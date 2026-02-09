@@ -1,0 +1,306 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   SOLARIUM DESIGN SYSTEM v5 — CSS Custom Properties
+   Light + Dark mode via .dark class (next-themes compatible)
+   Source of truth: docs/design-system.html
+   ============================================================ */
+
+@layer base {
+  :root {
+    /* ── Primary — Deep Teal ── */
+    --primary: #0d9488;
+    --primary-hover: #0b7e73;
+    --primary-dark: #087068;
+    --primary-light: #ccfbf1;
+    --primary-bg: #f0fdfa;
+
+    /* ── Accent — Warm Amber ── */
+    --accent: #f59e0b;
+    --accent-hover: #d97706;
+    --accent-dark: #b45309;
+    --accent-light: #fef3c7;
+    --accent-bg: #fffbeb;
+
+    /* ── Secondary — Ink Teal ── */
+    --secondary: #0f2f2d;
+    --secondary-light: #134e4a;
+    --secondary-bg: #e6fffb;
+
+    /* ── Success — Botanical Green ── */
+    --success: #16a34a;
+    --success-dark: #15803d;
+    --success-light: #dcfce7;
+    --success-bg: #f0fdf4;
+
+    /* ── Streak — Flame Orange ── */
+    --streak: #ea580c;
+    --streak-light: #fff7ed;
+
+    /* ── Danger — Warm Coral ── */
+    --danger: #e11d48;
+    --danger-light: #ffe4e6;
+
+    /* ── Solana Nod — SPARINGLY ── */
+    --solana-purple: #9945ff;
+    --solana-green: #14f195;
+
+    /* ── Neutrals — warm cream ── */
+    --bg: #fafaf7;
+    --card: #ffffff;
+    --subtle: #f5f3ee;
+    --warm: #fdf8f0;
+    --border: #e7e4dd;
+    --border-hover: #d4d0c7;
+    --text: #1c1917;
+    --text-2: #57534e;
+    --text-3: #a8a29e;
+
+    /* ── Shadows ── */
+    --shadow-push-color: var(--border);
+    --shadow-card: 0 2px 0 0 var(--border);
+    --shadow-card-hover: 0 4px 0 0 var(--border);
+    --shadow-glow: none;
+    --shadow-cert: 0 2px 0 0 #7b38cc;
+    --shadow-cert-hover: 0 4px 0 0 #7b38cc;
+    --shadow-cert-lg: 0 4px 0 0 #7b38cc;
+
+    /* ── Radii ── */
+    --r-sm: 10px;
+    --r-md: 14px;
+    --r-lg: 18px;
+    --r-xl: 24px;
+
+    /* ── Border width ── */
+    --bw: 2.5px;
+
+    /* ── Progress bar height ── */
+    --prog-h: 16px;
+
+    /* ── Legacy shadcn compat (used by Radix primitives) ── */
+    --radius: 14px;
+    --ring: var(--primary);
+  }
+
+  /* ============================================================
+     DARK MODE
+     ============================================================ */
+  .dark {
+    /* ── Neutrals — Soft Neutral Dark ── */
+    --bg: #343431;
+    --card: #3d3c38;
+    --subtle: #46443f;
+    --warm: #4a4843;
+    --border: #57534e;
+    --border-hover: #6a655e;
+    --text: #f5f1ea;
+    --text-2: #d4cec3;
+    --text-3: #a79f93;
+
+    /* ── Primary — lifted for dark readability ── */
+    --primary: #2dd4bf;
+    --primary-hover: #22c7b3;
+    --primary-dark: #0b7e73;
+    --primary-light: rgba(45, 212, 191, 0.15);
+    --primary-bg: rgba(45, 212, 191, 0.1);
+
+    /* ── Accent — lifted ── */
+    --accent: #fbbf24;
+    --accent-hover: #f59e0b;
+    --accent-dark: #b45309;
+    --accent-light: rgba(251, 191, 36, 0.18);
+    --accent-bg: rgba(251, 191, 36, 0.1);
+
+    /* ── Secondary — Ink Teal adapted ── */
+    --secondary: #2fa7a0;
+    --secondary-light: #5fd3cc;
+    --secondary-bg: rgba(47, 167, 160, 0.12);
+
+    /* ── Success ── */
+    --success: #4ade80;
+    --success-dark: #22c55e;
+    --success-light: rgba(74, 222, 128, 0.15);
+    --success-bg: rgba(74, 222, 128, 0.1);
+
+    /* ── Streak ── */
+    --streak: #fb923c;
+    --streak-light: rgba(251, 146, 60, 0.12);
+
+    /* ── Danger ── */
+    --danger: #fb7185;
+    --danger-light: rgba(251, 113, 133, 0.12);
+
+    /* ── Shadows — deeper for dark ── */
+    --shadow-push-color: rgba(0, 0, 0, 0.4);
+    --shadow-card: 0 2px 0 0 rgba(0, 0, 0, 0.35);
+    --shadow-card-hover: 0 4px 0 0 rgba(0, 0, 0, 0.35);
+    --shadow-glow: 0 0 12px rgba(45, 212, 191, 0.08);
+    --shadow-cert: 0 2px 0 0 rgba(123, 56, 204, 0.45);
+    --shadow-cert-hover: 0 4px 0 0 rgba(123, 56, 204, 0.45);
+    --shadow-cert-lg: 0 4px 0 0 rgba(123, 56, 204, 0.45);
+  }
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans), "Plus Jakarta Sans", sans-serif;
+  }
+
+  /* Keyboard focus ring for accessibility */
+  *:focus-visible {
+    @apply rounded-[var(--r-sm)] outline-2 outline-offset-2;
+    outline-color: var(--primary);
+  }
+}
+
+@layer utilities {
+  /* ── Certificate-only Solana gradient ── */
+  .bg-cert-gradient {
+    background: linear-gradient(
+      135deg,
+      var(--solana-purple) 0%,
+      var(--solana-green) 100%
+    );
+  }
+
+  /* ── Display font helper ── */
+  .font-display {
+    font-family: var(--font-display), "Nunito", sans-serif;
+  }
+
+  /* ── Body font helper ── */
+  .font-body {
+    font-family: var(--font-sans), "Plus Jakarta Sans", sans-serif;
+  }
+
+  /* ── 3D Push Button base ── */
+  .btn-push {
+    transition: all 0.1s ease;
+  }
+  .btn-push:active {
+    transform: translateY(3px);
+  }
+
+  /* ── Chunky Card ── */
+  .card-chunky {
+    background: var(--card);
+    border: 2.5px solid var(--border);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-card);
+    transition: all 0.15s ease;
+  }
+  .card-chunky:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-card-hover);
+    border-color: var(--border-hover);
+  }
+
+  /* ── Fat Progress Bar ── */
+  .progress-fat {
+    height: var(--prog-h);
+    border-radius: 9999px;
+    border: 2.5px solid var(--border);
+    background: var(--subtle);
+    overflow: hidden;
+  }
+  .progress-fat-fill {
+    height: 100%;
+    border-radius: 9999px;
+    position: relative;
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .progress-fat-fill::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 8px;
+    right: 8px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 9999px;
+  }
+
+  /* ── Progress fill variants ── */
+  .progress-fill-teal {
+    background: linear-gradient(90deg, var(--primary-dark), var(--primary));
+  }
+  .progress-fill-amber {
+    background: linear-gradient(90deg, var(--accent-dark), var(--accent));
+  }
+  .progress-fill-green {
+    background: linear-gradient(90deg, var(--success-dark), var(--success));
+  }
+
+  /* ── Card banner difficulty gradients ── */
+  .banner-beginner {
+    background: linear-gradient(
+      135deg,
+      #e0f7f4 0%,
+      #c8f0ea 40%,
+      #e8faf0 70%,
+      #f0fdf4 100%
+    );
+  }
+  .dark .banner-beginner {
+    background: linear-gradient(
+      135deg,
+      rgba(45, 212, 191, 0.15) 0%,
+      rgba(13, 148, 136, 0.2) 100%
+    );
+  }
+  .banner-intermediate {
+    background: linear-gradient(
+      135deg,
+      #e6fffb 0%,
+      #ccf5f0 40%,
+      #d5f5f2 70%,
+      #e6fffb 100%
+    );
+  }
+  .dark .banner-intermediate {
+    background: linear-gradient(
+      135deg,
+      rgba(47, 167, 160, 0.15) 0%,
+      rgba(15, 47, 45, 0.3) 100%
+    );
+  }
+  .banner-advanced {
+    background: linear-gradient(
+      135deg,
+      #fff0e6 0%,
+      #ffe0cc 40%,
+      #ffeee0 70%,
+      #fff7ed 100%
+    );
+  }
+  .dark .banner-advanced {
+    background: linear-gradient(
+      135deg,
+      rgba(234, 88, 12, 0.15) 0%,
+      rgba(180, 83, 9, 0.2) 100%
+    );
+  }
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #certificate-visual,
+  #certificate-visual * {
+    visibility: visible;
+  }
+  #certificate-visual {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+}
