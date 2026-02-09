@@ -1,0 +1,8 @@
+# Cloud Build only needs apps/build-server/
+*
+!apps/
+apps/*
+!apps/build-server/
+!apps/build-server/**
+apps/build-server/target/
+apps/build-server/*.md
