@@ -89,7 +89,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
           <div className="flex items-center justify-between gap-4 pt-6">
             {prevLesson ? (
               <Button variant="outline" asChild>
-                <Link href={`/courses/${course.slug}/lessons/${prevLesson.slug}`}>
+                <Link href={`/courses/${course.slug}/lessons/${prevLesson.id}`}>
                   <ChevronLeft className="mr-2 h-4 w-4" />
                   Previous
                 </Link>
@@ -99,7 +99,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
             )}
             {nextLesson ? (
               <Button asChild>
-                <Link href={`/courses/${course.slug}/lessons/${nextLesson.slug}`}>
+                <Link href={`/courses/${course.slug}/lessons/${nextLesson.id}`}>
                   Next Lesson
                   <ChevronRight className="ml-2 h-4 w-4" />
                 </Link>
@@ -122,7 +122,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
                 {lessons.map((l, index) => (
                   <Link
                     key={l.id}
-                    href={`/courses/${course.slug}/lessons/${l.slug}`}
+                    href={`/courses/${course.slug}/lessons/${l.id}`}
                     className={`block rounded-lg p-3 text-sm transition-colors ${
                       l.id === lesson.id
                         ? 'bg-primary text-primary-foreground'
