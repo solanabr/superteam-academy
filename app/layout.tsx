@@ -11,7 +11,8 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Superteam Academy",
-  description: "Solana developer learning platform"
+  description: "Solana developer learning platform",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000")
 };
 
 type RootLayoutProps = {

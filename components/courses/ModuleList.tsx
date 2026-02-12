@@ -1,10 +1,10 @@
 "use client";
 
-import type { Course } from "@/lib/content/courses";
 import { useI18n } from "@/lib/i18n/provider";
+import type { CmsCourse } from "@/lib/cms/types";
 
 type ModuleListProps = {
-  course: Course;
+  course: CmsCourse;
 };
 
 export function ModuleList({ course }: ModuleListProps): JSX.Element {
@@ -19,7 +19,7 @@ export function ModuleList({ course }: ModuleListProps): JSX.Element {
           </p>
           <p className="font-medium">{module.title}</p>
           <p className="text-sm text-muted-foreground">
-            {module.lessons} {t("common.lessons")}
+            {module.lessons.length} {t("common.lessons")}
           </p>
         </li>
       ))}

@@ -3,11 +3,11 @@
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import type { Course } from "@/lib/content/courses";
+import type { CmsCourse } from "@/lib/cms/types";
 import { useI18n } from "@/lib/i18n/provider";
 
 type CourseCardProps = {
-  course: Course;
+  course: CmsCourse;
 };
 
 export function CourseCard({ course }: CourseCardProps): JSX.Element {
@@ -26,7 +26,7 @@ export function CourseCard({ course }: CourseCardProps): JSX.Element {
           <span>{t("courses.durationLabel")}</span>
           <span className="text-right">{course.durationHours}h</span>
           <span>{t("common.lessons")}</span>
-          <span className="text-right">{course.totalLessons}</span>
+          <span className="text-right">{course.modules.reduce((sum, module) => sum + module.lessons.length, 0)}</span>
         </div>
         <Button asChild className="mt-auto w-full">
           <Link href={`/courses/${course.slug}`}>{t("common.enrollNow")}</Link>

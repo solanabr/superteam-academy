@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ModuleList } from "@/components/courses/ModuleList";
 import { XPBar } from "@/components/gamification/XPBar";
-import { mockCourses } from "@/lib/content/courses";
+import type { CmsCourse } from "@/lib/cms/types";
 import { useI18n } from "@/lib/i18n/provider";
 
 type CourseDetailPageProps = {
@@ -17,13 +17,35 @@ type CourseDetailPageProps = {
 
 export default function CourseDetailPage({ params }: CourseDetailPageProps): JSX.Element {
   const { t } = useI18n();
-  const course = mockCourses.find((entry) => entry.slug === params.slug);
+  const [course, setCourse] = useState<CmsCourse | null>(null);
+
+  useEffect(() => {
+    const run = async () => {
+      const response = await fetch(`/api/courses/${encodeURIComponent(params.slug)}`);
+      if (!response.ok) {
+        setCourse(null);
+        return;
+      }
+
+      const json = (await response.json()) as { course: CmsCourse };
+      setCourse(json.course);
+    };
+
+    void run();
+  }, [params.slug]);
+
+  const totalLessons = course
+    ? course.modules.reduce((sum, module) => sum + module.lessons.length, 0)
+    : 0;
 
   if (!course) {
-    notFound();
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-10">
+        <p className="text-sm text-muted-foreground">Course not found.</p>
+      </div>
+    );
   }
-
-  const demoCompletedLessons = Math.floor(course.totalLessons * 0.35);
+  const demoCompletedLessons = Math.floor(totalLessons * 0.35);
 
   return (
     <div className="mx-auto grid w-full max-w-7xl gap-8 px-4 py-10 lg:grid-cols-[2fr_1fr]">
@@ -37,11 +59,11 @@ export default function CourseDetailPage({ params }: CourseDetailPageProps): JSX
           <CardHeader>
             <CardTitle>{t("courses.detail.progress")}</CardTitle>
             <CardDescription>
-              {demoCompletedLessons} / {course.totalLessons} {t("common.lessons")}
+              {demoCompletedLessons} / {totalLessons} {t("common.lessons")}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <XPBar value={demoCompletedLessons} max={course.totalLessons} />
+            <XPBar value={demoCompletedLessons} max={totalLessons} />
           </CardContent>
         </Card>
 

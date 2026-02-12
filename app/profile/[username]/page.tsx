@@ -2,7 +2,8 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SkillRadar } from "@/components/shared/SkillRadar";
-import { mockCourses } from "@/lib/content/courses";
+import { useEffect, useState } from "react";
+import type { CmsCourse } from "@/lib/cms/types";
 import { useI18n } from "@/lib/i18n/provider";
 
 type ProfilePageProps = {
@@ -13,6 +14,16 @@ type ProfilePageProps = {
 
 export default function ProfilePage({ params }: ProfilePageProps): JSX.Element {
   const { t } = useI18n();
+  const [courses, setCourses] = useState<CmsCourse[]>([]);
+
+  useEffect(() => {
+    const run = async () => {
+      const response = await fetch("/api/courses");
+      const json = (await response.json()) as { courses: CmsCourse[] };
+      setCourses(json.courses);
+    };
+    void run();
+  }, []);
 
   const skills = [
     { label: "Solana", value: 84 },
@@ -61,7 +72,7 @@ export default function ProfilePage({ params }: ProfilePageProps): JSX.Element {
           <CardTitle>{t("profile.completedCourses")}</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {mockCourses.map((course) => (
+          {courses.map((course) => (
             <article key={course.slug} className="rounded-md border p-3">
               <p className="font-medium">{course.title}</p>
               <p className="text-xs text-muted-foreground">{course.xpReward} XP</p>

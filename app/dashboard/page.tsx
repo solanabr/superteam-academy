@@ -1,23 +1,33 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { XPBar } from "@/components/gamification/XPBar";
 import { LevelBadge } from "@/components/gamification/LevelBadge";
 import { StreakCalendar } from "@/components/gamification/StreakCalendar";
 import { AchievementGrid } from "@/components/gamification/AchievementGrid";
-import { mockCourses } from "@/lib/content/courses";
 import { levelProgress } from "@/lib/gamification/levels";
 import { achievements, unlockedAchievements } from "@/lib/gamification/achievements";
 import { useI18n } from "@/lib/i18n/provider";
+import type { CmsCourse } from "@/lib/cms/types";
 
 export default function DashboardPage(): JSX.Element {
   const { t } = useI18n();
   const xp = 760;
   const progress = levelProgress(xp);
-  const currentCourses = mockCourses.slice(0, 2);
+  const [currentCourses, setCurrentCourses] = useState<CmsCourse[]>([]);
   const unlocked = unlockedAchievements([achievements[0].id, achievements[2].id]);
+
+  useEffect(() => {
+    const run = async () => {
+      const response = await fetch("/api/courses");
+      const json = (await response.json()) as { courses: CmsCourse[] };
+      setCurrentCourses(json.courses.slice(0, 2));
+    };
+    void run();
+  }, []);
 
   const activeDays = Array.from({ length: 10 }).map((_, index) => {
     const d = new Date();
@@ -69,7 +79,7 @@ export default function DashboardPage(): JSX.Element {
               <div key={course.slug} className="rounded-md border p-3">
                 <p className="font-medium">{course.title}</p>
                 <p className="text-sm text-muted-foreground">
-                  {course.totalLessons} {t("common.lessons")}
+                  {course.modules.reduce((sum, module) => sum + module.lessons.length, 0)} {t("common.lessons")}
                 </p>
                 <Button asChild size="sm" className="mt-2">
                   <Link href={`/courses/${course.slug}`}>{t("common.continue")}</Link>
