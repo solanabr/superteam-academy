@@ -90,6 +90,16 @@ export interface LessonProgress {
   updated_at: string
 }
 
+export interface LessonCompletion {
+  id: string
+  user_id: string
+  lesson_id: string
+  enrollment_id: string
+  xp_earned: number
+  completed_at: string
+  created_at: string
+}
+
 export interface Enrollment {
   id: string
   user_id: string
