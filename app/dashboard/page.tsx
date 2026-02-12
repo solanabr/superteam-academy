@@ -28,7 +28,7 @@ export default async function DashboardPage() {
     <div className="container py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight">
-          Welcome back, {profile?.display_name || 'Learner'}
+          Welcome back, {profile?.username || 'Learner'}
         </h1>
         <p className="text-muted-foreground">Continue your learning journey</p>
       </div>
