@@ -43,10 +43,10 @@ export default async function CoursePage({ params }: CoursePageProps) {
                 {course.description}
               </p>
               <div className="flex flex-wrap gap-6 text-sm">
-                {course.estimated_hours && (
+                {course.duration_minutes && (
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4 text-muted-foreground" />
-                    <span>{course.estimated_hours} hours</span>
+                    <span>{Math.round(course.duration_minutes / 60)} hours</span>
                   </div>
                 )}
                 <div className="flex items-center gap-2">
@@ -60,7 +60,7 @@ export default async function CoursePage({ params }: CoursePageProps) {
               </div>
               <div className="pt-4">
                 <Button size="lg" asChild>
-                  <Link href={`/courses/${course.slug}/lessons/${lessons[0]?.slug}`}>
+                  <Link href={`/courses/${course.slug}/lessons/${lessons[0]?.id}`}>
                     Start Course
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>
@@ -100,7 +100,7 @@ export default async function CoursePage({ params }: CoursePageProps) {
                     {lessons.map((lesson, index) => (
                       <Link
                         key={lesson.id}
-                        href={`/courses/${course.slug}/lessons/${lesson.slug}`}
+                        href={`/courses/${course.slug}/lessons/${lesson.id}`}
                         className="flex items-center gap-4 rounded-lg border border-border p-4 transition-colors hover:bg-muted"
                       >
                         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-medium text-primary">
@@ -113,11 +113,11 @@ export default async function CoursePage({ params }: CoursePageProps) {
                           </p>
                         </div>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          {lesson.estimated_minutes && (
-                            <span>{lesson.estimated_minutes} min</span>
+                          {lesson.duration_minutes && (
+                            <span>{lesson.duration_minutes} min</span>
                           )}
                           <Badge variant="outline" className="shrink-0">
-                            {lesson.content_type}
+                            {lesson.lesson_type}
                           </Badge>
                         </div>
                       </Link>
