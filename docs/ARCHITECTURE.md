@@ -1,312 +1,102 @@
-# Superteam Academy — Architecture Reference
+# Superteam Academy — Architecture
 
-Quick-reference for developers. Full details in [SPEC.md](./SPEC.md).
+Covers both the **on-chain program** and the **frontend** application. On-chain details are in [SPEC.md](./SPEC.md).
 
 ---
 
-## System Overview
+## System overview
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                         FRONTEND (Next.js)                          │
+│                    FRONTEND (Next.js 14, App Router)                │
 │                                                                     │
-│  Wallet Adapter ─── Anchor Client ─── Helius DAS ─── Photon RPC   │
-└────────┬──────────────────┬─────────────────┬──────────────┬────────┘
-         │                  │                 │              │
-         │ sign txs         │ read accounts   │ leaderboard  │ credentials
-         │                  │                 │              │
-┌────────▼──────────────────▼─────────────────▼──────────────▼────────┐
-│                        BACKEND (API)                                │
-│                                                                     │
-│  Lesson validation ─── TX builder ─── Photon queries ─── Queue     │
-│                                                                     │
-│  Holds: backend_signer keypair (rotatable via update_config)       │
-└────────┬────────────────────────────────────────────────────────────┘
-         │
-         │ signed transactions
-         │
-┌────────▼────────────────────────────────────────────────────────────┐
-│                    SOLANA (On-Chain Program)                         │
-│                                                                     │
-│  Config ──┬── Course ──── Enrollment ──── Credential (compressed)  │
-│           │                                                         │
-│           └── LearnerProfile                                        │
-│                                                                     │
-│  XP Token (Token-2022: NonTransferable + PermanentDelegate)        │
+│  Wallet Adapter ──► LearningProgressService ──► Stub / On-chain    │
+│       │                        │                     │              │
+│       │                        ├── getXP             ├── Helius DAS │
+│       │                        ├── getProgress        ├── Photon     │
+│       │                        ├── getCredentials     └── Anchor SDK │
+│       │                        ├── getLeaderboard                    │
+│       │                        └── getStreak                         │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
----
-
-## Account Map
-
-### PDA Derivation
-
-| Account | Seeds | Owner | Closeable |
-| --- | --- | --- | --- |
-| Config | `["config"]` | Program | No |
-| Course | `["course", course_id.as_bytes()]` | Program | No |
-| LearnerProfile | `["learner", user.key()]` | Program | No |
-| Enrollment | `["enrollment", course_id.as_bytes(), user.key()]` | Program | Yes |
-| Credential | `["credential", learner.key(), track_id.to_le_bytes()]` | Light Protocol | N/A (compressed) |
-
-### Account Relationships
-
-```
-Config (singleton)
-  │
-  ├── current_mint ──► XP Token Mint (Token-2022)
-  │                       │
-  │                       └──► Token Accounts (one per learner per season)
-  │
-  ├── backend_signer (rotatable keypair)
-  │
-  └── authority (Squads multisig)
-
-Course (one per course)
-  │
-  ├── creator ──► receives XP on student completion
-  ├── authority ──► can update course
-  ├── prerequisite ──► Option<Course PDA>
-  │
-  └──► Enrollment (one per learner per course)
-        │
-        ├── lesson_flags (bitmap, up to 256 lessons)
-        ├── completed_at (set by finalize_course)
-        │
-        └──► Credential (ZK compressed, one per learner per track)
-              │
-              ├── current_level (upgrades on track progression)
-              └── metadata_hash ──► Arweave JSON
-
-LearnerProfile (one per learner)
-  │
-  ├── streak data (current, longest, last_activity, freezes)
-  ├── achievement_flags (bitmap, 256 slots)
-  ├── rate limiting (xp_earned_today, last_xp_day)
-  └── referral tracking (count, has_referrer)
-```
+- **Wallet**: Solana Wallet Adapter (multi-wallet); wallet required for XP display, credentials, and leaderboard identity.
+- **LearningProgressService**: Single abstraction for progress, XP, streak, leaderboard, credentials. Implementations:
+  - **Stub** (default): localStorage + in-memory; used until backend/on-chain is connected.
+  - **On-chain**: Token accounts for XP, indexer for leaderboard/credentials, Anchor for enrollments/completions.
 
 ---
 
-## Data Flow: Core Learning Loop
+## Frontend structure
 
-```
-1. ENROLL
-   Learner ──sign──► enroll(course_id)
-   ┌─────────────────────────────────────────────┐
-   │ Check: course.is_active                      │
-   │ Check: prerequisite completed (if set)       │
-   │ Create: Enrollment PDA                       │
-   │ Snapshot: enrolled_version = course.version  │
-   │ Emit: Enrolled event                         │
-   └─────────────────────────────────────────────┘
+### Routes (App Router)
 
-2. COMPLETE LESSONS (repeated per lesson)
-   Backend ──sign──► complete_lesson(lesson_index, xp_amount)
-   ┌─────────────────────────────────────────────┐
-   │ Check: lesson_index < course.lesson_count    │
-   │ Check: bit not already set                   │
-   │ Check: daily XP cap                          │
-   │ Set: lesson_flags bit                        │
-   │ Mint: XP to learner (Token-2022 CPI)        │
-   │ Update: streak (side effect)                 │
-   │ Emit: LessonCompleted event                  │
-   └─────────────────────────────────────────────┘
+| Path | Purpose |
+|------|---------|
+| `/` | Landing: hero, CTAs, learning path preview, features, footer |
+| `/courses` | Course catalog: filterable grid, search |
+| `/courses/[slug]` | Course detail: modules/lessons, progress, enrollment CTA |
+| `/courses/[slug]/lessons/[id]` | Lesson view: content + code challenge (split layout) |
+| `/dashboard` | User dashboard: current courses, XP, level, streak, achievements |
+| `/profile`, `/profile/[username]` | Profile: credentials, completed courses, skills |
+| `/leaderboard` | Rankings by XP; weekly/monthly/all-time |
+| `/settings` | Profile, account, preferences, privacy |
+| `/certificates/[id]` | Certificate view + verification link (Explorer) |
 
-3. FINALIZE COURSE
-   Backend ──sign──► finalize_course()
-   ┌─────────────────────────────────────────────┐
-   │ Check: all bits set (popcount == lesson_count)│
-   │ Mint: course.xp_total to learner             │
-   │ Mint: completion_reward_xp to creator        │
-   │   (gated by min_completions_for_reward)      │
-   │ Set: enrollment.completed_at = now           │
-   │ Increment: course.total_completions          │
-   │ Emit: CourseFinalized event                  │
-   └─────────────────────────────────────────────┘
+All routes are under `[locale]` for i18n (en, pt-BR, es).
 
-4. ISSUE CREDENTIAL
-   Backend ──sign──► issue_credential(proof, ...)
-   ┌─────────────────────────────────────────────┐
-   │ Check: enrollment.completed_at.is_some()     │
-   │ Query: Photon for existing credential        │
-   │ If exists: upgrade (Light CPI)               │
-   │ If new: create (Light CPI)                   │
-   │ Emit: CredentialIssued event                 │
-   └─────────────────────────────────────────────┘
+### Component layout
 
-5. CLOSE ENROLLMENT (optional, reclaims rent)
-   Learner ──sign──► close_enrollment()
-   ┌─────────────────────────────────────────────┐
-   │ Check: completed_at.is_some()                │
-   │ Close: account, return lamports to learner   │
-   │ Emit: EnrollmentClosed event                 │
-   └─────────────────────────────────────────────┘
-```
+- **`src/components/layout`**: Header, LanguageSwitcher, ThemeSwitcher
+- **`src/components/providers`**: WalletProvider, ThemeProvider
+- **`src/components/ui`**: Button, Select, etc. (Radix-based)
+- **`src/lib`**: types, `LearningProgressService` interface, stub implementation, `levelFromXP` util
+
+### Data flow
+
+1. **Auth**: Wallet connection via Wallet Adapter; `publicKey` used as `userId` for stub and for on-chain identity.
+2. **Progress/XP/Streak**: `LearningProgressService` (stub) reads/writes localStorage; swap for API + on-chain later.
+3. **Leaderboard**: Stub aggregates from localStorage XP keys; production uses Helius DAS (token holders) or custom indexer.
+4. **Credentials**: Stub returns empty or stored list; production uses Photon/DAS for compressed NFTs.
 
 ---
 
-## XP Token Architecture
+## Service interface: LearningProgressService
 
-```
-Season 1                    Season 2                    Season 3
-┌──────────────────┐       ┌──────────────────┐       ┌──────────────────┐
-│ Mint: S1_PUBKEY  │       │ Mint: S2_PUBKEY  │       │ Mint: S3_PUBKEY  │
-│ Extensions:      │       │ Extensions:      │       │ Extensions:      │
-│  NonTransferable │       │  NonTransferable │       │  NonTransferable │
-│  PermanentDelegate       │  PermanentDelegate       │  PermanentDelegate
-│  MetadataPointer │       │  MetadataPointer │       │  MetadataPointer │
-│  TokenMetadata   │       │  TokenMetadata   │       │  TokenMetadata   │
-└────────┬─────────┘       └────────┬─────────┘       └────────┬─────────┘
-         │                          │                           │
-    ┌────┴────┐                ┌────┴────┐                ┌────┴────┐
-    │ ATA: A  │                │ ATA: A  │                │ ATA: A  │
-    │ bal: 500│                │ bal: 800│                │ bal: 0  │
-    ├─────────┤                ├─────────┤                ├─────────┤
-    │ ATA: B  │                │ ATA: B  │                │ ATA: B  │
-    │ bal: 300│                │ bal: 150│                │ bal: 0  │
-    └─────────┘                └─────────┘                └─────────┘
+Used so the app can switch from stub to on-chain without changing UI code:
 
-    closed                     active                     future
-
-Config.current_mint = S2_PUBKEY
-Config.current_season = 2
-Config.season_closed = false
+```ts
+interface LearningProgressService {
+  getProgress(userId: string, courseId: string): Promise<Progress>;
+  completeLesson(userId: string, courseId: string, lessonIndex: number): Promise<void>;
+  getXP(userId: string): Promise<number>;
+  getStreak(userId: string): Promise<StreakData>;
+  getLeaderboard(timeframe: 'weekly' | 'monthly' | 'alltime'): Promise<LeaderboardEntry[]>;
+  getCredentials(wallet: PublicKey): Promise<Credential[]>;
+}
 ```
 
----
-
-## ZK Compression Flow (Credentials)
-
-```
-Backend                         Photon Indexer              Solana
-  │                                  │                        │
-  │ 1. getCompressedAccount          │                        │
-  │    (by derived address)          │                        │
-  │─────────────────────────────────►│                        │
-  │                                  │                        │
-  │ 2. Returns: account data         │                        │
-  │    OR: not found                 │                        │
-  │◄─────────────────────────────────│                        │
-  │                                  │                        │
-  │ 3. getValidityProof              │                        │
-  │    (for account state)           │                        │
-  │─────────────────────────────────►│                        │
-  │                                  │                        │
-  │ 4. Returns: 128-byte ZK proof    │                        │
-  │◄─────────────────────────────────│                        │
-  │                                  │                        │
-  │ 5. Build TX: issue_credential    │                        │
-  │    (proof + account data +       │                        │
-  │     remaining_accounts)          │                        │
-  │──────────────────────────────────────────────────────────►│
-  │                                  │                        │
-  │                                  │ 6. Light CPI:          │
-  │                                  │    create/update        │
-  │                                  │    compressed account   │
-  │                                  │◄───────────────────────│
-  │                                  │                        │
-  │ 7. TX confirmed                  │                        │
-  │◄──────────────────────────────────────────────────────────│
-```
-
-**Lookup tables to include:** (reduces TX size for ZK Compression accounts)
-- Mainnet: `9NYFyEqPkyXUhkerbGHXUXkvb4qpzeEdHuGpgbgpH1NJ`
-- Devnet: `qAJZMgnQJ8G6vA3WRcjD9Jan1wtKkaCFWLWskxJrR5V`
+- **Stub**: `createStubLearningProgressService()` in `src/lib/stub-learning-progress.ts`.
+- **On-chain**: Implement using Config/XP mint, enrollment PDAs, Photon/Helius; inject via provider or module.
 
 ---
 
-## Instruction → Account Matrix
+## On-chain integration points (when connected)
 
-Which accounts each instruction reads/writes:
+| Feature | Source |
+|--------|--------|
+| XP balance | Token-2022 (soulbound) ATA for current season mint |
+| Level | `floor(sqrt(xp / 100))` |
+| Leaderboard | Helius DAS `getTokenHolders(currentMint)` sorted by balance |
+| Credentials | Photon / ZK Compression indexer or Metaplex Bubblegum |
+| Enrollment / complete_lesson | Anchor instructions (backend-signed); stubbed in UI |
 
-| Instruction | Config | Course | Learner | Enrollment | Credential | XP Mint | Token Accts |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| initialize | **W** | | | | | | |
-| create_season | **W** | | | | | **W** (create) | |
-| close_season | **W** | | | | | | |
-| update_config | **W** | | | | | | |
-| create_course | R | **W** (create) | | | | | |
-| update_course | | **W** | | | | | |
-| init_learner | | | **W** (create) | | | | |
-| enroll | | R | | **W** (create) | | | |
-| unenroll | | | | **W** (close) | | | |
-| complete_lesson | R | R | **W** | **W** | | R | **W** (learner) |
-| finalize_course | R | **W** | **W** | **W** | | R | **W** (learner + creator) |
-| issue_credential | R | R | | R | **W** | | |
-| claim_achievement | R | | **W** | | | R | **W** (learner) |
-| award_streak_freeze | R | | **W** | | | | |
-| register_referral | | | **W** (both) | | | | |
-| close_enrollment | | | | **W** (close) | | | |
-
-R = read, **W** = write, (create) = init, (close) = close account
+Full on-chain details (PDAs, instructions, events, CU budgets): [SPEC.md](./SPEC.md).
 
 ---
 
-## Account Sizes
+## Performance
 
-| Account | Discriminator | Data | Reserved | Total | Rent |
-| --- | --- | --- | --- | --- | --- |
-| Config | 8 | 143 | 32 | ~183 | ~0.002 SOL |
-| Course | 8 | ~206 | 16 | ~230 | ~0.002 SOL |
-| LearnerProfile | 8 | ~87 | 16 | ~111 | ~0.001 SOL |
-| Enrollment | 8 | ~91 | 0 | ~99 | ~0.001 SOL |
-| Credential | — | ~88 | 0 | ~88 | 0 SOL |
-
----
-
-## Compute Unit Budget
-
-| Instruction | CU Budget | Primary Cost |
-| --- | --- | --- |
-| initialize | 5K | PDA creation |
-| create_season | 50K | Token-2022 mint + extensions |
-| close_season | 5K | Flag update |
-| update_config | 5K | Field updates |
-| create_course | 15K | PDA creation |
-| update_course | 10K | Field updates |
-| init_learner | 5K | PDA creation |
-| enroll | 15K | PDA creation + prerequisite check |
-| unenroll | 5K | Account close |
-| complete_lesson | 40K | Bitmap + Token-2022 CPI + streak |
-| finalize_course | 100K | Bitmap verify + 2x Token-2022 CPI |
-| issue_credential | 200-300K | ZK Compression CPI |
-| claim_achievement | 30K | Bitmap + Token-2022 CPI |
-| award_streak_freeze | 5K | Counter increment |
-| register_referral | 10K | Two account updates |
-| close_enrollment | 5K | Account close |
-
----
-
-## Error Handling Strategy
-
-```
-On-chain:                           Backend:
-┌─────────────────────────┐        ┌─────────────────────────────────┐
-│ Anchor error codes      │        │ Retry logic for:                │
-│ (AcademyError enum)     │        │   - TX confirmation failures    │
-│                         │        │   - Photon indexer timeouts      │
-│ checked_add/sub/mul     │        │   - Blockhash expiry            │
-│ (no unchecked math)     │        │                                 │
-│                         │        │ Queue for:                      │
-│ require!() macros       │        │   - issue_credential failures   │
-│ (fail fast)             │        │   (finalize_course already      │
-│                         │        │    succeeded, XP is safe)       │
-└─────────────────────────┘        └─────────────────────────────────┘
-```
-
----
-
-## Off-Chain Dependencies
-
-| Service | Purpose | Fallback |
-| --- | --- | --- |
-| Helius DAS API | XP leaderboard, token indexing | Custom indexer on transaction logs |
-| Photon (via Helius) | Credential queries, validity proofs | Cache credential state in backend DB |
-| Arweave | Course content, credential metadata | Content is immutable once uploaded |
-| Squads | Multisig for platform authority | Single signer (reduced security) |
-
----
-
-*For full implementation details, see [SPEC.md](./SPEC.md). For build order, see [IMPLEMENTATION_ORDER.md](./IMPLEMENTATION_ORDER.md). For deferred features, see [FUTURE_IMPROVEMENTS.md](./FUTURE_IMPROVEMENTS.md).*
+- Lighthouse targets: Performance 90+, Accessibility 95+, Best Practices 95+, SEO 90+.
+- Core Web Vitals: LCP &lt; 2.5s, FID &lt; 100ms, CLS &lt; 0.1.
+- Use: code splitting, lazy loading, static generation where possible, image optimization, bundle size care.

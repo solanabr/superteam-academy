@@ -1,0 +1,71 @@
+{
+  "common": {
+    "signUp": "Sign Up",
+    "signIn": "Sign In",
+    "exploreCourses": "Explore Courses",
+    "dashboard": "Dashboard",
+    "profile": "Profile",
+    "leaderboard": "Leaderboard",
+    "settings": "Settings",
+    "language": "Language",
+    "theme": "Theme",
+    "dark": "Dark",
+    "light": "Light"
+  },
+  "landing": {
+    "heroTitle": "Learn Solana. Build dApps. Get Credentials.",
+    "heroSubtitle": "The ultimate interactive learning platform for Solana developers. Gamified progression, on-chain credentials, and a community built for crypto natives.",
+    "learningPathPreview": "Learning paths",
+    "features": "Platform features",
+    "testimonials": "What builders say",
+    "newsletter": "Stay updated",
+    "newsletterPlaceholder": "Your email",
+    "subscribe": "Subscribe"
+  },
+  "courses": {
+    "title": "Course catalog",
+    "filterByDifficulty": "Difficulty",
+    "filterByTopic": "Topic",
+    "filterByDuration": "Duration",
+    "search": "Search courses",
+    "difficulty": { "beginner": "Beginner", "intermediate": "Intermediate", "advanced": "Advanced" },
+    "enroll": "Enroll",
+    "progress": "Progress"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "currentCourses": "Current courses",
+    "xpBalance": "XP balance",
+    "level": "Level",
+    "streak": "Streak",
+    "achievements": "Recent achievements",
+    "recommended": "Recommended",
+    "activity": "Recent activity"
+  },
+  "leaderboard": {
+    "title": "Leaderboard",
+    "weekly": "Weekly",
+    "monthly": "Monthly",
+    "allTime": "All time",
+    "rank": "Rank",
+    "xp": "XP"
+  },
+  "profile": {
+    "editProfile": "Edit profile",
+    "credentials": "On-chain credentials",
+    "completedCourses": "Completed courses",
+    "skillRadar": "Skills"
+  },
+  "settings": {
+    "title": "Settings",
+    "profile": "Profile",
+    "account": "Account",
+    "preferences": "Preferences",
+    "privacy": "Privacy"
+  },
+  "certificate": {
+    "title": "Certificate",
+    "verifyOnExplorer": "Verify on Solana Explorer",
+    "share": "Share"
+  }
+}

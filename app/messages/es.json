@@ -1,0 +1,71 @@
+{
+  "common": {
+    "signUp": "Registrarse",
+    "signIn": "Iniciar sesión",
+    "exploreCourses": "Explorar cursos",
+    "dashboard": "Panel",
+    "profile": "Perfil",
+    "leaderboard": "Clasificación",
+    "settings": "Ajustes",
+    "language": "Idioma",
+    "theme": "Tema",
+    "dark": "Oscuro",
+    "light": "Claro"
+  },
+  "landing": {
+    "heroTitle": "Aprende Solana. Construye dApps. Obtén credenciales.",
+    "heroSubtitle": "La plataforma de aprendizaje interactiva definitiva para desarrolladores Solana. Progresión gamificada, credenciales on-chain y una comunidad para nativos de crypto.",
+    "learningPathPreview": "Rutas de aprendizaje",
+    "features": "Características de la plataforma",
+    "testimonials": "Lo que dicen los builders",
+    "newsletter": "Mantente al día",
+    "newsletterPlaceholder": "Tu email",
+    "subscribe": "Suscribir"
+  },
+  "courses": {
+    "title": "Catálogo de cursos",
+    "filterByDifficulty": "Dificultad",
+    "filterByTopic": "Tema",
+    "filterByDuration": "Duración",
+    "search": "Buscar cursos",
+    "difficulty": { "beginner": "Principiante", "intermediate": "Intermedio", "advanced": "Avanzado" },
+    "enroll": "Inscribirse",
+    "progress": "Progreso"
+  },
+  "dashboard": {
+    "title": "Panel",
+    "currentCourses": "Cursos actuales",
+    "xpBalance": "Saldo de XP",
+    "level": "Nivel",
+    "streak": "Racha",
+    "achievements": "Logros recientes",
+    "recommended": "Recomendados",
+    "activity": "Actividad reciente"
+  },
+  "leaderboard": {
+    "title": "Clasificación",
+    "weekly": "Semanal",
+    "monthly": "Mensual",
+    "allTime": "Todo el tiempo",
+    "rank": "Posición",
+    "xp": "XP"
+  },
+  "profile": {
+    "editProfile": "Editar perfil",
+    "credentials": "Credenciales on-chain",
+    "completedCourses": "Cursos completados",
+    "skillRadar": "Habilidades"
+  },
+  "settings": {
+    "title": "Ajustes",
+    "profile": "Perfil",
+    "account": "Cuenta",
+    "preferences": "Preferencias",
+    "privacy": "Privacidad"
+  },
+  "certificate": {
+    "title": "Certificado",
+    "verifyOnExplorer": "Verificar en Solana Explorer",
+    "share": "Compartir"
+  }
+}
