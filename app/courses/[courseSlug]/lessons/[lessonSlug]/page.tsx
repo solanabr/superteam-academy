@@ -16,10 +16,10 @@ export default async function LessonPage({ params }: LessonPageProps) {
   const course = await courseService.getCourseBySlug(courseSlug);
   if (!course) notFound();
 
-  const lesson = await courseService.getLessonBySlug(courseSlug, lessonSlug);
+  const lessons = await courseService.getCourseLessons(course.id);
+  const lesson = lessons.find(l => l.id === lessonSlug);
   if (!lesson) notFound();
 
-  const lessons = await courseService.getCourseLessons(course.id);
   const currentIndex = lessons.findIndex(l => l.id === lesson.id);
   const prevLesson = currentIndex > 0 ? lessons[currentIndex - 1] : null;
   const nextLesson = currentIndex < lessons.length - 1 ? lessons[currentIndex + 1] : null;
@@ -47,7 +47,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
         <div className="lg:col-span-3 space-y-6">
           <div>
             <div className="mb-4 flex items-center gap-3">
-              <Badge>{lesson.content_type}</Badge>
+              <Badge className="capitalize">{lesson.lesson_type}</Badge>
               {lesson.xp_reward > 0 && (
                 <Badge variant="outline">{lesson.xp_reward} XP</Badge>
               )}
@@ -59,15 +59,15 @@ export default async function LessonPage({ params }: LessonPageProps) {
           {/* Lesson Content */}
           <Card>
             <CardContent className="prose prose-neutral dark:prose-invert max-w-none p-8">
-              {lesson.content_type === 'video' ? (
+              {lesson.lesson_type === 'video' ? (
                 <div className="aspect-video rounded-lg bg-muted flex items-center justify-center">
                   <p className="text-muted-foreground">Video player placeholder</p>
                 </div>
-              ) : lesson.content_type === 'interactive' ? (
+              ) : lesson.lesson_type === 'coding' ? (
                 <div className="rounded-lg border border-border p-8 bg-muted/50">
                   <p className="text-muted-foreground">Interactive code editor placeholder</p>
                 </div>
-              ) : lesson.content_type === 'quiz' ? (
+              ) : lesson.lesson_type === 'quiz' ? (
                 <div className="rounded-lg border border-border p-8">
                   <p className="text-muted-foreground">Quiz component placeholder</p>
                 </div>
@@ -89,7 +89,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
           <div className="flex items-center justify-between gap-4 pt-6">
             {prevLesson ? (
               <Button variant="outline" asChild>
-                <Link href={`/courses/${course.slug}/lessons/${prevLesson.slug}`}>
+                <Link href={`/courses/${course.slug}/lessons/${prevLesson.id}`}>
                   <ChevronLeft className="mr-2 h-4 w-4" />
                   Previous
                 </Link>
@@ -99,7 +99,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
             )}
             {nextLesson ? (
               <Button asChild>
-                <Link href={`/courses/${course.slug}/lessons/${nextLesson.slug}`}>
+                <Link href={`/courses/${course.slug}/lessons/${nextLesson.id}`}>
                   Next Lesson
                   <ChevronRight className="ml-2 h-4 w-4" />
                 </Link>
@@ -122,7 +122,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
                 {lessons.map((l, index) => (
                   <Link
                     key={l.id}
-                    href={`/courses/${course.slug}/lessons/${l.slug}`}
+                    href={`/courses/${course.slug}/lessons/${l.id}`}
                     className={`block rounded-lg p-3 text-sm transition-colors ${
                       l.id === lesson.id
                         ? 'bg-primary text-primary-foreground'

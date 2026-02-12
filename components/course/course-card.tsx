@@ -54,10 +54,10 @@ export function CourseCard({ course }: CourseCardProps) {
           </p>
         </CardContent>
         <CardFooter className="p-4 pt-0 flex items-center gap-4 text-sm text-muted-foreground">
-          {course.estimated_hours && (
+          {course.duration_minutes && (
             <div className="flex items-center gap-1">
               <Clock className="h-4 w-4" />
-              <span>{course.estimated_hours}h</span>
+              <span>{Math.round(course.duration_minutes / 60)}h</span>
             </div>
           )}
         </CardFooter>
