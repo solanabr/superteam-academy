@@ -39,7 +39,7 @@ export default async function LeaderboardPage() {
                   {getRankIcon(2)}
                 </div>
               </div>
-              <p className="text-2xl font-bold mb-1">{(topUsers[1] as any).profiles?.display_name || 'Anonymous'}</p>
+              <p className="text-2xl font-bold mb-1">{(topUsers[1] as any).username || 'Anonymous'}</p>
               <XPBadge 
                 xp={(topUsers[1] as any).total_xp} 
                 level={(topUsers[1] as any).level} 
@@ -57,7 +57,7 @@ export default async function LeaderboardPage() {
                   {getRankIcon(1)}
                 </div>
               </div>
-              <p className="text-3xl font-bold mb-1">{(topUsers[0] as any).profiles?.display_name || 'Anonymous'}</p>
+              <p className="text-3xl font-bold mb-1">{(topUsers[0] as any).username || 'Anonymous'}</p>
               <XPBadge 
                 xp={(topUsers[0] as any).total_xp} 
                 level={(topUsers[0] as any).level} 
@@ -75,7 +75,7 @@ export default async function LeaderboardPage() {
                   {getRankIcon(3)}
                 </div>
               </div>
-              <p className="text-2xl font-bold mb-1">{(topUsers[2] as any).profiles?.display_name || 'Anonymous'}</p>
+              <p className="text-2xl font-bold mb-1">{(topUsers[2] as any).username || 'Anonymous'}</p>
               <XPBadge 
                 xp={(topUsers[2] as any).total_xp} 
                 level={(topUsers[2] as any).level} 
@@ -104,7 +104,7 @@ export default async function LeaderboardPage() {
                   </div>
                   <div className="flex-1">
                     <p className="font-semibold">
-                      {user.profiles?.display_name || 'Anonymous'}
+                      {user.username || 'Anonymous'}
                     </p>
                     <p className="text-sm text-muted-foreground">
                       Level {user.level} • {user.current_streak} day streak

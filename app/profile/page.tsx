@@ -28,12 +28,12 @@ export default async function ProfilePage() {
             <CardContent className="pt-6">
               <div className="text-center space-y-4">
                 <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-primary/10 text-3xl font-bold text-primary">
-                  {profile?.display_name?.charAt(0).toUpperCase() || 'U'}
+                  {profile?.username?.charAt(0).toUpperCase() || 'U'}
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold">{profile?.display_name || 'Anonymous'}</h2>
-                  {profile?.username && (
-                    <p className="text-sm text-muted-foreground">@{profile.username}</p>
+                  <h2 className="text-2xl font-bold">{profile?.username || 'Anonymous'}</h2>
+                  {profile?.email && (
+                    <p className="text-sm text-muted-foreground">{profile.email}</p>
                   )}
                 </div>
                 {profile?.bio && (
