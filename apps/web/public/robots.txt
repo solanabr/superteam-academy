@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /teach/
+Disallow: /api/
+Disallow: /auth/
+
+Sitemap: https://academy.superteam.fun/sitemap.xml

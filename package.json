@@ -1,0 +1,13 @@
+{
+  "name": "superteam-academy",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --filter @superteam-academy/web dev",
+    "build": "pnpm --filter @superteam-academy/web build",
+    "lint": "pnpm --filter @superteam-academy/web lint",
+    "dev:cms": "pnpm --filter @superteam-academy/cms dev"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
