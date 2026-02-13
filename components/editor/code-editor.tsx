@@ -63,7 +63,7 @@ export function CodeEditor({
   }
 
   if (!mounted) return (
-    <div className="h-[500px] w-full flex items-center justify-center bg-[#1e1e1e] rounded-xl border border-border/50">
+    <div className="h-[360px] w-full flex items-center justify-center bg-[#1e1e1e] rounded-xl border border-border/50">
       <Loader2 className="h-8 w-8 animate-spin text-primary" />
     </div>
   )
@@ -110,7 +110,7 @@ export function CodeEditor({
       </div>
 
       {/* Main Editor Area */}
-      <div className="flex-1 min-h-[400px]">
+      <div className="flex-1 min-h-[320px]">
         <Editor
           height="100%"
           language={language}

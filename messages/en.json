@@ -137,5 +137,10 @@
     "issuedTo": "Issued to",
     "issueDate": "Issue Date",
     "mintAddress": "Mint Address"
+  },
+  "NotFound": {
+    "title": "Page Not Found",
+    "subtitle": "The page you’re looking for doesn’t exist or was moved.",
+    "backHome": "Back to Home"
   }
 }

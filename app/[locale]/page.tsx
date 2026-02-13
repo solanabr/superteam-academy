@@ -34,9 +34,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             
             <div className="space-y-6">
               <h1 className="text-4xl font-black tracking-tighter sm:text-6xl lg:text-7xl text-balance leading-[0.95] animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
-                <span className="block text-foreground/90">MASTER THE</span>
-                <span className="gradient-text">SOLANA</span>
-                <span className="block text-foreground/90">DEVELOPMENT</span>
+                {t('heroTitle')}
               </h1>
               
               <p className="mx-auto max-w-2xl text-base md:text-lg text-muted-foreground text-balance leading-relaxed font-medium animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
@@ -48,12 +46,12 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
               <Button size="lg" asChild className="h-14 px-8 text-lg font-black rounded-2xl bg-primary text-primary-foreground shadow-[0_0_30px_rgba(20,241,149,0.3)] hover:shadow-[0_0_50px_rgba(20,241,149,0.5)] hover:scale-105 transition-all duration-300">
                 <Link href="/auth/sign-up">
                   <BookOpen className="mr-3 h-6 w-6" />
-                  Sign up for free
+                  {t('startLearning')}
                 </Link>
               </Button>
               <Button size="lg" variant="outline" asChild className="h-14 px-8 text-lg font-black border-2 rounded-2xl bg-background/50 backdrop-blur-sm hover:bg-white/5 transition-all duration-300">
                 <Link href="/courses">
-                  Explore Courses
+                  {t('viewCourses')}
                   <ArrowRight className="ml-3 h-6 w-6" />
                 </Link>
               </Button>

@@ -19,9 +19,9 @@ export function CourseCard({ course }: CourseCardProps) {
 
   return (
     <Link href={`/courses/${course.slug}` as any}>
-      <Card className="group relative h-full overflow-hidden transition-all duration-300 hover:translate-y-[-2px] bg-white/[0.03] border-white/10 hover:border-primary/50 hover:bg-white/[0.05] rounded-[1.5rem]">
+      <Card className="group relative h-full overflow-hidden transition-all duration-300 hover:translate-y-[-2px] bg-white/[0.03] border-white/10 hover:border-primary/50 hover:bg-white/[0.05] rounded-[1.25rem]">
         <CardHeader className="p-0">
-          <div className="relative aspect-[16/10] overflow-hidden bg-white/5">
+          <div className="relative aspect-[16/9] overflow-hidden bg-white/5">
             {course.thumbnail_url ? (
               <Image
                 src={course.thumbnail_url}
@@ -39,31 +39,31 @@ export function CourseCard({ course }: CourseCardProps) {
             <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
             
             {/* XP Badge */}
-            <div className="absolute top-4 right-4 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-[10px] font-black tracking-widest text-primary uppercase">
+            <div className="absolute top-3 right-3 flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-[9px] font-black tracking-widest text-primary uppercase">
               <Star className="h-3 w-3 fill-primary" />
               <span>500 XP</span>
             </div>
           </div>
         </CardHeader>
-        <CardContent className="p-5">
+        <CardContent className="p-4">
           <div className="mb-4 flex items-center gap-2">
             {course.difficulty && (
-              <Badge variant="outline" className={cn("capitalize text-[9px] font-black tracking-widest h-5 px-2.5 rounded-full", difficultyColors[course.difficulty])}>
+              <Badge variant="outline" className={cn("capitalize text-[8px] font-black tracking-widest h-4.5 px-2 rounded-full", difficultyColors[course.difficulty])}>
                 {course.difficulty}
               </Badge>
             )}
-            <Badge variant="outline" className="text-[9px] font-black tracking-widest h-5 px-2.5 rounded-full bg-white/5 border-white/5 text-muted-foreground uppercase">
+            <Badge variant="outline" className="text-[8px] font-black tracking-widest h-4.5 px-2 rounded-full bg-white/5 border-white/5 text-muted-foreground uppercase">
               {course.category || 'Development'}
             </Badge>
           </div>
-          <h3 className="mb-2 font-bold text-xl tracking-tight line-clamp-2 leading-[1.15] group-hover:text-primary transition-colors">
+          <h3 className="mb-1.5 font-bold text-lg tracking-tight line-clamp-2 leading-[1.2] group-hover:text-primary transition-colors">
             {course.title}
           </h3>
-          <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed font-medium">
+          <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed font-medium">
             {course.description}
           </p>
         </CardContent>
-        <CardFooter className="px-6 pb-6 pt-0 flex items-center justify-between mt-auto">
+        <CardFooter className="px-5 pb-5 pt-0 flex items-center justify-between mt-auto">
           <div className="flex items-center gap-4 text-[11px] font-bold text-muted-foreground/50 uppercase tracking-widest">
             {course.duration_minutes && (
               <div className="flex items-center gap-1.5">
@@ -77,7 +77,7 @@ export function CourseCard({ course }: CourseCardProps) {
             </div>
           </div>
           
-          <div className="h-9 w-9 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+          <div className="h-8 w-8 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
             <ArrowRight className="h-4 w-4" />
           </div>
         </CardFooter>

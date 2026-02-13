@@ -34,6 +34,8 @@ export default function SettingsPage() {
   const supabase = createClient()
   const { theme, setTheme } = useTheme()
   const { publicKey, connected } = useWallet()
+  const [linkedGoogle, setLinkedGoogle] = useState(false)
+  const [linkedGithub, setLinkedGithub] = useState(false)
 
   useEffect(() => {
     async function loadProfile() {
@@ -50,6 +52,9 @@ export default function SettingsPage() {
         setBio(userProfile.bio || '')
       }
       setIsLoading(false)
+      
+      setLinkedGoogle(Boolean(user?.identities?.find((i: any) => i.provider === 'google')))
+      setLinkedGithub(Boolean(user?.identities?.find((i: any) => i.provider === 'github')))
     }
 
     loadProfile()
@@ -150,47 +155,7 @@ export default function SettingsPage() {
                   className="bg-background/50 min-h-[120px]"
                 />
               </div>
-              <div className="grid gap-2">
-                <Label>Wallet</Label>
-                <div className="flex items-center gap-3">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="rounded-xl"
-                    onClick={async () => {
-                      const { data: { user } } = await supabase.auth.getUser()
-                      if (!user || !publicKey) return
-                      await supabase
-                        .from('profiles')
-                        .update({ wallet_address: publicKey.toString(), updated_at: new Date().toISOString() })
-                        .eq('id', user.id)
-                      const updated = await userClientService.getProfile(user.id)
-                      if (updated) setProfile(updated)
-                    }}
-                  >
-                    <LinkIcon className="mr-2 h-4 w-4" />
-                    Link Connected Wallet
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    className="rounded-xl"
-                    onClick={async () => {
-                      const { data: { user } } = await supabase.auth.getUser()
-                      if (!user) return
-                      await supabase
-                        .from('profiles')
-                        .update({ wallet_address: null, updated_at: new Date().toISOString() })
-                        .eq('id', user.id)
-                      const updated = await userClientService.getProfile(user.id)
-                      if (updated) setProfile(updated)
-                    }}
-                  >
-                    <Unlink className="mr-2 h-4 w-4" />
-                    Unlink Wallet
-                  </Button>
-                </div>
-              </div>
+              {/* Wallet linking moved to Linked Accounts section */}
             </CardContent>
           </Card>
 
@@ -238,6 +203,118 @@ export default function SettingsPage() {
                   <div className="flex items-center gap-3">
                     <Button type="button" variant={notifications ? 'default' : 'outline'} onClick={() => setNotifications(true)} className="rounded-xl">On</Button>
                     <Button type="button" variant={!notifications ? 'default' : 'outline'} onClick={() => setNotifications(false)} className="rounded-xl">Off</Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Linked Accounts */}
+          <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <User className="h-5 w-5 text-primary" />
+                Linked Accounts
+              </CardTitle>
+              <CardDescription>
+                Connect external accounts to your profile
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid sm:grid-cols-3 gap-6">
+                <div className="space-y-2">
+                  <Label>Google</Label>
+                  <div className="flex items-center gap-3">
+                    {linkedGoogle ? (
+                      <span className="text-sm text-muted-foreground">Linked</span>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="rounded-xl"
+                        onClick={async () => {
+                          const { data: { user } } = await supabase.auth.getUser()
+                          if (!user) {
+                            router.push('/auth/login')
+                            return
+                          }
+                          await supabase.auth.linkIdentity({ provider: 'google', options: { redirectTo: `${location.origin}${location.pathname}` } })
+                        }}
+                      >
+                        Link Google
+                      </Button>
+                    )}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>GitHub</Label>
+                  <div className="flex items-center gap-3">
+                    {linkedGithub ? (
+                      <span className="text-sm text-muted-foreground">Linked</span>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="rounded-xl"
+                        onClick={async () => {
+                          const { data: { user } } = await supabase.auth.getUser()
+                          if (!user) {
+                            router.push('/auth/login')
+                            return
+                          }
+                          await supabase.auth.linkIdentity({ provider: 'github', options: { redirectTo: `${location.origin}${location.pathname}` } })
+                        }}
+                      >
+                        Link GitHub
+                      </Button>
+                    )}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Wallet</Label>
+                  <div className="flex items-center gap-3">
+                    {profile?.wallet_address ? (
+                      <>
+                        <span className="text-xs text-muted-foreground">{profile.wallet_address}</span>
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          className="rounded-xl"
+                          onClick={async () => {
+                            const { data: { user } } = await supabase.auth.getUser()
+                            if (!user) return
+                            await supabase
+                              .from('profiles')
+                              .update({ wallet_address: null, updated_at: new Date().toISOString() })
+                              .eq('id', user.id)
+                            const updated = await userClientService.getProfile(user.id)
+                            if (updated) setProfile(updated)
+                          }}
+                        >
+                          <Unlink className="mr-2 h-4 w-4" />
+                          Unlink
+                        </Button>
+                      </>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="rounded-xl"
+                        onClick={async () => {
+                          const { data: { user } } = await supabase.auth.getUser()
+                          if (!user || !publicKey) return
+                          await supabase
+                            .from('profiles')
+                            .update({ wallet_address: publicKey.toString(), updated_at: new Date().toISOString() })
+                            .eq('id', user.id)
+                          const updated = await userClientService.getProfile(user.id)
+                          if (updated) setProfile(updated)
+                        }}
+                      >
+                        <LinkIcon className="mr-2 h-4 w-4" />
+                        Link Connected Wallet
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>

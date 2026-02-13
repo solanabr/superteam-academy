@@ -137,5 +137,10 @@
     "issuedTo": "Emitido a",
     "issueDate": "Fecha de Emisión",
     "mintAddress": "Dirección de Mint"
+  },
+  "NotFound": {
+    "title": "Página no encontrada",
+    "subtitle": "La página que buscas no existe o fue movida.",
+    "backHome": "Volver al Inicio"
   }
 }

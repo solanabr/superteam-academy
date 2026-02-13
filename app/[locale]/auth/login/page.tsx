@@ -15,6 +15,7 @@ import { Link, useRouter } from '@/i18n/routing'
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Shield, Mail, Lock, ArrowRight, Loader2, Github, Chrome } from 'lucide-react'
+import { useWallet } from '@solana/wallet-adapter-react'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -23,6 +24,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
   const t = useTranslations('Auth')
+  const { signMessage, connected } = useWallet()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -155,6 +157,34 @@ export default function LoginPage() {
                     GitHub
                   </Button>
                 </div>
+                
+                <Button
+                  type="button"
+                  variant="default"
+                  className="w-full h-11 rounded-xl"
+                  onClick={async () => {
+                    const supabase = createClient()
+                    const { data: { user } } = await supabase.auth.getUser()
+                    if (!connected || !signMessage) {
+                      setError('Connect your wallet to continue')
+                      return
+                    }
+                    const encoder = new TextEncoder()
+                    const message = encoder.encode(`Sign in with wallet • ${new Date().toISOString()}`)
+                    try {
+                      await signMessage(message)
+                      if (user) {
+                        router.push('/dashboard')
+                        return
+                      }
+                      router.push('/auth/sign-up?wallet=1')
+                    } catch {
+                      setError('Wallet signature failed')
+                    }
+                  }}
+                >
+                  Sign in with Wallet
+                </Button>
 
                 <div className="text-center text-sm">
                   <span className="text-muted-foreground">{t('noAccount')}</span>{' '}

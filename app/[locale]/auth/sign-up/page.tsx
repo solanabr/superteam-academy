@@ -12,6 +12,7 @@ import { Link, useRouter } from '@/i18n/routing'
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Shield, Mail, Lock, UserPlus, ArrowRight, Loader2, Github, Chrome } from 'lucide-react'
+import { useWallet } from '@solana/wallet-adapter-react'
 
 export default function SignUpPage() {
   const [email, setEmail] = useState('')
@@ -21,6 +22,8 @@ export default function SignUpPage() {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
   const t = useTranslations('Auth')
+  const { signMessage, connected } = useWallet()
+  const [walletEmail, setWalletEmail] = useState('')
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -124,6 +127,43 @@ export default function SignUpPage() {
                       />
                     </div>
                   </div>
+                </div>
+                
+                <div className="space-y-3">
+                  <div className="grid gap-2">
+                    <Label htmlFor="wallet-email">Email for verification</Label>
+                    <Input
+                      id="wallet-email"
+                      type="email"
+                      placeholder="name@example.com"
+                      value={walletEmail}
+                      onChange={(e) => setWalletEmail(e.target.value)}
+                      className="h-11 bg-background/50 border-border/50 focus:border-primary/50 transition-all"
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="default"
+                    className="w-full h-11 rounded-xl"
+                    onClick={async () => {
+                      if (!connected || !signMessage) {
+                        return
+                      }
+                      if (!walletEmail) return
+                      const encoder = new TextEncoder()
+                      const message = encoder.encode(`Create account with wallet • ${new Date().toISOString()}`)
+                      try {
+                        await signMessage(message)
+                        const supabase = createClient()
+                        await supabase.auth.signInWithOtp({
+                          email: walletEmail,
+                          options: { emailRedirectTo: `${location.origin}/dashboard` }
+                        })
+                      } catch {}
+                    }}
+                  >
+                    Sign up with Wallet (Email Verification)
+                  </Button>
                 </div>
 
                 {error && (

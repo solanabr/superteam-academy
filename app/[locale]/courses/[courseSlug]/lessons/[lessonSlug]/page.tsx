@@ -132,29 +132,29 @@ export default async function LessonPage({ params }: LessonPageProps) {
             <Card className="border-border/50 bg-card/30 backdrop-blur-sm overflow-hidden shadow-2xl">
               <CardContent className="p-0">
                 {lesson.lesson_type === 'video' ? (
-                  <div className="aspect-video relative group">
+                  <div className="relative group aspect-video w-full max-h-[30rem] md:max-h-[36rem] xl:max-h-[42rem] rounded-2xl overflow-hidden border border-border/50 shadow-xl">
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center group-hover:bg-black/20 transition-all cursor-pointer">
-                      <div className="h-20 w-20 rounded-full bg-primary/90 flex items-center justify-center shadow-[0_0_30px_rgba(20,241,149,0.4)] group-hover:scale-110 transition-transform">
-                        <Play className="h-10 w-10 text-primary-foreground fill-current ml-1" />
+                      <div className="h-16 w-16 rounded-full bg-primary/90 flex items-center justify-center shadow-[0_0_24px_rgba(20,241,149,0.4)] group-hover:scale-110 transition-transform">
+                        <Play className="h-10 w-10 text-primary-foreground fill-current ml-0.5" />
                       </div>
                     </div>
                     {/* Background placeholder */}
-                    <div className="w-full h-full bg-gradient-to-br from-muted to-background flex items-center justify-center p-12 text-center">
-                      <div className="space-y-4">
-                        <p className="text-xl font-bold text-muted-foreground">{t('videoPlayer')}</p>
-                        <p className="text-sm text-muted-foreground/60">{t('placeholderContent')}</p>
+                    <div className="w-full h-full bg-gradient-to-br from-muted to-background flex items-center justify-center p-10 text-center">
+                      <div className="space-y-5">
+                        <p className="text-2xl font-extrabold text-muted-foreground">{t('videoPlayer')}</p>
+                        <p className="text-base text-muted-foreground/60">{t('placeholderContent')}</p>
                       </div>
                     </div>
                   </div>
                 ) : lesson.lesson_type === 'coding' ? (
-                  <div className="min-h-[600px] flex flex-col">
+                  <div className="min-h-[420px] flex flex-col">
                     <CodeEditor 
                       initialCode={lesson.starter_code || '// Write your Solana Rust code here\n\nuse anchor_lang::prelude::*;\n\ndeclare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");\n\n#[program]\npub mod hello_solana {\n    use super::*;\n    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {\n        msg!("Hello, Solana!");\n        Ok(())\n    }\n}\n\n#[derive(Accounts)]\npub struct Initialize {}\n'}
                       language="rust"
                     />
                   </div>
                 ) : (
-                  <div className="prose prose-neutral dark:prose-invert max-w-none p-8 md:p-12">
+                  <div className="prose prose-neutral dark:prose-invert max-w-none p-6 md:p-8">
                     <div className="space-y-6">
                       <div className="text-lg leading-relaxed" dangerouslySetInnerHTML={{ __html: lesson.content }} />
                       <div className="grid gap-6 sm:grid-cols-2">
