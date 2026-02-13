@@ -1,1 +1,11 @@
-{}
+{
+  "css.validate": false,
+  "css.lint.unknownAtRules": "ignore",
+  "tailwindCSS.includeLanguages": {
+    "typescriptreact": "javascript",
+    "typescript": "javascript",
+    "html": "html",
+    "css": "css"
+  },
+  "tailwindCSS.emmetCompletions": true
+}

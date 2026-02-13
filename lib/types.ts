@@ -70,7 +70,9 @@ export interface Module {
 
 export interface Lesson {
   id: string
-  module_id: string
+  course_id: string
+  module_id?: string
+  slug: string
   title: string
   description: string
   content: string
