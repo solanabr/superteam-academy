@@ -21,7 +21,10 @@ export default async function CoursePage({ params }: CoursePageProps) {
     return null;
   }
 
-  const lessons = await courseService.getCourseLessons(course.id);
+  let lessons = await courseService.getCourseLessons(course.id);
+  if (!lessons || lessons.length === 0) {
+    lessons = await courseService.getCourseLessonsBySlug(course.slug);
+  }
   const firstLesson = lessons[0];
   const firstLessonLink = firstLesson ? `/courses/${course.slug}/lessons/${firstLesson.slug || firstLesson.id}` : '#';
 

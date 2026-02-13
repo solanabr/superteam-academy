@@ -183,6 +183,32 @@ export class CourseService {
   }
 
   /**
+   * Get lessons by course slug via Sanity (fallback)
+   */
+  async getCourseLessonsBySlug(courseSlug: string): Promise<Lesson[]> {
+    const sanityCourse = await sanityService.getCourseBySlug(courseSlug);
+    if (!sanityCourse?.lessons) return [];
+    return sanityCourse.lessons.map((l: any) => ({
+      id: l._id,
+      course_id: sanityCourse._id,
+      slug: l.slug,
+      title: l.title,
+      description: l.description,
+      content: '',
+      lesson_type: l.lesson_type,
+      duration_minutes: l.duration_minutes ?? 0,
+      order: 0,
+      xp_reward: l.xp_reward ?? 50,
+      video_url: l.video_url,
+      starter_code: l.codeChallenge?.starter_code,
+      solution_code: l.codeChallenge?.solution_code,
+      language: l.codeChallenge?.language,
+      test_cases: l.codeChallenge?.testCases,
+      quiz: l.quiz
+    })) as Lesson[];
+  }
+
+  /**
    * Get lesson by slug
    */
   async getLessonBySlug(courseSlug: string, lessonSlug: string): Promise<Lesson | null> {
