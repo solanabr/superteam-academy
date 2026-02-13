@@ -1,0 +1,148 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-plus-jakarta: "Plus Jakarta Sans", "Avenir Next", Avenir, "Segoe UI", sans-serif;
+  --font-plex-mono: "IBM Plex Mono", "JetBrains Mono", Menlo, Monaco, Consolas, monospace;
+  --background: 52 36% 97%;
+  --foreground: 205 29% 16%;
+  --card: 0 0% 100%;
+  --border: 200 20% 82%;
+  --muted: 44 36% 92%;
+  --primary: 175 72% 31%;
+  --primary-foreground: 50 60% 98%;
+  --accent: 28 92% 52%;
+  --accent-foreground: 26 40% 10%;
+  --danger: 0 74% 52%;
+}
+
+.dark {
+  --background: 197 27% 9%;
+  --foreground: 44 21% 94%;
+  --card: 197 23% 13%;
+  --border: 196 17% 27%;
+  --muted: 197 16% 17%;
+  --primary: 170 79% 44%;
+  --primary-foreground: 186 46% 11%;
+  --accent: 30 97% 58%;
+  --accent-foreground: 24 44% 9%;
+  --danger: 0 79% 63%;
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+body {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  background-image:
+    radial-gradient(circle at 8% 4%, rgba(8, 145, 128, 0.24), transparent 32%),
+    radial-gradient(circle at 86% 96%, rgba(251, 146, 60, 0.19), transparent 30%),
+    linear-gradient(160deg, rgba(255, 255, 255, 0.06), transparent 44%);
+}
+
+.dark body {
+  background-image:
+    radial-gradient(circle at 7% 3%, rgba(13, 184, 162, 0.15), transparent 28%),
+    radial-gradient(circle at 90% 92%, rgba(249, 115, 22, 0.14), transparent 32%),
+    linear-gradient(165deg, rgba(6, 16, 24, 0.62), rgba(6, 16, 24, 0.84));
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+::selection {
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+
+@layer base {
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.02em;
+  }
+}
+
+@layer components {
+  .panel {
+    @apply rounded-3xl border border-border/80 bg-card/70 p-6 shadow-lg backdrop-blur;
+  }
+
+  .panel-soft {
+    @apply rounded-2xl border border-border/70 bg-background/55 p-4;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:brightness-105 disabled:opacity-60;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center rounded-xl border border-border/80 bg-background/50 px-4 py-2 text-sm font-semibold transition hover:bg-muted/70;
+  }
+
+  .chip {
+    @apply inline-flex items-center rounded-full border border-border/70 bg-background/55 px-3 py-1 text-xs font-medium text-foreground/80;
+  }
+
+  .input-field {
+    @apply w-full rounded-xl border border-border/80 bg-background/70 px-3 py-2 text-sm outline-none transition placeholder:text-foreground/45 focus:border-primary/60 focus:ring-2 focus:ring-primary/20;
+  }
+}
+
+.prose pre code {
+  background: transparent;
+  padding: 0;
+}
+
+.wallet-status .wallet-adapter-button {
+  height: 40px;
+  min-width: 128px;
+  line-height: 40px;
+  padding: 0 14px;
+  border-radius: 1rem;
+  border: 1px solid hsl(var(--border) / 0.7);
+  background: hsl(var(--card) / 0.75);
+  color: hsl(var(--foreground) / 0.9);
+  font-size: 0.875rem;
+  font-weight: 700;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.08);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.wallet-status .wallet-adapter-button:hover {
+  background: hsl(var(--muted) / 0.8);
+}
+
+.wallet-status .wallet-adapter-button:not([disabled]):focus-visible {
+  outline: 2px solid hsl(var(--primary) / 0.45);
+  outline-offset: 1px;
+}
+
+.wallet-status .wallet-adapter-button[disabled] {
+  opacity: 0.6;
+}
+
+.wallet-status .wallet-adapter-button-start-icon,
+.wallet-status .wallet-adapter-button-end-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.wallet-status .wallet-adapter-button-start-icon {
+  margin-right: 8px;
+}
+
+.wallet-status .wallet-adapter-button-end-icon {
+  margin-left: 8px;
+}

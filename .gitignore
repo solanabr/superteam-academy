@@ -1,0 +1,23 @@
+.next
+node_modules
+out
+.env
+.env.local
+.env.production
+.vercel
+*.log
+.DS_Store
+playwright-report
+test-results
+
+# local/dev artifacts
+.next
+.next_stale_*
+node_modules/
+.env.local
+.auth/
+.learning/
+test-results/
+playwright-report/
+lighthouse/
+*.tsbuildinfo

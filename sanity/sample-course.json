@@ -1,0 +1,14 @@
+{
+  "_type": "course",
+  "title": "Solana Fundamentals",
+  "slug": {
+    "_type": "slug",
+    "current": "solana-fundamentals"
+  },
+  "description": "Conta, runtime e transações para construir sua primeira dApp.",
+  "difficulty": "beginner",
+  "durationMinutes": 420,
+  "xpTotal": 1200,
+  "track": "Solana Foundations",
+  "status": "published"
+}
