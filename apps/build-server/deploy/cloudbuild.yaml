@@ -1,0 +1,67 @@
+steps:
+  # Fail fast if API key substitution is missing
+  - name: 'ubuntu'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        if [ -z "${_SOLARIUM_API_KEY}" ]; then
+          echo "ERROR: _SOLARIUM_API_KEY substitution is empty. Pass --substitutions=_SOLARIUM_API_KEY=<key>"
+          exit 1
+        fi
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/${_SERVICE}:${_TAG}'
+      - '-t'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/${_SERVICE}:latest'
+      - '.'
+    dir: 'apps/build-server'
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - '--all-tags'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/${_SERVICE}'
+
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - '${_SERVICE}'
+      - '--image'
+      - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/${_SERVICE}:${_TAG}'
+      - '--region'
+      - '${_REGION}'
+      - '--platform'
+      - 'managed'
+      - '--cpu'
+      - '4'
+      - '--memory'
+      - '8Gi'
+      - '--timeout'
+      - '300'
+      - '--concurrency'
+      - '2'
+      - '--min-instances'
+      - '1'
+      - '--max-instances'
+      - '3'
+      - '--no-invoker-iam-check'
+      - '--update-env-vars'
+      - 'SOLARIUM_API_KEY=${_SOLARIUM_API_KEY},ALLOWED_ORIGIN=${_ALLOWED_ORIGIN},MAX_CONCURRENT_BUILDS=2,BUILD_TIMEOUT_SECS=300,CACHE_TTL_SECS=1800,LOG_FORMAT=json,RUST_LOG=info'
+
+substitutions:
+  _REGION: 'southamerica-east1'
+  _REPO: 'solarium-images'
+  _SERVICE: 'solarium-build-server'
+  _TAG: 'latest'
+  _SOLARIUM_API_KEY: ''
+  _ALLOWED_ORIGIN: 'https://solarium.courses'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+timeout: '1800s'
