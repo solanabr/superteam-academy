@@ -467,6 +467,37 @@ function extractPatterns(solution: string): { label: string; regex: RegExp }[] {
     patterns.push({ label: "return statement", regex: /return\s+[^;]+/ });
   }
 
+  // Rust: detect struct definitions
+  for (const m of clean.matchAll(/struct\s+(\w+)/g)) {
+    patterns.push({ label: `struct ${m[1]}`, regex: new RegExp(`struct\\s+${m[1]}\\s*\\{`) });
+  }
+  // Rust: detect enum definitions
+  for (const m of clean.matchAll(/enum\s+(\w+)/g)) {
+    patterns.push({ label: `enum ${m[1]}`, regex: new RegExp(`enum\\s+${m[1]}\\s*\\{`) });
+  }
+  // Rust: detect impl blocks
+  for (const m of clean.matchAll(/impl\s+(\w+)/g)) {
+    patterns.push({ label: `impl ${m[1]}`, regex: new RegExp(`impl\\s+${m[1]}`) });
+  }
+  // Rust: detect pub fn
+  for (const m of clean.matchAll(/(?:pub\s+)?fn\s+(\w+)/g)) {
+    patterns.push({ label: `fn ${m[1]}`, regex: new RegExp(`fn\\s+${m[1]}\\s*\\(`) });
+  }
+  // Rust: detect derive macros
+  for (const m of clean.matchAll(/#\[derive\(([^)]+)\)\]/g)) {
+    patterns.push({ label: `#[derive(${m[1]})]`, regex: new RegExp(`#\\[derive\\([^)]*${m[1].split(",")[0].trim()}`) });
+  }
+  // Rust: detect specific field patterns (field_name: Type)
+  for (const m of clean.matchAll(/pub\s+(\w+)\s*:\s*(\w+)/g)) {
+    patterns.push({ label: `${m[1]}: ${m[2]}`, regex: new RegExp(`${m[1]}\\s*:\\s*${m[2]}`) });
+  }
+  // Rust: detect CPI calls (system_program::transfer, token::mint_to, etc.)
+  for (const m of clean.matchAll(/(\w+)::(\w+)\(/g)) {
+    if (!["use", "super", "Self", "self"].includes(m[1])) {
+      patterns.push({ label: `${m[1]}::${m[2]}()`, regex: new RegExp(`${m[1]}::${m[2]}\\(`) });
+    }
+  }
+
   // Fallback: if no specific patterns detected, check that code differs from a typical starter
   if (patterns.length === 0) {
     patterns.push({ label: "implementation", regex: /(?:return|=>|=)\s*[^\/\n]+/ });

@@ -1,22 +1,33 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { useUserStore } from "@/lib/stores/user-store";
-import { shortenAddress } from "@/lib/utils";
+import { useDisplayName, useSetDisplayName, useBio, useSetBio } from "@/lib/hooks/use-service";
 import { toast } from "sonner";
 
 export default function SettingsPage() {
   const { publicKey, disconnect, connected } = useWallet();
-  const { displayName, bio, profileVisibility, setDisplayName, setBio, setProfileVisibility, reset } = useUserStore();
+  const { data: displayName } = useDisplayName();
+  const { data: bio } = useBio();
+  const setDisplayNameMutation = useSetDisplayName();
+  const setBioMutation = useSetBio();
 
-  const [nameInput, setNameInput] = useState(displayName ?? "");
-  const [bioInput, setBioInput] = useState(bio ?? "");
+  const [nameInput, setNameInput] = useState("");
+  const [bioInput, setBioInput] = useState("");
+  const [profileVisibility, setProfileVisibility] = useState<"public" | "private">("public");
+
+  useEffect(() => {
+    if (displayName !== undefined) setNameInput(displayName ?? "");
+  }, [displayName]);
+
+  useEffect(() => {
+    if (bio !== undefined) setBioInput(bio ?? "");
+  }, [bio]);
 
   if (!connected || !publicKey) {
     return (
@@ -28,18 +39,16 @@ export default function SettingsPage() {
   }
 
   const handleSaveProfile = () => {
-    setDisplayName(nameInput || null);
-    setBio(bioInput || null);
-    toast.success("Profile updated!");
-  };
+    const trimmedName = nameInput.trim();
+    const trimmedBio = bioInput.trim();
 
-  const handleClearData = () => {
-    if (typeof window !== "undefined") {
-      const keys = Object.keys(localStorage).filter((k) => k.startsWith("sta_"));
-      keys.forEach((k) => localStorage.removeItem(k));
+    if (trimmedName !== (displayName ?? "")) {
+      setDisplayNameMutation.mutate(trimmedName || "");
     }
-    reset();
-    toast.success("All data cleared.");
+    if (trimmedBio !== (bio ?? "")) {
+      setBioMutation.mutate(trimmedBio || "");
+    }
+    toast.success("Profile updated!");
   };
 
   return (
@@ -72,7 +81,12 @@ export default function SettingsPage() {
                 className="mt-1"
               />
             </div>
-            <Button onClick={handleSaveProfile}>Save Changes</Button>
+            <Button
+              onClick={handleSaveProfile}
+              disabled={setDisplayNameMutation.isPending || setBioMutation.isPending}
+            >
+              {setDisplayNameMutation.isPending || setBioMutation.isPending ? "Saving..." : "Save Changes"}
+            </Button>
           </CardContent>
         </Card>
 
@@ -114,25 +128,6 @@ export default function SettingsPage() {
                 checked={profileVisibility === "public"}
                 onCheckedChange={(c) => setProfileVisibility(c ? "public" : "private")}
               />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Danger Zone */}
-        <Card className="border-destructive/50">
-          <CardHeader>
-            <CardTitle className="text-destructive">Danger Zone</CardTitle>
-            <CardDescription>Irreversible actions.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium">Clear All Local Data</p>
-                <p className="text-xs text-muted-foreground">Remove all locally stored progress, settings, and achievements.</p>
-              </div>
-              <Button variant="destructive" size="sm" onClick={handleClearData}>
-                Clear Data
-              </Button>
             </div>
           </CardContent>
         </Card>

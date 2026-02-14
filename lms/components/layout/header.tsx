@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { BookOpen, LayoutDashboard, Trophy, Menu } from "lucide-react";
+import { BookOpen, LayoutDashboard, Trophy, Code2, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
@@ -14,6 +14,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/s
 
 const NAV_ITEMS = [
   { href: "/courses", label: "Courses", icon: BookOpen },
+  { href: "/practice", label: "Practice", icon: Code2 },
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
 ];

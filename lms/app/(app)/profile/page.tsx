@@ -6,16 +6,16 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
-import { useXP, useLevel, useStreak, useAllProgress, useAchievements, useCourses } from "@/lib/hooks/use-service";
+import { useXP, useLevel, useStreak, useAllProgress, useAchievements, useCourses, useDisplayName, useBio } from "@/lib/hooks/use-service";
 import { getXpProgress, formatXP, shortenAddress } from "@/lib/utils";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { useUserStore } from "@/lib/stores/user-store";
 import { TRACKS } from "@/types/course";
 import Link from "next/link";
 
 export default function ProfilePage() {
   const { publicKey, connected } = useWallet();
-  const { displayName, bio } = useUserStore();
+  const { data: displayName } = useDisplayName();
+  const { data: bio } = useBio();
   const { data: xp = 0 } = useXP();
   const { data: level = 0 } = useLevel();
   const { data: streak } = useStreak();

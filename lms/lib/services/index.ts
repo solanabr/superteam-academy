@@ -1,11 +1,11 @@
 import type { LearningProgressService } from "./types";
-import { LocalStorageService } from "./local-storage.service";
+import { ApiService } from "./api.service";
 
 let service: LearningProgressService | null = null;
 
 export function getService(): LearningProgressService {
   if (!service) {
-    service = new LocalStorageService();
+    service = new ApiService();
   }
   return service;
 }

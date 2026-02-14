@@ -145,6 +145,62 @@ export function useSetDisplayName() {
   });
 }
 
+export function useBio() {
+  const { publicKey } = useWallet();
+  const userId = publicKey?.toBase58() ?? "guest";
+
+  return useQuery({
+    queryKey: ["bio", userId],
+    queryFn: () => getService().getBio(userId),
+    enabled: !!publicKey,
+    staleTime: Infinity,
+  });
+}
+
+export function useSetBio() {
+  const { publicKey } = useWallet();
+  const userId = publicKey?.toBase58() ?? "guest";
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (bio: string) => getService().setBio(userId, bio),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["bio", userId] });
+      queryClient.invalidateQueries({ queryKey: ["profile", userId] });
+    },
+  });
+}
+
+export function useUnenroll() {
+  const { publicKey } = useWallet();
+  const userId = publicKey?.toBase58() ?? "guest";
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (courseId: string) => getService().unenrollFromCourse(userId, courseId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["allProgress", userId] });
+      queryClient.invalidateQueries({ queryKey: ["progress"] });
+      queryClient.invalidateQueries({ queryKey: ["courses"] });
+    },
+  });
+}
+
+export function useClaimAchievement() {
+  const { publicKey } = useWallet();
+  const userId = publicKey?.toBase58() ?? "guest";
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (achievementId: number) => getService().claimAchievement(userId, achievementId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["achievements", userId] });
+      queryClient.invalidateQueries({ queryKey: ["xp", userId] });
+      queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
+    },
+  });
+}
+
 export function useEnroll() {
   const { publicKey } = useWallet();
   const userId = publicKey?.toBase58() ?? "guest";
@@ -173,6 +229,34 @@ export function useCompleteLesson() {
       queryClient.invalidateQueries({ queryKey: ["xp"] });
       queryClient.invalidateQueries({ queryKey: ["streak"] });
       queryClient.invalidateQueries({ queryKey: ["credentials"] });
+      queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
+    },
+  });
+}
+
+export function usePracticeProgress() {
+  const { publicKey } = useWallet();
+  const userId = publicKey?.toBase58() ?? "guest";
+
+  return useQuery({
+    queryKey: ["practiceProgress", userId],
+    queryFn: () => getService().getPracticeProgress(userId),
+    staleTime: 10_000,
+  });
+}
+
+export function useCompletePracticeChallenge() {
+  const { publicKey } = useWallet();
+  const userId = publicKey?.toBase58() ?? "guest";
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ challengeId, xpReward }: { challengeId: string; xpReward: number }) =>
+      getService().completePracticeChallenge(userId, challengeId, xpReward),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["practiceProgress"] });
+      queryClient.invalidateQueries({ queryKey: ["xp"] });
+      queryClient.invalidateQueries({ queryKey: ["streak"] });
       queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
     },
   });
