@@ -40,6 +40,8 @@ export class SanityService {
       "slug": slug.current,
       description,
       longDescription,
+      learningOutcomes,
+      prerequisites,
       "thumbnail_url": thumbnail.asset->url,
       difficulty,
       category,
@@ -49,11 +51,29 @@ export class SanityService {
         _id,
         title,
         description,
+        content,
+        "order_index": orderIndex,
         "lesson_type": select(contentType=="article"=>"reading", contentType=="interactive"=>"coding", contentType),
         "duration_minutes": coalesce(estimatedMinutes,0),
         "xp_reward": coalesce(xpReward,50),
         "video_url": videoUrl,
-        "slug": slug.current
+        "slug": slug.current,
+        codeChallenge->{
+          "starter_code": coalesce(starterCode.code, starterCode),
+          "solution_code": coalesce(solution.code, solution),
+          language,
+          "test_cases": testCases
+        },
+        quiz->{
+          title,
+          passingScore,
+          questions[]{
+            question,
+            options,
+            "correctAnswerIndex": coalesce(correctAnswerIndex, 0),
+            explanation
+          }
+        }
       }
     }`;
     return await sanityClient.fetch(query, { slug });

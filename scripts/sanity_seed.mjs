@@ -1,4 +1,8 @@
 import { createClient } from '@sanity/client'
+import dotenv from 'dotenv'
+
+// Load env from .env.local when running locally
+dotenv.config({ path: '.env.local' })
 
 const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID
 const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET
@@ -113,6 +117,11 @@ pub struct Initialize {}`,
   const lessonPdaChallengeId = id('lesson-pda-challenge')
   const lessonAccountsQuizId = id('lesson-accounts-quiz')
   const lessonAnchorHandlersId = id('lesson-anchor-handlers')
+  const lessonStateCompressionId = id('lesson-state-compression')
+  const lessonMetaplexBasicsId = id('lesson-metaplex-basics')
+  const lessonToken2022Id = id('lesson-token-2022')
+  const lessonWeb3WalletAdapterId = id('lesson-web3-wallet-adapter')
+  const lessonSolanaHistoryId = id('lesson-solana-history')
 
   const lessons = [
     {
@@ -232,6 +241,78 @@ pub struct Initialize {}`,
       orderIndex: 7,
       isPublished: true,
       codeChallenge: { _type: 'reference', _ref: codeChallengeId }
+    },
+    {
+      _id: lessonStateCompressionId,
+      _type: 'lesson',
+      title: 'State Compression & cNFTs',
+      slug: { _type: 'slug', current: 'state-compression-cnfts' },
+      description: 'Learn how state compression enables scalable cNFTs on Solana.',
+      contentType: 'video',
+      videoUrl: 'https://www.youtube.com/watch?v=VIDEO_ID_STATE_COMPRESSION',
+      estimatedMinutes: 20,
+      xpReward: 150,
+      orderIndex: 8,
+      isPublished: true
+    },
+    {
+      _id: lessonMetaplexBasicsId,
+      _type: 'lesson',
+      title: 'Metaplex Basics',
+      slug: { _type: 'slug', current: 'metaplex-basics' },
+      description: 'Mint and manage NFTs using Metaplex tooling.',
+      contentType: 'article',
+      content: [
+        { _type: 'block', style: 'normal', children: [{ _type: 'span', text: 'Use Metaplex JS SDK to mint and update NFT metadata.' }] },
+      ],
+      estimatedMinutes: 25,
+      xpReward: 180,
+      orderIndex: 9,
+      isPublished: true
+    },
+    {
+      _id: lessonToken2022Id,
+      _type: 'lesson',
+      title: 'Token-2022 & Non-Transferable XP',
+      slug: { _type: 'slug', current: 'token-2022-non-transferable-xp' },
+      description: 'Create a non-transferable token for XP using Token-2022.',
+      contentType: 'interactive',
+      content: [
+        { _type: 'block', style: 'normal', children: [{ _type: 'span', text: 'Configure token extensions and mint to user accounts.' }] },
+      ],
+      estimatedMinutes: 30,
+      xpReward: 220,
+      orderIndex: 10,
+      isPublished: true,
+      codeChallenge: { _type: 'reference', _ref: codeChallengeId }
+    },
+    {
+      _id: lessonWeb3WalletAdapterId,
+      _type: 'lesson',
+      title: 'Wallet Adapter Integration',
+      slug: { _type: 'slug', current: 'wallet-adapter-integration' },
+      description: 'Integrate Wallet Adapter in a web app and sign transactions.',
+      contentType: 'video',
+      videoUrl: 'https://www.youtube.com/watch?v=VIDEO_ID_WALLET_ADAPTER',
+      estimatedMinutes: 16,
+      xpReward: 120,
+      orderIndex: 11,
+      isPublished: true
+    },
+    {
+      _id: lessonSolanaHistoryId,
+      _type: 'lesson',
+      title: 'A Brief History of Solana',
+      slug: { _type: 'slug', current: 'brief-history-of-solana' },
+      description: 'Explore the origins and evolution of the Solana blockchain.',
+      contentType: 'article',
+      content: [
+        { _type: 'block', style: 'normal', children: [{ _type: 'span', text: 'From inception to high-throughput architecture and ecosystem growth.' }] },
+      ],
+      estimatedMinutes: 12,
+      xpReward: 90,
+      orderIndex: 12,
+      isPublished: true
     },
   ]
 
@@ -373,6 +454,11 @@ pub struct Initialize {}`,
       .createIfNotExists(lessons[5])
       .createIfNotExists(lessons[6])
       .createIfNotExists(lessons[7])
+      .createIfNotExists(lessons[8])
+      .createIfNotExists(lessons[9])
+      .createIfNotExists(lessons[10])
+      .createIfNotExists(lessons[11])
+      .createIfNotExists(lessons[12])
       .createIfNotExists(extraCourses[0])
       .createIfNotExists(extraCourses[1])
       .createIfNotExists(extraCourses[2])

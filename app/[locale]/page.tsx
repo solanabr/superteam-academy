@@ -4,11 +4,15 @@ import { CourseCard } from '@/components/course/course-card';
 import { ArrowRight, BookOpen, Trophy, Users, Zap, Shield, Globe, Star, Rocket, Code, Sparkles } from 'lucide-react';
 import { courseService } from '@/lib/services/course.service';
 import { getTranslations } from 'next-intl/server';
+import { createClient } from '@/lib/supabase/server';
 
 export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  const featuredCourses = await courseService.getCourses({ difficulty: 'beginner' });
-  const topCourses = featuredCourses.slice(0, 3);
+  const featuredCourses = await courseService.getCourses();
+  const topCourses = featuredCourses.slice(0, 5);
+  
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
   
   const t = await getTranslations('Landing');
   const commonT = await getTranslations('Common');
@@ -90,7 +94,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           {topCourses.map((course) => (
             <CourseCard key={course.id} course={course} />
           ))}
@@ -236,15 +240,23 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           <div className="absolute right-10 top-1/2 -translate-y-1/2 h-28 w-28 rounded-full ring-1 ring-white/15" />
           <div className="relative z-10 text-center space-y-6">
             <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight">
-              Ready to start your journey?
+              {user ? 'Ready to continue your journey?' : 'Ready to start your journey?'}
             </h2>
             <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
-              Join the Superteam Brazil community and become a top-tier Solana developer.
+              {user 
+                ? 'Dive back into your courses and keep building on Solana.' 
+                : 'Join the Superteam Brazil community and become a top-tier Solana developer.'}
             </p>
             <div className="flex justify-center">
-              <Button asChild className="h-11 px-6 rounded-full bg-white text-black hover:bg-white/90">
-                <Link href="/auth/sign-up">Create Free Account</Link>
-              </Button>
+              {user ? (
+                <Button asChild className="h-11 px-8 rounded-full bg-primary text-primary-foreground font-bold hover:bg-primary/90 shadow-[0_0_20px_rgba(20,241,149,0.3)]">
+                  <Link href="/dashboard">Go to Dashboard</Link>
+                </Button>
+              ) : (
+                <Button asChild className="h-11 px-8 rounded-full bg-white text-black font-bold hover:bg-white/90">
+                  <Link href="/auth/sign-up">Create Free Account</Link>
+                </Button>
+              )}
             </div>
           </div>
         </div>

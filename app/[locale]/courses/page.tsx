@@ -1,11 +1,10 @@
-import { cn } from '@/lib/utils';
 import { courseService } from '@/lib/services/course.service';
 import { CourseCard } from '@/components/course/course-card';
-import { Search, Filter, BookOpen, Layers, Zap } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import { BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/routing';
+import { CourseFilters } from '@/components/course/course-filters';
 
 interface CoursesPageProps {
   params: Promise<{ locale: string }>;
@@ -18,16 +17,27 @@ export default async function CoursesPage({ params, searchParams }: CoursesPageP
   const difficulty = typeof p.difficulty === 'string' ? p.difficulty as 'beginner' | 'intermediate' | 'advanced' : undefined;
   const category = typeof p.category === 'string' ? p.category : undefined;
   const search = typeof p.search === 'string' ? p.search : undefined;
+  const sort = typeof p.sort === 'string' ? p.sort : 'newest';
 
-  const courses = await courseService.getCourses({ difficulty, category, search });
+  let courses = await courseService.getCourses({ difficulty, category, search });
+  
+  // Apply sorting
+  if (sort === 'difficulty') {
+    const diffOrder = { beginner: 0, intermediate: 1, advanced: 2 };
+    courses = [...courses].sort((a, b) => 
+      (diffOrder[a.difficulty as keyof typeof diffOrder] || 0) - 
+      (diffOrder[b.difficulty as keyof typeof diffOrder] || 0)
+    );
+  } else if (sort === 'popular') {
+    courses = [...courses].sort((a, b) => (b.xp_reward || 0) - (a.xp_reward || 0));
+  } else {
+    // Default: newest
+    courses = [...courses].sort((a, b) => 
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+  }
+
   const t = await getTranslations('Common');
-
-  const difficulties = [
-    { label: 'All', value: undefined },
-    { label: 'Beginner', value: 'beginner' },
-    { label: 'Intermediate', value: 'intermediate' },
-    { label: 'Advanced', value: 'advanced' },
-  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -45,62 +55,18 @@ export default async function CoursesPage({ params, searchParams }: CoursesPageP
             </p>
           </div>
           
-          {/* Filters Bar */}
-          <div className="mt-16 flex flex-col lg:flex-row gap-6 items-start lg:items-center justify-between">
-            <div className="relative w-full lg:max-w-md group">
-              <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary" />
-              <Input
-                type="search"
-                placeholder="Search courses..."
-                className="pl-12 h-14 bg-white/5 border-white/10 focus:border-primary/50 rounded-2xl transition-all shadow-inner font-medium"
-                defaultValue={search}
-              />
-            </div>
-            
-            <div className="flex flex-wrap items-center gap-2 p-1.5 bg-white/5 rounded-2xl border border-white/10">
-              {difficulties.map((d) => (
-                <Button
-                  key={d.label}
-                  variant={difficulty === d.value ? 'secondary' : 'ghost'}
-                  size="sm"
-                  asChild
-                  className={cn(
-                    "rounded-xl h-10 px-6 font-bold transition-all",
-                    difficulty === d.value 
-                      ? "bg-primary text-primary-foreground shadow-[0_0_15px_rgba(20,241,149,0.3)]" 
-                      : "text-muted-foreground hover:text-foreground hover:bg-white/5"
-                  )}
-                >
-                  <Link href={`/courses${d.value ? `?difficulty=${d.value}` : ''}` as any}>
-                    {d.label}
-                  </Link>
-                </Button>
-              ))}
-            </div>
-          </div>
+          <CourseFilters 
+            initialSearch={search} 
+            initialDifficulty={difficulty} 
+            totalCourses={courses.length} 
+          />
         </div>
       </section>
 
       {/* Main Catalog */}
       <section className="container py-20">
-        <div className="flex items-center justify-between mb-12">
-          <div className="flex items-center gap-3 text-xs font-bold text-muted-foreground uppercase tracking-[0.2em] bg-white/5 px-5 py-2.5 rounded-full border border-white/10">
-            <Layers className="h-3.5 w-3.5 text-primary" />
-            <span>{courses.length} Courses Found</span>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Sort:</span>
-            <select className="bg-transparent text-sm font-bold text-foreground outline-none cursor-pointer hover:text-primary transition-colors appearance-none pr-4">
-              <option className="bg-background">Newest</option>
-              <option className="bg-background">Popular</option>
-              <option className="bg-background">Difficulty</option>
-            </select>
-          </div>
-        </div>
-
         {courses.length > 0 ? (
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
             {courses.map((course) => (
               <CourseCard key={course.id} course={course} />
             ))}

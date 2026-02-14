@@ -2,10 +2,12 @@ import { Link, redirect } from '@/i18n/routing';
 import Image from 'next/image';
 import { courseService } from '@/lib/services/course.service';
 import { Button } from '@/components/ui/button';
+import { EnrollButton } from '@/components/course/enroll-button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Clock, BookOpen, Award, CheckCircle2, ArrowRight, Star, Trophy, PlayCircle } from 'lucide-react';
+import { Clock, BookOpen, Award, CheckCircle2, ArrowRight, Star, Trophy, PlayCircle, ShieldCheck } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
+import { blocksToHtml } from '@/lib/utils/portableText';
 
 interface CoursePageProps {
   params: Promise<{ locale: string; courseSlug: string }>;
@@ -21,12 +23,13 @@ export default async function CoursePage({ params }: CoursePageProps) {
     return null;
   }
 
-  let lessons = await courseService.getCourseLessons(course.id);
-  if (!lessons || lessons.length === 0) {
-    lessons = await courseService.getCourseLessonsBySlug(course.slug);
-  }
+  const lessons = await courseService.getMergedCourseLessons(course.slug, course.id);
   const firstLesson = lessons[0];
   const firstLessonLink = firstLesson ? `/courses/${course.slug}/lessons/${firstLesson.slug || firstLesson.id}` : '#';
+
+  const longDescriptionHtml = Array.isArray(course.long_description) 
+    ? blocksToHtml(course.long_description) 
+    : (typeof course.long_description === 'string' ? course.long_description : '');
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -93,12 +96,11 @@ export default async function CoursePage({ params }: CoursePageProps) {
               </div>
 
               <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                <Button size="lg" className="h-14 px-8 text-lg font-bold rounded-xl shadow-[0_0_20px_rgba(20,241,149,0.2)] hover:shadow-[0_0_30px_rgba(20,241,149,0.3)] transition-all" asChild>
-                  <Link href={firstLessonLink as any}>
-                    {t('startCourse')}
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Link>
-                </Button>
+                <EnrollButton
+                  courseId={course.id}
+                  firstLessonHref={firstLessonLink as any}
+                  label={t('startCourse')}
+                />
                 <div className="flex items-center gap-4 px-6 py-3 rounded-xl bg-card/50 border border-border/50 backdrop-blur-md">
                   <div className="flex items-center gap-1.5">
                     <Star className="h-5 w-5 fill-accent text-accent" />
@@ -186,6 +188,20 @@ export default async function CoursePage({ params }: CoursePageProps) {
                 )}
               </div>
             </div>
+
+            {/* Long Description moved below Curriculum */}
+            {longDescriptionHtml && (
+              <div className="space-y-8 pt-8">
+                <div className="flex items-center gap-3">
+                  <div className="h-8 w-1.5 rounded-full bg-primary" />
+                  <h2 className="text-3xl font-bold tracking-tight">About Course</h2>
+                </div>
+                <div 
+                  className="text-lg text-muted-foreground leading-relaxed prose prose-invert max-w-none space-y-4"
+                  dangerouslySetInnerHTML={{ __html: longDescriptionHtml }}
+                />
+              </div>
+            )}
           </div>
 
           <div className="space-y-8">
@@ -198,23 +214,58 @@ export default async function CoursePage({ params }: CoursePageProps) {
               </CardHeader>
               <CardContent className="pt-6">
                 <ul className="space-y-4">
-                  {[
-                    t('learnFundamentals'),
-                    t('learnSmartContracts'),
-                    t('learnWeb3'),
-                    t('learnDApps'),
-                    t('learnSecurity')
-                  ].map((item, index) => (
-                    <li key={index} className="flex items-start gap-3">
-                      <div className="mt-1 p-0.5 rounded-full bg-primary/20">
-                        <CheckCircle2 className="h-4 w-4 text-primary" />
-                      </div>
-                      <span className="text-sm leading-relaxed text-muted-foreground">{item}</span>
-                    </li>
-                  ))}
+                  {(course.learning_outcomes && course.learning_outcomes.length > 0) ? (
+                    course.learning_outcomes.map((item, index) => (
+                      <li key={index} className="flex items-start gap-3">
+                        <div className="mt-1 p-0.5 rounded-full bg-primary/20">
+                          <CheckCircle2 className="h-4 w-4 text-primary" />
+                        </div>
+                        <span className="text-sm leading-relaxed text-muted-foreground">{item}</span>
+                      </li>
+                    ))
+                  ) : (
+                    [
+                      t('learnFundamentals'),
+                      t('learnSmartContracts'),
+                      t('learnWeb3'),
+                      t('learnDApps'),
+                      t('learnSecurity')
+                    ].map((item, index) => (
+                      <li key={index} className="flex items-start gap-3">
+                        <div className="mt-1 p-0.5 rounded-full bg-primary/20">
+                          <CheckCircle2 className="h-4 w-4 text-primary" />
+                        </div>
+                        <span className="text-sm leading-relaxed text-muted-foreground">{item}</span>
+                      </li>
+                    ))
+                  )}
                 </ul>
               </CardContent>
             </Card>
+
+            {/* Prerequisites */}
+            {course.prerequisites && course.prerequisites.length > 0 && (
+              <Card className="border-border/50 bg-card/30 backdrop-blur-sm overflow-hidden">
+                <CardHeader className="border-b border-border/50 bg-white/5">
+                  <CardTitle className="text-xl flex items-center gap-2">
+                    <ShieldCheck className="h-5 w-5 text-accent" />
+                    Course prerequisites
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <ul className="space-y-6">
+                    {course.prerequisites.map((item, index) => (
+                      <li key={index} className="flex items-start gap-4">
+                        <div className="mt-1 p-0.5 rounded-full bg-accent/20">
+                          <CheckCircle2 className="h-4 w-4 text-accent" />
+                        </div>
+                        <span className="text-sm leading-relaxed text-muted-foreground">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            )}
 
             {/* CTA Card */}
             <Card className="relative overflow-hidden border-primary/20 bg-primary/5">
@@ -226,11 +277,12 @@ export default async function CoursePage({ params }: CoursePageProps) {
                 <p className="text-sm text-muted-foreground">
                   {t('enrollDescription')}
                 </p>
-                <Button className="w-full font-bold shadow-lg shadow-primary/20" asChild>
-                  <Link href={firstLessonLink as any}>
-                    {t('startCourse')}
-                  </Link>
-                </Button>
+                <EnrollButton
+                  courseId={course.id}
+                  firstLessonHref={firstLessonLink as any}
+                  label={t('startCourse')}
+                  className="w-full"
+                />
               </CardContent>
             </Card>
           </div>

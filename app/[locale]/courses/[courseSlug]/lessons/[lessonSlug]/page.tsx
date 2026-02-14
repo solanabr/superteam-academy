@@ -20,6 +20,8 @@ import {
 import { getTranslations } from 'next-intl/server';
 import { cn } from '@/lib/utils';
 import { CodeEditor } from '@/components/editor/code-editor';
+import { Quiz } from '@/components/lesson/quiz';
+import { blocksToHtml } from '@/lib/utils/portableText';
 
 interface LessonPageProps {
   params: Promise<{ locale: string; courseSlug: string; lessonSlug: string }>;
@@ -34,7 +36,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
     return null;
   }
 
-  const lessons = await courseService.getCourseLessons(course.id);
+  const lessons = await courseService.getMergedCourseLessons(course.slug, course.id);
   // The route uses [lessonSlug], but current implementation might be passing ID or slug
   // We'll try to find by slug first, then ID as fallback for backward compatibility
   let lesson: any = lessons.find(l => l.slug === lessonSlug || l.id === lessonSlug);
@@ -65,6 +67,9 @@ export default async function LessonPage({ params }: LessonPageProps) {
     coding: <Code className="h-4 w-4" />,
     quiz: <HelpCircle className="h-4 w-4" />,
   };
+  const contentHtml = Array.isArray((lesson as any).content)
+    ? blocksToHtml((lesson as any).content)
+    : (typeof (lesson as any).content === 'string' ? (lesson as any).content : '');
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -132,31 +137,61 @@ export default async function LessonPage({ params }: LessonPageProps) {
             <Card className="border-border/50 bg-card/30 backdrop-blur-sm overflow-hidden shadow-2xl">
               <CardContent className="p-0">
                 {lesson.lesson_type === 'video' ? (
-                  <div className="relative group aspect-video w-full max-h-[30rem] md:max-h-[36rem] xl:max-h-[42rem] rounded-2xl overflow-hidden border border-border/50 shadow-xl">
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center group-hover:bg-black/20 transition-all cursor-pointer">
-                      <div className="h-16 w-16 rounded-full bg-primary/90 flex items-center justify-center shadow-[0_0_24px_rgba(20,241,149,0.4)] group-hover:scale-110 transition-transform">
-                        <Play className="h-10 w-10 text-primary-foreground fill-current ml-0.5" />
+                  <div className="relative group w-full h-[22rem] md:h-[26rem] xl:h-[30rem] rounded-2xl overflow-hidden border border-border/50 shadow-xl">
+                    {lesson.video_url ? (
+                      <iframe
+                        className="w-full h-full"
+                        src={
+                          lesson.video_url.includes('youtu.be')
+                            ? `https://www.youtube.com/embed/${lesson.video_url.split('/').pop()}`
+                            : lesson.video_url.includes('youtube.com/watch?v=')
+                              ? `https://www.youtube.com/embed/${new URL(lesson.video_url).searchParams.get('v')}`
+                              : lesson.video_url
+                        }
+                        title="Lesson Video"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowFullScreen
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-muted to-background flex items-center justify-center p-10 text-center">
+                        <div className="space-y-5">
+                          <p className="text-2xl font-extrabold text-muted-foreground">{t('videoPlayer')}</p>
+                          <p className="text-base text-muted-foreground/60">{t('placeholderContent')}</p>
+                        </div>
                       </div>
-                    </div>
-                    {/* Background placeholder */}
-                    <div className="w-full h-full bg-gradient-to-br from-muted to-background flex items-center justify-center p-10 text-center">
-                      <div className="space-y-5">
-                        <p className="text-2xl font-extrabold text-muted-foreground">{t('videoPlayer')}</p>
-                        <p className="text-base text-muted-foreground/60">{t('placeholderContent')}</p>
-                      </div>
-                    </div>
+                    )}
                   </div>
                 ) : lesson.lesson_type === 'coding' ? (
-                  <div className="min-h-[420px] flex flex-col">
-                    <CodeEditor 
-                      initialCode={lesson.starter_code || '// Write your Solana Rust code here\n\nuse anchor_lang::prelude::*;\n\ndeclare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");\n\n#[program]\npub mod hello_solana {\n    use super::*;\n    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {\n        msg!("Hello, Solana!");\n        Ok(())\n    }\n}\n\n#[derive(Accounts)]\npub struct Initialize {}\n'}
-                      language="rust"
-                    />
+                  <div className="flex flex-col h-full">
+                    {/* Instructions area */}
+                    {contentHtml && (
+                      <div className="prose prose-neutral dark:prose-invert max-w-none p-6 md:p-8 border-b border-border/50 bg-white/5">
+                        <div
+                          className="text-base leading-relaxed"
+                          dangerouslySetInnerHTML={{ __html: contentHtml }}
+                        />
+                      </div>
+                    )}
+                    <div className="min-h-[500px] flex-1 flex flex-col">
+                      <CodeEditor 
+                        initialCode={lesson.starter_code || '// Start coding...'}
+                        language={lesson.language || 'typescript'}
+                      />
+                    </div>
                   </div>
+                ) : lesson.lesson_type === 'quiz' ? (
+                  <Quiz
+                    title={(lesson as any).quiz?.title}
+                    questions={(lesson as any).quiz?.questions || []}
+                    passingScore={(lesson as any).quiz?.passingScore}
+                  />
                 ) : (
                   <div className="prose prose-neutral dark:prose-invert max-w-none p-6 md:p-8">
                     <div className="space-y-6">
-                      <div className="text-lg leading-relaxed" dangerouslySetInnerHTML={{ __html: lesson.content }} />
+                      <div
+                        className="text-lg leading-relaxed"
+                        dangerouslySetInnerHTML={{ __html: contentHtml }}
+                      />
                       <div className="grid gap-6 sm:grid-cols-2">
                         <div className="p-6 rounded-2xl bg-white/5 border border-white/10">
                           <h3 className="text-primary font-bold mb-3 flex items-center gap-2">

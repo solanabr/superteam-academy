@@ -112,7 +112,7 @@ export function CodeEditor({
       {/* Main Editor Area */}
       <div className="flex-1 min-h-[320px]">
         <Editor
-          height="100%"
+          height="420px"
           language={language}
           value={code}
           theme="vs-dark"

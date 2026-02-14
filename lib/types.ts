@@ -39,6 +39,9 @@ export interface Course {
   slug: string
   title: string
   description: string
+  long_description?: any
+  learning_outcomes?: string[]
+  prerequisites?: string[]
   thumbnail_url?: string
   difficulty: 'beginner' | 'intermediate' | 'advanced'
   duration_minutes: number
@@ -83,6 +86,8 @@ export interface Lesson {
   video_url?: string
   starter_code?: string
   solution_code?: string
+  language?: string
+  test_cases?: any[]
   quiz_questions?: QuizQuestion[]
 }
 

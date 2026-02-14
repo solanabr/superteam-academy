@@ -9,7 +9,7 @@ A modern, gamified learning platform for Solana blockchain development with on-c
 - 🎯 **NFT Credentials** - On-chain certificates as compressed NFTs (cNFTs)
 - 💻 **Code Editor** - In-browser coding environment for interactive lessons
 - 👥 **Community** - Discussion forums and leaderboards
-- 🔐 **Wallet Auth** - Connect with Phantom, Solflare, or other Solana wallets
+- 🔐 **Wallet Connect** - Connect Phantom/Solflare to view on-chain XP and credentials
 - 📱 **Responsive Design** - Mobile-first, works on all devices
 - 🌙 **Dark Mode** - Developer-friendly dark theme
 
@@ -20,7 +20,7 @@ A modern, gamified learning platform for Solana blockchain development with on-c
 - **Database**: Supabase (PostgreSQL with Row Level Security)
 - **CMS**: Sanity for course content management
 - **Blockchain**: Solana (Devnet), @solana/web3.js, @solana/wallet-adapter
-- **Auth**: Supabase Auth + Solana wallet signatures
+- **Auth**: Supabase Auth; wallet connection via Solana Wallet Adapter
 - **Deployment**: Vercel
 
 ## Getting Started
@@ -29,7 +29,7 @@ A modern, gamified learning platform for Solana blockchain development with on-c
 
 - Node.js 18+ and npm/pnpm
 - A Supabase account and project
-- A Sanity account and project (optional for MVP)
+- A Sanity account and project
 
 ### Environment Variables
 
@@ -41,7 +41,7 @@ NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
-# Sanity CMS (optional for MVP)
+# Sanity CMS
 NEXT_PUBLIC_SANITY_PROJECT_ID=your_project_id
 NEXT_PUBLIC_SANITY_DATASET=production
 SANITY_API_TOKEN=your_api_token
@@ -130,16 +130,31 @@ All tables have Row Level Security (RLS) enabled.
 - Cached in Supabase for performance
 - Lessons support video, article, interactive, and quiz types
 
+### Lesson Experience
+- Reading lessons render rich content via Portable Text
+- Coding lessons display instructions above the editor and load starter code from Sanity
+- Quiz lessons load questions, options, and correct answers from Sanity
+- Code challenges include language metadata and optional test cases
+
+### Catalog Search & Sorting
+- Search courses by title and description
+- Sort by Newest, Popular, or Difficulty
+- Home page highlights 5 featured courses
+
 ### Gamification
 - XP earned for completing lessons
 - Level progression system
 - Daily streak tracking
 - Achievement badges (9 initial achievements)
 
-### Blockchain Integration (Stubbed for MVP)
-- Service layer abstractions ready for on-chain integration
-- Credential display reads from devnet (planned)
-- Enrollment and lesson completion use local database
+### Blockchain Integration
+- On-chain XP and credential display via wallet connection on Devnet
+- Service layer abstractions ready for future on-chain writes
+- Enrollment and lesson completion use Supabase
+
+### Enrollment Flow
+- Enroll via `/api/enroll` with duplicate enrollment protection
+- Courses synced from Sanity to Supabase when needed
 
 ## Deployment
 
@@ -225,9 +240,9 @@ For questions or issues:
 
 ## Roadmap
 
-- [ ] Complete on-chain integration with Anchor program
-- [ ] Implement code editor with syntax highlighting
-- [ ] Add video lesson support
+- [ ] Complete on-chain writes with Anchor program
+- [ ] Add code challenge runner and automated tests
+- [ ] Enhance video analytics and progress tracking
 - [ ] Build admin dashboard
 - [ ] Add community features (forums, Q&A)
 - [ ] Implement PWA support
