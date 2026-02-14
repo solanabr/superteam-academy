@@ -1,0 +1,29 @@
+[
+  {
+    "_id": "path-solana-developer",
+    "_type": "learningPath",
+    "title": "Solana Developer Path",
+    "slug": { "_type": "slug", "current": "solana-developer" },
+    "description": "The complete path from zero to Solana developer. Start with the fundamentals, learn Rust for blockchain, master the Anchor framework, and build production-ready dApp frontends.",
+    "difficulty": "beginner",
+    "courses": [
+      { "_type": "reference", "_ref": "course-solana-fundamentals" },
+      { "_type": "reference", "_ref": "course-rust-for-solana" },
+      { "_type": "reference", "_ref": "course-anchor-framework" },
+      { "_type": "reference", "_ref": "course-solana-frontend" }
+    ]
+  },
+  {
+    "_id": "path-defi-builder",
+    "_type": "learningPath",
+    "title": "DeFi Builder Path",
+    "slug": { "_type": "slug", "current": "defi-builder" },
+    "description": "Specialize in decentralized finance on Solana. Build on your Solana development skills to understand AMMs, lending protocols, token mechanics, and create DeFi primitives.",
+    "difficulty": "advanced",
+    "courses": [
+      { "_type": "reference", "_ref": "course-solana-fundamentals" },
+      { "_type": "reference", "_ref": "course-rust-for-solana" },
+      { "_type": "reference", "_ref": "course-defi-on-solana" }
+    ]
+  }
+]

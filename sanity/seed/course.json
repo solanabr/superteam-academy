@@ -1,0 +1,193 @@
+[
+  {
+    "_id": "course-solana-fundamentals",
+    "_type": "course",
+    "title": "Solana Fundamentals",
+    "slug": {
+      "_type": "slug",
+      "current": "solana-fundamentals"
+    },
+    "description": "A comprehensive beginner course covering the fundamentals of Solana blockchain development. Learn to set up your environment, create wallets, send transactions, and work with SPL tokens. Perfect for developers new to Solana who want to start building decentralized applications.",
+    "difficulty": "beginner",
+    "duration": 10,
+    "instructor": {
+      "_type": "reference",
+      "_ref": "instructor-ana-santos"
+    },
+    "tags": ["solana", "blockchain", "web3", "typescript", "beginner"],
+    "xpReward": 600,
+    "modules": [
+      {
+        "_type": "reference",
+        "_ref": "module-getting-started"
+      },
+      {
+        "_type": "reference",
+        "_ref": "module-transactions-tokens"
+      },
+      {
+        "_type": "reference",
+        "_ref": "module-accounts-programs"
+      }
+    ]
+  },
+  {
+    "_id": "course-solana-frontend",
+    "_type": "course",
+    "title": "Solana Frontend Development",
+    "slug": {
+      "_type": "slug",
+      "current": "solana-frontend"
+    },
+    "description": "Build production-ready Solana dApp frontends. Master wallet integration, on-chain data reading, and interactive transaction UIs using React and the Solana Wallet Adapter.",
+    "difficulty": "intermediate",
+    "duration": 10,
+    "instructor": {
+      "_type": "reference",
+      "_ref": "instructor-ana-santos"
+    },
+    "tags": [
+      "frontend",
+      "react",
+      "nextjs",
+      "wallet-adapter",
+      "typescript",
+      "intermediate"
+    ],
+    "xpReward": 700,
+    "modules": [
+      {
+        "_type": "reference",
+        "_ref": "module-wallet-integration"
+      },
+      {
+        "_type": "reference",
+        "_ref": "module-reading-onchain"
+      },
+      {
+        "_type": "reference",
+        "_ref": "module-dapp-ui"
+      }
+    ]
+  },
+  {
+    "_id": "course-rust-for-solana",
+    "_type": "course",
+    "title": "Rust for Solana Developers",
+    "slug": {
+      "_type": "slug",
+      "current": "rust-for-solana"
+    },
+    "description": "Master Rust fundamentals tailored for Solana smart contract development. From ownership and borrowing to serialization, error handling, PDAs, and program architecture — build the skills to write native Solana programs.",
+    "difficulty": "intermediate",
+    "duration": 12,
+    "instructor": {
+      "_type": "reference",
+      "_ref": "instructor-lucas-oliveira"
+    },
+    "tags": ["rust", "solana", "programming", "systems", "intermediate"],
+    "xpReward": 800,
+    "modules": [
+      {
+        "_type": "reference",
+        "_ref": "module-rust-basics"
+      },
+      {
+        "_type": "reference",
+        "_ref": "module-rust-blockchain"
+      },
+      {
+        "_type": "reference",
+        "_ref": "module-rust-programs"
+      }
+    ]
+  },
+  {
+    "_id": "course-anchor-framework",
+    "_type": "course",
+    "title": "Anchor Framework Mastery",
+    "slug": {
+      "_type": "slug",
+      "current": "anchor-framework"
+    },
+    "description": "Master the Anchor framework for Solana smart contract development. From account constraints to PDAs, CPIs, testing, and deployment — build production-ready programs with confidence.",
+    "difficulty": "intermediate",
+    "duration": 14,
+    "instructor": {
+      "_type": "reference",
+      "_ref": "instructor-mariana-costa"
+    },
+    "tags": ["anchor", "solana", "rust", "framework", "intermediate"],
+    "xpReward": 900,
+    "modules": [
+      {
+        "_type": "reference",
+        "_ref": "module-anchor-basics"
+      },
+      {
+        "_type": "reference",
+        "_ref": "module-pdas-cpis"
+      },
+      {
+        "_type": "reference",
+        "_ref": "module-anchor-testing"
+      }
+    ]
+  },
+  {
+    "_id": "course-defi-on-solana",
+    "_type": "course",
+    "title": "DeFi on Solana",
+    "slug": {
+      "_type": "slug",
+      "current": "defi-on-solana"
+    },
+    "description": "Dive deep into decentralized finance on Solana. Understand AMMs, lending protocols, token mechanics, staking, and build DeFi primitives from vaults to liquidation engines.",
+    "difficulty": "advanced",
+    "duration": 16,
+    "instructor": {
+      "_type": "reference",
+      "_ref": "instructor-rafael-mendes"
+    },
+    "tags": ["defi", "solana", "tokens", "amm", "lending", "advanced"],
+    "xpReward": 1000,
+    "modules": [
+      {
+        "_type": "reference",
+        "_ref": "module-defi-primitives"
+      },
+      {
+        "_type": "reference",
+        "_ref": "module-token-mechanics"
+      },
+      {
+        "_type": "reference",
+        "_ref": "module-building-defi"
+      }
+    ]
+  },
+  {
+    "_id": "course-building-first-program",
+    "_type": "course",
+    "title": "Building Your First Solana Program",
+    "slug": {
+      "_type": "slug",
+      "current": "building-your-first-solana-program"
+    },
+    "description": "Take your Anchor knowledge from theory to practice. Write, compile, and deploy real Solana programs using the Solarium Build Server — no local toolchain setup required. By the end, you'll have a working counter program deployed to Devnet.",
+    "difficulty": "intermediate",
+    "duration": 12,
+    "instructor": {
+      "_type": "reference",
+      "_ref": "instructor-mariana-costa"
+    },
+    "tags": ["anchor", "rust", "solana", "build", "deploy", "devnet"],
+    "xpReward": 850,
+    "modules": [
+      { "_type": "reference", "_ref": "module-bfsp-build-pipeline" },
+      { "_type": "reference", "_ref": "module-bfsp-state-accounts" },
+      { "_type": "reference", "_ref": "module-bfsp-full-counter" },
+      { "_type": "reference", "_ref": "module-bfsp-deploy-interact" }
+    ]
+  }
+]

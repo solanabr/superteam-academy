@@ -1,0 +1,24 @@
+{
+  "name": "@superteam-lms/sanity",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "sanity dev",
+    "build": "sanity build",
+    "deploy": "sanity deploy",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@sanity/client": "^7.14.1",
+    "@sanity/vision": "^3.40.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "sanity": "^3.40.0",
+    "styled-components": "^6.1.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "typescript": "^5.7.0"
+  }
+}
