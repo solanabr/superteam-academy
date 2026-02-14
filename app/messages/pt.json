@@ -1,0 +1,214 @@
+{
+  "navigation": {
+    "courses": "Cursos",
+    "leaderboard": "Ranking",
+    "about": "Sobre",
+    "dashboard": "Painel",
+    "connectWallet": "Conectar Carteira"
+  },
+  "home": {
+    "badge": "Construido para o Ecossistema Solana",
+    "title": "Aprenda Desenvolvimento Solana.",
+    "titleHighlight": " Ganhe Credenciais.",
+    "subtitle": "Cursos interativos baseados em projetos que levam voce do zero ao deploy de dApps prontos para producao. Acompanhe seu progresso com XP on-chain e credenciais verificaveis.",
+    "cta": "Comecar a Aprender",
+    "viewCourses": "Ver Cursos",
+    "stats": {
+      "courses": "Cursos",
+      "learners": "Alunos",
+      "credentials": "Credenciais Emitidas",
+      "languages": "Idiomas"
+    },
+    "whyTitle": "Por que Superteam Academy?",
+    "features": {
+      "codeEditor": {
+        "title": "Editor de Codigo Interativo",
+        "description": "Escreva, execute e teste programas Solana diretamente no seu navegador. Receba feedback instantaneo no seu codigo com casos de teste integrados."
+      },
+      "gamified": {
+        "title": "Aprendizado Gamificado",
+        "description": "Ganhe XP, mantenha sequencias, desbloqueie conquistas e suba no ranking conforme domina novas habilidades."
+      },
+      "credentials": {
+        "title": "Credenciais On-Chain",
+        "description": "Receba credenciais NFT verificaveis e comprimidas com ZK que comprovam suas habilidades para potenciais empregadores ou colaboradores."
+      },
+      "projectBased": {
+        "title": "Curriculo Baseado em Projetos",
+        "description": "Aprenda construindo projetos reais. Cada curso termina com um dApp digno de portfolio que voce pode apresentar."
+      },
+      "multilingual": {
+        "title": "Suporte Multilingue",
+        "description": "Disponivel em Portugues, Espanhol e Ingles para servir a comunidade global Solana."
+      },
+      "community": {
+        "title": "Impulsionado pela Comunidade",
+        "description": "Codigo aberto e mantido pela comunidade. Crie cursos, contribua com conteudo e ganhe recompensas."
+      }
+    },
+    "tracks": {
+      "title": "Trilhas de Aprendizado",
+      "subtitle": "Caminhos estruturados do iniciante ao avancado, cobrindo tudo desde o basico do Solana ate protocolos DeFi complexos.",
+      "beginner": "Iniciante",
+      "intermediate": "Intermediario",
+      "advanced": "Avancado",
+      "foundations": {
+        "title": "Fundamentos Solana",
+        "intro": "Introducao ao Solana",
+        "wallet": "Integracao de Carteira",
+        "transaction": "Sua Primeira Transacao"
+      },
+      "anchor": {
+        "title": "Desenvolvimento Anchor",
+        "basics": "Basicos do Framework Anchor",
+        "pdas": "PDAs e Design de Contas",
+        "testing": "Testes e Deploy"
+      },
+      "defi": {
+        "title": "DeFi e Tokens",
+        "token2022": "Extensoes Token-2022",
+        "amm": "Implementacao de AMM",
+        "security": "Melhores Praticas de Seguranca"
+      }
+    },
+    "ctaSection": {
+      "title": "Pronto para Construir no Solana?",
+      "subtitle": "Junte-se a milhares de desenvolvedores aprendendo a construir o futuro de aplicacoes descentralizadas na blockchain mais rapida.",
+      "button": "Comecar Gratuitamente"
+    }
+  },
+  "courses": {
+    "title": "Catalogo de Cursos",
+    "subtitle": "Da sua primeira transacao a construcao de protocolos DeFi complexos. Escolha seu caminho e comece a ganhar credenciais on-chain.",
+    "searchPlaceholder": "Buscar cursos...",
+    "filters": {
+      "all": "Todos"
+    },
+    "levels": {
+      "beginner": "Iniciante",
+      "intermediate": "Intermediario",
+      "advanced": "Avancado"
+    },
+    "featured": "Destaque",
+    "featuredCourses": "Cursos em Destaque",
+    "allCourses": "Todos os Cursos",
+    "coursesFound": "cursos encontrados",
+    "courses": "cursos",
+    "lessons": "licoes",
+    "noCoursesFound": "Nenhum curso encontrado com seus criterios. Tente ajustar sua busca ou filtro.",
+    "clearFilters": "Limpar filtros",
+    "startCourse": "Iniciar Curso",
+    "notSureWhereToStart": "Nao sabe por onde comecar?",
+    "takeAssessmentDescription": "Faca nossa avaliacao rapida para obter um caminho de aprendizado personalizado baseado no seu nivel de experiencia e objetivos.",
+    "takeAssessment": "Fazer Avaliacao",
+    "footer": {
+      "builtBy": "Construido pela Superteam Brazil"
+    },
+    "card": {
+      "lessons": "licoes",
+      "xp": "XP",
+      "duration": "min",
+      "enroll": "Inscrever-se",
+      "continue": "Continuar",
+      "completed": "Concluido"
+    }
+  },
+  "courseDetail": {
+    "breadcrumb": {
+      "courses": "Cursos"
+    },
+    "lessons": "licoes",
+    "enrolled": "inscritos",
+    "continueLearning": "Continuar Aprendendo",
+    "progress": {
+      "title": "Seu Progresso",
+      "of": "de",
+      "xpEarned": "XP Ganho",
+      "timeSpent": "Tempo Gasto",
+      "streak": "Sequencia Atual",
+      "days": "dias"
+    },
+    "tabs": {
+      "curriculum": "Curriculo",
+      "overview": "Visao Geral",
+      "reviews": "Avaliacoes"
+    },
+    "lessonsCompleted": "licoes concluidas",
+    "whatYouWillLearn": "O Que Voce Vai Aprender",
+    "reviewsComingSoon": "Avaliacoes em breve...",
+    "instructor": {
+      "title": "Instrutor",
+      "courses": "cursos"
+    },
+    "credential": {
+      "title": "Ganhe uma Credencial",
+      "description": "Complete este curso para ganhar uma credencial on-chain verificavel (cNFT) que comprova suas habilidades para empregadores e colaboradores."
+    },
+    "notFound": {
+      "title": "Curso Nao Encontrado",
+      "description": "O curso que voce procura nao existe ou foi removido.",
+      "backToCourses": "Voltar aos Cursos"
+    }
+  },
+  "lesson": {
+    "instructions": "Instrucoes",
+    "codeEditor": "Editor de Codigo",
+    "run": "Executar",
+    "submit": "Enviar",
+    "output": "Saida",
+    "tests": "Testes",
+    "passed": "Passou",
+    "failed": "Falhou",
+    "nextLesson": "Proxima Licao",
+    "previousLesson": "Licao Anterior",
+    "backToCourse": "Voltar ao Curso"
+  },
+  "dashboard": {
+    "title": "Seu Painel",
+    "welcome": "Bem-vindo de volta",
+    "xp": {
+      "title": "Pontos de Experiencia",
+      "level": "Nivel",
+      "nextLevel": "para o proximo nivel"
+    },
+    "streak": {
+      "title": "Sequencia de Aprendizado",
+      "days": "dias",
+      "keepGoing": "Continue assim!"
+    },
+    "progress": {
+      "title": "Progresso do Curso",
+      "completed": "Concluido",
+      "inProgress": "Em Progresso"
+    },
+    "recentActivity": "Atividade Recente",
+    "achievements": "Conquistas"
+  },
+  "leaderboard": {
+    "title": "Ranking",
+    "subtitle": "Principais alunos na comunidade Superteam Academy.",
+    "tabs": {
+      "daily": "Diario",
+      "weekly": "Semanal",
+      "allTime": "Geral"
+    },
+    "rank": "Posicao",
+    "learner": "Aluno",
+    "level": "Nivel",
+    "xp": "XP",
+    "streak": "Sequencia"
+  },
+  "footer": {
+    "terms": "Termos",
+    "privacy": "Privacidade",
+    "builtBy": "Construido pela Superteam Brazil"
+  },
+  "common": {
+    "loading": "Carregando...",
+    "error": "Ocorreu um erro",
+    "retry": "Tentar Novamente",
+    "cancel": "Cancelar",
+    "save": "Salvar",
+    "close": "Fechar"
+  }
+}
