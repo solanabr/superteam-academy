@@ -1,8 +1,8 @@
 "use client";
 
-import { use } from "react";
+import { use, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Clock, BookOpen, Zap, Users, CheckCircle2, Circle, Code, Trophy } from "lucide-react";
+import { ArrowLeft, Clock, BookOpen, Zap, Users, CheckCircle2, Circle, Code, Trophy, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,7 +10,9 @@ import { Progress } from "@/components/ui/progress";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useCourse, useProgress, useEnroll } from "@/lib/hooks/use-service";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { useCourse, useProgress, useEnroll, useDisplayName, useSetDisplayName } from "@/lib/hooks/use-service";
 import { DIFFICULTY_CONFIG, TRACKS } from "@/types/course";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { toast } from "sonner";
@@ -21,6 +23,10 @@ export default function CourseDetailPage({ params }: { params: Promise<{ slug: s
   const { data: progress } = useProgress(slug);
   const { connected } = useWallet();
   const enrollMutation = useEnroll();
+  const { data: displayName } = useDisplayName();
+  const setDisplayNameMutation = useSetDisplayName();
+  const [enrollDialogOpen, setEnrollDialogOpen] = useState(false);
+  const [nameInput, setNameInput] = useState("");
 
   if (isLoading) {
     return (
@@ -45,14 +51,37 @@ export default function CourseDetailPage({ params }: { params: Promise<{ slug: s
   const isEnrolled = !!progress;
   const completedLessons = progress?.lessonsCompleted.length ?? 0;
 
-  const handleEnroll = async () => {
+  const handleEnrollClick = () => {
     if (!connected) {
       toast.error("Please connect your wallet first");
       return;
     }
+    if (!displayName) {
+      setNameInput("");
+      setEnrollDialogOpen(true);
+      return;
+    }
+    doEnroll();
+  };
+
+  const doEnroll = () => {
     enrollMutation.mutate(course.id, {
       onSuccess: () => toast.success("Enrolled successfully!"),
       onError: () => toast.error("Failed to enroll"),
+    });
+  };
+
+  const handleEnrollWithName = () => {
+    const trimmed = nameInput.trim();
+    if (!trimmed) {
+      toast.error("Please enter your name");
+      return;
+    }
+    setDisplayNameMutation.mutate(trimmed, {
+      onSuccess: () => {
+        setEnrollDialogOpen(false);
+        doEnroll();
+      },
     });
   };
 
@@ -173,11 +202,16 @@ export default function CourseDetailPage({ params }: { params: Promise<{ slug: s
                 <span className="font-medium">{course.challengeCount}</span>
               </div>
               {!isEnrolled ? (
-                <Button onClick={handleEnroll} className="w-full mt-4" variant="solana" disabled={enrollMutation.isPending}>
+                <Button onClick={handleEnrollClick} className="w-full mt-4" variant="solana" disabled={enrollMutation.isPending}>
                   {enrollMutation.isPending ? "Enrolling..." : "Enroll Now"}
                 </Button>
               ) : progress?.completedAt ? (
-                <Badge className="w-full justify-center py-2 bg-solana-green text-black">Completed</Badge>
+                <div className="space-y-2 mt-4">
+                  <Badge className="w-full justify-center py-2 bg-solana-green text-black">Completed</Badge>
+                  <Button asChild variant="outline" className="w-full">
+                    <Link href={`/certificates/${course.trackId}`}>View Certificate</Link>
+                  </Button>
+                </div>
               ) : (
                 <Button asChild className="w-full mt-4">
                   <Link href={`/courses/${slug}/lessons/${course.modules[0]?.lessons[0]?.id}`}>
@@ -189,6 +223,38 @@ export default function CourseDetailPage({ params }: { params: Promise<{ slug: s
           </Card>
         </div>
       </div>
+
+      <Dialog open={enrollDialogOpen} onOpenChange={setEnrollDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <User className="h-5 w-5" /> What's your name?
+            </DialogTitle>
+            <DialogDescription>
+              Your name will appear on certificates and the leaderboard.
+            </DialogDescription>
+          </DialogHeader>
+          <Input
+            placeholder="Enter your name"
+            value={nameInput}
+            onChange={(e) => setNameInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleEnrollWithName()}
+            autoFocus
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEnrollDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="solana"
+              onClick={handleEnrollWithName}
+              disabled={setDisplayNameMutation.isPending || enrollMutation.isPending}
+            >
+              {setDisplayNameMutation.isPending ? "Saving..." : "Enroll"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

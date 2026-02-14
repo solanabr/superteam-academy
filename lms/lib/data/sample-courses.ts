@@ -1,7 +1,17 @@
 import type { Course } from "@/types/course";
 
+function buildCourse(base: Omit<Course, "lessonCount" | "challengeCount" | "totalCompletions" | "totalEnrollments">): Course {
+  let lessonCount = 0;
+  let challengeCount = 0;
+  for (const m of base.modules) {
+    lessonCount += m.lessons.length;
+    challengeCount += m.lessons.filter((l) => l.type === "challenge").length;
+  }
+  return { ...base, lessonCount, challengeCount, totalCompletions: 0, totalEnrollments: 0 };
+}
+
 export const SAMPLE_COURSES: Course[] = [
-  {
+  buildCourse({
     id: "solana-fundamentals",
     slug: "solana-fundamentals",
     title: "Solana Fundamentals",
@@ -9,15 +19,11 @@ export const SAMPLE_COURSES: Course[] = [
     thumbnail: "/courses/solana-fundamentals.png",
     creator: "Superteam Academy",
     difficulty: "beginner",
-    lessonCount: 10,
-    challengeCount: 4,
     xpTotal: 500,
     trackId: 0,
     trackLevel: 1,
     duration: "6 hours",
     isActive: true,
-    totalCompletions: 1250,
-    totalEnrollments: 3800,
     createdAt: "2025-01-15T00:00:00Z",
     modules: [
       {
@@ -55,8 +61,8 @@ export const SAMPLE_COURSES: Course[] = [
         ],
       },
     ],
-  },
-  {
+  }),
+  buildCourse({
     id: "anchor-beginner",
     slug: "anchor-beginner",
     title: "Anchor Framework: Getting Started",
@@ -64,15 +70,11 @@ export const SAMPLE_COURSES: Course[] = [
     thumbnail: "/courses/anchor-beginner.png",
     creator: "Superteam Academy",
     difficulty: "beginner",
-    lessonCount: 8,
-    challengeCount: 3,
     xpTotal: 500,
     trackId: 1,
     trackLevel: 1,
     duration: "5 hours",
     isActive: true,
-    totalCompletions: 890,
-    totalEnrollments: 2400,
     createdAt: "2025-02-01T00:00:00Z",
     modules: [
       {
@@ -99,8 +101,8 @@ export const SAMPLE_COURSES: Course[] = [
         ],
       },
     ],
-  },
-  {
+  }),
+  buildCourse({
     id: "rust-for-solana",
     slug: "rust-for-solana",
     title: "Rust for Solana Developers",
@@ -108,15 +110,11 @@ export const SAMPLE_COURSES: Course[] = [
     thumbnail: "/courses/rust-for-solana.png",
     creator: "Superteam Academy",
     difficulty: "intermediate",
-    lessonCount: 12,
-    challengeCount: 5,
     xpTotal: 1000,
     trackId: 2,
     trackLevel: 1,
     duration: "8 hours",
     isActive: true,
-    totalCompletions: 620,
-    totalEnrollments: 1800,
     createdAt: "2025-03-01T00:00:00Z",
     modules: [
       {
@@ -136,8 +134,8 @@ export const SAMPLE_COURSES: Course[] = [
         ],
       },
     ],
-  },
-  {
+  }),
+  buildCourse({
     id: "defi-basics",
     slug: "defi-basics",
     title: "DeFi on Solana",
@@ -145,15 +143,11 @@ export const SAMPLE_COURSES: Course[] = [
     thumbnail: "/courses/defi-basics.png",
     creator: "Superteam Academy",
     difficulty: "intermediate",
-    lessonCount: 8,
-    challengeCount: 2,
     xpTotal: 1000,
     trackId: 3,
     trackLevel: 1,
     duration: "6 hours",
     isActive: true,
-    totalCompletions: 340,
-    totalEnrollments: 1200,
     createdAt: "2025-04-01T00:00:00Z",
     modules: [
       {
@@ -164,8 +158,8 @@ export const SAMPLE_COURSES: Course[] = [
         ],
       },
     ],
-  },
-  {
+  }),
+  buildCourse({
     id: "program-security",
     slug: "program-security",
     title: "Solana Program Security",
@@ -173,16 +167,12 @@ export const SAMPLE_COURSES: Course[] = [
     thumbnail: "/courses/program-security.png",
     creator: "Superteam Academy",
     difficulty: "advanced",
-    lessonCount: 10,
-    challengeCount: 4,
     xpTotal: 2000,
     trackId: 4,
     trackLevel: 1,
     duration: "10 hours",
     prerequisiteId: "anchor-beginner",
     isActive: true,
-    totalCompletions: 180,
-    totalEnrollments: 600,
     createdAt: "2025-05-01T00:00:00Z",
     modules: [
       {
@@ -193,8 +183,8 @@ export const SAMPLE_COURSES: Course[] = [
         ],
       },
     ],
-  },
-  {
+  }),
+  buildCourse({
     id: "anchor-intermediate",
     slug: "anchor-intermediate",
     title: "Anchor Intermediate: Advanced Patterns",
@@ -202,16 +192,12 @@ export const SAMPLE_COURSES: Course[] = [
     thumbnail: "/courses/anchor-intermediate.png",
     creator: "Superteam Academy",
     difficulty: "intermediate",
-    lessonCount: 10,
-    challengeCount: 4,
     xpTotal: 1000,
     trackId: 1,
     trackLevel: 2,
     duration: "8 hours",
     prerequisiteId: "anchor-beginner",
     isActive: true,
-    totalCompletions: 280,
-    totalEnrollments: 900,
     createdAt: "2025-06-01T00:00:00Z",
     modules: [
       {
@@ -222,5 +208,5 @@ export const SAMPLE_COURSES: Course[] = [
         ],
       },
     ],
-  },
+  }),
 ];

@@ -6,6 +6,7 @@ import type { Credential } from "@/types/credential";
 import { ACHIEVEMENTS } from "@/types/gamification";
 import { getLevel, getUtcDay } from "@/lib/utils";
 import { SAMPLE_COURSES } from "@/lib/data/sample-courses";
+import { fetchSanityCourses, fetchSanityCourse } from "./sanity-courses";
 
 const STORAGE_PREFIX = "sta_";
 
@@ -120,22 +121,67 @@ export class LocalStorageService implements LearningProgressService {
   }
 
   async getLeaderboard(_timeframe: "weekly" | "monthly" | "all-time"): Promise<LeaderboardEntry[]> {
-    return [
-      { rank: 1, wallet: "7xKXt...abc", displayName: "SolanaBuilder", xp: 15200, level: 12, streak: 45 },
-      { rank: 2, wallet: "9mPQr...def", displayName: "RustMaster", xp: 12800, level: 11, streak: 30 },
-      { rank: 3, wallet: "3kLnY...ghi", displayName: "AnchorDev", xp: 9500, level: 9, streak: 22 },
-      { rank: 4, wallet: "5hRcV...jkl", displayName: "DeFiWizard", xp: 7200, level: 8, streak: 15 },
-      { rank: 5, wallet: "2wXpZ...mno", displayName: "TokenHunter", xp: 5100, level: 7, streak: 10 },
-      { rank: 6, wallet: "8nBqS...pqr", displayName: "CryptoLearner", xp: 3800, level: 6, streak: 7 },
-      { rank: 7, wallet: "4jFdR...stu", displayName: "ChainExplorer", xp: 2400, level: 4, streak: 5 },
-      { rank: 8, wallet: "6tMwK...vwx", displayName: "Web3Student", xp: 1600, level: 4, streak: 3 },
-      { rank: 9, wallet: "1qAeP...yza", displayName: "BlockchainBob", xp: 900, level: 3, streak: 2 },
-      { rank: 10, wallet: "0pZsN...bcd", displayName: "SolNewbie", xp: 400, level: 2, streak: 1 },
-    ];
+    if (typeof window === "undefined") return [];
+    const entries: LeaderboardEntry[] = [];
+    // Scan localStorage for all users with XP
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key?.startsWith(`${STORAGE_PREFIX}xp_`)) continue;
+      const wallet = key.replace(`${STORAGE_PREFIX}xp_`, "");
+      if (!wallet || wallet === "guest") continue;
+      const xp = getItem<number>(`xp_${wallet}`, 0);
+      if (xp <= 0) continue;
+      const streak = getItem<{ current: number; longest: number; lastDay: number }>(`streak_${wallet}`, { current: 0, longest: 0, lastDay: 0 });
+      const displayName = getItem<string | null>(`name_${wallet}`, null);
+      entries.push({
+        rank: 0,
+        wallet,
+        displayName: displayName ?? undefined,
+        xp,
+        level: getLevel(xp),
+        streak: streak.current,
+      });
+    }
+    entries.sort((a, b) => b.xp - a.xp);
+    entries.forEach((e, i) => { e.rank = i + 1; });
+    return entries;
   }
 
-  async getCredentials(_wallet: string): Promise<Credential[]> {
-    return [];
+  async getCredentials(wallet: string): Promise<Credential[]> {
+    const progress = await this.getAllProgress(wallet);
+    const completed = progress.filter((p) => p.completedAt);
+    if (completed.length === 0) return [];
+
+    // Group completions by track
+    const trackMap = new Map<number, { count: number; xp: number; first: string; last: string }>();
+    for (const p of completed) {
+      const course = SAMPLE_COURSES.find((c) => c.id === p.courseId);
+      if (!course) continue;
+      const existing = trackMap.get(course.trackId);
+      if (existing) {
+        existing.count++;
+        existing.xp += course.xpTotal;
+        if (p.completedAt! < existing.first) existing.first = p.completedAt!;
+        if (p.completedAt! > existing.last) existing.last = p.completedAt!;
+      } else {
+        trackMap.set(course.trackId, { count: 1, xp: course.xpTotal, first: p.completedAt!, last: p.completedAt! });
+      }
+    }
+
+    const credentials: Credential[] = [];
+    for (const [trackId, data] of trackMap) {
+      credentials.push({
+        learner: wallet,
+        trackId,
+        currentLevel: data.count >= 3 ? 3 : data.count >= 2 ? 2 : 1,
+        coursesCompleted: data.count,
+        totalXpEarned: data.xp,
+        firstEarned: data.first,
+        lastUpdated: data.last,
+        metadataHash: "",
+      });
+    }
+    return credentials;
   }
 
   async getAchievements(userId: string): Promise<Achievement[]> {
@@ -159,8 +205,10 @@ export class LocalStorageService implements LearningProgressService {
   async getProfile(userId: string): Promise<UserProfile | null> {
     const xp = await this.getXP(userId);
     const streak = await this.getStreak(userId);
+    const displayName = await this.getDisplayName(userId);
     return {
       wallet: userId,
+      displayName: displayName ?? undefined,
       xp,
       level: getLevel(xp),
       currentStreak: streak.current,
@@ -174,11 +222,23 @@ export class LocalStorageService implements LearningProgressService {
     };
   }
 
+  async getDisplayName(userId: string): Promise<string | null> {
+    return getItem<string | null>(`name_${userId}`, null);
+  }
+
+  async setDisplayName(userId: string, name: string): Promise<void> {
+    setItem(`name_${userId}`, name);
+  }
+
   async getCourses(): Promise<Course[]> {
+    const sanityCourses = await fetchSanityCourses();
+    if (sanityCourses.length > 0) return sanityCourses;
     return SAMPLE_COURSES;
   }
 
   async getCourse(courseId: string): Promise<Course | null> {
+    const sanityCourse = await fetchSanityCourse(courseId);
+    if (sanityCourse) return sanityCourse;
     return SAMPLE_COURSES.find((c) => c.id === courseId || c.slug === courseId) ?? null;
   }
 }

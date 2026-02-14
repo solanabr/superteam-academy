@@ -106,6 +106,45 @@ export function useProfile() {
   });
 }
 
+export function useCredentials() {
+  const { publicKey } = useWallet();
+  const userId = publicKey?.toBase58() ?? "guest";
+
+  return useQuery({
+    queryKey: ["credentials", userId],
+    queryFn: () => getService().getCredentials(userId),
+    enabled: !!publicKey,
+    staleTime: 30_000,
+  });
+}
+
+export function useDisplayName() {
+  const { publicKey } = useWallet();
+  const userId = publicKey?.toBase58() ?? "guest";
+
+  return useQuery({
+    queryKey: ["displayName", userId],
+    queryFn: () => getService().getDisplayName(userId),
+    enabled: !!publicKey,
+    staleTime: Infinity,
+  });
+}
+
+export function useSetDisplayName() {
+  const { publicKey } = useWallet();
+  const userId = publicKey?.toBase58() ?? "guest";
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (name: string) => getService().setDisplayName(userId, name),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["displayName", userId] });
+      queryClient.invalidateQueries({ queryKey: ["profile", userId] });
+      queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
+    },
+  });
+}
+
 export function useEnroll() {
   const { publicKey } = useWallet();
   const userId = publicKey?.toBase58() ?? "guest";
@@ -133,6 +172,8 @@ export function useCompleteLesson() {
       queryClient.invalidateQueries({ queryKey: ["allProgress"] });
       queryClient.invalidateQueries({ queryKey: ["xp"] });
       queryClient.invalidateQueries({ queryKey: ["streak"] });
+      queryClient.invalidateQueries({ queryKey: ["credentials"] });
+      queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
     },
   });
 }

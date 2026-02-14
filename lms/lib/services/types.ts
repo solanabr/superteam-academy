@@ -17,6 +17,8 @@ export interface LearningProgressService {
   getAchievements(userId: string): Promise<Achievement[]>;
   claimAchievement(userId: string, achievementId: number): Promise<void>;
   getProfile(userId: string): Promise<UserProfile | null>;
+  getDisplayName(userId: string): Promise<string | null>;
+  setDisplayName(userId: string, name: string): Promise<void>;
   getCourses(): Promise<Course[]>;
   getCourse(courseId: string): Promise<Course | null>;
 }

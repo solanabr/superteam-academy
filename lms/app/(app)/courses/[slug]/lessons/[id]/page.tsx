@@ -51,8 +51,14 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string;
   }, [course, id, codeInitialized]);
 
   const isCompleted = progress?.lessonsCompleted.includes(lessonIndex) ?? false;
+  const isChallenge = lesson?.type === "challenge" && lesson?.challenge;
+  const allTestsPassed = testResults !== null && testResults.length > 0 && testResults.every((r) => r.passed);
 
   const handleComplete = () => {
+    if (isChallenge && !allTestsPassed) {
+      toast.error("Run tests and pass all of them before completing!");
+      return;
+    }
     completeMutation.mutate(
       { courseId: slug, lessonIndex },
       {
@@ -107,8 +113,6 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string;
       </div>
     );
   }
-
-  const isChallenge = lesson.type === "challenge" && lesson.challenge;
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
@@ -272,9 +276,14 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string;
             </Card>
 
             {!isCompleted && (
-              <Button onClick={handleComplete} size="sm" variant="solana" disabled={completeMutation.isPending}>
+              <Button
+                onClick={handleComplete}
+                size="sm"
+                variant={allTestsPassed ? "solana" : "outline"}
+                disabled={completeMutation.isPending || !allTestsPassed}
+              >
                 <CheckCircle2 className="h-4 w-4" />
-                {completeMutation.isPending ? "Completing..." : "Mark Complete"}
+                {completeMutation.isPending ? "Completing..." : allTestsPassed ? "Mark Complete" : "Pass All Tests First"}
               </Button>
             )}
           </div>

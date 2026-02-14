@@ -9,6 +9,7 @@ export function highlight(raw: string, lang: string): string {
   const code = esc(raw);
   if (lang === "bash" || lang === "sh" || lang === "shell" || lang === "zsh") return hlBash(code);
   if (lang === "rust" || lang === "rs") return hlRust(code);
+  if (lang === "json") return hlJSON(code);
   return hlTS(code);
 }
 
@@ -61,6 +62,24 @@ function hlRust(code: string): string {
     if (m[6]) return wrap("hl-kw", m[6]);
     if (m[7]) return wrap("hl-num", m[7]);
     if (m[8]) return wrap("hl-fn", m[8]);
+    return m[0];
+  });
+}
+
+// ── JSON ──
+const JSON_RE = new RegExp([
+  `(&quot;(?:[^&\\\\]|\\\\.)*?&quot;)(?=\\s*:)`,             // 1: key
+  `(&quot;(?:[^&\\\\]|\\\\.)*?&quot;)`,                       // 2: string value
+  `(\\b(?:true|false|null)\\b)`,                              // 3: keyword
+  `(-?\\b\\d[\\d_]*(?:\\.\\d+)?(?:[eE][+-]?\\d+)?\\b)`,      // 4: number
+].join("|"), "gm");
+
+function hlJSON(code: string): string {
+  return code.replace(JSON_RE, (...m) => {
+    if (m[1]) return wrap("hl-attr", m[1]);
+    if (m[2]) return wrap("hl-str", m[2]);
+    if (m[3]) return wrap("hl-kw", m[3]);
+    if (m[4]) return wrap("hl-num", m[4]);
     return m[0];
   });
 }

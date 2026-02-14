@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { BookOpen, LayoutDashboard, Trophy, Menu } from "lucide-react";
@@ -28,11 +29,9 @@ export function Header() {
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-8">
             <Link href="/" className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-solana-purple to-solana-green">
-                <span className="text-sm font-bold text-white">S</span>
-              </div>
+              <Image src="/image.png" alt="Superteam Academy" width={32} height={32} className="rounded-lg" />
               <span className="hidden text-lg font-bold sm:inline-block">
-                Superteam <span className="text-solana-purple">Academy</span>
+                Superteam <span className="text-solana-purple"></span>
               </span>
             </Link>
             <nav className="hidden items-center gap-1 md:flex">
