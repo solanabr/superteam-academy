@@ -1,0 +1,118 @@
+{
+  "common": {
+    "brand": "Superteam Academy",
+    "theme": "Tema",
+    "language": "Idioma",
+    "search": "Buscar",
+    "all": "Todos",
+    "beginner": "Principiante",
+    "intermediate": "Intermedio",
+    "advanced": "Avanzado",
+    "enrollNow": "Inscribirse",
+    "continue": "Continuar",
+    "runTests": "Ejecutar pruebas",
+    "pass": "Aprobado",
+    "fail": "Fallado",
+    "pending": "Pendiente",
+    "xp": "XP",
+    "level": "Nivel",
+    "streak": "Racha",
+    "lessons": "Lecciones",
+    "module": "Módulo",
+    "user": "Usuario"
+  },
+  "auth": {
+    "google": "Google",
+    "github": "GitHub",
+    "link": "Vincular"
+  },
+  "header": {
+    "courses": "Cursos",
+    "dashboard": "Panel",
+    "leaderboard": "Clasificación"
+  },
+  "landing": {
+    "heroTitle": "Conviértete en desarrollador Solana listo para producción",
+    "heroSubtitle": "Aprende con lecciones interactivas, desafíos de código y credenciales on-chain.",
+    "primaryCta": "Comenzar a aprender",
+    "secondaryCta": "Ver cursos",
+    "pathTitle": "Rutas de aprendizaje",
+    "pathSubtitle": "Elige tu ruta y desarrolla habilidades prácticas rápidamente.",
+    "paths": {
+      "foundations": {
+        "title": "Fundamentos de Solana",
+        "description": "Wallets, cuentas, transacciones y fundamentos de RPC."
+      },
+      "programs": {
+        "title": "Programas con Anchor",
+        "description": "Construye, prueba y despliega lógica on-chain segura."
+      },
+      "fullstack": {
+        "title": "dApps Fullstack",
+        "description": "Conecta apps Next.js con programas Solana de extremo a extremo."
+      }
+    }
+  },
+  "courses": {
+    "title": "Catálogo de Cursos",
+    "subtitle": "Encuentra el curso correcto por tema, dificultad y duración.",
+    "searchPlaceholder": "Buscar cursos, temas o rutas",
+    "empty": "Ningún curso coincide con los filtros.",
+    "difficultyLabel": "Dificultad",
+    "topicLabel": "Tema",
+    "durationLabel": "Duración",
+    "detail": {
+      "overview": "Resumen del curso",
+      "modules": "Módulos",
+      "progress": "Progreso",
+      "enrollmentCta": "Inscribirse al curso"
+    }
+  },
+  "lesson": {
+    "contentTitle": "Contenido de la lección",
+    "challengeTitle": "Desafío de código",
+    "starterCodeLabel": "Código inicial",
+    "testCasesLabel": "Casos de prueba",
+    "xpAwarded": "XP otorgado",
+    "introLine1": "Esta lección introduce patrones de derivación de cuentas, composición de transacciones y diseño seguro de instrucciones para apps Solana en producción.",
+    "introLine2": "Completa el desafío a la derecha para validar tu comprensión y ganar XP extra por tu progreso."
+  },
+  "dashboard": {
+    "title": "Panel",
+    "subtitle": "Sigue tu progreso y constancia de aprendizaje.",
+    "currentCourses": "Cursos actuales",
+    "achievements": "Logros",
+    "streakCalendar": "Calendario de racha"
+  },
+  "profile": {
+    "title": "Perfil",
+    "credentials": "Credenciales",
+    "completedCourses": "Cursos completados",
+    "skills": "Radar de habilidades"
+  },
+  "leaderboard": {
+    "title": "Clasificación",
+    "subtitle": "Principales builders por XP.",
+    "weekly": "Semanal",
+    "monthly": "Mensual",
+    "alltime": "General"
+  },
+  "settings": {
+    "title": "Configuración",
+    "subtitle": "Administra preferencias de cuenta y privacidad.",
+    "profile": "Perfil",
+    "accountLinking": "Vinculación de cuentas",
+    "privacy": "Privacidad",
+    "displayName": "Nombre para mostrar",
+    "bio": "Bio",
+    "save": "Guardar cambios",
+    "publicProfile": "Perfil público"
+  },
+  "certificate": {
+    "title": "Certificado",
+    "verifyOnChain": "Verificar on-chain",
+    "share": "Compartir",
+    "credentialTitle": "Credencial Superteam Academy",
+    "issuedOnDevnet": "Emitido en Devnet"
+  }
+}

@@ -1,0 +1,118 @@
+{
+  "common": {
+    "brand": "Superteam Academy",
+    "theme": "Theme",
+    "language": "Language",
+    "search": "Search",
+    "all": "All",
+    "beginner": "Beginner",
+    "intermediate": "Intermediate",
+    "advanced": "Advanced",
+    "enrollNow": "Enroll now",
+    "continue": "Continue",
+    "runTests": "Run tests",
+    "pass": "Pass",
+    "fail": "Fail",
+    "pending": "Pending",
+    "xp": "XP",
+    "level": "Level",
+    "streak": "Streak",
+    "lessons": "Lessons",
+    "module": "Module",
+    "user": "User"
+  },
+  "auth": {
+    "google": "Google",
+    "github": "GitHub",
+    "link": "Link"
+  },
+  "header": {
+    "courses": "Courses",
+    "dashboard": "Dashboard",
+    "leaderboard": "Leaderboard"
+  },
+  "landing": {
+    "heroTitle": "Become a production-ready Solana developer",
+    "heroSubtitle": "Learn through interactive lessons, coding challenges, and on-chain credentials.",
+    "primaryCta": "Start learning",
+    "secondaryCta": "Browse courses",
+    "pathTitle": "Learning paths",
+    "pathSubtitle": "Choose your track and build practical skills fast.",
+    "paths": {
+      "foundations": {
+        "title": "Solana Foundations",
+        "description": "Wallets, accounts, transactions, and RPC essentials."
+      },
+      "programs": {
+        "title": "Anchor Programs",
+        "description": "Build, test, and deploy secure on-chain logic."
+      },
+      "fullstack": {
+        "title": "Fullstack dApps",
+        "description": "Connect Next.js apps with Solana programs end-to-end."
+      }
+    }
+  },
+  "courses": {
+    "title": "Course Catalog",
+    "subtitle": "Find the right course by topic, difficulty, and duration.",
+    "searchPlaceholder": "Search courses, topics, or tracks",
+    "empty": "No courses match your filters.",
+    "difficultyLabel": "Difficulty",
+    "topicLabel": "Topic",
+    "durationLabel": "Duration",
+    "detail": {
+      "overview": "Course overview",
+      "modules": "Modules",
+      "progress": "Progress",
+      "enrollmentCta": "Enroll in course"
+    }
+  },
+  "lesson": {
+    "contentTitle": "Lesson content",
+    "challengeTitle": "Code challenge",
+    "starterCodeLabel": "Starter code",
+    "testCasesLabel": "Test cases",
+    "xpAwarded": "XP awarded",
+    "introLine1": "This lesson introduces account derivation patterns, transaction composition, and secure instruction design for production Solana apps.",
+    "introLine2": "Complete the challenge on the right to validate your understanding and earn bonus XP for your progress."
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Track your learning progress and momentum.",
+    "currentCourses": "Current courses",
+    "achievements": "Achievements",
+    "streakCalendar": "Streak calendar"
+  },
+  "profile": {
+    "title": "Profile",
+    "credentials": "Credentials",
+    "completedCourses": "Completed courses",
+    "skills": "Skill radar"
+  },
+  "leaderboard": {
+    "title": "Leaderboard",
+    "subtitle": "Top builders ranked by XP.",
+    "weekly": "Weekly",
+    "monthly": "Monthly",
+    "alltime": "All-time"
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Manage your account preferences and privacy.",
+    "profile": "Profile",
+    "accountLinking": "Account linking",
+    "privacy": "Privacy",
+    "displayName": "Display name",
+    "bio": "Bio",
+    "save": "Save changes",
+    "publicProfile": "Public profile"
+  },
+  "certificate": {
+    "title": "Certificate",
+    "verifyOnChain": "Verify on-chain",
+    "share": "Share",
+    "credentialTitle": "Superteam Academy Credential",
+    "issuedOnDevnet": "Issued on Devnet"
+  }
+}
