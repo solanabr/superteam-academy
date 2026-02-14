@@ -1,0 +1,98 @@
+[
+  {
+    "_id": "achievement-first-steps",
+    "_type": "achievement",
+    "name": "First Steps",
+    "description": "Complete your first lesson",
+    "icon": "footprints",
+    "category": "progress"
+  },
+  {
+    "_id": "achievement-course-completer",
+    "_type": "achievement",
+    "name": "Course Completer",
+    "description": "Complete an entire course",
+    "icon": "graduation-cap",
+    "category": "progress"
+  },
+  {
+    "_id": "achievement-speed-runner",
+    "_type": "achievement",
+    "name": "Speed Runner",
+    "description": "Complete a course in under 24 hours",
+    "icon": "zap",
+    "category": "progress"
+  },
+  {
+    "_id": "achievement-week-warrior",
+    "_type": "achievement",
+    "name": "Week Warrior",
+    "description": "Maintain a 7-day learning streak",
+    "icon": "flame",
+    "category": "streaks"
+  },
+  {
+    "_id": "achievement-monthly-master",
+    "_type": "achievement",
+    "name": "Monthly Master",
+    "description": "Maintain a 30-day learning streak",
+    "icon": "crown",
+    "category": "streaks"
+  },
+  {
+    "_id": "achievement-consistency-king",
+    "_type": "achievement",
+    "name": "Consistency King",
+    "description": "Maintain a 100-day learning streak",
+    "icon": "trophy",
+    "category": "streaks"
+  },
+  {
+    "_id": "achievement-rust-rookie",
+    "_type": "achievement",
+    "name": "Rust Rookie",
+    "description": "Complete your first Rust challenge",
+    "icon": "code",
+    "category": "skills"
+  },
+  {
+    "_id": "achievement-anchor-expert",
+    "_type": "achievement",
+    "name": "Anchor Expert",
+    "description": "Complete all Anchor framework lessons",
+    "icon": "anchor",
+    "category": "skills"
+  },
+  {
+    "_id": "achievement-full-stack-solana",
+    "_type": "achievement",
+    "name": "Full Stack Solana",
+    "description": "Complete all courses in the Solana Developer Path",
+    "icon": "layers",
+    "category": "skills"
+  },
+  {
+    "_id": "achievement-early-adopter",
+    "_type": "achievement",
+    "name": "Early Adopter",
+    "description": "Join the platform during the first month",
+    "icon": "sparkles",
+    "category": "special"
+  },
+  {
+    "_id": "achievement-bug-hunter",
+    "_type": "achievement",
+    "name": "Bug Hunter",
+    "description": "Report a verified bug in the platform",
+    "icon": "bug",
+    "category": "special"
+  },
+  {
+    "_id": "achievement-perfect-score",
+    "_type": "achievement",
+    "name": "Perfect Score",
+    "description": "Complete all challenges in a course with no wrong attempts",
+    "icon": "star",
+    "category": "special"
+  }
+]

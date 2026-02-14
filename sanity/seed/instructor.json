@@ -1,0 +1,42 @@
+[
+  {
+    "_id": "instructor-ana-santos",
+    "_type": "instructor",
+    "name": "Ana Santos",
+    "bio": "Solana core contributor and developer advocate. Building on Solana since 2021. Previously worked at Serum and Marinade Finance. Passionate about onboarding the next wave of Web3 developers in Latin America.",
+    "socialLinks": {
+      "twitter": "https://twitter.com/anasantos_sol",
+      "github": "https://github.com/anasantos"
+    }
+  },
+  {
+    "_id": "instructor-lucas-oliveira",
+    "_type": "instructor",
+    "name": "Lucas Oliveira",
+    "bio": "Systems programmer and Rust educator. Former embedded systems engineer who transitioned to blockchain development. Maintains open-source Solana tooling and teaches Rust workshops across Latin America.",
+    "socialLinks": {
+      "twitter": "https://twitter.com/lucasoliv_dev",
+      "github": "https://github.com/lucasoliveira"
+    }
+  },
+  {
+    "_id": "instructor-mariana-costa",
+    "_type": "instructor",
+    "name": "Mariana Costa",
+    "bio": "Anchor framework contributor and smart contract auditor. Leads the Solana security guild at Superteam Brazil. Has audited 20+ Solana programs including major DeFi protocols.",
+    "socialLinks": {
+      "twitter": "https://twitter.com/mari_costa_sol",
+      "github": "https://github.com/marianacosta"
+    }
+  },
+  {
+    "_id": "instructor-rafael-mendes",
+    "_type": "instructor",
+    "name": "Rafael Mendes",
+    "bio": "DeFi researcher and protocol designer. Previously built trading systems at a São Paulo quant fund. Now designs tokenomics and DeFi primitives for Solana protocols.",
+    "socialLinks": {
+      "twitter": "https://twitter.com/rafamendes_defi",
+      "github": "https://github.com/rafaelmendes"
+    }
+  }
+]
