@@ -1,0 +1,92 @@
+"use client";
+
+import { useWallet } from "@solana/wallet-adapter-react";
+import { type WalletName } from "@solana/wallet-adapter-base";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import Image from "next/image";
+
+interface WalletModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export function WalletModal({ open, onOpenChange }: WalletModalProps) {
+  const { wallets, select, connecting } = useWallet();
+
+  const handleSelect = (walletName: WalletName) => {
+    select(walletName);
+    onOpenChange(false);
+  };
+
+  // Deduplicate wallets by name (MetaMask can register multiple adapters)
+  const seen = new Set<string>();
+  const deduped = wallets.filter((w) => {
+    if (seen.has(w.adapter.name)) return false;
+    seen.add(w.adapter.name);
+    return true;
+  });
+  const installed = deduped.filter((w) => w.readyState === "Installed");
+  const notInstalled = deduped.filter((w) => w.readyState !== "Installed");
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Connect Wallet</DialogTitle>
+          <DialogDescription>
+            Connect your Solana wallet to access the platform.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          {installed.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-muted-foreground uppercase">Detected</p>
+              {installed.map((wallet) => (
+                <Button
+                  key={wallet.adapter.name}
+                  variant="outline"
+                  className="w-full justify-start gap-3 h-12"
+                  onClick={() => handleSelect(wallet.adapter.name)}
+                  disabled={connecting}
+                >
+                  {wallet.adapter.icon && (
+                    <Image src={wallet.adapter.icon} alt={wallet.adapter.name} width={24} height={24} className="rounded" />
+                  )}
+                  {wallet.adapter.name}
+                </Button>
+              ))}
+            </div>
+          )}
+          {notInstalled.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-muted-foreground uppercase">More Wallets</p>
+              {notInstalled.slice(0, 3).map((wallet) => (
+                <Button
+                  key={wallet.adapter.name}
+                  variant="ghost"
+                  className="w-full justify-start gap-3 h-12 opacity-60"
+                  onClick={() => {
+                    if (wallet.adapter.url) window.open(wallet.adapter.url, "_blank");
+                  }}
+                >
+                  {wallet.adapter.icon && (
+                    <Image src={wallet.adapter.icon} alt={wallet.adapter.name} width={24} height={24} className="rounded" />
+                  )}
+                  {wallet.adapter.name}
+                  <span className="ml-auto text-xs text-muted-foreground">Install</span>
+                </Button>
+              ))}
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}

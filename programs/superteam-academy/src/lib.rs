@@ -8,7 +8,7 @@ pub mod utils;
 use instructions::*;
 use state::*;
 
-declare_id!("STAcademy1111111111111111111111111111111111");
+declare_id!("8M2cmZPb3grNi479qCDVwx3DjZMWCk8UEyH3H7x95Cxs");
 
 #[program]
 pub mod superteam_academy {

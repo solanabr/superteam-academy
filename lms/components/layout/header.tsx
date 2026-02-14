@@ -1,0 +1,91 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useState } from "react";
+import { BookOpen, LayoutDashboard, Trophy, Menu } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/shared/theme-toggle";
+import { WalletButton } from "@/components/wallet/wallet-button";
+import { WalletModal } from "@/components/wallet/wallet-modal";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
+
+const NAV_ITEMS = [
+  { href: "/courses", label: "Courses", icon: BookOpen },
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
+];
+
+export function Header() {
+  const pathname = usePathname();
+  const [walletModalOpen, setWalletModalOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  return (
+    <>
+      <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-8">
+            <Link href="/" className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-solana-purple to-solana-green">
+                <span className="text-sm font-bold text-white">S</span>
+              </div>
+              <span className="hidden text-lg font-bold sm:inline-block">
+                Superteam <span className="text-solana-purple">Academy</span>
+              </span>
+            </Link>
+            <nav className="hidden items-center gap-1 md:flex">
+              {NAV_ITEMS.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground",
+                    pathname === item.href
+                      ? "bg-accent text-accent-foreground"
+                      : "text-muted-foreground"
+                  )}
+                >
+                  <item.icon className="h-4 w-4" />
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+          </div>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <WalletButton onConnectClick={() => setWalletModalOpen(true)} />
+            <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+              <SheetTrigger asChild className="md:hidden">
+                <Button variant="ghost" size="icon">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-72">
+                <SheetTitle>Navigation</SheetTitle>
+                <nav className="mt-8 flex flex-col gap-2">
+                  {NAV_ITEMS.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setMobileOpen(false)}
+                      className={cn(
+                        "flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors hover:bg-accent",
+                        pathname === item.href ? "bg-accent" : ""
+                      )}
+                    >
+                      <item.icon className="h-5 w-5" />
+                      {item.label}
+                    </Link>
+                  ))}
+                </nav>
+              </SheetContent>
+            </Sheet>
+          </div>
+        </div>
+      </header>
+      <WalletModal open={walletModalOpen} onOpenChange={setWalletModalOpen} />
+    </>
+  );
+}
