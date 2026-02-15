@@ -3,16 +3,16 @@
 import { useRef, useState, useMemo } from "react";
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
-import { ArrowLeft, Download, Share2, Shield, CheckCircle2, Copy, Check, Award, Trophy } from "lucide-react";
+import { ArrowLeft, Download, Share2, Shield, CheckCircle2, Copy, Check, Award, Trophy, ExternalLink } from "lucide-react";
 import { highlight } from "@/lib/syntax-highlight";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { usePracticeProgress, useXP, useDisplayName } from "@/lib/hooks/use-service";
+import { usePracticeProgress, useDisplayName } from "@/lib/hooks/use-service";
 import { PRACTICE_CHALLENGES } from "@/lib/data/practice-challenges";
-import { PRACTICE_MILESTONES, MILESTONE_LEVELS, PRACTICE_CATEGORIES } from "@/types/practice";
+import { PRACTICE_MILESTONES, MILESTONE_LEVELS, PRACTICE_CATEGORIES, PRACTICE_DIFFICULTY_CONFIG } from "@/types/practice";
 import type { PracticeCategory } from "@/types/practice";
 import { toast } from "sonner";
 
@@ -21,8 +21,7 @@ export default function PracticeCertificatePage() {
   const tc = useTranslations("common");
   const tCert = useTranslations("certificates");
   const { publicKey } = useWallet();
-  const { completed: completedIds } = usePracticeProgress();
-  const { data: xp } = useXP();
+  const { completed: completedIds, txHashes, claimedMilestones, milestoneTxHashes } = usePracticeProgress();
   const { data: displayName } = useDisplayName();
   const certRef = useRef<HTMLDivElement>(null);
   const [metaCopied, setMetaCopied] = useState(false);
@@ -31,14 +30,16 @@ export default function PracticeCertificatePage() {
   const shortWallet = wallet.length > 10 ? `${wallet.slice(0, 6)}...${wallet.slice(-4)}` : wallet;
   const solvedCount = completedIds.length;
 
-  const { milestone, level, color } = useMemo(() => {
+  const { milestone, level, color, nextMilestone } = useMemo(() => {
     let best = 0;
+    let next: number | null = null;
     for (const m of PRACTICE_MILESTONES) {
       if (solvedCount >= m) best = m;
+      else if (next === null) next = m;
     }
-    if (best === 0) return { milestone: 0, level: "None", color: "#71717a" };
+    if (best === 0) return { milestone: 0, level: "None", color: "#71717a", nextMilestone: PRACTICE_MILESTONES[0] };
     const info = MILESTONE_LEVELS[best];
-    return { milestone: best, level: info.name, color: info.color };
+    return { milestone: best, level: info.name, color: info.color, nextMilestone: next };
   }, [solvedCount]);
 
   const practiceXP = completedIds.reduce((sum, id) => {
@@ -55,6 +56,13 @@ export default function PracticeCertificatePage() {
     return Object.entries(catCounts)
       .filter(([, count]) => count >= 3)
       .map(([cat]) => cat as PracticeCategory);
+  }, [completedIds]);
+
+  const solvedChallenges = useMemo(() => {
+    return completedIds
+      .map((id) => PRACTICE_CHALLENGES.find((ch) => ch.id === id))
+      .filter(Boolean)
+      .reverse();
   }, [completedIds]);
 
   const earnedDate = new Date().toLocaleDateString("en-US", {
@@ -121,6 +129,7 @@ export default function PracticeCertificatePage() {
   }
 
   const secondaryColor = "#ffd23f";
+  const latestMilestoneTx = milestoneTxHashes[String(milestone)] ?? null;
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
@@ -211,6 +220,27 @@ export default function PracticeCertificatePage() {
                 </div>
               </div>
 
+              {/* Next milestone progress */}
+              {nextMilestone && (
+                <div className="mb-8">
+                  <div className="flex items-center justify-between text-xs mb-1.5">
+                    <span className="text-muted-foreground">{t("nextMilestone")}</span>
+                    <span className="font-semibold" style={{ color: MILESTONE_LEVELS[nextMilestone].color }}>
+                      {MILESTONE_LEVELS[nextMilestone].name} ({solvedCount}/{nextMilestone})
+                    </span>
+                  </div>
+                  <div className="h-2 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{
+                        width: `${Math.min((solvedCount / nextMilestone) * 100, 100)}%`,
+                        background: `linear-gradient(90deg, ${color}, ${MILESTONE_LEVELS[nextMilestone].color})`,
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+
               {categoriesMastered.length > 0 && (
                 <>
                   <Separator className="my-8" />
@@ -245,6 +275,15 @@ export default function PracticeCertificatePage() {
 
       {/* Actions */}
       <div className="mt-6 flex flex-wrap gap-3 justify-center">
+        {latestMilestoneTx && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.open(`https://explorer.solana.com/tx/${latestMilestoneTx}?cluster=devnet`, "_blank")}
+          >
+            <ExternalLink className="h-4 w-4" /> {tc("viewOn")}
+          </Button>
+        )}
         <Button variant="outline" size="sm" onClick={handleShare}>
           <Share2 className="h-4 w-4" /> {tc("shareOnX")}
         </Button>
@@ -253,8 +292,154 @@ export default function PracticeCertificatePage() {
         </Button>
       </div>
 
+      {/* On-Chain Verification */}
+      <Card className="mt-8">
+        <CardContent className="p-6">
+          <h2 className="font-semibold mb-3 flex items-center gap-2">
+            <Shield className="h-4 w-4" /> {tCert("onChainVerification")}
+          </h2>
+          <p className="text-sm text-muted-foreground mb-4">
+            {tCert("verificationDescription")}
+          </p>
+          <div className="space-y-2.5 text-sm">
+            {displayName && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">{tCert("learner")}</span>
+                <span className="font-medium">{displayName}</span>
+              </div>
+            )}
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">{tCert("tokenStandard")}</span>
+              <span className="font-medium">Token-2022 (NonTransferable)</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">{tCert("track")}</span>
+              <span className="font-medium" style={{ color }}>{t("practiceArena")}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">{tCert("levelLabel")}</span>
+              <span className="font-bold" style={{ color }}>{level}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">{tCert("networkLabel")}</span>
+              <span className="font-medium">Solana Devnet</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">{t("challengesSolved")}</span>
+              <span className="font-medium">{solvedCount} / {PRACTICE_CHALLENGES.length}</span>
+            </div>
+            {latestMilestoneTx && (
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">{tCert("transaction")}</span>
+                <button
+                  className="font-mono text-xs hover:underline cursor-pointer"
+                  style={{ color }}
+                  onClick={() => {
+                    navigator.clipboard.writeText(latestMilestoneTx);
+                    toast.success(tCert("txHashCopied"));
+                  }}
+                  title={latestMilestoneTx}
+                >
+                  {latestMilestoneTx.slice(0, 8)}...{latestMilestoneTx.slice(-8)}
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Milestone history */}
+          {claimedMilestones.length > 0 && (
+            <>
+              <Separator className="my-4" />
+              <h3 className="text-sm font-semibold mb-2">{t("milestoneHistory")}</h3>
+              <div className="space-y-2">
+                {PRACTICE_MILESTONES.filter((m) => claimedMilestones.includes(m)).map((m) => {
+                  const info = MILESTONE_LEVELS[m];
+                  const tx = milestoneTxHashes[String(m)];
+                  return (
+                    <div key={m} className="flex items-center justify-between text-sm rounded-md border px-3 py-2">
+                      <div className="flex items-center gap-2">
+                        <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: info.color }} />
+                        <div>
+                          <p className="font-medium">{info.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {m} {tc("solved").toLowerCase()} · {info.solReward} SOL
+                          </p>
+                        </div>
+                      </div>
+                      {tx ? (
+                        <a
+                          href={`https://explorer.solana.com/tx/${tx}?cluster=devnet`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-mono text-[11px] hover:underline"
+                          style={{ color: info.color }}
+                          title={tx}
+                        >
+                          {tx.slice(0, 6)}...{tx.slice(-4)}
+                        </a>
+                      ) : (
+                        <span className="text-[11px] text-muted-foreground/60">{tCert("awaitingTx")}</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Recently Solved Challenges */}
+      {solvedChallenges.length > 0 && (
+        <Card className="mt-4">
+          <CardContent className="p-6">
+            <h2 className="font-semibold mb-3 flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-solana-green" /> {t("recentlySolved")}
+            </h2>
+            <div className="space-y-2 max-h-[400px] overflow-y-auto">
+              {solvedChallenges.map((ch) => {
+                if (!ch) return null;
+                const tx = txHashes[ch.id];
+                const diffConfig = PRACTICE_DIFFICULTY_CONFIG[ch.difficulty];
+                const catConfig = PRACTICE_CATEGORIES[ch.category];
+                return (
+                  <div key={ch.id} className="flex items-center justify-between text-sm rounded-md border px-3 py-2">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex flex-col gap-0.5 min-w-0">
+                        <p className="font-medium truncate">{ch.title}</p>
+                        <div className="flex items-center gap-2 text-xs">
+                          <span style={{ color: diffConfig.color }} className="font-medium">{diffConfig.label}</span>
+                          <span className="text-muted-foreground">·</span>
+                          <span style={{ color: catConfig.color }}>{catConfig.label}</span>
+                          <span className="text-muted-foreground">·</span>
+                          <span className="text-xp-gold font-medium">{ch.xpReward} XP</span>
+                        </div>
+                      </div>
+                    </div>
+                    {tx ? (
+                      <a
+                        href={`https://explorer.solana.com/tx/${tx}?cluster=devnet`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-mono text-[11px] hover:underline flex-shrink-0 ml-2"
+                        style={{ color }}
+                        title={tx}
+                      >
+                        {tx.slice(0, 6)}...{tx.slice(-4)}
+                      </a>
+                    ) : (
+                      <CheckCircle2 className="h-4 w-4 text-solana-green flex-shrink-0 ml-2" />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* NFT Metadata */}
-      <Card className="mt-8 overflow-hidden">
+      <Card className="mt-4 overflow-hidden">
         <div className="flex items-center justify-between border-b px-4 py-2 bg-[#16161e]">
           <span className="text-xs font-semibold uppercase tracking-wider text-[#7f849c]">JSON</span>
           <Button

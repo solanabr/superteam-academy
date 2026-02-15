@@ -148,7 +148,7 @@ export default function PracticeChallengePage({ params }: { params: Promise<{ id
         <div className="flex items-center gap-2">
           {isCompleted && (
             <>
-              <Badge className="bg-solana-green text-black">{tc("solved")}</Badge>
+              <Badge className="bg-solana-green text-white dark:text-black">{tc("solved")}</Badge>
               {txHashes[id] && (
                 <a
                   href={`https://explorer.solana.com/tx/${txHashes[id]}?cluster=devnet`}
@@ -436,10 +436,10 @@ function extractPatterns(solution: string): { label: string; regex: RegExp }[] {
 
   // Rust patterns
   for (const m of clean.matchAll(/struct\s+(\w+)/g)) {
-    patterns.push({ label: `struct ${m[1]}`, regex: new RegExp(`struct\\s+${m[1]}\\s*\\{`) });
+    patterns.push({ label: `struct ${m[1]}`, regex: new RegExp(`struct\\s+${m[1]}[^{]*\\{`) });
   }
   for (const m of clean.matchAll(/enum\s+(\w+)/g)) {
-    patterns.push({ label: `enum ${m[1]}`, regex: new RegExp(`enum\\s+${m[1]}\\s*\\{`) });
+    patterns.push({ label: `enum ${m[1]}`, regex: new RegExp(`enum\\s+${m[1]}[^{]*\\{`) });
   }
   for (const m of clean.matchAll(/impl\s+(\w+)/g)) {
     patterns.push({ label: `impl ${m[1]}`, regex: new RegExp(`impl\\s+${m[1]}`) });

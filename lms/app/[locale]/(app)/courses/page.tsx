@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { CourseCard } from "@/components/courses/course-card";
 import { SearchBar } from "@/components/shared/search-bar";
@@ -15,9 +16,10 @@ const DIFFICULTIES: Difficulty[] = ["beginner", "intermediate", "advanced"];
 
 export default function CoursesPage() {
   const t = useTranslations("courses");
+  const searchParams = useSearchParams();
   const [search, setSearch] = useState("");
   const [difficulty, setDifficulty] = useState<Difficulty | "all">("all");
-  const [trackFilter, setTrackFilter] = useState<string>("all");
+  const [trackFilter, setTrackFilter] = useState<string>(searchParams.get("track") ?? "all");
 
   const { data: courses, isLoading } = useCourses();
   const { data: allProgress } = useAllProgress();
@@ -31,6 +33,10 @@ export default function CoursesPage() {
       return true;
     });
   }, [courses, search, difficulty, trackFilter]);
+
+  const completedCourseIds = new Set(
+    allProgress?.filter((p) => p.completedAt).map((p) => p.courseId) ?? []
+  );
 
   const getProgress = (courseId: string) => {
     const p = allProgress?.find((p) => p.courseId === courseId);
@@ -92,7 +98,12 @@ export default function CoursesPage() {
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((course) => (
-            <CourseCard key={course.id} course={course} progress={getProgress(course.id)} />
+            <CourseCard
+              key={course.id}
+              course={course}
+              progress={getProgress(course.id)}
+              prerequisiteMet={!course.prerequisiteId || completedCourseIds.has(course.prerequisiteId)}
+            />
           ))}
         </div>
       )}

@@ -4,7 +4,7 @@ import { Link, usePathname } from "@/i18n/navigation";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import { BookOpen, LayoutDashboard, Trophy, Code2, Menu, User } from "lucide-react";
+import { BookOpen, LayoutDashboard, Trophy, Code2, Menu, User, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
@@ -47,7 +47,7 @@ export function Header() {
                   href={item.href}
                   className={cn(
                     "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground",
-                    pathname === item.href
+                    pathname === item.href || pathname.startsWith(item.href + "/")
                       ? "bg-accent text-accent-foreground"
                       : "text-muted-foreground"
                   )}
@@ -78,7 +78,7 @@ export function Header() {
                       onClick={() => setMobileOpen(false)}
                       className={cn(
                         "flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors hover:bg-accent",
-                        pathname === item.href ? "bg-accent" : ""
+                        pathname === item.href || pathname.startsWith(item.href + "/") ? "bg-accent" : ""
                       )}
                     >
                       <item.icon className="h-5 w-5" />

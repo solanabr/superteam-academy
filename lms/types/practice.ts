@@ -27,29 +27,29 @@ export interface PracticeChallenge {
 }
 
 export const PRACTICE_CATEGORIES: Record<PracticeCategory, { label: string; color: string }> = {
-  accounts: { label: "Accounts", color: "#008c4c" },
-  transactions: { label: "Transactions", color: "#2f6b3f" },
-  pdas: { label: "PDAs", color: "#ffd23f" },
-  tokens: { label: "Tokens", color: "#ffd23f" },
-  cpi: { label: "CPI", color: "#2f6b3f" },
-  serialization: { label: "Serialization", color: "#008c4c" },
-  security: { label: "Security", color: "#1b231d" },
-  anchor: { label: "Anchor", color: "#008c4c" },
-  defi: { label: "DeFi", color: "#2f6b3f" },
-  advanced: { label: "Advanced", color: "#1b231d" },
+  accounts: { label: "Accounts", color: "#34d399" },
+  transactions: { label: "Transactions", color: "#60a5fa" },
+  pdas: { label: "PDAs", color: "#fbbf24" },
+  tokens: { label: "Tokens", color: "#a78bfa" },
+  cpi: { label: "CPI", color: "#f472b6" },
+  serialization: { label: "Serialization", color: "#2dd4bf" },
+  security: { label: "Security", color: "#fb923c" },
+  anchor: { label: "Anchor", color: "#34d399" },
+  defi: { label: "DeFi", color: "#4ade80" },
+  advanced: { label: "Advanced", color: "#f87171" },
 };
 
 export const PRACTICE_DIFFICULTY_CONFIG: Record<PracticeDifficulty, { label: string; color: string; xp: number }> = {
-  easy: { label: "Easy", color: "#008c4c", xp: 10 },
-  medium: { label: "Medium", color: "#ffd23f", xp: 25 },
-  hard: { label: "Hard", color: "#2f6b3f", xp: 50 },
+  easy: { label: "Easy", color: "#34d399", xp: 10 },
+  medium: { label: "Medium", color: "#fbbf24", xp: 25 },
+  hard: { label: "Hard", color: "#f87171", xp: 50 },
 };
 
 export const PRACTICE_MILESTONES = [15, 30, 50, 75] as const;
 
 export const MILESTONE_LEVELS: Record<number, { name: string; color: string; solReward: number }> = {
-  15: { name: "Bronze", color: "#2f6b3f", solReward: 0.05 },
-  30: { name: "Silver", color: "#8a9a8e", solReward: 0.1 },
-  50: { name: "Gold", color: "#ffd23f", solReward: 0.25 },
-  75: { name: "Diamond", color: "#008c4c", solReward: 0.5 },
+  15: { name: "Bronze", color: "#cd7f32", solReward: 0.05 },
+  30: { name: "Silver", color: "#a8b2c1", solReward: 0.1 },
+  50: { name: "Gold", color: "#fbbf24", solReward: 0.25 },
+  75: { name: "Diamond", color: "#22d3ee", solReward: 0.5 },
 };

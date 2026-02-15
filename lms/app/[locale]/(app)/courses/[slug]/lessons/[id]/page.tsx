@@ -157,7 +157,7 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string;
           <ArrowLeft className="h-4 w-4" /> {course.title}
         </Link>
         <div className="flex items-center gap-2">
-          {isCompleted && <Badge className="bg-solana-green text-black">{tc("completed")}</Badge>}
+          {isCompleted && <Badge className="bg-solana-green text-white dark:text-black">{tc("completed")}</Badge>}
           <Badge variant="xp">{lesson.xpReward} XP</Badge>
         </div>
       </div>
@@ -505,11 +505,11 @@ function extractPatterns(solution: string): { label: string; regex: RegExp }[] {
 
   // Rust: detect struct definitions
   for (const m of clean.matchAll(/struct\s+(\w+)/g)) {
-    patterns.push({ label: `struct ${m[1]}`, regex: new RegExp(`struct\\s+${m[1]}\\s*\\{`) });
+    patterns.push({ label: `struct ${m[1]}`, regex: new RegExp(`struct\\s+${m[1]}[^{]*\\{`) });
   }
   // Rust: detect enum definitions
   for (const m of clean.matchAll(/enum\s+(\w+)/g)) {
-    patterns.push({ label: `enum ${m[1]}`, regex: new RegExp(`enum\\s+${m[1]}\\s*\\{`) });
+    patterns.push({ label: `enum ${m[1]}`, regex: new RegExp(`enum\\s+${m[1]}[^{]*\\{`) });
   }
   // Rust: detect impl blocks
   for (const m of clean.matchAll(/impl\s+(\w+)/g)) {
@@ -517,7 +517,7 @@ function extractPatterns(solution: string): { label: string; regex: RegExp }[] {
   }
   // Rust: detect pub fn
   for (const m of clean.matchAll(/(?:pub\s+)?fn\s+(\w+)/g)) {
-    patterns.push({ label: `fn ${m[1]}`, regex: new RegExp(`fn\\s+${m[1]}\\s*\\(`) });
+    patterns.push({ label: `fn ${m[1]}`, regex: new RegExp(`fn\\s+${m[1]}\\s*(?:<[^>]*>)?\\s*\\(`) });
   }
   // Rust: detect derive macros
   for (const m of clean.matchAll(/#\[derive\(([^)]+)\)\]/g)) {

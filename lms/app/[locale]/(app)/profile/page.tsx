@@ -1,6 +1,7 @@
 "use client";
 
 import { Zap, Flame, Trophy, BookOpen, Award, Calendar, Code2, ExternalLink, CheckCircle2, Lock } from "lucide-react";
+import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +10,9 @@ import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { useXP, useLevel, useStreak, useAllProgress, useAchievements, useClaimAchievement, useCourses, useDisplayName, useBio, usePracticeProgress } from "@/lib/hooks/use-service";
 import { getXpProgress, formatXP, shortenAddress } from "@/lib/utils";
-import { useWallet } from "@solana/wallet-adapter-react";
+import { useWallet, useConnection } from "@solana/wallet-adapter-react";
+import { LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { useQuery } from "@tanstack/react-query";
 import { TRACKS } from "@/types/course";
 import { ACHIEVEMENTS, checkAchievementEligibility, type AchievementContext } from "@/types/gamification";
 import { PRACTICE_MILESTONES, MILESTONE_LEVELS, PRACTICE_DIFFICULTY_CONFIG } from "@/types/practice";
@@ -23,6 +26,7 @@ export default function ProfilePage() {
   const t = useTranslations("profile");
   const tc = useTranslations("common");
   const { publicKey, connected } = useWallet();
+  const { connection } = useConnection();
   const { data: displayName } = useDisplayName();
   const { data: bio } = useBio();
   const { data: xp = 0 } = useXP();
@@ -34,6 +38,19 @@ export default function ProfilePage() {
   const { completed: practiceCompleted, claimedMilestones, milestoneTxHashes } = usePracticeProgress();
   const claimAchievement = useClaimAchievement();
   const [claimingId, setClaimingId] = useState<number | null>(null);
+
+  const { data: balanceLamports } = useQuery({
+    queryKey: ["solBalance", publicKey?.toBase58()],
+    queryFn: () => connection.getBalance(publicKey!),
+    enabled: !!publicKey,
+    refetchInterval: 30_000,
+  });
+  const solBalance = balanceLamports != null ? balanceLamports / LAMPORTS_PER_SOL : null;
+
+  const solEarned = claimedMilestones.reduce((sum, m) => {
+    const level = MILESTONE_LEVELS[m];
+    return sum + (level?.solReward ?? 0);
+  }, 0);
 
   const xpProgress = getXpProgress(xp);
   const completedCourses = allProgress?.filter((p) => p.completedAt) ?? [];
@@ -128,6 +145,45 @@ export default function ProfilePage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* SOL Stats */}
+      <div className="grid gap-4 sm:grid-cols-2 mb-8">
+        <Card>
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">{t("walletBalance")}</p>
+                <p className="text-2xl font-bold mt-1">
+                  {solBalance != null ? `${solBalance.toFixed(4)} SOL` : "—"}
+                </p>
+              </div>
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-solana-purple/10">
+                <Image src="/image.png" alt="SOL" width={28} height={28} className="rounded-full" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">{t("solEarned")}</p>
+                <p className="text-2xl font-bold mt-1 text-solana-green">
+                  {solEarned > 0 ? `${solEarned} SOL` : "0 SOL"}
+                </p>
+                {claimedMilestones.length > 0 && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {t("fromMilestones", { count: claimedMilestones.length })}
+                  </p>
+                )}
+              </div>
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-solana-green/10">
+                <Image src="/image.png" alt="SOL" width={28} height={28} className="rounded-full" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       <div className="grid gap-8 lg:grid-cols-2">
         {/* Skill Tracks */}

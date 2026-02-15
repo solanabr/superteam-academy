@@ -218,28 +218,28 @@ export default function PracticePage() {
                     const catConfig = PRACTICE_CATEGORIES[c.category];
                     return (
                       <tr key={c.id} className="border-b last:border-0 hover:bg-muted/50 transition-colors">
-                        <td className="px-4 py-3 text-muted-foreground">{i + 1}</td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-3.5 text-muted-foreground/70 tabular-nums">{i + 1}</td>
+                        <td className="px-4 py-3.5">
                           <Link href={`/practice/${c.id}`} className="font-medium hover:text-solana-purple transition-colors">
                             {c.title}
                           </Link>
                         </td>
-                        <td className="px-4 py-3">
-                          <span className="text-xs font-semibold" style={{ color: diffConfig.color }}>
+                        <td className="px-4 py-3.5">
+                          <span className="text-xs font-bold" style={{ color: diffConfig.color }}>
                             {diffConfig.label}
                           </span>
                         </td>
-                        <td className="px-4 py-3">
-                          <Badge variant="outline" className="text-xs" style={{ borderColor: catConfig.color, color: catConfig.color }}>
+                        <td className="px-4 py-3.5">
+                          <Badge variant="outline" className="text-xs font-medium" style={{ borderColor: catConfig.color, color: catConfig.color }}>
                             {catConfig.label}
                           </Badge>
                         </td>
-                        <td className="px-4 py-3 capitalize text-xs text-muted-foreground">{c.language}</td>
-                        <td className="px-4 py-3 text-right font-medium text-xp-gold">{c.xpReward}</td>
-                        <td className="px-4 py-3 text-center">
+                        <td className="px-4 py-3.5 capitalize text-xs font-medium">{c.language === "rust" ? "Rust" : "TypeScript"}</td>
+                        <td className="px-4 py-3.5 text-right font-bold text-xp-gold">{c.xpReward}</td>
+                        <td className="px-4 py-3.5 text-center">
                           {solved && <CheckCircle2 className="h-4 w-4 text-solana-green mx-auto" />}
                         </td>
-                        <td className="px-4 py-3 text-center">
+                        <td className="px-4 py-3.5 text-center">
                           {txHashes[c.id] && (
                             <a
                               href={`https://explorer.solana.com/tx/${txHashes[c.id]}?cluster=devnet`}

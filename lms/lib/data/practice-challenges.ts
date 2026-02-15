@@ -3922,115 +3922,227 @@ pub fn binary_search_pubkeys(
   },
   {
     id: "hard-23",
-    title: "State Machine with Transition Guards",
-    description: "Implement a type-safe state machine pattern for on-chain proposal lifecycle.",
+    title: "On-Chain Proposal State Machine",
+    description: "Build a Solana program instruction processor that transitions proposal state on-chain with PDA validation, time guards, and vote quorum checks.",
     difficulty: "hard",
     category: "advanced",
     language: "rust",
     xpReward: 50,
-    tags: ["state-machine", "governance", "pattern"],
+    tags: ["state-machine", "governance", "on-chain", "pda"],
     challenge: {
       language: "rust",
-      prompt: "Implement a proposal state machine with states: Draft, Active, Succeeded, Defeated, Executed, Cancelled. Implement transition() that enforces valid transitions and time-based guards (Active only lasts voting_period seconds, Succeeded can be executed within execution_delay).",
-      starterCode: `#[derive(Clone, Copy, PartialEq)]
+      prompt: "Implement process_transition(): a Solana program instruction processor that transitions a proposal account between states on-chain. The proposal PDA is derived from [\"proposal\", proposal_id]. Deserialize the account, validate the authority signer, enforce valid state transitions with time-based guards (Clock sysvar) and quorum checks from instruction data, then serialize the updated state back.",
+      starterCode: `use solana_program::{
+    account_info::{next_account_info, AccountInfo},
+    clock::Clock,
+    entrypoint::ProgramResult,
+    program_error::ProgramError,
+    pubkey::Pubkey,
+    sysvar::Sysvar,
+};
+
+#[repr(u8)]
+#[derive(Clone, Copy, PartialEq)]
 pub enum ProposalState {
-    Draft,
-    Active,
-    Succeeded,
-    Defeated,
-    Executed,
-    Cancelled,
+    Draft = 0,
+    Active = 1,
+    Succeeded = 2,
+    Defeated = 3,
+    Executed = 4,
+    Cancelled = 5,
 }
 
-pub struct Proposal {
-    // Your fields here
-}
-
-impl Proposal {
-    pub fn new(created_at: i64, voting_period: i64, execution_delay: i64) -> Self {
-        // Your code here
-    }
-
-    pub fn transition(&mut self, to: ProposalState, current_time: i64, yes_votes: u64, no_votes: u64, quorum: u64) -> Result<(), &'static str> {
-        // Your code here
-    }
-}`,
-      solution: `#[derive(Clone, Copy, PartialEq)]
-pub enum ProposalState {
-    Draft,
-    Active,
-    Succeeded,
-    Defeated,
-    Executed,
-    Cancelled,
-}
-
-pub struct Proposal {
-    pub state: ProposalState,
-    pub created_at: i64,
-    pub activated_at: i64,
-    pub voting_period: i64,
-    pub execution_delay: i64,
-}
-
-impl Proposal {
-    pub fn new(created_at: i64, voting_period: i64, execution_delay: i64) -> Self {
-        Self { state: ProposalState::Draft, created_at, activated_at: 0, voting_period, execution_delay }
-    }
-
-    pub fn transition(&mut self, to: ProposalState, current_time: i64, yes_votes: u64, no_votes: u64, quorum: u64) -> Result<(), &'static str> {
-        match (self.state, to) {
-            (ProposalState::Draft, ProposalState::Active) => {
-                self.activated_at = current_time;
-                self.state = ProposalState::Active;
-                Ok(())
-            }
-            (ProposalState::Draft, ProposalState::Cancelled) => {
-                self.state = ProposalState::Cancelled;
-                Ok(())
-            }
-            (ProposalState::Active, ProposalState::Succeeded) => {
-                if current_time < self.activated_at + self.voting_period {
-                    return Err("Voting period not ended");
-                }
-                if yes_votes + no_votes < quorum {
-                    return Err("Quorum not reached");
-                }
-                if yes_votes <= no_votes {
-                    return Err("Proposal not passed");
-                }
-                self.state = ProposalState::Succeeded;
-                Ok(())
-            }
-            (ProposalState::Active, ProposalState::Defeated) => {
-                if current_time < self.activated_at + self.voting_period {
-                    return Err("Voting period not ended");
-                }
-                self.state = ProposalState::Defeated;
-                Ok(())
-            }
-            (ProposalState::Succeeded, ProposalState::Executed) => {
-                if current_time < self.activated_at + self.voting_period + self.execution_delay {
-                    return Err("Execution delay not passed");
-                }
-                self.state = ProposalState::Executed;
-                Ok(())
-            }
-            _ => Err("Invalid state transition"),
+impl ProposalState {
+    fn from_u8(v: u8) -> Result<Self, ProgramError> {
+        match v {
+            0 => Ok(Self::Draft),
+            1 => Ok(Self::Active),
+            2 => Ok(Self::Succeeded),
+            3 => Ok(Self::Defeated),
+            4 => Ok(Self::Executed),
+            5 => Ok(Self::Cancelled),
+            _ => Err(ProgramError::InvalidInstructionData),
         }
     }
+}
+
+// Proposal account data layout (88 bytes):
+//   [0]      state: u8
+//   [1..9]   activated_at: i64 (LE)
+//   [9..17]  voting_period: i64 (LE)
+//   [17..25] execution_delay: i64 (LE)
+//   [25..33] yes_votes: u64 (LE)
+//   [33..41] no_votes: u64 (LE)
+//   [41..49] quorum: u64 (LE)
+//   [49..81] authority: Pubkey
+//   [81..85] proposal_id: u32 (LE)
+//   [85..86] bump: u8
+//   [86..88] reserved
+
+// Instruction data: [0] = target_state: u8
+
+// Accounts:
+//   0: proposal (writable, PDA)
+//   1: authority (signer)
+//   2: clock sysvar
+
+pub fn process_transition(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
+    instruction_data: &[u8],
+) -> ProgramResult {
+    // Your code here
+}`,
+      solution: `use solana_program::{
+    account_info::{next_account_info, AccountInfo},
+    clock::Clock,
+    entrypoint::ProgramResult,
+    program_error::ProgramError,
+    pubkey::Pubkey,
+    sysvar::Sysvar,
+};
+
+#[repr(u8)]
+#[derive(Clone, Copy, PartialEq)]
+pub enum ProposalState {
+    Draft = 0,
+    Active = 1,
+    Succeeded = 2,
+    Defeated = 3,
+    Executed = 4,
+    Cancelled = 5,
+}
+
+impl ProposalState {
+    fn from_u8(v: u8) -> Result<Self, ProgramError> {
+        match v {
+            0 => Ok(Self::Draft),
+            1 => Ok(Self::Active),
+            2 => Ok(Self::Succeeded),
+            3 => Ok(Self::Defeated),
+            4 => Ok(Self::Executed),
+            5 => Ok(Self::Cancelled),
+            _ => Err(ProgramError::InvalidInstructionData),
+        }
+    }
+}
+
+pub fn process_transition(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
+    instruction_data: &[u8],
+) -> ProgramResult {
+    if instruction_data.is_empty() {
+        return Err(ProgramError::InvalidInstructionData);
+    }
+
+    let accounts_iter = &mut accounts.iter();
+    let proposal_info = next_account_info(accounts_iter)?;
+    let authority_info = next_account_info(accounts_iter)?;
+    let clock_info = next_account_info(accounts_iter)?;
+
+    if !authority_info.is_signer {
+        return Err(ProgramError::MissingRequiredSignature);
+    }
+
+    if proposal_info.owner != program_id {
+        return Err(ProgramError::IncorrectProgramId);
+    }
+
+    let clock = Clock::from_account_info(clock_info)?;
+    let current_time = clock.unix_timestamp;
+
+    let data = proposal_info.try_borrow_data()?;
+    if data.len() < 88 {
+        return Err(ProgramError::InvalidAccountData);
+    }
+
+    let current_state = ProposalState::from_u8(data[0])?;
+    let activated_at = i64::from_le_bytes(data[1..9].try_into().unwrap());
+    let voting_period = i64::from_le_bytes(data[9..17].try_into().unwrap());
+    let execution_delay = i64::from_le_bytes(data[17..25].try_into().unwrap());
+    let yes_votes = u64::from_le_bytes(data[25..33].try_into().unwrap());
+    let no_votes = u64::from_le_bytes(data[33..41].try_into().unwrap());
+    let quorum = u64::from_le_bytes(data[41..49].try_into().unwrap());
+    let authority = Pubkey::try_from(&data[49..81]).unwrap();
+    let proposal_id = u32::from_le_bytes(data[81..85].try_into().unwrap());
+    let bump = data[85];
+    drop(data);
+
+    if authority != *authority_info.key {
+        return Err(ProgramError::InvalidAccountData);
+    }
+
+    let seeds = [b"proposal", &proposal_id.to_le_bytes()[..], &[bump]];
+    let expected_pda = Pubkey::create_program_address(&seeds, program_id)?;
+    if expected_pda != *proposal_info.key {
+        return Err(ProgramError::InvalidSeeds);
+    }
+
+    let target_state = ProposalState::from_u8(instruction_data[0])?;
+
+    let new_activated_at = match (current_state, target_state) {
+        (ProposalState::Draft, ProposalState::Active) => {
+            current_time
+        }
+        (ProposalState::Draft, ProposalState::Cancelled) => {
+            activated_at
+        }
+        (ProposalState::Active, ProposalState::Succeeded) => {
+            if current_time < activated_at.checked_add(voting_period)
+                .ok_or(ProgramError::ArithmeticOverflow)? {
+                return Err(ProgramError::Custom(1));
+            }
+            if yes_votes.checked_add(no_votes)
+                .ok_or(ProgramError::ArithmeticOverflow)? < quorum {
+                return Err(ProgramError::Custom(2));
+            }
+            if yes_votes <= no_votes {
+                return Err(ProgramError::Custom(3));
+            }
+            activated_at
+        }
+        (ProposalState::Active, ProposalState::Defeated) => {
+            if current_time < activated_at.checked_add(voting_period)
+                .ok_or(ProgramError::ArithmeticOverflow)? {
+                return Err(ProgramError::Custom(1));
+            }
+            activated_at
+        }
+        (ProposalState::Succeeded, ProposalState::Executed) => {
+            let deadline = activated_at
+                .checked_add(voting_period)
+                .and_then(|v| v.checked_add(execution_delay))
+                .ok_or(ProgramError::ArithmeticOverflow)?;
+            if current_time < deadline {
+                return Err(ProgramError::Custom(4));
+            }
+            activated_at
+        }
+        _ => return Err(ProgramError::InvalidInstructionData),
+    };
+
+    let mut data = proposal_info.try_borrow_mut_data()?;
+    data[0] = target_state as u8;
+    data[1..9].copy_from_slice(&new_activated_at.to_le_bytes());
+
+    Ok(())
 }`,
       testCases: [
-        { id: "t1", name: "Enforces valid state transitions", input: "", expectedOutput: "" },
-        { id: "t2", name: "Checks voting period before finalizing", input: "", expectedOutput: "" },
-        { id: "t3", name: "Validates quorum and vote counts", input: "", expectedOutput: "" },
-        { id: "t4", name: "Enforces execution delay", input: "", expectedOutput: "" },
+        { id: "t1", name: "Validates PDA derivation and authority signer", input: "", expectedOutput: "" },
+        { id: "t2", name: "Transitions Draft -> Active and stores activated_at from Clock", input: "", expectedOutput: "" },
+        { id: "t3", name: "Rejects Active -> Succeeded before voting period ends", input: "", expectedOutput: "" },
+        { id: "t4", name: "Validates quorum and yes > no votes for Succeeded", input: "", expectedOutput: "" },
+        { id: "t5", name: "Enforces execution delay for Succeeded -> Executed", input: "", expectedOutput: "" },
+        { id: "t6", name: "Rejects invalid transitions with ProgramError", input: "", expectedOutput: "" },
       ],
       hints: [
-        "Use match (self.state, to) to handle all valid transitions",
-        "Draft -> Active | Cancelled",
-        "Active -> Succeeded (if passed + quorum) | Defeated (if failed)",
-        "Succeeded -> Executed (after execution_delay)",
+        "Parse accounts with next_account_info(): proposal (writable PDA), authority (signer), clock sysvar",
+        "Verify proposal_info.owner == program_id and authority_info.is_signer",
+        "Derive PDA with seeds [\"proposal\", proposal_id.to_le_bytes(), bump] and compare to proposal_info.key",
+        "Use Clock::from_account_info() for current_time, then match (current_state, target_state) for transitions",
+        "Use checked_add() for all arithmetic — never raw + in on-chain code",
+        "Write updated state and activated_at back via try_borrow_mut_data()",
       ],
     },
   },

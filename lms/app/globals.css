@@ -22,7 +22,7 @@
   --color-ring: var(--ring);
 
   --color-solana-purple: #008c4c;
-  --color-solana-green: #ffd23f;
+  --color-solana-green: var(--solana-green);
   --color-solana-cyan: #2f6b3f;
   --color-xp-gold: var(--xp-gold);
   --color-streak-orange: var(--streak-orange);
@@ -56,8 +56,9 @@
   --border: #e2e0d9;
   --input: #e2e0d9;
   --ring: #008c4c;
-  --xp-gold: #b8960a;
-  --streak-orange: #b8960a;
+  --solana-green: #8a6d00;
+  --xp-gold: #8a6d00;
+  --streak-orange: #8a6d00;
 }
 
 .dark {
@@ -80,6 +81,7 @@
   --border: #344038;
   --input: #344038;
   --ring: #008c4c;
+  --solana-green: #ffd23f;
   --xp-gold: #ffd23f;
   --streak-orange: #ffd23f;
 }

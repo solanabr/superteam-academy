@@ -2,6 +2,7 @@ import type { Course } from "@/types/course";
 import type { Progress, LeaderboardEntry, StreakData, UserProfile } from "@/types/user";
 import type { Achievement } from "@/types/gamification";
 import type { Credential } from "@/types/credential";
+import type { Thread, Reply, Endorsement, CommunityStats } from "@/types/community";
 
 export interface CompleteLessonResult {
   ok: boolean;
@@ -44,4 +45,23 @@ export interface LearningProgressService {
   getCourse(courseId: string): Promise<Course | null>;
   getPracticeProgress(userId: string): Promise<PracticeProgressData>;
   completePracticeChallenge(userId: string, challengeId: string, xpReward: number): Promise<OnChainResult>;
+
+  // Community
+  getThreads(params?: { type?: string; tag?: string; sort?: string; page?: number }): Promise<ThreadListResult>;
+  getThread(id: string): Promise<Thread>;
+  createThread(userId: string, title: string, body: string, type: string, tags: string[]): Promise<OnChainResult & { thread: Thread }>;
+  getReplies(threadId: string): Promise<Reply[]>;
+  createReply(userId: string, threadId: string, body: string): Promise<OnChainResult & { reply: Reply }>;
+  upvote(userId: string, targetId: string, targetType: "thread" | "reply"): Promise<{ ok: boolean; upvotes: string[] }>;
+  markSolution(userId: string, threadId: string, replyId: string): Promise<OnChainResult>;
+  getEndorsements(wallet: string): Promise<Endorsement[]>;
+  endorseUser(endorser: string, endorsee: string, message?: string): Promise<OnChainResult>;
+  getCommunityStats(userId: string): Promise<CommunityStats>;
+}
+
+export interface ThreadListResult {
+  threads: Thread[];
+  total: number;
+  page: number;
+  totalPages: number;
 }

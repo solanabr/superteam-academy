@@ -123,7 +123,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ slug: s
           <span className="flex items-center gap-1.5"><BookOpen className="h-4 w-4" />{course.lessonCount} {tc("lessons", { count: course.lessonCount })}</span>
           <span className="flex items-center gap-1.5"><Code className="h-4 w-4" />{course.challengeCount} {t("challengeCount")}</span>
           <span className="flex items-center gap-1.5 text-xp-gold"><Zap className="h-4 w-4" />{course.xpTotal} XP</span>
-          <span className="flex items-center gap-1.5"><Users className="h-4 w-4" />{course.totalEnrollments.toLocaleString()} {t("enrolled")}</span>
+          <span className="flex items-center gap-1.5"><Users className="h-4 w-4" />{t("enrolled", { count: course.totalEnrollments })}</span>
           <span className="flex items-center gap-1.5"><Trophy className="h-4 w-4" />{course.totalCompletions.toLocaleString()} {tc("completed")}</span>
         </div>
       </div>
@@ -224,7 +224,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ slug: s
                 </Button>
               ) : progress?.completedAt ? (
                 <div className="space-y-2 mt-4">
-                  <Badge className="w-full justify-center py-2 bg-solana-green text-black">{tc("completed")}</Badge>
+                  <Badge className="w-full justify-center py-2 bg-solana-green text-white dark:text-black">{tc("completed")}</Badge>
                   <Button asChild variant="outline" className="w-full">
                     <Link href={`/certificates/${course.trackId}`}>{t("viewCertificate")}</Link>
                   </Button>

@@ -50,26 +50,26 @@ export function Footer() {
             <div>
               <h3 className="text-sm font-semibold">{t("learningPaths")}</h3>
               <ul className="mt-4 space-y-2">
-                <li><span className="text-sm text-muted-foreground">{t("anchorFramework")}</span></li>
-                <li><span className="text-sm text-muted-foreground">{t("rustForSolana")}</span></li>
-                <li><span className="text-sm text-muted-foreground">{t("defiDevelopment")}</span></li>
-                <li><span className="text-sm text-muted-foreground">{t("programSecurity")}</span></li>
+                <li><Link href="/courses?track=1" className="text-sm text-muted-foreground hover:text-foreground">{t("anchorFramework")}</Link></li>
+                <li><Link href="/courses?track=2" className="text-sm text-muted-foreground hover:text-foreground">{t("rustForSolana")}</Link></li>
+                <li><Link href="/courses?track=3" className="text-sm text-muted-foreground hover:text-foreground">{t("defiDevelopment")}</Link></li>
+                <li><Link href="/courses?track=4" className="text-sm text-muted-foreground hover:text-foreground">{t("programSecurity")}</Link></li>
               </ul>
             </div>
             <div>
               <h3 className="text-sm font-semibold">{t("community")}</h3>
               <ul className="mt-4 space-y-2">
-                <li><span className="text-sm text-muted-foreground">{t("discord")}</span></li>
-                <li><span className="text-sm text-muted-foreground">{t("twitter")}</span></li>
-                <li><span className="text-sm text-muted-foreground">{t("github")}</span></li>
+                <li><a href="https://discord.gg/superteambrasil" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-foreground">{t("discord")}</a></li>
+                <li><a href="https://x.com/SuperteamBR" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-foreground">{t("twitter")}</a></li>
+                <li><Link href="/community/threads" className="text-sm text-muted-foreground hover:text-foreground">{t("threads")}</Link></li>
               </ul>
             </div>
             <div>
               <h3 className="text-sm font-semibold">{t("resources")}</h3>
               <ul className="mt-4 space-y-2">
-                <li><span className="text-sm text-muted-foreground">{t("documentation")}</span></li>
-                <li><span className="text-sm text-muted-foreground">{t("blog")}</span></li>
-                <li><span className="text-sm text-muted-foreground">{t("changelog")}</span></li>
+                <li><a href="https://solana.com/docs" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-foreground">{t("documentation")}</a></li>
+                <li><a href="https://solana.com/news" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-foreground">{t("blog")}</a></li>
+                <li><a href="https://github.com/solana-labs/solana/blob/master/CHANGELOG.md" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-foreground">{t("changelog")}</a></li>
               </ul>
             </div>
           </div>

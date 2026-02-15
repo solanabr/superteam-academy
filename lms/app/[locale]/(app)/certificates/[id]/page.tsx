@@ -11,7 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { TRACKS } from "@/types/course";
 import { LEVEL_NAMES } from "@/types/credential";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { useAllProgress, useXP, useDisplayName, useCertificates } from "@/lib/hooks/use-service";
+import { useAllProgress, useXP, useDisplayName, useCertificates, useCourses } from "@/lib/hooks/use-service";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 
@@ -31,10 +31,19 @@ export default function CertificatePage({ params }: { params: Promise<{ id: stri
   const wallet = publicKey?.toBase58() ?? "Not Connected";
   const shortWallet = wallet.length > 10 ? `${wallet.slice(0, 6)}...${wallet.slice(-4)}` : wallet;
   const { data: certificates } = useCertificates(trackId);
+  const { data: courses } = useCourses();
 
-  const completedCount = allProgress?.filter((p) => p.completedAt).length ?? 0;
+  const trackCourses = courses?.filter((c) => c.trackId === trackId) ?? [];
+  const completedTrackCourseIds = new Set(
+    allProgress?.filter((p) => p.completedAt).map((p) => p.courseId) ?? []
+  );
+  const completedInTrack = trackCourses.filter((c) => completedTrackCourseIds.has(c.id));
+  const trackCompletedCount = completedInTrack.length;
   const totalXP = xp ?? 0;
-  const level = completedCount >= 3 ? 3 : completedCount >= 1 ? 2 : 1;
+  const DIFFICULTY_TO_LEVEL: Record<string, number> = { beginner: 1, intermediate: 2, advanced: 3 };
+  const level = completedInTrack.reduce(
+    (max, c) => Math.max(max, DIFFICULTY_TO_LEVEL[c.difficulty] ?? 1), 1
+  );
   const levelName = LEVEL_NAMES[level] ?? "Beginner";
 
   const latestCert = certificates?.[0];
@@ -62,7 +71,7 @@ export default function CertificatePage({ params }: { params: Promise<{ id: stri
     attributes: [
       { trait_type: "Track", value: track?.display ?? "Unknown" },
       { trait_type: "Level", value: levelName },
-      { trait_type: "Courses Completed", value: completedCount.toString() },
+      { trait_type: "Courses Completed", value: trackCompletedCount.toString() },
       { trait_type: "Total XP", value: totalXP.toString() },
       ...(displayName ? [{ trait_type: "Learner", value: displayName }] : []),
     ],
@@ -185,7 +194,7 @@ export default function CertificatePage({ params }: { params: Promise<{ id: stri
                   <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">{t("xpEarned")}</p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-3xl font-black">{completedCount}</p>
+                  <p className="text-3xl font-black">{trackCompletedCount}</p>
                   <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">{t("coursesLabel")}</p>
                 </div>
                 <div className="space-y-1">

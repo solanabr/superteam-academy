@@ -1,8 +1,9 @@
-import type { LearningProgressService, CompleteLessonResult, OnChainResult, PracticeProgressData } from "./types";
+import type { LearningProgressService, CompleteLessonResult, OnChainResult, PracticeProgressData, ThreadListResult } from "./types";
 import type { Course } from "@/types/course";
 import type { Progress, LeaderboardEntry, StreakData, UserProfile } from "@/types/user";
 import type { Achievement } from "@/types/gamification";
 import type { Credential } from "@/types/credential";
+import type { Thread, Reply, Endorsement, CommunityStats } from "@/types/community";
 
 const BASE = "/api/learning";
 
@@ -123,5 +124,72 @@ export class ApiService implements LearningProgressService {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId, challengeId, xpReward }),
     });
+  }
+
+  // Community
+
+  async getThreads(params?: { type?: string; tag?: string; sort?: string; page?: number }): Promise<ThreadListResult> {
+    const sp = new URLSearchParams();
+    if (params?.type) sp.set("type", params.type);
+    if (params?.tag) sp.set("tag", params.tag);
+    if (params?.sort) sp.set("sort", params.sort);
+    if (params?.page) sp.set("page", String(params.page));
+    return fetchJson(`/api/community/threads?${sp.toString()}`);
+  }
+
+  async getThread(id: string): Promise<Thread> {
+    return fetchJson(`/api/community/threads/${id}`);
+  }
+
+  async createThread(userId: string, title: string, body: string, type: string, tags: string[]): Promise<OnChainResult & { thread: Thread }> {
+    return fetchJson("/api/community/threads", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, title, body, type, tags }),
+    });
+  }
+
+  async getReplies(threadId: string): Promise<Reply[]> {
+    return fetchJson(`/api/community/replies?threadId=${threadId}`);
+  }
+
+  async createReply(userId: string, threadId: string, body: string): Promise<OnChainResult & { reply: Reply }> {
+    return fetchJson("/api/community/replies", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, threadId, body }),
+    });
+  }
+
+  async upvote(userId: string, targetId: string, targetType: "thread" | "reply"): Promise<{ ok: boolean; upvotes: string[] }> {
+    return fetchJson("/api/community/upvote", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, targetId, targetType }),
+    });
+  }
+
+  async markSolution(userId: string, threadId: string, replyId: string): Promise<OnChainResult> {
+    return fetchJson("/api/community/mark-solution", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, threadId, replyId }),
+    });
+  }
+
+  async getEndorsements(wallet: string): Promise<Endorsement[]> {
+    return fetchJson(`/api/community/endorsements?wallet=${wallet}`);
+  }
+
+  async endorseUser(endorser: string, endorsee: string, message?: string): Promise<OnChainResult> {
+    return fetchJson("/api/community/endorsements", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ endorser, endorsee, message }),
+    });
+  }
+
+  async getCommunityStats(userId: string): Promise<CommunityStats> {
+    return fetchJson(`/api/community/points?userId=${userId}`);
   }
 }

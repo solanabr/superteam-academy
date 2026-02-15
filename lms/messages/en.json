@@ -34,6 +34,7 @@
     "dashboard": "Dashboard",
     "leaderboard": "Leaderboard",
     "profile": "Profile",
+    "community": "Community",
     "navigation": "Navigation"
   },
   "footer": {
@@ -50,7 +51,7 @@
     "programSecurity": "Program Security",
     "discord": "Discord",
     "twitter": "Twitter",
-    "github": "GitHub",
+    "threads": "Threads",
     "documentation": "Documentation",
     "blog": "Blog",
     "changelog": "Changelog",
@@ -102,7 +103,12 @@
     "trackDefi": "DeFi Development",
     "trackDefiDesc": "Build decentralized finance protocols",
     "trackSecurity": "Program Security",
-    "trackSecurityDesc": "Audit and secure Solana programs"
+    "trackSecurityDesc": "Audit and secure Solana programs",
+    "communityTitle": "Join the Community",
+    "communitySubtitle": "Connect with Solana builders, share your progress, and learn together.",
+    "joinDiscord": "Join Discord",
+    "followTwitter": "Follow on X",
+    "viewThreads": "Community Threads"
   },
   "courses": {
     "title": "Courses",
@@ -234,7 +240,10 @@
     "categories": "Categories",
     "categoriesMastered": "Categories Mastered",
     "challengesSolved": "Challenges Solved",
-    "solvedLabel": "{count} solved"
+    "solvedLabel": "{count} solved",
+    "nextMilestone": "Next Milestone",
+    "milestoneHistory": "Milestone History",
+    "recentlySolved": "Recently Solved"
   },
   "profile": {
     "title": "Profile",
@@ -251,7 +260,10 @@
     "xpFromPractice": "{amount} XP from practice",
     "noTierYet": "No tier yet",
     "completedCourses": "Completed Courses ({count})",
-    "noCoursesCompleted": "No courses completed yet."
+    "noCoursesCompleted": "No courses completed yet.",
+    "walletBalance": "Wallet Balance",
+    "solEarned": "SOL Earned",
+    "fromMilestones": "From {count} milestone{count, plural, one {} other {s}}"
   },
   "settings": {
     "title": "Settings",
@@ -329,5 +341,52 @@
   },
   "gamification": {
     "lvl": "Lvl {level}"
+  },
+  "community": {
+    "title": "Community",
+    "subtitle": "Discuss, ask questions, and connect with other learners.",
+    "newThread": "New Thread",
+    "newThreadDesc": "Start a new discussion or ask a question.",
+    "titlePlaceholder": "Thread title...",
+    "bodyPlaceholder": "Write your post...",
+    "tagsPlaceholder": "Tags (comma separated)",
+    "discussion": "Discussion",
+    "question": "Question",
+    "discussions": "Discussions",
+    "questions": "Questions",
+    "all": "All",
+    "create": "Create",
+    "creating": "Creating...",
+    "threadCreated": "Thread created!",
+    "threadCreateFailed": "Failed to create thread",
+    "noThreads": "No threads yet. Start the conversation!",
+    "loading": "Loading...",
+    "sortRecent": "Recent",
+    "sortPopular": "Popular",
+    "sortUnsolved": "Unsolved",
+    "solved": "Solved",
+    "pinned": "Pinned",
+    "solution": "Solution",
+    "points": "Community Points",
+    "endorsements": "Endorsements",
+    "replies": "Replies",
+    "noReplies": "No replies yet. Be the first to respond!",
+    "writeReply": "Write a reply",
+    "replyPlaceholder": "Write your reply...",
+    "postReply": "Post Reply",
+    "posting": "Posting...",
+    "replyPosted": "Reply posted!",
+    "replyFailed": "Failed to post reply",
+    "markSolution": "Mark as Solution",
+    "solutionMarked": "Solution marked!",
+    "solutionFailed": "Failed to mark solution",
+    "endorse": "Endorse",
+    "endorsed": "Endorsement sent!",
+    "endorseFailed": "Failed to endorse",
+    "connectToReply": "Connect your wallet to reply.",
+    "threadNotFound": "Thread not found.",
+    "backToThreads": "Back to Threads",
+    "prev": "Previous",
+    "next": "Next"
   }
 }

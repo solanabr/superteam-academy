@@ -34,6 +34,7 @@
     "dashboard": "Painel",
     "leaderboard": "Ranking",
     "profile": "Perfil",
+    "community": "Comunidade",
     "navigation": "Navegação"
   },
   "footer": {
@@ -50,7 +51,7 @@
     "programSecurity": "Segurança de Programas",
     "discord": "Discord",
     "twitter": "Twitter",
-    "github": "GitHub",
+    "threads": "Threads",
     "documentation": "Documentação",
     "blog": "Blog",
     "changelog": "Changelog",
@@ -102,7 +103,12 @@
     "trackDefi": "Desenvolvimento DeFi",
     "trackDefiDesc": "Construa protocolos de finanças descentralizadas",
     "trackSecurity": "Segurança de Programas",
-    "trackSecurityDesc": "Audite e proteja programas Solana"
+    "trackSecurityDesc": "Audite e proteja programas Solana",
+    "communityTitle": "Junte-se à Comunidade",
+    "communitySubtitle": "Conecte-se com builders Solana, compartilhe seu progresso e aprenda junto.",
+    "joinDiscord": "Entrar no Discord",
+    "followTwitter": "Seguir no X",
+    "viewThreads": "Threads da Comunidade"
   },
   "courses": {
     "title": "Cursos",
@@ -234,7 +240,10 @@
     "categories": "Categorias",
     "categoriesMastered": "Categorias Dominadas",
     "challengesSolved": "Desafios Resolvidos",
-    "solvedLabel": "{count} resolvidos"
+    "solvedLabel": "{count} resolvidos",
+    "nextMilestone": "Próximo Marco",
+    "milestoneHistory": "Histórico de Marcos",
+    "recentlySolved": "Resolvidos Recentemente"
   },
   "profile": {
     "title": "Perfil",
@@ -251,7 +260,10 @@
     "xpFromPractice": "{amount} XP da prática",
     "noTierYet": "Sem tier ainda",
     "completedCourses": "Cursos Concluídos ({count})",
-    "noCoursesCompleted": "Nenhum curso concluído ainda."
+    "noCoursesCompleted": "Nenhum curso concluído ainda.",
+    "walletBalance": "Saldo da Carteira",
+    "solEarned": "SOL Ganho",
+    "fromMilestones": "De {count} marco{count, plural, one {} other {s}}"
   },
   "settings": {
     "title": "Configurações",
@@ -329,5 +341,52 @@
   },
   "gamification": {
     "lvl": "Nv {level}"
+  },
+  "community": {
+    "title": "Comunidade",
+    "subtitle": "Discuta, tire dúvidas e conecte-se com outros alunos.",
+    "newThread": "Nova Discussão",
+    "newThreadDesc": "Inicie uma nova discussão ou faça uma pergunta.",
+    "titlePlaceholder": "Título da discussão...",
+    "bodyPlaceholder": "Escreva sua publicação...",
+    "tagsPlaceholder": "Tags (separadas por vírgula)",
+    "discussion": "Discussão",
+    "question": "Pergunta",
+    "discussions": "Discussões",
+    "questions": "Perguntas",
+    "all": "Todos",
+    "create": "Criar",
+    "creating": "Criando...",
+    "threadCreated": "Discussão criada!",
+    "threadCreateFailed": "Falha ao criar discussão",
+    "noThreads": "Nenhuma discussão ainda. Comece a conversa!",
+    "loading": "Carregando...",
+    "sortRecent": "Recentes",
+    "sortPopular": "Populares",
+    "sortUnsolved": "Não Resolvidos",
+    "solved": "Resolvido",
+    "pinned": "Fixado",
+    "solution": "Solução",
+    "points": "Pontos da Comunidade",
+    "endorsements": "Endossos",
+    "replies": "Respostas",
+    "noReplies": "Nenhuma resposta ainda. Seja o primeiro a responder!",
+    "writeReply": "Escreva uma resposta",
+    "replyPlaceholder": "Escreva sua resposta...",
+    "postReply": "Publicar Resposta",
+    "posting": "Publicando...",
+    "replyPosted": "Resposta publicada!",
+    "replyFailed": "Falha ao publicar resposta",
+    "markSolution": "Marcar como Solução",
+    "solutionMarked": "Solução marcada!",
+    "solutionFailed": "Falha ao marcar solução",
+    "endorse": "Endossar",
+    "endorsed": "Endosso enviado!",
+    "endorseFailed": "Falha ao endossar",
+    "connectToReply": "Conecte sua carteira para responder.",
+    "threadNotFound": "Discussão não encontrada.",
+    "backToThreads": "Voltar para Discussões",
+    "prev": "Anterior",
+    "next": "Próximo"
   }
 }

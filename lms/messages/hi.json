@@ -34,6 +34,7 @@
     "dashboard": "डैशबोर्ड",
     "leaderboard": "लीडरबोर्ड",
     "profile": "प्रोफ़ाइल",
+    "community": "समुदाय",
     "navigation": "नेविगेशन"
   },
   "footer": {
@@ -50,7 +51,7 @@
     "programSecurity": "प्रोग्राम सुरक्षा",
     "discord": "Discord",
     "twitter": "Twitter",
-    "github": "GitHub",
+    "threads": "थ्रेड्स",
     "documentation": "दस्तावेज़ीकरण",
     "blog": "ब्लॉग",
     "changelog": "चेंजलॉग",
@@ -102,7 +103,12 @@
     "trackDefi": "DeFi डेवलपमेंट",
     "trackDefiDesc": "विकेंद्रीकृत वित्त प्रोटोकॉल बनाएँ",
     "trackSecurity": "प्रोग्राम सुरक्षा",
-    "trackSecurityDesc": "Solana प्रोग्राम का ऑडिट और सुरक्षा करें"
+    "trackSecurityDesc": "Solana प्रोग्राम का ऑडिट और सुरक्षा करें",
+    "communityTitle": "समुदाय से जुड़ें",
+    "communitySubtitle": "Solana बिल्डर्स से जुड़ें, अपनी प्रगति साझा करें और साथ मिलकर सीखें।",
+    "joinDiscord": "Discord में शामिल हों",
+    "followTwitter": "X पर फॉलो करें",
+    "viewThreads": "सामुदायिक थ्रेड्स"
   },
   "courses": {
     "title": "कोर्स",
@@ -234,7 +240,10 @@
     "categories": "श्रेणियाँ",
     "categoriesMastered": "श्रेणियों में महारत",
     "challengesSolved": "हल किए गए चैलेंज",
-    "solvedLabel": "{count} हल किए"
+    "solvedLabel": "{count} हल किए",
+    "nextMilestone": "अगला माइलस्टोन",
+    "milestoneHistory": "माइलस्टोन इतिहास",
+    "recentlySolved": "हाल ही में हल किए गए"
   },
   "profile": {
     "title": "प्रोफ़ाइल",
@@ -251,7 +260,10 @@
     "xpFromPractice": "अभ्यास से {amount} XP",
     "noTierYet": "अभी कोई टियर नहीं",
     "completedCourses": "पूरे किए गए कोर्स ({count})",
-    "noCoursesCompleted": "अभी तक कोई कोर्स पूरा नहीं हुआ।"
+    "noCoursesCompleted": "अभी तक कोई कोर्स पूरा नहीं हुआ।",
+    "walletBalance": "वॉलेट बैलेंस",
+    "solEarned": "अर्जित SOL",
+    "fromMilestones": "{count} माइलस्टोन से"
   },
   "settings": {
     "title": "सेटिंग्स",
@@ -329,5 +341,52 @@
   },
   "gamification": {
     "lvl": "Lvl {level}"
+  },
+  "community": {
+    "title": "समुदाय",
+    "subtitle": "चर्चा करें, सवाल पूछें, और अन्य शिक्षार्थियों से जुड़ें।",
+    "newThread": "नई चर्चा",
+    "newThreadDesc": "नई चर्चा शुरू करें या सवाल पूछें।",
+    "titlePlaceholder": "चर्चा का शीर्षक...",
+    "bodyPlaceholder": "अपनी पोस्ट लिखें...",
+    "tagsPlaceholder": "टैग (कॉमा से अलग)",
+    "discussion": "चर्चा",
+    "question": "सवाल",
+    "discussions": "चर्चाएँ",
+    "questions": "सवाल",
+    "all": "सभी",
+    "create": "बनाएँ",
+    "creating": "बनाया जा रहा है...",
+    "threadCreated": "चर्चा बनाई गई!",
+    "threadCreateFailed": "चर्चा बनाने में विफल",
+    "noThreads": "अभी कोई चर्चा नहीं। बातचीत शुरू करें!",
+    "loading": "लोड हो रहा है...",
+    "sortRecent": "हाल के",
+    "sortPopular": "लोकप्रिय",
+    "sortUnsolved": "अनसुलझे",
+    "solved": "हल हो गया",
+    "pinned": "पिन किया गया",
+    "solution": "समाधान",
+    "points": "समुदाय अंक",
+    "endorsements": "समर्थन",
+    "replies": "उत्तर",
+    "noReplies": "अभी कोई उत्तर नहीं। पहले उत्तर दें!",
+    "writeReply": "उत्तर लिखें",
+    "replyPlaceholder": "अपना उत्तर लिखें...",
+    "postReply": "उत्तर पोस्ट करें",
+    "posting": "पोस्ट हो रहा है...",
+    "replyPosted": "उत्तर पोस्ट हो गया!",
+    "replyFailed": "उत्तर पोस्ट करने में विफल",
+    "markSolution": "समाधान चिह्नित करें",
+    "solutionMarked": "समाधान चिह्नित!",
+    "solutionFailed": "समाधान चिह्नित करने में विफल",
+    "endorse": "समर्थन करें",
+    "endorsed": "समर्थन भेजा गया!",
+    "endorseFailed": "समर्थन करने में विफल",
+    "connectToReply": "उत्तर देने के लिए वॉलेट कनेक्ट करें।",
+    "threadNotFound": "चर्चा नहीं मिली।",
+    "backToThreads": "चर्चाओं पर वापस जाएँ",
+    "prev": "पिछला",
+    "next": "अगला"
   }
 }

@@ -12,9 +12,10 @@ import { DIFFICULTY_CONFIG, TRACKS } from "@/types/course";
 interface CourseCardProps {
   course: Course;
   progress?: number;
+  prerequisiteMet?: boolean;
 }
 
-export function CourseCard({ course, progress }: CourseCardProps) {
+export function CourseCard({ course, progress, prerequisiteMet }: CourseCardProps) {
   const t = useTranslations("courses");
   const tc = useTranslations("common");
   const difficulty = DIFFICULTY_CONFIG[course.difficulty];
@@ -69,7 +70,7 @@ export function CourseCard({ course, progress }: CourseCardProps) {
             </div>
           )}
 
-          {course.prerequisiteId && (
+          {course.prerequisiteId && !prerequisiteMet && (
             <p className="mt-2 text-xs text-muted-foreground italic">
               {t("prerequisiteRequired")}
             </p>
