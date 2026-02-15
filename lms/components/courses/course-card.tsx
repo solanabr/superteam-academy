@@ -1,7 +1,8 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { Clock, BookOpen, Zap } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -14,6 +15,8 @@ interface CourseCardProps {
 }
 
 export function CourseCard({ course, progress }: CourseCardProps) {
+  const t = useTranslations("courses");
+  const tc = useTranslations("common");
   const difficulty = DIFFICULTY_CONFIG[course.difficulty];
   const track = TRACKS[course.trackId];
 
@@ -48,18 +51,18 @@ export function CourseCard({ course, progress }: CourseCardProps) {
             </span>
             <span className="flex items-center gap-1">
               <BookOpen className="h-3.5 w-3.5" />
-              {course.lessonCount} lessons
+              {tc("lessons", { count: course.lessonCount })}
             </span>
             <span className="flex items-center gap-1 text-xp-gold">
               <Zap className="h-3.5 w-3.5" />
-              {course.xpTotal} XP
+              {course.xpTotal} {tc("xp")}
             </span>
           </div>
 
           {progress !== undefined && progress > 0 && (
             <div className="mt-3">
               <div className="flex items-center justify-between text-xs mb-1">
-                <span className="text-muted-foreground">Progress</span>
+                <span className="text-muted-foreground">{t("progress")}</span>
                 <span className="font-medium">{Math.round(progress)}%</span>
               </div>
               <Progress value={progress} indicatorClassName="bg-solana-green" />
@@ -68,7 +71,7 @@ export function CourseCard({ course, progress }: CourseCardProps) {
 
           {course.prerequisiteId && (
             <p className="mt-2 text-xs text-muted-foreground italic">
-              Prerequisite required
+              {t("prerequisiteRequired")}
             </p>
           )}
         </CardContent>

@@ -1,6 +1,7 @@
 "use client";
 
 import { Zap } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Progress } from "@/components/ui/progress";
 import { useXP, useLevel } from "@/lib/hooks/use-service";
 import { getXpProgress, formatXP } from "@/lib/utils";
@@ -8,6 +9,7 @@ import { getXpProgress, formatXP } from "@/lib/utils";
 export function XPBar() {
   const { data: xp = 0 } = useXP();
   const { data: level = 0 } = useLevel();
+  const t = useTranslations("gamification");
   const progress = getXpProgress(xp);
 
   return (
@@ -21,7 +23,7 @@ export function XPBar() {
       <div className="flex-1 max-w-32">
         <Progress value={progress.percent} className="h-1.5" indicatorClassName="bg-xp-gold" />
       </div>
-      <span className="text-xs text-muted-foreground">Lvl {level}</span>
+      <span className="text-xs text-muted-foreground">{t("lvl", { level })}</span>
     </div>
   );
 }

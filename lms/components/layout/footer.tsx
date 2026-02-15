@@ -1,11 +1,12 @@
 "use client";
 
-import Link from "next/link";
+import { Link, usePathname } from "@/i18n/navigation";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 export function Footer() {
   const pathname = usePathname();
+  const t = useTranslations("footer");
   const isLanding = pathname === "/";
 
   return (
@@ -39,36 +40,36 @@ export function Footer() {
 
           <div className={isLanding ? "contents" : "grid grid-cols-2 gap-8 md:grid-cols-4"}>
             <div>
-              <h3 className="text-sm font-semibold">Platform</h3>
+              <h3 className="text-sm font-semibold">{t("platform")}</h3>
               <ul className="mt-4 space-y-2">
-                <li><Link href="/courses" className="text-sm text-muted-foreground hover:text-foreground">Courses</Link></li>
-                <li><Link href="/leaderboard" className="text-sm text-muted-foreground hover:text-foreground">Leaderboard</Link></li>
-                <li><Link href="/dashboard" className="text-sm text-muted-foreground hover:text-foreground">Dashboard</Link></li>
+                <li><Link href="/courses" className="text-sm text-muted-foreground hover:text-foreground">{t("courses")}</Link></li>
+                <li><Link href="/leaderboard" className="text-sm text-muted-foreground hover:text-foreground">{t("leaderboard")}</Link></li>
+                <li><Link href="/dashboard" className="text-sm text-muted-foreground hover:text-foreground">{t("dashboard")}</Link></li>
               </ul>
             </div>
             <div>
-              <h3 className="text-sm font-semibold">Learning Paths</h3>
+              <h3 className="text-sm font-semibold">{t("learningPaths")}</h3>
               <ul className="mt-4 space-y-2">
-                <li><span className="text-sm text-muted-foreground">Anchor Framework</span></li>
-                <li><span className="text-sm text-muted-foreground">Rust for Solana</span></li>
-                <li><span className="text-sm text-muted-foreground">DeFi Development</span></li>
-                <li><span className="text-sm text-muted-foreground">Program Security</span></li>
+                <li><span className="text-sm text-muted-foreground">{t("anchorFramework")}</span></li>
+                <li><span className="text-sm text-muted-foreground">{t("rustForSolana")}</span></li>
+                <li><span className="text-sm text-muted-foreground">{t("defiDevelopment")}</span></li>
+                <li><span className="text-sm text-muted-foreground">{t("programSecurity")}</span></li>
               </ul>
             </div>
             <div>
-              <h3 className="text-sm font-semibold">Community</h3>
+              <h3 className="text-sm font-semibold">{t("community")}</h3>
               <ul className="mt-4 space-y-2">
-                <li><span className="text-sm text-muted-foreground">Discord</span></li>
-                <li><span className="text-sm text-muted-foreground">Twitter</span></li>
-                <li><span className="text-sm text-muted-foreground">GitHub</span></li>
+                <li><span className="text-sm text-muted-foreground">{t("discord")}</span></li>
+                <li><span className="text-sm text-muted-foreground">{t("twitter")}</span></li>
+                <li><span className="text-sm text-muted-foreground">{t("github")}</span></li>
               </ul>
             </div>
             <div>
-              <h3 className="text-sm font-semibold">Resources</h3>
+              <h3 className="text-sm font-semibold">{t("resources")}</h3>
               <ul className="mt-4 space-y-2">
-                <li><span className="text-sm text-muted-foreground">Documentation</span></li>
-                <li><span className="text-sm text-muted-foreground">Blog</span></li>
-                <li><span className="text-sm text-muted-foreground">Changelog</span></li>
+                <li><span className="text-sm text-muted-foreground">{t("documentation")}</span></li>
+                <li><span className="text-sm text-muted-foreground">{t("blog")}</span></li>
+                <li><span className="text-sm text-muted-foreground">{t("changelog")}</span></li>
               </ul>
             </div>
           </div>
@@ -76,7 +77,7 @@ export function Footer() {
 
         <div className="mt-12 border-t pt-8 text-center">
           <p className="text-sm text-muted-foreground">
-            Built on Solana. Powered by Superteam.
+            {t("tagline")}
           </p>
         </div>
       </div>

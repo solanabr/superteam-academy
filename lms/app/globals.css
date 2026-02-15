@@ -37,7 +37,7 @@
 
 :root {
   --radius: 0.75rem;
-  --background: #f7eacb;
+  --background: #faf9f6;
   --foreground: #1b231d;
   --card: #ffffff;
   --card-foreground: #1b231d;
@@ -45,16 +45,16 @@
   --popover-foreground: #1b231d;
   --primary: #008c4c;
   --primary-foreground: #ffffff;
-  --secondary: #f0e4c4;
+  --secondary: #f2f1ed;
   --secondary-foreground: #1b231d;
-  --muted: #efe3bd;
+  --muted: #f2f1ed;
   --muted-foreground: #5a6b5e;
   --accent: #ffd23f;
   --accent-foreground: #1b231d;
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
-  --border: #d4c9a8;
-  --input: #d4c9a8;
+  --border: #e2e0d9;
+  --input: #e2e0d9;
   --ring: #008c4c;
   --xp-gold: #b8960a;
   --streak-orange: #b8960a;

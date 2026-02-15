@@ -1,6 +1,7 @@
 "use client";
 
 import { useWallet } from "@solana/wallet-adapter-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Wallet, LogOut, Copy, Check } from "lucide-react";
 import { shortenAddress } from "@/lib/utils";
@@ -19,6 +20,7 @@ interface WalletButtonProps {
 
 export function WalletButton({ onConnectClick }: WalletButtonProps) {
   const { publicKey, disconnect, connected } = useWallet();
+  const t = useTranslations("wallet");
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -33,7 +35,7 @@ export function WalletButton({ onConnectClick }: WalletButtonProps) {
     return (
       <Button onClick={onConnectClick} variant="solana" size="sm" className="min-w-[140px]">
         <Wallet className="h-4 w-4" />
-        Connect Wallet
+        {t("connectWallet")}
       </Button>
     );
   }
@@ -49,12 +51,12 @@ export function WalletButton({ onConnectClick }: WalletButtonProps) {
       <DropdownMenuContent align="end">
         <DropdownMenuItem onClick={handleCopy}>
           {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-          {copied ? "Copied!" : "Copy Address"}
+          {copied ? t("addressCopied") : t("copyAddress")}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => disconnect()}>
           <LogOut className="h-4 w-4" />
-          Disconnect
+          {t("disconnect")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

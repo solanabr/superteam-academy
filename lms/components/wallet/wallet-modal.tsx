@@ -2,6 +2,7 @@
 
 import { useWallet } from "@solana/wallet-adapter-react";
 import { type WalletName } from "@solana/wallet-adapter-base";
+import { useTranslations } from "next-intl";
 import {
   Dialog,
   DialogContent,
@@ -19,6 +20,7 @@ interface WalletModalProps {
 
 export function WalletModal({ open, onOpenChange }: WalletModalProps) {
   const { wallets, select, connecting } = useWallet();
+  const t = useTranslations("wallet");
 
   const handleSelect = (walletName: WalletName) => {
     select(walletName);
@@ -39,15 +41,13 @@ export function WalletModal({ open, onOpenChange }: WalletModalProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Connect Wallet</DialogTitle>
-          <DialogDescription>
-            Connect your Solana wallet to access the platform.
-          </DialogDescription>
+          <DialogTitle>{t("connectWallet")}</DialogTitle>
+          <DialogDescription>{t("connectDescription")}</DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
           {installed.length > 0 && (
             <div className="space-y-2">
-              <p className="text-xs font-medium text-muted-foreground uppercase">Detected</p>
+              <p className="text-xs font-medium text-muted-foreground uppercase">{t("detected")}</p>
               {installed.map((wallet) => (
                 <Button
                   key={wallet.adapter.name}
@@ -66,7 +66,7 @@ export function WalletModal({ open, onOpenChange }: WalletModalProps) {
           )}
           {notInstalled.length > 0 && (
             <div className="space-y-2">
-              <p className="text-xs font-medium text-muted-foreground uppercase">More Wallets</p>
+              <p className="text-xs font-medium text-muted-foreground uppercase">{t("moreWallets")}</p>
               {notInstalled.slice(0, 3).map((wallet) => (
                 <Button
                   key={wallet.adapter.name}
@@ -80,7 +80,7 @@ export function WalletModal({ open, onOpenChange }: WalletModalProps) {
                     <Image src={wallet.adapter.icon} alt={wallet.adapter.name} width={24} height={24} className="rounded" />
                   )}
                   {wallet.adapter.name}
-                  <span className="ml-auto text-xs text-muted-foreground">Install</span>
+                  <span className="ml-auto text-xs text-muted-foreground">{t("install")}</span>
                 </Button>
               ))}
             </div>

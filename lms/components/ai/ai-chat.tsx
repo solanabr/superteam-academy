@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { MessageCircle, X, Send, Trash2, Bot, User, Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAIChat } from "@/lib/hooks/use-ai-chat";
@@ -65,6 +66,7 @@ export function AIChat() {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const { messages, isLoading, sendMessage, clearChat } = useAIChat();
+  const t = useTranslations("ai");
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -108,8 +110,8 @@ export function AIChat() {
                 <Bot className="h-4 w-4 text-solana-purple" />
               </div>
               <div>
-                <p className="text-sm font-semibold">Academy AI</p>
-                <p className="text-[10px] text-muted-foreground">Solana learning assistant</p>
+                <p className="text-sm font-semibold">{t("title")}</p>
+                <p className="text-[10px] text-muted-foreground">{t("subtitle")}</p>
               </div>
             </div>
             <Button variant="ghost" size="sm" onClick={clearChat} className="h-8 w-8 p-0">
@@ -122,8 +124,8 @@ export function AIChat() {
             {messages.length === 0 && (
               <div className="flex flex-col items-center justify-center h-full text-center px-4">
                 <Bot className="h-12 w-12 text-solana-purple/30 mb-3" />
-                <p className="text-sm font-medium text-muted-foreground">Hi! I&apos;m your Solana learning assistant.</p>
-                <p className="text-xs text-muted-foreground mt-1">Ask me about Solana, Anchor, Rust, or any lesson topic.</p>
+                <p className="text-sm font-medium text-muted-foreground">{t("greeting")}</p>
+                <p className="text-xs text-muted-foreground mt-1">{t("greetingSub")}</p>
                 <div className="mt-4 flex flex-wrap gap-2 justify-center">
                   {["What is a PDA?", "Explain Token-2022", "How do CPIs work?"].map((q) => (
                     <button
@@ -168,7 +170,7 @@ export function AIChat() {
                 </div>
                 <div className="flex items-center gap-1 rounded-2xl bg-muted px-3 py-2 rounded-bl-sm">
                   <Loader2 className="h-3 w-3 animate-spin text-solana-purple" />
-                  <span className="text-xs text-muted-foreground">Thinking...</span>
+                  <span className="text-xs text-muted-foreground">{t("thinking")}</span>
                 </div>
               </div>
             )}
@@ -182,7 +184,7 @@ export function AIChat() {
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask about Solana..."
+                placeholder={t("placeholder")}
                 className="flex-1 rounded-full border bg-muted/50 px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-solana-purple/50 placeholder:text-muted-foreground"
                 disabled={isLoading}
               />
