@@ -11,7 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { TRACKS } from "@/types/course";
 import { LEVEL_NAMES } from "@/types/credential";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { useAllProgress, useXP, useDisplayName } from "@/lib/hooks/use-service";
+import { useAllProgress, useXP, useDisplayName, useCertificates } from "@/lib/hooks/use-service";
 import { toast } from "sonner";
 
 export default function CertificatePage({ params }: { params: Promise<{ id: string }> }) {
@@ -27,16 +27,27 @@ export default function CertificatePage({ params }: { params: Promise<{ id: stri
   const track = TRACKS[trackId];
   const wallet = publicKey?.toBase58() ?? "Not Connected";
   const shortWallet = wallet.length > 10 ? `${wallet.slice(0, 6)}...${wallet.slice(-4)}` : wallet;
+  const { data: certificates } = useCertificates(trackId);
 
   const completedCount = allProgress?.filter((p) => p.completedAt).length ?? 0;
   const totalXP = xp ?? 0;
   const level = completedCount >= 3 ? 3 : completedCount >= 1 ? 2 : 1;
   const levelName = LEVEL_NAMES[level] ?? "Beginner";
-  const earnedDate = new Date().toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+
+  const latestCert = certificates?.[0];
+  const earnedDate = latestCert
+    ? new Date(latestCert.issuedAt).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
+    : new Date().toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+  const txHash = latestCert?.txHash || null;
+  const shortTxHash = txHash ? `${txHash.slice(0, 8)}...${txHash.slice(-8)}` : null;
 
   const primaryColor = track?.color ?? "#9945FF";
   const secondaryColor = "#14F195";
@@ -201,9 +212,20 @@ export default function CertificatePage({ params }: { params: Promise<{ id: stri
 
       {/* Actions */}
       <div className="mt-6 flex flex-wrap gap-3 justify-center">
-        <Button variant="outline" size="sm" onClick={() => window.open(`https://explorer.solana.com/?cluster=devnet`, "_blank")}>
-          <ExternalLink className="h-4 w-4" /> View on Explorer
-        </Button>
+        {txHash && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              window.open(
+                `https://explorer.solana.com/tx/${txHash}?cluster=devnet`,
+                "_blank"
+              )
+            }
+          >
+            <ExternalLink className="h-4 w-4" /> View on Explorer
+          </Button>
+        )}
         <Button variant="outline" size="sm" onClick={handleShare}>
           <Share2 className="h-4 w-4" /> Share on X
         </Button>
@@ -245,7 +267,63 @@ export default function CertificatePage({ params }: { params: Promise<{ id: stri
               <span className="text-muted-foreground">Credential ID</span>
               <span className="font-mono text-xs">{id}</span>
             </div>
+            {txHash && (
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Transaction</span>
+                <button
+                  className="font-mono text-xs hover:underline cursor-pointer"
+                  style={{ color: primaryColor }}
+                  onClick={() => {
+                    navigator.clipboard.writeText(txHash);
+                    toast.success("Transaction hash copied");
+                  }}
+                  title={txHash}
+                >
+                  {shortTxHash}
+                </button>
+              </div>
+            )}
+            {latestCert && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Issued</span>
+                <span className="font-medium">{earnedDate}</span>
+              </div>
+            )}
           </div>
+
+          {/* Individual course certificates */}
+          {certificates && certificates.length > 0 && (
+            <>
+              <Separator className="my-4" />
+              <h3 className="text-sm font-semibold mb-2">Course Certificates</h3>
+              <div className="space-y-2">
+                {certificates.map((cert) => (
+                  <div key={cert.txHash || cert.courseId} className="flex items-center justify-between text-sm rounded-md border px-3 py-2">
+                    <div>
+                      <p className="font-medium">{cert.courseTitle}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(cert.issuedAt).toLocaleDateString()} · {cert.xpEarned} XP
+                      </p>
+                    </div>
+                    {cert.txHash ? (
+                      <a
+                        href={`https://explorer.solana.com/tx/${cert.txHash}?cluster=devnet`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-mono text-[11px] hover:underline cursor-pointer"
+                        style={{ color: primaryColor }}
+                        title={cert.txHash}
+                      >
+                        {cert.txHash.slice(0, 6)}...{cert.txHash.slice(-4)}
+                      </a>
+                    ) : (
+                      <span className="text-[11px] text-muted-foreground/60">Awaiting on-chain tx</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
 

@@ -22,7 +22,8 @@ const MonacoEditor = dynamic(() => import("@monaco-editor/react").then((m) => m.
 export default function LessonPage({ params }: { params: Promise<{ slug: string; id: string }> }) {
   const { slug, id } = use(params);
   const { data: course } = useCourse(slug);
-  const { data: progress } = useProgress(slug);
+  const courseId = course?.id ?? slug;
+  const { data: progress } = useProgress(courseId);
   const completeMutation = useCompleteLesson();
 
   const [code, setCode] = useState<string>("");
@@ -60,9 +61,40 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string;
       return;
     }
     completeMutation.mutate(
-      { courseId: slug, lessonIndex },
+      { courseId, lessonIndex },
       {
-        onSuccess: () => toast.success(`+${lesson?.xpReward ?? 50} XP earned!`),
+        onSuccess: (data) => {
+          const sig = data?.txSignature;
+          if (sig) {
+            toast.success(`+${lesson?.xpReward ?? 50} XP earned!`, {
+              description: `Tx: ${sig.slice(0, 8)}...${sig.slice(-8)}`,
+              action: {
+                label: "View",
+                onClick: () => window.open(`https://explorer.solana.com/tx/${sig}?cluster=devnet`, "_blank"),
+              },
+            });
+          } else {
+            toast.success(`+${lesson?.xpReward ?? 50} XP earned!`);
+          }
+          if (data?.finalizeTxSignature) {
+            toast.success("Course finalized on-chain!", {
+              description: `Tx: ${data.finalizeTxSignature.slice(0, 8)}...${data.finalizeTxSignature.slice(-8)}`,
+              action: {
+                label: "View",
+                onClick: () => window.open(`https://explorer.solana.com/tx/${data.finalizeTxSignature}?cluster=devnet`, "_blank"),
+              },
+            });
+          }
+          if (data?.credentialTxSignature) {
+            toast.success("Credential issued on-chain!", {
+              description: `Tx: ${data.credentialTxSignature.slice(0, 8)}...${data.credentialTxSignature.slice(-8)}`,
+              action: {
+                label: "View",
+                onClick: () => window.open(`https://explorer.solana.com/tx/${data.credentialTxSignature}?cluster=devnet`, "_blank"),
+              },
+            });
+          }
+        },
         onError: () => toast.error("Failed to mark as complete"),
       }
     );

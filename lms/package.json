@@ -28,6 +28,7 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "@sanity/image-url": "^2.0.3",
     "@sanity/vision": "^5.9.0",
+    "@solana/spl-memo": "^0.2.5",
     "@solana/spl-token": "^0.4.14",
     "@solana/wallet-adapter-base": "^0.9.27",
     "@solana/wallet-adapter-react": "^0.15.39",

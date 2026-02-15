@@ -5,7 +5,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import {
   ArrowLeft, ArrowRight, CheckCircle2, Play, Lightbulb, Eye, EyeOff,
-  Sparkles, Loader2, Copy, Check, Code2,
+  Sparkles, Loader2, Copy, Check, Code2, ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,7 +26,7 @@ const MonacoEditor = dynamic(() => import("@monaco-editor/react").then((m) => m.
 
 export default function PracticeChallengePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { data: completedIds = [] } = usePracticeProgress();
+  const { completed: completedIds, txHashes } = usePracticeProgress();
   const completeMutation = useCompletePracticeChallenge();
 
   const [code, setCode] = useState<string>("");
@@ -66,7 +66,20 @@ export default function PracticeChallengePage({ params }: { params: Promise<{ id
     completeMutation.mutate(
       { challengeId: id, xpReward: practiceChallenge.xpReward },
       {
-        onSuccess: () => toast.success(`+${practiceChallenge.xpReward} XP earned!`),
+        onSuccess: (data) => {
+          const sig = data?.txSignature;
+          if (sig) {
+            toast.success(`+${practiceChallenge.xpReward} XP earned!`, {
+              description: `Tx: ${sig.slice(0, 8)}...${sig.slice(-8)}`,
+              action: {
+                label: "View",
+                onClick: () => window.open(`https://explorer.solana.com/tx/${sig}?cluster=devnet`, "_blank"),
+              },
+            });
+          } else {
+            toast.success(`+${practiceChallenge.xpReward} XP earned!`);
+          }
+        },
         onError: () => toast.error("Failed to mark as complete"),
       }
     );
@@ -129,7 +142,22 @@ export default function PracticeChallengePage({ params }: { params: Promise<{ id
           <ArrowLeft className="h-4 w-4" /> Practice Arena
         </Link>
         <div className="flex items-center gap-2">
-          {isCompleted && <Badge className="bg-solana-green text-black">Solved</Badge>}
+          {isCompleted && (
+            <>
+              <Badge className="bg-solana-green text-black">Solved</Badge>
+              {txHashes[id] && (
+                <a
+                  href={`https://explorer.solana.com/tx/${txHashes[id]}?cluster=devnet`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-xs text-solana-purple hover:underline"
+                >
+                  Tx: {txHashes[id].slice(0, 4)}...{txHashes[id].slice(-4)}
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              )}
+            </>
+          )}
           <Badge variant="outline" style={{ borderColor: diffConfig.color, color: diffConfig.color }}>
             {diffConfig.label}
           </Badge>

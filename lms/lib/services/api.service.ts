@@ -1,4 +1,4 @@
-import type { LearningProgressService } from "./types";
+import type { LearningProgressService, CompleteLessonResult, OnChainResult, PracticeProgressData } from "./types";
 import type { Course } from "@/types/course";
 import type { Progress, LeaderboardEntry, StreakData, UserProfile } from "@/types/user";
 import type { Achievement } from "@/types/gamification";
@@ -20,16 +20,16 @@ export class ApiService implements LearningProgressService {
     return fetchJson(`${BASE}/progress?userId=${userId}`);
   }
 
-  async completeLesson(userId: string, courseId: string, lessonIndex: number): Promise<void> {
-    await fetchJson(`${BASE}/complete-lesson`, {
+  async completeLesson(userId: string, courseId: string, lessonIndex: number): Promise<CompleteLessonResult> {
+    return fetchJson(`${BASE}/complete-lesson`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId, courseId, lessonIndex }),
     });
   }
 
-  async enrollInCourse(userId: string, courseId: string): Promise<void> {
-    await fetchJson(`${BASE}/enroll`, {
+  async enrollInCourse(userId: string, courseId: string): Promise<OnChainResult> {
+    return fetchJson(`${BASE}/enroll`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId, courseId }),
@@ -68,8 +68,8 @@ export class ApiService implements LearningProgressService {
     return fetchJson(`${BASE}/achievements?userId=${userId}`);
   }
 
-  async claimAchievement(userId: string, achievementId: number): Promise<void> {
-    await fetchJson(`${BASE}/achievements/claim`, {
+  async claimAchievement(userId: string, achievementId: number): Promise<OnChainResult> {
+    return fetchJson(`${BASE}/achievements/claim`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId, achievementId }),
@@ -113,12 +113,12 @@ export class ApiService implements LearningProgressService {
     return fetchJson(`${BASE}/courses/${courseId}`);
   }
 
-  async getPracticeProgress(userId: string): Promise<string[]> {
+  async getPracticeProgress(userId: string): Promise<PracticeProgressData> {
     return fetchJson(`${BASE}/practice?userId=${userId}`);
   }
 
-  async completePracticeChallenge(userId: string, challengeId: string, xpReward: number): Promise<void> {
-    await fetchJson(`${BASE}/practice/complete`, {
+  async completePracticeChallenge(userId: string, challengeId: string, xpReward: number): Promise<OnChainResult> {
+    return fetchJson(`${BASE}/practice/complete`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId, challengeId, xpReward }),

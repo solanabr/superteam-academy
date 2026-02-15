@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { connectDB } from "@/lib/db/mongodb";
-import { Enrollment } from "@/lib/db/models/enrollment";
+import { PublicKey } from "@solana/web3.js";
+import { findEnrollment } from "@/lib/db/helpers";
+import { fetchEnrollment, fetchCourse, bitmapToLessonIndices } from "@/lib/solana/readers";
 
 export async function GET(
   req: NextRequest,
@@ -10,8 +11,42 @@ export async function GET(
   const userId = req.nextUrl.searchParams.get("userId");
   if (!userId) return NextResponse.json(null);
 
-  await connectDB();
-  const enrollment = await Enrollment.findOne({ userId, courseId }).lean();
+  // Try on-chain first
+  try {
+    const wallet = new PublicKey(userId);
+    const enrollment = await fetchEnrollment(courseId, wallet);
+    if (enrollment) {
+      const course = await fetchCourse(courseId);
+      const lessonsCompleted = bitmapToLessonIndices(enrollment.lessonFlags);
+      const totalLessons = course?.lessonCount ?? lessonsCompleted.length;
+      const completedAtRaw = enrollment.completedAt;
+      const completedAt = completedAtRaw
+        ? new Date(
+            (typeof completedAtRaw === "object" && "toNumber" in (completedAtRaw as any)
+              ? (completedAtRaw as any).toNumber()
+              : Number(completedAtRaw)) * 1000
+          ).toISOString()
+        : undefined;
+      const enrolledAt = new Date(
+        (typeof enrollment.enrolledAt === "object" && "toNumber" in (enrollment.enrolledAt as any)
+          ? (enrollment.enrolledAt as any).toNumber()
+          : Number(enrollment.enrolledAt)) * 1000
+      ).toISOString();
+
+      return NextResponse.json({
+        courseId,
+        enrolledAt,
+        completedAt,
+        lessonsCompleted,
+        totalLessons,
+        percentComplete: totalLessons > 0 ? (lessonsCompleted.length / totalLessons) * 100 : 0,
+      });
+    }
+  } catch {
+    // fallback to MongoDB
+  }
+
+  const enrollment = await findEnrollment(userId, courseId);
   if (!enrollment) return NextResponse.json(null);
 
   return NextResponse.json({

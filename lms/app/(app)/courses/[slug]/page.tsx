@@ -20,7 +20,8 @@ import { toast } from "sonner";
 export default function CourseDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
   const { data: course, isLoading } = useCourse(slug);
-  const { data: progress } = useProgress(slug);
+  const courseId = course?.id ?? slug;
+  const { data: progress } = useProgress(courseId);
   const { connected } = useWallet();
   const enrollMutation = useEnroll();
   const { data: displayName } = useDisplayName();
@@ -66,7 +67,19 @@ export default function CourseDetailPage({ params }: { params: Promise<{ slug: s
 
   const doEnroll = () => {
     enrollMutation.mutate(course.id, {
-      onSuccess: () => toast.success("Enrolled successfully!"),
+      onSuccess: (data) => {
+        if (data.txSignature) {
+          toast.success("Enrolled on-chain!", {
+            description: `Tx: ${data.txSignature.slice(0, 8)}...${data.txSignature.slice(-8)}`,
+            action: {
+              label: "View",
+              onClick: () => window.open(`https://explorer.solana.com/tx/${data.txSignature}?cluster=devnet`, "_blank"),
+            },
+          });
+        } else {
+          toast.success("Enrolled successfully!");
+        }
+      },
       onError: () => toast.error("Failed to enroll"),
     });
   };

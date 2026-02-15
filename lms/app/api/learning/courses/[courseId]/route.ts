@@ -3,14 +3,13 @@ import { connectDB } from "@/lib/db/mongodb";
 import { Enrollment } from "@/lib/db/models/enrollment";
 import { SAMPLE_COURSES } from "@/lib/data/sample-courses";
 import { fetchSanityCourse } from "@/lib/services/sanity-courses";
+import { fetchCourse as fetchOnChainCourse } from "@/lib/solana/readers";
 
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ courseId: string }> }
 ) {
   const { courseId } = await params;
-
-  await connectDB();
 
   const sanityCourse = await fetchSanityCourse(courseId);
   const course =
@@ -20,6 +19,21 @@ export async function GET(
 
   if (!course) return NextResponse.json(null);
 
+  // Try on-chain Course PDA for stats
+  try {
+    const onChain = await fetchOnChainCourse(course.id);
+    if (onChain) {
+      return NextResponse.json({
+        ...course,
+        totalEnrollments: onChain.totalEnrollments ?? 0,
+        totalCompletions: onChain.totalCompletions ?? 0,
+      });
+    }
+  } catch {
+    // fallback to MongoDB
+  }
+
+  await connectDB();
   const stats = await Enrollment.aggregate([
     { $match: { courseId: course.id } },
     {

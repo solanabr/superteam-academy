@@ -12,6 +12,7 @@ export interface IUser extends Document {
   };
   claimedAchievements: number[];
   completedPractice: string[];
+  practiceTxHashes: Map<string, string>;
   joinedAt: Date;
 }
 
@@ -27,6 +28,7 @@ const UserSchema = new Schema<IUser>({
   },
   claimedAchievements: { type: [Number], default: [] },
   completedPractice: { type: [String], default: [] },
+  practiceTxHashes: { type: Map, of: String, default: new Map() },
   joinedAt: { type: Date, default: Date.now },
 });
 

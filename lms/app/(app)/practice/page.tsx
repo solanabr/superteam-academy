@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import { Code2, CheckCircle2, Trophy, Search } from "lucide-react";
+import { Code2, CheckCircle2, Trophy, Search, ExternalLink } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -26,7 +26,7 @@ export default function PracticePage() {
   const [language, setLanguage] = useState<"all" | "rust" | "typescript">("all");
   const [status, setStatus] = useState<"all" | "solved" | "unsolved">("all");
 
-  const { data: completedIds = [] } = usePracticeProgress();
+  const { completed: completedIds, txHashes } = usePracticeProgress();
   const solvedCount = completedIds.length;
   const totalCount = PRACTICE_CHALLENGES.length;
   const totalXP = completedIds.reduce((sum, id) => {
@@ -181,6 +181,7 @@ export default function PracticePage() {
                     <th className="px-4 py-3 font-medium w-24">Language</th>
                     <th className="px-4 py-3 font-medium w-16 text-right">XP</th>
                     <th className="px-4 py-3 font-medium w-12 text-center">Status</th>
+                    <th className="px-4 py-3 font-medium w-24 text-center">Tx</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -210,6 +211,19 @@ export default function PracticePage() {
                         <td className="px-4 py-3 text-right font-medium text-xp-gold">{c.xpReward}</td>
                         <td className="px-4 py-3 text-center">
                           {solved && <CheckCircle2 className="h-4 w-4 text-solana-green mx-auto" />}
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          {txHashes[c.id] && (
+                            <a
+                              href={`https://explorer.solana.com/tx/${txHashes[c.id]}?cluster=devnet`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-xs text-solana-purple hover:underline"
+                            >
+                              {txHashes[c.id].slice(0, 4)}...{txHashes[c.id].slice(-4)}
+                              <ExternalLink className="h-3 w-3" />
+                            </a>
+                          )}
                         </td>
                       </tr>
                     );

@@ -17,7 +17,7 @@ import { toast } from "sonner";
 
 export default function PracticeCertificatePage() {
   const { publicKey } = useWallet();
-  const { data: completedIds = [] } = usePracticeProgress();
+  const { completed: completedIds } = usePracticeProgress();
   const { data: xp } = useXP();
   const { data: displayName } = useDisplayName();
   const certRef = useRef<HTMLDivElement>(null);

@@ -4250,3 +4250,23 @@ impl Router {
     },
   },
 ];
+
+/**
+ * On-chain mapping: practice challenge IDs → achievement bitmap indices.
+ * Regular achievements use indices 0-63; practice uses 64-138.
+ * This must stay in sync with PRACTICE_CHALLENGES order.
+ */
+const PRACTICE_ACHIEVEMENT_OFFSET = 64;
+const _practiceIndexMap = new Map<string, number>(
+  PRACTICE_CHALLENGES.map((c, i) => [c.id, PRACTICE_ACHIEVEMENT_OFFSET + i])
+);
+
+export function practiceIdToAchievementIndex(challengeId: string): number | null {
+  return _practiceIndexMap.get(challengeId) ?? null;
+}
+
+export function achievementIndexToPracticeId(index: number): string | null {
+  const offset = index - PRACTICE_ACHIEVEMENT_OFFSET;
+  if (offset < 0 || offset >= PRACTICE_CHALLENGES.length) return null;
+  return PRACTICE_CHALLENGES[offset].id;
+}
