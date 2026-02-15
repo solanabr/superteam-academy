@@ -62,11 +62,11 @@ Incremental build plan. Each phase produces a testable, deployable artifact. Shi
 
 ## Phase 4: Core Learning Loop — Enrollment + Lessons
 
-**Instructions:** `enroll`, `complete_lesson`
+**Instructions:** `enroll`, `complete_lesson`, `unenroll`
 
-**What you get:** The core product loop. Learners enroll in courses, complete lessons (backend-signed), earn per-lesson XP (`course.xp_per_lesson`), and streaks update automatically.
+**What you get:** The core product loop. Learners enroll in courses, complete lessons (backend-signed), earn per-lesson XP, and streaks update automatically.
 
-**Accounts:** Enrollment PDA (with `credential_asset: Option<Pubkey>` and `_reserved`)
+**Accounts:** Enrollment PDA
 
 **Key logic:**
 - Prerequisite check on enroll (if course has prerequisite, verify learner has completed it)
