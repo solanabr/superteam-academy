@@ -10,15 +10,15 @@ Quick-reference for developers. Full details in [SPEC.md](./SPEC.md).
 ┌─────────────────────────────────────────────────────────────────────┐
 │                         FRONTEND (Next.js)                          │
 │                                                                     │
-│  Wallet Adapter ─── Anchor Client ─── Helius DAS ─── Photon RPC   │
-└────────┬──────────────────┬─────────────────┬──────────────┬────────┘
-         │                  │                 │              │
-         │ sign txs         │ read accounts   │ leaderboard  │ credentials
-         │                  │                 │              │
-┌────────▼──────────────────▼─────────────────▼──────────────▼────────┐
+│  Wallet Adapter ─── Anchor Client ─── Helius DAS API               │
+└────────┬──────────────────┬─────────────────┬───────────────────────┘
+         │                  │                 │
+         │ sign txs         │ read accounts   │ leaderboard + credentials
+         │                  │                 │
+┌────────▼──────────────────▼─────────────────▼───────────────────────┐
 │                        BACKEND (API)                                │
 │                                                                     │
-│  Lesson validation ─── TX builder ─── Photon queries ─── Queue     │
+│  Lesson validation ─── TX builder ─── DAS API queries ─── Queue    │
 │                                                                     │
 │  Holds: backend_signer keypair (rotatable via update_config)       │
 └────────┬────────────────────────────────────────────────────────────┘
@@ -28,7 +28,7 @@ Quick-reference for developers. Full details in [SPEC.md](./SPEC.md).
 ┌────────▼────────────────────────────────────────────────────────────┐
 │                    SOLANA (On-Chain Program)                         │
 │                                                                     │
-│  Config ──┬── Course ──── Enrollment ──── Credential (compressed)  │
+│  Config ──┬── Course ──── Enrollment ──── Credential (Metaplex Core NFT) │
 │           │                                                         │
 │           └── LearnerProfile                                        │
 │                                                                     │
@@ -48,7 +48,7 @@ Quick-reference for developers. Full details in [SPEC.md](./SPEC.md).
 | Course | `["course", course_id.as_bytes()]` | Program | No |
 | LearnerProfile | `["learner", user.key()]` | Program | No |
 | Enrollment | `["enrollment", course_id.as_bytes(), user.key()]` | Program | Yes |
-| Credential | `["credential", learner.key(), track_id.to_le_bytes()]` | Light Protocol | N/A (compressed) |
+| Credential | Metaplex Core NFT (1 per learner per track) | Metaplex Core program | No |
 
 ### Account Relationships
 
@@ -73,11 +73,14 @@ Course (one per course)
         │
         ├── lesson_flags (bitmap, up to 256 lessons)
         ├── completed_at (set by finalize_course)
+        ├── credential_asset (set by issue_credential)
         │
-        └──► Credential (ZK compressed, one per learner per track)
+        └──► Credential (Metaplex Core NFT, one per learner per track)
               │
-              ├── current_level (upgrades on track progression)
-              └── metadata_hash ──► Arweave JSON
+              ├── Collection per track (Config PDA = collection update authority)
+              ├── Soulbound via PermanentFreezeDelegate plugin
+              ├── Upgradeable: URI + Attributes plugin (level, courses, XP)
+              └── Visible in Phantom, Backpack, Solflare
 
 LearnerProfile (one per learner)
   │
@@ -103,13 +106,14 @@ LearnerProfile (one per learner)
    └─────────────────────────────────────────────┘
 
 2. COMPLETE LESSONS (repeated per lesson)
-   Backend ──sign──► complete_lesson(lesson_index, xp_amount)
+   Backend ──sign──► complete_lesson(lesson_index)
    ┌─────────────────────────────────────────────┐
    │ Check: lesson_index < course.lesson_count    │
    │ Check: bit not already set                   │
    │ Check: daily XP cap                          │
    │ Set: lesson_flags bit                        │
-   │ Mint: XP to learner (Token-2022 CPI)        │
+   │ Mint: course.xp_per_lesson to learner        │
+   │   (Token-2022 CPI)                          │
    │ Update: streak (side effect)                 │
    │ Emit: LessonCompleted event                  │
    └─────────────────────────────────────────────┘
@@ -126,12 +130,15 @@ LearnerProfile (one per learner)
    └─────────────────────────────────────────────┘
 
 4. ISSUE CREDENTIAL
-   Backend ──sign──► issue_credential(proof, ...)
+   Backend ──sign──► issue_credential(metadata_uri, credential_name)
    ┌─────────────────────────────────────────────┐
    │ Check: enrollment.completed_at.is_some()     │
-   │ Query: Photon for existing credential        │
-   │ If exists: upgrade (Light CPI)               │
-   │ If new: create (Light CPI)                   │
+   │ Check: enrollment.credential_asset           │
+   │ If None: create Metaplex Core NFT (CPI)     │
+   │   → PermanentFreezeDelegate + Attributes     │
+   │   → Store asset pubkey in enrollment         │
+   │ If Some: upgrade existing NFT (CPI)          │
+   │   → Update URI + name + Attributes plugin    │
    │ Emit: CredentialIssued event                 │
    └─────────────────────────────────────────────┘
 
@@ -176,43 +183,33 @@ Config.season_closed = false
 
 ---
 
-## ZK Compression Flow (Credentials)
+## Metaplex Core Credential Flow
 
 ```
-Backend                         Photon Indexer              Solana
-  │                                  │                        │
-  │ 1. getCompressedAccount          │                        │
-  │    (by derived address)          │                        │
-  │─────────────────────────────────►│                        │
-  │                                  │                        │
-  │ 2. Returns: account data         │                        │
-  │    OR: not found                 │                        │
-  │◄─────────────────────────────────│                        │
-  │                                  │                        │
-  │ 3. getValidityProof              │                        │
-  │    (for account state)           │                        │
-  │─────────────────────────────────►│                        │
-  │                                  │                        │
-  │ 4. Returns: 128-byte ZK proof    │                        │
-  │◄─────────────────────────────────│                        │
-  │                                  │                        │
-  │ 5. Build TX: issue_credential    │                        │
-  │    (proof + account data +       │                        │
-  │     remaining_accounts)          │                        │
-  │──────────────────────────────────────────────────────────►│
-  │                                  │                        │
-  │                                  │ 6. Light CPI:          │
-  │                                  │    create/update        │
-  │                                  │    compressed account   │
-  │                                  │◄───────────────────────│
-  │                                  │                        │
-  │ 7. TX confirmed                  │                        │
-  │◄──────────────────────────────────────────────────────────│
+Backend                                              Solana
+  │                                                    │
+  │ 1. Read enrollment.credential_asset on-chain       │
+  │──────────────────────────────────────────────────►│
+  │                                                    │
+  │ 2. Returns: None (new) or Some(asset_pubkey)       │
+  │◄──────────────────────────────────────────────────│
+  │                                                    │
+  │ 3a. If None: build createV2 TX                     │
+  │     (new asset keypair, collection, plugins)       │
+  │ 3b. If Some: build updateV1 + updatePluginV1 TX   │
+  │     (update URI, name, Attributes)                 │
+  │──────────────────────────────────────────────────►│
+  │                                                    │
+  │ 4. Metaplex Core CPI executes                      │
+  │    (Config PDA signs as collection authority)       │
+  │◄──────────────────────────────────────────────────│
+  │                                                    │
+  │ 5. TX confirmed                                    │
+  │    NFT immediately visible in all wallets          │
+  │◄──────────────────────────────────────────────────│
 ```
 
-**Lookup tables to include:** (reduces TX size for ZK Compression accounts)
-- Mainnet: `9NYFyEqPkyXUhkerbGHXUXkvb4qpzeEdHuGpgbgpH1NJ`
-- Devnet: `qAJZMgnQJ8G6vA3WRcjD9Jan1wtKkaCFWLWskxJrR5V`
+**Key:** Config PDA must be the update authority of each track collection NFT. No external indexer dependency for create-vs-upgrade decisions — `enrollment.credential_asset` stores the state on-chain.
 
 ---
 
@@ -230,7 +227,6 @@ Which accounts each instruction reads/writes:
 | update_course | | **W** | | | | | |
 | init_learner | | | **W** (create) | | | | |
 | enroll | | R | | **W** (create) | | | |
-| unenroll | | | | **W** (close) | | | |
 | complete_lesson | R | R | **W** | **W** | | R | **W** (learner) |
 | finalize_course | R | **W** | **W** | **W** | | R | **W** (learner + creator) |
 | issue_credential | R | R | | R | **W** | | |
@@ -250,8 +246,8 @@ R = read, **W** = write, (create) = init, (close) = close account
 | Config | 8 | 143 | 32 | ~183 | ~0.002 SOL |
 | Course | 8 | ~206 | 16 | ~230 | ~0.002 SOL |
 | LearnerProfile | 8 | ~87 | 16 | ~111 | ~0.001 SOL |
-| Enrollment | 8 | ~91 | 0 | ~99 | ~0.001 SOL |
-| Credential | — | ~88 | 0 | ~88 | 0 SOL |
+| Enrollment | 8 | ~125 | 7 | ~140 | ~0.001 SOL |
+| Credential | — | ~200 (Metaplex Core asset) | — | ~200 | ~0.006 SOL |
 
 ---
 
@@ -267,10 +263,10 @@ R = read, **W** = write, (create) = init, (close) = close account
 | update_course | 10K | Field updates |
 | init_learner | 5K | PDA creation |
 | enroll | 15K | PDA creation + prerequisite check |
-| unenroll | 5K | Account close |
 | complete_lesson | 40K | Bitmap + Token-2022 CPI + streak |
-| finalize_course | 100K | Bitmap verify + 2x Token-2022 CPI |
-| issue_credential | 200-300K | ZK Compression CPI |
+| finalize_course | 80K | Bitmap verify + creator XP mint CPI |
+| claim_completion_bonus | 30K | XP mint CPI + daily cap check |
+| issue_credential | 50-100K | Metaplex Core CPI (create or update) |
 | claim_achievement | 30K | Bitmap + Token-2022 CPI |
 | award_streak_freeze | 5K | Counter increment |
 | register_referral | 10K | Two account updates |
@@ -285,7 +281,7 @@ On-chain:                           Backend:
 ┌─────────────────────────┐        ┌─────────────────────────────────┐
 │ Anchor error codes      │        │ Retry logic for:                │
 │ (AcademyError enum)     │        │   - TX confirmation failures    │
-│                         │        │   - Photon indexer timeouts      │
+│                         │        │   - Metaplex Core CPI failures   │
 │ checked_add/sub/mul     │        │   - Blockhash expiry            │
 │ (no unchecked math)     │        │                                 │
 │                         │        │ Queue for:                      │
@@ -301,9 +297,8 @@ On-chain:                           Backend:
 
 | Service | Purpose | Fallback |
 | --- | --- | --- |
-| Helius DAS API | XP leaderboard, token indexing | Custom indexer on transaction logs |
-| Photon (via Helius) | Credential queries, validity proofs | Cache credential state in backend DB |
-| Arweave | Course content, credential metadata | Content is immutable once uploaded |
+| Helius DAS API | XP leaderboard, token indexing, credential NFT queries | Custom indexer on transaction logs |
+| Arweave | Course content, credential metadata JSON | Content is immutable once uploaded |
 | Squads | Multisig for platform authority | Single signer (reduced security) |
 
 ---

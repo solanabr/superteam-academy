@@ -4,7 +4,21 @@ Items deferred from V1 to keep the initial release lean. Ordered roughly by expe
 
 ---
 
-## V2: Platform Maturity
+## V2: Deferred from V1 + Platform Maturity
+
+### 0. V1 Deferrals (Ship First in V2)
+
+**Seasons:** `create_season`, `close_season` — new Token-2022 mint per season, old tokens as history. Requires per-learner ATA per season.
+
+**Achievements:** `claim_achievement` — bitmap tracking + XP rewards. Requires on-chain achievement registry or fixed XP from Config.
+
+**Streak Freezes:** `award_streak_freeze` — backend awards freezes, multi-day stacking in `update_streak`. Add `MAX_STREAK_FREEZES` cap.
+
+**Referrals:** `register_referral` — analytics-only tracking. Referral XP rewards in later V2.
+
+**Complexity:** Low-Medium. These are fully specified in SPEC.md; implementation is straightforward since account structures already have reserved fields.
+
+---
 
 ### 1. On-Chain Track Registry
 
@@ -50,18 +64,18 @@ fn creator_reward(base_xp: u32, course: &Course) -> u32 {
 
 ---
 
-### 3. Decompress Credential to NFT
+### 3. ZK Compression Migration for Credentials
 
-**Problem:** ZK compressed credentials don't appear in standard wallet UIs (Phantom, Backpack). Learners may want a visible NFT in their wallet for social proof.
+**Problem:** Metaplex Core NFTs cost ~0.006 SOL per credential in rent. At 100K+ learners with multiple tracks, credential rent becomes significant (~600+ SOL).
 
-**Approach:** Add `decompress_credential` instruction that:
-1. Reads the compressed credential via validity proof
-2. Mints a standard Token-2022 NFT with the credential metadata
-3. Nullifies the compressed credential (or marks it as "decompressed")
+**Approach:** Migrate credentials from Metaplex Core NFTs to ZK compressed accounts when:
+1. Wallet support for compressed assets improves (Phantom, Backpack display them natively)
+2. Scale warrants the cost reduction (~$0.001 vs ~$0.75 per credential at $200/SOL)
+3. Light Protocol tooling stabilizes for production use
 
-The NFT would be a one-way operation — once decompressed, the credential lives as a regular NFT. Future upgrades would require a new compressed credential.
+This would require a new `issue_credential_compressed` instruction and potentially a migration path for existing Metaplex Core credentials.
 
-**Complexity:** High. Requires NFT minting logic, metadata handling, and a decision on whether decompressed credentials can still be upgraded.
+**Complexity:** High. Requires Photon indexer dependency, validity proofs, and wallet display regression testing.
 
 ---
 
@@ -196,13 +210,17 @@ Allow creators to set prices (in SOL or USDC) for premium courses, with platform
 
 | Improvement | Impact | Effort | Priority |
 | --- | --- | --- | --- |
+| Seasons (deferred from V1) | Medium | Low | V2.0 |
+| Achievements (deferred from V1) | Medium | Low | V2.0 |
+| Streak freezes (deferred from V1) | Low | Low | V2.0 |
+| Referrals (deferred from V1) | Low | Low | V2.0 |
 | Time-based creator decay | High | Medium | V2.0 |
 | Track registry on-chain | Medium | Low | V2.0 |
-| Decompress credential | High | High | V2.0 |
 | Batch operations | Medium | Low | V2.0 |
 | Analytics enrichment | Medium | Low | V2.0 |
 | SPL token rewards | High | High | V2.1 |
 | Guild accounts | Medium | Medium | V2.1 |
+| ZK Compression migration | Medium | High | V2.1+ |
 | Streak challenges | Low | Medium | V2.2 |
 | Cross-program composability | High | Medium | V2.2 |
 | On-chain governance | Medium | Very High | V3.0 |

@@ -40,17 +40,17 @@ Use `/quick-commit` command to automate branch creation and commits.
 superteam-academy/
 ├── CLAUDE.md                    ← You are here
 ├── docs/
-│   ├── SPEC.md                  ← On-chain program specification (v1.1)
+│   ├── SPEC.md                  ← On-chain program specification (v1.3)
 │   ├── ARCHITECTURE.md          ← System diagrams, account maps, CU budgets
-│   ├── IMPLEMENTATION_ORDER.md  ← 10-phase build plan
+│   ├── IMPLEMENTATION_ORDER.md  ← 6-phase build plan (simplified V1)
 │   └── FUTURE_IMPROVEMENTS.md   ← V2/V3 deferred features
 ├── programs/
 │   └── superteam-academy/
 │       ├── Cargo.toml
 │       └── src/
 │           ├── lib.rs           ← Program entrypoint + instruction dispatch
-│           ├── state/           ← Account structs (Config, Course, LearnerProfile, Enrollment, Credential)
-│           ├── instructions/    ← One file per instruction (16 total)
+│           ├── state/           ← Account structs (Config, Course, LearnerProfile, Enrollment)
+│           ├── instructions/    ← One file per instruction (11 in V1)
 │           ├── errors.rs        ← AcademyError enum
 │           └── utils.rs         ← Shared helpers (bitmap, rate limiting, streak)
 ├── tests/
@@ -78,39 +78,43 @@ superteam-academy/
 |-------|-------|
 | **Programs** | Anchor 0.31+, Rust 1.82+ |
 | **Token Standard** | Token-2022 (NonTransferable, PermanentDelegate, MetadataPointer, TokenMetadata) |
-| **Credentials** | Light SDK (ZK Compression) — compressed PDAs, Photon indexer |
+| **Credentials** | Metaplex Core NFTs (soulbound via PermanentFreezeDelegate, wallet-visible) |
 | **Testing** | Mollusk, LiteSVM, Trident (fuzz) |
 | **Client** | TypeScript, @coral-xyz/anchor, @solana/web3.js |
 | **Frontend** | Next.js 14+, React, Tailwind CSS |
-| **RPC** | Helius (DAS API + Photon for ZK Compression) |
+| **RPC** | Helius (DAS API for XP leaderboard + credential NFT queries) |
 | **Content** | Arweave (immutable course content) |
 | **Multisig** | Squads (platform authority) |
 
 ## On-Chain Program Summary
 
-### Accounts (4 Regular PDAs + 1 Compressed)
+### Accounts (4 Regular PDAs + Metaplex Core NFTs)
 
 | Account | Seeds | Purpose |
 |---------|-------|---------|
-| Config | `["config"]` | Singleton: authority, backend signer, season, rate limits |
+| Config | `["config"]` | Singleton: authority, backend signer, XP mint, rate limits |
 | Course | `["course", course_id.as_bytes()]` | Course metadata, creator, track, XP amounts |
-| LearnerProfile | `["learner", user.key()]` | Streaks, achievements (bitmap), rate limiting, referrals |
-| Enrollment | `["enrollment", course_id.as_bytes(), user.key()]` | Lesson bitmap, completion timestamps (closeable) |
-| Credential | `["credential", learner.key(), track_id.to_le_bytes()]` | ZK compressed, upgradeable per track (Light Protocol) |
+| LearnerProfile | `["learner", user.key()]` | Streaks, rate limiting (achievement/referral fields reserved for V2) |
+| Enrollment | `["enrollment", course_id.as_bytes(), user.key()]` | Lesson bitmap, completion timestamps, credential_asset ref (closeable) |
+| Credential | Metaplex Core NFT (1 per learner per track) | Soulbound, wallet-visible, upgradeable via URI + Attributes plugin |
 
-### Instructions (16 Total)
+### Instructions (11 in V1)
 
-**Platform Management (4):** `initialize`, `create_season`, `close_season`, `update_config`
+**Platform Management (2):** `initialize`, `update_config`
 **Courses (2):** `create_course`, `update_course`
-**Learner (4):** `init_learner`, `register_referral`, `claim_achievement`, `award_streak_freeze`
-**Enrollment & Progress (6):** `enroll`, `unenroll`, `complete_lesson`, `finalize_course`, `issue_credential`, `close_enrollment`
+**Learner (1):** `init_learner`
+**Enrollment & Progress (6):** `enroll`, `complete_lesson`, `finalize_course`, `claim_completion_bonus`, `issue_credential`, `close_enrollment`
+
+**Deferred to V2:** `create_season`, `close_season`, `claim_achievement`, `award_streak_freeze`, `register_referral`
 
 ### Key Design Decisions
 
 - **XP = soulbound Token-2022 token** with NonTransferable + PermanentDelegate (users can't transfer or self-burn)
-- **Seasons** = new mint per season; old tokens remain as history
-- **Credentials** use ZK Compression (Light Protocol) — no merkle tree, no rent, upgradeable
+- **Single XP mint** in V1 (seasons deferred to V2)
+- **Credentials = Metaplex Core NFTs** — soulbound via PermanentFreezeDelegate, wallet-visible, upgradeable
+- **Config PDA = update authority** of all track collection NFTs
 - **`finalize_course` and `issue_credential` are split** — XP awards don't depend on credential CPI success
+- **`claim_completion_bonus` is separate** from `finalize_course` — handles daily XP cap gracefully
 - **On-chain daily XP cap** — defense-in-depth even if backend compromised
 - **UTC standard** for all day boundaries (streaks, rate limiting)
 - **Rotatable backend signer** — stored in Config, rotatable via `update_config`
@@ -121,16 +125,12 @@ superteam-academy/
 
 Refer to `docs/IMPLEMENTATION_ORDER.md` for details. Summary:
 
-1. Config + Seasons → foundation
-2. LearnerProfile → user onboarding
-3. Course Registry → content management
-4. Enrollment + Lessons → **core learning loop** (most complex)
-5. Finalize Course → **working MVP** (deploy to devnet here)
-6. Credentials (ZK) → verifiable credentials
-7. Achievements → gamification
-8. Streak Freezes → streak polish
-9. Referrals → growth
-10. Close Enrollment → rent reclaim
+1. Foundation → Config PDA + XP mint (`initialize`, `update_config`)
+2. Users → LearnerProfile (`init_learner`)
+3. Courses → Course registry (`create_course`, `update_course`)
+4. Learning Loop → Enrollment + lessons (`enroll`, `complete_lesson`)
+5. Completion → **Working MVP** (`finalize_course`, `claim_completion_bonus`, `close_enrollment`)
+6. Credentials → Metaplex Core NFTs (`issue_credential`)
 
 ## Agents
 
@@ -192,7 +192,7 @@ git diff main...HEAD
 
 **Keep:**
 - Legitimate security checks
-- Comments explaining non-obvious logic (especially math, bitmap operations, ZK Compression)
+- Comments explaining non-obvious logic (especially math, bitmap operations, Metaplex Core CPI)
 - Error handling matching existing patterns
 
 **Report 1-3 sentence summary of cleanup.**
@@ -234,7 +234,7 @@ Rules (always-on constraints): `.claude/rules/`
 - [ ] Verifiable build (`anchor build --verifiable`)
 - [ ] CU optimization verified (see ARCHITECTURE.md for budgets)
 - [ ] On-chain rate limiting tested (daily XP cap, achievement XP cap)
-- [ ] ZK Compression credential flow tested (create + upgrade)
+- [ ] Metaplex Core credential flow tested (create + upgrade, soulbound transfer fails)
 - [ ] Streak logic tested across UTC day boundaries
 - [ ] Devnet testing successful (multiple days)
 - [ ] AI slop removed from branch
