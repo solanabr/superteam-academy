@@ -13,9 +13,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Superteam Academy | Learn Solana Development",
+  title: "Learn Solana Development",
   description: "A decentralized learning platform on Solana with gamified progression, verifiable credentials, and on-chain XP tracking.",
   keywords: ["Solana", "blockchain", "web3", "learning", "academy", "anchor", "rust"],
+  authors: [{ name: "Krish Soni", url: "https://krishsoni.co" }],
 };
 
 export default function RootLayout({

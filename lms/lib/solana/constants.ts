@@ -7,11 +7,11 @@ export const PROGRAM_ID = new PublicKey(
 export const RPC_ENDPOINT = process.env.NEXT_PUBLIC_RPC_ENDPOINT || "https://api.devnet.solana.com";
 
 export const TRACKS: Record<number, { name: string; display: string; color: string }> = {
-  0: { name: "standalone", display: "Standalone", color: "#71717a" },
-  1: { name: "anchor", display: "Anchor Framework", color: "#9945FF" },
-  2: { name: "rust", display: "Rust for Solana", color: "#FF6B35" },
-  3: { name: "defi", display: "DeFi Development", color: "#14F195" },
-  4: { name: "security", display: "Program Security", color: "#ef4444" },
+  0: { name: "standalone", display: "Standalone", color: "#8a9a8e" },
+  1: { name: "anchor", display: "Anchor Framework", color: "#008c4c" },
+  2: { name: "rust", display: "Rust for Solana", color: "#ffd23f" },
+  3: { name: "defi", display: "DeFi Development", color: "#2f6b3f" },
+  4: { name: "security", display: "Program Security", color: "#1b231d" },
 };
 
 export const MAX_DAILY_XP = 2000;

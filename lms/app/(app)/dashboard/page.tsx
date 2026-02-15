@@ -26,7 +26,7 @@ export default function DashboardPage() {
   if (!connected) {
     return (
       <div className="mx-auto max-w-7xl px-4 py-24 text-center">
-        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-solana-purple/20 to-solana-green/20 mb-6">
+        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-[#008c4c]/20 to-[#ffd23f]/20 mb-6">
           <Zap className="h-10 w-10 text-solana-purple" />
         </div>
         <h1 className="text-3xl font-bold">Welcome to Your Dashboard</h1>

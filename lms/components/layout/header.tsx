@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { BookOpen, LayoutDashboard, Trophy, Code2, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,11 @@ export function Header() {
   const pathname = usePathname();
   const [walletModalOpen, setWalletModalOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <>
@@ -30,9 +35,11 @@ export function Header() {
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-8">
             <Link href="/" className="flex items-center gap-2">
-              <Image src="/image.png" alt="Superteam Academy" width={32} height={32} className="rounded-lg" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white dark:bg-[#1b231d] shadow-sm">
+                <Image src="/logo.png" alt="Superteam Academy" width={28} height={28} />
+              </div>
               <span className="hidden text-lg font-bold sm:inline-block">
-                Superteam <span className="text-solana-purple"></span>
+                Superteam <span className="text-solana-purple">Brazil</span>
               </span>
             </Link>
             <nav className="hidden items-center gap-1 md:flex">
@@ -56,32 +63,34 @@ export function Header() {
           <div className="flex items-center gap-2">
             <ThemeToggle />
             <WalletButton onConnectClick={() => setWalletModalOpen(true)} />
-            <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-              <SheetTrigger asChild className="md:hidden">
-                <Button variant="ghost" size="icon">
-                  <Menu className="h-5 w-5" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-72">
-                <SheetTitle>Navigation</SheetTitle>
-                <nav className="mt-8 flex flex-col gap-2">
-                  {NAV_ITEMS.map((item) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={() => setMobileOpen(false)}
-                      className={cn(
-                        "flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors hover:bg-accent",
-                        pathname === item.href ? "bg-accent" : ""
-                      )}
-                    >
-                      <item.icon className="h-5 w-5" />
-                      {item.label}
-                    </Link>
-                  ))}
-                </nav>
-              </SheetContent>
-            </Sheet>
+            {mounted && (
+              <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+                <SheetTrigger asChild className="md:hidden">
+                  <Button variant="ghost" size="icon">
+                    <Menu className="h-5 w-5" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-72">
+                  <SheetTitle>Navigation</SheetTitle>
+                  <nav className="mt-8 flex flex-col gap-2">
+                    {NAV_ITEMS.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setMobileOpen(false)}
+                        className={cn(
+                          "flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors hover:bg-accent",
+                          pathname === item.href ? "bg-accent" : ""
+                        )}
+                      >
+                        <item.icon className="h-5 w-5" />
+                        {item.label}
+                      </Link>
+                    ))}
+                  </nav>
+                </SheetContent>
+              </Sheet>
+            )}
           </div>
         </div>
       </header>

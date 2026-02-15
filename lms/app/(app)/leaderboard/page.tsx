@@ -16,9 +16,9 @@ const TIMEFRAMES = [
 ];
 
 const PODIUM_COLORS = [
-  "from-yellow-400 to-amber-500",
-  "from-gray-300 to-gray-400",
-  "from-amber-600 to-amber-700",
+  "from-[#ffd23f] to-[#008c4c]",
+  "from-[#f7eacb] to-[#8a9a8e]",
+  "from-[#2f6b3f] to-[#1b231d]",
 ];
 
 export default function LeaderboardPage() {

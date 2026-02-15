@@ -91,7 +91,7 @@ export function AIChat() {
         onClick={() => setOpen(!open)}
         className={cn(
           "fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-all hover:scale-105",
-          "bg-gradient-to-br from-solana-purple to-solana-cyan text-white",
+          "bg-gradient-to-br from-[#008c4c] to-[#2f6b3f] text-white",
           open && "rotate-90 scale-90"
         )}
       >
@@ -102,7 +102,7 @@ export function AIChat() {
       {open && (
         <div className="fixed bottom-24 right-6 z-50 flex h-[520px] w-[400px] flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-2xl">
           {/* Header */}
-          <div className="flex items-center justify-between border-b px-4 py-3 bg-gradient-to-r from-solana-purple/10 to-solana-cyan/10">
+          <div className="flex items-center justify-between border-b px-4 py-3 bg-gradient-to-r from-[#008c4c]/10 to-[#2f6b3f]/10">
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-solana-purple/20">
                 <Bot className="h-4 w-4 text-solana-purple" />

@@ -15,10 +15,10 @@ export function LevelBadge({ level, size = "md" }: LevelBadgeProps) {
   };
 
   const tierColor =
-    level >= 10 ? "from-xp-gold to-amber-600" :
-    level >= 5 ? "from-solana-purple to-solana-cyan" :
-    level >= 1 ? "from-solana-green to-emerald-600" :
-    "from-gray-400 to-gray-500";
+    level >= 10 ? "from-[#ffd23f] to-[#008c4c]" :
+    level >= 5 ? "from-[#008c4c] to-[#2f6b3f]" :
+    level >= 1 ? "from-[#ffd23f] to-[#f7eacb]" :
+    "from-[#8a9a8e] to-[#2f6b3f]";
 
   return (
     <div

@@ -59,15 +59,15 @@ export interface TestCase {
 }
 
 export const TRACKS: Record<number, { name: string; display: string; color: string }> = {
-  0: { name: "standalone", display: "Standalone", color: "#71717a" },
-  1: { name: "anchor", display: "Anchor Framework", color: "#9945FF" },
-  2: { name: "rust", display: "Rust for Solana", color: "#FF6B35" },
-  3: { name: "defi", display: "DeFi Development", color: "#14F195" },
-  4: { name: "security", display: "Program Security", color: "#ef4444" },
+  0: { name: "standalone", display: "Standalone", color: "#8a9a8e" },
+  1: { name: "anchor", display: "Anchor Framework", color: "#008c4c" },
+  2: { name: "rust", display: "Rust for Solana", color: "#ffd23f" },
+  3: { name: "defi", display: "DeFi Development", color: "#2f6b3f" },
+  4: { name: "security", display: "Program Security", color: "#1b231d" },
 };
 
 export const DIFFICULTY_CONFIG: Record<Difficulty, { label: string; color: string; xp: number }> = {
-  beginner: { label: "Beginner", color: "#14F195", xp: 500 },
-  intermediate: { label: "Intermediate", color: "#FFD700", xp: 1000 },
-  advanced: { label: "Advanced", color: "#FF6B35", xp: 2000 },
+  beginner: { label: "Beginner", color: "#008c4c", xp: 500 },
+  intermediate: { label: "Intermediate", color: "#ffd23f", xp: 1000 },
+  advanced: { label: "Advanced", color: "#2f6b3f", xp: 2000 },
 };

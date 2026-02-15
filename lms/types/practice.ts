@@ -27,29 +27,29 @@ export interface PracticeChallenge {
 }
 
 export const PRACTICE_CATEGORIES: Record<PracticeCategory, { label: string; color: string }> = {
-  accounts: { label: "Accounts", color: "#14F195" },
-  transactions: { label: "Transactions", color: "#9945FF" },
-  pdas: { label: "PDAs", color: "#FF6B35" },
-  tokens: { label: "Tokens", color: "#FFD700" },
-  cpi: { label: "CPI", color: "#00D1FF" },
-  serialization: { label: "Serialization", color: "#FF69B4" },
-  security: { label: "Security", color: "#ef4444" },
-  anchor: { label: "Anchor", color: "#9945FF" },
-  defi: { label: "DeFi", color: "#14F195" },
-  advanced: { label: "Advanced", color: "#FF6B35" },
+  accounts: { label: "Accounts", color: "#008c4c" },
+  transactions: { label: "Transactions", color: "#2f6b3f" },
+  pdas: { label: "PDAs", color: "#ffd23f" },
+  tokens: { label: "Tokens", color: "#ffd23f" },
+  cpi: { label: "CPI", color: "#2f6b3f" },
+  serialization: { label: "Serialization", color: "#008c4c" },
+  security: { label: "Security", color: "#1b231d" },
+  anchor: { label: "Anchor", color: "#008c4c" },
+  defi: { label: "DeFi", color: "#2f6b3f" },
+  advanced: { label: "Advanced", color: "#1b231d" },
 };
 
 export const PRACTICE_DIFFICULTY_CONFIG: Record<PracticeDifficulty, { label: string; color: string; xp: number }> = {
-  easy: { label: "Easy", color: "#14F195", xp: 10 },
-  medium: { label: "Medium", color: "#FFD700", xp: 25 },
-  hard: { label: "Hard", color: "#FF6B35", xp: 50 },
+  easy: { label: "Easy", color: "#008c4c", xp: 10 },
+  medium: { label: "Medium", color: "#ffd23f", xp: 25 },
+  hard: { label: "Hard", color: "#2f6b3f", xp: 50 },
 };
 
 export const PRACTICE_MILESTONES = [15, 30, 50, 75] as const;
 
 export const MILESTONE_LEVELS: Record<number, { name: string; color: string }> = {
-  15: { name: "Bronze", color: "#CD7F32" },
-  30: { name: "Silver", color: "#C0C0C0" },
-  50: { name: "Gold", color: "#FFD700" },
-  75: { name: "Diamond", color: "#B9F2FF" },
+  15: { name: "Bronze", color: "#2f6b3f" },
+  30: { name: "Silver", color: "#8a9a8e" },
+  50: { name: "Gold", color: "#ffd23f" },
+  75: { name: "Diamond", color: "#008c4c" },
 };

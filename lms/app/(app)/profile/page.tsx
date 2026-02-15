@@ -54,7 +54,7 @@ export default function ProfilePage() {
         <CardContent className="p-8">
           <div className="flex flex-col items-center gap-6 sm:flex-row">
             <Avatar className="h-20 w-20">
-              <AvatarFallback className="text-2xl bg-gradient-to-br from-solana-purple to-solana-green text-white">
+              <AvatarFallback className="text-2xl bg-gradient-to-br from-[#008c4c] to-[#ffd23f] text-white">
                 {(displayName ?? address).slice(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
@@ -81,7 +81,7 @@ export default function ProfilePage() {
               <span>Level {level}</span>
               <span>{xpProgress.current}/{xpProgress.needed} XP to Level {level + 1}</span>
             </div>
-            <Progress value={xpProgress.percent} indicatorClassName="bg-gradient-to-r from-solana-purple to-solana-green" />
+            <Progress value={xpProgress.percent} indicatorClassName="bg-gradient-to-r from-[#008c4c] to-[#ffd23f]" />
           </div>
         </CardContent>
       </Card>

@@ -14,7 +14,7 @@ const buttonVariants = cva(
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        solana: "bg-gradient-to-r from-solana-purple to-solana-green text-white hover:opacity-90",
+        solana: "bg-gradient-to-r from-[#008c4c] to-[#ffd23f] text-white hover:opacity-90",
       },
       size: {
         default: "h-10 px-4 py-2",

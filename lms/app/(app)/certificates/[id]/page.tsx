@@ -49,8 +49,8 @@ export default function CertificatePage({ params }: { params: Promise<{ id: stri
   const txHash = latestCert?.txHash || null;
   const shortTxHash = txHash ? `${txHash.slice(0, 8)}...${txHash.slice(-8)}` : null;
 
-  const primaryColor = track?.color ?? "#9945FF";
-  const secondaryColor = "#14F195";
+  const primaryColor = track?.color ?? "#008c4c";
+  const secondaryColor = "#ffd23f";
 
   const nftMetadata = {
     name: `Superteam Academy — ${track?.display ?? "Solana"} ${levelName}`,
