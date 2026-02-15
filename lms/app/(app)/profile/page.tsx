@@ -1,15 +1,17 @@
 "use client";
 
-import { Zap, Flame, Trophy, BookOpen, Award, Calendar } from "lucide-react";
+import { Zap, Flame, Trophy, BookOpen, Award, Calendar, Code2, ExternalLink, CheckCircle2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
-import { useXP, useLevel, useStreak, useAllProgress, useAchievements, useCourses, useDisplayName, useBio } from "@/lib/hooks/use-service";
+import { useXP, useLevel, useStreak, useAllProgress, useAchievements, useCourses, useDisplayName, useBio, usePracticeProgress } from "@/lib/hooks/use-service";
 import { getXpProgress, formatXP, shortenAddress } from "@/lib/utils";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { TRACKS } from "@/types/course";
+import { PRACTICE_MILESTONES, MILESTONE_LEVELS, PRACTICE_DIFFICULTY_CONFIG } from "@/types/practice";
+import { PRACTICE_CHALLENGES } from "@/lib/data/practice-challenges";
 import Link from "next/link";
 
 export default function ProfilePage() {
@@ -22,6 +24,7 @@ export default function ProfilePage() {
   const { data: allProgress } = useAllProgress();
   const { data: achievements } = useAchievements();
   const { data: courses } = useCourses();
+  const { completed: practiceCompleted, claimedMilestones, milestoneTxHashes } = usePracticeProgress();
 
   const xpProgress = getXpProgress(xp);
   const completedCourses = allProgress?.filter((p) => p.completedAt) ?? [];
@@ -46,6 +49,14 @@ export default function ProfilePage() {
     ).length;
     return { ...track, id: parseInt(id), total: trackCourses.length, completed };
   }).filter((t) => t.total > 0);
+
+  const practiceSolvedCount = practiceCompleted.length;
+  const practiceXP = practiceCompleted.reduce((sum, id) => {
+    const c = PRACTICE_CHALLENGES.find((ch) => ch.id === id);
+    return sum + (c ? PRACTICE_DIFFICULTY_CONFIG[c.difficulty].xp : 0);
+  }, 0);
+  const currentTier = [...PRACTICE_MILESTONES].reverse().find((m) => practiceSolvedCount >= m);
+  const currentTierLevel = currentTier ? MILESTONE_LEVELS[currentTier] : null;
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
@@ -140,6 +151,72 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Practice Stats */}
+      <Card className="mt-8">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Code2 className="h-5 w-5" /> Practice Arena
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <div className="flex items-center justify-between text-sm mb-1">
+              <span className="font-medium">Problems Solved</span>
+              <span className="text-muted-foreground">{practiceSolvedCount} / 75</span>
+            </div>
+            <Progress value={(practiceSolvedCount / 75) * 100} indicatorClassName="bg-solana-purple" />
+          </div>
+          <div className="flex items-center gap-4">
+            {currentTierLevel ? (
+              <Badge style={{ backgroundColor: currentTierLevel.color, color: "#fff" }}>
+                {currentTierLevel.name}
+              </Badge>
+            ) : (
+              <Badge variant="outline">No tier yet</Badge>
+            )}
+            <span className="flex items-center gap-1 text-sm">
+              <Zap className="h-4 w-4 text-xp-gold" /> {practiceXP} XP from practice
+            </span>
+          </div>
+          <Separator />
+          <div className="space-y-2">
+            {PRACTICE_MILESTONES.map((m) => {
+              const level = MILESTONE_LEVELS[m];
+              const reached = practiceSolvedCount >= m;
+              const claimed = claimedMilestones.includes(m);
+              const txHash = milestoneTxHashes[String(m)];
+              return (
+                <div key={m} className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-2">
+                    <Trophy className="h-4 w-4" style={{ color: reached ? level.color : undefined }} />
+                    <span className={reached ? "font-medium" : "text-muted-foreground"}>{level.name}</span>
+                    <span className="text-xs text-muted-foreground">({m} solved)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium">{level.solReward} SOL</span>
+                    {claimed && txHash ? (
+                      <a
+                        href={`https://explorer.solana.com/tx/${txHash}?cluster=devnet`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-xs text-solana-green hover:underline"
+                      >
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    ) : reached ? (
+                      <span className="text-xs text-xp-gold">Eligible</span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">Locked</span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Completed Courses */}
       <Card className="mt-8">

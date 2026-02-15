@@ -376,7 +376,33 @@ export function usePracticeProgress() {
     ...query,
     completed: query.data?.completed ?? [],
     txHashes: query.data?.txHashes ?? {},
+    claimedMilestones: query.data?.claimedMilestones ?? [],
+    milestoneTxHashes: query.data?.milestoneTxHashes ?? {},
   };
+}
+
+export function useClaimMilestone() {
+  const { publicKey } = useWallet();
+  const userId = publicKey?.toBase58() ?? "guest";
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (milestone: number) => {
+      const res = await fetch("/api/learning/practice/claim-milestone", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, milestone }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error ?? "claim failed");
+      }
+      return res.json() as Promise<{ ok: boolean; txSignature: string }>;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["practiceProgress"] });
+    },
+  });
 }
 
 export function useCompletePracticeChallenge() {

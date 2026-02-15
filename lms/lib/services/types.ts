@@ -18,6 +18,8 @@ export interface OnChainResult {
 export interface PracticeProgressData {
   completed: string[];
   txHashes: Record<string, string>;
+  claimedMilestones: number[];
+  milestoneTxHashes: Record<string, string>;
 }
 
 export interface LearningProgressService {

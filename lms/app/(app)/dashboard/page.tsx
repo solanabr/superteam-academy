@@ -132,37 +132,45 @@ export default function DashboardPage() {
       </div>
 
       {/* Streak Calendar */}
-      {streak && (
-        <Card className="mb-8">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Flame className="h-5 w-5 text-streak-orange" /> Streak Calendar
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+      <Card className="mb-8 min-h-[140px]">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Flame className="h-5 w-5 text-streak-orange" /> Streak Calendar
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {streak ? (
+            <>
+              <div className="flex gap-1.5 flex-wrap">
+                {streak.history.map((day, i) => (
+                  <div
+                    key={i}
+                    className={`h-6 w-6 rounded-sm transition-colors ${
+                      day.active
+                        ? "bg-solana-green"
+                        : day.frozen
+                          ? "bg-blue-400"
+                          : "bg-muted"
+                    }`}
+                    title={`${day.date}${day.active ? " - Active" : day.frozen ? " - Frozen" : ""}`}
+                  />
+                ))}
+              </div>
+              <div className="mt-3 flex gap-4 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-solana-green" /> Active</span>
+                <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-blue-400" /> Frozen</span>
+                <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-muted" /> Inactive</span>
+              </div>
+            </>
+          ) : (
             <div className="flex gap-1.5 flex-wrap">
-              {streak.history.map((day, i) => (
-                <div
-                  key={i}
-                  className={`h-6 w-6 rounded-sm transition-colors ${
-                    day.active
-                      ? "bg-solana-green"
-                      : day.frozen
-                        ? "bg-blue-400"
-                        : "bg-muted"
-                  }`}
-                  title={`${day.date}${day.active ? " - Active" : day.frozen ? " - Frozen" : ""}`}
-                />
+              {Array.from({ length: 30 }).map((_, i) => (
+                <div key={i} className="h-6 w-6 rounded-sm bg-muted" />
               ))}
             </div>
-            <div className="mt-3 flex gap-4 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-solana-green" /> Active</span>
-              <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-blue-400" /> Frozen</span>
-              <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-muted" /> Inactive</span>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+          )}
+        </CardContent>
+      </Card>
 
       <div className="grid gap-8 lg:grid-cols-3">
         {/* Current Courses */}

@@ -47,9 +47,9 @@ export const PRACTICE_DIFFICULTY_CONFIG: Record<PracticeDifficulty, { label: str
 
 export const PRACTICE_MILESTONES = [15, 30, 50, 75] as const;
 
-export const MILESTONE_LEVELS: Record<number, { name: string; color: string }> = {
-  15: { name: "Bronze", color: "#2f6b3f" },
-  30: { name: "Silver", color: "#8a9a8e" },
-  50: { name: "Gold", color: "#ffd23f" },
-  75: { name: "Diamond", color: "#008c4c" },
+export const MILESTONE_LEVELS: Record<number, { name: string; color: string; solReward: number }> = {
+  15: { name: "Bronze", color: "#2f6b3f", solReward: 0.05 },
+  30: { name: "Silver", color: "#8a9a8e", solReward: 0.1 },
+  50: { name: "Gold", color: "#ffd23f", solReward: 0.25 },
+  75: { name: "Diamond", color: "#008c4c", solReward: 0.5 },
 };

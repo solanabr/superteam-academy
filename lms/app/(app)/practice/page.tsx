@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { usePracticeProgress } from "@/lib/hooks/use-service";
+import { usePracticeProgress, useClaimMilestone } from "@/lib/hooks/use-service";
 import { PRACTICE_CHALLENGES } from "@/lib/data/practice-challenges";
 import {
   PRACTICE_CATEGORIES,
@@ -26,7 +26,8 @@ export default function PracticePage() {
   const [language, setLanguage] = useState<"all" | "rust" | "typescript">("all");
   const [status, setStatus] = useState<"all" | "solved" | "unsolved">("all");
 
-  const { completed: completedIds, txHashes } = usePracticeProgress();
+  const { completed: completedIds, txHashes, claimedMilestones, milestoneTxHashes } = usePracticeProgress();
+  const claimMilestone = useClaimMilestone();
   const solvedCount = completedIds.length;
   const totalCount = PRACTICE_CHALLENGES.length;
   const totalXP = completedIds.reduce((sum, id) => {
@@ -88,6 +89,8 @@ export default function PracticePage() {
       <div className="mb-8 flex flex-wrap gap-3">
         {PRACTICE_MILESTONES.map((m) => {
           const reached = solvedCount >= m;
+          const claimed = claimedMilestones.includes(m);
+          const txHash = milestoneTxHashes[String(m)];
           const level = MILESTONE_LEVELS[m];
           return (
             <div
@@ -101,7 +104,27 @@ export default function PracticePage() {
               <Trophy className="h-4 w-4" style={{ color: reached ? level.color : undefined }} />
               <span className="font-medium">{level.name}</span>
               <span className="text-xs text-muted-foreground">{m} solved</span>
-              {reached && <CheckCircle2 className="h-3.5 w-3.5 text-solana-green" />}
+              {reached && claimed && txHash ? (
+                <a
+                  href={`https://explorer.solana.com/tx/${txHash}?cluster=devnet`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-xs text-solana-green hover:underline"
+                >
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              ) : reached && !claimed ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-6 px-2 text-xs"
+                  disabled={claimMilestone.isPending}
+                  onClick={() => claimMilestone.mutate(m)}
+                >
+                  Claim {level.solReward} SOL
+                </Button>
+              ) : null}
             </div>
           );
         })}

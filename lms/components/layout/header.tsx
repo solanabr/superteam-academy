@@ -3,8 +3,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useState, useEffect } from "react";
-import { BookOpen, LayoutDashboard, Trophy, Code2, Menu } from "lucide-react";
+import { useState } from "react";
+import { BookOpen, LayoutDashboard, Trophy, Code2, Menu, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
@@ -17,17 +17,13 @@ const NAV_ITEMS = [
   { href: "/practice", label: "Practice", icon: Code2 },
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
+  { href: "/profile", label: "Profile", icon: User },
 ];
 
 export function Header() {
   const pathname = usePathname();
   const [walletModalOpen, setWalletModalOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   return (
     <>
@@ -63,34 +59,32 @@ export function Header() {
           <div className="flex items-center gap-2">
             <ThemeToggle />
             <WalletButton onConnectClick={() => setWalletModalOpen(true)} />
-            {mounted && (
-              <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-                <SheetTrigger asChild className="md:hidden">
-                  <Button variant="ghost" size="icon">
-                    <Menu className="h-5 w-5" />
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="right" className="w-72">
-                  <SheetTitle>Navigation</SheetTitle>
-                  <nav className="mt-8 flex flex-col gap-2">
-                    {NAV_ITEMS.map((item) => (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        onClick={() => setMobileOpen(false)}
-                        className={cn(
-                          "flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors hover:bg-accent",
-                          pathname === item.href ? "bg-accent" : ""
-                        )}
-                      >
-                        <item.icon className="h-5 w-5" />
-                        {item.label}
-                      </Link>
-                    ))}
-                  </nav>
-                </SheetContent>
-              </Sheet>
-            )}
+            <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+              <SheetTrigger asChild className="md:hidden">
+                <Button variant="ghost" size="icon">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-72">
+                <SheetTitle>Navigation</SheetTitle>
+                <nav className="mt-8 flex flex-col gap-2">
+                  {NAV_ITEMS.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setMobileOpen(false)}
+                      className={cn(
+                        "flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors hover:bg-accent",
+                        pathname === item.href ? "bg-accent" : ""
+                      )}
+                    >
+                      <item.icon className="h-5 w-5" />
+                      {item.label}
+                    </Link>
+                  ))}
+                </nav>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </header>

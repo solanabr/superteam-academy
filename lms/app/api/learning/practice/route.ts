@@ -18,6 +18,13 @@ export async function GET(req: NextRequest) {
       txHashes[k] = v;
     }
   }
+  const claimedMilestones = user.claimedMilestones ?? [];
+  const milestoneTxHashes: Record<string, string> = {};
+  if (user.milestoneTxHashes) {
+    for (const [k, v] of user.milestoneTxHashes.entries()) {
+      milestoneTxHashes[k] = v;
+    }
+  }
 
   // Try on-chain first: read achievement_flags bitmap bits 64-138
   try {
@@ -32,7 +39,7 @@ export async function GET(req: NextRequest) {
           if (id) completed.push(id);
         }
       }
-      return NextResponse.json({ completed, txHashes });
+      return NextResponse.json({ completed, txHashes, claimedMilestones, milestoneTxHashes });
     }
   } catch {
     // fallback to MongoDB
@@ -41,5 +48,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     completed: user.completedPractice,
     txHashes,
+    claimedMilestones,
+    milestoneTxHashes,
   });
 }

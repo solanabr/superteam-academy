@@ -25,7 +25,7 @@
   --color-solana-green: #ffd23f;
   --color-solana-cyan: #2f6b3f;
   --color-xp-gold: var(--xp-gold);
-  --color-streak-orange: #ffd23f;
+  --color-streak-orange: var(--streak-orange);
 
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
@@ -56,7 +56,8 @@
   --border: #d4c9a8;
   --input: #d4c9a8;
   --ring: #008c4c;
-  --xp-gold: #ffd23f;
+  --xp-gold: #b8960a;
+  --streak-orange: #b8960a;
 }
 
 .dark {
@@ -80,6 +81,7 @@
   --input: #344038;
   --ring: #008c4c;
   --xp-gold: #ffd23f;
+  --streak-orange: #ffd23f;
 }
 
 * {
@@ -89,7 +91,7 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
+  font-family: var(--font-sans, "Helvetica Neue", Helvetica, Arial, ui-sans-serif, system-ui, sans-serif);
 }
 
 @layer base {

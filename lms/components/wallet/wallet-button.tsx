@@ -31,7 +31,7 @@ export function WalletButton({ onConnectClick }: WalletButtonProps) {
 
   if (!connected || !publicKey) {
     return (
-      <Button onClick={onConnectClick} variant="solana" size="sm">
+      <Button onClick={onConnectClick} variant="solana" size="sm" className="min-w-[140px]">
         <Wallet className="h-4 w-4" />
         Connect Wallet
       </Button>
@@ -41,7 +41,7 @@ export function WalletButton({ onConnectClick }: WalletButtonProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2">
+        <Button variant="outline" size="sm" className="gap-2 min-w-[140px]">
           <div className="h-2 w-2 rounded-full bg-solana-green" />
           {shortenAddress(publicKey.toBase58())}
         </Button>

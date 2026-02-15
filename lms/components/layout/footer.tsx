@@ -11,13 +11,13 @@ export function Footer() {
   return (
     <footer className="border-t bg-background">
       {isLanding && (
-        <div className="relative w-full overflow-hidden">
+        <div className="relative w-full overflow-hidden h-48 sm:h-64 lg:h-80">
           <Image
             src="/hero-banner.jpg"
             alt="Superteam Brasil"
             width={1280}
             height={400}
-            className="h-48 w-full object-cover sm:h-64 lg:h-80"
+            className="h-full w-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
         </div>
@@ -26,13 +26,13 @@ export function Footer() {
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className={isLanding ? "grid grid-cols-2 gap-8 md:grid-cols-4" : "grid gap-10 md:grid-cols-[200px_1fr]"}>
           {!isLanding && (
-            <div className="overflow-hidden rounded-xl">
+            <div className="overflow-hidden rounded-xl self-start">
               <Image
                 src="/hero-banner.jpg"
                 alt="Superteam Brasil"
                 width={400}
                 height={260}
-                className="h-full w-full object-cover rounded-xl"
+                className="w-full object-cover rounded-xl"
               />
             </div>
           )}
