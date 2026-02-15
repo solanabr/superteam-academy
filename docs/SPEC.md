@@ -1,8 +1,8 @@
 # Superteam Academy — On-Chain Program Specification
 
-**Version:** 1.1 (Revised with Split Instructions)
+**Version:** 1.3 (Metaplex Core Credentials)
 **Network:** Solana Mainnet
-**Framework:** Anchor + Light SDK (ZK Compression)
+**Framework:** Anchor + Metaplex Core
 
 ---
 
@@ -13,21 +13,21 @@ Superteam Academy is a decentralized learning platform for Solana development. T
 ### Design Principles
 
 1. **Tokens as state** — XP is a soulbound fungible token. Your balance is your score.
-2. **Evolving credentials** — One ZK compressed credential per learning track that upgrades as you progress.
+2. **Evolving credentials** — One Metaplex Core NFT per learning track that upgrades as you progress. Soulbound via PermanentFreezeDelegate plugin. Visible in all wallets.
 3. **Courses as factories** — Course PDAs spawn enrollment PDAs. Lessons are tracked by bitmap.
 4. **Creators earn** — Course authors receive XP proportional to student completions.
 5. **Minimal footprint** — Every byte justified. Closeable accounts. Reserved bytes for future-proofing.
-6. **Compression first** — Credentials use ZK Compression (Light Protocol) for rent-free, scalable state.
+6. **Wallet-visible credentials** — Credentials are Metaplex Core NFTs with universal wallet support (Phantom, Backpack, Solflare). Upgradeable via metadata/attribute updates.
 
 ### Key Metrics
 
 | Metric | Value |
 | --- | --- |
 | Regular PDA types | 4 (Config, Course, LearnerProfile, Enrollment) |
-| ZK compressed account types | 1 (Credential) |
+| Credential type | Metaplex Core NFT (soulbound, 1 per track per learner) |
 | Instructions | 16 |
-| Cost per learner/year | ~0.002 SOL |
-| One-time setup cost | ~2 SOL (no merkle tree creation) |
+| Cost per credential | ~0.0037 SOL (mint) + ~0.002 SOL (rent) |
+| One-time setup cost | ~2 SOL (program deploy + collection NFTs) |
 
 ---
 
@@ -60,13 +60,13 @@ Superteam Academy is a decentralized learning platform for Solana development. T
 │  └──────────────────┘                                                   │
 │                                                                         │
 │  ┌──────────────────────────────────────────────────────────────────┐   │
-│  │  ZK COMPRESSED STATE (Light Protocol)                            │   │
+│  │  METAPLEX CORE CREDENTIALS                                       │   │
 │  │                                                                  │   │
-│  │  Credential (one per learner-per-track)                          │   │
-│  │  • Deterministic address: ["credential", learner, track_id]     │   │
-│  │  • Track level, courses completed, XP earned                    │   │
-│  │  • Metadata hash (Arweave) for display                          │   │
-│  │  • No rent, no merkle tree setup, no Bubblegum dependency       │   │
+│  │  Credential NFT (one per learner-per-track)                      │   │
+│  │  • Collection per track (DeFi, Anchor, Security, etc.)          │   │
+│  │  • Soulbound via PermanentFreezeDelegate plugin                 │   │
+│  │  • Upgradeable: URI + Attributes plugin (level, courses, XP)    │   │
+│  │  • Visible in Phantom, Backpack, Solflare wallet galleries      │   │
 │  └──────────────────────────────────────────────────────────────────┘   │
 │                                                                         │
 └──────────────────────────────────────────────────────────────────────────┘
@@ -77,7 +77,7 @@ Superteam Academy is a decentralized learning platform for Solana development. T
 │                                                                          │
 │  • Content: Arweave (immutable, versioned via content_tx_id)            │
 │  • Leaderboard: Indexed from XP token balances (Helius DAS API)        │
-│  • Credentials: Indexed via Photon (Light Protocol indexer)            │
+│  • Credentials: Metaplex Core NFTs (Helius DAS API / wallet-native)   │
 │  • Analytics: GA4 / PostHog / Sentry                                    │
 │  • Community: Discord                                                    │
 │  • Usernames: Wallet display names (SNS, Backpack) or frontend DB      │
@@ -191,53 +191,133 @@ pub struct Config {
 
 ---
 
-## 3. Credentials (ZK Compressed Accounts)
+## 3. Credentials (Metaplex Core NFTs)
 
 ### Overview
 
-Credentials are **ZK compressed accounts** via Light Protocol. Instead of Bubblegum cNFTs, each credential is a compressed PDA with a deterministic address, enabling rent-free, updatable progress records per learning track.
+Credentials are **Metaplex Core NFTs** — soulbound, wallet-visible, and upgradeable. Each credential is a single NFT asset per learner per track, organized into collection NFTs per track.
 
-**One credential per learner per track.** No merkle tree setup. No Bubblegum dependency.
+**One credential per learner per track.** Soulbound via PermanentFreezeDelegate. Upgradeable via URI and Attributes plugin updates.
 
-### Why ZK Compression over Bubblegum
+### Why Metaplex Core
 
-| Factor | Bubblegum cNFTs | ZK Compression |
+| Factor | ZK Compression | Metaplex Core (chosen) |
 | --- | --- | --- |
-| Setup cost | ~1.5-15 SOL (tree) | 0 SOL (uses shared trees) |
-| Per-credential cost | Near-zero | Zero (no rent) |
-| Data flexibility | Limited to NFT metadata JSON | Arbitrary struct |
-| Update complexity | Merkle proof as remaining_accounts | Validity proof in instruction data |
-| Wallet display | Shows as NFT | Requires custom UI or decompress later |
-| Dependency | Metaplex Bubblegum | Light Protocol |
+| Wallet display | Not visible in wallets | Universal (Phantom, Backpack, Solflare) |
+| Setup cost | 0 SOL | ~0.003 SOL per collection |
+| Per-credential cost | Zero (no rent) | ~0.0037 SOL mint + ~0.002 SOL rent |
+| Data flexibility | Arbitrary struct | Metadata JSON + Attributes plugin |
+| Update complexity | Validity proof + Photon query | Single `updateV1` CPI call |
+| Soulbound | Inherent (no transfer) | PermanentFreezeDelegate plugin |
+| Ecosystem support | Limited (Photon indexer only) | Full (DAS API, wallets, explorers) |
+| Dependencies | Light Protocol + Photon indexer | Metaplex Core program (on-chain) |
+| Dev complexity | High (ZK proofs, indexer queries) | Low (single CPI, standard patterns) |
+| Time to implement | 3-4 weeks | 1-2 weeks |
 
-**Trade-off:** Credentials won't appear as NFTs in wallets like Phantom. They're visible through the Academy frontend and any indexer that supports ZK Compression (Helius/Photon). A future `decompress_credential` instruction could mint a standard NFT from compressed state if needed.
+**Trade-off:** Higher per-credential cost (~$0.75 vs ~$0.001 at $200/SOL). At <50K learners the total cost difference is acceptable. ZK Compression can be evaluated for v2 when wallet display support improves.
 
-### Compressed Account Structure
+### Credential Architecture
+
+```
+Track Collections (created once per track by authority):
+├── Collection: "Anchor Framework"     (track_id=1)
+├── Collection: "Rust for Solana"      (track_id=2)
+├── Collection: "DeFi Development"     (track_id=3)
+└── Collection: "Program Security"     (track_id=4)
+
+Per-Learner Credentials (minted on first course completion in track):
+├── Asset: "Anchor — Beginner"   → owner: learner_A, frozen: true
+├── Asset: "Anchor — Advanced"   → owner: learner_B, frozen: true  (upgraded)
+└── Asset: "DeFi — Intermediate" → owner: learner_A, frozen: true
+```
+
+### Minting Pattern (Inside `issue_credential`)
 
 ```rust
-#[event]
-#[derive(Clone, Debug, Default, LightDiscriminator)]
-pub struct Credential {
-    /// Owner/learner
-    pub learner: Pubkey,           // 32
-    /// Track identifier
-    pub track_id: u16,             // 2
-    /// Current level in track (1=beginner, 2=intermediate, 3=advanced)
-    pub current_level: u8,         // 1
-    /// Number of courses completed in this track
-    pub courses_completed: u8,     // 1
-    /// Total XP earned in this track
-    pub total_xp_earned: u32,      // 4
-    /// First credential earned timestamp
-    pub first_earned: i64,         // 8
-    /// Last upgrade timestamp
-    pub last_updated: i64,         // 8
-    /// Arweave TX hash for display metadata (badge image, name, etc.)
-    pub metadata_hash: [u8; 32],   // 32
+// CPI to Metaplex Core: create new credential NFT
+fn create_credential_nft<'info>(
+    ctx: &Context<'_, '_, '_, 'info, IssueCredential<'info>>,
+    course: &Course,
+    metadata_uri: String,
+) -> Result<()> {
+    // Mint new Core asset into the track's collection
+    // with PermanentFreezeDelegate plugin (soulbound)
+    let create_ix = CreateV2CpiBuilder::new(&ctx.accounts.mpl_core_program)
+        .asset(&ctx.accounts.credential_asset)
+        .collection(Some(&ctx.accounts.track_collection))
+        .payer(&ctx.accounts.payer)
+        .owner(Some(&ctx.accounts.learner))
+        .authority(Some(&ctx.accounts.config)) // PDA signer
+        .name(format!("{} — {}", track_name, level_name))
+        .uri(metadata_uri)
+        .plugins(vec![
+            PluginAuthorityPair {
+                plugin: Plugin::PermanentFreezeDelegate(PermanentFreezeDelegate { frozen: true }),
+                authority: Some(PluginAuthority::UpdateAuthority),
+            },
+            PluginAuthorityPair {
+                plugin: Plugin::Attributes(Attributes {
+                    attribute_list: vec![
+                        Attribute { key: "track_id".into(), value: course.track_id.to_string() },
+                        Attribute { key: "level".into(), value: course.track_level.to_string() },
+                        Attribute { key: "courses_completed".into(), value: "1".into() },
+                        Attribute { key: "total_xp".into(), value: learner_track_xp.to_string() },
+                    ],
+                }),
+                authority: Some(PluginAuthority::UpdateAuthority),
+            },
+        ])
+        .invoke_signed(&[config_seeds])?;
+
+    Ok(())
 }
-// ~88 bytes as compressed account data
-// Address derived from: ["credential", learner.as_ref(), track_id.to_le_bytes()]
+
+// CPI to Metaplex Core: upgrade existing credential
+fn upgrade_credential_nft<'info>(
+    ctx: &Context<'_, '_, '_, 'info, IssueCredential<'info>>,
+    course: &Course,
+    new_metadata_uri: String,
+    new_courses_completed: u8,
+    new_total_xp: u32,
+) -> Result<()> {
+    // Update URI (changes image + display name)
+    UpdateV1CpiBuilder::new(&ctx.accounts.mpl_core_program)
+        .asset(&ctx.accounts.credential_asset)
+        .collection(Some(&ctx.accounts.track_collection))
+        .authority(Some(&ctx.accounts.config)) // PDA signer
+        .new_name(Some(format!("{} — {}", track_name, new_level_name)))
+        .new_uri(Some(new_metadata_uri))
+        .invoke_signed(&[config_seeds])?;
+
+    // Update on-chain attributes
+    UpdatePluginV1CpiBuilder::new(&ctx.accounts.mpl_core_program)
+        .asset(&ctx.accounts.credential_asset)
+        .collection(Some(&ctx.accounts.track_collection))
+        .authority(Some(&ctx.accounts.config))
+        .plugin(Plugin::Attributes(Attributes {
+            attribute_list: vec![
+                Attribute { key: "level".into(), value: course.track_level.to_string() },
+                Attribute { key: "courses_completed".into(), value: new_courses_completed.to_string() },
+                Attribute { key: "total_xp".into(), value: new_total_xp.to_string() },
+            ],
+        }))
+        .invoke_signed(&[config_seeds])?;
+
+    Ok(())
+}
 ```
+
+### Credential Categories
+
+| Category | V1 | Behavior | Example Progression |
+| --- | --- | --- | --- |
+| Course Track | **Yes** | Upgrades through track levels | Anchor: Beginner → Intermediate → Advanced |
+| Skill | V2 | Upgrades through proficiency | Rust: Novice → Proficient → Expert |
+| Streak | V2 | Upgrades at milestones | 7-day → 30-day → 100-day → 365-day |
+| Platform | V2 | Upgrades with tenure/contribution | Newcomer → Veteran → Legend |
+| Special | V2 | One-off, no upgrades | Hackathon Winner, Bug Hunter |
+
+**V1 scope:** Only Course Track credentials are implemented. Other categories require new instructions and will be added in V2.
 
 ### Progression Model
 
@@ -245,120 +325,50 @@ pub struct Credential {
 Learner completes "Anchor Beginner" (track_id=1, track_level=1)
          │
          ▼
-Create compressed credential:
-  address = derive_address(["credential", learner, 1], address_tree, program_id)
-  { learner, track_id: 1, current_level: 1, courses_completed: 1, ... }
+Mint new Metaplex Core NFT:
+  collection = anchor_collection
+  name = "Anchor — Beginner"
+  uri = "https://api.superteam.academy/metadata/anchor/beginner/{mint}"
+  plugins: PermanentFreezeDelegate(frozen=true), Attributes(level=1, courses=1)
          │
          │  Learner completes "Anchor Intermediate" (track_id=1, track_level=2)
          ▼
-Update compressed credential:
-  { current_level: 2, courses_completed: 2, last_updated: now, ... }
+Update existing NFT:
+  name = "Anchor — Intermediate"
+  uri = "https://api.superteam.academy/metadata/anchor/intermediate/{mint}"
+  attributes: level=2, courses=2, total_xp=1500
          │
          │  Learner completes "Anchor Advanced" (track_id=1, track_level=3)
          ▼
-Update compressed credential:
-  { current_level: 3, courses_completed: 3, last_updated: now, ... }
+Update existing NFT:
+  name = "Anchor — Advanced"
+  uri = "https://api.superteam.academy/metadata/anchor/advanced/{mint}"
+  attributes: level=3, courses=3, total_xp=3500
 ```
 
-Same compressed address throughout. Full history preserved in Solana ledger (each update is a transaction).
+Same NFT address throughout. Full upgrade history preserved in Solana ledger. Badge image/name updates are immediately visible in all wallets.
 
-### Credential Operations (Inside `issue_credential`)
+### Display Metadata (Off-Chain, Arweave or API)
 
-```rust
-fn create_or_upgrade_credential<'info>(
-    ctx: &Context<'_, '_, '_, 'info, IssueCredential<'info>>,
-    course: &Course,
-    proof: ValidityProof,
-    // If upgrading, pass current credential state + meta
-    existing_credential: Option<Credential>,
-    credential_meta: Option<CompressedAccountMeta>,
-    // If creating, pass address tree info
-    address_tree_info: Option<PackedAddressTreeInfo>,
-    output_state_tree_index: u8,
-    new_metadata_hash: [u8; 32],
-) -> Result<()> {
-    let light_cpi_accounts = CpiAccounts::new(
-        ctx.accounts.backend_signer.as_ref(),
-        ctx.remaining_accounts,
-        crate::LIGHT_CPI_SIGNER,
-    );
-
-    if let Some(current) = existing_credential {
-        // Upgrade existing credential
-        let mut credential = LightAccount::<Credential>::new_mut(
-            &crate::ID,
-            &credential_meta.unwrap(),
-            current,
-        )?;
-        credential.current_level = course.track_level;
-        credential.courses_completed += 1;
-        credential.total_xp_earned += course.xp_total;
-        credential.last_updated = Clock::get()?.unix_timestamp;
-        credential.metadata_hash = new_metadata_hash;
-
-        LightSystemProgramCpi::new_cpi(LIGHT_CPI_SIGNER, proof)
-            .with_light_account(credential)?
-            .invoke(light_cpi_accounts)?;
-    } else {
-        // Create new credential for this track
-        let ati = address_tree_info.unwrap();
-        let (address, address_seed) = derive_address(
-            &[b"credential",
-              ctx.accounts.learner.key().as_ref(),
-              &course.track_id.to_le_bytes()],
-            &ati.get_tree_pubkey(&light_cpi_accounts)
-                .map_err(|_| ErrorCode::AccountNotEnoughKeys)?,
-            &crate::ID,
-        );
-
-        let mut credential = LightAccount::<Credential>::new_init(
-            &crate::ID, Some(address), output_state_tree_index,
-        );
-        credential.learner = ctx.accounts.learner.key();
-        credential.track_id = course.track_id;
-        credential.current_level = course.track_level;
-        credential.courses_completed = 1;
-        credential.total_xp_earned = course.xp_total;
-        credential.first_earned = Clock::get()?.unix_timestamp;
-        credential.last_updated = Clock::get()?.unix_timestamp;
-        credential.metadata_hash = new_metadata_hash;
-
-        LightSystemProgramCpi::new_cpi(LIGHT_CPI_SIGNER, proof)
-            .with_light_account(credential)?
-            .with_new_addresses(&[ati.into_new_address_params_packed(address_seed)])
-            .invoke(light_cpi_accounts)?;
-    }
-    Ok(())
-}
-```
-
-### Credential Categories
-
-| Category | Behavior | Example Progression |
-| --- | --- | --- |
-| Course Track | Upgrades through track levels | Anchor: Beginner → Intermediate → Advanced |
-| Skill | Upgrades through proficiency | Rust: Novice → Proficient → Expert |
-| Streak | Upgrades at milestones | 7-day → 30-day → 100-day → 365-day |
-| Platform | Upgrades with tenure/contribution | Newcomer → Veteran → Legend |
-| Special | One-off, no upgrades | Hackathon Winner, Bug Hunter |
-
-### Display Metadata (Off-Chain, Arweave)
-
-The `metadata_hash` field points to a JSON file on Arweave for frontend display:
+The NFT `uri` points to a JSON endpoint for wallet display:
 
 ```json
 {
   "name": "Anchor — Intermediate",
   "symbol": "STACAD",
-  "image": "ar://intermediate_badge_hash...",
+  "image": "https://cdn.superteam.academy/badges/anchor-intermediate.png",
   "attributes": [
     { "trait_type": "category", "value": "course_track" },
     { "trait_type": "track", "value": "anchor" },
     { "trait_type": "level", "value": "intermediate" },
-    { "trait_type": "level_number", "value": "2" }
+    { "trait_type": "level_number", "value": "2" },
+    { "trait_type": "courses_completed", "value": "2" },
+    { "trait_type": "total_xp", "value": "1500" }
   ]
 }
 ```
+
+On-chain Attributes plugin stores the same data as traits, enabling on-chain reads without fetching the URI. Wallets display the image and traits from both sources.
 
 ---
 
@@ -381,23 +391,19 @@ pub struct Course {
     /// Who can update course content (can differ from creator)
     pub authority: Pubkey,
 
-    // === Content (35 bytes) ===
-    /// Arweave transaction hash (reconstruct URI on client)
+    // === Content (34 bytes) ===
+    /// Arweave transaction ID (raw 32 bytes, base64url-encode on client)
     pub content_tx_id: [u8; 32],
     /// Content version (incremented on updates)
     pub version: u16,
-    /// Content type: 0=arweave, 1=ipfs
-    pub content_type: u8,
 
-    // === Structure (8 bytes) ===
+    // === Structure (6 bytes) ===
     /// Total lessons in course
     pub lesson_count: u8,
-    /// Lessons that are challenges (subset)
-    pub challenge_count: u8,
     /// Difficulty: 1=beginner, 2=intermediate, 3=advanced
     pub difficulty: u8,
-    /// Total XP earnable in this course
-    pub xp_total: u32,
+    /// Per-lesson XP (each lesson awards this amount via complete_lesson)
+    pub xp_per_lesson: u32,
 
     // === Track (3 bytes) ===
     /// Track ID (0=standalone, 1=anchor, 2=rust, etc.)
@@ -409,13 +415,13 @@ pub struct Course {
     /// Optional prerequisite course PDA (None if no prerequisite)
     pub prerequisite: Option<Pubkey>,
 
-    // === Creator Economics (8 bytes) ===
-    /// XP awarded to creator per student completion
-    pub completion_reward_xp: u32,
+    // === Completion Rewards (10 bytes) ===
+    /// Bonus XP awarded to learner on course completion (claimed via claim_completion_bonus)
+    pub completion_bonus_xp: u32,
+    /// XP awarded to creator per student completion (in finalize_course)
+    pub creator_reward_xp: u32,
     /// Minimum completions before creator earns XP (anti-alt-account)
     pub min_completions_for_reward: u16,
-    /// Padding
-    _pad: u16,
 
     // === Stats (8 bytes) ===
     /// Total completions
@@ -439,18 +445,17 @@ pub struct Course {
 }
 ```
 
-**Size:** 8 (discriminator) + ~222 bytes = ~230 bytes | **Rent:** ~0.002 SOL
+**Size:** 8 (discriminator) + ~218 bytes = ~226 bytes | **Rent:** ~0.002 SOL
 
-**Note:** The `content_hash_check` field has been removed entirely. Arweave immutability is relied upon; no on-chain hash verification is performed.
+**Removed from v1:** `challenge_count` (no distinct handling for challenges vs lessons), `content_type` (all content is Arweave; client can determine format from tx_id).
 
 ### Content Verification (Client-Side)
 
 ```typescript
 const course = await program.account.course.fetch(coursePDA);
-// Reconstruct URI from tx hash
-const uri = course.contentType === 0
-    ? `ar://${base64Encode(course.contentTxId)}`
-    : `ipfs://${cidFromBytes(course.contentTxId)}`;
+// Reconstruct Arweave URI from raw 32-byte tx ID
+const arweaveTxId = base64url.encode(Buffer.from(course.contentTxId));
+const uri = `https://arweave.net/${arweaveTxId}`;
 const manifest = await fetch(uri).then(r => r.json());
 ```
 
@@ -524,8 +529,8 @@ pub struct LearnerProfile {
 | XP balance | Query XP token account |
 | Level | `floor(sqrt(xp / 100))` |
 | Rank | Index all XP balances, sort |
-| Skills/Tracks | Query credentials via Photon indexer |
-| Courses completed | Count from credential data |
+| Skills/Tracks | Query credential NFTs via Helius DAS API (`getAssetsByOwner`) |
+| Courses completed | Read from credential NFT Attributes plugin |
 | Username | Wallet display name (SNS, Backpack) or frontend DB |
 | Join date | `init_learner` transaction timestamp |
 
@@ -560,62 +565,65 @@ pub struct Enrollment {
     /// Lesson completion bitmap (up to 256 lessons)
     pub lesson_flags: [u64; 4],
 
+    // === Credential (33 bytes) ===
+    /// Credential NFT address for this track (set by issue_credential, None before first issue)
+    pub credential_asset: Option<Pubkey>,
+
+    // === Bonus (1 byte) ===
+    /// Whether completion bonus has been claimed
+    pub bonus_claimed: bool,
+
+    // === Future-proofing (7 bytes) ===
+    pub _reserved: [u8; 7],
+
     // === PDA (1 byte) ===
     pub bump: u8,
 }
 ```
 
-**Size:** 8 (discriminator) + ~91 bytes = ~99 bytes | **Rent:** ~0.001 SOL (reclaimable)
+**Size:** 8 (discriminator) + ~132 bytes = ~140 bytes | **Rent:** ~0.001 SOL (reclaimable)
 
-Note: `learner` pubkey removed (derivable from PDA seeds). `credential_asset_id` removed (credentials are now ZK compressed accounts looked up by `["credential", learner, track_id]`).
+Note: `learner` pubkey removed (derivable from PDA seeds). `credential_asset` is set on-chain by `issue_credential` — eliminates DAS API dependency for create-vs-upgrade decisions.
 
-### Unenroll
+### Close Enrollment (Unified: Unenroll + Close)
 
-Learners can abandon courses they don't want to finish:
-
-```rust
-pub fn unenroll(ctx: Context<Unenroll>) -> Result<()> {
-    let enrollment = &ctx.accounts.enrollment;
-
-    // Cannot unenroll completed courses (use close_enrollment instead)
-    require!(enrollment.completed_at.is_none(), ErrorCode::NotCompleted);
-
-    // 24-hour cooldown: prevent enroll/unenroll spam
-    let now = Clock::get()?.unix_timestamp;
-    require!(
-        now - enrollment.enrolled_at > 86400,
-        ErrorCode::UnenrollCooldown
-    );
-
-    // No XP awarded. Rent returned to learner.
-    emit!(Unenrolled {
-        learner: ctx.accounts.learner.key(),
-        course: enrollment.course,
-        timestamp: now,
-    });
-
-    Ok(())
-}
-```
-
-### Close Enrollment (After Completion)
+Single instruction handles both abandoning incomplete courses and closing completed ones:
 
 ```rust
 pub fn close_enrollment(ctx: Context<CloseEnrollment>) -> Result<()> {
     let enrollment = &ctx.accounts.enrollment;
-    require!(enrollment.completed_at.is_some(), ErrorCode::NotCompleted);
+    let now = Clock::get()?.unix_timestamp;
 
-    emit!(EnrollmentClosed {
-        learner: ctx.accounts.learner.key(),
-        course: enrollment.course,
-        rent_reclaimed: ctx.accounts.enrollment.to_account_info().lamports(),
-        timestamp: Clock::get()?.unix_timestamp,
-    });
+    if enrollment.completed_at.is_some() {
+        // Completed course: close freely, reclaim rent
+        emit!(EnrollmentClosed {
+            learner: ctx.accounts.learner.key(),
+            course: enrollment.course,
+            completed: true,
+            rent_reclaimed: ctx.accounts.enrollment.to_account_info().lamports(),
+            timestamp: now,
+        });
+    } else {
+        // Incomplete course (unenroll): 24h cooldown, no XP
+        require!(
+            now - enrollment.enrolled_at > 86400,
+            ErrorCode::UnenrollCooldown
+        );
+        emit!(EnrollmentClosed {
+            learner: ctx.accounts.learner.key(),
+            course: enrollment.course,
+            completed: false,
+            rent_reclaimed: ctx.accounts.enrollment.to_account_info().lamports(),
+            timestamp: now,
+        });
+    }
+
+    // Account closed by Anchor's close constraint, rent returned to learner.
     Ok(())
 }
 ```
 
-**What's preserved after closing:** credential (compressed account, permanent), all events in ledger, full progress reconstructible by indexer.
+**What's preserved after closing:** credential NFT (Metaplex Core, permanent in wallet), all events in ledger, full progress reconstructible by indexer.
 
 ---
 
@@ -623,29 +631,36 @@ pub fn close_enrollment(ctx: Context<CloseEnrollment>) -> Result<()> {
 
 ### Mechanism
 
-When a student completes a course, both learner AND creator earn XP:
+Creator XP is awarded during `finalize_course`. Learner completion bonus is separate — claimed via `claim_completion_bonus`.
 
 ```rust
-// Inside finalize_course
-mint_xp(&learner_token_account, course.xp_total)?;
-
-// Creator reward gated by minimum completions
+// Inside finalize_course — creator reward only
 if course.total_completions >= course.min_completions_for_reward as u32 {
-    mint_xp(&creator_token_account, course.completion_reward_xp)?;
+    mint_xp(&creator_token_account, course.creator_reward_xp)?;
 }
 ```
 
+### XP Distribution Model
+
+```
+complete_lesson (×N)  →  xp_per_lesson × N  (minted per lesson to learner)
+finalize_course       →  creator_reward_xp   (minted to creator, gated by min_completions)
+claim_completion_bonus → completion_bonus_xp  (minted to learner, one-time claim)
+```
+
+**Learner total XP per course** = `(xp_per_lesson × lesson_count) + completion_bonus_xp`
+
 ### Economics
 
-| Difficulty | Student XP | Creator XP | Ratio |
-| --- | --- | --- | --- |
-| Beginner | 500 | 50 | 10% |
-| Intermediate | 1,000 | 100 | 10% |
-| Advanced | 2,000 | 200 | 10% |
+| Difficulty | Lessons | Per-Lesson XP | Completion Bonus | Total Learner XP | Creator XP |
+| --- | --- | --- | --- | --- | --- |
+| Beginner | 10 | 30 | 200 | 500 | 50 |
+| Intermediate | 15 | 40 | 400 | 1,000 | 100 |
+| Advanced | 20 | 60 | 800 | 2,000 | 200 |
 
 ### Dynamic Rewards
 
-`completion_reward_xp` can be adjusted via `update_course` (authority-gated) based on quality metrics. `min_completions_for_reward` prevents gaming with alt accounts.
+`creator_reward_xp` can be adjusted via `update_course` (authority-gated) based on quality metrics. `min_completions_for_reward` prevents gaming with alt accounts.
 
 ---
 
@@ -655,24 +670,43 @@ if course.total_completions >= course.min_completions_for_reward as u32 {
 
 No dedicated `checkin` instruction. Streaks update as a side effect of `complete_lesson`. All day boundaries use UTC (documented to users).
 
+### Streak Freeze Behavior
+
+Each streak freeze covers **exactly one missed day**. Multiple freezes can stack to cover multiple missed days. Example: a learner with 2 freezes who misses 2 days keeps their streak (both freezes consumed). A learner with 1 freeze who misses 2 days loses their streak.
+
+**Important:** Freezes are consumed automatically — no user action needed. The program deducts them during the next `complete_lesson` call.
+
 ### Logic
 
 ```rust
 fn update_streak(learner: &mut LearnerProfile) -> Result<()> {
     let now = Clock::get()?.unix_timestamp;
-    let today = now / 86400;  // UTC day number
-    let last_day = learner.last_activity_date / 86400;
+    let today = (now / 86400) as u64;  // UTC day number
+    let last_day = (learner.last_activity_date / 86400) as u64;
 
     if today > last_day {
-        if today == last_day + 1 {
-            learner.current_streak += 1;
-        } else if today == last_day + 2 && learner.streak_freezes > 0 {
-            learner.streak_freezes -= 1;
-            learner.current_streak += 1;
-        } else if today > last_day + 1 {
+        let gap = today.checked_sub(last_day).unwrap().checked_sub(1).unwrap(); // missed days
+
+        if gap == 0 {
+            // Consecutive day — streak continues
+            learner.current_streak = learner.current_streak.checked_add(1).unwrap();
+        } else if gap <= learner.streak_freezes as u64 {
+            // Gap covered by available freezes
+            learner.streak_freezes = learner.streak_freezes
+                .checked_sub(gap as u8).unwrap();
+            learner.current_streak = learner.current_streak.checked_add(1).unwrap();
+            emit!(StreakFreezesUsed {
+                learner: learner.authority,
+                freezes_used: gap as u8,
+                freezes_remaining: learner.streak_freezes,
+                timestamp: now,
+            });
+        } else {
+            // Gap too large — streak broken
             emit!(StreakBroken {
                 learner: learner.authority,
                 final_streak: learner.current_streak,
+                days_missed: gap as u16,
                 timestamp: now,
             });
             learner.current_streak = 1;
@@ -755,6 +789,7 @@ All lesson completions require backend signature. The backend signer is stored i
 ```rust
 fn check_and_update_daily_xp(
     learner: &mut LearnerProfile,
+    config: &Config,
     xp_amount: u32,
 ) -> Result<()> {
     let today = (Clock::get()?.unix_timestamp / 86400) as u16;
@@ -765,12 +800,16 @@ fn check_and_update_daily_xp(
         learner.last_xp_day = today;
     }
 
+    let new_total = learner.xp_earned_today
+        .checked_add(xp_amount)
+        .ok_or(AcademyError::Overflow)?;
+
     require!(
-        learner.xp_earned_today + xp_amount <= MAX_DAILY_XP,
-        ErrorCode::DailyXPLimitExceeded
+        new_total <= config.max_daily_xp,
+        AcademyError::DailyXPLimitExceeded
     );
 
-    learner.xp_earned_today += xp_amount;
+    learner.xp_earned_today = new_total;
     Ok(())
 }
 ```
@@ -823,7 +862,7 @@ pub fn update_course(ctx: Context<UpdateCourse>, params: UpdateCourseParams) -> 
 /// Initialize learner profile
 pub fn init_learner(ctx: Context<InitLearner>) -> Result<()>;
 
-/// Register a referral (validates referrer exists, prevents self-referral)
+/// Register a referral (analytics-only in v1: tracks count, no XP reward; validates referrer exists, prevents self-referral)
 pub fn register_referral(ctx: Context<RegisterReferral>) -> Result<()>;
 
 /// Claim an achievement (backend validates eligibility, on-chain caps XP)
@@ -840,61 +879,68 @@ pub fn award_streak_freeze(ctx: Context<AwardStreakFreeze>) -> Result<()>;
 /// Enroll in a course (checks prerequisites if set)
 pub fn enroll(ctx: Context<Enroll>) -> Result<()>;
 
-/// Abandon a course, reclaim rent (24h cooldown, no XP)
-pub fn unenroll(ctx: Context<Unenroll>) -> Result<()>;
-
-/// Complete a lesson (backend-signed, awards XP, updates streak, rate-limited)
+/// Complete a lesson (backend-signed, awards xp_per_lesson, updates streak, rate-limited)
 pub fn complete_lesson(
     ctx: Context<CompleteLesson>,
     lesson_index: u8,
-    xp_amount: u32,
 ) -> Result<()>;
 
-/// Finalize entire course: verify lesson bitmap, award XP to learner and creator, update stats
+/// Finalize entire course: verify lesson bitmap, award creator XP, update stats
 pub fn finalize_course(ctx: Context<FinalizeCourse>) -> Result<()>;
 
-/// Issue (create/upgrade) ZK compressed credential via Light Protocol CPI
-pub fn issue_credential(ctx: Context<IssueCredential>, /* ZK Compression params */) -> Result<()>;
+/// Claim completion bonus XP (learner-signed, one-time per enrollment after finalization)
+pub fn claim_completion_bonus(ctx: Context<ClaimCompletionBonus>) -> Result<()>;
 
-/// Close completed enrollment, reclaim rent
+/// Issue (create/upgrade) Metaplex Core credential NFT via CPI
+pub fn issue_credential(ctx: Context<IssueCredential>, metadata_uri: String) -> Result<()>;
+
+/// Close enrollment (works for both incomplete courses with 24h cooldown, and completed courses)
 pub fn close_enrollment(ctx: Context<CloseEnrollment>) -> Result<()>;
 ```
 
-### Instruction Details: finalize_course vs issue_credential
+### Instruction Details: Post-Lesson Flow
 
-**`finalize_course` (~100K CU, Backend-Signed):**
+**`finalize_course` (~80K CU, Backend-Signed):**
 - Verifies all lessons in enrollment bitmap match course lesson_count
-- Awards `course.xp_total` to learner
-- Awards `course.completion_reward_xp` to creator (if completion threshold met)
+- Awards `course.creator_reward_xp` to creator (if completion threshold met)
 - Increments `course.total_completions`
 - Sets `enrollment.completed_at = now`
 - Emits `CourseFinalized` event
-- **Does NOT interact with Light Protocol**
-- If this instruction fails, learner loses XP; must be called first
-- If this succeeds, `issue_credential` can safely be called afterward
+- **Does NOT mint learner XP** (per-lesson XP already minted; completion bonus is separate)
+- **Does NOT interact with Metaplex Core**
 
-**`issue_credential` (~200-300K CU, Backend-Signed):**
-- Requires `enrollment.completed_at.is_some()` (i.e., `finalize_course` must have run)
-- Fetches existing credential from Photon (if upgrading) or creates new
-- Performs Light Protocol CPI to create or upgrade ZK compressed credential
-- Updates credential metadata hash from Arweave
+**`claim_completion_bonus` (~30K CU, Learner-Signed):**
+- Requires `enrollment.completed_at.is_some()` (finalize_course must have run)
+- Requires enrollment not already claimed (check via flag or completed_at + bonus claimed tracking)
+- Mints `course.completion_bonus_xp` to learner
+- Subject to daily XP cap
+- Emits `CompletionBonusClaimed` event
+- **Learner calls this themselves** — no backend signature needed
+
+**`issue_credential` (~50-100K CU, Backend-Signed):**
+- Requires `enrollment.completed_at.is_some()` (finalize_course must have run)
+- Checks `enrollment.credential_asset`: if `None` → create new NFT; if `Some` → upgrade existing
+- If new: CPI to Metaplex Core `createV2` with PermanentFreezeDelegate + Attributes plugins, stores asset pubkey in `enrollment.credential_asset`
+- If upgrading: CPI to Metaplex Core `updateV1` + `updatePluginV1` for new level/URI
 - Emits `CredentialIssued` event
+- **No DAS API dependency for writes** — create-vs-upgrade decision is fully on-chain
 - **CPI failure does not affect XP awards** (already in learner account)
-- Backend calls `finalize_course` first, then `issue_credential` sequentially
-- If `issue_credential` fails, credential state is not updated, but learner keeps XP
 
-**Error Code Added:**
+**Error Codes:**
 ```rust
-#[msg("Course not finalized; issue_credential requires finalize_course to succeed first")]
+#[msg("Course not finalized; requires finalize_course to succeed first")]
 CourseNotFinalized,
+
+#[msg("Completion bonus already claimed for this enrollment")]
+BonusAlreadyClaimed,
 ```
 
 ### Internal Operations (Not Public Instructions)
 
-- `create_or_upgrade_credential` — CPI to Light System Program, called by `issue_credential`
-- `mint_xp` — CPI to Token-2022, called by `finalize_course`, `complete_lesson`, `claim_achievement`
+- `create_or_upgrade_credential` — CPI to Metaplex Core program, called by `issue_credential`
+- `mint_xp` — CPI to Token-2022, called by `complete_lesson`, `finalize_course` (creator only), `claim_completion_bonus`, `claim_achievement`
 - `update_streak` — Called internally by `complete_lesson`
-- `check_and_update_daily_xp` — Called internally by XP-awarding instructions
+- `check_and_update_daily_xp` — Called internally by XP-awarding instructions (reads `config.max_daily_xp`)
 
 ### Estimated Compute Units
 
@@ -905,8 +951,9 @@ CourseNotFinalized,
 | init_learner | ~5,000 | Simple PDA init |
 | enroll | ~15,000 | PDA init + prerequisite check |
 | complete_lesson | ~40,000 | Bitmap + XP mint CPI + streak |
-| finalize_course | ~100,000 | Bitmap verification + 2 XP mints (learner + creator) |
-| issue_credential | ~200-300,000 | ZK Compression CPI + Photon proof fetch |
+| finalize_course | ~80,000 | Bitmap verification + creator XP mint |
+| claim_completion_bonus | ~30,000 | XP mint CPI + daily cap check |
+| issue_credential | ~50-100,000 | Metaplex Core CPI (create or update) |
 | claim_achievement | ~30,000 | Bitmap + XP mint CPI |
 | award_streak_freeze | ~5,000 | Increment counter |
 | register_referral | ~10,000 | Two account updates |
@@ -933,8 +980,9 @@ CourseNotFinalized,
     pub course_version: u16, pub timestamp: i64,
 }
 
-#[event] pub struct Unenrolled {
-    pub learner: Pubkey, pub course: Pubkey, pub timestamp: i64,
+#[event] pub struct CompletionBonusClaimed {
+    pub learner: Pubkey, pub course: Pubkey,
+    pub bonus_xp: u32, pub timestamp: i64,
 }
 
 #[event] pub struct LessonCompleted {
@@ -949,8 +997,8 @@ CourseNotFinalized,
 
 #[event] pub struct CredentialIssued {
     pub learner: Pubkey, pub track_id: u16,
-    pub credential_created: bool, pub credential_upgraded: bool,
-    pub current_level: u8, pub timestamp: i64,
+    pub credential_asset: Pubkey, pub credential_created: bool,
+    pub credential_upgraded: bool, pub current_level: u8, pub timestamp: i64,
 }
 
 #[event] pub struct AchievementClaimed {
@@ -959,7 +1007,13 @@ CourseNotFinalized,
 }
 
 #[event] pub struct StreakBroken {
-    pub learner: Pubkey, pub final_streak: u16, pub timestamp: i64,
+    pub learner: Pubkey, pub final_streak: u16,
+    pub days_missed: u16, pub timestamp: i64,
+}
+
+#[event] pub struct StreakFreezesUsed {
+    pub learner: Pubkey, pub freezes_used: u8,
+    pub freezes_remaining: u8, pub timestamp: i64,
 }
 
 #[event] pub struct StreakMilestone {
@@ -972,7 +1026,7 @@ CourseNotFinalized,
 
 #[event] pub struct EnrollmentClosed {
     pub learner: Pubkey, pub course: Pubkey,
-    pub rent_reclaimed: u64, pub timestamp: i64,
+    pub completed: bool, pub rent_reclaimed: u64, pub timestamp: i64,
 }
 
 #[event] pub struct ReferralRegistered {
@@ -999,9 +1053,8 @@ CourseNotFinalized,
 | Deploy program | ~2 SOL |
 | Config PDA | ~0.002 SOL |
 | First season XP mint | ~0.001 SOL |
+| Track collection NFTs (~5 tracks) | ~0.015 SOL |
 | **Total setup** | **~2 SOL** |
-
-No merkle tree creation needed (ZK Compression uses shared public trees).
 
 ### Per Course
 
@@ -1019,18 +1072,18 @@ No merkle tree creation needed (ZK Compression uses shared public trees).
 | Complete lessons (100) | 100 | ~0.001 | — |
 | Finalize courses (5) | 5 | ~0.0005 | — |
 | Issue credentials (5) | 5 | ~0.0005 | — |
-| Credential create (first in track) | ~3 | ~0.0003 | 0 (compressed) |
-| Credential upgrades | ~2 | ~0.0002 | 0 (compressed) |
+| Credential create (first in track) | ~3 | ~0.0003 | 0.018 (Metaplex Core NFTs) |
+| Credential upgrades | ~2 | ~0.0001 | — (update only, no new rent) |
 | Close enrollments | 5 | ~0.00005 | -0.005 (reclaimed) |
-| **Net annual cost** | | | **~0.002 SOL** |
+| **Net annual cost** | | | **~0.02 SOL** |
 
 ### Scale Projections
 
-| Learners | Annual Cost |
-| --- | --- |
-| 1,000 | ~2 SOL |
-| 10,000 | ~20 SOL |
-| 100,000 | ~200 SOL |
+| Learners | Annual Cost | Notes |
+| --- | --- | --- |
+| 1,000 | ~20 SOL | ~$4K at $200/SOL |
+| 10,000 | ~200 SOL | ~$40K at $200/SOL |
+| 100,000 | ~2,000 SOL | Consider ZK Compression migration at this scale |
 
 ---
 
@@ -1043,7 +1096,7 @@ No merkle tree creation needed (ZK Compression uses shared public trees).
 | Platform Authority | Initialize, create seasons, create courses, update config | Multisig (Squads) |
 | Course Authority | Update/deactivate specific course | Per-course pubkey |
 | Backend Signer | Complete lessons, finalize courses, issue credentials, claim achievements, award streak freezes | Rotatable server keypair (in Config PDA) |
-| Learner | Init profile, enroll, unenroll, close enrollment, register referral | Wallet signature |
+| Learner | Init profile, enroll, claim completion bonus, close enrollment, register referral | Wallet signature |
 
 ### Access Control Matrix
 
@@ -1057,9 +1110,9 @@ No merkle tree creation needed (ZK Compression uses shared public trees).
 | update_course | | ✅ | | |
 | init_learner | | | | ✅ |
 | enroll | | | | ✅ |
-| unenroll | | | | ✅ |
 | complete_lesson | | | ✅ | |
 | finalize_course | | | ✅ | |
+| claim_completion_bonus | | | | ✅ |
 | issue_credential | | | ✅ | |
 | award_streak_freeze | | | ✅ | |
 | claim_achievement | | | ✅ | |
@@ -1075,7 +1128,7 @@ No merkle tree creation needed (ZK Compression uses shared public trees).
 5. **Bitmap double-check** — Can't complete same lesson twice
 6. **Prerequisite enforcement** — On-chain check before enrollment
 7. **Referral validation** — Referrer must exist, no self-referral, one-time only
-8. **Credential authority** — Only program (via CPI signer PDA) can create/update credentials
+8. **Credential authority** — Only program (via Config PDA as update authority) can create/update credential NFTs
 9. **Finalize-before-issue ordering** — `finalize_course` must succeed before `issue_credential` to prevent credential creation without XP awards
 
 ---
@@ -1102,10 +1155,10 @@ interface IndexedQueries {
     getLeaderboard(options?: { season?: number; limit?: number }): Promise<LeaderboardEntry[]>;
     getRank(wallet: PublicKey, season?: number): Promise<number>;
 
-    // Credentials (Photon / ZK Compression indexer)
+    // Credentials (Helius DAS API — Metaplex Core NFTs)
     getCredentials(wallet: PublicKey): Promise<Credential[]>;
     getCredentialByTrack(wallet: PublicKey, trackId: number): Promise<Credential | null>;
-    getCredentialHistory(address: PublicKey): Promise<CredentialVersion[]>;
+    getCredentialHistory(assetAddress: PublicKey): Promise<CredentialVersion[]>;
 
     // Aggregated
     getAllCourses(options?: { activeOnly?: boolean }): Promise<Course[]>;
@@ -1123,7 +1176,7 @@ interface TransactionBuilders {
     // Learner actions
     initLearner(): Promise<TransactionSignature>;
     enroll(courseId: string): Promise<TransactionSignature>;
-    unenroll(courseId: string): Promise<TransactionSignature>;
+    claimCompletionBonus(courseId: string): Promise<TransactionSignature>;
     closeEnrollment(courseId: string): Promise<TransactionSignature>;
     registerReferral(referrer: PublicKey): Promise<TransactionSignature>;
 
@@ -1150,16 +1203,17 @@ interface TransactionBuilders {
 
 ### RPC Provider
 
-Must support both standard Solana RPC and ZK Compression endpoints:
-- **Helius** — Supports both DAS API (for XP leaderboard) and Photon (for credentials)
-- **Triton** — Alternative with ZK Compression support
+Standard Solana RPC + DAS API support:
+- **Helius** — DAS API (for XP leaderboard and credential NFT queries)
+- **QuickNode** — Alternative with DAS API support
+- No ZK Compression / Photon indexer dependency
 
 ### Indexer Dependencies
 
 | Data | Indexer | Endpoint |
 | --- | --- | --- |
 | XP token balances | Helius DAS API | `getTokenHolders` |
-| Credentials | Photon (ZK Compression) | `getCompressedAccount`, `getValidityProof` |
+| Credential NFTs | Helius DAS API | `getAssetsByOwner`, `getAssetsByGroup` |
 | Events/history | Helius webhooks or custom | Transaction log parsing |
 
 ### Backend Requirements
@@ -1168,16 +1222,33 @@ For the full course completion flow with credentials:
 
 1. **`finalize_course` call:**
    - Verify all lessons marked as complete in bitmap
-   - Verify all lessons exist in course
    - Sign + submit transaction
    - Wait for confirmation
 
 2. **`issue_credential` call:**
-   - Query Photon for existing credential (if upgrading): `getCompressedAccountsByOwner`
-   - Fetch validity proof: `getValidityProof`
-   - Build transaction with compressed account data + proof
+   - Read `enrollment.credential_asset` on-chain (no DAS API needed)
+   - If `None`: generate new asset keypair, build create transaction
+   - If `Some(pubkey)`: build update transaction (new URI + attributes)
    - Sign + submit sequentially after finalize_course
-   - If fails, log error but do not retry blocking operations
+   - If fails, log error; learner already has XP, retry later
+
+3. **Learner-initiated `claim_completion_bonus`:**
+   - No backend involvement — learner signs directly
+   - Frontend builds transaction from enrollment + course PDAs
+
+### Backend Architecture (Recommended)
+
+```
+Next.js API Routes (Vercel) + AWS KMS
+├── POST /api/complete-lesson   → validate quiz → KMS sign → submit TX
+├── POST /api/finalize-course   → verify bitmap → KMS sign → submit TX
+├── POST /api/issue-credential  → read enrollment → KMS sign → submit TX
+├── POST /api/claim-achievement → verify eligibility → KMS sign → submit TX
+└── POST /api/award-freeze      → verify criteria → KMS sign → submit TX
+
+KMS: backend_signer private key never leaves KMS boundary.
+Rotation: generate new KMS key → update_config(new_signer) → deactivate old key.
+```
 
 ---
 
@@ -1186,10 +1257,10 @@ For the full course completion flow with credentials:
 | Account | Size (bytes) | Rent | Closeable | Type |
 | --- | --- | --- | --- | --- |
 | Config | ~183 | ~0.002 SOL | No | Regular PDA |
-| Course | ~230 | ~0.002 SOL | No | Regular PDA |
+| Course | ~226 | ~0.002 SOL | No | Regular PDA |
 | LearnerProfile | ~111 | ~0.001 SOL | No | Regular PDA |
-| Enrollment | ~99 | ~0.001 SOL | **Yes** | Regular PDA |
-| Credential | ~88 | **0 SOL** | N/A | ZK Compressed |
+| Enrollment | ~140 | ~0.001 SOL | **Yes** | Regular PDA |
+| Credential | ~200 (Core asset) | ~0.006 SOL | No | Metaplex Core NFT |
 
 ## Appendix B: Error Codes
 
@@ -1202,19 +1273,21 @@ pub enum AcademyError {
     #[msg("Not enrolled")] NotEnrolled,
     #[msg("Lesson index out of bounds")] LessonOutOfBounds,
     #[msg("Lesson already completed")] LessonAlreadyCompleted,
-    #[msg("Course not fully completed")] CourseNotCompleted,
-    #[msg("Course already completed")] CourseAlreadyCompleted,
+    #[msg("Not all lessons completed")] CourseNotCompleted,
+    #[msg("Course already finalized")] CourseAlreadyFinalized,
     #[msg("Achievement already claimed")] AchievementAlreadyClaimed,
-    #[msg("Course not finalized; issue_credential requires finalize_course to succeed first")] CourseNotFinalized,
+    #[msg("Course not finalized")] CourseNotFinalized,
+    #[msg("Completion bonus already claimed")] BonusAlreadyClaimed,
     #[msg("Season already closed")] SeasonClosed,
     #[msg("Cannot refer yourself")] SelfReferral,
     #[msg("Already has a referrer")] AlreadyReferred,
     #[msg("Referrer not found")] ReferrerNotFound,
     #[msg("Prerequisite not met")] PrerequisiteNotMet,
     #[msg("Daily XP limit exceeded")] DailyXPLimitExceeded,
-    #[msg("Unenroll cooldown not met (24h)")] UnenrollCooldown,
+    #[msg("Close cooldown not met (24h)")] UnenrollCooldown,
     #[msg("Enrollment/course mismatch")] EnrollmentCourseMismatch,
     #[msg("Season not active")] SeasonNotActive,
+    #[msg("Arithmetic overflow")] Overflow,
 }
 ```
 
@@ -1233,12 +1306,14 @@ pub enum AcademyError {
 
 Deployed as **upgradeable** with platform multisig as upgrade authority:
 
-- `decompress_credential` — Mint standard NFT from compressed credential
+- Referral XP rewards (currently analytics-only)
+- Credential categories: Streak, Platform, Special (new instructions)
+- ZK Compression migration — Migrate credentials to compressed accounts when wallet support matures and scale warrants cost reduction
 - SPL token rewards for creators (escrow model)
 - Guild/team accounts
 - On-chain governance for curriculum
-- Cross-program composability (DAO gating, job boards)
+- Cross-program composability (DAO gating via credential NFT ownership, job boards)
 
 ---
 
-*End of Specification v1.1 (Revised with Split Instructions)*
+*End of Specification v1.3 (Metaplex Core Credentials)*

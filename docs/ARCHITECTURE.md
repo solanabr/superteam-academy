@@ -118,8 +118,7 @@ LearnerProfile (one per learner)
    Backend ──sign──► finalize_course()
    ┌─────────────────────────────────────────────┐
    │ Check: all bits set (popcount == lesson_count)│
-   │ Mint: course.xp_total to learner             │
-   │ Mint: completion_reward_xp to creator        │
+   │ Mint: creator_reward_xp to creator           │
    │   (gated by min_completions_for_reward)      │
    │ Set: enrollment.completed_at = now           │
    │ Increment: course.total_completions          │
