@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# Anchor / Rust build artifacts
+target/
+.anchor/
+
+# Test artifacts
+test-ledger/
+.DS_Store
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# IDE
+.idea/
+.vscode/
+
+# Yarn / pnpm
+.yarn/
+.pnp.*
+yarn-error.log
+
+# Claude local settings
+.claude/settings.local.json
