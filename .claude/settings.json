@@ -1,0 +1,123 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(anchor *)",
+      "Bash(cargo build-sbf *)",
+      "Bash(cargo test-sbf *)",
+      "Bash(cargo test *)",
+      "Bash(cargo clippy *)",
+      "Bash(cargo fmt *)",
+      "Bash(cargo audit *)",
+      "Bash(cargo install *)",
+      "Bash(cargo geiger *)",
+      "Bash(trident *)",
+
+      "Bash(solana config *)",
+      "Bash(solana address *)",
+      "Bash(solana balance *)",
+      "Bash(solana airdrop *)",
+      "Bash(solana program show *)",
+      "Bash(solana program dump *)",
+      "Bash(solana logs *)",
+      "Bash(solana account *)",
+      "Bash(solana-test-validator *)",
+
+      "Bash(npm *)",
+      "Bash(yarn *)",
+      "Bash(pnpm *)",
+      "Bash(bun *)",
+      "Bash(npx *)",
+
+      "Bash(git status *)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(git pull *)",
+      "Bash(git fetch *)",
+      "Bash(git branch *)",
+      "Bash(git checkout *)",
+      "Bash(gh *)",
+
+      "Bash(ls *)",
+      "Bash(cat *)",
+      "Bash(grep *)",
+      "Bash(find *)",
+      "Bash(mkdir *)",
+      "Bash(touch *)",
+      "Bash(echo *)",
+      "Bash(pwd)",
+      "Bash(cd *)",
+      "Bash(cp *)",
+      "Bash(mv *)"
+    ],
+    "deny": [
+      "Bash(rm -rf / *)",
+      "Bash(sudo *)",
+      "Bash(chmod 777 *)",
+      "Bash(solana program deploy * mainnet *)",
+      "Bash(solana program deploy * --url *mainnet*)"
+    ]
+  },
+
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -z \"$CLAUDE_FILE_PATH\" ]; then exit 0; fi\n\ncase \"$CLAUDE_FILE_PATH\" in\n  *.rs)\n    command -v rustfmt >/dev/null 2>&1 && rustfmt \"$CLAUDE_FILE_PATH\" || true\n    ;;\n  *.ts|*.tsx|*.js|*.jsx|*.json|*.md)\n    command -v npx >/dev/null 2>&1 && npx prettier --write \"$CLAUDE_FILE_PATH\" || true\n    ;;\nesac"
+          }
+        ]
+      },
+
+      {
+        "matcher": "Bash",
+        "when": {
+          "command_matches": "cargo test|anchor test"
+        },
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo \"\"\necho \"Test Summary:\";\nif [ \"$CLAUDE_TOOL_EXIT_CODE\" -eq 0 ]; then\n  echo \"All tests passed!\"\nelse\n  echo \"Some tests failed. Review output above.\"\nfi"
+          }
+        ]
+      }
+    ],
+
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "when": {
+          "command_matches": "git commit"
+        },
+        "hooks": [
+          {
+            "type": "command",
+            "command": "set -e\n\necho \"Running pre-commit checks...\"\n\nif [ -f \"Anchor.toml\" ] || grep -q \"solana-program\" Cargo.toml 2>/dev/null; then\n  cargo fmt --check || { cargo fmt; exit 1; }\n  cargo clippy --all-targets -- -D warnings || exit 1\n  cargo test --lib || exit 1\nfi\n\nif [ -f \"package.json\" ]; then\n  npx prettier --check \"**/*.{ts,tsx,js,jsx,json}\" || { npx prettier --write \"**/*.{ts,tsx,js,jsx,json}\"; exit 1; }\n  [ -f \"tsconfig.json\" ] && npx tsc --noEmit || exit 1\nfi\n\necho \"Pre-commit checks passed\""
+          }
+        ]
+      },
+
+      {
+        "matcher": "Bash",
+        "when": {
+          "command_matches": "solana program deploy|anchor deploy"
+        },
+        "hooks": [
+          {
+            "type": "command",
+            "command": "set -e\n\necho \"PRE-DEPLOY CHECKS\"\nNETWORK=$(solana config get | grep \"RPC URL\" | awk '{print $3}')\necho \"Network: $NETWORK\"\n\nif echo \"$NETWORK\" | grep -q mainnet; then\n  echo \"MAINNET DEPLOY WARNING\"\n  echo \"Type 'DEPLOY TO MAINNET' to continue:\";\n  read -r CONFIRM;\n  [ \"$CONFIRM\" = \"DEPLOY TO MAINNET\" ] || exit 1\nfi\n\nif [ -f \"Anchor.toml\" ]; then\n  ls target/deploy/*.so >/dev/null 2>&1 || { echo \"No build found\"; exit 1; }\nfi\n\necho \"Pre-deploy checks passed\""
+          }
+        ]
+      }
+    ]
+  },
+
+  "modelDefaults": {
+    "agent": "opus",
+    "command": "sonnet"
+  }
+}
