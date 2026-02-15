@@ -1,9 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db/mongodb";
 import { Thread } from "@/lib/db/models/thread";
+import { User } from "@/lib/db/models/user";
 import { ensureUser } from "@/lib/db/helpers";
 import { getBackendSigner } from "@/lib/solana/backend-signer";
 import { sendMemoTx } from "@/lib/solana/transactions";
+
+async function resolveDisplayNames(wallets: string[]): Promise<Record<string, string>> {
+  const unique = [...new Set(wallets)];
+  const users = await User.find({ wallet: { $in: unique } }, { wallet: 1, displayName: 1 }).lean();
+  const map: Record<string, string> = {};
+  for (const u of users) {
+    map[u.wallet] = u.displayName || `${u.wallet.slice(0, 4)}...${u.wallet.slice(-4)}`;
+  }
+  for (const w of unique) {
+    if (!map[w]) map[w] = `${w.slice(0, 4)}...${w.slice(-4)}`;
+  }
+  return map;
+}
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -35,7 +49,14 @@ export async function GET(req: NextRequest) {
     Thread.countDocuments(filter),
   ]);
 
-  return NextResponse.json({ threads, total, page, totalPages: Math.ceil(total / limit) });
+  const names = await resolveDisplayNames(threads.map((t) => t.author));
+
+  const threadsWithNames = threads.map((t) => ({
+    ...t,
+    authorName: names[t.author],
+  }));
+
+  return NextResponse.json({ threads: threadsWithNames, total, page, totalPages: Math.ceil(total / limit) });
 }
 
 export async function POST(req: NextRequest) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Link } from "@/i18n/navigation";
@@ -13,6 +13,7 @@ import {
   Plus,
   Star,
   Award,
+  ExternalLink,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,9 @@ export default function CommunityThreadsPage() {
   const t = useTranslations("community");
   const tc = useTranslations("common");
   const { publicKey } = useWallet();
+
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const [typeFilter, setTypeFilter] = useState("all");
   const [sort, setSort] = useState("recent");
@@ -123,7 +127,7 @@ export default function CommunityThreadsPage() {
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button disabled={!publicKey}>
+            <Button disabled={!mounted || !publicKey}>
               <Plus className="mr-2 h-4 w-4" />
               {t("newThread")}
             </Button>
@@ -179,7 +183,7 @@ export default function CommunityThreadsPage() {
       </div>
 
       {/* Stats cards */}
-      {publicKey && stats && (
+      {mounted && publicKey && stats && (
         <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-2">
           <Card>
             <CardContent className="flex items-center gap-3 p-4">
@@ -267,7 +271,7 @@ export default function CommunityThreadsPage() {
                           {thread.body}
                         </p>
                         <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                          <span>{thread.author.slice(0, 4)}...{thread.author.slice(-4)}</span>
+                          <span>{thread.authorName}</span>
                           <span>{formatTimeAgo(thread.createdAt)}</span>
                           <span className="flex items-center gap-1">
                             <Eye className="h-3 w-3" />
@@ -282,6 +286,20 @@ export default function CommunityThreadsPage() {
                               {tag}
                             </Badge>
                           ))}
+                          {thread.txHash && (
+                            <span
+                              role="link"
+                              className="inline-flex items-center gap-1 text-solana-green hover:underline cursor-pointer"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                window.open(`https://explorer.solana.com/tx/${thread.txHash}?cluster=devnet`, "_blank");
+                              }}
+                            >
+                              <ExternalLink className="h-3 w-3" />
+                              {thread.txHash.slice(0, 8)}...{thread.txHash.slice(-4)}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </CardContent>

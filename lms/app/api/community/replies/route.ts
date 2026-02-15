@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db/mongodb";
 import { Reply } from "@/lib/db/models/reply";
 import { Thread } from "@/lib/db/models/thread";
+import { User } from "@/lib/db/models/user";
 import { ensureUser } from "@/lib/db/helpers";
 import { getBackendSigner } from "@/lib/solana/backend-signer";
 import { sendMemoTx } from "@/lib/solana/transactions";
@@ -15,7 +16,20 @@ export async function GET(req: NextRequest) {
 
   await connectDB();
   const replies = await Reply.find({ threadId }).sort({ createdAt: 1 }).lean();
-  return NextResponse.json(replies);
+
+  const wallets = [...new Set(replies.map((r) => r.author))];
+  const users = await User.find({ wallet: { $in: wallets } }, { wallet: 1, displayName: 1 }).lean();
+  const nameMap: Record<string, string> = {};
+  for (const u of users) {
+    nameMap[u.wallet] = u.displayName || `${u.wallet.slice(0, 4)}...${u.wallet.slice(-4)}`;
+  }
+
+  const repliesWithNames = replies.map((r) => ({
+    ...r,
+    authorName: nameMap[r.author] || `${r.author.slice(0, 4)}...${r.author.slice(-4)}`,
+  }));
+
+  return NextResponse.json(repliesWithNames);
 }
 
 export async function POST(req: NextRequest) {

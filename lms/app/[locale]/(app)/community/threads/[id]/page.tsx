@@ -8,6 +8,7 @@ import {
   ArrowBigUp,
   ArrowLeft,
   CheckCircle2,
+  ExternalLink,
   HelpCircle,
   MessageSquare,
   Eye,
@@ -216,7 +217,7 @@ export default function ThreadDetailPage({
                   title={t("endorse")}
                 >
                   <Award className="h-3 w-3" />
-                  {thread.author.slice(0, 4)}...{thread.author.slice(-4)}
+                  {thread.authorName}
                 </button>
                 <span>{formatDate(thread.createdAt)}</span>
                 <span className="flex items-center gap-1">
@@ -233,9 +234,10 @@ export default function ThreadDetailPage({
                     href={`https://explorer.solana.com/tx/${thread.txHash}?cluster=devnet`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-solana-green hover:underline"
+                    className="inline-flex items-center gap-1 text-solana-green hover:underline"
                   >
-                    Tx
+                    <ExternalLink className="h-3 w-3" />
+                    {thread.txHash.slice(0, 8)}...{thread.txHash.slice(-4)}
                   </a>
                 )}
               </div>
@@ -305,7 +307,7 @@ export default function ThreadDetailPage({
                           title={t("endorse")}
                         >
                           <Award className="h-3 w-3" />
-                          {reply.author.slice(0, 4)}...{reply.author.slice(-4)}
+                          {reply.authorName}
                         </button>
                         <span>{formatDate(reply.createdAt)}</span>
                         {reply.txHash && (
@@ -313,9 +315,10 @@ export default function ThreadDetailPage({
                             href={`https://explorer.solana.com/tx/${reply.txHash}?cluster=devnet`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-solana-green hover:underline"
+                            className="inline-flex items-center gap-1 text-solana-green hover:underline"
                           >
-                            Tx
+                            <ExternalLink className="h-3 w-3" />
+                            {reply.txHash.slice(0, 8)}...{reply.txHash.slice(-4)}
                           </a>
                         )}
                         {isSolution && (

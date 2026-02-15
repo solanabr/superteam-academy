@@ -3,6 +3,7 @@ export type ThreadType = "discussion" | "question";
 export interface Thread {
   _id: string;
   author: string;
+  authorName: string;
   title: string;
   body: string;
   type: ThreadType;
@@ -22,6 +23,7 @@ export interface Reply {
   _id: string;
   threadId: string;
   author: string;
+  authorName: string;
   body: string;
   upvotes: string[];
   txHash: string | null;

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db/mongodb";
 import { Thread } from "@/lib/db/models/thread";
+import { User } from "@/lib/db/models/user";
 
 export async function GET(
   _req: NextRequest,
@@ -19,7 +20,10 @@ export async function GET(
     return NextResponse.json({ error: "not found" }, { status: 404 });
   }
 
-  return NextResponse.json(thread);
+  const user = await User.findOne({ wallet: thread.author }, { displayName: 1 }).lean();
+  const authorName = user?.displayName || `${thread.author.slice(0, 4)}...${thread.author.slice(-4)}`;
+
+  return NextResponse.json({ ...thread, authorName });
 }
 
 export async function DELETE(
