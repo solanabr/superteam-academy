@@ -40,7 +40,7 @@ Use `/quick-commit` command to automate branch creation and commits.
 superteam-academy/
 ├── CLAUDE.md                    ← You are here
 ├── docs/
-│   ├── SPEC.md                  ← On-chain program specification (v1.3)
+│   ├── SPEC.md                  ← On-chain program specification (v1.1)
 │   ├── ARCHITECTURE.md          ← System diagrams, account maps, CU budgets
 │   ├── IMPLEMENTATION_ORDER.md  ← 10-phase build plan
 │   └── FUTURE_IMPROVEMENTS.md   ← V2/V3 deferred features
@@ -78,42 +78,39 @@ superteam-academy/
 |-------|-------|
 | **Programs** | Anchor 0.31+, Rust 1.82+ |
 | **Token Standard** | Token-2022 (NonTransferable, PermanentDelegate, MetadataPointer, TokenMetadata) |
-| **Credentials** | Metaplex Core NFTs — soulbound (PermanentFreezeDelegate), upgradeable, wallet-visible |
+| **Credentials** | Light SDK (ZK Compression) — compressed PDAs, Photon indexer |
 | **Testing** | Mollusk, LiteSVM, Trident (fuzz) |
 | **Client** | TypeScript, @coral-xyz/anchor, @solana/web3.js |
 | **Frontend** | Next.js 14+, React, Tailwind CSS |
-| **RPC** | Helius (DAS API for reads only: XP leaderboard + credential NFT display) |
-| **Backend Signing** | AWS KMS (backend_signer key never in memory, rotatable via update_config) |
+| **RPC** | Helius (DAS API + Photon for ZK Compression) |
 | **Content** | Arweave (immutable course content) |
 | **Multisig** | Squads (platform authority) |
 
 ## On-Chain Program Summary
 
-### Accounts (4 Regular PDAs + Metaplex Core NFTs)
+### Accounts (4 Regular PDAs + 1 Compressed)
 
-| Account | Seeds / Type | Purpose |
-|---------|-------------|---------|
+| Account | Seeds | Purpose |
+|---------|-------|---------|
 | Config | `["config"]` | Singleton: authority, backend signer, season, rate limits |
 | Course | `["course", course_id.as_bytes()]` | Course metadata, creator, track, XP amounts |
 | LearnerProfile | `["learner", user.key()]` | Streaks, achievements (bitmap), rate limiting, referrals |
-| Enrollment | `["enrollment", course_id.as_bytes(), user.key()]` | Lesson bitmap, credential_asset, completion timestamps (closeable) |
-| Credential | Metaplex Core NFT (per track collection) | Soulbound, upgradeable per track, wallet-visible |
+| Enrollment | `["enrollment", course_id.as_bytes(), user.key()]` | Lesson bitmap, completion timestamps (closeable) |
+| Credential | `["credential", learner.key(), track_id.to_le_bytes()]` | ZK compressed, upgradeable per track (Light Protocol) |
 
 ### Instructions (16 Total)
 
 **Platform Management (4):** `initialize`, `create_season`, `close_season`, `update_config`
 **Courses (2):** `create_course`, `update_course`
 **Learner (4):** `init_learner`, `register_referral`, `claim_achievement`, `award_streak_freeze`
-**Enrollment & Progress (6):** `enroll`, `complete_lesson`, `finalize_course`, `claim_completion_bonus`, `issue_credential`, `close_enrollment`
+**Enrollment & Progress (6):** `enroll`, `unenroll`, `complete_lesson`, `finalize_course`, `issue_credential`, `close_enrollment`
 
 ### Key Design Decisions
 
 - **XP = soulbound Token-2022 token** with NonTransferable + PermanentDelegate (users can't transfer or self-burn)
 - **Seasons** = new mint per season; old tokens remain as history
-- **Credentials** are Metaplex Core NFTs — soulbound (PermanentFreezeDelegate), upgradeable (URI + Attributes plugin), visible in all wallets
-- **XP is minted per-lesson** (`xp_per_lesson`) — `finalize_course` awards creator XP only; learner claims completion bonus separately via `claim_completion_bonus`
+- **Credentials** use ZK Compression (Light Protocol) — no merkle tree, no rent, upgradeable
 - **`finalize_course` and `issue_credential` are split** — XP awards don't depend on credential CPI success
-- **Credential create-vs-upgrade is on-chain** — `enrollment.credential_asset` tracks NFT address, no DAS API needed for writes
 - **On-chain daily XP cap** — defense-in-depth even if backend compromised
 - **UTC standard** for all day boundaries (streaks, rate limiting)
 - **Rotatable backend signer** — stored in Config, rotatable via `update_config`
@@ -128,11 +125,12 @@ Refer to `docs/IMPLEMENTATION_ORDER.md` for details. Summary:
 2. LearnerProfile → user onboarding
 3. Course Registry → content management
 4. Enrollment + Lessons → **core learning loop** (most complex)
-5. Completion + Close → **working MVP** (finalize, bonus, close — deploy to devnet here)
-6. Credentials (Core) → wallet-visible credentials
+5. Finalize Course → **working MVP** (deploy to devnet here)
+6. Credentials (ZK) → verifiable credentials
 7. Achievements → gamification
-8. Streak Freezes → multi-day freeze stacking
-9. Referrals → analytics tracking
+8. Streak Freezes → streak polish
+9. Referrals → growth
+10. Close Enrollment → rent reclaim
 
 ## Agents
 
@@ -194,7 +192,7 @@ git diff main...HEAD
 
 **Keep:**
 - Legitimate security checks
-- Comments explaining non-obvious logic (especially math, bitmap operations, Metaplex Core CPI)
+- Comments explaining non-obvious logic (especially math, bitmap operations, ZK Compression)
 - Error handling matching existing patterns
 
 **Report 1-3 sentence summary of cleanup.**
@@ -235,12 +233,9 @@ Rules (always-on constraints): `.claude/rules/`
 - [ ] Security audit completed
 - [ ] Verifiable build (`anchor build --verifiable`)
 - [ ] CU optimization verified (see ARCHITECTURE.md for budgets)
-- [ ] On-chain rate limiting tested (daily XP cap from config, achievement XP cap)
-- [ ] XP distribution tested (per-lesson mint + completion bonus claim + creator reward)
-- [ ] Metaplex Core credential flow tested (create + upgrade + soulbound check)
-- [ ] Credential create-vs-upgrade on-chain (enrollment.credential_asset, no DAS for writes)
-- [ ] Streak logic tested across UTC day boundaries (including multi-day freeze stacking)
-- [ ] close_enrollment tested (both completed + incomplete with 24h cooldown)
+- [ ] On-chain rate limiting tested (daily XP cap, achievement XP cap)
+- [ ] ZK Compression credential flow tested (create + upgrade)
+- [ ] Streak logic tested across UTC day boundaries
 - [ ] Devnet testing successful (multiple days)
 - [ ] AI slop removed from branch
 - [ ] User explicit confirmation received

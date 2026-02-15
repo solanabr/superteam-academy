@@ -50,18 +50,18 @@ fn creator_reward(base_xp: u32, course: &Course) -> u32 {
 
 ---
 
-### 3. ZK Compression Migration (Cost Optimization)
+### 3. Decompress Credential to NFT
 
-**Problem:** Metaplex Core credentials cost ~0.006 SOL each (mint + rent). At 100K+ learners with multiple tracks, credential costs become significant (~2,000+ SOL/year).
+**Problem:** ZK compressed credentials don't appear in standard wallet UIs (Phantom, Backpack). Learners may want a visible NFT in their wallet for social proof.
 
-**Approach:** Migrate credential storage to ZK Compression (Light Protocol) when:
-1. Wallet display support for compressed PDAs improves (monitor Q2-Q3 2026)
-2. Scale exceeds 50K learners and cost savings justify engineering investment
-3. Light SDK reaches full audit status (core protocol audited, SDK still maturing)
+**Approach:** Add `decompress_credential` instruction that:
+1. Reads the compressed credential via validity proof
+2. Mints a standard Token-2022 NFT with the credential metadata
+3. Nullifies the compressed credential (or marks it as "decompressed")
 
-Migration path: new credentials on ZK Compression, existing Metaplex Core NFTs remain as verified legacy. Optionally offer "compress" operation to reclaim rent.
+The NFT would be a one-way operation — once decompressed, the credential lives as a regular NFT. Future upgrades would require a new compressed credential.
 
-**Complexity:** High. Requires Light Protocol integration, Photon indexer dependency, custom credential viewer (unless wallets add support), and migration tooling for existing credentials.
+**Complexity:** High. Requires NFT minting logic, metadata handling, and a decision on whether decompressed credentials can still be upgraded.
 
 ---
 
@@ -196,11 +196,9 @@ Allow creators to set prices (in SOL or USDC) for premium courses, with platform
 
 | Improvement | Impact | Effort | Priority |
 | --- | --- | --- | --- |
-| Referral XP rewards | Medium | Low | V2.0 |
-| Credential categories (Streak/Platform/Special) | Medium | Medium | V2.0 |
 | Time-based creator decay | High | Medium | V2.0 |
 | Track registry on-chain | Medium | Low | V2.0 |
-| ZK Compression migration | High | High | V2.1+ (when wallets support) |
+| Decompress credential | High | High | V2.0 |
 | Batch operations | Medium | Low | V2.0 |
 | Analytics enrichment | Medium | Low | V2.0 |
 | SPL token rewards | High | High | V2.1 |
