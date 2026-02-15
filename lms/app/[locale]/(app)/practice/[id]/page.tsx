@@ -445,7 +445,7 @@ function extractPatterns(solution: string): { label: string; regex: RegExp }[] {
     patterns.push({ label: `impl ${m[1]}`, regex: new RegExp(`impl\\s+${m[1]}`) });
   }
   for (const m of clean.matchAll(/(?:pub\s+)?fn\s+(\w+)/g)) {
-    patterns.push({ label: `fn ${m[1]}`, regex: new RegExp(`fn\\s+${m[1]}\\s*\\(`) });
+    patterns.push({ label: `fn ${m[1]}`, regex: new RegExp(`fn\\s+${m[1]}\\s*(?:<[^>]*>)?\\s*\\(`) });
   }
   for (const m of clean.matchAll(/#\[derive\(([^)]+)\)\]/g)) {
     patterns.push({ label: `#[derive(${m[1]})]`, regex: new RegExp(`#\\[derive\\([^)]*${m[1].split(",")[0].trim()}`) });

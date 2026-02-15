@@ -319,6 +319,14 @@
     "certificateDownloaded": "Certificate downloaded!",
     "downloadFailed": "Failed to generate image. Try again."
   },
+  "achievements": {
+    "claim": "Claim",
+    "claiming": "Claiming...",
+    "claimed": "Claimed",
+    "claimSuccess": "Achievement unlocked! +{amount} XP",
+    "eligible": "Ready to claim",
+    "locked": "Locked"
+  },
   "gamification": {
     "lvl": "Lvl {level}"
   }

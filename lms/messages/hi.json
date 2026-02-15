@@ -319,6 +319,14 @@
     "certificateDownloaded": "प्रमाणपत्र डाउनलोड हो गया!",
     "downloadFailed": "इमेज बनाने में विफल। पुनः प्रयास करें।"
   },
+  "achievements": {
+    "claim": "क्लेम करें",
+    "claiming": "क्लेम हो रहा है...",
+    "claimed": "क्लेम किया गया",
+    "claimSuccess": "उपलब्धि अनलॉक! +{amount} XP",
+    "eligible": "क्लेम के लिए तैयार",
+    "locked": "लॉक है"
+  },
   "gamification": {
     "lvl": "Lvl {level}"
   }

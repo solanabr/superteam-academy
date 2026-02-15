@@ -8,8 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useXP, useLevel, useStreak, useAllProgress, useCourses, useAchievements } from "@/lib/hooks/use-service";
+import { useXP, useLevel, useStreak, useAllProgress, useCourses, useAchievements, useClaimAchievement, usePracticeProgress } from "@/lib/hooks/use-service";
 import { useWallet } from "@solana/wallet-adapter-react";
+import { checkAchievementEligibility, type AchievementContext } from "@/types/gamification";
+import { toast } from "sonner";
+import { useState } from "react";
 
 function xpForLevel(level: number) {
   return level * level * 100;
@@ -23,8 +26,12 @@ export default function DashboardPage() {
   const { data: allProgress, isLoading: progressLoading } = useAllProgress();
   const { data: courses } = useCourses();
   const { data: achievements } = useAchievements();
+  const { completed: practiceCompleted } = usePracticeProgress();
+  const claimAchievement = useClaimAchievement();
+  const [claimingId, setClaimingId] = useState<number | null>(null);
   const t = useTranslations("dashboard");
   const tc = useTranslations("common");
+  const ta = useTranslations("achievements");
 
   if (!connected) {
     return (
@@ -52,6 +59,26 @@ export default function DashboardPage() {
   const completedCourses = allProgress?.filter((p) => p.completedAt) ?? [];
   const claimedAchievements = achievements?.filter((a) => a.claimed) ?? [];
   const unclaimedAchievements = achievements?.filter((a) => !a.claimed).slice(0, 3) ?? [];
+
+  const totalLessonsCompleted = allProgress?.reduce((sum, p) => sum + p.lessonsCompleted.length, 0) ?? 0;
+  const completedTrackIds = completedCourses.reduce<number[]>((ids, p) => {
+    const course = courses?.find((c) => c.id === p.courseId);
+    if (course && !ids.includes(course.trackId)) ids.push(course.trackId);
+    return ids;
+  }, []);
+  const hasSpeedRun = completedCourses.some((p) => {
+    if (!p.completedAt || !p.enrolledAt) return false;
+    return new Date(p.completedAt).toDateString() === new Date(p.enrolledAt).toDateString();
+  });
+  const achievementCtx: AchievementContext = {
+    lessonsCompleted: totalLessonsCompleted,
+    coursesCompleted: completedCourses.length,
+    longestStreak: streak?.longest ?? 0,
+    practiceCount: practiceCompleted.length,
+    completedTrackIds,
+    hasSpeedRun,
+    referralCount: 0,
+  };
 
   const getCourse = (courseId: string) => courses?.find((c) => c.id === courseId);
 
@@ -273,18 +300,43 @@ export default function DashboardPage() {
               {unclaimedAchievements.length === 0 ? (
                 <p className="text-sm text-muted-foreground">{t("allAchievementsUnlocked")}</p>
               ) : (
-                unclaimedAchievements.map((a) => (
-                  <div key={a.id} className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center shrink-0 text-xs font-bold">
-                      {a.id + 1}
+                unclaimedAchievements.map((a) => {
+                  const eligible = checkAchievementEligibility(a.id, achievementCtx);
+                  return (
+                    <div key={a.id} className="flex items-center gap-3">
+                      <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 text-xs font-bold ${
+                        eligible ? "bg-xp-gold/10 text-xp-gold" : "bg-muted"
+                      }`}>
+                        {a.id + 1}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{a.name}</p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {eligible ? ta("eligible") : a.requirement}
+                        </p>
+                      </div>
+                      {eligible ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-xs px-2 border-xp-gold/50 text-xp-gold hover:bg-xp-gold/10 shrink-0"
+                          disabled={claimingId !== null}
+                          onClick={() => {
+                            setClaimingId(a.id);
+                            claimAchievement.mutate(a.id, {
+                              onSuccess: () => toast.success(ta("claimSuccess", { amount: a.xpReward })),
+                              onSettled: () => setClaimingId(null),
+                            });
+                          }}
+                        >
+                          {claimingId === a.id ? ta("claiming") : ta("claim")}
+                        </Button>
+                      ) : (
+                        <Badge variant="outline" className="text-xs text-xp-gold shrink-0">+{a.xpReward}</Badge>
+                      )}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{a.name}</p>
-                      <p className="text-xs text-muted-foreground truncate">{a.requirement}</p>
-                    </div>
-                    <Badge variant="outline" className="text-xs text-xp-gold shrink-0">+{a.xpReward}</Badge>
-                  </div>
-                ))
+                  );
+                })
               )}
             </CardContent>
           </Card>

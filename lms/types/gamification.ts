@@ -23,6 +23,37 @@ export interface Credential {
   badgeImage?: string;
 }
 
+export interface AchievementContext {
+  lessonsCompleted: number;
+  coursesCompleted: number;
+  longestStreak: number;
+  practiceCount: number;
+  completedTrackIds: number[];
+  hasSpeedRun: boolean;
+  referralCount: number;
+}
+
+export function checkAchievementEligibility(id: number, ctx: AchievementContext): boolean {
+  switch (id) {
+    case 0: return ctx.lessonsCompleted >= 1;
+    case 1: return ctx.lessonsCompleted >= 10;
+    case 2: return ctx.coursesCompleted >= 1;
+    case 3: return ctx.coursesCompleted >= 5;
+    case 4: return ctx.coursesCompleted >= 10;
+    case 5: return ctx.longestStreak >= 7;
+    case 6: return ctx.longestStreak >= 30;
+    case 7: return ctx.longestStreak >= 100;
+    case 8: return ctx.completedTrackIds.includes(1);
+    case 9: return ctx.completedTrackIds.includes(1) && ctx.coursesCompleted >= 2;
+    case 10: return ctx.completedTrackIds.includes(2);
+    case 11: return ctx.completedTrackIds.includes(3);
+    case 12: return ctx.referralCount >= 5;
+    case 13: return ctx.practiceCount >= 20;
+    case 14: return ctx.hasSpeedRun;
+    default: return false;
+  }
+}
+
 export const ACHIEVEMENTS: Achievement[] = [
   { id: 0, name: "First Steps", description: "Complete your first lesson", icon: "footprints", category: "progress", xpReward: 50, requirement: "1 lesson completed", claimed: false },
   { id: 1, name: "Quick Learner", description: "Complete 10 lessons", icon: "zap", category: "progress", xpReward: 100, requirement: "10 lessons completed", claimed: false },

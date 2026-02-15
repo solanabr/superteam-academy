@@ -1,19 +1,23 @@
 "use client";
 
-import { Zap, Flame, Trophy, BookOpen, Award, Calendar, Code2, ExternalLink, CheckCircle2 } from "lucide-react";
+import { Zap, Flame, Trophy, BookOpen, Award, Calendar, Code2, ExternalLink, CheckCircle2, Lock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
-import { useXP, useLevel, useStreak, useAllProgress, useAchievements, useCourses, useDisplayName, useBio, usePracticeProgress } from "@/lib/hooks/use-service";
+import { useXP, useLevel, useStreak, useAllProgress, useAchievements, useClaimAchievement, useCourses, useDisplayName, useBio, usePracticeProgress } from "@/lib/hooks/use-service";
 import { getXpProgress, formatXP, shortenAddress } from "@/lib/utils";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { TRACKS } from "@/types/course";
+import { ACHIEVEMENTS, checkAchievementEligibility, type AchievementContext } from "@/types/gamification";
 import { PRACTICE_MILESTONES, MILESTONE_LEVELS, PRACTICE_DIFFICULTY_CONFIG } from "@/types/practice";
 import { PRACTICE_CHALLENGES } from "@/lib/data/practice-challenges";
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
+import { useState } from "react";
 
 export default function ProfilePage() {
   const t = useTranslations("profile");
@@ -28,10 +32,35 @@ export default function ProfilePage() {
   const { data: achievements } = useAchievements();
   const { data: courses } = useCourses();
   const { completed: practiceCompleted, claimedMilestones, milestoneTxHashes } = usePracticeProgress();
+  const claimAchievement = useClaimAchievement();
+  const [claimingId, setClaimingId] = useState<number | null>(null);
 
   const xpProgress = getXpProgress(xp);
   const completedCourses = allProgress?.filter((p) => p.completedAt) ?? [];
   const claimedAchievements = achievements?.filter((a) => a.claimed) ?? [];
+
+  const totalLessonsCompleted = allProgress?.reduce((sum, p) => sum + p.lessonsCompleted.length, 0) ?? 0;
+  const completedTrackIds = completedCourses.reduce<number[]>((ids, p) => {
+    const course = courses?.find((c) => c.id === p.courseId || c.slug === p.courseId);
+    if (course && !ids.includes(course.trackId)) ids.push(course.trackId);
+    return ids;
+  }, []);
+  const hasSpeedRun = completedCourses.some((p) => {
+    if (!p.completedAt || !p.enrolledAt) return false;
+    return new Date(p.completedAt).toDateString() === new Date(p.enrolledAt).toDateString();
+  });
+
+  const achievementCtx: AchievementContext = {
+    lessonsCompleted: totalLessonsCompleted,
+    coursesCompleted: completedCourses.length,
+    longestStreak: streak?.longest ?? 0,
+    practiceCount: practiceCompleted.length,
+    completedTrackIds,
+    hasSpeedRun,
+    referralCount: 0,
+  };
+
+  const ta = useTranslations("achievements");
 
   if (!connected || !publicKey) {
     return (
@@ -136,21 +165,61 @@ export default function ProfilePage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {claimedAchievements.length === 0 ? (
-              <p className="text-sm text-muted-foreground">{t("noAchievements")}</p>
-            ) : (
-              <div className="grid grid-cols-3 gap-3">
-                {claimedAchievements.map((a) => (
-                  <div key={a.id} className="flex flex-col items-center gap-1 rounded-lg bg-muted p-3 text-center">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-solana-purple/10">
-                      <Trophy className="h-5 w-5 text-solana-purple" />
+            <div className="grid grid-cols-3 gap-3">
+              {ACHIEVEMENTS.map((a) => {
+                const claimed = achievements?.some((ua) => ua.id === a.id && ua.claimed) ?? false;
+                const eligible = !claimed && checkAchievementEligibility(a.id, achievementCtx);
+                const locked = !claimed && !eligible;
+
+                return (
+                  <div
+                    key={a.id}
+                    className={`flex flex-col items-center gap-1 rounded-lg p-3 text-center ${
+                      claimed
+                        ? "bg-solana-purple/10"
+                        : eligible
+                          ? "bg-xp-gold/10 ring-1 ring-xp-gold/30"
+                          : "bg-muted opacity-50"
+                    }`}
+                  >
+                    <div className={`flex h-10 w-10 items-center justify-center rounded-full ${
+                      claimed ? "bg-solana-green/20" : eligible ? "bg-xp-gold/20" : "bg-muted"
+                    }`}>
+                      {claimed ? (
+                        <CheckCircle2 className="h-5 w-5 text-solana-green" />
+                      ) : locked ? (
+                        <Lock className="h-5 w-5 text-muted-foreground" />
+                      ) : (
+                        <Trophy className="h-5 w-5 text-xp-gold" />
+                      )}
                     </div>
                     <p className="text-xs font-medium">{a.name}</p>
                     <p className="text-[10px] text-xp-gold">+{a.xpReward} XP</p>
+                    {claimed ? (
+                      <span className="text-[10px] text-solana-green font-medium">{ta("claimed")}</span>
+                    ) : eligible ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-6 text-[10px] px-2 border-xp-gold/50 text-xp-gold hover:bg-xp-gold/10"
+                        disabled={claimingId !== null}
+                        onClick={() => {
+                          setClaimingId(a.id);
+                          claimAchievement.mutate(a.id, {
+                            onSuccess: () => toast.success(ta("claimSuccess", { amount: a.xpReward })),
+                            onSettled: () => setClaimingId(null),
+                          });
+                        }}
+                      >
+                        {claimingId === a.id ? ta("claiming") : ta("claim")}
+                      </Button>
+                    ) : (
+                      <span className="text-[10px] text-muted-foreground">{ta("locked")}</span>
+                    )}
                   </div>
-                ))}
-              </div>
-            )}
+                );
+              })}
+            </div>
           </CardContent>
         </Card>
       </div>

@@ -319,6 +319,14 @@
     "certificateDownloaded": "¡Certificado descargado!",
     "downloadFailed": "Error al generar imagen. Intenta de nuevo."
   },
+  "achievements": {
+    "claim": "Reclamar",
+    "claiming": "Reclamando...",
+    "claimed": "Reclamado",
+    "claimSuccess": "¡Logro desbloqueado! +{amount} XP",
+    "eligible": "Listo para reclamar",
+    "locked": "Bloqueado"
+  },
   "gamification": {
     "lvl": "Nv {level}"
   }
