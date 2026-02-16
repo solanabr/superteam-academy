@@ -46,44 +46,41 @@ const MOCK_REPLIES = [
 ];
 
 test.describe("Thread detail page", () => {
-  test("renders thread title and body", async ({ page, communityApi }) => {
+  test.beforeEach(async ({ communityApi }) => {
     await communityApi.threadDetail(MOCK_THREAD);
     await communityApi.replies(MOCK_REPLIES);
-
-    const detail = new ThreadDetailPage(page);
-    await detail.goto("thread-123");
-
-    await expect(detail.title).toContainText("How to build a token?");
-    await expect(detail.body).toContainText("I want to create a custom SPL token");
   });
 
-  test("renders replies", async ({ page, communityApi }) => {
-    await communityApi.threadDetail(MOCK_THREAD);
-    await communityApi.replies(MOCK_REPLIES);
-
+  test("renders thread title and body", async ({ page }) => {
     const detail = new ThreadDetailPage(page);
     await detail.goto("thread-123");
+    await page.waitForLoadState("domcontentloaded");
+
+    await expect(detail.title).toContainText("How to build a token?");
+    await expect(detail.body).toContainText("custom SPL token");
+  });
+
+  test("renders replies", async ({ page }) => {
+    const detail = new ThreadDetailPage(page);
+    await detail.goto("thread-123");
+    await page.waitForLoadState("domcontentloaded");
 
     await expect(page.getByText("Use the spl-token CLI")).toBeVisible();
     await expect(page.getByText("Check out the Solana Cookbook")).toBeVisible();
   });
 
-  test("shows reply count", async ({ page, communityApi }) => {
-    await communityApi.threadDetail(MOCK_THREAD);
-    await communityApi.replies(MOCK_REPLIES);
-
+  test("shows reply count", async ({ page }) => {
     const detail = new ThreadDetailPage(page);
     await detail.goto("thread-123");
+    await page.waitForLoadState("domcontentloaded");
 
     await expect(page.getByText(/\(2\)/)).toBeVisible();
   });
 
-  test("back link navigates to threads list", async ({ page, communityApi }) => {
-    await communityApi.threadDetail(MOCK_THREAD);
-    await communityApi.replies(MOCK_REPLIES);
-
+  test("back link navigates to threads list", async ({ page }) => {
     const detail = new ThreadDetailPage(page);
     await detail.goto("thread-123");
+    await page.waitForLoadState("domcontentloaded");
 
     await expect(detail.backLink).toBeVisible();
     const href = await detail.backLink.getAttribute("href");
@@ -91,6 +88,7 @@ test.describe("Thread detail page", () => {
   });
 
   test("shows thread not found for missing thread", async ({ page }) => {
+    // Override the thread mock to return null
     await page.route("**/api/community/threads/*", (route) =>
       route.fulfill({
         status: 200,
@@ -98,16 +96,10 @@ test.describe("Thread detail page", () => {
         body: JSON.stringify(null),
       }),
     );
-    await page.route("**/api/community/replies*", (route) =>
-      route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify([]),
-      }),
-    );
 
     const detail = new ThreadDetailPage(page);
     await detail.goto("nonexistent");
+    await page.waitForLoadState("domcontentloaded");
 
     await expect(page.getByText(/not found/i)).toBeVisible();
   });

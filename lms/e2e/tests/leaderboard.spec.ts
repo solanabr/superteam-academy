@@ -9,12 +9,16 @@ const MOCK_ENTRIES = [
 ];
 
 test.describe("Leaderboard page", () => {
+  test.beforeEach(async ({ learningApi }) => {
+    await learningApi.xp(0);
+  });
+
   test("renders leaderboard with entries", async ({ page, learningApi }) => {
     await learningApi.leaderboard(MOCK_ENTRIES);
-    await learningApi.xp(0);
 
     const lb = new LeaderboardPage(page);
     await lb.goto();
+    await page.waitForLoadState("domcontentloaded");
 
     await expect(lb.heading).toBeVisible();
     await expect(page.getByText("Alice")).toBeVisible();
@@ -23,34 +27,40 @@ test.describe("Leaderboard page", () => {
 
   test("shows empty state when no entries", async ({ page, learningApi }) => {
     await learningApi.leaderboard([]);
-    await learningApi.xp(0);
 
     const lb = new LeaderboardPage(page);
     await lb.goto();
+    await page.waitForLoadState("domcontentloaded");
 
     await expect(lb.emptyState).toBeVisible();
   });
 
   test("entries are displayed in XP order", async ({ page, learningApi }) => {
     await learningApi.leaderboard(MOCK_ENTRIES);
-    await learningApi.xp(0);
 
     const lb = new LeaderboardPage(page);
     await lb.goto();
+    await page.waitForLoadState("domcontentloaded");
 
-    // Alice (5000 XP) should appear before Dave (1000 XP)
+    // Wait for entries to render
+    await expect(page.getByText("Alice")).toBeVisible();
+    await expect(page.getByText("Dave")).toBeVisible();
+
+    // Alice (5000 XP, rank 1) should appear before Dave (1000 XP, rank 4)
     const allText = await page.locator("body").textContent();
     const aliceIdx = allText?.indexOf("Alice") ?? -1;
     const daveIdx = allText?.indexOf("Dave") ?? -1;
+    expect(aliceIdx).toBeGreaterThan(-1);
+    expect(daveIdx).toBeGreaterThan(-1);
     expect(aliceIdx).toBeLessThan(daveIdx);
   });
 
   test("timeframe tabs are visible", async ({ page, learningApi }) => {
     await learningApi.leaderboard(MOCK_ENTRIES);
-    await learningApi.xp(0);
 
     const lb = new LeaderboardPage(page);
     await lb.goto();
+    await page.waitForLoadState("domcontentloaded");
 
     expect(await lb.timeframeTabs.count()).toBeGreaterThanOrEqual(3);
   });

@@ -15,7 +15,8 @@ export class PracticePage {
     this.challengeTable = page.locator("table");
     this.challengeRows = page.locator("tbody tr");
     this.searchInput = page.getByPlaceholder(/search/i);
-    this.progressBar = page.locator("[class*=rounded-full][class*=bg-solana]");
+    // Progress bar: the outer container with h-2 + rounded-full
+    this.progressBar = page.locator(".h-2.rounded-full").first();
   }
 
   async goto(locale?: string) {

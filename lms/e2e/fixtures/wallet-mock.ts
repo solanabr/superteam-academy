@@ -1,43 +1,64 @@
 import type { Page } from "@playwright/test";
-import { randomBytes } from "crypto";
 
 const MOCK_PUBKEY = "BrYpk5VU3k5e1LB7nFMtnhfWGYDy7UfAXHbMR5pAdyAi";
 
-/** Inject a mock Phantom wallet so wallet-dependent UI elements render. */
+/**
+ * Inject a mock Phantom wallet that auto-connects through @solana/wallet-adapter-react.
+ *
+ * The wallet is injected AFTER hydration (via setTimeout) to avoid React
+ * hydration mismatches. The adapter's polling strategy detects the wallet
+ * once it appears on `window.phantom.solana`, then autoConnect triggers.
+ *
+ * Must be called BEFORE page.goto().
+ */
 export async function injectMockWallet(page: Page, pubkey = MOCK_PUBKEY) {
   await page.addInitScript(
     ({ pk }) => {
-      const pubkeyBytes = Uint8Array.from(
-        atob(
-          // base58 → we just supply a 32-byte random array; tests don't verify on-chain
-          btoa(String.fromCharCode(...Array.from({ length: 32 }, () => Math.floor(Math.random() * 256)))),
-        ),
-        (c) => c.charCodeAt(0),
-      );
+      // Store wallet name so autoConnect picks it up.
+      // wallet-adapter-react uses JSON.parse, so we store JSON-encoded.
+      localStorage.setItem("walletName", JSON.stringify("Phantom"));
 
-      (window as any).__phantomMockPubkey = pk;
+      // Defer phantom injection to AFTER React hydration completes.
+      // This prevents server/client tree mismatches (hydration errors).
+      // The PhantomWalletAdapter's scopePollingDetectionStrategy will
+      // detect window.phantom.solana once it appears.
+      setTimeout(() => {
+        const pubkeyObj = {
+          toBase58: () => pk,
+          toBytes: () => new Uint8Array(32),
+          toString: () => pk,
+          equals: () => false,
+        };
 
-      Object.defineProperty(window, "phantom", {
-        value: {
-          solana: {
-            isPhantom: true,
-            publicKey: {
-              toBase58: () => pk,
-              toBytes: () => pubkeyBytes,
-              toString: () => pk,
+        Object.defineProperty(window, "phantom", {
+          value: {
+            solana: {
+              isPhantom: true,
+              publicKey: pubkeyObj,
+              isConnected: true,
+              connect: async () => ({ publicKey: pubkeyObj }),
+              disconnect: async () => {},
+              signMessage: async () => ({ signature: new Uint8Array(64) }),
+              signTransaction: async (tx: any) => tx,
+              signAllTransactions: async (txs: any[]) => txs,
+              on: () => {},
+              off: () => {},
+              removeListener: () => {},
+              removeAllListeners: () => {},
+              emit: () => {},
             },
-            isConnected: true,
-            connect: async () => ({ publicKey: { toBase58: () => pk } }),
-            disconnect: async () => {},
-            signMessage: async () => ({ signature: new Uint8Array(64) }),
-            signTransaction: async (tx: any) => tx,
-            signAllTransactions: async (txs: any[]) => txs,
-            on: () => {},
-            off: () => {},
           },
-        },
-        writable: false,
-      });
+          writable: false,
+          configurable: true,
+        });
+
+        Object.defineProperty(window, "solana", {
+          get() {
+            return (window as any).phantom?.solana;
+          },
+          configurable: true,
+        });
+      }, 100);
     },
     { pk: pubkey },
   );

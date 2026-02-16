@@ -32,7 +32,7 @@ export class CommunityThreadsPage {
 
     // Dialog
     this.titleInput = page.getByPlaceholder(/title/i);
-    this.bodyTextarea = page.getByPlaceholder(/body|content|describe/i);
+    this.bodyTextarea = page.getByPlaceholder(/write your post|post/i);
     this.typeSelect = page.getByTestId("thread-type-select");
     this.tagsInput = page.getByPlaceholder(/tag/i);
     this.submitButton = page.getByTestId("create-thread-submit");

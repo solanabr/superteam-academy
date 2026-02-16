@@ -4,7 +4,7 @@ import { use, useState, useMemo } from "react";
 import { Link } from "@/i18n/navigation";
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
-import { ArrowLeft, ArrowRight, CheckCircle2, Play, Lightbulb, Eye, EyeOff, Sparkles, Loader2, Copy, Check } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, Play, Lightbulb, Eye, EyeOff, Sparkles, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -271,7 +271,13 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string;
                     disabled={!!aiLoading}
                     className="text-solana-purple border-solana-purple/30 hover:bg-solana-purple/10"
                   >
-                    {aiLoading === "improve" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                    {aiLoading === "improve" ? (
+                      <span className="flex gap-0.5">
+                        <span className="h-1.5 w-1.5 rounded-full bg-solana-purple animate-bounce [animation-delay:0ms]" />
+                        <span className="h-1.5 w-1.5 rounded-full bg-solana-purple animate-bounce [animation-delay:150ms]" />
+                        <span className="h-1.5 w-1.5 rounded-full bg-solana-purple animate-bounce [animation-delay:300ms]" />
+                      </span>
+                    ) : <Sparkles className="h-4 w-4" />}
                     {t("improveWithAI")}
                   </Button>
                   <Button size="sm" onClick={handleRunTests}>

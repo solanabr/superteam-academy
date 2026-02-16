@@ -25,12 +25,16 @@ const MOCK_COURSES = [
 ];
 
 test.describe("Courses page", () => {
+  test.beforeEach(async ({ learningApi }) => {
+    await learningApi.progress();
+  });
+
   test("renders course listing", async ({ page, learningApi }) => {
     await learningApi.courses(MOCK_COURSES);
-    await learningApi.progress();
 
     const courses = new CoursesPage(page);
     await courses.goto();
+    await page.waitForLoadState("domcontentloaded");
 
     await expect(courses.heading).toBeVisible();
     await expect(page.getByText("Introduction to Solana")).toBeVisible();
@@ -39,36 +43,42 @@ test.describe("Courses page", () => {
 
   test("shows empty state when no courses", async ({ page, learningApi }) => {
     await learningApi.courses([]);
-    await learningApi.progress();
 
     const courses = new CoursesPage(page);
     await courses.goto();
+    await page.waitForLoadState("domcontentloaded");
 
-    await expect(page.getByText(/no courses|adjust/i)).toBeVisible();
+    await expect(page.getByText("No courses found")).toBeVisible();
   });
 
   test("search filters courses", async ({ page, learningApi }) => {
     await learningApi.courses(MOCK_COURSES);
-    await learningApi.progress();
 
     const courses = new CoursesPage(page);
     await courses.goto();
+    await page.waitForLoadState("domcontentloaded");
 
-    await courses.searchInput.fill("Anchor");
+    // Wait for courses to render first
+    await expect(page.getByText("Introduction to Solana")).toBeVisible();
+
+    // Search for "Anchor" — placeholder is "Search courses..."
+    const searchInput = page.getByPlaceholder(/search/i);
+    await searchInput.fill("Anchor");
+
     await expect(page.getByText("Anchor Development")).toBeVisible();
     await expect(page.getByText("Introduction to Solana")).not.toBeVisible();
   });
 
   test("course card has link to detail page", async ({ page, learningApi }) => {
     await learningApi.courses(MOCK_COURSES);
-    await learningApi.progress();
 
     const courses = new CoursesPage(page);
     await courses.goto();
+    await page.waitForLoadState("domcontentloaded");
 
-    const firstCard = courses.courseCards.first();
-    const link = firstCard.locator("a").first();
-    if (await link.count()) {
+    await expect(page.getByText("Introduction to Solana")).toBeVisible();
+    const link = page.getByRole("link", { name: /Introduction to Solana/i }).first();
+    if (await link.isVisible()) {
       const href = await link.getAttribute("href");
       expect(href).toBeTruthy();
     }

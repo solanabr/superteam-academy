@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { X, Send, Trash2, User, Loader2, Download, Maximize2 } from "lucide-react";
+import { X, Send, Trash2, User, Download, Maximize2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -59,9 +59,7 @@ function ChatImage({ src, onExpand }: { src: string; onExpand: (url: string) => 
   return (
     <div className="relative group mt-1.5">
       {loading && (
-        <div className="flex items-center justify-center h-32 rounded-lg bg-muted/50">
-          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-        </div>
+        <div className="h-32 rounded-lg animate-pulse bg-muted" />
       )}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
@@ -302,7 +300,11 @@ export function AIChat() {
               <div className="flex items-center gap-2.5">
                 <Image src="/logo.png" alt="AI" width={24} height={24} className="rounded-md" />
                 <div className="flex items-center gap-1.5 rounded-2xl bg-muted px-3.5 py-2.5 rounded-bl-sm">
-                  <Loader2 className="h-3 w-3 animate-spin text-solana-purple" />
+                  <span className="flex gap-1">
+                    <span className="h-1.5 w-1.5 rounded-full bg-solana-purple animate-bounce [animation-delay:0ms]" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-solana-purple animate-bounce [animation-delay:150ms]" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-solana-purple animate-bounce [animation-delay:300ms]" />
+                  </span>
                   <span className="text-xs text-muted-foreground">{t("thinking")}</span>
                 </div>
               </div>

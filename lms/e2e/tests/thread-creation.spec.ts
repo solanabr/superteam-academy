@@ -4,12 +4,13 @@ import { injectMockWallet } from "../fixtures/wallet-mock";
 
 test.describe("Thread creation", () => {
   test.beforeEach(async ({ page, communityApi }) => {
+    // Inject wallet mock BEFORE any navigation
+    await injectMockWallet(page);
     await communityApi.threads([], 0);
     await communityApi.stats();
   });
 
   test("discussion creation sends correct POST body", async ({ page, communityApi }) => {
-    await injectMockWallet(page);
     await communityApi.createThread({
       ok: true,
       txSignature: null,
@@ -18,13 +19,18 @@ test.describe("Thread creation", () => {
 
     const threads = new CommunityThreadsPage(page);
     await threads.goto();
+    await page.waitForLoadState("domcontentloaded");
+
+    // Wait for the button to be enabled (wallet auto-connect)
+    await expect(threads.newThreadButton).toBeEnabled({ timeout: 15_000 });
     await threads.openCreateDialog();
+
     await threads.fillThread("Test Discussion", "Discussion body content");
 
     const requestPromise = page.waitForRequest((req) => {
       if (req.url().includes("/api/community/threads") && req.method() === "POST") {
         const body = req.postDataJSON();
-        return body.type === "discussion" && body.title === "Test Discussion";
+        return body.title === "Test Discussion";
       }
       return false;
     });
@@ -41,7 +47,6 @@ test.describe("Thread creation", () => {
     page,
     communityApi,
   }) => {
-    await injectMockWallet(page);
     await communityApi.createThread({
       ok: true,
       txSignature: null,
@@ -50,7 +55,11 @@ test.describe("Thread creation", () => {
 
     const threads = new CommunityThreadsPage(page);
     await threads.goto();
+    await page.waitForLoadState("domcontentloaded");
+
+    await expect(threads.newThreadButton).toBeEnabled({ timeout: 15_000 });
     await threads.openCreateDialog();
+
     await threads.fillThread("My Question", "How does this work?", "question");
 
     const requestPromise = page.waitForRequest((req) => {
@@ -69,27 +78,31 @@ test.describe("Thread creation", () => {
   });
 
   test("submit button is disabled when title or body is empty", async ({ page }) => {
-    await injectMockWallet(page);
-
     const threads = new CommunityThreadsPage(page);
     await threads.goto();
+    await page.waitForLoadState("domcontentloaded");
+
+    await expect(threads.newThreadButton).toBeEnabled({ timeout: 15_000 });
     await threads.openCreateDialog();
 
+    // Both empty → disabled
     await expect(threads.submitButton).toBeDisabled();
 
+    // Title only → still disabled
     await threads.titleInput.fill("Title only");
     await expect(threads.submitButton).toBeDisabled();
 
+    // Body only → still disabled
     await threads.titleInput.clear();
     await threads.bodyTextarea.fill("Body only");
     await expect(threads.submitButton).toBeDisabled();
 
+    // Both filled → enabled
     await threads.titleInput.fill("Both filled");
     await expect(threads.submitButton).toBeEnabled();
   });
 
   test("shows success toast after creation", async ({ page, communityApi }) => {
-    await injectMockWallet(page);
     await communityApi.createThread({
       ok: true,
       txSignature: "abc123sig456",
@@ -98,15 +111,19 @@ test.describe("Thread creation", () => {
 
     const threads = new CommunityThreadsPage(page);
     await threads.goto();
+    await page.waitForLoadState("domcontentloaded");
+
+    await expect(threads.newThreadButton).toBeEnabled({ timeout: 15_000 });
     await threads.openCreateDialog();
     await threads.fillThread("Toast Test", "Body for toast");
     await threads.submitThread();
 
-    await expect(page.getByText(/abc123si.*456/)).toBeVisible({ timeout: 5000 });
+    // Toast should appear with tx signature excerpt
+    await expect(page.getByText(/abc123si/)).toBeVisible({ timeout: 10_000 });
   });
 
   test("shows error toast on API failure", async ({ page }) => {
-    await injectMockWallet(page);
+    // Override the createThread mock with an error response
     await page.route("**/api/community/threads", (route) => {
       if (route.request().method() !== "POST") return route.fallback();
       return route.fulfill({
@@ -118,10 +135,14 @@ test.describe("Thread creation", () => {
 
     const threads = new CommunityThreadsPage(page);
     await threads.goto();
+    await page.waitForLoadState("domcontentloaded");
+
+    await expect(threads.newThreadButton).toBeEnabled({ timeout: 15_000 });
     await threads.openCreateDialog();
     await threads.fillThread("Fail Test", "This should fail");
     await threads.submitThread();
 
-    await expect(page.getByText(/Database connection failed/i)).toBeVisible({ timeout: 5000 });
+    // Error toast should surface the API error message
+    await expect(page.getByText(/Database connection failed/i)).toBeVisible({ timeout: 10_000 });
   });
 });

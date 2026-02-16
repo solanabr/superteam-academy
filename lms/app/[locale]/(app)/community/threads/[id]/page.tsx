@@ -27,6 +27,7 @@ import {
   useMarkSolution,
   useEndorseUser,
 } from "@/lib/hooks/use-community";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -138,8 +139,50 @@ export default function ThreadDetailPage({
 
   if (threadLoading) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-8">
-        <p className="text-muted-foreground">{t("loading")}</p>
+      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+        <Skeleton className="mb-6 h-4 w-32" />
+        <Card className="mb-6">
+          <CardContent className="p-6">
+            <div className="flex gap-4">
+              <div className="flex flex-col items-center gap-1">
+                <Skeleton className="h-6 w-6 rounded" />
+                <Skeleton className="h-4 w-6" />
+              </div>
+              <div className="min-w-0 flex-1 space-y-3">
+                <Skeleton className="h-6 w-2/3" />
+                <div className="flex gap-3">
+                  <Skeleton className="h-3 w-20" />
+                  <Skeleton className="h-3 w-24" />
+                  <Skeleton className="h-3 w-12" />
+                </div>
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-4/5" />
+                <Skeleton className="h-4 w-3/5" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Skeleton className="mb-4 h-5 w-24" />
+        <div className="space-y-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Card key={i}>
+              <CardContent className="flex gap-4 p-4">
+                <div className="flex flex-col items-center gap-1">
+                  <Skeleton className="h-5 w-5 rounded" />
+                  <Skeleton className="h-3 w-5" />
+                </div>
+                <div className="min-w-0 flex-1 space-y-2">
+                  <div className="flex gap-3">
+                    <Skeleton className="h-3 w-16" />
+                    <Skeleton className="h-3 w-24" />
+                  </div>
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-2/3" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
     );
   }
@@ -259,7 +302,26 @@ export default function ThreadDetailPage({
       </div>
 
       {repliesLoading ? (
-        <p className="text-muted-foreground">{t("loading")}</p>
+        <div className="mb-6 space-y-3">
+          {Array.from({ length: 2 }).map((_, i) => (
+            <Card key={i}>
+              <CardContent className="flex gap-4 p-4">
+                <div className="flex flex-col items-center gap-1">
+                  <Skeleton className="h-5 w-5 rounded" />
+                  <Skeleton className="h-3 w-5" />
+                </div>
+                <div className="min-w-0 flex-1 space-y-2">
+                  <div className="flex gap-3">
+                    <Skeleton className="h-3 w-16" />
+                    <Skeleton className="h-3 w-24" />
+                  </div>
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-2/3" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       ) : replies.length === 0 ? (
         <Card className="mb-6">
           <CardContent className="py-8 text-center text-muted-foreground">

@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -38,6 +38,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useThreads, useCommunityStats, useCreateThread } from "@/lib/hooks/use-community";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -229,115 +230,134 @@ export default function CommunityThreadsPage() {
           </Select>
         </div>
 
-        <TabsContent value={typeFilter}>
-          {isLoading ? (
-            <div className="py-12 text-center text-muted-foreground">{t("loading")}</div>
-          ) : threads.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <MessageSquare className="mx-auto mb-3 h-10 w-10 text-muted-foreground/50" />
-                <p className="text-muted-foreground">{t("noThreads")}</p>
+      </Tabs>
+
+      {isLoading ? (
+        <div className="space-y-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i}>
+              <CardContent className="flex items-start gap-4 p-4">
+                <div className="flex flex-col items-center gap-1 pt-1">
+                  <Skeleton className="h-5 w-5 rounded" />
+                  <Skeleton className="h-4 w-6" />
+                </div>
+                <div className="min-w-0 flex-1 space-y-2">
+                  <Skeleton className="h-5 w-3/4" />
+                  <Skeleton className="h-4 w-full" />
+                  <div className="flex gap-3">
+                    <Skeleton className="h-3 w-16" />
+                    <Skeleton className="h-3 w-8" />
+                    <Skeleton className="h-3 w-12" />
+                  </div>
+                </div>
               </CardContent>
             </Card>
-          ) : (
-            <div className="space-y-3">
-              {threads.map((thread) => (
-                <Link key={thread._id} href={`/community/threads/${thread._id}`}>
-                  <Card className="transition-colors hover:bg-accent/50" data-testid="thread-card">
-                    <CardContent className="flex items-start gap-4 p-4">
-                      {/* Upvote count */}
-                      <div className="flex flex-col items-center gap-0.5 pt-1 text-muted-foreground">
-                        <ArrowBigUp className="h-5 w-5" />
-                        <span className="text-sm font-medium">{thread.upvotes.length}</span>
-                      </div>
+          ))}
+        </div>
+      ) : threads.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <MessageSquare className="mx-auto mb-3 h-10 w-10 text-muted-foreground/50" />
+            <p className="text-muted-foreground">{t("noThreads")}</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {threads.map((thread) => (
+            <Link key={thread._id} href={`/community/threads/${thread._id}`}>
+              <Card className="transition-colors hover:bg-accent/50" data-testid="thread-card">
+                <CardContent className="flex items-start gap-4 p-4">
+                  {/* Upvote count */}
+                  <div className="flex flex-col items-center gap-0.5 pt-1 text-muted-foreground">
+                    <ArrowBigUp className="h-5 w-5" />
+                    <span className="text-sm font-medium">{thread.upvotes.length}</span>
+                  </div>
 
-                      {/* Content */}
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          {thread.type === "question" ? (
-                            <HelpCircle className="h-4 w-4 shrink-0 text-solana-purple" />
-                          ) : (
-                            <MessageSquare className="h-4 w-4 shrink-0 text-muted-foreground" />
-                          )}
-                          <h3 className="truncate font-semibold">{thread.title}</h3>
-                          {thread.isSolved && (
-                            <Badge variant="beginner" className="shrink-0">
-                              <CheckCircle2 className="mr-1 h-3 w-3" />
-                              {t("solved")}
-                            </Badge>
-                          )}
-                          {thread.isPinned && (
-                            <Badge variant="xp" className="shrink-0">{t("pinned")}</Badge>
-                          )}
-                        </div>
-                        <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">
-                          {thread.body}
-                        </p>
-                        <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                          <span>{thread.authorName}</span>
-                          <span>{formatTimeAgo(thread.createdAt)}</span>
-                          <span className="flex items-center gap-1">
-                            <Eye className="h-3 w-3" />
-                            {thread.views}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <MessageSquare className="h-3 w-3" />
-                            {thread.replyCount}
-                          </span>
-                          {thread.tags.map((tag) => (
-                            <Badge key={tag} variant="secondary" className="text-xs">
-                              {tag}
-                            </Badge>
-                          ))}
-                          {thread.txHash && (
-                            <span
-                              role="link"
-                              className="inline-flex items-center gap-1 text-solana-green hover:underline cursor-pointer"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                window.open(`https://explorer.solana.com/tx/${thread.txHash}?cluster=devnet`, "_blank");
-                              }}
-                            >
-                              <ExternalLink className="h-3 w-3" />
-                              {thread.txHash.slice(0, 8)}...{thread.txHash.slice(-4)}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
-            </div>
-          )}
+                  {/* Content */}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      {thread.type === "question" ? (
+                        <HelpCircle className="h-4 w-4 shrink-0 text-solana-purple" />
+                      ) : (
+                        <MessageSquare className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      )}
+                      <h3 className="truncate font-semibold">{thread.title}</h3>
+                      {thread.isSolved && (
+                        <Badge variant="beginner" className="shrink-0">
+                          <CheckCircle2 className="mr-1 h-3 w-3" />
+                          {t("solved")}
+                        </Badge>
+                      )}
+                      {thread.isPinned && (
+                        <Badge variant="xp" className="shrink-0">{t("pinned")}</Badge>
+                      )}
+                    </div>
+                    <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">
+                      {thread.body}
+                    </p>
+                    <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                      <span>{thread.authorName}</span>
+                      <span>{formatTimeAgo(thread.createdAt)}</span>
+                      <span className="flex items-center gap-1">
+                        <Eye className="h-3 w-3" />
+                        {thread.views}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <MessageSquare className="h-3 w-3" />
+                        {thread.replyCount}
+                      </span>
+                      {thread.tags.map((tag) => (
+                        <Badge key={tag} variant="secondary" className="text-xs">
+                          {tag}
+                        </Badge>
+                      ))}
+                      {thread.txHash && (
+                        <span
+                          role="link"
+                          className="inline-flex items-center gap-1 text-solana-green hover:underline cursor-pointer"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            window.open(`https://explorer.solana.com/tx/${thread.txHash}?cluster=devnet`, "_blank");
+                          }}
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                          {thread.txHash.slice(0, 8)}...{thread.txHash.slice(-4)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
+        </div>
+      )}
 
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="mt-6 flex items-center justify-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page <= 1}
-                onClick={() => setPage((p) => p - 1)}
-              >
-                {t("prev")}
-              </Button>
-              <span className="text-sm text-muted-foreground">
-                {page} / {totalPages}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page >= totalPages}
-                onClick={() => setPage((p) => p + 1)}
-              >
-                {t("next")}
-              </Button>
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="mt-6 flex items-center justify-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page <= 1}
+            onClick={() => setPage((p) => p - 1)}
+          >
+            {t("prev")}
+          </Button>
+          <span className="text-sm text-muted-foreground">
+            {page} / {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page >= totalPages}
+            onClick={() => setPage((p) => p + 1)}
+          >
+            {t("next")}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
