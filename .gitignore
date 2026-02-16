@@ -1,27 +1,47 @@
-# Dependencies
-node_modules/
-
 # Anchor / Rust build artifacts
 target/
 .anchor/
+**/target/
+**/Cargo.lock
 
-# Test artifacts
+# Solana
+.log
 test-ledger/
-.DS_Store
+
+# Node modules
+node_modules/
+**/node_modules/
+
+# IDE
+.idea/
+.vscode/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
 
 # Environment
 .env
 .env.*
 !.env.example
 
-# IDE
-.idea/
-.vscode/
+# Misc
+.DS_Store
+*.pem
 
-# Yarn / pnpm
-.yarn/
-.pnp.*
-yarn-error.log
+# Frontend (superteam-frontend)
+superteam-frontend/.next/
+superteam-frontend/out/
+superteam-frontend/build/
+superteam-frontend/.pnpm-debug.log*
+superteam-frontend/npm-debug.log*
+superteam-frontend/yarn-debug.log*
+superteam-frontend/yarn-error.log*
+superteam-frontend/*.tsbuildinfo
+superteam-frontend/next-env.d.ts
+superteam-frontend/.vercel
 
 # Claude local settings
 .claude/settings.local.json

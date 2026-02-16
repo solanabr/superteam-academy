@@ -1,0 +1,98 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+@layer base {
+  :root {
+    --background: 200 10% 6%;
+    --foreground: 60 10% 95%;
+    --card: 200 10% 9%;
+    --card-foreground: 60 10% 95%;
+    --popover: 200 10% 9%;
+    --popover-foreground: 60 10% 95%;
+    --primary: 152 72% 40%;
+    --primary-foreground: 200 10% 6%;
+    --secondary: 200 8% 14%;
+    --secondary-foreground: 60 10% 90%;
+    --muted: 200 8% 14%;
+    --muted-foreground: 200 8% 55%;
+    --accent: 45 95% 55%;
+    --accent-foreground: 200 10% 6%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 60 10% 95%;
+    --border: 200 8% 18%;
+    --input: 200 8% 18%;
+    --ring: 152 72% 40%;
+    --chart-1: 152 72% 40%;
+    --chart-2: 45 95% 55%;
+    --chart-3: 200 70% 50%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+    --radius: 0.625rem;
+    --sidebar-background: 200 10% 7%;
+    --sidebar-foreground: 60 10% 90%;
+    --sidebar-primary: 152 72% 40%;
+    --sidebar-primary-foreground: 200 10% 6%;
+    --sidebar-accent: 200 8% 14%;
+    --sidebar-accent-foreground: 60 10% 90%;
+    --sidebar-border: 200 8% 18%;
+    --sidebar-ring: 152 72% 40%;
+    --emerald: 152 72% 40%;
+    --gold: 45 95% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: hsl(200 10% 9%);
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(200 8% 22%);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(200 8% 30%);
+}
+
+/* Code editor styling */
+.code-editor {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  tab-size: 2;
+  line-height: 1.6;
+}
+
+/* Glow effects */
+.glow-green {
+  box-shadow: 0 0 20px hsl(152 72% 40% / 0.15), 0 0 60px hsl(152 72% 40% / 0.05);
+}
+.glow-gold {
+  box-shadow: 0 0 20px hsl(45 95% 55% / 0.15), 0 0 60px hsl(45 95% 55% / 0.05);
+}
+
+/* Streak fire animation */
+@keyframes fire-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.1); }
+}
+.animate-fire {
+  animation: fire-pulse 1.5s ease-in-out infinite;
+}
