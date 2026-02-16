@@ -1,0 +1,137 @@
+import { create } from "zustand";
+
+export type EnrollmentProgress = {
+  courseId: string;
+  completedCount: number;
+  totalLessons: number;
+  completedAt: string | null;
+};
+
+type EnrollmentState = {
+  // Map of courseId -> enrollment progress
+  enrollments: Record<string, EnrollmentProgress>;
+  // Map of courseId -> loading state
+  loading: Record<string, boolean>;
+  // Map of courseId -> error message
+  errors: Record<string, string | null>;
+  // Actions
+  fetchEnrollment: (walletAddress: string, courseId: string) => Promise<void>;
+  enroll: (walletAddress: string, courseId: string) => Promise<void>;
+  setEnrollment: (courseId: string, progress: EnrollmentProgress | null) => void;
+  setLoading: (courseId: string, loading: boolean) => void;
+  setError: (courseId: string, error: string | null) => void;
+  // Optimistic update helper
+  setEnrollmentOptimistic: (courseId: string, totalLessons: number) => void;
+};
+
+export const useEnrollmentStore = create<EnrollmentState>((set, get) => ({
+  enrollments: {},
+  loading: {},
+  errors: {},
+
+  setEnrollment: (courseId, progress) => {
+    set((state) => ({
+      enrollments: progress
+        ? { ...state.enrollments, [courseId]: progress }
+        : (() => {
+            const { [courseId]: _, ...rest } = state.enrollments;
+            return rest;
+          })(),
+      errors: { ...state.errors, [courseId]: null },
+    }));
+  },
+
+  setLoading: (courseId, loading) => {
+    set((state) => ({
+      loading: { ...state.loading, [courseId]: loading },
+    }));
+  },
+
+  setError: (courseId, error) => {
+    set((state) => ({
+      errors: { ...state.errors, [courseId]: error },
+    }));
+  },
+
+  setEnrollmentOptimistic: (courseId, totalLessons) => {
+    // Optimistically set enrollment before API call completes
+    set((state) => ({
+      enrollments: {
+        ...state.enrollments,
+        [courseId]: {
+          courseId,
+          completedCount: 0,
+          totalLessons,
+          completedAt: null,
+        },
+      },
+      errors: { ...state.errors, [courseId]: null },
+    }));
+  },
+
+  fetchEnrollment: async (walletAddress, courseId) => {
+    const state = get();
+    // Prevent duplicate fetches
+    if (state.loading[courseId]) return;
+
+    state.setLoading(courseId, true);
+    state.setError(courseId, null);
+
+    try {
+      const res = await fetch(
+        `/api/enrollment?wallet=${encodeURIComponent(walletAddress)}&courseId=${encodeURIComponent(courseId)}`
+      );
+
+      if (res.ok) {
+        const data = await res.json();
+        state.setEnrollment(courseId, data);
+      } else if (res.status === 404) {
+        // Not enrolled - clear enrollment state
+        state.setEnrollment(courseId, null);
+      } else {
+        throw new Error("Failed to fetch enrollment");
+      }
+    } catch (error) {
+      // Ignore abort errors (component unmounted/navigated away)
+      if (error instanceof Error && error.name !== 'AbortError') {
+        state.setError(
+          courseId,
+          error.message || "Failed to fetch enrollment"
+        );
+      }
+      // Don't clear enrollment on error - keep existing state
+    } finally {
+      state.setLoading(courseId, false);
+    }
+  },
+
+  enroll: async (walletAddress, courseId) => {
+    const state = get();
+    state.setLoading(courseId, true);
+    state.setError(courseId, null);
+
+    try {
+      const res = await fetch("/api/enroll", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ wallet: walletAddress, courseId }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data?.error ?? "Enrollment failed");
+      }
+
+      // After successful enrollment, fetch the actual enrollment data
+      await state.fetchEnrollment(walletAddress, courseId);
+    } catch (error) {
+      state.setError(
+        courseId,
+        error instanceof Error ? error.message : "Enrollment failed"
+      );
+      throw error; // Re-throw so component can handle it
+    } finally {
+      state.setLoading(courseId, false);
+    }
+  },
+}));

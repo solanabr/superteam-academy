@@ -6,6 +6,7 @@ import { useState } from "react";
 import { LocaleSwitcher } from "./LocaleSwitcher";
 import { WalletButton } from "@/components/auth/WalletButton";
 import { Button } from "@/components/ui/button";
+import { useAppUser } from "@/hooks/useAppUser";
 import { cn } from "@/lib/utils";
 
 const navLinks = [
@@ -17,6 +18,8 @@ const navLinks = [
 
 export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { role } = useAppUser();
+  const canCreateCourse = role === "professor" || role === "admin";
 
   return (
     <header className="glass-panel border-border-subtle sticky top-0 z-20 border-b">
@@ -42,6 +45,14 @@ export function Header() {
               {label}
             </Link>
           ))}
+          {canCreateCourse && (
+            <Link
+              href="/teach/courses"
+              className="text-text-secondary hover:text-text-primary text-sm font-medium transition-colors"
+            >
+              My Courses
+            </Link>
+          )}
         </nav>
 
         <div className="flex items-center gap-3">
@@ -77,6 +88,15 @@ export function Header() {
               {label}
             </Link>
           ))}
+          {canCreateCourse && (
+            <Link
+              href="/teach/courses"
+              className="text-text-secondary hover:text-text-primary rounded px-3 py-2 text-sm font-medium hover:bg-surface-high"
+              onClick={() => setMobileOpen(false)}
+            >
+              My Courses
+            </Link>
+          )}
           <div className="mt-2 border-t border-border-subtle pt-2">
             <WalletButton className="w-full justify-center" />
           </div>

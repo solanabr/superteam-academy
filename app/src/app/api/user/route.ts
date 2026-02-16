@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
   }
   const user = await prisma.user.findUnique({
     where: { walletAddress: wallet },
-    select: { id: true, walletAddress: true, email: true },
+    select: { id: true, walletAddress: true, email: true, role: true },
   });
   if (!user) {
     return NextResponse.json(null, { status: 404 });
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     where: { walletAddress: wallet },
     create: { walletAddress: wallet, email: email ?? null },
     update: email !== undefined ? { email } : {},
-    select: { id: true, walletAddress: true, email: true },
+    select: { id: true, walletAddress: true, email: true, role: true },
   });
   return NextResponse.json(user);
 }

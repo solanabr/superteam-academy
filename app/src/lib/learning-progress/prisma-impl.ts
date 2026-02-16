@@ -33,6 +33,38 @@ function countSetBits(flags: Buffer | Uint8Array): number {
   return n;
 }
 
+function isLessonComplete(flags: Buffer | Uint8Array, index: number): boolean {
+  const byte = Math.floor(index / 8);
+  const bit = index % 8;
+  return byte < flags.length && (flags[byte]! & (1 << bit)) !== 0;
+}
+
+/** UTC day number (seconds since epoch / 86400). Same as SPEC. */
+function utcDayNumber(date: Date): number {
+  return Math.floor(date.getTime() / 86400000);
+}
+
+/** Compute new streak and lastActivityDate. No freezes in stub. */
+function updateStreakForComplete(
+  lastActivityDate: Date | null,
+  currentStreak: number,
+  longestStreak: number
+): { currentStreak: number; longestStreak: number; lastActivityDate: Date } {
+  const now = new Date();
+  const today = utcDayNumber(now);
+  if (!lastActivityDate) {
+    return { currentStreak: 1, longestStreak: Math.max(1, longestStreak), lastActivityDate: now };
+  }
+  const lastDay = utcDayNumber(lastActivityDate);
+  if (today <= lastDay) {
+    return { currentStreak, longestStreak, lastActivityDate: lastActivityDate };
+  }
+  const gap = today - lastDay - 1;
+  const newStreak = gap === 0 ? currentStreak + 1 : 1;
+  const newLongest = Math.max(longestStreak, newStreak);
+  return { currentStreak: newStreak, longestStreak: newLongest, lastActivityDate: now };
+}
+
 export function createLearningProgressService(prisma: PrismaClient): LearningProgressService {
   return {
     async getProgress(userId: string): Promise<Progress | null> {
@@ -129,31 +161,41 @@ export function createLearningProgressService(prisma: PrismaClient): LearningPro
         where: { userId_courseId: { userId, courseId } },
       });
       if (!enrollment) throw new Error("Enrollment not found");
+      if (isLessonComplete(enrollment.lessonFlags, lessonIndex)) {
+        return;
+      }
 
       const newFlags = setLessonFlag(enrollment.lessonFlags, lessonIndex);
-      const today = new Date();
-      today.setUTCHours(0, 0, 0, 0);
+      const progressRow = await prisma.progress.findUnique({
+        where: { userId },
+        select: { currentStreak: true, longestStreak: true, lastActivityDate: true },
+      });
+      const { currentStreak, longestStreak, lastActivityDate } = updateStreakForComplete(
+        progressRow?.lastActivityDate ?? null,
+        progressRow?.currentStreak ?? 0,
+        progressRow?.longestStreak ?? 0
+      );
 
       await prisma.$transaction([
         prisma.enrollment.update({
           where: { userId_courseId: { userId, courseId } },
-          data: { lessonFlags: new Uint8Array(newFlags) },
+          data: { lessonFlags: Buffer.from(newFlags) },
         }),
         prisma.progress.upsert({
           where: { userId },
           create: {
             userId,
             xp: xpReward,
-            currentStreak: 1,
-            longestStreak: 1,
-            lastActivityDate: today,
+            currentStreak,
+            longestStreak,
+            lastActivityDate,
             achievementFlags: Buffer.alloc(32),
           },
           update: {
             xp: { increment: xpReward },
-            currentStreak: { increment: 1 },
-            longestStreak: { increment: 1 },
-            lastActivityDate: today,
+            currentStreak,
+            longestStreak,
+            lastActivityDate,
           },
         }),
       ]);

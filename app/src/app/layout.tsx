@@ -3,6 +3,7 @@ import { Space_Grotesk, Inter, JetBrains_Mono } from "next/font/google";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { AuthProvider } from "@/components/providers/AuthProvider";
+import { SyncUserOnLogin } from "@/components/auth/SyncUserOnLogin";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -40,6 +41,7 @@ export default function RootLayout({
       >
         <div className="noise-overlay" aria-hidden />
         <AuthProvider>
+          <SyncUserOnLogin />
           <Header />
           <main className="relative z-10 flex-1">{children}</main>
           <Footer />

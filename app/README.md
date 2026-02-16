@@ -35,7 +35,9 @@ cp "design_assets/superteam brazil assets/Logo/HORIZONTAL/SVG/ST-EMERALD-GREEN-H
 - **Supabase (reference_demo_project style):** `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` (client/server), `SUPABASE_SERVICE_KEY` (server-only, elevated access). From Project Settings → API Keys (anon key + service_role key).
 - **`DATABASE_URL`** — Postgres for Prisma. Easiest when **SSL enforcement is OFF** (Database → Settings → SSL Configuration): use **Direct** URI with `?sslmode=disable`, e.g. `postgresql://postgres:PASSWORD@db.PROJECT_REF.supabase.co:5432/postgres?sslmode=disable`. Copy the exact URI from Dashboard → **Connect** → **Direct connection** and replace the password.
 - **Privy:** `NEXT_PUBLIC_PRIVY_APP_ID`, `PRIVY_APP_SECRET` (server-only). From [Privy Dashboard](https://dashboard.privy.io). If the app ID is unset, the app uses a test ID so build succeeds; set your own for production.
-- Sanity (Phase 2): project ID / dataset.
+- **Sanity (Phase 2):** `NEXT_PUBLIC_SANITY_PROJECT_ID`, `NEXT_PUBLIC_SANITY_DATASET`. Create a project at [sanity.io](https://sanity.io), then add these to `.env`. Optional: `NEXT_PUBLIC_SANITY_API_VERSION` (default `2026-02-16`).
+  - **Server-only write token:** `SANITY_API_TOKEN` (Editor role) is required for course creation/editing/publishing from the app’s API routes.
+  - **In-app course management:** Professors/admins manage content from `/teach/courses` (no need to use `/studio` in normal flow). Only **published** courses appear on `/courses`.
 
 ### Privy (auth)
 
