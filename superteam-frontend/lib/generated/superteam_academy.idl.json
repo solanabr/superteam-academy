@@ -1,0 +1,1194 @@
+{
+  "address": "DFB44LZedVS461TK6kv4o9U28ALuhJF26N5V9yRyCvtZ",
+  "metadata": {
+    "name": "superteam_academy",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "close_season",
+      "discriminator": [
+        162,
+        198,
+        31,
+        37,
+        77,
+        0,
+        199,
+        152
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "complete_lesson",
+      "discriminator": [
+        77,
+        217,
+        53,
+        132,
+        204,
+        150,
+        169,
+        58
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "learner",
+          "writable": true
+        },
+        {
+          "name": "course",
+          "writable": true
+        },
+        {
+          "name": "enrollment",
+          "writable": true
+        },
+        {
+          "name": "backend_signer",
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "create_course",
+      "discriminator": [
+        120,
+        121,
+        154,
+        164,
+        107,
+        180,
+        167,
+        241
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "course",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  117,
+                  114,
+                  115,
+                  101
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "course_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "course_id",
+          "type": "string"
+        },
+        {
+          "name": "lessons_count",
+          "type": "u16"
+        },
+        {
+          "name": "track_id",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "create_season",
+      "discriminator": [
+        38,
+        108,
+        29,
+        127,
+        60,
+        126,
+        101,
+        3
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "mint",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "enroll",
+      "discriminator": [
+        58,
+        12,
+        36,
+        3,
+        142,
+        28,
+        1,
+        43
+      ],
+      "accounts": [
+        {
+          "name": "course",
+          "writable": true
+        },
+        {
+          "name": "enrollment",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  110,
+                  114,
+                  111,
+                  108,
+                  108,
+                  109,
+                  101,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "course"
+              },
+              {
+                "kind": "account",
+                "path": "user"
+              }
+            ]
+          }
+        },
+        {
+          "name": "user",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "finalize_course",
+      "discriminator": [
+        68,
+        189,
+        122,
+        239,
+        39,
+        121,
+        16,
+        218
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "learner",
+          "writable": true
+        },
+        {
+          "name": "course",
+          "writable": true
+        },
+        {
+          "name": "enrollment",
+          "writable": true
+        },
+        {
+          "name": "backend_signer",
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "init_learner",
+      "discriminator": [
+        137,
+        243,
+        85,
+        146,
+        80,
+        49,
+        210,
+        152
+      ],
+      "accounts": [
+        {
+          "name": "learner",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  101,
+                  97,
+                  114,
+                  110,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "user"
+              }
+            ]
+          }
+        },
+        {
+          "name": "user",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initialize",
+      "discriminator": [
+        175,
+        175,
+        109,
+        31,
+        13,
+        152,
+        155,
+        237
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "backend_signer",
+          "type": "pubkey"
+        },
+        {
+          "name": "authority",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "issue_credential",
+      "discriminator": [
+        255,
+        193,
+        171,
+        224,
+        68,
+        171,
+        194,
+        87
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "course",
+          "writable": true
+        },
+        {
+          "name": "enrollment",
+          "writable": true
+        },
+        {
+          "name": "credential_asset"
+        },
+        {
+          "name": "backend_signer",
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "_metadata_uri",
+          "type": "string"
+        },
+        {
+          "name": "level",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "issue_profile_sbt",
+      "discriminator": [
+        102,
+        18,
+        116,
+        65,
+        174,
+        175,
+        143,
+        201
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "learner",
+          "writable": true
+        },
+        {
+          "name": "backend_signer",
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "profile_asset",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "revoke_certificate",
+      "discriminator": [
+        236,
+        5,
+        130,
+        119,
+        9,
+        164,
+        130,
+        122
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "course",
+          "writable": true
+        },
+        {
+          "name": "enrollment",
+          "writable": true
+        },
+        {
+          "name": "credential_asset"
+        },
+        {
+          "name": "backend_signer",
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "reason_code",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "update_config",
+      "discriminator": [
+        29,
+        158,
+        252,
+        191,
+        10,
+        83,
+        219,
+        99
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "new_authority",
+          "type": {
+            "option": "pubkey"
+          }
+        },
+        {
+          "name": "new_backend_signer",
+          "type": {
+            "option": "pubkey"
+          }
+        }
+      ]
+    },
+    {
+      "name": "update_course",
+      "discriminator": [
+        81,
+        217,
+        18,
+        192,
+        129,
+        233,
+        129,
+        231
+      ],
+      "accounts": [
+        {
+          "name": "course",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "lessons_count",
+          "type": {
+            "option": "u16"
+          }
+        },
+        {
+          "name": "is_active",
+          "type": {
+            "option": "bool"
+          }
+        }
+      ]
+    },
+    {
+      "name": "update_profile_sbt",
+      "discriminator": [
+        201,
+        192,
+        231,
+        141,
+        81,
+        200,
+        119,
+        232
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "learner",
+          "writable": true
+        },
+        {
+          "name": "backend_signer",
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "_metadata_uri",
+          "type": "string"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Config",
+      "discriminator": [
+        155,
+        12,
+        170,
+        224,
+        30,
+        250,
+        204,
+        130
+      ]
+    },
+    {
+      "name": "Course",
+      "discriminator": [
+        206,
+        6,
+        78,
+        228,
+        163,
+        138,
+        241,
+        106
+      ]
+    },
+    {
+      "name": "Enrollment",
+      "discriminator": [
+        249,
+        210,
+        64,
+        145,
+        197,
+        241,
+        57,
+        51
+      ]
+    },
+    {
+      "name": "LearnerProfile",
+      "discriminator": [
+        198,
+        114,
+        44,
+        71,
+        161,
+        227,
+        116,
+        166
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "CertificateRevoked",
+      "discriminator": [
+        99,
+        180,
+        224,
+        20,
+        200,
+        221,
+        133,
+        47
+      ]
+    },
+    {
+      "name": "CredentialIssued",
+      "discriminator": [
+        194,
+        216,
+        28,
+        159,
+        89,
+        29,
+        72,
+        177
+      ]
+    },
+    {
+      "name": "ProfileSbtIssued",
+      "discriminator": [
+        144,
+        59,
+        192,
+        22,
+        138,
+        32,
+        157,
+        162
+      ]
+    },
+    {
+      "name": "ProfileSbtUpdated",
+      "discriminator": [
+        97,
+        26,
+        55,
+        114,
+        228,
+        75,
+        66,
+        208
+      ]
+    },
+    {
+      "name": "SeasonCreated",
+      "discriminator": [
+        69,
+        129,
+        125,
+        162,
+        208,
+        173,
+        40,
+        68
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "MathOverflow",
+      "msg": "Math overflow."
+    },
+    {
+      "code": 6001,
+      "name": "SeasonAlreadyClosed",
+      "msg": "Season is already closed."
+    },
+    {
+      "code": 6002,
+      "name": "InvalidCourseId",
+      "msg": "Invalid course id."
+    },
+    {
+      "code": 6003,
+      "name": "CourseInactive",
+      "msg": "Course is inactive."
+    },
+    {
+      "code": 6004,
+      "name": "EnrollmentAlreadyCompleted",
+      "msg": "Enrollment already completed."
+    },
+    {
+      "code": 6005,
+      "name": "CourseNotComplete",
+      "msg": "Course lessons are not fully complete."
+    },
+    {
+      "code": 6006,
+      "name": "FinalizeBeforeIssueRequired",
+      "msg": "Course must be finalized before issuing a credential."
+    },
+    {
+      "code": 6007,
+      "name": "CredentialMissing",
+      "msg": "Credential is missing."
+    },
+    {
+      "code": 6008,
+      "name": "ProfileAlreadyIssued",
+      "msg": "Profile SBT already issued."
+    },
+    {
+      "code": 6009,
+      "name": "ProfileMissing",
+      "msg": "Profile SBT missing."
+    },
+    {
+      "code": 6010,
+      "name": "UnauthorizedAuthority",
+      "msg": "Unauthorized authority."
+    },
+    {
+      "code": 6011,
+      "name": "UnauthorizedBackendSigner",
+      "msg": "Unauthorized backend signer."
+    }
+  ],
+  "types": [
+    {
+      "name": "CertificateRevoked",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "user",
+            "type": "pubkey"
+          },
+          {
+            "name": "course",
+            "type": "pubkey"
+          },
+          {
+            "name": "credential_asset",
+            "type": "pubkey"
+          },
+          {
+            "name": "reason_code",
+            "type": "u8"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Config",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "backend_signer",
+            "type": "pubkey"
+          },
+          {
+            "name": "current_season",
+            "type": "u16"
+          },
+          {
+            "name": "current_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "season_closed",
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Course",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "course_id",
+            "type": "string"
+          },
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "lessons_count",
+            "type": "u16"
+          },
+          {
+            "name": "track_id",
+            "type": "u16"
+          },
+          {
+            "name": "is_active",
+            "type": "bool"
+          },
+          {
+            "name": "total_completions",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CredentialIssued",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "user",
+            "type": "pubkey"
+          },
+          {
+            "name": "course",
+            "type": "pubkey"
+          },
+          {
+            "name": "credential_asset",
+            "type": "pubkey"
+          },
+          {
+            "name": "credential_created",
+            "type": "bool"
+          },
+          {
+            "name": "credential_upgraded",
+            "type": "bool"
+          },
+          {
+            "name": "current_level",
+            "type": "u8"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Enrollment",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "course",
+            "type": "pubkey"
+          },
+          {
+            "name": "user",
+            "type": "pubkey"
+          },
+          {
+            "name": "lessons_completed",
+            "type": "u16"
+          },
+          {
+            "name": "completed_at",
+            "type": {
+              "option": "i64"
+            }
+          },
+          {
+            "name": "credential_asset",
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "current_level",
+            "type": "u8"
+          },
+          {
+            "name": "revoked",
+            "type": "bool"
+          },
+          {
+            "name": "revocation_reason",
+            "type": "u8"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "LearnerProfile",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "level",
+            "type": "u16"
+          },
+          {
+            "name": "xp_total",
+            "type": "u64"
+          },
+          {
+            "name": "streak_current",
+            "type": "u16"
+          },
+          {
+            "name": "streak_longest",
+            "type": "u16"
+          },
+          {
+            "name": "last_activity_ts",
+            "type": "i64"
+          },
+          {
+            "name": "profile_asset",
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ProfileSbtIssued",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "user",
+            "type": "pubkey"
+          },
+          {
+            "name": "profile_asset",
+            "type": "pubkey"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ProfileSbtUpdated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "user",
+            "type": "pubkey"
+          },
+          {
+            "name": "profile_asset",
+            "type": "pubkey"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SeasonCreated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "season",
+            "type": "u16"
+          },
+          {
+            "name": "mint",
+            "type": "pubkey"
+          }
+        ]
+      }
+    }
+  ]
+}

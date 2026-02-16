@@ -6,7 +6,7 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-superteam_academy = "3YchgRgR65gdRqgTZTM5qQXqtTZn5Kt2i6FPnZVu34Qb"
+superteam_academy = "DFB44LZedVS461TK6kv4o9U28ALuhJF26N5V9yRyCvtZ"
 
 [registry]
 url = "https://api.apr.dev"

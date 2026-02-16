@@ -2,7 +2,9 @@
   "license": "ISC",
   "scripts": {
     "lint:fix": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
-    "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check"
+    "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check",
+    "deploy:devnet": "bash ./scripts/deploy-and-sync.sh devnet https://api.devnet.solana.com",
+    "deploy:localnet": "bash ./scripts/deploy-and-sync.sh localnet http://127.0.0.1:8899"
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.31.1"
@@ -14,6 +16,8 @@
     "@types/bn.js": "^5.1.0",
     "@types/chai": "^4.3.0",
     "@types/mocha": "^9.0.0",
+    "@types/node": "^22.18.10",
+    "ts-node": "^10.9.2",
     "typescript": "^5.7.3",
     "prettier": "^2.6.2"
   }

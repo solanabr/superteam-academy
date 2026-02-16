@@ -19,7 +19,9 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { OnChainLearnerCard } from "@/components/dashboard/onchain-learner-card"
 import { currentUser, courses, recentActivity, getStreakDays } from "@/lib/mock-data"
+import type { IdentitySnapshot } from "@/lib/identity/types"
 
 const badgeIcons: Record<string, typeof Zap> = {
   footprints: Footprints,
@@ -32,7 +34,8 @@ const badgeIcons: Record<string, typeof Zap> = {
   zap: Zap,
 }
 
-export function DashboardContent() {
+export function DashboardContent({ identity }: { identity?: IdentitySnapshot }) {
+  const profile = identity?.profile
   const inProgressCourses = courses.filter((c) => c.progress > 0 && c.progress < 100)
   const recommendedCourses = courses.filter((c) => c.progress === 0).slice(0, 2)
   const streakDays = getStreakDays(365)
@@ -44,10 +47,10 @@ export function DashboardContent() {
       <div className="flex flex-col gap-4 mb-8 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground lg:text-3xl">
-            Welcome back, {currentUser.name.split(" ")[0]}
+            Welcome back, {(profile?.name ?? currentUser.name).split(" ")[0]}
           </h1>
           <p className="mt-1 text-muted-foreground">
-            Keep up the momentum! You{"'"}re on a {currentUser.streak}-day streak.
+            Keep up the momentum! You{"'"}re on a {profile?.streak ?? currentUser.streak}-day streak.
           </p>
         </div>
         <Link href="/courses">
@@ -58,33 +61,35 @@ export function DashboardContent() {
         </Link>
       </div>
 
+      {identity ? <OnChainLearnerCard identity={identity} /> : null}
+
       {/* Stats row */}
       <div className="grid grid-cols-2 gap-4 mb-8 lg:grid-cols-4">
         <StatCard
           icon={Zap}
           label="Total XP"
-          value={currentUser.xp.toLocaleString()}
+          value={(profile?.xp ?? currentUser.xp).toLocaleString()}
           color="text-primary"
           bgColor="bg-primary/10"
         />
         <StatCard
           icon={Flame}
           label="Day Streak"
-          value={currentUser.streak.toString()}
+          value={`${profile?.streak ?? currentUser.streak}`}
           color="text-[hsl(var(--gold))]"
           bgColor="bg-[hsl(var(--gold))]/10"
         />
         <StatCard
           icon={Trophy}
           label="Global Rank"
-          value={`#${currentUser.rank}`}
+          value={`#${profile?.rank ?? currentUser.rank}`}
           color="text-primary"
           bgColor="bg-primary/10"
         />
         <StatCard
           icon={Target}
           label="Level"
-          value={currentUser.level.toString()}
+          value={`${profile?.level ?? currentUser.level}`}
           color="text-[hsl(var(--gold))]"
           bgColor="bg-[hsl(var(--gold))]/10"
         />
@@ -95,18 +100,18 @@ export function DashboardContent() {
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <TrendingUp className="h-4 w-4 text-primary" />
-            <span className="text-sm font-medium text-foreground">Level {currentUser.level}</span>
+            <span className="text-sm font-medium text-foreground">Level {profile?.level ?? currentUser.level}</span>
           </div>
           <span className="text-xs text-muted-foreground">
-            {currentUser.xp.toLocaleString()} / {currentUser.xpToNext.toLocaleString()} XP
+            {(profile?.xp ?? currentUser.xp).toLocaleString()} / {(profile?.xpToNext ?? currentUser.xpToNext).toLocaleString()} XP
           </span>
         </div>
         <Progress
-          value={(currentUser.xp / currentUser.xpToNext) * 100}
+          value={((profile?.xp ?? currentUser.xp) / (profile?.xpToNext ?? currentUser.xpToNext)) * 100}
           className="h-2.5 bg-secondary [&>div]:bg-gradient-to-r [&>div]:from-primary [&>div]:to-[hsl(var(--gold))]"
         />
         <p className="text-xs text-muted-foreground mt-2">
-          {(currentUser.xpToNext - currentUser.xp).toLocaleString()} XP until Level {currentUser.level + 1}
+          {((profile?.xpToNext ?? currentUser.xpToNext) - (profile?.xp ?? currentUser.xp)).toLocaleString()} XP until Level {(profile?.level ?? currentUser.level) + 1}
         </p>
       </div>
 

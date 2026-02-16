@@ -22,6 +22,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Progress } from "@/components/ui/progress"
 import { courses as allCourses, currentUser, getStreakDays, leaderboardUsers, mockCertificates } from "@/lib/mock-data"
+import type { IdentitySnapshot } from "@/lib/identity/types"
 
 type SkillMap = {
   rust: number
@@ -125,33 +126,41 @@ function mapLeaderboardUsersToProfiles(): ProfileUser[] {
   })
 }
 
-function buildMockUsers(): ProfileUser[] {
+function buildMockUsers(identity?: IdentitySnapshot): ProfileUser[] {
+  const profile = identity?.profile
   const primaryUser: ProfileUser = {
-    id: "me",
-    name: currentUser.name,
-    username: currentUser.username,
-    bio: currentUser.bio,
-    joinDate: currentUser.joinDate,
+    id: profile?.userId ?? "me",
+    name: profile?.name ?? currentUser.name,
+    username: profile?.username ?? currentUser.username,
+    bio: profile?.bio ?? currentUser.bio,
+    joinDate: profile?.joinDate ?? currentUser.joinDate,
     avatar: currentUser.avatar,
-    level: currentUser.level,
-    xp: currentUser.xp,
-    xpToNext: currentUser.xpToNext,
-    streak: currentUser.streak,
-    rank: currentUser.rank,
-    totalCompleted: currentUser.totalCompleted,
+    level: profile?.level ?? currentUser.level,
+    xp: profile?.xp ?? currentUser.xp,
+    xpToNext: profile?.xpToNext ?? currentUser.xpToNext,
+    streak: profile?.streak ?? currentUser.streak,
+    rank: profile?.rank ?? currentUser.rank,
+    totalCompleted: profile?.totalCompleted ?? currentUser.totalCompleted,
     socialLinks: currentUser.socialLinks,
     skills: toSkillMap(currentUser.skills),
-    achievements: currentUser.badges.map((badge, index) => ({
+    achievements: (profile?.badges ?? currentUser.badges).map((badge, index) => ({
       id: `${index}-${badge.name}`,
       name: badge.name,
       earned: badge.earned,
     })),
-    onChainCredentials: mockCertificates.map((certificate) => ({
-      id: certificate.id,
-      name: certificate.course.title,
-      mintAddress: certificate.nft.mintAddress,
-      date: certificate.date,
-    })),
+    onChainCredentials: profile?.certificates
+      ? profile.certificates.map((certificate) => ({
+          id: certificate.id,
+          name: certificate.course,
+          mintAddress: certificate.mintAddress,
+          date: certificate.date,
+        }))
+      : mockCertificates.map((certificate) => ({
+          id: certificate.id,
+          name: certificate.course.title,
+          mintAddress: certificate.nft.mintAddress,
+          date: certificate.date,
+        })),
     completedCourses: allCourses.filter((course) => currentUser.completedCourses.includes(course.slug)),
   }
 
@@ -189,8 +198,14 @@ function buildContributionWindow() {
   return { weeks, byDate, activeDays }
 }
 
-export default function ProfilePageComponent({ username }: { username?: string }) {
-  const users = useMemo(() => buildMockUsers(), [])
+export default function ProfilePageComponent({
+  username,
+  identity,
+}: {
+  username?: string
+  identity?: IdentitySnapshot
+}) {
+  const users = useMemo(() => buildMockUsers(identity), [identity])
   const user = username ? users.find((u) => u.username === username) : users[0]
 
   if (!user) {

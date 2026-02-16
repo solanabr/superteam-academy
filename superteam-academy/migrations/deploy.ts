@@ -1,12 +1,27 @@
-// Migrations are an early feature. Currently, they're nothing more than this
-// single deploy script that's invoked from the CLI, injecting a provider
-// configured from the workspace's Anchor.toml.
+const anchor = require("@coral-xyz/anchor");
 
-import * as anchor from "@coral-xyz/anchor";
-
-module.exports = async function (provider: anchor.AnchorProvider) {
-  // Configure client to use the provider.
+module.exports = async function (provider: any) {
   anchor.setProvider(provider);
+  const program = anchor.workspace.SuperteamAcademy;
+  const [configPda] = anchor.web3.PublicKey.findProgramAddressSync(
+    [Buffer.from("config")],
+    program.programId
+  );
 
-  // Add your deploy script here.
+  const existing = await provider.connection.getAccountInfo(configPda);
+  if (existing) {
+    // Config already exists, so migration is idempotent.
+    return;
+  }
+
+  const authority = provider.wallet.publicKey;
+  const backendSigner = provider.wallet.publicKey;
+  await program.methods
+    .initialize(backendSigner, authority)
+    .accounts({
+      config: configPda,
+      payer: authority,
+      systemProgram: anchor.web3.SystemProgram.programId,
+    })
+    .rpc();
 };
