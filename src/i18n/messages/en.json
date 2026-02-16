@@ -1,0 +1,164 @@
+{
+  "common": {
+    "appName": "Solana Quest",
+    "tagline": "Your Adventure into Solana Development",
+    "signIn": "Sign In",
+    "signOut": "Sign Out",
+    "startQuest": "Start Quest",
+    "continueQuest": "Continue Quest",
+    "viewAll": "View All",
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "search": "Search",
+    "filter": "Filter",
+    "close": "Close",
+    "demo": "Demo Mode",
+    "xp": "XP",
+    "level": "Level",
+    "streak": "Streak",
+    "rank": "Rank"
+  },
+  "nav": {
+    "quests": "Quests",
+    "leaderboard": "Leaderboard",
+    "dashboard": "Dashboard",
+    "profile": "Profile",
+    "settings": "Settings"
+  },
+  "landing": {
+    "heroTitle": "Your Epic Quest Into Solana Development",
+    "heroSubtitle": "Level up from zero to deploying production-ready dApps. Interactive quests, boss battle coding challenges, and on-chain credentials that prove your skills.",
+    "startFree": "Start Free",
+    "exploreCourses": "Explore Courses",
+    "viewSource": "View Source",
+    "stats": {
+      "activeLearners": "Active Learners",
+      "questsAvailable": "Quests Available",
+      "xpAwarded": "XP Awarded",
+      "credentialsMinted": "Credentials Minted"
+    },
+    "paths": {
+      "title": "Choose Your Path",
+      "subtitle": "Multiple learning tracks designed to take you from beginner to expert."
+    },
+    "features": {
+      "title": "Not Your Average Tutorial Site",
+      "subtitle": "We combined the best of gamified learning platforms with real blockchain development tools.",
+      "bossBattle": "Boss Battle Challenges",
+      "codeEditor": "Integrated Code Editor",
+      "credentials": "On-Chain Credentials",
+      "streaks": "Streak & XP System",
+      "multiLang": "Multi-Language Support",
+      "production": "Production-Ready Skills"
+    },
+    "cta": {
+      "title": "Ready to Begin Your Quest?",
+      "subtitle": "Join thousands of developers building on Solana."
+    }
+  },
+  "courses": {
+    "title": "Explore Quests",
+    "subtitle": "Choose your next adventure. Each quest levels up your skills.",
+    "searchPlaceholder": "Search quests...",
+    "noResults": "No quests found",
+    "difficulty": {
+      "beginner": "Beginner",
+      "intermediate": "Intermediate",
+      "advanced": "Advanced",
+      "legendary": "Legendary"
+    },
+    "enrolled": "enrolled",
+    "lessons": "lessons",
+    "chapters": "chapters",
+    "duration": "Duration",
+    "prerequisites": "Prerequisites",
+    "startQuest": "Start Quest",
+    "continueQuest": "Continue Quest"
+  },
+  "lesson": {
+    "challenge": "Challenge",
+    "bossBattle": "Boss Battle",
+    "complete": "Mark as Complete",
+    "showHints": "Show Hints",
+    "hideHints": "Hide Hints",
+    "showSolution": "Show Solution",
+    "hideSolution": "Hide Solution",
+    "runCode": "Run Code",
+    "running": "Running...",
+    "reset": "Reset",
+    "testCases": "Test Cases",
+    "output": "Output",
+    "allTestsPassed": "All tests passed!",
+    "whatYouLearn": "What You'll Learn"
+  },
+  "dashboard": {
+    "welcome": "Welcome back",
+    "totalXP": "Total XP",
+    "activeQuests": "Active Quests",
+    "recommended": "Recommended Quests",
+    "achievements": "Achievements",
+    "skills": "Skills",
+    "recentActivity": "Recent Activity"
+  },
+  "leaderboard": {
+    "title": "Hall of Champions",
+    "subtitle": "The greatest Solana builders ranked by XP.",
+    "weekly": "Weekly",
+    "monthly": "Monthly",
+    "allTime": "All Time"
+  },
+  "profile": {
+    "editProfile": "Edit Profile",
+    "overview": "Overview",
+    "achievements": "Achievements",
+    "credentials": "Credentials",
+    "levelProgress": "Level Progress",
+    "skillTree": "Skill Tree",
+    "questProgress": "Quest Progress",
+    "verified": "Verified On-Chain",
+    "locked": "Locked"
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Manage your profile, preferences, and account settings.",
+    "profileTab": "Profile",
+    "preferencesTab": "Preferences",
+    "accountTab": "Account",
+    "displayName": "Display Name",
+    "bio": "Bio",
+    "theme": "Theme",
+    "language": "Language",
+    "notifications": "Notifications",
+    "connectedAccounts": "Connected Accounts",
+    "privacy": "Privacy",
+    "publicProfile": "Public Profile",
+    "exportData": "Export Data"
+  },
+  "certificates": {
+    "title": "Credential Verification",
+    "subtitle": "On-chain proof of your Solana development skills",
+    "verified": "Verified",
+    "viewOnExplorer": "View on Explorer",
+    "share": "Share",
+    "nftMetadata": "NFT Metadata"
+  },
+  "gamification": {
+    "levelTitles": {
+      "0": "Novice",
+      "1": "Apprentice",
+      "2": "Initiate",
+      "3": "Journeyman",
+      "4": "Adept",
+      "5": "Scholar",
+      "6": "Expert",
+      "7": "Master",
+      "8": "Grandmaster",
+      "9": "Legend",
+      "10": "Mythic"
+    }
+  }
+}
