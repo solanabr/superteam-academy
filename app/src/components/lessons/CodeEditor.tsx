@@ -136,7 +136,7 @@ function rustCompletions(context: CompletionContext): CompletionResult | null {
   if (useMatch) {
     const hasStd = !!useMatch[1];
     const prefix = useMatch[2] || "";
-    
+
     // Only suggest std:: imports if we're not explicitly using crate/self/super
     if (hasStd || (!textBefore.match(/use\s+(crate|self|super)::/) && (prefix === "" || explicit))) {
       const filtered = RUST_IMPORTS.filter((imp) => {
@@ -145,7 +145,7 @@ function rustCompletions(context: CompletionContext): CompletionResult | null {
         const impWithoutStd = imp.replace(/^std::/, "");
         return impWithoutStd.includes(prefix) || impWithoutStd.startsWith(prefix);
       });
-      
+
       if (filtered.length > 0 || explicit) {
         const startPos = hasStd ? pos - (`std::${prefix}`).length : pos - prefix.length;
         return {
@@ -322,16 +322,6 @@ function languageExtension(lang: SupportedLanguage) {
   }
 }
 
-/**
- * Generate a file URI for LSP under the same root as rootUri in the client.
- * Must be under file:///workspace so the language server (tsserver, rust-analyzer) has context.
- */
-function generateFileURI(language: SupportedLanguage): string {
-  const extension = language === "rust" ? "rs" : language === "typescript" ? "ts" : language === "javascript" ? "js" : "json";
-  const id = `editor-${Date.now()}-${Math.random().toString(36).substring(7)}`;
-  return `file:///workspace/${id}.${extension}`;
-}
-
 // Get completion source for current language
 function getCompletionSource(lang: SupportedLanguage) {
   switch (lang) {
@@ -360,13 +350,10 @@ export function CodeEditor({
   const [currentLanguage, setCurrentLanguage] = useState<SupportedLanguage>(language);
   const languageCompartmentRef = useRef(new Compartment());
   const completionCompartmentRef = useRef(new Compartment());
-  const lspCompartmentRef = useRef(new Compartment());
   const indentationMarkersRef = useRef<Extension | null>(null);
   // Use ref to store latest onChange callback to avoid stale closure
   const onChangeRef = useRef(onChange);
-  // Generate file URI for LSP (stable across re-renders)
-  const fileURIRef = useRef<string>(generateFileURI(language));
-  
+
   // Update ref when onChange changes
   useEffect(() => {
     onChangeRef.current = onChange;
@@ -375,7 +362,7 @@ export function CodeEditor({
   // Load indentation markers dynamically (optional package)
   useEffect(() => {
     if (indentationMarkersRef.current !== undefined) return; // Already attempted
-    
+
     // Try to load indentation markers, but don't fail if package isn't installed
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     import("@replit/codemirror-indentation-markers")
@@ -394,105 +381,78 @@ export function CodeEditor({
     const completionSource = getCompletionSource(currentLanguage);
     const completionExtension = completionSource
       ? autocompletion({
-          override: [completionSource, completeAnyWord],
-        })
+        override: [completionSource, completeAnyWord],
+      })
       : autocompletion({ override: [completeAnyWord] });
-
-    // Load LSP extensions asynchronously (only for Rust and TypeScript/JavaScript)
-    // Uses dynamic import to gracefully handle when LSP package is not installed
-    const loadLSPExtensions = async () => {
-      if (currentLanguage === "rust" || currentLanguage === "typescript" || currentLanguage === "javascript") {
-        try {
-          // Dynamic import - won't break build if package not installed
-          const { getLSPExtensions } = await import("@/lib/lsp/client");
-          const lspExtensions = await getLSPExtensions(currentLanguage, fileURIRef.current);
-          if (lspExtensions.length > 0) {
-            const view = viewRef.current;
-            if (view) {
-              view.dispatch({
-                effects: lspCompartmentRef.current.reconfigure(lspExtensions),
-              });
-            }
-          }
-          // If lspExtensions is empty, LSP is not available - editor works fine without it
-        } catch (error) {
-          // LSP not available - silently fail and use basic features
-          // This is expected if @codemirror/lsp-client is not installed
-          // Editor continues to work normally
-        }
-      }
-    };
 
     const baseExtensions: Extension[] = [
       // History (undo/redo)
       history(),
-      
+
       // Line numbers
       lineNumbers(),
-      
+
       // Fold gutter (code folding)
       foldGutter({
         openText: "⌄",
         closedText: "›",
       }),
-      
+
       // Bracket matching
       bracketMatching(),
-      
+
       // Close brackets automatically
       closeBrackets(),
-      
+
       // Configure indentation: use 4 spaces (standard for Rust, TypeScript, JavaScript)
       indentUnit.of("    "), // 4 spaces
       EditorState.tabSize.of(4),
-      
+
       // Indent on input (triggers auto-indentation when typing certain characters)
       indentOnInput(),
-      
-      // LSP extensions compartment (will be populated if LSP is available)
-      lspCompartmentRef.current.of([]),
-      
+
       // Draw custom selection (multi-selection support)
+
       drawSelection(),
-      
+
       // Drop cursor
       dropCursor(),
-      
+
       // Rectangular selection (Alt+drag)
       rectangularSelection(),
       crosshairCursor(),
-      
+
       // Highlight active line
       highlightActiveLine(),
       highlightActiveLineGutter(),
-      
+
       // Highlight special characters
       highlightSpecialChars(),
-      
+
       // Highlight trailing whitespace
       highlightTrailingWhitespace(),
-      
+
       // Highlight selection matches
       highlightSelectionMatches(),
-      
+
       // Indentation markers (visual guides for indentation levels)
       ...(indentationMarkersRef.current ? [indentationMarkersRef.current] : []),
-      
+
       // Line wrapping (optional - can be toggled)
       // lineWrapping(), // Uncomment to enable line wrapping
-      
+
       // Custom autocompletion with language-specific sources
       completionCompartmentRef.current.of(completionExtension),
-      
+
       // Language selection (Rust / TS / JS / JSON)
       languageCompartmentRef.current.of(languageExtension(currentLanguage)),
-      
+
       // Custom syntax highlighting theme
       syntaxHighlighting(superteamHighlightStyle, { fallback: true }),
-      
+
       // JSON linting
       currentLanguage === "json" ? linter(jsonParseLinter()) : [],
-      
+
       // Keymaps with custom overrides
       // Note: defaultKeymap includes Enter key behavior (insertNewlineAndIndent) which handles auto-indentation
       keymap.of([
@@ -524,7 +484,7 @@ export function CodeEditor({
         // Tab key for indentation
         indentWithTab,
       ]),
-      
+
       // Notify React when the document changes
       // Use ref to access latest onChange callback (avoids stale closure)
       EditorView.updateListener.of((update) => {
@@ -533,7 +493,7 @@ export function CodeEditor({
           onChangeRef.current(doc.toString());
         }
       }),
-      
+
       // Comprehensive theme matching Superteam Academy design system
       EditorView.theme(
         {
@@ -814,7 +774,7 @@ export function CodeEditor({
         },
         { dark: true }
       ),
-      
+
       EditorView.editable.of(!readOnly),
     ];
 
@@ -830,9 +790,6 @@ export function CodeEditor({
 
     viewRef.current = view;
 
-    // Load LSP extensions after view is created
-    loadLSPExtensions();
-
     return () => {
       view.destroy();
       viewRef.current = null;
@@ -845,62 +802,31 @@ export function CodeEditor({
     setCurrentLanguage(language);
     const view = viewRef.current;
     if (!view) return;
-    
-    // Update file URI for new language
-    fileURIRef.current = generateFileURI(language);
-    
+
     // Reconfigure language
     view.dispatch({
       effects: languageCompartmentRef.current.reconfigure(languageExtension(language)),
     });
-    
+
     // Reconfigure autocompletion for the new language
     const completionSource = getCompletionSource(language);
     const completionExtension = completionSource
       ? autocompletion({
-          override: [completionSource, completeAnyWord],
-        })
+        override: [completionSource, completeAnyWord],
+      })
       : autocompletion({ override: [completeAnyWord] });
-    
+
     view.dispatch({
       effects: completionCompartmentRef.current.reconfigure(completionExtension),
     });
-    
-    // Reconfigure LSP extensions for new language
-    // Uses dynamic import to gracefully handle when LSP package is not installed
-    const reconfigureLSP = async () => {
-      if (language === "rust" || language === "typescript" || language === "javascript") {
-        try {
-          // Dynamic import - won't break build if package not installed
-          const { getLSPExtensions } = await import("@/lib/lsp/client");
-          const lspExtensions = await getLSPExtensions(language, fileURIRef.current);
-          view.dispatch({
-            effects: lspCompartmentRef.current.reconfigure(lspExtensions),
-          });
-          // If lspExtensions is empty, LSP is not available - editor works fine without it
-        } catch (error) {
-          // LSP not available - clear LSP extensions
-          // This is expected if @codemirror/lsp-client is not installed
-          view.dispatch({
-            effects: lspCompartmentRef.current.reconfigure([]),
-          });
-        }
-      } else {
-        // Clear LSP extensions for JSON
-        view.dispatch({
-          effects: lspCompartmentRef.current.reconfigure([]),
-        });
-      }
-    };
-    
-    reconfigureLSP();
-    
+
     // Reconfigure linting for JSON
     if (language === "json") {
       // Note: linting reconfiguration would require a compartment, but for simplicity
       // we'll keep it as-is since it's only for JSON
     }
   }, [language]);
+
 
   // Expose method to get current code directly from editor view
   // This provides a fallback to read code directly when onChange might not have fired

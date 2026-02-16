@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
 
     const content = completion.choices[0]?.message?.content;
     const code =
-      (typeof content === "string" ? content : Array.isArray(content) ? content.map((c: any) => c?.text ?? "").join("") : "")?.trim() ??
+      (typeof content === "string" ? content : Array.isArray(content) ? (content as any[]).map((c: any) => c?.text ?? "").join("") : "")?.trim() ??
       "";
 
     if (!code) {
