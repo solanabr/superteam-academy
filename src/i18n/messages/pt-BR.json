@@ -1,0 +1,164 @@
+{
+  "common": {
+    "appName": "Solana Quest",
+    "tagline": "Sua Aventura no Desenvolvimento Solana",
+    "signIn": "Entrar",
+    "signOut": "Sair",
+    "startQuest": "Iniciar Missão",
+    "continueQuest": "Continuar Missão",
+    "viewAll": "Ver Todos",
+    "loading": "Carregando...",
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "back": "Voltar",
+    "next": "Próximo",
+    "previous": "Anterior",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "close": "Fechar",
+    "demo": "Modo Demo",
+    "xp": "XP",
+    "level": "Nível",
+    "streak": "Sequência",
+    "rank": "Ranking"
+  },
+  "nav": {
+    "quests": "Missões",
+    "leaderboard": "Ranking",
+    "dashboard": "Painel",
+    "profile": "Perfil",
+    "settings": "Configurações"
+  },
+  "landing": {
+    "heroTitle": "Sua Jornada Épica no Desenvolvimento Solana",
+    "heroSubtitle": "Evolua do zero até implantar dApps prontos para produção. Missões interativas, desafios de código estilo boss battle e credenciais on-chain que comprovam suas habilidades.",
+    "startFree": "Começar Grátis",
+    "exploreCourses": "Explorar Cursos",
+    "viewSource": "Ver Código",
+    "stats": {
+      "activeLearners": "Aprendizes Ativos",
+      "questsAvailable": "Missões Disponíveis",
+      "xpAwarded": "XP Concedido",
+      "credentialsMinted": "Credenciais Mintadas"
+    },
+    "paths": {
+      "title": "Escolha Seu Caminho",
+      "subtitle": "Múltiplas trilhas de aprendizado para te levar de iniciante a especialista."
+    },
+    "features": {
+      "title": "Não é um Site de Tutoriais Comum",
+      "subtitle": "Combinamos o melhor das plataformas gamificadas com ferramentas reais de desenvolvimento blockchain.",
+      "bossBattle": "Desafios Boss Battle",
+      "codeEditor": "Editor de Código Integrado",
+      "credentials": "Credenciais On-Chain",
+      "streaks": "Sistema de Sequência e XP",
+      "multiLang": "Suporte Multi-Idioma",
+      "production": "Habilidades para Produção"
+    },
+    "cta": {
+      "title": "Pronto para Começar Sua Missão?",
+      "subtitle": "Junte-se a milhares de desenvolvedores construindo na Solana."
+    }
+  },
+  "courses": {
+    "title": "Explorar Missões",
+    "subtitle": "Escolha sua próxima aventura. Cada missão melhora suas habilidades.",
+    "searchPlaceholder": "Buscar missões...",
+    "noResults": "Nenhuma missão encontrada",
+    "difficulty": {
+      "beginner": "Iniciante",
+      "intermediate": "Intermediário",
+      "advanced": "Avançado",
+      "legendary": "Lendário"
+    },
+    "enrolled": "inscritos",
+    "lessons": "aulas",
+    "chapters": "capítulos",
+    "duration": "Duração",
+    "prerequisites": "Pré-requisitos",
+    "startQuest": "Iniciar Missão",
+    "continueQuest": "Continuar Missão"
+  },
+  "lesson": {
+    "challenge": "Desafio",
+    "bossBattle": "Boss Battle",
+    "complete": "Marcar como Completo",
+    "showHints": "Mostrar Dicas",
+    "hideHints": "Ocultar Dicas",
+    "showSolution": "Mostrar Solução",
+    "hideSolution": "Ocultar Solução",
+    "runCode": "Executar Código",
+    "running": "Executando...",
+    "reset": "Resetar",
+    "testCases": "Casos de Teste",
+    "output": "Saída",
+    "allTestsPassed": "Todos os testes passaram!",
+    "whatYouLearn": "O Que Você Vai Aprender"
+  },
+  "dashboard": {
+    "welcome": "Bem-vindo de volta",
+    "totalXP": "XP Total",
+    "activeQuests": "Missões Ativas",
+    "recommended": "Missões Recomendadas",
+    "achievements": "Conquistas",
+    "skills": "Habilidades",
+    "recentActivity": "Atividade Recente"
+  },
+  "leaderboard": {
+    "title": "Salão dos Campeões",
+    "subtitle": "Os melhores builders Solana classificados por XP.",
+    "weekly": "Semanal",
+    "monthly": "Mensal",
+    "allTime": "Todos os Tempos"
+  },
+  "profile": {
+    "editProfile": "Editar Perfil",
+    "overview": "Visão Geral",
+    "achievements": "Conquistas",
+    "credentials": "Credenciais",
+    "levelProgress": "Progresso de Nível",
+    "skillTree": "Árvore de Habilidades",
+    "questProgress": "Progresso das Missões",
+    "verified": "Verificado On-Chain",
+    "locked": "Bloqueado"
+  },
+  "settings": {
+    "title": "Configurações",
+    "subtitle": "Gerencie seu perfil, preferências e configurações da conta.",
+    "profileTab": "Perfil",
+    "preferencesTab": "Preferências",
+    "accountTab": "Conta",
+    "displayName": "Nome de Exibição",
+    "bio": "Biografia",
+    "theme": "Tema",
+    "language": "Idioma",
+    "notifications": "Notificações",
+    "connectedAccounts": "Contas Conectadas",
+    "privacy": "Privacidade",
+    "publicProfile": "Perfil Público",
+    "exportData": "Exportar Dados"
+  },
+  "certificates": {
+    "title": "Verificação de Credencial",
+    "subtitle": "Prova on-chain das suas habilidades em desenvolvimento Solana",
+    "verified": "Verificado",
+    "viewOnExplorer": "Ver no Explorer",
+    "share": "Compartilhar",
+    "nftMetadata": "Metadados do NFT"
+  },
+  "gamification": {
+    "levelTitles": {
+      "0": "Novato",
+      "1": "Aprendiz",
+      "2": "Iniciado",
+      "3": "Jornaleiro",
+      "4": "Adepto",
+      "5": "Estudioso",
+      "6": "Especialista",
+      "7": "Mestre",
+      "8": "Grão-Mestre",
+      "9": "Lenda",
+      "10": "Mítico"
+    }
+  }
+}

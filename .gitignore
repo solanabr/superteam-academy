@@ -1,5 +1,12 @@
 # Dependencies
 node_modules/
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
 
 # Anchor / Rust build artifacts
 target/
@@ -7,7 +14,14 @@ target/
 
 # Test artifacts
 test-ledger/
-.DS_Store
+/coverage
+
+# Next.js
+/.next/
+/out/
+/build
+next-env.d.ts
+*.tsbuildinfo
 
 # Environment
 .env
@@ -17,11 +31,17 @@ test-ledger/
 # IDE
 .idea/
 .vscode/
-
-# Yarn / pnpm
-.yarn/
-.pnp.*
-yarn-error.log
-
-# Claude local settings
 .claude/settings.local.json
+
+# Misc
+.DS_Store
+*.pem
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Vercel
+.vercel
