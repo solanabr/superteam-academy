@@ -385,18 +385,41 @@ export const recentActivity = [
 ]
 
 // ──────────────── Streak Calendar ────────────────
-export function getStreakDays() {
+function hashCode(input: string): number {
+  let hash = 0
+  for (let i = 0; i < input.length; i++) {
+    hash = (hash << 5) - hash + input.charCodeAt(i)
+    hash |= 0
+  }
+  return Math.abs(hash)
+}
+
+export function getStreakDays(daysBack = 365) {
   const days = []
   const today = new Date()
-  for (let i = 41; i >= 0; i--) {
+
+  for (let i = daysBack - 1; i >= 0; i--) {
     const date = new Date(today)
     date.setDate(date.getDate() - i)
-    const active = i < 14 ? true : Math.random() > 0.5
+    const dateKey = date.toISOString().split("T")[0]
+
+    // Preserve a guaranteed active current streak from latest N days.
+    const forcedStreak = i < currentUser.streak
+    const entropy = hashCode(dateKey)
+    const active = forcedStreak || entropy % 100 < 46
+
+    // Use deterministic intensity distribution (0..4) for stable UI.
+    const intensity = active ? (entropy % 4) + 1 : 0
+
     days.push({
-      date: date.toISOString().split("T")[0],
+      date: dateKey,
       active,
-      intensity: active ? Math.floor(Math.random() * 3) + 1 : 0,
+      intensity,
+      month: date.getMonth(),
+      weekday: date.getDay(),
+      year: date.getFullYear(),
     })
   }
+
   return days
 }

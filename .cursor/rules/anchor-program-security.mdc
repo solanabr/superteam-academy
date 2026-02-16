@@ -1,0 +1,63 @@
+---
+description: Anchor program safety and account validation rules
+globs: programs/**/src/**/*.rs
+alwaysApply: false
+---
+
+# Anchor Program Security Rules
+
+Apply these rules to all on-chain Rust program code:
+
+- Validate all accounts with proper Anchor constraints (`Signer`, `Program`, `Account`, `has_one`, `constraint`).
+- Store canonical PDA bumps on init and reuse stored bump; do not recalculate on each instruction.
+- Use checked arithmetic only (`checked_add`, `checked_sub`, `checked_mul`, checked division patterns).
+- Never use `unwrap()` or `expect()` in program logic.
+- Define and use explicit custom errors with `#[error_code]` and meaningful messages.
+- Validate CPI target program IDs and use typed `Program<'info, T>`/`Interface<'info, T>` when possible.
+- Reload accounts after CPIs when account state is used post-CPI (`account.reload()?`).
+- Emit events for important state transitions.
+- Avoid `init_if_needed` in program instructions due to reinitialization risk.
+
+## Preferred Patterns
+
+### PDA
+
+```rust
+#[account]
+pub struct Vault {
+    pub authority: Pubkey,
+    pub bump: u8,
+}
+```
+
+```rust
+#[account(
+    seeds = [b"vault", authority.key().as_ref()],
+    bump = vault.bump
+)]
+pub vault: Account<'info, Vault>,
+```
+
+### Arithmetic
+
+```rust
+let new_balance = vault
+    .balance
+    .checked_add(amount)
+    .ok_or(ErrorCode::Overflow)?;
+```
+
+### CPI + Reload
+
+```rust
+token::transfer(cpi_ctx, amount)?;
+ctx.accounts.token_account.reload()?;
+```
+
+## Instruction Review Checklist
+
+- [ ] Access control enforced (authority/backend signer where required)
+- [ ] Account ownership/PDA/signer checks complete
+- [ ] Checked arithmetic everywhere
+- [ ] CPI targets validated and post-CPI reload applied if needed
+- [ ] No panic-prone calls (`unwrap`, `expect`)

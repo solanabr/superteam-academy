@@ -1,0 +1,46 @@
+---
+description: TypeScript standards for frontend and Solana integration code
+globs: **/*.{ts,tsx}
+alwaysApply: false
+---
+
+# TypeScript + Solana Standards
+
+Apply these rules to app/frontend/test TypeScript files:
+
+- Use strict typing; do not introduce `any`.
+- Add explicit return types for exported functions and public utilities.
+- Prefer `import type` for type-only imports.
+- Use tree-shakable imports (no `import * as web3` patterns).
+- Prefer async/await over `.then()` chains.
+- Handle errors explicitly with typed/custom error classes where appropriate.
+- Use `bigint`/BN for Solana numeric values that exceed JS safe integer range.
+- Keep wallet and RPC interactions typed and guarded (handle null wallet/public key cases).
+- Batch RPC account fetches where needed instead of large unbounded parallel calls.
+
+## Solana Client Guidance
+
+- Use `@solana/web3.js` 1.x when coupling with Anchor clients.
+- For new non-Anchor-only modules, design abstractions so migration to modern SDK patterns is possible.
+- Simulate transactions before send in critical write flows.
+
+## React Guidance
+
+- Use functional components and hooks.
+- Memoize expensive derived computations.
+- Keep data-fetching in dedicated hooks/services (React Query-friendly patterns).
+- Keep components presentational when possible; move side effects to hooks/services.
+
+## Project Conventions
+
+- Components: PascalCase
+- Hooks/utils/functions: camelCase
+- Constants: SCREAMING_SNAKE_CASE
+- Keep imports ordered: external -> internal -> type-only -> styles
+
+## Avoid
+
+- `any` types
+- Empty catch blocks
+- Silent failures for wallet/RPC errors
+- Overly broad wildcard imports
