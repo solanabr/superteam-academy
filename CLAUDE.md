@@ -4,7 +4,7 @@ You are **academy-builder** for the Superteam Academy on-chain program and front
 
 ## Project Overview
 
-Superteam Academy is a **decentralized learning platform on Solana** with gamified progression. The on-chain program handles verifiable credentials, XP tracking, course registries, streak systems, and creator incentives. The frontend is a Next.js application.
+Superteam Academy is a **decentralized learning platform on Solana**. The on-chain program handles verifiable credentials, XP tracking, course registries, and creator incentives. The frontend is a Next.js application.
 
 **Canonical Specification**: `docs/SPEC.md` (source of truth for all program behavior)
 **Architecture Reference**: `docs/ARCHITECTURE.md` (account maps, data flows, CU budgets)
@@ -40,19 +40,19 @@ Use `/quick-commit` command to automate branch creation and commits.
 superteam-academy/
 ├── CLAUDE.md                    ← You are here
 ├── docs/
-│   ├── SPEC.md                  ← On-chain program specification (v1.3)
+│   ├── SPEC.md                  ← On-chain program specification (v2.0)
 │   ├── ARCHITECTURE.md          ← System diagrams, account maps, CU budgets
-│   ├── IMPLEMENTATION_ORDER.md  ← 6-phase build plan (simplified V1)
+│   ├── IMPLEMENTATION_ORDER.md  ← 5-phase build plan (simplified V1)
 │   └── FUTURE_IMPROVEMENTS.md   ← V2/V3 deferred features
 ├── programs/
 │   └── superteam-academy/
 │       ├── Cargo.toml
 │       └── src/
 │           ├── lib.rs           ← Program entrypoint + instruction dispatch
-│           ├── state/           ← Account structs (Config, Course, LearnerProfile, Enrollment)
-│           ├── instructions/    ← One file per instruction (11 in V1)
+│           ├── state/           ← Account structs (Config, Course, Enrollment)
+│           ├── instructions/    ← One file per instruction (9 in V1)
 │           ├── errors.rs        ← AcademyError enum
-│           └── utils.rs         ← Shared helpers (bitmap, rate limiting, streak)
+│           └── utils.rs         ← Shared helpers (mint_xp)
 ├── tests/
 │   ├── rust/                    ← Mollusk/LiteSVM unit tests
 │   └── ts/                      ← Anchor TypeScript integration tests
@@ -88,24 +88,20 @@ superteam-academy/
 
 ## On-Chain Program Summary
 
-### Accounts (4 Regular PDAs + Metaplex Core NFTs)
+### Accounts (3 Regular PDAs + Metaplex Core NFTs)
 
 | Account | Seeds | Purpose |
 |---------|-------|---------|
-| Config | `["config"]` | Singleton: authority, backend signer, XP mint, rate limits |
+| Config | `["config"]` | Singleton: authority, backend signer, XP mint |
 | Course | `["course", course_id.as_bytes()]` | Course metadata, creator, track, XP amounts |
-| LearnerProfile | `["learner", user.key()]` | Streaks, rate limiting (achievement/referral fields reserved for V2) |
 | Enrollment | `["enrollment", course_id.as_bytes(), user.key()]` | Lesson bitmap, completion timestamps, credential_asset ref (closeable) |
 | Credential | Metaplex Core NFT (1 per learner per track) | Soulbound, wallet-visible, upgradeable via URI + Attributes plugin |
 
-### Instructions (11 in V1)
+### Instructions (9 in V1)
 
 **Platform Management (2):** `initialize`, `update_config`
 **Courses (2):** `create_course`, `update_course`
-**Learner (1):** `init_learner`
-**Enrollment & Progress (6):** `enroll`, `complete_lesson`, `finalize_course`, `claim_completion_bonus`, `issue_credential`, `close_enrollment`
-
-**Deferred to V2:** `create_season`, `close_season`, `claim_achievement`, `award_streak_freeze`, `register_referral`
+**Enrollment & Progress (5):** `enroll`, `complete_lesson`, `finalize_course`, `issue_credential`, `close_enrollment`
 
 ### Key Design Decisions
 
@@ -114,9 +110,8 @@ superteam-academy/
 - **Credentials = Metaplex Core NFTs** — soulbound via PermanentFreezeDelegate, wallet-visible, upgradeable
 - **Config PDA = update authority** of all track collection NFTs
 - **`finalize_course` and `issue_credential` are split** — XP awards don't depend on credential CPI success
-- **`claim_completion_bonus` is separate** from `finalize_course` — handles daily XP cap gracefully
-- **On-chain daily XP cap** — defense-in-depth even if backend compromised
-- **UTC standard** for all day boundaries (streaks, rate limiting)
+- **Completion bonus merged into `finalize_course`** — bonus XP minted at course finalization
+- **No LearnerProfile PDA** — XP balance tracked via Token-2022 ATA, no on-chain streaks/rate limiting
 - **Rotatable backend signer** — stored in Config, rotatable via `update_config`
 - **Reserved bytes** on all accounts for future-proofing without migrations
 - **No `content_hash`** — rely on Arweave immutability
@@ -126,11 +121,10 @@ superteam-academy/
 Refer to `docs/IMPLEMENTATION_ORDER.md` for details. Summary:
 
 1. Foundation → Config PDA + XP mint (`initialize`, `update_config`)
-2. Users → LearnerProfile (`init_learner`)
-3. Courses → Course registry (`create_course`, `update_course`)
-4. Learning Loop → Enrollment + lessons (`enroll`, `complete_lesson`)
-5. Completion → **Working MVP** (`finalize_course`, `claim_completion_bonus`, `close_enrollment`)
-6. Credentials → Metaplex Core NFTs (`issue_credential`)
+2. Courses → Course registry (`create_course`, `update_course`)
+3. Learning Loop → Enrollment + lessons (`enroll`, `complete_lesson`)
+4. Completion → **Working MVP** (`finalize_course`, `close_enrollment`)
+5. Credentials → Metaplex Core NFTs (`issue_credential`)
 
 ## Agents
 
@@ -172,7 +166,6 @@ Every program change:
 - Reload accounts after CPIs if modified
 - Validate CPI target program IDs
 - Round in favor of the vault/platform (protect existing state)
-- Check daily XP cap before minting
 - Verify backend_signer matches Config.backend_signer
 
 ## Code Quality: AI Slop Removal
@@ -233,9 +226,7 @@ Rules (always-on constraints): `.claude/rules/`
 - [ ] Security audit completed
 - [ ] Verifiable build (`anchor build --verifiable`)
 - [ ] CU optimization verified (see ARCHITECTURE.md for budgets)
-- [ ] On-chain rate limiting tested (daily XP cap, achievement XP cap)
 - [ ] Metaplex Core credential flow tested (create + upgrade, soulbound transfer fails)
-- [ ] Streak logic tested across UTC day boundaries
 - [ ] Devnet testing successful (multiple days)
 - [ ] AI slop removed from branch
 - [ ] User explicit confirmation received
