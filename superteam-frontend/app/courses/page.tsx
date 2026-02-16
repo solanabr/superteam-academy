@@ -1,8 +1,11 @@
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { CourseCatalog } from "@/components/courses/course-catalog"
+import { requireAuthenticatedUser } from "@/lib/server/auth-adapter"
 
-export default function CoursesPage() {
+export default async function CoursesPage() {
+  await requireAuthenticatedUser()
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />

@@ -34,10 +34,11 @@ export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const { connected, publicKey } = useWallet()
   const { setVisible } = useWalletModal()
-  const { isLoading, isAuthenticated, address, authError, loginWithWallet, logout } = useWalletAuth()
+  const { isLoading, isAuthenticated, user, authError, loginWithWallet, logout } = useWalletAuth()
 
   const connectedAddress = publicKey?.toBase58() ?? null
-  const activeAddress = address ?? connectedAddress
+  const activeAddress = user?.walletAddress ?? connectedAddress
+  const visibleNavLinks = isAuthenticated ? navLinks : []
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
@@ -54,7 +55,7 @@ export function Navbar() {
 
         {/* Desktop Nav */}
         <nav className="hidden items-center gap-1 md:flex">
-          {navLinks.map((link) => (
+          {visibleNavLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
@@ -116,32 +117,36 @@ export function Navbar() {
             <Search className="h-4 w-4" />
           </Button>
 
-          {/* Streak */}
-          <div className="flex items-center gap-1.5 rounded-lg bg-secondary px-3 py-1.5">
-            <Flame className="h-4 w-4 text-[hsl(var(--gold))]" />
-            <span className="text-sm font-semibold text-foreground">{currentUser.streak}</span>
-          </div>
+          {isAuthenticated && (
+            <>
+              {/* Streak */}
+              <div className="flex items-center gap-1.5 rounded-lg bg-secondary px-3 py-1.5">
+                <Flame className="h-4 w-4 text-[hsl(var(--gold))]" />
+                <span className="text-sm font-semibold text-foreground">{currentUser.streak}</span>
+              </div>
 
-          {/* XP */}
-          <div className="flex items-center gap-1.5 rounded-lg bg-secondary px-3 py-1.5">
-            <Zap className="h-4 w-4 text-primary" />
-            <span className="text-sm font-semibold text-foreground">{currentUser.xp.toLocaleString()}</span>
-          </div>
+              {/* XP */}
+              <div className="flex items-center gap-1.5 rounded-lg bg-secondary px-3 py-1.5">
+                <Zap className="h-4 w-4 text-primary" />
+                <span className="text-sm font-semibold text-foreground">{currentUser.xp.toLocaleString()}</span>
+              </div>
 
-          {/* Profile */}
-          <Link href="/profile" className="flex items-center gap-2">
-            <Avatar className="h-8 w-8 border border-primary/30">
-              <AvatarFallback className="bg-primary/20 text-xs text-primary">
-                {currentUser.avatar}
-              </AvatarFallback>
-            </Avatar>
-          </Link>
+              {/* Profile */}
+              <Link href="/profile" className="flex items-center gap-2">
+                <Avatar className="h-8 w-8 border border-primary/30">
+                  <AvatarFallback className="bg-primary/20 text-xs text-primary">
+                    {currentUser.avatar}
+                  </AvatarFallback>
+                </Avatar>
+              </Link>
 
-          <Link href="/settings">
-            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
-              <Settings className="h-4 w-4" />
-            </Button>
-          </Link>
+              <Link href="/settings">
+                <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
+                  <Settings className="h-4 w-4" />
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Mobile toggle */}
@@ -202,29 +207,31 @@ export function Navbar() {
             )}
           </div>
 
-          <div className="flex items-center gap-3 mb-4 pb-4 border-b border-border">
-            <Avatar className="h-10 w-10 border border-primary/30">
-              <AvatarFallback className="bg-primary/20 text-sm text-primary">
-                {currentUser.avatar}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <p className="text-sm font-semibold text-foreground">{currentUser.name}</p>
-              <div className="flex items-center gap-3 mt-0.5">
-                <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <Flame className="h-3 w-3 text-[hsl(var(--gold))]" /> {currentUser.streak}
-                </span>
-                <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <Zap className="h-3 w-3 text-primary" /> {currentUser.xp.toLocaleString()} XP
-                </span>
+          {isAuthenticated && (
+            <div className="flex items-center gap-3 mb-4 pb-4 border-b border-border">
+              <Avatar className="h-10 w-10 border border-primary/30">
+                <AvatarFallback className="bg-primary/20 text-sm text-primary">
+                  {currentUser.avatar}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="text-sm font-semibold text-foreground">{currentUser.name}</p>
+                <div className="flex items-center gap-3 mt-0.5">
+                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Flame className="h-3 w-3 text-[hsl(var(--gold))]" /> {currentUser.streak}
+                  </span>
+                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Zap className="h-3 w-3 text-primary" /> {currentUser.xp.toLocaleString()} XP
+                  </span>
+                </div>
               </div>
+              <Badge variant="outline" className="ml-auto border-primary/30 text-primary text-xs">
+                Lvl {currentUser.level}
+              </Badge>
             </div>
-            <Badge variant="outline" className="ml-auto border-primary/30 text-primary text-xs">
-              Lvl {currentUser.level}
-            </Badge>
-          </div>
+          )}
           <nav className="flex flex-col gap-1">
-            {navLinks.map((link) => (
+            {visibleNavLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
@@ -235,22 +242,26 @@ export function Navbar() {
                 {link.label}
               </Link>
             ))}
-            <Link
-              href="/profile"
-              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-              onClick={() => setMobileOpen(false)}
-            >
-              <User className="h-4 w-4" />
-              Profile
-            </Link>
-            <Link
-              href="/settings"
-              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-              onClick={() => setMobileOpen(false)}
-            >
-              <Settings className="h-4 w-4" />
-              Settings
-            </Link>
+            {isAuthenticated && (
+              <>
+                <Link
+                  href="/profile"
+                  className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  <User className="h-4 w-4" />
+                  Profile
+                </Link>
+                <Link
+                  href="/settings"
+                  className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  <Settings className="h-4 w-4" />
+                  Settings
+                </Link>
+              </>
+            )}
           </nav>
         </div>
       )}

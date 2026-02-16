@@ -1,8 +1,11 @@
 import { PublicKey } from "@solana/web3.js"
+import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
 import {
   buildWalletSignInMessage,
-  createNonceForAddress,
+  createNonce,
+  createNonceChallengeToken,
+  getWalletNonceCookieName,
   getNonceExpiryIso,
 } from "@/lib/server/wallet-auth"
 
@@ -25,8 +28,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid Solana address." }, { status: 400 })
     }
 
-    const nonce = createNonceForAddress(address)
+    const nonce = createNonce()
     const message = buildWalletSignInMessage(address, nonce)
+    const challengeToken = createNonceChallengeToken(address, nonce)
+    const cookieStore = await cookies()
+    cookieStore.set(getWalletNonceCookieName(), challengeToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 5,
+    })
 
     return NextResponse.json(
       {

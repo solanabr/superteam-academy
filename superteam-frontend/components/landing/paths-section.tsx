@@ -1,11 +1,28 @@
+"use client"
+
 import Link from "next/link"
+import { useWallet } from "@solana/wallet-adapter-react"
+import { useWalletModal } from "@solana/wallet-adapter-react-ui"
 import { ArrowRight, Clock, BookOpen } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { learningPaths, courses } from "@/lib/mock-data"
+import { useWalletAuth } from "@/components/providers/wallet-auth-provider"
 
 export function PathsSection() {
+  const { connected } = useWallet()
+  const { setVisible } = useWalletModal()
+  const { isAuthenticated, isLoading, loginWithWallet } = useWalletAuth()
+
+  const handleUnlockClick = () => {
+    if (!connected) {
+      setVisible(true)
+      return
+    }
+    void loginWithWallet().catch(() => undefined)
+  }
+
   return (
     <section className="py-20 lg:py-28">
       <div className="mx-auto max-w-7xl px-4 lg:px-6">
@@ -86,15 +103,27 @@ export function PathsSection() {
                   <Progress value={avgProgress} className="h-1.5 bg-secondary [&>div]:bg-primary" />
                 </div>
 
-                <Link href="/courses">
+                {isAuthenticated ? (
+                  <Link href="/courses">
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-between text-muted-foreground hover:text-foreground hover:bg-secondary"
+                    >
+                      {avgProgress > 0 ? "Continue Path" : "Start Path"}
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                ) : (
                   <Button
                     variant="ghost"
                     className="w-full justify-between text-muted-foreground hover:text-foreground hover:bg-secondary"
+                    disabled={isLoading}
+                    onClick={handleUnlockClick}
                   >
-                    {avgProgress > 0 ? "Continue Path" : "Start Path"}
+                    {isLoading ? "Authorizing..." : "Connect Wallet to Unlock"}
                     <ArrowRight className="h-4 w-4" />
                   </Button>
-                </Link>
+                )}
               </div>
             )
           })}

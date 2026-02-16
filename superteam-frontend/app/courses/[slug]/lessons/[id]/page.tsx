@@ -1,5 +1,6 @@
 import { LessonView } from "@/components/lesson/lesson-view"
 import { courses } from "@/lib/mock-data"
+import { requireAuthenticatedUser } from "@/lib/server/auth-adapter"
 import { notFound } from "next/navigation"
 
 export default async function LessonPage({
@@ -7,6 +8,7 @@ export default async function LessonPage({
 }: {
   params: Promise<{ slug: string; id: string }>
 }) {
+  await requireAuthenticatedUser()
   const { slug, id } = await params
   const course = courses.find((c) => c.slug === slug)
   if (!course) return notFound()

@@ -1,9 +1,26 @@
+"use client"
+
 import Link from "next/link"
+import { useWallet } from "@solana/wallet-adapter-react"
+import { useWalletModal } from "@solana/wallet-adapter-react-ui"
 import { ArrowRight, Play, Code2, Shield, Coins } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { useWalletAuth } from "@/components/providers/wallet-auth-provider"
 
 export function HeroSection() {
+  const { connected } = useWallet()
+  const { setVisible } = useWalletModal()
+  const { isAuthenticated, isLoading, loginWithWallet } = useWalletAuth()
+
+  const handleUnlockClick = () => {
+    if (!connected) {
+      setVisible(true)
+      return
+    }
+    void loginWithWallet().catch(() => undefined)
+  }
+
   return (
     <section className="relative overflow-hidden">
       {/* Background grid */}
@@ -32,25 +49,51 @@ export function HeroSection() {
           </p>
 
           <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <Link href="/courses">
-              <Button
-                size="lg"
-                className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2 px-8 h-12 text-base glow-green"
-              >
-                Start Learning
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            </Link>
-            <Link href="/courses">
-              <Button
-                variant="outline"
-                size="lg"
-                className="gap-2 border-border text-foreground hover:bg-secondary h-12 text-base"
-              >
-                <Play className="h-4 w-4" />
-                Explore Courses
-              </Button>
-            </Link>
+            {isAuthenticated ? (
+              <>
+                <Link href="/courses">
+                  <Button
+                    size="lg"
+                    className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2 px-8 h-12 text-base glow-green"
+                  >
+                    Start Learning
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </Link>
+                <Link href="/dashboard">
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="gap-2 border-border text-foreground hover:bg-secondary h-12 text-base"
+                  >
+                    <Play className="h-4 w-4" />
+                    Open Dashboard
+                  </Button>
+                </Link>
+              </>
+            ) : (
+              <>
+                <Button
+                  size="lg"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2 px-8 h-12 text-base glow-green"
+                  disabled={isLoading}
+                  onClick={handleUnlockClick}
+                >
+                  {isLoading ? "Authorizing..." : "Connect Wallet to Start"}
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+                <Link href="#features">
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="gap-2 border-border text-foreground hover:bg-secondary h-12 text-base"
+                  >
+                    <Play className="h-4 w-4" />
+                    Explore Features
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Floating skill tags */}

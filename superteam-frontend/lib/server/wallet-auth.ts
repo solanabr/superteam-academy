@@ -2,26 +2,20 @@ import { createHmac, randomBytes, timingSafeEqual } from "crypto"
 
 const NONCE_TTL_MS = 5 * 60 * 1000
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000
-const COOKIE_NAME = "st_wallet_session"
+const COOKIE_NAME = "st_access_token"
+const NONCE_COOKIE_NAME = "st_wallet_nonce_challenge"
 const DEV_WALLET_AUTH_SECRET = "superteam-academy-dev-wallet-secret"
+const JWT_ISSUER = "superteam-academy"
+const JWT_AUDIENCE = "superteam-frontend"
 
-type NonceRecord = {
-  nonce: string
-  expiresAt: number
+export type WalletJwtPayload = {
+  sub: string
+  walletAddress: string
 }
 
-type SessionPayload = {
-  address: string
-  exp: number
-}
+const jwtSecret = DEV_WALLET_AUTH_SECRET
 
-const nonceStore = new Map<string, NonceRecord>()
-
-function getSecret(): string {
-  return DEV_WALLET_AUTH_SECRET
-}
-
-function toBase64Url(input: Buffer | string): string {
+function toBase64Url(input: Buffer): string {
   return Buffer.from(input)
     .toString("base64")
     .replace(/\+/g, "-")
@@ -30,22 +24,27 @@ function toBase64Url(input: Buffer | string): string {
 }
 
 function fromBase64Url(input: string): Buffer {
-  const padded = input.padEnd(Math.ceil(input.length / 4) * 4, "=").replace(/-/g, "+").replace(/_/g, "/")
+  const padded = input
+    .replace(/-/g, "+")
+    .replace(/_/g, "/")
+    .padEnd(Math.ceil(input.length / 4) * 4, "=")
   return Buffer.from(padded, "base64")
 }
 
-function makeSignature(payloadB64: string): string {
-  return toBase64Url(createHmac("sha256", getSecret()).update(payloadB64).digest())
+function signJwtPart(data: string): string {
+  return toBase64Url(createHmac("sha256", jwtSecret).update(data).digest())
 }
 
 export function getWalletSessionCookieName(): string {
   return COOKIE_NAME
 }
 
-export function createNonceForAddress(address: string): string {
-  const nonce = toBase64Url(randomBytes(24))
-  nonceStore.set(address, { nonce, expiresAt: Date.now() + NONCE_TTL_MS })
-  return nonce
+export function getWalletNonceCookieName(): string {
+  return NONCE_COOKIE_NAME
+}
+
+export function createNonce(): string {
+  return toBase64Url(randomBytes(24))
 }
 
 export function buildWalletSignInMessage(address: string, nonce: string): string {
@@ -67,44 +66,124 @@ export function extractNonceFromMessage(message: string): string | null {
   return nonce.length > 0 ? nonce : null
 }
 
-export function consumeNonce(address: string, nonce: string): boolean {
-  const record = nonceStore.get(address)
-  nonceStore.delete(address)
-
-  if (!record) return false
-  if (record.expiresAt < Date.now()) return false
-  return record.nonce === nonce
+export function extractAddressFromMessage(message: string): string | null {
+  const match = message.match(/Address:\s*(.+)/i)
+  if (!match) return null
+  const address = match[1].trim()
+  return address.length > 0 ? address : null
 }
 
-export function createSessionToken(address: string): string {
-  const payload: SessionPayload = {
+export function createNonceChallengeToken(address: string, nonce: string): string {
+  const payload = {
     address,
-    exp: Date.now() + SESSION_TTL_MS,
+    nonce,
+    exp: Date.now() + NONCE_TTL_MS,
   }
-
-  const payloadB64 = toBase64Url(JSON.stringify(payload))
-  const sig = makeSignature(payloadB64)
-  return `${payloadB64}.${sig}`
+  const encodedPayload = toBase64Url(Buffer.from(JSON.stringify(payload), "utf8"))
+  const signature = signJwtPart(encodedPayload)
+  return `${encodedPayload}.${signature}`
 }
 
-export function verifySessionToken(token: string | undefined): SessionPayload | null {
-  if (!token) return null
+export function verifyNonceChallengeToken(
+  token: string | undefined,
+  address: string,
+  nonce: string,
+): boolean {
+  if (!token) return false
 
-  const [payloadB64, signature] = token.split(".")
-  if (!payloadB64 || !signature) return null
+  const [encodedPayload, signature] = token.split(".")
+  if (!encodedPayload || !signature) return false
 
-  const expectedSignature = makeSignature(payloadB64)
-  const actualBuf = Buffer.from(signature)
-  const expectedBuf = Buffer.from(expectedSignature)
-
-  if (actualBuf.length !== expectedBuf.length) return null
-  if (!timingSafeEqual(actualBuf, expectedBuf)) return null
+  const expectedSignature = signJwtPart(encodedPayload)
+  const expectedBuffer = Buffer.from(expectedSignature)
+  const actualBuffer = Buffer.from(signature)
+  if (expectedBuffer.length !== actualBuffer.length) return false
+  if (!timingSafeEqual(expectedBuffer, actualBuffer)) return false
 
   try {
-    const payload = JSON.parse(fromBase64Url(payloadB64).toString("utf8")) as SessionPayload
-    if (payload.exp < Date.now()) return null
-    if (!payload.address) return null
-    return payload
+    const payload = JSON.parse(fromBase64Url(encodedPayload).toString("utf8")) as {
+      address?: string
+      nonce?: string
+      exp?: number
+    }
+    if (payload.address !== address) return false
+    if (payload.nonce !== nonce) return false
+    if (typeof payload.exp !== "number" || payload.exp < Date.now()) return false
+    return true
+  } catch {
+    return false
+  }
+}
+
+export async function createAccessTokenForWallet(userId: string, walletAddress: string): Promise<string> {
+  const nowSeconds = Math.floor(Date.now() / 1000)
+  const expSeconds = nowSeconds + Math.floor(SESSION_TTL_MS / 1000)
+
+  const header = {
+    alg: "HS256",
+    typ: "JWT",
+  }
+
+  const payload = {
+    iss: JWT_ISSUER,
+    aud: JWT_AUDIENCE,
+    sub: userId,
+    walletAddress,
+    iat: nowSeconds,
+    exp: expSeconds,
+  }
+
+  const encodedHeader = toBase64Url(Buffer.from(JSON.stringify(header), "utf8"))
+  const encodedPayload = toBase64Url(Buffer.from(JSON.stringify(payload), "utf8"))
+  const signingInput = `${encodedHeader}.${encodedPayload}`
+  const signature = signJwtPart(signingInput)
+
+  return `${signingInput}.${signature}`
+}
+
+export async function verifyAccessToken(token: string | undefined): Promise<WalletJwtPayload | null> {
+  if (!token) return null
+  try {
+    const parts = token.split(".")
+    if (parts.length !== 3) return null
+
+    const [encodedHeader, encodedPayload, signature] = parts
+    if (!encodedHeader || !encodedPayload || !signature) return null
+
+    const signingInput = `${encodedHeader}.${encodedPayload}`
+    const expectedSignature = signJwtPart(signingInput)
+    const expectedBuffer = Buffer.from(expectedSignature)
+    const actualBuffer = Buffer.from(signature)
+    if (expectedBuffer.length !== actualBuffer.length) return null
+    if (!timingSafeEqual(expectedBuffer, actualBuffer)) return null
+
+    const header = JSON.parse(fromBase64Url(encodedHeader).toString("utf8")) as { alg?: string; typ?: string }
+    if (header.alg !== "HS256" || header.typ !== "JWT") {
+      return null
+    }
+
+    const payload = JSON.parse(fromBase64Url(encodedPayload).toString("utf8")) as {
+      iss?: string
+      aud?: string
+      sub?: string
+      walletAddress?: string
+      exp?: number
+    }
+
+    if (payload.iss !== JWT_ISSUER || payload.aud !== JWT_AUDIENCE) {
+      return null
+    }
+    if (typeof payload.exp !== "number" || payload.exp < Math.floor(Date.now() / 1000)) {
+      return null
+    }
+    if (typeof payload.sub !== "string" || typeof payload.walletAddress !== "string") {
+      return null
+    }
+
+    return {
+      sub: payload.sub,
+      walletAddress: payload.walletAddress,
+    }
   } catch {
     return null
   }

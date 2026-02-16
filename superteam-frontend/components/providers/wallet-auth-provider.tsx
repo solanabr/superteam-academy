@@ -15,13 +15,22 @@ import {
 
 type WalletSessionResponse = {
   authenticated: boolean
-  address: string | null
+  user: {
+    id: string
+    walletAddress: string
+    username: string
+  } | null
+}
+
+type VerifyWalletResponse = {
+  ok: boolean
+  user: WalletSessionResponse["user"]
 }
 
 type WalletAuthContextValue = {
   isLoading: boolean
   isAuthenticated: boolean
-  address: string | null
+  user: WalletSessionResponse["user"]
   authError: string | null
   loginWithWallet: () => Promise<void>
   logout: () => Promise<void>
@@ -37,21 +46,21 @@ export function WalletAuthProvider({ children }: WalletAuthProviderProps) {
   const { publicKey, signMessage, connected, disconnect } = useWallet()
   const [isLoading, setIsLoading] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [address, setAddress] = useState<string | null>(null)
+  const [user, setUser] = useState<WalletSessionResponse["user"]>(null)
   const [authError, setAuthError] = useState<string | null>(null)
   const lastAutoAuthAddress = useRef<string | null>(null)
 
   const syncSession = useCallback(async () => {
     setIsLoading(true)
     try {
-      const response = await fetch("/api/auth/wallet/session", { method: "GET" })
+      const response = await fetch("/api/auth/me", { method: "GET" })
       const data = (await response.json()) as WalletSessionResponse
       setIsAuthenticated(Boolean(data.authenticated))
-      setAddress(data.address ?? null)
+      setUser(data.user ?? null)
       setAuthError(null)
     } catch {
       setIsAuthenticated(false)
-      setAddress(null)
+      setUser(null)
       setAuthError("Unable to check wallet session.")
     } finally {
       setIsLoading(false)
@@ -102,13 +111,14 @@ export function WalletAuthProvider({ children }: WalletAuthProviderProps) {
         throw new Error("Wallet signature verification failed.")
       }
 
+      const verifyData = (await verifyResponse.json()) as VerifyWalletResponse
       setIsAuthenticated(true)
-      setAddress(walletAddress)
+      setUser(verifyData.user ?? null)
       setAuthError(null)
       lastAutoAuthAddress.current = walletAddress
     } catch (error) {
       setIsAuthenticated(false)
-      setAddress(null)
+      setUser(null)
       setAuthError(error instanceof Error ? error.message : "Wallet authentication failed.")
       throw error
     } finally {
@@ -121,7 +131,7 @@ export function WalletAuthProvider({ children }: WalletAuthProviderProps) {
     try {
       await fetch("/api/auth/wallet/logout", { method: "POST" })
       setIsAuthenticated(false)
-      setAddress(null)
+      setUser(null)
       setAuthError(null)
       lastAutoAuthAddress.current = null
       if (connected) {
@@ -135,20 +145,20 @@ export function WalletAuthProvider({ children }: WalletAuthProviderProps) {
   useEffect(() => {
     if (!connected) {
       setIsAuthenticated(false)
-      setAddress(null)
+      setUser(null)
       setAuthError(null)
       lastAutoAuthAddress.current = null
       return
     }
 
     const connectedAddress = publicKey?.toBase58() ?? null
-    if (address && connectedAddress && address !== connectedAddress) {
+    if (user?.walletAddress && connectedAddress && user.walletAddress !== connectedAddress) {
       setIsAuthenticated(false)
-      setAddress(null)
+      setUser(null)
       setAuthError(null)
       lastAutoAuthAddress.current = null
     }
-  }, [address, connected, publicKey])
+  }, [user, connected, publicKey])
 
   useEffect(() => {
     if (!connected || !publicKey) return
@@ -171,12 +181,12 @@ export function WalletAuthProvider({ children }: WalletAuthProviderProps) {
     () => ({
       isLoading,
       isAuthenticated,
-      address,
+      user,
       authError,
       loginWithWallet: retryAuthentication,
       logout,
     }),
-    [address, authError, isAuthenticated, isLoading, retryAuthentication, logout],
+    [user, authError, isAuthenticated, isLoading, retryAuthentication, logout],
   )
 
   return <WalletAuthContext.Provider value={value}>{children}</WalletAuthContext.Provider>
