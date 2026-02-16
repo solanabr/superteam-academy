@@ -1,6 +1,8 @@
 "use client"
 
 import Link from "next/link"
+import { useState } from "react"
+import { useWallet } from "@solana/wallet-adapter-react"
 import {
   Clock,
   Users,
@@ -26,6 +28,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
 import type { Course } from "@/lib/mock-data"
+import { sendEnrollCourse } from "@/lib/solana/enroll-course"
 
 const lessonIcons = {
   video: Play,
@@ -45,7 +48,17 @@ const reviews = [
   { name: "Bruno Sato", avatar: "BS", rating: 4, text: "Great content and structure. Would love to see more advanced security topics covered.", date: "2 months ago" },
 ]
 
-export function CourseDetail({ course }: { course: Course }) {
+export function CourseDetail({
+  course,
+  enrolledOnChain = false,
+}: {
+  course: Course
+  enrolledOnChain?: boolean
+}) {
+  const { publicKey, sendTransaction } = useWallet()
+  const [isEnrolling, setIsEnrolling] = useState(false)
+  const [enrollError, setEnrollError] = useState<string | null>(null)
+
   const totalLessons = course.modules.reduce((acc, m) => acc + m.lessons.length, 0)
   const completedLessons = course.modules.reduce(
     (acc, m) => acc + m.lessons.filter((l) => l.completed).length,
@@ -62,6 +75,34 @@ export function CourseDetail({ course }: { course: Course }) {
       }
     }
     if (nextLessonId) break
+  }
+
+  async function handleEnroll() {
+    if (!publicKey || !sendTransaction) {
+      setEnrollError("Connect a wallet to enroll.")
+      return
+    }
+    setIsEnrolling(true)
+    setEnrollError(null)
+    try {
+      const ensureResponse = await fetch("/api/academy/courses/ensure", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ slug: course.slug }),
+      })
+      if (!ensureResponse.ok) {
+        const payload = (await ensureResponse.json().catch(() => null)) as { error?: string } | null
+        throw new Error(payload?.error ?? "Failed to ensure course on-chain.")
+      }
+
+      await sendEnrollCourse(sendTransaction, publicKey.toBase58(), course.slug)
+      window.location.reload()
+    } catch (error) {
+      setEnrollError(error instanceof Error ? error.message : "Enrollment failed.")
+    } finally {
+      setIsEnrolling(false)
+    }
   }
 
   return (
@@ -129,7 +170,7 @@ export function CourseDetail({ course }: { course: Course }) {
             {/* Enrollment card */}
             <div className="lg:row-start-1 lg:col-start-3">
               <div className="rounded-xl border border-border bg-card p-6 glow-green">
-                {course.progress > 0 ? (
+                {course.progress > 0 || enrolledOnChain ? (
                   <>
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm text-muted-foreground">Your Progress</span>
@@ -159,12 +200,17 @@ export function CourseDetail({ course }: { course: Course }) {
                         Earn {course.xp} XP upon completion
                       </p>
                     </div>
-                    <Link href={`/courses/${course.slug}/lessons/${course.modules[0]?.lessons[0]?.id || "1-1"}`}>
-                      <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90 gap-2">
-                        Enroll Now
-                        <ArrowRight className="h-4 w-4" />
-                      </Button>
-                    </Link>
+                    <Button
+                      onClick={handleEnroll}
+                      disabled={isEnrolling}
+                      className="w-full bg-primary text-primary-foreground hover:bg-primary/90 gap-2"
+                    >
+                      {isEnrolling ? "Enrolling..." : "Enroll Now"}
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                    {enrollError ? (
+                      <p className="mt-2 text-xs text-destructive">{enrollError}</p>
+                    ) : null}
                   </>
                 )}
                 <Separator className="my-4" />

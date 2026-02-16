@@ -12,6 +12,7 @@ import {
   useRef,
   useState,
 } from "react"
+import { sendInitLearner } from "@/lib/solana/init-learner"
 
 type WalletSessionResponse = {
   authenticated: boolean
@@ -43,12 +44,13 @@ type WalletAuthProviderProps = {
 }
 
 export function WalletAuthProvider({ children }: WalletAuthProviderProps) {
-  const { publicKey, signMessage, connected, disconnect } = useWallet()
+  const { publicKey, signMessage, sendTransaction, connected, disconnect } = useWallet()
   const [isLoading, setIsLoading] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [user, setUser] = useState<WalletSessionResponse["user"]>(null)
   const [authError, setAuthError] = useState<string | null>(null)
   const lastAutoAuthAddress = useRef<string | null>(null)
+  const lastLearnerInitAttempt = useRef<string | null>(null)
 
   const syncSession = useCallback(async () => {
     setIsLoading(true)
@@ -134,6 +136,7 @@ export function WalletAuthProvider({ children }: WalletAuthProviderProps) {
       setUser(null)
       setAuthError(null)
       lastAutoAuthAddress.current = null
+      lastLearnerInitAttempt.current = null
       if (connected) {
         await disconnect()
       }
@@ -148,6 +151,7 @@ export function WalletAuthProvider({ children }: WalletAuthProviderProps) {
       setUser(null)
       setAuthError(null)
       lastAutoAuthAddress.current = null
+      lastLearnerInitAttempt.current = null
       return
     }
 
@@ -157,6 +161,7 @@ export function WalletAuthProvider({ children }: WalletAuthProviderProps) {
       setUser(null)
       setAuthError(null)
       lastAutoAuthAddress.current = null
+      lastLearnerInitAttempt.current = null
     }
   }, [user, connected, publicKey])
 
@@ -171,6 +176,50 @@ export function WalletAuthProvider({ children }: WalletAuthProviderProps) {
     lastAutoAuthAddress.current = connectedAddress
     void loginWithWallet().catch(() => undefined)
   }, [connected, publicKey, isAuthenticated, isLoading, loginWithWallet])
+
+  useEffect(() => {
+    if (!connected || !publicKey || !sendTransaction) return
+    if (!isAuthenticated || !user) return
+    if (user.walletAddress !== publicKey.toBase58()) return
+    if (lastLearnerInitAttempt.current === user.walletAddress) return
+
+    let cancelled = false
+    const run = async () => {
+      try {
+        const response = await fetch("/api/identity/me", {
+          method: "GET",
+          credentials: "include",
+          cache: "no-store",
+        })
+        if (!response.ok) return
+        const payload = (await response.json()) as {
+          authenticated?: boolean
+          snapshot?: { chain?: { hasLearnerProfile?: boolean } } | null
+        }
+        if (!payload.authenticated) return
+        if (payload.snapshot?.chain?.hasLearnerProfile) {
+          lastLearnerInitAttempt.current = user.walletAddress
+          return
+        }
+
+        lastLearnerInitAttempt.current = user.walletAddress
+        await sendInitLearner(sendTransaction, user.walletAddress)
+        if (!cancelled) {
+          setAuthError(null)
+        }
+      } catch (error) {
+        if (!cancelled) {
+          // Keep auth successful even if user rejected learner init signature.
+          setAuthError(error instanceof Error ? error.message : "Learner profile initialization failed.")
+        }
+      }
+    }
+
+    void run()
+    return () => {
+      cancelled = true
+    }
+  }, [connected, publicKey, sendTransaction, isAuthenticated, user])
 
   const retryAuthentication = useCallback(() => {
     lastAutoAuthAddress.current = null

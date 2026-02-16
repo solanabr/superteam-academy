@@ -2,9 +2,12 @@ import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { CourseCatalog } from "@/components/courses/course-catalog"
 import { requireAuthenticatedUser } from "@/lib/server/auth-adapter"
+import { getAllCourseProgressSnapshots } from "@/lib/server/academy-progress-adapter"
 
 export default async function CoursesPage() {
-  await requireAuthenticatedUser()
+  const user = await requireAuthenticatedUser()
+  const snapshots = await getAllCourseProgressSnapshots(user.walletAddress)
+  const courseList = snapshots.map((item) => item.course)
 
   return (
     <div className="min-h-screen bg-background">
@@ -16,7 +19,7 @@ export default async function CoursesPage() {
             Master blockchain development with hands-on interactive courses.
           </p>
         </div>
-        <CourseCatalog />
+        <CourseCatalog courses={courseList} />
       </main>
       <Footer />
     </div>

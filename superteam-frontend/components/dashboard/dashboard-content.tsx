@@ -19,10 +19,10 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { OnChainLearnerCard } from "@/components/dashboard/onchain-learner-card"
 import {
   currentUser,
-  courses,
+  type Course,
+  courses as mockCourses,
   recentActivity,
   getStreakDays,
 } from "@/lib/mock-data"
@@ -42,9 +42,12 @@ const badgeIcons: Record<string, typeof Zap> = {
 
 export function DashboardContent({
   identity,
+  coursesData,
 }: {
   identity?: IdentitySnapshot
+  coursesData?: Course[]
 }) {
+  const courses = coursesData ?? mockCourses
   const profile = identity?.profile
   const inProgressCourses = courses.filter(
     c => c.progress > 0 && c.progress < 100,
@@ -73,8 +76,6 @@ export function DashboardContent({
           </Button>
         </Link>
       </div>
-
-      {identity ? <OnChainLearnerCard identity={identity} /> : null}
 
       {/* Stats row */}
       <div className="grid grid-cols-2 gap-4 mb-8 lg:grid-cols-4">

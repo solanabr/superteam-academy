@@ -5,13 +5,13 @@ import { Search, SlidersHorizontal } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { courses } from "@/lib/mock-data"
+import type { Course } from "@/lib/mock-data"
 import { CourseCard } from "./course-card"
 
 const difficulties = ["All", "Beginner", "Intermediate", "Advanced"] as const
-const allTags = Array.from(new Set(courses.flatMap((c) => c.tags)))
 
-export function CourseCatalog() {
+export function CourseCatalog({ courses }: { courses: Course[] }) {
+  const allTags = useMemo(() => Array.from(new Set(courses.flatMap((c) => c.tags))), [courses])
   const [search, setSearch] = useState("")
   const [difficulty, setDifficulty] = useState<string>("All")
   const [selectedTag, setSelectedTag] = useState<string | null>(null)

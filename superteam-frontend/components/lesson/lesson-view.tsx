@@ -45,6 +45,7 @@ interface LessonViewProps {
   lessonIndex: number
   prevLesson: Lesson | null
   nextLesson: Lesson | null
+  enrolledOnChain?: boolean
 }
 
 export function LessonView({
@@ -52,16 +53,50 @@ export function LessonView({
   lesson,
   prevLesson,
   nextLesson,
+  enrolledOnChain = false,
 }: LessonViewProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [showHint, setShowHint] = useState(false)
   const [showSolution, setShowSolution] = useState(false)
+  const [isCompleting, setIsCompleting] = useState(false)
+  const [completeError, setCompleteError] = useState<string | null>(null)
 
   const allLessons = course.modules.flatMap((m) => m.lessons)
   const completed = allLessons.filter((l) => l.completed).length
   const progressPct = Math.round((completed / allLessons.length) * 100)
 
   const isChallenge = lesson.type === "challenge"
+
+  async function handleMarkComplete() {
+    if (!enrolledOnChain) {
+      setCompleteError("You must enroll on-chain before completing lessons.")
+      return
+    }
+    setIsCompleting(true)
+    setCompleteError(null)
+    try {
+      const response = await fetch("/api/academy/progress/complete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ slug: course.slug, lessonId: lesson.id }),
+      })
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as { error?: string } | null
+        throw new Error(payload?.error ?? "Failed to complete lesson on-chain.")
+      }
+
+      if (nextLesson) {
+        window.location.href = `/courses/${course.slug}/lessons/${nextLesson.id}`
+        return
+      }
+      window.location.href = `/courses/${course.slug}`
+    } catch (error) {
+      setCompleteError(error instanceof Error ? error.message : "Completion failed.")
+    } finally {
+      setIsCompleting(false)
+    }
+  }
 
   return (
     <div className="flex h-screen flex-col bg-background">
@@ -211,9 +246,13 @@ export function LessonView({
                 ) : (
                   <div />
                 )}
-                <Button className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2">
+                <Button
+                  onClick={handleMarkComplete}
+                  disabled={isCompleting}
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2"
+                >
                   <CheckCircle2 className="h-4 w-4" />
-                  Mark Complete
+                  {isCompleting ? "Submitting..." : "Mark Complete"}
                 </Button>
                 {nextLesson ? (
                   <Link href={`/courses/${course.slug}/lessons/${nextLesson.id}`}>
@@ -226,6 +265,9 @@ export function LessonView({
                   <div />
                 )}
               </div>
+              {completeError ? (
+                <p className="mt-3 text-sm text-destructive">{completeError}</p>
+              ) : null}
             </div>
           </div>
         )}

@@ -1,0 +1,76 @@
+import { PublicKey } from "@solana/web3.js"
+import { NextResponse } from "next/server"
+import { getAuthenticatedUser } from "@/lib/server/auth-adapter"
+import {
+  completeLessonOnChain,
+  fetchEnrollment,
+  fetchLearnerProfile,
+  finalizeCourseOnChain,
+} from "@/lib/server/academy-program"
+import { getCatalogCourseMeta } from "@/lib/server/academy-course-catalog"
+
+type CompleteLessonBody = {
+  slug?: string
+  lessonId?: string
+}
+
+export async function POST(request: Request) {
+  const user = await getAuthenticatedUser()
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
+  const body = (await request.json().catch(() => ({}))) as CompleteLessonBody
+  const slug = body.slug?.trim()
+  if (!slug) {
+    return NextResponse.json({ error: "Course slug is required." }, { status: 400 })
+  }
+
+  const meta = getCatalogCourseMeta(slug)
+  if (!meta) {
+    return NextResponse.json({ error: "Unknown course slug." }, { status: 404 })
+  }
+
+  const userPk = new PublicKey(user.walletAddress)
+  const learner = await fetchLearnerProfile(userPk)
+  if (!learner) {
+    return NextResponse.json(
+      { error: "Learner profile is missing. Initialize learner first." },
+      { status: 400 },
+    )
+  }
+
+  const enrollmentBefore = await fetchEnrollment(userPk, slug)
+  if (!enrollmentBefore) {
+    return NextResponse.json(
+      { error: "Enrollment is missing. Enroll in the course first." },
+      { status: 400 },
+    )
+  }
+
+  await completeLessonOnChain(userPk, slug)
+  const enrollmentAfter = await fetchEnrollment(userPk, slug)
+  const lessonsCompleted = Number(enrollmentAfter?.lessonsCompleted ?? 0)
+
+  let finalized = false
+  if (lessonsCompleted >= meta.lessonsCount) {
+    try {
+      await finalizeCourseOnChain(userPk, slug)
+      finalized = true
+    } catch {
+      // Keep lesson completion success even if finalize preconditions fail in race situations.
+    }
+  }
+
+  return NextResponse.json(
+    {
+      ok: true,
+      slug,
+      lessonId: body.lessonId ?? null,
+      lessonsCompleted,
+      lessonsTotal: meta.lessonsCount,
+      finalized,
+    },
+    { status: 200 },
+  )
+}

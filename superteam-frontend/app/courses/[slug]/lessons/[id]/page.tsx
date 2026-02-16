@@ -1,6 +1,6 @@
 import { LessonView } from "@/components/lesson/lesson-view"
-import { courses } from "@/lib/mock-data"
 import { requireAuthenticatedUser } from "@/lib/server/auth-adapter"
+import { getCourseProgressSnapshot } from "@/lib/server/academy-progress-adapter"
 import { notFound } from "next/navigation"
 
 export default async function LessonPage({
@@ -8,10 +8,11 @@ export default async function LessonPage({
 }: {
   params: Promise<{ slug: string; id: string }>
 }) {
-  await requireAuthenticatedUser()
+  const user = await requireAuthenticatedUser()
   const { slug, id } = await params
-  const course = courses.find((c) => c.slug === slug)
-  if (!course) return notFound()
+  const snapshot = await getCourseProgressSnapshot(user.walletAddress, slug)
+  if (!snapshot) return notFound()
+  const course = snapshot.course
 
   let currentLesson = null
   let currentModuleIndex = 0
@@ -43,6 +44,7 @@ export default async function LessonPage({
       lessonIndex={currentLessonIndex}
       prevLesson={prevLesson}
       nextLesson={nextLesson}
+      enrolledOnChain={snapshot.enrolledOnChain}
     />
   )
 }
