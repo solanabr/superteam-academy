@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { CodeEditor, SupportedLanguage } from "./CodeEditor";
 import { Button } from "@/components/ui/button";
+import { TerminalOutput } from "./TerminalOutput";
 
 type ChallengeRunnerProps = {
   language: SupportedLanguage;
@@ -12,6 +13,15 @@ type ChallengeRunnerProps = {
 };
 
 type RunStatus = "idle" | "running" | "passed" | "failed";
+
+type TestResult = {
+  name: string;
+  passed: boolean;
+  input?: string;
+  expected?: string;
+  actual?: string;
+  error?: string;
+};
 
 export function ChallengeRunner({
   language,
@@ -23,12 +33,21 @@ export function ChallengeRunner({
   const [status, setStatus] = useState<RunStatus>("idle");
   const [message, setMessage] = useState<string | null>(null);
   const [marking, setMarking] = useState(false);
-  const [output, setOutput] = useState<string>(""); // Simple terminal-style output
+  const [output, setOutput] = useState<string>("");
+  const [testResults, setTestResults] = useState<TestResult[]>([]);
+  const [dailyLimitReached, setDailyLimitReached] = useState(false);
+  const [executionStats, setExecutionStats] = useState<{
+    memory?: string;
+    cpuTime?: string;
+  }>({});
 
   const handleRun = async () => {
     setStatus("running");
     setMessage(null);
     setOutput("");
+    setTestResults([]);
+    setDailyLimitReached(false);
+    setExecutionStats({});
 
     if (!code.trim()) {
       setStatus("failed");
@@ -48,36 +67,71 @@ export function ChallengeRunner({
         }),
       });
 
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        setStatus("failed");
+        setMessage("Failed to execute code. Please check your code and try again.");
+        setOutput(`> error: ${errorData.stderr || errorData.error || "API request failed"}\n`);
+        return;
+      }
+
       const data = (await res.json()) as {
         stdout?: string;
         stderr?: string;
         passed?: boolean;
+        testResults?: TestResult[];
+        memory?: string;
+        cpuTime?: string;
+        dailyLimitReached?: boolean;
       };
 
+      setDailyLimitReached(Boolean(data.dailyLimitReached));
+
+      // Combine stdout and stderr for display (stderr contains errors)
       const lines: string[] = [];
       if (data.stdout) lines.push(data.stdout);
       if (data.stderr) lines.push(data.stderr);
-      setOutput(lines.join("\n"));
+      // If both are empty but execution failed, show a message
+      const combinedOutput = lines.join("\n");
+      setOutput(combinedOutput || (data.passed ? "> No output\n" : "> Execution failed with no output\n"));
+
+      // Set test results if available
+      if (data.testResults) {
+        setTestResults(data.testResults);
+      }
+
+      // Set execution stats
+      if (data.memory || data.cpuTime) {
+        setExecutionStats({
+          memory: data.memory,
+          cpuTime: data.cpuTime,
+        });
+      }
 
       if (data.passed) {
         setStatus("passed");
-        setMessage("All tests passed.");
+        setMessage("All tests passed! ✓");
       } else {
         setStatus("failed");
-        setMessage("Some tests failed. Check the terminal output above.");
+        if (data.testResults && data.testResults.length > 0) {
+          const failedCount = data.testResults.filter((t) => !t.passed).length;
+          setMessage(`${failedCount} of ${data.testResults.length} test(s) failed.`);
+        } else {
+          setMessage("Code execution failed. Check the terminal output above.");
+        }
       }
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error("run-code error", err);
       setStatus("failed");
       setMessage("Running code failed. Please try again.");
-      setOutput("> error: failed to contact runner API.\n");
+      setOutput(`> error: ${err instanceof Error ? err.message : "Failed to contact runner API"}\n`);
     }
   };
 
   const handleMarkComplete = async () => {
     if (status !== "passed") {
-      setMessage("Run the challenge and pass all tests before marking complete (stub policy).");
+      setMessage("Run the challenge and pass all tests before marking complete.");
       return;
     }
     try {
@@ -103,7 +157,7 @@ export function ChallengeRunner({
             onClick={handleRun}
             disabled={status === "running"}
           >
-            {status === "running" ? "Running…" : "Run tests (stub)"}
+            {status === "running" ? "Running…" : "Run tests"}
           </Button>
           <Button
             size="sm"
@@ -124,47 +178,92 @@ export function ChallengeRunner({
         />
       </div>
 
-      <div className="mt-2 flex min-h-[96px] flex-col rounded-md border border-border-subtle bg-black/80 text-xs font-mono text-text-secondary">
-        <div className="flex items-center justify-between border-b border-border-subtle/60 bg-white/5 px-3 py-1.5">
-          <span className="uppercase tracking-wide">Terminal</span>
-          <span className="text-[10px]">
-            {status === "running"
-              ? "Running…"
-              : status === "passed"
-                ? "All tests passed"
-                : status === "failed"
-                  ? "Tests failed"
-                  : "Idle"}
-          </span>
-        </div>
-        <div className="max-h-32 flex-1 overflow-auto px-3 py-2">
-          <pre className="whitespace-pre-wrap">
-            {output || "> Ready. Click \"Run tests\" to execute your code.\n"}
-          </pre>
-        </div>
-      </div>
+      <TerminalOutput
+        output={output}
+        status={status === "passed" ? "success" : status === "failed" ? "error" : status === "running" ? "running" : "idle"}
+        executionStats={executionStats}
+        dailyLimitReached={dailyLimitReached}
+        onClear={() => {
+          setOutput("");
+          setStatus("idle");
+          setTestResults([]);
+          setDailyLimitReached(false);
+          setExecutionStats({});
+        }}
+      />
 
       {testCases.length > 0 && (
         <div className="rounded-md border border-border-subtle bg-surface-high/40 p-3 text-xs text-text-secondary">
-          <p className="mb-1 font-semibold text-text-primary">Test cases (stub)</p>
-          <ul className="space-y-1">
-            {testCases.map((tc, i) => (
-              <li key={i}>
-                <span className="text-text-primary">{tc.name ?? `Case ${i + 1}`}</span>
-                {tc.input && (
-                  <>
-                    {" "}
-                    — input: <code className="rounded bg-void/80 px-1">{tc.input}</code>
-                  </>
-                )}
-                {tc.expected && (
-                  <>
-                    {" "}
-                    → expected: <code className="rounded bg-void/80 px-1">{tc.expected}</code>
-                  </>
-                )}
-              </li>
-            ))}
+          <p className="mb-2 font-semibold text-text-primary">
+            Test Cases
+            {testResults.length > 0 && (
+              <span className="ml-2 text-xs font-normal">
+                ({testResults.filter((t) => t.passed).length}/{testResults.length} passed)
+              </span>
+            )}
+          </p>
+          <ul className="space-y-2">
+            {testCases.map((tc, i) => {
+              const result = testResults[i];
+              const isPassed = result?.passed;
+              const showResult = result !== undefined;
+
+              return (
+                <li
+                  key={i}
+                  className={`rounded border p-2 ${
+                    showResult
+                      ? isPassed
+                        ? "border-solana/30 bg-solana/5"
+                        : "border-rust/30 bg-rust/5"
+                      : "border-border-subtle"
+                  }`}
+                >
+                  <div className="flex items-start gap-2">
+                    {showResult && (
+                      <span className={`text-sm ${isPassed ? "text-solana" : "text-rust"}`}>
+                        {isPassed ? "✓" : "✗"}
+                      </span>
+                    )}
+                    <div className="flex-1">
+                      <span className="font-semibold text-text-primary">
+                        {tc.name ?? `Test ${i + 1}`}
+                      </span>
+                      {tc.input && (
+                        <div className="mt-1">
+                          <span className="text-text-secondary">Input: </span>
+                          <code className="rounded bg-void/80 px-1 text-text-primary">
+                            {tc.input}
+                          </code>
+                        </div>
+                      )}
+                      {tc.expected && (
+                        <div className="mt-1">
+                          <span className="text-text-secondary">Expected: </span>
+                          <code className="rounded bg-void/80 px-1 text-text-primary">
+                            {tc.expected}
+                          </code>
+                        </div>
+                      )}
+                      {result?.actual !== undefined && (
+                        <div className="mt-1">
+                          <span className="text-text-secondary">Got: </span>
+                          <code className="rounded bg-void/80 px-1 text-text-primary">
+                            {result.actual}
+                          </code>
+                        </div>
+                      )}
+                      {result?.error && (
+                        <div className="mt-1 text-rust">
+                          <span className="font-semibold">Error: </span>
+                          {result.error}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         </div>
       )}

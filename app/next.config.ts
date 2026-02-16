@@ -27,7 +27,7 @@ const nextConfig: NextConfig = {
   turbopack: {},
   // SVG fix only in webpack (production build). Not in Turbopack to avoid CJS/ESM conflict on @privy-io/chains.
   // Dev relies on postinstall script (fix-appkit-ui-svg.js) for node_modules patch.
-  webpack: (config) => {
+  webpack: (config, { isServer }) => {
     config.module ??= { rules: [] };
     const rules = config.module.rules as Array<{
       enforce?: "pre";
@@ -41,6 +41,34 @@ const nextConfig: NextConfig = {
       include: nodeModulesPath,
       use: svgAttrReplace,
     });
+    
+    // Make @codemirror/lsp-client optional - handle gracefully if not installed
+    // The code uses dynamic imports with try-catch, so runtime will handle missing package
+    // This webpack config prevents build errors when the package is not installed
+    const originalExternals = config.externals || [];
+    config.externals = [
+      ...(Array.isArray(originalExternals) ? originalExternals : []),
+      ({ request }: { request?: string }, callback: Function) => {
+        if (request === "@codemirror/lsp-client") {
+          // Check if module exists
+          try {
+            require.resolve(request);
+            // Module exists - let webpack handle it normally
+            return callback();
+          } catch {
+            // Module doesn't exist - provide empty object to prevent build error
+            // Runtime code uses dynamic imports with try-catch to handle gracefully
+            return callback(null, "{}");
+          }
+        }
+        // For other modules, use original externals logic
+        if (typeof originalExternals === "function") {
+          return originalExternals({ request }, callback);
+        }
+        callback();
+      },
+    ];
+    
     return config;
   },
 };

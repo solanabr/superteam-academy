@@ -22,6 +22,7 @@
     "@codemirror/state": "^6.4.0",
     "@replit/codemirror-indentation-markers": "^6.5.3",
     "@codemirror/view": "^6.23.0",
+    "@codemirror/lsp-client": "^6.2.1",
     "@marimo-team/codemirror-ai": "^0.3.5",
     "@prisma/client": "^6.19.2",
     "@privy-io/react-auth": "^3.13.1",

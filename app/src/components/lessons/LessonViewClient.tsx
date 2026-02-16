@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import type { CourseDetail, LessonRef, ModuleRef } from "@/sanity/lib/queries";
 import { Button } from "@/components/ui/button";
 import { ChallengeRunner } from "./ChallengeRunner";
 import { CodeEditor, SupportedLanguage } from "./CodeEditor";
+import { TerminalOutput } from "./TerminalOutput";
 
 type LessonViewClientProps = {
   course: CourseDetail;
@@ -44,6 +45,15 @@ export function LessonViewClient({ course, lesson }: LessonViewClientProps) {
       "rust"
   );
 
+  // Playground state (for non-challenge lessons)
+  const [playgroundCode, setPlaygroundCode] = useState<string>("");
+  const [playgroundOutput, setPlaygroundOutput] = useState<string>("");
+  const [playgroundStatus, setPlaygroundStatus] = useState<"idle" | "running" | "success" | "error">("idle");
+  const [dailyLimitReached, setDailyLimitReached] = useState(false);
+  const [executionStats, setExecutionStats] = useState<{ memory?: string; cpuTime?: string }>({});
+  // Ref to get code directly from editor (fallback if onChange doesn't fire)
+  const getCodeFromEditorRef = useRef<(() => string) | null>(null);
+
   const flattened = useMemo(() => flattenLessons(course.modules), [course.modules]);
   const current = flattened.find((l) => l.lesson._id === lesson._id);
   const currentIndex = current?.index ?? 0;
@@ -69,6 +79,75 @@ export function LessonViewClient({ course, lesson }: LessonViewClientProps) {
     } catch (e) {
       // eslint-disable-next-line no-console
       console.error("Error marking lesson complete:", e);
+    }
+  };
+
+  const handleRunCode = async () => {
+    // Get code from editor directly (fallback if state is stale)
+    const codeToRun = getCodeFromEditorRef.current?.() || playgroundCode;
+    
+    if (!codeToRun.trim()) {
+      setPlaygroundOutput("> error: no code provided. Please write some code first.\n");
+      setPlaygroundStatus("error");
+      return;
+    }
+
+    setPlaygroundStatus("running");
+    setPlaygroundOutput("");
+    setExecutionStats({});
+    setDailyLimitReached(false);
+
+    try {
+      const res = await fetch("/api/run-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          language,
+          code: codeToRun,
+          // No test cases for playground mode
+        }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        setPlaygroundStatus("error");
+        setPlaygroundOutput(`> error: ${errorData.stderr || errorData.error || "API request failed"}\n`);
+        return;
+      }
+
+      const data = (await res.json()) as {
+        stdout?: string;
+        stderr?: string;
+        passed?: boolean;
+        memory?: string;
+        cpuTime?: string;
+        dailyLimitReached?: boolean;
+      };
+
+      setDailyLimitReached(Boolean(data.dailyLimitReached));
+
+      // Combine stdout and stderr for display (stderr contains errors)
+      const lines: string[] = [];
+      if (data.stdout) lines.push(data.stdout);
+      if (data.stderr) lines.push(data.stderr);
+      // If both are empty but execution failed, show a message
+      const combinedOutput = lines.join("\n");
+      setPlaygroundOutput(combinedOutput || (data.passed ? "> No output\n" : "> Execution failed with no output\n"));
+
+      // Set execution stats
+      if (data.memory || data.cpuTime) {
+        setExecutionStats({
+          memory: data.memory,
+          cpuTime: data.cpuTime,
+        });
+      }
+
+      setPlaygroundStatus(data.passed ? "success" : "error");
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error("run-code error", err);
+      setPlaygroundStatus("error");
+      setPlaygroundOutput(`> error: ${err instanceof Error ? err.message : "Failed to contact runner API"}\n`);
     }
   };
 
@@ -172,22 +251,49 @@ export function LessonViewClient({ course, lesson }: LessonViewClientProps) {
               <>
                 <div className="flex items-center justify-between gap-2 text-xs text-text-secondary">
                   <span>Playground</span>
-                  <span className="rounded-full border border-border-subtle px-2 py-0.5">
-                    <kbd className="rounded bg-void/70 px-1">Ctrl/Cmd+F</kbd> search •{" "}
-                    <kbd className="rounded bg-void/70 px-1">Ctrl+Space</kbd> autocomplete •{" "}
-                    <kbd className="rounded bg-void/70 px-1">Ctrl/Cmd+/</kbd> comment •{" "}
-                    <kbd className="rounded bg-void/70 px-1">Ctrl/Cmd+Z</kbd> undo •{" "}
-                    <kbd className="rounded bg-void/70 px-1">Ctrl/Cmd+Shift+[</kbd> fold •{" "}
-                    <kbd className="rounded bg-void/70 px-1">Alt+Drag</kbd> column select
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="rounded-full border border-border-subtle px-2 py-0.5">
+                      <kbd className="rounded bg-void/70 px-1">Ctrl/Cmd+F</kbd> search •{" "}
+                      <kbd className="rounded bg-void/70 px-1">Ctrl+Space</kbd> autocomplete •{" "}
+                      <kbd className="rounded bg-void/70 px-1">Ctrl/Cmd+/</kbd> comment •{" "}
+                      <kbd className="rounded bg-void/70 px-1">Ctrl/Cmd+Z</kbd> undo •{" "}
+                      <kbd className="rounded bg-void/70 px-1">Ctrl/Cmd+Shift+[</kbd> fold •{" "}
+                      <kbd className="rounded bg-void/70 px-1">Alt+Drag</kbd> column select
+                    </span>
+                    <Button
+                      size="sm"
+                      onClick={handleRunCode}
+                      disabled={playgroundStatus === "running"}
+                      className="shrink-0"
+                    >
+                      {playgroundStatus === "running" ? "Running…" : "Run Code"}
+                    </Button>
+                  </div>
                 </div>
                 <div className="flex-1 overflow-hidden rounded-md border border-border-subtle bg-void/60">
                   <CodeEditor
                     initialValue=""
                     language={language}
+                    onChange={setPlaygroundCode}
+                    onGetCode={(getCode) => {
+                      getCodeFromEditorRef.current = getCode;
+                    }}
                     className="h-full"
                   />
                 </div>
+                {/* Terminal Output Box */}
+                <TerminalOutput
+                  output={playgroundOutput}
+                  status={playgroundStatus}
+                  executionStats={executionStats}
+                  dailyLimitReached={dailyLimitReached}
+                  onClear={() => {
+                    setPlaygroundOutput("");
+                    setPlaygroundStatus("idle");
+                    setExecutionStats({});
+                    setDailyLimitReached(false);
+                  }}
+                />
               </>
             )}
           </div>
