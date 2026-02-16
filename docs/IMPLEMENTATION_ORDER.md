@@ -71,45 +71,50 @@ Incremental build plan. Each phase produces a testable, deployable artifact. Shi
 **Key logic:**
 - Prerequisite check on enroll (if course has prerequisite, verify learner has completed it)
 - Bitmap manipulation for lesson tracking
-- XP minting via Token-2022 CPI
-- Streak update as side effect of `complete_lesson`
-- On-chain daily XP rate limiting
-- 24h cooldown on unenroll
+- XP minting via Token-2022 CPI (`course.xp_per_lesson` — not a parameter, read from Course)
+- Streak update as side effect of `complete_lesson` (simple case: no freezes in Phase 4)
+- On-chain daily XP rate limiting (reads `config.max_daily_xp`)
+- Checked arithmetic throughout
 
 **Tests:**
-- Enroll creates enrollment with correct snapshot
+- Enroll creates enrollment with correct snapshot, `credential_asset = None`
 - Prerequisite enforcement (with and without)
 - `complete_lesson` sets correct bit in bitmap
-- `complete_lesson` mints XP to learner token account
-- `complete_lesson` updates streak (same day, next day, gap, freeze)
+- `complete_lesson` mints `xp_per_lesson` to learner token account
+- `complete_lesson` updates streak (same day, next day, gap → broken)
 - Double-completion of same lesson fails
-- Daily XP cap enforced
-- Unenroll after 24h works, before 24h fails
+- Daily XP cap enforced (reads from config, not constant)
 - Only backend signer can call `complete_lesson`
 
 **Estimated effort:** 3-4 days (most complex phase)
 
 ---
 
-## Phase 5: Rewards — XP Minting + Course Completion
+## Phase 5: Completion — Finalize + Bonus + Close
 
-**Instructions:** `finalize_course`
+**Instructions:** `finalize_course`, `claim_completion_bonus`, `close_enrollment`
 
-**What you get:** Course completion awards XP to both learner and creator. Working learning platform with economic incentives.
+**What you get:** Course completion awards creator XP, learner claims bonus XP separately, enrollment can be closed (both incomplete with 24h cooldown and completed). Working learning platform with economic incentives.
 
 **Key logic:**
 - Verify all lessons complete (bitmap popcount == lesson_count)
-- Mint XP to learner (course.xp_total)
-- Mint XP to creator (course.completion_reward_xp, gated by min_completions)
-- Set enrollment.completed_at
-- Increment course.total_completions
+- Mint creator XP (`course.creator_reward_xp`, gated by `min_completions_for_reward`)
+- Set `enrollment.completed_at`
+- Increment `course.total_completions`
+- `claim_completion_bonus`: learner-signed, mints `course.completion_bonus_xp`, one-time per enrollment
+- `close_enrollment`: unified handler — completed courses close freely, incomplete courses require 24h cooldown
 
 **Tests:**
 - Finalize with incomplete bitmap fails
-- Finalize awards correct XP to learner and creator
+- Finalize awards correct XP to creator only (learner XP already minted per-lesson)
 - Creator reward gated by min_completions_for_reward
 - Double finalize fails (completed_at already set)
-- Rate limit still enforced for finalize XP
+- `claim_completion_bonus` works after finalization, fails before
+- `claim_completion_bonus` cannot be called twice
+- `claim_completion_bonus` respects daily XP cap
+- `close_enrollment` on completed course succeeds immediately
+- `close_enrollment` on incomplete course requires 24h cooldown
+- `close_enrollment` returns rent to learner
 
 **Estimated effort:** 1-2 days
 
@@ -117,33 +122,37 @@ Incremental build plan. Each phase produces a testable, deployable artifact. Shi
 
 **Milestone: Phases 1-5 = Working Learning Platform**
 
-At this point you have: config management, learner profiles, course registry, enrollment, lesson completion with XP, streaks, and course finalization. Deploy to devnet and test the full flow end-to-end.
+At this point you have: config management, learner profiles, course registry, enrollment, lesson completion with per-lesson XP, streaks, course finalization with creator rewards, learner completion bonus claiming, and enrollment close/unenroll. Deploy to devnet and test the full flow end-to-end.
 
 ---
 
-## Phase 6: Credentials — ZK Compression Integration
+## Phase 6: Credentials — Metaplex Core NFTs
 
 **Instructions:** `issue_credential`
 
-**What you get:** Verifiable, rent-free credentials that upgrade as learners progress through tracks. The core differentiator.
+**What you get:** Soulbound, wallet-visible credential NFTs that upgrade as learners progress through tracks. Immediately visible in Phantom, Backpack, Solflare.
+
+**Pre-work:** Create Metaplex Core collection NFTs for each track (one-time authority action, off-chain or via admin script).
 
 **Key logic:**
 - Requires `enrollment.completed_at.is_some()` (finalize_course ran first)
-- Light Protocol CPI for compressed account creation/update
-- Deterministic address derivation: `["credential", learner, track_id]`
-- Create new credential (first course in track) or upgrade existing
-- Validity proof from Photon indexer
+- Checks `enrollment.credential_asset`: `None` → create, `Some` → upgrade (**no DAS API needed**)
+- Metaplex Core CPI: `createV2` (new) or `updateV1` + `updatePluginV1` (upgrade)
+- PermanentFreezeDelegate plugin makes NFTs soulbound on mint
+- Attributes plugin stores level, courses_completed, total_xp on-chain
+- Stores new asset pubkey in `enrollment.credential_asset` after create
 
-**Dependencies:** Light SDK integration, Photon RPC endpoint
+**Dependencies:** `mpl-core` crate, Metaplex Core program (on-chain)
 
 **Tests:**
-- Issue credential for first course in track (create)
-- Issue credential for subsequent course (upgrade)
-- Credential level updates correctly
+- Issue credential for first course in track (create new NFT)
+- Issue credential for subsequent course (upgrade existing NFT)
+- Credential level and attributes update correctly
+- NFT is frozen (PermanentFreezeDelegate) — transfer fails
 - Cannot issue without finalize_course
-- Address derivation is deterministic and consistent
+- NFT belongs to correct track collection
 
-**Estimated effort:** 3-4 days (new CPI pattern, ZK Compression learning curve)
+**Estimated effort:** 1-2 days (well-documented CPI, standard patterns)
 
 ---
 
@@ -168,31 +177,37 @@ At this point you have: config management, learner profiles, course registry, en
 
 ---
 
-## Phase 8: Streak Polish — Freeze Awards
+## Phase 8: Streak Polish — Freeze Awards + Multi-Day Freeze Support
 
 **Instructions:** `award_streak_freeze`
 
-**What you get:** Backend can award streak freezes to learners (via achievements, events, or manual grants).
+**What you get:** Backend can award streak freezes to learners (via achievements, events, or manual grants). Update `update_streak` to consume multiple freezes for multi-day gaps.
 
 **Key logic:**
 - Backend-signed instruction
-- Increments learner.streak_freezes (cap at 255)
-- Emits StreakFreezeAwarded event
+- Increments `learner.streak_freezes` (cap at 255)
+- Emits `StreakFreezeAwarded` event
+- Update `update_streak` (from Phase 4) to handle multi-day freeze stacking:
+  - Gap of N missed days consumes N freezes if available
+  - If insufficient freezes, streak breaks entirely (no partial consumption)
 
 **Tests:**
 - Award increments counter
 - Only backend signer can call
-- Counter doesn't overflow
+- Counter doesn't overflow (checked_add to 255)
+- Multi-day gap with sufficient freezes → streak continues, freezes decremented
+- Multi-day gap with insufficient freezes → streak broken
+- Emits `StreakFreezesUsed` event with correct counts
 
 **Estimated effort:** 0.5 days
 
 ---
 
-## Phase 9: Growth — Referrals
+## Phase 9: Growth — Referrals (Analytics-Only)
 
 **Instructions:** `register_referral`
 
-**What you get:** Referral tracking for growth analytics.
+**What you get:** Referral tracking for growth analytics. No XP reward in v1 — referral rewards deferred to V2.
 
 **Key logic:**
 - Validate referrer LearnerProfile exists
@@ -210,23 +225,9 @@ At this point you have: config management, learner profiles, course registry, en
 
 ---
 
-## Phase 10: Cleanup — Close Enrollment
+## ~~Phase 10: Cleanup — Close Enrollment~~ (Merged into Phase 5)
 
-**Instructions:** `close_enrollment`
-
-**What you get:** Rent reclamation for completed courses. Platform polish.
-
-**Key logic:**
-- Requires completed_at.is_some()
-- Returns rent to learner
-- Emits EnrollmentClosed event
-
-**Tests:**
-- Close returns rent
-- Cannot close incomplete enrollment
-- Account is removed after close
-
-**Estimated effort:** 0.5 days
+`close_enrollment` is now part of Phase 5. It handles both incomplete (unenroll with 24h cooldown) and completed enrollment closure in a single instruction.
 
 ---
 
@@ -238,16 +239,15 @@ At this point you have: config management, learner profiles, course registry, en
 | 2. Learner Profile | 0.5 | 2.5 | User onboarding |
 | 3. Course Registry | 1 | 3.5 | Content management |
 | 4. Enrollment + Lessons | 3-4 | 7.5 | Core learning loop |
-| 5. Finalize Course | 1-2 | 9.5 | **Working platform** |
-| 6. Credentials (ZK) | 3-4 | 13.5 | Verifiable credentials |
-| 7. Achievements | 1 | 14.5 | Gamification |
-| 8. Streak Freezes | 0.5 | 15 | Streak polish |
-| 9. Referrals | 0.5 | 15.5 | Growth mechanism |
-| 10. Close Enrollment | 0.5 | 16 | Rent reclaim |
+| 5. Completion + Close | 1-2 | 9.5 | **Working platform** (finalize, bonus, close) |
+| 6. Credentials (Core) | 1-2 | 11.5 | Wallet-visible credentials |
+| 7. Achievements | 1 | 12.5 | Gamification |
+| 8. Streak Freezes | 0.5 | 13 | Multi-day freeze stacking |
+| 9. Referrals | 0.5 | 13.5 | Analytics tracking |
 
-**Total: ~16 working days for the full program.**
+**Total: ~13.5 working days for the full program.**
 
-Phases 1-5 (~10 days) give you a deployable MVP. Phases 6-10 (~6 days) add the differentiating features.
+Phases 1-5 (~10 days) give you a deployable MVP. Phases 6-9 (~3.5 days) add the differentiating features.
 
 ---
 
@@ -257,7 +257,7 @@ After each milestone:
 
 1. **After Phase 5:** Full end-to-end test on devnet. Create config, season, course. Init learner, enroll, complete all lessons, finalize course. Verify XP balances.
 
-2. **After Phase 6:** Credential creation and upgrade on devnet. Verify Photon indexing. Test validity proof flow.
+2. **After Phase 6:** Credential NFT creation and upgrade on devnet. Verify NFT appears in wallet. Test soulbound (transfer fails). Verify DAS API returns credential.
 
 3. **After Phase 10:** Full regression test. All 16 instructions exercised. Run for multiple days to verify streak logic across day boundaries.
 

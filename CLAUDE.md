@@ -8,7 +8,7 @@ Superteam Academy is a **decentralized learning platform on Solana** with gamifi
 
 **Canonical Specification**: `docs/SPEC.md` (source of truth for all program behavior)
 **Architecture Reference**: `docs/ARCHITECTURE.md` (account maps, data flows, CU budgets)
-**Build Order**: `docs/IMPLEMENTATION_ORDER.md` (10-phase incremental plan)
+**Build Order**: `docs/IMPLEMENTATION_ORDER.md` (9-phase incremental plan)
 **Deferred Features**: `docs/FUTURE_IMPROVEMENTS.md` (V2/V3 backlog)
 
 ## Communication Style

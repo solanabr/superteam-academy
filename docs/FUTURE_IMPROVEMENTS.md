@@ -130,7 +130,7 @@ The NFT would be a one-way operation — once decompressed, the credential lives
 - **Job boards:** "Must have 10,000+ XP to apply"
 - **DeFi:** "Reduced fees for certified developers"
 
-For ZK compressed credentials, this requires the calling program to also integrate Light Protocol CPI (or use decompressed NFTs as proof).
+Since credentials are now Metaplex Core NFTs, other programs can simply verify NFT ownership and read on-chain Attributes plugin data without any special CPI integration.
 
 **Complexity:** Medium. Mostly documentation and example code. Actual CPI interface is already available via account reads.
 
