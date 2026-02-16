@@ -387,6 +387,14 @@
     "threadNotFound": "Thread not found.",
     "backToThreads": "Back to Threads",
     "prev": "Previous",
-    "next": "Next"
+    "next": "Next",
+    "bounty": "Bounty",
+    "bountyAmount": "Bounty Amount",
+    "bountyPlaceholder": "Bounty in SOL (e.g. 0.01)",
+    "bountyPaid": "Paid",
+    "bountyOpen": "Open",
+    "bountyTransferred": "Bounty transferred to solver!",
+    "bountyOptional": "Optional",
+    "solBounty": "SOL Bounty"
   }
 }

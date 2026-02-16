@@ -8,6 +8,7 @@ import {
   ArrowBigUp,
   ArrowLeft,
   CheckCircle2,
+  Coins,
   ExternalLink,
   HelpCircle,
   MessageSquare,
@@ -100,6 +101,15 @@ export default function ThreadDetailPage({
         });
       } else {
         toast.success(t("solutionMarked"));
+      }
+      if (result.bountyTxSignature) {
+        toast.success(t("bountyTransferred"), {
+          description: `${(thread!.bountyLamports / 1e9).toFixed(3)} SOL`,
+          action: {
+            label: tc("view"),
+            onClick: () => window.open(`https://explorer.solana.com/tx/${result.bountyTxSignature}?cluster=devnet`, "_blank"),
+          },
+        });
       }
     } catch {
       toast.error(t("solutionFailed"));
@@ -250,6 +260,13 @@ export default function ThreadDetailPage({
                     {t("solved")}
                   </Badge>
                 )}
+                {thread.bountyLamports > 0 && (
+                  <Badge variant={thread.bountyPaid ? "beginner" : "xp"}>
+                    <Coins className="mr-1 h-3 w-3" />
+                    {(thread.bountyLamports / 1e9).toFixed(thread.bountyLamports % 1e9 === 0 ? 0 : 3)} SOL
+                    {thread.bountyPaid ? ` - ${t("bountyPaid")}` : ` - ${t("bountyOpen")}`}
+                  </Badge>
+                )}
               </div>
 
               <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
@@ -281,6 +298,17 @@ export default function ThreadDetailPage({
                   >
                     <ExternalLink className="h-3 w-3" />
                     {thread.txHash.slice(0, 8)}...{thread.txHash.slice(-4)}
+                  </a>
+                )}
+                {thread.bountyTxHash && (
+                  <a
+                    href={`https://explorer.solana.com/tx/${thread.bountyTxHash}?cluster=devnet`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xp-gold hover:underline"
+                  >
+                    <Coins className="h-3 w-3" />
+                    {t("bounty")} tx
                   </a>
                 )}
               </div>

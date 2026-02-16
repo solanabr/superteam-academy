@@ -15,6 +15,9 @@ export interface IThread extends Document {
   solvedReplyId: string | null;
   replyCount: number;
   txHash: string | null;
+  bountyLamports: number;
+  bountyPaid: boolean;
+  bountyTxHash: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -33,6 +36,9 @@ const ThreadSchema = new Schema<IThread>(
     solvedReplyId: { $type: String, default: null },
     replyCount: { $type: Number, default: 0 },
     txHash: { $type: String, default: null },
+    bountyLamports: { $type: Number, default: 0 },
+    bountyPaid: { $type: Boolean, default: false },
+    bountyTxHash: { $type: String, default: null },
   },
   { timestamps: true, typeKey: "$type" }
 );

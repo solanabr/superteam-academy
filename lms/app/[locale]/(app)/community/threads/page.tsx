@@ -14,6 +14,7 @@ import {
   Star,
   Award,
   ExternalLink,
+  Coins,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -60,6 +61,7 @@ export default function CommunityThreadsPage() {
   const [newBody, setNewBody] = useState("");
   const [newType, setNewType] = useState<"discussion" | "question">("discussion");
   const [newTags, setNewTags] = useState("");
+  const [newBounty, setNewBounty] = useState("");
 
   const { data, isLoading } = useThreads({
     type: typeFilter !== "all" ? typeFilter : undefined,
@@ -77,6 +79,9 @@ export default function CommunityThreadsPage() {
     if (!newTitle.trim() || !newBody.trim()) return;
 
     try {
+      const bountyLamports = newType === "question" && newBounty
+        ? Math.round(parseFloat(newBounty) * 1e9)
+        : undefined;
       const result = await createThread.mutateAsync({
         title: newTitle.trim(),
         body: newBody.trim(),
@@ -85,6 +90,7 @@ export default function CommunityThreadsPage() {
           .split(",")
           .map((t) => t.trim())
           .filter(Boolean),
+        bountyLamports: bountyLamports && bountyLamports > 0 ? bountyLamports : undefined,
       });
       const sig = result.txSignature;
       if (sig) {
@@ -103,6 +109,7 @@ export default function CommunityThreadsPage() {
       setNewBody("");
       setNewType("discussion");
       setNewTags("");
+      setNewBounty("");
     } catch (err) {
       toast.error(t("threadCreateFailed"), {
         description: err instanceof Error ? err.message : undefined,
@@ -172,6 +179,21 @@ export default function CommunityThreadsPage() {
                   className="flex-1"
                 />
               </div>
+              {newType === "question" && (
+                <div className="flex items-center gap-2">
+                  <Coins className="h-4 w-4 text-xp-gold" />
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.001"
+                    placeholder={t("bountyPlaceholder")}
+                    value={newBounty}
+                    onChange={(e) => setNewBounty(e.target.value)}
+                    className="flex-1"
+                  />
+                  <span className="text-sm text-muted-foreground">{t("bountyOptional")}</span>
+                </div>
+              )}
             </div>
             <DialogFooter>
               <Button
@@ -290,6 +312,16 @@ export default function CommunityThreadsPage() {
                       )}
                       {thread.isPinned && (
                         <Badge variant="xp" className="shrink-0">{t("pinned")}</Badge>
+                      )}
+                      {thread.bountyLamports > 0 && (
+                        <Badge
+                          variant={thread.bountyPaid ? "beginner" : "xp"}
+                          className="shrink-0"
+                        >
+                          <Coins className="mr-1 h-3 w-3" />
+                          {(thread.bountyLamports / 1e9).toFixed(thread.bountyLamports % 1e9 === 0 ? 0 : 3)} SOL
+                          {thread.bountyPaid && ` - ${t("bountyPaid")}`}
+                        </Badge>
                       )}
                     </div>
                     <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">

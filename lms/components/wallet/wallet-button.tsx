@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Wallet, LogOut, Copy, Check } from "lucide-react";
 import { shortenAddress } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,6 +22,9 @@ export function WalletButton({ onConnectClick }: WalletButtonProps) {
   const { publicKey, disconnect, connected } = useWallet();
   const t = useTranslations("wallet");
   const [copied, setCopied] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
 
   const handleCopy = async () => {
     if (publicKey) {
@@ -31,7 +34,7 @@ export function WalletButton({ onConnectClick }: WalletButtonProps) {
     }
   };
 
-  if (!connected || !publicKey) {
+  if (!mounted || !connected || !publicKey) {
     return (
       <Button onClick={onConnectClick} variant="solana" size="sm" className="min-w-[140px]">
         <Wallet className="h-4 w-4" />

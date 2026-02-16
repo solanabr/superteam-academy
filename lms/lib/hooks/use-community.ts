@@ -60,8 +60,8 @@ export function useCreateThread() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ title, body, type, tags }: { title: string; body: string; type: string; tags: string[] }) =>
-      getService().createThread(userId, title, body, type, tags),
+    mutationFn: ({ title, body, type, tags, bountyLamports }: { title: string; body: string; type: string; tags: string[]; bountyLamports?: number }) =>
+      getService().createThread(userId, title, body, type, tags, bountyLamports),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["threads"] });
       queryClient.invalidateQueries({ queryKey: ["communityStats"] });

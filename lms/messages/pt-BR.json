@@ -387,6 +387,14 @@
     "threadNotFound": "Discussão não encontrada.",
     "backToThreads": "Voltar para Discussões",
     "prev": "Anterior",
-    "next": "Próximo"
+    "next": "Próximo",
+    "bounty": "Recompensa",
+    "bountyAmount": "Valor da Recompensa",
+    "bountyPlaceholder": "Recompensa em SOL (ex: 0.01)",
+    "bountyPaid": "Pago",
+    "bountyOpen": "Aberto",
+    "bountyTransferred": "Recompensa transferida para o solucionador!",
+    "bountyOptional": "Opcional",
+    "solBounty": "Recompensa SOL"
   }
 }

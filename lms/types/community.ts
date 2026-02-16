@@ -15,6 +15,9 @@ export interface Thread {
   solvedReplyId: string | null;
   replyCount: number;
   txHash: string | null;
+  bountyLamports: number;
+  bountyPaid: boolean;
+  bountyTxHash: string | null;
   createdAt: string;
   updatedAt: string;
 }

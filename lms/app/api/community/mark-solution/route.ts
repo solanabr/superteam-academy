@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
+import {
+  PublicKey,
+  SystemProgram,
+  Transaction,
+  sendAndConfirmTransaction,
+} from "@solana/web3.js";
 import { connectDB } from "@/lib/db/mongodb";
 import { Thread } from "@/lib/db/models/thread";
 import { Reply } from "@/lib/db/models/reply";
 import { ensureUser } from "@/lib/db/helpers";
 import { getBackendSigner } from "@/lib/solana/backend-signer";
+import { getConnection } from "@/lib/solana/connection";
 import { sendMemoTx } from "@/lib/solana/transactions";
 
 export async function POST(req: NextRequest) {
@@ -31,6 +38,8 @@ export async function POST(req: NextRequest) {
   }
 
   let txSignature: string | null = null;
+  let bountyTxSignature: string | null = null;
+  const hasBounty = thread.bountyLamports > 0 && !thread.bountyPaid;
 
   try {
     const backendKeypair = getBackendSigner();
@@ -40,10 +49,30 @@ export async function POST(req: NextRequest) {
       threadId,
       replyId,
       solverWallet: reply.author,
+      ...(hasBounty && { bountyLamports: String(thread.bountyLamports) }),
       timestamp: new Date().toISOString(),
     });
-  } catch {
-    // signer not configured
+
+    // Transfer SOL bounty to solver
+    if (hasBounty) {
+      const connection = getConnection();
+      const recipient = new PublicKey(reply.author);
+      const tx = new Transaction().add(
+        SystemProgram.transfer({
+          fromPubkey: backendKeypair.publicKey,
+          toPubkey: recipient,
+          lamports: thread.bountyLamports,
+        })
+      );
+      tx.feePayer = backendKeypair.publicKey;
+      tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+      bountyTxSignature = await sendAndConfirmTransaction(connection, tx, [backendKeypair]);
+
+      thread.bountyPaid = true;
+      thread.bountyTxHash = bountyTxSignature;
+    }
+  } catch (err) {
+    console.error("[mark-solution] error:", err instanceof Error ? err.message : err);
   }
 
   thread.isSolved = true;
@@ -55,5 +84,5 @@ export async function POST(req: NextRequest) {
   solver.communityPoints += 25;
   await solver.save();
 
-  return NextResponse.json({ ok: true, txSignature });
+  return NextResponse.json({ ok: true, txSignature, bountyTxSignature });
 }

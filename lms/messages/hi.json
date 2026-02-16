@@ -387,6 +387,14 @@
     "threadNotFound": "चर्चा नहीं मिली।",
     "backToThreads": "चर्चाओं पर वापस जाएँ",
     "prev": "पिछला",
-    "next": "अगला"
+    "next": "अगला",
+    "bounty": "इनाम",
+    "bountyAmount": "इनाम राशि",
+    "bountyPlaceholder": "SOL में इनाम (जैसे 0.01)",
+    "bountyPaid": "भुगतान हो गया",
+    "bountyOpen": "खुला",
+    "bountyTransferred": "इनाम समाधानकर्ता को भेज दिया गया!",
+    "bountyOptional": "वैकल्पिक",
+    "solBounty": "SOL इनाम"
   }
 }

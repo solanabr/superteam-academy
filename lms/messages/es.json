@@ -387,6 +387,14 @@
     "threadNotFound": "Hilo no encontrado.",
     "backToThreads": "Volver a Hilos",
     "prev": "Anterior",
-    "next": "Siguiente"
+    "next": "Siguiente",
+    "bounty": "Recompensa",
+    "bountyAmount": "Monto de Recompensa",
+    "bountyPlaceholder": "Recompensa en SOL (ej: 0.01)",
+    "bountyPaid": "Pagada",
+    "bountyOpen": "Abierta",
+    "bountyTransferred": "Recompensa transferida al solucionador!",
+    "bountyOptional": "Opcional",
+    "solBounty": "Recompensa SOL"
   }
 }

@@ -16,6 +16,12 @@ export interface OnChainResult {
   txSignature: string | null;
 }
 
+export interface MarkSolutionResult {
+  ok: boolean;
+  txSignature: string | null;
+  bountyTxSignature: string | null;
+}
+
 export interface PracticeProgressData {
   completed: string[];
   txHashes: Record<string, string>;
@@ -49,11 +55,11 @@ export interface LearningProgressService {
   // Community
   getThreads(params?: { type?: string; tag?: string; sort?: string; page?: number }): Promise<ThreadListResult>;
   getThread(id: string): Promise<Thread>;
-  createThread(userId: string, title: string, body: string, type: string, tags: string[]): Promise<OnChainResult & { thread: Thread }>;
+  createThread(userId: string, title: string, body: string, type: string, tags: string[], bountyLamports?: number): Promise<OnChainResult & { thread: Thread }>;
   getReplies(threadId: string): Promise<Reply[]>;
   createReply(userId: string, threadId: string, body: string): Promise<OnChainResult & { reply: Reply }>;
   upvote(userId: string, targetId: string, targetType: "thread" | "reply"): Promise<{ ok: boolean; upvotes: string[] }>;
-  markSolution(userId: string, threadId: string, replyId: string): Promise<OnChainResult>;
+  markSolution(userId: string, threadId: string, replyId: string): Promise<MarkSolutionResult>;
   getEndorsements(wallet: string): Promise<Endorsement[]>;
   endorseUser(endorser: string, endorsee: string, message?: string): Promise<OnChainResult>;
   getCommunityStats(userId: string): Promise<CommunityStats>;

@@ -7,7 +7,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "sonner";
 import { RPC_ENDPOINT } from "@/lib/solana/constants";
-import { WalletModal } from "@/components/wallet/wallet-modal";
 
 function WalletContextProvider({ children }: { children: ReactNode }) {
   const wallets = useMemo(() => [new PhantomWalletAdapter(), new SolflareWalletAdapter()], []);
@@ -31,13 +30,10 @@ export function Providers({ children }: { children: ReactNode }) {
     },
   }));
 
-  const [walletModalOpen, setWalletModalOpen] = useState(false);
-
   return (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
       <QueryClientProvider client={queryClient}>
         <WalletContextProvider>
-          <WalletModal open={walletModalOpen} onOpenChange={setWalletModalOpen} />
           {children}
           <Toaster position="bottom-right" richColors />
         </WalletContextProvider>

@@ -61,10 +61,12 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const { userId, title, body, type, tags } = await req.json();
+    const { userId, title, body, type, tags, bountyLamports } = await req.json();
     if (!userId || !title || !body) {
       return NextResponse.json({ error: "missing fields" }, { status: 400 });
     }
+
+    const bounty = type === "question" && bountyLamports > 0 ? Math.round(bountyLamports) : 0;
 
     let txSignature: string | null = null;
 
@@ -75,6 +77,7 @@ export async function POST(req: NextRequest) {
         wallet: userId,
         title: title.slice(0, 80),
         type: type ?? "discussion",
+        ...(bounty > 0 && { bountyLamports: String(bounty) }),
         timestamp: new Date().toISOString(),
       });
     } catch {
@@ -92,6 +95,7 @@ export async function POST(req: NextRequest) {
       type: type ?? "discussion",
       tags: tags ?? [],
       txHash: txSignature,
+      bountyLamports: bounty,
     });
 
     console.log("[threads/POST] created thread type:", thread.type);
