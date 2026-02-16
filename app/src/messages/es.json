@@ -1,0 +1,14 @@
+{
+  "common": {
+    "logoAlt": "Superteam Academy",
+    "connectWallet": "Conectar billetera",
+    "dashboard": "Panel",
+    "curriculum": "Plan de estudios",
+    "achievements": "Logros",
+    "settings": "Ajustes"
+  },
+  "home": {
+    "title": "Superteam Academy",
+    "subtitle": "Plataforma de aprendizaje descentralizada en Solana"
+  }
+}

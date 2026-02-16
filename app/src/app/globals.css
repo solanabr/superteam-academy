@@ -1,0 +1,153 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* Design tokens (from design_assets stylesheet + Superteam Brazil) */
+:root {
+  --void: #0a0a0b;
+  --surface-high: rgba(255, 255, 255, 0.02);
+  --border-subtle: #1f1f1f;
+  --text-primary: #ededef;
+  --text-secondary: #8f9099;
+  --solana: #14f195;
+  --rust: #f06529;
+  --syntax-purple: #8470ff;
+  /* shadcn compatibility */
+  --background: #0a0a0b;
+  --foreground: #ededef;
+  --primary: #14f195;
+  --primary-foreground: #0a0a0b;
+  --muted: #1f1f1f;
+  --muted-foreground: #8f9099;
+  --border: #1f1f1f;
+  --radius: 4px;
+}
+
+@theme inline {
+  --color-void: var(--void);
+  --color-surface-high: var(--surface-high);
+  --color-border-subtle: var(--border-subtle);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-solana: var(--solana);
+  --color-rust: var(--rust);
+  --color-syntax-purple: var(--syntax-purple);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+  --font-mono: var(--font-mono);
+  --radius-panel: 4px;
+}
+
+/* Noise overlay utility (fractal noise, low opacity) */
+.noise-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+}
+
+/* Glass panel */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+}
+
+/* Dark scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-subtle) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--border-subtle);
+  border-radius: 4px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+/* Selection (solana green tint) */
+::selection {
+  background: rgba(20, 241, 149, 0.25);
+  color: var(--text-primary);
+}
+
+body {
+  background: var(--void);
+  color: var(--text-primary);
+  font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  min-height: 100vh;
+}
+
+/* Privy modal: match design_assets theme (void, glass, solana accent) */
+body {
+  --privy-border-radius-sm: 4px;
+  --privy-border-radius-md: 4px;
+  --privy-border-radius-lg: 4px;
+  --privy-border-radius-full: 9999px;
+  --privy-color-background: #0a0a0b;
+  --privy-color-background-2: rgba(255, 255, 255, 0.04);
+  --privy-color-background-3: rgba(255, 255, 255, 0.06);
+  --privy-color-foreground: #ededef;
+  --privy-color-foreground-2: #8f9099;
+  --privy-color-foreground-3: #8f9099;
+  --privy-color-foreground-4: #1f1f1f;
+  --privy-color-foreground-accent: #0a0a0b;
+  --privy-color-accent: #14f195;
+  --privy-color-accent-light: rgba(20, 241, 149, 0.2);
+  --privy-color-accent-lightest: rgba(20, 241, 149, 0.1);
+  --privy-color-accent-dark: #10c977;
+  --privy-color-accent-darkest: #0d9f5f;
+  --privy-color-success: #14f195;
+  --privy-color-error: #f06529;
+  --privy-color-error-light: rgba(240, 101, 41, 0.2);
+}
+
+/* Login modal: glass-style panel (from design_assets) */
+body [role="dialog"] {
+  background: rgba(255, 255, 255, 0.02) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 4px !important;
+}
+
+/* OAuth/wallet buttons: row layout (container that has multiple icon buttons) */
+body [role="dialog"] div:has(button[type="button"]:has(svg) + button[type="button"]:has(svg)) {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 0.75rem !important;
+}
+
+body [role="dialog"] button[type="button"]:has(svg) {
+  width: 44px !important;
+  min-width: 44px !important;
+  padding: 0 !important;
+  justify-content: center !important;
+  border-radius: 4px !important;
+}
+
+/* Hide OAuth/wallet button text (keep icon only) */
+body [role="dialog"] button[type="button"]:has(svg) > *:not(:first-child) {
+  display: none !important;
+}

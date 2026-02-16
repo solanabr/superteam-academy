@@ -1,0 +1,11 @@
+reference_demo_project
+design_assets
+website_arch.md
+docs/IMPLEMENTATION_PLAN_WEBSITE.md
+
+.DS_Store
+.pnpm-store
+app/VERIFICATION.md
+
+# Supabase DB root cert (only if using SSL; do not commit)
+app/prisma/supabase-root.crt

@@ -1,0 +1,14 @@
+{
+  "common": {
+    "logoAlt": "Superteam Academy",
+    "connectWallet": "Connect Wallet",
+    "dashboard": "Dashboard",
+    "curriculum": "Curriculum",
+    "achievements": "Achievements",
+    "settings": "Settings"
+  },
+  "home": {
+    "title": "Superteam Academy",
+    "subtitle": "Decentralized learning platform on Solana"
+  }
+}
