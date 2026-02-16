@@ -37,7 +37,7 @@ export function Header() {
                 <Image src="/logo.png" alt="Superteam Academy" width={28} height={28} />
               </div>
               <span className="hidden text-lg font-bold sm:inline-block">
-                Superteam <span className="text-solana-purple">Brazil</span>
+                superteam <span className="text-solana-purple">brazil</span>
               </span>
             </Link>
             <nav className="hidden items-center gap-1 md:flex">

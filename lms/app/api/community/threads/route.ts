@@ -60,41 +60,53 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { userId, title, body, type, tags } = await req.json();
-  if (!userId || !title || !body) {
-    return NextResponse.json({ error: "missing fields" }, { status: 400 });
-  }
-
-  let txSignature: string | null = null;
-
   try {
-    const backendKeypair = getBackendSigner();
-    txSignature = await sendMemoTx(backendKeypair, {
-      event: "create_thread",
-      wallet: userId,
-      title: title.slice(0, 80),
+    const { userId, title, body, type, tags } = await req.json();
+    if (!userId || !title || !body) {
+      return NextResponse.json({ error: "missing fields" }, { status: 400 });
+    }
+
+    let txSignature: string | null = null;
+
+    try {
+      const backendKeypair = getBackendSigner();
+      txSignature = await sendMemoTx(backendKeypair, {
+        event: "create_thread",
+        wallet: userId,
+        title: title.slice(0, 80),
+        type: type ?? "discussion",
+        timestamp: new Date().toISOString(),
+      });
+    } catch {
+      // signer not configured
+    }
+
+    await connectDB();
+
+    console.log("[threads/POST] received type:", type);
+
+    const thread = await Thread.create({
+      author: userId,
+      title,
+      body,
       type: type ?? "discussion",
-      timestamp: new Date().toISOString(),
+      tags: tags ?? [],
+      txHash: txSignature,
     });
-  } catch {
-    // signer not configured
+
+    console.log("[threads/POST] created thread type:", thread.type);
+
+    // Award points
+    const user = await ensureUser(userId);
+    user.communityPoints += 10;
+    await user.save();
+
+    return NextResponse.json({ ok: true, txSignature, thread });
+  } catch (err) {
+    console.error("[threads/POST] error:", err);
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Internal server error" },
+      { status: 500 },
+    );
   }
-
-  await connectDB();
-
-  const thread = await Thread.create({
-    author: userId,
-    title,
-    body,
-    type: type ?? "discussion",
-    tags: tags ?? [],
-    txHash: txSignature,
-  });
-
-  // Award points
-  const user = await ensureUser(userId);
-  user.communityPoints += 10;
-  await user.save();
-
-  return NextResponse.json({ ok: true, txSignature, thread });
 }

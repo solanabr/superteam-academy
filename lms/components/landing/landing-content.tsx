@@ -1,9 +1,10 @@
 "use client";
 
+import { useRef, useEffect } from "react";
 import { Link } from "@/i18n/navigation";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
-import { motion } from "framer-motion";
+import { motion, useMotionValue, useSpring, useInView } from "framer-motion";
 import {
   ArrowRight,
   BookOpen,
@@ -43,8 +44,39 @@ const TRACK_COLORS = [
 const TRACK_COURSES = [3, 2, 2, 1];
 const TRACK_IDS = [1, 2, 3, 4];
 
-const STAT_VALUES = ["20+", "5,000+", "2M+", "1,200+"];
+const STATS = [
+  { value: 20, suffix: "+", useComma: false },
+  { value: 5000, suffix: "+", useComma: true },
+  { value: 2, suffix: "M+", useComma: false },
+  { value: 1200, suffix: "+", useComma: true },
+] as const;
 const STAT_KEYS = ["statCourses", "statLearners", "statXP", "statCredentials"] as const;
+
+function CountUp({ value, suffix, useComma }: { value: number; suffix: string; useComma: boolean }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-50px" });
+  const motionValue = useMotionValue(0);
+  const spring = useSpring(motionValue, { duration: 2000, bounce: 0 });
+
+  useEffect(() => {
+    if (inView) motionValue.set(value);
+  }, [inView, motionValue, value]);
+
+  useEffect(() => {
+    const unsubscribe = spring.on("change", (latest) => {
+      if (ref.current) {
+        const rounded = Math.round(latest);
+        const formatted = useComma
+          ? new Intl.NumberFormat("en-US").format(rounded)
+          : String(rounded);
+        ref.current.textContent = formatted + suffix;
+      }
+    });
+    return unsubscribe;
+  }, [spring, useComma, suffix]);
+
+  return <span ref={ref}>0{suffix}</span>;
+}
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -145,7 +177,7 @@ export function LandingContent() {
       </section>
 
       {/* Stats */}
-      <section className="border-y bg-muted/30 px-4 py-12">
+      <section className="border-y bg-muted/30 px-4 py-16">
         <motion.div
           className="mx-auto grid max-w-5xl grid-cols-2 gap-8 md:grid-cols-4"
           variants={staggerContainer}
@@ -158,7 +190,11 @@ export function LandingContent() {
               <p className="text-3xl font-bold">
                 <span className="rounded bg-white/60 px-1 -mx-1 dark:bg-transparent">
                   <span className="bg-gradient-to-r from-[#008c4c] to-[#ffd23f] bg-clip-text text-transparent">
-                    {STAT_VALUES[i]}
+                    <CountUp
+                      value={STATS[i].value}
+                      suffix={STATS[i].suffix}
+                      useComma={STATS[i].useComma}
+                    />
                   </span>
                 </span>
               </p>

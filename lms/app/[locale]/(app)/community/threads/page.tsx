@@ -102,8 +102,10 @@ export default function CommunityThreadsPage() {
       setNewBody("");
       setNewType("discussion");
       setNewTags("");
-    } catch {
-      toast.error(t("threadCreateFailed"));
+    } catch (err) {
+      toast.error(t("threadCreateFailed"), {
+        description: err instanceof Error ? err.message : undefined,
+      });
     }
   }
 
@@ -127,7 +129,7 @@ export default function CommunityThreadsPage() {
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button disabled={!mounted || !publicKey}>
+            <Button disabled={!mounted || !publicKey} data-testid="new-thread-button">
               <Plus className="mr-2 h-4 w-4" />
               {t("newThread")}
             </Button>
@@ -154,7 +156,7 @@ export default function CommunityThreadsPage() {
                   value={newType}
                   onValueChange={(v) => setNewType(v as "discussion" | "question")}
                 >
-                  <SelectTrigger className="w-40">
+                  <SelectTrigger className="w-40" data-testid="thread-type-select">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -174,6 +176,7 @@ export default function CommunityThreadsPage() {
               <Button
                 onClick={handleCreateThread}
                 disabled={createThread.isPending || !newTitle.trim() || !newBody.trim()}
+                data-testid="create-thread-submit"
               >
                 {createThread.isPending ? t("creating") : t("create")}
               </Button>
@@ -209,10 +212,10 @@ export default function CommunityThreadsPage() {
       {/* Tabs + Sort */}
       <Tabs value={typeFilter} onValueChange={(v) => { setTypeFilter(v); setPage(1); }}>
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <TabsList>
-            <TabsTrigger value="all">{t("all")}</TabsTrigger>
-            <TabsTrigger value="discussion">{t("discussions")}</TabsTrigger>
-            <TabsTrigger value="question">{t("questions")}</TabsTrigger>
+          <TabsList data-testid="thread-filter-tabs">
+            <TabsTrigger value="all" data-testid="tab-all">{t("all")}</TabsTrigger>
+            <TabsTrigger value="discussion" data-testid="tab-discussion">{t("discussions")}</TabsTrigger>
+            <TabsTrigger value="question" data-testid="tab-question">{t("questions")}</TabsTrigger>
           </TabsList>
           <Select value={sort} onValueChange={(v) => { setSort(v); setPage(1); }}>
             <SelectTrigger className="w-36">
@@ -240,7 +243,7 @@ export default function CommunityThreadsPage() {
             <div className="space-y-3">
               {threads.map((thread) => (
                 <Link key={thread._id} href={`/community/threads/${thread._id}`}>
-                  <Card className="transition-colors hover:bg-accent/50">
+                  <Card className="transition-colors hover:bg-accent/50" data-testid="thread-card">
                     <CardContent className="flex items-start gap-4 p-4">
                       {/* Upvote count */}
                       <div className="flex flex-col items-center gap-0.5 pt-1 text-muted-foreground">

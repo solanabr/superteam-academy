@@ -21,20 +21,20 @@ export interface IThread extends Document {
 
 const ThreadSchema = new Schema<IThread>(
   {
-    author: { type: String, required: true, index: true },
-    title: { type: String, required: true },
-    body: { type: String, required: true },
-    type: { type: String, enum: ["discussion", "question"], default: "discussion" },
-    tags: { type: [String], default: [] },
-    views: { type: Number, default: 0 },
-    upvotes: { type: [String], default: [] },
-    isPinned: { type: Boolean, default: false },
-    isSolved: { type: Boolean, default: false },
-    solvedReplyId: { type: String, default: null },
-    replyCount: { type: Number, default: 0 },
-    txHash: { type: String, default: null },
+    author: { $type: String, required: true, index: true },
+    title: { $type: String, required: true },
+    body: { $type: String, required: true },
+    type: { $type: String, enum: ["discussion", "question"], default: "discussion" },
+    tags: { $type: [String], default: [] },
+    views: { $type: Number, default: 0 },
+    upvotes: { $type: [String], default: [] },
+    isPinned: { $type: Boolean, default: false },
+    isSolved: { $type: Boolean, default: false },
+    solvedReplyId: { $type: String, default: null },
+    replyCount: { $type: Number, default: 0 },
+    txHash: { $type: String, default: null },
   },
-  { timestamps: true }
+  { timestamps: true, typeKey: "$type" }
 );
 
 ThreadSchema.index({ createdAt: -1 });
