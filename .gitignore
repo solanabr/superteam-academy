@@ -1,11 +1,34 @@
+# Dependencies
+node_modules/
+
+# Anchor / Rust build artifacts
+target/
+.anchor/
+
+# Test artifacts
+test-ledger/
+.DS_Store
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# IDE
+.idea/
+.vscode/
+
+# Yarn / pnpm
+.yarn/
+.pnp.*
+yarn-error.log
+
+# Claude local settings
+.claude/settings.local.json
+
 reference_demo_project
 design_assets
 website_arch.md
 docs/IMPLEMENTATION_PLAN_WEBSITE.md
 
-.DS_Store
-.pnpm-store
 app/VERIFICATION.md
-
-# Supabase DB root cert (only if using SSL; do not commit)
-app/prisma/supabase-root.crt
