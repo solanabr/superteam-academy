@@ -1,4 +1,5 @@
 import Link from "next/link"
+import Image from "next/image"
 import { Zap, Github, Twitter } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -32,12 +33,7 @@ export function Footer() {
           {/* Brand */}
           <div className="lg:col-span-2">
             <Link href="/" className="flex items-center gap-2 mb-4">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-                <Zap className="h-4 w-4 text-primary-foreground" />
-              </div>
-              <span className="text-lg font-bold text-foreground">
-                Chain<span className="text-primary">Learn</span>
-              </span>
+              <Image src="/logo.svg" alt="logo" width={128} height={164} />
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed mb-6 max-w-sm">
               The interactive learning platform for blockchain developers. Master Solana, Rust, and Web3 through hands-on challenges.
