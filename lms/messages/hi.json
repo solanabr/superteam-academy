@@ -144,7 +144,9 @@
     "enterName": "कृपया अपना नाम दर्ज करें",
     "enrolledOnChain": "ऑन-चेन नामांकन हो गया!",
     "enrolledSuccess": "नामांकन सफल!",
-    "enrollFailed": "नामांकन विफल रहा"
+    "enrollFailed": "नामांकन विफल रहा",
+    "enrollTx": "नामांकन Tx",
+    "completionTx": "पूर्णता Tx"
   },
   "lesson": {
     "lessonNotFound": "पाठ नहीं मिला",

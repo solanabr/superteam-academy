@@ -3,7 +3,7 @@
 import { use, useState } from "react";
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
-import { ArrowLeft, Clock, BookOpen, Zap, Users, CheckCircle2, Circle, Code, Trophy, User } from "lucide-react";
+import { ArrowLeft, Clock, BookOpen, Zap, Users, CheckCircle2, Circle, Code, Trophy, User, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -133,7 +133,29 @@ export default function CourseDetailPage({ params }: { params: Promise<{ slug: s
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium">{t("yourProgress")}</span>
-              <span className="text-sm font-medium">{completedLessons}/{course.lessonCount} {tc("lessons", { count: course.lessonCount })}</span>
+              <div className="flex items-center gap-3">
+                {progress.enrollTxHash && (
+                  <a
+                    href={`https://explorer.solana.com/tx/${progress.enrollTxHash}?cluster=devnet`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs text-solana-green hover:underline"
+                  >
+                    <ExternalLink className="h-3 w-3" /> {t("enrollTx")}
+                  </a>
+                )}
+                {progress.completionTxHash && (
+                  <a
+                    href={`https://explorer.solana.com/tx/${progress.completionTxHash}?cluster=devnet`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs text-solana-green hover:underline"
+                  >
+                    <ExternalLink className="h-3 w-3" /> {t("completionTx")}
+                  </a>
+                )}
+                <span className="text-sm font-medium">{completedLessons}/{course.lessonCount} {tc("lessons", { count: course.lessonCount })}</span>
+              </div>
             </div>
             <Progress value={progress.percentComplete} indicatorClassName="bg-solana-green" />
           </CardContent>
@@ -157,28 +179,41 @@ export default function CourseDetailPage({ params }: { params: Promise<{ slug: s
                     {module.lessons.map((lesson) => {
                       const currentIndex = lessonGlobalIndex++;
                       const completed = progress?.lessonsCompleted.includes(currentIndex);
+                      const txHash = progress?.lessonTxHashes?.[String(currentIndex)];
                       return (
-                        <Link
-                          key={lesson.id}
-                          href={isEnrolled ? `/courses/${slug}/lessons/${lesson.id}` : "#"}
-                          className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
-                            isEnrolled ? "hover:bg-muted cursor-pointer" : "opacity-60 cursor-not-allowed"
-                          }`}
-                          onClick={(e) => !isEnrolled && e.preventDefault()}
-                        >
-                          {completed ? (
-                            <CheckCircle2 className="h-4 w-4 text-solana-green shrink-0" />
-                          ) : (
-                            <Circle className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <div key={lesson.id} className="flex items-center gap-1">
+                          <Link
+                            href={isEnrolled ? `/courses/${slug}/lessons/${lesson.id}` : "#"}
+                            className={`flex flex-1 items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
+                              isEnrolled ? "hover:bg-muted cursor-pointer" : "opacity-60 cursor-not-allowed"
+                            }`}
+                            onClick={(e) => !isEnrolled && e.preventDefault()}
+                          >
+                            {completed ? (
+                              <CheckCircle2 className="h-4 w-4 text-solana-green shrink-0" />
+                            ) : (
+                              <Circle className="h-4 w-4 text-muted-foreground shrink-0" />
+                            )}
+                            <span className={completed ? "line-through text-muted-foreground" : ""}>
+                              {lesson.title}
+                            </span>
+                            {lesson.type === "challenge" && (
+                              <Badge variant="outline" className="ml-auto text-[10px]">{t("challenge")}</Badge>
+                            )}
+                            <span className="ml-auto text-xs text-muted-foreground">{lesson.duration}</span>
+                          </Link>
+                          {completed && txHash && (
+                            <a
+                              href={`https://explorer.solana.com/tx/${txHash}?cluster=devnet`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="shrink-0 p-1.5 rounded-md text-solana-green hover:bg-muted transition-colors"
+                              title={`Tx: ${txHash.slice(0, 8)}...${txHash.slice(-8)}`}
+                            >
+                              <ExternalLink className="h-3.5 w-3.5" />
+                            </a>
                           )}
-                          <span className={completed ? "line-through text-muted-foreground" : ""}>
-                            {lesson.title}
-                          </span>
-                          {lesson.type === "challenge" && (
-                            <Badge variant="outline" className="ml-auto text-[10px]">{t("challenge")}</Badge>
-                          )}
-                          <span className="ml-auto text-xs text-muted-foreground">{lesson.duration}</span>
-                        </Link>
+                        </div>
                       );
                     })}
                   </div>

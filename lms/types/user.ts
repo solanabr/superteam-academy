@@ -22,6 +22,9 @@ export interface Progress {
   lessonsCompleted: number[];
   totalLessons: number;
   percentComplete: number;
+  lessonTxHashes: Record<string, string>;
+  enrollTxHash?: string;
+  completionTxHash?: string;
 }
 
 export interface LeaderboardEntry {

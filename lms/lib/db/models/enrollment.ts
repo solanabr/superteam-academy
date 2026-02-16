@@ -8,6 +8,9 @@ export interface IEnrollment extends Document {
   lessonsCompleted: number[];
   totalLessons: number;
   percentComplete: number;
+  lessonTxHashes: Map<string, string>;
+  enrollTxHash?: string;
+  completionTxHash?: string;
 }
 
 const EnrollmentSchema = new Schema<IEnrollment>({
@@ -18,6 +21,9 @@ const EnrollmentSchema = new Schema<IEnrollment>({
   lessonsCompleted: { type: [Number], default: [] },
   totalLessons: { type: Number, required: true },
   percentComplete: { type: Number, default: 0 },
+  lessonTxHashes: { type: Map, of: String, default: new Map() },
+  enrollTxHash: { type: String, default: undefined },
+  completionTxHash: { type: String, default: undefined },
 });
 
 EnrollmentSchema.index({ userId: 1, courseId: 1 }, { unique: true });

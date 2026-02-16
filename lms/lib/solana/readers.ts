@@ -17,6 +17,10 @@ function toBN(val: any): BN {
   return new BN(String(val));
 }
 
+// Cache config result to avoid repeated RPC calls when program isn't deployed
+let configCache: { value: any; ts: number } | null = null;
+const CONFIG_TTL = 60_000; // 60 seconds
+
 export async function fetchConfig() {
   const program = getReadonlyProgram();
   const [configPda] = getConfigPDA();
@@ -25,6 +29,15 @@ export async function fetchConfig() {
   } catch {
     return null;
   }
+}
+
+export async function fetchConfigCached() {
+  if (configCache && Date.now() - configCache.ts < CONFIG_TTL) {
+    return configCache.value;
+  }
+  const value = await fetchConfig();
+  configCache = { value, ts: Date.now() };
+  return value;
 }
 
 export async function fetchLearnerProfile(wallet: PublicKey) {

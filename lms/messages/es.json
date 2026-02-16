@@ -144,7 +144,9 @@
     "enterName": "Por favor ingresa tu nombre",
     "enrolledOnChain": "¡Inscrito en la blockchain!",
     "enrolledSuccess": "¡Inscripción exitosa!",
-    "enrollFailed": "Error al inscribirse"
+    "enrollFailed": "Error al inscribirse",
+    "enrollTx": "Tx Inscripción",
+    "completionTx": "Tx Finalización"
   },
   "lesson": {
     "lessonNotFound": "Lección no encontrada",

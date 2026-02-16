@@ -162,6 +162,32 @@ body {
 .prose ol { list-style-type: decimal; }
 .prose li { margin-bottom: 0.25rem; line-height: 1.6; }
 .prose strong { font-weight: 600; }
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  font-size: 0.875rem;
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--border);
+}
+.prose table thead {
+  background: var(--muted);
+}
+.prose table th,
+.prose table td {
+  padding: 0.625rem 1rem;
+  text-align: left;
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--border);
+}
+.prose table th {
+  font-weight: 600;
+}
+.prose table tbody tr:hover {
+  background: var(--muted);
+}
 
 /* Chat markdown */
 .chat-md p { margin: 0; }

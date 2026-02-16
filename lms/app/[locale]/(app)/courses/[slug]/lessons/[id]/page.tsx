@@ -4,7 +4,7 @@ import { use, useState, useMemo } from "react";
 import { Link } from "@/i18n/navigation";
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
-import { ArrowLeft, ArrowRight, CheckCircle2, Play, Lightbulb, Eye, EyeOff, Sparkles, Copy, Check } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, Play, Lightbulb, Eye, EyeOff, Sparkles, Copy, Check, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -56,6 +56,7 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string;
   }, [course, id, codeInitialized]);
 
   const isCompleted = progress?.lessonsCompleted.includes(lessonIndex) ?? false;
+  const lessonTxHash = progress?.lessonTxHashes?.[String(lessonIndex)];
   const isChallenge = lesson?.type === "challenge" && lesson?.challenge;
   const allTestsPassed = testResults !== null && testResults.length > 0 && testResults.every((r) => r.passed);
 
@@ -158,6 +159,16 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string;
         </Link>
         <div className="flex items-center gap-2">
           {isCompleted && <Badge className="bg-solana-green text-white dark:text-black">{tc("completed")}</Badge>}
+          {isCompleted && lessonTxHash && (
+            <a
+              href={`https://explorer.solana.com/tx/${lessonTxHash}?cluster=devnet`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-xs text-solana-green hover:underline"
+            >
+              <ExternalLink className="h-3 w-3" /> Tx
+            </a>
+          )}
           <Badge variant="xp">{lesson.xpReward} XP</Badge>
         </div>
       </div>
@@ -402,7 +413,30 @@ function renderMarkdown(md: string): string {
   html = html.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
   html = html.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, "<em>$1</em>");
 
-  // 5. Lists
+  // 5. Tables — must come before lists/paragraphs
+  html = html.replace(/(^\|.+\|$\n?)+/gm, (block) => {
+    const rows = block.trim().split("\n").filter((r) => r.trim());
+    if (rows.length < 2) return block;
+    // Check if second row is a separator (|---|---|)
+    const isSep = /^\|[\s\-:]+(\|[\s\-:]+)+\|?$/.test(rows[1]);
+    if (!isSep) return block;
+
+    const parseRow = (row: string) =>
+      row.split("|").slice(1, -1).map((c) => c.trim());
+
+    const headers = parseRow(rows[0]);
+    const thead = `<thead><tr>${headers.map((h) => `<th>${h}</th>`).join("")}</tr></thead>`;
+    const bodyRows = rows.slice(2);
+    const tbody = `<tbody>${bodyRows
+      .map((r) => {
+        const cells = parseRow(r);
+        return `<tr>${cells.map((c) => `<td>${c}</td>`).join("")}</tr>`;
+      })
+      .join("")}</tbody>`;
+    return `<table>${thead}${tbody}</table>`;
+  });
+
+  // 6. Lists
   html = html.replace(/(^[-*]\s+.+$(\n|$))+/gm, (block) => {
     const items = block.trim().split("\n").map((l) => `<li>${l.replace(/^[-*]\s+/, "")}</li>`).join("");
     return `<ul>${items}</ul>`;
@@ -412,15 +446,15 @@ function renderMarkdown(md: string): string {
     return `<ol>${items}</ol>`;
   });
 
-  // 6. Paragraphs
+  // 7. Paragraphs
   html = html.split(/\n{2,}/).map((block) => {
     const t = block.trim();
     if (!t) return "";
-    if (/^<[hupold]|^\x00CB/.test(t)) return t;
+    if (/^<[hupoldta]|^\x00CB/.test(t)) return t;
     return `<p>${t.replace(/\n/g, "<br>")}</p>`;
   }).join("\n");
 
-  // 7. Re-insert code blocks
+  // 8. Re-insert code blocks
   html = html.replace(/\x00CB(\d+)\x00/g, (_m, idx) => codeBlocks[Number(idx)]);
   return html;
 }

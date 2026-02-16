@@ -121,6 +121,12 @@ export async function POST(req: NextRequest) {
     dbEnrollment.percentComplete =
       (dbEnrollment.lessonsCompleted.length / dbEnrollment.totalLessons) * 100;
 
+    // Store lesson tx hash
+    const lessonTx = txSignature;
+    if (lessonTx) {
+      dbEnrollment.lessonTxHashes.set(String(lessonIndex), lessonTx);
+    }
+
     const justCompleted = dbEnrollment.lessonsCompleted.length === dbEnrollment.totalLessons;
     if (justCompleted) {
       dbEnrollment.completedAt = new Date();
@@ -142,6 +148,7 @@ export async function POST(req: NextRequest) {
           // no SOL or signer not configured
         }
       }
+      dbEnrollment.completionTxHash = finalizeTxSignature ?? lessonTx ?? undefined;
     }
     await dbEnrollment.save();
 

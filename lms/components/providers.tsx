@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "sonner";
 import { RPC_ENDPOINT } from "@/lib/solana/constants";
+import { CSPostHogProvider } from "./posthog-provider";
 
 function WalletContextProvider({ children }: { children: ReactNode }) {
   const wallets = useMemo(() => [new PhantomWalletAdapter(), new SolflareWalletAdapter()], []);
@@ -31,13 +32,15 @@ export function Providers({ children }: { children: ReactNode }) {
   }));
 
   return (
-    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
-      <QueryClientProvider client={queryClient}>
-        <WalletContextProvider>
-          {children}
-          <Toaster position="bottom-right" richColors />
-        </WalletContextProvider>
-      </QueryClientProvider>
-    </ThemeProvider>
+    <CSPostHogProvider>
+      <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
+        <QueryClientProvider client={queryClient}>
+          <WalletContextProvider>
+            {children}
+            <Toaster position="bottom-right" richColors />
+          </WalletContextProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
+    </CSPostHogProvider>
   );
 }

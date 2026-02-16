@@ -41,6 +41,9 @@ export async function GET(req: NextRequest) {
         lessonsCompleted,
         totalLessons,
         percentComplete: totalLessons > 0 ? (lessonsCompleted.length / totalLessons) * 100 : 0,
+        lessonTxHashes: {},
+        enrollTxHash: undefined,
+        completionTxHash: undefined,
       });
     }
     if (results.length > 0) return NextResponse.json(results);
@@ -59,6 +62,9 @@ export async function GET(req: NextRequest) {
       lessonsCompleted: e.lessonsCompleted,
       totalLessons: e.totalLessons,
       percentComplete: e.percentComplete,
+      lessonTxHashes: Object.fromEntries((e as any).lessonTxHashes ?? new Map()),
+      enrollTxHash: (e as any).enrollTxHash ?? undefined,
+      completionTxHash: (e as any).completionTxHash ?? undefined,
     }))
   );
 }

@@ -144,7 +144,9 @@
     "enterName": "Por favor, digite seu nome",
     "enrolledOnChain": "Inscrito on-chain!",
     "enrolledSuccess": "Inscrito com sucesso!",
-    "enrollFailed": "Falha ao inscrever-se"
+    "enrollFailed": "Falha ao inscrever-se",
+    "enrollTx": "Tx Inscrição",
+    "completionTx": "Tx Conclusão"
   },
   "lesson": {
     "lessonNotFound": "Aula não encontrada",

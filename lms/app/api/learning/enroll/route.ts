@@ -42,6 +42,7 @@ export async function POST(req: NextRequest) {
     userId,
     courseId,
     totalLessons: course.lessonCount,
+    enrollTxHash: txSignature ?? undefined,
   });
 
   return NextResponse.json({ ok: true, txSignature });

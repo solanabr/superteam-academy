@@ -144,7 +144,9 @@
     "enterName": "Please enter your name",
     "enrolledOnChain": "Enrolled on-chain!",
     "enrolledSuccess": "Enrolled successfully!",
-    "enrollFailed": "Failed to enroll"
+    "enrollFailed": "Failed to enroll",
+    "enrollTx": "Enroll Tx",
+    "completionTx": "Completion Tx"
   },
   "lesson": {
     "lessonNotFound": "Lesson not found",
