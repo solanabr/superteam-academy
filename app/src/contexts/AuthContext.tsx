@@ -10,6 +10,7 @@ import {
 } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useSession, signOut as nextAuthSignOut } from "next-auth/react";
+import { LocalUserService } from "@/services/local/userService";
 
 // ===== Types =====
 
@@ -141,23 +142,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (walletConnected && publicKey && !user) {
       const provider = detectWalletProvider(wallet?.adapter.name ?? null);
       const address = publicKey.toBase58();
+      const existingProfile = LocalUserService.getUserProfile(address);
 
-      setUser(
-        createDefaultProfile({
+      if (existingProfile) {
+        setUser(existingProfile);
+      } else {
+        const newProfile = createDefaultProfile({
           id: address,
           displayName: `${provider === "solflare" ? "Solflare" : "Phantom"} Builder`,
           avatar: provider[0].toUpperCase(),
           walletAddress: address,
           authProvider: provider,
-        })
-      );
+        });
+        LocalUserService.saveUserProfile(newProfile);
+        setUser(newProfile);
+      }
     }
 
     // If wallet disconnects while wallet-auth user is active, logout
     if (!walletConnected && user?.authProvider && ["phantom", "solflare"].includes(user.authProvider)) {
       setUser(null);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [walletConnected, publicKey]);
 
   // ===== Sync NextAuth Session → UserProfile =====
@@ -169,16 +175,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const authProvider: AuthProviderType =
         provider === "github" ? "github" : "google";
 
-      setUser(
-        createDefaultProfile({
-          id: (session.user as Record<string, unknown>).id as string || crypto.randomUUID(),
+      const userId = (session.user as Record<string, unknown>).id as string || crypto.randomUUID();
+      const existingProfile = LocalUserService.getUserProfile(userId);
+
+      if (existingProfile) {
+        setUser(existingProfile);
+      } else {
+        const newProfile = createDefaultProfile({
+          id: userId,
           displayName: session.user.name || `${authProvider === "github" ? "GitHub" : "Google"} Builder`,
           avatar: session.user.name?.[0]?.toUpperCase() || authProvider[0].toUpperCase(),
           email: session.user.email || undefined,
           image: session.user.image || undefined,
           authProvider,
-        })
-      );
+        });
+        LocalUserService.saveUserProfile(newProfile);
+        setUser(newProfile);
+      }
     }
 
     // If session ends while social-auth user is active, logout
@@ -189,7 +202,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!hasInitialized && !isLoading) {
       setHasInitialized(true);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, sessionStatus]);
 
   // ===== Login Methods =====
@@ -244,24 +257,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser((prev) => {
       if (!prev) return prev;
       const newXP = prev.xp + amount;
-      return { ...prev, xp: newXP, level: calcLevel(newXP) };
+      const updatedUser = { ...prev, xp: newXP, level: calcLevel(newXP) };
+      LocalUserService.saveUserProfile(updatedUser);
+      return updatedUser;
     });
   }, []);
 
   const enrollCourse = useCallback((courseId: string) => {
     setUser((prev) => {
       if (!prev || prev.enrolledCourses.includes(courseId)) return prev;
-      return { ...prev, enrolledCourses: [...prev.enrolledCourses, courseId] };
+      const updatedUser = { ...prev, enrolledCourses: [...prev.enrolledCourses, courseId] };
+      LocalUserService.saveUserProfile(updatedUser);
+      return updatedUser;
     });
   }, []);
 
   const completeLesson = useCallback((lessonId: string) => {
     setUser((prev) => {
       if (!prev || prev.completedLessons.includes(lessonId)) return prev;
-      return {
+      const updatedUser = {
         ...prev,
         completedLessons: [...prev.completedLessons, lessonId],
       };
+      LocalUserService.saveUserProfile(updatedUser);
+      return updatedUser;
     });
   }, []);
 
@@ -273,7 +292,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       let mintAddress = "";
       for (let i = 0; i < 44; i++)
         mintAddress += chars[Math.floor(Math.random() * chars.length)];
-      return {
+      const updatedUser = {
         ...prev,
         completedCourses: [...prev.completedCourses, courseId],
         nftCertificates: [
@@ -281,16 +300,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           { courseId, mintAddress, mintedAt: new Date().toISOString() },
         ],
       };
+      LocalUserService.saveUserProfile(updatedUser);
+      return updatedUser;
     });
   }, []);
 
   const addAchievement = useCallback((achievementId: string) => {
     setUser((prev) => {
       if (!prev || prev.achievements.includes(achievementId)) return prev;
-      return {
+      const updatedUser = {
         ...prev,
         achievements: [...prev.achievements, achievementId],
       };
+      LocalUserService.saveUserProfile(updatedUser);
+      return updatedUser;
     });
   }, []);
 
@@ -303,11 +326,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .toISOString()
         .split("T")[0];
       const isConsecutive = prev.streakDates.includes(yesterday);
-      return {
+      const updatedUser = {
         ...prev,
         streakDates: [...prev.streakDates, today],
         streak: isConsecutive ? prev.streak + 1 : 1,
       };
+      LocalUserService.saveUserProfile(updatedUser);
+      return updatedUser;
     });
   }, []);
 

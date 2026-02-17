@@ -9,12 +9,11 @@ This file tracks the progress of user requests.
 - [x] Refactor App Structure (isolate Studio from Main App)
 - [ ] Connect Frontend to Sanity Data (waiting for content)
 
-## Active Request: PHASE 3: UI/UX Wajib
-- [x] Install Charts & Heatmap Libs (Recharts, React-Calendar-Heatmap)
-- [x] Create SkillRadar Component
-- [x] Create ActivityHeatmap Component
-- [x] Create Settings Page (Profile, Theme, Lang)
-- [x] Integrate Radar & Heatmap into Dashboard
+## Active Request: PHASE 4: Service Layer & Local Storage Gamification
+- [x] Create Local Services (Enrollment, Lesson, User)
+- [x] Implement LocalStorageManager
+- [x] Update AuthContext for Persistence
+- [x] Connect Dashboard Charts to Real User Data
 
 - [ ] Real cNFT certificate minting via Metaplex Bubblegum
 - [ ] On-chain leaderboard from token balances
