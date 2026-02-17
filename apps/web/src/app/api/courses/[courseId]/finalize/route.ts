@@ -7,6 +7,7 @@ import { ERROR_IDS } from "@/constants/errorIds";
 import {
   finalizeCourse as onChainFinalizeCourse,
   getConnection,
+  isOnChainProgramLive,
   PROGRAM_ID,
 } from "@/lib/solana/academy-program";
 import { fetchEnrollment, fetchCourse } from "@/lib/solana/academy-reads";
@@ -40,6 +41,13 @@ export async function POST(
       return NextResponse.json(
         { error: "Wallet not connected" },
         { status: 400 }
+      );
+    }
+
+    if (!(await isOnChainProgramLive())) {
+      return NextResponse.json(
+        { error: "On-chain program not available" },
+        { status: 503 }
       );
     }
 

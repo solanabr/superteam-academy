@@ -34,6 +34,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (action !== "enroll" && action !== "close") {
+      return NextResponse.json({ error: "Invalid action" }, { status: 400 });
+    }
+
+    if (Buffer.byteLength(courseId, "utf8") > 32) {
+      return NextResponse.json(
+        { error: "courseId exceeds 32 bytes" },
+        { status: 400 }
+      );
+    }
+
+    if (txSignature.length > 88) {
+      return NextResponse.json(
+        { error: "Invalid transaction signature" },
+        { status: 400 }
+      );
+    }
+
     // Look up user's wallet
     const supabaseAdmin = createAdminClient();
     const { data: profile } = await supabaseAdmin
@@ -75,12 +93,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Resolve all account keys including ALT-loaded accounts (versioned txs)
+    const accountKeys = tx.transaction.message.getAccountKeys({
+      accountKeysFromLookups: tx.meta?.loadedAddresses,
+    });
+
     // Verify program ID is in the transaction
-    const accountKeys = tx.transaction.message.getAccountKeys();
-    const programIdx = accountKeys.staticAccountKeys.findIndex((k) =>
-      k.equals(PROGRAM_ID)
-    );
-    if (programIdx === -1) {
+    let hasProgramId = false;
+    for (let i = 0; i < accountKeys.length; i++) {
+      if (accountKeys.get(i)?.equals(PROGRAM_ID)) {
+        hasProgramId = true;
+        break;
+      }
+    }
+    if (!hasProgramId) {
       return NextResponse.json(
         { error: "Transaction does not involve the academy program" },
         { status: 400 }
@@ -89,9 +115,13 @@ export async function POST(request: NextRequest) {
 
     // Verify the expected enrollment PDA is in the accounts
     const [expectedPDA] = findEnrollmentPDA(courseId, walletPubkey, PROGRAM_ID);
-    const hasEnrollmentPDA = accountKeys.staticAccountKeys.some((k) =>
-      k.equals(expectedPDA)
-    );
+    let hasEnrollmentPDA = false;
+    for (let i = 0; i < accountKeys.length; i++) {
+      if (accountKeys.get(i)?.equals(expectedPDA)) {
+        hasEnrollmentPDA = true;
+        break;
+      }
+    }
     if (!hasEnrollmentPDA) {
       return NextResponse.json(
         { error: "Enrollment PDA mismatch" },
