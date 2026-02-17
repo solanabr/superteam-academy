@@ -7,6 +7,7 @@ import { ERROR_IDS } from "@/constants/errorIds";
 import {
   issueCredential as onChainIssueCredential,
   getConnection,
+  isOnChainProgramLive,
   PROGRAM_ID,
 } from "@/lib/solana/academy-program";
 import { fetchEnrollment, fetchCourse } from "@/lib/solana/academy-reads";
@@ -39,6 +40,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate trackCollection is a valid base58 public key
+    let trackCollectionPubkey: PublicKey;
+    try {
+      trackCollectionPubkey = new PublicKey(trackCollection);
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid trackCollection address" },
+        { status: 400 }
+      );
+    }
+
     const supabaseAdmin = createAdminClient();
     const { data: profile } = await supabaseAdmin
       .from("profiles")
@@ -50,6 +62,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Wallet not connected" },
         { status: 400 }
+      );
+    }
+
+    if (!(await isOnChainProgramLive())) {
+      return NextResponse.json(
+        { error: "On-chain program not available" },
+        { status: 503 }
       );
     }
 
@@ -94,7 +113,12 @@ export async function POST(request: NextRequest) {
     // Generate metadata
     const sanityCourse = await getCourseBySlug(courseId);
     const courseName = sanityCourse?.title ?? courseId;
-    const credentialName = `Superteam Academy: ${courseName}`.slice(0, 32);
+    // Truncate by UTF-8 byte length (on-chain max_len = 32 bytes)
+    let credentialName = `Superteam Academy: ${courseName}`;
+    const encoder = new TextEncoder();
+    while (encoder.encode(credentialName).length > 32) {
+      credentialName = credentialName.slice(0, -1);
+    }
     const totalXp =
       (course.xpPerLesson as number) * ((course.lessonCount as number) ?? 1);
 
@@ -146,7 +170,7 @@ export async function POST(request: NextRequest) {
         metadataUri,
         1,
         totalXp,
-        new PublicKey(trackCollection)
+        trackCollectionPubkey
       );
       signature = result.signature;
       mintAddress = result.mintAddress;

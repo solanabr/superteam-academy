@@ -6,6 +6,7 @@ import {
   checkNewAchievements,
   isAchievementId,
 } from "@/lib/gamification/achievements";
+import { getAllCourseLessonCounts } from "@/lib/sanity/queries";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
 import {
@@ -73,9 +74,18 @@ export async function POST(request: NextRequest) {
         (courseLessonCounts.get(row.course_id) ?? 0) + 1
       );
     }
-    const completedCourseCount = Array.from(courseLessonCounts.values()).filter(
-      (count) => count >= 3
-    ).length;
+    // Count completed courses using actual Sanity lesson counts (not heuristic)
+    const sanityCourseCounts = await getAllCourseLessonCounts();
+    const totalLessonsPerCourse = new Map(
+      sanityCourseCounts.map((c) => [c._id, c.totalLessons])
+    );
+    let completedCourseCount = 0;
+    for (const [cid, completedCount] of courseLessonCounts) {
+      const total = totalLessonsPerCourse.get(cid);
+      if (total && total > 0 && completedCount >= total) {
+        completedCourseCount++;
+      }
+    }
 
     const { data: existingAchievements } = await supabaseAdmin
       .from("user_achievements")
