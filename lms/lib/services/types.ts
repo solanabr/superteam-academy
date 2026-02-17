@@ -33,7 +33,7 @@ export interface LearningProgressService {
   getProgress(userId: string, courseId: string): Promise<Progress | null>;
   getAllProgress(userId: string): Promise<Progress[]>;
   completeLesson(userId: string, courseId: string, lessonIndex: number): Promise<CompleteLessonResult>;
-  enrollInCourse(userId: string, courseId: string): Promise<OnChainResult>;
+  enrollInCourse(userId: string, courseId: string, txSignature?: string): Promise<OnChainResult>;
   unenrollFromCourse(userId: string, courseId: string): Promise<void>;
   getXP(userId: string): Promise<number>;
   getLevel(userId: string): Promise<number>;

@@ -8,7 +8,7 @@ import { getBackendSigner } from "@/lib/solana/backend-signer";
 import { sendMemoTx } from "@/lib/solana/transactions";
 
 export async function POST(req: NextRequest) {
-  const { userId, courseId } = await req.json();
+  const { userId, courseId, txSignature: clientTxSignature } = await req.json();
   if (!userId || !courseId) {
     return NextResponse.json({ error: "missing fields" }, { status: 400 });
   }
@@ -23,19 +23,21 @@ export async function POST(req: NextRequest) {
   const course = sanityCourse ?? SAMPLE_COURSES.find((c) => c.id === courseId || c.slug === courseId);
   if (!course) return NextResponse.json({ error: "course not found" }, { status: 404 });
 
-  // Send memo tx as on-chain proof of enrollment
-  let txSignature: string | null = null;
-  try {
-    const backendKeypair = getBackendSigner();
-    txSignature = await sendMemoTx(backendKeypair, {
-      event: "enroll",
-      wallet: userId,
-      courseId,
-      courseTitle: course.title,
-      timestamp: new Date().toISOString(),
-    });
-  } catch {
-    // no SOL or signer not configured
+  // Use client-provided tx signature if available, otherwise send memo tx as fallback
+  let txSignature: string | null = clientTxSignature ?? null;
+  if (!txSignature) {
+    try {
+      const backendKeypair = getBackendSigner();
+      txSignature = await sendMemoTx(backendKeypair, {
+        event: "enroll",
+        wallet: userId,
+        courseId,
+        courseTitle: course.title,
+        timestamp: new Date().toISOString(),
+      });
+    } catch {
+      // no SOL or signer not configured
+    }
   }
 
   await Enrollment.create({

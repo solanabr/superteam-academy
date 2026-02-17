@@ -17,6 +17,8 @@ const DIFFICULTIES: Difficulty[] = ["beginner", "intermediate", "advanced"];
 export default function CoursesPage() {
   const t = useTranslations("courses");
   const searchParams = useSearchParams();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   const [search, setSearch] = useState("");
   const [difficulty, setDifficulty] = useState<Difficulty | "all">("all");
   const [trackFilter, setTrackFilter] = useState<string>(searchParams.get("track") ?? "all");
@@ -71,17 +73,21 @@ export default function CoursesPage() {
             </Badge>
           ))}
         </div>
-        <Select value={trackFilter} onValueChange={setTrackFilter}>
-          <SelectTrigger className="w-48">
-            <SelectValue placeholder={t("allTracks")} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t("allTracks")}</SelectItem>
-            {Object.entries(TRACKS).map(([id, track]) => (
-              <SelectItem key={id} value={id}>{track.display}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {mounted ? (
+          <Select value={trackFilter} onValueChange={setTrackFilter}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder={t("allTracks")} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t("allTracks")}</SelectItem>
+              {Object.entries(TRACKS).map(([id, track]) => (
+                <SelectItem key={id} value={id}>{track.display}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <div className="h-10 w-48 rounded-lg border border-input bg-background" />
+        )}
       </div>
 
       {isLoading ? (
@@ -102,6 +108,7 @@ export default function CoursesPage() {
               key={course.id}
               course={course}
               progress={getProgress(course.id)}
+              completed={completedCourseIds.has(course.id) || completedCourseIds.has(course.slug)}
               prerequisiteMet={!course.prerequisiteId || completedCourseIds.has(course.prerequisiteId)}
             />
           ))}

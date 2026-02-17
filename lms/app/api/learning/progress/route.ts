@@ -3,68 +3,88 @@ import { PublicKey } from "@solana/web3.js";
 import { connectDB } from "@/lib/db/mongodb";
 import { Enrollment } from "@/lib/db/models/enrollment";
 import { SAMPLE_COURSES } from "@/lib/data/sample-courses";
+import { fetchSanityCourses } from "@/lib/services/sanity-courses";
 import { fetchEnrollment, fetchCourse, bitmapToLessonIndices } from "@/lib/solana/readers";
 
 export async function GET(req: NextRequest) {
   const userId = req.nextUrl.searchParams.get("userId");
   if (!userId) return NextResponse.json([]);
 
-  // Try on-chain first: iterate all known courses and check for enrollments
+  // Always query MongoDB as the source of truth for completedAt and tx hashes
+  await connectDB();
+  const dbEnrollments = await Enrollment.find({ userId }).lean();
+  const dbMap = new Map(
+    dbEnrollments.map((e) => [
+      e.courseId,
+      {
+        courseId: e.courseId,
+        enrolledAt: e.enrolledAt.toISOString(),
+        completedAt: e.completedAt?.toISOString() ?? undefined,
+        lessonsCompleted: e.lessonsCompleted,
+        totalLessons: e.totalLessons,
+        percentComplete: e.percentComplete,
+        lessonTxHashes: (e as any).lessonTxHashes instanceof Map
+          ? Object.fromEntries((e as any).lessonTxHashes)
+          : ((e as any).lessonTxHashes ?? {}),
+        enrollTxHash: (e as any).enrollTxHash ?? undefined,
+        completionTxHash: (e as any).completionTxHash ?? undefined,
+      },
+    ])
+  );
+
+  // Enrich with on-chain data where available
   try {
     const wallet = new PublicKey(userId);
-    const results = [];
-    for (const sampleCourse of SAMPLE_COURSES) {
-      const enrollment = await fetchEnrollment(sampleCourse.id, wallet);
+    const sanityCourses = await fetchSanityCourses();
+    const allCourses = [
+      ...SAMPLE_COURSES,
+      ...sanityCourses.filter((sc) => !SAMPLE_COURSES.some((s) => s.id === sc.id)),
+    ];
+    for (const knownCourse of allCourses) {
+      const enrollment = await fetchEnrollment(knownCourse.id, wallet);
       if (!enrollment) continue;
 
-      const course = await fetchCourse(sampleCourse.id);
+      const course = await fetchCourse(knownCourse.id);
       const lessonsCompleted = bitmapToLessonIndices(enrollment.lessonFlags);
-      const totalLessons = course?.lessonCount ?? sampleCourse.lessonCount;
+      const totalLessons = course?.lessonCount ?? knownCourse.lessonCount;
       const completedAtRaw = enrollment.completedAt;
-      const completedAt = completedAtRaw
-        ? new Date(
-            (typeof completedAtRaw === "object" && "toNumber" in (completedAtRaw as any)
-              ? (completedAtRaw as any).toNumber()
-              : Number(completedAtRaw)) * 1000
-          ).toISOString()
-        : undefined;
+      const onChainCompletedAt =
+        completedAtRaw &&
+        Number(
+          typeof completedAtRaw === "object" && "toNumber" in (completedAtRaw as any)
+            ? (completedAtRaw as any).toNumber()
+            : completedAtRaw
+        ) > 0
+          ? new Date(
+              Number(
+                typeof completedAtRaw === "object" && "toNumber" in (completedAtRaw as any)
+                  ? (completedAtRaw as any).toNumber()
+                  : completedAtRaw
+              ) * 1000
+            ).toISOString()
+          : undefined;
       const enrolledAt = new Date(
         (typeof enrollment.enrolledAt === "object" && "toNumber" in (enrollment.enrolledAt as any)
           ? (enrollment.enrolledAt as any).toNumber()
           : Number(enrollment.enrolledAt)) * 1000
       ).toISOString();
 
-      results.push({
-        courseId: sampleCourse.id,
+      const db = dbMap.get(knownCourse.id);
+      dbMap.set(knownCourse.id, {
+        courseId: knownCourse.id,
         enrolledAt,
-        completedAt,
+        completedAt: onChainCompletedAt ?? db?.completedAt,
         lessonsCompleted,
         totalLessons,
         percentComplete: totalLessons > 0 ? (lessonsCompleted.length / totalLessons) * 100 : 0,
-        lessonTxHashes: {},
-        enrollTxHash: undefined,
-        completionTxHash: undefined,
+        lessonTxHashes: db?.lessonTxHashes ?? {},
+        enrollTxHash: db?.enrollTxHash,
+        completionTxHash: db?.completionTxHash,
       });
     }
-    if (results.length > 0) return NextResponse.json(results);
   } catch {
-    // fallback to MongoDB
+    // on-chain unavailable, MongoDB data stands as-is
   }
 
-  await connectDB();
-  const enrollments = await Enrollment.find({ userId }).lean();
-
-  return NextResponse.json(
-    enrollments.map((e) => ({
-      courseId: e.courseId,
-      enrolledAt: e.enrolledAt.toISOString(),
-      completedAt: e.completedAt?.toISOString() ?? undefined,
-      lessonsCompleted: e.lessonsCompleted,
-      totalLessons: e.totalLessons,
-      percentComplete: e.percentComplete,
-      lessonTxHashes: Object.fromEntries((e as any).lessonTxHashes ?? new Map()),
-      enrollTxHash: (e as any).enrollTxHash ?? undefined,
-      completionTxHash: (e as any).completionTxHash ?? undefined,
-    }))
-  );
+  return NextResponse.json([...dbMap.values()]);
 }

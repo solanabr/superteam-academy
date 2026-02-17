@@ -59,7 +59,9 @@ export async function GET(
     lessonsCompleted: enrollment.lessonsCompleted,
     totalLessons: enrollment.totalLessons,
     percentComplete: enrollment.percentComplete,
-    lessonTxHashes: Object.fromEntries(enrollment.lessonTxHashes ?? new Map()),
+    lessonTxHashes: enrollment.lessonTxHashes instanceof Map
+      ? Object.fromEntries(enrollment.lessonTxHashes)
+      : (enrollment.lessonTxHashes ?? {}),
     enrollTxHash: enrollment.enrollTxHash ?? undefined,
     completionTxHash: enrollment.completionTxHash ?? undefined,
   });

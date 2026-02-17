@@ -33,11 +33,11 @@ export class ApiService implements LearningProgressService {
     });
   }
 
-  async enrollInCourse(userId: string, courseId: string): Promise<OnChainResult> {
+  async enrollInCourse(userId: string, courseId: string, txSignature?: string): Promise<OnChainResult> {
     return fetchJson(`${BASE}/enroll`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, courseId }),
+      body: JSON.stringify({ userId, courseId, txSignature }),
     });
   }
 

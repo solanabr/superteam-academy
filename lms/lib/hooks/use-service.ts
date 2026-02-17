@@ -303,7 +303,7 @@ export function useEnroll() {
       }
 
       // Sync to MongoDB + get memo tx if wallet tx failed
-      const result = await getService().enrollInCourse(userId, courseId);
+      const result = await getService().enrollInCourse(userId, courseId, txSignature ?? undefined);
       if (!txSignature && result.txSignature) {
         txSignature = result.txSignature;
       }

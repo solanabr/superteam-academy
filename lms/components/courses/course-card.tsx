@@ -1,7 +1,7 @@
 "use client";
 
 import { Link } from "@/i18n/navigation";
-import { Clock, BookOpen, Zap } from "lucide-react";
+import { Clock, BookOpen, Zap, CheckCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,9 +13,10 @@ interface CourseCardProps {
   course: Course;
   progress?: number;
   prerequisiteMet?: boolean;
+  completed?: boolean;
 }
 
-export function CourseCard({ course, progress, prerequisiteMet }: CourseCardProps) {
+export function CourseCard({ course, progress, prerequisiteMet, completed }: CourseCardProps) {
   const t = useTranslations("courses");
   const tc = useTranslations("common");
   const difficulty = DIFFICULTY_CONFIG[course.difficulty];
@@ -60,7 +61,12 @@ export function CourseCard({ course, progress, prerequisiteMet }: CourseCardProp
             </span>
           </div>
 
-          {progress !== undefined && progress > 0 && (
+          {completed ? (
+            <div className="mt-3 flex items-center gap-1.5 text-sm font-medium text-solana-green">
+              <CheckCircle className="h-4 w-4" />
+              {tc("completed")}
+            </div>
+          ) : progress !== undefined && progress > 0 ? (
             <div className="mt-3">
               <div className="flex items-center justify-between text-xs mb-1">
                 <span className="text-muted-foreground">{t("progress")}</span>
@@ -68,7 +74,7 @@ export function CourseCard({ course, progress, prerequisiteMet }: CourseCardProp
               </div>
               <Progress value={progress} indicatorClassName="bg-solana-green" />
             </div>
-          )}
+          ) : null}
 
           {course.prerequisiteId && !prerequisiteMet && (
             <p className="mt-2 text-xs text-muted-foreground italic">

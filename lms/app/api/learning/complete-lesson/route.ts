@@ -4,6 +4,7 @@ import { connectDB } from "@/lib/db/mongodb";
 import { ensureUser, getUtcDay, findEnrollment } from "@/lib/db/helpers";
 import { Certificate } from "@/lib/db/models/certificate";
 import { SAMPLE_COURSES } from "@/lib/data/sample-courses";
+import { fetchSanityCourse } from "@/lib/services/sanity-courses";
 import { getConnection } from "@/lib/solana/connection";
 import { getBackendSigner } from "@/lib/solana/backend-signer";
 import { getBackendProgram } from "@/lib/solana/program";
@@ -152,7 +153,11 @@ export async function POST(req: NextRequest) {
     }
     await dbEnrollment.save();
 
-    user.xp += 50;
+    const sampleCourse = SAMPLE_COURSES.find((c) => c.id === courseId || c.slug === courseId);
+    const sanityCourse = !sampleCourse ? await fetchSanityCourse(courseId) : null;
+    const courseXpTotal = sampleCourse?.xpTotal ?? sanityCourse?.xpTotal ?? 250;
+    const xpPerLesson = Math.floor(courseXpTotal / dbEnrollment.totalLessons);
+    user.xp += xpPerLesson;
     const today = getUtcDay();
     if (today > user.streak.lastDay) {
       if (today === user.streak.lastDay + 1) {
