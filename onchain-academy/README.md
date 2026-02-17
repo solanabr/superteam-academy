@@ -1,0 +1,3 @@
+- mint vanity address: xpXPUjkfk7t4AJF1tYUoyAYxzuM5DhinZWS1WjfjAu3
+- program vanity address: ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf
+- signer/deployer: ACAd3USj2sMV6drKcMY2wZtNkhVDHWpC4tfJe93hgqYn

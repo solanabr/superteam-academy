@@ -23,7 +23,7 @@ echo "Updated $LIB_RS"
 
 # Update Anchor.toml
 ANCHOR_TOML="$ROOT_DIR/onchain-academy/Anchor.toml"
-sed -i '' "s/superteam_academy = \"[^\"]*\"/superteam_academy = \"$PUBKEY\"/" "$ANCHOR_TOML"
+sed -i '' "s/onchain_academy = \"[^\"]*\"/onchain_academy = \"$PUBKEY\"/" "$ANCHOR_TOML"
 echo "Updated $ANCHOR_TOML"
 
 echo "Done. Run 'anchor build' to rebuild with the new program ID."

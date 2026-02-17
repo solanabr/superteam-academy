@@ -1,7 +1,7 @@
 use anchor_lang::AnchorDeserialize;
 use solana_sdk::pubkey::Pubkey;
 
-pub const PROGRAM_ID: Pubkey = superteam_academy::ID;
+pub const PROGRAM_ID: Pubkey = onchain_academy::ID;
 
 pub fn config_pda() -> (Pubkey, u8) {
     Pubkey::find_program_address(&[b"config"], &PROGRAM_ID)
