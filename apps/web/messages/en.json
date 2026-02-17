@@ -26,7 +26,10 @@
     "teach": "Teach",
     "signIn": "Sign In",
     "signOut": "Sign Out",
-    "connectWallet": "Connect Wallet"
+    "connectWallet": "Connect Wallet",
+    "community": "Community",
+    "challenges": "Challenges",
+    "onboarding": "Get Started"
   },
   "home": {
     "hero": {
@@ -421,5 +424,115 @@
     "prerequisitesRequired": "Prerequisites Required",
     "completed": "Completed",
     "completeFirst": "Complete \"{course}\" first"
+  },
+  "community": {
+    "title": "Community",
+    "subtitle": "Connect with fellow Solana developers",
+    "categories": {
+      "all": "All",
+      "general": "General",
+      "help": "Help",
+      "showAndTell": "Show & Tell",
+      "courseDiscussion": "Course Discussion"
+    },
+    "createThread": "New Thread",
+    "threadTitle": "Title",
+    "threadContent": "Content",
+    "threadCategory": "Category",
+    "replies": "replies",
+    "views": "views",
+    "noThreads": "No threads yet. Start the conversation!",
+    "replyPlaceholder": "Write a reply...",
+    "postReply": "Post Reply",
+    "backToThreads": "Back to Threads",
+    "postedBy": "by",
+    "ago": "ago",
+    "pinned": "Pinned"
+  },
+  "onboarding": {
+    "title": "Welcome to Superteam Academy",
+    "subtitle": "Let us personalize your learning experience",
+    "welcome": {
+      "title": "Welcome!",
+      "description": "We will ask you a few questions to recommend the best learning path for you."
+    },
+    "quiz": {
+      "title": "Skill Assessment",
+      "description": "Answer these questions about your experience level."
+    },
+    "recommendation": {
+      "title": "Your Learning Path",
+      "description": "Based on your answers, we recommend:",
+      "beginner": "Beginner Path",
+      "intermediate": "Intermediate Path",
+      "advanced": "Advanced Path",
+      "beginnerDesc": "Start with the basics of blockchain and Solana.",
+      "intermediateDesc": "Dive deeper into smart contracts and DeFi.",
+      "advancedDesc": "Master advanced patterns and protocol development."
+    },
+    "profile": {
+      "title": "Profile Setup",
+      "description": "Set up your profile to get started.",
+      "displayName": "Display Name",
+      "bio": "Bio (optional)"
+    },
+    "start": "Get Started",
+    "next": "Next",
+    "previous": "Previous",
+    "finish": "Start Learning",
+    "skip": "Skip",
+    "questions": {
+      "q1": "How familiar are you with blockchain technology?",
+      "q1a1": "Complete beginner",
+      "q1a2": "I understand the basics",
+      "q1a3": "I have built dApps before",
+      "q2": "Have you used Solana before?",
+      "q2a1": "Never",
+      "q2a2": "As a user (wallets, DeFi)",
+      "q2a3": "As a developer",
+      "q3": "What is your Rust experience?",
+      "q3a1": "No experience",
+      "q3a2": "Some basic knowledge",
+      "q3a3": "Comfortable writing Rust",
+      "q4": "What is your TypeScript/JavaScript level?",
+      "q4a1": "Beginner",
+      "q4a2": "Intermediate",
+      "q4a3": "Advanced",
+      "q5": "Have you worked with smart contracts?",
+      "q5a1": "Never",
+      "q5a2": "On other chains (Ethereum, etc.)",
+      "q5a3": "On Solana (Anchor/Native)"
+    }
+  },
+  "challenges": {
+    "title": "Challenges",
+    "subtitle": "Test your skills and earn XP",
+    "daily": "Daily Challenges",
+    "weekly": "Weekly Challenges",
+    "seasonal": "Seasonal Events",
+    "difficulty": "Difficulty",
+    "xpReward": "XP Reward",
+    "timeLimit": "Time Limit",
+    "minutes": "min",
+    "hours": "hours",
+    "completed": "Completed",
+    "inProgress": "In Progress",
+    "notStarted": "Start Challenge",
+    "expired": "Expired",
+    "dailyWidget": {
+      "title": "Daily Challenge",
+      "description": "Complete today's challenge for bonus XP!",
+      "timeRemaining": "Time remaining",
+      "claim": "Claim Reward"
+    },
+    "events": {
+      "solanaSummer": "Solana Summer",
+      "solanaSummerDesc": "Complete summer challenges for exclusive badges and bonus XP.",
+      "hackathonSeason": "Hackathon Season",
+      "hackathonSeasonDesc": "Prepare for hackathons with guided challenges and team exercises."
+    },
+    "easy": "Easy",
+    "medium": "Medium",
+    "hard": "Hard"
   }
 }

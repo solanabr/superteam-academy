@@ -36,6 +36,12 @@ export function Header() {
           <Link href="/leaderboard" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
             {t('leaderboard')}
           </Link>
+          <Link href="/community" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+            {t('community')}
+          </Link>
+          <Link href="/challenges" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+            {t('challenges')}
+          </Link>
           {session && (
             <Link href="/dashboard" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
               {t('dashboard')}

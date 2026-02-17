@@ -26,7 +26,10 @@
     "teach": "Enseñar",
     "signIn": "Iniciar Sesión",
     "signOut": "Cerrar Sesión",
-    "connectWallet": "Conectar Billetera"
+    "connectWallet": "Conectar Billetera",
+    "community": "Comunidad",
+    "challenges": "Desafíos",
+    "onboarding": "Comenzar"
   },
   "home": {
     "hero": {
@@ -421,5 +424,115 @@
     "prerequisitesRequired": "Prerrequisitos Necesarios",
     "completed": "Completado",
     "completeFirst": "Completa \"{course}\" primero"
+  },
+  "community": {
+    "title": "Comunidad",
+    "subtitle": "Conéctate con otros desarrolladores Solana",
+    "categories": {
+      "all": "Todos",
+      "general": "General",
+      "help": "Ayuda",
+      "showAndTell": "Muestra y Cuenta",
+      "courseDiscussion": "Discusión de Curso"
+    },
+    "createThread": "Nuevo Hilo",
+    "threadTitle": "Título",
+    "threadContent": "Contenido",
+    "threadCategory": "Categoría",
+    "replies": "respuestas",
+    "views": "vistas",
+    "noThreads": "¡Aún no hay hilos. ¡Inicia la conversación!",
+    "replyPlaceholder": "Escribe una respuesta...",
+    "postReply": "Responder",
+    "backToThreads": "Volver a Hilos",
+    "postedBy": "por",
+    "ago": "hace",
+    "pinned": "Fijado"
+  },
+  "onboarding": {
+    "title": "Bienvenido a Superteam Academy",
+    "subtitle": "Personalicemos tu experiencia de aprendizaje",
+    "welcome": {
+      "title": "¡Bienvenido!",
+      "description": "Te haremos algunas preguntas para recomendar el mejor camino de aprendizaje."
+    },
+    "quiz": {
+      "title": "Evaluación de Habilidades",
+      "description": "Responde estas preguntas sobre tu nivel de experiencia."
+    },
+    "recommendation": {
+      "title": "Tu Camino de Aprendizaje",
+      "description": "Basado en tus respuestas, recomendamos:",
+      "beginner": "Camino Principiante",
+      "intermediate": "Camino Intermedio",
+      "advanced": "Camino Avanzado",
+      "beginnerDesc": "Comienza con los fundamentos de blockchain y Solana.",
+      "intermediateDesc": "Profundiza en contratos inteligentes y DeFi.",
+      "advancedDesc": "Domina patrones avanzados y desarrollo de protocolos."
+    },
+    "profile": {
+      "title": "Configuración de Perfil",
+      "description": "Configura tu perfil para comenzar.",
+      "displayName": "Nombre",
+      "bio": "Bio (opcional)"
+    },
+    "start": "Comenzar",
+    "next": "Siguiente",
+    "previous": "Anterior",
+    "finish": "Empezar a Aprender",
+    "skip": "Omitir",
+    "questions": {
+      "q1": "¿Qué tan familiarizado estás con la tecnología blockchain?",
+      "q1a1": "Completamente principiante",
+      "q1a2": "Entiendo lo básico",
+      "q1a3": "He construido dApps",
+      "q2": "¿Has usado Solana antes?",
+      "q2a1": "Nunca",
+      "q2a2": "Como usuario (wallets, DeFi)",
+      "q2a3": "Como desarrollador",
+      "q3": "¿Cuál es tu experiencia con Rust?",
+      "q3a1": "Sin experiencia",
+      "q3a2": "Conocimiento básico",
+      "q3a3": "Cómodo escribiendo Rust",
+      "q4": "¿Cuál es tu nivel de TypeScript/JavaScript?",
+      "q4a1": "Principiante",
+      "q4a2": "Intermedio",
+      "q4a3": "Avanzado",
+      "q5": "¿Has trabajado con contratos inteligentes?",
+      "q5a1": "Nunca",
+      "q5a2": "En otras cadenas (Ethereum, etc.)",
+      "q5a3": "En Solana (Anchor/Native)"
+    }
+  },
+  "challenges": {
+    "title": "Desafíos",
+    "subtitle": "Pon a prueba tus habilidades y gana XP",
+    "daily": "Desafíos Diarios",
+    "weekly": "Desafíos Semanales",
+    "seasonal": "Eventos de Temporada",
+    "difficulty": "Dificultad",
+    "xpReward": "Recompensa XP",
+    "timeLimit": "Límite de Tiempo",
+    "minutes": "min",
+    "hours": "horas",
+    "completed": "Completado",
+    "inProgress": "En Progreso",
+    "notStarted": "Iniciar Desafío",
+    "expired": "Expirado",
+    "dailyWidget": {
+      "title": "Desafío Diario",
+      "description": "¡Completa el desafío de hoy para XP extra!",
+      "timeRemaining": "Tiempo restante",
+      "claim": "Reclamar Recompensa"
+    },
+    "events": {
+      "solanaSummer": "Verano Solana",
+      "solanaSummerDesc": "Completa desafíos de verano para insignias exclusivas y XP extra.",
+      "hackathonSeason": "Temporada de Hackathon",
+      "hackathonSeasonDesc": "Prepárate para hackathons con desafíos guiados y ejercicios en equipo."
+    },
+    "easy": "Fácil",
+    "medium": "Medio",
+    "hard": "Difícil"
   }
 }
