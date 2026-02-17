@@ -2,6 +2,7 @@
 
 import { signIn } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
 export default function SignInPage() {
@@ -49,6 +50,11 @@ export default function SignInPage() {
           >
             {t('signInWith', { provider: 'GitHub' })}
           </Button>
+          <div className="text-center">
+            <Link href="/onboarding" className="text-sm text-muted-foreground hover:text-primary underline">
+              {t('signUp')}
+            </Link>
+          </div>
         </div>
       </div>
     </div>
