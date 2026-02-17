@@ -1,0 +1,17 @@
+[workspace]
+
+[package]
+name = "onchain-academy-tests"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+onchain-academy = { path = "../../programs/onchain-academy", features = ["no-entrypoint"] }
+anchor-lang = "0.31.1"
+solana-sdk = "=2.0.25"
+solana-program = "=2.0.25"
+borsh = "0.10"
+
+[lib]
+name = "superteam_academy_tests"
+path = "src/lib.rs"
