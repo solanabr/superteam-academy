@@ -16,6 +16,13 @@ export interface IUser extends Document {
   practiceTxHashes: Map<string, string>;
   claimedMilestones: number[];
   milestoneTxHashes: Map<string, string>;
+  dailyStreak: {
+    current: number;
+    longest: number;
+    lastDay: string;
+  };
+  completedDailyChallenges: string[];
+  dailyChallengeTxHashes: Map<string, string>;
   communityPoints: number;
   endorsementCount: number;
   joinedAt: Date;
@@ -37,6 +44,13 @@ const UserSchema = new Schema<IUser>({
   practiceTxHashes: { type: Map, of: String, default: new Map() },
   claimedMilestones: { type: [Number], default: [] },
   milestoneTxHashes: { type: Map, of: String, default: new Map() },
+  dailyStreak: {
+    current: { type: Number, default: 0 },
+    longest: { type: Number, default: 0 },
+    lastDay: { type: String, default: "" },
+  },
+  completedDailyChallenges: { type: [String], default: [] },
+  dailyChallengeTxHashes: { type: Map, of: String, default: new Map() },
   communityPoints: { type: Number, default: 0 },
   endorsementCount: { type: Number, default: 0 },
   joinedAt: { type: Date, default: Date.now },

@@ -401,5 +401,23 @@
     "bountyTransferred": "इनाम समाधानकर्ता को भेज दिया गया!",
     "bountyOptional": "वैकल्पिक",
     "solBounty": "SOL इनाम"
+  },
+  "dailyChallenge": {
+    "title": "दैनिक चुनौती",
+    "streak": "स्ट्रीक",
+    "dayStreak": "दिन की स्ट्रीक",
+    "nextChallenge": "अगली चुनौती",
+    "nextMilestone": "अगला लक्ष्य",
+    "completed": "पूर्ण",
+    "solveNow": "अभी हल करें",
+    "backToPractice": "प्रैक्टिस पर वापस",
+    "unavailable": "दैनिक चुनौती उपलब्ध नहीं",
+    "alreadySolved": "आपने आज की चुनौती पहले ही हल कर ली है!",
+    "comeBackTomorrow": "नई चुनौती के लिए कल वापस आएं।",
+    "allTestsPassed": "सभी टेस्ट पास हो गए!",
+    "testsFailed": "{count} टेस्ट फेल हुए।",
+    "runTestsFirst": "पहले सभी टेस्ट चलाएं और पास करें!",
+    "xpEarned": "+{amount} XP अर्जित!",
+    "failedToComplete": "चुनौती पूरी करने में विफल"
   }
 }

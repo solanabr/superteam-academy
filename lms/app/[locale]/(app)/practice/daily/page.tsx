@@ -1,115 +1,149 @@
 "use client";
 
-import { use, useState, useMemo } from "react";
+import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import {
-  ArrowLeft, ArrowRight, CheckCircle2, Play, Lightbulb, Eye, EyeOff,
-  Sparkles, Copy, Check, Code2, ExternalLink,
+  ArrowLeft, CheckCircle2, Play, Lightbulb, Eye, EyeOff,
+  Sparkles, Copy, Check, Flame, Clock, ExternalLink, Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { usePracticeProgress, useCompletePracticeChallenge, useDailyArchive } from "@/lib/hooks/use-service";
-import { PRACTICE_CHALLENGES } from "@/lib/data/practice-challenges";
-import { PRACTICE_CATEGORIES, PRACTICE_DIFFICULTY_CONFIG } from "@/types/practice";
-import type { Challenge } from "@/types/course";
+import { useDailyChallenge, useCompleteDailyChallenge } from "@/lib/hooks/use-service";
+import { PRACTICE_CATEGORIES, PRACTICE_DIFFICULTY_CONFIG, DAILY_STREAK_MILESTONES } from "@/types/practice";
 import { highlight } from "@/lib/syntax-highlight";
 import { toast } from "sonner";
+import type { Challenge } from "@/types/course";
 
 const MonacoEditor = dynamic(() => import("@monaco-editor/react").then((m) => m.default), {
   ssr: false,
   loading: () => <Skeleton className="h-[400px] rounded-lg" />,
 });
 
-export default function PracticeChallengePage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
-  const { completed: completedIds, txHashes } = usePracticeProgress();
-  const completeMutation = useCompletePracticeChallenge();
-  const t = useTranslations("lesson");
-  const tp = useTranslations("practice");
+function getTimeUntilNextChallenge(): { hours: number; minutes: number; seconds: number } {
+  const now = new Date();
+  const brt = new Date(now.getTime() - 3 * 60 * 60 * 1000);
+  const nextMidnight = new Date(brt);
+  nextMidnight.setUTCHours(24, 0, 0, 0);
+  const diff = nextMidnight.getTime() - brt.getTime();
+  return {
+    hours: Math.floor(diff / (1000 * 60 * 60)),
+    minutes: Math.floor((diff / (1000 * 60)) % 60),
+    seconds: Math.floor((diff / 1000) % 60),
+  };
+}
+
+function pad(n: number): string {
+  return String(n).padStart(2, "0");
+}
+
+export default function DailyChallengePage() {
+  const t = useTranslations("dailyChallenge");
+  const tl = useTranslations("lesson");
   const tc = useTranslations("common");
 
-  const [code, setCode] = useState<string>("");
+  const { data: challenge, isLoading } = useDailyChallenge();
+  const completeMutation = useCompleteDailyChallenge();
+
+  const [code, setCode] = useState("");
+  const [codeInitialized, setCodeInitialized] = useState(false);
   const [showSolution, setShowSolution] = useState(false);
   const [showHints, setShowHints] = useState(false);
   const [testResults, setTestResults] = useState<{ name: string; passed: boolean; message?: string }[] | null>(null);
-  const [codeInitialized, setCodeInitialized] = useState(false);
   const [aiLoading, setAiLoading] = useState<"improve" | "autofill" | null>(null);
   const [copied, setCopied] = useState(false);
+  const [countdown, setCountdown] = useState(getTimeUntilNextChallenge);
 
-  const { data: dailyArchive } = useDailyArchive();
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCountdown(getTimeUntilNextChallenge());
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
-  const allChallenges = useMemo(() => {
-    const archived = dailyArchive ?? [];
-    return [...PRACTICE_CHALLENGES, ...archived];
-  }, [dailyArchive]);
-
-  const { challenge: practiceChallenge, prevChallenge, nextChallenge } = useMemo(() => {
-    const idx = allChallenges.findIndex((c) => c.id === id);
-    const challenge = allChallenges[idx] ?? null;
+  useEffect(() => {
     if (challenge && !codeInitialized) {
-      setCode(challenge.challenge.starterCode);
+      setCode(challenge.starterCode);
       setCodeInitialized(true);
     }
-    // Next/prev within same category
-    const sameCat = allChallenges.filter((c) => c.category === challenge?.category);
-    const catIdx = sameCat.findIndex((c) => c.id === id);
-    return {
-      challenge,
-      prevChallenge: catIdx > 0 ? sameCat[catIdx - 1] : null,
-      nextChallenge: catIdx < sameCat.length - 1 ? sameCat[catIdx + 1] : null,
-    };
-  }, [id, codeInitialized, allChallenges]);
+  }, [challenge, codeInitialized]);
 
-  const isCompleted = completedIds.includes(id);
+  if (isLoading) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <Skeleton className="h-8 w-64 mb-4" />
+        <Skeleton className="h-[600px] w-full rounded-xl" />
+      </div>
+    );
+  }
+
+  if (!challenge) {
+    return (
+      <div className="mx-auto max-w-4xl px-4 py-24 text-center">
+        <h1 className="text-2xl font-bold">{t("unavailable")}</h1>
+        <Button asChild className="mt-4"><Link href="/practice">{t("backToPractice")}</Link></Button>
+      </div>
+    );
+  }
+
+  const diffConfig = PRACTICE_DIFFICULTY_CONFIG[challenge.difficulty];
+  const catConfig = PRACTICE_CATEGORIES[challenge.category];
+  const isCompleted = challenge.completed;
   const allTestsPassed = testResults !== null && testResults.length > 0 && testResults.every((r) => r.passed);
+
+  const handleRunTests = () => {
+    if (!challenge) return;
+    const results = runDailyChallengeTests(code, {
+      language: challenge.language,
+      prompt: challenge.description,
+      starterCode: challenge.starterCode,
+      solution: challenge.solution,
+      testCases: challenge.testCases.map((tc) => ({
+        id: tc.id,
+        name: tc.name,
+        input: tc.input,
+        expectedOutput: tc.expected,
+      })),
+      hints: challenge.hints,
+    });
+    setTestResults(results);
+    if (results.every((r) => r.passed)) {
+      toast.success(t("allTestsPassed"));
+    } else {
+      const failed = results.filter((r) => !r.passed).length;
+      toast.error(t("testsFailed", { count: failed }));
+    }
+  };
 
   const handleComplete = () => {
     if (!allTestsPassed) {
-      toast.error(tp("runTestsFirst"));
+      toast.error(t("runTestsFirst"));
       return;
     }
-    if (!practiceChallenge) return;
-    completeMutation.mutate(
-      { challengeId: id, xpReward: practiceChallenge.xpReward },
-      {
-        onSuccess: (data) => {
-          const sig = data?.txSignature;
-          if (sig) {
-            toast.success(t("xpEarned", { amount: practiceChallenge.xpReward }), {
-              description: `Tx: ${sig.slice(0, 8)}...${sig.slice(-8)}`,
-              action: {
-                label: tc("view"),
-                onClick: () => window.open(`https://explorer.solana.com/tx/${sig}?cluster=devnet`, "_blank"),
-              },
-            });
-          } else {
-            toast.success(t("xpEarned", { amount: practiceChallenge.xpReward }));
-          }
-        },
-        onError: () => toast.error(t("failedToComplete")),
-      }
-    );
-  };
-
-  const handleRunTests = () => {
-    if (!practiceChallenge) return;
-    const results = runChallengeTests(code, practiceChallenge.challenge);
-    setTestResults(results);
-    if (results.every((r) => r.passed)) {
-      toast.success(tp("allTestsPassed"));
-    } else {
-      const failed = results.filter((r) => !r.passed).length;
-      toast.error(tp("testsFailed", { count: failed }));
-    }
+    completeMutation.mutate(undefined, {
+      onSuccess: (data) => {
+        const sig = data?.txSignature;
+        if (sig) {
+          toast.success(t("xpEarned", { amount: challenge.xpReward }), {
+            description: `Tx: ${sig.slice(0, 8)}...${sig.slice(-8)}`,
+            action: {
+              label: tc("view"),
+              onClick: () => window.open(`https://explorer.solana.com/tx/${sig}?cluster=devnet`, "_blank"),
+            },
+          });
+        } else {
+          toast.success(t("xpEarned", { amount: challenge.xpReward }));
+        }
+      },
+      onError: () => toast.error(t("failedToComplete")),
+    });
   };
 
   const handleAICode = async (mode: "improve" | "autofill") => {
-    if (!practiceChallenge || aiLoading) return;
+    if (!challenge || aiLoading) return;
     setAiLoading(mode);
     try {
       const res = await fetch("/api/ai-code", {
@@ -117,53 +151,44 @@ export default function PracticeChallengePage({ params }: { params: Promise<{ id
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           code,
-          language: practiceChallenge.challenge.language,
-          prompt: practiceChallenge.challenge.prompt,
+          language: challenge.language,
+          prompt: challenge.description,
           mode,
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "AI request failed");
       setCode(data.code);
-      toast.success(t("codeImprovedByAI"));
+      toast.success(tl("codeImprovedByAI"));
     } catch {
-      toast.error(t("aiUnavailable"));
+      toast.error(tl("aiUnavailable"));
     } finally {
       setAiLoading(null);
     }
   };
 
-  if (!practiceChallenge) {
-    return (
-      <div className="mx-auto max-w-4xl px-4 py-24 text-center">
-        <h1 className="text-2xl font-bold">{tp("challengeNotFound")}</h1>
-        <Button asChild className="mt-4"><Link href="/practice">{tp("backToPractice")}</Link></Button>
-      </div>
-    );
-  }
-
-  const ch = practiceChallenge;
-  const diffConfig = PRACTICE_DIFFICULTY_CONFIG[ch.difficulty];
-  const catConfig = PRACTICE_CATEGORIES[ch.category];
+  const streakCurrent = challenge.dailyStreak?.current ?? 0;
+  const nextMilestone = DAILY_STREAK_MILESTONES.find((m) => m > streakCurrent) ?? null;
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+      {/* Header */}
       <div className="mb-4 flex items-center justify-between">
         <Link href="/practice" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="h-4 w-4" /> {tp("title")}
+          <ArrowLeft className="h-4 w-4" /> {t("backToPractice")}
         </Link>
         <div className="flex items-center gap-2">
           {isCompleted && (
             <>
-              <Badge className="bg-solana-green text-white dark:text-black">{tc("solved")}</Badge>
-              {txHashes[id] && (
+              <Badge className="bg-solana-green text-white dark:text-black">{t("completed")}</Badge>
+              {challenge.txHash && (
                 <a
-                  href={`https://explorer.solana.com/tx/${txHashes[id]}?cluster=devnet`}
+                  href={`https://explorer.solana.com/tx/${challenge.txHash}?cluster=devnet`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 text-xs text-solana-purple hover:underline"
                 >
-                  Tx: {txHashes[id].slice(0, 4)}...{txHashes[id].slice(-4)}
+                  Tx: {challenge.txHash.slice(0, 4)}...{challenge.txHash.slice(-4)}
                   <ExternalLink className="h-3 w-3" />
                 </a>
               )}
@@ -175,31 +200,82 @@ export default function PracticeChallengePage({ params }: { params: Promise<{ id
           <Badge variant="outline" style={{ borderColor: catConfig.color, color: catConfig.color }}>
             {catConfig.label}
           </Badge>
-          <Badge variant="xp">{ch.xpReward} XP</Badge>
+          <Badge variant="xp">{challenge.xpReward} XP</Badge>
         </div>
       </div>
 
-      <h1 className="text-2xl font-bold mb-2">{ch.title}</h1>
-      <p className="text-muted-foreground mb-6">{ch.description}</p>
+      {/* Title + stats row */}
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <Zap className="h-5 w-5 text-xp-gold" />
+            <span className="text-xs font-bold uppercase tracking-wider text-xp-gold">{t("title")}</span>
+            <span className="text-xs text-muted-foreground">— {challenge.date}</span>
+          </div>
+          <h1 className="text-2xl font-bold">{challenge.title}</h1>
+          <p className="text-muted-foreground mt-1">{challenge.description}</p>
+        </div>
+
+        <div className="flex items-center gap-6 flex-shrink-0">
+          {/* Daily streak */}
+          <div className="flex items-center gap-1.5">
+            <Flame className="h-5 w-5 text-streak-orange" />
+            <div className="text-center">
+              <p className="text-xl font-bold leading-none">{streakCurrent}</p>
+              <p className="text-[10px] text-muted-foreground">{t("dayStreak")}</p>
+            </div>
+          </div>
+          {nextMilestone && (
+            <div className="text-center">
+              <p className="text-sm font-medium text-muted-foreground">
+                {t("nextMilestone")}: <span className="text-foreground font-bold">{nextMilestone}d</span>
+              </p>
+            </div>
+          )}
+          {/* Countdown */}
+          <div className="flex items-center gap-1.5">
+            <Clock className="h-4 w-4 text-muted-foreground" />
+            <div className="text-center">
+              <p className="text-sm font-mono font-bold leading-none tabular-nums">
+                {pad(countdown.hours)}:{pad(countdown.minutes)}:{pad(countdown.seconds)}
+              </p>
+              <p className="text-[10px] text-muted-foreground">{t("nextChallenge")}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Already completed state */}
+      {isCompleted && (
+        <Card className="mb-6 border-solana-green/30 bg-solana-green/5">
+          <CardContent className="p-4 flex items-center gap-3">
+            <CheckCircle2 className="h-6 w-6 text-solana-green" />
+            <div>
+              <p className="font-medium text-solana-green">{t("alreadySolved")}</p>
+              <p className="text-sm text-muted-foreground">{t("comeBackTomorrow")}</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Left: Challenge prompt */}
         <div className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">{t("challenge")}</CardTitle>
+              <CardTitle className="text-base">{tl("challenge")}</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm">{ch.challenge.prompt}</p>
+              <p className="text-sm">{challenge.description}</p>
             </CardContent>
           </Card>
 
-          {showHints && (
+          {showHints && challenge.hints.length > 0 && (
             <Card>
-              <CardHeader><CardTitle className="text-base">{t("hints")}</CardTitle></CardHeader>
+              <CardHeader><CardTitle className="text-base">{tl("hints")}</CardTitle></CardHeader>
               <CardContent>
                 <ul className="space-y-2 text-sm">
-                  {ch.challenge.hints.map((hint, i) => (
+                  {challenge.hints.map((hint, i) => (
                     <li key={i} className="flex gap-2">
                       <Lightbulb className="h-4 w-4 text-xp-gold shrink-0 mt-0.5" />
                       {hint}
@@ -212,7 +288,7 @@ export default function PracticeChallengePage({ params }: { params: Promise<{ id
 
           {testResults && (
             <Card>
-              <CardHeader><CardTitle className="text-base">{t("testResults")}</CardTitle></CardHeader>
+              <CardHeader><CardTitle className="text-base">{tl("testResults")}</CardTitle></CardHeader>
               <CardContent>
                 <div className="space-y-3">
                   {testResults.map((r, i) => (
@@ -237,26 +313,26 @@ export default function PracticeChallengePage({ params }: { params: Promise<{ id
 
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={() => setShowHints(!showHints)}>
-              <Lightbulb className="h-4 w-4" /> {showHints ? t("hideHints") : t("showHints")}
+              <Lightbulb className="h-4 w-4" /> {showHints ? tl("hideHints") : tl("showHints")}
             </Button>
             <Button variant="outline" size="sm" onClick={() => setShowSolution(!showSolution)}>
               {showSolution ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              {showSolution ? t("hideSolution") : t("showSolution")}
+              {showSolution ? tl("hideSolution") : tl("showSolution")}
             </Button>
           </div>
 
           {showSolution && (
             <Card className="overflow-hidden">
               <div className="flex items-center justify-between border-b px-4 py-2 bg-[#16161e]">
-                <span className="text-xs font-semibold uppercase tracking-wider text-[#7f849c]">Solution — {ch.challenge.language}</span>
+                <span className="text-xs font-semibold uppercase tracking-wider text-[#7f849c]">Solution — {challenge.language}</span>
                 <Button
                   variant="ghost"
                   size="sm"
                   className="h-7 px-2 text-[#7f849c] hover:text-white hover:bg-white/10"
                   onClick={() => {
-                    navigator.clipboard.writeText(ch.challenge.solution);
+                    navigator.clipboard.writeText(challenge.solution);
                     setCopied(true);
-                    toast.success(t("solutionCopied"));
+                    toast.success(tl("solutionCopied"));
                     setTimeout(() => setCopied(false), 2000);
                   }}
                 >
@@ -267,7 +343,7 @@ export default function PracticeChallengePage({ params }: { params: Promise<{ id
               <div className="bg-[#1e1e2e] p-4 overflow-x-auto">
                 <pre className="m-0"><code
                   className="font-mono text-[13px] leading-relaxed text-[#cdd6f4]"
-                  dangerouslySetInnerHTML={{ __html: highlight(ch.challenge.solution, ch.challenge.language) }}
+                  dangerouslySetInnerHTML={{ __html: highlight(challenge.solution, challenge.language) }}
                 /></pre>
               </div>
             </Card>
@@ -278,13 +354,13 @@ export default function PracticeChallengePage({ params }: { params: Promise<{ id
         <div className="space-y-4">
           <Card className="overflow-hidden">
             <div className="flex items-center justify-between border-b px-4 py-2">
-              <span className="text-sm font-medium capitalize">{ch.challenge.language}</span>
+              <span className="text-sm font-medium capitalize">{challenge.language}</span>
               <div className="flex gap-2">
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={() => handleAICode("improve")}
-                  disabled={!!aiLoading}
+                  disabled={!!aiLoading || isCompleted}
                   className="text-solana-purple border-solana-purple/30 hover:bg-solana-purple/10"
                 >
                   {aiLoading === "improve" ? (
@@ -294,17 +370,17 @@ export default function PracticeChallengePage({ params }: { params: Promise<{ id
                       <span className="h-1.5 w-1.5 rounded-full bg-solana-purple animate-bounce [animation-delay:300ms]" />
                     </span>
                   ) : <Sparkles className="h-4 w-4" />}
-                  {t("improveWithAI")}
+                  {tl("improveWithAI")}
                 </Button>
-                <Button size="sm" onClick={handleRunTests}>
-                  <Play className="h-4 w-4" /> {t("runTests")}
+                <Button size="sm" onClick={handleRunTests} disabled={isCompleted}>
+                  <Play className="h-4 w-4" /> {tl("runTests")}
                 </Button>
               </div>
             </div>
             <div className="h-[400px]">
               <MonacoEditor
                 height="100%"
-                language={ch.challenge.language === "rust" ? "rust" : "typescript"}
+                language={challenge.language === "rust" ? "rust" : "typescript"}
                 theme="vs-dark"
                 value={code}
                 onChange={(v) => setCode(v ?? "")}
@@ -328,6 +404,7 @@ export default function PracticeChallengePage({ params }: { params: Promise<{ id
                   scrollBeyondLastLine: false,
                   wordWrap: "on",
                   padding: { top: 16 },
+                  readOnly: isCompleted,
                 }}
               />
             </div>
@@ -341,40 +418,16 @@ export default function PracticeChallengePage({ params }: { params: Promise<{ id
               disabled={completeMutation.isPending || !allTestsPassed}
             >
               <CheckCircle2 className="h-4 w-4" />
-              {completeMutation.isPending ? t("completing") : allTestsPassed ? t("markComplete") : t("passAllTestsFirst")}
+              {completeMutation.isPending ? tl("completing") : allTestsPassed ? tl("markComplete") : tl("passAllTestsFirst")}
             </Button>
           )}
         </div>
-      </div>
-
-      <Separator className="my-8" />
-
-      {/* Navigation */}
-      <div className="flex items-center justify-between">
-        {prevChallenge ? (
-          <Button asChild variant="outline">
-            <Link href={`/practice/${prevChallenge.id}`}>
-              <ArrowLeft className="h-4 w-4" /> {prevChallenge.title}
-            </Link>
-          </Button>
-        ) : <div />}
-        {nextChallenge ? (
-          <Button asChild>
-            <Link href={`/practice/${nextChallenge.id}`}>
-              {nextChallenge.title} <ArrowRight className="h-4 w-4" />
-            </Link>
-          </Button>
-        ) : (
-          <Button asChild variant="solana">
-            <Link href="/practice">{tp("backToPractice")}</Link>
-          </Button>
-        )}
       </div>
     </div>
   );
 }
 
-function runChallengeTests(
+function runDailyChallengeTests(
   code: string,
   challenge: Challenge
 ): { name: string; passed: boolean; message?: string }[] {

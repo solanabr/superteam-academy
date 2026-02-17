@@ -10,7 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { usePracticeProgress, useClaimMilestone } from "@/lib/hooks/use-service";
+import { DailyChallengeBanner } from "@/components/daily-challenge-banner";
+import { usePracticeProgress, useClaimMilestone, useDailyArchive } from "@/lib/hooks/use-service";
 import { PRACTICE_CHALLENGES } from "@/lib/data/practice-challenges";
 import {
   PRACTICE_CATEGORIES,
@@ -32,15 +33,22 @@ export default function PracticePage() {
 
   const { completed: completedIds, txHashes, claimedMilestones, milestoneTxHashes } = usePracticeProgress();
   const claimMilestone = useClaimMilestone();
+  const { data: dailyArchive } = useDailyArchive();
+
+  const allChallenges = useMemo(() => {
+    const archived = dailyArchive ?? [];
+    return [...PRACTICE_CHALLENGES, ...archived];
+  }, [dailyArchive]);
+
   const solvedCount = completedIds.length;
-  const totalCount = PRACTICE_CHALLENGES.length;
+  const totalCount = allChallenges.length;
   const totalXP = completedIds.reduce((sum, id) => {
-    const c = PRACTICE_CHALLENGES.find((ch) => ch.id === id);
+    const c = allChallenges.find((ch) => ch.id === id);
     return sum + (c?.xpReward ?? 0);
   }, 0);
 
   const filtered = useMemo(() => {
-    return PRACTICE_CHALLENGES.filter((c) => {
+    return allChallenges.filter((c) => {
       if (search) {
         const q = search.toLowerCase();
         if (!c.title.toLowerCase().includes(q) && !c.description.toLowerCase().includes(q)) return false;
@@ -52,10 +60,13 @@ export default function PracticePage() {
       if (status === "unsolved" && completedIds.includes(c.id)) return false;
       return true;
     });
-  }, [search, difficulty, category, language, status, completedIds]);
+  }, [search, difficulty, category, language, status, completedIds, allChallenges]);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      {/* Daily Challenge Banner */}
+      <DailyChallengeBanner />
+
       {/* Header */}
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>

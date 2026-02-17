@@ -448,3 +448,49 @@ export function useCompletePracticeChallenge() {
     },
   });
 }
+
+export function useDailyChallenge() {
+  const { publicKey } = useWallet();
+  const userId = publicKey?.toBase58() ?? "guest";
+
+  return useQuery({
+    queryKey: ["dailyChallenge", userId],
+    queryFn: () => getService().getDailyChallenge(userId),
+    staleTime: 60_000,
+  });
+}
+
+export function useCompleteDailyChallenge() {
+  const { publicKey } = useWallet();
+  const userId = publicKey?.toBase58() ?? "guest";
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => getService().completeDailyChallenge(userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["dailyChallenge", userId] });
+      queryClient.invalidateQueries({ queryKey: ["dailyStreak", userId] });
+      queryClient.invalidateQueries({ queryKey: ["xp"] });
+      queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
+    },
+  });
+}
+
+export function useDailyStreak() {
+  const { publicKey } = useWallet();
+  const userId = publicKey?.toBase58() ?? "guest";
+
+  return useQuery({
+    queryKey: ["dailyStreak", userId],
+    queryFn: () => getService().getDailyStreak(userId),
+    staleTime: 30_000,
+  });
+}
+
+export function useDailyArchive() {
+  return useQuery({
+    queryKey: ["dailyArchive"],
+    queryFn: () => getService().getDailyArchive(),
+    staleTime: 60_000,
+  });
+}

@@ -3,6 +3,7 @@ import type { Progress, LeaderboardEntry, StreakData, UserProfile } from "@/type
 import type { Achievement } from "@/types/gamification";
 import type { Credential } from "@/types/credential";
 import type { Thread, Reply, Endorsement, CommunityStats } from "@/types/community";
+import type { DailyChallenge, DailyStreakData, PracticeChallenge } from "@/types/practice";
 
 export interface CompleteLessonResult {
   ok: boolean;
@@ -53,6 +54,12 @@ export interface LearningProgressService {
   getCourse(courseId: string): Promise<Course | null>;
   getPracticeProgress(userId: string): Promise<PracticeProgressData>;
   completePracticeChallenge(userId: string, challengeId: string, xpReward: number): Promise<OnChainResult>;
+
+  // Daily Challenge
+  getDailyChallenge(userId: string): Promise<DailyChallenge & { dailyStreak: DailyStreakData }>;
+  completeDailyChallenge(userId: string): Promise<OnChainResult>;
+  getDailyStreak(userId: string): Promise<DailyStreakData>;
+  getDailyArchive(): Promise<PracticeChallenge[]>;
 
   // Community
   getThreads(params?: { type?: string; tag?: string; sort?: string; page?: number }): Promise<ThreadListResult>;

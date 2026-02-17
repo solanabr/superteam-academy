@@ -401,5 +401,23 @@
     "bountyTransferred": "Bounty transferred to solver!",
     "bountyOptional": "Optional",
     "solBounty": "SOL Bounty"
+  },
+  "dailyChallenge": {
+    "title": "Daily Challenge",
+    "streak": "Streak",
+    "dayStreak": "day streak",
+    "nextChallenge": "Next challenge",
+    "nextMilestone": "Next milestone",
+    "completed": "Completed",
+    "solveNow": "Solve Now",
+    "backToPractice": "Back to Practice",
+    "unavailable": "Daily challenge unavailable",
+    "alreadySolved": "You've already solved today's challenge!",
+    "comeBackTomorrow": "Come back tomorrow for a new challenge.",
+    "allTestsPassed": "All tests passed!",
+    "testsFailed": "{count} test{count, plural, one {} other {s}} failed.",
+    "runTestsFirst": "Run tests and pass all of them first!",
+    "xpEarned": "+{amount} XP earned!",
+    "failedToComplete": "Failed to complete challenge"
   }
 }

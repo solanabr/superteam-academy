@@ -45,6 +45,37 @@ export const PRACTICE_DIFFICULTY_CONFIG: Record<PracticeDifficulty, { label: str
   hard: { label: "Hard", color: "#f87171", xp: 50 },
 };
 
+export interface DailyChallenge {
+  date: string;
+  title: string;
+  description: string;
+  difficulty: PracticeDifficulty;
+  category: PracticeCategory;
+  language: "rust" | "typescript";
+  xpReward: number;
+  starterCode: string;
+  solution: string;
+  testCases: { id: string; name: string; input: string; expected: string }[];
+  hints: string[];
+  completed?: boolean;
+  txHash?: string | null;
+}
+
+export interface DailyStreakData {
+  current: number;
+  longest: number;
+  lastDay: string;
+  completedDates: string[];
+}
+
+export const DAILY_STREAK_MILESTONES = [7, 30, 100] as const;
+
+export const DAILY_XP_REWARDS: Record<PracticeDifficulty, number> = {
+  easy: 15,
+  medium: 30,
+  hard: 60,
+};
+
 export const PRACTICE_MILESTONES = [15, 30, 50, 75] as const;
 
 export const MILESTONE_LEVELS: Record<number, { name: string; color: string; solReward: number }> = {

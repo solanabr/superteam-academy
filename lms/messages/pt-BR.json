@@ -401,5 +401,23 @@
     "bountyTransferred": "Recompensa transferida para o solucionador!",
     "bountyOptional": "Opcional",
     "solBounty": "Recompensa SOL"
+  },
+  "dailyChallenge": {
+    "title": "Desafio Diário",
+    "streak": "Sequência",
+    "dayStreak": "dias seguidos",
+    "nextChallenge": "Próximo desafio",
+    "nextMilestone": "Próxima meta",
+    "completed": "Concluído",
+    "solveNow": "Resolver Agora",
+    "backToPractice": "Voltar à Prática",
+    "unavailable": "Desafio diário indisponível",
+    "alreadySolved": "Você já resolveu o desafio de hoje!",
+    "comeBackTomorrow": "Volte amanhã para um novo desafio.",
+    "allTestsPassed": "Todos os testes passaram!",
+    "testsFailed": "{count} teste{count, plural, one {} other {s}} falhou(aram).",
+    "runTestsFirst": "Execute os testes e passe em todos primeiro!",
+    "xpEarned": "+{amount} XP ganhos!",
+    "failedToComplete": "Falha ao completar desafio"
   }
 }

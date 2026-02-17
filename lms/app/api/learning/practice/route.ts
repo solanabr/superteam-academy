@@ -26,6 +26,16 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  // Include daily archive completions as practice IDs
+  const dailyCompleted = (user.completedDailyChallenges ?? []).map(
+    (date: string) => `daily-${date}`
+  );
+  if (user.dailyChallengeTxHashes) {
+    for (const [date, hash] of user.dailyChallengeTxHashes.entries()) {
+      txHashes[`daily-${date}`] = hash;
+    }
+  }
+
   // Try on-chain first: read achievement_flags bitmap bits 64-138
   try {
     const wallet = new PublicKey(userId);
@@ -39,14 +49,24 @@ export async function GET(req: NextRequest) {
           if (id) completed.push(id);
         }
       }
+      // Merge daily archive completions
+      for (const dc of dailyCompleted) {
+        if (!completed.includes(dc)) completed.push(dc);
+      }
       return NextResponse.json({ completed, txHashes, claimedMilestones, milestoneTxHashes });
     }
   } catch {
     // fallback to MongoDB
   }
 
+  // Merge daily archive IDs into completedPractice
+  const allCompleted = [...user.completedPractice];
+  for (const dc of dailyCompleted) {
+    if (!allCompleted.includes(dc)) allCompleted.push(dc);
+  }
+
   return NextResponse.json({
-    completed: user.completedPractice,
+    completed: allCompleted,
     txHashes,
     claimedMilestones,
     milestoneTxHashes,

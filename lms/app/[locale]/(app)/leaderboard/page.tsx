@@ -12,6 +12,30 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { getLevel } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 
+function LeaderboardAvatar({ src, fallbackChar, size }: { src: string | undefined; fallbackChar: string; size: number }) {
+  const [loaded, setLoaded] = useState(false);
+
+  if (!src) {
+    return <span className={`${size > 40 ? "text-lg" : "text-sm"} font-bold text-white`}>{fallbackChar}</span>;
+  }
+
+  return (
+    <>
+      {!loaded && (
+        <div className="absolute inset-0 rounded-full bg-gradient-to-r from-muted via-muted-foreground/10 to-muted animate-shimmer bg-[length:200%_100%]" />
+      )}
+      <Image
+        src={src}
+        alt=""
+        width={size}
+        height={size}
+        className={`h-full w-full object-cover transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`}
+        onLoad={() => setLoaded(true)}
+      />
+    </>
+  );
+}
+
 const TIMEFRAME_KEYS = [
   { value: "weekly" as const, key: "thisWeek" },
   { value: "monthly" as const, key: "thisMonth" },
@@ -83,11 +107,11 @@ export default function LeaderboardPage() {
                 return (
                   <div key={podiumIndex} className={`flex flex-col items-center ${isFirst ? "order-2" : podiumIndex === 1 ? "order-1" : "order-3"}`}>
                     <div className={`relative flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br ${PODIUM_COLORS[podiumIndex]} ${isFirst ? "h-20 w-20" : ""} overflow-hidden`}>
-                      {getAvatarSrc(entry.avatar) ? (
-                        <Image src={getAvatarSrc(entry.avatar)!} alt="" width={80} height={80} className="h-full w-full object-cover" />
-                      ) : (
-                        <span className="text-lg font-bold text-white">{entry.displayName?.[0] ?? entry.wallet[0]}</span>
-                      )}
+                      <LeaderboardAvatar
+                        src={getAvatarSrc(entry.avatar)}
+                        fallbackChar={entry.displayName?.[0] ?? entry.wallet[0]}
+                        size={80}
+                      />
                       <div className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-background border-2 border-current text-xs font-bold">
                         {podiumIndex + 1}
                       </div>
@@ -113,12 +137,12 @@ export default function LeaderboardPage() {
                     <span className="w-8 text-center text-sm font-bold text-muted-foreground">
                       #{entry.rank}
                     </span>
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted shrink-0 overflow-hidden">
-                      {getAvatarSrc(entry.avatar) ? (
-                        <Image src={getAvatarSrc(entry.avatar)!} alt="" width={40} height={40} className="h-full w-full object-cover" />
-                      ) : (
-                        <span className="text-sm font-bold">{entry.displayName?.[0] ?? entry.wallet[0]}</span>
-                      )}
+                    <div className="relative flex h-10 w-10 items-center justify-center rounded-full bg-muted shrink-0 overflow-hidden">
+                      <LeaderboardAvatar
+                        src={getAvatarSrc(entry.avatar)}
+                        fallbackChar={entry.displayName?.[0] ?? entry.wallet[0]}
+                        size={40}
+                      />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">

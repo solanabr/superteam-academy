@@ -4,6 +4,7 @@ import type { Progress, LeaderboardEntry, StreakData, UserProfile } from "@/type
 import type { Achievement } from "@/types/gamification";
 import type { Credential } from "@/types/credential";
 import type { Thread, Reply, Endorsement, CommunityStats } from "@/types/community";
+import type { DailyChallenge, DailyStreakData, PracticeChallenge } from "@/types/practice";
 
 const BASE = "/api/learning";
 
@@ -141,6 +142,28 @@ export class ApiService implements LearningProgressService {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId, challengeId, xpReward }),
     });
+  }
+
+  // Daily Challenge
+
+  async getDailyChallenge(userId: string): Promise<DailyChallenge & { dailyStreak: DailyStreakData }> {
+    return fetchJson(`${BASE}/daily-challenge?userId=${userId}`);
+  }
+
+  async completeDailyChallenge(userId: string): Promise<OnChainResult> {
+    return fetchJson(`${BASE}/daily-challenge/complete`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId }),
+    });
+  }
+
+  async getDailyStreak(userId: string): Promise<DailyStreakData> {
+    return fetchJson(`${BASE}/daily-challenge/streak?userId=${userId}`);
+  }
+
+  async getDailyArchive(): Promise<PracticeChallenge[]> {
+    return fetchJson(`${BASE}/daily-challenge/archive`);
   }
 
   // Community

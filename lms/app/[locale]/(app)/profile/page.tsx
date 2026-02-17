@@ -22,6 +22,34 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useState } from "react";
 
+function AvatarWithShimmer({ src, displayName, address }: { src: string | undefined; displayName: string | undefined; address: string; }) {
+  const [loaded, setLoaded] = useState(false);
+
+  if (!src) {
+    return (
+      <span className="text-2xl font-bold text-white">
+        {(displayName ?? address).slice(0, 2).toUpperCase()}
+      </span>
+    );
+  }
+
+  return (
+    <>
+      {!loaded && (
+        <div className="absolute inset-0 rounded-full bg-gradient-to-r from-muted via-muted-foreground/10 to-muted animate-shimmer bg-[length:200%_100%]" />
+      )}
+      <Image
+        src={src}
+        alt="Avatar"
+        width={80}
+        height={80}
+        className={`h-full w-full object-cover transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`}
+        onLoad={() => setLoaded(true)}
+      />
+    </>
+  );
+}
+
 export default function ProfilePage() {
   const t = useTranslations("profile");
   const tc = useTranslations("common");
@@ -29,7 +57,7 @@ export default function ProfilePage() {
   const { connection } = useConnection();
   const { data: displayName } = useDisplayName();
   const { data: bio } = useBio();
-  const { data: avatar } = useAvatar();
+  const { data: avatar, isLoading: avatarLoading } = useAvatar();
   const { data: xp = 0 } = useXP();
   const { data: level = 0 } = useLevel();
   const { data: streak } = useStreak();
@@ -114,13 +142,11 @@ export default function ProfilePage() {
       <Card className="mb-8">
         <CardContent className="p-8">
           <div className="flex flex-col items-center gap-6 sm:flex-row">
-            <div className="h-20 w-20 rounded-full overflow-hidden bg-gradient-to-br from-[#008c4c] to-[#ffd23f] flex items-center justify-center shrink-0">
-              {getAvatarSrc(avatar ?? undefined) ? (
-                <Image src={getAvatarSrc(avatar ?? undefined)!} alt="Avatar" width={80} height={80} className="h-full w-full object-cover" />
+            <div className="relative h-20 w-20 rounded-full overflow-hidden bg-gradient-to-br from-[#008c4c] to-[#ffd23f] flex items-center justify-center shrink-0">
+              {avatarLoading ? (
+                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-muted via-muted-foreground/10 to-muted animate-shimmer bg-[length:200%_100%]" />
               ) : (
-                <span className="text-2xl font-bold text-white">
-                  {(displayName ?? address).slice(0, 2).toUpperCase()}
-                </span>
+                <AvatarWithShimmer src={getAvatarSrc(avatar ?? undefined)} displayName={displayName} address={address} />
               )}
             </div>
             <div className="text-center sm:text-left flex-1">
@@ -192,7 +218,7 @@ export default function ProfilePage() {
 
       <div className="grid gap-8 lg:grid-cols-2">
         {/* Skill Tracks */}
-        <Card>
+        <Card className="self-start">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <Award className="h-5 w-5" /> {t("skillTracks")}
