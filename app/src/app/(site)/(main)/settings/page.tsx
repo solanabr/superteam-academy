@@ -4,19 +4,19 @@ import { useState } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLang } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'; // Assuming shadcn/ui tabs exist, if not we will mock them or build simple ones.
 // Simple Mock Tabs if Shadcn not fully set up yet
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const SimpleTabs = ({ children, defaultValue }: any) => {
     const [active, setActive] = useState(defaultValue);
     return (
         <div className="w-full">
             <div className="flex border-b border-gray-200 dark:border-gray-800 mb-6">
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                 {children[0].props.children.map((child: any) => (
                     <button
-                        key={child.props.value}
-                        onClick={() => setActive(child.props.value)}
-                        className={`px-4 py-2 text-sm font-medium transition-colors relative ${active === child.props.value
+                        key={child.props['data-value']}
+                        onClick={() => setActive(child.props['data-value'])}
+                        className={`px-4 py-2 text-sm font-medium transition-colors relative ${active === child.props['data-value']
                             ? 'text-green-500 border-b-2 border-green-500'
                             : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
                             }`}
@@ -25,8 +25,9 @@ const SimpleTabs = ({ children, defaultValue }: any) => {
                     </button>
                 ))}
             </div>
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
             {children.map((child: any) => {
-                if (child.type === 'div' && child.props.value !== active) return null;
+                if (child.type === 'div' && child.props['data-value'] !== active) return null;
                 return child;
             })}
         </div>
@@ -37,7 +38,6 @@ export default function SettingsPage() {
     const { theme, toggleTheme } = useTheme();
     const { lang: language, setLang: setLanguage, t } = useLang();
     const { user, logout } = useAuth();
-    const router = useRouter();
 
     const [notifications, setNotifications] = useState({
         email: true,
@@ -53,13 +53,13 @@ export default function SettingsPage() {
                 <SimpleTabs defaultValue="profile">
                     {/* Tab Triggers */}
                     <div role="tablist">
-                        <div value="profile">Profile</div>
-                        <div value="preferences">Preferences</div>
-                        <div value="notifications">Notifications</div>
+                        <div data-value="profile">Profile</div>
+                        <div data-value="preferences">Preferences</div>
+                        <div data-value="notifications">Notifications</div>
                     </div>
 
                     {/* Content: Profile */}
-                    <div role="tabpanel" value="profile" className="mt-4">
+                    <div role="tabpanel" data-value="profile" className="mt-4">
                         <div className="space-y-6">
                             <div className="flex items-center gap-6 pb-6 border-b border-gray-100 dark:border-gray-800">
                                 <div className="w-24 h-24 rounded-full bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center text-3xl font-bold text-white shadow-inner">
@@ -94,7 +94,7 @@ export default function SettingsPage() {
                     </div>
 
                     {/* Content: Preferences */}
-                    <div role="tabpanel" value="preferences" className="mt-4">
+                    <div role="tabpanel" data-value="preferences" className="mt-4">
                         <div className="space-y-8">
                             {/* Theme Toggle */}
                             <div className="flex items-center justify-between">
@@ -138,7 +138,7 @@ export default function SettingsPage() {
                     </div>
 
                     {/* Content: Notifications */}
-                    <div role="tabpanel" value="notifications" className="mt-4">
+                    <div role="tabpanel" data-value="notifications" className="mt-4">
                         <div className="space-y-4">
                             {[
                                 { key: 'email', label: 'Email Notifications', desc: 'Receive daily summaries of your progress.' },

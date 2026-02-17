@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useLang } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,22 +10,8 @@ import { AuthModal } from '@/components/shared/AuthModal';
 
 export default function CoursesPage() {
   const { t } = useLang();
-  const { user, isAuthenticated, enrollCourse } = useAuth();
-  const router = useRouter();
+  const { user, isAuthenticated } = useAuth();
   const [authOpen, setAuthOpen] = useState(false);
-
-  const handleEnroll = (courseId: string) => {
-    if (!isAuthenticated) {
-      setAuthOpen(true);
-      return;
-    }
-    enrollCourse(courseId);
-    router.push(`/lesson/${courseId}`);
-  };
-
-  const handleContinue = (courseId: string) => {
-    router.push(`/lesson/${courseId}`);
-  };
 
   const levelColors: Record<string, string> = {
     beginner: 'text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-500/10 border-green-200 dark:border-green-500/20',
