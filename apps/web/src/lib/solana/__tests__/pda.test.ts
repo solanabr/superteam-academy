@@ -47,18 +47,18 @@ describe("PDA helpers", () => {
     expect(pda1.toBase58()).toBe(pda2.toBase58());
   });
 
-  it("findAchievementTypePDA works", () => {
-    const [pda] = findAchievementTypePDA("first-steps", PROGRAM_ID);
-    expect(pda).toBeInstanceOf(PublicKey);
+  it("findAchievementTypePDA is unique per achievementId", () => {
+    const [pda1] = findAchievementTypePDA("first-steps", PROGRAM_ID);
+    const [pda2] = findAchievementTypePDA("week-warrior", PROGRAM_ID);
+    expect(pda1.toBase58()).not.toBe(pda2.toBase58());
   });
 
-  it("findAchievementReceiptPDA works", () => {
-    const [pda] = findAchievementReceiptPDA(
-      "first-steps",
-      PublicKey.unique(),
-      PROGRAM_ID
-    );
-    expect(pda).toBeInstanceOf(PublicKey);
+  it("findAchievementReceiptPDA is unique per recipient", () => {
+    const user1 = PublicKey.unique();
+    const user2 = PublicKey.unique();
+    const [pda1] = findAchievementReceiptPDA("first-steps", user1, PROGRAM_ID);
+    const [pda2] = findAchievementReceiptPDA("first-steps", user2, PROGRAM_ID);
+    expect(pda1.toBase58()).not.toBe(pda2.toBase58());
   });
 
   it("PDA seeds match on-chain derivation", () => {
@@ -68,5 +68,21 @@ describe("PDA helpers", () => {
     );
     const [actual] = findConfigPDA(PROGRAM_ID);
     expect(actual.toBase58()).toBe(expected.toBase58());
+  });
+
+  it("throws on oversized courseId", () => {
+    const longId = "a".repeat(33);
+    expect(() => findCoursePDA(longId, PROGRAM_ID)).toThrow("courseId");
+  });
+
+  it("throws on empty courseId", () => {
+    expect(() => findCoursePDA("", PROGRAM_ID)).toThrow("courseId");
+  });
+
+  it("throws on oversized achievementId", () => {
+    const longId = "a".repeat(33);
+    expect(() => findAchievementTypePDA(longId, PROGRAM_ID)).toThrow(
+      "achievementId"
+    );
   });
 });

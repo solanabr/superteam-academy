@@ -57,4 +57,25 @@ describe("isAllLessonsComplete", () => {
       isAllLessonsComplete([new BN(1), new BN(0), new BN(0), new BN(0)], 1)
     ).toBe(true);
   });
+
+  it("returns false for lessonCount 0", () => {
+    expect(
+      isAllLessonsComplete(
+        [new BN(0xffffffff), new BN(0), new BN(0), new BN(0)],
+        0
+      )
+    ).toBe(false);
+  });
+
+  it("returns false when lessonFlags too short", () => {
+    expect(isAllLessonsComplete([new BN(0xff)], 65)).toBe(false);
+  });
+});
+
+describe("decodeLessonBitmap edge cases", () => {
+  it("throws when lessonFlags too short for lessonCount", () => {
+    expect(() => decodeLessonBitmap([new BN(0xff)], 65)).toThrow(
+      "lessonFlags has 1 words but lessonCount=65 requires 2"
+    );
+  });
 });

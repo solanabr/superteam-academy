@@ -5,6 +5,16 @@ export const PROGRAM_ID = new PublicKey(
     "3YchgRgR65gdRqgTZTM5qQXqtTZn5Kt2i6FPnZVu34Qb"
 );
 
+const MAX_COURSE_ID_BYTES = 32;
+const MAX_ACHIEVEMENT_ID_BYTES = 32;
+
+function assertIdLength(id: string, max: number, label: string): void {
+  const len = Buffer.byteLength(id, "utf8");
+  if (len === 0 || len > max) {
+    throw new Error(`${label} must be 1-${max} bytes (got ${len})`);
+  }
+}
+
 export function findConfigPDA(
   programId: PublicKey = PROGRAM_ID
 ): [PublicKey, number] {
@@ -15,6 +25,7 @@ export function findCoursePDA(
   courseId: string,
   programId: PublicKey = PROGRAM_ID
 ): [PublicKey, number] {
+  assertIdLength(courseId, MAX_COURSE_ID_BYTES, "courseId");
   return PublicKey.findProgramAddressSync(
     [Buffer.from("course"), Buffer.from(courseId)],
     programId
@@ -26,6 +37,7 @@ export function findEnrollmentPDA(
   user: PublicKey,
   programId: PublicKey = PROGRAM_ID
 ): [PublicKey, number] {
+  assertIdLength(courseId, MAX_COURSE_ID_BYTES, "courseId");
   return PublicKey.findProgramAddressSync(
     [Buffer.from("enrollment"), Buffer.from(courseId), user.toBuffer()],
     programId
@@ -46,6 +58,7 @@ export function findAchievementTypePDA(
   achievementId: string,
   programId: PublicKey = PROGRAM_ID
 ): [PublicKey, number] {
+  assertIdLength(achievementId, MAX_ACHIEVEMENT_ID_BYTES, "achievementId");
   return PublicKey.findProgramAddressSync(
     [Buffer.from("achievement"), Buffer.from(achievementId)],
     programId
@@ -57,6 +70,7 @@ export function findAchievementReceiptPDA(
   recipient: PublicKey,
   programId: PublicKey = PROGRAM_ID
 ): [PublicKey, number] {
+  assertIdLength(achievementId, MAX_ACHIEVEMENT_ID_BYTES, "achievementId");
   return PublicKey.findProgramAddressSync(
     [
       Buffer.from("achievement_receipt"),
