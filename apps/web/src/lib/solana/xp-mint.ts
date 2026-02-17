@@ -1,12 +1,4 @@
 /**
- * @deprecated This module is replaced by on-chain CPI in academy-program.ts.
- * The on-chain program's completeLesson instruction mints XP via CPI using
- * the Config PDA as mint authority. This file is kept as a fallback during
- * the transition period (when isOnChainProgramLive() returns false).
- * Remove this file after the program is deployed and verified on devnet.
- */
-
-/**
  * Server-side Token-2022 XP minting and burning.
  *
  * Loads the mint authority keypair from `XP_MINT_AUTHORITY_SECRET` env var
