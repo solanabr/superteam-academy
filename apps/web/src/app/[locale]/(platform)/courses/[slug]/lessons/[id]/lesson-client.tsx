@@ -14,12 +14,15 @@ import rehypeRaw from "rehype-raw";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { Lightning, CheckCircle, ArrowLeft } from "@phosphor-icons/react";
+import { useConnection, useWallet } from "@solana/wallet-adapter-react";
+import { Transaction } from "@solana/web3.js";
 import { Button } from "@/components/ui/button";
 import { ProgressBar } from "@/components/course/progress-bar";
 import { AuthModal } from "@/components/auth/auth-modal";
 import { dispatchXpGain } from "@/components/gamification/xp-popup";
 import { trackEvent } from "@/lib/analytics";
 import { createClient } from "@/lib/supabase/client";
+import { buildEnrollInstruction } from "@/lib/solana/instructions";
 import type { Lesson } from "@/lib/sanity/types";
 
 function CodeBlockWithCopy({
@@ -147,12 +150,16 @@ interface CompletionResponse {
   success: boolean;
   alreadyCompleted: boolean;
   xpEarned: number;
+  signature?: string;
+  finalized?: boolean;
+  finalizationSignature?: string | null;
   newAchievements: {
     id: string;
     name: string;
     description: string;
     icon: string;
   }[];
+  failedAchievements?: string[];
   streakData: {
     currentStreak: number;
     longestStreak: number;
@@ -162,13 +169,12 @@ interface CompletionResponse {
 
 async function completeLessonAPI(
   lessonId: string,
-  courseId: string,
-  xpReward: number
+  courseId: string
 ): Promise<CompletionResponse> {
   const res = await fetch("/api/lessons/complete", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ lessonId, courseId, xpReward }),
+    body: JSON.stringify({ lessonId, courseId }),
   });
   if (!res.ok) {
     throw new Error("Failed to complete lesson");
@@ -185,6 +191,8 @@ export function LessonPageClient({
 }: LessonPageClientProps) {
   const t = useTranslations("lesson");
   const tCommon = useTranslations("common");
+  const { connection } = useConnection();
+  const { publicKey, sendTransaction } = useWallet();
 
   const [isCompleted, setIsCompleted] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
@@ -234,6 +242,28 @@ export function LessonPageClient({
     if (isEnrolling || isEnrolled || !userId) return;
     setIsEnrolling(true);
     try {
+      // Attempt on-chain enrollment if wallet is connected
+      if (publicKey && sendTransaction) {
+        try {
+          const ix = buildEnrollInstruction(courseId, publicKey);
+          const tx = new Transaction().add(ix);
+          const signature = await sendTransaction(tx, connection);
+          await connection.confirmTransaction(signature, "confirmed");
+          trackEvent("enrollment_onchain", {
+            courseId,
+            signature,
+          });
+        } catch (err) {
+          // On-chain enrollment failed (e.g. program not deployed yet)
+          // Fall through to Supabase enrollment
+          console.warn(
+            "[enroll] On-chain enrollment failed, using Supabase fallback:",
+            err
+          );
+        }
+      }
+
+      // Supabase enrollment (always run to keep DB in sync)
       const supabase = createClient();
       const { error } = await supabase.from("enrollments").insert({
         user_id: userId,
@@ -252,7 +282,15 @@ export function LessonPageClient({
     } finally {
       setIsEnrolling(false);
     }
-  }, [userId, courseId, isEnrolling, isEnrolled]);
+  }, [
+    userId,
+    courseId,
+    isEnrolling,
+    isEnrolled,
+    publicKey,
+    sendTransaction,
+    connection,
+  ]);
 
   const currentIndex = allLessons.findIndex((l) => l._id === lesson._id);
   const prevLesson = currentIndex > 0 ? allLessons[currentIndex - 1] : null;
@@ -262,11 +300,11 @@ export function LessonPageClient({
   const isChallenge = lesson.type === "challenge";
 
   const handleComplete = useCallback(
-    async (xpReward: number) => {
+    async (_xpReward?: number) => {
       if (isCompleted || isCompleting) return;
       setIsCompleting(true);
       try {
-        const result = await completeLessonAPI(lesson._id, courseId, xpReward);
+        const result = await completeLessonAPI(lesson._id, courseId);
         setIsCompleting(false);
         setIsCompleted(true);
 
@@ -276,7 +314,15 @@ export function LessonPageClient({
             lessonId: lesson._id,
             courseId,
             xpEarned: result.xpEarned,
+            signature: result.signature,
           });
+
+          if (result.finalized) {
+            trackEvent("course_finalized", {
+              courseId,
+              finalizationSignature: result.finalizationSignature ?? undefined,
+            });
+          }
 
           for (const achievement of result.newAchievements) {
             trackEvent("achievement_unlocked", {

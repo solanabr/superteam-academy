@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { dispatchLevelUp } from "@/components/gamification/level-up-overlay";
 import { xpToNextLevel } from "@/lib/gamification/xp";
+import { useXpBalance } from "@/lib/solana/hooks";
 
 const sidebarItems = [
   { key: "dashboard", icon: House, href: "/dashboard" },
@@ -42,6 +43,9 @@ export function Sidebar() {
   const targetXpRef = useRef(0);
   const prevLevelRef = useRef(0);
   const rafRef = useRef<number>(0);
+
+  // On-chain XP balance as supplementary source
+  const { balance: onChainXp } = useXpBalance();
 
   const fetchXp = useCallback(async () => {
     const supabase = createClient();
@@ -119,6 +123,14 @@ export function Sidebar() {
     });
     return () => subscription.unsubscribe();
   }, [fetchXp]);
+
+  // Reconcile on-chain XP: if on-chain balance is higher, update display
+  useEffect(() => {
+    if (onChainXp > 0 && onChainXp > targetXpRef.current) {
+      targetXpRef.current = onChainXp;
+      setDisplayedXp(onChainXp);
+    }
+  }, [onChainXp]);
 
   // Refresh when XP is awarded (xp-gain event from lesson completion)
   useEffect(() => {
