@@ -1,6 +1,6 @@
 # Superteam Academy — Frontend Integration Guide
 
-Program ID: `3YchgRgR65gdRqgTZTM5qQXqtTZn5Kt2i6FPnZVu34Qb`
+Program ID: `ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf`
 
 ## Architecture
 
@@ -29,14 +29,14 @@ Program ID: `3YchgRgR65gdRqgTZTM5qQXqtTZn5Kt2i6FPnZVu34Qb`
 import { Program, AnchorProvider, BN } from "@coral-xyz/anchor";
 import { PublicKey, SystemProgram, Keypair } from "@solana/web3.js";
 import { getAssociatedTokenAddressSync, createAssociatedTokenAccountInstruction } from "@solana/spl-token";
-import { SuperteamAcademy, IDL } from "../target/types/superteam_academy";
+import { OnchainAcademy, IDL } from "../target/types/onchain_academy";
 
-const PROGRAM_ID = new PublicKey("3YchgRgR65gdRqgTZTM5qQXqtTZn5Kt2i6FPnZVu34Qb");
+const PROGRAM_ID = new PublicKey("ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf");
 const TOKEN_2022_PROGRAM_ID = new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb");
 const MPL_CORE_PROGRAM_ID = new PublicKey("CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d");
 
 const provider = AnchorProvider.env();
-const program = new Program<SuperteamAcademy>(IDL, PROGRAM_ID, provider);
+const program = new Program<OnchainAcademy>(IDL, PROGRAM_ID, provider);
 ```
 
 ---
