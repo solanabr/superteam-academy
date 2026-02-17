@@ -1,0 +1,42 @@
+{
+	"name": "@superteam/cms",
+	"version": "0.0.0",
+	"private": true,
+	"main": "./dist/index.js",
+	"module": "./dist/index.mjs",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.mjs",
+			"require": "./dist/index.js"
+		},
+		"./queries": {
+			"types": "./dist/queries.d.ts",
+			"import": "./dist/queries.mjs",
+			"require": "./dist/queries.js"
+		},
+		"./schemas": {
+			"types": "./dist/schemas.d.ts",
+			"import": "./dist/schemas.mjs",
+			"require": "./dist/schemas.js"
+		}
+	},
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"build": "tsup",
+		"dev": "tsup --watch",
+		"type-check": "tsc --noEmit"
+	},
+	"dependencies": {
+		"next-sanity": "^9.8.28",
+		"@sanity/image-url": "^1.1.0"
+	},
+	"devDependencies": {
+		"@types/node": "catalog:",
+		"tsup": "catalog:",
+		"typescript": "catalog:"
+	}
+}

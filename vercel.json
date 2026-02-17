@@ -1,0 +1,38 @@
+{
+	"version": 2,
+	"builds": [
+		{
+			"src": "app/package.json",
+			"use": "@vercel/next",
+			"config": {
+				"maxLambdaSize": "50mb"
+			}
+		}
+	],
+	"routes": [
+		{
+			"src": "/api/(.*)",
+			"dest": "/app/api/$1"
+		},
+		{
+			"src": "/(.*)",
+			"dest": "/app/$1"
+		}
+	],
+	"functions": {
+		"app/api/**/*.ts": {
+			"maxDuration": 30
+		}
+	},
+	"regions": [
+		"iad1"
+	],
+	"env": {
+		"NODE_ENV": "production"
+	},
+	"build": {
+		"env": {
+			"NODE_ENV": "production"
+		}
+	}
+}

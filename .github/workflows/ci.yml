@@ -1,0 +1,247 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  TURBO_REMOTE_CACHE_DISABLED: false
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm format:check
+      - run: pnpm lint
+      - run: pnpm type-check
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test:run
+      - run: pnpm test:accessibility
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./app/coverage/lcov.info
+          flags: frontend
+          name: frontend-coverage
+
+  e2e-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm test:e2e
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: app/test-results/
+          retention-days: 30
+
+  rust-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Rust
+      uses: actions-rust-lang/setup-rust-toolchain@v1
+      with:
+        components: rustfmt, clippy
+
+    - name: Cache Rust dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Check formatting
+      run: cargo fmt --all -- --check
+      working-directory: ./superteam-academy/programs/superteam-academy
+
+    - name: Run clippy
+      run: cargo clippy -- -W clippy::all
+      working-directory: ./superteam-academy/programs/superteam-academy
+
+    - name: Run Rust unit tests
+      run: cargo test
+      working-directory: ./superteam-academy/programs/superteam-academy
+
+  anchor-build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: 'pnpm'
+
+    - name: Setup Rust
+      uses: actions-rust-lang/setup-rust-toolchain@v1
+
+    - name: Setup Solana CLI
+      run: |
+        sh -c "$(curl -sSfL https://release.solana.com/v1.18.4/install)"
+        echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+
+    - name: Setup Anchor CLI
+      run: |
+        cargo install --git https://github.com/coral-xyz/anchor avm --locked --force
+        avm install latest
+        avm use latest
+
+    - name: Install dependencies
+      run: pnpm install --frozen-lockfile
+      working-directory: ./superteam-academy
+
+    - name: Build Anchor program
+      run: anchor build
+      working-directory: ./superteam-academy
+
+    - name: Run Anchor integration tests
+      run: anchor test
+      working-directory: ./superteam-academy
+
+  security-audit:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Rust
+      uses: actions-rust-lang/setup-rust-toolchain@v1
+
+    - name: Install cargo audit
+      run: cargo install cargo-audit
+
+    - name: Run cargo audit
+      run: cargo audit
+      working-directory: ./superteam-academy/programs/superteam-academy
+
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+    - name: Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+  dependency-check:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - name: Check for outdated dependencies
+        run: |
+          pnpm outdated || true
+          echo "Dependency check completed"
+
+  build:
+    runs-on: ubuntu-latest
+    needs: [lint, test, e2e-tests, rust-tests, anchor-build]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+
+  deploy-devnet:
+    runs-on: ubuntu-latest
+    needs: [build, security-audit]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+        cache: 'pnpm'
+
+    - name: Setup Solana CLI
+      run: |
+        sh -c "$(curl -sSfL https://release.solana.com/v1.18.4/install)"
+        echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+
+    - name: Setup Anchor CLI
+      run: |
+        cargo install --git https://github.com/coral-xyz/anchor avm --locked --force
+        avm install latest
+        avm use latest
+
+    - name: Configure Solana for devnet
+      run: solana config set --url https://api.devnet.solana.com
+
+    - name: Create deploy key
+      run: |
+        echo "$SOLANA_DEPLOY_KEY" > deploy-key.json
+        solana-keygen recover --force -o ~/.config/solana/id.json <<< "$SOLANA_PASSPHRASE"
+      env:
+        SOLANA_DEPLOY_KEY: ${{ secrets.SOLANA_DEPLOY_KEY }}
+        SOLANA_PASSPHRASE: ${{ secrets.SOLANA_PASSPHRASE }}
+
+    - name: Deploy to devnet
+      run: anchor deploy
+      working-directory: ./superteam-academy

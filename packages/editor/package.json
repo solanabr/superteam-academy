@@ -1,0 +1,42 @@
+{
+	"name": "@superteam/editor",
+	"version": "0.0.0",
+	"private": true,
+	"main": "./dist/index.js",
+	"module": "./dist/index.mjs",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.mjs",
+			"require": "./dist/index.js"
+		}
+	},
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"build": "tsup",
+		"dev": "tsup --watch",
+		"type-check": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@codemirror/lang-javascript": "^6.2.3",
+		"monaco-editor": "^0.52.2"
+	},
+	"devDependencies": {
+		"@codemirror/autocomplete": "^6.20.0",
+		"@codemirror/basic-setup": "^0.20.0",
+		"@codemirror/commands": "^6.10.2",
+		"@codemirror/lang-json": "^6.0.2",
+		"@codemirror/language": "^6.12.1",
+		"@codemirror/lint": "^6.9.4",
+		"@codemirror/search": "^6.6.0",
+		"@codemirror/state": "^6.5.4",
+		"@codemirror/theme-one-dark": "^6.1.3",
+		"@codemirror/view": "^6.39.14",
+		"codemirror": "^6.0.2",
+		"tsup": "catalog:",
+		"typescript": "catalog:"
+	}
+}

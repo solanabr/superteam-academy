@@ -1,0 +1,57 @@
+{
+	"name": "@superteam-academy/gamification",
+	"version": "1.0.0",
+	"private": true,
+	"main": "./dist/index.js",
+	"module": "./dist/index.mjs",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.mjs",
+			"require": "./dist/index.js"
+		},
+		"./level-system": {
+			"types": "./dist/level-system.d.ts",
+			"import": "./dist/level-system.mjs",
+			"require": "./dist/level-system.js"
+		},
+		"./xp-engine": {
+			"types": "./dist/xp-engine.d.ts",
+			"import": "./dist/xp-engine.mjs",
+			"require": "./dist/xp-engine.js"
+		},
+		"./streak-system": {
+			"types": "./dist/streak-system.d.ts",
+			"import": "./dist/streak-system.mjs",
+			"require": "./dist/streak-system.js"
+		},
+		"./achievement-system": {
+			"types": "./dist/achievement-system.d.ts",
+			"import": "./dist/achievement-system.mjs",
+			"require": "./dist/achievement-system.js"
+		}
+	},
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"build": "tsup",
+		"dev": "tsup --watch",
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"type-check": "tsc --noEmit"
+	},
+	"dependencies": {
+		"zod": "catalog:"
+	},
+	"devDependencies": {
+		"@types/node": "catalog:",
+		"tsup": "catalog:",
+		"typescript": "catalog:",
+		"vitest": "catalog:"
+	},
+	"peerDependencies": {
+		"@superteam/services": "workspace:*"
+	}
+}

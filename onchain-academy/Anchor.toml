@@ -24,3 +24,6 @@ program = "tests/fixtures/mpl_core.so"
 
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+build = "anchor build"
+deploy = "anchor deploy"
+test-local = "anchor test"

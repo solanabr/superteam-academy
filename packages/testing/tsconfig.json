@@ -1,0 +1,25 @@
+{
+	"extends": "../../tsconfig.json",
+	"compilerOptions": {
+		"outDir": "./dist",
+		"rootDir": "./src",
+		"declaration": true,
+		"declarationMap": true,
+		"sourceMap": true,
+		"jsx": "react-jsx",
+		"types": [
+			"vitest/globals",
+			"@testing-library/jest-dom",
+			"node"
+		]
+	},
+	"include": [
+		"src/**/*"
+	],
+	"exclude": [
+		"dist",
+		"node_modules",
+		"**/*.test.ts",
+		"**/*.test.tsx"
+	]
+}

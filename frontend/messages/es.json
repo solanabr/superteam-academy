@@ -1,0 +1,2300 @@
+{
+	"courses": {
+		"title": "Cursos",
+		"subtitle": "Explora nuestra colección completa de cursos de blockchain y Web3",
+		"search": {
+			"placeholder": "Buscar cursos...",
+			"query": "Buscar"
+		},
+		"filters": {
+			"category": "Categoría",
+			"level": "Nivel",
+			"sort": "Ordenar por",
+			"allCategories": "Todas las categorías",
+			"blockchain": "Blockchain",
+			"defi": "DeFi",
+			"nft": "NFT",
+			"web3": "Web3",
+			"smartContracts": "Contratos inteligentes",
+			"allLevels": "Todos los niveles",
+			"beginner": "Principiante",
+			"intermediate": "Intermedio",
+			"advanced": "Avanzado",
+			"popular": "Popular",
+			"newest": "Más reciente",
+			"rating": "Calificación",
+			"duration": "Duración",
+			"active": "Filtros activos"
+		},
+		"results": {
+			"showing": "Mostrando {count} cursos"
+		},
+		"empty": {
+			"title": "No se encontraron cursos",
+			"description": "Intenta ajustar tu búsqueda o criterios de filtrado.",
+			"clearFilters": "Limpiar filtros"
+		},
+		"categories": {
+			"all": "Todas las categorías",
+			"blockchain": "Blockchain",
+			"ai": "IA y aprendizaje automático",
+			"programming": "Programación",
+			"web3": "Web3",
+			"security": "Seguridad",
+			"nft": "NFT"
+		},
+		"difficulties": {
+			"all": "Todos los niveles",
+			"beginner": "Principiante",
+			"intermediate": "Intermedio",
+			"advanced": "Avanzado",
+			"expert": "Experto"
+		},
+		"sort": {
+			"popular": "Más popular",
+			"rating": "Mejor calificado",
+			"newest": "Más reciente",
+			"priceLow": "Precio: menor a mayor",
+			"priceHigh": "Precio: mayor a menor"
+		},
+		"premium": {
+			"title": "Cursos Premium",
+			"subtitle": "Desbloquea cursos avanzados y contenido exclusivo"
+		},
+		"upgradeAvailable": "Mejora disponible",
+		"tabs": {
+			"courses": "Cursos",
+			"pricing": "Precios",
+			"overview": "Descripción general",
+			"curriculum": "Plan de estudios",
+			"reviews": "Reseñas",
+			"instructor": "Instructor"
+		},
+		"noCourses": {
+			"title": "No se encontraron cursos",
+			"description": "Intenta ajustar tu búsqueda o criterios de filtrado"
+		},
+		"featured": "Destacado",
+		"new": "Nuevo",
+		"by": "Por",
+		"oneTime": "Pago único",
+		"backToCourses": "Volver a cursos",
+		"overview": {
+			"title": "Descripción del curso",
+			"whatYouWillLearn": "Lo que aprenderás",
+			"requirements": "Requisitos",
+			"skills": "Habilidades que obtendrás"
+		},
+		"enrollment": {
+			"title": "Inscripción"
+		},
+		"stats": {
+			"students": "Estudiantes",
+			"rating": "Calificación",
+			"duration": "Duración",
+			"level": "Nivel",
+			"xp": "Recompensa de XP"
+		}
+	},
+	"challenges": {
+		"title": "Desafíos de programación",
+		"subtitle": "Pon a prueba tus habilidades con desafíos de programación interactivos",
+		"editor": {
+			"codeEditor": "Editor de código",
+			"reset": "Reiniciar",
+			"runTests": "Ejecutar pruebas",
+			"running": "Ejecutando...",
+			"submit": "Enviar",
+			"submitting": "Enviando..."
+		},
+		"instructions": {
+			"objectives": "Objetivos de aprendizaje",
+			"steps": "Instrucciones paso a paso",
+			"progress": "Progreso",
+			"tips": {
+				"title": "Consejos",
+				"readCarefully": "Lee las instrucciones cuidadosamente antes de comenzar",
+				"testFrequently": "Prueba tu código frecuentemente mientras avanzas",
+				"useHints": "Usa las pistas estratégicamente cuando estés atascado",
+				"askHelp": "Pide ayuda en la comunidad si lo necesitas"
+			}
+		},
+		"tests": {
+			"testResults": "Resultados de pruebas",
+			"testsPassed": "pruebas aprobadas",
+			"pending": "Pendiente",
+			"passed": "Aprobada",
+			"failed": "Fallida",
+			"running": "Ejecutando pruebas...",
+			"runAll": "Ejecutar todas las pruebas",
+			"error": "Error",
+			"output": "Salida",
+			"testTypes": "Tipos de pruebas",
+			"unitTests": "Pruebas unitarias",
+			"unitDescription": "Prueba funciones y componentes individuales",
+			"integrationTests": "Pruebas de integración",
+			"integrationDescription": "Prueba cómo funcionan los componentes juntos",
+			"tests": "pruebas"
+		},
+		"results": {
+			"noResults": "Sin resultados aún",
+			"submitToSee": "Envía tu solución para ver los resultados",
+			"passed": "¡Desafío aprobado!",
+			"failed": "Desafío no aprobado",
+			"score": "Puntuación",
+			"testsPassed": "Pruebas aprobadas",
+			"executionTime": "Tiempo de ejecución",
+			"xpEarned": "XP ganado",
+			"overallScore": "Puntuación general",
+			"feedback": "Retroalimentación",
+			"achievements": "Logros desbloqueados",
+			"nextSteps": "Próximos pasos",
+			"greatJob": "¡Buen trabajo!",
+			"tryNext": "¿Listo para el siguiente desafío?",
+			"nextChallenge": "Siguiente desafío",
+			"continue": "Continuar",
+			"completedAll": "¡Has completado todos los desafíos!",
+			"tryAgain": "Intentar de nuevo",
+			"getHelp": "Obtener ayuda"
+		},
+		"hints": {
+			"title": "Pistas",
+			"available": "Disponibles",
+			"totalCost": "Costo total",
+			"hint": "Pista",
+			"reveal": "Revelar",
+			"insufficientXP": "XP insuficiente",
+			"clickToReveal": "Haz clic para revelar la pista",
+			"strategy": "Estrategia de pistas",
+			"strategy1": "Las pistas cuestan XP pero pueden ahorrarte tiempo",
+			"strategy2": "Intenta resolver sin pistas primero para un aprendizaje máximo",
+			"strategy3": "Usa las pistas cuando estés verdaderamente atascado, no solo frustrado"
+		},
+		"timeUp": "¡Se acabó el tiempo!",
+		"timeUpDesc": "El tiempo límite para este desafío ha expirado.",
+		"testsPassed": "¡Todas las pruebas aprobadas!",
+		"testsPassedDesc": "Tu solución pasó todos los casos de prueba.",
+		"testsFailed": "Algunas pruebas fallaron",
+		"testsFailedDesc": "Revisa tu código e intenta de nuevo.",
+		"testExecutionFailed": "La ejecución de pruebas falló",
+		"testExecutionFailedDesc": "Ocurrió un error al ejecutar las pruebas.",
+		"challengeCompleted": "¡Desafío completado!",
+		"challengeCompletedDesc": "¡Has completado exitosamente {challenge}!",
+		"submissionFailed": "Envío fallido",
+		"submissionFailedDesc": "Ocurrió un error al enviar tu solución.",
+		"easy": "Fácil",
+		"medium": "Medio",
+		"hard": "Difícil",
+		"code": "Código",
+		"testCases": "Casos de prueba",
+		"yourSolution": "Tu solución",
+		"writeYourCode": "Escribe tu código aquí...",
+		"input": "Entrada",
+		"expectedOutput": "Salida esperada",
+		"hiddenTestCases": "{count} casos de prueba ocultos también serán evaluados",
+		"reset": "Reiniciar",
+		"cancel": "Cancelar",
+		"running": "Ejecutando...",
+		"runTests": "Ejecutar pruebas",
+		"runningTests": "Ejecutando pruebas...",
+		"runningTestsDesc": "Evaluando tu solución contra los casos de prueba...",
+		"editCode": "Editar código",
+		"submitting": "Enviando...",
+		"submitSolution": "Enviar solución",
+		"yourResults": "Tus resultados",
+		"executionTime": "Tiempo de ejecución",
+		"memoryUsage": "Uso de memoria",
+		"testResults": "Resultados de pruebas",
+		"testCase": "Caso de prueba",
+		"challengeSubmission": "Envío del desafío",
+		"continue": "Continuar"
+	},
+	"pwa": {
+		"install": {
+			"title": "Instalar Superteam Academy",
+			"description": "Instala nuestra aplicación para la mejor experiencia de aprendizaje",
+			"install": "Instalar",
+			"installing": "Instalando...",
+			"later": "Más tarde"
+		},
+		"update": {
+			"available": "Actualizar",
+			"title": "Actualización disponible",
+			"description": "Una nueva versión está disponible con mejoras",
+			"update": "Actualizar"
+		},
+		"offline": {
+			"title": "Sin conexión"
+		},
+		"features": {
+			"fast": "Carga rápida",
+			"secure": "Seguro",
+			"offline": "Acceso sin conexión",
+			"notifications": "Notificaciones"
+		}
+	},
+	"search": {
+		"searchPlaceholder": "Buscar cursos, temas, instructores...",
+		"categories": {
+			"webDevelopment": "Desarrollo web",
+			"blockchain": "Blockchain",
+			"aiMl": "IA y aprendizaje automático",
+			"mobile": "Desarrollo móvil",
+			"design": "Diseño",
+			"dataScience": "Ciencia de datos",
+			"title": "Categorías",
+			"select": "Seleccionar categoría"
+		},
+		"difficulties": {
+			"beginner": "Principiante",
+			"intermediate": "Intermedio",
+			"advanced": "Avanzado"
+		},
+		"languages": {
+			"english": "Inglés",
+			"portuguese": "Portugués",
+			"spanish": "Español"
+		},
+		"sort": {
+			"relevance": "Relevancia",
+			"newest": "Más reciente",
+			"oldest": "Más antiguo",
+			"rating": "Calificación",
+			"participants": "Participantes",
+			"duration": "Duración"
+		},
+		"searching": "Buscando...",
+		"search": "Buscar",
+		"filters": "Filtros",
+		"clearAll": "Limpiar todo",
+		"selected": "seleccionados",
+		"difficulty": "Dificultad",
+		"selectDifficulty": "Seleccionar dificultad",
+		"duration": "Duración",
+		"minRating": "Calificación mínima",
+		"language": "Idioma",
+		"selectLanguage": "Seleccionar idioma",
+		"clearFilters": "Limpiar filtros",
+		"sortBy": "Ordenar por",
+		"results": "Mostrando {count} resultados para \"{query}\"",
+		"noResults": "No se encontraron resultados",
+		"noResultsDescription": "Intenta ajustar tu búsqueda o filtros"
+	},
+	"navigation": {
+		"breadcrumb": "Ruta de navegación",
+		"home": "Inicio",
+		"courses": "Cursos",
+		"allCourses": "Todos los cursos",
+		"myCourses": "Mis cursos",
+		"certificates": "Certificados",
+		"challenges": "Desafíos",
+		"leaderboard": "Tabla de clasificación",
+		"profile": "Perfil",
+		"searching": "Buscando...",
+		"searchingFor": "Buscando \"{query}\"",
+		"search": "Buscar",
+		"level": "Nivel",
+		"settings": "Configuración",
+		"logout": "Cerrar sesión",
+		"login": "Iniciar sesión",
+		"register": "Registrarse",
+		"toggleMenu": "Alternar menú"
+	},
+	"oauth": {
+		"alreadyConnected": "Ya conectado",
+		"alreadyConnectedDesc": "{provider} ya está vinculado a tu cuenta.",
+		"connected": "Conectado",
+		"connectedDesc": "{provider} ha sido vinculado a tu cuenta.",
+		"connectionFailed": "Conexión fallida",
+		"disconnected": "Desconectado",
+		"disconnectedDesc": "{provider} ha sido desvinculado de tu cuenta.",
+		"disconnectFailed": "Desconexión fallida",
+		"disconnectFailedDesc": "No se pudo desconectar el proveedor. Intenta de nuevo.",
+		"linkAccounts": "Vincular cuentas",
+		"linkDescription": "Conecta tus cuentas para una experiencia integrada",
+		"connectedAccounts": "Cuentas conectadas",
+		"lastUsed": "Último uso",
+		"disconnect": "Desconectar",
+		"availableProviders": "Proveedores disponibles",
+		"connecting": "Conectando...",
+		"connectGithub": "Conectar GitHub",
+		"connectGoogle": "Conectar Google",
+		"benefits": "Beneficios de vincular",
+		"benefit1": "Inicio de sesión único en todas las plataformas",
+		"benefit2": "Sincroniza tu progreso y logros",
+		"benefit3": "Seguridad mejorada con múltiples métodos de autenticación",
+		"help": "¿Necesitas ayuda?",
+		"support": "Contactar soporte"
+	},
+	"xp": {
+		"xpEarned": "¡XP ganado!",
+		"xpEarnedDesc": "+{xp} XP por {reason}",
+		"level": "Nivel",
+		"levelUp": "¡Subiste de nivel!",
+		"congratulations": "¡Felicidades!",
+		"levelUpDesc": "¡Has alcanzado el nivel {level}!",
+		"totalXP": "XP total",
+		"nextLevel": "Siguiente nivel"
+	},
+	"onboarding": {
+		"welcomeTitle": "Bienvenido a Superteam Academy",
+		"welcomeDesc": "Tu viaje en el desarrollo blockchain comienza aquí",
+		"connectWalletTitle": "Conecta tu billetera",
+		"connectWalletDesc": "Vincula tu billetera de Solana para rastrear tu progreso en la cadena",
+		"connectWallet": "Conectar billetera",
+		"exploreCoursesTitle": "Explora los cursos",
+		"exploreCoursesDesc": "Navega nuestra colección curada de cursos de blockchain",
+		"exploreCourses": "Explorar cursos",
+		"firstChallengeTitle": "Tu primer desafío",
+		"firstChallengeDesc": "Pon a prueba tus habilidades con un desafío introductorio de programación",
+		"startChallenge": "Iniciar desafío",
+		"setupCompleteTitle": "Configuración completa",
+		"setupCompleteDesc": "¡Estás listo para comenzar a aprender!",
+		"onboardingComplete": "Incorporación completa",
+		"onboardingCompleteDesc": "¡Bienvenido a bordo! Comienza a explorar los cursos.",
+		"gettingStarted": "Primeros pasos",
+		"completed": "Completado",
+		"previous": "Anterior",
+		"skip": "Omitir",
+		"finish": "Finalizar",
+		"next": "Siguiente"
+	},
+	"actions": {
+		"error": "Error",
+		"actionFailed": "{action} falló. Intenta de nuevo.",
+		"actions": "Acciones",
+		"more": "Más",
+		"create": "Crear",
+		"edit": "Editar",
+		"delete": "Eliminar",
+		"share": "Compartir",
+		"download": "Descargar",
+		"upload": "Subir",
+		"duplicate": "Duplicar",
+		"bookmark": "Marcador",
+		"favorite": "Favorito",
+		"view": "Ver",
+		"hide": "Ocultar",
+		"settings": "Configuración",
+		"quickStart": "Inicio rápido",
+		"setGoal": "Establecer meta",
+		"achievements": "Logros",
+		"community": "Comunidad",
+		"schedule": "Horario",
+		"notifications": "Notificaciones"
+	},
+	"streaks": {
+		"rewardsClaimed": "¡Recompensas reclamadas!",
+		"rewardsClaimedDesc": "¡+{xp} XP de bonificación por racha reclamados!",
+		"streakMilestone": "¡Hito de racha!",
+		"dayStreak": "Racha de días",
+		"bronze": "Bronce",
+		"silver": "Plata",
+		"gold": "Oro",
+		"diamond": "Diamante",
+		"milestone": "Hito",
+		"rewards": "Recompensas",
+		"badges": "Insignias",
+		"specialItems": "Artículos especiales",
+		"currentStreak": "Racha actual",
+		"days": "días",
+		"nextMilestone": "{days} días para el siguiente hito",
+		"claimed": "Reclamado",
+		"claimRewards": "Reclamar recompensas",
+		"streakBroken": "Racha interrumpida",
+		"longestStreak": "Racha más larga",
+		"lastActivity": "Última actividad",
+		"daysToGo": "días restantes",
+		"recentMilestones": "Hitos recientes"
+	},
+	"shortcuts": {
+		"shortcutUpdated": "Atajo actualizado",
+		"shortcutUpdatedDesc": "El atajo de teclado ha sido actualizado.",
+		"shortcutReset": "Atajo reiniciado",
+		"shortcutResetDesc": "Todos los atajos han sido restablecidos a los valores predeterminados.",
+		"keyboardShortcuts": "Atajos de teclado",
+		"shortcutsDescription": "Personaliza los atajos de teclado para agilizar tu flujo de trabajo",
+		"resetToDefaults": "Restablecer valores predeterminados",
+		"action": "Acción",
+		"shortcut": "Atajo",
+		"description": "Descripción",
+		"actions": "Acciones",
+		"recording": "Grabando...",
+		"pressKeys": "Presiona las teclas",
+		"clickToRecord": "Haz clic para grabar",
+		"edit": "Editar",
+		"help": "Ayuda",
+		"helpRecording": "Haz clic en un atajo y presiona la combinación de teclas deseada",
+		"helpConflicts": "Los atajos en conflicto se resaltarán",
+		"helpReset": "Puedes restablecer atajos individuales o todos a los valores predeterminados"
+	},
+	"levels": {
+		"shareLevelUp": "¡Acabo de alcanzar el nivel {level} con {xp} XP en Superteam Academy!",
+		"levelUp": "¡Subiste de nivel!",
+		"copiedToClipboard": "Copiado al portapapeles",
+		"levelUpLinkCopied": "¡Enlace de subida de nivel copiado!",
+		"congratulationsLevel": "¡Felicidades! ¡Has alcanzado el nivel {level}!",
+		"earned": "Ganado",
+		"level": "Nivel",
+		"rewards": "Recompensas",
+		"share": "Compartir",
+		"continue": "Continuar",
+		"currentLevel": "Nivel actual",
+		"progressToLevel": "Progreso al nivel {level}",
+		"toGo": "restante",
+		"currentLevelXP": "XP del nivel actual",
+		"nextLevelXP": "XP del siguiente nivel",
+		"totalXP": "XP total",
+		"levelBenefits": "Beneficios del nivel",
+		"benefit1": "Acceso a cursos avanzados",
+		"benefit2": "Canales exclusivos de comunidad",
+		"benefit3": "Insignias de logros especiales"
+	},
+	"settings": {
+		"language": "Idioma"
+	},
+	"pagination": {
+		"showing": "Mostrando {start}-{end} de {total}",
+		"perPage": "Por página",
+		"first": "Primera",
+		"previous": "Anterior",
+		"next": "Siguiente",
+		"last": "Última",
+		"of": "de",
+		"noMoreResults": "No hay más resultados",
+		"loading": "Cargando...",
+		"loadMore": "Cargar más"
+	},
+	"api": {
+		"title": "Gestión de API",
+		"subtitle": "Administra tus claves de API y acceso",
+		"activeKeys": "{count} claves activas",
+		"tabs": {
+			"keys": "Claves de API",
+			"endpoints": "Endpoints",
+			"usage": "Uso",
+			"docs": "Documentación"
+		},
+		"createApiKey": "Crear clave de API",
+		"createKeyDescription": "Genera una nueva clave de API para integración",
+		"keyName": "Nombre de la clave",
+		"keyNamePlaceholder": "Ingresa el nombre de la clave",
+		"createKey": "Crear clave",
+		"created": "Creada",
+		"status": {
+			"active": "Activa"
+		},
+		"apiKey": "Clave de API",
+		"requestsToday": "Solicitudes hoy",
+		"requestsMonth": "Solicitudes este mes",
+		"rateLimit": "Límite de solicitudes",
+		"lastUsed": "Último uso",
+		"never": "Nunca",
+		"regenerate": "Regenerar",
+		"revoke": "Revocar",
+		"availableEndpoints": "Endpoints disponibles",
+		"endpointsDescription": "Explora los endpoints de API disponibles",
+		"authRequired": "Autenticación requerida",
+		"requests": "solicitudes",
+		"totalRequests": "Total de solicitudes",
+		"avgResponseTime": "Tiempo de respuesta promedio",
+		"successRate": "Tasa de éxito",
+		"usageByEndpoint": "Uso por endpoint",
+		"errors": "Errores",
+		"apiDocumentation": "Documentación de API",
+		"docsDescription": "Explora la documentación de API",
+		"interactiveDocs": "Documentación interactiva",
+		"interactiveDocsDesc": "Prueba llamadas a la API directamente en el navegador",
+		"openapiSpec": "Especificación OpenAPI",
+		"openapiSpecDesc": "Descarga la especificación OpenAPI",
+		"authentication": "Autenticación",
+		"apiKeyAuth": "Autenticación por clave de API",
+		"rateLimits": "Límites de solicitudes"
+	},
+	"admin": {
+		"dashboard": {
+			"title": "Panel de administración",
+			"subtitle": "Vista general y gestión de la plataforma",
+			"settings": "Configuración",
+			"totalUsers": "Total de usuarios",
+			"activeUsers": "Usuarios activos",
+			"totalCourses": "Total de cursos",
+			"totalXP": "XP total otorgado",
+			"credentials": "Credenciales emitidas",
+			"completionRate": "Tasa de finalización",
+			"fromLastMonth": "respecto al mes pasado",
+			"completions": "Finalizaciones",
+			"tabs": {
+				"overview": "Vista general",
+				"users": "Usuarios",
+				"courses": "Cursos",
+				"analytics": "Analíticas"
+			},
+			"recentActivity": "Actividad reciente",
+			"activity": {
+				"enrolled": "Se inscribió en {course}",
+				"completed": "Completó {course}",
+				"achievement": "Desbloqueó un nuevo logro",
+				"credential": "Obtuvo credencial por {course}"
+			},
+			"systemHealth": "Estado del sistema",
+			"apiHealth": "Estado de API",
+			"database": "Base de datos",
+			"blockchain": "Blockchain",
+			"cdn": "CDN",
+			"uptime": "Tiempo activo",
+			"userManagement": "Gestión de usuarios",
+			"userManagementTitle": "Administrar usuarios",
+			"userManagementDesc": "Ver y administrar los usuarios de la plataforma",
+			"manageUsers": "Administrar usuarios",
+			"courseManagement": "Gestión de cursos",
+			"courseManagementTitle": "Administrar cursos",
+			"courseManagementDesc": "Crear y administrar el contenido de los cursos",
+			"manageCourses": "Administrar cursos",
+			"analytics": "Analíticas",
+			"analyticsTitle": "Analíticas de la plataforma",
+			"analyticsDesc": "Ver analíticas detalladas de la plataforma",
+			"viewAnalytics": "Ver analíticas"
+		}
+	},
+	"achievements": {
+		"shareAchievement": "¡Desbloqueé \"{title}\" ({rarity}) en Superteam Academy!",
+		"copiedToClipboard": "Copiado al portapapeles",
+		"achievementLinkCopied": "¡Enlace del logro copiado!",
+		"achievementUnlocked": "¡Logro desbloqueado!",
+		"common": "Común",
+		"rare": "Raro",
+		"epic": "Épico",
+		"legendary": "Legendario",
+		"progress": "Progreso",
+		"requirements": "Requisitos",
+		"share": "Compartir",
+		"continue": "Continuar",
+		"unlocked": "Desbloqueado"
+	},
+	"hackathon": {
+		"noActiveHackathon": {
+			"title": "Sin hackathon activo",
+			"description": "Vuelve pronto para próximos eventos de hackathon"
+		},
+		"tabs": {
+			"overview": "Vista general",
+			"teams": "Equipos",
+			"submissions": "Envíos",
+			"leaderboard": "Tabla de clasificación"
+		},
+		"participants": "Participantes",
+		"teams": "Equipos",
+		"submissions": "Envíos",
+		"rules": "Reglas",
+		"prizes": "Premios",
+		"joinHackathon": "Unirse al hackathon",
+		"joinDescription": "Elige cómo quieres participar",
+		"joinAsIndividual": "Unirse individualmente",
+		"createTeam": "Crear equipo",
+		"joinTeam": "Unirse a un equipo",
+		"project": "Proyecto",
+		"submitProject": "Enviar proyecto",
+		"submitDescription": "Envía tu proyecto del hackathon",
+		"projectName": "Nombre del proyecto",
+		"projectNamePlaceholder": "Ingresa el nombre del proyecto",
+		"projectDescription": "Descripción del proyecto",
+		"projectDescriptionPlaceholder": "Describe tu proyecto",
+		"techStack": "Stack tecnológico",
+		"techStackPlaceholder": "ej., React, Solana, Anchor",
+		"repoUrl": "URL del repositorio",
+		"repoUrlPlaceholder": "https://github.com/...",
+		"vote": "Votar",
+		"viewRepo": "Ver repositorio",
+		"leaderboard": "Tabla de clasificación",
+		"votes": "Votos"
+	},
+	"progress": {
+		"lessonsCompleted": "Lecciones completadas",
+		"challengesCompleted": "Desafíos completados",
+		"totalXP": "XP total",
+		"dayStreak": "Racha de días",
+		"levelProgress": "Progreso del nivel",
+		"level": "Nivel",
+		"toNextLevel": "para el siguiente nivel",
+		"courses": "Cursos",
+		"achievements": "Logros",
+		"activity": "Actividad",
+		"lessons": "Lecciones",
+		"challenges": "Desafíos",
+		"common": "Común",
+		"rare": "Raro",
+		"epic": "Épico",
+		"legendary": "Legendario",
+		"unlocked": "Desbloqueado",
+		"learningStats": "Estadísticas de aprendizaje",
+		"overallProgress": "Progreso general",
+		"totalTime": "Tiempo total",
+		"recentActivity": "Actividad reciente"
+	},
+	"enrollment": {
+		"enrolled": "¡Inscrito!",
+		"enrolledDesc": "Te has inscrito en {course}.",
+		"enrollmentFailed": "Inscripción fallida",
+		"enrollmentFailedDesc": "Ocurrió un error durante la inscripción.",
+		"beginner": "Principiante",
+		"intermediate": "Intermedio",
+		"advanced": "Avanzado",
+		"free": "Gratis",
+		"oneTimePayment": "Pago único",
+		"cancel": "Cancelar",
+		"continue": "Continuar",
+		"prerequisites": "Prerrequisitos",
+		"prerequisitesDesc": "Completa estos antes de inscribirte",
+		"noPrerequisites": "No se requieren prerrequisitos",
+		"back": "Atrás",
+		"enrollNow": "Inscribirse ahora",
+		"payment": "Pago",
+		"paymentDesc": "Completa tu pago para inscribirte",
+		"payNow": "Pagar ahora",
+		"confirmEnrollment": "Confirmar inscripción",
+		"confirmDesc": "Revisa los detalles de tu inscripción",
+		"course": "Curso",
+		"duration": "Duración",
+		"level": "Nivel",
+		"total": "Total",
+		"enrolling": "Inscribiendo...",
+		"confirmEnroll": "Confirmar e inscribirse",
+		"enrollmentSuccess": "¡Inscripción exitosa!",
+		"enrollmentSuccessDesc": "Ahora estás inscrito en {course}.",
+		"nextSteps": "Próximos pasos",
+		"nextStep1": "Comienza con la primera lección",
+		"nextStep2": "Únete a la comunidad del curso",
+		"nextStep3": "Establece tus metas de aprendizaje",
+		"startLearning": "Comenzar a aprender",
+		"courseEnrollment": "Inscripción al curso"
+	},
+	"recovery": {
+		"emailRequired": "El correo electrónico es obligatorio",
+		"invalidEmail": "Dirección de correo electrónico inválida",
+		"codeSent": "Código enviado",
+		"codeSentDesc": "Se ha enviado un código de verificación a tu correo electrónico.",
+		"sendCodeFailed": "No se pudo enviar el código",
+		"invalidCode": "Código de verificación inválido",
+		"codeVerified": "Código verificado",
+		"codeVerifiedDesc": "Tu código de verificación es válido.",
+		"verifyCodeFailed": "No se pudo verificar el código",
+		"passwordRequired": "La contraseña es obligatoria",
+		"passwordTooShort": "La contraseña debe tener al menos 8 caracteres",
+		"passwordMismatch": "Las contraseñas no coinciden",
+		"passwordReset": "Contraseña restablecida",
+		"passwordResetDesc": "Tu contraseña ha sido restablecida exitosamente.",
+		"resetFailed": "Restablecimiento fallido",
+		"forgotPassword": "¿Olvidaste tu contraseña?",
+		"enterEmailDesc": "Ingresa tu correo electrónico para recibir un código de verificación",
+		"email": "Correo electrónico",
+		"emailPlaceholder": "Ingresa tu correo electrónico",
+		"sending": "Enviando...",
+		"sendCode": "Enviar código",
+		"enterCode": "Ingresa el código",
+		"codeSentTo": "Se envió un código a {email}",
+		"verificationCode": "Código de verificación",
+		"codeHelp": "Revisa tu correo electrónico para el código de 6 dígitos",
+		"verifying": "Verificando...",
+		"verifyCode": "Verificar código",
+		"resendCode": "Reenviar código",
+		"newPassword": "Nueva contraseña",
+		"newPasswordDesc": "Elige una contraseña segura para tu cuenta",
+		"passwordPlaceholder": "Ingresa la nueva contraseña",
+		"confirmPassword": "Confirmar contraseña",
+		"confirmPasswordPlaceholder": "Confirma la nueva contraseña",
+		"resetting": "Restableciendo...",
+		"resetPassword": "Restablecer contraseña",
+		"success": "¡Éxito!",
+		"successDesc": "Tu contraseña ha sido restablecida. Ya puedes iniciar sesión.",
+		"continue": "Continuar",
+		"accountRecovery": "Recuperación de cuenta"
+	},
+	"credentials": {
+		"shareText": "¡Mira mi credencial {title} emitida por {issuer}!",
+		"linkCopied": "Enlace copiado",
+		"linkCopiedDesc": "Enlace de credencial copiado al portapapeles.",
+		"shareFailed": "Error al compartir",
+		"shareFailedDesc": "No se pudo compartir la credencial.",
+		"downloadStarted": "Descarga iniciada",
+		"downloadStartedDesc": "Descargando {title}...",
+		"issuedBy": "Emitida por",
+		"expires": "Expira",
+		"more": "Más",
+		"view": "Ver",
+		"share": "Compartir",
+		"download": "Descargar",
+		"overview": "Vista general",
+		"verification": "Verificación",
+		"metadata": "Metadatos",
+		"issuer": "Emisor",
+		"issueDate": "Fecha de emisión",
+		"expiryDate": "Fecha de expiración",
+		"grade": "Calificación",
+		"description": "Descripción",
+		"skills": "Habilidades",
+		"verified": "Verificada",
+		"verifiedDesc": "Esta credencial ha sido verificada en la cadena.",
+		"verificationUrl": "URL de verificación",
+		"blockchainTx": "Transacción en blockchain",
+		"courseId": "ID del curso",
+		"completionDate": "Fecha de finalización",
+		"totalXP": "XP total",
+		"rank": "Posición",
+		"noCredentials": "Sin credenciales",
+		"noCredentialsDesc": "Completa cursos para obtener credenciales verificables.",
+		"myCredentials": "Mis credenciales",
+		"credentialsDesc": "{count} credenciales obtenidas"
+	},
+	"seasonal": {
+		"title": "Eventos de temporada",
+		"subtitle": "Participa en eventos por tiempo limitado y gana recompensas exclusivas",
+		"activeEvents": "{count} eventos activos",
+		"tabs": {
+			"current": "Actual",
+			"upcoming": "Próximos",
+			"challenges": "Desafíos"
+		},
+		"timeRemaining": {
+			"days": "{days}d {hours}h restantes",
+			"hours": "{hours}h restantes",
+			"ended": "Evento finalizado"
+		},
+		"progress": "Progreso",
+		"joined": "Unido",
+		"joinEvent": "Unirse al evento",
+		"viewRewards": "Ver recompensas",
+		"noCurrentEvent": {
+			"title": "Sin eventos actuales",
+			"description": "Vuelve pronto para próximos eventos de temporada"
+		},
+		"startsIn": "Comienza en {days} días",
+		"challenges": "Desafíos",
+		"participants": "Participantes",
+		"noUpcomingEvents": {
+			"title": "Sin eventos próximos",
+			"description": "Mantente atento a futuros eventos"
+		},
+		"completed": "Completado",
+		"pending": "Pendiente",
+		"noTimeLimit": "Sin límite de tiempo",
+		"completeChallenge": "Completar desafío",
+		"noChallenges": {
+			"title": "Sin desafíos",
+			"description": "No hay desafíos disponibles para este evento"
+		},
+		"availableRewards": "Recompensas disponibles",
+		"claimReward": "Reclamar recompensa",
+		"locked": "Bloqueado"
+	},
+	"wallet": {
+		"connected": "Billetera conectada",
+		"connectedDesc": "Conectado a {address}",
+		"connectionFailed": "Conexión fallida",
+		"disconnected": "Billetera desconectada",
+		"disconnectedDesc": "Tu billetera ha sido desconectada.",
+		"disconnectFailed": "Desconexión fallida",
+		"disconnectFailedDesc": "No se pudo desconectar la billetera.",
+		"walletConnected": "Billetera conectada",
+		"connectedWallet": "Billetera conectada",
+		"copyAddress": "Copiar dirección",
+		"viewOnExplorer": "Ver en el explorador",
+		"disconnect": "Desconectar",
+		"connectWallet": "Conectar billetera",
+		"walletRequired": "Billetera requerida",
+		"connectDescription": "Conecta tu billetera de Solana para acceder a funciones en la cadena",
+		"connecting": "Conectando...",
+		"supportedWallets": "Billeteras compatibles",
+		"walletHelp": "¿Necesitas ayuda para conectar tu billetera?"
+	},
+	"plugins": {
+		"title": "Plugins",
+		"subtitle": "Amplía tu experiencia de aprendizaje con plugins",
+		"installedCount": "{count} instalados",
+		"tabs": {
+			"installed": "Instalados",
+			"marketplace": "Marketplace",
+			"development": "Desarrollo"
+		},
+		"enabled": "Habilitado",
+		"disabled": "Deshabilitado",
+		"update": "Actualizar",
+		"uninstall": "Desinstalar",
+		"settings": "Configuración",
+		"noPlugins": {
+			"title": "Sin plugins instalados",
+			"description": "Explora el marketplace para encontrar plugins"
+		},
+		"browseMarketplace": "Explorar marketplace",
+		"searchPlugins": "Buscar plugins...",
+		"categories": {
+			"all": "Todos",
+			"editor": "Editor",
+			"theme": "Tema",
+			"integration": "Integración",
+			"analytics": "Analíticas",
+			"gamification": "Gamificación",
+			"utility": "Utilidad"
+		},
+		"byAuthor": "por {author}",
+		"install": "Instalar",
+		"noResults": {
+			"title": "Sin resultados",
+			"description": "Ningún plugin coincide con tu búsqueda"
+		},
+		"createPlugin": "Crear plugin",
+		"createPluginDescription": "Crea tu propio plugin para la plataforma",
+		"pluginName": "Nombre del plugin",
+		"pluginNamePlaceholder": "Ingresa el nombre del plugin",
+		"pluginCategory": "Categoría",
+		"pluginDescription": "Descripción",
+		"pluginDescriptionPlaceholder": "Describe tu plugin",
+		"pluginCode": "Código del plugin",
+		"pluginCodePlaceholder": "Ingresa el código del plugin",
+		"publishPlugin": "Publicar plugin",
+		"developmentResources": "Recursos de desarrollo",
+		"apiReference": "Referencia de API",
+		"apiReferenceDesc": "Documentación completa de API para desarrollo de plugins",
+		"pluginHooks": "Hooks de plugins",
+		"pluginHooksDesc": "Hooks y eventos disponibles para plugins",
+		"viewDocs": "Ver documentación",
+		"learnMore": "Más información"
+	},
+	"editor": {
+		"fullscreenMode": "Modo pantalla completa",
+		"fullscreenDescription": "Cambiado al modo de edición en pantalla completa",
+		"codeCopied": "Código copiado",
+		"codeCopiedDescription": "El código ha sido copiado al portapapeles",
+		"copyFailed": "Error al copiar",
+		"copyFailedDescription": "No se pudo copiar el código al portapapeles",
+		"codePasted": "Código pegado",
+		"codePastedDescription": "El código ha sido pegado desde el portapapeles",
+		"pasteFailed": "Error al pegar",
+		"pasteFailedDescription": "No se pudo pegar el código desde el portapapeles",
+		"codeEditor": "Editor de código",
+		"mobileOptimized": "Optimizado para móvil",
+		"copy": "Copiar",
+		"paste": "Pegar",
+		"enterCode": "Ingresa tu código aquí..."
+	},
+	"mobile": {
+		"permissionGranted": "Permiso otorgado",
+		"geolocationPermissionGranted": "Permiso de geolocalización otorgado",
+		"cameraPermissionGranted": "Permiso de cámara otorgado",
+		"microphonePermissionGranted": "Permiso de micrófono otorgado",
+		"locationPermissionGranted": "Permiso de ubicación otorgado",
+		"permissionDenied": "Permiso denegado",
+		"locationPermissionDenied": "Permiso de ubicación denegado",
+		"permissionError": "Error de permisos",
+		"permissionErrorDescription": "Ocurrió un error al solicitar el permiso",
+		"featureDisabled": "Función deshabilitada",
+		"featureEnabled": "Función habilitada",
+		"hapticFeedbackToggled": "Retroalimentación háptica alternada",
+		"darkModeToggled": "Modo oscuro alternado",
+		"notificationsToggled": "Notificaciones alternadas",
+		"autoRotateToggled": "Rotación automática alternada",
+		"vibrationToggled": "Vibración alternada",
+		"deviceStatus": "Estado del dispositivo",
+		"online": "En línea",
+		"offline": "Sin conexión",
+		"charging": "Cargando",
+		"mobileFeatures": "Funciones móviles",
+		"darkMode": "Modo oscuro",
+		"hapticFeedback": "Retroalimentación háptica",
+		"notifications": "Notificaciones",
+		"autoRotate": "Rotación automática",
+		"permissions": "Permisos",
+		"location": "Ubicación",
+		"camera": "Cámara",
+		"microphone": "Micrófono",
+		"granted": "Otorgado",
+		"revoke": "Revocar",
+		"request": "Solicitar",
+		"volumeControl": "Control de volumen",
+		"volume": "Volumen",
+		"muted": "Silenciado"
+	},
+	"performance": {
+		"optimizationsApplied": "Optimizaciones aplicadas",
+		"optimizationsAppliedDescription": "Se han aplicado las optimizaciones de rendimiento",
+		"performanceMetrics": "Métricas de rendimiento",
+		"fps": "FPS",
+		"memory": "Memoria",
+		"network": "Red",
+		"battery": "Batería",
+		"slow": "Lento",
+		"fast": "Rápido",
+		"unknown": "Desconocido",
+		"lowPowerMode": "Modo de bajo consumo",
+		"optimizations": "Optimizaciones",
+		"reduceMotion": "Reducir movimiento",
+		"lowQualityImages": "Imágenes de baja calidad",
+		"disableAnimations": "Deshabilitar animaciones",
+		"lazyLoading": "Carga diferida",
+		"enableCaching": "Habilitar caché",
+		"applyOptimizations": "Aplicar optimizaciones"
+	},
+	"testing": {
+		"responsiveDesign": "Diseño responsivo",
+		"viewportScaling": "Escalado de ventana",
+		"touchTargets": "Áreas táctiles",
+		"orientationChange": "Cambio de orientación",
+		"fontScaling": "Escalado de fuente",
+		"performance": "Rendimiento",
+		"loadTime": "Tiempo de carga",
+		"memoryUsage": "Uso de memoria",
+		"batteryImpact": "Impacto en batería",
+		"networkEfficiency": "Eficiencia de red",
+		"gestures": "Gestos",
+		"touchEvents": "Eventos táctiles",
+		"swipeGestures": "Gestos de deslizamiento",
+		"pinchZoom": "Zoom con pellizco",
+		"longPress": "Pulsación larga",
+		"accessibility": "Accesibilidad",
+		"screenReader": "Lector de pantalla",
+		"keyboardNavigation": "Navegación por teclado",
+		"colorContrast": "Contraste de color",
+		"focusManagement": "Gestión de foco",
+		"testsCompleted": "Pruebas completadas",
+		"testResults": "{passed} aprobadas, {failed} fallidas de {total} pruebas",
+		"passed": "Aprobada",
+		"failed": "Fallida",
+		"running": "Ejecutando",
+		"pending": "Pendiente",
+		"skipped": "Omitida",
+		"total": "Total",
+		"mobileTesting": "Pruebas móviles",
+		"selectDevices": "Seleccionar dispositivos",
+		"runningTests": "Ejecutando pruebas",
+		"stopTests": "Detener pruebas",
+		"runTests": "Ejecutar pruebas",
+		"testSuites": "Suites de pruebas"
+	},
+	"gestures": {
+		"swipeLeft": "Deslizar a la izquierda",
+		"swipeLeftDescription": "Navegar al siguiente elemento",
+		"swipeRight": "Deslizar a la derecha",
+		"swipeRightDescription": "Navegar al elemento anterior",
+		"swipeUp": "Deslizar hacia arriba",
+		"swipeUpDescription": "Desplazar hacia arriba o descartar",
+		"swipeDown": "Deslizar hacia abajo",
+		"swipeDownDescription": "Actualizar o tirar hacia abajo",
+		"pinchOut": "Pellizcar hacia afuera",
+		"pinchOutDescription": "Acercar",
+		"pinchIn": "Pellizcar hacia adentro",
+		"pinchInDescription": "Alejar",
+		"doubleTap": "Doble toque",
+		"doubleTapDescription": "Zoom rápido o seleccionar",
+		"longPress": "Pulsación larga",
+		"longPressDescription": "Menú contextual o selección"
+	},
+	"analytics": {
+		"dataExported": "Datos exportados",
+		"dataExportedDescription": "Los datos de analíticas han sido exportados",
+		"mobileAnalytics": "Analíticas móviles",
+		"enableTracking": "Habilitar seguimiento",
+		"enabled": "Habilitado",
+		"disabled": "Deshabilitado",
+		"realTimeUpdates": "Actualizaciones en tiempo real",
+		"on": "Activado",
+		"off": "Desactivado",
+		"refreshData": "Actualizar datos",
+		"exportData": "Exportar datos",
+		"pageViews": "Vistas de página",
+		"uniqueVisitors": "Visitantes únicos",
+		"bounceRate": "Tasa de rebote",
+		"avgSession": "Sesión promedio",
+		"deviceBreakdown": "Desglose por dispositivo",
+		"mobile": "Móvil",
+		"tablet": "Tableta",
+		"desktop": "Escritorio",
+		"topPages": "Páginas principales",
+		"performance": "Rendimiento",
+		"loadTime": "Tiempo de carga",
+		"interactionTime": "Tiempo de interacción",
+		"scrollDepth": "Profundidad de desplazamiento",
+		"geolocation": "Geolocalización"
+	},
+	"optimization": {
+		"optimizationsApplied": "Optimizaciones aplicadas",
+		"optimizationScore": "Puntuación de optimización: {score}%",
+		"optimizationFailed": "Optimización fallida",
+		"optimizationFailedDescription": "Ocurrió un error al aplicar las optimizaciones",
+		"mobileOptimization": "Optimización móvil",
+		"performanceSettings": "Configuración de rendimiento",
+		"imageQuality": "Calidad de imagen",
+		"auto": "Automática",
+		"high": "Alta",
+		"medium": "Media",
+		"low": "Baja",
+		"preloadStrategy": "Estrategia de precarga",
+		"viewport": "Ventana visible",
+		"aggressive": "Agresiva",
+		"none": "Ninguna",
+		"cacheStrategy": "Estrategia de caché",
+		"persistent": "Persistente",
+		"memory": "Memoria",
+		"compressionLevel": "Nivel de compresión",
+		"featureToggles": "Interruptores de funciones",
+		"serviceWorker": "Service Worker",
+		"backgroundSync": "Sincronización en segundo plano",
+		"offlineMode": "Modo sin conexión",
+		"reduceAnimations": "Reducir animaciones",
+		"darkMode": "Modo oscuro",
+		"accessibilitySettings": "Configuración de accesibilidad",
+		"fontSize": "Tamaño de fuente",
+		"touchTargetSize": "Tamaño del área táctil",
+		"applying": "Aplicando...",
+		"applyOptimizations": "Aplicar optimizaciones",
+		"resetDefaults": "Restablecer valores predeterminados",
+		"exportSettings": "Exportar configuración",
+		"importSettings": "Importar configuración",
+		"settingsExported": "Configuración exportada",
+		"settingsExportedDescription": "La configuración de optimización se exportó exitosamente",
+		"settingsImported": "Configuración importada",
+		"settingsImportedDescription": "La configuración de optimización se importó exitosamente",
+		"importFailed": "Importación fallida",
+		"importFailedDescription": "No se pudo importar la configuración de optimización"
+	},
+	"tutorial": {
+		"tutorialCompleted": "Tutorial completado",
+		"tutorialCompletedDesc": "¡Has completado el tutorial!",
+		"previous": "Anterior",
+		"finish": "Finalizar",
+		"next": "Siguiente"
+	},
+	"filters": {
+		"categories": {
+			"webDevelopment": "Desarrollo web",
+			"blockchain": "Blockchain",
+			"aiMl": "IA y aprendizaje automático",
+			"mobile": "Desarrollo móvil",
+			"design": "Diseño",
+			"dataScience": "Ciencia de datos",
+			"title": "Categorías",
+			"select": "Seleccionar categoría"
+		},
+		"difficulties": {
+			"beginner": "Principiante",
+			"intermediate": "Intermedio",
+			"advanced": "Avanzado"
+		},
+		"languages": {
+			"english": "Inglés",
+			"portuguese": "Portugués",
+			"spanish": "Español"
+		},
+		"statuses": {
+			"active": "Activo",
+			"completed": "Completado",
+			"upcoming": "Próximo",
+			"draft": "Borrador"
+		},
+		"prices": {
+			"free": "Gratis",
+			"paid": "De pago",
+			"premium": "Premium"
+		},
+		"sort": {
+			"relevance": "Relevancia",
+			"newest": "Más reciente",
+			"oldest": "Más antiguo",
+			"ratingHigh": "Calificación: mayor a menor",
+			"ratingLow": "Calificación: menor a mayor",
+			"mostPopular": "Más popular",
+			"leastPopular": "Menos popular",
+			"shortest": "Más corto",
+			"longest": "Más largo",
+			"titleAZ": "Título: A-Z",
+			"titleZA": "Título: Z-A"
+		},
+		"difficulty": "Dificultad",
+		"selectDifficulty": "Seleccionar dificultad",
+		"duration": "Duración",
+		"minRating": "Calificación mínima",
+		"language": "Idioma",
+		"selectLanguage": "Seleccionar idioma",
+		"tags": "Etiquetas",
+		"selectTags": "Seleccionar etiquetas",
+		"dateRange": "Rango de fechas",
+		"selectDateRange": "Seleccionar rango de fechas",
+		"status": "Estado",
+		"selectStatus": "Seleccionar estado",
+		"price": "Precio",
+		"selectPrice": "Seleccionar rango de precios",
+		"activeFilters": "Filtros activos",
+		"clearAll": "Limpiar todo",
+		"filters": "Filtros",
+		"selected": "seleccionados",
+		"sortBy": "Ordenar por",
+		"rating": "Calificación"
+	},
+	"securityTraining": {
+		"securityTraining": {
+			"title": "Capacitación en seguridad",
+			"subtitle": "Administra programas de capacitación en seguridad y rastrea el progreso"
+		},
+		"createProgram": "Crear programa",
+		"enrolled": "Inscritos",
+		"tabs": {
+			"overview": "Vista general",
+			"programs": "Programas",
+			"users": "Usuarios",
+			"analytics": "Analíticas"
+		},
+		"metrics": {
+			"completionRate": "Tasa de finalización",
+			"vsLastMonth": "respecto al mes pasado",
+			"averageScore": "Puntuación promedio",
+			"improvement": "mejora",
+			"certifications": "Certificaciones",
+			"growth": "crecimiento",
+			"trainingHours": "Horas de capacitación",
+			"engagement": "participación"
+		},
+		"programOverview": {
+			"title": "Resumen del programa",
+			"description": "Resumen de todos los programas de capacitación",
+			"completion": "Finalización",
+			"enrolled": "Inscritos",
+			"duration": "Duración"
+		},
+		"userEngagement": {
+			"title": "Participación de usuarios",
+			"description": "Participación de usuarios en los programas de capacitación",
+			"high": "Alta",
+			"medium": "Media",
+			"low": "Baja"
+		},
+		"programs": {
+			"title": "Programas de capacitación",
+			"description": "Administra los programas de capacitación en seguridad",
+			"table": {
+				"title": "Título",
+				"type": "Tipo",
+				"duration": "Duración",
+				"completion": "Finalización",
+				"enrolled": "Inscritos",
+				"status": "Estado",
+				"actions": "Acciones"
+			},
+			"actions": {
+				"launch": "Iniciar",
+				"analytics": "Analíticas"
+			}
+		},
+		"users": {
+			"title": "Progreso de usuarios",
+			"description": "Rastrea el progreso de usuarios en los programas de capacitación",
+			"table": {
+				"user": "Usuario",
+				"progress": "Progreso",
+				"completed": "Completado",
+				"current": "Actual",
+				"risk": "Riesgo",
+				"lastActivity": "Última actividad"
+			}
+		},
+		"analytics": {
+			"progress": {
+				"title": "Progreso de capacitación",
+				"description": "Progreso general de capacitación a lo largo del tiempo"
+			},
+			"distribution": {
+				"title": "Distribución de puntuaciones",
+				"description": "Distribución de puntuaciones de capacitación"
+			},
+			"insights": {
+				"title": "Perspectivas de capacitación",
+				"description": "Perspectivas clave de los datos de capacitación",
+				"improvement": {
+					"title": "Mejora de puntuación",
+					"description": "Las puntuaciones promedio mejoraron en todos los programas"
+				},
+				"engagement": {
+					"title": "Aumento de participación",
+					"description": "La participación de usuarios ha aumentado significativamente"
+				},
+				"certification": {
+					"title": "Crecimiento de certificaciones",
+					"description": "Más usuarios están obteniendo certificaciones"
+				}
+			}
+		}
+	},
+	"behavioral": {
+		"behavioralAnalysis": {
+			"title": "Análisis de comportamiento",
+			"subtitle": "Monitorea y analiza patrones de comportamiento de usuarios"
+		},
+		"timeframes": {
+			"1h": "1 hora",
+			"24h": "24 horas",
+			"7d": "7 días",
+			"30d": "30 días"
+		},
+		"status": {
+			"monitoring": "Monitoreando"
+		},
+		"tabs": {
+			"overview": "Vista general",
+			"anomalies": "Anomalías",
+			"patterns": "Patrones",
+			"insights": "Perspectivas"
+		},
+		"metrics": {
+			"activeUsers": "Usuarios activos",
+			"vsLastPeriod": "respecto al período anterior",
+			"anomaliesDetected": "Anomalías detectadas",
+			"ofUsers": "de los usuarios",
+			"avgSessionTime": "Tiempo promedio de sesión",
+			"engagement": "participación",
+			"challengesPerSession": "Desafíos por sesión",
+			"adjusting": "ajustando"
+		},
+		"recentAnomalies": {
+			"title": "Anomalías recientes",
+			"description": "Últimas anomalías de comportamiento detectadas"
+		},
+		"confidence": "Confianza",
+		"anomalies": {
+			"title": "Todas las anomalías",
+			"description": "Lista completa de anomalías detectadas",
+			"table": {
+				"type": "Tipo",
+				"user": "Usuario",
+				"severity": "Severidad",
+				"confidence": "Confianza",
+				"status": "Estado",
+				"time": "Hora"
+			}
+		},
+		"patterns": {
+			"deviceDistribution": "Distribución por dispositivo",
+			"peakHours": "Horas pico",
+			"peakHoursDesc": "Horas de mayor actividad del día",
+			"behaviorPatterns": "Patrones de comportamiento"
+		},
+		"insights": {
+			"actionable": {
+				"title": "Perspectivas accionables",
+				"description": "Perspectivas clave de los datos de comportamiento"
+			},
+			"engagement": {
+				"title": "Perspectiva de participación",
+				"description": "Patrones y tendencias de participación de usuarios"
+			},
+			"mobile": {
+				"title": "Uso móvil",
+				"description": "Patrones de uso de dispositivos móviles"
+			},
+			"timing": {
+				"title": "Perspectiva de horarios",
+				"description": "Horarios óptimos para la participación de usuarios"
+			},
+			"recommendations": {
+				"title": "Recomendaciones",
+				"description": "Acciones sugeridas basadas en el análisis",
+				"mobile": {
+					"title": "Optimizar experiencia móvil",
+					"description": "Mejorar la responsividad y funciones móviles"
+				},
+				"content": {
+					"title": "Recomendaciones de contenido",
+					"description": "Alinear el contenido con las preferencias de los usuarios"
+				},
+				"notifications": {
+					"title": "Horario de notificaciones",
+					"description": "Enviar notificaciones durante las horas de mayor participación"
+				}
+			}
+		}
+	},
+	"anomaly": {
+		"anomalyDetection": {
+			"title": "Detección de anomalías",
+			"subtitle": "Detección de anomalías y alertas en tiempo real"
+		},
+		"alerts": {
+			"enabled": "Alertas habilitadas",
+			"disabled": "Alertas deshabilitadas"
+		},
+		"status": {
+			"active": "Activo"
+		},
+		"tabs": {
+			"detection": "Detección",
+			"rules": "Reglas",
+			"performance": "Rendimiento",
+			"settings": "Configuración"
+		},
+		"metrics": {
+			"totalAnomalies": "Total de anomalías",
+			"vsLastWeek": "respecto a la semana pasada",
+			"activeAlerts": "Alertas activas",
+			"requiresAttention": "requiere atención",
+			"detectionAccuracy": "Precisión de detección",
+			"improvement": "mejora",
+			"responseTime": "Tiempo de respuesta",
+			"optimization": "optimización"
+		},
+		"anomalyTypes": {
+			"title": "Tipos de anomalías",
+			"description": "Desglose de tipos de anomalías detectadas"
+		},
+		"severityDistribution": {
+			"title": "Distribución por severidad",
+			"description": "Anomalías por nivel de severidad",
+			"anomalies": "anomalías"
+		},
+		"rules": {
+			"title": "Reglas de detección",
+			"description": "Configura las reglas de detección de anomalías",
+			"table": {
+				"name": "Nombre",
+				"type": "Tipo",
+				"threshold": "Umbral",
+				"accuracy": "Precisión",
+				"alerts": "Alertas",
+				"status": "Estado",
+				"actions": "Acciones"
+			},
+			"status": {
+				"enabled": "Habilitada",
+				"disabled": "Deshabilitada"
+			},
+			"actions": {
+				"disable": "Deshabilitar",
+				"enable": "Habilitar"
+			}
+		},
+		"performance": {
+			"model": {
+				"title": "Rendimiento del modelo"
+			},
+			"system": {
+				"title": "Rendimiento del sistema",
+				"load": "Carga",
+				"memory": "Memoria",
+				"cpu": "CPU"
+			},
+			"alerts": {
+				"title": "Alertas de rendimiento",
+				"description": "Alertas recientes relacionadas con el rendimiento",
+				"accuracy": {
+					"title": "Alerta de precisión",
+					"description": "La precisión de detección está por debajo del umbral"
+				},
+				"response": {
+					"title": "Alerta de tiempo de respuesta",
+					"description": "El tiempo de respuesta excede los límites"
+				},
+				"load": {
+					"title": "Alerta de carga",
+					"description": "La carga del sistema es alta"
+				}
+			}
+		},
+		"settings": {
+			"title": "Configuración de detección",
+			"description": "Configura los parámetros de detección",
+			"alerts": {
+				"title": "Configuración de alertas",
+				"description": "Configura las notificaciones de alertas"
+			},
+			"sensitivity": {
+				"title": "Sensibilidad",
+				"description": "Ajusta la sensibilidad de detección"
+			},
+			"rules": {
+				"title": "Configuración de reglas",
+				"alerts": "Reglas de alertas",
+				"accuracy": "Umbral de precisión"
+			}
+		}
+	},
+	"incidentResponse": {
+		"incidentResponse": {
+			"title": "Respuesta a incidentes",
+			"subtitle": "Administra y responde a incidentes de seguridad"
+		},
+		"createIncident": "Crear incidente",
+		"activeIncidents": "Incidentes activos",
+		"tabs": {
+			"active": "Activos",
+			"all": "Todos",
+			"teams": "Equipos",
+			"analytics": "Analíticas"
+		},
+		"metrics": {
+			"activeIncidents": "Incidentes activos",
+			"vsLastWeek": "respecto a la semana pasada",
+			"avgResponseTime": "Tiempo de respuesta promedio",
+			"improvement": "mejora",
+			"slaCompliance": "Cumplimiento de SLA",
+			"resolvedToday": "Resueltos hoy",
+			"efficiency": "eficiencia"
+		},
+		"activeIncidentsDetails": {
+			"title": "Incidentes activos",
+			"description": "Incidentes de seguridad actualmente activos",
+			"assignedTo": "Asignado a",
+			"affectedUsers": "Usuarios afectados",
+			"progress": "Progreso",
+			"viewDetails": "Ver detalles",
+			"addNote": "Agregar nota"
+		},
+		"allIncidents": {
+			"title": "Todos los incidentes",
+			"description": "Historial completo de incidentes",
+			"table": {
+				"id": "ID",
+				"title": "Título",
+				"severity": "Severidad",
+				"status": "Estado",
+				"assignedTo": "Asignado a",
+				"created": "Creado",
+				"actions": "Acciones"
+			},
+			"view": "Ver"
+		},
+		"teams": {
+			"title": "Equipos de respuesta",
+			"description": "Resumen de equipos de respuesta a incidentes",
+			"lead": "Líder",
+			"specialization": "Especialización",
+			"activeIncidents": "Incidentes activos",
+			"responseTime": "Tiempo de respuesta",
+			"contact": "Contacto"
+		},
+		"analytics": {
+			"types": {
+				"title": "Tipos de incidentes",
+				"description": "Desglose de incidentes por tipo"
+			},
+			"severity": {
+				"title": "Distribución por severidad",
+				"description": "Incidentes por nivel de severidad"
+			},
+			"trend": {
+				"title": "Tendencia de incidentes",
+				"description": "Volumen de incidentes a lo largo del tiempo"
+			},
+			"insights": {
+				"title": "Perspectivas de respuesta",
+				"description": "Métricas clave de respuesta a incidentes",
+				"response": {
+					"title": "Mejora del tiempo de respuesta",
+					"description": "El tiempo de respuesta promedio ha disminuido"
+				},
+				"sla": {
+					"title": "Cumplimiento de SLA",
+					"description": "La tasa de cumplimiento de SLA está mejorando"
+				},
+				"containment": {
+					"title": "Tasa de contención",
+					"description": "Los incidentes se están conteniendo más rápido"
+				}
+			}
+		}
+	},
+	"securityReporting": {
+		"securityReporting": {
+			"title": "Reportes de seguridad",
+			"subtitle": "Genera y administra reportes de seguridad"
+		},
+		"createReport": "Crear reporte",
+		"settings": "Configuración",
+		"reportTypes": {
+			"executive": "Resumen ejecutivo",
+			"threat": "Reporte de amenazas",
+			"compliance": "Reporte de cumplimiento",
+			"incident": "Reporte de incidentes",
+			"audit": "Reporte de auditoría"
+		},
+		"tabs": {
+			"overview": "Vista general",
+			"reports": "Reportes",
+			"analytics": "Analíticas",
+			"compliance": "Cumplimiento",
+			"create": "Crear reporte"
+		},
+		"metrics": {
+			"totalIncidents": "Total de incidentes",
+			"vsLastMonth": "respecto al mes pasado",
+			"slaCompliance": "Cumplimiento de SLA",
+			"blockedAttacks": "Ataques bloqueados",
+			"effectiveness": "efectividad",
+			"systemUptime": "Tiempo activo del sistema",
+			"reliability": "confiabilidad"
+		},
+		"overview": {
+			"recentReports": {
+				"title": "Reportes recientes",
+				"description": "Últimos reportes generados",
+				"download": "Descargar"
+			},
+			"insights": {
+				"threats": {
+					"title": "Perspectivas de amenazas",
+					"incident": {
+						"title": "Cantidad de incidentes",
+						"description": "Total de incidentes de seguridad en este período"
+					},
+					"blocked": {
+						"title": "Ataques bloqueados",
+						"description": "Ataques prevenidos por los sistemas de seguridad"
+					}
+				},
+				"compliance": {
+					"title": "Perspectivas de cumplimiento",
+					"gdpr": {
+						"title": "Cumplimiento GDPR",
+						"description": "Estado actual de cumplimiento GDPR"
+					},
+					"ccpa": {
+						"title": "Cumplimiento CCPA",
+						"description": "Estado actual de cumplimiento CCPA"
+					}
+				}
+			}
+		},
+		"reports": {
+			"title": "Todos los reportes",
+			"description": "Explora y administra los reportes generados",
+			"table": {
+				"title": "Título",
+				"type": "Tipo",
+				"status": "Estado",
+				"generated": "Generado",
+				"size": "Tamaño",
+				"actions": "Acciones"
+			},
+			"view": "Ver",
+			"download": "Descargar"
+		},
+		"analytics": {
+			"incidents": {
+				"title": "Analíticas de incidentes",
+				"description": "Tendencias y patrones de incidentes de seguridad"
+			},
+			"response": {
+				"title": "Analíticas de respuesta",
+				"description": "Análisis del tiempo de respuesta a incidentes"
+			},
+			"breakdown": {
+				"incidentTypes": "Tipos de incidentes",
+				"severity": "Severidad",
+				"departments": "Departamentos"
+			}
+		},
+		"compliance": {
+			"lastAudit": "Última auditoría",
+			"score": "Puntuación",
+			"findings": "Hallazgos",
+			"nextAudit": "Próxima auditoría",
+			"actions": {
+				"title": "Acciones de cumplimiento",
+				"description": "Acciones de cumplimiento disponibles",
+				"scheduleAudit": "Programar auditoría",
+				"scheduleAuditDesc": "Programa una nueva auditoría de cumplimiento",
+				"schedule": "Programar",
+				"generateReport": "Generar reporte",
+				"generateReportDesc": "Genera un reporte de cumplimiento",
+				"generate": "Generar",
+				"reviewFindings": "Revisar hallazgos",
+				"reviewFindingsDesc": "Revisa los hallazgos de cumplimiento pendientes",
+				"review": "Revisar"
+			}
+		},
+		"create": {
+			"title": "Crear reporte",
+			"description": "Genera un nuevo reporte de seguridad",
+			"reportType": "Tipo de reporte",
+			"dateRange": "Rango de fechas",
+			"recipients": "Destinatarios",
+			"format": "Formato",
+			"generate": "Generar reporte",
+			"schedule": "Programar reporte",
+			"templates": {
+				"title": "Plantillas de reportes",
+				"description": "Comienza desde una plantilla",
+				"use": "Usar plantilla",
+				"executive": {
+					"description": "Resumen de seguridad de alto nivel para la dirección"
+				},
+				"threat": {
+					"description": "Análisis y evaluación detallada de amenazas"
+				},
+				"compliance": {
+					"description": "Reporte del estado de cumplimiento regulatorio"
+				},
+				"incident": {
+					"description": "Reporte de análisis detallado de incidentes"
+				},
+				"audit": {
+					"description": "Reporte integral de auditoría de seguridad"
+				}
+			}
+		}
+	},
+	"securityScoring": {
+		"securityScoring": {
+			"title": "Puntuación de seguridad",
+			"subtitle": "Puntuaciones de seguridad de usuarios y evaluación de riesgos"
+		},
+		"timeframes": {
+			"24h": "24 horas",
+			"7d": "7 días",
+			"30d": "30 días",
+			"90d": "90 días"
+		},
+		"status": {
+			"updating": "Actualizando..."
+		},
+		"tabs": {
+			"overview": "Vista general",
+			"users": "Usuarios",
+			"factors": "Factores",
+			"insights": "Perspectivas"
+		},
+		"metrics": {
+			"averageScore": "Puntuación promedio",
+			"vsLastPeriod": "respecto al período anterior",
+			"highRiskUsers": "Usuarios de alto riesgo",
+			"improvement": "mejora",
+			"totalUsers": "Total de usuarios",
+			"lowRisk": "bajo riesgo",
+			"securityIncidents": "Incidentes de seguridad",
+			"reduction": "reducción"
+		},
+		"scoreDistribution": {
+			"title": "Distribución de puntuaciones",
+			"description": "Distribución de puntuaciones de seguridad entre usuarios"
+		},
+		"riskOverview": {
+			"title": "Resumen de riesgos",
+			"description": "Desglose de niveles de riesgo de usuarios",
+			"lowRisk": "Riesgo bajo",
+			"mediumRisk": "Riesgo medio",
+			"highRisk": "Riesgo alto"
+		},
+		"users": {
+			"title": "Puntuaciones de usuarios",
+			"description": "Puntuaciones de seguridad individuales de usuarios",
+			"table": {
+				"user": "Usuario",
+				"score": "Puntuación",
+				"grade": "Grado",
+				"risk": "Riesgo",
+				"lastActivity": "Última actividad",
+				"status": "Estado"
+			}
+		},
+		"factors": {
+			"overview": {
+				"title": "Factores de puntuación",
+				"description": "Factores que contribuyen a las puntuaciones de seguridad"
+			},
+			"breakdown": {
+				"title": "Desglose de factores",
+				"description": "Desglose detallado de los factores de puntuación"
+			}
+		},
+		"insights": {
+			"security": {
+				"title": "Perspectivas de seguridad",
+				"description": "Perspectivas clave de puntuación de seguridad",
+				"improvement": {
+					"title": "Mejora de puntuación",
+					"description": "Las puntuaciones de seguridad generales están mejorando"
+				},
+				"authentication": {
+					"title": "Fortaleza de autenticación",
+					"description": "Los usuarios están adoptando métodos de autenticación más fuertes"
+				},
+				"monitoring": {
+					"title": "Cobertura de monitoreo",
+					"description": "La cobertura de monitoreo de seguridad se está expandiendo"
+				}
+			},
+			"recommendations": {
+				"title": "Recomendaciones",
+				"description": "Acciones sugeridas para mejorar las puntuaciones",
+				"training": {
+					"title": "Capacitación en seguridad",
+					"description": "Programa capacitación de concientización en seguridad"
+				},
+				"mfa": {
+					"title": "Habilitar MFA",
+					"description": "Fomenta la adopción de autenticación multifactor"
+				},
+				"monitoring": {
+					"title": "Monitoreo mejorado",
+					"description": "Habilita el monitoreo de seguridad avanzado"
+				}
+			}
+		}
+	},
+	"securityAutomation": {
+		"securityAutomation": {
+			"title": "Automatización de seguridad",
+			"subtitle": "Automatiza flujos de trabajo y respuestas de seguridad"
+		},
+		"status": {
+			"automated": "Automatizado"
+		},
+		"configure": "Configurar",
+		"tabs": {
+			"workflows": "Flujos de trabajo",
+			"rules": "Reglas",
+			"performance": "Rendimiento",
+			"builder": "Constructor"
+		},
+		"metrics": {
+			"activeWorkflows": "Flujos de trabajo activos",
+			"of": "de",
+			"total": "total",
+			"successRate": "Tasa de éxito",
+			"avgResponseTime": "Tiempo de respuesta promedio",
+			"improvement": "mejora",
+			"incidentsPrevented": "Incidentes prevenidos",
+			"vsLastMonth": "respecto al mes pasado"
+		},
+		"activeWorkflows": {
+			"title": "Flujos de trabajo activos",
+			"description": "Flujos de trabajo de seguridad actualmente en ejecución",
+			"triggeredBy": "Activado por",
+			"started": "Iniciado",
+			"estimatedCompletion": "Finalización estimada",
+			"completed": "completado"
+		},
+		"pause": "Pausar",
+		"rules": {
+			"title": "Reglas de automatización",
+			"description": "Configura las reglas de seguridad automatizadas",
+			"table": {
+				"name": "Nombre",
+				"trigger": "Activador",
+				"actions": "Acciones",
+				"priority": "Prioridad",
+				"successRate": "Tasa de éxito",
+				"status": "Estado"
+			},
+			"status": {
+				"enabled": "Habilitada",
+				"disabled": "Deshabilitada"
+			}
+		},
+		"performance": {
+			"coverage": {
+				"title": "Cobertura de automatización",
+				"description": "Porcentaje de tareas de seguridad automatizadas",
+				"overall": "Cobertura general",
+				"activeRules": "Reglas activas",
+				"totalExecutions": "Total de ejecuciones"
+			},
+			"response": {
+				"title": "Tiempos de respuesta",
+				"description": "Métricas de tiempo de respuesta automatizada",
+				"average": "Promedio",
+				"fastest": "Más rápido",
+				"slowest": "Más lento",
+				"median": "Mediana"
+			},
+			"effectiveness": {
+				"title": "Efectividad",
+				"description": "Métricas de efectividad de la automatización",
+				"incidentsPrevented": "Incidentes prevenidos",
+				"falsePositives": "Falsos positivos",
+				"accuracy": "Precisión"
+			}
+		},
+		"builder": {
+			"rule": {
+				"title": "Constructor de reglas",
+				"description": "Crea una nueva regla de automatización",
+				"name": "Nombre de la regla",
+				"trigger": "Condición de activación",
+				"actions": "Acciones",
+				"create": "Crear regla"
+			},
+			"workflow": {
+				"title": "Constructor de flujo de trabajo",
+				"description": "Crea un nuevo flujo de trabajo de automatización",
+				"name": "Nombre del flujo de trabajo",
+				"steps": "Pasos",
+				"addStep": "Agregar paso",
+				"trigger": "Activador",
+				"create": "Crear flujo de trabajo"
+			},
+			"templates": {
+				"title": "Plantillas",
+				"description": "Comienza desde una plantilla predefinida"
+			}
+		}
+	},
+	"fraud": {
+		"fraudPrevention": {
+			"title": "Prevención de fraude",
+			"subtitle": "Monitorea y previene actividades fraudulentas"
+		},
+		"status": {
+			"active": "Activo"
+		},
+		"accuracy": "Precisión",
+		"tabs": {
+			"overview": "Vista general",
+			"activities": "Actividades",
+			"analytics": "Analíticas",
+			"rules": "Reglas"
+		},
+		"metrics": {
+			"preventedLoss": "Pérdida prevenida",
+			"thisMonth": "este mes",
+			"blockedTransactions": "Transacciones bloqueadas",
+			"blockRate": "tasa de bloqueo",
+			"detectionAccuracy": "Precisión de detección",
+			"improvement": "mejora",
+			"responseTime": "Tiempo de respuesta",
+			"withinLimits": "Dentro de los límites"
+		},
+		"recentActivities": {
+			"title": "Actividades sospechosas recientes",
+			"description": "Últimas actividades marcadas que requieren atención"
+		},
+		"risk": "riesgo",
+		"search": {
+			"placeholder": "Buscar actividades..."
+		},
+		"filters": {
+			"allStatuses": "Todos los estados",
+			"flagged": "Marcado",
+			"investigating": "Investigando",
+			"blocked": "Bloqueado",
+			"resolved": "Resuelto"
+		},
+		"activities": {
+			"title": "Actividades sospechosas",
+			"description": "Todas las actividades marcadas",
+			"table": {
+				"type": "Tipo",
+				"risk": "Riesgo",
+				"user": "Usuario",
+				"amount": "Monto",
+				"status": "Estado",
+				"time": "Hora"
+			}
+		},
+		"analytics": {
+			"fraudByType": "Fraude por tipo",
+			"riskDistribution": "Distribución de riesgo"
+		},
+		"rules": {
+			"title": "Reglas de prevención de fraude",
+			"description": "Configura las reglas y umbrales de detección de fraude",
+			"detectionRules": "Reglas de detección",
+			"velocityChecks": "Verificaciones de velocidad",
+			"velocityDesc": "Detecta transacciones sucesivas rápidas",
+			"deviceFingerprinting": "Huella digital del dispositivo",
+			"deviceDesc": "Rastrea y verifica la identidad del dispositivo",
+			"locationAnalysis": "Análisis de ubicación",
+			"locationDesc": "Detecta patrones geográficos sospechosos",
+			"enabled": "Habilitado",
+			"thresholds": "Umbrales",
+			"maxTransactions": "Máx. transacciones por hora",
+			"maxAmount": "Monto máximo de transacción ($)",
+			"riskScore": "Umbral de puntuación de riesgo",
+			"saveChanges": "Guardar cambios"
+		}
+	},
+	"compliance": {
+		"complianceMonitoring": {
+			"title": "Monitoreo de cumplimiento",
+			"subtitle": "Monitorea el cumplimiento regulatorio en todos los marcos"
+		},
+		"exportReport": "Exportar reporte",
+		"tabs": {
+			"overview": "Vista general",
+			"requirements": "Requisitos",
+			"audit": "Registro de auditoría",
+			"reports": "Reportes"
+		},
+		"metrics": {
+			"overallScore": "Puntuación general",
+			"complianceLevel": "Nivel de cumplimiento",
+			"lastAudit": "Última auditoría",
+			"nextAudit": "Próxima auditoría",
+			"requirements": "Requisitos",
+			"compliantRequirements": "Requisitos cumplidos"
+		},
+		"frameworkStatus": {
+			"title": "Estado del marco",
+			"description": "Estado de cumplimiento en todos los marcos",
+			"score": "Puntuación",
+			"lastAudit": "Última auditoría"
+		},
+		"recentActivity": {
+			"title": "Actividad reciente",
+			"description": "Últimas verificaciones y auditorías de cumplimiento"
+		},
+		"requirements": {
+			"title": "Requisitos de cumplimiento",
+			"description": "Estado detallado de los requisitos",
+			"table": {
+				"requirement": "Requisito",
+				"status": "Estado",
+				"score": "Puntuación",
+				"lastChecked": "Última verificación",
+				"actions": "Acciones"
+			},
+			"viewDetails": "Ver detalles"
+		},
+		"audit": {
+			"title": "Registro de auditoría",
+			"description": "Registro completo de auditoría",
+			"table": {
+				"timestamp": "Marca de tiempo",
+				"framework": "Marco",
+				"requirement": "Requisito",
+				"type": "Tipo",
+				"status": "Estado",
+				"details": "Detalles"
+			}
+		},
+		"reports": {
+			"generation": {
+				"title": "Generar reportes",
+				"description": "Selecciona los reportes a generar"
+			},
+			"generateReport": "Generar reporte",
+			"scheduled": {
+				"title": "Reportes programados",
+				"description": "Reportes generados automáticamente"
+			}
+		},
+		"alerts": {
+			"title": "Alertas de cumplimiento",
+			"description": "Notificaciones importantes de cumplimiento",
+			"upcomingAudit": {
+				"title": "Próxima auditoría",
+				"description": "Tu próxima auditoría de cumplimiento está programada pronto."
+			},
+			"requirementReview": {
+				"title": "Revisión de requisitos",
+				"description": "Algunos requisitos necesitan atención antes de la próxima auditoría."
+			},
+			"complianceMilestone": {
+				"title": "Hito de cumplimiento",
+				"description": "Has alcanzado una puntuación de cumplimiento más alta este trimestre."
+			}
+		}
+	},
+	"security": {
+		"threatDetection": {
+			"title": "Detección de amenazas",
+			"subtitle": "Monitoreo de seguridad y detección de amenazas en tiempo real"
+		},
+		"status": {
+			"active": "Activo"
+		},
+		"tabs": {
+			"overview": "Vista general",
+			"threats": "Amenazas",
+			"analytics": "Analíticas",
+			"settings": "Configuración"
+		},
+		"metrics": {
+			"totalThreats": "Total de amenazas",
+			"fromLastWeek": "respecto a la semana pasada",
+			"blockedThreats": "Amenazas bloqueadas",
+			"blockRate": "tasa de bloqueo",
+			"responseTime": "Tiempo de respuesta",
+			"average": "Respuesta promedio",
+			"uptime": "Tiempo activo del sistema",
+			"excellent": "Excelente"
+		},
+		"recentThreats": {
+			"title": "Amenazas recientes",
+			"description": "Últimas amenazas de seguridad detectadas"
+		},
+		"threats": {
+			"title": "Todas las amenazas",
+			"description": "Registro completo de amenazas",
+			"table": {
+				"type": "Tipo",
+				"severity": "Severidad",
+				"source": "Origen",
+				"target": "Objetivo",
+				"status": "Estado",
+				"time": "Hora"
+			}
+		},
+		"analytics": {
+			"threatsByType": "Amenazas por tipo",
+			"threatsBySeverity": "Amenazas por severidad"
+		},
+		"settings": {
+			"title": "Configuración de detección de amenazas",
+			"description": "Configura las reglas de detección y alertas",
+			"detectionRules": "Reglas de detección",
+			"bruteForce": "Detección de fuerza bruta",
+			"sqlInjection": "Detección de inyección SQL",
+			"xss": "Detección de XSS",
+			"ddos": "Detección de DDoS",
+			"alertSettings": "Configuración de alertas",
+			"emailAlerts": "Alertas por correo electrónico",
+			"smsAlerts": "Alertas por SMS",
+			"slackAlerts": "Alertas por Slack",
+			"saveChanges": "Guardar cambios"
+		}
+	},
+	"premium": {
+		"upgrade": {
+			"title": "Actualizar a Premium",
+			"description": "Desbloquea todos los cursos y funciones premium",
+			"benefits": {
+				"unlimited": "Cursos ilimitados",
+				"unlimitedDesc": "Accede a todos los cursos premium",
+				"certificates": "Certificados verificados",
+				"certificatesDesc": "Obtén credenciales en la cadena",
+				"support": "Soporte prioritario",
+				"supportDesc": "Recibe ayuda de expertos"
+			},
+			"button": "Actualizar a Premium"
+		},
+		"preview": {
+			"premium": "Premium",
+			"progress": "Progreso",
+			"lessons": "Lecciones",
+			"upgradeMessage": "Actualiza a Premium para desbloquear todas las lecciones y funciones."
+		},
+		"feature": {
+			"title": "{feature} es una función Premium",
+			"description": "Actualiza tu plan para acceder a esta función.",
+			"upgrade": "Actualizar"
+		},
+		"badge": {
+			"course": "Curso Premium",
+			"feature": "Función Premium",
+			"content": "Contenido Premium"
+		},
+		"stats": {
+			"courses": "Cursos accedidos",
+			"challenges": "Desafíos completados",
+			"certificates": "Certificados obtenidos",
+			"daysActive": "Días activo"
+		},
+		"gate": {
+			"title": "Contenido Premium",
+			"description": "Este contenido requiere una suscripción premium.",
+			"descriptionWithPlan": "Este contenido requiere el plan {plan} o superior.",
+			"upgrade": "Actualizar ahora"
+		}
+	},
+	"subscription": {
+		"title": "Gestión de suscripción",
+		"subtitle": "Administra tu suscripción y facturación",
+		"status": {
+			"active": "Activa"
+		},
+		"tabs": {
+			"overview": "Vista general",
+			"plans": "Planes",
+			"billing": "Facturación",
+			"settings": "Configuración"
+		},
+		"overview": {
+			"free": {
+				"title": "Plan gratuito",
+				"description": "Actualiza para desbloquear funciones premium",
+				"courses": "Cursos gratuitos",
+				"challenges": "Desafíos diarios",
+				"certificates": "Certificado"
+			},
+			"active": {
+				"description": "Tu suscripción se renueva el {date}"
+			},
+			"inactive": {
+				"description": "Tu suscripción ya no está activa"
+			},
+			"premium": {
+				"courses": "Cursos ilimitados",
+				"challenges": "Desafíos ilimitados",
+				"certificates": "Certificados ilimitados",
+				"support": "Soporte"
+			},
+			"billing": {
+				"title": "Información de facturación",
+				"nextPayment": "Próximo pago",
+				"amount": "Monto"
+			}
+		},
+		"plans": {
+			"current": "Plan actual",
+			"upgrade": "Actualizar"
+		},
+		"billing": {
+			"title": "Historial de facturación"
+		},
+		"settings": {
+			"payment": {
+				"title": "Método de pago",
+				"description": "Administra tu método de pago",
+				"update": "Actualizar"
+			},
+			"cancel": {
+				"title": "Cancelar suscripción",
+				"description": "Cancela tu suscripción al final del período de facturación",
+				"warning": "Perderás acceso a las funciones premium al final de tu período de facturación.",
+				"button": "Cancelar suscripción"
+			},
+			"reactivate": {
+				"title": "Reactivar suscripción",
+				"description": "Reanuda tu suscripción premium",
+				"button": "Reactivar"
+			}
+		}
+	},
+	"payment": {
+		"title": "Pago",
+		"description": "Suscríbete a {plan} por ${amount} {currency}/mes",
+		"status": {
+			"processing": "Procesando pago",
+			"processingDesc": "Tu pago está siendo procesado...",
+			"success": "Pago exitoso",
+			"successDesc": "Tu pago ha sido procesado exitosamente.",
+			"failed": "Pago fallido",
+			"failedDesc": "Hubo un error al procesar tu pago."
+		},
+		"billing": {
+			"name": "Nombre completo",
+			"email": "Correo electrónico",
+			"address": "Dirección",
+			"city": "Ciudad",
+			"state": "Estado",
+			"zip": "Código postal"
+		},
+		"card": {
+			"details": "Detalles de la tarjeta"
+		},
+		"security": {
+			"note": "Tu pago está protegido con encriptación SSL"
+		},
+		"processing": "Procesando...",
+		"pay": "Pagar",
+		"errors": {
+			"stripeNotLoaded": "El sistema de pagos no se cargó. Actualiza la página.",
+			"paymentFailed": "El pago falló. Intenta de nuevo.",
+			"networkError": "Error de red. Verifica tu conexión."
+		}
+	},
+	"pricing": {
+		"plans": {
+			"free": {
+				"name": "Gratis",
+				"description": "Comienza con lo básico",
+				"features": {
+					"courses": "{count} cursos gratuitos",
+					"challenges": "{count} desafíos diarios",
+					"certificates": "{count} certificado",
+					"support": "Soporte de la comunidad",
+					"basic": "Analíticas básicas"
+				},
+				"limitations": {
+					"ads": "Contiene anuncios",
+					"analytics": "Analíticas limitadas"
+				},
+				"cta": "Comenzar"
+			},
+			"premium": {
+				"name": "Premium",
+				"description": "Para estudiantes comprometidos",
+				"features": {
+					"unlimited": "Cursos ilimitados",
+					"certificates": "Certificados verificados",
+					"priority": "Soporte prioritario",
+					"analytics": "Analíticas avanzadas",
+					"downloads": "Descargas sin conexión",
+					"noAds": "Sin anuncios"
+				},
+				"cta": "Iniciar Premium"
+			},
+			"pro": {
+				"name": "Pro",
+				"description": "Para equipos y profesionales",
+				"features": {
+					"everything": "Todo en Premium",
+					"teams": "Gestión de equipos",
+					"api": "Acceso a API",
+					"whiteLabel": "Opciones de marca blanca",
+					"priority": "Soporte prioritario",
+					"dedicated": "Gerente de cuenta dedicado"
+				},
+				"cta": "Iniciar Pro"
+			},
+			"enterprise": {
+				"name": "Empresarial",
+				"description": "Para organizaciones",
+				"features": {
+					"everything": "Todo en Pro",
+					"sso": "Integración SSO",
+					"audit": "Registros de auditoría",
+					"compliance": "Reportes de cumplimiento",
+					"onPremise": "Implementación local",
+					"custom": "Integraciones personalizadas"
+				},
+				"cta": "Contactar ventas"
+			}
+		},
+		"billing": {
+			"monthly": "Mensual",
+			"yearly": "Anual",
+			"save": "Ahorra"
+		},
+		"popular": "Más popular",
+		"current": "Plan actual",
+		"currentPlan": "Plan actual",
+		"free": "Gratis",
+		"contact": "Contáctanos",
+		"customPricing": "Precios personalizados para tu organización",
+		"year": "año",
+		"month": "mes",
+		"save": "Ahorra",
+		"limitations": "Limitaciones",
+		"comparison": {
+			"title": "Comparación de planes",
+			"description": "Compara las funciones de todos los planes",
+			"feature": "Función",
+			"courses": "Cursos",
+			"challenges": "Desafíos",
+			"certificates": "Certificados",
+			"support": "Soporte",
+			"community": "Comunidad",
+			"email": "Correo electrónico",
+			"priority": "Prioritario",
+			"dedicated": "Dedicado",
+			"analytics": "Analíticas"
+		}
+	},
+	"leaderboard": {
+		"tabs": {
+			"global": "Global",
+			"weekly": "Semanal",
+			"monthly": "Mensual",
+			"courses": "Cursos"
+		},
+		"global": {
+			"title": "Tabla de clasificación global",
+			"description": "Los mejores estudiantes de todos los tiempos en la plataforma"
+		},
+		"weekly": {
+			"title": "Tabla de clasificación semanal",
+			"description": "Los mejores de esta semana"
+		},
+		"monthly": {
+			"title": "Tabla de clasificación mensual",
+			"description": "Los mejores de este mes"
+		}
+	}
+}
