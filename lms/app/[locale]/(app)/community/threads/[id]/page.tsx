@@ -31,6 +31,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { ThreadBody } from "@/components/thread-body";
 
 export default function ThreadDetailPage({
   params,
@@ -313,9 +314,7 @@ export default function ThreadDetailPage({
                 )}
               </div>
 
-              <div className="mt-4 whitespace-pre-wrap text-sm leading-relaxed">
-                {thread.body}
-              </div>
+              <ThreadBody body={thread.body} className="mt-4" />
             </div>
           </div>
         </CardContent>
@@ -427,9 +426,7 @@ export default function ThreadDetailPage({
                         </Button>
                       )}
                     </div>
-                    <div className="mt-2 whitespace-pre-wrap text-sm leading-relaxed">
-                      {reply.body}
-                    </div>
+                    <ThreadBody body={reply.body} className="mt-2" />
                   </div>
                 </CardContent>
               </Card>
@@ -448,7 +445,11 @@ export default function ThreadDetailPage({
               rows={3}
               value={replyBody}
               onChange={(e) => setReplyBody(e.target.value)}
+              className="font-mono text-sm"
             />
+            <p className="mt-1.5 text-xs text-muted-foreground">
+              {t("codeHint")}
+            </p>
             <div className="mt-3 flex justify-end">
               <Button
                 onClick={handleReply}

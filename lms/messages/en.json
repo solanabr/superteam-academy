@@ -377,6 +377,7 @@
     "noReplies": "No replies yet. Be the first to respond!",
     "writeReply": "Write a reply",
     "replyPlaceholder": "Write your reply...",
+    "codeHint": "Tip: Use ```rust or ```ts to add syntax-highlighted code blocks",
     "postReply": "Post Reply",
     "posting": "Posting...",
     "replyPosted": "Reply posted!",

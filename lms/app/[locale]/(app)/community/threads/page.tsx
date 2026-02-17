@@ -158,7 +158,11 @@ export default function CommunityThreadsPage() {
                 rows={5}
                 value={newBody}
                 onChange={(e) => setNewBody(e.target.value)}
+                className="font-mono text-sm"
               />
+              <p className="text-xs text-muted-foreground">
+                {t("codeHint")}
+              </p>
               <div className="flex gap-4">
                 <Select
                   value={newType}
@@ -325,7 +329,7 @@ export default function CommunityThreadsPage() {
                       )}
                     </div>
                     <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">
-                      {thread.body}
+                      {thread.body.replace(/```[\s\S]*?```/g, "[code]")}
                     </p>
                     <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                       <span>{thread.authorName}</span>

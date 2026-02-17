@@ -377,6 +377,7 @@
     "noReplies": "Aún no hay respuestas. ¡Sé el primero en responder!",
     "writeReply": "Escribe una respuesta",
     "replyPlaceholder": "Escribe tu respuesta...",
+    "codeHint": "Consejo: Usa ```rust o ```ts para agregar bloques de código con resaltado de sintaxis",
     "postReply": "Publicar Respuesta",
     "posting": "Publicando...",
     "replyPosted": "¡Respuesta publicada!",
