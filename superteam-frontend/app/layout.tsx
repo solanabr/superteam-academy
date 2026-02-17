@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Archivo, Inter, JetBrains_Mono } from "next/font/google";
+import { getLocale, getMessages } from "next-intl/server";
 import "./globals.css";
 import { AppProviders } from "@/components/providers/app-providers";
+import { IntlProvider } from "@/components/providers/intl-provider";
 import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -25,20 +27,28 @@ export const viewport: Viewport = {
   themeColor: "#1b231d",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
+  const messages = await getMessages();
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <body
         className={`${inter.variable} ${jetbrains.variable} ${archivo.variable} font-sans antialiased`}
       >
-        <AppProviders>
-          {children}
-          <Toaster position="bottom-right" />
-        </AppProviders>
+        <IntlProvider
+          locale={locale}
+          messages={messages as Record<string, unknown>}
+        >
+          <AppProviders>
+            {children}
+            <Toaster position="bottom-right" />
+          </AppProviders>
+        </IntlProvider>
       </body>
     </html>
   );

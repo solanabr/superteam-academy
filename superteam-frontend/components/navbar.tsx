@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useWalletAuth } from "@/components/providers/wallet-auth-provider";
 import { useIdentitySnapshot } from "@/hooks/use-identity-snapshot";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 const navLinks = [
   { href: "/roadmaps", label: "Roadmaps", icon: Map, public: true },
@@ -116,6 +117,9 @@ export function Navbar() {
 
         {/* Right side - Desktop */}
         <div className="hidden items-center gap-3 md:flex">
+          {/* Language switcher */}
+          <LanguageSwitcher />
+
           {/* Theme toggle (always visible) */}
           {mounted && (
             <Button
