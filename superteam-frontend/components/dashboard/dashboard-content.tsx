@@ -56,7 +56,7 @@ export function DashboardContent({
 }: {
   identity?: IdentitySnapshot;
   coursesData?: Course[];
-  activityDays?: Array<{ date: string; intensity: number }>;
+  activityDays?: Array<{ date: string; intensity: number; count?: number }>;
   recentActivity?: RecentActivityItem[];
   leaderboardEntries?: LeaderboardEntry[];
 }) {

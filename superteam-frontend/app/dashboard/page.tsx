@@ -27,7 +27,7 @@ export default async function DashboardPage() {
     ] = await Promise.all([
       getIdentitySnapshotForUser(user),
       getAllCourseProgressSnapshots(user.walletAddress),
-      Promise.resolve(getActivityDays(user.walletAddress, 365)),
+      getActivityDays(user.walletAddress, 365),
       Promise.resolve(getRecentActivity(user.walletAddress)),
       getCachedLeaderboard(),
     ]);
@@ -44,7 +44,7 @@ export default async function DashboardPage() {
       );
       snapshot = await getIdentitySnapshotForUser(user).catch(() => null);
       courseSnapshots = [];
-      activityDays = getActivityDays(user.walletAddress, 365);
+      activityDays = await getActivityDays(user.walletAddress, 365);
       recentActivity = getRecentActivity(user.walletAddress);
       leaderboardEntries = [];
     } else {

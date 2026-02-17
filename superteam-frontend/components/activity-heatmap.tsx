@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 
-type ActivityDay = { date: string; intensity: number };
+type ActivityDay = { date: string; intensity: number; count?: number };
 
 function toDateKey(date: Date): string {
   const year = date.getFullYear();
@@ -40,20 +40,28 @@ function computeMaxStreak(activityDays: ActivityDay[]): number {
 
 function buildHeatmap(activityDays: ActivityDay[]) {
   const intensityByDate = new Map<string, number>();
+  const countByDate = new Map<string, number>();
   for (const day of activityDays) {
     intensityByDate.set(day.date, day.intensity);
+    countByDate.set(day.date, day.count ?? (day.intensity > 0 ? 1 : 0));
   }
 
   if (activityDays.length === 0) {
     return {
       weeks: [] as Date[][],
       intensityByDate,
+      countByDate,
       activeDays: 0,
+      totalCount: 0,
       maxStreak: 0,
     };
   }
 
   const activeDays = activityDays.filter((d) => d.intensity > 0).length;
+  const totalCount = activityDays.reduce(
+    (sum, d) => sum + (d.count ?? (d.intensity > 0 ? 1 : 0)),
+    0,
+  );
   const maxStreak = computeMaxStreak(activityDays);
 
   const earliestDate = fromDateKey(activityDays[0].date);
@@ -79,7 +87,14 @@ function buildHeatmap(activityDays: ActivityDay[]) {
     weeks.push(days.slice(i, i + 7));
   }
 
-  return { weeks, intensityByDate, activeDays, maxStreak };
+  return {
+    weeks,
+    intensityByDate,
+    countByDate,
+    activeDays,
+    totalCount,
+    maxStreak,
+  };
 }
 
 export function ActivityHeatmap({
@@ -91,8 +106,7 @@ export function ActivityHeatmap({
 }) {
   const heatmap = useMemo(() => buildHeatmap(activityDays), [activityDays]);
 
-  const submissionCount =
-    totalSubmissions ?? activityDays.filter((d) => d.intensity > 0).length;
+  const submissionCount = totalSubmissions ?? heatmap.totalCount;
 
   return (
     <div className="rounded-xl border border-border bg-card p-5">
@@ -132,13 +146,14 @@ export function ActivityHeatmap({
                 {week.map((date) => {
                   const dateKey = toDateKey(date);
                   const intensity = heatmap.intensityByDate.get(dateKey) ?? 0;
+                  const count = heatmap.countByDate.get(dateKey) ?? 0;
                   return (
                     <div
                       key={dateKey}
                       className={`h-[11px] w-[11px] rounded-[2px] ${intensityClass(intensity)}`}
                       title={`${dateKey}: ${
-                        intensity > 0
-                          ? `${intensity} ${intensity === 1 ? "activity" : "activities"}`
+                        count > 0
+                          ? `${count} ${count === 1 ? "activity" : "activities"}`
                           : "No activity"
                       }`}
                     />

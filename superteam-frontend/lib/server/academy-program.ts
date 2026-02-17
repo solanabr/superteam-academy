@@ -241,6 +241,47 @@ export async function completeLessonOnChain(
   }
 }
 
+function countToIntensity(count: number): number {
+  if (count >= 6) return 4;
+  if (count >= 4) return 3;
+  if (count >= 2) return 2;
+  if (count >= 1) return 1;
+  return 0;
+}
+
+export async function fetchActivityFromChain(
+  user: PublicKey,
+  daysBack: number,
+): Promise<Array<{ date: string; intensity: number; count: number }>> {
+  try {
+    const { connection } = getClient();
+    const learnerPda = deriveLearnerPda(user);
+    const signatures = await connection.getSignaturesForAddress(learnerPda, {
+      limit: 1000,
+    });
+
+    const cutoff = Date.now() / 1000 - daysBack * 86400;
+    const countsByDate = new Map<string, number>();
+
+    for (const sig of signatures) {
+      if (!sig.blockTime || sig.blockTime < cutoff) continue;
+      if (sig.err) continue;
+      const date = new Date(sig.blockTime * 1000).toISOString().split("T")[0]!;
+      countsByDate.set(date, (countsByDate.get(date) ?? 0) + 1);
+    }
+
+    const result: Array<{ date: string; intensity: number; count: number }> =
+      [];
+    for (const [date, count] of countsByDate) {
+      result.push({ date, intensity: countToIntensity(count), count });
+    }
+
+    return result;
+  } catch {
+    return [];
+  }
+}
+
 export async function finalizeCourseOnChain(
   user: PublicKey,
   courseId: string,

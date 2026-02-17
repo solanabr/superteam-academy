@@ -12,6 +12,6 @@ export async function GET(request: Request) {
     365,
     Math.max(30, Number(searchParams.get("days")) || 365),
   );
-  const days = getActivityDays(user.walletAddress, daysBack);
+  const days = await getActivityDays(user.walletAddress, daysBack);
   return NextResponse.json({ days });
 }

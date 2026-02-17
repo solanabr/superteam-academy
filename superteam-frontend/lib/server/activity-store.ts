@@ -1,5 +1,8 @@
 import "server-only";
 
+import { PublicKey } from "@solana/web3.js";
+import { fetchActivityFromChain } from "./academy-program";
+
 const XP_PER_LESSON = 50;
 
 export type RecentActivityItem = {
@@ -11,7 +14,7 @@ export type RecentActivityItem = {
   ts: number;
 };
 
-const activityDaysByWallet = new Map<string, Set<string>>();
+const activityCountsByWallet = new Map<string, Map<string, number>>();
 const recentActivityByWallet = new Map<string, RecentActivityItem[]>();
 const totalCompletedByWallet = new Map<string, number>();
 const MAX_RECENT = 20;
@@ -35,12 +38,12 @@ export function recordLessonComplete(
   lessonTitle?: string,
 ): void {
   const today = toDateKey(new Date());
-  let set = activityDaysByWallet.get(wallet);
-  if (!set) {
-    set = new Set();
-    activityDaysByWallet.set(wallet, set);
+  let counts = activityCountsByWallet.get(wallet);
+  if (!counts) {
+    counts = new Map();
+    activityCountsByWallet.set(wallet, counts);
   }
-  set.add(today);
+  counts.set(today, (counts.get(today) ?? 0) + 1);
 
   const items = recentActivityByWallet.get(wallet) ?? [];
   items.unshift({
@@ -73,21 +76,31 @@ export function recordCourseFinalized(
   recentActivityByWallet.set(wallet, items.slice(0, MAX_RECENT));
 }
 
-export function getActivityDays(
+export async function getActivityDays(
   wallet: string,
   daysBack = 365,
-): Array<{ date: string; intensity: number }> {
-  const set = activityDaysByWallet.get(wallet);
-  const result: Array<{ date: string; intensity: number }> = [];
+): Promise<Array<{ date: string; intensity: number; count: number }>> {
+  const onChainDays = await fetchActivityFromChain(
+    new PublicKey(wallet),
+    daysBack,
+  );
+  const onChainMap = new Map<string, { intensity: number; count: number }>();
+  for (const day of onChainDays) {
+    onChainMap.set(day.date, { intensity: day.intensity, count: day.count });
+  }
+
+  const memoryCounts = activityCountsByWallet.get(wallet);
+  const result: Array<{ date: string; intensity: number; count: number }> = [];
   const today = new Date();
   for (let i = daysBack - 1; i >= 0; i--) {
     const d = new Date(today);
     d.setDate(d.getDate() - i);
     const dateKey = toDateKey(d);
-    result.push({
-      date: dateKey,
-      intensity: set?.has(dateKey) ? 1 : 0,
-    });
+    const chain = onChainMap.get(dateKey);
+    const memoryCount = memoryCounts?.get(dateKey) ?? 0;
+    const count = Math.max(chain?.count ?? 0, memoryCount);
+    const intensity = Math.max(chain?.intensity ?? 0, memoryCount > 0 ? 1 : 0);
+    result.push({ date: dateKey, intensity, count });
   }
   return result;
 }

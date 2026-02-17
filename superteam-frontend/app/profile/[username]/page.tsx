@@ -16,7 +16,7 @@ export default async function Page({
   try {
     [snapshot, activityDays, courseSnapshots] = await Promise.all([
       getIdentitySnapshotForUser(user),
-      Promise.resolve(getActivityDays(user.walletAddress, 365)),
+      getActivityDays(user.walletAddress, 365),
       getAllCourseProgressSnapshots(user.walletAddress),
     ]);
   } catch (error: any) {
@@ -31,7 +31,7 @@ export default async function Page({
         error.message,
       );
       snapshot = await getIdentitySnapshotForUser(user).catch(() => null);
-      activityDays = getActivityDays(user.walletAddress, 365);
+      activityDays = await getActivityDays(user.walletAddress, 365);
       courseSnapshots = [];
     } else {
       throw error;

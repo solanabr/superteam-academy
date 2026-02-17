@@ -134,7 +134,7 @@ export default function ProfilePageComponent({
 }: {
   username?: string;
   identity?: IdentitySnapshot;
-  activityDays?: Array<{ date: string; intensity: number }>;
+  activityDays?: Array<{ date: string; intensity: number; count?: number }>;
   completedCourses?: Course[];
 }) {
   const user = useMemo(
