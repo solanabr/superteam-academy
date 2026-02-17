@@ -27,6 +27,8 @@ CREATE TABLE enrollments (
   user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
   course_id TEXT NOT NULL,
   enrolled_at TIMESTAMPTZ DEFAULT NOW(),
+  tx_signature TEXT,
+  wallet_address TEXT,
   UNIQUE(user_id, course_id)
 );
 
@@ -37,6 +39,8 @@ CREATE TABLE user_progress (
   lesson_id TEXT NOT NULL,
   completed BOOLEAN DEFAULT false,
   completed_at TIMESTAMPTZ,
+  tx_signature TEXT,
+  lesson_index SMALLINT,
   UNIQUE(user_id, lesson_id)
 );
 
@@ -55,7 +59,8 @@ CREATE TABLE xp_transactions (
   user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
   amount INTEGER NOT NULL,
   reason TEXT NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  tx_signature TEXT
 );
 
 CREATE TABLE user_achievements (
@@ -63,6 +68,8 @@ CREATE TABLE user_achievements (
   user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
   achievement_id TEXT NOT NULL,
   unlocked_at TIMESTAMPTZ DEFAULT NOW(),
+  tx_signature TEXT,
+  asset_address TEXT,
   UNIQUE(user_id, achievement_id)
 );
 
@@ -74,6 +81,8 @@ CREATE TABLE certificates (
   mint_address TEXT,
   metadata_uri TEXT,
   minted_at TIMESTAMPTZ DEFAULT NOW(),
+  tx_signature TEXT,
+  credential_type TEXT DEFAULT 'legacy',
   UNIQUE(user_id, course_id)
 );
 
