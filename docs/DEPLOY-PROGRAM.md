@@ -167,10 +167,10 @@ solana airdrop 2 wallets/signer.json
 solana airdrop 2 wallets/signer.json
 
 # Check balance
-solana balance wallets/signer.json
+solana balance ../wallets/signer.json
 ```
 
-If the CLI airdrop is rate-limited, use the web faucet: https://faucet.solana.com
+If the CLI airdrop is rate-limited, connect Github and use the web faucet: https://faucet.solana.com
 
 ---
 
@@ -179,7 +179,7 @@ If the CLI airdrop is rate-limited, use the web faucet: https://faucet.solana.co
 Run from inside `onchain-academy/`:
 
 ```bash
-anchor deploy --provider.cluster devnet --program-keypair ../wallets/program-keypair.json
+anchor deploy --program-name onchain_academy --provider.cluster devnet --program-keypair ../wallets/program-keypair.json
 ```
 
 On success you will see:
@@ -200,56 +200,11 @@ This is a one-time operation that:
 
 The deployer wallet becomes both `authority` and `backend_signer` — no separate backend key needed for devnet.
 
-Create `scripts/initialize.ts`:
-
-```typescript
-import * as anchor from "@coral-xyz/anchor";
-import { Program } from "@coral-xyz/anchor";
-import { OnchainAcademy } from "../target/types/onchain_academy";
-import { Keypair, PublicKey, SystemProgram } from "@solana/web3.js";
-import { TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
-import * as fs from "fs";
-
-const provider = anchor.AnchorProvider.env();
-anchor.setProvider(provider);
-const program = anchor.workspace.onchainAcademy as Program<OnchainAcademy>;
-
-// Load XP mint keypair
-const xpMintSecret = JSON.parse(fs.readFileSync("../wallets/xp-mint-keypair.json", "utf-8"));
-const xpMintKeypair = Keypair.fromSecretKey(Uint8Array.from(xpMintSecret));
-
-const [configPda] = PublicKey.findProgramAddressSync(
-  [Buffer.from("config")],
-  program.programId
-);
-const [minterRolePda] = PublicKey.findProgramAddressSync(
-  [Buffer.from("minter"), provider.wallet.publicKey.toBuffer()],
-  program.programId
-);
-
-const tx = await program.methods
-  .initialize()
-  .accountsStrict({
-    config: configPda,
-    xpMint: xpMintKeypair.publicKey,
-    authority: provider.wallet.publicKey,
-    backendMinterRole: minterRolePda,
-    systemProgram: SystemProgram.programId,
-    tokenProgram: TOKEN_2022_PROGRAM_ID,
-  })
-  .signers([xpMintKeypair])
-  .rpc();
-
-console.log("Initialized! Tx:", tx);
-console.log("Config PDA:", configPda.toBase58());
-console.log("XP Mint:", xpMintKeypair.publicKey.toBase58());
-```
-
-Run it:
+Run `scripts/initialize.ts`:
 
 ```bash
-ANCHOR_PROVIDER_URL=https://api.devnet.solana.com \
-ANCHOR_WALLET=../wallets/signer.json \
+export ANCHOR_PROVIDER_URL=https://api.devnet.solana.com \
+export ANCHOR_WALLET=../wallets/signer.json \
 npx ts-node scripts/initialize.ts
 ```
 
@@ -261,54 +216,8 @@ Note on XP token metadata: The `initialize` instruction sets the `MetadataPointe
 
 ## 9. Create a Test Course
 
-```typescript
-import * as anchor from "@coral-xyz/anchor";
-import { Program } from "@coral-xyz/anchor";
-import { OnchainAcademy } from "../target/types/onchain_academy";
-import { PublicKey, SystemProgram } from "@solana/web3.js";
-
-const provider = anchor.AnchorProvider.env();
-anchor.setProvider(provider);
-const program = anchor.workspace.onchainAcademy as Program<OnchainAcademy>;
-
-const [configPda] = PublicKey.findProgramAddressSync(
-  [Buffer.from("config")],
-  program.programId
-);
-
-const courseId = "solana-101";
-const [coursePda] = PublicKey.findProgramAddressSync(
-  [Buffer.from("course"), Buffer.from(courseId)],
-  program.programId
-);
-
-// Placeholder content tx ID — replace with a real Arweave tx for production
-const contentTxId = Buffer.alloc(32);
-
-const tx = await program.methods
-  .createCourse({
-    courseId,
-    contentTxId: Array.from(contentTxId),
-    lessonCount: 5,
-    difficulty: 2,
-    xpPerLesson: 100,
-    trackId: 1,
-    trackLevel: 1,
-    prerequisite: null,
-    creatorRewardXp: 50,
-    minCompletionsForReward: 10,
-  })
-  .accountsStrict({
-    config: configPda,
-    course: coursePda,
-    authority: provider.wallet.publicKey,
-    systemProgram: SystemProgram.programId,
-  })
-  .rpc();
-
-console.log("Course created:", courseId);
-console.log("Course PDA:", coursePda.toBase58());
-console.log("Tx:", tx);
+```bash
+npx ts-node scripts/create-mock-course.ts
 ```
 
 ---
@@ -317,27 +226,8 @@ console.log("Tx:", tx);
 
 Required only if you are testing `issue_credential` or `upgrade_credential`. Metaplex Core is already deployed on devnet — no fixtures needed.
 
-```typescript
-import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
-import { mplCore, createCollection } from "@metaplex-foundation/mpl-core";
-import { keypairIdentity } from "@metaplex-foundation/umi";
-import { fromWeb3JsKeypair } from "@metaplex-foundation/umi-web3js-adapters";
-import * as fs from "fs";
-import { Keypair } from "@solana/web3.js";
-
-const secret = JSON.parse(fs.readFileSync("../wallets/signer.json", "utf-8"));
-const keypair = Keypair.fromSecretKey(Uint8Array.from(secret));
-
-const umi = createUmi("https://api.devnet.solana.com")
-  .use(mplCore())
-  .use(keypairIdentity(fromWeb3JsKeypair(keypair)));
-
-const { signature, result } = await createCollection(umi, {
-  name: "Superteam Academy Track 1",
-  uri: "https://arweave.net/<YOUR_METADATA_URI>",
-}).sendAndConfirm(umi);
-
-console.log("Collection created:", result.value.publicKey.toString());
+```bash
+npx ts-node scripts/create-mock-track.ts
 ```
 
 Store the collection address — it is required as an account in `issue_credential`.
@@ -351,7 +241,7 @@ Store the collection address — it is required as an account in `issue_credenti
 solana program show <YOUR_PROGRAM_ID>
 
 # Fetch config account
-anchor account onchainAcademy.Config <CONFIG_PDA> --provider.cluster devnet
+anchor account onchain_academy.Config <CONFIG_PDA> --provider.cluster devnet
 
 # Check XP mint
 spl-token display <XP_MINT_ADDRESS> --program-id TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb
@@ -386,7 +276,7 @@ For devnet, `NEXT_PUBLIC_BACKEND_SIGNER` is the same as your authority public ke
 cd onchain-academy && anchor build
 # Edit Anchor.toml: cluster = "devnet", [programs.devnet]
 solana airdrop 2 wallets/signer.json
-anchor deploy --provider.cluster devnet --program-keypair ../wallets/program-keypair.json
+anchor deploy --program-name onchain_academy --provider.cluster devnet --program-keypair ../wallets/program-keypair.json
 
 # Initialize (run from onchain-academy/)
 ANCHOR_PROVIDER_URL=https://api.devnet.solana.com \
@@ -443,9 +333,8 @@ Deployment costs roughly 2-3 SOL. `initialize` costs an additional ~0.01 SOL for
 Anchor uses an intermediate buffer account for deployment. If a previous deploy failed mid-way:
 
 ```bash
-anchor deploy --provider.cluster devnet \
-  --program-keypair ../wallets/program-keypair.json \
-  --program-id <PROGRAM_ID>
+anchor deploy --program-name onchain_academy --provider.cluster devnet \
+  --program-keypair ../wallets/program-keypair.json
 ```
 
 Or close the stale buffer:
