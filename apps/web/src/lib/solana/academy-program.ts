@@ -1,11 +1,4 @@
-/**
- * Server-only singleton layer for the Superteam Academy on-chain program.
- *
- * Provides lazy-initialized Connection, backend signer Keypair,
- * and Anchor Program instance used by API routes.
- *
- * This module must ONLY be imported from API routes (server-side).
- */
+import "server-only";
 
 import { Connection, Keypair, clusterApiUrl } from "@solana/web3.js";
 import type { Idl } from "@coral-xyz/anchor";
@@ -15,7 +8,6 @@ import IDL from "./idl/superteam_academy.json";
 import { findConfigPDA, PROGRAM_ID } from "./pda";
 
 export { PROGRAM_ID } from "./pda";
-export * from "./pda";
 
 // ---------------------------------------------------------------------------
 // Layer 2: Setup — server-only lazy singletons
@@ -41,7 +33,11 @@ export function getBackendSigner(): Keypair {
       "BACKEND_SIGNER_SECRET env var not set. Required for on-chain instructions."
     );
   }
-  const secretKey = Uint8Array.from(JSON.parse(secret));
+  const parsed: unknown = JSON.parse(secret);
+  if (!Array.isArray(parsed) || parsed.length !== 64) {
+    throw new Error("BACKEND_SIGNER_SECRET must be a 64-element JSON array");
+  }
+  const secretKey = Uint8Array.from(parsed as number[]);
   _backendSigner = Keypair.fromSecretKey(secretKey);
   return _backendSigner;
 }
