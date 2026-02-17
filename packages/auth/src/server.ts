@@ -1,6 +1,6 @@
 import { betterAuth } from "better-auth";
 
-export interface AuthConfig {
+export interface ServerAuthConfig {
 	baseURL: string;
 	googleClientId?: string;
 	googleClientSecret?: string;
@@ -8,7 +8,7 @@ export interface AuthConfig {
 	githubClientSecret?: string;
 }
 
-export function createAuthClient(config: AuthConfig) {
+export function createServerAuth(config: ServerAuthConfig) {
 	const socialProviders: Record<string, { clientId: string; clientSecret: string }> = {};
 
 	if (config.googleClientId && config.googleClientSecret) {
@@ -42,4 +42,4 @@ export function createAuthClient(config: AuthConfig) {
 	});
 }
 
-export type AuthClient = ReturnType<typeof createAuthClient>;
+export type ServerAuth = ReturnType<typeof createServerAuth>;

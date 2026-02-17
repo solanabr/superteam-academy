@@ -303,10 +303,6 @@ export class StreakCalculator {
 export class StreakFreezeManager {
 	private freezes: Map<string, StreakFreeze[]> = new Map();
 
-	constructor(_config: StreakConfig) {
-		// config stored for future use (maxFreezes validation, freezeValidityDays)
-	}
-
 	// Award freeze to user
 	awardFreeze(userId: string, reason: string, validityDays?: number): StreakFreeze {
 		const freeze: StreakFreeze = {
@@ -876,6 +872,7 @@ export class StreakTestingFramework {
 	private async testFreezeUsage(): Promise<TestResult> {
 		try {
 			const freeze = this.freezeManager.awardFreeze("user4", "test freeze");
+			// biome-ignore lint/correctness/useHookAtTopLevel: useFreeze is not a React hook
 			const used = this.freezeManager.useFreeze("user4", freeze.id, new Date());
 
 			return {

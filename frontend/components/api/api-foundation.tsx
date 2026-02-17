@@ -15,21 +15,21 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import {
-    Key,
-    Globe,
-    Shield,
-    Activity,
-    Code,
-    Copy,
-    RefreshCw,
-    Trash2,
-    Plus,
-    Eye,
-    EyeOff,
-    AlertTriangle,
-    CheckCircle,
-    Clock,
-    Zap,
+	Key,
+	Globe,
+	Shield,
+	Activity,
+	Code,
+	Copy,
+	RefreshCw,
+	Trash2,
+	Plus,
+	Eye,
+	EyeOff,
+	AlertTriangle,
+	CheckCircle,
+	Clock,
+	Zap,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { format } from "date-fns";

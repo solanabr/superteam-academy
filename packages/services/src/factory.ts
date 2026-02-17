@@ -244,7 +244,7 @@ export class ServiceFactory {
 		if (!this.authLinkingService) {
 			switch (this.config.environment) {
 				case "development":
-						if (this.config.auth?.betterAuth && this.config.solana) {
+					if (this.config.auth?.betterAuth && this.config.solana) {
 						this.authLinkingService = new BetterAuthLinkingService(
 							this.config.auth.betterAuth
 						);

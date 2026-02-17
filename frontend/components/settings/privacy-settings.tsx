@@ -25,18 +25,52 @@ interface PrivacyState {
 }
 
 const TOGGLE_ITEMS = [
-	{ key: "showProgress" as const, label: "Show progress", desc: "Display course progress on your profile" },
-	{ key: "showAchievements" as const, label: "Show achievements", desc: "Display badges and credentials" },
-	{ key: "showActivity" as const, label: "Show activity", desc: "Display recent learning activity" },
-	{ key: "allowMessaging" as const, label: "Allow messaging", desc: "Let other learners message you" },
-	{ key: "dataSharing" as const, label: "Data sharing", desc: "Share anonymized data for platform improvement" },
-	{ key: "analyticsTracking" as const, label: "Analytics tracking", desc: "Allow usage analytics to improve your experience" },
+	{
+		key: "showProgress" as const,
+		label: "Show progress",
+		desc: "Display course progress on your profile",
+	},
+	{
+		key: "showAchievements" as const,
+		label: "Show achievements",
+		desc: "Display badges and credentials",
+	},
+	{
+		key: "showActivity" as const,
+		label: "Show activity",
+		desc: "Display recent learning activity",
+	},
+	{
+		key: "allowMessaging" as const,
+		label: "Allow messaging",
+		desc: "Let other learners message you",
+	},
+	{
+		key: "dataSharing" as const,
+		label: "Data sharing",
+		desc: "Share anonymized data for platform improvement",
+	},
+	{
+		key: "analyticsTracking" as const,
+		label: "Analytics tracking",
+		desc: "Allow usage analytics to improve your experience",
+	},
 ] as const;
 
 const VISIBILITY_OPTIONS = [
 	{ value: "public" as const, label: "Public", desc: "Anyone can view your profile", Icon: Eye },
-	{ value: "friends" as const, label: "Friends only", desc: "Only connections can view", Icon: Users },
-	{ value: "private" as const, label: "Private", desc: "Only you can view your profile", Icon: Lock },
+	{
+		value: "friends" as const,
+		label: "Friends only",
+		desc: "Only connections can view",
+		Icon: Users,
+	},
+	{
+		value: "private" as const,
+		label: "Private",
+		desc: "Only you can view your profile",
+		Icon: Lock,
+	},
 ];
 
 export function PrivacySettings() {
@@ -79,16 +113,22 @@ export function PrivacySettings() {
 					<Label className="text-xs">Profile visibility</Label>
 					<Select
 						value={settings.profileVisibility}
-						onValueChange={(v: "public" | "friends" | "private") => update("profileVisibility", v)}
+						onValueChange={(v: "public" | "friends" | "private") =>
+							update("profileVisibility", v)
+						}
 					>
-						<SelectTrigger><SelectValue /></SelectTrigger>
+						<SelectTrigger>
+							<SelectValue />
+						</SelectTrigger>
 						<SelectContent>
 							{VISIBILITY_OPTIONS.map(({ value, label, desc, Icon }) => (
 								<SelectItem key={value} value={value}>
 									<div className="flex items-center gap-2">
 										<Icon className="h-3.5 w-3.5" />
 										<span>{label}</span>
-										<span className="text-muted-foreground text-xs">- {desc}</span>
+										<span className="text-muted-foreground text-xs">
+											- {desc}
+										</span>
 									</div>
 								</SelectItem>
 							))}

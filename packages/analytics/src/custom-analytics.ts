@@ -701,8 +701,6 @@ export const AnalyticsFactory = {
 
 // Cohort Analysis
 export class CohortAnalysis {
-	constructor(_analytics: AnalyticsService) {}
-
 	// Analyze user cohorts
 	async analyzeCohorts(
 		_cohortDefinition: {

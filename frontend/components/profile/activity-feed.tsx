@@ -70,7 +70,9 @@ export function ActivityFeed({ activities }: ActivityFeedProps) {
 							key={activity.id}
 							className="px-5 py-3.5 flex gap-3 hover:bg-muted/20 transition-colors"
 						>
-							<div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${color}`}>
+							<div
+								className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${color}`}
+							>
 								<Icon className="h-4 w-4" />
 							</div>
 
@@ -93,7 +95,9 @@ export function ActivityFeed({ activities }: ActivityFeedProps) {
 									</span>
 								) : null}
 								<span className="text-[10px] text-muted-foreground block">
-									{formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true })}
+									{formatDistanceToNow(new Date(activity.timestamp), {
+										addSuffix: true,
+									})}
 								</span>
 							</div>
 						</div>

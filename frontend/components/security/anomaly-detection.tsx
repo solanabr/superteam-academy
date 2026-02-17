@@ -13,29 +13,29 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
 } from "@/components/ui/table";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import {
-    Zap,
-    TrendingUp,
-    TrendingDown,
-    AlertTriangle,
-    CheckCircle,
-    Settings,
-    BarChart3,
-    Activity,
-    Cpu,
-    Shield,
-    Bell,
-    BellOff,
+	Zap,
+	TrendingUp,
+	TrendingDown,
+	AlertTriangle,
+	CheckCircle,
+	Settings,
+	BarChart3,
+	Activity,
+	Cpu,
+	Shield,
+	Bell,
+	BellOff,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 

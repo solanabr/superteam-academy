@@ -1,10 +1,10 @@
 import type {
-    AnalyticsService,
-    AnalyticsEvent,
-    AnalyticsMetric,
-    UserAnalytics,
-    CourseAnalytics,
-    PlatformAnalytics,
+	AnalyticsService,
+	AnalyticsEvent,
+	AnalyticsMetric,
+	UserAnalytics,
+	CourseAnalytics,
+	PlatformAnalytics,
 } from "../interfaces/analytics";
 import type { ServiceResponse } from "../types";
 
@@ -140,9 +140,10 @@ export class GA4AnalyticsService implements AnalyticsService {
 		}
 	}
 
-	async getPlatformAnalytics(
-		_timeframe?: { start: Date; end: Date }
-	): Promise<ServiceResponse<PlatformAnalytics>> {
+	async getPlatformAnalytics(_timeframe?: {
+		start: Date;
+		end: Date;
+	}): Promise<ServiceResponse<PlatformAnalytics>> {
 		try {
 			const analytics: PlatformAnalytics = {
 				totalUsers: 0,

@@ -2,14 +2,14 @@
 
 import { useState } from "react";
 import {
-    ChevronDown,
-    ChevronRight,
-    FileText,
-    Link,
-    Download,
-    ImageIcon,
-    Video,
-    CircleHelp,
+	ChevronDown,
+	ChevronRight,
+	FileText,
+	Link,
+	Download,
+	ImageIcon,
+	Video,
+	CircleHelp,
 } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

@@ -3,35 +3,35 @@
 import { useState } from "react";
 import Image from "next/image";
 import {
-    Home,
-    BookOpen,
-    Code,
-    Trophy,
-    User,
-    Settings,
-    Search,
-    Menu,
-    Bell,
-    MessageSquare,
+	Home,
+	BookOpen,
+	Code,
+	Trophy,
+	User,
+	Settings,
+	Search,
+	Menu,
+	Bell,
+	MessageSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuLabel,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-    NavigationMenu,
-    NavigationMenuContent,
-    NavigationMenuItem,
-    NavigationMenuLink,
-    NavigationMenuList,
-    NavigationMenuTrigger,
+	NavigationMenu,
+	NavigationMenuContent,
+	NavigationMenuItem,
+	NavigationMenuLink,
+	NavigationMenuList,
+	NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useToast } from "@/hooks/use-toast";

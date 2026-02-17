@@ -123,7 +123,8 @@ export class MonacoEditorAdapter {
 			minimap: { enabled: config.minimap ?? false },
 			lineNumbers: config.lineNumbers || "on",
 			folding: config.folding ?? true,
-			matchBrackets: (config.bracketMatching ?? true) ? "always" as const : "never" as const,
+			matchBrackets:
+				(config.bracketMatching ?? true) ? ("always" as const) : ("never" as const),
 			autoClosingBrackets: config.autoClosingBrackets ? "always" : "never",
 			autoClosingQuotes: config.autoClosingQuotes ? "always" : "never",
 			formatOnPaste: config.formatOnPaste ?? true,
@@ -174,10 +175,14 @@ export class MonacoEditorAdapter {
 			},
 			onSave: (callback) => {
 				editor.addCommand(
-					this.monaco!.KeyMod.CtrlCmd | this.monaco!.KeyCode.KeyS,
+					this.monaco?.KeyMod.CtrlCmd | this.monaco?.KeyCode.KeyS,
 					callback
 				);
-				return { dispose: () => { /* commands cannot be individually removed */ } };
+				return {
+					dispose: () => {
+						/* commands cannot be individually removed */
+					},
+				};
 			},
 		};
 

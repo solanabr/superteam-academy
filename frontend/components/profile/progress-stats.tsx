@@ -88,7 +88,9 @@ export function ProgressStats({ stats }: ProgressStatsProps) {
 
 					return (
 						<div key={key} className="rounded-xl border border-border/60 bg-card p-4">
-							<div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-2 ${color}`}>
+							<div
+								className={`w-8 h-8 rounded-lg flex items-center justify-center mb-2 ${color}`}
+							>
 								<Icon className="h-4 w-4" />
 							</div>
 							<div className="text-xl font-bold">{value}</div>

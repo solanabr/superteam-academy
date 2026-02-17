@@ -1,8 +1,8 @@
 import type {
-    CredentialService,
-    Credential,
-    CredentialIssuanceRequest,
-    CredentialVerificationResult,
+	CredentialService,
+	Credential,
+	CredentialIssuanceRequest,
+	CredentialVerificationResult,
 } from "../interfaces/credential";
 import type { ServiceResponse } from "../types";
 

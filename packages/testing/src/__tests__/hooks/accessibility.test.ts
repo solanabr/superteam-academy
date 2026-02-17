@@ -1,15 +1,15 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import {
-    useFocusManagement,
-    useLiveRegion,
-    useKeyboardNavigation,
-    useReducedMotion,
-    useHighContrast,
-    useId,
-    getFocusableElements,
-    trapFocus,
-    announceToScreenReader,
+	useFocusManagement,
+	useLiveRegion,
+	useKeyboardNavigation,
+	useReducedMotion,
+	useHighContrast,
+	useId,
+	getFocusableElements,
+	trapFocus,
+	announceToScreenReader,
 } from "@superteam-academy/ui";
 
 describe("useFocusManagement Hook", () => {

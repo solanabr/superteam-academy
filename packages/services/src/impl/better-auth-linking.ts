@@ -1,9 +1,9 @@
 import type {
-    AuthLinkingService,
-    AuthLinkingRequest,
-    AuthUnlinkingRequest,
-    AuthLinkingResult,
-    AuthLink,
+	AuthLinkingService,
+	AuthLinkingRequest,
+	AuthUnlinkingRequest,
+	AuthLinkingResult,
+	AuthLink,
 } from "../interfaces/auth-linking";
 import type { ServiceResponse } from "../types";
 
@@ -19,7 +19,7 @@ export class BetterAuthLinkingService implements AuthLinkingService {
 
 	async linkAccount(
 		userId: string,
-		request: AuthLinkingRequest,
+		request: AuthLinkingRequest
 	): Promise<ServiceResponse<AuthLinkingResult>> {
 		try {
 			void this.betterAuth;
@@ -50,7 +50,7 @@ export class BetterAuthLinkingService implements AuthLinkingService {
 
 	async unlinkAccount(
 		_userId: string,
-		_request: AuthUnlinkingRequest,
+		_request: AuthUnlinkingRequest
 	): Promise<ServiceResponse<void>> {
 		try {
 			return { success: true };
@@ -93,10 +93,7 @@ export class BetterAuthLinkingService implements AuthLinkingService {
 		}
 	}
 
-	async verifyLink(
-		_linkId: string,
-		_verificationToken: string,
-	): Promise<ServiceResponse<void>> {
+	async verifyLink(_linkId: string, _verificationToken: string): Promise<ServiceResponse<void>> {
 		try {
 			return { success: true };
 		} catch (error) {
@@ -110,10 +107,7 @@ export class BetterAuthLinkingService implements AuthLinkingService {
 		}
 	}
 
-	async getProviderLoginUrl(
-		provider: string,
-		_state: string,
-	): Promise<ServiceResponse<string>> {
+	async getProviderLoginUrl(provider: string, _state: string): Promise<ServiceResponse<string>> {
 		try {
 			return { success: true, data: `https://auth.example.com/${provider}/login` };
 		} catch (error) {
@@ -130,7 +124,7 @@ export class BetterAuthLinkingService implements AuthLinkingService {
 	async handleProviderCallback(
 		provider: string,
 		_code: string,
-		_state: string,
+		_state: string
 	): Promise<ServiceResponse<AuthLinkingResult>> {
 		try {
 			const result: AuthLinkingResult = {

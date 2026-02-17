@@ -133,7 +133,9 @@ export class CodeMirrorEditor implements CodeEditor {
 					});
 					const changeListeners = this.eventListeners.get("change");
 					if (changeListeners) {
-						changeListeners.forEach((cb) => cb(value));
+						changeListeners.forEach((cb) => {
+							cb(value);
+						});
 					}
 				}
 			}),
@@ -240,7 +242,10 @@ export class CodeMirrorEditor implements CodeEditor {
 	off(event: string, callback: (...args: unknown[]) => void): void {
 		const listeners = this.eventListeners.get(event);
 		if (listeners) {
-			this.eventListeners.set(event, listeners.filter((cb) => cb !== callback));
+			this.eventListeners.set(
+				event,
+				listeners.filter((cb) => cb !== callback)
+			);
 		}
 	}
 

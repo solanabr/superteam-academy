@@ -277,7 +277,12 @@ export class PerformanceMonitor {
 		if (typeof navigator === "undefined" || !("connection" in navigator)) return;
 
 		const navWithConnection = navigator as Navigator & {
-			connection?: { effectiveType?: string; downlink?: number; rtt?: number; saveData?: boolean };
+			connection?: {
+				effectiveType?: string;
+				downlink?: number;
+				rtt?: number;
+				saveData?: boolean;
+			};
 		};
 		const connection = navWithConnection.connection;
 		if (!connection) return;

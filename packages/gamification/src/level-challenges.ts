@@ -338,7 +338,10 @@ export class LevelChallengeTracker {
 				completed: number;
 				completionRate: number;
 			}
-		> = {} as Record<ChallengeType, { total: number; completed: number; completionRate: number }>;
+		> = {} as Record<
+			ChallengeType,
+			{ total: number; completed: number; completionRate: number }
+		>;
 
 		Object.entries(challengeTypeCounts).forEach(([type, stats]) => {
 			challengeTypeStats[type as ChallengeType] = {

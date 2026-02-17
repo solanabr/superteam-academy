@@ -2,33 +2,33 @@
 
 import { useState, useMemo } from "react";
 import {
-    Search,
-    Filter,
-    X,
-    ChevronDown,
-    Calendar,
-    Clock,
-    Star,
-    Users,
-    BookOpen,
+	Search,
+	Filter,
+	X,
+	ChevronDown,
+	Calendar,
+	Clock,
+	Star,
+	Users,
+	BookOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
 } from "@/components/ui/select";
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuCheckboxItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuCheckboxItem,
+	DropdownMenuLabel,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Slider } from "@/components/ui/slider";

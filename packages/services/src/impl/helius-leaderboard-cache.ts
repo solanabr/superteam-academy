@@ -1,9 +1,9 @@
 import type {
-    LeaderboardCacheService,
-    CacheEntry,
-    CacheConfig,
-    CacheStats,
-    ServiceResponse,
+	LeaderboardCacheService,
+	CacheEntry,
+	CacheConfig,
+	CacheStats,
+	ServiceResponse,
 } from "../interfaces/leaderboard-cache";
 import type { LeaderboardCategory, Timeframe, LeaderboardResult } from "../interfaces/leaderboard";
 

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, getLocale } from "next-intl/server";
+import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/contexts/auth-context";
 import { SiteHeader } from "@/components/navigation/site-header";
 import { SiteFooter } from "@/components/navigation/site-footer";
@@ -27,7 +28,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 	const messages = await getMessages();
 
 	return (
-		<html lang={locale}>
+		<html lang={locale} suppressHydrationWarning>
 			<head>
 				<link rel="preconnect" href="https://fonts.googleapis.com" />
 				<link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -37,13 +38,20 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 				/>
 			</head>
 			<body className="min-h-screen flex flex-col">
-				<NextIntlClientProvider messages={messages}>
-					<AuthProvider>
-						<SiteHeader />
-						<main className="flex-1">{children}</main>
-						<SiteFooter />
-					</AuthProvider>
-				</NextIntlClientProvider>
+				<ThemeProvider
+					attribute="class"
+					defaultTheme="system"
+					enableSystem
+					disableTransitionOnChange
+				>
+					<NextIntlClientProvider messages={messages}>
+						<AuthProvider>
+							<SiteHeader />
+							<main className="flex-1">{children}</main>
+							<SiteFooter />
+						</AuthProvider>
+					</NextIntlClientProvider>
+				</ThemeProvider>
 			</body>
 		</html>
 	);

@@ -1,6 +1,15 @@
-import { LevelProgressionEngine, type Level, type UserLevel, ChallengeType } from "./level-system";
+import {
+	LevelProgressionEngine,
+	type Level,
+	type UserLevel,
+	type ChallengeType,
+} from "./level-system";
 import { LevelAnalyticsEngine } from "./level-analytics";
-import { LevelNotificationsEngine, type NotificationHandler, NotificationType } from "./level-notifications";
+import {
+	LevelNotificationsEngine,
+	type NotificationHandler,
+	type NotificationType,
+} from "./level-notifications";
 import { LevelChallengeTracker, ChallengeRecommendationEngine } from "./level-challenges";
 
 // Main Level System Integration
@@ -141,12 +150,15 @@ export class LevelSystem {
 	}
 
 	// Notification Management
-	getUserNotifications(userId: string, options?: {
-		unreadOnly?: boolean;
-		type?: NotificationType;
-		limit?: number;
-		offset?: number;
-	}) {
+	getUserNotifications(
+		userId: string,
+		options?: {
+			unreadOnly?: boolean;
+			type?: NotificationType;
+			limit?: number;
+			offset?: number;
+		}
+	) {
 		return this.notifications.getUserNotifications(userId, options);
 	}
 

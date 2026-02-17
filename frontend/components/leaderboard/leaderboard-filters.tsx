@@ -116,8 +116,8 @@ export function LeaderboardFilters({ onFiltersChange }: LeaderboardFiltersProps)
 					<SlidersHorizontal className="h-4 w-4 text-muted-foreground hidden sm:block" />
 
 					<Select
-						value={filters.country || undefined}
-						onValueChange={(value) => handleFilterChange("country", value)}
+						{...(filters.country ? { value: filters.country } : {})}
+						onValueChange={(value: string) => handleFilterChange("country", value)}
 					>
 						<SelectTrigger className="w-36 h-9 bg-muted/40 border-border/60 text-sm">
 							<SelectValue placeholder="Country" />
@@ -132,8 +132,8 @@ export function LeaderboardFilters({ onFiltersChange }: LeaderboardFiltersProps)
 					</Select>
 
 					<Select
-						value={filters.level || undefined}
-						onValueChange={(value) => handleFilterChange("level", value)}
+						{...(filters.level ? { value: filters.level } : {})}
+						onValueChange={(value: string) => handleFilterChange("level", value)}
 					>
 						<SelectTrigger className="w-28 h-9 bg-muted/40 border-border/60 text-sm">
 							<SelectValue placeholder="Level" />

@@ -12,24 +12,24 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
 } from "@/components/ui/table";
 import {
-    Shield,
-    AlertTriangle,
-    CheckCircle,
-    Activity,
-    Eye,
-    Zap,
-    TrendingUp,
-    Clock,
-    Target,
-    BarChart3,
+	Shield,
+	AlertTriangle,
+	CheckCircle,
+	Activity,
+	Eye,
+	Zap,
+	TrendingUp,
+	Clock,
+	Target,
+	BarChart3,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 

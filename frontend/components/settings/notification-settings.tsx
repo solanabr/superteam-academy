@@ -26,12 +26,46 @@ interface NotificationState {
 }
 
 const TOGGLE_ITEMS = [
-	{ key: "emailNotifications" as const, label: "Email notifications", desc: "Receive updates via email", Icon: Mail, section: "general" },
-	{ key: "pushNotifications" as const, label: "Push notifications", desc: "Browser & mobile push alerts", Icon: MessageSquare, section: "general" },
-	{ key: "courseUpdates" as const, label: "Course updates", desc: "New content & curriculum changes", Icon: BookOpen, section: "types" },
-	{ key: "achievementAlerts" as const, label: "Achievement alerts", desc: "Badges and milestone notifications", Icon: Trophy, section: "types" },
-	{ key: "weeklyDigest" as const, label: "Weekly digest", desc: "Summary of your weekly activity", section: "types" },
-	{ key: "marketingEmails" as const, label: "Marketing emails", desc: "Product news and promotions", section: "types" },
+	{
+		key: "emailNotifications" as const,
+		label: "Email notifications",
+		desc: "Receive updates via email",
+		Icon: Mail,
+		section: "general",
+	},
+	{
+		key: "pushNotifications" as const,
+		label: "Push notifications",
+		desc: "Browser & mobile push alerts",
+		Icon: MessageSquare,
+		section: "general",
+	},
+	{
+		key: "courseUpdates" as const,
+		label: "Course updates",
+		desc: "New content & curriculum changes",
+		Icon: BookOpen,
+		section: "types",
+	},
+	{
+		key: "achievementAlerts" as const,
+		label: "Achievement alerts",
+		desc: "Badges and milestone notifications",
+		Icon: Trophy,
+		section: "types",
+	},
+	{
+		key: "weeklyDigest" as const,
+		label: "Weekly digest",
+		desc: "Summary of your weekly activity",
+		section: "types",
+	},
+	{
+		key: "marketingEmails" as const,
+		label: "Marketing emails",
+		desc: "Product news and promotions",
+		section: "types",
+	},
 ] as const;
 
 export function NotificationSettings() {
@@ -52,7 +86,10 @@ export function NotificationSettings() {
 		setIsLoading(true);
 		try {
 			await new Promise((resolve) => setTimeout(resolve, 1000));
-			toast({ title: "Notifications updated", description: "Your preferences have been saved." });
+			toast({
+				title: "Notifications updated",
+				description: "Your preferences have been saved.",
+			});
 		} catch {
 			toast({ title: "Error", description: "Failed to save.", variant: "destructive" });
 		} finally {
@@ -66,22 +103,28 @@ export function NotificationSettings() {
 
 	const renderSection = (title: string, section: string) => (
 		<div className="space-y-3">
-			<h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{title}</h4>
-			{TOGGLE_ITEMS.filter((i) => i.section === section).map(({ key, label, desc, Icon }) => (
-				<div key={key} className="flex items-center justify-between py-2">
-					<div className="flex items-center gap-3">
-						{Icon && <Icon className="h-4 w-4 text-muted-foreground" />}
-						<div>
-							<Label className="text-sm">{label}</Label>
-							<p className="text-xs text-muted-foreground">{desc}</p>
+			<h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+				{title}
+			</h4>
+			{TOGGLE_ITEMS.filter((i) => i.section === section).map((item) => {
+				const { key, label, desc } = item;
+				const Icon = "Icon" in item ? item.Icon : null;
+				return (
+					<div key={key} className="flex items-center justify-between py-2">
+						<div className="flex items-center gap-3">
+							{Icon && <Icon className="h-4 w-4 text-muted-foreground" />}
+							<div>
+								<Label className="text-sm">{label}</Label>
+								<p className="text-xs text-muted-foreground">{desc}</p>
+							</div>
 						</div>
+						<Switch
+							checked={settings[key] as boolean}
+							onCheckedChange={(checked) => update(key, checked)}
+						/>
 					</div>
-					<Switch
-						checked={settings[key] as boolean}
-						onCheckedChange={(checked) => update(key, checked)}
-					/>
-				</div>
-			))}
+				);
+			})}
 		</div>
 	);
 
@@ -96,12 +139,21 @@ export function NotificationSettings() {
 				{renderSection("Notification Types", "types")}
 
 				<div className="space-y-3">
-					<h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Frequency</h4>
+					<h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+						Frequency
+					</h4>
 					<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 						<div className="space-y-1.5">
 							<Label className="text-xs">Email frequency</Label>
-							<Select value={settings.emailFrequency} onValueChange={(v: "immediate" | "daily" | "weekly") => update("emailFrequency", v)}>
-								<SelectTrigger><SelectValue /></SelectTrigger>
+							<Select
+								value={settings.emailFrequency}
+								onValueChange={(v: "immediate" | "daily" | "weekly") =>
+									update("emailFrequency", v)
+								}
+							>
+								<SelectTrigger>
+									<SelectValue />
+								</SelectTrigger>
 								<SelectContent>
 									<SelectItem value="immediate">Immediate</SelectItem>
 									<SelectItem value="daily">Daily digest</SelectItem>
@@ -111,8 +163,15 @@ export function NotificationSettings() {
 						</div>
 						<div className="space-y-1.5">
 							<Label className="text-xs">Push frequency</Label>
-							<Select value={settings.pushFrequency} onValueChange={(v: "immediate" | "daily" | "weekly") => update("pushFrequency", v)}>
-								<SelectTrigger><SelectValue /></SelectTrigger>
+							<Select
+								value={settings.pushFrequency}
+								onValueChange={(v: "immediate" | "daily" | "weekly") =>
+									update("pushFrequency", v)
+								}
+							>
+								<SelectTrigger>
+									<SelectValue />
+								</SelectTrigger>
 								<SelectContent>
 									<SelectItem value="immediate">Immediate</SelectItem>
 									<SelectItem value="daily">Daily digest</SelectItem>

@@ -1,9 +1,9 @@
 import type { ServiceResponse } from "../types";
 import type {
-    LeaderboardCategory,
-    Timeframe,
-    LeaderboardAnalytics,
-    ScoreDistribution,
+	LeaderboardCategory,
+	Timeframe,
+	LeaderboardAnalytics,
+	ScoreDistribution,
 } from "./leaderboard";
 
 export type { ServiceResponse, LeaderboardAnalytics, ScoreDistribution };

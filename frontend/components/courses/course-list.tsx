@@ -46,7 +46,9 @@ export function CourseList({ courses }: CourseListProps) {
 						href={`/courses/${course.id}`}
 						className="group flex gap-5 p-4 rounded-2xl bg-card border border-border/60 overflow-hidden hover:shadow-md hover:border-primary/30 transition-all duration-300"
 					>
-						<div className={`relative w-28 h-20 flex-shrink-0 rounded-xl bg-gradient-to-br ${gradient} overflow-hidden`}>
+						<div
+							className={`relative w-28 h-20 flex-shrink-0 rounded-xl bg-gradient-to-br ${gradient} overflow-hidden`}
+						>
 							<div className="absolute inset-0 bg-black/5" />
 							{course.featured && (
 								<Badge className="absolute top-1.5 left-1.5 bg-white/20 text-white backdrop-blur-sm border-0 text-[10px] px-1.5 py-0">
@@ -65,7 +67,9 @@ export function CourseList({ courses }: CourseListProps) {
 								<h3 className="font-semibold leading-tight line-clamp-1 group-hover:text-primary transition-colors">
 									{course.title}
 								</h3>
-								<span className={`inline-block px-2 py-0.5 rounded-md text-xs font-medium whitespace-nowrap border ${levelClass}`}>
+								<span
+									className={`inline-block px-2 py-0.5 rounded-md text-xs font-medium whitespace-nowrap border ${levelClass}`}
+								>
 									{course.level.charAt(0).toUpperCase() + course.level.slice(1)}
 								</span>
 							</div>

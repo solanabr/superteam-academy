@@ -445,7 +445,11 @@ export class TranslationValidator {
 				const targetVal = target[key];
 				if (typeof targetVal === "object" && targetVal !== null) {
 					missing.push(
-						...this.findMissingKeys(baseVal, targetVal as Record<string, unknown>, fullKey)
+						...this.findMissingKeys(
+							baseVal,
+							targetVal as Record<string, unknown>,
+							fullKey
+						)
 					);
 				} else {
 					missing.push(fullKey);
@@ -476,7 +480,11 @@ export class TranslationValidator {
 				const baseVal = base[key];
 				if (typeof baseVal === "object" && baseVal !== null) {
 					extra.push(
-						...this.findExtraKeys(baseVal as Record<string, unknown>, targetVal, fullKey)
+						...this.findExtraKeys(
+							baseVal as Record<string, unknown>,
+							targetVal,
+							fullKey
+						)
 					);
 				} else {
 					extra.push(fullKey);

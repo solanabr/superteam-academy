@@ -108,7 +108,10 @@ export class CoreWebVitalsObserver {
 			const observer = new PerformanceObserver((list) => {
 				const entries = list.getEntries();
 				entries.forEach((entry) => {
-					const layoutShiftEntry = entry as PerformanceEntry & { hadRecentInput?: boolean; value: number };
+					const layoutShiftEntry = entry as PerformanceEntry & {
+						hadRecentInput?: boolean;
+						value: number;
+					};
 					if (!layoutShiftEntry.hadRecentInput) {
 						clsValue += layoutShiftEntry.value;
 					}
@@ -186,7 +189,9 @@ export class CoreWebVitalsObserver {
 		try {
 			const observer = new PerformanceObserver((list) => {
 				const entries = list.getEntries();
-				const lastEntry = entries[entries.length - 1] as PerformanceEntry & { processingEnd?: number };
+				const lastEntry = entries[entries.length - 1] as PerformanceEntry & {
+					processingEnd?: number;
+				};
 
 				if (lastEntry.processingEnd) {
 					const inp = lastEntry.processingEnd - lastEntry.startTime;

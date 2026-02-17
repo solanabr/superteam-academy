@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, type ReactNode } from "react";
 import {
     Plus,
     Edit,
@@ -39,7 +39,7 @@ import { cn } from "@/lib/utils";
 export interface QuickAction {
 	id: string;
 	label: string;
-	icon: any;
+	icon: ReactNode;
 	shortcut?: string;
 	action: () => void | Promise<void>;
 	variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";

@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import {
-    ServiceFactory,
-    type ServiceEnvironment,
-    type ServiceConfig,
+	ServiceFactory,
+	type ServiceEnvironment,
+	type ServiceConfig,
 } from "@superteam-academy/services";
 import { type Connection, PublicKey } from "@solana/web3.js";
 

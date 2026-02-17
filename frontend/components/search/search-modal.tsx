@@ -3,11 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Search, BookOpen, Layers, Users, Clock } from "lucide-react";
-import {
-	Dialog,
-	DialogContent,
-	DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import * as VisuallyHidden from "@radix-ui/react-visually-hidden";
 
 interface SearchModalProps {

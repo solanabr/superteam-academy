@@ -1,19 +1,23 @@
 import {
-    type LeaderboardService,
-    type LeaderboardEntry,
-    type LeaderboardFilter,
-    type LeaderboardFilters,
-    type LeaderboardQuery,
-    type LeaderboardResult,
-    type UserRank,
-    LeaderboardCategory,
-    Timeframe,
-    type LeaderboardMetadata,
-    type LeaderboardAnalytics,
-    type ScoreDistribution,
+	type LeaderboardService,
+	type LeaderboardEntry,
+	type LeaderboardFilter,
+	type LeaderboardFilters,
+	type LeaderboardQuery,
+	type LeaderboardResult,
+	type UserRank,
+	LeaderboardCategory,
+	Timeframe,
+	type LeaderboardMetadata,
+	type LeaderboardAnalytics,
+	type ScoreDistribution,
 } from "../interfaces/leaderboard";
 import type { ServiceResponse, PaginatedResponse } from "../types";
-import { HeliusDASClient, CredentialParser, LeaderboardAggregator } from "../leaderboard/helius-das-integration";
+import {
+	HeliusDASClient,
+	CredentialParser,
+	LeaderboardAggregator,
+} from "../leaderboard/helius-das-integration";
 
 // Enhanced Leaderboard Service with Helius DAS Integration
 export class HeliusLeaderboardService implements LeaderboardService {
@@ -49,8 +53,8 @@ export class HeliusLeaderboardService implements LeaderboardService {
 
 			return {
 				success: true,
-				data: result.data!.entries,
-				total: result.data!.totalCount,
+				data: result.data?.entries,
+				total: result.data?.totalCount,
 				page: pagination?.page || 1,
 				limit: pagination?.limit || 50,
 			};
@@ -88,12 +92,12 @@ export class HeliusLeaderboardService implements LeaderboardService {
 				category,
 				timeframe,
 				limit: 1,
-				offset: rankResult.data!.rank - 1,
+				offset: rankResult.data?.rank - 1,
 			});
 
 			const entry =
-				leaderboardQuery.success && leaderboardQuery.data!.entries.length > 0
-					? leaderboardQuery.data!.entries[0]
+				leaderboardQuery.success && leaderboardQuery.data?.entries.length > 0
+					? leaderboardQuery.data?.entries[0]
 					: null;
 
 			if (!entry) {
@@ -106,7 +110,7 @@ export class HeliusLeaderboardService implements LeaderboardService {
 			return {
 				success: true,
 				data: {
-					rank: rankResult.data!.rank,
+					rank: rankResult.data?.rank,
 					entry,
 				},
 			};
@@ -137,7 +141,7 @@ export class HeliusLeaderboardService implements LeaderboardService {
 				};
 			}
 
-			const userRank = userRankResult.data!.rank;
+			const userRank = userRankResult.data?.rank;
 			const startRank = Math.max(1, userRank - range);
 			const endRank = userRank + range;
 
@@ -152,7 +156,7 @@ export class HeliusLeaderboardService implements LeaderboardService {
 
 			return {
 				success: result.success,
-				data: result.success ? result.data!.entries : [],
+				data: result.success ? result.data?.entries : [],
 				...(!result.success && result.error !== undefined ? { error: result.error } : {}),
 			};
 		} catch (error) {
@@ -194,8 +198,8 @@ export class HeliusLeaderboardService implements LeaderboardService {
 
 			return {
 				success: true,
-				data: result.data!.entries,
-				total: result.data!.totalCount,
+				data: result.data?.entries,
+				total: result.data?.totalCount,
 				page: pagination?.page || 1,
 				limit: pagination?.limit || 50,
 			};
@@ -492,7 +496,10 @@ export class HeliusLeaderboardService implements LeaderboardService {
 		}
 	}
 
-	private applyFilters(entries: LeaderboardEntry[], filters: LeaderboardFilters): LeaderboardEntry[] {
+	private applyFilters(
+		entries: LeaderboardEntry[],
+		filters: LeaderboardFilters
+	): LeaderboardEntry[] {
 		return entries.filter((entry) => {
 			if (filters.trackId && entry.userId !== filters.trackId) return false;
 			if (filters.country && entry.avatar !== filters.country) return false; // Placeholder

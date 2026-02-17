@@ -1,12 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@superteam-academy/testing";
 import {
-    Card,
-    CardHeader,
-    CardTitle,
-    CardDescription,
-    CardContent,
-    CardFooter,
+	Card,
+	CardHeader,
+	CardTitle,
+	CardDescription,
+	CardContent,
+	CardFooter,
 } from "@superteam-academy/ui";
 
 describe("Card Component", () => {

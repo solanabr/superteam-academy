@@ -222,7 +222,9 @@ export class ChallengeTemplateManager {
 						},
 					],
 					generate: (params) => ({
-						testCases: this.generateStringReverseTestCases(params.includeSpecialChars as boolean),
+						testCases: this.generateStringReverseTestCases(
+							params.includeSpecialChars as boolean
+						),
 					}),
 				},
 			],
@@ -678,7 +680,9 @@ class LinkedList {
 						},
 					],
 					generate: (params) => ({
-						testCases: this.generatePalindromeTestCases(params.includeSpaces as boolean),
+						testCases: this.generatePalindromeTestCases(
+							params.includeSpaces as boolean
+						),
 					}),
 				},
 			],
@@ -787,11 +791,46 @@ class LinkedList {
 		};
 
 		const testCases: TestCase[] = [
-			{ id: "fib-0", input: [0], expectedOutput: 0, description: "Fibonacci of 0", isHidden: false, timeout: 5000 },
-			{ id: "fib-1", input: [1], expectedOutput: 1, description: "Fibonacci of 1", isHidden: false, timeout: 5000 },
-			{ id: "fib-2", input: [2], expectedOutput: 1, description: "Fibonacci of 2", isHidden: false, timeout: 5000 },
-			{ id: "fib-3", input: [3], expectedOutput: 2, description: "Fibonacci of 3", isHidden: false, timeout: 5000 },
-			{ id: "fib-4", input: [4], expectedOutput: 3, description: "Fibonacci of 4", isHidden: false, timeout: 5000 },
+			{
+				id: "fib-0",
+				input: [0],
+				expectedOutput: 0,
+				description: "Fibonacci of 0",
+				isHidden: false,
+				timeout: 5000,
+			},
+			{
+				id: "fib-1",
+				input: [1],
+				expectedOutput: 1,
+				description: "Fibonacci of 1",
+				isHidden: false,
+				timeout: 5000,
+			},
+			{
+				id: "fib-2",
+				input: [2],
+				expectedOutput: 1,
+				description: "Fibonacci of 2",
+				isHidden: false,
+				timeout: 5000,
+			},
+			{
+				id: "fib-3",
+				input: [3],
+				expectedOutput: 2,
+				description: "Fibonacci of 3",
+				isHidden: false,
+				timeout: 5000,
+			},
+			{
+				id: "fib-4",
+				input: [4],
+				expectedOutput: 3,
+				description: "Fibonacci of 4",
+				isHidden: false,
+				timeout: 5000,
+			},
 		];
 
 		for (let i = 5; i <= Math.min(maxN, 20); i++) {
@@ -955,10 +994,38 @@ class LinkedList {
 		};
 
 		const testCases: TestCase[] = [
-			{ id: "prime-1", input: [1], expectedOutput: false, description: "1 is not prime", isHidden: false, timeout: 5000 },
-			{ id: "prime-2", input: [2], expectedOutput: true, description: "2 is prime", isHidden: false, timeout: 5000 },
-			{ id: "prime-3", input: [3], expectedOutput: true, description: "3 is prime", isHidden: false, timeout: 5000 },
-			{ id: "prime-4", input: [4], expectedOutput: false, description: "4 is not prime", isHidden: false, timeout: 5000 },
+			{
+				id: "prime-1",
+				input: [1],
+				expectedOutput: false,
+				description: "1 is not prime",
+				isHidden: false,
+				timeout: 5000,
+			},
+			{
+				id: "prime-2",
+				input: [2],
+				expectedOutput: true,
+				description: "2 is prime",
+				isHidden: false,
+				timeout: 5000,
+			},
+			{
+				id: "prime-3",
+				input: [3],
+				expectedOutput: true,
+				description: "3 is prime",
+				isHidden: false,
+				timeout: 5000,
+			},
+			{
+				id: "prime-4",
+				input: [4],
+				expectedOutput: false,
+				description: "4 is not prime",
+				isHidden: false,
+				timeout: 5000,
+			},
 		];
 
 		for (let i = 5; i <= Math.min(maxNum, 100); i++) {

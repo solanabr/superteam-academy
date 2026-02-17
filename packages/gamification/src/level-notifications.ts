@@ -1,9 +1,9 @@
 import {
-    type Level,
-    type LevelReward,
-    type LevelChallenge,
-    RewardType,
-    ChallengeType,
+	type Level,
+	type LevelReward,
+	type LevelChallenge,
+	RewardType,
+	ChallengeType,
 } from "./level-system";
 
 // Notification Types

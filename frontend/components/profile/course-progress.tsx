@@ -76,19 +76,26 @@ export function CourseProgress({ courses }: CourseProgressProps) {
 							href={`/courses/${course.id}`}
 							className="flex items-center gap-4 px-5 py-4 hover:bg-muted/30 transition-colors group"
 						>
-							<div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${GRADIENTS[i % GRADIENTS.length]} flex items-center justify-center shrink-0`}>
+							<div
+								className={`w-12 h-12 rounded-xl bg-gradient-to-br ${GRADIENTS[i % GRADIENTS.length]} flex items-center justify-center shrink-0`}
+							>
 								<Play className="h-5 w-5 text-white" />
 							</div>
 							<div className="flex-1 min-w-0">
 								<div className="flex items-center gap-2 mb-1">
-									<span className="text-sm font-medium truncate">{course.title}</span>
+									<span className="text-sm font-medium truncate">
+										{course.title}
+									</span>
 									<span className="text-[10px] px-1.5 py-0.5 rounded-md bg-primary/10 text-primary font-medium">
 										{pct}%
 									</span>
 								</div>
 								<Progress value={pct} className="h-1.5 mb-1" />
 								<div className="flex items-center gap-3 text-[11px] text-muted-foreground">
-									<span>{course.progress.completedLessons}/{course.progress.totalLessons} lessons</span>
+									<span>
+										{course.progress.completedLessons}/
+										{course.progress.totalLessons} lessons
+									</span>
 									<span className="inline-flex items-center gap-0.5">
 										<Clock className="h-3 w-3" />
 										{formatTime(course.progress.timeSpent)}
@@ -101,7 +108,7 @@ export function CourseProgress({ courses }: CourseProgressProps) {
 					);
 				})}
 
-				{completed.map((course, i) => (
+				{completed.map((course) => (
 					<Link
 						key={course.id}
 						href={`/courses/${course.id}`}
@@ -111,7 +118,9 @@ export function CourseProgress({ courses }: CourseProgressProps) {
 							<CheckCircle className="h-5 w-5 text-green" />
 						</div>
 						<div className="flex-1 min-w-0">
-							<span className="text-sm font-medium truncate block">{course.title}</span>
+							<span className="text-sm font-medium truncate block">
+								{course.title}
+							</span>
 							<div className="flex items-center gap-3 text-[11px] text-muted-foreground mt-0.5">
 								<span className="inline-flex items-center gap-0.5">
 									<Clock className="h-3 w-3" />
@@ -119,7 +128,11 @@ export function CourseProgress({ courses }: CourseProgressProps) {
 								</span>
 								{course.completionDate && (
 									<span>
-										Completed {new Date(course.completionDate).toLocaleDateString("en", { month: "short", day: "numeric" })}
+										Completed{" "}
+										{new Date(course.completionDate).toLocaleDateString("en", {
+											month: "short",
+											day: "numeric",
+										})}
 									</span>
 								)}
 								{course.certificateEarned && (
@@ -141,13 +154,19 @@ export function CourseProgress({ courses }: CourseProgressProps) {
 							<BookOpen className="h-5 w-5 text-muted-foreground" />
 						</div>
 						<div className="flex-1 min-w-0">
-							<span className="text-sm font-medium truncate block">{course.title}</span>
+							<span className="text-sm font-medium truncate block">
+								{course.title}
+							</span>
 							<div className="flex items-center gap-3 text-[11px] text-muted-foreground mt-0.5">
 								<span>{course.progress.totalLessons} lessons</span>
 								<span>by {course.instructor.name}</span>
 							</div>
 						</div>
-						<Button variant="outline" size="sm" className="h-7 text-xs shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+						<Button
+							variant="outline"
+							size="sm"
+							className="h-7 text-xs shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+						>
 							Start
 						</Button>
 					</Link>

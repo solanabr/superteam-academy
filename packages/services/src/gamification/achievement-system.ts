@@ -399,11 +399,17 @@ export class AchievementUnlocker {
 				break;
 
 			case RewardType.AVATAR_FRAME:
-				await this.grantAvatarFrameReward(userId, reward.metadata?.frameId as string | undefined);
+				await this.grantAvatarFrameReward(
+					userId,
+					reward.metadata?.frameId as string | undefined
+				);
 				break;
 
 			case RewardType.SPECIAL_ACCESS:
-				await this.grantSpecialAccessReward(userId, reward.metadata?.accessType as string | undefined);
+				await this.grantSpecialAccessReward(
+					userId,
+					reward.metadata?.accessType as string | undefined
+				);
 				break;
 
 			case RewardType.DISCOUNT:

@@ -42,8 +42,6 @@
         "@solana/wallet-adapter-solflare": "catalog:",
         "@solana/wallet-adapter-wallets": "catalog:",
         "@solana/web3.js": "catalog:",
-        "@stripe/react-stripe-js": "^5.6.0",
-        "@stripe/stripe-js": "^8.7.0",
         "@superteam-academy/i18n": "workspace:*",
         "@superteam/analytics": "workspace:*",
         "@superteam/anchor": "workspace:*",
@@ -1693,10 +1691,6 @@
     "@stellar/stellar-base": ["@stellar/stellar-base@14.0.4", "", { "dependencies": { "@noble/curves": "^1.9.6", "@stellar/js-xdr": "^3.1.2", "base32.js": "^0.1.0", "bignumber.js": "^9.3.1", "buffer": "^6.0.3", "sha.js": "^2.4.12" } }, "sha512-UbNW6zbdOBXJwLAV2mMak0bIC9nw3IZVlQXkv2w2dk1jgCbJjy3oRVC943zeGE5JAm0Z9PHxrIjmkpGhayY7kw=="],
 
     "@stellar/stellar-sdk": ["@stellar/stellar-sdk@14.2.0", "", { "dependencies": { "@stellar/stellar-base": "^14.0.1", "axios": "^1.12.2", "bignumber.js": "^9.3.1", "eventsource": "^2.0.2", "feaxios": "^0.0.23", "randombytes": "^2.1.0", "toml": "^3.0.0", "urijs": "^1.19.1" } }, "sha512-7nh2ogzLRMhfkIC0fGjn1LHUzk3jqVw8tjAuTt5ADWfL9CSGBL18ILucE9igz2L/RU2AZgeAvhujAnW91Ut/oQ=="],
-
-    "@stripe/react-stripe-js": ["@stripe/react-stripe-js@5.6.0", "", { "dependencies": { "prop-types": "^15.7.2" }, "peerDependencies": { "@stripe/stripe-js": ">=8.0.0 <9.0.0", "react": ">=16.8.0 <20.0.0", "react-dom": ">=16.8.0 <20.0.0" } }, "sha512-tucu/vTGc+5NXbo2pUiaVjA4ENdRBET8qGS00BM4BAU8J4Pi3eY6BHollsP2+VSuzzlvXwMg0it3ZLhbCj2fPg=="],
-
-    "@stripe/stripe-js": ["@stripe/stripe-js@8.7.0", "", {}, "sha512-tNUerSstwNC1KuHgX4CASGO0Md3CB26IJzSXmVlSuFvhsBP4ZaEPpY4jxWOn9tfdDscuVT4Kqb8cZ2o9nLCgRQ=="],
 
     "@superteam-academy/gamification": ["@superteam-academy/gamification@workspace:packages/gamification"],
 

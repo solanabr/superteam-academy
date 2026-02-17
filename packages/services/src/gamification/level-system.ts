@@ -283,11 +283,17 @@ export class LevelProgressionEngine {
 				break;
 
 			case RewardType.AVATAR_FRAME:
-				await this.grantAvatarFrameReward(userId, reward.metadata?.frameId as string | undefined);
+				await this.grantAvatarFrameReward(
+					userId,
+					reward.metadata?.frameId as string | undefined
+				);
 				break;
 
 			case RewardType.SPECIAL_ACCESS:
-				await this.grantSpecialAccessReward(userId, reward.metadata?.accessType as string | undefined);
+				await this.grantSpecialAccessReward(
+					userId,
+					reward.metadata?.accessType as string | undefined
+				);
 				break;
 
 			case RewardType.DISCOUNT:
@@ -295,7 +301,10 @@ export class LevelProgressionEngine {
 				break;
 
 			case RewardType.UNLOCK_FEATURE:
-				await this.grantFeatureUnlockReward(userId, reward.metadata?.featureId as string | undefined);
+				await this.grantFeatureUnlockReward(
+					userId,
+					reward.metadata?.featureId as string | undefined
+				);
 				break;
 			default:
 				break;
@@ -529,8 +538,6 @@ export class LevelAnalytics {
 
 // Level Notifications
 export class LevelNotificationManager {
-	constructor(_progressionEngine: LevelProgressionEngine) {}
-
 	// Send level up notification
 	async sendLevelUpNotification(userId: string, levelUpResult: LevelUpResult): Promise<void> {
 		const notification = {

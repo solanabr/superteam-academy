@@ -14,12 +14,15 @@ export class SolanaLearningProgressService implements LearningProgressService {
 		this.wallet = wallet;
 	}
 
-	async getProgress(userId: string, courseId: string): Promise<ServiceResponse<LearningProgress>> {
+	async getProgress(
+		userId: string,
+		courseId: string
+	): Promise<ServiceResponse<LearningProgress>> {
 		try {
 			const learnerPubkey = new PublicKey(userId);
 			const [enrollmentPDA] = PublicKey.findProgramAddressSync(
 				[Buffer.from("enrollment"), Buffer.from(courseId), learnerPubkey.toBuffer()],
-				this.programId,
+				this.programId
 			);
 
 			const accountInfo = await this.connection.getAccountInfo(enrollmentPDA);
@@ -57,23 +60,23 @@ export class SolanaLearningProgressService implements LearningProgressService {
 	async updateProgress(
 		userId: string,
 		courseId: string,
-		lessonId: string,
+		lessonId: string
 	): Promise<ServiceResponse<void>> {
 		try {
 			const learnerPubkey = new PublicKey(userId);
 			const [_enrollmentPDA] = PublicKey.findProgramAddressSync(
 				[Buffer.from("enrollment"), Buffer.from(courseId), learnerPubkey.toBuffer()],
-				this.programId,
+				this.programId
 			);
 
 			const [_learnerProfilePDA] = PublicKey.findProgramAddressSync(
 				[Buffer.from("learner"), learnerPubkey.toBuffer()],
-				this.programId,
+				this.programId
 			);
 
 			const [_configPDA] = PublicKey.findProgramAddressSync(
 				[Buffer.from("config")],
-				this.programId,
+				this.programId
 			);
 
 			// TODO: call complete_lesson instruction via program

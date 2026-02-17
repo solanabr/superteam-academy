@@ -51,12 +51,24 @@ export default function SettingsPage() {
 							))}
 						</TabsList>
 
-						<TabsContent value="profile"><ProfileSettings /></TabsContent>
-						<TabsContent value="notifications"><NotificationSettings /></TabsContent>
-						<TabsContent value="privacy"><PrivacySettings /></TabsContent>
-						<TabsContent value="appearance"><AppearanceSettings /></TabsContent>
-						<TabsContent value="language"><LanguageSettings /></TabsContent>
-						<TabsContent value="wallet"><WalletSettings /></TabsContent>
+						<TabsContent value="profile">
+							<ProfileSettings />
+						</TabsContent>
+						<TabsContent value="notifications">
+							<NotificationSettings />
+						</TabsContent>
+						<TabsContent value="privacy">
+							<PrivacySettings />
+						</TabsContent>
+						<TabsContent value="appearance">
+							<AppearanceSettings />
+						</TabsContent>
+						<TabsContent value="language">
+							<LanguageSettings />
+						</TabsContent>
+						<TabsContent value="wallet">
+							<WalletSettings />
+						</TabsContent>
 					</Tabs>
 				</div>
 			</Suspense>

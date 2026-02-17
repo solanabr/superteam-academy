@@ -39,7 +39,10 @@ export function AppearanceSettings() {
 		try {
 			setTheme(currentTheme);
 			await new Promise((resolve) => setTimeout(resolve, 500));
-			toast({ title: "Appearance updated", description: "Your preferences have been saved." });
+			toast({
+				title: "Appearance updated",
+				description: "Your preferences have been saved.",
+			});
 		} catch {
 			toast({ title: "Error", description: "Failed to save.", variant: "destructive" });
 		} finally {
@@ -55,7 +58,9 @@ export function AppearanceSettings() {
 
 			<div className="p-6 space-y-6">
 				<div className="space-y-3">
-					<h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Theme</h4>
+					<h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+						Theme
+					</h4>
 					<div className="grid grid-cols-3 gap-2">
 						{THEMES.map(({ value, label, Icon }) => (
 							<button
@@ -68,7 +73,9 @@ export function AppearanceSettings() {
 										: "border-border/60 hover:bg-muted/30"
 								}`}
 							>
-								<Icon className={`h-5 w-5 ${currentTheme === value ? "text-primary" : "text-muted-foreground"}`} />
+								<Icon
+									className={`h-5 w-5 ${currentTheme === value ? "text-primary" : "text-muted-foreground"}`}
+								/>
 								<span className="text-xs font-medium">{label}</span>
 							</button>
 						))}
@@ -76,7 +83,9 @@ export function AppearanceSettings() {
 				</div>
 
 				<div className="space-y-3">
-					<h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Font size</h4>
+					<h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+						Font size
+					</h4>
 					<div className="flex gap-2">
 						{FONT_SIZES.map(({ value, label }) => (
 							<button
@@ -96,11 +105,15 @@ export function AppearanceSettings() {
 				</div>
 
 				<div className="space-y-3">
-					<h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Accessibility</h4>
+					<h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+						Accessibility
+					</h4>
 					<div className="flex items-center justify-between py-2">
 						<div>
 							<Label className="text-sm">Reduced motion</Label>
-							<p className="text-xs text-muted-foreground">Minimize animations across the platform</p>
+							<p className="text-xs text-muted-foreground">
+								Minimize animations across the platform
+							</p>
 						</div>
 						<Switch checked={reducedMotion} onCheckedChange={setReducedMotion} />
 					</div>

@@ -48,7 +48,9 @@ export class ImageOptimizationService {
 				.map((size) => {
 					const url = this.generateOptimizedUrl(src, {
 						width: size,
-						...(aspectRatio !== undefined && { height: Math.round(size / aspectRatio) }),
+						...(aspectRatio !== undefined && {
+							height: Math.round(size / aspectRatio),
+						}),
 						format,
 					});
 					return `${url} ${size}w`;

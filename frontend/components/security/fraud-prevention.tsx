@@ -12,32 +12,32 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
 } from "@/components/ui/select";
 import {
-    Shield,
-    AlertTriangle,
-    CheckCircle,
-    DollarSign,
-    TrendingUp,
-    Eye,
-    Flag,
-    Ban,
-    Search,
+	Shield,
+	AlertTriangle,
+	CheckCircle,
+	DollarSign,
+	TrendingUp,
+	Eye,
+	Flag,
+	Ban,
+	Search,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 

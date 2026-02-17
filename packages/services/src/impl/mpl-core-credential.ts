@@ -1,8 +1,8 @@
 import type {
-    CredentialService,
-    Credential,
-    CredentialIssuanceRequest,
-    CredentialVerificationResult,
+	CredentialService,
+	Credential,
+	CredentialIssuanceRequest,
+	CredentialVerificationResult,
 } from "../interfaces/credential";
 import type { ServiceResponse } from "../types";
 import type { Connection, PublicKey } from "@solana/web3.js";
@@ -18,7 +18,7 @@ export class MPLCoreCredentialService implements CredentialService {
 	}
 
 	async issueCredential(
-		request: CredentialIssuanceRequest,
+		request: CredentialIssuanceRequest
 	): Promise<ServiceResponse<Credential>> {
 		try {
 			void this.connection;
@@ -85,12 +85,17 @@ export class MPLCoreCredentialService implements CredentialService {
 	}
 
 	async verifyCredential(
-		credentialId: string,
+		credentialId: string
 	): Promise<ServiceResponse<CredentialVerificationResult>> {
 		try {
 			const credentialResult = await this.getCredential(credentialId);
 			if (!credentialResult.success) {
-				return { success: false, ...(credentialResult.error !== undefined ? { error: credentialResult.error } : {}) };
+				return {
+					success: false,
+					...(credentialResult.error !== undefined
+						? { error: credentialResult.error }
+						: {}),
+				};
 			}
 
 			const result: CredentialVerificationResult = {
@@ -113,7 +118,7 @@ export class MPLCoreCredentialService implements CredentialService {
 
 	async upgradeCredential(
 		credentialId: string,
-		newLevel: number,
+		newLevel: number
 	): Promise<ServiceResponse<Credential>> {
 		try {
 			const currentResult = await this.getCredential(credentialId);

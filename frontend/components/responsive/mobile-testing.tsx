@@ -1,13 +1,13 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import {
-    Smartphone,
-    TestTube,
-    CheckCircle,
-    XCircle,
-    AlertTriangle,
-    Play,
-    Square,
-    RotateCcw,
+	Smartphone,
+	TestTube,
+	CheckCircle,
+	XCircle,
+	AlertTriangle,
+	Play,
+	Square,
+	RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

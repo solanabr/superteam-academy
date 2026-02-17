@@ -1,10 +1,7 @@
 {
 	"compilerOptions": {
 		"target": "ES2022",
-		"lib": [
-			"ES2022",
-			"dom"
-		],
+		"lib": ["ES2022", "dom"],
 		"allowJs": false,
 		"skipLibCheck": true,
 		"strict": true,
@@ -24,21 +21,10 @@
 		"allowUnreachableCode": false,
 		"baseUrl": ".",
 		"paths": {
-			"@/*": [
-				"./*"
-			],
-			"@/packages/*": [
-				"./packages/*"
-			],
-			"@/frontend/*": [
-				"./frontend/*"
-			]
+			"@/*": ["./*"],
+			"@/packages/*": ["./packages/*"],
+			"@/frontend/*": ["./frontend/*"]
 		}
 	},
-	"exclude": [
-		"node_modules",
-		"dist",
-		".next",
-		"out"
-	]
+	"exclude": ["node_modules", "dist", ".next", "out"]
 }

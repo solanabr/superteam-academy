@@ -53,12 +53,20 @@ export function StreakTracker({ streakData }: StreakTrackerProps) {
 	return (
 		<div className="rounded-2xl border border-border/60 bg-card p-5 space-y-5">
 			<div className="flex items-center gap-3">
-				<div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-					isActive ? "bg-destructive/10" : isWarning ? "bg-gold/10" : "bg-muted"
-				}`}>
-					<Flame className={`h-6 w-6 ${
-						isActive ? "text-destructive" : isWarning ? "text-gold" : "text-muted-foreground"
-					}`} />
+				<div
+					className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+						isActive ? "bg-destructive/10" : isWarning ? "bg-gold/10" : "bg-muted"
+					}`}
+				>
+					<Flame
+						className={`h-6 w-6 ${
+							isActive
+								? "text-destructive"
+								: isWarning
+									? "text-gold"
+									: "text-muted-foreground"
+						}`}
+					/>
 				</div>
 				<div className="flex-1">
 					<div className="flex items-baseline gap-1.5">
@@ -90,16 +98,20 @@ export function StreakTracker({ streakData }: StreakTrackerProps) {
 				<div className="grid grid-cols-7 gap-1.5 mb-2">
 					{weekDays.map((day, i) => (
 						<div key={i} className="text-center">
-							<div className="text-[10px] text-muted-foreground mb-1">{day.label}</div>
-							<div className={`w-full aspect-square rounded-lg flex items-center justify-center text-[10px] font-medium ${
-								day.isToday
-									? "ring-2 ring-primary bg-primary text-primary-foreground"
-									: day.active
-										? "bg-green/20 text-green"
-										: day.isPast
-											? "bg-destructive/10 text-destructive/60"
-											: "bg-muted text-muted-foreground"
-							}`}>
+							<div className="text-[10px] text-muted-foreground mb-1">
+								{day.label}
+							</div>
+							<div
+								className={`w-full aspect-square rounded-lg flex items-center justify-center text-[10px] font-medium ${
+									day.isToday
+										? "ring-2 ring-primary bg-primary text-primary-foreground"
+										: day.active
+											? "bg-green/20 text-green"
+											: day.isPast
+												? "bg-destructive/10 text-destructive/60"
+												: "bg-muted text-muted-foreground"
+								}`}
+							>
 								{day.active ? (
 									<Flame className="h-3 w-3" />
 								) : day.isPast ? (

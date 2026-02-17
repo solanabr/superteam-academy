@@ -1,14 +1,14 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@superteam-academy/testing";
 import {
-    Dialog,
-    DialogTrigger,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogDescription,
-    DialogFooter,
-    DialogClose,
+	Dialog,
+	DialogTrigger,
+	DialogContent,
+	DialogHeader,
+	DialogTitle,
+	DialogDescription,
+	DialogFooter,
+	DialogClose,
 } from "@superteam-academy/ui";
 
 describe("Dialog Component", () => {

@@ -1,13 +1,10 @@
 import type { ServiceResponse } from "../types";
 import {
-    CustomIndexerService,
-    type IndexerEvent,
-    type IndexerEventHandler,
+	CustomIndexerService,
+	type IndexerEvent,
+	type IndexerEventHandler,
 } from "./custom-indexer";
-import {
-    HeliusDASClient,
-    CredentialParser,
-} from "../leaderboard/helius-das-integration";
+import { HeliusDASClient, CredentialParser } from "../leaderboard/helius-das-integration";
 
 // Hybrid Architecture Types
 export interface HybridConfig {
@@ -321,8 +318,12 @@ export class HybridIndexerService {
 		heliusData: unknown[],
 		syncDuration: number
 	): DataConsistencyReport {
-		const indexerMap = new Map(indexerData.map((item) => [(item as Record<string, unknown>).id as string, item]));
-		const heliusMap = new Map(heliusData.map((item) => [(item as Record<string, unknown>).id as string, item]));
+		const indexerMap = new Map(
+			indexerData.map((item) => [(item as Record<string, unknown>).id as string, item])
+		);
+		const heliusMap = new Map(
+			heliusData.map((item) => [(item as Record<string, unknown>).id as string, item])
+		);
 
 		const allIds = new Set([...indexerMap.keys(), ...heliusMap.keys()]);
 		const conflicts: DataConsistencyReport["conflicts"] = [];
@@ -375,7 +376,10 @@ export class HybridIndexerService {
 		if (a.level !== b.level) {
 			return "level_mismatch";
 		}
-		if ((a.lastActivity as Date | undefined)?.getTime() !== (b.lastActivity as Date | undefined)?.getTime()) {
+		if (
+			(a.lastActivity as Date | undefined)?.getTime() !==
+			(b.lastActivity as Date | undefined)?.getTime()
+		) {
 			return "activity_mismatch";
 		}
 		return null;
@@ -401,9 +405,9 @@ export class HybridIndexerService {
 			() => {
 				this.checkDataConsistency()
 					.then((result) => {
-						if (result.success && result.data!.conflicts.length > 0) {
+						if (result.success && result.data?.conflicts.length > 0) {
 							console.warn(
-								`Data consistency issues found: ${result.data!.conflicts.length} conflicts`
+								`Data consistency issues found: ${result.data?.conflicts.length} conflicts`
 							);
 						}
 					})

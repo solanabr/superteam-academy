@@ -149,7 +149,8 @@ export class TestAnalyticsEngine {
 		const recentSubmissions = this.submissionHistory.filter(
 			(s) =>
 				s.challengeId === challengeId &&
-				Date.now() - s.timestamp.getTime() < TestAnalyticsEngine.TIME_WINDOW_DAYS * 24 * 60 * 60 * 1000
+				Date.now() - s.timestamp.getTime() <
+					TestAnalyticsEngine.TIME_WINDOW_DAYS * 24 * 60 * 60 * 1000
 		);
 
 		const passRate =

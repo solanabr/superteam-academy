@@ -1,11 +1,11 @@
 import {
-    ServiceFactory,
-    type ServiceConfig,
-    getLearningProgressService,
-    getCredentialService,
-    getLeaderboardService,
-    getAnalyticsService,
-    getAuthLinkingService,
+	ServiceFactory,
+	type ServiceConfig,
+	getLearningProgressService,
+	getCredentialService,
+	getLeaderboardService,
+	getAnalyticsService,
+	getAuthLinkingService,
 } from "./factory";
 import { Connection, PublicKey } from "@solana/web3.js";
 import type { Wallet } from "@coral-xyz/anchor";

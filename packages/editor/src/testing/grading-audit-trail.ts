@@ -168,11 +168,7 @@ export class GradingAuditTrail {
 
 		if (query.dateRange) {
 			const { start, end } = query.dateRange;
-			results = results.filter(
-				(entry) =>
-					entry.timestamp >= start &&
-					entry.timestamp <= end
-			);
+			results = results.filter((entry) => entry.timestamp >= start && entry.timestamp <= end);
 		}
 
 		if (query.status) {

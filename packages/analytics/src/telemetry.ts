@@ -118,8 +118,6 @@ export class FileExporter implements TelemetryExporter {
 	name = "file";
 	private events: TelemetryEvent[] = [];
 
-	constructor(_filePath: string) {}
-
 	async export(events: TelemetryEvent[]): Promise<void> {
 		this.events.push(...events);
 	}

@@ -13,32 +13,32 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
 } from "@/components/ui/table";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-    FileCheck,
-    AlertTriangle,
-    CheckCircle,
-    XCircle,
-    Clock,
-    Shield,
-    FileText,
-    Calendar,
-    Download,
-    Eye,
+	FileCheck,
+	AlertTriangle,
+	CheckCircle,
+	XCircle,
+	Clock,
+	Shield,
+	FileText,
+	Calendar,
+	Download,
+	Eye,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 

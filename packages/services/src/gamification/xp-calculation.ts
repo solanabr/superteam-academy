@@ -320,8 +320,6 @@ export class XPTracker {
 
 // XP Analytics
 export class XPAnalytics {
-	constructor(_tracker: XPTracker, _calculator: XPCalculator) {}
-
 	// Get top XP earners
 	getTopEarners(
 		_limit = 10,

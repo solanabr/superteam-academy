@@ -1,10 +1,10 @@
 import {
-    type AuditLogEntry,
-    type AuditLogger,
-    type AuditQueryOptions,
-    type AuditLoggerConfig,
-    auditLogSchema,
-    DEFAULT_AUDIT_CONFIG,
+	type AuditLogEntry,
+	type AuditLogger,
+	type AuditQueryOptions,
+	type AuditLoggerConfig,
+	auditLogSchema,
+	DEFAULT_AUDIT_CONFIG,
 } from "./audit";
 import { env } from "./env";
 
@@ -17,12 +17,8 @@ interface AuditDbClient {
 			take: number;
 			skip: number;
 		}): Promise<AuditLogEntry[]>;
-		findUnique(args: {
-			where: { id: string };
-		}): Promise<AuditLogEntry | null>;
-		createMany(args: {
-			data: Array<Record<string, unknown>>;
-		}): Promise<{ count: number }>;
+		findUnique(args: { where: { id: string } }): Promise<AuditLogEntry | null>;
+		createMany(args: { data: Record<string, unknown>[] }): Promise<{ count: number }>;
 	};
 	disconnect(): Promise<void>;
 }

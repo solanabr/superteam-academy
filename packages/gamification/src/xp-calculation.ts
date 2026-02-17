@@ -153,7 +153,9 @@ export class XPCalculationEngine {
 		const difficulty = event.metadata?.difficulty;
 		if (typeof difficulty === "string" && difficulty in this.config.multipliers.difficulty) {
 			const difficultyMultiplier =
-				this.config.multipliers.difficulty[difficulty as keyof typeof this.config.multipliers.difficulty] || 1;
+				this.config.multipliers.difficulty[
+					difficulty as keyof typeof this.config.multipliers.difficulty
+				] || 1;
 			baseAmount *= difficultyMultiplier;
 		}
 

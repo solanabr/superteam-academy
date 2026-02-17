@@ -2,7 +2,12 @@ export * from "./types";
 export * from "./interfaces/learning-progress";
 export * from "./interfaces/credential";
 export * from "./interfaces/leaderboard";
-export type { LeaderboardAnalyticsService, LeaderboardInsights, AnalyticsQuery, AnalyticsResult } from "./interfaces/leaderboard-analytics";
+export type {
+	LeaderboardAnalyticsService,
+	LeaderboardInsights,
+	AnalyticsQuery,
+	AnalyticsResult,
+} from "./interfaces/leaderboard-analytics";
 export * from "./interfaces/leaderboard-cache";
 export * from "./interfaces/analytics";
 export * from "./interfaces/auth-linking";

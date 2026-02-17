@@ -38,8 +38,6 @@
 		"@solana/wallet-adapter-solflare": "catalog:",
 		"@solana/wallet-adapter-wallets": "catalog:",
 		"@solana/web3.js": "catalog:",
-		"@stripe/react-stripe-js": "^5.6.0",
-		"@stripe/stripe-js": "^8.7.0",
 		"@superteam-academy/i18n": "workspace:*",
 		"@superteam/analytics": "workspace:*",
 		"@superteam/anchor": "workspace:*",

@@ -117,7 +117,10 @@ export class MonacoCodeEditor implements CodeEditor {
 
 	setLanguage(language: string): void {
 		if (this.editor) {
-			const monaco = (window as unknown as Record<string, unknown>).monaco as Record<string, unknown>;
+			const monaco = (window as unknown as Record<string, unknown>).monaco as Record<
+				string,
+				unknown
+			>;
 			const model = this.editor.getModel();
 			(
 				monaco.editor as Record<string, unknown> & {
@@ -134,7 +137,10 @@ export class MonacoCodeEditor implements CodeEditor {
 
 	setTheme(theme: string): void {
 		if (this.editor) {
-			const monaco = (window as unknown as Record<string, unknown>).monaco as Record<string, unknown>;
+			const monaco = (window as unknown as Record<string, unknown>).monaco as Record<
+				string,
+				unknown
+			>;
 			(monaco.editor as Record<string, unknown> & { setTheme(t: string): void }).setTheme(
 				theme
 			);
@@ -180,7 +186,10 @@ export class MonacoCodeEditor implements CodeEditor {
 	off(event: string, callback: (...args: unknown[]) => void): void {
 		const listeners = this.eventListeners.get(event);
 		if (listeners) {
-			this.eventListeners.set(event, listeners.filter((cb) => cb !== callback));
+			this.eventListeners.set(
+				event,
+				listeners.filter((cb) => cb !== callback)
+			);
 		}
 	}
 
@@ -260,7 +269,9 @@ export class MonacoCodeEditor implements CodeEditor {
 			});
 			const changeListeners = this.eventListeners.get("change");
 			if (changeListeners) {
-				changeListeners.forEach((cb) => cb(value));
+				changeListeners.forEach((cb) => {
+					cb(value);
+				});
 			}
 		});
 
@@ -285,7 +296,10 @@ export class MonacoCodeEditor implements CodeEditor {
 	}
 
 	private configureTypeScript(): void {
-		const monaco = (window as unknown as Record<string, unknown>).monaco as Record<string, unknown>;
+		const monaco = (window as unknown as Record<string, unknown>).monaco as Record<
+			string,
+			unknown
+		>;
 		const languages = monaco.languages as Record<string, unknown>;
 		const typescript = languages.typescript as Record<string, unknown>;
 		const typescriptDefaults = typescript.typescriptDefaults as Record<string, unknown> & {
@@ -327,7 +341,10 @@ export class MonacoCodeEditor implements CodeEditor {
 	}
 
 	private parseKeybinding(keybinding: string): number {
-		const monaco = (window as unknown as Record<string, unknown>).monaco as Record<string, unknown>;
+		const monaco = (window as unknown as Record<string, unknown>).monaco as Record<
+			string,
+			unknown
+		>;
 		const KeyMod = monaco.KeyMod as Record<string, number>;
 		const KeyCode = monaco.KeyCode as Record<string, number>;
 

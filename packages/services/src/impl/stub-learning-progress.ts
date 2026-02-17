@@ -1,7 +1,4 @@
-import type {
-    LearningProgressService,
-    LearningProgress,
-} from "../interfaces/learning-progress";
+import type { LearningProgressService, LearningProgress } from "../interfaces/learning-progress";
 import type { ServiceResponse } from "../types";
 
 export class StubLearningProgressService implements LearningProgressService {

@@ -1,13 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import { BarChart3, Users, BookOpen, Trophy, TrendingUp, Settings, Shield } from "lucide-react";
+import {
+	BarChart3,
+	Users,
+	BookOpen,
+	Trophy,
+	TrendingUp,
+	Settings,
+	Shield,
+	Lock,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useTranslations } from "next-intl";
+import { useAuth } from "@/contexts/auth-context";
 
 interface DashboardStats {
 	totalUsers: number;
@@ -28,6 +38,8 @@ interface RecentActivity {
 
 export default function AdminDashboard() {
 	const t = useTranslations("admin");
+	const { isAuthenticated } = useAuth();
+
 	const [stats] = useState<DashboardStats>({
 		totalUsers: 15_420,
 		activeUsers: 8920,
@@ -66,6 +78,20 @@ export default function AdminDashboard() {
 			timestamp: "2024-02-16T08:30:00Z",
 		},
 	]);
+
+	if (!isAuthenticated) {
+		return (
+			<div className="min-h-screen flex items-center justify-center">
+				<div className="text-center space-y-4">
+					<Lock className="h-12 w-12 mx-auto text-muted-foreground" />
+					<h1 className="text-xl font-bold">Access Denied</h1>
+					<p className="text-muted-foreground text-sm">
+						You must be signed in to access the admin dashboard.
+					</p>
+				</div>
+			</div>
+		);
+	}
 
 	const getActivityIcon = (type: RecentActivity["type"]) => {
 		switch (type) {

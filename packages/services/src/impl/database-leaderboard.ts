@@ -1,14 +1,14 @@
 import type {
-    LeaderboardService,
-    LeaderboardEntry,
-    LeaderboardQuery,
-    LeaderboardFilter,
-    LeaderboardResult,
-    LeaderboardCategory,
-    Timeframe,
-    UserRank,
-    LeaderboardMetadata,
-    LeaderboardAnalytics,
+	LeaderboardService,
+	LeaderboardEntry,
+	LeaderboardQuery,
+	LeaderboardFilter,
+	LeaderboardResult,
+	LeaderboardCategory,
+	Timeframe,
+	UserRank,
+	LeaderboardMetadata,
+	LeaderboardAnalytics,
 } from "../interfaces/leaderboard";
 import type { ServiceResponse, PaginatedResponse } from "../types";
 
@@ -48,7 +48,7 @@ export class DatabaseLeaderboardService implements LeaderboardService {
 
 	async getGlobalLeaderboard(
 		_filter?: LeaderboardFilter,
-		pagination?: { page: number; limit: number },
+		pagination?: { page: number; limit: number }
 	): Promise<PaginatedResponse<LeaderboardEntry>> {
 		try {
 			const entries = this.getSortedEntries();
@@ -78,7 +78,7 @@ export class DatabaseLeaderboardService implements LeaderboardService {
 
 	async getUserRank(
 		userId: string,
-		_filter?: LeaderboardFilter,
+		_filter?: LeaderboardFilter
 	): Promise<ServiceResponse<{ rank: number; entry: LeaderboardEntry }>> {
 		try {
 			const entries = this.getSortedEntries();
@@ -114,7 +114,7 @@ export class DatabaseLeaderboardService implements LeaderboardService {
 	async getNearbyRanks(
 		userId: string,
 		range: number,
-		_filter?: LeaderboardFilter,
+		_filter?: LeaderboardFilter
 	): Promise<ServiceResponse<LeaderboardEntry[]>> {
 		try {
 			const entries = this.getSortedEntries();
@@ -126,7 +126,9 @@ export class DatabaseLeaderboardService implements LeaderboardService {
 			const end = Math.min(entries.length, idx + range + 1);
 			return {
 				success: true,
-				data: entries.slice(start, end).map((e, i) => this.toLeaderboardEntry(e, start + i + 1)),
+				data: entries
+					.slice(start, end)
+					.map((e, i) => this.toLeaderboardEntry(e, start + i + 1)),
 			};
 		} catch (error) {
 			return {
@@ -142,14 +144,16 @@ export class DatabaseLeaderboardService implements LeaderboardService {
 	async getTrackLeaderboard(
 		_trackId: number,
 		_filter?: LeaderboardFilter,
-		pagination?: { page: number; limit: number },
+		pagination?: { page: number; limit: number }
 	): Promise<PaginatedResponse<LeaderboardEntry>> {
 		return this.getGlobalLeaderboard(_filter, pagination);
 	}
 
 	async updateUserStats(
 		userId: string,
-		stats: Partial<Pick<LeaderboardEntry, "xp" | "streak" | "coursesCompleted" | "achievements">>,
+		stats: Partial<
+			Pick<LeaderboardEntry, "xp" | "streak" | "coursesCompleted" | "achievements">
+		>
 	): Promise<ServiceResponse<void>> {
 		try {
 			const existing = this.db.get(userId);
@@ -210,7 +214,7 @@ export class DatabaseLeaderboardService implements LeaderboardService {
 	async getUserRankEnhanced(
 		userId: string,
 		category: LeaderboardCategory,
-		timeframe: Timeframe,
+		timeframe: Timeframe
 	): Promise<ServiceResponse<UserRank | null>> {
 		try {
 			const entries = this.getSortedEntries();
@@ -244,7 +248,7 @@ export class DatabaseLeaderboardService implements LeaderboardService {
 	async getUserRanks(
 		userIds: string[],
 		category: LeaderboardCategory,
-		timeframe: Timeframe,
+		timeframe: Timeframe
 	): Promise<ServiceResponse<UserRank[]>> {
 		try {
 			const results: UserRank[] = [];
@@ -268,14 +272,14 @@ export class DatabaseLeaderboardService implements LeaderboardService {
 
 	async updateCache(
 		_category: LeaderboardCategory,
-		_timeframe: Timeframe,
+		_timeframe: Timeframe
 	): Promise<ServiceResponse<void>> {
 		return { success: true };
 	}
 
 	async getLeaderboardMetadata(
 		category: LeaderboardCategory,
-		timeframe: Timeframe,
+		timeframe: Timeframe
 	): Promise<ServiceResponse<LeaderboardMetadata>> {
 		return {
 			success: true,
@@ -292,7 +296,7 @@ export class DatabaseLeaderboardService implements LeaderboardService {
 
 	async getLeaderboardAnalytics(
 		category: LeaderboardCategory,
-		timeframe: Timeframe,
+		timeframe: Timeframe
 	): Promise<ServiceResponse<LeaderboardAnalytics>> {
 		const entries = this.getSortedEntries();
 		const scores = entries.map((e) => e.xp);

@@ -81,8 +81,12 @@ export function AchievementGrid({ achievements, unlockedCount, totalCount }: Ach
 								{a.description}
 							</div>
 							<div className="flex items-center gap-2 mt-2">
-								<span className="text-[10px] font-medium text-gold">+{a.xpReward} XP</span>
-								<span className="text-[10px] text-muted-foreground capitalize">{a.rarity}</span>
+								<span className="text-[10px] font-medium text-gold">
+									+{a.xpReward} XP
+								</span>
+								<span className="text-[10px] text-muted-foreground capitalize">
+									{a.rarity}
+								</span>
 							</div>
 						</div>
 					);

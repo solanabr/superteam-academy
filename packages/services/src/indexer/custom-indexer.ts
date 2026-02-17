@@ -143,8 +143,18 @@ interface RawTransaction {
 		loadedAddresses?: unknown;
 		preBalances?: number[];
 		postBalances?: number[];
-		preAccount?: { owner: string; data?: string[]; executable: boolean; rentEpoch: number } | null;
-		postAccount?: { owner: string; data?: string[]; executable: boolean; rentEpoch: number } | null;
+		preAccount?: {
+			owner: string;
+			data?: string[];
+			executable: boolean;
+			rentEpoch: number;
+		} | null;
+		postAccount?: {
+			owner: string;
+			data?: string[];
+			executable: boolean;
+			rentEpoch: number;
+		} | null;
 	};
 }
 
@@ -489,7 +499,11 @@ export class CustomIndexerService implements IndexerService {
 		}
 	}
 
-	private async processTransaction(tx: RawTransaction, slot: number, blockTime: number): Promise<void> {
+	private async processTransaction(
+		tx: RawTransaction,
+		slot: number,
+		blockTime: number
+	): Promise<void> {
 		try {
 			const signature = tx.transaction.signatures[0];
 			const indexedTx: IndexedTransaction = {
@@ -672,7 +686,9 @@ export const IndexerFactory = {
 			maxConcurrency: config.maxConcurrency || 5,
 			cacheSize: config.cacheSize || 10_000,
 			persistenceEnabled: config.persistenceEnabled || false,
-			...(config.persistencePath !== undefined && { persistencePath: config.persistencePath }),
+			...(config.persistencePath !== undefined && {
+				persistencePath: config.persistencePath,
+			}),
 		};
 
 		return new CustomIndexerService(fullConfig);

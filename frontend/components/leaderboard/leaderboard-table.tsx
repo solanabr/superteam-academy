@@ -83,11 +83,15 @@ export function LeaderboardTable({
 						>
 							<div className="col-span-1 flex items-center">
 								{entry.rank <= 3 ? (
-									<div className={`w-7 h-7 rounded-lg flex items-center justify-center ${
-										entry.rank === 1 ? "bg-gold/20 text-gold" :
-										entry.rank === 2 ? "bg-muted text-muted-foreground" :
-										"bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400"
-									}`}>
+									<div
+										className={`w-7 h-7 rounded-lg flex items-center justify-center ${
+											entry.rank === 1
+												? "bg-gold/20 text-gold"
+												: entry.rank === 2
+													? "bg-muted text-muted-foreground"
+													: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400"
+										}`}
+									>
 										<Trophy className="h-3.5 w-3.5" />
 									</div>
 								) : (
@@ -105,15 +109,21 @@ export function LeaderboardTable({
 									</AvatarFallback>
 								</Avatar>
 								<div className="min-w-0">
-									<div className="text-sm font-medium truncate">{entry.user.name}</div>
-									<div className="text-[10px] text-muted-foreground">{entry.user.country}</div>
+									<div className="text-sm font-medium truncate">
+										{entry.user.name}
+									</div>
+									<div className="text-[10px] text-muted-foreground">
+										{entry.user.country}
+									</div>
 								</div>
 							</div>
 
 							<div className="col-span-2 text-right">
 								<div className="flex items-center justify-end gap-1">
 									<Zap className="h-3 w-3 text-gold" />
-									<span className="text-sm font-semibold">{entry.score.toLocaleString()}</span>
+									<span className="text-sm font-semibold">
+										{entry.score.toLocaleString()}
+									</span>
 								</div>
 							</div>
 
@@ -136,16 +146,22 @@ export function LeaderboardTable({
 								</span>
 							</div>
 
-							<div className={`${compact ? "col-span-3" : "col-span-2"} flex items-center justify-end gap-1`}>
+							<div
+								className={`${compact ? "col-span-3" : "col-span-2"} flex items-center justify-end gap-1`}
+							>
 								{entry.change > 0 ? (
 									<>
 										<TrendingUp className="h-3.5 w-3.5 text-green" />
-										<span className="text-xs font-medium text-green">+{entry.change}</span>
+										<span className="text-xs font-medium text-green">
+											+{entry.change}
+										</span>
 									</>
 								) : entry.change < 0 ? (
 									<>
 										<TrendingDown className="h-3.5 w-3.5 text-destructive" />
-										<span className="text-xs font-medium text-destructive">{entry.change}</span>
+										<span className="text-xs font-medium text-destructive">
+											{entry.change}
+										</span>
 									</>
 								) : (
 									<>
@@ -162,7 +178,8 @@ export function LeaderboardTable({
 			{showPagination && totalPages > 1 && (
 				<div className="flex items-center justify-between px-5 py-3 border-t border-border/40 bg-muted/20">
 					<span className="text-xs text-muted-foreground">
-						{start + 1}-{Math.min(start + itemsPerPage, entries.length)} of {entries.length}
+						{start + 1}-{Math.min(start + itemsPerPage, entries.length)} of{" "}
+						{entries.length}
 					</span>
 					<div className="flex items-center gap-1">
 						<Button
@@ -174,17 +191,19 @@ export function LeaderboardTable({
 						>
 							<ChevronLeft className="h-3.5 w-3.5" />
 						</Button>
-						{Array.from({ length: Math.min(5, totalPages) }, (_, i) => i + 1).map((page) => (
-							<Button
-								key={page}
-								variant={currentPage === page ? "default" : "ghost"}
-								size="sm"
-								className="h-7 w-7 p-0 text-xs"
-								onClick={() => setCurrentPage(page)}
-							>
-								{page}
-							</Button>
-						))}
+						{Array.from({ length: Math.min(5, totalPages) }, (_, i) => i + 1).map(
+							(page) => (
+								<Button
+									key={page}
+									variant={currentPage === page ? "default" : "ghost"}
+									size="sm"
+									className="h-7 w-7 p-0 text-xs"
+									onClick={() => setCurrentPage(page)}
+								>
+									{page}
+								</Button>
+							)
+						)}
 						<Button
 							variant="ghost"
 							size="sm"

@@ -1,3 +1,3 @@
 // Stub parser for Python — replace with a real Lezer grammar in production
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: stub parser requires structural cast to LRParser
 export const parser = {} as any;

@@ -14,19 +14,19 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
-    AlertTriangle,
-    Calendar,
-    Clock,
-    Trophy,
-    Gift,
-    Star,
-    Flame,
-    Snowflake,
-    Sun,
-    Target,
-    Users,
-    Award,
-    Timer,
+	AlertTriangle,
+	Calendar,
+	Clock,
+	Trophy,
+	Gift,
+	Star,
+	Flame,
+	Snowflake,
+	Sun,
+	Target,
+	Users,
+	Award,
+	Timer,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { format, differenceInDays, differenceInHours } from "date-fns";

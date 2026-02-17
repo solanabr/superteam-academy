@@ -1,9 +1,9 @@
 import {
-    type LevelAnalytics,
-    type LevelProgressionEngine,
-    type UserLevel,
-    type LevelRewardClaim,
-    RewardType,
+	type LevelAnalytics,
+	type LevelProgressionEngine,
+	type UserLevel,
+	type LevelRewardClaim,
+	RewardType,
 } from "./level-system";
 
 // Level Analytics Engine

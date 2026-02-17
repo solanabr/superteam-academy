@@ -1,11 +1,11 @@
 import {
-    type HeliusDASQuery,
-    type HeliusDASResponse,
-    type DASAsset,
-    LeaderboardCategory,
-    Timeframe,
-    type LeaderboardEntry,
-    type UserRank,
+	type HeliusDASQuery,
+	type HeliusDASResponse,
+	type DASAsset,
+	LeaderboardCategory,
+	Timeframe,
+	type LeaderboardEntry,
+	type UserRank,
 } from "../interfaces/leaderboard";
 
 // Helius DAS Client
@@ -251,8 +251,6 @@ export interface ParsedCredential {
 // Leaderboard Data Aggregator
 export class LeaderboardAggregator {
 	private cache: Map<string, CachedLeaderboardData> = new Map();
-
-	constructor(_dasClient: HeliusDASClient, _credentialParser: CredentialParser) {}
 
 	// Aggregate leaderboard data from DAS
 	async aggregateLeaderboardData(

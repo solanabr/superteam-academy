@@ -17,14 +17,13 @@ interface LevelProgressProps {
 
 export function LevelProgress({
 	currentLevel,
-	currentXP,
+	currentXP: _currentXP,
 	nextLevelXP,
 	totalXP,
 	levelUpHistory = [],
 }: LevelProgressProps) {
-	const lastLevelXP = levelUpHistory.length > 0
-		? levelUpHistory[levelUpHistory.length - 1].xpAtLevel
-		: 0;
+	const lastLevelXP =
+		levelUpHistory.length > 0 ? levelUpHistory[levelUpHistory.length - 1].xpAtLevel : 0;
 	const xpInLevel = totalXP - lastLevelXP;
 	const progress = Math.min((xpInLevel / nextLevelXP) * 100, 100);
 	const xpRemaining = Math.max(nextLevelXP - xpInLevel, 0);
@@ -47,8 +46,14 @@ export function LevelProgress({
 				</div>
 				<div className="flex-1 space-y-1.5">
 					<div className="flex justify-between text-xs text-muted-foreground">
-						<span>{xpInLevel.toLocaleString()} / {nextLevelXP.toLocaleString()} XP</span>
-						<span>{xpRemaining > 0 ? `${xpRemaining.toLocaleString()} to go` : "Ready to level up"}</span>
+						<span>
+							{xpInLevel.toLocaleString()} / {nextLevelXP.toLocaleString()} XP
+						</span>
+						<span>
+							{xpRemaining > 0
+								? `${xpRemaining.toLocaleString()} to go`
+								: "Ready to level up"}
+						</span>
 					</div>
 					<Progress value={progress} className="h-2.5" />
 				</div>
@@ -64,10 +69,16 @@ export function LevelProgress({
 						.slice(-3)
 						.reverse()
 						.map((lv, i) => (
-							<span key={i} className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-md bg-muted">
+							<span
+								key={i}
+								className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-md bg-muted"
+							>
 								Lvl {lv.level}
 								<span className="text-muted-foreground">
-									{new Date(lv.achievedAt).toLocaleDateString("en", { month: "short", day: "numeric" })}
+									{new Date(lv.achievedAt).toLocaleDateString("en", {
+										month: "short",
+										day: "numeric",
+									})}
 								</span>
 							</span>
 						))}

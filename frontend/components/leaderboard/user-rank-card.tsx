@@ -39,11 +39,15 @@ export function UserRankCard({ userRank }: UserRankCardProps) {
 
 					<div className="flex gap-6 flex-wrap">
 						<div className="text-center">
-							<div className="text-xl font-bold text-primary">#{userRank.weeklyRank}</div>
+							<div className="text-xl font-bold text-primary">
+								#{userRank.weeklyRank}
+							</div>
 							<div className="text-xs text-muted-foreground">This week</div>
 						</div>
 						<div className="text-center">
-							<div className="text-xl font-bold text-forest">#{userRank.monthlyRank}</div>
+							<div className="text-xl font-bold text-forest">
+								#{userRank.monthlyRank}
+							</div>
 							<div className="text-xs text-muted-foreground">This month</div>
 						</div>
 					</div>

@@ -12,44 +12,44 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
 } from "@/components/ui/table";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
-    Zap,
-    Pause,
-    Settings,
-    AlertTriangle,
-    CheckCircle,
-    XCircle,
-    Clock,
-    Activity,
-    Shield,
-    Bot,
-    Workflow,
-    GitBranch,
-    Timer,
-    Users,
-    Mail,
-    MessageSquare,
-    Lock,
-    Eye,
-    FileText,
+	Zap,
+	Pause,
+	Settings,
+	AlertTriangle,
+	CheckCircle,
+	XCircle,
+	Clock,
+	Activity,
+	Shield,
+	Bot,
+	Workflow,
+	GitBranch,
+	Timer,
+	Users,
+	Mail,
+	MessageSquare,
+	Lock,
+	Eye,
+	FileText,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 

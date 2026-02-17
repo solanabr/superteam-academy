@@ -66,12 +66,18 @@ export function ProfileHeader({ user, stats }: ProfileHeaderProps) {
 					<div className="flex-1 min-w-0 sm:pb-1">
 						<h1 className="text-xl font-bold truncate">{user.name}</h1>
 						{user.bio && (
-							<p className="text-sm text-muted-foreground mt-0.5 line-clamp-1">{user.bio}</p>
+							<p className="text-sm text-muted-foreground mt-0.5 line-clamp-1">
+								{user.bio}
+							</p>
 						)}
 						<div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 text-xs text-muted-foreground">
 							<span className="inline-flex items-center gap-1">
 								<Calendar className="h-3 w-3" />
-								Joined {new Date(user.joinDate).toLocaleDateString("en", { month: "short", year: "numeric" })}
+								Joined{" "}
+								{new Date(user.joinDate).toLocaleDateString("en", {
+									month: "short",
+									year: "numeric",
+								})}
 							</span>
 							{user.location && (
 								<span className="inline-flex items-center gap-1">
@@ -111,28 +117,36 @@ export function ProfileHeader({ user, stats }: ProfileHeaderProps) {
 				<div className="grid grid-cols-4 gap-3 mt-5 pt-5 border-t border-border/40">
 					<div className="text-center">
 						<div className="text-lg font-bold text-primary">{stats.level}</div>
-						<div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Level</div>
+						<div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+							Level
+						</div>
 					</div>
 					<div className="text-center">
 						<div className="inline-flex items-center gap-1 text-lg font-bold text-gold">
 							<Zap className="h-4 w-4" />
 							{stats.totalXP.toLocaleString()}
 						</div>
-						<div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Total XP</div>
+						<div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+							Total XP
+						</div>
 					</div>
 					<div className="text-center">
 						<div className="inline-flex items-center gap-1 text-lg font-bold text-destructive">
 							<Flame className="h-4 w-4" />
 							{stats.streak.current}
 						</div>
-						<div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Streak</div>
+						<div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+							Streak
+						</div>
 					</div>
 					<div className="text-center">
 						<div className="inline-flex items-center gap-1 text-lg font-bold text-green">
 							<Award className="h-4 w-4" />
 							{stats.achievements.unlocked}
 						</div>
-						<div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Badges</div>
+						<div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+							Badges
+						</div>
 					</div>
 				</div>
 			</div>

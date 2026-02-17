@@ -36,7 +36,11 @@ export function ProfileSettings() {
 			await new Promise((resolve) => setTimeout(resolve, 1000));
 			toast({ title: "Profile updated", description: "Your changes have been saved." });
 		} catch {
-			toast({ title: "Error", description: "Failed to save changes.", variant: "destructive" });
+			toast({
+				title: "Error",
+				description: "Failed to save changes.",
+				variant: "destructive",
+			});
 		} finally {
 			setIsLoading(false);
 		}
@@ -86,7 +90,9 @@ export function ProfileSettings() {
 
 				<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 					<div className="space-y-1.5">
-						<Label htmlFor="name" className="text-xs">Name</Label>
+						<Label htmlFor="name" className="text-xs">
+							Name
+						</Label>
 						<Input
 							id="name"
 							value={profile.name}
@@ -94,7 +100,9 @@ export function ProfileSettings() {
 						/>
 					</div>
 					<div className="space-y-1.5">
-						<Label htmlFor="email" className="text-xs">Email</Label>
+						<Label htmlFor="email" className="text-xs">
+							Email
+						</Label>
 						<Input
 							id="email"
 							type="email"
@@ -103,15 +111,21 @@ export function ProfileSettings() {
 						/>
 					</div>
 					<div className="space-y-1.5">
-						<Label htmlFor="location" className="text-xs">Location</Label>
+						<Label htmlFor="location" className="text-xs">
+							Location
+						</Label>
 						<Input
 							id="location"
 							value={profile.location}
-							onChange={(e) => setProfile((p) => ({ ...p, location: e.target.value }))}
+							onChange={(e) =>
+								setProfile((p) => ({ ...p, location: e.target.value }))
+							}
 						/>
 					</div>
 					<div className="space-y-1.5">
-						<Label htmlFor="website" className="text-xs">Website</Label>
+						<Label htmlFor="website" className="text-xs">
+							Website
+						</Label>
 						<Input
 							id="website"
 							value={profile.website}
@@ -121,7 +135,9 @@ export function ProfileSettings() {
 				</div>
 
 				<div className="space-y-1.5">
-					<Label htmlFor="bio" className="text-xs">Bio</Label>
+					<Label htmlFor="bio" className="text-xs">
+						Bio
+					</Label>
 					<Textarea
 						id="bio"
 						value={profile.bio}

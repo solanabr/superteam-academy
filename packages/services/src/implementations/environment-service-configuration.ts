@@ -1,6 +1,6 @@
 import type {
-    ServiceConfiguration,
-    ConfigurationOptions,
+	ServiceConfiguration,
+	ConfigurationOptions,
 } from "../interfaces/service-configuration";
 
 export class EnvironmentServiceConfiguration implements ServiceConfiguration {

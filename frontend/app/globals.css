@@ -53,40 +53,84 @@
 	--animate-float: float 6s ease-in-out infinite;
 
 	@keyframes accordion-down {
-		from { height: 0; }
-		to { height: var(--radix-accordion-content-height); }
+		from {
+			height: 0;
+		}
+		to {
+			height: var(--radix-accordion-content-height);
+		}
 	}
 	@keyframes accordion-up {
-		from { height: var(--radix-accordion-content-height); }
-		to { height: 0; }
+		from {
+			height: var(--radix-accordion-content-height);
+		}
+		to {
+			height: 0;
+		}
 	}
 	@keyframes fade-in {
-		from { opacity: 0; }
-		to { opacity: 1; }
+		from {
+			opacity: 0;
+		}
+		to {
+			opacity: 1;
+		}
 	}
 	@keyframes fade-up {
-		from { opacity: 0; transform: translateY(16px); }
-		to { opacity: 1; transform: translateY(0); }
+		from {
+			opacity: 0;
+			transform: translateY(16px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
 	}
 	@keyframes slide-in {
-		from { opacity: 0; transform: translateX(-8px); }
-		to { opacity: 1; transform: translateX(0); }
+		from {
+			opacity: 0;
+			transform: translateX(-8px);
+		}
+		to {
+			opacity: 1;
+			transform: translateX(0);
+		}
 	}
 	@keyframes scale-in {
-		from { opacity: 0; transform: scale(0.95); }
-		to { opacity: 1; transform: scale(1); }
+		from {
+			opacity: 0;
+			transform: scale(0.95);
+		}
+		to {
+			opacity: 1;
+			transform: scale(1);
+		}
 	}
 	@keyframes shimmer {
-		0% { background-position: -200% 0; }
-		100% { background-position: 200% 0; }
+		0% {
+			background-position: -200% 0;
+		}
+		100% {
+			background-position: 200% 0;
+		}
 	}
 	@keyframes pulse-soft {
-		0%, 100% { opacity: 1; }
-		50% { opacity: 0.7; }
+		0%,
+		100% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0.7;
+		}
 	}
 	@keyframes float {
-		0%, 100% { transform: translateY(0); }
-		50% { transform: translateY(-8px); }
+		0%,
+		100% {
+			transform: translateY(0);
+		}
+		50% {
+			transform: translateY(-8px);
+		}
 	}
 }
 
@@ -130,11 +174,16 @@
 		@apply bg-background text-foreground font-sans;
 		font-feature-settings: "ss01", "ss02", "cv01";
 	}
-	h1, h2, h3, h4 {
+	h1,
+	h2,
+	h3,
+	h4 {
 		font-family: var(--font-display);
 		letter-spacing: -0.02em;
 	}
-	code, pre, kbd {
+	code,
+	pre,
+	kbd {
 		font-family: var(--font-mono);
 	}
 	button:not([disabled]) {
@@ -195,12 +244,28 @@
 	.animate-stagger > * {
 		animation: fade-up 0.5s ease-out both;
 	}
-	.animate-stagger > *:nth-child(1) { animation-delay: 0ms; }
-	.animate-stagger > *:nth-child(2) { animation-delay: 80ms; }
-	.animate-stagger > *:nth-child(3) { animation-delay: 160ms; }
-	.animate-stagger > *:nth-child(4) { animation-delay: 240ms; }
-	.animate-stagger > *:nth-child(5) { animation-delay: 320ms; }
-	.animate-stagger > *:nth-child(6) { animation-delay: 400ms; }
-	.animate-stagger > *:nth-child(7) { animation-delay: 480ms; }
-	.animate-stagger > *:nth-child(8) { animation-delay: 560ms; }
+	.animate-stagger > *:nth-child(1) {
+		animation-delay: 0ms;
+	}
+	.animate-stagger > *:nth-child(2) {
+		animation-delay: 80ms;
+	}
+	.animate-stagger > *:nth-child(3) {
+		animation-delay: 160ms;
+	}
+	.animate-stagger > *:nth-child(4) {
+		animation-delay: 240ms;
+	}
+	.animate-stagger > *:nth-child(5) {
+		animation-delay: 320ms;
+	}
+	.animate-stagger > *:nth-child(6) {
+		animation-delay: 400ms;
+	}
+	.animate-stagger > *:nth-child(7) {
+		animation-delay: 480ms;
+	}
+	.animate-stagger > *:nth-child(8) {
+		animation-delay: 560ms;
+	}
 }

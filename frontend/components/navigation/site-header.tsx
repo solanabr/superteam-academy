@@ -111,11 +111,7 @@ export function SiteHeader() {
 								</kbd>
 							</button>
 
-							<Button
-								variant="ghost"
-								size="sm"
-								onClick={() => setLoginOpen(true)}
-							>
+							<Button variant="ghost" size="sm" onClick={() => setLoginOpen(true)}>
 								Log in
 							</Button>
 							<Button
