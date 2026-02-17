@@ -12,12 +12,11 @@ import {
   UnsafeBurnerWalletAdapter,
 } from "@solana/wallet-adapter-wallets";
 import "@solana/wallet-adapter-react-ui/styles.css";
+import { ACADEMY_RPC_URL } from "@/lib/generated/academy-program";
 
 type Web3ProviderProps = {
   children: ReactNode;
 };
-
-const DEVNET_RPC_ENDPOINT = "https://api.devnet.solana.com";
 
 export function Web3Provider({ children }: Web3ProviderProps) {
   const wallets = useMemo(
@@ -30,7 +29,7 @@ export function Web3Provider({ children }: Web3ProviderProps) {
   );
 
   return (
-    <ConnectionProvider endpoint={DEVNET_RPC_ENDPOINT}>
+    <ConnectionProvider endpoint={ACADEMY_RPC_URL}>
       <WalletProvider wallets={wallets} autoConnect>
         <WalletModalProvider>{children}</WalletModalProvider>
       </WalletProvider>

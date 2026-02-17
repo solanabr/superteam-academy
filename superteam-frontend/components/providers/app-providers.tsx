@@ -11,7 +11,7 @@ type AppProvidersProps = {
 
 export function AppProviders({ children }: AppProvidersProps) {
   return (
-    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
       <Web3Provider>
         <WalletAuthProvider>{children}</WalletAuthProvider>
       </Web3Provider>

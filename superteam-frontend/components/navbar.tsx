@@ -1,8 +1,9 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useTheme } from "next-themes";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import {
@@ -18,6 +19,8 @@ import {
   LogOut,
   Wallet,
   Loader2,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -66,6 +69,9 @@ export function Navbar() {
   const { setVisible } = useWalletModal();
   const { isLoading, isAuthenticated, user, status, logout } = useWalletAuth();
   const { snapshot } = useIdentitySnapshot();
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const profile = snapshot?.profile;
   const connectedAddress = publicKey?.toBase58() ?? null;
@@ -103,6 +109,22 @@ export function Navbar() {
 
         {/* Right side - Desktop */}
         <div className="hidden items-center gap-3 md:flex">
+          {/* Theme toggle (always visible) */}
+          {mounted && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            >
+              {theme === "dark" ? (
+                <Sun className="h-4 w-4" />
+              ) : (
+                <Moon className="h-4 w-4" />
+              )}
+            </Button>
+          )}
+
           {showConnectButton && (
             <Button
               variant="outline"
@@ -274,6 +296,21 @@ export function Navbar() {
                 Lvl {profile?.level ?? "—"}
               </Badge>
             </div>
+          )}
+
+          {/* Mobile theme toggle */}
+          {mounted && (
+            <button
+              className="flex items-center gap-3 rounded-lg px-3 py-2.5 mb-1 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            >
+              {theme === "dark" ? (
+                <Sun className="h-4 w-4" />
+              ) : (
+                <Moon className="h-4 w-4" />
+              )}
+              {theme === "dark" ? "Light Mode" : "Dark Mode"}
+            </button>
           )}
 
           <nav className="flex flex-col gap-1">

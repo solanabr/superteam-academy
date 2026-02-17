@@ -10,41 +10,78 @@
 
 @layer base {
   :root {
-    --background: 200 10% 6%;
-    --foreground: 60 10% 95%;
-    --card: 200 10% 9%;
-    --card-foreground: 60 10% 95%;
-    --popover: 200 10% 9%;
-    --popover-foreground: 60 10% 95%;
-    --primary: 152 72% 40%;
-    --primary-foreground: 200 10% 6%;
-    --secondary: 200 8% 14%;
-    --secondary-foreground: 60 10% 90%;
-    --muted: 200 8% 14%;
-    --muted-foreground: 200 8% 55%;
-    --accent: 45 95% 55%;
-    --accent-foreground: 200 10% 6%;
+    --background: 40 40% 97%;
+    --foreground: 135 13% 12%;
+    --card: 40 30% 95%;
+    --card-foreground: 135 13% 12%;
+    --popover: 40 30% 95%;
+    --popover-foreground: 135 13% 12%;
+    --primary: 153 100% 27%;
+    --primary-foreground: 40 40% 97%;
+    --secondary: 135 6% 91%;
+    --secondary-foreground: 135 13% 15%;
+    --muted: 135 5% 92%;
+    --muted-foreground: 135 8% 40%;
+    --accent: 47 100% 63%;
+    --accent-foreground: 135 13% 12%;
     --destructive: 0 72% 51%;
-    --destructive-foreground: 60 10% 95%;
-    --border: 200 8% 18%;
-    --input: 200 8% 18%;
-    --ring: 152 72% 40%;
-    --chart-1: 152 72% 40%;
-    --chart-2: 45 95% 55%;
+    --destructive-foreground: 40 40% 97%;
+    --border: 135 8% 85%;
+    --input: 135 8% 85%;
+    --ring: 136 39% 30%;
+    --chart-1: 153 100% 27%;
+    --chart-2: 47 100% 63%;
     --chart-3: 200 70% 50%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
     --radius: 0.625rem;
-    --sidebar-background: 200 10% 7%;
-    --sidebar-foreground: 60 10% 90%;
-    --sidebar-primary: 152 72% 40%;
-    --sidebar-primary-foreground: 200 10% 6%;
-    --sidebar-accent: 200 8% 14%;
-    --sidebar-accent-foreground: 60 10% 90%;
-    --sidebar-border: 200 8% 18%;
-    --sidebar-ring: 152 72% 40%;
-    --emerald: 152 72% 40%;
-    --gold: 45 95% 55%;
+    --sidebar-background: 40 30% 95%;
+    --sidebar-foreground: 135 13% 15%;
+    --sidebar-primary: 153 100% 27%;
+    --sidebar-primary-foreground: 40 40% 97%;
+    --sidebar-accent: 135 6% 91%;
+    --sidebar-accent-foreground: 135 13% 15%;
+    --sidebar-border: 135 8% 85%;
+    --sidebar-ring: 136 39% 30%;
+    --emerald: 153 100% 27%;
+    --gold: 47 100% 63%;
+  }
+
+  .dark {
+    --background: 135 13% 12%;
+    --foreground: 40 30% 93%;
+    --card: 135 10% 15%;
+    --card-foreground: 40 30% 93%;
+    --popover: 135 10% 15%;
+    --popover-foreground: 40 30% 93%;
+    --primary: 153 100% 27%;
+    --primary-foreground: 40 30% 93%;
+    --secondary: 135 8% 18%;
+    --secondary-foreground: 40 20% 88%;
+    --muted: 135 8% 18%;
+    --muted-foreground: 135 8% 55%;
+    --accent: 47 100% 63%;
+    --accent-foreground: 135 13% 12%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 40 30% 93%;
+    --border: 135 8% 22%;
+    --input: 135 8% 22%;
+    --ring: 136 39% 30%;
+    --chart-1: 153 100% 27%;
+    --chart-2: 47 100% 63%;
+    --chart-3: 200 70% 50%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+    --sidebar-background: 135 13% 13%;
+    --sidebar-foreground: 40 20% 88%;
+    --sidebar-primary: 153 100% 27%;
+    --sidebar-primary-foreground: 40 30% 93%;
+    --sidebar-accent: 135 8% 18%;
+    --sidebar-accent-foreground: 40 20% 88%;
+    --sidebar-border: 135 8% 22%;
+    --sidebar-ring: 136 39% 30%;
+    --emerald: 153 100% 27%;
+    --gold: 47 100% 63%;
   }
 }
 
@@ -55,6 +92,9 @@
   body {
     @apply bg-background text-foreground;
   }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-archivo), system-ui, sans-serif;
+  }
 }
 
 /* Custom scrollbar */
@@ -63,14 +103,14 @@
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: hsl(200 10% 9%);
+  background: hsl(var(--card));
 }
 ::-webkit-scrollbar-thumb {
-  background: hsl(200 8% 22%);
+  background: hsl(var(--border));
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(200 8% 30%);
+  background: hsl(var(--muted-foreground));
 }
 
 /* Code editor styling */
@@ -82,10 +122,10 @@
 
 /* Glow effects */
 .glow-green {
-  box-shadow: 0 0 20px hsl(152 72% 40% / 0.15), 0 0 60px hsl(152 72% 40% / 0.05);
+  box-shadow: 0 0 20px hsl(var(--emerald) / 0.15), 0 0 60px hsl(var(--emerald) / 0.05);
 }
 .glow-gold {
-  box-shadow: 0 0 20px hsl(45 95% 55% / 0.15), 0 0 60px hsl(45 95% 55% / 0.05);
+  box-shadow: 0 0 20px hsl(var(--gold) / 0.15), 0 0 60px hsl(var(--gold) / 0.05);
 }
 
 /* Streak fire animation */
