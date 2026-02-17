@@ -19,10 +19,7 @@ type Web3ProviderProps = {
 
 export function Web3Provider({ children }: Web3ProviderProps) {
   const wallets = useMemo(
-    () => [
-      new PhantomWalletAdapter(),
-      new SolflareWalletAdapter(),
-    ],
+    () => [new PhantomWalletAdapter(), new SolflareWalletAdapter()],
     [],
   );
 

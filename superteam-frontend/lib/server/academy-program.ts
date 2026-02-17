@@ -249,10 +249,28 @@ function countToIntensity(count: number): number {
   return 0;
 }
 
-export async function fetchActivityFromChain(
+export type ChainActivityItem = {
+  type: "lesson" | "course";
+  text: string;
+  course: string;
+  xp: number;
+  ts: number;
+};
+
+export type ChainActivityData = {
+  days: Array<{ date: string; intensity: number; count: number }>;
+  recent: ChainActivityItem[];
+};
+
+/**
+ * Single RPC call to fetch learner signatures, then derive both
+ * heatmap days and recent activity items from the same data.
+ */
+export async function fetchChainActivity(
   user: PublicKey,
   daysBack: number,
-): Promise<Array<{ date: string; intensity: number; count: number }>> {
+  recentLimit = 20,
+): Promise<ChainActivityData> {
   try {
     const { connection } = getClient();
     const learnerPda = deriveLearnerPda(user);
@@ -262,24 +280,54 @@ export async function fetchActivityFromChain(
 
     const cutoff = Date.now() / 1000 - daysBack * 86400;
     const countsByDate = new Map<string, number>();
+    const recent: ChainActivityItem[] = [];
 
     for (const sig of signatures) {
-      if (!sig.blockTime || sig.blockTime < cutoff) continue;
-      if (sig.err) continue;
-      const date = new Date(sig.blockTime * 1000).toISOString().split("T")[0]!;
-      countsByDate.set(date, (countsByDate.get(date) ?? 0) + 1);
+      if (!sig.blockTime || sig.err) continue;
+      if (sig.blockTime >= cutoff) {
+        const date = new Date(sig.blockTime * 1000)
+          .toISOString()
+          .split("T")[0]!;
+        countsByDate.set(date, (countsByDate.get(date) ?? 0) + 1);
+      }
+      if (recent.length < recentLimit) {
+        recent.push({
+          type: "lesson",
+          text: "Completed a lesson",
+          course: "",
+          xp: 50,
+          ts: sig.blockTime * 1000,
+        });
+      }
     }
 
-    const result: Array<{ date: string; intensity: number; count: number }> =
-      [];
+    const days: ChainActivityData["days"] = [];
     for (const [date, count] of countsByDate) {
-      result.push({ date, intensity: countToIntensity(count), count });
+      days.push({ date, intensity: countToIntensity(count), count });
     }
 
-    return result;
+    return { days, recent };
   } catch {
-    return [];
+    return { days: [], recent: [] };
   }
+}
+
+/** @deprecated use fetchChainActivity instead */
+export async function fetchActivityFromChain(
+  user: PublicKey,
+  daysBack: number,
+): Promise<Array<{ date: string; intensity: number; count: number }>> {
+  const { days } = await fetchChainActivity(user, daysBack);
+  return days;
+}
+
+/** @deprecated use fetchChainActivity instead */
+export async function fetchRecentActivityFromChain(
+  user: PublicKey,
+  limit = 20,
+): Promise<ChainActivityItem[]> {
+  const { recent } = await fetchChainActivity(user, 365, limit);
+  return recent;
 }
 
 export async function finalizeCourseOnChain(

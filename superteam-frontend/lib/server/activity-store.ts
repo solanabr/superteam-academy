@@ -1,7 +1,7 @@
 import "server-only";
 
 import { PublicKey } from "@solana/web3.js";
-import { fetchActivityFromChain } from "./academy-program";
+import { fetchChainActivity } from "./academy-program";
 
 const XP_PER_LESSON = 50;
 
@@ -76,21 +76,29 @@ export function recordCourseFinalized(
   recentActivityByWallet.set(wallet, items.slice(0, MAX_RECENT));
 }
 
-export async function getActivityDays(
+/**
+ * Fetch both heatmap days and recent activity from a single RPC call.
+ */
+export async function getActivityData(
   wallet: string,
   daysBack = 365,
-): Promise<Array<{ date: string; intensity: number; count: number }>> {
-  const onChainDays = await fetchActivityFromChain(
+): Promise<{
+  days: Array<{ date: string; intensity: number; count: number }>;
+  recentActivity: RecentActivityItem[];
+}> {
+  const chainData = await fetchChainActivity(
     new PublicKey(wallet),
     daysBack,
+    MAX_RECENT,
   );
+
+  // --- Heatmap days ---
   const onChainMap = new Map<string, { intensity: number; count: number }>();
-  for (const day of onChainDays) {
+  for (const day of chainData.days) {
     onChainMap.set(day.date, { intensity: day.intensity, count: day.count });
   }
-
   const memoryCounts = activityCountsByWallet.get(wallet);
-  const result: Array<{ date: string; intensity: number; count: number }> = [];
+  const days: Array<{ date: string; intensity: number; count: number }> = [];
   const today = new Date();
   for (let i = daysBack - 1; i >= 0; i--) {
     const d = new Date(today);
@@ -100,17 +108,47 @@ export async function getActivityDays(
     const memoryCount = memoryCounts?.get(dateKey) ?? 0;
     const count = Math.max(chain?.count ?? 0, memoryCount);
     const intensity = Math.max(chain?.intensity ?? 0, memoryCount > 0 ? 1 : 0);
-    result.push({ date: dateKey, intensity, count });
+    days.push({ date: dateKey, intensity, count });
   }
-  return result;
-}
 
-export function getRecentActivity(wallet: string): RecentActivityItem[] {
-  const items = recentActivityByWallet.get(wallet) ?? [];
-  return items.map((item) => ({
+  // --- Recent activity ---
+  const memoryItems = recentActivityByWallet.get(wallet) ?? [];
+  const merged = [...memoryItems];
+  for (const ci of chainData.recent) {
+    const isDuplicate = merged.some(
+      (mi) => Math.abs(mi.ts - ci.ts) < 2000 && mi.type === ci.type,
+    );
+    if (!isDuplicate) {
+      merged.push({
+        ...ci,
+        time: formatTimeAgo(ci.ts),
+      });
+    }
+  }
+  merged.sort((a, b) => b.ts - a.ts);
+  const recentActivity = merged.slice(0, MAX_RECENT).map((item) => ({
     ...item,
     time: formatTimeAgo(item.ts),
   }));
+
+  return { days, recentActivity };
+}
+
+/** @deprecated Use getActivityData instead */
+export async function getActivityDays(
+  wallet: string,
+  daysBack = 365,
+): Promise<Array<{ date: string; intensity: number; count: number }>> {
+  const { days } = await getActivityData(wallet, daysBack);
+  return days;
+}
+
+/** @deprecated Use getActivityData instead */
+export async function getRecentActivity(
+  wallet: string,
+): Promise<RecentActivityItem[]> {
+  const { recentActivity } = await getActivityData(wallet);
+  return recentActivity;
 }
 
 export function getTotalCompleted(wallet: string): number {

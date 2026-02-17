@@ -4,33 +4,20 @@ import { DashboardContent } from "@/components/dashboard/dashboard-content";
 import { requireAuthenticatedUser } from "@/lib/server/auth-adapter";
 import { getIdentitySnapshotForUser } from "@/lib/server/solana-identity-adapter";
 import { getAllCourseProgressSnapshots } from "@/lib/server/academy-progress-adapter";
-import {
-  getActivityDays,
-  getRecentActivity,
-} from "@/lib/server/activity-store";
+import { getActivityData } from "@/lib/server/activity-store";
 import { getCachedLeaderboard } from "@/lib/server/leaderboard-cache";
 
 export default async function DashboardPage() {
   const user = await requireAuthenticatedUser();
-  let snapshot,
-    courseSnapshots,
-    activityDays,
-    recentActivity,
-    leaderboardEntries;
+  let snapshot, courseSnapshots, activityData, leaderboardEntries;
   try {
-    [
-      snapshot,
-      courseSnapshots,
-      activityDays,
-      recentActivity,
-      leaderboardEntries,
-    ] = await Promise.all([
-      getIdentitySnapshotForUser(user),
-      getAllCourseProgressSnapshots(user.walletAddress),
-      getActivityDays(user.walletAddress, 365),
-      Promise.resolve(getRecentActivity(user.walletAddress)),
-      getCachedLeaderboard(),
-    ]);
+    [snapshot, courseSnapshots, activityData, leaderboardEntries] =
+      await Promise.all([
+        getIdentitySnapshotForUser(user),
+        getAllCourseProgressSnapshots(user.walletAddress),
+        getActivityData(user.walletAddress, 365),
+        getCachedLeaderboard(),
+      ]);
   } catch (error: any) {
     // Network error - use fallbacks
     if (
@@ -44,8 +31,7 @@ export default async function DashboardPage() {
       );
       snapshot = await getIdentitySnapshotForUser(user).catch(() => null);
       courseSnapshots = [];
-      activityDays = await getActivityDays(user.walletAddress, 365);
-      recentActivity = getRecentActivity(user.walletAddress);
+      activityData = await getActivityData(user.walletAddress, 365);
       leaderboardEntries = [];
     } else {
       throw error;
@@ -60,8 +46,8 @@ export default async function DashboardPage() {
         <DashboardContent
           identity={snapshot}
           coursesData={courses}
-          activityDays={activityDays}
-          recentActivity={recentActivity}
+          activityDays={activityData.days}
+          recentActivity={activityData.recentActivity}
           leaderboardEntries={leaderboardEntries.slice(0, 10)}
         />
       </main>

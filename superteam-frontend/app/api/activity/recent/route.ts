@@ -7,6 +7,6 @@ export async function GET() {
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  const items = getRecentActivity(user.walletAddress);
+  const items = await getRecentActivity(user.walletAddress);
   return NextResponse.json({ items });
 }

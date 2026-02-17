@@ -235,34 +235,54 @@ export function DashboardContent({
             <h2 className="text-lg font-semibold text-foreground mb-4">
               Recommended for You
             </h2>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {recommendedCourses.map((course) => (
-                <Link key={course.slug} href={`/courses/${course.slug}`}>
-                  <div className="rounded-xl border border-border bg-card p-5 transition-all hover:border-primary/20 h-full">
-                    <Badge
-                      variant="outline"
-                      className="text-[10px] border-border text-muted-foreground mb-3"
-                    >
-                      {course.difficulty}
-                    </Badge>
-                    <h3 className="text-base font-semibold text-foreground mb-1">
-                      {course.title}
-                    </h3>
-                    <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-                      {course.description}
-                    </p>
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" /> {course.duration}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Zap className="h-3 w-3 text-primary" /> {course.xp} XP
-                      </span>
+            {recommendedCourses.length > 0 ? (
+              <div className="grid gap-4 sm:grid-cols-2">
+                {recommendedCourses.map((course) => (
+                  <Link key={course.slug} href={`/courses/${course.slug}`}>
+                    <div className="rounded-xl border border-border bg-card p-5 transition-all hover:border-primary/20 h-full">
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] border-border text-muted-foreground mb-3"
+                      >
+                        {course.difficulty}
+                      </Badge>
+                      <h3 className="text-base font-semibold text-foreground mb-1">
+                        {course.title}
+                      </h3>
+                      <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                        {course.description}
+                      </p>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" /> {course.duration}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Zap className="h-3 w-3 text-primary" /> {course.xp}{" "}
+                          XP
+                        </span>
+                      </div>
                     </div>
-                  </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-xl border border-border bg-card p-6 text-center">
+                <Trophy className="h-8 w-8 text-primary mx-auto mb-3" />
+                <p className="text-sm font-medium text-foreground mb-1">
+                  You{"'"}ve started all available courses!
+                </p>
+                <p className="text-xs text-muted-foreground mb-4">
+                  Keep going and finish what you started, or check back later
+                  for new content.
+                </p>
+                <Link href="/courses">
+                  <Button size="sm" variant="outline" className="gap-1.5">
+                    <BookOpen className="h-3.5 w-3.5" />
+                    View All Courses
+                  </Button>
                 </Link>
-              ))}
-            </div>
+              </div>
+            )}
           </section>
         </div>
 
@@ -316,7 +336,7 @@ export function DashboardContent({
               Recent Activity
             </h2>
             <div className="rounded-xl border border-border bg-card overflow-hidden">
-              <div className="divide-y divide-border">
+              <div className="divide-y divide-border max-h-[400px] overflow-y-auto">
                 {recentActivity.length === 0 ? (
                   <p className="px-4 py-6 text-sm text-muted-foreground text-center">
                     No recent activity. Complete a lesson to see it here.
