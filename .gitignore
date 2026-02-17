@@ -89,6 +89,9 @@ supabase/.temp
 # Debug
 *.pem
 
+# Audit (internal notes)
+audit/
+
 # Misc
 *.log
 *.tmp
