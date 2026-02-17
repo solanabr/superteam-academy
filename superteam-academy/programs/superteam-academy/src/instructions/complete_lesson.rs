@@ -59,11 +59,13 @@ pub struct CompleteLesson<'info> {
 
     #[account(
         mut,
+        seeds = [b"enrollment", course.course_id.as_bytes(), learner.key().as_ref()],
+        bump = enrollment.bump,
         constraint = enrollment.course == course.key() @ AcademyError::EnrollmentCourseMismatch,
     )]
     pub enrollment: Account<'info, Enrollment>,
 
-    /// CHECK: Used for PDA derivation only.
+    /// CHECK: Tied to enrollment PDA via seeds constraint.
     pub learner: AccountInfo<'info>,
 
     /// CHECK: Token-2022 ATA for learner's XP. Validated by Token-2022 program during mint CPI.

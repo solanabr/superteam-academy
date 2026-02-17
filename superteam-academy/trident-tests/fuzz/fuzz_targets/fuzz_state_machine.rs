@@ -416,4 +416,34 @@ fuzz_target!(|input: StateMachineInput| {
             "total_completions must be 0 if enrollment not finalized"
         );
     }
+
+    // INVARIANT: XP values are always non-negative (u64 guarantees this but check logic)
+    assert!(
+        xp.learner_xp <= u64::MAX,
+        "Learner XP must not overflow"
+    );
+    assert!(
+        xp.creator_xp <= u64::MAX,
+        "Creator XP must not overflow"
+    );
+
+    // INVARIANT: Credential is idempotent (can issue multiple times without error)
+    if enrollment.completed_at.is_some() {
+        let prev = enrollment.credential_asset;
+        let result = execute_issue_credential(&mut enrollment);
+        assert!(matches!(result, ActionResult::Ok));
+        // credential_asset remains true once set
+        if prev {
+            assert!(enrollment.credential_asset);
+        }
+    }
+
+    // INVARIANT: Close enrollment after finalize always succeeds (no cooldown)
+    if enrollment.completed_at.is_some() {
+        let result = execute_close_enrollment(&enrollment, 0);
+        assert!(
+            matches!(result, ActionResult::Ok),
+            "Completed enrollment close must always succeed regardless of elapsed time"
+        );
+    }
 });

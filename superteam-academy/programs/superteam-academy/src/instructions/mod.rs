@@ -7,6 +7,7 @@ pub mod initialize;
 pub mod issue_credential;
 pub mod update_config;
 pub mod update_course;
+pub mod upgrade_credential;
 
 pub use close_enrollment::*;
 pub use complete_lesson::*;
@@ -17,3 +18,4 @@ pub use initialize::*;
 pub use issue_credential::*;
 pub use update_config::*;
 pub use update_course::*;
+pub use upgrade_credential::*;

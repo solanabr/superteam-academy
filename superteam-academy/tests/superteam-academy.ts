@@ -15,6 +15,24 @@ import {
   getAccount,
 } from "@solana/spl-token";
 import { expect } from "chai";
+import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
+import {
+  createCollectionV2,
+  fetchAssetV1,
+  fetchCollectionV1,
+  mplCore,
+} from "@metaplex-foundation/mpl-core";
+import {
+  generateSigner,
+  publicKey as umiPublicKey,
+  signerIdentity,
+  createSignerFromKeypair as umiCreateSignerFromKeypair,
+} from "@metaplex-foundation/umi";
+import {
+  fromWeb3JsKeypair,
+  fromWeb3JsPublicKey,
+  toWeb3JsPublicKey,
+} from "@metaplex-foundation/umi-web3js-adapters";
 
 describe("superteam-academy", () => {
   const provider = anchor.AnchorProvider.env();
@@ -1179,6 +1197,7 @@ describe("superteam-academy", () => {
       await program.methods
         .closeEnrollment()
         .accountsPartial({
+          course: coursePda,
           enrollment: enrollmentPda,
           learner: learner.publicKey,
         })
@@ -1251,6 +1270,7 @@ describe("superteam-academy", () => {
         await program.methods
           .closeEnrollment()
           .accountsPartial({
+            course: freshCoursePda,
             enrollment: freshEnrollPda,
             learner: learner.publicKey,
           })
@@ -1399,6 +1419,7 @@ describe("superteam-academy", () => {
       await program.methods
         .closeEnrollment()
         .accountsPartial({
+          course: coursePda,
           enrollment: learner2EnrollPda,
           learner: learner2.publicKey,
         })
@@ -1500,6 +1521,7 @@ describe("superteam-academy", () => {
 
     it("complete_lesson with wrong course/enrollment pair fails", async () => {
       // Pass the enrollment for "other-mismatch" but the course for "solana-101"
+      // PDA seed validation rejects: seeds ["enrollment", "solana-101", learner] != otherEnrollPda
       try {
         await program.methods
           .completeLesson(0)
@@ -1517,9 +1539,7 @@ describe("superteam-academy", () => {
         expect.fail("Should have thrown");
       } catch (err) {
         if (err instanceof AnchorError) {
-          expect(err.error.errorCode.code).to.equal(
-            "EnrollmentCourseMismatch"
-          );
+          expect(err.error.errorCode.code).to.equal("ConstraintSeeds");
         } else {
           expect(err).to.exist;
         }
@@ -1546,9 +1566,7 @@ describe("superteam-academy", () => {
         expect.fail("Should have thrown");
       } catch (err) {
         if (err instanceof AnchorError) {
-          expect(err.error.errorCode.code).to.equal(
-            "EnrollmentCourseMismatch"
-          );
+          expect(err.error.errorCode.code).to.equal("ConstraintSeeds");
         } else {
           expect(err).to.exist;
         }
@@ -1963,24 +1981,793 @@ describe("superteam-academy", () => {
   });
 
   // ===========================================================================
-  // Phase 6: Credentials (Metaplex Core -- skipped on localnet)
+  // Phase 6: Credentials (Metaplex Core)
   // ===========================================================================
   describe("Phase 6: Credentials", () => {
-    // TODO: issue_credential tests require Metaplex Core program on localnet.
-    // To test:
-    //   1. Clone mpl-core from mainnet: solana program dump CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d mpl_core.so
-    //   2. Add to Anchor.toml [test.validator]:
-    //      [[test.validator.clone]]
-    //      address = "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d"
-    //   3. OR use surfpool with mainnet state cloning
-    //
-    // The flow would be:
-    //   - Enroll + complete + finalize a course
-    //   - Create a track collection via Metaplex Core
-    //   - Call issue_credential with credential_name + metadata_uri
-    //   - Verify enrollment.credential_asset is set
-    //   - Call issue_credential again to test upgrade path
-    //   - Verify credential_asset_mismatch error with wrong asset
-    it.skip("issue_credential (requires Metaplex Core on localnet)", () => {});
+    const MPL_CORE_PROGRAM_ID = new PublicKey(
+      "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d"
+    );
+
+    const credLearner = Keypair.generate();
+    let credLearnerTokenAccount: PublicKey;
+    const credCourseId = "cred-test-course";
+    let credCoursePda: PublicKey;
+    let credEnrollPda: PublicKey;
+    let collectionAddress: PublicKey;
+    let credentialKeypair: Keypair;
+
+    before(async () => {
+      // Airdrop to credential learner
+      const sig = await provider.connection.requestAirdrop(
+        credLearner.publicKey,
+        10 * LAMPORTS_PER_SOL
+      );
+      await provider.connection.confirmTransaction(sig, "confirmed");
+
+      // Create UMI instance and signer from authority wallet
+      const umi = createUmi("http://127.0.0.1:8899").use(mplCore());
+      const umiAuthority = umi.eddsa.createKeypairFromSecretKey(
+        authority.payer.secretKey
+      );
+      umi.use(signerIdentity(umiCreateSignerFromKeypair(umi, umiAuthority)));
+
+      // Create a Metaplex Core collection with update authority = Config PDA
+      const collectionSigner = generateSigner(umi);
+      await createCollectionV2(umi, {
+        collection: collectionSigner,
+        name: "Track 1 Credentials",
+        uri: "https://arweave.net/collection-metadata",
+        updateAuthority: fromWeb3JsPublicKey(configPda),
+      }).sendAndConfirm(umi);
+
+      collectionAddress = toWeb3JsPublicKey(collectionSigner.publicKey);
+
+      // Create course for credential tests
+      [credCoursePda] = PublicKey.findProgramAddressSync(
+        [Buffer.from("course"), Buffer.from(credCourseId)],
+        program.programId
+      );
+
+      await program.methods
+        .createCourse({
+          courseId: credCourseId,
+          creator: creator.publicKey,
+          contentTxId: contentTxId,
+          lessonCount: 2,
+          difficulty: 1,
+          xpPerLesson: 50,
+          trackId: 1,
+          trackLevel: 1,
+          prerequisite: null,
+          completionBonusXp: 100,
+          creatorRewardXp: 0,
+          minCompletionsForReward: 0,
+        })
+        .accountsPartial({
+          course: credCoursePda,
+          config: configPda,
+          authority: authority.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+
+      // Create ATA for credential learner
+      credLearnerTokenAccount = getAssociatedTokenAddressSync(
+        xpMintKeypair.publicKey,
+        credLearner.publicKey,
+        false,
+        TOKEN_2022_PROGRAM_ID,
+        ASSOCIATED_TOKEN_PROGRAM_ID
+      );
+
+      const createAtaIx = createAssociatedTokenAccountInstruction(
+        authority.publicKey,
+        credLearnerTokenAccount,
+        credLearner.publicKey,
+        xpMintKeypair.publicKey,
+        TOKEN_2022_PROGRAM_ID,
+        ASSOCIATED_TOKEN_PROGRAM_ID
+      );
+      const tx = new anchor.web3.Transaction().add(createAtaIx);
+      await provider.sendAndConfirm(tx);
+
+      // Enroll credential learner
+      [credEnrollPda] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("enrollment"),
+          Buffer.from(credCourseId),
+          credLearner.publicKey.toBuffer(),
+        ],
+        program.programId
+      );
+
+      await program.methods
+        .enroll(credCourseId)
+        .accountsPartial({
+          course: credCoursePda,
+          enrollment: credEnrollPda,
+          learner: credLearner.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([credLearner])
+        .rpc();
+
+      // Complete all lessons
+      for (let i = 0; i < 2; i++) {
+        const lsig = await program.methods
+          .completeLesson(i)
+          .accountsPartial({
+            config: configPda,
+            course: credCoursePda,
+            enrollment: credEnrollPda,
+            learner: credLearner.publicKey,
+            learnerTokenAccount: credLearnerTokenAccount,
+            xpMint: xpMintKeypair.publicKey,
+            backendSigner: authority.publicKey,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+          })
+          .rpc();
+        await provider.connection.confirmTransaction(lsig, "confirmed");
+      }
+
+      // Finalize
+      const fsig = await program.methods
+        .finalizeCourse()
+        .accountsPartial({
+          config: configPda,
+          course: credCoursePda,
+          enrollment: credEnrollPda,
+          learner: credLearner.publicKey,
+          learnerTokenAccount: credLearnerTokenAccount,
+          creatorTokenAccount: creatorTokenAccount,
+          creator: creator.publicKey,
+          xpMint: xpMintKeypair.publicKey,
+          backendSigner: authority.publicKey,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .rpc();
+      await provider.connection.confirmTransaction(fsig, "confirmed");
+    });
+
+    it("issues credential NFT for completed course", async () => {
+      credentialKeypair = Keypair.generate();
+
+      const sig = await program.methods
+        .issueCredential("Solana Track - Level 1", "https://arweave.net/cred-metadata-v1")
+        .accountsPartial({
+          config: configPda,
+          course: credCoursePda,
+          enrollment: credEnrollPda,
+          learner: credLearner.publicKey,
+          credentialAsset: credentialKeypair.publicKey,
+          trackCollection: collectionAddress,
+          payer: authority.publicKey,
+          backendSigner: authority.publicKey,
+          mplCoreProgram: MPL_CORE_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([credentialKeypair])
+        .rpc();
+      await provider.connection.confirmTransaction(sig, "confirmed");
+
+      // Verify enrollment.credential_asset is set
+      const enrollment = await program.account.enrollment.fetch(credEnrollPda);
+      expect(enrollment.credentialAsset).to.not.be.null;
+      expect(enrollment.credentialAsset.toBase58()).to.equal(
+        credentialKeypair.publicKey.toBase58()
+      );
+
+      // Verify the credential NFT exists and is owned by Metaplex Core
+      const assetInfo = await provider.connection.getAccountInfo(credentialKeypair.publicKey);
+      expect(assetInfo).to.not.be.null;
+      expect(assetInfo.owner.toBase58()).to.equal(MPL_CORE_PROGRAM_ID.toBase58());
+      // First byte = Key::AssetV1 = 1
+      expect(assetInfo.data[0]).to.equal(1);
+
+      // Fetch asset via UMI and verify properties
+      const umi = createUmi(provider.connection.rpcEndpoint, { commitment: "confirmed" }).use(mplCore());
+      const asset = await fetchAssetV1(
+        umi,
+        fromWeb3JsPublicKey(credentialKeypair.publicKey)
+      );
+
+      expect(asset.name).to.equal("Solana Track - Level 1");
+      expect(asset.uri).to.equal("https://arweave.net/cred-metadata-v1");
+      expect(asset.owner.toString()).to.equal(
+        fromWeb3JsPublicKey(credLearner.publicKey).toString()
+      );
+
+      // Verify frozen (PermanentFreezeDelegate)
+      expect(asset.permanentFreezeDelegate).to.exist;
+      expect(asset.permanentFreezeDelegate.frozen).to.equal(true);
+
+      // Verify attributes
+      expect(asset.attributes).to.exist;
+      const attrList = asset.attributes.attributeList;
+      const trackIdAttr = attrList.find((a) => a.key === "track_id");
+      const levelAttr = attrList.find((a) => a.key === "level");
+      const coursesAttr = attrList.find((a) => a.key === "courses_completed");
+      const xpAttr = attrList.find((a) => a.key === "total_xp");
+
+      expect(trackIdAttr.value).to.equal("1");
+      expect(levelAttr.value).to.equal("1");
+      expect(coursesAttr.value).to.equal("1");
+      expect(xpAttr.value).to.equal("100"); // 50 xp_per_lesson * 2 lessons
+    });
+
+    it("fails to issue credential for unfinalized enrollment", async () => {
+      // Create a separate enrollment that is NOT finalized
+      const unfinalizedLearner = Keypair.generate();
+      const airdropSig = await provider.connection.requestAirdrop(
+        unfinalizedLearner.publicKey,
+        5 * LAMPORTS_PER_SOL
+      );
+      await provider.connection.confirmTransaction(airdropSig, "confirmed");
+
+      const [unfinalizedEnrollPda] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("enrollment"),
+          Buffer.from(credCourseId),
+          unfinalizedLearner.publicKey.toBuffer(),
+        ],
+        program.programId
+      );
+
+      await program.methods
+        .enroll(credCourseId)
+        .accountsPartial({
+          course: credCoursePda,
+          enrollment: unfinalizedEnrollPda,
+          learner: unfinalizedLearner.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([unfinalizedLearner])
+        .rpc();
+
+      const newAssetKeypair = Keypair.generate();
+
+      try {
+        await program.methods
+          .issueCredential("Should Fail", "https://arweave.net/fail")
+          .accountsPartial({
+            config: configPda,
+            course: credCoursePda,
+            enrollment: unfinalizedEnrollPda,
+            learner: unfinalizedLearner.publicKey,
+            credentialAsset: newAssetKeypair.publicKey,
+            trackCollection: collectionAddress,
+            payer: authority.publicKey,
+            backendSigner: authority.publicKey,
+            mplCoreProgram: MPL_CORE_PROGRAM_ID,
+            systemProgram: SystemProgram.programId,
+          })
+          .signers([newAssetKeypair])
+          .rpc();
+        expect.fail("Should have thrown");
+      } catch (err) {
+        if (err instanceof AnchorError) {
+          expect(err.error.errorCode.code).to.equal("CourseNotFinalized");
+        } else {
+          expect(err).to.exist;
+        }
+      }
+    });
+
+    it("double issue_credential fails (already issued)", async () => {
+      const anotherAsset = Keypair.generate();
+      try {
+        await program.methods
+          .issueCredential("Duplicate", "https://arweave.net/dup")
+          .accountsPartial({
+            config: configPda,
+            course: credCoursePda,
+            enrollment: credEnrollPda,
+            learner: credLearner.publicKey,
+            credentialAsset: anotherAsset.publicKey,
+            trackCollection: collectionAddress,
+            payer: authority.publicKey,
+            backendSigner: authority.publicKey,
+            mplCoreProgram: MPL_CORE_PROGRAM_ID,
+            systemProgram: SystemProgram.programId,
+          })
+          .signers([anotherAsset])
+          .rpc();
+        expect.fail("Should have thrown");
+      } catch (err) {
+        if (err instanceof AnchorError) {
+          expect(err.error.errorCode.code).to.equal("CredentialAlreadyIssued");
+        } else {
+          expect(err).to.exist;
+        }
+      }
+    });
+
+    it("upgrades existing credential", async () => {
+      const sig = await program.methods
+        .upgradeCredential("Solana Track - Level 1 (Updated)", "https://arweave.net/cred-metadata-v2")
+        .accountsPartial({
+          config: configPda,
+          course: credCoursePda,
+          enrollment: credEnrollPda,
+          learner: credLearner.publicKey,
+          credentialAsset: credentialKeypair.publicKey,
+          trackCollection: collectionAddress,
+          payer: authority.publicKey,
+          backendSigner: authority.publicKey,
+          mplCoreProgram: MPL_CORE_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+      await provider.connection.confirmTransaction(sig, "confirmed");
+
+      // Fetch updated asset via UMI
+      const umi = createUmi(provider.connection.rpcEndpoint, { commitment: "confirmed" }).use(mplCore());
+      const asset = await fetchAssetV1(
+        umi,
+        fromWeb3JsPublicKey(credentialKeypair.publicKey)
+      );
+
+      expect(asset.name).to.equal("Solana Track - Level 1 (Updated)");
+      expect(asset.uri).to.equal("https://arweave.net/cred-metadata-v2");
+
+      // Enrollment credential_asset should remain unchanged
+      const enrollment = await program.account.enrollment.fetch(credEnrollPda);
+      expect(enrollment.credentialAsset.toBase58()).to.equal(
+        credentialKeypair.publicKey.toBase58()
+      );
+    });
+
+    it("fails with wrong credential asset on upgrade", async () => {
+      const wrongAssetKeypair = Keypair.generate();
+
+      try {
+        await program.methods
+          .upgradeCredential("Wrong Asset", "https://arweave.net/wrong")
+          .accountsPartial({
+            config: configPda,
+            course: credCoursePda,
+            enrollment: credEnrollPda,
+            learner: credLearner.publicKey,
+            credentialAsset: wrongAssetKeypair.publicKey,
+            trackCollection: collectionAddress,
+            payer: authority.publicKey,
+            backendSigner: authority.publicKey,
+            mplCoreProgram: MPL_CORE_PROGRAM_ID,
+            systemProgram: SystemProgram.programId,
+          })
+          .rpc();
+        expect.fail("Should have thrown");
+      } catch (err) {
+        if (err instanceof AnchorError) {
+          expect(err.error.errorCode.code).to.equal("CredentialAssetMismatch");
+        } else {
+          expect(err).to.exist;
+        }
+      }
+    });
+  });
+
+  // ===========================================================================
+  // 13. PDA seed validation (security)
+  // ===========================================================================
+  describe("13. PDA seed validation (security)", () => {
+    const secLearnerA = Keypair.generate();
+    const secLearnerB = Keypair.generate();
+    const secCourseId = "sec-pda-test";
+    let secCoursePda: PublicKey;
+    let secEnrollPdaA: PublicKey;
+    let secLearnerATokenAccount: PublicKey;
+    let secLearnerBTokenAccount: PublicKey;
+
+    before(async () => {
+      for (const wallet of [secLearnerA.publicKey, secLearnerB.publicKey]) {
+        const sig = await provider.connection.requestAirdrop(
+          wallet,
+          5 * LAMPORTS_PER_SOL
+        );
+        await provider.connection.confirmTransaction(sig, "confirmed");
+      }
+
+      [secCoursePda] = PublicKey.findProgramAddressSync(
+        [Buffer.from("course"), Buffer.from(secCourseId)],
+        program.programId
+      );
+
+      await program.methods
+        .createCourse({
+          courseId: secCourseId,
+          creator: creator.publicKey,
+          contentTxId: contentTxId,
+          lessonCount: 2,
+          difficulty: 1,
+          xpPerLesson: 10,
+          trackId: 20,
+          trackLevel: 1,
+          prerequisite: null,
+          completionBonusXp: 0,
+          creatorRewardXp: 0,
+          minCompletionsForReward: 0,
+        })
+        .accountsPartial({
+          course: secCoursePda,
+          config: configPda,
+          authority: authority.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+
+      [secEnrollPdaA] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("enrollment"),
+          Buffer.from(secCourseId),
+          secLearnerA.publicKey.toBuffer(),
+        ],
+        program.programId
+      );
+
+      await program.methods
+        .enroll(secCourseId)
+        .accountsPartial({
+          course: secCoursePda,
+          enrollment: secEnrollPdaA,
+          learner: secLearnerA.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([secLearnerA])
+        .rpc();
+
+      // Create ATAs for both learners
+      secLearnerATokenAccount = getAssociatedTokenAddressSync(
+        xpMintKeypair.publicKey,
+        secLearnerA.publicKey,
+        false,
+        TOKEN_2022_PROGRAM_ID,
+        ASSOCIATED_TOKEN_PROGRAM_ID
+      );
+
+      secLearnerBTokenAccount = getAssociatedTokenAddressSync(
+        xpMintKeypair.publicKey,
+        secLearnerB.publicKey,
+        false,
+        TOKEN_2022_PROGRAM_ID,
+        ASSOCIATED_TOKEN_PROGRAM_ID
+      );
+
+      const createAtaAIx = createAssociatedTokenAccountInstruction(
+        authority.publicKey,
+        secLearnerATokenAccount,
+        secLearnerA.publicKey,
+        xpMintKeypair.publicKey,
+        TOKEN_2022_PROGRAM_ID,
+        ASSOCIATED_TOKEN_PROGRAM_ID
+      );
+
+      const createAtaBIx = createAssociatedTokenAccountInstruction(
+        authority.publicKey,
+        secLearnerBTokenAccount,
+        secLearnerB.publicKey,
+        xpMintKeypair.publicKey,
+        TOKEN_2022_PROGRAM_ID,
+        ASSOCIATED_TOKEN_PROGRAM_ID
+      );
+
+      const tx = new anchor.web3.Transaction()
+        .add(createAtaAIx)
+        .add(createAtaBIx);
+      await provider.sendAndConfirm(tx);
+    });
+
+    it("close enrollment by wrong learner fails", async () => {
+      // Learner B tries to close learner A's enrollment.
+      // The enrollment PDA is derived from learner A's key, so passing
+      // learner B as the signer will cause a ConstraintSeeds error because
+      // seeds = ["enrollment", course_id, learner.key()] won't match.
+      try {
+        await program.methods
+          .closeEnrollment()
+          .accountsPartial({
+            course: secCoursePda,
+            enrollment: secEnrollPdaA,
+            learner: secLearnerB.publicKey,
+          })
+          .signers([secLearnerB])
+          .rpc();
+        expect.fail("Should have thrown");
+      } catch (err) {
+        if (err instanceof AnchorError) {
+          expect(err.error.errorCode.code).to.equal("ConstraintSeeds");
+        } else {
+          expect(err).to.exist;
+        }
+      }
+    });
+
+    it("complete lesson with wrong learner fails", async () => {
+      // Pass learner B's pubkey but learner A's enrollment PDA.
+      // seeds = ["enrollment", course_id, learner.key()] with learner B
+      // won't match secEnrollPdaA (derived from learner A).
+      try {
+        await program.methods
+          .completeLesson(0)
+          .accountsPartial({
+            config: configPda,
+            course: secCoursePda,
+            enrollment: secEnrollPdaA,
+            learner: secLearnerB.publicKey,
+            learnerTokenAccount: secLearnerBTokenAccount,
+            xpMint: xpMintKeypair.publicKey,
+            backendSigner: authority.publicKey,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+          })
+          .rpc();
+        expect.fail("Should have thrown");
+      } catch (err) {
+        if (err instanceof AnchorError) {
+          expect(err.error.errorCode.code).to.equal("ConstraintSeeds");
+        } else {
+          expect(err).to.exist;
+        }
+      }
+    });
+  });
+
+  // ===========================================================================
+  // 14. Edge cases
+  // ===========================================================================
+  describe("14. Edge cases", () => {
+    it("finalize with zero bonus and zero creator reward", async () => {
+      const zeroCourseId = "zero-bonus-course";
+      const [zeroCoursePda] = PublicKey.findProgramAddressSync(
+        [Buffer.from("course"), Buffer.from(zeroCourseId)],
+        program.programId
+      );
+
+      const zeroLearner = Keypair.generate();
+      const airdropSig = await provider.connection.requestAirdrop(
+        zeroLearner.publicKey,
+        5 * LAMPORTS_PER_SOL
+      );
+      await provider.connection.confirmTransaction(airdropSig, "confirmed");
+
+      // Create course with zero bonus and zero creator reward
+      await program.methods
+        .createCourse({
+          courseId: zeroCourseId,
+          creator: creator.publicKey,
+          contentTxId: contentTxId,
+          lessonCount: 2,
+          difficulty: 1,
+          xpPerLesson: 75,
+          trackId: 30,
+          trackLevel: 1,
+          prerequisite: null,
+          completionBonusXp: 0,
+          creatorRewardXp: 0,
+          minCompletionsForReward: 0,
+        })
+        .accountsPartial({
+          course: zeroCoursePda,
+          config: configPda,
+          authority: authority.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+
+      const zeroLearnerTokenAccount = getAssociatedTokenAddressSync(
+        xpMintKeypair.publicKey,
+        zeroLearner.publicKey,
+        false,
+        TOKEN_2022_PROGRAM_ID,
+        ASSOCIATED_TOKEN_PROGRAM_ID
+      );
+
+      const createAtaIx = createAssociatedTokenAccountInstruction(
+        authority.publicKey,
+        zeroLearnerTokenAccount,
+        zeroLearner.publicKey,
+        xpMintKeypair.publicKey,
+        TOKEN_2022_PROGRAM_ID,
+        ASSOCIATED_TOKEN_PROGRAM_ID
+      );
+      const ataT = new anchor.web3.Transaction().add(createAtaIx);
+      await provider.sendAndConfirm(ataT);
+
+      const [zeroEnrollPda] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("enrollment"),
+          Buffer.from(zeroCourseId),
+          zeroLearner.publicKey.toBuffer(),
+        ],
+        program.programId
+      );
+
+      await program.methods
+        .enroll(zeroCourseId)
+        .accountsPartial({
+          course: zeroCoursePda,
+          enrollment: zeroEnrollPda,
+          learner: zeroLearner.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([zeroLearner])
+        .rpc();
+
+      // Complete both lessons
+      for (let i = 0; i < 2; i++) {
+        const lsig = await program.methods
+          .completeLesson(i)
+          .accountsPartial({
+            config: configPda,
+            course: zeroCoursePda,
+            enrollment: zeroEnrollPda,
+            learner: zeroLearner.publicKey,
+            learnerTokenAccount: zeroLearnerTokenAccount,
+            xpMint: xpMintKeypair.publicKey,
+            backendSigner: authority.publicKey,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+          })
+          .rpc();
+        await provider.connection.confirmTransaction(lsig, "confirmed");
+      }
+
+      // Finalize
+      const fsig = await program.methods
+        .finalizeCourse()
+        .accountsPartial({
+          config: configPda,
+          course: zeroCoursePda,
+          enrollment: zeroEnrollPda,
+          learner: zeroLearner.publicKey,
+          learnerTokenAccount: zeroLearnerTokenAccount,
+          creatorTokenAccount: creatorTokenAccount,
+          creator: creator.publicKey,
+          xpMint: xpMintKeypair.publicKey,
+          backendSigner: authority.publicKey,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .rpc();
+      await provider.connection.confirmTransaction(fsig, "confirmed");
+
+      const enrollment = await program.account.enrollment.fetch(zeroEnrollPda);
+      expect(enrollment.completedAt).to.not.be.null;
+
+      // Learner should only have lesson XP: 75 * 2 = 150, no bonus
+      const learnerAta = await getAccount(
+        provider.connection,
+        zeroLearnerTokenAccount,
+        "confirmed",
+        TOKEN_2022_PROGRAM_ID
+      );
+      expect(Number(learnerAta.amount)).to.equal(75 * 2);
+    });
+
+    it("course with single lesson", async () => {
+      const singleId = "single-lesson-course";
+      const [singleCoursePda] = PublicKey.findProgramAddressSync(
+        [Buffer.from("course"), Buffer.from(singleId)],
+        program.programId
+      );
+
+      const singleLearner = Keypair.generate();
+      const airdropSig = await provider.connection.requestAirdrop(
+        singleLearner.publicKey,
+        5 * LAMPORTS_PER_SOL
+      );
+      await provider.connection.confirmTransaction(airdropSig, "confirmed");
+
+      await program.methods
+        .createCourse({
+          courseId: singleId,
+          creator: creator.publicKey,
+          contentTxId: contentTxId,
+          lessonCount: 1,
+          difficulty: 2,
+          xpPerLesson: 200,
+          trackId: 31,
+          trackLevel: 1,
+          prerequisite: null,
+          completionBonusXp: 50,
+          creatorRewardXp: 10,
+          minCompletionsForReward: 1,
+        })
+        .accountsPartial({
+          course: singleCoursePda,
+          config: configPda,
+          authority: authority.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+
+      const singleLearnerTokenAccount = getAssociatedTokenAddressSync(
+        xpMintKeypair.publicKey,
+        singleLearner.publicKey,
+        false,
+        TOKEN_2022_PROGRAM_ID,
+        ASSOCIATED_TOKEN_PROGRAM_ID
+      );
+
+      const createAtaIx = createAssociatedTokenAccountInstruction(
+        authority.publicKey,
+        singleLearnerTokenAccount,
+        singleLearner.publicKey,
+        xpMintKeypair.publicKey,
+        TOKEN_2022_PROGRAM_ID,
+        ASSOCIATED_TOKEN_PROGRAM_ID
+      );
+      const ataT = new anchor.web3.Transaction().add(createAtaIx);
+      await provider.sendAndConfirm(ataT);
+
+      const [singleEnrollPda] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("enrollment"),
+          Buffer.from(singleId),
+          singleLearner.publicKey.toBuffer(),
+        ],
+        program.programId
+      );
+
+      await program.methods
+        .enroll(singleId)
+        .accountsPartial({
+          course: singleCoursePda,
+          enrollment: singleEnrollPda,
+          learner: singleLearner.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([singleLearner])
+        .rpc();
+
+      // Complete the single lesson
+      const clSig = await program.methods
+        .completeLesson(0)
+        .accountsPartial({
+          config: configPda,
+          course: singleCoursePda,
+          enrollment: singleEnrollPda,
+          learner: singleLearner.publicKey,
+          learnerTokenAccount: singleLearnerTokenAccount,
+          xpMint: xpMintKeypair.publicKey,
+          backendSigner: authority.publicKey,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .rpc();
+      await provider.connection.confirmTransaction(clSig, "confirmed");
+
+      // Finalize: creator gets reward since minCompletionsForReward=1
+      // Need a dedicated creator ATA for this course's creator (reuse existing)
+      const fsig = await program.methods
+        .finalizeCourse()
+        .accountsPartial({
+          config: configPda,
+          course: singleCoursePda,
+          enrollment: singleEnrollPda,
+          learner: singleLearner.publicKey,
+          learnerTokenAccount: singleLearnerTokenAccount,
+          creatorTokenAccount: creatorTokenAccount,
+          creator: creator.publicKey,
+          xpMint: xpMintKeypair.publicKey,
+          backendSigner: authority.publicKey,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .rpc();
+      await provider.connection.confirmTransaction(fsig, "confirmed");
+
+      const enrollment = await program.account.enrollment.fetch(
+        singleEnrollPda
+      );
+      expect(enrollment.completedAt).to.not.be.null;
+
+      const course = await program.account.course.fetch(singleCoursePda);
+      expect(course.totalCompletions).to.equal(1);
+
+      // Learner XP: 200 (lesson) + 50 (bonus) = 250
+      const learnerAta = await getAccount(
+        provider.connection,
+        singleLearnerTokenAccount,
+        "confirmed",
+        TOKEN_2022_PROGRAM_ID
+      );
+      expect(Number(learnerAta.amount)).to.equal(200 + 50);
+    });
   });
 });

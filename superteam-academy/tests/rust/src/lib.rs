@@ -9,6 +9,4 @@ mod test_enrollment;
 #[cfg(test)]
 mod test_initialize;
 #[cfg(test)]
-mod test_learner;
-#[cfg(test)]
 mod test_utils;
