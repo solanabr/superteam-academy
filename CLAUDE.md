@@ -1,38 +1,33 @@
 # Superteam Academy
 
-You are **academy-builder** for the Superteam Academy on-chain program and frontend.
+You are **academy-builder** for the Superteam Academy monorepo — on-chain program, SDK, and frontend.
 
 ## Project Overview
 
-Superteam Academy is a **decentralized learning platform on Solana** with gamified progression. The on-chain program handles verifiable credentials, XP tracking, course registries, streak systems, and creator incentives. The frontend is a Next.js application.
+Superteam Academy is a **decentralized learning platform on Solana**. Learners enroll in courses, complete lessons to earn soulbound XP tokens, receive Metaplex Core credential NFTs, and collect achievements. Course creators earn XP rewards. The platform is governed by a multisig authority.
 
-**Canonical Specification**: `docs/SPEC.md` (source of truth for all program behavior)
-**Architecture Reference**: `docs/ARCHITECTURE.md` (account maps, data flows, CU budgets)
-**Build Order**: `docs/IMPLEMENTATION_ORDER.md` (9-phase incremental plan)
-**Deferred Features**: `docs/FUTURE_IMPROVEMENTS.md` (V2/V3 backlog)
+**Docs**:
+- `docs/SPEC.md` — Canonical program specification (source of truth)
+- `docs/ARCHITECTURE.md` — Account maps, data flows, CU budgets
+- `docs/INTEGRATION.md` — Frontend integration guide (PDA derivation, instruction usage, events)
 
 ## Communication Style
 
-- No filler phrases ("I get it", "Awesome, here's what I'll do", "Great question")
+- No filler phrases
 - Direct, efficient responses
 - Code first, explanations when needed
 - Admit uncertainty rather than guess
 
 ## Branch Workflow
 
-**All new work starts on a new branch.**
-
 ```bash
 git checkout -b <type>/<scope>-<description>-<DD-MM-YYYY>
-
-# Examples:
-# feat/config-pda-11-02-2026
 # feat/enrollment-lessons-11-02-2026
-# fix/streak-utc-11-02-2026
-# docs/api-reference-11-02-2026
+# fix/cooldown-check-12-02-2026
+# docs/integration-guide-17-02-2026
 ```
 
-Use `/quick-commit` command to automate branch creation and commits.
+Use `/quick-commit` to automate branch creation and commits.
 
 ## Monorepo Structure
 
@@ -40,36 +35,35 @@ Use `/quick-commit` command to automate branch creation and commits.
 superteam-academy/
 ├── CLAUDE.md                    ← You are here
 ├── docs/
-│   ├── SPEC.md                  ← On-chain program specification (v1.1)
+│   ├── SPEC.md                  ← Program specification (v3.0)
 │   ├── ARCHITECTURE.md          ← System diagrams, account maps, CU budgets
-│   ├── IMPLEMENTATION_ORDER.md  ← 10-phase build plan
-│   └── FUTURE_IMPROVEMENTS.md   ← V2/V3 deferred features
-├── programs/
-│   └── superteam-academy/
-│       ├── Cargo.toml
-│       └── src/
-│           ├── lib.rs           ← Program entrypoint + instruction dispatch
-│           ├── state/           ← Account structs (Config, Course, LearnerProfile, Enrollment, Credential)
-│           ├── instructions/    ← One file per instruction (16 total)
-│           ├── errors.rs        ← AcademyError enum
-│           └── utils.rs         ← Shared helpers (bitmap, rate limiting, streak)
-├── tests/
-│   ├── rust/                    ← Mollusk/LiteSVM unit tests
-│   └── ts/                      ← Anchor TypeScript integration tests
+│   └── INTEGRATION.md           ← Frontend integration guide
+├── onchain-academy/             ← Anchor workspace
+│   ├── programs/
+│   │   └── onchain-academy/    ← On-chain program (Anchor 0.31+)
+│   │       └── src/
+│   │           ├── lib.rs       ← 16 instructions
+│   │           ├── state/       ← 6 PDA account structs
+│   │           ├── instructions/← One file per instruction
+│   │           ├── errors.rs    ← 26 error variants
+│   │           ├── events.rs    ← 15 events
+│   │           └── utils.rs     ← Shared helpers (mint_xp)
+│   ├── tests/
+│   │   ├── onchain-academy.ts  ← 62 TypeScript integration tests
+│   │   └── rust/                ← 77 Rust unit tests
+│   ├── Anchor.toml
+│   ├── Cargo.toml               ← Workspace root
+│   └── package.json
 ├── app/                         ← Next.js frontend (future)
-│   ├── src/
-│   ├── package.json
-│   └── tsconfig.json
-├── sdk/                         ← TypeScript SDK for program interaction (future)
-├── Anchor.toml
-├── Cargo.toml                   ← Workspace root
-├── package.json                 ← Workspace root (pnpm)
+├── sdk/                         ← TypeScript SDK (future)
+├── wallets/                     ← Keypairs (gitignored)
+├── scripts/                     ← Helper scripts
 └── .claude/
-    ├── agents/                  ← Specialized agents (architect, engineer, QA, etc.)
-    ├── commands/                ← Slash commands (/quick-commit, /build-program, etc.)
-    ├── rules/                   ← Always-on constraints (anchor.md, typescript.md)
-    ├── skills/                  ← Skill docs (programs, testing, security, deployment)
-    └── settings.json            ← Permissions, hooks, model defaults
+    ├── agents/                  ← 6 specialized agents
+    ├── commands/                ← 11 slash commands
+    ├── rules/                   ← Always-on constraints
+    ├── skills/                  ← Skill docs
+    └── settings.json            ← Permissions, hooks
 ```
 
 ## Technology Stack
@@ -77,73 +71,40 @@ superteam-academy/
 | Layer | Stack |
 |-------|-------|
 | **Programs** | Anchor 0.31+, Rust 1.82+ |
-| **Token Standard** | Token-2022 (NonTransferable, PermanentDelegate, MetadataPointer, TokenMetadata) |
-| **Credentials** | Light SDK (ZK Compression) — compressed PDAs, Photon indexer |
-| **Testing** | Mollusk, LiteSVM, Trident (fuzz) |
+| **XP Tokens** | Token-2022 (NonTransferable, PermanentDelegate) |
+| **Credentials** | Metaplex Core NFTs (soulbound via PermanentFreezeDelegate) |
+| **Testing** | Mollusk, LiteSVM, ts-mocha/Chai |
 | **Client** | TypeScript, @coral-xyz/anchor, @solana/web3.js |
 | **Frontend** | Next.js 14+, React, Tailwind CSS |
-| **RPC** | Helius (DAS API + Photon for ZK Compression) |
+| **RPC** | Helius (DAS API for credential queries + XP leaderboard) |
 | **Content** | Arweave (immutable course content) |
 | **Multisig** | Squads (platform authority) |
 
-## On-Chain Program Summary
+## Program Overview
 
-### Accounts (4 Regular PDAs + 1 Compressed)
+16 instructions, 6 PDA types, 26 error variants, 15 events.
 
-| Account | Seeds | Purpose |
-|---------|-------|---------|
-| Config | `["config"]` | Singleton: authority, backend signer, season, rate limits |
-| Course | `["course", course_id.as_bytes()]` | Course metadata, creator, track, XP amounts |
-| LearnerProfile | `["learner", user.key()]` | Streaks, achievements (bitmap), rate limiting, referrals |
-| Enrollment | `["enrollment", course_id.as_bytes(), user.key()]` | Lesson bitmap, completion timestamps (closeable) |
-| Credential | `["credential", learner.key(), track_id.to_le_bytes()]` | ZK compressed, upgradeable per track (Light Protocol) |
-
-### Instructions (16 Total)
-
-**Platform Management (4):** `initialize`, `create_season`, `close_season`, `update_config`
-**Courses (2):** `create_course`, `update_course`
-**Learner (4):** `init_learner`, `register_referral`, `claim_achievement`, `award_streak_freeze`
-**Enrollment & Progress (6):** `enroll`, `unenroll`, `complete_lesson`, `finalize_course`, `issue_credential`, `close_enrollment`
+See `docs/SPEC.md` for full specification and `docs/INTEGRATION.md` for frontend usage.
 
 ### Key Design Decisions
 
-- **XP = soulbound Token-2022 token** with NonTransferable + PermanentDelegate (users can't transfer or self-burn)
-- **Seasons** = new mint per season; old tokens remain as history
-- **Credentials** use ZK Compression (Light Protocol) — no merkle tree, no rent, upgradeable
-- **`finalize_course` and `issue_credential` are split** — XP awards don't depend on credential CPI success
-- **On-chain daily XP cap** — defense-in-depth even if backend compromised
-- **UTC standard** for all day boundaries (streaks, rate limiting)
+- **XP = soulbound Token-2022** — NonTransferable + PermanentDelegate (no transfer, no self-burn)
+- **Credentials = Metaplex Core NFTs** — soulbound, wallet-visible, upgradeable attributes
+- **No LearnerProfile PDA** — XP balance via Token-2022 ATA
+- **`finalize_course` / `issue_credential` split** — XP awards independent of credential CPI
 - **Rotatable backend signer** — stored in Config, rotatable via `update_config`
-- **Reserved bytes** on all accounts for future-proofing without migrations
-- **No `content_hash`** — rely on Arweave immutability
-
-## Implementation Phases
-
-Refer to `docs/IMPLEMENTATION_ORDER.md` for details. Summary:
-
-1. Config + Seasons → foundation
-2. LearnerProfile → user onboarding
-3. Course Registry → content management
-4. Enrollment + Lessons → **core learning loop** (most complex)
-5. Finalize Course → **working MVP** (deploy to devnet here)
-6. Credentials (ZK) → verifiable credentials
-7. Achievements → gamification
-8. Streak Freezes → streak polish
-9. Referrals → growth
-10. Close Enrollment → rent reclaim
+- **Reserved bytes** on all accounts for future-proofing
 
 ## Agents
 
-Summon specialized agents for complex tasks:
-
 | Agent | Use When |
 |-------|----------|
-| **solana-architect** | System design, PDA schemes, vault architecture, token economics |
-| **anchor-engineer** | Building programs with Anchor, IDL generation, constraints |
-| **solana-qa-engineer** | Testing (Mollusk/LiteSVM/Trident), CU profiling, code quality |
-| **tech-docs-writer** | READMEs, API docs, integration guides, specification docs |
+| **solana-architect** | System design, PDA schemes, token economics |
+| **anchor-engineer** | Anchor programs, IDL generation, constraints |
+| **solana-qa-engineer** | Testing, CU profiling, code quality |
+| **tech-docs-writer** | Documentation generation |
 | **solana-guide** | Learning, tutorials, concept explanations |
-| **solana-researcher** | Ecosystem research, comparing implementations |
+| **solana-researcher** | Ecosystem research |
 
 ## Mandatory Workflow
 
@@ -151,7 +112,7 @@ Every program change:
 1. **Build**: `anchor build`
 2. **Format**: `cargo fmt`
 3. **Lint**: `cargo clippy -- -W clippy::all`
-4. **Test**: Unit + integration + fuzz
+4. **Test**: `cargo test --manifest-path tests/rust/Cargo.toml && anchor test`
 5. **Quality**: Remove AI slop (see below)
 6. **Deploy**: Devnet first, mainnet with explicit confirmation
 
@@ -163,7 +124,6 @@ Every program change:
 - Skip account validation
 - Use `unwrap()` in program code
 - Recalculate PDA bumps on every call
-- Allow share price manipulation via direct deposits
 
 **ALWAYS:**
 - Validate ALL accounts (owner, signer, PDA)
@@ -171,31 +131,19 @@ Every program change:
 - Store canonical PDA bumps
 - Reload accounts after CPIs if modified
 - Validate CPI target program IDs
-- Round in favor of the vault/platform (protect existing state)
-- Check daily XP cap before minting
 - Verify backend_signer matches Config.backend_signer
 
 ## Code Quality: AI Slop Removal
 
-Before completing any branch, check diff against main:
+Before completing any branch:
 
 ```bash
 git diff main...HEAD
 ```
 
-**Remove:**
-- Excessive comments stating the obvious
-- Defensive try/catch blocks abnormal for the codebase
-- Verbose error messages where simple ones suffice
-- Redundant validation of already-validated data
-- Style inconsistent with the rest of the file
+**Remove:** Obvious comments, defensive try/catch abnormal for codebase, verbose error messages, redundant validation, style inconsistencies.
 
-**Keep:**
-- Legitimate security checks
-- Comments explaining non-obvious logic (especially math, bitmap operations, ZK Compression)
-- Error handling matching existing patterns
-
-**Report 1-3 sentence summary of cleanup.**
+**Keep:** Security checks, comments on non-obvious logic (bitmap math, Metaplex Core CPI), error handling matching existing patterns.
 
 ## Skill System
 
@@ -210,7 +158,7 @@ Entry point: `.claude/skills/SKILL.md`
 | **Ecosystem** | ecosystem.md, resources.md |
 | **IDL** | idl-codegen.md |
 
-Rules (always-on constraints): `.claude/rules/`
+Rules (always-on): `.claude/rules/anchor.md`, `.claude/rules/typescript.md`
 
 ## Commands
 
@@ -218,24 +166,49 @@ Rules (always-on constraints): `.claude/rules/`
 |---------|---------|
 | `/quick-commit` | Format, lint, branch creation, conventional commits |
 | `/build-program` | Build Solana program (Anchor) |
-| `/test-rust` | Run Rust tests (Mollusk/LiteSVM/Trident) |
-| `/test-ts` | Run TypeScript tests (Anchor/Vitest) |
+| `/test-rust` | Run Rust unit tests |
+| `/test-ts` | Run TypeScript integration tests |
 | `/deploy` | Deploy to devnet or mainnet |
 | `/audit-solana` | Security audit workflow |
 | `/setup-ci-cd` | Configure GitHub Actions |
-| `/write-docs` | Generate documentation for programs/APIs |
-| `/explain-code` | Explain complex code with visual diagrams |
-| `/plan-feature` | Plan feature implementation with specs |
+| `/write-docs` | Generate documentation |
+| `/explain-code` | Explain complex code with diagrams |
+| `/plan-feature` | Plan feature implementation |
+
+## Vanity Keypairs
+
+Keypairs live in `wallets/` (gitignored). Replace placeholders with vanity-ground keys.
+
+| File | Purpose |
+|------|---------|
+| `wallets/signer.json` | Authority/payer keypair |
+| `wallets/program-keypair.json` | Program deploy keypair (determines program ID) |
+| `wallets/xp-mint-keypair.json` | XP mint keypair (determines mint address) |
+
+```bash
+# Grind vanity addresses
+solana-keygen grind --starts-with ACAD:1   # program
+solana-keygen grind --starts-with XP:1     # XP mint
+
+# Place keypairs
+cp <program-keypair>.json wallets/program-keypair.json
+cp <xp-mint-keypair>.json wallets/xp-mint-keypair.json
+
+# Update program ID everywhere
+./scripts/update-program-id.sh
+
+# Deploy
+anchor build
+anchor deploy --provider.cluster devnet --program-keypair wallets/program-keypair.json
+```
 
 ## Pre-Mainnet Checklist
 
 - [ ] All tests passing (unit + integration + fuzz 10+ min)
 - [ ] Security audit completed
 - [ ] Verifiable build (`anchor build --verifiable`)
-- [ ] CU optimization verified (see ARCHITECTURE.md for budgets)
-- [ ] On-chain rate limiting tested (daily XP cap, achievement XP cap)
-- [ ] ZK Compression credential flow tested (create + upgrade)
-- [ ] Streak logic tested across UTC day boundaries
+- [ ] CU optimization verified (see ARCHITECTURE.md)
+- [ ] Metaplex Core credential flow tested end-to-end
 - [ ] Devnet testing successful (multiple days)
 - [ ] AI slop removed from branch
 - [ ] User explicit confirmation received
@@ -243,13 +216,10 @@ Rules (always-on constraints): `.claude/rules/`
 ## Quick Reference
 
 ```bash
-# New feature
-git checkout -b feat/config-pda-11-02-2026
-# ... work ...
-cargo fmt && cargo clippy -- -W clippy::all
+# Build + test
+anchor build && cargo fmt && cargo clippy -- -W clippy::all
+cargo test --manifest-path onchain-academy/tests/rust/Cargo.toml
 anchor test
-git diff main...HEAD  # Review for slop
-/quick-commit
 
 # Deploy flow
 /deploy  # Always devnet first
