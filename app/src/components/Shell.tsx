@@ -4,8 +4,9 @@ const nav = [
   { href: "/courses", label: "Courses" },
   { href: "/dashboard", label: "Dashboard" },
   { href: "/leaderboard", label: "Leaderboard" },
+  { href: "/certificates/demo", label: "Certificates" },
   { href: "/settings", label: "Settings" },
-  { href: "/me", label: "Profile" },
+  { href: "/profile", label: "Profile" },
 ];
 
 export function Shell({
