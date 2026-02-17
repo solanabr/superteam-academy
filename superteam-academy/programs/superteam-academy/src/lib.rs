@@ -56,4 +56,12 @@ pub mod superteam_academy {
     ) -> Result<()> {
         instructions::issue_credential::handler(ctx, credential_name, metadata_uri)
     }
+
+    pub fn upgrade_credential(
+        ctx: Context<UpgradeCredential>,
+        credential_name: String,
+        metadata_uri: String,
+    ) -> Result<()> {
+        instructions::upgrade_credential::handler(ctx, credential_name, metadata_uri)
+    }
 }

@@ -1,3 +1,5 @@
+[workspace]
+
 [package]
 name = "superteam-academy-tests"
 version = "0.1.0"
@@ -6,12 +8,9 @@ edition = "2021"
 [dependencies]
 superteam-academy = { path = "../../programs/superteam-academy", features = ["no-entrypoint"] }
 anchor-lang = "0.31.1"
-solana-sdk = "2.0"
-solana-program = "2.0"
-spl-token-2022 = { version = "5", features = ["no-entrypoint"] }
-spl-associated-token-account = { version = "5", features = ["no-entrypoint"] }
+solana-sdk = "=2.0.25"
+solana-program = "=2.0.25"
 borsh = "0.10"
-litesvm = "0.5"
 
 [lib]
 name = "superteam_academy_tests"

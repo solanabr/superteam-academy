@@ -38,6 +38,8 @@ pub enum AcademyError {
     InvalidDifficulty,
     #[msg("Credential asset does not match enrollment record")]
     CredentialAssetMismatch,
+    #[msg("Credential already issued for this enrollment")]
+    CredentialAlreadyIssued,
     #[msg("Metaplex Core CPI failed")]
     CredentialCpiFailed,
 }

@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 
 use crate::errors::AcademyError;
 use crate::events::EnrollmentClosed;
-use crate::state::Enrollment;
+use crate::state::{Course, Enrollment};
 
 pub fn handler(ctx: Context<CloseEnrollment>) -> Result<()> {
     let enrollment = &ctx.accounts.enrollment;
@@ -31,8 +31,12 @@ pub fn handler(ctx: Context<CloseEnrollment>) -> Result<()> {
 
 #[derive(Accounts)]
 pub struct CloseEnrollment<'info> {
+    pub course: Account<'info, Course>,
+
     #[account(
         mut,
+        seeds = [b"enrollment", course.course_id.as_bytes(), learner.key().as_ref()],
+        bump = enrollment.bump,
         close = learner,
     )]
     pub enrollment: Account<'info, Enrollment>,

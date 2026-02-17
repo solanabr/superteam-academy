@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 use mpl_core::{
-    instructions::{CreateV2CpiBuilder, UpdatePluginV1CpiBuilder, UpdateV1CpiBuilder},
+    instructions::CreateV2CpiBuilder,
     types::{
         Attribute, Attributes, PermanentFreezeDelegate, Plugin, PluginAuthority,
         PluginAuthorityPair,
@@ -25,116 +25,63 @@ pub fn handler(
         AcademyError::CourseNotFinalized
     );
 
+    require!(
+        enrollment.credential_asset.is_none(),
+        AcademyError::CredentialAlreadyIssued
+    );
+
     let config_bump = config.bump;
     let config_seeds: &[&[u8]] = &[b"config", &[config_bump]];
     let signer_seeds = &[config_seeds];
 
-    let is_create = enrollment.credential_asset.is_none();
+    CreateV2CpiBuilder::new(&ctx.accounts.mpl_core_program.to_account_info())
+        .asset(&ctx.accounts.credential_asset.to_account_info())
+        .collection(Some(&ctx.accounts.track_collection))
+        .payer(&ctx.accounts.payer.to_account_info())
+        .owner(Some(&ctx.accounts.learner))
+        .authority(Some(&ctx.accounts.config.to_account_info()))
+        .system_program(&ctx.accounts.system_program.to_account_info())
+        .name(credential_name)
+        .uri(metadata_uri)
+        .plugins(vec![
+            PluginAuthorityPair {
+                plugin: Plugin::PermanentFreezeDelegate(PermanentFreezeDelegate { frozen: true }),
+                authority: Some(PluginAuthority::UpdateAuthority),
+            },
+            PluginAuthorityPair {
+                plugin: Plugin::Attributes(Attributes {
+                    attribute_list: vec![
+                        Attribute {
+                            key: "track_id".into(),
+                            value: course.track_id.to_string(),
+                        },
+                        Attribute {
+                            key: "level".into(),
+                            value: course.track_level.to_string(),
+                        },
+                        Attribute {
+                            key: "courses_completed".into(),
+                            value: "1".into(),
+                        },
+                        Attribute {
+                            key: "total_xp".into(),
+                            value: (course.xp_per_lesson as u64 * course.lesson_count as u64)
+                                .to_string(),
+                        },
+                    ],
+                }),
+                authority: Some(PluginAuthority::UpdateAuthority),
+            },
+        ])
+        .invoke_signed(signer_seeds)?;
 
-    if is_create {
-        // CREATE path: new credential NFT
-        CreateV2CpiBuilder::new(&ctx.accounts.mpl_core_program.to_account_info())
-            .asset(&ctx.accounts.credential_asset)
-            .collection(Some(&ctx.accounts.track_collection))
-            .payer(&ctx.accounts.payer.to_account_info())
-            .owner(Some(&ctx.accounts.learner))
-            .authority(Some(&ctx.accounts.config.to_account_info()))
-            .system_program(&ctx.accounts.system_program.to_account_info())
-            .name(credential_name)
-            .uri(metadata_uri)
-            .plugins(vec![
-                PluginAuthorityPair {
-                    plugin: Plugin::PermanentFreezeDelegate(PermanentFreezeDelegate {
-                        frozen: true,
-                    }),
-                    authority: Some(PluginAuthority::UpdateAuthority),
-                },
-                PluginAuthorityPair {
-                    plugin: Plugin::Attributes(Attributes {
-                        attribute_list: vec![
-                            Attribute {
-                                key: "track_id".into(),
-                                value: course.track_id.to_string(),
-                            },
-                            Attribute {
-                                key: "level".into(),
-                                value: course.track_level.to_string(),
-                            },
-                            Attribute {
-                                key: "courses_completed".into(),
-                                value: "1".into(),
-                            },
-                            Attribute {
-                                key: "total_xp".into(),
-                                value: (course.xp_per_lesson as u64 * course.lesson_count as u64)
-                                    .to_string(),
-                            },
-                        ],
-                    }),
-                    authority: Some(PluginAuthority::UpdateAuthority),
-                },
-            ])
-            .invoke_signed(signer_seeds)?;
-
-        // Store the credential asset key on the enrollment
-        let enrollment_mut = &mut ctx.accounts.enrollment;
-        enrollment_mut.credential_asset = Some(ctx.accounts.credential_asset.key());
-    } else {
-        // UPGRADE path: update existing credential NFT
-        let existing_asset = enrollment.credential_asset.unwrap();
-        require!(
-            ctx.accounts.credential_asset.key() == existing_asset,
-            AcademyError::CredentialAssetMismatch
-        );
-
-        // Update name + URI
-        UpdateV1CpiBuilder::new(&ctx.accounts.mpl_core_program.to_account_info())
-            .asset(&ctx.accounts.credential_asset)
-            .collection(Some(&ctx.accounts.track_collection))
-            .authority(Some(&ctx.accounts.config.to_account_info()))
-            .payer(&ctx.accounts.payer.to_account_info())
-            .system_program(&ctx.accounts.system_program.to_account_info())
-            .new_name(credential_name)
-            .new_uri(metadata_uri)
-            .invoke_signed(signer_seeds)?;
-
-        // Update Attributes plugin
-        UpdatePluginV1CpiBuilder::new(&ctx.accounts.mpl_core_program.to_account_info())
-            .asset(&ctx.accounts.credential_asset)
-            .collection(Some(&ctx.accounts.track_collection))
-            .authority(Some(&ctx.accounts.config.to_account_info()))
-            .payer(&ctx.accounts.payer.to_account_info())
-            .system_program(&ctx.accounts.system_program.to_account_info())
-            .plugin(Plugin::Attributes(Attributes {
-                attribute_list: vec![
-                    Attribute {
-                        key: "track_id".into(),
-                        value: course.track_id.to_string(),
-                    },
-                    Attribute {
-                        key: "level".into(),
-                        value: course.track_level.to_string(),
-                    },
-                    Attribute {
-                        key: "courses_completed".into(),
-                        value: course.total_completions.to_string(),
-                    },
-                    Attribute {
-                        key: "total_xp".into(),
-                        value: (course.xp_per_lesson as u64 * course.lesson_count as u64)
-                            .to_string(),
-                    },
-                ],
-            }))
-            .invoke_signed(signer_seeds)?;
-    }
+    let enrollment_mut = &mut ctx.accounts.enrollment;
+    enrollment_mut.credential_asset = Some(ctx.accounts.credential_asset.key());
 
     emit!(CredentialIssued {
         learner: ctx.accounts.learner.key(),
         track_id: course.track_id,
         credential_asset: ctx.accounts.credential_asset.key(),
-        credential_created: is_create,
-        credential_upgraded: !is_create,
         current_level: course.track_level,
         timestamp: Clock::get()?.unix_timestamp,
     });
@@ -154,23 +101,20 @@ pub struct IssueCredential<'info> {
 
     #[account(
         mut,
+        seeds = [b"enrollment", course.course_id.as_bytes(), learner.key().as_ref()],
+        bump = enrollment.bump,
         constraint = enrollment.course == course.key() @ AcademyError::EnrollmentCourseMismatch,
     )]
     pub enrollment: Account<'info, Enrollment>,
 
-    /// The learner wallet (owner of the credential NFT).
-    /// CHECK: Not a signer; backend signs on behalf of learner.
+    /// CHECK: Tied to enrollment PDA via seeds constraint.
     pub learner: AccountInfo<'info>,
 
-    /// The credential NFT asset account.
-    /// For create: new keypair (signer).
-    /// For upgrade: existing asset (not signer).
-    /// CHECK: Validated by Metaplex Core CPI. For upgrades, verified against enrollment.credential_asset.
+    /// New credential NFT asset keypair — must sign the transaction.
     #[account(mut)]
-    pub credential_asset: AccountInfo<'info>,
+    pub credential_asset: Signer<'info>,
 
-    /// The Metaplex Core collection for this track.
-    /// CHECK: Validated by Metaplex Core CPI (collection authority must match Config PDA).
+    /// CHECK: Metaplex Core collection for this track. Validated by Metaplex Core CPI.
     #[account(mut)]
     pub track_collection: AccountInfo<'info>,
 

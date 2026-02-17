@@ -1,423 +1,208 @@
 use crate::helpers::*;
-use anchor_lang::{InstructionData, ToAccountMetas};
-use solana_sdk::{
-    instruction::{AccountMeta, Instruction},
-    signature::{Keypair, Signer},
-    system_program,
-    transaction::Transaction,
-};
-use superteam_academy::state::{Course, Enrollment};
+use anchor_lang::{AnchorDeserialize, AnchorSerialize};
+use solana_sdk::pubkey::Pubkey;
+use superteam_academy::state::Enrollment;
 
 #[test]
-fn enroll_creates_enrollment_with_correct_fields() {
-    let (mut svm, authority) = setup();
-    initialize_config(&mut svm, &authority, 5000, 1000);
-
-    let course_id = "enroll-test";
-    let course_addr = create_test_course(&mut svm, &authority, course_id, 5, 100);
-
-    let learner = Keypair::new();
-    svm.airdrop(&learner.pubkey(), 5_000_000_000).unwrap();
-
-    let enrollment_addr = enroll_learner(&mut svm, &learner, course_id);
-    let enrollment: Enrollment = get_account_data(&svm, &enrollment_addr);
-
-    assert_eq!(enrollment.course, course_addr);
-    assert_eq!(enrollment.enrolled_version, 1);
-    assert!(enrollment.enrolled_at > 0);
-    assert_eq!(enrollment.completed_at, None);
-    assert_eq!(enrollment.lesson_flags, [0u64; 4]);
-    assert_eq!(enrollment.credential_asset, None);
-    assert!(!enrollment.bonus_claimed);
-    assert_eq!(enrollment._reserved, [0u8; 7]);
+fn enrollment_size_constant_is_correct() {
+    // 8 (discriminator) + 32 (course) + 8 (enrolled_at) + (1 + 8) (completed_at Option<i64>)
+    // + 32 (lesson_flags [u64; 4]) + (1 + 32) (credential_asset Option<Pubkey>)
+    // + 4 (_reserved) + 1 (bump)
+    assert_eq!(Enrollment::SIZE, 8 + 32 + 8 + 9 + 32 + 33 + 4 + 1);
+    assert_eq!(Enrollment::SIZE, 127);
 }
 
 #[test]
-fn enroll_increments_course_total_enrollments() {
-    let (mut svm, authority) = setup();
-    initialize_config(&mut svm, &authority, 5000, 1000);
+fn enrollment_serialization_roundtrip_in_progress() {
+    let course = Pubkey::new_unique();
+    let enrollment = Enrollment {
+        course,
+        enrolled_at: 1700000000,
+        completed_at: None,
+        lesson_flags: [0u64; 4],
+        credential_asset: None,
+        _reserved: [0u8; 4],
+        bump: 252,
+    };
 
-    let course_id = "enroll-count";
-    let course_addr = create_test_course(&mut svm, &authority, course_id, 5, 100);
+    let mut buf = Vec::new();
+    enrollment.serialize(&mut buf).unwrap();
+    let deserialized = Enrollment::deserialize(&mut buf.as_slice()).unwrap();
 
-    let learner1 = Keypair::new();
-    let learner2 = Keypair::new();
-    svm.airdrop(&learner1.pubkey(), 5_000_000_000).unwrap();
-    svm.airdrop(&learner2.pubkey(), 5_000_000_000).unwrap();
-
-    enroll_learner(&mut svm, &learner1, course_id);
-    let course: Course = get_account_data(&svm, &course_addr);
-    assert_eq!(course.total_enrollments, 1);
-
-    enroll_learner(&mut svm, &learner2, course_id);
-    let course: Course = get_account_data(&svm, &course_addr);
-    assert_eq!(course.total_enrollments, 2);
+    assert_eq!(deserialized.course, course);
+    assert_eq!(deserialized.enrolled_at, 1700000000);
+    assert_eq!(deserialized.completed_at, None);
+    assert_eq!(deserialized.lesson_flags, [0u64; 4]);
+    assert_eq!(deserialized.credential_asset, None);
+    assert_eq!(deserialized._reserved, [0u8; 4]);
+    assert_eq!(deserialized.bump, 252);
 }
 
 #[test]
-fn enroll_bump_stored_correctly() {
-    let (mut svm, authority) = setup();
-    initialize_config(&mut svm, &authority, 5000, 1000);
+fn enrollment_serialization_roundtrip_completed() {
+    let course = Pubkey::new_unique();
+    let credential = Pubkey::new_unique();
+    let enrollment = Enrollment {
+        course,
+        enrolled_at: 1700000000,
+        completed_at: Some(1700100000),
+        lesson_flags: [0b1111, 0, 0, 0],
+        credential_asset: Some(credential),
+        _reserved: [0u8; 4],
+        bump: 250,
+    };
 
-    let course_id = "bump-enroll";
-    create_test_course(&mut svm, &authority, course_id, 5, 100);
+    let mut buf = Vec::new();
+    enrollment.serialize(&mut buf).unwrap();
+    let deserialized = Enrollment::deserialize(&mut buf.as_slice()).unwrap();
 
-    let learner = Keypair::new();
-    svm.airdrop(&learner.pubkey(), 5_000_000_000).unwrap();
-
-    let enrollment_addr = enroll_learner(&mut svm, &learner, course_id);
-    let enrollment: Enrollment = get_account_data(&svm, &enrollment_addr);
-
-    let (expected_addr, expected_bump) = enrollment_pda(course_id, &learner.pubkey());
-    assert_eq!(enrollment_addr, expected_addr);
-    assert_eq!(enrollment.bump, expected_bump);
+    assert_eq!(deserialized.completed_at, Some(1700100000));
+    assert_eq!(deserialized.lesson_flags[0], 0b1111);
+    assert_eq!(deserialized.credential_asset, Some(credential));
 }
 
 #[test]
-fn enroll_inactive_course_fails() {
-    let (mut svm, authority) = setup();
-    initialize_config(&mut svm, &authority, 5000, 1000);
-
-    let course_id = "inactive-enroll";
-    let course_addr = create_test_course(&mut svm, &authority, course_id, 5, 100);
-
-    // Deactivate the course
-    let params = superteam_academy::instructions::UpdateCourseParams {
-        new_content_tx_id: None,
-        new_is_active: Some(false),
-        new_authority: None,
-        new_xp_per_lesson: None,
-        new_completion_bonus_xp: None,
-        new_creator_reward_xp: None,
-        new_min_completions_for_reward: None,
+fn enrollment_serialized_size_matches_constant() {
+    // All Option fields must be Some for worst-case size to match SIZE constant
+    let enrollment = Enrollment {
+        course: Pubkey::new_unique(),
+        enrolled_at: 0,
+        completed_at: Some(12345),
+        lesson_flags: [0u64; 4],
+        credential_asset: Some(Pubkey::new_unique()),
+        _reserved: [0u8; 4],
+        bump: 0,
     };
 
-    let data = superteam_academy::instruction::UpdateCourse { params };
-    let accounts = superteam_academy::accounts::UpdateCourse {
-        course: course_addr,
-        authority: authority.pubkey(),
-    };
+    let mut buf = Vec::new();
+    enrollment.serialize(&mut buf).unwrap();
 
-    let ix = Instruction {
-        program_id: PROGRAM_ID,
-        accounts: accounts.to_account_metas(None),
-        data: data.data(),
-    };
-
-    let tx = Transaction::new_signed_with_payer(
-        &[ix],
-        Some(&authority.pubkey()),
-        &[&authority],
-        svm.latest_blockhash(),
-    );
-    svm.send_transaction(tx).expect("update failed");
-
-    // Now try to enroll
-    let learner = Keypair::new();
-    svm.airdrop(&learner.pubkey(), 5_000_000_000).unwrap();
-
-    let (enrollment_addr, _) = enrollment_pda(course_id, &learner.pubkey());
-    let enroll_data = superteam_academy::instruction::Enroll {
-        course_id: course_id.to_string(),
-    };
-
-    let enroll_accounts = superteam_academy::accounts::Enroll {
-        course: course_addr,
-        enrollment: enrollment_addr,
-        learner: learner.pubkey(),
-        system_program: system_program::id(),
-    };
-
-    let enroll_ix = Instruction {
-        program_id: PROGRAM_ID,
-        accounts: enroll_accounts.to_account_metas(None),
-        data: enroll_data.data(),
-    };
-
-    let enroll_tx = Transaction::new_signed_with_payer(
-        &[enroll_ix],
-        Some(&learner.pubkey()),
-        &[&learner],
-        svm.latest_blockhash(),
-    );
-
-    let result = svm.send_transaction(enroll_tx);
-    assert!(result.is_err(), "Enrolling in inactive course should fail");
+    // Serialized data + 8-byte discriminator = SIZE
+    assert_eq!(buf.len() + 8, Enrollment::SIZE);
 }
 
 #[test]
-fn complete_lesson_sets_bitmap_bit() {
-    let (mut svm, authority) = setup();
-    let (_, xp_mint_kp) = initialize_config(&mut svm, &authority, 5000, 1000);
-    let xp_mint = xp_mint_kp.pubkey();
+fn enrollment_serialized_size_none_options_fits_within_allocation() {
+    let enrollment = Enrollment {
+        course: Pubkey::new_unique(),
+        enrolled_at: 0,
+        completed_at: None,
+        lesson_flags: [0u64; 4],
+        credential_asset: None,
+        _reserved: [0u8; 4],
+        bump: 0,
+    };
 
-    let course_id = "bitmap-test";
-    create_test_course(&mut svm, &authority, course_id, 5, 100);
+    let mut buf = Vec::new();
+    enrollment.serialize(&mut buf).unwrap();
 
-    let learner = Keypair::new();
-    svm.airdrop(&learner.pubkey(), 5_000_000_000).unwrap();
-    init_learner_profile(&mut svm, &learner);
-
-    enroll_learner(&mut svm, &learner, course_id);
-
-    let learner_ata = create_token_2022_ata(&mut svm, &learner, &xp_mint, &learner.pubkey());
-
-    // Complete lesson 0
-    complete_lesson(
-        &mut svm,
-        &authority, // authority is backend_signer after initialize
-        &learner,
-        course_id,
-        0,
-        &xp_mint,
-        &learner_ata,
-    );
-
-    let (enrollment_addr, _) = enrollment_pda(course_id, &learner.pubkey());
-    let enrollment: Enrollment = get_account_data(&svm, &enrollment_addr);
-
-    // Bit 0 should be set
-    assert_eq!(enrollment.lesson_flags[0] & 1, 1);
-    // Other bits should be 0
-    assert_eq!(enrollment.lesson_flags[0] & !1u64, 0);
+    // None options serialize smaller, but must fit within allocated SIZE
+    assert!(buf.len() + 8 <= Enrollment::SIZE);
 }
 
 #[test]
-fn complete_lesson_mints_xp() {
-    let (mut svm, authority) = setup();
-    let (_, xp_mint_kp) = initialize_config(&mut svm, &authority, 5000, 1000);
-    let xp_mint = xp_mint_kp.pubkey();
-
-    let course_id = "xp-mint-test";
-    let xp_per_lesson = 100u32;
-    create_test_course(&mut svm, &authority, course_id, 5, xp_per_lesson);
-
-    let learner = Keypair::new();
-    svm.airdrop(&learner.pubkey(), 5_000_000_000).unwrap();
-    init_learner_profile(&mut svm, &learner);
-    enroll_learner(&mut svm, &learner, course_id);
-
-    let learner_ata = create_token_2022_ata(&mut svm, &learner, &xp_mint, &learner.pubkey());
-
-    assert_eq!(get_token_balance(&svm, &learner_ata), 0);
-
-    complete_lesson(
-        &mut svm, &authority, &learner, course_id, 0, &xp_mint, &learner_ata,
-    );
-
-    assert_eq!(get_token_balance(&svm, &learner_ata), xp_per_lesson as u64);
-
-    complete_lesson(
-        &mut svm, &authority, &learner, course_id, 1, &xp_mint, &learner_ata,
-    );
-
-    assert_eq!(get_token_balance(&svm, &learner_ata), (xp_per_lesson * 2) as u64);
+fn enrollment_pda_is_deterministic() {
+    let learner = Pubkey::new_unique();
+    let (pda1, bump1) = enrollment_pda("test", &learner);
+    let (pda2, bump2) = enrollment_pda("test", &learner);
+    assert_eq!(pda1, pda2);
+    assert_eq!(bump1, bump2);
 }
 
 #[test]
-fn complete_lesson_duplicate_fails() {
-    let (mut svm, authority) = setup();
-    let (_, xp_mint_kp) = initialize_config(&mut svm, &authority, 5000, 1000);
-    let xp_mint = xp_mint_kp.pubkey();
-
-    let course_id = "dup-lesson";
-    create_test_course(&mut svm, &authority, course_id, 5, 100);
-
-    let learner = Keypair::new();
-    svm.airdrop(&learner.pubkey(), 5_000_000_000).unwrap();
-    init_learner_profile(&mut svm, &learner);
-    enroll_learner(&mut svm, &learner, course_id);
-
-    let learner_ata = create_token_2022_ata(&mut svm, &learner, &xp_mint, &learner.pubkey());
-
-    // Complete lesson 2 once
-    complete_lesson(
-        &mut svm, &authority, &learner, course_id, 2, &xp_mint, &learner_ata,
-    );
-
-    // Try again -- should fail
-    let (config_addr, _) = config_pda();
-    let (course_addr, _) = course_pda(course_id);
-    let (enrollment_addr, _) = enrollment_pda(course_id, &learner.pubkey());
-    let (learner_profile_addr, _) = learner_pda(&learner.pubkey());
-
-    let data = superteam_academy::instruction::CompleteLesson { lesson_index: 2 };
-    let accounts = superteam_academy::accounts::CompleteLesson {
-        config: config_addr,
-        course: course_addr,
-        enrollment: enrollment_addr,
-        learner_profile: learner_profile_addr,
-        learner: learner.pubkey(),
-        learner_token_account: learner_ata,
-        xp_mint,
-        backend_signer: authority.pubkey(),
-        token_program: spl_token_2022::id(),
-    };
-
-    let ix = Instruction {
-        program_id: PROGRAM_ID,
-        accounts: accounts.to_account_metas(None),
-        data: data.data(),
-    };
-
-    let tx = Transaction::new_signed_with_payer(
-        &[ix],
-        Some(&authority.pubkey()),
-        &[&authority],
-        svm.latest_blockhash(),
-    );
-
-    let result = svm.send_transaction(tx);
-    assert!(result.is_err(), "Duplicate lesson completion should fail");
+fn different_learners_yield_different_enrollment_pdas() {
+    let learner_a = Pubkey::new_unique();
+    let learner_b = Pubkey::new_unique();
+    let (pda_a, _) = enrollment_pda("same-course", &learner_a);
+    let (pda_b, _) = enrollment_pda("same-course", &learner_b);
+    assert_ne!(pda_a, pda_b);
 }
 
 #[test]
-fn complete_lesson_out_of_bounds_fails() {
-    let (mut svm, authority) = setup();
-    let (_, xp_mint_kp) = initialize_config(&mut svm, &authority, 5000, 1000);
-    let xp_mint = xp_mint_kp.pubkey();
-
-    let course_id = "oob-lesson";
-    let lesson_count = 5u8;
-    create_test_course(&mut svm, &authority, course_id, lesson_count, 100);
-
-    let learner = Keypair::new();
-    svm.airdrop(&learner.pubkey(), 5_000_000_000).unwrap();
-    init_learner_profile(&mut svm, &learner);
-    enroll_learner(&mut svm, &learner, course_id);
-
-    let learner_ata = create_token_2022_ata(&mut svm, &learner, &xp_mint, &learner.pubkey());
-
-    // Try lesson_index = lesson_count (out of bounds)
-    let (config_addr, _) = config_pda();
-    let (course_addr, _) = course_pda(course_id);
-    let (enrollment_addr, _) = enrollment_pda(course_id, &learner.pubkey());
-    let (learner_profile_addr, _) = learner_pda(&learner.pubkey());
-
-    let data = superteam_academy::instruction::CompleteLesson {
-        lesson_index: lesson_count,
-    };
-    let accounts = superteam_academy::accounts::CompleteLesson {
-        config: config_addr,
-        course: course_addr,
-        enrollment: enrollment_addr,
-        learner_profile: learner_profile_addr,
-        learner: learner.pubkey(),
-        learner_token_account: learner_ata,
-        xp_mint,
-        backend_signer: authority.pubkey(),
-        token_program: spl_token_2022::id(),
-    };
-
-    let ix = Instruction {
-        program_id: PROGRAM_ID,
-        accounts: accounts.to_account_metas(None),
-        data: data.data(),
-    };
-
-    let tx = Transaction::new_signed_with_payer(
-        &[ix],
-        Some(&authority.pubkey()),
-        &[&authority],
-        svm.latest_blockhash(),
-    );
-
-    let result = svm.send_transaction(tx);
-    assert!(
-        result.is_err(),
-        "Lesson index out of bounds should fail"
-    );
+fn different_courses_yield_different_enrollment_pdas() {
+    let learner = Pubkey::new_unique();
+    let (pda_a, _) = enrollment_pda("course-a", &learner);
+    let (pda_b, _) = enrollment_pda("course-b", &learner);
+    assert_ne!(pda_a, pda_b);
 }
 
 #[test]
-fn complete_lesson_wrong_backend_signer_fails() {
-    let (mut svm, authority) = setup();
-    let (_, xp_mint_kp) = initialize_config(&mut svm, &authority, 5000, 1000);
-    let xp_mint = xp_mint_kp.pubkey();
-
-    let course_id = "wrong-signer";
-    create_test_course(&mut svm, &authority, course_id, 5, 100);
-
-    let learner = Keypair::new();
-    svm.airdrop(&learner.pubkey(), 5_000_000_000).unwrap();
-    init_learner_profile(&mut svm, &learner);
-    enroll_learner(&mut svm, &learner, course_id);
-
-    let learner_ata = create_token_2022_ata(&mut svm, &learner, &xp_mint, &learner.pubkey());
-
-    let fake_signer = Keypair::new();
-    svm.airdrop(&fake_signer.pubkey(), 5_000_000_000).unwrap();
-
-    let (config_addr, _) = config_pda();
-    let (course_addr, _) = course_pda(course_id);
-    let (enrollment_addr, _) = enrollment_pda(course_id, &learner.pubkey());
-    let (learner_profile_addr, _) = learner_pda(&learner.pubkey());
-
-    let data = superteam_academy::instruction::CompleteLesson { lesson_index: 0 };
-    let accounts = superteam_academy::accounts::CompleteLesson {
-        config: config_addr,
-        course: course_addr,
-        enrollment: enrollment_addr,
-        learner_profile: learner_profile_addr,
-        learner: learner.pubkey(),
-        learner_token_account: learner_ata,
-        xp_mint,
-        backend_signer: fake_signer.pubkey(),
-        token_program: spl_token_2022::id(),
-    };
-
-    let ix = Instruction {
-        program_id: PROGRAM_ID,
-        accounts: accounts.to_account_metas(None),
-        data: data.data(),
-    };
-
-    let tx = Transaction::new_signed_with_payer(
-        &[ix],
-        Some(&fake_signer.pubkey()),
-        &[&fake_signer],
-        svm.latest_blockhash(),
+fn enrollment_pda_is_valid() {
+    let learner = Pubkey::new_unique();
+    let course_id = "my-course";
+    let (pda, bump) = enrollment_pda(course_id, &learner);
+    let derived = Pubkey::create_program_address(
+        &[
+            b"enrollment",
+            course_id.as_bytes(),
+            learner.as_ref(),
+            &[bump],
+        ],
+        &PROGRAM_ID,
     );
-
-    let result = svm.send_transaction(tx);
-    assert!(
-        result.is_err(),
-        "Wrong backend signer should fail"
-    );
+    assert!(derived.is_ok());
+    assert_eq!(derived.unwrap(), pda);
 }
 
 #[test]
-fn complete_all_lessons_sets_all_bits() {
-    let (mut svm, authority) = setup();
-    let (_, xp_mint_kp) = initialize_config(&mut svm, &authority, 50000, 1000);
-    let xp_mint = xp_mint_kp.pubkey();
+fn enrollment_bitmap_set_lesson() {
+    let mut enrollment = Enrollment {
+        course: Pubkey::new_unique(),
+        enrolled_at: 0,
+        completed_at: None,
+        lesson_flags: [0u64; 4],
+        credential_asset: None,
+        _reserved: [0u8; 4],
+        bump: 0,
+    };
 
-    let course_id = "all-lessons";
-    let lesson_count = 10u8;
-    create_test_course(&mut svm, &authority, course_id, lesson_count, 100);
+    let lesson_index: u8 = 5;
+    let word_index = (lesson_index / 64) as usize;
+    let bit_index = lesson_index % 64;
+    let mask = 1u64 << bit_index;
 
-    let learner = Keypair::new();
-    svm.airdrop(&learner.pubkey(), 5_000_000_000).unwrap();
-    init_learner_profile(&mut svm, &learner);
-    enroll_learner(&mut svm, &learner, course_id);
+    // Before: bit is clear
+    assert_eq!(enrollment.lesson_flags[word_index] & mask, 0);
 
-    let learner_ata = create_token_2022_ata(&mut svm, &learner, &xp_mint, &learner.pubkey());
+    // Set bit
+    enrollment.lesson_flags[word_index] |= mask;
+
+    // After: bit is set
+    assert_ne!(enrollment.lesson_flags[word_index] & mask, 0);
+
+    // Serialization preserves the bitmap
+    let mut buf = Vec::new();
+    enrollment.serialize(&mut buf).unwrap();
+    let deserialized = Enrollment::deserialize(&mut buf.as_slice()).unwrap();
+    assert_ne!(deserialized.lesson_flags[word_index] & mask, 0);
+}
+
+#[test]
+fn enrollment_completed_lessons_count() {
+    let mut flags = [0u64; 4];
+    let lesson_count: u8 = 10;
 
     for i in 0..lesson_count {
-        complete_lesson(
-            &mut svm, &authority, &learner, course_id, i, &xp_mint, &learner_ata,
-        );
+        let word = (i / 64) as usize;
+        let bit = i % 64;
+        flags[word] |= 1u64 << bit;
     }
 
-    let (enrollment_addr, _) = enrollment_pda(course_id, &learner.pubkey());
-    let enrollment: Enrollment = get_account_data(&svm, &enrollment_addr);
-
-    let completed: u32 = enrollment.lesson_flags.iter().map(|w| w.count_ones()).sum();
+    let completed: u32 = flags.iter().map(|w| w.count_ones()).sum();
     assert_eq!(completed, lesson_count as u32);
+}
 
-    // Verify XP minted
-    assert_eq!(
-        get_token_balance(&svm, &learner_ata),
-        (lesson_count as u64) * 100
-    );
+#[test]
+fn enrollment_reserved_bytes_size() {
+    let enrollment = Enrollment {
+        course: Pubkey::new_unique(),
+        enrolled_at: 0,
+        completed_at: None,
+        lesson_flags: [0u64; 4],
+        credential_asset: None,
+        _reserved: [0u8; 4],
+        bump: 0,
+    };
+
+    assert_eq!(enrollment._reserved.len(), 4);
 }

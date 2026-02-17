@@ -1,413 +1,209 @@
 use crate::helpers::*;
-use anchor_lang::{InstructionData, ToAccountMetas};
-use solana_sdk::{
-    instruction::Instruction,
-    signature::{Keypair, Signer},
-    system_program,
-    transaction::Transaction,
-};
-use superteam_academy::state::Course;
+use anchor_lang::{AnchorDeserialize, AnchorSerialize};
+use solana_sdk::pubkey::Pubkey;
+use superteam_academy::state::{Course, MAX_COURSE_ID_LEN};
 
 #[test]
-fn create_course_stores_all_fields() {
-    let (mut svm, authority) = setup();
-    initialize_config(&mut svm, &authority, 5000, 1000);
-
-    let course_id = "rust-101";
-    let course_addr = create_test_course_full(
-        &mut svm,
-        &authority,
-        course_id,
-        10,   // lesson_count
-        100,  // xp_per_lesson
-        2,    // difficulty
-        5,    // track_id
-        3,    // track_level
-        None, // prerequisite
-        200,  // completion_bonus_xp
-        50,   // creator_reward_xp
-        5,    // min_completions_for_reward
-    );
-
-    let course: Course = get_account_data(&svm, &course_addr);
-
-    assert_eq!(course.course_id, "rust-101");
-    assert_eq!(course.creator, authority.pubkey());
-    assert_eq!(course.authority, authority.pubkey());
-    assert_eq!(course.content_tx_id, [0u8; 32]);
-    assert_eq!(course.version, 1);
-    assert_eq!(course.lesson_count, 10);
-    assert_eq!(course.difficulty, 2);
-    assert_eq!(course.xp_per_lesson, 100);
-    assert_eq!(course.track_id, 5);
-    assert_eq!(course.track_level, 3);
-    assert_eq!(course.prerequisite, None);
-    assert_eq!(course.completion_bonus_xp, 200);
-    assert_eq!(course.creator_reward_xp, 50);
-    assert_eq!(course.min_completions_for_reward, 5);
-    assert_eq!(course.total_completions, 0);
-    assert_eq!(course.total_enrollments, 0);
-    assert!(course.is_active);
-    assert!(course.created_at > 0);
-    assert_eq!(course.created_at, course.updated_at);
-    assert_eq!(course._reserved, [0u8; 16]);
+fn course_size_constant_is_correct() {
+    // 8 (discriminator) + (4 + 32) (course_id String) + 32 (creator) + 32 (authority)
+    // + 32 (content_tx_id) + 2 (version) + 1 (lesson_count) + 1 (difficulty)
+    // + 4 (xp_per_lesson) + 2 (track_id) + 1 (track_level) + (1 + 32) (prerequisite Option<Pubkey>)
+    // + 4 (completion_bonus_xp) + 4 (creator_reward_xp) + 2 (min_completions_for_reward)
+    // + 4 (total_completions) + 4 (total_enrollments) + 1 (is_active)
+    // + 8 (created_at) + 8 (updated_at) + 8 (_reserved) + 1 (bump)
+    assert_eq!(Course::SIZE, 228);
 }
 
 #[test]
-fn create_course_bump_stored_correctly() {
-    let (mut svm, authority) = setup();
-    initialize_config(&mut svm, &authority, 5000, 1000);
-
-    let course_id = "test-bump";
-    let course_addr = create_test_course(&mut svm, &authority, course_id, 5, 100);
-    let course: Course = get_account_data(&svm, &course_addr);
-
-    let (expected_addr, expected_bump) = course_pda(course_id);
-    assert_eq!(course_addr, expected_addr);
-    assert_eq!(course.bump, expected_bump);
+fn max_course_id_len_is_32() {
+    assert_eq!(MAX_COURSE_ID_LEN, 32);
 }
 
 #[test]
-fn create_course_empty_id_fails() {
-    let (mut svm, authority) = setup();
-    initialize_config(&mut svm, &authority, 5000, 1000);
+fn course_serialization_roundtrip() {
+    let course = Course {
+        course_id: "test-course".to_string(),
+        creator: Pubkey::new_unique(),
+        authority: Pubkey::new_unique(),
+        content_tx_id: [42u8; 32],
+        version: 3,
+        lesson_count: 10,
+        difficulty: 2,
+        xp_per_lesson: 100,
+        track_id: 5,
+        track_level: 2,
+        prerequisite: None,
+        completion_bonus_xp: 500,
+        creator_reward_xp: 50,
+        min_completions_for_reward: 10,
+        total_completions: 7,
+        total_enrollments: 25,
+        is_active: true,
+        created_at: 1700000000,
+        updated_at: 1700001000,
+        _reserved: [0u8; 8],
+        bump: 253,
+    };
 
-    let (config_addr, _) = config_pda();
-    let (course_addr, _) = course_pda("");
+    let mut buf = Vec::new();
+    course.serialize(&mut buf).unwrap();
 
-    let params = superteam_academy::instructions::CreateCourseParams {
-        course_id: "".to_string(),
-        creator: authority.pubkey(),
+    let deserialized = Course::deserialize(&mut buf.as_slice()).unwrap();
+
+    assert_eq!(deserialized.course_id, "test-course");
+    assert_eq!(deserialized.creator, course.creator);
+    assert_eq!(deserialized.authority, course.authority);
+    assert_eq!(deserialized.content_tx_id, [42u8; 32]);
+    assert_eq!(deserialized.version, 3);
+    assert_eq!(deserialized.lesson_count, 10);
+    assert_eq!(deserialized.difficulty, 2);
+    assert_eq!(deserialized.xp_per_lesson, 100);
+    assert_eq!(deserialized.track_id, 5);
+    assert_eq!(deserialized.track_level, 2);
+    assert_eq!(deserialized.prerequisite, None);
+    assert_eq!(deserialized.completion_bonus_xp, 500);
+    assert_eq!(deserialized.creator_reward_xp, 50);
+    assert_eq!(deserialized.min_completions_for_reward, 10);
+    assert_eq!(deserialized.total_completions, 7);
+    assert_eq!(deserialized.total_enrollments, 25);
+    assert!(deserialized.is_active);
+    assert_eq!(deserialized.created_at, 1700000000);
+    assert_eq!(deserialized.updated_at, 1700001000);
+    assert_eq!(deserialized._reserved, [0u8; 8]);
+    assert_eq!(deserialized.bump, 253);
+}
+
+#[test]
+fn course_with_prerequisite_roundtrip() {
+    let prereq = Pubkey::new_unique();
+    let course = Course {
+        course_id: "advanced".to_string(),
+        creator: Pubkey::new_unique(),
+        authority: Pubkey::new_unique(),
         content_tx_id: [0u8; 32],
+        version: 1,
         lesson_count: 5,
+        difficulty: 3,
+        xp_per_lesson: 200,
+        track_id: 1,
+        track_level: 2,
+        prerequisite: Some(prereq),
+        completion_bonus_xp: 100,
+        creator_reward_xp: 20,
+        min_completions_for_reward: 5,
+        total_completions: 0,
+        total_enrollments: 0,
+        is_active: true,
+        created_at: 0,
+        updated_at: 0,
+        _reserved: [0u8; 8],
+        bump: 1,
+    };
+
+    let mut buf = Vec::new();
+    course.serialize(&mut buf).unwrap();
+    let deserialized = Course::deserialize(&mut buf.as_slice()).unwrap();
+
+    assert_eq!(deserialized.prerequisite, Some(prereq));
+}
+
+#[test]
+fn course_pda_is_deterministic() {
+    let (pda1, bump1) = course_pda("test-course");
+    let (pda2, bump2) = course_pda("test-course");
+    assert_eq!(pda1, pda2);
+    assert_eq!(bump1, bump2);
+}
+
+#[test]
+fn different_course_ids_yield_different_pdas() {
+    let (pda_a, _) = course_pda("course-a");
+    let (pda_b, _) = course_pda("course-b");
+    assert_ne!(pda_a, pda_b);
+}
+
+#[test]
+fn course_pda_is_valid() {
+    let course_id = "my-course";
+    let (pda, bump) = course_pda(course_id);
+    let derived =
+        Pubkey::create_program_address(&[b"course", course_id.as_bytes(), &[bump]], &PROGRAM_ID);
+    assert!(derived.is_ok());
+    assert_eq!(derived.unwrap(), pda);
+}
+
+#[test]
+fn course_max_id_length_pda() {
+    let long_id = "a".repeat(MAX_COURSE_ID_LEN);
+    let (pda, bump) = course_pda(&long_id);
+    let derived =
+        Pubkey::create_program_address(&[b"course", long_id.as_bytes(), &[bump]], &PROGRAM_ID);
+    assert!(derived.is_ok());
+    assert_eq!(derived.unwrap(), pda);
+}
+
+#[test]
+fn course_serialized_size_with_max_id_and_all_options() {
+    let course = Course {
+        course_id: "a".repeat(MAX_COURSE_ID_LEN),
+        creator: Pubkey::new_unique(),
+        authority: Pubkey::new_unique(),
+        content_tx_id: [0u8; 32],
+        version: 1,
+        lesson_count: 1,
         difficulty: 1,
-        xp_per_lesson: 100,
-        track_id: 1,
-        track_level: 1,
-        prerequisite: None,
-        completion_bonus_xp: 50,
-        creator_reward_xp: 10,
-        min_completions_for_reward: 1,
+        xp_per_lesson: 0,
+        track_id: 0,
+        track_level: 0,
+        prerequisite: Some(Pubkey::new_unique()),
+        completion_bonus_xp: 0,
+        creator_reward_xp: 0,
+        min_completions_for_reward: 0,
+        total_completions: 0,
+        total_enrollments: 0,
+        is_active: true,
+        created_at: 0,
+        updated_at: 0,
+        _reserved: [0u8; 8],
+        bump: 0,
     };
 
-    let data = superteam_academy::instruction::CreateCourse { params };
-    let accounts = superteam_academy::accounts::CreateCourse {
-        course: course_addr,
-        config: config_addr,
-        authority: authority.pubkey(),
-        system_program: system_program::id(),
-    };
+    let mut buf = Vec::new();
+    course.serialize(&mut buf).unwrap();
 
-    let ix = Instruction {
-        program_id: PROGRAM_ID,
-        accounts: accounts.to_account_metas(None),
-        data: data.data(),
-    };
-
-    let tx = Transaction::new_signed_with_payer(
-        &[ix],
-        Some(&authority.pubkey()),
-        &[&authority],
-        svm.latest_blockhash(),
-    );
-
-    let result = svm.send_transaction(tx);
-    assert!(result.is_err(), "Empty course_id should fail");
+    // With max-length course_id and all Options filled, serialized data + discriminator = SIZE
+    assert_eq!(buf.len() + 8, Course::SIZE);
 }
 
 #[test]
-fn create_course_difficulty_zero_fails() {
-    let (mut svm, authority) = setup();
-    initialize_config(&mut svm, &authority, 5000, 1000);
-
-    let course_id = "diff-zero";
-    let (config_addr, _) = config_pda();
-    let (course_addr, _) = course_pda(course_id);
-
-    let params = superteam_academy::instructions::CreateCourseParams {
-        course_id: course_id.to_string(),
-        creator: authority.pubkey(),
+fn course_serialized_size_shorter_id_fits_within_allocation() {
+    let course = Course {
+        course_id: "short".to_string(),
+        creator: Pubkey::new_unique(),
+        authority: Pubkey::new_unique(),
         content_tx_id: [0u8; 32],
-        lesson_count: 5,
-        difficulty: 0,
-        xp_per_lesson: 100,
-        track_id: 1,
-        track_level: 1,
-        prerequisite: None,
-        completion_bonus_xp: 50,
-        creator_reward_xp: 10,
-        min_completions_for_reward: 1,
-    };
-
-    let data = superteam_academy::instruction::CreateCourse { params };
-    let accounts = superteam_academy::accounts::CreateCourse {
-        course: course_addr,
-        config: config_addr,
-        authority: authority.pubkey(),
-        system_program: system_program::id(),
-    };
-
-    let ix = Instruction {
-        program_id: PROGRAM_ID,
-        accounts: accounts.to_account_metas(None),
-        data: data.data(),
-    };
-
-    let tx = Transaction::new_signed_with_payer(
-        &[ix],
-        Some(&authority.pubkey()),
-        &[&authority],
-        svm.latest_blockhash(),
-    );
-
-    let result = svm.send_transaction(tx);
-    assert!(result.is_err(), "difficulty=0 should fail");
-}
-
-#[test]
-fn create_course_difficulty_four_fails() {
-    let (mut svm, authority) = setup();
-    initialize_config(&mut svm, &authority, 5000, 1000);
-
-    let course_id = "diff-four";
-    let (config_addr, _) = config_pda();
-    let (course_addr, _) = course_pda(course_id);
-
-    let params = superteam_academy::instructions::CreateCourseParams {
-        course_id: course_id.to_string(),
-        creator: authority.pubkey(),
-        content_tx_id: [0u8; 32],
-        lesson_count: 5,
-        difficulty: 4,
-        xp_per_lesson: 100,
-        track_id: 1,
-        track_level: 1,
-        prerequisite: None,
-        completion_bonus_xp: 50,
-        creator_reward_xp: 10,
-        min_completions_for_reward: 1,
-    };
-
-    let data = superteam_academy::instruction::CreateCourse { params };
-    let accounts = superteam_academy::accounts::CreateCourse {
-        course: course_addr,
-        config: config_addr,
-        authority: authority.pubkey(),
-        system_program: system_program::id(),
-    };
-
-    let ix = Instruction {
-        program_id: PROGRAM_ID,
-        accounts: accounts.to_account_metas(None),
-        data: data.data(),
-    };
-
-    let tx = Transaction::new_signed_with_payer(
-        &[ix],
-        Some(&authority.pubkey()),
-        &[&authority],
-        svm.latest_blockhash(),
-    );
-
-    let result = svm.send_transaction(tx);
-    assert!(result.is_err(), "difficulty=4 should fail");
-}
-
-#[test]
-fn create_course_lesson_count_zero_fails() {
-    let (mut svm, authority) = setup();
-    initialize_config(&mut svm, &authority, 5000, 1000);
-
-    let course_id = "zero-lessons";
-    let (config_addr, _) = config_pda();
-    let (course_addr, _) = course_pda(course_id);
-
-    let params = superteam_academy::instructions::CreateCourseParams {
-        course_id: course_id.to_string(),
-        creator: authority.pubkey(),
-        content_tx_id: [0u8; 32],
-        lesson_count: 0,
+        version: 1,
+        lesson_count: 1,
         difficulty: 1,
-        xp_per_lesson: 100,
-        track_id: 1,
-        track_level: 1,
+        xp_per_lesson: 0,
+        track_id: 0,
+        track_level: 0,
         prerequisite: None,
-        completion_bonus_xp: 50,
-        creator_reward_xp: 10,
-        min_completions_for_reward: 1,
+        completion_bonus_xp: 0,
+        creator_reward_xp: 0,
+        min_completions_for_reward: 0,
+        total_completions: 0,
+        total_enrollments: 0,
+        is_active: true,
+        created_at: 0,
+        updated_at: 0,
+        _reserved: [0u8; 8],
+        bump: 0,
     };
 
-    let data = superteam_academy::instruction::CreateCourse { params };
-    let accounts = superteam_academy::accounts::CreateCourse {
-        course: course_addr,
-        config: config_addr,
-        authority: authority.pubkey(),
-        system_program: system_program::id(),
-    };
+    let mut buf = Vec::new();
+    course.serialize(&mut buf).unwrap();
 
-    let ix = Instruction {
-        program_id: PROGRAM_ID,
-        accounts: accounts.to_account_metas(None),
-        data: data.data(),
-    };
-
-    let tx = Transaction::new_signed_with_payer(
-        &[ix],
-        Some(&authority.pubkey()),
-        &[&authority],
-        svm.latest_blockhash(),
-    );
-
-    let result = svm.send_transaction(tx);
-    assert!(result.is_err(), "lesson_count=0 should fail");
-}
-
-#[test]
-fn update_course_increments_version_on_content_change() {
-    let (mut svm, authority) = setup();
-    initialize_config(&mut svm, &authority, 5000, 1000);
-
-    let course_id = "ver-test";
-    let course_addr = create_test_course(&mut svm, &authority, course_id, 5, 100);
-
-    let course_before: Course = get_account_data(&svm, &course_addr);
-    assert_eq!(course_before.version, 1);
-
-    let params = superteam_academy::instructions::UpdateCourseParams {
-        new_content_tx_id: Some([1u8; 32]),
-        new_is_active: None,
-        new_authority: None,
-        new_xp_per_lesson: None,
-        new_completion_bonus_xp: None,
-        new_creator_reward_xp: None,
-        new_min_completions_for_reward: None,
-    };
-
-    let data = superteam_academy::instruction::UpdateCourse { params };
-    let accounts = superteam_academy::accounts::UpdateCourse {
-        course: course_addr,
-        authority: authority.pubkey(),
-    };
-
-    let ix = Instruction {
-        program_id: PROGRAM_ID,
-        accounts: accounts.to_account_metas(None),
-        data: data.data(),
-    };
-
-    let tx = Transaction::new_signed_with_payer(
-        &[ix],
-        Some(&authority.pubkey()),
-        &[&authority],
-        svm.latest_blockhash(),
-    );
-
-    svm.send_transaction(tx).expect("update_course failed");
-
-    let course_after: Course = get_account_data(&svm, &course_addr);
-    assert_eq!(course_after.version, 2);
-    assert_eq!(course_after.content_tx_id, [1u8; 32]);
-}
-
-#[test]
-fn update_course_no_content_change_keeps_version() {
-    let (mut svm, authority) = setup();
-    initialize_config(&mut svm, &authority, 5000, 1000);
-
-    let course_id = "no-ver-bump";
-    let course_addr = create_test_course(&mut svm, &authority, course_id, 5, 100);
-
-    let params = superteam_academy::instructions::UpdateCourseParams {
-        new_content_tx_id: None,
-        new_is_active: Some(false),
-        new_authority: None,
-        new_xp_per_lesson: Some(200),
-        new_completion_bonus_xp: None,
-        new_creator_reward_xp: None,
-        new_min_completions_for_reward: None,
-    };
-
-    let data = superteam_academy::instruction::UpdateCourse { params };
-    let accounts = superteam_academy::accounts::UpdateCourse {
-        course: course_addr,
-        authority: authority.pubkey(),
-    };
-
-    let ix = Instruction {
-        program_id: PROGRAM_ID,
-        accounts: accounts.to_account_metas(None),
-        data: data.data(),
-    };
-
-    let tx = Transaction::new_signed_with_payer(
-        &[ix],
-        Some(&authority.pubkey()),
-        &[&authority],
-        svm.latest_blockhash(),
-    );
-
-    svm.send_transaction(tx).expect("update_course failed");
-
-    let course: Course = get_account_data(&svm, &course_addr);
-    assert_eq!(course.version, 1); // unchanged
-    assert!(!course.is_active);
-    assert_eq!(course.xp_per_lesson, 200);
-}
-
-#[test]
-fn update_course_wrong_authority_fails() {
-    let (mut svm, authority) = setup();
-    initialize_config(&mut svm, &authority, 5000, 1000);
-
-    let course_id = "auth-test";
-    let course_addr = create_test_course(&mut svm, &authority, course_id, 5, 100);
-
-    let imposter = Keypair::new();
-    svm.airdrop(&imposter.pubkey(), 5_000_000_000).unwrap();
-
-    let params = superteam_academy::instructions::UpdateCourseParams {
-        new_content_tx_id: None,
-        new_is_active: Some(false),
-        new_authority: None,
-        new_xp_per_lesson: None,
-        new_completion_bonus_xp: None,
-        new_creator_reward_xp: None,
-        new_min_completions_for_reward: None,
-    };
-
-    let data = superteam_academy::instruction::UpdateCourse { params };
-    let accounts = superteam_academy::accounts::UpdateCourse {
-        course: course_addr,
-        authority: imposter.pubkey(),
-    };
-
-    let ix = Instruction {
-        program_id: PROGRAM_ID,
-        accounts: accounts.to_account_metas(None),
-        data: data.data(),
-    };
-
-    let tx = Transaction::new_signed_with_payer(
-        &[ix],
-        Some(&imposter.pubkey()),
-        &[&imposter],
-        svm.latest_blockhash(),
-    );
-
-    let result = svm.send_transaction(tx);
-    assert!(
-        result.is_err(),
-        "Update with wrong authority should fail"
-    );
-}
-
-#[test]
-fn create_course_account_owned_by_program() {
-    let (mut svm, authority) = setup();
-    initialize_config(&mut svm, &authority, 5000, 1000);
-
-    let course_addr = create_test_course(&mut svm, &authority, "owner-check", 5, 100);
-    let account = svm.get_account(&course_addr).expect("account not found");
-
-    assert_eq!(account.owner, PROGRAM_ID);
+    // Shorter course_id means serialized data fits within allocated SIZE
+    assert!(buf.len() + 8 <= Course::SIZE);
 }

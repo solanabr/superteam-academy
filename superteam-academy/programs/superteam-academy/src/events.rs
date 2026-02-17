@@ -65,8 +65,15 @@ pub struct CredentialIssued {
     pub learner: Pubkey,
     pub track_id: u16,
     pub credential_asset: Pubkey,
-    pub credential_created: bool,
-    pub credential_upgraded: bool,
+    pub current_level: u8,
+    pub timestamp: i64,
+}
+
+#[event]
+pub struct CredentialUpgraded {
+    pub learner: Pubkey,
+    pub track_id: u16,
+    pub credential_asset: Pubkey,
     pub current_level: u8,
     pub timestamp: i64,
 }
