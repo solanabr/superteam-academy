@@ -1,0 +1,27 @@
+{
+  "name": "Superteam Academy",
+  "short_name": "ST Academy",
+  "description": "Learn Solana development with interactive courses, code challenges, and on-chain credentials.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#9945FF",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "developer tools"],
+  "lang": "en",
+  "dir": "ltr"
+}

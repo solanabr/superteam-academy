@@ -24,6 +24,16 @@ export const metadata: Metadata = {
   },
   description: 'Learn Solana development with interactive courses, code challenges, and on-chain credentials.',
   keywords: ['solana', 'blockchain', 'web3', 'learning', 'coding', 'superteam'],
+  manifest: '/manifest.json',
+  themeColor: '#9945FF',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Superteam Academy',
+  },
+  icons: {
+    apple: '/icons/apple-touch-icon.png',
+  },
 };
 
 export default function RootLayout({
