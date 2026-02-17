@@ -1,0 +1,29 @@
+# Rust build artifacts
+**/target/
+apps/build-server/
+
+# Anchor / Solana
+onchain-academy/
+.anchor/
+test-ledger/
+wallets/
+
+# Turbo cache
+.turbo/
+
+# Audit reports
+audit/
+
+# Sanity Studio (deployed separately — /sanity/ matches root only)
+/sanity/
+
+# Docs (not needed for frontend build)
+/docs/
+
+# Scripts
+/scripts/
+
+# Misc
+*.profraw
+*.profdata
+coverage/
