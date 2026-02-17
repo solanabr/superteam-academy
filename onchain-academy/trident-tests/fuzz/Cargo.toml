@@ -1,0 +1,33 @@
+[package]
+name = "onchain-academy-fuzz"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+arbitrary = { version = "1", features = ["derive"] }
+
+# Fuzz targets do NOT depend on the on-chain program crate directly.
+# The pure logic is duplicated here to avoid pulling in Anchor/Solana
+# runtime dependencies that conflict with libfuzzer.
+
+[[bin]]
+name = "fuzz_bitmap"
+path = "fuzz_targets/fuzz_bitmap.rs"
+doc = false
+
+[[bin]]
+name = "fuzz_state_machine"
+path = "fuzz_targets/fuzz_state_machine.rs"
+doc = false
+
+[profile.release]
+debug = 1
+opt-level = 3
+
+# Prevent this from interfering with workspace
+[workspace]

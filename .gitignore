@@ -1,27 +1,61 @@
 # Dependencies
 node_modules/
 
-# Anchor / Rust build artifacts
+# Rust / Anchor build artifacts
 target/
 .anchor/
+**/*.rs.bk
 
 # Test artifacts
 test-ledger/
-.DS_Store
 
-# Environment
+# Lock files (regenerated per-workspace)
+# Keep Cargo.lock for reproducible builds but ignore yarn.lock if using pnpm
+yarn.lock
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment variables
 .env
 .env.*
 !.env.example
 
-# IDE
+# IDE / Editor
 .idea/
 .vscode/
+*.swp
+*.swo
+*~
+.vim/
 
 # Yarn / pnpm
 .yarn/
 .pnp.*
 yarn-error.log
+.pnpm-debug.log
 
-# Claude local settings
+# Keypair files (contain private keys — NEVER commit)
+wallets/
+
+# Claude local settings (user-specific permissions)
 .claude/settings.local.json
+
+# Coverage / profiling
+coverage/
+lcov.info
+*.profraw
+*.profdata
+
+# Fuzz corpus (can be large)
+onchain-academy/trident-tests/fuzz/corpus/
+onchain-academy/trident-tests/fuzz/artifacts/
+
+# Verifiable build artifacts
+onchain-academy/target/verifiable/
+
+# Misc
+*.log
+*.tmp
+.cache/
