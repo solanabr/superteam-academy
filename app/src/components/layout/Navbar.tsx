@@ -7,7 +7,7 @@ import { useLang } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import type { Lang } from '@/i18n/translations';
-import { Menu, X, Globe, Flame, Zap, Sun, Moon, Trophy } from 'lucide-react';
+import { Menu, X, Globe, Flame, Zap, Sun, Moon } from 'lucide-react';
 import { AuthModal } from '@/components/shared/AuthModal';
 
 export function Navbar() {
@@ -62,8 +62,8 @@ export function Navbar() {
                   key={item.href}
                   href={item.href}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${isActive(item.href)
-                      ? 'text-slate-900 dark:text-white bg-slate-100 dark:bg-gray-800'
-                      : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-gray-800/50'
+                    ? 'text-slate-900 dark:text-white bg-slate-100 dark:bg-gray-800'
+                    : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-gray-800/50'
                     }`}
                 >
                   {item.label}
@@ -185,8 +185,8 @@ export function Navbar() {
                   href={item.href}
                   onClick={() => setMobileOpen(false)}
                   className={`block w-full text-left px-4 py-2 rounded-lg text-sm font-medium transition-all ${isActive(item.href)
-                      ? 'text-slate-900 dark:text-white bg-slate-100 dark:bg-gray-800'
-                      : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-gray-800/50'
+                    ? 'text-slate-900 dark:text-white bg-slate-100 dark:bg-gray-800'
+                    : 'text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-gray-800/50'
                     }`}
                 >
                   {item.label}
