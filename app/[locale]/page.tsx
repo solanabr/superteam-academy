@@ -33,7 +33,9 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           <div className="mx-auto max-w-5xl text-center space-y-12">
             <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-5 py-2 text-xs sm:text-sm font-bold text-primary backdrop-blur-md animate-in fade-in slide-in-from-bottom-4 duration-1000">
               <Zap className="h-4 w-4 fill-primary animate-pulse" />
-              <span className="uppercase tracking-widest">{commonT('home')} • Open Source Learning Platform</span>
+              <span className="uppercase tracking-widest">
+                {commonT('home')} • {t('heroBadgeSuffix')}
+              </span>
             </div>
             
             <div className="space-y-6">
@@ -64,10 +66,10 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             {/* Stats / Social Proof */}
             <div className="pt-20 grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto animate-in fade-in duration-1000 delay-700">
               {[
-                { label: 'Active Students', value: '10K+' },
-                { label: 'Courses', value: '50+' },
-                { label: 'cNFTs Minted', value: '25K+' },
-                { label: 'XP Earned', value: '2M+' },
+                { label: t('statsActiveStudents'), value: '10K+' },
+                { label: t('statsCourses'), value: '50+' },
+                { label: t('statsCnftsMinted'), value: '25K+' },
+                { label: t('statsXpEarned'), value: '2M+' },
               ].map((stat, i) => (
                 <div key={i} className="space-y-1">
                   <div className="text-3xl font-black gradient-text">{stat.value}</div>
@@ -107,20 +109,20 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           {[
             {
               icon: <Shield className="h-8 w-8" />,
-              title: 'On-chain Credentials',
-              description: 'Earn compressed NFTs (cNFTs) for every course. Build a verifiable proof-of-skill resume on Solana.',
+              title: t('featureOnchainTitle'),
+              description: t('featureOnchainDescription'),
               color: 'primary'
             },
             {
               icon: <Trophy className="h-8 w-8" />,
-              title: 'Gamified Growth',
-              description: 'Level up, maintain daily streaks, and climb the global leaderboard. Learning is a competitive sport.',
+              title: t('featureGamifiedTitle'),
+              description: t('featureGamifiedDescription'),
               color: 'primary'
             },
             {
               icon: <Code className="h-8 w-8" />,
-              title: 'Interactive IDE',
-              description: 'Write, compile, and deploy Solana programs directly in your browser. Real hands-on experience.',
+              title: t('featureIdeTitle'),
+              description: t('featureIdeDescription'),
               color: 'primary'
             }
           ].map((feature, i) => (
@@ -143,9 +145,9 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       {/* Recommended Learning Paths */}
       <section className="container py-24">
         <div className="text-center space-y-4 mb-16">
-          <h2 className="text-3xl font-black tracking-tight sm:text-5xl uppercase">Choose Your Learning Path</h2>
+          <h2 className="text-3xl font-black tracking-tight sm:text-5xl uppercase">{t('pathsTitle')}</h2>
           <p className="text-muted-foreground text-base md:text-lg max-w-2xl mx-auto">
-            Curated learning paths to guide you from beginner to expert in Solana development.
+            {t('pathsSubtitle')}
           </p>
         </div>
         
@@ -154,36 +156,36 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             <div className="mb-4 inline-flex p-2.5 rounded-xl bg-background border border-border">
               <BookOpen className="h-5 w-5 text-primary" />
             </div>
-            <h3 className="text-lg font-bold mb-2 leading-tight">Solana Fundamentals</h3>
+            <h3 className="text-lg font-bold mb-2 leading-tight">{t('pathFundamentalsTitle')}</h3>
             <p className="text-muted-foreground text-sm leading-relaxed mb-6 line-clamp-2">
-              Start from scratch and understand the Solana blockchain inside out.
+              {t('pathFundamentalsDescription')}
             </p>
             <Button variant="ghost" asChild className="rounded-xl">
-              <Link href="/courses?category=development">Explore</Link>
+              <Link href="/courses?category=development">{t('pathExplore')}</Link>
             </Button>
           </div>
           <div className="group p-6 rounded-2xl border bg-card/30 border-white/5 hover:border-white/10 hover:bg-card/50 transition-all">
             <div className="mb-4 inline-flex p-2.5 rounded-xl bg-background border border-border">
               <Zap className="h-5 w-5 text-primary" />
             </div>
-            <h3 className="text-lg font-bold mb-2 leading-tight">DeFi Developer</h3>
+            <h3 className="text-lg font-bold mb-2 leading-tight">{t('pathDefiTitle')}</h3>
             <p className="text-muted-foreground text-sm leading-relaxed mb-6 line-clamp-2">
-              Master DeFi protocols and build decentralized finance applications.
+              {t('pathDefiDescription')}
             </p>
             <Button variant="ghost" asChild className="rounded-xl">
-              <Link href="/courses?category=defi">Explore</Link>
+              <Link href="/courses?category=defi">{t('pathExplore')}</Link>
             </Button>
           </div>
           <div className="group p-6 rounded-2xl border bg-card/30 border-white/5 hover:border-white/10 hover:bg-card/50 transition-all">
             <div className="mb-4 inline-flex p-2.5 rounded-xl bg-background border border-border">
               <Shield className="h-5 w-5 text-primary" />
             </div>
-            <h3 className="text-lg font-bold mb-2 leading-tight">Security Auditor</h3>
+            <h3 className="text-lg font-bold mb-2 leading-tight">{t('pathSecurityTitle')}</h3>
             <p className="text-muted-foreground text-sm leading-relaxed mb-6 line-clamp-2">
-              Find bugs, write audits, protect Solana protocols.
+              {t('pathSecurityDescription')}
             </p>
             <Button variant="ghost" asChild className="rounded-xl">
-              <Link href="/courses?category=security">Explore</Link>
+              <Link href="/courses?category=security">{t('pathExplore')}</Link>
             </Button>
           </div>
         </div>
@@ -192,32 +194,32 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       {/* Why Superteam Academy? Section */}
       <section className="container py-32 border-t border-white/5">
         <div className="text-center space-y-4 mb-20">
-          <h2 className="text-3xl font-black tracking-tight sm:text-5xl uppercase">WHY SUPERTEAM ACADEMY?</h2>
+          <h2 className="text-3xl font-black tracking-tight sm:text-5xl uppercase">{t('whyTitle')}</h2>
           <p className="text-muted-foreground text-base max-w-2xl mx-auto font-medium">
-            Everything you need to become a world-class Solana developer.
+            {t('whySubtitle')}
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {[
             {
-              title: 'Interactive Code',
-              description: 'Code challenges with integrated editor, real-time feedback and automated tests.',
+              title: t('whyInteractiveTitle'),
+              description: t('whyInteractiveDescription'),
               icon: <Code className="h-10 w-10 text-primary" />
             },
             {
-              title: 'On-Chain Credentials',
-              description: 'Certificates as verifiable cNFTs on Solana — prove your skills on-chain.',
+              title: t('whyOnchainTitle'),
+              description: t('whyOnchainDescription'),
               icon: <Shield className="h-10 w-10 text-primary" />
             },
             {
-              title: 'Gamified Learning',
-              description: 'Earn XP, keep streaks, climb rankings and unlock achievements.',
+              title: t('whyGamifiedTitle'),
+              description: t('whyGamifiedDescription'),
               icon: <Trophy className="h-10 w-10 text-primary" />
             },
             {
-              title: 'Multi-Language',
-              description: 'Learn in English, Portuguese or Spanish. More languages coming soon.',
+              title: t('whyMultilanguageTitle'),
+              description: t('whyMultilanguageDescription'),
               icon: <Globe className="h-10 w-10 text-primary" />
             }
           ].map((item, i) => (
@@ -240,21 +242,19 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           <div className="absolute right-10 top-1/2 -translate-y-1/2 h-28 w-28 rounded-full ring-1 ring-white/15" />
           <div className="relative z-10 text-center space-y-6">
             <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight">
-              {user ? 'Ready to continue your journey?' : 'Ready to start your journey?'}
+              {user ? t('ctaTitleLoggedIn') : t('ctaTitleLoggedOut')}
             </h2>
             <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
-              {user 
-                ? 'Dive back into your courses and keep building on Solana.' 
-                : 'Join the Superteam Brazil community and become a top-tier Solana developer.'}
+              {user ? t('ctaTextLoggedIn') : t('ctaTextLoggedOut')}
             </p>
             <div className="flex justify-center">
               {user ? (
                 <Button asChild className="h-11 px-8 rounded-full bg-primary text-primary-foreground font-bold hover:bg-primary/90 shadow-[0_0_20px_rgba(20,241,149,0.3)]">
-                  <Link href="/dashboard">Go to Dashboard</Link>
+                  <Link href="/dashboard">{t('ctaButtonDashboard')}</Link>
                 </Button>
               ) : (
                 <Button asChild className="h-11 px-8 rounded-full bg-white text-black font-bold hover:bg-white/90">
-                  <Link href="/auth/sign-up">Create Free Account</Link>
+                  <Link href="/auth/sign-up">{t('ctaButtonCreateAccount')}</Link>
                 </Button>
               )}
             </div>

@@ -12,10 +12,13 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Link, useRouter } from '@/i18n/routing'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Shield, Mail, Lock, ArrowRight, Loader2, Github, Chrome } from 'lucide-react'
 import { useWallet } from '@solana/wallet-adapter-react'
+
+const DEMO_EMAIL = process.env.NEXT_PUBLIC_DEMO_EMAIL || 'demo@example.com'
+const DEMO_PASSWORD = process.env.NEXT_PUBLIC_DEMO_PASSWORD || 'demo1234'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -26,13 +29,24 @@ export default function LoginPage() {
   const t = useTranslations('Auth')
   const { signMessage, connected } = useWallet()
 
+  useEffect(() => {
+    const checkUser = async () => {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        router.replace('/dashboard')
+      }
+    }
+    checkUser()
+  }, [router])
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    const supabase = createClient()
     setIsLoading(true)
     setError(null)
 
     try {
+      const supabase = createClient()
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -132,15 +146,19 @@ export default function LoginPage() {
                 </Button>
                 
                 <div className="grid grid-cols-2 gap-3">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    className="h-11 rounded-xl" 
-                    onClick={async () => {
-                      const supabase = createClient()
-                      await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${location.origin}${location.pathname}` } })
-                    }}
-                  >
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="h-11 rounded-xl" 
+                  onClick={async () => {
+                    const supabase = createClient()
+                    setError(null)
+                    const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${location.origin}${location.pathname}` } })
+                    if (error) {
+                      setError(error.message)
+                    }
+                  }}
+                >
                     <Chrome className="mr-2 h-4 w-4" />
                     Google
                   </Button>
@@ -150,7 +168,11 @@ export default function LoginPage() {
                     className="h-11 rounded-xl" 
                     onClick={async () => {
                       const supabase = createClient()
-                      await supabase.auth.signInWithOAuth({ provider: 'github', options: { redirectTo: `${location.origin}${location.pathname}` } })
+                      setError(null)
+                      const { error } = await supabase.auth.signInWithOAuth({ provider: 'github', options: { redirectTo: `${location.origin}${location.pathname}` } })
+                      if (error) {
+                        setError(error.message)
+                      }
                     }}
                   >
                     <Github className="mr-2 h-4 w-4" />
@@ -164,6 +186,7 @@ export default function LoginPage() {
                   className="w-full h-11 rounded-xl"
                   onClick={async () => {
                     const supabase = createClient()
+                    setError(null)
                     const { data: { user } } = await supabase.auth.getUser()
                     if (!connected || !signMessage) {
                       setError('Connect your wallet to continue')
@@ -184,6 +207,31 @@ export default function LoginPage() {
                   }}
                 >
                   Sign in with Wallet
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full h-11 rounded-xl"
+                  onClick={async () => {
+                    const supabase = createClient()
+                    setIsLoading(true)
+                    setError(null)
+                    try {
+                      const { error } = await supabase.auth.signInWithPassword({
+                        email: DEMO_EMAIL,
+                        password: DEMO_PASSWORD,
+                      })
+                      if (error) throw error
+                      router.push('/dashboard')
+                    } catch (error: unknown) {
+                      setError(error instanceof Error ? error.message : 'Demo login failed')
+                    } finally {
+                      setIsLoading(false)
+                    }
+                  }}
+                >
+                  {t('demoLoginButton')}
                 </Button>
 
                 <div className="text-center text-sm">

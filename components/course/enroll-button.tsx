@@ -2,9 +2,10 @@
 
 import { Button } from '@/components/ui/button'
 import { ArrowRight } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@/i18n/routing'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
+import { createClient } from '@/lib/supabase/client'
 
 export function EnrollButton({ 
   courseId, 
@@ -19,10 +20,17 @@ export function EnrollButton({
 }) {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const supabase = createClient()
 
   async function onClick() {
     setLoading(true)
     try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        router.push('/auth/login')
+        return
+      }
+
       const url = typeof window !== 'undefined' ? `${window.location.origin}/api/enroll` : '/api/enroll'
       const response = await fetch(url, {
         method: 'POST',
@@ -34,11 +42,11 @@ export function EnrollButton({
       if (!response.ok) {
         console.error('Enrollment failed:', await response.text())
       }
+      router.push(firstLessonHref)
     } catch (error) {
       console.error('Error during enrollment:', error)
     } finally {
       setLoading(false)
-      router.push(firstLessonHref)
     }
   }
 

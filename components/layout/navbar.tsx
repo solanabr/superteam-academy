@@ -155,14 +155,13 @@ export function Navbar() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <div className="hidden sm:block">
-            {connected && shortKey ? (
+          <div className="hidden sm:flex items-center gap-2">
+            {connected && shortKey && (
               <span className="inline-flex items-center h-8 px-3 rounded-lg bg-violet-600 text-white text-[11px] font-black uppercase tracking-widest shadow-[0_0_14px_rgba(124,58,237,0.35)]">
                 {shortKey}
               </span>
-            ) : (
-              <WalletMultiButton className="!bg-white/5 !border !border-white/10 !rounded-lg !h-8 !text-[10px] !font-black !uppercase !tracking-widest hover:!bg-white/10 !transition-all" />
             )}
+            <WalletMultiButton className="!bg-white/5 !border !border-white/10 !rounded-lg !h-8 !text-[10px] !font-black !uppercase !tracking-widest hover:!bg-white/10 !transition-all" />
           </div>
           
           {user ? (

@@ -9,7 +9,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Link, useRouter } from '@/i18n/routing'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Shield, Mail, Lock, UserPlus, ArrowRight, Loader2, Github, Chrome } from 'lucide-react'
 import { useWallet } from '@solana/wallet-adapter-react'
@@ -25,9 +25,19 @@ export default function SignUpPage() {
   const { signMessage, connected } = useWallet()
   const [walletEmail, setWalletEmail] = useState('')
 
+  useEffect(() => {
+    const checkUser = async () => {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        router.replace('/dashboard')
+      }
+    }
+    checkUser()
+  }, [router])
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
-    const supabase = createClient()
     setIsLoading(true)
     setError(null)
 
@@ -38,6 +48,7 @@ export default function SignUpPage() {
     }
 
     try {
+      const supabase = createClient()
       const { error } = await supabase.auth.signUp({
         email,
         password,
