@@ -1,3 +1,10 @@
+/**
+ * @deprecated This module is replaced by POST /api/credentials/issue.
+ * The new flow uses the on-chain issueCredential instruction (Metaplex Core)
+ * instead of client-side mpl-token-metadata minting.
+ * Remove this file after the on-chain credential flow is verified.
+ */
+
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
 import {
   createNft,
