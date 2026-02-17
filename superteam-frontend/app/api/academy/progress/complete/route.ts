@@ -12,7 +12,7 @@ import {
   recordLessonComplete,
   recordCourseFinalized,
 } from "@/lib/server/activity-store";
-import { courses } from "@/lib/mock-data";
+import { courses } from "@/lib/course-catalog";
 
 type CompleteLessonBody = {
   slug?: string;

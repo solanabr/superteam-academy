@@ -28,7 +28,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import type { Course } from "@/lib/mock-data";
+import type { Course } from "@/lib/course-catalog";
 import { sendEnrollCourse } from "@/lib/solana/enroll-course";
 import { ACADEMY_CLUSTER } from "@/lib/generated/academy-program";
 import { useOptimisticMutation } from "@/lib/hooks/use-optimistic-mutation";

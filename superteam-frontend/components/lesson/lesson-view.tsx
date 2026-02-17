@@ -32,7 +32,7 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { CodeEditor } from "./code-editor";
-import type { Course, Lesson } from "@/lib/mock-data";
+import type { Course, Lesson } from "@/lib/course-catalog";
 import { useWalletAuth } from "@/components/providers/wallet-auth-provider";
 import { ACADEMY_CLUSTER } from "@/lib/generated/academy-program";
 import { useOptimisticMutation } from "@/lib/hooks/use-optimistic-mutation";

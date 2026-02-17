@@ -1,7 +1,7 @@
 import "server-only";
 
 import { PublicKey } from "@solana/web3.js";
-import { courses, type Course } from "@/lib/mock-data";
+import { courses, type Course } from "@/lib/course-catalog";
 import {
   deriveCoursePda,
   deriveEnrollmentPda,

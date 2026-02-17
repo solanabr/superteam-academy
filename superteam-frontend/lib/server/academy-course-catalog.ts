@@ -1,6 +1,6 @@
 import "server-only";
 
-import { courses } from "@/lib/mock-data";
+import { courses } from "@/lib/course-catalog";
 
 export type CatalogCourseMeta = {
   slug: string;

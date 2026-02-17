@@ -1,5 +1,5 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { testimonials } from "@/lib/mock-data";
+import { testimonials } from "@/lib/landing-data";
 import { Quote } from "lucide-react";
 
 export function TestimonialsSection() {

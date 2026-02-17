@@ -26,7 +26,7 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { Progress } from "@/components/ui/progress";
-import type { Course } from "@/lib/mock-data";
+import type { Course } from "@/lib/course-catalog";
 import type { IdentitySnapshot } from "@/lib/identity/types";
 import { ActivityHeatmap } from "@/components/activity-heatmap";
 

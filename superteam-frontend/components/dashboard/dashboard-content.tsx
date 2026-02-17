@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { type Course, courses as mockCourses } from "@/lib/mock-data";
+import type { Course } from "@/lib/course-catalog";
 import type { IdentitySnapshot } from "@/lib/identity/types";
 import type { LeaderboardEntry } from "@/lib/server/leaderboard-cache";
 import type { RecentActivityItem } from "@/lib/server/activity-store";
@@ -60,7 +60,7 @@ export function DashboardContent({
   recentActivity?: RecentActivityItem[];
   leaderboardEntries?: LeaderboardEntry[];
 }) {
-  const courses = coursesData ?? mockCourses;
+  const courses = coursesData ?? [];
   const profile = identity?.profile;
   const inProgressCourses = courses.filter(
     (c) => c.progress > 0 && c.progress < 100,

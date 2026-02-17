@@ -5,7 +5,7 @@ import { Search, SlidersHorizontal } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import type { Course } from "@/lib/mock-data";
+import type { Course } from "@/lib/course-catalog";
 import { CourseCard } from "./course-card";
 
 const difficulties = ["All", "Beginner", "Intermediate", "Advanced"] as const;

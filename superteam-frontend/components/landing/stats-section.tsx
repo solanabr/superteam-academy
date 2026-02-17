@@ -1,5 +1,5 @@
 import { Users, BookCheck, Code2, Zap } from "lucide-react";
-import { platformStats } from "@/lib/mock-data";
+import { platformStats } from "@/lib/landing-data";
 
 const stats = [
   { label: "Developers", value: platformStats.developers, icon: Users },

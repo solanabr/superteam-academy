@@ -3,7 +3,7 @@ import { Clock, Users, Star, Zap, BookOpen } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import type { Course } from "@/lib/mock-data";
+import type { Course } from "@/lib/course-catalog";
 
 const difficultyColor = {
   Beginner: "border-primary text-primary",

@@ -7,7 +7,8 @@ import { ArrowRight, Clock, BookOpen } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { learningPaths, courses } from "@/lib/mock-data";
+import { learningPaths } from "@/lib/landing-data";
+import { courses } from "@/lib/course-catalog";
 import { useWalletAuth } from "@/components/providers/wallet-auth-provider";
 
 export function PathsSection() {
