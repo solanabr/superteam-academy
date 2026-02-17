@@ -110,6 +110,19 @@ export class ApiService implements LearningProgressService {
     });
   }
 
+  async getAvatar(userId: string): Promise<string | null> {
+    const profile = await this.getProfile(userId);
+    return profile?.avatar ?? null;
+  }
+
+  async setAvatar(userId: string, avatar: string): Promise<void> {
+    await fetchJson(`${BASE}/profile/display-name`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, avatar }),
+    });
+  }
+
   async getCourses(): Promise<Course[]> {
     return fetchJson(`${BASE}/courses`);
   }

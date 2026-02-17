@@ -29,6 +29,9 @@ export async function GET() {
         const nameMap = new Map(
           users.map((u) => [u.wallet, u.displayName])
         );
+        const avatarMap = new Map(
+          users.map((u) => [u.wallet, u.avatar])
+        );
 
         const ranked = entries
           .filter((e) => e.xp > 0)
@@ -38,6 +41,7 @@ export async function GET() {
             rank: i + 1,
             wallet: e.wallet,
             displayName: nameMap.get(e.wallet) ?? undefined,
+            avatar: avatarMap.get(e.wallet) ?? undefined,
             xp: e.xp,
             level: getLevel(e.xp),
             streak: e.streak,
@@ -61,6 +65,7 @@ export async function GET() {
     rank: i + 1,
     wallet: u.wallet,
     displayName: u.displayName ?? undefined,
+    avatar: u.avatar ?? undefined,
     xp: u.xp,
     level: getLevel(u.xp),
     streak: u.streak.current,

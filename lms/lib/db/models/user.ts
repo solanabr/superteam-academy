@@ -4,6 +4,7 @@ export interface IUser extends Document {
   wallet: string;
   displayName?: string;
   bio?: string;
+  avatar?: string;
   xp: number;
   streak: {
     current: number;
@@ -24,6 +25,7 @@ const UserSchema = new Schema<IUser>({
   wallet: { type: String, required: true, unique: true, index: true },
   displayName: { type: String, default: undefined },
   bio: { type: String, default: undefined },
+  avatar: { type: String, default: undefined },
   xp: { type: Number, default: 0 },
   streak: {
     current: { type: Number, default: 0 },
@@ -40,5 +42,6 @@ const UserSchema = new Schema<IUser>({
   joinedAt: { type: Date, default: Date.now },
 });
 
-export const User =
-  mongoose.models.User || mongoose.model<IUser>("User", UserSchema);
+// Delete cached model so schema changes (e.g. new fields) are picked up during HMR
+delete mongoose.models.User;
+export const User = mongoose.model<IUser>("User", UserSchema);

@@ -3,12 +3,12 @@
 import { Zap, Flame, Trophy, BookOpen, Award, Calendar, Code2, ExternalLink, CheckCircle2, Lock } from "lucide-react";
 import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
-import { useXP, useLevel, useStreak, useAllProgress, useAchievements, useClaimAchievement, useCourses, useDisplayName, useBio, usePracticeProgress } from "@/lib/hooks/use-service";
+import { useXP, useLevel, useStreak, useAllProgress, useAchievements, useClaimAchievement, useCourses, useDisplayName, useBio, usePracticeProgress, useAvatar } from "@/lib/hooks/use-service";
+import { getAvatarSrc } from "@/lib/data/avatars";
 import { getXpProgress, formatXP, shortenAddress } from "@/lib/utils";
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
@@ -29,6 +29,7 @@ export default function ProfilePage() {
   const { connection } = useConnection();
   const { data: displayName } = useDisplayName();
   const { data: bio } = useBio();
+  const { data: avatar } = useAvatar();
   const { data: xp = 0 } = useXP();
   const { data: level = 0 } = useLevel();
   const { data: streak } = useStreak();
@@ -113,11 +114,15 @@ export default function ProfilePage() {
       <Card className="mb-8">
         <CardContent className="p-8">
           <div className="flex flex-col items-center gap-6 sm:flex-row">
-            <Avatar className="h-20 w-20">
-              <AvatarFallback className="text-2xl bg-gradient-to-br from-[#008c4c] to-[#ffd23f] text-white">
-                {(displayName ?? address).slice(0, 2).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
+            <div className="h-20 w-20 rounded-full overflow-hidden bg-gradient-to-br from-[#008c4c] to-[#ffd23f] flex items-center justify-center shrink-0">
+              {getAvatarSrc(avatar ?? undefined) ? (
+                <Image src={getAvatarSrc(avatar ?? undefined)!} alt="Avatar" width={80} height={80} className="h-full w-full object-cover" />
+              ) : (
+                <span className="text-2xl font-bold text-white">
+                  {(displayName ?? address).slice(0, 2).toUpperCase()}
+                </span>
+              )}
+            </div>
             <div className="text-center sm:text-left flex-1">
               <h1 className="text-2xl font-bold">{displayName ?? shortenAddress(address)}</h1>
               {bio && <p className="mt-1 text-muted-foreground">{bio}</p>}

@@ -7,7 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { useDisplayName, useSetDisplayName, useBio, useSetBio } from "@/lib/hooks/use-service";
+import { useDisplayName, useSetDisplayName, useBio, useSetBio, useAvatar, useSetAvatar } from "@/lib/hooks/use-service";
+import { AVATARS, getAvatarSrc } from "@/lib/data/avatars";
+import Image from "next/image";
 import { toast } from "sonner";
 import { useTranslations, useLocale } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
@@ -29,11 +31,14 @@ export default function SettingsPage() {
   const { publicKey, disconnect, connected } = useWallet();
   const { data: displayName } = useDisplayName();
   const { data: bio } = useBio();
+  const { data: avatar } = useAvatar();
   const setDisplayNameMutation = useSetDisplayName();
   const setBioMutation = useSetBio();
+  const setAvatarMutation = useSetAvatar();
 
   const [nameInput, setNameInput] = useState("");
   const [bioInput, setBioInput] = useState("");
+  const [selectedAvatar, setSelectedAvatar] = useState<string>("");
   const [profileVisibility, setProfileVisibility] = useState<"public" | "private">("public");
 
   useEffect(() => {
@@ -44,6 +49,10 @@ export default function SettingsPage() {
     if (bio !== undefined) setBioInput(bio ?? "");
   }, [bio]);
 
+  useEffect(() => {
+    if (avatar !== undefined) setSelectedAvatar(avatar ?? "");
+  }, [avatar]);
+
   if (!connected || !publicKey) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-24 text-center">
@@ -53,18 +62,25 @@ export default function SettingsPage() {
     );
   }
 
-  const handleSaveProfile = () => {
+  const handleSaveProfile = async () => {
     const trimmedName = nameInput.trim();
     const trimmedBio = bioInput.trim();
 
+    const promises: Promise<void>[] = [];
     if (trimmedName !== (displayName ?? "")) {
-      setDisplayNameMutation.mutate(trimmedName || "");
+      promises.push(setDisplayNameMutation.mutateAsync(trimmedName || ""));
     }
     if (trimmedBio !== (bio ?? "")) {
-      setBioMutation.mutate(trimmedBio || "");
+      promises.push(setBioMutation.mutateAsync(trimmedBio || ""));
     }
+    if (selectedAvatar !== (avatar ?? "")) {
+      promises.push(setAvatarMutation.mutateAsync(selectedAvatar));
+    }
+    await Promise.all(promises);
     toast.success(t("profileUpdated"));
   };
+
+  const isSaving = setDisplayNameMutation.isPending || setBioMutation.isPending || setAvatarMutation.isPending;
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6 lg:px-8">
@@ -78,6 +94,37 @@ export default function SettingsPage() {
             <CardDescription>{t("profileDescription")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">{t("avatar")}</label>
+              <p className="text-xs text-muted-foreground mb-2">{t("chooseAvatar")}</p>
+              <div className="flex items-center gap-4 mb-3">
+                <div className="h-16 w-16 rounded-full overflow-hidden bg-gradient-to-br from-[#008c4c] to-[#ffd23f] flex items-center justify-center shrink-0">
+                  {getAvatarSrc(selectedAvatar) ? (
+                    <Image src={getAvatarSrc(selectedAvatar)!} alt="Avatar" width={64} height={64} className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="text-xl font-bold text-white">
+                      {(displayName ?? publicKey.toBase58()).slice(0, 2).toUpperCase()}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="grid grid-cols-5 sm:grid-cols-7 gap-2">
+                {AVATARS.map((a) => (
+                  <button
+                    key={a.id}
+                    type="button"
+                    onClick={() => setSelectedAvatar(a.id)}
+                    className={`rounded-full overflow-hidden border-2 transition-all ${
+                      selectedAvatar === a.id
+                        ? "border-solana-green ring-2 ring-solana-green/30 scale-105"
+                        : "border-transparent hover:border-muted-foreground/30"
+                    }`}
+                  >
+                    <Image src={a.src} alt={a.id} width={56} height={56} className="h-full w-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            </div>
             <div>
               <label className="text-sm font-medium">{t("displayName")}</label>
               <Input
@@ -98,9 +145,9 @@ export default function SettingsPage() {
             </div>
             <Button
               onClick={handleSaveProfile}
-              disabled={setDisplayNameMutation.isPending || setBioMutation.isPending}
+              disabled={isSaving}
             >
-              {setDisplayNameMutation.isPending || setBioMutation.isPending ? tc("saving") : tc("save")}
+              {isSaving ? tc("saving") : tc("save")}
             </Button>
           </CardContent>
         </Card>

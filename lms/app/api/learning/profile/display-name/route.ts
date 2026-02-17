@@ -10,12 +10,13 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
-  const { userId, name, bio } = await req.json();
+  const { userId, name, bio, avatar } = await req.json();
   if (!userId) return NextResponse.json({ error: "missing fields" }, { status: 400 });
 
   const user = await ensureUser(userId);
   if (name !== undefined) user.displayName = name || undefined;
   if (bio !== undefined) user.bio = bio || undefined;
+  if (avatar !== undefined) user.avatar = avatar || undefined;
   await user.save();
   return NextResponse.json({ ok: true });
 }

@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import { Trophy, Flame, Zap, Medal } from "lucide-react";
+import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLeaderboard, useXP } from "@/lib/hooks/use-service";
+import { getAvatarSrc } from "@/lib/data/avatars";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { getLevel } from "@/lib/utils";
 import { useTranslations } from "next-intl";
@@ -80,8 +82,12 @@ export default function LeaderboardPage() {
                 const isFirst = podiumIndex === 0;
                 return (
                   <div key={podiumIndex} className={`flex flex-col items-center ${isFirst ? "order-2" : podiumIndex === 1 ? "order-1" : "order-3"}`}>
-                    <div className={`relative flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br ${PODIUM_COLORS[podiumIndex]} ${isFirst ? "h-20 w-20" : ""}`}>
-                      <span className="text-lg font-bold text-white">{entry.displayName?.[0] ?? entry.wallet[0]}</span>
+                    <div className={`relative flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br ${PODIUM_COLORS[podiumIndex]} ${isFirst ? "h-20 w-20" : ""} overflow-hidden`}>
+                      {getAvatarSrc(entry.avatar) ? (
+                        <Image src={getAvatarSrc(entry.avatar)!} alt="" width={80} height={80} className="h-full w-full object-cover" />
+                      ) : (
+                        <span className="text-lg font-bold text-white">{entry.displayName?.[0] ?? entry.wallet[0]}</span>
+                      )}
                       <div className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-background border-2 border-current text-xs font-bold">
                         {podiumIndex + 1}
                       </div>
@@ -107,8 +113,12 @@ export default function LeaderboardPage() {
                     <span className="w-8 text-center text-sm font-bold text-muted-foreground">
                       #{entry.rank}
                     </span>
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted shrink-0">
-                      <span className="text-sm font-bold">{entry.displayName?.[0] ?? entry.wallet[0]}</span>
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted shrink-0 overflow-hidden">
+                      {getAvatarSrc(entry.avatar) ? (
+                        <Image src={getAvatarSrc(entry.avatar)!} alt="" width={40} height={40} className="h-full w-full object-cover" />
+                      ) : (
+                        <span className="text-sm font-bold">{entry.displayName?.[0] ?? entry.wallet[0]}</span>
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">

@@ -47,6 +47,8 @@ export interface LearningProgressService {
   setDisplayName(userId: string, name: string): Promise<void>;
   setBio(userId: string, bio: string): Promise<void>;
   getBio(userId: string): Promise<string | null>;
+  getAvatar(userId: string): Promise<string | null>;
+  setAvatar(userId: string, avatar: string): Promise<void>;
   getCourses(): Promise<Course[]>;
   getCourse(courseId: string): Promise<Course | null>;
   getPracticeProgress(userId: string): Promise<PracticeProgressData>;

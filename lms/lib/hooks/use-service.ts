@@ -182,6 +182,33 @@ export function useSetBio() {
   });
 }
 
+export function useAvatar() {
+  const { publicKey } = useWallet();
+  const userId = publicKey?.toBase58() ?? "guest";
+
+  return useQuery({
+    queryKey: ["avatar", userId],
+    queryFn: () => getService().getAvatar(userId),
+    enabled: !!publicKey,
+    staleTime: 30_000,
+  });
+}
+
+export function useSetAvatar() {
+  const { publicKey } = useWallet();
+  const userId = publicKey?.toBase58() ?? "guest";
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (avatar: string) => getService().setAvatar(userId, avatar),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["avatar", userId] });
+      queryClient.invalidateQueries({ queryKey: ["profile", userId] });
+      queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
+    },
+  });
+}
+
 export function useUnenroll() {
   const { publicKey, signTransaction } = useWallet();
   const { connection } = useConnection();
