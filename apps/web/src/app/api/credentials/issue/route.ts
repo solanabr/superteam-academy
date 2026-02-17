@@ -82,12 +82,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Fetch course data for credential attributes (before metadata insert)
+    const course = await fetchCourse(courseId, connection, PROGRAM_ID);
+    if (!course) {
+      return NextResponse.json(
+        { error: "Course not found on-chain" },
+        { status: 404 }
+      );
+    }
+
     // Generate metadata
     const sanityCourse = await getCourseBySlug(courseId);
     const courseName = sanityCourse?.title ?? courseId;
+    const credentialName = `Superteam Academy: ${courseName}`.slice(0, 32);
+    const totalXp =
+      (course.xpPerLesson as number) * ((course.lessonCount as number) ?? 1);
 
     const metadataJson = {
-      name: `Superteam Academy: ${courseName}`.slice(0, 32),
+      name: credentialName,
       symbol: "STACAD",
       description: `Certificate of completion for ${courseName} on Superteam Academy.`,
       image: "",
@@ -124,21 +136,28 @@ export async function POST(request: NextRequest) {
 
     const metadataUri = `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/api/certificates/metadata?id=${metadataRow.id}`;
 
-    // Fetch course data for credential attributes
-    const course = await fetchCourse(courseId, connection, PROGRAM_ID);
-
-    const { signature, mintAddress } = await onChainIssueCredential(
-      courseId,
-      walletPubkey,
-      `Superteam Academy: ${courseName}`.slice(0, 32),
-      metadataUri,
-      1,
-      course?.xpPerLesson
-        ? (course.xpPerLesson as number) *
-            ((course?.lessonCount as number) ?? 1)
-        : 0,
-      new PublicKey(trackCollection)
-    );
+    let signature: string;
+    let mintAddress: PublicKey;
+    try {
+      const result = await onChainIssueCredential(
+        courseId,
+        walletPubkey,
+        credentialName,
+        metadataUri,
+        1,
+        totalXp,
+        new PublicKey(trackCollection)
+      );
+      signature = result.signature;
+      mintAddress = result.mintAddress;
+    } catch (err) {
+      // Clean up orphaned metadata row
+      await supabaseAdmin
+        .from("nft_metadata")
+        .delete()
+        .eq("id", metadataRow.id);
+      throw err;
+    }
 
     // Supabase mirror
     await supabaseAdmin.from("certificates").insert({
