@@ -158,19 +158,21 @@ export default function CertificatePage({ params }: { params: Promise<{ id: stri
                       boxShadow: `0 0 80px ${primaryColor}30, 0 0 40px ${secondaryColor}20`,
                     }}
                   >
-                    <div className="h-full w-full rounded-[22px] bg-background flex items-center justify-center relative overflow-hidden">
-                      {/* Background pattern */}
+                    <div
+                      className="h-full w-full rounded-[22px] flex items-center justify-center relative overflow-hidden"
+                      style={{ background: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}CC)` }}
+                    >
                       <div
-                        className="absolute inset-0 opacity-[0.04]"
+                        className="absolute inset-0 opacity-[0.08]"
                         style={{
-                          backgroundImage: `radial-gradient(${primaryColor} 1px, transparent 1px)`,
+                          backgroundImage: "radial-gradient(white 1px, transparent 1px)",
                           backgroundSize: "16px 16px",
                         }}
                       />
                       <div className="text-center relative z-10">
-                        <Award className="h-10 w-10 mx-auto mb-1" style={{ color: primaryColor }} />
-                        <p className="text-4xl font-black" style={{ color: primaryColor }}>{levelName[0]}</p>
-                        <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-[0.25em] mt-0.5">{levelName}</p>
+                        <Award className="h-10 w-10 mx-auto mb-1 text-white" />
+                        <p className="text-4xl font-black text-white">{levelName[0]}</p>
+                        <p className="text-[9px] font-bold text-white/70 uppercase tracking-[0.25em] mt-0.5">{levelName}</p>
                       </div>
                     </div>
                   </div>
@@ -182,7 +184,7 @@ export default function CertificatePage({ params }: { params: Promise<{ id: stri
                 </div>
 
                 <h1 className="text-2xl font-bold sm:text-3xl tracking-tight">{track?.display ?? "Solana Development"}</h1>
-                <p className="mt-1.5 text-base font-semibold" style={{ color: primaryColor }}>{t("credential", { level: levelName })}</p>
+                <p className="mt-1.5 text-base font-semibold text-solana-green">{t("credential", { level: levelName })}</p>
               </div>
 
               <Separator className="my-8" />
@@ -198,7 +200,7 @@ export default function CertificatePage({ params }: { params: Promise<{ id: stri
                   <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">{t("coursesLabel")}</p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-3xl font-black" style={{ color: primaryColor }}>{levelName}</p>
+                  <p className="text-3xl font-black text-solana-green">{levelName}</p>
                   <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">{t("levelLabel")}</p>
                 </div>
               </div>
@@ -268,7 +270,7 @@ export default function CertificatePage({ params }: { params: Promise<{ id: stri
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">{t("track")}</span>
-              <span className="font-medium" style={{ color: track?.color }}>{track?.display ?? "Unknown"}</span>
+              <span className="font-medium text-solana-green">{track?.display ?? "Unknown"}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">{t("networkLabel")}</span>
@@ -282,8 +284,7 @@ export default function CertificatePage({ params }: { params: Promise<{ id: stri
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">{t("transaction")}</span>
                 <button
-                  className="font-mono text-xs hover:underline cursor-pointer"
-                  style={{ color: primaryColor }}
+                  className="font-mono text-xs hover:underline cursor-pointer text-solana-green"
                   onClick={() => {
                     navigator.clipboard.writeText(txHash);
                     toast.success(t("txHashCopied"));
@@ -321,8 +322,7 @@ export default function CertificatePage({ params }: { params: Promise<{ id: stri
                         href={`https://explorer.solana.com/tx/${cert.txHash}?cluster=devnet`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="font-mono text-[11px] hover:underline cursor-pointer"
-                        style={{ color: primaryColor }}
+                        className="font-mono text-[11px] hover:underline cursor-pointer text-solana-green"
                         title={cert.txHash}
                       >
                         {cert.txHash.slice(0, 6)}...{cert.txHash.slice(-4)}

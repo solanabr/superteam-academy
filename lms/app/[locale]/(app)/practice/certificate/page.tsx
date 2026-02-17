@@ -177,18 +177,21 @@ export default function PracticeCertificatePage() {
                       boxShadow: `0 0 80px ${color}30, 0 0 40px ${secondaryColor}20`,
                     }}
                   >
-                    <div className="h-full w-full rounded-[22px] bg-background flex items-center justify-center relative overflow-hidden">
+                    <div
+                      className="h-full w-full rounded-[22px] flex items-center justify-center relative overflow-hidden"
+                      style={{ background: `linear-gradient(135deg, ${color}, ${color}CC)` }}
+                    >
                       <div
-                        className="absolute inset-0 opacity-[0.04]"
+                        className="absolute inset-0 opacity-[0.08]"
                         style={{
-                          backgroundImage: `radial-gradient(${color} 1px, transparent 1px)`,
+                          backgroundImage: "radial-gradient(white 1px, transparent 1px)",
                           backgroundSize: "16px 16px",
                         }}
                       />
                       <div className="text-center relative z-10">
-                        <Award className="h-10 w-10 mx-auto mb-1" style={{ color }} />
-                        <p className="text-4xl font-black" style={{ color }}>{level[0]}</p>
-                        <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-[0.25em] mt-0.5">{level}</p>
+                        <Award className="h-10 w-10 mx-auto mb-1 text-white" />
+                        <p className="text-4xl font-black text-white">{level[0]}</p>
+                        <p className="text-[9px] font-bold text-white/70 uppercase tracking-[0.25em] mt-0.5">{level}</p>
                       </div>
                     </div>
                   </div>
