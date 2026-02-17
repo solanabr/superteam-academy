@@ -53,6 +53,7 @@
     "react-markdown": "^10.1.0",
     "rehype-raw": "^7.0.0",
     "remark-gfm": "^4.0.1",
+    "server-only": "^0.0.1",
     "sucrase": "^3.35.1",
     "tailwind-merge": "^2.4.0",
     "tailwindcss-animate": "^1.0.7",
