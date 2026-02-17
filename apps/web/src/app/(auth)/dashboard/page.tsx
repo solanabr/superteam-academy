@@ -7,6 +7,7 @@ import { XPLevelDisplay } from '@/components/dashboard/xp-level-display';
 import { StreakCalendar } from '@/components/dashboard/streak-calendar';
 import { ActivityFeed } from '@/components/dashboard/activity-feed';
 import { BadgeGrid } from '@/components/profile/badge-grid';
+import { DailyChallengeWidget } from '@/components/challenges/daily-challenge-widget';
 import { getCurrentUser, courses, streakData, activityFeed } from '@/lib/mock-data';
 
 export default function DashboardPage() {
@@ -62,10 +63,15 @@ export default function DashboardPage() {
         />
       </div>
 
-      {/* Badges & Activity side by side */}
-      <div className="mt-8 grid gap-6 lg:grid-cols-2">
-        <BadgeGrid earnedBadgeIds={user.earnedBadgeIds} />
-        <ActivityFeed items={userActivity} />
+      {/* Daily Challenge + Badges & Activity */}
+      <div className="mt-8 grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-1">
+          <DailyChallengeWidget />
+        </div>
+        <div className="lg:col-span-2 grid gap-6 md:grid-cols-2">
+          <BadgeGrid earnedBadgeIds={user.earnedBadgeIds} />
+          <ActivityFeed items={userActivity} />
+        </div>
       </div>
 
       {/* Recommended Courses */}
