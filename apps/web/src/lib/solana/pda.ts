@@ -1,0 +1,68 @@
+import { PublicKey } from "@solana/web3.js";
+
+export const PROGRAM_ID = new PublicKey(
+  process.env.NEXT_PUBLIC_ACADEMY_PROGRAM_ID ??
+    "3YchgRgR65gdRqgTZTM5qQXqtTZn5Kt2i6FPnZVu34Qb"
+);
+
+export function findConfigPDA(
+  programId: PublicKey = PROGRAM_ID
+): [PublicKey, number] {
+  return PublicKey.findProgramAddressSync([Buffer.from("config")], programId);
+}
+
+export function findCoursePDA(
+  courseId: string,
+  programId: PublicKey = PROGRAM_ID
+): [PublicKey, number] {
+  return PublicKey.findProgramAddressSync(
+    [Buffer.from("course"), Buffer.from(courseId)],
+    programId
+  );
+}
+
+export function findEnrollmentPDA(
+  courseId: string,
+  user: PublicKey,
+  programId: PublicKey = PROGRAM_ID
+): [PublicKey, number] {
+  return PublicKey.findProgramAddressSync(
+    [Buffer.from("enrollment"), Buffer.from(courseId), user.toBuffer()],
+    programId
+  );
+}
+
+export function findMinterRolePDA(
+  minter: PublicKey,
+  programId: PublicKey = PROGRAM_ID
+): [PublicKey, number] {
+  return PublicKey.findProgramAddressSync(
+    [Buffer.from("minter"), minter.toBuffer()],
+    programId
+  );
+}
+
+export function findAchievementTypePDA(
+  achievementId: string,
+  programId: PublicKey = PROGRAM_ID
+): [PublicKey, number] {
+  return PublicKey.findProgramAddressSync(
+    [Buffer.from("achievement"), Buffer.from(achievementId)],
+    programId
+  );
+}
+
+export function findAchievementReceiptPDA(
+  achievementId: string,
+  recipient: PublicKey,
+  programId: PublicKey = PROGRAM_ID
+): [PublicKey, number] {
+  return PublicKey.findProgramAddressSync(
+    [
+      Buffer.from("achievement_receipt"),
+      Buffer.from(achievementId),
+      recipient.toBuffer(),
+    ],
+    programId
+  );
+}
