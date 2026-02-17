@@ -1,16 +1,45 @@
 import { NextRequest, NextResponse } from "next/server";
+import { PublicKey } from "@solana/web3.js";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { checkNewAchievements } from "@/lib/gamification/achievements";
-import { getAllCourseLessonCounts } from "@/lib/sanity/queries";
+import {
+  getAllCourseLessonCounts,
+  getCourseBySlug,
+} from "@/lib/sanity/queries";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
-import { mintXpToWallet } from "@/lib/solana/xp-mint";
+import {
+  isOnChainProgramLive,
+  completeLesson as onChainCompleteLesson,
+  finalizeCourse as onChainFinalizeCourse,
+  getConnection,
+  PROGRAM_ID,
+} from "@/lib/solana/academy-program";
+import { fetchEnrollment, fetchCourse } from "@/lib/solana/academy-reads";
+import { isAllLessonsComplete } from "@/lib/solana/bitmap";
 
 interface LessonCompleteRequest {
   lessonId: string;
   courseId: string;
-  xpReward: number;
+}
+
+/**
+ * Derive the 0-based lesson index within a course from Sanity content order.
+ * Modules and lessons are flattened in order; the index matches the on-chain bitmap position.
+ */
+async function deriveLessonIndex(
+  courseId: string,
+  lessonId: string
+): Promise<number> {
+  const course = await getCourseBySlug(courseId);
+  if (!course) throw new Error(`Course not found: ${courseId}`);
+  const allLessons = (course.modules ?? []).flatMap(
+    (m: { lessons?: { _id: string }[] }) => m.lessons ?? []
+  );
+  const index = allLessons.findIndex((l) => l._id === lessonId);
+  if (index === -1) throw new Error(`Lesson not found in course: ${lessonId}`);
+  return index;
 }
 
 export async function POST(request: NextRequest) {
@@ -39,18 +68,11 @@ export async function POST(request: NextRequest) {
     }
 
     const body = (await request.json()) as LessonCompleteRequest;
-    const { lessonId, courseId, xpReward } = body;
+    const { lessonId, courseId } = body;
 
-    if (!lessonId || !courseId || !xpReward || xpReward <= 0) {
+    if (!lessonId || !courseId) {
       return NextResponse.json(
-        { error: "Missing or invalid lessonId, courseId, or xpReward" },
-        { status: 400 }
-      );
-    }
-
-    if (xpReward > 100) {
-      return NextResponse.json(
-        { error: "XP amount exceeds maximum" },
+        { error: "Missing lessonId or courseId" },
         { status: 400 }
       );
     }
@@ -71,6 +93,72 @@ export async function POST(request: NextRequest) {
         { error: "Not enrolled in this course" },
         { status: 403 }
       );
+    }
+
+    // Look up user's wallet — required for on-chain operations
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("wallet_address")
+      .eq("id", user.id)
+      .single();
+
+    let onChainSignature: string | undefined;
+    let finalizeSig: string | null = null;
+    let finalized = false;
+    let lessonIndex: number | null = null;
+
+    const programLive =
+      profile?.wallet_address && (await isOnChainProgramLive());
+
+    if (programLive && profile?.wallet_address) {
+      const walletPubkey = new PublicKey(profile.wallet_address);
+
+      // Derive lesson index from Sanity content order (cached for later use)
+      lessonIndex = await deriveLessonIndex(courseId, lessonId);
+
+      // Call on-chain completeLesson — backend signs, mints XP via CPI
+      onChainSignature = await onChainCompleteLesson(
+        courseId,
+        walletPubkey,
+        lessonIndex
+      );
+
+      // Check if all lessons are now complete for auto-finalize
+      const connection = getConnection();
+      const onChainEnrollment = await fetchEnrollment(
+        courseId,
+        walletPubkey,
+        connection,
+        PROGRAM_ID
+      );
+
+      if (onChainEnrollment) {
+        const onChainCourse = await fetchCourse(
+          courseId,
+          connection,
+          PROGRAM_ID
+        );
+        const totalLessons = (onChainCourse?.lessonCount as number) ?? 0;
+
+        if (
+          isAllLessonsComplete(
+            onChainEnrollment.lessonFlags as (bigint | number)[],
+            totalLessons
+          ) &&
+          !onChainEnrollment.completedAt
+        ) {
+          try {
+            finalizeSig = await onChainFinalizeCourse(courseId, walletPubkey);
+            finalized = true;
+          } catch (err) {
+            logError({
+              errorId: ERROR_IDS.LESSON_COMPLETE_FAILED,
+              error: err instanceof Error ? err : new Error(String(err)),
+              context: { note: "auto-finalize failed, can retry" },
+            });
+          }
+        }
+      }
     }
 
     // 2. Check if lesson is already completed (prevent double-awarding)
@@ -101,6 +189,8 @@ export async function POST(request: NextRequest) {
           lesson_id: lessonId,
           completed: true,
           completed_at: new Date().toISOString(),
+          tx_signature: onChainSignature ?? null,
+          lesson_index: lessonIndex,
         },
         { onConflict: "user_id,lesson_id" }
       );
@@ -112,7 +202,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 4. Award XP via SECURITY DEFINER function (also handles streak in SQL)
+    // 4. Determine XP amount — from on-chain course or default
+    let xpReward = 10;
+    if (programLive) {
+      const connection = getConnection();
+      const course = await fetchCourse(courseId, connection, PROGRAM_ID);
+      xpReward = (course?.xpPerLesson as number) ?? 10;
+    }
+
+    // Award XP via SECURITY DEFINER function (also handles streak in SQL)
     const { error: xpError } = await supabaseAdmin.rpc("award_xp", {
       p_user_id: user.id,
       p_amount: xpReward,
@@ -124,29 +222,6 @@ export async function POST(request: NextRequest) {
         { error: "Failed to award XP" },
         { status: 500 }
       );
-    }
-
-    // 4b. Mint Token-2022 XP on-chain (awaited to capture signature for response)
-    // Look up user's wallet address; only mint if they have one connected
-    const { data: profile } = await supabaseAdmin
-      .from("profiles")
-      .select("wallet_address")
-      .eq("id", user.id)
-      .single();
-
-    let onChainMintSignature: string | undefined;
-
-    if (profile?.wallet_address) {
-      const mintResult = await mintXpToWallet(profile.wallet_address, xpReward);
-      if (mintResult.success) {
-        onChainMintSignature = mintResult.signature;
-      } else if (mintResult.error) {
-        logError({
-          errorId: ERROR_IDS.LESSON_COMPLETE_FAILED,
-          error: new Error(`On-chain XP mint failed: ${mintResult.error}`),
-          context: { userId: user.id, walletAddress: profile.wallet_address },
-        });
-      }
     }
 
     // 5. Fetch updated user state for achievement checks
@@ -251,7 +326,9 @@ export async function POST(request: NextRequest) {
       success: true,
       alreadyCompleted: false,
       xpEarned: xpReward,
-      onChainMintSignature,
+      signature: onChainSignature,
+      finalized,
+      finalizationSignature: finalizeSig,
       newAchievements: successfullyUnlocked.map((a) => ({
         id: a.id,
         name: a.name,
