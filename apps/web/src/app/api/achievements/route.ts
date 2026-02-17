@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { PublicKey } from "@solana/web3.js";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
@@ -7,6 +8,10 @@ import {
 } from "@/lib/gamification/achievements";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
+import {
+  isOnChainProgramLive,
+  awardAchievement as onChainAwardAchievement,
+} from "@/lib/solana/academy-program";
 
 export async function POST(request: NextRequest) {
   try {
@@ -121,7 +126,52 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ success: true, achievementId });
+    // On-chain achievement minting (non-blocking — Supabase already unlocked)
+    let onChainSig: string | undefined;
+    let assetAddress: string | undefined;
+
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("wallet_address")
+      .eq("id", user.id)
+      .single();
+
+    if (profile?.wallet_address && (await isOnChainProgramLive())) {
+      try {
+        const walletPubkey = new PublicKey(profile.wallet_address);
+        const result = await onChainAwardAchievement(
+          achievementId,
+          walletPubkey
+        );
+        onChainSig = result.signature;
+        assetAddress = result.assetAddress.toBase58();
+      } catch (err) {
+        logError({
+          errorId: ERROR_IDS.ACHIEVEMENT_ONCHAIN_FAILED,
+          error: err instanceof Error ? err : new Error(String(err)),
+          context: { achievementId },
+        });
+      }
+    }
+
+    // Update Supabase with on-chain data if minting succeeded
+    if (onChainSig) {
+      await supabaseAdmin
+        .from("user_achievements")
+        .update({
+          tx_signature: onChainSig,
+          asset_address: assetAddress,
+        })
+        .eq("user_id", user.id)
+        .eq("achievement_id", achievementId);
+    }
+
+    return NextResponse.json({
+      success: true,
+      achievementId,
+      signature: onChainSig,
+      assetAddress,
+    });
   } catch (err: unknown) {
     logError({
       errorId: ERROR_IDS.ACHIEVEMENT_UNLOCK_FAILED,
