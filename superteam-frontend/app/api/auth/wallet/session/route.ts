@@ -2,6 +2,8 @@ import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
 import { getWalletSessionCookieName, verifyAccessToken } from "@/lib/server/wallet-auth"
 
+export const dynamic = "force-dynamic"
+
 function buildUsername(walletAddress: string): string {
   return `user_${walletAddress.slice(0, 6).toLowerCase()}`
 }

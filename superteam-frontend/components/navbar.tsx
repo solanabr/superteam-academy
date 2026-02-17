@@ -17,6 +17,7 @@ import {
   Zap,
   LogOut,
   Wallet,
+  Loader2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -38,18 +39,40 @@ const navLinks = [
   { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
 ]
 
+function openWalletModal(setVisible: (v: boolean) => void) {
+  try {
+    setTimeout(() => {
+      try {
+        setVisible(true)
+      } catch (err) {
+        console.error("Failed to open wallet modal:", err)
+        if (typeof window !== "undefined" && (window as any).solana?.isPhantom) {
+          ;(window as any).solana.connect().catch(() => undefined)
+        }
+      }
+    }, 100)
+  } catch (err) {
+    console.error("Wallet connection error:", err)
+  }
+}
+
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const router = useRouter()
   const { connected, publicKey } = useWallet()
   const { setVisible } = useWalletModal()
-  const { isLoading, isAuthenticated, user, authError, loginWithWallet, logout } = useWalletAuth()
+  const { isLoading, isAuthenticated, user, status, logout } = useWalletAuth()
   const { snapshot } = useIdentitySnapshot()
 
   const profile = snapshot?.profile
   const connectedAddress = publicKey?.toBase58() ?? null
   const activeAddress = user?.walletAddress ?? connectedAddress
   const visibleNavLinks = isAuthenticated ? navLinks : []
+
+  // Determine what to show in the wallet area
+  const showConnectButton = !connected || status === "disconnected"
+  const showAuthProgress = connected && isLoading
+  const showAuthenticatedUI = isAuthenticated
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
@@ -75,35 +98,32 @@ export function Navbar() {
           </nav>
         </div>
 
-        {/* Right side */}
+        {/* Right side - Desktop */}
         <div className="hidden items-center gap-3 md:flex">
-          {!connected ? (
+          {showConnectButton && (
             <Button
               variant="outline"
               className="border-primary/30 text-primary hover:bg-primary/10"
-              onClick={() => {
-                try {
-                  setTimeout(() => {
-                    try {
-                      setVisible(true)
-                    } catch (err) {
-                      console.error("Failed to open wallet modal:", err)
-                      if (typeof window !== "undefined" && (window as any).solana?.isPhantom) {
-                        ;(window as any).solana.connect().catch(() => undefined)
-                      }
-                    }
-                  }, 100)
-                } catch (err) {
-                  console.error("Wallet connection error:", err)
-                }
-              }}
+              onClick={() => openWalletModal(setVisible)}
             >
               <Wallet className="mr-2 h-4 w-4" />
               Connect Wallet
             </Button>
-          ) : null}
+          )}
 
-          {isAuthenticated && (
+          {showAuthProgress && (
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="border-border text-muted-foreground">
+                {shortAddress(connectedAddress)}
+              </Badge>
+              <div className="flex items-center gap-2 rounded-lg bg-secondary px-3 py-1.5 text-sm text-muted-foreground">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                {status === "signing" ? "Signing in..." : "Verifying..."}
+              </div>
+            </div>
+          )}
+
+          {showAuthenticatedUI && (
             <>
               {/* Streak */}
               <div className="flex items-center gap-1.5 rounded-lg bg-secondary px-3 py-1.5">
@@ -119,7 +139,7 @@ export function Navbar() {
                 </span>
               </div>
 
-              {/* Profile */}
+              {/* Profile dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="rounded-full border border-primary/30 outline-none transition-colors hover:border-primary/50 focus-visible:ring-2 focus-visible:ring-primary/50">
@@ -133,57 +153,26 @@ export function Navbar() {
                 <DropdownMenuContent align="end" className="w-48">
                   <DropdownMenuLabel>My Account</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onSelect={() => {
-                      router.push("/profile")
-                    }}
-                  >
+                  <DropdownMenuItem onSelect={() => router.push("/profile")}>
                     <User className="h-4 w-4" />
                     Profile
                   </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={() => {
-                      router.push("/settings")
-                    }}
-                  >
+                  <DropdownMenuItem onSelect={() => router.push("/settings")}>
                     <Settings className="h-4 w-4" />
                     Settings
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onSelect={() => {
-                      void logout().catch(() => undefined)
-                    }}
-                  >
+                  <DropdownMenuItem onSelect={() => void logout().catch(() => undefined)}>
                     <LogOut className="h-4 w-4" />
                     Logout
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            </>
-          )}
 
-          {connected && (
-            <div className="ml-1 flex items-center gap-2">
               <Badge variant="outline" className="border-primary/30 text-primary">
                 {shortAddress(activeAddress)}
               </Badge>
-              {!isAuthenticated && isLoading ? (
-                <Badge variant="outline" className="border-border text-muted-foreground">
-                  Authorizing...
-                </Badge>
-              ) : !isAuthenticated ? (
-                <Button
-                  variant="outline"
-                  className="border-primary/30 text-primary hover:bg-primary/10"
-                  onClick={() => {
-                    void loginWithWallet().catch(() => undefined)
-                  }}
-                >
-                  Retry Auth
-                </Button>
-              ) : null}
-            </div>
+            </>
           )}
         </div>
 
@@ -202,50 +191,38 @@ export function Navbar() {
       {mobileOpen && (
         <div className="border-t border-border bg-background px-4 py-4 md:hidden">
           <div className="mb-4 flex flex-col gap-2 border-b border-border pb-4">
-            {!connected ? (
+            {showConnectButton && (
               <Button
                 variant="outline"
                 className="w-full border-primary/30 text-primary hover:bg-primary/10"
-                onClick={() => setVisible(true)}
+                onClick={() => openWalletModal(setVisible)}
               >
                 <Wallet className="mr-2 h-4 w-4" />
                 Connect Wallet
               </Button>
-            ) : !isAuthenticated ? (
-              isLoading ? (
-                <Badge variant="outline" className="w-full justify-center border-border text-muted-foreground py-2">
-                  Authorizing wallet...
-                </Badge>
-              ) : (
-                <Button
-                  variant="outline"
-                  className="w-full border-primary/30 text-primary hover:bg-primary/10"
-                  onClick={() => {
-                    void loginWithWallet().catch(() => undefined)
-                  }}
-                >
-                  Retry Auth
-                </Button>
-              )
-            ) : (
+            )}
+
+            {showAuthProgress && (
+              <div className="flex w-full items-center justify-center gap-2 rounded-lg bg-secondary px-3 py-2.5 text-sm text-muted-foreground">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                {status === "signing" ? "Signing in..." : "Verifying session..."}
+              </div>
+            )}
+
+            {showAuthenticatedUI && (
               <Button
                 variant="outline"
                 className="w-full border-primary/30 text-primary hover:bg-primary/10"
                 disabled={isLoading}
-                onClick={() => {
-                  void logout().catch(() => undefined)
-                }}
+                onClick={() => void logout().catch(() => undefined)}
               >
                 <LogOut className="mr-2 h-4 w-4" />
                 Logout ({shortAddress(activeAddress)})
               </Button>
             )}
-            {authError && (
-              <p className="text-xs text-destructive">{authError}</p>
-            )}
           </div>
 
-          {isAuthenticated && (
+          {showAuthenticatedUI && (
             <div className="flex items-center gap-3 mb-4 pb-4 border-b border-border">
               <Avatar className="h-10 w-10 border border-primary/30">
                 <AvatarFallback className="bg-primary/20 text-sm text-primary">
@@ -268,6 +245,7 @@ export function Navbar() {
               </Badge>
             </div>
           )}
+
           <nav className="flex flex-col gap-1">
             {visibleNavLinks.map((link) => (
               <Link
@@ -280,7 +258,7 @@ export function Navbar() {
                 {link.label}
               </Link>
             ))}
-            {isAuthenticated && (
+            {showAuthenticatedUI && (
               <>
                 <Link
                   href="/profile"
