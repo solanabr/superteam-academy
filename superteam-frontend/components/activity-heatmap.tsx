@@ -177,7 +177,7 @@ export function ActivityHeatmap({
               return (
                 <div
                   key={week[0].toISOString()}
-                  className="text-[10px] text-muted-foreground leading-none truncate"
+                  className="text-[10px] text-muted-foreground leading-none overflow-visible whitespace-nowrap"
                 >
                   {showLabel
                     ? week[0].toLocaleString("en-US", { month: "short" })
