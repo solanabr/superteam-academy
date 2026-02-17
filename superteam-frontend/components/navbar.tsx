@@ -21,6 +21,7 @@ import {
   Loader2,
   Sun,
   Moon,
+  Map,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -37,9 +38,15 @@ import { useWalletAuth } from "@/components/providers/wallet-auth-provider";
 import { useIdentitySnapshot } from "@/hooks/use-identity-snapshot";
 
 const navLinks = [
-  { href: "/courses", label: "Courses", icon: BookOpen },
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
+  { href: "/roadmaps", label: "Roadmaps", icon: Map, public: true },
+  { href: "/courses", label: "Courses", icon: BookOpen, public: false },
+  {
+    href: "/dashboard",
+    label: "Dashboard",
+    icon: LayoutDashboard,
+    public: false,
+  },
+  { href: "/leaderboard", label: "Leaderboard", icon: Trophy, public: false },
 ];
 
 function openWalletModal(setVisible: (v: boolean) => void) {
@@ -76,7 +83,7 @@ export function Navbar() {
   const profile = snapshot?.profile;
   const connectedAddress = publicKey?.toBase58() ?? null;
   const activeAddress = user?.walletAddress ?? connectedAddress;
-  const visibleNavLinks = isAuthenticated ? navLinks : [];
+  const visibleNavLinks = navLinks.filter((l) => l.public || isAuthenticated);
 
   // Determine what to show in the wallet area
   const showConnectButton = !connected || status === "disconnected";

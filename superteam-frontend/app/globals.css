@@ -128,6 +128,21 @@
   box-shadow: 0 0 20px hsl(var(--gold) / 0.15), 0 0 60px hsl(var(--gold) / 0.05);
 }
 
+/* React Flow roadmap edges */
+.react-flow__edge.main-edge .react-flow__edge-path {
+  stroke: hsl(var(--primary));
+  stroke-width: 2.5;
+}
+.react-flow__edge.branch-edge .react-flow__edge-path {
+  stroke: hsl(var(--muted-foreground) / 0.6);
+  stroke-width: 1.5;
+}
+.react-flow__edge.sub-edge .react-flow__edge-path {
+  stroke: hsl(var(--muted-foreground) / 0.4);
+  stroke-width: 1;
+  stroke-dasharray: 5 5;
+}
+
 /* Streak fire animation */
 @keyframes fire-pulse {
   0%, 100% { opacity: 1; transform: scale(1); }
