@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useLang } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -138,7 +139,7 @@ export function Navbar() {
                     className="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-yellow-400 flex items-center justify-center text-gray-950 font-bold text-sm overflow-hidden"
                   >
                     {user?.image ? (
-                      <img src={user.image} alt={user.displayName || "User avatar"} className="w-full h-full object-cover" />
+                      <Image src={user.image} alt={user.displayName || "User avatar"} width={32} height={32} className="w-full h-full object-cover" />
                     ) : (
                       user?.avatar
                     )}

@@ -3,12 +3,12 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Hero } from '@/components/shared/Hero';
-import { useLang } from '@/contexts/LanguageContext';
+
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthModal } from '@/components/shared/AuthModal';
 
 export default function HomePage() {
-  const { t } = useLang();
+
   const { isAuthenticated } = useAuth();
   const router = useRouter();
   const [authOpen, setAuthOpen] = useState(false);

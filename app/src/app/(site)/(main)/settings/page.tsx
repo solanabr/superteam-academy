@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLang } from '@/contexts/LanguageContext';
+import type { Lang } from '@/i18n/translations';
 import { useAuth } from '@/contexts/AuthContext';
 // Simple Mock Tabs if Shadcn not fully set up yet
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -36,7 +37,7 @@ const SimpleTabs = ({ children, defaultValue }: any) => {
 
 export default function SettingsPage() {
     const { theme, toggleTheme } = useTheme();
-    const { lang: language, setLang: setLanguage, t } = useLang();
+    const { lang: language, setLang: setLanguage } = useLang();
     const { user, logout } = useAuth();
 
     const [notifications, setNotifications] = useState({
@@ -126,7 +127,7 @@ export default function SettingsPage() {
                                 </div>
                                 <select
                                     value={language}
-                                    onChange={(e) => setLanguage(e.target.value as any)}
+                                    onChange={(e) => setLanguage(e.target.value as Lang)}
                                     className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent dark:text-white outline-none focus:border-green-500"
                                 >
                                     <option value="en">English (US)</option>

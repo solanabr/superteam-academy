@@ -45,7 +45,7 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
                         startDate={subDays(new Date(), 365)}
                         endDate={new Date()}
                         values={dummyData}
-                        classForValue={(value) => {
+                        classForValue={(value: { date: string; count: number } | null) => {
                             if (!value || value.count === 0) {
                                 return 'fill-gray-200 dark:fill-gray-800';
                             }
@@ -55,7 +55,7 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
                             return 'fill-green-500';
                         }}
                         showWeekdayLabels={true}
-                        onClick={(value) => {
+                        onClick={(value: { date: string; count: number } | null) => {
                             if (value) {
                                 alert(`On ${value.date}, you made ${value.count} contributions.`);
                             }

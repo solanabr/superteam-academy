@@ -1,7 +1,7 @@
 'use client';
 
 import { useAuth } from '@/contexts/AuthContext';
-import { useLang } from '@/contexts/LanguageContext';
+
 import { SkillRadar } from '@/components/dashboard/SkillRadar';
 import { ActivityHeatmap } from '@/components/dashboard/ActivityHeatmap';
 import { useRouter } from 'next/navigation';
@@ -10,7 +10,7 @@ import { useEffect } from 'react';
 export default function DashboardPage() {
 
   const { user, isAuthenticated, isLoading } = useAuth();
-  const { t } = useLang();
+
   const router = useRouter();
 
   useEffect(() => {
@@ -57,7 +57,7 @@ export default function DashboardPage() {
             Welcome back, {user?.displayName || 'Builder'}!
           </h1>
           <p className="text-slate-500 dark:text-gray-400">
-            Let's continue your journey to becoming a Solana expert.
+            Let&apos;s continue your journey to becoming a Solana expert.
           </p>
         </div>
       </div>

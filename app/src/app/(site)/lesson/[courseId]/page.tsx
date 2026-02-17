@@ -41,44 +41,15 @@ export default function LessonPage() {
   const [showComplete, setShowComplete] = useState(false);
   const codeRef = useRef<string>("");
 
-  if (!course || !isAuthenticated || !user) {
-    return (
-      <div className="min-h-screen bg-slate-50 dark:bg-gray-950 flex items-center justify-center transition-colors">
-        <div className="text-center">
-          <p className="text-slate-500 dark:text-gray-400 mb-4">
-            {!course
-              ? t('lesson.courseNotFound')
-              : t('lesson.connectRequired')}
-          </p>
-          <button
-            onClick={() => router.push("/courses")}
-            className="px-6 py-3 rounded-xl bg-gradient-to-r from-green-500 to-yellow-400 text-gray-950 font-semibold"
-          >
-            {t('lesson.browseCourses')}
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  const lesson = course.lessons[currentLessonIndex];
-  const isLessonCompleted = user.completedLessons.includes(lesson.id);
-  const isCourseCompleted = user.completedCourses.includes(course.id);
-
-  // Calculate progress
-  const completedInCourse = course.lessons.filter((l) =>
-    user.completedLessons.includes(l.id)
-  ).length;
-  const progressPercent =
-    course.lessons.length > 0
-      ? Math.round((completedInCourse / course.lessons.length) * 100)
-      : 0;
-
   const handleCodeChange = useCallback((code: string) => {
     codeRef.current = code;
   }, []);
 
   const handlePass = useCallback(async () => {
+    if (!course || !user) return;
+    const lesson = course.lessons[currentLessonIndex];
+    if (!lesson) return;
+
     if (!user.completedLessons.includes(lesson.id)) {
       // Call service layer
       await lessonCompletionService.completeLesson({
@@ -112,7 +83,40 @@ export default function LessonPage() {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lesson, user, course]);
+  }, [currentLessonIndex, user, course]);
+
+  if (!course || !isAuthenticated || !user) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-gray-950 flex items-center justify-center transition-colors">
+        <div className="text-center">
+          <p className="text-slate-500 dark:text-gray-400 mb-4">
+            {!course
+              ? t('lesson.courseNotFound')
+              : t('lesson.connectRequired')}
+          </p>
+          <button
+            onClick={() => router.push("/courses")}
+            className="px-6 py-3 rounded-xl bg-gradient-to-r from-green-500 to-yellow-400 text-gray-950 font-semibold"
+          >
+            {t('lesson.browseCourses')}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const lesson = course.lessons[currentLessonIndex];
+  const isLessonCompleted = user.completedLessons.includes(lesson.id);
+  const isCourseCompleted = user.completedCourses.includes(course.id);
+
+  // Calculate progress
+  const completedInCourse = course.lessons.filter((l) =>
+    user.completedLessons.includes(l.id)
+  ).length;
+  const progressPercent =
+    course.lessons.length > 0
+      ? Math.round((completedInCourse / course.lessons.length) * 100)
+      : 0;
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-gray-950 transition-colors">
