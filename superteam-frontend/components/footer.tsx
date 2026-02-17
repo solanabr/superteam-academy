@@ -1,8 +1,8 @@
-import Link from "next/link"
-import Image from "next/image"
-import { Zap, Github, Twitter } from "lucide-react"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
+import Link from "next/link";
+import Image from "next/image";
+import { Zap, Github, Twitter } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 const footerLinks = {
   Platform: [
@@ -23,7 +23,7 @@ const footerLinks = {
     { label: "Privacy", href: "#" },
     { label: "Terms", href: "#" },
   ],
-}
+};
 
 export function Footer() {
   return (
@@ -36,7 +36,8 @@ export function Footer() {
               <Image src="/logo.svg" alt="logo" width={128} height={164} />
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed mb-6 max-w-sm">
-              The interactive learning platform for blockchain developers. Master Solana, Rust, and Web3 through hands-on challenges.
+              The interactive learning platform for blockchain developers.
+              Master Solana, Rust, and Web3 through hands-on challenges.
             </p>
             {/* Newsletter */}
             <div className="flex gap-2 max-w-sm">
@@ -53,7 +54,9 @@ export function Footer() {
           {/* Links */}
           {Object.entries(footerLinks).map(([title, links]) => (
             <div key={title}>
-              <h4 className="text-sm font-semibold text-foreground mb-4">{title}</h4>
+              <h4 className="text-sm font-semibold text-foreground mb-4">
+                {title}
+              </h4>
               <ul className="flex flex-col gap-2.5">
                 {links.map((link) => (
                   <li key={link.label}>
@@ -76,11 +79,17 @@ export function Footer() {
             2026 SuperTeam. All rights reserved.
           </p>
           <div className="flex items-center gap-4">
-            <a href="#" className="text-muted-foreground transition-colors hover:text-foreground">
+            <a
+              href="#"
+              className="text-muted-foreground transition-colors hover:text-foreground"
+            >
               <Github className="h-4 w-4" />
               <span className="sr-only">GitHub</span>
             </a>
-            <a href="#" className="text-muted-foreground transition-colors hover:text-foreground">
+            <a
+              href="#"
+              className="text-muted-foreground transition-colors hover:text-foreground"
+            >
               <Twitter className="h-4 w-4" />
               <span className="sr-only">Twitter</span>
             </a>
@@ -88,5 +97,5 @@ export function Footer() {
         </div>
       </div>
     </footer>
-  )
+  );
 }

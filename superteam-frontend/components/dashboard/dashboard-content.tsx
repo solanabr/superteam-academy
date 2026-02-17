@@ -1,4 +1,4 @@
-import Link from "next/link"
+import Link from "next/link";
 import {
   Zap,
   Flame,
@@ -14,17 +14,17 @@ import {
   Bug,
   Building,
   Anchor,
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { type Course, courses as mockCourses } from "@/lib/mock-data"
-import type { IdentitySnapshot } from "@/lib/identity/types"
-import type { LeaderboardEntry } from "@/lib/server/leaderboard-cache"
-import type { RecentActivityItem } from "@/lib/server/activity-store"
-import { ActivityHeatmap } from "@/components/activity-heatmap"
-import { LeaderboardWidget } from "./leaderboard-widget"
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { type Course, courses as mockCourses } from "@/lib/mock-data";
+import type { IdentitySnapshot } from "@/lib/identity/types";
+import type { LeaderboardEntry } from "@/lib/server/leaderboard-cache";
+import type { RecentActivityItem } from "@/lib/server/activity-store";
+import { ActivityHeatmap } from "@/components/activity-heatmap";
+import { LeaderboardWidget } from "./leaderboard-widget";
 
 const badgeIcons: Record<string, typeof Zap> = {
   footprints: Footprints,
@@ -35,7 +35,7 @@ const badgeIcons: Record<string, typeof Zap> = {
   building: Building,
   anchor: Anchor,
   zap: Zap,
-}
+};
 const badgeNameToIcon: Record<string, string> = {
   "First Steps": "footprints",
   "Code Warrior": "swords",
@@ -45,7 +45,7 @@ const badgeNameToIcon: Record<string, string> = {
   "DeFi Builder": "building",
   "Anchor Pro": "anchor",
   "Speed Demon": "zap",
-}
+};
 
 export function DashboardContent({
   identity,
@@ -54,18 +54,20 @@ export function DashboardContent({
   recentActivity = [],
   leaderboardEntries = [],
 }: {
-  identity?: IdentitySnapshot
-  coursesData?: Course[]
-  activityDays?: Array<{ date: string; intensity: number }>
-  recentActivity?: RecentActivityItem[]
-  leaderboardEntries?: LeaderboardEntry[]
+  identity?: IdentitySnapshot;
+  coursesData?: Course[];
+  activityDays?: Array<{ date: string; intensity: number }>;
+  recentActivity?: RecentActivityItem[];
+  leaderboardEntries?: LeaderboardEntry[];
 }) {
-  const courses = coursesData ?? mockCourses
-  const profile = identity?.profile
+  const courses = coursesData ?? mockCourses;
+  const profile = identity?.profile;
   const inProgressCourses = courses.filter(
-    c => c.progress > 0 && c.progress < 100,
-  )
-  const recommendedCourses = courses.filter(c => c.progress === 0).slice(0, 2)
+    (c) => c.progress > 0 && c.progress < 100,
+  );
+  const recommendedCourses = courses
+    .filter((c) => c.progress === 0)
+    .slice(0, 2);
   return (
     <div>
       {/* Welcome header */}
@@ -75,7 +77,8 @@ export function DashboardContent({
             Welcome back, {(profile?.name ?? "there").split(" ")[0]}
           </h1>
           <p className="mt-1 text-muted-foreground">
-            Keep up the momentum! You{"'"}re on a {profile?.streak ?? 0}-day streak.
+            Keep up the momentum! You{"'"}re on a {profile?.streak ?? 0}-day
+            streak.
           </p>
         </div>
         <Link href="/courses">
@@ -128,18 +131,20 @@ export function DashboardContent({
             </span>
           </div>
           <span className="text-xs text-muted-foreground">
-            {(profile?.xp ?? 0).toLocaleString()} / {(profile?.xpToNext ?? 10000).toLocaleString()} XP
+            {(profile?.xp ?? 0).toLocaleString()} /{" "}
+            {(profile?.xpToNext ?? 10000).toLocaleString()} XP
           </span>
         </div>
         <Progress
-          value={
-            ((profile?.xp ?? 0) / (profile?.xpToNext ?? 10000)) * 100
-          }
+          value={((profile?.xp ?? 0) / (profile?.xpToNext ?? 10000)) * 100}
           className="h-2.5 bg-secondary [&>div]:bg-gradient-to-r [&>div]:from-primary [&>div]:to-[hsl(var(--gold))]"
         />
         <p className="text-xs text-muted-foreground mt-2">
-          {Math.max(0, (profile?.xpToNext ?? 10000) - (profile?.xp ?? 0)).toLocaleString()} XP until
-          Level {(profile?.level ?? 1) + 1}
+          {Math.max(
+            0,
+            (profile?.xpToNext ?? 10000) - (profile?.xp ?? 0),
+          ).toLocaleString()}{" "}
+          XP until Level {(profile?.level ?? 1) + 1}
         </p>
       </div>
 
@@ -152,17 +157,17 @@ export function DashboardContent({
               Continue Learning
             </h2>
             <div className="space-y-3">
-              {inProgressCourses.map(course => {
+              {inProgressCourses.map((course) => {
                 // Find next lesson
-                let nextLesson = null
+                let nextLesson = null;
                 for (const mod of course.modules) {
                   for (const l of mod.lessons) {
                     if (!l.completed) {
-                      nextLesson = l
-                      break
+                      nextLesson = l;
+                      break;
                     }
                   }
-                  if (nextLesson) break
+                  if (nextLesson) break;
                 }
                 return (
                   <div
@@ -212,7 +217,7 @@ export function DashboardContent({
                       </Link>
                     </div>
                   </div>
-                )
+                );
               })}
             </div>
           </section>
@@ -231,7 +236,7 @@ export function DashboardContent({
               Recommended for You
             </h2>
             <div className="grid gap-4 sm:grid-cols-2">
-              {recommendedCourses.map(course => (
+              {recommendedCourses.map((course) => (
                 <Link key={course.slug} href={`/courses/${course.slug}`}>
                   <div className="rounded-xl border border-border bg-card p-5 transition-all hover:border-primary/20 h-full">
                     <Badge
@@ -271,9 +276,9 @@ export function DashboardContent({
             </h2>
             <div className="rounded-xl border border-border bg-card p-5">
               <div className="grid grid-cols-4 gap-3">
-                {(profile?.badges ?? []).map(badge => {
-                  const iconKey = badgeNameToIcon[badge.name] ?? "zap"
-                  const Icon = badgeIcons[iconKey] ?? Award
+                {(profile?.badges ?? []).map((badge) => {
+                  const iconKey = badgeNameToIcon[badge.name] ?? "zap";
+                  const Icon = badgeIcons[iconKey] ?? Award;
                   return (
                     <div
                       key={badge.name}
@@ -299,7 +304,7 @@ export function DashboardContent({
                         {badge.name}
                       </span>
                     </div>
-                  )
+                  );
                 })}
               </div>
             </div>
@@ -331,14 +336,18 @@ export function DashboardContent({
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm text-foreground">{activity.text}</p>
+                        <p className="text-sm text-foreground">
+                          {activity.text}
+                        </p>
                         <div className="flex items-center gap-2 mt-0.5">
                           {activity.course && (
                             <span className="text-xs text-muted-foreground truncate">
                               {activity.course}
                             </span>
                           )}
-                          <span className="text-xs text-muted-foreground">{activity.time}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {activity.time}
+                          </span>
                         </div>
                       </div>
                       {activity.xp > 0 && (
@@ -355,7 +364,7 @@ export function DashboardContent({
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 function StatCard({
@@ -365,11 +374,11 @@ function StatCard({
   color,
   bgColor,
 }: {
-  icon: typeof Zap
-  label: string
-  value: string
-  color: string
-  bgColor: string
+  icon: typeof Zap;
+  label: string;
+  value: string;
+  color: string;
+  bgColor: string;
 }) {
   return (
     <div className="rounded-xl border border-border bg-card p-4">
@@ -381,7 +390,5 @@ function StatCard({
       <p className="text-2xl font-bold text-foreground">{value}</p>
       <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
     </div>
-  )
+  );
 }
-
-

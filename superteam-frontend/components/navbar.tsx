@@ -1,10 +1,10 @@
-"use client"
-import Image from "next/image"
-import Link from "next/link"
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { useWallet } from "@solana/wallet-adapter-react"
-import { useWalletModal } from "@solana/wallet-adapter-react-ui"
+"use client";
+import Image from "next/image";
+import Link from "next/link";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import {
   BookOpen,
   LayoutDashboard,
@@ -18,10 +18,10 @@ import {
   LogOut,
   Wallet,
   Loader2,
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,50 +29,53 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { useWalletAuth } from "@/components/providers/wallet-auth-provider"
-import { useIdentitySnapshot } from "@/hooks/use-identity-snapshot"
+} from "@/components/ui/dropdown-menu";
+import { useWalletAuth } from "@/components/providers/wallet-auth-provider";
+import { useIdentitySnapshot } from "@/hooks/use-identity-snapshot";
 
 const navLinks = [
   { href: "/courses", label: "Courses", icon: BookOpen },
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
-]
+];
 
 function openWalletModal(setVisible: (v: boolean) => void) {
   try {
     setTimeout(() => {
       try {
-        setVisible(true)
+        setVisible(true);
       } catch (err) {
-        console.error("Failed to open wallet modal:", err)
-        if (typeof window !== "undefined" && (window as any).solana?.isPhantom) {
-          ;(window as any).solana.connect().catch(() => undefined)
+        console.error("Failed to open wallet modal:", err);
+        if (
+          typeof window !== "undefined" &&
+          (window as any).solana?.isPhantom
+        ) {
+          (window as any).solana.connect().catch(() => undefined);
         }
       }
-    }, 100)
+    }, 100);
   } catch (err) {
-    console.error("Wallet connection error:", err)
+    console.error("Wallet connection error:", err);
   }
 }
 
 export function Navbar() {
-  const [mobileOpen, setMobileOpen] = useState(false)
-  const router = useRouter()
-  const { connected, publicKey } = useWallet()
-  const { setVisible } = useWalletModal()
-  const { isLoading, isAuthenticated, user, status, logout } = useWalletAuth()
-  const { snapshot } = useIdentitySnapshot()
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const router = useRouter();
+  const { connected, publicKey } = useWallet();
+  const { setVisible } = useWalletModal();
+  const { isLoading, isAuthenticated, user, status, logout } = useWalletAuth();
+  const { snapshot } = useIdentitySnapshot();
 
-  const profile = snapshot?.profile
-  const connectedAddress = publicKey?.toBase58() ?? null
-  const activeAddress = user?.walletAddress ?? connectedAddress
-  const visibleNavLinks = isAuthenticated ? navLinks : []
+  const profile = snapshot?.profile;
+  const connectedAddress = publicKey?.toBase58() ?? null;
+  const activeAddress = user?.walletAddress ?? connectedAddress;
+  const visibleNavLinks = isAuthenticated ? navLinks : [];
 
   // Determine what to show in the wallet area
-  const showConnectButton = !connected || status === "disconnected"
-  const showAuthProgress = connected && isLoading
-  const showAuthenticatedUI = isAuthenticated
+  const showConnectButton = !connected || status === "disconnected";
+  const showAuthProgress = connected && isLoading;
+  const showAuthenticatedUI = isAuthenticated;
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
@@ -113,7 +116,10 @@ export function Navbar() {
 
           {showAuthProgress && (
             <div className="flex items-center gap-2">
-              <Badge variant="outline" className="border-border text-muted-foreground">
+              <Badge
+                variant="outline"
+                className="border-border text-muted-foreground"
+              >
                 {shortAddress(connectedAddress)}
               </Badge>
               <div className="flex items-center gap-2 rounded-lg bg-secondary px-3 py-1.5 text-sm text-muted-foreground">
@@ -128,7 +134,9 @@ export function Navbar() {
               {/* Streak */}
               <div className="flex items-center gap-1.5 rounded-lg bg-secondary px-3 py-1.5">
                 <Flame className="h-4 w-4 text-[hsl(var(--gold))]" />
-                <span className="text-sm font-semibold text-foreground">{profile?.streak ?? "—"}</span>
+                <span className="text-sm font-semibold text-foreground">
+                  {profile?.streak ?? "—"}
+                </span>
               </div>
 
               {/* XP */}
@@ -145,7 +153,9 @@ export function Navbar() {
                   <button className="rounded-full border border-primary/30 outline-none transition-colors hover:border-primary/50 focus-visible:ring-2 focus-visible:ring-primary/50">
                     <Avatar className="h-8 w-8">
                       <AvatarFallback className="bg-primary/20 text-xs text-primary">
-                        {profile?.name?.slice(0, 2) ?? activeAddress?.slice(0, 2) ?? "?"}
+                        {profile?.name?.slice(0, 2) ??
+                          activeAddress?.slice(0, 2) ??
+                          "?"}
                       </AvatarFallback>
                     </Avatar>
                   </button>
@@ -162,14 +172,19 @@ export function Navbar() {
                     Settings
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onSelect={() => void logout().catch(() => undefined)}>
+                  <DropdownMenuItem
+                    onSelect={() => void logout().catch(() => undefined)}
+                  >
                     <LogOut className="h-4 w-4" />
                     Logout
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              <Badge variant="outline" className="border-primary/30 text-primary">
+              <Badge
+                variant="outline"
+                className="border-primary/30 text-primary"
+              >
                 {shortAddress(activeAddress)}
               </Badge>
             </>
@@ -183,7 +198,11 @@ export function Navbar() {
           className="md:hidden text-muted-foreground"
           onClick={() => setMobileOpen(!mobileOpen)}
         >
-          {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          {mobileOpen ? (
+            <X className="h-5 w-5" />
+          ) : (
+            <Menu className="h-5 w-5" />
+          )}
         </Button>
       </div>
 
@@ -205,7 +224,9 @@ export function Navbar() {
             {showAuthProgress && (
               <div className="flex w-full items-center justify-center gap-2 rounded-lg bg-secondary px-3 py-2.5 text-sm text-muted-foreground">
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                {status === "signing" ? "Signing in..." : "Verifying session..."}
+                {status === "signing"
+                  ? "Signing in..."
+                  : "Verifying session..."}
               </div>
             )}
 
@@ -226,21 +247,30 @@ export function Navbar() {
             <div className="flex items-center gap-3 mb-4 pb-4 border-b border-border">
               <Avatar className="h-10 w-10 border border-primary/30">
                 <AvatarFallback className="bg-primary/20 text-sm text-primary">
-                  {profile?.name?.slice(0, 2) ?? activeAddress?.slice(0, 2) ?? "?"}
+                  {profile?.name?.slice(0, 2) ??
+                    activeAddress?.slice(0, 2) ??
+                    "?"}
                 </AvatarFallback>
               </Avatar>
               <div>
-                <p className="text-sm font-semibold text-foreground">{profile?.name ?? shortAddress(activeAddress)}</p>
+                <p className="text-sm font-semibold text-foreground">
+                  {profile?.name ?? shortAddress(activeAddress)}
+                </p>
                 <div className="flex items-center gap-3 mt-0.5">
                   <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Flame className="h-3 w-3 text-[hsl(var(--gold))]" /> {profile?.streak ?? "—"}
+                    <Flame className="h-3 w-3 text-[hsl(var(--gold))]" />{" "}
+                    {profile?.streak ?? "—"}
                   </span>
                   <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Zap className="h-3 w-3 text-primary" /> {(profile?.xp ?? 0).toLocaleString()} XP
+                    <Zap className="h-3 w-3 text-primary" />{" "}
+                    {(profile?.xp ?? 0).toLocaleString()} XP
                   </span>
                 </div>
               </div>
-              <Badge variant="outline" className="ml-auto border-primary/30 text-primary text-xs">
+              <Badge
+                variant="outline"
+                className="ml-auto border-primary/30 text-primary text-xs"
+              >
                 Lvl {profile?.level ?? "—"}
               </Badge>
             </div>
@@ -282,10 +312,10 @@ export function Navbar() {
         </div>
       )}
     </header>
-  )
+  );
 }
 
 function shortAddress(address: string | null): string {
-  if (!address) return "Wallet Connected"
-  return `${address.slice(0, 4)}...${address.slice(-4)}`
+  if (!address) return "Wallet Connected";
+  return `${address.slice(0, 4)}...${address.slice(-4)}`;
 }

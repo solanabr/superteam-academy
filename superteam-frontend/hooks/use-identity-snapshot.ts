@@ -1,26 +1,26 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import type { IdentitySnapshot } from "@/lib/identity/types"
-import { fetchIdentitySnapshot } from "@/lib/services/identity-read-service"
+import { useEffect, useState } from "react";
+import type { IdentitySnapshot } from "@/lib/identity/types";
+import { fetchIdentitySnapshot } from "@/lib/services/identity-read-service";
 
 export function useIdentitySnapshot() {
-  const [snapshot, setSnapshot] = useState<IdentitySnapshot | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [snapshot, setSnapshot] = useState<IdentitySnapshot | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    let mounted = true
+    let mounted = true;
     void (async () => {
-      setIsLoading(true)
-      const next = await fetchIdentitySnapshot()
-      if (!mounted) return
-      setSnapshot(next)
-      setIsLoading(false)
-    })()
+      setIsLoading(true);
+      const next = await fetchIdentitySnapshot();
+      if (!mounted) return;
+      setSnapshot(next);
+      setIsLoading(false);
+    })();
     return () => {
-      mounted = false
-    }
-  }, [])
+      mounted = false;
+    };
+  }, []);
 
-  return { snapshot, isLoading }
+  return { snapshot, isLoading };
 }

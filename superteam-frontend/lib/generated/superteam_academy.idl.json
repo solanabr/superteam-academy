@@ -9,16 +9,7 @@
   "instructions": [
     {
       "name": "close_season",
-      "discriminator": [
-        162,
-        198,
-        31,
-        37,
-        77,
-        0,
-        199,
-        152
-      ],
+      "discriminator": [162, 198, 31, 37, 77, 0, 199, 152],
       "accounts": [
         {
           "name": "config",
@@ -27,14 +18,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
@@ -48,16 +32,7 @@
     },
     {
       "name": "complete_lesson",
-      "discriminator": [
-        77,
-        217,
-        53,
-        132,
-        204,
-        150,
-        169,
-        58
-      ],
+      "discriminator": [77, 217, 53, 132, 204, 150, 169, 58],
       "accounts": [
         {
           "name": "config",
@@ -65,14 +40,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
@@ -98,16 +66,7 @@
     },
     {
       "name": "create_course",
-      "discriminator": [
-        120,
-        121,
-        154,
-        164,
-        107,
-        180,
-        167,
-        241
-      ],
+      "discriminator": [120, 121, 154, 164, 107, 180, 167, 241],
       "accounts": [
         {
           "name": "config",
@@ -116,14 +75,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
@@ -135,14 +87,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  117,
-                  114,
-                  115,
-                  101
-                ]
+                "value": [99, 111, 117, 114, 115, 101]
               },
               {
                 "kind": "arg",
@@ -178,16 +123,7 @@
     },
     {
       "name": "create_season",
-      "discriminator": [
-        38,
-        108,
-        29,
-        127,
-        60,
-        126,
-        101,
-        3
-      ],
+      "discriminator": [38, 108, 29, 127, 60, 126, 101, 3],
       "accounts": [
         {
           "name": "config",
@@ -196,14 +132,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
@@ -222,16 +151,7 @@
     },
     {
       "name": "enroll",
-      "discriminator": [
-        58,
-        12,
-        36,
-        3,
-        142,
-        28,
-        1,
-        43
-      ],
+      "discriminator": [58, 12, 36, 3, 142, 28, 1, 43],
       "accounts": [
         {
           "name": "course",
@@ -244,18 +164,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  101,
-                  110,
-                  114,
-                  111,
-                  108,
-                  108,
-                  109,
-                  101,
-                  110,
-                  116
-                ]
+                "value": [101, 110, 114, 111, 108, 108, 109, 101, 110, 116]
               },
               {
                 "kind": "account",
@@ -282,16 +191,7 @@
     },
     {
       "name": "finalize_course",
-      "discriminator": [
-        68,
-        189,
-        122,
-        239,
-        39,
-        121,
-        16,
-        218
-      ],
+      "discriminator": [68, 189, 122, 239, 39, 121, 16, 218],
       "accounts": [
         {
           "name": "config",
@@ -299,14 +199,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
@@ -332,16 +225,7 @@
     },
     {
       "name": "init_learner",
-      "discriminator": [
-        137,
-        243,
-        85,
-        146,
-        80,
-        49,
-        210,
-        152
-      ],
+      "discriminator": [137, 243, 85, 146, 80, 49, 210, 152],
       "accounts": [
         {
           "name": "learner",
@@ -350,15 +234,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  108,
-                  101,
-                  97,
-                  114,
-                  110,
-                  101,
-                  114
-                ]
+                "value": [108, 101, 97, 114, 110, 101, 114]
               },
               {
                 "kind": "account",
@@ -381,16 +257,7 @@
     },
     {
       "name": "initialize",
-      "discriminator": [
-        175,
-        175,
-        109,
-        31,
-        13,
-        152,
-        155,
-        237
-      ],
+      "discriminator": [175, 175, 109, 31, 13, 152, 155, 237],
       "accounts": [
         {
           "name": "config",
@@ -399,14 +266,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
@@ -434,16 +294,7 @@
     },
     {
       "name": "issue_credential",
-      "discriminator": [
-        255,
-        193,
-        171,
-        224,
-        68,
-        171,
-        194,
-        87
-      ],
+      "discriminator": [255, 193, 171, 224, 68, 171, 194, 87],
       "accounts": [
         {
           "name": "config",
@@ -451,14 +302,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
@@ -492,16 +336,7 @@
     },
     {
       "name": "issue_profile_sbt",
-      "discriminator": [
-        102,
-        18,
-        116,
-        65,
-        174,
-        175,
-        143,
-        201
-      ],
+      "discriminator": [102, 18, 116, 65, 174, 175, 143, 201],
       "accounts": [
         {
           "name": "config",
@@ -509,14 +344,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
@@ -539,16 +367,7 @@
     },
     {
       "name": "revoke_certificate",
-      "discriminator": [
-        236,
-        5,
-        130,
-        119,
-        9,
-        164,
-        130,
-        122
-      ],
+      "discriminator": [236, 5, 130, 119, 9, 164, 130, 122],
       "accounts": [
         {
           "name": "config",
@@ -556,14 +375,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
@@ -593,16 +405,7 @@
     },
     {
       "name": "update_config",
-      "discriminator": [
-        29,
-        158,
-        252,
-        191,
-        10,
-        83,
-        219,
-        99
-      ],
+      "discriminator": [29, 158, 252, 191, 10, 83, 219, 99],
       "accounts": [
         {
           "name": "config",
@@ -611,14 +414,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
@@ -645,16 +441,7 @@
     },
     {
       "name": "update_course",
-      "discriminator": [
-        81,
-        217,
-        18,
-        192,
-        129,
-        233,
-        129,
-        231
-      ],
+      "discriminator": [81, 217, 18, 192, 129, 233, 129, 231],
       "accounts": [
         {
           "name": "course",
@@ -682,16 +469,7 @@
     },
     {
       "name": "update_profile_sbt",
-      "discriminator": [
-        201,
-        192,
-        231,
-        141,
-        81,
-        200,
-        119,
-        232
-      ],
+      "discriminator": [201, 192, 231, 141, 81, 200, 119, 232],
       "accounts": [
         {
           "name": "config",
@@ -699,14 +477,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
@@ -731,122 +502,41 @@
   "accounts": [
     {
       "name": "Config",
-      "discriminator": [
-        155,
-        12,
-        170,
-        224,
-        30,
-        250,
-        204,
-        130
-      ]
+      "discriminator": [155, 12, 170, 224, 30, 250, 204, 130]
     },
     {
       "name": "Course",
-      "discriminator": [
-        206,
-        6,
-        78,
-        228,
-        163,
-        138,
-        241,
-        106
-      ]
+      "discriminator": [206, 6, 78, 228, 163, 138, 241, 106]
     },
     {
       "name": "Enrollment",
-      "discriminator": [
-        249,
-        210,
-        64,
-        145,
-        197,
-        241,
-        57,
-        51
-      ]
+      "discriminator": [249, 210, 64, 145, 197, 241, 57, 51]
     },
     {
       "name": "LearnerProfile",
-      "discriminator": [
-        198,
-        114,
-        44,
-        71,
-        161,
-        227,
-        116,
-        166
-      ]
+      "discriminator": [198, 114, 44, 71, 161, 227, 116, 166]
     }
   ],
   "events": [
     {
       "name": "CertificateRevoked",
-      "discriminator": [
-        99,
-        180,
-        224,
-        20,
-        200,
-        221,
-        133,
-        47
-      ]
+      "discriminator": [99, 180, 224, 20, 200, 221, 133, 47]
     },
     {
       "name": "CredentialIssued",
-      "discriminator": [
-        194,
-        216,
-        28,
-        159,
-        89,
-        29,
-        72,
-        177
-      ]
+      "discriminator": [194, 216, 28, 159, 89, 29, 72, 177]
     },
     {
       "name": "ProfileSbtIssued",
-      "discriminator": [
-        144,
-        59,
-        192,
-        22,
-        138,
-        32,
-        157,
-        162
-      ]
+      "discriminator": [144, 59, 192, 22, 138, 32, 157, 162]
     },
     {
       "name": "ProfileSbtUpdated",
-      "discriminator": [
-        97,
-        26,
-        55,
-        114,
-        228,
-        75,
-        66,
-        208
-      ]
+      "discriminator": [97, 26, 55, 114, 228, 75, 66, 208]
     },
     {
       "name": "SeasonCreated",
-      "discriminator": [
-        69,
-        129,
-        125,
-        162,
-        208,
-        173,
-        40,
-        68
-      ]
+      "discriminator": [69, 129, 125, 162, 208, 173, 40, 68]
     }
   ],
   "errors": [

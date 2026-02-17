@@ -1,40 +1,43 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { useWallet } from "@solana/wallet-adapter-react"
-import { useWalletModal } from "@solana/wallet-adapter-react-ui"
-import { ArrowRight, Clock, BookOpen } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Progress } from "@/components/ui/progress"
-import { learningPaths, courses } from "@/lib/mock-data"
-import { useWalletAuth } from "@/components/providers/wallet-auth-provider"
+import Link from "next/link";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
+import { ArrowRight, Clock, BookOpen } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { learningPaths, courses } from "@/lib/mock-data";
+import { useWalletAuth } from "@/components/providers/wallet-auth-provider";
 
 export function PathsSection() {
-  const { connected } = useWallet()
-  const { setVisible } = useWalletModal()
-  const { isAuthenticated, isLoading, loginWithWallet } = useWalletAuth()
+  const { connected } = useWallet();
+  const { setVisible } = useWalletModal();
+  const { isAuthenticated, isLoading, loginWithWallet } = useWalletAuth();
 
   const handleUnlockClick = () => {
     if (!connected) {
       try {
         setTimeout(() => {
           try {
-            setVisible(true)
+            setVisible(true);
           } catch (err) {
-            console.error("Failed to open wallet modal:", err)
-            if (typeof window !== "undefined" && (window as any).solana?.isPhantom) {
-              ;(window as any).solana.connect().catch(() => undefined)
+            console.error("Failed to open wallet modal:", err);
+            if (
+              typeof window !== "undefined" &&
+              (window as any).solana?.isPhantom
+            ) {
+              (window as any).solana.connect().catch(() => undefined);
             }
           }
-        }, 100)
+        }, 100);
       } catch (err) {
-        console.error("Wallet connection error:", err)
+        console.error("Wallet connection error:", err);
       }
-      return
+      return;
     }
-    void loginWithWallet().catch(() => undefined)
-  }
+    void loginWithWallet().catch(() => undefined);
+  };
 
   return (
     <section className="py-20 lg:py-28">
@@ -44,18 +47,20 @@ export function PathsSection() {
             Structured Learning Paths
           </h2>
           <p className="mt-4 text-muted-foreground max-w-xl mx-auto text-pretty">
-            Follow curated tracks designed to take you from beginner to expert with clear progression and real-world projects.
+            Follow curated tracks designed to take you from beginner to expert
+            with clear progression and real-world projects.
           </p>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-3">
           {learningPaths.map((path) => {
             const pathCourses = path.courses.map(
-              (slug) => courses.find((c) => c.slug === slug)!
-            )
+              (slug) => courses.find((c) => c.slug === slug)!,
+            );
             const avgProgress = Math.round(
-              pathCourses.reduce((acc, c) => acc + c.progress, 0) / pathCourses.length
-            )
+              pathCourses.reduce((acc, c) => acc + c.progress, 0) /
+                pathCourses.length,
+            );
 
             return (
               <div
@@ -64,7 +69,9 @@ export function PathsSection() {
               >
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <h3 className="text-lg font-semibold text-foreground">{path.title}</h3>
+                    <h3 className="text-lg font-semibold text-foreground">
+                      {path.title}
+                    </h3>
                     <p className="mt-1 text-sm text-muted-foreground leading-relaxed">
                       {path.description}
                     </p>
@@ -110,10 +117,17 @@ export function PathsSection() {
                 {/* Progress */}
                 <div className="mb-4">
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-xs text-muted-foreground">Progress</span>
-                    <span className="text-xs font-medium text-foreground">{avgProgress}%</span>
+                    <span className="text-xs text-muted-foreground">
+                      Progress
+                    </span>
+                    <span className="text-xs font-medium text-foreground">
+                      {avgProgress}%
+                    </span>
                   </div>
-                  <Progress value={avgProgress} className="h-1.5 bg-secondary [&>div]:bg-primary" />
+                  <Progress
+                    value={avgProgress}
+                    className="h-1.5 bg-secondary [&>div]:bg-primary"
+                  />
                 </div>
 
                 {isAuthenticated ? (
@@ -138,10 +152,10 @@ export function PathsSection() {
                   </Button>
                 )}
               </div>
-            )
+            );
           })}
         </div>
       </div>
     </section>
-  )
+  );
 }

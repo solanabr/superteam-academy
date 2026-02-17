@@ -1,31 +1,34 @@
-"use client"
+"use client";
 
-import { useState, useMemo } from "react"
-import { Search, SlidersHorizontal } from "lucide-react"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import type { Course } from "@/lib/mock-data"
-import { CourseCard } from "./course-card"
+import { useState, useMemo } from "react";
+import { Search, SlidersHorizontal } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import type { Course } from "@/lib/mock-data";
+import { CourseCard } from "./course-card";
 
-const difficulties = ["All", "Beginner", "Intermediate", "Advanced"] as const
+const difficulties = ["All", "Beginner", "Intermediate", "Advanced"] as const;
 
 export function CourseCatalog({ courses }: { courses: Course[] }) {
-  const allTags = useMemo(() => Array.from(new Set(courses.flatMap((c) => c.tags))), [courses])
-  const [search, setSearch] = useState("")
-  const [difficulty, setDifficulty] = useState<string>("All")
-  const [selectedTag, setSelectedTag] = useState<string | null>(null)
+  const allTags = useMemo(
+    () => Array.from(new Set(courses.flatMap((c) => c.tags))),
+    [courses],
+  );
+  const [search, setSearch] = useState("");
+  const [difficulty, setDifficulty] = useState<string>("All");
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     return courses.filter((c) => {
       const matchSearch =
         c.title.toLowerCase().includes(search.toLowerCase()) ||
-        c.description.toLowerCase().includes(search.toLowerCase())
-      const matchDiff = difficulty === "All" || c.difficulty === difficulty
-      const matchTag = !selectedTag || c.tags.includes(selectedTag)
-      return matchSearch && matchDiff && matchTag
-    })
-  }, [search, difficulty, selectedTag])
+        c.description.toLowerCase().includes(search.toLowerCase());
+      const matchDiff = difficulty === "All" || c.difficulty === difficulty;
+      const matchTag = !selectedTag || c.tags.includes(selectedTag);
+      return matchSearch && matchDiff && matchTag;
+    });
+  }, [search, difficulty, selectedTag]);
 
   return (
     <div>
@@ -41,7 +44,10 @@ export function CourseCatalog({ courses }: { courses: Course[] }) {
               className="pl-10 bg-card border-border text-foreground placeholder:text-muted-foreground"
             />
           </div>
-          <Button variant="outline" className="gap-2 border-border text-muted-foreground shrink-0">
+          <Button
+            variant="outline"
+            className="gap-2 border-border text-muted-foreground shrink-0"
+          >
             <SlidersHorizontal className="h-4 w-4" />
             <span className="hidden sm:inline">Filters</span>
           </Button>
@@ -98,14 +104,16 @@ export function CourseCatalog({ courses }: { courses: Course[] }) {
 
       {filtered.length === 0 && (
         <div className="text-center py-16">
-          <p className="text-lg text-muted-foreground">No courses found matching your filters.</p>
+          <p className="text-lg text-muted-foreground">
+            No courses found matching your filters.
+          </p>
           <Button
             variant="outline"
             className="mt-4 border-border text-muted-foreground"
             onClick={() => {
-              setSearch("")
-              setDifficulty("All")
-              setSelectedTag(null)
+              setSearch("");
+              setDifficulty("All");
+              setSelectedTag(null);
             }}
           >
             Clear filters
@@ -113,5 +121,5 @@ export function CourseCatalog({ courses }: { courses: Course[] }) {
         </div>
       )}
     </div>
-  )
+  );
 }

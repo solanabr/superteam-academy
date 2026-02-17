@@ -1,37 +1,40 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { useWallet } from "@solana/wallet-adapter-react"
-import { useWalletModal } from "@solana/wallet-adapter-react-ui"
-import { ArrowRight } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { useWalletAuth } from "@/components/providers/wallet-auth-provider"
+import Link from "next/link";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
+import { ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useWalletAuth } from "@/components/providers/wallet-auth-provider";
 
 export function CtaSection() {
-  const { connected } = useWallet()
-  const { setVisible } = useWalletModal()
-  const { isAuthenticated, isLoading, loginWithWallet } = useWalletAuth()
+  const { connected } = useWallet();
+  const { setVisible } = useWalletModal();
+  const { isAuthenticated, isLoading, loginWithWallet } = useWalletAuth();
 
   const handleUnlockClick = () => {
     if (!connected) {
       try {
         setTimeout(() => {
           try {
-            setVisible(true)
+            setVisible(true);
           } catch (err) {
-            console.error("Failed to open wallet modal:", err)
-            if (typeof window !== "undefined" && (window as any).solana?.isPhantom) {
-              ;(window as any).solana.connect().catch(() => undefined)
+            console.error("Failed to open wallet modal:", err);
+            if (
+              typeof window !== "undefined" &&
+              (window as any).solana?.isPhantom
+            ) {
+              (window as any).solana.connect().catch(() => undefined);
             }
           }
-        }, 100)
+        }, 100);
       } catch (err) {
-        console.error("Wallet connection error:", err)
+        console.error("Wallet connection error:", err);
       }
-      return
+      return;
     }
-    void loginWithWallet().catch(() => undefined)
-  }
+    void loginWithWallet().catch(() => undefined);
+  };
 
   return (
     <section className="border-t border-border bg-card/30 py-20 lg:py-28">
@@ -92,5 +95,5 @@ export function CtaSection() {
         </div>
       </div>
     </section>
-  )
+  );
 }

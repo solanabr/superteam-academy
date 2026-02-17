@@ -4,18 +4,18 @@ import { Navbar } from "@/components/navbar";
 import { requireAuthenticatedUser } from "@/lib/server/auth-adapter";
 
 export default async function Page({ params }: { params: { id: string } }) {
-    await requireAuthenticatedUser();
+  await requireAuthenticatedUser();
 
-    const certificate = mockCertificates.find(c => c.id === params.id);
+  const certificate = mockCertificates.find((c) => c.id === params.id);
 
-    if (!certificate) {
-        return <div>Certificate not found</div>;
-    }
+  if (!certificate) {
+    return <div>Certificate not found</div>;
+  }
 
-    return (
-        <div>
-            <Navbar />
-            <CertificatePage certificate={certificate} />
-        </div>
-    );
+  return (
+    <div>
+      <Navbar />
+      <CertificatePage certificate={certificate} />
+    </div>
+  );
 }

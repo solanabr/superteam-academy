@@ -1,9 +1,13 @@
-import { NextResponse } from "next/server"
-import { ACADEMY_CLUSTER, ACADEMY_PROGRAM_ID, ACADEMY_RPC_URL } from "@/lib/generated/academy-program"
-import { getAcademyConfigOnChain } from "@/lib/server/academy-chain-read"
+import { NextResponse } from "next/server";
+import {
+  ACADEMY_CLUSTER,
+  ACADEMY_PROGRAM_ID,
+  ACADEMY_RPC_URL,
+} from "@/lib/generated/academy-program";
+import { getAcademyConfigOnChain } from "@/lib/server/academy-chain-read";
 
 export async function GET() {
-  const config = await getAcademyConfigOnChain().catch(() => null)
+  const config = await getAcademyConfigOnChain().catch(() => null);
   return NextResponse.json(
     {
       ok: true,
@@ -14,5 +18,5 @@ export async function GET() {
       config,
     },
     { status: 200 },
-  )
+  );
 }

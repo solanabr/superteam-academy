@@ -1,93 +1,98 @@
-"use client"
+"use client";
 
-import { useMemo } from "react"
+import { useMemo } from "react";
 
-type ActivityDay = { date: string; intensity: number }
+type ActivityDay = { date: string; intensity: number };
 
 function toDateKey(date: Date): string {
-  const year = date.getFullYear()
-  const month = `${date.getMonth() + 1}`.padStart(2, "0")
-  const day = `${date.getDate()}`.padStart(2, "0")
-  return `${year}-${month}-${day}`
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getDate()}`.padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 function fromDateKey(dateKey: string): Date {
-  const [year, month, day] = dateKey.split("-").map(Number)
-  return new Date(year, month - 1, day)
+  const [year, month, day] = dateKey.split("-").map(Number);
+  return new Date(year, month - 1, day);
 }
 
 function intensityClass(intensity: number): string {
-  if (intensity <= 0) return "bg-secondary"
-  if (intensity === 1) return "bg-emerald-900/60"
-  if (intensity === 2) return "bg-emerald-600/70"
-  if (intensity === 3) return "bg-emerald-500"
-  return "bg-emerald-400"
+  if (intensity <= 0) return "bg-secondary";
+  if (intensity === 1) return "bg-emerald-900/60";
+  if (intensity === 2) return "bg-emerald-600/70";
+  if (intensity === 3) return "bg-emerald-500";
+  return "bg-emerald-400";
 }
 
 function computeMaxStreak(activityDays: ActivityDay[]): number {
-  let max = 0
-  let current = 0
+  let max = 0;
+  let current = 0;
   for (const day of activityDays) {
     if (day.intensity > 0) {
-      current++
-      if (current > max) max = current
+      current++;
+      if (current > max) max = current;
     } else {
-      current = 0
+      current = 0;
     }
   }
-  return max
+  return max;
 }
 
 function buildHeatmap(activityDays: ActivityDay[]) {
-  const intensityByDate = new Map<string, number>()
+  const intensityByDate = new Map<string, number>();
   for (const day of activityDays) {
-    intensityByDate.set(day.date, day.intensity)
+    intensityByDate.set(day.date, day.intensity);
   }
 
   if (activityDays.length === 0) {
-    return { weeks: [] as Date[][], intensityByDate, activeDays: 0, maxStreak: 0 }
+    return {
+      weeks: [] as Date[][],
+      intensityByDate,
+      activeDays: 0,
+      maxStreak: 0,
+    };
   }
 
-  const activeDays = activityDays.filter((d) => d.intensity > 0).length
-  const maxStreak = computeMaxStreak(activityDays)
+  const activeDays = activityDays.filter((d) => d.intensity > 0).length;
+  const maxStreak = computeMaxStreak(activityDays);
 
-  const earliestDate = fromDateKey(activityDays[0].date)
-  const latestDate = fromDateKey(activityDays[activityDays.length - 1].date)
+  const earliestDate = fromDateKey(activityDays[0].date);
+  const latestDate = fromDateKey(activityDays[activityDays.length - 1].date);
 
-  const gridStart = new Date(earliestDate)
-  gridStart.setDate(gridStart.getDate() - gridStart.getDay())
+  const gridStart = new Date(earliestDate);
+  gridStart.setDate(gridStart.getDate() - gridStart.getDay());
 
-  const gridEnd = new Date(latestDate)
-  gridEnd.setDate(gridEnd.getDate() + (6 - gridEnd.getDay()))
+  const gridEnd = new Date(latestDate);
+  gridEnd.setDate(gridEnd.getDate() + (6 - gridEnd.getDay()));
 
-  const days: Date[] = []
+  const days: Date[] = [];
   for (
     const cursor = new Date(gridStart);
     cursor <= gridEnd;
     cursor.setDate(cursor.getDate() + 1)
   ) {
-    days.push(new Date(cursor))
+    days.push(new Date(cursor));
   }
 
-  const weeks: Date[][] = []
+  const weeks: Date[][] = [];
   for (let i = 0; i < days.length; i += 7) {
-    weeks.push(days.slice(i, i + 7))
+    weeks.push(days.slice(i, i + 7));
   }
 
-  return { weeks, intensityByDate, activeDays, maxStreak }
+  return { weeks, intensityByDate, activeDays, maxStreak };
 }
 
 export function ActivityHeatmap({
   activityDays = [],
   totalSubmissions,
 }: {
-  activityDays?: ActivityDay[]
-  totalSubmissions?: number
+  activityDays?: ActivityDay[];
+  totalSubmissions?: number;
 }) {
-  const heatmap = useMemo(() => buildHeatmap(activityDays), [activityDays])
+  const heatmap = useMemo(() => buildHeatmap(activityDays), [activityDays]);
 
   const submissionCount =
-    totalSubmissions ?? activityDays.filter((d) => d.intensity > 0).length
+    totalSubmissions ?? activityDays.filter((d) => d.intensity > 0).length;
 
   return (
     <div className="rounded-xl border border-border bg-card p-5">
@@ -120,10 +125,13 @@ export function ActivityHeatmap({
         <div className="min-w-[660px]">
           <div className="flex gap-[3px]">
             {heatmap.weeks.map((week) => (
-              <div key={week[0].toISOString()} className="grid grid-rows-7 gap-[3px]">
+              <div
+                key={week[0].toISOString()}
+                className="grid grid-rows-7 gap-[3px]"
+              >
                 {week.map((date) => {
-                  const dateKey = toDateKey(date)
-                  const intensity = heatmap.intensityByDate.get(dateKey) ?? 0
+                  const dateKey = toDateKey(date);
+                  const intensity = heatmap.intensityByDate.get(dateKey) ?? 0;
                   return (
                     <div
                       key={dateKey}
@@ -134,7 +142,7 @@ export function ActivityHeatmap({
                           : "No activity"
                       }`}
                     />
-                  )
+                  );
                 })}
               </div>
             ))}
@@ -146,7 +154,7 @@ export function ActivityHeatmap({
               const showLabel =
                 weekIndex === 0 ||
                 week[0].getMonth() !==
-                  heatmap.weeks[weekIndex - 1][0].getMonth()
+                  heatmap.weeks[weekIndex - 1][0].getMonth();
 
               return (
                 <div
@@ -157,11 +165,11 @@ export function ActivityHeatmap({
                     ? week[0].toLocaleString("en-US", { month: "short" })
                     : ""}
                 </div>
-              )
+              );
             })}
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -1,4 +1,4 @@
-import { Code2, Trophy, Shield, Zap, Award, Users } from "lucide-react"
+import { Code2, Trophy, Shield, Zap, Award, Users } from "lucide-react";
 
 const features = [
   {
@@ -37,18 +37,22 @@ const features = [
     description:
       "Join a thriving community of blockchain developers. Share solutions, ask questions, and collaborate.",
   },
-]
+];
 
 export function FeaturesSection() {
   return (
-    <section id="features" className="border-t border-border bg-card/30 py-20 lg:py-28">
+    <section
+      id="features"
+      className="border-t border-border bg-card/30 py-20 lg:py-28"
+    >
       <div className="mx-auto max-w-7xl px-4 lg:px-6">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold text-foreground lg:text-4xl text-balance">
             Everything You Need to Succeed
           </h2>
           <p className="mt-4 text-muted-foreground max-w-xl mx-auto text-pretty">
-            A complete learning platform designed for blockchain developers, from beginners to security auditors.
+            A complete learning platform designed for blockchain developers,
+            from beginners to security auditors.
           </p>
         </div>
 
@@ -61,7 +65,9 @@ export function FeaturesSection() {
               <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
                 <feature.icon className="h-5 w-5 text-primary" />
               </div>
-              <h3 className="text-base font-semibold text-foreground mb-2">{feature.title}</h3>
+              <h3 className="text-base font-semibold text-foreground mb-2">
+                {feature.title}
+              </h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 {feature.description}
               </p>
@@ -70,5 +76,5 @@ export function FeaturesSection() {
         </div>
       </div>
     </section>
-  )
+  );
 }

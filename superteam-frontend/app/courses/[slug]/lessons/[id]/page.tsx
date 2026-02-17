@@ -1,51 +1,56 @@
-import { LessonView } from "@/components/lesson/lesson-view"
-import { requireAuthenticatedUser } from "@/lib/server/auth-adapter"
-import { getCourseProgressSnapshot } from "@/lib/server/academy-progress-adapter"
-import { notFound } from "next/navigation"
+import { LessonView } from "@/components/lesson/lesson-view";
+import { requireAuthenticatedUser } from "@/lib/server/auth-adapter";
+import { getCourseProgressSnapshot } from "@/lib/server/academy-progress-adapter";
+import { notFound } from "next/navigation";
 
 export default async function LessonPage({
   params,
 }: {
-  params: Promise<{ slug: string; id: string }>
+  params: Promise<{ slug: string; id: string }>;
 }) {
-  const user = await requireAuthenticatedUser()
-  const { slug, id } = await params
-  let snapshot
+  const user = await requireAuthenticatedUser();
+  const { slug, id } = await params;
+  let snapshot;
   try {
-    snapshot = await getCourseProgressSnapshot(user.walletAddress, slug)
+    snapshot = await getCourseProgressSnapshot(user.walletAddress, slug);
   } catch (error: any) {
     // Network error - show lesson without progress
-    if (error?.message?.includes("fetch failed") || error?.message?.includes("Network error") || error?.message?.includes("ECONNREFUSED")) {
-      console.warn("Network error loading lesson progress:", error.message)
-      snapshot = null
+    if (
+      error?.message?.includes("fetch failed") ||
+      error?.message?.includes("Network error") ||
+      error?.message?.includes("ECONNREFUSED")
+    ) {
+      console.warn("Network error loading lesson progress:", error.message);
+      snapshot = null;
     } else {
-      throw error
+      throw error;
     }
   }
-  if (!snapshot) return notFound()
-  const course = snapshot.course
+  if (!snapshot) return notFound();
+  const course = snapshot.course;
 
-  let currentLesson = null
-  let currentModuleIndex = 0
-  let currentLessonIndex = 0
+  let currentLesson = null;
+  let currentModuleIndex = 0;
+  let currentLessonIndex = 0;
 
   for (let mi = 0; mi < course.modules.length; mi++) {
     for (let li = 0; li < course.modules[mi].lessons.length; li++) {
       if (course.modules[mi].lessons[li].id === id) {
-        currentLesson = course.modules[mi].lessons[li]
-        currentModuleIndex = mi
-        currentLessonIndex = li
+        currentLesson = course.modules[mi].lessons[li];
+        currentModuleIndex = mi;
+        currentLessonIndex = li;
       }
     }
   }
 
-  if (!currentLesson) return notFound()
+  if (!currentLesson) return notFound();
 
   // Build flat lesson list for prev/next
-  const allLessons = course.modules.flatMap((m) => m.lessons)
-  const flatIndex = allLessons.findIndex((l) => l.id === id)
-  const prevLesson = flatIndex > 0 ? allLessons[flatIndex - 1] : null
-  const nextLesson = flatIndex < allLessons.length - 1 ? allLessons[flatIndex + 1] : null
+  const allLessons = course.modules.flatMap((m) => m.lessons);
+  const flatIndex = allLessons.findIndex((l) => l.id === id);
+  const prevLesson = flatIndex > 0 ? allLessons[flatIndex - 1] : null;
+  const nextLesson =
+    flatIndex < allLessons.length - 1 ? allLessons[flatIndex + 1] : null;
 
   return (
     <LessonView
@@ -57,5 +62,5 @@ export default async function LessonPage({
       nextLesson={nextLesson}
       enrolledOnChain={snapshot.enrolledOnChain}
     />
-  )
+  );
 }

@@ -1,20 +1,26 @@
-import type { IdentityProfile } from "@/lib/identity/types"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import type { IdentityProfile } from "@/lib/identity/types";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 export function SettingsPage({
   profile,
   walletAddress,
 }: {
-  profile?: IdentityProfile | null
-  walletAddress: string
+  profile?: IdentityProfile | null;
+  walletAddress: string;
 }) {
-  const name = profile?.name ?? ""
-  const bio = profile?.bio ?? ""
-  const shortWallet = `${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}`
+  const name = profile?.name ?? "";
+  const bio = profile?.bio ?? "";
+  const shortWallet = `${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}`;
 
   return (
     <div className="container mx-auto py-10">
@@ -23,12 +29,16 @@ export function SettingsPage({
         <Card>
           <CardHeader>
             <CardTitle>Profile</CardTitle>
-            <CardDescription>Update your public profile information.</CardDescription>
+            <CardDescription>
+              Update your public profile information.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center space-x-4">
               <Avatar className="h-20 w-20">
-                <AvatarFallback>{name.slice(0, 2) || shortWallet.slice(0, 2)}</AvatarFallback>
+                <AvatarFallback>
+                  {name.slice(0, 2) || shortWallet.slice(0, 2)}
+                </AvatarFallback>
               </Avatar>
               <Button disabled>Change Avatar</Button>
             </div>
@@ -68,5 +78,5 @@ export function SettingsPage({
         </Card>
       </div>
     </div>
-  )
+  );
 }

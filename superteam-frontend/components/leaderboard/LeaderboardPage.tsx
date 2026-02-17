@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Card, CardContent } from "@/components/ui/card"
+import Link from "next/link";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -10,26 +10,28 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { Zap, Award, Flame } from "lucide-react"
+} from "@/components/ui/table";
+import { Zap, Award, Flame } from "lucide-react";
 
 export type LeaderboardEntry = {
-  rank: number
-  wallet: string
-  xp: number
-  level: number
-  streak: number
-}
+  rank: number;
+  wallet: string;
+  xp: number;
+  level: number;
+  streak: number;
+};
 
 export default function LeaderboardPage({
   entries = [],
   me = null,
 }: {
-  entries: LeaderboardEntry[]
-  me: LeaderboardEntry | null
+  entries: LeaderboardEntry[];
+  me: LeaderboardEntry | null;
 }) {
-  const myWallet = me?.wallet ?? null
-  const meInList = myWallet ? entries.some((e) => e.wallet === myWallet) : false
+  const myWallet = me?.wallet ?? null;
+  const meInList = myWallet
+    ? entries.some((e) => e.wallet === myWallet)
+    : false;
 
   return (
     <div className="container mx-auto py-8 text-white">
@@ -57,27 +59,41 @@ export default function LeaderboardPage({
                 <TableRow
                   key={entry.wallet}
                   className={
-                    entry.wallet === myWallet ? "bg-yellow-400/10 border-b-gray-800" : "border-b-gray-800"
+                    entry.wallet === myWallet
+                      ? "bg-yellow-400/10 border-b-gray-800"
+                      : "border-b-gray-800"
                   }
                 >
                   <TableCell className="font-bold">#{entry.rank}</TableCell>
                   <TableCell>
                     {entry.wallet === myWallet ? (
-                      <Link href="/profile" className="flex items-center gap-4 hover:underline">
+                      <Link
+                        href="/profile"
+                        className="flex items-center gap-4 hover:underline"
+                      >
                         <Avatar className="w-10 h-10">
-                          <AvatarFallback>{entry.wallet.slice(0, 2).toUpperCase()}</AvatarFallback>
+                          <AvatarFallback>
+                            {entry.wallet.slice(0, 2).toUpperCase()}
+                          </AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="font-bold">{entry.wallet.slice(0, 4)}...{entry.wallet.slice(-4)}</p>
+                          <p className="font-bold">
+                            {entry.wallet.slice(0, 4)}...
+                            {entry.wallet.slice(-4)}
+                          </p>
                           <p className="text-sm text-muted-foreground">You</p>
                         </div>
                       </Link>
                     ) : (
                       <div className="flex items-center gap-4">
                         <Avatar className="w-10 h-10">
-                          <AvatarFallback>{entry.wallet.slice(0, 2).toUpperCase()}</AvatarFallback>
+                          <AvatarFallback>
+                            {entry.wallet.slice(0, 2).toUpperCase()}
+                          </AvatarFallback>
                         </Avatar>
-                        <p className="font-bold">{entry.wallet.slice(0, 4)}...{entry.wallet.slice(-4)}</p>
+                        <p className="font-bold">
+                          {entry.wallet.slice(0, 4)}...{entry.wallet.slice(-4)}
+                        </p>
                       </div>
                     )}
                   </TableCell>
@@ -105,12 +121,19 @@ export default function LeaderboardPage({
                 <TableRow className="bg-yellow-400/10 border-b-gray-800">
                   <TableCell className="font-bold">#{me.rank}</TableCell>
                   <TableCell>
-                    <Link href="/profile" className="flex items-center gap-4 hover:underline">
+                    <Link
+                      href="/profile"
+                      className="flex items-center gap-4 hover:underline"
+                    >
                       <Avatar className="w-10 h-10">
-                        <AvatarFallback>{me.wallet.slice(0, 2).toUpperCase()}</AvatarFallback>
+                        <AvatarFallback>
+                          {me.wallet.slice(0, 2).toUpperCase()}
+                        </AvatarFallback>
                       </Avatar>
                       <div>
-                        <p className="font-bold">{me.wallet.slice(0, 4)}...{me.wallet.slice(-4)}</p>
+                        <p className="font-bold">
+                          {me.wallet.slice(0, 4)}...{me.wallet.slice(-4)}
+                        </p>
                         <p className="text-sm text-muted-foreground">You</p>
                       </div>
                     </Link>
@@ -140,8 +163,10 @@ export default function LeaderboardPage({
         </CardContent>
       </Card>
       {entries.length === 0 && (
-        <p className="text-center text-muted-foreground py-8">No leaderboard data yet.</p>
+        <p className="text-center text-muted-foreground py-8">
+          No leaderboard data yet.
+        </p>
       )}
     </div>
-  )
+  );
 }

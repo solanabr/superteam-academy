@@ -1,17 +1,17 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { useWallet } from "@solana/wallet-adapter-react"
-import { useWalletModal } from "@solana/wallet-adapter-react-ui"
-import { ArrowRight, Play, Code2, Shield, Coins } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { useWalletAuth } from "@/components/providers/wallet-auth-provider"
+import Link from "next/link";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
+import { ArrowRight, Play, Code2, Shield, Coins } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { useWalletAuth } from "@/components/providers/wallet-auth-provider";
 
 export function HeroSection() {
-  const { connected } = useWallet()
-  const { setVisible } = useWalletModal()
-  const { isAuthenticated, isLoading, loginWithWallet } = useWalletAuth()
+  const { connected } = useWallet();
+  const { setVisible } = useWalletModal();
+  const { isAuthenticated, isLoading, loginWithWallet } = useWalletAuth();
 
   const handleUnlockClick = () => {
     if (!connected) {
@@ -19,22 +19,25 @@ export function HeroSection() {
         // Small delay to ensure Phantom content script is ready
         setTimeout(() => {
           try {
-            setVisible(true)
+            setVisible(true);
           } catch (err) {
-            console.error("Failed to open wallet modal:", err)
+            console.error("Failed to open wallet modal:", err);
             // Fallback: try direct Phantom connection
-            if (typeof window !== "undefined" && (window as any).solana?.isPhantom) {
-              ;(window as any).solana.connect().catch(() => undefined)
+            if (
+              typeof window !== "undefined" &&
+              (window as any).solana?.isPhantom
+            ) {
+              (window as any).solana.connect().catch(() => undefined);
             }
           }
-        }, 100)
+        }, 100);
       } catch (err) {
-        console.error("Wallet connection error:", err)
+        console.error("Wallet connection error:", err);
       }
-      return
+      return;
     }
-    void loginWithWallet().catch(() => undefined)
-  }
+    void loginWithWallet().catch(() => undefined);
+  };
 
   return (
     <section className="relative overflow-hidden">
@@ -59,8 +62,8 @@ export function HeroSection() {
 
           <p className="mt-6 text-lg leading-relaxed text-muted-foreground max-w-2xl mx-auto text-pretty">
             Master Solana, Rust, and Web3 through interactive coding challenges.
-            Earn XP, collect on-chain credentials, and join a global community of
-            blockchain developers.
+            Earn XP, collect on-chain credentials, and join a global community
+            of blockchain developers.
           </p>
 
           <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
@@ -138,7 +141,9 @@ export function HeroSection() {
             <div className="h-3 w-3 rounded-full bg-destructive/60" />
             <div className="h-3 w-3 rounded-full bg-[hsl(var(--gold))]/60" />
             <div className="h-3 w-3 rounded-full bg-primary/60" />
-            <span className="ml-2 text-xs text-muted-foreground font-mono">counter.rs</span>
+            <span className="ml-2 text-xs text-muted-foreground font-mono">
+              counter.rs
+            </span>
           </div>
           <div className="p-6 font-mono text-sm leading-relaxed">
             <div className="text-muted-foreground">
@@ -161,14 +166,12 @@ export function HeroSection() {
               {"ctx.accounts.counter.count = "}
               <span className="text-primary">0</span>;
             </div>
-            <div className="pl-8 text-muted-foreground">
-              {"Ok(())"}
-            </div>
+            <div className="pl-8 text-muted-foreground">{"Ok(())"}</div>
             <div className="pl-4 text-muted-foreground">{"}"}</div>
             <div className="text-muted-foreground">{"}"}</div>
           </div>
         </div>
       </div>
     </section>
-  )
+  );
 }

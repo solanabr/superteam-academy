@@ -1,13 +1,13 @@
-"use client"
+"use client";
 
-import { ReactNode } from "react"
-import { ThemeProvider } from "@/components/theme-provider"
-import { Web3Provider } from "@/components/providers/web3-provider"
-import { WalletAuthProvider } from "@/components/providers/wallet-auth-provider"
+import { ReactNode } from "react";
+import { ThemeProvider } from "@/components/theme-provider";
+import { Web3Provider } from "@/components/providers/web3-provider";
+import { WalletAuthProvider } from "@/components/providers/wallet-auth-provider";
 
 type AppProvidersProps = {
-  children: ReactNode
-}
+  children: ReactNode;
+};
 
 export function AppProviders({ children }: AppProvidersProps) {
   return (
@@ -16,5 +16,5 @@ export function AppProviders({ children }: AppProvidersProps) {
         <WalletAuthProvider>{children}</WalletAuthProvider>
       </Web3Provider>
     </ThemeProvider>
-  )
+  );
 }

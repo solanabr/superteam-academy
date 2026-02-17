@@ -1,15 +1,23 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowRight } from "lucide-react"
+import Link from "next/link";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowRight } from "lucide-react";
 
-export type LeaderboardWidgetEntry = { rank: number; wallet: string; xp: number }
+export type LeaderboardWidgetEntry = {
+  rank: number;
+  wallet: string;
+  xp: number;
+};
 
-export function LeaderboardWidget({ entries = [] }: { entries?: LeaderboardWidgetEntry[] }) {
-  const top = entries.slice(0, 5)
+export function LeaderboardWidget({
+  entries = [],
+}: {
+  entries?: LeaderboardWidgetEntry[];
+}) {
+  const top = entries.slice(0, 5);
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -23,19 +31,25 @@ export function LeaderboardWidget({ entries = [] }: { entries?: LeaderboardWidge
       <CardContent>
         <div className="space-y-4">
           {top.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No leaderboard data yet.</p>
+            <p className="text-sm text-muted-foreground">
+              No leaderboard data yet.
+            </p>
           ) : (
             top.map((user) => (
               <div key={user.wallet} className="flex items-center">
                 <div className="font-bold w-8 text-center">{user.rank}</div>
                 <Avatar className="h-10 w-10">
-                  <AvatarFallback>{user.wallet.slice(0, 2).toUpperCase()}</AvatarFallback>
+                  <AvatarFallback>
+                    {user.wallet.slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="ml-4 min-w-0 flex-1">
                   <p className="font-semibold truncate">
                     {user.wallet.slice(0, 4)}...{user.wallet.slice(-4)}
                   </p>
-                  <p className="text-sm text-muted-foreground">{user.xp.toLocaleString()} XP</p>
+                  <p className="text-sm text-muted-foreground">
+                    {user.xp.toLocaleString()} XP
+                  </p>
                 </div>
               </div>
             ))
@@ -43,5 +57,5 @@ export function LeaderboardWidget({ entries = [] }: { entries?: LeaderboardWidge
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

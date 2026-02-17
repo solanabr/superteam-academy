@@ -1,8 +1,9 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { useState } from "react"
-import { useWallet } from "@solana/wallet-adapter-react"
+import Link from "next/link";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import {
   Clock,
   Users,
@@ -16,96 +17,139 @@ import {
   Circle,
   ChevronDown,
   ArrowRight,
-  ExternalLink,
-} from "lucide-react"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Progress } from "@/components/ui/progress"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Separator } from "@/components/ui/separator"
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@/components/ui/collapsible"
-import type { Course } from "@/lib/mock-data"
-import { sendEnrollCourse } from "@/lib/solana/enroll-course"
-import { ACADEMY_CLUSTER } from "@/lib/generated/academy-program"
+} from "@/components/ui/collapsible";
+import type { Course } from "@/lib/mock-data";
+import { sendEnrollCourse } from "@/lib/solana/enroll-course";
+import { ACADEMY_CLUSTER } from "@/lib/generated/academy-program";
+import { useOptimisticMutation } from "@/lib/hooks/use-optimistic-mutation";
 
 const lessonIcons = {
   video: Play,
   reading: FileText,
   challenge: Code2,
-}
+};
 
 const difficultyColor = {
   Beginner: "border-primary bg-primary/10 text-primary",
-  Intermediate: "border-[hsl(var(--gold))] bg-[hsl(var(--gold))]/10 text-[hsl(var(--gold))]",
+  Intermediate:
+    "border-[hsl(var(--gold))] bg-[hsl(var(--gold))]/10 text-[hsl(var(--gold))]",
   Advanced: "border-destructive bg-destructive/10 text-destructive",
-}
+};
 
 const reviews = [
-  { name: "Gabriel Tanaka", avatar: "GT", rating: 5, text: "Absolutely brilliant course. The interactive challenges really solidify the concepts.", date: "2 weeks ago" },
-  { name: "Laura Andrade", avatar: "LA", rating: 5, text: "Best Solana course I've taken. The instructor explains complex topics with clarity.", date: "1 month ago" },
-  { name: "Bruno Sato", avatar: "BS", rating: 4, text: "Great content and structure. Would love to see more advanced security topics covered.", date: "2 months ago" },
-]
+  {
+    name: "Gabriel Tanaka",
+    avatar: "GT",
+    rating: 5,
+    text: "Absolutely brilliant course. The interactive challenges really solidify the concepts.",
+    date: "2 weeks ago",
+  },
+  {
+    name: "Laura Andrade",
+    avatar: "LA",
+    rating: 5,
+    text: "Best Solana course I've taken. The instructor explains complex topics with clarity.",
+    date: "1 month ago",
+  },
+  {
+    name: "Bruno Sato",
+    avatar: "BS",
+    rating: 4,
+    text: "Great content and structure. Would love to see more advanced security topics covered.",
+    date: "2 months ago",
+  },
+];
 
 export function CourseDetail({
   course,
   enrolledOnChain = false,
 }: {
-  course: Course
-  enrolledOnChain?: boolean
+  course: Course;
+  enrolledOnChain?: boolean;
 }) {
-  const { publicKey, sendTransaction } = useWallet()
-  const [isEnrolling, setIsEnrolling] = useState(false)
-  const [enrollError, setEnrollError] = useState<string | null>(null)
-  const [enrollTxSignature, setEnrollTxSignature] = useState<string | null>(null)
+  const { publicKey, sendTransaction } = useWallet();
+  const router = useRouter();
 
-  const totalLessons = course.modules.reduce((acc, m) => acc + m.lessons.length, 0)
-  const completedLessons = course.modules.reduce(
-    (acc, m) => acc + m.lessons.filter((l) => l.completed).length,
-    0
-  )
+  const toastId = "enroll-toast";
+  const {
+    state: enrolled,
+    mutate: enroll,
+    isPending: isEnrolling,
+  } = useOptimisticMutation<boolean, string>({
+    initialState: enrolledOnChain || course.progress > 0,
+    onMutate: () => true,
+    mutationFn: async () => {
+      if (!publicKey || !sendTransaction)
+        throw new Error("Connect a wallet to enroll.");
+      toast.loading(`Enrolling in ${course.title}...`, { id: toastId });
 
-  // Find next incomplete lesson
-  let nextLessonId: string | null = null
-  for (const mod of course.modules) {
-    for (const lesson of mod.lessons) {
-      if (!lesson.completed) {
-        nextLessonId = lesson.id
-        break
-      }
-    }
-    if (nextLessonId) break
-  }
-
-  async function handleEnroll() {
-    if (!publicKey || !sendTransaction) {
-      setEnrollError("Connect a wallet to enroll.")
-      return
-    }
-    setIsEnrolling(true)
-    setEnrollError(null)
-    try {
       const ensureResponse = await fetch("/api/academy/courses/ensure", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ slug: course.slug }),
-      })
+      });
       if (!ensureResponse.ok) {
-        const payload = (await ensureResponse.json().catch(() => null)) as { error?: string } | null
-        throw new Error(payload?.error ?? "Failed to ensure course on-chain.")
+        const payload = (await ensureResponse.json().catch(() => null)) as {
+          error?: string;
+        } | null;
+        throw new Error(payload?.error ?? "Failed to ensure course on-chain.");
       }
 
-      const sig = await sendEnrollCourse(sendTransaction, publicKey.toBase58(), course.slug)
-      setEnrollTxSignature(sig)
-    } catch (error) {
-      setEnrollError(error instanceof Error ? error.message : "Enrollment failed.")
-    } finally {
-      setIsEnrolling(false)
+      return sendEnrollCourse(
+        sendTransaction,
+        publicKey.toBase58(),
+        course.slug,
+      );
+    },
+    onSuccess: (sig) => {
+      const explorerUrl = `https://explorer.solana.com/tx/${sig}${ACADEMY_CLUSTER === "devnet" ? "?cluster=devnet" : ""}`;
+      toast.success("Enrolled!", {
+        id: toastId,
+        description: "You're now enrolled in this course.",
+        action: {
+          label: "View on Explorer",
+          onClick: () => window.open(explorerUrl, "_blank"),
+        },
+      });
+      router.refresh();
+    },
+    onError: (error) => {
+      toast.error(error.message || "Enrollment failed.", {
+        id: toastId,
+        action: { label: "Retry", onClick: () => enroll() },
+      });
+    },
+  });
+
+  const totalLessons = course.modules.reduce(
+    (acc, m) => acc + m.lessons.length,
+    0,
+  );
+  const completedLessons = course.modules.reduce(
+    (acc, m) => acc + m.lessons.filter((l) => l.completed).length,
+    0,
+  );
+
+  let nextLessonId: string | null = null;
+  for (const mod of course.modules) {
+    for (const lesson of mod.lessons) {
+      if (!lesson.completed) {
+        nextLessonId = lesson.id;
+        break;
+      }
     }
+    if (nextLessonId) break;
   }
 
   return (
@@ -116,7 +160,10 @@ export function CourseDetail({
           <div className="grid gap-8 lg:grid-cols-3">
             <div className="lg:col-span-2">
               <div className="flex flex-wrap items-center gap-2 mb-4">
-                <Badge variant="outline" className={difficultyColor[course.difficulty]}>
+                <Badge
+                  variant="outline"
+                  className={difficultyColor[course.difficulty]}
+                >
                   {course.difficulty}
                 </Badge>
                 {course.tags.map((tag) => (
@@ -145,8 +192,12 @@ export function CourseDetail({
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="text-sm font-medium text-foreground">{course.instructor}</p>
-                  <p className="text-xs text-muted-foreground">Course Instructor</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {course.instructor}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Course Instructor
+                  </p>
                 </div>
               </div>
 
@@ -159,10 +210,12 @@ export function CourseDetail({
                   <BookOpen className="h-4 w-4" /> {course.lessons} lessons
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <Users className="h-4 w-4" /> {course.enrolled.toLocaleString()} enrolled
+                  <Users className="h-4 w-4" />{" "}
+                  {course.enrolled.toLocaleString()} enrolled
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <Star className="h-4 w-4 text-[hsl(var(--gold))]" /> {course.rating}
+                  <Star className="h-4 w-4 text-[hsl(var(--gold))]" />{" "}
+                  {course.rating}
                 </span>
                 <span className="flex items-center gap-1.5">
                   <Zap className="h-4 w-4 text-primary" /> {course.xp} XP
@@ -173,10 +226,12 @@ export function CourseDetail({
             {/* Enrollment card */}
             <div className="lg:row-start-1 lg:col-start-3">
               <div className="rounded-xl border border-border bg-card p-6 glow-green">
-                {course.progress > 0 || enrolledOnChain ? (
+                {enrolled ? (
                   <>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-muted-foreground">Your Progress</span>
+                      <span className="text-sm text-muted-foreground">
+                        Your Progress
+                      </span>
                       <span className="text-sm font-semibold text-primary">
                         {course.progress}%
                       </span>
@@ -188,7 +243,9 @@ export function CourseDetail({
                     <p className="text-xs text-muted-foreground mb-4">
                       {completedLessons} of {totalLessons} lessons completed
                     </p>
-                    <Link href={`/courses/${course.slug}/lessons/${nextLessonId || "1-1"}`}>
+                    <Link
+                      href={`/courses/${course.slug}/lessons/${nextLessonId || "1-1"}`}
+                    >
                       <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90 gap-2">
                         Continue Learning
                         <ArrowRight className="h-4 w-4" />
@@ -203,55 +260,33 @@ export function CourseDetail({
                         Earn {course.xp} XP upon completion
                       </p>
                     </div>
-                    {enrollTxSignature ? (
-                      <div className="space-y-2">
-                        <p className="text-sm font-medium text-primary">Enrolled on-chain</p>
-                        <a
-                          href={`https://explorer.solana.com/tx/${enrollTxSignature}${ACADEMY_CLUSTER === "devnet" ? "?cluster=devnet" : ""}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-xs text-primary hover:underline inline-flex items-center gap-1"
-                        >
-                          View transaction (Academy program) <ExternalLink className="h-3 w-3" />
-                        </a>
-                        <Button
-                          onClick={() => window.location.reload()}
-                          className="w-full bg-primary text-primary-foreground hover:bg-primary/90 gap-2 mt-2"
-                        >
-                          Continue
-                          <ArrowRight className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <>
-                        <Button
-                          onClick={handleEnroll}
-                          disabled={isEnrolling}
-                          className="w-full bg-primary text-primary-foreground hover:bg-primary/90 gap-2"
-                        >
-                          {isEnrolling ? "Enrolling..." : "Enroll Now"}
-                          <ArrowRight className="h-4 w-4" />
-                        </Button>
-                        {enrollError ? (
-                          <p className="mt-2 text-xs text-destructive">{enrollError}</p>
-                        ) : null}
-                      </>
-                    )}
+                    <Button
+                      onClick={() => enroll()}
+                      disabled={isEnrolling}
+                      className="w-full bg-primary text-primary-foreground hover:bg-primary/90 gap-2"
+                    >
+                      {isEnrolling ? "Enrolling..." : "Enroll Now"}
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
                   </>
                 )}
                 <Separator className="my-4" />
                 <ul className="space-y-2 text-sm text-muted-foreground">
                   <li className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-primary" /> {course.modules.length} modules
+                    <CheckCircle2 className="h-4 w-4 text-primary" />{" "}
+                    {course.modules.length} modules
                   </li>
                   <li className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-primary" /> Interactive challenges
+                    <CheckCircle2 className="h-4 w-4 text-primary" />{" "}
+                    Interactive challenges
                   </li>
                   <li className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-primary" /> NFT certificate
+                    <CheckCircle2 className="h-4 w-4 text-primary" /> NFT
+                    certificate
                   </li>
                   <li className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-primary" /> Lifetime access
+                    <CheckCircle2 className="h-4 w-4 text-primary" /> Lifetime
+                    access
                   </li>
                 </ul>
               </div>
@@ -264,10 +299,14 @@ export function CourseDetail({
       <div className="mx-auto max-w-7xl px-4 py-10 lg:px-6">
         <div className="grid gap-10 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            <h2 className="text-xl font-semibold text-foreground mb-6">Course Content</h2>
+            <h2 className="text-xl font-semibold text-foreground mb-6">
+              Course Content
+            </h2>
             <div className="space-y-3">
               {course.modules.map((mod, mi) => {
-                const modCompleted = mod.lessons.filter((l) => l.completed).length
+                const modCompleted = mod.lessons.filter(
+                  (l) => l.completed,
+                ).length;
                 return (
                   <Collapsible key={mod.title} defaultOpen={mi === 0}>
                     <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg border border-border bg-card px-5 py-4 text-left transition-colors hover:bg-secondary/50">
@@ -276,9 +315,12 @@ export function CourseDetail({
                           {mi + 1}
                         </span>
                         <div>
-                          <p className="text-sm font-medium text-foreground">{mod.title}</p>
+                          <p className="text-sm font-medium text-foreground">
+                            {mod.title}
+                          </p>
                           <p className="text-xs text-muted-foreground mt-0.5">
-                            {mod.lessons.length} lessons · {modCompleted}/{mod.lessons.length} completed
+                            {mod.lessons.length} lessons · {modCompleted}/
+                            {mod.lessons.length} completed
                           </p>
                         </div>
                       </div>
@@ -287,7 +329,7 @@ export function CourseDetail({
                     <CollapsibleContent>
                       <div className="ml-4 border-l border-border pl-6 pt-2 pb-1 space-y-1">
                         {mod.lessons.map((lesson) => {
-                          const Icon = lessonIcons[lesson.type]
+                          const Icon = lessonIcons[lesson.type];
                           return (
                             <Link
                               key={lesson.id}
@@ -313,21 +355,26 @@ export function CourseDetail({
                                 {lesson.duration}
                               </span>
                             </Link>
-                          )
+                          );
                         })}
                       </div>
                     </CollapsibleContent>
                   </Collapsible>
-                )
+                );
               })}
             </div>
 
             {/* Reviews */}
             <div className="mt-12">
-              <h2 className="text-xl font-semibold text-foreground mb-6">Reviews</h2>
+              <h2 className="text-xl font-semibold text-foreground mb-6">
+                Reviews
+              </h2>
               <div className="space-y-4">
                 {reviews.map((review) => (
-                  <div key={review.name} className="rounded-xl border border-border bg-card p-5">
+                  <div
+                    key={review.name}
+                    className="rounded-xl border border-border bg-card p-5"
+                  >
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
                         <Avatar className="h-8 w-8">
@@ -336,8 +383,12 @@ export function CourseDetail({
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="text-sm font-medium text-foreground">{review.name}</p>
-                          <p className="text-xs text-muted-foreground">{review.date}</p>
+                          <p className="text-sm font-medium text-foreground">
+                            {review.name}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {review.date}
+                          </p>
                         </div>
                       </div>
                       <div className="flex gap-0.5">
@@ -364,5 +415,5 @@ export function CourseDetail({
         </div>
       </div>
     </div>
-  )
+  );
 }

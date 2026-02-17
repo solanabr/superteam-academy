@@ -1,34 +1,45 @@
-import ProfilePageComponent from "@/components/profile/ProfilePageComponent"
-import { Navbar } from "@/components/navbar"
-import { requireAuthenticatedUser } from "@/lib/server/auth-adapter"
-import { getIdentitySnapshotForUser } from "@/lib/server/solana-identity-adapter"
-import { getActivityDays } from "@/lib/server/activity-store"
-import { getAllCourseProgressSnapshots } from "@/lib/server/academy-progress-adapter"
+import ProfilePageComponent from "@/components/profile/ProfilePageComponent";
+import { Navbar } from "@/components/navbar";
+import { requireAuthenticatedUser } from "@/lib/server/auth-adapter";
+import { getIdentitySnapshotForUser } from "@/lib/server/solana-identity-adapter";
+import { getActivityDays } from "@/lib/server/activity-store";
+import { getAllCourseProgressSnapshots } from "@/lib/server/academy-progress-adapter";
 
-export default async function Page({ params }: { params: Promise<{ username: string }> }) {
-  const { username } = await params
-  const user = await requireAuthenticatedUser()
-  let snapshot, activityDays, courseSnapshots
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ username: string }>;
+}) {
+  const { username } = await params;
+  const user = await requireAuthenticatedUser();
+  let snapshot, activityDays, courseSnapshots;
   try {
-    ;[snapshot, activityDays, courseSnapshots] = await Promise.all([
+    [snapshot, activityDays, courseSnapshots] = await Promise.all([
       getIdentitySnapshotForUser(user),
       Promise.resolve(getActivityDays(user.walletAddress, 365)),
       getAllCourseProgressSnapshots(user.walletAddress),
-    ])
+    ]);
   } catch (error: any) {
     // Network error - use fallbacks
-    if (error?.message?.includes("fetch failed") || error?.message?.includes("Network error") || error?.message?.includes("ECONNREFUSED")) {
-      console.warn("Network error loading profile data, using fallbacks:", error.message)
-      snapshot = await getIdentitySnapshotForUser(user).catch(() => null)
-      activityDays = getActivityDays(user.walletAddress, 365)
-      courseSnapshots = []
+    if (
+      error?.message?.includes("fetch failed") ||
+      error?.message?.includes("Network error") ||
+      error?.message?.includes("ECONNREFUSED")
+    ) {
+      console.warn(
+        "Network error loading profile data, using fallbacks:",
+        error.message,
+      );
+      snapshot = await getIdentitySnapshotForUser(user).catch(() => null);
+      activityDays = getActivityDays(user.walletAddress, 365);
+      courseSnapshots = [];
     } else {
-      throw error
+      throw error;
     }
   }
   const completedCourses = courseSnapshots
     .filter((s) => s.course.progress >= 100)
-    .map((s) => s.course)
+    .map((s) => s.course);
 
   return (
     <div>
@@ -40,5 +51,5 @@ export default async function Page({ params }: { params: Promise<{ username: str
         completedCourses={completedCourses}
       />
     </div>
-  )
+  );
 }

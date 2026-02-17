@@ -1,15 +1,15 @@
-import Link from "next/link"
-import { Clock, Users, Star, Zap, BookOpen } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import type { Course } from "@/lib/mock-data"
+import Link from "next/link";
+import { Clock, Users, Star, Zap, BookOpen } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import type { Course } from "@/lib/mock-data";
 
 const difficultyColor = {
   Beginner: "border-primary text-primary",
   Intermediate: "border-[hsl(var(--gold))] text-[hsl(var(--gold))]",
   Advanced: "border-destructive text-destructive",
-}
+};
 
 export function CourseCard({ course }: { course: Course }) {
   return (
@@ -80,7 +80,9 @@ export function CourseCard({ course }: { course: Course }) {
                   {course.instructorAvatar}
                 </AvatarFallback>
               </Avatar>
-              <span className="text-xs text-muted-foreground">{course.instructor}</span>
+              <span className="text-xs text-muted-foreground">
+                {course.instructor}
+              </span>
             </div>
             <div className="flex items-center gap-1 text-xs">
               <Zap className="h-3 w-3 text-primary" />
@@ -92,11 +94,13 @@ export function CourseCard({ course }: { course: Course }) {
           {course.progress > 0 && (
             <div className="mt-3 flex items-center justify-between text-xs">
               <span className="text-muted-foreground">Progress</span>
-              <span className="font-medium text-primary">{course.progress}%</span>
+              <span className="font-medium text-primary">
+                {course.progress}%
+              </span>
             </div>
           )}
         </div>
       </div>
     </Link>
-  )
+  );
 }

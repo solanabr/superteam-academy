@@ -1,7 +1,9 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import {
   ArrowLeft,
   ArrowRight,
@@ -19,36 +21,36 @@ import {
   Menu,
   X,
   BookOpen,
-  ExternalLink,
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
-import { Separator } from "@/components/ui/separator"
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
-} from "@/components/ui/resizable"
-import { CodeEditor } from "./code-editor"
-import type { Course, Lesson } from "@/lib/mock-data"
-import { useWalletAuth } from "@/components/providers/wallet-auth-provider"
-import { ACADEMY_CLUSTER } from "@/lib/generated/academy-program"
+} from "@/components/ui/resizable";
+import { CodeEditor } from "./code-editor";
+import type { Course, Lesson } from "@/lib/mock-data";
+import { useWalletAuth } from "@/components/providers/wallet-auth-provider";
+import { ACADEMY_CLUSTER } from "@/lib/generated/academy-program";
+import { useOptimisticMutation } from "@/lib/hooks/use-optimistic-mutation";
 
 const lessonIcons = {
   video: Play,
   reading: FileText,
   challenge: Code2,
-}
+};
 
 interface LessonViewProps {
-  course: Course
-  lesson: Lesson
-  moduleIndex: number
-  lessonIndex: number
-  prevLesson: Lesson | null
-  nextLesson: Lesson | null
-  enrolledOnChain?: boolean
+  course: Course;
+  lesson: Lesson;
+  moduleIndex: number;
+  lessonIndex: number;
+  prevLesson: Lesson | null;
+  nextLesson: Lesson | null;
+  enrolledOnChain?: boolean;
 }
 
 export function LessonView({
@@ -58,67 +60,167 @@ export function LessonView({
   nextLesson,
   enrolledOnChain = false,
 }: LessonViewProps) {
-  const { loginWithWallet } = useWalletAuth()
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [showHint, setShowHint] = useState(false)
-  const [showSolution, setShowSolution] = useState(false)
-  const [isCompleting, setIsCompleting] = useState(false)
-  const [completeError, setCompleteError] = useState<string | null>(null)
-  const [needsSignIn, setNeedsSignIn] = useState(false)
-  const [completeTxSignature, setCompleteTxSignature] = useState<string | null>(null)
-  const [redirectTo, setRedirectTo] = useState<string | null>(null)
+  const { loginWithWallet } = useWalletAuth();
+  const router = useRouter();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showHint, setShowHint] = useState(false);
+  const [showSolution, setShowSolution] = useState(false);
+  const [needsSignIn, setNeedsSignIn] = useState(false);
 
-  const allLessons = course.modules.flatMap((m) => m.lessons)
-  const completed = allLessons.filter((l) => l.completed).length
-  const progressPct = Math.round((completed / allLessons.length) * 100)
+  const allLessons = course.modules.flatMap((m) => m.lessons);
+  const baseCompleted = allLessons.filter((l) => l.completed).length;
+  const isChallenge = lesson.type === "challenge";
+  const xpAmount = isChallenge ? 120 : 50;
 
-  const isChallenge = lesson.type === "challenge"
+  const completeToastId = "complete-toast";
+  const {
+    state: lessonCompleted,
+    mutate: markComplete,
+    isPending: isCompleting,
+  } = useOptimisticMutation<boolean, { completeTxSignature?: string }>({
+    initialState: lesson.completed,
+    onMutate: () => true,
+    mutationFn: async () => {
+      if (!enrolledOnChain)
+        throw new Error("You must enroll on-chain before completing lessons.");
+      toast.loading("Recording progress...", { id: completeToastId });
 
-  async function handleMarkComplete() {
-    if (!enrolledOnChain) {
-      setCompleteError("You must enroll on-chain before completing lessons.")
-      return
-    }
-    setNeedsSignIn(false)
-    setIsCompleting(true)
-    setCompleteError(null)
-    try {
       const response = await fetch("/api/academy/progress/complete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ slug: course.slug, lessonId: lesson.id }),
-      })
+      });
       if (response.status === 401) {
-        setNeedsSignIn(true)
-        setCompleteError("Sign in once to record your progress.")
-        return
+        setNeedsSignIn(true);
+        throw new Error("Sign in once to record your progress.");
       }
       const payload = (await response.json().catch(() => null)) as {
-        error?: string
-        completeTxSignature?: string
-        finalizeTxSignature?: string | null
-      } | null
+        error?: string;
+        completeTxSignature?: string;
+        finalizeTxSignature?: string | null;
+      } | null;
       if (!response.ok) {
-        throw new Error(payload?.error ?? "Failed to complete lesson on-chain.")
+        throw new Error(
+          payload?.error ?? "Failed to complete lesson on-chain.",
+        );
       }
-      if (payload?.completeTxSignature) {
-        setCompleteTxSignature(payload.completeTxSignature)
-        setRedirectTo(nextLesson ? `/courses/${course.slug}/lessons/${nextLesson.id}` : `/courses/${course.slug}`)
-        return
+      return { completeTxSignature: payload?.completeTxSignature };
+    },
+    onSuccess: (result) => {
+      const nextPath = nextLesson
+        ? `/courses/${course.slug}/lessons/${nextLesson.id}`
+        : `/courses/${course.slug}`;
+      const nextLabel = nextLesson ? "Next Lesson" : "Back to Course";
+
+      if (result.completeTxSignature) {
+        const explorerUrl = `https://explorer.solana.com/tx/${result.completeTxSignature}${ACADEMY_CLUSTER === "devnet" ? "?cluster=devnet" : ""}`;
+        toast.success(`Lesson completed! +${xpAmount} XP`, {
+          id: completeToastId,
+          action: {
+            label: "View on Explorer",
+            onClick: () => window.open(explorerUrl, "_blank"),
+          },
+        });
+      } else {
+        toast.success(`Lesson completed! +${xpAmount} XP`, {
+          id: completeToastId,
+          action: { label: nextLabel, onClick: () => router.push(nextPath) },
+        });
       }
 
-      if (nextLesson) {
-        window.location.href = `/courses/${course.slug}/lessons/${nextLesson.id}`
-        return
+      setTimeout(() => router.push(nextPath), 1500);
+    },
+    onError: (error) => {
+      if (needsSignIn) {
+        toast.error(error.message, { id: completeToastId });
+      } else {
+        toast.error(error.message || "Failed to record progress.", {
+          id: completeToastId,
+          action: { label: "Retry", onClick: () => markComplete() },
+        });
       }
-      window.location.href = `/courses/${course.slug}`
-    } catch (error) {
-      setCompleteError(error instanceof Error ? error.message : "Completion failed.")
-    } finally {
-      setIsCompleting(false)
-    }
+    },
+  });
+
+  const optimisticCompleted =
+    lessonCompleted && !lesson.completed ? baseCompleted + 1 : baseCompleted;
+  const progressPct = Math.round(
+    (optimisticCompleted / allLessons.length) * 100,
+  );
+
+  function isLessonCompleted(l: Lesson) {
+    if (l.id === lesson.id) return lessonCompleted;
+    return l.completed;
   }
+
+  const bottomBar = (
+    <div className="shrink-0 flex items-center justify-between gap-4 border-t border-border bg-card px-4 py-3">
+      {prevLesson ? (
+        <Link href={`/courses/${course.slug}/lessons/${prevLesson.id}`}>
+          <Button
+            variant="outline"
+            className="gap-2 border-border text-muted-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Previous
+          </Button>
+        </Link>
+      ) : (
+        <div />
+      )}
+      {lessonCompleted ? (
+        <Badge
+          variant="outline"
+          className="border-primary text-primary gap-1.5 py-1.5 px-3"
+        >
+          <CheckCircle2 className="h-4 w-4" />
+          Completed
+        </Badge>
+      ) : (
+        <Button
+          onClick={() => markComplete()}
+          disabled={isCompleting}
+          className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2"
+        >
+          <CheckCircle2 className="h-4 w-4" />
+          {isCompleting ? "Submitting..." : "Mark Complete"}
+        </Button>
+      )}
+      {nextLesson ? (
+        <Link href={`/courses/${course.slug}/lessons/${nextLesson.id}`}>
+          <Button
+            variant="outline"
+            className="gap-2 border-border text-muted-foreground"
+          >
+            Next
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+        </Link>
+      ) : (
+        <div />
+      )}
+    </div>
+  );
+
+  const signInBar =
+    needsSignIn && !lessonCompleted ? (
+      <div className="shrink-0 flex flex-wrap items-center gap-2 px-4 pb-3">
+        <p className="text-sm text-destructive">
+          Sign in once to record your progress.
+        </p>
+        <Button
+          size="sm"
+          variant="outline"
+          className="border-primary text-primary hover:bg-primary/10"
+          onClick={() =>
+            void loginWithWallet().then(() => setNeedsSignIn(false))
+          }
+        >
+          Sign in
+        </Button>
+      </div>
+    ) : null;
 
   return (
     <div className="flex h-screen flex-col bg-background">
@@ -131,7 +233,11 @@ export function LessonView({
             className="h-8 w-8 text-muted-foreground lg:hidden"
             onClick={() => setSidebarOpen(!sidebarOpen)}
           >
-            {sidebarOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+            {sidebarOpen ? (
+              <X className="h-4 w-4" />
+            ) : (
+              <Menu className="h-4 w-4" />
+            )}
           </Button>
           <Link
             href={`/courses/${course.slug}`}
@@ -148,29 +254,49 @@ export function LessonView({
               value={progressPct}
               className="h-1.5 w-24 bg-secondary [&>div]:bg-primary"
             />
-            <span className="text-xs text-muted-foreground">{progressPct}%</span>
+            <span className="text-xs text-muted-foreground">
+              {progressPct}%
+            </span>
           </div>
           <Separator orientation="vertical" className="h-5 mx-1" />
           <div className="flex items-center gap-1">
             {prevLesson ? (
               <Link href={`/courses/${course.slug}/lessons/${prevLesson.id}`}>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground"
+                >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
               </Link>
             ) : (
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" disabled>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-muted-foreground"
+                disabled
+              >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
             )}
             {nextLesson ? (
               <Link href={`/courses/${course.slug}/lessons/${nextLesson.id}`}>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground"
+                >
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </Link>
             ) : (
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" disabled>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-muted-foreground"
+                disabled
+              >
                 <ChevronRight className="h-4 w-4" />
               </Button>
             )}
@@ -186,7 +312,9 @@ export function LessonView({
           } lg:flex w-72 shrink-0 flex-col border-r border-border bg-card overflow-y-auto`}
         >
           <div className="p-4">
-            <h3 className="text-sm font-semibold text-foreground mb-3">Course Modules</h3>
+            <h3 className="text-sm font-semibold text-foreground mb-3">
+              Course Modules
+            </h3>
             <div className="space-y-4">
               {course.modules.map((mod, mi) => (
                 <div key={mod.title}>
@@ -195,8 +323,9 @@ export function LessonView({
                   </p>
                   <div className="space-y-0.5">
                     {mod.lessons.map((l) => {
-                      const Icon = lessonIcons[l.type]
-                      const isCurrent = l.id === lesson.id
+                      const Icon = lessonIcons[l.type];
+                      const isCurrent = l.id === lesson.id;
+                      const completed = isLessonCompleted(l);
                       return (
                         <Link
                           key={l.id}
@@ -207,7 +336,7 @@ export function LessonView({
                               : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                           }`}
                         >
-                          {l.completed ? (
+                          {completed ? (
                             <CheckCircle2 className="h-3.5 w-3.5 text-primary shrink-0" />
                           ) : (
                             <Circle className="h-3.5 w-3.5 shrink-0 opacity-40" />
@@ -215,7 +344,7 @@ export function LessonView({
                           <Icon className="h-3 w-3 shrink-0" />
                           <span className="truncate">{l.title}</span>
                         </Link>
-                      )
+                      );
                     })}
                   </div>
                 </div>
@@ -227,7 +356,10 @@ export function LessonView({
         {/* Main content area */}
         {isChallenge ? (
           <div className="flex flex-1 flex-col overflow-hidden">
-            <ResizablePanelGroup direction="horizontal" className="flex-1 min-h-0">
+            <ResizablePanelGroup
+              direction="horizontal"
+              className="flex-1 min-h-0"
+            >
               <ResizablePanel defaultSize={45} minSize={30}>
                 <div className="h-full overflow-y-auto p-6 lg:p-8">
                   <LessonContent
@@ -242,75 +374,14 @@ export function LessonView({
               </ResizablePanel>
               <ResizableHandle withHandle className="bg-border" />
               <ResizablePanel defaultSize={55} minSize={30}>
-                <CodeEditor courseSlug={course.slug} nextLessonId={nextLesson?.id || null} />
+                <CodeEditor
+                  courseSlug={course.slug}
+                  nextLessonId={nextLesson?.id || null}
+                />
               </ResizablePanel>
             </ResizablePanelGroup>
-            {/* Mark Complete / nav for challenges (and last lesson) */}
-            <div className="shrink-0 flex items-center justify-between gap-4 border-t border-border bg-card px-4 py-3">
-              {prevLesson ? (
-                <Link href={`/courses/${course.slug}/lessons/${prevLesson.id}`}>
-                  <Button variant="outline" className="gap-2 border-border text-muted-foreground">
-                    <ArrowLeft className="h-4 w-4" />
-                    Previous
-                  </Button>
-                </Link>
-              ) : (
-                <div />
-              )}
-              {completeTxSignature ? (
-                <div className="flex flex-col items-center gap-2">
-                  <p className="text-sm text-primary font-medium">Recorded on-chain (backend signed)</p>
-                  <a
-                    href={`https://explorer.solana.com/tx/${completeTxSignature}${ACADEMY_CLUSTER === "devnet" ? "?cluster=devnet" : ""}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-xs text-primary hover:underline inline-flex items-center gap-1"
-                  >
-                    View transaction <ExternalLink className="h-3 w-3" />
-                  </a>
-                  <Button
-                    onClick={() => redirectTo && (window.location.href = redirectTo)}
-                    className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2"
-                  >
-                    {redirectTo?.includes("/lessons/") ? "Next lesson" : "Back to course"}
-                  </Button>
-                </div>
-              ) : (
-                <Button
-                  onClick={handleMarkComplete}
-                  disabled={isCompleting}
-                  className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2"
-                >
-                  <CheckCircle2 className="h-4 w-4" />
-                  {isCompleting ? "Submitting..." : "Mark Complete"}
-                </Button>
-              )}
-              {nextLesson ? (
-                <Link href={`/courses/${course.slug}/lessons/${nextLesson.id}`}>
-                  <Button variant="outline" className="gap-2 border-border text-muted-foreground">
-                    Next
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </Link>
-              ) : (
-                <div />
-              )}
-            </div>
-            {completeError && isChallenge ? (
-              <div className="shrink-0 flex flex-wrap items-center gap-2 px-4 pb-3">
-                <p className="text-sm text-destructive">{completeError}</p>
-                {needsSignIn && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="border-primary text-primary hover:bg-primary/10"
-                    onClick={() => void loginWithWallet().then(() => setNeedsSignIn(false))}
-                  >
-                    Sign in
-                  </Button>
-                )}
-              </div>
-            ) : null}
+            {bottomBar}
+            {signInBar}
           </div>
         ) : (
           <div className="flex-1 overflow-y-auto">
@@ -327,8 +398,13 @@ export function LessonView({
               {/* Nav buttons */}
               <div className="flex items-center justify-between mt-10 pt-6 border-t border-border">
                 {prevLesson ? (
-                  <Link href={`/courses/${course.slug}/lessons/${prevLesson.id}`}>
-                    <Button variant="outline" className="gap-2 border-border text-muted-foreground">
+                  <Link
+                    href={`/courses/${course.slug}/lessons/${prevLesson.id}`}
+                  >
+                    <Button
+                      variant="outline"
+                      className="gap-2 border-border text-muted-foreground"
+                    >
                       <ArrowLeft className="h-4 w-4" />
                       Previous
                     </Button>
@@ -336,27 +412,17 @@ export function LessonView({
                 ) : (
                   <div />
                 )}
-                {completeTxSignature ? (
-                  <div className="flex flex-col gap-2">
-                    <p className="text-sm text-primary font-medium">Recorded on-chain (backend signed — no wallet popup)</p>
-                    <a
-                      href={`https://explorer.solana.com/tx/${completeTxSignature}${ACADEMY_CLUSTER === "devnet" ? "?cluster=devnet" : ""}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-xs text-primary hover:underline inline-flex items-center gap-1"
-                    >
-                      View transaction <ExternalLink className="h-3 w-3" />
-                    </a>
-                    <Button
-                      onClick={() => redirectTo && (window.location.href = redirectTo)}
-                      className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2"
-                    >
-                      {redirectTo?.includes("/lessons/") ? "Next lesson" : "Back to course"}
-                    </Button>
-                  </div>
+                {lessonCompleted ? (
+                  <Badge
+                    variant="outline"
+                    className="border-primary text-primary gap-1.5 py-1.5 px-3"
+                  >
+                    <CheckCircle2 className="h-4 w-4" />
+                    Completed
+                  </Badge>
                 ) : (
                   <Button
-                    onClick={handleMarkComplete}
+                    onClick={() => markComplete()}
                     disabled={isCompleting}
                     className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2"
                   >
@@ -365,8 +431,13 @@ export function LessonView({
                   </Button>
                 )}
                 {nextLesson ? (
-                  <Link href={`/courses/${course.slug}/lessons/${nextLesson.id}`}>
-                    <Button variant="outline" className="gap-2 border-border text-muted-foreground">
+                  <Link
+                    href={`/courses/${course.slug}/lessons/${nextLesson.id}`}
+                  >
+                    <Button
+                      variant="outline"
+                      className="gap-2 border-border text-muted-foreground"
+                    >
                       Next
                       <ArrowRight className="h-4 w-4" />
                     </Button>
@@ -375,27 +446,13 @@ export function LessonView({
                   <div />
                 )}
               </div>
-              {completeError ? (
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <p className="text-sm text-destructive">{completeError}</p>
-                  {needsSignIn && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="border-primary text-primary hover:bg-primary/10"
-                      onClick={() => void loginWithWallet().then(() => setNeedsSignIn(false))}
-                    >
-                      Sign in
-                    </Button>
-                  )}
-                </div>
-              ) : null}
+              {signInBar}
             </div>
           </div>
         )}
       </div>
     </div>
-  )
+  );
 }
 
 // ──────────────── Lesson Content ────────────────
@@ -407,21 +464,28 @@ function LessonContent({
   setShowSolution,
   isChallenge,
 }: {
-  lesson: Lesson
-  showHint: boolean
-  setShowHint: (v: boolean) => void
-  showSolution: boolean
-  setShowSolution: (v: boolean) => void
-  isChallenge: boolean
+  lesson: Lesson;
+  showHint: boolean;
+  setShowHint: (v: boolean) => void;
+  showSolution: boolean;
+  setShowSolution: (v: boolean) => void;
+  isChallenge: boolean;
 }) {
-  const LessonIcon = lessonIcons[lesson.type]
+  const LessonIcon = lessonIcons[lesson.type];
 
   return (
     <div>
       <div className="flex items-center gap-2 mb-2">
-        <Badge variant="outline" className="border-border text-muted-foreground text-xs gap-1">
+        <Badge
+          variant="outline"
+          className="border-border text-muted-foreground text-xs gap-1"
+        >
           <LessonIcon className="h-3 w-3" />
-          {lesson.type === "challenge" ? "Challenge" : lesson.type === "video" ? "Video" : "Reading"}
+          {lesson.type === "challenge"
+            ? "Challenge"
+            : lesson.type === "video"
+              ? "Video"
+              : "Reading"}
         </Badge>
         <span className="text-xs text-muted-foreground">{lesson.duration}</span>
         <span className="ml-auto flex items-center gap-1 text-xs">
@@ -432,7 +496,9 @@ function LessonContent({
         </span>
       </div>
 
-      <h1 className="text-2xl font-bold text-foreground mb-4">{lesson.title}</h1>
+      <h1 className="text-2xl font-bold text-foreground mb-4">
+        {lesson.title}
+      </h1>
 
       {/* Mock content based on type */}
       {lesson.type === "video" && (
@@ -449,10 +515,13 @@ function LessonContent({
       <div className="prose prose-sm max-w-none">
         <div className="space-y-4 text-sm text-muted-foreground leading-relaxed">
           <p>
-            In this {lesson.type === "challenge" ? "challenge" : "lesson"}, you will learn about{" "}
-            <span className="text-foreground font-medium">{lesson.title.toLowerCase()}</span> and how it applies
-            to building on Solana. This is a core concept that forms the foundation of
-            blockchain development.
+            In this {lesson.type === "challenge" ? "challenge" : "lesson"}, you
+            will learn about{" "}
+            <span className="text-foreground font-medium">
+              {lesson.title.toLowerCase()}
+            </span>{" "}
+            and how it applies to building on Solana. This is a core concept
+            that forms the foundation of blockchain development.
           </p>
 
           {isChallenge && (
@@ -479,7 +548,9 @@ function LessonContent({
               </div>
 
               <div className="rounded-lg border border-border bg-secondary/50 p-4">
-                <h3 className="text-sm font-semibold text-foreground mb-2">Expected Output</h3>
+                <h3 className="text-sm font-semibold text-foreground mb-2">
+                  Expected Output
+                </h3>
                 <code className="text-xs text-primary font-mono bg-background px-2 py-1 rounded">
                   {"Transaction confirmed: Success"}
                 </code>
@@ -488,8 +559,9 @@ function LessonContent({
           )}
 
           <p>
-            Understanding this concept is crucial for writing secure and efficient smart contracts.
-            Take your time to work through the material and experiment with the code examples.
+            Understanding this concept is crucial for writing secure and
+            efficient smart contracts. Take your time to work through the
+            material and experiment with the code examples.
           </p>
         </div>
       </div>
@@ -534,7 +606,7 @@ function LessonContent({
 #[program]
 pub mod solution {
     use super::*;
-    
+
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
         let counter = &mut ctx.accounts.counter;
         counter.count = 0;
@@ -547,5 +619,5 @@ pub mod solution {
         </div>
       )}
     </div>
-  )
+  );
 }

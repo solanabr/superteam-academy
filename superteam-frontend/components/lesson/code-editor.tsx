@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
+import { useState } from "react";
+import Link from "next/link";
 import {
   Play,
   RotateCcw,
@@ -12,10 +12,10 @@ import {
   Zap,
   ArrowRight,
   PartyPopper,
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const starterCode = `use anchor_lang::prelude::*;
 
@@ -58,73 +58,79 @@ pub struct Increment<'info> {
 pub struct Counter {
     pub count: u64,
     pub authority: Pubkey,
-}`
+}`;
 
 const testCases = [
   { name: "Initializes counter to 0", passed: null as boolean | null },
   { name: "Sets correct authority", passed: null as boolean | null },
   { name: "Increments counter by 1", passed: null as boolean | null },
   { name: "Rejects unauthorized increment", passed: null as boolean | null },
-]
+];
 
 export function CodeEditor({
   courseSlug,
   nextLessonId,
 }: {
-  courseSlug: string
-  nextLessonId: string | null
+  courseSlug: string;
+  nextLessonId: string | null;
 }) {
-  const [code, setCode] = useState(starterCode)
-  const [output, setOutput] = useState("")
-  const [running, setRunning] = useState(false)
-  const [tests, setTests] = useState(testCases)
-  const [completed, setCompleted] = useState(false)
-  const [activeTab, setActiveTab] = useState("editor")
+  const [code, setCode] = useState(starterCode);
+  const [output, setOutput] = useState("");
+  const [running, setRunning] = useState(false);
+  const [tests, setTests] = useState(testCases);
+  const [completed, setCompleted] = useState(false);
+  const [activeTab, setActiveTab] = useState("editor");
 
   const handleRun = () => {
-    setRunning(true)
-    setOutput("")
-    setActiveTab("output")
+    setRunning(true);
+    setOutput("");
+    setActiveTab("output");
 
     // Simulate running
     setTimeout(() => {
-      const allPassed = code.includes("count") && code.includes("authority")
+      const allPassed = code.includes("count") && code.includes("authority");
       const results = tests.map((t, i) => ({
         ...t,
         passed: allPassed ? true : i < 2,
-      }))
-      setTests(results)
+      }));
+      setTests(results);
 
       if (allPassed) {
         setOutput(
-          "Compiling program...\nDeploying to devnet...\nRunning test suite...\n\n✓ All tests passed!\n\nTransaction confirmed: Success\nProgram deployed at: 7xKY...9fGh"
-        )
-        setCompleted(true)
+          "Compiling program...\nDeploying to devnet...\nRunning test suite...\n\n✓ All tests passed!\n\nTransaction confirmed: Success\nProgram deployed at: 7xKY...9fGh",
+        );
+        setCompleted(true);
       } else {
         setOutput(
-          "Compiling program...\nDeploying to devnet...\nRunning test suite...\n\n✗ 2 tests failed\n\nError: Counter not initialized correctly\n  Expected count: 0\n  Received: undefined"
-        )
+          "Compiling program...\nDeploying to devnet...\nRunning test suite...\n\n✗ 2 tests failed\n\nError: Counter not initialized correctly\n  Expected count: 0\n  Received: undefined",
+        );
       }
-      setRunning(false)
-    }, 2000)
-  }
+      setRunning(false);
+    }, 2000);
+  };
 
   const handleReset = () => {
-    setCode(starterCode)
-    setTests(testCases.map((t) => ({ ...t, passed: null })))
-    setOutput("")
-    setCompleted(false)
-  }
+    setCode(starterCode);
+    setTests(testCases.map((t) => ({ ...t, passed: null })));
+    setOutput("");
+    setCompleted(false);
+  };
 
   return (
     <div className="flex h-full flex-col bg-[hsl(200,10%,7%)]">
       {/* Editor toolbar */}
       <div className="flex h-10 items-center justify-between border-b border-border bg-card px-3">
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className="text-[10px] border-border text-muted-foreground font-mono">
+          <Badge
+            variant="outline"
+            className="text-[10px] border-border text-muted-foreground font-mono"
+          >
             counter.rs
           </Badge>
-          <Badge variant="outline" className="text-[10px] border-border text-muted-foreground">
+          <Badge
+            variant="outline"
+            className="text-[10px] border-border text-muted-foreground"
+          >
             Rust
           </Badge>
         </div>
@@ -155,7 +161,11 @@ export function CodeEditor({
       </div>
 
       {/* Editor + output split */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-1 flex-col overflow-hidden">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="flex flex-1 flex-col overflow-hidden"
+      >
         <TabsList className="h-9 w-full justify-start rounded-none border-b border-border bg-card px-2">
           <TabsTrigger
             value="editor"
@@ -226,8 +236,8 @@ export function CodeEditor({
                     test.passed === null
                       ? "text-muted-foreground"
                       : test.passed
-                      ? "text-foreground"
-                      : "text-destructive"
+                        ? "text-foreground"
+                        : "text-destructive"
                   }`}
                 >
                   {test.name}
@@ -257,7 +267,9 @@ export function CodeEditor({
             <div className="flex items-center gap-3">
               <PartyPopper className="h-5 w-5 text-[hsl(var(--gold))]" />
               <div>
-                <p className="text-sm font-semibold text-foreground">Challenge Complete!</p>
+                <p className="text-sm font-semibold text-foreground">
+                  Challenge Complete!
+                </p>
                 <p className="text-xs text-muted-foreground flex items-center gap-1">
                   <Zap className="h-3 w-3 text-primary" /> +120 XP earned
                 </p>
@@ -265,7 +277,10 @@ export function CodeEditor({
             </div>
             {nextLessonId && (
               <Link href={`/courses/${courseSlug}/lessons/${nextLessonId}`}>
-                <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 gap-1">
+                <Button
+                  size="sm"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 gap-1"
+                >
                   Next Lesson
                   <ArrowRight className="h-3.5 w-3.5" />
                 </Button>
@@ -275,5 +290,5 @@ export function CodeEditor({
         </div>
       )}
     </div>
-  )
+  );
 }

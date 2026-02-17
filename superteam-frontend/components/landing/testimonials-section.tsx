@@ -1,6 +1,6 @@
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { testimonials } from "@/lib/mock-data"
-import { Quote } from "lucide-react"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { testimonials } from "@/lib/mock-data";
+import { Quote } from "lucide-react";
 
 export function TestimonialsSection() {
   return (
@@ -11,7 +11,8 @@ export function TestimonialsSection() {
             Loved by Developers
           </h2>
           <p className="mt-4 text-muted-foreground max-w-xl mx-auto text-pretty">
-            Hear from developers who transformed their careers through our platform.
+            Hear from developers who transformed their careers through our
+            platform.
           </p>
         </div>
 
@@ -32,7 +33,9 @@ export function TestimonialsSection() {
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="text-sm font-medium text-foreground">{t.name}</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {t.name}
+                  </p>
                   <p className="text-xs text-muted-foreground">{t.role}</p>
                 </div>
               </div>
@@ -41,5 +44,5 @@ export function TestimonialsSection() {
         </div>
       </div>
     </section>
-  )
+  );
 }
