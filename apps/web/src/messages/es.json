@@ -382,6 +382,8 @@
       "requesting": "Solicitando...",
       "airdropSuccess": "+{amount} SOL recibido!",
       "rateLimited": "Faucet de devnet ocupado. Espera {seconds}s e intenta de nuevo.",
+      "rateLimitedWithFaucet": "Airdrop por CLI con rate limit. Conecta GitHub y usa el faucet web.",
+      "faucetHint": "Conecta GitHub y usa el faucet web:",
       "networkError": "Error de red. Intenta de nuevo.",
       "readyForDeploy": "Listo para el despliegue!",
       "needMoreSol": "Necesita ~{amount} SOL más",

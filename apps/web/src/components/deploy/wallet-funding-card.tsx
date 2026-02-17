@@ -69,7 +69,7 @@ export function WalletFundingCard() {
       setCooldown(COOLDOWN_SECONDS);
     } else if (result.rateLimited) {
       setMessage({
-        text: t("rateLimited", { seconds: "60" }),
+        text: t("rateLimitedWithFaucet"),
         type: "warning",
       });
       setCooldown(60);
@@ -147,7 +147,7 @@ export function WalletFundingCard() {
 
         {/* Status message */}
         {message && (
-          <p
+          <div
             className={`text-sm ${
               message.type === "success"
                 ? "text-green-500"
@@ -156,8 +156,21 @@ export function WalletFundingCard() {
                   : "text-red-500"
             }`}
           >
-            {message.text}
-          </p>
+            <p>{message.text}</p>
+            {message.type === "warning" && (
+              <p className="mt-1">
+                {t("faucetHint")}{" "}
+                <a
+                  href="https://faucet.solana.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-yellow-400"
+                >
+                  faucet.solana.com
+                </a>
+              </p>
+            )}
+          </div>
         )}
 
         {/* Action buttons */}
