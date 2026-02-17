@@ -10,12 +10,18 @@
 </p>
 
 <p align="center">
+  <a href="https://superteam-academy.vercel.app">🔗 Live Demo</a> •
   <a href="#features">Features</a> •
   <a href="#tech-stack">Tech Stack</a> •
   <a href="#getting-started">Getting Started</a> •
   <a href="#project-structure">Structure</a> •
   <a href="#deployment">Deploy</a> •
   <a href="#contributing">Contributing</a>
+</p>
+
+<p align="center">
+  <a href="https://superteam-academy.vercel.app"><img src="https://img.shields.io/badge/Demo-Live-brightgreen?style=for-the-badge" alt="Live Demo" /></a>
+  <a href="https://github.com/kukaklaudio/superteam-academy"><img src="https://img.shields.io/badge/GitHub-Repo-blue?style=for-the-badge&logo=github" alt="GitHub" /></a>
 </p>
 
 ---
@@ -112,7 +118,7 @@
 
 ```bash
 # Clone
-git clone https://github.com/solanabr/superteam-academy.git
+git clone https://github.com/kukaklaudio/superteam-academy.git
 cd superteam-academy
 
 # Install dependencies
@@ -244,4 +250,4 @@ pnpm type-check     # TypeScript compiler check
 
 ## License
 
-MIT © [Superteam Brazil](https://github.com/solanabr)
+MIT © [Superteam Brazil](https://github.com/kukaklaudio)
