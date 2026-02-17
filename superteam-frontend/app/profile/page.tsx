@@ -32,9 +32,7 @@ export default async function Page() {
       throw error;
     }
   }
-  const completedCourses = courseSnapshots
-    .filter((s) => s.course.progress >= 100)
-    .map((s) => s.course);
+  const allCourses = courseSnapshots.map((s) => s.course);
 
   return (
     <div>
@@ -42,7 +40,7 @@ export default async function Page() {
       <ProfilePageComponent
         identity={snapshot}
         activityDays={activityDays}
-        completedCourses={completedCourses}
+        allCourses={allCourses}
       />
     </div>
   );

@@ -76,18 +76,58 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-const EMPTY_SKILLS: SkillMap = {
-  rust: 0,
-  anchor: 0,
-  frontend: 0,
-  security: 0,
-  defi: 0,
-  testing: 0,
+const TAG_TO_SKILL: Record<string, keyof SkillMap> = {
+  Rust: "rust",
+  Anchor: "anchor",
+  DeFi: "defi",
+  Security: "security",
+  Auditing: "security",
+  NFT: "frontend",
+  Metaplex: "frontend",
+  Frontend: "frontend",
+  Testing: "testing",
 };
+
+function computeSkills(allCourses: Course[]): SkillMap {
+  const totals: Record<keyof SkillMap, number[]> = {
+    rust: [],
+    anchor: [],
+    frontend: [],
+    security: [],
+    defi: [],
+    testing: [],
+  };
+
+  for (const course of allCourses) {
+    const matched = new Set<keyof SkillMap>();
+    for (const tag of course.tags) {
+      const skill = TAG_TO_SKILL[tag];
+      if (skill) matched.add(skill);
+    }
+    for (const skill of matched) {
+      totals[skill].push(course.progress);
+    }
+  }
+
+  const skills: SkillMap = {
+    rust: 0,
+    anchor: 0,
+    frontend: 0,
+    security: 0,
+    defi: 0,
+    testing: 0,
+  };
+  for (const key of Object.keys(skills) as (keyof SkillMap)[]) {
+    const values = totals[key];
+    if (values.length === 0) continue;
+    skills[key] = Math.round(values.reduce((a, b) => a + b, 0) / values.length);
+  }
+  return skills;
+}
 
 function buildProfileUser(
   identity: IdentitySnapshot | undefined,
-  completedCourses: Course[],
+  allCourses: Course[],
 ): ProfileUser | null {
   const profile = identity?.profile;
   if (!profile) return null;
@@ -105,7 +145,7 @@ function buildProfileUser(
     rank: profile.rank,
     totalCompleted: profile.totalCompleted,
     socialLinks: undefined,
-    skills: EMPTY_SKILLS,
+    skills: computeSkills(allCourses),
     achievements: profile.badges.map((b, i) => ({
       id: `${i}-${b.name}`,
       name: b.name,
@@ -117,7 +157,7 @@ function buildProfileUser(
       mintAddress: c.mintAddress,
       date: c.date,
     })),
-    completedCourses,
+    completedCourses: allCourses.filter((c) => c.progress >= 100),
   };
 }
 
@@ -130,16 +170,16 @@ export default function ProfilePageComponent({
   username: usernameParam,
   identity,
   activityDays = [],
-  completedCourses = [],
+  allCourses = [],
 }: {
   username?: string;
   identity?: IdentitySnapshot;
   activityDays?: Array<{ date: string; intensity: number; count?: number }>;
-  completedCourses?: Course[];
+  allCourses?: Course[];
 }) {
   const user = useMemo(
-    () => buildProfileUser(identity, completedCourses),
-    [identity, completedCourses],
+    () => buildProfileUser(identity, allCourses),
+    [identity, allCourses],
   );
   if (usernameParam != null && user && user.username !== usernameParam) {
     return (
