@@ -1,6 +1,6 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program, BN, AnchorError } from "@coral-xyz/anchor";
-import { SuperteamAcademy } from "../target/types/superteam_academy";
+import { OnchainAcademy } from "../target/types/onchain_academy";
 import {
   Keypair,
   PublicKey,
@@ -39,7 +39,7 @@ describe("onchain-academy", () => {
   anchor.setProvider(provider);
 
   const program = anchor.workspace
-    .superteamAcademy as Program<SuperteamAcademy>;
+    .onchainAcademy as Program<OnchainAcademy>;
   const authority = provider.wallet as anchor.Wallet;
 
   // Shared state
