@@ -10,7 +10,7 @@ const program = anchor.workspace.onchainAcademy as Program<OnchainAcademy>;
 // Default: mock track collection from devnet deployment
 const courseId = process.argv[2] || "solana-mock-test";
 const learner = new PublicKey(process.argv[3] || provider.wallet.publicKey.toBase58());
-const trackCollection = new PublicKey(process.argv[4] || "E4gRxTadnEF3Xt8RHtWtKVRk45UfP4G8n3F9YQjTatZY");
+const trackCollection = new PublicKey(process.argv[4] || "HgbTmCi4wUWAWLx4LD6zJ2AQdayaCe7mVfhJpGwXfeVX");
 
 const MPL_CORE_PROGRAM_ID = new PublicKey("CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d");
 

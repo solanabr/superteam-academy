@@ -11,7 +11,7 @@ Anchor program for the Superteam Academy learning platform — courses, soulboun
 | **XP Mint** | `xpXPUjkfk7t4AJF1tYUoyAYxzuM5DhinZWS1WjfjAu3` |
 | **Authority / Signer** | `ACAd3USj2sMV6drKcMY2wZtNkhVDHWpC4tfJe93hgqYn` |
 | **Mock Course** | `7MRgCuJAbDCP1T5b3B5hkE36wAU7hvZQT7eNAn8Ag3rC` |
-| **Mock Track Collection** | `E4gRxTadnEF3Xt8RHtWtKVRk45UfP4G8n3F9YQjTatZY` |
+| **Mock Track Collection** | `HgbTmCi4wUWAWLx4LD6zJ2AQdayaCe7mVfhJpGwXfeVX` |
 
 ## Architecture
 
@@ -116,8 +116,17 @@ npx ts-node scripts/<script>.ts [args]
 | `fetch-course.ts` | Display Course PDA |
 | `fetch-enrollment.ts` | Display Enrollment with lesson progress |
 | `check-xp.ts` | Check XP balance for a wallet |
+| **`e2e-flow.ts`** | **Full learner flow: enroll → lessons → finalize → credential → close** |
 
 Scripts use hardcoded defaults matching the deployed mock data. Pass CLI args to override.
+
+Run the full end-to-end flow:
+```bash
+npx ts-node scripts/e2e-flow.ts              # default mock course
+npx ts-node scripts/e2e-flow.ts my-course-id  # custom course
+```
+
+The e2e script is resumable — it detects existing enrollment state and picks up where it left off.
 
 ## Documentation
 
