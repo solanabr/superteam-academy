@@ -125,7 +125,7 @@ export default function LeaderboardPage({
     : false;
 
   return (
-    <div className="container mx-auto py-8 text-white">
+    <div className="container max-w-7xl mx-auto py-8 text-white">
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold">{t("title")}</h1>
         <p className="text-muted-foreground mt-2 text-sm">{t("subtitle")}</p>
