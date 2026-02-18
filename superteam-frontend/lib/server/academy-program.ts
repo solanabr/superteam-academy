@@ -491,6 +491,39 @@ export async function countCompletedCoursesOnChain(
   }
 }
 
+/**
+ * Batch-fetch enrollment data for multiple courses in a single RPC call.
+ * Returns a Map of courseId → { lessonsCompleted }.
+ */
+export async function fetchEnrollmentsBatch(
+  user: PublicKey,
+  courseIds: string[],
+): Promise<Map<string, { lessonsCompleted: number }>> {
+  if (courseIds.length === 0) return new Map();
+
+  try {
+    const { connection } = getClient();
+    const pdas: PublicKey[] = [];
+    for (const courseId of courseIds) {
+      const coursePda = deriveCoursePda(courseId);
+      pdas.push(deriveEnrollmentPda(coursePda, user));
+    }
+
+    const accounts = await connection.getMultipleAccountsInfo(pdas);
+    const result = new Map<string, { lessonsCompleted: number }>();
+    for (let i = 0; i < accounts.length; i++) {
+      const info = accounts[i];
+      if (!info) continue;
+      result.set(courseIds[i], {
+        lessonsCompleted: decodeEnrollmentLessonsCompleted(info.data as Buffer),
+      });
+    }
+    return result;
+  } catch {
+    return new Map();
+  }
+}
+
 /** @deprecated use fetchChainActivity instead */
 export async function fetchActivityFromChain(
   user: PublicKey,

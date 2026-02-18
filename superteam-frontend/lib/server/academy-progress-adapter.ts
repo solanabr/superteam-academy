@@ -8,6 +8,7 @@ import {
   deriveEnrollmentPda,
   ensureCourseOnChain,
   fetchEnrollment,
+  fetchEnrollmentsBatch,
   invalidateEnrollmentCache,
 } from "@/lib/server/academy-program";
 import { getCatalogCourseMeta } from "@/lib/server/academy-course-catalog";
@@ -95,39 +96,31 @@ export async function getAllCourseProgressSnapshots(
     ? (await Promise.all(slugs.map((s) => getCourse(s)))).filter(Boolean)
     : await getAllCourses();
 
-  const settled = await Promise.allSettled(
-    courseList
-      .filter((c): c is NonNullable<typeof c> => c != null)
-      .map(async (course) => {
-        try {
-          const snapshot = await getCourseProgressSnapshot(
-            walletAddress,
-            course.slug,
-          );
-          return snapshot;
-        } catch {
-          // Fallback: show course without on-chain data
-          const fallback = await cloneCourse(course.slug);
-          if (fallback) {
-            const coursePda = deriveCoursePda(course.slug);
-            const user = new PublicKey(walletAddress);
-            return {
-              course: applyProgress(fallback, 0),
-              enrolledOnChain: false,
-              completedLessons: 0,
-              enrollmentPda: deriveEnrollmentPda(coursePda, user).toBase58(),
-            } satisfies CourseProgressSnapshot;
-          }
-          return null;
-        }
-      }),
+  const validCourses = courseList.filter(
+    (c): c is NonNullable<typeof c> => c != null,
+  );
+  const user = new PublicKey(walletAddress);
+
+  const enrollments = await fetchEnrollmentsBatch(
+    user,
+    validCourses.map((c) => c.slug),
   );
 
-  return settled
-    .filter(
-      (r): r is PromiseFulfilledResult<CourseProgressSnapshot | null> =>
-        r.status === "fulfilled",
-    )
-    .map((r) => r.value)
-    .filter((s): s is CourseProgressSnapshot => s != null);
+  const snapshots: CourseProgressSnapshot[] = [];
+  for (const course of validCourses) {
+    const clone = await cloneCourse(course.slug);
+    if (!clone) continue;
+
+    const enrollment = enrollments.get(course.slug);
+    const completedLessons = enrollment ? enrollment.lessonsCompleted : 0;
+    const coursePda = deriveCoursePda(course.slug);
+
+    snapshots.push({
+      course: applyProgress(clone, completedLessons),
+      enrolledOnChain: Boolean(enrollment),
+      completedLessons,
+      enrollmentPda: deriveEnrollmentPda(coursePda, user).toBase58(),
+    });
+  }
+  return snapshots;
 }

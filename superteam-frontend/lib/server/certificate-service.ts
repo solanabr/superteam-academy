@@ -6,12 +6,7 @@ import {
   ACADEMY_PROGRAM_ID,
   ACADEMY_CLUSTER,
 } from "@/lib/generated/academy-program";
-import {
-  deriveCoursePda,
-  deriveEnrollmentPda,
-  fetchEnrollment,
-} from "@/lib/server/academy-program";
-import { getCatalogCourseMeta } from "@/lib/server/academy-course-catalog";
+import { fetchEnrollmentsBatch } from "@/lib/server/academy-program";
 
 export type CertificateData = {
   id: string;
@@ -134,31 +129,37 @@ export async function getCertificateById(
 
 export async function getCertificatesForWallet(
   wallet: string,
+  completedSlugs?: string[],
 ): Promise<CertificateData[]> {
-  const results: CertificateData[] = [];
-  const user = new PublicKey(wallet);
+  let slugs: string[];
 
-  for (const course of await getAllCourses()) {
-    const meta = await getCatalogCourseMeta(course.slug);
-    if (!meta) continue;
+  if (completedSlugs) {
+    slugs = completedSlugs;
+  } else {
+    const user = new PublicKey(wallet);
+    const allCourses = await getAllCourses();
+    const courseIds = allCourses.map((c) => c.slug);
+    const enrollments = await fetchEnrollmentsBatch(user, courseIds);
 
-    try {
-      const enrollment = await fetchEnrollment(user, course.slug);
+    slugs = [];
+    for (const course of allCourses) {
+      const enrollment = enrollments.get(course.slug);
       if (!enrollment) continue;
-
       const totalLessons = course.modules.reduce(
         (acc, m) => acc + m.lessons.length,
         0,
       );
-      if (Number(enrollment.lessonsCompleted) >= totalLessons) {
-        const cert = await buildCertificateData(wallet, course.slug);
-        if (cert) results.push(cert);
+      if (enrollment.lessonsCompleted >= totalLessons) {
+        slugs.push(course.slug);
       }
-    } catch {
-      continue;
     }
   }
 
+  const results: CertificateData[] = [];
+  for (const slug of slugs) {
+    const cert = await buildCertificateData(wallet, slug);
+    if (cert) results.push(cert);
+  }
   return results;
 }
 

@@ -174,6 +174,7 @@ export async function getAllLearnerProfilesOnChain(): Promise<
   try {
     const accounts = await connection.getProgramAccounts(programId, {
       commitment: "confirmed",
+      filters: [{ dataSize: 96 }],
     });
     const out: OnChainLearnerProfile[] = [];
     for (const { pubkey, account } of accounts) {

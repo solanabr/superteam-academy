@@ -12,10 +12,13 @@ import {
   getLearnerProfileOnChain,
   getLearnerProfilePda,
   getCredentialNFTs,
+  type OnChainLearnerProfile,
+  type OnChainCredentialNFT,
 } from "@/lib/server/academy-chain-read";
 import {
   getCachedLeaderboard,
   getRankForWallet,
+  type LeaderboardEntry,
 } from "@/lib/server/leaderboard-cache";
 import { getCurrentStreak } from "@/lib/server/activity-store";
 import { countCompletedCoursesOnChain } from "@/lib/server/academy-program";
@@ -100,55 +103,53 @@ export async function getIdentitySnapshotForWallet(
   });
 }
 
-async function fetchCertificates(
-  walletAddress: string,
-): Promise<IdentityCertificate[]> {
-  // Try on-chain NFTs first via Helius DAS
-  const nfts = await getCredentialNFTs(walletAddress);
-  if (nfts.length > 0) {
-    return nfts.map((nft) => ({
+export type IdentityPrefetch = {
+  onChainLearner: OnChainLearnerProfile | null;
+  streak: number;
+  totalCompleted: number;
+  leaderboard: LeaderboardEntry[];
+  credentialNfts: OnChainCredentialNFT[];
+  completedSlugs?: string[];
+};
+
+export async function buildIdentitySnapshot(
+  user: AuthenticatedUser,
+  data: IdentityPrefetch,
+): Promise<IdentitySnapshot> {
+  let certificates: IdentityCertificate[];
+  if (data.credentialNfts.length > 0) {
+    certificates = data.credentialNfts.map((nft) => ({
       id: nft.id,
       course: nft.name,
       date: nft.completionDate,
       mintAddress: nft.mintAddress,
     }));
+  } else {
+    const certs = await getCertificatesForWallet(
+      user.walletAddress,
+      data.completedSlugs,
+    );
+    certificates = certs.map((c) => ({
+      id: c.id,
+      course: c.courseTitle,
+      date: c.completionDate,
+      mintAddress: c.mintAddress,
+    }));
   }
 
-  // Fallback: derive from completed enrollments
-  const certs = await getCertificatesForWallet(walletAddress);
-  return certs.map((c) => ({
-    id: c.id,
-    course: c.courseTitle,
-    date: c.completionDate,
-    mintAddress: c.mintAddress,
-  }));
-}
-
-export async function getIdentitySnapshotForUser(
-  user: AuthenticatedUser,
-): Promise<IdentitySnapshot> {
-  const [
-    onChainLearner,
-    activityStreak,
-    totalCompleted,
-    entries,
-    certificates,
-  ] = await Promise.all([
-    getLearnerProfileOnChain(user.walletAddress).catch(() => null),
-    getCurrentStreak(user.walletAddress),
-    countCompletedCoursesOnChain(user.walletAddress),
-    getCachedLeaderboard(),
-    fetchCertificates(user.walletAddress),
-  ]);
   const learnerPda = getLearnerProfilePda(user.walletAddress);
-  const level = onChainLearner?.level ?? 1;
-  const xp = onChainLearner?.xpTotal ?? 0;
-  const streak = Math.max(onChainLearner?.streakCurrent ?? 0, activityStreak);
-  const rank = getRankForWallet(entries, user.walletAddress);
+  const level = data.onChainLearner?.level ?? 1;
+  const xp = data.onChainLearner?.xpTotal ?? 0;
+  const rank = getRankForWallet(data.leaderboard, user.walletAddress);
 
   const badges: IdentityAchievement[] = BADGE_RULES.map((rule) => ({
     name: rule.name,
-    earned: rule.earned({ xp, streak, totalCompleted, rank }),
+    earned: rule.earned({
+      xp,
+      streak: data.streak,
+      totalCompleted: data.totalCompleted,
+      rank,
+    }),
   }));
 
   const settings = await getUserSettings(user.walletAddress);
@@ -171,9 +172,9 @@ export async function getIdentitySnapshotForUser(
       level,
       xp,
       xpToNext: XP_PER_LEVEL,
-      streak,
+      streak: data.streak,
       rank: rank ?? 0,
-      totalCompleted,
+      totalCompleted: data.totalCompleted,
       badges,
       certificates,
       socialLinks: hasSocials ? socialLinks : undefined,
@@ -182,7 +183,33 @@ export async function getIdentitySnapshotForUser(
       programId: ACADEMY_PROGRAM_ID,
       cluster: ACADEMY_CLUSTER,
       learnerPda,
-      hasLearnerProfile: Boolean(onChainLearner),
+      hasLearnerProfile: Boolean(data.onChainLearner),
     },
   };
+}
+
+export async function getIdentitySnapshotForUser(
+  user: AuthenticatedUser,
+): Promise<IdentitySnapshot> {
+  const [
+    onChainLearner,
+    activityStreak,
+    totalCompleted,
+    leaderboard,
+    credentialNfts,
+  ] = await Promise.all([
+    getLearnerProfileOnChain(user.walletAddress).catch(() => null),
+    getCurrentStreak(user.walletAddress),
+    countCompletedCoursesOnChain(user.walletAddress),
+    getCachedLeaderboard(),
+    getCredentialNFTs(user.walletAddress),
+  ]);
+
+  return buildIdentitySnapshot(user, {
+    onChainLearner,
+    streak: Math.max(onChainLearner?.streakCurrent ?? 0, activityStreak),
+    totalCompleted,
+    leaderboard,
+    credentialNfts,
+  });
 }
