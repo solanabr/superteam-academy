@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { createAirdropRequest } from "@superteam-lms/deploy";
@@ -25,6 +25,7 @@ export function WalletFundingCard() {
     text: string;
     type: "success" | "warning" | "error";
   } | null>(null);
+  const airdropRef = useRef(false);
 
   // Fetch balance on mount and after airdrop
   const refreshBalance = useCallback(async () => {
@@ -55,6 +56,8 @@ export function WalletFundingCard() {
 
   const handleAirdrop = async () => {
     if (!publicKey || !connection || isAirdropping || cooldown > 0) return;
+    if (airdropRef.current) return;
+    airdropRef.current = true;
     setIsAirdropping(true);
     setMessage(null);
 
@@ -80,6 +83,7 @@ export function WalletFundingCard() {
       });
     }
 
+    airdropRef.current = false;
     setIsAirdropping(false);
   };
 

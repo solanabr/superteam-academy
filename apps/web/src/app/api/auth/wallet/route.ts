@@ -33,16 +33,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Body size limit (10KB)
-    const contentLength = parseInt(
-      request.headers.get("content-length") ?? "0",
-      10
-    );
-    if (contentLength > 10240) {
+    const bodyText = await request.text();
+    if (bodyText.length > 10_000) {
       return NextResponse.json({ error: "Request too large" }, { status: 413 });
     }
-
-    const body = (await request.json()) as WalletAuthRequest;
+    const body = JSON.parse(bodyText) as WalletAuthRequest;
 
     // Verify SIWS request (nonce, domain, expiry, signature)
     const verification = await verifySIWSRequest({

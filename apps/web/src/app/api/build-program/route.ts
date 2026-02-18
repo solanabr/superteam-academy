@@ -17,9 +17,19 @@ interface TokenBucket {
 const rateLimitStore = new Map<string, TokenBucket>();
 const MAX_TOKENS = 5;
 const REFILL_INTERVAL_MS = 60_000;
+const CLEANUP_INTERVAL_MS = 5 * 60_000;
+let lastCleanup = Date.now();
 
 function isRateLimited(key: string): boolean {
   const now = Date.now();
+  if (now - lastCleanup > CLEANUP_INTERVAL_MS) {
+    for (const [k, bucket] of rateLimitStore) {
+      if (now - bucket.lastRefill > CLEANUP_INTERVAL_MS) {
+        rateLimitStore.delete(k);
+      }
+    }
+    lastCleanup = now;
+  }
   const bucket = rateLimitStore.get(key);
 
   if (!bucket) {
