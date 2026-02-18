@@ -1,0 +1,160 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── Users ──────────────────────────────────────────────────────────────────
+
+model User {
+  id            String   @id @default(cuid())
+  walletAddress String   @unique
+  displayName   String?
+  avatar        String?
+  role          Role     @default(STUDENT)
+  points        Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  enrollments   Enrollment[]
+  progress      Progress[]
+  certificates  Certificate[]
+  coursesCreated Course[] @relation("instructor")
+}
+
+enum Role {
+  ADMIN
+  INSTRUCTOR
+  STUDENT
+}
+
+// ── Courses ────────────────────────────────────────────────────────────────
+
+model Course {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  titlePt     String?  // Portuguese translation
+  description String
+  descriptionPt String?
+  thumbnail   String?
+  published   Boolean  @default(false)
+  difficulty  Difficulty @default(BEGINNER)
+  category    String?
+  
+  // Token gating
+  tokenGated     Boolean @default(false)
+  requiredToken   String? // SPL token mint address
+  requiredAmount  Float?  // Minimum token amount
+
+  instructorId String
+  instructor   User     @relation("instructor", fields: [instructorId], references: [id])
+  
+  modules     Module[]
+  enrollments Enrollment[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum Difficulty {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+model Module {
+  id       String @id @default(cuid())
+  title    String
+  titlePt  String?
+  order    Int
+  courseId  String
+  course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessons  Lesson[]
+}
+
+model Lesson {
+  id        String     @id @default(cuid())
+  title     String
+  titlePt   String?
+  content   String     // Markdown content
+  contentPt String?
+  videoUrl  String?
+  order     Int
+  type      LessonType @default(TEXT)
+  
+  moduleId  String
+  module    Module @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  
+  progress  Progress[]
+  quiz      QuizQuestion[]
+}
+
+enum LessonType {
+  TEXT
+  VIDEO
+  QUIZ
+  ASSIGNMENT
+}
+
+// ── Quizzes ────────────────────────────────────────────────────────────────
+
+model QuizQuestion {
+  id        String   @id @default(cuid())
+  question  String
+  options   Json     // string[]
+  answer    Int      // index of correct option
+  lessonId  String
+  lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+}
+
+// ── Enrollment & Progress ──────────────────────────────────────────────────
+
+model Enrollment {
+  id        String   @id @default(cuid())
+  userId    String
+  courseId   String
+  enrolledAt DateTime @default(now())
+  completedAt DateTime?
+  
+  user      User   @relation(fields: [userId], references: [id])
+  course    Course @relation(fields: [courseId], references: [id])
+  
+  @@unique([userId, courseId])
+}
+
+model Progress {
+  id          String   @id @default(cuid())
+  userId      String
+  lessonId    String
+  completed   Boolean  @default(false)
+  quizScore   Float?
+  completedAt DateTime?
+  
+  // On-chain checkpoint tx
+  checkpointTx String?
+  
+  user   User   @relation(fields: [userId], references: [id])
+  lesson Lesson @relation(fields: [lessonId], references: [id])
+  
+  @@unique([userId, lessonId])
+}
+
+// ── Certificates ───────────────────────────────────────────────────────────
+
+model Certificate {
+  id          String   @id @default(cuid())
+  userId      String
+  courseSlug   String
+  mintAddress String?  // Compressed NFT address
+  txSignature String?  // Mint transaction
+  metadata    Json?    // NFT metadata
+  issuedAt    DateTime @default(now())
+  
+  user User @relation(fields: [userId], references: [id])
+  
+  @@unique([userId, courseSlug])
+}
