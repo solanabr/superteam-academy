@@ -4,8 +4,13 @@ import { useTranslations } from "next-intl";
 import type { Certificate } from "@superteam-lms/types";
 import { Button } from "@/components/ui/button";
 import { SolanaLogo } from "@/components/icons/solana-logo";
-import { getExplorerUrl } from "@/lib/solana/mint-certificate";
 import { CERTIFICATE_STYLES as CS, cx } from "@/lib/styles/styleClasses";
+
+function getExplorerUrl(address: string, network: string): string {
+  const base = "https://explorer.solana.com";
+  const cluster = network === "mainnet-beta" ? "" : `?cluster=${network}`;
+  return `${base}/address/${address}${cluster}`;
+}
 
 interface CertificateCardProps {
   certificate: Certificate;

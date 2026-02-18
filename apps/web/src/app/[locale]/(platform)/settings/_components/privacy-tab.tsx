@@ -110,7 +110,7 @@ export function PrivacyTab({ isPublic, onPublicChange }: PrivacyTabProps) {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "superteam-lms-data.json";
+      a.download = "superteam-academy-data.json";
       a.click();
       URL.revokeObjectURL(url);
     } catch {

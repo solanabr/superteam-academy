@@ -8,9 +8,6 @@ export const XP_REWARDS = {
   firstDaily: 25,
 } as const;
 
-/** @deprecated Use `Difficulty` from `@superteam-lms/types` instead. */
-export type LessonDifficulty = Difficulty;
-
 const DIFFICULTY_MULTIPLIER: Record<Difficulty, number> = {
   beginner: 0,
   intermediate: 0.5,

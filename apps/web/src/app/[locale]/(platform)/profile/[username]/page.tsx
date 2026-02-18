@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Lock, ArrowLeft } from "@phosphor-icons/react";
 import type { Achievement, Certificate } from "@superteam-lms/types";
@@ -73,11 +73,11 @@ const INITIAL_STATE: ProfileData = {
 
 export default function PublicProfilePage() {
   const params = useParams();
+  const router = useRouter();
   const username = decodeURIComponent(params.username as string);
   const t = useTranslations("profile");
   const tGamification = useTranslations("gamification");
   const tCerts = useTranslations("certificates");
-  const tCourses = useTranslations("courses");
   const [data, setData] = useState<ProfileData>(INITIAL_STATE);
 
   useEffect(() => {
@@ -334,14 +334,15 @@ export default function PublicProfilePage() {
 
   return (
     <div className="space-y-8">
-      {/* Back link */}
-      <a
-        href="javascript:history.back()"
+      {/* Back button */}
+      <button
+        type="button"
+        onClick={() => router.back()}
         className="inline-flex items-center gap-1.5 text-sm text-text-3 transition-colors hover:text-text"
       >
         <ArrowLeft size={14} weight="bold" />
         {t("backToLeaderboard")}
-      </a>
+      </button>
 
       {/* Profile Header */}
       <div className="flex flex-col items-start gap-6 sm:flex-row">
@@ -470,37 +471,6 @@ export default function PublicProfilePage() {
             certificates={data.certificates}
             recipientName={data.user.username}
           />
-        </div>
-      )}
-
-      {/* Completed Courses */}
-      {data.completedCourses.length > 0 && (
-        <div className="space-y-4">
-          <h2 className="font-display text-xl font-bold">
-            {t("completedCourses")}
-          </h2>
-          <div className="space-y-3">
-            {data.completedCourses.map((course) => (
-              <Card key={course.slug}>
-                <CardContent className="flex items-center justify-between p-4">
-                  <div className="flex min-w-0 items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-bg">
-                      <span
-                        className="h-2.5 w-2.5 rounded-full bg-primary"
-                        aria-hidden="true"
-                      />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="truncate font-medium">{course.title}</p>
-                      <p className="text-xs text-text-3">
-                        {tCourses("completed")} {course.completedAt}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
         </div>
       )}
     </div>
