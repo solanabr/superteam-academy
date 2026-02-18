@@ -8,7 +8,6 @@ import {
   Trophy,
   Lightning,
   X,
-  GraduationCap,
   WarningOctagon,
 } from "@phosphor-icons/react";
 import type { StreakData } from "@superteam-lms/types";
@@ -19,17 +18,14 @@ import { LevelBadge } from "@/components/gamification/level-badge";
 import { StreakDisplay } from "@/components/gamification/streak-display";
 import { ProgressBar } from "@/components/course/progress-bar";
 import { CourseCard } from "@/components/course/course-card";
-import { MintButton } from "@/components/certificates/mint-button";
+import { CourseCompletionMint } from "@/components/certificates/course-completion-mint";
 import { WalletNameGenerator } from "@/components/profile/wallet-name-generator";
 import { createClient } from "@/lib/supabase/client";
 import { getProgressService } from "@/lib/services";
-import type {
-  CertificateMetadata,
-  MintResult,
-} from "@/lib/solana/mint-certificate";
 import { calculateLevel } from "@/lib/gamification/xp";
 import {
   getCoursesByIds,
+  getLessonsByIds,
   getRecommendedCourses,
   type RecommendedCourse,
 } from "@/lib/sanity/queries";
@@ -62,6 +58,7 @@ interface DashboardData {
     detail: string;
     xp: number;
     time: string;
+    href: string | null;
   }[];
   username: string;
   userId: string;
@@ -190,15 +187,27 @@ function useDashboardData(): DashboardData {
           streakHistory,
         };
 
-        const recentActivity =
-          transactions?.map((tx) => {
-            return {
-              action: tx.reason,
-              detail: "",
-              xp: tx.amount,
-              time: tx.created_at,
-            };
-          }) ?? [];
+        // Parse lesson IDs from transaction reasons for human-readable activity
+        const lessonPattern = /^Completed lesson:\s*(.+)$/;
+        const lessonIdsFromTx: string[] = [];
+        for (const tx of transactions ?? []) {
+          const match = lessonPattern.exec(tx.reason);
+          if (match?.[1]) lessonIdsFromTx.push(match[1]);
+        }
+
+        // Fetch lesson titles/slugs from Sanity
+        const uniqueLessonIds = [...new Set(lessonIdsFromTx)];
+        const lessonSummaries =
+          uniqueLessonIds.length > 0
+            ? await getLessonsByIds(uniqueLessonIds)
+            : [];
+        const lessonMap = new Map(lessonSummaries.map((l) => [l._id, l]));
+
+        // Map lesson_id -> course_id from progress rows
+        const lessonToCourse = new Map<string, string>();
+        for (const row of progressRows ?? []) {
+          lessonToCourse.set(row.lesson_id, row.course_id);
+        }
 
         // Resolve enrolled course titles and lesson counts from Sanity CMS
         // Exclude courses that already have a minted certificate
@@ -206,13 +215,20 @@ function useDashboardData(): DashboardData {
         const enrolledIds = allEnrolledIds.filter(
           (id) => !mintedCourseIds.has(id)
         );
+        // Also include course IDs referenced in recent activity (may be minted/unenrolled)
+        const activityCourseIds = uniqueLessonIds
+          .map((lid) => lessonToCourse.get(lid))
+          .filter((cid): cid is string => !!cid);
+        const allCourseIdsToFetch = [
+          ...new Set([...enrolledIds, ...activityCourseIds]),
+        ];
         // Exclude both enrolled and completed courses from recommendations
         const excludeFromRecommended = [
           ...new Set([...allEnrolledIds, ...mintedCourseIds]),
         ];
         const [courseSummaries, recommended] = await Promise.all([
-          enrolledIds.length > 0
-            ? getCoursesByIds(enrolledIds)
+          allCourseIdsToFetch.length > 0
+            ? getCoursesByIds(allCourseIdsToFetch)
             : Promise.resolve([]),
           getRecommendedCourses(excludeFromRecommended),
         ]);
@@ -229,6 +245,36 @@ function useDashboardData(): DashboardData {
             totalLessons: sanity?.totalLessons ?? 0,
           };
         });
+
+        // Build recent activity with human-readable titles and hrefs
+        const recentActivity =
+          transactions?.map((tx) => {
+            const match = lessonPattern.exec(tx.reason);
+            const lessonId = match?.[1];
+            const lesson = lessonId ? lessonMap.get(lessonId) : undefined;
+            const courseId = lessonId
+              ? lessonToCourse.get(lessonId)
+              : undefined;
+            const course = courseId ? courseMap.get(courseId) : undefined;
+
+            let action = tx.reason;
+            let href: string | null = null;
+
+            if (lesson && course) {
+              action = `Completed lesson: ${lesson.title}`;
+              href = `/courses/${course.slug}/lessons/${lesson.slug}`;
+            } else if (lesson) {
+              action = `Completed lesson: ${lesson.title}`;
+            }
+
+            return {
+              action,
+              detail: "",
+              xp: tx.amount,
+              time: tx.created_at,
+              href,
+            };
+          }) ?? [];
 
         setData({
           xp: totalXp,
@@ -265,7 +311,6 @@ export default function DashboardPage() {
   const t = useTranslations("dashboard");
   const tGamification = useTranslations("gamification");
   const tCourses = useTranslations("courses");
-  const tCerts = useTranslations("certificates");
   const tTime = useTranslations("timeAgo");
   const locale = useLocale();
   const data = useDashboardData();
@@ -330,24 +375,6 @@ export default function DashboardPage() {
       setCourses((prev) => prev.filter((c) => c.courseId !== courseId));
     }
   }, []);
-
-  const handleMintSuccess = useCallback(
-    async (courseId: string, courseTitle: string, result: MintResult) => {
-      const supabase = createClient();
-
-      await supabase.from("certificates").insert({
-        user_id: data.userId,
-        course_id: courseId,
-        course_title: courseTitle,
-        mint_address: result.mintAddress,
-        metadata_uri: result.metadataUri,
-      });
-
-      // Remove the course from the dashboard list after minting
-      setCourses((prev) => prev.filter((c) => c.courseId !== courseId));
-    },
-    [data.userId]
-  );
 
   const formatTimeAgo = (isoDate: string): string => {
     const createdAt = new Date(isoDate);
@@ -551,45 +578,11 @@ export default function DashboardPage() {
                   {/* Completed course: blurred mint overlay */}
                   {isComplete && data.userId && (
                     <div className="bg-bg/95 absolute inset-0 z-10 flex flex-col items-center justify-center px-5 backdrop-blur-md">
-                      <div className="flex items-center gap-2">
-                        <GraduationCap
-                          size={18}
-                          weight="duotone"
-                          className="shrink-0 text-primary"
-                          aria-hidden="true"
-                        />
-                        <span className="text-sm font-medium">
-                          {tCerts("courseComplete")}
-                        </span>
-                      </div>
-                      <MintButton
-                        metadata={
-                          {
-                            courseId: course.courseId,
-                            courseName: course.title,
-                            recipientName: data.username,
-                            completionDate: new Date().toLocaleDateString(
-                              "en-US",
-                              {
-                                year: "numeric",
-                                month: "long",
-                                day: "numeric",
-                              }
-                            ),
-                            imageUrl:
-                              typeof window !== "undefined"
-                                ? `${window.location.origin}/cover.png`
-                                : "",
-                          } satisfies CertificateMetadata
-                        }
-                        onSuccess={(result) =>
-                          handleMintSuccess(
-                            course.courseId,
-                            course.title,
-                            result
-                          )
-                        }
-                        className="mt-3 h-8 px-3 text-xs"
+                      <CourseCompletionMint
+                        courseId={course.courseId}
+                        courseTitle={course.title}
+                        userId={data.userId}
+                        totalLessons={course.totalLessons}
                       />
                     </div>
                   )}
@@ -625,43 +618,54 @@ export default function DashboardPage() {
           <CardContent className="p-0">
             {data.recentActivity.length > 0 ? (
               <div className="divide-y">
-                {data.recentActivity.map((activity, index) => (
-                  <div
-                    key={`activity-${index}`}
-                    className="flex items-center justify-between px-4 py-3"
-                  >
-                    <div className="flex min-w-0 items-center gap-3">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-subtle">
-                        <Lightning
-                          size={16}
-                          weight="duotone"
-                          className="text-accent"
-                          aria-hidden="true"
-                        />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium">
-                          {activity.action}
-                        </p>
-                        {activity.detail && (
-                          <p className="truncate text-xs text-text-3">
-                            {activity.detail}
+                {data.recentActivity.map((activity, index) => {
+                  const content = (
+                    <div className="flex items-center justify-between px-4 py-3">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-subtle">
+                          <Lightning
+                            size={16}
+                            weight="duotone"
+                            className="text-accent"
+                            aria-hidden="true"
+                          />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium">
+                            {activity.action}
                           </p>
+                          {activity.detail && (
+                            <p className="truncate text-xs text-text-3">
+                              {activity.detail}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-3">
+                        {activity.xp > 0 && (
+                          <span className="font-display text-xs font-bold text-accent">
+                            +{activity.xp} XP
+                          </span>
                         )}
+                        <span className="text-xs text-text-3">
+                          {formatTimeAgo(activity.time)}
+                        </span>
                       </div>
                     </div>
-                    <div className="flex shrink-0 items-center gap-3">
-                      {activity.xp > 0 && (
-                        <span className="font-display text-xs font-bold text-accent">
-                          +{activity.xp} XP
-                        </span>
-                      )}
-                      <span className="text-xs text-text-3">
-                        {formatTimeAgo(activity.time)}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+                  );
+
+                  return activity.href ? (
+                    <Link
+                      key={`activity-${index}`}
+                      href={`/${locale}${activity.href}`}
+                      className="block transition-colors hover:bg-subtle"
+                    >
+                      {content}
+                    </Link>
+                  ) : (
+                    <div key={`activity-${index}`}>{content}</div>
+                  );
+                })}
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-8">

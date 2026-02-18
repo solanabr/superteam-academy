@@ -11,7 +11,7 @@ import {
   PROGRAM_ID,
 } from "@/lib/solana/academy-program";
 import { fetchEnrollment, fetchCourse } from "@/lib/solana/academy-reads";
-import { getCourseBySlug } from "@/lib/sanity/queries";
+import { getCourseById } from "@/lib/sanity/queries";
 
 interface IssueCredentialRequest {
   courseId: string;
@@ -52,11 +52,26 @@ export async function POST(request: NextRequest) {
     }
 
     const supabaseAdmin = createAdminClient();
-    const { data: profile } = await supabaseAdmin
+    const { data: profile, error: profileError } = await supabaseAdmin
       .from("profiles")
       .select("wallet_address, username")
       .eq("id", user.id)
       .single();
+
+    if (profileError) {
+      logError({
+        errorId: ERROR_IDS.CREDENTIAL_ISSUE_FAILED,
+        error: new Error(profileError.message),
+        context: {
+          route: "/api/credentials/issue",
+          note: "profile lookup failed",
+        },
+      });
+      return NextResponse.json(
+        { error: "Failed to look up profile" },
+        { status: 500 }
+      );
+    }
 
     if (!profile?.wallet_address) {
       return NextResponse.json(
@@ -111,7 +126,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate metadata
-    const sanityCourse = await getCourseBySlug(courseId);
+    const sanityCourse = await getCourseById(courseId);
     const courseName = sanityCourse?.title ?? courseId;
     // Truncate by UTF-8 byte length (on-chain max_len = 32 bytes)
     let credentialName = `Superteam Academy: ${courseName}`;
@@ -184,15 +199,31 @@ export async function POST(request: NextRequest) {
     }
 
     // Supabase mirror
-    await supabaseAdmin.from("certificates").insert({
-      user_id: user.id,
-      course_id: courseId,
-      mint_address: mintAddress.toBase58(),
-      metadata_uri: metadataUri,
-      minted_at: new Date().toISOString(),
-      tx_signature: signature,
-      credential_type: "core",
-    });
+    const { error: certInsertError } = await supabaseAdmin
+      .from("certificates")
+      .insert({
+        user_id: user.id,
+        course_id: courseId,
+        course_title: courseName,
+        mint_address: mintAddress.toBase58(),
+        metadata_uri: metadataUri,
+        minted_at: new Date().toISOString(),
+        tx_signature: signature,
+        credential_type: "core",
+      });
+
+    if (certInsertError) {
+      logError({
+        errorId: ERROR_IDS.CREDENTIAL_ISSUE_FAILED,
+        error: new Error(certInsertError.message),
+        context: {
+          route: "/api/credentials/issue",
+          note: "On-chain credential minted but Supabase insert failed",
+          mintAddress: mintAddress.toBase58(),
+          signature,
+        },
+      });
+    }
 
     return NextResponse.json({
       success: true,

@@ -38,12 +38,15 @@ export function useXpBalance(): UseXpBalanceResult {
         return;
       }
 
-      const xp = await fetchXpBalance(
+      const result = await fetchXpBalance(
         publicKey,
         config.xpMint as PublicKey,
         connection
       );
-      setBalance(xp);
+      setBalance(result.balance);
+      if (result.error) {
+        setError(result.error);
+      }
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to fetch XP balance"

@@ -58,18 +58,27 @@ export interface Database {
           user_id: string;
           course_id: string;
           enrolled_at: string;
+          completed_at: string | null;
+          tx_signature: string | null;
+          wallet_address: string | null;
         };
         Insert: {
           id?: string;
           user_id: string;
           course_id: string;
           enrolled_at?: string;
+          completed_at?: string | null;
+          tx_signature?: string | null;
+          wallet_address?: string | null;
         };
         Update: {
           id?: string;
           user_id?: string;
           course_id?: string;
           enrolled_at?: string;
+          completed_at?: string | null;
+          tx_signature?: string | null;
+          wallet_address?: string | null;
         };
         Relationships: [
           {
@@ -89,6 +98,8 @@ export interface Database {
           lesson_id: string;
           completed: boolean;
           completed_at: string | null;
+          tx_signature: string | null;
+          lesson_index: number | null;
         };
         Insert: {
           id?: string;
@@ -97,6 +108,8 @@ export interface Database {
           lesson_id: string;
           completed?: boolean;
           completed_at?: string | null;
+          tx_signature?: string | null;
+          lesson_index?: number | null;
         };
         Update: {
           id?: string;
@@ -105,6 +118,8 @@ export interface Database {
           lesson_id?: string;
           completed?: boolean;
           completed_at?: string | null;
+          tx_signature?: string | null;
+          lesson_index?: number | null;
         };
         Relationships: [
           {
@@ -161,6 +176,7 @@ export interface Database {
           amount: number;
           reason: string;
           created_at: string;
+          tx_signature: string | null;
         };
         Insert: {
           id?: string;
@@ -168,6 +184,7 @@ export interface Database {
           amount: number;
           reason: string;
           created_at?: string;
+          tx_signature?: string | null;
         };
         Update: {
           id?: string;
@@ -175,6 +192,7 @@ export interface Database {
           amount?: number;
           reason?: string;
           created_at?: string;
+          tx_signature?: string | null;
         };
         Relationships: [
           {
@@ -192,18 +210,24 @@ export interface Database {
           user_id: string;
           achievement_id: string;
           unlocked_at: string;
+          tx_signature: string | null;
+          asset_address: string | null;
         };
         Insert: {
           id?: string;
           user_id: string;
           achievement_id: string;
           unlocked_at?: string;
+          tx_signature?: string | null;
+          asset_address?: string | null;
         };
         Update: {
           id?: string;
           user_id?: string;
           achievement_id?: string;
           unlocked_at?: string;
+          tx_signature?: string | null;
+          asset_address?: string | null;
         };
         Relationships: [
           {
@@ -224,6 +248,8 @@ export interface Database {
           mint_address: string | null;
           metadata_uri: string | null;
           minted_at: string;
+          tx_signature: string | null;
+          credential_type: "core" | "legacy";
         };
         Insert: {
           id?: string;
@@ -233,6 +259,8 @@ export interface Database {
           mint_address?: string | null;
           metadata_uri?: string | null;
           minted_at?: string;
+          tx_signature?: string | null;
+          credential_type?: string;
         };
         Update: {
           id?: string;
@@ -242,6 +270,8 @@ export interface Database {
           mint_address?: string | null;
           metadata_uri?: string | null;
           minted_at?: string;
+          tx_signature?: string | null;
+          credential_type?: string;
         };
         Relationships: [
           {

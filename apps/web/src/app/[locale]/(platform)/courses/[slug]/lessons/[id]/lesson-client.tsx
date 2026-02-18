@@ -242,16 +242,18 @@ export function LessonPageClient({
     if (isEnrolling || isEnrolled || !userId) return;
     setIsEnrolling(true);
     try {
+      let onChainSignature: string | undefined;
+
       // Attempt on-chain enrollment if wallet is connected
       if (publicKey && sendTransaction) {
         try {
           const ix = buildEnrollInstruction(courseId, publicKey);
           const tx = new Transaction().add(ix);
-          const signature = await sendTransaction(tx, connection);
-          await connection.confirmTransaction(signature, "confirmed");
+          onChainSignature = await sendTransaction(tx, connection);
+          await connection.confirmTransaction(onChainSignature, "confirmed");
           trackEvent("enrollment_onchain", {
             courseId,
-            signature,
+            signature: onChainSignature,
           });
         } catch (err) {
           // On-chain enrollment failed (e.g. program not deployed yet)
@@ -260,22 +262,41 @@ export function LessonPageClient({
             "[enroll] On-chain enrollment failed, using Supabase fallback:",
             err
           );
+          onChainSignature = undefined;
         }
       }
 
-      // Supabase enrollment (always run to keep DB in sync)
-      const supabase = createClient();
-      const { error } = await supabase.from("enrollments").insert({
-        user_id: userId,
-        course_id: courseId,
-      });
-      if (error) {
-        if (error.code === "23505") {
-          // Already enrolled (unique constraint)
+      if (onChainSignature) {
+        // Sync via API route — verifies tx and writes tx_signature + wallet_address
+        const res = await fetch("/api/enrollment/sync", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            courseId,
+            txSignature: onChainSignature,
+            action: "enroll",
+          }),
+        });
+        if (res.ok) {
           setIsEnrolled(true);
+        } else {
+          // Sync failed — fall through to direct Supabase insert
+          console.warn("[enroll] Sync route failed, using direct insert");
+          const supabase = createClient();
+          const { error } = await supabase.from("enrollments").insert({
+            user_id: userId,
+            course_id: courseId,
+          });
+          if (!error || error.code === "23505") setIsEnrolled(true);
         }
       } else {
-        setIsEnrolled(true);
+        // No on-chain tx — direct Supabase enrollment
+        const supabase = createClient();
+        const { error } = await supabase.from("enrollments").insert({
+          user_id: userId,
+          course_id: courseId,
+        });
+        if (!error || error.code === "23505") setIsEnrolled(true);
       }
     } catch {
       // silently fail

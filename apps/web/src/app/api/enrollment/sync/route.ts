@@ -54,11 +54,26 @@ export async function POST(request: NextRequest) {
 
     // Look up user's wallet
     const supabaseAdmin = createAdminClient();
-    const { data: profile } = await supabaseAdmin
+    const { data: profile, error: profileError } = await supabaseAdmin
       .from("profiles")
       .select("wallet_address")
       .eq("id", user.id)
       .single();
+
+    if (profileError) {
+      logError({
+        errorId: ERROR_IDS.ENROLLMENT_SYNC_FAILED,
+        error: new Error(profileError.message),
+        context: {
+          route: "/api/enrollment/sync",
+          note: "profile lookup failed",
+        },
+      });
+      return NextResponse.json(
+        { error: "Failed to look up profile" },
+        { status: 500 }
+      );
+    }
 
     if (!profile?.wallet_address) {
       return NextResponse.json(
@@ -130,22 +145,48 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === "enroll") {
-      await supabaseAdmin.from("enrollments").upsert(
-        {
-          user_id: user.id,
-          course_id: courseId,
-          enrolled_at: new Date().toISOString(),
-          tx_signature: txSignature,
-          wallet_address: profile.wallet_address,
-        },
-        { onConflict: "user_id,course_id" }
-      );
+      const { error: upsertError } = await supabaseAdmin
+        .from("enrollments")
+        .upsert(
+          {
+            user_id: user.id,
+            course_id: courseId,
+            enrolled_at: new Date().toISOString(),
+            tx_signature: txSignature,
+            wallet_address: profile.wallet_address,
+          },
+          { onConflict: "user_id,course_id" }
+        );
+
+      if (upsertError) {
+        logError({
+          errorId: ERROR_IDS.ENROLLMENT_SYNC_FAILED,
+          error: new Error(upsertError.message),
+          context: { route: "/api/enrollment/sync", action: "enroll" },
+        });
+        return NextResponse.json(
+          { error: "Failed to sync enrollment" },
+          { status: 500 }
+        );
+      }
     } else if (action === "close") {
-      await supabaseAdmin
+      const { error: deleteError } = await supabaseAdmin
         .from("enrollments")
         .delete()
         .eq("user_id", user.id)
         .eq("course_id", courseId);
+
+      if (deleteError) {
+        logError({
+          errorId: ERROR_IDS.ENROLLMENT_SYNC_FAILED,
+          error: new Error(deleteError.message),
+          context: { route: "/api/enrollment/sync", action: "close" },
+        });
+        return NextResponse.json(
+          { error: "Failed to sync enrollment removal" },
+          { status: 500 }
+        );
+      }
     }
 
     return NextResponse.json({ success: true });

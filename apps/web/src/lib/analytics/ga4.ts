@@ -12,7 +12,7 @@ declare global {
     gtag: (
       command: string,
       targetOrEvent: string,
-      params?: Record<string, unknown>,
+      params?: Record<string, unknown>
     ) => void;
     dataLayer: Array<Record<string, unknown>>;
   }
@@ -45,7 +45,7 @@ export function initGA4(): void {
   window.gtag = function gtag(
     command: string,
     targetOrEvent: string,
-    params?: Record<string, unknown>,
+    params?: Record<string, unknown>
   ) {
     window.dataLayer.push({ event: command, ...params, target: targetOrEvent });
   };
@@ -61,7 +61,7 @@ export function initGA4(): void {
  */
 export function trackGA4Event(
   name: string,
-  params?: Record<string, unknown>,
+  params?: Record<string, unknown>
 ): void {
   if (!isAvailable()) return;
   window.gtag("event", name, params);

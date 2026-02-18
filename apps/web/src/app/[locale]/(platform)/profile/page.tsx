@@ -253,7 +253,6 @@ function useProfileData(): ProfileData {
 export default function ProfilePage() {
   const t = useTranslations("profile");
   const tGamification = useTranslations("gamification");
-  const tCourses = useTranslations("courses");
   const tCerts = useTranslations("certificates");
   const data = useProfileData();
 
@@ -400,52 +399,6 @@ export default function ProfilePage() {
           certificates={data.certificates}
           recipientName={data.user.username}
         />
-      </div>
-
-      {/* Completed Courses */}
-      <div className="space-y-4">
-        <h2 className="font-display text-xl font-bold">
-          {t("completedCourses")}
-        </h2>
-        {data.completedCourses.length > 0 ? (
-          <div className="space-y-3">
-            {data.completedCourses.map((course) => (
-              <Card key={course.slug}>
-                <CardContent className="flex items-center justify-between p-4">
-                  <div className="flex min-w-0 items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-bg">
-                      <span
-                        className="h-2.5 w-2.5 rounded-full bg-primary"
-                        aria-hidden="true"
-                      />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="truncate font-medium">{course.title}</p>
-                      <p className="text-xs text-text-3">
-                        {tCourses("completed")} {course.completedAt}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-1 font-display text-sm font-bold text-accent">
-                    {course.xpEarned} XP
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <p
-                className="mb-3 font-display text-4xl font-black text-text-3"
-                aria-hidden="true"
-              >
-                --
-              </p>
-              <p className="text-text-3">{t("noCompletedCourses")}</p>
-            </CardContent>
-          </Card>
-        )}
       </div>
     </div>
   );

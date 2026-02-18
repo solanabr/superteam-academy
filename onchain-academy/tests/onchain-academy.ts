@@ -134,9 +134,8 @@ describe("onchain-academy", () => {
       expect(configAccount.bump).to.equal(configBump);
 
       // Verify auto-registered backend minter role
-      const minterRole = await program.account.minterRole.fetch(
-        backendMinterRole
-      );
+      const minterRole =
+        await program.account.minterRole.fetch(backendMinterRole);
       expect(minterRole.minter.toBase58()).to.equal(
         authority.publicKey.toBase58()
       );
@@ -292,9 +291,7 @@ describe("onchain-academy", () => {
       const course = await program.account.course.fetch(coursePda);
 
       expect(course.courseId).to.equal(courseId);
-      expect(course.creator.toBase58()).to.equal(
-        creator.publicKey.toBase58()
-      );
+      expect(course.creator.toBase58()).to.equal(creator.publicKey.toBase58());
       expect(course.version).to.equal(1);
       expect(course.lessonCount).to.equal(LESSON_COUNT);
       expect(course.difficulty).to.equal(2);
@@ -1208,9 +1205,8 @@ describe("onchain-academy", () => {
         .signers([learner])
         .rpc();
 
-      const enrollmentInfo = await provider.connection.getAccountInfo(
-        enrollmentPda
-      );
+      const enrollmentInfo =
+        await provider.connection.getAccountInfo(enrollmentPda);
       expect(enrollmentInfo).to.be.null;
 
       const balanceAfter = await provider.connection.getBalance(
@@ -1386,9 +1382,8 @@ describe("onchain-academy", () => {
         .rpc();
       await provider.connection.confirmTransaction(fsig, "confirmed");
 
-      const enrollment = await program.account.enrollment.fetch(
-        learner2EnrollPda
-      );
+      const enrollment =
+        await program.account.enrollment.fetch(learner2EnrollPda);
       expect(enrollment.completedAt).to.not.be.null;
 
       const course = await program.account.course.fetch(coursePda);
@@ -1589,10 +1584,7 @@ describe("onchain-academy", () => {
     const threshCreator = Keypair.generate();
 
     before(async () => {
-      for (const wallet of [
-        threshLearner.publicKey,
-        threshCreator.publicKey,
-      ]) {
+      for (const wallet of [threshLearner.publicKey, threshCreator.publicKey]) {
         const sig = await provider.connection.requestAirdrop(
           wallet,
           3 * LAMPORTS_PER_SOL
@@ -1721,9 +1713,8 @@ describe("onchain-academy", () => {
         .rpc();
       await provider.connection.confirmTransaction(sig, "confirmed");
 
-      const enrollment = await program.account.enrollment.fetch(
-        threshEnrollPda
-      );
+      const enrollment =
+        await program.account.enrollment.fetch(threshEnrollPda);
       expect(enrollment.completedAt).to.not.be.null;
 
       // Learner gets lesson XP + bonus: 50 + 25 = 75
@@ -2142,7 +2133,12 @@ describe("onchain-academy", () => {
       credentialKeypair = Keypair.generate();
 
       const sig = await program.methods
-        .issueCredential("Solana Track - Level 1", "https://arweave.net/cred-metadata-v1", 1, new anchor.BN(500))
+        .issueCredential(
+          "Solana Track - Level 1",
+          "https://arweave.net/cred-metadata-v1",
+          1,
+          new anchor.BN(500)
+        )
         .accountsPartial({
           config: configPda,
           course: credCoursePda,
@@ -2167,14 +2163,20 @@ describe("onchain-academy", () => {
       );
 
       // Verify the credential NFT exists and is owned by Metaplex Core
-      const assetInfo = await provider.connection.getAccountInfo(credentialKeypair.publicKey);
+      const assetInfo = await provider.connection.getAccountInfo(
+        credentialKeypair.publicKey
+      );
       expect(assetInfo).to.not.be.null;
-      expect(assetInfo.owner.toBase58()).to.equal(MPL_CORE_PROGRAM_ID.toBase58());
+      expect(assetInfo.owner.toBase58()).to.equal(
+        MPL_CORE_PROGRAM_ID.toBase58()
+      );
       // First byte = Key::AssetV1 = 1
       expect(assetInfo.data[0]).to.equal(1);
 
       // Fetch asset via UMI and verify properties
-      const umi = createUmi(provider.connection.rpcEndpoint, { commitment: "confirmed" }).use(mplCore());
+      const umi = createUmi(provider.connection.rpcEndpoint, {
+        commitment: "confirmed",
+      }).use(mplCore());
       const asset = await fetchAssetV1(
         umi,
         fromWeb3JsPublicKey(credentialKeypair.publicKey)
@@ -2237,7 +2239,12 @@ describe("onchain-academy", () => {
 
       try {
         await program.methods
-          .issueCredential("Should Fail", "https://arweave.net/fail", 1, new anchor.BN(500))
+          .issueCredential(
+            "Should Fail",
+            "https://arweave.net/fail",
+            1,
+            new anchor.BN(500)
+          )
           .accountsPartial({
             config: configPda,
             course: credCoursePda,
@@ -2266,7 +2273,12 @@ describe("onchain-academy", () => {
       const anotherAsset = Keypair.generate();
       try {
         await program.methods
-          .issueCredential("Duplicate", "https://arweave.net/dup", 1, new anchor.BN(500))
+          .issueCredential(
+            "Duplicate",
+            "https://arweave.net/dup",
+            1,
+            new anchor.BN(500)
+          )
           .accountsPartial({
             config: configPda,
             course: credCoursePda,
@@ -2293,7 +2305,12 @@ describe("onchain-academy", () => {
 
     it("upgrades existing credential", async () => {
       const sig = await program.methods
-        .upgradeCredential("Solana Track - Level 1 (Updated)", "https://arweave.net/cred-metadata-v2", 2, new anchor.BN(1000))
+        .upgradeCredential(
+          "Solana Track - Level 1 (Updated)",
+          "https://arweave.net/cred-metadata-v2",
+          2,
+          new anchor.BN(1000)
+        )
         .accountsPartial({
           config: configPda,
           course: credCoursePda,
@@ -2310,7 +2327,9 @@ describe("onchain-academy", () => {
       await provider.connection.confirmTransaction(sig, "confirmed");
 
       // Fetch updated asset via UMI
-      const umi = createUmi(provider.connection.rpcEndpoint, { commitment: "confirmed" }).use(mplCore());
+      const umi = createUmi(provider.connection.rpcEndpoint, {
+        commitment: "confirmed",
+      }).use(mplCore());
       const asset = await fetchAssetV1(
         umi,
         fromWeb3JsPublicKey(credentialKeypair.publicKey)
@@ -2331,7 +2350,12 @@ describe("onchain-academy", () => {
 
       try {
         await program.methods
-          .upgradeCredential("Wrong Asset", "https://arweave.net/wrong", 2, new anchor.BN(1000))
+          .upgradeCredential(
+            "Wrong Asset",
+            "https://arweave.net/wrong",
+            2,
+            new anchor.BN(1000)
+          )
           .accountsPartial({
             config: configPda,
             course: credCoursePda,
@@ -2645,7 +2669,9 @@ describe("onchain-academy", () => {
         "confirmed",
         TOKEN_2022_PROGRAM_ID
       );
-      expect(Number(learnerAta.amount)).to.equal(75 * 2 + Math.floor((75 * 2) / 2));
+      expect(Number(learnerAta.amount)).to.equal(
+        75 * 2 + Math.floor((75 * 2) / 2)
+      );
     });
 
     it("course with single lesson", async () => {
@@ -2758,9 +2784,8 @@ describe("onchain-academy", () => {
         .rpc();
       await provider.connection.confirmTransaction(fsig, "confirmed");
 
-      const enrollment = await program.account.enrollment.fetch(
-        singleEnrollPda
-      );
+      const enrollment =
+        await program.account.enrollment.fetch(singleEnrollPda);
       expect(enrollment.completedAt).to.not.be.null;
 
       const course = await program.account.course.fetch(singleCoursePda);
@@ -2796,10 +2821,7 @@ describe("onchain-academy", () => {
         program.programId
       );
 
-      for (const wallet of [
-        testMinter.publicKey,
-        minterRecipient.publicKey,
-      ]) {
+      for (const wallet of [testMinter.publicKey, minterRecipient.publicKey]) {
         const sig = await provider.connection.requestAirdrop(
           wallet,
           5 * LAMPORTS_PER_SOL
@@ -2845,9 +2867,7 @@ describe("onchain-academy", () => {
         .rpc();
 
       const role = await program.account.minterRole.fetch(testMinterRolePda);
-      expect(role.minter.toBase58()).to.equal(
-        testMinter.publicKey.toBase58()
-      );
+      expect(role.minter.toBase58()).to.equal(testMinter.publicKey.toBase58());
       expect(role.label).to.equal("test-minter");
       expect(role.maxXpPerCall.toNumber()).to.equal(1000);
       expect(role.totalXpMinted.toNumber()).to.equal(0);
@@ -2898,9 +2918,7 @@ describe("onchain-academy", () => {
         expect.fail("Should have thrown");
       } catch (err) {
         const anchorErr = err as AnchorError;
-        expect(anchorErr.error.errorCode.code).to.equal(
-          "MinterAmountExceeded"
-        );
+        expect(anchorErr.error.errorCode.code).to.equal("MinterAmountExceeded");
       }
     });
 
@@ -2939,9 +2957,7 @@ describe("onchain-academy", () => {
         })
         .rpc();
 
-      const info = await provider.connection.getAccountInfo(
-        testMinterRolePda
-      );
+      const info = await provider.connection.getAccountInfo(testMinterRolePda);
       expect(info).to.be.null;
 
       const balanceAfter = await provider.connection.getBalance(
@@ -3054,9 +3070,8 @@ describe("onchain-academy", () => {
         .signers([achievementCollectionKeypair])
         .rpc();
 
-      const achievement = await program.account.achievementType.fetch(
-        achievementTypePda
-      );
+      const achievement =
+        await program.account.achievementType.fetch(achievementTypePda);
       expect(achievement.achievementId).to.equal(achievementId);
       expect(achievement.name).to.equal("First Course Completed");
       expect(achievement.metadataUri).to.equal("https://arweave.net/test");
@@ -3182,9 +3197,8 @@ describe("onchain-academy", () => {
       expect(Number(ata.amount)).to.equal(200);
 
       // Verify achievement_type.current_supply incremented
-      const achievement = await program.account.achievementType.fetch(
-        achievementTypePda
-      );
+      const achievement =
+        await program.account.achievementType.fetch(achievementTypePda);
       expect(achievement.currentSupply).to.equal(1);
     });
 
@@ -3233,9 +3247,8 @@ describe("onchain-academy", () => {
         })
         .rpc();
 
-      const achievement = await program.account.achievementType.fetch(
-        achievementTypePda
-      );
+      const achievement =
+        await program.account.achievementType.fetch(achievementTypePda);
       expect(achievement.isActive).to.equal(false);
     });
 
@@ -3306,9 +3319,7 @@ describe("onchain-academy", () => {
         expect.fail("Should have thrown");
       } catch (err) {
         const anchorErr = err as AnchorError;
-        expect(anchorErr.error.errorCode.code).to.equal(
-          "AchievementNotActive"
-        );
+        expect(anchorErr.error.errorCode.code).to.equal("AchievementNotActive");
       }
     });
 
@@ -3369,7 +3380,9 @@ describe("onchain-academy", () => {
         TOKEN_2022_PROGRAM_ID,
         ASSOCIATED_TOKEN_PROGRAM_ID
       );
-      await provider.sendAndConfirm(new anchor.web3.Transaction().add(createAta1Ix));
+      await provider.sendAndConfirm(
+        new anchor.web3.Transaction().add(createAta1Ix)
+      );
 
       const [firstReceiptPda] = PublicKey.findProgramAddressSync(
         [
@@ -3403,7 +3416,8 @@ describe("onchain-academy", () => {
         .rpc();
       await provider.connection.confirmTransaction(sig, "confirmed");
 
-      const achievement = await program.account.achievementType.fetch(limitedAchPda);
+      const achievement =
+        await program.account.achievementType.fetch(limitedAchPda);
       expect(achievement.currentSupply).to.equal(1);
 
       // Second award to different recipient fails with supply exhausted
@@ -3429,7 +3443,9 @@ describe("onchain-academy", () => {
         TOKEN_2022_PROGRAM_ID,
         ASSOCIATED_TOKEN_PROGRAM_ID
       );
-      await provider.sendAndConfirm(new anchor.web3.Transaction().add(createAta2Ix));
+      await provider.sendAndConfirm(
+        new anchor.web3.Transaction().add(createAta2Ix)
+      );
 
       const [secondReceiptPda] = PublicKey.findProgramAddressSync(
         [
@@ -3533,7 +3549,9 @@ describe("onchain-academy", () => {
         TOKEN_2022_PROGRAM_ID,
         ASSOCIATED_TOKEN_PROGRAM_ID
       );
-      await provider.sendAndConfirm(new anchor.web3.Transaction().add(createAtaIx));
+      await provider.sendAndConfirm(
+        new anchor.web3.Transaction().add(createAtaIx)
+      );
 
       [bitmapEnrollPda] = PublicKey.findProgramAddressSync(
         [
@@ -3669,7 +3687,9 @@ describe("onchain-academy", () => {
         TOKEN_2022_PROGRAM_ID,
         ASSOCIATED_TOKEN_PROGRAM_ID
       );
-      await provider.sendAndConfirm(new anchor.web3.Transaction().add(createAtaIx));
+      await provider.sendAndConfirm(
+        new anchor.web3.Transaction().add(createAtaIx)
+      );
 
       [reEnrollEnrollPda] = PublicKey.findProgramAddressSync(
         [
@@ -3735,7 +3755,8 @@ describe("onchain-academy", () => {
         .rpc();
 
       // Verify closed
-      const closedInfo = await provider.connection.getAccountInfo(reEnrollEnrollPda);
+      const closedInfo =
+        await provider.connection.getAccountInfo(reEnrollEnrollPda);
       expect(closedInfo).to.be.null;
     });
 
@@ -3751,8 +3772,11 @@ describe("onchain-academy", () => {
         .signers([reEnrollLearner])
         .rpc();
 
-      const enrollment = await program.account.enrollment.fetch(reEnrollEnrollPda);
-      expect(enrollment.course.toBase58()).to.equal(reEnrollCoursePda.toBase58());
+      const enrollment =
+        await program.account.enrollment.fetch(reEnrollEnrollPda);
+      expect(enrollment.course.toBase58()).to.equal(
+        reEnrollCoursePda.toBase58()
+      );
       expect(enrollment.completedAt).to.be.null;
       // Lesson flags should be reset to zero
       for (const word of enrollment.lessonFlags) {
@@ -3783,7 +3807,9 @@ describe("onchain-academy", () => {
 
     it("backend_signer rotation deactivates old MinterRole via remaining_accounts", async () => {
       // Verify old minter role is active before rotation
-      const roleBefore = await program.account.minterRole.fetch(rotationMinterRolePda);
+      const roleBefore = await program.account.minterRole.fetch(
+        rotationMinterRolePda
+      );
       expect(roleBefore.isActive).to.equal(true);
 
       const newSigner = Keypair.generate();
@@ -3807,7 +3833,9 @@ describe("onchain-academy", () => {
         .rpc();
 
       // Verify old MinterRole is deactivated
-      const roleAfter = await program.account.minterRole.fetch(rotationMinterRolePda);
+      const roleAfter = await program.account.minterRole.fetch(
+        rotationMinterRolePda
+      );
       expect(roleAfter.isActive).to.equal(false);
 
       // Verify config was updated
@@ -3831,7 +3859,9 @@ describe("onchain-academy", () => {
       // The old role PDA still exists but is deactivated; we need it active
       // for other tests that might run after this.
       // Since it's still allocated, we can't re-init it. Just confirm it's deactivated.
-      const roleFinal = await program.account.minterRole.fetch(rotationMinterRolePda);
+      const roleFinal = await program.account.minterRole.fetch(
+        rotationMinterRolePda
+      );
       expect(roleFinal.isActive).to.equal(false);
     });
   });

@@ -143,6 +143,22 @@ export async function getAllLearningPaths(): Promise<LearningPath[]> {
 }
 
 /**
+ * Fetch a course by its Sanity _id (not slug).
+ * Used by API routes where courseId is the Sanity document _id.
+ */
+export async function getCourseById(id: string): Promise<Course | null> {
+  return sanityFetch<Course | null>(
+    `*[_type == "course" && _id == $id][0] {
+      ${courseFields},
+      "modules": modules[]->{
+        ${moduleWithLessonsFields}
+      } | order(order asc)
+    }`,
+    { id }
+  );
+}
+
+/**
  * Get a course's Sanity _id from its slug (lightweight, no content fetched).
  */
 export async function getCourseIdBySlug(slug: string): Promise<string | null> {
@@ -198,6 +214,28 @@ export async function getCoursesByIds(ids: string[]): Promise<CourseSummary[]> {
       tags,
       difficulty,
       "totalLessons": count(modules[]->lessons[])
+    }`,
+    { ids }
+  );
+}
+
+export interface LessonSummary {
+  _id: string;
+  title: string;
+  slug: string;
+}
+
+/**
+ * Fetch lesson summaries by their Sanity _id values.
+ * Used to resolve lesson titles/slugs for recent activity on the dashboard.
+ */
+export async function getLessonsByIds(ids: string[]): Promise<LessonSummary[]> {
+  if (ids.length === 0) return [];
+  return sanityFetch<LessonSummary[]>(
+    `*[_type == "lesson" && _id in $ids] {
+      _id,
+      title,
+      "slug": slug.current
     }`,
     { ids }
   );
