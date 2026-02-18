@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { useWallets } from "@privy-io/react-auth/solana";
 import { Button } from "@/components/ui/button";
+import { useTranslations } from "next-intl";
+import { urlFor } from "@/sanity/lib/image";
 
 type EditableLesson = {
   _id?: string;
@@ -29,6 +31,7 @@ type Course = {
   duration?: string;
   difficulty?: string;
   track?: string;
+  image?: any;
   published: boolean;
   modules?: Array<{
     _id: string;
@@ -44,6 +47,7 @@ type Course = {
 };
 
 export default function EditCoursePage() {
+  const t = useTranslations("teach");
   const router = useRouter();
   const params = useParams();
   const courseId = params?.id as string;
@@ -51,9 +55,12 @@ export default function EditCoursePage() {
   const { wallets } = useWallets();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [course, setCourse] = useState<Course | null>(null);
   const [modulesState, setModulesState] = useState<EditableModule[]>([]);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const walletAddress =
     wallets?.[0]?.address ??
@@ -68,6 +75,7 @@ export default function EditCoursePage() {
     difficulty: "beginner" as "beginner" | "intermediate" | "advanced",
     track: "other",
     published: false,
+    image: null as any,
   });
 
   useEffect(() => {
@@ -127,7 +135,16 @@ export default function EditCoursePage() {
             difficulty: (data.difficulty as any) || "beginner",
             track: data.track || "other",
             published: data.published || false,
+            image: data.image || null,
           });
+
+          if (data.image) {
+            try {
+              setImagePreview(urlFor(data.image).url());
+            } catch (e) {
+              console.error("Failed to generate image preview", e);
+            }
+          }
         }
       })
       .catch((err) => {
@@ -137,6 +154,44 @@ export default function EditCoursePage() {
         setLoading(false);
       });
   }, [authenticated, walletAddress, courseId]);
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !walletAddress) return;
+
+    setUploading(true);
+    setError(null);
+
+    const uploadData = new FormData();
+    uploadData.append("file", file);
+    uploadData.append("wallet", walletAddress);
+
+    try {
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: uploadData,
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Upload failed");
+
+      setFormData((prev) => ({
+        ...prev,
+        image: {
+          _type: "image",
+          asset: {
+            _type: "reference",
+            _ref: data.assetId,
+          },
+        },
+      }));
+      setImagePreview(data.url);
+    } catch (err: any) {
+      setError(err.message || "Failed to upload image");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -152,7 +207,6 @@ export default function EditCoursePage() {
         body: JSON.stringify({
           ...formData,
           wallet: walletAddress,
-          // Send modules/lessons structure for metadata only; content is handled by separate endpoint
         }),
       });
 
@@ -213,7 +267,7 @@ export default function EditCoursePage() {
   if (!authenticated) {
     return (
       <div className="container py-8">
-        <p>Please log in to edit courses.</p>
+        <p>{t("login_required")}</p>
       </div>
     );
   }
@@ -221,7 +275,7 @@ export default function EditCoursePage() {
   if (loading) {
     return (
       <div className="container py-8">
-        <p>Loading course...</p>
+        <p>{t("loading_course")}</p>
       </div>
     );
   }
@@ -236,26 +290,10 @@ export default function EditCoursePage() {
     );
   }
 
-  // Sanity Studio deep-link for this course document
-  const studioUrl = courseId
-    ? `/studio/intent/edit/id=${encodeURIComponent(courseId)};type=course`
-    : null;
-
   return (
     <div className="container py-8 max-w-2xl">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Edit Course</h1>
-        {studioUrl && (
-          <a
-            href={studioUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-solana/40 text-solana text-sm font-medium hover:bg-solana/10 transition-colors"
-          >
-            <span className="material-symbols-outlined text-[16px]">edit_note</span>
-            Open in Sanity Studio ↗
-          </a>
-        )}
+        <h1 className="text-2xl font-bold">{t("edit_course")}</h1>
       </div>
 
       {error && (
@@ -265,9 +303,42 @@ export default function EditCoursePage() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Course Logo Section */}
+        <div className="space-y-3">
+          <label className="block text-sm font-medium">{t("course_logo")}</label>
+          <div className="flex items-center gap-6">
+            <div className="size-24 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
+              {imagePreview ? (
+                <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+              ) : (
+                <span className="material-symbols-outlined text-white/20 text-3xl">image</span>
+              )}
+            </div>
+            <div className="flex flex-col gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+              >
+                {uploading ? t("uploading") : t("upload_logo")}
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                className="hidden"
+                accept="image/*"
+                onChange={handleImageChange}
+              />
+              <p className="text-xs text-text-secondary">{t("logo_preview")}</p>
+            </div>
+          </div>
+        </div>
+
         <div>
           <label htmlFor="title" className="block text-sm font-medium mb-1">
-            Title *
+            {t("title")}
           </label>
           <input
             id="title"
@@ -282,7 +353,7 @@ export default function EditCoursePage() {
 
         <div>
           <label htmlFor="description" className="block text-sm font-medium mb-1">
-            Description
+            {t("description")}
           </label>
           <textarea
             id="description"
@@ -299,7 +370,7 @@ export default function EditCoursePage() {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label htmlFor="instructor" className="block text-sm font-medium mb-1">
-              Instructor Name
+              {t("instructor")}
             </label>
             <input
               id="instructor"
@@ -315,7 +386,7 @@ export default function EditCoursePage() {
 
           <div>
             <label htmlFor="duration" className="block text-sm font-medium mb-1">
-              Duration
+              {t("duration")}
             </label>
             <input
               id="duration"
@@ -333,7 +404,7 @@ export default function EditCoursePage() {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label htmlFor="difficulty" className="block text-sm font-medium mb-1">
-              Difficulty
+              {t("difficulty")}
             </label>
             <select
               id="difficulty"
@@ -354,7 +425,7 @@ export default function EditCoursePage() {
 
           <div>
             <label htmlFor="track" className="block text-sm font-medium mb-1">
-              Track
+              {t("track")}
             </label>
             <select
               id="track"
@@ -372,7 +443,7 @@ export default function EditCoursePage() {
         </div>
 
         <div className="border border-border-subtle rounded-md p-4">
-          <h3 className="text-sm font-semibold mb-3">Modules & Lessons</h3>
+          <h3 className="text-sm font-semibold mb-3">{t("modules_lessons")}</h3>
           <div className="space-y-4 text-sm">
             {modulesState.map((mod, modIndex) => (
               <div
@@ -382,7 +453,7 @@ export default function EditCoursePage() {
                 <div className="mb-2 flex items-center justify-between gap-2">
                   <div className="flex-1">
                     <label className="block text-xs font-medium mb-1">
-                      Module title
+                      {t("module_title")}
                     </label>
                     <input
                       type="text"
@@ -409,7 +480,7 @@ export default function EditCoursePage() {
                     >
                       <div className="mb-2">
                         <label className="block text-xs font-medium mb-1">
-                          Lesson {lessonIndex + 1} title
+                          {t("lesson_title", { index: lessonIndex + 1 })}
                         </label>
                         <input
                           type="text"
@@ -428,7 +499,7 @@ export default function EditCoursePage() {
                       </div>
                       <div>
                         <label className="block text-xs font-medium mb-1">
-                          Lesson content
+                          {t("lesson_content")}
                         </label>
                         <textarea
                           value={lesson.contentText}
@@ -445,8 +516,7 @@ export default function EditCoursePage() {
                           className="flex w-full rounded-md border border-border-subtle bg-transparent px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-solana"
                         />
                         <p className="mt-1 text-[11px] text-text-secondary">
-                          Basic text only. Rich formatting and challenges will
-                          be added in a later phase.
+                          {t("lesson_content_info")}
                         </p>
                       </div>
                     </div>
@@ -472,7 +542,7 @@ export default function EditCoursePage() {
                       setModulesState(next);
                     }}
                   >
-                    + Add lesson
+                    {t("add_lesson")}
                   </Button>
                 </div>
               </div>
@@ -495,7 +565,7 @@ export default function EditCoursePage() {
               ]);
             }}
           >
-            + Add module
+            {t("add_module")}
           </Button>
         </div>
 
@@ -511,28 +581,30 @@ export default function EditCoursePage() {
               className="h-4 w-4 rounded border-border-subtle"
             />
             <label htmlFor="published" className="text-sm font-medium">
-              Published
+              {t("published")}
             </label>
           </div>
         </div>
 
         <div className="flex gap-3">
-          <Button type="submit" disabled={saving}>
-            {saving ? "Saving..." : "Save Changes"}
+          <Button type="submit" disabled={saving || uploading}>
+            {saving ? t("saving") : t("save_changes")}
           </Button>
           <Button
             type="button"
             variant="outline"
             onClick={handlePublish}
+            disabled={saving || uploading}
           >
-            {formData.published ? "Unpublish" : "Publish"}
+            {formData.published ? t("unpublish") : t("publish")}
           </Button>
           <Button
             type="button"
             variant="outline"
             onClick={() => router.push("/teach/courses")}
+            disabled={saving || uploading}
           >
-            Cancel
+            {t("cancel")}
           </Button>
         </div>
       </form>

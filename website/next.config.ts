@@ -27,6 +27,14 @@ const svgAttrReplace = {
 const nodeModulesPath = path.join(__dirname, "node_modules");
 
 const nextConfig: NextConfig = {
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "cdn.sanity.io",
+      },
+    ],
+  },
   // Satisfy Next 16: having webpack config requires a turbopack key (empty = no custom Turbopack).
   turbopack: {},
   // SVG fix only in webpack (production build). Not in Turbopack to avoid CJS/ESM conflict on @privy-io/chains.

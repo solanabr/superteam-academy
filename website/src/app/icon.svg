@@ -1,0 +1,11 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg-grad" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#14F195"/>
+      <stop offset="1" stop-color="#064e3b"/>
+    </linearGradient>
+  </defs>
+  <rect width="32" height="32" rx="8" fill="url(#bg-grad)"/>
+  <!-- Terminal Icon Mimic (Material Symbols 'terminal' style) -->
+  <path fill-rule="evenodd" clip-rule="evenodd" d="M7 9C5.89543 9 5 9.89543 5 11V21C5 22.1046 5.89543 23 7 23H25C26.1046 23 27 22.1046 27 21V11C27 9.89543 26.1046 9 25 9H7ZM7 11H25V14H7V11ZM7 16V21H25V16H7ZM10 17.5L12 18.5L10 19.5V17.5ZM13 19.5H16V20.5H13V19.5Z" fill="#0A0A0B"/>
+</svg>

@@ -125,6 +125,11 @@ export async function PATCH(
     if (updates.track !== undefined) fieldsToUpdate.track = updates.track;
     if (updates.published !== undefined) fieldsToUpdate.published = updates.published;
 
+    // Handle image update (expects { _type: 'image', asset: { _ref: assetId } })
+    if (updates.image !== undefined) {
+      fieldsToUpdate.image = updates.image;
+    }
+
     if (Object.keys(fieldsToUpdate).length > 0) {
       patch.set(fieldsToUpdate);
     }
@@ -134,17 +139,17 @@ export async function PATCH(
     return NextResponse.json({ success: true, course: updated });
   } catch (error: any) {
     console.error("Error updating course:", error);
-    
+
     if (error.message?.includes("Insufficient permissions") || error.statusCode === 403) {
       return NextResponse.json(
-        { 
+        {
           error: "API token lacks write permissions. Please create a new token with Editor role in Sanity dashboard (Settings → API → Tokens). See docs/SANITY_TOKEN_SETUP.md for details.",
-          details: error.message 
+          details: error.message
         },
         { status: 403 }
       );
     }
-    
+
     return NextResponse.json(
       { error: error.message || "Failed to update course" },
       { status: 500 }
@@ -206,17 +211,17 @@ export async function DELETE(
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error("Error deleting course:", error);
-    
+
     if (error.message?.includes("Insufficient permissions") || error.statusCode === 403) {
       return NextResponse.json(
-        { 
+        {
           error: "API token lacks write permissions. Please create a new token with Editor role in Sanity dashboard (Settings → API → Tokens). See docs/SANITY_TOKEN_SETUP.md for details.",
-          details: error.message 
+          details: error.message
         },
         { status: 403 }
       );
     }
-    
+
     return NextResponse.json(
       { error: error.message || "Failed to delete course" },
       { status: 500 }
