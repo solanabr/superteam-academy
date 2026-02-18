@@ -22,12 +22,12 @@ import { getAcademyClient } from "@/lib/academy";
 import { mapCourseToDetail } from "@/lib/course-data";
 
 interface LessonPageProps {
-	params: {
+	params: Promise<{
 		id: string;
-	};
-	searchParams: {
+	}>;
+	searchParams?: Promise<{
 		lesson?: string;
-	};
+	}>;
 }
 
 export async function generateMetadata({
@@ -35,8 +35,11 @@ export async function generateMetadata({
 	searchParams,
 }: LessonPageProps): Promise<Metadata> {
 	// This would fetch course and lesson data from CMS/API
-	const course = await getCourse(params.id);
-	const lesson = await getLesson(params.id, searchParams.lesson || "1-1");
+	const { id } = await params;
+	const resolvedSearchParams = await searchParams;
+	const lessonId = resolvedSearchParams?.lesson || "1-1";
+	const course = await getCourse(id);
+	const lesson = await getLesson(id, lessonId);
 
 	return {
 		title: `${lesson.title} | ${course.title} | Superteam Academy`,
@@ -45,13 +48,14 @@ export async function generateMetadata({
 }
 
 export default async function LessonPage({ params, searchParams }: LessonPageProps) {
+	const { id } = await params;
+	const resolvedSearchParams = await searchParams;
+	const lessonId = resolvedSearchParams?.lesson || "1-1";
+
 	return (
 		<div className="min-h-screen bg-background">
 			<Suspense fallback={<LessonSkeleton />}>
-				<LessonContentWrapper
-					courseId={params.id}
-					lessonId={searchParams.lesson || "1-1"}
-				/>
+				<LessonContentWrapper courseId={id} lessonId={lessonId} />
 			</Suspense>
 		</div>
 	);
@@ -72,7 +76,7 @@ async function LessonContentWrapper({
 	return (
 		<div className="flex flex-col lg:flex-row min-h-screen">
 			<div className="flex-1 flex flex-col">
-				<div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40">
+				<div className="border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 sticky top-0 z-40">
 					<div className="container mx-auto px-4 py-4">
 						<div className="flex items-center justify-between">
 							<div className="flex items-center gap-4">
