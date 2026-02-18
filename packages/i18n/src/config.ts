@@ -71,7 +71,7 @@ export const translationConfig = {
 };
 
 // Next-intl request configuration
-export default getRequestConfig(async ({ locale = "pt-BR" }) => ({
+export default getRequestConfig(async ({ locale = "en" }) => ({
 	locale,
 	messages: await translationConfig.loadTranslations(locale as Locale),
 }));
