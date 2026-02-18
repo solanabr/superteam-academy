@@ -6,12 +6,14 @@ import { urlFor } from "@/sanity/lib/image";
 import { EnrollButton } from "@/components/courses/EnrollButton";
 import { CourseEnrollmentBlock } from "@/components/courses/CourseEnrollmentBlock";
 import { CourseCompletion } from "@/components/courses/CourseCompletion";
+import { getTranslations } from "next-intl/server";
 
 export default async function CourseDetailPage({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
+  const t = await getTranslations("courses");
   const { slug } = await params;
   const course = await getCourseBySlug(slug);
   if (!course) notFound();
@@ -40,7 +42,7 @@ export default async function CourseDetailPage({
         <div className="flex flex-1 flex-col gap-4">
           {course.track && (
             <span className="text-solana text-xs font-medium uppercase tracking-wider">
-              {course.track}
+              {t(`filters.${course.track.toLowerCase()}` as any)}
             </span>
           )}
           <h1 className="font-display text-text-primary text-2xl font-bold md:text-3xl">
@@ -50,10 +52,10 @@ export default async function CourseDetailPage({
             <p className="text-text-secondary leading-relaxed">{course.description}</p>
           )}
           <div className="text-text-secondary flex flex-wrap gap-4 text-sm">
-            {course.instructor && <span>Instructor: {course.instructor}</span>}
+            {course.instructor && <span>{t("instructor")}: {course.instructor}</span>}
             {course.duration && <span>{course.duration}</span>}
-            {course.difficulty && <span className="capitalize">{course.difficulty}</span>}
-            {lessonCount > 0 && <span>{lessonCount} lessons</span>}
+            {course.difficulty && <span className="capitalize">{t(course.difficulty.toLowerCase() as any)}</span>}
+            {lessonCount > 0 && <span>{t("lessons_count", { count: lessonCount })}</span>}
           </div>
           <div className="mt-2">
             <CourseEnrollmentBlock courseId={course.slug} courseTitle={course.title} />
@@ -65,7 +67,7 @@ export default async function CourseDetailPage({
       {course.modules && course.modules.length > 0 && (
         <section className="mt-10">
           <h2 className="font-display text-text-primary mb-4 text-xl font-semibold">
-            Course content
+            {t("course_content")}
           </h2>
           <div className="flex flex-col gap-4">
             {course.modules
@@ -76,7 +78,7 @@ export default async function CourseDetailPage({
                   className="glass-panel rounded-lg border p-4"
                 >
                   <h3 className="font-display text-text-primary font-medium">
-                    Module {modIndex + 1}: {mod.title}
+                    {t("module_label", { index: modIndex + 1 })}: {mod.title}
                   </h3>
                   <ul className="mt-3 flex flex-col gap-2">
                     {(mod.lessons ?? [])
@@ -103,7 +105,7 @@ export default async function CourseDetailPage({
 
       {(!course.modules || course.modules.length === 0) && (
         <p className="text-text-secondary mt-8 text-sm">
-          No modules yet. Add modules and lessons in Sanity Studio.
+          {t("no_modules")}
         </p>
       )}
     </div>

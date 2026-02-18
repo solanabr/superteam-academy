@@ -4,8 +4,11 @@ import { useEffect, useState } from "react";
 import { Link } from "@/i18n/routing";
 import { Footer } from "@/components/layout/Footer";
 import { getCourses, type CourseListItem } from "@/sanity/lib/queries";
+import { useTranslations } from "next-intl";
 
 export default function CoursesPage() {
+  const t = useTranslations("courses");
+  const tc = useTranslations("common");
   const [courses, setCourses] = useState<CourseListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<string>("all");
@@ -36,6 +39,8 @@ export default function CoursesPage() {
     }
   };
 
+  const tracks = ["all", "rust", "anchor", "security", "solana"];
+
   return (
     <div className="min-h-screen relative overflow-x-hidden">
       {/* Main Content */}
@@ -43,15 +48,15 @@ export default function CoursesPage() {
         {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
           <div className="flex flex-col gap-2 max-w-2xl">
-            <h2 className="font-display text-4xl md:text-5xl font-bold text-white tracking-tight">Explore Curriculum</h2>
-            <p className="text-text-secondary font-body text-lg">Master the Solana ecosystem one concept at a time. From Rust primitives to advanced anchor security.</p>
+            <h2 className="font-display text-4xl md:text-5xl font-bold text-white tracking-tight">{t("title")}</h2>
+            <p className="text-text-secondary font-body text-lg">{t("subtitle")}</p>
           </div>
           {/* Search */}
           <div className="relative w-full md:w-72 group">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary/50 material-symbols-outlined notranslate text-[18px]">search</span>
             <input
               className="w-full bg-[#0A0A0B] border border-[#1F1F1F] text-[#EDEDEF] rounded-md pl-9 pr-3 py-1.5 text-xs font-mono transition-colors placeholder:text-text-secondary/30 focus:border-[#383838] focus:outline-none"
-              placeholder="Search modules... (Ctrl+K)"
+              placeholder={t("search_placeholder")}
               type="text"
             />
           </div>
@@ -59,47 +64,26 @@ export default function CoursesPage() {
 
         {/* Filters */}
         <div className="flex flex-wrap gap-3 overflow-x-auto pb-2 no-scrollbar">
-          <button
-            onClick={() => setFilter("all")}
-            className={`px-3 py-1 rounded text-[11px] font-mono transition-all uppercase tracking-wider ${filter === "all" ? "bg-[#1F1F1F] text-white border border-[#383838]" : "border border-[#1F1F1F] bg-transparent text-[#8F9099] hover:bg-white/5"}`}
-          >
-            All
-          </button>
-          <button
-            onClick={() => setFilter("rust")}
-            className={`px-3 py-1 rounded text-[11px] font-mono transition-all uppercase tracking-wider ${filter === "rust" ? "bg-[#1F1F1F] text-white border border-[#383838]" : "border border-[#1F1F1F] bg-transparent text-[#8F9099] hover:bg-white/5"}`}
-          >
-            Rust
-          </button>
-          <button
-            onClick={() => setFilter("anchor")}
-            className={`px-3 py-1 rounded text-[11px] font-mono transition-all uppercase tracking-wider ${filter === "anchor" ? "bg-[#1F1F1F] text-white border border-[#383838]" : "border border-[#1F1F1F] bg-transparent text-[#8F9099] hover:bg-white/5"}`}
-          >
-            Anchor
-          </button>
-          <button
-            onClick={() => setFilter("security")}
-            className={`px-3 py-1 rounded text-[11px] font-mono transition-all uppercase tracking-wider ${filter === "security" ? "bg-[#1F1F1F] text-white border border-[#383838]" : "border border-[#1F1F1F] bg-transparent text-[#8F9099] hover:bg-white/5"}`}
-          >
-            Security
-          </button>
-          <button
-            onClick={() => setFilter("solana")}
-            className={`px-3 py-1 rounded text-[11px] font-mono transition-all uppercase tracking-wider ${filter === "solana" ? "bg-[#1F1F1F] text-white border border-[#383838]" : "border border-[#1F1F1F] bg-transparent text-[#8F9099] hover:bg-white/5"}`}
-          >
-            Solana
-          </button>
+          {tracks.map((track) => (
+            <button
+              key={track}
+              onClick={() => setFilter(track)}
+              className={`px-3 py-1 rounded text-[11px] font-mono transition-all uppercase tracking-wider ${filter === track ? "bg-[#1F1F1F] text-white border border-[#383838]" : "border border-[#1F1F1F] bg-transparent text-[#8F9099] hover:bg-white/5"}`}
+            >
+              {t(`filters.${track}`)}
+            </button>
+          ))}
         </div>
 
         {/* Course Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {isLoading ? (
             <div className="col-span-full text-center py-12 text-text-secondary">
-              Loading courses...
+              {t("loading")}
             </div>
           ) : filteredCourses.length === 0 ? (
             <div className="col-span-full text-center py-12 text-text-secondary">
-              {filter === "all" ? "No courses available yet." : `No courses found for ${filter}.`}
+              {filter === "all" ? t("none_available") : t("none_found", { filter: t(`filters.${filter}`) })}
             </div>
           ) : (
             filteredCourses.map((course) => (
@@ -124,12 +108,12 @@ export default function CoursesPage() {
                     <div className="mt-auto pt-4 border-t border-white/10 flex items-center gap-4 text-xs font-mono text-text-secondary">
                       <span className="flex items-center gap-1.5 text-solana">
                         <span className="material-symbols-outlined notranslate text-[14px]">{getDifficultyIcon(course.difficulty)}</span>
-                        {course.difficulty || "Beginner"}
+                        {course.difficulty ? t(course.difficulty.toLowerCase() as any) : t("beginner")}
                       </span>
                       <span className="w-1 h-1 rounded-full bg-[#1F1F1F]"></span>
                       <span className="flex items-center gap-1.5">
                         <span className="material-symbols-outlined notranslate text-[14px]">schedule</span>
-                        {course.duration || "TBD"}
+                        {course.duration || t("duration_tbd")}
                       </span>
                     </div>
                   </div>

@@ -3,12 +3,14 @@ import { notFound } from "next/navigation";
 import { getCourseBySlug, getLessonById } from "@/sanity/lib/queries";
 import { LessonViewClient } from "@/components/lessons/LessonViewClient";
 import { EnrollmentGate } from "@/components/courses/EnrollmentGate";
+import { getTranslations } from "next-intl/server";
 
 export default async function LessonPage({
   params,
 }: {
   params: Promise<{ slug: string; id: string }>;
 }) {
+  const t = await getTranslations("courses");
   const { slug, id } = await params;
   const course = await getCourseBySlug(slug);
   const lesson = await getLessonById(id);
@@ -17,7 +19,7 @@ export default async function LessonPage({
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       <nav className="text-text-secondary mb-6 flex items-center gap-2 text-sm">
-        <Link href="/courses" className="hover:text-solana transition-colors">Curriculum</Link>
+        <Link href="/courses" className="hover:text-solana transition-colors">{t("curriculum")}</Link>
         <span>/</span>
         <Link href={`/courses/${slug}`} className="hover:text-solana transition-colors">
           {course.title}

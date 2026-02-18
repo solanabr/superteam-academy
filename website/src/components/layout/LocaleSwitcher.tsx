@@ -1,35 +1,70 @@
 "use client";
 
+import { useLocale, useTranslations } from "next-intl";
+import { usePathname, useRouter } from "@/i18n/routing";
+import { useState, useRef, useEffect } from "react";
+
 const locales = [
-  { code: "en", label: "EN" },
-  { code: "pt-BR", label: "PT-BR" },
-  { code: "es", label: "ES" },
+  { code: "en", label: "English" },
+  { code: "pt-BR", label: "Português (BR)" },
+  { code: "es", label: "Español" },
 ] as const;
 
 export function LocaleSwitcher() {
-  // Full next-intl wiring deferred: Next 16 + Turbopack has known config resolution issue.
-  // Messages live in src/messages/*.json; i18n/request.ts is ready. Re-enable plugin in next.config when fixed.
-  const currentLocale = "en";
+  const t = useTranslations("common");
+  const locale = useLocale();
+  const router = useRouter();
+  const pathname = usePathname();
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  function setLocale(code: string) {
-    document.cookie = `locale=${code};path=/;max-age=31536000`;
-    window.location.reload();
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  function onSelectChange(nextLocale: string) {
+    router.replace(pathname, { locale: nextLocale });
+    setIsOpen(false);
   }
 
+  const currentLabel = locales.find((l) => l.code === locale)?.label || "English";
+
   return (
-    <nav className="flex items-center gap-1" aria-label="Language switcher">
-      {locales.map(({ code, label }) => (
-        <button
-          key={code}
-          type="button"
-          onClick={() => setLocale(code)}
-          className={`text-sm transition-colors hover:text-text-primary ${
-            currentLocale === code ? "text-solana font-medium" : "text-text-secondary"
-          }`}
-        >
-          {label}
-        </button>
-      ))}
-    </nav>
+    <div className="relative" ref={dropdownRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-white/5 transition-all text-sm font-medium text-text-muted hover:text-white"
+      >
+        <span className="material-symbols-outlined notranslate text-lg">language</span>
+        <span className="hidden sm:inline">{currentLabel}</span>
+        <span className="material-symbols-outlined notranslate text-sm">
+          {isOpen ? "expand_less" : "expand_more"}
+        </span>
+      </button>
+
+      {isOpen && (
+        <div className="absolute right-0 mt-2 w-40 rounded-lg bg-void/95 backdrop-blur-md border border-white/10 shadow-xl overflow-hidden z-50">
+          <div className="py-1">
+            {locales.map((l) => (
+              <button
+                key={l.code}
+                onClick={() => onSelectChange(l.code)}
+                className={`w-full text-left px-4 py-2 text-sm transition-colors hover:bg-white/5 ${locale === l.code ? "text-solana font-medium" : "text-text-secondary"
+                  }`}
+              >
+                {l.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

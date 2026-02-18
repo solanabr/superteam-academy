@@ -1,6 +1,7 @@
 "use client";
 
 import { Link } from "@/i18n/routing";
+import { useTranslations } from "next-intl";
 import { usePathname, useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { useUIStore } from "@/store/ui-store";
@@ -10,6 +11,7 @@ import { useEnrollmentStore } from "@/store/enrollment-store";
 import { useLessonStore } from "@/store/lesson-store";
 import { usePlaygroundStore } from "@/store/playground-store";
 import { useAppUser } from "@/hooks/useAppUser";
+import { LocaleSwitcher } from "../layout/LocaleSwitcher";
 
 export function PlatformNavbar() {
     const pathname = usePathname();
@@ -25,14 +27,16 @@ export function PlatformNavbar() {
     const toggleMobileMenu = useUIStore((s) => s.toggleMobileMenu);
     const setMobileMenuOpen = useUIStore((s) => s.setMobileMenuOpen);
 
+    const t = useTranslations("nav");
+
     // Check if user is professor/admin
     const isProfessor = user?.role === "professor" || user?.role === "admin";
 
     const navLinks = [
-        { href: "/dashboard", label: "Dashboard", icon: "dashboard" },
-        { href: "/courses", label: "Courses", icon: "school" },
-        { href: "/achievements", label: "Achievements", icon: "trophy" },
-        ...(isProfessor ? [{ href: "/teach/courses", label: "Teach", icon: "edit_note" }] : []),
+        { href: "/dashboard", label: t("dashboard"), icon: "dashboard" },
+        { href: "/courses", label: t("courses"), icon: "school" },
+        { href: "/achievements", label: t("achievements"), icon: "trophy" },
+        ...(isProfessor ? [{ href: "/teach/courses", label: t("teach"), icon: "edit_note" }] : []),
     ];
 
     const isActive = (href: string) => {
@@ -98,6 +102,11 @@ export function PlatformNavbar() {
 
             {/* Right Side: Wallet + User Profile */}
             <div className="flex items-center gap-3">
+                {/* Locale Switcher */}
+                <div className="hidden md:block">
+                    <LocaleSwitcher />
+                </div>
+
                 {/* Wallet Address (Desktop) */}
                 {user?.walletAddress && (
                     <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10">
@@ -142,14 +151,14 @@ export function PlatformNavbar() {
                                     onClick={() => setProfileOpen(false)}
                                 >
                                     <span className="material-symbols-outlined notranslate text-lg">settings</span>
-                                    <span className="text-sm font-medium">Settings</span>
+                                    <span className="text-sm font-medium">{t("settings")}</span>
                                 </Link>
                                 <button
                                     onClick={handleLogout}
                                     className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 text-text-muted hover:text-white transition-all"
                                 >
                                     <span className="material-symbols-outlined notranslate text-lg">logout</span>
-                                    <span className="text-sm font-medium">Logout</span>
+                                    <span className="text-sm font-medium">{t("logout")}</span>
                                 </button>
                             </div>
                         </div>
@@ -168,34 +177,36 @@ export function PlatformNavbar() {
             </div>
 
             {/* Mobile Menu */}
-            {isMobileMenuOpen && (
-                <div className="absolute top-16 left-0 right-0 md:hidden bg-void/95 backdrop-blur-md border-b border-white/10 shadow-xl">
-                    <div className="p-4 space-y-2">
-                        {navLinks.map((link) => (
-                            <Link
-                                key={link.href}
-                                href={link.href}
-                                className={`flex items-center gap-3 px-4 py-3 rounded-lg font-display font-medium text-sm transition-all ${isActive(link.href)
-                                    ? "bg-solana/10 text-solana border border-solana/20"
-                                    : "text-text-muted hover:text-white hover:bg-white/5"
-                                    }`}
-                                onClick={() => setMobileMenuOpen(false)}
+            {
+                isMobileMenuOpen && (
+                    <div className="absolute top-16 left-0 right-0 md:hidden bg-void/95 backdrop-blur-md border-b border-white/10 shadow-xl">
+                        <div className="p-4 space-y-2">
+                            {navLinks.map((link) => (
+                                <Link
+                                    key={link.href}
+                                    href={link.href}
+                                    className={`flex items-center gap-3 px-4 py-3 rounded-lg font-display font-medium text-sm transition-all ${isActive(link.href)
+                                        ? "bg-solana/10 text-solana border border-solana/20"
+                                        : "text-text-muted hover:text-white hover:bg-white/5"
+                                        }`}
+                                    onClick={() => setMobileMenuOpen(false)}
+                                >
+                                    <span className="material-symbols-outlined notranslate text-lg">{link.icon}</span>
+                                    <span>{link.label}</span>
+                                </Link>
+                            ))}
+                            {/* Mobile Logout */}
+                            <button
+                                onClick={handleLogout}
+                                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg font-display font-medium text-sm text-text-muted hover:text-white hover:bg-white/5 transition-all"
                             >
-                                <span className="material-symbols-outlined notranslate text-lg">{link.icon}</span>
-                                <span>{link.label}</span>
-                            </Link>
-                        ))}
-                        {/* Mobile Logout */}
-                        <button
-                            onClick={handleLogout}
-                            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg font-display font-medium text-sm text-text-muted hover:text-white hover:bg-white/5 transition-all"
-                        >
-                            <span className="material-symbols-outlined notranslate text-lg">logout</span>
-                            <span>Logout</span>
-                        </button>
+                                <span className="material-symbols-outlined notranslate text-lg">logout</span>
+                                <span>{t("logout")}</span>
+                            </button>
+                        </div>
                     </div>
-                </div>
-            )}
-        </nav>
+                )
+            }
+        </nav >
     );
 }

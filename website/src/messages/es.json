@@ -1,14 +1,157 @@
 {
-  "common": {
-    "logoAlt": "Superteam Academy",
-    "connectWallet": "Conectar billetera",
-    "dashboard": "Panel",
-    "curriculum": "Plan de estudios",
-    "achievements": "Logros",
-    "settings": "Ajustes"
-  },
-  "home": {
-    "title": "Superteam Academy",
-    "subtitle": "Plataforma de aprendizaje descentralizada en Solana"
-  }
+    "common": {
+        "loading": "Cargando...",
+        "error": "Algo salió mal",
+        "save": "Guardar",
+        "cancel": "Cancelar",
+        "delete": "Eliminar",
+        "edit": "Editar",
+        "back": "Volver",
+        "search": "Buscar...",
+        "continue": "Continuar",
+        "view_all": "Ver todo"
+    },
+    "nav": {
+        "dashboard": "Panel",
+        "courses": "Cursos",
+        "achievements": "Logros",
+        "teach": "Enseñar",
+        "settings": "Ajustes",
+        "logout": "Cerrar sesión"
+    },
+    "dashboard": {
+        "welcome": "Bienvenido de nuevo, {name}",
+        "wallet_id": "ID de Billetera",
+        "browse_courses": "Explorar Cursos",
+        "stats": {
+            "xp": "Experiencia Total",
+            "streak": "Racha Actual",
+            "rank": "Rango Actual",
+            "days": "Días",
+            "next_rank": "Próximo Rango: {rank} ({xp} XP)",
+            "max_rank": "¡Rango máximo alcanzado!",
+            "streak_bonus": "¡Sigue así! {days} días para el bono semanal.",
+            "streak_amazing": "🔥 ¡Increíble! Mayor racha: {days} días"
+        },
+        "active_course": "Curso Activo",
+        "up_next": "A continuación",
+        "trophy_case": "Vitrina de Trofeos",
+        "unlocked": "{count}/{total} Desbloqueados"
+    },
+    "settings": {
+        "title": "Ajustes",
+        "wallet_address": "Dirección de Billetera",
+        "account_role": "Rol de Cuenta",
+        "role_info": "el rol de cuenta no es editable, contacta al administrador para cambios",
+        "display_name": "Nombre de Pantalla",
+        "display_name_placeholder": "Ingresa tu nombre",
+        "email": "Correo electrónico",
+        "email_placeholder": "Ingresa tu correo",
+        "bio": "Biografía",
+        "bio_placeholder": "Cuéntanos sobre ti",
+        "save_changes": "Guardar Cambios",
+        "saving": "Guardando...",
+        "save_success": "✓ Guardado con éxito",
+        "save_error": "✗ Error al guardar",
+        "connect_wallet_prompt": "Por favor conecta tu billetera para ver los ajustes.",
+        "linked_accounts": {
+            "google": "Cuenta de Google",
+            "github": "Cuenta de GitHub",
+            "email": "Cuenta de Correo",
+            "linked": "Vinculado",
+            "tooltip": "Tu dirección de billetera está vinculada a esta cuenta de {provider}. Esto no se puede cambiar."
+        }
+    },
+    "courses": {
+        "title": "Explorar Currículo",
+        "subtitle": "Domina el ecosistema de Solana paso a paso. Desde conceptos básicos de Rust hasta seguridad avanzada en Anchor.",
+        "search_placeholder": "Buscar módulos... (Ctrl+K)",
+        "filters": {
+            "all": "Todos",
+            "rust": "Rust",
+            "anchor": "Anchor",
+            "security": "Seguridad",
+            "solana": "Solana"
+        },
+        "loading": "Cargando cursos...",
+        "none_available": "No hay cursos disponibles aún.",
+        "none_found": "No se encontraron cursos para {filter}.",
+        "duration_tbd": "TBD",
+        "beginner": "Principiante",
+        "intermediate": "Intermedio",
+        "advanced": "Avanzado",
+        "instructor": "Instructor",
+        "lessons_count": "{count} lecciones",
+        "course_content": "Contenido del curso",
+        "module_label": "Módulo {index}",
+        "no_modules": "Aún no hay módulos. Agrega módulos y lecciones en Sanity Studio.",
+        "curriculum": "Currículo",
+        "all_courses": "Todos los cursos"
+    },
+    "achievements": {
+        "title": "Logros",
+        "subtitle": "Desbloquea logros para ganar XP y mostrar tu progreso.",
+        "back_to_dashboard": "Volver al Panel"
+    },
+    "lessons": {
+        "breadcrumb_courses": "Cursos",
+        "module_label": "Módulo {index}",
+        "est_time": "Est. {mins} mins",
+        "previous": "Anterior",
+        "next_lesson": "Siguiente Lección",
+        "continue": "Continuar",
+        "finish_course": "Finalizar Curso",
+        "completing": "Completando...",
+        "course_complete_grad": "Curso Completado 🎓",
+        "lesson_completed": "¡Lección Completada!",
+        "next_lesson_cta": "¡Buen trabajo! Continúa con la siguiente lección para seguir construyendo.",
+        "course_complete_cta": "¡Felicidades! Has completado todas las lecciones de este curso. 🎓",
+        "building": "Construyendo...",
+        "build_deploy": "Construir y Desplegar",
+        "terminal": "Terminal",
+        "ready": "Listo",
+        "completed": "Completado",
+        "reset_code": "Reiniciar Código",
+        "no_output": "> Sin salida",
+        "execution_failed": "> La ejecución falló sin salida",
+        "error_no_code": "> error: no se proporcionó código. Por favor escribe algo de código primero."
+    },
+    "enrollment": {
+        "checking": "Comprobando inscripción...",
+        "sign_in_required": "Inicia sesión para acceder a esta lección",
+        "sign_in_info": "Debes iniciar sesión y estar inscrito en este curso para ver el contenido de la lección.",
+        "sign_in_button": "Iniciar sesión",
+        "enrollment_required": "Inscripción requerida",
+        "enrollment_info": "Debes inscribirte en este curso antes de poder acceder a sus lecciones.",
+        "enroll_now": "Inscribirse ahora",
+        "browse_courses": "Explorar cursos"
+    },
+    "footer": {
+        "made_with": "Hecho con",
+        "from": "por Superteam Brazil",
+        "ubuntu_quote": "ubuntu - Soy porque somos.",
+        "mission": "esforcémonos por el desarrollo de una blockchain mejor y más segura",
+        "exit": "salir"
+    },
+    "course_detail": {
+        "your_progress": "Tu progreso: {current}/{total} lecciones ({pct}%)",
+        "login_to_enroll": "Inicia sesión y conecta tu billetera para inscribirte en {title}.",
+        "enrolled": "Inscrito",
+        "enrolling": "Inscribiendo...",
+        "enroll_cta": "Inscribirse en este curso",
+        "completion_title": "¡Curso Completado!",
+        "completion_info": "Has terminado todas las lecciones.",
+        "finalize_button": "Finalizar Curso",
+        "bonus_available": "¡Bono de Finalización Disponible!",
+        "bonus_info": "Reclama tu recompensa de {xp} XP por completar este curso.",
+        "claim_button": "Reclamar {xp} XP",
+        "course_finished_claimed": "Curso Completado y Bono Reclamado",
+        "finalize_failed": "Error al finalizar el curso. Por favor, inténtalo de nuevo.",
+        "claim_failed": "Error al reclamar el bono. Por favor, inténtalo de nuevo."
+    },
+    "locale": {
+        "en": "English",
+        "es": "Español",
+        "pt-BR": "Português (BR)"
+    }
 }

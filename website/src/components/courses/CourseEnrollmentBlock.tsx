@@ -5,6 +5,7 @@ import { usePrivy } from "@privy-io/react-auth";
 import { useWallets } from "@privy-io/react-auth/solana";
 import { EnrollButton } from "./EnrollButton";
 import { useEnrollmentStore } from "@/store/enrollment-store";
+import { useTranslations } from "next-intl";
 
 type CourseEnrollmentBlockProps = {
   courseId: string;
@@ -12,9 +13,10 @@ type CourseEnrollmentBlockProps = {
 };
 
 export function CourseEnrollmentBlock({ courseId, courseTitle }: CourseEnrollmentBlockProps) {
+  const t = useTranslations("course_detail");
   const { authenticated, user } = usePrivy();
   const { wallets } = useWallets();
-  
+
   const linkedAddress =
     user?.wallet?.address ?? user?.linkedAccounts?.find((a) => a.type === "wallet")?.address;
   const walletAddress = linkedAddress ?? wallets?.[0]?.address;
@@ -36,7 +38,7 @@ export function CourseEnrollmentBlock({ courseId, courseTitle }: CourseEnrollmen
   }
 
   if (loading && !enrollment) {
-    return <span className="text-text-secondary text-sm">Loading…</span>;
+    return <span className="text-text-secondary text-sm">{t("enrolling")}</span>;
   }
 
   const enrolled = enrollment !== undefined;
@@ -48,7 +50,7 @@ export function CourseEnrollmentBlock({ courseId, courseTitle }: CourseEnrollmen
     <div className="flex flex-col gap-3">
       {enrolled && (
         <p className="text-text-secondary text-sm">
-          Your progress: {completedCount}/{totalLessons} lessons ({pct}%)
+          {t("your_progress", { current: completedCount, total: totalLessons, pct })}
         </p>
       )}
       <EnrollButton courseId={courseId} courseTitle={courseTitle} />

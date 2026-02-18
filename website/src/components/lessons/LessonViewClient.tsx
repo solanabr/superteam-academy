@@ -9,6 +9,7 @@ import { useAppUser } from "@/hooks/useAppUser";
 import { Link } from "@/i18n/routing";
 import { useLessonStore } from "@/store/lesson-store";
 import { usePlaygroundStore } from "@/store/playground-store";
+import { useTranslations } from "next-intl";
 
 type LessonViewClientProps = {
   course: CourseDetail;
@@ -45,6 +46,7 @@ function portableTextToParagraphs(content: unknown): string[] {
 const EMPTY_STATS: { memory?: string; cpuTime?: string } = {};
 
 export function LessonViewClient({ course, lesson }: LessonViewClientProps) {
+  const t = useTranslations("lessons");
   const lessonId = lesson._id;
   const getCodeFromEditorRef = useRef<(() => string) | null>(null);
 
@@ -103,7 +105,7 @@ export function LessonViewClient({ course, lesson }: LessonViewClientProps) {
   const handleRunCode = async () => {
     const codeToRun = getCodeFromEditorRef.current?.() || playgroundCode;
     if (!codeToRun.trim()) {
-      setOutput(lessonId, "> error: no code provided. Please write some code first.\n");
+      setOutput(lessonId, t("error_no_code") + "\n");
       setStatus(lessonId, "error");
       return;
     }
@@ -129,7 +131,7 @@ export function LessonViewClient({ course, lesson }: LessonViewClientProps) {
       if (data.stdout) lines.push(data.stdout);
       if (data.stderr) lines.push(data.stderr);
       const combinedOutput = lines.join("\n");
-      setOutput(lessonId, combinedOutput || (data.passed ? "> No output\n" : "> Execution failed with no output\n"));
+      setOutput(lessonId, combinedOutput || (data.passed ? t("no_output") + "\n" : t("execution_failed") + "\n"));
       if (data.memory || data.cpuTime) {
         setStats(lessonId, { memory: data.memory, cpuTime: data.cpuTime });
       }
@@ -161,7 +163,7 @@ export function LessonViewClient({ course, lesson }: LessonViewClientProps) {
           {/* Breadcrumbs */}
           <div className="hidden md:flex items-center gap-2 ml-4">
             <span className="text-white/20">/</span>
-            <Link className="text-text-secondary hover:text-solana text-sm font-medium transition-colors" href="/courses">Courses</Link>
+            <Link className="text-text-secondary hover:text-solana text-sm font-medium transition-colors" href="/courses">{t("breadcrumb_courses")}</Link>
             <span className="text-white/20">/</span>
             <Link className="text-text-secondary hover:text-solana text-sm font-medium transition-colors" href={`/courses/${course.slug}`}>{course.title}</Link>
             <span className="text-white/20">/</span>
@@ -194,8 +196,8 @@ export function LessonViewClient({ course, lesson }: LessonViewClientProps) {
             {/* Lesson Header */}
             <div className="mb-8">
               <div className="flex items-center gap-2 mb-4">
-                <span className="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider bg-rust/20 text-rust border border-rust/30">Module {currentIndex + 1}</span>
-                <span className="text-text-secondary text-xs font-mono">Est. 15 mins</span>
+                <span className="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider bg-rust/20 text-rust border border-rust/30">{t("module_label", { index: currentIndex + 1 })}</span>
+                <span className="text-text-secondary text-xs font-mono">{t("est_time", { mins: 15 })}</span>
               </div>
               <h1 className="font-display text-4xl font-bold leading-tight mb-4 text-white tracking-tight">{lesson.title}</h1>
               {contentParagraphs.length > 0 && (
@@ -221,7 +223,7 @@ export function LessonViewClient({ course, lesson }: LessonViewClientProps) {
               {prevLesson ? (
                 <Link href={`/courses/${course.slug}/lessons/${prevLesson._id}`} className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium text-text-secondary hover:text-white hover:bg-white/5 transition-all border border-transparent hover:border-white/10">
                   <span className="material-symbols-outlined text-lg">arrow_back</span>
-                  Previous
+                  {t("previous")}
                 </Link>
               ) : <div></div>}
 
@@ -229,7 +231,7 @@ export function LessonViewClient({ course, lesson }: LessonViewClientProps) {
                 /* Last lesson completed — finished state */
                 <div className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold bg-solana/20 text-solana border border-solana/30 cursor-default">
                   <span className="material-symbols-outlined text-lg">check_circle</span>
-                  Course Complete 🎓
+                  {t("course_complete_grad")}
                 </div>
               ) : isCompleted && nextLesson ? (
                 /* Lesson completed — go to next */
@@ -237,7 +239,7 @@ export function LessonViewClient({ course, lesson }: LessonViewClientProps) {
                   href={`/courses/${course.slug}/lessons/${nextLesson._id}`}
                   className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold bg-solana text-[#0A0A0B] hover:brightness-110 active:scale-[0.98] transition-all shadow-[0_0_20px_-5px_rgba(20,240,148,0.4)]"
                 >
-                  Next Lesson
+                  {t("next_lesson")}
                   <span className="material-symbols-outlined text-lg">arrow_forward</span>
                 </Link>
               ) : (
@@ -252,7 +254,7 @@ export function LessonViewClient({ course, lesson }: LessonViewClientProps) {
                   disabled={isCompleting}
                   className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold bg-solana text-[#0A0A0B] hover:brightness-110 active:scale-[0.98] transition-all shadow-[0_0_20px_-5px_rgba(20,240,148,0.4)] disabled:opacity-50"
                 >
-                  {isCompleting ? "Completing..." : (nextLesson ? "Continue" : "Finish Course")}
+                  {isCompleting ? t("completing") : (nextLesson ? t("continue") : t("finish_course"))}
                   <span className="material-symbols-outlined text-lg">arrow_forward</span>
                 </button>
               )}
@@ -269,11 +271,11 @@ export function LessonViewClient({ course, lesson }: LessonViewClientProps) {
                 <span className="material-symbols-outlined text-5xl text-solana">check_circle</span>
               </div>
               <div className="text-center">
-                <h3 className="text-2xl font-display font-bold text-white mb-2">Lesson Completed!</h3>
+                <h3 className="text-2xl font-display font-bold text-white mb-2">{t("lesson_completed")}</h3>
                 <p className="text-text-secondary text-sm max-w-xs">
                   {nextLesson
-                    ? "Great work! Continue to the next lesson to keep building."
-                    : "Congratulations! You've completed all lessons in this course. 🎓"}
+                    ? t("next_lesson_cta")
+                    : t("course_complete_cta")}
                 </p>
               </div>
               {nextLesson && (
@@ -281,7 +283,7 @@ export function LessonViewClient({ course, lesson }: LessonViewClientProps) {
                   href={`/courses/${course.slug}/lessons/${nextLesson._id}`}
                   className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold bg-solana text-[#0A0A0B] hover:brightness-110 active:scale-[0.98] transition-all shadow-[0_0_20px_-5px_rgba(20,240,148,0.4)]"
                 >
-                  Next Lesson
+                  {t("next_lesson")}
                   <span className="material-symbols-outlined text-lg">arrow_forward</span>
                 </Link>
               )}
@@ -299,7 +301,7 @@ export function LessonViewClient({ course, lesson }: LessonViewClientProps) {
             </div>
             <div className="flex items-center gap-3 pr-2">
               {!isCompleted && (
-                <button className="text-text-secondary hover:text-white transition-colors p-1 rounded hover:bg-white/5" onClick={() => setCode(lessonId, "")} title="Reset Code">
+                <button className="text-text-secondary hover:text-white transition-colors p-1 rounded hover:bg-white/5" onClick={() => setCode(lessonId, "")} title={t("reset_code")}>
                   <span className="material-symbols-outlined text-[18px]">restart_alt</span>
                 </button>
               )}
@@ -327,7 +329,7 @@ export function LessonViewClient({ course, lesson }: LessonViewClientProps) {
                   <span className={`material-symbols-outlined ${playgroundStatus === "running" ? "animate-spin" : "group-hover:animate-spin"}`}>
                     {playgroundStatus === "running" ? "progress_activity" : "settings"}
                   </span>
-                  <span>{playgroundStatus === "running" ? "Building..." : "Build & Deploy"}</span>
+                  <span>{playgroundStatus === "running" ? t("building") : t("build_deploy")}</span>
                 </button>
               </div>
             )}
@@ -337,7 +339,7 @@ export function LessonViewClient({ course, lesson }: LessonViewClientProps) {
           <div className="h-48 border-t border-white/10 bg-[#020202] flex flex-col shrink-0">
             <div className="h-8 flex items-center justify-between px-4 bg-white/[0.03]">
               <div className="flex items-center gap-4">
-                <span className="text-xs font-mono uppercase tracking-widest text-text-secondary">Terminal</span>
+                <span className="text-xs font-mono uppercase tracking-widest text-text-secondary">{t("terminal")}</span>
                 <div className="flex items-center gap-2">
                   <span className="size-2 rounded-full bg-red-500/50"></span>
                   <span className="size-2 rounded-full bg-yellow-500/50"></span>
@@ -347,7 +349,7 @@ export function LessonViewClient({ course, lesson }: LessonViewClientProps) {
               <div className="flex items-center gap-2">
                 <span className={`text-xs font-mono flex items-center gap-1 ${isCompleted ? 'text-solana' : 'text-green-400'}`}>
                   <span className="material-symbols-outlined text-[14px]">check_circle</span>
-                  {isCompleted ? 'Completed' : 'Ready'}
+                  {isCompleted ? t("completed") : t("ready")}
                 </span>
               </div>
             </div>

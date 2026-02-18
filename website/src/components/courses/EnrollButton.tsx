@@ -4,6 +4,7 @@ import { usePrivy } from "@privy-io/react-auth";
 import { useWallets } from "@privy-io/react-auth/solana";
 import { Button } from "@/components/ui/button";
 import { useEnrollmentStore } from "@/store/enrollment-store";
+import { useTranslations } from "next-intl";
 
 type EnrollButtonProps = {
   courseId: string;
@@ -12,9 +13,10 @@ type EnrollButtonProps = {
 };
 
 export function EnrollButton({ courseId, courseTitle, className }: EnrollButtonProps) {
+  const t = useTranslations("course_detail");
   const { authenticated, user } = usePrivy();
   const { wallets } = useWallets();
-  
+
   const linkedAddress =
     user?.wallet?.address ?? user?.linkedAccounts?.find((a) => a.type === "wallet")?.address;
   const walletAddress = linkedAddress ?? wallets?.[0]?.address;
@@ -27,7 +29,7 @@ export function EnrollButton({ courseId, courseTitle, className }: EnrollButtonP
 
   const handleEnroll = async () => {
     if (!authenticated || !walletAddress) return;
-    
+
     try {
       await enroll(walletAddress, courseId);
     } catch (e) {
@@ -39,7 +41,7 @@ export function EnrollButton({ courseId, courseTitle, className }: EnrollButtonP
   if (!authenticated) {
     return (
       <p className="text-text-secondary text-sm">
-        Log in and connect your wallet to enroll in {courseTitle}.
+        {t("login_to_enroll", { title: courseTitle })}
       </p>
     );
   }
@@ -49,7 +51,7 @@ export function EnrollButton({ courseId, courseTitle, className }: EnrollButtonP
   if (enrolled) {
     return (
       <Button disabled className={className}>
-        Enrolled
+        {t("enrolled")}
       </Button>
     );
   }
@@ -61,7 +63,7 @@ export function EnrollButton({ courseId, courseTitle, className }: EnrollButtonP
         disabled={loading}
         className={className}
       >
-        {loading ? "Enrolling…" : "Enroll in this course"}
+        {loading ? t("enrolling") : t("enroll_cta")}
       </Button>
       {error && <p className="text-rust text-sm">{error}</p>}
     </div>

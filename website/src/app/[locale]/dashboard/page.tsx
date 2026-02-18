@@ -8,8 +8,10 @@ import { ACHIEVEMENTS } from "@/lib/achievements";
 import { getRankFromXp, getRankProgress, getLevelFromXp } from "@/lib/ranks";
 import { Link } from "@/i18n/routing";
 import { Footer } from "@/components/layout/Footer";
+import { useTranslations } from "next-intl";
 
 export default function DashboardPage() {
+    const t = useTranslations("dashboard");
     const { user } = useAppUser();
 
     // Read from Zustand stores directly
@@ -60,17 +62,19 @@ export default function DashboardPage() {
                         <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-solana/10 text-solana uppercase tracking-wider border border-solana/20">Cycle 04</span>
                         <span className="w-1.5 h-1.5 rounded-full bg-solana animate-pulse"></span>
                     </div>
-                    <h2 className="text-3xl md:text-4xl font-display font-bold text-white tracking-tight">Welcome back, {(user?.profile as any)?.displayName || (user?.walletAddress ? "Dev" : "Student")}</h2>
+                    <h2 className="text-3xl md:text-4xl font-display font-bold text-white tracking-tight">
+                        {t("welcome", { name: (user?.profile as any)?.displayName || (user?.walletAddress ? "Dev" : "Student") })}
+                    </h2>
                     <p className="font-mono text-text-muted text-sm flex items-center gap-2 mt-1">
                         <span className="material-symbols-outlined notranslate text-sm">wallet</span>
-                        Wallet ID: <span className="text-solana/80">{user?.walletAddress ? `${user.walletAddress.slice(0, 4)}...${user.walletAddress.slice(-4)}` : "Not Connected"}</span>
+                        {t("wallet_id")}: <span className="text-solana/80">{user?.walletAddress ? `${user.walletAddress.slice(0, 4)}...${user.walletAddress.slice(-4)}` : "Not Connected"}</span>
                     </p>
                 </div>
                 <div className="flex gap-3">
                     <Link href="/courses">
                         <button className="flex items-center gap-2 px-4 py-2 bg-solana/10 hover:bg-solana/20 border border-solana/20 text-solana rounded-lg text-sm font-medium transition-all shadow-[0_0_15px_rgba(20,241,149,0.1)] hover:shadow-[0_0_20px_rgba(20,241,149,0.2)]">
                             <span className="material-symbols-outlined notranslate text-lg">code</span>
-                            Browse Courses
+                            {t("browse_courses")}
                         </button>
                     </Link>
                 </div>
@@ -83,7 +87,7 @@ export default function DashboardPage() {
                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                         <span className="material-symbols-outlined notranslate text-4xl text-white">data_usage</span>
                     </div>
-                    <p className="text-text-muted text-[10px] font-mono uppercase tracking-[0.2em] font-bold">Total Experience</p>
+                    <p className="text-text-muted text-[10px] font-mono uppercase tracking-[0.2em] font-bold">{t("stats.xp")}</p>
                     <div className="flex items-baseline gap-2 mt-1">
                         <h3 className="text-4xl font-mono font-bold text-white">
                             {isLoading ? "..." : xp.toLocaleString()}
@@ -100,12 +104,14 @@ export default function DashboardPage() {
                     <div className="absolute top-0 right-0 p-4 opacity-50">
                         <span className="material-symbols-outlined notranslate text-4xl text-rust animate-pulse-glow">local_fire_department</span>
                     </div>
-                    <p className="text-text-muted text-sm font-display uppercase tracking-widest font-semibold">Current Streak</p>
+                    <p className="text-text-muted text-sm font-display uppercase tracking-widest font-semibold">{t("stats.streak")}</p>
                     <h3 className="text-4xl font-mono font-bold text-white">
-                        {isLoading ? "..." : currentStreak} <span className="text-lg text-text-muted font-normal">Days</span>
+                        {isLoading ? "..." : currentStreak} <span className="text-lg text-text-muted font-normal">{t("stats.days")}</span>
                     </h3>
                     <p className="text-xs text-text-muted">
-                        {currentStreak >= 7 ? `🔥 Amazing! Longest: ${longestStreak} days` : `Keep it up! ${7 - currentStreak} days to 1 week bonus.`}
+                        {currentStreak >= 7
+                            ? t("stats.streak_amazing", { days: longestStreak })
+                            : t("stats.streak_bonus", { days: 7 - currentStreak })}
                     </p>
                 </div>
 
@@ -114,12 +120,14 @@ export default function DashboardPage() {
                     <div className="absolute top-0 right-0 p-4 opacity-20 group-hover:opacity-40 transition-opacity">
                         <span className="material-symbols-outlined notranslate text-4xl text-white">military_tech</span>
                     </div>
-                    <p className="text-text-muted text-sm font-display uppercase tracking-widest font-semibold">Current Rank</p>
+                    <p className="text-text-muted text-sm font-display uppercase tracking-widest font-semibold">{t("stats.rank")}</p>
                     <h3 className={`text-4xl font-display font-bold ${rankInfo.color}`}>
                         {isLoading ? "..." : rankInfo.name}
                     </h3>
                     <p className="text-xs text-text-muted">
-                        {rankInfo.nextRank ? `Next Rank: ${rankInfo.nextRank} (${rankInfo.nextXp?.toLocaleString()} XP)` : "Max rank achieved!"}
+                        {rankInfo.nextRank
+                            ? t("stats.next_rank", { rank: rankInfo.nextRank, xp: rankInfo.nextXp ? rankInfo.nextXp.toLocaleString() : "0" })
+                            : t("stats.max_rank")}
                     </p>
                 </div>
             </div>
@@ -130,7 +138,7 @@ export default function DashboardPage() {
                     {/* Active Course Card */}
                     <section>
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-display font-semibold text-white">Active Course</h3>
+                            <h3 className="text-lg font-display font-semibold text-white">{t("active_course")}</h3>
                             <Link className="text-xs font-mono text-solana hover:underline" href="/courses">View All Courses -&gt;</Link>
                         </div>
                         <div className="glass-panel rounded-2xl p-1 border border-white/10 group glass-card-hover transition-all duration-300">
@@ -173,7 +181,7 @@ export default function DashboardPage() {
 
                     {/* Recent Activity / Modules */}
                     <section>
-                        <h3 className="text-lg font-display font-semibold text-white mb-4">Up Next</h3>
+                        <h3 className="text-lg font-display font-semibold text-white mb-4">{t("up_next")}</h3>
                         <div className="flex flex-col gap-3">
                             {/* Module Item 1 */}
                             <div className="glass-panel p-4 rounded-lg flex items-center gap-4 hover:bg-white/5 transition-colors cursor-pointer group border-l-2 border-l-transparent hover:border-l-solana">
@@ -197,9 +205,9 @@ export default function DashboardPage() {
                     {/* Trophy Case - Dynamic */}
                     <section className="flex flex-col h-full">
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-display font-semibold text-white">Trophy Case</h3>
+                            <h3 className="text-lg font-display font-semibold text-white">{t("trophy_case")}</h3>
                             <span className="text-xs font-mono text-text-muted">
-                                {isAchievementsLoading ? "..." : `${unlockedCount}/${totalCount} Unlocked`}
+                                {isAchievementsLoading ? "..." : t("unlocked", { count: unlockedCount, total: totalCount })}
                             </span>
                         </div>
                         <div className="glass-panel rounded-xl p-6 border border-white/10 flex-1 relative overflow-hidden">

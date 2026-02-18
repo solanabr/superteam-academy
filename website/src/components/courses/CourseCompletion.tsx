@@ -5,6 +5,7 @@ import { usePrivy } from "@privy-io/react-auth";
 import { useWallets } from "@privy-io/react-auth/solana";
 import { useEnrollmentStore } from "@/store/enrollment-store";
 import { Loader2, Trophy, CheckCircle } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 type CourseCompletionProps = {
     courseId: string;
@@ -12,6 +13,7 @@ type CourseCompletionProps = {
 };
 
 export function CourseCompletion({ courseId, totalLessons }: CourseCompletionProps) {
+    const t = useTranslations("course_detail");
     const { authenticated, user } = usePrivy();
     const { wallets } = useWallets();
 
@@ -46,7 +48,7 @@ export function CourseCompletion({ courseId, totalLessons }: CourseCompletionPro
             await finalize(walletAddress, courseId, totalLessons);
         } catch (error) {
             console.error("Finalize failed", error);
-            alert("Failed to finalize course. Please try again.");
+            alert(t("finalize_failed"));
         } finally {
             setIsActionLoading(false);
         }
@@ -59,7 +61,7 @@ export function CourseCompletion({ courseId, totalLessons }: CourseCompletionPro
             await claimBonus(walletAddress, courseId, 500);
         } catch (error) {
             console.error("Claim failed", error);
-            alert("Failed to claim bonus. Please try again.");
+            alert(t("claim_failed"));
         } finally {
             setIsActionLoading(false);
         }
@@ -71,36 +73,36 @@ export function CourseCompletion({ courseId, totalLessons }: CourseCompletionPro
         <div className="mt-6 border-t border-white/10 pt-6">
             {!completedAt ? (
                 <div className="flex flex-col gap-4 items-start">
-                    <h3 className="text-xl font-bold text-white">Course Complete!</h3>
-                    <p className="text-text-secondary">You have finished all lessons.</p>
+                    <h3 className="text-xl font-bold text-white">{t("completion_title")}</h3>
+                    <p className="text-text-secondary">{t("completion_info")}</p>
                     <button
                         onClick={handleFinalize}
                         disabled={isActionLoading || loading}
                         className="flex items-center gap-2 rounded-md bg-solana px-4 py-2 text-sm font-medium text-black hover:bg-solana/90 disabled:opacity-50"
                     >
                         {isActionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
-                        Finalize Course
+                        {t("finalize_button")}
                     </button>
                 </div>
             ) : !bonusClaimed ? (
                 <div className="flex flex-col gap-4 items-start bg-solana/10 p-4 rounded-lg border border-solana/20">
                     <h3 className="text-xl font-bold text-solana flex items-center gap-2">
                         <Trophy className="h-6 w-6" />
-                        Completion Bonus Available!
+                        {t("bonus_available")}
                     </h3>
-                    <p className="text-text-secondary">Claim your 500 XP reward for completing this course.</p>
+                    <p className="text-text-secondary">{t("bonus_info", { xp: 500 })}</p>
                     <button
                         onClick={handleClaim}
                         disabled={isActionLoading || loading}
                         className="flex items-center gap-2 rounded-md bg-solana px-4 py-2 text-sm font-medium text-black hover:bg-solana/90 disabled:opacity-50"
                     >
-                        {isActionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Claim 500 XP"}
+                        {isActionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : t("claim_button", { xp: 500 })}
                     </button>
                 </div>
             ) : (
                 <div className="flex items-center gap-2 text-solana">
                     <CheckCircle className="h-5 w-5" />
-                    <span className="font-medium">Course Complete & Bonus Claimed</span>
+                    <span className="font-medium">{t("course_finished_claimed")}</span>
                 </div>
             )}
         </div>

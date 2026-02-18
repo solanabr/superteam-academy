@@ -7,6 +7,7 @@ import { useEnrollmentStore } from "@/store/enrollment-store";
 import { useUserStore } from "@/store/user-store";
 import { Loader2, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useTranslations } from "next-intl";
 
 interface EnrollmentGateProps {
     courseId: string;   // Sanity course _id (used for enrollment lookup)
@@ -22,6 +23,7 @@ interface EnrollmentGateProps {
  * - Shows a locked overlay with enroll CTA if not enrolled.
  */
 export function EnrollmentGate({ courseId, courseSlug, children }: EnrollmentGateProps) {
+    const t = useTranslations("enrollment");
     const user = useUserStore((s) => s.user);
     const userLoading = useUserStore((s) => s.isLoading);
 
@@ -49,7 +51,7 @@ export function EnrollmentGate({ courseId, courseSlug, children }: EnrollmentGat
             <div className="flex h-[60vh] items-center justify-center">
                 <div className="flex flex-col items-center gap-3">
                     <Loader2 className="h-8 w-8 animate-spin text-solana" />
-                    <span className="text-sm text-text-secondary font-mono">Checking enrollment...</span>
+                    <span className="text-sm text-text-secondary font-mono">{t("checking")}</span>
                 </div>
             </div>
         );
@@ -64,13 +66,13 @@ export function EnrollmentGate({ courseId, courseSlug, children }: EnrollmentGat
                         <Lock className="h-7 w-7 text-text-muted" />
                     </div>
                     <div>
-                        <h2 className="font-display text-xl font-semibold text-text-primary mb-2">Sign in to access this lesson</h2>
+                        <h2 className="font-display text-xl font-semibold text-text-primary mb-2">{t("sign_in_required")}</h2>
                         <p className="text-sm text-text-secondary leading-relaxed">
-                            You need to be signed in and enrolled in this course to view lesson content.
+                            {t("sign_in_info")}
                         </p>
                     </div>
                     <Link href="/" className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-solana text-white text-sm font-semibold hover:bg-solana/90 transition-colors">
-                        Sign in
+                        {t("sign_in_button")}
                     </Link>
                 </div>
             </div>
@@ -86,9 +88,9 @@ export function EnrollmentGate({ courseId, courseSlug, children }: EnrollmentGat
                         <Lock className="h-7 w-7 text-text-muted" />
                     </div>
                     <div>
-                        <h2 className="font-display text-xl font-semibold text-text-primary mb-2">Enrollment required</h2>
+                        <h2 className="font-display text-xl font-semibold text-text-primary mb-2">{t("enrollment_required")}</h2>
                         <p className="text-sm text-text-secondary leading-relaxed">
-                            You need to enroll in this course before you can access its lessons.
+                            {t("enrollment_info")}
                         </p>
                     </div>
                     <div className="flex flex-col sm:flex-row gap-3 w-full">
@@ -96,13 +98,13 @@ export function EnrollmentGate({ courseId, courseSlug, children }: EnrollmentGat
                             href={`/courses/${courseSlug}`}
                             className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg bg-solana text-white text-sm font-semibold hover:bg-solana/90 transition-colors"
                         >
-                            Enroll now
+                            {t("enroll_now")}
                         </Link>
                         <Link
                             href="/courses"
                             className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg border border-white/10 text-text-secondary text-sm font-medium hover:bg-white/5 transition-colors"
                         >
-                            Browse courses
+                            {t("browse_courses")}
                         </Link>
                     </div>
                 </div>

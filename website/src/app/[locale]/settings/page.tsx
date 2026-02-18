@@ -7,6 +7,7 @@ import { Link } from "@/i18n/routing";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, Save, Lock, Mail } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 // ─── Provider Icons ────────────────────────────────────────────────────────────
 
@@ -36,16 +37,17 @@ type LinkedAccountRowProps = {
   label: string;
   value: string;
   tooltip: string;
+  linkedText: string;
 };
 
-function LinkedAccountRow({ icon, label, value, tooltip }: LinkedAccountRowProps) {
+function LinkedAccountRow({ icon, label, value, tooltip, linkedText }: LinkedAccountRowProps) {
   const [showTip, setShowTip] = useState(false);
 
   return (
     <div className="space-y-2">
       <label className="text-sm font-medium text-text-secondary flex items-center gap-2">
         {label}
-        <span className="text-[10px] font-mono text-text-muted uppercase tracking-wider bg-white/5 px-1.5 py-0.5 rounded">Linked</span>
+        <span className="text-[10px] font-mono text-text-muted uppercase tracking-wider bg-white/5 px-1.5 py-0.5 rounded">{linkedText}</span>
       </label>
       <div className="relative">
         <div className="flex items-center gap-3 h-10 px-3 rounded-md border border-white/10 bg-black/20 opacity-70">
@@ -76,6 +78,8 @@ function LinkedAccountRow({ icon, label, value, tooltip }: LinkedAccountRowProps
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function SettingsPage() {
+  const t = useTranslations("settings");
+  const tc = useTranslations("common");
   const { user, isLoading: userLoading } = useAppUser();
   const { user: privyUser } = usePrivy();
 
@@ -144,7 +148,7 @@ export default function SettingsPage() {
   if (!user) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-8 text-center">
-        <p className="text-text-secondary">Please connect your wallet to view settings.</p>
+        <p className="text-text-secondary">{t("connect_wallet_prompt")}</p>
       </div>
     );
   }
@@ -155,7 +159,7 @@ export default function SettingsPage() {
         <Link href="/dashboard" className="p-2 rounded-full hover:bg-white/5 text-text-secondary hover:text-white transition-colors">
           <span className="material-symbols-outlined">arrow_back</span>
         </Link>
-        <h1 className="font-display text-text-primary text-2xl font-semibold">Settings</h1>
+        <h1 className="font-display text-text-primary text-2xl font-semibold">{t("title")}</h1>
       </div>
 
       <div className="glass-panel space-y-6 rounded-lg border border-white/5 p-8">
@@ -163,7 +167,7 @@ export default function SettingsPage() {
 
           {/* Wallet Address */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-text-secondary">Wallet Address</label>
+            <label className="text-sm font-medium text-text-secondary">{t("wallet_address")}</label>
             <Input
               value={user.walletAddress}
               disabled
@@ -173,7 +177,7 @@ export default function SettingsPage() {
 
           {/* Account Role */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-text-secondary">Account Role</label>
+            <label className="text-sm font-medium text-text-secondary">{t("account_role")}</label>
             <div className="flex items-center gap-3 h-10 px-3 rounded-md border border-white/10 bg-black/20">
               <span className={`material-symbols-outlined text-lg ${user.role === "admin" ? "text-amber-400" :
                 user.role === "professor" ? "text-blue-400" : "text-solana"
@@ -199,7 +203,7 @@ export default function SettingsPage() {
                 </button>
                 {showRoleTip && (
                   <div className="absolute right-0 bottom-full mb-2 z-10 w-64 rounded-md bg-[#1a1a1f] border border-white/10 px-3 py-2 text-xs text-text-secondary shadow-xl normal-case font-body">
-                    account role not editable, reach to platform admin for role updation
+                    {t("role_info")}
                   </div>
                 )}
               </div>
@@ -210,37 +214,40 @@ export default function SettingsPage() {
           {linkedGoogle && (
             <LinkedAccountRow
               icon={<GoogleIcon className="h-4 w-4" />}
-              label="Google Account"
+              label={t("linked_accounts.google")}
               value={linkedGoogle.email ?? linkedGoogle.name ?? "Connected"}
-              tooltip="Your wallet address is linked to this Google account. This cannot be changed."
+              tooltip={t("linked_accounts.tooltip", { provider: "Google" })}
+              linkedText={t("linked_accounts.linked")}
             />
           )}
 
           {linkedGithub && (
             <LinkedAccountRow
               icon={<GitHubIcon className="h-4 w-4 text-white" />}
-              label="GitHub Account"
+              label={t("linked_accounts.github")}
               value={linkedGithub.username ?? linkedGithub.name ?? linkedGithub.email ?? "Connected"}
-              tooltip="Your wallet address is linked to this GitHub account. This cannot be changed."
+              tooltip={t("linked_accounts.tooltip", { provider: "GitHub" })}
+              linkedText={t("linked_accounts.linked")}
             />
           )}
 
           {linkedEmail && !linkedGoogle && !linkedGithub && (
             <LinkedAccountRow
               icon={<Mail className="h-4 w-4 text-text-secondary" />}
-              label="Email Account"
+              label={t("linked_accounts.email")}
               value={linkedEmail.address ?? "Connected"}
-              tooltip="Your wallet address is linked to this email. This cannot be changed."
+              tooltip={t("linked_accounts.tooltip", { provider: "email" })}
+              linkedText={t("linked_accounts.linked")}
             />
           )}
 
           {/* Display Name */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-text-primary">Display Name</label>
+            <label className="text-sm font-medium text-text-primary">{t("display_name")}</label>
             <Input
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
-              placeholder="Enter your name"
+              placeholder={t("display_name_placeholder")}
               className="bg-black/20 border-white/10 focus:border-solana/50"
             />
           </div>
@@ -248,12 +255,12 @@ export default function SettingsPage() {
           {/* Email — only editable for wallet-only accounts */}
           {!hasOAuthProvider && (
             <div className="space-y-2">
-              <label className="text-sm font-medium text-text-primary">Email</label>
+              <label className="text-sm font-medium text-text-primary">{t("email")}</label>
               <Input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
+                placeholder={t("email_placeholder")}
                 className="bg-black/20 border-white/10 focus:border-solana/50"
               />
             </div>
@@ -261,11 +268,11 @@ export default function SettingsPage() {
 
           {/* Bio */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-text-primary">Bio</label>
+            <label className="text-sm font-medium text-text-primary">{t("bio")}</label>
             <textarea
               value={bio}
               onChange={(e) => setBio(e.target.value)}
-              placeholder="Tell us about yourself"
+              placeholder={t("bio_placeholder")}
               className="flex min-h-[80px] w-full rounded-md border border-white/10 bg-black/20 px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-solana/50 disabled:cursor-not-allowed disabled:opacity-50"
             />
           </div>
@@ -276,20 +283,20 @@ export default function SettingsPage() {
               {saving ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
+                  {t("saving")}
                 </>
               ) : (
                 <>
                   <Save className="mr-2 h-4 w-4" />
-                  Save Changes
+                  {t("save_changes")}
                 </>
               )}
             </Button>
             {saveStatus === "success" && (
-              <span className="text-sm text-solana font-medium">✓ Saved successfully</span>
+              <span className="text-sm text-solana font-medium">{t("save_success")}</span>
             )}
             {saveStatus === "error" && (
-              <span className="text-sm text-rust font-medium">✗ Failed to save</span>
+              <span className="text-sm text-rust font-medium">{t("save_error")}</span>
             )}
           </div>
         </form>

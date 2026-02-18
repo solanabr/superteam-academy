@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
+import { useTranslations } from "next-intl";
 
 export function Footer() {
+  const t = useTranslations("footer");
   const [clickCount, setClickCount] = useState(0);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isOpen, setIsOpen] = useState(false);
@@ -32,7 +34,7 @@ export function Footer() {
     <footer className="border-t border-white/10 py-8 mt-12 bg-[#0A0A0B]">
       <div className="max-w-7xl mx-auto px-6 text-center">
         <p className="text-text-secondary text-sm font-mono flex items-center justify-center gap-2 select-none">
-          Made with
+          {t("made_with")}
           <span
             className="text-rust cursor-pointer transition-transform duration-200 inline-block relative"
             style={{ transform: `translate(${position.x}px, ${position.y}px)` }}
@@ -40,7 +42,7 @@ export function Footer() {
           >
             ♥
           </span>
-          from Superteam Brazil
+          {t("from")}
         </p>
         <div className="mt-4 flex justify-center gap-4 opacity-50">
           <span className="text-xs text-text-secondary/50">Solana Foundation</span>
@@ -56,13 +58,13 @@ export function Footer() {
               ubuntu@superteam:~$
             </Dialog.Title>
             <div className="font-mono text-text-primary text-sm leading-relaxed space-y-4">
-              <p className="typing-effect">ubuntu - I am because we are.</p>
-              <p className="text-text-secondary">lets strive towards development of safer/better blockchain</p>
+              <p className="typing-effect">{t("ubuntu_quote")}</p>
+              <p className="text-text-secondary">{t("mission")}</p>
             </div>
             <div className="mt-6 flex justify-end">
               <Dialog.Close asChild>
                 <button className="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded text-xs font-mono transition-colors">
-                  exit
+                  {t("exit")}
                 </button>
               </Dialog.Close>
             </div>

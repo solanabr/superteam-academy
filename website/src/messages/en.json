@@ -1,14 +1,157 @@
 {
-  "common": {
-    "logoAlt": "Superteam Academy",
-    "connectWallet": "Connect Wallet",
-    "dashboard": "Dashboard",
-    "curriculum": "Curriculum",
-    "achievements": "Achievements",
-    "settings": "Settings"
-  },
-  "home": {
-    "title": "Superteam Academy",
-    "subtitle": "Decentralized learning platform on Solana"
-  }
+    "common": {
+        "loading": "Loading...",
+        "error": "Something went wrong",
+        "save": "Save",
+        "cancel": "Cancel",
+        "delete": "Delete",
+        "edit": "Edit",
+        "back": "Back",
+        "search": "Search...",
+        "continue": "Continue",
+        "view_all": "View All"
+    },
+    "nav": {
+        "dashboard": "Dashboard",
+        "courses": "Courses",
+        "achievements": "Achievements",
+        "teach": "Teach",
+        "settings": "Settings",
+        "logout": "Logout"
+    },
+    "dashboard": {
+        "welcome": "Welcome back, {name}",
+        "wallet_id": "Wallet ID",
+        "browse_courses": "Browse Courses",
+        "stats": {
+            "xp": "Total Experience",
+            "streak": "Current Streak",
+            "rank": "Current Rank",
+            "days": "Days",
+            "next_rank": "Next Rank: {rank} ({xp} XP)",
+            "max_rank": "Max rank achieved!",
+            "streak_bonus": "Keep it up! {days} days to 1 week bonus.",
+            "streak_amazing": "🔥 Amazing! Longest: {days} days"
+        },
+        "active_course": "Active Course",
+        "up_next": "Up Next",
+        "trophy_case": "Trophy Case",
+        "unlocked": "{count}/{total} Unlocked"
+    },
+    "settings": {
+        "title": "Settings",
+        "wallet_address": "Wallet Address",
+        "account_role": "Account Role",
+        "role_info": "account role not editable, reach to platform admin for role updation",
+        "display_name": "Display Name",
+        "display_name_placeholder": "Enter your name",
+        "email": "Email",
+        "email_placeholder": "Enter your email",
+        "bio": "Bio",
+        "bio_placeholder": "Tell us about yourself",
+        "save_changes": "Save Changes",
+        "saving": "Saving...",
+        "save_success": "✓ Saved successfully",
+        "save_error": "✗ Failed to save",
+        "connect_wallet_prompt": "Please connect your wallet to view settings.",
+        "linked_accounts": {
+            "google": "Google Account",
+            "github": "GitHub Account",
+            "email": "Email Account",
+            "linked": "Linked",
+            "tooltip": "Your wallet address is linked to this {provider}. This cannot be changed."
+        }
+    },
+    "courses": {
+        "title": "Explore Curriculum",
+        "subtitle": "Master the Solana ecosystem one concept at a time. From Rust primitives to advanced anchor security.",
+        "search_placeholder": "Search modules... (Ctrl+K)",
+        "filters": {
+            "all": "All",
+            "rust": "Rust",
+            "anchor": "Anchor",
+            "security": "Security",
+            "solana": "Solana"
+        },
+        "loading": "Loading courses...",
+        "none_available": "No courses available yet.",
+        "none_found": "No courses found for {filter}.",
+        "duration_tbd": "TBD",
+        "beginner": "Beginner",
+        "intermediate": "Intermediate",
+        "advanced": "Advanced",
+        "instructor": "Instructor",
+        "lessons_count": "{count} lessons",
+        "course_content": "Course content",
+        "module_label": "Module {index}",
+        "no_modules": "No modules yet. Add modules and lessons in Sanity Studio.",
+        "curriculum": "Curriculum",
+        "all_courses": "All Courses"
+    },
+    "achievements": {
+        "title": "Achievements",
+        "subtitle": "Unlock achievements to earn XP and show off your progress.",
+        "back_to_dashboard": "Back to Dashboard"
+    },
+    "lessons": {
+        "breadcrumb_courses": "Courses",
+        "module_label": "Module {index}",
+        "est_time": "Est. {mins} mins",
+        "previous": "Previous",
+        "next_lesson": "Next Lesson",
+        "continue": "Continue",
+        "finish_course": "Finish Course",
+        "completing": "Completing...",
+        "course_complete_grad": "Course Complete 🎓",
+        "lesson_completed": "Lesson Completed!",
+        "next_lesson_cta": "Great work! Continue to the next lesson to keep building.",
+        "course_complete_cta": "Congratulations! You've completed all lessons in this course. 🎓",
+        "building": "Building...",
+        "build_deploy": "Build & Deploy",
+        "terminal": "Terminal",
+        "ready": "Ready",
+        "completed": "Completed",
+        "reset_code": "Reset Code",
+        "no_output": "> No output",
+        "execution_failed": "> Execution failed with no output",
+        "error_no_code": "> error: no code provided. Please write some code first."
+    },
+    "enrollment": {
+        "checking": "Checking enrollment...",
+        "sign_in_required": "Sign in to access this lesson",
+        "sign_in_info": "You need to be signed in and enrolled in this course to view lesson content.",
+        "sign_in_button": "Sign in",
+        "enrollment_required": "Enrollment required",
+        "enrollment_info": "You need to enroll in this course before you can access its lessons.",
+        "enroll_now": "Enroll now",
+        "browse_courses": "Browse courses"
+    },
+    "footer": {
+        "made_with": "Made with",
+        "from": "from Superteam Brazil",
+        "ubuntu_quote": "ubuntu - I am because we are.",
+        "mission": "lets strive towards development of safer/better blockchain",
+        "exit": "exit"
+    },
+    "course_detail": {
+        "your_progress": "Your progress: {current}/{total} lessons ({pct}%)",
+        "login_to_enroll": "Log in and connect your wallet to enroll in {title}.",
+        "enrolled": "Enrolled",
+        "enrolling": "Enrolling...",
+        "enroll_cta": "Enroll in this course",
+        "completion_title": "Course Complete!",
+        "completion_info": "You have finished all lessons.",
+        "finalize_button": "Finalize Course",
+        "bonus_available": "Completion Bonus Available!",
+        "bonus_info": "Claim your {xp} XP reward for completing this course.",
+        "claim_button": "Claim {xp} XP",
+        "course_finished_claimed": "Course Complete & Bonus Claimed",
+        "finalize_failed": "Failed to finalize course. Please try again.",
+        "claim_failed": "Failed to claim bonus. Please try again."
+    },
+    "locale": {
+        "en": "English",
+        "es": "Español",
+        "pt-BR": "Português (BR)"
+    }
 }
