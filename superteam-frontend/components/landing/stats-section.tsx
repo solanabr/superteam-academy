@@ -1,22 +1,27 @@
+"use client";
+
 import { Users, BookCheck, Code2, Zap } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { platformStats } from "@/lib/landing-data";
 
-const stats = [
-  { label: "Developers", value: platformStats.developers, icon: Users },
-  {
-    label: "Courses Completed",
-    value: platformStats.coursesCompleted,
-    icon: BookCheck,
-  },
-  {
-    label: "Challenges Solved",
-    value: platformStats.challengesSolved,
-    icon: Code2,
-  },
-  { label: "XP Awarded", value: platformStats.xpAwarded, icon: Zap },
-];
-
 export function StatsSection() {
+  const t = useTranslations("stats");
+
+  const stats = [
+    { label: t("developers"), value: platformStats.developers, icon: Users },
+    {
+      label: t("coursesCompleted"),
+      value: platformStats.coursesCompleted,
+      icon: BookCheck,
+    },
+    {
+      label: t("challengesSolved"),
+      value: platformStats.challengesSolved,
+      icon: Code2,
+    },
+    { label: t("xpAwarded"), value: platformStats.xpAwarded, icon: Zap },
+  ];
+
   return (
     <section className="border-y border-border bg-card/50">
       <div className="mx-auto max-w-7xl px-4 py-12 lg:px-6">

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { ArrowRight, Play, Code2, Shield, Coins } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useWalletAuth } from "@/components/providers/wallet-auth-provider";
@@ -12,6 +13,8 @@ export function HeroSection() {
   const { connected } = useWallet();
   const { setVisible } = useWalletModal();
   const { isAuthenticated, isLoading, loginWithWallet } = useWalletAuth();
+  const t = useTranslations("hero");
+  const tAuth = useTranslations("auth");
 
   const handleUnlockClick = () => {
     if (!connected) {
@@ -34,18 +37,19 @@ export function HeroSection() {
             className="mb-6 border-primary/30 bg-primary/10 text-primary px-4 py-1.5"
           >
             <span className="mr-2 inline-block h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-            Now with Solana 2.0 Support
+            {t("badge")}
           </Badge>
 
           <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl lg:text-6xl text-balance">
-            Learn Blockchain Development by{" "}
-            <span className="text-primary">Building</span>
+            {t.rich("title", {
+              highlight: (chunks) => (
+                <span className="text-primary">{chunks}</span>
+              ),
+            })}
           </h1>
 
           <p className="mt-6 text-lg leading-relaxed text-muted-foreground max-w-2xl mx-auto text-pretty">
-            Master Solana, Rust, and Web3 through interactive coding challenges.
-            Earn XP, collect on-chain credentials, and join a global community
-            of blockchain developers.
+            {t("subtitle")}
           </p>
 
           <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
@@ -56,7 +60,7 @@ export function HeroSection() {
                     size="lg"
                     className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2 px-8 h-12 text-base glow-green"
                   >
-                    Start Learning
+                    {t("startLearning")}
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
@@ -67,7 +71,7 @@ export function HeroSection() {
                     className="gap-2 border-border text-foreground hover:bg-secondary h-12 text-base"
                   >
                     <Play className="h-4 w-4" />
-                    Open Dashboard
+                    {t("openDashboard")}
                   </Button>
                 </Link>
               </>
@@ -79,7 +83,7 @@ export function HeroSection() {
                   disabled={isLoading}
                   onClick={handleUnlockClick}
                 >
-                  {isLoading ? "Authorizing..." : "Connect Wallet to Start"}
+                  {isLoading ? tAuth("authorizing") : t("connectToStart")}
                   <ArrowRight className="h-4 w-4" />
                 </Button>
                 <Link href="#features">
@@ -89,7 +93,7 @@ export function HeroSection() {
                     className="gap-2 border-border text-foreground hover:bg-secondary h-12 text-base"
                   >
                     <Play className="h-4 w-4" />
-                    Explore Features
+                    {t("exploreFeatures")}
                   </Button>
                 </Link>
               </>

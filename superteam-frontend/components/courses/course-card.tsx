@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { Clock, Users, Star, Zap, BookOpen } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -12,6 +15,7 @@ const difficultyColor = {
 };
 
 export function CourseCard({ course }: { course: Course }) {
+  const t = useTranslations("catalog");
   return (
     <Link href={`/courses/${course.slug}`}>
       <div className="group h-full rounded-xl border border-border bg-card transition-all hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 overflow-hidden">
@@ -64,7 +68,7 @@ export function CourseCard({ course }: { course: Course }) {
             </span>
             <span className="flex items-center gap-1">
               <BookOpen className="h-3 w-3" />
-              {course.lessons} lessons
+              {course.lessons} {t("lessons")}
             </span>
             <span className="flex items-center gap-1">
               <Star className="h-3 w-3 text-[hsl(var(--gold))]" />
@@ -93,7 +97,7 @@ export function CourseCard({ course }: { course: Course }) {
           {/* Progress text */}
           {course.progress > 0 && (
             <div className="mt-3 flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">Progress</span>
+              <span className="text-muted-foreground">{t("progress")}</span>
               <span className="font-medium text-primary">
                 {course.progress}%
               </span>

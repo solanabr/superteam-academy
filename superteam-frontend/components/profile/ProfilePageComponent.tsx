@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
   Award,
@@ -180,6 +181,8 @@ export default function ProfilePageComponent({
   isOwnProfile?: boolean;
 }) {
   const router = useRouter();
+  const t = useTranslations("profile");
+  const tCatalog = useTranslations("catalog");
   const user = useMemo(
     () => buildProfileUser(identity, allCourses),
     [identity, allCourses],
@@ -198,18 +201,18 @@ export default function ProfilePageComponent({
       navigator.clipboard
         .writeText(shareUrl)
         .then(() => {
-          toast.success("Profile link copied to clipboard");
+          toast.success(t("copiedToClipboard"));
         })
         .catch(() => {});
     }
-  }, [identity?.profile?.walletAddress]);
+  }, [identity?.profile?.walletAddress, t]);
 
   if (!user) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-10 lg:px-6">
         <Card>
           <CardContent className="py-10 text-center text-muted-foreground">
-            User not found.
+            {t("userNotFound")}
           </CardContent>
         </Card>
       </div>
@@ -257,7 +260,7 @@ export default function ProfilePageComponent({
                     @{user.username}
                   </Badge>
                   <Badge className="bg-primary/15 text-primary hover:bg-primary/15">
-                    Rank #{user.rank}
+                    {t("rankLabel", { rank: user.rank })}
                   </Badge>
                 </div>
                 <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
@@ -309,14 +312,14 @@ export default function ProfilePageComponent({
                 className="border-border text-foreground"
                 onClick={handleShare}
               >
-                Share Profile
+                {t("shareProfile")}
               </Button>
               {isOwnProfile && (
                 <Button
                   className="bg-primary text-primary-foreground hover:bg-primary/90"
                   onClick={() => router.push("/settings")}
                 >
-                  Edit Profile
+                  {t("editProfile")}
                 </Button>
               )}
             </div>
@@ -325,22 +328,22 @@ export default function ProfilePageComponent({
           <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <StatPill
               icon={Trophy}
-              label="Global Rank"
+              label={t("globalRank")}
               value={`#${user.rank}`}
             />
             <StatPill
               icon={Zap}
-              label="Total XP"
+              label={t("totalXp")}
               value={user.xp.toLocaleString()}
             />
             <StatPill
               icon={Flame}
-              label="Current Streak"
-              value={`${user.streak} days`}
+              label={t("currentStreak")}
+              value={`${user.streak} ${t("days")}`}
             />
             <StatPill
               icon={CheckCircle2}
-              label="Courses Completed"
+              label={t("coursesCompleted")}
               value={`${user.totalCompleted}`}
             />
           </div>
@@ -348,7 +351,7 @@ export default function ProfilePageComponent({
           <div className="mt-4 rounded-lg border border-border bg-background/40 p-3">
             <div className="mb-1.5 flex items-center justify-between text-xs">
               <span className="text-muted-foreground">
-                Level {user.level} progress
+                {t("levelProgress", { level: user.level })}
               </span>
               <span className="font-medium text-foreground">
                 {user.xp.toLocaleString()} / {user.xpToNext.toLocaleString()} XP
@@ -366,19 +369,19 @@ export default function ProfilePageComponent({
         <div className="space-y-6 xl:col-span-2">
           <section>
             <h2 className="text-lg font-semibold text-foreground mb-4">
-              Activity
+              {t("activity")}
             </h2>
             <ActivityHeatmap activityDays={activityDays} />
           </section>
 
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Completed Courses</CardTitle>
+              <CardTitle className="text-lg">{t("completedCourses")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               {user.completedCourses.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                  No completed courses yet.
+                  {t("noCompletedCourses")}
                 </p>
               ) : (
                 user.completedCourses.map((course) => (
@@ -403,7 +406,9 @@ export default function ProfilePageComponent({
                       </Badge>
                     </div>
                     <div className="mb-2 flex items-center justify-between text-xs">
-                      <span className="text-muted-foreground">Progress</span>
+                      <span className="text-muted-foreground">
+                        {tCatalog("progress")}
+                      </span>
                       <span className="font-medium text-primary">
                         {course.progress}%
                       </span>
@@ -423,7 +428,7 @@ export default function ProfilePageComponent({
                 href="/courses"
                 className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
               >
-                Browse all courses <ExternalLink className="h-3.5 w-3.5" />
+                {t("browseAllCourses")} <ExternalLink className="h-3.5 w-3.5" />
               </Link>
             </CardContent>
           </Card>
@@ -432,7 +437,7 @@ export default function ProfilePageComponent({
         <div className="space-y-6">
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Skills</CardTitle>
+              <CardTitle className="text-lg">{t("skills")}</CardTitle>
             </CardHeader>
             <CardContent>
               <ChartContainer
@@ -477,7 +482,9 @@ export default function ProfilePageComponent({
 
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Achievements</CardTitle>
+              <CardTitle className="text-lg">
+                {t("achievementsTitle")}
+              </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-wrap gap-2">
               {user.achievements.map((achievement) => (
@@ -499,12 +506,14 @@ export default function ProfilePageComponent({
 
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg">On-Chain Credentials</CardTitle>
+              <CardTitle className="text-lg">
+                {t("onChainCredentials")}
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               {user.onChainCredentials.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                  No credentials issued yet.
+                  {t("noCredentials")}
                 </p>
               ) : (
                 user.onChainCredentials.map((credential) => (
@@ -516,15 +525,19 @@ export default function ProfilePageComponent({
                       {credential.name}
                     </p>
                     <div className="mt-1 space-y-1 text-xs text-muted-foreground">
-                      <p>Mint: {shortAddress(credential.mintAddress)}</p>
-                      <p>Issued: {credential.date}</p>
+                      <p>
+                        {t("mint")} {shortAddress(credential.mintAddress)}
+                      </p>
+                      <p>
+                        {t("issued")} {credential.date}
+                      </p>
                     </div>
                     <Button
                       variant="ghost"
                       size="sm"
                       className="mt-2 h-7 px-2 text-primary"
                     >
-                      Verify
+                      {t("verify")}
                       <ExternalLink className="ml-1 h-3.5 w-3.5" />
                     </Button>
                   </div>
@@ -535,22 +548,24 @@ export default function ProfilePageComponent({
 
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Profile Visibility</CardTitle>
+              <CardTitle className="text-lg">
+                {t("profileVisibility")}
+              </CardTitle>
             </CardHeader>
             <CardContent className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-foreground">
-                  Public Profile
+                  {t("publicProfile")}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Joined {user.joinDate}
+                  {t("joinDate", { date: user.joinDate })}
                 </p>
               </div>
               <Badge
                 variant="outline"
                 className="border-primary/30 text-primary"
               >
-                Public
+                {t("public")}
               </Badge>
             </CardContent>
           </Card>

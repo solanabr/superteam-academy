@@ -7,26 +7,35 @@ import { Github, Twitter } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-const footerLinks = {
-  Platform: [
-    { label: "Courses", href: "/courses" },
-    { label: "Dashboard", href: "/dashboard" },
-    { label: "Leaderboard", href: "/leaderboard" },
-    { label: "Certificates", href: "/certificates/cert-sol-001" },
-  ],
-  Resources: [
-    { label: "Documentation", href: "#" },
-    { label: "Blog", href: "#" },
-    { label: "Community", href: "#" },
-    { label: "Support", href: "#" },
-  ],
-  Company: [
-    { label: "About", href: "#" },
-    { label: "Careers", href: "#" },
-    { label: "Privacy", href: "#" },
-    { label: "Terms", href: "#" },
-  ],
-};
+const footerLinks = [
+  {
+    titleKey: "platform" as const,
+    links: [
+      { labelKey: "courses" as const, href: "/courses" },
+      { labelKey: "dashboard" as const, href: "/dashboard" },
+      { labelKey: "leaderboard" as const, href: "/leaderboard" },
+      { labelKey: "certificates" as const, href: "/certificates/cert-sol-001" },
+    ],
+  },
+  {
+    titleKey: "resources" as const,
+    links: [
+      { labelKey: "docs" as const, href: "#" },
+      { labelKey: "blog" as const, href: "#" },
+      { labelKey: "community" as const, href: "#" },
+      { labelKey: "support" as const, href: "#" },
+    ],
+  },
+  {
+    titleKey: "company" as const,
+    links: [
+      { labelKey: "about" as const, href: "#" },
+      { labelKey: "careers" as const, href: "#" },
+      { labelKey: "privacy" as const, href: "#" },
+      { labelKey: "terms" as const, href: "#" },
+    ],
+  },
+];
 
 export function Footer() {
   const t = useTranslations("footer");
@@ -40,35 +49,34 @@ export function Footer() {
               <Image src="/logo.svg" alt="logo" width={128} height={164} />
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed mb-6 max-w-sm">
-              The interactive learning platform for blockchain developers.
-              Master Solana, Rust, and Web3 through hands-on challenges.
+              {t("description")}
             </p>
             {/* Newsletter */}
             <div className="flex gap-2 max-w-sm">
               <Input
-                placeholder="Enter your email"
+                placeholder={t("emailPlaceholder")}
                 className="bg-secondary border-border text-foreground placeholder:text-muted-foreground"
               />
               <Button className="bg-primary text-primary-foreground hover:bg-primary/90 shrink-0">
-                Subscribe
+                {t("subscribe")}
               </Button>
             </div>
           </div>
 
           {/* Links */}
-          {Object.entries(footerLinks).map(([title, links]) => (
-            <div key={title}>
+          {footerLinks.map((section) => (
+            <div key={section.titleKey}>
               <h4 className="text-sm font-semibold text-foreground mb-4">
-                {title}
+                {t(section.titleKey)}
               </h4>
               <ul className="flex flex-col gap-2.5">
-                {links.map((link) => (
-                  <li key={link.label}>
+                {section.links.map((link) => (
+                  <li key={link.labelKey}>
                     <Link
                       href={link.href}
                       className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                     >
-                      {link.label}
+                      {t(link.labelKey)}
                     </Link>
                   </li>
                 ))}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { useTranslations } from "next-intl";
 
 type ActivityDay = { date: string; intensity: number; count?: number };
 
@@ -104,6 +105,7 @@ export function ActivityHeatmap({
   activityDays?: ActivityDay[];
   totalSubmissions?: number;
 }) {
+  const t = useTranslations("dashboard");
   const heatmap = useMemo(() => buildHeatmap(activityDays), [activityDays]);
 
   const submissionCount = totalSubmissions ?? heatmap.totalCount;
@@ -116,17 +118,20 @@ export function ActivityHeatmap({
           <span className="text-base font-bold text-foreground">
             {submissionCount}
           </span>{" "}
-          submissions in the past one year
+          {t("submissionsYear", { count: submissionCount }).replace(
+            /^\d+\s*/,
+            "",
+          )}
         </p>
         <div className="flex items-center gap-4 text-xs text-muted-foreground ml-auto">
           <span>
-            Total active days:{" "}
+            {t("totalActiveDays")}:{" "}
             <span className="font-medium text-foreground">
               {heatmap.activeDays}
             </span>
           </span>
           <span>
-            Max streak:{" "}
+            {t("maxStreak")}:{" "}
             <span className="font-medium text-foreground">
               {heatmap.maxStreak}
             </span>
@@ -152,8 +157,8 @@ export function ActivityHeatmap({
                     className={`aspect-square w-full rounded-[2px] ${intensityClass(intensity)}`}
                     title={`${dateKey}: ${
                       count > 0
-                        ? `${count} ${count === 1 ? "activity" : "activities"}`
-                        : "No activity"
+                        ? `${count} ${count === 1 ? t("activity") : t("activities")}`
+                        : t("noActivityTooltip")
                     }`}
                   />
                 );
@@ -180,7 +185,7 @@ export function ActivityHeatmap({
                   className="text-[10px] text-muted-foreground leading-none overflow-visible whitespace-nowrap"
                 >
                   {showLabel
-                    ? week[0].toLocaleString("en-US", { month: "short" })
+                    ? week[0].toLocaleString(undefined, { month: "short" })
                     : ""}
                 </div>
               );

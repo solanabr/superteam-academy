@@ -85,7 +85,9 @@ export default function LeaderboardPage({
                           {entry.wallet.slice(-4)}
                         </p>
                         {entry.wallet === myWallet && (
-                          <p className="text-sm text-muted-foreground">You</p>
+                          <p className="text-sm text-muted-foreground">
+                            {t("you")}
+                          </p>
                         )}
                       </div>
                     </Link>
@@ -127,7 +129,9 @@ export default function LeaderboardPage({
                         <p className="font-bold">
                           {me.wallet.slice(0, 4)}...{me.wallet.slice(-4)}
                         </p>
-                        <p className="text-sm text-muted-foreground">You</p>
+                        <p className="text-sm text-muted-foreground">
+                          {t("you")}
+                        </p>
                       </div>
                     </Link>
                   </TableCell>

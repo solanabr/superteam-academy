@@ -38,6 +38,7 @@ import {
   Download,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import type { IdentityProfile } from "@/lib/identity/types";
 import { locales, localeNames, type Locale } from "@/i18n/config";
 import { useSetLocale } from "@/i18n/client";
@@ -62,6 +63,8 @@ export function SettingsPage({
   walletAddress: string;
 }) {
   const { theme, setTheme } = useTheme();
+  const t = useTranslations("settings");
+  const tTheme = useTranslations("theme");
   const setLocale = useSetLocale();
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -89,9 +92,9 @@ export function SettingsPage({
         body: JSON.stringify(settings),
       });
       if (!res.ok) throw new Error("Failed to save");
-      toast.success("Settings saved successfully");
+      toast.success(t("settingsSaved"));
     } catch {
-      toast.error("Failed to save settings");
+      toast.error(t("settingsFailed"));
     } finally {
       setSaving(false);
     }
@@ -110,16 +113,14 @@ export function SettingsPage({
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 lg:px-6 lg:py-10">
-      <h1 className="text-2xl font-bold text-foreground mb-6">Settings</h1>
+      <h1 className="text-2xl font-bold text-foreground mb-6">{t("title")}</h1>
 
       <div className="space-y-6">
         {/* Profile Section */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Profile</CardTitle>
-            <CardDescription>
-              Update your public profile information.
-            </CardDescription>
+            <CardTitle className="text-lg">{t("profileSection")}</CardTitle>
+            <CardDescription>{t("profileDescription")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
             <div className="flex items-center gap-4">
@@ -133,7 +134,7 @@ export function SettingsPage({
                   {settings.name || shortWallet}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Avatar customization coming soon
+                  {t("avatarComingSoon")}
                 </p>
               </div>
             </div>
@@ -143,7 +144,7 @@ export function SettingsPage({
                 htmlFor="name"
                 className="text-sm font-medium text-foreground"
               >
-                Display Name
+                {t("name")}
               </label>
               <Input
                 id="name"
@@ -151,7 +152,7 @@ export function SettingsPage({
                 onChange={(e) =>
                   setSettings((prev) => ({ ...prev, name: e.target.value }))
                 }
-                placeholder="Your display name"
+                placeholder={t("displayNamePlaceholder")}
               />
             </div>
 
@@ -160,7 +161,7 @@ export function SettingsPage({
                 htmlFor="bio"
                 className="text-sm font-medium text-foreground"
               >
-                Bio
+                {t("bio")}
               </label>
               <Textarea
                 id="bio"
@@ -168,7 +169,7 @@ export function SettingsPage({
                 onChange={(e) =>
                   setSettings((prev) => ({ ...prev, bio: e.target.value }))
                 }
-                placeholder="Tell us about yourself"
+                placeholder={t("bioPlaceholder")}
                 rows={3}
               />
             </div>
@@ -176,7 +177,7 @@ export function SettingsPage({
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-foreground flex items-center gap-1.5">
-                  <Twitter className="h-3.5 w-3.5" /> Twitter
+                  <Twitter className="h-3.5 w-3.5" /> {t("twitter")}
                 </label>
                 <Input
                   value={settings.twitter}
@@ -191,7 +192,7 @@ export function SettingsPage({
               </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-foreground flex items-center gap-1.5">
-                  <Github className="h-3.5 w-3.5" /> GitHub
+                  <Github className="h-3.5 w-3.5" /> {t("github")}
                 </label>
                 <Input
                   value={settings.github}
@@ -206,7 +207,7 @@ export function SettingsPage({
               </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-foreground flex items-center gap-1.5">
-                  <Linkedin className="h-3.5 w-3.5" /> LinkedIn
+                  <Linkedin className="h-3.5 w-3.5" /> {t("linkedIn")}
                 </label>
                 <Input
                   value={settings.linkedin}
@@ -221,7 +222,7 @@ export function SettingsPage({
               </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-foreground flex items-center gap-1.5">
-                  <Globe className="h-3.5 w-3.5" /> Website
+                  <Globe className="h-3.5 w-3.5" /> {t("website")}
                 </label>
                 <Input
                   value={settings.website}
@@ -241,10 +242,8 @@ export function SettingsPage({
         {/* Account Section */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Account</CardTitle>
-            <CardDescription>
-              Manage your connected accounts and authentication methods.
-            </CardDescription>
+            <CardTitle className="text-lg">{t("accountSection")}</CardTitle>
+            <CardDescription>{t("accountDescription")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between rounded-lg border border-border p-3">
@@ -254,7 +253,7 @@ export function SettingsPage({
                 </div>
                 <div>
                   <p className="text-sm font-medium text-foreground">
-                    Solana Wallet
+                    {t("solanaWallet")}
                   </p>
                   <p className="font-mono text-xs text-muted-foreground">
                     {shortWallet}
@@ -266,7 +265,7 @@ export function SettingsPage({
                   variant="outline"
                   className="border-primary/30 text-primary"
                 >
-                  Connected
+                  {t("connected")}
                 </Badge>
                 <Button
                   variant="ghost"
@@ -306,12 +305,16 @@ export function SettingsPage({
                   </svg>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-foreground">Google</p>
-                  <p className="text-xs text-muted-foreground">Not connected</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {t("google")}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {t("notConnected")}
+                  </p>
                 </div>
               </div>
               <Button variant="outline" size="sm" disabled>
-                Link Account
+                {t("linkAccount")}
               </Button>
             </div>
 
@@ -321,12 +324,16 @@ export function SettingsPage({
                   <Github className="h-4 w-4" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-foreground">GitHub</p>
-                  <p className="text-xs text-muted-foreground">Not connected</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {t("github")}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {t("notConnected")}
+                  </p>
                 </div>
               </div>
               <Button variant="outline" size="sm" disabled>
-                Link Account
+                {t("linkAccount")}
               </Button>
             </div>
           </CardContent>
@@ -335,17 +342,17 @@ export function SettingsPage({
         {/* Preferences Section */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Preferences</CardTitle>
-            <CardDescription>
-              Customize your experience on the platform.
-            </CardDescription>
+            <CardTitle className="text-lg">{t("preferencesSection")}</CardTitle>
+            <CardDescription>{t("preferencesDescription")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-foreground">Language</p>
+                <p className="text-sm font-medium text-foreground">
+                  {t("language")}
+                </p>
                 <p className="text-xs text-muted-foreground">
-                  Choose your preferred language
+                  {t("chooseLanguage")}
                 </p>
               </div>
               <Select
@@ -367,9 +374,11 @@ export function SettingsPage({
 
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-foreground">Theme</p>
+                <p className="text-sm font-medium text-foreground">
+                  {t("themePreference")}
+                </p>
                 <p className="text-xs text-muted-foreground">
-                  Select your preferred appearance
+                  {t("selectAppearance")}
                 </p>
               </div>
               <div className="flex gap-1 rounded-lg border border-border p-0.5">
@@ -379,7 +388,7 @@ export function SettingsPage({
                   className="h-8 px-3"
                   onClick={() => setTheme("light")}
                 >
-                  <Sun className="h-3.5 w-3.5 mr-1.5" /> Light
+                  <Sun className="h-3.5 w-3.5 mr-1.5" /> {tTheme("light")}
                 </Button>
                 <Button
                   variant={theme === "dark" ? "secondary" : "ghost"}
@@ -387,7 +396,7 @@ export function SettingsPage({
                   className="h-8 px-3"
                   onClick={() => setTheme("dark")}
                 >
-                  <Moon className="h-3.5 w-3.5 mr-1.5" /> Dark
+                  <Moon className="h-3.5 w-3.5 mr-1.5" /> {tTheme("dark")}
                 </Button>
                 <Button
                   variant={theme === "system" ? "secondary" : "ghost"}
@@ -395,7 +404,7 @@ export function SettingsPage({
                   className="h-8 px-3"
                   onClick={() => setTheme("system")}
                 >
-                  <Monitor className="h-3.5 w-3.5 mr-1.5" /> System
+                  <Monitor className="h-3.5 w-3.5 mr-1.5" /> {tTheme("system")}
                 </Button>
               </div>
             </div>
@@ -403,10 +412,10 @@ export function SettingsPage({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-foreground">
-                  Email Notifications
+                  {t("emailNotifications")}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Receive updates about courses and achievements
+                  {t("notificationsDescription")}
                 </p>
               </div>
               <Switch
@@ -425,19 +434,17 @@ export function SettingsPage({
         {/* Privacy Section */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Privacy</CardTitle>
-            <CardDescription>
-              Control who can see your profile and data.
-            </CardDescription>
+            <CardTitle className="text-lg">{t("privacySection")}</CardTitle>
+            <CardDescription>{t("privacyDescription")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-foreground">
-                  Public Profile
+                  {t("publicProfile")}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Allow others to see your profile, achievements, and progress
+                  {t("publicProfileDescription")}
                 </p>
               </div>
               <Switch
@@ -451,18 +458,18 @@ export function SettingsPage({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-foreground">
-                  Export Data
+                  {t("dataExport")}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Download all your learning data and progress
+                  {t("exportDescription")}
                 </p>
               </div>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => toast.info("Data export coming soon")}
+                onClick={() => toast.info(t("dataExportComingSoon"))}
               >
-                <Download className="h-3.5 w-3.5 mr-1.5" /> Export
+                <Download className="h-3.5 w-3.5 mr-1.5" /> {t("export")}
               </Button>
             </div>
           </CardContent>
@@ -477,11 +484,11 @@ export function SettingsPage({
           >
             {saving ? (
               <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" /> {t("saving")}
               </>
             ) : (
               <>
-                <Save className="h-4 w-4 mr-2" /> Save Changes
+                <Save className="h-4 w-4 mr-2" /> {t("saveChanges")}
               </>
             )}
           </Button>

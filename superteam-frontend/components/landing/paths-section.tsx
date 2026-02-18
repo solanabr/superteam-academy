@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { ArrowRight, Clock, BookOpen } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -15,6 +16,9 @@ export function PathsSection() {
   const { connected } = useWallet();
   const { setVisible } = useWalletModal();
   const { isAuthenticated, isLoading, loginWithWallet } = useWalletAuth();
+  const t = useTranslations("paths");
+  const tAuth = useTranslations("auth");
+  const tCta = useTranslations("cta");
 
   const handleUnlockClick = () => {
     if (!connected) {
@@ -29,11 +33,10 @@ export function PathsSection() {
       <div className="mx-auto max-w-7xl px-4 lg:px-6">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold text-foreground lg:text-4xl text-balance">
-            Structured Learning Paths
+            {t("title")}
           </h2>
           <p className="mt-4 text-muted-foreground max-w-xl mx-auto text-pretty">
-            Follow curated tracks designed to take you from beginner to expert
-            with clear progression and real-world projects.
+            {t("subtitle")}
           </p>
         </div>
 
@@ -70,7 +73,7 @@ export function PathsSection() {
                   </span>
                   <span className="flex items-center gap-1">
                     <BookOpen className="h-3.5 w-3.5" />
-                    {path.courses.length} courses
+                    {t("courses", { count: path.courses.length })}
                   </span>
                   <Badge variant="outline" className="text-xs border-border">
                     {path.difficulty}
@@ -103,7 +106,7 @@ export function PathsSection() {
                 <div className="mb-4">
                   <div className="flex items-center justify-between mb-1.5">
                     <span className="text-xs text-muted-foreground">
-                      Progress
+                      {t("progress")}
                     </span>
                     <span className="text-xs font-medium text-foreground">
                       {avgProgress}%
@@ -121,7 +124,7 @@ export function PathsSection() {
                       variant="ghost"
                       className="w-full justify-between text-muted-foreground hover:text-foreground hover:bg-secondary"
                     >
-                      {avgProgress > 0 ? "Continue Path" : "Start Path"}
+                      {avgProgress > 0 ? t("continuePath") : t("startPath")}
                       <ArrowRight className="h-4 w-4" />
                     </Button>
                   </Link>
@@ -132,7 +135,7 @@ export function PathsSection() {
                     disabled={isLoading}
                     onClick={handleUnlockClick}
                   >
-                    {isLoading ? "Authorizing..." : "Connect Wallet to Unlock"}
+                    {isLoading ? tAuth("authorizing") : tCta("connectToUnlock")}
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 )}

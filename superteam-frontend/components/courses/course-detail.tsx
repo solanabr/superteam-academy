@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -77,6 +78,8 @@ export function CourseDetail({
   course: Course;
   enrolledOnChain?: boolean;
 }) {
+  const t = useTranslations("courseDetail");
+  const tCatalog = useTranslations("catalog");
   const { publicKey, sendTransaction } = useWallet();
   const router = useRouter();
 
@@ -196,7 +199,7 @@ export function CourseDetail({
                     {course.instructor}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Course Instructor
+                    {t("courseInstructor")}
                   </p>
                 </div>
               </div>
@@ -207,11 +210,12 @@ export function CourseDetail({
                   <Clock className="h-4 w-4" /> {course.duration}
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <BookOpen className="h-4 w-4" /> {course.lessons} lessons
+                  <BookOpen className="h-4 w-4" /> {course.lessons}{" "}
+                  {tCatalog("lessons")}
                 </span>
                 <span className="flex items-center gap-1.5">
                   <Users className="h-4 w-4" />{" "}
-                  {course.enrolled.toLocaleString()} enrolled
+                  {course.enrolled.toLocaleString()} {tCatalog("enrolled")}
                 </span>
                 <span className="flex items-center gap-1.5">
                   <Star className="h-4 w-4 text-[hsl(var(--gold))]" />{" "}
@@ -230,7 +234,7 @@ export function CourseDetail({
                   <>
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm text-muted-foreground">
-                        Your Progress
+                        {t("yourProgress")}
                       </span>
                       <span className="text-sm font-semibold text-primary">
                         {course.progress}%
@@ -241,13 +245,16 @@ export function CourseDetail({
                       className="h-2 mb-4 bg-secondary [&>div]:bg-primary"
                     />
                     <p className="text-xs text-muted-foreground mb-4">
-                      {completedLessons} of {totalLessons} lessons completed
+                      {t("lessonsCompleted", {
+                        completed: completedLessons,
+                        total: totalLessons,
+                      })}
                     </p>
                     <Link
                       href={`/courses/${course.slug}/lessons/${nextLessonId || "1-1"}`}
                     >
                       <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90 gap-2">
-                        Continue Learning
+                        {t("continueLearning")}
                         <ArrowRight className="h-4 w-4" />
                       </Button>
                     </Link>
@@ -255,9 +262,11 @@ export function CourseDetail({
                 ) : (
                   <>
                     <div className="text-center mb-4">
-                      <p className="text-2xl font-bold text-foreground">Free</p>
+                      <p className="text-2xl font-bold text-foreground">
+                        {t("free")}
+                      </p>
                       <p className="text-xs text-muted-foreground mt-1">
-                        Earn {course.xp} XP upon completion
+                        {t("earnXp", { xp: course.xp })}
                       </p>
                     </div>
                     <Button
@@ -265,7 +274,7 @@ export function CourseDetail({
                       disabled={isEnrolling}
                       className="w-full bg-primary text-primary-foreground hover:bg-primary/90 gap-2"
                     >
-                      {isEnrolling ? "Enrolling..." : "Enroll Now"}
+                      {isEnrolling ? t("enrolling") : t("enroll")}
                       <ArrowRight className="h-4 w-4" />
                     </Button>
                   </>
@@ -274,19 +283,19 @@ export function CourseDetail({
                 <ul className="space-y-2 text-sm text-muted-foreground">
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-primary" />{" "}
-                    {course.modules.length} modules
+                    {course.modules.length} {t("modules").toLowerCase()}
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-primary" />{" "}
-                    Interactive challenges
+                    {t("interactiveChallenges")}
                   </li>
                   <li className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-primary" /> NFT
-                    certificate
+                    <CheckCircle2 className="h-4 w-4 text-primary" />{" "}
+                    {t("nftCertificate")}
                   </li>
                   <li className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-primary" /> Lifetime
-                    access
+                    <CheckCircle2 className="h-4 w-4 text-primary" />{" "}
+                    {t("lifetimeAccess")}
                   </li>
                 </ul>
               </div>
@@ -300,7 +309,7 @@ export function CourseDetail({
         <div className="grid gap-10 lg:grid-cols-3">
           <div className="lg:col-span-2">
             <h2 className="text-xl font-semibold text-foreground mb-6">
-              Course Content
+              {t("courseContent")}
             </h2>
             <div className="space-y-3">
               {course.modules.map((mod, mi) => {
@@ -319,8 +328,12 @@ export function CourseDetail({
                             {mod.title}
                           </p>
                           <p className="text-xs text-muted-foreground mt-0.5">
-                            {mod.lessons.length} lessons · {modCompleted}/
-                            {mod.lessons.length} completed
+                            {t("moduleLessons", { count: mod.lessons.length })}{" "}
+                            ·{" "}
+                            {t("moduleCompleted", {
+                              completed: modCompleted,
+                              total: mod.lessons.length,
+                            })}
                           </p>
                         </div>
                       </div>
@@ -367,7 +380,7 @@ export function CourseDetail({
             {/* Reviews */}
             <div className="mt-12">
               <h2 className="text-xl font-semibold text-foreground mb-6">
-                Reviews
+                {t("reviews")}
               </h2>
               <div className="space-y-4">
                 {reviews.map((review) => (

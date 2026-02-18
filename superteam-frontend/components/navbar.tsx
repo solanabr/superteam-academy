@@ -60,6 +60,7 @@ export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const router = useRouter();
   const t = useTranslations("nav");
+  const tAuth = useTranslations("auth");
   const { connected, publicKey } = useWallet();
   const { setVisible } = useWalletModal();
   const { isLoading, isAuthenticated, user, status, logout } = useWalletAuth();
@@ -142,11 +143,11 @@ export function Navbar() {
                 variant="outline"
                 className="border-border text-muted-foreground"
               >
-                {shortAddress(connectedAddress)}
+                {shortAddress(connectedAddress, t("walletConnected"))}
               </Badge>
               <div className="flex items-center gap-2 rounded-lg bg-secondary px-3 py-1.5 text-sm text-muted-foreground">
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                {status === "signing" ? "Signing in..." : "Verifying..."}
+                {status === "signing" ? tAuth("signingIn") : tAuth("verifying")}
               </div>
             </div>
           )}
@@ -195,7 +196,11 @@ export function Navbar() {
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    onSelect={() => void logout().then(() => router.push("/")).catch(() => undefined)}
+                    onSelect={() =>
+                      void logout()
+                        .then(() => router.push("/"))
+                        .catch(() => undefined)
+                    }
                   >
                     <LogOut className="h-4 w-4" />
                     {t("signOut")}
@@ -207,7 +212,7 @@ export function Navbar() {
                 variant="outline"
                 className="border-primary/30 text-primary"
               >
-                {shortAddress(activeAddress)}
+                {shortAddress(activeAddress, t("walletConnected"))}
               </Badge>
             </>
           )}
@@ -247,8 +252,8 @@ export function Navbar() {
               <div className="flex w-full items-center justify-center gap-2 rounded-lg bg-secondary px-3 py-2.5 text-sm text-muted-foreground">
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 {status === "signing"
-                  ? "Signing in..."
-                  : "Verifying session..."}
+                  ? tAuth("signingIn")
+                  : tAuth("verifyingSession")}
               </div>
             )}
 
@@ -257,10 +262,15 @@ export function Navbar() {
                 variant="outline"
                 className="w-full border-primary/30 text-primary hover:bg-primary/10"
                 disabled={isLoading}
-                onClick={() => void logout().then(() => router.push("/")).catch(() => undefined)}
+                onClick={() =>
+                  void logout()
+                    .then(() => router.push("/"))
+                    .catch(() => undefined)
+                }
               >
                 <LogOut className="mr-2 h-4 w-4" />
-                {t("signOut")} ({shortAddress(activeAddress)})
+                {t("signOut")} (
+                {shortAddress(activeAddress, t("walletConnected"))})
               </Button>
             )}
           </div>
@@ -276,7 +286,8 @@ export function Navbar() {
               </Avatar>
               <div>
                 <p className="text-sm font-semibold text-foreground">
-                  {profile?.name ?? shortAddress(activeAddress)}
+                  {profile?.name ??
+                    shortAddress(activeAddress, t("walletConnected"))}
                 </p>
                 <div className="flex items-center gap-3 mt-0.5">
                   <span className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -293,7 +304,7 @@ export function Navbar() {
                 variant="outline"
                 className="ml-auto border-primary/30 text-primary text-xs"
               >
-                Lvl {profile?.level ?? "—"}
+                {t("level")} {profile?.level ?? "—"}
               </Badge>
             </div>
           )}
@@ -309,7 +320,7 @@ export function Navbar() {
               ) : (
                 <Moon className="h-4 w-4" />
               )}
-              {theme === "dark" ? "Light Mode" : "Dark Mode"}
+              {theme === "dark" ? t("lightMode") : t("darkMode")}
             </button>
           )}
 
@@ -352,7 +363,7 @@ export function Navbar() {
   );
 }
 
-function shortAddress(address: string | null): string {
-  if (!address) return "Wallet Connected";
+function shortAddress(address: string | null, fallback = ""): string {
+  if (!address) return fallback;
   return `${address.slice(0, 4)}...${address.slice(-4)}`;
 }
