@@ -1,6 +1,6 @@
 # CMS Guide
 
-Guide for managing course content in Sanity CMS for Solarium (`solarium.courses`), a Solana developer education platform built by Superteam Brazil.
+Guide for managing course content in Sanity CMS for Superteam Academy (`solarium.courses`), a Solana developer education platform built by Superteam Brazil.
 
 ## Overview
 
