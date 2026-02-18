@@ -1,6 +1,6 @@
-# Superteam Academy — Web App
+# Superteam Academy — App
 
-Next.js frontend for the Superteam Academy LMS (Solana). See repo root `docs/IMPLEMENTATION_PLAN_WEBSITE.md` for the full build plan.
+Next.js frontend for the Superteam Academy LMS (Solana). See repo root `development-journey/IMPLEMENTATION_PLAN_APP.md` for the full build plan.
 
 ## Setup
 

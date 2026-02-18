@@ -62,8 +62,8 @@ onchain-academy/target/verifiable/
 
 reference_demo_project
 design_assets
-website_arch.md
-docs/IMPLEMENTATION_PLAN_WEBSITE.md
+app_arch.md
+development-journey/IMPLEMENTATION_PLAN_APP.md
 
 app/VERIFICATION.md
 development-journey
