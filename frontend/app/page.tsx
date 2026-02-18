@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
 	ArrowRight,
@@ -14,6 +13,7 @@ import {
 	Clock,
 } from "lucide-react";
 import { getTranslations } from "next-intl/server";
+import HeroWave from "@/public/hero-wave.svg";
 
 const TOPICS = [
 	{ name: "Solana Basics", courses: 12, color: "bg-green/10 text-green" },
@@ -93,9 +93,9 @@ async function HeroSection() {
 			<div className="absolute top-0 right-0 w-150 h-150 bg-linear-to-bl from-green/8 via-transparent to-transparent rounded-full blur-3xl" />
 			<div className="absolute bottom-0 left-0 w-100 h-100 bg-linear-to-tr from-gold/6 via-transparent to-transparent rounded-full blur-3xl" />
 
-			<div className="relative mx-auto px-4 sm:px-6 py-20 sm:py-28 lg:py-36">
+			<div className="relative mx-auto px-4 sm:px-6">
 				<div className="flex items-center gap-8 lg:gap-12">
-					<div className="max-w-3xl flex-1">
+					<div className="max-w-3xl py-20 sm:py-28 lg:py-36">
 						<div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-highlight text-highlight-foreground text-sm font-medium mb-6 animate-fade-in">
 							<span className="w-1.5 h-1.5 bg-green rounded-full animate-pulse-soft" />
 							{t("badge")}
@@ -171,14 +171,11 @@ async function HeroSection() {
 						</div>
 					</div>
 
-					<div className="hidden lg:block shrink-0">
-						<Image
-							src="/hero-wave.svg"
-							alt=""
+					<div className="hidden flex-1 w-full shrink-0 md:flex justify-end">
+						<HeroWave
 							width={540}
-							height={960}
-							className="h-105 w-auto opacity-40"
-							priority
+							height={ 960 }
+							className="text-forest dark:text-cream animate-float"
 						/>
 					</div>
 				</div>

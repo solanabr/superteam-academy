@@ -138,7 +138,6 @@ export default async function MembersPage() {
 
 	return (
 		<div className="space-y-8">
-			{/* Leaders this month - inspired by Quicken's sidebar */}
 			<div className="rounded-2xl border border-border/60 bg-card overflow-hidden">
 				<div className="px-6 py-5 border-b border-border/40 flex items-center gap-2">
 					<Trophy className="h-4 w-4 text-[#ffd23f]" />
@@ -167,7 +166,7 @@ export default async function MembersPage() {
 				</div>
 			</div>
 
-			{/* Search and list */}
+			
 			<div className="flex items-center gap-3">
 				<div className="relative flex-1 max-w-sm">
 					<Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />

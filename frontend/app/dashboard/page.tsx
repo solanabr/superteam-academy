@@ -122,13 +122,11 @@ export default function DashboardPage() {
 	return (
 		<div className="min-h-screen bg-background">
 			<div className="mx-auto max-w-7xl px-4 sm:px-6 py-8 space-y-8">
-				{/* Header */}
 				<div>
 					<h1 className="text-2xl font-bold">{t("welcome", { name: displayName })}</h1>
 					<p className="text-muted-foreground mt-1">{t("overview")}</p>
 				</div>
 
-				{/* Stats Grid */}
 				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 					<StatCard
 						icon={<TrendingUp className="w-5 h-5" />}
@@ -156,7 +154,6 @@ export default function DashboardPage() {
 					/>
 				</div>
 
-				{/* Recent Courses */}
 				<div className="space-y-4">
 					<div className="flex items-center justify-between">
 						<h2 className="text-lg font-semibold">{t("yourCourses")}</h2>
@@ -173,7 +170,6 @@ export default function DashboardPage() {
 					</div>
 				</div>
 
-				{/* Quick Actions */}
 				<div className="space-y-4">
 					<h2 className="text-lg font-semibold">{t("quickActions")}</h2>
 					<div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

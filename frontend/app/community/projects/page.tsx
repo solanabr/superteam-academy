@@ -132,7 +132,6 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
 
 	return (
 		<div className="space-y-8">
-			{/* Toolbar */}
 			<div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
 				<div className="flex items-center gap-3 flex-1 w-full sm:w-auto">
 					<div className="relative flex-1 max-w-sm">
@@ -162,7 +161,6 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
 				</Button>
 			</div>
 
-			{/* Featured projects */}
 			{featured.length > 0 && (
 				<div>
 					<h2 className="text-lg font-semibold mb-4">{t("projects.featured")}</h2>
@@ -174,7 +172,6 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
 				</div>
 			)}
 
-			{/* All projects */}
 			<div>
 				{featured.length > 0 && (
 					<h2 className="text-lg font-semibold mb-4">{t("projects.allProjects")}</h2>
