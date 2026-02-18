@@ -29,12 +29,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Body size limit (10KB)
-    const contentLength = parseInt(
-      request.headers.get("content-length") ?? "0",
-      10
-    );
-    if (contentLength > 10240) {
+    const bodyText = await request.text();
+    if (bodyText.length > 10_000) {
       return NextResponse.json({ error: "Request too large" }, { status: 413 });
     }
 
@@ -66,7 +62,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = (await request.json()) as LinkWalletRequest;
+    const body = JSON.parse(bodyText) as LinkWalletRequest;
 
     // Verify SIWS request (nonce, domain, expiry, signature)
     const verification = await verifySIWSRequest({

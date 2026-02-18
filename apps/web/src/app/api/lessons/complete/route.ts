@@ -3,10 +3,7 @@ import { PublicKey } from "@solana/web3.js";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { checkNewAchievements } from "@/lib/gamification/achievements";
-import {
-  getAllCourseLessonCounts,
-  getCourseBySlug,
-} from "@/lib/sanity/queries";
+import { getAllCourseLessonCounts, getCourseById } from "@/lib/sanity/queries";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
 import {
@@ -32,7 +29,7 @@ async function deriveLessonIndex(
   courseId: string,
   lessonId: string
 ): Promise<number> {
-  const course = await getCourseBySlug(courseId);
+  const course = await getCourseById(courseId);
   if (!course) throw new Error(`Course not found: ${courseId}`);
   const allLessons = (course.modules ?? []).flatMap(
     (m: { lessons?: { _id: string }[] }) => m.lessons ?? []
@@ -81,39 +78,76 @@ export async function POST(request: NextRequest) {
     const supabaseAdmin = createAdminClient();
 
     // 1. Verify user is enrolled in this course
-    const { data: enrollment } = await supabaseAdmin
+    const { data: enrollment, error: enrollError } = await supabaseAdmin
       .from("enrollments")
       .select("id")
       .eq("user_id", user.id)
       .eq("course_id", courseId)
       .single();
 
-    if (!enrollment) {
+    if (enrollError || !enrollment) {
       return NextResponse.json(
         { error: "Not enrolled in this course" },
         { status: 403 }
       );
     }
 
+    // 2. Check if lesson is already completed (prevent double-awarding + wasteful on-chain tx)
+    const { data: existing } = await supabaseAdmin
+      .from("user_progress")
+      .select("id, completed")
+      .eq("user_id", user.id)
+      .eq("lesson_id", lessonId)
+      .maybeSingle();
+
+    if (existing?.completed) {
+      return NextResponse.json({
+        success: true,
+        alreadyCompleted: true,
+        xpEarned: 0,
+        newAchievements: [],
+        streakData: null,
+      });
+    }
+
     // Look up user's wallet — required for on-chain operations
-    const { data: profile } = await supabaseAdmin
+    const { data: profile, error: profileError } = await supabaseAdmin
       .from("profiles")
       .select("wallet_address")
       .eq("id", user.id)
       .single();
 
+    if (profileError) {
+      logError({
+        errorId: ERROR_IDS.LESSON_COMPLETE_FAILED,
+        error: new Error(profileError.message),
+        context: {
+          route: "/api/lessons/complete",
+          note: "profile lookup failed",
+        },
+      });
+    }
+
     let onChainSignature: string | undefined;
     let finalizeSig: string | null = null;
     let finalized = false;
     let lessonIndex: number | null = null;
+    let xpReward = 10;
 
     const programLive =
       profile?.wallet_address && (await isOnChainProgramLive());
 
     if (programLive && profile?.wallet_address) {
       const walletPubkey = new PublicKey(profile.wallet_address);
+      const connection = getConnection();
 
-      // Derive lesson index from Sanity content order (cached for later use)
+      // Fetch on-chain course to get XP amount BEFORE the completeLesson call
+      const onChainCourse = await fetchCourse(courseId, connection, PROGRAM_ID);
+      if (onChainCourse) {
+        xpReward = (onChainCourse.xpPerLesson as number) ?? 10;
+      }
+
+      // Derive lesson index from Sanity content order
       lessonIndex = await deriveLessonIndex(courseId, lessonId);
 
       // Call on-chain completeLesson — backend signs, mints XP via CPI
@@ -124,7 +158,6 @@ export async function POST(request: NextRequest) {
       );
 
       // Check if all lessons are now complete for auto-finalize
-      const connection = getConnection();
       const onChainEnrollment = await fetchEnrollment(
         courseId,
         walletPubkey,
@@ -132,13 +165,8 @@ export async function POST(request: NextRequest) {
         PROGRAM_ID
       );
 
-      if (onChainEnrollment) {
-        const onChainCourse = await fetchCourse(
-          courseId,
-          connection,
-          PROGRAM_ID
-        );
-        const totalLessons = (onChainCourse?.lessonCount as number) ?? 0;
+      if (onChainEnrollment && onChainCourse) {
+        const totalLessons = (onChainCourse.lessonCount as number) ?? 0;
 
         if (
           isAllLessonsComplete(
@@ -152,31 +180,13 @@ export async function POST(request: NextRequest) {
             finalized = true;
           } catch (err) {
             logError({
-              errorId: ERROR_IDS.LESSON_COMPLETE_FAILED,
+              errorId: ERROR_IDS.COURSE_FINALIZE_FAILED,
               error: err instanceof Error ? err : new Error(String(err)),
               context: { note: "auto-finalize failed, can retry" },
             });
           }
         }
       }
-    }
-
-    // 2. Check if lesson is already completed (prevent double-awarding)
-    const { data: existing } = await supabaseAdmin
-      .from("user_progress")
-      .select("id, completed")
-      .eq("user_id", user.id)
-      .eq("lesson_id", lessonId)
-      .single();
-
-    if (existing?.completed) {
-      return NextResponse.json({
-        success: true,
-        alreadyCompleted: true,
-        xpEarned: 0,
-        newAchievements: [],
-        streakData: null,
-      });
     }
 
     // 3. Upsert user_progress to mark lesson complete
@@ -200,14 +210,6 @@ export async function POST(request: NextRequest) {
         { error: "Failed to save progress" },
         { status: 500 }
       );
-    }
-
-    // 4. Determine XP amount — from on-chain course or default
-    let xpReward = 10;
-    if (programLive) {
-      const connection = getConnection();
-      const course = await fetchCourse(courseId, connection, PROGRAM_ID);
-      xpReward = (course?.xpPerLesson as number) ?? 10;
     }
 
     // Award XP via SECURITY DEFINER function (also handles streak in SQL)
@@ -275,21 +277,38 @@ export async function POST(request: NextRequest) {
 
     const completedLessonIds = (completedLessons ?? []).map((l) => l.lesson_id);
 
+    const { data: userProfile } = await supabaseAdmin
+      .from("profiles")
+      .select("created_at")
+      .eq("id", user.id)
+      .single();
+
+    const { count: userNumber } = await supabaseAdmin
+      .from("profiles")
+      .select("id", { count: "exact", head: true })
+      .lte("created_at", userProfile?.created_at ?? new Date().toISOString());
+
     const newAchievements = checkNewAchievements(
       {
         completedLessons: completedLessonCount,
         completedCourses: completedCourseCount,
         currentStreak: xpData?.current_streak ?? 0,
-        hasCompletedRustLesson: completedLessonIds.some((id) =>
-          id.includes("rust")
+        hasCompletedRustLesson: completedLessonIds.some(
+          (id) =>
+            id.startsWith("rust-") ||
+            id.includes("-rust-") ||
+            id.endsWith("-rust")
         ),
-        hasCompletedAnchorCourse: completedLessonIds.some((id) =>
-          id.includes("anchor")
+        hasCompletedAnchorCourse: completedLessonIds.some(
+          (id) =>
+            id.startsWith("anchor-") ||
+            id.includes("-anchor-") ||
+            id.endsWith("-anchor")
         ),
-        hasCompletedAllTracks: false, // Would need learning path data
-        courseCompletionTimeHours: null, // Would need timestamp tracking
-        allTestsPassedFirstTry: false, // Would need test attempt tracking
-        userNumber: 1, // Early adopter - would need profile count
+        hasCompletedAllTracks: false,
+        courseCompletionTimeHours: null,
+        allTestsPassedFirstTry: false,
+        userNumber: userNumber ?? 999,
       },
       alreadyUnlocked
     );

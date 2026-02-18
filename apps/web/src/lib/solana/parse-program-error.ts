@@ -38,11 +38,10 @@ export function resolveIdlError(code: number, idl: Idl): ProgramError | null {
     };
   }
 
-  const index = code - 6000;
   const errors = (
     idl as { errors?: { code: number; name: string; msg?: string }[] }
   ).errors;
-  if (!errors || index >= errors.length) {
+  if (!errors) {
     return {
       code,
       name: "UnknownError",
@@ -50,7 +49,7 @@ export function resolveIdlError(code: number, idl: Idl): ProgramError | null {
     };
   }
 
-  const err = errors[index];
+  const err = errors.find((e) => e.code === code);
   if (!err) {
     return {
       code,
