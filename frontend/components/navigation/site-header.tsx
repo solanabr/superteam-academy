@@ -89,7 +89,7 @@ export function SiteHeader() {
 									key={item.href}
 									href={item.href}
 									className={cn(
-										"relative px-3 py-2 text-sm font-medium rounded-lg transition-colors",
+										"relative px-3 py-2 text-sm font-medium rounded-lg transition-colors whitespace-nowrap",
 										"hover:bg-muted hover:text-foreground",
 										isActive(item.href)
 											? "text-foreground bg-muted"
