@@ -12,7 +12,6 @@ import {
   findConfigPDA,
   findCoursePDA,
   findEnrollmentPDA,
-  findAchievementReceiptPDA,
   PROGRAM_ID,
 } from "./pda";
 
@@ -55,7 +54,7 @@ export async function fetchXpBalance(
   user: PublicKey,
   xpMint: PublicKey,
   connection: Connection
-): Promise<number> {
+): Promise<{ balance: number; error?: string }> {
   const ata = getAssociatedTokenAddressSync(
     xpMint,
     user,
@@ -70,20 +69,17 @@ export async function fetchXpBalance(
       "confirmed",
       TOKEN_2022_PROGRAM_ID
     );
-    return Number(account.amount);
-  } catch {
-    return 0;
+    return { balance: Number(account.amount) };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    // TokenAccountNotFoundError means the ATA doesn't exist yet (legitimate 0 balance)
+    if (
+      message.includes("could not find account") ||
+      message.includes("TokenAccountNotFound")
+    ) {
+      return { balance: 0 };
+    }
+    // Any other error is an RPC/network failure — surface it
+    return { balance: 0, error: message };
   }
-}
-
-export async function fetchAchievementReceipt(
-  achievementId: string,
-  recipient: PublicKey,
-  connection: Connection,
-  programId: PublicKey = PROGRAM_ID
-) {
-  const [pda] = findAchievementReceiptPDA(achievementId, recipient, programId);
-  const accountInfo = await connection.getAccountInfo(pda);
-  if (!accountInfo) return null;
-  return coder.accounts.decode("AchievementReceipt", accountInfo.data);
 }

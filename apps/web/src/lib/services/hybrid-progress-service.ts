@@ -13,32 +13,6 @@ import {
   TOKEN_2022_PROGRAM_ID,
 } from "@solana/spl-token";
 import type { Database } from "@/lib/supabase/types";
-import { calculateLevel } from "@/lib/gamification/xp";
-
-// ---------------------------------------------------------------------------
-// Helius DAS API response types
-// ---------------------------------------------------------------------------
-
-interface HeliusTokenAccountInfo {
-  address: string;
-  mint: string;
-  owner: string;
-  amount: number;
-  delegated_amount: number;
-  frozen: boolean;
-}
-
-interface HeliusGetTokenAccountsResult {
-  total: number;
-  limit: number;
-  token_accounts: HeliusTokenAccountInfo[];
-}
-
-interface HeliusJsonRpcResponse {
-  jsonrpc: string;
-  id: string;
-  result: HeliusGetTokenAccountsResult;
-}
 
 // ---------------------------------------------------------------------------
 // HybridProgressService
@@ -110,18 +84,6 @@ export class HybridProgressService implements LearningProgressService {
   async getLeaderboard(
     timeframe: "weekly" | "monthly" | "alltime"
   ): Promise<LeaderboardEntry[]> {
-    const apiKey = process.env.HELIUS_API_KEY;
-
-    // On-chain leaderboard via Helius DAS API (alltime only, when configured)
-    if (apiKey && this.xpMint && timeframe === "alltime") {
-      try {
-        return await this.getLeaderboardFromHelius(apiKey);
-      } catch {
-        // Fall through to Supabase
-      }
-    }
-
-    // Supabase fallback (also used for weekly/monthly since Token-2022
     // balances have no time-windowed snapshots)
     return this.getLeaderboardFromSupabase(timeframe);
   }
@@ -269,61 +231,6 @@ export class HybridProgressService implements LearningProgressService {
       .single();
 
     return data ?? null;
-  }
-
-  /**
-   * Fetch the alltime leaderboard from Helius DAS API using Token-2022 balances.
-   */
-  private async getLeaderboardFromHelius(
-    apiKey: string
-  ): Promise<LeaderboardEntry[]> {
-    const response = await fetch(
-      `https://devnet.helius-rpc.com/?api-key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          jsonrpc: "2.0",
-          id: "leaderboard",
-          method: "getTokenAccounts",
-          params: {
-            mint: this.xpMint!.toBase58(),
-            limit: 20,
-          },
-        }),
-      }
-    );
-
-    const json = (await response.json()) as HeliusJsonRpcResponse;
-    const accounts = json.result.token_accounts;
-
-    // Sort by amount descending
-    accounts.sort((a, b) => b.amount - a.amount);
-
-    // Collect all owner wallet addresses for profile enrichment
-    const walletAddresses = accounts.map((a) => a.owner);
-
-    const { data: profiles } = await this.supabase
-      .from("profiles")
-      .select("id, wallet_address, username, avatar_url")
-      .in("wallet_address", walletAddresses);
-
-    const profilesByWallet = new Map(
-      (profiles ?? []).map((p) => [p.wallet_address, p])
-    );
-
-    return accounts.map((account, index): LeaderboardEntry => {
-      const profile = profilesByWallet.get(account.owner);
-      return {
-        userId: profile?.id ?? account.owner,
-        username: profile?.username ?? account.owner.slice(0, 8),
-        avatarUrl: profile?.avatar_url ?? "",
-        totalXp: account.amount,
-        level: calculateLevel(account.amount),
-        rank: index + 1,
-        walletAddress: account.owner,
-      };
-    });
   }
 
   /**

@@ -27,6 +27,7 @@ CREATE TABLE enrollments (
   user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
   course_id TEXT NOT NULL,
   enrolled_at TIMESTAMPTZ DEFAULT NOW(),
+  completed_at TIMESTAMPTZ,
   tx_signature TEXT,
   wallet_address TEXT,
   UNIQUE(user_id, course_id)

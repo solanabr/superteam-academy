@@ -31,11 +31,26 @@ export async function POST(
     const { courseId } = await params;
     const supabaseAdmin = createAdminClient();
 
-    const { data: profile } = await supabaseAdmin
+    const { data: profile, error: profileError } = await supabaseAdmin
       .from("profiles")
       .select("wallet_address")
       .eq("id", user.id)
       .single();
+
+    if (profileError) {
+      logError({
+        errorId: ERROR_IDS.COURSE_FINALIZE_FAILED,
+        error: new Error(profileError.message),
+        context: {
+          route: "/api/courses/[courseId]/finalize",
+          note: "profile lookup failed",
+        },
+      });
+      return NextResponse.json(
+        { error: "Failed to look up profile" },
+        { status: 500 }
+      );
+    }
 
     if (!profile?.wallet_address) {
       return NextResponse.json(
@@ -100,11 +115,24 @@ export async function POST(
     const signature = await onChainFinalizeCourse(courseId, walletPubkey);
 
     // Supabase mirror: update enrollment
-    await supabaseAdmin
+    const { error: updateError } = await supabaseAdmin
       .from("enrollments")
       .update({ completed_at: new Date().toISOString() })
       .eq("user_id", user.id)
       .eq("course_id", courseId);
+
+    if (updateError) {
+      logError({
+        errorId: ERROR_IDS.COURSE_FINALIZE_FAILED,
+        error: new Error(updateError.message),
+        context: {
+          route: "/api/courses/[courseId]/finalize",
+          note: "On-chain finalized but Supabase update failed",
+          courseId,
+          signature,
+        },
+      });
+    }
 
     return NextResponse.json({
       success: true,

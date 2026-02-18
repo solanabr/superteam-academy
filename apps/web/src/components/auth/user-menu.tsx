@@ -75,7 +75,7 @@ export function UserMenu({
         </button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent className="w-56" align="end" forceMount>
+      <DropdownMenuContent className="w-64" align="end" forceMount>
         {/* User info header */}
         <div className="flex items-center gap-3 p-2">
           <Avatar className="h-8 w-8 shrink-0">
