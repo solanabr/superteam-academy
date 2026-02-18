@@ -1,27 +1,24 @@
 const fs = require("node:fs");
 const path = require("node:path");
 
-const locales = ["en", "pt-BR", "es"];
+const localesDir = path.join(__dirname, "locales");
+const locales = fs
+	.readdirSync(localesDir)
+	.filter((file) => file.endsWith(".json"))
+	.map((file) => file.replace(/\.json$/, ""));
 const results = {};
+
+const baseLocale = "en";
+const baseTranslations = JSON.parse(
+	fs.readFileSync(path.join(localesDir, `${baseLocale}.json`), "utf-8")
+);
+const requiredSections = Object.keys(baseTranslations);
 
 for (const locale of locales) {
 	try {
-		const content = fs.readFileSync(path.join("messages", `${locale}.json`), "utf-8");
+		const content = fs.readFileSync(path.join(localesDir, `${locale}.json`), "utf-8");
 		const translations = JSON.parse(content);
 
-		// Basic structure check
-		const requiredSections = [
-			"common",
-			"navigation",
-			"auth",
-			"courses",
-			"learning",
-			"profile",
-			"settings",
-			"errors",
-			"validation",
-			"accessibility",
-		];
 		const missingSections = requiredSections.filter((section) => !translations[section]);
 
 		results[locale] = {

@@ -633,6 +633,7 @@
 	},
 	"settings": {
 		"language": "Language",
+		"switchLanguage": "Switch language",
 		"title": "Settings",
 		"description": "Manage your account, preferences, and connected wallets",
 		"tabs": {

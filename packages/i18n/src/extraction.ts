@@ -201,7 +201,7 @@ export class TranslationExtractor {
 		missingKeys: string[],
 		locales: string[] = ["en", "pt-BR", "es"]
 	): Promise<void> {
-		const messagesDir = path.join(__dirname, "../messages");
+		const messagesDir = path.join(__dirname, "../locales");
 
 		for (const locale of locales) {
 			const filePath = path.join(messagesDir, `${locale}.json`);
@@ -249,7 +249,7 @@ export class TranslationExtractor {
 	 * Generate translation template from existing keys
 	 */
 	async generateTemplate(baseLocale = "es"): Promise<Record<string, unknown>> {
-		const baseFile = path.join(__dirname, "../messages", `${baseLocale}.json`);
+		const baseFile = path.join(__dirname, "../locales", `${baseLocale}.json`);
 		const content = fs.readFileSync(baseFile, "utf-8");
 		const baseTranslations = JSON.parse(content);
 
@@ -320,7 +320,7 @@ export async function extractTranslations(): Promise<void> {
  */
 export async function checkMissingTranslations(): Promise<void> {
 	const extractor = new TranslationExtractor();
-	const messagesDir = path.join(__dirname, "../messages");
+	const messagesDir = path.join(__dirname, "../locales");
 
 	try {
 		// Load base translations (English)

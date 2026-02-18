@@ -16,7 +16,7 @@
 	},
 	"files": [
 		"dist",
-		"messages"
+		"locales"
 	],
 	"scripts": {
 		"build": "tsup",

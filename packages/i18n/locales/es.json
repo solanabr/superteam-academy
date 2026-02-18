@@ -639,6 +639,7 @@
 		"title": "Configuración",
 		"description": "Administra tu cuenta, preferencias y billeteras conectadas",
 		"language": "Idioma",
+		"switchLanguage": "Cambiar idioma",
 		"tabs": {
 			"profile": "Perfil",
 			"notifications": "Notificaciones",

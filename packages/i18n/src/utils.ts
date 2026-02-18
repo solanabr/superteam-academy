@@ -192,6 +192,7 @@ export const NAVIGATION_KEYS = {
 	LOGOUT: "navigation.logout",
 	LOGIN: "navigation.login",
 	SIGNUP: "navigation.signup",
+	SWITCH_LANGUAGE: "navigation.switchLanguage",
 } as const;
 
 /**
@@ -341,6 +342,7 @@ export const PROFILE_KEYS = {
 export const SETTINGS_KEYS = {
 	TITLE: "settings.title",
 	LANGUAGE: "settings.language",
+	SWITCH_LANGUAGE: "settings.switchLanguage",
 	THEME: "settings.theme",
 	NOTIFICATIONS: "settings.notifications",
 	PRIVACY: "settings.privacy",
