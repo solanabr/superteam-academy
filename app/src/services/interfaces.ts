@@ -113,3 +113,12 @@ export interface AvatarService {
   /** Delete avatar for a user, reverting to default. */
   deleteAvatar(userId: string): Promise<void>;
 }
+
+export interface NewsletterService {
+  /** Subscribe an email to the newsletter. Returns whether the email was already subscribed. */
+  subscribe(
+    email: string,
+    locale?: string,
+  ): Promise<{ alreadySubscribed: boolean }>;
+}
+

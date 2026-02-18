@@ -1,11 +1,13 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { useLocale } from "next-intl";
 import { Link } from "@/i18n/routing";
-import { GraduationCap, Mail, ArrowRight } from "lucide-react";
+import { GraduationCap, Mail, ArrowRight, Check, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
+import { useState } from "react";
 
 /* Inline social icons – avoids extra dep, keeps bundle small */
 function TwitterIcon({ className }: { className?: string }) {
@@ -36,12 +38,42 @@ export function Footer() {
   const t = useTranslations("footer");
   const tc = useTranslations("common");
   const tl = useTranslations("landing");
+  const locale = useLocale();
+
+  const [email, setEmail] = useState("");
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "already" | "error">("idle");
+
+  async function handleNewsletterSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!email.trim() || status === "loading") return;
+
+    setStatus("loading");
+    try {
+      const res = await fetch("/api/newsletter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), locale }),
+      });
+
+      if (!res.ok) throw new Error("Failed");
+
+      const data = await res.json();
+      setStatus(data.alreadySubscribed ? "already" : "success");
+      if (!data.alreadySubscribed) setEmail("");
+
+      // Reset to idle after 4 seconds
+      setTimeout(() => setStatus("idle"), 4000);
+    } catch {
+      setStatus("error");
+      setTimeout(() => setStatus("idle"), 4000);
+    }
+  }
 
   return (
     <footer className="border-t bg-card">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-2 gap-8 md:grid-cols-5">
-          <div className="col-span-2 md:col-span-1">
+        <div className="grid grid-cols-2 gap-8 md:grid-cols-6">
+          <div className="col-span-2">
             <Link href="/" className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
                 <GraduationCap className="h-5 w-5 text-primary-foreground" />
@@ -51,36 +83,6 @@ export function Footer() {
             <p className="mt-3 text-sm text-muted-foreground">
               {t("description")}
             </p>
-            {/* Social links */}
-            <div className="mt-4 flex items-center gap-3">
-              <a
-                href="https://twitter.com/SuperteamBR"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted/50 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-                aria-label="Twitter / X"
-              >
-                <TwitterIcon className="h-4 w-4" />
-              </a>
-              <a
-                href="https://discord.gg/superteambrasil"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted/50 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-                aria-label="Discord"
-              >
-                <DiscordIcon className="h-4 w-4" />
-              </a>
-              <a
-                href="https://github.com/solanabr/superteam-academy"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted/50 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-                aria-label="GitHub"
-              >
-                <GitHubIcon className="h-4 w-4" />
-              </a>
-            </div>
           </div>
 
           <div>
@@ -203,21 +205,53 @@ export function Footer() {
             <p className="mt-1 text-xs text-muted-foreground">
               {tl("newsletterDesc")}
             </p>
-            <form
-              className="mt-3 flex w-full gap-2"
-              onSubmit={(e) => e.preventDefault()}
-            >
-              <Input
-                type="email"
-                placeholder={tl("newsletterPlaceholder")}
-                className="flex-1 h-9 text-sm"
-                required
-              />
-              <Button type="submit" size="sm" className="gap-1.5">
-                {tl("newsletterButton")}
-                <ArrowRight className="h-3.5 w-3.5" />
-              </Button>
-            </form>
+
+            {status === "success" ? (
+              <div className="mt-3 flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
+                <Check className="h-4 w-4" />
+                {tl("newsletterSuccess")}
+              </div>
+            ) : status === "already" ? (
+              <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
+                <Check className="h-4 w-4" />
+                {tl("newsletterAlreadySubscribed")}
+              </div>
+            ) : status === "error" ? (
+              <p className="mt-3 text-sm text-destructive">
+                {tl("newsletterError")}
+              </p>
+            ) : (
+              <form
+                className="mt-3 flex w-full gap-2"
+                onSubmit={handleNewsletterSubmit}
+              >
+                <Input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder={tl("newsletterPlaceholder")}
+                  pattern="[^\s@]+@[^\s@]+\.[^\s@]+"
+                  title="Please enter a valid email (e.g. name@example.com)"
+                  className="flex-1 h-9 text-sm"
+                  required
+                  disabled={status === "loading"}
+                />
+                <Button
+                  type="submit"
+                  className="h-9 gap-1.5 px-4 text-sm"
+                  disabled={status === "loading"}
+                >
+                  {status === "loading" ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <>
+                      {tl("newsletterButton")}
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </>
+                  )}
+                </Button>
+              </form>
+            )}
           </div>
         </div>
 

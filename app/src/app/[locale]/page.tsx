@@ -21,9 +21,14 @@ import {
   ChevronRight,
   UserPlus,
   Route,
+  LogIn,
+  User,
+  Rocket,
 } from "lucide-react";
 import { motion, useMotionValue, useTransform, animate, useInView } from "framer-motion";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useSession } from "next-auth/react";
+import { SignInModal } from "@/components/auth/sign-in-modal";
 
 const fadeIn = {
   initial: { opacity: 0, y: 20 },
@@ -136,8 +141,13 @@ export default function LandingPage() {
     { value: 1.2, suffix: "M+", label: t("statsXP") },
   ];
 
+  const { data: session } = useSession();
+  const isLoggedIn = !!session?.user;
+  const [signInOpen, setSignInOpen] = useState(false);
+
   return (
     <div className="flex flex-col">
+      <SignInModal open={signInOpen} onOpenChange={setSignInOpen} />
       {/* ── Hero ── */}
       <section className="relative overflow-hidden px-4 py-24 sm:py-32 lg:py-40">
         {/* Background decorations */}
@@ -160,18 +170,40 @@ export default function LandingPage() {
               {t("heroSubtitle")}
             </p>
             <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Link href="/courses">
-                <Button size="lg" className="gap-2 text-base">
-                  {t("heroCTA")}
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-              <Link href="/courses">
-                <Button size="lg" variant="outline" className="gap-2 text-base">
-                  {t("heroSecondaryCTA")}
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </Link>
+              {isLoggedIn ? (
+                <>
+                  <Link href="/dashboard">
+                    <Button size="lg" className="gap-2 text-base">
+                      {t("heroCTALoggedIn")}
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                  <Link href="/profile">
+                    <Button size="lg" variant="outline" className="gap-2 text-base">
+                      {t("heroSecondaryCTALoggedIn")}
+                      <User className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link href="/courses">
+                    <Button size="lg" className="gap-2 text-base">
+                      {t("heroCTA")}
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="gap-2 text-base"
+                    onClick={() => setSignInOpen(true)}
+                  >
+                    {t("heroSecondaryCTA")}
+                    <LogIn className="h-4 w-4" />
+                  </Button>
+                </>
+              )}
             </div>
           </motion.div>
         </div>
@@ -530,15 +562,34 @@ export default function LandingPage() {
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
           >
-            <Award className="mx-auto h-12 w-12 text-primary" />
-            <h2 className="mt-4 text-3xl font-bold">{t("ctaTitle")}</h2>
-            <p className="mt-3 text-muted-foreground">{t("ctaSubtitle")}</p>
-            <Link href="/courses">
-              <Button size="lg" className="mt-8 gap-2">
+            {isLoggedIn ? (
+              <Rocket className="mx-auto h-12 w-12 text-primary" />
+            ) : (
+              <Award className="mx-auto h-12 w-12 text-primary" />
+            )}
+            <h2 className="mt-4 text-3xl font-bold">
+              {isLoggedIn ? t("ctaTitleLoggedIn") : t("ctaTitle")}
+            </h2>
+            <p className="mt-3 text-muted-foreground">
+              {isLoggedIn ? t("ctaSubtitleLoggedIn") : t("ctaSubtitle")}
+            </p>
+            {isLoggedIn ? (
+              <Link href="/dashboard">
+                <Button size="lg" className="mt-8 gap-2">
+                  {t("ctaButtonLoggedIn")}
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+            ) : (
+              <Button
+                size="lg"
+                className="mt-8 gap-2"
+                onClick={() => setSignInOpen(true)}
+              >
                 {t("ctaButton")}
                 <ArrowRight className="h-4 w-4" />
               </Button>
-            </Link>
+            )}
           </motion.div>
         </div>
       </section>
