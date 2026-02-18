@@ -8,6 +8,8 @@ Prioritize **performance** (tree-shaking, minimal re-renders, lean bundles) and 
 
 **Environment variables**: Validate with Zod before use. Define schema in `app/lib/env.ts`, parse with `safeParse`, throw on invalid (build fails via import in `next.config.ts`). Use typed `env` export — never read `process.env` directly in app code.
 
+**Commits**: Do not add `Co-authored-by: Cursor <cursoragent@cursor.com>` or similar to commit messages.
+
 ## Wallet & Solana in the app
 
 Use **Connector Kit** (`@solana/connector`) for wallet connection and **@solana/kit** for all Solana integration (RPC, transactions, signing).
