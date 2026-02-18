@@ -12,11 +12,11 @@ export function CommunityNav({ items }: CommunityNavProps) {
 	const pathname = usePathname();
 
 	return (
-		<div className="sticky top-14 z-30 border-b border-border/60 bg-background/80 backdrop-blur-xl">
+		<div className="sticky top-16 z-30 border-b border-border/60 bg-background/80 backdrop-blur-xl">
 			<div className="mx-auto px-4 sm:px-6">
 				<nav className="flex gap-1 overflow-x-auto scrollbar-none -mb-px">
 					{items.map((item) => {
-						const isActive = pathname.startsWith(item.href);
+						const isActive = pathname === item.href;
 
 						return (
 							<Link

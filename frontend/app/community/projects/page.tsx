@@ -107,14 +107,11 @@ const PROJECTS = [
 ];
 
 interface ProjectsPageProps {
-	searchParams: {
-		q?: string;
-		category?: string;
-	};
+	searchParams: Promise<{ q?: string; category?: string }>;
 }
 
 export default async function ProjectsPage({ searchParams }: ProjectsPageProps) {
-	const { q = "", category = "all" } = searchParams;
+	const { q = "", category = "all" } = await searchParams;
 	const t = await getTranslations("community");
 
 	const filtered = PROJECTS.filter((p) => {

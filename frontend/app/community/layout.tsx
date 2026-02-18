@@ -5,7 +5,7 @@ export default async function CommunityLayout({ children }: { children: React.Re
 	const t = await getTranslations("community");
 
 	const navItems = [
-		{ href: "/community/discussions", label: t("nav.discussions") },
+		{ href: "/community", label: t("nav.discussions") },
 		{ href: "/community/events", label: t("nav.events") },
 		{ href: "/community/members", label: t("nav.members") },
 		{ href: "/community/projects", label: t("nav.projects") },
