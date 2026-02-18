@@ -1,9 +1,9 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import Logo from "@/public/logo.svg";
 
 const FOOTER_LINKS = {
 	learn: [
@@ -50,15 +50,13 @@ export function SiteFooter() {
 				<div className="py-12 lg:py-16">
 					<div className="grid grid-cols-2 md:grid-cols-5 gap-8 lg:gap-12">
 						<div className="col-span-2 md:col-span-1 space-y-4">
-							<Link href="/" className="inline-block">
-								<Image
-									src="/logo.svg"
-									alt="Superteam Academy"
-									width={140}
-									height={30}
-									className="h-7 w-auto"
-								/>
-							</Link>
+						<Link href="/" className="cursor-pointer inline-block">
+							<Logo
+								width={150}
+								height={32}
+								className="text-brand dark:text-white"
+							/>
+						</Link>
 							<p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
 								{t("description")}
 							</p>

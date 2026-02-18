@@ -10,6 +10,14 @@ const nextConfig: NextConfig = {
 			{ protocol: "http", hostname: "localhost" },
 		],
 	},
+	turbopack: {
+		rules: {
+			"*.svg": {
+				loaders: ["@svgr/webpack"],
+				as: "*.js",
+			},
+		},
+	},
 };
 
 export default withNextIntl(nextConfig);

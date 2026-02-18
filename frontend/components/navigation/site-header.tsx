@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Trophy, Search, Menu, X, Layers, Users, Compass, Sun, Moon } from "lucide-react";
@@ -11,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { SearchModal } from "@/components/search/search-modal";
 import { LoginModal } from "@/components/auth/login-modal";
 import { cn } from "@/lib/utils";
+import Logo from "@/public/logo.svg";
 
 const NAV_ITEMS = [
 	{
@@ -75,14 +75,11 @@ export function SiteHeader() {
 			<header className="sticky top-0 z-50 w-full glass border-b border-border/40">
 				<div className="mx-auto px-4 sm:px-6">
 					<div className="flex h-16 items-center gap-4">
-						<Link href="/" className="flex items-center gap-2 shrink-0">
-							<Image
-								src="/logo.svg"
-								alt="Superteam Academy"
+						<Link href="/" className="cursor-pointer">
+							<Logo
 								width={150}
 								height={32}
-								priority
-								className="h-8 w-auto"
+								className="text-brand dark:text-white"
 							/>
 						</Link>
 

@@ -1,10 +1,13 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
 	--color-gold: #ffd23f;
 	--color-cream: #f7eacb;
 	--color-forest: #2f6b3f;
 	--color-green: #008c4c;
+	--color-brand: #306c40;
 	--color-dark: #1b231d;
 
 	--color-background: #faf6ee;
