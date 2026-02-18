@@ -47,27 +47,26 @@ Add all environment variables in **Vercel → Project → Settings → Environme
 
 #### Required Variables
 
-| Variable                        | Type            | Notes                                                                        |
-| ------------------------------- | --------------- | ---------------------------------------------------------------------------- |
-| `NEXT_PUBLIC_SUPABASE_URL`      | Public          | Bundled into client JS                                                       |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public          | Bundled into client JS                                                       |
-| `SUPABASE_SERVICE_ROLE_KEY`     | **Server-only** | Never exposed to browser                                                     |
-| `NEXT_PUBLIC_SANITY_PROJECT_ID` | Public          | Bundled into client JS                                                       |
-| `NEXT_PUBLIC_SANITY_DATASET`    | Public          | Usually `production`                                                         |
-| `NEXT_PUBLIC_SOLANA_RPC_URL`    | Public          | `https://api.devnet.solana.com`                                              |
-| `NEXT_PUBLIC_SOLANA_NETWORK`    | Public          | `devnet`                                                                     |
-| `NEXT_PUBLIC_APP_URL`           | Public          | Your Vercel URL (e.g., `https://solarium.courses`)                           |
-| `NEXT_PUBLIC_XP_MINT_ADDRESS`   | Public          | Output by `setup-devnet.ts` script                                           |
-| `XP_MINT_AUTHORITY_SECRET`      | **Server-only** | JSON array of keypair bytes — never expose                                   |
-| `NEXT_PUBLIC_BUILD_SERVER_URL`  | Public          | Cloud Run service URL (e.g., `https://solarium-build-server-HASH.a.run.app`) |
-| `BUILD_SERVER_API_KEY`          | **Server-only** | Same value as `SOLARIUM_API_KEY` on Cloud Run                                |
+| Variable                        | Type            | Notes                                                                       |
+| ------------------------------- | --------------- | --------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`      | Public          | Bundled into client JS                                                      |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public          | Bundled into client JS                                                      |
+| `SUPABASE_SERVICE_ROLE_KEY`     | **Server-only** | Never exposed to browser                                                    |
+| `NEXT_PUBLIC_SANITY_PROJECT_ID` | Public          | Bundled into client JS                                                      |
+| `NEXT_PUBLIC_SANITY_DATASET`    | Public          | Usually `production`                                                        |
+| `NEXT_PUBLIC_SOLANA_RPC_URL`    | Public          | `https://api.devnet.solana.com`                                             |
+| `NEXT_PUBLIC_SOLANA_NETWORK`    | Public          | `devnet`                                                                    |
+| `NEXT_PUBLIC_APP_URL`           | Public          | Your Vercel URL (e.g., `https://solarium.courses`)                          |
+| `NEXT_PUBLIC_XP_MINT_ADDRESS`   | Public          | Output by `setup-devnet.ts` script                                          |
+| `XP_MINT_AUTHORITY_SECRET`      | **Server-only** | JSON array of keypair bytes — never expose                                  |
+| `NEXT_PUBLIC_BUILD_SERVER_URL`  | Public          | Cloud Run service URL (e.g., `https://academy-build-server-HASH.a.run.app`) |
+| `BUILD_SERVER_API_KEY`          | **Server-only** | Same value as `ACADEMY_API_KEY` on Cloud Run                                |
 
 #### Optional Variables
 
 | Variable                         | Type            | Notes                                           |
 | -------------------------------- | --------------- | ----------------------------------------------- |
 | `NEXT_PUBLIC_GOOGLE_CLIENT_ID`   | Public          | Google OAuth (see [setup](#google-oauth-setup)) |
-| `HELIUS_API_KEY`                 | **Server-only** | Helius DAS API for on-chain leaderboard         |
 | `NEXT_PUBLIC_GA4_MEASUREMENT_ID` | Public          | Google Analytics 4                              |
 | `NEXT_PUBLIC_POSTHOG_KEY`        | Public          | PostHog project key                             |
 | `NEXT_PUBLIC_POSTHOG_HOST`       | Public          | PostHog instance URL                            |
@@ -249,16 +248,6 @@ The authority keypair is both the **mint authority** (can mint XP on lesson comp
 
 > **IMPORTANT**: `scripts/.devnet-authority.json` and `scripts/.devnet-mint.json` are gitignored. Never commit these files.
 
-### 3. Helius DAS API (Optional)
-
-For on-chain leaderboard indexing via the Digital Asset Standard API:
-
-```bash
-HELIUS_API_KEY=<your-helius-api-key>
-```
-
-Sign up at [helius.dev](https://helius.dev) for a free API key.
-
 ---
 
 ## Build Server (GCP Cloud Run)
@@ -293,8 +282,8 @@ cd apps/build-server/deploy
 
 This enables the required APIs and creates:
 
-- **Artifact Registry** repository (`solarium-images`)
-- **Service account** (`solarium-build-sa`) with `run.invoker` and `iam.serviceAccountUser` roles
+- **Artifact Registry** repository (`academy-images`)
+- **Service account** (`academy-build-sa`) with `run.invoker` and `iam.serviceAccountUser` roles
 
 After running, grant Artifact Registry write access to the Compute Engine default service account (used by regional Cloud Build):
 
@@ -315,7 +304,7 @@ openssl rand -hex 32
 ### 2. Deploy to Cloud Run
 
 ```bash
-export SOLARIUM_API_KEY=<your-generated-api-key>
+export ACADEMY_API_KEY=<your-generated-api-key>
 export ALLOWED_ORIGIN=https://solarium.courses
 
 cd apps/build-server/deploy
@@ -340,7 +329,7 @@ This builds the Docker image (~15 min first time due to `cargo-build-sbf` crate 
 
 | Variable                | Purpose                          |
 | ----------------------- | -------------------------------- |
-| `SOLARIUM_API_KEY`      | API key for `X-API-Key` header   |
+| `ACADEMY_API_KEY`       | API key for `X-API-Key` header   |
 | `ALLOWED_ORIGIN`        | CORS origin for the web app      |
 | `MAX_CONCURRENT_BUILDS` | Max parallel builds (default: 2) |
 | `BUILD_TIMEOUT_SECS`    | Per-build timeout (default: 120) |
@@ -358,17 +347,17 @@ gcloud builds triggers create github \
   --repo-owner=<OWNER> \
   --branch-pattern="^main$" \
   --build-config=apps/build-server/deploy/cloudbuild.yaml \
-  --substitutions=_REGION=southamerica-east1,_REPO=solarium-images,_SERVICE=solarium-build-server \
+  --substitutions=_REGION=southamerica-east1,_REPO=academy-images,_SERVICE=academy-build-server \
   --include-build-logs=ALL
 ```
 
-Secrets (`SOLARIUM_API_KEY`, `ALLOWED_ORIGIN`) must be added via Cloud Build substitutions or Secret Manager.
+Secrets (`ACADEMY_API_KEY`, `ALLOWED_ORIGIN`) must be added via Cloud Build substitutions or Secret Manager.
 
 ### 4. Verify Deployment
 
 ```bash
 # Health check (no auth needed for /health)
-curl https://solarium-build-server-<HASH>.a.run.app/health
+curl https://academy-build-server-<HASH>.a.run.app/health
 
 # Expected response:
 # {"status":"ok","version":"0.1.0","solana_version":"3.0.14",
@@ -508,10 +497,10 @@ After deploying, verify:
 
 ```bash
 # List revisions
-gcloud run revisions list --service=solarium-build-server --region=southamerica-east1
+gcloud run revisions list --service=academy-build-server --region=southamerica-east1
 
 # Route traffic to a previous revision
-gcloud run services update-traffic solarium-build-server \
+gcloud run services update-traffic academy-build-server \
   --to-revisions=<REVISION_NAME>=100 \
   --region=southamerica-east1
 ```

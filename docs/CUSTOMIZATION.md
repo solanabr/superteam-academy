@@ -306,26 +306,6 @@ This means:
 - No code changes are needed when new wallets are released
 - The wallet selection modal shows whatever wallets the user has installed
 
-### Adding a Legacy Wallet Adapter
-
-If you need to support a wallet that does not implement the Wallet Standard, you can add a legacy adapter:
-
-1. Install the adapter package:
-
-   ```bash
-   pnpm add @solana/wallet-adapter-wallets --filter @superteam-lms/web
-   ```
-
-2. Import and add the adapter in `wallet-provider.tsx`:
-
-   ```typescript
-   import { LegacyWalletAdapter } from "@solana/wallet-adapter-wallets";
-
-   const wallets = useMemo(() => [new LegacyWalletAdapter()], []);
-   ```
-
-3. The wallet will automatically appear in the wallet selection modal alongside auto-discovered wallets.
-
 ### Network Configuration
 
 The RPC endpoint is configured via the `NEXT_PUBLIC_SOLANA_RPC_URL` environment variable. It defaults to Solana Devnet if not set:

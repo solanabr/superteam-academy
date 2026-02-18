@@ -2,7 +2,7 @@ import { useId } from "react";
 
 interface SolanaLogoProps {
   className?: string;
-  /** "official" uses Solana's green→purple, "brand" uses Solarium's purple→teal */
+  /** "official" uses Solana's green→purple, "brand" uses Superteam Academy's purple→teal */
   variant?: "official" | "brand";
 }
 
