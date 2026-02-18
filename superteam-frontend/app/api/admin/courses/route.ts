@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { checkPermission } from "@/lib/server/admin-auth";
 import { getAllCourses, upsertCourse } from "@/lib/server/admin-store";
 import { ensureCourseOnChain } from "@/lib/server/academy-program";
+import { CacheTags } from "@/lib/server/cache-tags";
 import type { Course } from "@/lib/course-catalog";
 
 function unauthorized() {
@@ -26,6 +28,7 @@ export async function POST(request: Request) {
   }
 
   await upsertCourse(body);
+  revalidateTag(CacheTags.COURSES, "max");
 
   const lessonsCount = body.modules
     ? body.modules.reduce((sum, m) => sum + m.lessons.length, 0)

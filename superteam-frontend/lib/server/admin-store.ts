@@ -1,26 +1,36 @@
 import "server-only";
 
+import { unstable_cache } from "next/cache";
 import type { Course } from "@/lib/course-catalog";
 import type { RoadmapDef } from "@/lib/roadmaps/types";
 import { getDb } from "./mongodb";
+import { CacheTags } from "./cache-tags";
 
 // ---------------------------------------------------------------------------
 // Courses
 // ---------------------------------------------------------------------------
 
-export async function getAllCourses(): Promise<Course[]> {
-  const db = await getDb();
-  return db.collection<Course>("courses").find({}).toArray() as Promise<
-    Course[]
-  >;
-}
+export const getAllCourses = unstable_cache(
+  async (): Promise<Course[]> => {
+    const db = await getDb();
+    return db.collection<Course>("courses").find({}).toArray() as Promise<
+      Course[]
+    >;
+  },
+  ["getAllCourses"],
+  { tags: [CacheTags.COURSES], revalidate: 3600 },
+);
 
-export async function getCourse(slug: string): Promise<Course | null> {
-  const db = await getDb();
-  return db
-    .collection<Course>("courses")
-    .findOne({ slug }) as Promise<Course | null>;
-}
+export const getCourse = unstable_cache(
+  async (slug: string): Promise<Course | null> => {
+    const db = await getDb();
+    return db
+      .collection<Course>("courses")
+      .findOne({ slug }) as Promise<Course | null>;
+  },
+  ["getCourse"],
+  { tags: [CacheTags.COURSES], revalidate: 3600 },
+);
 
 export async function upsertCourse(course: Course): Promise<void> {
   const db = await getDb();
@@ -39,21 +49,27 @@ export async function deleteCourse(slug: string): Promise<boolean> {
 // Roadmaps
 // ---------------------------------------------------------------------------
 
-export async function getAllRoadmaps(): Promise<RoadmapDef[]> {
-  const db = await getDb();
-  return db.collection<RoadmapDef>("roadmaps").find({}).toArray() as Promise<
-    RoadmapDef[]
-  >;
-}
+export const getAllRoadmaps = unstable_cache(
+  async (): Promise<RoadmapDef[]> => {
+    const db = await getDb();
+    return db.collection<RoadmapDef>("roadmaps").find({}).toArray() as Promise<
+      RoadmapDef[]
+    >;
+  },
+  ["getAllRoadmaps"],
+  { tags: [CacheTags.ROADMAPS], revalidate: 3600 },
+);
 
-export async function getRoadmapBySlug(
-  slug: string,
-): Promise<RoadmapDef | null> {
-  const db = await getDb();
-  return db
-    .collection<RoadmapDef>("roadmaps")
-    .findOne({ slug }) as Promise<RoadmapDef | null>;
-}
+export const getRoadmapBySlug = unstable_cache(
+  async (slug: string): Promise<RoadmapDef | null> => {
+    const db = await getDb();
+    return db
+      .collection<RoadmapDef>("roadmaps")
+      .findOne({ slug }) as Promise<RoadmapDef | null>;
+  },
+  ["getRoadmapBySlug"],
+  { tags: [CacheTags.ROADMAPS], revalidate: 3600 },
+);
 
 export async function upsertRoadmap(roadmap: RoadmapDef): Promise<void> {
   const db = await getDb();
@@ -86,13 +102,17 @@ const DEFAULT_CONFIG: PlatformConfig = {
   registrationOpen: true,
 };
 
-export async function getPlatformConfig(): Promise<PlatformConfig> {
-  const db = await getDb();
-  const doc = await db.collection("platform_config").findOne({ key: "main" });
-  if (!doc) return { ...DEFAULT_CONFIG };
-  const { _id, key, ...config } = doc;
-  return { ...DEFAULT_CONFIG, ...config } as PlatformConfig;
-}
+export const getPlatformConfig = unstable_cache(
+  async (): Promise<PlatformConfig> => {
+    const db = await getDb();
+    const doc = await db.collection("platform_config").findOne({ key: "main" });
+    if (!doc) return { ...DEFAULT_CONFIG };
+    const { _id, key, ...config } = doc;
+    return { ...DEFAULT_CONFIG, ...config } as PlatformConfig;
+  },
+  ["getPlatformConfig"],
+  { tags: [CacheTags.PLATFORM_CONFIG], revalidate: 3600 },
+);
 
 export async function updatePlatformConfig(
   updates: Partial<PlatformConfig>,

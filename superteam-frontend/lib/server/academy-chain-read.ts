@@ -1,8 +1,10 @@
 import { Connection, PublicKey } from "@solana/web3.js";
+import { unstable_cache } from "next/cache";
 import {
   ACADEMY_PROGRAM_ID,
   ACADEMY_RPC_URL,
 } from "@/lib/generated/academy-program";
+import { CacheTags } from "./cache-tags";
 
 const CONFIG_SEED = "config";
 const LEARNER_SEED = "learner";
@@ -321,7 +323,7 @@ function dasAssetToCredential(asset: DASAsset): OnChainCredentialNFT {
  * Fetch Metaplex Core NFT credentials from the Helius DAS API.
  * Filters assets owned by the wallet to only those issued by the academy program.
  */
-export async function getCredentialNFTs(
+async function _getCredentialNFTs(
   walletAddress: string,
 ): Promise<OnChainCredentialNFT[]> {
   try {
@@ -352,4 +354,18 @@ export async function getCredentialNFTs(
   } catch {
     return [];
   }
+}
+
+function cachedGetCredentialNFTs(wallet: string) {
+  return unstable_cache(
+    () => _getCredentialNFTs(wallet),
+    ["getCredentialNFTs", wallet],
+    { tags: [CacheTags.credentialNfts(wallet)], revalidate: 600 },
+  );
+}
+
+export async function getCredentialNFTs(
+  walletAddress: string,
+): Promise<OnChainCredentialNFT[]> {
+  return cachedGetCredentialNFTs(walletAddress)();
 }

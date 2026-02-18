@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { checkPermission } from "@/lib/server/admin-auth";
 import {
   getRoadmapBySlug,
   upsertRoadmap,
   deleteRoadmap,
 } from "@/lib/server/admin-store";
+import { CacheTags } from "@/lib/server/cache-tags";
 import type { RoadmapDef } from "@/lib/roadmaps/types";
 
 function unauthorized() {
@@ -31,6 +33,7 @@ export async function PUT(request: Request, { params }: Params) {
   const body = (await request.json()) as RoadmapDef;
   body.slug = slug;
   await upsertRoadmap(body);
+  revalidateTag(CacheTags.ROADMAPS, "max");
   return NextResponse.json(body);
 }
 
@@ -42,5 +45,6 @@ export async function DELETE(_request: Request, { params }: Params) {
   if (!deleted) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
+  revalidateTag(CacheTags.ROADMAPS, "max");
   return NextResponse.json({ ok: true });
 }

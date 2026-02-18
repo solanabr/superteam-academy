@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { checkPermission } from "@/lib/server/admin-auth";
 import { getAllRoadmaps, upsertRoadmap } from "@/lib/server/admin-store";
+import { CacheTags } from "@/lib/server/cache-tags";
 import type { RoadmapDef } from "@/lib/roadmaps/types";
 
 function unauthorized() {
@@ -24,5 +26,6 @@ export async function POST(request: Request) {
     );
   }
   await upsertRoadmap(body);
+  revalidateTag(CacheTags.ROADMAPS, "max");
   return NextResponse.json(body, { status: 201 });
 }

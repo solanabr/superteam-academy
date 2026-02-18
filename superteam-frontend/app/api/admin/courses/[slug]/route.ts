@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { checkPermission } from "@/lib/server/admin-auth";
 import {
   getCourse,
@@ -11,6 +12,7 @@ import {
   updateCourseOnChain,
   deactivateCourseOnChain,
 } from "@/lib/server/academy-program";
+import { CacheTags } from "@/lib/server/cache-tags";
 import type { Course } from "@/lib/course-catalog";
 
 function unauthorized() {
@@ -37,6 +39,7 @@ export async function PUT(request: Request, { params }: Params) {
   const body = (await request.json()) as Course;
   body.slug = slug;
   await upsertCourse(body);
+  revalidateTag(CacheTags.COURSES, "max");
 
   const lessonsCount = body.modules
     ? body.modules.reduce((sum, m) => sum + m.lessons.length, 0)
@@ -72,6 +75,7 @@ export async function DELETE(_request: Request, { params }: Params) {
   if (!deleted) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
+  revalidateTag(CacheTags.COURSES, "max");
 
   let deactivated = false;
   let chainError: string | null = null;

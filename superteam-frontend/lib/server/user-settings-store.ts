@@ -1,6 +1,8 @@
 import "server-only";
 
+import { unstable_cache } from "next/cache";
 import { getDb } from "./mongodb";
+import { CacheTags } from "./cache-tags";
 
 export type UserSettings = {
   name: string;
@@ -30,9 +32,7 @@ const defaultSettings: UserSettings = {
   profilePublic: true,
 };
 
-export async function getUserSettings(
-  walletAddress: string,
-): Promise<UserSettings> {
+async function _getUserSettings(walletAddress: string): Promise<UserSettings> {
   const db = await getDb();
   const doc = await db
     .collection("user_settings")
@@ -40,6 +40,20 @@ export async function getUserSettings(
   if (!doc) return { ...defaultSettings };
   const { _id, wallet, ...settings } = doc;
   return { ...defaultSettings, ...settings } as UserSettings;
+}
+
+function cachedGetUserSettings(wallet: string) {
+  return unstable_cache(
+    () => _getUserSettings(wallet),
+    ["getUserSettings", wallet],
+    { tags: [CacheTags.userSettings(wallet)], revalidate: 300 },
+  );
+}
+
+export async function getUserSettings(
+  walletAddress: string,
+): Promise<UserSettings> {
+  return cachedGetUserSettings(walletAddress)();
 }
 
 export async function updateUserSettings(
