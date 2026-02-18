@@ -6,10 +6,10 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-onchain_academy = "ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf"
+onchain_academy = "GmLKszNTdCgYYkrspmi9sRFWj3ZiCamkc4YrppKJRUhh"
 
 [programs.devnet]
-onchain_academy = "ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf"
+onchain_academy = "GmLKszNTdCgYYkrspmi9sRFWj3ZiCamkc4YrppKJRUhh"
 
 [registry]
 url = "https://api.apr.dev"

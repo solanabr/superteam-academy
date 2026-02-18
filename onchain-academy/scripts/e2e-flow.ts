@@ -27,9 +27,9 @@ const provider = anchor.AnchorProvider.env();
 anchor.setProvider(provider);
 const program = anchor.workspace.onchainAcademy as Program<OnchainAcademy>;
 
-const courseId = process.argv[2] || "solana-mock-test";
+const courseId = process.env.COURSE_ID || "solana-mock-test";
 const trackCollection = new PublicKey(
-  process.argv[3] || "HgbTmCi4wUWAWLx4LD6zJ2AQdayaCe7mVfhJpGwXfeVX"
+  process.env.TRACK_COLLECTION || "Bd7gN9YXWv19cPFMywCeaA5Kp8ZexPnMtZquyyqNpWEr"
 );
 const MPL_CORE_PROGRAM_ID = new PublicKey(
   "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d"
