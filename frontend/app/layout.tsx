@@ -2,8 +2,7 @@ import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, getLocale } from "next-intl/server";
-import { ThemeProvider } from "next-themes";
-import { AuthProvider } from "@/contexts/auth-context";
+import Providers from "./providers";
 import { SiteHeader } from "@/components/navigation/site-header";
 import { SiteFooter } from "@/components/navigation/site-footer";
 import "./globals.css";
@@ -52,20 +51,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 						</Script>
 					</>
 				)}
-				<ThemeProvider
-					attribute="class"
-					defaultTheme="system"
-					enableSystem
-					disableTransitionOnChange
-				>
-					<NextIntlClientProvider messages={messages}>
-						<AuthProvider>
-							<SiteHeader />
-							<main className="flex-1">{children}</main>
-							<SiteFooter />
-						</AuthProvider>
-					</NextIntlClientProvider>
-				</ThemeProvider>
+				<NextIntlClientProvider messages={messages}>
+					<Providers>
+						<SiteHeader />
+						<main className="flex-1">{children}</main>
+						<SiteFooter />
+					</Providers>
+				</NextIntlClientProvider>
 			</body>
 		</html>
 	);

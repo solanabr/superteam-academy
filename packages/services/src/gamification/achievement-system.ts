@@ -773,9 +773,10 @@ export class AchievementAnalytics {
 			.sort(([, a], [, b]) => b - a)
 			.slice(0, 5)
 			.map(([achievementId, unlocks]) => ({
-				achievement: this.catalog.getAchievement(achievementId)!,
+				achievement: this.catalog.getAchievement(achievementId),
 				recentUnlocks: unlocks,
-			}));
+			}))
+			.filter((item) => item.achievement !== undefined) as TrendingAchievement[];
 	}
 
 	private calculateAverageTimeToUnlock(userAchievements: UserAchievement[]): number {

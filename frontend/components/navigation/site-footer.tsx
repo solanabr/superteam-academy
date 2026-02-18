@@ -50,13 +50,13 @@ export function SiteFooter() {
 				<div className="py-12 lg:py-16">
 					<div className="grid grid-cols-2 md:grid-cols-5 gap-8 lg:gap-12">
 						<div className="col-span-2 md:col-span-1 space-y-4">
-						<Link href="/" className="cursor-pointer inline-block">
-							<Logo
-								width={150}
-								height={32}
-								className="text-brand dark:text-white"
-							/>
-						</Link>
+							<Link href="/" className="cursor-pointer inline-block">
+								<Logo
+									width={150}
+									height={32}
+									className="text-brand dark:text-white"
+								/>
+							</Link>
 							<p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
 								{t("description")}
 							</p>
@@ -95,8 +95,7 @@ export function SiteFooter() {
 						</Link>
 						<Link href="/cookies" className="hover:text-foreground transition-colors">
 							{t("cookies")}
-						</Link>
-						{" "}
+						</Link>{" "}
 						<LanguageSwitcher />
 					</div>
 				</div>

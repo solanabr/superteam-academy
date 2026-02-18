@@ -69,7 +69,7 @@ export class RedisLeaderboardCacheService implements LeaderboardCacheService {
 			const entry: CacheEntry<T> = {
 				data,
 				timestamp: new Date(),
-				ttl: ttl || this.config.defaultTTL!,
+				ttl: ttl || this.config.defaultTTL || 0,
 				accessCount: 0,
 				lastAccessed: new Date(),
 			};

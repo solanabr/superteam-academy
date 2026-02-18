@@ -41,13 +41,13 @@ export class HeliusLeaderboardAnalyticsService implements LeaderboardAnalyticsSe
 				timeframe
 			);
 
-			if (!analytics.success) {
+			if (!analytics.success || !analytics.data) {
 				return analytics;
 			}
 
 			// Cache the result
 			this.analyticsCache.set(cacheKey, {
-				data: analytics.data!,
+				data: analytics.data,
 				timestamp: new Date(),
 				ttl: 10 * 60 * 1000, // 10 minutes
 			});
@@ -179,14 +179,14 @@ export class HeliusLeaderboardAnalyticsService implements LeaderboardAnalyticsSe
 		try {
 			const analytics = await this.getLeaderboardAnalytics(category, timeframe);
 
-			if (!analytics.success) {
+			if (!analytics.success || !analytics.data) {
 				return {
 					success: false,
 					...(analytics.error !== undefined ? { error: analytics.error } : {}),
 				};
 			}
 
-			const insights = this.generateInsights(analytics.data!, category, timeframe);
+			const insights = this.generateInsights(analytics.data, category, timeframe);
 
 			return {
 				success: true,
@@ -235,7 +235,7 @@ export class HeliusLeaderboardAnalyticsService implements LeaderboardAnalyticsSe
 					query.timeframe
 				);
 				if (distribution.success) {
-					results.metrics.scoreDistribution = distribution.data!;
+					results.metrics.scoreDistribution = distribution.data;
 				}
 			}
 
@@ -243,7 +243,7 @@ export class HeliusLeaderboardAnalyticsService implements LeaderboardAnalyticsSe
 			if (query.includeParticipationTrends) {
 				const trends = await this.getParticipationTrends(query.category, query.timeframe);
 				if (trends.success) {
-					results.metrics.participationTrends = trends.data!;
+					results.metrics.participationTrends = trends.data;
 				}
 			}
 
@@ -291,8 +291,8 @@ export class HeliusLeaderboardAnalyticsService implements LeaderboardAnalyticsSe
 				};
 			}
 
-			if (format === "csv") {
-				const csv = this.convertAnalyticsToCSV(analytics.data!);
+			if (format === "csv" && analytics.data) {
+				const csv = this.convertAnalyticsToCSV(analytics.data);
 				return {
 					success: true,
 					data: csv,
@@ -301,7 +301,7 @@ export class HeliusLeaderboardAnalyticsService implements LeaderboardAnalyticsSe
 
 			return {
 				success: true,
-				data: JSON.stringify(analytics.data!, null, 2),
+				data: JSON.stringify(analytics.data, null, 2),
 			};
 		} catch (error) {
 			const msg = error instanceof Error ? error.message : "Unknown error";

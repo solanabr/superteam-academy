@@ -243,7 +243,7 @@ export class LevelProgressionEngine {
 				updatedAt: new Date(),
 			});
 		}
-		return this.userLevels.get(userId)!;
+		return this.userLevels.get(userId) as UserLevel;
 	}
 
 	private async grantLevelRewards(userId: string, levelNumber: number): Promise<LevelReward[]> {

@@ -100,7 +100,7 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
 					<DialogDescription>
 						{step === "choose" && t("welcomeDescription")}
 						{step === "wallet-verify" &&
-							t("verifyWalletDescription", { address: truncatedAddress })}
+							t("verifyWalletDescription", { address: truncatedAddress ?? "" })}
 					</DialogDescription>
 				</DialogHeader>
 
@@ -121,7 +121,7 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
 							<Wallet className="w-4 h-4 mr-3" />
 							{isLoading === "wallet"
 								? t("connecting")
-								: isWalletConnected
+								: isWalletConnected && truncatedAddress
 									? t("continueWithWalletAddress", { address: truncatedAddress })
 									: t("continueWithWallet")}
 						</Button>

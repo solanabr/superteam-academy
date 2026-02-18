@@ -76,11 +76,7 @@ export function SiteHeader() {
 				<div className="mx-auto px-4 sm:px-6">
 					<div className="flex h-16 items-center gap-4">
 						<Link href="/" className="cursor-pointer">
-							<Logo
-								width={150}
-								height={32}
-								className="text-brand dark:text-white"
-							/>
+							<Logo width={150} height={32} className="text-brand dark:text-white" />
 						</Link>
 
 						<nav className="hidden lg:flex items-center gap-1">
