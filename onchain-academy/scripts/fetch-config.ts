@@ -9,7 +9,7 @@ const program = anchor.workspace.onchainAcademy as Program<OnchainAcademy>;
 
 const [configPda] = PublicKey.findProgramAddressSync(
   [Buffer.from("config")],
-  program.programId
+  program.programId,
 );
 
 async function main() {

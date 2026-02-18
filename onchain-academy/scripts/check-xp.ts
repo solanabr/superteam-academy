@@ -2,17 +2,22 @@ import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { OnchainAcademy } from "../target/types/onchain_academy";
 import { PublicKey } from "@solana/web3.js";
-import { TOKEN_2022_PROGRAM_ID, getAssociatedTokenAddressSync } from "@solana/spl-token";
+import {
+  TOKEN_2022_PROGRAM_ID,
+  getAssociatedTokenAddressSync,
+} from "@solana/spl-token";
 
 const provider = anchor.AnchorProvider.env();
 anchor.setProvider(provider);
 const program = anchor.workspace.onchainAcademy as Program<OnchainAcademy>;
 
-const wallet = new PublicKey(process.argv[2] || provider.wallet.publicKey.toBase58());
+const wallet = new PublicKey(
+  process.argv[2] || provider.wallet.publicKey.toBase58(),
+);
 
 const [configPda] = PublicKey.findProgramAddressSync(
   [Buffer.from("config")],
-  program.programId
+  program.programId,
 );
 
 async function main() {
@@ -21,7 +26,7 @@ async function main() {
     config.xpMint,
     wallet,
     false,
-    TOKEN_2022_PROGRAM_ID
+    TOKEN_2022_PROGRAM_ID,
   );
 
   try {
