@@ -42,7 +42,6 @@ wallets/
 # Claude local settings (user-specific permissions)
 .claude/settings.local.json
 
-=======
 # Coverage / profiling
 coverage/
 lcov.info
@@ -60,7 +59,6 @@ onchain-academy/target/verifiable/
 *.log
 *.tmp
 .cache
->>>>>>> main
 
 reference_demo_project
 design_assets
