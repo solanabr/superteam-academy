@@ -47,20 +47,21 @@ Add all environment variables in **Vercel → Project → Settings → Environme
 
 #### Required Variables
 
-| Variable                        | Type            | Notes                                                                       |
-| ------------------------------- | --------------- | --------------------------------------------------------------------------- |
-| `NEXT_PUBLIC_SUPABASE_URL`      | Public          | Bundled into client JS                                                      |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public          | Bundled into client JS                                                      |
-| `SUPABASE_SERVICE_ROLE_KEY`     | **Server-only** | Never exposed to browser                                                    |
-| `NEXT_PUBLIC_SANITY_PROJECT_ID` | Public          | Bundled into client JS                                                      |
-| `NEXT_PUBLIC_SANITY_DATASET`    | Public          | Usually `production`                                                        |
-| `NEXT_PUBLIC_SOLANA_RPC_URL`    | Public          | `https://api.devnet.solana.com`                                             |
-| `NEXT_PUBLIC_SOLANA_NETWORK`    | Public          | `devnet`                                                                    |
-| `NEXT_PUBLIC_APP_URL`           | Public          | Your Vercel URL (e.g., `https://solarium.courses`)                          |
-| `NEXT_PUBLIC_XP_MINT_ADDRESS`   | Public          | Output by `setup-devnet.ts` script                                          |
-| `XP_MINT_AUTHORITY_SECRET`      | **Server-only** | JSON array of keypair bytes — never expose                                  |
-| `NEXT_PUBLIC_BUILD_SERVER_URL`  | Public          | Cloud Run service URL (e.g., `https://academy-build-server-HASH.a.run.app`) |
-| `BUILD_SERVER_API_KEY`          | **Server-only** | Same value as `ACADEMY_API_KEY` on Cloud Run                                |
+| Variable                        | Type            | Notes                                                                          |
+| ------------------------------- | --------------- | ------------------------------------------------------------------------------ |
+| `NEXT_PUBLIC_SUPABASE_URL`      | Public          | Bundled into client JS                                                         |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public          | Bundled into client JS                                                         |
+| `SUPABASE_SERVICE_ROLE_KEY`     | **Server-only** | Never exposed to browser                                                       |
+| `NEXT_PUBLIC_SANITY_PROJECT_ID` | Public          | Bundled into client JS                                                         |
+| `NEXT_PUBLIC_SANITY_DATASET`    | Public          | Usually `production`                                                           |
+| `NEXT_PUBLIC_SOLANA_RPC_URL`    | Public          | `https://api.devnet.solana.com`                                                |
+| `NEXT_PUBLIC_SOLANA_NETWORK`    | Public          | `devnet`                                                                       |
+| `NEXT_PUBLIC_APP_URL`           | Public          | Your Vercel URL (e.g., `https://solarium.courses`)                             |
+| `NEXT_PUBLIC_PROGRAM_ID`        | Public          | Program ID from `anchor deploy` (see [DEPLOY-PROGRAM.md](./DEPLOY-PROGRAM.md)) |
+| `NEXT_PUBLIC_XP_MINT_ADDRESS`   | Public          | XP mint pubkey from `initialize.ts` output                                     |
+| `NEXT_PUBLIC_BACKEND_SIGNER`    | Public          | Authority pubkey (same as deployer on devnet)                                  |
+| `NEXT_PUBLIC_BUILD_SERVER_URL`  | Public          | Cloud Run service URL (e.g., `https://academy-build-server-HASH.a.run.app`)    |
+| `BUILD_SERVER_API_KEY`          | **Server-only** | Same value as `ACADEMY_API_KEY` on Cloud Run                                   |
 
 #### Optional Variables
 
@@ -221,32 +222,21 @@ NEXT_PUBLIC_GOOGLE_CLIENT_ID=<your-client-id>.apps.googleusercontent.com
 
 The platform uses Token-2022 soulbound tokens for on-chain XP tracking.
 
-### 1. Run the Setup Script
+### Deploy and Initialize the On-Chain Program
+
+The XP mint is created by the on-chain program's `initialize` instruction — not a standalone script. Follow the full deployment guide:
+
+**[DEPLOY-PROGRAM.md](./DEPLOY-PROGRAM.md)** — keypair generation, build, deploy, initialize, and verification.
+
+After deployment, add these to your `.env.local`:
 
 ```bash
-npx tsx scripts/setup-devnet.ts
+NEXT_PUBLIC_PROGRAM_ID=<your-program-id>
+NEXT_PUBLIC_XP_MINT_ADDRESS=<xp-mint-pubkey-from-initialize-output>
+NEXT_PUBLIC_BACKEND_SIGNER=<your-authority-pubkey>
 ```
 
-This script:
-
-1. Generates (or reuses) an authority keypair at `scripts/.devnet-authority.json`
-2. Airdrops 2 SOL from the devnet faucet
-3. Creates a Token-2022 mint with **NonTransferable** + **PermanentDelegate** extensions
-4. Saves the mint keypair to `scripts/.devnet-mint.json`
-5. Outputs the env vars you need
-
-### 2. Set Environment Variables
-
-The script outputs two values — add them to your `.env.local`:
-
-```bash
-NEXT_PUBLIC_XP_MINT_ADDRESS=<base58-mint-pubkey>
-XP_MINT_AUTHORITY_SECRET='[<byte-array>]'
-```
-
-The authority keypair is both the **mint authority** (can mint XP on lesson completion) and the **PermanentDelegate** (can burn XP on wallet unlink).
-
-> **IMPORTANT**: `scripts/.devnet-authority.json` and `scripts/.devnet-mint.json` are gitignored. Never commit these files.
+On devnet, the deployer wallet serves as both `authority` and `backend_signer`.
 
 ---
 
