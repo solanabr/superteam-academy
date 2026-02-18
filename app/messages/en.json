@@ -1,0 +1,104 @@
+{
+  "nav": {
+    "home": "Home",
+    "courses": "Courses",
+    "dashboard": "Dashboard",
+    "profile": "Profile",
+    "login": "Login",
+    "logout": "Logout"
+  },
+  "home": {
+    "title": "Superteam Brazil LMS",
+    "subtitle": "Learn, Build, and Earn in the Solana Ecosystem",
+    "description": "Join thousands of learners in mastering blockchain development, DeFi, and Web3 technologies with hands-on courses and earn NFT certificates.",
+    "getStarted": "Get Started",
+    "exploreCourses": "Explore Courses",
+    "connectWallet": "Connect Wallet",
+    "features": {
+      "blockchain": "Blockchain Education",
+      "blockchainDesc": "Learn from industry experts with practical, hands-on courses",
+      "certificates": "NFT Certificates",
+      "certificatesDesc": "Earn verifiable on-chain certificates as NFTs",
+      "community": "Community",
+      "communityDesc": "Connect with fellow learners and builders"
+    }
+  },
+  "courses": {
+    "title": "Available Courses",
+    "search": "Search courses...",
+    "filter": "Filter by category",
+    "allCategories": "All Categories",
+    "enroll": "Enroll Now",
+    "enrolled": "Enrolled",
+    "continue": "Continue Learning",
+    "completed": "Completed",
+    "progress": "Progress",
+    "lessons": "lessons",
+    "students": "students",
+    "duration": "duration",
+    "level": "Level",
+    "beginner": "Beginner",
+    "intermediate": "Intermediate",
+    "advanced": "Advanced"
+  },
+  "dashboard": {
+    "title": "My Dashboard",
+    "welcome": "Welcome back",
+    "enrolledCourses": "Enrolled Courses",
+    "completedCourses": "Completed Courses",
+    "certificates": "My Certificates",
+    "recentActivity": "Recent Activity",
+    "viewAll": "View All",
+    "noCourses": "You haven't enrolled in any courses yet.",
+    "browseCourses": "Browse Courses"
+  },
+  "course": {
+    "overview": "Overview",
+    "curriculum": "Curriculum",
+    "instructor": "Instructor",
+    "reviews": "Reviews",
+    "enroll": "Enroll in Course",
+    "startLearning": "Start Learning",
+    "whatYouLearn": "What you'll learn",
+    "requirements": "Requirements",
+    "description": "Description",
+    "lesson": "Lesson",
+    "quiz": "Quiz",
+    "assignment": "Assignment",
+    "downloadCertificate": "Download Certificate",
+    "mintCertificate": "Mint NFT Certificate"
+  },
+  "profile": {
+    "title": "Profile Settings",
+    "personal": "Personal Information",
+    "wallet": "Wallet Settings",
+    "achievements": "Achievements",
+    "save": "Save Changes",
+    "cancel": "Cancel"
+  },
+  "wallet": {
+    "connect": "Connect Wallet",
+    "disconnect": "Disconnect",
+    "connecting": "Connecting...",
+    "connected": "Connected",
+    "selectWallet": "Select a wallet",
+    "phantom": "Phantom",
+    "solflare": "Solflare",
+    "error": "Failed to connect wallet"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "success": "Success",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "finish": "Finish",
+    "retry": "Retry"
+  }
+}

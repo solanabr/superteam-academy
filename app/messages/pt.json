@@ -1,0 +1,104 @@
+{
+  "nav": {
+    "home": "Início",
+    "courses": "Cursos",
+    "dashboard": "Painel",
+    "profile": "Perfil",
+    "login": "Entrar",
+    "logout": "Sair"
+  },
+  "home": {
+    "title": "Superteam Brazil LMS",
+    "subtitle": "Aprenda, Construa e Ganhe no Ecossistema Solana",
+    "description": "Junte-se a milhares de estudantes dominando desenvolvimento blockchain, DeFi e tecnologias Web3 com cursos práticos e ganhe certificados NFT.",
+    "getStarted": "Começar",
+    "exploreCourses": "Explorar Cursos",
+    "connectWallet": "Conectar Carteira",
+    "features": {
+      "blockchain": "Educação Blockchain",
+      "blockchainDesc": "Aprenda com especialistas da indústria com cursos práticos",
+      "certificates": "Certificados NFT",
+      "certificatesDesc": "Ganhe certificados verificáveis on-chain como NFTs",
+      "community": "Comunidade",
+      "communityDesc": "Conecte-se com outros estudantes e construtores"
+    }
+  },
+  "courses": {
+    "title": "Cursos Disponíveis",
+    "search": "Buscar cursos...",
+    "filter": "Filtrar por categoria",
+    "allCategories": "Todas as Categorias",
+    "enroll": "Inscrever-se Agora",
+    "enrolled": "Inscrito",
+    "continue": "Continuar Aprendendo",
+    "completed": "Concluído",
+    "progress": "Progresso",
+    "lessons": "aulas",
+    "students": "alunos",
+    "duration": "duração",
+    "level": "Nível",
+    "beginner": "Iniciante",
+    "intermediate": "Intermediário",
+    "advanced": "Avançado"
+  },
+  "dashboard": {
+    "title": "Meu Painel",
+    "welcome": "Bem-vindo de volta",
+    "enrolledCourses": "Cursos Inscritos",
+    "completedCourses": "Cursos Concluídos",
+    "certificates": "Meus Certificados",
+    "recentActivity": "Atividade Recente",
+    "viewAll": "Ver Todos",
+    "noCourses": "Você ainda não se inscreveu em nenhum curso.",
+    "browseCourses": "Navegar Cursos"
+  },
+  "course": {
+    "overview": "Visão Geral",
+    "curriculum": "Currículo",
+    "instructor": "Instrutor",
+    "reviews": "Avaliações",
+    "enroll": "Inscrever-se no Curso",
+    "startLearning": "Começar a Aprender",
+    "whatYouLearn": "O que você aprenderá",
+    "requirements": "Requisitos",
+    "description": "Descrição",
+    "lesson": "Lição",
+    "quiz": "Quiz",
+    "assignment": "Tarefa",
+    "downloadCertificate": "Baixar Certificado",
+    "mintCertificate": "Cunhar Certificado NFT"
+  },
+  "profile": {
+    "title": "Configurações do Perfil",
+    "personal": "Informações Pessoais",
+    "wallet": "Configurações da Carteira",
+    "achievements": "Conquistas",
+    "save": "Salvar Alterações",
+    "cancel": "Cancelar"
+  },
+  "wallet": {
+    "connect": "Conectar Carteira",
+    "disconnect": "Desconectar",
+    "connecting": "Conectando...",
+    "connected": "Conectado",
+    "selectWallet": "Selecione uma carteira",
+    "phantom": "Phantom",
+    "solflare": "Solflare",
+    "error": "Falha ao conectar carteira"
+  },
+  "common": {
+    "loading": "Carregando...",
+    "error": "Ocorreu um erro",
+    "success": "Sucesso",
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "edit": "Editar",
+    "delete": "Excluir",
+    "confirm": "Confirmar",
+    "back": "Voltar",
+    "next": "Próximo",
+    "previous": "Anterior",
+    "finish": "Finalizar",
+    "retry": "Tentar Novamente"
+  }
+}
