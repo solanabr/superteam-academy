@@ -15,7 +15,7 @@ export async function GET() {
   const user = await checkPermission("settings.read");
   if (!user) return unauthorized();
   const [platformConfig, chainConfig] = await Promise.all([
-    Promise.resolve(getPlatformConfig()),
+    getPlatformConfig(),
     getAcademyConfigOnChain(),
   ]);
   return NextResponse.json({ platformConfig, chainConfig });
@@ -25,6 +25,6 @@ export async function PUT(request: Request) {
   const user = await checkPermission("settings.write");
   if (!user) return unauthorized();
   const body = (await request.json()) as Partial<PlatformConfig>;
-  const updated = updatePlatformConfig(body);
+  const updated = await updatePlatformConfig(body);
   return NextResponse.json(updated);
 }

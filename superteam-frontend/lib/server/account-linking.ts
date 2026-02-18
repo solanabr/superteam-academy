@@ -1,4 +1,5 @@
 import { randomUUID } from "crypto";
+import { getDb } from "./mongodb";
 
 export type LinkedAccount = {
   id: string;
@@ -9,77 +10,73 @@ export type LinkedAccount = {
   username?: string;
 };
 
-const store = new Map<string, LinkedAccount>();
-
-// Secondary indexes for lookups
-const walletIndex = new Map<string, string>(); // walletAddress -> id
-const oauthIndex = new Map<string, string>(); // "provider:providerId" -> id
-
-function oauthKey(provider: string, providerId: string): string {
-  return `${provider}:${providerId}`;
+export async function getLinkedAccount(
+  userId: string,
+): Promise<LinkedAccount | null> {
+  const db = await getDb();
+  const doc = await db.collection("linked_accounts").findOne({ id: userId });
+  if (!doc) return null;
+  const { _id, ...account } = doc;
+  return account as unknown as LinkedAccount;
 }
 
-export function getLinkedAccount(userId: string): LinkedAccount | null {
-  return store.get(userId) ?? null;
+export async function findByWallet(
+  walletAddress: string,
+): Promise<LinkedAccount | null> {
+  const db = await getDb();
+  const doc = await db.collection("linked_accounts").findOne({ walletAddress });
+  if (!doc) return null;
+  const { _id, ...account } = doc;
+  return account as unknown as LinkedAccount;
 }
 
-export function findByWallet(walletAddress: string): LinkedAccount | null {
-  const id = walletIndex.get(walletAddress);
-  if (!id) return null;
-  return store.get(id) ?? null;
-}
-
-export function findByOAuth(
+export async function findByOAuth(
   provider: string,
   providerId: string,
-): LinkedAccount | null {
-  const id = oauthIndex.get(oauthKey(provider, providerId));
-  if (!id) return null;
-  return store.get(id) ?? null;
+): Promise<LinkedAccount | null> {
+  const field = provider === "google" ? "googleId" : "githubId";
+  const db = await getDb();
+  const doc = await db
+    .collection("linked_accounts")
+    .findOne({ [field]: providerId });
+  if (!doc) return null;
+  const { _id, ...account } = doc;
+  return account as unknown as LinkedAccount;
 }
 
-export function linkWallet(
+export async function linkWallet(
   userId: string,
   walletAddress: string,
-): LinkedAccount {
-  let account = store.get(userId);
-  if (!account) {
-    account = { id: userId };
-    store.set(userId, account);
-  }
-
-  // Remove old wallet index if changing wallet
-  if (account.walletAddress && account.walletAddress !== walletAddress) {
-    walletIndex.delete(account.walletAddress);
-  }
-
-  account.walletAddress = walletAddress;
-  walletIndex.set(walletAddress, userId);
-  return account;
+): Promise<LinkedAccount> {
+  const db = await getDb();
+  const result = await db
+    .collection("linked_accounts")
+    .findOneAndUpdate(
+      { id: userId },
+      { $set: { walletAddress } },
+      { upsert: true, returnDocument: "after" },
+    );
+  const { _id, ...account } = result!;
+  return account as unknown as LinkedAccount;
 }
 
-export function linkOAuth(
+export async function linkOAuth(
   userId: string,
   provider: "google" | "github",
   providerId: string,
   email: string,
-): LinkedAccount {
-  let account = store.get(userId);
-  if (!account) {
-    account = { id: userId, email };
-    store.set(userId, account);
-  }
-
-  account.email = email;
-
-  if (provider === "google") {
-    account.googleId = providerId;
-  } else if (provider === "github") {
-    account.githubId = providerId;
-  }
-
-  oauthIndex.set(oauthKey(provider, providerId), userId);
-  return account;
+): Promise<LinkedAccount> {
+  const field = provider === "google" ? "googleId" : "githubId";
+  const db = await getDb();
+  const result = await db
+    .collection("linked_accounts")
+    .findOneAndUpdate(
+      { id: userId },
+      { $set: { email, [field]: providerId } },
+      { upsert: true, returnDocument: "after" },
+    );
+  const { _id, ...account } = result!;
+  return account as unknown as LinkedAccount;
 }
 
 export type LinkedAccountStatus = {
@@ -88,10 +85,10 @@ export type LinkedAccountStatus = {
   email?: string;
 };
 
-export function getLinkedStatusForWallet(
+export async function getLinkedStatusForWallet(
   walletAddress: string,
-): LinkedAccountStatus {
-  const account = findByWallet(walletAddress);
+): Promise<LinkedAccountStatus> {
+  const account = await findByWallet(walletAddress);
   if (!account) {
     return { google: false, github: false };
   }
@@ -102,29 +99,27 @@ export function getLinkedStatusForWallet(
   };
 }
 
-export function findOrCreateByOAuth(
+export async function findOrCreateByOAuth(
   provider: "google" | "github",
   providerId: string,
   email: string,
-): LinkedAccount {
-  // Check if this OAuth account already exists
-  const existing = findByOAuth(provider, providerId);
+): Promise<LinkedAccount> {
+  const existing = await findByOAuth(provider, providerId);
   if (existing) {
-    existing.email = email;
+    if (existing.email !== email) {
+      const db = await getDb();
+      await db
+        .collection("linked_accounts")
+        .updateOne({ id: existing.id }, { $set: { email } });
+      existing.email = email;
+    }
     return existing;
   }
 
-  // Create new account
   const id = `oauth:${randomUUID()}`;
-  const account: LinkedAccount = { id, email };
-
-  if (provider === "google") {
-    account.googleId = providerId;
-  } else {
-    account.githubId = providerId;
-  }
-
-  store.set(id, account);
-  oauthIndex.set(oauthKey(provider, providerId), id);
+  const field = provider === "google" ? "googleId" : "githubId";
+  const account: LinkedAccount = { id, email, [field]: providerId };
+  const db = await getDb();
+  await db.collection("linked_accounts").insertOne({ ...account });
   return account;
 }

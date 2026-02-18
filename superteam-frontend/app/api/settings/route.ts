@@ -10,7 +10,7 @@ export async function GET() {
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  const settings = getUserSettings(user.walletAddress);
+  const settings = await getUserSettings(user.walletAddress);
   return NextResponse.json({ settings });
 }
 
@@ -20,6 +20,6 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const body = await request.json();
-  const updated = updateUserSettings(user.walletAddress, body);
+  const updated = await updateUserSettings(user.walletAddress, body);
   return NextResponse.json({ settings: updated });
 }

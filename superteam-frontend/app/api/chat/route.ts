@@ -42,8 +42,8 @@ Superteam Academy is an interactive blockchain education platform where learners
 - If asked about something outside the platform, briefly answer but redirect to relevant platform content.
 - Keep responses under 300 words unless the learner asks for a detailed explanation.`;
 
-function buildSystemPrompt(): string {
-  const courses = getAllCourses();
+async function buildSystemPrompt(): Promise<string> {
+  const courses = await getAllCourses();
   const courseList = courses
     .map(
       (c) =>
@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
 
   const result = streamText({
     model: groq("llama-3.3-70b-versatile"),
-    system: buildSystemPrompt(),
+    system: await buildSystemPrompt(),
     messages: await convertToModelMessages(messages),
     maxOutputTokens: 1024,
   });

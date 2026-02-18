@@ -41,7 +41,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const meta = getCatalogCourseMeta(slug);
+  const meta = await getCatalogCourseMeta(slug);
   if (!meta) {
     return NextResponse.json(
       { error: "Unknown course slug." },
@@ -83,10 +83,10 @@ export async function POST(request: Request) {
 
   // Compute daily bonuses (streak + first-of-day)
   const currentStreak = await getCurrentStreak(user.walletAddress);
-  const bonuses = computeBonusXp(user.walletAddress, currentStreak);
+  const bonuses = await computeBonusXp(user.walletAddress, currentStreak);
 
-  const courseTitle = getCourse(slug)?.title ?? slug;
-  recordLessonComplete(
+  const courseTitle = (await getCourse(slug))?.title ?? slug;
+  await recordLessonComplete(
     user.walletAddress,
     courseTitle,
     lessonXp,
@@ -101,7 +101,7 @@ export async function POST(request: Request) {
       finalizeTxSignature = await finalizeCourseOnChain(userPk, slug);
       finalized = true;
       courseCompletionXp = rewards.courseComplete;
-      recordCourseFinalized(
+      await recordCourseFinalized(
         user.walletAddress,
         courseTitle,
         courseCompletionXp,

@@ -11,7 +11,7 @@ function unauthorized() {
 export async function GET() {
   const user = await checkPermission("courses.read");
   if (!user) return unauthorized();
-  return NextResponse.json(getAllCourses());
+  return NextResponse.json(await getAllCourses());
 }
 
 export async function POST(request: Request) {
@@ -25,12 +25,12 @@ export async function POST(request: Request) {
     );
   }
 
-  upsertCourse(body);
+  await upsertCourse(body);
 
   const lessonsCount = body.modules
     ? body.modules.reduce((sum, m) => sum + m.lessons.length, 0)
     : 0;
-  const allCourses = getAllCourses();
+  const allCourses = await getAllCourses();
   const trackId = allCourses.findIndex((c) => c.slug === body.slug) + 1;
 
   let onChain = false;

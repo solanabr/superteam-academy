@@ -16,7 +16,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const meta = getCatalogCourseMeta(slug);
+  const meta = await getCatalogCourseMeta(slug);
   if (!meta) {
     return NextResponse.json(
       { error: "Unknown course slug." },

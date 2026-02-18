@@ -78,20 +78,22 @@ function getTrackCourseSlugs(trackName: string): string[] {
     .map(([slug]) => slug);
 }
 
-function getTrackTotalXp(trackName: string): number {
+async function getTrackTotalXp(trackName: string): Promise<number> {
   const slugs = getTrackCourseSlugs(trackName);
-  return slugs.reduce((total, slug) => {
-    const course = getCourse(slug);
-    return total + (course?.xp ?? 0);
-  }, 0);
+  let total = 0;
+  for (const slug of slugs) {
+    const course = await getCourse(slug);
+    total += course?.xp ?? 0;
+  }
+  return total;
 }
 
-function buildCertificateData(
+async function buildCertificateData(
   wallet: string,
   courseSlug: string,
   completionDate?: string,
-): CertificateData | null {
-  const course = getCourse(courseSlug);
+): Promise<CertificateData | null> {
+  const course = await getCourse(courseSlug);
   if (!course) return null;
 
   const trackInfo = TRACK_MAP[courseSlug] ?? {
@@ -111,42 +113,33 @@ function buildCertificateData(
     trackName: trackInfo.name,
     trackLevel: trackInfo.level,
     coursesInTrack: trackSlugs.length,
-    totalTrackXp: getTrackTotalXp(trackInfo.name),
+    totalTrackXp: await getTrackTotalXp(trackInfo.name),
     programId: ACADEMY_PROGRAM_ID,
     cluster: ACADEMY_CLUSTER,
   };
 }
 
-/**
- * Look up a certificate by its encoded ID.
- * For now, derives mock data from the ID. When on-chain credentials land,
- * this will query the compressed PDA via the Photon indexer.
- */
-export function getCertificateById(id: string): CertificateData | null {
+export async function getCertificateById(
+  id: string,
+): Promise<CertificateData | null> {
   const parsed = decodeCertificateId(id);
   if (!parsed) return null;
 
-  const course = getCourse(parsed.courseSlug);
+  const course = await getCourse(parsed.courseSlug);
   if (!course) return null;
 
-  // Build certificate with the wallet prefix as a stand-in
-  // In production this would fetch the real wallet from the credential PDA
   const mockWallet = parsed.walletPrefix.padEnd(32, "1");
   return buildCertificateData(mockWallet, parsed.courseSlug);
 }
 
-/**
- * Get all certificates for a wallet. Checks on-chain enrollment data;
- * courses with all lessons completed are considered certified.
- */
 export async function getCertificatesForWallet(
   wallet: string,
 ): Promise<CertificateData[]> {
   const results: CertificateData[] = [];
   const user = new PublicKey(wallet);
 
-  for (const course of getAllCourses()) {
-    const meta = getCatalogCourseMeta(course.slug);
+  for (const course of await getAllCourses()) {
+    const meta = await getCatalogCourseMeta(course.slug);
     if (!meta) continue;
 
     try {
@@ -158,11 +151,10 @@ export async function getCertificatesForWallet(
         0,
       );
       if (Number(enrollment.lessonsCompleted) >= totalLessons) {
-        const cert = buildCertificateData(wallet, course.slug);
+        const cert = await buildCertificateData(wallet, course.slug);
         if (cert) results.push(cert);
       }
     } catch {
-      // Network errors - skip this course
       continue;
     }
   }
@@ -170,14 +162,10 @@ export async function getCertificatesForWallet(
   return results;
 }
 
-/**
- * Build certificate data for a specific wallet + course combination.
- * Returns null if the course doesn't exist in the catalog.
- */
-export function buildCertificateForWallet(
+export async function buildCertificateForWallet(
   wallet: string,
   courseSlug: string,
   completionDate?: string,
-): CertificateData | null {
+): Promise<CertificateData | null> {
   return buildCertificateData(wallet, courseSlug, completionDate);
 }

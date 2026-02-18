@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 async function SettingsContent() {
   const user = await requireAuthenticatedUser();
   const snapshot = await getIdentitySnapshotForUser(user);
-  const linkedAccounts = getLinkedStatusForWallet(user.walletAddress);
+  const linkedAccounts = await getLinkedStatusForWallet(user.walletAddress);
   const configuredProviders = getConfiguredProviders();
 
   return (

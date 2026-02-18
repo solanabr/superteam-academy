@@ -23,7 +23,7 @@ export async function GET(_request: Request, { params }: Params) {
   const user = await checkPermission("courses.read");
   if (!user) return unauthorized();
   const { slug } = await params;
-  const course = getCourse(slug);
+  const course = await getCourse(slug);
   if (!course) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
@@ -36,12 +36,12 @@ export async function PUT(request: Request, { params }: Params) {
   const { slug } = await params;
   const body = (await request.json()) as Course;
   body.slug = slug;
-  upsertCourse(body);
+  await upsertCourse(body);
 
   const lessonsCount = body.modules
     ? body.modules.reduce((sum, m) => sum + m.lessons.length, 0)
     : 0;
-  const allCourses = getAllCourses();
+  const allCourses = await getAllCourses();
   const trackId = allCourses.findIndex((c) => c.slug === slug) + 1;
 
   let onChain = false;
@@ -68,7 +68,7 @@ export async function DELETE(_request: Request, { params }: Params) {
   const user = await checkPermission("courses.write");
   if (!user) return unauthorized();
   const { slug } = await params;
-  const deleted = deleteCourse(slug);
+  const deleted = await deleteCourse(slug);
   if (!deleted) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }

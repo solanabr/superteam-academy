@@ -12,7 +12,7 @@ export async function GET() {
   if (!user) return unauthorized();
   const [profiles, courses] = await Promise.all([
     getAllLearnerProfilesOnChain(),
-    Promise.resolve(getAllCourses()),
+    getAllCourses(),
   ]);
 
   const totalLearners = profiles.length;

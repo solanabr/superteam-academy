@@ -6,6 +6,7 @@ import {
   DAILY_STREAK_BONUS,
   FIRST_COMPLETION_OF_DAY_BONUS,
 } from "./academy-course-catalog";
+import { getDb } from "./mongodb";
 
 export type RecentActivityItem = {
   type: "lesson" | "course";
@@ -16,11 +17,6 @@ export type RecentActivityItem = {
   ts: number;
 };
 
-const activityCountsByWallet = new Map<string, Map<string, number>>();
-const recentActivityByWallet = new Map<string, RecentActivityItem[]>();
-const totalCompletedByWallet = new Map<string, number>();
-// Tracks whether a wallet has completed anything today (for first-of-day bonus)
-const firstCompletionDateByWallet = new Map<string, string>();
 const MAX_RECENT = 20;
 
 function toDateKey(d: Date): string {
@@ -36,31 +32,23 @@ function formatTimeAgo(ts: number): string {
   return `${Math.floor(sec / 604800)}w ago`;
 }
 
-/**
- * Check if this is the first completion of the day for a wallet.
- * Returns true only the first time per UTC day.
- */
-function checkFirstCompletionOfDay(wallet: string): boolean {
-  const today = toDateKey(new Date());
-  const lastDate = firstCompletionDateByWallet.get(wallet);
-  if (lastDate === today) return false;
-  firstCompletionDateByWallet.set(wallet, today);
-  return true;
-}
-
-/**
- * Compute bonus XP for a completion event.
- * Returns { streakBonus, firstOfDayBonus, totalBonus }.
- */
-export function computeBonusXp(
+export async function computeBonusXp(
   wallet: string,
   currentStreak: number,
-): { streakBonus: number; firstOfDayBonus: number; totalBonus: number } {
-  const isFirstOfDay = checkFirstCompletionOfDay(wallet);
+): Promise<{
+  streakBonus: number;
+  firstOfDayBonus: number;
+  totalBonus: number;
+}> {
+  const today = toDateKey(new Date());
+  const db = await getDb();
+  const existing = await db
+    .collection("activity")
+    .countDocuments({ wallet, dateKey: today });
+  // First-of-day means no prior activity recorded today
+  const isFirstOfDay = existing === 0;
   const firstOfDayBonus = isFirstOfDay ? FIRST_COMPLETION_OF_DAY_BONUS : 0;
-  // Streak bonus applies if user has an active streak of 2+ days
   const streakBonus = currentStreak >= 2 ? DAILY_STREAK_BONUS : 0;
-  // Streak bonus only applies once per day (same as first-of-day tracking)
   const effectiveStreakBonus = isFirstOfDay ? streakBonus : 0;
   return {
     streakBonus: effectiveStreakBonus,
@@ -69,55 +57,50 @@ export function computeBonusXp(
   };
 }
 
-export function recordLessonComplete(
+export async function recordLessonComplete(
   wallet: string,
   courseTitle: string,
   xpAmount: number,
   lessonTitle?: string,
-): void {
-  const today = toDateKey(new Date());
-  let counts = activityCountsByWallet.get(wallet);
-  if (!counts) {
-    counts = new Map();
-    activityCountsByWallet.set(wallet, counts);
-  }
-  counts.set(today, (counts.get(today) ?? 0) + 1);
-
-  const items = recentActivityByWallet.get(wallet) ?? [];
-  items.unshift({
+): Promise<void> {
+  const now = Date.now();
+  const dateKey = toDateKey(new Date());
+  const db = await getDb();
+  await db.collection("activity").insertOne({
+    wallet,
     type: "lesson",
     text: lessonTitle ? `Completed '${lessonTitle}'` : "Completed a lesson",
     course: courseTitle,
-    time: formatTimeAgo(Date.now()),
     xp: xpAmount,
-    ts: Date.now(),
+    ts: now,
+    dateKey,
   });
-  recentActivityByWallet.set(wallet, items.slice(0, MAX_RECENT));
 }
 
-export function recordCourseFinalized(
+export async function recordCourseFinalized(
   wallet: string,
   courseTitle: string,
   xpAmount: number,
-): void {
-  const prev = totalCompletedByWallet.get(wallet) ?? 0;
-  totalCompletedByWallet.set(wallet, prev + 1);
-
-  const items = recentActivityByWallet.get(wallet) ?? [];
-  items.unshift({
-    type: "course",
-    text: `Completed course: ${courseTitle}`,
-    course: courseTitle,
-    time: formatTimeAgo(Date.now()),
-    xp: xpAmount,
-    ts: Date.now(),
-  });
-  recentActivityByWallet.set(wallet, items.slice(0, MAX_RECENT));
+): Promise<void> {
+  const now = Date.now();
+  const dateKey = toDateKey(new Date());
+  const db = await getDb();
+  await Promise.all([
+    db.collection("activity").insertOne({
+      wallet,
+      type: "course",
+      text: `Completed course: ${courseTitle}`,
+      course: courseTitle,
+      xp: xpAmount,
+      ts: now,
+      dateKey,
+    }),
+    db
+      .collection("activity_totals")
+      .updateOne({ wallet }, { $inc: { totalCompleted: 1 } }, { upsert: true }),
+  ]);
 }
 
-/**
- * Fetch both heatmap days and recent activity from a single RPC call.
- */
 export async function getActivityData(
   wallet: string,
   daysBack = 365,
@@ -125,18 +108,35 @@ export async function getActivityData(
   days: Array<{ date: string; intensity: number; count: number }>;
   recentActivity: RecentActivityItem[];
 }> {
-  const chainData = await fetchChainActivity(
-    new PublicKey(wallet),
-    daysBack,
-    MAX_RECENT,
-  );
+  const db = await getDb();
+
+  const [chainData, dbCounts, dbRecent] = await Promise.all([
+    fetchChainActivity(new PublicKey(wallet), daysBack, MAX_RECENT),
+    db
+      .collection("activity")
+      .aggregate<{ _id: string; count: number }>([
+        { $match: { wallet } },
+        { $group: { _id: "$dateKey", count: { $sum: 1 } } },
+      ])
+      .toArray(),
+    db
+      .collection("activity")
+      .find({ wallet })
+      .sort({ ts: -1 })
+      .limit(MAX_RECENT)
+      .toArray(),
+  ]);
 
   // --- Heatmap days ---
   const onChainMap = new Map<string, { intensity: number; count: number }>();
   for (const day of chainData.days) {
     onChainMap.set(day.date, { intensity: day.intensity, count: day.count });
   }
-  const memoryCounts = activityCountsByWallet.get(wallet);
+  const dbCountMap = new Map<string, number>();
+  for (const row of dbCounts) {
+    dbCountMap.set(row._id, row.count);
+  }
+
   const days: Array<{ date: string; intensity: number; count: number }> = [];
   const today = new Date();
   for (let i = daysBack - 1; i >= 0; i--) {
@@ -144,15 +144,23 @@ export async function getActivityData(
     d.setDate(d.getDate() - i);
     const dateKey = toDateKey(d);
     const chain = onChainMap.get(dateKey);
-    const memoryCount = memoryCounts?.get(dateKey) ?? 0;
-    const count = Math.max(chain?.count ?? 0, memoryCount);
-    const intensity = Math.max(chain?.intensity ?? 0, memoryCount > 0 ? 1 : 0);
+    const dbCount = dbCountMap.get(dateKey) ?? 0;
+    const count = Math.max(chain?.count ?? 0, dbCount);
+    const intensity = Math.max(chain?.intensity ?? 0, dbCount > 0 ? 1 : 0);
     days.push({ date: dateKey, intensity, count });
   }
 
   // --- Recent activity ---
-  const memoryItems = recentActivityByWallet.get(wallet) ?? [];
-  const merged = [...memoryItems];
+  const dbItems: RecentActivityItem[] = dbRecent.map((doc) => ({
+    type: doc.type as "lesson" | "course",
+    text: doc.text as string,
+    course: doc.course as string,
+    time: formatTimeAgo(doc.ts as number),
+    xp: doc.xp as number,
+    ts: doc.ts as number,
+  }));
+
+  const merged = [...dbItems];
   for (const ci of chainData.recent) {
     const isDuplicate = merged.some(
       (mi) => Math.abs(mi.ts - ci.ts) < 2000 && mi.type === ci.type,
@@ -190,13 +198,12 @@ export async function getRecentActivity(
   return recentActivity;
 }
 
-export function getTotalCompleted(wallet: string): number {
-  return totalCompletedByWallet.get(wallet) ?? 0;
+export async function getTotalCompleted(wallet: string): Promise<number> {
+  const db = await getDb();
+  const doc = await db.collection("activity_totals").findOne({ wallet });
+  return (doc?.totalCompleted as number) ?? 0;
 }
 
-/**
- * Compute the current streak (consecutive active days ending today or yesterday).
- */
 export function computeStreakFromDays(
   days: Array<{ date: string; count: number }>,
 ): number {
@@ -225,9 +232,6 @@ export function computeStreakFromDays(
   return streak;
 }
 
-/**
- * Get the current activity streak for a wallet from chain + in-memory data.
- */
 export async function getCurrentStreak(wallet: string): Promise<number> {
   const { days } = await getActivityData(wallet);
   return computeStreakFromDays(days);

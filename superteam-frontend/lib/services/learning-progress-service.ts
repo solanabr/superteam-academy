@@ -100,7 +100,7 @@ export class OnChainLearningProgressService implements LearningProgressService {
       await import("@/lib/server/academy-progress-adapter");
     const { getCourse } = await import("@/lib/server/admin-store");
     const snapshot = await getCourseProgressSnapshot(userId, courseSlug);
-    const course = getCourse(courseSlug);
+    const course = await getCourse(courseSlug);
     const total = course ? countTotalLessons(course) : 0;
 
     if (!snapshot) {
@@ -133,7 +133,7 @@ export class OnChainLearningProgressService implements LearningProgressService {
   async getAllProgress(userId: string): Promise<CourseProgress[]> {
     const { getAllCourses } = await import("@/lib/server/admin-store");
     const results: CourseProgress[] = [];
-    for (const course of getAllCourses()) {
+    for (const course of await getAllCourses()) {
       const progress = await this.getProgressForCourse(userId, course.slug);
       results.push(progress);
     }
@@ -155,9 +155,9 @@ export class OnChainLearningProgressService implements LearningProgressService {
     const user = new PublicKey(userId);
     await completeLessonOnChain(user, courseSlug);
 
-    const course = getCourse(courseSlug);
+    const course = await getCourse(courseSlug);
     // Default XP for this codepath (service-level call without difficulty context)
-    recordLessonComplete(userId, course?.title ?? courseSlug, 50);
+    await recordLessonComplete(userId, course?.title ?? courseSlug, 50);
   }
 
   async getXpBalance(userId: string): Promise<number> {
@@ -249,7 +249,7 @@ export class OnChainLearningProgressService implements LearningProgressService {
   async getCredentialById(id: string): Promise<Credential | null> {
     const { getCertificateById } =
       await import("@/lib/server/certificate-service");
-    const cert = getCertificateById(id);
+    const cert = await getCertificateById(id);
     if (!cert) return null;
     return {
       id: cert.id,

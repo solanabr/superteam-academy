@@ -80,18 +80,22 @@ export const authConfig: NextAuthConfig = {
         // Check if this OAuth sign-in should be linked to an existing wallet session
         const walletAddress = await getWalletAddressFromCookie();
         if (walletAddress) {
-          const existing = findByWallet(walletAddress);
+          const existing = await findByWallet(walletAddress);
           if (existing) {
-            linkOAuth(existing.id, provider, providerId, email);
+            await linkOAuth(existing.id, provider, providerId, email);
             token.userId = existing.id;
             token.walletAddress = walletAddress;
           } else {
-            const linked = findOrCreateByOAuth(provider, providerId, email);
+            const linked = await findOrCreateByOAuth(
+              provider,
+              providerId,
+              email,
+            );
             token.userId = linked.id;
             token.walletAddress = linked.walletAddress ?? undefined;
           }
         } else {
-          const linked = findOrCreateByOAuth(provider, providerId, email);
+          const linked = await findOrCreateByOAuth(provider, providerId, email);
           token.userId = linked.id;
           token.walletAddress = linked.walletAddress ?? undefined;
         }

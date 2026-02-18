@@ -151,7 +151,7 @@ export async function getIdentitySnapshotForUser(
     earned: rule.earned({ xp, streak, totalCompleted, rank }),
   }));
 
-  const settings = getUserSettings(user.walletAddress);
+  const settings = await getUserSettings(user.walletAddress);
   const socialLinks: IdentitySnapshot["profile"]["socialLinks"] = {
     twitter: settings.twitter || undefined,
     github: settings.github || undefined,

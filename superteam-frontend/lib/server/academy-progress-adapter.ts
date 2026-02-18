@@ -19,8 +19,8 @@ export type CourseProgressSnapshot = {
   completedLessons: number;
 };
 
-function cloneCourse(slug: string): Course | null {
-  const raw = getCourse(slug);
+async function cloneCourse(slug: string): Promise<Course | null> {
+  const raw = await getCourse(slug);
   if (!raw) return null;
   return JSON.parse(JSON.stringify(raw)) as Course;
 }
@@ -49,7 +49,7 @@ export async function getCourseProgressSnapshot(
   slug: string,
   options?: { forceRefresh?: boolean },
 ): Promise<CourseProgressSnapshot | null> {
-  const meta = getCatalogCourseMeta(slug);
+  const meta = await getCatalogCourseMeta(slug);
   if (!meta) return null;
 
   try {
@@ -73,7 +73,7 @@ export async function getCourseProgressSnapshot(
   }
 
   const completedLessons = enrollment ? Number(enrollment.lessonsCompleted) : 0;
-  const course = cloneCourse(slug);
+  const course = await cloneCourse(slug);
   if (!course) return null;
 
   const coursePda = deriveCoursePda(meta.slug);
@@ -92,8 +92,8 @@ export async function getAllCourseProgressSnapshots(
   slugs?: string[],
 ): Promise<CourseProgressSnapshot[]> {
   const courseList = slugs
-    ? slugs.map((s) => getCourse(s)).filter(Boolean)
-    : getAllCourses();
+    ? (await Promise.all(slugs.map((s) => getCourse(s)))).filter(Boolean)
+    : await getAllCourses();
 
   const settled = await Promise.allSettled(
     courseList
@@ -107,7 +107,7 @@ export async function getAllCourseProgressSnapshots(
           return snapshot;
         } catch {
           // Fallback: show course without on-chain data
-          const fallback = cloneCourse(course.slug);
+          const fallback = await cloneCourse(course.slug);
           if (fallback) {
             const coursePda = deriveCoursePda(course.slug);
             const user = new PublicKey(walletAddress);

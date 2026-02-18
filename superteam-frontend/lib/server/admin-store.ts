@@ -1,142 +1,75 @@
 import "server-only";
 
-import fs from "fs";
-import path from "path";
-import { courses as seedCourses, type Course } from "@/lib/course-catalog";
-import { roadmaps as seedRoadmaps } from "@/lib/roadmaps";
+import type { Course } from "@/lib/course-catalog";
 import type { RoadmapDef } from "@/lib/roadmaps/types";
+import { getDb } from "./mongodb";
 
 // ---------------------------------------------------------------------------
-// Persistence helpers — JSON file backing survives HMR + server restarts
+// Courses
 // ---------------------------------------------------------------------------
 
-const DATA_DIR = path.join(process.cwd(), ".admin-data");
-const COURSES_FILE = path.join(DATA_DIR, "courses.json");
-const ROADMAPS_FILE = path.join(DATA_DIR, "roadmaps.json");
-const CONFIG_FILE = path.join(DATA_DIR, "config.json");
-
-function ensureDataDir() {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-  }
+export async function getAllCourses(): Promise<Course[]> {
+  const db = await getDb();
+  return db.collection<Course>("courses").find({}).toArray() as Promise<
+    Course[]
+  >;
 }
 
-function readJson<T>(filePath: string): T | null {
-  try {
-    if (!fs.existsSync(filePath)) return null;
-    return JSON.parse(fs.readFileSync(filePath, "utf-8")) as T;
-  } catch {
-    return null;
-  }
+export async function getCourse(slug: string): Promise<Course | null> {
+  const db = await getDb();
+  return db
+    .collection<Course>("courses")
+    .findOne({ slug }) as Promise<Course | null>;
 }
 
-function writeJson(filePath: string, data: unknown) {
-  ensureDataDir();
-  fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+export async function upsertCourse(course: Course): Promise<void> {
+  const db = await getDb();
+  await db
+    .collection("courses")
+    .updateOne({ slug: course.slug }, { $set: course }, { upsert: true });
 }
 
-// ---------------------------------------------------------------------------
-// globalThis cache — survives HMR in dev mode (standard Next.js pattern)
-// ---------------------------------------------------------------------------
-
-const globalStore = globalThis as unknown as {
-  __adminCourses?: Map<string, Course>;
-  __adminRoadmaps?: Map<string, RoadmapDef>;
-  __adminConfig?: PlatformConfig;
-};
-
-// ---------------------------------------------------------------------------
-// Courses Store
-// ---------------------------------------------------------------------------
-
-function getCoursesStore(): Map<string, Course> {
-  if (globalStore.__adminCourses) return globalStore.__adminCourses;
-
-  const store = new Map<string, Course>();
-
-  // Try loading from disk first
-  const persisted = readJson<Course[]>(COURSES_FILE);
-  if (persisted && persisted.length > 0) {
-    for (const c of persisted) store.set(c.slug, c);
-  } else {
-    // Seed from static catalog
-    for (const c of seedCourses) store.set(c.slug, { ...c });
-  }
-
-  globalStore.__adminCourses = store;
-  return store;
-}
-
-function persistCourses() {
-  const store = getCoursesStore();
-  writeJson(COURSES_FILE, Array.from(store.values()));
-}
-
-export function getAllCourses(): Course[] {
-  return Array.from(getCoursesStore().values());
-}
-
-export function getCourse(slug: string): Course | null {
-  return getCoursesStore().get(slug) ?? null;
-}
-
-export function upsertCourse(course: Course): void {
-  getCoursesStore().set(course.slug, course);
-  persistCourses();
-}
-
-export function deleteCourse(slug: string): boolean {
-  const result = getCoursesStore().delete(slug);
-  if (result) persistCourses();
-  return result;
+export async function deleteCourse(slug: string): Promise<boolean> {
+  const db = await getDb();
+  const result = await db.collection("courses").deleteOne({ slug });
+  return result.deletedCount > 0;
 }
 
 // ---------------------------------------------------------------------------
-// Roadmaps Store
+// Roadmaps
 // ---------------------------------------------------------------------------
 
-function getRoadmapsStore(): Map<string, RoadmapDef> {
-  if (globalStore.__adminRoadmaps) return globalStore.__adminRoadmaps;
-
-  const store = new Map<string, RoadmapDef>();
-
-  const persisted = readJson<RoadmapDef[]>(ROADMAPS_FILE);
-  if (persisted && persisted.length > 0) {
-    for (const r of persisted) store.set(r.slug, r);
-  } else {
-    for (const r of seedRoadmaps) store.set(r.slug, { ...r });
-  }
-
-  globalStore.__adminRoadmaps = store;
-  return store;
+export async function getAllRoadmaps(): Promise<RoadmapDef[]> {
+  const db = await getDb();
+  return db.collection<RoadmapDef>("roadmaps").find({}).toArray() as Promise<
+    RoadmapDef[]
+  >;
 }
 
-function persistRoadmaps() {
-  const store = getRoadmapsStore();
-  writeJson(ROADMAPS_FILE, Array.from(store.values()));
+export async function getRoadmapBySlug(
+  slug: string,
+): Promise<RoadmapDef | null> {
+  const db = await getDb();
+  return db
+    .collection<RoadmapDef>("roadmaps")
+    .findOne({ slug }) as Promise<RoadmapDef | null>;
 }
 
-export function getAllRoadmaps(): RoadmapDef[] {
-  return Array.from(getRoadmapsStore().values());
+export async function upsertRoadmap(roadmap: RoadmapDef): Promise<void> {
+  const db = await getDb();
+  await db
+    .collection("roadmaps")
+    .updateOne({ slug: roadmap.slug }, { $set: roadmap }, { upsert: true });
 }
 
-export function getRoadmapBySlug(slug: string): RoadmapDef | null {
-  return getRoadmapsStore().get(slug) ?? null;
-}
-
-export function upsertRoadmap(roadmap: RoadmapDef): void {
-  getRoadmapsStore().set(roadmap.slug, roadmap);
-  persistRoadmaps();
-}
-
-export function deleteRoadmap(slug: string): boolean {
-  const result = getRoadmapsStore().delete(slug);
-  if (result) persistRoadmaps();
-  return result;
+export async function deleteRoadmap(slug: string): Promise<boolean> {
+  const db = await getDb();
+  const result = await db.collection("roadmaps").deleteOne({ slug });
+  return result.deletedCount > 0;
 }
 
 // ---------------------------------------------------------------------------
-// Platform Config Store
+// Platform Config
 // ---------------------------------------------------------------------------
 
 export type PlatformConfig = {
@@ -153,24 +86,25 @@ const DEFAULT_CONFIG: PlatformConfig = {
   registrationOpen: true,
 };
 
-function getConfigStore(): PlatformConfig {
-  if (globalStore.__adminConfig) return globalStore.__adminConfig;
-
-  const persisted = readJson<PlatformConfig>(CONFIG_FILE);
-  const config = persisted ?? { ...DEFAULT_CONFIG };
-  globalStore.__adminConfig = config;
-  return config;
+export async function getPlatformConfig(): Promise<PlatformConfig> {
+  const db = await getDb();
+  const doc = await db.collection("platform_config").findOne({ key: "main" });
+  if (!doc) return { ...DEFAULT_CONFIG };
+  const { _id, key, ...config } = doc;
+  return { ...DEFAULT_CONFIG, ...config } as PlatformConfig;
 }
 
-export function getPlatformConfig(): PlatformConfig {
-  return { ...getConfigStore() };
-}
-
-export function updatePlatformConfig(
+export async function updatePlatformConfig(
   updates: Partial<PlatformConfig>,
-): PlatformConfig {
-  const config = { ...getConfigStore(), ...updates };
-  globalStore.__adminConfig = config;
-  writeJson(CONFIG_FILE, config);
-  return { ...config };
+): Promise<PlatformConfig> {
+  const db = await getDb();
+  const result = await db
+    .collection("platform_config")
+    .findOneAndUpdate(
+      { key: "main" },
+      { $set: updates },
+      { upsert: true, returnDocument: "after" },
+    );
+  const { _id, key, ...config } = result!;
+  return { ...DEFAULT_CONFIG, ...config } as PlatformConfig;
 }

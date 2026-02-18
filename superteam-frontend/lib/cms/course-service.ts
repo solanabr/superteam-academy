@@ -128,18 +128,19 @@ class SanityCourseService implements CourseService {
 
 class LocalCourseService implements CourseService {
   async getAllCourses(): Promise<Course[]> {
-    return structuredClone(getAllCourses());
+    return structuredClone(await getAllCourses());
   }
 
   async getCourseBySlug(slug: string): Promise<Course | null> {
-    const course = getCourse(slug);
+    const course = await getCourse(slug);
     return course ? structuredClone(course) : null;
   }
 
   async searchCourses(query: string): Promise<Course[]> {
     const lower = query.toLowerCase();
+    const all = await getAllCourses();
     return structuredClone(
-      getAllCourses().filter(
+      all.filter(
         (c) =>
           c.title.toLowerCase().includes(lower) ||
           c.description.toLowerCase().includes(lower),
@@ -148,8 +149,9 @@ class LocalCourseService implements CourseService {
   }
 
   async getCoursesByDifficulty(difficulty: string): Promise<Course[]> {
+    const all = await getAllCourses();
     return structuredClone(
-      getAllCourses().filter(
+      all.filter(
         (c) => c.difficulty.toLowerCase() === difficulty.toLowerCase(),
       ),
     );
@@ -157,10 +159,9 @@ class LocalCourseService implements CourseService {
 
   async getCoursesByTag(tag: string): Promise<Course[]> {
     const lower = tag.toLowerCase();
+    const all = await getAllCourses();
     return structuredClone(
-      getAllCourses().filter((c) =>
-        c.tags.some((t) => t.toLowerCase() === lower),
-      ),
+      all.filter((c) => c.tags.some((t) => t.toLowerCase() === lower)),
     );
   }
 }

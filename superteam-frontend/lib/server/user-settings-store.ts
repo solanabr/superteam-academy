@@ -1,5 +1,7 @@
 import "server-only";
 
+import { getDb } from "./mongodb";
+
 export type UserSettings = {
   name: string;
   bio: string;
@@ -28,18 +30,30 @@ const defaultSettings: UserSettings = {
   profilePublic: true,
 };
 
-const settingsByWallet = new Map<string, UserSettings>();
-
-export function getUserSettings(walletAddress: string): UserSettings {
-  return settingsByWallet.get(walletAddress) ?? { ...defaultSettings };
+export async function getUserSettings(
+  walletAddress: string,
+): Promise<UserSettings> {
+  const db = await getDb();
+  const doc = await db
+    .collection("user_settings")
+    .findOne({ wallet: walletAddress });
+  if (!doc) return { ...defaultSettings };
+  const { _id, wallet, ...settings } = doc;
+  return { ...defaultSettings, ...settings } as UserSettings;
 }
 
-export function updateUserSettings(
+export async function updateUserSettings(
   walletAddress: string,
   updates: Partial<UserSettings>,
-): UserSettings {
-  const current = getUserSettings(walletAddress);
-  const updated = { ...current, ...updates };
-  settingsByWallet.set(walletAddress, updated);
-  return updated;
+): Promise<UserSettings> {
+  const db = await getDb();
+  const result = await db
+    .collection("user_settings")
+    .findOneAndUpdate(
+      { wallet: walletAddress },
+      { $set: updates },
+      { upsert: true, returnDocument: "after" },
+    );
+  const { _id, wallet, ...settings } = result!;
+  return { ...defaultSettings, ...settings } as UserSettings;
 }

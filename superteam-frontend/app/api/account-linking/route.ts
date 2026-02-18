@@ -9,7 +9,7 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const linked = getLinkedStatusForWallet(user.walletAddress);
+  const linked = await getLinkedStatusForWallet(user.walletAddress);
   const providers = getConfiguredProviders();
 
   return NextResponse.json({ linked, providers });

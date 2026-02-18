@@ -12,7 +12,7 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
-  const cert = getCertificateById(id);
+  const cert = await getCertificateById(id);
 
   if (!cert) {
     return {
@@ -40,7 +40,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function Page({ params }: Props) {
   const { id } = await params;
-  const cert = getCertificateById(id);
+  const cert = await getCertificateById(id);
 
   return (
     <div className="min-h-screen bg-background">

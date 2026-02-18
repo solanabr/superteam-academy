@@ -25,8 +25,10 @@ export function getXpRewards(
   return XP_REWARDS[difficulty];
 }
 
-export function getCatalogCourseMeta(slug: string): CatalogCourseMeta | null {
-  const courses = getAllCourses();
+export async function getCatalogCourseMeta(
+  slug: string,
+): Promise<CatalogCourseMeta | null> {
+  const courses = await getAllCourses();
   const index = courses.findIndex((item) => item.slug === slug);
   if (index < 0) return null;
   const course = courses[index];

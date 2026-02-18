@@ -109,7 +109,7 @@ export async function POST(request: Request) {
       username: buildUsername(address),
     };
     await ensureWalletIdentitySynced(address);
-    linkWallet(user.id, user.walletAddress);
+    await linkWallet(user.id, user.walletAddress);
     const token = await createAccessTokenForWallet(user.id, user.walletAddress);
     cookieStore.delete(getWalletNonceCookieName());
     cookieStore.set(getWalletSessionCookieName(), token, {

@@ -10,7 +10,7 @@ function unauthorized() {
 export async function GET() {
   const user = await checkPermission("roadmaps.read");
   if (!user) return unauthorized();
-  return NextResponse.json(getAllRoadmaps());
+  return NextResponse.json(await getAllRoadmaps());
 }
 
 export async function POST(request: Request) {
@@ -23,6 +23,6 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
-  upsertRoadmap(body);
+  await upsertRoadmap(body);
   return NextResponse.json(body, { status: 201 });
 }
