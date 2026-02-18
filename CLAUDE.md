@@ -56,7 +56,7 @@ superteam-academy/
 ├── tests/
 │   ├── rust/                    ← Mollusk/LiteSVM unit tests
 │   └── ts/                      ← Anchor TypeScript integration tests
-├── app/                         ← Next.js frontend (future)
+├── website/                     ← Next.js frontend
 │   ├── src/
 │   ├── package.json
 │   └── tsconfig.json
