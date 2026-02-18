@@ -10,6 +10,15 @@ Prefer an IDL-driven, code-generated workflow.
   - Rust clients (when available/needed)
   - documentation artifacts
 
+## Superteam Academy — concrete setup
+
+- **Config:** `codama.json` at repo root
+- **IDL path:** `onchain-academy/target/idl/onchain_academy.json`
+- **Output:** `sdk/src/generated/` (renderers-js)
+- **Deps:** codama, @codama/renderers-js, @codama/nodes-from-anchor (root devDeps)
+- **Regeneration:** `pnpm build:sdk` or `anchor build && pnpm codama:js && pnpm -C sdk build`
+- **See:** docs/solutions/codama-kit-sdk-generation-superteam-academy-20260218.md
+
 ## Anchor → Codama
 If the program is Anchor:
 1) Produce Anchor IDL from the build

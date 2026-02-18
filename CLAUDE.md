@@ -54,8 +54,8 @@ superteam-academy/
 │   ├── Anchor.toml
 │   ├── Cargo.toml               ← Workspace root
 │   └── package.json
-├── app/                         ← Next.js frontend (future)
-├── sdk/                         ← TypeScript SDK (future)
+├── app/                         ← Next.js frontend
+├── sdk/                         ← Kit SDK (Codama-generated)
 ├── wallets/                     ← Keypairs (gitignored)
 ├── scripts/                     ← Helper scripts
 └── .claude/
@@ -220,6 +220,9 @@ anchor deploy --provider.cluster devnet --program-keypair wallets/program-keypai
 anchor build && cargo fmt && cargo clippy -- -W clippy::all
 cargo test --manifest-path onchain-academy/tests/rust/Cargo.toml
 anchor test
+
+# Regenerate Kit SDK (after program changes)
+pnpm build:sdk  # anchor build → codama → sdk build
 
 # Deploy flow
 /deploy  # Always devnet first

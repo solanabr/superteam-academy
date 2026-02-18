@@ -1,0 +1,7 @@
+packages:
+  - "app"
+  - "sdk"
+
+ignoredBuiltDependencies:
+  - sharp
+  - unrs-resolver

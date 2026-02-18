@@ -1,0 +1,14 @@
+{
+  "name": "superteam-academy",
+  "private": true,
+  "scripts": {
+    "build:sdk": "cd onchain-academy && anchor build && cd .. && codama run js && pnpm -C sdk build",
+    "codama:js": "codama run js",
+    "build": "pnpm run build:sdk && pnpm -C app build"
+  },
+  "devDependencies": {
+    "codama": "latest",
+    "@codama/renderers-js": "latest",
+    "@codama/nodes-from-anchor": "latest"
+  }
+}

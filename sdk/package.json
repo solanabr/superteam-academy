@@ -1,0 +1,28 @@
+{
+  "name": "@superteam/academy-sdk",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts"
+  },
+  "peerDependencies": {
+    "@solana/kit": "^6.1.0"
+  },
+  "dependencies": {
+    "@solana/program-client-core": "^6.1.0"
+  },
+  "devDependencies": {
+    "tsup": "^8",
+    "typescript": "^5",
+    "@solana/kit": "^6.1.0"
+  }
+}
