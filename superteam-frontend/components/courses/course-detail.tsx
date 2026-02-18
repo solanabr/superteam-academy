@@ -18,6 +18,7 @@ import {
   Circle,
   ChevronDown,
   ArrowRight,
+  Lock,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -230,7 +231,7 @@ export function CourseDetail({
             {/* Enrollment card */}
             <div className="lg:row-start-1 lg:col-start-3">
               <div className="rounded-xl border border-border bg-card p-6 glow-green">
-                {enrolled ? (
+                {enrolled && !isEnrolling ? (
                   <>
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm text-muted-foreground">
@@ -343,16 +344,15 @@ export function CourseDetail({
                       <div className="ml-4 border-l border-border pl-6 pt-2 pb-1 space-y-1">
                         {mod.lessons.map((lesson) => {
                           const Icon = lessonIcons[lesson.type];
-                          return (
-                            <Link
-                              key={lesson.id}
-                              href={`/courses/${course.slug}/lessons/${lesson.id}`}
-                              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors hover:bg-secondary/50"
-                            >
+                          const canAccess = enrolled && !isEnrolling;
+                          const inner = (
+                            <>
                               {lesson.completed ? (
                                 <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
-                              ) : (
+                              ) : canAccess ? (
                                 <Circle className="h-4 w-4 text-muted-foreground/40 shrink-0" />
+                              ) : (
+                                <Lock className="h-4 w-4 text-muted-foreground/40 shrink-0" />
                               )}
                               <Icon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                               <span
@@ -367,7 +367,23 @@ export function CourseDetail({
                               <span className="ml-auto text-xs text-muted-foreground shrink-0">
                                 {lesson.duration}
                               </span>
+                            </>
+                          );
+                          return canAccess ? (
+                            <Link
+                              key={lesson.id}
+                              href={`/courses/${course.slug}/lessons/${lesson.id}`}
+                              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors hover:bg-secondary/50"
+                            >
+                              {inner}
                             </Link>
+                          ) : (
+                            <div
+                              key={lesson.id}
+                              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm opacity-60"
+                            >
+                              {inner}
+                            </div>
                           );
                         })}
                       </div>

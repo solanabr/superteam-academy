@@ -27,6 +27,7 @@
     "description": "The interactive learning platform for blockchain developers. Master Solana, Rust, and Web3 through hands-on challenges.",
     "emailPlaceholder": "Enter your email",
     "subscribe": "Subscribe",
+    "subscribedThankYou": "Thank you for subscribing!",
     "platform": "Platform",
     "resources": "Resources",
     "company": "Company",
@@ -130,7 +131,8 @@
     "continueLearning": "Continue Learning",
     "filters": "Filters",
     "showing": "Showing {filtered} of {total} courses",
-    "clearFilters": "Clear filters"
+    "clearFilters": "Clear filters",
+    "loadMore": "Load More"
   },
   "courseDetail": {
     "aboutCourse": "About This Course",
@@ -316,7 +318,10 @@
     "saved": "Saved!",
     "settingsSaved": "Settings saved successfully",
     "settingsFailed": "Failed to save settings",
-    "comingSoon": "Coming Soon"
+    "comingSoon": "Coming Soon",
+    "configureEnvVar": "Configure {envVar} to enable",
+    "googleLinked": "Google account linked successfully",
+    "githubLinked": "GitHub account linked successfully"
   },
   "certificate": {
     "title": "Certificate of Completion",

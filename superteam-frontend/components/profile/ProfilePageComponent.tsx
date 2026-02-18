@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
@@ -147,7 +147,7 @@ function buildProfileUser(
     streak: profile.streak,
     rank: profile.rank,
     totalCompleted: profile.totalCompleted,
-    socialLinks: undefined,
+    socialLinks: profile.socialLinks,
     skills: computeSkills(allCourses),
     achievements: profile.badges.map((b, i) => ({
       id: `${i}-${b.name}`,
@@ -187,6 +187,29 @@ export default function ProfilePageComponent({
     () => buildProfileUser(identity, allCourses),
     [identity, allCourses],
   );
+
+  const [isPublic, setIsPublic] = useState(true);
+  const [togglingVisibility, setTogglingVisibility] = useState(false);
+
+  const handleToggleVisibility = useCallback(async () => {
+    if (!isOwnProfile || togglingVisibility) return;
+    setTogglingVisibility(true);
+    const newValue = !isPublic;
+    try {
+      const res = await fetch("/api/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profilePublic: newValue }),
+      });
+      if (!res.ok) throw new Error();
+      setIsPublic(newValue);
+      toast.success(newValue ? t("public") : t("private"));
+    } catch {
+      toast.error("Failed to update visibility");
+    } finally {
+      setTogglingVisibility(false);
+    }
+  }, [isOwnProfile, isPublic, togglingVisibility, t]);
 
   const handleShare = useCallback(() => {
     const walletAddress = identity?.profile?.walletAddress;
@@ -563,9 +586,18 @@ export default function ProfilePageComponent({
               </div>
               <Badge
                 variant="outline"
-                className="border-primary/30 text-primary"
+                className={`${
+                  isPublic
+                    ? "border-primary/30 text-primary"
+                    : "border-border text-muted-foreground"
+                } ${isOwnProfile ? "cursor-pointer select-none transition-colors" : ""}`}
+                onClick={isOwnProfile ? handleToggleVisibility : undefined}
               >
-                {t("public")}
+                {togglingVisibility
+                  ? "..."
+                  : isPublic
+                    ? t("public")
+                    : t("private")}
               </Badge>
             </CardContent>
           </Card>

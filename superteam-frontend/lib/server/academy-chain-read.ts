@@ -219,3 +219,136 @@ export async function getLearnerProfileOnChain(
     throw error;
   }
 }
+
+// ---------------------------------------------------------------------------
+// Credential NFTs via Helius DAS API
+// ---------------------------------------------------------------------------
+
+export type OnChainCredentialNFT = {
+  id: string;
+  name: string;
+  mintAddress: string;
+  imageUrl: string;
+  trackName: string;
+  level: number;
+  coursesCompleted: number;
+  xp: number;
+  completionDate: string;
+};
+
+type DASAsset = {
+  id: string;
+  content?: {
+    metadata?: {
+      name?: string;
+      attributes?: Array<{ trait_type: string; value: string }>;
+    };
+    links?: {
+      image?: string;
+    };
+    json_uri?: string;
+  };
+  authorities?: Array<{
+    address: string;
+    scopes: string[];
+  }>;
+  creators?: Array<{
+    address: string;
+    verified: boolean;
+  }>;
+  ownership?: {
+    owner: string;
+  };
+};
+
+function parseDASAttribute(
+  attributes: Array<{ trait_type: string; value: string }> | undefined,
+  key: string,
+): string | undefined {
+  return attributes?.find(
+    (a) => a.trait_type.toLowerCase() === key.toLowerCase(),
+  )?.value;
+}
+
+function isAcademyCredential(asset: DASAsset): boolean {
+  const programIdStr = ACADEMY_PROGRAM_ID;
+
+  const authorityMatch = asset.authorities?.some(
+    (a) => a.address === programIdStr,
+  );
+  if (authorityMatch) return true;
+
+  const creatorMatch = asset.creators?.some(
+    (c) => c.address === programIdStr && c.verified,
+  );
+  if (creatorMatch) return true;
+
+  const attrs = asset.content?.metadata?.attributes;
+  const programAttr = parseDASAttribute(attrs, "program");
+  if (programAttr === programIdStr) return true;
+
+  const name = asset.content?.metadata?.name ?? "";
+  if (name.startsWith("Superteam Academy")) return true;
+
+  return false;
+}
+
+function dasAssetToCredential(asset: DASAsset): OnChainCredentialNFT {
+  const attrs = asset.content?.metadata?.attributes;
+  const name = asset.content?.metadata?.name ?? "Academy Credential";
+  const imageUrl = asset.content?.links?.image ?? "";
+
+  return {
+    id: asset.id,
+    name,
+    mintAddress: asset.id,
+    imageUrl,
+    trackName: parseDASAttribute(attrs, "track") ?? "General",
+    level: parseInt(parseDASAttribute(attrs, "level") ?? "1", 10),
+    coursesCompleted: parseInt(
+      parseDASAttribute(attrs, "courses_completed") ?? "0",
+      10,
+    ),
+    xp: parseInt(parseDASAttribute(attrs, "xp") ?? "0", 10),
+    completionDate:
+      parseDASAttribute(attrs, "completion_date") ??
+      new Date().toISOString().split("T")[0]!,
+  };
+}
+
+/**
+ * Fetch Metaplex Core NFT credentials from the Helius DAS API.
+ * Filters assets owned by the wallet to only those issued by the academy program.
+ */
+export async function getCredentialNFTs(
+  walletAddress: string,
+): Promise<OnChainCredentialNFT[]> {
+  try {
+    const response = await fetch(ACADEMY_RPC_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: "getAssetsByOwner",
+        method: "getAssetsByOwner",
+        params: {
+          ownerAddress: walletAddress,
+          page: 1,
+          limit: 100,
+          displayOptions: {
+            showCollectionMetadata: true,
+          },
+        },
+      }),
+    });
+
+    if (!response.ok) return [];
+
+    const json = await response.json();
+    const items: DASAsset[] = json?.result?.items ?? [];
+
+    return items.filter(isAcademyCredential).map(dasAssetToCredential);
+  } catch {
+    return [];
+  }
+}

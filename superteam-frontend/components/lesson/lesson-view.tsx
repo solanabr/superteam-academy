@@ -143,6 +143,9 @@ export function LessonView({
     },
   });
 
+  const confirmedComplete =
+    lesson.completed || (lessonCompleted && !isCompleting);
+
   const optimisticCompleted =
     lessonCompleted && !lesson.completed ? baseCompleted + 1 : baseCompleted;
   const progressPct = Math.round(
@@ -169,7 +172,7 @@ export function LessonView({
       ) : (
         <div />
       )}
-      {lessonCompleted ? (
+      {confirmedComplete ? (
         <Badge
           variant="outline"
           className="border-primary text-primary gap-1.5 py-1.5 px-3"
@@ -188,15 +191,26 @@ export function LessonView({
         </Button>
       )}
       {nextLesson ? (
-        <Link href={`/courses/${course.slug}/lessons/${nextLesson.id}`}>
+        confirmedComplete ? (
+          <Link href={`/courses/${course.slug}/lessons/${nextLesson.id}`}>
+            <Button
+              variant="outline"
+              className="gap-2 border-border text-muted-foreground"
+            >
+              Next
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </Link>
+        ) : (
           <Button
             variant="outline"
+            disabled
             className="gap-2 border-border text-muted-foreground"
           >
             Next
             <ArrowRight className="h-4 w-4" />
           </Button>
-        </Link>
+        )
       ) : (
         <div />
       )}
@@ -280,7 +294,7 @@ export function LessonView({
                 <ChevronLeft className="h-4 w-4" />
               </Button>
             )}
-            {nextLesson ? (
+            {nextLesson && confirmedComplete ? (
               <Link href={`/courses/${course.slug}/lessons/${nextLesson.id}`}>
                 <Button
                   variant="ghost"
@@ -431,17 +445,28 @@ export function LessonView({
                   </Button>
                 )}
                 {nextLesson ? (
-                  <Link
-                    href={`/courses/${course.slug}/lessons/${nextLesson.id}`}
-                  >
+                  lessonCompleted ? (
+                    <Link
+                      href={`/courses/${course.slug}/lessons/${nextLesson.id}`}
+                    >
+                      <Button
+                        variant="outline"
+                        className="gap-2 border-border text-muted-foreground"
+                      >
+                        Next
+                        <ArrowRight className="h-4 w-4" />
+                      </Button>
+                    </Link>
+                  ) : (
                     <Button
                       variant="outline"
+                      disabled
                       className="gap-2 border-border text-muted-foreground"
                     >
                       Next
                       <ArrowRight className="h-4 w-4" />
                     </Button>
-                  </Link>
+                  )
                 ) : (
                   <div />
                 )}
@@ -500,14 +525,22 @@ function LessonContent({
         {lesson.title}
       </h1>
 
-      {/* Mock content based on type */}
+      {/* Video placeholder */}
       {lesson.type === "video" && (
-        <div className="rounded-xl border border-border bg-secondary aspect-video flex items-center justify-center mb-6">
-          <div className="flex flex-col items-center gap-3 text-muted-foreground">
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/20">
-              <Play className="h-6 w-6 text-primary ml-0.5" />
+        <div className="rounded-xl border border-border bg-gradient-to-br from-secondary via-secondary/80 to-background aspect-video flex items-center justify-center mb-6 relative overflow-hidden">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,hsl(var(--primary)/0.06)_0%,transparent_70%)]" />
+          <div className="flex flex-col items-center gap-4 text-center relative z-10">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/15 border border-primary/20 shadow-lg shadow-primary/5">
+              <Play className="h-7 w-7 text-primary ml-0.5" />
             </div>
-            <span className="text-sm">Video Lesson - {lesson.duration}</span>
+            <div>
+              <p className="text-sm font-medium text-foreground">
+                Video content coming soon
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {lesson.title} &middot; {lesson.duration}
+              </p>
+            </div>
           </div>
         </div>
       )}

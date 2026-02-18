@@ -14,7 +14,7 @@ import { useTheme } from "next-themes";
 import { RoadmapNode } from "./roadmap-node";
 import { RoadmapDetailPanel } from "./roadmap-detail-panel";
 import { buildRoadmapGraph } from "@/lib/roadmaps/builder";
-import type { RoadmapDef } from "@/lib/roadmaps/types";
+import type { RoadmapDef, ResourceLink } from "@/lib/roadmaps/types";
 
 const nodeTypes = { roadmapNode: RoadmapNode };
 
@@ -68,7 +68,7 @@ export function RoadmapViewer({ roadmap }: { roadmap: RoadmapDef }) {
                 label: string;
                 variant: string;
                 description?: string;
-                resources?: { type: string; title: string; url: string }[];
+                resources?: ResourceLink[];
               }
             }
             onClose={() => setSelectedNode(null)}

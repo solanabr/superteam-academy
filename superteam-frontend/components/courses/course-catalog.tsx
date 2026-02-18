@@ -1,13 +1,15 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useTranslations } from "next-intl";
-import { Search, SlidersHorizontal } from "lucide-react";
+import { Search, SlidersHorizontal, ChevronDown, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import type { Course } from "@/lib/course-catalog";
+import type { CourseCardData } from "@/lib/course-catalog";
 import { CourseCard } from "./course-card";
+
+const PAGE_SIZE = 6;
 
 const difficulties = [
   { value: "All", key: "filterAll" as const },
@@ -16,15 +18,27 @@ const difficulties = [
   { value: "Advanced", key: "filterAdvanced" as const },
 ];
 
-export function CourseCatalog({ courses }: { courses: Course[] }) {
+export function CourseCatalog({
+  initialCourses,
+  totalCourses,
+}: {
+  initialCourses: CourseCardData[];
+  totalCourses: number;
+}) {
   const t = useTranslations("catalog");
+  const [courses, setCourses] = useState<CourseCardData[]>(
+    initialCourses ?? [],
+  );
+  const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState("");
+  const [difficulty, setDifficulty] = useState<string>("All");
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+
   const allTags = useMemo(
     () => Array.from(new Set(courses.flatMap((c) => c.tags))),
     [courses],
   );
-  const [search, setSearch] = useState("");
-  const [difficulty, setDifficulty] = useState<string>("All");
-  const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     return courses.filter((c) => {
@@ -35,7 +49,36 @@ export function CourseCatalog({ courses }: { courses: Course[] }) {
       const matchTag = !selectedTag || c.tags.includes(selectedTag);
       return matchSearch && matchDiff && matchTag;
     });
-  }, [search, difficulty, selectedTag]);
+  }, [courses, search, difficulty, selectedTag]);
+
+  const hasMore = courses.length < totalCourses;
+
+  const loadMore = useCallback(async () => {
+    if (loading || !hasMore) return;
+    setLoading(true);
+    try {
+      const res = await fetch(
+        `/api/courses?offset=${courses.length}&limit=${PAGE_SIZE}`,
+      );
+      if (!res.ok) throw new Error("Failed to load");
+      const data = await res.json();
+      setCourses((prev) => [...prev, ...data.courses]);
+    } catch {
+      // Silent fail — user can retry
+    } finally {
+      setLoading(false);
+    }
+  }, [courses.length, hasMore, loading]);
+
+  const setSearchAndReset = useCallback((v: string) => {
+    setSearch(v);
+  }, []);
+  const setDifficultyAndReset = useCallback((v: string) => {
+    setDifficulty(v);
+  }, []);
+  const setTagAndReset = useCallback((v: string | null) => {
+    setSelectedTag(v);
+  }, []);
 
   return (
     <div>
@@ -47,13 +90,18 @@ export function CourseCatalog({ courses }: { courses: Course[] }) {
             <Input
               placeholder={t("searchPlaceholder")}
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => setSearchAndReset(e.target.value)}
               className="pl-10 bg-card border-border text-foreground placeholder:text-muted-foreground"
             />
           </div>
           <Button
             variant="outline"
-            className="gap-2 border-border text-muted-foreground shrink-0"
+            className={`gap-2 border-border shrink-0 ${
+              filtersOpen
+                ? "bg-primary/10 text-primary border-primary/30"
+                : "text-muted-foreground"
+            }`}
+            onClick={() => setFiltersOpen((prev) => !prev)}
           >
             <SlidersHorizontal className="h-4 w-4" />
             <span className="hidden sm:inline">{t("filters")}</span>
@@ -61,13 +109,17 @@ export function CourseCatalog({ courses }: { courses: Course[] }) {
         </div>
 
         {/* Difficulty filter */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div
+          className={`flex-wrap items-center gap-2 ${
+            filtersOpen ? "flex" : "hidden sm:flex"
+          }`}
+        >
           {difficulties.map((d) => (
             <Button
               key={d.value}
               variant={difficulty === d.value ? "default" : "outline"}
               size="sm"
-              onClick={() => setDifficulty(d.value)}
+              onClick={() => setDifficultyAndReset(d.value)}
               className={
                 difficulty === d.value
                   ? "bg-primary text-primary-foreground hover:bg-primary/90"
@@ -89,7 +141,7 @@ export function CourseCatalog({ courses }: { courses: Course[] }) {
                   ? "border-primary bg-primary/10 text-primary"
                   : "border-border text-muted-foreground hover:border-primary/30 hover:text-foreground"
               }`}
-              onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
+              onClick={() => setTagAndReset(selectedTag === tag ? null : tag)}
             >
               {tag}
             </Badge>
@@ -99,7 +151,7 @@ export function CourseCatalog({ courses }: { courses: Course[] }) {
 
       {/* Results info */}
       <p className="text-sm text-muted-foreground mb-6">
-        {t("showing", { filtered: filtered.length, total: courses.length })}
+        {t("showing", { filtered: filtered.length, total: totalCourses })}
       </p>
 
       {/* Course grid */}
@@ -109,6 +161,26 @@ export function CourseCatalog({ courses }: { courses: Course[] }) {
         ))}
       </div>
 
+      {hasMore && (
+        <div className="flex justify-center mt-8">
+          <Button
+            variant="outline"
+            className="gap-2 border-border text-muted-foreground hover:text-foreground"
+            onClick={loadMore}
+            disabled={loading}
+          >
+            {loading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <>
+                {t("loadMore")}
+                <ChevronDown className="h-4 w-4" />
+              </>
+            )}
+          </Button>
+        </div>
+      )}
+
       {filtered.length === 0 && (
         <div className="text-center py-16">
           <p className="text-lg text-muted-foreground">{t("noResults")}</p>
@@ -116,9 +188,9 @@ export function CourseCatalog({ courses }: { courses: Course[] }) {
             variant="outline"
             className="mt-4 border-border text-muted-foreground"
             onClick={() => {
-              setSearch("");
-              setDifficulty("All");
-              setSelectedTag(null);
+              setSearchAndReset("");
+              setDifficultyAndReset("All");
+              setTagAndReset(null);
             }}
           >
             {t("clearFilters")}

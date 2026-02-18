@@ -1,8 +1,7 @@
 import { LessonView } from "@/components/lesson/lesson-view";
 import { requireAuthenticatedUser } from "@/lib/server/auth-adapter";
 import { getCourseProgressSnapshot } from "@/lib/server/academy-progress-adapter";
-import { getCourse } from "@/lib/server/admin-store";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 export default async function LessonPage({
   params,
@@ -18,15 +17,8 @@ export default async function LessonPage({
     snapshot = null;
   }
 
-  if (!snapshot) {
-    const course = getCourse(slug);
-    if (!course) return notFound();
-    snapshot = {
-      course: { ...course, progress: 0 },
-      enrolledOnChain: false,
-      completedLessons: 0,
-      enrollmentPda: "",
-    };
+  if (!snapshot?.enrolledOnChain) {
+    redirect(`/courses/${slug}`);
   }
   const course = snapshot.course;
 

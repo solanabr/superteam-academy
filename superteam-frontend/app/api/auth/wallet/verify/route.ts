@@ -12,6 +12,7 @@ import {
   verifyNonceChallengeToken,
 } from "@/lib/server/wallet-auth";
 import { ensureWalletIdentitySynced } from "@/lib/server/solana-identity-adapter";
+import { linkWallet } from "@/lib/server/account-linking";
 
 type VerifyRequestBody = {
   address?: string;
@@ -108,6 +109,7 @@ export async function POST(request: Request) {
       username: buildUsername(address),
     };
     await ensureWalletIdentitySynced(address);
+    linkWallet(user.id, user.walletAddress);
     const token = await createAccessTokenForWallet(user.id, user.walletAddress);
     cookieStore.delete(getWalletNonceCookieName());
     cookieStore.set(getWalletSessionCookieName(), token, {

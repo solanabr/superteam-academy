@@ -213,14 +213,52 @@ export class OnChainLearningProgressService implements LearningProgressService {
     return getRankForWallet(entries, userId);
   }
 
-  async getCredentials(_walletAddress: string): Promise<Credential[]> {
-    // ZK Compression credentials are not yet implemented in the frontend.
-    // Returns empty until Light Protocol integration is complete.
-    return [];
+  async getCredentials(walletAddress: string): Promise<Credential[]> {
+    const { getCredentialNFTs } =
+      await import("@/lib/server/academy-chain-read");
+
+    const nfts = await getCredentialNFTs(walletAddress);
+    if (nfts.length > 0) {
+      return nfts.map((nft) => ({
+        id: nft.id,
+        courseTitle: nft.name,
+        trackName: nft.trackName,
+        level: nft.level,
+        mintAddress: nft.mintAddress,
+        completionDate: nft.completionDate,
+        imageUrl: nft.imageUrl,
+      }));
+    }
+
+    // Fallback: derive credentials from completed enrollments
+    const { getCertificatesForWallet } =
+      await import("@/lib/server/certificate-service");
+    const certs = await getCertificatesForWallet(walletAddress);
+    return certs.map((c) => ({
+      id: c.id,
+      courseTitle: c.courseTitle,
+      trackName: c.trackName,
+      level: parseInt(c.trackLevel, 10) || 1,
+      mintAddress: c.mintAddress,
+      completionDate: c.completionDate,
+      imageUrl: "",
+    }));
   }
 
-  async getCredentialById(_id: string): Promise<Credential | null> {
-    return null;
+  async getCredentialById(id: string): Promise<Credential | null> {
+    const { getCertificateById } =
+      await import("@/lib/server/certificate-service");
+    const cert = getCertificateById(id);
+    if (!cert) return null;
+    return {
+      id: cert.id,
+      courseTitle: cert.courseTitle,
+      trackName: cert.trackName,
+      level: parseInt(cert.trackLevel, 10) || 1,
+      mintAddress: cert.mintAddress,
+      completionDate: cert.completionDate,
+      imageUrl: "",
+    };
   }
 }
 

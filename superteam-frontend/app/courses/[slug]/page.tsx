@@ -2,7 +2,7 @@ import { Footer } from "@/components/footer";
 import { CourseDetail } from "@/components/courses/course-detail";
 import { requireAuthenticatedUser } from "@/lib/server/auth-adapter";
 import { getCourseProgressSnapshot } from "@/lib/server/academy-progress-adapter";
-import { getCourse } from "@/lib/server/admin-store";
+import { courseService } from "@/lib/cms/course-service";
 import { notFound } from "next/navigation";
 
 export default async function CourseDetailPage({
@@ -22,7 +22,7 @@ export default async function CourseDetailPage({
 
   if (!snapshot) {
     // Fallback: show course from store without on-chain data
-    const course = getCourse(slug);
+    const course = await courseService.getCourseBySlug(slug);
     if (!course) return notFound();
     snapshot = {
       course: { ...course, progress: 0 },

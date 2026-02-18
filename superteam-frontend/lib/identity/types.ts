@@ -25,6 +25,12 @@ export type IdentityProfile = {
   totalCompleted: number;
   badges: IdentityAchievement[];
   certificates: IdentityCertificate[];
+  socialLinks?: {
+    twitter?: string;
+    github?: string;
+    linkedin?: string;
+    website?: string;
+  };
 };
 
 export type IdentitySnapshot = {

@@ -4,12 +4,20 @@ import { requireAuthenticatedUser } from "@/lib/server/auth-adapter";
 import { getIdentitySnapshotForUser } from "@/lib/server/solana-identity-adapter";
 import { getAllCourseProgressSnapshots } from "@/lib/server/academy-progress-adapter";
 import { getActivityData } from "@/lib/server/activity-store";
-import { getCachedLeaderboard } from "@/lib/server/leaderboard-cache";
-import { getAllCourses } from "@/lib/server/admin-store";
+import {
+  getCachedLeaderboard,
+  type LeaderboardEntry,
+} from "@/lib/server/leaderboard-cache";
+import { courseService } from "@/lib/cms/course-service";
+import type { CourseProgressSnapshot } from "@/lib/server/academy-progress-adapter";
+import type { IdentitySnapshot } from "@/lib/identity/types";
 
 export default async function DashboardPage() {
   const user = await requireAuthenticatedUser();
-  let snapshot, courseSnapshots, activityData, leaderboardEntries;
+  let snapshot: IdentitySnapshot | undefined;
+  let courseSnapshots: CourseProgressSnapshot[] = [];
+  let activityData: Awaited<ReturnType<typeof getActivityData>>;
+  let leaderboardEntries: LeaderboardEntry[] = [];
   try {
     [snapshot, courseSnapshots, activityData, leaderboardEntries] =
       await Promise.all([
@@ -19,7 +27,8 @@ export default async function DashboardPage() {
         getCachedLeaderboard(),
       ]);
   } catch {
-    snapshot = await getIdentitySnapshotForUser(user).catch(() => null);
+    snapshot =
+      (await getIdentitySnapshotForUser(user).catch(() => null)) ?? undefined;
     courseSnapshots = [];
     activityData = await getActivityData(user.walletAddress, 365);
     leaderboardEntries = [];
@@ -27,7 +36,10 @@ export default async function DashboardPage() {
   const courses =
     courseSnapshots.length > 0
       ? courseSnapshots.map((item) => item.course)
-      : getAllCourses().map((c) => ({ ...c, progress: 0 }));
+      : (await courseService.getAllCourses()).map((c) => ({
+          ...c,
+          progress: 0,
+        }));
 
   return (
     <div className="min-h-screen bg-background">

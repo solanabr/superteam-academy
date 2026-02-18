@@ -166,12 +166,61 @@ class LocalCourseService implements CourseService {
 }
 
 // ---------------------------------------------------------------------------
+// Sanity-with-local-fallback: tries Sanity first, falls back to local store
+// ---------------------------------------------------------------------------
+
+class FallbackCourseService implements CourseService {
+  private sanity = new SanityCourseService();
+  private local = new LocalCourseService();
+
+  async getAllCourses(): Promise<Course[]> {
+    try {
+      const results = await this.sanity.getAllCourses();
+      if (results.length > 0) return results;
+    } catch {}
+    return this.local.getAllCourses();
+  }
+
+  async getCourseBySlug(slug: string): Promise<Course | null> {
+    try {
+      const result = await this.sanity.getCourseBySlug(slug);
+      if (result) return result;
+    } catch {}
+    return this.local.getCourseBySlug(slug);
+  }
+
+  async searchCourses(query: string): Promise<Course[]> {
+    try {
+      const results = await this.sanity.searchCourses(query);
+      if (results.length > 0) return results;
+    } catch {}
+    return this.local.searchCourses(query);
+  }
+
+  async getCoursesByDifficulty(difficulty: string): Promise<Course[]> {
+    try {
+      const results = await this.sanity.getCoursesByDifficulty(difficulty);
+      if (results.length > 0) return results;
+    } catch {}
+    return this.local.getCoursesByDifficulty(difficulty);
+  }
+
+  async getCoursesByTag(tag: string): Promise<Course[]> {
+    try {
+      const results = await this.sanity.getCoursesByTag(tag);
+      if (results.length > 0) return results;
+    } catch {}
+    return this.local.getCoursesByTag(tag);
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Factory
 // ---------------------------------------------------------------------------
 
 export function getCourseService(): CourseService {
   if (isCmsConfigured()) {
-    return new SanityCourseService();
+    return new FallbackCourseService();
   }
   return new LocalCourseService();
 }

@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { Github, Twitter } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -39,6 +41,14 @@ const footerLinks = [
 
 export function Footer() {
   const t = useTranslations("footer");
+  const [email, setEmail] = useState("");
+
+  const handleSubscribe = (e: React.FormEvent) => {
+    e.preventDefault();
+    toast.success(t("subscribedThankYou"));
+    setEmail("");
+  };
+
   return (
     <footer className="border-t border-border bg-background">
       <div className="mx-auto max-w-7xl px-4 py-12 lg:px-6">
@@ -52,15 +62,22 @@ export function Footer() {
               {t("description")}
             </p>
             {/* Newsletter */}
-            <div className="flex gap-2 max-w-sm">
+            <form onSubmit={handleSubscribe} className="flex gap-2 max-w-sm">
               <Input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder={t("emailPlaceholder")}
                 className="bg-secondary border-border text-foreground placeholder:text-muted-foreground"
               />
-              <Button className="bg-primary text-primary-foreground hover:bg-primary/90 shrink-0">
+              <Button
+                type="submit"
+                className="bg-primary text-primary-foreground hover:bg-primary/90 shrink-0"
+              >
                 {t("subscribe")}
               </Button>
-            </div>
+            </form>
           </div>
 
           {/* Links */}

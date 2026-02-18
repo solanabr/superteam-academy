@@ -82,6 +82,26 @@ export function linkOAuth(
   return account;
 }
 
+export type LinkedAccountStatus = {
+  google: boolean;
+  github: boolean;
+  email?: string;
+};
+
+export function getLinkedStatusForWallet(
+  walletAddress: string,
+): LinkedAccountStatus {
+  const account = findByWallet(walletAddress);
+  if (!account) {
+    return { google: false, github: false };
+  }
+  return {
+    google: !!account.googleId,
+    github: !!account.githubId,
+    email: account.email,
+  };
+}
+
 export function findOrCreateByOAuth(
   provider: "google" | "github",
   providerId: string,

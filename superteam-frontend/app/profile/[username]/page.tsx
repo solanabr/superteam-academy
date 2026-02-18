@@ -6,7 +6,9 @@ import {
 } from "@/lib/server/solana-identity-adapter";
 import { getActivityDays } from "@/lib/server/activity-store";
 import { getAllCourseProgressSnapshots } from "@/lib/server/academy-progress-adapter";
-import { getAllCourses } from "@/lib/server/admin-store";
+import { courseService } from "@/lib/cms/course-service";
+import type { CourseProgressSnapshot } from "@/lib/server/academy-progress-adapter";
+import type { IdentitySnapshot } from "@/lib/identity/types";
 
 export default async function Page({
   params,
@@ -23,7 +25,9 @@ export default async function Page({
 
   const targetWallet = isCurrentUser ? currentUser.walletAddress : username;
 
-  let snapshot, activityDays, courseSnapshots;
+  let snapshot: IdentitySnapshot | undefined;
+  let activityDays: Awaited<ReturnType<typeof getActivityDays>>;
+  let courseSnapshots: CourseProgressSnapshot[] = [];
   try {
     [snapshot, activityDays, courseSnapshots] = await Promise.all([
       isCurrentUser
@@ -33,16 +37,21 @@ export default async function Page({
       getAllCourseProgressSnapshots(targetWallet),
     ]);
   } catch {
-    snapshot = isCurrentUser
-      ? await getIdentitySnapshotForUser(currentUser).catch(() => null)
-      : await getIdentitySnapshotForWallet(targetWallet).catch(() => null);
+    snapshot =
+      (isCurrentUser
+        ? await getIdentitySnapshotForUser(currentUser).catch(() => null)
+        : await getIdentitySnapshotForWallet(targetWallet).catch(() => null)) ??
+      undefined;
     activityDays = await getActivityDays(targetWallet, 365);
     courseSnapshots = [];
   }
   const allCourses =
     courseSnapshots.length > 0
       ? courseSnapshots.map((s) => s.course)
-      : getAllCourses().map((c) => ({ ...c, progress: 0 }));
+      : (await courseService.getAllCourses()).map((c) => ({
+          ...c,
+          progress: 0,
+        }));
 
   return (
     <ProfilePageComponent

@@ -81,9 +81,15 @@ export async function getCourseProgressSnapshot(
 
 export async function getAllCourseProgressSnapshots(
   walletAddress: string,
+  slugs?: string[],
 ): Promise<CourseProgressSnapshot[]> {
+  const courseList = slugs
+    ? slugs.map((s) => getCourse(s)).filter(Boolean)
+    : getAllCourses();
+
   const results: CourseProgressSnapshot[] = [];
-  for (const course of getAllCourses()) {
+  for (const course of courseList) {
+    if (!course) continue;
     try {
       const snapshot = await getCourseProgressSnapshot(
         walletAddress,

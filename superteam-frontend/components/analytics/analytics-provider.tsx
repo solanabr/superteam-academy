@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import Script from "next/script";
 import { gtagScriptUrl, gtagInitScript } from "@/lib/analytics/gtag";
 import { getPostHogClient } from "@/lib/analytics/posthog";
+import { initSentry } from "@/lib/analytics/sentry";
 import { analytics } from "@/lib/analytics";
 
 type AnalyticsProviderProps = {
@@ -16,6 +17,7 @@ export function AnalyticsProvider({ children }: AnalyticsProviderProps) {
 
   useEffect(() => {
     getPostHogClient();
+    initSentry();
   }, []);
 
   useEffect(() => {

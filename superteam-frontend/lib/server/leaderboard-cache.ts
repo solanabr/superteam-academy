@@ -10,22 +10,23 @@ export type LeaderboardEntry = {
   level: number;
   streak: number;
   rank: number;
+  lastActivityTs: number;
 };
+
+export type TimeFilter = "all" | "monthly" | "weekly";
 
 const CACHE_MS = 5 * 60 * 1000;
 let cached: { entries: LeaderboardEntry[]; at: number } | null = null;
 
-export async function getCachedLeaderboard(): Promise<LeaderboardEntry[]> {
+async function fetchAll(): Promise<LeaderboardEntry[]> {
   if (cached && Date.now() - cached.at < CACHE_MS) {
     return cached.entries;
   }
   try {
     const profiles = await getAllLearnerProfilesOnChain();
-    // If network error returned empty array, use cached data if available
     if (profiles.length === 0 && cached) {
       return cached.entries;
     }
-    // Compute real streaks from activity data (transaction signatures)
     const streaks = await Promise.all(
       profiles.map((p) => getCurrentStreak(p.authority).catch(() => 0)),
     );
@@ -37,6 +38,7 @@ export async function getCachedLeaderboard(): Promise<LeaderboardEntry[]> {
         level: p.level,
         streak: Math.max(p.streakCurrent, streaks[i]),
         rank: 0,
+        lastActivityTs: p.lastActivityTs,
       }))
       .sort((a, b) => b.xp - a.xp);
     entries.forEach((e, i) => {
@@ -45,19 +47,34 @@ export async function getCachedLeaderboard(): Promise<LeaderboardEntry[]> {
     cached = { entries, at: Date.now() };
     return entries;
   } catch (error: any) {
-    // Network errors - return cached data if available, otherwise empty array
     if (
       error?.message?.includes("fetch failed") ||
       error?.message?.includes("ECONNREFUSED") ||
       error?.code === "ENOTFOUND"
     ) {
-      if (cached) {
-        return cached.entries;
-      }
+      if (cached) return cached.entries;
       return [];
     }
     throw error;
   }
+}
+
+export async function getCachedLeaderboard(
+  filter: TimeFilter = "all",
+): Promise<LeaderboardEntry[]> {
+  const all = await fetchAll();
+  if (filter === "all") return all;
+
+  const now = Date.now() / 1000;
+  const cutoff = filter === "weekly" ? now - 7 * 86400 : now - 30 * 86400;
+
+  const filtered = all
+    .filter((e) => e.lastActivityTs >= cutoff)
+    .sort((a, b) => b.xp - a.xp);
+  filtered.forEach((e, i) => {
+    e.rank = i + 1;
+  });
+  return filtered;
 }
 
 export function getRankForWallet(

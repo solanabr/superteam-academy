@@ -21,10 +21,12 @@ export default async function Page() {
         entries.filter((e) => e.xp > learner.xpTotal).length + 1;
       me = {
         wallet: user.walletAddress,
+        authority: user.walletAddress,
         rank,
         xp: learner.xpTotal,
         level: learner.level,
         streak: learner.streakCurrent,
+        lastActivityTs: learner.lastActivityTs,
       };
     }
   }

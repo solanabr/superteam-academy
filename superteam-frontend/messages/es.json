@@ -27,6 +27,7 @@
     "description": "La plataforma de aprendizaje interactiva para desarrolladores blockchain. Domina Solana, Rust y Web3 con desafios practicos.",
     "emailPlaceholder": "Ingresa tu correo",
     "subscribe": "Suscribirse",
+    "subscribedThankYou": "Gracias por suscribirte!",
     "platform": "Plataforma",
     "resources": "Recursos",
     "company": "Empresa",
@@ -130,7 +131,8 @@
     "continueLearning": "Seguir Aprendiendo",
     "filters": "Filtros",
     "showing": "Mostrando {filtered} de {total} cursos",
-    "clearFilters": "Limpiar filtros"
+    "clearFilters": "Limpiar filtros",
+    "loadMore": "Cargar Más"
   },
   "courseDetail": {
     "aboutCourse": "Acerca de Este Curso",
@@ -316,7 +318,10 @@
     "saved": "Guardado!",
     "settingsSaved": "Configuracion guardada correctamente",
     "settingsFailed": "Error al guardar la configuracion",
-    "comingSoon": "Proximamente"
+    "comingSoon": "Proximamente",
+    "configureEnvVar": "Configura {envVar} para activar",
+    "googleLinked": "Cuenta de Google vinculada exitosamente",
+    "githubLinked": "Cuenta de GitHub vinculada exitosamente"
   },
   "certificate": {
     "title": "Certificado de Finalizacion",
