@@ -3,12 +3,34 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Trophy, Search, Menu, X, Layers, Users, Compass, Sun, Moon } from "lucide-react";
+import {
+	Trophy,
+	Search,
+	Menu,
+	X,
+	Layers,
+	Users,
+	Compass,
+	Sun,
+	Moon,
+	User,
+	Settings,
+	LogOut,
+} from "lucide-react";
 import { useTheme } from "next-themes";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuLabel,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { SearchModal } from "@/components/search/search-modal";
 import { LoginModal } from "@/components/auth/login-modal";
+import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
 import Logo from "@/public/logo.svg";
 
@@ -39,6 +61,7 @@ export function SiteHeader() {
 	const pathname = usePathname();
 	const t = useTranslations("navigation");
 	const { resolvedTheme, setTheme } = useTheme();
+	const { isAuthenticated, user, wallet, signOut, isOAuthLoading } = useAuth();
 	const [mounted, setMounted] = useState(false);
 	const [mobileOpen, setMobileOpen] = useState(false);
 	const [searchOpen, setSearchOpen] = useState(false);
@@ -67,6 +90,16 @@ export function SiteHeader() {
 		document.addEventListener("keydown", handleKeyDown);
 		return () => document.removeEventListener("keydown", handleKeyDown);
 	}, [handleKeyDown]);
+
+	const walletAddress = wallet.publicKey?.toBase58();
+	const displayName =
+		user?.name ??
+		(walletAddress ? `${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}` : "Learner");
+	const displayMeta = user?.email ?? walletAddress ?? "";
+
+	const handleSignOut = async () => {
+		await signOut();
+	};
 
 	const toggleTheme = () => setTheme(resolvedTheme === "dark" ? "light" : "dark");
 
@@ -126,16 +159,91 @@ export function SiteHeader() {
 								)}
 							</button>
 
-							<Button variant="ghost" size="sm" onClick={() => setLoginOpen(true)}>
-								{t("login")}
-							</Button>
-							<Button
-								size="sm"
-								className="font-semibold"
-								onClick={() => setLoginOpen(true)}
-							>
-								{t("signUpFree")}
-							</Button>
+							{!isOAuthLoading && isAuthenticated ? (
+								<DropdownMenu>
+									<DropdownMenuTrigger asChild={true}>
+										<Button
+											variant="ghost"
+											size="icon"
+											className="h-9 w-9 rounded-full"
+											aria-label="Open account menu"
+										>
+											{user?.image ? (
+												<img
+													src={user.image}
+													alt={displayName}
+													className="h-9 w-9 rounded-full object-cover"
+												/>
+											) : (
+												<div className="h-9 w-9 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+													<User className="h-4 w-4" />
+												</div>
+											)}
+										</Button>
+									</DropdownMenuTrigger>
+									<DropdownMenuContent align="end" className="w-64">
+										<DropdownMenuLabel className="font-normal">
+											<div className="flex flex-col">
+												<span className="text-sm font-medium">
+													{displayName}
+												</span>
+												{displayMeta ? (
+													<span className="text-xs text-muted-foreground truncate">
+														{displayMeta}
+													</span>
+												) : null}
+											</div>
+										</DropdownMenuLabel>
+										<DropdownMenuSeparator />
+										<DropdownMenuItem asChild={true}>
+											<Link href="/profile">
+												<User className="h-4 w-4 mr-2" />
+												Profile
+											</Link>
+										</DropdownMenuItem>
+										<DropdownMenuItem asChild={true}>
+											<Link href="/settings">
+												<Settings className="h-4 w-4 mr-2" />
+												Settings
+											</Link>
+										</DropdownMenuItem>
+										<DropdownMenuItem asChild={true}>
+											<Link href="/certificates">
+												<Trophy className="h-4 w-4 mr-2" />
+												My Certifications
+											</Link>
+										</DropdownMenuItem>
+										<DropdownMenuItem asChild={true}>
+											<Link href="/courses/my">
+												<Compass className="h-4 w-4 mr-2" />
+												Tracks I’m Following
+											</Link>
+										</DropdownMenuItem>
+										<DropdownMenuSeparator />
+										<DropdownMenuItem onSelect={handleSignOut}>
+											<LogOut className="h-4 w-4 mr-2" />
+											Logout
+										</DropdownMenuItem>
+									</DropdownMenuContent>
+								</DropdownMenu>
+							) : (
+								<>
+									<Button
+										variant="ghost"
+										size="sm"
+										onClick={() => setLoginOpen(true)}
+									>
+										{t("login")}
+									</Button>
+									<Button
+										size="sm"
+										className="font-semibold"
+										onClick={() => setLoginOpen(true)}
+									>
+										{t("signUpFree")}
+									</Button>
+								</>
+							)}
 						</div>
 
 						<div className="flex lg:hidden items-center gap-2">
@@ -202,25 +310,75 @@ export function SiteHeader() {
 									);
 								})}
 								<div className="pt-4 space-y-2 border-t border-border">
-									<Button
-										variant="outline"
-										className="w-full"
-										onClick={() => {
-											setMobileOpen(false);
-											setLoginOpen(true);
-										}}
-									>
-										{t("login")}
-									</Button>
-									<Button
-										className="w-full font-semibold"
-										onClick={() => {
-											setMobileOpen(false);
-											setLoginOpen(true);
-										}}
-									>
-										{t("signUpFree")}
-									</Button>
+									{!isOAuthLoading && isAuthenticated ? (
+										<>
+											<Link
+												href="/profile"
+												onClick={() => setMobileOpen(false)}
+												className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-muted"
+											>
+												<User className="h-4 w-4" />
+												Profile
+											</Link>
+											<Link
+												href="/settings"
+												onClick={() => setMobileOpen(false)}
+												className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-muted"
+											>
+												<Settings className="h-4 w-4" />
+												Settings
+											</Link>
+											<Link
+												href="/certificates"
+												onClick={() => setMobileOpen(false)}
+												className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-muted"
+											>
+												<Trophy className="h-4 w-4" />
+												My Certifications
+											</Link>
+											<Link
+												href="/courses/my"
+												onClick={() => setMobileOpen(false)}
+												className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-muted"
+											>
+												<Compass className="h-4 w-4" />
+												Tracks I’m Following
+											</Link>
+											<Button
+												variant="outline"
+												className="w-full"
+												onClick={async () => {
+													await handleSignOut();
+													setMobileOpen(false);
+												}}
+											>
+												<LogOut className="h-4 w-4 mr-2" />
+												Logout
+											</Button>
+										</>
+									) : (
+										<>
+											<Button
+												variant="outline"
+												className="w-full"
+												onClick={() => {
+													setMobileOpen(false);
+													setLoginOpen(true);
+												}}
+											>
+												{t("login")}
+											</Button>
+											<Button
+												className="w-full font-semibold"
+												onClick={() => {
+													setMobileOpen(false);
+													setLoginOpen(true);
+												}}
+											>
+												{t("signUpFree")}
+											</Button>
+										</>
+									)}
 								</div>
 							</nav>
 						</div>
