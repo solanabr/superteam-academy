@@ -30,9 +30,13 @@ export function createServerAuth(config: ServerAuthConfig) {
 		socialProviders,
 		trustedOrigins: [config.baseURL],
 		session: {
+			expiresIn: 60 * 60 * 24 * 7,
+			disableSessionRefresh: true,
 			cookieCache: {
 				enabled: true,
-				maxAge: 5 * 60,
+				maxAge: 60 * 60 * 24 * 7,
+				strategy: "jwt",
+				refreshCache: true,
 			},
 		},
 		rateLimit: {

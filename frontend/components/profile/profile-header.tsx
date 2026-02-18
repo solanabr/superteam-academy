@@ -1,8 +1,10 @@
 "use client";
 
 import { Edit, MapPin, Calendar, Github, Linkedin, Wallet, Zap, Flame, Award } from "lucide-react";
+import { usePathname } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/auth-context";
 
 interface User {
 	id: string;
@@ -40,6 +42,16 @@ interface ProfileHeaderProps {
 }
 
 export function ProfileHeader({ user, stats }: ProfileHeaderProps) {
+	const { isAuthenticated, user: authUser, wallet } = useAuth();
+	const pathname = usePathname();
+	const walletAddress = wallet.publicKey?.toBase58();
+	const isSelfProfileRoute = pathname === "/profile";
+	const identifiersMatch =
+		(authUser?.id !== undefined && authUser.id === user.id) ||
+		(walletAddress !== undefined && walletAddress === user.walletAddress);
+	const isOwner =
+		isAuthenticated && (identifiersMatch || isSelfProfileRoute);
+
 	const initials = user.name
 		.split(" ")
 		.map((n) => n[0])
@@ -107,10 +119,12 @@ export function ProfileHeader({ user, stats }: ProfileHeaderProps) {
 								</a>
 							</Button>
 						)}
-						<Button variant="outline" size="sm" className="h-8 gap-1.5">
-							<Edit className="h-3.5 w-3.5" />
-							Edit
-						</Button>
+						{isOwner ? (
+							<Button variant="outline" size="sm" className="h-8 gap-1.5">
+								<Edit className="h-3.5 w-3.5" />
+								Edit
+							</Button>
+						) : null}
 					</div>
 				</div>
 
