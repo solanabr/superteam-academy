@@ -357,7 +357,7 @@ export class TranslationValidator {
 	/**
 	 * Compare translations between locales to find missing keys
 	 */
-	async compareTranslations(baseLocale = "en"): Promise<Record<string, ValidationResult>> {
+	async compareTranslations(baseLocale = "es"): Promise<Record<string, ValidationResult>> {
 		const results: Record<string, ValidationResult> = {};
 		const baseFile = path.join(this.messagesDir, `${baseLocale}.json`);
 

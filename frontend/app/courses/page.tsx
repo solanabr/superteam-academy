@@ -17,6 +17,7 @@ import { CourseGrid } from "@/components/courses/course-grid";
 import { CourseList } from "@/components/courses/course-list";
 import { Pagination } from "@/components/ui/pagination";
 import { getCoursesCMS, isSanityConfigured } from "@/lib/cms";
+import { getTranslations } from "next-intl/server";
 export const metadata: Metadata = {
 	title: "Catalog | Superteam Academy",
 	description:
@@ -35,29 +36,19 @@ interface CoursesPageProps {
 }
 
 const CATEGORIES = [
-	{ value: "all", label: "All topics" },
-	{ value: "solana", label: "Solana Core" },
-	{ value: "anchor", label: "Anchor" },
-	{ value: "defi", label: "DeFi" },
-	{ value: "nft", label: "NFTs & Metaplex" },
-	{ value: "security", label: "Security" },
-	{ value: "frontend", label: "Web3 Frontend" },
-	{ value: "token", label: "Token Programs" },
-];
+	"all",
+	"solana",
+	"anchor",
+	"defi",
+	"nft",
+	"security",
+	"frontend",
+	"token",
+] as const;
 
-const LEVELS = [
-	{ value: "all", label: "All levels" },
-	{ value: "beginner", label: "Beginner" },
-	{ value: "intermediate", label: "Intermediate" },
-	{ value: "advanced", label: "Advanced" },
-];
+const LEVELS = ["all", "beginner", "intermediate", "advanced"] as const;
 
-const SORTS = [
-	{ value: "popular", label: "Most popular" },
-	{ value: "newest", label: "Newest" },
-	{ value: "xp", label: "Highest XP" },
-	{ value: "duration", label: "Duration" },
-];
+const SORTS = ["popular", "newest", "xp", "duration"] as const;
 
 export default async function CoursesPage({ searchParams }: CoursesPageProps) {
 	const {
@@ -70,17 +61,17 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
 	} = searchParams;
 
 	const hasFilters = q || category !== "all" || level !== "all";
+	const t = await getTranslations("courses");
 
 	return (
 		<div className="min-h-screen">
 			<div className="border-b border-border/60 noise">
 				<div className="mx-auto px-4 sm:px-6 py-10 sm:py-14">
 					<h1 className="text-3xl sm:text-4xl font-bold tracking-tight">
-						Course catalog
+						{t("catalog.title")}
 					</h1>
 					<p className="mt-3 text-lg text-muted-foreground max-w-xl">
-						Browse courses by topic, level, or learning path. Every course earns you XP
-						and on-chain credentials.
+						{t("catalog.description")}
 					</p>
 				</div>
 			</div>
@@ -91,7 +82,7 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
 						<div className="relative flex-1 max-w-sm w-full">
 							<Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
 							<Input
-								placeholder="Search courses..."
+								placeholder={t("search.placeholder")}
 								className="pl-9 h-9 bg-muted/50 border-border/60 rounded-lg"
 								defaultValue={q}
 							/>
@@ -104,8 +95,8 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
 								</SelectTrigger>
 								<SelectContent>
 									{CATEGORIES.map((c) => (
-										<SelectItem key={c.value} value={c.value}>
-											{c.label}
+										<SelectItem key={c} value={c}>
+											{t(`categories.${c}`)}
 										</SelectItem>
 									))}
 								</SelectContent>
@@ -117,8 +108,8 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
 								</SelectTrigger>
 								<SelectContent>
 									{LEVELS.map((l) => (
-										<SelectItem key={l.value} value={l.value}>
-											{l.label}
+										<SelectItem key={l} value={l}>
+											{t(`levels.${l}`)}
 										</SelectItem>
 									))}
 								</SelectContent>
@@ -130,8 +121,8 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
 								</SelectTrigger>
 								<SelectContent>
 									{SORTS.map((s) => (
-										<SelectItem key={s.value} value={s.value}>
-											{s.label}
+										<SelectItem key={s} value={s}>
+											{t(`sortOptions.${s}`)}
 										</SelectItem>
 									))}
 								</SelectContent>
@@ -170,7 +161,9 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
 
 					{hasFilters && (
 						<div className="flex items-center gap-2 mt-3 flex-wrap">
-							<span className="text-xs text-muted-foreground">Filters:</span>
+							<span className="text-xs text-muted-foreground">
+								{t("catalog.filters")}:
+							</span>
 							{q && (
 								<Badge
 									variant="secondary"
@@ -190,7 +183,7 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
 									variant="secondary"
 									className="gap-1 text-xs font-normal pr-1"
 								>
-									{CATEGORIES.find((c) => c.value === category)?.label}
+									{t(`categories.${category}`)}
 									<a
 										href={buildFilterUrl({ q, level, sort, view })}
 										className="ml-0.5 p-0.5 rounded-full hover:bg-muted-foreground/20"
@@ -204,7 +197,7 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
 									variant="secondary"
 									className="gap-1 text-xs font-normal pr-1"
 								>
-									{LEVELS.find((l) => l.value === level)?.label}
+									{t(`levels.${level}`)}
 									<a
 										href={buildFilterUrl({ q, category, sort, view })}
 										className="ml-0.5 p-0.5 rounded-full hover:bg-muted-foreground/20"
@@ -217,7 +210,7 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
 								href="/courses"
 								className="text-xs text-primary hover:underline ml-1"
 							>
-								Clear all
+								{t("catalog.clearAll")}
 							</a>
 						</div>
 					)}
@@ -251,12 +244,15 @@ async function CoursesContent({
 }) {
 	const courses = await getCourses(searchParams);
 	const totalPages = Math.ceil(courses.length / 12);
+	const t = await getTranslations("courses");
 
 	return (
 		<div className="space-y-6">
 			<div className="flex items-center justify-between">
 				<p className="text-sm text-muted-foreground">
-					{courses.length} course{courses.length !== 1 ? "s" : ""}
+					{courses.length === 1
+						? t("catalog.count", { count: courses.length })
+						: t("catalog.countPlural", { count: courses.length })}
 				</p>
 			</div>
 
@@ -282,12 +278,12 @@ async function CoursesContent({
 					<div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mx-auto">
 						<Search className="h-7 w-7 text-muted-foreground" />
 					</div>
-					<h3 className="text-lg font-semibold">No courses found</h3>
+					<h3 className="text-lg font-semibold">{t("empty.title")}</h3>
 					<p className="text-muted-foreground max-w-sm mx-auto text-sm">
-						Try adjusting your search or filters to find what you&apos;re looking for.
+						{t("empty.description")}
 					</p>
 					<Button variant="outline" size="sm" asChild>
-						<Link href="/courses">Clear all filters</Link>
+						<Link href="/courses">{t("empty.clearFilters")}</Link>
 					</Button>
 				</div>
 			)}

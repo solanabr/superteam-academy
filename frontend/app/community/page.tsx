@@ -11,6 +11,7 @@ import {
 	Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getTranslations } from "next-intl/server";
 
 export const metadata: Metadata = {
 	title: "Community | Superteam Academy",
@@ -78,15 +79,13 @@ const TOP_CONTRIBUTORS = [
 	{ name: "Yuki Tanaka", xp: "17,500 XP", rank: 5, courses: 12 },
 ];
 
-export default function CommunityPage() {
+export default async function CommunityPage() {
+	const t = await getTranslations("community");
 	return (
 		<div className="mx-auto px-4 sm:px-6 py-12 space-y-16">
 			<div className="text-center max-w-2xl mx-auto">
-				<h1 className="text-4xl font-bold font-display mb-3">Community</h1>
-				<p className="text-lg text-muted-foreground">
-					Learn together, build together. Join thousands of developers mastering Solana
-					through collaboration.
-				</p>
+				<h1 className="text-4xl font-bold font-display mb-3">{t("title")}</h1>
+				<p className="text-lg text-muted-foreground">{t("description")}</p>
 			</div>
 
 			<div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -107,7 +106,7 @@ export default function CommunityPage() {
 
 			<div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 				<div>
-					<h2 className="text-xl font-bold font-display mb-4">Join the conversation</h2>
+					<h2 className="text-xl font-bold font-display mb-4">{t("joinConversation")}</h2>
 					<div className="space-y-3">
 						{CHANNELS.map((ch) => (
 							<a
@@ -140,7 +139,7 @@ export default function CommunityPage() {
 				</div>
 
 				<div>
-					<h2 className="text-xl font-bold font-display mb-4">Upcoming events</h2>
+					<h2 className="text-xl font-bold font-display mb-4">{t("upcomingEvents")}</h2>
 					<div className="rounded-2xl border border-border/60 bg-card overflow-hidden">
 						<div className="divide-y divide-border/40">
 							{UPCOMING_EVENTS.map((event) => (
@@ -177,10 +176,10 @@ export default function CommunityPage() {
 
 			<div>
 				<div className="flex items-center justify-between mb-4">
-					<h2 className="text-xl font-bold font-display">Top contributors</h2>
+					<h2 className="text-xl font-bold font-display">{t("topContributors")}</h2>
 					<Button variant="ghost" size="sm" asChild>
 						<Link href="/leaderboard">
-							Full leaderboard
+							{t("fullLeaderboard")}
 							<ArrowRight className="h-3.5 w-3.5 ml-1.5" />
 						</Link>
 					</Button>
@@ -205,7 +204,7 @@ export default function CommunityPage() {
 								<div className="flex-1 min-w-0">
 									<p className="text-sm font-medium">{user.name}</p>
 									<p className="text-xs text-muted-foreground">
-										{user.courses} courses completed
+										{t("coursesCompleted", { count: user.courses })}
 									</p>
 								</div>
 								<div className="flex items-center gap-1 text-sm font-semibold text-[#ffd23f]">
@@ -219,13 +218,11 @@ export default function CommunityPage() {
 			</div>
 
 			<div className="rounded-2xl bg-linear-to-br from-[#2f6b3f] to-[#008c4c] p-8 sm:p-12 text-center text-white">
-				<h2 className="text-2xl font-bold font-display mb-2">Ready to start learning?</h2>
-				<p className="text-white/80 mb-6 max-w-md mx-auto">
-					Join the community, earn XP, and build your on-chain credentials.
-				</p>
+				<h2 className="text-2xl font-bold font-display mb-2">{t("readyToStart")}</h2>
+				<p className="text-white/80 mb-6 max-w-md mx-auto">{t("readyToStartDesc")}</p>
 				<div className="flex gap-3 justify-center">
 					<Button size="sm" className="bg-white text-[#2f6b3f] hover:bg-white/90" asChild>
-						<Link href="/courses">Browse courses</Link>
+						<Link href="/courses">{t("browseCourses")}</Link>
 					</Button>
 					<Button
 						size="sm"
@@ -233,7 +230,7 @@ export default function CommunityPage() {
 						className="border-white/40 text-white hover:bg-white/10"
 						asChild
 					>
-						<Link href="/leaderboard">View leaderboard</Link>
+						<Link href="/leaderboard">{t("viewLeaderboard")}</Link>
 					</Button>
 				</div>
 			</div>

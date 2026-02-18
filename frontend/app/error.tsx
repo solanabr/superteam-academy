@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { AlertTriangle, Home, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useTranslations } from "next-intl";
 
 interface ErrorPageProps {
 	error?: Error;
@@ -11,6 +12,8 @@ interface ErrorPageProps {
 }
 
 export default function ErrorPage({ error, reset }: ErrorPageProps) {
+	const t = useTranslations("common.error");
+
 	useEffect(() => {
 		if (process.env.NODE_ENV === "development" && error) {
 			console.error("Error page rendered:", error);
@@ -36,15 +39,13 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
 				</div>
 
 				<div className="space-y-2">
-					<h1 className="text-3xl font-bold font-display">Something went wrong</h1>
-					<p className="text-muted-foreground">
-						We ran into an unexpected issue. Try refreshing or head back home.
-					</p>
+					<h1 className="text-3xl font-bold font-display">{t("title")}</h1>
+					<p className="text-muted-foreground">{t("description")}</p>
 				</div>
 
 				{process.env.NODE_ENV === "development" && error && (
 					<div className="rounded-xl bg-destructive/5 border border-destructive/20 p-4 text-left">
-						<p className="text-xs font-medium text-destructive mb-1">Error details</p>
+						<p className="text-xs font-medium text-destructive mb-1">{t("details")}</p>
 						<code className="text-xs text-destructive/80 break-all">
 							{error.message}
 						</code>
@@ -54,12 +55,12 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
 				<div className="flex gap-3 justify-center">
 					<Button onClick={handleRetry} size="sm">
 						<RefreshCw className="h-4 w-4 mr-2" />
-						Try again
+						{t("tryAgain")}
 					</Button>
 					<Button variant="outline" size="sm" asChild>
 						<Link href="/">
 							<Home className="h-4 w-4 mr-2" />
-							Go home
+							{t("goHome")}
 						</Link>
 					</Button>
 				</div>

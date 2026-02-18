@@ -4,6 +4,7 @@ import { Award, ExternalLink, CheckCircle, Calendar, Shield } from "lucide-react
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getTranslations } from "next-intl/server";
 
 interface CertificatePageProps {
 	params: Promise<{ id: string }>;
@@ -23,6 +24,7 @@ export default async function CertificatePage({ params }: CertificatePageProps) 
 	const { id } = await params;
 	const cert = await getCertificate(id);
 	if (!cert) notFound();
+	const t = await getTranslations("certificates");
 
 	return (
 		<div className="min-h-screen py-12">
@@ -33,8 +35,8 @@ export default async function CertificatePage({ params }: CertificatePageProps) 
 					</div>
 					<h1 className="text-2xl font-bold tracking-tight">{cert.title}</h1>
 					<p className="text-muted-foreground">
-						Issued by{" "}
-						<span className="font-medium text-foreground">Superteam Academy</span>
+						{t("issuedBy")}{" "}
+						<span className="font-medium text-foreground">{t("issuer")}</span>
 					</p>
 				</div>
 
@@ -42,31 +44,31 @@ export default async function CertificatePage({ params }: CertificatePageProps) 
 					<CardHeader>
 						<CardTitle className="flex items-center gap-2 text-lg">
 							<Shield className="h-5 w-5 text-primary" />
-							Credential Details
+							{t("title")}
 						</CardTitle>
 					</CardHeader>
 					<CardContent className="space-y-4">
 						<div className="grid grid-cols-2 gap-4">
 							<div>
-								<p className="text-sm text-muted-foreground">Holder</p>
+								<p className="text-sm text-muted-foreground">{t("holder")}</p>
 								<p className="font-medium">{cert.holder}</p>
 							</div>
 							<div>
-								<p className="text-sm text-muted-foreground">Course</p>
+								<p className="text-sm text-muted-foreground">{t("course")}</p>
 								<p className="font-medium">{cert.courseName}</p>
 							</div>
 							<div>
-								<p className="text-sm text-muted-foreground">Track</p>
+								<p className="text-sm text-muted-foreground">{t("track")}</p>
 								<Badge variant="secondary">{cert.track}</Badge>
 							</div>
 							<div>
-								<p className="text-sm text-muted-foreground">Level</p>
+								<p className="text-sm text-muted-foreground">{t("level")}</p>
 								<Badge variant="outline">{cert.level}</Badge>
 							</div>
 							<div className="flex items-center gap-1">
 								<Calendar className="h-4 w-4 text-muted-foreground" />
 								<div>
-									<p className="text-sm text-muted-foreground">Issued</p>
+									<p className="text-sm text-muted-foreground">{t("issued")}</p>
 									<p className="font-medium">
 										{new Date(cert.issuedAt).toLocaleDateString()}
 									</p>
@@ -75,14 +77,14 @@ export default async function CertificatePage({ params }: CertificatePageProps) 
 							<div className="flex items-center gap-1">
 								<CheckCircle className="h-4 w-4 text-green-500" />
 								<div>
-									<p className="text-sm text-muted-foreground">Status</p>
-									<p className="font-medium text-green-600">Verified</p>
+									<p className="text-sm text-muted-foreground">{t("status")}</p>
+									<p className="font-medium text-green-600">{t("verified")}</p>
 								</div>
 							</div>
 						</div>
 
 						<div className="pt-4 border-t space-y-2">
-							<p className="text-sm text-muted-foreground">XP Earned</p>
+							<p className="text-sm text-muted-foreground">{t("xpEarned")}</p>
 							<p className="text-2xl font-bold">
 								{cert.xpEarned.toLocaleString()} XP
 							</p>
@@ -90,7 +92,9 @@ export default async function CertificatePage({ params }: CertificatePageProps) 
 
 						{cert.onChainAddress && (
 							<div className="pt-4 border-t">
-								<p className="text-sm text-muted-foreground mb-2">On-Chain Proof</p>
+								<p className="text-sm text-muted-foreground mb-2">
+									{t("onChainProof")}
+								</p>
 								<code className="block p-3 bg-muted rounded-lg text-xs break-all">
 									{cert.onChainAddress}
 								</code>
@@ -100,7 +104,7 @@ export default async function CertificatePage({ params }: CertificatePageProps) 
 										target="_blank"
 										rel="noopener noreferrer"
 									>
-										View on Explorer
+										{t("viewOnExplorer")}
 										<ExternalLink className="h-3 w-3" />
 									</a>
 								</Button>

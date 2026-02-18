@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { User, Bell, Shield, Palette, Globe, Wallet } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -17,36 +18,36 @@ export const metadata: Metadata = {
 };
 
 const TABS = [
-	{ value: "profile", label: "Profile", Icon: User },
-	{ value: "notifications", label: "Notifications", Icon: Bell },
-	{ value: "privacy", label: "Privacy", Icon: Shield },
-	{ value: "appearance", label: "Appearance", Icon: Palette },
-	{ value: "language", label: "Language", Icon: Globe },
-	{ value: "wallet", label: "Wallet", Icon: Wallet },
+	{ value: "profile", Icon: User },
+	{ value: "notifications", Icon: Bell },
+	{ value: "privacy", Icon: Shield },
+	{ value: "appearance", Icon: Palette },
+	{ value: "language", Icon: Globe },
+	{ value: "wallet", Icon: Wallet },
 ] as const;
 
-export default function SettingsPage() {
+export default async function SettingsPage() {
+	const t = await getTranslations("settings");
+
 	return (
 		<div className="min-h-screen bg-background">
 			<Suspense fallback={<SettingsSkeleton />}>
 				<div className="max-w-4xl mx-auto px-4 py-10 space-y-8">
 					<div>
-						<h1 className="text-2xl font-bold tracking-tight">Settings</h1>
-						<p className="text-sm text-muted-foreground mt-1">
-							Manage your account, preferences, and connected wallets
-						</p>
+						<h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+						<p className="text-sm text-muted-foreground mt-1">{t("description")}</p>
 					</div>
 
 					<Tabs defaultValue="profile" className="space-y-6">
 						<TabsList className="h-auto p-1 bg-muted/50 rounded-xl flex flex-wrap gap-0.5">
-							{TABS.map(({ value, label, Icon }) => (
+							{TABS.map(({ value, Icon }) => (
 								<TabsTrigger
 									key={value}
 									value={value}
 									className="gap-1.5 rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm px-3 py-2 text-xs sm:text-sm"
 								>
 									<Icon className="h-3.5 w-3.5" />
-									<span className="hidden sm:inline">{label}</span>
+									<span className="hidden sm:inline">{t(`tabs.${value}`)}</span>
 								</TabsTrigger>
 							))}
 						</TabsList>

@@ -248,7 +248,7 @@ export class TranslationExtractor {
 	/**
 	 * Generate translation template from existing keys
 	 */
-	async generateTemplate(baseLocale = "en"): Promise<Record<string, unknown>> {
+	async generateTemplate(baseLocale = "es"): Promise<Record<string, unknown>> {
 		const baseFile = path.join(__dirname, "../messages", `${baseLocale}.json`);
 		const content = fs.readFileSync(baseFile, "utf-8");
 		const baseTranslations = JSON.parse(content);

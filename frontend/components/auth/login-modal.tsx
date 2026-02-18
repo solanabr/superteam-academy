@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Mail, ArrowLeft } from "lucide-react";
+import { useState, useCallback } from "react";
+import { Mail, ArrowLeft, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,28 +19,31 @@ interface LoginModalProps {
 	onOpenChange: (open: boolean) => void;
 }
 
-type Step = "choose" | "email" | "otp";
+type Step = "choose" | "email" | "otp" | "wallet-verify";
 
 export function LoginModal({ open, onOpenChange }: LoginModalProps) {
-	const { signInWithOAuth } = useAuth();
+	const { signInWithOAuth, wallet, verifyWallet, isWalletConnected } = useAuth();
 	const [step, setStep] = useState<Step>("choose");
 	const [email, setEmail] = useState("");
 	const [otp, setOtp] = useState("");
 	const [isLoading, setIsLoading] = useState<string | null>(null);
 	const [error, setError] = useState<string | null>(null);
 
-	const reset = () => {
+	const reset = useCallback(() => {
 		setStep("choose");
 		setEmail("");
 		setOtp("");
 		setIsLoading(null);
 		setError(null);
-	};
+	}, []);
 
-	const handleOpenChange = (value: boolean) => {
-		if (!value) reset();
-		onOpenChange(value);
-	};
+	const handleOpenChange = useCallback(
+		(value: boolean) => {
+			if (!value) reset();
+			onOpenChange(value);
+		},
+		[onOpenChange, reset]
+	);
 
 	const handleOAuthSignIn = async (provider: "google" | "github") => {
 		setIsLoading(provider);
@@ -54,6 +57,37 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
 			setIsLoading(null);
 		}
 	};
+
+	const handleWalletConnect = useCallback(async () => {
+		setError(null);
+		if (!isWalletConnected) {
+			setIsLoading("wallet");
+			try {
+				await wallet.select(wallet.wallets[0]?.adapter.name ?? null);
+				await wallet.connect();
+				setStep("wallet-verify");
+			} catch {
+				setError("Failed to connect wallet. Please try again.");
+			} finally {
+				setIsLoading(null);
+			}
+			return;
+		}
+		setStep("wallet-verify");
+	}, [wallet, isWalletConnected]);
+
+	const handleWalletVerify = useCallback(async () => {
+		setIsLoading("wallet-verify");
+		setError(null);
+		try {
+			await verifyWallet();
+			handleOpenChange(false);
+		} catch {
+			setError("Wallet verification failed. Please try again.");
+		} finally {
+			setIsLoading(null);
+		}
+	}, [verifyWallet, handleOpenChange]);
 
 	const handleEmailSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -96,6 +130,10 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
 		}
 	};
 
+	const truncatedAddress = wallet.publicKey
+		? `${wallet.publicKey.toBase58().slice(0, 4)}...${wallet.publicKey.toBase58().slice(-4)}`
+		: null;
+
 	return (
 		<Dialog open={open} onOpenChange={handleOpenChange}>
 			<DialogContent className="sm:max-w-md">
@@ -104,12 +142,15 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
 						{step === "choose" && "Welcome to Superteam Academy"}
 						{step === "email" && "Sign in with Email"}
 						{step === "otp" && "Enter verification code"}
+						{step === "wallet-verify" && "Verify your wallet"}
 					</DialogTitle>
 					<DialogDescription>
 						{step === "choose" &&
 							"Sign in to track your progress, earn XP, and unlock achievements."}
 						{step === "email" && "We'll send a one-time code to your email."}
 						{step === "otp" && `We sent a code to ${email}`}
+						{step === "wallet-verify" &&
+							`Sign a message to verify ownership of ${truncatedAddress}`}
 					</DialogDescription>
 				</DialogHeader>
 
@@ -121,6 +162,29 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
 
 				{step === "choose" && (
 					<div className="space-y-3 pt-2">
+						<Button
+							variant="outline"
+							className="w-full justify-start h-11"
+							onClick={handleWalletConnect}
+							disabled={isLoading === "wallet"}
+						>
+							<Wallet className="w-4 h-4 mr-3" />
+							{isLoading === "wallet"
+								? "Connecting..."
+								: isWalletConnected
+									? `Continue with wallet (${truncatedAddress})`
+									: "Continue with Solana Wallet"}
+						</Button>
+
+						<div className="relative my-4">
+							<div className="absolute inset-0 flex items-center">
+								<span className="w-full border-t border-border" />
+							</div>
+							<div className="relative flex justify-center text-xs uppercase">
+								<span className="bg-background px-2 text-muted-foreground">or</span>
+							</div>
+						</div>
+
 						<Button
 							variant="outline"
 							className="w-full justify-start h-11"
@@ -160,15 +224,6 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
 							{isLoading === "github" ? "Signing in..." : "Continue with GitHub"}
 						</Button>
 
-						<div className="relative my-4">
-							<div className="absolute inset-0 flex items-center">
-								<span className="w-full border-t border-border" />
-							</div>
-							<div className="relative flex justify-center text-xs uppercase">
-								<span className="bg-background px-2 text-muted-foreground">or</span>
-							</div>
-						</div>
-
 						<Button
 							variant="outline"
 							className="w-full justify-start h-11"
@@ -176,6 +231,35 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
 						>
 							<Mail className="w-4 h-4 mr-3" />
 							Continue with Email
+						</Button>
+					</div>
+				)}
+
+				{step === "wallet-verify" && (
+					<div className="space-y-4 pt-2">
+						<p className="text-sm text-muted-foreground">
+							Your wallet will prompt you to sign a message. This proves ownership
+							without any on-chain transaction or gas fees.
+						</p>
+						<Button
+							className="w-full"
+							onClick={handleWalletVerify}
+							disabled={isLoading === "wallet-verify"}
+						>
+							{isLoading === "wallet-verify" ? "Signing..." : "Sign message & verify"}
+						</Button>
+						<Button
+							type="button"
+							variant="ghost"
+							size="sm"
+							className="w-full"
+							onClick={() => {
+								setStep("choose");
+								setError(null);
+							}}
+						>
+							<ArrowLeft className="w-3.5 h-3.5 mr-2" />
+							Back to sign in options
 						</Button>
 					</div>
 				)}

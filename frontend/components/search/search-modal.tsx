@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Search, BookOpen, Layers, Users, Clock } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import * as VisuallyHidden from "@radix-ui/react-visually-hidden";
 
@@ -14,13 +15,14 @@ interface SearchModalProps {
 const RECENT_SEARCHES_KEY = "academy_recent_searches";
 
 const QUICK_LINKS = [
-	{ label: "Browse Courses", href: "/courses", icon: BookOpen },
-	{ label: "Explore Topics", href: "/topics", icon: Layers },
-	{ label: "Leaderboard", href: "/leaderboard", icon: Users },
+	{ key: "browseCourses" as const, href: "/courses", icon: BookOpen },
+	{ key: "exploreTopics" as const, href: "/topics", icon: Layers },
+	{ key: "leaderboard" as const, href: "/leaderboard", icon: Users },
 ];
 
 export function SearchModal({ open, onOpenChange }: SearchModalProps) {
 	const router = useRouter();
+	const t = useTranslations("searchModal");
 	const inputRef = useRef<HTMLInputElement>(null);
 	const [query, setQuery] = useState("");
 	const [recentSearches, setRecentSearches] = useState<string[]>([]);
@@ -62,7 +64,7 @@ export function SearchModal({ open, onOpenChange }: SearchModalProps) {
 		<Dialog open={open} onOpenChange={onOpenChange}>
 			<DialogContent className="sm:max-w-xl p-0 gap-0 overflow-hidden">
 				<VisuallyHidden.Root>
-					<DialogTitle>Search</DialogTitle>
+					<DialogTitle>{t("title")}</DialogTitle>
 				</VisuallyHidden.Root>
 				<div className="flex items-center border-b border-border px-4">
 					<Search className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -74,7 +76,7 @@ export function SearchModal({ open, onOpenChange }: SearchModalProps) {
 						onKeyDown={(e) => {
 							if (e.key === "Enter") handleSearch(query);
 						}}
-						placeholder="Search for courses, topics, instructors..."
+						placeholder={t("placeholder")}
 						className="flex-1 px-3 py-4 text-sm bg-transparent border-0 outline-none placeholder:text-muted-foreground"
 					/>
 					<kbd className="text-[10px] font-mono text-muted-foreground bg-muted rounded px-1.5 py-0.5 border border-border/50">
@@ -86,7 +88,7 @@ export function SearchModal({ open, onOpenChange }: SearchModalProps) {
 					{recentSearches.length > 0 && !query && (
 						<div className="mb-2">
 							<p className="px-3 py-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-								Recent
+								{t("recent")}
 							</p>
 							{recentSearches.map((search) => (
 								<button
@@ -105,7 +107,7 @@ export function SearchModal({ open, onOpenChange }: SearchModalProps) {
 					{!query && (
 						<div>
 							<p className="px-3 py-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-								Quick links
+								{t("quickLinks")}
 							</p>
 							{QUICK_LINKS.map((link) => {
 								const Icon = link.icon;
@@ -117,7 +119,7 @@ export function SearchModal({ open, onOpenChange }: SearchModalProps) {
 										className="flex items-center gap-3 w-full px-3 py-2 text-sm rounded-md hover:bg-accent transition-colors text-left"
 									>
 										<Icon className="h-3.5 w-3.5 text-muted-foreground" />
-										{link.label}
+										{t(link.key)}
 									</button>
 								);
 							})}
@@ -131,7 +133,7 @@ export function SearchModal({ open, onOpenChange }: SearchModalProps) {
 							className="flex items-center gap-3 w-full px-3 py-2 text-sm rounded-md hover:bg-accent transition-colors text-left"
 						>
 							<Search className="h-3.5 w-3.5 text-muted-foreground" />
-							Search for &ldquo;{query}&rdquo;
+						{t("searchFor", { query })}
 						</button>
 					)}
 				</div>

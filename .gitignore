@@ -16,6 +16,9 @@ yarn.lock
 # OS files
 .DS_Store
 Thumbs.db
+.next
+.turbo
+dist
 
 # Environment variables
 .env

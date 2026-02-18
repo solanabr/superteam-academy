@@ -3,8 +3,7 @@
 	"private": true,
 	"workspaces": [
 		"packages/*",
-		"frontend",
-		"superteam-academy"
+		"frontend"
 	],
 	"catalog": {
 		"@biomejs/biome": "2.3.15",

@@ -12,6 +12,7 @@ import {
 	TrendingUp,
 	Clock,
 } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 const TOPICS = [
 	{ name: "Solana Basics", courses: 12, color: "bg-green/10 text-green" },
@@ -61,44 +62,6 @@ const FEATURED_COURSES = [
 	},
 ];
 
-const FEATURES = [
-	{
-		icon: Code,
-		title: "Interactive Coding",
-		description:
-			"Write, test, and deploy Solana programs directly in your browser with instant feedback.",
-	},
-	{
-		icon: Zap,
-		title: "Earn XP & Level Up",
-		description: "Gain experience points for every lesson, challenge, and course you complete.",
-	},
-	{
-		icon: Award,
-		title: "On-Chain Credentials",
-		description:
-			"Receive verifiable, soulbound credentials stored on Solana that prove your expertise.",
-	},
-	{
-		icon: Shield,
-		title: "Expert-Curated Content",
-		description:
-			"Courses built by auditors, core contributors, and builders who ship on mainnet.",
-	},
-	{
-		icon: TrendingUp,
-		title: "Track Your Streaks",
-		description:
-			"Build learning habits with daily streaks, weekly goals, and milestone celebrations.",
-	},
-	{
-		icon: Users,
-		title: "Global Community",
-		description:
-			"Join thousands of Solana builders, share progress, and compete on leaderboards.",
-	},
-];
-
 const TESTIMONIALS = [
 	{
 		name: "Ana Costa",
@@ -120,7 +83,9 @@ const TESTIMONIALS = [
 	},
 ];
 
-function HeroSection() {
+async function HeroSection() {
+	const t = await getTranslations("home.hero");
+
 	return (
 		<section className="relative overflow-hidden noise">
 			<div className="absolute inset-0 pattern-dots opacity-40" />
@@ -131,20 +96,19 @@ function HeroSection() {
 				<div className="max-w-3xl">
 					<div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-highlight text-highlight-foreground text-sm font-medium mb-6 animate-fade-in">
 						<span className="w-1.5 h-1.5 bg-green rounded-full animate-pulse-soft" />
-						Free courses available now
+						{t("badge")}
 					</div>
 
 					<h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.08] tracking-tight text-balance animate-fade-up">
-						Build on Solana. <span className="text-gradient">Prove your skills</span>{" "}
-						on-chain.
+						{t("title")} <span className="text-gradient">{t("titleHighlight")}</span>{" "}
+						{t("titleSuffix")}
 					</h1>
 
 					<p
 						className="mt-6 text-lg sm:text-xl text-muted-foreground max-w-2xl leading-relaxed animate-fade-up"
 						style={{ animationDelay: "100ms" }}
 					>
-						Interactive courses, hands-on challenges, and verifiable credentials. Master
-						blockchain development the way real builders learn — by shipping code.
+						{t("description")}
 					</p>
 
 					<div
@@ -157,12 +121,12 @@ function HeroSection() {
 							asChild
 						>
 							<Link href="/courses">
-								Start learning free
+								{t("cta")}
 								<ArrowRight className="ml-2 h-4 w-4" />
 							</Link>
 						</Button>
 						<Button variant="outline" size="lg" className="text-base px-6 h-12" asChild>
-							<Link href="/courses?view=paths">Explore paths</Link>
+							<Link href="/courses?view=paths">{t("explorePaths")}</Link>
 						</Button>
 					</div>
 
@@ -174,21 +138,27 @@ function HeroSection() {
 							<div className="text-2xl sm:text-3xl font-bold text-foreground">
 								10k+
 							</div>
-							<div className="text-sm text-muted-foreground mt-0.5">Learners</div>
+							<div className="text-sm text-muted-foreground mt-0.5">
+								{t("learners")}
+							</div>
 						</div>
 						<div className="w-px h-10 bg-border" />
 						<div>
 							<div className="text-2xl sm:text-3xl font-bold text-foreground">
 								50+
 							</div>
-							<div className="text-sm text-muted-foreground mt-0.5">Courses</div>
+							<div className="text-sm text-muted-foreground mt-0.5">
+								{t("courses")}
+							</div>
 						</div>
 						<div className="w-px h-10 bg-border" />
 						<div>
 							<div className="text-2xl sm:text-3xl font-bold text-foreground">
 								95%
 							</div>
-							<div className="text-sm text-muted-foreground mt-0.5">Completion</div>
+							<div className="text-sm text-muted-foreground mt-0.5">
+								{t("completion")}
+							</div>
 						</div>
 					</div>
 				</div>
@@ -197,13 +167,15 @@ function HeroSection() {
 	);
 }
 
-function TopicsStrip() {
+async function TopicsStrip() {
+	const t = await getTranslations("home.topics");
+
 	return (
 		<section className="border-y border-border bg-muted/30">
 			<div className="mx-auto px-4 sm:px-6 py-6">
 				<div className="flex items-center gap-3 overflow-x-auto scrollbar-none pb-1">
 					<span className="text-sm font-medium text-muted-foreground whitespace-nowrap">
-						Popular topics:
+						{t("popular")}
 					</span>
 					{TOPICS.map((topic) => (
 						<Link
@@ -221,17 +193,51 @@ function TopicsStrip() {
 	);
 }
 
-function FeaturesSection() {
+async function FeaturesSection() {
+	const t = await getTranslations("home.features");
+
+	const FEATURES = [
+		{
+			icon: Code,
+			title: t("interactiveCoding"),
+			description: t("interactiveCodingDesc"),
+		},
+		{
+			icon: Zap,
+			title: t("earnXp"),
+			description: t("earnXpDesc"),
+		},
+		{
+			icon: Award,
+			title: t("credentials"),
+			description: t("credentialsDesc"),
+		},
+		{
+			icon: Shield,
+			title: t("expertContent"),
+			description: t("expertContentDesc"),
+		},
+		{
+			icon: TrendingUp,
+			title: t("streaks"),
+			description: t("streaksDesc"),
+		},
+		{
+			icon: Users,
+			title: t("community"),
+			description: t("communityDesc"),
+		},
+	];
+
 	return (
 		<section className="py-20 lg:py-28">
 			<div className="mx-auto px-4 sm:px-6">
 				<div className="max-w-2xl mb-14">
 					<h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
-						Designed for <span className="text-gradient">real progress</span>
+						{t("title")} <span className="text-gradient">{t("titleHighlight")}</span>
 					</h2>
 					<p className="mt-4 text-lg text-muted-foreground leading-relaxed">
-						Everything you need to go from beginner to proficient Solana developer, with
-						tools and incentives that keep you moving forward.
+						{t("description")}
 					</p>
 				</div>
 
@@ -256,22 +262,22 @@ function FeaturesSection() {
 	);
 }
 
-function FeaturedCoursesSection() {
+async function FeaturedCoursesSection() {
+	const t = await getTranslations("home.featured");
+
 	return (
 		<section className="py-20 lg:py-28 bg-muted/30 border-y border-border/60">
 			<div className="mx-auto px-4 sm:px-6">
 				<div className="flex items-end justify-between mb-10">
 					<div>
 						<h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
-							Featured courses
+							{t("title")}
 						</h2>
-						<p className="mt-3 text-lg text-muted-foreground">
-							Start here. Master the foundations with our most popular tracks.
-						</p>
+						<p className="mt-3 text-lg text-muted-foreground">{t("description")}</p>
 					</div>
 					<Button variant="outline" className="hidden sm:inline-flex" asChild>
 						<Link href="/courses">
-							View all courses
+							{t("viewAll")}
 							<ArrowRight className="ml-2 h-4 w-4" />
 						</Link>
 					</Button>
@@ -306,7 +312,7 @@ function FeaturedCoursesSection() {
 								<div className="flex items-center gap-4 text-xs text-muted-foreground pt-1">
 									<span className="flex items-center gap-1">
 										<BookOpen className="h-3.5 w-3.5" />
-										{course.lessons} lessons
+										{t("lessons", { count: course.lessons })}
 									</span>
 									<span className="flex items-center gap-1">
 										<Clock className="h-3.5 w-3.5" />
@@ -322,10 +328,10 @@ function FeaturedCoursesSection() {
 							<div className="px-5 pb-4 pt-0">
 								<div className="flex items-center justify-between text-sm">
 									<span className="text-muted-foreground">
-										{course.students.toLocaleString()} learners
+										{t("learners", { count: course.students.toLocaleString() })}
 									</span>
 									<span className="font-medium text-primary group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
-										Start course
+										{t("startCourse")}
 										<ArrowRight className="h-3.5 w-3.5" />
 									</span>
 								</div>
@@ -337,7 +343,7 @@ function FeaturedCoursesSection() {
 				<div className="mt-8 text-center sm:hidden">
 					<Button variant="outline" asChild>
 						<Link href="/courses">
-							View all courses
+							{t("viewAll")}
 							<ArrowRight className="ml-2 h-4 w-4" />
 						</Link>
 					</Button>

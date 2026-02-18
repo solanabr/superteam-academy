@@ -21,7 +21,8 @@
 		"type-check": "tsc --noEmit"
 	},
 	"dependencies": {
-		"@coral-xyz/anchor": "catalog:"
+		"@coral-xyz/anchor": "catalog:",
+		"@solana/web3.js": "catalog:"
 	},
 	"devDependencies": {
 		"tsup": "catalog:",

@@ -116,7 +116,8 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
 		});
 
 		if (!verifyRes.ok) {
-			throw new Error("Wallet verification failed");
+			const errorData = (await verifyRes.json()) as { error: string };
+			throw new Error(errorData.error || "Wallet verification failed");
 		}
 
 		setIsWalletVerified(true);

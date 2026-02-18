@@ -16,14 +16,15 @@ export const metadata: Metadata = {
 };
 
 export default async function LeaderboardPage() {
+	const t = await getTranslations("leaderboard");
+
 	return (
 		<div className="min-h-screen">
 			<div className="border-b border-border/60 noise">
 				<div className="mx-auto px-4 sm:px-6 py-10 sm:py-14">
-					<h1 className="text-3xl sm:text-4xl font-bold tracking-tight">Leaderboard</h1>
+					<h1 className="text-3xl sm:text-4xl font-bold tracking-tight">{t("title")}</h1>
 					<p className="mt-3 text-lg text-muted-foreground max-w-xl">
-						Compete with builders worldwide. Climb the ranks by earning XP, maintaining
-						streaks, and unlocking achievements.
+						{t("description")}
 					</p>
 				</div>
 			</div>

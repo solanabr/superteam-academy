@@ -14,6 +14,7 @@ import {
 	ArrowRight,
 	BookOpen,
 } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 export const metadata: Metadata = {
 	title: "Topics | Superteam Academy",
@@ -114,15 +115,13 @@ const TOPICS = [
 	},
 ];
 
-export default function TopicsPage() {
+export default async function TopicsPage() {
+	const t = await getTranslations("topics");
 	return (
 		<div className="mx-auto px-4 sm:px-6 py-12">
 			<div className="max-w-2xl mb-12">
-				<h1 className="text-4xl font-bold font-display mb-3">Topics</h1>
-				<p className="text-lg text-muted-foreground">
-					Explore learning paths across the Solana ecosystem. Each topic contains curated
-					courses from beginner to advanced.
-				</p>
+				<h1 className="text-4xl font-bold font-display mb-3">{t("title")}</h1>
+				<p className="text-lg text-muted-foreground">{t("description")}</p>
 			</div>
 
 			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -150,7 +149,7 @@ export default function TopicsPage() {
 									<div className="flex items-center gap-2 mt-3">
 										<BookOpen className="h-3.5 w-3.5 text-muted-foreground" />
 										<span className="text-xs text-muted-foreground">
-											{topic.courses} courses
+											{t("courses", { count: topic.courses })}
 										</span>
 										<ArrowRight className="h-3.5 w-3.5 text-muted-foreground ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
 									</div>

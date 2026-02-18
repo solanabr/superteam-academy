@@ -1,36 +1,48 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 const FOOTER_LINKS = {
-	Learn: [
-		{ label: "Catalog", href: "/courses" },
-		{ label: "Topics", href: "/topics" },
-		{ label: "Learning Paths", href: "/courses?view=paths" },
-		{ label: "Challenges", href: "/challenges" },
-		{ label: "Certifications", href: "/certifications" },
+	learn: [
+		{ key: "catalog" as const, href: "/courses" },
+		{ key: "topics" as const, href: "/topics" },
+		{ key: "learningPaths" as const, href: "/courses?view=paths" },
+		{ key: "challenges" as const, href: "/challenges" },
+		{ key: "certifications" as const, href: "/certifications" },
 	],
-	Community: [
-		{ label: "Leaderboard", href: "/leaderboard" },
-		{ label: "Discord", href: "#" },
-		{ label: "Forum", href: "/community" },
-		{ label: "Events", href: "/events" },
-		{ label: "Blog", href: "/blog" },
+	community: [
+		{ key: "leaderboard" as const, href: "/leaderboard" },
+		{ key: "discord" as const, href: "#" },
+		{ key: "forum" as const, href: "/community" },
+		{ key: "events" as const, href: "/events" },
+		{ key: "blog" as const, href: "/blog" },
 	],
-	Resources: [
-		{ label: "Documentation", href: "/docs" },
-		{ label: "API Reference", href: "/docs/api" },
-		{ label: "FAQs", href: "/faq" },
-		{ label: "Help Center", href: "/help" },
+	resources: [
+		{ key: "documentation" as const, href: "/docs" },
+		{ key: "apiReference" as const, href: "/docs/api" },
+		{ key: "faqs" as const, href: "/faq" },
+		{ key: "helpCenter" as const, href: "/help" },
 	],
-	Company: [
-		{ label: "About", href: "/about" },
-		{ label: "Careers", href: "/careers" },
-		{ label: "Pricing", href: "/pricing" },
-		{ label: "Contact", href: "/contact" },
+	company: [
+		{ key: "about" as const, href: "/about" },
+		{ key: "careers" as const, href: "/careers" },
+		{ key: "pricing" as const, href: "/pricing" },
+		{ key: "contact" as const, href: "/contact" },
 	],
 } as const;
 
+const SECTION_KEYS = {
+	learn: "learn",
+	community: "community",
+	resources: "resources",
+	company: "company",
+} as const;
+
 export function SiteFooter() {
+	const t = useTranslations("footer");
+
 	return (
 		<footer className="border-t border-border bg-muted/30">
 			<div className="mx-auto px-4 sm:px-6">
@@ -47,24 +59,23 @@ export function SiteFooter() {
 								/>
 							</Link>
 							<p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
-								Master Solana development through interactive courses and earn
-								verifiable on-chain credentials.
+								{t("description")}
 							</p>
 						</div>
 
 						{Object.entries(FOOTER_LINKS).map(([category, links]) => (
 							<div key={category}>
 								<h3 className="text-sm font-semibold text-foreground mb-3">
-									{category}
+									{t(SECTION_KEYS[category as keyof typeof SECTION_KEYS])}
 								</h3>
 								<ul className="space-y-2">
 									{links.map((link) => (
-										<li key={link.label}>
+										<li key={link.key}>
 											<Link
 												href={link.href}
 												className="text-sm text-muted-foreground hover:text-foreground transition-colors"
 											>
-												{link.label}
+												{t(link.key)}
 											</Link>
 										</li>
 									))}
@@ -75,16 +86,16 @@ export function SiteFooter() {
 				</div>
 
 				<div className="py-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
-					<p>2026 Superteam Academy. Built on Solana.</p>
+					<p>{t("copyright")}</p>
 					<div className="flex items-center gap-6">
 						<Link href="/privacy" className="hover:text-foreground transition-colors">
-							Privacy
+							{t("privacy")}
 						</Link>
 						<Link href="/terms" className="hover:text-foreground transition-colors">
-							Terms
+							{t("terms")}
 						</Link>
 						<Link href="/cookies" className="hover:text-foreground transition-colors">
-							Cookies
+							{t("cookies")}
 						</Link>
 					</div>
 				</div>

@@ -16,6 +16,7 @@ import { LessonProgress } from "@/components/lessons/lesson-progress";
 import { LessonNotes } from "@/components/lessons/lesson-notes";
 import { LessonQuiz } from "@/components/lessons/lesson-quiz";
 import { LessonResources } from "@/components/lessons/lesson-resources";
+import { getTranslations } from "next-intl/server";
 
 interface LessonPageProps {
 	params: {
@@ -63,6 +64,7 @@ async function LessonContentWrapper({
 	const course = await getCourse(courseId);
 	const lesson = await getLesson(lessonId);
 	const progress = await getLessonProgress(courseId, lessonId);
+	const t = await getTranslations("learn");
 
 	return (
 		<div className="flex flex-col lg:flex-row min-h-screen">
@@ -74,7 +76,7 @@ async function LessonContentWrapper({
 								<Button variant="ghost" asChild={true} className="gap-2">
 									<a href={`/courses/${courseId}`}>
 										<ArrowLeft className="h-4 w-4" />
-										Back to Course
+										{t("backToCourse")}
 									</a>
 								</Button>
 
@@ -112,10 +114,10 @@ async function LessonContentWrapper({
 					<Tabs defaultValue="content" className="h-full flex flex-col">
 						<div className="border-b px-4">
 							<TabsList className="grid w-full grid-cols-4">
-								<TabsTrigger value="content">Content</TabsTrigger>
-								<TabsTrigger value="notes">Notes</TabsTrigger>
-								<TabsTrigger value="quiz">Quiz</TabsTrigger>
-								<TabsTrigger value="resources">Resources</TabsTrigger>
+								<TabsTrigger value="content">{t("tabs.content")}</TabsTrigger>
+								<TabsTrigger value="notes">{t("tabs.notes")}</TabsTrigger>
+								<TabsTrigger value="quiz">{t("tabs.quiz")}</TabsTrigger>
+								<TabsTrigger value="resources">{t("tabs.resources")}</TabsTrigger>
 							</TabsList>
 						</div>
 
@@ -178,20 +180,20 @@ async function LessonContentWrapper({
 
 					<Card>
 						<CardHeader>
-							<CardTitle className="text-base">Quick Actions</CardTitle>
+							<CardTitle className="text-base">{t("quickActions")}</CardTitle>
 						</CardHeader>
 						<CardContent className="space-y-2">
 							<Button variant="outline" className="w-full justify-start gap-2">
 								<BookOpen className="h-4 w-4" />
-								Take Notes
+								{t("takeNotes")}
 							</Button>
 							<Button variant="outline" className="w-full justify-start gap-2">
 								<CheckCircle className="h-4 w-4" />
-								Mark as Complete
+								{t("markComplete")}
 							</Button>
 							<Button variant="outline" className="w-full justify-start gap-2">
 								<Maximize className="h-4 w-4" />
-								Fullscreen
+								{t("fullscreen")}
 							</Button>
 						</CardContent>
 					</Card>

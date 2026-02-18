@@ -1,4 +1,3 @@
-// Placeholder for Anchor program types
-// Run pnpm generate to update
-
-export type ProgramTypes = Record<string, never>;
+export * from "./idl";
+export * from "./pda";
+export * from "./client";

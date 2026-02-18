@@ -4,7 +4,9 @@ import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Trophy, Search, Menu, X, Layers, Users, Compass } from "lucide-react";
+import { Trophy, Search, Menu, X, Layers, Users, Compass, Sun, Moon } from "lucide-react";
+import { useTheme } from "next-themes";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { SearchModal } from "@/components/search/search-modal";
 import { LoginModal } from "@/components/auth/login-modal";
@@ -12,22 +14,22 @@ import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
 	{
-		label: "Catalog",
+		key: "catalog" as const,
 		href: "/courses",
 		icon: Compass,
 	},
 	{
-		label: "Topics",
+		key: "topics" as const,
 		href: "/topics",
 		icon: Layers,
 	},
 	{
-		label: "Leaderboard",
+		key: "leaderboard" as const,
 		href: "/leaderboard",
 		icon: Trophy,
 	},
 	{
-		label: "Community",
+		key: "community" as const,
 		href: "/community",
 		icon: Users,
 	},
@@ -35,9 +37,14 @@ const NAV_ITEMS = [
 
 export function SiteHeader() {
 	const pathname = usePathname();
+	const t = useTranslations("navigation");
+	const { resolvedTheme, setTheme } = useTheme();
+	const [mounted, setMounted] = useState(false);
 	const [mobileOpen, setMobileOpen] = useState(false);
 	const [searchOpen, setSearchOpen] = useState(false);
 	const [loginOpen, setLoginOpen] = useState(false);
+
+	useEffect(() => setMounted(true), []);
 
 	const isActive = (href: string) => {
 		if (href === "/") return pathname === "/";
@@ -45,7 +52,7 @@ export function SiteHeader() {
 	};
 
 	const handleKeyDown = useCallback(
-		(e: KeyboardEvent) => {
+(e: KeyboardEvent) => {
 			if (e.key === "/" && !searchOpen && !loginOpen) {
 				const target = e.target as HTMLElement;
 				if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") return;
@@ -61,8 +68,10 @@ export function SiteHeader() {
 		return () => document.removeEventListener("keydown", handleKeyDown);
 	}, [handleKeyDown]);
 
+	const toggleTheme = () => setTheme(resolvedTheme === "dark" ? "light" : "dark");
+
 	return (
-		<>
+<>
 			<header className="sticky top-0 z-50 w-full glass border-b border-border/40">
 				<div className="mx-auto px-4 sm:px-6">
 					<div className="flex h-16 items-center gap-4">
@@ -79,18 +88,18 @@ export function SiteHeader() {
 
 						<nav className="hidden lg:flex items-center gap-1">
 							{NAV_ITEMS.map((item) => (
-								<Link
+<Link
 									key={item.href}
 									href={item.href}
 									className={cn(
-										"relative px-3 py-2 text-sm font-medium rounded-lg transition-colors",
-										"hover:bg-muted hover:text-foreground",
-										isActive(item.href)
-											? "text-foreground bg-muted"
-											: "text-muted-foreground"
-									)}
+"relative px-3 py-2 text-sm font-medium rounded-lg transition-colors",
+"hover:bg-muted hover:text-foreground",
+isActive(item.href)
+? "text-foreground bg-muted"
+: "text-muted-foreground"
+)}
 								>
-									{item.label}
+									{t(item.key)}
 									{isActive(item.href) && (
 										<span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-5 h-0.5 bg-primary rounded-full" />
 									)}
@@ -105,25 +114,50 @@ export function SiteHeader() {
 								className="flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground rounded-lg border border-border/60 bg-muted/50 hover:bg-muted transition-colors min-w-50"
 							>
 								<Search className="h-3.5 w-3.5" />
-								<span>Search courses...</span>
+								<span>{t("searchPlaceholder")}</span>
 								<kbd className="ml-auto text-[10px] font-mono bg-background rounded px-1.5 py-0.5 border border-border/50">
 									/
 								</kbd>
 							</button>
 
+							<button
+								type="button"
+								onClick={toggleTheme}
+								className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground"
+								aria-label={t("toggleTheme")}
+							>
+								{mounted && resolvedTheme === "dark" ? (
+<Sun className="h-4 w-4" />
+								) : (
+<Moon className="h-4 w-4" />
+								)}
+							</button>
+
 							<Button variant="ghost" size="sm" onClick={() => setLoginOpen(true)}>
-								Log in
+								{t("login")}
 							</Button>
 							<Button
 								size="sm"
 								className="font-semibold"
 								onClick={() => setLoginOpen(true)}
 							>
-								Sign up free
+								{t("signUpFree")}
 							</Button>
 						</div>
 
 						<div className="flex lg:hidden items-center gap-2">
+							<button
+								type="button"
+								onClick={toggleTheme}
+								className="p-2 rounded-lg hover:bg-muted transition-colors"
+								aria-label={t("toggleTheme")}
+							>
+								{mounted && resolvedTheme === "dark" ? (
+<Sun className="h-5 w-5 text-muted-foreground" />
+								) : (
+<Moon className="h-5 w-5 text-muted-foreground" />
+								)}
+							</button>
 							<button
 								type="button"
 								onClick={() => setSearchOpen(true)}
@@ -137,9 +171,9 @@ export function SiteHeader() {
 								className="p-2 rounded-lg hover:bg-muted transition-colors"
 							>
 								{mobileOpen ? (
-									<X className="h-5 w-5" />
+<X className="h-5 w-5" />
 								) : (
-									<Menu className="h-5 w-5" />
+<Menu className="h-5 w-5" />
 								)}
 							</button>
 						</div>
@@ -152,19 +186,19 @@ export function SiteHeader() {
 							{NAV_ITEMS.map((item) => {
 								const Icon = item.icon;
 								return (
-									<Link
+<Link
 										key={item.href}
 										href={item.href}
 										onClick={() => setMobileOpen(false)}
 										className={cn(
-											"flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-											isActive(item.href)
-												? "bg-primary/10 text-primary"
-												: "text-muted-foreground hover:bg-muted hover:text-foreground"
-										)}
+"flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+isActive(item.href)
+? "bg-primary/10 text-primary"
+: "text-muted-foreground hover:bg-muted hover:text-foreground"
+)}
 									>
 										<Icon className="h-4 w-4" />
-										{item.label}
+										{t(item.key)}
 									</Link>
 								);
 							})}
@@ -177,7 +211,7 @@ export function SiteHeader() {
 										setLoginOpen(true);
 									}}
 								>
-									Log in
+									{t("login")}
 								</Button>
 								<Button
 									className="w-full font-semibold"
@@ -186,7 +220,7 @@ export function SiteHeader() {
 										setLoginOpen(true);
 									}}
 								>
-									Sign up free
+									{t("signUpFree")}
 								</Button>
 							</div>
 						</nav>
