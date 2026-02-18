@@ -4,13 +4,8 @@ import { useEffect, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
 import { GraduationCap, CheckCircle, Wallet } from "@phosphor-icons/react";
-import { MintButton } from "./mint-button";
 import { createClient } from "@/lib/supabase/client";
 import { trackEvent, captureError } from "@/lib/analytics";
-import type {
-  CertificateMetadata,
-  MintResult,
-} from "@/lib/solana/mint-certificate";
 
 interface CredentialIssueResponse {
   success: boolean;
@@ -40,7 +35,7 @@ type CompletionState =
 
 export function CourseCompletionMint({
   courseId,
-  courseTitle,
+  courseTitle: _courseTitle,
   userId,
   totalLessons,
   trackCollection,
@@ -137,41 +132,6 @@ export function CourseCompletionMint({
     }
   }
 
-  async function handleMintSuccess(result: MintResult) {
-    const supabase = createClient();
-    const maxAttempts = 3;
-
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      const { error } = await supabase.from("certificates").insert({
-        user_id: userId,
-        course_id: courseId,
-        course_title: courseTitle,
-        mint_address: result.mintAddress,
-        metadata_uri: result.metadataUri,
-      });
-
-      if (!error) {
-        setState({ status: "already_minted", certId: result.mintAddress });
-        return;
-      }
-
-      console.error(
-        `[Certificate] Insert attempt ${attempt}/${maxAttempts} failed:`,
-        error.message
-      );
-
-      if (attempt < maxAttempts) {
-        // Exponential backoff: 1s, 2s, 4s
-        await new Promise((resolve) =>
-          setTimeout(resolve, Math.pow(2, attempt - 1) * 1000)
-        );
-      }
-    }
-
-    // All retries exhausted — show persistent warning with mint address
-    setState({ status: "insert_failed", mintAddress: result.mintAddress });
-  }
-
   if (state.status === "loading") {
     return (
       <div className="flex items-center gap-2 text-sm text-text-3">
@@ -263,7 +223,6 @@ export function CourseCompletionMint({
   }
 
   if (state.status === "complete") {
-    // Prefer on-chain credential issuance when trackCollection is available
     if (trackCollection) {
       return (
         <div className="flex items-center gap-3">
@@ -284,41 +243,8 @@ export function CourseCompletionMint({
       );
     }
 
-    // Legacy flow: client-side Metaplex Token Metadata mint
-    const origin =
-      typeof window !== "undefined"
-        ? window.location.origin
-        : (process.env.NEXT_PUBLIC_APP_URL ?? "");
-    const imageUrl = `${origin}/cover.png`;
-
-    const metadata: CertificateMetadata = {
-      courseId,
-      courseName: courseTitle,
-      recipientName: state.recipientName,
-      completionDate: new Date().toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      }),
-      imageUrl,
-    };
-
-    return (
-      <div className="flex items-center gap-3">
-        <GraduationCap
-          size={18}
-          weight="duotone"
-          className="shrink-0 text-primary"
-          aria-hidden="true"
-        />
-        <span className="text-sm font-medium">{t("courseComplete")}</span>
-        <MintButton
-          metadata={metadata}
-          onSuccess={handleMintSuccess}
-          className="h-8 px-3 text-xs"
-        />
-      </div>
-    );
+    // No trackCollection available — course is complete but credential cannot be issued
+    return null;
   }
 
   // incomplete

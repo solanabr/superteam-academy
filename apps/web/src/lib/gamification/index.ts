@@ -8,7 +8,6 @@ export {
   xpToNextLevel,
   detectLevelUp,
 } from "./xp";
-export type { LessonDifficulty } from "./xp";
 
 export {
   STREAK_MILESTONES,
