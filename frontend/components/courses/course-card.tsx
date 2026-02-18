@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Clock, Zap, Users, ArrowRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -33,6 +34,7 @@ const LEVEL_COLORS: Record<string, string> = {
 };
 
 export function CourseCard({ course, variant = "default" }: CourseCardProps) {
+	const t = useTranslations("courses");
 	const isCompact = variant === "compact";
 	const levelClass = LEVEL_COLORS[course.level] ?? "bg-muted text-muted-foreground";
 	const gradient = course.gradient ?? "from-green to-forest";
@@ -102,10 +104,10 @@ export function CourseCard({ course, variant = "default" }: CourseCardProps) {
 			<div className="px-4 pb-4 pt-0">
 				<div className="flex items-center justify-between text-sm">
 					<span className="text-xs text-muted-foreground">
-						{course.price === 0 ? "Free" : `$${course.price}`}
+						{course.price === 0 ? t("card.free") : `$${course.price}`}
 					</span>
 					<span className="font-medium text-primary text-xs group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
-						{course.enrolled ? "Continue" : "Start course"}
+						{course.enrolled ? t("card.continue") : t("card.startCourse")}
 						<ArrowRight className="h-3 w-3" />
 					</span>
 				</div>

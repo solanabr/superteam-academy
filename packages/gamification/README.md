@@ -14,7 +14,7 @@ A comprehensive leveling system for gamified learning platforms. Provides XP pro
 ## Installation
 
 ```bash
-pnpm add @superteam-academy/gamification
+bun add @superteam-academy/gamification
 ```
 
 ## Quick Start
@@ -208,23 +208,23 @@ The system includes 10 default levels (1-10) with increasing XP requirements and
 
 ```bash
 # Run tests
-pnpm test
+bun test
 
 # Run with coverage
-pnpm test:coverage
+bun run test:coverage
 
 # Run in watch mode
-pnpm test:watch
+bun run test:watch
 ```
 
 ## Building
 
 ```bash
 # Build for production
-pnpm build
+bun run build
 
 # Build in watch mode
-pnpm dev
+bun dev
 ```
 
 ## Architecture

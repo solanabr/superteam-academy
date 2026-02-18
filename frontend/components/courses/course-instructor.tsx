@@ -1,4 +1,5 @@
 import { Star, Users, BookOpen, Award, Twitter, Linkedin, Globe } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,9 +24,11 @@ interface CourseInstructorProps {
 }
 
 export function CourseInstructor({ instructor }: CourseInstructorProps) {
+	const t = useTranslations("courses");
+
 	return (
 		<div className="space-y-6">
-			<h2 className="text-2xl font-bold">About the Instructor</h2>
+			<h2 className="text-2xl font-bold">{t("instructor.aboutTitle")}</h2>
 
 			<Card>
 				<CardHeader>
@@ -51,14 +54,14 @@ export function CourseInstructor({ instructor }: CourseInstructorProps) {
 									<Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
 									<span className="font-medium">{instructor.rating}</span>
 									<span className="text-sm text-muted-foreground">
-										Instructor Rating
+										{t("instructor.instructorRating")}
 									</span>
 								</div>
 
 								<div className="flex items-center gap-2">
 									<BookOpen className="h-4 w-4 text-muted-foreground" />
 									<span className="font-medium">{instructor.courses}</span>
-									<span className="text-sm text-muted-foreground">Courses</span>
+									<span className="text-sm text-muted-foreground">{t("instructor.courses")}</span>
 								</div>
 
 								<div className="flex items-center gap-2">
@@ -66,7 +69,7 @@ export function CourseInstructor({ instructor }: CourseInstructorProps) {
 									<span className="font-medium">
 										{instructor.students.toLocaleString()}
 									</span>
-									<span className="text-sm text-muted-foreground">Students</span>
+									<span className="text-sm text-muted-foreground">{t("instructor.students")}</span>
 								</div>
 							</div>
 
@@ -111,36 +114,36 @@ export function CourseInstructor({ instructor }: CourseInstructorProps) {
 
 				<CardContent className="space-y-4">
 					<div>
-						<h3 className="font-semibold mb-2">About</h3>
+						<h3 className="font-semibold mb-2">{t("instructor.about")}</h3>
 						<p className="text-muted-foreground leading-relaxed">{instructor.bio}</p>
 					</div>
 
 					<Separator />
 
 					<div>
-						<h3 className="font-semibold mb-3">Instructor Stats</h3>
+						<h3 className="font-semibold mb-3">{t("instructor.instructorStats")}</h3>
 						<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
 							<div className="text-center p-3 bg-muted/50 rounded-lg">
 								<div className="text-2xl font-bold text-primary">
 									{instructor.courses}
 								</div>
-								<div className="text-sm text-muted-foreground">Courses Created</div>
+								<div className="text-sm text-muted-foreground">{t("instructor.coursesCreated")}</div>
 							</div>
 							<div className="text-center p-3 bg-muted/50 rounded-lg">
 								<div className="text-2xl font-bold text-primary">
 									{instructor.students.toLocaleString()}
 								</div>
-								<div className="text-sm text-muted-foreground">Students Taught</div>
+								<div className="text-sm text-muted-foreground">{t("instructor.studentsTaught")}</div>
 							</div>
 							<div className="text-center p-3 bg-muted/50 rounded-lg">
 								<div className="text-2xl font-bold text-primary">
 									{instructor.rating}
 								</div>
-								<div className="text-sm text-muted-foreground">Average Rating</div>
+								<div className="text-sm text-muted-foreground">{t("instructor.averageRating")}</div>
 							</div>
 							<div className="text-center p-3 bg-muted/50 rounded-lg">
 								<Award className="h-8 w-8 text-primary mx-auto mb-1" />
-								<div className="text-sm text-muted-foreground">Top Instructor</div>
+								<div className="text-sm text-muted-foreground">{t("instructor.topInstructor")}</div>
 							</div>
 						</div>
 					</div>
@@ -149,7 +152,7 @@ export function CourseInstructor({ instructor }: CourseInstructorProps) {
 
 					<div>
 						<h3 className="font-semibold mb-3">
-							Other Courses by {instructor.name.split(" ")[0]}
+							{t("instructor.otherCourses", { name: instructor.name.split(" ")[0] })}
 						</h3>
 						<div className="space-y-3">
 							<div className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
@@ -163,29 +166,29 @@ export function CourseInstructor({ instructor }: CourseInstructorProps) {
 									</p>
 								</div>
 								<Button variant="outline" size="sm">
-									View Course
-								</Button>
-							</div>
-
-							<div className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-								<div className="w-12 h-12 bg-muted rounded flex-shrink-0" />
-								<div className="flex-1 min-w-0">
-									<h4 className="font-medium truncate">
-										Smart Contract Security
-									</h4>
-									<p className="text-sm text-muted-foreground">
-										4.8 • 1,890 students
-									</p>
+										{t("instructor.viewCourse")}
+									</Button>
 								</div>
-								<Button variant="outline" size="sm">
-									View Course
+
+								<div className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+									<div className="w-12 h-12 bg-muted rounded flex-shrink-0" />
+									<div className="flex-1 min-w-0">
+										<h4 className="font-medium truncate">
+											Smart Contract Security
+										</h4>
+										<p className="text-sm text-muted-foreground">
+											4.8 • 1,890 students
+										</p>
+									</div>
+									<Button variant="outline" size="sm">
+										{t("instructor.viewCourse")}
 								</Button>
 							</div>
 						</div>
 
 						<div className="mt-4">
 							<Button variant="outline" className="w-full">
-								View All Courses by {instructor.name.split(" ")[0]}
+								{t("instructor.viewAllCourses", { name: instructor.name.split(" ")[0] })}
 							</Button>
 						</div>
 					</div>

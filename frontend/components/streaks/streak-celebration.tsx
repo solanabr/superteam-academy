@@ -138,7 +138,7 @@ export function StreakCelebration({
 						</div>
 
 						<div className="relative">
-							<div className="mx-auto w-32 h-32 rounded-full bg-gradient-to-br from-orange-400 via-red-500 to-yellow-500 flex items-center justify-center shadow-2xl animate-pulse">
+							<div className="mx-auto w-32 h-32 rounded-full bg-linear-to-br from-orange-400 via-red-500 to-yellow-500 flex items-center justify-center shadow-2xl animate-pulse">
 								<Flame className="h-16 w-16 text-white animate-bounce" />
 							</div>
 							<div className="absolute -top-2 -right-2 text-2xl animate-spin">

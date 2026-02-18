@@ -10,7 +10,7 @@ target/
 test-ledger/
 
 # Lock files (regenerated per-workspace)
-# Keep Cargo.lock for reproducible builds but ignore yarn.lock if using pnpm
+# Keep Cargo.lock for reproducible builds
 yarn.lock
 
 # OS files
@@ -33,11 +33,11 @@ dist
 *~
 .vim/
 
-# Yarn / pnpm
+# Yarn / Bun
 .yarn/
 .pnp.*
 yarn-error.log
-.pnpm-debug.log
+bun.lockb
 
 # Keypair files (contain private keys — NEVER commit)
 wallets/

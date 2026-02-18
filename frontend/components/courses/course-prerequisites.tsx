@@ -1,4 +1,5 @@
 import { CheckCircle, AlertCircle, BookOpen } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +13,7 @@ interface CoursePrerequisitesProps {
 }
 
 export function CoursePrerequisites({ prerequisites }: CoursePrerequisitesProps) {
+	const t = useTranslations("courses");
 	const completedCount = prerequisites.filter((p) => p.completed).length;
 	const totalCount = prerequisites.length;
 
@@ -20,16 +22,16 @@ export function CoursePrerequisites({ prerequisites }: CoursePrerequisitesProps)
 			<CardHeader>
 				<CardTitle className="flex items-center gap-2">
 					<BookOpen className="h-5 w-5" />
-					Prerequisites
+					{t("prerequisites.title")}
 				</CardTitle>
 			</CardHeader>
 			<CardContent className="space-y-4">
 				<div className="flex items-center justify-between text-sm">
 					<span className="text-muted-foreground">
-						{completedCount} of {totalCount} completed
+						{t("prerequisites.completedOf", { completed: completedCount, total: totalCount })}
 					</span>
 					<Badge variant={completedCount === totalCount ? "default" : "secondary"}>
-						{completedCount === totalCount ? "Ready" : "In Progress"}
+						{completedCount === totalCount ? t("prerequisites.ready") : t("prerequisites.inProgress")}
 					</Badge>
 				</div>
 
@@ -52,7 +54,7 @@ export function CoursePrerequisites({ prerequisites }: CoursePrerequisitesProps)
 									{prerequisite.title}
 								</div>
 								<div className="text-sm text-muted-foreground">
-									{prerequisite.completed ? "Completed" : "Not completed"}
+								{prerequisite.completed ? t("prerequisites.completed") : t("prerequisites.notCompleted")}
 								</div>
 							</div>
 						</div>
@@ -65,12 +67,10 @@ export function CoursePrerequisites({ prerequisites }: CoursePrerequisitesProps)
 							<AlertCircle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
 							<div>
 								<h4 className="font-medium text-yellow-800 dark:text-yellow-200">
-									Prerequisites Not Met
+									{t("prerequisites.notMetTitle")}
 								</h4>
 								<p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
-									Complete the prerequisites above to unlock this course. You can
-									still preview the content, but enrollment requires completion of
-									all prerequisites.
+									{t("prerequisites.notMetDescription")}
 								</p>
 							</div>
 						</div>

@@ -119,6 +119,140 @@
 			"duration": "Duración",
 			"level": "Nivel",
 			"xp": "Recompensa de XP"
+		},
+		"hero": {
+			"free": "Gratis",
+			"reviews": "{count} reseñas",
+			"students": "{count} estudiantes",
+			"createdBy": "Creado por",
+			"continueLearning": "Continuar aprendiendo",
+			"enrollFree": "Inscribirse gratis",
+			"enrollFor": "Inscribirse por ${price}",
+			"save": "Guardar",
+			"share": "Compartir",
+			"preview": "Vista previa",
+			"watchPreview": "Ver vista previa"
+		},
+		"enroll": {
+			"enrolled": "Inscrito",
+			"hasAccess": "Tienes acceso a este curso",
+			"continueLearning": "Continuar aprendiendo",
+			"completePrerequisites": "Completa todos los requisitos previos para inscribirte en este curso.",
+			"free": "GRATIS",
+			"noPayment": "No se requiere pago",
+			"enrolling": "Inscribiendo...",
+			"enrollFree": "Inscribirse gratis",
+			"oneTimePayment": "Pago único",
+			"choosePayment": "Elige el método de pago:",
+			"cryptoWallet": "Billetera Cripto",
+			"payWithCrypto": "Paga con SOL o USDC",
+			"recommended": "Recomendado",
+			"creditCard": "Tarjeta de Crédito",
+			"creditCardDesc": "Visa, Mastercard, American Express",
+			"processing": "Procesando...",
+			"enrollFor": "Inscribirse por ${price}",
+			"moneyBack": "Garantía de devolución de 30 días",
+			"lifetimeAccess": "Acceso de por vida a los materiales del curso",
+			"certificateIncluded": "Certificado de finalización incluido"
+		},
+		"modules": {
+			"title": "Plan de estudios",
+			"modulesCount": "{count} módulos",
+			"lessonsCount": "{count} lecciones",
+			"lessonsCompleted": "{completed} de {total} lecciones completadas",
+			"completed": "Completado",
+			"start": "Iniciar"
+		},
+		"reviewsSection": {
+			"title": "Reseñas de estudiantes",
+			"writeReview": "Escribir una reseña",
+			"basedOn": "Basado en {count} reseñas",
+			"helpful": "Útil ({count})",
+			"wasHelpful": "¿Fue útil esta reseña?",
+			"loadMore": "Cargar más reseñas"
+		},
+		"instructor": {
+			"aboutTitle": "Sobre el instructor",
+			"instructorRating": "Calificación del instructor",
+			"courses": "Cursos",
+			"students": "Estudiantes",
+			"about": "Acerca de",
+			"instructorStats": "Estadísticas del instructor",
+			"coursesCreated": "Cursos creados",
+			"studentsTaught": "Estudiantes enseñados",
+			"averageRating": "Calificación promedio",
+			"topInstructor": "Instructor destacado",
+			"otherCourses": "Otros cursos de {name}",
+			"viewCourse": "Ver curso",
+			"viewAllCourses": "Ver todos los cursos de {name}"
+		},
+		"prerequisites": {
+			"title": "Requisitos previos",
+			"completedOf": "{completed} de {total} completados",
+			"ready": "Listo",
+			"inProgress": "En progreso",
+			"completed": "Completado",
+			"notCompleted": "No completado",
+			"notMetTitle": "Requisitos previos no cumplidos",
+			"notMetDescription": "Completa los requisitos previos anteriores para desbloquear este curso. Puedes previsualizar el contenido, pero la inscripción requiere completar todos los requisitos previos."
+		},
+		"certificate": {
+			"title": "Certificado de finalización",
+			"preview": "Vista previa del certificado",
+			"issuedBy": "Emitido por {issuer}",
+			"verifiable": "Verificable",
+			"certificateType": "Tipo de certificado:",
+			"issuer": "Emisor:",
+			"blockchain": "Blockchain:",
+			"verification": "Verificación:",
+			"onChain": "En cadena",
+			"whatYouGet": "Lo que obtendrás:",
+			"benefit1": "Certificado digital con ID de verificación único",
+			"benefit2": "Enlace de certificado compartible para tu portafolio",
+			"benefit3": "Verificación en cadena usando blockchain de Solana",
+			"benefit4": "Reconocimiento de tu logro en el ecosistema Web3",
+			"benefit5": "Inclusión automática en tu perfil de aprendiz",
+			"download": "Descargar certificado",
+			"share": "Compartir",
+			"verifiableCredential": "Credencial verificable",
+			"verifiableDescription": "Este certificado está almacenado en la blockchain de Solana y puede ser verificado por cualquier persona usando el ID del certificado."
+		},
+		"progress": {
+			"title": "Tu progreso",
+			"courseCompletion": "Progreso del curso",
+			"lessonsCompleted": "{completed} de {total} lecciones completadas",
+			"timeSpent": "Tiempo dedicado",
+			"dayStreak": "Racha de días",
+			"xpEarned": "XP ganados",
+			"xpTotal": "XP totales",
+			"xpProgress": "Progreso de XP",
+			"lastActivity": "Última actividad:",
+			"estimatedCompletion": "Finalización estimada:",
+			"continueLearning": "Continuar aprendiendo",
+			"viewCertificate": "Ver certificado",
+			"keepItUp": "¡Sigue así!",
+			"toGo": "{percent}% por completar. ¡Lo estás haciendo genial!",
+			"congratulations": "¡Felicitaciones!",
+			"completedCourse": "Has completado este curso. ¡Reclama tu certificado!"
+		},
+		"card": {
+			"free": "Gratis",
+			"continue": "Continuar",
+			"startCourse": "Comenzar curso"
+		},
+		"list": {
+			"free": "Gratis",
+			"continue": "Continuar",
+			"start": "Iniciar"
+		},
+		"filterSheet": {
+			"filters": "Filtros",
+			"title": "Filtrar cursos",
+			"description": "Filtra cursos por categoría, nivel y duración.",
+			"categories": "Categorías",
+			"level": "Nivel",
+			"duration": "Duración",
+			"clearAll": "Borrar todos los filtros"
 		}
 	},
 	"challenges": {
@@ -2476,6 +2610,13 @@
 	"community": {
 		"title": "Comunidad",
 		"description": "Aprende junto, construye junto. Únete a miles de desarrolladores dominando Solana a través de la colaboración.",
+		"nav": {
+			"home": "Inicio",
+			"discussions": "Discusiones",
+			"events": "Eventos",
+			"members": "Miembros",
+			"projects": "Proyectos"
+		},
 		"stats": {
 			"learners": "Estudiantes",
 			"coursesCompleted": "Cursos completados",
@@ -2491,14 +2632,100 @@
 			"twitter": "Twitter / X",
 			"twitterDesc": "Actualizaciones, anuncios y destacados de la comunidad."
 		},
-		"upcomingEvents": "Próximos eventos",
 		"topContributors": "Principales contribuidores",
 		"fullLeaderboard": "Tabla completa",
 		"coursesCompleted": "{count} cursos completados",
 		"readyToStart": "¿Listo para empezar a aprender?",
 		"readyToStartDesc": "Únete a la comunidad, gana XP y construye tus credenciales en cadena.",
 		"browseCourses": "Explorar cursos",
-		"viewLeaderboard": "Ver tabla de clasificación"
+		"viewLeaderboard": "Ver tabla de clasificación",
+		"hub": {
+			"announcements": "Anuncios",
+			"pinned": "Fijado",
+			"featuredDiscussions": "Discusiones Destacadas",
+			"viewAll": "Ver todo",
+			"categories": "Categorías",
+			"categoryLabels": {
+				"announcements": "Anuncios",
+				"technicalQA": "Preguntas Técnicas",
+				"projectShowcase": "Exhibición de Proyectos",
+				"featureRequests": "Solicitudes de Funciones",
+				"studyGroups": "Grupos de Estudio",
+				"offTopic": "Fuera de Tema"
+			},
+			"popularTags": "Etiquetas Populares"
+		},
+		"discussions": {
+			"searchPlaceholder": "Buscar discusiones...",
+			"newDiscussion": "Nueva Discusión",
+			"filteredByTag": "Filtrado por etiqueta",
+			"solved": "Resuelto",
+			"empty": "No se encontraron discusiones",
+			"emptyDescription": "Intenta ajustar tus filtros o inicia una nueva discusión.",
+			"tabs": {
+				"recent": "Recientes",
+				"trending": "Tendencias",
+				"unanswered": "Sin respuesta"
+			},
+			"categories": {
+				"all": "Todas las Categorías",
+				"announcements": "Anuncios",
+				"technicalQA": "Preguntas Técnicas",
+				"projectShowcase": "Exhibición de Proyectos",
+				"featureRequests": "Solicitudes de Funciones",
+				"studyGroups": "Grupos de Estudio",
+				"offTopic": "Fuera de Tema"
+			}
+		},
+		"events": {
+			"tabs": {
+				"upcoming": "Próximos",
+				"past": "Pasados"
+			},
+			"online": "En línea",
+			"registered": "registrados",
+			"attended": "asistieron",
+			"speakers": "Ponentes",
+			"rsvp": "Confirmar",
+			"recording": "Grabación"
+		},
+		"members": {
+			"leadersThisMonth": "Líderes este mes",
+			"searchPlaceholder": "Buscar miembros...",
+			"tabs": {
+				"all": "Todos los Miembros",
+				"mentors": "Mentores",
+				"risingStars": "Estrellas Emergentes"
+			},
+			"badges": {
+				"top-contributor": "Top Contribuidor",
+				"mentor": "Mentor",
+				"rising-star": "Estrella Emergente"
+			},
+			"stats": {
+				"courses": "Cursos",
+				"streak": "Racha",
+				"achievements": "Logros"
+			}
+		},
+		"projects": {
+			"searchPlaceholder": "Buscar proyectos...",
+			"submit": "Enviar Proyecto",
+			"featured": "Proyectos Destacados",
+			"featuredBadge": "Destacado",
+			"allProjects": "Todos los Proyectos",
+			"empty": "No se encontraron proyectos",
+			"emptyDescription": "Intenta ajustar tu búsqueda o envía tu propio proyecto.",
+			"categories": {
+				"all": "Todas las Categorías",
+				"defi": "DeFi",
+				"nft": "NFT",
+				"tooling": "Herramientas",
+				"gaming": "Juegos",
+				"social": "Social",
+				"infra": "Infraestructura"
+			}
+		}
 	},
 	"topics": {
 		"title": "Temas",
@@ -2532,6 +2759,28 @@
 		"takeNotes": "Tomar notas",
 		"markComplete": "Marcar como completado",
 		"fullscreen": "Pantalla completa"
+	},
+	"auth": {
+		"welcomeTitle": "Bienvenido a Superteam Academy",
+		"welcomeDescription": "Inicia sesión para seguir tu progreso, ganar XP y desbloquear credenciales en cadena.",
+		"verifyWalletTitle": "Verifica tu billetera",
+		"verifyWalletDescription": "Firma un mensaje para verificar la propiedad de {address}",
+		"oauthError": "Error al iniciar sesión con {provider}. Inténtalo de nuevo.",
+		"walletConnectError": "Error al conectar la billetera. Inténtalo de nuevo.",
+		"walletVerifyError": "Error al verificar la billetera. Inténtalo de nuevo.",
+		"connectWallet": "Conectar billetera",
+		"connecting": "Conectando...",
+		"continueWithWallet": "Continuar con billetera",
+		"continueWithWalletAddress": "Continuar con {address}",
+		"or": "o",
+		"signingIn": "Iniciando sesión...",
+		"continueWithGoogle": "Continuar con Google",
+		"continueWithGithub": "Continuar con GitHub",
+		"walletSignMessage": "Firma un mensaje con tu billetera para demostrar la propiedad. Esto no cuesta SOL.",
+		"signing": "Firmando...",
+		"signAndVerify": "Firmar y verificar",
+		"backToOptions": "Volver a las opciones de inicio de sesión",
+		"termsNotice": "Al continuar, aceptas nuestros Términos de servicio y Política de privacidad."
 	},
 	"footer": {
 		"description": "Domina el desarrollo en Solana a través de cursos interactivos y obtén credenciales verificables en cadena.",

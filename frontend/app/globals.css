@@ -196,10 +196,10 @@
 		text-wrap: balance;
 	}
 	.text-gradient {
-		@apply bg-clip-text text-transparent bg-gradient-to-r from-green to-forest;
+		@apply bg-clip-text text-transparent bg-linear-to-r from-green to-forest;
 	}
 	.text-gradient-gold {
-		@apply bg-clip-text text-transparent bg-gradient-to-r from-gold via-amber-400 to-gold;
+		@apply bg-clip-text text-transparent bg-linear-to-r from-gold via-amber-400 to-gold;
 	}
 	.glass {
 		@apply bg-background/80 backdrop-blur-xl border border-border/50;

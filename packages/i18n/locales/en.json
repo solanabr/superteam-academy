@@ -115,6 +115,140 @@
 			"duration": "Duration",
 			"level": "Level",
 			"xp": "XP Reward"
+		},
+		"hero": {
+			"free": "Free",
+			"reviews": "{count} reviews",
+			"students": "{count} students",
+			"createdBy": "Created by",
+			"continueLearning": "Continue Learning",
+			"enrollFree": "Enroll for Free",
+			"enrollFor": "Enroll for ${price}",
+			"save": "Save",
+			"share": "Share",
+			"preview": "Preview",
+			"watchPreview": "Watch Preview"
+		},
+		"enroll": {
+			"enrolled": "Enrolled",
+			"hasAccess": "You have access to this course",
+			"continueLearning": "Continue Learning",
+			"completePrerequisites": "Complete all prerequisites to enroll in this course.",
+			"free": "FREE",
+			"noPayment": "No payment required",
+			"enrolling": "Enrolling...",
+			"enrollFree": "Enroll for Free",
+			"oneTimePayment": "One-time payment",
+			"choosePayment": "Choose payment method:",
+			"cryptoWallet": "Crypto Wallet",
+			"payWithCrypto": "Pay with SOL or USDC",
+			"recommended": "Recommended",
+			"creditCard": "Credit Card",
+			"creditCardDesc": "Visa, Mastercard, American Express",
+			"processing": "Processing...",
+			"enrollFor": "Enroll for ${price}",
+			"moneyBack": "30-day money-back guarantee",
+			"lifetimeAccess": "Lifetime access to course materials",
+			"certificateIncluded": "Certificate of completion included"
+		},
+		"modules": {
+			"title": "Course Curriculum",
+			"modulesCount": "{count} modules",
+			"lessonsCount": "{count} lessons",
+			"lessonsCompleted": "{completed} of {total} lessons completed",
+			"completed": "Completed",
+			"start": "Start"
+		},
+		"reviewsSection": {
+			"title": "Student Reviews",
+			"writeReview": "Write a Review",
+			"basedOn": "Based on {count} reviews",
+			"helpful": "Helpful ({count})",
+			"wasHelpful": "Was this review helpful?",
+			"loadMore": "Load More Reviews"
+		},
+		"instructor": {
+			"aboutTitle": "About the Instructor",
+			"instructorRating": "Instructor Rating",
+			"courses": "Courses",
+			"students": "Students",
+			"about": "About",
+			"instructorStats": "Instructor Stats",
+			"coursesCreated": "Courses Created",
+			"studentsTaught": "Students Taught",
+			"averageRating": "Average Rating",
+			"topInstructor": "Top Instructor",
+			"otherCourses": "Other Courses by {name}",
+			"viewCourse": "View Course",
+			"viewAllCourses": "View All Courses by {name}"
+		},
+		"prerequisites": {
+			"title": "Prerequisites",
+			"completedOf": "{completed} of {total} completed",
+			"ready": "Ready",
+			"inProgress": "In Progress",
+			"completed": "Completed",
+			"notCompleted": "Not completed",
+			"notMetTitle": "Prerequisites Not Met",
+			"notMetDescription": "Complete the prerequisites above to unlock this course. You can still preview the content, but enrollment requires completion of all prerequisites."
+		},
+		"certificate": {
+			"title": "Certificate of Completion",
+			"preview": "Certificate Preview",
+			"issuedBy": "Issued by {issuer}",
+			"verifiable": "Verifiable",
+			"certificateType": "Certificate Type:",
+			"issuer": "Issuer:",
+			"blockchain": "Blockchain:",
+			"verification": "Verification:",
+			"onChain": "On-chain",
+			"whatYouGet": "What you'll get:",
+			"benefit1": "Digital certificate with unique verification ID",
+			"benefit2": "Shareable certificate link for your portfolio",
+			"benefit3": "On-chain verification using Solana blockchain",
+			"benefit4": "Recognition of your achievement in the Web3 ecosystem",
+			"benefit5": "Automatic inclusion in your learner profile",
+			"download": "Download Certificate",
+			"share": "Share",
+			"verifiableCredential": "Verifiable Credential",
+			"verifiableDescription": "This certificate is stored on the Solana blockchain and can be verified by anyone using the certificate ID."
+		},
+		"progress": {
+			"title": "Your Progress",
+			"courseCompletion": "Course Completion",
+			"lessonsCompleted": "{completed} of {total} lessons completed",
+			"timeSpent": "Time Spent",
+			"dayStreak": "Day Streak",
+			"xpEarned": "XP Earned",
+			"xpTotal": "XP Total",
+			"xpProgress": "XP Progress",
+			"lastActivity": "Last Activity:",
+			"estimatedCompletion": "Estimated Completion:",
+			"continueLearning": "Continue Learning",
+			"viewCertificate": "View Certificate",
+			"keepItUp": "Keep it up!",
+			"toGo": "{percent}% to go. You're doing great!",
+			"congratulations": "Congratulations!",
+			"completedCourse": "You've completed this course. Claim your certificate!"
+		},
+		"card": {
+			"free": "Free",
+			"continue": "Continue",
+			"startCourse": "Start course"
+		},
+		"list": {
+			"free": "Free",
+			"continue": "Continue",
+			"start": "Start"
+		},
+		"filterSheet": {
+			"filters": "Filters",
+			"title": "Filter Courses",
+			"description": "Narrow down courses by category, level, and duration.",
+			"categories": "Categories",
+			"level": "Level",
+			"duration": "Duration",
+			"clearAll": "Clear All Filters"
 		}
 	},
 	"challenges": {
@@ -2472,6 +2606,13 @@
 	"community": {
 		"title": "Community",
 		"description": "Learn together, build together. Join thousands of developers mastering Solana through collaboration.",
+		"nav": {
+			"home": "Home",
+			"discussions": "Discussions",
+			"events": "Events",
+			"members": "Members",
+			"projects": "Projects"
+		},
 		"stats": {
 			"learners": "Learners",
 			"coursesCompleted": "Courses completed",
@@ -2487,14 +2628,100 @@
 			"twitter": "Twitter / X",
 			"twitterDesc": "Updates, announcements, and community highlights."
 		},
-		"upcomingEvents": "Upcoming events",
 		"topContributors": "Top contributors",
 		"fullLeaderboard": "Full leaderboard",
 		"coursesCompleted": "{count} courses completed",
 		"readyToStart": "Ready to start learning?",
 		"readyToStartDesc": "Join the community, earn XP, and build your on-chain credentials.",
 		"browseCourses": "Browse courses",
-		"viewLeaderboard": "View leaderboard"
+		"viewLeaderboard": "View leaderboard",
+		"hub": {
+			"announcements": "Announcements",
+			"pinned": "Pinned",
+			"featuredDiscussions": "Featured Discussions",
+			"viewAll": "View all",
+			"categories": "Categories",
+			"categoryLabels": {
+				"announcements": "Announcements",
+				"technicalQA": "Technical Q&A",
+				"projectShowcase": "Project Showcase",
+				"featureRequests": "Feature Requests",
+				"studyGroups": "Study Groups",
+				"offTopic": "Off Topic"
+			},
+			"popularTags": "Popular Tags"
+		},
+		"discussions": {
+			"searchPlaceholder": "Search discussions...",
+			"newDiscussion": "New Discussion",
+			"filteredByTag": "Filtered by tag",
+			"solved": "Solved",
+			"empty": "No discussions found",
+			"emptyDescription": "Try adjusting your filters or start a new discussion.",
+			"tabs": {
+				"recent": "Recent",
+				"trending": "Trending",
+				"unanswered": "Unanswered"
+			},
+			"categories": {
+				"all": "All Categories",
+				"announcements": "Announcements",
+				"technicalQA": "Technical Q&A",
+				"projectShowcase": "Project Showcase",
+				"featureRequests": "Feature Requests",
+				"studyGroups": "Study Groups",
+				"offTopic": "Off Topic"
+			}
+		},
+		"events": {
+			"tabs": {
+				"upcoming": "Upcoming",
+				"past": "Past"
+			},
+			"online": "Online",
+			"registered": "registered",
+			"attended": "attended",
+			"speakers": "Speakers",
+			"rsvp": "RSVP",
+			"recording": "Recording"
+		},
+		"members": {
+			"leadersThisMonth": "Leaders this month",
+			"searchPlaceholder": "Search members...",
+			"tabs": {
+				"all": "All Members",
+				"mentors": "Mentors",
+				"risingStars": "Rising Stars"
+			},
+			"badges": {
+				"top-contributor": "Top Contributor",
+				"mentor": "Mentor",
+				"rising-star": "Rising Star"
+			},
+			"stats": {
+				"courses": "Courses",
+				"streak": "Streak",
+				"achievements": "Achievements"
+			}
+		},
+		"projects": {
+			"searchPlaceholder": "Search projects...",
+			"submit": "Submit Project",
+			"featured": "Featured Projects",
+			"featuredBadge": "Featured",
+			"allProjects": "All Projects",
+			"empty": "No projects found",
+			"emptyDescription": "Try adjusting your search or submit your own project.",
+			"categories": {
+				"all": "All Categories",
+				"defi": "DeFi",
+				"nft": "NFT",
+				"tooling": "Tooling",
+				"gaming": "Gaming",
+				"social": "Social",
+				"infra": "Infrastructure"
+			}
+		}
 	},
 	"topics": {
 		"title": "Topics",
@@ -2528,6 +2755,28 @@
 		"takeNotes": "Take Notes",
 		"markComplete": "Mark as Complete",
 		"fullscreen": "Fullscreen"
+	},
+	"auth": {
+		"welcomeTitle": "Welcome to Superteam Academy",
+		"welcomeDescription": "Sign in to track your progress, earn XP, and unlock on-chain credentials.",
+		"verifyWalletTitle": "Verify your wallet",
+		"verifyWalletDescription": "Sign a message to verify ownership of {address}",
+		"oauthError": "Failed to sign in with {provider}. Please try again.",
+		"walletConnectError": "Failed to connect wallet. Please try again.",
+		"walletVerifyError": "Failed to verify wallet. Please try again.",
+		"connectWallet": "Connect Wallet",
+		"connecting": "Connecting...",
+		"continueWithWallet": "Continue with Wallet",
+		"continueWithWalletAddress": "Continue with {address}",
+		"or": "or",
+		"signingIn": "Signing in...",
+		"continueWithGoogle": "Continue with Google",
+		"continueWithGithub": "Continue with GitHub",
+		"walletSignMessage": "Sign a message with your wallet to prove ownership. This does not cost any SOL.",
+		"signing": "Signing...",
+		"signAndVerify": "Sign & Verify",
+		"backToOptions": "Back to sign in options",
+		"termsNotice": "By continuing, you agree to our Terms of Service and Privacy Policy."
 	},
 	"footer": {
 		"description": "Master Solana development through interactive courses and earn verifiable on-chain credentials.",

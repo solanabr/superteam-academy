@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Play, Share2, Heart, Star, Users, Clock, Award } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -31,6 +32,8 @@ interface CourseHeroProps {
 }
 
 export function CourseHero({ course }: CourseHeroProps) {
+	const t = useTranslations("courses");
+
 	return (
 		<div className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-background to-secondary/10">
 			<div className="container mx-auto px-4 py-12">
@@ -42,7 +45,7 @@ export function CourseHero({ course }: CourseHeroProps) {
 								<Badge variant="outline">{course.level}</Badge>
 								{course.price === 0 && (
 									<Badge className="bg-green-500/10 text-green-600 border-green-500/20">
-										Free
+										{t("hero.free")}
 									</Badge>
 								)}
 							</div>
@@ -61,14 +64,14 @@ export function CourseHero({ course }: CourseHeroProps) {
 								<Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
 								<span className="font-semibold">{course.rating}</span>
 								<span className="text-muted-foreground">
-									({course.reviewCount} reviews)
+									({t("hero.reviews", { count: course.reviewCount })})
 								</span>
 							</div>
 
 							<div className="flex items-center gap-2">
 								<Users className="h-5 w-5 text-muted-foreground" />
 								<span className="font-medium">
-									{course.students.toLocaleString()} students
+									{t("hero.students", { count: course.students.toLocaleString() })}
 								</span>
 							</div>
 
@@ -84,7 +87,7 @@ export function CourseHero({ course }: CourseHeroProps) {
 						</div>
 
 						<div className="flex items-center gap-3">
-							<div className="text-sm text-muted-foreground">Created by</div>
+							<div className="text-sm text-muted-foreground">{t("hero.createdBy")}</div>
 							<div className="font-medium">{course.instructor.name}</div>
 							<div className="text-sm text-muted-foreground">•</div>
 							<div className="text-sm text-muted-foreground">
@@ -104,33 +107,33 @@ export function CourseHero({ course }: CourseHeroProps) {
 							{course.enrolled ? (
 								<Button size="lg" asChild={true}>
 									<Link href={`/courses/${course.id}/learn`}>
-										Continue Learning
+										{t("hero.continueLearning")}
 									</Link>
 								</Button>
 							) : (
 								<Button size="lg" asChild={true}>
 									<Link href={`/courses/${course.id}?tab=overview#enroll`}>
 										{course.price === 0
-											? "Enroll for Free"
-											: `Enroll for $${course.price}`}
+											? t("hero.enrollFree")
+											: t("hero.enrollFor", { price: course.price })}
 									</Link>
 								</Button>
 							)}
 
 							<Button variant="outline" size="lg" className="gap-2">
 								<Heart className="h-4 w-4" />
-								Save
+								{t("hero.save")}
 							</Button>
 
 							<Button variant="outline" size="lg" className="gap-2">
 								<Share2 className="h-4 w-4" />
-								Share
+								{t("hero.share")}
 							</Button>
 
 							{course.videoPreview && (
 								<Button variant="outline" size="lg" className="gap-2">
 									<Play className="h-4 w-4" />
-									Preview
+									{t("hero.preview")}
 								</Button>
 							)}
 						</div>
@@ -150,7 +153,7 @@ export function CourseHero({ course }: CourseHeroProps) {
 								<div className="absolute inset-0 bg-black/50 flex items-center justify-center">
 									<Button size="lg" variant="secondary" className="gap-2">
 										<Play className="h-5 w-5" />
-										Watch Preview
+										{t("hero.watchPreview")}
 									</Button>
 								</div>
 							)}
@@ -175,7 +178,7 @@ export function CourseHero({ course }: CourseHeroProps) {
 										))}
 									</div>
 									<div className="text-sm text-muted-foreground">
-										{course.reviewCount} reviews
+										{t("hero.reviews", { count: course.reviewCount })}
 									</div>
 								</div>
 							</CardContent>

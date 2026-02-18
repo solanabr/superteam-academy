@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Users, Clock, Zap, ArrowRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -34,6 +35,8 @@ const LEVEL_COLORS: Record<string, string> = {
 };
 
 export function CourseList({ courses }: CourseListProps) {
+	const t = useTranslations("courses");
+
 	return (
 		<div className="space-y-3 animate-stagger">
 			{courses.map((course) => {
@@ -92,13 +95,13 @@ export function CourseList({ courses }: CourseListProps) {
 									{course.students.toLocaleString()}
 								</span>
 								<span className="text-muted-foreground/60">&middot;</span>
-								<span>{course.price === 0 ? "Free" : `$${course.price}`}</span>
+								<span>{course.price === 0 ? t("list.free") : `$${course.price}`}</span>
 							</div>
 						</div>
 
 						<div className="hidden sm:flex items-center flex-shrink-0">
 							<span className="font-medium text-xs text-primary group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
-								{course.enrolled ? "Continue" : "Start"}
+							{course.enrolled ? t("list.continue") : t("list.start")}
 								<ArrowRight className="h-3 w-3" />
 							</span>
 						</div>

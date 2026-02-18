@@ -11,7 +11,6 @@
 			"Bash(cargo install *)",
 			"Bash(cargo geiger *)",
 			"Bash(trident *)",
-
 			"Bash(solana config *)",
 			"Bash(solana address *)",
 			"Bash(solana balance *)",
@@ -21,13 +20,10 @@
 			"Bash(solana logs *)",
 			"Bash(solana account *)",
 			"Bash(solana-test-validator *)",
-
 			"Bash(npm *)",
 			"Bash(yarn *)",
-			"Bash(pnpm *)",
 			"Bash(bun *)",
 			"Bash(npx *)",
-
 			"Bash(git status *)",
 			"Bash(git diff *)",
 			"Bash(git log *)",
@@ -39,7 +35,6 @@
 			"Bash(git branch *)",
 			"Bash(git checkout *)",
 			"Bash(gh *)",
-
 			"Bash(ls *)",
 			"Bash(cat *)",
 			"Bash(grep *)",
@@ -60,7 +55,6 @@
 			"Bash(solana program deploy * --url *mainnet*)"
 		]
 	},
-
 	"hooks": {
 		"PostToolUse": [
 			{
@@ -72,7 +66,6 @@
 					}
 				]
 			},
-
 			{
 				"matcher": "Bash",
 				"when": {
@@ -86,7 +79,6 @@
 				]
 			}
 		],
-
 		"PreToolUse": [
 			{
 				"matcher": "Bash",
@@ -100,7 +92,6 @@
 					}
 				]
 			},
-
 			{
 				"matcher": "Bash",
 				"when": {
@@ -115,7 +106,6 @@
 			}
 		]
 	},
-
 	"modelDefaults": {
 		"agent": "opus",
 		"command": "sonnet"

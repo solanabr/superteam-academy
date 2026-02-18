@@ -1,4 +1,5 @@
 import { TrendingUp, Calendar, Award, Target, Rocket, PartyPopper } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -20,25 +21,27 @@ interface CourseProgressProps {
 }
 
 export function CourseProgress({ progress }: CourseProgressProps) {
+	const t = useTranslations("courses");
+
 	return (
 		<Card>
 			<CardHeader>
 				<CardTitle className="flex items-center gap-2">
 					<Target className="h-5 w-5" />
-					Your Progress
+					{t("progress.title")}
 				</CardTitle>
 			</CardHeader>
 			<CardContent className="space-y-6">
 				<div className="space-y-3">
 					<div className="flex items-center justify-between">
-						<span className="text-sm font-medium">Course Completion</span>
+						<span className="text-sm font-medium">{t("progress.courseCompletion")}</span>
 						<span className="text-sm text-muted-foreground">
 							{progress.percentage}%
 						</span>
 					</div>
 					<Progress value={progress.percentage} className="h-3" />
 					<div className="text-sm text-muted-foreground">
-						{progress.completedLessons} of {progress.totalLessons} lessons completed
+						{t("progress.lessonsCompleted", { completed: progress.completedLessons, total: progress.totalLessons })}
 					</div>
 				</div>
 
@@ -46,31 +49,31 @@ export function CourseProgress({ progress }: CourseProgressProps) {
 					<div className="text-center p-3 bg-muted/50 rounded-lg">
 						<Calendar className="h-6 w-6 text-primary mx-auto mb-2" />
 						<div className="text-lg font-bold">{progress.timeSpent}</div>
-						<div className="text-xs text-muted-foreground">Time Spent</div>
+						<div className="text-xs text-muted-foreground">{t("progress.timeSpent")}</div>
 					</div>
 
 					<div className="text-center p-3 bg-muted/50 rounded-lg">
 						<TrendingUp className="h-6 w-6 text-green-500 mx-auto mb-2" />
 						<div className="text-lg font-bold">{progress.streak}</div>
-						<div className="text-xs text-muted-foreground">Day Streak</div>
+						<div className="text-xs text-muted-foreground">{t("progress.dayStreak")}</div>
 					</div>
 
 					<div className="text-center p-3 bg-muted/50 rounded-lg">
 						<Award className="h-6 w-6 text-yellow-500 mx-auto mb-2" />
 						<div className="text-lg font-bold">{progress.xpEarned}</div>
-						<div className="text-xs text-muted-foreground">XP Earned</div>
+						<div className="text-xs text-muted-foreground">{t("progress.xpEarned")}</div>
 					</div>
 
 					<div className="text-center p-3 bg-muted/50 rounded-lg">
 						<Target className="h-6 w-6 text-blue-500 mx-auto mb-2" />
 						<div className="text-lg font-bold">{progress.xpTotal}</div>
-						<div className="text-xs text-muted-foreground">XP Total</div>
+						<div className="text-xs text-muted-foreground">{t("progress.xpTotal")}</div>
 					</div>
 				</div>
 
 				<div className="space-y-2">
 					<div className="flex items-center justify-between">
-						<span className="text-sm font-medium">XP Progress</span>
+						<span className="text-sm font-medium">{t("progress.xpProgress")}</span>
 						<Badge variant="secondary">
 							{progress.xpEarned} / {progress.xpTotal} XP
 						</Badge>
@@ -83,22 +86,22 @@ export function CourseProgress({ progress }: CourseProgressProps) {
 
 				<div className="space-y-3 pt-4 border-t">
 					<div className="flex items-center justify-between text-sm">
-						<span className="text-muted-foreground">Last Activity:</span>
+						<span className="text-muted-foreground">{t("progress.lastActivity")}</span>
 						<span>{progress.lastActivity}</span>
 					</div>
 
 					<div className="flex items-center justify-between text-sm">
-						<span className="text-muted-foreground">Estimated Completion:</span>
+						<span className="text-muted-foreground">{t("progress.estimatedCompletion")}</span>
 						<span>{progress.estimatedCompletion}</span>
 					</div>
 				</div>
 
 				<div className="flex gap-2">
 					<Button className="flex-1" size="sm">
-						Continue Learning
+						{t("progress.continueLearning")}
 					</Button>
 					<Button variant="outline" size="sm">
-						View Certificate
+						{t("progress.viewCertificate")}
 					</Button>
 				</div>
 
@@ -107,11 +110,11 @@ export function CourseProgress({ progress }: CourseProgressProps) {
 						<div className="text-center">
 							<div className="text-sm font-medium text-primary mb-1">
 								<span className="inline-flex items-center gap-1">
-									Keep it up! <Rocket className="inline h-4 w-4" />
+									{t("progress.keepItUp")} <Rocket className="inline h-4 w-4" />
 								</span>
 							</div>
 							<div className="text-xs text-muted-foreground">
-								{100 - progress.percentage}% to go. You're doing great!
+								{t("progress.toGo", { percent: 100 - progress.percentage })}
 							</div>
 						</div>
 					</div>
@@ -122,11 +125,11 @@ export function CourseProgress({ progress }: CourseProgressProps) {
 						<div className="text-center">
 							<div className="text-sm font-medium text-green-800 dark:text-green-200 mb-1">
 								<span className="inline-flex items-center gap-1">
-									Congratulations! <PartyPopper className="inline h-4 w-4" />
+									{t("progress.congratulations")} <PartyPopper className="inline h-4 w-4" />
 								</span>
 							</div>
 							<div className="text-xs text-green-700 dark:text-green-300">
-								You've completed this course. Claim your certificate!
+								{t("progress.completedCourse")}
 							</div>
 						</div>
 					</div>

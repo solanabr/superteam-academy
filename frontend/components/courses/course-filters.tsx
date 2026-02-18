@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Filter, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -34,6 +35,7 @@ export function CourseFilters({
 	durations,
 	onFiltersChange,
 }: CourseFiltersProps) {
+	const t = useTranslations("courses");
 	const router = useRouter();
 	const searchParams = useSearchParams();
 
@@ -110,7 +112,7 @@ export function CourseFilters({
 			<SheetTrigger asChild={true}>
 				<Button variant="outline" className="gap-2">
 					<Filter className="h-4 w-4" />
-					Filters
+					{t("filterSheet.filters")}
 					{hasActiveFilters && (
 						<span className="bg-primary text-primary-foreground rounded-full px-2 py-0.5 text-xs">
 							{selectedCategories.length +
@@ -122,16 +124,16 @@ export function CourseFilters({
 			</SheetTrigger>
 			<SheetContent className="w-full sm:max-w-md">
 				<SheetHeader>
-					<SheetTitle>Filter Courses</SheetTitle>
+					<SheetTitle>{t("filterSheet.title")}</SheetTitle>
 					<SheetDescription>
-						Narrow down courses by category, level, and duration.
+						{t("filterSheet.description")}
 					</SheetDescription>
 				</SheetHeader>
 
 				<div className="space-y-6 mt-6">
 					<div className="space-y-3">
 						<div className="flex items-center justify-between">
-							<Label className="text-base font-medium">Categories</Label>
+							<Label className="text-base font-medium">{t("filterSheet.categories")}</Label>
 							{selectedCategories.length > 0 && (
 								<Button
 									variant="ghost"
@@ -175,7 +177,7 @@ export function CourseFilters({
 
 					<div className="space-y-3">
 						<div className="flex items-center justify-between">
-							<Label className="text-base font-medium">Level</Label>
+							<Label className="text-base font-medium">{t("filterSheet.level")}</Label>
 							{selectedLevels.length > 0 && (
 								<Button
 									variant="ghost"
@@ -219,7 +221,7 @@ export function CourseFilters({
 
 					<div className="space-y-3">
 						<div className="flex items-center justify-between">
-							<Label className="text-base font-medium">Duration</Label>
+							<Label className="text-base font-medium">{t("filterSheet.duration")}</Label>
 							{selectedDurations.length > 0 && (
 								<Button
 									variant="ghost"
@@ -263,7 +265,7 @@ export function CourseFilters({
 						<>
 							<Separator />
 							<Button variant="outline" onClick={clearAllFilters} className="w-full">
-								Clear All Filters
+							{t("filterSheet.clearAll")}
 							</Button>
 						</>
 					)}

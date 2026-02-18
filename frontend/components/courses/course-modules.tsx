@@ -1,4 +1,5 @@
 import { ChevronDown, Play, FileText, Code, CheckCircle } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,13 +25,15 @@ interface CourseModulesProps {
 }
 
 export function CourseModules({ modules }: CourseModulesProps) {
+	const t = useTranslations("courses");
+
 	return (
 		<div className="space-y-4">
 			<div className="flex items-center justify-between">
-				<h2 className="text-2xl font-bold">Course Curriculum</h2>
+				<h2 className="text-2xl font-bold">{t("modules.title")}</h2>
 				<div className="text-sm text-muted-foreground">
-					{modules.length} modules •{" "}
-					{modules.reduce((acc, module) => acc + module.lessons, 0)} lessons
+					{t("modules.modulesCount", { count: modules.length })} •{" "}
+					{t("modules.lessonsCount", { count: modules.reduce((acc, module) => acc + module.lessons, 0) })}
 				</div>
 			</div>
 
@@ -50,6 +53,7 @@ function ModuleCard({
 	module: CourseModulesProps["modules"][0];
 	moduleNumber: number;
 }) {
+	const t = useTranslations("courses");
 	const getLessonIcon = (type: string) => {
 		switch (type) {
 			case "video":
@@ -93,7 +97,7 @@ function ModuleCard({
 
 							<div className="flex items-center gap-4">
 								<div className="text-right text-sm text-muted-foreground">
-									<div>{module.lessons} lessons</div>
+									<div>{t("modules.lessonsCount", { count: module.lessons })}</div>
 									<div>{module.duration}</div>
 								</div>
 								<div className="flex items-center gap-2">
@@ -108,7 +112,7 @@ function ModuleCard({
 						<div className="mt-4">
 							<div className="flex items-center justify-between text-sm mb-2">
 								<span className="text-muted-foreground">
-									{completedLessons} of {module.lessons} lessons completed
+									{t("modules.lessonsCompleted", { completed: completedLessons, total: module.lessons })}
 								</span>
 								<span className="font-medium">
 									{Math.round(progressPercentage)}%
@@ -160,11 +164,11 @@ function ModuleCard({
 										</Badge>
 										{lesson.completed ? (
 											<Button size="sm" variant="ghost" disabled={true}>
-												Completed
+												{t("modules.completed")}
 											</Button>
 										) : (
 											<Button size="sm" variant="ghost">
-												Start
+												{t("modules.start")}
 											</Button>
 										)}
 									</div>

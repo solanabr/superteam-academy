@@ -14,7 +14,7 @@ Internationalization package for the Superteam Academy LMS platform. Built with 
 ## Installation
 
 ```bash
-pnpm add @superteam-academy/i18n
+bun add @superteam-academy/i18n
 ```
 
 ## Quick Start
@@ -107,7 +107,7 @@ const context = await createTranslationContext(locale);
 Validate translation files for completeness:
 
 ```bash
-pnpm validate
+bun run validate
 ```
 
 ### Extraction
@@ -115,7 +115,7 @@ pnpm validate
 Extract translation keys from source code:
 
 ```bash
-pnpm extract
+bun run extract
 ```
 
 ### Check Missing Keys
@@ -123,13 +123,13 @@ pnpm extract
 Find missing translations:
 
 ```bash
-pnpm check-missing
+bun run check-missing
 ```
 
 ## Translation Structure
 
 ```
-messages/
+locales/
 ├── en.json      # English translations
 ├── pt-BR.json  # Portuguese (Brazil)
 └── es.json     # Spanish
@@ -165,26 +165,26 @@ Translation keys use dot notation:
 ### Building
 
 ```bash
-pnpm build
+bun run build
 ```
 
 ### Type Checking
 
 ```bash
-pnpm typecheck
+bun run typecheck
 ```
 
 ### Linting
 
 ```bash
-pnpm lint
-pnpm lint:fix
+bun run lint
+bun run lint:fix
 ```
 
 ## Contributing
 
 1. Add new translation keys to all language files
-2. Run validation: `pnpm validate`
+2. Run validation: `bun run validate`
 3. Update types if needed
 4. Test in development environment
 

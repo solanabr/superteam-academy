@@ -13,7 +13,7 @@ A comprehensive service abstraction layer for the Superteam Academy platform, pr
 ## Installation
 
 ```bash
-pnpm add @superteam/services
+bun add @superteam/services
 ```
 
 ## Quick Start
@@ -125,13 +125,13 @@ The service layer follows these principles:
 ### Building
 
 ```bash
-pnpm build
+bun run build
 ```
 
 ### Testing
 
 ```bash
-pnpm test
+bun test
 ```
 
 ### Adding New Services

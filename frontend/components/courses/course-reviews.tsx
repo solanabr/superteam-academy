@@ -1,4 +1,5 @@
 import { Star, ThumbsUp, Flag } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -21,6 +22,8 @@ interface CourseReviewsProps {
 }
 
 export function CourseReviews({ reviews, averageRating, totalReviews }: CourseReviewsProps) {
+	const t = useTranslations("courses");
+
 	const ratingDistribution = [5, 4, 3, 2, 1].map((rating) => {
 		const count = reviews.filter((review) => review.rating === rating).length;
 		const percentage = totalReviews > 0 ? (count / totalReviews) * 100 : 0;
@@ -30,8 +33,8 @@ export function CourseReviews({ reviews, averageRating, totalReviews }: CourseRe
 	return (
 		<div className="space-y-6">
 			<div className="flex items-center justify-between">
-				<h2 className="text-2xl font-bold">Student Reviews</h2>
-				<Button variant="outline">Write a Review</Button>
+				<h2 className="text-2xl font-bold">{t("reviewsSection.title")}</h2>
+				<Button variant="outline">{t("reviewsSection.writeReview")}</Button>
 			</div>
 
 			<div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -49,7 +52,7 @@ export function CourseReviews({ reviews, averageRating, totalReviews }: CourseRe
 							/>
 						))}
 					</div>
-					<div className="text-muted-foreground">Based on {totalReviews} reviews</div>
+					<div className="text-muted-foreground">{t("reviewsSection.basedOn", { count: totalReviews })}</div>
 				</div>
 
 				<div className="space-y-2">
@@ -125,11 +128,11 @@ export function CourseReviews({ reviews, averageRating, totalReviews }: CourseRe
 							<div className="flex items-center justify-between">
 								<Button variant="ghost" size="sm" className="gap-2">
 									<ThumbsUp className="h-4 w-4" />
-									Helpful ({review.helpful})
+									{t("reviewsSection.helpful", { count: review.helpful })}
 								</Button>
 
 								<div className="text-sm text-muted-foreground">
-									Was this review helpful?
+									{t("reviewsSection.wasHelpful")}
 								</div>
 							</div>
 						</CardContent>
@@ -139,7 +142,7 @@ export function CourseReviews({ reviews, averageRating, totalReviews }: CourseRe
 
 			{reviews.length > 10 && (
 				<div className="text-center">
-					<Button variant="outline">Load More Reviews</Button>
+					<Button variant="outline">{t("reviewsSection.loadMore")}</Button>
 				</div>
 			)}
 		</div>

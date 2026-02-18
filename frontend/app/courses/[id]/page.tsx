@@ -193,7 +193,7 @@ async function CourseDetailContent({
 										<div className="flex items-center gap-1">
 											<Zap className="h-4 w-4 text-yellow-500" />
 											<span className="font-medium">
-												{course.xpReward} XP
+												{course.xpReward.toLocaleString()} XP
 											</span>
 										</div>
 									</div>
@@ -223,7 +223,7 @@ function CourseDetailSkeleton() {
 	return (
 		<div className="space-y-8">
 			<div className="relative h-96 bg-muted animate-pulse">
-				<div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-secondary/20" />
+				<div className="absolute inset-0 bg-linear-to-r from-primary/20 to-secondary/20" />
 			</div>
 
 			<div className="container mx-auto px-4">

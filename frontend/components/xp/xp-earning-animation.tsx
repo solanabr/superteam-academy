@@ -115,7 +115,7 @@ export function XPEarningAnimation({
 						</div>
 
 						<div
-							className={`mx-auto w-20 h-20 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center shadow-lg animate-pulse ${getXPColor(xpGained)}`}
+							className={`mx-auto w-20 h-20 rounded-full bg-linear-to-br from-yellow-400 to-orange-500 flex items-center justify-center shadow-lg animate-pulse ${getXPColor(xpGained)}`}
 						>
 							{getXPIcon(xpGained)}
 						</div>
@@ -141,7 +141,7 @@ export function XPEarningAnimation({
 							</div>
 							<Progress value={Math.min(progressPercentage, 100)} className="h-3" />
 							{isLevelUp && (
-								<Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white animate-pulse">
+								<Badge className="bg-linear-to-r from-purple-500 to-pink-500 text-white animate-pulse">
 									<TrendingUp className="h-3 w-3 mr-1" />
 									{t("levelUp")}
 								</Badge>

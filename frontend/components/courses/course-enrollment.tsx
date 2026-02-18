@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Wallet, CreditCard, CheckCircle, AlertCircle } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -23,6 +24,7 @@ interface CourseEnrollmentProps {
 }
 
 export function CourseEnrollment({ course }: CourseEnrollmentProps) {
+	const t = useTranslations("courses");
 	const [enrollmentMethod, setEnrollmentMethod] = useState<"wallet" | "card" | null>(null);
 	const [isEnrolling, setIsEnrolling] = useState(false);
 
@@ -48,17 +50,17 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 						<CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
 						<div>
 							<h3 className="font-medium text-green-800 dark:text-green-200">
-								Enrolled
-							</h3>
-							<p className="text-sm text-green-700 dark:text-green-300">
-								You have access to this course
+							{t("enroll.enrolled")}
+						</h3>
+						<p className="text-sm text-green-700 dark:text-green-300">
+								{t("enroll.hasAccess")}
 							</p>
 						</div>
 					</div>
 				</div>
 
 				<Button className="w-full" size="lg">
-					Continue Learning
+					{t("enroll.continueLearning")}
 				</Button>
 			</div>
 		);
@@ -70,7 +72,7 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 				<Alert>
 					<AlertCircle className="h-4 w-4" />
 					<AlertDescription>
-						Complete all prerequisites to enroll in this course.
+						{t("enroll.completePrerequisites")}
 					</AlertDescription>
 				</Alert>
 			)}
@@ -78,8 +80,8 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 			{course.price === 0 ? (
 				<div className="space-y-4">
 					<div className="text-center p-6 bg-muted/50 rounded-lg">
-						<div className="text-3xl font-bold text-green-600 mb-2">FREE</div>
-						<p className="text-muted-foreground">No payment required</p>
+						<div className="text-3xl font-bold text-green-600 mb-2">{t("enroll.free")}</div>
+						<p className="text-muted-foreground">{t("enroll.noPayment")}</p>
 					</div>
 
 					<Button
@@ -88,18 +90,18 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 						onClick={handleEnrollment}
 						disabled={!prerequisitesMet || isEnrolling}
 					>
-						{isEnrolling ? "Enrolling..." : "Enroll for Free"}
+						{isEnrolling ? t("enroll.enrolling") : t("enroll.enrollFree")}
 					</Button>
 				</div>
 			) : (
 				<div className="space-y-4">
 					<div className="text-center p-6 bg-muted/50 rounded-lg">
 						<div className="text-3xl font-bold mb-2">${course.price}</div>
-						<p className="text-muted-foreground">One-time payment</p>
+						<p className="text-muted-foreground">{t("enroll.oneTimePayment")}</p>
 					</div>
 
 					<div className="space-y-3">
-						<div className="text-sm font-medium">Choose payment method:</div>
+						<div className="text-sm font-medium">{t("enroll.choosePayment")}</div>
 
 						<div className="space-y-2">
 							<Card
@@ -114,12 +116,12 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 									<div className="flex items-center gap-3">
 										<Wallet className="h-5 w-5" />
 										<div className="flex-1">
-											<div className="font-medium">Crypto Wallet</div>
+											<div className="font-medium">{t("enroll.cryptoWallet")}</div>
 											<div className="text-sm text-muted-foreground">
-												Pay with SOL or USDC
+												{t("enroll.payWithCrypto")}
 											</div>
 										</div>
-										<Badge variant="secondary">Recommended</Badge>
+										<Badge variant="secondary">{t("enroll.recommended")}</Badge>
 									</div>
 								</CardContent>
 							</Card>
@@ -134,9 +136,9 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 									<div className="flex items-center gap-3">
 										<CreditCard className="h-5 w-5" />
 										<div className="flex-1">
-											<div className="font-medium">Credit Card</div>
+											<div className="font-medium">{t("enroll.creditCard")}</div>
 											<div className="text-sm text-muted-foreground">
-												Visa, Mastercard, American Express
+												{t("enroll.creditCardDesc")}
 											</div>
 										</div>
 									</div>
@@ -151,15 +153,15 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 						onClick={handleEnrollment}
 						disabled={!prerequisitesMet || !enrollmentMethod || isEnrolling}
 					>
-						{isEnrolling ? "Processing..." : `Enroll for $${course.price}`}
+						{isEnrolling ? t("enroll.processing") : t("enroll.enrollFor", { price: course.price })}
 					</Button>
 				</div>
 			)}
 
 			<div className="text-xs text-muted-foreground text-center space-y-1">
-				<p>30-day money-back guarantee</p>
-				<p>Lifetime access to course materials</p>
-				<p>Certificate of completion included</p>
+				<p>{t("enroll.moneyBack")}</p>
+				<p>{t("enroll.lifetimeAccess")}</p>
+				<p>{t("enroll.certificateIncluded")}</p>
 			</div>
 		</div>
 	);

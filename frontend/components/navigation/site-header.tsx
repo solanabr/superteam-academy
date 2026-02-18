@@ -181,10 +181,17 @@ isActive(item.href)
 				</div>
 
 				{mobileOpen && (
-					<div className="lg:hidden border-t border-border bg-background/95 backdrop-blur-xl animate-fade-in">
-						<nav className="mx-auto px-4 py-4 space-y-1">
-							{NAV_ITEMS.map((item) => {
-								const Icon = item.icon;
+					<>
+						<div
+							className="lg:hidden fixed inset-0 top-16 bg-black/20 z-40"
+							onClick={() => setMobileOpen(false)}
+							onKeyDown={() => {}}
+							role="presentation"
+						/>
+						<div className="lg:hidden absolute left-0 right-0 top-full border-t border-border bg-background/95 backdrop-blur-xl animate-fade-in shadow-lg z-50">
+							<nav className="mx-auto px-4 py-4 space-y-1">
+								{NAV_ITEMS.map((item) => {
+									const Icon = item.icon;
 								return (
 <Link
 										key={item.href}
@@ -225,6 +232,7 @@ isActive(item.href)
 							</div>
 						</nav>
 					</div>
+					</>
 				)}
 			</header>
 

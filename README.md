@@ -29,7 +29,7 @@ Superteam Academy is a comprehensive learning platform that combines interactive
 ### Prerequisites
 
 - Node.js 18+
-- PNPM 8+
+- Bun 1.1+
 - Rust 1.70+ (for Solana programs)
 - Anchor CLI 0.30+
 - Solana CLI 1.18+
@@ -44,7 +44,7 @@ Superteam Academy is a comprehensive learning platform that combines interactive
 
 2. **Install dependencies**
    ```bash
-   pnpm install
+   bun install
    ```
 
 3. **Set up environment variables**
@@ -55,12 +55,12 @@ Superteam Academy is a comprehensive learning platform that combines interactive
 
 4. **Build the project**
    ```bash
-   pnpm build
+   bun run build
    ```
 
 5. **Start development server**
    ```bash
-   pnpm dev
+   bun dev
    ```
 
 ## Architecture
@@ -140,20 +140,20 @@ The platform uses a strict service abstraction layer for complete swappability:
 
 ```bash
 # Development
-pnpm dev              # Start development server
-pnpm build            # Build all packages
-pnpm test             # Run test suite
-pnpm lint             # Run ESLint
-pnpm type-check       # TypeScript type checking
+bun dev               # Start development server
+bun run build         # Build all packages
+bun test              # Run test suite
+bun run lint          # Run ESLint
+bun run type-check    # TypeScript type checking
 
 # Solana Programs
-pnpm program:build    # Build Anchor program
-pnpm program:test     # Test Solana program
-pnpm program:deploy   # Deploy to devnet
+bun run program:build # Build Anchor program
+bun run program:test  # Test Solana program
+bun run program:deploy # Deploy to devnet
 
 # Analytics
-pnpm analytics:build  # Build analytics package
-pnpm analytics:test   # Test analytics package
+bun run analytics:build  # Build analytics package
+bun run analytics:test   # Test analytics package
 ```
 
 ### Environment Setup
@@ -261,7 +261,7 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 1. **Fork and Clone**
 2. **Create Feature Branch**: `git checkout -b feature/your-feature`
 3. **Make Changes**: Follow our coding standards
-4. **Run Tests**: `pnpm test`
+4. **Run Tests**: `bun test`
 5. **Submit PR**: With detailed description
 
 ### Code Quality
