@@ -1,8 +1,3 @@
-/**
- * Fraud Prevention Systems Component
- * Implements comprehensive fraud detection and prevention mechanisms
- */
-
 "use client";
 
 import { useState, useEffect, useMemo } from "react";

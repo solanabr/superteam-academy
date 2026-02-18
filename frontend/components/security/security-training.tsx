@@ -1,8 +1,3 @@
-/**
- * Security Training Component
- * Implements security awareness training and education programs
- */
-
 "use client";
 
 import { useState, useEffect } from "react";

@@ -1,8 +1,3 @@
-/**
- * Advanced Threat Detection Component
- * Implements real-time security monitoring and threat detection
- */
-
 "use client";
 
 import { useState, useEffect } from "react";

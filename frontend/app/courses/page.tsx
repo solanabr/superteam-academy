@@ -25,14 +25,14 @@ export const metadata: Metadata = {
 };
 
 interface CoursesPageProps {
-	searchParams: {
+	searchParams: Promise<{
 		q?: string;
 		category?: string;
 		level?: string;
 		sort?: string;
 		view?: "grid" | "list";
 		page?: string;
-	};
+	}>;
 }
 
 const CATEGORIES = [
@@ -58,7 +58,7 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
 		sort = "popular",
 		view = "grid",
 		page = "1",
-	} = searchParams;
+	} = await searchParams;
 
 	const hasFilters = q || category !== "all" || level !== "all";
 	const t = await getTranslations("courses");
@@ -76,7 +76,7 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
 				</div>
 			</div>
 
-			<div className="sticky top-14 z-30 border-b border-border/60 bg-background/80 backdrop-blur-xl">
+			<div className="sticky top-16 z-30 border-b border-border/60 bg-background/80 backdrop-blur-xl">
 				<div className="mx-auto px-4 sm:px-6 py-3">
 					<div className="flex flex-col lg:flex-row gap-3 items-start lg:items-center">
 						<div className="relative flex-1 max-w-sm w-full">
@@ -240,7 +240,7 @@ function buildFilterUrl(params: Record<string, string | undefined>) {
 async function CoursesContent({
 	searchParams,
 }: {
-	searchParams: CoursesPageProps["searchParams"];
+	searchParams: Awaited<CoursesPageProps["searchParams"]>;
 }) {
 	const courses = await getCourses(searchParams);
 	const totalPages = Math.ceil(courses.length / 12);
@@ -338,7 +338,7 @@ function CoursesSkeleton({ view }: { view: string }) {
 	);
 }
 
-async function getCourses(searchParams: CoursesPageProps["searchParams"]) {
+async function getCourses(searchParams: Awaited<CoursesPageProps["searchParams"]>) {
 	// When Sanity is configured, fetch from CMS; otherwise use seed data
 	let baseCourses: typeof SEED_COURSES;
 	if (isSanityConfigured) {

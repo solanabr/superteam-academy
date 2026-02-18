@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 const FOOTER_LINKS = {
 	learn: [
@@ -97,6 +98,8 @@ export function SiteFooter() {
 						<Link href="/cookies" className="hover:text-foreground transition-colors">
 							{t("cookies")}
 						</Link>
+						{" "}
+						<LanguageSwitcher />
 					</div>
 				</div>
 			</div>

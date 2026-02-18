@@ -1,8 +1,3 @@
-/**
- * Security Reporting Component
- * Implements comprehensive security reporting and analytics dashboard
- */
-
 "use client";
 
 import { useState, useEffect } from "react";

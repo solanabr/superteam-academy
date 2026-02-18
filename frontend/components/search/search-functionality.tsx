@@ -2,33 +2,33 @@
 
 import { useState, useMemo } from "react";
 import {
-    Search,
-    Filter,
-    X,
-    ChevronDown,
-    Calendar,
-    Clock,
-    Star,
-    Users,
-    BookOpen,
+	Search,
+	Filter,
+	X,
+	ChevronDown,
+	Calendar,
+	Clock,
+	Star,
+	Users,
+	BookOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
 } from "@/components/ui/select";
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuCheckboxItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuCheckboxItem,
+	DropdownMenuLabel,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Slider } from "@/components/ui/slider";
@@ -436,9 +436,7 @@ export function SearchFunctionality({
 								key={result.id}
 								className="flex items-start gap-3 p-4 border rounded-lg hover:bg-accent/50 transition-colors"
 							>
-								<div className="shrink-0 mt-1">
-									{getResultIcon(result.type)}
-								</div>
+								<div className="shrink-0 mt-1">{getResultIcon(result.type)}</div>
 								<div className="flex-1 min-w-0">
 									<div className="flex items-start justify-between">
 										<div>

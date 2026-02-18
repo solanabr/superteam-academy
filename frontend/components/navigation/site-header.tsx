@@ -4,20 +4,13 @@ import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Trophy, Search, Menu, X, Layers, Users, Compass, Sun, Moon, Globe } from "lucide-react";
+import { Trophy, Search, Menu, X, Layers, Users, Compass, Sun, Moon } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useTranslations, useLocale } from "next-intl";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { SearchModal } from "@/components/search/search-modal";
 import { LoginModal } from "@/components/auth/login-modal";
 import { cn } from "@/lib/utils";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { locales } from "@superteam-academy/i18n/config";
 
 const NAV_ITEMS = [
 	{
@@ -46,7 +39,6 @@ export function SiteHeader() {
 	const pathname = usePathname();
 	const t = useTranslations("navigation");
 	const { resolvedTheme, setTheme } = useTheme();
-	const locale = useLocale();
 	const [mounted, setMounted] = useState(false);
 	const [mobileOpen, setMobileOpen] = useState(false);
 	const [searchOpen, setSearchOpen] = useState(false);
@@ -77,13 +69,6 @@ export function SiteHeader() {
 	}, [handleKeyDown]);
 
 	const toggleTheme = () => setTheme(resolvedTheme === "dark" ? "light" : "dark");
-
-	const currentLocale = locales.find((l) => l.code === locale);
-
-	const switchLocale = (code: string) => {
-		document.cookie = `NEXT_LOCALE=${code};path=/;max-age=31536000`;
-		window.location.reload();
-	};
 
 	return (
 		<>
@@ -148,36 +133,6 @@ export function SiteHeader() {
 								)}
 							</button>
 
-							<DropdownMenu>
-								<DropdownMenuTrigger asChild>
-									<button
-										type="button"
-										className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground flex items-center gap-1.5"
-										aria-label={t("switchLanguage")}
-									>
-										<Globe className="h-4 w-4" />
-										<span className="text-xs font-medium">
-											{currentLocale?.flag}
-										</span>
-									</button>
-								</DropdownMenuTrigger>
-								<DropdownMenuContent align="end" className="min-w-35">
-									{locales.map((l) => (
-										<DropdownMenuItem
-											key={l.code}
-											onClick={() => switchLocale(l.code)}
-											className={cn(
-												"cursor-pointer",
-												locale === l.code && "bg-accent"
-											)}
-										>
-											<span className="mr-2">{l.flag}</span>
-											{l.name}
-										</DropdownMenuItem>
-									))}
-								</DropdownMenuContent>
-							</DropdownMenu>
-
 							<Button variant="ghost" size="sm" onClick={() => setLoginOpen(true)}>
 								{t("login")}
 							</Button>
@@ -191,32 +146,6 @@ export function SiteHeader() {
 						</div>
 
 						<div className="flex lg:hidden items-center gap-2">
-							<DropdownMenu>
-								<DropdownMenuTrigger asChild>
-									<button
-										type="button"
-										className="p-2 rounded-lg hover:bg-muted transition-colors"
-										aria-label={t("switchLanguage")}
-									>
-										<Globe className="h-5 w-5 text-muted-foreground" />
-									</button>
-								</DropdownMenuTrigger>
-								<DropdownMenuContent align="end" className="min-w-35">
-									{locales.map((l) => (
-										<DropdownMenuItem
-											key={l.code}
-											onClick={() => switchLocale(l.code)}
-											className={cn(
-												"cursor-pointer",
-												locale === l.code && "bg-accent"
-											)}
-										>
-											<span className="mr-2">{l.flag}</span>
-											{l.name}
-										</DropdownMenuItem>
-									))}
-								</DropdownMenuContent>
-							</DropdownMenu>
 							<button
 								type="button"
 								onClick={toggleTheme}

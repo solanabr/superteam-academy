@@ -1,8 +1,3 @@
-/**
- * Compliance Monitoring Component
- * Implements regulatory compliance monitoring and reporting
- */
-
 "use client";
 
 import { useState, useEffect } from "react";

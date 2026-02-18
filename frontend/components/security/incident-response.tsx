@@ -1,8 +1,3 @@
-/**
- * Incident Response Component
- * Implements incident detection, response, and management system
- */
-
 "use client";
 
 import { useState, useEffect } from "react";

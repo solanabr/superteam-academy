@@ -1,8 +1,3 @@
-/**
- * Security Automation Component
- * Implements automated security responses and workflow orchestration
- */
-
 "use client";
 
 import { useState, useEffect } from "react";

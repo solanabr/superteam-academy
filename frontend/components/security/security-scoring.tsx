@@ -1,8 +1,3 @@
-/**
- * Security Scoring Component
- * Implements dynamic security scoring and risk assessment
- */
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -12,35 +7,35 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
 } from "@/components/ui/table";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
-    Shield,
-    TrendingUp,
-    TrendingDown,
-    AlertTriangle,
-    CheckCircle,
-    XCircle,
-    Star,
-    StarHalf,
-    Award,
-    Target,
-    Users,
-    Activity,
-    Eye,
+	Shield,
+	TrendingUp,
+	TrendingDown,
+	AlertTriangle,
+	CheckCircle,
+	XCircle,
+	Star,
+	StarHalf,
+	Award,
+	Target,
+	Users,
+	Activity,
+	Eye,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 

@@ -15,16 +15,16 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
-    Code,
-    Users,
-    Trophy,
-    Timer,
-    GitBranch,
-    Award,
-    Star,
-    GitCommit,
-    GitPullRequest,
-    AlertTriangle,
+	Code,
+	Users,
+	Trophy,
+	Timer,
+	GitBranch,
+	Award,
+	Star,
+	GitCommit,
+	GitPullRequest,
+	AlertTriangle,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { format } from "date-fns";

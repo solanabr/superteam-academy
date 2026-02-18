@@ -1,8 +1,3 @@
-/**
- * Anomaly Detection Component
- * Implements real-time anomaly detection with machine learning algorithms
- */
-
 "use client";
 
 import { useState, useEffect } from "react";
