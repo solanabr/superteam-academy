@@ -1,12 +1,13 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
+// @ts-ignore
 import { OnchainAcademy } from "../target/types/onchain_academy";
 import { PublicKey } from "@solana/web3.js";
 import {
-  TOKEN_2022_PROGRAM_ID,
-  getAssociatedTokenAddressSync,
-  createAssociatedTokenAccountInstruction,
-  getAccount,
+	TOKEN_2022_PROGRAM_ID,
+	getAssociatedTokenAddressSync,
+	createAssociatedTokenAccountInstruction,
+	getAccount,
 } from "@solana/spl-token";
 
 const provider = anchor.AnchorProvider.env();

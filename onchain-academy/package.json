@@ -13,7 +13,8 @@
 		"@metaplex-foundation/umi-bundle-defaults": "^1.5.1",
 		"@metaplex-foundation/umi-web3js-adapters": "^1.5.1",
 		"@solana/spl-token": "^0.4.9",
-		"@solana/web3.js": "^1.98.0"
+		"@solana/web3.js": "^1.98.0",
+		"arweave": "^1.15.7"
 	},
 	"devDependencies": {
 		"@types/bn.js": "^5.1.0",

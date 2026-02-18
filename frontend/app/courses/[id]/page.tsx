@@ -17,19 +17,23 @@ import { CoursePrerequisites } from "@/components/courses/course-prerequisites";
 import { CourseCertificate } from "@/components/courses/course-certificate";
 import { CourseEnrollment } from "@/components/courses/course-enrollment";
 import { CourseProgress } from "@/components/courses/course-progress";
+import { getCourseById, getCourseReviews } from "@/lib/cms";
+import { getAcademyClient } from "@/lib/academy";
+import { mapCourseToDetail } from "@/lib/course-data";
 
 interface CourseDetailPageProps {
-	params: {
+	params: Promise<{
 		id: string;
-	};
-	searchParams: {
+	}>;
+	searchParams?: Promise<{
 		tab?: string;
-	};
+	}>;
 }
 
 export async function generateMetadata({ params }: CourseDetailPageProps): Promise<Metadata> {
 	// This would fetch course data from CMS/API
-	const course = await getCourse(params.id);
+	const { id } = await params;
+	const course = await getCourse(id);
 
 	return {
 		title: `${course.title} | Superteam Academy`,
@@ -43,13 +47,14 @@ export async function generateMetadata({ params }: CourseDetailPageProps): Promi
 }
 
 export default async function CourseDetailPage({ params, searchParams }: CourseDetailPageProps) {
+	const { id } = await params;
+	const resolvedSearchParams = await searchParams;
+	const activeTab = resolvedSearchParams?.tab || "overview";
+
 	return (
 		<div className="min-h-screen bg-background">
 			<Suspense fallback={<CourseDetailSkeleton />}>
-				<CourseDetailContent
-					courseId={params.id}
-					activeTab={searchParams.tab || "overview"}
-				/>
+				<CourseDetailContent courseId={id} activeTab={activeTab} />
 			</Suspense>
 		</div>
 	);
@@ -256,208 +261,33 @@ function CourseDetailSkeleton() {
 	);
 }
 
-// Mock data - replace with actual API call
-type CourseLessonItem = {
-	id: string;
-	title: string;
-	duration: string;
-	type: "video" | "interactive" | "quiz" | "reading";
-	completed: boolean;
-};
-
 async function getCourse(id: string) {
-	// This would be replaced with actual CMS/API call
-	const mockCourse = {
-		id,
-		title: "Introduction to Blockchain Technology",
-		description:
-			"Master the fundamentals of blockchain technology, from basic concepts to advanced implementations. This comprehensive course covers everything you need to know to start building on blockchain platforms.",
-		shortDescription:
-			"Learn blockchain fundamentals and start building decentralized applications.",
-		category: "blockchain",
-		level: "beginner",
-		duration: "8 weeks",
-		rating: 4.8,
-		reviewCount: 1247,
-		students: 15_420,
-		instructor: {
-			name: "Dr. Sarah Chen",
-			title: "Blockchain Researcher & Educator",
-			avatar: "/instructors/sarah-chen.jpg",
-			bio: "PhD in Computer Science with 10+ years of experience in blockchain research and education.",
-			courses: 12,
-			students: 45_000,
-			rating: 4.9,
-			socialLinks: {
-				twitter: "@sarahchen",
-				linkedin: "sarahchen",
-				website: "sarahchen.dev",
-			},
-		},
-		image: "/courses/blockchain-intro.jpg",
-		videoPreview: "/courses/blockchain-intro-preview.mp4",
-		tags: ["blockchain", "cryptography", "decentralization", "smart-contracts"],
-		xpReward: 2500,
-		price: 0,
-		enrolled: false,
-		progress: {
-			percentage: 0,
-			completedLessons: 0,
-			totalLessons: 11,
-			timeSpent: "0 min",
-			streak: 0,
-			xpEarned: 0,
-			xpTotal: 2500,
-			estimatedCompletion: "8 weeks",
-			lastActivity: "",
-		},
-		certificate: {
-			title: "Blockchain Fundamentals Certificate",
-			issuer: "Superteam Academy",
-			type: "completion",
-			verifiable: true,
-		},
-		learningObjectives: [
-			"Understand blockchain fundamentals and consensus mechanisms",
-			"Learn cryptographic principles used in blockchain",
-			"Explore different blockchain platforms and their use cases",
-			"Build your first decentralized application",
-			"Understand smart contract development basics",
-		],
-		requirements: [
-			"Basic programming knowledge",
-			"Understanding of computer science fundamentals",
-			"No prior blockchain experience required",
-		],
-		skills: [
-			"Blockchain Architecture",
-			"Cryptography",
-			"Smart Contracts",
-			"DApp Development",
-			"Web3 Integration",
-		],
-		modules: [
-			{
-				id: "1",
-				title: "Blockchain Basics",
-				description: "Introduction to blockchain technology and its core concepts",
-				duration: "2 hours",
-				lessons: 5,
-				completed: false,
-				lessonsList: [
-					{
-						id: "1-1",
-						title: "What is Blockchain?",
-						duration: "15 min",
-						type: "video",
-						completed: false,
-					},
-					{
-						id: "1-2",
-						title: "How Blockchain Works",
-						duration: "20 min",
-						type: "video",
-						completed: false,
-					},
-					{
-						id: "1-3",
-						title: "Consensus Mechanisms",
-						duration: "25 min",
-						type: "video",
-						completed: false,
-					},
-					{
-						id: "1-4",
-						title: "Cryptographic Foundations",
-						duration: "30 min",
-						type: "interactive",
-						completed: false,
-					},
-					{
-						id: "1-5",
-						title: "Module Quiz",
-						duration: "15 min",
-						type: "quiz",
-						completed: false,
-					},
-				] satisfies CourseLessonItem[],
-			},
-			{
-				id: "2",
-				title: "Smart Contracts",
-				description: "Learn about smart contracts and their applications",
-				duration: "3 hours",
-				lessons: 6,
-				completed: false,
-				lessonsList: [
-					{
-						id: "2-1",
-						title: "Introduction to Smart Contracts",
-						duration: "20 min",
-						type: "video",
-						completed: false,
-					},
-					{
-						id: "2-2",
-						title: "Solidity Basics",
-						duration: "35 min",
-						type: "video",
-						completed: false,
-					},
-					{
-						id: "2-3",
-						title: "Writing Your First Contract",
-						duration: "45 min",
-						type: "interactive",
-						completed: false,
-					},
-					{
-						id: "2-4",
-						title: "Testing Smart Contracts",
-						duration: "30 min",
-						type: "video",
-						completed: false,
-					},
-					{
-						id: "2-5",
-						title: "Security Best Practices",
-						duration: "25 min",
-						type: "video",
-						completed: false,
-					},
-					{
-						id: "2-6",
-						title: "Smart Contract Quiz",
-						duration: "15 min",
-						type: "quiz",
-						completed: false,
-					},
-				] satisfies CourseLessonItem[],
-			},
-		],
-		reviews: [
-			{
-				id: "1",
-				user: { name: "Alex Johnson", avatar: "/users/alex.jpg" },
-				rating: 5,
-				date: "2024-01-15",
-				comment: "Excellent course! The instructor explains complex concepts very clearly.",
-				helpful: 24,
-			},
-			{
-				id: "2",
-				user: { name: "Maria Garcia", avatar: "/users/maria.jpg" },
-				rating: 4,
-				date: "2024-01-10",
-				comment: "Great content, but some sections could be more detailed.",
-				helpful: 18,
-			},
-		],
-		prerequisites: [
-			{ id: "1", title: "Basic Programming", completed: true },
-			{ id: "2", title: "Computer Science Fundamentals", completed: false },
-		],
-	};
+	const academyClient = getAcademyClient();
+	const [cmsCourse, onchainCourse, onchainCourses, reviews] = await Promise.all([
+		getCourseById(id),
+		academyClient.fetchCourse(id),
+		academyClient.fetchAllCourses(),
+		getCourseReviews(id),
+	]);
 
-	return mockCourse;
+	let prerequisiteLabel: string | null = null;
+	const prerequisite = onchainCourse?.prerequisite ?? null;
+	if (prerequisite) {
+		const prereq = onchainCourses.find((course) =>
+			course.pubkey.equals(prerequisite)
+		);
+		prerequisiteLabel = prereq?.account.courseId ?? prerequisite.toBase58();
+	}
+
+	return mapCourseToDetail(id, cmsCourse, {
+		...(onchainCourse
+			? {
+				xpPerLesson: onchainCourse.xpPerLesson,
+				lessonCount: onchainCourse.lessonCount,
+				trackId: onchainCourse.trackId,
+				trackLevel: onchainCourse.trackLevel,
+			}
+			: {}),
+		...(prerequisiteLabel ? { prerequisiteLabel } : {}),
+	}, { reviews });
 }

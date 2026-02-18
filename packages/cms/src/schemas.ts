@@ -40,6 +40,11 @@ export type Course = SanityDocument & {
 	published: boolean;
 	xpReward: number;
 	track?: string;
+	onchainStatus?: "queued" | "running" | "succeeded" | "failed" | "draft";
+	arweaveTxId?: string;
+	coursePda?: string;
+	createSignature?: string;
+	lastSyncError?: string;
 	modules?: Module[];
 };
 

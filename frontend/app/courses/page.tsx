@@ -3,21 +3,16 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Search, LayoutGrid, List, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CourseGrid } from "@/components/courses/course-grid";
 import { CourseList } from "@/components/courses/course-list";
+import { CoursesFilters } from "@/components/courses/courses-filters";
 import { Pagination } from "@/components/ui/pagination";
-import { getCoursesCMS, isSanityConfigured } from "@/lib/cms";
+import { getCoursesCMS, isSanityConfigured, resolveCourseImageUrl } from "@/lib/cms";
+import { FRONTEND_SEED_COURSES } from "@superteam/cms";
 import { getTranslations } from "next-intl/server";
+
 export const metadata: Metadata = {
 	title: "Catalog | Superteam Academy",
 	description:
@@ -34,21 +29,6 @@ interface CoursesPageProps {
 		page?: string;
 	}>;
 }
-
-const CATEGORIES = [
-	"all",
-	"solana",
-	"anchor",
-	"defi",
-	"nft",
-	"security",
-	"frontend",
-	"token",
-] as const;
-
-const LEVELS = ["all", "beginner", "intermediate", "advanced"] as const;
-
-const SORTS = ["popular", "newest", "xp", "duration"] as const;
 
 export default async function CoursesPage({ searchParams }: CoursesPageProps) {
 	const {
@@ -79,54 +59,7 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
 			<div className="sticky top-16 z-30 border-b border-border/60 bg-background/80 backdrop-blur-xl">
 				<div className="mx-auto px-4 sm:px-6 py-3">
 					<div className="flex flex-col lg:flex-row gap-3 items-start lg:items-center">
-						<div className="relative flex-1 max-w-sm w-full">
-							<Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-							<Input
-								placeholder={t("search.placeholder")}
-								className="pl-9 h-9 bg-muted/50 border-border/60 rounded-lg"
-								defaultValue={q}
-							/>
-						</div>
-
-						<div className="flex items-center gap-2 flex-wrap">
-							<Select defaultValue={category}>
-								<SelectTrigger className="h-9 w-32.5 text-sm bg-muted/50 border-border/60 rounded-lg">
-									<SelectValue />
-								</SelectTrigger>
-								<SelectContent>
-									{CATEGORIES.map((c) => (
-										<SelectItem key={c} value={c}>
-											{t(`categories.${c}`)}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
-
-							<Select defaultValue={level}>
-								<SelectTrigger className="h-9 w-30 text-sm bg-muted/50 border-border/60 rounded-lg">
-									<SelectValue />
-								</SelectTrigger>
-								<SelectContent>
-									{LEVELS.map((l) => (
-										<SelectItem key={l} value={l}>
-											{t(`levels.${l}`)}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
-
-							<Select defaultValue={sort}>
-								<SelectTrigger className="h-9 w-32.5 text-sm bg-muted/50 border-border/60 rounded-lg">
-									<SelectValue />
-								</SelectTrigger>
-								<SelectContent>
-									{SORTS.map((s) => (
-										<SelectItem key={s} value={s}>
-											{t(`sortOptions.${s}`)}
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
+						<CoursesFilters q={q} category={category} level={level} sort={sort} />
 
 							<div className="h-5 w-px bg-border/60 hidden lg:block" />
 
@@ -157,7 +90,6 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
 								</a>
 							</div>
 						</div>
-					</div>
 
 					{hasFilters && (
 						<div className="flex items-center gap-2 mt-3 flex-wrap">
@@ -340,11 +272,11 @@ function CoursesSkeleton({ view }: { view: string }) {
 
 async function getCourses(searchParams: Awaited<CoursesPageProps["searchParams"]>) {
 	// When Sanity is configured, fetch from CMS; otherwise use seed data
-	let baseCourses: typeof SEED_COURSES;
+	let baseCourses: typeof FRONTEND_SEED_COURSES;
 	if (isSanityConfigured) {
 		const cmsCourses = await getCoursesCMS();
 		baseCourses = cmsCourses.map((c) => ({
-			id: c._id,
+			id: c.slug?.current ?? c._id,
 			title: c.title,
 			description: c.description ?? "",
 			category: c.track ?? "solana",
@@ -352,16 +284,16 @@ async function getCourses(searchParams: Awaited<CoursesPageProps["searchParams"]
 			duration: c.duration ?? "",
 			students: 0,
 			instructor: "",
-			image: "",
+			image: resolveCourseImageUrl(c.image, 960, 540) ?? "/courses/default.jpg",
 			tags: [c.track ?? "solana"],
 			xpReward: c.xpReward,
 			price: 0,
 			featured: false,
 			gradient: "from-green to-forest",
 		}));
-		if (baseCourses.length === 0) baseCourses = SEED_COURSES;
+		if (baseCourses.length === 0) baseCourses = FRONTEND_SEED_COURSES;
 	} else {
-		baseCourses = SEED_COURSES;
+		baseCourses = FRONTEND_SEED_COURSES;
 	}
 
 	let filtered = [...baseCourses];
@@ -396,108 +328,3 @@ async function getCourses(searchParams: Awaited<CoursesPageProps["searchParams"]
 
 	return filtered;
 }
-
-const SEED_COURSES = [
-	{
-		id: "1",
-		title: "Introduction to Solana",
-		description:
-			"Learn how Solana works: accounts, transactions, programs, and the runtime model.",
-		category: "solana",
-		level: "beginner" as const,
-		duration: "3 hours",
-		students: 2450,
-		instructor: "Dr. Sarah Chen",
-		image: "/courses/blockchain-intro.jpg",
-		tags: ["solana", "blockchain", "fundamentals"],
-		xpReward: 500,
-		price: 0,
-		featured: true,
-		gradient: "from-green to-forest",
-	},
-	{
-		id: "2",
-		title: "Anchor Framework Deep Dive",
-		description:
-			"Build, test, and deploy Solana programs using Anchor with real-world examples.",
-		category: "anchor",
-		level: "intermediate" as const,
-		duration: "10 hours",
-		students: 1280,
-		instructor: "Mike Johnson",
-		image: "/courses/solidity.jpg",
-		tags: ["anchor", "rust", "programs"],
-		xpReward: 1200,
-		price: 0,
-		featured: false,
-		gradient: "from-forest to-dark",
-	},
-	{
-		id: "3",
-		title: "DeFi Protocol Engineering",
-		description:
-			"Design and implement AMMs, lending protocols, and yield strategies on Solana.",
-		category: "defi",
-		level: "advanced" as const,
-		duration: "16 hours",
-		students: 890,
-		instructor: "Alex Rivera",
-		image: "/courses/defi.jpg",
-		tags: ["defi", "protocols", "amm"],
-		xpReward: 2000,
-		price: 0,
-		featured: true,
-		gradient: "from-gold via-amber-500 to-gold",
-	},
-	{
-		id: "4",
-		title: "Token-2022 & Extensions",
-		description:
-			"Master the Token Extensions program: transfer fees, metadata, confidential transfers.",
-		category: "token",
-		level: "intermediate" as const,
-		duration: "6 hours",
-		students: 720,
-		instructor: "Maria Santos",
-		image: "/courses/token.jpg",
-		tags: ["token-2022", "extensions", "spl"],
-		xpReward: 800,
-		price: 0,
-		featured: false,
-		gradient: "from-green/80 to-green",
-	},
-	{
-		id: "5",
-		title: "Smart Contract Security",
-		description:
-			"Identify vulnerabilities, write fuzz tests, and audit Solana programs professionally.",
-		category: "security",
-		level: "advanced" as const,
-		duration: "12 hours",
-		students: 560,
-		instructor: "James Wu",
-		image: "/courses/security.jpg",
-		tags: ["security", "auditing", "fuzzing"],
-		xpReward: 1500,
-		price: 0,
-		featured: true,
-		gradient: "from-dark to-forest",
-	},
-	{
-		id: "6",
-		title: "Web3 Frontend with Next.js",
-		description:
-			"Build production dApp frontends: wallet adapters, transaction UX, and real-time data.",
-		category: "frontend",
-		level: "beginner" as const,
-		duration: "8 hours",
-		students: 1100,
-		instructor: "Lisa Park",
-		image: "/courses/frontend.jpg",
-		tags: ["nextjs", "react", "wallet-adapter"],
-		xpReward: 700,
-		price: 0,
-		featured: false,
-		gradient: "from-gold/80 to-forest",
-	},
-];

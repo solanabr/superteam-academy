@@ -13,7 +13,12 @@ export const courseFields = /* groq */ `
   image,
   published,
   xpReward,
-  track
+  track,
+  onchainStatus,
+  arweaveTxId,
+  coursePda,
+  createSignature,
+  lastSyncError
 `;
 
 export const moduleFields = /* groq */ `

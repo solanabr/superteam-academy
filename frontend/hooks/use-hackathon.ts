@@ -60,7 +60,7 @@ interface LeaderboardEntry {
 	votes: number;
 }
 
-export function useHackathon(hackathonId: string, _userId: string) {
+export function useHackathon(hackathonId: string, userId: string) {
 	const [hackathon, setHackathon] = useState<Hackathon | null>(null);
 	const [teams, setTeams] = useState<Team[]>([]);
 	const [submissions, setSubmissions] = useState<Submission[]>([]);
@@ -69,92 +69,79 @@ export function useHackathon(hackathonId: string, _userId: string) {
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 
+	const hydrate = useCallback(
+		(payload: {
+			hackathon: Omit<Hackathon, "startDate" | "endDate"> & {
+				startDate: string;
+				endDate: string;
+			};
+			teams: Team[];
+			submissions: Array<Omit<Submission, "submittedAt" | "team"> & { teamId: string; submittedAt: string }>;
+			leaderboard: LeaderboardEntry[];
+		}) => {
+			setHackathon({
+				...payload.hackathon,
+				startDate: new Date(payload.hackathon.startDate),
+				endDate: new Date(payload.hackathon.endDate),
+			});
+			setTeams(payload.teams);
+			setSubmissions(
+				payload.submissions.map((submission) => ({
+					id: submission.id,
+					team: {
+						id: submission.teamId,
+						name:
+							payload.teams.find((team) => team.id === submission.teamId)?.name ??
+							"Team",
+					},
+					project: submission.project,
+					submittedAt: new Date(submission.submittedAt),
+					votes: submission.votes,
+				})),
+			);
+			setLeaderboard(payload.leaderboard);
+		},
+		[],
+	);
+
 	const loadHackathon = useCallback(async () => {
 		try {
 			setLoading(true);
-			// Mock data - in real app, this would come from API
-			const mockHackathon: Hackathon = {
-				id: hackathonId || "hackathon-2024",
-				name: "Superteam Solana Hackathon",
-				description: "Build the future of Web3 education on Solana",
-				status: "active",
-				startDate: new Date("2024-02-01"),
-				endDate: new Date("2024-02-15"),
-				rules: [
-					"All code must be open source",
-					"Projects must use Solana blockchain",
-					"Teams can have 2-4 members",
-					"Submissions must include working demo",
-				],
-				prizes: [
-					{ position: "1st", amount: "5000 USDC", description: "Grand Prize" },
-					{ position: "2nd", amount: "3000 USDC", description: "Runner Up" },
-					{ position: "3rd", amount: "1000 USDC", description: "Third Place" },
-				],
-				participants: 150,
+			const response = await fetch("/api/platform/hackathon", {
+				method: "GET",
+				cache: "no-store",
+			});
+			if (!response.ok) {
+				throw new Error("Unable to load hackathon");
+			}
+			const payload = (await response.json()) as {
+				hackathon: Omit<Hackathon, "startDate" | "endDate"> & {
+					startDate: string;
+					endDate: string;
+				};
+				teams: Team[];
+				submissions: Array<
+					Omit<Submission, "submittedAt" | "team"> & {
+						teamId: string;
+						submittedAt: string;
+					}
+				>;
+				leaderboard: LeaderboardEntry[];
 			};
 
-			const mockTeams: Team[] = [
-				{
-					id: "team-1",
-					name: "Solana Wizards",
-					members: [
-						{ id: "user-1", name: "Alice" },
-						{ id: "user-2", name: "Bob" },
-					],
-					maxSize: 4,
-					project: {
-						name: "DeFi Learning Platform",
-						description: "Interactive DeFi education platform",
-						techStack: ["React", "Solana", "Rust"],
-						repoUrl: "https://github.com/team/solana-defi-learn",
-					},
-				},
-				{
-					id: "team-2",
-					name: "NFT Masters",
-					members: [
-						{ id: "user-3", name: "Charlie" },
-						{ id: "user-4", name: "Diana" },
-						{ id: "user-5", name: "Eve" },
-					],
-					maxSize: 4,
-				},
-			];
-
-			const mockSubmissions: Submission[] = [
-				{
-					id: "sub-1",
-					team: { id: "team-1", name: "Solana Wizards" },
-					project: {
-						name: "DeFi Learning Platform",
-						description: "Interactive DeFi education platform with gamification",
-						techStack: ["React", "Solana", "Rust", "TypeScript"],
-						repoUrl: "https://github.com/team/solana-defi-learn",
-					},
-					submittedAt: new Date("2024-02-14T10:00:00"),
-					votes: 45,
-				},
-			];
-
-			const mockLeaderboard: LeaderboardEntry[] = [
-				{ teamId: "team-1", teamName: "Solana Wizards", members: 2, votes: 45 },
-				{ teamId: "team-2", teamName: "NFT Masters", members: 3, votes: 32 },
-				{ teamId: "team-3", teamName: "Blockchain Builders", members: 4, votes: 28 },
-			];
-
-			setHackathon(mockHackathon);
-			setTeams(mockTeams);
-			setSubmissions(mockSubmissions);
-			setLeaderboard(mockLeaderboard);
-			setUserTeam(mockTeams[0]); // Mock user is in first team
+			hydrate(payload);
+			setUserTeam(
+				payload.teams.find((team) => team.members.some((member) => member.id === userId)) ??
+					payload.teams[0] ??
+					null,
+			);
 			setError(null);
 		} catch (_err) {
 			setError("Failed to load hackathon data");
 		} finally {
 			setLoading(false);
 		}
-	}, [hackathonId]);
+	}, [hydrate, userId]);
 
 	useEffect(() => {
 		if (hackathonId) {
@@ -163,21 +150,52 @@ export function useHackathon(hackathonId: string, _userId: string) {
 	}, [hackathonId, loadHackathon]);
 
 	const joinHackathon = async () => {
-		// Mock implementation
-		// In real app, this would call API to join hackathon
+		if (!userId) return;
+		await fetch("/api/platform/hackathon", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({
+				action: "createTeam",
+				name: "New Team",
+				userId,
+				userName: `User ${userId.slice(0, 6)}`,
+			}),
+		});
+		await loadHackathon();
 	};
 
-	const createTeam = async () => {
-		// Mock implementation
-		// In real app, this would open team creation modal
+	const createTeam = async (name = "New Team") => {
+		if (!userId) return;
+		await fetch("/api/platform/hackathon", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({
+				action: "createTeam",
+				name,
+				userId,
+				userName: `User ${userId.slice(0, 6)}`,
+			}),
+		});
+		await loadHackathon();
 	};
 
 	const joinTeam = async (teamId: string) => {
-		// Mock implementation
-		const team = teams.find((t) => t.id === teamId);
-		if (team) {
-			setUserTeam(team);
-		}
+		if (!userId) return;
+		await fetch("/api/platform/hackathon", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({
+				action: "joinTeam",
+				teamId,
+				userId,
+				userName: `User ${userId.slice(0, 6)}`,
+			}),
+		});
+		await loadHackathon();
+		setUserTeam((prev) => {
+			if (prev?.id === teamId) return prev;
+			return teams.find((team) => team.id === teamId) ?? prev ?? null;
+		});
 	};
 
 	const submitProject = async (projectData: {
@@ -186,38 +204,22 @@ export function useHackathon(hackathonId: string, _userId: string) {
 		techStack: string[];
 		repoUrl: string;
 	}) => {
-		// Mock implementation
-		if (userTeam) {
-			const newSubmission: Submission = {
-				id: `sub-${Date.now()}`,
-				team: { id: userTeam.id, name: userTeam.name },
-				project: projectData,
-				submittedAt: new Date(),
-				votes: 0,
-			};
-			setSubmissions((prev) => [...prev, newSubmission]);
-			setTeams((prev) =>
-				prev.map((team) =>
-					team.id === userTeam.id ? { ...team, project: projectData } : team
-				)
-			);
-		}
+		if (!userTeam) return;
+		await fetch("/api/platform/hackathon", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ action: "submitProject", teamId: userTeam.id, project: projectData }),
+		});
+		await loadHackathon();
 	};
 
 	const voteOnProject = async (submissionId: string) => {
-		// Mock implementation
-		setSubmissions((prev) =>
-			prev.map((sub) => (sub.id === submissionId ? { ...sub, votes: sub.votes + 1 } : sub))
-		);
-		setLeaderboard((prev) =>
-			prev
-				.map((entry) =>
-					entry.teamId === submissions.find((s) => s.id === submissionId)?.team.id
-						? { ...entry, votes: entry.votes + 1 }
-						: entry
-				)
-				.sort((a, b) => b.votes - a.votes)
-		);
+		await fetch("/api/platform/hackathon", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ action: "vote", submissionId }),
+		});
+		await loadHackathon();
 	};
 
 	const getTimeRemaining = () => {

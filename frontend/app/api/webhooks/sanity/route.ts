@@ -1,6 +1,12 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { revalidateTag, revalidatePath } from "next/cache";
 import { headers } from "next/headers";
+import { createSanityClient } from "@superteam/cms";
+import {
+    enqueueCourseSyncJob,
+    getCourseSyncJobs,
+    processCourseSyncQueue,
+} from "@/lib/course-sync-jobs";
 
 // Sanity webhook secret for verification
 const SANITY_WEBHOOK_SECRET = process.env.SANITY_WEBHOOK_SECRET;
@@ -13,7 +19,7 @@ function getWebhookSecret(): string {
 }
 
 // Verify webhook signature from Sanity
-async function verifyWebhook(request: NextRequest): Promise<boolean> {
+async function verifyWebhook(requestBody: string): Promise<boolean> {
 	try {
 		const headersList = await headers();
 		const signature = headersList.get("sanity-webhook-signature");
@@ -22,10 +28,8 @@ async function verifyWebhook(request: NextRequest): Promise<boolean> {
 			return false;
 		}
 
-		// Get raw body for signature verification
-		const body = await request.text();
 		const encoder = new TextEncoder();
-		const data = encoder.encode(body);
+		const data = encoder.encode(requestBody);
 		const key = encoder.encode(getWebhookSecret());
 
 		// Import crypto for HMAC verification
@@ -44,16 +48,28 @@ async function verifyWebhook(request: NextRequest): Promise<boolean> {
 
 export async function POST(request: NextRequest) {
 	try {
+		const rawBody = await request.text();
+
 		// Verify webhook authenticity
-		const isValid = await verifyWebhook(request);
+		const isValid = await verifyWebhook(rawBody);
 		if (!isValid) {
 			console.error("Invalid webhook signature");
 			return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
 		}
 
 		// Parse webhook payload
-		const body = await request.json();
+		const body = JSON.parse(rawBody) as {
+			_type?: string;
+			operation?: string;
+			documentId?: string;
+		};
 		const { _type, operation, documentId } = body;
+		if (!_type || !operation || !documentId) {
+			return NextResponse.json({
+				success: true,
+				message: "Webhook payload missing required fields",
+			});
+		}
 
 		// Handle different content types and operations
 		switch (_type) {
@@ -74,10 +90,12 @@ export async function POST(request: NextRequest) {
 		revalidatePath("/courses");
 
 		// Revalidate specific content pages if documentId is provided
-		if (documentId) {
-			revalidatePath(`/courses/${documentId}`);
-			revalidateTag(`course-${documentId}`, "default");
-			revalidateTag(`content-${documentId}`, "default");
+		revalidatePath(`/courses/${documentId}`);
+		revalidateTag(`course-${documentId}`, "default");
+		revalidateTag(`content-${documentId}`, "default");
+
+		if (_type === "course" && (operation === "create" || operation === "update")) {
+			await triggerOnchainCourseSync(documentId);
 		}
 
 		return NextResponse.json({
@@ -88,6 +106,27 @@ export async function POST(request: NextRequest) {
 		console.error("Webhook processing error:", error);
 		return NextResponse.json({ error: "Internal server error" }, { status: 500 });
 	}
+}
+
+async function triggerOnchainCourseSync(documentId: string) {
+	if (process.env.ENABLE_SANITY_ONCHAIN_SYNC !== "true") return;
+
+	const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
+	const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET ?? "production";
+	const token = process.env.SANITY_API_READ_TOKEN;
+	if (!projectId || !token) return;
+
+	const client = createSanityClient({ projectId, dataset, token, useCdn: false });
+	const doc = await client.fetch<{ slug?: { current?: string } } | null>(
+		`*[_type == "course" && _id == $id][0]{ slug }`,
+		{ id: documentId },
+	);
+
+	const courseId = doc?.slug?.current;
+	if (!courseId) return;
+
+	await enqueueCourseSyncJob(documentId, courseId);
+	void processCourseSyncQueue();
 }
 
 // Handle course content updates
@@ -130,8 +169,10 @@ async function handleLessonUpdate(_operation: string, documentId: string) {
 
 // Health check endpoint for webhook monitoring
 export async function GET() {
+	const jobs = await getCourseSyncJobs(20);
 	return NextResponse.json({
 		status: "ok",
 		message: "Sanity webhook endpoint is active",
+		jobs,
 	});
 }

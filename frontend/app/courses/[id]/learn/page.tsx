@@ -17,6 +17,9 @@ import { LessonNotes } from "@/components/lessons/lesson-notes";
 import { LessonQuiz } from "@/components/lessons/lesson-quiz";
 import { LessonResources } from "@/components/lessons/lesson-resources";
 import { getTranslations } from "next-intl/server";
+import { getCourseById } from "@/lib/cms";
+import { getAcademyClient } from "@/lib/academy";
+import { mapCourseToDetail } from "@/lib/course-data";
 
 interface LessonPageProps {
 	params: {
@@ -33,7 +36,7 @@ export async function generateMetadata({
 }: LessonPageProps): Promise<Metadata> {
 	// This would fetch course and lesson data from CMS/API
 	const course = await getCourse(params.id);
-	const lesson = await getLesson(searchParams.lesson || "1-1");
+	const lesson = await getLesson(params.id, searchParams.lesson || "1-1");
 
 	return {
 		title: `${lesson.title} | ${course.title} | Superteam Academy`,
@@ -62,7 +65,7 @@ async function LessonContentWrapper({
 	lessonId: string;
 }) {
 	const course = await getCourse(courseId);
-	const lesson = await getLesson(lessonId);
+	const lesson = await getLesson(courseId, lessonId);
 	const progress = await getLessonProgress(courseId, lessonId);
 	const t = await getTranslations("learn");
 
@@ -256,118 +259,185 @@ function handleLessonSelect(_lessonId: string) {
 	// ignored
 }
 
-// Mock data - replace with actual API calls
 async function getCourse(id: string) {
+	const academyClient = getAcademyClient();
+	const [cmsCourse, onchainCourse, onchainCourses] = await Promise.all([
+		getCourseById(id),
+		academyClient.fetchCourse(id),
+		academyClient.fetchAllCourses(),
+	]);
+
+	let prerequisiteLabel: string | null = null;
+	const prerequisite = onchainCourse?.prerequisite ?? null;
+	if (prerequisite) {
+		const prereq = onchainCourses.find((course) =>
+			course.pubkey.equals(prerequisite)
+		);
+		prerequisiteLabel = prereq?.account.courseId ?? prerequisite.toBase58();
+	}
+
+	const onchainMeta = {
+		...(onchainCourse
+			? {
+				xpPerLesson: onchainCourse.xpPerLesson,
+				lessonCount: onchainCourse.lessonCount,
+				trackId: onchainCourse.trackId,
+				trackLevel: onchainCourse.trackLevel,
+			}
+			: {}),
+		...(prerequisiteLabel ? { prerequisiteLabel } : {}),
+	};
+
+	const detail = mapCourseToDetail(id, cmsCourse, onchainMeta);
+
 	return {
-		id,
-		title: "Introduction to Blockchain Technology",
-		modules: [
-			{
-				id: "1",
-				title: "Blockchain Basics",
-				lessons: [
-					{ id: "1-1", title: "What is Blockchain?", completed: true },
-					{ id: "1-2", title: "How Blockchain Works", completed: true },
-					{ id: "1-3", title: "Consensus Mechanisms", completed: false },
-					{ id: "1-4", title: "Cryptographic Foundations", completed: false },
-					{ id: "1-5", title: "Module Quiz", completed: false },
-				],
-			},
-			{
-				id: "2",
-				title: "Smart Contracts",
-				lessons: [
-					{ id: "2-1", title: "Introduction to Smart Contracts", completed: false },
-					{ id: "2-2", title: "Solidity Basics", completed: false },
-				],
-			},
-		],
+		id: detail.id,
+		title: detail.title,
+		modules: detail.modules.map((module) => ({
+			id: module.id,
+			title: module.title,
+			lessons: module.lessonsList.map((lesson) => ({
+				id: lesson.id,
+				title: lesson.title,
+				completed: lesson.completed,
+			})),
+		})),
 	};
 }
 
-async function getLesson(id: string) {
+async function getLesson(courseId: string, lessonId: string) {
+	const cmsCourse = await getCourseById(courseId);
+	const lessons =
+		cmsCourse?.modules?.flatMap((module) =>
+			(module.lessons ?? []).map((lesson) => ({
+				id: lesson.slug?.current ?? lesson._id,
+				title: lesson.title,
+				duration: lesson.duration ?? "10 min",
+				content: lesson.content,
+			}))
+		) ?? [];
+
+	const lesson =
+		lessons.find((entry) => entry.id === lessonId) ??
+		lessons[0] ?? {
+			id: lessonId,
+			title: "Lesson",
+			duration: "10 min",
+			content: [],
+		};
+	const links = extractLinksFromBlocks(lesson.content ?? []);
+	const videoUrl =
+		links.find((link) => isVideoUrl(link.href))?.href ??
+		links.find((link) => link.href.endsWith(".mp4"))?.href ??
+		"/videos/placeholder.mp4";
+	const resources = links
+		.filter((link) => link.href !== videoUrl)
+		.map((link, index) => ({
+			id: `${lesson.id}-resource-${index + 1}`,
+			title: link.title,
+			description: `Referenced in lesson content`,
+			type: inferResourceType(link.href),
+			url: link.href,
+			tags: ["lesson"],
+		}));
+
+	const sections = (lesson.content ?? []).map((block, index) => ({
+		id: `${lesson.id}-section-${index + 1}`,
+		title: block.style === "h2" ? "Section" : `Part ${index + 1}`,
+		type: "text" as const,
+		content: (block.children ?? []).map((child) => child.text).join(" "),
+		order: index + 1,
+	}));
+
 	return {
-		id,
-		title: "What is Blockchain?",
-		description: "Learn the fundamental concepts of blockchain technology",
-		duration: "15 min",
-		videoUrl: "/videos/blockchain-intro.mp4",
-		content: {
-			sections: [
-				{
-					id: "s1",
-					title: "Introduction",
-					type: "text" as const,
-					content:
-						"Blockchain is a distributed ledger technology that maintains a continuously growing list of records, called blocks, which are linked and secured using cryptography.",
-					order: 1,
-				},
-				{
-					id: "s2",
-					title: "Key Characteristics",
-					type: "text" as const,
-					content:
-						"Decentralized - No central authority. Immutable - Records cannot be altered. Transparent - All transactions are visible. Secure - Cryptographic protection.",
-					order: 2,
-				},
-				{
-					id: "s3",
-					title: "Block Structure Example",
-					type: "code" as const,
-					content: `// Simple blockchain block structure\nconst block = {\n  index: 1,\n  timestamp: Date.now(),\n  data: 'Hello Blockchain',\n  previousHash: '0000',\n  hash: calculateHash()\n}`,
-					order: 3,
-				},
-			],
-		},
+		id: lesson.id,
+		title: lesson.title,
+		description: `Lesson from ${cmsCourse?.title ?? "course"}`,
+		duration: lesson.duration,
+		videoUrl,
+		content: { sections },
 		quiz: {
-			id: "quiz-1",
-			title: "Blockchain Basics Quiz",
-			questions: [
-				{
-					id: "q1",
-					question: "What is blockchain?",
-					options: [
-						"A type of cryptocurrency",
-						"A distributed ledger technology",
-						"A programming language",
-						"A database system",
-					],
-					correctAnswer: 1,
-				},
-			],
+			id: `${lesson.id}-quiz`,
+			title: `${lesson.title} Quiz`,
+			questions: [],
 			passingScore: 70,
 		},
-		resources: [
-			{
-				id: "r1",
-				title: "Blockchain Whitepaper",
-				description: "The original Bitcoin whitepaper by Satoshi Nakamoto",
-				type: "document" as const,
-				url: "/resources/blockchain-whitepaper.pdf",
-			},
-			{
-				id: "r2",
-				title: "Additional Reading",
-				description: "Comprehensive blockchain overview on Wikipedia",
-				type: "link" as const,
-				url: "https://en.wikipedia.org/wiki/Blockchain",
-			},
-		],
+		resources,
 	};
 }
 
-async function getLessonProgress(_courseId: string, _lessonId: string) {
+type SanityLessonBlock = {
+	children?: Array<{ text?: string; marks?: string[] }>;
+	markDefs?: Array<{ _key?: string; _type?: string; href?: string }>;
+};
+
+function extractLinksFromBlocks(blocks: SanityLessonBlock[]) {
+	const links: Array<{ href: string; title: string }> = [];
+
+	for (const block of blocks) {
+		const defs = block.markDefs ?? [];
+		const children = block.children ?? [];
+
+		for (const child of children) {
+			const markKeys = child.marks ?? [];
+			for (const markKey of markKeys) {
+				const def = defs.find((item) => item._key === markKey && item._type === "link");
+				const href = def?.href;
+				if (!href) continue;
+
+				const title =
+					child.text?.trim() ||
+					safeHostname(href) ||
+					"Resource";
+				if (!links.some((link) => link.href === href)) {
+					links.push({ href, title });
+				}
+			}
+		}
+	}
+
+	return links;
+}
+
+function safeHostname(href: string) {
+	try {
+		return new URL(href).hostname.replace("www.", "");
+	} catch {
+		return "";
+	}
+}
+
+function isVideoUrl(url: string) {
+	return /youtube\.com|youtu\.be|vimeo\.com|\.mp4($|\?)/i.test(url);
+}
+
+function inferResourceType(url: string): "article" | "video" | "document" | "link" | "book" | "tool" {
+	if (isVideoUrl(url)) return "video";
+	if (/\.pdf($|\?)/i.test(url)) return "document";
+	if (/docs\.|notion\.so|readme|guide|article|blog/i.test(url)) return "article";
+	if (/book|ebook|handbook/i.test(url)) return "book";
+	if (/github\.com|figma\.com|tool|app\./i.test(url)) return "tool";
+	return "link";
+}
+
+async function getLessonProgress(courseId: string, lessonId: string) {
+	const academyClient = getAcademyClient();
+	const onchainCourse = await academyClient.fetchCourse(courseId);
+	const lessonCount = onchainCourse?.lessonCount ?? 1;
+	const lessonIndex = Number.parseInt(lessonId.split("-").at(-1) ?? "1", 10) - 1;
+	const completedLessons = Math.min(Math.max(lessonIndex, 0), lessonCount);
+
 	return {
-		completedLessons: 5,
-		totalLessons: 12,
-		timeSpent: 45,
-		xpEarned: 250,
-		xpRequired: 500,
+		completedLessons,
+		totalLessons: lessonCount,
+		timeSpent: completedLessons * 10,
+		xpEarned: completedLessons * (onchainCourse?.xpPerLesson ?? 0),
+		xpRequired: lessonCount * (onchainCourse?.xpPerLesson ?? 0),
 		achievements: [
 			{
-				id: "first-lesson",
-				title: "First Steps",
-				description: "Complete your first lesson",
+				id: "course-progress",
+				title: "Course Progress",
+				description: "Complete lessons to progress through this course",
 				unlocked: true,
 				icon: "book",
 			},

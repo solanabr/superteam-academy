@@ -8,28 +8,57 @@ import { ActivityFeed } from "@/components/profile/activity-feed";
 import { LevelProgress } from "@/components/profile/level-progress";
 import { StreakTracker } from "@/components/profile/streak-tracker";
 import { CourseProgress } from "@/components/profile/course-progress";
+import { PublicKey } from "@solana/web3.js";
+import { findToken2022ATA } from "@superteam/solana";
+import { fetchIndexedLearnerActivity, getAcademyClient } from "@/lib/academy";
+import { cookies } from "next/headers";
 
 export const metadata: Metadata = {
 	title: "Profile | Superteam Academy",
 	description: "View your learning progress, achievements, and statistics",
 };
 
-export default async function ProfilePage() {
+interface ProfilePageProps {
+	searchParams?: Promise<{ wallet?: string }>;
+}
+
+export default async function ProfilePage({ searchParams }: ProfilePageProps) {
+	const params = searchParams ? await searchParams : undefined;
+	const cookieStore = await cookies();
+	const rawLinkedAccounts = cookieStore.get("linked_accounts")?.value;
+	const linkedWallet = safeGetLinkedWallet(rawLinkedAccounts);
+
+	const wallet = params?.wallet ?? linkedWallet ?? process.env.NEXT_PUBLIC_DEFAULT_PROFILE_WALLET;
+
 	return (
 		<div className="min-h-screen bg-background">
 			<Suspense fallback={<ProfileSkeleton />}>
-				<ProfileContent />
+				<ProfileContent {...(wallet ? { walletAddress: wallet } : {})} />
 			</Suspense>
 		</div>
 	);
 }
 
-async function ProfileContent() {
-	const user = await getCurrentUser();
-	const stats = await getUserStats();
-	const achievements = await getUserAchievements();
-	const activity = await getUserActivity();
-	const courses = await getUserCourses();
+function safeGetLinkedWallet(rawLinkedAccounts: string | undefined) {
+	if (!rawLinkedAccounts) return undefined;
+
+	try {
+		const accounts = JSON.parse(rawLinkedAccounts) as Array<{
+			provider?: string;
+			identifier?: string;
+		}>;
+
+		return accounts.find(
+			(account) => account.provider === "wallet" && typeof account.identifier === "string",
+		)?.identifier;
+	} catch {
+		return undefined;
+	}
+}
+
+async function ProfileContent({ walletAddress }: { walletAddress?: string }) {
+	const profile = await getDynamicProfile(walletAddress);
+	const { user, stats, achievements, activity, courses } = profile;
 
 	return (
 		<div className="mx-auto px-4 sm:px-6 py-8 space-y-6">
@@ -90,263 +119,209 @@ function ProfileSkeleton() {
 	);
 }
 
-// Mock data - replace with actual API calls
-async function getCurrentUser() {
-	return {
-		id: "user-1",
-		name: "João Silva",
-		email: "joao@example.com",
-		avatar: "/avatars/joao.jpg",
-		bio: "Solana developer passionate about Web3 education",
-		joinDate: "2024-01-15",
-		location: "São Paulo, Brazil",
-		github: "https://github.com/joaosilva",
-		linkedin: "https://linkedin.com/in/joaosilva",
-		walletAddress: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAs",
-	};
-}
+async function getDynamicProfile(walletAddress?: string) {
+	if (!walletAddress) {
+		return {
+			user: {
+				id: "anonymous",
+				name: "Connect Wallet",
+				email: "",
+				avatar: "",
+				bio: "Add ?wallet=<public-key> to view on-chain profile data.",
+				joinDate: new Date().toISOString(),
+				location: "",
+				github: "",
+				linkedin: "",
+				walletAddress: "11111111111111111111111111111111",
+			},
+			stats: emptyStats(),
+			achievements: [],
+			activity: [],
+			courses: [],
+		};
+	}
 
-async function getUserStats() {
-	return {
-		level: 12,
-		xp: 2450,
-		totalXP: 2450,
-		nextLevelXP: 550,
+	const learner = new PublicKey(walletAddress);
+	const academyClient = getAcademyClient();
+	const [config, allCourses, enrollments] = await Promise.all([
+		academyClient.fetchConfig(),
+		academyClient.fetchAllCourses(),
+		academyClient.fetchEnrollmentsForLearner(learner),
+	]);
+	const indexedActivity = await fetchIndexedLearnerActivity(learner, 20);
+
+	const xpMint = config?.xpMint;
+	const xpBalance = xpMint
+		? (await academyClient.fetchXpBalance(findToken2022ATA(learner, xpMint))) ?? 0n
+		: 0n;
+
+	const coursesByKey = new Map(allCourses.map((course) => [course.pubkey.toBase58(), course.account]));
+	const enrolledCourses = enrollments.map((entry) => {
+		const course = coursesByKey.get(entry.account.course.toBase58());
+		const completedLessons = countBits(entry.account.lessonFlags);
+		const totalLessons = course?.lessonCount ?? 0;
+		return {
+			id: course?.courseId ?? entry.pubkey.toBase58(),
+			title: course?.courseId ?? "Course",
+			description: "On-chain course progress",
+			thumbnail: "/courses/default.jpg",
+			instructor: { name: "Superteam", avatar: "" },
+			progress: {
+				completedLessons,
+				totalLessons,
+				completedChallenges: 0,
+				totalChallenges: 0,
+				timeSpent: completedLessons * 10,
+				...(entry.account.enrolledAt
+					? { lastAccessed: new Date(entry.account.enrolledAt * 1000).toISOString() }
+					: {}),
+			},
+			status: entry.account.completedAt
+				? ("completed" as const)
+				: completedLessons > 0
+					? ("in_progress" as const)
+					: ("not_started" as const),
+			enrollmentDate: entry.account.enrolledAt
+				? new Date(entry.account.enrolledAt * 1000).toISOString()
+				: new Date().toISOString(),
+			...(entry.account.completedAt
+				? { completionDate: new Date(entry.account.completedAt * 1000).toISOString() }
+				: {}),
+			certificateEarned: Boolean(entry.account.credentialAsset),
+		};
+	});
+
+	const completedCourses = enrolledCourses.filter((course) => course.status === "completed").length;
+	const inProgressCourses = enrolledCourses.filter((course) => course.status === "in_progress").length;
+	const totalLessonsCompleted = enrolledCourses.reduce(
+		(sum, course) => sum + course.progress.completedLessons,
+		0,
+	);
+	const totalLessons = enrolledCourses.reduce((sum, course) => sum + course.progress.totalLessons, 0);
+
+	const currentXP = Number(xpBalance);
+	const level = Math.max(1, Math.floor(currentXP / 500) + 1);
+	const baseXP = (level - 1) * 500;
+	const xpIntoLevel = currentXP - baseXP;
+
+	const stats = {
+		level,
+		xp: xpIntoLevel,
+		totalXP: currentXP,
+		nextLevelXP: 500,
 		streak: {
-			current: 7,
-			longest: 23,
-			lastActivity: "2024-02-16T10:30:00Z",
-			streakHistory: [
-				{ date: "2024-02-16", activities: 2, maintained: true },
-				{ date: "2024-02-15", activities: 3, maintained: true },
-				{ date: "2024-02-14", activities: 1, maintained: true },
-				{ date: "2024-02-13", activities: 2, maintained: true },
-				{ date: "2024-02-12", activities: 1, maintained: true },
-				{ date: "2024-02-11", activities: 2, maintained: true },
-				{ date: "2024-02-10", activities: 1, maintained: true },
-			],
-			weeklyGoal: 14,
-			thisWeekActivities: 12,
+			current: 0,
+			longest: 0,
+			lastActivity: "",
+			streakHistory: [],
+			weeklyGoal: 7,
+			thisWeekActivities: 0,
 		},
 		courses: {
-			completed: 3,
-			enrolled: 5,
-			inProgress: 2,
+			completed: completedCourses,
+			enrolled: enrolledCourses.length,
+			inProgress: inProgressCourses,
 		},
 		lessons: {
-			completed: 32,
-			total: 45,
+			completed: totalLessonsCompleted,
+			total: totalLessons,
 		},
 		challenges: {
-			completed: 22,
-			total: 28,
+			completed: 0,
+			total: 0,
 		},
 		achievements: {
-			unlocked: 15,
-			total: 50,
+			unlocked: completedCourses,
+			total: Math.max(10, allCourses.length),
 		},
 		timeSpent: {
-			today: 120,
-			thisWeek: 840,
-			total: 1240,
+			today: 0,
+			thisWeek: 0,
+			total: totalLessonsCompleted * 10,
 		},
-		levelHistory: [
-			{ level: 10, achievedAt: "2024-02-01T00:00:00Z", xpAtLevel: 1800 },
-			{ level: 11, achievedAt: "2024-02-08T00:00:00Z", xpAtLevel: 2100 },
-		],
+		levelHistory: [],
 	};
-}
 
-async function getUserAchievements() {
-	return [
+	const achievements = [
 		{
-			id: "first-lesson",
-			title: "First Steps",
-			description: "Complete your first lesson",
+			id: "onchain-learner",
+			title: "On-Chain Learner",
+			description: "Enrolled in at least one on-chain course",
 			icon: "book",
 			category: "learning" as const,
 			rarity: "common" as const,
-			xpReward: 50,
-			unlockedAt: "2024-01-16T00:00:00Z",
-		},
-		{
-			id: "streak-7",
-			title: "Week Warrior",
-			description: "Maintain a 7-day learning streak",
-			icon: "flame",
-			category: "streak" as const,
-			rarity: "rare" as const,
-			xpReward: 150,
-			unlockedAt: "2024-02-10T00:00:00Z",
-		},
-		{
-			id: "first-challenge",
-			title: "Code Master",
-			description: "Complete your first coding challenge",
-			icon: "target",
-			category: "completion" as const,
-			rarity: "rare" as const,
-			xpReward: 200,
-			unlockedAt: "2024-01-20T00:00:00Z",
-		},
-		{
-			id: "course-complete",
-			title: "Course Conqueror",
-			description: "Complete an entire course",
-			icon: "trophy",
-			category: "completion" as const,
-			rarity: "epic" as const,
-			xpReward: 500,
-			unlockedAt: "2024-02-01T00:00:00Z",
-		},
-		{
-			id: "speed-demon",
-			title: "Speed Demon",
-			description: "Complete a challenge in under 5 minutes",
-			icon: "zap",
-			category: "special" as const,
-			rarity: "legendary" as const,
-			xpReward: 300,
-			progress: { current: 0, total: 1 },
-		},
-		{
-			id: "social-butterfly",
-			title: "Social Butterfly",
-			description: "Help 10 other learners",
-			icon: "users",
-			category: "social" as const,
-			rarity: "epic" as const,
-			xpReward: 250,
-			progress: { current: 3, total: 10 },
+			xpReward: 0,
+			...(enrolledCourses.length > 0
+				? { unlockedAt: new Date().toISOString() }
+				: { progress: { current: 0, total: 1 } }),
 		},
 	];
+
+	const activity = indexedActivity.map((entry) => ({
+		id: entry.signature,
+		type: "lesson_completed" as const,
+		title: `On-chain ${entry.instruction}`,
+		description: `Transaction ${entry.signature.slice(0, 8)}...${entry.signature.slice(-8)}`,
+		timestamp: entry.timestamp,
+		xpGained: 0,
+		metadata: {
+			lessonName: `${entry.instruction} @ slot ${entry.slot}`,
+		},
+	}));
+
+	return {
+		user: {
+			id: learner.toBase58(),
+			name: `Learner ${learner.toBase58().slice(0, 6)}`,
+			email: "",
+			avatar: "",
+			bio: "On-chain academy profile",
+			joinDate: enrollments[0]
+				? new Date(enrollments[0].account.enrolledAt * 1000).toISOString()
+				: new Date().toISOString(),
+			location: "",
+			github: "",
+			linkedin: "",
+			walletAddress: learner.toBase58(),
+		},
+		stats,
+		achievements,
+		activity,
+		courses: enrolledCourses,
+	};
 }
 
-async function getUserActivity() {
-	return [
-		{
-			id: "1",
-			type: "lesson_completed" as const,
-			title: 'Completed "Smart Contract Basics"',
-			description: "Finished lesson 3.2 in Solana Fundamentals course",
-			timestamp: "2024-02-16T10:30:00Z",
-			xpGained: 25,
-			metadata: {
-				courseName: "Solana Fundamentals",
-				lessonName: "Smart Contract Basics",
-			},
+function emptyStats() {
+	return {
+		level: 1,
+		xp: 0,
+		totalXP: 0,
+		nextLevelXP: 500,
+		streak: {
+			current: 0,
+			longest: 0,
+			lastActivity: "",
+			streakHistory: [],
+			weeklyGoal: 7,
+			thisWeekActivities: 0,
 		},
-		{
-			id: "2",
-			type: "challenge_completed" as const,
-			title: 'Solved "Counter Program" challenge',
-			description: "Successfully implemented a basic counter program",
-			timestamp: "2024-02-16T09:15:00Z",
-			xpGained: 100,
-			metadata: {
-				challengeName: "Counter Program",
-			},
-		},
-		{
-			id: "3",
-			type: "achievement" as const,
-			title: 'Unlocked "Code Master" achievement',
-			description: "Earned the Code Master achievement for completing advanced challenges",
-			timestamp: "2024-02-15T16:45:00Z",
-			xpGained: 200,
-			metadata: {
-				achievementName: "Code Master",
-			},
-		},
-		{
-			id: "4",
-			type: "streak" as const,
-			title: "7-day learning streak maintained",
-			description: "Continued your learning journey for 7 consecutive days",
-			timestamp: "2024-02-15T08:00:00Z",
-			xpGained: 50,
-			metadata: {
-				streakDays: 7,
-			},
-		},
-		{
-			id: "5",
-			type: "level_up" as const,
-			title: "Reached Level 12",
-			description: "Congratulations on reaching a new level!",
-			timestamp: "2024-02-14T14:20:00Z",
-			xpGained: 0,
-			metadata: {
-				level: 12,
-			},
-		},
-	];
+		courses: { completed: 0, enrolled: 0, inProgress: 0 },
+		lessons: { completed: 0, total: 0 },
+		challenges: { completed: 0, total: 0 },
+		achievements: { unlocked: 0, total: 10 },
+		timeSpent: { today: 0, thisWeek: 0, total: 0 },
+		levelHistory: [],
+	};
 }
 
-async function getUserCourses() {
-	return [
-		{
-			id: "solana-fundamentals",
-			title: "Solana Fundamentals",
-			description: "Learn the basics of Solana blockchain development",
-			thumbnail: "/courses/solana-fundamentals.jpg",
-			instructor: {
-				name: "Maria Santos",
-				avatar: "/instructors/maria.jpg",
-			},
-			progress: {
-				completedLessons: 8,
-				totalLessons: 12,
-				completedChallenges: 5,
-				totalChallenges: 8,
-				timeSpent: 480,
-				lastAccessed: "2024-02-16T10:30:00Z",
-			},
-			status: "in_progress" as const,
-			enrollmentDate: "2024-01-15",
-			rating: 4.8,
-		},
-		{
-			id: "anchor-masterclass",
-			title: "Anchor Framework Masterclass",
-			description: "Master the Anchor framework for Solana programs",
-			thumbnail: "/courses/anchor-masterclass.jpg",
-			instructor: {
-				name: "Carlos Rodriguez",
-				avatar: "/instructors/carlos.jpg",
-			},
-			progress: {
-				completedLessons: 15,
-				totalLessons: 15,
-				completedChallenges: 12,
-				totalChallenges: 12,
-				timeSpent: 720,
-				lastAccessed: "2024-02-10T16:00:00Z",
-			},
-			status: "completed" as const,
-			enrollmentDate: "2024-01-10",
-			completionDate: "2024-02-10",
-			certificateEarned: true,
-			rating: 5.0,
-		},
-		{
-			id: "web3-frontend",
-			title: "Web3 Frontend Development",
-			description: "Build modern Web3 applications with React and Solana",
-			thumbnail: "/courses/web3-frontend.jpg",
-			instructor: {
-				name: "Ana Costa",
-				avatar: "/instructors/ana.jpg",
-			},
-			progress: {
-				completedLessons: 0,
-				totalLessons: 10,
-				completedChallenges: 0,
-				totalChallenges: 6,
-				timeSpent: 0,
-			},
-			status: "not_started" as const,
-			enrollmentDate: "2024-02-01",
-		},
-	];
+function countBits(flags: [bigint, bigint, bigint, bigint]): number {
+	let total = 0;
+	for (const word of flags) {
+		let value = word;
+		while (value > 0n) {
+			total += Number(value & 1n);
+			value >>= 1n;
+		}
+	}
+	return total;
 }
