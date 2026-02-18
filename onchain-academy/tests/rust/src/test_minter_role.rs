@@ -1,7 +1,7 @@
 use crate::helpers::*;
 use anchor_lang::{AnchorDeserialize, AnchorSerialize};
 use solana_sdk::pubkey::Pubkey;
-use superteam_academy::state::{MinterRole, MAX_LABEL_LEN};
+use onchain_academy::state::{MinterRole, MAX_LABEL_LEN};
 
 #[test]
 fn minter_role_size_constant_is_correct() {
