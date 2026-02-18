@@ -51,7 +51,7 @@ export function LanguageSwitcher() {
 						onClick={() => switchLocale(l.code)}
 						className={cn("cursor-pointer", locale === l.code && "bg-accent")}
 					>
-						<span className="mr-2">{l.flag}</span>
+						{/* <span className="mr-2">{l.flag}</span> */}
 						{l.name}
 					</DropdownMenuItem>
 				))}
