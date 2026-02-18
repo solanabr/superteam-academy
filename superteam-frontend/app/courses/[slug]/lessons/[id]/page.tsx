@@ -35,6 +35,18 @@ export default async function LessonPage({
     snapshot = null;
   }
 
+  // If the cached snapshot says not enrolled, the cache may be stale
+  // (enrollment was just created client-side). Retry with a fresh RPC call.
+  if (!snapshot?.enrolledOnChain) {
+    try {
+      snapshot = await getCourseProgressSnapshot(user.walletAddress, slug, {
+        forceRefresh: true,
+      });
+    } catch {
+      snapshot = null;
+    }
+  }
+
   if (!snapshot?.enrolledOnChain) {
     redirect(`/courses/${slug}`);
   }

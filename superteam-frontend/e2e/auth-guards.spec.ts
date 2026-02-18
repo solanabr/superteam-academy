@@ -15,7 +15,9 @@ test.describe("Auth guards", () => {
       await page.goto(route);
       await page.waitForURL(/(\/|\/auth\/signin)/, { timeout: 10_000 });
       const url = new URL(page.url());
-      expect(url.pathname === "/" || url.pathname === "/auth/signin").toBe(true);
+      expect(url.pathname === "/" || url.pathname === "/auth/signin").toBe(
+        true,
+      );
     });
   }
 });

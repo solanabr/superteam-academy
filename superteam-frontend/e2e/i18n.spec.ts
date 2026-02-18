@@ -4,9 +4,11 @@ async function setLocaleCookie(
   page: import("@playwright/test").Page,
   locale: string,
 ) {
-  await page.context().addCookies([
-    { name: "locale", value: locale, domain: "localhost", path: "/" },
-  ]);
+  await page
+    .context()
+    .addCookies([
+      { name: "locale", value: locale, domain: "localhost", path: "/" },
+    ]);
 }
 
 test.describe("i18n: Spanish", () => {

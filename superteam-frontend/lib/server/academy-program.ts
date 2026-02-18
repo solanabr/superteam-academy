@@ -49,6 +49,13 @@ function cacheSet<T>(key: string, value: T, ttl = CACHE_TTL_MS): void {
 // Set of course IDs we already know exist on-chain (never expires within process)
 const knownCourses = new Set<string>();
 
+// Enrollment is a monotonic state — once confirmed on-chain, it should never
+// appear as "missing" due to stale cache.  This Set tracks every
+// (wallet, courseId) pair that we have seen exist so that a cached null
+// can be bypassed with a fresh RPC call.
+const knownEnrollments = new Set<string>();
+const NULL_ENROLLMENT_TTL_MS = 5_000; // short TTL for "not enrolled yet"
+
 function keypair(): string {
   return "[254,140,9,1,99,219,118,106,147,86,25,95,78,31,254,148,163,95,183,208,127,190,220,93,191,49,4,154,248,236,22,50,171,175,142,158,235,36,219,4,123,33,90,21,193,6,145,227,74,158,145,17,180,214,51,12,198,229,67,107,195,236,182,231]";
 }
@@ -268,8 +275,20 @@ export async function fetchEnrollment(
   courseId: string,
 ): Promise<any | null> {
   const cacheKey = `enrollment:${user.toBase58()}:${courseId}`;
+  const eKey = `${user.toBase58()}:${courseId}`;
   const cached = cacheGet<any | null>(cacheKey);
-  if (cached !== undefined) return cached;
+
+  if (cached !== undefined) {
+    // Positive cache hit — always trust
+    if (cached !== null) return cached;
+    // Cached null, but we previously confirmed this enrollment exists.
+    // Stale negative — bypass cache and do a fresh RPC call.
+    if (knownEnrollments.has(eKey)) {
+      rpcCache.delete(cacheKey);
+    } else {
+      return cached;
+    }
+  }
 
   try {
     const { connection } = getClient();
@@ -277,21 +296,26 @@ export async function fetchEnrollment(
     const enrollment = deriveEnrollmentPda(course, user);
     const info = await connection.getAccountInfo(enrollment);
     if (!info) {
-      cacheSet(cacheKey, null);
+      cacheSet(cacheKey, null, NULL_ENROLLMENT_TTL_MS);
       return null;
     }
     const result = {
       lessonsCompleted: decodeEnrollmentLessonsCompleted(info.data),
     };
+    knownEnrollments.add(eKey);
     cacheSet(cacheKey, result);
     return result;
   } catch (error: any) {
-    // Network errors - assume not enrolled (safe fallback)
     if (
       error?.message?.includes("fetch failed") ||
       error?.message?.includes("ECONNREFUSED") ||
       error?.code === "ENOTFOUND"
     ) {
+      // Network error: if enrollment was previously confirmed, return safe
+      // fallback instead of a false negative that would block lesson completion.
+      if (knownEnrollments.has(eKey)) {
+        return { lessonsCompleted: 0 };
+      }
       return null;
     }
     throw error;
@@ -329,6 +353,8 @@ export async function completeLessonOnChain(
     const sig = await sendAndConfirmTransaction(connection, tx, [backend], {
       commitment: "confirmed",
     });
+    // Lesson completed successfully → enrollment must exist
+    knownEnrollments.add(`${user.toBase58()}:${courseId}`);
     return sig;
   } catch (error: any) {
     // Network errors - rethrow with clearer message
@@ -508,6 +534,8 @@ export async function finalizeCourseOnChain(
     const sig = await sendAndConfirmTransaction(connection, tx, [backend], {
       commitment: "confirmed",
     });
+    // Course finalized successfully → enrollment must exist
+    knownEnrollments.add(`${user.toBase58()}:${courseId}`);
     return sig;
   } catch (error: any) {
     // Network errors - rethrow with clearer message

@@ -7,9 +7,13 @@ type NavTiming = {
   startTime: number;
 };
 
-async function getNavTiming(page: import("@playwright/test").Page): Promise<NavTiming> {
+async function getNavTiming(
+  page: import("@playwright/test").Page,
+): Promise<NavTiming> {
   return page.evaluate(() => {
-    const [entry] = performance.getEntriesByType("navigation") as PerformanceNavigationTiming[];
+    const [entry] = performance.getEntriesByType(
+      "navigation",
+    ) as PerformanceNavigationTiming[];
     return {
       domContentLoadedEventEnd: entry.domContentLoadedEventEnd,
       loadEventEnd: entry.loadEventEnd,
@@ -61,7 +65,9 @@ publicTest.describe("Performance: Bundle size", () => {
   publicTest("total JS transferred < 500KB", async ({ page }) => {
     await page.goto("/", { waitUntil: "load" });
     const totalJsBytes = await page.evaluate(() => {
-      const resources = performance.getEntriesByType("resource") as PerformanceResourceTiming[];
+      const resources = performance.getEntriesByType(
+        "resource",
+      ) as PerformanceResourceTiming[];
       return resources
         .filter((r) => r.initiatorType === "script" || r.name.endsWith(".js"))
         .reduce((sum, r) => sum + r.transferSize, 0);

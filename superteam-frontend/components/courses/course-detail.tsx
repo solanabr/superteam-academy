@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useWallet } from "@solana/wallet-adapter-react";
@@ -31,9 +32,46 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import type { Course } from "@/lib/course-catalog";
-import { sendEnrollCourse } from "@/lib/solana/enroll-course";
+import {
+  sendEnrollCourse,
+  checkEnrollmentExists,
+  ALREADY_ENROLLED,
+} from "@/lib/solana/enroll-course";
 import { ACADEMY_CLUSTER } from "@/lib/generated/academy-program";
-import { useOptimisticMutation } from "@/lib/hooks/use-optimistic-mutation";
+
+function enrollmentStorageKey(slug: string) {
+  return `enrolled:${slug}`;
+}
+
+function readEnrolledFromStorage(slug: string): boolean {
+  try {
+    return sessionStorage.getItem(enrollmentStorageKey(slug)) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function writeEnrolledToStorage(slug: string) {
+  try {
+    sessionStorage.setItem(enrollmentStorageKey(slug), "1");
+  } catch {}
+}
+
+async function refreshEnrollmentCache(slug: string): Promise<boolean> {
+  try {
+    const res = await fetch("/api/academy/enrollment/refresh", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ slug }),
+    });
+    if (res.ok) {
+      const data = (await res.json()) as { enrolled: boolean };
+      return data.enrolled;
+    }
+  } catch {}
+  return false;
+}
 
 const lessonIcons = {
   video: Play,
@@ -84,57 +122,119 @@ export function CourseDetail({
   const { publicKey, sendTransaction } = useWallet();
   const router = useRouter();
 
-  const toastId = "enroll-toast";
-  const {
-    state: enrolled,
-    mutate: enroll,
-    isPending: isEnrolling,
-  } = useOptimisticMutation<boolean, string>({
-    initialState: enrolledOnChain || course.progress > 0,
-    onMutate: () => true,
-    mutationFn: async () => {
-      if (!publicKey || !sendTransaction)
-        throw new Error("Connect a wallet to enroll.");
-      toast.loading(`Enrolling in ${course.title}...`, { id: toastId });
+  // Enrollment state: trust any positive signal (server, sessionStorage, or optimistic)
+  const [enrolled, setEnrolled] = useState(
+    enrolledOnChain || course.progress > 0,
+  );
+  const [isEnrolling, setIsEnrolling] = useState(false);
+  const enrollingRef = useRef(false);
 
-      const ensureResponse = await fetch("/api/academy/courses/ensure", {
+  // On mount: check sessionStorage for client-side enrollment evidence
+  useEffect(() => {
+    if (!enrolled && readEnrolledFromStorage(course.slug)) {
+      setEnrolled(true);
+    }
+  }, [course.slug, enrolled]);
+
+  // If the server prop upgrades to true (cache caught up), lock in
+  useEffect(() => {
+    if (enrolledOnChain || course.progress > 0) {
+      setEnrolled(true);
+    }
+  }, [enrolledOnChain, course.progress]);
+
+  const toastId = "enroll-toast";
+
+  const handleEnroll = useCallback(async () => {
+    if (enrollingRef.current) return;
+    if (!publicKey || !sendTransaction) {
+      toast.error("Connect a wallet to enroll.");
+      return;
+    }
+
+    enrollingRef.current = true;
+    setIsEnrolling(true);
+    setEnrolled(true); // optimistic
+    toast.loading(`Enrolling in ${course.title}...`, { id: toastId });
+
+    try {
+      // 1. Ensure course exists on-chain
+      const ensureRes = await fetch("/api/academy/courses/ensure", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ slug: course.slug }),
       });
-      if (!ensureResponse.ok) {
-        const payload = (await ensureResponse.json().catch(() => null)) as {
+      if (!ensureRes.ok) {
+        const payload = (await ensureRes.json().catch(() => null)) as {
           error?: string;
         } | null;
         throw new Error(payload?.error ?? "Failed to ensure course on-chain.");
       }
 
-      return sendEnrollCourse(
+      // 2. Send enrollment transaction (pre-checks for existing enrollment)
+      const sig = await sendEnrollCourse(
         sendTransaction,
         publicKey.toBase58(),
         course.slug,
       );
-    },
-    onSuccess: (sig) => {
-      const explorerUrl = `https://explorer.solana.com/tx/${sig}${ACADEMY_CLUSTER === "devnet" ? "?cluster=devnet" : ""}`;
-      toast.success("Enrolled!", {
-        id: toastId,
-        description: "You're now enrolled in this course.",
-        action: {
-          label: "View on Explorer",
-          onClick: () => window.open(explorerUrl, "_blank"),
-        },
-      });
+
+      // 3. Persist enrollment client-side so navigation doesn't lose state
+      writeEnrolledToStorage(course.slug);
+
+      // 4. Invalidate server-side cache so next page load gets fresh data
+      await refreshEnrollmentCache(course.slug);
+
+      // 5. Show success toast
+      if (sig === ALREADY_ENROLLED) {
+        toast.success("You're already enrolled!", {
+          id: toastId,
+          description: "Continue learning where you left off.",
+        });
+      } else {
+        const explorerUrl = `https://explorer.solana.com/tx/${sig}${ACADEMY_CLUSTER === "devnet" ? "?cluster=devnet" : ""}`;
+        toast.success("Enrolled!", {
+          id: toastId,
+          description: "You're now enrolled in this course.",
+          action: {
+            label: "View on Explorer",
+            onClick: () => window.open(explorerUrl, "_blank"),
+          },
+        });
+      }
+
       router.refresh();
-    },
-    onError: (error) => {
-      toast.error(error.message || "Enrollment failed.", {
-        id: toastId,
-        action: { label: "Retry", onClick: () => enroll() },
-      });
-    },
-  });
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : "Enrollment failed.";
+
+      // Before showing error, check if enrollment actually succeeded on-chain.
+      // This handles confirmation timeout — tx sent but confirmTransaction threw.
+      const actuallyEnrolled = await checkEnrollmentExists(
+        publicKey.toBase58(),
+        course.slug,
+      );
+
+      if (actuallyEnrolled) {
+        writeEnrolledToStorage(course.slug);
+        setEnrolled(true);
+        await refreshEnrollmentCache(course.slug);
+        toast.success("Enrolled!", {
+          id: toastId,
+          description: "You're now enrolled in this course.",
+        });
+        router.refresh();
+      } else {
+        setEnrolled(false);
+        toast.error(msg, {
+          id: toastId,
+          action: { label: "Retry", onClick: () => void handleEnroll() },
+        });
+      }
+    } finally {
+      setIsEnrolling(false);
+      enrollingRef.current = false;
+    }
+  }, [publicKey, sendTransaction, course.slug, course.title, router]);
 
   const totalLessons = course.modules.reduce(
     (acc, m) => acc + m.lessons.length,
@@ -271,7 +371,7 @@ export function CourseDetail({
                       </p>
                     </div>
                     <Button
-                      onClick={() => enroll()}
+                      onClick={() => void handleEnroll()}
                       disabled={isEnrolling}
                       className="w-full bg-primary text-primary-foreground hover:bg-primary/90 gap-2"
                     >

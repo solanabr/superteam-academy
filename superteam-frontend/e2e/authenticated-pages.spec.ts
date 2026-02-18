@@ -1,7 +1,9 @@
 import { test, expect } from "./fixtures/auth";
 
 test.describe("Courses (authenticated)", () => {
-  test("course catalog loads with cards", async ({ authenticatedPage: page }) => {
+  test("course catalog loads with cards", async ({
+    authenticatedPage: page,
+  }) => {
     await page.goto("/courses");
     await expect(page.locator("h1")).toContainText(/course/i);
     const cards = page.locator("[class*='card'], [class*='Card']");
@@ -43,7 +45,9 @@ test.describe("Leaderboard (authenticated)", () => {
     await page.waitForLoadState("networkidle");
     expect(page.url()).toContain("/leaderboard");
     // Leaderboard should have visible content
-    const content = page.locator("main, [class*='leaderboard'], table, [role='table']").first();
+    const content = page
+      .locator("main, [class*='leaderboard'], table, [role='table']")
+      .first();
     await expect(content).toBeVisible({ timeout: 15_000 });
   });
 });

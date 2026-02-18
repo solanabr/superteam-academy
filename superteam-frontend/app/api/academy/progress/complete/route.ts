@@ -58,7 +58,12 @@ export async function POST(request: Request) {
     );
   }
 
-  const enrollmentBefore = await fetchEnrollment(userPk, slug);
+  let enrollmentBefore = await fetchEnrollment(userPk, slug);
+  if (!enrollmentBefore) {
+    // Retry once with fresh RPC — cache may hold a stale null
+    invalidateEnrollmentCache(userPk, slug);
+    enrollmentBefore = await fetchEnrollment(userPk, slug);
+  }
   if (!enrollmentBefore) {
     return NextResponse.json(
       { error: "Enrollment is missing. Enroll in the course first." },

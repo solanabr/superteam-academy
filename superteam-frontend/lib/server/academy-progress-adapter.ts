@@ -8,6 +8,7 @@ import {
   deriveEnrollmentPda,
   ensureCourseOnChain,
   fetchEnrollment,
+  invalidateEnrollmentCache,
 } from "@/lib/server/academy-program";
 import { getCatalogCourseMeta } from "@/lib/server/academy-course-catalog";
 
@@ -46,6 +47,7 @@ function applyProgress(course: Course, completedLessons: number): Course {
 export async function getCourseProgressSnapshot(
   walletAddress: string,
   slug: string,
+  options?: { forceRefresh?: boolean },
 ): Promise<CourseProgressSnapshot | null> {
   const meta = getCatalogCourseMeta(slug);
   if (!meta) return null;
@@ -57,6 +59,12 @@ export async function getCourseProgressSnapshot(
   }
 
   const user = new PublicKey(walletAddress);
+
+  // If forceRefresh requested, clear stale cache first
+  if (options?.forceRefresh) {
+    invalidateEnrollmentCache(user, meta.slug);
+  }
+
   let enrollment: any = null;
   try {
     enrollment = await fetchEnrollment(user, meta.slug);
