@@ -35,7 +35,7 @@ export function CourseHero({ course }: CourseHeroProps) {
 	const t = useTranslations("courses");
 
 	return (
-		<div className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-background to-secondary/10">
+		<div className="relative overflow-hidden bg-linear-to-br from-primary/10 via-background to-secondary/10">
 			<div className="container mx-auto px-4 py-12">
 				<div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
 					<div className="space-y-6">
@@ -71,7 +71,9 @@ export function CourseHero({ course }: CourseHeroProps) {
 							<div className="flex items-center gap-2">
 								<Users className="h-5 w-5 text-muted-foreground" />
 								<span className="font-medium">
-									{t("hero.students", { count: course.students.toLocaleString() })}
+									{t("hero.students", {
+										count: course.students.toLocaleString(),
+									})}
 								</span>
 							</div>
 
@@ -87,7 +89,9 @@ export function CourseHero({ course }: CourseHeroProps) {
 						</div>
 
 						<div className="flex items-center gap-3">
-							<div className="text-sm text-muted-foreground">{t("hero.createdBy")}</div>
+							<div className="text-sm text-muted-foreground">
+								{t("hero.createdBy")}
+							</div>
 							<div className="font-medium">{course.instructor.name}</div>
 							<div className="text-sm text-muted-foreground">•</div>
 							<div className="text-sm text-muted-foreground">

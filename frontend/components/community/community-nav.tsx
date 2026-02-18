@@ -16,10 +16,7 @@ export function CommunityNav({ items }: CommunityNavProps) {
 			<div className="mx-auto px-4 sm:px-6">
 				<nav className="flex gap-1 overflow-x-auto scrollbar-none -mb-px">
 					{items.map((item) => {
-						const isActive =
-							item.href === "/community"
-								? pathname === "/community"
-								: pathname.startsWith(item.href);
+						const isActive = pathname.startsWith(item.href);
 
 						return (
 							<Link

@@ -184,7 +184,7 @@ export function AchievementUnlocking({
 						</div>
 
 						<div
-							className={`mx-auto w-24 h-24 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center shadow-lg animate-bounce ${getCategoryColor(achievement.category)}`}
+							className={`mx-auto w-24 h-24 rounded-full bg-linear-to-br from-yellow-400 to-orange-500 flex items-center justify-center shadow-lg animate-bounce ${getCategoryColor(achievement.category)}`}
 						>
 							{getCategoryIcon(achievement.category)}
 						</div>

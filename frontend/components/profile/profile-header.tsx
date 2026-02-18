@@ -50,7 +50,7 @@ export function ProfileHeader({ user, stats }: ProfileHeaderProps) {
 
 	return (
 		<div className="rounded-2xl border border-border/60 bg-card overflow-hidden">
-			<div className="h-24 bg-gradient-to-r from-forest via-green to-forest relative">
+			<div className="h-24 bg-linear-to-r from-forest via-green to-forest relative">
 				<div className="absolute inset-0 pattern-dots opacity-20" />
 			</div>
 

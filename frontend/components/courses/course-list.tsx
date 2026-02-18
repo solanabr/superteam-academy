@@ -50,7 +50,7 @@ export function CourseList({ courses }: CourseListProps) {
 						className="group flex gap-5 p-4 rounded-2xl bg-card border border-border/60 overflow-hidden hover:shadow-md hover:border-primary/30 transition-all duration-300"
 					>
 						<div
-							className={`relative w-28 h-20 flex-shrink-0 rounded-xl bg-gradient-to-br ${gradient} overflow-hidden`}
+							className={`relative w-28 h-20 shrink-0 rounded-xl bg-linear-to-br ${gradient} overflow-hidden`}
 						>
 							<div className="absolute inset-0 bg-black/5" />
 							{course.featured && (
@@ -95,13 +95,15 @@ export function CourseList({ courses }: CourseListProps) {
 									{course.students.toLocaleString()}
 								</span>
 								<span className="text-muted-foreground/60">&middot;</span>
-								<span>{course.price === 0 ? t("list.free") : `$${course.price}`}</span>
+								<span>
+									{course.price === 0 ? t("list.free") : `$${course.price}`}
+								</span>
 							</div>
 						</div>
 
-						<div className="hidden sm:flex items-center flex-shrink-0">
+						<div className="hidden sm:flex items-center shrink-0">
 							<span className="font-medium text-xs text-primary group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
-							{course.enrolled ? t("list.continue") : t("list.start")}
+								{course.enrolled ? t("list.continue") : t("list.start")}
 								<ArrowRight className="h-3 w-3" />
 							</span>
 						</div>

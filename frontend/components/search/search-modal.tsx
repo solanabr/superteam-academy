@@ -133,7 +133,7 @@ export function SearchModal({ open, onOpenChange }: SearchModalProps) {
 							className="flex items-center gap-3 w-full px-3 py-2 text-sm rounded-md hover:bg-accent transition-colors text-left"
 						>
 							<Search className="h-3.5 w-3.5 text-muted-foreground" />
-						{t("searchFor", { query })}
+							{t("searchFor", { query })}
 						</button>
 					)}
 				</div>

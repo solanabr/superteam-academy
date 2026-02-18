@@ -19,11 +19,11 @@ interface UserRankCardProps {
 
 export function UserRankCard({ userRank }: UserRankCardProps) {
 	return (
-		<div className="rounded-2xl bg-gradient-to-br from-forest via-green to-forest p-[1px]">
+		<div className="rounded-2xl bg-linear-to-br from-forest via-green to-forest p-[1px]">
 			<div className="rounded-2xl bg-card p-6 h-full">
 				<div className="flex flex-col md:flex-row md:items-center gap-6">
 					<div className="flex items-center gap-4">
-						<div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-gold/20 to-gold/5 flex items-center justify-center">
+						<div className="w-16 h-16 rounded-2xl bg-linear-to-br from-gold/20 to-gold/5 flex items-center justify-center">
 							<Trophy className="h-7 w-7 text-gold" />
 						</div>
 						<div>

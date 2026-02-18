@@ -61,7 +61,9 @@ export function CourseInstructor({ instructor }: CourseInstructorProps) {
 								<div className="flex items-center gap-2">
 									<BookOpen className="h-4 w-4 text-muted-foreground" />
 									<span className="font-medium">{instructor.courses}</span>
-									<span className="text-sm text-muted-foreground">{t("instructor.courses")}</span>
+									<span className="text-sm text-muted-foreground">
+										{t("instructor.courses")}
+									</span>
 								</div>
 
 								<div className="flex items-center gap-2">
@@ -69,7 +71,9 @@ export function CourseInstructor({ instructor }: CourseInstructorProps) {
 									<span className="font-medium">
 										{instructor.students.toLocaleString()}
 									</span>
-									<span className="text-sm text-muted-foreground">{t("instructor.students")}</span>
+									<span className="text-sm text-muted-foreground">
+										{t("instructor.students")}
+									</span>
 								</div>
 							</div>
 
@@ -127,23 +131,31 @@ export function CourseInstructor({ instructor }: CourseInstructorProps) {
 								<div className="text-2xl font-bold text-primary">
 									{instructor.courses}
 								</div>
-								<div className="text-sm text-muted-foreground">{t("instructor.coursesCreated")}</div>
+								<div className="text-sm text-muted-foreground">
+									{t("instructor.coursesCreated")}
+								</div>
 							</div>
 							<div className="text-center p-3 bg-muted/50 rounded-lg">
 								<div className="text-2xl font-bold text-primary">
 									{instructor.students.toLocaleString()}
 								</div>
-								<div className="text-sm text-muted-foreground">{t("instructor.studentsTaught")}</div>
+								<div className="text-sm text-muted-foreground">
+									{t("instructor.studentsTaught")}
+								</div>
 							</div>
 							<div className="text-center p-3 bg-muted/50 rounded-lg">
 								<div className="text-2xl font-bold text-primary">
 									{instructor.rating}
 								</div>
-								<div className="text-sm text-muted-foreground">{t("instructor.averageRating")}</div>
+								<div className="text-sm text-muted-foreground">
+									{t("instructor.averageRating")}
+								</div>
 							</div>
 							<div className="text-center p-3 bg-muted/50 rounded-lg">
 								<Award className="h-8 w-8 text-primary mx-auto mb-1" />
-								<div className="text-sm text-muted-foreground">{t("instructor.topInstructor")}</div>
+								<div className="text-sm text-muted-foreground">
+									{t("instructor.topInstructor")}
+								</div>
 							</div>
 						</div>
 					</div>
@@ -156,7 +168,7 @@ export function CourseInstructor({ instructor }: CourseInstructorProps) {
 						</h3>
 						<div className="space-y-3">
 							<div className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-								<div className="w-12 h-12 bg-muted rounded flex-shrink-0" />
+								<div className="w-12 h-12 bg-muted rounded shrink-0" />
 								<div className="flex-1 min-w-0">
 									<h4 className="font-medium truncate">
 										Advanced DeFi Strategies
@@ -166,29 +178,31 @@ export function CourseInstructor({ instructor }: CourseInstructorProps) {
 									</p>
 								</div>
 								<Button variant="outline" size="sm">
-										{t("instructor.viewCourse")}
-									</Button>
-								</div>
+									{t("instructor.viewCourse")}
+								</Button>
+							</div>
 
-								<div className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-									<div className="w-12 h-12 bg-muted rounded flex-shrink-0" />
-									<div className="flex-1 min-w-0">
-										<h4 className="font-medium truncate">
-											Smart Contract Security
-										</h4>
-										<p className="text-sm text-muted-foreground">
-											4.8 • 1,890 students
-										</p>
-									</div>
-									<Button variant="outline" size="sm">
-										{t("instructor.viewCourse")}
+							<div className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+								<div className="w-12 h-12 bg-muted rounded shrink-0" />
+								<div className="flex-1 min-w-0">
+									<h4 className="font-medium truncate">
+										Smart Contract Security
+									</h4>
+									<p className="text-sm text-muted-foreground">
+										4.8 • 1,890 students
+									</p>
+								</div>
+								<Button variant="outline" size="sm">
+									{t("instructor.viewCourse")}
 								</Button>
 							</div>
 						</div>
 
 						<div className="mt-4">
 							<Button variant="outline" className="w-full">
-								{t("instructor.viewAllCourses", { name: instructor.name.split(" ")[0] })}
+								{t("instructor.viewAllCourses", {
+									name: instructor.name.split(" ")[0],
+								})}
 							</Button>
 						</div>
 					</div>

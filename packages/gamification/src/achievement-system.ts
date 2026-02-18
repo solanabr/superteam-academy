@@ -345,7 +345,7 @@ export class AchievementSystem {
 		}>;
 	} {
 		this.initializeUser(userId);
-		const userAchievements = this.userProgress.get(userId)!;
+		const userAchievements = this.userProgress.get(userId);
 		const unlockedAchievements: Achievement[] = [];
 		const progressUpdates: Array<{
 			achievementId: string;
@@ -357,7 +357,7 @@ export class AchievementSystem {
 		this.achievements.forEach((achievement) => {
 			if (!achievement.isActive) return;
 
-			const userAchievement = userAchievements.get(achievement.id);
+			const userAchievement = userAchievements?.get(achievement.id);
 			if (!userAchievement || userAchievement.isCompleted) return;
 
 			// Check if this achievement uses the updated metric
@@ -401,8 +401,8 @@ export class AchievementSystem {
 		const userAchievements = this.getUserAchievements(userId);
 		return userAchievements
 			.filter((ua) => ua.isCompleted)
-			.map((ua) => this.achievements.get(ua.achievementId)!)
-			.filter(Boolean);
+			.map((ua) => this.achievements.get(ua.achievementId))
+			.filter(Boolean) as Achievement[];
 	}
 
 	// Get achievement progress for user
@@ -498,8 +498,8 @@ export class AchievementSystem {
 			.filter((ua) => ua.isCompleted && ua.completedAt)
 			.sort((a, b) => (b.completedAt?.getTime() ?? 0) - (a.completedAt?.getTime() ?? 0))
 			.slice(0, 10)
-			.map((ua) => this.achievements.get(ua.achievementId)!)
-			.filter(Boolean);
+			.map((ua) => this.achievements.get(ua.achievementId))
+			.filter(Boolean) as Achievement[];
 
 		return {
 			totalAchievements: allAchievements.length,

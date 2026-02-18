@@ -125,15 +125,15 @@ export function CourseFilters({
 			<SheetContent className="w-full sm:max-w-md">
 				<SheetHeader>
 					<SheetTitle>{t("filterSheet.title")}</SheetTitle>
-					<SheetDescription>
-						{t("filterSheet.description")}
-					</SheetDescription>
+					<SheetDescription>{t("filterSheet.description")}</SheetDescription>
 				</SheetHeader>
 
 				<div className="space-y-6 mt-6">
 					<div className="space-y-3">
 						<div className="flex items-center justify-between">
-							<Label className="text-base font-medium">{t("filterSheet.categories")}</Label>
+							<Label className="text-base font-medium">
+								{t("filterSheet.categories")}
+							</Label>
 							{selectedCategories.length > 0 && (
 								<Button
 									variant="ghost"
@@ -177,7 +177,9 @@ export function CourseFilters({
 
 					<div className="space-y-3">
 						<div className="flex items-center justify-between">
-							<Label className="text-base font-medium">{t("filterSheet.level")}</Label>
+							<Label className="text-base font-medium">
+								{t("filterSheet.level")}
+							</Label>
 							{selectedLevels.length > 0 && (
 								<Button
 									variant="ghost"
@@ -221,7 +223,9 @@ export function CourseFilters({
 
 					<div className="space-y-3">
 						<div className="flex items-center justify-between">
-							<Label className="text-base font-medium">{t("filterSheet.duration")}</Label>
+							<Label className="text-base font-medium">
+								{t("filterSheet.duration")}
+							</Label>
 							{selectedDurations.length > 0 && (
 								<Button
 									variant="ghost"
@@ -265,7 +269,7 @@ export function CourseFilters({
 						<>
 							<Separator />
 							<Button variant="outline" onClick={clearAllFilters} className="w-full">
-							{t("filterSheet.clearAll")}
+								{t("filterSheet.clearAll")}
 							</Button>
 						</>
 					)}

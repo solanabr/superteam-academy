@@ -213,7 +213,7 @@ export class GradingAuditTrail {
 		const errorEntries = entries.filter((entry) => entry.details.errorMessage);
 		const errorCounts = new Map<string, number>();
 		errorEntries.forEach((entry) => {
-			const error = entry.details.errorMessage!;
+			const error = entry.details.errorMessage || "Unknown Error";
 			errorCounts.set(error, (errorCounts.get(error) || 0) + 1);
 		});
 

@@ -1,14 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import {
-	Search,
-	MessageCircle,
-	Eye,
-	ThumbsUp,
-	Pin,
-	Filter,
-	Plus,
-} from "lucide-react";
+import { Search, MessageCircle, Eye, ThumbsUp, Pin, Filter, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -163,10 +155,7 @@ export default async function DiscussionsPage({ searchParams }: DiscussionsPageP
 		if (tag && !d.tags.includes(tag)) return false;
 		if (q) {
 			const query = q.toLowerCase();
-			return (
-				d.title.toLowerCase().includes(query) ||
-				d.excerpt.toLowerCase().includes(query)
-			);
+			return d.title.toLowerCase().includes(query) || d.excerpt.toLowerCase().includes(query);
 		}
 		return true;
 	});
@@ -209,7 +198,9 @@ export default async function DiscussionsPage({ searchParams }: DiscussionsPageP
 
 			{tag && (
 				<div className="flex items-center gap-2">
-					<span className="text-sm text-muted-foreground">{t("discussions.filteredByTag")}:</span>
+					<span className="text-sm text-muted-foreground">
+						{t("discussions.filteredByTag")}:
+					</span>
 					<Badge variant="secondary" className="gap-1">
 						{tag}
 						<Link
@@ -308,9 +299,7 @@ function DiscussionRow({
 				</div>
 				<div className="flex-1 min-w-0">
 					<div className="flex items-center gap-2 mb-1 flex-wrap">
-						{d.pinned && (
-							<Pin className="h-3 w-3 text-amber-500 shrink-0" />
-						)}
+						{d.pinned && <Pin className="h-3 w-3 text-amber-500 shrink-0" />}
 						{d.solved && (
 							<Badge
 								variant="outline"
@@ -324,17 +313,11 @@ function DiscussionRow({
 						</span>
 					</div>
 					<p className="text-sm font-semibold mb-1 line-clamp-1">{d.title}</p>
-					<p className="text-xs text-muted-foreground line-clamp-1 mb-2">
-						{d.excerpt}
-					</p>
+					<p className="text-xs text-muted-foreground line-clamp-1 mb-2">{d.excerpt}</p>
 					<div className="flex items-center gap-2 flex-wrap">
-						<span className="text-xs text-muted-foreground">
-							{d.author.name}
-						</span>
+						<span className="text-xs text-muted-foreground">{d.author.name}</span>
 						<span className="text-xs text-muted-foreground">·</span>
-						<span className="text-xs text-muted-foreground">
-							{d.createdAt}
-						</span>
+						<span className="text-xs text-muted-foreground">{d.createdAt}</span>
 						<span className="hidden sm:inline text-xs text-muted-foreground">·</span>
 						<div className="hidden sm:flex items-center gap-2">
 							{d.tags.map((tag) => (

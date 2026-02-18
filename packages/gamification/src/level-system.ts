@@ -477,7 +477,7 @@ export class LevelProgressionEngine {
 	// Initialize user level progress
 	initializeUser(userId: string, totalXP = 0): UserLevel {
 		if (this.userLevels.has(userId)) {
-			return this.userLevels.get(userId)!;
+			return this.userLevels.get(userId) as UserLevel;
 		}
 
 		const levelProgress = this.calculateLevelProgress(totalXP);

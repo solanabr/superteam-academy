@@ -482,7 +482,8 @@
 		"signUpFree": "Regístrate gratis",
 		"register": "Registrarse",
 		"toggleMenu": "Alternar menú",
-		"toggleTheme": "Cambiar tema"
+		"toggleTheme": "Cambiar tema",
+		"switchLanguage": "Cambiar idioma"
 	},
 	"oauth": {
 		"alreadyConnected": "Ya conectado",

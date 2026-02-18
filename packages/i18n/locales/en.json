@@ -478,7 +478,8 @@
 		"signUpFree": "Sign up free",
 		"register": "Register",
 		"toggleMenu": "Toggle menu",
-		"toggleTheme": "Toggle theme"
+		"toggleTheme": "Toggle theme",
+		"switchLanguage": "Switch language"
 	},
 	"oauth": {
 		"alreadyConnected": "Already Connected",

@@ -15,16 +15,16 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
-	Code,
-	Users,
-	Trophy,
-	Timer,
-	GitBranch,
-	Award,
-	Star,
-	GitCommit,
-	GitPullRequest,
-	AlertTriangle,
+    Code,
+    Users,
+    Trophy,
+    Timer,
+    GitBranch,
+    Award,
+    Star,
+    GitCommit,
+    GitPullRequest,
+    AlertTriangle,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { format } from "date-fns";
@@ -161,7 +161,7 @@ export function HackathonMode({ hackathonId, userId, className = "" }: Hackathon
 							<ul className="space-y-2 text-sm">
 								{hackathon.rules.map((rule, index) => (
 									<li key={index} className="flex items-start gap-2">
-										<div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 flex-shrink-0" />
+										<div className="w-1.5 h-1.5 bg-primary rounded-full mt-2 shrink-0" />
 										{rule}
 									</li>
 								))}

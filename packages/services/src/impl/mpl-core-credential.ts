@@ -98,9 +98,19 @@ export class MPLCoreCredentialService implements CredentialService {
 				};
 			}
 
+			if (!credentialResult.data) {
+				return {
+					success: false,
+					error: {
+						code: "NOT_FOUND",
+						message: "Credential not found",
+					},
+				};
+			}
+
 			const result: CredentialVerificationResult = {
 				isValid: true,
-				credential: credentialResult.data!,
+				credential: credentialResult.data,
 				verificationDetails: { verifiedAt: new Date(), method: "mpl_core_verification" },
 			};
 

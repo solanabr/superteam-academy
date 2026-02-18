@@ -41,7 +41,7 @@ export function LevelProgress({
 			</div>
 
 			<div className="flex items-center gap-3">
-				<div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-green to-forest text-white text-sm font-bold shrink-0">
+				<div className="flex items-center justify-center w-10 h-10 rounded-xl bg-linear-to-br from-green to-forest text-white text-sm font-bold shrink-0">
 					{currentLevel}
 				</div>
 				<div className="flex-1 space-y-1.5">

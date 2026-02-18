@@ -265,7 +265,7 @@ export class LevelChallengeTracker {
 			.map((c) => ({
 				challengeId: c.challengeId,
 				challenge: c.challenge,
-				completedAt: c.completedAt!,
+				completedAt: c.completedAt ?? new Date(),
 				xpAwarded: c.xpAwarded,
 			}))
 			.sort((a, b) => b.completedAt.getTime() - a.completedAt.getTime());

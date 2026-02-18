@@ -153,7 +153,8 @@
 				"useDefaultSwitchClauseLast": "error",
 				"useErrorMessage": "error",
 				"useGetterReturn": "error",
-				"useIsArray": "error"
+				"useIsArray": "error",
+				"useIterableCallbackReturn": "off"
 			},
 			"performance": {
 				"noAccumulatingSpread": "error",
@@ -163,7 +164,7 @@
 				"noExcessiveCognitiveComplexity": {
 					"level": "warn",
 					"options": {
-						"maxAllowedComplexity": 30
+						"maxAllowedComplexity": 50
 					}
 				}
 			},

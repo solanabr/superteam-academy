@@ -260,7 +260,7 @@ export function NavigationSystem({ user, onSearch }: NavigationSystemProps) {
 												className="h-8 w-8 rounded-full"
 											/>
 										) : (
-											<div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
+											<div className="h-8 w-8 rounded-full bg-linear-to-br from-blue-600 to-purple-600 flex items-center justify-center">
 												<User className="h-4 w-4 text-white" />
 											</div>
 										)}
@@ -321,7 +321,7 @@ export function NavigationSystem({ user, onSearch }: NavigationSystemProps) {
 					</SheetTrigger>
 					<SheetContent side="left" className="pr-0">
 						<div className="flex items-center gap-2 pb-4">
-							<div className="h-8 w-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+							<div className="h-8 w-8 bg-linear-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
 								<BookOpen className="h-5 w-5 text-white" />
 							</div>
 							<span className="font-bold">Superteam Academy</span>

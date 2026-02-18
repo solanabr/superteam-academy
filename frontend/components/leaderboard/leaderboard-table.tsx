@@ -38,9 +38,9 @@ interface LeaderboardTableProps {
 }
 
 const RANK_STYLES: Record<number, string> = {
-	1: "bg-gradient-to-r from-gold/20 to-gold/5 border-gold/30",
-	2: "bg-gradient-to-r from-muted to-muted/50 border-muted-foreground/20",
-	3: "bg-gradient-to-r from-amber-100/50 to-amber-50/30 dark:from-amber-900/20 dark:to-amber-800/10 border-amber-300/30",
+	1: "bg-linear-to-r from-gold/20 to-gold/5 border-gold/30",
+	2: "bg-linear-to-r from-muted to-muted/50 border-muted-foreground/20",
+	3: "bg-linear-to-r from-amber-100/50 to-amber-50/30 dark:from-amber-900/20 dark:to-amber-800/10 border-amber-300/30",
 };
 
 export function LeaderboardTable({

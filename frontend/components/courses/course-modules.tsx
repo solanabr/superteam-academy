@@ -33,7 +33,9 @@ export function CourseModules({ modules }: CourseModulesProps) {
 				<h2 className="text-2xl font-bold">{t("modules.title")}</h2>
 				<div className="text-sm text-muted-foreground">
 					{t("modules.modulesCount", { count: modules.length })} •{" "}
-					{t("modules.lessonsCount", { count: modules.reduce((acc, module) => acc + module.lessons, 0) })}
+					{t("modules.lessonsCount", {
+						count: modules.reduce((acc, module) => acc + module.lessons, 0),
+					})}
 				</div>
 			</div>
 
@@ -97,7 +99,9 @@ function ModuleCard({
 
 							<div className="flex items-center gap-4">
 								<div className="text-right text-sm text-muted-foreground">
-									<div>{t("modules.lessonsCount", { count: module.lessons })}</div>
+									<div>
+										{t("modules.lessonsCount", { count: module.lessons })}
+									</div>
 									<div>{module.duration}</div>
 								</div>
 								<div className="flex items-center gap-2">
@@ -112,7 +116,10 @@ function ModuleCard({
 						<div className="mt-4">
 							<div className="flex items-center justify-between text-sm mb-2">
 								<span className="text-muted-foreground">
-									{t("modules.lessonsCompleted", { completed: completedLessons, total: module.lessons })}
+									{t("modules.lessonsCompleted", {
+										completed: completedLessons,
+										total: module.lessons,
+									})}
 								</span>
 								<span className="font-medium">
 									{Math.round(progressPercentage)}%

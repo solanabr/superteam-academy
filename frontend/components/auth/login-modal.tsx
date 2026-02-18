@@ -131,7 +131,9 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
 								<span className="w-full border-t border-border" />
 							</div>
 							<div className="relative flex justify-center text-xs uppercase">
-								<span className="bg-background px-2 text-muted-foreground">{t("or")}</span>
+								<span className="bg-background px-2 text-muted-foreground">
+									{t("or")}
+								</span>
 							</div>
 						</div>
 
@@ -178,9 +180,7 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
 
 				{step === "wallet-verify" && (
 					<div className="space-y-4 pt-2">
-						<p className="text-sm text-muted-foreground">
-							{t("walletSignMessage")}
-						</p>
+						<p className="text-sm text-muted-foreground">{t("walletSignMessage")}</p>
 						<Button
 							className="w-full"
 							onClick={handleWalletVerify}
@@ -204,9 +204,7 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
 					</div>
 				)}
 
-				<p className="text-xs text-muted-foreground text-center pt-2">
-					{t("termsNotice")}
-				</p>
+				<p className="text-xs text-muted-foreground text-center pt-2">{t("termsNotice")}</p>
 			</DialogContent>
 		</Dialog>
 	);

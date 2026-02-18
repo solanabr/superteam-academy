@@ -149,7 +149,7 @@ export function LessonVideoPlayer({
 			/>
 
 			<div
-				className={`absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent transition-opacity duration-300 ${
+				className={`absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent transition-opacity duration-300 ${
 					showControls || !isPlaying ? "opacity-100" : "opacity-0"
 				}`}
 			>

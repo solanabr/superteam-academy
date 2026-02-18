@@ -162,7 +162,7 @@ export function LevelUpProgression({
 
 						<div className="relative">
 							<div
-								className={`mx-auto w-32 h-32 rounded-full bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500 flex items-center justify-center shadow-2xl animate-bounce ${getLevelColor(levelUpData.newLevel)}`}
+								className={`mx-auto w-32 h-32 rounded-full bg-linear-to-br from-blue-400 via-purple-500 to-pink-500 flex items-center justify-center shadow-2xl animate-bounce ${getLevelColor(levelUpData.newLevel)}`}
 							>
 								{getLevelIcon(levelUpData.newLevel)}
 							</div>

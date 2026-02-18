@@ -62,7 +62,7 @@ export class RedisLeaderboardCacheService implements LeaderboardCacheService {
 	async set<T>(key: string, data: T, ttl?: number): Promise<ServiceResponse<void>> {
 		try {
 			// Check cache size limit
-			if (this.cache.size >= this.config.maxSize!) {
+			if (this.config.maxSize && this.cache.size >= this.config.maxSize) {
 				await this.evictOldEntries();
 			}
 

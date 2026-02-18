@@ -50,9 +50,9 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 						<CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
 						<div>
 							<h3 className="font-medium text-green-800 dark:text-green-200">
-							{t("enroll.enrolled")}
-						</h3>
-						<p className="text-sm text-green-700 dark:text-green-300">
+								{t("enroll.enrolled")}
+							</h3>
+							<p className="text-sm text-green-700 dark:text-green-300">
 								{t("enroll.hasAccess")}
 							</p>
 						</div>
@@ -71,16 +71,16 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 			{!prerequisitesMet && (
 				<Alert>
 					<AlertCircle className="h-4 w-4" />
-					<AlertDescription>
-						{t("enroll.completePrerequisites")}
-					</AlertDescription>
+					<AlertDescription>{t("enroll.completePrerequisites")}</AlertDescription>
 				</Alert>
 			)}
 
 			{course.price === 0 ? (
 				<div className="space-y-4">
 					<div className="text-center p-6 bg-muted/50 rounded-lg">
-						<div className="text-3xl font-bold text-green-600 mb-2">{t("enroll.free")}</div>
+						<div className="text-3xl font-bold text-green-600 mb-2">
+							{t("enroll.free")}
+						</div>
 						<p className="text-muted-foreground">{t("enroll.noPayment")}</p>
 					</div>
 
@@ -116,7 +116,9 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 									<div className="flex items-center gap-3">
 										<Wallet className="h-5 w-5" />
 										<div className="flex-1">
-											<div className="font-medium">{t("enroll.cryptoWallet")}</div>
+											<div className="font-medium">
+												{t("enroll.cryptoWallet")}
+											</div>
 											<div className="text-sm text-muted-foreground">
 												{t("enroll.payWithCrypto")}
 											</div>
@@ -136,7 +138,9 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 									<div className="flex items-center gap-3">
 										<CreditCard className="h-5 w-5" />
 										<div className="flex-1">
-											<div className="font-medium">{t("enroll.creditCard")}</div>
+											<div className="font-medium">
+												{t("enroll.creditCard")}
+											</div>
 											<div className="text-sm text-muted-foreground">
 												{t("enroll.creditCardDesc")}
 											</div>
@@ -153,7 +157,9 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 						onClick={handleEnrollment}
 						disabled={!prerequisitesMet || !enrollmentMethod || isEnrolling}
 					>
-						{isEnrolling ? t("enroll.processing") : t("enroll.enrollFor", { price: course.price })}
+						{isEnrolling
+							? t("enroll.processing")
+							: t("enroll.enrollFor", { price: course.price })}
 					</Button>
 				</div>
 			)}

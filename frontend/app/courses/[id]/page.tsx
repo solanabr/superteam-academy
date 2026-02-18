@@ -100,7 +100,7 @@ async function CourseDetailContent({
 									<ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
 										{course.learningObjectives.map((objective, index) => (
 											<li key={index} className="flex items-start gap-2">
-												<CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+												<CheckCircle className="h-5 w-5 text-green-500 mt-0.5 shrink-0" />
 												<span>{objective}</span>
 											</li>
 										))}

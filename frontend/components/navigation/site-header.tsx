@@ -4,13 +4,20 @@ import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Trophy, Search, Menu, X, Layers, Users, Compass, Sun, Moon } from "lucide-react";
+import { Trophy, Search, Menu, X, Layers, Users, Compass, Sun, Moon, Globe } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { SearchModal } from "@/components/search/search-modal";
 import { LoginModal } from "@/components/auth/login-modal";
 import { cn } from "@/lib/utils";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { locales } from "@superteam-academy/i18n/config";
 
 const NAV_ITEMS = [
 	{
@@ -39,6 +46,7 @@ export function SiteHeader() {
 	const pathname = usePathname();
 	const t = useTranslations("navigation");
 	const { resolvedTheme, setTheme } = useTheme();
+	const locale = useLocale();
 	const [mounted, setMounted] = useState(false);
 	const [mobileOpen, setMobileOpen] = useState(false);
 	const [searchOpen, setSearchOpen] = useState(false);
@@ -52,7 +60,7 @@ export function SiteHeader() {
 	};
 
 	const handleKeyDown = useCallback(
-(e: KeyboardEvent) => {
+		(e: KeyboardEvent) => {
 			if (e.key === "/" && !searchOpen && !loginOpen) {
 				const target = e.target as HTMLElement;
 				if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") return;
@@ -70,8 +78,15 @@ export function SiteHeader() {
 
 	const toggleTheme = () => setTheme(resolvedTheme === "dark" ? "light" : "dark");
 
+	const currentLocale = locales.find((l) => l.code === locale);
+
+	const switchLocale = (code: string) => {
+		document.cookie = `NEXT_LOCALE=${code};path=/;max-age=31536000`;
+		window.location.reload();
+	};
+
 	return (
-<>
+		<>
 			<header className="sticky top-0 z-50 w-full glass border-b border-border/40">
 				<div className="mx-auto px-4 sm:px-6">
 					<div className="flex h-16 items-center gap-4">
@@ -88,16 +103,16 @@ export function SiteHeader() {
 
 						<nav className="hidden lg:flex items-center gap-1">
 							{NAV_ITEMS.map((item) => (
-<Link
+								<Link
 									key={item.href}
 									href={item.href}
 									className={cn(
-"relative px-3 py-2 text-sm font-medium rounded-lg transition-colors",
-"hover:bg-muted hover:text-foreground",
-isActive(item.href)
-? "text-foreground bg-muted"
-: "text-muted-foreground"
-)}
+										"relative px-3 py-2 text-sm font-medium rounded-lg transition-colors",
+										"hover:bg-muted hover:text-foreground",
+										isActive(item.href)
+											? "text-foreground bg-muted"
+											: "text-muted-foreground"
+									)}
 								>
 									{t(item.key)}
 									{isActive(item.href) && (
@@ -127,11 +142,41 @@ isActive(item.href)
 								aria-label={t("toggleTheme")}
 							>
 								{mounted && resolvedTheme === "dark" ? (
-<Sun className="h-4 w-4" />
+									<Sun className="h-4 w-4" />
 								) : (
-<Moon className="h-4 w-4" />
+									<Moon className="h-4 w-4" />
 								)}
 							</button>
+
+							<DropdownMenu>
+								<DropdownMenuTrigger asChild>
+									<button
+										type="button"
+										className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground flex items-center gap-1.5"
+										aria-label={t("switchLanguage")}
+									>
+										<Globe className="h-4 w-4" />
+										<span className="text-xs font-medium">
+											{currentLocale?.flag}
+										</span>
+									</button>
+								</DropdownMenuTrigger>
+								<DropdownMenuContent align="end" className="min-w-35">
+									{locales.map((l) => (
+										<DropdownMenuItem
+											key={l.code}
+											onClick={() => switchLocale(l.code)}
+											className={cn(
+												"cursor-pointer",
+												locale === l.code && "bg-accent"
+											)}
+										>
+											<span className="mr-2">{l.flag}</span>
+											{l.name}
+										</DropdownMenuItem>
+									))}
+								</DropdownMenuContent>
+							</DropdownMenu>
 
 							<Button variant="ghost" size="sm" onClick={() => setLoginOpen(true)}>
 								{t("login")}
@@ -146,6 +191,32 @@ isActive(item.href)
 						</div>
 
 						<div className="flex lg:hidden items-center gap-2">
+							<DropdownMenu>
+								<DropdownMenuTrigger asChild>
+									<button
+										type="button"
+										className="p-2 rounded-lg hover:bg-muted transition-colors"
+										aria-label={t("switchLanguage")}
+									>
+										<Globe className="h-5 w-5 text-muted-foreground" />
+									</button>
+								</DropdownMenuTrigger>
+								<DropdownMenuContent align="end" className="min-w-35">
+									{locales.map((l) => (
+										<DropdownMenuItem
+											key={l.code}
+											onClick={() => switchLocale(l.code)}
+											className={cn(
+												"cursor-pointer",
+												locale === l.code && "bg-accent"
+											)}
+										>
+											<span className="mr-2">{l.flag}</span>
+											{l.name}
+										</DropdownMenuItem>
+									))}
+								</DropdownMenuContent>
+							</DropdownMenu>
 							<button
 								type="button"
 								onClick={toggleTheme}
@@ -153,9 +224,9 @@ isActive(item.href)
 								aria-label={t("toggleTheme")}
 							>
 								{mounted && resolvedTheme === "dark" ? (
-<Sun className="h-5 w-5 text-muted-foreground" />
+									<Sun className="h-5 w-5 text-muted-foreground" />
 								) : (
-<Moon className="h-5 w-5 text-muted-foreground" />
+									<Moon className="h-5 w-5 text-muted-foreground" />
 								)}
 							</button>
 							<button
@@ -171,9 +242,9 @@ isActive(item.href)
 								className="p-2 rounded-lg hover:bg-muted transition-colors"
 							>
 								{mobileOpen ? (
-<X className="h-5 w-5" />
+									<X className="h-5 w-5" />
 								) : (
-<Menu className="h-5 w-5" />
+									<Menu className="h-5 w-5" />
 								)}
 							</button>
 						</div>
@@ -185,53 +256,52 @@ isActive(item.href)
 						<div
 							className="lg:hidden fixed inset-0 top-16 bg-black/20 z-40"
 							onClick={() => setMobileOpen(false)}
-							onKeyDown={() => {}}
 							role="presentation"
 						/>
 						<div className="lg:hidden absolute left-0 right-0 top-full border-t border-border bg-background/95 backdrop-blur-xl animate-fade-in shadow-lg z-50">
 							<nav className="mx-auto px-4 py-4 space-y-1">
 								{NAV_ITEMS.map((item) => {
 									const Icon = item.icon;
-								return (
-<Link
-										key={item.href}
-										href={item.href}
-										onClick={() => setMobileOpen(false)}
-										className={cn(
-"flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-isActive(item.href)
-? "bg-primary/10 text-primary"
-: "text-muted-foreground hover:bg-muted hover:text-foreground"
-)}
+									return (
+										<Link
+											key={item.href}
+											href={item.href}
+											onClick={() => setMobileOpen(false)}
+											className={cn(
+												"flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+												isActive(item.href)
+													? "bg-primary/10 text-primary"
+													: "text-muted-foreground hover:bg-muted hover:text-foreground"
+											)}
+										>
+											<Icon className="h-4 w-4" />
+											{t(item.key)}
+										</Link>
+									);
+								})}
+								<div className="pt-4 space-y-2 border-t border-border">
+									<Button
+										variant="outline"
+										className="w-full"
+										onClick={() => {
+											setMobileOpen(false);
+											setLoginOpen(true);
+										}}
 									>
-										<Icon className="h-4 w-4" />
-										{t(item.key)}
-									</Link>
-								);
-							})}
-							<div className="pt-4 space-y-2 border-t border-border">
-								<Button
-									variant="outline"
-									className="w-full"
-									onClick={() => {
-										setMobileOpen(false);
-										setLoginOpen(true);
-									}}
-								>
-									{t("login")}
-								</Button>
-								<Button
-									className="w-full font-semibold"
-									onClick={() => {
-										setMobileOpen(false);
-										setLoginOpen(true);
-									}}
-								>
-									{t("signUpFree")}
-								</Button>
-							</div>
-						</nav>
-					</div>
+										{t("login")}
+									</Button>
+									<Button
+										className="w-full font-semibold"
+										onClick={() => {
+											setMobileOpen(false);
+											setLoginOpen(true);
+										}}
+									>
+										{t("signUpFree")}
+									</Button>
+								</div>
+							</nav>
+						</div>
 					</>
 				)}
 			</header>

@@ -12,33 +12,33 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
 } from "@/components/ui/table";
 import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "@/components/ui/select";
 import {
-	Brain,
-	TrendingUp,
-	TrendingDown,
-	Users,
-	Activity,
-	AlertTriangle,
-	CheckCircle,
-	Eye,
-	Clock,
-	MousePointer,
-	Monitor,
-	Smartphone,
+    Brain,
+    TrendingUp,
+    TrendingDown,
+    Users,
+    Activity,
+    AlertTriangle,
+    CheckCircle,
+    Eye,
+    Clock,
+    MousePointer,
+    Monitor,
+    Smartphone,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -642,7 +642,7 @@ export function BehavioralAnalysis({ className = "" }: BehavioralAnalysisProps) 
 							<CardContent className="space-y-4">
 								<div className="space-y-3">
 									<div className="flex items-start space-x-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-										<div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0" />
+										<div className="w-2 h-2 bg-blue-500 rounded-full mt-2 shrink-0" />
 										<div className="text-sm">
 											<strong>
 												{t("insights.recommendations.mobile.title")}
@@ -652,7 +652,7 @@ export function BehavioralAnalysis({ className = "" }: BehavioralAnalysisProps) 
 									</div>
 
 									<div className="flex items-start space-x-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-										<div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0" />
+										<div className="w-2 h-2 bg-green-500 rounded-full mt-2 shrink-0" />
 										<div className="text-sm">
 											<strong>
 												{t("insights.recommendations.content.title")}
@@ -662,7 +662,7 @@ export function BehavioralAnalysis({ className = "" }: BehavioralAnalysisProps) 
 									</div>
 
 									<div className="flex items-start space-x-3 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-										<div className="w-2 h-2 bg-purple-500 rounded-full mt-2 flex-shrink-0" />
+										<div className="w-2 h-2 bg-purple-500 rounded-full mt-2 shrink-0" />
 										<div className="text-sm">
 											<strong>
 												{t("insights.recommendations.notifications.title")}

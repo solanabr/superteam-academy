@@ -52,7 +52,9 @@ export function CourseReviews({ reviews, averageRating, totalReviews }: CourseRe
 							/>
 						))}
 					</div>
-					<div className="text-muted-foreground">{t("reviewsSection.basedOn", { count: totalReviews })}</div>
+					<div className="text-muted-foreground">
+						{t("reviewsSection.basedOn", { count: totalReviews })}
+					</div>
 				</div>
 
 				<div className="space-y-2">

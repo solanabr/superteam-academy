@@ -121,7 +121,7 @@ export function ChallengeResults({ results, onRetry }: ChallengeResultsProps) {
 						<div className="space-y-3">
 							{results.feedback.map((item, index) => (
 								<div key={index} className="flex items-start gap-3">
-									<div className="h-2 w-2 rounded-full bg-primary mt-2 flex-shrink-0" />
+									<div className="h-2 w-2 rounded-full bg-primary mt-2 shrink-0" />
 									<p className="text-sm">{item}</p>
 								</div>
 							))}

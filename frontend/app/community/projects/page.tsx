@@ -1,15 +1,4 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import {
-	Search,
-	ExternalLink,
-	Github,
-	Star,
-	Users,
-	Zap,
-	Plus,
-	Globe,
-} from "lucide-react";
+import { Search, ExternalLink, Github, Star, Users, Zap, Plus, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -21,12 +10,6 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { getTranslations } from "next-intl/server";
-
-export const metadata: Metadata = {
-	title: "Projects | Community | Superteam Academy",
-	description:
-		"Discover projects built by the Superteam Academy community. Showcase your Solana builds.",
-};
 
 const CATEGORIES = ["all", "defi", "nft", "tooling", "gaming", "social", "infra"] as const;
 
@@ -233,9 +216,7 @@ function ProjectCard({
 	return (
 		<div
 			className={`rounded-2xl border bg-card p-5 flex flex-col ${
-				featured
-					? "border-primary/30 ring-1 ring-primary/10"
-					: "border-border/60"
+				featured ? "border-primary/30 ring-1 ring-primary/10" : "border-border/60"
 			}`}
 		>
 			<div className="flex items-start gap-3 mb-3">

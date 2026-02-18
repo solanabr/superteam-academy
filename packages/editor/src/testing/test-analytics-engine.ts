@@ -337,15 +337,17 @@ export class TestAnalyticsEngine {
 				tracks.set(track, { completed: 0, total: 0, recent: submission.timestamp });
 			}
 
-			const trackData = tracks.get(track)!;
-			trackData.total++;
+			const trackData = tracks.get(track);
+			if (trackData) {
+				trackData.total++;
 
-			if (submission.passed) {
-				trackData.completed++;
-			}
+				if (submission.passed) {
+					trackData.completed++;
+				}
 
-			if (submission.timestamp > trackData.recent) {
-				trackData.recent = submission.timestamp;
+				if (submission.timestamp > trackData.recent) {
+					trackData.recent = submission.timestamp;
+				}
 			}
 		});
 
@@ -370,9 +372,11 @@ export class TestAnalyticsEngine {
 			if (!challengeTypes.has(type)) {
 				challengeTypes.set(type, { passed: 0, total: 0 });
 			}
-			const stats = challengeTypes.get(type)!;
-			stats.total++;
-			if (submission.passed) stats.passed++;
+			const stats = challengeTypes.get(type);
+			if (stats) {
+				stats.total++;
+				if (submission.passed) stats.passed++;
+			}
 		});
 
 		challengeTypes.forEach((stats, type) => {
@@ -398,9 +402,11 @@ export class TestAnalyticsEngine {
 			if (!challengeTypes.has(type)) {
 				challengeTypes.set(type, { passed: 0, total: 0 });
 			}
-			const stats = challengeTypes.get(type)!;
-			stats.total++;
-			if (submission.passed) stats.passed++;
+			const stats = challengeTypes.get(type);
+			if (stats) {
+				stats.total++;
+				if (submission.passed) stats.passed++;
+			}
 		});
 
 		challengeTypes.forEach((stats, type) => {

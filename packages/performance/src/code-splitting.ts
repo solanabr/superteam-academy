@@ -297,7 +297,8 @@ export class RouteBasedSplitting {
 		const preloadPromises = routes
 			.filter((route) => this.routes.has(route))
 			.map((route) => {
-				const config = this.routes.get(route)!;
+				const config = this.routes.get(route);
+				if (!config) return;
 				return config.component().then((component) => {
 					config.loaded = true;
 					config.lastAccessed = Date.now();

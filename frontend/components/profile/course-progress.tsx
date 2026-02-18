@@ -77,7 +77,7 @@ export function CourseProgress({ courses }: CourseProgressProps) {
 							className="flex items-center gap-4 px-5 py-4 hover:bg-muted/30 transition-colors group"
 						>
 							<div
-								className={`w-12 h-12 rounded-xl bg-gradient-to-br ${GRADIENTS[i % GRADIENTS.length]} flex items-center justify-center shrink-0`}
+								className={`w-12 h-12 rounded-xl bg-linear-to-br ${GRADIENTS[i % GRADIENTS.length]} flex items-center justify-center shrink-0`}
 							>
 								<Play className="h-5 w-5 text-white" />
 							</div>

@@ -45,7 +45,7 @@ export function CourseCard({ course, variant = "default" }: CourseCardProps) {
 			className="group relative flex flex-col rounded-2xl bg-card border border-border/60 overflow-hidden hover:shadow-lg hover:border-primary/30 transition-all duration-300"
 		>
 			<div
-				className={`relative ${isCompact ? "h-28" : "h-36"} bg-gradient-to-br ${gradient} overflow-hidden`}
+				className={`relative ${isCompact ? "h-28" : "h-36"} bg-linear-to-br ${gradient} overflow-hidden`}
 			>
 				<div className="absolute inset-0 bg-black/5" />
 				{course.featured && (

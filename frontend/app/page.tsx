@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
 	ArrowRight,
@@ -89,77 +90,96 @@ async function HeroSection() {
 	return (
 		<section className="relative overflow-hidden noise">
 			<div className="absolute inset-0 pattern-dots opacity-40" />
-			<div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-bl from-green/8 via-transparent to-transparent rounded-full blur-3xl" />
-			<div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-gold/6 via-transparent to-transparent rounded-full blur-3xl" />
+			<div className="absolute top-0 right-0 w-150 h-150 bg-linear-to-bl from-green/8 via-transparent to-transparent rounded-full blur-3xl" />
+			<div className="absolute bottom-0 left-0 w-100 h-100 bg-linear-to-tr from-gold/6 via-transparent to-transparent rounded-full blur-3xl" />
 
 			<div className="relative mx-auto px-4 sm:px-6 py-20 sm:py-28 lg:py-36">
-				<div className="max-w-3xl">
-					<div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-highlight text-highlight-foreground text-sm font-medium mb-6 animate-fade-in">
-						<span className="w-1.5 h-1.5 bg-green rounded-full animate-pulse-soft" />
-						{t("badge")}
-					</div>
+				<div className="flex items-center gap-8 lg:gap-12">
+					<div className="max-w-3xl flex-1">
+						<div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-highlight text-highlight-foreground text-sm font-medium mb-6 animate-fade-in">
+							<span className="w-1.5 h-1.5 bg-green rounded-full animate-pulse-soft" />
+							{t("badge")}
+						</div>
 
-					<h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.08] tracking-tight text-balance animate-fade-up">
-						{t("title")} <span className="text-gradient">{t("titleHighlight")}</span>{" "}
-						{t("titleSuffix")}
-					</h1>
+						<h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.08] tracking-tight text-balance animate-fade-up">
+							{t("title")}{" "}
+							<span className="text-gradient">{t("titleHighlight")}</span>{" "}
+							{t("titleSuffix")}
+						</h1>
 
-					<p
-						className="mt-6 text-lg sm:text-xl text-muted-foreground max-w-2xl leading-relaxed animate-fade-up"
-						style={{ animationDelay: "100ms" }}
-					>
-						{t("description")}
-					</p>
-
-					<div
-						className="mt-8 flex flex-col sm:flex-row gap-3 animate-fade-up"
-						style={{ animationDelay: "200ms" }}
-					>
-						<Button
-							size="lg"
-							className="text-base px-6 h-12 font-semibold shadow-lg shadow-primary/20"
-							asChild
+						<p
+							className="mt-6 text-lg sm:text-xl text-muted-foreground max-w-2xl leading-relaxed animate-fade-up"
+							style={{ animationDelay: "100ms" }}
 						>
-							<Link href="/courses">
-								{t("cta")}
-								<ArrowRight className="ml-2 h-4 w-4" />
-							</Link>
-						</Button>
-						<Button variant="outline" size="lg" className="text-base px-6 h-12" asChild>
-							<Link href="/courses?view=paths">{t("explorePaths")}</Link>
-						</Button>
+							{t("description")}
+						</p>
+
+						<div
+							className="mt-8 flex flex-col sm:flex-row gap-3 animate-fade-up"
+							style={{ animationDelay: "200ms" }}
+						>
+							<Button
+								size="lg"
+								className="text-base px-6 h-12 font-semibold shadow-lg shadow-primary/20"
+								asChild
+							>
+								<Link href="/courses">
+									{t("cta")}
+									<ArrowRight className="ml-2 h-4 w-4" />
+								</Link>
+							</Button>
+							<Button
+								variant="outline"
+								size="lg"
+								className="text-base px-6 h-12"
+								asChild
+							>
+								<Link href="/courses?view=paths">{t("explorePaths")}</Link>
+							</Button>
+						</div>
+
+						<div
+							className="mt-14 flex items-center gap-8 sm:gap-12 animate-fade-up"
+							style={{ animationDelay: "300ms" }}
+						>
+							<div>
+								<div className="text-2xl sm:text-3xl font-bold text-foreground">
+									10k+
+								</div>
+								<div className="text-sm text-muted-foreground mt-0.5">
+									{t("learners")}
+								</div>
+							</div>
+							<div className="w-px h-10 bg-border" />
+							<div>
+								<div className="text-2xl sm:text-3xl font-bold text-foreground">
+									50+
+								</div>
+								<div className="text-sm text-muted-foreground mt-0.5">
+									{t("courses")}
+								</div>
+							</div>
+							<div className="w-px h-10 bg-border" />
+							<div>
+								<div className="text-2xl sm:text-3xl font-bold text-foreground">
+									95%
+								</div>
+								<div className="text-sm text-muted-foreground mt-0.5">
+									{t("completion")}
+								</div>
+							</div>
+						</div>
 					</div>
 
-					<div
-						className="mt-14 flex items-center gap-8 sm:gap-12 animate-fade-up"
-						style={{ animationDelay: "300ms" }}
-					>
-						<div>
-							<div className="text-2xl sm:text-3xl font-bold text-foreground">
-								10k+
-							</div>
-							<div className="text-sm text-muted-foreground mt-0.5">
-								{t("learners")}
-							</div>
-						</div>
-						<div className="w-px h-10 bg-border" />
-						<div>
-							<div className="text-2xl sm:text-3xl font-bold text-foreground">
-								50+
-							</div>
-							<div className="text-sm text-muted-foreground mt-0.5">
-								{t("courses")}
-							</div>
-						</div>
-						<div className="w-px h-10 bg-border" />
-						<div>
-							<div className="text-2xl sm:text-3xl font-bold text-foreground">
-								95%
-							</div>
-							<div className="text-sm text-muted-foreground mt-0.5">
-								{t("completion")}
-							</div>
-						</div>
+					<div className="hidden lg:block shrink-0">
+						<Image
+							src="/hero-wave.svg"
+							alt=""
+							width={540}
+							height={960}
+							className="h-105 w-auto opacity-40"
+							priority
+						/>
 					</div>
 				</div>
 			</div>
@@ -291,7 +311,7 @@ async function FeaturedCoursesSection() {
 							className="group relative flex flex-col rounded-2xl surface-elevated overflow-hidden hover:shadow-lg transition-all duration-300"
 						>
 							<div
-								className={`h-40 bg-gradient-to-br ${course.gradient} relative overflow-hidden`}
+								className={`h-40 bg-linear-to-br ${course.gradient} relative overflow-hidden`}
 							>
 								<div className="absolute inset-0 bg-black/10" />
 								<div className="absolute bottom-4 left-5 right-5">
@@ -353,27 +373,23 @@ async function FeaturedCoursesSection() {
 	);
 }
 
-function PathsSection() {
+async function PathsSection() {
+	const t = await getTranslations("home.paths");
 	const paths = [
 		{
-			title: "Solana Core Developer",
-			description: "Full path from Rust basics to deploying production programs on mainnet.",
+			key: "coreDev",
 			courses: 6,
 			duration: "40 hours",
 			icon: Code,
 		},
 		{
-			title: "Security Auditor",
-			description:
-				"Learn to identify vulnerabilities and audit Solana programs professionally.",
+			key: "auditor",
 			courses: 4,
 			duration: "28 hours",
 			icon: Shield,
 		},
 		{
-			title: "Full-Stack dApp Builder",
-			description:
-				"End-to-end: on-chain programs, TypeScript SDK, React frontend, deployment.",
+			key: "fullStack",
 			courses: 8,
 			duration: "52 hours",
 			icon: Layers,
@@ -383,32 +399,29 @@ function PathsSection() {
 		<section className="py-20 lg:py-28">
 			<div className="mx-auto px-4 sm:px-6">
 				<div className="text-center max-w-2xl mx-auto mb-14">
-					<h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
-						Structured learning paths
-					</h2>
+					<h2 className="text-3xl sm:text-4xl font-bold tracking-tight">{t("title")}</h2>
 					<p className="mt-4 text-lg text-muted-foreground leading-relaxed">
-						Follow a curated sequence of courses to build expertise in a specific
-						domain. No guessing what to learn next.
+						{t("description")}
 					</p>
 				</div>
 
 				<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 					{paths.map((path) => (
 						<div
-							key={path.title}
+							key={path.key}
 							className="group relative p-6 rounded-2xl border border-border bg-card hover:shadow-lg hover:border-primary/30 transition-all duration-300"
 						>
-							<div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green/10 to-forest/10 flex items-center justify-center mb-5">
+							<div className="w-12 h-12 rounded-xl bg-linear-to-br from-green/10 to-forest/10 flex items-center justify-center mb-5">
 								<path.icon className="h-6 w-6 text-primary" />
 							</div>
-							<h3 className="text-xl font-semibold mb-2">{path.title}</h3>
+							<h3 className="text-xl font-semibold mb-2">{t(path.key)}</h3>
 							<p className="text-sm text-muted-foreground mb-5 leading-relaxed">
-								{path.description}
+								{t(`${path.key}Desc`)}
 							</p>
 							<div className="flex items-center gap-4 text-sm text-muted-foreground mb-5">
 								<span className="flex items-center gap-1.5">
 									<BookOpen className="h-4 w-4" />
-									{path.courses} courses
+									{t("courses", { count: path.courses })}
 								</span>
 								<span className="flex items-center gap-1.5">
 									<Clock className="h-4 w-4" />
@@ -421,7 +434,7 @@ function PathsSection() {
 								asChild
 							>
 								<Link href="/courses?view=paths">
-									View path
+									{t("viewPath")}
 									<ArrowRight className="ml-2 h-4 w-4" />
 								</Link>
 							</Button>
@@ -433,32 +446,29 @@ function PathsSection() {
 	);
 }
 
-function TestimonialsSection() {
+async function TestimonialsSection() {
+	const t = await getTranslations("home.testimonials");
 	return (
 		<section className="py-20 lg:py-28 bg-muted/30 border-y border-border/60">
 			<div className="mx-auto px-4 sm:px-6">
 				<div className="text-center max-w-2xl mx-auto mb-14">
-					<h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
-						Built by builders, for builders
-					</h2>
-					<p className="mt-4 text-lg text-muted-foreground">
-						Hear from developers who accelerated their Solana careers.
-					</p>
+					<h2 className="text-3xl sm:text-4xl font-bold tracking-tight">{t("title")}</h2>
+					<p className="mt-4 text-lg text-muted-foreground">{t("description")}</p>
 				</div>
 
 				<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-					{TESTIMONIALS.map((t) => (
+					{TESTIMONIALS.map((item) => (
 						<div
-							key={t.name}
+							key={item.name}
 							className="p-6 rounded-2xl bg-card border border-border/60 space-y-4"
 						>
 							<p className="text-sm leading-relaxed text-foreground/90">
-								&ldquo;{t.quote}&rdquo;
+								&ldquo;{item.quote}&rdquo;
 							</p>
 							<div className="pt-2 border-t border-border/60">
-								<div className="font-medium text-sm">{t.name}</div>
+								<div className="font-medium text-sm">{item.name}</div>
 								<div className="text-xs text-muted-foreground">
-									{t.role} &middot; {t.location}
+									{item.role} &middot; {item.location}
 								</div>
 							</div>
 						</div>
@@ -469,33 +479,19 @@ function TestimonialsSection() {
 	);
 }
 
-function HowItWorksSection() {
+async function HowItWorksSection() {
+	const t = await getTranslations("home.howItWorks");
 	const steps = [
-		{
-			step: "01",
-			title: "Pick a course or path",
-			description:
-				"Browse our catalog of 50+ courses organized by topic, difficulty, and career path.",
-		},
-		{
-			step: "02",
-			title: "Learn by doing",
-			description:
-				"Complete interactive lessons, solve coding challenges, and build real projects in-browser.",
-		},
-		{
-			step: "03",
-			title: "Earn XP & credentials",
-			description:
-				"Collect experience points, maintain streaks, and unlock soulbound on-chain credentials.",
-		},
+		{ step: "01", titleKey: "step1Title" as const, descKey: "step1Desc" as const },
+		{ step: "02", titleKey: "step2Title" as const, descKey: "step2Desc" as const },
+		{ step: "03", titleKey: "step3Title" as const, descKey: "step3Desc" as const },
 	];
 
 	return (
 		<section className="py-20 lg:py-28">
 			<div className="mx-auto px-4 sm:px-6">
 				<div className="text-center max-w-2xl mx-auto mb-14">
-					<h2 className="text-3xl sm:text-4xl font-bold tracking-tight">How it works</h2>
+					<h2 className="text-3xl sm:text-4xl font-bold tracking-tight">{t("title")}</h2>
 				</div>
 
 				<div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -504,9 +500,9 @@ function HowItWorksSection() {
 							<div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 text-primary text-lg font-bold">
 								{s.step}
 							</div>
-							<h3 className="text-xl font-semibold">{s.title}</h3>
+							<h3 className="text-xl font-semibold">{t(s.titleKey)}</h3>
 							<p className="text-sm text-muted-foreground leading-relaxed max-w-xs mx-auto">
-								{s.description}
+								{t(s.descKey)}
 							</p>
 						</div>
 					))}
@@ -516,20 +512,18 @@ function HowItWorksSection() {
 	);
 }
 
-function CTASection() {
+async function CTASection() {
+	const t = await getTranslations("home.cta");
 	return (
 		<section className="relative py-20 lg:py-28 overflow-hidden">
-			<div className="absolute inset-0 bg-gradient-to-br from-forest via-green to-forest" />
+			<div className="absolute inset-0 bg-linear-to-br from-forest via-green to-forest" />
 			<div className="absolute inset-0 pattern-dots opacity-10" />
 
 			<div className="relative mx-auto px-4 sm:px-6 text-center">
 				<h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight text-balance">
-					Your Solana journey starts here
+					{t("title")}
 				</h2>
-				<p className="mt-4 text-lg text-white/80 max-w-xl mx-auto">
-					Join 10,000+ developers already building the future of Web3. Start with our free
-					courses today.
-				</p>
+				<p className="mt-4 text-lg text-white/80 max-w-xl mx-auto">{t("description")}</p>
 				<div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
 					<Button
 						size="lg"
@@ -537,7 +531,7 @@ function CTASection() {
 						asChild
 					>
 						<Link href="/courses">
-							Get started free
+							{t("getStarted")}
 							<ArrowRight className="ml-2 h-4 w-4" />
 						</Link>
 					</Button>
@@ -547,7 +541,7 @@ function CTASection() {
 						className="border-white/30 text-white hover:bg-white/10 text-base px-8 h-12"
 						asChild
 					>
-						<Link href="/pricing">View pricing</Link>
+						<Link href="/pricing">{t("viewPricing")}</Link>
 					</Button>
 				</div>
 			</div>

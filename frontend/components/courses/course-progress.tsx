@@ -34,14 +34,19 @@ export function CourseProgress({ progress }: CourseProgressProps) {
 			<CardContent className="space-y-6">
 				<div className="space-y-3">
 					<div className="flex items-center justify-between">
-						<span className="text-sm font-medium">{t("progress.courseCompletion")}</span>
+						<span className="text-sm font-medium">
+							{t("progress.courseCompletion")}
+						</span>
 						<span className="text-sm text-muted-foreground">
 							{progress.percentage}%
 						</span>
 					</div>
 					<Progress value={progress.percentage} className="h-3" />
 					<div className="text-sm text-muted-foreground">
-						{t("progress.lessonsCompleted", { completed: progress.completedLessons, total: progress.totalLessons })}
+						{t("progress.lessonsCompleted", {
+							completed: progress.completedLessons,
+							total: progress.totalLessons,
+						})}
 					</div>
 				</div>
 
@@ -49,19 +54,25 @@ export function CourseProgress({ progress }: CourseProgressProps) {
 					<div className="text-center p-3 bg-muted/50 rounded-lg">
 						<Calendar className="h-6 w-6 text-primary mx-auto mb-2" />
 						<div className="text-lg font-bold">{progress.timeSpent}</div>
-						<div className="text-xs text-muted-foreground">{t("progress.timeSpent")}</div>
+						<div className="text-xs text-muted-foreground">
+							{t("progress.timeSpent")}
+						</div>
 					</div>
 
 					<div className="text-center p-3 bg-muted/50 rounded-lg">
 						<TrendingUp className="h-6 w-6 text-green-500 mx-auto mb-2" />
 						<div className="text-lg font-bold">{progress.streak}</div>
-						<div className="text-xs text-muted-foreground">{t("progress.dayStreak")}</div>
+						<div className="text-xs text-muted-foreground">
+							{t("progress.dayStreak")}
+						</div>
 					</div>
 
 					<div className="text-center p-3 bg-muted/50 rounded-lg">
 						<Award className="h-6 w-6 text-yellow-500 mx-auto mb-2" />
 						<div className="text-lg font-bold">{progress.xpEarned}</div>
-						<div className="text-xs text-muted-foreground">{t("progress.xpEarned")}</div>
+						<div className="text-xs text-muted-foreground">
+							{t("progress.xpEarned")}
+						</div>
 					</div>
 
 					<div className="text-center p-3 bg-muted/50 rounded-lg">
@@ -91,7 +102,9 @@ export function CourseProgress({ progress }: CourseProgressProps) {
 					</div>
 
 					<div className="flex items-center justify-between text-sm">
-						<span className="text-muted-foreground">{t("progress.estimatedCompletion")}</span>
+						<span className="text-muted-foreground">
+							{t("progress.estimatedCompletion")}
+						</span>
 						<span>{progress.estimatedCompletion}</span>
 					</div>
 				</div>
@@ -125,7 +138,8 @@ export function CourseProgress({ progress }: CourseProgressProps) {
 						<div className="text-center">
 							<div className="text-sm font-medium text-green-800 dark:text-green-200 mb-1">
 								<span className="inline-flex items-center gap-1">
-									{t("progress.congratulations")} <PartyPopper className="inline h-4 w-4" />
+									{t("progress.congratulations")}{" "}
+									<PartyPopper className="inline h-4 w-4" />
 								</span>
 							</div>
 							<div className="text-xs text-green-700 dark:text-green-300">

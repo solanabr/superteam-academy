@@ -1,24 +1,12 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import {
-	Search,
-	Trophy,
-	Zap,
-	BookOpen,
-	Award,
-	Flame,
-	Crown,
-} from "lucide-react";
+import { Search, Trophy, Zap, BookOpen, Award, Flame, Crown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getTranslations } from "next-intl/server";
 
-export const metadata: Metadata = {
+export const metadata = {
 	title: "Members | Community | Superteam Academy",
-	description:
-		"Discover top contributors and active members of the Superteam Academy community.",
+	description: "Discover top contributors and active members of the Superteam Academy community.",
 };
 
 const MEMBERS = [
@@ -27,7 +15,7 @@ const MEMBERS = [
 		name: "Alex Chen",
 		initials: "AC",
 		title: "Solana Core Developer",
-		xp: 24500,
+		xp: 24_500,
 		level: 28,
 		courses: 18,
 		streak: 45,
@@ -40,7 +28,7 @@ const MEMBERS = [
 		name: "Maria Santos",
 		initials: "MS",
 		title: "DeFi Protocol Engineer",
-		xp: 22100,
+		xp: 22_100,
 		level: 26,
 		courses: 15,
 		streak: 32,
@@ -53,7 +41,7 @@ const MEMBERS = [
 		name: "James Wilson",
 		initials: "JW",
 		title: "Security Researcher",
-		xp: 19800,
+		xp: 19_800,
 		level: 24,
 		courses: 14,
 		streak: 28,
@@ -66,7 +54,7 @@ const MEMBERS = [
 		name: "Priya Patel",
 		initials: "PP",
 		title: "Full-Stack Solana Dev",
-		xp: 18200,
+		xp: 18_200,
 		level: 22,
 		courses: 13,
 		streak: 21,
@@ -79,7 +67,7 @@ const MEMBERS = [
 		name: "Yuki Tanaka",
 		initials: "YT",
 		title: "NFT & Token Engineer",
-		xp: 17500,
+		xp: 17_500,
 		level: 21,
 		courses: 12,
 		streak: 18,
@@ -92,7 +80,7 @@ const MEMBERS = [
 		name: "Carlos Rodriguez",
 		initials: "CR",
 		title: "Anchor Developer",
-		xp: 16200,
+		xp: 16_200,
 		level: 20,
 		courses: 11,
 		streak: 15,
@@ -105,7 +93,7 @@ const MEMBERS = [
 		name: "Lisa Park",
 		initials: "LP",
 		title: "Frontend & Wallet UX",
-		xp: 14800,
+		xp: 14_800,
 		level: 19,
 		courses: 10,
 		streak: 22,
@@ -118,7 +106,7 @@ const MEMBERS = [
 		name: "Pedro Lima",
 		initials: "PL",
 		title: "ZK Researcher",
-		xp: 13500,
+		xp: 13_500,
 		level: 18,
 		courses: 9,
 		streak: 14,
@@ -192,13 +180,22 @@ export default async function MembersPage() {
 
 			<Tabs defaultValue="all" className="space-y-5">
 				<TabsList className="bg-muted/50 p-1 rounded-xl">
-					<TabsTrigger value="all" className="rounded-lg text-sm data-[state=active]:shadow-sm">
+					<TabsTrigger
+						value="all"
+						className="rounded-lg text-sm data-[state=active]:shadow-sm"
+					>
 						{t("members.tabs.all")}
 					</TabsTrigger>
-					<TabsTrigger value="mentors" className="rounded-lg text-sm data-[state=active]:shadow-sm">
+					<TabsTrigger
+						value="mentors"
+						className="rounded-lg text-sm data-[state=active]:shadow-sm"
+					>
 						{t("members.tabs.mentors")}
 					</TabsTrigger>
-					<TabsTrigger value="rising" className="rounded-lg text-sm data-[state=active]:shadow-sm">
+					<TabsTrigger
+						value="rising"
+						className="rounded-lg text-sm data-[state=active]:shadow-sm"
+					>
 						{t("members.tabs.risingStars")}
 					</TabsTrigger>
 				</TabsList>

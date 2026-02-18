@@ -408,23 +408,23 @@ export class CodeQualityAnalyzer {
 		score += complexityScore * weights.cyclomaticComplexity;
 
 		// Comment ratio (higher is better)
-		score += Math.min(metrics.commentRatio! * 2, 1) * weights.commentRatio;
+		score += Math.min((metrics.commentRatio ?? 0) * 2, 1) * weights.commentRatio;
 
 		// Function length (lower is better)
-		const lengthScore = Math.max(0, 1 - metrics.averageFunctionLength! / 100);
+		const lengthScore = Math.max(0, 1 - (metrics.averageFunctionLength ?? 0) / 100);
 		score += lengthScore * weights.averageFunctionLength;
 
 		// Duplicate code (lower is better)
-		score += (1 - metrics.duplicateCodeRatio!) * weights.duplicateCodeRatio;
+		score += (1 - (metrics.duplicateCodeRatio ?? 0)) * weights.duplicateCodeRatio;
 
 		// Naming conventions (higher is better)
-		score += (metrics.namingConventionScore! / 100) * weights.namingConventionScore;
+		score += (metrics.namingConventionScore ?? 0 / 100) * weights.namingConventionScore;
 
 		// Error handling (higher is better)
-		score += (metrics.errorHandlingScore! / 100) * weights.errorHandlingScore;
+		score += (metrics.errorHandlingScore ?? 0 / 100) * weights.errorHandlingScore;
 
 		// Testability (higher is better)
-		score += (metrics.testabilityScore! / 100) * weights.testabilityScore;
+		score += (metrics.testabilityScore ?? 0 / 100) * weights.testabilityScore;
 
 		return Math.round(score * 100);
 	}

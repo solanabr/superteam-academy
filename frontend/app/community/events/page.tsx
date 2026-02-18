@@ -1,13 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import {
-	Calendar,
-	Clock,
-	MapPin,
-	Users,
-	ExternalLink,
-	Video,
-} from "lucide-react";
+import { Calendar, Clock, MapPin, Users, ExternalLink, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -62,9 +54,7 @@ const UPCOMING_EVENTS = [
 		location: "online",
 		attendees: 234,
 		maxAttendees: 500,
-		speakers: [
-			{ name: "Light Protocol Team", role: "Core Contributors" },
-		],
+		speakers: [{ name: "Light Protocol Team", role: "Core Contributors" }],
 		tags: ["hackathon", "zk", "competition"],
 	},
 	{
@@ -182,9 +172,7 @@ export default async function EventsPage() {
 										)}
 									</div>
 
-									<h3 className="text-base font-semibold mb-1">
-										{event.title}
-									</h3>
+									<h3 className="text-base font-semibold mb-1">{event.title}</h3>
 									<p className="text-sm text-muted-foreground mb-3 line-clamp-2">
 										{event.description}
 									</p>
@@ -197,8 +185,9 @@ export default async function EventsPage() {
 										<span className="flex items-center gap-1">
 											<Users className="h-3 w-3" />
 											{event.attendees.toLocaleString()}
-											{event.maxAttendees && ` / ${event.maxAttendees.toLocaleString()}`}
-											{" "}{t("events.registered")}
+											{event.maxAttendees &&
+												` / ${event.maxAttendees.toLocaleString()}`}{" "}
+											{t("events.registered")}
 										</span>
 									</div>
 
@@ -208,7 +197,11 @@ export default async function EventsPage() {
 												{t("events.speakers")}:
 											</span>
 											{event.speakers.map((s) => (
-												<Badge key={s.name} variant="secondary" className="text-xs font-normal">
+												<Badge
+													key={s.name}
+													variant="secondary"
+													className="text-xs font-normal"
+												>
 													{s.name}
 												</Badge>
 											))}
@@ -254,8 +247,17 @@ export default async function EventsPage() {
 								</div>
 							</div>
 							{event.recordingUrl && (
-								<Button variant="ghost" size="sm" className="gap-1.5 shrink-0" asChild>
-									<a href={event.recordingUrl} target="_blank" rel="noopener noreferrer">
+								<Button
+									variant="ghost"
+									size="sm"
+									className="gap-1.5 shrink-0"
+									asChild
+								>
+									<a
+										href={event.recordingUrl}
+										target="_blank"
+										rel="noopener noreferrer"
+									>
 										<Video className="h-3.5 w-3.5" />
 										{t("events.recording")}
 										<ExternalLink className="h-3 w-3" />
