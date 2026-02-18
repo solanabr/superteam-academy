@@ -172,11 +172,19 @@ async function HeroSection() {
 					</div>
 
 					<div className="hidden flex-1 w-full shrink-0 md:flex justify-end">
-						<HeroWave
-							width={540}
-							height={ 960 }
-							className="text-forest dark:text-cream animate-float"
-						/>
+						<div className="relative hero-wave-stack animate-float">
+							<HeroWave
+								width={540}
+								height={960}
+								className="hero-wave-base text-black dark:text-gold"
+							/>
+							<HeroWave
+								width={540}
+								height={960}
+								aria-hidden="true"
+								className="hero-wave-highlight text-forest dark:text-cream"
+							/>
+						</div>
 					</div>
 				</div>
 			</div>

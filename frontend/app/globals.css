@@ -135,6 +135,17 @@
 			transform: translateY(-8px);
 		}
 	}
+	@keyframes hero-wave-sweep {
+		0% {
+			clip-path: inset(0 0 100% 0);
+		}
+		50% {
+			clip-path: inset(0 0 0 0);
+		}
+		100% {
+			clip-path: inset(100% 0 0 0);
+		}
+	}
 }
 
 .dark {
@@ -270,5 +281,20 @@
 	}
 	.animate-stagger > *:nth-child(8) {
 		animation-delay: 560ms;
+	}
+	.hero-wave-stack {
+		width: 540px;
+		height: 960px;
+	}
+	.hero-wave-stack svg {
+		position: absolute;
+		inset: 0;
+	}
+	.hero-wave-base {
+		opacity: 0.92;
+	}
+	.hero-wave-highlight {
+		animation: hero-wave-sweep 6s ease-in-out infinite;
+		will-change: clip-path;
 	}
 }
