@@ -5,6 +5,11 @@ import {
   SYSVAR_RENT_PUBKEY,
   SYSVAR_CLOCK_PUBKEY,
 } from "@solana/web3.js";
+import {
+  TOKEN_PROGRAM_ID,
+  TOKEN_2022_PROGRAM_ID,
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+} from "@solana/spl-token";
 import { loadKeypair, saveKeypair } from "./keypair-storage";
 
 // ---------------------------------------------------------------------------
@@ -83,6 +88,9 @@ const WELL_KNOWN_PROGRAMS: Record<string, PublicKey> = {
   systemprogram: SystemProgram.programId,
   rent: SYSVAR_RENT_PUBKEY,
   clock: SYSVAR_CLOCK_PUBKEY,
+  tokenprogram: TOKEN_PROGRAM_ID,
+  token2022program: TOKEN_2022_PROGRAM_ID,
+  associatedtokenprogram: ASSOCIATED_TOKEN_PROGRAM_ID,
 };
 
 // ---------------------------------------------------------------------------
@@ -140,11 +148,14 @@ export function resolveAccount(
   }
 
   // 3. Well-known programs
-  if (WELL_KNOWN_PROGRAMS[normalized]) {
+  const wellKnown =
+    WELL_KNOWN_PROGRAMS[normalized] ??
+    (normalized.startsWith("tokenkegqe") ? TOKEN_PROGRAM_ID : undefined);
+  if (wellKnown) {
     return {
       resolved: true,
       account: {
-        pubkey: WELL_KNOWN_PROGRAMS[normalized],
+        pubkey: wellKnown,
         isSigner: false,
         isWritable: false,
         source: "well-known",
@@ -166,8 +177,7 @@ export function resolveAccount(
           if (WALLET_NAMES.has(seedNorm)) {
             return wallet.toBuffer();
           }
-          // Fallback: most PDA seeds reference the user/authority wallet
-          return wallet.toBuffer();
+          throw new Error(`Cannot auto-resolve PDA seed: ${seed.path}`);
         }
         return Buffer.alloc(0);
       });

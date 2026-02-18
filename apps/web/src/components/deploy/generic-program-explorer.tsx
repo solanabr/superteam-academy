@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
+import type { WalletName } from "@solana/wallet-adapter-base";
 import {
   Transaction,
   TransactionInstruction,
@@ -10,10 +11,14 @@ import {
 import { BorshInstructionCoder, BorshCoder, BN } from "@coral-xyz/anchor";
 import type { Idl } from "@coral-xyz/anchor";
 import { useTranslations } from "next-intl";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { isWalletKeyringError } from "@/lib/solana/wallet-errors";
+import {
+  isWalletKeyringError,
+  isUserRejection,
+} from "@/lib/solana/wallet-errors";
 import {
   extractCustomErrorCode,
   resolveIdlError,
@@ -117,8 +122,16 @@ export function GenericProgramExplorer({
   courseId,
 }: GenericProgramExplorerProps) {
   const t = useTranslations("deploy.explorer");
-  const { publicKey, signTransaction, disconnect } = useWallet();
+  const { publicKey, signTransaction, disconnect, wallet, select } =
+    useWallet();
   const { connection } = useConnection();
+  const { setVisible: openWalletModal } = useWalletModal();
+  const [isReconnecting, setIsReconnecting] = useState(false);
+  const [pendingReconnectWallet, setPendingReconnectWallet] =
+    useState<WalletName | null>(null);
+  const reconnectAttemptsRef = useRef(0);
+  const executingRef = useRef(false);
+  const MAX_RECONNECT_ATTEMPTS = 3;
 
   // Parse IDL
   const idl = useMemo<Idl | null>(() => {
@@ -186,6 +199,39 @@ export function GenericProgramExplorer({
   const [expandedTx, setExpandedTx] = useState<string | null>(null);
 
   const txEndRef = useRef<HTMLDivElement>(null);
+
+  // Clear stale errors when wallet reconnects (covers external reconnection
+  // through browser extension, not just our handleReconnectWallet button)
+  useEffect(() => {
+    if (publicKey) {
+      setWalletError(false);
+      setErrorMessage(null);
+      setProgramError(null);
+      reconnectAttemptsRef.current = 0;
+    }
+  }, [publicKey]);
+
+  // State-driven reconnection: after select(null) deselects the adapter,
+  // re-select the remembered wallet once the provider reflects the change.
+  useEffect(() => {
+    if (pendingReconnectWallet && !wallet) {
+      select(pendingReconnectWallet);
+      setPendingReconnectWallet(null);
+      setIsReconnecting(false);
+    }
+  }, [pendingReconnectWallet, wallet, select]);
+
+  // Safety timeout: if reconnection doesn't complete within 5s, give up
+  // and let the user trigger it manually.
+  useEffect(() => {
+    if (!pendingReconnectWallet) return;
+    const timeout = setTimeout(() => {
+      setPendingReconnectWallet(null);
+      setIsReconnecting(false);
+      setWalletError(true);
+    }, 5000);
+    return () => clearTimeout(timeout);
+  }, [pendingReconnectWallet]);
 
   // ---------------------------------------------------------------------------
   // Load program ID
@@ -285,6 +331,43 @@ export function GenericProgramExplorer({
   );
 
   // ---------------------------------------------------------------------------
+  // Wallet reconnect handler
+  // ---------------------------------------------------------------------------
+
+  // Fully reset the adapter to clear Phantom's stale keyring session.
+  // select(null) drops the stale adapter; the state-driven useEffect
+  // on pendingReconnectWallet re-selects it once the provider reflects
+  // the deselection, triggering a fresh autoConnect with a new keyring.
+  const handleReconnectWallet = useCallback(async () => {
+    if (isReconnecting) return;
+    setIsReconnecting(true);
+
+    const walletName = wallet?.adapter.name ?? null;
+
+    // Clear transaction-related errors; walletError is managed by
+    // reconnection outcome (publicKey useEffect clears it on success).
+    setErrorMessage(null);
+    setProgramError(null);
+
+    try {
+      await disconnect();
+    } catch {
+      // ignore — adapter may already be disconnected
+    }
+
+    // Fully deselect the adapter so the provider drops the stale instance.
+    select(null);
+
+    if (walletName) {
+      setPendingReconnectWallet(walletName);
+    } else {
+      // No wallet was previously selected — fall back to the modal
+      setIsReconnecting(false);
+      openWalletModal(true);
+    }
+  }, [disconnect, wallet, select, openWalletModal, isReconnecting]);
+
+  // ---------------------------------------------------------------------------
   // Execute instruction
   // ---------------------------------------------------------------------------
 
@@ -298,6 +381,9 @@ export function GenericProgramExplorer({
         !instructionCoder
       )
         return;
+
+      if (executingRef.current) return;
+      executingRef.current = true;
 
       setIsExecuting(true);
       setErrorMessage(null);
@@ -463,8 +549,17 @@ export function GenericProgramExplorer({
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
 
+        // User pressed "Reject" in wallet popup — not an error, just a cancel
+        if (isUserRejection(msg)) {
+          return;
+        }
+
         if (isWalletKeyringError(msg)) {
+          reconnectAttemptsRef.current += 1;
           setWalletError(true);
+          if (reconnectAttemptsRef.current <= MAX_RECONNECT_ATTEMPTS) {
+            handleReconnectWallet();
+          }
           return;
         }
 
@@ -492,6 +587,7 @@ export function GenericProgramExplorer({
 
         setErrorMessage(msg);
       } finally {
+        executingRef.current = false;
         setIsExecuting(false);
       }
     },
@@ -506,19 +602,9 @@ export function GenericProgramExplorer({
       connection,
       storagePrefix,
       fetchAccountData,
+      handleReconnectWallet,
     ]
   );
-
-  // Wallet reconnect handler
-  const handleReconnectWallet = useCallback(async () => {
-    try {
-      await disconnect();
-    } catch {
-      // ignore
-    }
-    setWalletError(false);
-    setErrorMessage(null);
-  }, [disconnect]);
 
   // ---------------------------------------------------------------------------
   // Render: Error states
@@ -546,18 +632,6 @@ export function GenericProgramExplorer({
     );
   }
 
-  if (!publicKey) {
-    return (
-      <Card className="border-yellow-500/30 bg-yellow-500/5">
-        <CardContent className="py-8 text-center">
-          <p className="text-sm text-muted-foreground">
-            {t("walletDisconnected")}
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
-
   if (walletError) {
     return (
       <Card className="border-yellow-500/30 bg-yellow-500/5">
@@ -565,8 +639,33 @@ export function GenericProgramExplorer({
           <p className="text-sm text-muted-foreground">
             {t("walletSessionExpired")}
           </p>
-          <Button onClick={handleReconnectWallet} variant="outline" size="sm">
-            {t("reconnectWallet")}
+          <div className="flex items-center justify-center gap-2">
+            <Button
+              onClick={handleReconnectWallet}
+              size="sm"
+              disabled={isReconnecting}
+            >
+              {isReconnecting ? t("executing") + "..." : t("reconnectWallet")}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!publicKey) {
+    return (
+      <Card className="border-yellow-500/30 bg-yellow-500/5">
+        <CardContent className="space-y-4 py-8 text-center">
+          <p className="text-sm text-muted-foreground">
+            {t("walletDisconnected")}
+          </p>
+          <Button
+            onClick={() => openWalletModal(true)}
+            variant="outline"
+            size="sm"
+          >
+            {t("connectWallet")}
           </Button>
         </CardContent>
       </Card>
@@ -830,7 +929,7 @@ export function GenericProgramExplorer({
                     className="w-full bg-gradient-to-r from-[#9945FF] to-[#14F195] font-semibold text-white hover:opacity-90"
                   >
                     {isExecuting
-                      ? t("confirmed") + "..."
+                      ? t("executing") + "..."
                       : `Execute ${formatInstructionName(ix.name)}`}
                   </Button>
                 </div>
@@ -844,7 +943,7 @@ export function GenericProgramExplorer({
           <div className="flex items-center justify-center gap-2 py-2">
             <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
             <span className="text-sm text-muted-foreground">
-              {t("confirmed")}...
+              {t("executing")}...
             </span>
           </div>
         )}
