@@ -199,11 +199,12 @@ export function createLearningProgressService(prisma: PrismaClient): LearningPro
   };
 
   const claimAchievement = async (userId: string, achievementId: string): Promise<boolean> => {
-    // 1. Fetch user progress
+    // 1. Fetch user progress and preferences
     const progress = await prisma.progress.findUnique({
       where: { userId },
+      include: { user: { select: { preferences: true } } }
     });
-    if (!progress) return false; // No progress yet — not eligible for any achievement
+    if (!progress) return false;
 
     // 2. Fetch Achievement definition
     const { ACHIEVEMENTS } = await import("@/lib/achievements");
@@ -247,6 +248,11 @@ export function createLearningProgressService(prisma: PrismaClient): LearningPro
       case "night-owl": {
         const hours = new Date().getUTCHours();
         isValid = hours >= 22;
+        break;
+      }
+      case "easter-egg": {
+        const unlocked = (progress.user.preferences as any)?.unlockedAchievements || [];
+        isValid = Array.isArray(unlocked) && unlocked.includes("easter-egg");
         break;
       }
       default:

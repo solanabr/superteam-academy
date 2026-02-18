@@ -56,4 +56,12 @@ export const ACHIEVEMENTS: Achievement[] = [
         bitIndex: 6,
         icon: "🦉",
     },
+    {
+        id: "easter-egg",
+        title: "Finding Easter Egg",
+        description: "You've discovered a secret hidden deep within the platform.",
+        xp: 1000,
+        bitIndex: 7,
+        icon: "🥚",
+    },
 ];
