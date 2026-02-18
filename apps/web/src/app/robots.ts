@@ -13,6 +13,6 @@ export default function robots(): MetadataRoute.Robots {
         "/api/",
       ],
     },
-    sitemap: "https://superteam-lms.vercel.app/sitemap.xml",
+    sitemap: `${process.env.NEXT_PUBLIC_APP_URL || "https://solarium.courses"}/sitemap.xml`,
   };
 }

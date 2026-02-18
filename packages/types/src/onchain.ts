@@ -1,4 +1,4 @@
-// On-chain account types for the Solarium LMS Solana program.
+// On-chain account types for the Superteam Academy Solana program.
 // These map to the PDA accounts defined in the bounty spec's Anchor program.
 // Currently used for type-safe deserialization of on-chain reads;
 // write paths are stubbed and delegate to Supabase via API routes.

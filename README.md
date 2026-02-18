@@ -128,7 +128,7 @@ For detailed deployment instructions, see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.m
 ## Project Structure
 
 ```
-solarium/
+superteam-academy/
 ├── apps/
 │   ├── web/                   # Next.js 14 application
 │   │   ├── src/app/           #   App Router pages ([locale] route groups)
@@ -174,8 +174,6 @@ NEXT_PUBLIC_SOLANA_NETWORK=devnet
 NEXT_PUBLIC_XP_MINT_ADDRESS=       # Base58 mint pubkey
 XP_MINT_AUTHORITY_SECRET=          # PRIVATE -- JSON array of authority keypair bytes
 
-# Helius DAS API (for on-chain leaderboard indexing — server-only)
-HELIUS_API_KEY=
 
 # ── Auth ─────────────────────────────────────────────────────────────────────
 NEXT_PUBLIC_GOOGLE_CLIENT_ID=      # Google OAuth client ID

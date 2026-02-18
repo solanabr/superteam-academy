@@ -1,6 +1,6 @@
 # Architecture
 
-Technical architecture documentation for Solarium -- a production-ready learning management system for Solana developer education, built by Superteam Brazil.
+Technical architecture documentation for Superteam Academy -- a production-ready learning management system for Solana developer education, built by Superteam Brazil.
 
 **Production domain**: `solarium.courses`
 
@@ -62,7 +62,7 @@ Technical architecture documentation for Solarium -- a production-ready learning
 ## Monorepo Structure
 
 ```
-solarium/
+superteam-academy/
 ├── apps/
 │   ├── web/                             # Next.js 14 application
 │   │   ├── src/
@@ -360,7 +360,7 @@ The Solana program build server provides defense-in-depth:
 - **SBF target**: Programs compile to Solana BPF/SBF bytecode, which cannot access the host system
 - **Concurrency limit**: Semaphore-gated (default: 2 concurrent builds)
 - **Build timeout**: Configurable (default: 120 seconds)
-- **Non-root execution**: Docker runs as `solarium` user
+- **Non-root execution**: Docker runs as `academy` user
 - **CORS**: Exact origin match (`ALLOWED_ORIGIN` env var, default: `https://solarium.courses`)
 - **API key auth**: `X-API-Key` header validated at Axum middleware level; `/health` and `/metrics` are exempt
 - **Request body limit**: 512KB (tower-http `RequestBodyLimitLayer`)
@@ -370,7 +370,7 @@ The Solana program build server provides defense-in-depth:
 
 The build server is a standalone Rust/Axum service deployed on **GCP Cloud Run** with `--no-invoker-iam-check` (GCP's IAM layer is disabled; authentication is handled at the application level via `X-API-Key` header). There is no API Gateway or Load Balancer in front of it.
 
-**URL pattern**: `https://solarium-build-server-HASH.a.run.app`
+**URL pattern**: `https://academy-build-server-HASH.a.run.app`
 
 ### Stack
 
@@ -412,7 +412,7 @@ Request → CORS → Body Limit (512KB) → Compression → Request ID → Loggi
 
 | Variable                | Required | Default                    | Purpose                       |
 | ----------------------- | -------- | -------------------------- | ----------------------------- |
-| `SOLARIUM_API_KEY`      | Yes      | -                          | API key for X-API-Key auth    |
+| `ACADEMY_API_KEY`       | Yes      | -                          | API key for X-API-Key auth    |
 | `ALLOWED_ORIGIN`        | No       | `https://solarium.courses` | CORS allowed origin           |
 | `PORT`                  | No       | `8080`                     | Listen port                   |
 | `MAX_CONCURRENT_BUILDS` | No       | `2`                        | Semaphore permits             |
@@ -420,23 +420,24 @@ Request → CORS → Body Limit (512KB) → Compression → Request ID → Loggi
 | `CACHE_TTL_SECS`        | No       | `1800`                     | Build cache TTL (30 min)      |
 | `LOG_FORMAT`            | No       | `json`                     | `json` or `pretty`            |
 | `PROGRAMS_DIR`          | No       | `programs`                 | Template Cargo.toml directory |
-| `BUILDS_DIR`            | No       | `/tmp/solarium-builds`     | Build output directory        |
+| `BUILDS_DIR`            | No       | `/tmp/academy-builds`      | Build output directory        |
 
 ## API Routes
 
-| Route                        | Method | Auth     | Purpose                                                                   |
-| ---------------------------- | ------ | -------- | ------------------------------------------------------------------------- |
-| `/api/auth/nonce`            | GET    | None     | Generate SIWS nonce, store in Postgres, return with domain                |
-| `/api/auth/wallet`           | POST   | None     | SIWS: verify signature, create user, set session                          |
-| `/api/auth/callback`         | GET    | None     | Google/GitHub OAuth: exchange code, redirect                              |
-| `/api/auth/link-wallet`      | POST   | Required | Link Solana wallet to existing account, sync XP on-chain                  |
-| `/api/auth/unlink`           | POST   | Required | Unlink auth method (wallet/Google/GitHub), burn XP if wallet              |
-| `/api/lessons/complete`      | POST   | Required | Complete lesson, award XP (max 100), mint XP on-chain, check achievements |
-| `/api/courses/complete`      | POST   | Required | Complete course, award XP (500), check enrollment + progress              |
-| `/api/achievements`          | POST   | Required | Unlock achievement (allowlist)                                            |
-| `/api/leaderboard`           | GET    | None     | Leaderboard data (weekly/monthly/alltime via HybridProgressService)       |
-| `/api/certificates/metadata` | GET    | None     | Serve NFT metadata JSON for Metaplex                                      |
-| `/api/rust/execute`          | POST   | Optional | Proxy Rust code to Rust Playground (rate-limited, 50KB limit)             |
+| Route                              | Method | Auth     | Purpose                                            |
+| ---------------------------------- | ------ | -------- | -------------------------------------------------- |
+| `/api/auth/wallet`                 | POST   | None     | SIWS authentication                                |
+| `/api/auth/callback`               | GET    | None     | Google OAuth callback                              |
+| `/api/auth/link-wallet`            | POST   | Required | Link wallet to existing account                    |
+| `/api/auth/nonce`                  | GET    | None     | Generate SIWS nonce                                |
+| `/api/lessons/complete`            | POST   | Required | Mark lesson complete, award XP, check achievements |
+| `/api/leaderboard`                 | GET    | None     | XP rankings                                        |
+| `/api/credentials/issue`           | POST   | Required | Issue Metaplex Core credential NFT                 |
+| `/api/certificates/metadata`       | GET    | None     | Serve NFT metadata JSON for Metaplex               |
+| `/api/build-program`               | POST   | Required | Proxy Anchor build to build server                 |
+| `/api/deploy`                      | POST   | Required | Program deployment orchestrator                    |
+| `/api/enrollment/sync`             | POST   | Required | Sync on-chain enrollment to Supabase               |
+| `/api/courses/[courseId]/finalize` | POST   | Required | Finalize course completion on-chain                |
 
 ## Database Schema
 
@@ -707,15 +708,12 @@ NEXT_PUBLIC_SOLANA_NETWORK=devnet
 NEXT_PUBLIC_XP_MINT_ADDRESS=           # Base58 mint pubkey
 XP_MINT_AUTHORITY_SECRET=              # PRIVATE — JSON array of authority keypair bytes
 
-# Helius DAS API (for on-chain leaderboard indexing — server-only)
-HELIUS_API_KEY=                        # Optional — falls back to Supabase leaderboard
-
 # ── Auth ──────────────────────────────────────────────────────────────────────
 NEXT_PUBLIC_GOOGLE_CLIENT_ID=          # Google OAuth client ID
 
 # ── Build Server (GCP Cloud Run) ─────────────────────────────────────────────
 NEXT_PUBLIC_BUILD_SERVER_URL=          # Direct Cloud Run URL (IAM check disabled)
-BUILD_SERVER_API_KEY=                  # PRIVATE — server-only, same as SOLARIUM_API_KEY on Cloud Run
+BUILD_SERVER_API_KEY=                  # PRIVATE — server-only, same as ACADEMY_API_KEY on Cloud Run
 
 # ── Analytics (optional — platform works without these) ───────────────────────
 NEXT_PUBLIC_GA4_MEASUREMENT_ID=

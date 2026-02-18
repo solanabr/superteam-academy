@@ -2,8 +2,7 @@ import { MetadataRoute } from "next";
 import { getAllCourses } from "@/lib/sanity/queries";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl =
-    process.env.NEXT_PUBLIC_APP_URL || "https://superteam-lms.vercel.app";
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://solarium.courses";
   const locales = ["en", "pt-BR", "es"];
 
   const publicRoutes = ["", "/courses", "/leaderboard"];
