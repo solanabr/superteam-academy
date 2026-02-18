@@ -31,7 +31,7 @@ function ConnectButton() {
       await connect(connectorId);
       setOpen(false);
     },
-    [connect]
+    [connect],
   );
 
   if (isConnected) {
@@ -42,7 +42,7 @@ function ConnectButton() {
           onClick={copy}
           className={cn(
             "rounded-lg border border-transparent px-2.5 py-1.5 text-sm font-medium",
-            "hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 outline-none"
+            "hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 outline-none",
           )}
         >
           {copied ? "Copied!" : formatted}
@@ -82,7 +82,7 @@ function ConnectButton() {
               className={cn(
                 "flex w-full items-center gap-3 rounded-lg border border-transparent px-3 py-2.5 text-left",
                 "hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 outline-none",
-                "disabled:opacity-50"
+                "disabled:opacity-50",
               )}
             >
               {wallet.icon && (
