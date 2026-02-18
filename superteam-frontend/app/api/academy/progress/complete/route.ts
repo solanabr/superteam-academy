@@ -12,7 +12,7 @@ import {
   recordLessonComplete,
   recordCourseFinalized,
 } from "@/lib/server/activity-store";
-import { courses } from "@/lib/course-catalog";
+import { getCourse } from "@/lib/server/admin-store";
 
 type CompleteLessonBody = {
   slug?: string;
@@ -63,7 +63,7 @@ export async function POST(request: Request) {
   const enrollmentAfter = await fetchEnrollment(userPk, slug);
   const lessonsCompleted = Number(enrollmentAfter?.lessonsCompleted ?? 0);
 
-  const courseTitle = courses.find((c) => c.slug === slug)?.title ?? slug;
+  const courseTitle = getCourse(slug)?.title ?? slug;
   recordLessonComplete(
     user.walletAddress,
     courseTitle,

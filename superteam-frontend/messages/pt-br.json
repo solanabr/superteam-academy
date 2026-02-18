@@ -369,5 +369,30 @@
     "noActivity": "Nenhuma atividade para exibir.",
     "noAchievements": "Nenhuma conquista desbloqueada ainda. Continue aprendendo!",
     "noCredentials": "Nenhuma credencial conquistada ainda. Conclua um curso para conquistar a primeira!"
+  },
+  "admin": {
+    "title": "Painel de Administracao",
+    "dashboard": "Painel",
+    "courses": "Cursos",
+    "users": "Usuarios",
+    "roadmaps": "Trilhas",
+    "settings": "Configuracoes",
+    "backToSite": "Voltar ao Site",
+    "save": "Salvar Alteracoes",
+    "create": "Criar",
+    "delete": "Excluir",
+    "cancel": "Cancelar",
+    "edit": "Editar",
+    "search": "Buscar...",
+    "noResults": "Nenhum resultado encontrado.",
+    "confirmDelete": "Tem certeza? Esta acao nao pode ser desfeita.",
+    "saved": "Alteracoes salvas com sucesso.",
+    "totalLearners": "Total de Alunos",
+    "totalCourses": "Total de Cursos",
+    "totalXpAwarded": "XP Total Concedido",
+    "activeToday": "Ativos Hoje",
+    "avgStreak": "Sequencia Media",
+    "adminPanel": "Painel Admin",
+    "management": "Gerenciamento"
   }
 }

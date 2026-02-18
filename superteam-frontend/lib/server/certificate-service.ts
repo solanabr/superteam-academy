@@ -1,7 +1,7 @@
 import "server-only";
 
 import { PublicKey } from "@solana/web3.js";
-import { courses } from "@/lib/course-catalog";
+import { getAllCourses, getCourse } from "@/lib/server/admin-store";
 import {
   ACADEMY_PROGRAM_ID,
   ACADEMY_CLUSTER,
@@ -81,7 +81,7 @@ function getTrackCourseSlugs(trackName: string): string[] {
 function getTrackTotalXp(trackName: string): number {
   const slugs = getTrackCourseSlugs(trackName);
   return slugs.reduce((total, slug) => {
-    const course = courses.find((c) => c.slug === slug);
+    const course = getCourse(slug);
     return total + (course?.xp ?? 0);
   }, 0);
 }
@@ -91,7 +91,7 @@ function buildCertificateData(
   courseSlug: string,
   completionDate?: string,
 ): CertificateData | null {
-  const course = courses.find((c) => c.slug === courseSlug);
+  const course = getCourse(courseSlug);
   if (!course) return null;
 
   const trackInfo = TRACK_MAP[courseSlug] ?? {
@@ -126,7 +126,7 @@ export function getCertificateById(id: string): CertificateData | null {
   const parsed = decodeCertificateId(id);
   if (!parsed) return null;
 
-  const course = courses.find((c) => c.slug === parsed.courseSlug);
+  const course = getCourse(parsed.courseSlug);
   if (!course) return null;
 
   // Build certificate with the wallet prefix as a stand-in
@@ -145,7 +145,7 @@ export async function getCertificatesForWallet(
   const results: CertificateData[] = [];
   const user = new PublicKey(wallet);
 
-  for (const course of courses) {
+  for (const course of getAllCourses()) {
     const meta = getCatalogCourseMeta(course.slug);
     if (!meta) continue;
 

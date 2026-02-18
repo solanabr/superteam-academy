@@ -5,6 +5,7 @@ import { getIdentitySnapshotForUser } from "@/lib/server/solana-identity-adapter
 import { getAllCourseProgressSnapshots } from "@/lib/server/academy-progress-adapter";
 import { getActivityData } from "@/lib/server/activity-store";
 import { getCachedLeaderboard } from "@/lib/server/leaderboard-cache";
+import { getAllCourses } from "@/lib/server/admin-store";
 
 export default async function DashboardPage() {
   const user = await requireAuthenticatedUser();
@@ -17,26 +18,16 @@ export default async function DashboardPage() {
         getActivityData(user.walletAddress, 365),
         getCachedLeaderboard(),
       ]);
-  } catch (error: any) {
-    // Network error - use fallbacks
-    if (
-      error?.message?.includes("fetch failed") ||
-      error?.message?.includes("Network error") ||
-      error?.message?.includes("ECONNREFUSED")
-    ) {
-      console.warn(
-        "Network error loading dashboard data, using fallbacks:",
-        error.message,
-      );
-      snapshot = await getIdentitySnapshotForUser(user).catch(() => null);
-      courseSnapshots = [];
-      activityData = await getActivityData(user.walletAddress, 365);
-      leaderboardEntries = [];
-    } else {
-      throw error;
-    }
+  } catch {
+    snapshot = await getIdentitySnapshotForUser(user).catch(() => null);
+    courseSnapshots = [];
+    activityData = await getActivityData(user.walletAddress, 365);
+    leaderboardEntries = [];
   }
-  const courses = courseSnapshots.map((item) => item.course);
+  const courses =
+    courseSnapshots.length > 0
+      ? courseSnapshots.map((item) => item.course)
+      : getAllCourses().map((c) => ({ ...c, progress: 0 }));
 
   return (
     <div className="min-h-screen bg-background">

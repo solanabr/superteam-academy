@@ -3,6 +3,7 @@ import { requireAuthenticatedUser } from "@/lib/server/auth-adapter";
 import { getIdentitySnapshotForUser } from "@/lib/server/solana-identity-adapter";
 import { getActivityDays } from "@/lib/server/activity-store";
 import { getAllCourseProgressSnapshots } from "@/lib/server/academy-progress-adapter";
+import { getAllCourses } from "@/lib/server/admin-store";
 
 export default async function Page() {
   const user = await requireAuthenticatedUser();
@@ -13,25 +14,15 @@ export default async function Page() {
       getActivityDays(user.walletAddress, 365),
       getAllCourseProgressSnapshots(user.walletAddress),
     ]);
-  } catch (error: any) {
-    // Network error - use fallbacks
-    if (
-      error?.message?.includes("fetch failed") ||
-      error?.message?.includes("Network error") ||
-      error?.message?.includes("ECONNREFUSED")
-    ) {
-      console.warn(
-        "Network error loading profile data, using fallbacks:",
-        error.message,
-      );
-      snapshot = await getIdentitySnapshotForUser(user).catch(() => null);
-      activityDays = await getActivityDays(user.walletAddress, 365);
-      courseSnapshots = [];
-    } else {
-      throw error;
-    }
+  } catch {
+    snapshot = await getIdentitySnapshotForUser(user).catch(() => null);
+    activityDays = await getActivityDays(user.walletAddress, 365);
+    courseSnapshots = [];
   }
-  const allCourses = courseSnapshots.map((s) => s.course);
+  const allCourses =
+    courseSnapshots.length > 0
+      ? courseSnapshots.map((s) => s.course)
+      : getAllCourses().map((c) => ({ ...c, progress: 0 }));
 
   return (
     <ProfilePageComponent

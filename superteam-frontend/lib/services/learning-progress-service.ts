@@ -98,8 +98,9 @@ export class OnChainLearningProgressService implements LearningProgressService {
   ): Promise<CourseProgress> {
     const { getCourseProgressSnapshot } =
       await import("@/lib/server/academy-progress-adapter");
+    const { getCourse } = await import("@/lib/server/admin-store");
     const snapshot = await getCourseProgressSnapshot(userId, courseSlug);
-    const course = findCourse(courseSlug);
+    const course = getCourse(courseSlug);
     const total = course ? countTotalLessons(course) : 0;
 
     if (!snapshot) {
@@ -130,8 +131,9 @@ export class OnChainLearningProgressService implements LearningProgressService {
   }
 
   async getAllProgress(userId: string): Promise<CourseProgress[]> {
+    const { getAllCourses } = await import("@/lib/server/admin-store");
     const results: CourseProgress[] = [];
-    for (const course of localCourses) {
+    for (const course of getAllCourses()) {
       const progress = await this.getProgressForCourse(userId, course.slug);
       results.push(progress);
     }
@@ -148,11 +150,12 @@ export class OnChainLearningProgressService implements LearningProgressService {
       await import("@/lib/server/academy-program");
     const { recordLessonComplete } =
       await import("@/lib/server/activity-store");
+    const { getCourse } = await import("@/lib/server/admin-store");
 
     const user = new PublicKey(userId);
     await completeLessonOnChain(user, courseSlug);
 
-    const course = findCourse(courseSlug);
+    const course = getCourse(courseSlug);
     recordLessonComplete(userId, course?.title ?? courseSlug);
   }
 

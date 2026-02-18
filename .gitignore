@@ -43,5 +43,8 @@ superteam-frontend/*.tsbuildinfo
 superteam-frontend/next-env.d.ts
 superteam-frontend/.vercel
 
+# Admin data (persisted in-memory store)
+superteam-frontend/.admin-data/
+
 # Claude local settings
 .claude/settings.local.json

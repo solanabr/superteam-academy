@@ -1,6 +1,7 @@
 import { LessonView } from "@/components/lesson/lesson-view";
 import { requireAuthenticatedUser } from "@/lib/server/auth-adapter";
 import { getCourseProgressSnapshot } from "@/lib/server/academy-progress-adapter";
+import { getCourse } from "@/lib/server/admin-store";
 import { notFound } from "next/navigation";
 
 export default async function LessonPage({
@@ -13,20 +14,20 @@ export default async function LessonPage({
   let snapshot;
   try {
     snapshot = await getCourseProgressSnapshot(user.walletAddress, slug);
-  } catch (error: any) {
-    // Network error - show lesson without progress
-    if (
-      error?.message?.includes("fetch failed") ||
-      error?.message?.includes("Network error") ||
-      error?.message?.includes("ECONNREFUSED")
-    ) {
-      console.warn("Network error loading lesson progress:", error.message);
-      snapshot = null;
-    } else {
-      throw error;
-    }
+  } catch {
+    snapshot = null;
   }
-  if (!snapshot) return notFound();
+
+  if (!snapshot) {
+    const course = getCourse(slug);
+    if (!course) return notFound();
+    snapshot = {
+      course: { ...course, progress: 0 },
+      enrolledOnChain: false,
+      completedLessons: 0,
+      enrollmentPda: "",
+    };
+  }
   const course = snapshot.course;
 
   let currentLesson = null;

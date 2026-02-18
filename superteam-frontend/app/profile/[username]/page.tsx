@@ -6,6 +6,7 @@ import {
 } from "@/lib/server/solana-identity-adapter";
 import { getActivityDays } from "@/lib/server/activity-store";
 import { getAllCourseProgressSnapshots } from "@/lib/server/academy-progress-adapter";
+import { getAllCourses } from "@/lib/server/admin-store";
 
 export default async function Page({
   params,
@@ -15,8 +16,6 @@ export default async function Page({
   const { username } = await params;
   const currentUser = await requireAuthenticatedUser();
 
-  // Determine which wallet to show: if the param looks like a Solana address
-  // (32+ chars base58) and isn't the current user, show that wallet's profile.
   const isCurrentUser =
     username === currentUser.walletAddress ||
     username === currentUser.username ||
@@ -33,22 +32,17 @@ export default async function Page({
       getActivityDays(targetWallet, 365),
       getAllCourseProgressSnapshots(targetWallet),
     ]);
-  } catch (error: any) {
-    if (
-      error?.message?.includes("fetch failed") ||
-      error?.message?.includes("Network error") ||
-      error?.message?.includes("ECONNREFUSED")
-    ) {
-      snapshot = isCurrentUser
-        ? await getIdentitySnapshotForUser(currentUser).catch(() => null)
-        : await getIdentitySnapshotForWallet(targetWallet).catch(() => null);
-      activityDays = await getActivityDays(targetWallet, 365);
-      courseSnapshots = [];
-    } else {
-      throw error;
-    }
+  } catch {
+    snapshot = isCurrentUser
+      ? await getIdentitySnapshotForUser(currentUser).catch(() => null)
+      : await getIdentitySnapshotForWallet(targetWallet).catch(() => null);
+    activityDays = await getActivityDays(targetWallet, 365);
+    courseSnapshots = [];
   }
-  const allCourses = courseSnapshots.map((s) => s.course);
+  const allCourses =
+    courseSnapshots.length > 0
+      ? courseSnapshots.map((s) => s.course)
+      : getAllCourses().map((c) => ({ ...c, progress: 0 }));
 
   return (
     <ProfilePageComponent

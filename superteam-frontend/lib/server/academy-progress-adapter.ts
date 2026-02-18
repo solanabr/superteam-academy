@@ -1,7 +1,8 @@
 import "server-only";
 
 import { PublicKey } from "@solana/web3.js";
-import { courses, type Course } from "@/lib/course-catalog";
+import type { Course } from "@/lib/course-catalog";
+import { getAllCourses, getCourse } from "@/lib/server/admin-store";
 import {
   deriveCoursePda,
   deriveEnrollmentPda,
@@ -18,7 +19,7 @@ export type CourseProgressSnapshot = {
 };
 
 function cloneCourse(slug: string): Course | null {
-  const raw = courses.find((item) => item.slug === slug);
+  const raw = getCourse(slug);
   if (!raw) return null;
   return JSON.parse(JSON.stringify(raw)) as Course;
 }
@@ -51,26 +52,16 @@ export async function getCourseProgressSnapshot(
 
   try {
     await ensureCourseOnChain(meta.slug, meta.lessonsCount, meta.trackId);
-  } catch (error: any) {
-    // If network error, continue with fallback (course may exist, we just can't verify)
-    if (!error?.message?.includes("Network error")) {
-      throw error;
-    }
+  } catch {
+    // On-chain sync is best-effort — don't block course display
   }
 
   const user = new PublicKey(walletAddress);
   let enrollment: any = null;
   try {
     enrollment = await fetchEnrollment(user, meta.slug);
-  } catch (error: any) {
-    // Network error - assume not enrolled (safe fallback)
-    if (
-      !error?.message?.includes("fetch failed") &&
-      !error?.message?.includes("ECONNREFUSED") &&
-      error?.code !== "ENOTFOUND"
-    ) {
-      throw error;
-    }
+  } catch {
+    // Network error — assume not enrolled (safe fallback)
   }
 
   const completedLessons = enrollment ? Number(enrollment.lessonsCompleted) : 0;
@@ -92,12 +83,27 @@ export async function getAllCourseProgressSnapshots(
   walletAddress: string,
 ): Promise<CourseProgressSnapshot[]> {
   const results: CourseProgressSnapshot[] = [];
-  for (const course of courses) {
-    const snapshot = await getCourseProgressSnapshot(
-      walletAddress,
-      course.slug,
-    );
-    if (snapshot) results.push(snapshot);
+  for (const course of getAllCourses()) {
+    try {
+      const snapshot = await getCourseProgressSnapshot(
+        walletAddress,
+        course.slug,
+      );
+      if (snapshot) results.push(snapshot);
+    } catch {
+      // Skip courses that fail on-chain lookup — still show the rest
+      const fallback = cloneCourse(course.slug);
+      if (fallback) {
+        const coursePda = deriveCoursePda(course.slug);
+        const user = new PublicKey(walletAddress);
+        results.push({
+          course: applyProgress(fallback, 0),
+          enrolledOnChain: false,
+          completedLessons: 0,
+          enrollmentPda: deriveEnrollmentPda(coursePda, user).toBase58(),
+        });
+      }
+    }
   }
   return results;
 }

@@ -369,5 +369,30 @@
     "noActivity": "No activity to display.",
     "noAchievements": "No achievements unlocked yet. Keep learning!",
     "noCredentials": "No credentials earned yet. Complete a course to earn your first!"
+  },
+  "admin": {
+    "title": "Admin Panel",
+    "dashboard": "Dashboard",
+    "courses": "Courses",
+    "users": "Users",
+    "roadmaps": "Roadmaps",
+    "settings": "Settings",
+    "backToSite": "Back to Site",
+    "save": "Save Changes",
+    "create": "Create",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "search": "Search...",
+    "noResults": "No results found.",
+    "confirmDelete": "Are you sure? This cannot be undone.",
+    "saved": "Changes saved successfully.",
+    "totalLearners": "Total Learners",
+    "totalCourses": "Total Courses",
+    "totalXpAwarded": "Total XP Awarded",
+    "activeToday": "Active Today",
+    "avgStreak": "Avg Streak",
+    "adminPanel": "Admin Panel",
+    "management": "Management"
   }
 }

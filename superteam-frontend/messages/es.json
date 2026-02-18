@@ -369,5 +369,30 @@
     "noActivity": "No hay actividad para mostrar.",
     "noAchievements": "Ningun logro desbloqueado todavia. Sigue aprendiendo!",
     "noCredentials": "Ninguna credencial obtenida todavia. Completa un curso para obtener la primera!"
+  },
+  "admin": {
+    "title": "Panel de Administracion",
+    "dashboard": "Panel",
+    "courses": "Cursos",
+    "users": "Usuarios",
+    "roadmaps": "Rutas",
+    "settings": "Configuracion",
+    "backToSite": "Volver al Sitio",
+    "save": "Guardar Cambios",
+    "create": "Crear",
+    "delete": "Eliminar",
+    "cancel": "Cancelar",
+    "edit": "Editar",
+    "search": "Buscar...",
+    "noResults": "No se encontraron resultados.",
+    "confirmDelete": "Estas seguro? Esta accion no se puede deshacer.",
+    "saved": "Cambios guardados exitosamente.",
+    "totalLearners": "Total de Estudiantes",
+    "totalCourses": "Total de Cursos",
+    "totalXpAwarded": "XP Total Otorgado",
+    "activeToday": "Activos Hoy",
+    "avgStreak": "Racha Promedio",
+    "adminPanel": "Panel de Admin",
+    "management": "Gestion"
   }
 }

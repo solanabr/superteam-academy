@@ -73,6 +73,30 @@ function encodeCreateCourseArgs(
   ]);
 }
 
+function encodeUpdateCourseArgs(
+  lessonsCount: number | null,
+  isActive: boolean | null,
+): Buffer {
+  // update_course(lessons_count: Option<u16>, is_active: Option<bool>)
+  // Borsh: Option<T> = 0 (None) | 1 + T (Some)
+  const parts: Buffer[] = [
+    Buffer.from([81, 217, 18, 192, 129, 233, 129, 231]), // update_course discriminator
+  ];
+  if (lessonsCount !== null) {
+    parts.push(Buffer.from([1])); // Some
+    parts.push(u16le(lessonsCount));
+  } else {
+    parts.push(Buffer.from([0])); // None
+  }
+  if (isActive !== null) {
+    parts.push(Buffer.from([1])); // Some
+    parts.push(Buffer.from([isActive ? 1 : 0]));
+  } else {
+    parts.push(Buffer.from([0])); // None
+  }
+  return Buffer.concat(parts);
+}
+
 function decodeEnrollmentLessonsCompleted(data: Buffer): number {
   // 8 bytes discriminator + 32 course + 32 user
   return data.readUInt16LE(8 + 32 + 32);
@@ -151,6 +175,34 @@ export async function ensureCourseOnChain(
     }
     throw error;
   }
+}
+
+export async function updateCourseOnChain(
+  courseId: string,
+  lessonsCount: number | null,
+  isActive: boolean | null,
+): Promise<string> {
+  const { connection, backend } = getClient();
+  const coursePda = deriveCoursePda(courseId);
+
+  const instruction = new TransactionInstruction({
+    programId: new PublicKey(ACADEMY_PROGRAM_ID),
+    keys: [
+      { pubkey: coursePda, isSigner: false, isWritable: true },
+      { pubkey: backend.publicKey, isSigner: true, isWritable: false },
+    ],
+    data: encodeUpdateCourseArgs(lessonsCount, isActive),
+  });
+  const tx = new Transaction().add(instruction);
+  return sendAndConfirmTransaction(connection, tx, [backend], {
+    commitment: "confirmed",
+  });
+}
+
+export async function deactivateCourseOnChain(
+  courseId: string,
+): Promise<string> {
+  return updateCourseOnChain(courseId, null, false);
 }
 
 export async function fetchLearnerProfile(

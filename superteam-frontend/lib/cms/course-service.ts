@@ -1,5 +1,5 @@
 import type { Course } from "@/lib/course-catalog";
-import { courses as localCourses } from "@/lib/course-catalog";
+import { getAllCourses, getCourse } from "@/lib/server/admin-store";
 import {
   isCmsConfigured,
   getSanityClient,
@@ -128,18 +128,18 @@ class SanityCourseService implements CourseService {
 
 class LocalCourseService implements CourseService {
   async getAllCourses(): Promise<Course[]> {
-    return structuredClone(localCourses);
+    return structuredClone(getAllCourses());
   }
 
   async getCourseBySlug(slug: string): Promise<Course | null> {
-    const course = localCourses.find((c) => c.slug === slug);
+    const course = getCourse(slug);
     return course ? structuredClone(course) : null;
   }
 
   async searchCourses(query: string): Promise<Course[]> {
     const lower = query.toLowerCase();
     return structuredClone(
-      localCourses.filter(
+      getAllCourses().filter(
         (c) =>
           c.title.toLowerCase().includes(lower) ||
           c.description.toLowerCase().includes(lower),
@@ -149,7 +149,7 @@ class LocalCourseService implements CourseService {
 
   async getCoursesByDifficulty(difficulty: string): Promise<Course[]> {
     return structuredClone(
-      localCourses.filter(
+      getAllCourses().filter(
         (c) => c.difficulty.toLowerCase() === difficulty.toLowerCase(),
       ),
     );
@@ -158,7 +158,9 @@ class LocalCourseService implements CourseService {
   async getCoursesByTag(tag: string): Promise<Course[]> {
     const lower = tag.toLowerCase();
     return structuredClone(
-      localCourses.filter((c) => c.tags.some((t) => t.toLowerCase() === lower)),
+      getAllCourses().filter((c) =>
+        c.tags.some((t) => t.toLowerCase() === lower),
+      ),
     );
   }
 }

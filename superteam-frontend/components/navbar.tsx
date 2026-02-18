@@ -2,7 +2,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useTranslations } from "next-intl";
 import { useWallet } from "@solana/wallet-adapter-react";
@@ -23,6 +23,7 @@ import {
   Sun,
   Moon,
   Map,
+  Shield,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -38,6 +39,7 @@ import {
 import { useWalletAuth } from "@/components/providers/wallet-auth-provider";
 import { useIdentitySnapshot } from "@/hooks/use-identity-snapshot";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { getRoleForWallet } from "@/lib/admin-constants";
 
 const navLinks = [
   { href: "/roadmaps", key: "roadmaps" as const, icon: Map, public: true },
@@ -59,6 +61,7 @@ const navLinks = [
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
   const t = useTranslations("nav");
   const tAuth = useTranslations("auth");
   const { connected, publicKey } = useWallet();
@@ -68,6 +71,8 @@ export function Navbar() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+
+  if (pathname.startsWith("/admin")) return null;
 
   const profile = snapshot?.profile;
   const connectedAddress = publicKey?.toBase58() ?? null;
@@ -194,6 +199,13 @@ export function Navbar() {
                     <Settings className="h-4 w-4" />
                     {t("settings")}
                   </DropdownMenuItem>
+                  {activeAddress &&
+                    getRoleForWallet(activeAddress) !== null && (
+                      <DropdownMenuItem onSelect={() => router.push("/admin")}>
+                        <Shield className="h-4 w-4" />
+                        Admin Panel
+                      </DropdownMenuItem>
+                    )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onSelect={() =>
@@ -214,6 +226,18 @@ export function Navbar() {
               >
                 {shortAddress(activeAddress, t("walletConnected"))}
               </Badge>
+
+              {activeAddress && getRoleForWallet(activeAddress) !== null && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-primary/30 text-primary hover:bg-primary/10"
+                  onClick={() => router.push("/admin")}
+                >
+                  <Shield className="mr-1.5 h-3.5 w-3.5" />
+                  Admin
+                </Button>
+              )}
             </>
           )}
         </div>
@@ -354,6 +378,16 @@ export function Navbar() {
                   <Settings className="h-4 w-4" />
                   {t("settings")}
                 </Link>
+                {activeAddress && getRoleForWallet(activeAddress) !== null && (
+                  <Link
+                    href="/admin"
+                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-primary transition-colors hover:bg-primary/10"
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    <Shield className="h-4 w-4" />
+                    Admin Panel
+                  </Link>
+                )}
               </>
             )}
           </nav>
