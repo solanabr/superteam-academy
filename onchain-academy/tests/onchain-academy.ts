@@ -38,8 +38,7 @@ describe("onchain-academy", () => {
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
 
-  const program = anchor.workspace
-    .onchainAcademy as Program<OnchainAcademy>;
+  const program = anchor.workspace.onchainAcademy as Program<OnchainAcademy>;
   const authority = provider.wallet as anchor.Wallet;
 
   // Shared state

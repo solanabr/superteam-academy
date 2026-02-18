@@ -14,7 +14,9 @@ anchor.setProvider(provider);
 const program = anchor.workspace.onchainAcademy as Program<OnchainAcademy>;
 
 const courseId = process.argv[2] || "solana-mock-test";
-const learner = new PublicKey(process.argv[3] || provider.wallet.publicKey.toBase58());
+const learner = new PublicKey(
+  process.argv[3] || provider.wallet.publicKey.toBase58()
+);
 
 const [configPda] = PublicKey.findProgramAddressSync(
   [Buffer.from("config")],
@@ -48,7 +50,12 @@ async function main() {
 
   // Create creator ATA if it doesn't exist
   try {
-    await getAccount(provider.connection, creatorAta, undefined, TOKEN_2022_PROGRAM_ID);
+    await getAccount(
+      provider.connection,
+      creatorAta,
+      undefined,
+      TOKEN_2022_PROGRAM_ID
+    );
   } catch {
     console.log("Creating XP token account for creator...");
     const ix = createAssociatedTokenAccountInstruction(

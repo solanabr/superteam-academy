@@ -31,7 +31,9 @@ const courseId = process.argv[2] || "solana-mock-test";
 const trackCollection = new PublicKey(
   process.argv[3] || "HgbTmCi4wUWAWLx4LD6zJ2AQdayaCe7mVfhJpGwXfeVX"
 );
-const MPL_CORE_PROGRAM_ID = new PublicKey("CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d");
+const MPL_CORE_PROGRAM_ID = new PublicKey(
+  "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d"
+);
 
 const learner = provider.wallet.publicKey;
 
@@ -87,9 +89,19 @@ async function ensureAta(
   owner: PublicKey,
   label: string
 ): Promise<PublicKey> {
-  const ata = getAssociatedTokenAddressSync(mint, owner, false, TOKEN_2022_PROGRAM_ID);
+  const ata = getAssociatedTokenAddressSync(
+    mint,
+    owner,
+    false,
+    TOKEN_2022_PROGRAM_ID
+  );
   try {
-    await getAccount(provider.connection, ata, undefined, TOKEN_2022_PROGRAM_ID);
+    await getAccount(
+      provider.connection,
+      ata,
+      undefined,
+      TOKEN_2022_PROGRAM_ID
+    );
   } catch {
     console.log(`  Creating ${label} XP token account...`);
     const ix = createAssociatedTokenAccountInstruction(
@@ -119,12 +131,15 @@ async function main() {
 
   console.log(`  Program:    ${program.programId.toBase58()}`);
   console.log(`  Learner:    ${learner.toBase58()}`);
-  console.log(`  Course:     "${courseId}" (${lessonCount} lessons, ${course.xpPerLesson} XP/lesson)`);
+  console.log(
+    `  Course:     "${courseId}" (${lessonCount} lessons, ${course.xpPerLesson} XP/lesson)`
+  );
   console.log(`  XP Mint:    ${config.xpMint.toBase58()}`);
   console.log();
 
   // --- Check existing state ---
-  let enrollment = await program.account.enrollment.fetchNullable(enrollmentPda);
+  let enrollment =
+    await program.account.enrollment.fetchNullable(enrollmentPda);
 
   // --- Step 1: Enroll ---
   if (!enrollment) {
@@ -147,7 +162,9 @@ async function main() {
     }
   } else {
     const done = countCompleted(enrollment.lessonFlags as BN[]);
-    console.log(`▸ Step 1: Enroll — skipped (already enrolled, ${done}/${lessonCount} lessons done)`);
+    console.log(
+      `▸ Step 1: Enroll — skipped (already enrolled, ${done}/${lessonCount} lessons done)`
+    );
   }
   console.log();
 
@@ -185,7 +202,9 @@ async function main() {
             tokenProgram: TOKEN_2022_PROGRAM_ID,
           })
           .rpc();
-        console.log(`  Lesson ${i + 1}/${lessonCount} ✓  (+${course.xpPerLesson} XP)`);
+        console.log(
+          `  Lesson ${i + 1}/${lessonCount} ✓  (+${course.xpPerLesson} XP)`
+        );
       } catch (e: any) {
         console.error(`  ✗ Lesson ${i + 1} failed: ${e.message}`);
         return;
@@ -202,7 +221,11 @@ async function main() {
     console.log("▸ Step 4: Finalize — skipped (already finalized)");
   } else {
     console.log("▸ Step 4: Finalize course");
-    const creatorAta = await ensureAta(config.xpMint, course.creator, "creator");
+    const creatorAta = await ensureAta(
+      config.xpMint,
+      course.creator,
+      "creator"
+    );
 
     try {
       const tx = await program.methods
@@ -235,7 +258,9 @@ async function main() {
   enrollment = await program.account.enrollment.fetch(enrollmentPda);
 
   if (enrollment.credentialAsset) {
-    console.log(`▸ Step 5: Issue credential — skipped (already issued: ${enrollment.credentialAsset.toBase58()})`);
+    console.log(
+      `▸ Step 5: Issue credential — skipped (already issued: ${enrollment.credentialAsset.toBase58()})`
+    );
   } else {
     console.log("▸ Step 5: Issue credential");
     const credentialAsset = Keypair.generate();
@@ -267,7 +292,9 @@ async function main() {
         })
         .signers([credentialAsset])
         .rpc();
-      console.log(`  ✓ Credential minted: ${credentialAsset.publicKey.toBase58()}`);
+      console.log(
+        `  ✓ Credential minted: ${credentialAsset.publicKey.toBase58()}`
+      );
       console.log(`    ${txUrl(tx)}`);
     } catch (e: any) {
       console.error(`  ✗ Issue credential failed: ${e.message}`);
@@ -282,7 +309,8 @@ async function main() {
 
   // XP balance
   try {
-    const balance = await provider.connection.getTokenAccountBalance(learnerAta);
+    const balance =
+      await provider.connection.getTokenAccountBalance(learnerAta);
     const xp = Number(balance.value.amount);
     const level = Math.floor(Math.sqrt(xp / 100));
     console.log(`  XP Balance: ${xp}  (Level ${level})`);
@@ -291,7 +319,9 @@ async function main() {
   }
 
   if (enrollment.credentialAsset) {
-    console.log(`  Credential: ${explorerUrl(enrollment.credentialAsset.toBase58())}`);
+    console.log(
+      `  Credential: ${explorerUrl(enrollment.credentialAsset.toBase58())}`
+    );
   }
   console.log(`  Enrollment: ${explorerUrl(enrollmentPda.toBase58())}`);
   console.log();

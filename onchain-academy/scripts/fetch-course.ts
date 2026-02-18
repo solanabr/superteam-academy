@@ -26,14 +26,23 @@ async function main() {
   console.log("XP per Lesson:           ", course.xpPerLesson);
   console.log("Track ID:                ", course.trackId);
   console.log("Track Level:             ", course.trackLevel);
-  console.log("Prerequisite:            ", course.prerequisite?.toBase58() || "none");
+  console.log(
+    "Prerequisite:            ",
+    course.prerequisite?.toBase58() || "none"
+  );
   console.log("Creator Reward XP:       ", course.creatorRewardXp);
   console.log("Min Completions (reward):", course.minCompletionsForReward);
   console.log("Total Completions:       ", course.totalCompletions);
   console.log("Total Enrollments:       ", course.totalEnrollments);
   console.log("Active:                  ", course.isActive);
-  console.log("Created:                 ", new Date(course.createdAt.toNumber() * 1000).toISOString());
-  console.log("Updated:                 ", new Date(course.updatedAt.toNumber() * 1000).toISOString());
+  console.log(
+    "Created:                 ",
+    new Date(course.createdAt.toNumber() * 1000).toISOString()
+  );
+  console.log(
+    "Updated:                 ",
+    new Date(course.updatedAt.toNumber() * 1000).toISOString()
+  );
 }
 
 main().catch(console.error);
