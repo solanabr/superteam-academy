@@ -151,7 +151,6 @@
     "fetchError": "No se pudo cargar tu panel",
     "fetchErrorDetail": "Tuvimos problemas al cargar tus datos. Tu progreso está seguro — intenta actualizar la página.",
     "noCourses": "Aún no te has inscrito en ningún curso",
-    "activityShowMore": "Ver {count} más",
     "noRecentActivity": "Sin actividad reciente",
     "progressOverview": "Resumen de Progreso",
     "recentActivity": "Actividad Reciente",

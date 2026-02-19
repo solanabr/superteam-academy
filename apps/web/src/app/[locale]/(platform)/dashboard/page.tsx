@@ -469,7 +469,8 @@ export default function DashboardPage() {
   const [courses, setCourses] = useState<CurrentCourse[]>([]);
   const [showNameReveal, setShowNameReveal] = useState(false);
   const [dashboardUsername, setDashboardUsername] = useState(data.username);
-  const [activityLimit, setActivityLimit] = useState(5);
+  const [activityPage, setActivityPage] = useState(0);
+  const ACTIVITY_PAGE_SIZE = 5;
 
   // Show name reveal modal on first visit (rerolls === 0 means never seen)
   useEffect(() => {
@@ -807,7 +808,10 @@ export default function DashboardPage() {
               <>
                 <div className="divide-y">
                   {data.recentActivity
-                    .slice(0, activityLimit)
+                    .slice(
+                      activityPage * ACTIVITY_PAGE_SIZE,
+                      (activityPage + 1) * ACTIVITY_PAGE_SIZE
+                    )
                     .map((activity) => {
                       const iconConfig = {
                         lesson: { Icon: Lightning, cls: "text-accent" },
@@ -892,19 +896,29 @@ export default function DashboardPage() {
                       );
                     })}
                 </div>
-                {activityLimit < data.recentActivity.length && (
-                  <div className="border-t px-4 py-3">
-                    <button
-                      onClick={() => setActivityLimit((n) => n + 5)}
-                      className="text-sm font-medium text-primary hover:underline"
-                    >
-                      {t("activityShowMore", {
-                        count: Math.min(
-                          5,
-                          data.recentActivity.length - activityLimit
+                {data.recentActivity.length > ACTIVITY_PAGE_SIZE && (
+                  <div className="flex items-center justify-end gap-1 border-t px-4 py-3">
+                    {Array.from(
+                      {
+                        length: Math.ceil(
+                          data.recentActivity.length / ACTIVITY_PAGE_SIZE
                         ),
-                      })}
-                    </button>
+                      },
+                      (_, i) => (
+                        <button
+                          key={i}
+                          onClick={() => setActivityPage(i)}
+                          aria-current={activityPage === i ? "page" : undefined}
+                          className={`flex h-7 w-7 items-center justify-center rounded text-sm font-medium transition-colors ${
+                            activityPage === i
+                              ? "bg-primary text-primary-foreground"
+                              : "text-text-3 hover:bg-subtle"
+                          }`}
+                        >
+                          {i + 1}
+                        </button>
+                      )
+                    )}
                   </div>
                 )}
               </>

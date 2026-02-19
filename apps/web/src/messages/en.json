@@ -151,7 +151,6 @@
     "fetchError": "Could not load your dashboard",
     "fetchErrorDetail": "We had trouble loading your data. Your progress is safe — please try refreshing the page.",
     "noCourses": "You haven't enrolled in any courses yet",
-    "activityShowMore": "Show {count} more",
     "noRecentActivity": "No recent activity",
     "progressOverview": "Progress Overview",
     "recentActivity": "Recent Activity",
