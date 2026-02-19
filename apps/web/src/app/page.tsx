@@ -1,4 +1,4 @@
-import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { WalletButton } from "@/components/solana/wallet-button";
 
 export default function Home() {
   return (
@@ -8,7 +8,7 @@ export default function Home() {
           Superteam Academy
         </p>
         <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <WalletMultiButton className="bg-primary text-white border-3 border-black shadow-neo hover:shadow-neo-hover transition-all" />
+          <WalletButton />
         </div>
       </div>
 
