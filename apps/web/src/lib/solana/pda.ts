@@ -1,8 +1,8 @@
 import { PublicKey } from "@solana/web3.js";
 
 export const PROGRAM_ID = new PublicKey(
-  process.env.NEXT_PUBLIC_ACADEMY_PROGRAM_ID ??
-    "3YchgRgR65gdRqgTZTM5qQXqtTZn5Kt2i6FPnZVu34Qb"
+  process.env.NEXT_PUBLIC_PROGRAM_ID ??
+    "GmLKszNTdCgYYkrspmi9sRFWj3ZiCamkc4YrppKJRUhh"
 );
 
 const MAX_COURSE_ID_BYTES = 32;

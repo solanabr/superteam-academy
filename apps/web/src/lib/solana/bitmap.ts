@@ -23,6 +23,17 @@ export function decodeLessonBitmap(
   return result;
 }
 
+export function isLessonComplete(
+  lessonFlags: BitValue[],
+  lessonIndex: number
+): boolean {
+  const wordIndex = Math.floor(lessonIndex / 64);
+  const bitIndex = lessonIndex % 64;
+  if (lessonFlags.length <= wordIndex) return false;
+  const word = BigInt((lessonFlags[wordIndex] as BitValue).toString());
+  return (word & (1n << BigInt(bitIndex))) !== 0n;
+}
+
 export function isAllLessonsComplete(
   lessonFlags: BitValue[],
   lessonCount: number

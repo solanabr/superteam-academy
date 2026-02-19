@@ -1,3 +1,5 @@
+import "server-only";
+
 /**
  * Server-side Token-2022 XP minting and burning.
  *

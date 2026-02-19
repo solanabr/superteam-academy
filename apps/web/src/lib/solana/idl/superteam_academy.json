@@ -1,10 +1,10 @@
 {
-  "address": "3YchgRgR65gdRqgTZTM5qQXqtTZn5Kt2i6FPnZVu34Qb",
+  "address": "GmLKszNTdCgYYkrspmi9sRFWj3ZiCamkc4YrppKJRUhh",
   "metadata": {
     "name": "superteam_academy",
     "version": "0.1.0",
     "spec": "0.1.0",
-    "description": "Superteam Academy on-chain program — courses, XP, credentials, achievements"
+    "description": "Superteam Academy on-chain program \u2014 courses, XP, credentials, achievements"
   },
   "instructions": [
     {
@@ -667,7 +667,7 @@
         {
           "name": "credential_asset",
           "docs": [
-            "New credential NFT asset keypair — must sign the transaction."
+            "New credential NFT asset keypair \u2014 must sign the transaction."
           ],
           "writable": true,
           "signer": true
@@ -1010,7 +1010,7 @@
         {
           "name": "credential_asset",
           "docs": [
-            "Existing credential NFT asset — not a signer, validated against enrollment record."
+            "Existing credential NFT asset \u2014 not a signer, validated against enrollment record."
           ],
           "writable": true
         },
@@ -1508,7 +1508,7 @@
           {
             "name": "creator",
             "docs": [
-              "XP recipient for creator rewards (not an authority — all admin goes through Config)"
+              "XP recipient for creator rewards (not an authority \u2014 all admin goes through Config)"
             ],
             "type": "pubkey"
           },
@@ -1866,7 +1866,7 @@
           {
             "name": "lesson_flags",
             "docs": [
-              "Lesson completion bitmap: 4 × u64 = 256 bits.",
+              "Lesson completion bitmap: 4 \u00d7 u64 = 256 bits.",
               "lesson_count is u8 (max 255), so all valid indices fit within this bitmap."
             ],
             "type": {
@@ -1885,7 +1885,7 @@
           {
             "name": "_reserved",
             "docs": [
-              "Reserved for future use (4 bytes — differs from 8 on other accounts; cannot resize without migration)"
+              "Reserved for future use (4 bytes \u2014 differs from 8 on other accounts; cannot resize without migration)"
             ],
             "type": {
               "array": ["u8", 4]
