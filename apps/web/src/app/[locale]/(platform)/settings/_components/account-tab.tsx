@@ -390,30 +390,6 @@ export function AccountTab({
     }
   };
 
-  const handleUnlinkWallet = async () => {
-    setLinkMessage(null);
-    try {
-      const res = await fetch("/api/auth/unlink", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ provider: "wallet" }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        if (data.error === "cannotUnlinkLast") {
-          setLinkMessage({ type: "error", text: t("cannotUnlinkLastHint") });
-        } else {
-          setLinkMessage({ type: "error", text: t("unlinkFailed") });
-        }
-        return;
-      }
-      setWalletAddress(null);
-      setLinkMessage({ type: "success", text: t("walletUnlinked") });
-    } catch {
-      setLinkMessage({ type: "error", text: t("unlinkFailed") });
-    }
-  };
-
   const handleUnlinkGoogle = async () => {
     setLinkMessage(null);
     try {
@@ -502,19 +478,14 @@ export function AccountTab({
                   ? `${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}`
                   : t("notLinked")}
               </p>
+              {walletAddress && (
+                <p className="mt-0.5 text-xs text-text-3">
+                  {t("walletPermanent")}
+                </p>
+              )}
             </div>
           </div>
-          {walletAddress ? (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleUnlinkWallet}
-              disabled={!canUnlink}
-              title={!canUnlink ? t("cannotUnlinkLastHint") : undefined}
-            >
-              {t("unlink")}
-            </Button>
-          ) : (
+          {!walletAddress && (
             <Button
               variant="outline"
               size="sm"
