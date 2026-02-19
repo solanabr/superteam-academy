@@ -84,7 +84,7 @@ export async function POST(
       );
     }
 
-    if (enrollment.completedAt) {
+    if (enrollment.completed_at) {
       return NextResponse.json(
         { error: "Course already finalized" },
         { status: 400 }
@@ -101,8 +101,8 @@ export async function POST(
 
     if (
       !isAllLessonsComplete(
-        enrollment.lessonFlags as (bigint | number)[],
-        course.lessonCount as number
+        enrollment.lesson_flags as (bigint | number)[],
+        course.lesson_count as number
       )
     ) {
       return NextResponse.json(
