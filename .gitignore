@@ -60,13 +60,6 @@ onchain-academy/target/verifiable/
 *.tmp
 .cache
 
-reference_demo_project
 design_assets
 app_arch.md
-development-journey/IMPLEMENTATION_PLAN_APP.md
-
-app/VERIFICATION.md
 development-journey
-
-working-demo
-frappe-lms
