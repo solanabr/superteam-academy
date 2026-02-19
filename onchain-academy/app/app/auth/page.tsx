@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, Suspense } from "react";
+import { motion } from "framer-motion";
 import Link from "next/link";
 import {
     ArrowLeft,
@@ -22,8 +22,11 @@ import {
 } from "lucide-react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { signIn, useSession } from "next-auth/react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { useAuth } from "@/components/providers/auth-context";
+import { googleAuth, walletGetNonce, walletVerify } from "@/lib/api";
 
 /* ─── Types ─── */
 type AuthMode = "login" | "signup";
@@ -220,11 +223,17 @@ function LinkedAccount({
 function AccountLinkingPanel() {
     const { connected } = useWallet();
     const { data: session } = useSession();
+    const { setVisible } = useWalletModal();
+    const { user, isAuthenticated } = useAuth();
 
     const walletLinked = connected;
     const googleLinked = !!session;
-    const [githubLinked, setGithubLinked] = useState(false);
-    const { setVisible } = useWalletModal();
+    const githubLinked = isAuthenticated && !session; // If authenticated but no Google session, likely GitHub
+
+    const GITHUB_CLIENT_ID = process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID;
+    const GITHUB_REDIRECT_URI = typeof window !== "undefined"
+        ? `${window.location.origin}/auth/github/callback`
+        : "";
 
     return (
         <div className="space-y-4">
@@ -243,10 +252,19 @@ function AccountLinkingPanel() {
                 <LinkedAccount
                     method="google"
                     linked={googleLinked}
-                    detail={session?.user?.email || undefined}
-                    onLink={() => signIn("google")}
+                    detail={googleLinked ? session?.user?.email || undefined : undefined}
+                    onLink={() => signIn("google", { callbackUrl: "/auth" })}
                 />
-                <LinkedAccount method="github" linked={githubLinked} onLink={() => setGithubLinked(true)} />
+                <LinkedAccount
+                    method="github"
+                    linked={githubLinked}
+                    detail={githubLinked ? user?.username || undefined : undefined}
+                    onLink={() => {
+                        if (GITHUB_CLIENT_ID) {
+                            window.location.href = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${encodeURIComponent(GITHUB_REDIRECT_URI)}&scope=read:user,user:email`;
+                        }
+                    }}
+                />
             </div>
 
             {/* Wallet required notice */}
@@ -276,6 +294,19 @@ function AccountLinkingPanel() {
                     <Check className="w-4 h-4 text-neon-green" />
                     <span className="text-[11px] text-neon-green font-bold">All accounts linked! You can sign in with any method.</span>
                 </motion.div>
+            )}
+
+            {/* Continue to Dashboard */}
+            {isAuthenticated && (
+                <motion.a
+                    href="/dashboard"
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-gradient-to-r from-neon-green to-emerald-400 text-black text-sm font-black hover:brightness-110 transition-all"
+                >
+                    Continue to Dashboard
+                    <ArrowRight className="w-4 h-4" />
+                </motion.a>
             )}
         </div>
     );
@@ -356,55 +387,118 @@ function SidebarStats() {
 }
 
 /* ─── Main Auth Page ─── */
-export default function AuthPage() {
+function AuthPageContent() {
     const [mode, setMode] = useState<AuthMode>("signup");
-    const [step, setStep] = useState<"auth" | "linking">("auth");
     const [isLoading, setIsLoading] = useState(false);
     const [selectedMethod, setSelectedMethod] = useState<AuthMethod | null>(null);
+    const [authError, setAuthError] = useState<string | null>(null);
+    const googleAuthSent = useRef(false);
 
     const { setVisible } = useWalletModal();
-    const { connected, publicKey } = useWallet();
+    const { connected, publicKey, signMessage } = useWallet();
     const { data: session } = useSession();
+    const { login, isAuthenticated } = useAuth();
+    const searchParams = useSearchParams();
+    const router = useRouter();
 
-    // Watch for wallet connection
+    const GITHUB_CLIENT_ID = process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID;
+    const GITHUB_REDIRECT_URI = typeof window !== "undefined"
+        ? `${window.location.origin}/auth/github/callback`
+        : "";
+
+    // Redirect authenticated users to dashboard
     useEffect(() => {
-        if (connected && selectedMethod === "wallet") {
-            setIsLoading(false);
-            if (mode === "signup") {
-                setStep("linking");
-            }
+        if (isAuthenticated) {
+            router.push("/dashboard");
         }
-    }, [connected, selectedMethod, mode]);
+    }, [isAuthenticated, router]);
 
-    // Watch for Google session
+    // Watch for wallet connection → start nonce+sign+verify flow
     useEffect(() => {
-        if (session) {
-            // @ts-expect-error - id_token is custom property
-            const idToken = session.id_token;
-            if (idToken) {
-                console.log("Google ID Token:", idToken);
-                // Here you would send the token to your backend
-                // await fetch('/api/login', { method: 'POST', body: JSON.stringify({ token: idToken }) })
+        if (connected && publicKey && selectedMethod === "wallet" && signMessage) {
+            (async () => {
+                try {
+                    setIsLoading(true);
+                    setAuthError(null);
 
-                setIsLoading(false);
-                setSelectedMethod("google");
-                if (mode === "signup") {
-                    setStep("linking");
+                    // 1. Request nonce from backend
+                    const nonceResult = await walletGetNonce(publicKey.toBase58());
+
+                    // 2. Sign the message
+                    const message = new TextEncoder().encode(nonceResult.message);
+                    const signature = await signMessage(message);
+
+                    // 3. Send signature to backend for verification
+                    const authResult = await walletVerify(
+                        publicKey.toBase58(),
+                        Array.from(signature),
+                        nonceResult.nonce
+                    );
+
+                    // 4. Store JWT — redirect handled by useEffect above
+                    login(authResult.token, authResult.user);
+                    setIsLoading(false);
+                } catch (err) {
+                    setIsLoading(false);
+                    setAuthError(err instanceof Error ? err.message : "Wallet auth failed");
                 }
+            })();
+        }
+    }, [connected, publicKey, selectedMethod, signMessage, mode, login]);
+
+    // Watch for Google session → send id_token to backend
+    useEffect(() => {
+        if (session && !googleAuthSent.current) {
+            // @ts-expect-error - id_token is custom property
+            const idToken = session.id_token as string | undefined;
+
+            if (idToken) {
+                googleAuthSent.current = true;
+                (async () => {
+                    try {
+                        setIsLoading(true);
+                        setAuthError(null);
+                        const authResult = await googleAuth(idToken);
+                        login(authResult.token, authResult.user);
+                        setIsLoading(false);
+                        setSelectedMethod("google");
+                    } catch (err) {
+                        setIsLoading(false);
+                        setAuthError(err instanceof Error ? err.message : "Google auth failed");
+                    }
+                })();
             }
         }
-    }, [session, mode]);
+    }, [session, mode, login]);
 
     const handleAuth = (method: AuthMethod) => {
         setSelectedMethod(method);
+        setAuthError(null);
 
         if (method === "wallet") {
             if (!connected) {
                 setVisible(true);
             } else {
-                // Already connected
-                if (mode === "signup") {
-                    setStep("linking");
+                // Already connected — trigger nonce+sign flow
+                if (publicKey && signMessage) {
+                    (async () => {
+                        try {
+                            setIsLoading(true);
+                            const nonceResult = await walletGetNonce(publicKey.toBase58());
+                            const message = new TextEncoder().encode(nonceResult.message);
+                            const signature = await signMessage(message);
+                            const authResult = await walletVerify(
+                                publicKey.toBase58(),
+                                Array.from(signature),
+                                nonceResult.nonce
+                            );
+                            login(authResult.token, authResult.user);
+                            setIsLoading(false);
+                        } catch (err) {
+                            setIsLoading(false);
+                            setAuthError(err instanceof Error ? err.message : "Wallet auth failed");
+                        }
+                    })();
                 }
             }
             return;
@@ -412,19 +506,20 @@ export default function AuthPage() {
 
         if (method === "google") {
             setIsLoading(true);
-            signIn("google", { callbackUrl: "/dashboard" }); // Redirect to dashboard after login
+            signIn("google", { callbackUrl: "/auth" });
             return;
         }
 
-        setIsLoading(true);
-
-        // Simulate auth flow
-        setTimeout(() => {
-            setIsLoading(false);
-            if (mode === "signup") {
-                setStep("linking");
+        if (method === "github") {
+            setIsLoading(true);
+            if (GITHUB_CLIENT_ID) {
+                window.location.href = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${encodeURIComponent(GITHUB_REDIRECT_URI)}&scope=read:user,user:email`;
+            } else {
+                setIsLoading(false);
+                setAuthError("GitHub client ID not configured");
             }
-        }, 1500);
+            return;
+        }
     };
 
     return (
@@ -465,162 +560,109 @@ export default function AuthPage() {
                         </Link>
                     </motion.div>
 
-                    <AnimatePresence mode="wait">
-                        {step === "auth" ? (
-                            <motion.div
-                                key="auth"
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -20 }}
-                                transition={{ duration: 0.3 }}
-                                className="space-y-6"
-                            >
-                                {/* Header */}
-                                <div className="space-y-2">
-                                    <div className="flex items-center gap-2">
-                                        <motion.div
-                                            animate={{ rotate: [0, 10, -10, 0] }}
-                                            transition={{ duration: 3, repeat: Infinity }}
-                                        >
-                                            <Sparkles className="w-6 h-6 text-neon-green" />
-                                        </motion.div>
-                                        <h1 className="text-2xl md:text-3xl font-black text-white">
-                                            {mode === "signup" ? "Start Your Quest" : "Welcome Back"}
-                                        </h1>
-                                    </div>
-                                    <p className="text-sm text-zinc-500">
-                                        {mode === "signup"
-                                            ? "Create your account to earn XP, unlock achievements, and build on Solana."
-                                            : "Sign in with any linked auth method to continue your journey."}
-                                    </p>
-                                </div>
-
-                                {/* Auth buttons */}
-                                <div className="space-y-3">
-                                    <AuthButton method="wallet" mode={mode} onClick={() => handleAuth("wallet")} isLoading={isLoading && selectedMethod === "wallet"} />
-
-                                    <div className="flex items-center gap-3">
-                                        <div className="flex-1 h-px bg-white/[0.06]" />
-                                        <span className="text-[10px] text-zinc-600 uppercase tracking-widest font-bold">or continue with</span>
-                                        <div className="flex-1 h-px bg-white/[0.06]" />
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <AuthButton method="google" mode={mode} onClick={() => handleAuth("google")} isLoading={isLoading && selectedMethod === "google"} />
-                                        <AuthButton method="github" mode={mode} onClick={() => handleAuth("github")} isLoading={isLoading && selectedMethod === "github"} />
-                                    </div>
-                                </div>
-
-                                {/* Signup bonuses */}
-                                {mode === "signup" && <SignupBonuses />}
-
-                                {/* Toggle mode */}
-                                <div className="text-center text-sm text-zinc-500">
-                                    {mode === "signup" ? (
-                                        <>
-                                            Already have an account?{" "}
-                                            <button
-                                                onClick={() => setMode("login")}
-                                                className="text-neon-green font-bold hover:text-neon-green/80 transition-colors"
-                                            >
-                                                Sign In
-                                            </button>
-                                        </>
-                                    ) : (
-                                        <>
-                                            New to Superteam Academy?{" "}
-                                            <button
-                                                onClick={() => setMode("signup")}
-                                                className="text-neon-green font-bold hover:text-neon-green/80 transition-colors"
-                                            >
-                                                Create Account
-                                            </button>
-                                        </>
-                                    )}
-                                </div>
-
-                                {/* Terms */}
-                                <p className="text-[10px] text-zinc-700 text-center leading-relaxed">
-                                    By continuing, you agree to our{" "}
-                                    <a href="#" className="text-zinc-500 underline hover:text-white transition-colors">Terms of Service</a>
-                                    {" "}and{" "}
-                                    <a href="#" className="text-zinc-500 underline hover:text-white transition-colors">Privacy Policy</a>.
-                                </p>
-                            </motion.div>
-                        ) : (
-                            <motion.div
-                                key="linking"
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -20 }}
-                                transition={{ duration: 0.3 }}
-                                className="space-y-6"
-                            >
-                                {/* Success header */}
-                                <div className="space-y-3">
-                                    <motion.div
-                                        initial={{ scale: 0 }}
-                                        animate={{ scale: 1 }}
-                                        transition={{ type: "spring", bounce: 0.5 }}
-                                        className="w-14 h-14 rounded-xl bg-gradient-to-br from-neon-green to-emerald-400 flex items-center justify-center"
-                                    >
-                                        <Check className="w-7 h-7 text-black" />
-                                    </motion.div>
-                                    <div>
-                                        <h1 className="text-2xl font-black text-white">Account Created! 🎉</h1>
-                                        <p className="text-sm text-zinc-500 mt-1">
-                                            You signed up with{" "}
-                                            <span className="text-white font-bold capitalize">{selectedMethod}</span>.
-                                            Link more methods for flexible sign-in.
-                                        </p>
-                                    </div>
-                                </div>
-
-                                {/* XP reward */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="space-y-6"
+                    >
+                        {/* Header */}
+                        <div className="space-y-2">
+                            <div className="flex items-center gap-2">
                                 <motion.div
-                                    initial={{ opacity: 0, scale: 0.9 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    transition={{ delay: 0.3 }}
-                                    className="flex items-center gap-3 p-3 rounded-lg bg-neon-green/[0.05] border border-neon-green/20"
+                                    animate={{ rotate: [0, 10, -10, 0] }}
+                                    transition={{ duration: 3, repeat: Infinity }}
                                 >
-                                    <Zap className="w-5 h-5 text-neon-green" />
-                                    <div className="flex-1">
-                                        <span className="text-sm font-bold text-neon-green">+500 XP Welcome Bonus</span>
-                                        <span className="text-[10px] text-zinc-500 block">Your journey has begun!</span>
-                                    </div>
-                                    <span className="text-lg">⚡</span>
+                                    <Sparkles className="w-6 h-6 text-neon-green" />
                                 </motion.div>
+                                <h1 className="text-2xl md:text-3xl font-black text-white">
+                                    {mode === "signup" ? "Start Your Quest" : "Welcome Back"}
+                                </h1>
+                            </div>
+                            <p className="text-sm text-zinc-500">
+                                {mode === "signup"
+                                    ? "Create your account to earn XP, unlock achievements, and build on Solana."
+                                    : "Sign in with any linked auth method to continue your journey."}
+                            </p>
+                        </div>
 
-                                {/* Account linking */}
-                                <AccountLinkingPanel />
+                        {/* Auth buttons */}
+                        <div className="space-y-3">
+                            <AuthButton method="wallet" mode={mode} onClick={() => handleAuth("wallet")} isLoading={isLoading && selectedMethod === "wallet"} />
 
-                                {/* Continue button */}
-                                <motion.button
-                                    whileHover={{ scale: 1.02 }}
-                                    whileTap={{ scale: 0.98 }}
-                                    onClick={() => {
-                                        // Navigate to dashboard
-                                    }}
-                                    className="w-full flex items-center justify-center gap-2 h-12 rounded-xl bg-gradient-to-r from-neon-green to-emerald-400 text-black font-black text-sm hover:shadow-[0_0_30px_rgba(0,255,163,0.3)] transition-all"
-                                >
-                                    Enter Academy
-                                    <ArrowRight className="w-4 h-4" />
-                                </motion.button>
+                            <div className="flex items-center gap-3">
+                                <div className="flex-1 h-px bg-white/[0.06]" />
+                                <span className="text-[10px] text-zinc-600 uppercase tracking-widest font-bold">or continue with</span>
+                                <div className="flex-1 h-px bg-white/[0.06]" />
+                            </div>
 
-                                <button
-                                    onClick={() => {
-                                        setStep("auth");
-                                        setSelectedMethod(null);
-                                    }}
-                                    className="w-full text-center text-[11px] text-zinc-600 hover:text-zinc-400 transition-colors"
-                                >
-                                    ← Back to sign in options
-                                </button>
+                            <div className="grid grid-cols-2 gap-3">
+                                <AuthButton method="google" mode={mode} onClick={() => handleAuth("google")} isLoading={isLoading && selectedMethod === "google"} />
+                                <AuthButton method="github" mode={mode} onClick={() => handleAuth("github")} isLoading={isLoading && selectedMethod === "github"} />
+                            </div>
+                        </div>
+
+                        {/* Auth error display */}
+                        {authError && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -5 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="flex items-start gap-2.5 p-3 rounded-lg bg-red-500/[0.05] border border-red-500/20"
+                            >
+                                <Shield className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
+                                <div>
+                                    <div className="text-[11px] font-bold text-red-400">Authentication failed</div>
+                                    <div className="text-[10px] text-zinc-500 mt-0.5">{authError}</div>
+                                </div>
                             </motion.div>
                         )}
-                    </AnimatePresence>
+
+                        {/* Signup bonuses */}
+                        {mode === "signup" && <SignupBonuses />}
+
+                        {/* Toggle mode */}
+                        <div className="text-center text-sm text-zinc-500">
+                            {mode === "signup" ? (
+                                <>
+                                    Already have an account?{" "}
+                                    <button
+                                        onClick={() => setMode("login")}
+                                        className="text-neon-green font-bold hover:text-neon-green/80 transition-colors"
+                                    >
+                                        Sign In
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    New to Superteam Academy?{" "}
+                                    <button
+                                        onClick={() => setMode("signup")}
+                                        className="text-neon-green font-bold hover:text-neon-green/80 transition-colors"
+                                    >
+                                        Create Account
+                                    </button>
+                                </>
+                            )}
+                        </div>
+
+                        {/* Terms */}
+                        <p className="text-[10px] text-zinc-700 text-center leading-relaxed">
+                            By continuing, you agree to our{" "}
+                            <a href="#" className="text-zinc-500 underline hover:text-white transition-colors">Terms of Service</a>
+                            {" "}and{" "}
+                            <a href="#" className="text-zinc-500 underline hover:text-white transition-colors">Privacy Policy</a>.
+                        </p>
+                    </motion.div>
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function AuthPage() {
+    return (
+        <Suspense>
+            <AuthPageContent />
+        </Suspense>
     );
 }

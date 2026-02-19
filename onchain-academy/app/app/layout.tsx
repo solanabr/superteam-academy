@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { SolanaWalletProvider } from "@/components/providers/wallet-provider";
 import { AuthSessionProvider } from "@/components/providers/session-provider";
+import { AuthProvider } from "@/components/providers/auth-context";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,7 +32,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <AuthSessionProvider>
-          <SolanaWalletProvider>{children}</SolanaWalletProvider>
+          <AuthProvider>
+            <SolanaWalletProvider>{children}</SolanaWalletProvider>
+          </AuthProvider>
         </AuthSessionProvider>
       </body>
     </html>

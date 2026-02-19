@@ -1,0 +1,6 @@
+course has milestones, 
+1 milestone has resources  (videos, docs, tests)
+after completing a milestone, the user would get a tests
+if user pass test, user gets exp and milestone would be marked as completed
+and users level would increase
+1 level = floor(sqrt(xp/100))
