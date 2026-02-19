@@ -11,7 +11,7 @@ import { CourseProgress } from "@/components/profile/course-progress";
 import { PublicKey } from "@solana/web3.js";
 import { findToken2022ATA } from "@superteam/solana";
 import { fetchIndexedLearnerActivity, getAcademyClient } from "@/lib/academy";
-import { cookies } from "next/headers";
+import { getLinkedWallet } from "@/lib/auth";
 
 export const metadata: Metadata = {
 	title: "Profile | Superteam Academy",
@@ -24,11 +24,8 @@ interface ProfilePageProps {
 
 export default async function ProfilePage({ searchParams }: ProfilePageProps) {
 	const params = searchParams ? await searchParams : undefined;
-	const cookieStore = await cookies();
-	const rawLinkedAccounts = cookieStore.get("linked_accounts")?.value;
-	const linkedWallet = safeGetLinkedWallet(rawLinkedAccounts);
-
-	const wallet = params?.wallet ?? linkedWallet ?? process.env.NEXT_PUBLIC_DEFAULT_PROFILE_WALLET;
+	const linkedWallet = await getLinkedWallet();
+	const wallet = params?.wallet ?? linkedWallet;
 
 	return (
 		<div className="min-h-screen bg-background">
@@ -39,22 +36,6 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
 	);
 }
 
-function safeGetLinkedWallet(rawLinkedAccounts: string | undefined) {
-	if (!rawLinkedAccounts) return undefined;
-
-	try {
-		const accounts = JSON.parse(rawLinkedAccounts) as Array<{
-			provider?: string;
-			identifier?: string;
-		}>;
-
-		return accounts.find(
-			(account) => account.provider === "wallet" && typeof account.identifier === "string",
-		)?.identifier;
-	} catch {
-		return undefined;
-	}
-}
 
 async function ProfileContent({ walletAddress }: { walletAddress?: string }) {
 	const profile = await getDynamicProfile(walletAddress);

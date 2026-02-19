@@ -3,13 +3,12 @@ import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
 import { LeaderboardTable } from "@/components/leaderboard/leaderboard-table";
 import { LeaderboardFilters } from "@/components/leaderboard/leaderboard-filters";
-import { LeaderboardStats } from "@/components/leaderboard/leaderboard-stats";
 import { UserRankCard } from "@/components/leaderboard/user-rank-card";
 import { getAcademyClient } from "@/lib/academy";
 import { LeaderboardService } from "@/services/LeaderboardService";
+import { getLinkedWallet } from "@/lib/auth";
 
 export const metadata: Metadata = {
 	title: "Leaderboard | Superteam Academy",
@@ -48,14 +47,7 @@ async function LeaderboardContent() {
 
 	return (
 		<div className="space-y-8">
-			<div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-				<div className="lg:col-span-2">
-					<UserRankCard userRank={userRank} />
-				</div>
-				<div>
-					<LeaderboardStats stats={await getLeaderboardStats()} />
-				</div>
-			</div>
+			{userRank && <UserRankCard userRank={userRank} />}
 
 			<LeaderboardFilters />
 
@@ -204,8 +196,10 @@ async function getCourseLeaderboards() {
 
 async function getUserRank() {
 	const global = await getGlobalLeaderboard();
-	const wallet = process.env.NEXT_PUBLIC_DEFAULT_PROFILE_WALLET;
-	const target = wallet ? global.find((entry) => entry.user.id === wallet) : global[0];
+	const linkedWallet = await getLinkedWallet();
+	const target = global.find((entry) => entry.user.id === linkedWallet);
+
+	if(!target) return undefined
 
 	return {
 		globalRank: target?.rank ?? 0,
@@ -219,21 +213,5 @@ async function getUserRank() {
 			global.length > 0 && target
 				? Math.max(0, (1 - target.rank / global.length) * 100)
 				: 0,
-	};
-}
-
-async function getLeaderboardStats() {
-	const global = await getGlobalLeaderboard();
-	const totalXP = global.reduce((sum, entry) => sum + entry.score, 0);
-	const averageLevel =
-		global.length > 0
-			? global.reduce((sum, entry) => sum + entry.level, 0) / global.length
-			: 0;
-
-	return {
-		totalUsers: global.length,
-		activeThisWeek: global.length,
-		totalXP,
-		averageLevel,
 	};
 }
