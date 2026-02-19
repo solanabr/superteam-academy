@@ -9,7 +9,9 @@ import {
   BookOpen,
   Lightning,
   User,
+  Wallet,
 } from "@phosphor-icons/react";
+import { useWallet } from "@solana/wallet-adapter-react";
 import { Button } from "@/components/ui/button";
 import { DifficultyBadge } from "@/components/course/difficulty-badge";
 import { CurriculumAccordion } from "@/components/course/curriculum-accordion";
@@ -27,6 +29,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
   const t = useTranslations("courses");
   const tCommon = useTranslations("common");
   const locale = useLocale();
+  const { publicKey } = useWallet();
 
   const modules = course.modules ?? [];
   const tags = course.tags ?? [];
@@ -185,32 +188,51 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
           <div className="flex shrink-0 flex-col items-start gap-3 md:items-end">
             {!isLoading && userId ? (
               <>
-                <Button
-                  variant="push"
-                  size="lg"
-                  className="font-semibold"
-                  onClick={isEnrolled ? undefined : handleEnroll}
-                  disabled={isEnrolling}
-                  asChild={isEnrolled ? true : undefined}
-                >
-                  {isEnrolled ? (
-                    <a
-                      href={`/${locale}/courses/${course.slug}/lessons/${modules[0]?.lessons?.[0]?.slug ?? ""}`}
-                    >
-                      {t("continueCourse")}
-                    </a>
-                  ) : (
-                    <>
-                      {isEnrolling && (
-                        <>
-                          <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
-                          <span className="sr-only">Loading...</span>
-                        </>
-                      )}
-                      {t("enrollNow")}
-                    </>
-                  )}
-                </Button>
+                {!isEnrolled && !publicKey ? (
+                  <Button
+                    variant="push"
+                    size="lg"
+                    className="font-semibold"
+                    asChild
+                  >
+                    <Link href={`/${locale}/settings?tab=account`}>
+                      <Wallet
+                        size={16}
+                        weight="duotone"
+                        className="mr-2"
+                        aria-hidden="true"
+                      />
+                      {t("linkWalletToEnroll")}
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button
+                    variant="push"
+                    size="lg"
+                    className="font-semibold"
+                    onClick={isEnrolled ? undefined : handleEnroll}
+                    disabled={isEnrolling}
+                    asChild={isEnrolled ? true : undefined}
+                  >
+                    {isEnrolled ? (
+                      <a
+                        href={`/${locale}/courses/${course.slug}/lessons/${modules[0]?.lessons?.[0]?.slug ?? ""}`}
+                      >
+                        {t("continueCourse")}
+                      </a>
+                    ) : (
+                      <>
+                        {isEnrolling && (
+                          <>
+                            <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+                            <span className="sr-only">Loading...</span>
+                          </>
+                        )}
+                        {t("enrollNow")}
+                      </>
+                    )}
+                  </Button>
+                )}
                 {enrollError && (
                   <p role="alert" className="text-sm text-destructive">
                     {t("enrollFailed")}
