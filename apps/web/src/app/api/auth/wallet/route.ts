@@ -158,6 +158,27 @@ export async function POST(request: NextRequest) {
 
     const userId = sessionData.session.user.id;
 
+    // Wallet links are permanent — reject if a different wallet is already linked.
+    // Same wallet re-authenticating (e.g. after session expiry) is allowed.
+    const { data: linkedWallet } = await supabaseAdmin
+      .from("profiles")
+      .select("wallet_address")
+      .eq("id", userId)
+      .single();
+
+    if (
+      linkedWallet?.wallet_address &&
+      linkedWallet.wallet_address !== body.publicKey
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "A wallet is already linked to this account. Wallet links are permanent.",
+        },
+        { status: 409 }
+      );
+    }
+
     // Update profile with wallet address
     await supabaseAdmin
       .from("profiles")

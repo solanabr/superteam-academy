@@ -97,7 +97,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if user already has a DIFFERENT wallet linked
+    // Wallet links are permanent — reject if a DIFFERENT wallet is already linked.
+    // Same wallet re-linking is allowed (idempotent, e.g. after session issues).
     const { data: ownProfile } = await supabaseAdmin
       .from("profiles")
       .select("wallet_address, wallet_xp_synced_at")
@@ -109,7 +110,7 @@ export async function POST(request: NextRequest) {
       ownProfile.wallet_address !== body.publicKey
     ) {
       return NextResponse.json(
-        { error: "differentWalletLinked" },
+        { error: "walletAlreadyLinked" },
         { status: 409 }
       );
     }
