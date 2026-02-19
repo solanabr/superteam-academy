@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
     const userId = sessionData.session.user.id;
     const { data: profile } = await supabase
       .from("profiles")
-      .select("username")
+      .select("username, avatar_url")
       .eq("id", userId)
       .single();
 
@@ -107,6 +107,26 @@ export async function GET(request: NextRequest) {
           .update({ username: name })
           .eq("id", userId);
         if (!nameError) break;
+      }
+    }
+
+    // Refresh the Google avatar URL on every login. Google CDN URLs rotate, so
+    // the URL stored at signup can go stale. Only overwrite if the user hasn't
+    // set a custom uploaded avatar (Supabase Storage URLs contain the project host).
+    const freshGoogleAvatar = sessionData.session.user.user_metadata
+      ?.avatar_url as string | undefined;
+
+    if (freshGoogleAvatar) {
+      const storageHost = new URL(url).host;
+      const storedAvatar = profile?.avatar_url ?? null;
+      const isCustomUpload =
+        storedAvatar !== null && storedAvatar.includes(storageHost);
+
+      if (!isCustomUpload) {
+        await supabase
+          .from("profiles")
+          .update({ avatar_url: freshGoogleAvatar })
+          .eq("id", userId);
       }
     }
 

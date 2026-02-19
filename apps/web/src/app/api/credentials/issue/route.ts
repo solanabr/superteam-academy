@@ -102,14 +102,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Not enrolled" }, { status: 403 });
     }
 
-    if (!enrollment.completedAt) {
+    if (!enrollment.completed_at) {
       return NextResponse.json(
         { error: "Course not finalized" },
         { status: 400 }
       );
     }
 
-    if (enrollment.credentialAsset) {
+    if (enrollment.credential_asset) {
       return NextResponse.json(
         { error: "Credential already issued" },
         { status: 400 }
@@ -128,19 +128,29 @@ export async function POST(request: NextRequest) {
     // Generate metadata
     const sanityCourse = await getCourseById(courseId);
     const courseName = sanityCourse?.title ?? courseId;
+
+    // Cross-check: user-supplied trackCollection must match Sanity course data
+    const expectedCollection = sanityCourse?.trackCollectionAddress;
+    if (expectedCollection && trackCollection !== expectedCollection) {
+      return NextResponse.json(
+        { error: "track collection mismatch" },
+        { status: 400 }
+      );
+    }
+
     // Truncate by UTF-8 byte length (on-chain max_len = 32 bytes)
-    let credentialName = `Superteam Academy: ${courseName}`;
+    let credentialName = `Solarium: ${courseName}`;
     const encoder = new TextEncoder();
     while (encoder.encode(credentialName).length > 32) {
       credentialName = credentialName.slice(0, -1);
     }
     const totalXp =
-      (course.xpPerLesson as number) * ((course.lessonCount as number) ?? 1);
+      Number(course.xp_per_lesson) * (Number(course.lesson_count) || 1);
 
     const metadataJson = {
       name: credentialName,
       symbol: "STACAD",
-      description: `Certificate of completion for ${courseName} on Superteam Academy.`,
+      description: `Certificate of completion for ${courseName} on Solarium.`,
       image: "",
       attributes: [
         { trait_type: "Course", value: courseName },
@@ -152,7 +162,7 @@ export async function POST(request: NextRequest) {
           trait_type: "Recipient",
           value: profile.username ?? profile.wallet_address,
         },
-        { trait_type: "Platform", value: "Superteam Academy" },
+        { trait_type: "Platform", value: "Solarium" },
       ],
       properties: { category: "certificate", creators: [] },
       external_url: `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/certificates`,
@@ -199,7 +209,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Supabase mirror
-    const { error: certInsertError } = await supabaseAdmin
+    const { data: certRow, error: certInsertError } = await supabaseAdmin
       .from("certificates")
       .insert({
         user_id: user.id,
@@ -210,7 +220,9 @@ export async function POST(request: NextRequest) {
         minted_at: new Date().toISOString(),
         tx_signature: signature,
         credential_type: "core",
-      });
+      })
+      .select("id")
+      .single();
 
     if (certInsertError) {
       logError({
@@ -230,6 +242,7 @@ export async function POST(request: NextRequest) {
       signature,
       mintAddress: mintAddress.toBase58(),
       metadataUri,
+      certificateId: certRow?.id as string | undefined,
     });
   } catch (err: unknown) {
     logError({

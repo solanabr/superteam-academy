@@ -61,18 +61,30 @@ export async function POST(request: NextRequest) {
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
 
-    const email = walletEmail(body.publicKey);
+    const syntheticEmail = walletEmail(body.publicKey);
 
-    // Check if wallet already has an account
+    // Check if wallet already has an account (e.g. Google user who linked this wallet)
     const { data: existingProfile } = await supabaseAdmin
       .from("profiles")
       .select("id")
       .eq("wallet_address", body.publicKey)
       .maybeSingle();
 
-    if (!existingProfile) {
+    let authEmail = syntheticEmail;
+
+    if (existingProfile) {
+      // Wallet is linked to an existing account — resolve their actual auth email
+      // so the magic link logs into the CORRECT user (not a new synthetic one).
+      const { data: existingUser } = await supabaseAdmin.auth.admin.getUserById(
+        existingProfile.id
+      );
+      if (existingUser?.user?.email) {
+        authEmail = existingUser.user.email;
+      }
+    } else {
+      // No account with this wallet — create a new user with synthetic email
       const { error: createError } = await supabaseAdmin.auth.admin.createUser({
-        email,
+        email: syntheticEmail,
         email_confirm: true,
         user_metadata: {
           wallet_address: body.publicKey,
@@ -97,7 +109,7 @@ export async function POST(request: NextRequest) {
     const { data: linkData, error: linkError } =
       await supabaseAdmin.auth.admin.generateLink({
         type: "magiclink",
-        email,
+        email: authEmail,
       });
 
     if (linkError || !linkData) {
