@@ -162,7 +162,8 @@ export async function POST(request: NextRequest) {
     let credentialMinted = false;
     let newCertificateId: string | undefined;
     let lessonIndex: number | null = null;
-    let xpReward = 10;
+    // On-chain value is set below when programLive; 0 is never reached in practice.
+    let xpReward = 0;
 
     const programLive =
       profile?.wallet_address && (await isOnChainProgramLive());
@@ -174,7 +175,7 @@ export async function POST(request: NextRequest) {
       // Fetch on-chain course to get XP amount BEFORE the completeLesson call
       const onChainCourse = await fetchCourse(courseId, connection, PROGRAM_ID);
       if (onChainCourse) {
-        xpReward = Number(onChainCourse.xp_per_lesson) || 10;
+        xpReward = Number(onChainCourse.xp_per_lesson);
       }
 
       // Derive lesson index from Sanity content order
@@ -508,6 +509,7 @@ export async function POST(request: NextRequest) {
       p_user_id: user.id,
       p_amount: xpReward,
       p_reason: `Completed lesson: ${lessonId}`,
+      p_tx_signature: onChainSignature ?? null,
     });
 
     if (xpError) {
@@ -542,7 +544,9 @@ export async function POST(request: NextRequest) {
     // 5. Fetch updated user state for achievement checks
     const { data: xpData } = await supabaseAdmin
       .from("user_xp")
-      .select("total_xp, current_streak, longest_streak, last_activity_date")
+      .select(
+        "total_xp, level, current_streak, longest_streak, last_activity_date"
+      )
       .eq("user_id", user.id)
       .single();
 
@@ -690,6 +694,15 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Detect level-up: compare level after award vs level before award.
+    // level before = floor(sqrt((total_xp_after - xpReward) / 100))
+    const newLevel = xpData?.level ?? 0;
+    const prevLevel =
+      xpData && !xpError
+        ? Math.floor(Math.sqrt((xpData.total_xp - xpReward) / 100))
+        : newLevel;
+    const leveledUp = newLevel > prevLevel;
+
     return NextResponse.json({
       success: true,
       alreadyCompleted: false,
@@ -712,6 +725,8 @@ export async function POST(request: NextRequest) {
             lastActivityDate: xpData.last_activity_date,
           }
         : null,
+      leveledUp,
+      newLevel: leveledUp ? newLevel : undefined,
     });
   } catch (err: unknown) {
     logError({
