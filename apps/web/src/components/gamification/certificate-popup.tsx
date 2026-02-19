@@ -4,6 +4,8 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
+import { SolanaLogo } from "@/components/icons/solana-logo";
+import { CERTIFICATE_STYLES as CS, cx } from "@/lib/styles/styleClasses";
 
 interface CertificateEvent {
   certificateId: string;
@@ -35,7 +37,7 @@ export function CertificatePopup({ className }: { className?: string }) {
     setEvents((prev) => [...prev, detail]);
     setTimeout(() => {
       setEvents((prev) => prev.filter((ev) => ev.uid !== detail.uid));
-    }, 5000);
+    }, 7000);
   }, []);
 
   useEffect(() => {
@@ -61,14 +63,19 @@ export function CertificatePopup({ className }: { className?: string }) {
         <button
           key={ev.uid}
           onClick={() => handleClick(ev)}
-          className="flex animate-pop items-center gap-2 rounded-full bg-success px-4 py-2 text-white shadow-push transition-opacity hover:opacity-90"
+          className={cx(CS.outer, CS.outerClickable, "animate-pop")}
         >
-          <span className="font-display text-xs font-bold text-white">
-            {t("certificateMinted")}
-          </span>
-          <span className="font-body text-xs font-medium text-white underline">
-            {t("viewCertificate")}
-          </span>
+          <div className={cx(CS.inner, "flex items-center gap-3 px-4 py-3")}>
+            <SolanaLogo className="h-5 w-5 shrink-0" variant="brand" />
+            <div className="flex flex-col items-start">
+              <span className="font-display text-sm font-extrabold text-text">
+                {t("certificateMinted")}
+              </span>
+              <span className="font-body text-xs font-medium text-primary">
+                {t("viewCertificate")} →
+              </span>
+            </div>
+          </div>
         </button>
       ))}
     </div>

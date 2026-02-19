@@ -36,7 +36,7 @@ export function AchievementPopup({ className }: { className?: string }) {
     setEvents((prev) => [...prev, detail]);
     setTimeout(() => {
       setEvents((prev) => prev.filter((ev) => ev.uid !== detail.uid));
-    }, 4000);
+    }, 7000);
   }, []);
 
   useEffect(() => {
@@ -69,9 +69,6 @@ export function AchievementPopup({ className }: { className?: string }) {
           </span>
           <span className="font-body text-xs text-primary-foreground/80">
             {ev.name}
-          </span>
-          <span className="font-body text-xs font-medium text-primary-foreground underline">
-            {t("viewAchievements")}
           </span>
         </button>
       ))}
