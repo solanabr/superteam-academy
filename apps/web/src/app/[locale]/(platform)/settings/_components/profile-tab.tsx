@@ -140,9 +140,10 @@ export function ProfileTab({
       // Google URLs (lh3.googleusercontent.com) have nothing to delete in storage.
       if (avatarUrl?.includes("/storage/v1/object/public/avatars/")) {
         const marker = "/storage/v1/object/public/avatars/";
-        const storagePath = avatarUrl
-          .slice(avatarUrl.indexOf(marker) + marker.length)
-          .split("?")[0];
+        const storagePath =
+          avatarUrl
+            .slice(avatarUrl.indexOf(marker) + marker.length)
+            .split("?")[0] ?? "";
         await supabase.storage.from("avatars").remove([storagePath]);
       }
 

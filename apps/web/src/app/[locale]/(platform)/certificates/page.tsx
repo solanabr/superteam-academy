@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
-import { Trophy } from "@phosphor-icons/react";
+import { GraduationCap } from "@phosphor-icons/react";
 import type { Certificate } from "@superteam-lms/types";
 import { createClient } from "@/lib/supabase/client";
 import { CertificateCard } from "@/components/certificates/certificate-card";
@@ -88,7 +88,7 @@ export default function CertificatesPage() {
         </div>
       ) : certificates.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-4 py-16">
-          <Trophy
+          <GraduationCap
             size={48}
             weight="duotone"
             className="text-accent"

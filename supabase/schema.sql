@@ -289,7 +289,8 @@ CREATE OR REPLACE FUNCTION award_xp(
   p_user_id UUID,
   p_amount INTEGER,
   p_reason TEXT,
-  p_idempotency_key TEXT DEFAULT NULL
+  p_idempotency_key TEXT DEFAULT NULL,
+  p_tx_signature TEXT DEFAULT NULL
 ) RETURNS void AS $$
 DECLARE
   v_last_activity DATE;
@@ -299,8 +300,8 @@ DECLARE
   v_new_longest INTEGER;
 BEGIN
   IF p_idempotency_key IS NOT NULL THEN
-    INSERT INTO xp_transactions (user_id, amount, reason, idempotency_key)
-    VALUES (p_user_id, p_amount, p_reason, p_idempotency_key)
+    INSERT INTO xp_transactions (user_id, amount, reason, idempotency_key, tx_signature)
+    VALUES (p_user_id, p_amount, p_reason, p_idempotency_key, p_tx_signature)
     ON CONFLICT (user_id, idempotency_key) WHERE idempotency_key IS NOT NULL DO NOTHING;
 
     -- If nothing was inserted (duplicate), skip the XP update too
@@ -308,8 +309,8 @@ BEGIN
       RETURN;
     END IF;
   ELSE
-    INSERT INTO xp_transactions (user_id, amount, reason)
-    VALUES (p_user_id, p_amount, p_reason);
+    INSERT INTO xp_transactions (user_id, amount, reason, tx_signature)
+    VALUES (p_user_id, p_amount, p_reason, p_tx_signature);
   END IF;
 
   -- Get current streak state before updating
