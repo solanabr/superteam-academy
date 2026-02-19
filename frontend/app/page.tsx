@@ -176,7 +176,7 @@ async function HeroSection() {
 							<HeroWave
 								width={540}
 								height={960}
-								className="hero-wave-base text-black dark:text-gold"
+								className="hero-wave-base text-foreground dark:text-gold"
 							/>
 							<HeroWave
 								width={540}
@@ -543,7 +543,7 @@ async function CTASection() {
 					<Button
 						size="lg"
 						variant="outline"
-						className="border-white/30 text-white hover:bg-white/10 text-base px-8 h-12"
+						className="border-white/30 text-white bg-white/10 text-base px-8 h-12"
 						asChild
 					>
 						<Link href="/pricing">{t("viewPricing")}</Link>

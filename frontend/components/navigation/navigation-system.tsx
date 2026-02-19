@@ -136,7 +136,7 @@ export function NavigationSystem({ user, onSearch }: NavigationSystemProps) {
 	};
 
 	return (
-		<header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+		<header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
 			<div className="container flex h-16 items-center">
 				<div className="mr-4 hidden md:flex">
 					<Link href="/" className="mr-6 flex items-center space-x-2">
@@ -170,7 +170,7 @@ export function NavigationSystem({ user, onSearch }: NavigationSystemProps) {
 											</div>
 										</NavigationMenuTrigger>
 										<NavigationMenuContent>
-											<ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
+											<ul className="grid w-100 gap-3 p-4 md:w-125 md:grid-cols-2 lg:w-150">
 												{item.children.map((child) => (
 													<li key={child.id}>
 														<NavigationMenuLink asChild={true}>
@@ -195,7 +195,7 @@ export function NavigationSystem({ user, onSearch }: NavigationSystemProps) {
 									<NavigationMenuLink asChild={true}>
 										<Link
 											href={item.href}
-											className={`group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50 ${
+											className={`group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-active:bg-accent/50 data-[state=open]:bg-accent/50 ${
 												isActive(item.href) ? "bg-accent" : ""
 											}`}
 										>
@@ -223,7 +223,7 @@ export function NavigationSystem({ user, onSearch }: NavigationSystemProps) {
 							<Input
 								type="search"
 								placeholder={t("search")}
-								className="pl-8 md:w-[300px] lg:w-[400px]"
+								className="pl-8 md:w-75 lg:w-100"
 								value={searchQuery}
 								onChange={(e) => setSearchQuery(e.target.value)}
 								onFocus={() => setIsSearchFocused(true)}

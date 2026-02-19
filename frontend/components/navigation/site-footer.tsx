@@ -26,19 +26,12 @@ const FOOTER_LINKS = {
 		{ key: "faqs" as const, href: "/faq" },
 		{ key: "helpCenter" as const, href: "/help" },
 	],
-	company: [
-		{ key: "about" as const, href: "/about" },
-		{ key: "careers" as const, href: "/careers" },
-		{ key: "pricing" as const, href: "/pricing" },
-		{ key: "contact" as const, href: "/contact" },
-	],
 } as const;
 
 const SECTION_KEYS = {
 	learn: "learn",
 	community: "community",
 	resources: "resources",
-	company: "company",
 } as const;
 
 export function SiteFooter() {
@@ -49,7 +42,7 @@ export function SiteFooter() {
 			<div className="mx-auto px-4 sm:px-6">
 				<div className="py-12 lg:py-16">
 					<div className="grid grid-cols-2 md:grid-cols-5 gap-8 lg:gap-12">
-						<div className="col-span-2 md:col-span-1 space-y-4">
+						<div className="col-span-2 space-y-4">
 							<Link href="/" className="cursor-pointer inline-block">
 								<Logo
 									width={150}

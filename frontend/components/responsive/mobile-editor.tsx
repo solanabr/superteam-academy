@@ -147,7 +147,7 @@ export function MobileEditor({
 							>
 								<span className="text-lg leading-none">-</span>
 							</Button>
-							<span className="text-sm text-muted-foreground min-w-[2rem] text-center">
+							<span className="text-sm text-muted-foreground min-w-8 text-center">
 								{fontSize}px
 							</span>
 							<Button

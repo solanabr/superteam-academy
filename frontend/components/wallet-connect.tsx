@@ -58,7 +58,7 @@ export function WalletConnect() {
 					{publicKey.toBase58().slice(0, 8)}...
 				</span>
 				<WalletMultiButton
-					className="!bg-primary !text-primary-foreground hover:!bg-primary/90 !h-10 !px-4 !py-2 !rounded-md !text-sm !font-medium"
+					className="bg-primary! text-primary-foreground! hover:bg-primary/90! h-10! px-4! py-2! rounded-md! text-sm! font-medium!"
 					aria-label="Wallet options"
 				/>
 			</div>
@@ -67,7 +67,7 @@ export function WalletConnect() {
 
 	return (
 		<WalletMultiButton
-			className="!bg-primary !text-primary-foreground hover:!bg-primary/90 !h-10 !px-4 !py-2 !rounded-md !text-sm !font-medium"
+			className="bg-primary! text-primary-foreground! hover:bg-primary/90! h-10! px-4! py-2! rounded-md! text-sm! font-medium!"
 			disabled={connecting}
 			aria-label={connecting ? "Connecting wallet..." : "Connect wallet"}
 		>

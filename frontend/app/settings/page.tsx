@@ -2,9 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { User, Bell, Shield, Palette, Globe, Wallet } from "lucide-react";
 import { getTranslations } from "next-intl/server";
-
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
 import { ProfileSettings } from "@/components/settings/profile-settings";
 import { NotificationSettings } from "@/components/settings/notification-settings";
 import { PrivacySettings } from "@/components/settings/privacy-settings";
@@ -32,14 +30,14 @@ export default async function SettingsPage() {
 	return (
 		<div className="min-h-screen bg-background">
 			<Suspense fallback={<SettingsSkeleton />}>
-				<div className="max-w-4xl mx-auto px-4 py-10 space-y-8">
+				<div className="mx-auto px-6 py-10 space-y-8">
 					<div>
 						<h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
 						<p className="text-sm text-muted-foreground mt-1">{t("description")}</p>
 					</div>
 
 					<Tabs defaultValue="profile" className="space-y-6">
-						<TabsList className="h-auto p-1 bg-muted/50 rounded-xl flex flex-wrap gap-0.5">
+						<TabsList className="h-auto p-1 bg-muted/50 rounded-xl flex justify-start flex-wrap gap-0.5">
 							{TABS.map(({ value, Icon }) => (
 								<TabsTrigger
 									key={value}

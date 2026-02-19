@@ -38,10 +38,11 @@ export function LanguageSwitcher() {
 			<DropdownMenuTrigger asChild>
 				<button
 					type="button"
-					className="p-2 md:p-1 rounded-lg hover:bg-muted transition-colors"
+					className="flex gap-1 p-2 md:p-1 rounded-lg hover:bg-muted transition-colors whitespace-nowrap"
 					aria-label={t("switchLanguage")}
 				>
 					<Globe className="h-5 w-5 md:h-4 md:w-4 text-muted-foreground" />
+					<span className="capitalize">{locale}</span>
 				</button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end" className="min-w-35">
@@ -51,7 +52,6 @@ export function LanguageSwitcher() {
 						onClick={() => switchLocale(l.code)}
 						className={cn("cursor-pointer", locale === l.code && "bg-accent")}
 					>
-						{/* <span className="mr-2">{l.flag}</span> */}
 						{l.name}
 					</DropdownMenuItem>
 				))}

@@ -246,7 +246,7 @@ export function SiteHeader() {
 							)}
 						</div>
 
-						<div className="flex lg:hidden items-center gap-2">
+						<div className="flex w-full lg:hidden items-center justify-end gap-2">
 							<button
 								type="button"
 								onClick={toggleTheme}

@@ -72,7 +72,7 @@ async function CourseDetailContent({
 
 	return (
 		<div className="space-y-8">
-			<div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40">
+			<div className="border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 sticky top-0 z-40">
 				<div className="container mx-auto px-4 py-4">
 					<Button variant="ghost" asChild={true} className="gap-2">
 						<a href="/courses">

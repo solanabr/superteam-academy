@@ -244,7 +244,7 @@ export function ChallengeSubmissionFlow({
 										value={code}
 										onChange={(e) => setCode(e.target.value)}
 										placeholder={t("writeYourCode")}
-										className="min-h-[300px] font-mono text-sm"
+										className="min-h-75 font-mono text-sm"
 									/>
 								</div>
 							</TabsContent>

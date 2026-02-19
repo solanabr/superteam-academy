@@ -104,7 +104,7 @@ export default function DashboardPage() {
 	if (isLoading || !stats) {
 		return (
 			<div className="min-h-screen bg-background">
-				<div className="mx-auto max-w-7xl px-4 sm:px-6 py-8 space-y-6">
+				<div className="mx-auto px-4 sm:px-6 py-8 space-y-6">
 					<div className="h-8 w-48 bg-muted animate-pulse rounded-lg" />
 					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 						{Array.from({ length: 4 }).map((_, i) => (
@@ -121,7 +121,7 @@ export default function DashboardPage() {
 
 	return (
 		<div className="min-h-screen bg-background">
-			<div className="mx-auto max-w-7xl px-4 sm:px-6 py-8 space-y-8">
+			<div className="mx-auto px-4 sm:px-6 py-8 space-y-8">
 				<div>
 					<h1 className="text-2xl font-bold">{t("welcome", { name: displayName })}</h1>
 					<p className="text-muted-foreground mt-1">{t("overview")}</p>
