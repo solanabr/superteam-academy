@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { burnXpFromWallet } from "@/lib/solana/xp-mint";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
 
@@ -94,64 +93,12 @@ export async function POST(request: NextRequest) {
 
     // Perform the unlink operation
     if (provider === "wallet") {
-      if (!hasWallet) {
-        return NextResponse.json(
-          { error: "No wallet linked" },
-          { status: 400 }
-        );
-      }
-
-      // Burn all Token-2022 XP from the wallet BEFORE unlinking.
-      // This prevents double-spending: XP lives in Supabase as source of truth,
-      // and is re-minted to whatever wallet the user links next.
-      let xpBurned = 0;
-      let burnSignature: string | undefined;
-
-      const burnResult = await burnXpFromWallet(profile.wallet_address!);
-      if (burnResult.success) {
-        xpBurned = burnResult.amount ?? 0;
-        burnSignature = burnResult.signature;
-      } else if (burnResult.error) {
-        logError({
-          errorId: ERROR_IDS.UNLINK_FAILED,
-          error: new Error(`XP burn failed: ${burnResult.error}`),
-          context: { userId: user.id, walletAddress: profile.wallet_address },
-        });
-        // Don't block the unlink — Supabase is the XP source of truth.
-        // On-chain tokens on an unlinked wallet are harmless (non-transferable).
-      }
-
-      // Clear wallet link. Only reset wallet_xp_synced_at if burn succeeded,
-      // so a re-link won't double-mint if tokens are still on-chain.
-      const updatePayload: Record<string, string | null> = {
-        wallet_address: null,
-      };
-      if (burnResult.success) {
-        updatePayload.wallet_xp_synced_at = null;
-      }
-
-      const { error: updateError } = await supabaseAdmin
-        .from("profiles")
-        .update(updatePayload)
-        .eq("id", user.id);
-
-      if (updateError) {
-        console.error(
-          "[auth/unlink] Wallet unlink error:",
-          updateError.message
-        );
-        return NextResponse.json(
-          { error: "Failed to unlink wallet" },
-          { status: 500 }
-        );
-      }
-
-      return NextResponse.json({
-        success: true,
-        provider: "wallet",
-        xpBurned,
-        burnSignature,
-      });
+      // Wallet links are permanent — on-chain state (enrollments, XP, achievements)
+      // is bound to this specific public key and cannot be migrated to another wallet.
+      return NextResponse.json(
+        { error: "walletLinkPermanent" },
+        { status: 403 }
+      );
     }
 
     if (provider === "google") {

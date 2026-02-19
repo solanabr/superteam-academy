@@ -306,7 +306,8 @@
     "githubPlaceholder": "username",
     "discordPlaceholder": "user#0000",
     "exportFailed": "Could not export your data. Please try again.",
-    "privacyUpdateFailed": "Could not update privacy setting. Please try again."
+    "privacyUpdateFailed": "Could not update privacy setting. Please try again.",
+    "walletPermanent": "Permanent — cannot be changed"
   },
   "a11y": {
     "clearOutput": "Clear output",
