@@ -242,10 +242,12 @@ export async function retryPendingOnchainActions(
           const walletAddress = payload.walletAddress as string;
 
           // Guard: verify the EnrollmentPDA still exists before writing the DB row.
-          // If it's gone (e.g. user closed enrollment on-chain), don't create a ghost row.
+          // Use the wallet from the payload, not the current wallet — the user may
+          // have rotated their wallet between the failed sync and this retry.
+          const enrollmentWallet = new PublicKey(walletAddress);
           const enrollmentAccount = await fetchEnrollment(
             courseId,
-            wallet,
+            enrollmentWallet,
             connection,
             PROGRAM_ID
           );
@@ -255,13 +257,19 @@ export async function retryPendingOnchainActions(
             );
           }
 
+          // Use the original enrollment timestamp from the payload to avoid writing
+          // the retry time (which may be hours/days later) as enrolled_at.
+          const enrolledAt =
+            (payload.enrolledAt as string | undefined) ??
+            new Date().toISOString();
+
           const { error: upsertError } = await adminClient
             .from("enrollments")
             .upsert(
               {
                 user_id: userId,
                 course_id: courseId,
-                enrolled_at: new Date().toISOString(),
+                enrolled_at: enrolledAt,
                 tx_signature: txSignature,
                 wallet_address: walletAddress,
               },

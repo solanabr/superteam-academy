@@ -12,6 +12,7 @@ import {
   Medal,
   Scroll,
   GraduationCap,
+  ArrowSquareOut,
   X,
   WarningOctagon,
 } from "@phosphor-icons/react";
@@ -35,6 +36,13 @@ import {
   getRecommendedCourses,
   type RecommendedCourse,
 } from "@/lib/sanity/queries";
+
+const SOLANA_CLUSTER = process.env.NEXT_PUBLIC_SOLANA_NETWORK ?? "devnet";
+function explorerTxUrl(sig: string): string {
+  return SOLANA_CLUSTER === "mainnet-beta"
+    ? `https://explorer.solana.com/tx/${sig}`
+    : `https://explorer.solana.com/tx/${sig}?cluster=${SOLANA_CLUSTER}`;
+}
 
 // Default streak for unauthenticated or on error
 const defaultStreak: StreakData = {
@@ -72,6 +80,7 @@ interface DashboardData {
     xp: number;
     time: string;
     href: string | null;
+    txSignature: string | null;
   }[];
   username: string;
   userId: string;
@@ -140,7 +149,7 @@ function useDashboardData(): DashboardData {
         // Fetch recent XP transactions (15 to have headroom for multi-source merge)
         const { data: transactions } = await supabase
           .from("xp_transactions")
-          .select("amount, reason, created_at")
+          .select("amount, reason, created_at, tx_signature")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false })
           .limit(15);
@@ -169,7 +178,7 @@ function useDashboardData(): DashboardData {
         ] = await Promise.all([
           supabase
             .from("enrollments")
-            .select("course_id, enrolled_at")
+            .select("course_id, enrolled_at, tx_signature")
             .eq("user_id", user.id),
           supabase
             .from("user_progress")
@@ -178,11 +187,11 @@ function useDashboardData(): DashboardData {
             .eq("completed", true),
           supabase
             .from("certificates")
-            .select("course_id, course_title, minted_at")
+            .select("course_id, course_title, minted_at, tx_signature")
             .eq("user_id", user.id),
           supabase
             .from("user_achievements")
-            .select("achievement_id, unlocked_at")
+            .select("achievement_id, unlocked_at, tx_signature")
             .eq("user_id", user.id)
             .order("unlocked_at", { ascending: false })
             .limit(10),
@@ -207,15 +216,19 @@ function useDashboardData(): DashboardData {
           streakHistory,
         };
 
-        // Parse lesson/challenge IDs from transaction reasons for human-readable activity
+        // Parse lesson/challenge/course-complete IDs from transaction reasons
         const lessonPattern = /^Completed lesson:\s*(.+)$/;
         const challengePattern = /^Completed challenge:\s*(.+)$/;
+        const courseCompletePattern = /^Completed course:\s*(.+)$/;
         const lessonIdsFromTx: string[] = [];
+        const courseCompleteIdsFromTx: string[] = [];
         for (const tx of transactions ?? []) {
           const lessonMatch = lessonPattern.exec(tx.reason);
           const challengeMatch = challengePattern.exec(tx.reason);
-          const id = lessonMatch?.[1] ?? challengeMatch?.[1];
-          if (id) lessonIdsFromTx.push(id);
+          const courseMatch = courseCompletePattern.exec(tx.reason);
+          const lessonOrChallengeId = lessonMatch?.[1] ?? challengeMatch?.[1];
+          if (lessonOrChallengeId) lessonIdsFromTx.push(lessonOrChallengeId);
+          if (courseMatch?.[1]) courseCompleteIdsFromTx.push(courseMatch[1]);
         }
 
         // Fetch lesson titles/slugs from Sanity
@@ -245,7 +258,11 @@ function useDashboardData(): DashboardData {
         // Use allEnrolledIds (not enrolledIds) so completed/minted courses resolve
         // titles in the enrollment activity feed items.
         const allCourseIdsToFetch = [
-          ...new Set([...allEnrolledIds, ...activityCourseIds]),
+          ...new Set([
+            ...allEnrolledIds,
+            ...activityCourseIds,
+            ...courseCompleteIdsFromTx,
+          ]),
         ];
         // Exclude both enrolled and completed courses from recommendations
         const excludeFromRecommended = [
@@ -272,7 +289,7 @@ function useDashboardData(): DashboardData {
         });
 
         // Build multi-source activity feed. Each source uses a different timestamp
-        // column; normalise to a single `timestamp` field before merging and sorting.
+        // column name; normalise all to `time` before merging and sorting.
         type ActivityType =
           | "lesson"
           | "challenge"
@@ -287,9 +304,8 @@ function useDashboardData(): DashboardData {
           xp: number;
           time: string;
           href: string | null;
-          timestamp: string;
+          txSignature: string | null;
         };
-        const courseCompletePattern = /^Completed course:\s*(.+)$/;
         const raw: RawActivity[] = [];
 
         // 1. XP transactions → lessons, challenges, course completions, generic XP
@@ -307,7 +323,7 @@ function useDashboardData(): DashboardData {
               action: lesson ? `Completed lesson: ${lesson.title}` : tx.reason,
               xp: tx.amount,
               time: tx.created_at,
-              timestamp: tx.created_at,
+              txSignature: tx.tx_signature ?? null,
               href:
                 lesson && course
                   ? `/courses/${course.slug}/lessons/${lesson.slug}`
@@ -324,7 +340,7 @@ function useDashboardData(): DashboardData {
                 : tx.reason,
               xp: tx.amount,
               time: tx.created_at,
-              timestamp: tx.created_at,
+              txSignature: tx.tx_signature ?? null,
               href:
                 lesson && course
                   ? `/courses/${course.slug}/lessons/${lesson.slug}`
@@ -337,7 +353,7 @@ function useDashboardData(): DashboardData {
               action: course ? `Completed course: ${course.title}` : tx.reason,
               xp: tx.amount,
               time: tx.created_at,
-              timestamp: tx.created_at,
+              txSignature: tx.tx_signature ?? null,
               href: course ? `/courses/${course.slug}` : null,
             });
           } else {
@@ -346,7 +362,7 @@ function useDashboardData(): DashboardData {
               action: tx.reason,
               xp: tx.amount,
               time: tx.created_at,
-              timestamp: tx.created_at,
+              txSignature: tx.tx_signature ?? null,
               href: null,
             });
           }
@@ -362,7 +378,7 @@ function useDashboardData(): DashboardData {
             action: `Achievement unlocked: ${name}`,
             xp: 0,
             time: row.unlocked_at,
-            timestamp: row.unlocked_at,
+            txSignature: row.tx_signature ?? null,
             href: null,
           });
         }
@@ -375,7 +391,7 @@ function useDashboardData(): DashboardData {
             action: `Certificate earned: ${cert.course_title}`,
             xp: 0,
             time: cert.minted_at,
-            timestamp: cert.minted_at,
+            txSignature: cert.tx_signature ?? null,
             href: `/certificates`,
           });
         }
@@ -391,15 +407,15 @@ function useDashboardData(): DashboardData {
               : `Enrolled in course`,
             xp: 0,
             time: enrollment.enrolled_at,
-            timestamp: enrollment.enrolled_at,
+            txSignature: enrollment.tx_signature ?? null,
             href: course ? `/courses/${course.slug}` : null,
           });
         }
 
-        // Sort all sources by timestamp descending, take top 10
+        // Sort all sources by time descending, take top 10
         raw.sort(
           (a: RawActivity, b: RawActivity) =>
-            new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+            new Date(b.time).getTime() - new Date(a.time).getTime()
         );
         const recentActivity = raw.slice(0, 10).map((item) => ({
           type: item.type,
@@ -407,6 +423,7 @@ function useDashboardData(): DashboardData {
           xp: item.xp,
           time: item.time,
           href: item.href,
+          txSignature: item.txSignature,
         }));
 
         setData({
@@ -452,6 +469,7 @@ export default function DashboardPage() {
   const [courses, setCourses] = useState<CurrentCourse[]>([]);
   const [showNameReveal, setShowNameReveal] = useState(false);
   const [dashboardUsername, setDashboardUsername] = useState(data.username);
+  const [activityLimit, setActivityLimit] = useState(5);
 
   // Show name reveal modal on first visit (rerolls === 0 means never seen)
   useEffect(() => {
@@ -786,63 +804,110 @@ export default function DashboardPage() {
         <Card>
           <CardContent className="p-0">
             {data.recentActivity.length > 0 ? (
-              <div className="divide-y">
-                {data.recentActivity.map((activity, index) => {
-                  const iconConfig = {
-                    lesson: { Icon: Lightning, cls: "text-accent" },
-                    challenge: { Icon: Lightning, cls: "text-accent" },
-                    course_complete: {
-                      Icon: GraduationCap,
-                      cls: "text-primary",
-                    },
-                    achievement: { Icon: Medal, cls: "text-accent" },
-                    certificate: { Icon: Scroll, cls: "text-primary" },
-                    enrollment: { Icon: BookOpen, cls: "text-primary" },
-                    xp_other: { Icon: Lightning, cls: "text-accent" },
-                  }[activity.type] ?? { Icon: Lightning, cls: "text-accent" };
-                  const { Icon: ActivityIcon, cls: iconCls } = iconConfig;
+              <>
+                <div className="divide-y">
+                  {data.recentActivity
+                    .slice(0, activityLimit)
+                    .map((activity) => {
+                      const iconConfig = {
+                        lesson: { Icon: Lightning, cls: "text-accent" },
+                        challenge: { Icon: Lightning, cls: "text-accent" },
+                        course_complete: {
+                          Icon: GraduationCap,
+                          cls: "text-primary",
+                        },
+                        achievement: { Icon: Medal, cls: "text-accent" },
+                        certificate: { Icon: Scroll, cls: "text-primary" },
+                        enrollment: { Icon: BookOpen, cls: "text-primary" },
+                        xp_other: { Icon: Lightning, cls: "text-accent" },
+                      }[activity.type] ?? {
+                        Icon: Lightning,
+                        cls: "text-accent",
+                      };
+                      const { Icon: ActivityIcon, cls: iconCls } = iconConfig;
 
-                  const content = (
-                    <div className="flex items-center justify-between px-4 py-3">
-                      <div className="flex min-w-0 items-center gap-3">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-subtle">
-                          <ActivityIcon
-                            size={16}
-                            weight="duotone"
-                            className={iconCls}
-                            aria-hidden="true"
-                          />
+                      const content = (
+                        <div className="flex items-center justify-between px-4 py-3">
+                          <div className="flex min-w-0 items-center gap-3">
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-subtle">
+                              <ActivityIcon
+                                size={16}
+                                weight="duotone"
+                                className={iconCls}
+                                aria-hidden="true"
+                              />
+                            </div>
+                            <p className="truncate text-sm font-medium">
+                              {activity.action}
+                            </p>
+                          </div>
+                          <div className="flex shrink-0 items-center gap-3">
+                            {activity.xp > 0 && (
+                              <span className="font-display text-xs font-bold text-accent">
+                                +{activity.xp} XP
+                              </span>
+                            )}
+                            <span className="text-xs text-text-3">
+                              {formatTimeAgo(activity.time)}
+                            </span>
+                            {activity.txSignature && (
+                              <ArrowSquareOut
+                                size={14}
+                                className="shrink-0 text-text-3"
+                                aria-hidden="true"
+                              />
+                            )}
+                          </div>
                         </div>
-                        <p className="truncate text-sm font-medium">
-                          {activity.action}
-                        </p>
-                      </div>
-                      <div className="flex shrink-0 items-center gap-3">
-                        {activity.xp > 0 && (
-                          <span className="font-display text-xs font-bold text-accent">
-                            +{activity.xp} XP
-                          </span>
-                        )}
-                        <span className="text-xs text-text-3">
-                          {formatTimeAgo(activity.time)}
-                        </span>
-                      </div>
-                    </div>
-                  );
+                      );
 
-                  return activity.href ? (
-                    <Link
-                      key={`activity-${index}`}
-                      href={`/${locale}${activity.href}`}
-                      className="block transition-colors hover:bg-subtle"
+                      if (activity.txSignature) {
+                        return (
+                          <a
+                            key={`${activity.type}-${activity.time}`}
+                            href={explorerTxUrl(activity.txSignature)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block transition-colors hover:bg-subtle"
+                          >
+                            {content}
+                          </a>
+                        );
+                      }
+                      if (activity.href) {
+                        return (
+                          <Link
+                            key={`${activity.type}-${activity.time}`}
+                            href={`/${locale}${activity.href}`}
+                            className="block transition-colors hover:bg-subtle"
+                          >
+                            {content}
+                          </Link>
+                        );
+                      }
+                      return (
+                        <div key={`${activity.type}-${activity.time}`}>
+                          {content}
+                        </div>
+                      );
+                    })}
+                </div>
+                {activityLimit < data.recentActivity.length && (
+                  <div className="border-t px-4 py-3">
+                    <button
+                      onClick={() => setActivityLimit((n) => n + 5)}
+                      className="text-sm font-medium text-primary hover:underline"
                     >
-                      {content}
-                    </Link>
-                  ) : (
-                    <div key={`activity-${index}`}>{content}</div>
-                  );
-                })}
-              </div>
+                      {t("activityShowMore", {
+                        count: Math.min(
+                          5,
+                          data.recentActivity.length - activityLimit
+                        ),
+                      })}
+                    </button>
+                  </div>
+                )}
+              </>
             ) : (
               <div className="flex flex-col items-center justify-center py-8">
                 <p className="text-sm text-text-3">{t("noRecentActivity")}</p>
