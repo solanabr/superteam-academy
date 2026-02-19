@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
 import { findEnrollmentPDA, PROGRAM_ID } from "@/lib/solana/pda";
+import { queueFailedOnchainAction } from "@/lib/solana/onchain-queue";
 
 interface SyncRequest {
   courseId: string;
@@ -164,6 +165,18 @@ export async function POST(request: NextRequest) {
           error: new Error(upsertError.message),
           context: { route: "/api/enrollment/sync", action: "enroll" },
         });
+        // On-chain tx succeeded but DB sync failed — queue for automatic retry on next login.
+        await queueFailedOnchainAction(
+          user.id,
+          "enroll",
+          courseId,
+          {
+            courseId,
+            txSignature,
+            walletAddress: profile.wallet_address,
+          },
+          upsertError.message
+        );
         return NextResponse.json(
           { error: "Failed to sync enrollment" },
           { status: 500 }
