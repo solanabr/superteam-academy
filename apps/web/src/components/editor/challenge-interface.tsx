@@ -43,6 +43,7 @@ export function ChallengeInterface({
   hints,
   solution,
   xpReward,
+  earnedXp,
   isAlreadyCompleted,
   isEnrolled: isEnrolledProp,
   onEnroll,
@@ -68,10 +69,19 @@ export function ChallengeInterface({
   const [showSolutionDialog, setShowSolutionDialog] = useState(false);
   const [isComplete, setIsComplete] = useState(isAlreadyCompleted ?? false);
   const [pendingSubmit, setPendingSubmit] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-  // Sync when the async DB check resolves after mount
+  // Sync when the async DB check resolves after mount.
+  // Also fires when lesson-client sets isCompleted=true after API returns —
+  // this is when we show the overlay and trigger confetti.
+  const prevIsAlreadyCompleted = useRef(isAlreadyCompleted ?? false);
   useEffect(() => {
-    if (isAlreadyCompleted) setIsComplete(true);
+    if (isAlreadyCompleted && !prevIsAlreadyCompleted.current) {
+      setIsComplete(true);
+      setIsSaving(false);
+      confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+    }
+    prevIsAlreadyCompleted.current = isAlreadyCompleted ?? false;
   }, [isAlreadyCompleted]);
   const [showDescription, setShowDescription] = useState(true);
   const [descHeight, setDescHeight] = useState(180);
@@ -139,24 +149,17 @@ export function ChallengeInterface({
   }, [solution]);
 
   const completeLesson = useCallback(() => {
-    setIsComplete(true);
     setPendingSubmit(false);
+    setIsSaving(true);
     onComplete?.();
 
-    // Trigger confetti celebration
-    confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-
-    // Emit custom event for gamification system
+    // Emit custom event — lesson-client.tsx calls the API and sets
+    // isAlreadyCompleted=true when done, which triggers the overlay + confetti.
     const event = new CustomEvent(LESSON_COMPLETE_EVENT, {
-      detail: {
-        lessonId,
-        xpReward: challengeState.solutionRevealed
-          ? Math.floor(xpReward * 0.5)
-          : xpReward,
-      },
+      detail: { lessonId },
     });
     window.dispatchEvent(event);
-  }, [lessonId, xpReward, challengeState.solutionRevealed, onComplete]);
+  }, [lessonId, onComplete]);
 
   const handleSubmit = useCallback(() => {
     if (!isEnrolled) {
@@ -429,6 +432,19 @@ export function ChallengeInterface({
           </div>
         )}
 
+        {/* Saving overlay — shown while API call is in flight */}
+        {isSaving && !isComplete && (
+          <div className="bg-bg/60 pointer-events-none absolute inset-0 flex items-center justify-center backdrop-blur-sm">
+            <div className="flex flex-col items-center gap-2 rounded-xl border-[2.5px] border-border bg-card p-6 shadow-card">
+              <div
+                className="h-6 w-6 animate-spin rounded-full border-4 border-primary border-t-transparent"
+                aria-hidden="true"
+              />
+              <p className="text-sm text-text-3">{t("savingProgress")}</p>
+            </div>
+          </div>
+        )}
+
         {/* Success overlay */}
         {isComplete && (
           <div className="bg-bg/60 pointer-events-none absolute inset-0 flex items-center justify-center backdrop-blur-sm">
@@ -444,9 +460,11 @@ export function ChallengeInterface({
               </p>
               <p className="text-sm text-success">
                 {t("xpEarned", {
-                  amount: challengeState.solutionRevealed
-                    ? Math.floor(xpReward * 0.5)
-                    : xpReward,
+                  amount:
+                    earnedXp ??
+                    (challengeState.solutionRevealed
+                      ? Math.floor(xpReward * 0.5)
+                      : xpReward),
                 })}
               </p>
             </div>
