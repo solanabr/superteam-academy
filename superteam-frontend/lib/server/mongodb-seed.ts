@@ -1,6 +1,8 @@
 import type { Db } from "mongodb";
+import { revalidateTag } from "next/cache";
 import { courses as seedCourses } from "@/lib/course-catalog";
 import { roadmaps as seedRoadmaps } from "@/lib/roadmaps";
+import { CacheTags } from "./cache-tags";
 
 const DEFAULT_CONFIG = {
   key: "main",
@@ -36,4 +38,21 @@ export async function seedIfEmpty(db: Db): Promise<void> {
   }
 
   await Promise.all(ops);
+}
+
+export async function seedNewCourses(db: Db): Promise<void> {
+  const col = db.collection("courses");
+  const results = await Promise.all(
+    seedCourses.map((c) =>
+      col.updateOne(
+        { slug: c.slug },
+        { $setOnInsert: { ...c } },
+        { upsert: true },
+      ),
+    ),
+  );
+  const inserted = results.some((r) => r.upsertedCount > 0);
+  if (inserted) {
+    revalidateTag(CacheTags.COURSES, "max");
+  }
 }

@@ -1,7 +1,7 @@
 import "server-only";
 
 import { MongoClient, type Db } from "mongodb";
-import { seedIfEmpty } from "./mongodb-seed";
+import { seedIfEmpty, seedNewCourses } from "./mongodb-seed";
 import { ensureIndexes } from "./mongodb-indexes";
 
 const MONGODB_URI = process.env.MONGODB_URI!;
@@ -28,6 +28,7 @@ export async function getDb(): Promise<Db> {
   if (!g.__mongoInitDone) {
     g.__mongoInitDone = true;
     await seedIfEmpty(db);
+    await seedNewCourses(db);
     await ensureIndexes(db);
   }
 

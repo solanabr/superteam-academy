@@ -132,7 +132,11 @@
     "filters": "Filtros",
     "showing": "Exibindo {filtered} de {total} cursos",
     "clearFilters": "Limpar filtros",
-    "loadMore": "Carregar Mais"
+    "loadMore": "Carregar Mais",
+    "statusAll": "Todos",
+    "statusCompleted": "Concluídos",
+    "statusInProgress": "Em Andamento",
+    "statusToDo": "A Fazer"
   },
   "courseDetail": {
     "aboutCourse": "Sobre Este Curso",

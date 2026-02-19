@@ -2,14 +2,12 @@
 
 import { useState, useMemo, useCallback } from "react";
 import { useTranslations } from "next-intl";
-import { Search, SlidersHorizontal, ChevronDown, Loader2 } from "lucide-react";
+import { Search, SlidersHorizontal } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { CourseCardData } from "@/lib/course-catalog";
 import { CourseCard } from "./course-card";
-
-const PAGE_SIZE = 6;
 
 const difficulties = [
   { value: "All", key: "filterAll" as const },
@@ -18,20 +16,27 @@ const difficulties = [
   { value: "Advanced", key: "filterAdvanced" as const },
 ];
 
+const statuses = [
+  { value: "All", key: "statusAll" as const },
+  { value: "Completed", key: "statusCompleted" as const },
+  { value: "In Progress", key: "statusInProgress" as const },
+  { value: "To Do", key: "statusToDo" as const },
+];
+
 export function CourseCatalog({
   initialCourses,
   totalCourses,
+  allLoaded,
 }: {
   initialCourses: CourseCardData[];
   totalCourses: number;
+  allLoaded?: boolean;
 }) {
   const t = useTranslations("catalog");
-  const [courses, setCourses] = useState<CourseCardData[]>(
-    initialCourses ?? [],
-  );
-  const [loading, setLoading] = useState(false);
+  const [courses] = useState<CourseCardData[]>(initialCourses ?? []);
   const [search, setSearch] = useState("");
   const [difficulty, setDifficulty] = useState<string>("All");
+  const [status, setStatus] = useState<string>("All");
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
@@ -47,28 +52,14 @@ export function CourseCatalog({
         c.description.toLowerCase().includes(search.toLowerCase());
       const matchDiff = difficulty === "All" || c.difficulty === difficulty;
       const matchTag = !selectedTag || c.tags.includes(selectedTag);
-      return matchSearch && matchDiff && matchTag;
+      const matchStatus =
+        status === "All" ||
+        (status === "Completed" && c.progress === 100) ||
+        (status === "In Progress" && c.progress > 0 && c.progress < 100) ||
+        (status === "To Do" && c.progress === 0);
+      return matchSearch && matchDiff && matchTag && matchStatus;
     });
-  }, [courses, search, difficulty, selectedTag]);
-
-  const hasMore = courses.length < totalCourses;
-
-  const loadMore = useCallback(async () => {
-    if (loading || !hasMore) return;
-    setLoading(true);
-    try {
-      const res = await fetch(
-        `/api/courses?offset=${courses.length}&limit=${PAGE_SIZE}`,
-      );
-      if (!res.ok) throw new Error("Failed to load");
-      const data = await res.json();
-      setCourses((prev) => [...prev, ...data.courses]);
-    } catch {
-      // Silent fail — user can retry
-    } finally {
-      setLoading(false);
-    }
-  }, [courses.length, hasMore, loading]);
+  }, [courses, search, difficulty, selectedTag, status]);
 
   const setSearchAndReset = useCallback((v: string) => {
     setSearch(v);
@@ -108,7 +99,7 @@ export function CourseCatalog({
           </Button>
         </div>
 
-        {/* Difficulty filter */}
+        {/* Difficulty + Status + Tag filters */}
         <div
           className={`flex-wrap items-center gap-2 ${
             filtersOpen ? "flex" : "hidden sm:flex"
@@ -127,6 +118,24 @@ export function CourseCatalog({
               }
             >
               {t(d.key)}
+            </Button>
+          ))}
+
+          <div className="h-5 w-px bg-border mx-1" />
+
+          {statuses.map((s) => (
+            <Button
+              key={s.value}
+              variant={status === s.value ? "default" : "outline"}
+              size="sm"
+              onClick={() => setStatus(s.value)}
+              className={
+                status === s.value
+                  ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                  : "border-border text-muted-foreground hover:text-foreground"
+              }
+            >
+              {t(s.key)}
             </Button>
           ))}
 
@@ -161,26 +170,6 @@ export function CourseCatalog({
         ))}
       </div>
 
-      {hasMore && (
-        <div className="flex justify-center mt-8">
-          <Button
-            variant="outline"
-            className="gap-2 border-border text-muted-foreground hover:text-foreground"
-            onClick={loadMore}
-            disabled={loading}
-          >
-            {loading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <>
-                {t("loadMore")}
-                <ChevronDown className="h-4 w-4" />
-              </>
-            )}
-          </Button>
-        </div>
-      )}
-
       {filtered.length === 0 && (
         <div className="text-center py-16">
           <p className="text-lg text-muted-foreground">{t("noResults")}</p>
@@ -190,6 +179,7 @@ export function CourseCatalog({
             onClick={() => {
               setSearchAndReset("");
               setDifficultyAndReset("All");
+              setStatus("All");
               setTagAndReset(null);
             }}
           >

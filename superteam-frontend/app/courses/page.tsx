@@ -13,8 +13,6 @@ export const metadata: Metadata = {
     "Browse interactive Solana development courses — from fundamentals to advanced DeFi and NFT programming.",
 };
 
-const PAGE_SIZE = 6;
-
 function toCard(course: {
   slug: string;
   title: string;
@@ -53,8 +51,9 @@ export default async function CoursesPage() {
   const user = await requireAuthenticatedUser();
 
   const allCourses = await courseService.getAllCourses();
-  const firstPage = allCourses.slice(0, PAGE_SIZE);
-  const zeroProgressCards = firstPage.map((c) => toCard({ ...c, progress: 0 }));
+  const zeroProgressCards = allCourses.map((c) =>
+    toCard({ ...c, progress: 0 }),
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -72,6 +71,7 @@ export default async function CoursesPage() {
             <CourseCatalog
               initialCourses={zeroProgressCards}
               totalCourses={allCourses.length}
+              allLoaded
             />
           }
         >
@@ -111,19 +111,22 @@ async function CoursesWithProgress({
   }>;
   totalCourses: number;
 }) {
-  const firstPage = allCourses.slice(0, PAGE_SIZE);
   let initialCards: CourseCardData[];
   try {
     const snapshots = await getAllCourseProgressSnapshots(
       wallet,
-      firstPage.map((c) => c.slug),
+      allCourses.map((c) => c.slug),
     );
     initialCards = snapshots.map((s) => toCard(s.course));
   } catch {
-    initialCards = firstPage.map((c) => toCard({ ...c, progress: 0 }));
+    initialCards = allCourses.map((c) => toCard({ ...c, progress: 0 }));
   }
 
   return (
-    <CourseCatalog initialCourses={initialCards} totalCourses={totalCourses} />
+    <CourseCatalog
+      initialCourses={initialCards}
+      totalCourses={totalCourses}
+      allLoaded
+    />
   );
 }
