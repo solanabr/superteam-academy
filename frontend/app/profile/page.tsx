@@ -122,7 +122,29 @@ async function getDynamicProfile(walletAddress?: string) {
 		};
 	}
 
-	const learner = new PublicKey(walletAddress);
+	let learner: PublicKey;
+	try {
+		learner = new PublicKey(walletAddress);
+	} catch {
+		return {
+			user: {
+				id: "invalid-wallet",
+				name: "Invalid Wallet",
+				email: "",
+				avatar: "",
+				bio: "Wallet address is invalid. Use a valid Solana public key.",
+				joinDate: new Date().toISOString(),
+				location: "",
+				github: "",
+				linkedin: "",
+				walletAddress: "11111111111111111111111111111111",
+			},
+			stats: emptyStats(),
+			achievements: [],
+			activity: [],
+			courses: [],
+		};
+	}
 	const academyClient = getAcademyClient();
 	const [config, allCourses, enrollments] = await Promise.all([
 		academyClient.fetchConfig(),

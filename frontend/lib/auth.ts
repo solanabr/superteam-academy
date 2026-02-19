@@ -1,5 +1,7 @@
 import { createServerAuth, type ServerAuthConfig } from "@superteam/auth";
-import { cookies } from "next/headers";
+import { headers } from "next/headers";
+import type { NextRequest } from "next/server";
+import { PublicKey } from "@solana/web3.js";
 
 const authConfig: ServerAuthConfig = {
 	baseURL: process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000",
@@ -11,27 +13,47 @@ const authConfig: ServerAuthConfig = {
 
 export const serverAuth = createServerAuth(authConfig);
 
+const WALLET_EMAIL_DOMAIN = "wallet.superteam.local";
 
-function safeGetLinkedWallet(rawLinkedAccounts: string | undefined) {
-	if (!rawLinkedAccounts) return undefined;
+function isWalletEmail(email: string) {
+	return email.endsWith(`@${WALLET_EMAIL_DOMAIN}`);
+}
+
+function extractWalletFromEmail(email: string) {
+	if (!isWalletEmail(email)) {
+		return undefined;
+	}
+
+	const candidate = email.slice(0, email.length - (`@${WALLET_EMAIL_DOMAIN}`).length);
 
 	try {
-		const accounts = JSON.parse(rawLinkedAccounts) as Array<{
-			provider?: string;
-			identifier?: string;
-		}>;
-
-		return accounts.find(
-			(account) => account.provider === "wallet" && typeof account.identifier === "string",
-		)?.identifier;
+		return new PublicKey(candidate).toBase58();
 	} catch {
 		return undefined;
 	}
 }
 
-export async function getLinkedWallet() {
+export async function issueWalletBetterAuthSession(request: NextRequest, publicKey: string) {
+	return serverAuth.api.signInWallet({
+		body: {
+			publicKey,
+			rememberMe: true,
+		},
+		request,
+		headers: request.headers,
+		asResponse: true,
+	});
+}
 
-		const cookieStore = await cookies();
-		const rawLinkedAccounts = cookieStore.get("linked_accounts")?.value;
-		return safeGetLinkedWallet(rawLinkedAccounts);
+export async function getLinkedWallet() {
+	const requestHeaders = await headers();
+	const session = await serverAuth.api.getSession({
+		headers: requestHeaders,
+	});
+
+	if (!session) {
+		return undefined;
+	}
+
+	return extractWalletFromEmail(session.user.email);
 }

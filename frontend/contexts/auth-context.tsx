@@ -60,23 +60,32 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
 	const [isOAuthLoading, setIsOAuthLoading] = useState(true);
 	const [isWalletVerified, setIsWalletVerified] = useState(false);
 
+	const refreshSession = useCallback(async () => {
+		const result = await authClient.getSession();
+
+		if (!result.data) {
+			setSession(null);
+			setUser(null);
+			return;
+		}
+
+		setSession({
+			id: result.data.session.id,
+			expiresAt: new Date(result.data.session.expiresAt),
+			userId: result.data.user.id,
+		});
+		setUser({
+			id: result.data.user.id,
+			name: result.data.user.name,
+			email: result.data.user.email,
+			image: result.data.user.image ?? "",
+		});
+	}, []);
+
 	useEffect(() => {
 		const loadSession = async () => {
 			try {
-				const result = await authClient.getSession();
-				if (result.data) {
-					setSession({
-						id: result.data.session.id,
-						expiresAt: new Date(result.data.session.expiresAt),
-						userId: result.data.user.id,
-					});
-					setUser({
-						id: result.data.user.id,
-						name: result.data.user.name,
-						email: result.data.user.email,
-						image: result.data.user.image ?? "",
-					});
-				}
+				await refreshSession();
 			} catch {
 				// No session
 			} finally {
@@ -84,7 +93,7 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
 			}
 		};
 		loadSession();
-	}, []);
+	}, [refreshSession]);
 
 	useEffect(() => {
 		if (!wallet.connected) {
@@ -95,6 +104,19 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
 	const verifyWallet = useCallback(async () => {
 		if (!wallet.publicKey || !wallet.signMessage) {
 			throw new Error("Wallet must be connected and support message signing");
+		}
+
+		const currentWallet = wallet.publicKey.toBase58();
+		if (isWalletVerified) {
+			return;
+		}
+
+		if (
+			session?.userId &&
+			user?.email === `${currentWallet}@wallet.superteam.local`
+		) {
+			setIsWalletVerified(true);
+			return;
 		}
 
 		const nonceRes = await fetch("/api/auth/wallet/nonce");
@@ -121,7 +143,9 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
 		}
 
 		setIsWalletVerified(true);
-	}, [wallet]);
+
+		void refreshSession();
+	}, [wallet, refreshSession, isWalletVerified, session, user]);
 
 	const isWalletConnected = wallet.connected;
 	const isOAuthAuthenticated = !!session;

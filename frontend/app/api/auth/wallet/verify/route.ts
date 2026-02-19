@@ -1,7 +1,25 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import crypto from "node:crypto";
 import { verifyWalletSignature, walletAuthSchema } from "@superteam/auth";
+import { issueWalletBetterAuthSession } from "@/lib/auth";
+
+function appendSetCookieHeaders(source: Headers, target: Headers) {
+	const typedHeaders = source as Headers & {
+		getSetCookie?: () => string[];
+	};
+
+	if (typeof typedHeaders.getSetCookie === "function") {
+		for (const cookie of typedHeaders.getSetCookie()) {
+			target.append("set-cookie", cookie);
+		}
+		return;
+	}
+
+	const setCookie = source.get("set-cookie");
+	if (setCookie) {
+		target.append("set-cookie", setCookie);
+	}
+}
 
 export async function POST(request: NextRequest) {
 	try {
@@ -30,41 +48,25 @@ export async function POST(request: NextRequest) {
 			return NextResponse.json({ error: "Nonce mismatch" }, { status: 401 });
 		}
 
-		// Clear the used nonce immediately to prevent replay
-		cookieStore.delete("wallet_nonce");
-
 		const isValid = verifyWalletSignature(parsed.data);
 		if (!isValid) {
 			return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
 		}
 
-		// Create a wallet session token.
-		// In production, this would create/lookup a user record in the database
-		// and issue a proper session via better-auth. For now, we create a signed
-		// session cookie containing the verified public key.
-		const sessionToken = crypto.randomBytes(32).toString("base64url");
+		const betterAuthResponse = await issueWalletBetterAuthSession(request, parsed.data.publicKey);
 
-		cookieStore.set(
-			"wallet_session",
-			JSON.stringify({
-				publicKey: parsed.data.publicKey,
-				token: sessionToken,
-				createdAt: Date.now(),
-			}),
-			{
-				httpOnly: true,
-				secure: process.env.NODE_ENV === "production",
-				sameSite: "strict",
-				maxAge: 7 * 24 * 60 * 60, // 7 days
-				path: "/",
-			}
-		);
-
-		return NextResponse.json({
+		const response = NextResponse.json({
 			authenticated: true,
 			publicKey: parsed.data.publicKey,
 		});
-	} catch {
+
+		response.cookies.delete({ name: "wallet_nonce", path: "/api/auth/wallet" });
+
+		appendSetCookieHeaders(betterAuthResponse.headers, response.headers);
+
+		return response;
+	} catch (error) {
+		console.error("Wallet verification failed", error);
 		return NextResponse.json({ error: "Internal server error" }, { status: 500 });
 	}
 }

@@ -1,4 +1,5 @@
 import { betterAuth } from "better-auth";
+import { walletAuthPlugin } from "./wallet-plugin";
 
 export interface ServerAuthConfig {
 	baseURL: string;
@@ -28,6 +29,10 @@ export function createServerAuth(config: ServerAuthConfig) {
 	return betterAuth({
 		baseURL: config.baseURL,
 		socialProviders,
+		plugins: [walletAuthPlugin()],
+		emailAndPassword: {
+			enabled: true,
+		},
 		trustedOrigins: [config.baseURL],
 		session: {
 			expiresIn: 60 * 60 * 24 * 7,

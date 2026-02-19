@@ -19,6 +19,7 @@
 		"@solana/wallet-adapter-base": "catalog:",
 		"@solana/web3.js": "catalog:",
 		"better-auth": "catalog:",
+		"better-call": "^1.3.2",
 		"tweetnacl": "^1.0.3",
 		"zod": "catalog:"
 	},
