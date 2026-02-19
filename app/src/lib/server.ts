@@ -1,58 +1,80 @@
 // app/src/lib/server.ts
-import { Connection, Keypair, PublicKey } from "@solana/web3.js";
-import { Program, AnchorProvider, Wallet, Idl } from "@coral-xyz/anchor";
+import { Connection, Keypair } from "@solana/web3.js";
+import { Program, AnchorProvider } from "@coral-xyz/anchor";
 import fs from "fs";
 import path from "path";
-import { PROGRAM_ID } from "@/lib/constants";
+
 import idl from "@/lib/idl/onchain_academy.json";
 import type { OnchainAcademy } from "@/types/onchain_academy";
 
-// 1. Настройка соединения (используем Helius или Devnet)
-const RPC_URL = process.env.NEXT_PUBLIC_CLUSTER === 'devnet' 
-  ? "https://api.devnet.solana.com" 
-  : "https://api.mainnet-beta.solana.com";
+// ──────────────────────────────────────────────
+// RPC (Helius в приоритете)
+// ──────────────────────────────────────────────
+export const connection = new Connection(
+  process.env.HELIUS_RPC ||
+    (process.env.NEXT_PUBLIC_CLUSTER === "devnet"
+      ? "https://api.devnet.solana.com"
+      : "https://api.mainnet-beta.solana.com"),
+  "confirmed"
+);
 
-// Если есть Helius ключ в env, лучше использовать его и на бэкенде
-// const CONNECTION = new Connection(process.env.HELIUS_RPC || RPC_URL);
-export const connection = new Connection(process.env.HELIUS_RPC || RPC_URL, "confirmed");
+// ──────────────────────────────────────────────
+// Кастомный Backend Wallet (работает на Anchor 0.32+)
+// ──────────────────────────────────────────────
+class BackendWallet {
+  constructor(readonly payer: Keypair) {}
 
-// 2. Загрузка кошелька бэкенда (Backend Signer)
-const loadBackendWallet = (): Wallet => {
+  get publicKey() {
+    return this.payer.publicKey;
+  }
+
+  async signTransaction(tx: any) {
+    tx.partialSign(this.payer);
+    return tx;
+  }
+
+  async signAllTransactions(txs: any[]) {
+    txs.forEach((tx) => tx.partialSign(this.payer));
+    return txs;
+  }
+}
+
+const loadBackendWallet = () => {
   try {
-    // Путь к ключу. В продакшене лучше использовать переменную окружения с самим ключом, 
-    // но для хакатона чтение файла допустимо.
-    // Мы ищем файл относительно корня проекта (где лежит package.json)
-    // В .env.local у нас: BACKEND_SIGNER_KEYPAIR="../wallets/signer.json"
-    
     const keyPath = process.env.BACKEND_SIGNER_KEYPAIR;
-    
+
     if (!keyPath) {
-        throw new Error("BACKEND_SIGNER_KEYPAIR not set in .env.local");
+      throw new Error("BACKEND_SIGNER_KEYPAIR not set in .env.local");
     }
 
-    // Резолвим путь. process.cwd() в Next.js указывает на корень app/
     const fullPath = path.resolve(process.cwd(), keyPath);
-    
-    const keypairFile = JSON.parse(fs.readFileSync(fullPath, "utf-8"));
-    const keypair = Keypair.fromSecretKey(new Uint8Array(keypairFile));
-    
-    return new Wallet(keypair);
-  } catch (error) {
+
+    if (!fs.existsSync(fullPath)) {
+      throw new Error(`Keypair file not found: ${fullPath}`);
+    }
+
+    const secretKey = JSON.parse(fs.readFileSync(fullPath, "utf-8"));
+    const keypair = Keypair.fromSecretKey(new Uint8Array(secretKey));
+
+    return new BackendWallet(keypair);
+  } catch (error: any) {
     console.error("Failed to load backend wallet:", error);
-    throw new Error("Backend wallet configuration error");
+    throw new Error(`Backend wallet configuration error: ${error.message}`);
   }
 };
 
-// 3. Инициализация Программы (Server-Side)
+// ──────────────────────────────────────────────
+// Основные экспорты
+// ──────────────────────────────────────────────
 export const getServerProgram = () => {
   const wallet = loadBackendWallet();
-  const provider = new AnchorProvider(connection, wallet, {
+
+  const provider = new AnchorProvider(connection, wallet as any, {
     commitment: "confirmed",
   });
-  
-  // @ts-ignore - игнорируем несовпадение типов JSON IDL
+
+  // @ts-ignore
   return new Program<OnchainAcademy>(idl, provider);
 };
 
-// Экспортируем кошелек отдельно, если понадобится подписать транзакцию
 export const getBackendWallet = () => loadBackendWallet();

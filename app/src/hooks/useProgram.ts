@@ -15,6 +15,7 @@ import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 import idl from "@/lib/idl/onchain_academy.json";
 import type { OnchainAcademy } from "@/types/onchain_academy";
 import { PROGRAM_ID, XP_MINT } from "@/lib/constants";
+import * as web3 from "@solana/web3.js";
 
 export function useProgram() {
   const { connection } = useConnection();
@@ -45,6 +46,8 @@ export function useProgram() {
       return [];
     }
   }, [program]);
+
+  
 
   const getXPBalance = useCallback(async () => {
     if (!wallet) return 0;
@@ -89,10 +92,46 @@ export function useProgram() {
     }
   }, [program, wallet]);
 
+    const enrollInCourse = useCallback(async (courseId: string) => {
+    if (!wallet) throw new Error("Wallet not connected");
+
+    try {
+      const [coursePda] = PublicKey.findProgramAddressSync(
+        [Buffer.from("course"), Buffer.from(courseId)],
+        PROGRAM_ID
+      );
+
+      const [enrollmentPda] = PublicKey.findProgramAddressSync(
+        [Buffer.from("enrollment"), Buffer.from(courseId), wallet.publicKey.toBuffer()],
+        PROGRAM_ID
+      );
+
+      // В реальном проекте нужно проверять пререквизиты (prerequisite)
+      // Для хакатона предполагаем, что их нет (null)
+      
+      const tx = await program.methods
+        .enroll(courseId)
+        .accountsPartial({
+          course: coursePda,
+          enrollment: enrollmentPda,
+          learner: wallet.publicKey,
+          systemProgram: web3.SystemProgram.programId,
+        } as const)  // или as any, если TS всё равно ругается
+        .rpc();
+      
+      console.log("Enrolled! Tx:", tx);
+      return tx;
+    } catch (error) {
+      console.error("Enrollment error:", error);
+      throw error;
+    }
+  }, [program, wallet]);
+
   return {
     program,
     fetchCourses,
     getUserEnrollment,
     getXPBalance,
+    enrollInCourse,
   };
 }
