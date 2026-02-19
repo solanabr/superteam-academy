@@ -161,7 +161,6 @@ interface CompletionResponse {
     description: string;
     icon: string;
   }[];
-  failedAchievements?: string[];
   streakData: {
     currentStreak: number;
     longestStreak: number;

@@ -4,6 +4,7 @@ import type { CookieOptions } from "@supabase/ssr";
 import { generateWalletName } from "@/lib/utils/generate-wallet-name";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
+import { retryPendingOnchainActions } from "@/lib/solana/onchain-queue";
 import type { Database } from "@/lib/supabase/types";
 
 function sanitizeRedirect(raw: string, fallback: string): string {
@@ -129,6 +130,14 @@ export async function GET(request: NextRequest) {
           .eq("id", userId);
       }
     }
+
+    retryPendingOnchainActions(userId).catch((err: unknown) =>
+      logError({
+        errorId: ERROR_IDS.OAUTH_CALLBACK_FAILED,
+        error: err instanceof Error ? err : new Error(String(err)),
+        context: { note: "retryPendingOnchainActions failed", userId },
+      })
+    );
 
     return response;
   } catch (err: unknown) {

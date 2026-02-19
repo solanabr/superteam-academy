@@ -6,6 +6,7 @@ import { verifySIWSRequest } from "@/lib/solana/verify-siws";
 import { generateWalletName } from "@/lib/utils/generate-wallet-name";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
+import { retryPendingOnchainActions } from "@/lib/solana/onchain-queue";
 import type { Database } from "@/lib/supabase/types";
 
 interface WalletAuthRequest {
@@ -181,6 +182,14 @@ export async function POST(request: NextRequest) {
         if (!nameError) break;
       }
     }
+
+    retryPendingOnchainActions(userId).catch((err: unknown) =>
+      logError({
+        errorId: ERROR_IDS.WALLET_AUTH_FAILED,
+        error: err instanceof Error ? err : new Error(String(err)),
+        context: { note: "retryPendingOnchainActions failed", userId },
+      })
+    );
 
     return NextResponse.json({ success: true });
   } catch (err: unknown) {
