@@ -5,11 +5,13 @@ import {
   Keypair,
   SystemProgram,
   PublicKey,
+  TransactionInstruction,
   clusterApiUrl,
 } from "@solana/web3.js";
 import { BN } from "@coral-xyz/anchor";
 import {
   getAssociatedTokenAddressSync,
+  createAssociatedTokenAccountIdempotentInstruction,
   TOKEN_2022_PROGRAM_ID,
   ASSOCIATED_TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
@@ -49,6 +51,7 @@ interface AcademyAccounts {
 
 interface MethodBuilder {
   accountsPartial(accounts: Record<string, PublicKey>): MethodBuilder;
+  preInstructions(ixs: TransactionInstruction[]): MethodBuilder;
   signers(signers: Keypair[]): MethodBuilder;
   rpc(): Promise<string>;
 }
@@ -167,8 +170,22 @@ export async function completeLesson(
     ASSOCIATED_TOKEN_PROGRAM_ID
   );
 
+  // Ensure the learner's XP token account exists before calling completeLesson.
+  // The program constraint checks `learner_token_account.owner == spl_token_2022`,
+  // so the ATA must be initialized. The idempotent variant is a no-op if it
+  // already exists, making this safe to include unconditionally.
+  const createAtaIx = createAssociatedTokenAccountIdempotentInstruction(
+    signer.publicKey,
+    learnerTokenAccount,
+    learner,
+    xpMint,
+    TOKEN_2022_PROGRAM_ID,
+    ASSOCIATED_TOKEN_PROGRAM_ID
+  );
+
   const sig = await methods
     .completeLesson(lessonIndex)
+    .preInstructions([createAtaIx])
     .accountsPartial({
       config: configPDA,
       course: coursePDA,
@@ -222,8 +239,27 @@ export async function finalizeCourse(
     ASSOCIATED_TOKEN_PROGRAM_ID
   );
 
+  // Ensure both token accounts exist before finalization (same owner constraint as completeLesson).
+  const createLearnerAtaIx = createAssociatedTokenAccountIdempotentInstruction(
+    signer.publicKey,
+    learnerTokenAccount,
+    learner,
+    xpMint,
+    TOKEN_2022_PROGRAM_ID,
+    ASSOCIATED_TOKEN_PROGRAM_ID
+  );
+  const createCreatorAtaIx = createAssociatedTokenAccountIdempotentInstruction(
+    signer.publicKey,
+    creatorTokenAccount,
+    creator,
+    xpMint,
+    TOKEN_2022_PROGRAM_ID,
+    ASSOCIATED_TOKEN_PROGRAM_ID
+  );
+
   const sig = await methods
     .finalizeCourse()
+    .preInstructions([createLearnerAtaIx, createCreatorAtaIx])
     .accountsPartial({
       config: configPDA,
       course: coursePDA,
@@ -338,8 +374,19 @@ export async function awardAchievement(
     program.programId
   );
 
+  const createRecipientAtaIx =
+    createAssociatedTokenAccountIdempotentInstruction(
+      signer.publicKey,
+      recipientTokenAccount,
+      recipient,
+      xpMint,
+      TOKEN_2022_PROGRAM_ID,
+      ASSOCIATED_TOKEN_PROGRAM_ID
+    );
+
   const sig = await methods
     .awardAchievement()
+    .preInstructions([createRecipientAtaIx])
     .accountsPartial({
       config: configPDA,
       achievementType: achievementTypePDA,

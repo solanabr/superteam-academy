@@ -40,7 +40,7 @@ export function useXpBalance(): UseXpBalanceResult {
 
       const result = await fetchXpBalance(
         publicKey,
-        config.xpMint as PublicKey,
+        config.xp_mint as PublicKey,
         connection
       );
       setBalance(result.balance);
