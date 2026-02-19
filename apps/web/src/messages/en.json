@@ -141,7 +141,9 @@
     "buildProgram": "Build",
     "buildingProgram": "Building Solana program...",
     "buildSuccess": "Program compiled successfully!",
-    "buildFailed": "Build failed. Check compiler output for errors."
+    "buildFailed": "Build failed. Check compiler output for errors.",
+    "linkWalletToEarnXp": "Link your wallet to earn on-chain XP.",
+    "linkWalletSettings": "Go to Settings →"
   },
   "dashboard": {
     "browseCourses": "Browse Courses",
