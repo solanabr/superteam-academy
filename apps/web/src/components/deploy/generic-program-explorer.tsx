@@ -157,8 +157,9 @@ export function GenericProgramExplorer({
   const instructionCoder = useMemo(() => {
     if (!idl) return null;
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return new BorshInstructionCoder(idl as any);
+      return new BorshInstructionCoder(
+        idl as unknown as ConstructorParameters<typeof BorshInstructionCoder>[0]
+      );
     } catch {
       return null;
     }
@@ -168,8 +169,9 @@ export function GenericProgramExplorer({
   const accountCoder = useMemo(() => {
     if (!idl) return null;
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return new BorshCoder(idl as any);
+      return new BorshCoder(
+        idl as unknown as ConstructorParameters<typeof BorshCoder>[0]
+      );
     } catch {
       return null;
     }

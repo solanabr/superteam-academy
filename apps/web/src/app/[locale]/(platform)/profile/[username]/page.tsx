@@ -12,8 +12,12 @@ import { SkillRadar } from "@/components/gamification/skill-radar";
 import { AchievementGrid } from "@/components/gamification/achievement-grid";
 import { CertificateGrid } from "@/components/certificates/certificate-grid";
 import { createClient } from "@/lib/supabase/client";
-import { getAllCourseTags, getCoursesByIds } from "@/lib/sanity/queries";
-import { getAchievementById } from "@/lib/gamification/achievements";
+import {
+  getAllCourseTags,
+  getCoursesByIds,
+  getDeployedAchievements,
+  type DeployedAchievement,
+} from "@/lib/sanity/queries";
 
 interface UserData {
   id: string;
@@ -50,6 +54,7 @@ interface ProfileData {
   };
   skills: SkillItem[];
   achievements: Achievement[];
+  deployedAchievements: DeployedAchievement[];
   certificates: Certificate[];
   completedCourses: CompletedCourse[];
   isLoading: boolean;
@@ -63,6 +68,7 @@ const INITIAL_STATE: ProfileData = {
   stats: { totalXp: 0, level: 0, coursesCompleted: 0, certificatesCount: 0 },
   skills: [],
   achievements: [],
+  deployedAchievements: [],
   certificates: [],
   completedCourses: [],
   isLoading: true,
@@ -175,19 +181,6 @@ export default function PublicProfilePage() {
           socialLinks,
         };
 
-        const achievements: Achievement[] =
-          achievementResult.data?.map((row) => {
-            const def = getAchievementById(row.achievement_id);
-            return {
-              id: row.achievement_id,
-              name: def?.name ?? row.achievement_id,
-              description: def?.description ?? "",
-              icon: def?.icon ?? "Award",
-              category: def?.category ?? "special",
-              unlockedAt: new Date(row.unlocked_at),
-            };
-          }) ?? [];
-
         const certificates: Certificate[] =
           certResult.data?.map((row) => ({
             id: row.id,
@@ -211,12 +204,31 @@ export default function PublicProfilePage() {
         const enrolledIds = (enrollmentResult.data ?? []).map(
           (e) => e.course_id
         );
-        const [courseSummaries, allCourseTags] = await Promise.all([
-          enrolledIds.length > 0
-            ? getCoursesByIds(enrolledIds)
-            : Promise.resolve([]),
-          getAllCourseTags(),
-        ]);
+        const [courseSummaries, allCourseTags, deployedAchievements] =
+          await Promise.all([
+            enrolledIds.length > 0
+              ? getCoursesByIds(enrolledIds)
+              : Promise.resolve([]),
+            getAllCourseTags(),
+            getDeployedAchievements(),
+          ]);
+
+        const achievementMap = new Map(
+          deployedAchievements.map((a) => [a.id, a])
+        );
+
+        const achievements: Achievement[] =
+          achievementResult.data?.map((row) => {
+            const def = achievementMap.get(row.achievement_id);
+            return {
+              id: row.achievement_id,
+              name: def?.name ?? row.achievement_id,
+              description: def?.description ?? "",
+              icon: def?.icon ?? "Award",
+              category: (def?.category as Achievement["category"]) ?? "special",
+              unlockedAt: new Date(row.unlocked_at),
+            };
+          }) ?? [];
 
         const courseMap = new Map(courseSummaries.map((c) => [c._id, c]));
 
@@ -271,6 +283,7 @@ export default function PublicProfilePage() {
           },
           skills: skills.length > 0 ? skills : [],
           achievements,
+          deployedAchievements,
           certificates,
           completedCourses,
           isLoading: false,
@@ -459,9 +472,10 @@ export default function PublicProfilePage() {
       )}
 
       {/* Achievements */}
-      {data.achievements.length > 0 && (
-        <AchievementGrid unlockedAchievements={data.achievements} />
-      )}
+      <AchievementGrid
+        unlockedAchievements={data.achievements}
+        catalog={data.deployedAchievements}
+      />
 
       {/* Certificates */}
       {data.certificates.length > 0 && (

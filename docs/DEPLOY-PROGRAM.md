@@ -8,13 +8,13 @@ Full instruction reference: [INTEGRATION.md](./INTEGRATION.md) | Program specifi
 
 ## Prerequisites
 
-| Tool | Version |
-|------|---------|
-| Rust | 1.82+ |
-| Solana CLI | 1.18+ |
-| Anchor CLI | 0.31+ |
-| Node.js | 18+ |
-| yarn | any |
+| Tool       | Version |
+| ---------- | ------- |
+| Rust       | 1.82+   |
+| Solana CLI | 1.18+   |
+| Anchor CLI | 0.31+   |
+| Node.js    | 18+     |
+| pnpm       | any     |
 
 Verify:
 
@@ -32,7 +32,7 @@ node --version
 ```bash
 git clone https://github.com/solanabr/superteam-academy
 cd superteam-academy/onchain-academy
-yarn install
+pnpm install
 ```
 
 ---
@@ -117,6 +117,7 @@ anchor build
 ```
 
 After a successful build, the IDL is at:
+
 - `target/types/onchain_academy.ts` — TypeScript types for your client
 - `target/idl/onchain_academy.json` — raw JSON IDL
 
@@ -194,6 +195,7 @@ Deploy success
 ## 8. Initialize the Program
 
 This is a one-time operation that:
+
 - Creates the `Config` PDA
 - Creates the XP mint (Token-2022, NonTransferable + PermanentDelegate, 0 decimals)
 - Auto-registers the authority as a `MinterRole` (label: "backend", unlimited cap)
@@ -256,7 +258,7 @@ Add these to your `.env.local`:
 ```env
 # Public (safe to expose)
 NEXT_PUBLIC_PROGRAM_ID=<YOUR_PROGRAM_ID>
-NEXT_PUBLIC_XP_MINT=<YOUR_XP_MINT_ADDRESS>
+NEXT_PUBLIC_XP_MINT_ADDRESS=<YOUR_XP_MINT_ADDRESS>
 NEXT_PUBLIC_BACKEND_SIGNER=<YOUR_AUTHORITY_PUBKEY>
 NEXT_PUBLIC_CLUSTER=devnet
 

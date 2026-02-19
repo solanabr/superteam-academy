@@ -82,6 +82,7 @@ export interface Course {
   tags: string[];
   xpReward: number;
   modules: Module[];
+  trackCollectionAddress?: string | null;
 }
 
 export interface LearningPath {

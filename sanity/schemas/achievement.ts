@@ -38,6 +38,62 @@ export const achievement = defineType({
       },
       validation: (rule) => rule.required(),
     }),
+    defineField({
+      name: "xpReward",
+      title: "XP Reward",
+      type: "number",
+      initialValue: 50,
+      validation: (rule) => rule.required().min(1),
+      description:
+        "XP awarded to the student when this achievement is unlocked.",
+    }),
+    defineField({
+      name: "maxSupply",
+      title: "Max Supply",
+      type: "number",
+      initialValue: 0,
+      description:
+        "Maximum number of times this achievement can be awarded. 0 = unlimited.",
+    }),
+    defineField({
+      name: "metadataUri",
+      title: "Metadata URI",
+      type: "url",
+      description:
+        "URI for the NFT metadata JSON. Leave blank to use the platform default endpoint.",
+    }),
+    defineField({
+      name: "onChainStatus",
+      title: "On-Chain Status",
+      type: "object",
+      readOnly: true,
+      hidden: ({ currentUser }) =>
+        !currentUser?.roles?.some((r) => r.name === "administrator"),
+      description: "Managed by the admin dashboard. Do not edit manually.",
+      fields: [
+        defineField({
+          name: "status",
+          title: "Status",
+          type: "string",
+          options: { list: ["synced"] },
+        }),
+        defineField({
+          name: "achievementPda",
+          title: "Achievement PDA",
+          type: "string",
+        }),
+        defineField({
+          name: "collectionAddress",
+          title: "Collection Address",
+          type: "string",
+        }),
+        defineField({
+          name: "lastSynced",
+          title: "Last Synced",
+          type: "datetime",
+        }),
+      ],
+    }),
   ],
   preview: {
     select: {

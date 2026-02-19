@@ -7,6 +7,7 @@ node_modules/
 target/
 .anchor/
 **/*.rs.bk
+*.so
 
 # Test artifacts
 test-ledger/
@@ -89,7 +90,9 @@ supabase/.temp
 # Debug
 *.pem
 
-# Audit (internal notes)
+# Internal audit files (not for submission)
+docs/FLOW_AUDIT.md
+docs/DEEP_AUDIT_REPORT.md
 audit/
 
 # Misc

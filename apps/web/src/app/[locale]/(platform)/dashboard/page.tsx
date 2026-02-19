@@ -3,6 +3,8 @@
 import { useEffect, useState, useCallback } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
+import { Transaction } from "@solana/web3.js";
+import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import {
   BookOpen,
   Trophy,
@@ -21,6 +23,7 @@ import { CourseCard } from "@/components/course/course-card";
 import { CourseCompletionMint } from "@/components/certificates/course-completion-mint";
 import { WalletNameGenerator } from "@/components/profile/wallet-name-generator";
 import { createClient } from "@/lib/supabase/client";
+import { buildCloseEnrollmentInstruction } from "@/lib/solana/instructions";
 import { getProgressService } from "@/lib/services";
 import { calculateLevel } from "@/lib/gamification/xp";
 import {
@@ -314,6 +317,8 @@ export default function DashboardPage() {
   const tTime = useTranslations("timeAgo");
   const locale = useLocale();
   const data = useDashboardData();
+  const { connection } = useConnection();
+  const { publicKey, sendTransaction } = useWallet();
   const [courses, setCourses] = useState<CurrentCourse[]>([]);
   const [showNameReveal, setShowNameReveal] = useState(false);
   const [dashboardUsername, setDashboardUsername] = useState(data.username);
@@ -358,23 +363,57 @@ export default function DashboardPage() {
     setCourses(data.currentCourses);
   }, [data.currentCourses]);
 
-  const handleUnenroll = useCallback(async (courseId: string) => {
-    const supabase = createClient();
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (!session?.user) return;
+  const handleUnenroll = useCallback(
+    async (courseId: string) => {
+      const supabase = createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session?.user) return;
 
-    const { error } = await supabase
-      .from("enrollments")
-      .delete()
-      .eq("user_id", session.user.id)
-      .eq("course_id", courseId);
+      // Attempt to close the on-chain Enrollment PDA (returns SOL rent to learner).
+      // If the wallet is connected and the TX succeeds, sync via API.
+      // If no wallet or TX fails, fall through to direct Supabase delete
+      // (the PDA may not exist if the user enrolled before on-chain was live).
+      if (publicKey && sendTransaction) {
+        try {
+          const ix = buildCloseEnrollmentInstruction(courseId, publicKey);
+          const tx = new Transaction().add(ix);
+          const sig = await sendTransaction(tx, connection);
+          await connection.confirmTransaction(sig, "confirmed");
 
-    if (!error) {
-      setCourses((prev) => prev.filter((c) => c.courseId !== courseId));
-    }
-  }, []);
+          const res = await fetch("/api/enrollment/sync", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              courseId,
+              txSignature: sig,
+              action: "close",
+            }),
+          });
+
+          if (res.ok) {
+            setCourses((prev) => prev.filter((c) => c.courseId !== courseId));
+            return;
+          }
+        } catch {
+          // On-chain close failed (PDA may not exist) — fall through to Supabase delete
+        }
+      }
+
+      // Fallback: remove from Supabase directly (no on-chain PDA, or TX failed)
+      const { error } = await supabase
+        .from("enrollments")
+        .delete()
+        .eq("user_id", session.user.id)
+        .eq("course_id", courseId);
+
+      if (!error) {
+        setCourses((prev) => prev.filter((c) => c.courseId !== courseId));
+      }
+    },
+    [publicKey, sendTransaction, connection]
+  );
 
   const formatTimeAgo = (isoDate: string): string => {
     const createdAt = new Date(isoDate);

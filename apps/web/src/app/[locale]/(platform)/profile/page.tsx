@@ -12,8 +12,12 @@ import { CertificateGrid } from "@/components/certificates/certificate-grid";
 import { createClient } from "@/lib/supabase/client";
 import { getProgressService } from "@/lib/services";
 import { calculateLevel } from "@/lib/gamification/xp";
-import { getAllCourseTags, getCoursesByIds } from "@/lib/sanity/queries";
-import { getAchievementById } from "@/lib/gamification/achievements";
+import {
+  getAllCourseTags,
+  getCoursesByIds,
+  getDeployedAchievements,
+  type DeployedAchievement,
+} from "@/lib/sanity/queries";
 
 interface UserData {
   id: string;
@@ -51,6 +55,7 @@ interface ProfileData {
   };
   skills: SkillItem[];
   achievements: Achievement[];
+  deployedAchievements: DeployedAchievement[];
   certificates: Certificate[];
   completedCourses: CompletedCourse[];
   isLoading: boolean;
@@ -62,6 +67,7 @@ function useProfileData(): ProfileData {
     stats: { totalXp: 0, level: 0, coursesCompleted: 0, certificatesCount: 0 },
     skills: [],
     achievements: [],
+    deployedAchievements: [],
     certificates: [],
     completedCourses: [],
     isLoading: true,
@@ -129,18 +135,7 @@ function useProfileData(): ProfileData {
             }
           : null;
 
-        const achievements: Achievement[] =
-          achievementRows?.map((row) => {
-            const def = getAchievementById(row.achievement_id);
-            return {
-              id: row.achievement_id,
-              name: def?.name ?? row.achievement_id,
-              description: def?.description ?? "",
-              icon: def?.icon ?? "Award",
-              category: def?.category ?? "special",
-              unlockedAt: new Date(row.unlocked_at),
-            };
-          }) ?? [];
+        // achievements resolved after achievementMap is built below
 
         const certificates: Certificate[] =
           certRows?.map((row) => ({
@@ -171,12 +166,30 @@ function useProfileData(): ProfileData {
 
         // Resolve enrolled course details from Sanity CMS
         const enrolledIds = (enrollmentRows ?? []).map((e) => e.course_id);
-        const [courseSummaries, allCourseTags] = await Promise.all([
-          enrolledIds.length > 0
-            ? getCoursesByIds(enrolledIds)
-            : Promise.resolve([]),
-          getAllCourseTags(),
-        ]);
+        const [courseSummaries, allCourseTags, deployedAchievements] =
+          await Promise.all([
+            enrolledIds.length > 0
+              ? getCoursesByIds(enrolledIds)
+              : Promise.resolve([]),
+            getAllCourseTags(),
+            getDeployedAchievements(),
+          ]);
+        const achievementMap = new Map(
+          deployedAchievements.map((a) => [a.id, a])
+        );
+
+        const achievements: Achievement[] =
+          achievementRows?.map((row) => {
+            const def = achievementMap.get(row.achievement_id);
+            return {
+              id: row.achievement_id,
+              name: def?.name ?? row.achievement_id,
+              description: def?.description ?? "",
+              icon: def?.icon ?? "Award",
+              category: (def?.category as Achievement["category"]) ?? "special",
+              unlockedAt: new Date(row.unlocked_at),
+            };
+          }) ?? [];
 
         const courseMap = new Map(courseSummaries.map((c) => [c._id, c]));
 
@@ -235,6 +248,7 @@ function useProfileData(): ProfileData {
           },
           skills: skills.length > 0 ? skills : [],
           achievements,
+          deployedAchievements,
           certificates,
           completedCourses,
           isLoading: false,
@@ -302,7 +316,6 @@ export default function ProfilePage() {
           <p className="max-w-2xl text-text-3">{data.user.bio || t("noBio")}</p>
 
           <div className="flex items-center gap-1 text-sm text-text-3">
-            <span>Joined: </span>
             <span>
               {t("joinedOn", { date: data.user.joinedAt.toLocaleDateString() })}
             </span>
@@ -390,7 +403,10 @@ export default function ProfilePage() {
       </div>
 
       {/* Achievements */}
-      <AchievementGrid unlockedAchievements={data.achievements} />
+      <AchievementGrid
+        unlockedAchievements={data.achievements}
+        catalog={data.deployedAchievements}
+      />
 
       {/* Certificates */}
       <div className="space-y-4">

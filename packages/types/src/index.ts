@@ -26,8 +26,12 @@ export type { UserProfile, Achievement, Certificate } from "./user";
 
 export type {
   XPMintInfo,
-  LearnerProfileAccount,
+  ConfigAccount,
+  CourseAccount,
   EnrollmentAccount,
+  MinterRoleAccount,
+  AchievementTypeAccount,
+  AchievementReceiptAccount,
 } from "./onchain";
 
 export { PDA_SEEDS, setBit, checkBit, popcount } from "./onchain";

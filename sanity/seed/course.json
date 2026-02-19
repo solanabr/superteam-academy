@@ -16,6 +16,11 @@
     },
     "tags": ["solana", "blockchain", "web3", "typescript", "beginner"],
     "xpReward": 600,
+    "xpPerLesson": 10,
+    "trackId": 1,
+    "trackLevel": 1,
+    "creatorRewardXp": 500,
+    "minCompletionsForReward": 10,
     "modules": [
       {
         "_type": "reference",
@@ -55,6 +60,11 @@
       "intermediate"
     ],
     "xpReward": 700,
+    "xpPerLesson": 20,
+    "trackId": 4,
+    "trackLevel": 1,
+    "creatorRewardXp": 750,
+    "minCompletionsForReward": 10,
     "modules": [
       {
         "_type": "reference",
@@ -87,6 +97,11 @@
     },
     "tags": ["rust", "solana", "programming", "systems", "intermediate"],
     "xpReward": 800,
+    "xpPerLesson": 20,
+    "trackId": 2,
+    "trackLevel": 1,
+    "creatorRewardXp": 750,
+    "minCompletionsForReward": 10,
     "modules": [
       {
         "_type": "reference",
@@ -119,6 +134,11 @@
     },
     "tags": ["anchor", "solana", "rust", "framework", "intermediate"],
     "xpReward": 900,
+    "xpPerLesson": 20,
+    "trackId": 3,
+    "trackLevel": 1,
+    "creatorRewardXp": 750,
+    "minCompletionsForReward": 10,
     "modules": [
       {
         "_type": "reference",
@@ -151,6 +171,11 @@
     },
     "tags": ["defi", "solana", "tokens", "amm", "lending", "advanced"],
     "xpReward": 1000,
+    "xpPerLesson": 40,
+    "trackId": 5,
+    "trackLevel": 1,
+    "creatorRewardXp": 1000,
+    "minCompletionsForReward": 10,
     "modules": [
       {
         "_type": "reference",
@@ -183,6 +208,11 @@
     },
     "tags": ["anchor", "rust", "solana", "build", "deploy", "devnet"],
     "xpReward": 850,
+    "xpPerLesson": 20,
+    "trackId": 1,
+    "trackLevel": 2,
+    "creatorRewardXp": 750,
+    "minCompletionsForReward": 10,
     "modules": [
       { "_type": "reference", "_ref": "module-bfsp-build-pipeline" },
       { "_type": "reference", "_ref": "module-bfsp-state-accounts" },

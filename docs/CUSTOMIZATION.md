@@ -2,54 +2,54 @@
 
 How to customize and extend Solarium for your own needs.
 
-## Theming
+## Theme Customization
 
 ### CSS Custom Properties
 
-The design system (v5) is built on CSS custom properties defined in `apps/web/src/styles/globals.css`. These control all colors across both light and dark modes. Values are plain hex or rgb — not HSL.
+The design system is built on CSS custom properties defined in `apps/web/src/styles/globals.css`. These control all colors across both light and dark modes. Values are plain hex or rgba.
 
 **Light Mode** (`:root`):
 
 ```css
 :root {
-  /* ── Primary — Deep Teal ── */
+  /* -- Primary: Deep Teal -- */
   --primary: #0d9488;
   --primary-hover: #0b7e73;
   --primary-dark: #087068;
   --primary-light: #ccfbf1;
   --primary-bg: #f0fdfa;
 
-  /* ── Accent — Warm Amber ── */
+  /* -- Accent: Warm Amber -- */
   --accent: #f59e0b;
   --accent-hover: #d97706;
   --accent-dark: #b45309;
   --accent-light: #fef3c7;
   --accent-bg: #fffbeb;
 
-  /* ── Secondary — Ink Teal ── */
+  /* -- Secondary: Ink Teal -- */
   --secondary: #0f2f2d;
   --secondary-light: #134e4a;
   --secondary-bg: #e6fffb;
 
-  /* ── Success — Botanical Green ── */
+  /* -- Success: Botanical Green -- */
   --success: #16a34a;
   --success-dark: #15803d;
   --success-light: #dcfce7;
   --success-bg: #f0fdf4;
 
-  /* ── Streak — Flame Orange ── */
+  /* -- Streak: Flame Orange -- */
   --streak: #ea580c;
   --streak-light: #fff7ed;
 
-  /* ── Danger — Warm Coral ── */
+  /* -- Danger: Warm Coral -- */
   --danger: #e11d48;
   --danger-light: #ffe4e6;
 
-  /* ── Solana Nod — SPARINGLY ── */
+  /* -- Solana Nod (used sparingly) -- */
   --solana-purple: #9945ff;
   --solana-green: #14f195;
 
-  /* ── Neutrals — warm cream ── */
+  /* -- Neutrals: warm cream -- */
   --bg: #fafaf7;
   --card: #ffffff;
   --subtle: #f5f3ee;
@@ -60,7 +60,7 @@ The design system (v5) is built on CSS custom properties defined in `apps/web/sr
   --text-2: #57534e;
   --text-3: #a8a29e;
 
-  /* ── Radii ── */
+  /* -- Radii -- */
   --r-sm: 10px;
   --r-md: 14px;
   --r-lg: 18px;
@@ -72,7 +72,7 @@ The design system (v5) is built on CSS custom properties defined in `apps/web/sr
 
 ```css
 .dark {
-  /* ── Neutrals — Soft Neutral Dark ── */
+  /* -- Neutrals: Soft Neutral Dark -- */
   --bg: #343431;
   --card: #3d3c38;
   --subtle: #46443f;
@@ -83,25 +83,34 @@ The design system (v5) is built on CSS custom properties defined in `apps/web/sr
   --text-2: #d4cec3;
   --text-3: #a79f93;
 
-  /* ── Primary — lifted for dark readability ── */
+  /* -- Primary: lifted for dark readability -- */
   --primary: #2dd4bf;
   --primary-hover: #22c7b3;
   --primary-dark: #0b7e73;
   --primary-light: rgba(45, 212, 191, 0.15);
   --primary-bg: rgba(45, 212, 191, 0.1);
 
-  /* ── Accent — lifted ── */
+  /* -- Accent: lifted -- */
   --accent: #fbbf24;
   --accent-hover: #f59e0b;
   --accent-dark: #b45309;
   --accent-light: rgba(251, 191, 36, 0.18);
   --accent-bg: rgba(251, 191, 36, 0.1);
 
-  /* etc. — see globals.css for the full set */
+  /* etc. -- see globals.css for the full set */
 }
 ```
 
 To change the color scheme, update the hex/rgba values in `globals.css`. All components reference these properties through Tailwind classes like `bg-primary`, `text-text`, `border-border`, etc.
+
+### Changing the Primary Color Scheme
+
+To rebrand from Deep Teal to a different primary color:
+
+1. Update the `--primary-*` variables in both `:root` (light) and `.dark` blocks in `globals.css`
+2. Update the `--accent-*` variables if desired
+3. The Tailwind config (`apps/web/tailwind.config.ts`) references these CSS variables, so no Tailwind changes are needed
+4. Confetti colors in `apps/web/src/components/gamification/level-up-overlay.tsx` use hardcoded hex values -- update those to match
 
 ### Tailwind Configuration
 
@@ -165,6 +174,18 @@ colors: {
 
 To add a new color group, define the CSS variables in `globals.css` (both `:root` and `.dark` blocks), then add the Tailwind mapping in `tailwind.config.ts`.
 
+**Legacy shadcn Compatibility:**
+
+The config also includes compatibility aliases for shadcn/ui components:
+
+- `background` -> `var(--bg)`
+- `foreground` -> `var(--text)`
+- `destructive` -> `var(--danger)` (with white foreground)
+- `muted` -> `var(--subtle)` (with `--text-3` foreground)
+- `popover` -> `var(--card)` (with `--text` foreground)
+- `input` -> `var(--border)`
+- `ring` -> `var(--primary)`
+
 **Certificate Gradient:**
 
 ```typescript
@@ -176,33 +197,50 @@ backgroundImage: {
 
 The Solana gradient is used sparingly (certificates only). A matching `.bg-cert-gradient` utility class is also available in `globals.css`.
 
-**Custom Shadows:**
+**Border Radius:**
 
-The config exposes several shadow tokens:
+```typescript
+borderRadius: {
+  sm: "var(--r-sm)",   // 10px
+  md: "var(--r-md)",   // 14px
+  lg: "var(--r-lg)",   // 18px
+  xl: "var(--r-xl)",   // 24px
+}
+```
+
+**Custom Shadows:**
 
 ```typescript
 boxShadow: {
   push: "0 4px 0 0 var(--shadow-push-color)",        // 3D push button
-  "push-sm": "0 2px 0 0 var(--shadow-push-color)",
-  "push-active": "0 1px 0 0 var(--shadow-push-color)",
-  card: "var(--shadow-card)",                          // chunky card
-  "card-hover": "var(--shadow-card-hover)",
-  glow: "var(--shadow-glow)",                          // dark-mode glow
-  cert: "var(--shadow-cert)",                          // certificate cards
-  "cert-hover": "var(--shadow-cert-hover)",
-  "cert-lg": "var(--shadow-cert-lg)",
+  "push-sm": "0 2px 0 0 var(--shadow-push-color)",   // Small push button
+  "push-active": "0 1px 0 0 var(--shadow-push-color)", // Pressed push button
+  card: "var(--shadow-card)",                          // Chunky card
+  "card-hover": "var(--shadow-card-hover)",            // Card hover lift
+  glow: "var(--shadow-glow)",                          // Dark-mode glow
+  cert: "var(--shadow-cert)",                          // Certificate cards
+  "cert-hover": "var(--shadow-cert-hover)",            // Certificate hover
+  "cert-lg": "var(--shadow-cert-lg)",                  // Large certificate
 }
 ```
 
 **Custom Animations:**
 
-- `accordion-down` / `accordion-up`: Radix accordion transitions
-- `xp-pop`: XP gain popup (scale + float up + fade out)
-- `shimmer`: Loading skeleton shimmer effect
-- `breathe`: Gentle pulsing scale (used for emphasis)
-- `pop`: Bounce-in entry animation
-- `pulse-ring`: Pulsing glow ring (used on CTAs)
-- `bounce-in`: Quick elastic scale-in
+| Name             | Duration / Timing                      | Purpose                                     |
+| ---------------- | -------------------------------------- | ------------------------------------------- |
+| `accordion-down` | 0.2s ease-out                          | Radix accordion open transition             |
+| `accordion-up`   | 0.2s ease-out                          | Radix accordion close transition            |
+| `xp-pop`         | 2s ease-out (forwards)                 | XP gain popup: scale up, float up, fade out |
+| `shimmer`        | 2s infinite                            | Loading skeleton shimmer effect             |
+| `breathe`        | 2s infinite alternate ease-in-out      | Gentle pulsing scale for emphasis           |
+| `pop`            | 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) | Bounce-in entry for popups                  |
+| `pulse-ring`     | 2s infinite                            | Pulsing glow ring on CTAs                   |
+| `bounce-in`      | 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) | Quick elastic scale-in                      |
+
+**Additional transition utilities:**
+
+- `duration-600`: 600ms transition duration
+- `ease-smooth`: `cubic-bezier(0.4, 0, 0.2, 1)` timing function
 
 **CSS Utility Classes (in globals.css):**
 
@@ -214,6 +252,11 @@ Beyond Tailwind's generated classes, `globals.css` provides additional utilities
 - `.progress-fill-teal` / `.progress-fill-amber` / `.progress-fill-green`: Progress bar color variants
 - `.banner-beginner` / `.banner-intermediate` / `.banner-advanced`: Difficulty-based gradient banners (with dark mode variants)
 - `.font-display` / `.font-body`: Font family shortcuts
+
+**Tailwind Plugins:**
+
+- `tailwindcss-animate`: Animation utility classes
+- `@tailwindcss/typography`: Prose styling for Markdown content
 
 ### Fonts
 
@@ -235,11 +278,21 @@ Theme switching is handled by `next-themes`:
 - `ThemeToggle` in `components/layout/theme-toggle.tsx` provides the UI toggle
 - `darkMode: "class"` in `tailwind.config.ts` enables class-based dark mode
 
-## Adding New Languages
+All color tokens have separate light and dark values. Components use `dark:` Tailwind variants or the CSS variable system (which switches automatically based on the `.dark` class on `<html>`).
 
-The platform uses `next-intl` for internationalization. To add a new language:
+## Adding New Languages (i18n)
 
-### 1. Create the Message File
+The platform uses `next-intl` for internationalization.
+
+### Current Locales
+
+Three locales are currently supported (files in `apps/web/src/messages/`):
+
+- `en.json` -- English (default)
+- `pt-BR.json` -- Portuguese (Brazil)
+- `es.json` -- Spanish
+
+### Step 1: Create the Message File
 
 Create a new JSON file in `apps/web/src/messages/`. Copy the structure from `en.json` and translate all values. Every key must be present -- missing keys cause `MISSING_MESSAGE` errors at runtime.
 
@@ -247,15 +300,15 @@ Create a new JSON file in `apps/web/src/messages/`. Copy the structure from `en.
 apps/web/src/messages/fr.json
 ```
 
-The top-level key structure to replicate:
+The top-level namespace structure to replicate (19 namespaces):
 
 ```
 common, nav, auth, landing, courses, lesson, dashboard,
 gamification, certificates, profile, settings, a11y, footer,
-notFound, error, errors, timeAgo, nameGenerator
+notFound, error, errors, timeAgo, nameGenerator, deploy
 ```
 
-### 2. Register the Locale
+### Step 2: Register the Locale
 
 Update `apps/web/src/lib/i18n/config.ts`:
 
@@ -272,11 +325,23 @@ export const localeNames: Record<Locale, string> = {
 };
 ```
 
-### 3. Update Middleware
+### Step 3: No Middleware Changes Needed
 
-The middleware (`apps/web/src/middleware.ts`) reads from the `locales` array in `config.ts`, so no changes are needed there.
+The middleware (`apps/web/src/middleware.ts`) imports from `config.ts`:
 
-### 4. Verify
+```typescript
+import { locales, defaultLocale } from "@/lib/i18n/config";
+```
+
+It reads from the `locales` array dynamically, so no separate middleware update is needed.
+
+The i18n request handler (`apps/web/src/lib/i18n/request.ts`) also imports from `config.ts` and dynamically loads the message file:
+
+```typescript
+messages: (await import(`@/messages/${locale}.json`)).default,
+```
+
+### Step 4: Verify
 
 Run the development server and navigate to `http://localhost:3000/fr/` to verify the new locale loads correctly.
 
@@ -286,6 +351,19 @@ Run the development server and navigate to `http://localhost:3000/fr/` to verify
 - Use nested keys for organization (e.g., `dashboard.welcome`, `courses.difficulty.beginner`)
 - Keep keys descriptive: `auth.connectWallet` not `btn1`
 - Pluralization is supported via next-intl's ICU message format
+- Root-level files (`not-found.tsx`, `error.tsx`) cannot use `next-intl` because they render outside the `[locale]` layout. They use inline translation objects.
+
+### Critical vs Optional Namespaces
+
+All namespaces are required for a complete translation. The most critical ones (used on every page):
+
+- `common` -- shared buttons, labels, app name
+- `nav` -- navigation links
+- `auth` -- wallet connection, sign in/out
+- `footer` -- footer links and text
+- `a11y` -- accessibility labels (screen readers)
+
+The remaining namespaces are page-specific and can be translated incrementally, though missing keys will show `MISSING_MESSAGE` warnings.
 
 ## Adding New Wallet Adapters
 
@@ -296,7 +374,6 @@ The Solana wallet provider is configured in `apps/web/src/lib/solana/wallet-prov
 The platform uses the **Wallet Standard** protocol, which automatically discovers any wallet extension the user has installed (Phantom, Solflare, Backpack, MetaMask Snap, etc.). No wallet adapters are explicitly imported or instantiated:
 
 ```typescript
-// Wallet Standard auto-discovers installed wallets
 const wallets = useMemo(() => [], []);
 ```
 
@@ -346,48 +423,81 @@ To switch to mainnet, update the environment variable and set `NEXT_PUBLIC_SOLAN
    }
    ```
 
-3. Call the XP award from the appropriate API route. XP is awarded server-side via the `HybridProgressService` (see `apps/web/src/lib/services/`), which implements the `LearningProgressService` interface from `packages/types/src/progress.ts`.
+3. Call the XP award from the appropriate API route. XP is awarded server-side via the Supabase `award_xp()` function (SECURITY DEFINER, called with service_role key from API routes).
+
+**Server-side XP cap**: The on-chain `xpPerLesson` field has a max of 100 (enforced in the Sanity schema: `rule.min(1).max(100)`). The Supabase `award_xp()` function itself has no cap -- the API route controls the amount.
 
 ### Adding New Achievements
 
-1. Add the achievement definition to the `ACHIEVEMENT_CATALOG` in `apps/web/src/lib/gamification/achievements.ts`:
+Adding a new achievement requires changes in three places: Sanity (metadata), TypeScript (unlock logic), and on-chain (deployment via admin panel).
 
-   ```typescript
-   {
-     id: "ten-courses",
-     name: "Decathlon",
-     description: "Complete 10 courses",
-     icon: "Trophy",
-     category: "progress",
-   },
-   ```
+#### 1. Create the Achievement in Sanity
 
-2. Add the check condition in the `checks` map inside `checkNewAchievements()`. The map type is `Partial<Record<AchievementId, () => boolean>>`:
+Create a new Achievement document in Sanity Studio with:
 
-   ```typescript
-   const checks: Partial<Record<AchievementId, () => boolean>> = {
-     // ...existing checks...
-     "ten-courses": () => state.completedCourses >= 10,
-   };
-   ```
+- **name** (required): Display name (e.g., "Decathlon")
+- **description**: What the learner did to earn it (e.g., "Complete 10 courses")
+- **icon**: Icon identifier (e.g., `trophy`)
+- **category** (required): One of `progress`, `streaks`, `skills`, `community`, `special`
+- **xpReward** (required): XP awarded on unlock (default: 50)
+- **maxSupply**: Maximum awards (0 = unlimited)
 
-3. Update the `UserState` interface (in the same file) if the check requires new data fields:
+Use the `_id` convention: `achievement-{slug}` (e.g., `achievement-ten-courses`).
 
-   ```typescript
-   interface UserState {
-     completedLessons: number;
-     completedCourses: number;
-     currentStreak: number;
-     hasCompletedRustLesson: boolean;
-     hasCompletedAnchorCourse: boolean;
-     hasCompletedAllTracks: boolean;
-     courseCompletionTimeHours: number | null;
-     allTestsPassedFirstTry: boolean;
-     userNumber: number;
-   }
-   ```
+#### 2. Add Unlock Logic
 
-4. Add the achievement to Sanity CMS so it appears in the content management system as well.
+Add the check condition to the `UNLOCK_CHECKS` map in `apps/web/src/lib/gamification/achievements.ts`:
+
+```typescript
+const UNLOCK_CHECKS: Record<string, (state: UserState) => boolean> = {
+  // ...existing checks...
+  "ten-courses": (s) => s.completedCourses >= 10,
+};
+```
+
+The function receives a `UserState` object with these fields:
+
+```typescript
+interface UserState {
+  completedLessons: number; // Total lessons completed across all courses
+  completedCourses: number; // Number of fully completed courses
+  currentStreak: number; // Current consecutive-day streak
+  hasCompletedRustLesson: boolean;
+  hasCompletedAnchorCourse: boolean;
+  hasCompletedAllTracks: boolean; // Deferred (always false currently)
+  courseCompletionTimeHours: number | null; // Deferred (always null currently)
+  allTestsPassedFirstTry: boolean; // Deferred (always false currently)
+  userNumber: number; // User's signup order (1 = first user)
+}
+```
+
+**Deferred signals**: Three fields (`hasCompletedAllTracks`, `courseCompletionTimeHours`, `allTestsPassedFirstTry`) require cross-course tracking infrastructure that is not yet implemented. Achievements depending on these signals (`full-stack-solana`, `speed-runner`, `perfect-score`) are currently unearnable.
+
+Achievement IDs in `UNLOCK_CHECKS` must match the Sanity `_id` minus the `achievement-` prefix. For example, Sanity document `achievement-first-steps` maps to key `"first-steps"`.
+
+#### 3. Deploy On-Chain
+
+Use the admin panel to deploy the achievement on-chain. This creates an AchievementType PDA and a Metaplex Core collection. The admin panel writes back `achievementPda` and `collectionAddress` to Sanity, setting the status to `"synced"`.
+
+#### Current Achievement Catalog
+
+The 15 built-in achievements and their unlock conditions:
+
+| ID                  | Condition                                      |
+| ------------------- | ---------------------------------------------- |
+| `first-steps`       | Complete 1 lesson                              |
+| `course-completer`  | Complete 1 course                              |
+| `speed-runner`      | Complete a course in under 24 hours (deferred) |
+| `week-warrior`      | 7-day streak                                   |
+| `monthly-master`    | 30-day streak                                  |
+| `consistency-king`  | 100-day streak                                 |
+| `rust-rookie`       | Complete a Rust lesson                         |
+| `anchor-expert`     | Complete an Anchor course                      |
+| `full-stack-solana` | Complete all tracks (deferred)                 |
+| `early-adopter`     | Be among the first 100 users                   |
+| `perfect-score`     | Pass all tests on first try (deferred)         |
+
+Achievements without a `UNLOCK_CHECKS` entry (e.g., `bug-hunter`, `helper`, `first-comment`, `top-contributor`) are admin-granted and not automatically checked.
 
 ### Adding New Streak Milestones
 
@@ -402,7 +512,23 @@ export const STREAK_MILESTONES = [
 ] as const;
 ```
 
-Then add a corresponding achievement definition in `ACHIEVEMENT_CATALOG` for the new milestone.
+Then add a corresponding achievement definition in Sanity and an `UNLOCK_CHECKS` entry for the new milestone.
+
+### Streak Logic
+
+Streaks are tracked in two places:
+
+**Supabase** (`supabase/schema.sql`, `award_xp()` function): The server-side `award_xp()` SECURITY DEFINER function handles streak tracking atomically alongside XP awards:
+
+- If `last_activity_date` is NULL: first activity ever, set streak to 1
+- If `last_activity_date` is today: already active today, keep current streak
+- If `last_activity_date` is yesterday: consecutive day, increment streak by 1
+- If gap > 1 day: reset streak to 1
+- `longest_streak` is always `GREATEST(longest_streak, new_streak)`
+
+The `user_xp` table stores: `current_streak`, `longest_streak`, `last_activity_date`.
+
+**Client-side** (`apps/web/src/lib/gamification/streaks.ts`): Provides utilities for streak display, calendar generation, and milestone tracking. The client-side `updateStreak()` function mirrors the server logic for optimistic UI updates.
 
 ### Modifying the Leveling Curve
 
@@ -414,13 +540,48 @@ export function calculateLevel(totalXp: number): number {
 }
 ```
 
-To make leveling faster, decrease the divisor. To make it slower, increase it. The `xpForLevel()` function provides the inverse calculation, and both should stay in sync:
+The inverse calculation:
 
 ```typescript
 export function xpForLevel(level: number): number {
   return level * level * 100;
 }
 ```
+
+This means Level 1 = 100 XP, Level 2 = 400 XP, Level 5 = 2500 XP, Level 10 = 10000 XP.
+
+To make leveling faster, decrease the divisor (100). To make it slower, increase it. Both functions must stay in sync. The same formula is also implemented in the Supabase `award_xp()` function: `floor(sqrt(total_xp / 100.0))::int`.
+
+### Gamification Event Bus (Popup System)
+
+Gamification popups use a custom event bus pattern. Components dispatch browser `CustomEvent`s, and listener components render popups in response.
+
+**Event types and their dispatchers:**
+
+| Event Name                     | Dispatch Function                          | Source File             | Detail Shape                                |
+| ------------------------------ | ------------------------------------------ | ----------------------- | ------------------------------------------- |
+| `xp-gain`                      | `dispatchXpGain(amount)`                   | `xp-popup.tsx`          | `{ amount: number, id: number }`            |
+| `superteam:level-up`           | `dispatchLevelUp(newLevel)`                | `level-up-overlay.tsx`  | `{ newLevel: number }`                      |
+| `superteam:achievement-unlock` | `dispatchAchievementUnlock(id, name)`      | `achievement-popup.tsx` | `{ id: string, name: string, uid: number }` |
+| `superteam:certificate-minted` | `dispatchCertificateMinted(certificateId)` | `certificate-popup.tsx` | `{ certificateId: string, uid: number }`    |
+
+**How it works:**
+
+1. An API response or client action calls the dispatch function (e.g., `dispatchXpGain(50)`)
+2. The dispatch function creates and fires a `CustomEvent` on `window`
+3. The corresponding popup component listens for the event via `window.addEventListener`
+4. The popup renders with an animation (`animate-xp-pop`, `animate-pop`, etc.)
+5. The popup auto-dismisses after a timeout (XP: 2.5s, achievements: 4s, certificates: 5s, level-up: 3s)
+
+**Listener mount point:** `GamificationOverlays` (`apps/web/src/components/gamification/gamification-overlays.tsx`) mounts all popup components. It only renders when a user is authenticated. The component is included in the platform layout.
+
+**Adding a new popup type:**
+
+1. Create a new component in `apps/web/src/components/gamification/` following the existing pattern:
+   - Export a `dispatch*()` function that fires a `CustomEvent`
+   - Export a React component that listens for the event and renders a popup
+2. Add the component to `GamificationOverlays`
+3. Call the dispatch function from the relevant API response handler or client action
 
 ## Creating New Course Types
 
@@ -474,15 +635,6 @@ defineField({
 In `packages/types/src/course.ts`, add a new variant to the discriminated union. The existing types use a `LessonBase` interface with `ContentLesson` and `ChallengeLesson` extending it:
 
 ```typescript
-interface LessonBase {
-  _id: string;
-  title: string;
-  slug: string;
-  order: number;
-  difficulty?: Difficulty;
-  xpReward: number;
-}
-
 export interface QuizLesson extends LessonBase {
   type: "quiz";
   content: string;
@@ -504,7 +656,7 @@ Build a component to render the new lesson type in `apps/web/src/components/cour
 
 ### 5. Update the Lesson Page
 
-In `apps/web/src/app/[locale]/(platform)/courses/[slug]/lessons/[id]/page.tsx`, add rendering logic for the new type:
+In the lesson page component, add rendering logic for the new type:
 
 ```typescript
 if (lesson.type === "quiz") {

@@ -6,12 +6,14 @@ import Link from "next/link";
 import { GraduationCap, CheckCircle, Wallet } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
 import { trackEvent, captureError } from "@/lib/analytics";
+import { dispatchCertificateMinted } from "@/components/gamification/certificate-popup";
 
 interface CredentialIssueResponse {
   success: boolean;
   signature: string;
   mintAddress: string;
   metadataUri: string;
+  certificateId?: string;
   error?: string;
 }
 
@@ -28,7 +30,7 @@ type CompletionState =
   | { status: "incomplete"; completedCount: number }
   | { status: "complete"; recipientName: string }
   | { status: "no_wallet" }
-  | { status: "already_minted"; certId: string }
+  | { status: "already_minted" }
   | { status: "insert_failed"; mintAddress: string }
   | { status: "issuing" }
   | { status: "issue_error"; message: string };
@@ -57,7 +59,7 @@ export function CourseCompletionMint({
         .maybeSingle();
 
       if (existingCert) {
-        setState({ status: "already_minted", certId: existingCert.id });
+        setState({ status: "already_minted" });
         return;
       }
 
@@ -100,6 +102,20 @@ export function CourseCompletionMint({
     if (!trackCollection) return;
     setState({ status: "issuing" });
     try {
+      // Finalize course first (awards bonus XP, marks enrollment complete).
+      // Safe to call if already finalized — the route returns 400 which we accept.
+      const finalizeRes = await fetch(`/api/courses/${courseId}/finalize`, {
+        method: "POST",
+      });
+      if (!finalizeRes.ok && finalizeRes.status !== 400) {
+        const finalizeData = await finalizeRes.json();
+        setState({
+          status: "issue_error",
+          message: finalizeData.error ?? "Failed to finalize course",
+        });
+        return;
+      }
+
       const res = await fetch("/api/credentials/issue", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -120,7 +136,10 @@ export function CourseCompletionMint({
         mintAddress: data.mintAddress,
         signature: data.signature,
       });
-      setState({ status: "already_minted", certId: data.mintAddress });
+      if (data.certificateId) {
+        dispatchCertificateMinted(data.certificateId);
+      }
+      setState({ status: "already_minted" });
     } catch (err) {
       if (err instanceof Error) {
         captureError(err, { courseId });
