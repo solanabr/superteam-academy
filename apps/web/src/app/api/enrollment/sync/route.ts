@@ -174,6 +174,7 @@ export async function POST(request: NextRequest) {
             courseId,
             txSignature,
             walletAddress: profile.wallet_address,
+            enrolledAt: new Date().toISOString(),
           },
           upsertError.message
         );
