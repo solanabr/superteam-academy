@@ -141,7 +141,9 @@
     "buildProgram": "Compilar",
     "buildingProgram": "Compilando programa Solana...",
     "buildSuccess": "¡Programa compilado con éxito!",
-    "buildFailed": "Error de compilación. Revisa los errores del compilador."
+    "buildFailed": "Error de compilación. Revisa los errores del compilador.",
+    "linkWalletToEarnXp": "Vincula tu wallet para ganar XP on-chain.",
+    "linkWalletSettings": "Ir a Configuración →"
   },
   "dashboard": {
     "browseCourses": "Explorar Cursos",

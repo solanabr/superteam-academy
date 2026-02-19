@@ -147,6 +147,15 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    if (!profile?.wallet_address) {
+      return NextResponse.json(
+        {
+          error: "Wallet not connected. Link your wallet to earn on-chain XP.",
+        },
+        { status: 400 }
+      );
+    }
+
     let onChainSignature: string | undefined;
     let finalizeSig: string | null = null;
     let finalized = false;
@@ -180,6 +189,16 @@ export async function POST(request: NextRequest) {
         connection,
         PROGRAM_ID
       );
+
+      if (!onChainEnrollment) {
+        return NextResponse.json(
+          {
+            error:
+              "On-chain enrollment not found. Please re-enroll the course.",
+          },
+          { status: 403 }
+        );
+      }
 
       const lessonAlreadyOnChain =
         onChainEnrollment !== null &&

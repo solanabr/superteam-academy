@@ -198,6 +198,8 @@ export function LessonPageClient({
   const [isCompleting, setIsCompleting] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [isEnrolled, setIsEnrolled] = useState(false);
+  // null = still loading, false = no wallet linked, true = wallet linked
+  const [hasLinkedWallet, setHasLinkedWallet] = useState<boolean | null>(null);
   const [buildUuid, setBuildUuid] = useState<string | null>(null);
   const [programKeypairSecret, setProgramKeypairSecret] = useState<
     number[] | null
@@ -215,6 +217,16 @@ export function LessonPageClient({
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session?.user) return;
       setUserId(session.user.id);
+
+      // Check whether user has linked a wallet (required for on-chain XP)
+      supabase
+        .from("profiles")
+        .select("wallet_address")
+        .eq("id", session.user.id)
+        .single()
+        .then(({ data }) => {
+          setHasLinkedWallet(!!data?.wallet_address);
+        });
 
       // Check enrollment
       supabase
@@ -251,6 +263,7 @@ export function LessonPageClient({
   const handleComplete = useCallback(
     async (_xpReward?: number) => {
       if (isCompleted || isCompleting) return;
+      if (hasLinkedWallet === false) return;
       setIsCompleting(true);
       try {
         const result = await completeLessonAPI(lesson._id, courseId);
@@ -294,7 +307,7 @@ export function LessonPageClient({
         setIsCompleting(false);
       }
     },
-    [lesson._id, courseId, isCompleted, isCompleting]
+    [lesson._id, courseId, isCompleted, isCompleting, hasLinkedWallet]
   );
 
   // Listen for challenge completion events from ChallengeInterface
@@ -596,7 +609,9 @@ export function LessonPageClient({
               <Button
                 variant={isCompleted ? "outline" : "pushSuccess"}
                 size="lg"
-                disabled={isCompleted || isCompleting}
+                disabled={
+                  isCompleted || isCompleting || hasLinkedWallet === false
+                }
                 onClick={() => handleComplete(lesson.xpReward)}
                 className="gap-2"
               >
@@ -675,6 +690,17 @@ export function LessonPageClient({
         {enrollError && (
           <p role="alert" className="text-center text-sm text-destructive">
             {tCourses("enrollFailed")}
+          </p>
+        )}
+        {hasLinkedWallet === false && isEnrolled && (
+          <p role="alert" className="text-center text-sm text-text-3">
+            {t("linkWalletToEarnXp")}{" "}
+            <Link
+              href={`/${locale}/settings`}
+              className="font-medium text-primary underline-offset-2 hover:underline"
+            >
+              {t("linkWalletSettings")}
+            </Link>
           </p>
         )}
       </div>
