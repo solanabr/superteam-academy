@@ -211,13 +211,6 @@ export const lesson = defineType({
       hidden: ({ parent }) => parent?.type !== "challenge",
     }),
     defineField({
-      name: "xpReward",
-      title: "XP Reward",
-      type: "number",
-      validation: (rule) => rule.required().min(0),
-      initialValue: 10,
-    }),
-    defineField({
       name: "order",
       title: "Order",
       type: "number",

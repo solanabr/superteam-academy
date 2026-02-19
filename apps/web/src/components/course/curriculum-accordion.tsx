@@ -8,7 +8,6 @@ interface LessonItem {
   title: string;
   slug: string;
   type: "content" | "challenge";
-  xpReward: number;
   order: number;
   completed?: boolean;
   locked?: boolean;
@@ -114,9 +113,6 @@ export function CurriculumAccordion({
                           </span>
                         )}
                         {lesson.title}
-                      </span>
-                      <span className="shrink-0 text-xs tabular-nums text-text-3">
-                        +{lesson.xpReward} XP
                       </span>
                     </a>
                   );

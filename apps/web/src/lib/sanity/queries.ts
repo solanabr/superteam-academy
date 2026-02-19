@@ -42,7 +42,6 @@ const moduleWithLessonsFields = `
     tests,
     hints,
     solution,
-    xpReward,
     order
   } | order(order asc)
 `;
@@ -63,7 +62,6 @@ export async function getAllCourses(): Promise<Course[]> {
           title,
           "slug": slug.current,
           type,
-          xpReward,
           order
         } | order(order asc)
       } | order(order asc)
@@ -105,7 +103,6 @@ export async function getLessonBySlug(
         tests,
         hints,
         solution,
-        xpReward,
         order
       }
     }.allLessons[slug == $lessonSlug][0]`,
@@ -133,7 +130,6 @@ export async function getAllLearningPaths(): Promise<LearningPath[]> {
             title,
             "slug": slug.current,
             type,
-            xpReward,
             order
           } | order(order asc)
         } | order(order asc)
@@ -160,11 +156,17 @@ export async function getCourseById(id: string): Promise<Course | null> {
 }
 
 /**
- * Get a course's Sanity _id from its slug (lightweight, no content fetched).
+ * Get a course's Sanity _id and xpPerLesson from its slug (lightweight, no content fetched).
+ * xpPerLesson is the on-chain uniform XP reward for completing any lesson in this course.
  */
-export async function getCourseIdBySlug(slug: string): Promise<string | null> {
-  return sanityFetch<string | null>(
-    `*[_type == "course" && slug.current == $slug && onChainStatus.status == "synced"][0]._id`,
+export async function getCourseIdBySlug(
+  slug: string
+): Promise<{ _id: string; xpPerLesson: number } | null> {
+  return sanityFetch<{ _id: string; xpPerLesson: number } | null>(
+    `*[_type == "course" && slug.current == $slug && onChainStatus.status == "synced"][0] {
+      _id,
+      "xpPerLesson": coalesce(xpPerLesson, 0)
+    }`,
     { slug }
   );
 }
@@ -344,7 +346,7 @@ export async function getDeployedAchievements(): Promise<
     }`
   );
   return raw.map((a) => ({
-    id: a._id.replace(/^achievement-/, ""),
+    id: a._id,
     name: a.name,
     description: a.description,
     icon: a.icon,
@@ -372,7 +374,7 @@ export async function getAllAchievements(): Promise<DeployedAchievement[]> {
     }`
   );
   return raw.map((a) => ({
-    id: a._id.replace(/^achievement-/, ""),
+    id: a._id,
     name: a.name,
     description: a.description,
     icon: a.icon,

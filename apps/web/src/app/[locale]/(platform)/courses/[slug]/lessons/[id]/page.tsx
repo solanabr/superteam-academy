@@ -13,7 +13,7 @@ interface LessonPageProps {
 export default async function LessonPage({ params }: LessonPageProps) {
   const { locale, slug, id } = await params;
 
-  const [lesson, allLessons, courseId] = await Promise.all([
+  const [lesson, allLessons, courseInfo] = await Promise.all([
     getLessonBySlug(slug, id),
     getCourseLessons(slug),
     getCourseIdBySlug(slug),
@@ -27,7 +27,8 @@ export default async function LessonPage({ params }: LessonPageProps) {
       allLessons={allLessons ?? []}
       locale={locale}
       courseSlug={slug}
-      courseId={courseId ?? slug}
+      courseId={courseInfo?._id ?? slug}
+      courseXpPerLesson={courseInfo?.xpPerLesson ?? 0}
     />
   );
 }

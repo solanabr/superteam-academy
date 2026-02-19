@@ -20,6 +20,7 @@ import { AuthModal } from "@/components/auth/auth-modal";
 import { dispatchXpGain } from "@/components/gamification/xp-popup";
 import { dispatchAchievementUnlock } from "@/components/gamification/achievement-popup";
 import { dispatchCertificateMinted } from "@/components/gamification/certificate-popup";
+import { dispatchLevelUp } from "@/components/gamification/level-up-overlay";
 import { trackEvent } from "@/lib/analytics";
 import { createClient } from "@/lib/supabase/client";
 import { useOnChainEnroll } from "@/hooks/use-on-chain-enroll";
@@ -144,6 +145,7 @@ interface LessonPageClientProps {
   locale: string;
   courseSlug: string;
   courseId: string;
+  courseXpPerLesson: number;
 }
 
 interface CompletionResponse {
@@ -166,6 +168,8 @@ interface CompletionResponse {
     longestStreak: number;
     lastActivityDate: string;
   } | null;
+  leveledUp?: boolean;
+  newLevel?: number;
 }
 
 async function completeLessonAPI(
@@ -189,6 +193,7 @@ export function LessonPageClient({
   locale,
   courseSlug,
   courseId,
+  courseXpPerLesson,
 }: LessonPageClientProps) {
   const t = useTranslations("lesson");
   const tCommon = useTranslations("common");
@@ -196,6 +201,7 @@ export function LessonPageClient({
 
   const [isCompleted, setIsCompleted] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
+  const [earnedXp, setEarnedXp] = useState<number | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [isEnrolled, setIsEnrolled] = useState(false);
   // null = still loading, false = no wallet linked, true = wallet linked
@@ -260,63 +266,64 @@ export function LessonPageClient({
 
   const isChallenge = lesson.type === "challenge";
 
-  const handleComplete = useCallback(
-    async (_xpReward?: number) => {
-      if (isCompleted || isCompleting) return;
-      if (hasLinkedWallet === false) return;
-      setIsCompleting(true);
-      try {
-        const result = await completeLessonAPI(lesson._id, courseId);
-        setIsCompleting(false);
-        setIsCompleted(true);
+  const handleComplete = useCallback(async () => {
+    if (isCompleted || isCompleting) return;
+    if (hasLinkedWallet === false) return;
+    setIsCompleting(true);
+    try {
+      const result = await completeLessonAPI(lesson._id, courseId);
+      setIsCompleting(false);
+      setIsCompleted(true);
 
-        if (!result.alreadyCompleted && result.xpEarned > 0) {
-          dispatchXpGain(result.xpEarned);
-          trackEvent("lesson_completed", {
-            lessonId: lesson._id,
+      if (!result.alreadyCompleted && result.xpEarned > 0) {
+        setEarnedXp(result.xpEarned);
+        dispatchXpGain(result.xpEarned);
+        trackEvent("lesson_completed", {
+          lessonId: lesson._id,
+          courseId,
+          xpEarned: result.xpEarned,
+          signature: result.signature,
+        });
+
+        if (result.finalized) {
+          trackEvent("course_finalized", {
             courseId,
-            xpEarned: result.xpEarned,
-            signature: result.signature,
+            finalizationSignature: result.finalizationSignature ?? undefined,
           });
-
-          if (result.finalized) {
-            trackEvent("course_finalized", {
-              courseId,
-              finalizationSignature: result.finalizationSignature ?? undefined,
-            });
-          }
-
-          if (result.credentialMinted && result.certificateId) {
-            dispatchCertificateMinted(result.certificateId);
-            trackEvent("certificate_minted", {
-              courseId,
-              certificateId: result.certificateId,
-            });
-          }
-
-          for (const achievement of result.newAchievements) {
-            dispatchAchievementUnlock(achievement.id, achievement.name);
-            trackEvent("achievement_unlocked", {
-              achievementId: achievement.id,
-              achievementName: achievement.name,
-            });
-          }
         }
-      } catch {
-        // Allow retry on failure
-        setIsCompleting(false);
+
+        if (result.leveledUp && result.newLevel) {
+          dispatchLevelUp(result.newLevel);
+        }
+
+        if (result.credentialMinted && result.certificateId) {
+          dispatchCertificateMinted(result.certificateId);
+          trackEvent("certificate_minted", {
+            courseId,
+            certificateId: result.certificateId,
+          });
+        }
+
+        for (const achievement of result.newAchievements) {
+          dispatchAchievementUnlock(achievement.id, achievement.name);
+          trackEvent("achievement_unlocked", {
+            achievementId: achievement.id,
+            achievementName: achievement.name,
+          });
+        }
       }
-    },
-    [lesson._id, courseId, isCompleted, isCompleting, hasLinkedWallet]
-  );
+    } catch {
+      // Allow retry on failure
+      setIsCompleting(false);
+    }
+  }, [lesson._id, courseId, isCompleted, isCompleting, hasLinkedWallet]);
 
   // Listen for challenge completion events from ChallengeInterface
   useEffect(() => {
     const handleChallengeComplete = (e: Event) => {
-      const detail = (e as CustomEvent<{ lessonId: string; xpReward: number }>)
-        .detail;
+      const detail = (e as CustomEvent<{ lessonId: string }>).detail;
       if (detail.lessonId === lesson._id) {
-        handleComplete(detail.xpReward);
+        handleComplete();
       }
     };
 
@@ -396,7 +403,7 @@ export function LessonPageClient({
                     weight="duotone"
                     className="text-accent"
                   />
-                  +{lesson.xpReward} XP
+                  +{earnedXp ?? courseXpPerLesson} XP
                 </span>
               </div>
 
@@ -492,7 +499,8 @@ export function LessonPageClient({
                 tests={lesson.tests}
                 hints={lesson.hints ?? []}
                 solution={lesson.solution}
-                xpReward={lesson.xpReward}
+                xpReward={courseXpPerLesson}
+                earnedXp={earnedXp}
                 isAlreadyCompleted={isCompleted}
                 isEnrolled={isEnrolled}
                 onEnroll={handleEnroll}
@@ -557,7 +565,7 @@ export function LessonPageClient({
         <span>{t("content")}</span>
         <span className="ml-auto flex items-center gap-1 font-display font-bold text-accent">
           <Lightning size={14} weight="duotone" className="text-accent" />+
-          {lesson.xpReward} XP
+          {earnedXp ?? courseXpPerLesson} XP
         </span>
       </div>
 
@@ -612,7 +620,7 @@ export function LessonPageClient({
                 disabled={
                   isCompleted || isCompleting || hasLinkedWallet === false
                 }
-                onClick={() => handleComplete(lesson.xpReward)}
+                onClick={() => handleComplete()}
                 className="gap-2"
               >
                 {isCompleting ? (
