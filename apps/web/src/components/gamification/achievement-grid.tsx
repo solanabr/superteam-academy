@@ -2,7 +2,13 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { CaretDown, Check, CheckSquare, Square } from "@phosphor-icons/react";
+import {
+  CaretDown,
+  Check,
+  CheckSquare,
+  Square,
+  Trophy,
+} from "@phosphor-icons/react";
 import type { Achievement } from "@superteam-lms/types";
 import { AchievementCard } from "./achievement-card";
 import type { AchievementDefinition } from "@/lib/gamification";
@@ -138,18 +144,32 @@ export function AchievementGrid({
       </div>
 
       {/* Badge wall */}
-      <div className="flex flex-wrap gap-5">
-        {sorted.map((def) => (
-          <AchievementCard
-            key={def.id}
-            id={def.id}
-            name={def.name}
-            description={def.description}
-            unlockedAt={unlockedMap.get(def.id)}
-            explorerUrl={explorerUrlMap.get(def.id)}
+      {sorted.length > 0 ? (
+        <div className="flex flex-wrap gap-5">
+          {sorted.map((def) => (
+            <AchievementCard
+              key={def.id}
+              id={def.id}
+              name={def.name}
+              description={def.description}
+              unlockedAt={unlockedMap.get(def.id)}
+              explorerUrl={explorerUrlMap.get(def.id)}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center gap-4 py-12">
+          <Trophy
+            size={48}
+            weight="duotone"
+            className="text-accent"
+            aria-hidden="true"
           />
-        ))}
-      </div>
+          <p className="text-center font-body text-text-3">
+            {t("noAchievements")}
+          </p>
+        </div>
+      )}
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
-import { Trophy } from "@phosphor-icons/react";
+import { GraduationCap } from "@phosphor-icons/react";
 import type { Certificate } from "@superteam-lms/types";
 import { CertificateCard } from "./certificate-card";
 import { CERTIFICATE_STYLES as CS, cx } from "@/lib/styles/styleClasses";
@@ -33,7 +33,7 @@ export function CertificateGrid({
           className
         )}
       >
-        <Trophy
+        <GraduationCap
           size={48}
           weight="duotone"
           className="text-accent"
