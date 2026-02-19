@@ -115,7 +115,7 @@ export default function CertificateViewPage() {
 
   function handleShareTwitter() {
     const text = encodeURIComponent(
-      `I just earned my "${certData.courseTitle}" certificate on @SuperteamBR LMS! Verify on-chain: ${explorerUrl}`
+      `I just earned my "${certData.courseTitle}" certificate on Solarium! Verify on-chain: ${explorerUrl}`
     );
     window.open(
       `https://twitter.com/intent/tweet?text=${text}`,
@@ -151,16 +151,6 @@ export default function CertificateViewPage() {
           <div className={v.date}>
             {t("completedOn", { date: certData.completionDate })}
           </div>
-
-          {/* Verify link */}
-          <a
-            href={explorerUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={v.verifyLink}
-          >
-            {t("verifyOnChain")}
-          </a>
         </div>
       </div>
 
@@ -206,7 +196,7 @@ export default function CertificateViewPage() {
         </div>
         <div className={v.nftRow}>
           <span className={v.nftLabel}>{t("standard")}</span>
-          <span className={v.nftValue}>Metaplex Token Metadata</span>
+          <span className={v.nftValue}>Metaplex Core</span>
         </div>
         <div className={v.nftRow}>
           <span className={v.nftLabel}>{t("collection")}</span>
