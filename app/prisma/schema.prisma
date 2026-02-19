@@ -17,27 +17,28 @@ model User {
 }
 
 model Course {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  courseId  String   @unique // On-chain course ID
-  metadata  Json     // To store title, description from CMS
-  lessons   Lesson[]
+  id       String   @id @default(auto()) @map("_id") @db.ObjectId
+  courseId String   @unique
+  metadata Json
+  lessons  Lesson[]
 }
 
 model Lesson {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  course    Course   @relation(fields: [courseId], references: [id])
-  courseId  String   @db.ObjectId
-  progress  LessonProgress[]
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  course   Course @relation(fields: [courseId], references: [id])
+  courseId String @db.ObjectId
+  // УДАЛЯЕМ progress — он больше не нужен
 }
 
 model LessonProgress {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  lesson      Lesson   @relation(fields: [lessonId], references: [id])
-  lessonId    String   @db.ObjectId
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
   userWallet  String
-  status      String   // "not_started", "in_progress", "completed"
+  courseId    String
+  lessonIndex Int
+  status      String    @default("not_started")
   codeSnippet String?
   completedAt DateTime?
 
-  @@unique([lessonId, userWallet])
+  @@unique([userWallet, courseId, lessonIndex])
+  @@map("LessonProgress")
 }
