@@ -20,14 +20,5 @@ export {
   generateWeekCalendar,
 } from "./streaks";
 
-export {
-  ACHIEVEMENT_CATALOG,
-  ACHIEVEMENT_CATEGORIES,
-  checkNewAchievements,
-  getAchievementById,
-  getAchievementsByCategory,
-} from "./achievements";
-export type {
-  AchievementDefinition,
-  AchievementCategory,
-} from "./achievements";
+export { checkNewAchievements } from "./achievements";
+export type { AchievementDefinition } from "./achievements";
