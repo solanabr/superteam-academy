@@ -9,6 +9,17 @@ const intlMiddleware = createIntlMiddleware({
   localePrefix: "always",
 });
 
+function isAdminRoute(pathname: string): boolean {
+  for (const locale of locales) {
+    const prefix = `/${locale}`;
+    if (pathname.startsWith(prefix)) {
+      const rest = pathname.slice(prefix.length);
+      return rest === "/admin" || rest.startsWith("/admin/");
+    }
+  }
+  return false;
+}
+
 function isProtectedRoute(pathname: string): boolean {
   // Only routes that require authentication (personal data)
   // Public routes (/courses, /leaderboard, /certificates/[id]) are NOT listed here
@@ -74,6 +85,23 @@ export async function middleware(request: NextRequest) {
   supabaseResponse.cookies.getAll().forEach((cookie) => {
     intlResponse.cookies.set(cookie);
   });
+
+  // Admin routes: check admin_session cookie (separate from Supabase session)
+  // The /admin page renders its own login form when the cookie is absent,
+  // so sub-routes that need protection redirect back to /admin.
+  if (isAdminRoute(request.nextUrl.pathname)) {
+    const adminSession = request.cookies.get("admin_session");
+    const isAdminRoot = /^\/[a-z-]+\/admin\/?$/.test(request.nextUrl.pathname);
+    if (!adminSession || adminSession.value !== "1") {
+      if (!isAdminRoot) {
+        const locale =
+          locales.find((l) => request.nextUrl.pathname.startsWith(`/${l}`)) ??
+          defaultLocale;
+        return NextResponse.redirect(new URL(`/${locale}/admin`, request.url));
+      }
+    }
+    return intlResponse;
+  }
 
   // For platform routes, check auth (fail-closed: no user = redirect)
   if (isProtectedRoute(request.nextUrl.pathname)) {

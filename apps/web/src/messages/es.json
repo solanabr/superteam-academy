@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "Superteam LMS",
+    "appName": "Solarium",
     "tagline": "Aprende Desarrollo Solana",
     "loading": "Cargando...",
     "error": "Algo salió mal",
@@ -54,7 +54,7 @@
     "retry": "Reintentar",
     "signFailed": "No se pudo firmar el mensaje de verificación. Inténtalo de nuevo.",
     "signInSubtitle": "Conecta tu billetera o inicia sesión para empezar a aprender",
-    "signInTitle": "Bienvenido a Superteam LMS",
+    "signInTitle": "Bienvenido a Solarium",
     "signInWithGoogle": "Iniciar sesión con Google",
     "signInWithGitHub": "Iniciar sesión con GitHub",
     "githubSignInFailed": "No se pudo iniciar sesión con GitHub. Inténtalo de nuevo.",
@@ -106,7 +106,8 @@
     "noResults": "No se encontraron cursos con tus filtros",
     "noCourses": "No hay cursos disponibles",
     "noCoursesDescription": "Vuelve pronto para nuevos contenidos de aprendizaje.",
-    "signInToEnroll": "Iniciar Sesión para Inscribirse"
+    "signInToEnroll": "Iniciar Sesión para Inscribirse",
+    "enrollFailed": "Error al inscribirse. Inténtalo de nuevo."
   },
   "lesson": {
     "content": "Contenido",
@@ -173,6 +174,9 @@
     "levelUp": "¡Subiste de Nivel!",
     "levelUpMessage": "¡Alcanzaste el nivel {level}!",
     "newAchievement": "¡Logro Desbloqueado!",
+    "viewAchievements": "Ver Logros",
+    "certificateMinted": "¡Certificado Ganado!",
+    "viewCertificate": "Ver Certificado",
     "yourRank": "Tu Posición",
     "active": "Activo",
     "locked": "Bloqueado",
@@ -200,7 +204,6 @@
     "viewOnExplorer": "Ver en Solana Explorer",
     "share": "Compartir",
     "download": "Descargar",
-    "verifyOnChain": "Verificar On-Chain",
     "completedOn": "Completado el {date}",
     "recipient": "Destinatario",
     "mintAddress": "Dirección de Mint",
@@ -219,7 +222,8 @@
     "notFound": "Certificado no encontrado",
     "pageTitle": "Mis Certificados",
     "pageSubtitle": "Tus certificados NFT ganados en Solana",
-    "linkWalletToMint": "Vincula una billetera en Configuración para acuñar tu certificado."
+    "linkWalletToMint": "Vincula una billetera en Configuración para acuñar tu certificado.",
+    "insertFailed": "Error al registrar el certificado. Por favor, inténtelo de nuevo."
   },
   "profile": {
     "editProfile": "Editar Perfil",

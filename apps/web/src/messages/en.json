@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "Superteam LMS",
+    "appName": "Solarium",
     "tagline": "Learn Solana Development",
     "loading": "Loading...",
     "error": "Something went wrong",
@@ -54,7 +54,7 @@
     "retry": "Try again",
     "signFailed": "Could not sign the verification message. Please try again.",
     "signInSubtitle": "Connect your wallet or sign in to start learning",
-    "signInTitle": "Welcome to Superteam LMS",
+    "signInTitle": "Welcome to Solarium",
     "signInWithGoogle": "Sign in with Google",
     "signInWithGitHub": "Sign in with GitHub",
     "githubSignInFailed": "Could not start GitHub sign-in. Please try again.",
@@ -106,7 +106,8 @@
     "noResults": "No courses found matching your filters",
     "noCourses": "No courses available",
     "noCoursesDescription": "Check back soon for new learning content.",
-    "signInToEnroll": "Sign In to Enroll"
+    "signInToEnroll": "Sign In to Enroll",
+    "enrollFailed": "Enrollment failed. Please try again."
   },
   "lesson": {
     "content": "Content",
@@ -173,6 +174,9 @@
     "levelUp": "Level Up!",
     "levelUpMessage": "You reached level {level}!",
     "newAchievement": "Achievement Unlocked!",
+    "viewAchievements": "View Achievements",
+    "certificateMinted": "Certificate Earned!",
+    "viewCertificate": "View Certificate",
     "yourRank": "Your Rank",
     "active": "Active",
     "locked": "Locked",
@@ -200,7 +204,6 @@
     "viewOnExplorer": "View on Solana Explorer",
     "share": "Share",
     "download": "Download",
-    "verifyOnChain": "Verify On-Chain",
     "completedOn": "Completed on {date}",
     "recipient": "Recipient",
     "mintAddress": "Mint Address",
@@ -219,7 +222,8 @@
     "notFound": "Certificate not found",
     "pageTitle": "My Certificates",
     "pageSubtitle": "Your earned NFT certificates on Solana",
-    "linkWalletToMint": "Link a wallet in Settings to mint your certificate."
+    "linkWalletToMint": "Link a wallet in Settings to mint your certificate.",
+    "insertFailed": "Failed to record certificate. Please try again."
   },
   "profile": {
     "editProfile": "Edit Profile",
