@@ -24,18 +24,18 @@ interface UserState {
  * Metadata (name, description, icon, category) lives in Sanity — only the logic lives here.
  */
 const UNLOCK_CHECKS: Record<string, (state: UserState) => boolean> = {
-  "first-steps": (s) => s.completedLessons >= 1,
-  "course-completer": (s) => s.completedCourses >= 1,
-  "speed-runner": (s) =>
+  "achievement-first-steps": (s) => s.completedLessons >= 1,
+  "achievement-course-completer": (s) => s.completedCourses >= 1,
+  "achievement-speed-runner": (s) =>
     s.courseCompletionTimeHours !== null && s.courseCompletionTimeHours < 24,
-  "week-warrior": (s) => s.currentStreak >= 7,
-  "monthly-master": (s) => s.currentStreak >= 30,
-  "consistency-king": (s) => s.currentStreak >= 100,
-  "rust-rookie": (s) => s.hasCompletedRustLesson,
-  "anchor-expert": (s) => s.hasCompletedAnchorCourse,
-  "full-stack-solana": (s) => s.hasCompletedAllTracks,
-  "early-adopter": (s) => s.userNumber <= 100,
-  "perfect-score": (s) => s.allTestsPassedFirstTry,
+  "achievement-week-warrior": (s) => s.currentStreak >= 7,
+  "achievement-monthly-master": (s) => s.currentStreak >= 30,
+  "achievement-consistency-king": (s) => s.currentStreak >= 100,
+  "achievement-rust-rookie": (s) => s.hasCompletedRustLesson,
+  "achievement-anchor-expert": (s) => s.hasCompletedAnchorCourse,
+  "achievement-full-stack-solana": (s) => s.hasCompletedAllTracks,
+  "achievement-early-adopter": (s) => s.userNumber <= 100,
+  "achievement-perfect-score": (s) => s.allTestsPassedFirstTry,
 };
 
 /**
