@@ -535,7 +535,7 @@ export const CERTIFICATE_STYLES = {
     value: "font-display font-bold text-[13px] text-text",
     valueMono: "font-mono text-[11px] font-medium text-text-2",
     actions: "flex items-center gap-2 pt-3 border-t-[2.5px] border-border",
-    grid: "grid grid-cols-1 md:grid-cols-2 gap-4",
+    grid: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4",
   },
 
   // ── 3. Verification — /certificates/[id] ──

@@ -1,6 +1,7 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
+import Link from "next/link";
 import { Trophy } from "@phosphor-icons/react";
 import type { Certificate } from "@superteam-lms/types";
 import { CertificateCard } from "./certificate-card";
@@ -22,6 +23,7 @@ export function CertificateGrid({
   className,
 }: CertificateGridProps) {
   const t = useTranslations("certificates");
+  const locale = useLocale();
 
   if (certificates.length === 0) {
     return (
@@ -47,12 +49,13 @@ export function CertificateGrid({
   return (
     <div className={cx(CS.compact.grid, className)}>
       {certificates.map((cert) => (
-        <CertificateCard
-          key={cert.id}
-          certificate={cert}
-          recipientName={recipientName}
-          variant="compact"
-        />
+        <Link key={cert.id} href={`/${locale}/certificates/${cert.id}`}>
+          <CertificateCard
+            certificate={cert}
+            recipientName={recipientName}
+            variant="compact"
+          />
+        </Link>
       ))}
     </div>
   );
