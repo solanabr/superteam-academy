@@ -21,11 +21,24 @@ interface ProfileData {
   nameRerollsUsed: number;
 }
 
+const VALID_TABS = ["profile", "account", "preferences", "privacy"] as const;
+
 export default function SettingsPage() {
   const t = useTranslations("settings");
+  const [activeTab, setActiveTab] = useState("profile");
 
   // ── Shared state (used by multiple tabs) ────────────────────────
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+
+  // Switch to the requested tab only after data has loaded, so AccountTab
+  // mounts with fully-populated props instead of empty initial state.
+  useEffect(() => {
+    if (isLoadingProfile) return;
+    const param = new URLSearchParams(window.location.search).get("tab");
+    if (param && VALID_TABS.includes(param as (typeof VALID_TABS)[number])) {
+      setActiveTab(param);
+    }
+  }, [isLoadingProfile]);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isPublic, setIsPublic] = useState(true);
 
@@ -149,7 +162,11 @@ export default function SettingsPage() {
         <h1 className="font-display text-3xl font-bold">{t("title")}</h1>
       </div>
 
-      <Tabs defaultValue="profile" className="space-y-6">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="space-y-6"
+      >
         <TabsList>
           <TabsTrigger value="profile">{t("profileSettings")}</TabsTrigger>
           <TabsTrigger value="account">{t("accountSettings")}</TabsTrigger>

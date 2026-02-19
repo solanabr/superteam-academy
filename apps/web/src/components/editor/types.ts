@@ -75,6 +75,7 @@ export interface ChallengeInterfaceProps {
   hints: string[];
   solution: string;
   xpReward: number;
+  earnedXp?: number | null;
   isAlreadyCompleted?: boolean;
   isEnrolled?: boolean;
   onEnroll?: () => void;

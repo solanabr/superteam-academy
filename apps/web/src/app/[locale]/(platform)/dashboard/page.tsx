@@ -878,17 +878,6 @@ export default function DashboardPage() {
                           </a>
                         );
                       }
-                      if (activity.href) {
-                        return (
-                          <Link
-                            key={`${activity.type}-${activity.time}`}
-                            href={`/${locale}${activity.href}`}
-                            className="block transition-colors hover:bg-subtle"
-                          >
-                            {content}
-                          </Link>
-                        );
-                      }
                       return (
                         <div key={`${activity.type}-${activity.time}`}>
                           {content}
