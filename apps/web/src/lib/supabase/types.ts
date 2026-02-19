@@ -177,6 +177,7 @@ export interface Database {
           reason: string;
           created_at: string;
           tx_signature: string | null;
+          idempotency_key: string | null;
         };
         Insert: {
           id?: string;
@@ -185,6 +186,7 @@ export interface Database {
           reason: string;
           created_at?: string;
           tx_signature?: string | null;
+          idempotency_key?: string | null;
         };
         Update: {
           id?: string;
@@ -193,6 +195,7 @@ export interface Database {
           reason?: string;
           created_at?: string;
           tx_signature?: string | null;
+          idempotency_key?: string | null;
         };
         Relationships: [
           {
@@ -310,6 +313,50 @@ export interface Database {
         };
         Relationships: [];
       };
+      pending_onchain_actions: {
+        Row: {
+          id: string;
+          user_id: string;
+          action_type: string;
+          reference_id: string;
+          payload: Record<string, unknown>;
+          failed_at: string;
+          retry_count: number;
+          last_error: string | null;
+          resolved_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          action_type: string;
+          reference_id: string;
+          payload: Record<string, unknown>;
+          failed_at?: string;
+          retry_count?: number;
+          last_error?: string | null;
+          resolved_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          action_type?: string;
+          reference_id?: string;
+          payload?: Record<string, unknown>;
+          failed_at?: string;
+          retry_count?: number;
+          last_error?: string | null;
+          resolved_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "pending_onchain_actions_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       nft_metadata: {
         Row: {
           id: string;
@@ -336,6 +383,7 @@ export interface Database {
           p_user_id: string;
           p_amount: number;
           p_reason: string;
+          p_idempotency_key?: string | null;
         };
         Returns: undefined;
       };

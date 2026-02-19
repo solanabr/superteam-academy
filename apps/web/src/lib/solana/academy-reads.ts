@@ -12,6 +12,7 @@ import {
   findConfigPDA,
   findCoursePDA,
   findEnrollmentPDA,
+  findAchievementReceiptPDA,
   PROGRAM_ID,
 } from "./pda";
 
@@ -81,5 +82,25 @@ export async function fetchXpBalance(
     }
     // Any other error is an RPC/network failure — surface it
     return { balance: 0, error: message };
+  }
+}
+
+export async function fetchAchievementReceipt(
+  achievementId: string,
+  recipientAddress: string,
+  connection: Connection,
+  programId: PublicKey = PROGRAM_ID
+): Promise<boolean> {
+  try {
+    const recipient = new PublicKey(recipientAddress);
+    const [receiptPda] = findAchievementReceiptPDA(
+      achievementId,
+      recipient,
+      programId
+    );
+    const accountInfo = await connection.getAccountInfo(receiptPda);
+    return accountInfo !== null;
+  } catch {
+    return false;
   }
 }

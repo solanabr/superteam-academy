@@ -20,6 +20,10 @@ import {
   PROGRAM_ID,
 } from "@/lib/solana/academy-program";
 import { fetchEnrollment, fetchCourse } from "@/lib/solana/academy-reads";
+import {
+  withRetry,
+  queueFailedOnchainAction,
+} from "@/lib/solana/onchain-queue";
 import { isAllLessonsComplete, isLessonComplete } from "@/lib/solana/bitmap";
 
 interface LessonCompleteRequest {
@@ -213,7 +217,9 @@ export async function POST(request: NextRequest) {
           )
         ) {
           try {
-            finalizeSig = await onChainFinalizeCourse(courseId, walletPubkey);
+            finalizeSig = await withRetry(() =>
+              onChainFinalizeCourse(courseId, walletPubkey)
+            );
             finalized = true;
 
             // Mirror finalization into Supabase enrollments table.
@@ -236,11 +242,22 @@ export async function POST(request: NextRequest) {
               });
             }
           } catch (err) {
-            logError({
-              errorId: ERROR_IDS.COURSE_FINALIZE_FAILED,
-              error: err instanceof Error ? err : new Error(String(err)),
-              context: { note: "auto-finalize failed, can retry" },
-            });
+            const xpForFinalize = onChainCourse
+              ? Number(onChainCourse.xp_per_lesson) *
+                (Number(onChainCourse.lesson_count) || 1)
+              : 0;
+            await queueFailedOnchainAction(
+              user.id,
+              "course_finalize",
+              courseId,
+              {
+                courseId,
+                walletAddress: walletPubkey.toBase58(),
+                xpAmount: xpForFinalize,
+                reason: `Completed course: ${courseId}`,
+              },
+              err instanceof Error ? err.message : String(err)
+            );
           }
         }
 
@@ -248,9 +265,14 @@ export async function POST(request: NextRequest) {
         // credentialAsset is set by issue_credential — if already populated,
         // a previous request minted successfully; skip silently.
         if (finalized && !onChainEnrollment.credential_asset) {
+          let metadataRow: { id: string } | undefined;
+          let sanityCourse: Awaited<ReturnType<typeof getCourseById>> | null =
+            null;
+          let trackCollectionAddress: string | undefined;
           try {
-            const sanityCourse = await getCourseById(courseId);
-            const trackCollectionAddress = sanityCourse?.trackCollectionAddress;
+            sanityCourse = await getCourseById(courseId);
+            trackCollectionAddress =
+              sanityCourse?.trackCollectionAddress ?? undefined;
 
             if (trackCollectionAddress) {
               const trackCollectionPubkey = new PublicKey(
@@ -315,32 +337,34 @@ export async function POST(request: NextRequest) {
               };
 
               // Store metadata in Supabase nft_metadata table
-              const { data: metadataRow, error: metaError } =
-                await supabaseAdmin
-                  .from("nft_metadata")
-                  .insert({ data: metadataJson })
-                  .select("id")
-                  .single();
+              const { data: metaRow, error: metaError } = await supabaseAdmin
+                .from("nft_metadata")
+                .insert({ data: metadataJson })
+                .select("id")
+                .single();
 
-              if (metaError || !metadataRow) {
+              if (metaError || !metaRow) {
                 throw new Error(
                   metaError?.message ?? "Failed to store NFT metadata"
                 );
               }
+              metadataRow = metaRow;
 
               const metadataUri = `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/api/certificates/metadata?id=${metadataRow.id}`;
 
               let credSig: string;
               let mintAddress: PublicKey;
               try {
-                const result = await onChainIssueCredential(
-                  courseId,
-                  walletPubkey,
-                  credentialName,
-                  metadataUri,
-                  1,
-                  totalXp,
-                  trackCollectionPubkey
+                const result = await withRetry(() =>
+                  onChainIssueCredential(
+                    courseId,
+                    walletPubkey,
+                    credentialName,
+                    metadataUri,
+                    1,
+                    totalXp,
+                    trackCollectionPubkey
+                  )
                 );
                 credSig = result.signature;
                 mintAddress = result.mintAddress;
@@ -387,16 +411,49 @@ export async function POST(request: NextRequest) {
               }
             }
           } catch (credErr) {
-            logError({
-              errorId: ERROR_IDS.CREDENTIAL_ISSUE_FAILED,
-              error:
-                credErr instanceof Error ? credErr : new Error(String(credErr)),
-              context: {
-                route: "/api/lessons/complete",
-                note: "auto-credential mint failed, non-fatal",
+            // sanityCourse and trackCollectionAddress already populated above — no second fetch needed
+            if (trackCollectionAddress) {
+              await queueFailedOnchainAction(
+                user.id,
+                "certificate",
                 courseId,
-              },
-            });
+                {
+                  courseId,
+                  walletAddress: walletPubkey.toBase58(),
+                  courseTitle: sanityCourse?.title ?? courseId,
+                  credentialName: (() => {
+                    let n = `Solarium: ${sanityCourse?.title ?? courseId}`;
+                    const enc = new TextEncoder();
+                    while (enc.encode(n).length > 32) n = n.slice(0, -1);
+                    return n;
+                  })(),
+                  metadataUri: metadataRow
+                    ? `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/api/certificates/metadata?id=${metadataRow.id}`
+                    : undefined,
+                  metadataId: metadataRow?.id,
+                  trackCollection: trackCollectionAddress,
+                  coursesCompleted: 1,
+                  totalXp: onChainCourse
+                    ? Number(onChainCourse.xp_per_lesson) *
+                      (Number(onChainCourse.lesson_count) || 1)
+                    : 0,
+                },
+                credErr instanceof Error ? credErr.message : String(credErr)
+              );
+            } else {
+              logError({
+                errorId: ERROR_IDS.CREDENTIAL_ISSUE_FAILED,
+                error:
+                  credErr instanceof Error
+                    ? credErr
+                    : new Error(String(credErr)),
+                context: {
+                  route: "/api/lessons/complete",
+                  note: "no trackCollectionAddress — cannot queue",
+                  courseId,
+                },
+              });
+            }
           }
         }
       }
@@ -445,6 +502,22 @@ export async function POST(request: NextRequest) {
           lessonId,
         },
       });
+
+      if (lessonIndex !== null) {
+        await queueFailedOnchainAction(
+          user.id,
+          "xp",
+          lessonId,
+          {
+            lessonId,
+            walletAddress: profile?.wallet_address ?? "",
+            xpAmount: xpReward,
+            courseId,
+            reason: `Completed lesson: ${lessonId}`,
+          },
+          xpError.message
+        );
+      }
     }
 
     // 5. Fetch updated user state for achievement checks
@@ -543,61 +616,53 @@ export async function POST(request: NextRequest) {
       alreadyUnlocked
     );
 
-    // 7. Unlock new achievements — on-chain first.
-    // The on-chain TX must succeed before the Supabase record is written.
-    // Without a live program or wallet, achievements are not recorded.
-    const achievementErrors: { id: string; error: string }[] = [];
+    // 7. Unlock new achievements — on-chain first, queue failures for retry.
     const successfullyUnlocked: typeof newAchievements = [];
 
     if (programLive && profile?.wallet_address) {
       for (const achievement of newAchievements) {
-        // On-chain first — AchievementReceipt PDA + NFT must be minted first.
         try {
-          await awardAchievement(
-            achievement.id,
-            new PublicKey(profile.wallet_address)
+          await withRetry(() =>
+            awardAchievement(
+              achievement.id,
+              new PublicKey(profile.wallet_address!)
+            )
           );
-        } catch (onChainErr) {
-          achievementErrors.push({
-            id: achievement.id,
-            error:
-              onChainErr instanceof Error
-                ? onChainErr.message
-                : String(onChainErr),
-          });
-          logError({
-            errorId: ERROR_IDS.LESSON_ACHIEVEMENT_UNLOCK,
-            error:
-              onChainErr instanceof Error
-                ? onChainErr
-                : new Error(String(onChainErr)),
-            context: { userId: user.id, achievementId: achievement.id },
-          });
-          continue;
-        }
-
-        // On-chain succeeded — mirror to Supabase.
-        const { error: unlockError } = await supabaseAdmin.rpc(
-          "unlock_achievement",
-          {
-            p_user_id: user.id,
-            p_achievement_id: achievement.id,
+          const { error: unlockError } = await supabaseAdmin.rpc(
+            "unlock_achievement",
+            {
+              p_user_id: user.id,
+              p_achievement_id: achievement.id,
+            }
+          );
+          if (unlockError) {
+            await queueFailedOnchainAction(
+              user.id,
+              "achievement",
+              achievement.id,
+              {
+                achievementId: achievement.id,
+                walletAddress: profile.wallet_address,
+              },
+              unlockError.message
+            );
+          } else {
+            successfullyUnlocked.push(achievement);
           }
-        );
-
-        if (unlockError) {
-          logError({
-            errorId: ERROR_IDS.LESSON_ACHIEVEMENT_UNLOCK,
-            error: new Error(unlockError.message),
-            context: {
-              note: "on-chain succeeded but Supabase mirror failed",
-              userId: user.id,
+        } catch (onChainErr) {
+          await queueFailedOnchainAction(
+            user.id,
+            "achievement",
+            achievement.id,
+            {
               achievementId: achievement.id,
+              walletAddress: profile.wallet_address,
             },
-          });
+            onChainErr instanceof Error
+              ? onChainErr.message
+              : String(onChainErr)
+          );
         }
-
-        successfullyUnlocked.push(achievement);
       }
     }
 
@@ -616,10 +681,6 @@ export async function POST(request: NextRequest) {
         description: a.description,
         icon: a.icon,
       })),
-      failedAchievements:
-        achievementErrors.length > 0
-          ? achievementErrors.map((e) => e.id)
-          : undefined,
       streakData: xpData
         ? {
             currentStreak: xpData.current_streak,
