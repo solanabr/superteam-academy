@@ -379,7 +379,7 @@ function useDashboardData(): DashboardData {
             xp: 0,
             time: row.unlocked_at,
             txSignature: row.tx_signature ?? null,
-            href: null,
+            href: `/profile`,
           });
         }
 
