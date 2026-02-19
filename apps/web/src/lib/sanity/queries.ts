@@ -51,7 +51,7 @@ const moduleWithLessonsFields = `
 
 export async function getAllCourses(): Promise<Course[]> {
   return sanityFetch<Course[]>(
-    `*[_type == "course"] | order(title asc) {
+    `*[_type == "course" && onChainStatus.status == "synced"] | order(title asc) {
       ${courseFields},
       "modules": modules[]->{
         _id,
@@ -73,7 +73,7 @@ export async function getAllCourses(): Promise<Course[]> {
 
 export async function getCourseBySlug(slug: string): Promise<Course | null> {
   return sanityFetch<Course | null>(
-    `*[_type == "course" && slug.current == $slug][0] {
+    `*[_type == "course" && slug.current == $slug && onChainStatus.status == "synced"][0] {
       ${courseFields},
       "modules": modules[]->{
         ${moduleWithLessonsFields}
@@ -88,7 +88,7 @@ export async function getLessonBySlug(
   lessonSlug: string
 ): Promise<Lesson | null> {
   return sanityFetch<Lesson | null>(
-    `*[_type == "course" && slug.current == $courseSlug][0] {
+    `*[_type == "course" && slug.current == $courseSlug && onChainStatus.status == "synced"][0] {
       "allLessons": modules[]->lessons[]->{
         _id,
         title,
@@ -121,7 +121,7 @@ export async function getAllLearningPaths(): Promise<LearningPath[]> {
       description,
       "slug": slug.current,
       difficulty,
-      "courses": courses[]->{
+      "courses": courses[onChainStatus.status == "synced"]->{
         ${courseFields},
         "modules": modules[]->{
           _id,
@@ -150,6 +150,7 @@ export async function getCourseById(id: string): Promise<Course | null> {
   return sanityFetch<Course | null>(
     `*[_type == "course" && _id == $id][0] {
       ${courseFields},
+      "trackCollectionAddress": onChainStatus.trackCollectionAddress,
       "modules": modules[]->{
         ${moduleWithLessonsFields}
       } | order(order asc)
@@ -163,7 +164,7 @@ export async function getCourseById(id: string): Promise<Course | null> {
  */
 export async function getCourseIdBySlug(slug: string): Promise<string | null> {
   return sanityFetch<string | null>(
-    `*[_type == "course" && slug.current == $slug][0]._id`,
+    `*[_type == "course" && slug.current == $slug && onChainStatus.status == "synced"][0]._id`,
     { slug }
   );
 }
@@ -175,7 +176,7 @@ export async function getCourseLessons(
   courseSlug: string
 ): Promise<Pick<Lesson, "_id" | "title" | "slug" | "type">[]> {
   return sanityFetch<Pick<Lesson, "_id" | "title" | "slug" | "type">[]>(
-    `*[_type == "course" && slug.current == $courseSlug][0] {
+    `*[_type == "course" && slug.current == $courseSlug && onChainStatus.status == "synced"][0] {
       "lessons": modules[]->lessons[]-> {
         _id,
         title,
@@ -206,7 +207,7 @@ export interface CourseSummary {
 export async function getCoursesByIds(ids: string[]): Promise<CourseSummary[]> {
   if (ids.length === 0) return [];
   return sanityFetch<CourseSummary[]>(
-    `*[_type == "course" && _id in $ids] {
+    `*[_type == "course" && _id in $ids && onChainStatus.status == "synced"] {
       _id,
       title,
       "slug": slug.current,
@@ -263,7 +264,7 @@ export async function getRecommendedCourses(
   excludeIds: string[]
 ): Promise<RecommendedCourse[]> {
   return sanityFetch<RecommendedCourse[]>(
-    `*[_type == "course" && !(_id in $excludeIds)] | order(title asc) {
+    `*[_type == "course" && !(_id in $excludeIds) && onChainStatus.status == "synced"] | order(title asc) {
       _id,
       title,
       "slug": slug.current,
@@ -288,7 +289,7 @@ export async function getAllCourseTags(): Promise<
   { _id: string; title: string; tags: string[] }[]
 > {
   return sanityFetch<{ _id: string; title: string; tags: string[] }[]>(
-    `*[_type == "course" && defined(tags)] {
+    `*[_type == "course" && onChainStatus.status == "synced" && defined(tags)] {
       _id,
       title,
       tags
@@ -304,9 +305,162 @@ export async function getAllCourseLessonCounts(): Promise<
   { _id: string; totalLessons: number }[]
 > {
   return sanityFetch<{ _id: string; totalLessons: number }[]>(
-    `*[_type == "course"] {
+    `*[_type == "course" && onChainStatus.status == "synced"] {
       _id,
       "totalLessons": count(modules[]->lessons[])
+    }`
+  );
+}
+
+export interface DeployedAchievement {
+  /** TS-compatible ID — Sanity _id with "achievement-" prefix stripped (e.g. "first-steps"). */
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  category: string;
+}
+
+/**
+ * Returns full achievement definitions for achievements deployed on-chain.
+ * Only achievements with an on-chain PDA are included — these are the only ones
+ * that can be minted as NFTs.
+ * ID is derived from Sanity _id by stripping the "achievement-" prefix.
+ */
+export async function getDeployedAchievements(): Promise<
+  DeployedAchievement[]
+> {
+  const raw = await sanityFetch<
+    Array<{
+      _id: string;
+      name: string;
+      description: string;
+      icon: string;
+      category: string;
+    }>
+  >(
+    `*[_type == "achievement" && defined(onChainStatus.achievementPda)] | order(name asc) {
+      _id, name, description, icon, category
+    }`
+  );
+  return raw.map((a) => ({
+    id: a._id.replace(/^achievement-/, ""),
+    name: a.name,
+    description: a.description,
+    icon: a.icon,
+    category: a.category,
+  }));
+}
+
+/**
+ * Returns all achievement definitions from Sanity regardless of on-chain status.
+ * Used for achievement unlock checking — Supabase records achievements even before
+ * on-chain PDAs are deployed. On-chain minting is attempted separately and is non-fatal.
+ */
+export async function getAllAchievements(): Promise<DeployedAchievement[]> {
+  const raw = await sanityFetch<
+    Array<{
+      _id: string;
+      name: string;
+      description: string;
+      icon: string;
+      category: string;
+    }>
+  >(
+    `*[_type == "achievement"] | order(name asc) {
+      _id, name, description, icon, category
+    }`
+  );
+  return raw.map((a) => ({
+    id: a._id.replace(/^achievement-/, ""),
+    name: a.name,
+    description: a.description,
+    icon: a.icon,
+    category: a.category,
+  }));
+}
+
+// ---------------------------------------------------------------------------
+// Admin queries (server-side only, includes on-chain status fields)
+// ---------------------------------------------------------------------------
+
+export interface AdminCourse {
+  _id: string;
+  title: string;
+  slug: string;
+  difficulty: string;
+  xpPerLesson: number | null;
+  trackId: number | null;
+  trackLevel: number | null;
+  prerequisiteCourse: { _id: string; slug: string; title: string } | null;
+  creatorRewardXp: number | null;
+  minCompletionsForReward: number | null;
+  lessonCount: number;
+  trackCollectionAddress: string | null;
+  onChainStatus: {
+    status: string | null;
+    coursePda: string | null;
+    lastSynced: string | null;
+    txSignature: string | null;
+  } | null;
+}
+
+export interface AdminAchievement {
+  _id: string;
+  name: string;
+  category: string | null;
+  xpReward: number | null;
+  maxSupply: number | null;
+  metadataUri: string | null;
+  onChainStatus: {
+    status: string | null;
+    achievementPda: string | null;
+    collectionAddress: string | null;
+    lastSynced: string | null;
+  } | null;
+}
+
+/**
+ * Fetch all courses with on-chain sync fields for the admin dashboard.
+ * Includes drafts — filter by `_id.startsWith("drafts.")` on the client side.
+ */
+export async function getAllCoursesAdmin(): Promise<AdminCourse[]> {
+  return sanityFetch<AdminCourse[]>(
+    `*[_type == "course"] | order(title asc) {
+      _id,
+      title,
+      "slug": slug.current,
+      difficulty,
+      xpPerLesson,
+      trackId,
+      trackLevel,
+      "prerequisiteCourse": prerequisiteCourse->{
+        _id,
+        title,
+        "slug": slug.current
+      },
+      creatorRewardXp,
+      minCompletionsForReward,
+      "lessonCount": count(modules[]->lessons[]),
+      "trackCollectionAddress": onChainStatus.trackCollectionAddress,
+      onChainStatus
+    }`
+  );
+}
+
+/**
+ * Fetch all achievements with on-chain sync fields for the admin dashboard.
+ */
+export async function getAllAchievementsAdmin(): Promise<AdminAchievement[]> {
+  return sanityFetch<AdminAchievement[]>(
+    `*[_type == "achievement"] | order(name asc) {
+      _id,
+      name,
+      category,
+      xpReward,
+      maxSupply,
+      metadataUri,
+      onChainStatus
     }`
   );
 }
