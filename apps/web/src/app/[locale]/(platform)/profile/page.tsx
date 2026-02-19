@@ -101,7 +101,7 @@ function useProfileData(): ProfileData {
         // Fetch achievements
         const { data: achievementRows } = await supabase
           .from("user_achievements")
-          .select("achievement_id, unlocked_at")
+          .select("achievement_id, unlocked_at, asset_address, tx_signature")
           .eq("user_id", user.id);
 
         // Fetch certificates
@@ -178,9 +178,17 @@ function useProfileData(): ProfileData {
           deployedAchievements.map((a) => [a.id, a])
         );
 
+        const network = process.env.NEXT_PUBLIC_SOLANA_NETWORK ?? "devnet";
+        const cluster = network === "mainnet" ? "mainnet-beta" : network;
+
         const achievements: Achievement[] =
           achievementRows?.map((row) => {
             const def = achievementMap.get(row.achievement_id);
+            const explorerUrl = row.asset_address
+              ? `https://explorer.solana.com/address/${row.asset_address}?cluster=${cluster}`
+              : row.tx_signature
+                ? `https://explorer.solana.com/tx/${row.tx_signature}?cluster=${cluster}`
+                : undefined;
             return {
               id: row.achievement_id,
               name: def?.name ?? row.achievement_id,
@@ -188,6 +196,7 @@ function useProfileData(): ProfileData {
               icon: def?.icon ?? "Award",
               category: (def?.category as Achievement["category"]) ?? "special",
               unlockedAt: new Date(row.unlocked_at),
+              explorerUrl,
             };
           }) ?? [];
 

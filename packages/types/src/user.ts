@@ -22,6 +22,7 @@ export interface Achievement {
   icon: string;
   category: "progress" | "streaks" | "skills" | "community" | "special";
   unlockedAt?: Date;
+  explorerUrl?: string;
 }
 
 export interface Certificate {

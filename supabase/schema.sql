@@ -356,12 +356,16 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- Unlock achievement (called from API routes with service_role key only)
 CREATE OR REPLACE FUNCTION unlock_achievement(
   p_user_id UUID,
-  p_achievement_id TEXT
+  p_achievement_id TEXT,
+  p_tx_signature TEXT DEFAULT NULL,
+  p_asset_address TEXT DEFAULT NULL
 ) RETURNS void AS $$
 BEGIN
-  INSERT INTO user_achievements (user_id, achievement_id)
-  VALUES (p_user_id, p_achievement_id)
-  ON CONFLICT (user_id, achievement_id) DO NOTHING;
+  INSERT INTO user_achievements (user_id, achievement_id, tx_signature, asset_address)
+  VALUES (p_user_id, p_achievement_id, p_tx_signature, p_asset_address)
+  ON CONFLICT (user_id, achievement_id) DO UPDATE
+    SET tx_signature = COALESCE(EXCLUDED.tx_signature, user_achievements.tx_signature),
+        asset_address = COALESCE(EXCLUDED.asset_address, user_achievements.asset_address);
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 

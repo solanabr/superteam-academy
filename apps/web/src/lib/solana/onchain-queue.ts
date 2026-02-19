@@ -109,6 +109,9 @@ export async function retryPendingOnchainActions(
       switch (actionType) {
         case "achievement": {
           const achievementId = row.reference_id;
+          let txSignature = payload.txSignature as string | undefined;
+          let assetAddress = payload.assetAddress as string | undefined;
+
           const exists = await fetchAchievementReceipt(
             achievementId,
             profile.wallet_address,
@@ -116,13 +119,20 @@ export async function retryPendingOnchainActions(
             PROGRAM_ID
           );
           if (!exists) {
-            await withRetry(() => awardAchievement(achievementId, wallet));
+            const result = await withRetry(() =>
+              awardAchievement(achievementId, wallet)
+            );
+            txSignature = result.signature;
+            assetAddress = result.assetAddress.toBase58();
           }
+
           const { error: unlockRpcError } = await adminClient.rpc(
             "unlock_achievement",
             {
               p_user_id: userId,
               p_achievement_id: achievementId,
+              p_tx_signature: txSignature ?? null,
+              p_asset_address: assetAddress ?? null,
             }
           );
           if (unlockRpcError) throw new Error(unlockRpcError.message);
