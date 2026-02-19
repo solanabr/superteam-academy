@@ -151,7 +151,6 @@
     "fetchError": "Não foi possível carregar seu painel",
     "fetchErrorDetail": "Tivemos problemas ao carregar seus dados. Seu progresso está seguro — tente atualizar a página.",
     "noCourses": "Você ainda não se matriculou em nenhum curso",
-    "activityShowMore": "Mostrar mais {count}",
     "noRecentActivity": "Nenhuma atividade recente",
     "progressOverview": "Visão Geral do Progresso",
     "recentActivity": "Atividade Recente",
