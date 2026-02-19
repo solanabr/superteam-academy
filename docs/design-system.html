@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solarium Design System v5 — Light + Dark</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     THEME TOKENS — LIGHT (default)
+     ============================================================ */
+  :root {
+    /* Primary — Deep Teal */
+    --primary: #0D9488;
+    --primary-hover: #0B7E73;
+    --primary-dark: #087068;
+    --primary-light: #CCFBF1;
+    --primary-bg: #F0FDFA;
+
+    /* Accent — Warm Amber */
+    --accent: #F59E0B;
+    --accent-hover: #D97706;
+    --accent-dark: #B45309;
+    --accent-light: #FEF3C7;
+    --accent-bg: #FFFBEB;
+
+    /* Secondary — Ink Teal */
+    --secondary: #0F2F2D;
+    --secondary-light: #134E4A;
+    --secondary-bg: #E6FFFB;
+
+    /* Success — Botanical Green */
+    --success: #16A34A;
+    --success-dark: #15803D;
+    --success-light: #DCFCE7;
+    --success-bg: #F0FDF4;
+
+    /* Streak — Flame Orange */
+    --streak: #EA580C;
+    --streak-light: #FFF7ED;
+
+    /* Danger — Warm Coral */
+    --danger: #E11D48;
+    --danger-light: #FFE4E6;
+
+    /* Solana Nod — SPARINGLY */
+    --solana-purple: #9945FF;
+    --solana-green: #14F195;
+
+    /* Neutrals — warm cream */
+    --bg: #FAFAF7;
+    --card: #FFFFFF;
+    --subtle: #F5F3EE;
+    --warm: #FDF8F0;
+    --border: #E7E4DD;
+    --border-hover: #D4D0C7;
+    --text: #1C1917;
+    --text-2: #57534E;
+    --text-3: #A8A29E;
+
+    /* Shadows */
+    --shadow-push: 0 4px 0 0;
+    --shadow-push-active: 0 1px 0 0;
+    --shadow-card: 0 2px 0 0 var(--border);
+    --shadow-card-hover: 0 4px 0 0 var(--border);
+    --shadow-glow: none;
+
+    /* Typography */
+    --font-d: 'Nunito', sans-serif;
+    --font-b: 'Plus Jakarta Sans', sans-serif;
+
+    /* Radii */
+    --r-sm: 10px;
+    --r-md: 14px;
+    --r-lg: 18px;
+    --r-xl: 24px;
+
+    /* Border width */
+    --bw: 2.5px;
+
+    /* Progress bar height */
+    --prog-h: 16px;
+  }
+
+  /* ============================================================
+     THEME TOKENS — DARK
+     ============================================================ */
+  [data-theme="dark"] {
+    /* Neutrals — Soft Neutral Dark */
+    --bg: #343431;
+    --card: #3D3C38;
+    --subtle: #46443F;
+    --warm: #4A4843;
+
+    --border: #57534E;
+    --border-hover: #6A655E;
+
+    --text: #F5F1EA;
+    --text-2: #D4CEC3;
+    --text-3: #A79F93;
+
+    /* Primary — lifted for dark readability */
+    --primary: #2DD4BF;
+    --primary-hover: #22C7B3;
+    --primary-dark: #0B7E73;
+    --primary-light: rgba(45,212,191,0.15);
+    --primary-bg: rgba(45,212,191,0.10);
+
+    /* Accent — lifted */
+    --accent: #FBBF24;
+    --accent-hover: #F59E0B;
+    --accent-dark: #B45309;
+    --accent-light: rgba(251,191,36,0.18);
+    --accent-bg: rgba(251,191,36,0.10);
+
+    /* Secondary — Ink Teal adapted for dark */
+    --secondary: #2FA7A0;
+    --secondary-light: #5FD3CC;
+    --secondary-bg: rgba(47,167,160,0.12);
+
+    /* Success */
+    --success: #4ADE80;
+    --success-dark: #22C55E;
+    --success-light: rgba(74,222,128,0.15);
+    --success-bg: rgba(74,222,128,0.10);
+
+    /* Streak */
+    --streak: #FB923C;
+    --streak-light: rgba(251,146,60,0.12);
+
+    /* Danger */
+    --danger: #FB7185;
+    --danger-light: rgba(251,113,133,0.12);
+
+    /* Shadows — deeper for dark */
+    --shadow-card: 0 2px 0 0 rgba(0,0,0,0.35);
+    --shadow-card-hover: 0 4px 0 0 rgba(0,0,0,0.35);
+    --shadow-glow: 0 0 12px rgba(45,212,191,0.08);
+  }
+
+  /* ============================================================
+     RESET & BASE
+     ============================================================ */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: var(--font-b);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    padding: 40px;
+    max-width: 1200px;
+    margin: 0 auto;
+    transition: background 0.3s ease, color 0.3s ease;
+  }
+
+  /* ============================================================
+     THEME TOGGLE
+     ============================================================ */
+  .theme-toggle {
+    position: fixed; top: 20px; right: 20px; z-index: 100;
+    font-family: var(--font-d); font-weight: 800; font-size: 14px;
+    padding: 10px 20px; border: var(--bw) solid var(--border);
+    border-radius: var(--r-md); cursor: pointer;
+    background: var(--card); color: var(--text);
+    box-shadow: 0 4px 0 0 var(--border);
+    transition: all 0.15s;
+  }
+  .theme-toggle:active { transform: translateY(3px); box-shadow: 0 1px 0 0 var(--border); }
+
+  /* ============================================================
+     PAGE STRUCTURE
+     ============================================================ */
+  .page-header { margin-bottom: 56px; border-bottom: var(--bw) solid var(--border); padding-bottom: 32px; }
+  .page-title { font-family: var(--font-d); font-weight: 900; font-size: 40px; }
+  .page-title span { color: var(--primary); }
+  .page-sub { font-size: 17px; color: var(--text-2); margin-top: 6px; max-width: 700px; }
+
+  .s { margin-bottom: 64px; }
+  .s-title { font-family: var(--font-d); font-weight: 800; font-size: 24px; margin-bottom: 6px; }
+  .s-desc { color: var(--text-2); font-size: 15px; margin-bottom: 24px; max-width: 650px; line-height: 1.6; }
+
+  .theme-label {
+    display: inline-block; padding: 4px 14px; border-radius: 9999px;
+    font-family: var(--font-d); font-weight: 800; font-size: 11px;
+    background: var(--primary-bg); color: var(--primary); border: 2px solid var(--primary);
+    margin-bottom: 16px; text-transform: uppercase; letter-spacing: 1px;
+  }
+
+  /* ============ COLOR SWATCHES ============ */
+  .swatch-group { margin-bottom: 20px; }
+  .swatch-group-label { font-family: var(--font-d); font-weight: 700; font-size: 14px; margin-bottom: 10px; color: var(--text-2); }
+  .swatches { display: flex; gap: 10px; flex-wrap: wrap; }
+  .swatch { width: 76px; text-align: center; }
+  .swatch-circle {
+    width: 60px; height: 60px; border-radius: 14px; margin: 0 auto 6px;
+    border: var(--bw) solid rgba(0,0,0,0.06); transition: transform 0.15s;
+  }
+  [data-theme="dark"] .swatch-circle { border-color: rgba(255,255,255,0.1); }
+  .swatch-circle:hover { transform: scale(1.08); }
+  .swatch-label { font-size: 11px; font-weight: 700; color: var(--text-2); }
+  .swatch-hex { font-size: 10px; color: var(--text-3); font-family: monospace; }
+
+  /* ============ TYPOGRAPHY ============ */
+  .type-row { padding: 14px 0; border-bottom: 1px solid var(--border); }
+  .type-label { font-size: 11px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .type-display-xl { font-family: var(--font-d); font-weight: 900; font-size: 44px; line-height: 1.1; }
+  .type-display-lg { font-family: var(--font-d); font-weight: 800; font-size: 30px; line-height: 1.2; }
+  .type-display-md { font-family: var(--font-d); font-weight: 800; font-size: 22px; }
+  .type-body-lg { font-family: var(--font-b); font-weight: 500; font-size: 17px; }
+  .type-body { font-family: var(--font-b); font-weight: 400; font-size: 15px; color: var(--text-2); }
+  .type-caption { font-family: var(--font-b); font-weight: 600; font-size: 12px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.5px; }
+  .type-mono { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--primary); }
+
+  /* ============ BUTTONS — 3D PUSH ============ */
+  .btn-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+  .btn {
+    font-family: var(--font-d); font-weight: 800; font-size: 15px;
+    padding: 12px 28px; border: none; border-radius: var(--r-md);
+    cursor: pointer; transition: all 0.1s ease;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .btn:active { transform: translateY(3px); }
+  .btn-p { background: var(--primary); color: white; box-shadow: var(--shadow-push) var(--primary-dark); }
+  .btn-p:hover { background: var(--primary-hover); }
+  .btn-p:active { box-shadow: var(--shadow-push-active) var(--primary-dark); }
+  .btn-a { background: var(--accent); color: white; box-shadow: var(--shadow-push) var(--accent-dark); }
+  .btn-a:hover { background: var(--accent-hover); }
+  .btn-a:active { box-shadow: var(--shadow-push-active) var(--accent-dark); }
+  .btn-s { background: var(--success); color: white; box-shadow: var(--shadow-push) var(--success-dark); }
+  .btn-s:active { box-shadow: var(--shadow-push-active) var(--success-dark); }
+  .btn-sec { background: var(--secondary); color: white; box-shadow: var(--shadow-push) #0A1F1E; }
+  .btn-sec:hover { background: var(--secondary-light); }
+  .btn-sec:active { box-shadow: var(--shadow-push-active) #0A1F1E; }
+  .btn-o { background: var(--card); color: var(--text); border: var(--bw) solid var(--border); box-shadow: var(--shadow-push) var(--border); padding: 10px 26px; }
+  .btn-o:hover { background: var(--subtle); }
+  .btn-o:active { box-shadow: var(--shadow-push-active) var(--border); }
+  .btn-g { background: transparent; color: var(--text-2); box-shadow: none; }
+  .btn-g:hover { background: var(--subtle); color: var(--text); }
+  .btn-d { background: var(--danger); color: white; box-shadow: var(--shadow-push) #9F1239; }
+  .btn-d:active { box-shadow: var(--shadow-push-active) #9F1239; }
+  .btn-sm { font-size: 13px; padding: 8px 18px; }
+  .btn-lg { font-size: 17px; padding: 16px 36px; }
+
+  /* Dark mode button depth override */
+  [data-theme="dark"] .btn-p { box-shadow: var(--shadow-push) rgba(0,0,0,0.4); }
+  [data-theme="dark"] .btn-p:active { box-shadow: var(--shadow-push-active) rgba(0,0,0,0.5); }
+  [data-theme="dark"] .btn-a { box-shadow: var(--shadow-push) rgba(0,0,0,0.4); }
+  [data-theme="dark"] .btn-a:active { box-shadow: var(--shadow-push-active) rgba(0,0,0,0.5); }
+  [data-theme="dark"] .btn-s { box-shadow: var(--shadow-push) rgba(0,0,0,0.4); }
+  [data-theme="dark"] .btn-s:active { box-shadow: var(--shadow-push-active) rgba(0,0,0,0.5); }
+  [data-theme="dark"] .btn-sec { box-shadow: var(--shadow-push) rgba(0,0,0,0.4); }
+  [data-theme="dark"] .btn-sec:active { box-shadow: var(--shadow-push-active) rgba(0,0,0,0.5); }
+  [data-theme="dark"] .btn-o { box-shadow: var(--shadow-push) rgba(0,0,0,0.35); }
+  [data-theme="dark"] .btn-o:active { box-shadow: var(--shadow-push-active) rgba(0,0,0,0.45); }
+  [data-theme="dark"] .btn-d { box-shadow: var(--shadow-push) rgba(0,0,0,0.4); }
+  [data-theme="dark"] .btn-d:active { box-shadow: var(--shadow-push-active) rgba(0,0,0,0.5); }
+
+  /* ============ DASHBOARD STATS ============ */
+  .dash-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .dash-stat {
+    background: var(--card); border: var(--bw) solid var(--border); border-radius: var(--r-lg);
+    padding: 24px 20px; box-shadow: var(--shadow-card); transition: all 0.15s; position: relative;
+  }
+  .dash-stat:hover { transform: translateY(-1px); box-shadow: var(--shadow-card-hover); }
+  .dash-stat.xp-card { display: flex; justify-content: space-between; align-items: flex-start; }
+  .xp-label { font-family: var(--font-d); font-weight: 700; font-size: 13px; color: var(--text-3); margin-bottom: 4px; }
+  .xp-value { font-family: var(--font-d); font-weight: 900; font-size: 44px; line-height: 1; color: var(--primary); }
+  .xp-progress-wrap { margin-top: 12px; }
+  .xp-progress-text { font-size: 12px; color: var(--text-3); margin-top: 4px; }
+  .level-circle {
+    width: 56px; height: 56px; border-radius: 50%; border: 3px solid var(--primary);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-d); font-weight: 900; font-size: 22px;
+    color: var(--primary); background: var(--primary-bg); flex-shrink: 0;
+  }
+  .xp-prog-track {
+    width: 100%; height: 10px; background: var(--subtle);
+    border-radius: 9999px; border: 2px solid var(--border); overflow: hidden;
+  }
+  .xp-prog-fill { height: 100%; border-radius: 9999px; background: linear-gradient(90deg, var(--secondary), var(--primary)); }
+  .stat-icon-label { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+  .stat-emoji { font-size: 16px; }
+  .stat-label-text { font-family: var(--font-d); font-weight: 700; font-size: 13px; color: var(--text-3); }
+  .stat-value { font-family: var(--font-d); font-weight: 900; font-size: 36px; line-height: 1; color: var(--text); margin-bottom: 2px; }
+  .stat-sub { font-size: 13px; color: var(--text-2); font-weight: 500; }
+
+  /* ============ COURSE CARDS ============ */
+  .cards-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .card {
+    background: var(--card); border: var(--bw) solid var(--border); border-radius: var(--r-lg);
+    overflow: hidden; box-shadow: var(--shadow-card); transition: all 0.15s; cursor: pointer;
+  }
+  .card:hover { transform: translateY(-2px); box-shadow: var(--shadow-card-hover); border-color: var(--border-hover); }
+  .card-banner { height: 140px; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .card-banner.beginner { background: linear-gradient(135deg, #E0F7F4 0%, #C8F0EA 40%, #E8FAF0 70%, #F0FDF4 100%); }
+  .card-banner.intermediate { background: linear-gradient(135deg, #E6FFFB 0%, #CCF5F0 40%, #D5F5F2 70%, #E6FFFB 100%); }
+  .card-banner.advanced { background: linear-gradient(135deg, #FFF0E6 0%, #FFE0CC 40%, #FFEEE0 70%, #FFF7ED 100%); }
+  [data-theme="dark"] .card-banner.beginner { background: linear-gradient(135deg, rgba(45,212,191,0.15) 0%, rgba(13,148,136,0.2) 100%); }
+  [data-theme="dark"] .card-banner.intermediate { background: linear-gradient(135deg, rgba(47,167,160,0.15) 0%, rgba(15,47,45,0.3) 100%); }
+  [data-theme="dark"] .card-banner.advanced { background: linear-gradient(135deg, rgba(234,88,12,0.15) 0%, rgba(180,83,9,0.2) 100%); }
+  .card-cover-img {
+    width: 72px; height: 72px; border-radius: var(--r-md);
+    background: rgba(255,255,255,0.6); backdrop-filter: blur(8px);
+    border: 2px solid rgba(255,255,255,0.8);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  }
+  [data-theme="dark"] .card-cover-img { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.15); }
+  .card-cover-inner { width: 48px; height: 48px; border-radius: 8px; background: linear-gradient(135deg, rgba(13,148,136,0.15), rgba(15,47,45,0.1)); }
+  .card-badge {
+    position: absolute; top: 12px; left: 12px; padding: 4px 14px;
+    border-radius: 9999px; font-family: var(--font-d); font-weight: 800; font-size: 11px; border: 2px solid;
+  }
+  .card-badge.beginner { background: rgba(255,255,255,0.9); color: var(--primary); border-color: rgba(13,148,136,0.2); }
+  .card-badge.intermediate { background: rgba(255,255,255,0.9); color: var(--secondary); border-color: rgba(15,47,45,0.2); }
+  .card-badge.advanced { background: rgba(255,255,255,0.9); color: var(--streak); border-color: rgba(234,88,12,0.2); }
+  [data-theme="dark"] .card-badge { background: var(--card); }
+  .card-body { padding: 18px 20px; }
+  .card-title { font-family: var(--font-d); font-weight: 800; font-size: 17px; margin-bottom: 3px; }
+  .card-by { font-size: 13px; color: var(--text-3); margin-bottom: 10px; }
+  .card-desc { font-size: 14px; color: var(--text-2); margin-bottom: 16px; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .card-foot { display: flex; justify-content: space-between; align-items: center; }
+  .card-hours { font-size: 13px; color: var(--text-3); font-weight: 600; display: flex; align-items: center; gap: 4px; }
+  .card-xp { font-family: var(--font-d); font-weight: 900; font-size: 14px; color: var(--accent-dark); display: flex; align-items: center; gap: 4px; }
+  [data-theme="dark"] .card-xp { color: var(--accent); }
+
+  /* ============ PROGRESS BARS ============ */
+  .prog-wrap { max-width: 500px; margin-bottom: 20px; }
+  .prog-top { display: flex; justify-content: space-between; margin-bottom: 6px; }
+  .prog-name { font-family: var(--font-d); font-weight: 700; font-size: 14px; }
+  .prog-val { font-family: var(--font-d); font-weight: 800; font-size: 14px; }
+  .prog-track {
+    width: 100%; height: var(--prog-h); background: var(--subtle);
+    border-radius: 9999px; border: var(--bw) solid var(--border); overflow: hidden;
+  }
+  .prog-fill {
+    height: 100%; border-radius: 9999px; position: relative;
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .prog-fill::after {
+    content: ''; position: absolute; top: 2px; left: 8px; right: 8px; height: 4px;
+    background: rgba(255,255,255,0.3); border-radius: 9999px;
+  }
+  .prog-fill.teal { background: linear-gradient(90deg, var(--primary-dark), var(--primary)); }
+  .prog-fill.amber { background: linear-gradient(90deg, var(--accent-dark), var(--accent)); }
+  .prog-fill.green { background: linear-gradient(90deg, var(--success-dark), var(--success)); }
+
+  /* ============ STREAK ============ */
+  .streak-box {
+    background: var(--card); border: var(--bw) solid var(--border); border-radius: var(--r-lg);
+    padding: 24px; box-shadow: var(--shadow-card); max-width: 500px;
+  }
+  .streak-header { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+  .streak-icon {
+    width: 48px; height: 48px; background: var(--streak-light); border-radius: var(--r-md);
+    display: flex; align-items: center; justify-content: center; font-size: 24px;
+    animation: breathe 2s infinite alternate ease-in-out;
+  }
+  @keyframes breathe { 0% { transform: scale(1); } 100% { transform: scale(1.06); } }
+  .streak-count { font-family: var(--font-d); font-weight: 900; font-size: 26px; }
+  .streak-label { font-size: 13px; color: var(--text-3); }
+  .streak-days { display: flex; gap: 6px; }
+  .streak-day {
+    width: 40px; height: 40px; border-radius: 50%; border: var(--bw) solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-d); font-weight: 800; font-size: 13px;
+    color: var(--text-3); background: var(--subtle);
+  }
+  .streak-day.on { background: var(--success-light); border-color: var(--success); color: var(--success-dark); box-shadow: var(--shadow-push) var(--success-dark); }
+  .streak-day.now { background: var(--primary); border-color: var(--primary-dark); color: white; box-shadow: var(--shadow-push) var(--primary-dark); animation: pulse 2s infinite; }
+  [data-theme="dark"] .streak-day.on { box-shadow: 0 2px 0 0 rgba(0,0,0,0.35); }
+  [data-theme="dark"] .streak-day.now { box-shadow: 0 2px 0 0 rgba(0,0,0,0.35); }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 2px 0 0 var(--primary-dark), 0 0 0 0 rgba(13,148,136,0.3); }
+    50% { box-shadow: 0 2px 0 0 var(--primary-dark), 0 0 0 6px rgba(13,148,136,0); }
+  }
+
+  /* ============ XP POPUPS ============ */
+  .popups-row { display: flex; gap: 16px; flex-wrap: wrap; }
+  .popup {
+    display: inline-flex; align-items: center; gap: 6px; padding: 12px 24px;
+    border-radius: 9999px; font-family: var(--font-d); font-weight: 900; font-size: 17px;
+    animation: pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .popup.xp { background: var(--accent); color: white; box-shadow: var(--shadow-push) var(--accent-dark); }
+  .popup.done { background: var(--success); color: white; box-shadow: var(--shadow-push) var(--success-dark); }
+  .popup.badge { background: var(--primary); color: white; box-shadow: var(--shadow-push) var(--primary-dark); }
+  [data-theme="dark"] .popup { box-shadow: var(--shadow-push) rgba(0,0,0,0.4); }
+  @keyframes pop {
+    0% { transform: scale(0) translateY(20px); opacity: 0; }
+    60% { transform: scale(1.12) translateY(-4px); }
+    100% { transform: scale(1) translateY(0); opacity: 1; }
+  }
+
+  /* ============ ACHIEVEMENTS ============ */
+  .badges-grid { display: flex; gap: 20px; flex-wrap: wrap; }
+  .ach { width: 88px; text-align: center; }
+  .ach-circle {
+    width: 68px; height: 68px; border-radius: 50%; margin: 0 auto 8px;
+    display: flex; align-items: center; justify-content: center;
+    border: 3px solid; transition: transform 0.2s;
+    font-family: var(--font-d); font-weight: 900; font-size: 14px; text-transform: uppercase;
+  }
+  .ach-circle:hover { transform: scale(1.08); }
+  .ach-circle.earned {
+    background: linear-gradient(145deg, #FEF3C7, #FDE68A); border-color: var(--accent);
+    box-shadow: 0 4px 0 0 var(--accent-dark), 0 0 16px rgba(245,158,11,0.15); color: var(--accent-dark);
+  }
+  [data-theme="dark"] .ach-circle.earned { box-shadow: 0 4px 0 0 rgba(0,0,0,0.35), 0 0 16px rgba(251,191,36,0.15); }
+  .ach-circle.locked { background: var(--subtle); border-color: var(--border); color: var(--text-3); opacity: 0.4; }
+  .ach-name { font-family: var(--font-d); font-weight: 700; font-size: 11px; color: var(--text-2); }
+
+  /* ============ LEVELS ============ */
+  .levels-row { display: flex; gap: 32px; align-items: flex-end; }
+  .lvl { text-align: center; }
+  .lvl-circle {
+    width: 56px; height: 56px; border-radius: 50%; border: 3px solid;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-d); font-weight: 900; font-size: 22px; margin-bottom: 6px;
+  }
+  .lvl-circle.l1 { background: var(--primary-light); border-color: var(--primary); color: var(--primary); }
+  .lvl-circle.l5 { background: var(--secondary-bg); border-color: var(--secondary-light); color: var(--secondary); }
+  .lvl-circle.l10 { background: var(--accent-light); border-color: var(--accent); color: var(--accent-dark); box-shadow: 0 0 14px rgba(245,158,11,0.2); }
+  .lvl-circle.l20 { background: linear-gradient(145deg, #FDE68A, #F59E0B); border-color: var(--accent-dark); color: #78350F; box-shadow: 0 0 20px rgba(245,158,11,0.3); }
+  .lvl-name { font-family: var(--font-d); font-weight: 700; font-size: 12px; color: var(--text-3); }
+
+  /* ============ LEADERBOARD ============ */
+  .lb { max-width: 520px; }
+  .lb-row {
+    display: flex; align-items: center; gap: 14px; padding: 14px 18px;
+    background: var(--card); border: var(--bw) solid var(--border); border-radius: var(--r-md);
+    margin-bottom: 8px; box-shadow: var(--shadow-card); transition: all 0.15s;
+  }
+  .lb-row:hover { transform: translateY(-1px); box-shadow: var(--shadow-card-hover); }
+  .lb-row.first { border-color: var(--accent); background: var(--accent-bg); }
+  .lb-row.me { border-color: var(--primary); background: var(--primary-bg); }
+  .lb-rank { font-family: var(--font-d); font-weight: 900; font-size: 18px; width: 28px; color: var(--text-3); }
+  .lb-row.first .lb-rank { color: var(--accent-dark); }
+  [data-theme="dark"] .lb-row.first .lb-rank { color: var(--accent); }
+  .lb-av {
+    width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-d); font-weight: 800; font-size: 14px; color: white;
+  }
+  .lb-info { flex: 1; }
+  .lb-name { font-family: var(--font-d); font-weight: 700; font-size: 15px; }
+  .lb-name .you { font-size: 11px; color: var(--primary); font-weight: 800; }
+  .lb-lvl { font-size: 12px; color: var(--text-3); }
+  .lb-xp { font-family: var(--font-d); font-weight: 900; font-size: 16px; color: var(--accent-dark); }
+  [data-theme="dark"] .lb-xp { color: var(--accent); }
+
+  /* ============ DIFFICULTY PILLS ============ */
+  .pills { display: flex; gap: 8px; }
+  .pill {
+    padding: 7px 18px; border-radius: 9999px; font-family: var(--font-d); font-weight: 700;
+    font-size: 13px; border: var(--bw) solid; cursor: pointer; transition: all 0.15s;
+  }
+  .pill:active { transform: translateY(1px); }
+  .pill.beg { background: var(--primary-bg); border-color: var(--primary); color: var(--primary-dark); }
+  .pill.int { background: var(--secondary-bg); border-color: var(--secondary-light); color: var(--secondary); }
+  .pill.adv { background: var(--streak-light); border-color: var(--streak); color: #9A3412; }
+  [data-theme="dark"] .pill.beg { color: var(--primary); }
+  [data-theme="dark"] .pill.int { color: var(--secondary-light); }
+  [data-theme="dark"] .pill.adv { color: var(--streak); }
+
+  /* ============ FEATURE CARDS ============ */
+  .feat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; max-width: 680px; }
+  .feat {
+    background: var(--card); border: var(--bw) solid var(--border); border-radius: var(--r-lg);
+    padding: 28px 24px; box-shadow: var(--shadow-card); transition: all 0.15s;
+  }
+  .feat:hover { transform: translateY(-2px); box-shadow: var(--shadow-card-hover); }
+  .feat-num { font-family: var(--font-d); font-weight: 900; font-size: 36px; line-height: 1; margin-bottom: 8px; }
+  .feat-title { font-family: var(--font-d); font-weight: 800; font-size: 17px; margin-bottom: 6px; }
+  .feat-desc { font-size: 14px; color: var(--text-2); line-height: 1.5; }
+
+  /* ============ INPUT/SELECT — FORM ELEMENTS ============ */
+  .form-demo { max-width: 400px; }
+  .form-group { margin-bottom: 16px; }
+  .form-label { font-family: var(--font-d); font-weight: 700; font-size: 13px; color: var(--text-2); margin-bottom: 6px; display: block; }
+  .form-input {
+    width: 100%; padding: 12px 16px; background: var(--card); border: var(--bw) solid var(--border);
+    border-radius: var(--r-md); font-family: var(--font-b); font-size: 15px; color: var(--text);
+    transition: all 0.15s; outline: none;
+  }
+  .form-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-bg); }
+  .form-input::placeholder { color: var(--text-3); }
+  .form-select {
+    width: 100%; padding: 12px 16px; background: var(--card); border: var(--bw) solid var(--border);
+    border-radius: var(--r-md); font-family: var(--font-b); font-size: 15px; color: var(--text);
+    transition: all 0.15s; outline: none; cursor: pointer; appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23A8A29E' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 16px center;
+  }
+  .form-select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-bg); }
+  .form-helper { font-size: 12px; color: var(--text-3); margin-top: 4px; }
+  .form-error { font-size: 12px; color: var(--danger); margin-top: 4px; font-weight: 600; }
+
+  /* ============ MODAL PREVIEW ============ */
+  .modal-preview {
+    max-width: 500px; background: var(--card); border: var(--bw) solid var(--border);
+    border-radius: var(--r-xl); box-shadow: 0 24px 48px rgba(0,0,0,0.12); overflow: hidden;
+  }
+  .modal-header { padding: 24px 28px 16px; border-bottom: 1px solid var(--border); }
+  .modal-title { font-family: var(--font-d); font-weight: 900; font-size: 22px; }
+  .modal-subtitle { font-size: 14px; color: var(--text-2); margin-top: 4px; }
+  .modal-body { padding: 24px 28px; }
+  .modal-body p { font-size: 15px; color: var(--text-2); line-height: 1.6; }
+  .modal-footer { padding: 16px 28px; border-top: 1px solid var(--border); background: var(--subtle); display: flex; justify-content: flex-end; gap: 10px; }
+
+  /* ============ TOAST / NOTIFICATION ============ */
+  .toast-row { display: flex; gap: 12px; flex-wrap: wrap; }
+  .toast {
+    display: flex; align-items: center; gap: 10px; padding: 14px 20px;
+    border-radius: var(--r-md); border: var(--bw) solid; font-family: var(--font-b); font-size: 14px; font-weight: 600;
+  }
+  .toast.success { background: var(--success-bg); border-color: var(--success); color: var(--success-dark); }
+  .toast.warning { background: var(--accent-bg); border-color: var(--accent); color: var(--accent-dark); }
+  .toast.error { background: var(--danger-light); border-color: var(--danger); color: var(--danger); }
+  .toast.info { background: var(--primary-bg); border-color: var(--primary); color: var(--primary-dark); }
+  [data-theme="dark"] .toast.success { color: var(--success); }
+  [data-theme="dark"] .toast.warning { color: var(--accent); }
+  [data-theme="dark"] .toast.error { color: var(--danger); }
+  [data-theme="dark"] .toast.info { color: var(--primary); }
+
+  /* ============ COMPARISON ============ */
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; }
+  .cmp { padding: 24px; border-radius: var(--r-lg); border: var(--bw) solid; }
+  .cmp.old { background: var(--danger-light); border-color: var(--danger); }
+  .cmp.new { background: var(--success-bg); border-color: var(--success); }
+  .cmp-label { font-family: var(--font-d); font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+  .cmp.old .cmp-label { color: var(--danger); }
+  .cmp.new .cmp-label { color: var(--success-dark); }
+  [data-theme="dark"] .cmp.new .cmp-label { color: var(--success); }
+  .cmp-item { font-size: 14px; color: var(--text-2); margin-bottom: 5px; padding-left: 20px; position: relative; }
+  .cmp-item::before { position: absolute; left: 0; font-weight: 700; }
+  .cmp.old .cmp-item::before { content: '✕'; color: var(--danger); }
+  .cmp.new .cmp-item::before { content: '✓'; color: var(--success); }
+
+  .note {
+    background: var(--accent-bg); border: var(--bw) solid var(--accent); border-radius: var(--r-lg);
+    padding: 20px 24px; font-size: 14px; color: var(--text-2); line-height: 1.6; margin-top: 16px;
+  }
+  .note strong { color: var(--text); }
+
+  hr.divider { border: none; border-top: var(--bw) solid var(--border); margin: 48px 0; }
+
+  /* ============ TOKEN TABLE ============ */
+  .token-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .token-table th {
+    text-align: left; padding: 8px 12px; font-family: var(--font-d); font-weight: 700;
+    font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-3);
+    border-bottom: var(--bw) solid var(--border);
+  }
+  .token-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); }
+  .token-table code { font-family: monospace; font-size: 12px; color: var(--primary); background: var(--subtle); padding: 2px 6px; border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<button class="theme-toggle" onclick="toggleTheme()">🌓 Toggle Theme</button>
+
+<div class="page-header">
+  <h1 class="page-title">Solarium <span>Design System</span> v5</h1>
+  <p class="page-sub">Light + Dark mode. Ink Teal secondary. Updated token architecture. The complete implementation reference for Tailwind CSS style classes.</p>
+</div>
+
+<!-- ============ THEME TOKENS REFERENCE ============ -->
+<div class="s">
+  <h2 class="s-title">Theme Token Architecture</h2>
+  <p class="s-desc">All colors use CSS custom properties. Toggle the theme above to see how every token adapts. This is the source of truth for the Tailwind config and style classes file.</p>
+
+  <div class="theme-label" id="theme-indicator">Currently: Light Mode</div>
+
+  <table class="token-table">
+    <tr><th>Token</th><th>Light</th><th>Dark</th><th>Usage</th></tr>
+    <tr><td><code>--bg</code></td><td>#FAFAF7</td><td>#343431</td><td>Page background</td></tr>
+    <tr><td><code>--card</code></td><td>#FFFFFF</td><td>#3D3C38</td><td>Card/surface bg</td></tr>
+    <tr><td><code>--subtle</code></td><td>#F5F3EE</td><td>#46443F</td><td>Subtle bg, tracks</td></tr>
+    <tr><td><code>--border</code></td><td>#E7E4DD</td><td>#57534E</td><td>All borders</td></tr>
+    <tr><td><code>--text</code></td><td>#1C1917</td><td>#F5F1EA</td><td>Primary text</td></tr>
+    <tr><td><code>--text-2</code></td><td>#57534E</td><td>#D4CEC3</td><td>Secondary text</td></tr>
+    <tr><td><code>--text-3</code></td><td>#A8A29E</td><td>#A79F93</td><td>Muted/caption</td></tr>
+    <tr><td><code>--primary</code></td><td>#0D9488</td><td>#2DD4BF</td><td>Actions, CTAs</td></tr>
+    <tr><td><code>--accent</code></td><td>#F59E0B</td><td>#FBBF24</td><td>XP, rewards</td></tr>
+    <tr><td><code>--secondary</code></td><td>#0F2F2D</td><td>#2FA7A0</td><td>Structure, depth</td></tr>
+    <tr><td><code>--success</code></td><td>#16A34A</td><td>#4ADE80</td><td>Complete, correct</td></tr>
+    <tr><td><code>--streak</code></td><td>#EA580C</td><td>#FB923C</td><td>Streaks, flame</td></tr>
+    <tr><td><code>--danger</code></td><td>#E11D48</td><td>#FB7185</td><td>Errors, destructive</td></tr>
+  </table>
+</div>
+
+<!-- ============ COLORS ============ -->
+<div class="s">
+  <h2 class="s-title">Color Palette</h2>
+  <p class="s-desc">Unique warm palette. Teal is the brand, amber is rewards, Ink Teal is structure. Solana purple/green appears ONLY on NFT certificates.</p>
+
+  <div class="swatch-group">
+    <div class="swatch-group-label">Primary — Deep Teal (growth, trust, brand, CTAs)</div>
+    <div class="swatches">
+      <div class="swatch"><div class="swatch-circle" style="background:var(--primary)"></div><div class="swatch-label">Primary</div><div class="swatch-hex">--primary</div></div>
+      <div class="swatch"><div class="swatch-circle" style="background:var(--primary-hover)"></div><div class="swatch-label">Hover</div><div class="swatch-hex">--primary-hover</div></div>
+      <div class="swatch"><div class="swatch-circle" style="background:var(--primary-dark)"></div><div class="swatch-label">Dark</div><div class="swatch-hex">--primary-dark</div></div>
+      <div class="swatch"><div class="swatch-circle" style="background:var(--primary-light)"></div><div class="swatch-label">Light</div><div class="swatch-hex">--primary-light</div></div>
+      <div class="swatch"><div class="swatch-circle" style="background:var(--primary-bg)"></div><div class="swatch-label">BG</div><div class="swatch-hex">--primary-bg</div></div>
+    </div>
+  </div>
+
+  <div class="swatch-group">
+    <div class="swatch-group-label">Accent — Warm Amber (XP, rewards, celebration)</div>
+    <div class="swatches">
+      <div class="swatch"><div class="swatch-circle" style="background:var(--accent)"></div><div class="swatch-label">Accent</div><div class="swatch-hex">--accent</div></div>
+      <div class="swatch"><div class="swatch-circle" style="background:var(--accent-hover)"></div><div class="swatch-label">Hover</div><div class="swatch-hex">--accent-hover</div></div>
+      <div class="swatch"><div class="swatch-circle" style="background:var(--accent-dark)"></div><div class="swatch-label">Dark</div><div class="swatch-hex">--accent-dark</div></div>
+      <div class="swatch"><div class="swatch-circle" style="background:var(--accent-light)"></div><div class="swatch-label">Light</div><div class="swatch-hex">--accent-light</div></div>
+      <div class="swatch"><div class="swatch-circle" style="background:var(--accent-bg)"></div><div class="swatch-label">BG</div><div class="swatch-hex">--accent-bg</div></div>
+    </div>
+  </div>
+
+  <div class="swatch-group">
+    <div class="swatch-group-label">Secondary — Ink Teal (structure, depth, code panels, serious UI)</div>
+    <div class="swatches">
+      <div class="swatch"><div class="swatch-circle" style="background:var(--secondary)"></div><div class="swatch-label">Deep</div><div class="swatch-hex">--secondary</div></div>
+      <div class="swatch"><div class="swatch-circle" style="background:var(--secondary-light)"></div><div class="swatch-label">Light</div><div class="swatch-hex">--secondary-light</div></div>
+      <div class="swatch"><div class="swatch-circle" style="background:var(--secondary-bg)"></div><div class="swatch-label">BG</div><div class="swatch-hex">--secondary-bg</div></div>
+    </div>
+  </div>
+
+  <div class="swatch-group">
+    <div class="swatch-group-label">Semantic</div>
+    <div class="swatches">
+      <div class="swatch"><div class="swatch-circle" style="background:var(--success)"></div><div class="swatch-label">Success</div><div class="swatch-hex">--success</div></div>
+      <div class="swatch"><div class="swatch-circle" style="background:var(--streak)"></div><div class="swatch-label">Streak</div><div class="swatch-hex">--streak</div></div>
+      <div class="swatch"><div class="swatch-circle" style="background:var(--danger)"></div><div class="swatch-label">Danger</div><div class="swatch-hex">--danger</div></div>
+    </div>
+  </div>
+
+  <div class="swatch-group">
+    <div class="swatch-group-label">Neutrals — warm tones (adapts to theme)</div>
+    <div class="swatches">
+      <div class="swatch"><div class="swatch-circle" style="background:var(--bg); border-color:var(--border)"></div><div class="swatch-label">BG</div><div class="swatch-hex">--bg</div></div>
+      <div class="swatch"><div class="swatch-circle" style="background:var(--card); border-color:var(--border)"></div><div class="swatch-label">Card</div><div class="swatch-hex">--card</div></div>
+      <div class="swatch"><div class="swatch-circle" style="background:var(--subtle)"></div><div class="swatch-label">Subtle</div><div class="swatch-hex">--subtle</div></div>
+      <div class="swatch"><div class="swatch-circle" style="background:var(--border)"></div><div class="swatch-label">Border</div><div class="swatch-hex">--border</div></div>
+      <div class="swatch"><div class="swatch-circle" style="background:var(--text)"></div><div class="swatch-label">Text</div><div class="swatch-hex">--text</div></div>
+      <div class="swatch"><div class="swatch-circle" style="background:var(--text-2)"></div><div class="swatch-label">Text 2</div><div class="swatch-hex">--text-2</div></div>
+      <div class="swatch"><div class="swatch-circle" style="background:var(--text-3)"></div><div class="swatch-label">Text 3</div><div class="swatch-hex">--text-3</div></div>
+    </div>
+  </div>
+
+  <div class="swatch-group">
+    <div class="swatch-group-label">Solana Nod — ONLY on certificates and NFT elements</div>
+    <div class="swatches">
+      <div class="swatch"><div class="swatch-circle" style="background:#9945FF"></div><div class="swatch-label">Purple</div><div class="swatch-hex">#9945FF</div></div>
+      <div class="swatch"><div class="swatch-circle" style="background:#14F195"></div><div class="swatch-label">Green</div><div class="swatch-hex">#14F195</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ TYPOGRAPHY ============ -->
+<div class="s">
+  <h2 class="s-title">Typography</h2>
+  <p class="s-desc">Nunito for display — bold, rounded, friendly. Plus Jakarta Sans for body — clean, modern. Never Inter, Roboto, or system fonts.</p>
+
+  <div class="type-row"><div class="type-label">Display XL — Nunito 900 / 44px</div><div class="type-display-xl">Master Solana Development</div></div>
+  <div class="type-row"><div class="type-label">Display LG — Nunito 800 / 30px</div><div class="type-display-lg">Solana Fundamentals</div></div>
+  <div class="type-row"><div class="type-label">Display MD — Nunito 800 / 22px</div><div class="type-display-md">Course Catalog</div></div>
+  <div class="type-row"><div class="type-label">Body LG — Jakarta 500 / 17px</div><div class="type-body-lg">A comprehensive beginner course covering the fundamentals of Solana.</div></div>
+  <div class="type-row"><div class="type-label">Body — Jakarta 400 / 15px</div><div class="type-body">Learn to set up your environment, create wallets, and send your first transaction.</div></div>
+  <div class="type-row"><div class="type-label">Caption — Jakarta 600 / 12px</div><div class="type-caption">12 hours · 600 XP · Beginner</div></div>
+</div>
+
+<!-- ============ BUTTONS ============ -->
+<div class="s">
+  <h2 class="s-title">Buttons — 3D Push Style</h2>
+  <p class="s-desc">All 7 variants. Visible bottom shadow depresses on click. Works in both themes.</p>
+
+  <div class="btn-row">
+    <button class="btn btn-p btn-lg">Start Learning →</button>
+    <button class="btn btn-a btn-lg">Claim XP</button>
+    <button class="btn btn-s btn-lg">Mark Complete ✓</button>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-p">Primary</button>
+    <button class="btn btn-sec">Secondary</button>
+    <button class="btn btn-a">Accent</button>
+    <button class="btn btn-o">Outline</button>
+    <button class="btn btn-g">Ghost</button>
+    <button class="btn btn-d">Danger</button>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-p btn-sm">Small Primary</button>
+    <button class="btn btn-sec btn-sm">Small Secondary</button>
+    <button class="btn btn-o btn-sm">Small Outline</button>
+  </div>
+</div>
+
+<!-- ============ FORM ELEMENTS ============ -->
+<div class="s">
+  <h2 class="s-title">Form Elements</h2>
+  <p class="s-desc">Chunky borders, warm backgrounds, teal focus ring. Consistent with the push-depth aesthetic.</p>
+
+  <div class="form-demo">
+    <div class="form-group">
+      <label class="form-label">Wallet Address</label>
+      <input class="form-input" type="text" placeholder="Enter your Solana wallet address...">
+      <div class="form-helper">Your SPL token rewards will be sent here</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Difficulty Level</label>
+      <select class="form-select">
+        <option>Beginner</option>
+        <option>Intermediate</option>
+        <option>Advanced</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Course Title</label>
+      <input class="form-input" type="text" value="" style="border-color: var(--danger);">
+      <div class="form-error">Course title is required</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ DASHBOARD STATS ============ -->
+<div class="s">
+  <h2 class="s-title">Dashboard Stats</h2>
+  <p class="s-desc">XP card with level circle + progress bar, then streak/courses/badges cards.</p>
+
+  <div class="dash-stats">
+    <div class="dash-stat xp-card">
+      <div class="xp-left">
+        <div class="xp-label">XP</div>
+        <div class="xp-value">306</div>
+        <div class="xp-progress-wrap">
+          <div class="xp-prog-track" style="width: 160px;"><div class="xp-prog-fill" style="width: 68%"></div></div>
+          <div class="xp-progress-text">206 / 300 XP to Level 2</div>
+        </div>
+      </div>
+      <div class="level-circle">1</div>
+    </div>
+    <div class="dash-stat">
+      <div class="stat-icon-label"><span class="stat-emoji">🔥</span><span class="stat-label-text">Streak</span></div>
+      <div class="stat-value">2</div>
+      <div class="stat-sub">2 day streak</div>
+    </div>
+    <div class="dash-stat">
+      <div class="stat-icon-label"><span class="stat-emoji">📖</span><span class="stat-label-text">Courses</span></div>
+      <div class="stat-value">2</div>
+      <div class="stat-sub">In Progress</div>
+    </div>
+    <div class="dash-stat">
+      <div class="stat-icon-label"><span class="stat-emoji">🏆</span><span class="stat-label-text">Achievements</span></div>
+      <div class="stat-value">4</div>
+      <div class="stat-sub">Badges</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ COURSE CARDS ============ -->
+<div class="s">
+  <h2 class="s-title">Course Cards</h2>
+  <p class="s-desc">Difficulty pills + cover image banners. Note how banner gradients adapt to dark mode.</p>
+
+  <div class="pills" style="margin-bottom: 16px;">
+    <span class="pill beg">Beginner</span>
+    <span class="pill int">Intermediate</span>
+    <span class="pill adv">Advanced</span>
+  </div>
+
+  <div class="cards-grid">
+    <div class="card">
+      <div class="card-banner beginner">
+        <span class="card-badge beginner">Beginner</span>
+        <div class="card-cover-img"><div class="card-cover-inner"></div></div>
+      </div>
+      <div class="card-body">
+        <div class="card-title">Solana Fundamentals</div>
+        <div class="card-by">by Ana Santos</div>
+        <div class="card-desc">A comprehensive beginner course covering the fundamentals of Solana blockchain development.</div>
+        <div class="card-foot"><span class="card-hours">⏱ 10h</span><span class="card-xp">⚡ 600 XP</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-banner intermediate">
+        <span class="card-badge intermediate">Intermediate</span>
+        <div class="card-cover-img"><div class="card-cover-inner"></div></div>
+      </div>
+      <div class="card-body">
+        <div class="card-title">Rust for Solana Devs</div>
+        <div class="card-by">by Lucas Oliveira</div>
+        <div class="card-desc">Master Rust fundamentals tailored for Solana smart contract development.</div>
+        <div class="card-foot"><span class="card-hours">⏱ 12h</span><span class="card-xp">⚡ 800 XP</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-banner advanced">
+        <span class="card-badge advanced">Advanced</span>
+        <div class="card-cover-img"><div class="card-cover-inner"></div></div>
+      </div>
+      <div class="card-body">
+        <div class="card-title">DeFi on Solana</div>
+        <div class="card-by">by Rafael Mendes</div>
+        <div class="card-desc">AMMs, lending protocols, vaults, and liquidation engines on Solana.</div>
+        <div class="card-foot"><span class="card-hours">⏱ 16h</span><span class="card-xp">⚡ 1000 XP</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ PROGRESS BARS ============ -->
+<div class="s">
+  <h2 class="s-title">Progress Bars</h2>
+  <p class="s-desc">16px tall, inner highlight, gradient fills. Teal = course, amber = XP, green = complete.</p>
+
+  <div class="prog-wrap">
+    <div class="prog-top"><span class="prog-name">Solana Fundamentals</span><span class="prog-val" style="color: var(--primary)">8 / 12</span></div>
+    <div class="prog-track"><div class="prog-fill teal" style="width: 67%"></div></div>
+  </div>
+  <div class="prog-wrap">
+    <div class="prog-top"><span class="prog-name">Level Progress</span><span class="prog-val" style="color: var(--accent)">102 / 300 XP</span></div>
+    <div class="prog-track"><div class="prog-fill amber" style="width: 34%"></div></div>
+  </div>
+  <div class="prog-wrap">
+    <div class="prog-top"><span class="prog-name">Course Complete</span><span class="prog-val" style="color: var(--success)">12 / 12 ✓</span></div>
+    <div class="prog-track"><div class="prog-fill green" style="width: 100%"></div></div>
+  </div>
+</div>
+
+<!-- ============ STREAK ============ -->
+<div class="s">
+  <h2 class="s-title">Streak Display</h2>
+  <div class="streak-box">
+    <div class="streak-header">
+      <div class="streak-icon">🔥</div>
+      <div><div class="streak-count">2 day streak</div><div class="streak-label">Learn today to keep it going!</div></div>
+    </div>
+    <div class="streak-days">
+      <div class="streak-day">M</div><div class="streak-day">T</div><div class="streak-day">W</div>
+      <div class="streak-day">T</div><div class="streak-day">F</div>
+      <div class="streak-day on">S</div><div class="streak-day now">S</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ POPUPS ============ -->
+<div class="s">
+  <h2 class="s-title">Celebration Popups</h2>
+  <div class="popups-row">
+    <div class="popup xp">+25 XP ⚡</div>
+    <div class="popup done">Lesson Complete ✓</div>
+    <div class="popup badge">Achievement Unlocked! 🏆</div>
+  </div>
+</div>
+
+<!-- ============ TOASTS ============ -->
+<div class="s">
+  <h2 class="s-title">Toast Notifications</h2>
+  <p class="s-desc">Semantic colored borders with tinted backgrounds. Adapt cleanly to dark mode.</p>
+
+  <div class="toast-row">
+    <div class="toast success">✓ Course enrolled successfully</div>
+    <div class="toast warning">⚠ Streak expires in 2 hours</div>
+    <div class="toast error">✕ Wallet connection failed</div>
+    <div class="toast info">ℹ New course available</div>
+  </div>
+</div>
+
+<!-- ============ MODAL ============ -->
+<div class="s">
+  <h2 class="s-title">Modal</h2>
+  <p class="s-desc">24px radius, card background, subtle shadow. Header/body/footer zones.</p>
+
+  <div class="modal-preview">
+    <div class="modal-header">
+      <div class="modal-title">Claim Certificate</div>
+      <div class="modal-subtitle">Mint your completion NFT on Solana</div>
+    </div>
+    <div class="modal-body">
+      <p>You've completed all 12 lessons in Solana Fundamentals. Claim your on-chain certificate to prove your skills.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-o btn-sm">Cancel</button>
+      <button class="btn btn-p btn-sm">Mint Certificate →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ ACHIEVEMENTS ============ -->
+<div class="s">
+  <h2 class="s-title">Achievement Badges</h2>
+  <div class="badges-grid">
+    <div class="ach"><div class="ach-circle earned">1st</div><div class="ach-name">First Steps</div></div>
+    <div class="ach"><div class="ach-circle earned">7d</div><div class="ach-name">Week Warrior</div></div>
+    <div class="ach"><div class="ach-circle earned">⚡</div><div class="ach-name">Early Adopter</div></div>
+    <div class="ach"><div class="ach-circle locked">✓</div><div class="ach-name">Completer</div></div>
+    <div class="ach"><div class="ach-circle locked">Rs</div><div class="ach-name">Rust Rookie</div></div>
+    <div class="ach"><div class="ach-circle locked">⚓</div><div class="ach-name">Anchor Expert</div></div>
+  </div>
+</div>
+
+<!-- ============ LEVELS ============ -->
+<div class="s">
+  <h2 class="s-title">Level Badges</h2>
+  <div class="levels-row">
+    <div class="lvl"><div class="lvl-circle l1">1</div><div class="lvl-name">Seed</div></div>
+    <div class="lvl"><div class="lvl-circle l5">5</div><div class="lvl-name">Sprout</div></div>
+    <div class="lvl"><div class="lvl-circle l10">10</div><div class="lvl-name">Sapling</div></div>
+    <div class="lvl"><div class="lvl-circle l20">20</div><div class="lvl-name">Canopy</div></div>
+  </div>
+</div>
+
+<!-- ============ LEADERBOARD ============ -->
+<div class="s">
+  <h2 class="s-title">Leaderboard</h2>
+  <div class="lb">
+    <div class="lb-row first">
+      <div class="lb-rank">1</div>
+      <div class="lb-av" style="background: linear-gradient(135deg, var(--primary), #2DD4BF);">ST</div>
+      <div class="lb-info"><div class="lb-name">Sthom</div><div class="lb-lvl">Level 1 · Seed</div></div>
+      <div class="lb-xp">306 XP</div>
+    </div>
+    <div class="lb-row">
+      <div class="lb-rank">2</div>
+      <div class="lb-av" style="background: linear-gradient(135deg, var(--streak), var(--accent));">MR</div>
+      <div class="lb-info"><div class="lb-name">Maria R.</div><div class="lb-lvl">Level 3 · Sprout</div></div>
+      <div class="lb-xp">450 XP</div>
+    </div>
+    <div class="lb-row me">
+      <div class="lb-rank">3</div>
+      <div class="lb-av" style="background: linear-gradient(135deg, var(--secondary), var(--secondary-light));">JL</div>
+      <div class="lb-info"><div class="lb-name">João L. <span class="you">(you)</span></div><div class="lb-lvl">Level 2 · Seed</div></div>
+      <div class="lb-xp">320 XP</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ FEATURES ============ -->
+<div class="s">
+  <h2 class="s-title">Landing Page Features</h2>
+  <div class="feat-grid">
+    <div class="feat"><div class="feat-num" style="color: var(--primary)">01</div><div class="feat-title">Interactive Challenges</div><div class="feat-desc">Code directly in the browser with real test cases.</div></div>
+    <div class="feat"><div class="feat-num" style="color: var(--secondary)">{}</div><div class="feat-title">On-Chain Certificates</div><div class="feat-desc">Earn NFT certificates on Solana. Verifiable and permanent.</div></div>
+    <div class="feat"><div class="feat-num" style="color: var(--accent)">XP</div><div class="feat-title">Gamified Progress</div><div class="feat-desc">Streaks, levels, and achievements for builders.</div></div>
+    <div class="feat"><div class="feat-num" style="color: var(--success)">++</div><div class="feat-title">Community Driven</div><div class="feat-desc">Open-source, built by Superteam Brazil.</div></div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ============ DESIGN RULES ============ -->
+<div class="s">
+  <h2 class="s-title">Design Rules Summary</h2>
+  <div class="compare">
+    <div class="cmp old">
+      <div class="cmp-label">Don't</div>
+      <div class="cmp-item">Use Solana purple/green as primary</div>
+      <div class="cmp-item">Use cold gray backgrounds</div>
+      <div class="cmp-item">Use Inter / Roboto / system fonts</div>
+      <div class="cmp-item">Use thin 1px borders</div>
+      <div class="cmp-item">Use thin 4px progress bars</div>
+      <div class="cmp-item">Use flat buttons with no depth</div>
+      <div class="cmp-item">Hardcode colors — always use tokens</div>
+      <div class="cmp-item">Mix primary + secondary on same layer</div>
+    </div>
+    <div class="cmp new">
+      <div class="cmp-label">Do</div>
+      <div class="cmp-item">Teal primary, amber accent, Ink Teal secondary</div>
+      <div class="cmp-item">Warm cream #FAFAF7 / dark #343431</div>
+      <div class="cmp-item">Nunito display + Plus Jakarta Sans body</div>
+      <div class="cmp-item">2.5px chunky borders everywhere</div>
+      <div class="cmp-item">Fat 16px progress bars with inner glow</div>
+      <div class="cmp-item">3D push buttons with bottom shadow</div>
+      <div class="cmp-item">Use CSS vars → Tailwind tokens always</div>
+      <div class="cmp-item">Primary = foreground action, Secondary = structure</div>
+    </div>
+  </div>
+
+  <div class="note" style="margin-top: 24px;">
+    <strong>Primary vs Secondary rule:</strong> Primary (#0D9488) = foreground action color (buttons, XP, progress, active states). Secondary (#0F2F2D) = background structure color (card accents, code panels, section dividers). They should never compete on the same visual layer. If two elements with these colors touch each other, something is wrong.
+  </div>
+
+  <div class="note" style="margin-top: 12px;">
+    <strong>Dark mode rule:</strong> All colors adapt through CSS custom properties. Components use <code>var(--token)</code>, never raw hex. Dark mode lifts primaries for readability and deepens shadows with <code>rgba(0,0,0,0.35)</code> instead of color-specific shadows. The push depth aesthetic is preserved via opacity-based shadows.
+  </div>
+</div>
+
+<script>
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  if (isDark) {
+    html.removeAttribute('data-theme');
+    document.getElementById('theme-indicator').textContent = 'Currently: Light Mode';
+    document.getElementById('theme-indicator').style.background = 'var(--primary-bg)';
+    document.getElementById('theme-indicator').style.color = 'var(--primary)';
+    document.getElementById('theme-indicator').style.borderColor = 'var(--primary)';
+  } else {
+    html.setAttribute('data-theme', 'dark');
+    document.getElementById('theme-indicator').textContent = 'Currently: Dark Mode';
+    document.getElementById('theme-indicator').style.background = 'var(--primary-bg)';
+    document.getElementById('theme-indicator').style.color = 'var(--primary)';
+    document.getElementById('theme-indicator').style.borderColor = 'var(--primary)';
+  }
+}
+</script>
+
+</body>
+</html>

@@ -258,18 +258,19 @@ CREATE POLICY "Public certificates are viewable by everyone"
     )
   );
 
-CREATE POLICY "Users can insert their own certificates"
-  ON certificates FOR INSERT WITH CHECK (auth.uid() = user_id);
+-- NOTE: No INSERT or UPDATE policies on certificates.
+-- All certificate writes go through service_role via the API routes.
+-- Allowing authenticated users to self-issue certificates would let them
+-- fabricate completion records for courses they have not finished.
 
-CREATE POLICY "Users can update their own certificates"
-  ON certificates FOR UPDATE USING (auth.uid() = user_id);
-
--- nft_metadata (public read, authenticated insert)
+-- nft_metadata (public read only — writes via service_role API routes)
 CREATE POLICY "Anyone can read nft metadata"
   ON nft_metadata FOR SELECT USING (true);
 
-CREATE POLICY "Authenticated users can insert nft metadata"
-  ON nft_metadata FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
+-- NOTE: No INSERT policy on nft_metadata for authenticated users.
+-- All metadata rows are inserted by the lesson-complete API route using
+-- the service_role key. An open authenticated INSERT policy would allow
+-- any logged-in user to flood the table or plant fake metadata.
 
 -- ─────────────────────────────────────────────
 -- 4. SECURE SERVER-SIDE FUNCTIONS

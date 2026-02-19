@@ -7,6 +7,7 @@ You are **academy-builder** for the Superteam Academy monorepo — on-chain prog
 Superteam Academy is a **decentralized learning platform on Solana**. Learners enroll in courses, complete lessons to earn soulbound XP tokens, receive Metaplex Core credential NFTs, and collect achievements. Course creators earn XP rewards. The platform is governed by a multisig authority.
 
 **Docs**:
+
 - `docs/SPEC.md` — Canonical program specification (source of truth)
 - `docs/ARCHITECTURE.md` — Account maps, data flows, CU budgets
 - `docs/INTEGRATION.md` — Frontend integration guide (PDA derivation, instruction usage, events)
@@ -53,7 +54,7 @@ superteam-academy/
 │   │           ├── lib.rs       ← 16 instructions
 │   │           ├── state/       ← 6 PDA account structs
 │   │           ├── instructions/← One file per instruction
-│   │           ├── errors.rs    ← 26 error variants
+│   │           ├── errors.rs    ← 27 error variants
 │   │           ├── events.rs    ← 15 events
 │   │           └── utils.rs     ← Shared helpers (mint_xp)
 │   ├── tests/
@@ -100,7 +101,7 @@ superteam-academy/
 │   │   │   ├── lib/
 │   │   │   │   ├── supabase/       # client.ts, server.ts, admin.ts, types.ts
 │   │   │   │   ├── sanity/         # client.ts, queries.ts, types.ts
-│   │   │   │   ├── solana/         # wallet-provider.tsx, wallet-auth.ts, mint-certificate.ts
+│   │   │   │   ├── solana/         # wallet-provider.tsx, wallet-auth.ts, xp-mint.ts
 │   │   │   │   ├── analytics/      # ga4.ts, posthog.ts, sentry.ts, index.ts (facade)
 │   │   │   │   ├── gamification/   # xp.ts, achievements.ts
 │   │   │   │   ├── i18n/           # config.ts, request.ts
@@ -135,29 +136,29 @@ superteam-academy/
 
 ## Technology Stack
 
-| Layer | Stack |
-|-------|-------|
-| **Programs** | Anchor 0.31+, Rust 1.82+ |
-| **XP Tokens** | Token-2022 (NonTransferable, PermanentDelegate) |
-| **Credentials** | Metaplex Core NFTs (soulbound via PermanentFreezeDelegate) |
-| **Testing** | Mollusk, LiteSVM, ts-mocha/Chai |
-| **Client** | TypeScript, @coral-xyz/anchor, @solana/web3.js |
-| **Frontend** | Next.js 14, React, Tailwind CSS, shadcn/ui + Radix |
-| **CMS** | Sanity v3 (GROQ queries, visual editor) |
-| **Backend/DB** | Supabase (Postgres, RLS, auth helpers) |
-| **Auth** | Solana Wallet Adapter (SIWS) + Google OAuth |
-| **Code Editor** | Monaco Editor (JS/TS syntax, challenge runner) |
-| **Build Server** | Rust/Axum (Docker-based Anchor compilation) |
-| **Analytics** | GA4 + PostHog + Sentry |
-| **i18n** | next-intl (PT-BR, ES, EN) |
-| **RPC** | Helius (DAS API for credential queries + XP leaderboard) |
-| **Content** | Arweave (immutable course content) |
-| **Multisig** | Squads (platform authority) |
-| **Deployment** | Vercel (frontend), Google Cloud Run (build server) |
+| Layer            | Stack                                                      |
+| ---------------- | ---------------------------------------------------------- |
+| **Programs**     | Anchor 0.31+, Rust 1.82+                                   |
+| **XP Tokens**    | Token-2022 (NonTransferable, PermanentDelegate)            |
+| **Credentials**  | Metaplex Core NFTs (soulbound via PermanentFreezeDelegate) |
+| **Testing**      | Mollusk, LiteSVM, ts-mocha/Chai                            |
+| **Client**       | TypeScript, @coral-xyz/anchor, @solana/web3.js             |
+| **Frontend**     | Next.js 14, React, Tailwind CSS, shadcn/ui + Radix         |
+| **CMS**          | Sanity v3 (GROQ queries, visual editor)                    |
+| **Backend/DB**   | Supabase (Postgres, RLS, auth helpers)                     |
+| **Auth**         | Solana Wallet Adapter (SIWS) + Google OAuth                |
+| **Code Editor**  | Monaco Editor (JS/TS syntax, challenge runner)             |
+| **Build Server** | Rust/Axum (Docker-based Anchor compilation)                |
+| **Analytics**    | GA4 + PostHog + Sentry                                     |
+| **i18n**         | next-intl (PT-BR, ES, EN)                                  |
+| **RPC**          | Helius (DAS API for credential queries + XP leaderboard)   |
+| **Content**      | Arweave (immutable course content)                         |
+| **Multisig**     | Squads (platform authority)                                |
+| **Deployment**   | Vercel (frontend), Google Cloud Run (build server)         |
 
 ## Program Overview
 
-16 instructions, 6 PDA types, 26 error variants, 15 events.
+16 instructions, 6 PDA types, 27 error variants, 15 events.
 
 See `docs/SPEC.md` for full specification and `docs/INTEGRATION.md` for frontend usage.
 
@@ -188,6 +189,7 @@ See `docs/SPEC.md` for full specification and `docs/INTEGRATION.md` for frontend
 ### On-Chain Program
 
 **NEVER:**
+
 - Deploy to mainnet without explicit user confirmation
 - Use unchecked arithmetic in programs
 - Skip account validation
@@ -195,6 +197,7 @@ See `docs/SPEC.md` for full specification and `docs/INTEGRATION.md` for frontend
 - Recalculate PDA bumps on every call
 
 **ALWAYS:**
+
 - Validate ALL accounts (owner, signer, PDA)
 - Use checked arithmetic (`checked_add`, `checked_sub`, `checked_mul`)
 - Store canonical PDA bumps
@@ -330,18 +333,19 @@ Located in `packages/types/src/`. Key types:
 
 ## Agents
 
-| Agent | Use When |
-|-------|----------|
-| **solana-architect** | System design, PDA schemes, token economics |
-| **anchor-engineer** | Anchor programs, IDL generation, constraints |
-| **solana-qa-engineer** | Testing, CU profiling, code quality |
-| **tech-docs-writer** | Documentation generation |
-| **solana-guide** | Learning, tutorials, concept explanations |
-| **solana-researcher** | Ecosystem research |
+| Agent                  | Use When                                     |
+| ---------------------- | -------------------------------------------- |
+| **solana-architect**   | System design, PDA schemes, token economics  |
+| **anchor-engineer**    | Anchor programs, IDL generation, constraints |
+| **solana-qa-engineer** | Testing, CU profiling, code quality          |
+| **tech-docs-writer**   | Documentation generation                     |
+| **solana-guide**       | Learning, tutorials, concept explanations    |
+| **solana-researcher**  | Ecosystem research                           |
 
 ## Mandatory On-Chain Workflow
 
 Every program change:
+
 1. **Build**: `anchor build`
 2. **Format**: `cargo fmt`
 3. **Lint**: `cargo clippy -- -W clippy::all`
@@ -351,28 +355,28 @@ Every program change:
 
 ## Commands
 
-| Command | Purpose |
-|---------|---------|
-| `/quick-commit` | Format, lint, branch creation, conventional commits |
-| `/build-program` | Build Solana program (Anchor) |
-| `/test-rust` | Run Rust unit tests |
-| `/test-ts` | Run TypeScript integration tests |
-| `/deploy` | Deploy to devnet or mainnet |
-| `/audit-solana` | Security audit workflow |
-| `/setup-ci-cd` | Configure GitHub Actions |
-| `/write-docs` | Generate documentation |
-| `/explain-code` | Explain complex code with diagrams |
-| `/plan-feature` | Plan feature implementation |
+| Command          | Purpose                                             |
+| ---------------- | --------------------------------------------------- |
+| `/quick-commit`  | Format, lint, branch creation, conventional commits |
+| `/build-program` | Build Solana program (Anchor)                       |
+| `/test-rust`     | Run Rust unit tests                                 |
+| `/test-ts`       | Run TypeScript integration tests                    |
+| `/deploy`        | Deploy to devnet or mainnet                         |
+| `/audit-solana`  | Security audit workflow                             |
+| `/setup-ci-cd`   | Configure GitHub Actions                            |
+| `/write-docs`    | Generate documentation                              |
+| `/explain-code`  | Explain complex code with diagrams                  |
+| `/plan-feature`  | Plan feature implementation                         |
 
 ## Vanity Keypairs
 
 Keypairs live in `wallets/` (gitignored). Replace placeholders with vanity-ground keys.
 
-| File | Purpose |
-|------|---------|
-| `wallets/signer.json` | Authority/payer keypair |
+| File                           | Purpose                                        |
+| ------------------------------ | ---------------------------------------------- |
+| `wallets/signer.json`          | Authority/payer keypair                        |
 | `wallets/program-keypair.json` | Program deploy keypair (determines program ID) |
-| `wallets/xp-mint-keypair.json` | XP mint keypair (determines mint address) |
+| `wallets/xp-mint-keypair.json` | XP mint keypair (determines mint address)      |
 
 ```bash
 # Grind vanity addresses

@@ -15,8 +15,8 @@ import { DifficultyBadge } from "@/components/course/difficulty-badge";
 import { CurriculumAccordion } from "@/components/course/curriculum-accordion";
 import { ProgressBar } from "@/components/course/progress-bar";
 import { createClient } from "@/lib/supabase/client";
-import { CourseCompletionMint } from "@/components/certificates/course-completion-mint";
 import { AuthModal } from "@/components/auth/auth-modal";
+import { useOnChainEnroll } from "@/hooks/use-on-chain-enroll";
 import type { Course } from "@/lib/sanity/types";
 
 interface CourseDetailClientProps {
@@ -39,8 +39,6 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [completedLessons, setCompletedLessons] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isEnrolling, setIsEnrolling] = useState(false);
-  const [enrollError, setEnrollError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
 
   const fetchEnrollmentAndProgress = useCallback(async () => {
@@ -90,44 +88,11 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
     fetchEnrollmentAndProgress();
   }, [fetchEnrollmentAndProgress]);
 
-  const handleEnroll = async () => {
-    setIsEnrolling(true);
-    setEnrollError(null);
-
-    try {
-      const supabase = createClient();
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      const user = session?.user ?? null;
-
-      if (!user) {
-        setEnrollError(tCommon("error"));
-        return;
-      }
-
-      const { error } = await supabase.from("enrollments").insert({
-        user_id: user.id,
-        course_id: course._id,
-      });
-
-      if (error) {
-        if (error.code === "23505") {
-          // Already enrolled (unique constraint violation)
-          setIsEnrolled(true);
-        } else {
-          setEnrollError(tCommon("error"));
-        }
-        return;
-      }
-
-      setIsEnrolled(true);
-    } catch {
-      setEnrollError(tCommon("error"));
-    } finally {
-      setIsEnrolling(false);
-    }
-  };
+  const { isEnrolling, handleEnroll, enrollError } = useOnChainEnroll({
+    courseId: course._id,
+    userId,
+    onSuccess: () => setIsEnrolled(true),
+  });
 
   const completedCount = completedLessons.length;
   const isComplete = completedCount === totalLessons && totalLessons > 0;
@@ -247,7 +212,9 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                   )}
                 </Button>
                 {enrollError && (
-                  <p className="text-sm text-danger">{enrollError}</p>
+                  <p role="alert" className="text-sm text-destructive">
+                    {t("enrollFailed")}
+                  </p>
                 )}
               </>
             ) : !isLoading ? (
@@ -275,16 +242,6 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
             </div>
             <ProgressBar value={completedCount} max={totalLessons} showLabel />
           </div>
-        )}
-
-        {/* NFT Certificate Minting */}
-        {isEnrolled && userId && (
-          <CourseCompletionMint
-            courseId={course._id}
-            courseTitle={course.title}
-            userId={userId}
-            totalLessons={totalLessons}
-          />
         )}
       </div>
 

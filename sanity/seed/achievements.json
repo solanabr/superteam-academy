@@ -5,7 +5,10 @@
     "name": "First Steps",
     "description": "Complete your first lesson",
     "icon": "footprints",
-    "category": "progress"
+    "category": "progress",
+    "xpReward": 50,
+    "maxSupply": 0,
+    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-first-steps"
   },
   {
     "_id": "achievement-course-completer",
@@ -13,7 +16,10 @@
     "name": "Course Completer",
     "description": "Complete an entire course",
     "icon": "graduation-cap",
-    "category": "progress"
+    "category": "progress",
+    "xpReward": 200,
+    "maxSupply": 0,
+    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-course-completer"
   },
   {
     "_id": "achievement-speed-runner",
@@ -21,7 +27,10 @@
     "name": "Speed Runner",
     "description": "Complete a course in under 24 hours",
     "icon": "zap",
-    "category": "progress"
+    "category": "progress",
+    "xpReward": 150,
+    "maxSupply": 0,
+    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-speed-runner"
   },
   {
     "_id": "achievement-week-warrior",
@@ -29,7 +38,10 @@
     "name": "Week Warrior",
     "description": "Maintain a 7-day learning streak",
     "icon": "flame",
-    "category": "streaks"
+    "category": "streaks",
+    "xpReward": 100,
+    "maxSupply": 0,
+    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-week-warrior"
   },
   {
     "_id": "achievement-monthly-master",
@@ -37,7 +49,10 @@
     "name": "Monthly Master",
     "description": "Maintain a 30-day learning streak",
     "icon": "crown",
-    "category": "streaks"
+    "category": "streaks",
+    "xpReward": 300,
+    "maxSupply": 0,
+    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-monthly-master"
   },
   {
     "_id": "achievement-consistency-king",
@@ -45,7 +60,10 @@
     "name": "Consistency King",
     "description": "Maintain a 100-day learning streak",
     "icon": "trophy",
-    "category": "streaks"
+    "category": "streaks",
+    "xpReward": 500,
+    "maxSupply": 0,
+    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-consistency-king"
   },
   {
     "_id": "achievement-rust-rookie",
@@ -53,7 +71,10 @@
     "name": "Rust Rookie",
     "description": "Complete your first Rust challenge",
     "icon": "code",
-    "category": "skills"
+    "category": "skills",
+    "xpReward": 150,
+    "maxSupply": 0,
+    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-rust-rookie"
   },
   {
     "_id": "achievement-anchor-expert",
@@ -61,7 +82,10 @@
     "name": "Anchor Expert",
     "description": "Complete all Anchor framework lessons",
     "icon": "anchor",
-    "category": "skills"
+    "category": "skills",
+    "xpReward": 300,
+    "maxSupply": 0,
+    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-anchor-expert"
   },
   {
     "_id": "achievement-full-stack-solana",
@@ -69,7 +93,10 @@
     "name": "Full Stack Solana",
     "description": "Complete all courses in the Solana Developer Path",
     "icon": "layers",
-    "category": "skills"
+    "category": "skills",
+    "xpReward": 500,
+    "maxSupply": 0,
+    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-full-stack-solana"
   },
   {
     "_id": "achievement-early-adopter",
@@ -77,7 +104,10 @@
     "name": "Early Adopter",
     "description": "Join the platform during the first month",
     "icon": "sparkles",
-    "category": "special"
+    "category": "special",
+    "xpReward": 1000,
+    "maxSupply": 1000,
+    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-early-adopter"
   },
   {
     "_id": "achievement-bug-hunter",
@@ -85,7 +115,10 @@
     "name": "Bug Hunter",
     "description": "Report a verified bug in the platform",
     "icon": "bug",
-    "category": "special"
+    "category": "special",
+    "xpReward": 250,
+    "maxSupply": 0,
+    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-bug-hunter"
   },
   {
     "_id": "achievement-perfect-score",
@@ -93,6 +126,9 @@
     "name": "Perfect Score",
     "description": "Complete all challenges in a course with no wrong attempts",
     "icon": "star",
-    "category": "special"
+    "category": "special",
+    "xpReward": 100,
+    "maxSupply": 0,
+    "metadataUri": "https://superteam-academy.vercel.app/api/achievements/metadata?id=achievement-perfect-score"
   }
 ]

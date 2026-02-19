@@ -101,12 +101,11 @@ export function ProfileTab({
         data: { publicUrl },
       } = supabase.storage.from("avatars").getPublicUrl(path);
 
-      // Append cache-buster so browser shows the new image immediately
-      const url = `${publicUrl}?t=${Date.now()}`;
-
+      // Store the stable public URL in the DB; use a cache-busted URL only for
+      // immediate UI display so the browser doesn't serve the stale cached image.
       const { error: updateError } = await supabase
         .from("profiles")
-        .update({ avatar_url: url })
+        .update({ avatar_url: publicUrl })
         .eq("id", user.id);
 
       if (updateError) {
@@ -114,7 +113,7 @@ export function ProfileTab({
         return;
       }
 
-      onAvatarChange(url);
+      onAvatarChange(`${publicUrl}?t=${Date.now()}`);
       setSaveMessage({ type: "success", text: t("avatarUpdated") });
       setTimeout(() => setSaveMessage(null), 3000);
     } catch {
@@ -137,7 +136,16 @@ export function ProfileTab({
       } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Clear the URL from the profile (don't bother deleting from storage)
+      // If the current avatar is a Supabase Storage upload, delete the file too.
+      // Google URLs (lh3.googleusercontent.com) have nothing to delete in storage.
+      if (avatarUrl?.includes("/storage/v1/object/public/avatars/")) {
+        const marker = "/storage/v1/object/public/avatars/";
+        const storagePath = avatarUrl
+          .slice(avatarUrl.indexOf(marker) + marker.length)
+          .split("?")[0];
+        await supabase.storage.from("avatars").remove([storagePath]);
+      }
+
       const { error } = await supabase
         .from("profiles")
         .update({ avatar_url: null })

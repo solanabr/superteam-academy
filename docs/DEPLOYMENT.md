@@ -47,21 +47,25 @@ Add all environment variables in **Vercel → Project → Settings → Environme
 
 #### Required Variables
 
-| Variable                        | Type            | Notes                                                                          |
-| ------------------------------- | --------------- | ------------------------------------------------------------------------------ |
-| `NEXT_PUBLIC_SUPABASE_URL`      | Public          | Bundled into client JS                                                         |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public          | Bundled into client JS                                                         |
-| `SUPABASE_SERVICE_ROLE_KEY`     | **Server-only** | Never exposed to browser                                                       |
-| `NEXT_PUBLIC_SANITY_PROJECT_ID` | Public          | Bundled into client JS                                                         |
-| `NEXT_PUBLIC_SANITY_DATASET`    | Public          | Usually `production`                                                           |
-| `NEXT_PUBLIC_SOLANA_RPC_URL`    | Public          | `https://api.devnet.solana.com`                                                |
-| `NEXT_PUBLIC_SOLANA_NETWORK`    | Public          | `devnet`                                                                       |
-| `NEXT_PUBLIC_APP_URL`           | Public          | Your Vercel URL (e.g., `https://solarium.courses`)                             |
-| `NEXT_PUBLIC_PROGRAM_ID`        | Public          | Program ID from `anchor deploy` (see [DEPLOY-PROGRAM.md](./DEPLOY-PROGRAM.md)) |
-| `NEXT_PUBLIC_XP_MINT_ADDRESS`   | Public          | XP mint pubkey from `initialize.ts` output                                     |
-| `NEXT_PUBLIC_BACKEND_SIGNER`    | Public          | Authority pubkey (same as deployer on devnet)                                  |
-| `NEXT_PUBLIC_BUILD_SERVER_URL`  | Public          | Cloud Run service URL (e.g., `https://academy-build-server-HASH.a.run.app`)    |
-| `BUILD_SERVER_API_KEY`          | **Server-only** | Same value as `ACADEMY_API_KEY` on Cloud Run                                   |
+| Variable                        | Type            | Notes                                                                                                                 |
+| ------------------------------- | --------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`      | Public          | Bundled into client JS                                                                                                |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Public          | Bundled into client JS                                                                                                |
+| `SUPABASE_SERVICE_ROLE_KEY`     | **Server-only** | Never exposed to browser                                                                                              |
+| `NEXT_PUBLIC_SANITY_PROJECT_ID` | Public          | Bundled into client JS                                                                                                |
+| `NEXT_PUBLIC_SANITY_DATASET`    | Public          | Usually `production`                                                                                                  |
+| `NEXT_PUBLIC_SOLANA_RPC_URL`    | Public          | `https://api.devnet.solana.com`                                                                                       |
+| `NEXT_PUBLIC_SOLANA_NETWORK`    | Public          | `devnet`                                                                                                              |
+| `NEXT_PUBLIC_APP_URL`           | Public          | Your Vercel URL (e.g., `https://solarium.courses`)                                                                    |
+| `NEXT_PUBLIC_PROGRAM_ID`        | Public          | Program ID from `anchor deploy` (see [DEPLOY-PROGRAM.md](./DEPLOY-PROGRAM.md))                                        |
+| `NEXT_PUBLIC_XP_MINT_ADDRESS`   | Public          | XP mint pubkey from `initialize.ts` output                                                                            |
+| `NEXT_PUBLIC_BACKEND_SIGNER`    | Public          | Authority pubkey (same as deployer on devnet)                                                                         |
+| `NEXT_PUBLIC_BUILD_SERVER_URL`  | Public          | Cloud Run service URL (e.g., `https://academy-build-server-HASH.a.run.app`)                                           |
+| `BUILD_SERVER_API_KEY`          | **Server-only** | Same value as `ACADEMY_API_KEY` on Cloud Run                                                                          |
+| `PROGRAM_AUTHORITY_SECRET`      | **Server-only** | Base58 private key of the Config PDA authority — required for admin panel on-chain deployments                        |
+| `BACKEND_SIGNER_SECRET`         | **Server-only** | Base58 private key of the backend signer registered in `Config.backend_signer` — signs lesson completion transactions |
+| `ADMIN_SECRET`                  | **Server-only** | Admin panel password (min 32 chars). Required to access `/{locale}/admin`                                             |
+| `SANITY_ADMIN_TOKEN`            | **Server-only** | Sanity write token — required to update `onChainStatus` in Sanity after on-chain deployment                           |
 
 #### Optional Variables
 

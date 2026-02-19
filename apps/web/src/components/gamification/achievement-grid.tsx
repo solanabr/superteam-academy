@@ -5,11 +5,7 @@ import { useTranslations } from "next-intl";
 import { CaretDown, Check, CheckSquare, Square } from "@phosphor-icons/react";
 import type { Achievement } from "@superteam-lms/types";
 import { AchievementCard } from "./achievement-card";
-import {
-  ACHIEVEMENT_CATALOG,
-  ACHIEVEMENT_CATEGORIES,
-  type AchievementCategory,
-} from "@/lib/gamification";
+import type { AchievementDefinition } from "@/lib/gamification";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -20,27 +16,34 @@ import { cn } from "@/lib/utils";
 
 interface AchievementGridProps {
   unlockedAchievements: Achievement[];
+  /** Deployed achievement definitions fetched from Sanity — only these are shown. */
+  catalog: AchievementDefinition[];
   className?: string;
 }
 
 export function AchievementGrid({
   unlockedAchievements,
+  catalog,
   className,
 }: AchievementGridProps) {
   const t = useTranslations("gamification");
-  const [activeCategory, setActiveCategory] = useState<
-    AchievementCategory | "all"
-  >("all");
+  const [activeCategory, setActiveCategory] = useState<string>("all");
   const [showLocked, setShowLocked] = useState(false);
 
   const unlockedMap = new Map(
     unlockedAchievements.map((a) => [a.id, a.unlockedAt])
   );
 
+  // Derive categories from the live catalog (no hardcoded list)
+  const categories = [
+    "all",
+    ...Array.from(new Set(catalog.map((a) => a.category))).sort(),
+  ];
+
   const filtered =
     activeCategory === "all"
-      ? ACHIEVEMENT_CATALOG
-      : ACHIEVEMENT_CATALOG.filter((a) => a.category === activeCategory);
+      ? catalog
+      : catalog.filter((a) => a.category === activeCategory);
 
   const visible = showLocked
     ? filtered
@@ -54,16 +57,15 @@ export function AchievementGrid({
     return 0;
   });
 
-  const totalUnlocked = unlockedAchievements.length;
-  const totalAchievements = ACHIEVEMENT_CATALOG.length;
+  const totalUnlocked = unlockedAchievements.filter((a) =>
+    catalog.some((c) => c.id === a.id)
+  ).length;
+  const totalAchievements = catalog.length;
 
   const categoryLabel =
-    activeCategory === "all" ? t("all") : t(`category_${activeCategory}`);
-
-  const categories: (AchievementCategory | "all")[] = [
-    "all",
-    ...ACHIEVEMENT_CATEGORIES,
-  ];
+    activeCategory === "all"
+      ? t("all")
+      : t(`category_${activeCategory}` as Parameters<typeof t>[0]);
 
   return (
     <div className={cn("space-y-4", className)}>
@@ -100,7 +102,9 @@ export function AchievementGrid({
                   )}
                   aria-hidden="true"
                 />
-                {cat === "all" ? t("all") : t(`category_${cat}`)}
+                {cat === "all"
+                  ? t("all")
+                  : t(`category_${cat}` as Parameters<typeof t>[0])}
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>
