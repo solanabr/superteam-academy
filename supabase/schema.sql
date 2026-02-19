@@ -61,7 +61,8 @@ CREATE TABLE xp_transactions (
   amount INTEGER NOT NULL,
   reason TEXT NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  tx_signature TEXT
+  tx_signature TEXT,
+  idempotency_key TEXT
 );
 
 CREATE TABLE user_achievements (
@@ -150,6 +151,9 @@ CREATE INDEX idx_user_progress_user_id ON user_progress(user_id);
 CREATE INDEX idx_user_progress_course_id ON user_progress(course_id);
 CREATE INDEX idx_xp_transactions_user_id ON xp_transactions(user_id);
 CREATE INDEX idx_xp_transactions_created_at ON xp_transactions(created_at);
+CREATE UNIQUE INDEX idx_xp_transactions_idempotency
+  ON xp_transactions (user_id, idempotency_key)
+  WHERE idempotency_key IS NOT NULL;
 CREATE INDEX idx_user_achievements_user_id ON user_achievements(user_id);
 CREATE INDEX idx_certificates_user_id ON certificates(user_id);
 CREATE INDEX idx_user_xp_total_xp ON user_xp(total_xp DESC);
@@ -279,10 +283,13 @@ CREATE POLICY "Anyone can read nft metadata"
 -- Award XP (called from API routes with service_role key only)
 -- Also handles streak tracking: increments current_streak if last activity was
 -- yesterday, resets to 1 if gap > 1 day, and updates longest_streak.
+-- p_idempotency_key: when provided, uses ON CONFLICT DO NOTHING to prevent
+-- double-award from concurrent retries (race-safe deduplication).
 CREATE OR REPLACE FUNCTION award_xp(
   p_user_id UUID,
   p_amount INTEGER,
-  p_reason TEXT
+  p_reason TEXT,
+  p_idempotency_key TEXT DEFAULT NULL
 ) RETURNS void AS $$
 DECLARE
   v_last_activity DATE;
@@ -291,8 +298,19 @@ DECLARE
   v_new_streak INTEGER;
   v_new_longest INTEGER;
 BEGIN
-  INSERT INTO xp_transactions (user_id, amount, reason)
-  VALUES (p_user_id, p_amount, p_reason);
+  IF p_idempotency_key IS NOT NULL THEN
+    INSERT INTO xp_transactions (user_id, amount, reason, idempotency_key)
+    VALUES (p_user_id, p_amount, p_reason, p_idempotency_key)
+    ON CONFLICT (user_id, idempotency_key) WHERE idempotency_key IS NOT NULL DO NOTHING;
+
+    -- If nothing was inserted (duplicate), skip the XP update too
+    IF NOT FOUND THEN
+      RETURN;
+    END IF;
+  ELSE
+    INSERT INTO xp_transactions (user_id, amount, reason)
+    VALUES (p_user_id, p_amount, p_reason);
+  END IF;
 
   -- Get current streak state before updating
   SELECT last_activity_date, current_streak, longest_streak
