@@ -1,0 +1,721 @@
+@import "tailwindcss";
+
+/* ============================================
+   Superteam Brazil — Official Color Palette
+   Source: ST Brazil bounty design system image
+
+   PALETTE OVERVIEW:
+   ├── Yellow/Gold: Warm accent, CTAs
+   ├── Green (3 shades): Primary brand, headers
+   ├── Neutrals: Cream (light) / Deep green (dark)
+   └── Text: Dark green on cream, cream on dark green
+   ============================================ */
+
+/* ── Palette Source Values (from design image) ── */
+:root {
+  /* Main: Yellow / Gold */
+  --palette-yellow-base: #c8b830;
+  --palette-yellow-surface: #ede08a;
+  --palette-yellow-hover: #d4c23d;
+  --palette-yellow-pressed: #b8a028;
+  --palette-yellow-border: #c4ba88;
+
+  /* Main: Green (medium) — darkened from #5b9a4b for WCAG AA contrast with white text (4.79:1) */
+  --palette-green-base: #448038;
+  --palette-green-surface: #3d7a4a;
+  --palette-green-hover: #3a7232;
+  --palette-green-pressed: #306028;
+  --palette-green-border: #4a7a52;
+
+  /* Main: Green (dark) */
+  --palette-green-dark-base: #2d6b42;
+  --palette-green-dark-surface: #2a5a38;
+  --palette-green-dark-hover: #266040;
+  --palette-green-dark-pressed: #204e30;
+  --palette-green-dark-border: #3a6b4a;
+
+  /* Main: Green (darkest) / BG for dark mode */
+  --palette-green-darkest-bg: #1e3a28;
+  --palette-green-darkest-surface: #2a4d38;
+  --palette-green-darkest-hover: #243f2e;
+  --palette-green-darkest-border: #304a38;
+
+  /* Neutrals: Cream / Warm whites */
+  --palette-neutral-bg: #f2ebd4;
+  --palette-neutral-surface: #e8e0c6;
+  --palette-neutral-surface2: #ddd5b2;
+  --palette-neutral-border: #c8be8c;
+
+  /* Text */
+  --palette-text-on-light: #1a3020;
+  --palette-text-on-dark: #ede6d2;
+}
+
+/* ── Dark Mode (default) ── */
+:root {
+  /* Backgrounds */
+  --background: var(--palette-green-darkest-bg);
+  --foreground: var(--palette-text-on-dark);
+  --card: var(--palette-green-darkest-surface);
+  --card-foreground: var(--palette-text-on-dark);
+  --popover: var(--palette-green-darkest-surface);
+  --popover-foreground: var(--palette-text-on-dark);
+
+  /* Borders / Input */
+  --border: rgba(237, 230, 210, 0.1);
+  --input: rgba(237, 230, 210, 0.1);
+  --ring: var(--palette-green-base);
+
+  /* Brand: Green (primary) */
+  --primary: var(--palette-green-base);
+  --primary-foreground: #ffffff;
+
+  /* Brand: Gold (accent) */
+  --secondary: var(--palette-yellow-base);
+  --secondary-foreground: var(--palette-green-darkest-bg);
+
+  /* Muted */
+  --muted: var(--palette-green-darkest-hover);
+  --muted-foreground: #aabfac;
+
+  /* Accent */
+  --accent: var(--palette-yellow-hover);
+  --accent-foreground: var(--palette-green-darkest-bg);
+
+  /* Destructive */
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+
+  /* Superteam Green brand scale */
+  --st-green: var(--palette-green-base);
+  --st-green-light: var(--palette-green-hover);
+  --st-green-dark: var(--palette-green-dark-base);
+
+  /* Gold scale */
+  --brazil-gold: var(--palette-yellow-base);
+  --brazil-gold-light: var(--palette-yellow-hover);
+  --brazil-gold-dark: var(--palette-yellow-pressed);
+
+  /* Supporting tones */
+  --brazil-green: #2d9b6e;
+  --brazil-teal: #43b5a0;
+  --brazil-coral: #d4755e;
+  --brazil-blue: #1a5c7a;
+  --brazil-cream: var(--palette-text-on-dark);
+
+  /* Gamification */
+  --xp-color: var(--palette-yellow-base);
+  --streak-color: #ef4444;
+  --level-color: var(--palette-green-base);
+  --achievement-color: var(--palette-yellow-hover);
+
+  /* Radius */
+  --radius: 0.75rem;
+
+  /* Sidebar */
+  --sidebar-background: var(--palette-green-darkest-bg);
+  --sidebar-foreground: var(--palette-text-on-dark);
+}
+
+/* ── Light Mode ── */
+.light {
+  --background: var(--palette-neutral-bg);
+  --foreground: var(--palette-text-on-light);
+  --card: var(--palette-neutral-surface);
+  --card-foreground: var(--palette-text-on-light);
+  --popover: var(--palette-neutral-surface);
+  --popover-foreground: var(--palette-text-on-light);
+  --border: rgba(26, 48, 32, 0.12);
+  --input: rgba(26, 48, 32, 0.12);
+  --ring: var(--palette-green-dark-base);
+  --muted: var(--palette-neutral-surface2);
+  --muted-foreground: #5a6b5c;
+  --primary: var(--palette-green-dark-base);
+  --primary-foreground: #ffffff;
+  --secondary: var(--palette-yellow-pressed);
+  --secondary-foreground: #ffffff;
+  --accent: var(--palette-yellow-base);
+  --accent-foreground: var(--palette-text-on-light);
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --st-green: var(--palette-green-dark-base);
+  --st-green-light: var(--palette-green-base);
+  --st-green-dark: var(--palette-green-dark-pressed);
+  --brazil-gold: var(--palette-yellow-pressed);
+  --brazil-gold-light: var(--palette-yellow-base);
+  --brazil-gold-dark: var(--palette-yellow-pressed);
+  --sidebar-background: var(--palette-neutral-bg);
+  --sidebar-foreground: var(--palette-text-on-light);
+}
+
+/* ── Tailwind v4 Theme ── */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Brand green */
+  --color-st-green: var(--st-green);
+  --color-st-green-light: var(--st-green-light);
+  --color-st-green-dark: var(--st-green-dark);
+
+  /* Gold accent */
+  --color-brazil-gold: var(--brazil-gold);
+  --color-brazil-gold-light: var(--brazil-gold-light);
+  --color-brazil-gold-dark: var(--brazil-gold-dark);
+
+  /* Supporting */
+  --color-brazil-green: var(--brazil-green);
+  --color-brazil-teal: var(--brazil-teal);
+  --color-brazil-coral: var(--brazil-coral);
+  --color-brazil-blue: var(--brazil-blue);
+  --color-brazil-cream: var(--brazil-cream);
+
+  /* Gamification */
+  --color-xp: var(--xp-color);
+  --color-streak: var(--streak-color);
+  --color-level: var(--level-color);
+  --color-achievement: var(--achievement-color);
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+
+  /* Fonts */
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-heading: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  /* Accordion animations */
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+}
+
+/* ── Base Styles ── */
+* {
+  border-color: var(--border);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* Focus-visible ring for keyboard navigation */
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Respect reduced-motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(237, 230, 210, 0.15);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(237, 230, 210, 0.25);
+}
+
+.light ::-webkit-scrollbar-thumb {
+  background: rgba(26, 48, 32, 0.15);
+}
+
+.light ::-webkit-scrollbar-thumb:hover {
+  background: rgba(26, 48, 32, 0.25);
+}
+
+/* Glassmorphic card */
+.glass {
+  background: rgba(42, 77, 56, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(237, 230, 210, 0.08);
+}
+
+.light .glass {
+  background: rgba(232, 224, 198, 0.8);
+  border: 1px solid rgba(26, 48, 32, 0.08);
+}
+
+/* Gold hover gradient (Superteam Brazil signature) */
+.hover-gold {
+  transition: all 0.3s ease;
+}
+
+.hover-gold:hover {
+  border-color: transparent;
+  background-image: linear-gradient(var(--card), var(--card)),
+    linear-gradient(144.34deg, var(--palette-yellow-hover) -29.96%, var(--palette-yellow-base) 131.56%);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+}
+
+/* Gradient text */
+.text-gradient-brand {
+  background: linear-gradient(135deg, var(--st-green) 0%, var(--brazil-teal) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-gold {
+  background: linear-gradient(135deg, var(--brazil-gold-light) 0%, var(--brazil-gold) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Animations ── */
+@keyframes accordion-down {
+  from { height: 0; }
+  to { height: var(--radix-accordion-content-height); }
+}
+
+@keyframes accordion-up {
+  from { height: var(--radix-accordion-content-height); }
+  to { height: 0; }
+}
+
+@keyframes xp-gain {
+  0% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-24px); }
+}
+
+.animate-xp-gain {
+  animation: xp-gain 1s ease-out forwards;
+}
+
+@keyframes flame-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.animate-flame {
+  animation: flame-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes notification-slide-in {
+  0% { opacity: 0; transform: translateX(100%); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+.animate-notification-in {
+  animation: notification-slide-in 0.3s ease-out forwards;
+}
+
+/* Gamification animations */
+@keyframes celebration-bounce {
+  0% { opacity: 0; transform: scale(0); }
+  60% { opacity: 1; transform: scale(1.2); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.animate-celebration-bounce {
+  animation: celebration-bounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes confetti-fall {
+  0% { opacity: 1; transform: translateY(-10px) rotate(0deg); }
+  100% { opacity: 0; transform: translateY(400px) rotate(720deg); }
+}
+
+.animate-confetti {
+  animation: confetti-fall var(--confetti-duration, 3s) ease-in forwards;
+  animation-delay: var(--confetti-delay, 0s);
+}
+
+@keyframes combo-pulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(200, 184, 48, 0.4); }
+  50% { transform: scale(1.05); box-shadow: 0 0 12px 4px rgba(200, 184, 48, 0.2); }
+}
+
+.animate-combo-pulse {
+  animation: combo-pulse 2s ease-in-out infinite;
+}
+
+@keyframes goal-complete {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+
+.animate-goal-complete {
+  animation: goal-complete 0.3s ease-out;
+}
+
+@keyframes streak-danger-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.animate-streak-danger {
+  animation: streak-danger-pulse 1.5s ease-in-out infinite;
+}
+
+/* ── Micro-interaction Animations ── */
+
+/* Shimmer sweep on active progress bars */
+@keyframes progress-shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.progress-bar-animated {
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-bar-animated::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.15) 50%,
+    transparent 100%
+  );
+  animation: progress-shimmer 2.5s ease-in-out infinite;
+}
+
+/* Glow pulse for claimed achievement hover */
+@keyframes achievement-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(212, 194, 61, 0); }
+  50% { box-shadow: 0 0 12px 2px rgba(212, 194, 61, 0.15); }
+}
+
+.achievement-hover-glow:hover {
+  animation: achievement-glow 2s ease-in-out infinite;
+}
+
+/* Page transition — subtle fade for route navigation */
+@keyframes page-enter {
+  from { opacity: 0.7; }
+  to { opacity: 1; }
+}
+
+.animate-page-enter {
+  animation: page-enter 0.15s ease-out;
+}
+
+/* ── Landing Page Animations ── */
+
+/* Hero badge shimmer sweep */
+@keyframes shimmer-sweep {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.animate-shimmer {
+  background-size: 200% 100%;
+  animation: shimmer-sweep 3s ease-in-out infinite;
+}
+
+/* Animated gradient text — hero title keyword highlight */
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.text-gradient-animated {
+  background: linear-gradient(
+    90deg,
+    var(--brazil-gold) 0%,
+    var(--st-green) 25%,
+    var(--brazil-teal) 50%,
+    var(--brazil-gold) 75%,
+    var(--st-green) 100%
+  );
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradient-shift 6s ease-in-out infinite;
+}
+
+/* Pulsing glow for CTA and primary buttons — uses filter so box-shadow stays free for 3D ledge */
+@keyframes glow-pulse {
+  0%, 100% { filter: drop-shadow(0 0 12px rgba(68, 128, 56, 0.25)); }
+  50% { filter: drop-shadow(0 0 28px rgba(68, 128, 56, 0.45)); }
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 3s ease-in-out infinite;
+}
+
+/* Animated border gradient — cards */
+@keyframes border-rotate {
+  0% { --border-angle: 0deg; }
+  100% { --border-angle: 360deg; }
+}
+
+@property --border-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.animate-border-glow {
+  animation: border-rotate 4s linear infinite;
+  border-image: conic-gradient(
+    from var(--border-angle),
+    var(--brazil-gold) 0%,
+    var(--st-green) 33%,
+    var(--brazil-teal) 66%,
+    var(--brazil-gold) 100%
+  ) 1;
+}
+
+/* Icon bounce on hover */
+@keyframes icon-bounce {
+  0%, 100% { transform: translateY(0) scale(1); }
+  25% { transform: translateY(-6px) scale(1.15); }
+  50% { transform: translateY(-2px) scale(1.05); }
+}
+
+.group:hover .animate-icon-bounce {
+  animation: icon-bounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Marquee scroll for partner logos */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  animation: marquee 25s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+/* Stat bar pulse on viewport entry */
+@keyframes stat-pop {
+  0% { transform: scale(0.8); opacity: 0; }
+  60% { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.animate-stat-pop {
+  animation: stat-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Hover card tilt glow */
+.card-hover-glow {
+  position: relative;
+  overflow: hidden;
+}
+
+.card-hover-glow::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(200, 184, 48, 0.08) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.card-hover-glow:hover::before {
+  opacity: 1;
+}
+
+/* Typewriter cursor blink */
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.animate-cursor-blink::after {
+  content: "|";
+  animation: cursor-blink 0.8s step-end infinite;
+  color: var(--brazil-gold);
+  font-weight: 200;
+}
+
+/* Floating gradient orb background */
+@keyframes orb-float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(30px, -20px) scale(1.05); }
+  50% { transform: translate(-20px, 20px) scale(0.95); }
+  75% { transform: translate(20px, 10px) scale(1.02); }
+}
+
+.animate-orb {
+  animation: orb-float 20s ease-in-out infinite;
+}
+
+.animate-orb-delayed {
+  animation: orb-float 25s ease-in-out infinite;
+  animation-delay: -10s;
+}
+
+/* ── Landing Page Utilities ── */
+
+/* Grid background — dots */
+.bg-grid-dots {
+  background-image: radial-gradient(circle, rgba(237, 230, 210, 0.06) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.light .bg-grid-dots {
+  background-image: radial-gradient(circle, rgba(26, 48, 32, 0.06) 1px, transparent 1px);
+}
+
+/* Grid background — lines */
+.bg-grid-lines {
+  background-image:
+    linear-gradient(rgba(237, 230, 210, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(237, 230, 210, 0.08) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+.light .bg-grid-lines {
+  background-image:
+    linear-gradient(rgba(26, 48, 32, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(26, 48, 32, 0.08) 1px, transparent 1px);
+}
+
+/* 3D perspective container */
+.perspective-container {
+  perspective: 1000px;
+}
+
+/* ── Certificate Premium Effects ── */
+
+/* Holographic shimmer sweep across certificate */
+@keyframes cert-holo-sweep {
+  0% { transform: translateX(-100%) rotate(-15deg); }
+  100% { transform: translateX(200%) rotate(-15deg); }
+}
+
+.cert-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.cert-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    rgba(212, 194, 61, 0.06) 45%,
+    rgba(67, 181, 160, 0.08) 50%,
+    rgba(212, 194, 61, 0.06) 55%,
+    transparent 60%
+  );
+  animation: cert-holo-sweep 6s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Spinning conic-gradient border for certificate */
+.cert-border-animated {
+  position: relative;
+  z-index: 0;
+}
+.cert-border-animated::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 1rem;
+  padding: 2px;
+  background: conic-gradient(
+    from var(--border-angle),
+    #e8cc4a 0%,
+    #d4b83d 20%,
+    #346b4a 40%,
+    #43b5a0 60%,
+    #d4b83d 80%,
+    #e8cc4a 100%
+  );
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  animation: border-rotate 4s linear infinite;
+  z-index: -1;
+}
+.cert-border-animated::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: calc(1rem + 4px);
+  background: conic-gradient(
+    from var(--border-angle),
+    #e8cc4a 0%,
+    #d4b83d 20%,
+    #346b4a 40%,
+    #43b5a0 60%,
+    #d4b83d 80%,
+    #e8cc4a 100%
+  );
+  filter: blur(12px);
+  opacity: 0.3;
+  animation: border-rotate 4s linear infinite;
+  z-index: -2;
+}
+
+/* Corner ornament lines */
+.cert-corner-ornament {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+}
+.cert-corner-ornament::before,
+.cert-corner-ornament::after {
+  content: "";
+  position: absolute;
+  background: linear-gradient(90deg, var(--brazil-gold), transparent);
+  opacity: 0.4;
+}
+.cert-corner-ornament::before { width: 100%; height: 1px; }
+.cert-corner-ornament::after { width: 1px; height: 100%; }
