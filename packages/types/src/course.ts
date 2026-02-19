@@ -21,7 +21,6 @@ interface LessonBase {
   slug: string;
   order: number;
   difficulty?: Difficulty;
-  xpReward: number;
   videoUrl?: string;
 }
 
