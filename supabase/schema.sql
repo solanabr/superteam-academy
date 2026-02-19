@@ -536,7 +536,7 @@ CREATE POLICY "Users can update their own deployments"
 CREATE TABLE pending_onchain_actions (
   id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id        UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  action_type    TEXT NOT NULL CHECK (action_type IN ('achievement', 'certificate', 'course_finalize', 'xp')),
+  action_type    TEXT NOT NULL CHECK (action_type IN ('achievement', 'certificate', 'course_finalize', 'xp', 'enroll')),
   reference_id   TEXT NOT NULL,
   payload        JSONB NOT NULL,
   failed_at      TIMESTAMPTZ DEFAULT NOW(),
