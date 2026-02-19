@@ -14,15 +14,15 @@ import rehypeRaw from "rehype-raw";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { Lightning, CheckCircle, ArrowLeft } from "@phosphor-icons/react";
-import { useConnection, useWallet } from "@solana/wallet-adapter-react";
-import { Transaction } from "@solana/web3.js";
 import { Button } from "@/components/ui/button";
 import { ProgressBar } from "@/components/course/progress-bar";
 import { AuthModal } from "@/components/auth/auth-modal";
 import { dispatchXpGain } from "@/components/gamification/xp-popup";
+import { dispatchAchievementUnlock } from "@/components/gamification/achievement-popup";
+import { dispatchCertificateMinted } from "@/components/gamification/certificate-popup";
 import { trackEvent } from "@/lib/analytics";
 import { createClient } from "@/lib/supabase/client";
-import { buildEnrollInstruction } from "@/lib/solana/instructions";
+import { useOnChainEnroll } from "@/hooks/use-on-chain-enroll";
 import type { Lesson } from "@/lib/sanity/types";
 
 function CodeBlockWithCopy({
@@ -153,6 +153,8 @@ interface CompletionResponse {
   signature?: string;
   finalized?: boolean;
   finalizationSignature?: string | null;
+  credentialMinted?: boolean;
+  certificateId?: string;
   newAchievements: {
     id: string;
     name: string;
@@ -191,20 +193,22 @@ export function LessonPageClient({
 }: LessonPageClientProps) {
   const t = useTranslations("lesson");
   const tCommon = useTranslations("common");
-  const { connection } = useConnection();
-  const { publicKey, sendTransaction } = useWallet();
+  const tCourses = useTranslations("courses");
 
   const [isCompleted, setIsCompleted] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [isEnrolled, setIsEnrolled] = useState(false);
-  const [isEnrolling, setIsEnrolling] = useState(false);
   const [buildUuid, setBuildUuid] = useState<string | null>(null);
   const [programKeypairSecret, setProgramKeypairSecret] = useState<
     number[] | null
   >(null);
 
-  const tCourses = useTranslations("courses");
+  const { isEnrolling, handleEnroll, enrollError } = useOnChainEnroll({
+    courseId,
+    userId,
+    onSuccess: () => setIsEnrolled(true),
+  });
 
   // Check auth state, enrollment, and completion on mount
   useEffect(() => {
@@ -238,81 +242,6 @@ export function LessonPageClient({
     });
   }, [lesson._id, courseId]);
 
-  const handleEnroll = useCallback(async () => {
-    if (isEnrolling || isEnrolled || !userId) return;
-    setIsEnrolling(true);
-    try {
-      let onChainSignature: string | undefined;
-
-      // Attempt on-chain enrollment if wallet is connected
-      if (publicKey && sendTransaction) {
-        try {
-          const ix = buildEnrollInstruction(courseId, publicKey);
-          const tx = new Transaction().add(ix);
-          onChainSignature = await sendTransaction(tx, connection);
-          await connection.confirmTransaction(onChainSignature, "confirmed");
-          trackEvent("enrollment_onchain", {
-            courseId,
-            signature: onChainSignature,
-          });
-        } catch (err) {
-          // On-chain enrollment failed (e.g. program not deployed yet)
-          // Fall through to Supabase enrollment
-          console.warn(
-            "[enroll] On-chain enrollment failed, using Supabase fallback:",
-            err
-          );
-          onChainSignature = undefined;
-        }
-      }
-
-      if (onChainSignature) {
-        // Sync via API route — verifies tx and writes tx_signature + wallet_address
-        const res = await fetch("/api/enrollment/sync", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            courseId,
-            txSignature: onChainSignature,
-            action: "enroll",
-          }),
-        });
-        if (res.ok) {
-          setIsEnrolled(true);
-        } else {
-          // Sync failed — fall through to direct Supabase insert
-          console.warn("[enroll] Sync route failed, using direct insert");
-          const supabase = createClient();
-          const { error } = await supabase.from("enrollments").insert({
-            user_id: userId,
-            course_id: courseId,
-          });
-          if (!error || error.code === "23505") setIsEnrolled(true);
-        }
-      } else {
-        // No on-chain tx — direct Supabase enrollment
-        const supabase = createClient();
-        const { error } = await supabase.from("enrollments").insert({
-          user_id: userId,
-          course_id: courseId,
-        });
-        if (!error || error.code === "23505") setIsEnrolled(true);
-      }
-    } catch {
-      // silently fail
-    } finally {
-      setIsEnrolling(false);
-    }
-  }, [
-    userId,
-    courseId,
-    isEnrolling,
-    isEnrolled,
-    publicKey,
-    sendTransaction,
-    connection,
-  ]);
-
   const currentIndex = allLessons.findIndex((l) => l._id === lesson._id);
   const prevLesson = currentIndex > 0 ? allLessons[currentIndex - 1] : null;
   const nextLesson =
@@ -345,7 +274,16 @@ export function LessonPageClient({
             });
           }
 
+          if (result.credentialMinted && result.certificateId) {
+            dispatchCertificateMinted(result.certificateId);
+            trackEvent("certificate_minted", {
+              courseId,
+              certificateId: result.certificateId,
+            });
+          }
+
           for (const achievement of result.newAchievements) {
+            dispatchAchievementUnlock(achievement.id, achievement.name);
             trackEvent("achievement_unlocked", {
               achievementId: achievement.id,
               achievementName: achievement.name,
@@ -642,96 +580,103 @@ export function LessonPageClient({
         )}
 
       {/* Navigation + completion */}
-      <div className="flex flex-wrap items-center justify-center gap-3 border-t border-border pt-6">
-        {prevLesson && (
-          <Button variant="pushOutline" size="sm" asChild>
-            <Link
-              href={`/${locale}/courses/${courseSlug}/lessons/${prevLesson.slug}`}
-            >
-              &larr; {tCommon("previous")}
-            </Link>
-          </Button>
-        )}
+      <div className="space-y-2">
+        <div className="flex flex-wrap items-center justify-center gap-3 border-t border-border pt-6">
+          {prevLesson && (
+            <Button variant="pushOutline" size="sm" asChild>
+              <Link
+                href={`/${locale}/courses/${courseSlug}/lessons/${prevLesson.slug}`}
+              >
+                &larr; {tCommon("previous")}
+              </Link>
+            </Button>
+          )}
 
-        {userId ? (
-          isEnrolled ? (
-            <Button
-              variant={isCompleted ? "outline" : "pushSuccess"}
-              size="lg"
-              disabled={isCompleted || isCompleting}
-              onClick={() => handleComplete(lesson.xpReward)}
-              className="gap-2"
-            >
-              {isCompleting ? (
-                <>
-                  <div
-                    className="h-5 w-5 animate-spin rounded-full border-4 border-primary border-t-transparent"
+          {userId ? (
+            isEnrolled ? (
+              <Button
+                variant={isCompleted ? "outline" : "pushSuccess"}
+                size="lg"
+                disabled={isCompleted || isCompleting}
+                onClick={() => handleComplete(lesson.xpReward)}
+                className="gap-2"
+              >
+                {isCompleting ? (
+                  <>
+                    <div
+                      className="h-5 w-5 animate-spin rounded-full border-4 border-primary border-t-transparent"
+                      aria-hidden="true"
+                    />
+                    <span className="sr-only">Loading...</span>
+                  </>
+                ) : isCompleted ? (
+                  <CheckCircle
+                    size={20}
+                    weight="duotone"
+                    className="text-success"
                     aria-hidden="true"
                   />
-                  <span className="sr-only">Loading...</span>
-                </>
-              ) : isCompleted ? (
-                <CheckCircle
-                  size={20}
-                  weight="duotone"
-                  className="text-success"
-                  aria-hidden="true"
-                />
-              ) : null}
-              {isCompleted ? t("lessonComplete") : t("markComplete")}
+                ) : null}
+                {isCompleted ? t("lessonComplete") : t("markComplete")}
+              </Button>
+            ) : (
+              <Button
+                variant="push"
+                size="lg"
+                disabled={isEnrolling}
+                onClick={handleEnroll}
+                className="gap-2"
+              >
+                {isEnrolling && (
+                  <>
+                    <div
+                      className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent"
+                      aria-hidden="true"
+                    />
+                    <span className="sr-only">Loading...</span>
+                  </>
+                )}
+                {tCourses("enrollNow")}
+              </Button>
+            )
+          ) : (
+            <AuthModal
+              trigger={
+                <Button variant="pushSuccess" size="lg" className="gap-2">
+                  {t("signInToTrack")}
+                </Button>
+              }
+            />
+          )}
+
+          {nextLesson ? (
+            <Button
+              variant={isCompleted ? "push" : "pushOutline"}
+              size="sm"
+              asChild
+            >
+              <Link
+                href={`/${locale}/courses/${courseSlug}/lessons/${nextLesson.slug}`}
+              >
+                {tCommon("next")} &rarr;
+              </Link>
             </Button>
           ) : (
             <Button
-              variant="push"
-              size="lg"
-              disabled={isEnrolling}
-              onClick={handleEnroll}
-              className="gap-2"
+              variant={isCompleted ? "push" : "pushOutline"}
+              size="sm"
+              asChild
             >
-              {isEnrolling && (
-                <>
-                  <div
-                    className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent"
-                    aria-hidden="true"
-                  />
-                  <span className="sr-only">Loading...</span>
-                </>
-              )}
-              {tCourses("enrollNow")}
+              <Link href={`/${locale}/courses/${courseSlug}`}>
+                {t("lessonComplete")}
+              </Link>
             </Button>
-          )
-        ) : (
-          <AuthModal
-            trigger={
-              <Button variant="pushSuccess" size="lg" className="gap-2">
-                {t("signInToTrack")}
-              </Button>
-            }
-          />
-        )}
-
-        {nextLesson ? (
-          <Button
-            variant={isCompleted ? "push" : "pushOutline"}
-            size="sm"
-            asChild
-          >
-            <Link
-              href={`/${locale}/courses/${courseSlug}/lessons/${nextLesson.slug}`}
-            >
-              {tCommon("next")} &rarr;
-            </Link>
-          </Button>
-        ) : (
-          <Button
-            variant={isCompleted ? "push" : "pushOutline"}
-            size="sm"
-            asChild
-          >
-            <Link href={`/${locale}/courses/${courseSlug}`}>
-              {t("lessonComplete")}
-            </Link>
-          </Button>
+          )}
+        </div>
+        {enrollError && (
+          <p role="alert" className="text-center text-sm text-destructive">
+            {tCourses("enrollFailed")}
+          </p>
         )}
       </div>
     </div>
