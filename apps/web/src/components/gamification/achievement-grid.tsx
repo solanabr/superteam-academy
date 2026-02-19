@@ -34,6 +34,12 @@ export function AchievementGrid({
     unlockedAchievements.map((a) => [a.id, a.unlockedAt])
   );
 
+  const explorerUrlMap = new Map(
+    unlockedAchievements
+      .filter((a) => a.explorerUrl)
+      .map((a) => [a.id, a.explorerUrl!])
+  );
+
   // Derive categories from the live catalog (no hardcoded list)
   const categories = [
     "all",
@@ -140,6 +146,7 @@ export function AchievementGrid({
             name={def.name}
             description={def.description}
             unlockedAt={unlockedMap.get(def.id)}
+            explorerUrl={explorerUrlMap.get(def.id)}
           />
         ))}
       </div>

@@ -622,17 +622,20 @@ export async function POST(request: NextRequest) {
     if (programLive && profile?.wallet_address) {
       for (const achievement of newAchievements) {
         try {
-          await withRetry(() =>
-            awardAchievement(
-              achievement.id,
-              new PublicKey(profile.wallet_address!)
-            )
+          const { signature: achSig, assetAddress: achAsset } = await withRetry(
+            () =>
+              awardAchievement(
+                achievement.id,
+                new PublicKey(profile.wallet_address!)
+              )
           );
           const { error: unlockError } = await supabaseAdmin.rpc(
             "unlock_achievement",
             {
               p_user_id: user.id,
               p_achievement_id: achievement.id,
+              p_tx_signature: achSig,
+              p_asset_address: achAsset.toBase58(),
             }
           );
           if (unlockError) {
@@ -643,6 +646,8 @@ export async function POST(request: NextRequest) {
               {
                 achievementId: achievement.id,
                 walletAddress: profile.wallet_address,
+                txSignature: achSig,
+                assetAddress: achAsset.toBase58(),
               },
               unlockError.message
             );

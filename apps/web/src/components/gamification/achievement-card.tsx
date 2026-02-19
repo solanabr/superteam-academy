@@ -18,6 +18,7 @@ import {
   RocketLaunch,
   Bug,
   Crosshair,
+  ArrowSquareOut,
 } from "@phosphor-icons/react";
 import type { IconProps } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
@@ -45,6 +46,7 @@ interface AchievementCardProps {
   name: string;
   description: string;
   unlockedAt?: Date;
+  explorerUrl?: string;
   className?: string;
 }
 
@@ -53,24 +55,50 @@ export function AchievementCard({
   name,
   description,
   unlockedAt,
+  explorerUrl,
   className,
 }: AchievementCardProps) {
   const t = useTranslations("gamification");
   const isUnlocked = !!unlockedAt;
   const Icon = ICON_MAP[id] ?? Star;
 
+  const circleContent = (
+    <div
+      className={cn(
+        "relative mx-auto mb-2 flex h-[68px] w-[68px] items-center justify-center rounded-full border-[3px] transition-transform duration-200 hover:scale-[1.08]",
+        isUnlocked
+          ? "border-accent bg-gradient-to-br from-[#FEF3C7] to-[#FDE68A] text-accent-dark shadow-[0_4px_0_0_var(--accent-dark),0_0_16px_rgba(245,158,11,0.15)] dark:shadow-[0_4px_0_0_rgba(0,0,0,0.35),0_0_16px_rgba(251,191,36,0.15)]"
+          : "border-border bg-subtle text-text-3 opacity-40"
+      )}
+    >
+      <Icon size={28} weight="bold" aria-hidden="true" />
+      {isUnlocked && explorerUrl && (
+        <ArrowSquareOut
+          size={10}
+          weight="bold"
+          className="absolute bottom-1 right-1 opacity-0 transition-opacity group-hover:opacity-70"
+          aria-hidden="true"
+        />
+      )}
+    </div>
+  );
+
   return (
-    <div className={cn("w-[100px] text-center", className)}>
-      <div
-        className={cn(
-          "mx-auto mb-2 flex h-[68px] w-[68px] items-center justify-center rounded-full border-[3px] transition-transform duration-200 hover:scale-[1.08]",
-          isUnlocked
-            ? "border-accent bg-gradient-to-br from-[#FEF3C7] to-[#FDE68A] text-accent-dark shadow-[0_4px_0_0_var(--accent-dark),0_0_16px_rgba(245,158,11,0.15)] dark:shadow-[0_4px_0_0_rgba(0,0,0,0.35),0_0_16px_rgba(251,191,36,0.15)]"
-            : "border-border bg-subtle text-text-3 opacity-40"
-        )}
-      >
-        <Icon size={28} weight="bold" aria-hidden="true" />
-      </div>
+    <div className={cn("group w-[100px] text-center", className)}>
+      {isUnlocked && explorerUrl ? (
+        <a
+          href={explorerUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={`View ${name} achievement on Solana Explorer`}
+          title="View on Solana Explorer"
+          className="block"
+        >
+          {circleContent}
+        </a>
+      ) : (
+        circleContent
+      )}
       <p
         className={cn(
           "font-display text-[11px] font-bold leading-tight",
