@@ -17,7 +17,8 @@ type OnchainActionType =
   | "achievement"
   | "certificate"
   | "course_finalize"
-  | "xp";
+  | "xp"
+  | "enroll";
 
 // ---------------------------------------------------------------------------
 // 1. Generic retry wrapper
@@ -232,6 +233,41 @@ export async function retryPendingOnchainActions(
             p_idempotency_key: row.reference_id,
           });
           if (xpRpcError) throw new Error(xpRpcError.message);
+          break;
+        }
+
+        case "enroll": {
+          const courseId = payload.courseId as string;
+          const txSignature = payload.txSignature as string;
+          const walletAddress = payload.walletAddress as string;
+
+          // Guard: verify the EnrollmentPDA still exists before writing the DB row.
+          // If it's gone (e.g. user closed enrollment on-chain), don't create a ghost row.
+          const enrollmentAccount = await fetchEnrollment(
+            courseId,
+            wallet,
+            connection,
+            PROGRAM_ID
+          );
+          if (!enrollmentAccount) {
+            throw new Error(
+              `EnrollmentPDA not found for course ${courseId} — skipping DB sync`
+            );
+          }
+
+          const { error: upsertError } = await adminClient
+            .from("enrollments")
+            .upsert(
+              {
+                user_id: userId,
+                course_id: courseId,
+                enrolled_at: new Date().toISOString(),
+                tx_signature: txSignature,
+                wallet_address: walletAddress,
+              },
+              { onConflict: "user_id,course_id" }
+            );
+          if (upsertError) throw new Error(upsertError.message);
           break;
         }
 
