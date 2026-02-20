@@ -863,26 +863,33 @@ function AdminApiSection() {
               />
             </div>
             <div className="space-y-2">
-              <Label>newIsActive (true/false)</Label>
-              <Input
-                placeholder="true or false"
+              <Label>newIsActive</Label>
+              <Select
                 value={
                   adminForm.updateCourse.newIsActive == null
-                    ? ""
+                    ? "skip"
                     : String(adminForm.updateCourse.newIsActive)
                 }
-                onChange={(e) => {
-                  const v = e.target.value;
+                onValueChange={(v) =>
                   setAdminForm((f) => ({
                     ...f,
                     updateCourse: {
                       ...f.updateCourse,
                       newIsActive:
-                        v === "" ? null : v === "true",
+                        v === "skip" ? null : v === "true",
                     },
-                  }));
-                }}
-              />
+                  }))
+                }
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Skip (leave unchanged)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="skip">Skip (leave unchanged)</SelectItem>
+                  <SelectItem value="true">true</SelectItem>
+                  <SelectItem value="false">false</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label>newXpPerLesson</Label>
@@ -1006,10 +1013,13 @@ function AdminApiSection() {
                 }
               />
             </div>
-            <div className="space-y-2 w-24">
+          </div>
+          <div className="flex flex-wrap gap-4 items-end">
+            <div className="space-y-2 min-w-[140px] shrink-0">
               <Label>coursesCompleted</Label>
               <Input
                 type="number"
+                className="w-24"
                 value={adminForm.issueCredential.coursesCompleted}
                 onChange={(e) =>
                   setAdminForm((f) => ({
@@ -1022,10 +1032,11 @@ function AdminApiSection() {
                 }
               />
             </div>
-            <div className="space-y-2 w-24">
+            <div className="space-y-2 min-w-[80px] shrink-0">
               <Label>totalXp</Label>
               <Input
                 type="number"
+                className="w-24"
                 value={adminForm.issueCredential.totalXp}
                 onChange={(e) =>
                   setAdminForm((f) => ({

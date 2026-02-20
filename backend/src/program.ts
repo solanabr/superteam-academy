@@ -47,8 +47,16 @@ function walletFromKeypair(keypair: Keypair) {
   };
 }
 
+export function getAuthorityKeypair(): Keypair | null {
+  return getKeypair("ACADEMY_AUTHORITY_KEYPAIR");
+}
+
+export function getBackendSignerKeypair(): Keypair | null {
+  return getKeypair("ACADEMY_BACKEND_SIGNER_KEYPAIR");
+}
+
 export function getAuthorityProgram(): Program | null {
-  const keypair = getKeypair("ACADEMY_AUTHORITY_KEYPAIR");
+  const keypair = getAuthorityKeypair();
   if (!keypair) return null;
   const connection = new Connection(rpc);
   const wallet = walletFromKeypair(keypair);

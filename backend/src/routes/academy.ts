@@ -3,13 +3,23 @@ import anchor from "@coral-xyz/anchor";
 import type { BN as BNType } from "@coral-xyz/anchor";
 
 const { BN } = anchor;
-import { Keypair, PublicKey, SystemProgram } from "@solana/web3.js";
+import {
+  Keypair,
+  PublicKey,
+  SystemProgram,
+  Transaction,
+} from "@solana/web3.js";
 import {
   getAssociatedTokenAddressSync,
   createAssociatedTokenAccountInstruction,
   TOKEN_2022_PROGRAM_ID,
 } from "@solana/spl-token";
-import { getAuthorityProgram, getBackendProgram } from "../program.js";
+import {
+  getAuthorityKeypair,
+  getAuthorityProgram,
+  getBackendProgram,
+  getBackendSignerKeypair,
+} from "../program.js";
 import {
   getAchievementReceiptPda,
   getAchievementTypePda,
@@ -742,7 +752,8 @@ app.post("/reward-xp", async (c) => {
 app.post("/create-achievement-type", async (c) => {
   try {
     const program = getAuthorityProgram();
-    if (!program) {
+    const authorityKeypair = getAuthorityKeypair();
+    if (!program || !authorityKeypair) {
       return c.json(
         { error: "ACADEMY_AUTHORITY_KEYPAIR not configured" },
         500
@@ -785,7 +796,7 @@ app.post("/create-achievement-type", async (c) => {
           xpReward: number;
         }) => {
           accountsPartial: (accs: Record<string, PublicKey>) => {
-            signers: (s: Keypair[]) => { rpc: () => Promise<string> };
+            signers: (s: Keypair[]) => { transaction: () => Promise<Transaction> };
           };
         };
       }
@@ -807,9 +818,24 @@ app.post("/create-achievement-type", async (c) => {
         systemProgram: SystemProgram.programId,
       })
       .signers([collection])
-      .rpc();
+      .transaction();
+    if (!(tx instanceof Transaction)) {
+      return c.json(
+        { error: "VersionedTransaction not yet supported for create-achievement-type" },
+        500
+      );
+    }
+    tx.recentBlockhash = (
+      await program.provider.connection.getLatestBlockhash()
+    ).blockhash;
+    tx.feePayer = authorityKeypair.publicKey;
+    tx.partialSign(collection, authorityKeypair);
+    const sig = await program.provider.connection.sendRawTransaction(
+      tx.serialize()
+    );
+    await program.provider.connection.confirmTransaction(sig, "confirmed");
     return c.json({
-      tx,
+      tx: sig,
       collection: collection.publicKey.toBase58(),
     });
   } catch (err) {
@@ -820,7 +846,8 @@ app.post("/create-achievement-type", async (c) => {
 app.post("/award-achievement", async (c) => {
   try {
     const program = getBackendProgram();
-    if (!program) {
+    const backendKeypair = getBackendSignerKeypair();
+    if (!program || !backendKeypair) {
       return c.json(
         { error: "ACADEMY_BACKEND_SIGNER_KEYPAIR not configured" },
         500
@@ -898,7 +925,9 @@ app.post("/award-achievement", async (c) => {
       program.methods as unknown as {
         awardAchievement: () => {
           accountsPartial: (accs: Record<string, PublicKey>) => {
-            signers: (s: Keypair[]) => { rpc: () => Promise<string> };
+            signers: (s: Keypair[]) => {
+              transaction: () => Promise<Transaction>;
+            };
           };
         };
       }
@@ -922,8 +951,26 @@ app.post("/award-achievement", async (c) => {
         systemProgram: SystemProgram.programId,
       })
       .signers([asset])
-      .rpc();
-    return c.json({ tx, asset: asset.publicKey.toBase58() });
+      .transaction();
+    if (!(tx instanceof Transaction)) {
+      return c.json(
+        {
+          error:
+            "VersionedTransaction not yet supported for award-achievement",
+        },
+        500
+      );
+    }
+    tx.recentBlockhash = (
+      await program.provider.connection.getLatestBlockhash()
+    ).blockhash;
+    tx.feePayer = backendKeypair.publicKey;
+    tx.partialSign(asset, backendKeypair);
+    const sig = await program.provider.connection.sendRawTransaction(
+      tx.serialize()
+    );
+    await program.provider.connection.confirmTransaction(sig, "confirmed");
+    return c.json({ tx: sig, asset: asset.publicKey.toBase58() });
   } catch (err) {
     return c.json({ error: String(err) }, 500);
   }
