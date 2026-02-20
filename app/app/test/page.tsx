@@ -1561,10 +1561,7 @@ export default function TestPage() {
   return (
     <div className="min-h-screen bg-background">
       <header className="flex items-center justify-between border-b border-border px-4 py-3">
-        <div className="flex items-center gap-6">
-          <Logo />
-          <Badge variant="outline">/test</Badge>
-        </div>
+        <Logo />
         <WalletConnectButton />
       </header>
       <main className="mx-auto max-w-5xl space-y-8 p-6">
