@@ -75,7 +75,11 @@ export async function syncUserToSanity(params: {
 				patch.role = newRole;
 			}
 		}
-		await client.patch(existing._id).set(patch).commit();
+		try {
+			await client.patch(existing._id).set(patch).commit();
+		} catch (err) {
+			console.error("[sanity-users] Failed to patch user:", err);
+		}
 		return { ...existing, ...patch } as AcademyUser;
 	}
 
@@ -94,8 +98,13 @@ export async function syncUserToSanity(params: {
 		lastActiveAt: now,
 	};
 
-	const created = await client.create(doc);
-	return { ...doc, ...created } as unknown as AcademyUser;
+	try {
+		const created = await client.create(doc);
+		return { ...doc, ...created } as unknown as AcademyUser;
+	} catch (err) {
+		console.error("[sanity-users] Failed to create user:", err);
+		return null;
+	}
 }
 
 export async function getUserByAuthId(authId: string): Promise<AcademyUser | null> {
