@@ -1,0 +1,215 @@
+{
+  "navigation": {
+    "home": "Inicio",
+    "courses": "Cursos",
+    "dashboard": "Panel",
+    "leaderboard": "Clasificación",
+    "profile": "Perfil",
+    "settings": "Configuración",
+    "signIn": "Iniciar Sesión",
+    "signOut": "Cerrar Sesión",
+    "connectWallet": "Conectar Billetera",
+    "explore": "Explorar Cursos"
+  },
+  "landing": {
+    "hero": {
+      "title": "Domina el Desarrollo en Solana",
+      "subtitle": "De cero a implementar dApps listas para producción. Cursos interactivos, credenciales on-chain y una comunidad de builders.",
+      "cta": "Empezar a Aprender",
+      "ctaSecondary": "Explorar Cursos"
+    },
+    "features": {
+      "title": "Todo lo que necesitas para convertirte en desarrollador Solana",
+      "interactive": {
+        "title": "Código Interactivo",
+        "description": "Escribe, prueba y despliega programas Solana directamente en tu navegador con retroalimentación en tiempo real."
+      },
+      "credentials": {
+        "title": "Credenciales On-Chain",
+        "description": "Gana NFTs soulbound que demuestran tus habilidades. Verificables on-chain, visibles en tu billetera."
+      },
+      "xp": {
+        "title": "XP y Nivelación",
+        "description": "Gana tokens XP con cada lección. Sigue tu progreso y compite en la clasificación."
+      },
+      "community": {
+        "title": "Impulsado por la Comunidad",
+        "description": "Aprende con builders de toda América Latina y más allá. Open-source y forkable."
+      }
+    },
+    "paths": {
+      "title": "Rutas de Aprendizaje",
+      "subtitle": "Rutas estructuradas para llevarte de principiante a experto"
+    },
+    "stats": {
+      "learners": "Estudiantes Activos",
+      "courses": "Cursos",
+      "credentials": "Credenciales Emitidas",
+      "xpAwarded": "XP Otorgado"
+    },
+    "cta": {
+      "title": "¿Listo para construir en Solana?",
+      "subtitle": "Únete a miles de desarrolladores aprendiendo a construir el futuro de las finanzas.",
+      "button": "Comienza Gratis"
+    },
+    "testimonials": {
+      "title": "Amado por Builders",
+      "subtitle": "Lo que los desarrolladores dicen sobre Superteam Academy",
+      "1": {
+        "quote": "Los desafíos interactivos de código hicieron que aprender Anchor fuera mucho más fácil. Desplegué mi primer programa en una semana.",
+        "name": "Lucas M.",
+        "role": "Solana Developer, Brasil"
+      },
+      "2": {
+        "quote": "Las credenciales on-chain son un cambio radical. Puedo demostrar mis habilidades directamente desde mi wallet.",
+        "name": "Ana R.",
+        "role": "Full-stack Dev, Argentina"
+      },
+      "3": {
+        "quote": "La mejor ruta de aprendizaje estructurada de Solana que he encontrado. El sistema de XP me mantiene motivado.",
+        "name": "Pedro S.",
+        "role": "Blockchain Engineer, Portugal"
+      }
+    }
+  },
+  "courses": {
+    "catalog": {
+      "title": "Cursos",
+      "subtitle": "Cursos basados en proyectos para mejorar tus habilidades en Solana",
+      "search": "Buscar cursos...",
+      "filters": {
+        "all": "Todos",
+        "beginner": "Principiante",
+        "intermediate": "Intermedio",
+        "advanced": "Avanzado"
+      },
+      "empty": "No se encontraron cursos con estos filtros.",
+      "lessons": "lecciones",
+      "xp": "XP",
+      "enrolled": "Inscrito",
+      "completed": "Completado"
+    },
+    "detail": {
+      "enroll": "Inscribirse",
+      "continue": "Continuar Aprendiendo",
+      "completed": "Completado",
+      "prerequisite": "Prerrequisito",
+      "modules": "Módulos del Curso",
+      "whatYouLearn": "Lo que aprenderás",
+      "duration": "Duración",
+      "difficulty": "Dificultad",
+      "xpReward": "Recompensa XP",
+      "totalXp": "XP total",
+      "reviews": "Reseñas"
+    }
+  },
+  "lesson": {
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "complete": "Marcar como Completa",
+    "completed": "Completada",
+    "challenge": {
+      "title": "Desafío",
+      "run": "Ejecutar Código",
+      "submit": "Enviar",
+      "reset": "Reiniciar",
+      "hints": "Mostrar Pistas",
+      "solution": "Mostrar Solución",
+      "passed": "¡Todas las pruebas pasaron!",
+      "failed": "Algunas pruebas fallaron. Inténtalo de nuevo.",
+      "testCases": "Casos de Prueba"
+    }
+  },
+  "dashboard": {
+    "title": "Panel",
+    "welcome": "Bienvenido de vuelta",
+    "currentCourses": "Cursos Actuales",
+    "nextLesson": "Siguiente Lección",
+    "recentActivity": "Actividad Reciente",
+    "achievements": "Logros",
+    "recommended": "Recomendados",
+    "noCourses": "Aún no te has inscrito en ningún curso.",
+    "startLearning": "Empieza a Aprender"
+  },
+  "profile": {
+    "title": "Perfil",
+    "editProfile": "Editar Perfil",
+    "skills": "Habilidades",
+    "achievements": "Logros",
+    "credentials": "Credenciales",
+    "completedCourses": "Cursos Completados",
+    "memberSince": "Miembro desde",
+    "level": "Nivel",
+    "totalXp": "XP Total",
+    "streak": "Días de Racha",
+    "noCredentials": "Sin credenciales aún. Completa una ruta de curso para ganar una."
+  },
+  "leaderboard": {
+    "title": "Clasificación",
+    "subtitle": "Mejores builders clasificados por XP",
+    "weekly": "Semanal",
+    "monthly": "Mensual",
+    "allTime": "General",
+    "rank": "Posición",
+    "learner": "Estudiante",
+    "xp": "XP",
+    "level": "Nivel",
+    "you": "Tú"
+  },
+  "settings": {
+    "title": "Configuración",
+    "profile": "Perfil",
+    "account": "Cuenta",
+    "preferences": "Preferencias",
+    "privacy": "Privacidad",
+    "language": "Idioma",
+    "theme": "Tema",
+    "notifications": "Notificaciones",
+    "save": "Guardar Cambios",
+    "saved": "Cambios guardados",
+    "connectedWallets": "Billeteras Conectadas",
+    "linkWallet": "Vincular Billetera",
+    "linkGoogle": "Vincular Google",
+    "linkGithub": "Vincular GitHub",
+    "publicProfile": "Perfil Público",
+    "exportData": "Exportar Datos"
+  },
+  "certificate": {
+    "title": "Certificado de Finalización",
+    "verifyOnChain": "Verificar On-Chain",
+    "share": "Compartir",
+    "download": "Descargar",
+    "mintAddress": "Dirección de Mint",
+    "issuedTo": "Emitido a",
+    "issuedOn": "Emitido el",
+    "track": "Ruta",
+    "coursesCompleted": "Cursos Completados",
+    "totalXp": "XP Total"
+  },
+  "gamification": {
+    "xp": "XP",
+    "level": "Nivel",
+    "streak": "Racha",
+    "days": "días",
+    "achievements": "Logros",
+    "noAchievements": "Completa lecciones y cursos para ganar logros."
+  },
+  "auth": {
+    "signIn": "Iniciar Sesión",
+    "signUp": "Registrarse",
+    "signInWith": "Iniciar sesión con",
+    "orContinueWith": "o continúa con",
+    "connectWallet": "Conectar Billetera",
+    "walletRequired": "Conecta una billetera para inscribirte en cursos y recibir credenciales."
+  },
+  "common": {
+    "loading": "Cargando...",
+    "error": "Algo salió mal",
+    "retry": "Reintentar",
+    "back": "Volver",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "viewAll": "Ver Todo",
+    "comingSoon": "Próximamente"
+  }
+}

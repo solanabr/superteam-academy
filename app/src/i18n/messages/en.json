@@ -1,0 +1,215 @@
+{
+  "navigation": {
+    "home": "Home",
+    "courses": "Courses",
+    "dashboard": "Dashboard",
+    "leaderboard": "Leaderboard",
+    "profile": "Profile",
+    "settings": "Settings",
+    "signIn": "Sign In",
+    "signOut": "Sign Out",
+    "connectWallet": "Connect Wallet",
+    "explore": "Explore Courses"
+  },
+  "landing": {
+    "hero": {
+      "title": "Master Solana Development",
+      "subtitle": "From zero to deploying production-ready dApps. Interactive courses, on-chain credentials, and a community of builders.",
+      "cta": "Start Learning",
+      "ctaSecondary": "Explore Courses"
+    },
+    "features": {
+      "title": "Everything you need to become a Solana developer",
+      "interactive": {
+        "title": "Interactive Coding",
+        "description": "Write, test, and deploy Solana programs directly in your browser with real-time feedback."
+      },
+      "credentials": {
+        "title": "On-Chain Credentials",
+        "description": "Earn soulbound NFTs that prove your skills. Verifiable on-chain, visible in your wallet."
+      },
+      "xp": {
+        "title": "XP & Leveling",
+        "description": "Earn XP tokens for every lesson. Track your progress and compete on the leaderboard."
+      },
+      "community": {
+        "title": "Community Driven",
+        "description": "Learn with builders from across Latin America and beyond. Open-source and forkable."
+      }
+    },
+    "paths": {
+      "title": "Learning Paths",
+      "subtitle": "Structured tracks to take you from beginner to expert"
+    },
+    "stats": {
+      "learners": "Active Learners",
+      "courses": "Courses",
+      "credentials": "Credentials Issued",
+      "xpAwarded": "XP Awarded"
+    },
+    "cta": {
+      "title": "Ready to build on Solana?",
+      "subtitle": "Join thousands of developers learning to build the future of finance.",
+      "button": "Get Started Free"
+    },
+    "testimonials": {
+      "title": "Loved by Builders",
+      "subtitle": "See what developers are saying about Superteam Academy",
+      "1": {
+        "quote": "The interactive coding challenges made learning Anchor so much easier. I deployed my first program in a week.",
+        "name": "Lucas M.",
+        "role": "Solana Developer, Brazil"
+      },
+      "2": {
+        "quote": "On-chain credentials are a game changer. I can prove my skills directly from my wallet.",
+        "name": "Ana R.",
+        "role": "Full-stack Dev, Argentina"
+      },
+      "3": {
+        "quote": "Best structured Solana learning path I've found. The XP system keeps me motivated.",
+        "name": "Pedro S.",
+        "role": "Blockchain Engineer, Portugal"
+      }
+    }
+  },
+  "courses": {
+    "catalog": {
+      "title": "Courses",
+      "subtitle": "Project-based courses to level up your Solana skills",
+      "search": "Search courses...",
+      "filters": {
+        "all": "All",
+        "beginner": "Beginner",
+        "intermediate": "Intermediate",
+        "advanced": "Advanced"
+      },
+      "empty": "No courses found matching your filters.",
+      "lessons": "lessons",
+      "xp": "XP",
+      "enrolled": "Enrolled",
+      "completed": "Completed"
+    },
+    "detail": {
+      "enroll": "Enroll Now",
+      "continue": "Continue Learning",
+      "completed": "Completed",
+      "prerequisite": "Prerequisite",
+      "modules": "Course Modules",
+      "whatYouLearn": "What you'll learn",
+      "duration": "Duration",
+      "difficulty": "Difficulty",
+      "xpReward": "XP Reward",
+      "totalXp": "total XP",
+      "reviews": "Student Reviews"
+    }
+  },
+  "lesson": {
+    "previous": "Previous",
+    "next": "Next",
+    "complete": "Mark Complete",
+    "completed": "Completed",
+    "challenge": {
+      "title": "Challenge",
+      "run": "Run Code",
+      "submit": "Submit",
+      "reset": "Reset",
+      "hints": "Show Hints",
+      "solution": "Show Solution",
+      "passed": "All tests passed!",
+      "failed": "Some tests failed. Try again.",
+      "testCases": "Test Cases"
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome back",
+    "currentCourses": "Current Courses",
+    "nextLesson": "Next Lesson",
+    "recentActivity": "Recent Activity",
+    "achievements": "Achievements",
+    "recommended": "Recommended",
+    "noCourses": "You haven't enrolled in any courses yet.",
+    "startLearning": "Start Learning"
+  },
+  "profile": {
+    "title": "Profile",
+    "editProfile": "Edit Profile",
+    "skills": "Skills",
+    "achievements": "Achievements",
+    "credentials": "Credentials",
+    "completedCourses": "Completed Courses",
+    "memberSince": "Member since",
+    "level": "Level",
+    "totalXp": "Total XP",
+    "streak": "Day Streak",
+    "noCredentials": "No credentials yet. Complete a course track to earn one."
+  },
+  "leaderboard": {
+    "title": "Leaderboard",
+    "subtitle": "Top builders ranked by XP",
+    "weekly": "Weekly",
+    "monthly": "Monthly",
+    "allTime": "All Time",
+    "rank": "Rank",
+    "learner": "Learner",
+    "xp": "XP",
+    "level": "Level",
+    "you": "You"
+  },
+  "settings": {
+    "title": "Settings",
+    "profile": "Profile",
+    "account": "Account",
+    "preferences": "Preferences",
+    "privacy": "Privacy",
+    "language": "Language",
+    "theme": "Theme",
+    "notifications": "Notifications",
+    "save": "Save Changes",
+    "saved": "Changes saved",
+    "connectedWallets": "Connected Wallets",
+    "linkWallet": "Link Wallet",
+    "linkGoogle": "Link Google",
+    "linkGithub": "Link GitHub",
+    "publicProfile": "Public Profile",
+    "exportData": "Export Data"
+  },
+  "certificate": {
+    "title": "Certificate of Completion",
+    "verifyOnChain": "Verify On-Chain",
+    "share": "Share",
+    "download": "Download",
+    "mintAddress": "Mint Address",
+    "issuedTo": "Issued to",
+    "issuedOn": "Issued on",
+    "track": "Track",
+    "coursesCompleted": "Courses Completed",
+    "totalXp": "Total XP"
+  },
+  "gamification": {
+    "xp": "XP",
+    "level": "Level",
+    "streak": "Streak",
+    "days": "days",
+    "achievements": "Achievements",
+    "noAchievements": "Complete lessons and courses to earn achievements."
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "signInWith": "Sign in with",
+    "orContinueWith": "or continue with",
+    "connectWallet": "Connect Wallet",
+    "walletRequired": "Connect a wallet to enroll in courses and receive credentials."
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "retry": "Retry",
+    "back": "Back",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "viewAll": "View All",
+    "comingSoon": "Coming Soon"
+  }
+}
