@@ -86,6 +86,8 @@ app.use(express.static("public"));
 
 // Routes
 import authRoutes from "./routes/auth";
+import courseRoutes from "./routes/courses";
+import profileRoutes from "./routes/profile";
 import swaggerSpecs from "./swagger";
 
 // Swagger UI (available in all environments)
@@ -103,6 +105,8 @@ if (isDevelopment) {
 
 // Routes
 app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/courses", courseRoutes);
+app.use("/api/v1/profile", profileRoutes);
 
 // Root route
 app.get("/", (req: Request, res: Response) => {
