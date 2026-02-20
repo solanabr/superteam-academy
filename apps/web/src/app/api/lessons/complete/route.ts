@@ -590,14 +590,22 @@ export async function POST(request: NextRequest) {
 
     // A course is complete when the user has finished ALL its Sanity lessons
     let completedCourseCount = 0;
+    const completedCourseIds = new Set<string>();
     for (const [cid, completedCount] of courseLessonCounts) {
       const total = totalLessonsPerCourse.get(cid);
       if (total && total > 0 && completedCount >= total) {
         completedCourseCount++;
+        completedCourseIds.add(cid);
       }
     }
 
-    const completedLessonIds = (completedLessons ?? []).map((l) => l.lesson_id);
+    // Course IDs that make up the Solana Developer Path learning path
+    const SOLANA_DEV_PATH_COURSES = [
+      "course-solana-fundamentals",
+      "course-rust-for-solana",
+      "course-anchor-framework",
+      "course-solana-frontend",
+    ];
 
     const { data: userProfile } = await supabaseAdmin
       .from("profiles")
@@ -616,22 +624,14 @@ export async function POST(request: NextRequest) {
         completedLessons: completedLessonCount,
         completedCourses: completedCourseCount,
         currentStreak: xpData?.current_streak ?? 0,
-        hasCompletedRustLesson: completedLessonIds.some(
-          (id) =>
-            id.startsWith("rust-") ||
-            id.includes("-rust-") ||
-            id.endsWith("-rust")
+        hasCompletedRustLesson:
+          (courseLessonCounts.get("course-rust-for-solana") ?? 0) >= 1,
+        hasCompletedAnchorCourse: completedCourseIds.has(
+          "course-anchor-framework"
         ),
-        hasCompletedAnchorCourse: completedLessonIds.some(
-          (id) =>
-            id.startsWith("anchor-") ||
-            id.includes("-anchor-") ||
-            id.endsWith("-anchor")
+        hasCompletedAllTracks: SOLANA_DEV_PATH_COURSES.every((id) =>
+          completedCourseIds.has(id)
         ),
-        // TODO: These 3 achievement signals require cross-course tracking infrastructure.
-        // full-stack-solana, speed-runner, and perfect-score are roadmap items.
-        // They are permanently unearnable until these signals are implemented.
-        hasCompletedAllTracks: false,
         courseCompletionTimeHours: null,
         allTestsPassedFirstTry: false,
         userNumber: userNumber ?? 999,

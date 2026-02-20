@@ -291,11 +291,9 @@ For details, see [docs/ADMIN.md](docs/ADMIN.md).
 
 The on-chain program is feature-complete with 16 instructions covering the full learning lifecycle. The following items are scoped for future iterations:
 
-- **Achievement NFT minting**: The `unlock_achievement` instruction is implemented on-chain. Auto-minting an achievement NFT after unlock is planned as a follow-up integration.
 - **Track collection enforcement**: `track_collection` is validated server-side during credential issuance but is not yet enforced on-chain as an account constraint (future program upgrade).
-- **Cross-course achievements**: Three achievement types (Anchor Expert, Full Stack Solana, Rust Rookie) require tracking completions across multiple courses. The on-chain `AchievementRecord` supports this; frontend integration is planned.
-- **Unenrollment UI**: The `unenroll` instruction exists on-chain; the frontend flow is not yet wired.
-- **Build server**: Compilation features require a separately deployed Rust/Axum build server on GCP Cloud Run. See the [Deployment](#deployment) section for details.
+- **Cross-course achievements**: Three achievement types (Anchor Expert, Full Stack Solana, Rust Rookie) have partial frontend logic but lack proper cross-course tracking infrastructure. `full-stack-solana` is hardcoded to `false`; `anchor-expert` and `rust-rookie` use lesson ID pattern matching instead of course-level completion checks.
+- **Build server**: Compilation features (`buildable` Rust challenges + program deployment) require a separately deployed Rust/Axum build server on GCP Cloud Run. See the [Deployment](#deployment) section for setup details.
 
 ## Code Quality
 
