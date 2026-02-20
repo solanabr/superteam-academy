@@ -6,8 +6,10 @@ import { usePrivy } from "@privy-io/react-auth";
 import { Link } from "@/i18n/routing";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Save, Lock, Mail } from "lucide-react";
+import { Loader2, Save, Lock, Mail, Wallet, Coins, Info } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Connection, PublicKey, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { useUserStore } from "@/store/user-store";
 
 // ─── Provider Icons ────────────────────────────────────────────────────────────
 
@@ -77,6 +79,8 @@ function LinkedAccountRow({ icon, label, value, tooltip, linkedText }: LinkedAcc
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
+import { PlatformNavbar } from "@/components/navigation/PlatformNavbar";
+
 export default function SettingsPage() {
   const t = useTranslations("settings");
   const tc = useTranslations("common");
@@ -89,6 +93,11 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "success" | "error">("idle");
   const [showRoleTip, setShowRoleTip] = useState(false);
+  const [solBalance, setSolBalance] = useState<number | null>(null);
+  const [showAirdropTip, setShowAirdropTip] = useState(false);
+  // Zustand
+  const progress = useUserStore((s) => s.progress);
+  const fetchProgress = useUserStore((s) => s.fetchProgress);
 
   // Detect linked OAuth providers from Privy
   const linkedGoogle = privyUser?.linkedAccounts?.find((a) => a.type === "google_oauth") as any;
@@ -107,8 +116,25 @@ export default function SettingsPage() {
       if (!hasOAuthProvider) {
         setEmail(user.email ?? linkedEmail?.address ?? "");
       }
+
+      // Fetch Progress (for EXP balance)
+      if (user.walletAddress && !progress) {
+        fetchProgress(user.walletAddress);
+      }
+
+      // Fetch SOL Balance
+      const fetchSol = async () => {
+        try {
+          const conn = new Connection(process.env.NEXT_PUBLIC_RPC_URL || "https://api.devnet.solana.com");
+          const balance = await conn.getBalance(new PublicKey(user.walletAddress));
+          setSolBalance(balance / LAMPORTS_PER_SOL);
+        } catch (e) {
+          console.error("Failed to fetch SOL balance", e);
+        }
+      };
+      fetchSol();
     }
-  }, [user, hasOAuthProvider, linkedEmail]);
+  }, [user, hasOAuthProvider, linkedEmail, fetchProgress, progress]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -154,153 +180,223 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8">
-      <div className="flex items-center gap-4 mb-8">
-        <Link href="/dashboard" className="p-2 rounded-full hover:bg-white/5 text-text-secondary hover:text-white transition-colors">
-          <span className="material-symbols-outlined">arrow_back</span>
-        </Link>
-        <h1 className="font-display text-text-primary text-2xl font-semibold">{t("title")}</h1>
-      </div>
+    <main className="min-h-screen bg-void pt-20 pb-12">
+      <PlatformNavbar />
+      <div className="mx-auto max-w-2xl px-4">
+        <div className="flex items-center gap-4 mb-8">
+          <Link href="/dashboard" className="p-2 rounded-full hover:bg-white/5 text-text-secondary hover:text-white transition-colors">
+            <span className="material-symbols-outlined">arrow_back</span>
+          </Link>
+          <h1 className="font-display text-text-primary text-2xl font-semibold">{t("title")}</h1>
+        </div>
 
-      <div className="glass-panel space-y-6 rounded-lg border border-white/5 p-8">
-        <form onSubmit={handleSave} className="space-y-6">
+        <div className="glass-panel rounded-lg border border-white/5 p-8">
+          <form onSubmit={handleSave} className="space-y-6">
 
-          {/* Wallet Address */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-text-secondary">{t("wallet_address")}</label>
-            <Input
-              value={user.walletAddress}
-              disabled
-              className="font-mono text-xs opacity-50 bg-black/20"
-            />
-          </div>
+            {/* Wallet Address */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-text-secondary">{t("wallet_address")}</label>
+              <Input
+                value={user.walletAddress}
+                disabled
+                className="font-mono text-xs opacity-50 bg-black/20"
+              />
+            </div>
 
-          {/* Account Role */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-text-secondary">{t("account_role")}</label>
-            <div className="flex items-center gap-3 h-10 px-3 rounded-md border border-white/10 bg-black/20">
-              <span className={`material-symbols-outlined text-lg ${user.role === "admin" ? "text-amber-400" :
-                user.role === "professor" ? "text-blue-400" : "text-solana"
-                }`}>
-                {user.role === "admin" ? "admin_panel_settings" :
-                  user.role === "professor" ? "psychology" : "school"}
-              </span>
-              <span className={`text-sm font-display font-semibold capitalize ${user.role === "admin" ? "text-amber-400" :
-                user.role === "professor" ? "text-blue-400" : "text-solana"
-                }`}>
-                {user.role === "professor" ? "Teacher" : user.role ?? "Student"}
-              </span>
-              <div className="ml-auto relative flex items-center">
-                <button
-                  type="button"
-                  className="text-text-muted hover:text-text-secondary transition-colors"
-                  onMouseEnter={() => setShowRoleTip(true)}
-                  onMouseLeave={() => setShowRoleTip(false)}
-                  onFocus={() => setShowRoleTip(true)}
-                  onBlur={() => setShowRoleTip(false)}
-                >
-                  <Lock className="h-3.5 w-3.5" />
-                </button>
-                {showRoleTip && (
-                  <div className="absolute right-0 bottom-full mb-2 z-10 w-64 rounded-md bg-[#1a1a1f] border border-white/10 px-3 py-2 text-xs text-text-secondary shadow-xl normal-case font-body">
-                    {t("role_info")}
-                  </div>
-                )}
+            {/* Account Role */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-text-secondary">{t("account_role")}</label>
+              <div className="flex items-center gap-3 h-10 px-3 rounded-md border border-white/10 bg-black/20">
+                <span className={`material-symbols-outlined text-lg ${user.role === "admin" ? "text-amber-400" :
+                  user.role === "professor" ? "text-blue-400" : "text-solana"
+                  }`}>
+                  {user.role === "admin" ? "admin_panel_settings" :
+                    user.role === "professor" ? "psychology" : "school"}
+                </span>
+                <span className={`text-sm font-display font-semibold capitalize ${user.role === "admin" ? "text-amber-400" :
+                  user.role === "professor" ? "text-blue-400" : "text-solana"
+                  }`}>
+                  {user.role === "professor" ? "Teacher" : user.role ?? "Student"}
+                </span>
+                <div className="ml-auto relative flex items-center">
+                  <button
+                    type="button"
+                    className="text-text-muted hover:text-text-secondary transition-colors"
+                    onMouseEnter={() => setShowRoleTip(true)}
+                    onMouseLeave={() => setShowRoleTip(false)}
+                    onFocus={() => setShowRoleTip(true)}
+                    onBlur={() => setShowRoleTip(false)}
+                  >
+                    <Lock className="h-3.5 w-3.5" />
+                  </button>
+                  {showRoleTip && (
+                    <div className="absolute right-0 bottom-full mb-2 z-10 w-64 rounded-md bg-[#1a1a1f] border border-white/10 px-3 py-2 text-xs text-text-secondary shadow-xl normal-case font-body">
+                      {t("role_info")}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* ── Linked Accounts ─────────────────────────────── */}
-          {linkedGoogle && (
-            <LinkedAccountRow
-              icon={<GoogleIcon className="h-4 w-4" />}
-              label={t("linked_accounts.google")}
-              value={linkedGoogle.email ?? linkedGoogle.name ?? "Connected"}
-              tooltip={t("linked_accounts.tooltip", { provider: "Google" })}
-              linkedText={t("linked_accounts.linked")}
-            />
-          )}
+            {/* ── Wallet Balances ─────────────────────────────── */}
+            <div className="pt-4 border-t border-white/5 space-y-4">
+              <h3 className="text-sm font-medium text-text-primary flex items-center gap-2">
+                <Wallet className="h-4 w-4 text-solana" />
+                {t("balance_title")}
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="p-4 rounded-lg bg-black/20 border border-white/5 flex flex-col gap-1 relative overflow-visible">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-mono text-text-muted uppercase tracking-widest">{t("sol_balance")}</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] font-mono font-bold text-amber-500/80 uppercase px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20">
+                        {t("devnet_label")}
+                      </span>
+                      <button
+                        type="button"
+                        onMouseEnter={() => setShowAirdropTip(true)}
+                        onMouseLeave={() => setShowAirdropTip(false)}
+                        className="text-text-muted hover:text-text-secondary transition-colors"
+                      >
+                        <Info className="h-3 w-3" />
+                      </button>
+                    </div>
+                  </div>
 
-          {linkedGithub && (
-            <LinkedAccountRow
-              icon={<GitHubIcon className="h-4 w-4 text-white" />}
-              label={t("linked_accounts.github")}
-              value={linkedGithub.username ?? linkedGithub.name ?? linkedGithub.email ?? "Connected"}
-              tooltip={t("linked_accounts.tooltip", { provider: "GitHub" })}
-              linkedText={t("linked_accounts.linked")}
-            />
-          )}
+                  {showAirdropTip && (
+                    <div className="absolute right-0 bottom-full mb-2 z-20 w-64 rounded-md bg-[#1a1a1f] border border-white/10 px-3 py-2 text-[11px] leading-relaxed text-text-secondary shadow-xl font-body">
+                      {t("airdrop_tooltip")}
+                    </div>
+                  )}
 
-          {linkedEmail && !linkedGoogle && !linkedGithub && (
-            <LinkedAccountRow
-              icon={<Mail className="h-4 w-4 text-text-secondary" />}
-              label={t("linked_accounts.email")}
-              value={linkedEmail.address ?? "Connected"}
-              tooltip={t("linked_accounts.tooltip", { provider: "email" })}
-              linkedText={t("linked_accounts.linked")}
-            />
-          )}
+                  <div className="flex items-center justify-between mt-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl font-mono font-bold text-white">
+                        {solBalance !== null ? solBalance.toFixed(4) : "..."}
+                      </span>
+                      <span className="text-xs text-text-muted font-mono">SOL</span>
+                    </div>
 
-          {/* Display Name */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-text-primary">{t("display_name")}</label>
-            <Input
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              placeholder={t("display_name_placeholder")}
-              className="bg-black/20 border-white/10 focus:border-solana/50"
-            />
-          </div>
+                    {solBalance !== null && solBalance < 0.5 && (
+                      <a
+                        href="https://faucet.solana.com"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[10px] font-bold text-solana hover:text-white transition-colors flex items-center gap-1 bg-solana/10 px-2 py-1 rounded border border-solana/20"
+                      >
+                        <span className="material-symbols-outlined text-[12px]">open_in_new</span>
+                        Get SOL
+                      </a>
+                    )}
+                  </div>
+                </div>
 
-          {/* Email — only editable for wallet-only accounts */}
-          {!hasOAuthProvider && (
+                <div className="p-4 rounded-lg bg-black/20 border border-white/5 flex flex-col gap-1">
+                  <span className="text-[10px] font-mono text-text-muted uppercase tracking-widest">{t("exp_balance")}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl font-mono font-bold text-solana">
+                      {progress?.xp ? progress.xp.toLocaleString() : "0"}
+                    </span>
+                    <Coins className="h-4 w-4 text-solana" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* ── Linked Accounts ─────────────────────────────── */}
+            <div className="space-y-4 pt-4 border-t border-white/5">
+              {linkedGoogle && (
+                <LinkedAccountRow
+                  icon={<GoogleIcon className="h-4 w-4" />}
+                  label={t("linked_accounts.google")}
+                  value={linkedGoogle.email ?? linkedGoogle.name ?? "Connected"}
+                  tooltip={t("linked_accounts.tooltip", { provider: "Google" })}
+                  linkedText={t("linked_accounts.linked")}
+                />
+              )}
+
+              {linkedGithub && (
+                <LinkedAccountRow
+                  icon={<GitHubIcon className="h-4 w-4 text-white" />}
+                  label={t("linked_accounts.github")}
+                  value={linkedGithub.username ?? linkedGithub.name ?? linkedGithub.email ?? "Connected"}
+                  tooltip={t("linked_accounts.tooltip", { provider: "GitHub" })}
+                  linkedText={t("linked_accounts.linked")}
+                />
+              )}
+
+              {linkedEmail && !linkedGoogle && !linkedGithub && (
+                <LinkedAccountRow
+                  icon={<Mail className="h-4 w-4 text-text-secondary" />}
+                  label={t("linked_accounts.email")}
+                  value={linkedEmail.address ?? "Connected"}
+                  tooltip={t("linked_accounts.tooltip", { provider: "email" })}
+                  linkedText={t("linked_accounts.linked")}
+                />
+              )}
+            </div>
+
+            {/* Display Name */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-text-primary">{t("email")}</label>
+              <label className="text-sm font-medium text-text-primary">{t("display_name")}</label>
               <Input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder={t("email_placeholder")}
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                placeholder={t("display_name_placeholder")}
                 className="bg-black/20 border-white/10 focus:border-solana/50"
               />
             </div>
-          )}
 
-          {/* Bio */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-text-primary">{t("bio")}</label>
-            <textarea
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              placeholder={t("bio_placeholder")}
-              className="flex min-h-[80px] w-full rounded-md border border-white/10 bg-black/20 px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-solana/50 disabled:cursor-not-allowed disabled:opacity-50"
-            />
-          </div>
+            {/* Email — only editable for wallet-only accounts */}
+            {!hasOAuthProvider && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-text-primary">{t("email")}</label>
+                <Input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder={t("email_placeholder")}
+                  className="bg-black/20 border-white/10 focus:border-solana/50"
+                />
+              </div>
+            )}
 
-          {/* Save */}
-          <div className="flex items-center gap-4 pt-4">
-            <Button type="submit" disabled={saving} className="w-full sm:w-auto">
-              {saving ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {t("saving")}
-                </>
-              ) : (
-                <>
-                  <Save className="mr-2 h-4 w-4" />
-                  {t("save_changes")}
-                </>
+            {/* Bio */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-text-primary">{t("bio")}</label>
+              <textarea
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                placeholder={t("bio_placeholder")}
+                className="flex min-h-[80px] w-full rounded-md border border-white/10 bg-black/20 px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-solana/50 disabled:cursor-not-allowed disabled:opacity-50"
+              />
+            </div>
+
+            {/* Save */}
+            <div className="flex items-center gap-4 pt-4">
+              <Button type="submit" disabled={saving} className="w-full sm:w-auto">
+                {saving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {t("saving")}
+                  </>
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" />
+                    {t("save_changes")}
+                  </>
+                )}
+              </Button>
+              {saveStatus === "success" && (
+                <span className="text-sm text-solana font-medium">{t("save_success")}</span>
               )}
-            </Button>
-            {saveStatus === "success" && (
-              <span className="text-sm text-solana font-medium">{t("save_success")}</span>
-            )}
-            {saveStatus === "error" && (
-              <span className="text-sm text-rust font-medium">{t("save_error")}</span>
-            )}
-          </div>
-        </form>
+              {saveStatus === "error" && (
+                <span className="text-sm text-rust font-medium">{t("save_error")}</span>
+              )}
+            </div>
+          </form>
+        </div>
       </div>
-    </div>
+    </main>
   );
 }

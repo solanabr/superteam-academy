@@ -45,9 +45,9 @@ The program is live on devnet:
 
 | | Address |
 |---|---|
-| **Program** | [`ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf`](https://explorer.solana.com/address/ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf?cluster=devnet) |
-| **XP Mint** | [`xpXPUjkfk7t4AJF1tYUoyAYxzuM5DhinZWS1WjfjAu3`](https://explorer.solana.com/address/xpXPUjkfk7t4AJF1tYUoyAYxzuM5DhinZWS1WjfjAu3?cluster=devnet) |
-| **Authority** | [`ACAd3USj2sMV6drKcMY2wZtNkhVDHWpC4tfJe93hgqYn`](https://explorer.solana.com/address/ACAd3USj2sMV6drKcMY2wZtNkhVDHWpC4tfJe93hgqYn?cluster=devnet) |
+| **Program** | [`AVEskHawcLAjVP8AweAbKHQUyS1jzeB2PY2Fw7UAK1qv`](https://explorer.solana.com/address/AVEskHawcLAjVP8AweAbKHQUyS1jzeB2PY2Fw7UAK1qv?cluster=devnet) |
+| **XP Mint** | [`BCsF1T75cvdvcZwnyD4TNsvRPGBGn3k2fiMujkfX75t`](https://explorer.solana.com/address/BCsF1T75cvdvcZwnyD4TNsvRPGBGn3k2fiMujkfX75t?cluster=devnet) |
+| **Authority** | [`2rwDSwX9pUwc9gVDSHgvDFAZWn41DodaeAvwS1rrZho7`](https://explorer.solana.com/address/2rwDSwX9pUwc9gVDSHgvDFAZWn41DodaeAvwS1rrZho7?cluster=devnet) |
 
 Frontend bounty applicants: [deploy your own instance](docs/DEPLOY-PROGRAM.md) on devnet.
 

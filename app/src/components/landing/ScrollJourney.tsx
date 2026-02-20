@@ -12,87 +12,83 @@ export function ScrollJourney() {
 
     useEffect(() => {
         const handleScroll = () => {
-            if (!orbRef.current || !containerRef.current || !terminalRef.current) return;
+            if (!orbRef.current || !containerRef.current || !terminalRef.current || !blockchainRef.current || !mobileRef.current) return;
 
-            const scrollY = window.scrollY;
             const windowHeight = window.innerHeight;
-            const scrollCenter = scrollY + windowHeight / 2;
+            const observerY = windowHeight / 2; // The fixed vertical point where the orb is located
 
-            // Get terminal position - orb should only appear after we've scrolled past terminal start
-            const terminalRect = terminalRef.current.getBoundingClientRect();
-            const terminalTop = terminalRect.top + scrollY;
-
-            // Don't show orb until we've scrolled past the start of terminal
-            if (scrollCenter < terminalTop) {
-                orbRef.current.style.opacity = "0";
-                return;
-            }
-
-            // Check if we're inside any of the three main elements
             const sections = [terminalRef.current, blockchainRef.current, mobileRef.current];
-            let isInsideSection = false;
-            let distanceToNearestEdge = Infinity;
+            let minDistanceToEdge = Infinity;
+            let isInsideAnySection = false;
 
             sections.forEach((section) => {
-                if (section) {
-                    const rect = section.getBoundingClientRect();
-                    const top = rect.top + scrollY;
-                    const bottom = rect.bottom + scrollY;
+                const rect = section.getBoundingClientRect();
+                // Add a tiny buffer (5px) to ensure it's fully hidden before it even touches the element
+                const top = rect.top + 5;
+                const bottom = rect.bottom - 5;
 
-                    // Add padding to hide orb earlier (150px before, 100px after element)
-                    const paddingBefore = 150;
-                    const paddingAfter = 100;
-
-                    if (scrollCenter >= (top - paddingBefore) && scrollCenter <= (bottom + paddingAfter)) {
-                        isInsideSection = true;
-
-                        // Calculate distance to nearest edge for fade effect
-                        const distToTop = Math.abs(scrollCenter - (top - paddingBefore));
-                        const distToBottom = Math.abs(scrollCenter - (bottom + paddingAfter));
-                        distanceToNearestEdge = Math.min(distanceToNearestEdge, distToTop, distToBottom);
-                    }
+                if (observerY >= top && observerY <= bottom) {
+                    isInsideAnySection = true;
+                } else {
+                    const dist = Math.min(Math.abs(observerY - top), Math.abs(observerY - bottom));
+                    if (dist < minDistanceToEdge) minDistanceToEdge = dist;
                 }
             });
 
-            // Smooth fade transition
-            const fadeDistance = 100; // Distance over which to fade
-            let targetOpacity = 1;
+            // Calculate target opacity
+            // Faster fade threshold (40px)
+            const fadeThreshold = 40;
+            let targetOpacity = isInsideAnySection ? 0 : Math.min(1, minDistanceToEdge / fadeThreshold);
 
-            if (isInsideSection) {
-                // Fade out as we approach the element
-                targetOpacity = Math.min(1, distanceToNearestEdge / fadeDistance);
-            }
+            // Special rule: The orb should only be visible strictly between elements as per user's "wire" requirement
+            // Hide if above the terminal
+            const firstRect = terminalRef.current.getBoundingClientRect();
+            if (observerY < firstRect.top) targetOpacity = 0;
+
+            // Hide if below the mobile app (transitioning to CTA)
+            const lastRect = mobileRef.current.getBoundingClientRect();
+            if (observerY > lastRect.bottom) targetOpacity = 0;
 
             orbRef.current.style.opacity = targetOpacity.toString();
 
-            // Subtle pulse animation
+            // Pulse animation
             const scale = 1 + Math.sin(Date.now() / 300) * 0.08;
             orbRef.current.style.transform = `translate(-50%, -50%) scale(${scale})`;
         };
 
         window.addEventListener("scroll", handleScroll);
-        handleScroll(); // Initial check
-        return () => window.removeEventListener("scroll", handleScroll);
+        // Use requestAnimationFrame for smoother and more performant updates
+        let rafId: number;
+        const tick = () => {
+            handleScroll();
+            rafId = requestAnimationFrame(tick);
+        };
+        rafId = requestAnimationFrame(tick);
+
+        return () => {
+            window.removeEventListener("scroll", handleScroll);
+            cancelAnimationFrame(rafId);
+        };
     }, []);
 
     return (
-        <div ref={containerRef} className="relative w-full max-w-4xl px-6 flex flex-col items-center mt-32">
+        <div ref={containerRef} className="relative w-full max-w-7xl px-6 flex flex-col items-center mt-32">
             {/* Scroll Indicator Wire */}
             <div className="absolute left-1/2 -translate-x-1/2 top-0 h-full vertical-wire opacity-30 z-0"></div>
 
-            {/* Moving Glow Orb - now with smooth fade transitions */}
+            {/* Moving Glow Orb - with faster transition for better responsiveness */}
             <div
                 ref={orbRef}
                 className="fixed left-1/2 w-4 h-4 rounded-full glow-orb z-50 pointer-events-none"
                 style={{
                     top: '50%',
                     opacity: 0,
-                    transition: 'opacity 0.4s ease-out, transform 0.1s ease-out'
+                    transition: 'opacity 0.15s linear, transform 0.1s ease-out'
                 }}
             ></div>
 
             {/* Element 1 - Terminal Window */}
-            <div ref={terminalRef} className="relative z-10 w-full mb-64" data-purpose="terminal-component">
+            <div ref={terminalRef} className="relative z-10 max-w-[676px] w-full mb-64" data-purpose="terminal-component">
                 <div className="ambient-glow -top-20 -left-20"></div>
                 <div className="glass-morphism bg-[#0A0A0B]/90 rounded-lg overflow-hidden shadow-2xl">
                     <div className="flex items-center gap-2 px-4 py-3 border-b border-white/10 bg-white/5">
@@ -112,15 +108,14 @@ export function ScrollJourney() {
                         <p className="mt-4">Deployment successful. <span className="terminal-cursor"></span></p>
                     </div>
                 </div>
-                <div className="mt-8 text-right md:absolute md:-right-48 md:top-1/2 md:-translate-y-1/2 md:w-40">
+                <div className="mt-8 text-right md:absolute md:-right-72 md:top-1/2 md:-translate-y-1/2 md:w-64">
                     <p className="text-white/40 font-code text-xs uppercase tracking-tighter mb-1">Phase 01</p>
-                    <h3 className="text-xl font-display font-bold text-white mb-2">Direct Deploy</h3>
-                    <p className="text-sm text-text-secondary leading-relaxed">Hands-on learning with in-built IDE</p>
+                    <h3 className="text-2xl font-display font-bold text-white mb-2">Hands-on learning with in-built IDE</h3>
                 </div>
             </div>
 
             {/* Element 2 - Blockchain Visualization (Solana Validator/Database) */}
-            <div ref={blockchainRef} className="relative z-10 w-full mb-64 flex justify-center" data-purpose="blockchain-visualization">
+            <div ref={blockchainRef} className="relative z-10 max-w-2xl mb-64 flex justify-center" data-purpose="blockchain-visualization">
                 <div className="ambient-glow top-0"></div>
                 <div className="relative w-64 h-64 md:w-80 md:h-80 flex items-center justify-center">
                     <svg className="w-full h-full opacity-90 eclipse-halo" viewBox="0 0 200 200">
@@ -141,15 +136,14 @@ export function ScrollJourney() {
                         </div>
                     </div>
                 </div>
-                <div className="mt-8 text-left md:absolute md:-left-48 md:top-1/2 md:-translate-y-1/2 md:w-40">
+                <div className="mt-8 text-left md:absolute md:-left-72 md:top-1/2 md:-translate-y-1/2 md:w-64">
                     <p className="text-white/40 font-code text-xs uppercase tracking-tighter mb-1">Phase 02</p>
-                    <h3 className="text-xl font-display font-bold text-white mb-2">Immutable Ledger</h3>
-                    <p className="text-sm text-text-secondary leading-relaxed">Implement your learning on-chain</p>
+                    <h3 className="text-2xl font-display font-bold text-white mb-2">Implement your learning on-chain</h3>
                 </div>
             </div>
 
             {/* Element 3 - Mobile UI */}
-            <div ref={mobileRef} className="relative z-10 w-full flex flex-col items-center" data-purpose="mobile-ui-component">
+            <div ref={mobileRef} className="relative z-10 max-w-2xl flex flex-col items-center" data-purpose="mobile-ui-component">
                 <div className="ambient-glow -bottom-20 -right-20"></div>
                 <div className="w-[280px] h-[560px] bg-[#0A0A0B] rounded-[3rem] border-[8px] border-neutral-800 shadow-2xl relative overflow-hidden flex flex-col items-center p-6">
                     <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-neutral-800 rounded-b-2xl"></div>
@@ -175,10 +169,9 @@ export function ScrollJourney() {
                         </div>
                     </div>
                 </div>
-                <div className="mt-8 text-right md:absolute md:-right-48 md:bottom-20 md:w-40">
+                <div className="mt-8 text-right md:absolute md:-right-72 md:top-1/2 md:-translate-y-1/2 md:w-64">
                     <p className="text-white/40 font-code text-xs uppercase tracking-tighter mb-1">Phase 03</p>
-                    <h3 className="text-xl font-display font-bold text-white mb-2">Global Scale</h3>
-                    <p className="text-sm text-text-secondary leading-relaxed">See your learning in action</p>
+                    <h3 className="text-2xl font-display font-bold text-white mb-2">See your learning in action</h3>
                 </div>
             </div>
 

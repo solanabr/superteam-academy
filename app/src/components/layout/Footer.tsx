@@ -19,7 +19,7 @@ export function Footer() {
     e.stopPropagation();
 
     // Hide and seek game
-    if (clickCount < 5) {
+    if (clickCount < 4) {
       setClickCount(c => c + 1);
       // Move randomly
       setPosition({
@@ -49,10 +49,10 @@ export function Footer() {
   return (
     <footer className="border-t border-white/10 py-8 mt-12 bg-[#0A0A0B]">
       <div className="max-w-7xl mx-auto px-6 text-center">
-        <p className="text-text-secondary text-sm font-mono flex items-center justify-center gap-2 select-none">
+        <p className="text-text-secondary text-base font-mono flex items-center justify-center gap-2 select-none">
           {t("made_with")}
           <span
-            className="text-rust cursor-pointer transition-transform duration-200 inline-block relative"
+            className="text-rust text-xl cursor-pointer transition-transform duration-200 inline-block relative"
             style={{ transform: `translate(${position.x}px, ${position.y}px)` }}
             onClick={handleHeartClick}
           >
@@ -67,7 +67,7 @@ export function Footer() {
 
       <Dialog.Root open={isOpen} onOpenChange={setIsOpen}>
         <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100]" />
+          <Dialog.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-xl z-[100]" />
           <Dialog.Content className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl aspect-[4/3] p-8 rounded-xl shadow-2xl z-[101] outline-none overflow-hidden border border-solana/30 flex flex-col justify-between">
             {/* Background and Overlay */}
             <div

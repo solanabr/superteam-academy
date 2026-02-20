@@ -5,6 +5,7 @@ import { Link } from "@/i18n/routing";
 import { Footer } from "@/components/layout/Footer";
 import { getCourses, type CourseListItem } from "@/sanity/lib/queries";
 import { useTranslations } from "next-intl";
+import { PlatformNavbar } from "@/components/navigation/PlatformNavbar";
 
 export default function CoursesPage() {
   const t = useTranslations("courses");
@@ -42,9 +43,9 @@ export default function CoursesPage() {
   const tracks = ["all", "rust", "anchor", "security", "solana"];
 
   return (
-    <div className="min-h-screen relative overflow-x-hidden">
-      {/* Main Content */}
-      <main className="pt-8 pb-20 px-6 max-w-7xl mx-auto flex flex-col gap-10">
+    <main className="min-h-screen bg-void pt-20 pb-12">
+      <PlatformNavbar />
+      <div className="max-w-7xl mx-auto px-6 space-y-10 flex flex-col pt-4">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
           <div className="flex flex-col gap-2 max-w-2xl">
@@ -122,10 +123,8 @@ export default function CoursesPage() {
             ))
           )}
         </div>
-      </main>
-
-      {/* Footer with Made With Love */}
+      </div>
       <Footer />
-    </div>
+    </main>
   );
 }

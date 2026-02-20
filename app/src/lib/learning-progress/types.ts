@@ -36,6 +36,7 @@ export interface Credential {
   totalXpEarned: number;
   earnedAt: Date;
   metadataUrl: string | null;
+  image?: string;
 }
 
 /** Enrollment with lesson bitmap. */

@@ -72,7 +72,7 @@ export function AchievementList() {
         setToast(null);
 
         try {
-            const res = await fetch("/api/achievements/claim", {
+            const res = await fetch("/api/onchain/claim-achievement", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

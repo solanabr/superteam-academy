@@ -13,13 +13,14 @@ export interface LearningProgressService {
   getStreak(userId: string): Promise<StreakData>;
   getLeaderboard(options?: { limit?: number }): Promise<LeaderboardEntry[]>;
   getCredentials(userId: string): Promise<Credential[]>;
+  getCredential(id: string): Promise<Credential | null>;
   completeLesson(params: {
     userId: string;
     courseId: string;
     lessonIndex: number;
     xpReward: number;
   }): Promise<void>;
-  enroll(userId: string, courseId: string): Promise<void>;
+  enroll(userId: string, courseId: string): Promise<any>;
   finalizeCourse(userId: string, courseId: string, lessonCount: number): Promise<void>;
   claimCompletionBonus(userId: string, courseId: string, xpAmount: number): Promise<void>;
   issueCredential(params: { userId: string; trackId: string; trackName: string; xpEarned: number }): Promise<void>;

@@ -17,6 +17,7 @@
         "achievements": "Logros",
         "teach": "Enseñar",
         "settings": "Ajustes",
+        "profile": "Perfil",
         "logout": "Cerrar sesión"
     },
     "dashboard": {
@@ -60,7 +61,10 @@
             "email": "Cuenta de Correo",
             "linked": "Vinculado",
             "tooltip": "Tu dirección de billetera está vinculada a esta cuenta de {provider}. Esto no se puede cambiar."
-        }
+        },
+        "balance_title": "Saldos de Billetera",
+        "sol_balance": "Saldo SOL",
+        "exp_balance": "Saldo de Tokens EXP"
     },
     "courses": {
         "title": "Explorar Currículo",

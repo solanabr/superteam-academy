@@ -3,6 +3,7 @@ import { Space_Grotesk, Inter, JetBrains_Mono } from "next/font/google";
 // Header and Footer removed for custom page layouts
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { SyncUserOnLogin } from "@/components/auth/SyncUserOnLogin";
+import { ThirdPartyScripts } from "@/components/analytics/ThirdPartyScripts";
 import "../globals.css"; // Adjusted path
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
@@ -54,6 +55,7 @@ export default async function RootLayout({
         <NextIntlClientProvider messages={messages}>
           <AuthProvider>
             <SyncUserOnLogin />
+            <ThirdPartyScripts />
             {children}
           </AuthProvider>
         </NextIntlClientProvider>

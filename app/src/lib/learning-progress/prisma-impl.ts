@@ -153,6 +153,26 @@ export function createLearningProgressService(prisma: PrismaClient): LearningPro
     }));
   };
 
+  const getCredential = async (id: string): Promise<Credential | null> => {
+    const cred = await prisma.credential.findUnique({
+      where: { id },
+    });
+    if (!cred) return null;
+    return {
+      id: cred.id,
+      userId: cred.userId,
+      trackId: cred.trackId,
+      trackName: cred.trackName,
+      level: cred.level,
+      coursesCompleted: cred.coursesCompleted,
+      totalXpEarned: cred.totalXpEarned,
+      earnedAt: cred.earnedAt,
+      metadataUrl: cred.metadataUrl,
+      // Mock image for DB mode if missing
+      image: `/certificates/${cred.trackId}.png`,
+    };
+  };
+
   const issueCredential = async (params: {
     userId: string;
     trackId: string;
@@ -435,6 +455,7 @@ export function createLearningProgressService(prisma: PrismaClient): LearningPro
     getStreak,
     getLeaderboard,
     getCredentials,
+    getCredential,
     completeLesson,
     enroll,
     finalizeCourse,

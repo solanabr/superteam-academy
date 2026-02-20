@@ -41,7 +41,7 @@ export function CourseEnrollmentBlock({ courseId, courseTitle }: CourseEnrollmen
     return <span className="text-text-secondary text-sm">{t("enrolling")}</span>;
   }
 
-  const enrolled = enrollment !== undefined;
+  const enrolled = !!enrollment;
   const completedCount = enrollment?.completedCount ?? 0;
   const totalLessons = enrollment?.totalLessons ?? 0;
   const pct = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;

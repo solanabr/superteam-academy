@@ -139,6 +139,17 @@ export const useEnrollmentStore = create<EnrollmentState>((set, get) => ({
     state.setError(courseId, null);
 
     try {
+      // Check Devnet SOL balance before allowing enrollment
+      const { Connection, PublicKey } = await import("@solana/web3.js");
+      const connection = new Connection(process.env.NEXT_PUBLIC_RPC_URL || "https://api.devnet.solana.com");
+      const pubkey = new PublicKey(walletAddress);
+      const balance = await connection.getBalance(pubkey);
+
+      // Require at least 0.01 SOL (10,000,000 lamports) for gas
+      if (balance < 0.01 * 1_000_000_000) {
+        throw new Error("Insufficient Devnet SOL for gas. Please claim your Airdrop in Settings.");
+      }
+
       const res = await fetch("/api/enroll", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

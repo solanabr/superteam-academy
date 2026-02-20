@@ -17,6 +17,7 @@
         "achievements": "Conquistas",
         "teach": "Ensinar",
         "settings": "Configurações",
+        "profile": "Perfil",
         "logout": "Sair"
     },
     "dashboard": {
@@ -60,7 +61,10 @@
             "email": "Conta de E-mail",
             "linked": "Vinculado",
             "tooltip": "Seu endereço de carteira está vinculado a esta conta do {provider}. Isso não pode ser alterado."
-        }
+        },
+        "balance_title": "Saldos da Carteira",
+        "sol_balance": "Saldo SOL",
+        "exp_balance": "Saldo de Tokens EXP"
     },
     "courses": {
         "title": "Explorar Currículo",

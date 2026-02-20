@@ -17,6 +17,7 @@
         "achievements": "Achievements",
         "teach": "Teach",
         "settings": "Settings",
+        "profile": "Profile",
         "logout": "Logout"
     },
     "dashboard": {
@@ -60,7 +61,14 @@
             "email": "Email Account",
             "linked": "Linked",
             "tooltip": "Your wallet address is linked to this {provider}. This cannot be changed."
-        }
+        },
+        "balance_title": "Wallet Balances",
+        "sol_balance": "SOL Balance",
+        "exp_balance": "EXP Token Balance",
+        "devnet_label": "Devnet",
+        "airdrop_tooltip": "We automatically airdrop 1 Devnet SOL to new accounts to cover transaction fees for enrollment and lessons.",
+        "request_airdrop_cta": "Request Airdrop",
+        "requesting_airdrop": "Requesting..."
     },
     "courses": {
         "title": "Explore Curriculum",

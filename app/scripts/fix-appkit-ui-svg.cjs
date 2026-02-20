@@ -46,7 +46,7 @@ function findAppkitUiDirs(dir, acc = []) {
           try {
             const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
             if (pkg.name === "@reown/appkit-ui") acc.push(full);
-          } catch (_) {}
+          } catch (_) { }
         }
       }
       findAppkitUiDirs(full, acc);
@@ -55,7 +55,19 @@ function findAppkitUiDirs(dir, acc = []) {
   return acc;
 }
 
+const seenFiles = new Set();
+const seenDirs = new Set();
+
 function walk(dir, callback, opts = {}) {
+  let realDir;
+  try {
+    realDir = fs.realpathSync(dir);
+  } catch (_) {
+    return;
+  }
+  if (seenDirs.has(realDir)) return;
+  seenDirs.add(realDir);
+
   let entries;
   try {
     entries = fs.readdirSync(dir, { withFileTypes: true });
@@ -64,49 +76,75 @@ function walk(dir, callback, opts = {}) {
   }
   for (const e of entries) {
     const full = path.join(dir, e.name);
-    if (e.isDirectory()) {
+    let isDir = e.isDirectory();
+    let isFile = e.isFile();
+
+    if (e.isSymbolicLink()) {
+      try {
+        const stat = fs.statSync(full);
+        isDir = stat.isDirectory();
+        isFile = stat.isFile();
+      } catch (_) {
+        continue;
+      }
+    }
+
+    if (isDir) {
       if (!opts.allDirs && e.name === "node_modules") continue;
       walk(full, callback, opts);
-    } else if (e.isFile() && (opts.checkExt ? isJsFile(full) : (e.name.endsWith(".js") || e.name.endsWith(".mjs")))) {
+    } else if (isFile && (opts.checkExt ? isJsFile(full) : (e.name.endsWith(".js") || e.name.endsWith(".mjs")))) {
       callback(full);
     }
   }
 }
 
 function patchFile(filePath) {
-  let s;
+  let realPath;
   try {
-    s = fs.readFileSync(filePath, "utf8");
+    realPath = fs.realpathSync(filePath);
   } catch (_) {
     return false;
   }
-  if (!s.includes("fill-rule=") && !s.includes("clip-rule=")) return false;
+  if (seenFiles.has(realPath)) return false;
+  seenFiles.add(realPath);
+
+  let s;
+  try {
+    s = fs.readFileSync(realPath, "utf8");
+  } catch (_) {
+    return false;
+  }
+
+  if (!s.includes("fill-rule") && !s.includes("clip-rule")) return false;
+
   const orig = s;
-  s = s.replace(/\bfill-rule=/g, "fillRule=").replace(/\bclip-rule=/g, "clipRule=");
+  // Match both fill-rule= and "fill-rule": or 'fill-rule':
+  s = s.replace(/\bfill-rule\b/g, "fillRule").replace(/\bclip-rule\b/g, "clipRule");
+
   if (s === orig) return false;
-  fs.writeFileSync(filePath, s);
-  return true;
+
+  try {
+    fs.writeFileSync(realPath, s);
+    console.log(`  Patched: ${path.relative(nodeModules, realPath)}`);
+    return true;
+  } catch (err) {
+    console.warn(`  Failed to patch: ${path.relative(nodeModules, realPath)}`, err.message);
+    return false;
+  }
 }
 
 // 1) Patch all @reown/appkit-ui copies
+console.log("Scanning for @reown/appkit-ui...");
 const appkitDirs = findAppkitUiDirs(nodeModules, []);
 let appkitTotal = 0;
-const seen = new Set();
 for (const d of appkitDirs) {
-  let real;
-  try {
-    real = fs.realpathSync(d);
-  } catch (_) {
-    real = d;
-  }
-  if (seen.has(real)) continue;
-  seen.add(real);
   walk(d, (file) => {
     if (patchFile(file)) appkitTotal++;
   });
 }
 
 // 2) Patch any other JS in node_modules that still has fill-rule= or clip-rule=
+console.log("Scanning node_modules for remaining fill-rule/clip-rule attributes...");
 let otherTotal = 0;
 walk(nodeModules, (file) => {
   if (patchFile(file)) otherTotal++;

@@ -123,10 +123,16 @@ export function PlatformNavbar() {
                         onClick={toggleProfile}
                         className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-white/5 transition-all"
                     >
-                        <div className="size-8 rounded-full bg-gradient-to-tr from-gray-700 to-gray-600 flex items-center justify-center border border-white/10">
-                            <span className="font-mono text-xs text-white">
-                                {(user?.profile as any)?.displayName?.slice(0, 2).toUpperCase() || "DV"}
-                            </span>
+                        <div className="size-8 rounded-full bg-gradient-to-tr from-gray-700 to-gray-600 flex items-center justify-center border border-white/10 overflow-hidden">
+                            {(user?.profile as any)?.image ? (
+                                <img src={(user?.profile as any).image} alt="Profile" className="w-full h-full object-cover" />
+                            ) : user?.walletAddress ? (
+                                <img src={`https://api.dicebear.com/9.x/bottts-neutral/svg?seed=${user.walletAddress}`} alt="Profile" className="w-full h-full object-cover" />
+                            ) : (
+                                <span className="font-mono text-xs text-white">
+                                    {(user?.profile as any)?.displayName?.slice(0, 2).toUpperCase() || "DV"}
+                                </span>
+                            )}
                         </div>
                         <span className="material-symbols-outlined notranslate text-text-muted text-sm hidden md:block">
                             {isProfileOpen ? "expand_less" : "expand_more"}
@@ -195,7 +201,18 @@ export function PlatformNavbar() {
                                     <span>{link.label}</span>
                                 </Link>
                             ))}
-                            {/* Mobile Logout */}
+
+                            <hr className="border-white/10 my-2" />
+
+                            <Link
+                                href="/settings"
+                                className="flex items-center gap-3 px-4 py-3 rounded-lg font-display font-medium text-sm text-text-muted hover:text-white hover:bg-white/5 transition-all"
+                                onClick={() => setMobileMenuOpen(false)}
+                            >
+                                <span className="material-symbols-outlined notranslate text-lg">settings</span>
+                                <span>{t("settings")}</span>
+                            </Link>
+
                             <button
                                 onClick={handleLogout}
                                 className="w-full flex items-center gap-3 px-4 py-3 rounded-lg font-display font-medium text-sm text-text-muted hover:text-white hover:bg-white/5 transition-all"

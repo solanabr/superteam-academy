@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { serverClient } from "@/sanity/lib/server-client";
 import { prisma } from "@/lib/db";
+import { Connection, Keypair, PublicKey, SystemProgram } from "@solana/web3.js";
+import { Program, AnchorProvider } from "@coral-xyz/anchor";
+// @ts-ignore
+import onchainAcademyIdl from "@/lib/idl/onchain_academy.json";
+import bs58 from "bs58";
+
+const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || "https://api.devnet.solana.com";
+const BACKEND_WALLET_KEY = process.env.BACKEND_WALLET_PRIVATE_KEY;
 
 /**
  * POST /api/courses/[id]/publish
@@ -29,9 +37,12 @@ export async function POST(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Get course to check ownership
+    // Get course to check ownership and gather data for on-chain
     const course = await serverClient.fetch(
-      `*[_type == "course" && _id == $id][0] { createdBy }`,
+      `*[_type == "course" && _id == $id][0] { 
+        createdBy,
+        "lessonCount": count(modules[]->lessons[]->_id)
+      }`,
       { id }
     );
 
@@ -55,7 +66,78 @@ export async function POST(
     // Sanity handles draft/published versions automatically
     // We patch by query to update both draft and published if they exist
     const publishedId = id.startsWith("drafts.") ? id.replace("drafts.", "") : id;
-    
+
+    // Auto-sync to blockchain if not already explicitly done, or as part of this step
+    if (BACKEND_WALLET_KEY && process.env.NEXT_PUBLIC_USE_ONCHAIN === "true") {
+      try {
+        const connection = new Connection(RPC_URL, "confirmed");
+        const backendWallet = Keypair.fromSecretKey(bs58.decode(BACKEND_WALLET_KEY));
+
+        const provider = new AnchorProvider(
+          connection,
+          // @ts-ignore
+          { publicKey: backendWallet.publicKey, signTransaction: async (tx) => { tx.sign(backendWallet); return tx; }, signAllTransactions: async (txs) => { txs.forEach(t => t.sign(backendWallet)); return txs; } },
+          AnchorProvider.defaultOptions()
+        );
+
+        const program = new Program(onchainAcademyIdl as any, provider);
+
+        const [coursePda] = PublicKey.findProgramAddressSync(
+          [Buffer.from("course"), Buffer.from(publishedId)],
+          program.programId
+        );
+        const [configPda] = PublicKey.findProgramAddressSync(
+          [Buffer.from("config")],
+          program.programId
+        );
+
+        // Check if course account already exists
+        const courseAccountInfo = await connection.getAccountInfo(coursePda);
+
+        if (!courseAccountInfo) {
+          console.log(`Creating course on-chain: ${publishedId}`);
+          // Send transaction to initialize the course
+          // Assuming 100 XP per lesson, Level 1, Track 1 defaults. We will refine this later if needed.
+          const creatorPubkey = new PublicKey(wallet);
+          const lessonCount = course.lessonCount || 1;
+
+          const tx = await program.methods
+            .createCourse({
+              courseId: publishedId.substring(0, 32), // Ensure valid slice for string limitations if any
+              creator: creatorPubkey,
+              contentTxId: Array(32).fill(0), // Placeholder content tx id
+              lessonCount: lessonCount,
+              difficulty: 1, // Default difficulty
+              xpPerLesson: 100, // Default xp per lesson
+              trackId: 1,
+              trackLevel: 1,
+              prerequisite: null,
+              creatorRewardXp: 500, // Reward for creator
+              minCompletionsForReward: 10,
+            } as any)
+            .accounts({
+              course: coursePda,
+              config: configPda,
+              authority: backendWallet.publicKey,
+              systemProgram: SystemProgram.programId,
+            } as any)
+            .transaction();
+
+          tx.feePayer = backendWallet.publicKey;
+          tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+          tx.sign(backendWallet);
+
+          const sig = await connection.sendRawTransaction(tx.serialize());
+          await connection.confirmTransaction(sig);
+          console.log("On-chain course created, tx signature:", sig);
+        }
+      } catch (onchainError) {
+        console.error("Failed to sync course on-chain during publish:", onchainError);
+        // We log the error but still proceed with Sanity publishing to unblock user
+        // An ideal system might enqueue this for retry.
+      }
+    }
+
     // Update both draft and published versions
     await Promise.all([
       serverClient.patch(publishedId).set({ published: true }).commit().catch(() => null),
@@ -65,17 +147,17 @@ export async function POST(
     return NextResponse.json({ success: true, published: true });
   } catch (error: any) {
     console.error("Error publishing course:", error);
-    
+
     if (error.message?.includes("Insufficient permissions") || error.statusCode === 403) {
       return NextResponse.json(
-        { 
+        {
           error: "API token lacks write permissions. Please create a new token with Editor role in Sanity dashboard (Settings → API → Tokens). See docs/SANITY_TOKEN_SETUP.md for details.",
-          details: error.message 
+          details: error.message
         },
         { status: 403 }
       );
     }
-    
+
     return NextResponse.json(
       { error: error.message || "Failed to publish course" },
       { status: 500 }

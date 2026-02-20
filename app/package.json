@@ -2,12 +2,13 @@
   "name": "app",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "postinstall": "node scripts/fix-appkit-ui-svg.js"
+    "postinstall": "node scripts/fix-appkit-ui-svg.cjs"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.20.0",
@@ -20,6 +21,7 @@
     "@codemirror/search": "^6.6.0",
     "@codemirror/state": "^6.4.0",
     "@codemirror/view": "^6.23.0",
+    "@coral-xyz/anchor": "^0.31.1",
     "@marimo-team/codemirror-ai": "^0.3.5",
     "@prisma/client": "^6.19.2",
     "@privy-io/react-auth": "^3.13.1",
@@ -32,6 +34,8 @@
     "@solana-program/system": "^0.11.0",
     "@solana-program/token": "^0.10.0",
     "@solana/kit": "^6.0.1",
+    "@solana/spl-token": "^0.4.14",
+    "@solana/web3.js": "^1.98.4",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.95.3",
     "canvas-confetti": "^1.9.4",
@@ -44,6 +48,7 @@
     "next-sanity": "^12.1.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "react-resizable-panels": "^4",
     "sanity": "^5.9.0",
     "styled-components": "^6.3.9",
     "tailwind-merge": "^3.4.1",

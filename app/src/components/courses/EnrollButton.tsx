@@ -46,7 +46,7 @@ export function EnrollButton({ courseId, courseTitle, className }: EnrollButtonP
     );
   }
 
-  const enrolled = enrollment !== undefined;
+  const enrolled = !!enrollment;
 
   if (enrolled) {
     return (
