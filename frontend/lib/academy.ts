@@ -44,7 +44,7 @@ export type IndexedLearnerActivity = {
 
 export async function fetchIndexedLearnerActivity(
 	learner: PublicKey,
-	limit = 20,
+	limit = 20
 ): Promise<IndexedLearnerActivity[]> {
 	const connection = getSolanaConnection();
 	const programId = getProgramId();
@@ -65,15 +65,16 @@ export async function fetchIndexedLearnerActivity(
 			connection
 				.getParsedTransaction(entry.signature, { maxSupportedTransactionVersion: 0 })
 				.then((transaction) => ({ entry, transaction }))
-		),
+		)
 	);
 
 	const activity = transactions
 		.filter(({ transaction }) => transaction !== null)
 		.map(({ entry, transaction }) => {
 			const parsed = transaction!;
-			const hasProgramInstruction = parsed.transaction.message.instructions.some((instruction) =>
-				"programId" in instruction ? instruction.programId.equals(programId) : false,
+			const hasProgramInstruction = parsed.transaction.message.instructions.some(
+				(instruction) =>
+					"programId" in instruction ? instruction.programId.equals(programId) : false
 			);
 			if (!hasProgramInstruction) return null;
 
@@ -84,7 +85,9 @@ export async function fetchIndexedLearnerActivity(
 			return {
 				signature: entry.signature,
 				slot: entry.slot,
-				timestamp: new Date((entry.blockTime ?? Math.floor(Date.now() / 1000)) * 1000).toISOString(),
+				timestamp: new Date(
+					(entry.blockTime ?? Math.floor(Date.now() / 1000)) * 1000
+				).toISOString(),
 				instruction: instructionFromLogs ?? "program_interaction",
 				success: parsed.meta?.err == null,
 			} satisfies IndexedLearnerActivity;

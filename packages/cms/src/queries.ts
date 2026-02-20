@@ -102,3 +102,65 @@ export const authorBySlugQuery = /* groq */ `
     }
   }
 `;
+
+// ── Academy User queries ────────────────────────────────────────────
+
+export const userFields = /* groq */ `
+  _id,
+  _type,
+  _createdAt,
+  _updatedAt,
+  authId,
+  name,
+  email,
+  walletAddress,
+  image,
+  role,
+  xpBalance,
+  enrolledCourses,
+  completedCourses,
+  lastActiveAt
+`;
+
+export const userByAuthIdQuery = /* groq */ `
+  *[_type == "academyUser" && authId == $authId][0] {
+    ${userFields}
+  }
+`;
+
+export const userByEmailQuery = /* groq */ `
+  *[_type == "academyUser" && email == $email][0] {
+    ${userFields}
+  }
+`;
+
+export const userByWalletQuery = /* groq */ `
+  *[_type == "academyUser" && walletAddress == $walletAddress][0] {
+    ${userFields}
+  }
+`;
+
+export const allUsersQuery = /* groq */ `
+  *[_type == "academyUser"] | order(_createdAt desc) {
+    ${userFields}
+  }
+`;
+
+export const adminUsersQuery = /* groq */ `
+  *[_type == "academyUser" && role in ["admin", "superadmin"]] | order(_createdAt desc) {
+    ${userFields}
+  }
+`;
+
+export const userCountQuery = /* groq */ `
+  count(*[_type == "academyUser"])
+`;
+
+export const userStatsQuery = /* groq */ `
+  {
+    "totalUsers": count(*[_type == "academyUser"]),
+    "activeUsers": count(*[_type == "academyUser" && lastActiveAt > $since]),
+    "adminCount": count(*[_type == "academyUser" && role in ["admin", "superadmin"]]),
+    "totalEnrollments": count(*[_type == "academyUser" && count(enrolledCourses) > 0])
+  }
+`;

@@ -274,20 +274,18 @@ async function getCourse(id: string) {
 	let prerequisiteLabel: string | null = null;
 	const prerequisite = onchainCourse?.prerequisite ?? null;
 	if (prerequisite) {
-		const prereq = onchainCourses.find((course) =>
-			course.pubkey.equals(prerequisite)
-		);
+		const prereq = onchainCourses.find((course) => course.pubkey.equals(prerequisite));
 		prerequisiteLabel = prereq?.account.courseId ?? prerequisite.toBase58();
 	}
 
 	const onchainMeta = {
 		...(onchainCourse
 			? {
-				xpPerLesson: onchainCourse.xpPerLesson,
-				lessonCount: onchainCourse.lessonCount,
-				trackId: onchainCourse.trackId,
-				trackLevel: onchainCourse.trackLevel,
-			}
+					xpPerLesson: onchainCourse.xpPerLesson,
+					lessonCount: onchainCourse.lessonCount,
+					trackId: onchainCourse.trackId,
+					trackLevel: onchainCourse.trackLevel,
+				}
 			: {}),
 		...(prerequisiteLabel ? { prerequisiteLabel } : {}),
 	};
@@ -321,8 +319,7 @@ async function getLesson(courseId: string, lessonId: string) {
 			}))
 		) ?? [];
 
-	const lesson =
-		lessons.find((entry) => entry.id === lessonId) ??
+	const lesson = lessons.find((entry) => entry.id === lessonId) ??
 		lessons[0] ?? {
 			id: lessonId,
 			title: "Lesson",
@@ -339,7 +336,7 @@ async function getLesson(courseId: string, lessonId: string) {
 		.map((link, index) => ({
 			id: `${lesson.id}-resource-${index + 1}`,
 			title: link.title,
-			description: `Referenced in lesson content`,
+			description: "Referenced in lesson content",
 			type: inferResourceType(link.href),
 			url: link.href,
 			tags: ["lesson"],
@@ -389,10 +386,7 @@ function extractLinksFromBlocks(blocks: SanityLessonBlock[]) {
 				const href = def?.href;
 				if (!href) continue;
 
-				const title =
-					child.text?.trim() ||
-					safeHostname(href) ||
-					"Resource";
+				const title = child.text?.trim() || safeHostname(href) || "Resource";
 				if (!links.some((link) => link.href === href)) {
 					links.push({ href, title });
 				}
@@ -415,7 +409,9 @@ function isVideoUrl(url: string) {
 	return /youtube\.com|youtu\.be|vimeo\.com|\.mp4($|\?)/i.test(url);
 }
 
-function inferResourceType(url: string): "article" | "video" | "document" | "link" | "book" | "tool" {
+function inferResourceType(
+	url: string
+): "article" | "video" | "document" | "link" | "book" | "tool" {
 	if (isVideoUrl(url)) return "video";
 	if (/\.pdf($|\?)/i.test(url)) return "document";
 	if (/docs\.|notion\.so|readme|guide|article|blog/i.test(url)) return "article";

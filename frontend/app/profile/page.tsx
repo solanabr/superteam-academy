@@ -36,7 +36,6 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
 	);
 }
 
-
 async function ProfileContent({ walletAddress }: { walletAddress?: string }) {
 	const profile = await getDynamicProfile(walletAddress);
 	const { user, stats, achievements, activity, courses } = profile;
@@ -155,10 +154,12 @@ async function getDynamicProfile(walletAddress?: string) {
 
 	const xpMint = config?.xpMint;
 	const xpBalance = xpMint
-		? (await academyClient.fetchXpBalance(findToken2022ATA(learner, xpMint))) ?? 0n
+		? ((await academyClient.fetchXpBalance(findToken2022ATA(learner, xpMint))) ?? 0n)
 		: 0n;
 
-	const coursesByKey = new Map(allCourses.map((course) => [course.pubkey.toBase58(), course.account]));
+	const coursesByKey = new Map(
+		allCourses.map((course) => [course.pubkey.toBase58(), course.account])
+	);
 	const enrolledCourses = enrollments.map((entry) => {
 		const course = coursesByKey.get(entry.account.course.toBase58());
 		const completedLessons = countBits(entry.account.lessonFlags);
@@ -194,13 +195,20 @@ async function getDynamicProfile(walletAddress?: string) {
 		};
 	});
 
-	const completedCourses = enrolledCourses.filter((course) => course.status === "completed").length;
-	const inProgressCourses = enrolledCourses.filter((course) => course.status === "in_progress").length;
+	const completedCourses = enrolledCourses.filter(
+		(course) => course.status === "completed"
+	).length;
+	const inProgressCourses = enrolledCourses.filter(
+		(course) => course.status === "in_progress"
+	).length;
 	const totalLessonsCompleted = enrolledCourses.reduce(
 		(sum, course) => sum + course.progress.completedLessons,
-		0,
+		0
 	);
-	const totalLessons = enrolledCourses.reduce((sum, course) => sum + course.progress.totalLessons, 0);
+	const totalLessons = enrolledCourses.reduce(
+		(sum, course) => sum + course.progress.totalLessons,
+		0
+	);
 
 	const currentXP = Number(xpBalance);
 	const level = Math.max(1, Math.floor(currentXP / 500) + 1);

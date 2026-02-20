@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { readPlatformStore, writePlatformStore } from "@/lib/platform-store";
 
 export async function GET() {
@@ -30,7 +30,12 @@ export async function POST(request: NextRequest) {
 		| {
 				action: "submitProject";
 				teamId: string;
-				project: { name: string; description: string; techStack: string[]; repoUrl: string };
+				project: {
+					name: string;
+					description: string;
+					techStack: string[];
+					repoUrl: string;
+				};
 		  }
 		| { action: "vote"; submissionId: string };
 
@@ -49,7 +54,7 @@ export async function POST(request: NextRequest) {
 		store.teams = store.teams.map((team) =>
 			team.id === body.teamId && !team.members.some((member) => member.id === body.userId)
 				? { ...team, members: [...team.members, { id: body.userId, name: body.userName }] }
-				: team,
+				: team
 		);
 	}
 
@@ -65,7 +70,7 @@ export async function POST(request: NextRequest) {
 			},
 		];
 		store.teams = store.teams.map((team) =>
-			team.id === body.teamId ? { ...team, project: body.project } : team,
+			team.id === body.teamId ? { ...team, project: body.project } : team
 		);
 	}
 
@@ -73,7 +78,7 @@ export async function POST(request: NextRequest) {
 		store.submissions = store.submissions.map((submission) =>
 			submission.id === body.submissionId
 				? { ...submission, votes: submission.votes + 1 }
-				: submission,
+				: submission
 		);
 	}
 

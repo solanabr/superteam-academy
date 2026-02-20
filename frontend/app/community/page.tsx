@@ -161,7 +161,6 @@ export default async function DiscussionsPage({ searchParams }: DiscussionsPageP
 
 	return (
 		<div className="space-y-6">
-
 			<div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
 				<div className="flex items-center gap-3 flex-1 w-full sm:w-auto">
 					<div className="relative flex-1 max-w-sm">
@@ -209,7 +208,6 @@ export default async function DiscussionsPage({ searchParams }: DiscussionsPageP
 				</div>
 			)}
 
-			
 			<Tabs defaultValue="recent" className="space-y-5">
 				<TabsList className="bg-muted/50 p-1 rounded-xl">
 					<TabsTrigger

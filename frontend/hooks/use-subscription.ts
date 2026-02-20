@@ -49,7 +49,7 @@ export function useSubscription(userId: string) {
 			setLoading(true);
 			const response = await fetch(
 				`/api/platform/subscription?userId=${encodeURIComponent(userId)}`,
-				{ method: "GET", cache: "no-store" },
+				{ method: "GET", cache: "no-store" }
 			);
 			if (!response.ok) {
 				throw new Error("Unable to load subscription");
@@ -85,14 +85,11 @@ export function useSubscription(userId: string) {
 		}
 	}, [loadSubscription, userId]);
 
-	const hasAccessToCourse = useCallback(
-		() => {
-			if (!subscription) return false;
-			if (subscription.planId === "free") return false;
-			return subscription.status === "active";
-		},
-		[subscription]
-	);
+	const hasAccessToCourse = useCallback(() => {
+		if (!subscription) return false;
+		if (subscription.planId === "free") return false;
+		return subscription.status === "active";
+	}, [subscription]);
 
 	const upgradeSubscription = useCallback(
 		async (planId: string) => {

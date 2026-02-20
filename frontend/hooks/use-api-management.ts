@@ -69,7 +69,10 @@ export function useApiManagement(_userId: string) {
 
 			const payload = (await response.json()) as {
 				apiKeys: Array<
-					Omit<ApiKey, "createdAt" | "lastUsed"> & { createdAt: string; lastUsed?: string }
+					Omit<ApiKey, "createdAt" | "lastUsed"> & {
+						createdAt: string;
+						lastUsed?: string;
+					}
 				>;
 				endpoints: ApiEndpoint[];
 				usage: UsageStats;
@@ -84,7 +87,7 @@ export function useApiManagement(_userId: string) {
 						createdAt: new Date(rest.createdAt),
 						...(lastUsed ? { lastUsed } : {}),
 					};
-				}),
+				})
 			);
 			setEndpoints(payload.endpoints);
 			setUsage(payload.usage);
@@ -94,7 +97,7 @@ export function useApiManagement(_userId: string) {
 		} finally {
 			setLoading(false);
 		}
-	}, []);
+	}, [toDate]);
 
 	useEffect(() => {
 		loadApiData();

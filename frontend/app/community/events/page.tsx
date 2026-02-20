@@ -138,7 +138,6 @@ export default async function EventsPage() {
 							className="rounded-2xl border border-border/60 bg-card p-6 hover:border-primary/20 transition-colors"
 						>
 							<div className="flex flex-col sm:flex-row gap-5">
-
 								<div className="shrink-0 flex sm:flex-col items-center gap-2 sm:gap-0 sm:w-16">
 									<div className="h-14 w-14 rounded-xl bg-primary/10 flex flex-col items-center justify-center">
 										<span className="text-xs text-primary font-medium leading-none">
@@ -150,7 +149,6 @@ export default async function EventsPage() {
 									</div>
 								</div>
 
-								
 								<div className="flex-1 min-w-0">
 									<div className="flex items-center gap-2 mb-1 flex-wrap">
 										<Badge
@@ -209,7 +207,6 @@ export default async function EventsPage() {
 									)}
 								</div>
 
-								
 								<div className="shrink-0 flex sm:flex-col items-center gap-2">
 									<Button size="sm" className="w-full sm:w-auto">
 										{t("events.rsvp")}

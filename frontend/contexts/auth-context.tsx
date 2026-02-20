@@ -21,7 +21,7 @@ const authClient: AuthClient = createAuthClient({
 	baseURL: process.env.NEXT_PUBLIC_AUTH_URL ?? "http://localhost:3000",
 });
 
-interface AuthSession {
+export interface AuthSession {
 	id: string;
 	expiresAt: Date;
 	userId: string;
@@ -32,6 +32,7 @@ interface AuthUser {
 	name: string;
 	email: string;
 	image?: string;
+	role?: "learner" | "admin" | "superadmin";
 }
 
 interface AuthContextType {
@@ -44,6 +45,8 @@ interface AuthContextType {
 	isOAuthLoading: boolean;
 
 	isAuthenticated: boolean;
+	isAdmin: boolean;
+	isSuperAdmin: boolean;
 	authMethod: "wallet" | "oauth" | "linked" | null;
 
 	verifyWallet: () => Promise<void>;
@@ -53,9 +56,15 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-function AuthProviderInner({ children }: { children: ReactNode }) {
+function AuthProviderInner({
+	children,
+	initialSession,
+}: {
+	children: ReactNode;
+	initialSession: AuthSession | null;
+}) {
 	const wallet = useWallet();
-	const [session, setSession] = useState<AuthSession | null>(null);
+	const [session, setSession] = useState<AuthSession | null>(initialSession ?? null);
 	const [user, setUser] = useState<AuthUser | null>(null);
 	const [isOAuthLoading, setIsOAuthLoading] = useState(true);
 	const [isWalletVerified, setIsWalletVerified] = useState(false);
@@ -74,12 +83,28 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
 			expiresAt: new Date(result.data.session.expiresAt),
 			userId: result.data.user.id,
 		});
-		setUser({
+
+		const userData: AuthUser = {
 			id: result.data.user.id,
 			name: result.data.user.name,
 			email: result.data.user.email,
 			image: result.data.user.image ?? "",
-		});
+		};
+		setUser(userData);
+
+		// Sync to Sanity and get role
+		try {
+			const syncRes = await fetch("/api/auth/sync", { method: "POST" });
+			if (syncRes.ok) {
+				const syncData = (await syncRes.json()) as { synced: boolean; role?: string };
+				if (syncData.synced && syncData.role) {
+					const role = syncData.role as NonNullable<AuthUser["role"]>;
+					setUser((prev) => (prev ? { ...prev, role } : prev));
+				}
+			}
+		} catch {
+			// Sync failure is non-blocking
+		}
 	}, []);
 
 	useEffect(() => {
@@ -93,7 +118,7 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
 			}
 		};
 		loadSession();
-	}, [refreshSession]);
+	}, []);
 
 	useEffect(() => {
 		if (!wallet.connected) {
@@ -111,10 +136,7 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
 			return;
 		}
 
-		if (
-			session?.userId &&
-			user?.email === `${currentWallet}@wallet.superteam.local`
-		) {
+		if (session?.userId && user?.email === `${currentWallet}@wallet.superteam.local`) {
 			setIsWalletVerified(true);
 			return;
 		}
@@ -150,6 +172,8 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
 	const isWalletConnected = wallet.connected;
 	const isOAuthAuthenticated = !!session;
 	const isAuthenticated = (isWalletConnected && isWalletVerified) || isOAuthAuthenticated;
+	const isAdmin = user?.role === "admin" || user?.role === "superadmin";
+	const isSuperAdmin = user?.role === "superadmin";
 	const authMethod =
 		isWalletVerified && isOAuthAuthenticated
 			? "linked"
@@ -182,6 +206,8 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
 			user,
 			isOAuthLoading,
 			isAuthenticated,
+			isAdmin,
+			isSuperAdmin,
 			authMethod,
 			verifyWallet,
 			signInWithOAuth,
@@ -195,6 +221,8 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
 			user,
 			isOAuthLoading,
 			isAuthenticated,
+			isAdmin,
+			isSuperAdmin,
 			authMethod,
 			verifyWallet,
 			signInWithOAuth,
@@ -208,12 +236,20 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
 const DEVNET_ENDPOINT = clusterApiUrl("devnet");
 const WALLETS = [new PhantomWalletAdapter(), new SolflareWalletAdapter()];
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({
+	children,
+	initialSession,
+}: {
+	children: ReactNode;
+	initialSession: AuthSession | null;
+}) {
 	return (
 		<ConnectionProvider endpoint={DEVNET_ENDPOINT}>
 			<WalletProvider wallets={WALLETS} autoConnect>
 				<WalletModalProvider>
-					<AuthProviderInner>{children}</AuthProviderInner>
+					<AuthProviderInner initialSession={initialSession}>
+						{children}
+					</AuthProviderInner>
 				</WalletModalProvider>
 			</WalletProvider>
 		</ConnectionProvider>

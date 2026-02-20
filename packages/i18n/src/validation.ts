@@ -118,7 +118,9 @@ export class TranslationValidator {
 					}
 
 					if (extraKeys.length > 0) {
-						result.warnings.push(`Extra ${extraKeys.length} keys compared to ${baseLocale}`);
+						result.warnings.push(
+							`Extra ${extraKeys.length} keys compared to ${baseLocale}`
+						);
 					}
 				} catch (error) {
 					result.isValid = false;
@@ -161,7 +163,11 @@ export class TranslationValidator {
 				const targetVal = target[key];
 				if (typeof targetVal === "object" && targetVal !== null) {
 					missing.push(
-						...this.findMissingKeys(baseVal, targetVal as Record<string, unknown>, fullKey)
+						...this.findMissingKeys(
+							baseVal,
+							targetVal as Record<string, unknown>,
+							fullKey
+						)
 					);
 				} else {
 					missing.push(fullKey);
@@ -189,7 +195,11 @@ export class TranslationValidator {
 				const baseVal = base[key];
 				if (typeof baseVal === "object" && baseVal !== null) {
 					extra.push(
-						...this.findExtraKeys(baseVal as Record<string, unknown>, targetVal, fullKey)
+						...this.findExtraKeys(
+							baseVal as Record<string, unknown>,
+							targetVal,
+							fullKey
+						)
 					);
 				} else {
 					extra.push(fullKey);
@@ -250,8 +260,6 @@ export async function validateTranslations(): Promise<void> {
 	const results = await validator.validateAll();
 	const comparisonResults = await validator.compareTranslations("en");
 	const allResults = { ...results, ...comparisonResults };
-
-	console.log(validator.generateReport(allResults));
 
 	const hasErrors = Object.values(allResults).some((result) => !result.isValid);
 	if (hasErrors) {

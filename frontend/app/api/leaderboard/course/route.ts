@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { PublicKey } from "@solana/web3.js";
+import type { PublicKey } from "@solana/web3.js";
 import { getAcademyClient } from "@/lib/academy";
 
 export async function GET() {
@@ -17,25 +17,30 @@ export async function GET() {
 	).fetchAllEnrollments;
 
 	const enrollments =
-		typeof fetchAllEnrollments === "function" ? await fetchAllEnrollments.call(academyClient) : [];
+		typeof fetchAllEnrollments === "function"
+			? await fetchAllEnrollments.call(academyClient)
+			: [];
 
 	const byCourse = new Map<string, Map<string, number>>();
 	for (const enrollment of enrollments) {
 		const courseKey = enrollment.account.course.toBase58();
 		const course = courses.find(
-			(entry: (typeof courses)[number]) => entry.pubkey.toBase58() === courseKey,
+			(entry: (typeof courses)[number]) => entry.pubkey.toBase58() === courseKey
 		);
 		if (!course) continue;
 
-		const completedLessons = enrollment.account.lessonFlags.reduce((sum: number, word: bigint) => {
-			let value = word;
-			let bits = 0;
-			while (value > 0n) {
-				bits += Number(value & 1n);
-				value >>= 1n;
-			}
-			return sum + bits;
-		}, 0);
+		const completedLessons = enrollment.account.lessonFlags.reduce(
+			(sum: number, word: bigint) => {
+				let value = word;
+				let bits = 0;
+				while (value > 0n) {
+					bits += Number(value & 1n);
+					value >>= 1n;
+				}
+				return sum + bits;
+			},
+			0
+		);
 		const score = completedLessons * course.account.xpPerLesson;
 		const userId = enrollment.pubkey.toBase58();
 

@@ -61,35 +61,35 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
 					<div className="flex flex-col lg:flex-row gap-3 items-start lg:items-center">
 						<CoursesFilters q={q} category={category} level={level} sort={sort} />
 
-							<div className="h-5 w-px bg-border/60 hidden lg:block" />
+						<div className="h-5 w-px bg-border/60 hidden lg:block" />
 
-							<div className="flex items-center rounded-lg border border-border/60 overflow-hidden">
-								<a
-									href={buildFilterUrl({
-										q,
-										category,
-										level,
-										sort,
-										view: "grid",
-									})}
-									className={`p-2 transition-colors ${view === "grid" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"}`}
-								>
-									<LayoutGrid className="h-3.5 w-3.5" />
-								</a>
-								<a
-									href={buildFilterUrl({
-										q,
-										category,
-										level,
-										sort,
-										view: "list",
-									})}
-									className={`p-2 transition-colors border-l border-border/60 ${view === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"}`}
-								>
-									<List className="h-3.5 w-3.5" />
-								</a>
-							</div>
+						<div className="flex items-center rounded-lg border border-border/60 overflow-hidden">
+							<a
+								href={buildFilterUrl({
+									q,
+									category,
+									level,
+									sort,
+									view: "grid",
+								})}
+								className={`p-2 transition-colors ${view === "grid" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"}`}
+							>
+								<LayoutGrid className="h-3.5 w-3.5" />
+							</a>
+							<a
+								href={buildFilterUrl({
+									q,
+									category,
+									level,
+									sort,
+									view: "list",
+								})}
+								className={`p-2 transition-colors border-l border-border/60 ${view === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"}`}
+							>
+								<List className="h-3.5 w-3.5" />
+							</a>
 						</div>
+					</div>
 
 					{hasFilters && (
 						<div className="flex items-center gap-2 mt-3 flex-wrap">

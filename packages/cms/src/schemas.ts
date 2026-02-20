@@ -86,3 +86,19 @@ export type Track = SanityDocument & {
 	image?: SanityImage;
 	courses?: Array<{ _ref: string }>;
 };
+
+export type UserRole = "learner" | "admin" | "superadmin";
+
+export type AcademyUser = SanityDocument & {
+	_type: "academyUser";
+	authId: string;
+	name: string;
+	email: string;
+	walletAddress?: string;
+	image?: string;
+	role: UserRole;
+	xpBalance: number;
+	enrolledCourses: string[];
+	completedCourses: string[];
+	lastActiveAt?: string;
+};

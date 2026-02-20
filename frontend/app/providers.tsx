@@ -3,9 +3,15 @@
 import type React from "react";
 import { ProgressProvider } from "@bprogress/next/app";
 import { ThemeProvider } from "next-themes";
-import { AuthProvider } from "@/contexts/auth-context";
+import { AuthProvider, type AuthSession } from "@/contexts/auth-context";
 
-export default function Providers({ children }: { children: React.ReactNode }) {
+export default function Providers({
+	children,
+	initialSession,
+}: {
+	children: React.ReactNode;
+	initialSession: AuthSession | null;
+}) {
 	return (
 		<ThemeProvider
 			attribute="class"
@@ -19,7 +25,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 				options={{ showSpinner: false }}
 				shallowRouting
 			>
-				<AuthProvider>{children}</AuthProvider>
+				<AuthProvider initialSession={initialSession}>{children}</AuthProvider>
 			</ProgressProvider>
 		</ThemeProvider>
 	);

@@ -24,7 +24,7 @@ function extractWalletFromEmail(email: string) {
 		return undefined;
 	}
 
-	const candidate = email.slice(0, email.length - (`@${WALLET_EMAIL_DOMAIN}`).length);
+	const candidate = email.slice(0, email.length - `@${WALLET_EMAIL_DOMAIN}`.length);
 
 	try {
 		return new PublicKey(candidate).toBase58();

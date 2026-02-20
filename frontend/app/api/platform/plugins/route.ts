@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { readPlatformStore, writePlatformStore } from "@/lib/platform-store";
 
 export async function GET() {
@@ -33,24 +33,34 @@ export async function POST(request: NextRequest) {
 		| { action: "toggle"; pluginId: string; enabled: boolean }
 		| {
 				action: "create";
-				plugin: { name: string; description: string; category: "editor" | "theme" | "integration" | "analytics" | "gamification" | "utility" };
+				plugin: {
+					name: string;
+					description: string;
+					category:
+						| "editor"
+						| "theme"
+						| "integration"
+						| "analytics"
+						| "gamification"
+						| "utility";
+				};
 		  };
 
 	const store = await readPlatformStore();
 
 	if (body.action === "install") {
 		store.plugins = store.plugins.map((plugin) =>
-			plugin.id === body.pluginId ? { ...plugin, enabled: true } : plugin,
+			plugin.id === body.pluginId ? { ...plugin, enabled: true } : plugin
 		);
 	}
 	if (body.action === "uninstall") {
 		store.plugins = store.plugins.map((plugin) =>
-			plugin.id === body.pluginId ? { ...plugin, enabled: false } : plugin,
+			plugin.id === body.pluginId ? { ...plugin, enabled: false } : plugin
 		);
 	}
 	if (body.action === "toggle") {
 		store.plugins = store.plugins.map((plugin) =>
-			plugin.id === body.pluginId ? { ...plugin, enabled: body.enabled } : plugin,
+			plugin.id === body.pluginId ? { ...plugin, enabled: body.enabled } : plugin
 		);
 	}
 	if (body.action === "create") {

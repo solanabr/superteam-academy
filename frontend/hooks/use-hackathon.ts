@@ -76,7 +76,9 @@ export function useHackathon(hackathonId: string, userId: string) {
 				endDate: string;
 			};
 			teams: Team[];
-			submissions: Array<Omit<Submission, "submittedAt" | "team"> & { teamId: string; submittedAt: string }>;
+			submissions: Array<
+				Omit<Submission, "submittedAt" | "team"> & { teamId: string; submittedAt: string }
+			>;
 			leaderboard: LeaderboardEntry[];
 		}) => {
 			setHackathon({
@@ -97,11 +99,11 @@ export function useHackathon(hackathonId: string, userId: string) {
 					project: submission.project,
 					submittedAt: new Date(submission.submittedAt),
 					votes: submission.votes,
-				})),
+				}))
 			);
 			setLeaderboard(payload.leaderboard);
 		},
-		[],
+		[]
 	);
 
 	const loadHackathon = useCallback(async () => {
@@ -133,7 +135,7 @@ export function useHackathon(hackathonId: string, userId: string) {
 			setUserTeam(
 				payload.teams.find((team) => team.members.some((member) => member.id === userId)) ??
 					payload.teams[0] ??
-					null,
+					null
 			);
 			setError(null);
 		} catch (_err) {
@@ -208,7 +210,11 @@ export function useHackathon(hackathonId: string, userId: string) {
 		await fetch("/api/platform/hackathon", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ action: "submitProject", teamId: userTeam.id, project: projectData }),
+			body: JSON.stringify({
+				action: "submitProject",
+				teamId: userTeam.id,
+				project: projectData,
+			}),
 		});
 		await loadHackathon();
 	};

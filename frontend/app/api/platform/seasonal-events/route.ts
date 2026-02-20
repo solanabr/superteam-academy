@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 
 type SeasonalProgress = {
 	joined: boolean;
@@ -25,8 +25,18 @@ const challenges = [
 ] as const;
 
 const rewards = [
-	{ id: "reward-1", name: "Winter Badge", description: "Season completion badge", icon: "trophy" },
-	{ id: "reward-2", name: "Snowflake NFT", description: "Limited seasonal collectible", icon: "snowflake" },
+	{
+		id: "reward-1",
+		name: "Winter Badge",
+		description: "Season completion badge",
+		icon: "trophy",
+	},
+	{
+		id: "reward-2",
+		name: "Snowflake NFT",
+		description: "Limited seasonal collectible",
+		icon: "snowflake",
+	},
 ] as const;
 
 const progressByUser = new Map<string, SeasonalProgress>();

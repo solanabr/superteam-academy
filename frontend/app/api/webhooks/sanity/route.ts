@@ -3,9 +3,9 @@ import { revalidateTag, revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { createSanityClient } from "@superteam/cms";
 import {
-    enqueueCourseSyncJob,
-    getCourseSyncJobs,
-    processCourseSyncQueue,
+	enqueueCourseSyncJob,
+	getCourseSyncJobs,
+	processCourseSyncQueue,
 } from "@/lib/course-sync-jobs";
 
 // Sanity webhook secret for verification
@@ -119,7 +119,7 @@ async function triggerOnchainCourseSync(documentId: string) {
 	const client = createSanityClient({ projectId, dataset, token, useCdn: false });
 	const doc = await client.fetch<{ slug?: { current?: string } } | null>(
 		`*[_type == "course" && _id == $id][0]{ slug }`,
-		{ id: documentId },
+		{ id: documentId }
 	);
 
 	const courseId = doc?.slug?.current;

@@ -53,10 +53,13 @@ export function useSeasonalEvents(_userId: string) {
 	const loadSeasonalEvents = useCallback(async () => {
 		try {
 			setLoading(true);
-			const response = await fetch(`/api/platform/seasonal-events?userId=${encodeURIComponent(_userId)}`, {
-				method: "GET",
-				cache: "no-store",
-			});
+			const response = await fetch(
+				`/api/platform/seasonal-events?userId=${encodeURIComponent(_userId)}`,
+				{
+					method: "GET",
+					cache: "no-store",
+				}
+			);
 			if (!response.ok) {
 				throw new Error("Unable to load seasonal events");
 			}
@@ -65,7 +68,12 @@ export function useSeasonalEvents(_userId: string) {
 					startDate: string;
 					endDate: string;
 				};
-				upcomingEvents: Array<Omit<SeasonalEvent, "startDate" | "endDate"> & { startDate: string; endDate: string }>;
+				upcomingEvents: Array<
+					Omit<SeasonalEvent, "startDate" | "endDate"> & {
+						startDate: string;
+						endDate: string;
+					}
+				>;
 				challenges: Challenge[];
 				rewards: Reward[];
 				userProgress: UserProgress;
@@ -81,7 +89,7 @@ export function useSeasonalEvents(_userId: string) {
 					...event,
 					startDate: new Date(event.startDate),
 					endDate: new Date(event.endDate),
-				})),
+				}))
 			);
 			setChallenges(payload.challenges);
 			setRewards(payload.rewards);

@@ -49,8 +49,7 @@ export function ProfileHeader({ user, stats }: ProfileHeaderProps) {
 	const identifiersMatch =
 		(authUser?.id !== undefined && authUser.id === user.id) ||
 		(walletAddress !== undefined && walletAddress === user.walletAddress);
-	const isOwner =
-		isAuthenticated && (identifiersMatch || isSelfProfileRoute);
+	const isOwner = isAuthenticated && (identifiersMatch || isSelfProfileRoute);
 
 	const initials = user.name
 		.split(" ")

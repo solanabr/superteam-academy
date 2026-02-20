@@ -1,21 +1,21 @@
 import { type Connection, PublicKey } from "@solana/web3.js";
 import {
-    PROGRAM_ID,
-    ACCOUNT_SIZES,
-    type ConfigAccount,
-    type CourseAccount,
-    type EnrollmentAccount,
-    type MinterRoleAccount,
-    type AchievementTypeAccount,
-    type AchievementReceiptAccount,
+	PROGRAM_ID,
+	ACCOUNT_SIZES,
+	type ConfigAccount,
+	type CourseAccount,
+	type EnrollmentAccount,
+	type MinterRoleAccount,
+	type AchievementTypeAccount,
+	type AchievementReceiptAccount,
 } from "./idl";
 import {
-    findConfigPDA,
-    findCoursePDA,
-    findEnrollmentPDA,
-    findMinterRolePDA,
-    findAchievementTypePDA,
-    findAchievementReceiptPDA,
+	findConfigPDA,
+	findCoursePDA,
+	findEnrollmentPDA,
+	findMinterRolePDA,
+	findAchievementTypePDA,
+	findAchievementReceiptPDA,
 } from "./pda";
 
 const DISCRIMINATOR_SIZE = 8;

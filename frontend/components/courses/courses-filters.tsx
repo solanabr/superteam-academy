@@ -6,11 +6,11 @@ import { Search } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
 } from "@/components/ui/select";
 
 type CoursesFiltersProps = {
@@ -43,7 +43,7 @@ export function CoursesFilters({ q, category, level, sort }: CoursesFiltersProps
 				router.push(`${pathname}?${params.toString()}`);
 			});
 		},
-		[baseParams, pathname, router],
+		[baseParams, pathname, router]
 	);
 
 	const submitSearch = useCallback(() => {

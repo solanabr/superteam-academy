@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { readdir } from "node:fs/promises";
 import path from "node:path";
 import { readPlatformStore, writePlatformStore } from "@/lib/platform-store";
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
 
 	if (body.action === "revoke") {
 		store.apiKeys = store.apiKeys.map((key) =>
-			key.id === body.keyId ? { ...key, status: "revoked" } : key,
+			key.id === body.keyId ? { ...key, status: "revoked" } : key
 		);
 	}
 
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
 						secret: `sk_${Math.random().toString(36).slice(2, 18)}`,
 						createdAt: new Date().toISOString(),
 					}
-				: key,
+				: key
 		);
 	}
 

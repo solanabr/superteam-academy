@@ -6,6 +6,8 @@ import Providers from "./providers";
 import { SiteHeader } from "@/components/navigation/site-header";
 import { SiteFooter } from "@/components/navigation/site-footer";
 import "./globals.css";
+import { serverAuth } from "@/lib/auth";
+import { headers } from "next/headers";
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
 
@@ -26,8 +28,14 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
+	const headerList = await headers();
 	const locale = await getLocale();
 	const messages = await getMessages();
+	const initialSession = await serverAuth.api.getSession({
+		headers: {
+			cookie: headerList.get("cookie") || "",
+		},
+	});
 
 	return (
 		<html lang={locale} suppressHydrationWarning>
@@ -52,7 +60,19 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 					</>
 				)}
 				<NextIntlClientProvider messages={messages}>
-					<Providers>
+					<Providers
+						initialSession={
+							initialSession
+								? {
+										id: initialSession.session.id,
+										expiresAt: initialSession
+											? new Date(initialSession.session.expiresAt)
+											: new Date(),
+										userId: initialSession?.user.id ?? "",
+									}
+								: null
+						}
+					>
 						<SiteHeader />
 						<main className="flex-1">{children}</main>
 						<SiteFooter />

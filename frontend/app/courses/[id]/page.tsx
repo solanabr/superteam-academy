@@ -273,21 +273,24 @@ async function getCourse(id: string) {
 	let prerequisiteLabel: string | null = null;
 	const prerequisite = onchainCourse?.prerequisite ?? null;
 	if (prerequisite) {
-		const prereq = onchainCourses.find((course) =>
-			course.pubkey.equals(prerequisite)
-		);
+		const prereq = onchainCourses.find((course) => course.pubkey.equals(prerequisite));
 		prerequisiteLabel = prereq?.account.courseId ?? prerequisite.toBase58();
 	}
 
-	return mapCourseToDetail(id, cmsCourse, {
-		...(onchainCourse
-			? {
-				xpPerLesson: onchainCourse.xpPerLesson,
-				lessonCount: onchainCourse.lessonCount,
-				trackId: onchainCourse.trackId,
-				trackLevel: onchainCourse.trackLevel,
-			}
-			: {}),
-		...(prerequisiteLabel ? { prerequisiteLabel } : {}),
-	}, { reviews });
+	return mapCourseToDetail(
+		id,
+		cmsCourse,
+		{
+			...(onchainCourse
+				? {
+						xpPerLesson: onchainCourse.xpPerLesson,
+						lessonCount: onchainCourse.lessonCount,
+						trackId: onchainCourse.trackId,
+						trackLevel: onchainCourse.trackLevel,
+					}
+				: {}),
+			...(prerequisiteLabel ? { prerequisiteLabel } : {}),
+		},
+		{ reviews }
+	);
 }

@@ -199,7 +199,7 @@ async function getUserRank() {
 	const linkedWallet = await getLinkedWallet();
 	const target = global.find((entry) => entry.user.id === linkedWallet);
 
-	if(!target) return undefined
+	if (!target) return undefined;
 
 	return {
 		globalRank: target?.rank ?? 0,
@@ -210,8 +210,6 @@ async function getUserRank() {
 		achievements: target?.achievements ?? 0,
 		streak: target?.streak ?? 0,
 		percentile:
-			global.length > 0 && target
-				? Math.max(0, (1 - target.rank / global.length) * 100)
-				: 0,
+			global.length > 0 && target ? Math.max(0, (1 - target.rank / global.length) * 100) : 0,
 	};
 }

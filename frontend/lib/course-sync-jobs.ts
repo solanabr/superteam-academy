@@ -6,11 +6,7 @@ import { createSanityClient } from "@superteam/cms";
 
 const execFileAsync = promisify(execFile);
 
-export type CourseSyncStatus =
-	| "queued"
-	| "running"
-	| "succeeded"
-	| "failed";
+export type CourseSyncStatus = "queued" | "running" | "succeeded" | "failed";
 
 export type CourseSyncJob = {
 	id: string;
@@ -36,7 +32,7 @@ type CourseSyncStore = {
 };
 
 const STORE_PATH = path.join(process.cwd(), ".next", "cache", "course-sync-jobs.json");
-const RETRY_DELAYS_MS = [2_000, 10_000, 30_000];
+const RETRY_DELAYS_MS = [2000, 10_000, 30_000];
 
 let storeLock: Promise<void> = Promise.resolve();
 let workerRunning = false;
@@ -108,7 +104,7 @@ async function patchLifecycle(
 		coursePda?: string;
 		createSignature?: string;
 		lastSyncError?: string | null;
-	},
+	}
 ) {
 	const client = sanityClient();
 	if (!client) return;
@@ -147,7 +143,7 @@ async function executeCourseSync(job: CourseSyncJob) {
 			"--arweaveKey",
 			arweaveKey,
 		],
-		{ cwd: path.join(repoRoot, "onchain-academy"), env: process.env },
+		{ cwd: path.join(repoRoot, "onchain-academy"), env: process.env }
 	);
 
 	if (stderr?.trim()) {
@@ -185,7 +181,7 @@ async function pickNextRunnableJob(): Promise<CourseSyncJob | null> {
 				(job) =>
 					(job.status === "queued" || job.status === "failed") &&
 					new Date(job.nextAttemptAt).getTime() <= now &&
-					job.attempts < job.maxAttempts,
+					job.attempts < job.maxAttempts
 			)
 			.sort((a, b) => a.createdAt.localeCompare(b.createdAt))[0];
 
@@ -239,7 +235,7 @@ export async function enqueueCourseSyncJob(documentId: string, courseId: string)
 		const existing = store.jobs.find(
 			(job) =>
 				job.idempotencyKey === idempotencyKey &&
-				(job.status === "queued" || job.status === "running" || job.status === "succeeded"),
+				(job.status === "queued" || job.status === "running" || job.status === "succeeded")
 		);
 		if (existing) return existing;
 
@@ -270,9 +266,7 @@ export async function enqueueCourseSyncJob(documentId: string, courseId: string)
 
 export async function getCourseSyncJobs(limit = 50) {
 	const store = await readStore();
-	return [...store.jobs]
-		.sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-		.slice(0, limit);
+	return [...store.jobs].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, limit);
 }
 
 export async function processCourseSyncQueue() {

@@ -107,7 +107,7 @@ export function mapCourseToDetail(
 	} | null,
 	options?: {
 		reviews?: CourseReviewView[];
-	},
+	}
 ): CourseDetailView {
 	const seed = seedCourseById(id);
 	const lessons = course?.modules?.flatMap((module) => module.lessons ?? []) ?? [];
@@ -118,7 +118,11 @@ export function mapCourseToDetail(
 	const reviews = options?.reviews ?? [];
 	const averageRating =
 		reviews.length > 0
-			? Number((reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length).toFixed(1))
+			? Number(
+					(
+						reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
+					).toFixed(1)
+				)
 			: 4.7;
 
 	const modules =
@@ -132,9 +136,7 @@ export function mapCourseToDetail(
 				lessons: moduleLessons.length,
 				completed: false,
 				lessonsList: moduleLessons.map((lesson, lessonIndex) => {
-					const lessonType: "quiz" | "video" = lesson.title
-						.toLowerCase()
-						.includes("quiz")
+					const lessonType: "quiz" | "video" = lesson.title.toLowerCase().includes("quiz")
 						? "quiz"
 						: "video";
 
@@ -176,7 +178,10 @@ export function mapCourseToDetail(
 				website: "",
 			},
 		},
-		image: resolveCourseImageUrl(course?.image, 1400, 788) ?? seed?.image ?? "/courses/default.jpg",
+		image:
+			resolveCourseImageUrl(course?.image, 1400, 788) ??
+			seed?.image ??
+			"/courses/default.jpg",
 		videoPreview: "",
 		tags: seed?.tags ?? [course?.track ?? "solana"],
 		xpReward: computedXpReward,
@@ -199,30 +204,31 @@ export function mapCourseToDetail(
 			type: "completion",
 			verifiable: true,
 		},
-		learningObjectives:
-			lessons.slice(0, 5).map((lesson) => lesson.title) || ["Complete all course lessons"],
+		learningObjectives: lessons.slice(0, 5).map((lesson) => lesson.title) || [
+			"Complete all course lessons",
+		],
 		requirements: ["Solana wallet", "Basic development knowledge"],
 		skills: seed?.tags ?? ["solana"],
 		modules:
 			modules.length > 0
 				? modules
 				: [
-					{
-						id: `${id}-module-1`,
-						title: "Core Curriculum",
-						description: "Course lessons",
-						duration: `${lessonCount * 10} min`,
-						lessons: lessonCount,
-						completed: false,
-						lessonsList: Array.from({ length: lessonCount }, (_, index) => ({
-							id: `${id}-lesson-${index + 1}`,
-							title: `Lesson ${index + 1}`,
-							duration: "10 min",
-							type: "video" as const,
+						{
+							id: `${id}-module-1`,
+							title: "Core Curriculum",
+							description: "Course lessons",
+							duration: `${lessonCount * 10} min`,
+							lessons: lessonCount,
 							completed: false,
-						})),
-					},
-				],
+							lessonsList: Array.from({ length: lessonCount }, (_, index) => ({
+								id: `${id}-lesson-${index + 1}`,
+								title: `Lesson ${index + 1}`,
+								duration: "10 min",
+								type: "video" as const,
+								completed: false,
+							})),
+						},
+					],
 		reviews,
 		prerequisites: onchain?.prerequisiteLabel
 			? [{ id: "prereq", title: onchain.prerequisiteLabel, completed: false }]
