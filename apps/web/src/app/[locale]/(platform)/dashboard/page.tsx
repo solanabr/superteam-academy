@@ -467,6 +467,7 @@ export default function DashboardPage() {
   const { connection } = useConnection();
   const { publicKey, sendTransaction } = useWallet();
   const [courses, setCourses] = useState<CurrentCourse[]>([]);
+  const [unenrollingId, setUnenrollingId] = useState<string | null>(null);
   const [showNameReveal, setShowNameReveal] = useState(false);
   const [dashboardUsername, setDashboardUsername] = useState(data.username);
   const [activityPage, setActivityPage] = useState(0);
@@ -514,11 +515,15 @@ export default function DashboardPage() {
 
   const handleUnenroll = useCallback(
     async (courseId: string) => {
+      setUnenrollingId(courseId);
       const supabase = createClient();
       const {
         data: { session },
       } = await supabase.auth.getSession();
-      if (!session?.user) return;
+      if (!session?.user) {
+        setUnenrollingId(null);
+        return;
+      }
 
       // Attempt to close the on-chain Enrollment PDA (returns SOL rent to learner).
       // If the wallet is connected and the TX succeeds, sync via API.
@@ -543,6 +548,7 @@ export default function DashboardPage() {
 
           if (res.ok) {
             setCourses((prev) => prev.filter((c) => c.courseId !== courseId));
+            setUnenrollingId(null);
             return;
           }
         } catch {
@@ -560,6 +566,7 @@ export default function DashboardPage() {
       if (!error) {
         setCourses((prev) => prev.filter((c) => c.courseId !== courseId));
       }
+      setUnenrollingId(null);
     },
     [publicKey, sendTransaction, connection]
   );
@@ -722,10 +729,15 @@ export default function DashboardPage() {
                   {!isComplete && (
                     <button
                       onClick={() => handleUnenroll(course.courseId)}
-                      className="absolute right-2 top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full text-danger opacity-0 transition-all hover:scale-110 hover:bg-danger hover:text-white hover:shadow-md group-hover:opacity-100"
+                      disabled={unenrollingId === course.courseId}
+                      className="absolute right-2 top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full text-danger opacity-0 transition-all hover:scale-110 hover:bg-danger hover:text-white hover:shadow-md disabled:cursor-not-allowed disabled:opacity-100 group-hover:opacity-100"
                       aria-label={t("removeCourse")}
                     >
-                      <X size={12} weight="bold" />
+                      {unenrollingId === course.courseId ? (
+                        <span className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                      ) : (
+                        <X size={12} weight="bold" />
+                      )}
                     </button>
                   )}
 
