@@ -1,4 +1,5 @@
 import { createAuthEndpoint } from "better-auth/api";
+import { setSessionCookie } from "better-auth/cookies";
 import type { AuthContext } from "better-auth";
 import { APIError } from "better-call";
 import { PublicKey } from "@solana/web3.js";
@@ -75,9 +76,16 @@ export function walletAuthPlugin() {
 					body: z.object({
 						publicKey: z.string().min(32).max(64),
 						rememberMe: z.boolean().optional(),
+						internalAuthToken: z.string().min(1),
 					}),
 				},
 				async (ctx) => {
+					if (ctx.body.internalAuthToken !== `wallet:${ctx.context.secret}`) {
+						throw new APIError("UNAUTHORIZED", {
+							message: "Unauthorized wallet sign-in invocation",
+						});
+					}
+
 					let normalizedPublicKey: string;
 					try {
 						normalizedPublicKey = new PublicKey(ctx.body.publicKey).toBase58();
@@ -104,7 +112,7 @@ export function walletAuthPlugin() {
 						!ctx.body.rememberMe
 					);
 
-					ctx.context.setNewSession({ session, user });
+					await setSessionCookie(ctx, { session, user }, !ctx.body.rememberMe);
 
 					return {
 						token: session.token,

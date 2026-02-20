@@ -34,14 +34,22 @@ function extractWalletFromEmail(email: string) {
 }
 
 export async function issueWalletBetterAuthSession(request: NextRequest, publicKey: string) {
+	const authSecret = process.env.BETTER_AUTH_SECRET ?? process.env.AUTH_SECRET;
+	if (!authSecret) {
+		throw new Error("BETTER_AUTH_SECRET or AUTH_SECRET is required for wallet auth");
+	}
+
+	const endpointHeaders = new Headers(request.headers);
+
 	return serverAuth.api.signInWallet({
 		body: {
 			publicKey,
 			rememberMe: true,
+			internalAuthToken: `wallet:${authSecret}`,
 		},
 		request,
-		headers: request.headers,
-		asResponse: true,
+		headers: endpointHeaders,
+		returnHeaders: true,
 	});
 }
 
