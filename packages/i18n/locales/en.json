@@ -2685,7 +2685,10 @@
 			"attended": "attended",
 			"speakers": "Speakers",
 			"rsvp": "RSVP",
-			"recording": "Recording"
+			"recording": "Recording",
+			"empty": "No events found",
+			"emptyDescription": "Check back soon for upcoming community events.",
+			"createEvent": "Create Event"
 		},
 		"members": {
 			"leadersThisMonth": "Leaders this month",

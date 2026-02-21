@@ -27,7 +27,9 @@ import {
 export class CommunityService {
 	// Currently wraps CMS functions; on-chain integration will be added in future
 	// biome-ignore lint/complexity/noUselessConstructor: Prepared for future on-chain params
-	constructor() {}
+	constructor() {
+		// do nothing
+	}
 
 	// ── Discussions ────────────────────────────────────────────
 
@@ -40,7 +42,7 @@ export class CommunityService {
 	}
 
 	async getDiscussionsByCategory(category: string): Promise<DiscussionWithMeta[]> {
-		return getDiscussionsByCategory(category as any);
+		return getDiscussionsByCategory(category as never);
 	}
 
 	async getDiscussionsByTag(tag: string): Promise<DiscussionWithMeta[]> {
@@ -70,7 +72,7 @@ export class CommunityService {
 	}
 
 	async getEventsByStatus(status: string): Promise<EventWithMeta[]> {
-		return getEventsByStatus(status as any);
+		return getEventsByStatus(status as never);
 	}
 
 	// ── Projects ───────────────────────────────────────────────
@@ -88,7 +90,7 @@ export class CommunityService {
 	}
 
 	async getProjectsByCategory(category: string): Promise<ProjectWithMeta[]> {
-		return getProjectsByCategory(category as any);
+		return getProjectsByCategory(category as never);
 	}
 
 	// ── Members ────────────────────────────────────────────────

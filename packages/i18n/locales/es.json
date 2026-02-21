@@ -2689,7 +2689,10 @@
 			"attended": "asistieron",
 			"speakers": "Ponentes",
 			"rsvp": "Confirmar",
-			"recording": "Grabación"
+			"recording": "Grabación",
+			"empty": "No hay eventos",
+			"emptyDescription": "Vuelve pronto para ver próximos eventos de la comunidad.",
+			"createEvent": "Crear evento"
 		},
 		"members": {
 			"leadersThisMonth": "Líderes este mes",

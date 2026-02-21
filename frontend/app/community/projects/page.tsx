@@ -1,4 +1,5 @@
 import { Search, ExternalLink, Github, Star, Users, Zap, Plus, Globe } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -225,9 +226,11 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
 						</SelectContent>
 					</Select>
 				</div>
-				<Button size="sm" className="gap-1.5">
-					<Plus className="h-3.5 w-3.5" />
-					{t("projects.submit")}
+				<Button size="sm" className="gap-1.5" asChild>
+					<Link href="/community/projects/new">
+						<Plus className="h-3.5 w-3.5" />
+						{t("projects.submit")}
+					</Link>
 				</Button>
 			</div>
 

@@ -254,9 +254,11 @@ export default async function DiscussionsPage({ searchParams }: DiscussionsPageP
 						</SelectContent>
 					</Select>
 				</div>
-				<Button size="sm" className="gap-1.5">
-					<Plus className="h-3.5 w-3.5" />
-					{t("discussions.newDiscussion")}
+				<Button size="sm" className="gap-1.5" asChild>
+					<Link href="/community/discussions/new">
+						<Plus className="h-3.5 w-3.5" />
+						{t("discussions.newDiscussion")}
+					</Link>
 				</Button>
 			</div>
 

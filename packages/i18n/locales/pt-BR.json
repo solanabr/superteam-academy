@@ -2693,7 +2693,10 @@
 			"attended": "Participou",
 			"speakers": "Palestrantes",
 			"rsvp": "Confirmar presença",
-			"recording": "Gravação"
+			"recording": "Gravação",
+			"empty": "Nenhum evento encontrado",
+			"emptyDescription": "Volte em breve para conferir os próximos eventos da comunidade.",
+			"createEvent": "Criar evento"
 		},
 		"members": {
 			"leadersThisMonth": "Líderes deste mês",

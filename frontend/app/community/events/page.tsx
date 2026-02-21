@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Calendar, Clock, MapPin, Users, ExternalLink, Video } from "lucide-react";
+import Link from "next/link";
+import { Calendar, Clock, MapPin, Users, ExternalLink, Video, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -138,6 +139,12 @@ export default async function EventsPage() {
 							{t("events.tabs.past")}
 						</TabsTrigger>
 					</TabsList>
+					<Button size="sm" className="gap-1.5" asChild>
+						<Link href="/community/events/new">
+							<Plus className="h-3.5 w-3.5" />
+							Create Event
+						</Link>
+					</Button>
 				</div>
 
 				<TabsContent value="upcoming" className="space-y-4">
@@ -224,6 +231,17 @@ export default async function EventsPage() {
 							</div>
 						</div>
 					))}
+					{upcomingEvents.length === 0 && (
+						<div className="text-center py-16 space-y-3">
+							<div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center mx-auto">
+								<Calendar className="h-6 w-6 text-muted-foreground" />
+							</div>
+							<h3 className="text-lg font-semibold">{t("events.empty")}</h3>
+							<p className="text-sm text-muted-foreground max-w-sm mx-auto">
+								{t("events.emptyDescription")}
+							</p>
+						</div>
+					)}
 				</TabsContent>
 
 				<TabsContent value="past" className="space-y-3">
@@ -272,6 +290,17 @@ export default async function EventsPage() {
 							)}
 						</div>
 					))}
+					{pastEvents.length === 0 && (
+						<div className="text-center py-16 space-y-3">
+							<div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center mx-auto">
+								<Calendar className="h-6 w-6 text-muted-foreground" />
+							</div>
+							<h3 className="text-lg font-semibold">No past events</h3>
+							<p className="text-sm text-muted-foreground max-w-sm mx-auto">
+								Past events will appear here once they've concluded.
+							</p>
+						</div>
+					)}
 				</TabsContent>
 			</Tabs>
 		</div>
