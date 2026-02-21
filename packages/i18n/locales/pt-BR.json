@@ -17,10 +17,10 @@
 			"defi": "DeFi",
 			"nft": "NFT",
 			"security": "Segurança",
-			"frontend": "Web3 Frontend",
-			"token": "Token Programs",
+			"frontend": "Frontend Web3",
+			"token": "Programas de Token",
 			"blockchain": "Blockchain",
-			"ai": "IA & Machine Learning",
+			"ai": "IA & Aprendizado de Máquina",
 			"programming": "Programação",
 			"web3": "Web3"
 		},
@@ -402,12 +402,12 @@
 			"update": "Atualizar"
 		},
 		"offline": {
-			"title": "Offline"
+			"title": "Desconectado"
 		},
 		"features": {
 			"fast": "Carregamento Rápido",
 			"secure": "Seguro",
-			"offline": "Acesso Offline",
+			"offline": "Acesso Sem Conexão",
 			"notifications": "Notificações"
 		}
 	},
@@ -1092,7 +1092,7 @@
 		"vibrationToggled": "Vibração alternada",
 		"deviceStatus": "Status do Dispositivo",
 		"online": "Online",
-		"offline": "Offline",
+		"offline": "Desconectado",
 		"charging": "Carregando",
 		"mobileFeatures": "Recursos Mobile",
 		"darkMode": "Modo Escuro",
@@ -1202,8 +1202,8 @@
 		"avgSession": "Sessão Média",
 		"deviceBreakdown": "Distribuição por Dispositivo",
 		"mobile": "Mobile",
-		"tablet": "Tablet",
-		"desktop": "Desktop",
+		"tablet": "Tablet (Táblet)",
+		"desktop": "Computador",
 		"topPages": "Páginas Mais Visitadas",
 		"performance": "Desempenho",
 		"loadTime": "Tempo de Carregamento",
@@ -1234,7 +1234,7 @@
 		"featureToggles": "Alternância de Recursos",
 		"serviceWorker": "Service Worker",
 		"backgroundSync": "Sincronização em Segundo Plano",
-		"offlineMode": "Modo Offline",
+		"offlineMode": "Modo Desconectado",
 		"reduceAnimations": "Reduzir Animações",
 		"darkMode": "Modo Escuro",
 		"accessibilitySettings": "Configurações de Acessibilidade",
@@ -1263,7 +1263,7 @@
 		"categories": {
 			"webDevelopment": "Desenvolvimento Web",
 			"blockchain": "Blockchain",
-			"aiMl": "IA & Machine Learning",
+			"aiMl": "IA & Aprendizado de Máquina",
 			"mobile": "Desenvolvimento Mobile",
 			"design": "Design",
 			"dataScience": "Ciência de Dados",
@@ -2415,7 +2415,7 @@
 					"certificates": "Certificados verificados",
 					"priority": "Suporte prioritário",
 					"analytics": "Analytics avançado",
-					"downloads": "Downloads offline",
+					"downloads": "Downloads desconectado",
 					"noAds": "Sem anúncios"
 				},
 				"cta": "Começar Premium"
@@ -2547,7 +2547,7 @@
 			"coreDevDesc": "Aprenda conceitos centrais da Solana",
 			"auditor": "Auditor",
 			"auditorDesc": "Foque em segurança e auditoria",
-			"fullStack": "Full‑Stack Web3",
+			"fullStack": "Web3 Full-Stack",
 			"fullStackDesc": "Frontend + on‑chain integration",
 			"courses": "{count} cursos",
 			"viewPath": "Ver Trilha"
