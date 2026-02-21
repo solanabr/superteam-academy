@@ -118,7 +118,7 @@ function AuthProviderInner({
 			}
 		};
 		loadSession();
-	}, []);
+	}, [refreshSession]);
 
 	useEffect(() => {
 		if (!wallet.connected) {
