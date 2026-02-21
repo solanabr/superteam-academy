@@ -10,3 +10,5 @@ export type {
 	SeedLessonKind,
 } from "./course-stubs";
 export * from "./schemas";
+export * from "./services";
+export * from "./queries";

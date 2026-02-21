@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getTranslations } from "next-intl/server";
+import { getUpcomingEvents, getPastEvents, isSanityConfigured } from "@/lib/community-cms";
 
 export const metadata: Metadata = {
 	title: "Events | Community | Superteam Academy",
@@ -111,6 +112,14 @@ const PAST_EVENTS = [
 export default async function EventsPage() {
 	const t = await getTranslations("community");
 
+	// Fetch events from Sanity or use mock data
+	const upcomingEvents = isSanityConfigured
+		? (await getUpcomingEvents()).map(normalizeEvent)
+		: UPCOMING_EVENTS;
+	const pastEvents = isSanityConfigured
+		? (await getPastEvents()).map(normalizePastEvent)
+		: PAST_EVENTS;
+
 	return (
 		<div className="space-y-6">
 			<Tabs defaultValue="upcoming" className="space-y-5">
@@ -132,7 +141,7 @@ export default async function EventsPage() {
 				</div>
 
 				<TabsContent value="upcoming" className="space-y-4">
-					{UPCOMING_EVENTS.map((event) => (
+					{upcomingEvents.map((event) => (
 						<div
 							key={event.id}
 							className="rounded-2xl border border-border/60 bg-card p-6 hover:border-primary/20 transition-colors"
@@ -218,7 +227,7 @@ export default async function EventsPage() {
 				</TabsContent>
 
 				<TabsContent value="past" className="space-y-3">
-					{PAST_EVENTS.map((event) => (
+					{pastEvents.map((event) => (
 						<div
 							key={event.id}
 							className="rounded-2xl border border-border/60 bg-card px-5 py-4 flex items-center gap-4"
@@ -267,4 +276,50 @@ export default async function EventsPage() {
 			</Tabs>
 		</div>
 	);
+}
+
+function normalizeEvent(event: Awaited<ReturnType<typeof getUpcomingEvents>>[number]) {
+	const startDate = new Date(event.startDate);
+	const formattedDate = startDate.toLocaleDateString("en-US", {
+		month: "short",
+		day: "numeric",
+		year: "numeric",
+	});
+	const formattedTime = startDate.toLocaleTimeString("en-US", {
+		hour: "numeric",
+		minute: "2-digit",
+		timeZone: event.timezone,
+	});
+
+	return {
+		id: event._id,
+		title: event.title,
+		description: event.description,
+		date: formattedDate,
+		time: `${formattedTime} ${event.timezone}`,
+		type: event.type,
+		location: event.isOnline ? "online" : event.location || "TBA",
+		attendees: event.attendeeCount,
+		maxAttendees: event.maxAttendees ?? null,
+		speakers: event.speakers || [],
+		tags: event.tags || [],
+	};
+}
+
+function normalizePastEvent(event: Awaited<ReturnType<typeof getPastEvents>>[number]) {
+	const startDate = new Date(event.startDate);
+	const formattedDate = startDate.toLocaleDateString("en-US", {
+		month: "short",
+		day: "numeric",
+		year: "numeric",
+	});
+
+	return {
+		id: event._id,
+		title: event.title,
+		date: formattedDate,
+		type: event.type,
+		attendees: event.attendeeCount,
+		recordingUrl: event.recordingUrl || undefined,
+	};
 }

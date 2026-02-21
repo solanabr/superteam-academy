@@ -164,3 +164,195 @@ export const userStatsQuery = /* groq */ `
     "totalEnrollments": count(*[_type == "academyUser" && count(enrolledCourses) > 0])
   }
 `;
+
+// ── Community queries ───────────────────────────────────────────
+
+export const discussionFields = /* groq */ `
+  _id,
+  _type,
+  _createdAt,
+  _updatedAt,
+  title,
+  slug,
+  excerpt,
+  content,
+  category,
+  tags,
+  pinned,
+  solved,
+  locked,
+  views,
+  points,
+  publishedAt,
+  "author": author->{
+    _id,
+    name,
+    image
+  },
+  "commentCount": count(*[_type == "discussionComment" && references(^._id)])
+`;
+
+export const allDiscussionsQuery = /* groq */ `
+  *[_type == "discussion"] | order(pinned desc, publishedAt desc) {
+    ${discussionFields}
+  }
+`;
+
+export const discussionBySlugQuery = /* groq */ `
+  *[_type == "discussion" && slug.current == $slug][0] {
+    ${discussionFields},
+    "comments": *[_type == "discussionComment" && references(^._id)] | order(publishedAt asc) {
+      _id,
+      content,
+      points,
+      accepted,
+      publishedAt,
+      "author": author->{
+        _id,
+        name,
+        image
+      }
+    }
+  }
+`;
+
+export const discussionsByCategoryQuery = /* groq */ `
+  *[_type == "discussion" && category == $category] | order(pinned desc, publishedAt desc) {
+    ${discussionFields}
+  }
+`;
+
+export const discussionsByTagQuery = /* groq */ `
+  *[_type == "discussion" && $tag in tags] | order(publishedAt desc) {
+    ${discussionFields}
+  }
+`;
+
+export const eventFields = /* groq */ `
+  _id,
+  _type,
+  _createdAt,
+  _updatedAt,
+  title,
+  slug,
+  description,
+  type,
+  status,
+  startDate,
+  endDate,
+  timezone,
+  location,
+  isOnline,
+  image,
+  maxAttendees,
+  registrationUrl,
+  recordingUrl,
+  speakers,
+  tags,
+  publishedAt,
+  "attendeeCount": count(*[_type == "eventRegistration" && references(^._id)])
+`;
+
+export const upcomingEventsQuery = /* groq */ `
+  *[_type == "event" && status == "upcoming"] | order(startDate asc) {
+    ${eventFields}
+  }
+`;
+
+export const pastEventsQuery = /* groq */ `
+  *[_type == "event" && status == "past"] | order(startDate desc) {
+    ${eventFields}
+  }
+`;
+
+export const eventBySlugQuery = /* groq */ `
+  *[_type == "event" && slug.current == $slug][0] {
+    ${eventFields}
+  }
+`;
+
+export const projectFields = /* groq */ `
+  _id,
+  _type,
+  _createdAt,
+  _updatedAt,
+  title,
+  slug,
+  description,
+  category,
+  tags,
+  githubUrl,
+  liveUrl,
+  image,
+  featured,
+  stars,
+  contributors,
+  xpReward,
+  publishedAt,
+  "author": author->{
+    _id,
+    name,
+    image
+  }
+`;
+
+export const allProjectsQuery = /* groq */ `
+  *[_type == "project"] | order(featured desc, publishedAt desc) {
+    ${projectFields}
+  }
+`;
+
+export const featuredProjectsQuery = /* groq */ `
+  *[_type == "project" && featured == true] | order(publishedAt desc) {
+    ${projectFields}
+  }
+`;
+
+export const projectBySlugQuery = /* groq */ `
+  *[_type == "project" && slug.current == $slug][0] {
+    ${projectFields}
+  }
+`;
+
+export const projectsByCategoryQuery = /* groq */ `
+  *[_type == "project" && category == $category] | order(featured desc, publishedAt desc) {
+    ${projectFields}
+  }
+`;
+
+export const memberFields = /* groq */ `
+  _id,
+  _type,
+  title,
+  badges,
+  streak,
+  joinedAt,
+  "user": user->{
+    _id,
+    name,
+    image,
+    xpBalance,
+    "courseCount": count(completedCourses)
+  }
+`;
+
+export const allMembersQuery = /* groq */ `
+  *[_type == "communityMember"] | order(user->xpBalance desc) {
+    ${memberFields},
+    "achievementCount": 0
+  }
+`;
+
+export const topMembersQuery = /* groq */ `
+  *[_type == "communityMember"] | order(user->xpBalance desc) [0...$limit] {
+    ${memberFields},
+    "achievementCount": 0
+  }
+`;
+
+export const membersByBadgeQuery = /* groq */ `
+  *[_type == "communityMember" && $badge in badges] | order(user->xpBalance desc) {
+    ${memberFields},
+    "achievementCount": 0
+  }
+`;

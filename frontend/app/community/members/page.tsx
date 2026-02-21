@@ -3,11 +3,72 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getTranslations } from "next-intl/server";
+import {
+	getAllMembers,
+	getTopMembers,
+	getMembersByBadge,
+	isSanityConfigured,
+	type MemberWithMeta,
+} from "@/lib/community-cms";
 
 export const metadata = {
 	title: "Members | Community | Superteam Academy",
 	description: "Discover top contributors and active members of the Superteam Academy community.",
 };
+
+// Normalized member shape (consistent between Sanity and mock data)
+type NormalizedMember = {
+	id: string;
+	name: string;
+	initials: string;
+	title: string;
+	xp: number;
+	level: number;
+	courses: number;
+	streak: number;
+	achievements: number;
+	joinedAt: string;
+	badges: string[];
+};
+
+// Helper functions
+function getInitials(name: string): string {
+	return name
+		.split(" ")
+		.map((n) => n[0])
+		.join("")
+		.toUpperCase()
+		.slice(0, 2);
+}
+
+function normalizeMember(member: MemberWithMeta | (typeof MEMBERS)[number]): NormalizedMember {
+	// If already normalized (mock data), return as-is
+	if ("initials" in member && "name" in member && typeof member.initials === "string") {
+		return member as NormalizedMember;
+	}
+
+	// Normalize Sanity data
+	const sanityMember = member as MemberWithMeta;
+	return {
+		id: sanityMember._id,
+		name: sanityMember.user?.name || "Unknown",
+		initials: getInitials(sanityMember.user?.name || "Unknown"),
+		title: sanityMember.title || "Solana Developer",
+		xp: sanityMember.user?.xpBalance || 0,
+		level: Math.floor((sanityMember.user?.xpBalance || 0) / 1000),
+		courses: sanityMember.user?.courseCount || 0,
+		streak: sanityMember.streak || 0,
+		achievements: sanityMember.achievementCount || 0,
+		joinedAt: new Date(sanityMember.joinedAt || sanityMember._createdAt).toLocaleDateString(
+			"en-US",
+			{
+				month: "short",
+				year: "numeric",
+			}
+		),
+		badges: sanityMember.badges || [],
+	};
+}
 
 const MEMBERS = [
 	{
@@ -116,8 +177,6 @@ const MEMBERS = [
 	},
 ];
 
-const LEADERS_THIS_MONTH = MEMBERS.slice(0, 5);
-
 const BADGE_LABELS: Record<string, { icon: typeof Crown; color: string }> = {
 	"top-contributor": {
 		icon: Crown,
@@ -136,6 +195,18 @@ const BADGE_LABELS: Record<string, { icon: typeof Crown; color: string }> = {
 export default async function MembersPage() {
 	const t = await getTranslations("community");
 
+	// Fetch members from Sanity or use mock data
+	const allMembers = isSanityConfigured ? (await getAllMembers()).map(normalizeMember) : MEMBERS;
+	const topMembers = isSanityConfigured
+		? (await getTopMembers(5)).map(normalizeMember)
+		: MEMBERS.slice(0, 5);
+	const mentorMembers = isSanityConfigured
+		? (await getMembersByBadge("mentor")).map(normalizeMember)
+		: allMembers.filter((m) => m.badges.includes("mentor"));
+	const risingStarMembers = isSanityConfigured
+		? (await getMembersByBadge("rising-star")).map(normalizeMember)
+		: allMembers.filter((m) => m.badges.includes("rising-star"));
+
 	return (
 		<div className="space-y-8">
 			<div className="rounded-2xl border border-border/60 bg-card overflow-hidden">
@@ -144,7 +215,7 @@ export default async function MembersPage() {
 					<h2 className="text-base font-semibold">{t("members.leadersThisMonth")}</h2>
 				</div>
 				<div className="grid grid-cols-1 sm:grid-cols-5 divide-y sm:divide-y-0 sm:divide-x divide-border/40">
-					{LEADERS_THIS_MONTH.map((user, i) => (
+					{topMembers.map((user, i) => (
 						<div key={user.id} className="p-5 text-center">
 							<div className="relative inline-block mb-2">
 								<div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center text-sm font-medium mx-auto">
@@ -199,19 +270,19 @@ export default async function MembersPage() {
 				</TabsList>
 
 				<TabsContent value="all" className="space-y-3">
-					{MEMBERS.map((user, i) => (
+					{allMembers.map((user, i) => (
 						<MemberRow key={user.id} member={user} rank={i + 1} t={t} />
 					))}
 				</TabsContent>
 
 				<TabsContent value="mentors" className="space-y-3">
-					{MEMBERS.filter((m) => m.badges.includes("mentor")).map((user, i) => (
+					{mentorMembers.map((user, i) => (
 						<MemberRow key={user.id} member={user} rank={i + 1} t={t} />
 					))}
 				</TabsContent>
 
 				<TabsContent value="rising" className="space-y-3">
-					{MEMBERS.filter((m) => m.badges.includes("rising-star")).map((user, i) => (
+					{risingStarMembers.map((user, i) => (
 						<MemberRow key={user.id} member={user} rank={i + 1} t={t} />
 					))}
 				</TabsContent>

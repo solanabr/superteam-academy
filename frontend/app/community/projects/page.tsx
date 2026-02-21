@@ -10,8 +10,68 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { getTranslations } from "next-intl/server";
+import {
+	getAllProjects,
+	getProjectsByCategory,
+	isSanityConfigured,
+	type ProjectWithMeta,
+} from "@/lib/community-cms";
+import type { ProjectCategory } from "@superteam/cms";
 
 const CATEGORIES = ["all", "defi", "nft", "tooling", "gaming", "social", "infra"] as const;
+
+// Normalized project shape (consistent between Sanity and mock data)
+type NormalizedProject = {
+	id: string;
+	title: string;
+	description: string;
+	author: { name: string; initials: string };
+	category: string;
+	stars: number;
+	contributors: number;
+	xpReward: number;
+	tags: string[];
+	githubUrl?: string;
+	liveUrl?: string;
+	featured: boolean;
+};
+
+// Helper functions
+function getInitials(name: string): string {
+	return name
+		.split(" ")
+		.map((n) => n[0])
+		.join("")
+		.toUpperCase()
+		.slice(0, 2);
+}
+
+function normalizeProject(project: ProjectWithMeta | (typeof PROJECTS)[number]): NormalizedProject {
+	// If already normalized (mock data with initials in author), return as-is
+	if ("author" in project && typeof project.author === "object" && "initials" in project.author) {
+		return project as NormalizedProject;
+	}
+
+	// Normalize Sanity data (has _id, author object without initials)
+	const sanityProject = project as ProjectWithMeta;
+	return {
+		id: sanityProject._id,
+		title: sanityProject.title,
+		description: sanityProject.description,
+		author: {
+			name: sanityProject.author?.name || "Unknown",
+			initials: getInitials(sanityProject.author?.name || "Unknown"),
+		},
+		category: sanityProject.category,
+		stars: sanityProject.stars || 0,
+		contributors: sanityProject.contributors || 1,
+		xpReward: sanityProject.xpReward || 0,
+		tags: sanityProject.tags || [],
+		...(sanityProject.githubUrl && { githubUrl: sanityProject.githubUrl }),
+		...(sanityProject.liveUrl && { liveUrl: sanityProject.liveUrl }),
+		featured: sanityProject.featured || false,
+	};
+}
 
 const PROJECTS = [
 	{
@@ -114,14 +174,24 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
 	const { q = "", category = "all" } = await searchParams;
 	const t = await getTranslations("community");
 
-	const filtered = PROJECTS.filter((p) => {
-		if (category !== "all" && p.category !== category) return false;
+	// Fetch projects from Sanity or use mock data
+	const rawProjects = isSanityConfigured
+		? category !== "all"
+			? await getProjectsByCategory(category as ProjectCategory)
+			: await getAllProjects()
+		: PROJECTS;
+
+	// Always normalize to ensure consistent shape
+	const projects = rawProjects.map(normalizeProject);
+
+	// Filter by search query
+	const filtered = projects.filter((p) => {
 		if (q) {
 			const query = q.toLowerCase();
 			return (
 				p.title.toLowerCase().includes(query) ||
 				p.description.toLowerCase().includes(query) ||
-				p.tags.some((t) => t.includes(query))
+				p.tags?.some((t) => t.includes(query))
 			);
 		}
 		return true;
@@ -203,7 +273,7 @@ function ProjectCard({
 	t,
 	featured,
 }: {
-	project: (typeof PROJECTS)[number];
+	project: NormalizedProject;
 	t: Awaited<ReturnType<typeof getTranslations<"community">>>;
 	featured?: boolean;
 }) {

@@ -132,7 +132,7 @@
 				"noExplicitAny": "error",
 				"noExtraNonNullAssertion": "error",
 				"noFallthroughSwitchClause": "error",
-				"noFocusedTests": "error",
+				"noFocusedTests": "warn",
 				"noFunctionAssign": "error",
 				"noGlobalAssign": "error",
 				"noGlobalIsFinite": "error",

@@ -4,6 +4,7 @@ import { CredentialService } from "./CredentialService";
 import { LeaderboardService } from "./LeaderboardService";
 import { AnalyticsService } from "./AnalyticsService";
 import { AuthLinkingService } from "./AuthLinkingService";
+import { CommunityService } from "./CommunityService";
 
 export interface AcademyServices {
 	connection: Connection;
@@ -13,6 +14,7 @@ export interface AcademyServices {
 	leaderboard: LeaderboardService;
 	analytics: AnalyticsService;
 	authLinking: AuthLinkingService;
+	community: CommunityService;
 }
 
 export function createServices(connection: Connection, programId: PublicKey): AcademyServices {
@@ -31,6 +33,7 @@ export function createServices(connection: Connection, programId: PublicKey): Ac
 		leaderboard: new LeaderboardService(connection, programId),
 		analytics: new AnalyticsService(connection, programId),
 		authLinking: new AuthLinkingService(connection, programId),
+		community: new CommunityService(),
 	};
 }
 

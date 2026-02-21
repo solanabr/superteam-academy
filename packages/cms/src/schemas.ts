@@ -102,3 +102,106 @@ export type AcademyUser = SanityDocument & {
 	completedCourses: string[];
 	lastActiveAt?: string;
 };
+
+// ── Community Schemas ───────────────────────────────────────────
+
+export type DiscussionCategory =
+	| "announcements"
+	| "technicalQA"
+	| "projectShowcase"
+	| "featureRequests"
+	| "studyGroups"
+	| "offTopic";
+
+export type Discussion = SanityDocument & {
+	_type: "discussion";
+	title: string;
+	slug: SanitySlug;
+	excerpt: string;
+	content: SanityBlock[];
+	author: { _ref: string };
+	category: DiscussionCategory;
+	tags: string[];
+	pinned: boolean;
+	solved: boolean;
+	locked: boolean;
+	views: number;
+	points: number;
+	publishedAt: string;
+};
+
+export type DiscussionComment = SanityDocument & {
+	_type: "discussionComment";
+	discussion: { _ref: string };
+	content: SanityBlock[];
+	author: { _ref: string };
+	points: number;
+	accepted: boolean;
+	publishedAt: string;
+};
+
+export type EventType = "Workshop" | "AMA" | "Hackathon" | "Meetup";
+
+export type EventStatus = "upcoming" | "ongoing" | "past" | "cancelled";
+
+export type Event = SanityDocument & {
+	_type: "event";
+	title: string;
+	slug: SanitySlug;
+	description: string;
+	type: EventType;
+	status: EventStatus;
+	startDate: string;
+	endDate?: string;
+	timezone: string;
+	location?: string;
+	isOnline: boolean;
+	image?: SanityImage;
+	maxAttendees?: number;
+	registrationUrl?: string;
+	recordingUrl?: string;
+	speakers: Array<{
+		name: string;
+		role: string;
+		image?: SanityImage;
+	}>;
+	tags: string[];
+	publishedAt: string;
+};
+
+export type EventRegistration = SanityDocument & {
+	_type: "eventRegistration";
+	event: { _ref: string };
+	user: { _ref: string };
+	registeredAt: string;
+	attended?: boolean;
+};
+
+export type ProjectCategory = "defi" | "nft" | "tooling" | "gaming" | "social" | "infra";
+
+export type Project = SanityDocument & {
+	_type: "project";
+	title: string;
+	slug: SanitySlug;
+	description: string;
+	author: { _ref: string };
+	category: ProjectCategory;
+	tags: string[];
+	githubUrl?: string;
+	liveUrl?: string;
+	image?: SanityImage;
+	featured: boolean;
+	stars: number;
+	contributors: number;
+	xpReward?: number;
+	publishedAt: string;
+};
+
+export type CommunityMember = SanityDocument & {
+	_type: "communityMember";
+	user: { _ref: string };
+	title?: string;
+	badges: string[];
+	streak: number;
+	joinedAt: string;
+};

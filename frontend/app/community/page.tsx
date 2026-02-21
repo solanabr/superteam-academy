@@ -13,6 +13,15 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getTranslations } from "next-intl/server";
+import {
+	getAllDiscussions,
+	getTrendingDiscussions,
+	getUnansweredDiscussions,
+	getDiscussionsByCategory,
+	getDiscussionsByTag,
+	isSanityConfigured,
+} from "@/lib/community-cms";
+import type { DiscussionCategory } from "@superteam/cms";
 
 export const metadata: Metadata = {
 	title: "Discussions | Community | Superteam Academy",
@@ -29,6 +38,49 @@ const CATEGORIES = [
 	"studyGroups",
 	"offTopic",
 ] as const;
+
+// Helper functions
+function getInitials(name: string): string {
+	return name
+		.split(" ")
+		.map((n) => n[0])
+		.join("")
+		.toUpperCase()
+		.slice(0, 2);
+}
+
+function formatRelativeTime(date: string): string {
+	const now = new Date();
+	const past = new Date(date);
+	const diffMs = now.getTime() - past.getTime();
+	const diffMins = Math.floor(diffMs / 60_000);
+	const diffHours = Math.floor(diffMins / 60);
+	const diffDays = Math.floor(diffHours / 24);
+	const diffWeeks = Math.floor(diffDays / 7);
+
+	if (diffMins < 60) return `${diffMins}m ago`;
+	if (diffHours < 24) return `${diffHours}h ago`;
+	if (diffDays < 7) return `${diffDays}d ago`;
+	if (diffWeeks < 4) return `${diffWeeks}w ago`;
+	return past.toLocaleDateString();
+}
+
+function normalizeDiscussion(d: Awaited<ReturnType<typeof getAllDiscussions>>[number]) {
+	return {
+		id: d._id,
+		title: d.title,
+		excerpt: d.excerpt,
+		author: { name: d.author.name, initials: getInitials(d.author.name) },
+		category: d.category,
+		views: d.views,
+		comments: d.commentCount,
+		points: d.points,
+		tags: d.tags || [],
+		createdAt: formatRelativeTime(d.publishedAt || d._createdAt),
+		pinned: d.pinned,
+		solved: d.solved,
+	};
+}
 
 const DISCUSSIONS = [
 	{
@@ -146,12 +198,29 @@ export default async function DiscussionsPage({ searchParams }: DiscussionsPageP
 	const { q = "", category = "all", tag } = await searchParams;
 	const t = await getTranslations("community");
 
-	const filtered = DISCUSSIONS.filter((d) => {
-		if (category !== "all" && d.category !== category) return false;
-		if (tag && !d.tags.includes(tag)) return false;
+	// Fetch discussions from Sanity
+	const sanityDiscussions = isSanityConfigured
+		? category !== "all"
+			? await getDiscussionsByCategory(category as DiscussionCategory)
+			: tag
+				? await getDiscussionsByTag(tag)
+				: await getAllDiscussions()
+		: [];
+
+	// Normalize Sanity data or use mock data
+	const discussions = isSanityConfigured
+		? sanityDiscussions.map(normalizeDiscussion)
+		: DISCUSSIONS;
+
+	// Filter by search query
+	const filtered = discussions.filter((d) => {
 		if (q) {
 			const query = q.toLowerCase();
-			return d.title.toLowerCase().includes(query) || d.excerpt.toLowerCase().includes(query);
+			return (
+				d.title.toLowerCase().includes(query) ||
+				d.excerpt.toLowerCase().includes(query) ||
+				d.tags?.some((t) => t.toLowerCase().includes(query))
+			);
 		}
 		return true;
 	});
@@ -244,19 +313,23 @@ export default async function DiscussionsPage({ searchParams }: DiscussionsPageP
 				</TabsContent>
 
 				<TabsContent value="trending" className="space-y-3">
-					{[...filtered]
-						.sort((a, b) => b.points - a.points)
-						.map((d) => (
-							<DiscussionRow key={d.id} discussion={d} t={t} />
-						))}
+					{isSanityConfigured ? (
+						<TrendingDiscussionsTab t={t} />
+					) : (
+						[...filtered]
+							.sort((a, b) => b.points - a.points)
+							.map((d) => <DiscussionRow key={d.id} discussion={d} t={t} />)
+					)}
 				</TabsContent>
 
 				<TabsContent value="unanswered" className="space-y-3">
-					{filtered
-						.filter((d) => !d.solved)
-						.map((d) => (
-							<DiscussionRow key={d.id} discussion={d} t={t} />
-						))}
+					{isSanityConfigured ? (
+						<UnansweredDiscussionsTab t={t} />
+					) : (
+						filtered
+							.filter((d) => !d.solved)
+							.map((d) => <DiscussionRow key={d.id} discussion={d} t={t} />)
+					)}
 				</TabsContent>
 			</Tabs>
 
@@ -272,6 +345,36 @@ export default async function DiscussionsPage({ searchParams }: DiscussionsPageP
 				</div>
 			)}
 		</div>
+	);
+}
+
+async function TrendingDiscussionsTab({
+	t,
+}: {
+	t: Awaited<ReturnType<typeof getTranslations<"community">>>;
+}) {
+	const discussions = await getTrendingDiscussions();
+	return (
+		<>
+			{discussions.map((d) => (
+				<DiscussionRow key={d._id} discussion={normalizeDiscussion(d)} t={t} />
+			))}
+		</>
+	);
+}
+
+async function UnansweredDiscussionsTab({
+	t,
+}: {
+	t: Awaited<ReturnType<typeof getTranslations<"community">>>;
+}) {
+	const discussions = await getUnansweredDiscussions();
+	return (
+		<>
+			{discussions.map((d) => (
+				<DiscussionRow key={d._id} discussion={normalizeDiscussion(d)} t={t} />
+			))}
+		</>
 	);
 }
 
