@@ -161,32 +161,31 @@ export function useEnrollOnChain() {
   const [enrolling, setEnrolling] = useState(false);
 
   const enrollOnChain = useCallback(
-    async (courseId: string, courseIndex: number) => {
+    async (courseId: string) => {
       if (!publicKey) throw new Error("Wallet not connected");
 
       setEnrolling(true);
       try {
-        const configPda = getConfigPda();
         const coursePda = getCoursePda(courseId);
         const enrollmentPda = getEnrollmentPda(courseId, publicKey);
 
-        // Anchor discriminator for "enroll" = sha256("global:enroll")[0..8]
+        // Anchor discriminator for "enroll" from IDL
         const discriminator = Buffer.from([
-          0x2a, 0x59, 0x5a, 0x39, 0xc3, 0x5c, 0x48, 0x75,
+          58, 12, 36, 3, 142, 28, 1, 43,
         ]);
 
-        // Encode course_index as u32 LE
-        const data = Buffer.alloc(12);
-        discriminator.copy(data);
-        data.writeUInt32LE(courseIndex, 8);
+        // Encode course_id as Borsh string: 4-byte LE length + UTF-8 bytes
+        const courseIdBytes = Buffer.from(courseId, "utf-8");
+        const lenBuf = Buffer.alloc(4);
+        lenBuf.writeUInt32LE(courseIdBytes.length);
+        const data = Buffer.concat([discriminator, lenBuf, courseIdBytes]);
 
         const ix = new TransactionInstruction({
           programId: PROGRAM_ID,
           keys: [
-            { pubkey: publicKey, isSigner: true, isWritable: true },
-            { pubkey: configPda, isSigner: false, isWritable: false },
             { pubkey: coursePda, isSigner: false, isWritable: true },
             { pubkey: enrollmentPda, isSigner: false, isWritable: true },
+            { pubkey: publicKey, isSigner: true, isWritable: true },
             {
               pubkey: SystemProgram.programId,
               isSigner: false,
@@ -211,7 +210,7 @@ export function useEnrollOnChain() {
           "confirmed"
         );
 
-        trackEvent("enrollment_onchain", { courseId, courseIndex });
+        trackEvent("enrollment_onchain", { courseId });
 
         toast.success("Enrolled on-chain!", {
           description: `${sig.slice(0, 8)}...`,

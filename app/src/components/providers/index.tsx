@@ -19,7 +19,7 @@ export function Providers({ children }: { children: ReactNode }) {
                 {children}
               </AnalyticsProvider>
             </Suspense>
-            <Toaster position="bottom-right" />
+            <Toaster position="top-right" />
           </TooltipProvider>
         </AuthProvider>
       </SolanaProvider>

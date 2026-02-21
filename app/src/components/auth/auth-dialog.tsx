@@ -1,10 +1,9 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useWallet } from "@solana/wallet-adapter-react";
-import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { useAuth } from "@/components/providers/auth-provider";
 import { Button } from "@/components/ui/button";
+
 import {
   Dialog,
   DialogContent,
@@ -13,23 +12,55 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Separator } from "@/components/ui/separator";
-import { Github, Mail, Wallet, LogOut, Check } from "lucide-react";
-import { useState } from "react";
+import { Github, LogOut, Wallet } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 
 export function AuthDialog({ children }: { children?: React.ReactNode }) {
   const t = useTranslations("auth");
   const {
     isAuthenticated,
-    profile,
     signInWithGoogle,
     signInWithGithub,
-    signOut,
-    linkWallet,
-    walletLinked,
+    signInWithWallet,
   } = useAuth();
-  const { connected } = useWallet();
+  const { connected, connecting } = useWallet();
+  const { setVisible } = useWalletModal();
   const [open, setOpen] = useState(false);
+  const [isSigningIn, setIsSigningIn] = useState(false);
+  const pendingSignIn = useRef(false);
+
+  // Auto-trigger sign-in after wallet connects via modal
+  // This effect lives in AuthDialog (always mounted), not in DialogContent
+  useEffect(() => {
+    if (connected && pendingSignIn.current) {
+      pendingSignIn.current = false;
+      setIsSigningIn(true);
+      signInWithWallet()
+        .catch((err) => console.error("Wallet sign-in failed:", err))
+        .finally(() => setIsSigningIn(false));
+    }
+  }, [connected, signInWithWallet]);
+
+  const handleWalletClick = useCallback(async () => {
+    if (!connected) {
+      pendingSignIn.current = true;
+      // Close auth dialog so its overlay doesn't block the wallet modal
+      setOpen(false);
+      setTimeout(() => setVisible(true), 100);
+      return;
+    }
+
+    setIsSigningIn(true);
+    try {
+      await signInWithWallet();
+    } catch (err) {
+      console.error("Wallet sign-in failed:", err);
+    } finally {
+      setIsSigningIn(false);
+    }
+  }, [connected, signInWithWallet, setVisible]);
 
   if (isAuthenticated) {
     return (
@@ -97,32 +128,19 @@ export function AuthDialog({ children }: { children?: React.ReactNode }) {
             {t("signInWith")} GitHub
           </Button>
 
-          <div className="relative my-2">
-            <Separator />
-            <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-3 text-xs text-muted-foreground">
-              {t("orContinueWith")}
-            </span>
-          </div>
-
-          <div className="flex flex-col items-center gap-2">
-            <WalletMultiButton
-              style={{
-                width: "100%",
-                height: "44px",
-                fontSize: "14px",
-                borderRadius: "8px",
-                backgroundColor: "hsl(var(--primary))",
-                color: "hsl(var(--primary-foreground))",
-                fontFamily: "inherit",
-                fontWeight: 500,
-                justifyContent: "center",
-                border: "none",
-              }}
-            />
-            <p className="text-xs text-muted-foreground text-center">
-              {t("walletRequired")}
-            </p>
-          </div>
+          <Button
+            variant="outline"
+            className="h-11 justify-start gap-3 font-normal"
+            onClick={handleWalletClick}
+            disabled={connecting || isSigningIn}
+          >
+            <Wallet className="h-4 w-4" />
+            {connecting || isSigningIn
+              ? "Connecting..."
+              : connected
+                ? `${t("signInWith")} Wallet`
+                : "Connect Wallet"}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
@@ -130,8 +148,7 @@ export function AuthDialog({ children }: { children?: React.ReactNode }) {
 }
 
 export function UserMenu() {
-  const { profile, signOut, isAuthenticated, linkWallet, walletLinked } = useAuth();
-  const { connected } = useWallet();
+  const { signOut, isAuthenticated, profile } = useAuth();
   const t = useTranslations("navigation");
 
   if (!isAuthenticated) {
@@ -140,32 +157,19 @@ export function UserMenu() {
 
   return (
     <div className="flex items-center gap-2">
-      {connected && !walletLinked && (
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-8 gap-1.5 text-xs"
-          onClick={linkWallet}
-        >
-          <Wallet className="h-3 w-3" />
-          Link Wallet
-        </Button>
+      {profile?.walletAddress && (
+        <span className="text-xs text-muted-foreground hidden sm:inline">
+          {profile.walletAddress.slice(0, 4)}...{profile.walletAddress.slice(-4)}
+        </span>
       )}
-      {walletLinked && (
-        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-          <Check className="h-3 w-3 text-emerald-500" />
-          <span className="hidden sm:inline">Linked</span>
-        </div>
-      )}
-      <Button
-        variant="ghost"
-        size="sm"
-        className="h-8 gap-1.5 text-xs"
-        onClick={signOut}
+      <button
+        type="button"
+        className="inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer"
+        onClick={() => signOut()}
       >
-        <LogOut className="h-3 w-3" />
-        <span className="hidden sm:inline">{t("signOut")}</span>
-      </Button>
+        <LogOut className="h-4 w-4" />
+        <span>{t("signOut")}</span>
+      </button>
     </div>
   );
 }

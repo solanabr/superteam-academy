@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <circle cx="64" cy="64" r="60" fill="#F97316"/>
+  <circle cx="64" cy="64" r="56" fill="#EA580C"/>
+  <!-- Flame -->
+  <path d="M64 28 C64 28 44 52 44 72 C44 83 50 92 58 96 C54 88 56 78 64 68 C72 78 74 88 70 96 C78 92 84 83 84 72 C84 52 64 28 64 28Z" fill="white"/>
+  <path d="M64 58 C64 58 54 72 54 80 C54 86 58 90 64 90 C70 90 74 86 74 80 C74 72 64 58 64 58Z" fill="#EA580C"/>
+</svg>

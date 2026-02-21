@@ -10,6 +10,7 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "cdn.sanity.io" },
       { protocol: "https", hostname: "arweave.net" },
       { protocol: "https", hostname: "**.supabase.co" },
+      { protocol: "https", hostname: "i.ibb.co" },
     ],
   },
   webpack: (config) => {

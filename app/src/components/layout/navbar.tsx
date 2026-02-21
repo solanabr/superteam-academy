@@ -1,9 +1,9 @@
 "use client";
 
 import NextLink from "next/link";
-import { useTranslations } from "next-intl";
+import Image from "next/image";
+import { useTranslations, useLocale } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
-import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { UserMenu } from "@/components/auth";
 import {
   BookOpen,
@@ -44,8 +44,14 @@ const localeLabels: Record<string, string> = {
 export function Navbar() {
   const t = useTranslations("navigation");
   const pathname = usePathname();
+  const currentLocale = useLocale();
   const { theme, setTheme } = useAppStore();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const switchLocale = (loc: string) => {
+    document.cookie = `NEXT_LOCALE=${loc};path=/;max-age=31536000`;
+    window.location.reload();
+  };
 
   const toggleTheme = () => {
     setTheme(theme === "dark" ? "light" : "dark");
@@ -56,9 +62,13 @@ export function Navbar() {
       <nav className="container mx-auto flex h-16 items-center justify-between px-4 lg:px-8">
         {/* Logo */}
         <NextLink href="/" className="flex items-center gap-2.5 font-semibold text-lg tracking-tight">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground text-sm font-bold">
-            S
-          </div>
+          <Image
+            src="/superteam-logo.jpg"
+            alt="Superteam"
+            width={32}
+            height={32}
+            className="rounded-lg"
+          />
           <span className="hidden sm:inline">Superteam Academy</span>
         </NextLink>
 
@@ -95,10 +105,12 @@ export function Navbar() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               {Object.entries(localeLabels).map(([loc, label]) => (
-                <DropdownMenuItem key={loc} asChild>
-                  <Link href={pathname} locale={loc as "en" | "pt-br" | "es"}>
-                    {label}
-                  </Link>
+                <DropdownMenuItem
+                  key={loc}
+                  onClick={() => switchLocale(loc as "en" | "pt-br" | "es")}
+                  className={cn(currentLocale === loc && "font-semibold")}
+                >
+                  {label}
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>
@@ -120,19 +132,6 @@ export function Navbar() {
 
           {/* Auth + Wallet */}
           <div className="hidden sm:flex items-center gap-2">
-            <WalletMultiButton
-              style={{
-                height: "36px",
-                fontSize: "14px",
-                borderRadius: "8px",
-                backgroundColor: "hsl(var(--primary))",
-                color: "hsl(var(--primary-foreground))",
-                fontFamily: "inherit",
-                fontWeight: 500,
-                padding: "0 16px",
-                border: "none",
-              }}
-            />
             <UserMenu />
           </div>
 
@@ -175,20 +174,6 @@ export function Navbar() {
                   })}
                 </div>
                 <div className="mt-auto border-t p-4 space-y-3">
-                  <WalletMultiButton
-                    style={{
-                      width: "100%",
-                      height: "40px",
-                      fontSize: "14px",
-                      borderRadius: "8px",
-                      backgroundColor: "hsl(var(--primary))",
-                      color: "hsl(var(--primary-foreground))",
-                      fontFamily: "inherit",
-                      fontWeight: 500,
-                      justifyContent: "center",
-                      border: "none",
-                    }}
-                  />
                   <UserMenu />
                 </div>
               </div>

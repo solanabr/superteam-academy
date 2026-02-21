@@ -41,11 +41,25 @@ export interface Lesson {
   title: string;
   description: string;
   order: number;
-  type: "content" | "challenge";
+  type: "content" | "challenge" | "quiz";
   content?: string;
   challenge?: Challenge;
+  quiz?: Quiz;
   xp: number;
   duration?: string;
+}
+
+export interface Quiz {
+  questions: QuizQuestion[];
+  passingScore: number;
+}
+
+export interface QuizQuestion {
+  id: string;
+  question: string;
+  options: string[];
+  correctIndex: number;
+  explanation?: string;
 }
 
 export interface Challenge {

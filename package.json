@@ -1,0 +1,6 @@
+{
+  "devDependencies": {
+    "@sanity/client": "^7.15.0",
+    "dotenv": "^17.3.1"
+  }
+}

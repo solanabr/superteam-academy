@@ -7,8 +7,8 @@ import { ProtectedRoute } from "@/components/auth";
 import { XPDisplay, StreakBadge } from "@/components/shared";
 import {
   StreakCalendar,
-  AchievementCard,
   LevelRing,
+  EarlyAdopterMint,
 } from "@/components/gamification";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -19,7 +19,6 @@ import {
   useXP,
   useStreak,
   useActivities,
-  useAchievements,
 } from "@/hooks/use-services";
 import { useAuth } from "@/components/providers/auth-provider";
 import {
@@ -39,11 +38,9 @@ export default function DashboardPage() {
   const { balance, loading: xpLoading } = useXP();
   const { streak } = useStreak();
   const { activities } = useActivities(10);
-  const { achievements } = useAchievements();
 
   const inProgress = progressList.filter((p) => !p.isCompleted);
   const completed = progressList.filter((p) => p.isCompleted);
-  const earnedAchievements = achievements.filter((a) => a.isEarned);
 
   return (
     <ProtectedRoute>
@@ -179,6 +176,9 @@ export default function DashboardPage() {
                 )}
               </div>
 
+              {/* Early Adopter NFT Mint */}
+              <EarlyAdopterMint />
+
               {/* Recent activity */}
               <div>
                 <h2 className="text-lg font-semibold mb-4">
@@ -220,51 +220,10 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Right: Streak Calendar + Achievements */}
+            {/* Right: Streak Calendar */}
             <div className="space-y-8">
-              {/* Streak calendar */}
               <div className="rounded-xl border bg-card p-5">
                 <StreakCalendar streakHistory={streak.streakHistory} />
-              </div>
-
-              {/* Achievements */}
-              <div>
-                <h2 className="text-lg font-semibold mb-4">
-                  {t("achievements")}
-                </h2>
-                <div className="space-y-3">
-                  {achievements.length === 0 ? (
-                    <div className="rounded-xl border bg-card p-6 text-center">
-                      <Trophy className="h-8 w-8 mx-auto text-muted-foreground/30 mb-2" />
-                      <p className="text-sm text-muted-foreground">
-                        Complete lessons to earn achievements
-                      </p>
-                    </div>
-                  ) : (
-                    achievements.map((ach) => (
-                      <AchievementCard
-                        key={ach.id}
-                        achievement={ach}
-                        size="sm"
-                      />
-                    ))
-                  )}
-                </div>
-
-                {/* Progress */}
-                {achievements.length > 0 && (
-                  <div className="mt-4 space-y-2">
-                    <p className="text-xs text-muted-foreground">
-                      {earnedAchievements.length}/{achievements.length} earned
-                    </p>
-                    <Progress
-                      value={
-                        (earnedAchievements.length / achievements.length) * 100
-                      }
-                      className="h-1.5"
-                    />
-                  </div>
-                )}
               </div>
             </div>
           </div>

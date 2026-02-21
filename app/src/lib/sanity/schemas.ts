@@ -96,6 +96,31 @@ export const course = defineType({
       initialValue: false,
     }),
     defineField({
+      name: "isActive",
+      title: "Active",
+      type: "boolean",
+      initialValue: true,
+    }),
+    defineField({
+      name: "lessonCount",
+      title: "Lesson Count",
+      description: "Total number of lessons across all modules",
+      type: "number",
+      validation: (r) => r.min(0),
+    }),
+    defineField({
+      name: "totalCompletions",
+      title: "Total Completions",
+      type: "number",
+      initialValue: 0,
+    }),
+    defineField({
+      name: "creatorRewardXp",
+      title: "Creator Reward XP",
+      type: "number",
+      initialValue: 0,
+    }),
+    defineField({
       name: "creator",
       title: "Creator",
       type: "string",
@@ -171,13 +196,15 @@ export const lesson = defineType({
         list: [
           { title: "Content", value: "content" },
           { title: "Challenge", value: "challenge" },
+          { title: "Quiz", value: "quiz" },
         ],
       },
       initialValue: "content",
     }),
     defineField({
       name: "content",
-      title: "Content",
+      title: "Rich Content",
+      description: "Use this for new content created in Studio",
       type: "array",
       of: [
         { type: "block" },
@@ -196,6 +223,19 @@ export const lesson = defineType({
         },
         { type: "image" },
       ],
+    }),
+    defineField({
+      name: "htmlContent",
+      title: "HTML Content",
+      description: "Raw HTML content (imported courses). Rich Content takes priority when both exist.",
+      type: "text",
+      rows: 20,
+    }),
+    defineField({
+      name: "xp",
+      title: "XP Reward",
+      type: "number",
+      validation: (r) => r.min(0),
     }),
     defineField({
       name: "duration",
@@ -263,6 +303,50 @@ export const lesson = defineType({
                   initialValue: false,
                 }),
               ],
+            },
+          ],
+        }),
+      ],
+    }),
+    defineField({
+      name: "quiz",
+      title: "Quiz",
+      type: "object",
+      fields: [
+        defineField({
+          name: "passingScore",
+          type: "number",
+          title: "Passing Score (%)",
+          initialValue: 70,
+          validation: (r) => r.min(1).max(100),
+        }),
+        defineField({
+          name: "questions",
+          type: "array",
+          title: "Questions",
+          of: [
+            {
+              type: "object",
+              fields: [
+                defineField({ name: "question", type: "text", title: "Question", rows: 2 }),
+                defineField({
+                  name: "options",
+                  type: "array",
+                  of: [{ type: "string" }],
+                  title: "Options",
+                  validation: (r) => r.min(2).max(6),
+                }),
+                defineField({
+                  name: "correctIndex",
+                  type: "number",
+                  title: "Correct Option Index (0-based)",
+                  validation: (r) => r.min(0),
+                }),
+                defineField({ name: "explanation", type: "text", title: "Explanation", rows: 2 }),
+              ],
+              preview: {
+                select: { title: "question" },
+              },
             },
           ],
         }),

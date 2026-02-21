@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <circle cx="64" cy="64" r="60" fill="#14B8A6"/>
+  <circle cx="64" cy="64" r="56" fill="#0D9488"/>
+  <!-- Speech bubble -->
+  <rect x="32" y="36" width="64" height="44" rx="10" fill="white"/>
+  <polygon points="48,80 56,80 44,96" fill="white"/>
+  <!-- Dots inside bubble -->
+  <circle cx="50" cy="58" r="5" fill="#0D9488"/>
+  <circle cx="66" cy="58" r="5" fill="#0D9488"/>
+  <circle cx="82" cy="58" r="5" fill="#0D9488"/>
+</svg>

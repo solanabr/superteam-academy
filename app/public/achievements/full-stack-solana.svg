@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="purple-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#A855F7"/>
+      <stop offset="100%" stop-color="#7C3AED"/>
+    </linearGradient>
+  </defs>
+  <circle cx="64" cy="64" r="60" fill="url(#purple-grad)"/>
+  <circle cx="64" cy="64" r="56" fill="#7C3AED"/>
+  <!-- Stack layers -->
+  <ellipse cx="64" cy="46" rx="28" ry="10" fill="none" stroke="white" stroke-width="4"/>
+  <path d="M36 46 L36 58 C36 63.5 48.5 68 64 68 C79.5 68 92 63.5 92 58 L92 46" fill="none" stroke="white" stroke-width="4"/>
+  <path d="M36 58 L36 70 C36 75.5 48.5 80 64 80 C79.5 80 92 75.5 92 70 L92 58" fill="none" stroke="white" stroke-width="4"/>
+  <path d="M36 70 L36 82 C36 87.5 48.5 92 64 92 C79.5 92 92 87.5 92 82 L92 70" fill="none" stroke="white" stroke-width="4"/>
+</svg>

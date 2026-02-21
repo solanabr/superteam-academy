@@ -1,34 +1,29 @@
 import type { EnrollmentService } from "../enrollment-service";
 import type { Enrollment } from "@/types";
-import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
+
+async function apiGet(url: string) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
 
 export const supabaseEnrollmentService: EnrollmentService = {
-  async enroll(userId, courseId) {
-    const supabase = createSupabaseBrowserClient();
+  async enroll(userId, courseId, totalLessons?: number) {
     const now = Date.now();
 
-    const { data, error } = await supabase
-      .from("course_progress")
-      .upsert(
-        {
-          user_id: userId,
-          course_id: courseId,
-          completed_lessons: [],
-          total_lessons: 0,
-          is_completed: false,
-          is_finalized: false,
-          xp_earned: 0,
-          enrolled_at: new Date(now).toISOString(),
-        },
-        { onConflict: "user_id,course_id" },
-      )
-      .select()
-      .single();
+    const res = await fetch("/api/enroll", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, courseId, totalLessons }),
+    });
 
-    if (error) throw new Error(error.message);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: "Enrollment failed" }));
+      throw new Error(err.error || err.details || "Enrollment failed");
+    }
 
     return {
-      courseId: data.course_id,
+      courseId,
       learner: userId,
       lessonFlags: [],
       enrolledAt: now,
@@ -38,45 +33,36 @@ export const supabaseEnrollmentService: EnrollmentService = {
   },
 
   async getEnrollment(userId, courseId) {
-    const supabase = createSupabaseBrowserClient();
-    const { data } = await supabase
-      .from("course_progress")
-      .select("*")
-      .eq("user_id", userId)
-      .eq("course_id", courseId)
-      .single();
+    const { progress } = await apiGet(
+      `/api/progress?userId=${userId}&courseId=${encodeURIComponent(courseId)}`,
+    );
 
-    if (!data) return null;
+    if (!progress) return null;
 
     return {
-      courseId: data.course_id,
+      courseId: progress.course_id,
       learner: userId,
       lessonFlags: [],
-      enrolledAt: new Date(data.enrolled_at).getTime(),
-      completedAt: data.completed_at
-        ? new Date(data.completed_at).getTime()
+      enrolledAt: new Date(progress.enrolled_at).getTime(),
+      completedAt: progress.completed_at
+        ? new Date(progress.completed_at).getTime()
         : null,
       credentialAsset: null,
     } satisfies Enrollment;
   },
 
   async getEnrollments(userId) {
-    const supabase = createSupabaseBrowserClient();
-    const { data } = await supabase
-      .from("course_progress")
-      .select("*")
-      .eq("user_id", userId)
-      .order("enrolled_at", { ascending: false });
+    const { progressList } = await apiGet(`/api/progress?userId=${userId}`);
 
-    return (data ?? []).map(
-      (row) =>
+    return (progressList ?? []).map(
+      (row: Record<string, unknown>) =>
         ({
-          courseId: row.course_id,
+          courseId: row.course_id as string,
           learner: userId,
           lessonFlags: [],
-          enrolledAt: new Date(row.enrolled_at).getTime(),
+          enrolledAt: new Date(row.enrolled_at as string).getTime(),
           completedAt: row.completed_at
-            ? new Date(row.completed_at).getTime()
+            ? new Date(row.completed_at as string).getTime()
             : null,
           credentialAsset: null,
         }) satisfies Enrollment,
@@ -84,23 +70,13 @@ export const supabaseEnrollmentService: EnrollmentService = {
   },
 
   async isEnrolled(userId, courseId) {
-    const supabase = createSupabaseBrowserClient();
-    const { data } = await supabase
-      .from("course_progress")
-      .select("id")
-      .eq("user_id", userId)
-      .eq("course_id", courseId)
-      .single();
-
-    return !!data;
+    const { progress } = await apiGet(
+      `/api/progress?userId=${userId}&courseId=${encodeURIComponent(courseId)}`,
+    );
+    return !!progress;
   },
 
-  async closeEnrollment(userId, courseId) {
-    const supabase = createSupabaseBrowserClient();
-    await supabase
-      .from("course_progress")
-      .delete()
-      .eq("user_id", userId)
-      .eq("course_id", courseId);
+  async closeEnrollment() {
+    // No-op for now
   },
 };

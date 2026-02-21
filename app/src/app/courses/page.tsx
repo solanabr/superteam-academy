@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCourses } from "@/hooks/use-services";
-import { trackLabels } from "@/lib/constants";
+import { trackLabels, courseThumbnails } from "@/lib/constants";
 import {
   Search,
   BookOpen,
@@ -132,9 +132,9 @@ export default function CoursesPage() {
               >
                 {/* Thumbnail */}
                 <div className="relative aspect-video bg-muted">
-                  {course.thumbnailUrl ? (
+                  {(course.thumbnailUrl || courseThumbnails[course.slug]) ? (
                     <Image
-                      src={course.thumbnailUrl}
+                      src={course.thumbnailUrl || courseThumbnails[course.slug]}
                       alt={course.title}
                       fill
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"

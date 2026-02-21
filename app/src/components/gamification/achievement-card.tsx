@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -45,21 +46,25 @@ export function AchievementCard({
       )}
     >
       <div className="flex items-start gap-3">
-        {/* Icon */}
+        {/* Icon / Image */}
         <div
           className={cn(
-            "flex items-center justify-center rounded-lg shrink-0",
+            "flex items-center justify-center rounded-lg shrink-0 overflow-hidden",
             achievement.isEarned
               ? "bg-primary/10"
-              : "bg-muted",
+              : "bg-muted grayscale",
             size === "sm" && "h-10 w-10",
             size === "md" && "h-12 w-12"
           )}
         >
           {achievement.iconUrl ? (
-            <span className={cn(size === "sm" ? "text-lg" : "text-2xl")}>
-              {achievement.iconUrl}
-            </span>
+            <Image
+              src={achievement.iconUrl}
+              alt={achievement.name}
+              width={size === "sm" ? 40 : 48}
+              height={size === "sm" ? 40 : 48}
+              className="object-cover"
+            />
           ) : achievement.isEarned ? (
             <CheckCircle2
               className={cn(

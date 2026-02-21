@@ -3,7 +3,7 @@
 import { useAuth } from "@/components/providers/auth-provider";
 import { AuthDialog } from "@/components/auth/auth-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { ReactNode } from "react";
+import { type ReactNode, useState, useEffect } from "react";
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -17,6 +17,13 @@ export function ProtectedRoute({
   requireWallet = false,
 }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading, walletLinked } = useAuth();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
 
   if (isLoading) {
     return (

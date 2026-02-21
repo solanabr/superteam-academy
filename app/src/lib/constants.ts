@@ -56,3 +56,12 @@ export const trackLabels: Record<number, string> = {
   4: "NFT & Metaplex",
   5: "Full Stack Solana",
 };
+
+export const courseThumbnails: Record<string, string> = {
+  "solana-dev-setup": "/courses/solana-dev-setup.svg",
+  "intro-to-solana": "/courses/intro-to-solana.webp",
+  "anchor-fundamentals": "/courses/anchor-fundamentals.svg",
+  "token-extensions": "/courses/token-extensions.png",
+  "metaplex-core-nfts": "/courses/metaplex-core-nfts.png",
+  "defi-on-solana": "/courses/defi-on-solana.svg",
+};

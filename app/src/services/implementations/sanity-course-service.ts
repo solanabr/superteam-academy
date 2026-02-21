@@ -21,6 +21,12 @@ const COURSE_FIELDS = `
   creatorRewardXp,
   "thumbnailUrl": thumbnail.asset->url,
   duration,
+  whatYouLearn,
+  "instructor": instructor{
+    name,
+    "avatar": avatar.asset->url,
+    bio
+  },
   "modules": modules[]{
     _key,
     "id": _key,
@@ -34,7 +40,7 @@ const COURSE_FIELDS = `
       description,
       order,
       type,
-      content,
+      "content": coalesce(htmlContent, null),
       xp,
       duration,
       "challenge": challenge{
@@ -52,6 +58,17 @@ const COURSE_FIELDS = `
         },
         solution,
         hints
+      },
+      "quiz": quiz{
+        passingScore,
+        "questions": questions[]{
+          _key,
+          "id": _key,
+          question,
+          options,
+          correctIndex,
+          explanation
+        }
       }
     }
   }
@@ -92,7 +109,7 @@ export const sanityCourseService: CourseService = {
   },
 
   async getFeaturedCourses() {
-    const query = `*[_type == "course" && isActive == true && isFeatured == true] | order(totalCompletions desc) [0...6] { ${COURSE_FIELDS} }`;
+    const query = `*[_type == "course" && isActive == true] | order(totalCompletions desc) [0...6] { ${COURSE_FIELDS} }`;
     return sanityClient.fetch<Course[]>(query);
   },
 

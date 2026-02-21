@@ -49,9 +49,9 @@ export function XPDisplay({
       </div>
       {showProgress && (
         <div className="mt-1.5 space-y-1">
-          <Progress value={progress * 100} className="h-1.5" />
+          <Progress value={(xp / nextLevelXp) * 100} className="h-1.5" />
           <p className="text-[10px] text-muted-foreground">
-            {(xp - currentLevelXp).toLocaleString()} / {(nextLevelXp - currentLevelXp).toLocaleString()} XP to level {level + 1}
+            {xp.toLocaleString()} / {nextLevelXp.toLocaleString()} XP to level {level + 1}
           </p>
         </div>
       )}

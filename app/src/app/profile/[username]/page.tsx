@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabaseProfileService } from "@/services";
-import { mockXPService } from "@/services";
+import { supabaseXPService } from "@/services";
 import type { UserProfile, XPBalance } from "@/types";
 import { Calendar, Zap, User } from "lucide-react";
 
@@ -28,7 +28,7 @@ export default function UserProfilePage({
       const p = await supabaseProfileService.getProfileByUsername(username);
       setProfile(p);
       if (p) {
-        const xp = await mockXPService.getBalanceByUserId(p.id);
+        const xp = await supabaseXPService.getBalanceByUserId(p.id);
         setBalance(xp);
       }
       setLoading(false);

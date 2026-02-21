@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <circle cx="64" cy="64" r="60" fill="#EAB308"/>
+  <circle cx="64" cy="64" r="56" fill="#CA8A04"/>
+  <!-- Star -->
+  <polygon points="64,28 74,52 100,54 80,72 86,98 64,84 42,98 48,72 28,54 54,52" fill="white"/>
+</svg>

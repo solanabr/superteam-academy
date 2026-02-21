@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
-import { mockCredentialService } from "@/services";
+import { heliusCredentialService } from "@/services";
 import { trackLabels } from "@/lib/constants";
 import type { Credential } from "@/types";
 import {
@@ -35,7 +35,7 @@ export default function CertificatePage({
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    mockCredentialService
+    heliusCredentialService
       .getCredentialByMint(id)
       .then(setCredential)
       .catch(() => setCredential(null))

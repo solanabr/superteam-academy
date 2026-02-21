@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <circle cx="64" cy="64" r="60" fill="#3B82F6"/>
+  <circle cx="64" cy="64" r="56" fill="#2563EB"/>
+  <!-- Footsteps -->
+  <ellipse cx="48" cy="42" rx="8" ry="12" fill="white" transform="rotate(-15 48 42)"/>
+  <ellipse cx="45" cy="30" rx="4" ry="5" fill="white" transform="rotate(-15 45 30)"/>
+  <ellipse cx="68" cy="62" rx="8" ry="12" fill="white" transform="rotate(10 68 62)"/>
+  <ellipse cx="72" cy="50" rx="4" ry="5" fill="white" transform="rotate(10 72 50)"/>
+  <ellipse cx="50" cy="82" rx="8" ry="12" fill="white" transform="rotate(-10 50 82)"/>
+  <ellipse cx="47" cy="70" rx="4" ry="5" fill="white" transform="rotate(-10 47 70)"/>
+</svg>

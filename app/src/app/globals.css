@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -123,4 +124,77 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Ensure Solana wallet adapter modal/dropdown renders above shadcn Dialog (z-50) */
+.wallet-adapter-modal-overlay {
+  z-index: 100 !important;
+}
+.wallet-adapter-modal-wrapper {
+  z-index: 101 !important;
+}
+.wallet-adapter-modal {
+  z-index: 101 !important;
+}
+.wallet-adapter-dropdown-list {
+  z-index: 101 !important;
+}
+
+/* ─── Prose content styling for lesson pages ─── */
+.prose pre {
+  background-color: #1e1e2e;
+  border: 1px solid #313244;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  overflow-x: auto;
+}
+
+.prose pre code {
+  background: transparent;
+  padding: 0;
+  font-size: 0.875rem;
+  color: #cdd6f4;
+}
+
+.prose code {
+  background-color: #1e1e2e;
+  padding: 0.15rem 0.4rem;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+  color: #a6e3a1;
+}
+
+.prose code::before,
+.prose code::after {
+  content: none;
+}
+
+.prose table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.prose th,
+.prose td {
+  border: 1px solid #313244;
+  padding: 0.5rem 1rem;
+  text-align: left;
+}
+
+.prose th {
+  background-color: #1e1e2e;
+  font-weight: 600;
+}
+
+.prose blockquote {
+  border-left-color: #9945FF;
+}
+
+.prose a {
+  color: #89b4fa;
+  text-decoration: underline;
+}
+
+.prose a:hover {
+  color: #b4d0fb;
 }

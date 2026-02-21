@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { PlatformLayout } from "@/components/layout";
 import { ProtectedRoute } from "@/components/auth";
@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   Select,
   SelectContent,
@@ -17,7 +18,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAuth } from "@/components/providers/auth-provider";
-import { supabaseProfileService } from "@/services";
 import { useAppStore } from "@/stores/app-store";
 import { toast } from "sonner";
 import {
@@ -28,13 +28,16 @@ import {
   Wallet,
   Save,
   Check,
+  Camera,
+  Loader2,
 } from "lucide-react";
 
 export default function SettingsPage() {
   const t = useTranslations("settings");
-  const { profile, walletLinked, linkWallet, refreshProfile } = useAuth();
+  const { user, profile, walletLinked, refreshProfile } = useAuth();
   const { theme, setTheme } = useAppStore();
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
@@ -44,6 +47,8 @@ export default function SettingsPage() {
   const [isPublic, setIsPublic] = useState(true);
   const [language, setLanguage] = useState("en");
   const [saving, setSaving] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   useEffect(() => {
     if (profile) {
@@ -55,27 +60,91 @@ export default function SettingsPage() {
       setWebsite(profile.socialLinks?.website ?? "");
       setIsPublic(profile.isPublic ?? true);
       setLanguage(profile.preferredLanguage ?? "en");
+      setAvatarUrl(profile.avatarUrl ?? null);
     }
   }, [profile]);
 
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Reset input so the same file can be re-selected
+    e.target.value = "";
+
+    setUploadingAvatar(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/profile/avatar", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error ?? "Upload failed");
+      }
+
+      setAvatarUrl(data.avatarUrl);
+      await refreshProfile();
+      toast.success("Avatar updated");
+    } catch (err) {
+      console.error("[Settings] Avatar upload failed:", err);
+      toast.error(err instanceof Error ? err.message : "Failed to upload avatar");
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
   const handleSave = async () => {
-    if (!profile) return;
+    const userId = profile?.id ?? user?.id;
+
+    if (!userId) {
+      toast.error("Could not determine your account. Please sign out and back in.");
+      return;
+    }
+
     setSaving(true);
 
     try {
-      await supabaseProfileService.updateProfile(profile.id, {
-        username,
-        displayName,
-        bio,
-        socialLinks: { twitter, github, website },
-        isPublic,
-        preferredLanguage: language,
-        theme,
+      // If profile doesn't exist yet, create it server-side first
+      if (!profile) {
+        const ensureRes = await fetch("/api/auth/ensure-profile", { method: "POST" });
+        if (!ensureRes.ok) {
+          const body = await ensureRes.json().catch(() => ({}));
+          console.error("[Settings] ensure-profile failed:", ensureRes.status, body);
+          toast.error("Could not create your profile. Please sign out and back in.");
+          return;
+        }
+      }
+
+      // Update profile via server API (bypasses browser RLS issues)
+      const res = await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username,
+          displayName,
+          bio,
+          socialLinks: { twitter, github, website },
+          isPublic,
+          preferredLanguage: language,
+          theme,
+        }),
       });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? `Server returned ${res.status}`);
+      }
+
       await refreshProfile();
       toast.success(t("saved"));
-    } catch {
-      toast.error("Failed to save");
+    } catch (err) {
+      console.error("[Settings] Failed to save profile:", err);
+      toast.error(err instanceof Error ? err.message : "Failed to save");
     } finally {
       setSaving(false);
     }
@@ -97,6 +166,45 @@ export default function SettingsPage() {
             </div>
 
             <div className="space-y-4">
+              {/* Avatar picker */}
+              <div className="flex items-center gap-4">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingAvatar}
+                  className="relative group cursor-pointer"
+                >
+                  <Avatar className="size-20">
+                    {avatarUrl ? (
+                      <AvatarImage src={avatarUrl} alt="Profile picture" />
+                    ) : null}
+                    <AvatarFallback className="text-lg">
+                      {(displayName || username || "?")[0]?.toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {uploadingAvatar ? (
+                      <Loader2 className="h-5 w-5 text-white animate-spin" />
+                    ) : (
+                      <Camera className="h-5 w-5 text-white" />
+                    )}
+                  </div>
+                </button>
+                <div>
+                  <p className="text-sm font-medium">Profile Picture</p>
+                  <p className="text-xs text-muted-foreground">
+                    Click to upload. Max 2 MB. JPEG, PNG, WebP, or GIF.
+                  </p>
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  className="hidden"
+                  onChange={handleAvatarUpload}
+                />
+              </div>
+
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="username">Username</Label>
@@ -256,10 +364,9 @@ export default function SettingsPage() {
                 </span>
               </div>
             ) : (
-              <Button variant="outline" className="gap-2" onClick={linkWallet}>
-                <Wallet className="h-4 w-4" />
-                {t("linkWallet")}
-              </Button>
+              <p className="text-sm text-muted-foreground">
+                Sign in with a wallet to link it to your account.
+              </p>
             )}
           </section>
 

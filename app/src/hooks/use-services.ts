@@ -2,15 +2,22 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/components/providers/auth-provider";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { toast } from "sonner";
 import { courseService } from "@/services";
 import { supabaseEnrollmentService } from "@/services";
 import { supabaseProgressService } from "@/services";
-import { mockXPService } from "@/services";
+import { supabaseXPService } from "@/services";
 import { supabaseStreakService } from "@/services";
 import { supabaseActivityService } from "@/services";
-import { mockLeaderboardService } from "@/services";
-import { mockAchievementService } from "@/services";
-import { mockCredentialService } from "@/services";
+import { supabaseLeaderboardService } from "@/services";
+import { supabaseAchievementService } from "@/services";
+import {
+  useOnChainXP,
+  useOnChainEnrollment,
+  useEnrollOnChain,
+  useOnChainCredentials,
+} from "@/hooks/use-onchain";
 import type {
   Course,
   CourseProgress,
@@ -76,11 +83,16 @@ export function useFeaturedCourses() {
 
 // ─── Enrollment ─────────────────────────────────────────
 
-export function useEnrollment(courseId: string) {
+export function useEnrollment(courseId: string, totalLessons?: number) {
   const { user } = useAuth();
-  const [enrolled, setEnrolled] = useState(false);
+  const { publicKey: walletKey } = useWallet();
+  const { enrolled: onChainEnrolled, loading: onChainLoading } =
+    useOnChainEnrollment(courseId);
+  const { enrollOnChain, enrolling } = useEnrollOnChain();
+  const [supabaseEnrolled, setSupabaseEnrolled] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  // Check Supabase enrollment
   useEffect(() => {
     if (!user || !courseId) {
       setLoading(false);
@@ -88,18 +100,73 @@ export function useEnrollment(courseId: string) {
     }
     supabaseEnrollmentService
       .isEnrolled(user.id, courseId)
-      .then(setEnrolled)
-      .catch(() => setEnrolled(false))
+      .then(setSupabaseEnrolled)
+      .catch(() => setSupabaseEnrolled(false))
       .finally(() => setLoading(false));
   }, [user, courseId]);
 
-  const enroll = useCallback(async () => {
-    if (!user) return;
-    await supabaseEnrollmentService.enroll(user.id, courseId);
-    setEnrolled(true);
-  }, [user, courseId]);
+  // Enrolled if either on-chain or Supabase says so
+  const enrolled = onChainEnrolled || supabaseEnrolled;
+  const [localEnrolling, setLocalEnrolling] = useState(false);
 
-  return { enrolled, loading, enroll };
+  const enroll = useCallback(async () => {
+    if (!user) {
+      toast.error("Please sign in to enroll");
+      return;
+    }
+
+    setLocalEnrolling(true);
+    let onChainSuccess = false;
+
+    try {
+      // 1. Try on-chain enrollment if wallet connected
+      if (walletKey) {
+        try {
+          await enrollOnChain(courseId);
+          onChainSuccess = true;
+        } catch (err: unknown) {
+          const msg = err instanceof Error ? err.message : String(err);
+          // User rejected = not an error, just cancelled
+          if (msg.includes("User rejected")) {
+            toast.info("Transaction cancelled");
+            return;
+          }
+          // Already enrolled on-chain is fine
+          if (msg.includes("already in use")) {
+            onChainSuccess = true;
+          } else {
+            console.error("On-chain enrollment failed:", msg);
+            toast.error("On-chain enrollment failed. Enrolling off-chain only.");
+          }
+        }
+      }
+
+      // 2. Always record in Supabase for progress tracking
+      await supabaseEnrollmentService.enroll(user.id, courseId, totalLessons);
+      setSupabaseEnrolled(true);
+
+      // Only show generic success if enrollOnChain didn't already toast
+      if (!walletKey) {
+        toast.success("Enrolled! Connect a wallet for on-chain enrollment.");
+      } else if (!onChainSuccess) {
+        // On-chain failed but Supabase succeeded — error toast already shown above
+      }
+      // If onChainSuccess, enrollOnChain already showed a success toast
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error("Enrollment failed:", msg);
+      toast.error("Enrollment failed: " + msg);
+    } finally {
+      setLocalEnrolling(false);
+    }
+  }, [user, walletKey, courseId, enrollOnChain, totalLessons]);
+
+  return {
+    enrolled,
+    loading: loading || onChainLoading,
+    enroll,
+    enrolling: localEnrolling || enrolling,
+  };
 }
 
 // ─── Progress ───────────────────────────────────────────
@@ -165,7 +232,13 @@ export function useAllProgress() {
 
 export function useXP() {
   const { user } = useAuth();
-  const [balance, setBalance] = useState<XPBalance>({
+  const { publicKey: walletKey } = useWallet();
+  const {
+    balance: onChainXP,
+    loading: onChainLoading,
+    refresh: refreshOnChain,
+  } = useOnChainXP();
+  const [supabaseBalance, setSupabaseBalance] = useState<XPBalance>({
     amount: 0,
     level: 0,
     progress: 0,
@@ -174,10 +247,14 @@ export function useXP() {
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
-    if (!user) return;
-    const xp = await mockXPService.getBalanceByUserId(user.id);
-    setBalance(xp);
-  }, [user]);
+    if (walletKey) {
+      await refreshOnChain();
+    }
+    if (user) {
+      const xp = await supabaseXPService.getBalanceByUserId(user.id);
+      setSupabaseBalance(xp);
+    }
+  }, [user, walletKey, refreshOnChain]);
 
   useEffect(() => {
     if (!user) {
@@ -187,7 +264,20 @@ export function useXP() {
     refresh().finally(() => setLoading(false));
   }, [user, refresh]);
 
-  return { balance, loading, refresh };
+  // Prefer on-chain XP when wallet is connected and has a balance
+  const useOnChain = walletKey && !onChainLoading && onChainXP > 0;
+  const amount = useOnChain ? onChainXP : supabaseBalance.amount;
+  const level = Math.floor(Math.sqrt(amount / 100));
+  const currentLevelXp = level * level * 100;
+  const nextLevelXp = (level + 1) * (level + 1) * 100;
+  const progress =
+    nextLevelXp > currentLevelXp
+      ? (amount - currentLevelXp) / (nextLevelXp - currentLevelXp)
+      : 0;
+
+  const balance: XPBalance = { amount, level, progress, nextLevelXp };
+
+  return { balance, loading: loading || onChainLoading, refresh };
 }
 
 // ─── Streak ─────────────────────────────────────────────
@@ -209,20 +299,21 @@ export function useStreak() {
     setStreak(s);
   }, [user]);
 
-  useEffect(() => {
-    if (!user) {
-      setLoading(false);
-      return;
-    }
-    refresh().finally(() => setLoading(false));
-  }, [user, refresh]);
-
   const recordActivity = useCallback(async () => {
     if (!user) return;
     const updated = await supabaseStreakService.recordActivity(user.id);
     setStreak(updated);
     return updated;
   }, [user]);
+
+  useEffect(() => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+    // Record activity on load so visiting the app counts as an active day
+    recordActivity().finally(() => setLoading(false));
+  }, [user, recordActivity]);
 
   return { streak, loading, recordActivity, refresh };
 }
@@ -277,8 +368,8 @@ export function useLeaderboard(
   useEffect(() => {
     setLoading(true);
     Promise.all([
-      mockLeaderboardService.getLeaderboard(timeframe, limit),
-      mockLeaderboardService.getTotalParticipants(timeframe),
+      supabaseLeaderboardService.getLeaderboard(timeframe, limit),
+      supabaseLeaderboardService.getTotalParticipants(timeframe),
     ])
       .then(([e, t]) => {
         setEntries(e);
@@ -306,7 +397,7 @@ export function useAchievements() {
       setLoading(false);
       return;
     }
-    mockAchievementService
+    supabaseAchievementService
       .getAchievements(user.id)
       .then(setAchievements)
       .catch(() => setAchievements([]))
@@ -320,20 +411,35 @@ export function useAchievements() {
 
 export function useCredentials() {
   const { user, profile } = useAuth();
-  const [credentials, setCredentials] = useState<Credential[]>([]);
+  const { publicKey: walletKey } = useWallet();
+  const {
+    credentials: onChainCredentials,
+    loading: onChainLoading,
+  } = useOnChainCredentials();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user || !profile?.walletAddress) {
+    if (!user) {
       setLoading(false);
       return;
     }
-    mockCredentialService
-      .getCredentials(profile.walletAddress)
-      .then(setCredentials)
-      .catch(() => setCredentials([]))
-      .finally(() => setLoading(false));
-  }, [user, profile?.walletAddress]);
+    // On-chain credentials load from Helius DAS automatically
+    setLoading(false);
+  }, [user]);
 
-  return { credentials, loading };
+  // Map on-chain DAS credentials to our Credential type
+  const credentials: Credential[] = onChainCredentials.map((c) => ({
+    mintAddress: c.id,
+    name: c.name,
+    metadataUri: c.uri,
+    imageUrl: c.image,
+    trackId: parseInt(c.attributes["track"] ?? "0"),
+    trackLevel: parseInt(c.attributes["level"] ?? "0"),
+    coursesCompleted: parseInt(c.attributes["courses_completed"] ?? "0"),
+    totalXp: parseInt(c.attributes["total_xp"] ?? "0"),
+    owner: walletKey?.toBase58() ?? profile?.walletAddress ?? "",
+    collection: process.env.NEXT_PUBLIC_CREDENTIAL_COLLECTION ?? "",
+  }));
+
+  return { credentials, loading: loading || onChainLoading };
 }

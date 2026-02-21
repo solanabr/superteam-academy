@@ -1,16 +1,21 @@
 "use client";
 
-import { use, useMemo, useCallback } from "react";
+import { use, useMemo, useCallback, useState, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { PlatformLayout } from "@/components/layout";
 import { CodeEditor } from "@/components/lesson";
+import { LessonQuiz } from "@/components/lesson/quiz";
 import { ProtectedRoute } from "@/components/auth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCourse, useProgress } from "@/hooks/use-services";
+import { useAuth } from "@/components/providers/auth-provider";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useConnection } from "@solana/wallet-adapter-react";
+import { VersionedTransaction } from "@solana/web3.js";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -22,6 +27,9 @@ import {
   CheckCircle2,
   BookOpen,
   Zap,
+  Coins,
+  ExternalLink,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { trackEvent } from "@/components/providers/analytics-provider";
@@ -36,6 +44,11 @@ export default function LessonPage({
   const t = useTranslations("lesson");
   const { course, loading: courseLoading } = useCourse(slug);
   const { progress, completeLesson } = useProgress(course?.courseId ?? "");
+  const { user } = useAuth();
+  const { publicKey: walletKey, signTransaction } = useWallet();
+  const { connection } = useConnection();
+  const [claimingXP, setClaimingXP] = useState(false);
+  const [xpClaimed, setXpClaimed] = useState(false);
 
   // Find the lesson
   const lessonInfo = useMemo(() => {
@@ -56,6 +69,8 @@ export default function LessonPage({
   const isComplete = progress?.completedLessons.includes(lessonIndex) ?? false;
   const hasPrev = lessonIndex > 0;
   const hasNext = lessonInfo ? lessonIndex < lessonInfo.totalLessons - 1 : false;
+  const isLastLesson = lessonInfo ? lessonIndex === lessonInfo.totalLessons - 1 : false;
+  const isQuizLesson = lessonInfo?.lesson.type === "quiz" && !!lessonInfo.lesson.quiz;
 
   const handleComplete = useCallback(async () => {
     if (!lessonInfo || isComplete) return;
@@ -63,6 +78,139 @@ export default function LessonPage({
     trackEvent("lesson_completed", { slug, lessonIndex, xp: lessonInfo.lesson.xp });
     toast.success(`+${lessonInfo.lesson.xp} XP earned!`);
   }, [lessonInfo, lessonIndex, isComplete, completeLesson, slug]);
+
+  // Auto-complete content lessons when user scrolls to bottom
+  const contentEndRef = useRef<HTMLDivElement>(null);
+  const autoCompleted = useRef(false);
+
+  useEffect(() => {
+    autoCompleted.current = false;
+  }, [lessonIndex]);
+
+  useEffect(() => {
+    if (!contentEndRef.current || isComplete || isQuizLesson || lessonInfo?.lesson.type === "challenge") return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !autoCompleted.current) {
+          autoCompleted.current = true;
+          handleComplete();
+        }
+      },
+      { threshold: 0.5 },
+    );
+
+    observer.observe(contentEndRef.current);
+    return () => observer.disconnect();
+  }, [isComplete, isQuizLesson, lessonInfo, handleComplete]);
+
+  // Calculate total course XP for quiz claim
+  const totalCourseXP = useMemo(() => {
+    if (!course) return 0;
+    let total = 0;
+    for (const mod of course.modules) {
+      for (const lesson of mod.lessons) {
+        total += lesson.xp;
+      }
+    }
+    return total;
+  }, [course]);
+
+  const handleClaimXP = useCallback(async () => {
+    if (!course || !user || !walletKey || !signTransaction || !lessonInfo) return;
+    setClaimingXP(true);
+    try {
+      // Step 1: Get partially-signed txs from backend
+      const allLessonIndices: number[] = [];
+      for (let i = 0; i < lessonInfo.totalLessons; i++) {
+        allLessonIndices.push(i);
+      }
+
+      const res = await fetch("/api/lessons/complete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          courseId: course.courseId,
+          lessonIndices: allLessonIndices,
+          learnerWallet: walletKey.toBase58(),
+          userId: user.id,
+        }),
+      });
+      const data = await res.json();
+
+      if (data.alreadyCompleted) {
+        setXpClaimed(true);
+        toast.info("All XP already claimed on-chain");
+        return;
+      }
+
+      if (!res.ok || !data.transactions?.length) {
+        toast.error(data.error || "Failed to claim XP. Please try again.");
+        return;
+      }
+
+      // Step 2: Sign each tx with wallet and send
+      const signatures: string[] = [];
+      for (const txBase64 of data.transactions) {
+        const tx = VersionedTransaction.deserialize(
+          Buffer.from(txBase64, "base64"),
+        );
+        const signedTx = await signTransaction(tx);
+        const sig = await connection.sendRawTransaction(signedTx.serialize(), {
+          skipPreflight: false,
+          maxRetries: 3,
+        });
+        await connection.confirmTransaction(sig, "confirmed");
+        signatures.push(sig);
+      }
+
+      // Step 3: Confirm to backend (streak update)
+      await fetch("/api/lessons/complete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          courseId: course.courseId,
+          learnerWallet: walletKey.toBase58(),
+          userId: user.id,
+          action: "confirm",
+        }),
+      });
+
+      setXpClaimed(true);
+
+      const lastSig = signatures[signatures.length - 1] ?? "";
+      trackEvent("course_xp_claimed_onchain", {
+        slug,
+        totalLessons: allLessonIndices.length,
+        claimed: data.pendingCount,
+        totalXP: totalCourseXP,
+      });
+      toast.success(
+        <div className="flex items-center gap-2">
+          <span>{totalCourseXP} XP minted on-chain!</span>
+          {lastSig && (
+            <a
+              href={`https://explorer.solana.com/tx/${lastSig}?cluster=devnet`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary underline inline-flex items-center gap-1"
+            >
+              View <ExternalLink className="h-3 w-3" />
+            </a>
+          )}
+        </div>,
+      );
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      if (msg.includes("User rejected")) {
+        toast.info("Transaction cancelled");
+        return;
+      }
+      toast.error(`Failed to claim XP: ${msg}`);
+    } finally {
+      setClaimingXP(false);
+    }
+  }, [course, user, walletKey, signTransaction, connection, lessonInfo, slug, totalCourseXP]);
 
   const handleChallengeSubmit = useCallback(
     async (passed: boolean) => {
@@ -189,32 +337,80 @@ export default function LessonPage({
                 )}
               </ResizablePanelGroup>
             ) : (
-              /* Content lesson: Text + optional code */
+              /* Content / Quiz lesson */
               <div className="h-full overflow-y-auto">
                 <div className="container mx-auto max-w-3xl px-4 py-8">
+                  {/* Lesson content */}
                   <article className="prose prose-neutral dark:prose-invert max-w-none">
                     {lesson.content ? (
                       <div
                         dangerouslySetInnerHTML={{ __html: lesson.content }}
                       />
-                    ) : (
+                    ) : !isQuizLesson ? (
                       <div className="text-center py-12 text-muted-foreground">
                         <BookOpen className="h-12 w-12 mx-auto mb-4 opacity-30" />
                         <p>Lesson content is loading from CMS...</p>
                       </div>
-                    )}
+                    ) : null}
                   </article>
 
-                  {/* Mark complete button for content lessons */}
-                  {!isComplete && (
+                  {/* Quiz section (for quiz-type lessons) */}
+                  {isQuizLesson && lessonInfo.lesson.quiz && (
+                    <div className="mt-8">
+                      <LessonQuiz
+                        quiz={lessonInfo.lesson.quiz}
+                        onPass={handleComplete}
+                      />
+                    </div>
+                  )}
+
+                  {/* Auto-complete sentinel for content lessons */}
+                  {!isQuizLesson && <div ref={contentEndRef} className="h-1" />}
+
+                  {/* Completion status */}
+                  {isComplete && !isQuizLesson && (
                     <div className="mt-8 text-center">
-                      <Button
-                        onClick={handleComplete}
-                        className="h-11 px-8 gap-2"
-                      >
+                      <div className="inline-flex items-center gap-2 text-sm text-emerald-500 font-medium">
                         <CheckCircle2 className="h-4 w-4" />
-                        {t("complete")}
-                      </Button>
+                        Lesson completed
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Claim XP — only on quiz lessons */}
+                  {isQuizLesson && (
+                    <div className="mt-8 text-center space-y-3">
+                      {isComplete && (
+                        <div className="inline-flex items-center gap-2 text-sm text-emerald-500 font-medium">
+                          <CheckCircle2 className="h-4 w-4" />
+                          Quiz passed!
+                        </div>
+                      )}
+
+                      {isComplete && walletKey && !xpClaimed && (
+                        <div>
+                          <Button
+                            onClick={handleClaimXP}
+                            disabled={claimingXP}
+                            variant="outline"
+                            className="h-11 px-8 gap-2 border-primary/50 hover:bg-primary/10"
+                          >
+                            {claimingXP ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Coins className="h-4 w-4" />
+                            )}
+                            {claimingXP ? "Minting XP..." : `Claim ${totalCourseXP} XP On-Chain`}
+                          </Button>
+                        </div>
+                      )}
+
+                      {xpClaimed && (
+                        <div className="inline-flex items-center gap-2 text-sm text-emerald-500 font-medium">
+                          <CheckCircle2 className="h-4 w-4" />
+                          XP claimed on-chain
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

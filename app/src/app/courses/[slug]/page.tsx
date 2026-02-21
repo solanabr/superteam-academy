@@ -1,6 +1,6 @@
 "use client";
 
-import { use } from "react";
+import { use, useCallback } from "react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
@@ -13,7 +13,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { useCourse, useEnrollment, useProgress } from "@/hooks/use-services";
 import { useAuth } from "@/components/providers/auth-provider";
-import { trackLabels, difficultyLabels } from "@/lib/constants";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useConnection } from "@solana/wallet-adapter-react";
+import { VersionedTransaction } from "@solana/web3.js";
+import { trackLabels, difficultyLabels, courseThumbnails } from "@/lib/constants";
+import { toast } from "sonner";
+import { trackEvent } from "@/components/providers/analytics-provider";
 import {
   BookOpen,
   Clock,
@@ -25,6 +30,9 @@ import {
   Play,
   ChevronDown,
   ChevronRight,
+  Award,
+  ExternalLink,
+  Loader2,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -35,13 +43,111 @@ export default function CourseDetailPage({
 }) {
   const { slug } = use(params);
   const t = useTranslations("courses.detail");
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  const { publicKey: walletKey, signTransaction } = useWallet();
+  const { connection } = useConnection();
   const { course, loading: courseLoading } = useCourse(slug);
-  const { enrolled, enroll } = useEnrollment(course?.courseId ?? "");
-  const { progress } = useProgress(course?.courseId ?? "");
+  const { enrolled, enroll, enrolling } = useEnrollment(course?.courseId ?? "", course?.lessonCount);
+  const { progress, refresh: refreshProgress } = useProgress(course?.courseId ?? "");
   const [expandedModules, setExpandedModules] = useState<Set<string>>(
     new Set(),
   );
+  const [finalizing, setFinalizing] = useState(false);
+
+  const handleFinalize = useCallback(async () => {
+    if (!course || !user || !walletKey || !signTransaction || !progress?.isCompleted) return;
+    setFinalizing(true);
+    try {
+      // Step 1: Get partially-signed txs from backend
+      const res = await fetch("/api/courses/finalize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          courseId: course.courseId,
+          learnerWallet: walletKey.toBase58(),
+          userId: user.id,
+        }),
+      });
+      const data = await res.json();
+      if (data.alreadyFinalized) {
+        toast.info("Course already finalized");
+        await refreshProgress();
+        return;
+      }
+      if (!res.ok || !data.finalizeTx) throw new Error(data.error || "Failed to finalize");
+
+      // Step 2: Sign and send finalize tx
+      const finalizeTx = VersionedTransaction.deserialize(
+        Buffer.from(data.finalizeTx, "base64"),
+      );
+      const signedFinalize = await signTransaction(finalizeTx);
+      const finalizeSig = await connection.sendRawTransaction(signedFinalize.serialize(), {
+        skipPreflight: false,
+        maxRetries: 3,
+      });
+      await connection.confirmTransaction(finalizeSig, "confirmed");
+
+      // Step 3: Try credential tx (best-effort)
+      let credentialSig: string | null = null;
+      if (data.credentialTx) {
+        try {
+          const credTx = VersionedTransaction.deserialize(
+            Buffer.from(data.credentialTx, "base64"),
+          );
+          const signedCred = await signTransaction(credTx);
+          credentialSig = await connection.sendRawTransaction(signedCred.serialize(), {
+            skipPreflight: false,
+            maxRetries: 3,
+          });
+          await connection.confirmTransaction(credentialSig, "confirmed");
+        } catch (credErr) {
+          console.error("Credential tx failed (finalize succeeded):", credErr);
+        }
+      }
+
+      // Step 4: Confirm to backend (Supabase update)
+      await fetch("/api/courses/finalize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          courseId: course.courseId,
+          learnerWallet: walletKey.toBase58(),
+          userId: user.id,
+          action: "confirm",
+          finalizeSig,
+        }),
+      });
+
+      trackEvent("course_finalized", {
+        courseId: course.courseId,
+        credentialMint: data.credentialAssetAddress,
+      });
+
+      toast.success(
+        <div className="flex flex-col gap-1">
+          <span className="font-medium">Course finalized!</span>
+          <a
+            href={`https://explorer.solana.com/tx/${credentialSig ?? finalizeSig}?cluster=devnet`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary underline inline-flex items-center gap-1 text-xs"
+          >
+            View on Explorer <ExternalLink className="h-3 w-3" />
+          </a>
+        </div>,
+      );
+      await refreshProgress();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      if (msg.includes("User rejected")) {
+        toast.info("Transaction cancelled");
+        return;
+      }
+      toast.error(`Finalization failed: ${msg}`);
+    } finally {
+      setFinalizing(false);
+    }
+  }, [course, user, walletKey, signTransaction, connection, progress, refreshProgress]);
 
   const toggleModule = (moduleId: string) => {
     setExpandedModules((prev) => {
@@ -302,10 +408,10 @@ export default function CourseDetailPage({
           <div className="space-y-6">
             {/* Enroll Card */}
             <div className="rounded-xl border bg-card p-6 space-y-5 sticky top-24">
-              {course.thumbnailUrl && (
+              {(course.thumbnailUrl || courseThumbnails[course.slug]) && (
                 <div className="aspect-video rounded-lg overflow-hidden bg-muted relative">
                   <Image
-                    src={course.thumbnailUrl}
+                    src={course.thumbnailUrl || courseThumbnails[course.slug]}
                     alt={course.title}
                     fill
                     sizes="400px"
@@ -316,10 +422,35 @@ export default function CourseDetailPage({
 
               {enrolled ? (
                 progress?.isCompleted ? (
-                  <Button className="w-full h-11" disabled>
-                    <CheckCircle2 className="mr-2 h-4 w-4" />
-                    {t("completed")}
-                  </Button>
+                  progress.isFinalized ? (
+                    <div className="space-y-2">
+                      <Button className="w-full h-11" disabled>
+                        <CheckCircle2 className="mr-2 h-4 w-4" />
+                        {t("completed")}
+                      </Button>
+                      <p className="text-xs text-center text-muted-foreground">
+                        Credential NFT issued to your wallet
+                      </p>
+                    </div>
+                  ) : (
+                    <Button
+                      className="w-full h-11 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+                      onClick={handleFinalize}
+                      disabled={finalizing || !walletKey}
+                    >
+                      {finalizing ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Minting Credential...
+                        </>
+                      ) : (
+                        <>
+                          <Award className="mr-2 h-4 w-4" />
+                          Claim Certificate NFT
+                        </>
+                      )}
+                    </Button>
+                  )
                 ) : (
                   <Button asChild className="w-full h-11">
                     <Link
@@ -335,9 +466,9 @@ export default function CourseDetailPage({
                 <Button
                   className="w-full h-11"
                   onClick={enroll}
-                  disabled={!isAuthenticated}
+                  disabled={!isAuthenticated || enrolling}
                 >
-                  {t("enroll")}
+                  {enrolling ? "Enrolling..." : t("enroll")}
                 </Button>
               )}
 

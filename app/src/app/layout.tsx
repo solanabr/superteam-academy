@@ -63,6 +63,7 @@ export default async function RootLayout({
     <html lang={locale} suppressHydrationWarning>
       <body
         className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased bg-background text-foreground`}
+        suppressHydrationWarning
       >
         <NextIntlClientProvider messages={messages}>
           <Providers>{children}</Providers>

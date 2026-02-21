@@ -1,7 +1,86 @@
-import type { CourseService } from "../course-service";
-import type { Course } from "@/types";
+/**
+ * Push all courses from mock data to Sanity CMS.
+ *
+ * Usage:
+ *   cd app && npx tsx ../scripts/push-courses-to-sanity.ts
+ *
+ * Requires SANITY_API_TOKEN in app/.env.local
+ */
 
-const MOCK_COURSES: Course[] = [
+import { createClient } from "@sanity/client";
+import * as dotenv from "dotenv";
+import { resolve } from "path";
+
+dotenv.config({ path: resolve(__dirname, "../app/.env.local") });
+
+const client = createClient({
+  projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!,
+  dataset: process.env.NEXT_PUBLIC_SANITY_DATASET ?? "production",
+  apiVersion: "2026-02-19",
+  token: process.env.SANITY_API_TOKEN!,
+  useCdn: false,
+});
+
+interface MockLesson {
+  id: string;
+  title: string;
+  description: string;
+  type: "content" | "challenge";
+  order: number;
+  xp: number;
+  duration?: string;
+  content?: string;
+  challenge?: {
+    prompt: string;
+    objectives: string[];
+    starterCode: string;
+    language: string;
+    solution?: string;
+    hints?: string[];
+    testCases?: {
+      id: string;
+      name: string;
+      input?: string;
+      expectedOutput: string;
+      hidden?: boolean;
+    }[];
+  };
+}
+
+interface MockModule {
+  id: string;
+  title: string;
+  description: string;
+  order: number;
+  lessons: MockLesson[];
+}
+
+interface MockCourse {
+  id: string;
+  courseId: string;
+  title: string;
+  slug: string;
+  description: string;
+  difficulty: number;
+  lessonCount: number;
+  xpPerLesson: number;
+  trackId: number;
+  trackLevel: number;
+  isActive: boolean;
+  prerequisite: string | null;
+  totalCompletions: number;
+  creatorRewardXp: number;
+  duration?: string;
+  thumbnailUrl?: string;
+  creator: string;
+  modules: MockModule[];
+  whatYouLearn?: string[];
+  instructor?: { name: string; bio?: string };
+}
+
+// ─── Course definitions ─────────────────────────────────
+
+const COURSES: MockCourse[] = [
   {
     id: "intro-solana",
     courseId: "intro-solana",
@@ -19,7 +98,6 @@ const MOCK_COURSES: Course[] = [
     totalCompletions: 342,
     creatorRewardXp: 200,
     duration: "3 hours",
-    thumbnailUrl: "",
     creator: "Superteam Academy",
     modules: [
       {
@@ -70,8 +148,7 @@ const MOCK_COURSES: Course[] = [
             xp: 25,
             duration: "25 min",
             challenge: {
-              prompt:
-                "Write a function that creates and sends a SOL transfer transaction.",
+              prompt: "Write a function that creates and sends a SOL transfer transaction.",
               objectives: [
                 "Create a transfer instruction using SystemProgram",
                 "Build and sign the transaction",
@@ -88,20 +165,8 @@ const MOCK_COURSES: Course[] = [
                 "Use sendAndConfirmTransaction to send it",
               ],
               testCases: [
-                {
-                  id: "tc-1",
-                  name: "Creates transfer instruction",
-                  input: "",
-                  expectedOutput: "SystemProgram.transfer",
-                  hidden: false,
-                },
-                {
-                  id: "tc-2",
-                  name: "Returns transaction signature",
-                  input: "",
-                  expectedOutput: "sendAndConfirmTransaction",
-                  hidden: false,
-                },
+                { id: "tc-1", name: "Creates transfer instruction", expectedOutput: "SystemProgram.transfer", hidden: false },
+                { id: "tc-2", name: "Returns transaction signature", expectedOutput: "sendAndConfirmTransaction", hidden: false },
               ],
             },
           },
@@ -161,13 +226,7 @@ const MOCK_COURSES: Course[] = [
                 "Use msg!() macro to log the value",
               ],
               testCases: [
-                {
-                  id: "tc-1",
-                  name: "Increments counter",
-                  input: "",
-                  expectedOutput: "checked_add",
-                  hidden: false,
-                },
+                { id: "tc-1", name: "Increments counter", expectedOutput: "checked_add", hidden: false },
               ],
             },
           },
@@ -191,10 +250,7 @@ const MOCK_COURSES: Course[] = [
       "Cross-Program Invocations for composability",
       "SPL Token program and Token-2022 extensions",
     ],
-    instructor: {
-      name: "Superteam Academy",
-      bio: "Official Solana education platform",
-    },
+    instructor: { name: "Superteam Academy", bio: "Official Solana education platform" },
   },
   {
     id: "anchor-fundamentals",
@@ -213,7 +269,6 @@ const MOCK_COURSES: Course[] = [
     totalCompletions: 187,
     creatorRewardXp: 300,
     duration: "5 hours",
-    thumbnailUrl: "",
     creator: "Superteam Academy",
     modules: [
       {
@@ -292,20 +347,8 @@ const MOCK_COURSES: Course[] = [
                 "Define a DepositEvent with #[event]",
               ],
               testCases: [
-                {
-                  id: "tc-1",
-                  name: "Transfers SOL",
-                  input: "",
-                  expectedOutput: "system_program::transfer",
-                  hidden: false,
-                },
-                {
-                  id: "tc-2",
-                  name: "Updates balance",
-                  input: "",
-                  expectedOutput: "checked_add",
-                  hidden: false,
-                },
+                { id: "tc-1", name: "Transfers SOL", expectedOutput: "system_program::transfer", hidden: false },
+                { id: "tc-2", name: "Updates balance", expectedOutput: "checked_add", hidden: false },
               ],
             },
           },
@@ -359,8 +402,7 @@ const MOCK_COURSES: Course[] = [
             xp: 30,
             duration: "25 min",
             challenge: {
-              prompt:
-                "Write an integration test for the initialize instruction.",
+              prompt: "Write an integration test for the initialize instruction.",
               objectives: [
                 "Derive the config PDA correctly",
                 "Call the initialize method",
@@ -377,20 +419,8 @@ const MOCK_COURSES: Course[] = [
                 "Fetch account with program.account.config.fetch(pda)",
               ],
               testCases: [
-                {
-                  id: "tc-1",
-                  name: "Derives PDA",
-                  input: "",
-                  expectedOutput: "findProgramAddressSync",
-                  hidden: false,
-                },
-                {
-                  id: "tc-2",
-                  name: "Fetches and asserts state",
-                  input: "",
-                  expectedOutput: "fetch",
-                  hidden: false,
-                },
+                { id: "tc-1", name: "Derives PDA", expectedOutput: "findProgramAddressSync", hidden: false },
+                { id: "tc-2", name: "Fetches and asserts state", expectedOutput: "fetch", hidden: false },
               ],
             },
           },
@@ -415,10 +445,7 @@ const MOCK_COURSES: Course[] = [
       "Testing with TypeScript and Rust",
       "Devnet deployment workflow",
     ],
-    instructor: {
-      name: "Superteam Academy",
-      bio: "Official Solana education platform",
-    },
+    instructor: { name: "Superteam Academy", bio: "Official Solana education platform" },
   },
   {
     id: "token-extensions",
@@ -437,7 +464,6 @@ const MOCK_COURSES: Course[] = [
     totalCompletions: 94,
     creatorRewardXp: 210,
     duration: "3 hours",
-    thumbnailUrl: "",
     creator: "Superteam Academy",
     modules: [
       {
@@ -494,13 +520,7 @@ const MOCK_COURSES: Course[] = [
                 "Call token_2022::mint_to(ctx, amount)",
               ],
               testCases: [
-                {
-                  id: "tc-1",
-                  name: "Creates signer context",
-                  input: "",
-                  expectedOutput: "new_with_signer",
-                  hidden: false,
-                },
+                { id: "tc-1", name: "Creates signer context", expectedOutput: "new_with_signer", hidden: false },
               ],
             },
           },
@@ -554,10 +574,7 @@ const MOCK_COURSES: Course[] = [
       "Transfer fees and hooks for DeFi protocols",
       "On-chain metadata without Metaplex",
     ],
-    instructor: {
-      name: "Superteam Academy",
-      bio: "Official Solana education platform",
-    },
+    instructor: { name: "Superteam Academy", bio: "Official Solana education platform" },
   },
   {
     id: "metaplex-core",
@@ -569,14 +586,13 @@ const MOCK_COURSES: Course[] = [
     difficulty: 2,
     lessonCount: 5,
     xpPerLesson: 35,
-    trackId: 2,
+    trackId: 4,
     trackLevel: 2,
     isActive: true,
     prerequisite: null,
     totalCompletions: 68,
     creatorRewardXp: 175,
     duration: "2.5 hours",
-    thumbnailUrl: "",
     creator: "Superteam Academy",
     modules: [
       {
@@ -633,13 +649,7 @@ const MOCK_COURSES: Course[] = [
                 "Attributes plugin stores key-value metadata",
               ],
               testCases: [
-                {
-                  id: "tc-1",
-                  name: "Creates with freeze delegate",
-                  input: "",
-                  expectedOutput: "PermanentFreezeDelegate",
-                  hidden: false,
-                },
+                { id: "tc-1", name: "Creates with freeze delegate", expectedOutput: "PermanentFreezeDelegate", hidden: false },
               ],
             },
           },
@@ -683,10 +693,7 @@ const MOCK_COURSES: Course[] = [
       "Upgrading credentials via attribute updates",
       "Querying collections with Helius DAS API",
     ],
-    instructor: {
-      name: "Superteam Academy",
-      bio: "Official Solana education platform",
-    },
+    instructor: { name: "Superteam Academy", bio: "Official Solana education platform" },
   },
   {
     id: "defi-on-solana",
@@ -705,7 +712,6 @@ const MOCK_COURSES: Course[] = [
     totalCompletions: 45,
     creatorRewardXp: 320,
     duration: "6 hours",
-    thumbnailUrl: "",
     creator: "Superteam Academy",
     modules: [
       {
@@ -723,7 +729,7 @@ const MOCK_COURSES: Course[] = [
             xp: 40,
             duration: "25 min",
             content:
-              "<h2>AMM Design on Solana</h2><p>Automated Market Makers are the backbone of on-chain trading.</p><h3>Constant Product Formula</h3><p>$$x \\cdot y = k$$</p><p>Where $x$ and $y$ are token reserves and $k$ remains constant after swaps.</p><h3>Solana Advantages</h3><ul><li>Sub-second finality for real-time trading</li><li>Low fees (~$0.00025) make small swaps viable</li><li>Parallel execution for multiple pools</li></ul>",
+              "<h2>AMM Design on Solana</h2><p>Automated Market Makers are the backbone of on-chain trading.</p><h3>Constant Product Formula</h3><p><strong>x * y = k</strong></p><p>Where x and y are token reserves and k remains constant after swaps.</p><h3>Solana Advantages</h3><ul><li>Sub-second finality for real-time trading</li><li>Low fees (~$0.00025) make small swaps viable</li><li>Parallel execution for multiple pools</li></ul>",
           },
           {
             id: "defi-1-2",
@@ -745,113 +751,113 @@ const MOCK_COURSES: Course[] = [
       "Lending protocol architecture",
       "Liquidation engine design",
     ],
-    instructor: {
-      name: "Superteam Academy",
-      bio: "Official Solana education platform",
-    },
-  },
-  {
-    id: "solana-mobile",
-    courseId: "solana-mobile",
-    title: "Solana Mobile (dApp Store)",
-    slug: "solana-mobile",
-    description:
-      "Build mobile-first dApps using Solana Mobile Stack, Mobile Wallet Adapter, and publish to the Solana dApp Store.",
-    difficulty: 2,
-    lessonCount: 6,
-    xpPerLesson: 30,
-    trackId: 4,
-    trackLevel: 1,
-    isActive: true,
-    prerequisite: null,
-    totalCompletions: 31,
-    creatorRewardXp: 180,
-    duration: "4 hours",
-    thumbnailUrl: "",
-    creator: "Superteam Academy",
-    modules: [
-      {
-        id: "mob-mod-1",
-        title: "Solana Mobile Stack",
-        description: "Mobile Wallet Adapter and SDK",
-        order: 0,
-        lessons: [
-          {
-            id: "mob-1-1",
-            title: "Mobile Wallet Adapter",
-            description: "Connect mobile wallets to your dApp",
-            type: "content",
-            order: 0,
-            xp: 30,
-            duration: "20 min",
-            content:
-              "<h2>Mobile Wallet Adapter (MWA)</h2><p>MWA is the standard protocol for connecting Solana wallets on mobile devices.</p><h3>How It Works</h3><ol><li>Your app broadcasts an association request</li><li>Compatible wallets respond via local socket</li><li>User approves the connection in their wallet</li><li>Your app receives signing capabilities</li></ol>",
-          },
-        ],
-      },
-    ],
-    whatYouLearn: [
-      "Solana Mobile Stack architecture",
-      "Mobile Wallet Adapter integration",
-      "dApp Store publishing process",
-    ],
-    instructor: {
-      name: "Superteam Academy",
-      bio: "Official Solana education platform",
-    },
+    instructor: { name: "Superteam Academy", bio: "Official Solana education platform" },
   },
 ];
 
-export const mockCourseService: CourseService = {
-  async getCourses(params) {
-    let courses = [...MOCK_COURSES];
+// ─── Helpers ────────────────────────────────────────────
 
-    if (params?.difficulty) {
-      courses = courses.filter(
-        (c) => c.difficulty === Number(params.difficulty)
-      );
-    }
-    if (params?.track) {
-      courses = courses.filter((c) => c.trackId === Number(params.track));
-    }
-    if (params?.search) {
-      const q = params.search.toLowerCase();
-      courses = courses.filter(
-        (c) =>
-          c.title.toLowerCase().includes(q) ||
-          c.description.toLowerCase().includes(q)
-      );
-    }
+function generateKey(): string {
+  return Math.random().toString(36).substring(2, 14);
+}
 
-    return courses;
-  },
+function buildSanityLesson(lesson: MockLesson) {
+  const doc: Record<string, unknown> = {
+    _key: generateKey(),
+    _type: "lesson",
+    title: lesson.title,
+    description: lesson.description,
+    type: lesson.type,
+    order: lesson.order,
+    xp: lesson.xp,
+    duration: lesson.duration,
+    htmlContent: lesson.content ?? null,
+  };
 
-  async getCourseBySlug(slug) {
-    return MOCK_COURSES.find((c) => c.slug === slug) ?? null;
-  },
+  if (lesson.challenge) {
+    doc.challenge = {
+      prompt: lesson.challenge.prompt,
+      objectives: lesson.challenge.objectives,
+      starterCode: lesson.challenge.starterCode,
+      language: lesson.challenge.language,
+      solution: lesson.challenge.solution ?? null,
+      hints: lesson.challenge.hints ?? [],
+      testCases: (lesson.challenge.testCases ?? []).map((tc) => ({
+        _key: generateKey(),
+        _type: "object",
+        name: tc.name,
+        expectedOutput: tc.expectedOutput,
+        hidden: tc.hidden ?? false,
+      })),
+    };
+  }
 
-  async getCourseById(courseId) {
-    return MOCK_COURSES.find((c) => c.courseId === courseId) ?? null;
-  },
+  return doc;
+}
 
-  async getFeaturedCourses() {
-    return MOCK_COURSES.slice(0, 4);
-  },
+function buildSanityModule(mod: MockModule) {
+  return {
+    _key: generateKey(),
+    _type: "module",
+    title: mod.title,
+    description: mod.description,
+    order: mod.order,
+    lessons: mod.lessons.map(buildSanityLesson),
+  };
+}
 
-  async getCoursesByTrack(trackId) {
-    return MOCK_COURSES.filter((c) => c.trackId === trackId);
-  },
+function buildSanityCourse(course: MockCourse) {
+  return {
+    _id: `course-${course.courseId}`,
+    _type: "course",
+    title: course.title,
+    slug: { _type: "slug", current: course.slug },
+    courseId: course.courseId,
+    description: course.description,
+    difficulty: course.difficulty,
+    duration: course.duration,
+    trackId: course.trackId,
+    trackLevel: course.trackLevel,
+    xpPerLesson: course.xpPerLesson,
+    lessonCount: course.lessonCount,
+    isActive: course.isActive,
+    isPublished: true,
+    totalCompletions: course.totalCompletions,
+    creatorRewardXp: course.creatorRewardXp,
+    creator: course.creator,
+    whatYouLearn: course.whatYouLearn ?? [],
+    instructor: course.instructor
+      ? { name: course.instructor.name, bio: course.instructor.bio }
+      : undefined,
+    modules: course.modules.map(buildSanityModule),
+  };
+}
 
-  async searchCourses(query) {
-    const q = query.toLowerCase();
-    return MOCK_COURSES.filter(
-      (c) =>
-        c.title.toLowerCase().includes(q) ||
-        c.description.toLowerCase().includes(q)
+// ─── Main ───────────────────────────────────────────────
+
+async function main() {
+  console.log("Pushing courses to Sanity...");
+  console.log(`  Project: ${process.env.NEXT_PUBLIC_SANITY_PROJECT_ID}`);
+  console.log(`  Dataset: ${process.env.NEXT_PUBLIC_SANITY_DATASET}`);
+
+  const transaction = client.transaction();
+
+  for (const course of COURSES) {
+    const doc = buildSanityCourse(course);
+    console.log(`\n  Creating: ${doc.title} (${doc._id})`);
+    console.log(`    Modules: ${doc.modules.length}`);
+    console.log(
+      `    Lessons: ${doc.modules.reduce((s, m) => s + (m.lessons?.length ?? 0), 0)}`,
     );
-  },
+    transaction.createOrReplace(doc);
+  }
 
-  async getTotalCourseCount() {
-    return MOCK_COURSES.length;
-  },
-};
+  const result = await transaction.commit();
+  console.log(`\nDone! ${result.results.length} documents pushed.`);
+  console.log("Transaction ID:", result.transactionId);
+}
+
+main().catch((err) => {
+  console.error("Failed:", err);
+  process.exit(1);
+});

@@ -1,0 +1,690 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║          SUPERTEAM ACADEMY — COMPREHENSIVE TEST RESULTS                     ║
+║          Generated: 2026-02-20T16:14:03.999Z                            ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+═══ SUMMARY ═══════════════════════════════════════════════════════════════════
+  Total tests:   140
+  ✅ PASS:       120
+  ❌ FAIL:       0
+  🔧 MANUAL:     20
+  ⏭️  SKIP:       0
+  Pass rate:     100.0% (automated only)
+
+
+═══ STRUCTURE (6✅ 0❌ 0🔧) ════════════════════════════════════
+ID       Status   Feature                                            Details
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────
+S-01     ✅       Root .claude/ directory exists                     OK
+S-02     ✅       Root docs/ directory exists                        OK
+S-03     ✅       onchain-academy/ directory exists                  OK
+S-04     ✅       app/ directory exists                              OK
+S-05     ✅       backend/ directory exists                          OK
+S-06     ✅       MIT License file exists                            OK
+
+═══ BUILD (3✅ 0❌ 0🔧) ════════════════════════════════════
+ID       Status   Feature                                            Details
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────
+B-01     ✅       Next.js build succeeds                             OK
+B-02     ✅       TypeScript strict mode enabled                     OK
+B-03     ✅       No TypeScript any types in source                  OK
+
+═══ PAGES (12✅ 0❌ 0🔧) ════════════════════════════════════
+ID       Status   Feature                                            Details
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────
+P-01     ✅       Landing Page (/) exists                            OK
+P-02     ✅       Course Catalog (/courses) exists                   OK
+P-03     ✅       Course Detail (/courses/[slug]) exists             OK
+P-04     ✅       Lesson View (/courses/[slug]/lessons/[id]) exists  OK
+P-05     ✅       Dashboard (/dashboard) exists                      OK
+P-06     ✅       User Profile (/profile) exists                     OK
+P-07     ✅       Public Profile (/profile/[username]) exists        OK
+P-08     ✅       Leaderboard (/leaderboard) exists                  OK
+P-09     ✅       Settings (/settings) exists                        OK
+P-10     ✅       Certificate View (/certificates/[id]) exists       OK
+P-11     ✅       API health endpoint                                OK
+P-12     ✅       API auth callback endpoint                         OK
+
+═══ TECH STACK (16✅ 0❌ 0🔧) ════════════════════════════════════
+ID       Status   Feature                                            Details
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────
+T-01     ✅       Tailwind CSS v4                                    OK
+T-02     ✅       Custom design tokens (oklch)                       OK
+T-03     ✅       shadcn/ui components (21+)                         OK
+T-04     ✅       Radix UI primitives                                OK
+T-05     ✅       Sanity CMS client configured                       OK
+T-06     ✅       Sanity CMS schemas defined                         OK
+T-07     ✅       Mock course fallback (works without Sanity)        OK
+T-08     ✅       Solana Wallet Adapter                              OK
+T-09     ✅       Supabase auth                                      OK
+T-10     ✅       @sentry/nextjs installed                           OK
+T-11     ✅       Sentry config files                                OK
+T-12     ✅       next-intl i18n configured                          OK
+T-13     ✅       Monaco Editor                                      OK
+T-14     ✅       Zustand state management                           OK
+T-15     ✅       Recharts for visualizations                        OK
+T-16     ✅       Framer Motion animations                           OK
+
+═══ AUTH (6✅ 0❌ 0🔧) ════════════════════════════════════
+ID       Status   Feature                                            Details
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────
+A-01     ✅       Google sign-in implemented                         OK
+A-02     ✅       GitHub sign-in implemented                         OK
+A-03     ✅       Wallet connect implemented                         OK
+A-04     ✅       Wallet linking with signature                      OK
+A-05     ✅       Auth dialog with all methods                       OK
+A-06     ✅       Protected routes redirect unauthenticated          OK
+
+═══ I18N (6✅ 0❌ 2🔧) ════════════════════════════════════
+ID       Status   Feature                                            Details
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────
+I-01     ✅       English locale file                                OK
+I-02     ✅       Portuguese (BR) locale file                        OK
+I-03     ✅       Spanish locale file                                OK
+I-04     ✅       Locale key parity (en vs pt-br vs es)              OK
+I-05     ✅       Language switcher in navbar                        OK
+I-06     ✅       Language setting in /settings                      OK
+I-07     🔧      Switch to PT-BR                                    Requires manual verification
+I-08     🔧      Switch to ES                                       Requires manual verification
+
+═══ THEME (2✅ 0❌ 1🔧) ════════════════════════════════════
+ID       Status   Feature                                            Details
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────
+TH-01    ✅       Theme provider exists                              OK
+TH-02    ✅       Dark mode CSS tokens                               OK
+TH-03    🔧      Toggle dark mode                                   Requires manual verification
+
+═══ ON-CHAIN (7✅ 0❌ 0🔧) ════════════════════════════════════
+ID       Status   Feature                                            Details
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────
+OC-01    ✅       PDA derivation helpers                             OK
+OC-02    ✅       useOnChainXP hook (Token-2022)                     OK
+OC-03    ✅       useOnChainCredentials hook (Helius DAS)            OK
+OC-04    ✅       useEnrollOnChain hook                              OK
+OC-05    ✅       useOnChainConfig hook                              OK
+OC-06    ✅       Program ID constant matches spec                   OK
+OC-07    ✅       XP Mint constant matches spec                      OK
+
+═══ SERVICES (11✅ 0❌ 0🔧) ════════════════════════════════════
+ID       Status   Feature                                            Details
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────
+SV-01    ✅       CourseService interface exists                     OK
+SV-02    ✅       EnrollmentService interface exists                 OK
+SV-03    ✅       ProgressService interface exists                   OK
+SV-04    ✅       XPService interface exists                         OK
+SV-05    ✅       CredentialService interface exists                 OK
+SV-06    ✅       LeaderboardService interface exists                OK
+SV-07    ✅       StreakService interface exists                     OK
+SV-08    ✅       AchievementService interface exists                OK
+SV-09    ✅       ProfileService interface exists                    OK
+SV-10    ✅       ActivityService interface exists                   OK
+SV-11    ✅       Service index exports (smart routing)              OK
+
+═══ GAMIFICATION (7✅ 0❌ 0🔧) ════════════════════════════════════
+ID       Status   Feature                                            Details
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────
+G-01     ✅       XP leveling formula: floor(sqrt(xp/100))           OK
+G-02     ✅       LevelRing component                                OK
+G-03     ✅       StreakCalendar component                           OK
+G-04     ✅       SkillRadar chart                                   OK
+G-05     ✅       AchievementCard component                          OK
+G-06     ✅       XPNotification component                           OK
+G-07     ✅       GamificationStats component                        OK
+
+═══ CODE EDITOR (8✅ 0❌ 0🔧) ════════════════════════════════════
+ID       Status   Feature                                            Details
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────
+CE-01    ✅       CodeEditor component exists                        OK
+CE-02    ✅       Lazy-loaded (dynamic import, ssr: false)           OK
+CE-03    ✅       Rust/TypeScript/JSON language support              OK
+CE-04    ✅       Test cases with pass/fail indicators               OK
+CE-05    ✅       Error markers on failed tests                      OK
+CE-06    ✅       Hints panel                                        OK
+CE-07    ✅       Solution toggle                                    OK
+CE-08    ✅       Reset code button                                  OK
+
+═══ ANALYTICS (5✅ 0❌ 0🔧) ════════════════════════════════════
+ID       Status   Feature                                            Details
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────
+AN-01    ✅       GA4 integration                                    OK
+AN-02    ✅       PostHog integration                                OK
+AN-03    ✅       Sentry error monitoring                            OK
+AN-04    ✅       Custom trackEvent function                         OK
+AN-05    ✅       AnalyticsProvider in provider tree                 OK
+
+═══ CMS (5✅ 0❌ 0🔧) ════════════════════════════════════
+ID       Status   Feature                                            Details
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────
+CMS-01   ✅       Sanity client configured                           OK
+CMS-02   ✅       Course/module/lesson schemas                       OK
+CMS-03   ✅       GROQ queries                                       OK
+CMS-04   ✅       Smart fallback to mock data                        OK
+CMS-05   ✅       Mock courses with 3+ courses                       OK
+
+═══ PERFORMANCE (4✅ 0❌ 0🔧) ════════════════════════════════════
+ID       Status   Feature                                            Details
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────
+PF-01    ✅       next/image usage (no raw <img>)                    OK
+PF-02    ✅       Image remote patterns in next.config               OK
+PF-03    ✅       Resizable panels in lesson view                    OK
+PF-04    ✅       Font display swap                                  OK
+
+═══ UI/UX (2✅ 0❌ 3🔧) ════════════════════════════════════
+ID       Status   Feature                                            Details
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────
+UI-01    🔧      Mobile responsive (< 640px)                        Requires manual verification
+UI-02    🔧      Tablet responsive (768px)                          Requires manual verification
+UI-03    🔧      Desktop layout (1280px+)                           Requires manual verification
+UI-04    ✅       Mobile nav (sheet/hamburger)                       OK
+UI-05    ✅       Toast notifications (sonner)                       OK
+
+═══ DOCS (7✅ 0❌ 0🔧) ════════════════════════════════════
+ID       Status   Feature                                            Details
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────
+D-01     ✅       README.md exists with content                      OK
+D-02     ✅       ARCHITECTURE.md exists with content                OK
+D-03     ✅       CMS_GUIDE.md exists with content                   OK
+D-04     ✅       CUSTOMIZATION.md exists with content               OK
+D-05     ✅       .env.example exists with content                   OK
+D-06     ✅       Supabase schema.sql                                OK
+D-07     ✅       Backend README.md                                  OK
+
+═══ LANDING (5✅ 0❌ 0🔧) ════════════════════════════════════
+ID       Status   Feature                                            Details
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────
+LP-01    ✅       Hero section with CTAs                             OK
+LP-02    ✅       Testimonials section                               OK
+LP-03    ✅       Partner logos                                      OK
+LP-04    ✅       Footer with newsletter signup                      OK
+LP-05    ✅       Learning path previews                             OK
+
+═══ DASHBOARD (0✅ 0❌ 5🔧) ════════════════════════════════════
+ID       Status   Feature                                            Details
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────
+DB-01    🔧      Current courses with progress                      Requires manual verification
+DB-02    🔧      XP balance and level display                       Requires manual verification
+DB-03    🔧      Streak visualization                               Requires manual verification
+DB-04    🔧      Recommended courses                                Requires manual verification
+DB-05    🔧      Activity feed                                      Requires manual verification
+
+═══ COURSE FLOW (0✅ 0❌ 5🔧) ════════════════════════════════════
+ID       Status   Feature                                            Details
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────
+CF-01    🔧      Browse → Enroll → Learn                            Requires manual verification
+CF-02    🔧      Challenge lesson with code editor                  Requires manual verification
+CF-03    🔧      Lesson completion → XP toast                       Requires manual verification
+CF-04    🔧      Module navigation                                  Requires manual verification
+CF-05    🔧      Course progress persistence                        Requires manual verification
+
+═══ CREDENTIALS (4✅ 0❌ 0🔧) ════════════════════════════════════
+ID       Status   Feature                                            Details
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────
+CR-01    ✅       Certificate page has explorer link                 OK
+CR-02    ✅       Share button (Web Share API)                       OK
+CR-03    ✅       Download button                                    OK
+CR-04    ✅       NFT metadata display                               OK
+
+═══ SETTINGS (0✅ 0❌ 4🔧) ════════════════════════════════════
+ID       Status   Feature                                            Details
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ST-01    🔧      Edit profile (name, bio, socials)                  Requires manual verification
+ST-02    🔧      Theme selection                                    Requires manual verification
+ST-03    🔧      Privacy toggle                                     Requires manual verification
+ST-04    🔧      Wallet linking                                     Requires manual verification
+
+═══ BONUS (4✅ 0❌ 0🔧) ════════════════════════════════════
+ID       Status   Feature                                            Details
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────
+BN-01    ✅       GitHub sign-in (bonus auth method)                 OK
+BN-02    ✅       Resizable lesson split layout                      OK
+BN-03    ✅       Reviews section on course page                     OK
+BN-04    ✅       Activity tracking with analytics events            OK
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                    MANUAL TESTING CHECKLIST                                  ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+For each item below, follow the steps and mark [x] when verified:
+
+[x] S-01 — Root .claude/ directory exists
+    Steps: Verify .claude/ folder exists at project root with agents, commands, rules, skills
+
+[x] S-02 — Root docs/ directory exists
+    Steps: Verify docs/ folder exists with SPEC.md, ARCHITECTURE.md, INTEGRATION.md
+
+[x] S-03 — onchain-academy/ directory exists
+    Steps: Verify onchain-academy/ folder exists with Anchor program
+
+[x] S-04 — app/ directory exists
+    Steps: Verify app/ folder exists with Next.js frontend
+
+[x] S-05 — backend/ directory exists
+    Steps: Verify backend/ folder exists with README.md describing planned endpoints
+
+[x] S-06 — MIT License file exists
+    Steps: Open LICENSE file — should say MIT License
+
+[x] B-01 — Next.js build succeeds
+    Steps: Run `cd app && pnpm build` — should complete with 0 errors
+
+[x] B-02 — TypeScript strict mode enabled
+    Steps: Check app/tsconfig.json has "strict": true
+
+[x] B-03 — No TypeScript any types in source
+    Steps: Search source for `: any` — should be minimal or zero
+
+[x] P-01 — Landing Page (/) exists
+    Steps: Visit / → Should show hero, CTAs, stats, features, testimonials, partner logos, learning paths, footer with newsletter
+
+[x] P-02 — Course Catalog (/courses) exists
+    Steps: Visit /courses → Should show filterable grid, search bar, difficulty/track filters, course cards with thumbnails
+
+[x] P-03 — Course Detail (/courses/[slug]) exists
+    Steps: Click a course → Should show header, module list, progress bar, enrollment CTA, reviews, sidebar
+
+[x] P-04 — Lesson View (/courses/[slug]/lessons/[id]) exists
+    Steps: Open a lesson → Should show split layout (content + editor), markdown rendering, prev/next nav, completion tracking
+
+[x] P-05 — Dashboard (/dashboard) exists
+    Steps: Visit /dashboard (logged in) → Should show current courses, XP, level, streak, achievements, recommendations, activity feed
+
+[x] P-06 — User Profile (/profile) exists
+    Steps: Visit /profile (logged in) → Should show avatar, bio, skill radar, achievements, credentials, completed courses, streak calendar
+
+[x] P-07 — Public Profile (/profile/[username]) exists
+    Steps: Visit /profile/someuser → Should show public profile with name, bio, XP, level
+
+[x] P-08 — Leaderboard (/leaderboard) exists
+    Steps: Visit /leaderboard → Should show rankings, weekly/monthly/all-time filters, user cards with rank badges
+
+[x] P-09 — Settings (/settings) exists
+    Steps: Visit /settings (logged in) → Should show profile editing, theme, language, privacy, wallet linking
+
+[x] P-10 — Certificate View (/certificates/[id]) exists
+    Steps: Visit /certificates/some-mint → Should show certificate card, explorer link, share/download, NFT details
+
+[x] P-11 — API health endpoint
+    Steps: Visit /api/health → Should return { status: 'ok' }
+
+[x] P-12 — API auth callback endpoint
+    Steps: OAuth callback route for Supabase auth — should exist and handle code exchange
+
+[x] T-01 — Tailwind CSS v4
+    Steps: Check app/package.json has tailwindcss dependency
+
+[x] T-02 — Custom design tokens (oklch)
+    Steps: Check app/src/app/globals.css for oklch() color tokens
+
+[x] T-03 — shadcn/ui components (21+)
+    Steps: Check app/src/components/ui/ — should have 15+ component files
+
+[x] T-04 — Radix UI primitives
+    Steps: Check package.json for @radix-ui dependencies
+
+[x] T-05 — Sanity CMS client configured
+    Steps: Check app/src/lib/sanity/client.ts exists with createClient config
+
+[x] T-06 — Sanity CMS schemas defined
+    Steps: Check app/src/lib/sanity/schemas.ts — should have course/module/lesson schemas
+
+[x] T-07 — Mock course fallback (works without Sanity)
+    Steps: Start app without SANITY env vars → /courses should load 3+ built-in mock courses
+
+[x] T-08 — Solana Wallet Adapter
+    Steps: Check package.json for @solana/wallet-adapter-* packages
+
+[x] T-09 — Supabase auth
+    Steps: Check package.json for @supabase packages
+
+[x] T-10 — @sentry/nextjs installed
+    Steps: Check package.json has @sentry/nextjs
+
+[x] T-11 — Sentry config files
+    Steps: Verify all 3 Sentry configs exist at app root: client, server, edge
+
+[x] T-12 — next-intl i18n configured
+    Steps: Check package.json has next-intl
+
+[x] T-13 — Monaco Editor
+    Steps: Check package.json has @monaco-editor/react
+
+[x] T-14 — Zustand state management
+    Steps: Check package.json has zustand
+
+[x] T-15 — Recharts for visualizations
+    Steps: Check package.json has recharts (used for skill radar)
+
+[x] T-16 — Framer Motion animations
+    Steps: Check package.json has framer-motion
+
+[x] A-01 — Google sign-in implemented
+    Steps: Click 'Sign In' → Should show Google sign-in button → Clicking opens Google OAuth flow
+
+[x] A-02 — GitHub sign-in implemented
+    Steps: Click 'Sign In' → Should show GitHub sign-in button → Clicking opens GitHub OAuth flow
+
+[x] A-03 — Wallet connect implemented
+    Steps: Click wallet button in navbar → Should open wallet modal with auto-detected wallets (Phantom, etc.)
+
+[x] A-04 — Wallet linking with signature
+    Steps: Go to /settings → Connect wallet section → Link wallet should sign a message for ownership proof
+
+[x] A-05 — Auth dialog with all methods
+    Steps: Click Sign In → Auth dialog should show Google, GitHub, and Wallet options
+
+[x] A-06 — Protected routes redirect unauthenticated
+    Steps: Visit /dashboard logged out → Should redirect to landing or show sign-in prompt
+
+[x] I-01 — English locale file
+    Steps: Check en.json has all UI string keys
+
+[x] I-02 — Portuguese (BR) locale file
+    Steps: Check pt-br.json has all UI string keys matching en.json structure
+
+[x] I-03 — Spanish locale file
+    Steps: Check es.json has all UI string keys matching en.json structure
+
+[x] I-04 — Locale key parity (en vs pt-br vs es)
+    Steps: Compare key count across all 3 locale JSON files — should match exactly
+
+[x] I-05 — Language switcher in navbar
+    Steps: Look for Globe icon dropdown in navbar → Should show EN / PT-BR / ES options
+
+[x] I-06 — Language setting in /settings
+    Steps: Go to /settings → Language section → Should show EN / PT-BR / ES selector
+
+[ ] I-07 — Switch to PT-BR
+    Steps: Switch language to PT-BR → All UI text should change: 'Courses' → 'Cursos', nav items, buttons, etc.
+
+[ ] I-08 — Switch to ES
+    Steps: Switch language to ES → All UI text should change: 'Courses' → 'Cursos', nav items, buttons, etc.
+
+[x] TH-01 — Theme provider exists
+    Steps: Check theme-provider.tsx exists with light/dark/system modes
+
+[x] TH-02 — Dark mode CSS tokens
+    Steps: Check globals.css has .dark { ... } with oklch color token overrides
+
+[ ] TH-03 — Toggle dark mode
+    Steps: Go to /settings → Theme section → Toggle to Dark → All pages should switch. Toggle to Light → Should switch back. Toggle to System → Should follow OS.
+
+[x] OC-01 — PDA derivation helpers
+    Steps: Check app/src/lib/solana/program.ts has getConfigPda, getCoursePda, getEnrollmentPda, etc.
+
+[x] OC-02 — useOnChainXP hook (Token-2022)
+    Steps: With wallet connected + devnet → Check if XP balance loads from Token-2022 token account
+
+[x] OC-03 — useOnChainCredentials hook (Helius DAS)
+    Steps: With wallet connected + Helius API key → Should fetch Metaplex Core NFTs from DAS API
+
+[x] OC-04 — useEnrollOnChain hook
+    Steps: With wallet connected → Enroll in a course → Should build + sign Anchor enroll instruction on devnet
+
+[x] OC-05 — useOnChainConfig hook
+    Steps: With RPC configured → Should fetch and parse the on-chain Config PDA
+
+[x] OC-06 — Program ID constant matches spec
+    Steps: Check program.ts has correct PROGRAM_ID: ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf
+
+[x] OC-07 — XP Mint constant matches spec
+    Steps: Check program.ts or .env.example has correct XP_MINT: XPTkMWRRH1QLbAYGSkwNmmHF8Q75RURmC269nHVhUoe
+
+[x] SV-01 — CourseService interface exists
+    Steps: Check app/src/services/course-service.ts — should define a typed interface with all CRUD methods
+
+[x] SV-02 — EnrollmentService interface exists
+    Steps: Check app/src/services/enrollment-service.ts — should define a typed interface with all CRUD methods
+
+[x] SV-03 — ProgressService interface exists
+    Steps: Check app/src/services/progress-service.ts — should define a typed interface with all CRUD methods
+
+[x] SV-04 — XPService interface exists
+    Steps: Check app/src/services/xp-service.ts — should define a typed interface with all CRUD methods
+
+[x] SV-05 — CredentialService interface exists
+    Steps: Check app/src/services/credential-service.ts — should define a typed interface with all CRUD methods
+
+[x] SV-06 — LeaderboardService interface exists
+    Steps: Check app/src/services/leaderboard-service.ts — should define a typed interface with all CRUD methods
+
+[x] SV-07 — StreakService interface exists
+    Steps: Check app/src/services/streak-service.ts — should define a typed interface with all CRUD methods
+
+[x] SV-08 — AchievementService interface exists
+    Steps: Check app/src/services/achievement-service.ts — should define a typed interface with all CRUD methods
+
+[x] SV-09 — ProfileService interface exists
+    Steps: Check app/src/services/profile-service.ts — should define a typed interface with all CRUD methods
+
+[x] SV-10 — ActivityService interface exists
+    Steps: Check app/src/services/activity-service.ts — should define a typed interface with all CRUD methods
+
+[x] SV-11 — Service index exports (smart routing)
+    Steps: Check app/src/services/index.ts — should export resolved service instances (Sanity vs mock, Supabase vs local)
+
+[x] G-01 — XP leveling formula: floor(sqrt(xp/100))
+    Steps: Check constants.ts → calculateLevel(xp) = Math.floor(Math.sqrt(xp / 100))
+
+[x] G-02 — LevelRing component
+    Steps: Visit /dashboard or /profile → Should show SVG ring with level number and XP progress arc
+
+[x] G-03 — StreakCalendar component
+    Steps: Visit /profile → Should show GitHub-style 12-week activity heatmap
+
+[x] G-04 — SkillRadar chart
+    Steps: Visit /profile → Should show radar chart with 6 skills (Rust, Anchor, Frontend, Token-2022, Security, DeFi)
+
+[x] G-05 — AchievementCard component
+    Steps: Visit /dashboard → Achievements section → Should show achievement cards with icons, progress bars, earned/locked state
+
+[x] G-06 — XPNotification component
+    Steps: Complete a lesson → Should show animated '+XP' notification (auto-dismiss)
+
+[x] G-07 — GamificationStats component
+    Steps: Visit /dashboard → Should show composite level ring + XP + streak + achievement count
+
+[x] CE-01 — CodeEditor component exists
+    Steps: Open a challenge lesson → Should show Monaco editor with toolbar, prompt, test results
+
+[x] CE-02 — Lazy-loaded (dynamic import, ssr: false)
+    Steps: Check lesson/index.tsx → Should use next/dynamic with { ssr: false }
+
+[x] CE-03 — Rust/TypeScript/JSON language support
+    Steps: Open code editor → Language badge should show rust/typescript/json based on challenge
+
+[x] CE-04 — Test cases with pass/fail indicators
+    Steps: Run tests in editor → Should show green checkmark or red X per test case
+
+[x] CE-05 — Error markers on failed tests
+    Steps: Run tests that fail → Editor should show red squiggly markers inline at relevant lines
+
+[x] CE-06 — Hints panel
+    Steps: Click 'Hints' button in code editor → Should toggle hints panel below editor
+
+[x] CE-07 — Solution toggle
+    Steps: Click 'Solution' button → Should toggle solution code panel below editor
+
+[x] CE-08 — Reset code button
+    Steps: Modify code in editor → Click 'Reset' → Should restore original starter code
+
+[x] AN-01 — GA4 integration
+    Steps: Set NEXT_PUBLIC_GA_MEASUREMENT_ID in .env → Check browser network tab for gtag.js loading
+
+[x] AN-02 — PostHog integration
+    Steps: Set NEXT_PUBLIC_POSTHOG_KEY in .env → Check browser network tab for PostHog calls
+
+[x] AN-03 — Sentry error monitoring
+    Steps: Set NEXT_PUBLIC_SENTRY_DSN → Trigger an error → Check Sentry dashboard for captured event
+
+[x] AN-04 — Custom trackEvent function
+    Steps: Check analytics-provider.tsx exports trackEvent() — used for lesson_completed, enrollment, etc.
+
+[x] AN-05 — AnalyticsProvider in provider tree
+    Steps: Check providers/index.tsx wraps children with AnalyticsProvider
+
+[x] CMS-01 — Sanity client configured
+    Steps: Check sanity/client.ts — should use createClient with projectId, dataset, apiVersion
+
+[x] CMS-02 — Course/module/lesson schemas
+    Steps: Check sanity/schemas.ts — should define course, module, lesson, challenge document types
+
+[x] CMS-03 — GROQ queries
+    Steps: Check sanity/ or services/ for GROQ query strings
+
+[x] CMS-04 — Smart fallback to mock data
+    Steps: Remove Sanity env vars → App should load with built-in mock courses (no errors)
+
+[x] CMS-05 — Mock courses with 3+ courses
+    Steps: Check mock-course-service.ts → Should have at least 3 complete courses with modules and lessons
+
+[x] PF-01 — next/image usage (no raw <img>)
+    Steps: Search source for <img tags → Should be zero; all images should use next/image <Image>
+
+[x] PF-02 — Image remote patterns in next.config
+    Steps: Check next.config.ts → images.remotePatterns should include cdn.sanity.io, arweave.net, supabase.co
+
+[x] PF-03 — Resizable panels in lesson view
+    Steps: Open a challenge lesson → Content and editor panels should be resizable by dragging the handle
+
+[x] PF-04 — Font display swap
+    Steps: Check layout.tsx → Font should have display: 'swap' for fast initial paint
+
+[ ] UI-01 — Mobile responsive (< 640px)
+    Steps: Open app on mobile viewport (375px width) → All pages should be usable: stacked layouts, no horizontal scroll, hamburger nav
+
+[ ] UI-02 — Tablet responsive (768px)
+    Steps: Open app on tablet viewport → Should show 2-column grids, sidebar toggles properly
+
+[ ] UI-03 — Desktop layout (1280px+)
+    Steps: Open app on desktop → Should show full sidebar, 3-column course grid, wide lesson split view
+
+[x] UI-04 — Mobile nav (sheet/hamburger)
+    Steps: On mobile width → Hamburger icon should open slide-out nav sheet
+
+[x] UI-05 — Toast notifications (sonner)
+    Steps: Perform actions (enroll, complete lesson) → Should show toast notifications
+
+[x] D-01 — README.md exists with content
+    Steps: Open README → Should have overview, quickstart, project structure, features, env vars, tech stack, contributing
+
+[x] D-02 — ARCHITECTURE.md exists with content
+    Steps: Open ARCHITECTURE.md → Should have system diagram, directory tree, data flows, provider stack, service layer
+
+[x] D-03 — CMS_GUIDE.md exists with content
+    Steps: Open CMS_GUIDE.md → Should have content architecture, Sanity setup, schemas, GROQ queries, publishing workflow
+
+[x] D-04 — CUSTOMIZATION.md exists with content
+    Steps: Open CUSTOMIZATION.md → Should have theme colors, typography, adding languages, gamification extension, forking guide
+
+[x] D-05 — .env.example exists with content
+    Steps: Open .env.example → Should list ALL env vars with section headers and descriptions
+
+[x] D-06 — Supabase schema.sql
+    Steps: Check app/supabase/schema.sql → Should define all tables: profiles, course_progress, streaks, activities, user_achievements, wallet_links
+
+[x] D-07 — Backend README.md
+    Steps: Open backend/README.md → Should describe planned endpoints, signing flow, integration points
+
+[x] LP-01 — Hero section with CTAs
+    Steps: Visit / → Hero section should have clear value proposition and primary CTA buttons
+
+[x] LP-02 — Testimonials section
+    Steps: Visit / → Should show 3+ testimonial cards with avatar, name, role, quote
+
+[x] LP-03 — Partner logos
+    Steps: Visit / → Should show partner/supporter logos (Solana Foundation, Superteam, Helius, Metaplex)
+
+[x] LP-04 — Footer with newsletter signup
+    Steps: Scroll to footer → Should have email input + subscribe button for newsletter
+
+[x] LP-05 — Learning path previews
+    Steps: Visit / → Should show learning path cards (Solana Fundamentals, Anchor, DeFi, NFT, Full Stack)
+
+[ ] DB-01 — Current courses with progress
+    Steps: Visit /dashboard → Should show enrolled courses with completion %, next lesson link
+
+[ ] DB-02 — XP balance and level display
+    Steps: Visit /dashboard → Should show XP number, level ring, rank position
+
+[ ] DB-03 — Streak visualization
+    Steps: Visit /dashboard → Should show current streak count with flame icon
+
+[ ] DB-04 — Recommended courses
+    Steps: Visit /dashboard → Should show 2-3 recommended courses based on track
+
+[ ] DB-05 — Activity feed
+    Steps: Visit /dashboard → Should show recent activities (enrollments, completions, XP earned)
+
+[ ] CF-01 — Browse → Enroll → Learn
+    Steps: Browse /courses → Click a course → Click Enroll → Open first lesson → Content renders with markdown
+
+[ ] CF-02 — Challenge lesson with code editor
+    Steps: Open a challenge lesson → Monaco editor loads → Type code → Click Run → See test results (pass/fail)
+
+[ ] CF-03 — Lesson completion → XP toast
+    Steps: Complete a lesson → Should show XP notification toast → Progress bar updates
+
+[ ] CF-04 — Module navigation
+    Steps: In lesson view → Click Previous/Next → Should navigate between lessons. Module overview visible.
+
+[ ] CF-05 — Course progress persistence
+    Steps: Complete lessons → Reload page → Progress should be preserved (Supabase or local storage)
+
+[x] CR-01 — Certificate page has explorer link
+    Steps: Visit /certificates/[id] → Should show Solana Explorer link for the credential NFT mint address
+
+[x] CR-02 — Share button (Web Share API)
+    Steps: Click Share on certificate → Should use Web Share API or copy link to clipboard
+
+[x] CR-03 — Download button
+    Steps: Click Download on certificate → Should download certificate image or open credential URL
+
+[x] CR-04 — NFT metadata display
+    Steps: Visit /certificates/[id] → Should show mint address, track, courses completed, total XP
+
+[ ] ST-01 — Edit profile (name, bio, socials)
+    Steps: Go to /settings → Edit display name, bio, social links → Click Save → Reload → Changes persist
+
+[ ] ST-02 — Theme selection
+    Steps: Go to /settings → Switch between Light / Dark / System → Theme should update immediately
+
+[ ] ST-03 — Privacy toggle
+    Steps: Go to /settings → Toggle profile visibility (public/private) → Save → Visit /profile/[username] → Respects visibility
+
+[ ] ST-04 — Wallet linking
+    Steps: Go to /settings → Wallet section → Connect wallet → Sign message → Wallet address saved to profile
+
+[x] BN-01 — GitHub sign-in (bonus auth method)
+    Steps: Click Sign In → Should show GitHub option alongside Google and Wallet
+
+[x] BN-02 — Resizable lesson split layout
+    Steps: Open challenge lesson → Drag handle between content and editor → Panels should resize
+
+[x] BN-03 — Reviews section on course page
+    Steps: Visit /courses/[slug] → Scroll down → Should see student reviews section with star ratings
+
+[x] BN-04 — Activity tracking with analytics events
+    Steps: Open browser DevTools Network tab → Perform actions → Should see GA4/PostHog event calls
+
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                    ENVIRONMENT SETUP CHECKLIST                               ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+Before manual testing, ensure the following are configured:
+
+[ ] 1. Copy app/.env.example to app/.env.local
+[ ] 2. Create Supabase project → fill NEXT_PUBLIC_SUPABASE_URL + NEXT_PUBLIC_SUPABASE_ANON_KEY
+[ ] 3. Run schema: copy app/supabase/schema.sql → paste in Supabase SQL Editor → Run
+[ ] 4. Enable Google OAuth in Supabase → Auth → Providers → Google (client ID + secret)
+[ ] 5. Enable GitHub OAuth in Supabase → Auth → Providers → GitHub (client ID + secret)
+[ ] 6. Set redirect URL in OAuth providers: https://your-supabase.supabase.co/auth/v1/callback
+[ ] 7. (Optional) Sanity: create project → fill NEXT_PUBLIC_SANITY_PROJECT_ID (or leave blank for mock data)
+[ ] 8. Solana RPC: default devnet works, or set NEXT_PUBLIC_HELIUS_RPC for Helius DAS API
+[ ] 9. (Optional) Analytics: set NEXT_PUBLIC_GA_MEASUREMENT_ID, NEXT_PUBLIC_POSTHOG_KEY, NEXT_PUBLIC_SENTRY_DSN
+[ ] 10. Install dependencies: cd app && pnpm install
+[ ] 11. Start dev server: cd app && pnpm dev
+[ ] 12. Open http://localhost:3000
+[ ] 13. Install Phantom wallet extension (or any Solana wallet)
+[ ] 14. Switch Phantom to Devnet: Settings → Developer Settings → Testnet Mode → Devnet

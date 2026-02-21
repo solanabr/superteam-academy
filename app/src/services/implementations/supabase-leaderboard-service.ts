@@ -4,7 +4,7 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { xpProgress } from "@/lib/constants";
 
 // TODO: Replace with Helius DAS API for on-chain Token-2022 balance ranking
-export const mockLeaderboardService: LeaderboardService = {
+export const supabaseLeaderboardService: LeaderboardService = {
   async getLeaderboard(
     _timeframe: LeaderboardTimeframe,
     limit = 50,

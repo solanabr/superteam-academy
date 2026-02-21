@@ -4,3 +4,4 @@ export { LevelRing } from "./level-ring";
 export { XPNotification } from "./xp-notification";
 export { GamificationStats } from "./gamification-stats";
 export { SkillRadar } from "./skill-radar";
+export { EarlyAdopterMint } from "./early-adopter-mint";

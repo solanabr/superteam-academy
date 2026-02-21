@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { Github, Twitter, Mail } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
@@ -65,9 +66,13 @@ export function Footer() {
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
             <Link href="/" className="flex items-center gap-2.5 font-semibold text-lg">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground text-sm font-bold">
-                S
-              </div>
+              <Image
+                src="/superteam-logo.jpg"
+                alt="Superteam"
+                width={32}
+                height={32}
+                className="rounded-lg"
+              />
               <span>Academy</span>
             </Link>
             <p className="mt-3 text-sm text-muted-foreground max-w-[240px]">

@@ -23,8 +23,8 @@ interface AuthState {
   walletLinked: boolean;
   signInWithGoogle: () => Promise<void>;
   signInWithGithub: () => Promise<void>;
+  signInWithWallet: () => Promise<void>;
   signOut: () => Promise<void>;
-  linkWallet: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
 
@@ -49,36 +49,63 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isAuthenticated = !!user;
   const walletLinked = !!profile?.walletAddress;
 
+  const mapRowToProfile = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (data: any): UserProfile => ({
+      id: data.id,
+      walletAddress: data.wallet_address,
+      email: data.email,
+      username: data.username ?? data.id.slice(0, 8),
+      displayName: data.display_name ?? "Learner",
+      bio: data.bio ?? "",
+      avatarUrl: data.avatar_url,
+      socialLinks: data.social_links ?? {},
+      joinedAt: data.created_at,
+      isPublic: data.is_public ?? true,
+      preferredLanguage: data.preferred_language ?? "en",
+      theme: data.theme ?? "light",
+    }),
+    []
+  );
+
   const fetchProfile = useCallback(
     async (userId: string) => {
-      const { data } = await supabase
+      // Try server API first (reliable for wallet-authenticated users)
+      try {
+        const res = await fetch("/api/profile");
+        if (res.ok) {
+          const { profile: row } = await res.json();
+          if (row && row.id === userId) {
+            const userProfile = mapRowToProfile(row);
+            setProfile(userProfile);
+            setUser(userProfile);
+            return userProfile;
+          }
+        }
+      } catch {
+        // Server API unavailable — fall through to browser client
+      }
+
+      // Fallback: browser client (works for OAuth users)
+      const { data, error } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", userId)
         .single();
 
+      if (error) {
+        console.error("[Auth] Failed to fetch profile:", error.message);
+      }
+
       if (data) {
-        const userProfile: UserProfile = {
-          id: data.id,
-          walletAddress: data.wallet_address,
-          email: data.email,
-          username: data.username ?? data.id.slice(0, 8),
-          displayName: data.display_name ?? "Learner",
-          bio: data.bio ?? "",
-          avatarUrl: data.avatar_url,
-          socialLinks: data.social_links ?? {},
-          joinedAt: data.created_at,
-          isPublic: data.is_public ?? true,
-          preferredLanguage: data.preferred_language ?? "en",
-          theme: data.theme ?? "light",
-        };
+        const userProfile = mapRowToProfile(data);
         setProfile(userProfile);
         setUser(userProfile);
         return userProfile;
       }
       return null;
     },
-    [supabase, setUser]
+    [supabase, setUser, mapRowToProfile]
   );
 
   const ensureProfile = useCallback(
@@ -86,14 +113,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const existing = await fetchProfile(authUser.id);
       if (existing) return existing;
 
-      // Create profile if it doesn't exist
+      // Try client-side upsert first
       const username =
         authUser.user_metadata?.preferred_username ??
         authUser.user_metadata?.user_name ??
         authUser.email?.split("@")[0] ??
         authUser.id.slice(0, 8);
 
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("profiles")
         .upsert(
           {
@@ -105,6 +132,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               authUser.user_metadata?.name ??
               username,
             avatar_url: authUser.user_metadata?.avatar_url ?? null,
+            wallet_address: authUser.user_metadata?.wallet_address ?? null,
             is_public: true,
             preferred_language: "en",
             theme: "light",
@@ -114,16 +142,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .select()
         .single();
 
-      if (data) {
-        return fetchProfile(authUser.id);
+      if (error || !data) {
+        console.error("[Auth] Client upsert failed, trying server fallback:", error?.message ?? "no data returned");
+        // Fallback: ask the server to create the profile (admin client bypasses RLS)
+        try {
+          const res = await fetch("/api/auth/ensure-profile", { method: "POST" });
+          if (!res.ok) {
+            const body = await res.json().catch(() => ({}));
+            console.error("[Auth] Server ensure-profile returned", res.status, body);
+          }
+        } catch (fetchErr) {
+          console.error("[Auth] Server ensure-profile network error:", fetchErr);
+        }
+        const retryProfile = await fetchProfile(authUser.id);
+        if (retryProfile) return retryProfile;
+        return null;
       }
-      return null;
+
+      return fetchProfile(authUser.id);
     },
     [supabase, fetchProfile]
   );
 
   // Listen for auth changes
   useEffect(() => {
+    // Safety timeout — ensure isLoading resolves even if profile fetch hangs
+    const safetyTimeout = setTimeout(() => {
+      setIsLoading(false);
+    }, 5000);
+
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, newSession) => {
@@ -131,7 +178,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAuthUser(newSession?.user ?? null);
 
       if (newSession?.user) {
-        await ensureProfile(newSession.user);
+        try {
+          await ensureProfile(newSession.user);
+        } catch {
+          // Profile fetch failed — continue without profile
+        }
       } else {
         setProfile(null);
         setUser(null);
@@ -144,12 +195,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(s);
       setAuthUser(s?.user ?? null);
       if (s?.user) {
-        await ensureProfile(s.user);
+        try {
+          await ensureProfile(s.user);
+        } catch {
+          // Profile fetch failed — continue without profile
+        }
       }
       setIsLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      clearTimeout(safetyTimeout);
+      subscription.unsubscribe();
+    };
   }, [supabase, ensureProfile, setUser]);
 
   const signInWithGoogle = async () => {
@@ -171,53 +229,76 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
     setProfile(null);
     setUser(null);
     setAuthUser(null);
     setSession(null);
+
+    // Clear Supabase cookies manually to prevent auto-relogin
+    document.cookie.split(";").forEach((c) => {
+      const name = c.trim().split("=")[0];
+      if (name.includes("supabase") || name.includes("sb-")) {
+        document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+      }
+    });
+
+    // Await signOut with a timeout so it doesn't hang forever
+    try {
+      await Promise.race([
+        supabase.auth.signOut(),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("timeout")), 3000)
+        ),
+      ]);
+    } catch {
+      // Timeout or error — cookies already cleared above
+    }
+
+    if (window.location.pathname === "/") {
+      window.location.reload();
+    } else {
+      window.location.href = "/";
+    }
   };
 
-  const linkWallet = async () => {
-    if (!publicKey || !user || !signMessage) return;
+  const signInWithWallet = async () => {
+    if (!publicKey || !signMessage) {
+      throw new Error("Wallet not connected or does not support message signing");
+    }
 
     const walletAddress = publicKey.toBase58();
+    const timestamp = Date.now();
+    const msg = `Sign in to Superteam Academy with wallet ${walletAddress} at ${timestamp}`;
+    const messageBytes = new TextEncoder().encode(msg);
 
-    // Sign a message to prove ownership
-    const message = new TextEncoder().encode(
-      `Link wallet ${walletAddress} to Superteam Academy account ${user.id}`
-    );
+    const signature = await signMessage(messageBytes);
 
-    try {
-      const signature = await signMessage(message);
+    // Encode signature as base58
+    const bs58 = await import("bs58");
+    const signatureB58 = bs58.default.encode(signature);
 
-      // Store the wallet link
-      await supabase
-        .from("profiles")
-        .update({ wallet_address: walletAddress })
-        .eq("id", user.id);
+    const res = await fetch("/api/auth/wallet", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        walletAddress,
+        signature: signatureB58,
+        message: msg,
+      }),
+    });
 
-      // Store wallet-user mapping
-      await supabase.from("wallet_links").upsert(
-        {
-          user_id: user.id,
-          wallet_address: walletAddress,
-          signature: Buffer.from(signature).toString("base64"),
-          linked_at: new Date().toISOString(),
-        },
-        { onConflict: "wallet_address" }
-      );
-
-      await fetchProfile(user.id);
-    } catch {
-      // User rejected signature
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error ?? "Wallet auth failed");
     }
+
+    // Session cookies set server-side — redirect like OAuth callback
+    window.location.href = "/dashboard";
   };
 
   const refreshProfile = async () => {
-    if (user) {
-      await fetchProfile(user.id);
-    }
+    if (!user) return;
+    await fetchProfile(user.id);
   };
 
   return (
@@ -231,8 +312,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         walletLinked,
         signInWithGoogle,
         signInWithGithub,
+        signInWithWallet,
         signOut,
-        linkWallet,
         refreshProfile,
       }}
     >

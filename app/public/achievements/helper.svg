@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <circle cx="64" cy="64" r="60" fill="#22C55E"/>
+  <circle cx="64" cy="64" r="56" fill="#15803D"/>
+  <!-- Helping hands / heart in hands -->
+  <path d="M44 76 C36 76 30 70 30 62 L30 54 C30 50 34 48 38 50 L50 58" fill="none" stroke="white" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M84 76 C92 76 98 70 98 62 L98 54 C98 50 94 48 90 50 L78 58" fill="none" stroke="white" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Heart -->
+  <path d="M64 56 C60 44 44 44 44 56 C44 70 64 82 64 82 C64 82 84 70 84 56 C84 44 68 44 64 56Z" fill="white"/>
+</svg>

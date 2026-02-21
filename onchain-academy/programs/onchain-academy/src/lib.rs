@@ -8,7 +8,7 @@ pub mod utils;
 
 use instructions::*;
 
-declare_id!("ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf");
+declare_id!("FEjumbmTCGxTwqikEcyC13czHfTwsnk7B9erNEEuHeBB");
 
 #[program]
 pub mod onchain_academy {
@@ -16,6 +16,15 @@ pub mod onchain_academy {
 
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
         instructions::initialize::handler(ctx)
+    }
+
+    pub fn init_xp_metadata(
+        ctx: Context<InitXpMetadata>,
+        name: String,
+        symbol: String,
+        uri: String,
+    ) -> Result<()> {
+        instructions::init_xp_metadata::handler(ctx, name, symbol, uri)
     }
 
     pub fn update_config<'info>(
@@ -112,5 +121,13 @@ pub mod onchain_academy {
 
     pub fn deactivate_achievement_type(ctx: Context<DeactivateAchievementType>) -> Result<()> {
         instructions::deactivate_achievement_type::handler(ctx)
+    }
+
+    pub fn update_xp_metadata(
+        ctx: Context<UpdateXpMetadata>,
+        field: String,
+        value: String,
+    ) -> Result<()> {
+        instructions::update_xp_metadata::handler(ctx, field, value)
     }
 }
