@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getTranslations } from "next-intl/server";
+import { getSolanaConnection, getProgramId } from "@/lib/academy";
+import { CredentialService } from "@/services/CredentialService";
 
 interface CertificatePageProps {
 	params: Promise<{ id: string }>;
@@ -130,31 +132,27 @@ interface Certificate {
 }
 
 async function getCertificate(id: string): Promise<Certificate | null> {
-	// Seed data for demonstration — replaced by on-chain lookup when program is deployed
-	const certificates: Record<string, Certificate> = {
-		"cert-solana-fundamentals": {
-			id: "cert-solana-fundamentals",
-			title: "Solana Fundamentals Certificate",
-			holder: "João Silva",
-			courseName: "Introduction to Solana",
-			track: "Solana Core",
-			level: "Beginner",
-			issuedAt: "2024-02-10T00:00:00Z",
-			xpEarned: 500,
-			onChainAddress: null,
-		},
-		"cert-anchor-masterclass": {
-			id: "cert-anchor-masterclass",
-			title: "Anchor Masterclass Certificate",
-			holder: "Maria Santos",
-			courseName: "Anchor Framework Deep Dive",
-			track: "Anchor",
-			level: "Intermediate",
-			issuedAt: "2024-02-15T00:00:00Z",
-			xpEarned: 1200,
-			onChainAddress: null,
-		},
-	};
+	const connection = getSolanaConnection();
+	const programId = getProgramId();
+	const service = new CredentialService(connection, programId);
 
-	return certificates[id] ?? null;
+	const metadata = await service.getCredentialMetadata(id);
+	const verification = await service.verifyCredential(id);
+
+	if (!verification.isValid || !verification.credential) return null;
+
+	const trackAttr = metadata.attributes.find((a) => a.trait_type === "Track");
+	const levelAttr = metadata.attributes.find((a) => a.trait_type === "Level");
+
+	return {
+		id,
+		title: metadata.name,
+		holder: "",
+		courseName: metadata.description,
+		track: trackAttr?.value ?? verification.credential.track,
+		level: levelAttr?.value ?? "Beginner",
+		issuedAt: verification.credential.issuedAt.toISOString(),
+		xpEarned: verification.credential.totalXp,
+		onChainAddress: id,
+	};
 }

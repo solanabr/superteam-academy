@@ -9,6 +9,7 @@ import { UserRankCard } from "@/components/leaderboard/user-rank-card";
 import { getAcademyClient } from "@/lib/academy";
 import { LeaderboardService } from "@/services/LeaderboardService";
 import { getLinkedWallet } from "@/lib/auth";
+import { calculateLevelFromXP } from "@superteam/gamification";
 
 export const metadata: Metadata = {
 	title: "Leaderboard | Superteam Academy",
@@ -160,7 +161,7 @@ async function getGlobalLeaderboard() {
 				country: "--",
 			},
 			score: xp,
-			level: Math.max(1, Math.floor(xp / 500) + 1),
+			level: calculateLevelFromXP(xp),
 			achievements: 0,
 			streak: 0,
 			change: 0,
@@ -178,20 +179,53 @@ async function getMonthlyLeaderboard() {
 
 async function getCourseLeaderboards() {
 	const academyClient = getAcademyClient();
+	const config = await academyClient.fetchConfig();
 	const courses = await academyClient.fetchAllCourses();
-	return courses.slice(0, 4).map((course) => ({
-		courseId: course.account.courseId,
-		courseName: course.account.courseId,
-		entries: [] as Array<{
-			rank: number;
-			user: { id: string; name: string; avatar?: string; country: string };
-			score: number;
-			level: number;
-			achievements: number;
-			streak: number;
-			change: number;
-		}>,
-	}));
+	if (!config)
+		return courses.slice(0, 4).map((course) => ({
+			courseId: course.account.courseId,
+			courseName: course.account.courseId,
+			entries: [] as Array<{
+				rank: number;
+				user: { id: string; name: string; avatar?: string; country: string };
+				score: number;
+				level: number;
+				achievements: number;
+				streak: number;
+				change: number;
+			}>,
+		}));
+
+	const service = new LeaderboardService(academyClient.connection, academyClient.programId);
+
+	const results = await Promise.all(
+		courses.slice(0, 4).map(async (course) => {
+			const entries = await service.getCourseLeaderboard(course.account.courseId, 10);
+			return {
+				courseId: course.account.courseId,
+				courseName: course.account.courseId,
+				entries: entries.map((entry) => {
+					const xp = Number(entry.xpBalance);
+					return {
+						rank: entry.rank,
+						user: {
+							id: entry.publicKey,
+							name: `${entry.publicKey.slice(0, 4)}...${entry.publicKey.slice(-4)}`,
+							avatar: "",
+							country: "--",
+						},
+						score: xp,
+						level: calculateLevelFromXP(xp),
+						achievements: 0,
+						streak: 0,
+						change: 0,
+					};
+				}),
+			};
+		})
+	);
+
+	return results;
 }
 
 async function getUserRank() {

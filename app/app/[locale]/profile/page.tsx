@@ -8,10 +8,19 @@ import { ActivityFeed } from "@/components/profile/activity-feed";
 import { LevelProgress } from "@/components/profile/level-progress";
 import { StreakTracker } from "@/components/profile/streak-tracker";
 import { CourseProgress } from "@/components/profile/course-progress";
+import { CredentialList } from "@/components/credentials/credential-list";
 import { PublicKey } from "@solana/web3.js";
 import { findToken2022ATA } from "@superteam/solana";
-import { fetchIndexedLearnerActivity, getAcademyClient } from "@/lib/academy";
+import {
+	fetchIndexedLearnerActivity,
+	getAcademyClient,
+	getSolanaConnection,
+	getProgramId,
+} from "@/lib/academy";
 import { getLinkedWallet } from "@/lib/auth";
+import { calculateLevelFromXP } from "@superteam/gamification";
+import { CredentialService } from "@/services/CredentialService";
+import { AchievementService } from "@/services/AchievementService";
 
 export const metadata: Metadata = {
 	title: "Profile | Superteam Academy",
@@ -38,7 +47,7 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
 
 async function ProfileContent({ walletAddress }: { walletAddress?: string }) {
 	const profile = await getDynamicProfile(walletAddress);
-	const { user, stats, achievements, activity, courses } = profile;
+	const { user, stats, achievements, activity, courses, credentials } = profile;
 
 	return (
 		<div className="mx-auto px-4 sm:px-6 py-8 space-y-6">
@@ -54,6 +63,7 @@ async function ProfileContent({ walletAddress }: { walletAddress?: string }) {
 						levelUpHistory={stats.levelHistory}
 					/>
 					<CourseProgress courses={courses} />
+					<CredentialList credentials={credentials} />
 					<AchievementGrid
 						achievements={achievements}
 						unlockedCount={stats.achievements.unlocked}
@@ -118,6 +128,7 @@ async function getDynamicProfile(walletAddress?: string) {
 			achievements: [],
 			activity: [],
 			courses: [],
+			credentials: [],
 		};
 	}
 
@@ -142,6 +153,7 @@ async function getDynamicProfile(walletAddress?: string) {
 			achievements: [],
 			activity: [],
 			courses: [],
+			credentials: [],
 		};
 	}
 	const academyClient = getAcademyClient();
@@ -151,6 +163,26 @@ async function getDynamicProfile(walletAddress?: string) {
 		academyClient.fetchEnrollmentsForLearner(learner),
 	]);
 	const indexedActivity = await fetchIndexedLearnerActivity(learner, 20);
+
+	// Fetch credential NFTs via DAS API
+	const credentialService = new CredentialService(getSolanaConnection(), getProgramId());
+	const rawCredentials = await credentialService.getCredentialsByOwner(learner);
+	const credentials = await Promise.all(
+		rawCredentials.map(async (cred) => {
+			const metadata = await credentialService.getCredentialMetadata(cred.id);
+			return {
+				id: cred.id,
+				title: metadata.name,
+				description: metadata.description,
+				imageUrl: metadata.image,
+				track: cred.track,
+				issuedAt: cred.issuedAt,
+				totalXp: cred.totalXp,
+				metadataUri: cred.metadataUri,
+				isActive: cred.isActive,
+			};
+		})
+	);
 
 	const xpMint = config?.xpMint;
 	const xpBalance = xpMint
@@ -211,15 +243,55 @@ async function getDynamicProfile(walletAddress?: string) {
 	);
 
 	const currentXP = Number(xpBalance);
-	const level = Math.max(1, Math.floor(currentXP / 500) + 1);
-	const baseXP = (level - 1) * 500;
-	const xpIntoLevel = currentXP - baseXP;
+	const level = calculateLevelFromXP(currentXP);
+	const currentLevelXP = level * level * 100;
+	const nextLevelXP = (level + 1) * (level + 1) * 100;
+	const xpIntoLevel = currentXP - currentLevelXP;
+
+	// Fetch on-chain achievements
+	const achievementService = new AchievementService(getSolanaConnection(), getProgramId());
+	const onChainAchievements = await achievementService.getLearnerAchievements(learner);
+	const achievements = onChainAchievements.map((a) => ({
+		id: a.achievementId,
+		title: a.name,
+		description: a.earned ? `Earned +${a.xpReward} XP` : `${a.xpReward} XP reward`,
+		icon: "award",
+		category: "learning" as const,
+		rarity: (a.xpReward >= 5000
+			? "legendary"
+			: a.xpReward >= 2500
+				? "epic"
+				: a.xpReward >= 1000
+					? "rare"
+					: "common") as "common" | "rare" | "epic" | "legendary",
+		xpReward: a.xpReward,
+		...(a.earned && a.awardedAt
+			? { unlockedAt: new Date(a.awardedAt * 1000).toISOString() }
+			: { progress: { current: 0, total: 1 } }),
+	}));
+
+	if (achievements.length === 0) {
+		achievements.push({
+			id: "onchain-learner",
+			title: "On-Chain Learner",
+			description: "Enrolled in at least one on-chain course",
+			icon: "book",
+			category: "learning" as const,
+			rarity: "common" as const,
+			xpReward: 0,
+			...(enrolledCourses.length > 0
+				? { unlockedAt: new Date().toISOString() }
+				: { progress: { current: 0, total: 1 } }),
+		});
+	}
+
+	const unlockedCount = achievements.filter((a) => "unlockedAt" in a).length;
 
 	const stats = {
 		level,
 		xp: xpIntoLevel,
 		totalXP: currentXP,
-		nextLevelXP: 500,
+		nextLevelXP: nextLevelXP - currentLevelXP,
 		streak: {
 			current: 0,
 			longest: 0,
@@ -242,8 +314,8 @@ async function getDynamicProfile(walletAddress?: string) {
 			total: 0,
 		},
 		achievements: {
-			unlocked: completedCourses,
-			total: Math.max(10, allCourses.length),
+			unlocked: unlockedCount,
+			total: Math.max(achievements.length, allCourses.length),
 		},
 		timeSpent: {
 			today: 0,
@@ -252,21 +324,6 @@ async function getDynamicProfile(walletAddress?: string) {
 		},
 		levelHistory: [],
 	};
-
-	const achievements = [
-		{
-			id: "onchain-learner",
-			title: "On-Chain Learner",
-			description: "Enrolled in at least one on-chain course",
-			icon: "book",
-			category: "learning" as const,
-			rarity: "common" as const,
-			xpReward: 0,
-			...(enrolledCourses.length > 0
-				? { unlockedAt: new Date().toISOString() }
-				: { progress: { current: 0, total: 1 } }),
-		},
-	];
 
 	const activity = indexedActivity.map((entry) => ({
 		id: entry.signature,
@@ -299,6 +356,7 @@ async function getDynamicProfile(walletAddress?: string) {
 		achievements,
 		activity,
 		courses: enrolledCourses,
+		credentials,
 	};
 }
 

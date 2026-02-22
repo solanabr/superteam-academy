@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Link } from "@superteam-academy/i18n/navigation";
 import {
 	BookOpen,
@@ -11,11 +11,16 @@ import {
 	Target,
 	TrendingUp,
 } from "lucide-react";
+import { useConnection } from "@solana/wallet-adapter-react";
+import { countCompletedLessons } from "@superteam/anchor";
+import { calculateLevelFromXP } from "@superteam/gamification";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/contexts/auth-context";
 import { useTranslations } from "next-intl";
+import { LearningProgressService } from "@/services/LearningProgressService";
+import { getProgramId } from "@/lib/academy";
 
 interface DashboardStats {
 	totalXp: number;
@@ -38,54 +43,75 @@ interface RecentCourse {
 
 export default function DashboardPage() {
 	const { isAuthenticated, user, wallet } = useAuth();
+	const { connection } = useConnection();
 	const t = useTranslations("dashboard");
 	const [stats, setStats] = useState<DashboardStats | null>(null);
 	const [recentCourses, setRecentCourses] = useState<RecentCourse[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
 
-	useEffect(() => {
-		async function loadDashboard() {
-			// In production, these would come from the LearningProgressService
-			// querying on-chain enrollment accounts and XP balances.
-			setStats({
-				totalXp: 2450,
-				level: 12,
-				streak: 7,
-				coursesEnrolled: 5,
-				coursesCompleted: 3,
-				lessonsCompleted: 32,
-				achievementsUnlocked: 15,
-			});
-			setRecentCourses([
-				{
-					id: "solana-fundamentals",
-					title: "Solana Fundamentals",
-					progress: 67,
-					totalLessons: 12,
-					completedLessons: 8,
-					lastAccessed: new Date().toISOString(),
-				},
-				{
-					id: "anchor-masterclass",
-					title: "Anchor Framework Masterclass",
-					progress: 100,
-					totalLessons: 15,
-					completedLessons: 15,
-					lastAccessed: new Date(Date.now() - 86_400_000 * 6).toISOString(),
-				},
-				{
-					id: "web3-frontend",
-					title: "Web3 Frontend Development",
-					progress: 0,
-					totalLessons: 10,
-					completedLessons: 0,
-					lastAccessed: new Date(Date.now() - 86_400_000 * 15).toISOString(),
-				},
-			]);
+	const loadDashboard = useCallback(async () => {
+		if (!wallet.publicKey) {
 			setIsLoading(false);
+			return;
 		}
+
+		const programId = getProgramId();
+		const service = new LearningProgressService(connection, programId);
+		const client = service.academyClient;
+
+		const [config, allCourses, enrollments] = await Promise.all([
+			client.fetchConfig(),
+			client.fetchAllCourses(),
+			client.fetchEnrollmentsForLearner(wallet.publicKey),
+		]);
+
+		let totalXp = 0;
+		if (config?.xpMint) {
+			const { findToken2022ATA } = await import("@superteam/solana");
+			const ata = findToken2022ATA(wallet.publicKey, config.xpMint);
+			const balance = await client.fetchXpBalance(ata);
+			totalXp = Number(balance ?? 0n);
+		}
+
+		const coursesByKey = new Map(allCourses.map((c) => [c.pubkey.toBase58(), c.account]));
+
+		let completedCount = 0;
+		let totalLessonsCompleted = 0;
+		const courses: RecentCourse[] = enrollments.map((entry) => {
+			const course = coursesByKey.get(entry.account.course.toBase58());
+			const completed = countCompletedLessons(entry.account.lessonFlags);
+			totalLessonsCompleted += completed;
+			if (entry.account.completedAt !== null) completedCount++;
+			const total = course?.lessonCount ?? 0;
+			const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
+			return {
+				id: course?.courseId ?? entry.pubkey.toBase58(),
+				title: course?.courseId ?? "Course",
+				progress,
+				totalLessons: total,
+				completedLessons: completed,
+				lastAccessed: new Date(entry.account.enrolledAt * 1000).toISOString(),
+			};
+		});
+
+		const level = calculateLevelFromXP(totalXp);
+
+		setStats({
+			totalXp,
+			level,
+			streak: 0,
+			coursesEnrolled: enrollments.length,
+			coursesCompleted: completedCount,
+			lessonsCompleted: totalLessonsCompleted,
+			achievementsUnlocked: completedCount,
+		});
+		setRecentCourses(courses.slice(0, 3));
+		setIsLoading(false);
+	}, [wallet.publicKey, connection]);
+
+	useEffect(() => {
 		loadDashboard();
-	}, []);
+	}, [loadDashboard]);
 
 	if (!isAuthenticated) {
 		return (

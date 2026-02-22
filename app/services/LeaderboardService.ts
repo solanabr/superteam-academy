@@ -1,6 +1,6 @@
 import { PublicKey } from "@solana/web3.js";
 import { BaseService } from "./types";
-import { AcademyClient } from "@superteam/anchor";
+import { AcademyClient, countCompletedLessons } from "@superteam/anchor";
 import { findToken2022ATA } from "@superteam/solana";
 
 export interface LeaderboardEntry {
@@ -55,6 +55,41 @@ export class LeaderboardService extends BaseService {
 				rank: index + 1,
 				publicKey,
 				xpBalance,
+			}));
+	}
+
+	/**
+	 * Fetch per-course leaderboard by counting completed lessons from enrollment accounts.
+	 */
+	async getCourseLeaderboard(courseId: string, limit: number): Promise<LeaderboardEntry[]> {
+		const allEnrollments = await this.client.fetchAllEnrollments();
+		const allCourses = await this.client.fetchAllCourses();
+
+		const coursePubkey = allCourses.find((c) => c.account.courseId === courseId)?.pubkey;
+		if (!coursePubkey) return [];
+
+		const courseKey = coursePubkey.toBase58();
+		const courseEnrollments = allEnrollments.filter(
+			(e) => e.account.course.toBase58() === courseKey
+		);
+
+		const courseAccount = allCourses.find((c) => c.account.courseId === courseId)?.account;
+		const xpPerLesson = courseAccount?.xpPerLesson ?? 0;
+
+		return courseEnrollments
+			.map((e) => {
+				const completed = countCompletedLessons(e.account.lessonFlags);
+				return {
+					pubkey: e.pubkey,
+					xpBalance: BigInt(completed * xpPerLesson),
+				};
+			})
+			.sort((a, b) => (a.xpBalance > b.xpBalance ? -1 : 1))
+			.slice(0, limit)
+			.map((entry, index) => ({
+				rank: index + 1,
+				publicKey: entry.pubkey.toBase58(),
+				xpBalance: entry.xpBalance,
 			}));
 	}
 }
