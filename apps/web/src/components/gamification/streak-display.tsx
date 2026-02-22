@@ -9,7 +9,7 @@ import {
   generateWeekCalendar,
   getStreakMilestones,
 } from "@/lib/gamification";
-import { cn } from "@/lib/utils";
+import { cn, todayDateString } from "@/lib/utils";
 
 interface StreakDisplayProps {
   streak: StreakData;
@@ -23,7 +23,7 @@ export function StreakDisplay({ streak, className }: StreakDisplayProps) {
   const calendar = generateWeekCalendar(streak.streakHistory);
   const milestones = getStreakMilestones(streak.currentStreak);
 
-  const todayDate = new Date().toISOString().split("T")[0];
+  const todayDate = todayDateString();
 
   return (
     <div className={cn("card-chunky p-6", className)}>
