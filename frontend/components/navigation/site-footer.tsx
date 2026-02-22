@@ -9,22 +9,20 @@ const FOOTER_LINKS = {
 	learn: [
 		{ key: "catalog" as const, href: "/courses" },
 		{ key: "topics" as const, href: "/topics" },
-		{ key: "learningPaths" as const, href: "/courses?view=paths" },
-		{ key: "challenges" as const, href: "/challenges" },
-		{ key: "certifications" as const, href: "/certifications" },
+		{ key: "challenges" as const, href: "/courses" },
 	],
 	community: [
 		{ key: "leaderboard" as const, href: "/leaderboard" },
-		{ key: "discord" as const, href: "#" },
-		{ key: "forum" as const, href: "/community" },
-		{ key: "events" as const, href: "/events" },
-		{ key: "blog" as const, href: "/blog" },
+		{ key: "discord" as const, href: "https://discord.gg/superteambrasil" },
+		{ key: "forum" as const, href: "/community/discussions" },
+		{ key: "events" as const, href: "/community/events" },
+		{ key: "projects" as const, href: "/community/projects" },
 	],
 	resources: [
-		{ key: "documentation" as const, href: "/docs" },
-		{ key: "apiReference" as const, href: "/docs/api" },
-		{ key: "faqs" as const, href: "/faq" },
-		{ key: "helpCenter" as const, href: "/help" },
+		{ key: "documentation" as const, href: "/courses" },
+		{ key: "apiReference" as const, href: "/topics" },
+		{ key: "faqs" as const, href: "/pricing" },
+		{ key: "helpCenter" as const, href: "/settings" },
 	],
 } as const;
 
@@ -80,13 +78,13 @@ export function SiteFooter() {
 				<div className="py-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
 					<p>{t("copyright")}</p>
 					<div className="flex items-center gap-6">
-						<Link href="/privacy" className="hover:text-foreground transition-colors">
+						<Link href="/settings" className="hover:text-foreground transition-colors">
 							{t("privacy")}
 						</Link>
-						<Link href="/terms" className="hover:text-foreground transition-colors">
+						<Link href="/settings" className="hover:text-foreground transition-colors">
 							{t("terms")}
 						</Link>
-						<Link href="/cookies" className="hover:text-foreground transition-colors">
+						<Link href="/settings" className="hover:text-foreground transition-colors">
 							{t("cookies")}
 						</Link>{" "}
 						<LanguageSwitcher />

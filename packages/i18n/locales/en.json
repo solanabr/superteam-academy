@@ -2635,7 +2635,7 @@
 		"channels": {
 			"discord": "Discord",
 			"discordDesc": "Real-time discussions, help channels, and study groups.",
-			"forum": "Forum",
+			"forum": "Discussions",
 			"forumDesc": "Long-form discussions, project showcases, and Q&A threads.",
 			"twitter": "Twitter / X",
 			"twitterDesc": "Updates, announcements, and community highlights."
@@ -2816,9 +2816,9 @@
 		"certifications": "Certifications",
 		"leaderboard": "Leaderboard",
 		"discord": "Discord",
-		"forum": "Forum",
+		"forum": "Discussions",
 		"events": "Events",
-		"blog": "Blog",
+		"projects": "Projects",
 		"documentation": "Documentation",
 		"apiReference": "API Reference",
 		"faqs": "FAQs",

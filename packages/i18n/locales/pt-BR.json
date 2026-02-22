@@ -18,11 +18,7 @@
 			"nft": "NFT",
 			"security": "Segurança",
 			"frontend": "Frontend Web3",
-			"token": "Programas de Token",
-			"blockchain": "Blockchain",
-			"ai": "IA & Aprendizado de Máquina",
-			"programming": "Programação",
-			"web3": "Web3"
+			"token": "Programas de Token"
 		},
 		"levels": {
 			"all": "Todos os Níveis",
@@ -2350,11 +2346,7 @@
 				"description": "Retome sua assinatura premium",
 				"button": "Reativar"
 			}
-		},
-		"description": "Assine {plan} por ${amount} {currency}/mês",
-		"courses": "{count} cursos gratuitos",
-		"challenges": "{count} desafios diários",
-		"certificates": "{count} certificado"
+		}
 	},
 	"payment": {
 		"title": "Pagamento",
@@ -2826,7 +2818,7 @@
 		"discord": "Discord",
 		"forum": "Forum",
 		"events": "Events",
-		"blog": "Blog",
+		"projects": "Projetos",
 		"documentation": "Documentation",
 		"apiReference": "API Reference",
 		"faqs": "FAQs",

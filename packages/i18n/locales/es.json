@@ -18,11 +18,7 @@
 			"nft": "NFTs y Metaplex",
 			"security": "Seguridad",
 			"frontend": "Frontend Web3",
-			"token": "Programas de tokens",
-			"blockchain": "Blockchain",
-			"ai": "IA y aprendizaje automático",
-			"programming": "Programación",
-			"web3": "Web3"
+			"token": "Programas de tokens"
 		},
 		"levels": {
 			"all": "Todos los niveles",
@@ -2822,7 +2818,7 @@
 		"discord": "Discord",
 		"forum": "Foro",
 		"events": "Eventos",
-		"blog": "Blog",
+		"projects": "Proyectos",
 		"documentation": "Documentación",
 		"apiReference": "Referencia de API",
 		"faqs": "Preguntas frecuentes",
