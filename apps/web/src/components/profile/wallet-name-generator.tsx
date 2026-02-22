@@ -104,7 +104,7 @@ export function WalletNameGenerator({
     <div className="flex flex-col items-center gap-6">
       {/* Title */}
       <div className="text-center">
-        <h2 className="font-display text-xl font-bold">{t("title")}</h2>
+        <h2 className="font-display text-xl font-extrabold">{t("title")}</h2>
         <p className="mt-1 text-sm text-text-3">{t("subtitle")}</p>
       </div>
 
