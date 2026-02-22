@@ -129,10 +129,15 @@ export async function isOnChainProgramLive(): Promise<boolean> {
     return _programLive;
   }
 
-  const connection = getConnection();
-  const [configPDA] = findConfigPDA(PROGRAM_ID);
-  const account = await connection.getAccountInfo(configPDA);
-  _programLive = account !== null;
+  try {
+    const connection = getConnection();
+    const [configPDA] = findConfigPDA(PROGRAM_ID);
+    const account = await connection.getAccountInfo(configPDA);
+    _programLive = account !== null;
+  } catch {
+    // RPC failure — assume program is not live; re-checked after TTL
+    _programLive = false;
+  }
   _programLiveCheckedAt = Date.now();
   return _programLive;
 }
