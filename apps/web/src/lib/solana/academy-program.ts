@@ -26,10 +26,10 @@ import {
   findAchievementTypePDA,
   findAchievementReceiptPDA,
   findMinterRolePDA,
-  PROGRAM_ID,
+  getProgramId,
 } from "./pda";
 
-export { PROGRAM_ID } from "./pda";
+export { getProgramId } from "./pda";
 
 const MPL_CORE_PROGRAM_ID = new PublicKey(
   "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d"
@@ -135,7 +135,7 @@ export async function isOnChainProgramLive(): Promise<boolean> {
 
   try {
     const connection = getConnection();
-    const [configPDA] = findConfigPDA(PROGRAM_ID);
+    const [configPDA] = findConfigPDA(getProgramId());
     const account = await connection.getAccountInfo(configPDA);
     _programLive = account !== null;
   } catch {
