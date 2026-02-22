@@ -55,12 +55,38 @@ const config: Config = {
         /* ── Danger — Warm Coral ── */
         danger: {
           DEFAULT: "var(--danger)",
+          dark: "var(--danger-dark)",
           light: "var(--danger-light)",
         },
         /* ── Solana Nod ── */
         solana: {
           purple: "var(--solana-purple)",
           green: "var(--solana-green)",
+        },
+        /* ── XP / Amber (V9 dashboard) ── */
+        xp: {
+          DEFAULT: "var(--xp)",
+          dim: "var(--xp-dim)",
+          dark: "var(--xp-dark)",
+        },
+        /* ── Gold metallic (medal/badge gradients) ── */
+        gold: {
+          hi: "var(--gold-hi)",
+          ink: "var(--gold-ink)",
+        },
+        /* ── Level — Purple (V9 level badges, leaderboard) ── */
+        level: {
+          DEFAULT: "var(--level)",
+          dim: "var(--level-dim)",
+        },
+        /* ── Activity heatmap (V9) ── */
+        sg: {
+          0: "var(--sg-0)",
+          1: "var(--sg-1)",
+          2: "var(--sg-2)",
+          3: "var(--sg-3)",
+          4: "var(--sg-4)",
+          today: "var(--sg-today)",
         },
         /* ── Neutrals ── */
         bg: "var(--bg)",
@@ -73,6 +99,7 @@ const config: Config = {
         border: {
           DEFAULT: "var(--border)",
           hover: "var(--border-hover)",
+          strong: "var(--border-strong)",
         },
         text: {
           DEFAULT: "var(--text)",
@@ -116,6 +143,7 @@ const config: Config = {
         card: "var(--shadow-card)",
         "card-hover": "var(--shadow-card-hover)",
         glow: "var(--shadow-glow)",
+        "glow-xp": "var(--shadow-glow-xp)",
         cert: "var(--shadow-cert)",
         "cert-hover": "var(--shadow-cert-hover)",
         "cert-lg": "var(--shadow-cert-lg)",
@@ -129,6 +157,64 @@ const config: Config = {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
+        /* V9 Dashboard Panel animations */
+        "dash-amb-a": {
+          "0%": { transform: "translate(0,0)" },
+          "100%": { transform: "translate(32px,24px)" },
+        },
+        "dash-amb-b": {
+          "0%": { transform: "translate(0,0)" },
+          "100%": { transform: "translate(-24px,16px)" },
+        },
+        "dm-in": {
+          from: { opacity: "0", transform: "scale(0.5) translateY(6px)" },
+          to: { opacity: "1", transform: "scale(1) translateY(0)" },
+        },
+        "dm-glow": {
+          "0%,100%": {
+            filter: "drop-shadow(0 4px 10px rgba(245,166,35,0.26))",
+          },
+          "50%": { filter: "drop-shadow(0 5px 16px rgba(245,166,35,0.50))" },
+        },
+        "dm-sol": {
+          "0%,100%": {
+            filter: "drop-shadow(0 4px 10px rgba(153,69,255,0.26))",
+          },
+          "50%": { filter: "drop-shadow(0 5px 18px rgba(20,241,149,0.46))" },
+        },
+        "today-cell": {
+          "0%,100%": {
+            boxShadow:
+              "0 0 0 1.5px rgba(245,166,35,0.40), 0 0 7px rgba(245,166,35,0.36)",
+          },
+          "50%": {
+            boxShadow:
+              "0 0 0 2px rgba(245,166,35,0.60), 0 0 13px rgba(245,166,35,0.52)",
+          },
+        },
+        "col-breathe": {
+          "0%,100%": { opacity: "0.6" },
+          "50%": { opacity: "1" },
+        },
+        flicker: {
+          "0%": { transform: "scale(1) rotate(-2deg)" },
+          "100%": { transform: "scale(1.08) rotate(2deg)" },
+        },
+        "lv-canopy-pulse": {
+          "0%,100%": { boxShadow: "0 0 14px rgba(245,166,35,0.38)" },
+          "50%": { boxShadow: "0 0 22px rgba(245,166,35,0.62)" },
+        },
+        /* V9: Lv 50+ legend badge — Solana iridescent pulse */
+        "lv-legend-pulse": {
+          "0%,100%": { boxShadow: "0 0 14px rgba(153,69,255,0.30)" },
+          "50%": { boxShadow: "0 0 24px rgba(20,241,149,0.45)" },
+        },
+        /* V9: pop-spring — popup entry animation (XP, achievement, cert) */
+        "pop-spring": {
+          "0%": { opacity: "0", transform: "scale(0.72) translateY(12px)" },
+          "55%": { transform: "scale(1.09) translateY(-4px)" },
+          "100%": { opacity: "1", transform: "scale(1) translateY(0)" },
+        },
         "xp-pop": {
           "0%": { transform: "scale(0) translateY(0)", opacity: "0" },
           "20%": { transform: "scale(1.2) translateY(-8px)", opacity: "1" },
@@ -136,6 +222,7 @@ const config: Config = {
           "100%": { transform: "scale(1) translateY(-28px)", opacity: "0" },
         },
         shimmer: {
+          "0%": { transform: "translateX(-100%)" },
           "100%": { transform: "translateX(100%)" },
         },
         breathe: {
@@ -181,11 +268,23 @@ const config: Config = {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "xp-pop": "xp-pop 2s ease-out forwards",
-        shimmer: "shimmer 2s infinite",
+        shimmer: "shimmer 2.2s infinite",
         breathe: "breathe 2s infinite alternate ease-in-out",
         pop: "pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)",
         "pulse-ring": "pulse-ring 2s infinite",
         "bounce-in": "bounce-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
+        /* V9 Dashboard Panel animations */
+        "dash-amb-a": "dash-amb-a 14s ease-in-out infinite alternate",
+        "dash-amb-b": "dash-amb-b 11s ease-in-out infinite alternate",
+        "dm-glow": "dm-glow 3.5s ease-in-out infinite",
+        "dm-sol": "dm-sol 3.5s ease-in-out infinite",
+        "today-cell": "today-cell 2s ease-in-out infinite",
+        "col-breathe": "col-breathe 2.5s ease-in-out infinite",
+        flicker: "flicker 1.5s ease-in-out infinite alternate",
+        "lv-canopy-pulse": "lv-canopy-pulse 3s ease-in-out infinite",
+        "lv-legend-pulse": "lv-legend-pulse 3s ease-in-out infinite",
+        "pop-spring": "pop-spring 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)",
+        "dm-in": "dm-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both",
       },
       backgroundImage: {
         "cert-gradient":
