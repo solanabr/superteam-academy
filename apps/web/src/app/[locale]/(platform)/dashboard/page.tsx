@@ -536,21 +536,11 @@ export default function DashboardPage() {
           const sig = await sendTransaction(tx, connection);
           await connection.confirmTransaction(sig, "confirmed");
 
-          const res = await fetch("/api/enrollment/sync", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              courseId,
-              txSignature: sig,
-              action: "close",
-            }),
-          });
-
-          if (res.ok) {
-            setCourses((prev) => prev.filter((c) => c.courseId !== courseId));
-            setUnenrollingId(null);
-            return;
-          }
+          // On-chain TX succeeded — Helius webhook will sync Supabase.
+          // Optimistically update UI.
+          setCourses((prev) => prev.filter((c) => c.courseId !== courseId));
+          setUnenrollingId(null);
+          return;
         } catch {
           // On-chain close failed (PDA may not exist) — fall through to Supabase delete
         }
