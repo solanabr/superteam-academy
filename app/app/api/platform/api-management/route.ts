@@ -1,7 +1,12 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { readdir } from "node:fs/promises";
+import { randomBytes } from "node:crypto";
 import path from "node:path";
 import { readPlatformStore, writePlatformStore } from "@/lib/platform-store";
+
+function generateApiSecret(): string {
+	return `sk_${randomBytes(12).toString("hex")}`;
+}
 
 async function listApiRoutes(dir: string, base = "/api"): Promise<string[]> {
 	const entries = await readdir(dir, { withFileTypes: true });
@@ -62,7 +67,7 @@ export async function POST(request: NextRequest) {
 		store.apiKeys.push({
 			id: `key-${Date.now()}`,
 			name: body.name,
-			secret: `sk_${Math.random().toString(36).slice(2, 18)}`,
+			secret: generateApiSecret(),
 			status: "active",
 			createdAt: new Date().toISOString(),
 			rateLimit: 1000,
@@ -81,7 +86,7 @@ export async function POST(request: NextRequest) {
 			key.id === body.keyId
 				? {
 						...key,
-						secret: `sk_${Math.random().toString(36).slice(2, 18)}`,
+						secret: generateApiSecret(),
 						createdAt: new Date().toISOString(),
 					}
 				: key

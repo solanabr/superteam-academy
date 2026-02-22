@@ -1,10 +1,24 @@
-import { type PublicKey, SystemProgram, TransactionInstruction } from "@solana/web3.js";
-import { findCoursePDA, findEnrollmentPDA } from "./pda";
+import { PublicKey, SystemProgram, TransactionInstruction } from "@solana/web3.js";
+import { findConfigPDA, findCoursePDA, findEnrollmentPDA } from "./pda";
+
+// Well-known program IDs
+const TOKEN_2022_PROGRAM_ID_STR = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb";
+const MPL_CORE_PROGRAM_ID_STR = "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d";
+const TOKEN_2022_PROGRAM_ID = new PublicKey(TOKEN_2022_PROGRAM_ID_STR);
+const MPL_CORE_PROGRAM_ID = new PublicKey(MPL_CORE_PROGRAM_ID_STR);
 
 // Anchor discriminators: sha256("global:<name>")[0..8]
 const DISCRIMINATOR_ENROLL = Buffer.from([0x3a, 0x0c, 0x24, 0x03, 0x8e, 0x1c, 0x01, 0x2b]);
 const DISCRIMINATOR_CLOSE_ENROLLMENT = Buffer.from([
 	0xec, 0x89, 0x85, 0xfd, 0x5b, 0x8a, 0xd9, 0x5b,
+]);
+const DISCRIMINATOR_COMPLETE_LESSON = Buffer.from([0x4d, 0xd9, 0x35, 0x84, 0xcc, 0x96, 0xa9, 0x3a]);
+const DISCRIMINATOR_FINALIZE_COURSE = Buffer.from([0x44, 0xbd, 0x7a, 0xef, 0x27, 0x79, 0x10, 0xda]);
+const DISCRIMINATOR_ISSUE_CREDENTIAL = Buffer.from([
+	0xff, 0xc1, 0xab, 0xe0, 0x44, 0xab, 0xc2, 0x57,
+]);
+const DISCRIMINATOR_UPGRADE_CREDENTIAL = Buffer.from([
+	0x02, 0x79, 0x4d, 0xff, 0x67, 0xbb, 0xfc, 0xa9,
 ]);
 
 function encodeBorshString(value: string): Buffer {
@@ -76,4 +90,222 @@ export function buildCloseEnrollmentInstruction({
 		programId,
 		data: DISCRIMINATOR_CLOSE_ENROLLMENT,
 	});
+}
+
+// ─── complete_lesson ─────────────────────────────────────────────────────────
+
+export interface CompleteLessonParams {
+	courseId: string;
+	lessonIndex: number;
+	learner: PublicKey;
+	learnerTokenAccount: PublicKey;
+	xpMint: PublicKey;
+	backendSigner: PublicKey;
+	programId: PublicKey;
+}
+
+export function buildCompleteLessonInstruction({
+	courseId,
+	lessonIndex,
+	learner,
+	learnerTokenAccount,
+	xpMint,
+	backendSigner,
+	programId,
+}: CompleteLessonParams): TransactionInstruction {
+	const [configPda] = findConfigPDA();
+	const [coursePda] = findCoursePDA(courseId);
+	const [enrollmentPda] = findEnrollmentPDA(courseId, learner);
+
+	const data = Buffer.concat([DISCRIMINATOR_COMPLETE_LESSON, encodeU8(lessonIndex)]);
+
+	const keys = [
+		{ pubkey: configPda, isSigner: false, isWritable: false },
+		{ pubkey: coursePda, isSigner: false, isWritable: false },
+		{ pubkey: enrollmentPda, isSigner: false, isWritable: true },
+		{ pubkey: learner, isSigner: false, isWritable: false },
+		{ pubkey: learnerTokenAccount, isSigner: false, isWritable: true },
+		{ pubkey: xpMint, isSigner: false, isWritable: true },
+		{ pubkey: backendSigner, isSigner: true, isWritable: false },
+		{ pubkey: TOKEN_2022_PROGRAM_ID, isSigner: false, isWritable: false },
+	];
+
+	return new TransactionInstruction({ keys, programId, data });
+}
+
+// ─── finalize_course ─────────────────────────────────────────────────────────
+
+export interface FinalizeCourseParams {
+	courseId: string;
+	learner: PublicKey;
+	learnerTokenAccount: PublicKey;
+	creatorTokenAccount: PublicKey;
+	creator: PublicKey;
+	xpMint: PublicKey;
+	backendSigner: PublicKey;
+	programId: PublicKey;
+}
+
+export function buildFinalizeCourseInstruction({
+	courseId,
+	learner,
+	learnerTokenAccount,
+	creatorTokenAccount,
+	creator,
+	xpMint,
+	backendSigner,
+	programId,
+}: FinalizeCourseParams): TransactionInstruction {
+	const [configPda] = findConfigPDA();
+	const [coursePda] = findCoursePDA(courseId);
+	const [enrollmentPda] = findEnrollmentPDA(courseId, learner);
+
+	const keys = [
+		{ pubkey: configPda, isSigner: false, isWritable: false },
+		{ pubkey: coursePda, isSigner: false, isWritable: true },
+		{ pubkey: enrollmentPda, isSigner: false, isWritable: true },
+		{ pubkey: learner, isSigner: false, isWritable: false },
+		{ pubkey: learnerTokenAccount, isSigner: false, isWritable: true },
+		{ pubkey: creatorTokenAccount, isSigner: false, isWritable: true },
+		{ pubkey: creator, isSigner: false, isWritable: false },
+		{ pubkey: xpMint, isSigner: false, isWritable: true },
+		{ pubkey: backendSigner, isSigner: true, isWritable: false },
+		{ pubkey: TOKEN_2022_PROGRAM_ID, isSigner: false, isWritable: false },
+	];
+
+	return new TransactionInstruction({ keys, programId, data: DISCRIMINATOR_FINALIZE_COURSE });
+}
+
+// ─── issue_credential ────────────────────────────────────────────────────────
+
+export interface IssueCredentialParams {
+	courseId: string;
+	learner: PublicKey;
+	credentialAsset: PublicKey;
+	trackCollection: PublicKey;
+	payer: PublicKey;
+	backendSigner: PublicKey;
+	credentialName: string;
+	metadataUri: string;
+	coursesCompleted: number;
+	totalXp: bigint;
+	programId: PublicKey;
+}
+
+export function buildIssueCredentialInstruction({
+	courseId,
+	learner,
+	credentialAsset,
+	trackCollection,
+	payer,
+	backendSigner,
+	credentialName,
+	metadataUri,
+	coursesCompleted,
+	totalXp,
+	programId,
+}: IssueCredentialParams): TransactionInstruction {
+	const [configPda] = findConfigPDA();
+	const [coursePda] = findCoursePDA(courseId);
+	const [enrollmentPda] = findEnrollmentPDA(courseId, learner);
+
+	const data = Buffer.concat([
+		DISCRIMINATOR_ISSUE_CREDENTIAL,
+		encodeBorshString(credentialName),
+		encodeBorshString(metadataUri),
+		encodeU32(coursesCompleted),
+		encodeU64(totalXp),
+	]);
+
+	const keys = [
+		{ pubkey: configPda, isSigner: false, isWritable: false },
+		{ pubkey: coursePda, isSigner: false, isWritable: false },
+		{ pubkey: enrollmentPda, isSigner: false, isWritable: true },
+		{ pubkey: learner, isSigner: false, isWritable: false },
+		{ pubkey: credentialAsset, isSigner: true, isWritable: true },
+		{ pubkey: trackCollection, isSigner: false, isWritable: true },
+		{ pubkey: payer, isSigner: true, isWritable: true },
+		{ pubkey: backendSigner, isSigner: true, isWritable: false },
+		{ pubkey: MPL_CORE_PROGRAM_ID, isSigner: false, isWritable: false },
+		{ pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+	];
+
+	return new TransactionInstruction({ keys, programId, data });
+}
+
+// ─── upgrade_credential ──────────────────────────────────────────────────────
+
+export interface UpgradeCredentialParams {
+	courseId: string;
+	learner: PublicKey;
+	credentialAsset: PublicKey;
+	trackCollection: PublicKey;
+	payer: PublicKey;
+	backendSigner: PublicKey;
+	credentialName: string;
+	metadataUri: string;
+	coursesCompleted: number;
+	totalXp: bigint;
+	programId: PublicKey;
+}
+
+export function buildUpgradeCredentialInstruction({
+	courseId,
+	learner,
+	credentialAsset,
+	trackCollection,
+	payer,
+	backendSigner,
+	credentialName,
+	metadataUri,
+	coursesCompleted,
+	totalXp,
+	programId,
+}: UpgradeCredentialParams): TransactionInstruction {
+	const [configPda] = findConfigPDA();
+	const [coursePda] = findCoursePDA(courseId);
+	const [enrollmentPda] = findEnrollmentPDA(courseId, learner);
+
+	const data = Buffer.concat([
+		DISCRIMINATOR_UPGRADE_CREDENTIAL,
+		encodeBorshString(credentialName),
+		encodeBorshString(metadataUri),
+		encodeU32(coursesCompleted),
+		encodeU64(totalXp),
+	]);
+
+	const keys = [
+		{ pubkey: configPda, isSigner: false, isWritable: false },
+		{ pubkey: coursePda, isSigner: false, isWritable: false },
+		{ pubkey: enrollmentPda, isSigner: false, isWritable: false },
+		{ pubkey: learner, isSigner: false, isWritable: false },
+		{ pubkey: credentialAsset, isSigner: false, isWritable: true },
+		{ pubkey: trackCollection, isSigner: false, isWritable: true },
+		{ pubkey: payer, isSigner: true, isWritable: true },
+		{ pubkey: backendSigner, isSigner: true, isWritable: false },
+		{ pubkey: MPL_CORE_PROGRAM_ID, isSigner: false, isWritable: false },
+		{ pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+	];
+
+	return new TransactionInstruction({ keys, programId, data });
+}
+
+// ─── Borsh encoding helpers ──────────────────────────────────────────────────
+
+function encodeU8(value: number): Buffer {
+	const buf = Buffer.alloc(1);
+	buf.writeUInt8(value, 0);
+	return buf;
+}
+
+function encodeU32(value: number): Buffer {
+	const buf = Buffer.alloc(4);
+	buf.writeUInt32LE(value, 0);
+	return buf;
+}
+
+function encodeU64(value: bigint): Buffer {
+	const buf = Buffer.alloc(8);
+	buf.writeBigUInt64LE(value, 0);
+	return buf;
 }

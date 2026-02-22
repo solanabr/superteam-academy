@@ -9,17 +9,22 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
-import { LessonVideoPlayer } from "@/components/lessons/lesson-video-player";
+import {
+	LessonVideoPlayerWrapper,
+	LessonQuizWrapper,
+	LessonNavigationWrapper,
+} from "@/components/lessons/lesson-interactive";
 import { LessonContent } from "@/components/lessons/lesson-content";
-import { LessonNavigation } from "@/components/lessons/lesson-navigation";
 import { LessonProgress } from "@/components/lessons/lesson-progress";
 import { LessonNotes } from "@/components/lessons/lesson-notes";
-import { LessonQuiz } from "@/components/lessons/lesson-quiz";
 import { LessonResources } from "@/components/lessons/lesson-resources";
 import { getTranslations } from "next-intl/server";
 import { getCourseById } from "@/lib/cms";
 import { getAcademyClient } from "@/lib/academy";
+import { getLinkedWallet } from "@/lib/auth";
 import { mapCourseToDetail } from "@/lib/course-data";
+import { PublicKey } from "@solana/web3.js";
+import { countCompletedLessons } from "@superteam/anchor";
 
 interface LessonPageProps {
 	params: Promise<{
@@ -109,11 +114,11 @@ async function LessonContentWrapper({
 				</div>
 
 				<div className="relative bg-black">
-					<LessonVideoPlayer
+					<LessonVideoPlayerWrapper
+						courseId={courseId}
+						lessonIndex={progress.lessonIndex}
 						videoUrl={lesson.videoUrl}
-						title={lesson.title}
-						onProgress={handleVideoProgress}
-						onComplete={handleLessonComplete}
+						lessonTitle={lesson.title}
 					/>
 				</div>
 
@@ -148,9 +153,10 @@ async function LessonContentWrapper({
 							<TabsContent value="quiz" className="h-full m-0">
 								<ScrollArea className="h-full">
 									<div className="p-6">
-										<LessonQuiz
+										<LessonQuizWrapper
+											courseId={courseId}
+											lessonIndex={progress.lessonIndex}
 											quiz={lesson.quiz}
-											onComplete={handleQuizComplete}
 										/>
 									</div>
 								</ScrollArea>
@@ -175,12 +181,12 @@ async function LessonContentWrapper({
 						currentLesson={{ id: lessonId, title: lesson.title, progress: 0 }}
 					/>
 
-					<LessonNavigation
-						currentLessonId={lessonId}
+					<LessonNavigationWrapper
+						courseId={courseId}
+						lessonId={lessonId}
 						lessons={course.modules.flatMap((m) =>
 							m.lessons.map((l) => ({ ...l, duration: 15 }))
 						)}
-						onLessonSelect={handleLessonSelect}
 						hasPrevious={false}
 						hasNext={true}
 					/>
@@ -246,22 +252,8 @@ function LessonSkeleton() {
 	);
 }
 
-// Event handlers (would be implemented with actual API calls)
-async function handleVideoProgress(_progress: number) {
-	// ignored
-}
-
-async function handleLessonComplete() {
-	// ignored
-}
-
-async function handleQuizComplete(_score: number, _passed: boolean) {
-	// ignored
-}
-
-function handleLessonSelect(_lessonId: string) {
-	// ignored
-}
+// Removed: handleVideoProgress, handleLessonComplete, handleQuizComplete, handleLessonSelect
+// Interactive behavior now lives in lesson-interactive.tsx client components
 
 async function getCourse(id: string) {
 	const academyClient = getAcademyClient();
@@ -422,14 +414,26 @@ function inferResourceType(
 
 async function getLessonProgress(courseId: string, lessonId: string) {
 	const academyClient = getAcademyClient();
+	const wallet = await getLinkedWallet();
+
 	const onchainCourse = await academyClient.fetchCourse(courseId);
 	const lessonCount = onchainCourse?.lessonCount ?? 1;
 	const lessonIndex = Number.parseInt(lessonId.split("-").at(-1) ?? "1", 10) - 1;
-	const completedLessons = Math.min(Math.max(lessonIndex, 0), lessonCount);
+
+	let completedLessons = 0;
+
+	if (wallet) {
+		const learner = new PublicKey(wallet);
+		const enrollment = await academyClient.fetchEnrollment(courseId, learner);
+		if (enrollment) {
+			completedLessons = countCompletedLessons(enrollment.lessonFlags);
+		}
+	}
 
 	return {
 		completedLessons,
 		totalLessons: lessonCount,
+		lessonIndex: Math.min(Math.max(lessonIndex, 0), lessonCount - 1),
 		timeSpent: completedLessons * 10,
 		xpEarned: completedLessons * (onchainCourse?.xpPerLesson ?? 0),
 		xpRequired: lessonCount * (onchainCourse?.xpPerLesson ?? 0),
@@ -438,7 +442,7 @@ async function getLessonProgress(courseId: string, lessonId: string) {
 				id: "course-progress",
 				title: "Course Progress",
 				description: "Complete lessons to progress through this course",
-				unlocked: true,
+				unlocked: completedLessons > 0,
 				icon: "book",
 			},
 		],
