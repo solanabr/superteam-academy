@@ -5,7 +5,7 @@ import {
 	buildUpgradeCredentialInstruction,
 } from "@superteam/anchor";
 import { getLinkedWallet } from "@/lib/auth";
-import { getProgramId, getSolanaConnection } from "@/lib/academy";
+import { getAcademyClient, getProgramId, getSolanaConnection } from "@/lib/academy";
 
 function loadBackendSigner(): Keypair {
 	const secret = process.env.BACKEND_SIGNER_SECRET_KEY;
@@ -57,12 +57,24 @@ export async function POST(request: Request) {
 		}
 
 		const connection = getSolanaConnection();
+		const client = getAcademyClient();
 		const programId = getProgramId();
 		const backendKeypair = loadBackendSigner();
 		const learner = new PublicKey(wallet);
 		const trackCollectionPk = new PublicKey(trackCollection);
 		const totalXpBigInt = BigInt(totalXp);
 		const isUpgrade = !!body.existingCredentialAsset;
+
+		const enrollment = await client.fetchEnrollment(courseId, learner);
+		if (!enrollment) {
+			return NextResponse.json({ error: "Not enrolled in this course" }, { status: 403 });
+		}
+		if (!enrollment.completedAt) {
+			return NextResponse.json({ error: "Course not yet finalized" }, { status: 400 });
+		}
+		if (!isUpgrade && enrollment.credentialAsset) {
+			return NextResponse.json({ error: "Credential already issued" }, { status: 409 });
+		}
 
 		let credentialAssetKeypair: Keypair | null = null;
 		let credentialAssetPk: PublicKey;

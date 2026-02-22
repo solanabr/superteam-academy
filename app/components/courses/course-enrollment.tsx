@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Wallet, CreditCard, CheckCircle, AlertCircle } from "lucide-react";
 import { useConnection } from "@solana/wallet-adapter-react";
 import { Transaction } from "@solana/web3.js";
-import { buildEnrollInstruction } from "@superteam/anchor";
+import { buildEnrollInstruction, buildCloseEnrollmentInstruction } from "@superteam/anchor";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
@@ -35,6 +35,7 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 	const { connection } = useConnection();
 	const [enrollmentMethod, setEnrollmentMethod] = useState<"wallet" | "card" | null>(null);
 	const [isEnrolling, setIsEnrolling] = useState(false);
+	const [isClosing, setIsClosing] = useState(false);
 
 	const prerequisitesMet = course.prerequisites
 		? course.prerequisites.every((p) => p.completed)
@@ -64,6 +65,28 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 		}
 	};
 
+	const handleCloseEnrollment = async () => {
+		if (!wallet.publicKey || !wallet.sendTransaction) return;
+
+		setIsClosing(true);
+		try {
+			const ix = buildCloseEnrollmentInstruction({
+				courseId: course.id,
+				learner: wallet.publicKey,
+				programId: getProgramId(),
+			});
+
+			const tx = new Transaction().add(ix);
+			tx.feePayer = wallet.publicKey;
+			tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+
+			const signature = await wallet.sendTransaction(tx, connection);
+			await connection.confirmTransaction(signature, "confirmed");
+		} finally {
+			setIsClosing(false);
+		}
+	};
+
 	if (course.enrolled) {
 		return (
 			<div className="space-y-4">
@@ -83,6 +106,16 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 
 				<Button className="w-full" size="lg">
 					{t("enroll.continueLearning")}
+				</Button>
+
+				<Button
+					variant="ghost"
+					size="sm"
+					className="w-full text-muted-foreground"
+					onClick={handleCloseEnrollment}
+					disabled={isClosing}
+				>
+					{isClosing ? t("enroll.processing") : t("enroll.closeEnrollment")}
 				</Button>
 			</div>
 		);

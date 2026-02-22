@@ -31,6 +31,15 @@ interface DasAsset {
 	ownership: { owner: string; frozen: boolean };
 }
 
+/** DAS asset with optional attributes from NFT metadata */
+interface DasAssetWithAttributes extends DasAsset {
+	content: DasAsset["content"] & {
+		metadata: DasAsset["content"]["metadata"] & {
+			attributes?: Array<{ trait_type: string; value: string }>;
+		};
+	};
+}
+
 export class CredentialService extends BaseService {
 	private client: AcademyClient;
 
@@ -70,7 +79,14 @@ export class CredentialService extends BaseService {
 		_learner: PublicKey,
 		track: string,
 		coursesCompleted: number,
-		totalXp: number
+		totalXp: number,
+		options?: {
+			courseId: string;
+			trackCollection: string;
+			credentialName: string;
+			metadataUri: string;
+			existingCredentialAsset?: string;
+		}
 	): Promise<IssueResult> {
 		const requirements = TRACK_REQUIREMENTS[track];
 		if (!requirements) {
@@ -79,9 +95,37 @@ export class CredentialService extends BaseService {
 		if (coursesCompleted < requirements.courses || totalXp < requirements.xp) {
 			return { success: false, error: "Track requirements not met" };
 		}
-		// Actual credential issuance requires a backend signer transaction.
-		// The backend submits the issue_credential instruction on behalf of the learner.
-		return { success: true, credentialId: `pending-${Date.now()}` };
+		if (!options) {
+			return {
+				success: false,
+				error: "Missing credential options (courseId, trackCollection, etc.)",
+			};
+		}
+
+		const res = await fetch("/api/credentials/issue", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({
+				courseId: options.courseId,
+				trackCollection: options.trackCollection,
+				credentialName: options.credentialName,
+				metadataUri: options.metadataUri,
+				coursesCompleted,
+				totalXp: totalXp.toString(),
+				existingCredentialAsset: options.existingCredentialAsset,
+			}),
+		});
+
+		if (!res.ok) {
+			const body = await res.json().catch(() => ({ error: "Request failed" }));
+			return {
+				success: false,
+				error: (body as { error?: string }).error ?? "Credential issuance failed",
+			};
+		}
+
+		const result = (await res.json()) as { signature: string; credentialAsset: string };
+		return { success: true, credentialId: result.credentialAsset };
 	}
 
 	/** Verify a credential NFT via DAS API: check frozen state + collection membership */
@@ -226,12 +270,32 @@ export class CredentialService extends BaseService {
 
 	private dasAssetToCredential(asset: DasAsset): Credential {
 		const collection = asset.grouping.find((g) => g.group_key === "collection");
+
+		// Read real values from the Attributes plugin if available
+		const attributes = (asset as DasAssetWithAttributes).content?.metadata?.attributes;
+		let coursesCompleted = 1;
+		let totalXp = 0;
+		let issuedAt = new Date();
+
+		if (Array.isArray(attributes)) {
+			for (const attr of attributes) {
+				if (attr.trait_type === "courses_completed" && attr.value) {
+					coursesCompleted = parseInt(attr.value, 10) || 1;
+				} else if (attr.trait_type === "total_xp" && attr.value) {
+					totalXp = parseInt(attr.value, 10) || 0;
+				} else if (attr.trait_type === "issued_at" && attr.value) {
+					const ts = parseInt(attr.value, 10);
+					if (!Number.isNaN(ts)) issuedAt = new Date(ts * 1000);
+				}
+			}
+		}
+
 		return {
 			id: asset.id,
 			track: collection?.group_value ?? "Unknown",
-			issuedAt: new Date(),
-			coursesCompleted: 1,
-			totalXp: 0,
+			issuedAt,
+			coursesCompleted,
+			totalXp,
 			metadataUri: asset.content.json_uri,
 			isActive: asset.frozen || asset.ownership.frozen,
 		};

@@ -233,7 +233,7 @@ function AuthProviderInner({
 	return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-const DEVNET_ENDPOINT = clusterApiUrl("devnet");
+const ENDPOINT = process.env.NEXT_PUBLIC_SOLANA_RPC_URL ?? clusterApiUrl("devnet");
 const WALLETS = [new PhantomWalletAdapter(), new SolflareWalletAdapter()];
 
 export function AuthProvider({
@@ -244,7 +244,7 @@ export function AuthProvider({
 	initialSession: AuthSession | null;
 }) {
 	return (
-		<ConnectionProvider endpoint={DEVNET_ENDPOINT}>
+		<ConnectionProvider endpoint={ENDPOINT}>
 			<WalletProvider wallets={WALLETS} autoConnect>
 				<WalletModalProvider>
 					<AuthProviderInner initialSession={initialSession}>

@@ -1,7 +1,17 @@
 import { NextResponse } from "next/server";
-import { Keypair, PublicKey, Transaction } from "@solana/web3.js";
-import { buildCompleteLessonInstruction } from "@superteam/anchor";
-import { findToken2022ATA } from "@superteam/solana";
+import {
+	Keypair,
+	PublicKey,
+	SystemProgram,
+	Transaction,
+	TransactionInstruction,
+} from "@solana/web3.js";
+import { buildCompleteLessonInstruction, isLessonCompleted } from "@superteam/anchor";
+import {
+	findToken2022ATA,
+	TOKEN_2022_PROGRAM_ID,
+	ASSOCIATED_TOKEN_PROGRAM_ID,
+} from "@superteam/solana";
 import { getLinkedWallet } from "@/lib/auth";
 import { getAcademyClient, getProgramId, getSolanaConnection } from "@/lib/academy";
 
@@ -33,12 +43,49 @@ export async function POST(request: Request) {
 		const backendKeypair = loadBackendSigner();
 		const learner = new PublicKey(wallet);
 
-		const config = await client.fetchConfig();
+		const [config, course, enrollment] = await Promise.all([
+			client.fetchConfig(),
+			client.fetchCourse(courseId),
+			client.fetchEnrollment(courseId, learner),
+		]);
 		if (!config) {
 			return NextResponse.json({ error: "Config not found" }, { status: 500 });
 		}
+		if (!course || !course.isActive) {
+			return NextResponse.json({ error: "Course not found or inactive" }, { status: 404 });
+		}
+		if (!enrollment) {
+			return NextResponse.json({ error: "Not enrolled in this course" }, { status: 403 });
+		}
+		if (lessonIndex >= course.lessonCount) {
+			return NextResponse.json({ error: "Invalid lesson index" }, { status: 400 });
+		}
+		if (isLessonCompleted(enrollment.lessonFlags, lessonIndex)) {
+			return NextResponse.json({ error: "Lesson already completed" }, { status: 409 });
+		}
+
 		const xpMint = config.xpMint;
 		const learnerTokenAccount = findToken2022ATA(learner, xpMint);
+
+		const tx = new Transaction();
+
+		// Ensure the learner's Token-2022 ATA exists (CreateIdempotent = instruction index 1)
+		const ataInfo = await connection.getAccountInfo(learnerTokenAccount);
+		if (!ataInfo) {
+			const createAtaIx = new TransactionInstruction({
+				programId: ASSOCIATED_TOKEN_PROGRAM_ID,
+				keys: [
+					{ pubkey: backendKeypair.publicKey, isSigner: true, isWritable: true },
+					{ pubkey: learnerTokenAccount, isSigner: false, isWritable: true },
+					{ pubkey: learner, isSigner: false, isWritable: false },
+					{ pubkey: xpMint, isSigner: false, isWritable: false },
+					{ pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+					{ pubkey: TOKEN_2022_PROGRAM_ID, isSigner: false, isWritable: false },
+				],
+				data: Buffer.from([1]), // CreateIdempotent
+			});
+			tx.add(createAtaIx);
+		}
 
 		const ix = buildCompleteLessonInstruction({
 			courseId,
@@ -50,7 +97,7 @@ export async function POST(request: Request) {
 			programId,
 		});
 
-		const tx = new Transaction().add(ix);
+		tx.add(ix);
 		tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
 		tx.feePayer = backendKeypair.publicKey;
 		tx.sign(backendKeypair);

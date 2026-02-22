@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { Keypair, PublicKey, Transaction } from "@solana/web3.js";
-import { buildFinalizeCourseInstruction } from "@superteam/anchor";
+import { buildFinalizeCourseInstruction, countCompletedLessons } from "@superteam/anchor";
 import { findToken2022ATA } from "@superteam/solana";
 import { getLinkedWallet } from "@/lib/auth";
 import { getAcademyClient, getProgramId, getSolanaConnection } from "@/lib/academy";
@@ -40,6 +40,21 @@ export async function POST(request: Request) {
 		}
 		if (!course) {
 			return NextResponse.json({ error: "Course not found" }, { status: 404 });
+		}
+
+		const enrollment = await client.fetchEnrollment(courseId, learner);
+		if (!enrollment) {
+			return NextResponse.json({ error: "Not enrolled in this course" }, { status: 403 });
+		}
+		if (enrollment.completedAt) {
+			return NextResponse.json({ error: "Course already finalized" }, { status: 409 });
+		}
+		const completed = countCompletedLessons(enrollment.lessonFlags);
+		if (completed < course.lessonCount) {
+			return NextResponse.json(
+				{ error: `Not all lessons completed (${completed}/${course.lessonCount})` },
+				{ status: 400 }
+			);
 		}
 
 		const xpMint = config.xpMint;

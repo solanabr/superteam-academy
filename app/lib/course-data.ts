@@ -107,6 +107,12 @@ export function mapCourseToDetail(
 	} | null,
 	options?: {
 		reviews?: CourseReviewView[];
+		enrollment?: {
+			enrolled: boolean;
+			completedLessons: number;
+			xpEarned: number;
+			finalized: boolean;
+		} | null;
 	}
 ): CourseDetailView {
 	const seed = seedCourseById(id);
@@ -153,6 +159,13 @@ export function mapCourseToDetail(
 			};
 		}) ?? [];
 
+	const enrollmentData = options?.enrollment;
+	const enrolled = enrollmentData?.enrolled ?? false;
+	const completedLessonsCount = enrollmentData?.completedLessons ?? 0;
+	const xpEarned = enrollmentData?.xpEarned ?? 0;
+	const progressPercent =
+		lessonCount > 0 ? Math.round((completedLessonsCount / lessonCount) * 100) : 0;
+
 	return {
 		id,
 		title: course?.title ?? seed?.title ?? id,
@@ -186,14 +199,14 @@ export function mapCourseToDetail(
 		tags: seed?.tags ?? [course?.track ?? "solana"],
 		xpReward: computedXpReward,
 		price: seed?.price ?? 0,
-		enrolled: false,
+		enrolled,
 		progress: {
-			percentage: 0,
-			completedLessons: 0,
+			percentage: progressPercent,
+			completedLessons: completedLessonsCount,
 			totalLessons: lessonCount,
-			timeSpent: "0 min",
+			timeSpent: `${completedLessonsCount * 10} min`,
 			streak: 0,
-			xpEarned: 0,
+			xpEarned,
 			xpTotal: computedXpReward,
 			estimatedCompletion: course?.duration ?? seed?.duration ?? "",
 			lastActivity: "",

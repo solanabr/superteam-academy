@@ -50,8 +50,5 @@
 		"tsup": "catalog:",
 		"typescript": "catalog:",
 		"vitest": "catalog:"
-	},
-	"peerDependencies": {
-		"@superteam/services": "workspace:*"
 	}
 }

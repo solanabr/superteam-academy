@@ -19,7 +19,10 @@ import { CourseEnrollment } from "@/components/courses/course-enrollment";
 import { CourseProgress } from "@/components/courses/course-progress";
 import { getCourseById, getCourseReviews } from "@/lib/cms";
 import { getAcademyClient } from "@/lib/academy";
+import { getLinkedWallet } from "@/lib/auth";
 import { mapCourseToDetail } from "@/lib/course-data";
+import { PublicKey } from "@solana/web3.js";
+import { countCompletedLessons } from "@superteam/anchor";
 
 interface CourseDetailPageProps {
 	params: Promise<{
@@ -263,11 +266,12 @@ function CourseDetailSkeleton() {
 
 async function getCourse(id: string) {
 	const academyClient = getAcademyClient();
-	const [cmsCourse, onchainCourse, onchainCourses, reviews] = await Promise.all([
+	const [cmsCourse, onchainCourse, onchainCourses, reviews, wallet] = await Promise.all([
 		getCourseById(id),
 		academyClient.fetchCourse(id),
 		academyClient.fetchAllCourses(),
 		getCourseReviews(id),
+		getLinkedWallet(),
 	]);
 
 	let prerequisiteLabel: string | null = null;
@@ -275,6 +279,27 @@ async function getCourse(id: string) {
 	if (prerequisite) {
 		const prereq = onchainCourses.find((course) => course.pubkey.equals(prerequisite));
 		prerequisiteLabel = prereq?.account.courseId ?? prerequisite.toBase58();
+	}
+
+	let enrollment: {
+		enrolled: boolean;
+		completedLessons: number;
+		xpEarned: number;
+		finalized: boolean;
+	} | null = null;
+
+	if (wallet && onchainCourse) {
+		const learner = new PublicKey(wallet);
+		const enrollmentData = await academyClient.fetchEnrollment(id, learner);
+		if (enrollmentData) {
+			const completed = countCompletedLessons(enrollmentData.lessonFlags);
+			enrollment = {
+				enrolled: true,
+				completedLessons: completed,
+				xpEarned: completed * onchainCourse.xpPerLesson,
+				finalized: !!enrollmentData.completedAt,
+			};
+		}
 	}
 
 	return mapCourseToDetail(
@@ -291,6 +316,6 @@ async function getCourse(id: string) {
 				: {}),
 			...(prerequisiteLabel ? { prerequisiteLabel } : {}),
 		},
-		{ reviews }
+		{ reviews, enrollment }
 	);
 }
