@@ -5,7 +5,6 @@ import { useTranslations } from "next-intl";
 import type { UserIdentity } from "@supabase/supabase-js";
 import { ProfileTab } from "./_components/profile-tab";
 import { AccountTab } from "./_components/account-tab";
-import { PreferencesTab } from "./_components/preferences-tab";
 import { PrivacyTab } from "./_components/privacy-tab";
 import { createClient } from "@/lib/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -21,7 +20,7 @@ interface ProfileData {
   nameRerollsUsed: number;
 }
 
-const VALID_TABS = ["profile", "account", "preferences", "privacy"] as const;
+const VALID_TABS = ["profile", "account", "privacy"] as const;
 
 export default function SettingsPage() {
   const t = useTranslations("settings");
@@ -159,7 +158,9 @@ export default function SettingsPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="font-display text-3xl font-bold">{t("title")}</h1>
+        <h1 className="font-display text-3xl font-black tracking-[-0.5px]">
+          {t("title")}
+        </h1>
       </div>
 
       <Tabs
@@ -170,7 +171,6 @@ export default function SettingsPage() {
         <TabsList>
           <TabsTrigger value="profile">{t("profileSettings")}</TabsTrigger>
           <TabsTrigger value="account">{t("accountSettings")}</TabsTrigger>
-          <TabsTrigger value="preferences">{t("preferences")}</TabsTrigger>
           <TabsTrigger value="privacy">{t("privacy")}</TabsTrigger>
         </TabsList>
 
@@ -205,11 +205,6 @@ export default function SettingsPage() {
             avatarUrl={avatarUrl}
             onAvatarChange={handleAvatarChange}
           />
-        </TabsContent>
-
-        {/* Preferences Tab */}
-        <TabsContent value="preferences">
-          <PreferencesTab />
         </TabsContent>
 
         {/* Privacy Tab */}
