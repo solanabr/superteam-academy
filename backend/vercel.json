@@ -1,4 +1,6 @@
 {
+  "buildCommand": "",
+  "outputDirectory": ".",
   "rewrites": [{ "source": "/(.*)", "destination": "/api/index" }],
   "functions": {
     "api/index.ts": {
