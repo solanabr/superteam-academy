@@ -1,5 +1,5 @@
 import type { Course } from "../schemas";
-import { CMSService } from "./cms-service";
+import type { CMSContext } from "./cms-service";
 import {
 	allCoursesQuery,
 	courseBySlugQuery,
@@ -7,24 +7,38 @@ import {
 	allTracksQuery,
 } from "../queries";
 
-export class CourseService extends CMSService {
-	async getAllCourses(): Promise<Course[]> {
-		if (!this.client) return [];
-		return (await this.fetch<Course[]>(allCoursesQuery)) || [];
-	}
+export type CourseReview = {
+	id: string;
+	rating: number;
+	comment: string;
+	date: string;
+	helpful: number;
+	user: {
+		name: string;
+		avatar: string;
+	};
+};
 
-	async getCourseBySlug(slug: string): Promise<Course | null> {
-		if (!this.client) return null;
-		return this.fetch<Course | null>(courseBySlugQuery, { slug });
-	}
+export function createCourseService(context: CMSContext) {
+	const { fetch, resolveImageUrl, readClient } = context;
 
-	async getCourseById(idOrSlug: string): Promise<Course | null> {
-		if (!this.client) return null;
+	const getAllCourses = async (): Promise<Course[]> => {
+		if (!readClient) return [];
+		return (await fetch<Course[]>(allCoursesQuery)) || [];
+	};
 
-		const bySlug = await this.fetch<Course | null>(courseBySlugQuery, { slug: idOrSlug });
+	const getCourseBySlug = async (slug: string): Promise<Course | null> => {
+		if (!readClient) return null;
+		return fetch<Course | null>(courseBySlugQuery, { slug });
+	};
+
+	const getCourseById = async (idOrSlug: string): Promise<Course | null> => {
+		if (!readClient) return null;
+
+		const bySlug = await fetch<Course | null>(courseBySlugQuery, { slug: idOrSlug });
 		if (bySlug) return bySlug;
 
-		return this.fetch<Course | null>(
+		return fetch<Course | null>(
 			`*[_type == "course" && _id == $id][0] {
 				_id,_type,_createdAt,_updatedAt,title,slug,description,level,duration,image,published,xpReward,track,onchainStatus,arweaveTxId,coursePda,createSignature,lastSyncError,
 				"modules": *[_type == "module" && references(^._id)] | order(order asc) {
@@ -36,17 +50,25 @@ export class CourseService extends CMSService {
 			}`,
 			{ id: idOrSlug }
 		);
-	}
+	};
 
-	async getCoursesByTrack(track: string): Promise<Course[]> {
-		if (!this.client) return [];
-		return (await this.fetch<Course[]>(coursesByTrackQuery, { track })) || [];
-	}
+	const getCoursesByTrack = async (track: string): Promise<Course[]> => {
+		if (!readClient) return [];
+		return (await fetch<Course[]>(coursesByTrackQuery, { track })) || [];
+	};
 
-	async getTracks() {
-		if (!this.client) return [];
+	const getTracks = async (): Promise<
+		Array<{
+			_id: string;
+			title: string;
+			slug: { current: string };
+			description?: string;
+			courseCount: number;
+		}>
+	> => {
+		if (!readClient) return [];
 		return (
-			(await this.fetch<
+			(await fetch<
 				Array<{
 					_id: string;
 					title: string;
@@ -56,19 +78,19 @@ export class CourseService extends CMSService {
 				}>
 			>(allTracksQuery)) || []
 		);
-	}
+	};
 
-	async getCourseReviews(idOrSlug: string) {
-		if (!this.client) return [];
+	const getCourseReviews = async (idOrSlug: string): Promise<CourseReview[]> => {
+		if (!readClient) return [];
 
-		const courseId = await this.fetch<string | null>(
+		const courseId = await fetch<string | null>(
 			`coalesce(*[_type == "course" && slug.current == $id][0]._id, *[_type == "course" && _id == $id][0]._id)`,
 			{ id: idOrSlug }
 		);
 
 		if (!courseId) return [];
 
-		const reviews = await this.fetch<
+		const reviews = await fetch<
 			Array<{
 				_id: string;
 				rating?: number;
@@ -102,13 +124,25 @@ export class CourseService extends CMSService {
 				user: {
 					name: review.userName ?? "Learner",
 					avatar: review.userAvatar
-						? (this.resolveImageUrl(review.userAvatar, 128, 128) ?? "")
+						? (resolveImageUrl(review.userAvatar, 128, 128) ?? "")
 						: "",
 				},
 			}));
-	}
+	};
 
-	resolveCourseImageUrl(image: Course["image"] | undefined, width = 1200, height = 675) {
-		return this.resolveImageUrl(image, width, height);
-	}
+	const resolveCourseImageUrl = (
+		image: Course["image"] | undefined,
+		width = 1200,
+		height = 675
+	): string | null => resolveImageUrl(image, width, height);
+
+	return {
+		getAllCourses,
+		getCourseBySlug,
+		getCourseById,
+		getCoursesByTrack,
+		getTracks,
+		getCourseReviews,
+		resolveCourseImageUrl,
+	};
 }

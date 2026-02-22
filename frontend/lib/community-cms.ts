@@ -1,5 +1,5 @@
-import { createSanityClient } from "@superteam/cms";
-import { CommunityService } from "@superteam/cms";
+import { createCommunityService } from "@superteam/cms";
+import { cmsContext, isSanityConfigured } from "./cms-context";
 import type {
 	DiscussionWithMeta,
 	EventWithMeta,
@@ -10,20 +10,7 @@ import type {
 	ProjectCategory,
 } from "@superteam/cms";
 
-const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
-const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET ?? "production";
-
-const isSanityConfigured = Boolean(projectId);
-
-const client = isSanityConfigured && projectId ? createSanityClient({ projectId, dataset }) : null;
-
-// Initialize community service
-const communityService = new CommunityService(
-	client,
-	isSanityConfigured && projectId ? { projectId, dataset } : null
-);
-
-// ── Discussions ────────────────────────────────────────────
+const communityService = createCommunityService(cmsContext);
 
 export async function getAllDiscussions(): Promise<DiscussionWithMeta[]> {
 	return communityService.getAllDiscussions();
@@ -51,8 +38,6 @@ export async function getUnansweredDiscussions(): Promise<DiscussionWithMeta[]> 
 	return communityService.getUnansweredDiscussions();
 }
 
-// ── Events ─────────────────────────────────────────────────
-
 export async function getUpcomingEvents(): Promise<EventWithMeta[]> {
 	return communityService.getUpcomingEvents();
 }
@@ -77,8 +62,6 @@ export function resolveEventImageUrl(
 	return communityService.resolveEventImageUrl(image, width, height);
 }
 
-// ── Projects ───────────────────────────────────────────────
-
 export async function getAllProjects(): Promise<ProjectWithMeta[]> {
 	return communityService.getAllProjects();
 }
@@ -102,8 +85,6 @@ export function resolveProjectImageUrl(
 ) {
 	return communityService.resolveProjectImageUrl(image, width, height);
 }
-
-// ── Members ────────────────────────────────────────────────
 
 export async function getAllMembers(): Promise<MemberWithMeta[]> {
 	return communityService.getAllMembers();

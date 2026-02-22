@@ -1,28 +1,7 @@
-import { createSanityClient } from "@superteam/cms";
-import { NewsletterService } from "@superteam/cms";
+import { createNewsletterService } from "@superteam/cms";
+import { cmsContext, isSanityConfigured } from "./cms-context";
 
-const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
-const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET ?? "production";
-const token = process.env.SANITY_API_TOKEN; // Server-side only token with write permissions
-
-const isSanityConfigured = Boolean(projectId && token);
-
-// Create authenticated client for write operations
-const client =
-	isSanityConfigured && projectId && token
-		? createSanityClient({
-				projectId,
-				dataset,
-				token,
-				useCdn: false, // Don't use CDN for write operations
-			})
-		: null;
-
-// Initialize newsletter service
-const newsletterService = new NewsletterService(
-	client,
-	isSanityConfigured && projectId ? { projectId, dataset } : null
-);
+const newsletterService = createNewsletterService(cmsContext);
 
 export async function subscribeToNewsletter(
 	email: string,

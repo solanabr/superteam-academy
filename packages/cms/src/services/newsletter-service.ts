@@ -1,40 +1,29 @@
-import { CMSService } from "./cms-service";
-import type { createClient } from "next-sanity";
-import type { CMSConfig } from "./cms-service";
+import type { CMSContext } from "./cms-service";
 import type { NewsletterSubscriber } from "../schemas";
+export function createNewsletterService(context: CMSContext) {
+	const { fetch, writeClient } = context;
+	const activeWriteClient = writeClient;
 
-type SanityClient = ReturnType<typeof createClient>;
-
-export class NewsletterService extends CMSService {
-	constructor(client: SanityClient | null, config: CMSConfig | null) {
-		super(client, config);
-	}
-
-	/**
-	 * Subscribe an email to the newsletter
-	 */
-	async subscribe(
+	const subscribe = async (
 		email: string,
 		options?: {
 			source?: string;
 			locale?: string;
 		}
-	): Promise<{ success: boolean; subscriber?: NewsletterSubscriber; error?: string }> {
-		if (!this.client) {
+	): Promise<{ success: boolean; subscriber?: NewsletterSubscriber; error?: string }> => {
+		if (!activeWriteClient) {
 			return { success: false, error: "Sanity client not configured" };
 		}
 
 		try {
-			// Check if email already exists
-			const existing = await this.fetch<NewsletterSubscriber>(
+			const existing = await fetch<NewsletterSubscriber>(
 				`*[_type == "newsletterSubscriber" && email == $email][0]`,
 				{ email }
 			);
 
 			if (existing) {
-				// If previously unsubscribed, reactivate
 				if (existing.status === "unsubscribed") {
-					const updated = await this.client
+					const updated = await activeWriteClient
 						.patch(existing._id)
 						.set({
 							status: "active",
@@ -46,12 +35,10 @@ export class NewsletterService extends CMSService {
 					return { success: true, subscriber: updated as NewsletterSubscriber };
 				}
 
-				// Already subscribed
 				return { success: true, subscriber: existing };
 			}
 
-			// Create new subscriber
-			const subscriber = await this.client.create({
+			const subscriber = await activeWriteClient.create({
 				_type: "newsletterSubscriber" as const,
 				email,
 				status: "active" as const,
@@ -67,18 +54,15 @@ export class NewsletterService extends CMSService {
 				error: error instanceof Error ? error.message : "Unknown error",
 			};
 		}
-	}
+	};
 
-	/**
-	 * Unsubscribe an email from the newsletter
-	 */
-	async unsubscribe(email: string): Promise<{ success: boolean; error?: string }> {
-		if (!this.client) {
+	const unsubscribe = async (email: string): Promise<{ success: boolean; error?: string }> => {
+		if (!activeWriteClient) {
 			return { success: false, error: "Sanity client not configured" };
 		}
 
 		try {
-			const subscriber = await this.fetch<NewsletterSubscriber>(
+			const subscriber = await fetch<NewsletterSubscriber>(
 				`*[_type == "newsletterSubscriber" && email == $email][0]`,
 				{ email }
 			);
@@ -87,7 +71,7 @@ export class NewsletterService extends CMSService {
 				return { success: false, error: "Email not found" };
 			}
 
-			await this.client
+			await activeWriteClient
 				.patch(subscriber._id)
 				.set({
 					status: "unsubscribed",
@@ -102,37 +86,38 @@ export class NewsletterService extends CMSService {
 				error: error instanceof Error ? error.message : "Unknown error",
 			};
 		}
-	}
+	};
 
-	/**
-	 * Get subscriber by email
-	 */
-	async getSubscriber(email: string): Promise<NewsletterSubscriber | null> {
-		return this.fetch<NewsletterSubscriber>(
+	const getSubscriber = async (email: string): Promise<NewsletterSubscriber | null> => {
+		return fetch<NewsletterSubscriber>(
 			`*[_type == "newsletterSubscriber" && email == $email][0]`,
 			{ email }
 		);
-	}
+	};
 
-	/**
-	 * Get all active subscribers
-	 */
-	async getActiveSubscribers(): Promise<NewsletterSubscriber[]> {
-		const subscribers = await this.fetch<NewsletterSubscriber[]>(
+	const getActiveSubscribers = async (): Promise<NewsletterSubscriber[]> => {
+		const subscribers = await fetch<NewsletterSubscriber[]>(
 			`*[_type == "newsletterSubscriber" && status == "active"] | order(subscribedAt desc)`
 		);
 		return subscribers || [];
-	}
+	};
 
-	/**
-	 * Get subscriber count by status
-	 */
-	async getSubscriberCount(status?: "active" | "unsubscribed" | "bounced"): Promise<number> {
+	const getSubscriberCount = async (
+		status?: "active" | "unsubscribed" | "bounced"
+	): Promise<number> => {
 		const query = status
 			? `count(*[_type == "newsletterSubscriber" && status == $status])`
 			: `count(*[_type == "newsletterSubscriber"])`;
 
-		const count = await this.fetch<number>(query, status ? { status } : undefined);
+		const count = await fetch<number>(query, status ? { status } : undefined);
 		return count || 0;
-	}
+	};
+
+	return {
+		subscribe,
+		unsubscribe,
+		getSubscriber,
+		getActiveSubscribers,
+		getSubscriberCount,
+	};
 }

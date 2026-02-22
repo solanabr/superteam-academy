@@ -7,7 +7,7 @@ import type {
 	EventStatus,
 	ProjectCategory,
 } from "../schemas";
-import { CMSService } from "./cms-service";
+import type { CMSContext } from "./cms-service";
 import {
 	allDiscussionsQuery,
 	discussionBySlugQuery,
@@ -57,62 +57,60 @@ export interface MemberWithMeta extends Omit<CommunityMember, "user"> {
 	achievementCount: number;
 }
 
-export class CommunityService extends CMSService {
-	// ── Discussions ────────────────────────────────────────────
+export function createCommunityService(context: CMSContext) {
+	const { fetch, resolveImageUrl, readClient } = context;
 
-	async getAllDiscussions(): Promise<DiscussionWithMeta[]> {
-		if (!this.client) return [];
-		return (await this.fetch<DiscussionWithMeta[]>(allDiscussionsQuery)) || [];
-	}
+	const getAllDiscussions = async (): Promise<DiscussionWithMeta[]> => {
+		if (!readClient) return [];
+		return (await fetch<DiscussionWithMeta[]>(allDiscussionsQuery)) || [];
+	};
 
-	async getDiscussionBySlug(slug: string): Promise<DiscussionWithMeta | null> {
-		if (!this.client) return null;
-		return this.fetch<DiscussionWithMeta | null>(discussionBySlugQuery, { slug });
-	}
+	const getDiscussionBySlug = async (slug: string): Promise<DiscussionWithMeta | null> => {
+		if (!readClient) return null;
+		return fetch<DiscussionWithMeta | null>(discussionBySlugQuery, { slug });
+	};
 
-	async getDiscussionsByCategory(category: DiscussionCategory): Promise<DiscussionWithMeta[]> {
-		if (!this.client) return [];
-		return (
-			(await this.fetch<DiscussionWithMeta[]>(discussionsByCategoryQuery, { category })) || []
-		);
-	}
+	const getDiscussionsByCategory = async (
+		category: DiscussionCategory
+	): Promise<DiscussionWithMeta[]> => {
+		if (!readClient) return [];
+		return (await fetch<DiscussionWithMeta[]>(discussionsByCategoryQuery, { category })) || [];
+	};
 
-	async getDiscussionsByTag(tag: string): Promise<DiscussionWithMeta[]> {
-		if (!this.client) return [];
-		return (await this.fetch<DiscussionWithMeta[]>(discussionsByTagQuery, { tag })) || [];
-	}
+	const getDiscussionsByTag = async (tag: string): Promise<DiscussionWithMeta[]> => {
+		if (!readClient) return [];
+		return (await fetch<DiscussionWithMeta[]>(discussionsByTagQuery, { tag })) || [];
+	};
 
-	async getTrendingDiscussions(): Promise<DiscussionWithMeta[]> {
-		const discussions = await this.getAllDiscussions();
+	const getTrendingDiscussions = async (): Promise<DiscussionWithMeta[]> => {
+		const discussions = await getAllDiscussions();
 		return discussions.sort((a, b) => b.points - a.points);
-	}
+	};
 
-	async getUnansweredDiscussions(): Promise<DiscussionWithMeta[]> {
-		const discussions = await this.getAllDiscussions();
+	const getUnansweredDiscussions = async (): Promise<DiscussionWithMeta[]> => {
+		const discussions = await getAllDiscussions();
 		return discussions.filter((d) => !d.solved);
-	}
+	};
 
-	// ── Events ─────────────────────────────────────────────────
+	const getUpcomingEvents = async (): Promise<EventWithMeta[]> => {
+		if (!readClient) return [];
+		return (await fetch<EventWithMeta[]>(upcomingEventsQuery)) || [];
+	};
 
-	async getUpcomingEvents(): Promise<EventWithMeta[]> {
-		if (!this.client) return [];
-		return (await this.fetch<EventWithMeta[]>(upcomingEventsQuery)) || [];
-	}
+	const getPastEvents = async (): Promise<EventWithMeta[]> => {
+		if (!readClient) return [];
+		return (await fetch<EventWithMeta[]>(pastEventsQuery)) || [];
+	};
 
-	async getPastEvents(): Promise<EventWithMeta[]> {
-		if (!this.client) return [];
-		return (await this.fetch<EventWithMeta[]>(pastEventsQuery)) || [];
-	}
+	const getEventBySlug = async (slug: string): Promise<EventWithMeta | null> => {
+		if (!readClient) return null;
+		return fetch<EventWithMeta | null>(eventBySlugQuery, { slug });
+	};
 
-	async getEventBySlug(slug: string): Promise<EventWithMeta | null> {
-		if (!this.client) return null;
-		return this.fetch<EventWithMeta | null>(eventBySlugQuery, { slug });
-	}
-
-	async getEventsByStatus(status: EventStatus): Promise<EventWithMeta[]> {
-		if (!this.client) return [];
+	const getEventsByStatus = async (status: EventStatus): Promise<EventWithMeta[]> => {
+		if (!readClient) return [];
 		return (
-			(await this.fetch<EventWithMeta[]>(
+			(await fetch<EventWithMeta[]>(
 				`*[_type == "event" && status == $status] | order(startDate ${status === "past" ? "desc" : "asc"}) {
 					_id,_type,_createdAt,_updatedAt,title,slug,description,type,status,startDate,endDate,timezone,location,isOnline,image,maxAttendees,registrationUrl,recordingUrl,speakers,tags,publishedAt,
 					"attendeeCount": count(*[_type == "eventRegistration" && references(^._id)])
@@ -120,61 +118,80 @@ export class CommunityService extends CMSService {
 				{ status }
 			)) || []
 		);
-	}
+	};
 
-	// ── Projects ───────────────────────────────────────────────
+	const getAllProjects = async (): Promise<ProjectWithMeta[]> => {
+		if (!readClient) return [];
+		return (await fetch<ProjectWithMeta[]>(allProjectsQuery)) || [];
+	};
 
-	async getAllProjects(): Promise<ProjectWithMeta[]> {
-		if (!this.client) return [];
-		return (await this.fetch<ProjectWithMeta[]>(allProjectsQuery)) || [];
-	}
+	const getFeaturedProjects = async (): Promise<ProjectWithMeta[]> => {
+		if (!readClient) return [];
+		return (await fetch<ProjectWithMeta[]>(featuredProjectsQuery)) || [];
+	};
 
-	async getFeaturedProjects(): Promise<ProjectWithMeta[]> {
-		if (!this.client) return [];
-		return (await this.fetch<ProjectWithMeta[]>(featuredProjectsQuery)) || [];
-	}
+	const getProjectBySlug = async (slug: string): Promise<ProjectWithMeta | null> => {
+		if (!readClient) return null;
+		return fetch<ProjectWithMeta | null>(projectBySlugQuery, { slug });
+	};
 
-	async getProjectBySlug(slug: string): Promise<ProjectWithMeta | null> {
-		if (!this.client) return null;
-		return this.fetch<ProjectWithMeta | null>(projectBySlugQuery, { slug });
-	}
+	const getProjectsByCategory = async (category: ProjectCategory): Promise<ProjectWithMeta[]> => {
+		if (!readClient) return [];
+		return (await fetch<ProjectWithMeta[]>(projectsByCategoryQuery, { category })) || [];
+	};
 
-	async getProjectsByCategory(category: ProjectCategory): Promise<ProjectWithMeta[]> {
-		if (!this.client) return [];
-		return (await this.fetch<ProjectWithMeta[]>(projectsByCategoryQuery, { category })) || [];
-	}
+	const getAllMembers = async (): Promise<MemberWithMeta[]> => {
+		if (!readClient) return [];
+		return (await fetch<MemberWithMeta[]>(allMembersQuery)) || [];
+	};
 
-	// ── Members ────────────────────────────────────────────────
+	const getTopMembers = async (limit = 10): Promise<MemberWithMeta[]> => {
+		if (!readClient) return [];
+		return (await fetch<MemberWithMeta[]>(topMembersQuery, { limit })) || [];
+	};
 
-	async getAllMembers(): Promise<MemberWithMeta[]> {
-		if (!this.client) return [];
-		return (await this.fetch<MemberWithMeta[]>(allMembersQuery)) || [];
-	}
+	const getMembersByBadge = async (badge: string): Promise<MemberWithMeta[]> => {
+		if (!readClient) return [];
+		return (await fetch<MemberWithMeta[]>(membersByBadgeQuery, { badge })) || [];
+	};
 
-	async getTopMembers(limit = 10): Promise<MemberWithMeta[]> {
-		if (!this.client) return [];
-		return (await this.fetch<MemberWithMeta[]>(topMembersQuery, { limit })) || [];
-	}
+	const resolveEventImageUrl = (
+		image: Event["image"] | undefined,
+		width = 1200,
+		height = 675
+	): string | null => resolveImageUrl(image, width, height);
 
-	async getMembersByBadge(badge: string): Promise<MemberWithMeta[]> {
-		if (!this.client) return [];
-		return (await this.fetch<MemberWithMeta[]>(membersByBadgeQuery, { badge })) || [];
-	}
+	const resolveProjectImageUrl = (
+		image: Project["image"] | undefined,
+		width = 800,
+		height = 450
+	): string | null => resolveImageUrl(image, width, height);
 
-	// ── Image resolution ───────────────────────────────────────
-
-	resolveEventImageUrl(image: Event["image"] | undefined, width = 1200, height = 675) {
-		return this.resolveImageUrl(image, width, height);
-	}
-
-	resolveProjectImageUrl(image: Project["image"] | undefined, width = 800, height = 450) {
-		return this.resolveImageUrl(image, width, height);
-	}
-
-	resolveUserImageUrl(
+	const resolveUserImageUrl = (
 		image: { _type: "image"; asset: { _ref: string; _type: "reference" } } | undefined,
 		size = 128
-	) {
-		return this.resolveImageUrl(image, size, size);
-	}
+	): string | null => resolveImageUrl(image, size, size);
+
+	return {
+		getAllDiscussions,
+		getDiscussionBySlug,
+		getDiscussionsByCategory,
+		getDiscussionsByTag,
+		getTrendingDiscussions,
+		getUnansweredDiscussions,
+		getUpcomingEvents,
+		getPastEvents,
+		getEventBySlug,
+		getEventsByStatus,
+		getAllProjects,
+		getFeaturedProjects,
+		getProjectBySlug,
+		getProjectsByCategory,
+		getAllMembers,
+		getTopMembers,
+		getMembersByBadge,
+		resolveEventImageUrl,
+		resolveProjectImageUrl,
+		resolveUserImageUrl,
+	};
 }

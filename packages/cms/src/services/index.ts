@@ -1,11 +1,12 @@
-export { CMSService } from "./cms-service";
-export type { CMSConfig } from "./cms-service";
-export { CourseService } from "./course-service";
-export { CommunityService } from "./community-service";
+export { createCmsContext } from "./cms-service";
+export type { CMSConfig, CMSContext, CMSContextInput } from "./cms-service";
+export { createCourseService } from "./course-service";
+export type { CourseReview } from "./course-service";
+export { createCommunityService } from "./community-service";
 export type {
 	DiscussionWithMeta,
 	EventWithMeta,
 	ProjectWithMeta,
 	MemberWithMeta,
 } from "./community-service";
-export { NewsletterService } from "./newsletter-service";
+export { createNewsletterService } from "./newsletter-service";

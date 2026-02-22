@@ -1,19 +1,7 @@
-import { createSanityClient } from "@superteam/cms";
+import { createCourseService } from "@superteam/cms";
 import type { Course } from "@superteam/cms";
-import { CourseService } from "@superteam/cms";
-
-const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
-const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET ?? "production";
-
-const isSanityConfigured = Boolean(projectId);
-
-const client = isSanityConfigured && projectId ? createSanityClient({ projectId, dataset }) : null;
-
-// Initialize course service
-const courseService = new CourseService(
-	client,
-	isSanityConfigured && projectId ? { projectId, dataset } : null
-);
+import { cmsContext, isSanityConfigured } from "./cms-context";
+const courseService = createCourseService(cmsContext);
 
 export type CourseReview = {
 	id: string;
