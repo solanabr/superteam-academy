@@ -3,10 +3,20 @@ import { NewsletterService } from "@superteam/cms";
 
 const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
 const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET ?? "production";
+const token = process.env.SANITY_API_TOKEN; // Server-side only token with write permissions
 
-const isSanityConfigured = Boolean(projectId);
+const isSanityConfigured = Boolean(projectId && token);
 
-const client = isSanityConfigured && projectId ? createSanityClient({ projectId, dataset }) : null;
+// Create authenticated client for write operations
+const client =
+	isSanityConfigured && projectId && token
+		? createSanityClient({
+				projectId,
+				dataset,
+				token,
+				useCdn: false, // Don't use CDN for write operations
+			})
+		: null;
 
 // Initialize newsletter service
 const newsletterService = new NewsletterService(

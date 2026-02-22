@@ -62,7 +62,6 @@ export class NewsletterService extends CMSService {
 
 			return { success: true, subscriber: subscriber as NewsletterSubscriber };
 		} catch (error) {
-			console.error("Newsletter subscription error:", error);
 			return {
 				success: false,
 				error: error instanceof Error ? error.message : "Unknown error",
