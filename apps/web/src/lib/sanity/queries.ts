@@ -446,7 +446,9 @@ export async function getAllCoursesAdmin(): Promise<AdminCourse[]> {
       "lessonCount": count(modules[]->lessons[]),
       "trackCollectionAddress": onChainStatus.trackCollectionAddress,
       onChainStatus
-    }`
+    }`,
+    undefined,
+    0
   );
 }
 
@@ -463,6 +465,8 @@ export async function getAllAchievementsAdmin(): Promise<AdminAchievement[]> {
       maxSupply,
       metadataUri,
       onChainStatus
-    }`
+    }`,
+    undefined,
+    0
   );
 }
