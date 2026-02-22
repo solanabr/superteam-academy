@@ -36,7 +36,6 @@ interface HeatmapCell {
 
 interface HeatmapData {
   columns: HeatmapCell[][];
-  todayColIdx: number;
   monthLabels: { label: string; colIdx: number }[];
 }
 
@@ -112,7 +111,6 @@ function buildHeatmapData(streakHistory: Record<string, number>): HeatmapData {
 
   const columns: HeatmapCell[][] = [];
   const monthLabelMap = new Map<number, string>();
-  let todayColIdx = COLS - 1;
 
   for (let col = 0; col < COLS; col++) {
     const colCells: HeatmapCell[] = [];
@@ -132,7 +130,6 @@ function buildHeatmapData(streakHistory: Record<string, number>): HeatmapData {
       const count = streakHistory[dateStr] ?? 0;
       const level = countToLevel(count);
 
-      if (isToday) todayColIdx = col;
       colCells.push({ date: dateStr, level, isToday, count });
 
       if (row === 0 && !monthLabelMap.has(col)) {
@@ -160,7 +157,7 @@ function buildHeatmapData(streakHistory: Record<string, number>): HeatmapData {
     }
   }
 
-  return { columns, todayColIdx, monthLabels };
+  return { columns, monthLabels };
 }
 
 /* ---------------------------------------------------------------
@@ -513,13 +510,6 @@ export function DashboardIdentityPanel({
                     role="img"
                     aria-label={t("streak")}
                   >
-                    {/* Today column vertical glow */}
-                    <div
-                      className="today-col-glow"
-                      aria-hidden="true"
-                      style={{ left: heatmap.todayColIdx * (11 + 3) }}
-                    />
-
                     {/* Grid cells — iterate column-major */}
                     {heatmap.columns.flatMap((col, colIdx) =>
                       col.map((cell, rowIdx) =>

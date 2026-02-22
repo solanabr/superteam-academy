@@ -182,13 +182,13 @@ export function Header() {
       {/* Main header bar — bottom border is XP progress */}
       <div className="relative bg-transparent backdrop-blur-md">
         <div className="relative mx-auto flex h-[56px] max-w-[1600px] items-center px-[16px]">
-          {/* Center: nav links (desktop) — absolute to be truly centered */}
-          <nav
-            className="absolute inset-0 hidden items-center justify-center gap-[2px] md:flex"
-            aria-label={tA11y("platformNavigation")}
-          >
-            {isLoggedIn &&
-              navItems.map((item) => {
+          {/* Center: nav pill bar (desktop) */}
+          {isLoggedIn && (
+            <nav
+              className="nav-bar absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 md:flex"
+              aria-label={tA11y("platformNavigation")}
+            >
+              {navItems.map((item) => {
                 const fullHref = `/${locale}${item.href}`;
                 const isActive = pathname.startsWith(fullHref);
                 const Icon = item.icon;
@@ -198,19 +198,15 @@ export function Header() {
                     key={item.key}
                     href={fullHref}
                     aria-current={isActive ? "page" : undefined}
-                    className={cn(
-                      "flex items-center gap-[8px] rounded-[var(--r-md)] px-[14px] py-[7px] text-[13px] font-semibold no-underline transition-all duration-150",
-                      isActive
-                        ? "bg-[var(--primary-dim)] text-[var(--primary)]"
-                        : "text-[var(--text-3)] hover:bg-[var(--card)] hover:text-[var(--text-2)]"
-                    )}
+                    className={cn("nav-link", isActive && "active")}
                   >
-                    <Icon size={16} weight="bold" />
+                    <Icon size={16} weight={isActive ? "fill" : "bold"} />
                     <span>{t(item.key)}</span>
                   </Link>
                 );
               })}
-          </nav>
+            </nav>
+          )}
 
           {/* Right: XP ring → lang → theme → user (desktop) */}
           <div className="relative z-10 ml-auto hidden shrink-0 items-center gap-[10px] md:flex">
