@@ -15,8 +15,8 @@ function TestResultRow({ result }: { result: TestResult }) {
       className={cn(
         "flex flex-col gap-1 rounded-md border p-3",
         result.passed
-          ? "border-success/30 bg-success/5"
-          : "border-danger/30 bg-danger/5"
+          ? "[background:var(--success-bg)] [border-color:var(--success-border)]"
+          : "[background:var(--danger-light)] [border-color:var(--danger-border)]"
       )}
     >
       <div className="flex items-center gap-2">
@@ -98,13 +98,13 @@ export function OutputPanel({
           <TabsList className="h-8 bg-transparent p-0">
             <TabsTrigger
               value="output"
-              className="data-[state=active]:bg-subtle/80 h-7 rounded-sm px-2 text-xs"
+              className="h-7 rounded-sm px-2 text-xs data-[state=active]:[background:var(--input)]"
             >
               {t("output")}
             </TabsTrigger>
             <TabsTrigger
               value="tests"
-              className="data-[state=active]:bg-subtle/80 h-7 rounded-sm px-2 text-xs"
+              className="h-7 rounded-sm px-2 text-xs data-[state=active]:[background:var(--input)]"
             >
               {t("testCases")}
               {hasTestResults && (
@@ -112,8 +112,8 @@ export function OutputPanel({
                   className={cn(
                     "ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold",
                     allPassed
-                      ? "bg-success/20 text-success"
-                      : "bg-danger/20 text-danger"
+                      ? "text-success [background:var(--success-light)]"
+                      : "text-danger [background:var(--danger-light)]"
                   )}
                 >
                   {passedCount}/{totalCount}
@@ -141,7 +141,7 @@ export function OutputPanel({
           ) : executionResult ? (
             <div className="space-y-2">
               {executionResult.error && (
-                <div className="border-danger/30 bg-danger/5 flex items-start gap-2 rounded-md border p-3">
+                <div className="flex items-start gap-2 rounded-md border p-3 [background:var(--danger-light)] [border-color:var(--danger-border)]">
                   <Warning
                     size={16}
                     weight="duotone"
@@ -171,7 +171,7 @@ export function OutputPanel({
           {hasTestResults ? (
             <div className="space-y-2">
               {allPassed && (
-                <div className="border-success/30 bg-success/10 mb-3 flex items-center gap-2 rounded-md border p-3">
+                <div className="mb-3 flex items-center gap-2 rounded-md border p-3 [background:var(--success-bg)] [border-color:var(--success-border)]">
                   <CheckCircle
                     size={20}
                     weight="duotone"

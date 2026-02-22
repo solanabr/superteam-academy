@@ -6,16 +6,22 @@ interface DifficultyBadgeProps {
   className?: string;
 }
 
+/**
+ * v9 difficulty chip styles — pill-beg / pill-int / pill-adv pattern.
+ * Uses CSS var() for backgrounds not yet mapped in Tailwind config.
+ */
 const difficultyStyles = {
-  beginner: "border-primary/40 bg-card text-primary-dark dark:text-primary",
+  beginner:
+    "[border-color:var(--primary-border)] [background:var(--primary-dim)] text-primary-dark dark:text-primary",
   intermediate:
-    "border-secondary-light/40 bg-card text-secondary dark:text-secondary-light",
-  advanced: "border-streak/40 bg-card text-[#9A3412] dark:text-streak",
+    "[border-color:var(--accent-border)] bg-xp-dim text-xp-dark dark:text-xp",
+  advanced:
+    "[border-color:var(--streak-border)] bg-streak-light text-streak dark:[background:var(--streak-dim)]",
 } as const;
 
 /** Shared base class for all card-overlay chip badges (difficulty, enrolled, completed). */
 export const chipBase =
-  "inline-flex items-center rounded-full border bg-card px-3 py-0.5 text-[11px] font-display font-bold uppercase tracking-wider";
+  "inline-flex items-center rounded-full border px-3 py-0.5 text-[11px] font-display font-bold uppercase tracking-wider";
 
 export function DifficultyBadge({
   difficulty,

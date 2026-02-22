@@ -594,7 +594,7 @@ export function DeployPanel({
                         isComplete &&
                           "border-green-500 bg-green-500 text-white",
                         isCurrent &&
-                          "border-primary bg-gradient-to-r from-[#9945FF] to-[#14F195] text-white",
+                          "border-primary bg-gradient-to-r from-solana-purple to-solana-green text-white",
                         !isComplete &&
                           !isCurrent &&
                           "border-muted-foreground/30 text-muted-foreground/50"
@@ -663,7 +663,7 @@ export function DeployPanel({
               </div>
               <Progress
                 value={chunkPercent}
-                className="h-2 [&>div]:bg-gradient-to-r [&>div]:from-[#9945FF] [&>div]:to-[#14F195]"
+                className="h-2 [&>div]:bg-gradient-to-r [&>div]:from-solana-purple [&>div]:to-solana-green"
               />
               {estimatedTimeRemaining !== null &&
                 estimatedTimeRemaining > 0 && (
@@ -871,7 +871,7 @@ export function DeployPanel({
 
         <Button
           onClick={handleDeploy}
-          className="w-full bg-gradient-to-r from-[#9945FF] to-[#14F195] font-semibold text-white hover:opacity-90"
+          className="w-full bg-gradient-to-r from-solana-purple to-solana-green font-semibold text-white hover:opacity-90"
           disabled={!publicKey}
         >
           {t("deployToDevnet")}

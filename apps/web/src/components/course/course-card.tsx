@@ -1,30 +1,31 @@
+"use client";
+
 import Link from "next/link";
-import Image from "next/image";
+import { CheckCircle } from "@phosphor-icons/react";
 import { useTranslations } from "next-intl";
 import { useLocale } from "next-intl";
-import { Clock, Lightning, CheckCircle } from "@phosphor-icons/react";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-} from "@/components/ui/card";
-import {
-  DifficultyBadge,
-  chipBase,
-} from "@/components/course/difficulty-badge";
 
 interface CourseCardProps {
   slug: string;
   title: string;
   description: string;
   difficulty: "beginner" | "intermediate" | "advanced";
+  /** Total duration in hours */
   duration: number;
-  thumbnail?: string;
+  /** Total number of lessons */
+  lessonCount?: number;
   xpReward: number;
   instructorName?: string;
   status?: "enrolled" | "completed";
+  /** 1-based position in the grid — rendered as the large ghost background number */
+  courseNum?: number;
 }
+
+const trackClass: Record<"beginner" | "intermediate" | "advanced", string> = {
+  beginner: "beg",
+  intermediate: "int",
+  advanced: "adv",
+};
 
 export function CourseCard({
   slug,
@@ -32,72 +33,80 @@ export function CourseCard({
   description,
   difficulty,
   duration,
-  thumbnail,
+  lessonCount,
   xpReward,
   instructorName,
   status,
+  courseNum,
 }: CourseCardProps) {
   const t = useTranslations("courses");
   const locale = useLocale();
+  const track = trackClass[difficulty];
 
   return (
-    <Link href={`/${locale}/courses/${slug}`} className="group block">
-      <Card className="flex h-full flex-col overflow-hidden">
-        <div className="relative h-44 overflow-hidden bg-primary-bg">
-          <Image
-            src={thumbnail || "/cover.png"}
-            alt={title}
-            fill
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
-          />
-          <div className="absolute left-3 top-3">
-            <DifficultyBadge difficulty={difficulty} label={t(difficulty)} />
-          </div>
-          {status === "enrolled" && (
-            <div className="absolute right-3 top-3">
-              <span className={`${chipBase} border-primary/40 text-primary`}>
-                {t("enrolled")}
+    <Link
+      href={`/${locale}/courses/${slug}`}
+      className={`course-card ${track}`}
+      aria-label={title}
+    >
+      {/* Large ghost background number — zero-padded per v9 spec */}
+      {courseNum !== undefined && (
+        <span className="course-num" aria-hidden="true">
+          {String(courseNum).padStart(2, "0")}
+        </span>
+      )}
+
+      <div className="course-card-body">
+        {/* Status badge — inline pill above the title */}
+        {status === "completed" && (
+          <span
+            className="course-card-status completed"
+            aria-label={t("completed")}
+          >
+            <CheckCircle size={11} weight="fill" aria-hidden="true" />
+            {t("completed")}
+          </span>
+        )}
+        {status === "enrolled" && (
+          <span
+            className="course-card-status enrolled"
+            aria-label={t("enrolled")}
+          >
+            {t("enrolled")}
+          </span>
+        )}
+
+        {/* 1. Title */}
+        <h3 className="course-card-title">{title}</h3>
+
+        {/* 2. Instructor by-line */}
+        {instructorName && (
+          <p className="course-card-by">
+            {t("courseBy")} {instructorName}
+          </p>
+        )}
+
+        {/* 3. Description — 2-line clamp handled by CSS */}
+        <p className="course-card-desc">{description}</p>
+
+        {/* 4. Footer: stats + XP */}
+        <div className="course-card-foot">
+          <div className="course-card-stat">
+            {lessonCount !== undefined && (
+              <span>
+                {lessonCount} {t("lessons")}
               </span>
-            </div>
-          )}
-          {status === "completed" && (
-            <div className="absolute right-3 top-3">
-              <span
-                className={`${chipBase} border-success/40 gap-1 text-success`}
-              >
-                <CheckCircle size={12} weight="fill" aria-hidden="true" />
-                {t("completed")}
-              </span>
-            </div>
-          )}
-        </div>
-        <CardHeader className="pb-2">
-          <h3 className="line-clamp-2 font-display text-lg font-bold leading-tight transition-colors group-hover:text-primary">
-            {title}
-          </h3>
-          {instructorName && (
-            <p className="text-sm text-text-3">
-              {t("courseBy")} {instructorName}
-            </p>
-          )}
-        </CardHeader>
-        <CardContent className="flex-1">
-          <p className="line-clamp-2 text-sm text-text-2">{description}</p>
-        </CardContent>
-        <CardFooter className="flex items-center justify-between border-t border-border pt-4">
-          <div className="flex items-center gap-1 text-sm text-text-3">
-            <Clock size={14} weight="duotone" className="text-text-3" />
+            )}
             <span>
               {duration} {t("hours")}
             </span>
           </div>
-          <span className="flex items-center gap-1 font-display font-black text-accent-dark dark:text-accent">
-            <Lightning size={14} weight="duotone" className="text-accent" />
-            {xpReward} XP
+
+          <span className="course-card-xp" aria-label={`${xpReward} XP`}>
+            <span aria-hidden="true">{"\u26A1"}</span> {xpReward}
           </span>
-        </CardFooter>
-      </Card>
+        </div>
+      </div>
     </Link>
   );
 }

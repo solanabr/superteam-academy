@@ -27,15 +27,15 @@ function getMonacoLanguage(language: EditorLanguage): string {
 
 function EditorSkeleton() {
   return (
-    <div className="flex h-full w-full flex-col gap-2 bg-white p-4 dark:bg-[#333842]">
-      <div className="bg-subtle/20 h-4 w-16 animate-pulse rounded" />
-      <div className="bg-subtle/20 h-4 w-48 animate-pulse rounded" />
-      <div className="bg-subtle/20 h-4 w-32 animate-pulse rounded" />
-      <div className="bg-subtle/20 h-4 w-64 animate-pulse rounded" />
-      <div className="bg-subtle/20 h-4 w-24 animate-pulse rounded" />
-      <div className="bg-subtle/20 h-4 w-56 animate-pulse rounded" />
-      <div className="bg-subtle/20 h-4 w-40 animate-pulse rounded" />
-      <div className="bg-subtle/20 h-4 w-36 animate-pulse rounded" />
+    <div className="flex h-full w-full flex-col gap-2 bg-[var(--surface)] p-4">
+      <div className="h-4 w-16 animate-pulse rounded [background:var(--border-default)]" />
+      <div className="h-4 w-48 animate-pulse rounded [background:var(--border-default)]" />
+      <div className="h-4 w-32 animate-pulse rounded [background:var(--border-default)]" />
+      <div className="h-4 w-64 animate-pulse rounded [background:var(--border-default)]" />
+      <div className="h-4 w-24 animate-pulse rounded [background:var(--border-default)]" />
+      <div className="h-4 w-56 animate-pulse rounded [background:var(--border-default)]" />
+      <div className="h-4 w-40 animate-pulse rounded [background:var(--border-default)]" />
+      <div className="h-4 w-36 animate-pulse rounded [background:var(--border-default)]" />
     </div>
   );
 }
