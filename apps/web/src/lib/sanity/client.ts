@@ -18,13 +18,16 @@ export const client = createClient({
 
 /**
  * Cached fetch wrapper — uses Next.js ISR revalidation (default 1 hour).
+ * Pass revalidate=0 to bypass both Next.js cache and Sanity CDN (for admin ops).
  */
 export async function sanityFetch<T>(
   query: string,
   params?: QueryParams,
   revalidate = 3600
 ): Promise<T> {
-  return client.fetch<T>(query, params ?? {}, {
+  const fetcher =
+    revalidate === 0 ? client.withConfig({ useCdn: false }) : client;
+  return fetcher.fetch<T>(query, params ?? {}, {
     next: { revalidate },
   });
 }
