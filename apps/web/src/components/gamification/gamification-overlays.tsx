@@ -6,6 +6,7 @@ import { XpPopup } from "@/components/gamification/xp-popup";
 import { LevelUpOverlay } from "@/components/gamification/level-up-overlay";
 import { AchievementPopup } from "@/components/gamification/achievement-popup";
 import { CertificatePopup } from "@/components/gamification/certificate-popup";
+import { ToastContainer } from "@/components/ui/toast-container";
 
 export function GamificationOverlays() {
   const [show, setShow] = useState(false);
@@ -26,17 +27,21 @@ export function GamificationOverlays() {
     return () => subscription.unsubscribe();
   }, []);
 
-  if (!show) return null;
-
   return (
     <>
-      <XpPopup />
-      <LevelUpOverlay />
-      {/* Celebration popups — stacked in bottom-left above XpPopup */}
-      <div className="pointer-events-none fixed bottom-28 left-6 z-50 flex flex-col gap-2">
-        <AchievementPopup className="pointer-events-auto" />
-        <CertificatePopup className="pointer-events-auto" />
-      </div>
+      {/* Toast container always renders — works for auth and non-auth contexts */}
+      <ToastContainer />
+      {!show ? null : (
+        <>
+          <XpPopup />
+          <LevelUpOverlay />
+          {/* Celebration popups — stacked in bottom-left above XpPopup */}
+          <div className="pointer-events-none fixed bottom-28 left-6 z-50 flex flex-col gap-2">
+            <AchievementPopup className="pointer-events-auto" />
+            <CertificatePopup className="pointer-events-auto" />
+          </div>
+        </>
+      )}
     </>
   );
 }

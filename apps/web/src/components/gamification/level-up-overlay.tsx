@@ -1,10 +1,16 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import confetti from "canvas-confetti";
 import { useTranslations } from "next-intl";
 import { LevelBadge } from "./level-badge";
 import { cn } from "@/lib/utils";
+
+/**
+ * V9 Design System: Level-up popup was removed in v8.
+ * Level-up is communicated as a non-blocking toast notification
+ * (not a blocking modal/overlay). The dashboard stat strip updating
+ * is the primary indicator of a level change.
+ */
 
 interface LevelUpEvent {
   newLevel: number;
@@ -21,37 +27,17 @@ export function dispatchLevelUp(newLevel: number): void {
 
 export function LevelUpOverlay() {
   const t = useTranslations("gamification");
-  const [level, setLevel] = useState<number | null>(null);
-  const [visible, setVisible] = useState(false);
-  const [animating, setAnimating] = useState(false);
+  const [events, setEvents] = useState<{ level: number; uid: number }[]>([]);
 
   const handleLevelUp = useCallback((e: Event) => {
     const { newLevel } = (e as CustomEvent<LevelUpEvent>).detail;
-    setLevel(newLevel);
-    setVisible(true);
-    setAnimating(true);
+    const uid = Date.now();
+    setEvents((prev) => [...prev, { level: newLevel, uid }]);
 
-    // Fire confetti from both sides
-    confetti({
-      particleCount: 80,
-      angle: 60,
-      spread: 55,
-      origin: { x: 0, y: 0.6 },
-      colors: ["#0D9488", "#F59E0B", "#312E81", "#5EEAD4"],
-    });
-    confetti({
-      particleCount: 80,
-      angle: 120,
-      spread: 55,
-      origin: { x: 1, y: 0.6 },
-      colors: ["#0D9488", "#F59E0B", "#312E81", "#5EEAD4"],
-    });
-
-    // Auto-dismiss after 3 seconds
+    // Auto-dismiss after 4 seconds
     setTimeout(() => {
-      setAnimating(false);
-      setTimeout(() => setVisible(false), 500);
-    }, 3000);
+      setEvents((prev) => prev.filter((ev) => ev.uid !== uid));
+    }, 4000);
   }, []);
 
   useEffect(() => {
@@ -60,42 +46,36 @@ export function LevelUpOverlay() {
       window.removeEventListener("superteam:level-up", handleLevelUp);
   }, [handleLevelUp]);
 
-  if (!visible || level === null) return null;
+  if (events.length === 0) return null;
 
   return (
     <div
-      className={cn(
-        "pointer-events-none fixed inset-0 z-[100] flex items-center justify-center transition-opacity duration-500",
-        animating ? "opacity-100" : "opacity-0"
-      )}
-      aria-live="assertive"
+      className="pointer-events-none fixed bottom-6 right-6 z-50 flex flex-col gap-2"
+      aria-live="polite"
     >
-      {/* Backdrop */}
-      <div className="bg-bg/60 absolute inset-0 backdrop-blur-sm" />
-
-      {/* Content */}
-      <div
-        className={cn(
-          "relative flex flex-col items-center gap-4 transition-all duration-700",
-          animating ? "translate-y-0 scale-100" : "translate-y-8 scale-75"
-        )}
-      >
-        {/* Animated ring */}
-        <div className="relative">
-          <div className="absolute -inset-4 animate-ping rounded-full bg-primary opacity-20" />
-          <div className="absolute -inset-8 rounded-full bg-primary opacity-10 blur-xl" />
-          <LevelBadge level={level} size="lg" />
+      {events.map((ev) => (
+        <div
+          key={ev.uid}
+          className={cn(
+            "pointer-events-auto inline-flex items-center gap-3",
+            "rounded-[var(--r-full)] border border-[var(--border)] bg-[var(--card)] px-5 py-3",
+            "shadow-[var(--shadow),0_0_24px_var(--level-dim)]"
+          )}
+          style={{
+            animation: "pop-spring 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)",
+          }}
+        >
+          <LevelBadge level={ev.level} size="sm" />
+          <div>
+            <div className="font-mono text-[10px] font-medium uppercase tracking-[1px] text-[var(--level)]">
+              {t("levelUp")}
+            </div>
+            <div className="font-display text-[15px] font-extrabold text-[var(--text)]">
+              {t("levelUpMessage", { level: ev.level })}
+            </div>
+          </div>
         </div>
-
-        <div className="text-center">
-          <h2 className="font-display text-3xl font-black text-primary">
-            {t("levelUp")}
-          </h2>
-          <p className="mt-1 font-body text-lg text-text-3">
-            {t("levelUpMessage", { level })}
-          </p>
-        </div>
-      </div>
+      ))}
     </div>
   );
 }

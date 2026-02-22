@@ -1,45 +1,8 @@
 "use client";
 
-import type { ComponentType } from "react";
 import { useTranslations } from "next-intl";
-import {
-  Footprints,
-  GraduationCap,
-  Lightning,
-  Fire,
-  CalendarCheck,
-  Crown,
-  Code,
-  Anchor,
-  Stack,
-  HandHeart,
-  ChatCircle,
-  Star,
-  RocketLaunch,
-  Bug,
-  Crosshair,
-  ArrowSquareOut,
-} from "@phosphor-icons/react";
-import type { IconProps } from "@phosphor-icons/react";
+import { GLYPH_MAP, SOL_TIER_IDS } from "@/lib/gamification/achievement-meta";
 import { cn } from "@/lib/utils";
-
-const ICON_MAP: Record<string, ComponentType<IconProps>> = {
-  "first-steps": Footprints,
-  "course-completer": GraduationCap,
-  "speed-runner": Lightning,
-  "week-warrior": Fire,
-  "monthly-master": CalendarCheck,
-  "consistency-king": Crown,
-  "rust-rookie": Code,
-  "anchor-expert": Anchor,
-  "full-stack-solana": Stack,
-  helper: HandHeart,
-  "first-comment": ChatCircle,
-  "top-contributor": Star,
-  "early-adopter": RocketLaunch,
-  "bug-hunter": Bug,
-  "perfect-score": Crosshair,
-};
 
 interface AchievementCardProps {
   id: string;
@@ -53,68 +16,78 @@ interface AchievementCardProps {
 export function AchievementCard({
   id,
   name,
-  description,
+  // description is intentionally omitted from the medal grid view
+  // (shown in tooltips or detail panels, not in the compact octagon layout)
+  description: _description,
   unlockedAt,
   explorerUrl,
   className,
 }: AchievementCardProps) {
   const t = useTranslations("gamification");
   const isUnlocked = !!unlockedAt;
-  const Icon = ICON_MAP[id] ?? Star;
+  const isSol = isUnlocked && SOL_TIER_IDS.has(id);
+  const glyph = GLYPH_MAP[id] ?? id.slice(-2).toUpperCase();
 
-  const circleContent = (
-    <div
-      className={cn(
-        "relative mx-auto mb-2 flex h-[68px] w-[68px] items-center justify-center rounded-full border-[3px] transition-transform duration-200 hover:scale-[1.08]",
-        isUnlocked
-          ? "border-accent bg-gradient-to-br from-[#FEF3C7] to-[#FDE68A] text-accent-dark shadow-[0_4px_0_0_var(--accent-dark),0_0_16px_rgba(245,158,11,0.15)] dark:shadow-[0_4px_0_0_rgba(0,0,0,0.35),0_0_16px_rgba(251,191,36,0.15)]"
-          : "border-border bg-subtle text-text-3 opacity-40"
-      )}
-    >
-      <Icon size={28} weight="bold" aria-hidden="true" />
-      {isUnlocked && explorerUrl && (
-        <ArrowSquareOut
-          size={10}
-          weight="bold"
-          className="absolute bottom-1 right-1 opacity-0 transition-opacity group-hover:opacity-70"
-          aria-hidden="true"
-        />
-      )}
+  const medalState = isUnlocked ? (isSol ? "sol" : "earned") : "locked";
+
+  const medal = (
+    <div className={cn("ach-medal", medalState)} aria-hidden="true">
+      <div className="ach-face" />
+      <span className="ach-glyph">{glyph}</span>
     </div>
   );
 
   return (
-    <div className={cn("group w-[100px] text-center", className)}>
+    <div className={cn("ach-item group", className)}>
       {isUnlocked && explorerUrl ? (
         <a
           href={explorerUrl}
           target="_blank"
           rel="noopener noreferrer"
-          aria-label={`View ${name} achievement on Solana Explorer`}
-          title="View on Solana Explorer"
-          className="block"
+          aria-label={`${name} — ${t("viewOnExplorer")}`}
+          className="rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2"
         >
-          {circleContent}
+          {medal}
         </a>
       ) : (
-        circleContent
+        medal
       )}
-      <p
-        className={cn(
-          "font-display text-[11px] font-bold leading-tight",
-          isUnlocked ? "text-text-2" : "text-text-3"
+
+      <div className="ach-info">
+        <p className="ach-name">{name}</p>
+
+        {isUnlocked && (
+          <div className="ach-proof">
+            {explorerUrl ? (
+              <a
+                href={explorerUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="proof-pill"
+                aria-label={`${name} — ${t("viewOnExplorer")}`}
+                tabIndex={-1}
+              >
+                <span className="proof-dot" aria-hidden="true" />
+                {t("onChain")}
+              </a>
+            ) : (
+              <span className="proof-pill">
+                <span className="proof-dot" aria-hidden="true" />
+                {t("onChain")}
+              </span>
+            )}
+          </div>
         )}
-      >
-        {name}
-      </p>
-      <p className="mt-0.5 font-body text-[10px] leading-tight text-text-3">
-        {description}
-      </p>
-      {!isUnlocked && (
-        <p className="mt-0.5 font-display text-[10px] font-bold text-text-3">
-          {t("locked")}
-        </p>
-      )}
+
+        {!isUnlocked && (
+          <p
+            className="mt-0.5 font-mono text-[10px] font-semibold leading-tight"
+            style={{ color: "var(--text-3)" }}
+          >
+            {t("locked")}
+          </p>
+        )}
+      </div>
     </div>
   );
 }
