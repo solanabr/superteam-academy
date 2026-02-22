@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import { fetchConfig, fetchXpBalance } from "../academy-reads";
-import { PROGRAM_ID } from "../pda";
+import { getProgramId } from "../pda";
 
 interface UseXpBalanceResult {
   balance: number;
@@ -31,7 +31,7 @@ export function useXpBalance(): UseXpBalanceResult {
     setError(null);
 
     try {
-      const config = await fetchConfig(connection, PROGRAM_ID);
+      const config = await fetchConfig(connection, getProgramId());
       if (!config) {
         setBalance(0);
         setIsLoading(false);

@@ -14,7 +14,7 @@ import {
   getConnection,
 } from "@/lib/solana/academy-program";
 import { fetchEnrollment, fetchCourse } from "@/lib/solana/academy-reads";
-import { PROGRAM_ID } from "@/lib/solana/pda";
+import { getProgramId } from "@/lib/solana/pda";
 import { isAllLessonsComplete } from "@/lib/solana/bitmap";
 import { checkNewAchievements } from "@/lib/gamification/achievements";
 import {
@@ -395,14 +395,14 @@ async function tryFinalizeCourse(
       courseId,
       learnerPk,
       connection,
-      PROGRAM_ID
+      getProgramId()
     );
     if (!enrollment) return;
 
     // Already finalized on-chain
     if (enrollment.completed_at) return;
 
-    const course = await fetchCourse(courseId, connection, PROGRAM_ID);
+    const course = await fetchCourse(courseId, connection, getProgramId());
     if (!course) return;
 
     const lessonCount = Number(course.lesson_count);
@@ -443,7 +443,7 @@ async function tryIssueCredential(
       courseId,
       learnerPk,
       connection,
-      PROGRAM_ID
+      getProgramId()
     );
     if (!enrollment) return;
     if (enrollment.credential_asset) return;
@@ -468,7 +468,11 @@ async function tryIssueCredential(
     }
 
     // Fetch on-chain course for XP calculation
-    const onChainCourse = await fetchCourse(courseId, connection, PROGRAM_ID);
+    const onChainCourse = await fetchCourse(
+      courseId,
+      connection,
+      getProgramId()
+    );
     const totalXp = onChainCourse
       ? Number(onChainCourse.xp_per_lesson) *
         (Number(onChainCourse.lesson_count) || 1)

@@ -14,7 +14,7 @@ import {
 import {
   findCoursePDA,
   findAchievementTypePDA,
-  PROGRAM_ID,
+  getProgramId,
 } from "@/lib/solana/pda";
 import {
   verifyAuthorityMatchesConfig,
@@ -77,7 +77,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         };
       }
 
-      const [coursePda] = findCoursePDA(course._id, PROGRAM_ID);
+      const [coursePda] = findCoursePDA(course._id, getProgramId());
       const accountInfo = await connection.getAccountInfo(coursePda);
 
       if (!accountInfo) {
@@ -140,7 +140,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         };
       }
 
-      const [achPda] = findAchievementTypePDA(ach._id, PROGRAM_ID);
+      const [achPda] = findAchievementTypePDA(ach._id, getProgramId());
       const accountInfo = await connection.getAccountInfo(achPda);
 
       if (!accountInfo) {
@@ -168,7 +168,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   return NextResponse.json({
     program: {
       deployed: authorityCheck.matches,
-      programId: PROGRAM_ID.toBase58(),
+      programId: getProgramId().toBase58(),
       configPda: authorityCheck.configAuthority ? "found" : null,
       minterRegistered: isAdminSignerReady(),
       authorityMatch: authorityCheck,

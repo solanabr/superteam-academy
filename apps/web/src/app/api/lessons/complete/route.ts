@@ -9,7 +9,7 @@ import {
   isOnChainProgramLive,
   completeLesson as onChainCompleteLesson,
   getConnection,
-  PROGRAM_ID,
+  getProgramId,
 } from "@/lib/solana/academy-program";
 import { fetchEnrollment } from "@/lib/solana/academy-reads";
 import { isLessonComplete } from "@/lib/solana/bitmap";
@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
       courseId,
       walletPubkey,
       connection,
-      PROGRAM_ID
+      getProgramId()
     );
 
     if (!onChainEnrollment) {
