@@ -41,3 +41,13 @@ export { LevelProgressionEngine } from "./level-system";
 
 // Default Levels Configuration
 export { DEFAULT_LEVELS } from "./level-system";
+
+// XP Calculation
+export { XPCalculationEngine, DEFAULT_XP_CONFIG } from "./xp-calculation";
+export type { XPConfig, XPEvent, XPStats, XPAnalytics } from "./xp-calculation";
+export { XPEventType } from "./xp-calculation";
+
+/** Spec formula: Level = floor(sqrt(totalXP / 100)) */
+export function calculateLevelFromXP(totalXP: number): number {
+	return Math.max(0, Math.floor(Math.sqrt(totalXP / 100)));
+}

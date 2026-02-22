@@ -91,7 +91,7 @@ export const DEFAULT_LEVELS: Level[] = [
 	{
 		level: 1,
 		name: "Novice",
-		xpRequired: 0,
+		xpRequired: 100, // 1² × 100
 		rewards: [
 			{
 				type: RewardType.TITLE,
@@ -116,7 +116,7 @@ export const DEFAULT_LEVELS: Level[] = [
 	{
 		level: 2,
 		name: "Explorer",
-		xpRequired: 100,
+		xpRequired: 400, // 2² × 100
 		rewards: [
 			{
 				type: RewardType.XP_BONUS,
@@ -154,7 +154,7 @@ export const DEFAULT_LEVELS: Level[] = [
 	{
 		level: 3,
 		name: "Apprentice",
-		xpRequired: 250,
+		xpRequired: 900, // 3² × 100
 		rewards: [
 			{
 				type: RewardType.STREAK_FREEZE,
@@ -185,7 +185,7 @@ export const DEFAULT_LEVELS: Level[] = [
 	{
 		level: 4,
 		name: "Scholar",
-		xpRequired: 500,
+		xpRequired: 1600, // 4² × 100
 		rewards: [
 			{
 				type: RewardType.XP_BONUS,
@@ -216,7 +216,7 @@ export const DEFAULT_LEVELS: Level[] = [
 	{
 		level: 5,
 		name: "Expert",
-		xpRequired: 1000,
+		xpRequired: 2500, // 5² × 100
 		rewards: [
 			{
 				type: RewardType.STREAK_FREEZE,
@@ -254,7 +254,7 @@ export const DEFAULT_LEVELS: Level[] = [
 	{
 		level: 6,
 		name: "Master",
-		xpRequired: 1750,
+		xpRequired: 3600, // 6² × 100
 		rewards: [
 			{
 				type: RewardType.XP_BONUS,
@@ -291,7 +291,7 @@ export const DEFAULT_LEVELS: Level[] = [
 	{
 		level: 7,
 		name: "Grandmaster",
-		xpRequired: 2750,
+		xpRequired: 4900, // 7² × 100
 		rewards: [
 			{
 				type: RewardType.STREAK_FREEZE,
@@ -329,7 +329,7 @@ export const DEFAULT_LEVELS: Level[] = [
 	{
 		level: 8,
 		name: "Legend",
-		xpRequired: 4000,
+		xpRequired: 6400, // 8² × 100
 		rewards: [
 			{
 				type: RewardType.XP_BONUS,
@@ -360,7 +360,7 @@ export const DEFAULT_LEVELS: Level[] = [
 	{
 		level: 9,
 		name: "Myth",
-		xpRequired: 5500,
+		xpRequired: 8100, // 9² × 100
 		rewards: [
 			{
 				type: RewardType.STREAK_FREEZE,
@@ -404,7 +404,7 @@ export const DEFAULT_LEVELS: Level[] = [
 	{
 		level: 10,
 		name: "Transcendent",
-		xpRequired: 7500,
+		xpRequired: 10000, // 10² × 100
 		rewards: [
 			{
 				type: RewardType.XP_BONUS,
@@ -694,42 +694,21 @@ export class LevelProgressionEngine {
 		return rewards;
 	}
 
-	// Calculate level progress from XP
+	// Calculate level progress from XP using spec formula: Level = floor(sqrt(totalXP / 100))
 	private calculateLevelProgress(totalXP: number): {
 		level: number;
 		xpToNextLevel: number;
 		progress: number;
 	} {
-		let currentLevel = 1;
-
-		// Find current level
-		for (const level of this.levels.values()) {
-			if (totalXP >= level.xpRequired) {
-				currentLevel = level.level;
-			} else {
-				break;
-			}
-		}
-
-		// Calculate progress to next level
-		const currentLevelData = this.levels.get(currentLevel);
-		const nextLevelData = this.levels.get(currentLevel + 1);
-
-		let progress = 100; // Max level reached
-		let xpToNext = 0;
-
-		if (nextLevelData) {
-			const currentLevelXP = currentLevelData?.xpRequired || 0;
-			const nextLevelXP = nextLevelData.xpRequired;
-			const xpInThisLevel = totalXP - currentLevelXP;
-			const xpNeededForNext = nextLevelXP - currentLevelXP;
-
-			progress = xpNeededForNext > 0 ? (xpInThisLevel / xpNeededForNext) * 100 : 100;
-			xpToNext = Math.max(0, nextLevelXP - totalXP);
-		}
+		const level = Math.max(0, Math.floor(Math.sqrt(totalXP / 100)));
+		const currentLevelXP = level * level * 100;
+		const nextLevelXP = (level + 1) * (level + 1) * 100;
+		const xpToNext = Math.max(0, nextLevelXP - totalXP);
+		const xpNeeded = nextLevelXP - currentLevelXP;
+		const progress = xpNeeded > 0 ? ((totalXP - currentLevelXP) / xpNeeded) * 100 : 100;
 
 		return {
-			level: currentLevel,
+			level,
 			xpToNextLevel: xpToNext,
 			progress: Math.min(progress, 100),
 		};

@@ -54,7 +54,6 @@ export interface XPConfig {
 		monthly: number;
 		lifetime: number;
 	};
-	levelThresholds: number[]; // XP required for each level
 }
 
 // Default XP Configuration
@@ -99,28 +98,6 @@ export const DEFAULT_XP_CONFIG: XPConfig = {
 		monthly: 15_000,
 		lifetime: 1_000_000,
 	},
-	levelThresholds: [
-		0, // Level 1
-		100, // Level 2
-		250, // Level 3
-		500, // Level 4
-		1000, // Level 5
-		1750, // Level 6
-		2750, // Level 7
-		4000, // Level 8
-		5500, // Level 9
-		7500, // Level 10
-		10_000, // Level 11
-		13_500, // Level 12
-		18_000, // Level 13
-		23_500, // Level 14
-		30_000, // Level 15
-		38_000, // Level 16
-		47_500, // Level 17
-		58_500, // Level 18
-		71_500, // Level 19
-		86_500, // Level 20
-	],
 };
 
 // XP Calculation Engine
@@ -166,27 +143,16 @@ export class XPCalculationEngine {
 		return Math.min(baseAmount, this.getCapForEvent(event));
 	}
 
-	// Calculate level from total XP
+	// Calculate level from total XP using spec formula: Level = floor(sqrt(totalXP / 100))
 	calculateLevel(totalXP: number): {
 		level: number;
 		currentXP: number;
 		nextLevelXP: number;
 		progress: number;
 	} {
-		let level = 1;
-		let xpForNextLevel = 0;
-
-		for (let i = 0; i < this.config.levelThresholds.length - 1; i++) {
-			if (totalXP >= this.config.levelThresholds[i]) {
-				level = i + 1;
-				xpForNextLevel = this.config.levelThresholds[i + 1];
-			} else {
-				break;
-			}
-		}
-
-		const currentLevelXP = this.config.levelThresholds[level - 1] || 0;
-		const nextLevelXP = xpForNextLevel || totalXP;
+		const level = Math.max(0, Math.floor(Math.sqrt(totalXP / 100)));
+		const currentLevelXP = level * level * 100;
+		const nextLevelXP = (level + 1) * (level + 1) * 100;
 		const progress =
 			nextLevelXP > currentLevelXP
 				? (totalXP - currentLevelXP) / (nextLevelXP - currentLevelXP)
