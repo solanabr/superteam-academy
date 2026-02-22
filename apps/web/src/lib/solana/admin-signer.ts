@@ -34,7 +34,7 @@ import {
   findConfigPDA,
   findCoursePDA,
   findAchievementTypePDA,
-  PROGRAM_ID,
+  getProgramId,
 } from "./pda";
 
 // ---------------------------------------------------------------------------
@@ -229,8 +229,8 @@ export async function deployCoursePda(
   }
 
   try {
-    const [configPDA] = findConfigPDA(PROGRAM_ID);
-    const [coursePDA] = findCoursePDA(params.courseId, PROGRAM_ID);
+    const [configPDA] = findConfigPDA(getProgramId());
+    const [coursePDA] = findCoursePDA(params.courseId, getProgramId());
 
     const prerequisite =
       params.prerequisitePda != null
@@ -291,8 +291,8 @@ export async function updateCoursePda(
   }
 
   try {
-    const [configPDA] = findConfigPDA(PROGRAM_ID);
-    const [coursePDA] = findCoursePDA(params.courseId, PROGRAM_ID);
+    const [configPDA] = findConfigPDA(getProgramId());
+    const [coursePDA] = findCoursePDA(params.courseId, getProgramId());
 
     const onChainParams: UpdateCourseOnChainParams = {
       newContentTxId: null,
@@ -353,10 +353,10 @@ export async function deployAchievementType(
   }
 
   try {
-    const [configPDA] = findConfigPDA(PROGRAM_ID);
+    const [configPDA] = findConfigPDA(getProgramId());
     const [achievementTypePDA] = findAchievementTypePDA(
       params.achievementId,
-      PROGRAM_ID
+      getProgramId()
     );
 
     // Fresh collection keypair — this becomes the Metaplex Core collection.
@@ -431,7 +431,7 @@ export async function deployCourseTrackCollection(params: {
   try {
     const rpcUrl =
       process.env.NEXT_PUBLIC_SOLANA_RPC_URL ?? clusterApiUrl("devnet");
-    const [configPDA] = findConfigPDA(PROGRAM_ID);
+    const [configPDA] = findConfigPDA(getProgramId());
 
     const umi = createUmi(rpcUrl)
       .use(mplCore())
@@ -479,7 +479,7 @@ export async function verifyAuthorityMatchesConfig(): Promise<{
   }
 
   try {
-    const [configPDA] = findConfigPDA(PROGRAM_ID);
+    const [configPDA] = findConfigPDA(getProgramId());
     const accountInfo = await _connection.getAccountInfo(configPDA);
     if (!accountInfo) {
       return { matches: false };

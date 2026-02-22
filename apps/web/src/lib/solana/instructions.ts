@@ -6,14 +6,14 @@ import {
 import type { Idl } from "@coral-xyz/anchor";
 import { BorshCoder } from "@coral-xyz/anchor";
 import IDL from "./idl/superteam_academy.json";
-import { findCoursePDA, findEnrollmentPDA, PROGRAM_ID } from "./pda";
+import { findCoursePDA, findEnrollmentPDA, getProgramId } from "./pda";
 
 const coder = new BorshCoder(IDL as unknown as Idl);
 
 export function buildEnrollInstruction(
   courseId: string,
   learner: PublicKey,
-  programId: PublicKey = PROGRAM_ID
+  programId: PublicKey = getProgramId()
 ): TransactionInstruction {
   const [coursePDA] = findCoursePDA(courseId, programId);
   const [enrollmentPDA] = findEnrollmentPDA(courseId, learner, programId);
@@ -36,7 +36,7 @@ export function buildEnrollInstruction(
 export function buildCloseEnrollmentInstruction(
   courseId: string,
   learner: PublicKey,
-  programId: PublicKey = PROGRAM_ID
+  programId: PublicKey = getProgramId()
 ): TransactionInstruction {
   const [coursePDA] = findCoursePDA(courseId, programId);
   const [enrollmentPDA] = findEnrollmentPDA(courseId, learner, programId);
