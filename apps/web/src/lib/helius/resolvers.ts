@@ -67,7 +67,8 @@ export async function resolveCourseId(
     }
 
     const decoded = coder.accounts.decode("Course", accountInfo.data);
-    const courseId = decoded.courseId as string;
+    // Anchor 0.31+ IDL preserves snake_case field names
+    const courseId = (decoded.course_id ?? decoded.courseId) as string;
     coursePdaCache.set(coursePda, courseId);
     return courseId;
   } catch (err) {
