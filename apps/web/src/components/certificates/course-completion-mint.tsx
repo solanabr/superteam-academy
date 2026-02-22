@@ -184,7 +184,7 @@ export function CourseCompletionMint({
         <span className="text-sm font-medium">{t("courseComplete")}</span>
         <Link
           href={`/${locale}/settings`}
-          className="hover:bg-primary/90 inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white transition-colors"
+          className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 font-display text-xs font-bold text-white shadow-[0_2px_0_0_var(--primary-dark)] transition-all hover:bg-primary-hover active:translate-y-px active:shadow-none"
         >
           <Wallet size={14} weight="duotone" aria-hidden="true" />
           {t("linkWalletToMint")}
@@ -196,10 +196,10 @@ export function CourseCompletionMint({
   if (state.status === "insert_failed") {
     return (
       <div
-        className="border-warning bg-warning/10 rounded-lg border p-4"
+        className="rounded-lg border p-4 [background:var(--xp-dim)] [border-color:var(--accent-border-s)]"
         role="alert"
       >
-        <p className="text-warning text-sm font-medium">{t("insertFailed")}</p>
+        <p className="text-sm font-medium text-xp">{t("insertFailed")}</p>
         <p className="mt-1 text-xs text-text-3">
           {t("mintAddress")}: {state.mintAddress}
         </p>
@@ -254,7 +254,7 @@ export function CourseCompletionMint({
           <span className="text-sm font-medium">{t("courseComplete")}</span>
           <button
             onClick={handleIssueCredential}
-            className="hover:bg-primary/90 inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 font-display text-xs font-bold text-white shadow-[0_2px_0_0_var(--primary-dark)] transition-all hover:bg-primary-hover active:translate-y-px active:shadow-none"
           >
             {t("mintCertificate")}
           </button>
