@@ -1,48 +1,45 @@
 // app/src/hooks/useUser.ts
 import { useState, useEffect, useCallback } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
-
-// Тип для Enrollments
-interface Enrollment {
-    courseId: string;
-    enrolledAt: string;
-}
+import { useSession } from "next-auth/react";
 
 export function useUser() {
   const { publicKey } = useWallet();
+  const { status } = useSession(); // Следим за статусом сессии NextAuth
   const [userDb, setUserDb] = useState<any>(null);
-  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Синхронизация при подключении кошелька
-  useEffect(() => {
-    if (publicKey) {
-      setLoading(true);
-      const wallet = publicKey.toString();
+  const fetchUser = useCallback(async () => {
+    // Ждем, пока NextAuth определится со своим состоянием
+    if (status === "loading") return;
 
-      // 1. Синхронизируем юзера
-      fetch("/api/user/sync", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ walletAddress: wallet }),
-      })
-      .then((res) => res.json())
-      .then((data) => setUserDb(data))
-      .catch((err) => console.error("Sync failed:", err));
+    setLoading(true);
+    const walletStr = publicKey ? publicKey.toString() : "";
+    
+    console.log(`[useUser Hook] Fetching data... Auth status: ${status}, Wallet: ${walletStr}`);
 
-      // 2. Получаем список курсов
-      fetch(`/api/user/enrollments?wallet=${wallet}`)
-      .then((res) => res.json())
-      .then((data) => setEnrollments(data))
-      .catch((err) => console.error("Enrollments fetch failed:", err))
-      .finally(() => setLoading(false));
-
-    } else {
+    try {
+      const res = await fetch(`/api/user/me?wallet=${walletStr}`);
+      if (res.ok) {
+        const data = await res.json();
+        console.log("[useUser Hook] Data received:", data);
+        setUserDb(data);
+      } else {
+        console.log("[useUser Hook] User not found in DB or not logged in.");
+        setUserDb(null);
+      }
+    } catch (err) {
+      console.error("[useUser Hook] Fetch failed:", err);
       setUserDb(null);
-      setEnrollments([]);
+    } finally {
       setLoading(false);
     }
-  }, [publicKey]);
+  }, [publicKey, status]);
+
+  // Запускаем fetch при изменении кошелька или сессии
+  useEffect(() => {
+    fetchUser();
+  }, [fetchUser]);
 
   const saveCode = useCallback(async (courseId: string, lessonIndex: number, code: string) => {
     if (!publicKey) return;
@@ -61,8 +58,9 @@ export function useUser() {
 
   return {
     userDb,
-    enrollments, // Теперь возвращаем список курсов
+    enrollments: userDb?.enrollments || [],
     loading,
     saveCode,
+    refetchUser: fetchUser // Экспортируем функцию для ручного обновления
   };
 }

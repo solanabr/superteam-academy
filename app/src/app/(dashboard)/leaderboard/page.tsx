@@ -7,6 +7,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Trophy, Medal, Flame } from "lucide-react";
 import { useWallet } from "@solana/wallet-adapter-react";
+import {useUser} from '@/hooks/useUser';
+import {useSession} from 'next-auth/react';
 
 interface Leader {
   walletAddress: string;
@@ -19,6 +21,8 @@ export default function LeaderboardPage() {
   const { publicKey } = useWallet();
   const [leaders, setLeaders] = useState<Leader[]>([]);
   const [loading, setLoading] = useState(true);
+  const { data: session } = useSession();
+  const { userDb } = useUser(); 
 
   useEffect(() => {
     fetch("/api/leaderboard")
@@ -28,6 +32,11 @@ export default function LeaderboardPage() {
         setLoading(false);
       });
   }, []);
+
+  const avatarSrc = 
+    userDb?.image || // Из БД (GitHub image сохраняется сюда при создании)
+    session?.user?.image || // Из текущей сессии
+    `https://api.dicebear.com/7.x/identicon/svg?seed=${publicKey?.toString() || "user"}`;
 
   const getRankIcon = (index: number) => {
     if (index === 0) return <Trophy className="h-6 w-6 text-yellow-500" />;
@@ -72,7 +81,7 @@ export default function LeaderboardPage() {
                     <TableCell>
                         <div className="flex items-center gap-3">
                             <Avatar className="h-8 w-8">
-                                <AvatarImage src={`https://api.dicebear.com/7.x/identicon/svg?seed=${leader.walletAddress}`} />
+                                <AvatarImage src={avatarSrc} />
                                 <AvatarFallback>U</AvatarFallback>
                             </Avatar>
                             <div className="flex flex-col">

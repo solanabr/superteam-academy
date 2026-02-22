@@ -8,8 +8,15 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowRight, Loader2 } from "lucide-react";
 
+interface UserEnrollment {
+    id: string;
+    courseId: string;
+    enrolledAt: string;
+}
+
 export default function DashboardPage() {
   const { userDb, enrollments, loading } = useUser();
+  const userEnrollments = enrollments as UserEnrollment[];
 
   return (
     <div className="flex-1 space-y-4 p-8 pt-6">
@@ -25,8 +32,8 @@ export default function DashboardPage() {
             
             {loading ? (
                 <div className="flex justify-center p-8"><Loader2 className="animate-spin" /></div>
-            ) : enrollments.length > 0 ? (
-                enrollments.map((enrollment) => (
+            ) : userEnrollments && userEnrollments.length > 0 ? (
+                userEnrollments.map((enrollment) => (
                     <CourseProgress key={enrollment.courseId} courseId={enrollment.courseId} />
                 ))
             ) : (

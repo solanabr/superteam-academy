@@ -9,32 +9,76 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Модель User (расширенная для NextAuth)
 model User {
-  id            String   @id @default(auto()) @map("_id") @db.ObjectId
-  walletAddress String   @unique
-  username      String?
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  // NextAuth поля
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  
+  // Наши поля
+  walletAddress String?   @unique
+  
+  // Профиль
+  username      String?   @unique // Уникальный, чтобы не было дублей
   bio           String?
-  twitter       String?
-  github        String?
   
-  xp            Int      @default(0)
-  level         Int      @default(0)
-  streak        Int      @default(0)
+  // Соцсети (храним username для отображения)
+  twitterHandle String?
+  githubHandle  String?
   
-  lastLogin     DateTime @default(now())
-  lastLessonAt  DateTime? // Новое поле для честного расчета стриков
+  // Геймификация
+  xp            Int       @default(0)
+  level         Int       @default(0)
+  streak        Int       @default(0)
+  lastLogin     DateTime  @default(now())
+  lastLessonAt  DateTime?
 
   // Связи
+  accounts      Account[]
+  sessions      Session[]
   enrollments   UserEnrollment[]
   progress      LessonProgress[]
 }
 
-// Новая модель для быстрого отображения списка курсов в Dashboard
+
+// NextAuth: Account (хранит связи с GitHub/Google)
+model Account {
+  id                String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String  @db.ObjectId
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.String
+  access_token      String? @db.String
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.String
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+// NextAuth: Session
+model Session {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  sessionToken String   @unique
+  userId       String   @db.ObjectId
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Остальные модели без изменений
 model UserEnrollment {
   id            String   @id @default(auto()) @map("_id") @db.ObjectId
   user          User     @relation(fields: [userId], references: [id])
   userId        String   @db.ObjectId
-  courseId      String   // ID курса (anchor-101)
+  courseId      String
   enrolledAt    DateTime @default(now())
 
   @@unique([userId, courseId])
@@ -43,10 +87,10 @@ model UserEnrollment {
 model LessonProgress {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   user        User     @relation(fields: [userId], references: [id])
-  userId      String   @db.ObjectId // Связь с юзером
+  userId      String   @db.ObjectId
   courseId    String
   lessonIndex Int
-  status      String   // "in_progress", "completed"
+  status      String
   codeSnippet String?
   completedAt DateTime?
 
