@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
         const [configPda] = PublicKey.findProgramAddressSync([Buffer.from("config")], program.programId);
         const [minterPda] = PublicKey.findProgramAddressSync([Buffer.from("minter"), backendWallet.publicKey.toBuffer()], program.programId);
 
-        const config = await (program.account as any).Config.fetch(configPda);
+        const config = await (program.account as any).config.fetch(configPda);
         const learnerTokenAccount = (await connection.getTokenAccountsByOwner(learner, { mint: config.xpMint })).value[0]?.pubkey;
 
         if (!learnerTokenAccount) {
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
             .rewardXp(new (program.provider as any).anchor.BN(xpAmount))
             .accounts({
                 config: configPda,
-                minterRecord: minterPda,
+                minterRole: minterPda,
                 xpMint: config.xpMint,
                 recipientTokenAccount: learnerTokenAccount,
                 minter: backendWallet.publicKey,

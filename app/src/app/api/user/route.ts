@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
         email: email ?? null,
         referrerId: referrerId,
         profile: {
-          image: `https://api.dicebear.com/9.x/bottts-neutral/svg?seed=${wallet}`,
+          image: `https://api.dicebear.com/9.x/bottts/svg?seed=${wallet}&backgroundColor=0a0a0b&baseColor=14f195&radius=50&sidesProbability=0&topProbability=0`,
           displayName: ""
         }
       },

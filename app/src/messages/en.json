@@ -14,6 +14,7 @@
     "nav": {
         "dashboard": "Dashboard",
         "courses": "Courses",
+        "leaderboard": "Leaderboard",
         "achievements": "Achievements",
         "teach": "Teach",
         "settings": "Settings",
@@ -42,6 +43,7 @@
     "settings": {
         "title": "Settings",
         "wallet_address": "Wallet Address",
+        "wallet_tooltip": "Your wallet address is the permanent identifier for your account. Achievements, EXP, and course progress are bound to this address and cannot be transferred.",
         "account_role": "Account Role",
         "role_info": "account role not editable, reach to platform admin for role updation",
         "display_name": "Display Name",
@@ -62,11 +64,16 @@
             "linked": "Linked",
             "tooltip": "Your wallet address is linked to this {provider}. This cannot be changed."
         },
+        "delete_account": "Delete Account",
+        "delete_account_warning": "Warning: This action is irreversible.",
+        "delete_account_desc": "You will lose access to the embedded wallet created for you by Superteam Academy. Any certificates or assets in that wallet will be permanently inaccessible. Your connected external wallets will remain yours.",
+        "delete_account_confirm": "I understand, delete my account",
+        "cancel": "Cancel",
         "balance_title": "Wallet Balances",
         "sol_balance": "SOL Balance",
         "exp_balance": "EXP Token Balance",
         "devnet_label": "Devnet",
-        "airdrop_tooltip": "We automatically airdrop 1 Devnet SOL to new accounts to cover transaction fees for enrollment and lessons.",
+        "airdrop_tooltip": "Devnet SOL is used to pay for transaction fees during enrollment and lessons. If your balance is low, you can request more from the official faucet.",
         "request_airdrop_cta": "Request Airdrop",
         "requesting_airdrop": "Requesting..."
     },

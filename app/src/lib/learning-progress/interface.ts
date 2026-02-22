@@ -25,4 +25,5 @@ export interface LearningProgressService {
   claimCompletionBonus(userId: string, courseId: string, xpAmount: number): Promise<void>;
   issueCredential(params: { userId: string; trackId: string; trackName: string; xpEarned: number }): Promise<void>;
   claimAchievement(userId: string, achievementId: string): Promise<boolean>;
+  logActivity(userId: string): Promise<void>;
 }

@@ -43,7 +43,8 @@ export async function POST(request: NextRequest) {
     const service = learningProgressService;
 
     try {
-        const claimed = await service.claimAchievement(user.id, achievementId);
+        const identifier = process.env.NEXT_PUBLIC_USE_ONCHAIN === "true" ? wallet : user.id;
+        const claimed = await service.claimAchievement(identifier, achievementId);
         return NextResponse.json({ ok: true, claimed });
     } catch (e: any) {
         return NextResponse.json(

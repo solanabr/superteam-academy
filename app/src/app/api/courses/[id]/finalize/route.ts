@@ -40,7 +40,8 @@ export async function POST(
 
 
     try {
-        await service.finalizeCourse(user.id, courseId, lessonCount);
+        const identifier = process.env.NEXT_PUBLIC_USE_ONCHAIN === "true" ? wallet : user.id;
+        await service.finalizeCourse(identifier, courseId, lessonCount);
 
         // Fetch course data to issue credential
         const { getCourseBySlug } = await import("@/sanity/lib/queries");
@@ -51,7 +52,7 @@ export async function POST(
             const trackName = course.track.charAt(0).toUpperCase() + course.track.slice(1);
 
             await service.issueCredential({
-                userId: user.id,
+                userId: identifier,
                 trackId: course.track,
                 trackName: trackName,
                 xpEarned: 500 // Logic should eventually align with course XP

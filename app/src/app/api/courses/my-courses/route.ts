@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { serverClient } from "@/sanity/lib/server-client";
 import { prisma } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
 /**
  * GET /api/courses/my-courses?wallet=...
  * Get all courses created by the professor (including drafts)

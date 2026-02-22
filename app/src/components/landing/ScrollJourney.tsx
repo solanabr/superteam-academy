@@ -2,8 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Link } from "@/i18n/routing";
+import { usePrivy } from "@privy-io/react-auth";
+import { useRouter } from "next/navigation";
 
 export function ScrollJourney() {
+    const { ready, authenticated, login } = usePrivy();
+    const router = useRouter();
+
     const orbRef = useRef<HTMLDivElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const terminalRef = useRef<HTMLDivElement>(null);
@@ -177,12 +182,21 @@ export function ScrollJourney() {
 
             {/* Final CTA below the mobile app */}
             <div className="mt-32 mb-20 z-10">
-                <Link href="/dashboard">
-                    <button className="h-14 px-10 bg-solana hover:bg-[#10d482] hover:scale-105 transition-all duration-300 text-black font-display font-bold text-lg rounded-sm flex items-center justify-center gap-3 shadow-[0_0_30px_rgba(20,241,149,0.3)]">
-                        <span>Start Compiling</span>
-                        <span className="material-symbols-outlined notranslate text-xl">arrow_forward</span>
-                    </button>
-                </Link>
+                <button
+                    onClick={() => {
+                        if (!ready) return;
+                        if (authenticated) {
+                            router.push("/dashboard");
+                        } else {
+                            login();
+                        }
+                    }}
+                    disabled={!ready}
+                    className="h-14 px-10 bg-solana hover:bg-[#10d482] hover:scale-105 transition-all duration-300 text-black font-display font-bold text-lg rounded-sm flex items-center justify-center gap-3 shadow-[0_0_30px_rgba(20,241,149,0.3)] disabled:opacity-50"
+                >
+                    <span>{authenticated ? "Dashboard" : "Start Compiling"}</span>
+                    <span className="material-symbols-outlined notranslate text-xl">arrow_forward</span>
+                </button>
             </div>
         </div>
     );

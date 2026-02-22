@@ -26,7 +26,7 @@ function utcDayNumber(date: Date): number {
  * Compute new streak and lastActivityDate. Consumes freezes if needed. 
  * SPEC.md Rule: Each streak freeze covers exactly one missed day.
  */
-function updateStreakForComplete(
+function calculateNewStreak(
   lastActivityDate: Date | null,
   currentStreak: number,
   longestStreak: number,
@@ -52,8 +52,8 @@ function updateStreakForComplete(
       lastActivityDate: now,
       freezesConsumed: 0
     };
-  } else if (gap > 0 && gap <= streakFreezes) {
-    // Missed days covered by enough freezes
+  } else if (gap > 0 && streakFreezes >= gap) {
+    // Missed days strictly covered by enough freezes
     const newStreak = currentStreak + 1;
     return {
       currentStreak: newStreak,
@@ -62,7 +62,7 @@ function updateStreakForComplete(
       freezesConsumed: gap
     };
   } else {
-    // No freezes or not enough freezes
+    // Gap exceeded available freezes - streak is lost
     return { currentStreak: 1, longestStreak: Math.max(longestStreak, 1), lastActivityDate: now, freezesConsumed: 0 };
   }
 }
@@ -220,11 +220,30 @@ export function createLearningProgressService(prisma: PrismaClient): LearningPro
 
   const claimAchievement = async (userId: string, achievementId: string): Promise<boolean> => {
     // 1. Fetch user progress and preferences
-    const progress = await prisma.progress.findUnique({
+    let progress = await prisma.progress.findUnique({
       where: { userId },
       include: { user: { select: { preferences: true } } }
     });
-    if (!progress) return false;
+
+    if (!progress) {
+      // Auto-create progress if it doesn't exist (e.g. they unlock easter egg before their first course)
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { preferences: true }
+      });
+      if (!user) throw new Error("User not found");
+
+      progress = await prisma.progress.create({
+        data: {
+          userId,
+          xp: 0,
+          currentStreak: 0,
+          longestStreak: 0,
+          achievementFlags: Buffer.alloc(32)
+        },
+        include: { user: { select: { preferences: true } } }
+      });
+    }
 
     // 2. Fetch Achievement definition
     const { ACHIEVEMENTS } = await import("@/lib/achievements");
@@ -235,7 +254,7 @@ export function createLearningProgressService(prisma: PrismaClient): LearningPro
     // 3. Check if already claimed
     const flags = toUint8Array(progress.achievementFlags);
     if (isLessonComplete(flags, bitIndex)) {
-      return false; // Already claimed
+      throw new Error("Achievement already claimed");
     }
 
     // 4. Validate requirements
@@ -245,6 +264,7 @@ export function createLearningProgressService(prisma: PrismaClient): LearningPro
       case "first-lesson": {
         const enrollments = await prisma.enrollment.findMany({ where: { userId } });
         isValid = enrollments.some(e => countSetBits(e.lessonFlags) > 0);
+        if (!isValid) throw new Error("Complete your first lesson to claim this achievement!");
         break;
       }
       case "first-course": {
@@ -252,31 +272,37 @@ export function createLearningProgressService(prisma: PrismaClient): LearningPro
           where: { userId, completedAt: { not: null } }
         });
         isValid = !!completedCourse;
+        if (!isValid) throw new Error("Complete a full course to claim this achievement!");
         break;
       }
       case "streak-3":
         isValid = progress.currentStreak >= 3;
+        if (!isValid) throw new Error("Maintain a 3-day streak to claim this achievement!");
         break;
       case "streak-7":
         isValid = progress.currentStreak >= 7;
+        if (!isValid) throw new Error("Maintain a 7-day streak to claim this achievement!");
         break;
       case "early-bird": {
         const hours = new Date().getUTCHours();
         isValid = hours < 8;
+        if (!isValid) throw new Error("Complete a lesson before 8 AM UTC to claim this achievement!");
         break;
       }
       case "night-owl": {
         const hours = new Date().getUTCHours();
         isValid = hours >= 22;
+        if (!isValid) throw new Error("Complete a lesson after 10 PM UTC to claim this achievement!");
         break;
       }
       case "easter-egg": {
         const unlocked = (progress.user.preferences as any)?.unlockedAchievements || [];
         isValid = Array.isArray(unlocked) && unlocked.includes("easter-egg");
+        if (!isValid) throw new Error("Easter egg not found yet! Keep searching the platform.");
         break;
       }
       default:
-        return false; // Unknown achievement — not eligible
+        throw new Error("Unknown achievement");
     }
 
     if (!isValid) return false;
@@ -288,7 +314,6 @@ export function createLearningProgressService(prisma: PrismaClient): LearningPro
       where: { userId },
       data: {
         achievementFlags: Buffer.from(newFlags),
-        xp: { increment: achievement.xp },
       },
     });
 
@@ -351,7 +376,7 @@ export function createLearningProgressService(prisma: PrismaClient): LearningPro
         streakFreezes: true
       },
     });
-    const { currentStreak, longestStreak, lastActivityDate, freezesConsumed } = updateStreakForComplete(
+    const { currentStreak, longestStreak, lastActivityDate, freezesConsumed } = calculateNewStreak(
       progressRow?.lastActivityDate ?? null,
       progressRow?.currentStreak ?? 0,
       progressRow?.longestStreak ?? 0,
@@ -448,6 +473,62 @@ export function createLearningProgressService(prisma: PrismaClient): LearningPro
     ]);
   };
 
+  const logActivity = async (userId: string): Promise<void> => {
+    const progressRow = await prisma.progress.findUnique({
+      where: { userId },
+      select: {
+        currentStreak: true,
+        longestStreak: true,
+        lastActivityDate: true,
+        streakFreezes: true
+      },
+    });
+
+    if (!progressRow) {
+      // Create their initial progress and grant day 1 streak automatically
+      await prisma.progress.create({
+        data: {
+          userId,
+          xp: 0,
+          currentStreak: 1,
+          longestStreak: 1,
+          lastActivityDate: new Date(),
+          achievementFlags: Buffer.alloc(32)
+        }
+      });
+      return;
+    }
+
+    const { currentStreak, longestStreak, lastActivityDate, freezesConsumed } = calculateNewStreak(
+      progressRow.lastActivityDate,
+      progressRow.currentStreak,
+      progressRow.longestStreak,
+      progressRow.streakFreezes
+    );
+
+    // Only hit DB if there's an actual change in state
+    const today = utcDayNumber(new Date());
+    const rowLastDay = progressRow.lastActivityDate ? utcDayNumber(progressRow.lastActivityDate) : -1;
+
+    if (today > rowLastDay || freezesConsumed > 0) {
+      const updateData: import("@prisma/client").Prisma.ProgressUpdateInput = {
+        currentStreak,
+        longestStreak,
+        lastActivityDate,
+      };
+
+      if (freezesConsumed > 0) {
+        updateData.streakFreezes = { decrement: freezesConsumed };
+        updateData.lastFreezeDate = new Date();
+      }
+
+      await prisma.progress.update({
+        where: { userId },
+        data: updateData,
+      });
+    }
+  };
+
   return {
     getProgress,
     getEnrollmentProgress,
@@ -462,5 +543,6 @@ export function createLearningProgressService(prisma: PrismaClient): LearningPro
     claimCompletionBonus,
     issueCredential,
     claimAchievement,
+    logActivity,
   };
 }

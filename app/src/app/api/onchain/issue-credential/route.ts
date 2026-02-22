@@ -44,7 +44,8 @@ export async function POST(req: NextRequest) {
         let totalXp = xpEarned || 0;
 
         if (user) {
-            const progress = await service.getProgress(user.id);
+            const identifier = process.env.NEXT_PUBLIC_USE_ONCHAIN === "true" ? wallet : user.id;
+            const progress = await service.getProgress(identifier);
             if (progress) {
                 totalXp = progress.xp;
                 // We would ideally query total completed courses, hardcode to 1 for this MVP mapping

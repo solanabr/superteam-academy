@@ -1,7 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { CodeEditor, SupportedLanguage } from "./CodeEditor";
+import dynamic from "next/dynamic";
+import type { SupportedLanguage } from "./CodeEditor";
+
+const CodeEditor = dynamic(() => import("./CodeEditor").then((mod) => mod.CodeEditor), {
+  ssr: false,
+  loading: () => <div className="h-full w-full animate-pulse bg-void/50 flex items-center justify-center text-text-muted text-sm font-mono">Loading Editor...</div>
+});
 import { Button } from "@/components/ui/button";
 import { TerminalOutput } from "./TerminalOutput";
 
@@ -211,13 +217,12 @@ export function ChallengeRunner({
               return (
                 <li
                   key={i}
-                  className={`rounded border p-2 ${
-                    showResult
+                  className={`rounded border p-2 ${showResult
                       ? isPassed
                         ? "border-solana/30 bg-solana/5"
                         : "border-rust/30 bg-rust/5"
                       : "border-border-subtle"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-start gap-2">
                     {showResult && (

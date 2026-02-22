@@ -19,7 +19,14 @@ export async function GET(request: NextRequest) {
     }
 
     // Use unified service (resolves to onchain or prisma based on env)
-    const progress = await service.getProgress(user.id);
+    const identifier = process.env.NEXT_PUBLIC_USE_ONCHAIN === "true" ? wallet : user.id;
+
+    // Asynchronously log activity to increment streak if applicable
+    service.logActivity(identifier).catch(err => {
+      console.error("Failed to log activity behind the scenes", err);
+    });
+
+    const progress = await service.getProgress(identifier);
     const xp = progress?.xp ?? 0;
     const level = Math.floor(Math.sqrt(xp / 100));
     return NextResponse.json({

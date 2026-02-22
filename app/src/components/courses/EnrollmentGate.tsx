@@ -36,7 +36,7 @@ export function EnrollmentGate({ courseId, courseSlug, children }: EnrollmentGat
     // Fetch enrollment when wallet is available
     useEffect(() => {
         if (walletAddress && courseId && enrollment === undefined && !enrollmentLoading) {
-            fetchEnrollment(courseId, walletAddress);
+            fetchEnrollment(walletAddress, courseId);
         }
     }, [walletAddress, courseId, enrollment, enrollmentLoading, fetchEnrollment]);
 

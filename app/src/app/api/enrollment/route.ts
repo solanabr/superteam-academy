@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { createLearningProgressService } from "@/lib/learning-progress/prisma-impl";
 import { serverClient } from "@/sanity/lib/server-client";
+import { learningProgressService } from "@/lib/learning-progress/service";
 
 /** GET /api/enrollment?wallet=...&courseId=... — enrollment progress for a user in a course. */
 export async function GET(request: NextRequest) {
@@ -21,10 +22,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(null, { status: 404 });
     }
 
-    const service = createLearningProgressService(prisma);
+    const service = learningProgressService;
 
     if (courseId) {
-      const progress = await service.getEnrollmentProgress(user.id, courseId);
+      // For On-Chain, we pass the wallet address directly as the identifier
+      const identifier = process.env.NEXT_PUBLIC_USE_ONCHAIN === "true" ? (wallet as string) : user.id;
+      const progress = await service.getEnrollmentProgress(identifier, courseId);
       if (!progress) {
         return NextResponse.json(null, { status: 404 });
       }

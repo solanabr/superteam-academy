@@ -4,15 +4,23 @@ import { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { useTranslations } from "next-intl";
 import { useWallets } from "@privy-io/react-auth/solana";
+import { usePrivy } from "@privy-io/react-auth";
 
 export function Footer() {
   const t = useTranslations("footer");
   const { wallets } = useWallets();
+  const { user } = usePrivy();
   const [clickCount, setClickCount] = useState(0);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isOpen, setIsOpen] = useState(false);
 
-  const walletAddress = wallets?.[0]?.address;
+  const linkedAddress =
+    user?.wallet?.address ?? user?.linkedAccounts?.find((a) => a.type === "wallet")?.address;
+  const walletAddress =
+    linkedAddress ??
+    wallets?.[0]?.address ??
+    (typeof window !== "undefined" &&
+      localStorage.getItem("linkedWalletAddress"));
 
   const handleHeartClick = (e: React.MouseEvent) => {
     e.preventDefault();

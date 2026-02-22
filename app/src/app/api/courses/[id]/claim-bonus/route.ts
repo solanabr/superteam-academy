@@ -40,7 +40,8 @@ export async function POST(
 
 
     try {
-        await service.claimCompletionBonus(user.id, courseId, xpAmount);
+        const identifier = process.env.NEXT_PUBLIC_USE_ONCHAIN === "true" ? wallet : user.id;
+        await service.claimCompletionBonus(identifier, courseId, xpAmount);
     } catch (e: any) {
         return NextResponse.json(
             { error: e?.message ?? "Failed to claim bonus" },

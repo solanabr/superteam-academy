@@ -7,33 +7,9 @@ import { ScrollJourney } from "@/components/landing/ScrollJourney";
 import { usePrivy } from "@privy-io/react-auth";
 import { useRouter } from "next/navigation";
 
-/** Auth-aware CTA button: calls login() if not authenticated, else navigates to dashboard. */
-function HeroCTA() {
-    const { ready, authenticated, login } = usePrivy();
-    const router = useRouter();
-
-    const handleClick = () => {
-        if (!ready) return;
-        if (authenticated) {
-            router.push("/dashboard");
-        } else {
-            login();
-        }
-    };
-
-    return (
-        <button
-            onClick={handleClick}
-            disabled={!ready}
-            className="h-14 px-10 bg-solana hover:bg-[#10d482] hover:scale-105 transition-all duration-300 text-black font-display font-bold text-lg rounded-sm flex items-center justify-center gap-3 shadow-[0_0_30px_rgba(20,241,149,0.3)] disabled:opacity-50"
-        >
-            <span>Start Compiling</span>
-            <span className="material-symbols-outlined notranslate text-xl">arrow_forward</span>
-        </button>
-    );
-}
-
 export default function LandingPage() {
+    const { ready, authenticated } = usePrivy();
+
     return (
         <div className="relative min-h-screen flex flex-col bg-void text-text-primary overflow-x-hidden">
             {/* Noise Texture Overlay — z-30 keeps it below navbar (z-40) and modals (z-50+) */}
@@ -53,6 +29,14 @@ export default function LandingPage() {
                     <span className="font-display font-bold text-xl tracking-tight text-white">Superteam Academy</span>
                 </div>
                 <div className="flex items-center gap-6">
+                    {ready && authenticated && (
+                        <Link
+                            href="/dashboard"
+                            className="font-code text-xs font-medium uppercase tracking-wider text-text-muted hover:text-solana transition-colors"
+                        >
+                            Dashboard
+                        </Link>
+                    )}
                     <WalletButton className="font-code text-xs font-medium uppercase tracking-wider bg-white/5 hover:bg-white/10 border border-white/10" />
                 </div>
             </nav>
@@ -75,13 +59,6 @@ export default function LandingPage() {
                     <p className="font-body text-lg md:text-xl text-text-muted max-w-2xl leading-relaxed">
                         The definitive learning environment for the Solana ecosystem. Transform Rust smart contract development into an immersive experience.
                     </p>
-
-                    <div className="flex flex-col md:flex-row items-center gap-4 mt-4">
-                        <HeroCTA />
-                        <button className="h-14 px-10 glass-panel hover:bg-white/5 transition-all duration-300 text-white font-code text-sm rounded-sm flex items-center justify-center border border-white/20">
-                            $ cargo build-bpf
-                        </button>
-                    </div>
                 </div>
 
                 {/* 3D Artifact Section */}
@@ -142,7 +119,6 @@ export default function LandingPage() {
                 <ScrollJourney />
             </main>
             <Footer />
-
 
             {/* Background Elements for Atmosphere */}
             <div className="fixed bottom-0 left-0 w-full h-32 bg-gradient-to-t from-[#0A0A0B] to-transparent z-20 pointer-events-none"></div>

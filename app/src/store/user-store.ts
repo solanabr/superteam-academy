@@ -25,7 +25,7 @@ export type UserProgress = {
     lastActivityDate: string | null;
 };
 
-type UserState = {
+export type UserState = {
     // User data
     user: AppUser | null;
     progress: UserProgress | null;

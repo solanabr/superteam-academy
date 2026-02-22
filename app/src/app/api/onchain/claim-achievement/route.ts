@@ -29,7 +29,12 @@ export async function POST(req: NextRequest) {
 
         // Off-chain hybrid validation and record keeping
         const prismaService = createLearningProgressService(prisma);
-        const claimed = await prismaService.claimAchievement(user.id, achievementId);
+        let claimed = false;
+        try {
+            claimed = await prismaService.claimAchievement(user.id, achievementId);
+        } catch (validationError: any) {
+            return NextResponse.json({ error: validationError.message }, { status: 400 });
+        }
 
         if (!claimed) {
             return NextResponse.json({ error: "Not eligible or already claimed" }, { status: 400 });
@@ -91,7 +96,7 @@ export async function POST(req: NextRequest) {
                 achievementType: achievementTypePda,
                 achievementReceipt: receiptPda,
                 minter: backendWallet.publicKey,
-                minterRecord: minterPda,
+                minterRole: minterPda,
                 asset: credentialAsset.publicKey,
                 collection: achievementType.collection,
                 recipient: learner,

@@ -15,35 +15,36 @@ const solanaConnectors = toSolanaWalletConnectors({
  * Comes from Privy's internal login modal (options list), not our code. Non-blocking.
  * Upstream: https://github.com/privy-io/examples/issues/135
  */
+const privyConfig: any = {
+  appearance: {
+    theme: "dark",
+    walletChainType: "solana-only",
+    walletList: [
+      "phantom",
+      "solflare",
+      "backpack",
+      "detected_solana_wallets",
+      "wallet_connect",
+    ],
+  },
+  externalWallets: {
+    solana: {
+      connectors: solanaConnectors,
+    },
+  },
+  embeddedWallets: {
+    solana: {
+      createOnLogin: "users-without-wallets",
+    },
+  },
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   return (
-    <PrivyProvider
-      appId={appId}
-      config={{
-        appearance: {
-          theme: "dark",
-          walletChainType: "solana-only",
-          walletList: [
-            "phantom",
-            "solflare",
-            "backpack",
-            "detected_solana_wallets",
-            "wallet_connect",
-          ],
-        },
-        externalWallets: {
-          solana: {
-            connectors: solanaConnectors,
-          },
-        },
-        embeddedWallets: {
-          solana: {
-            createOnLogin: "users-without-wallets",
-          },
-        },
-      }}
-    >
-      {children}
+    <PrivyProvider appId={appId} config={privyConfig}>
+      <div key="auth-root" className="contents">
+        {children}
+      </div>
     </PrivyProvider>
   );
 }

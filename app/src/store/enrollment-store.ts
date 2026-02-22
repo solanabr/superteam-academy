@@ -16,7 +16,7 @@ type EnrollmentState = {
   // Map of courseId -> error message
   errors: Record<string, string | null>;
   // Actions
-  fetchEnrollment: (walletAddress: string, courseId: string) => Promise<void>;
+  fetchEnrollment: (walletAddress: string, courseId: string, force?: boolean) => Promise<void>;
   enroll: (walletAddress: string, courseId: string) => Promise<void>;
   finalize: (walletAddress: string, courseId: string, lessonCount: number) => Promise<void>;
   claimBonus: (walletAddress: string, courseId: string, xpAmount: number) => Promise<void>;
@@ -93,10 +93,10 @@ export const useEnrollmentStore = create<EnrollmentState>((set, get) => ({
     });
   },
 
-  fetchEnrollment: async (walletAddress, courseId) => {
+  fetchEnrollment: async (walletAddress, courseId, force = false) => {
     const state = get();
-    // Prevent duplicate fetches
-    if (state.loading[courseId]) return;
+    // Prevent duplicate fetches unless forced (like during retries)
+    if (!force && state.loading[courseId]) return;
 
     state.setLoading(courseId, true);
     state.setError(courseId, null);
@@ -161,11 +161,37 @@ export const useEnrollmentStore = create<EnrollmentState>((set, get) => ({
         throw new Error(data?.error ?? "Enrollment failed");
       }
 
-      // Clear loading BEFORE calling fetchEnrollment so its guard doesn't block the refresh
-      state.setLoading(courseId, false);
+      // Assume enrollment succeeded instantly for snappy UI
+      state.setEnrollmentOptimistic(courseId, 0);
 
-      // Fetch actual enrollment data from server
-      await get().fetchEnrollment(walletAddress, courseId);
+      // Fetch actual enrollment data from server with backoff for RPC sync delays
+      // Run this asynchronously to not block the UI
+      (async () => {
+        let retries = 5;
+        while (retries > 0) {
+          try {
+            const pollRes = await fetch(
+              `/api/enrollment?wallet=${encodeURIComponent(walletAddress)}&courseId=${encodeURIComponent(courseId)}`
+            );
+
+            if (pollRes.ok) {
+              const data = await pollRes.json();
+              if (data && typeof data.bonusClaimed === 'undefined') {
+                data.bonusClaimed = false;
+              }
+              // Successfully found on-chain data, finalize our optimistic UI with the real data
+              get().setEnrollment(courseId, data);
+              break;
+            }
+          } catch (e) {
+            // Ignore network errors during polling
+          }
+
+          await new Promise((r) => setTimeout(r, 2000));
+          retries--;
+        }
+        state.setLoading(courseId, false);
+      })();
     } catch (error) {
       state.setError(
         courseId,

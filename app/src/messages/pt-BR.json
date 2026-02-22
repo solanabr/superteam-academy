@@ -14,6 +14,7 @@
     "nav": {
         "dashboard": "Painel",
         "courses": "Cursos",
+        "leaderboard": "Leaderboard",
         "achievements": "Conquistas",
         "teach": "Ensinar",
         "settings": "Configurações",
@@ -42,6 +43,7 @@
     "settings": {
         "title": "Configurações",
         "wallet_address": "Endereço da Carteira",
+        "wallet_tooltip": "Seu endereço de carteira é o identificador permanente de sua conta. Conquistas, EXP e progresso no curso estão vinculados a este endereço e não podem ser transferidos.",
         "account_role": "Função da Conta",
         "role_info": "a função da conta não é editável, entre em contato com o administrador",
         "display_name": "Nome de Exibição",
@@ -62,9 +64,16 @@
             "linked": "Vinculado",
             "tooltip": "Seu endereço de carteira está vinculado a esta conta do {provider}. Isso não pode ser alterado."
         },
+        "delete_account": "Excluir conta",
+        "delete_account_warning": "Aviso: Esta ação é irreversível.",
+        "delete_account_desc": "Você perderá o acesso à carteira incorporada criada para você pela Superteam Academy. Quaisquer certificados ou ativos nessa carteira se tornarão permanentemente inacessíveis. Suas carteiras externas conectadas continuarão sendo suas.",
+        "delete_account_confirm": "Eu entendo, excluir minha conta",
+        "cancel": "Cancelar",
         "balance_title": "Saldos da Carteira",
         "sol_balance": "Saldo SOL",
-        "exp_balance": "Saldo de Tokens EXP"
+        "exp_balance": "Saldo de Tokens EXP",
+        "devnet_label": "Devnet",
+        "airdrop_tooltip": "O SOL da Devnet é usado para pagar taxas de transação. Se o seu saldo estiver baixo, você pode solicitar mais no faucet oficial."
     },
     "courses": {
         "title": "Explorar Currículo",

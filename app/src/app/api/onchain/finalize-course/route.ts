@@ -33,10 +33,10 @@ export async function POST(req: NextRequest) {
         const [enrollmentPda] = PublicKey.findProgramAddressSync([Buffer.from("enrollment"), Buffer.from(courseId), learner.toBuffer()], program.programId);
         const [configPda] = PublicKey.findProgramAddressSync([Buffer.from("config")], program.programId);
 
-        const config = await (program.account as any).Config.fetch(configPda);
+        const config = await (program.account as any).config.fetch(configPda);
         const learnerTokenAccount = (await connection.getTokenAccountsByOwner(learner, { mint: config.xpMint })).value[0]?.pubkey;
 
-        const course = await (program.account as any).Course.fetch(coursePda);
+        const course = await (program.account as any).course.fetch(coursePda);
         const creator = course.creator;
         const creatorTokenAccount = (await connection.getTokenAccountsByOwner(creator, { mint: config.xpMint })).value[0]?.pubkey;
 
@@ -66,6 +66,20 @@ export async function POST(req: NextRequest) {
 
         const sig = await connection.sendRawTransaction(tx.serialize());
         await connection.confirmTransaction(sig);
+
+        // Sync to Off-Chain DB so Achievements and UI load properly
+        try {
+            const { prisma } = await import("@/lib/db");
+            const user = await prisma.user.findUnique({ where: { walletAddress: wallet }, select: { id: true } });
+            if (user) {
+                await prisma.enrollment.updateMany({
+                    where: { userId: user.id, courseId },
+                    data: { completedAt: new Date() }
+                });
+            }
+        } catch (dbErr) {
+            console.error("Failed to sync off-chain finalization:", dbErr);
+        }
 
         return NextResponse.json({ success: true, signature: sig });
 

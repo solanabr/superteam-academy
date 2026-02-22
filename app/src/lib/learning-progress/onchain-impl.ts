@@ -47,11 +47,36 @@ export class OnChainLearningService implements LearningProgressService {
     // --- READ Methods ---
 
     async getProgress(userId: string): Promise<any> {
-        return null;
+        try {
+            // Get XP from on-chain balance
+            const xp = await this.getXP(userId);
+
+            // Get streak and achievement flags from DB (off-chain) using Prisma
+            const user = await prisma.user.findFirst({
+                where: { OR: [{ walletAddress: userId }, { id: userId }] },
+                include: { progress: true }
+            });
+
+            if (!user || !user.progress) {
+                return { xp, currentStreak: 0, longestStreak: 0, lastActivityDate: null, achievementFlags: [] };
+            }
+
+            return {
+                xp,
+                currentStreak: user.progress.currentStreak,
+                longestStreak: user.progress.longestStreak,
+                lastActivityDate: user.progress.lastActivityDate,
+                achievementFlags: user.progress.achievementFlags
+            };
+        } catch (e) {
+            console.error("Failed to get progress", e);
+            return null;
+        }
     }
 
     async getEnrollmentProgress(userId: string, courseId: string): Promise<any> {
         try {
+            console.log(`[getEnrollmentProgress] userId=${userId}, courseId=${courseId}`);
             const userKey = new PublicKey(userId);
             const enrollmentPda = this.getEnrollmentPDA(courseId, userKey);
             // In 0.31, account names usually follow the IDL casing. 
@@ -386,5 +411,22 @@ export class OnChainLearningService implements LearningProgressService {
 
         const data = await res.json();
         return data.claimed === true;
+    }
+
+    async logActivity(userId: string): Promise<void> {
+        // Hybrid Implementation: Streaks are always off-chain (DB/Frontend)
+        try {
+            const user = await prisma.user.findUnique({
+                where: { walletAddress: userId },
+                select: { id: true }
+            });
+            if (!user) return;
+
+            const { createLearningProgressService } = await import("./prisma-impl");
+            const prismaService = createLearningProgressService(prisma);
+            await prismaService.logActivity(user.id);
+        } catch (e) {
+            console.error("Failed to log activity", e);
+        }
     }
 }

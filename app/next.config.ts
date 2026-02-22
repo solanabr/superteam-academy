@@ -33,6 +33,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "cdn.sanity.io",
       },
+      {
+        protocol: "https",
+        hostname: "api.dicebear.com",
+      },
     ],
   },
   // Satisfy Next 16: having webpack config requires a turbopack key (empty = no custom Turbopack).

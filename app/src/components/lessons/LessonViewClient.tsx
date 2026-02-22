@@ -3,10 +3,16 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import type { CourseDetail, LessonRef, ModuleRef } from "@/sanity/lib/queries";
 import { ChallengeRunner } from "./ChallengeRunner";
-import { CodeEditor, SupportedLanguage } from "./CodeEditor";
+import dynamic from "next/dynamic";
+import type { SupportedLanguage } from "./CodeEditor";
+
+const CodeEditor = dynamic(() => import("./CodeEditor").then((mod) => mod.CodeEditor), {
+  ssr: false,
+  loading: () => <div className="h-full w-full animate-pulse bg-void/50 flex items-center justify-center text-text-muted text-sm font-mono">Loading Editor...</div>
+});
 import { TerminalOutput } from "./TerminalOutput";
 import { useAppUser } from "@/hooks/useAppUser";
-import { Link } from "@/i18n/routing";
+import { Link, useRouter } from "@/i18n/routing";
 import { useLessonStore } from "@/store/lesson-store";
 import { usePlaygroundStore } from "@/store/playground-store";
 import { useTranslations } from "next-intl";
@@ -48,6 +54,7 @@ const EMPTY_STATS: { memory?: string; cpuTime?: string } = {};
 
 export function LessonViewClient({ course, lesson }: LessonViewClientProps) {
   const t = useTranslations("lessons");
+  const router = useRouter();
   const lessonId = lesson._id;
   const getCodeFromEditorRef = useRef<(() => string) | null>(null);
 
@@ -78,10 +85,10 @@ export function LessonViewClient({ course, lesson }: LessonViewClientProps) {
 
   // Use lesson store for instant completion state (fixes flicker bug)
   const isCompleted = useLessonStore((state) =>
-    state.isLessonCompleted(course.slug, currentIndex)
+    state.isLessonCompleted(course._id, currentIndex)
   );
   const isCompleting = useLessonStore((state) =>
-    state.loading[course.slug] ?? false
+    state.loading[course._id] ?? false
   );
   const markComplete = useLessonStore((state) => state.markComplete);
   const fetchCompletionStatus = useLessonStore((state) => state.fetchCompletionStatus);
@@ -89,15 +96,15 @@ export function LessonViewClient({ course, lesson }: LessonViewClientProps) {
   // Fetch completion status on mount (cached in store)
   useEffect(() => {
     if (user?.walletAddress) {
-      fetchCompletionStatus(user.walletAddress, course.slug);
+      fetchCompletionStatus(user.walletAddress, course._id);
     }
-  }, [user?.walletAddress, course.slug, fetchCompletionStatus]);
+  }, [user?.walletAddress, course._id, fetchCompletionStatus]);
 
   const handleComplete = async () => {
     if (!user?.walletAddress || isCompleting || isCompleted) return;
 
     try {
-      await markComplete(user.walletAddress, course.slug, currentIndex);
+      await markComplete(user.walletAddress, course._id, currentIndex);
     } catch (error) {
       console.error("Failed to mark lesson complete:", error);
     }
@@ -251,7 +258,7 @@ export function LessonViewClient({ course, lesson }: LessonViewClientProps) {
                       onClick={async () => {
                         if (!isCompleted) await handleComplete();
                         if (nextLesson) {
-                          window.location.href = `/courses/${course.slug}/lessons/${nextLesson._id}`;
+                          router.push(`/courses/${course.slug}/lessons/${nextLesson._id}`);
                         }
                       }}
                       disabled={isCompleting}

@@ -107,11 +107,11 @@ export function AchievementList() {
                     message: "Complete courses to earn XP and unlock this achievement.",
                 });
             }
-        } catch (e) {
+        } catch (e: any) {
             console.error(e);
             setToast({
                 type: "info",
-                message: "Something went wrong. Please try again later.",
+                message: e.message || "Something went wrong. Please try again later.",
             });
         } finally {
             setClaimingId(null);
@@ -174,10 +174,6 @@ export function AchievementList() {
                                     {a.title}
                                 </h3>
                                 <p className="text-text-secondary text-sm mt-1">{a.description}</p>
-                            </div>
-                            <div className="mt-auto pt-2 border-t border-white/5 flex justify-between items-center">
-                                <span className="text-xs text-text-secondary uppercase tracking-wider font-medium">Reward</span>
-                                <span className="text-solana font-bold">+{a.xp} XP</span>
                             </div>
                         </div>
                     );

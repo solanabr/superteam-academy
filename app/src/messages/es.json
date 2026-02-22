@@ -14,6 +14,7 @@
     "nav": {
         "dashboard": "Panel",
         "courses": "Cursos",
+        "leaderboard": "Leaderboard",
         "achievements": "Logros",
         "teach": "Enseñar",
         "settings": "Ajustes",
@@ -42,6 +43,7 @@
     "settings": {
         "title": "Ajustes",
         "wallet_address": "Dirección de Billetera",
+        "wallet_tooltip": "Tu dirección de billetera es el identificador permanente de tu cuenta. Los logros, el EXP y el progreso del curso están vinculados a esta dirección y no pueden transferirse.",
         "account_role": "Rol de Cuenta",
         "role_info": "el rol de cuenta no es editable, contacta al administrador para cambios",
         "display_name": "Nombre de Pantalla",
@@ -62,9 +64,16 @@
             "linked": "Vinculado",
             "tooltip": "Tu dirección de billetera está vinculada a esta cuenta de {provider}. Esto no se puede cambiar."
         },
+        "delete_account": "Eliminar cuenta",
+        "delete_account_warning": "Advertencia: Esta acción es irreversible.",
+        "delete_account_desc": "Perderás el acceso a la billetera integrada creada para ti por Superteam Academy. Cualquier certificado o activo en esa billetera será permanentemente inaccesible. Tus billeteras externas conectadas seguirán siendo tuyas.",
+        "delete_account_confirm": "Entiendo, eliminar mi cuenta",
+        "cancel": "Cancelar",
         "balance_title": "Saldos de Billetera",
         "sol_balance": "Saldo SOL",
-        "exp_balance": "Saldo de Tokens EXP"
+        "exp_balance": "Saldo de Tokens EXP",
+        "devnet_label": "Devnet",
+        "airdrop_tooltip": "El SOL de Devnet se usa para pagar las tarifas de transacción. Si tu saldo es bajo, puedes solicitar más en el faucet oficial."
     },
     "courses": {
         "title": "Explorar Currículo",

@@ -34,6 +34,7 @@ export function PlatformNavbar() {
 
     const navLinks = [
         { href: "/dashboard", label: t("dashboard"), icon: "dashboard" },
+        { href: "/leaderboard", label: t("leaderboard"), icon: "leaderboard" },
         { href: "/courses", label: t("courses"), icon: "school" },
         { href: "/achievements", label: t("achievements"), icon: "trophy" },
         ...(isProfessor ? [{ href: "/teach/courses", label: t("teach"), icon: "edit_note" }] : []),
@@ -72,7 +73,7 @@ export function PlatformNavbar() {
     };
 
     return (
-        <nav className="fixed top-0 left-0 right-0 h-16 z-40 glass-panel border-b border-white/10 px-4 md:px-8 flex items-center justify-between transition-all duration-300">
+        <nav className="fixed top-0 left-0 right-0 h-16 z-40 bg-[#0A0A0B]/70 backdrop-blur-2xl border-b border-white/10 px-4 md:px-8 flex items-center justify-between transition-all duration-300">
             {/* Logo */}
             <Link href="/dashboard" className="flex items-center gap-3">
                 <div className="size-8 rounded bg-gradient-to-br from-solana to-emerald-800 flex items-center justify-center shadow-[0_0_10px_rgba(20,241,149,0.3)]">
@@ -118,7 +119,10 @@ export function PlatformNavbar() {
                 )}
 
                 {/* User Profile Dropdown */}
-                <div className="relative">
+                <div
+                    className="relative"
+                    onMouseLeave={() => setProfileOpen(false)}
+                >
                     <button
                         onClick={toggleProfile}
                         className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-white/5 transition-all"
@@ -127,7 +131,7 @@ export function PlatformNavbar() {
                             {(user?.profile as any)?.image ? (
                                 <img src={(user?.profile as any).image} alt="Profile" className="w-full h-full object-cover" />
                             ) : user?.walletAddress ? (
-                                <img src={`https://api.dicebear.com/9.x/bottts-neutral/svg?seed=${user.walletAddress}`} alt="Profile" className="w-full h-full object-cover" />
+                                <img src={`https://api.dicebear.com/9.x/bottts/svg?seed=${user.walletAddress}&backgroundColor=0a0a0b&baseColor=14f195&radius=50&sidesProbability=0&topProbability=0`} alt="Profile" className="w-full h-full object-cover" />
                             ) : (
                                 <span className="font-mono text-xs text-white">
                                     {(user?.profile as any)?.displayName?.slice(0, 2).toUpperCase() || "DV"}
@@ -139,33 +143,35 @@ export function PlatformNavbar() {
                         </span>
                     </button>
 
-                    {/* Dropdown Menu */}
+                    {/* Dropdown Menu - Wrapped with invisible expanded padding for better UX */}
                     {isProfileOpen && (
-                        <div className="absolute right-0 mt-2 w-56 rounded-lg bg-void/95 backdrop-blur-md border border-white/10 shadow-xl overflow-hidden">
-                            <div className="p-3 border-b border-white/10">
-                                <p className="text-sm font-medium text-white truncate">
-                                    {(user?.profile as any)?.displayName || "DevUser"}
-                                </p>
-                                <p className="text-xs font-mono text-solana truncate">
-                                    {user?.walletAddress ? `${user.walletAddress.slice(0, 6)}...${user.walletAddress.slice(-4)}` : "Not Connected"}
-                                </p>
-                            </div>
-                            <div className="p-2">
-                                <Link
-                                    href="/settings"
-                                    className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 text-text-muted hover:text-white transition-all"
-                                    onClick={() => setProfileOpen(false)}
-                                >
-                                    <span className="material-symbols-outlined notranslate text-lg">settings</span>
-                                    <span className="text-sm font-medium">{t("settings")}</span>
-                                </Link>
-                                <button
-                                    onClick={handleLogout}
-                                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 text-text-muted hover:text-white transition-all"
-                                >
-                                    <span className="material-symbols-outlined notranslate text-lg">logout</span>
-                                    <span className="text-sm font-medium">{t("logout")}</span>
-                                </button>
+                        <div className="absolute right-0 top-full pt-2 pb-10 pl-16 pr-8 -mr-8 z-50 flex justify-end">
+                            <div className="w-56 rounded-lg bg-void/95 backdrop-blur-md border border-white/10 shadow-xl overflow-hidden">
+                                <div className="p-3 border-b border-white/10">
+                                    <p className="text-sm font-medium text-white truncate">
+                                        {(user?.profile as any)?.displayName || "DevUser"}
+                                    </p>
+                                    <p className="text-xs font-mono text-solana truncate">
+                                        {user?.walletAddress ? `${user.walletAddress.slice(0, 6)}...${user.walletAddress.slice(-4)}` : "Not Connected"}
+                                    </p>
+                                </div>
+                                <div className="p-2">
+                                    <Link
+                                        href="/settings"
+                                        className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 text-text-muted hover:text-white transition-all"
+                                        onClick={() => setProfileOpen(false)}
+                                    >
+                                        <span className="material-symbols-outlined notranslate text-lg">settings</span>
+                                        <span className="text-sm font-medium">{t("settings")}</span>
+                                    </Link>
+                                    <button
+                                        onClick={handleLogout}
+                                        className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 text-text-muted hover:text-white transition-all"
+                                    >
+                                        <span className="material-symbols-outlined notranslate text-lg">logout</span>
+                                        <span className="text-sm font-medium">{t("logout")}</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     )}

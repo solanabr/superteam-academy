@@ -3,15 +3,19 @@
 import { useEffect, useRef } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { useWallets } from "@privy-io/react-auth/solana";
+import { useUserStore } from "@/store/user-store";
+import type { UserState } from "@/store/user-store";
 
 /** Syncs the authenticated user (wallet) to our DB on login. Renders nothing. */
 export function SyncUserOnLogin() {
   const { authenticated, user } = usePrivy();
   const { wallets } = useWallets();
+  const setUser = useUserStore((s: UserState) => s.setUser);
+  const fetchProgress = useUserStore((s: UserState) => s.fetchProgress);
   const synced = useRef(false);
 
   const linkedAddress =
-    user?.wallet?.address ?? user?.linkedAccounts?.find((a) => a.type === "wallet")?.address;
+    user?.wallet?.address ?? (user?.linkedAccounts?.find((a: any) => a.type === "wallet") as any)?.address;
   const solanaAddress = wallets?.[0]?.address;
   const walletAddress = linkedAddress ?? solanaAddress;
 
@@ -19,15 +23,27 @@ export function SyncUserOnLogin() {
     if (!authenticated || !walletAddress || synced.current) return;
     synced.current = true;
     const email =
-      user?.email?.address ?? user?.linkedAccounts?.find((a) => a.type === "email")?.address;
+      user?.email?.address ?? (user?.linkedAccounts?.find((a: any) => a.type === "email") as any)?.address;
+
     fetch("/api/user", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ wallet: walletAddress, email: email ?? undefined }),
-    }).catch(() => {
-      synced.current = false;
-    });
-  }, [authenticated, walletAddress, user?.email?.address, user?.linkedAccounts]);
+    })
+      .then(async (res) => {
+        if (res.ok) {
+          const data = await res.json();
+          setUser(data);
+          // Also trigger progress fetch once user is synced
+          fetchProgress(walletAddress);
+        } else {
+          synced.current = false;
+        }
+      })
+      .catch(() => {
+        synced.current = false;
+      });
+  }, [authenticated, walletAddress, user?.email?.address, user?.linkedAccounts, setUser, fetchProgress]);
 
   return null;
 }

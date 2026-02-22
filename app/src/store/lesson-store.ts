@@ -106,7 +106,7 @@ export const useLessonStore = create<LessonState>((set, get) => ({
 
     markComplete: async (walletAddress, courseId, lessonIndex) => {
         const state = get();
-        state.setCompletionOptimistic(courseId, lessonIndex, true);
+        state.setLoading(courseId, true);
 
         try {
             if (USE_ONCHAIN) {
@@ -135,12 +135,13 @@ export const useLessonStore = create<LessonState>((set, get) => ({
             const { useUserStore } = await import("@/store/user-store");
             await useUserStore.getState().fetchProgress(walletAddress);
 
-            // Optional: Refresh
-            // await state.fetchCompletionStatus(walletAddress, courseId);
+            // Only update local state visually AFTER server confirms success
+            get().setCompletionOptimistic(courseId, lessonIndex, true);
         } catch (error) {
-            state.setCompletionOptimistic(courseId, lessonIndex, false);
             state.setError(courseId, error instanceof Error ? error.message : "Failed to complete");
             throw error;
+        } finally {
+            get().setLoading(courseId, false);
         }
     },
 

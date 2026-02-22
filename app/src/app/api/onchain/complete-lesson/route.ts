@@ -46,6 +46,25 @@ export async function POST(req: NextRequest) {
             program.programId
         );
 
+        const enrollmentInfo = await connection.getAccountInfo(enrollmentPda);
+        const instructions = [];
+
+        if (!enrollmentInfo) {
+            console.log(`Auto-enrolling learner ${wallet} for course ${courseId}`);
+            const adminEnrollIx = await program.methods
+                .adminEnroll(courseId)
+                .accounts({
+                    config: configPda,
+                    course: coursePda,
+                    enrollment: enrollmentPda,
+                    learner: learner,
+                    authority: backendWallet.publicKey,
+                    systemProgram: SystemProgram.programId,
+                } as any)
+                .instruction();
+            instructions.push(adminEnrollIx);
+        }
+
         // Fetch Config to get XP Mint
         const config = await (program.account as any).config.fetch(configPda);
 
@@ -57,7 +76,6 @@ export async function POST(req: NextRequest) {
         );
 
         const learnerTokenAccountInfo = await connection.getAccountInfo(learnerTokenAccount);
-        const instructions = [];
 
         if (!learnerTokenAccountInfo) {
             console.log(`Creating XP token account for learner ${wallet}`);
@@ -97,6 +115,24 @@ export async function POST(req: NextRequest) {
 
         const sig = await connection.sendRawTransaction(tx.serialize());
         await connection.confirmTransaction(sig);
+
+        // Sync to Off-Chain DB so Achievements and UI load properly
+        try {
+            const { prisma } = await import("@/lib/db");
+            const user = await prisma.user.findUnique({ where: { walletAddress: wallet }, select: { id: true } });
+            if (user) {
+                const { createLearningProgressService } = await import("@/lib/learning-progress/prisma-impl");
+                const prismaService = createLearningProgressService(prisma);
+                await prismaService.completeLesson({
+                    userId: user.id,
+                    courseId,
+                    lessonIndex,
+                    xpReward: 100
+                });
+            }
+        } catch (dbErr) {
+            console.error("Failed to sync off-chain completion:", dbErr);
+        }
 
         return NextResponse.json({ success: true, signature: sig });
 
