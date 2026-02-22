@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getTranslations } from "next-intl/server";
 import { getSolanaConnection, getProgramId } from "@/lib/academy";
 import { CredentialService } from "@/services/CredentialService";
+import { CertificateActions } from "@/components/credentials/certificate-actions";
 
 interface CertificatePageProps {
 	params: Promise<{ id: string }>;
@@ -112,6 +113,16 @@ export default async function CertificatePage({ params }: CertificatePageProps) 
 								</Button>
 							</div>
 						)}
+
+						<div className="pt-4 border-t">
+							<CertificateActions
+								title={cert.title}
+								holder={cert.holder}
+								courseName={cert.courseName}
+								xpEarned={cert.xpEarned}
+								certificateId={id}
+							/>
+						</div>
 					</CardContent>
 				</Card>
 			</div>

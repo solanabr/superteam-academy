@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { CourseImage } from "@/components/courses/course-image";
 
 interface CourseCardProps {
 	course: {
@@ -47,6 +48,14 @@ export function CourseCard({ course, variant = "default" }: CourseCardProps) {
 			<div
 				className={`relative ${isCompact ? "h-28" : "h-36"} bg-linear-to-br ${gradient} overflow-hidden`}
 			>
+				{course.image && course.image !== "/courses/default.jpg" && (
+					<CourseImage
+						src={course.image}
+						alt={course.title}
+						fill
+						className="object-cover"
+					/>
+				)}
 				<div className="absolute inset-0 bg-black/5" />
 				{course.featured && (
 					<Badge className="absolute top-3 left-3 bg-white/20 text-white backdrop-blur-sm border-0 text-xs">
