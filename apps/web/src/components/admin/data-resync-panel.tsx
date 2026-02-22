@@ -6,6 +6,9 @@ interface ResyncResult {
   synced: boolean;
   wallet: string;
   xp: number;
+  enrollments: number;
+  lessonsCompleted: number;
+  coursesCompleted: number;
   achievements: number;
   certificates: number;
 }
@@ -57,9 +60,10 @@ export function DataResyncPanel({ adminToken }: DataResyncPanelProps) {
   return (
     <div className="space-y-4">
       <p className="text-sm text-text-3">
-        Rebuild a user&apos;s Supabase data from on-chain state (XP balance via
-        Token-2022 ATA, achievements via Helius DAS API). Use this after webhook
-        failures or for migration.
+        Rebuild a user&apos;s Supabase data from on-chain state: XP balance
+        (Token-2022 ATA), enrollments &amp; lesson progress (Enrollment PDAs +
+        bitmap), achievements &amp; certificates (Helius DAS API). Use after
+        webhook failures or for migration.
       </p>
 
       <div className="flex gap-2">
@@ -93,11 +97,29 @@ export function DataResyncPanel({ adminToken }: DataResyncPanelProps) {
               {result.wallet.slice(0, 4)}...{result.wallet.slice(-4)}
             </span>
           </div>
-          <div className="flex gap-4 text-text-2">
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-text-2">
             <span>
               XP:{" "}
               <span className="font-display font-bold text-text">
                 {result.xp.toLocaleString()}
+              </span>
+            </span>
+            <span>
+              Enrollments:{" "}
+              <span className="font-display font-bold text-text">
+                {result.enrollments}
+              </span>
+            </span>
+            <span>
+              Lessons:{" "}
+              <span className="font-display font-bold text-text">
+                {result.lessonsCompleted}
+              </span>
+            </span>
+            <span>
+              Courses completed:{" "}
+              <span className="font-display font-bold text-text">
+                {result.coursesCompleted}
               </span>
             </span>
             <span>
