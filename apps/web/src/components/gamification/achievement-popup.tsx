@@ -59,17 +59,27 @@ export function AchievementPopup({ className }: { className?: string }) {
       aria-label={t("achievements")}
     >
       {events.map((ev) => (
+        /* v9 .popup-grad.achievement — Solana gradient border, pop-spring animation */
         <button
           key={ev.uid}
           onClick={() => handleClick(ev.uid)}
-          className="flex animate-pop items-center gap-2 rounded-full bg-primary px-4 py-2 text-primary-foreground shadow-push transition-opacity hover:opacity-90"
+          className="popup-grad achievement cursor-pointer border-none bg-transparent p-0 text-left transition-opacity hover:opacity-90"
+          aria-label={`${t("newAchievement")}: ${ev.name}`}
         >
-          <span className="font-display text-xs font-bold text-primary-foreground">
-            {t("newAchievement")}
-          </span>
-          <span className="font-body text-xs text-primary-foreground/80">
-            {ev.name}
-          </span>
+          <div className="popup-grad-inner">
+            {/* v9 .popup-icon-ring — 44px circle, Solana gradient, 2.5px padding */}
+            <div className="popup-icon-ring">
+              <div className="popup-icon-inner" aria-hidden="true">
+                🏆
+              </div>
+            </div>
+            <div>
+              {/* v9 .popup-label — mono 10px uppercase primary */}
+              <div className="popup-label">{t("newAchievement")}</div>
+              {/* v9 .popup-name — Nunito 800, 15px */}
+              <div className="popup-name">{ev.name}</div>
+            </div>
+          </div>
         </button>
       ))}
     </div>

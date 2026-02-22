@@ -83,7 +83,7 @@ export function AchievementGrid({
     <div className={cn("space-y-4", className)}>
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h3 className="font-display text-lg font-bold">{t("achievements")}</h3>
+        <h3 className="font-display text-lg font-black">{t("achievements")}</h3>
         <span className="font-body text-sm text-text-3">
           {totalUnlocked}/{totalAchievements}
         </span>
@@ -145,7 +145,7 @@ export function AchievementGrid({
 
       {/* Badge wall */}
       {sorted.length > 0 ? (
-        <div className="flex flex-wrap gap-5">
+        <div className="ach-grid">
           {sorted.map((def) => (
             <AchievementCard
               key={def.id}
