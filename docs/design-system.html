@@ -1,1008 +1,1941 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Solarium Design System v5 — Light + Dark</title>
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Solarium Design System v9</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
 <style>
-  /* ============================================================
-     THEME TOKENS — LIGHT (default)
-     ============================================================ */
-  :root {
-    /* Primary — Deep Teal */
-    --primary: #0D9488;
-    --primary-hover: #0B7E73;
-    --primary-dark: #087068;
-    --primary-light: #CCFBF1;
-    --primary-bg: #F0FDFA;
+/* ═══════════════════════════════════════════════════════════════
+   DARK MODE TOKENS
+═══════════════════════════════════════════════════════════════ */
+:root, [data-theme="dark"] {
+  --bg:          #0E1117;
+  --surface:     #131920;
+  --card:        #161B27;
+  --card-hover:  #1C2333;
+  --input:       #1C2333;
 
-    /* Accent — Warm Amber */
-    --accent: #F59E0B;
-    --accent-hover: #D97706;
-    --accent-dark: #B45309;
-    --accent-light: #FEF3C7;
-    --accent-bg: #FFFBEB;
+  --border:         rgba(255,255,255,0.07);
+  --border-default: rgba(255,255,255,0.11);
+  --border-strong:  rgba(255,255,255,0.20);
 
-    /* Secondary — Ink Teal */
-    --secondary: #0F2F2D;
-    --secondary-light: #134E4A;
-    --secondary-bg: #E6FFFB;
+  /* Forest Emerald — Primary */
+  --primary:        #2ECC8E;
+  --primary-hover:  #27BD82;
+  --primary-dark:   #0A7055;
+  --primary-dim:    rgba(46,204,142,0.13);
+  --primary-glow:   0 0 20px rgba(46,204,142,0.22);
 
-    /* Success — Botanical Green */
-    --success: #16A34A;
-    --success-dark: #15803D;
-    --success-light: #DCFCE7;
-    --success-bg: #F0FDF4;
+  /* Warm Amber — XP */
+  --xp:             #F5A623;
+  --xp-dim:         rgba(245,166,35,0.14);
+  --xp-dark:        #B45309;
 
-    /* Streak — Flame Orange */
-    --streak: #EA580C;
-    --streak-light: #FFF7ED;
+  /* Streak */
+  --streak:         #F97316;
+  --streak-dim:     rgba(249,115,22,0.13);
 
-    /* Danger — Warm Coral */
-    --danger: #E11D48;
-    --danger-light: #FFE4E6;
+  /* Level purple */
+  --level:          #A78BFA;
+  --level-dim:      rgba(167,139,250,0.13);
 
-    /* Solana Nod — SPARINGLY */
-    --solana-purple: #9945FF;
-    --solana-green: #14F195;
+  /* Solana — ONLY NFT/cert */
+  --sol-grad:    linear-gradient(135deg, #9945FF 0%, #00C2FF 50%, #14F195 100%);
+  --sol-subtle:  linear-gradient(135deg, rgba(153,69,255,0.10) 0%, rgba(0,194,255,0.08) 50%, rgba(20,241,149,0.10) 100%);
+  --sol-green:   #14F195;
+  --sol-purple:  #9945FF;
 
-    /* Neutrals — warm cream */
-    --bg: #FAFAF7;
-    --card: #FFFFFF;
-    --subtle: #F5F3EE;
-    --warm: #FDF8F0;
-    --border: #E7E4DD;
-    --border-hover: #D4D0C7;
-    --text: #1C1917;
-    --text-2: #57534E;
-    --text-3: #A8A29E;
+  --success:     #3FB950;
+  --error:       #F85149;
 
-    /* Shadows */
-    --shadow-push: 0 4px 0 0;
-    --shadow-push-active: 0 1px 0 0;
-    --shadow-card: 0 2px 0 0 var(--border);
-    --shadow-card-hover: 0 4px 0 0 var(--border);
-    --shadow-glow: none;
+  --text:        #E6EDF3;
+  --text-2:      #8B949E;
+  --text-3:      #484F5A;
 
-    /* Typography */
-    --font-d: 'Nunito', sans-serif;
-    --font-b: 'Plus Jakarta Sans', sans-serif;
+  --track-beg:   linear-gradient(90deg, #2ECC8E, #34D399);
+  --track-int:   linear-gradient(90deg, #0A7055, #2ECC8E);
+  --track-adv:   linear-gradient(90deg, #F97316, #FBBF24);
 
-    /* Radii */
-    --r-sm: 10px;
-    --r-md: 14px;
-    --r-lg: 18px;
-    --r-xl: 24px;
+  --sg-0:        #1C2333;
+  --sg-1:        #0D4A32;
+  --sg-2:        #116B48;
+  --sg-3:        #1A9964;
+  --sg-4:        #2ECC8E;
+  --sg-today:    #F5A623;
 
-    /* Border width */
-    --bw: 2.5px;
+  --font-d: 'Nunito', sans-serif;
+  --font-b: 'Plus Jakarta Sans', sans-serif;
+  --font-m: 'JetBrains Mono', monospace;
 
-    /* Progress bar height */
-    --prog-h: 16px;
-  }
+  --r-xs:  4px;
+  --r-sm:  8px;
+  --r-md:  12px;
+  --r-lg:  16px;
+  --r-xl:  22px;
+  --r-full: 999px;
 
-  /* ============================================================
-     THEME TOKENS — DARK
-     ============================================================ */
-  [data-theme="dark"] {
-    /* Neutrals — Soft Neutral Dark */
-    --bg: #343431;
-    --card: #3D3C38;
-    --subtle: #46443F;
-    --warm: #4A4843;
+  --shadow:       0 1px 3px rgba(0,0,0,0.5), 0 4px 16px rgba(0,0,0,0.35);
+  --shadow-hover: 0 4px 24px rgba(0,0,0,0.5);
+  --shadow-glow-primary: 0 0 0 1px rgba(46,204,142,0.25), 0 4px 20px rgba(46,204,142,0.12);
+}
 
-    --border: #57534E;
-    --border-hover: #6A655E;
+/* ═══════════════════════════════════════════════════════════════
+   LIGHT MODE TOKENS
+═══════════════════════════════════════════════════════════════ */
+[data-theme="light"] {
+  --bg:          #FAFAF7;
+  --surface:     #FFFFFF;
+  --card:        #FFFFFF;
+  --card-hover:  #F7F5F0;
+  --input:       #F3F1EC;
 
-    --text: #F5F1EA;
-    --text-2: #D4CEC3;
-    --text-3: #A79F93;
+  --border:         rgba(0,0,0,0.08);
+  --border-default: rgba(0,0,0,0.13);
+  --border-strong:  rgba(0,0,0,0.22);
 
-    /* Primary — lifted for dark readability */
-    --primary: #2DD4BF;
-    --primary-hover: #22C7B3;
-    --primary-dark: #0B7E73;
-    --primary-light: rgba(45,212,191,0.15);
-    --primary-bg: rgba(45,212,191,0.10);
+  --primary:        #0A7055;
+  --primary-hover:  #08604A;
+  --primary-dark:   #065C44;
+  --primary-dim:    rgba(10,112,85,0.09);
+  --primary-glow:   0 0 20px rgba(10,112,85,0.15);
 
-    /* Accent — lifted */
-    --accent: #FBBF24;
-    --accent-hover: #F59E0B;
-    --accent-dark: #B45309;
-    --accent-light: rgba(251,191,36,0.18);
-    --accent-bg: rgba(251,191,36,0.10);
+  --xp:             #F59E0B;
+  --xp-dim:         rgba(245,158,11,0.10);
+  --xp-dark:        #B45309;
 
-    /* Secondary — Ink Teal adapted for dark */
-    --secondary: #2FA7A0;
-    --secondary-light: #5FD3CC;
-    --secondary-bg: rgba(47,167,160,0.12);
+  --streak:         #EA580C;
+  --streak-dim:     rgba(234,88,12,0.10);
 
-    /* Success */
-    --success: #4ADE80;
-    --success-dark: #22C55E;
-    --success-light: rgba(74,222,128,0.15);
-    --success-bg: rgba(74,222,128,0.10);
+  --level:          #7C3AED;
+  --level-dim:      rgba(124,58,237,0.10);
 
-    /* Streak */
-    --streak: #FB923C;
-    --streak-light: rgba(251,146,60,0.12);
+  --success:     #16A34A;
+  --error:       #DC2626;
 
-    /* Danger */
-    --danger: #FB7185;
-    --danger-light: rgba(251,113,133,0.12);
+  --text:        #1C1917;
+  --text-2:      #57534E;
+  --text-3:      #A8A29E;
 
-    /* Shadows — deeper for dark */
-    --shadow-card: 0 2px 0 0 rgba(0,0,0,0.35);
-    --shadow-card-hover: 0 4px 0 0 rgba(0,0,0,0.35);
-    --shadow-glow: 0 0 12px rgba(45,212,191,0.08);
-  }
+  --track-beg:   linear-gradient(90deg, #0A7055, #34D399);
+  --track-int:   linear-gradient(90deg, #065C44, #0A7055);
+  --track-adv:   linear-gradient(90deg, #EA580C, #F59E0B);
 
-  /* ============================================================
-     RESET & BASE
-     ============================================================ */
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    font-family: var(--font-b);
-    background: var(--bg);
-    color: var(--text);
-    line-height: 1.5;
-    padding: 40px;
-    max-width: 1200px;
-    margin: 0 auto;
-    transition: background 0.3s ease, color 0.3s ease;
-  }
+  --sg-0:        #EDEDE8;
+  --sg-1:        #B8E8D4;
+  --sg-2:        #5DC49A;
+  --sg-3:        #0A7055;
+  --sg-4:        #065C44;
+  --sg-today:    #F59E0B;
 
-  /* ============================================================
-     THEME TOGGLE
-     ============================================================ */
-  .theme-toggle {
-    position: fixed; top: 20px; right: 20px; z-index: 100;
-    font-family: var(--font-d); font-weight: 800; font-size: 14px;
-    padding: 10px 20px; border: var(--bw) solid var(--border);
-    border-radius: var(--r-md); cursor: pointer;
-    background: var(--card); color: var(--text);
-    box-shadow: 0 4px 0 0 var(--border);
-    transition: all 0.15s;
-  }
-  .theme-toggle:active { transform: translateY(3px); box-shadow: 0 1px 0 0 var(--border); }
+  --shadow:       0 1px 3px rgba(0,0,0,0.06), 0 2px 0 0 rgba(0,0,0,0.06);
+  --shadow-hover: 0 4px 0 0 rgba(0,0,0,0.08);
+  --shadow-glow-primary: 0 0 0 1px rgba(10,112,85,0.2), 0 4px 20px rgba(10,112,85,0.08);
+}
 
-  /* ============================================================
-     PAGE STRUCTURE
-     ============================================================ */
-  .page-header { margin-bottom: 56px; border-bottom: var(--bw) solid var(--border); padding-bottom: 32px; }
-  .page-title { font-family: var(--font-d); font-weight: 900; font-size: 40px; }
-  .page-title span { color: var(--primary); }
-  .page-sub { font-size: 17px; color: var(--text-2); margin-top: 6px; max-width: 700px; }
+/* ═══════════════════════════════════════════════════════════════
+   RESET & BASE
+═══════════════════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-b);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.3s, color 0.3s;
+}
 
-  .s { margin-bottom: 64px; }
-  .s-title { font-family: var(--font-d); font-weight: 800; font-size: 24px; margin-bottom: 6px; }
-  .s-desc { color: var(--text-2); font-size: 15px; margin-bottom: 24px; max-width: 650px; line-height: 1.6; }
+/* ═══════════════════════════════════════════════════════════════
+   GRID BACKGROUND TEXTURE
+═══════════════════════════════════════════════════════════════ */
+.grid-bg {
+  background-image: radial-gradient(circle, var(--border-default) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
 
-  .theme-label {
-    display: inline-block; padding: 4px 14px; border-radius: 9999px;
-    font-family: var(--font-d); font-weight: 800; font-size: 11px;
-    background: var(--primary-bg); color: var(--primary); border: 2px solid var(--primary);
-    margin-bottom: 16px; text-transform: uppercase; letter-spacing: 1px;
-  }
+/* ═══════════════════════════════════════════════════════════════
+   NAV
+═══════════════════════════════════════════════════════════════ */
+.doc-nav {
+  position: sticky; top: 0; z-index: 200;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 48px;
+  display: flex; align-items: center;
+  overflow-x: auto; -ms-overflow-style: none; scrollbar-width: none;
+}
+.doc-nav::-webkit-scrollbar { display: none; }
+.nav-logo {
+  font-family: var(--font-d); font-weight: 900; font-size: 17px;
+  color: var(--primary); margin-right: 28px; white-space: nowrap;
+  padding: 16px 0; flex-shrink: 0; letter-spacing: -0.3px;
+}
+.doc-nav a {
+  color: var(--text-3); text-decoration: none;
+  padding: 16px 11px; font-size: 12px; font-weight: 600;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s; white-space: nowrap;
+}
+.doc-nav a:hover { color: var(--text-2); }
+.doc-nav a.active { color: var(--primary); border-bottom-color: var(--primary); }
+.theme-btn {
+  margin-left: auto; flex-shrink: 0;
+  font-family: var(--font-d); font-weight: 800; font-size: 12px;
+  padding: 6px 14px; border: 1px solid var(--border-default);
+  border-radius: var(--r-sm); cursor: pointer;
+  background: var(--card); color: var(--text-2);
+  transition: all 0.15s;
+}
+.theme-btn:hover { border-color: var(--primary); color: var(--primary); }
 
-  /* ============ COLOR SWATCHES ============ */
-  .swatch-group { margin-bottom: 20px; }
-  .swatch-group-label { font-family: var(--font-d); font-weight: 700; font-size: 14px; margin-bottom: 10px; color: var(--text-2); }
-  .swatches { display: flex; gap: 10px; flex-wrap: wrap; }
-  .swatch { width: 76px; text-align: center; }
-  .swatch-circle {
-    width: 60px; height: 60px; border-radius: 14px; margin: 0 auto 6px;
-    border: var(--bw) solid rgba(0,0,0,0.06); transition: transform 0.15s;
-  }
-  [data-theme="dark"] .swatch-circle { border-color: rgba(255,255,255,0.1); }
-  .swatch-circle:hover { transform: scale(1.08); }
-  .swatch-label { font-size: 11px; font-weight: 700; color: var(--text-2); }
-  .swatch-hex { font-size: 10px; color: var(--text-3); font-family: monospace; }
+/* ═══════════════════════════════════════════════════════════════
+   HEADER
+═══════════════════════════════════════════════════════════════ */
+.doc-header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 56px 64px;
+  position: relative; overflow: hidden;
+}
+.doc-header::before {
+  content: ''; position: absolute; inset: 0;
+  background: var(--sol-subtle); opacity: 0.5; pointer-events: none;
+}
+.doc-header-inner { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; }
+.doc-logo { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+.doc-logo-mark {
+  width: 40px; height: 40px; background: var(--sol-grad);
+  border-radius: var(--r-md);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-d); font-weight: 900; font-size: 18px; color: #000;
+}
+.doc-logo-name { font-family: var(--font-d); font-weight: 900; font-size: 22px; color: var(--primary); }
+.doc-tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--primary-dim); color: var(--primary);
+  border: 1px solid rgba(46,204,142,0.2);
+  padding: 4px 12px; border-radius: var(--r-full);
+  font-family: var(--font-m); font-size: 11px; margin-bottom: 16px;
+}
+[data-theme="light"] .doc-tag { border-color: rgba(10,112,85,0.2); }
+.doc-tag-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--primary); }
+.doc-title {
+  font-family: var(--font-d); font-size: 44px; font-weight: 900;
+  color: var(--text); margin-bottom: 10px; letter-spacing: -1px; line-height: 1.1;
+}
+.doc-title em { color: var(--primary); font-style: normal; }
+.doc-sub { color: var(--text-2); font-size: 16px; max-width: 500px; line-height: 1.7; }
 
-  /* ============ TYPOGRAPHY ============ */
-  .type-row { padding: 14px 0; border-bottom: 1px solid var(--border); }
-  .type-label { font-size: 11px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
-  .type-display-xl { font-family: var(--font-d); font-weight: 900; font-size: 44px; line-height: 1.1; }
-  .type-display-lg { font-family: var(--font-d); font-weight: 800; font-size: 30px; line-height: 1.2; }
-  .type-display-md { font-family: var(--font-d); font-weight: 800; font-size: 22px; }
-  .type-body-lg { font-family: var(--font-b); font-weight: 500; font-size: 17px; }
-  .type-body { font-family: var(--font-b); font-weight: 400; font-size: 15px; color: var(--text-2); }
-  .type-caption { font-family: var(--font-b); font-weight: 600; font-size: 12px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.5px; }
-  .type-mono { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--primary); }
+/* ═══════════════════════════════════════════════════════════════
+   BODY / SECTIONS
+═══════════════════════════════════════════════════════════════ */
+.doc-body { max-width: 1200px; margin: 0 auto; padding: 56px 64px; }
+.section { margin-bottom: 88px; scroll-margin-top: 60px; }
+.section-title { font-family: var(--font-d); font-size: 26px; font-weight: 900; color: var(--text); margin-bottom: 6px; letter-spacing: -0.3px; }
+.section-desc { color: var(--text-2); font-size: 14px; line-height: 1.7; margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid var(--border); max-width: 600px; }
+.sub-label { font-family: var(--font-m); font-size: 11px; font-weight: 500; color: var(--text-3); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px; }
 
-  /* ============ BUTTONS — 3D PUSH ============ */
-  .btn-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
-  .btn {
-    font-family: var(--font-d); font-weight: 800; font-size: 15px;
-    padding: 12px 28px; border: none; border-radius: var(--r-md);
-    cursor: pointer; transition: all 0.1s ease;
-    display: inline-flex; align-items: center; gap: 8px;
-  }
-  .btn:active { transform: translateY(3px); }
-  .btn-p { background: var(--primary); color: white; box-shadow: var(--shadow-push) var(--primary-dark); }
-  .btn-p:hover { background: var(--primary-hover); }
-  .btn-p:active { box-shadow: var(--shadow-push-active) var(--primary-dark); }
-  .btn-a { background: var(--accent); color: white; box-shadow: var(--shadow-push) var(--accent-dark); }
-  .btn-a:hover { background: var(--accent-hover); }
-  .btn-a:active { box-shadow: var(--shadow-push-active) var(--accent-dark); }
-  .btn-s { background: var(--success); color: white; box-shadow: var(--shadow-push) var(--success-dark); }
-  .btn-s:active { box-shadow: var(--shadow-push-active) var(--success-dark); }
-  .btn-sec { background: var(--secondary); color: white; box-shadow: var(--shadow-push) #0A1F1E; }
-  .btn-sec:hover { background: var(--secondary-light); }
-  .btn-sec:active { box-shadow: var(--shadow-push-active) #0A1F1E; }
-  .btn-o { background: var(--card); color: var(--text); border: var(--bw) solid var(--border); box-shadow: var(--shadow-push) var(--border); padding: 10px 26px; }
-  .btn-o:hover { background: var(--subtle); }
-  .btn-o:active { box-shadow: var(--shadow-push-active) var(--border); }
-  .btn-g { background: transparent; color: var(--text-2); box-shadow: none; }
-  .btn-g:hover { background: var(--subtle); color: var(--text); }
-  .btn-d { background: var(--danger); color: white; box-shadow: var(--shadow-push) #9F1239; }
-  .btn-d:active { box-shadow: var(--shadow-push-active) #9F1239; }
-  .btn-sm { font-size: 13px; padding: 8px 18px; }
-  .btn-lg { font-size: 17px; padding: 16px 36px; }
+.showcase { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 32px; margin-bottom: 20px; }
+.showcase.dots {
+  background-color: var(--surface);
+  background-image: radial-gradient(circle, var(--border-default) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+.flex-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
 
-  /* Dark mode button depth override */
-  [data-theme="dark"] .btn-p { box-shadow: var(--shadow-push) rgba(0,0,0,0.4); }
-  [data-theme="dark"] .btn-p:active { box-shadow: var(--shadow-push-active) rgba(0,0,0,0.5); }
-  [data-theme="dark"] .btn-a { box-shadow: var(--shadow-push) rgba(0,0,0,0.4); }
-  [data-theme="dark"] .btn-a:active { box-shadow: var(--shadow-push-active) rgba(0,0,0,0.5); }
-  [data-theme="dark"] .btn-s { box-shadow: var(--shadow-push) rgba(0,0,0,0.4); }
-  [data-theme="dark"] .btn-s:active { box-shadow: var(--shadow-push-active) rgba(0,0,0,0.5); }
-  [data-theme="dark"] .btn-sec { box-shadow: var(--shadow-push) rgba(0,0,0,0.4); }
-  [data-theme="dark"] .btn-sec:active { box-shadow: var(--shadow-push-active) rgba(0,0,0,0.5); }
-  [data-theme="dark"] .btn-o { box-shadow: var(--shadow-push) rgba(0,0,0,0.35); }
-  [data-theme="dark"] .btn-o:active { box-shadow: var(--shadow-push-active) rgba(0,0,0,0.45); }
-  [data-theme="dark"] .btn-d { box-shadow: var(--shadow-push) rgba(0,0,0,0.4); }
-  [data-theme="dark"] .btn-d:active { box-shadow: var(--shadow-push-active) rgba(0,0,0,0.5); }
+code {
+  font-family: var(--font-m); font-size: 11px; color: var(--primary);
+  background: var(--primary-dim); padding: 2px 6px;
+  border-radius: 4px; border: 1px solid rgba(46,204,142,0.15);
+}
+[data-theme="light"] code { border-color: rgba(10,112,85,0.15); }
 
-  /* ============ DASHBOARD STATS ============ */
-  .dash-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
-  .dash-stat {
-    background: var(--card); border: var(--bw) solid var(--border); border-radius: var(--r-lg);
-    padding: 24px 20px; box-shadow: var(--shadow-card); transition: all 0.15s; position: relative;
-  }
-  .dash-stat:hover { transform: translateY(-1px); box-shadow: var(--shadow-card-hover); }
-  .dash-stat.xp-card { display: flex; justify-content: space-between; align-items: flex-start; }
-  .xp-label { font-family: var(--font-d); font-weight: 700; font-size: 13px; color: var(--text-3); margin-bottom: 4px; }
-  .xp-value { font-family: var(--font-d); font-weight: 900; font-size: 44px; line-height: 1; color: var(--primary); }
-  .xp-progress-wrap { margin-top: 12px; }
-  .xp-progress-text { font-size: 12px; color: var(--text-3); margin-top: 4px; }
-  .level-circle {
-    width: 56px; height: 56px; border-radius: 50%; border: 3px solid var(--primary);
-    display: flex; align-items: center; justify-content: center;
-    font-family: var(--font-d); font-weight: 900; font-size: 22px;
-    color: var(--primary); background: var(--primary-bg); flex-shrink: 0;
-  }
-  .xp-prog-track {
-    width: 100%; height: 10px; background: var(--subtle);
-    border-radius: 9999px; border: 2px solid var(--border); overflow: hidden;
-  }
-  .xp-prog-fill { height: 100%; border-radius: 9999px; background: linear-gradient(90deg, var(--secondary), var(--primary)); }
-  .stat-icon-label { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
-  .stat-emoji { font-size: 16px; }
-  .stat-label-text { font-family: var(--font-d); font-weight: 700; font-size: 13px; color: var(--text-3); }
-  .stat-value { font-family: var(--font-d); font-weight: 900; font-size: 36px; line-height: 1; color: var(--text); margin-bottom: 2px; }
-  .stat-sub { font-size: 13px; color: var(--text-2); font-weight: 500; }
+/* ═══════════════════════════════════════════════════════════════
+   TYPOGRAPHY
+═══════════════════════════════════════════════════════════════ */
+.type-row { padding: 14px 0; border-bottom: 1px solid var(--border); }
+.type-label { font-family: var(--font-m); font-size: 11px; color: var(--text-3); margin-bottom: 6px; }
+.t-hero { font-family: var(--font-d); font-weight: 900; font-size: 48px; letter-spacing: -1.5px; line-height: 1.05; }
+.t-h1   { font-family: var(--font-d); font-weight: 800; font-size: 32px; letter-spacing: -0.5px; }
+.t-h2   { font-family: var(--font-d); font-weight: 800; font-size: 24px; }
+.t-body-lg { font-size: 17px; color: var(--text-2); line-height: 1.7; }
+.t-body    { font-size: 15px; color: var(--text-2); }
+.t-caption { font-size: 12px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.5px; }
+.t-mono    { font-family: var(--font-m); font-size: 13px; color: var(--primary); }
+.t-gradient {
+  font-family: var(--font-d); font-weight: 900; font-size: 44px; letter-spacing: -1px;
+  background: var(--sol-grad);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
 
-  /* ============ COURSE CARDS ============ */
-  .cards-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-  .card {
-    background: var(--card); border: var(--bw) solid var(--border); border-radius: var(--r-lg);
-    overflow: hidden; box-shadow: var(--shadow-card); transition: all 0.15s; cursor: pointer;
-  }
-  .card:hover { transform: translateY(-2px); box-shadow: var(--shadow-card-hover); border-color: var(--border-hover); }
-  .card-banner { height: 140px; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-  .card-banner.beginner { background: linear-gradient(135deg, #E0F7F4 0%, #C8F0EA 40%, #E8FAF0 70%, #F0FDF4 100%); }
-  .card-banner.intermediate { background: linear-gradient(135deg, #E6FFFB 0%, #CCF5F0 40%, #D5F5F2 70%, #E6FFFB 100%); }
-  .card-banner.advanced { background: linear-gradient(135deg, #FFF0E6 0%, #FFE0CC 40%, #FFEEE0 70%, #FFF7ED 100%); }
-  [data-theme="dark"] .card-banner.beginner { background: linear-gradient(135deg, rgba(45,212,191,0.15) 0%, rgba(13,148,136,0.2) 100%); }
-  [data-theme="dark"] .card-banner.intermediate { background: linear-gradient(135deg, rgba(47,167,160,0.15) 0%, rgba(15,47,45,0.3) 100%); }
-  [data-theme="dark"] .card-banner.advanced { background: linear-gradient(135deg, rgba(234,88,12,0.15) 0%, rgba(180,83,9,0.2) 100%); }
-  .card-cover-img {
-    width: 72px; height: 72px; border-radius: var(--r-md);
-    background: rgba(255,255,255,0.6); backdrop-filter: blur(8px);
-    border: 2px solid rgba(255,255,255,0.8);
-    display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-  }
-  [data-theme="dark"] .card-cover-img { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.15); }
-  .card-cover-inner { width: 48px; height: 48px; border-radius: 8px; background: linear-gradient(135deg, rgba(13,148,136,0.15), rgba(15,47,45,0.1)); }
-  .card-badge {
-    position: absolute; top: 12px; left: 12px; padding: 4px 14px;
-    border-radius: 9999px; font-family: var(--font-d); font-weight: 800; font-size: 11px; border: 2px solid;
-  }
-  .card-badge.beginner { background: rgba(255,255,255,0.9); color: var(--primary); border-color: rgba(13,148,136,0.2); }
-  .card-badge.intermediate { background: rgba(255,255,255,0.9); color: var(--secondary); border-color: rgba(15,47,45,0.2); }
-  .card-badge.advanced { background: rgba(255,255,255,0.9); color: var(--streak); border-color: rgba(234,88,12,0.2); }
-  [data-theme="dark"] .card-badge { background: var(--card); }
-  .card-body { padding: 18px 20px; }
-  .card-title { font-family: var(--font-d); font-weight: 800; font-size: 17px; margin-bottom: 3px; }
-  .card-by { font-size: 13px; color: var(--text-3); margin-bottom: 10px; }
-  .card-desc { font-size: 14px; color: var(--text-2); margin-bottom: 16px; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-  .card-foot { display: flex; justify-content: space-between; align-items: center; }
-  .card-hours { font-size: 13px; color: var(--text-3); font-weight: 600; display: flex; align-items: center; gap: 4px; }
-  .card-xp { font-family: var(--font-d); font-weight: 900; font-size: 14px; color: var(--accent-dark); display: flex; align-items: center; gap: 4px; }
-  [data-theme="dark"] .card-xp { color: var(--accent); }
+/* ═══════════════════════════════════════════════════════════════
+   BUTTONS — 3 variants only: Primary, Secondary, Accent
+═══════════════════════════════════════════════════════════════ */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  font-family: var(--font-b); font-weight: 700;
+  border: none; cursor: pointer; text-decoration: none;
+  transition: all 0.12s ease; white-space: nowrap;
+  border-radius: var(--r-md); font-size: 14px; padding: 11px 22px;
+}
+.btn:active { transform: translateY(2px); }
 
-  /* ============ PROGRESS BARS ============ */
-  .prog-wrap { max-width: 500px; margin-bottom: 20px; }
-  .prog-top { display: flex; justify-content: space-between; margin-bottom: 6px; }
-  .prog-name { font-family: var(--font-d); font-weight: 700; font-size: 14px; }
-  .prog-val { font-family: var(--font-d); font-weight: 800; font-size: 14px; }
-  .prog-track {
-    width: 100%; height: var(--prog-h); background: var(--subtle);
-    border-radius: 9999px; border: var(--bw) solid var(--border); overflow: hidden;
-  }
-  .prog-fill {
-    height: 100%; border-radius: 9999px; position: relative;
-    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-  .prog-fill::after {
-    content: ''; position: absolute; top: 2px; left: 8px; right: 8px; height: 4px;
-    background: rgba(255,255,255,0.3); border-radius: 9999px;
-  }
-  .prog-fill.teal { background: linear-gradient(90deg, var(--primary-dark), var(--primary)); }
-  .prog-fill.amber { background: linear-gradient(90deg, var(--accent-dark), var(--accent)); }
-  .prog-fill.green { background: linear-gradient(90deg, var(--success-dark), var(--success)); }
+.btn-primary {
+  background: var(--primary); color: #fff;
+  box-shadow: 0 4px 0 0 var(--primary-dark);
+}
+.btn-primary:hover { background: var(--primary-hover); }
+.btn-primary:active { box-shadow: 0 1px 0 0 var(--primary-dark); }
 
-  /* ============ STREAK ============ */
-  .streak-box {
-    background: var(--card); border: var(--bw) solid var(--border); border-radius: var(--r-lg);
-    padding: 24px; box-shadow: var(--shadow-card); max-width: 500px;
-  }
-  .streak-header { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
-  .streak-icon {
-    width: 48px; height: 48px; background: var(--streak-light); border-radius: var(--r-md);
-    display: flex; align-items: center; justify-content: center; font-size: 24px;
-    animation: breathe 2s infinite alternate ease-in-out;
-  }
-  @keyframes breathe { 0% { transform: scale(1); } 100% { transform: scale(1.06); } }
-  .streak-count { font-family: var(--font-d); font-weight: 900; font-size: 26px; }
-  .streak-label { font-size: 13px; color: var(--text-3); }
-  .streak-days { display: flex; gap: 6px; }
-  .streak-day {
-    width: 40px; height: 40px; border-radius: 50%; border: var(--bw) solid var(--border);
-    display: flex; align-items: center; justify-content: center;
-    font-family: var(--font-d); font-weight: 800; font-size: 13px;
-    color: var(--text-3); background: var(--subtle);
-  }
-  .streak-day.on { background: var(--success-light); border-color: var(--success); color: var(--success-dark); box-shadow: var(--shadow-push) var(--success-dark); }
-  .streak-day.now { background: var(--primary); border-color: var(--primary-dark); color: white; box-shadow: var(--shadow-push) var(--primary-dark); animation: pulse 2s infinite; }
-  [data-theme="dark"] .streak-day.on { box-shadow: 0 2px 0 0 rgba(0,0,0,0.35); }
-  [data-theme="dark"] .streak-day.now { box-shadow: 0 2px 0 0 rgba(0,0,0,0.35); }
-  @keyframes pulse {
-    0%, 100% { box-shadow: 0 2px 0 0 var(--primary-dark), 0 0 0 0 rgba(13,148,136,0.3); }
-    50% { box-shadow: 0 2px 0 0 var(--primary-dark), 0 0 0 6px rgba(13,148,136,0); }
-  }
+.btn-secondary {
+  background: transparent; color: var(--text);
+  border: 1.5px solid var(--border-strong);
+}
+.btn-secondary:hover { border-color: var(--primary); color: var(--primary); }
 
-  /* ============ XP POPUPS ============ */
-  .popups-row { display: flex; gap: 16px; flex-wrap: wrap; }
-  .popup {
-    display: inline-flex; align-items: center; gap: 6px; padding: 12px 24px;
-    border-radius: 9999px; font-family: var(--font-d); font-weight: 900; font-size: 17px;
-    animation: pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-  .popup.xp { background: var(--accent); color: white; box-shadow: var(--shadow-push) var(--accent-dark); }
-  .popup.done { background: var(--success); color: white; box-shadow: var(--shadow-push) var(--success-dark); }
-  .popup.badge { background: var(--primary); color: white; box-shadow: var(--shadow-push) var(--primary-dark); }
-  [data-theme="dark"] .popup { box-shadow: var(--shadow-push) rgba(0,0,0,0.4); }
-  @keyframes pop {
-    0% { transform: scale(0) translateY(20px); opacity: 0; }
-    60% { transform: scale(1.12) translateY(-4px); }
-    100% { transform: scale(1) translateY(0); opacity: 1; }
-  }
+.btn-accent {
+  background: var(--xp); color: #fff;
+  box-shadow: 0 4px 0 0 var(--xp-dark);
+}
+.btn-accent:hover { opacity: 0.92; }
+.btn-accent:active { box-shadow: 0 1px 0 0 var(--xp-dark); }
 
-  /* ============ ACHIEVEMENTS ============ */
-  .badges-grid { display: flex; gap: 20px; flex-wrap: wrap; }
-  .ach { width: 88px; text-align: center; }
-  .ach-circle {
-    width: 68px; height: 68px; border-radius: 50%; margin: 0 auto 8px;
-    display: flex; align-items: center; justify-content: center;
-    border: 3px solid; transition: transform 0.2s;
-    font-family: var(--font-d); font-weight: 900; font-size: 14px; text-transform: uppercase;
-  }
-  .ach-circle:hover { transform: scale(1.08); }
-  .ach-circle.earned {
-    background: linear-gradient(145deg, #FEF3C7, #FDE68A); border-color: var(--accent);
-    box-shadow: 0 4px 0 0 var(--accent-dark), 0 0 16px rgba(245,158,11,0.15); color: var(--accent-dark);
-  }
-  [data-theme="dark"] .ach-circle.earned { box-shadow: 0 4px 0 0 rgba(0,0,0,0.35), 0 0 16px rgba(251,191,36,0.15); }
-  .ach-circle.locked { background: var(--subtle); border-color: var(--border); color: var(--text-3); opacity: 0.4; }
-  .ach-name { font-family: var(--font-d); font-weight: 700; font-size: 11px; color: var(--text-2); }
+.btn-sm { padding: 7px 14px; font-size: 12px; border-radius: var(--r-sm); }
+.btn-lg { padding: 14px 30px; font-size: 16px; }
 
-  /* ============ LEVELS ============ */
-  .levels-row { display: flex; gap: 32px; align-items: flex-end; }
-  .lvl { text-align: center; }
-  .lvl-circle {
-    width: 56px; height: 56px; border-radius: 50%; border: 3px solid;
-    display: flex; align-items: center; justify-content: center;
-    font-family: var(--font-d); font-weight: 900; font-size: 22px; margin-bottom: 6px;
-  }
-  .lvl-circle.l1 { background: var(--primary-light); border-color: var(--primary); color: var(--primary); }
-  .lvl-circle.l5 { background: var(--secondary-bg); border-color: var(--secondary-light); color: var(--secondary); }
-  .lvl-circle.l10 { background: var(--accent-light); border-color: var(--accent); color: var(--accent-dark); box-shadow: 0 0 14px rgba(245,158,11,0.2); }
-  .lvl-circle.l20 { background: linear-gradient(145deg, #FDE68A, #F59E0B); border-color: var(--accent-dark); color: #78350F; box-shadow: 0 0 20px rgba(245,158,11,0.3); }
-  .lvl-name { font-family: var(--font-d); font-weight: 700; font-size: 12px; color: var(--text-3); }
+/* ═══════════════════════════════════════════════════════════════
+   PILLS & BADGES — v3 palette (vibrant on dark, muted on light)
+═══════════════════════════════════════════════════════════════ */
+.pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 12px; border-radius: var(--r-full);
+  font-family: var(--font-d); font-weight: 700; font-size: 11px;
+  text-transform: uppercase; letter-spacing: 0.4px;
+  border: 1px solid;
+}
+/* Primary / beginner — emerald */
+.pill-primary { background: var(--primary-dim); color: var(--primary); border-color: rgba(46,204,142,0.22); }
+[data-theme="light"] .pill-primary { border-color: rgba(10,112,85,0.2); }
 
-  /* ============ LEADERBOARD ============ */
-  .lb { max-width: 520px; }
-  .lb-row {
-    display: flex; align-items: center; gap: 14px; padding: 14px 18px;
-    background: var(--card); border: var(--bw) solid var(--border); border-radius: var(--r-md);
-    margin-bottom: 8px; box-shadow: var(--shadow-card); transition: all 0.15s;
-  }
-  .lb-row:hover { transform: translateY(-1px); box-shadow: var(--shadow-card-hover); }
-  .lb-row.first { border-color: var(--accent); background: var(--accent-bg); }
-  .lb-row.me { border-color: var(--primary); background: var(--primary-bg); }
-  .lb-rank { font-family: var(--font-d); font-weight: 900; font-size: 18px; width: 28px; color: var(--text-3); }
-  .lb-row.first .lb-rank { color: var(--accent-dark); }
-  [data-theme="dark"] .lb-row.first .lb-rank { color: var(--accent); }
-  .lb-av {
-    width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-    font-family: var(--font-d); font-weight: 800; font-size: 14px; color: white;
-  }
-  .lb-info { flex: 1; }
-  .lb-name { font-family: var(--font-d); font-weight: 700; font-size: 15px; }
-  .lb-name .you { font-size: 11px; color: var(--primary); font-weight: 800; }
-  .lb-lvl { font-size: 12px; color: var(--text-3); }
-  .lb-xp { font-family: var(--font-d); font-weight: 900; font-size: 16px; color: var(--accent-dark); }
-  [data-theme="dark"] .lb-xp { color: var(--accent); }
+/* XP / rewards — gold */
+.pill-xp { background: var(--xp-dim); color: var(--xp); border-color: rgba(245,166,35,0.22); }
+[data-theme="light"] .pill-xp { border-color: rgba(245,158,11,0.2); }
 
-  /* ============ DIFFICULTY PILLS ============ */
-  .pills { display: flex; gap: 8px; }
-  .pill {
-    padding: 7px 18px; border-radius: 9999px; font-family: var(--font-d); font-weight: 700;
-    font-size: 13px; border: var(--bw) solid; cursor: pointer; transition: all 0.15s;
-  }
-  .pill:active { transform: translateY(1px); }
-  .pill.beg { background: var(--primary-bg); border-color: var(--primary); color: var(--primary-dark); }
-  .pill.int { background: var(--secondary-bg); border-color: var(--secondary-light); color: var(--secondary); }
-  .pill.adv { background: var(--streak-light); border-color: var(--streak); color: #9A3412; }
-  [data-theme="dark"] .pill.beg { color: var(--primary); }
-  [data-theme="dark"] .pill.int { color: var(--secondary-light); }
-  [data-theme="dark"] .pill.adv { color: var(--streak); }
+/* Streak */
+.pill-streak { background: var(--streak-dim); color: var(--streak); border-color: rgba(249,115,22,0.22); }
+[data-theme="light"] .pill-streak { border-color: rgba(234,88,12,0.2); }
 
-  /* ============ FEATURE CARDS ============ */
-  .feat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; max-width: 680px; }
-  .feat {
-    background: var(--card); border: var(--bw) solid var(--border); border-radius: var(--r-lg);
-    padding: 28px 24px; box-shadow: var(--shadow-card); transition: all 0.15s;
-  }
-  .feat:hover { transform: translateY(-2px); box-shadow: var(--shadow-card-hover); }
-  .feat-num { font-family: var(--font-d); font-weight: 900; font-size: 36px; line-height: 1; margin-bottom: 8px; }
-  .feat-title { font-family: var(--font-d); font-weight: 800; font-size: 17px; margin-bottom: 6px; }
-  .feat-desc { font-size: 14px; color: var(--text-2); line-height: 1.5; }
+/* Level — purple (v3 style) */
+.pill-level { background: var(--level-dim); color: var(--level); border-color: rgba(167,139,250,0.22); }
+[data-theme="light"] .pill-level { color: var(--level); border-color: rgba(124,58,237,0.2); }
 
-  /* ============ INPUT/SELECT — FORM ELEMENTS ============ */
-  .form-demo { max-width: 400px; }
-  .form-group { margin-bottom: 16px; }
-  .form-label { font-family: var(--font-d); font-weight: 700; font-size: 13px; color: var(--text-2); margin-bottom: 6px; display: block; }
-  .form-input {
-    width: 100%; padding: 12px 16px; background: var(--card); border: var(--bw) solid var(--border);
-    border-radius: var(--r-md); font-family: var(--font-b); font-size: 15px; color: var(--text);
-    transition: all 0.15s; outline: none;
-  }
-  .form-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-bg); }
-  .form-input::placeholder { color: var(--text-3); }
-  .form-select {
-    width: 100%; padding: 12px 16px; background: var(--card); border: var(--bw) solid var(--border);
-    border-radius: var(--r-md); font-family: var(--font-b); font-size: 15px; color: var(--text);
-    transition: all 0.15s; outline: none; cursor: pointer; appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23A8A29E' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-    background-repeat: no-repeat; background-position: right 16px center;
-  }
-  .form-select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-bg); }
-  .form-helper { font-size: 12px; color: var(--text-3); margin-top: 4px; }
-  .form-error { font-size: 12px; color: var(--danger); margin-top: 4px; font-weight: 600; }
+/* Solana / on-chain */
+.pill-sol { background: rgba(153,69,255,0.08); color: #C4B5FD; border-color: rgba(153,69,255,0.2); }
 
-  /* ============ MODAL PREVIEW ============ */
-  .modal-preview {
-    max-width: 500px; background: var(--card); border: var(--bw) solid var(--border);
-    border-radius: var(--r-xl); box-shadow: 0 24px 48px rgba(0,0,0,0.12); overflow: hidden;
-  }
-  .modal-header { padding: 24px 28px 16px; border-bottom: 1px solid var(--border); }
-  .modal-title { font-family: var(--font-d); font-weight: 900; font-size: 22px; }
-  .modal-subtitle { font-size: 14px; color: var(--text-2); margin-top: 4px; }
-  .modal-body { padding: 24px 28px; }
-  .modal-body p { font-size: 15px; color: var(--text-2); line-height: 1.6; }
-  .modal-footer { padding: 16px 28px; border-top: 1px solid var(--border); background: var(--subtle); display: flex; justify-content: flex-end; gap: 10px; }
+/* Done / success */
+.pill-done { background: rgba(63,185,80,0.10); color: var(--success); border-color: rgba(63,185,80,0.22); }
+[data-theme="light"] .pill-done { color: var(--success); border-color: rgba(22,163,74,0.2); }
 
-  /* ============ TOAST / NOTIFICATION ============ */
-  .toast-row { display: flex; gap: 12px; flex-wrap: wrap; }
-  .toast {
-    display: flex; align-items: center; gap: 10px; padding: 14px 20px;
-    border-radius: var(--r-md); border: var(--bw) solid; font-family: var(--font-b); font-size: 14px; font-weight: 600;
-  }
-  .toast.success { background: var(--success-bg); border-color: var(--success); color: var(--success-dark); }
-  .toast.warning { background: var(--accent-bg); border-color: var(--accent); color: var(--accent-dark); }
-  .toast.error { background: var(--danger-light); border-color: var(--danger); color: var(--danger); }
-  .toast.info { background: var(--primary-bg); border-color: var(--primary); color: var(--primary-dark); }
-  [data-theme="dark"] .toast.success { color: var(--success); }
-  [data-theme="dark"] .toast.warning { color: var(--accent); }
-  [data-theme="dark"] .toast.error { color: var(--danger); }
-  [data-theme="dark"] .toast.info { color: var(--primary); }
+/* Difficulty aliases */
+.pill-beg { background: var(--primary-dim); color: var(--primary); border-color: rgba(46,204,142,0.22); }
+[data-theme="light"] .pill-beg { border-color: rgba(10,112,85,0.2); }
+.pill-int { background: rgba(10,112,85,0.12); color: var(--primary-dark); border-color: rgba(10,112,85,0.2); }
+[data-theme="dark"] .pill-int { color: var(--primary); }
+.pill-adv { background: var(--streak-dim); color: var(--streak); border-color: rgba(249,115,22,0.22); }
+[data-theme="light"] .pill-adv { border-color: rgba(234,88,12,0.2); }
 
-  /* ============ COMPARISON ============ */
-  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; }
-  .cmp { padding: 24px; border-radius: var(--r-lg); border: var(--bw) solid; }
-  .cmp.old { background: var(--danger-light); border-color: var(--danger); }
-  .cmp.new { background: var(--success-bg); border-color: var(--success); }
-  .cmp-label { font-family: var(--font-d); font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
-  .cmp.old .cmp-label { color: var(--danger); }
-  .cmp.new .cmp-label { color: var(--success-dark); }
-  [data-theme="dark"] .cmp.new .cmp-label { color: var(--success); }
-  .cmp-item { font-size: 14px; color: var(--text-2); margin-bottom: 5px; padding-left: 20px; position: relative; }
-  .cmp-item::before { position: absolute; left: 0; font-weight: 700; }
-  .cmp.old .cmp-item::before { content: '✕'; color: var(--danger); }
-  .cmp.new .cmp-item::before { content: '✓'; color: var(--success); }
+/* Level system badges */
+/* ═══════════════════════════════════════════════════════════════
+   LEVEL BADGES — numbered circles, v6 spirit in v9 skin
+   No names, no emojis. Just the level number.
+═══════════════════════════════════════════════════════════════ */
+.level-badge {
+  width: 44px; height: 44px; border-radius: 50%;
+  border: 2.5px solid;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: var(--font-d); font-weight: 900; font-size: 16px;
+  transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.2s;
+  cursor: default; flex-shrink: 0; letter-spacing: -0.5px;
+}
+.level-badge:hover { transform: scale(1.12); }
 
-  .note {
-    background: var(--accent-bg); border: var(--bw) solid var(--accent); border-radius: var(--r-lg);
-    padding: 20px 24px; font-size: 14px; color: var(--text-2); line-height: 1.6; margin-top: 16px;
-  }
-  .note strong { color: var(--text); }
+/* Lv 1–4: emerald */
+.lv-seed {
+  background: var(--primary-dim);
+  border-color: rgba(46,204,142,0.40);
+  color: var(--primary);
+}
+[data-theme="light"] .lv-seed { border-color: rgba(10,112,85,0.40); }
 
-  hr.divider { border: none; border-top: var(--bw) solid var(--border); margin: 48px 0; }
+/* Lv 5–9: deep teal */
+.lv-sprout {
+  background: rgba(10,112,85,0.18);
+  border-color: rgba(10,112,85,0.55);
+  color: #2ECC8E;
+  box-shadow: 0 0 12px rgba(10,112,85,0.20);
+}
+[data-theme="light"] .lv-sprout { color: var(--primary-dark); }
 
-  /* ============ TOKEN TABLE ============ */
-  .token-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  .token-table th {
-    text-align: left; padding: 8px 12px; font-family: var(--font-d); font-weight: 700;
-    font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-3);
-    border-bottom: var(--bw) solid var(--border);
-  }
-  .token-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); }
-  .token-table code { font-family: monospace; font-size: 12px; color: var(--primary); background: var(--subtle); padding: 2px 6px; border-radius: 4px; }
+/* Lv 10–19: amber warming up */
+.lv-sapling {
+  background: rgba(180,83,9,0.15);
+  border-color: rgba(245,166,35,0.45);
+  color: var(--xp);
+  box-shadow: 0 0 14px rgba(245,166,35,0.18);
+}
+
+/* Lv 20–49: gold filled, glowing */
+.lv-canopy {
+  background: linear-gradient(145deg, #92400E 0%, #B45309 30%, #F5A623 70%, #FDE68A 100%);
+  border-color: #F5A623;
+  color: #1A0800;
+  box-shadow: 0 0 18px rgba(245,166,35,0.45);
+  animation: lv-canopy-pulse 3s ease-in-out infinite;
+}
+@keyframes lv-canopy-pulse {
+  0%,100% { box-shadow: 0 0 14px rgba(245,166,35,0.38); }
+  50%      { box-shadow: 0 0 22px rgba(245,166,35,0.62); }
+}
+
+/* Legend / max: Solana iridescent */
+.lv-legend {
+  background: linear-gradient(145deg, rgba(153,69,255,0.20), rgba(20,241,149,0.15));
+  border-color: #9945FF;
+  color: var(--level);
+  box-shadow: 0 0 18px rgba(153,69,255,0.35);
+  animation: lv-legend-pulse 3s ease-in-out infinite;
+}
+@keyframes lv-legend-pulse {
+  0%,100% { box-shadow: 0 0 14px rgba(153,69,255,0.30); }
+  50%      { box-shadow: 0 0 24px rgba(20,241,149,0.45); }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ON-CHAIN PROOF PILL
+═══════════════════════════════════════════════════════════════ */
+.proof-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(153,69,255,0.07);
+  border: 1px solid rgba(153,69,255,0.20);
+  border-radius: var(--r-full);
+  padding: 4px 12px 4px 8px;
+  font-family: var(--font-m); font-size: 11px; color: #C4B5FD;
+  cursor: pointer; transition: all 0.15s; text-decoration: none;
+}
+.proof-pill:hover { background: rgba(153,69,255,0.13); border-color: rgba(153,69,255,0.38); }
+.proof-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--sol-green); box-shadow: 0 0 6px rgba(20,241,149,0.8);
+  animation: blink 2.5s ease-in-out infinite; flex-shrink: 0;
+}
+@keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+
+/* ═══════════════════════════════════════════════════════════════
+   DASHBOARD IDENTITY PANEL
+   Left: Level arc + XP · Right: medal tokens grid + activity grid
+═══════════════════════════════════════════════════════════════ */
+.dash-panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  position: relative;
+}
+/* Gradient accent line across top */
+.dash-panel::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; z-index: 5;
+  background: linear-gradient(90deg,
+    transparent 0%, var(--primary-dark) 10%, var(--primary) 35%,
+    var(--xp) 65%, var(--xp-dark) 90%, transparent 100%);
+  opacity: 0.6;
+}
+/* Slow ambient glow blobs */
+.dash-panel-amb {
+  position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 0;
+}
+.dash-panel-amb::before {
+  content: ''; position: absolute; width: 380px; height: 380px; border-radius: 50%;
+  background: radial-gradient(circle, var(--primary-dim) 0%, transparent 68%);
+  top: -140px; left: -40px;
+  animation: dash-amb-a 14s ease-in-out infinite alternate;
+}
+.dash-panel-amb::after {
+  content: ''; position: absolute; width: 320px; height: 320px; border-radius: 50%;
+  background: radial-gradient(circle, var(--xp-dim) 0%, transparent 68%);
+  top: -80px; right: 40px;
+  animation: dash-amb-b 11s ease-in-out infinite alternate;
+}
+@keyframes dash-amb-a { 0%{transform:translate(0,0)} 100%{transform:translate(32px,24px)} }
+@keyframes dash-amb-b { 0%{transform:translate(0,0)} 100%{transform:translate(-24px,16px)} }
+
+/* Two-column top section */
+.dash-top {
+  display: grid; grid-template-columns: 1fr 1fr;
+  border-bottom: 1px solid var(--border);
+  position: relative; z-index: 1;
+}
+
+/* ── LEFT: Level ring + XP ── */
+.dash-identity {
+  padding: 28px 28px 26px;
+  border-right: 1px solid var(--border);
+  display: flex; align-items: center; gap: 22px;
+}
+
+
+/* XP numbers beside level badge */
+.dash-xp-num {
+  font-family: var(--font-d); font-weight: 900; font-size: 38px;
+  color: var(--xp); letter-spacing: -2px; line-height: 1; margin-bottom: 1px;
+}
+.dash-xp-unit {
+  font-family: var(--font-m); font-size: 10px; font-weight: 500;
+  text-transform: uppercase; letter-spacing: 1.2px; color: var(--text-3);
+  margin-bottom: 11px;
+}
+.dash-xp-to {
+  font-family: var(--font-m); font-size: 11px; color: var(--text-2); margin-bottom: 9px;
+}
+.dash-xp-to em { color: var(--xp); font-style: normal; font-weight: 600; }
+/* 4px progress bar — same as sidebar */
+.dash-xp-track {
+  width: 100%; height: 4px; background: var(--input);
+  border-radius: var(--r-full); overflow: hidden;
+}
+.dash-xp-fill {
+  height: 100%; border-radius: var(--r-full);
+  background: linear-gradient(90deg, var(--xp-dark), var(--xp));
+  width: 0%; transition: width 1.2s cubic-bezier(0.4,0,0.2,1);
+  position: relative;
+}
+.dash-xp-fill::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.28), transparent);
+  animation: shimmer 2.2s infinite;
+}
+
+/* ── RIGHT: Medals ── */
+.dash-medals {
+  padding: 24px 26px;
+  display: flex; flex-direction: column;
+}
+.dash-medals-head {
+  display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 18px;
+}
+.dash-medals-title {
+  font-family: var(--font-m); font-size: 10px; font-weight: 500;
+  color: var(--text-3); text-transform: uppercase; letter-spacing: 1.5px;
+}
+.dash-medals-count {
+  font-family: var(--font-d); font-size: 12px; font-weight: 700; color: var(--text-2);
+}
+.dash-medals-count span { color: var(--xp); }
+.dash-medals-row { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+
+/* Mini medal tokens — same octagon system as .ach-medal */
+.dm { display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: default;
+  animation: dm-in 0.45s cubic-bezier(0.34,1.56,0.64,1) both; }
+.dm:nth-child(1){animation-delay:.05s} .dm:nth-child(2){animation-delay:.10s}
+.dm:nth-child(3){animation-delay:.15s} .dm:nth-child(4){animation-delay:.20s}
+.dm:nth-child(5){animation-delay:.25s} .dm:nth-child(6){animation-delay:.30s}
+@keyframes dm-in {
+  from { opacity:0; transform:scale(0.5) translateY(6px); }
+  to   { opacity:1; transform:scale(1) translateY(0); }
+}
+.dm-oct {
+  width: 52px; height: 52px;
+  clip-path: polygon(25% 0%,75% 0%,100% 25%,100% 75%,75% 100%,25% 100%,0% 75%,0% 25%);
+  display: flex; align-items: center; justify-content: center; position: relative;
+  transition: transform 0.22s cubic-bezier(0.34,1.56,0.64,1), filter 0.22s;
+}
+.dm:hover .dm-oct { transform: scale(1.14) translateY(-3px); }
+.dm-oct.earned {
+  background: linear-gradient(145deg,#7A3E00 0%,#B45309 18%,#F5A623 40%,#FDE68A 52%,#F5A623 65%,#B45309 84%,#7A3E00 100%);
+  filter: drop-shadow(0 4px 10px rgba(245,166,35,0.30));
+  animation: dm-glow 3.5s ease-in-out infinite;
+}
+@keyframes dm-glow {
+  0%,100%{filter:drop-shadow(0 4px 10px rgba(245,166,35,0.26))}
+  50%    {filter:drop-shadow(0 5px 16px rgba(245,166,35,0.50))}
+}
+.dm-oct.sol {
+  background: var(--sol-grad);
+  animation: dm-sol 3.5s ease-in-out infinite;
+}
+@keyframes dm-sol {
+  0%,100%{filter:drop-shadow(0 4px 10px rgba(153,69,255,0.26))}
+  50%    {filter:drop-shadow(0 5px 18px rgba(20,241,149,0.46))}
+}
+.dm-oct.locked { background: var(--border-strong); filter: none; opacity: 0.25; }
+.dm:hover .dm-oct.locked { transform: none; }
+
+.dm-face {
+  width: 42px; height: 42px;
+  clip-path: polygon(25% 0%,75% 0%,100% 25%,100% 75%,75% 100%,25% 100%,0% 75%,0% 25%);
+  position: absolute; display: flex; align-items: center; justify-content: center;
+}
+.dm-oct.earned .dm-face { background: linear-gradient(155deg,rgba(0,0,0,0.20) 0%,rgba(255,255,255,0.08) 50%,rgba(0,0,0,0.16) 100%); }
+.dm-oct.sol    .dm-face { background: linear-gradient(155deg,rgba(0,0,0,0.24) 0%,rgba(255,255,255,0.10) 50%,rgba(0,0,0,0.20) 100%); }
+.dm-oct.locked .dm-face { background: var(--card); width: 46px; height: 46px; }
+
+.dm-glyph {
+  font-family: var(--font-m); font-weight: 600; font-size: 14px;
+  position: relative; z-index: 1; line-height: 1; user-select: none;
+  letter-spacing: -0.5px;
+}
+.dm-oct.earned .dm-glyph { color: rgba(0,0,0,0.56); text-shadow: 0 1px 0 rgba(255,255,255,0.20); }
+.dm-oct.sol    .dm-glyph { color: rgba(0,0,0,0.52); font-size: 17px; letter-spacing: 0; }
+.dm-oct.locked .dm-glyph { color: var(--text-3); }
+
+.dm-name {
+  font-family: var(--font-m); font-size: 9px; font-weight: 500; letter-spacing: 0.3px;
+  color: var(--text-3); text-align: center; text-transform: uppercase; max-width: 56px;
+}
+.dm-oct.earned ~ .dm-name,
+.dm-oct.sol    ~ .dm-name { color: var(--text-2); }
+
+/* ── GRID SECTION ── */
+.dash-grid {
+  padding: 18px 26px 20px;
+  position: relative; z-index: 1;
+}
+/* left-edge green glow */
+.dash-grid::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 130px;
+  background: linear-gradient(90deg, var(--primary-dim), transparent);
+  pointer-events: none; opacity: 0.55;
+}
+.dash-grid-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px; position: relative; z-index: 1;
+}
+.dash-grid-streak { display: flex; align-items: center; gap: 8px; }
+.dash-flame {
+  font-size: 20px; display: inline-block;
+  animation: flicker 1.5s ease-in-out infinite alternate;
+}
+@keyframes flicker { 0%{transform:scale(1) rotate(-2deg)} 100%{transform:scale(1.08) rotate(2deg)} }
+.dash-streak-num {
+  font-family: var(--font-d); font-weight: 900; font-size: 17px;
+  color: var(--text); letter-spacing: -0.4px;
+}
+.dash-streak-sub { font-family: var(--font-m); font-size: 11px; color: var(--text-2); }
+.dash-grid-stats { display: flex; gap: 16px; }
+.dgs { text-align: right; }
+.dgs-val { font-family: var(--font-d); font-weight: 900; font-size: 15px; letter-spacing: -0.5px; }
+.dgs-key { font-family: var(--font-m); font-size: 10px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* Heatmap — same cell classes as before */
+.contrib-scroll { overflow-x: auto; -ms-overflow-style: none; scrollbar-width: none; position: relative; z-index: 1; }
+.contrib-scroll::-webkit-scrollbar { display: none; }
+.contrib-wrap { display: flex; gap: 3px; }
+.contrib-day-labels { display: grid; grid-template-rows: repeat(7, 11px); gap: 3px; margin-right: 6px; padding-top: 18px; flex-shrink: 0; }
+.contrib-day-label { font-family: var(--font-m); font-size: 9px; color: var(--text-3); height: 11px; display: flex; align-items: center; }
+.contrib-cols { display: flex; flex-direction: column; gap: 4px; }
+.contrib-month-row { display: flex; gap: 3px; }
+.contrib-month-lbl { font-family: var(--font-m); font-size: 10px; color: var(--text-3); display: inline-block; }
+.contrib-grid {
+  display: grid; grid-template-rows: repeat(7, 11px);
+  grid-auto-flow: column; grid-auto-columns: 11px; gap: 3px;
+  position: relative;
+}
+/* Today column vertical glow */
+.today-col-glow {
+  position: absolute; top: 0; bottom: 0; width: 11px;
+  background: linear-gradient(180deg, rgba(245,166,35,0.13), rgba(245,166,35,0.05), transparent);
+  border-radius: 3px; pointer-events: none; z-index: 0;
+  animation: col-breathe 2.5s ease-in-out infinite;
+}
+@keyframes col-breathe { 0%,100%{opacity:0.6} 50%{opacity:1} }
+.cday { width: 11px; height: 11px; border-radius: 2px; background: var(--sg-0); transition: transform 0.1s; cursor: default; position: relative; z-index: 1; }
+.cday:hover { transform: scale(1.45); z-index: 10; }
+.cday.l1{background:var(--sg-1)} .cday.l2{background:var(--sg-2)}
+.cday.l3{background:var(--sg-3)} .cday.l4{background:var(--sg-4)}
+.cday.today {
+  background: var(--sg-today);
+  animation: today-cell 2s ease-in-out infinite;
+}
+@keyframes today-cell {
+  0%,100%{ box-shadow: 0 0 0 1.5px rgba(245,166,35,0.40), 0 0 7px rgba(245,166,35,0.36); }
+  50%    { box-shadow: 0 0 0 2px   rgba(245,166,35,0.60), 0 0 13px rgba(245,166,35,0.52); }
+}
+.contrib-legend { display: flex; align-items: center; gap: 5px; margin-top: 10px; font-family: var(--font-m); font-size: 10px; color: var(--text-3); position: relative; z-index: 1; }
+.legend-sq { width: 10px; height: 10px; border-radius: 2px; }
+
+/* ═══════════════════════════════════════════════════════════════
+   COURSE CARDS — atmospheric left-accent editorial style
+   Left 3px accent bar + radial glow + large ghost background number
+═══════════════════════════════════════════════════════════════ */
+.course-card {
+  position: relative; overflow: hidden;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border);
+  border-left-width: 3px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+  cursor: pointer; display: flex; flex-direction: column;
+}
+.course-card:hover { transform: translateY(-5px); box-shadow: 0 12px 40px rgba(0,0,0,0.25); }
+
+/* Track-specific left border + radial atmospheric glow */
+.course-card.beg {
+  border-left-color: #2ECC8E;
+  background-image: radial-gradient(ellipse 120% 80% at 0% 100%, rgba(46,204,142,0.10) 0%, transparent 65%);
+}
+.course-card.int {
+  border-left-color: #2ECC8E;
+  background-image: radial-gradient(ellipse 120% 80% at 0% 100%, rgba(46,204,142,0.07) 0%, transparent 65%);
+}
+[data-theme="light"] .course-card.int { border-left-color: #0A7055; background-image: radial-gradient(ellipse 120% 80% at 0% 100%, rgba(10,112,85,0.08) 0%, transparent 65%); }
+.course-card.adv {
+  border-left-color: #F97316;
+  background-image: radial-gradient(ellipse 120% 80% at 0% 100%, rgba(249,115,22,0.10) 0%, transparent 65%);
+}
+
+/* Ghost course number — huge background typography */
+.course-num {
+  position: absolute; right: -4px; bottom: -16px;
+  font-family: var(--font-m); font-weight: 700; font-size: 110px;
+  line-height: 1; letter-spacing: -8px;
+  pointer-events: none; user-select: none; z-index: 0;
+  transition: opacity 0.22s, transform 0.22s;
+}
+.course-card.beg .course-num  { color: rgba(46,204,142,0.08); }
+.course-card.int .course-num  { color: rgba(46,204,142,0.07); }
+[data-theme="light"] .course-card.int .course-num { color: rgba(10,112,85,0.07); }
+.course-card.adv .course-num  { color: rgba(249,115,22,0.09); }
+.course-card:hover .course-num { opacity: 1; transform: translateX(-4px) translateY(-4px); }
+
+.course-card-body { padding: 22px 22px 20px 20px; position: relative; z-index: 1; flex: 1; display: flex; flex-direction: column; }
+
+.course-card-title {
+  font-family: var(--font-d); font-weight: 900; font-size: 20px;
+  color: var(--text); line-height: 1.2; letter-spacing: -0.4px;
+  margin-bottom: 6px; margin-top: 2px;
+}
+.course-card-by {
+  font-family: var(--font-m); font-size: 11px; color: var(--text-3);
+  margin-bottom: 12px;
+}
+.course-card-desc {
+  font-size: 13px; color: var(--text-2); line-height: 1.65; flex: 1;
+  margin-bottom: 18px;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.course-card-foot {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-top: 14px; border-top: 1px solid var(--border);
+}
+.course-card-stat {
+  font-family: var(--font-m); font-size: 11px; color: var(--text-3);
+  display: flex; gap: 12px;
+}
+.course-card-xp {
+  font-family: var(--font-d); font-weight: 900; font-size: 16px;
+  color: var(--xp); letter-spacing: -0.3px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   GRADIENT BORDER CARD
+═══════════════════════════════════════════════════════════════ */
+.grad-card { position: relative; border-radius: var(--r-lg); padding: 1.5px; background: var(--sol-grad); }
+.grad-card-inner {
+  background: var(--card); border-radius: calc(var(--r-lg) - 1.5px);
+  padding: 24px; position: relative; overflow: hidden;
+}
+.grad-card-inner::before {
+  content: ''; position: absolute; inset: 0;
+  background: var(--sol-subtle); opacity: 0.5; pointer-events: none;
+}
+.grad-card-body { position: relative; z-index: 1; }
+
+/* ═══════════════════════════════════════════════════════════════
+   PROGRESS BARS — shimmer + inner glow
+═══════════════════════════════════════════════════════════════ */
+.prog-wrap { margin-bottom: 20px; }
+.prog-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 7px; }
+.prog-label { font-family: var(--font-d); font-weight: 700; font-size: 14px; }
+.prog-val { font-family: var(--font-m); font-size: 12px; color: var(--primary); }
+.prog-track { width: 100%; height: 14px; background: var(--input); border-radius: var(--r-full); border: 1px solid var(--border); overflow: hidden; }
+.prog-fill { height: 100%; border-radius: var(--r-full); position: relative; transition: width 0.7s cubic-bezier(0.4,0,0.2,1); }
+.prog-fill::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.22), transparent);
+  animation: shimmer 2.2s infinite;
+}
+.prog-fill::before {
+  content: ''; position: absolute; top: 2px; left: 8px; right: 8px; height: 3px;
+  background: rgba(255,255,255,0.22); border-radius: var(--r-full);
+}
+@keyframes shimmer { 0%{transform:translateX(-100%);} 100%{transform:translateX(100%);} }
+.pf-primary { background: linear-gradient(90deg, var(--primary-dark), var(--primary)); }
+.pf-xp      { background: linear-gradient(90deg, var(--xp-dark), var(--xp)); }
+.pf-success { background: linear-gradient(90deg, #16803D, var(--success)); }
+
+/* ═══════════════════════════════════════════════════════════════
+   XP TOKEN DISPLAY
+═══════════════════════════════════════════════════════════════ */
+.xp-token {
+  display: inline-flex; align-items: center; gap: 10px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--r-lg); padding: 12px 16px; box-shadow: var(--shadow);
+}
+.xp-token-icon { width: 36px; height: 36px; border-radius: 50%; background: var(--xp-dim); border: 1px solid rgba(245,166,35,0.2); display: flex; align-items: center; justify-content: center; font-size: 18px; }
+.xp-token-amount { font-family: var(--font-d); font-size: 22px; font-weight: 900; color: var(--xp); letter-spacing: -0.5px; }
+.xp-token-label { font-family: var(--font-m); font-size: 10px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* ═══════════════════════════════════════════════════════════════
+   ACHIEVEMENT MEDALS — octagonal tokens, no emoji, pure CSS craft
+   clip-path octagon with inner depth layer + monospace glyphs
+═══════════════════════════════════════════════════════════════ */
+.ach-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 20px; }
+.ach-item { display: flex; flex-direction: column; align-items: center; gap: 10px; cursor: default; }
+
+/* Outer shell — the medal itself */
+.ach-medal {
+  width: 82px; height: 82px;
+  clip-path: polygon(25% 0%, 75% 0%, 100% 25%, 100% 75%, 75% 100%, 25% 100%, 0% 75%, 0% 25%);
+  display: flex; align-items: center; justify-content: center;
+  position: relative; flex-shrink: 0;
+  transition: transform 0.22s cubic-bezier(0.34,1.56,0.64,1), filter 0.22s;
+  cursor: default;
+}
+.ach-item:hover .ach-medal { transform: scale(1.12) translateY(-3px); }
+
+/* Earned — golden metallic gradient */
+.ach-medal.earned {
+  background: linear-gradient(145deg,
+    #7A4500 0%, #B45309 15%, #F5A623 35%,
+    #FDE68A 50%, #F5A623 65%, #B45309 85%, #7A4500 100%);
+  filter: drop-shadow(0 6px 18px rgba(245,166,35,0.38));
+  animation: medal-pulse 3.5s ease-in-out infinite;
+}
+@keyframes medal-pulse {
+  0%,100% { filter: drop-shadow(0 6px 18px rgba(245,166,35,0.32)); }
+  50%      { filter: drop-shadow(0 8px 26px rgba(245,166,35,0.58)); }
+}
+
+/* Solana tier — iridescent */
+.ach-medal.sol {
+  background: var(--sol-grad);
+  filter: drop-shadow(0 6px 18px rgba(153,69,255,0.42));
+  animation: medal-sol-pulse 3.5s ease-in-out infinite;
+}
+@keyframes medal-sol-pulse {
+  0%,100% { filter: drop-shadow(0 6px 18px rgba(153,69,255,0.35)); }
+  50%      { filter: drop-shadow(0 8px 28px rgba(20,241,149,0.55)); }
+}
+
+/* Locked — ghost border illusion via two octagon layers */
+.ach-medal.locked {
+  background: var(--border-strong);
+  filter: none; opacity: 0.3;
+}
+.ach-item:hover .ach-medal.locked { transform: none; }
+
+/* Inner face — creates medal depth */
+.ach-face {
+  width: 66px; height: 66px;
+  clip-path: polygon(25% 0%, 75% 0%, 100% 25%, 100% 75%, 75% 100%, 25% 100%, 0% 75%, 0% 25%);
+  display: flex; align-items: center; justify-content: center;
+  position: absolute;
+}
+.ach-medal.earned .ach-face {
+  background: linear-gradient(145deg, rgba(0,0,0,0.22) 0%, rgba(255,255,255,0.08) 50%, rgba(0,0,0,0.18) 100%);
+}
+.ach-medal.sol .ach-face {
+  background: linear-gradient(145deg, rgba(0,0,0,0.25) 0%, rgba(255,255,255,0.10) 50%, rgba(0,0,0,0.20) 100%);
+}
+.ach-medal.locked .ach-face {
+  background: var(--card);
+  width: 70px; height: 70px;
+}
+
+/* Glyph — the hero symbol, pure monospace, no emoji */
+.ach-glyph {
+  font-family: var(--font-m); font-weight: 600;
+  user-select: none; position: relative; z-index: 1; line-height: 1;
+}
+.ach-medal.earned .ach-glyph, .ach-medal.sol .ach-glyph {
+  font-size: 20px; letter-spacing: -1px;
+  color: rgba(0,0,0,0.60);
+  text-shadow: 0 1px 0 rgba(255,255,255,0.25);
+}
+.ach-medal.locked .ach-glyph { font-size: 18px; color: var(--text-3); }
+
+/* Medal info below */
+.ach-info { text-align: center; }
+.ach-name {
+  font-family: var(--font-d); font-size: 11px; font-weight: 700;
+  color: var(--text-3); line-height: 1.3; margin-bottom: 5px;
+}
+.ach-item:hover .ach-medal.earned ~ .ach-info .ach-name,
+.ach-item:hover .ach-medal.sol ~ .ach-info .ach-name { color: var(--text); }
+.ach-medal.earned ~ .ach-info .ach-name { color: var(--text-2); }
+.ach-medal.sol ~ .ach-info .ach-name { color: var(--text-2); }
+.ach-proof { display: flex; justify-content: center; }
+
+/* ── Achievement card log — transaction-entry style ── */
+.ach-card {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 16px; background: var(--card);
+  border: 1px solid var(--border); border-radius: var(--r-md);
+  box-shadow: var(--shadow); transition: all 0.15s; margin-bottom: 8px;
+}
+.ach-card:hover { transform: translateX(3px); border-color: var(--border-default); }
+.ach-card.earned { border-left: 2px solid var(--xp); }
+.ach-card.locked { opacity: 0.45; }
+
+/* Mini medal for the card list */
+.ach-mini {
+  width: 44px; height: 44px; flex-shrink: 0;
+  clip-path: polygon(25% 0%, 75% 0%, 100% 25%, 100% 75%, 75% 100%, 25% 100%, 0% 75%, 0% 25%);
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+}
+.ach-mini.earned {
+  background: linear-gradient(145deg, #B45309, #F5A623, #FDE68A, #F5A623, #B45309);
+}
+.ach-mini.locked { background: var(--border-strong); }
+.ach-mini-face {
+  width: 36px; height: 36px;
+  clip-path: polygon(25% 0%, 75% 0%, 100% 25%, 100% 75%, 75% 100%, 25% 100%, 0% 75%, 0% 25%);
+  background: rgba(0,0,0,0.18);
+  display: flex; align-items: center; justify-content: center;
+  position: absolute;
+}
+.ach-mini.locked .ach-mini-face { background: var(--card); width: 38px; height: 38px; }
+.ach-mini-glyph { font-family: var(--font-m); font-size: 12px; font-weight: 600; color: rgba(0,0,0,0.55); position: relative; z-index: 1; }
+.ach-mini.locked .ach-mini-glyph { color: var(--text-3); }
+
+.ach-card-name { font-family: var(--font-d); font-weight: 700; font-size: 13px; color: var(--text); margin-bottom: 2px; }
+.ach-card-desc { font-size: 12px; color: var(--text-3); }
+
+/* ═══════════════════════════════════════════════════════════════
+   LEADERBOARD — wallet address, level badge + xp only on right
+═══════════════════════════════════════════════════════════════ */
+.lb-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px; background: var(--card);
+  border: 1px solid var(--border); border-radius: var(--r-md);
+  box-shadow: var(--shadow); margin-bottom: 8px; transition: all 0.15s;
+}
+.lb-row:hover { border-color: var(--border-default); background: var(--card-hover); }
+.lb-row.gold { border-color: rgba(245,166,35,0.22); background: rgba(245,166,35,0.04); }
+.lb-row.me   { border-color: rgba(46,204,142,0.22); background: var(--primary-dim); }
+
+.lb-rank { font-family: var(--font-d); font-weight: 900; font-size: 16px; width: 28px; color: var(--text-3); flex-shrink: 0; }
+.lb-row.gold .lb-rank { color: var(--xp); }
+.lb-av {
+  width: 36px; height: 36px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-d); font-weight: 800; font-size: 13px; color: #000;
+  flex-shrink: 0;
+}
+.lb-info { flex: 1; min-width: 0; }
+.lb-name { font-family: var(--font-d); font-weight: 700; font-size: 13px; display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
+.lb-me-tag { font-size: 10px; font-weight: 800; background: var(--primary-dim); color: var(--primary); border: 1px solid rgba(46,204,142,0.2); padding: 1px 6px; border-radius: var(--r-full); }
+.lb-wallet { font-family: var(--font-m); font-size: 11px; color: var(--text-3); }
+.lb-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.lb-level-badge { font-family: var(--font-d); font-size: 11px; font-weight: 700; color: var(--level); background: var(--level-dim); border: 1px solid rgba(167,139,250,0.2); padding: 3px 8px; border-radius: var(--r-full); }
+.lb-xp { font-family: var(--font-d); font-weight: 900; font-size: 14px; color: var(--xp); text-align: right; min-width: 54px; }
+
+/* ═══════════════════════════════════════════════════════════════
+   SIDEBAR
+═══════════════════════════════════════════════════════════════ */
+.sidebar {
+  width: 216px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: var(--r-lg);
+  padding: 16px 10px; display: flex; flex-direction: column; gap: 2px;
+  box-shadow: var(--shadow);
+}
+.sidebar-logo { display: flex; align-items: center; gap: 10px; padding: 8px 10px 18px; }
+.sidebar-logo-mark {
+  width: 27px; height: 27px; border-radius: var(--r-sm); background: var(--sol-grad);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-d); font-weight: 900; font-size: 13px; color: #000;
+}
+.sidebar-logo-text { font-family: var(--font-d); font-weight: 900; font-size: 16px; color: var(--primary); letter-spacing: -0.3px; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px; padding: 9px 10px;
+  border-radius: var(--r-md); font-size: 13px; font-weight: 600;
+  color: var(--text-3); cursor: pointer; transition: all 0.15s; text-decoration: none;
+}
+.nav-item:hover { background: var(--card); color: var(--text-2); }
+.nav-item.active { background: var(--primary-dim); color: var(--primary); }
+.nav-item-icon { font-size: 15px; width: 18px; text-align: center; }
+.sidebar-xp {
+  margin-top: auto; background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--r-md); padding: 12px;
+}
+.sidebar-xp-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 3px; }
+.sidebar-xp-amount { font-family: var(--font-d); font-size: 17px; font-weight: 900; color: var(--xp); }
+.sidebar-xp-label { font-family: var(--font-m); font-size: 10px; color: var(--text-3); margin-bottom: 7px; }
+.sidebar-prog { height: 4px; background: var(--input); border-radius: var(--r-full); overflow: hidden; }
+.sidebar-prog-fill {
+  height: 100%; border-radius: var(--r-full);
+  background: linear-gradient(90deg, var(--primary-dark), var(--primary));
+  position: relative;
+}
+.sidebar-prog-fill::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  animation: shimmer 2.2s infinite;
+}
+.sidebar-xp-levels { display: flex; justify-content: space-between; margin-top: 4px; font-family: var(--font-m); font-size: 10px; color: var(--text-3); }
+
+/* ═══════════════════════════════════════════════════════════════
+   CERTIFICATE CARD — typographic, no icons, refined
+═══════════════════════════════════════════════════════════════ */
+.cert-wrap {
+  border-radius: var(--r-xl); padding: 2px;
+  background: var(--sol-grad);
+  box-shadow: 0 0 40px rgba(153,69,255,0.18), 0 0 80px rgba(20,241,149,0.06);
+  max-width: 420px;
+}
+.cert-inner {
+  background: var(--card); border-radius: calc(var(--r-xl) - 2px);
+  padding: 32px 36px; position: relative; overflow: hidden;
+}
+.cert-inner::before {
+  content: ''; position: absolute; inset: 0;
+  background: var(--sol-subtle); opacity: 0.45; pointer-events: none;
+}
+/* Decorative dot grid texture on cert */
+.cert-inner::after {
+  content: ''; position: absolute; inset: 0;
+  background-image: radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px);
+  background-size: 18px 18px;
+  pointer-events: none;
+}
+.cert-body { position: relative; z-index: 1; }
+.cert-eyebrow {
+  font-family: var(--font-m); font-size: 10px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 2px;
+  color: var(--primary); margin-bottom: 20px;
+  display: flex; align-items: center; gap: 8px;
+}
+.cert-eyebrow::after {
+  content: ''; flex: 1; height: 1px;
+  background: linear-gradient(90deg, rgba(46,204,142,0.3), transparent);
+}
+.cert-course {
+  font-family: var(--font-d); font-size: 24px; font-weight: 900;
+  line-height: 1.2; letter-spacing: -0.5px;
+  margin-bottom: 6px;
+}
+.cert-subtitle {
+  font-family: var(--font-d); font-size: 13px; font-weight: 600;
+  color: var(--text-3); margin-bottom: 28px; text-transform: uppercase; letter-spacing: 1px;
+}
+.cert-divider {
+  height: 1px; margin-bottom: 20px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.08), rgba(255,255,255,0.16), rgba(255,255,255,0.08));
+}
+.cert-meta-row { display: flex; gap: 0; margin-bottom: 22px; }
+.cert-meta-item { flex: 1; }
+.cert-meta-key { font-family: var(--font-m); font-size: 10px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 3px; }
+.cert-meta-val { font-family: var(--font-d); font-size: 14px; font-weight: 800; color: var(--text); }
+.cert-meta-val.highlight { color: var(--xp); }
+.cert-foot { display: flex; align-items: center; justify-content: space-between; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.07); }
+.cert-network { font-family: var(--font-m); font-size: 10px; color: var(--text-3); letter-spacing: 0.5px; }
+
+/* ═══════════════════════════════════════════════════════════════
+   POPUPS — spring animation
+═══════════════════════════════════════════════════════════════ */
+@keyframes pop-spring {
+  0%   { opacity: 0; transform: scale(0.72) translateY(12px); }
+  55%  { transform: scale(1.09) translateY(-4px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* XP popup only */
+.popup-xp {
+  display: inline-flex; align-items: center; gap: 10px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--r-full); padding: 12px 22px;
+  box-shadow: var(--shadow), 0 0 24px var(--xp-dim);
+  animation: pop-spring 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.popup-xp-amount { font-family: var(--font-d); font-weight: 900; font-size: 20px; color: var(--xp); letter-spacing: -0.5px; }
+.popup-xp-icon { width: 34px; height: 34px; border-radius: 50%; background: var(--xp-dim); display: flex; align-items: center; justify-content: center; font-size: 16px; }
+
+/* Achievement & Certificate popup — gradient border wrapper */
+.popup-grad {
+  border-radius: var(--r-xl); padding: 2px;
+  animation: pop-spring 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: inline-block;
+}
+.popup-grad.achievement { background: var(--sol-grad); box-shadow: 0 8px 32px rgba(153,69,255,0.28); }
+.popup-grad.cert        { background: var(--sol-grad); box-shadow: 0 8px 32px rgba(20,241,149,0.20); }
+.popup-grad-inner {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--card);
+  border-radius: calc(var(--r-xl) - 2px);
+  padding: 13px 20px 13px 13px;
+}
+.popup-icon-ring {
+  width: 44px; height: 44px; border-radius: 50%; padding: 2.5px; flex-shrink: 0;
+}
+.popup-grad.achievement .popup-icon-ring { background: var(--sol-grad); }
+.popup-grad.cert .popup-icon-ring { background: var(--sol-grad); }
+.popup-icon-inner {
+  width: 100%; height: 100%; border-radius: 50%;
+  background: var(--card);
+  display: flex; align-items: center; justify-content: center; font-size: 20px;
+}
+.popup-label { font-family: var(--font-m); font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--primary); margin-bottom: 3px; }
+.popup-name { font-family: var(--font-d); font-weight: 800; font-size: 15px; color: var(--text); }
+
+/* ═══════════════════════════════════════════════════════════════
+   TOASTS
+═══════════════════════════════════════════════════════════════ */
+.toast { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: var(--r-md); border: 1px solid; font-size: 13px; font-weight: 600; }
+.toast.success { background: rgba(63,185,80,0.08); border-color: rgba(63,185,80,0.22); color: var(--success); }
+.toast.warning { background: var(--xp-dim); border-color: rgba(245,166,35,0.22); color: var(--xp); }
+.toast.error   { background: rgba(248,81,73,0.08); border-color: rgba(248,81,73,0.22); color: var(--error); }
+.toast.info    { background: var(--primary-dim); border-color: rgba(46,204,142,0.2); color: var(--primary); }
+[data-theme="light"] .toast.info { border-color: rgba(10,112,85,0.2); }
+
+/* ═══════════════════════════════════════════════════════════════
+   FORM
+═══════════════════════════════════════════════════════════════ */
+.form-label { font-family: var(--font-d); font-weight: 700; font-size: 13px; color: var(--text-2); margin-bottom: 6px; display: block; }
+.form-input { width: 100%; padding: 11px 14px; background: var(--input); border: 1px solid var(--border-default); border-radius: var(--r-md); font-family: var(--font-b); font-size: 14px; color: var(--text); transition: all 0.15s; outline: none; }
+.form-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-dim); }
+.form-input::placeholder { color: var(--text-3); }
+.form-helper { font-size: 12px; color: var(--text-3); margin-top: 4px; }
+
+/* ═══════════════════════════════════════════════════════════════
+   DO/DON'T
+═══════════════════════════════════════════════════════════════ */
+.compare { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.cmp { padding: 20px; border-radius: var(--r-lg); border: 1px solid; }
+.cmp.old { background: rgba(248,81,73,0.05); border-color: rgba(248,81,73,0.18); }
+.cmp.new { background: rgba(63,185,80,0.05); border-color: rgba(63,185,80,0.18); }
+.cmp-label { font-family: var(--font-d); font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+.cmp.old .cmp-label { color: var(--error); }
+.cmp.new .cmp-label { color: var(--success); }
+.cmp-item { font-size: 13px; color: var(--text-2); margin-bottom: 6px; padding-left: 18px; position: relative; line-height: 1.5; }
+.cmp-item::before { position: absolute; left: 0; font-weight: 700; }
+.cmp.old .cmp-item::before { content: '✕'; color: var(--error); }
+.cmp.new .cmp-item::before { content: '✓'; color: var(--success); }
+.note { background: rgba(245,166,35,0.05); border: 1px solid rgba(245,166,35,0.18); border-radius: var(--r-md); padding: 14px 18px; font-size: 13px; color: var(--text-2); line-height: 1.7; margin-top: 14px; }
+.note strong { color: var(--text); }
 </style>
 </head>
 <body>
 
-<button class="theme-toggle" onclick="toggleTheme()">🌓 Toggle Theme</button>
+<!-- ─── NAV ─── -->
+<nav class="doc-nav">
+  <div class="nav-logo">{Solarium}</div>
+  <a href="#type">Type</a>
+  <a href="#buttons">Buttons</a>
+  <a href="#pills">Pills</a>
+  <a href="#onchain">On-Chain</a>
+  <a href="#dashboard">Dashboard</a>
+  <a href="#courses">Courses</a>
+  <a href="#progress">Progress</a>
+  <a href="#achievements">Achievements</a>
+  <a href="#leaderboard">Leaderboard</a>
+  <a href="#sidebar">Sidebar</a>
+  <a href="#certificate">Certificate</a>
+  <a href="#popups">Popups</a>
+  <a href="#forms">Forms</a>
+  <a href="#rules">Rules</a>
+  <button class="theme-btn" onclick="toggleTheme()" id="theme-btn">☀️ Light</button>
+</nav>
 
-<div class="page-header">
-  <h1 class="page-title">Solarium <span>Design System</span> v5</h1>
-  <p class="page-sub">Light + Dark mode. Ink Teal secondary. Updated token architecture. The complete implementation reference for Tailwind CSS style classes.</p>
-</div>
-
-<!-- ============ THEME TOKENS REFERENCE ============ -->
-<div class="s">
-  <h2 class="s-title">Theme Token Architecture</h2>
-  <p class="s-desc">All colors use CSS custom properties. Toggle the theme above to see how every token adapts. This is the source of truth for the Tailwind config and style classes file.</p>
-
-  <div class="theme-label" id="theme-indicator">Currently: Light Mode</div>
-
-  <table class="token-table">
-    <tr><th>Token</th><th>Light</th><th>Dark</th><th>Usage</th></tr>
-    <tr><td><code>--bg</code></td><td>#FAFAF7</td><td>#343431</td><td>Page background</td></tr>
-    <tr><td><code>--card</code></td><td>#FFFFFF</td><td>#3D3C38</td><td>Card/surface bg</td></tr>
-    <tr><td><code>--subtle</code></td><td>#F5F3EE</td><td>#46443F</td><td>Subtle bg, tracks</td></tr>
-    <tr><td><code>--border</code></td><td>#E7E4DD</td><td>#57534E</td><td>All borders</td></tr>
-    <tr><td><code>--text</code></td><td>#1C1917</td><td>#F5F1EA</td><td>Primary text</td></tr>
-    <tr><td><code>--text-2</code></td><td>#57534E</td><td>#D4CEC3</td><td>Secondary text</td></tr>
-    <tr><td><code>--text-3</code></td><td>#A8A29E</td><td>#A79F93</td><td>Muted/caption</td></tr>
-    <tr><td><code>--primary</code></td><td>#0D9488</td><td>#2DD4BF</td><td>Actions, CTAs</td></tr>
-    <tr><td><code>--accent</code></td><td>#F59E0B</td><td>#FBBF24</td><td>XP, rewards</td></tr>
-    <tr><td><code>--secondary</code></td><td>#0F2F2D</td><td>#2FA7A0</td><td>Structure, depth</td></tr>
-    <tr><td><code>--success</code></td><td>#16A34A</td><td>#4ADE80</td><td>Complete, correct</td></tr>
-    <tr><td><code>--streak</code></td><td>#EA580C</td><td>#FB923C</td><td>Streaks, flame</td></tr>
-    <tr><td><code>--danger</code></td><td>#E11D48</td><td>#FB7185</td><td>Errors, destructive</td></tr>
-  </table>
-</div>
-
-<!-- ============ COLORS ============ -->
-<div class="s">
-  <h2 class="s-title">Color Palette</h2>
-  <p class="s-desc">Unique warm palette. Teal is the brand, amber is rewards, Ink Teal is structure. Solana purple/green appears ONLY on NFT certificates.</p>
-
-  <div class="swatch-group">
-    <div class="swatch-group-label">Primary — Deep Teal (growth, trust, brand, CTAs)</div>
-    <div class="swatches">
-      <div class="swatch"><div class="swatch-circle" style="background:var(--primary)"></div><div class="swatch-label">Primary</div><div class="swatch-hex">--primary</div></div>
-      <div class="swatch"><div class="swatch-circle" style="background:var(--primary-hover)"></div><div class="swatch-label">Hover</div><div class="swatch-hex">--primary-hover</div></div>
-      <div class="swatch"><div class="swatch-circle" style="background:var(--primary-dark)"></div><div class="swatch-label">Dark</div><div class="swatch-hex">--primary-dark</div></div>
-      <div class="swatch"><div class="swatch-circle" style="background:var(--primary-light)"></div><div class="swatch-label">Light</div><div class="swatch-hex">--primary-light</div></div>
-      <div class="swatch"><div class="swatch-circle" style="background:var(--primary-bg)"></div><div class="swatch-label">BG</div><div class="swatch-hex">--primary-bg</div></div>
+<!-- ─── HEADER ─── -->
+<div class="doc-header">
+  <div class="doc-header-inner">
+    <div class="doc-logo">
+      <div class="doc-logo-mark">S</div>
+      <span class="doc-logo-name">{Solarium}</span>
     </div>
-  </div>
-
-  <div class="swatch-group">
-    <div class="swatch-group-label">Accent — Warm Amber (XP, rewards, celebration)</div>
-    <div class="swatches">
-      <div class="swatch"><div class="swatch-circle" style="background:var(--accent)"></div><div class="swatch-label">Accent</div><div class="swatch-hex">--accent</div></div>
-      <div class="swatch"><div class="swatch-circle" style="background:var(--accent-hover)"></div><div class="swatch-label">Hover</div><div class="swatch-hex">--accent-hover</div></div>
-      <div class="swatch"><div class="swatch-circle" style="background:var(--accent-dark)"></div><div class="swatch-label">Dark</div><div class="swatch-hex">--accent-dark</div></div>
-      <div class="swatch"><div class="swatch-circle" style="background:var(--accent-light)"></div><div class="swatch-label">Light</div><div class="swatch-hex">--accent-light</div></div>
-      <div class="swatch"><div class="swatch-circle" style="background:var(--accent-bg)"></div><div class="swatch-label">BG</div><div class="swatch-hex">--accent-bg</div></div>
-    </div>
-  </div>
-
-  <div class="swatch-group">
-    <div class="swatch-group-label">Secondary — Ink Teal (structure, depth, code panels, serious UI)</div>
-    <div class="swatches">
-      <div class="swatch"><div class="swatch-circle" style="background:var(--secondary)"></div><div class="swatch-label">Deep</div><div class="swatch-hex">--secondary</div></div>
-      <div class="swatch"><div class="swatch-circle" style="background:var(--secondary-light)"></div><div class="swatch-label">Light</div><div class="swatch-hex">--secondary-light</div></div>
-      <div class="swatch"><div class="swatch-circle" style="background:var(--secondary-bg)"></div><div class="swatch-label">BG</div><div class="swatch-hex">--secondary-bg</div></div>
-    </div>
-  </div>
-
-  <div class="swatch-group">
-    <div class="swatch-group-label">Semantic</div>
-    <div class="swatches">
-      <div class="swatch"><div class="swatch-circle" style="background:var(--success)"></div><div class="swatch-label">Success</div><div class="swatch-hex">--success</div></div>
-      <div class="swatch"><div class="swatch-circle" style="background:var(--streak)"></div><div class="swatch-label">Streak</div><div class="swatch-hex">--streak</div></div>
-      <div class="swatch"><div class="swatch-circle" style="background:var(--danger)"></div><div class="swatch-label">Danger</div><div class="swatch-hex">--danger</div></div>
-    </div>
-  </div>
-
-  <div class="swatch-group">
-    <div class="swatch-group-label">Neutrals — warm tones (adapts to theme)</div>
-    <div class="swatches">
-      <div class="swatch"><div class="swatch-circle" style="background:var(--bg); border-color:var(--border)"></div><div class="swatch-label">BG</div><div class="swatch-hex">--bg</div></div>
-      <div class="swatch"><div class="swatch-circle" style="background:var(--card); border-color:var(--border)"></div><div class="swatch-label">Card</div><div class="swatch-hex">--card</div></div>
-      <div class="swatch"><div class="swatch-circle" style="background:var(--subtle)"></div><div class="swatch-label">Subtle</div><div class="swatch-hex">--subtle</div></div>
-      <div class="swatch"><div class="swatch-circle" style="background:var(--border)"></div><div class="swatch-label">Border</div><div class="swatch-hex">--border</div></div>
-      <div class="swatch"><div class="swatch-circle" style="background:var(--text)"></div><div class="swatch-label">Text</div><div class="swatch-hex">--text</div></div>
-      <div class="swatch"><div class="swatch-circle" style="background:var(--text-2)"></div><div class="swatch-label">Text 2</div><div class="swatch-hex">--text-2</div></div>
-      <div class="swatch"><div class="swatch-circle" style="background:var(--text-3)"></div><div class="swatch-label">Text 3</div><div class="swatch-hex">--text-3</div></div>
-    </div>
-  </div>
-
-  <div class="swatch-group">
-    <div class="swatch-group-label">Solana Nod — ONLY on certificates and NFT elements</div>
-    <div class="swatches">
-      <div class="swatch"><div class="swatch-circle" style="background:#9945FF"></div><div class="swatch-label">Purple</div><div class="swatch-hex">#9945FF</div></div>
-      <div class="swatch"><div class="swatch-circle" style="background:#14F195"></div><div class="swatch-label">Green</div><div class="swatch-hex">#14F195</div></div>
-    </div>
+    <div class="doc-tag"><span class="doc-tag-dot"></span>v9.0 — Medals + Editorial Cards</div>
+    <h1 class="doc-title">Design <em>System</em></h1>
+    <p class="doc-sub">Octagonal medal tokens replace circles + emoji. Editorial course cards with atmospheric glow and large ghost numbers. Everything else preserved from v8.</p>
   </div>
 </div>
 
-<!-- ============ TYPOGRAPHY ============ -->
-<div class="s">
-  <h2 class="s-title">Typography</h2>
-  <p class="s-desc">Nunito for display — bold, rounded, friendly. Plus Jakarta Sans for body — clean, modern. Never Inter, Roboto, or system fonts.</p>
+<div class="doc-body">
 
-  <div class="type-row"><div class="type-label">Display XL — Nunito 900 / 44px</div><div class="type-display-xl">Master Solana Development</div></div>
-  <div class="type-row"><div class="type-label">Display LG — Nunito 800 / 30px</div><div class="type-display-lg">Solana Fundamentals</div></div>
-  <div class="type-row"><div class="type-label">Display MD — Nunito 800 / 22px</div><div class="type-display-md">Course Catalog</div></div>
-  <div class="type-row"><div class="type-label">Body LG — Jakarta 500 / 17px</div><div class="type-body-lg">A comprehensive beginner course covering the fundamentals of Solana.</div></div>
-  <div class="type-row"><div class="type-label">Body — Jakarta 400 / 15px</div><div class="type-body">Learn to set up your environment, create wallets, and send your first transaction.</div></div>
-  <div class="type-row"><div class="type-label">Caption — Jakarta 600 / 12px</div><div class="type-caption">12 hours · 600 XP · Beginner</div></div>
-</div>
-
-<!-- ============ BUTTONS ============ -->
-<div class="s">
-  <h2 class="s-title">Buttons — 3D Push Style</h2>
-  <p class="s-desc">All 7 variants. Visible bottom shadow depresses on click. Works in both themes.</p>
-
-  <div class="btn-row">
-    <button class="btn btn-p btn-lg">Start Learning →</button>
-    <button class="btn btn-a btn-lg">Claim XP</button>
-    <button class="btn btn-s btn-lg">Mark Complete ✓</button>
+<!-- ─── TYPOGRAPHY ─── -->
+<section class="section" id="type">
+  <h2 class="section-title">Typography</h2>
+  <p class="section-desc">Nunito 900 for display. Plus Jakarta Sans for body. JetBrains Mono for all on-chain data, addresses, and numbers.</p>
+  <div class="showcase">
+    <div class="type-row"><div class="type-label">Hero — Nunito 900 / 48px / -1.5px</div><div class="t-hero">Build on Solana.</div></div>
+    <div class="type-row"><div class="type-label">Hero Gradient — for big moments</div><div class="t-gradient">Build on Solana.</div></div>
+    <div class="type-row"><div class="type-label">H1 — Nunito 800 / 32px</div><div class="t-h1">Course Catalog</div></div>
+    <div class="type-row"><div class="type-label">H2 — Nunito 800 / 24px</div><div class="t-h2">Your Achievements</div></div>
+    <div class="type-row"><div class="type-label">Body LG — Jakarta 400 / 17px</div><div class="t-body-lg">Learn to build, deploy, and audit production Solana programs.</div></div>
+    <div class="type-row"><div class="type-label">Body — Jakarta 400 / 15px</div><div class="t-body">Complete the lesson to earn XP and unlock your on-chain achievement badge.</div></div>
+    <div class="type-row"><div class="type-label">Caption — Jakarta 600 / 12px uppercase</div><div class="t-caption">Joined Feb 2026 · Verified on Devnet</div></div>
+    <div class="type-row"><div class="type-label">Mono — addresses, tx hashes, XP counts</div><div class="t-mono">F5gw...iLwq · tx: 3xKp...9mRz · 2,490 XPT</div></div>
   </div>
-  <div class="btn-row">
-    <button class="btn btn-p">Primary</button>
-    <button class="btn btn-sec">Secondary</button>
-    <button class="btn btn-a">Accent</button>
-    <button class="btn btn-o">Outline</button>
-    <button class="btn btn-g">Ghost</button>
-    <button class="btn btn-d">Danger</button>
-  </div>
-  <div class="btn-row">
-    <button class="btn btn-p btn-sm">Small Primary</button>
-    <button class="btn btn-sec btn-sm">Small Secondary</button>
-    <button class="btn btn-o btn-sm">Small Outline</button>
-  </div>
-</div>
+</section>
 
-<!-- ============ FORM ELEMENTS ============ -->
-<div class="s">
-  <h2 class="s-title">Form Elements</h2>
-  <p class="s-desc">Chunky borders, warm backgrounds, teal focus ring. Consistent with the push-depth aesthetic.</p>
-
-  <div class="form-demo">
-    <div class="form-group">
-      <label class="form-label">Wallet Address</label>
-      <input class="form-input" type="text" placeholder="Enter your Solana wallet address...">
-      <div class="form-helper">Your SPL token rewards will be sent here</div>
+<!-- ─── BUTTONS ─── -->
+<section class="section" id="buttons">
+  <h2 class="section-title">Buttons</h2>
+  <p class="section-desc">Three variants: Primary (forest emerald, push shadow), Secondary (outline), Accent (amber, for reward-related actions). That's it.</p>
+  <div class="showcase dots">
+    <div class="flex-row" style="margin-bottom:20px;">
+      <button class="btn btn-primary btn-lg">Start Learning →</button>
+      <button class="btn btn-secondary btn-lg">View Course</button>
+      <button class="btn btn-accent btn-lg">⚡ Collect Reward</button>
     </div>
-    <div class="form-group">
-      <label class="form-label">Difficulty Level</label>
-      <select class="form-select">
-        <option>Beginner</option>
-        <option>Intermediate</option>
-        <option>Advanced</option>
-      </select>
+    <div class="flex-row" style="margin-bottom:16px;">
+      <button class="btn btn-primary">Primary</button>
+      <button class="btn btn-secondary">Secondary</button>
+      <button class="btn btn-accent">Accent</button>
     </div>
-    <div class="form-group">
-      <label class="form-label">Course Title</label>
-      <input class="form-input" type="text" value="" style="border-color: var(--danger);">
-      <div class="form-error">Course title is required</div>
+    <div class="flex-row">
+      <button class="btn btn-primary btn-sm">Small Primary</button>
+      <button class="btn btn-secondary btn-sm">Small Secondary</button>
+      <button class="btn btn-accent btn-sm">Small Accent</button>
     </div>
   </div>
-</div>
+</section>
 
-<!-- ============ DASHBOARD STATS ============ -->
-<div class="s">
-  <h2 class="s-title">Dashboard Stats</h2>
-  <p class="s-desc">XP card with level circle + progress bar, then streak/courses/badges cards.</p>
+<!-- ─── PILLS ─── -->
+<section class="section" id="pills">
+  <h2 class="section-title">Badges & Pills</h2>
+  <p class="section-desc">v3 color palette — emerald for progress/completion, gold for XP, orange for streaks, purple for levels, Solana purple/green for on-chain elements.</p>
+  <div class="showcase">
+    <div class="sub-label">Difficulty</div>
+    <div class="flex-row" style="margin-bottom:18px;">
+      <span class="pill pill-beg">Beginner</span>
+      <span class="pill pill-int">Intermediate</span>
+      <span class="pill pill-adv">Advanced</span>
+    </div>
+    <div class="sub-label">Status & Gamification</div>
+    <div class="flex-row" style="margin-bottom:18px;">
+      <span class="pill pill-done">✓ Completed</span>
+      <span class="pill pill-xp">⚡ 450 XP</span>
+      <span class="pill pill-streak">🔥 12d Streak</span>
+      <span class="pill pill-level">Lv.4</span>
+      <span class="pill pill-sol">◎ On-Chain</span>
+    </div>
+    <div class="sub-label">Level System</div>
+    <div class="flex-row">
+      <span class="level-badge lv-seed">1</span>
+      <span class="level-badge lv-sprout">5</span>
+      <span class="level-badge lv-sapling">10</span>
+      <span class="level-badge lv-canopy">20</span>
+      <span class="level-badge lv-legend">∞</span>
+    </div>
+  </div>
+</section>
 
-  <div class="dash-stats">
-    <div class="dash-stat xp-card">
-      <div class="xp-left">
-        <div class="xp-label">XP</div>
-        <div class="xp-value">306</div>
-        <div class="xp-progress-wrap">
-          <div class="xp-prog-track" style="width: 160px;"><div class="xp-prog-fill" style="width: 68%"></div></div>
-          <div class="xp-progress-text">206 / 300 XP to Level 2</div>
+<!-- ─── ON-CHAIN PROOF ─── -->
+<section class="section" id="onchain">
+  <h2 class="section-title">On-Chain Proof</h2>
+  <p class="section-desc">Every achievement NFT and certificate gets a proof link. The pulsing dot communicates liveness — this is real and verifiable on-chain.</p>
+  <div class="showcase dots">
+    <div class="sub-label">Inline Proof Pill</div>
+    <div class="flex-row" style="margin-bottom:20px;">
+      <a href="#" class="proof-pill"><span class="proof-dot"></span>tx: 3xKp...9mRz</a>
+      <a href="#" class="proof-pill"><span class="proof-dot"></span>NFT: F5gw...iLwq</a>
+      <a href="#" class="proof-pill"><span class="proof-dot"></span>PDA: 9mRz...3xKp</a>
+    </div>
+    <div class="sub-label">Inline in cards</div>
+    <div class="grad-card" style="max-width:340px;">
+      <div class="grad-card-inner">
+        <div class="grad-card-body">
+          <div style="font-family:var(--font-d);font-size:14px;font-weight:800;margin-bottom:6px;">Course Certificate</div>
+          <div style="font-size:13px;color:var(--text-2);margin-bottom:14px;">Permanently stored on Solana devnet.</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <a href="#" class="proof-pill"><span class="proof-dot"></span>tx: 3xKp...9mRz</a>
+            <span class="pill pill-sol">◎ Verified</span>
+          </div>
         </div>
       </div>
-      <div class="level-circle">1</div>
-    </div>
-    <div class="dash-stat">
-      <div class="stat-icon-label"><span class="stat-emoji">🔥</span><span class="stat-label-text">Streak</span></div>
-      <div class="stat-value">2</div>
-      <div class="stat-sub">2 day streak</div>
-    </div>
-    <div class="dash-stat">
-      <div class="stat-icon-label"><span class="stat-emoji">📖</span><span class="stat-label-text">Courses</span></div>
-      <div class="stat-value">2</div>
-      <div class="stat-sub">In Progress</div>
-    </div>
-    <div class="dash-stat">
-      <div class="stat-icon-label"><span class="stat-emoji">🏆</span><span class="stat-label-text">Achievements</span></div>
-      <div class="stat-value">4</div>
-      <div class="stat-sub">Badges</div>
     </div>
   </div>
-</div>
+</section>
 
-<!-- ============ COURSE CARDS ============ -->
-<div class="s">
-  <h2 class="s-title">Course Cards</h2>
-  <p class="s-desc">Difficulty pills + cover image banners. Note how banner gradients adapt to dark mode.</p>
+<!-- ─── DASHBOARD IDENTITY PANEL ─── -->
+<section class="section" id="dashboard">
+  <h2 class="section-title">Dashboard Identity Panel</h2>
+  <p class="section-desc">The first thing a user sees. Level + XP as one identity unit with a circular arc. Real medal tokens instead of a counter. Activity grid below. Everything animates in on load.</p>
 
-  <div class="pills" style="margin-bottom: 16px;">
-    <span class="pill beg">Beginner</span>
-    <span class="pill int">Intermediate</span>
-    <span class="pill adv">Advanced</span>
-  </div>
+  <div class="showcase dots">
+    <div class="dash-panel">
+      <div class="dash-panel-amb"></div>
 
-  <div class="cards-grid">
-    <div class="card">
-      <div class="card-banner beginner">
-        <span class="card-badge beginner">Beginner</span>
-        <div class="card-cover-img"><div class="card-cover-inner"></div></div>
+      <!-- Top: identity + medals -->
+      <div class="dash-top">
+
+        <!-- Level badge + XP -->
+        <div class="dash-identity">
+          <span class="level-badge lv-canopy" style="width:96px;height:96px;font-size:42px;border-width:3px;flex-shrink:0;">4</span>
+          <div>
+            <div class="dash-xp-num" id="dash-xp">2,490</div>
+            <div class="dash-xp-unit">Experience Points</div>
+            <div class="dash-xp-to"><em>890 XP</em> to Level 5</div>
+            <div class="dash-xp-track"><div class="dash-xp-fill" id="dash-xp-bar" style="width:74%"></div></div>
+          </div>
+        </div>
+
+        <!-- Medals -->
+        <div class="dash-medals">
+          <div class="dash-medals-head">
+            <div class="dash-medals-title">Your Medals</div>
+            <div class="dash-medals-count"><span>4</span> of 6 unlocked</div>
+          </div>
+          <div class="dash-medals-row">
+            <div class="dm">
+              <div class="dm-oct earned"><div class="dm-face"></div><span class="dm-glyph">01</span></div>
+              <div class="dm-name">First Steps</div>
+            </div>
+            <div class="dm">
+              <div class="dm-oct earned"><div class="dm-face"></div><span class="dm-glyph" style="font-size:17px;letter-spacing:0">α</span></div>
+              <div class="dm-name">Early Adopter</div>
+            </div>
+            <div class="dm">
+              <div class="dm-oct earned"><div class="dm-face"></div><span class="dm-glyph" style="font-size:17px;letter-spacing:0">✦</span></div>
+              <div class="dm-name">Completer</div>
+            </div>
+            <div class="dm">
+              <div class="dm-oct sol"><div class="dm-face"></div><span class="dm-glyph" style="font-size:17px;letter-spacing:0">◎</span></div>
+              <div class="dm-name">Legend</div>
+            </div>
+            <div class="dm">
+              <div class="dm-oct locked"><div class="dm-face"></div><span class="dm-glyph">7×</span></div>
+              <div class="dm-name">7d Streak</div>
+            </div>
+            <div class="dm">
+              <div class="dm-oct locked"><div class="dm-face"></div><span class="dm-glyph" style="font-size:15px;letter-spacing:0">⬡</span></div>
+              <div class="dm-name">Anchor Pro</div>
+            </div>
+          </div>
+        </div>
+
       </div>
-      <div class="card-body">
-        <div class="card-title">Solana Fundamentals</div>
-        <div class="card-by">by Ana Santos</div>
-        <div class="card-desc">A comprehensive beginner course covering the fundamentals of Solana blockchain development.</div>
-        <div class="card-foot"><span class="card-hours">⏱ 10h</span><span class="card-xp">⚡ 600 XP</span></div>
+
+      <!-- Activity grid -->
+      <div class="dash-grid">
+        <div class="dash-grid-header">
+          <div class="dash-grid-streak">
+            <span class="dash-flame">🔥</span>
+            <span class="dash-streak-num">12 day streak</span>
+            <span class="dash-streak-sub">&nbsp;— keep it going</span>
+          </div>
+          <div class="dash-grid-stats">
+            <div class="dgs">
+              <div class="dgs-val" style="color:var(--primary)">47</div>
+              <div class="dgs-key">Days</div>
+            </div>
+            <div class="dgs">
+              <div class="dgs-val" style="color:var(--xp)">21d</div>
+              <div class="dgs-key">Best</div>
+            </div>
+          </div>
+        </div>
+        <div class="contrib-scroll">
+          <div class="contrib-wrap">
+            <div class="contrib-day-labels">
+              <div class="contrib-day-label"></div>
+              <div class="contrib-day-label">Mon</div>
+              <div class="contrib-day-label"></div>
+              <div class="contrib-day-label">Wed</div>
+              <div class="contrib-day-label"></div>
+              <div class="contrib-day-label">Fri</div>
+              <div class="contrib-day-label"></div>
+            </div>
+            <div class="contrib-cols">
+              <div class="contrib-month-row" id="dash-month-row"></div>
+              <div style="position:relative;">
+                <div class="today-col-glow" id="dash-today-glow"></div>
+                <div class="contrib-grid" id="contrib-grid"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="contrib-legend">
+          <span>Less</span>
+          <div style="display:flex;gap:3px;">
+            <div class="legend-sq" style="background:var(--sg-0)"></div>
+            <div class="legend-sq" style="background:var(--sg-1)"></div>
+            <div class="legend-sq" style="background:var(--sg-2)"></div>
+            <div class="legend-sq" style="background:var(--sg-3)"></div>
+            <div class="legend-sq" style="background:var(--sg-4)"></div>
+          </div>
+          <span>More</span>
+          <span style="margin-left:8px;display:flex;align-items:center;gap:4px;">
+            <div class="legend-sq" style="background:var(--sg-today);box-shadow:0 0 4px rgba(245,166,35,0.6)"></div>Today
+          </span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ─── COURSE CARDS ─── -->
+<section class="section" id="courses">
+  <h2 class="section-title">Course Cards</h2>
+  <p class="section-desc">Left accent bar in track color. Atmospheric radial glow from the track. Large ghost course number as background element. Strong typographic hierarchy.</p>
+  <div class="showcase">
+    <div class="grid-3">
+
+      <!-- Beginner -->
+      <div class="course-card beg">
+        <div class="course-num">01</div>
+        <div class="course-card-body">
+          <div class="course-card-title">Solana Foundations</div>
+          <div class="course-card-by">Ana Santos</div>
+          <div class="course-card-desc">Core blockchain concepts, wallets, accounts, and token standards on Solana.</div>
+          <div class="course-card-foot">
+            <div class="course-card-stat">
+              <span>8 lessons</span>
+              <span>8h</span>
+            </div>
+            <span class="course-card-xp">⚡ 300</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Intermediate -->
+      <div class="course-card int">
+        <div class="course-num">02</div>
+        <div class="course-card-body">
+          <div class="course-card-title">Anchor Framework Mastery</div>
+          <div class="course-card-by">Mariana Costa</div>
+          <div class="course-card-desc">Build, test, and deploy secure Solana programs using the Anchor framework.</div>
+          <div class="course-card-foot">
+            <div class="course-card-stat">
+              <span>9 lessons</span>
+              <span>12h</span>
+            </div>
+            <span class="course-card-xp">⚡ 450</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Advanced -->
+      <div class="course-card adv">
+        <div class="course-num">03</div>
+        <div class="course-card-body">
+          <div class="course-card-title">DeFi on Solana</div>
+          <div class="course-card-by">Rafael Mendes</div>
+          <div class="course-card-desc">AMMs, lending pools, vaults, and liquidation engines — production DeFi on Solana.</div>
+          <div class="course-card-foot">
+            <div class="course-card-stat">
+              <span>12 lessons</span>
+              <span>16h</span>
+            </div>
+            <span class="course-card-xp">⚡ 1000</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ─── PROGRESS ─── -->
+<section class="section" id="progress">
+  <h2 class="section-title">Progress Bars</h2>
+  <p class="section-desc">14px tall, inner 3D highlight, shimmer animation. Three fills: emerald for course, amber for XP, green for complete.</p>
+  <div class="showcase" style="max-width:560px;">
+    <div class="prog-wrap">
+      <div class="prog-header"><span class="prog-label">Course Progress</span><span class="prog-val">5/9 lessons</span></div>
+      <div class="prog-track"><div class="prog-fill pf-primary" style="width:55%"></div></div>
+    </div>
+    <div class="prog-wrap">
+      <div class="prog-header"><span class="prog-label">Level Progress</span><span class="prog-val" style="color:var(--xp)">890/1,200 XP</span></div>
+      <div class="prog-track"><div class="prog-fill pf-xp" style="width:74%"></div></div>
+    </div>
+    <div class="prog-wrap">
+      <div class="prog-header"><span class="prog-label">Course Complete</span><span class="prog-val" style="color:var(--success)">12/12 ✓</span></div>
+      <div class="prog-track"><div class="prog-fill pf-success" style="width:100%"></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── ACHIEVEMENTS ─── -->
+<section class="section" id="achievements">
+  <h2 class="section-title">Achievements</h2>
+  <p class="section-desc">Octagonal medal tokens — no emoji, pure CSS craft. Golden metallic gradient for earned. Solana iridescent for legend tier. Monospace glyphs that mean something. Locked = ghost border.</p>
+
+  <div class="sub-label">Medal Grid — Profile Page</div>
+  <div class="showcase dots">
+    <div class="ach-grid">
+
+      <!-- 01 First Steps -->
+      <div class="ach-item">
+        <div class="ach-medal earned">
+          <div class="ach-face"></div>
+          <span class="ach-glyph">01</span>
+        </div>
+        <div class="ach-info">
+          <div class="ach-name">First Steps</div>
+          <div class="ach-proof"><a href="#" class="proof-pill" style="margin-top:2px;font-size:10px;"><span class="proof-dot"></span>NFT</a></div>
+        </div>
+      </div>
+
+      <!-- α Early Adopter -->
+      <div class="ach-item">
+        <div class="ach-medal earned">
+          <div class="ach-face"></div>
+          <span class="ach-glyph" style="font-size:24px;letter-spacing:0;">α</span>
+        </div>
+        <div class="ach-info">
+          <div class="ach-name">Early Adopter</div>
+          <div class="ach-proof"><a href="#" class="proof-pill" style="margin-top:2px;font-size:10px;"><span class="proof-dot"></span>NFT</a></div>
+        </div>
+      </div>
+
+      <!-- ∎ Completer -->
+      <div class="ach-item">
+        <div class="ach-medal earned">
+          <div class="ach-face"></div>
+          <span class="ach-glyph" style="font-size:26px;letter-spacing:0;">✦</span>
+        </div>
+        <div class="ach-info">
+          <div class="ach-name">Completer</div>
+          <div class="ach-proof"><a href="#" class="proof-pill" style="margin-top:2px;font-size:10px;"><span class="proof-dot"></span>NFT</a></div>
+        </div>
+      </div>
+
+      <!-- ◎ Legend — Solana tier -->
+      <div class="ach-item">
+        <div class="ach-medal sol">
+          <div class="ach-face"></div>
+          <span class="ach-glyph" style="font-size:26px;letter-spacing:0;">◎</span>
+        </div>
+        <div class="ach-info">
+          <div class="ach-name">Legend</div>
+          <div class="ach-proof"><a href="#" class="proof-pill" style="margin-top:2px;font-size:10px;"><span class="proof-dot"></span>NFT</a></div>
+        </div>
+      </div>
+
+      <!-- 7× Streak — locked -->
+      <div class="ach-item">
+        <div class="ach-medal locked">
+          <div class="ach-face"></div>
+          <span class="ach-glyph">7×</span>
+        </div>
+        <div class="ach-info"><div class="ach-name">7d Streak</div></div>
+      </div>
+
+      <!-- ⬡ Anchor Expert — locked -->
+      <div class="ach-item">
+        <div class="ach-medal locked">
+          <div class="ach-face"></div>
+          <span class="ach-glyph" style="font-size:22px;letter-spacing:0;">⬡</span>
+        </div>
+        <div class="ach-info"><div class="ach-name">Anchor Expert</div></div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="sub-label" style="margin-top:4px;">Achievement Log — with proof</div>
+  <div class="showcase" style="max-width:520px;">
+
+    <div class="ach-card earned">
+      <div class="ach-mini earned">
+        <div class="ach-mini-face"></div>
+        <span class="ach-mini-glyph">01</span>
+      </div>
+      <div style="flex:1">
+        <div class="ach-card-name">First Steps</div>
+        <div class="ach-card-desc">Complete your first lesson</div>
+      </div>
+      <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:5px;">
+        <span style="font-family:var(--font-m);font-size:10px;color:var(--text-3);">Feb 14</span>
+        <a href="#" class="proof-pill" style="font-size:10px;"><span class="proof-dot"></span>NFT</a>
       </div>
     </div>
-    <div class="card">
-      <div class="card-banner intermediate">
-        <span class="card-badge intermediate">Intermediate</span>
-        <div class="card-cover-img"><div class="card-cover-inner"></div></div>
+
+    <div class="ach-card earned">
+      <div class="ach-mini earned">
+        <div class="ach-mini-face"></div>
+        <span class="ach-mini-glyph" style="font-size:14px;">✦</span>
       </div>
-      <div class="card-body">
-        <div class="card-title">Rust for Solana Devs</div>
-        <div class="card-by">by Lucas Oliveira</div>
-        <div class="card-desc">Master Rust fundamentals tailored for Solana smart contract development.</div>
-        <div class="card-foot"><span class="card-hours">⏱ 12h</span><span class="card-xp">⚡ 800 XP</span></div>
+      <div style="flex:1">
+        <div class="ach-card-name">Course Completer</div>
+        <div class="ach-card-desc">Finish an entire course</div>
       </div>
-    </div>
-    <div class="card">
-      <div class="card-banner advanced">
-        <span class="card-badge advanced">Advanced</span>
-        <div class="card-cover-img"><div class="card-cover-inner"></div></div>
-      </div>
-      <div class="card-body">
-        <div class="card-title">DeFi on Solana</div>
-        <div class="card-by">by Rafael Mendes</div>
-        <div class="card-desc">AMMs, lending protocols, vaults, and liquidation engines on Solana.</div>
-        <div class="card-foot"><span class="card-hours">⏱ 16h</span><span class="card-xp">⚡ 1000 XP</span></div>
+      <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:5px;">
+        <span style="font-family:var(--font-m);font-size:10px;color:var(--text-3);">Feb 19</span>
+        <a href="#" class="proof-pill" style="font-size:10px;"><span class="proof-dot"></span>NFT</a>
       </div>
     </div>
-  </div>
-</div>
 
-<!-- ============ PROGRESS BARS ============ -->
-<div class="s">
-  <h2 class="s-title">Progress Bars</h2>
-  <p class="s-desc">16px tall, inner highlight, gradient fills. Teal = course, amber = XP, green = complete.</p>
-
-  <div class="prog-wrap">
-    <div class="prog-top"><span class="prog-name">Solana Fundamentals</span><span class="prog-val" style="color: var(--primary)">8 / 12</span></div>
-    <div class="prog-track"><div class="prog-fill teal" style="width: 67%"></div></div>
-  </div>
-  <div class="prog-wrap">
-    <div class="prog-top"><span class="prog-name">Level Progress</span><span class="prog-val" style="color: var(--accent)">102 / 300 XP</span></div>
-    <div class="prog-track"><div class="prog-fill amber" style="width: 34%"></div></div>
-  </div>
-  <div class="prog-wrap">
-    <div class="prog-top"><span class="prog-name">Course Complete</span><span class="prog-val" style="color: var(--success)">12 / 12 ✓</span></div>
-    <div class="prog-track"><div class="prog-fill green" style="width: 100%"></div></div>
-  </div>
-</div>
-
-<!-- ============ STREAK ============ -->
-<div class="s">
-  <h2 class="s-title">Streak Display</h2>
-  <div class="streak-box">
-    <div class="streak-header">
-      <div class="streak-icon">🔥</div>
-      <div><div class="streak-count">2 day streak</div><div class="streak-label">Learn today to keep it going!</div></div>
+    <div class="ach-card locked">
+      <div class="ach-mini locked">
+        <div class="ach-mini-face"></div>
+        <span class="ach-mini-glyph">7×</span>
+      </div>
+      <div style="flex:1">
+        <div class="ach-card-name">7-Day Streak</div>
+        <div class="ach-card-desc">Stay active seven days in a row</div>
+      </div>
+      <span style="font-family:var(--font-m);font-size:10px;color:var(--text-3);flex-shrink:0;">Locked</span>
     </div>
-    <div class="streak-days">
-      <div class="streak-day">M</div><div class="streak-day">T</div><div class="streak-day">W</div>
-      <div class="streak-day">T</div><div class="streak-day">F</div>
-      <div class="streak-day on">S</div><div class="streak-day now">S</div>
+
+  </div>
+</section>
+
+<!-- ─── LEADERBOARD ─── -->
+<section class="section" id="leaderboard">
+  <h2 class="section-title">Leaderboard</h2>
+  <p class="section-desc">Wallet address instead of progress bar. Level badge + XP only on the right. Gold for #1, primary tint for current user.</p>
+
+  <div class="showcase" style="max-width:560px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <div style="display:flex;gap:2px;background:var(--input);padding:3px;border-radius:var(--r-sm);border:1px solid var(--border);">
+        <button style="padding:5px 14px;border-radius:6px;font-family:var(--font-d);font-weight:700;font-size:12px;background:var(--card);border:none;color:var(--text);cursor:pointer;">Weekly</button>
+        <button style="padding:5px 14px;border-radius:6px;font-family:var(--font-d);font-weight:700;font-size:12px;background:transparent;border:none;color:var(--text-3);cursor:pointer;">Monthly</button>
+        <button style="padding:5px 14px;border-radius:6px;font-family:var(--font-d);font-weight:700;font-size:12px;background:transparent;border:none;color:var(--text-3);cursor:pointer;">All-Time</button>
+      </div>
     </div>
-  </div>
-</div>
 
-<!-- ============ POPUPS ============ -->
-<div class="s">
-  <h2 class="s-title">Celebration Popups</h2>
-  <div class="popups-row">
-    <div class="popup xp">+25 XP ⚡</div>
-    <div class="popup done">Lesson Complete ✓</div>
-    <div class="popup badge">Achievement Unlocked! 🏆</div>
-  </div>
-</div>
-
-<!-- ============ TOASTS ============ -->
-<div class="s">
-  <h2 class="s-title">Toast Notifications</h2>
-  <p class="s-desc">Semantic colored borders with tinted backgrounds. Adapt cleanly to dark mode.</p>
-
-  <div class="toast-row">
-    <div class="toast success">✓ Course enrolled successfully</div>
-    <div class="toast warning">⚠ Streak expires in 2 hours</div>
-    <div class="toast error">✕ Wallet connection failed</div>
-    <div class="toast info">ℹ New course available</div>
-  </div>
-</div>
-
-<!-- ============ MODAL ============ -->
-<div class="s">
-  <h2 class="s-title">Modal</h2>
-  <p class="s-desc">24px radius, card background, subtle shadow. Header/body/footer zones.</p>
-
-  <div class="modal-preview">
-    <div class="modal-header">
-      <div class="modal-title">Claim Certificate</div>
-      <div class="modal-subtitle">Mint your completion NFT on Solana</div>
+    <div class="lb-row gold">
+      <div class="lb-rank">🥇</div>
+      <div class="lb-av" style="background:linear-gradient(135deg,var(--primary-dark),var(--primary));">AS</div>
+      <div class="lb-info">
+        <div class="lb-name">ana_sol</div>
+        <div class="lb-wallet">7xKm...f3Rw</div>
+      </div>
+      <div class="lb-right">
+        <span class="lb-level-badge">Lv.2</span>
+        <div class="lb-xp">540 XP</div>
+      </div>
     </div>
-    <div class="modal-body">
-      <p>You've completed all 12 lessons in Solana Fundamentals. Claim your on-chain certificate to prove your skills.</p>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-o btn-sm">Cancel</button>
-      <button class="btn btn-p btn-sm">Mint Certificate →</button>
-    </div>
-  </div>
-</div>
 
-<!-- ============ ACHIEVEMENTS ============ -->
-<div class="s">
-  <h2 class="s-title">Achievement Badges</h2>
-  <div class="badges-grid">
-    <div class="ach"><div class="ach-circle earned">1st</div><div class="ach-name">First Steps</div></div>
-    <div class="ach"><div class="ach-circle earned">7d</div><div class="ach-name">Week Warrior</div></div>
-    <div class="ach"><div class="ach-circle earned">⚡</div><div class="ach-name">Early Adopter</div></div>
-    <div class="ach"><div class="ach-circle locked">✓</div><div class="ach-name">Completer</div></div>
-    <div class="ach"><div class="ach-circle locked">Rs</div><div class="ach-name">Rust Rookie</div></div>
-    <div class="ach"><div class="ach-circle locked">⚓</div><div class="ach-name">Anchor Expert</div></div>
-  </div>
-</div>
-
-<!-- ============ LEVELS ============ -->
-<div class="s">
-  <h2 class="s-title">Level Badges</h2>
-  <div class="levels-row">
-    <div class="lvl"><div class="lvl-circle l1">1</div><div class="lvl-name">Seed</div></div>
-    <div class="lvl"><div class="lvl-circle l5">5</div><div class="lvl-name">Sprout</div></div>
-    <div class="lvl"><div class="lvl-circle l10">10</div><div class="lvl-name">Sapling</div></div>
-    <div class="lvl"><div class="lvl-circle l20">20</div><div class="lvl-name">Canopy</div></div>
-  </div>
-</div>
-
-<!-- ============ LEADERBOARD ============ -->
-<div class="s">
-  <h2 class="s-title">Leaderboard</h2>
-  <div class="lb">
-    <div class="lb-row first">
-      <div class="lb-rank">1</div>
-      <div class="lb-av" style="background: linear-gradient(135deg, var(--primary), #2DD4BF);">ST</div>
-      <div class="lb-info"><div class="lb-name">Sthom</div><div class="lb-lvl">Level 1 · Seed</div></div>
-      <div class="lb-xp">306 XP</div>
-    </div>
     <div class="lb-row">
-      <div class="lb-rank">2</div>
-      <div class="lb-av" style="background: linear-gradient(135deg, var(--streak), var(--accent));">MR</div>
-      <div class="lb-info"><div class="lb-name">Maria R.</div><div class="lb-lvl">Level 3 · Sprout</div></div>
-      <div class="lb-xp">450 XP</div>
+      <div class="lb-rank">🥈</div>
+      <div class="lb-av" style="background:linear-gradient(135deg,#2D3748,#4A5568);">BD</div>
+      <div class="lb-info">
+        <div class="lb-name">bruno.dev</div>
+        <div class="lb-wallet">3pAn...c9Wz</div>
+      </div>
+      <div class="lb-right">
+        <span class="lb-level-badge">Lv.2</span>
+        <div class="lb-xp">490 XP</div>
+      </div>
     </div>
+
+    <div class="lb-row">
+      <div class="lb-rank" style="color:var(--text-2);">3</div>
+      <div class="lb-av" style="background:linear-gradient(135deg,#374151,#6B7280);">MC</div>
+      <div class="lb-info">
+        <div class="lb-name">mari.c</div>
+        <div class="lb-wallet">9fBq...h1Yx</div>
+      </div>
+      <div class="lb-right">
+        <span class="lb-level-badge">Lv.2</span>
+        <div class="lb-xp">440 XP</div>
+      </div>
+    </div>
+
+    <div style="text-align:center;padding:8px 0;font-family:var(--font-m);font-size:10px;color:var(--text-3);letter-spacing:0.5px;">· · ·</div>
+
     <div class="lb-row me">
-      <div class="lb-rank">3</div>
-      <div class="lb-av" style="background: linear-gradient(135deg, var(--secondary), var(--secondary-light));">JL</div>
-      <div class="lb-info"><div class="lb-name">João L. <span class="you">(you)</span></div><div class="lb-lvl">Level 2 · Seed</div></div>
-      <div class="lb-xp">320 XP</div>
+      <div class="lb-rank" style="color:var(--primary);">6</div>
+      <div class="lb-av" style="background:linear-gradient(135deg,var(--primary-dark),var(--primary));color:#000;">G</div>
+      <div class="lb-info">
+        <div class="lb-name">gabriel <span class="lb-me-tag">You</span></div>
+        <div class="lb-wallet">F5gw...iLwq</div>
+      </div>
+      <div class="lb-right">
+        <span class="lb-level-badge">Lv.1</span>
+        <div class="lb-xp" style="color:var(--primary);">350 XP</div>
+      </div>
     </div>
   </div>
-</div>
+</section>
 
-<!-- ============ FEATURES ============ -->
-<div class="s">
-  <h2 class="s-title">Landing Page Features</h2>
-  <div class="feat-grid">
-    <div class="feat"><div class="feat-num" style="color: var(--primary)">01</div><div class="feat-title">Interactive Challenges</div><div class="feat-desc">Code directly in the browser with real test cases.</div></div>
-    <div class="feat"><div class="feat-num" style="color: var(--secondary)">{}</div><div class="feat-title">On-Chain Certificates</div><div class="feat-desc">Earn NFT certificates on Solana. Verifiable and permanent.</div></div>
-    <div class="feat"><div class="feat-num" style="color: var(--accent)">XP</div><div class="feat-title">Gamified Progress</div><div class="feat-desc">Streaks, levels, and achievements for builders.</div></div>
-    <div class="feat"><div class="feat-num" style="color: var(--success)">++</div><div class="feat-title">Community Driven</div><div class="feat-desc">Open-source, built by Superteam Brazil.</div></div>
+<!-- ─── SIDEBAR ─── -->
+<section class="section" id="sidebar">
+  <h2 class="section-title">Sidebar Navigation</h2>
+  <p class="section-desc">Solana mark logo. Active state in primary dim. XP + shimmer progress at the bottom.</p>
+  <div class="showcase dots">
+    <div class="sidebar">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-mark">S</div>
+        <span class="sidebar-logo-text">{Solarium}</span>
+      </div>
+      <a href="#" class="nav-item active"><span class="nav-item-icon">◻</span>Dashboard</a>
+      <a href="#" class="nav-item"><span class="nav-item-icon">📖</span>Courses</a>
+      <a href="#" class="nav-item"><span class="nav-item-icon">🏆</span>Leaderboard</a>
+      <a href="#" class="nav-item"><span class="nav-item-icon">👤</span>Profile</a>
+      <a href="#" class="nav-item"><span class="nav-item-icon">📜</span>Certificates</a>
+      <a href="#" class="nav-item"><span class="nav-item-icon">⚙</span>Settings</a>
+      <div class="sidebar-xp">
+        <div class="sidebar-xp-row">
+          <div class="sidebar-xp-amount">2,490 XP</div>
+          <span class="level-badge lv-canopy" style="width:32px;height:32px;font-size:13px;border-width:2px;">4</span>
+        </div>
+        <div class="sidebar-xp-label">890 XP to Level 5</div>
+        <div class="sidebar-prog"><div class="sidebar-prog-fill" style="width:72%"></div></div>
+        <div class="sidebar-xp-levels"><span>Lv.4</span><span>Lv.5</span></div>
+      </div>
+    </div>
   </div>
-</div>
+</section>
 
-<hr class="divider">
+<!-- ─── CERTIFICATE ─── -->
+<section class="section" id="certificate">
+  <h2 class="section-title">Certificate Card</h2>
+  <p class="section-desc">Typographic, refined — no generic icons. Dot grid texture on the card body. The Solana gradient border communicates that this is an NFT. The text does the work.</p>
+  <div class="showcase dots">
+    <div class="cert-wrap">
+      <div class="cert-inner">
+        <div class="cert-body">
+          <div class="cert-eyebrow">Certificate of Completion</div>
+          <div class="cert-course">Building Your First<br>Solana Program</div>
+          <div class="cert-subtitle">Anchor Development · Intermediate</div>
+          <div class="cert-divider"></div>
+          <div class="cert-meta-row">
+            <div class="cert-meta-item">
+              <div class="cert-meta-key">Issued to</div>
+              <div class="cert-meta-val">Gabriel Lima</div>
+            </div>
+            <div class="cert-meta-item">
+              <div class="cert-meta-key">Date</div>
+              <div class="cert-meta-val">Feb 19, 2026</div>
+            </div>
+            <div class="cert-meta-item">
+              <div class="cert-meta-key">Earned</div>
+              <div class="cert-meta-val highlight">850 XP</div>
+            </div>
+          </div>
+          <div class="cert-foot">
+            <a href="#" class="proof-pill"><span class="proof-dot"></span>tx: 3xKp...9mRz</a>
+            <span class="cert-network">Solana Devnet</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
-<!-- ============ DESIGN RULES ============ -->
-<div class="s">
-  <h2 class="s-title">Design Rules Summary</h2>
+<!-- ─── POPUPS ─── -->
+<section class="section" id="popups">
+  <h2 class="section-title">Popups & Celebrations</h2>
+  <p class="section-desc">Three popups only: XP reward, Achievement Unlocked (gradient border), Certificate Minted (same structure, different label). Level-up removed.</p>
+
+  <div class="showcase dots">
+    <div class="sub-label">XP Reward</div>
+    <div class="flex-row" style="margin-bottom:28px;">
+      <div class="popup-xp">
+        <div class="popup-xp-icon">⚡</div>
+        <div>
+          <div style="font-family:var(--font-m);font-size:10px;color:var(--text-3);margin-bottom:2px;">XP EARNED</div>
+          <div class="popup-xp-amount">+40 XP</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sub-label">Achievement Unlocked</div>
+    <div class="flex-row" style="margin-bottom:28px;">
+      <div class="popup-grad achievement">
+        <div class="popup-grad-inner">
+          <div class="popup-icon-ring">
+            <div class="popup-icon-inner">🏆</div>
+          </div>
+          <div>
+            <div class="popup-label">Achievement Unlocked</div>
+            <div class="popup-name">First Steps</div>
+            <a href="#" class="proof-pill" style="margin-top:7px;display:inline-flex;"><span class="proof-dot"></span>NFT minted ↗</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sub-label">Certificate Minted</div>
+    <div class="flex-row">
+      <div class="popup-grad cert">
+        <div class="popup-grad-inner">
+          <div class="popup-icon-ring">
+            <div class="popup-icon-inner">◎</div>
+          </div>
+          <div>
+            <div class="popup-label">Certificate Minted</div>
+            <div class="popup-name">Anchor Mastery</div>
+            <a href="#" class="proof-pill" style="margin-top:7px;display:inline-flex;"><span class="proof-dot"></span>NFT on Solana ↗</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sub-label" style="margin-top:24px;">Toast Notifications</div>
+  <div class="showcase">
+    <div class="flex-row">
+      <div class="toast success">✓ Enrolled in Anchor Mastery</div>
+      <div class="toast warning">⚠ Streak expires in 2h</div>
+      <div class="toast error">✕ Wallet not connected</div>
+      <div class="toast info">ℹ New course available</div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── FORMS ─── -->
+<section class="section" id="forms">
+  <h2 class="section-title">Forms</h2>
+  <p class="section-desc">Focused input style. Primary focus ring. Used for wallet connection and profile settings.</p>
+  <div class="showcase" style="max-width:420px;">
+    <div style="margin-bottom:16px;">
+      <label class="form-label">Wallet Address</label>
+      <input class="form-input" type="text" placeholder="Enter Solana wallet address...">
+      <div class="form-helper">XPT rewards will be sent to this address</div>
+    </div>
+    <div style="margin-bottom:16px;">
+      <label class="form-label">Username</label>
+      <input class="form-input" type="text" style="border-color:var(--error);">
+      <div style="font-size:12px;color:var(--error);margin-top:4px;font-weight:600;">Username is required</div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button class="btn btn-secondary btn-sm">Cancel</button>
+      <button class="btn btn-primary btn-sm">Save Changes</button>
+    </div>
+  </div>
+</section>
+
+<!-- ─── RULES ─── -->
+<section class="section" id="rules">
+  <h2 class="section-title">Design Rules</h2>
+  <p class="section-desc">Non-negotiable. Every rule here exists because a previous version broke it.</p>
   <div class="compare">
     <div class="cmp old">
-      <div class="cmp-label">Don't</div>
-      <div class="cmp-item">Use Solana purple/green as primary</div>
-      <div class="cmp-item">Use cold gray backgrounds</div>
-      <div class="cmp-item">Use Inter / Roboto / system fonts</div>
-      <div class="cmp-item">Use thin 1px borders</div>
-      <div class="cmp-item">Use thin 4px progress bars</div>
-      <div class="cmp-item">Use flat buttons with no depth</div>
-      <div class="cmp-item">Hardcode colors — always use tokens</div>
-      <div class="cmp-item">Mix primary + secondary on same layer</div>
+      <div class="cmp-label">Never</div>
+      <div class="cmp-item">Warm brown dark (#343431) or pure black (#0A0A0B)</div>
+      <div class="cmp-item">Cold gray backgrounds</div>
+      <div class="cmp-item">Solana gradient as primary brand color in UI</div>
+      <div class="cmp-item">More than 3 button variants (Primary/Secondary/Accent)</div>
+      <div class="cmp-item">Inter, Roboto, or system fonts</div>
+      <div class="cmp-item">Level-up popup (removed in v8)</div>
+      <div class="cmp-item">Level bar in leaderboard rows</div>
+      <div class="cmp-item">Achievement badges without proof pill (if NFT minted)</div>
+      <div class="cmp-item">Streak as circle days widget</div>
+      <div class="cmp-item">Hardcode hex values in components</div>
     </div>
     <div class="cmp new">
-      <div class="cmp-label">Do</div>
-      <div class="cmp-item">Teal primary, amber accent, Ink Teal secondary</div>
-      <div class="cmp-item">Warm cream #FAFAF7 / dark #343431</div>
-      <div class="cmp-item">Nunito display + Plus Jakarta Sans body</div>
-      <div class="cmp-item">2.5px chunky borders everywhere</div>
-      <div class="cmp-item">Fat 16px progress bars with inner glow</div>
-      <div class="cmp-item">3D push buttons with bottom shadow</div>
-      <div class="cmp-item">Use CSS vars → Tailwind tokens always</div>
-      <div class="cmp-item">Primary = foreground action, Secondary = structure</div>
+      <div class="cmp-label">Always</div>
+      <div class="cmp-item">Cool navy-slate dark (#0E1117 → #161B27 → #1C2333)</div>
+      <div class="cmp-item">Warm cream light (#FAFAF7 → #FFFFFF)</div>
+      <div class="cmp-item">Forest emerald as primary — our identity</div>
+      <div class="cmp-item">Solana gradient ONLY on certificates + NFT elements</div>
+      <div class="cmp-item">Nunito + Plus Jakarta Sans + JetBrains Mono</div>
+      <div class="cmp-item">Stat strip + streak grid as one unified block</div>
+      <div class="cmp-item">Wallet address in leaderboard, level badge + XP on right</div>
+      <div class="cmp-item">Amber gradient ring on unlocked achievement badges</div>
+      <div class="cmp-item">GitHub-style contribution grid for streak</div>
+      <div class="cmp-item">CSS variables — always use tokens</div>
     </div>
   </div>
-
-  <div class="note" style="margin-top: 24px;">
-    <strong>Primary vs Secondary rule:</strong> Primary (#0D9488) = foreground action color (buttons, XP, progress, active states). Secondary (#0F2F2D) = background structure color (card accents, code panels, section dividers). They should never compete on the same visual layer. If two elements with these colors touch each other, something is wrong.
+  <div class="note">
+    <strong>The three popup rule:</strong> Only XP reward, Achievement Unlocked, and Certificate Minted. No level-up popup — level-up is communicated through the dashboard stat strip updating. Keeps reward moments focused.
   </div>
-
-  <div class="note" style="margin-top: 12px;">
-    <strong>Dark mode rule:</strong> All colors adapt through CSS custom properties. Components use <code>var(--token)</code>, never raw hex. Dark mode lifts primaries for readability and deepens shadows with <code>rgba(0,0,0,0.35)</code> instead of color-specific shadows. The push depth aesthetic is preserved via opacity-based shadows.
+  <div class="note" style="margin-top:10px;">
+    <strong>Dashboard strip + streak:</strong> These two components must always be rendered together with no visual gap between them. The strip has no bottom border-radius, the streak block has no top border-radius. They share <code>--card</code> background. The result is one unified panel that communicates the learner's full status at a glance.
   </div>
+</section>
+
 </div>
 
 <script>
 function toggleTheme() {
-  const html = document.documentElement;
-  const isDark = html.getAttribute('data-theme') === 'dark';
-  if (isDark) {
-    html.removeAttribute('data-theme');
-    document.getElementById('theme-indicator').textContent = 'Currently: Light Mode';
-    document.getElementById('theme-indicator').style.background = 'var(--primary-bg)';
-    document.getElementById('theme-indicator').style.color = 'var(--primary)';
-    document.getElementById('theme-indicator').style.borderColor = 'var(--primary)';
-  } else {
-    html.setAttribute('data-theme', 'dark');
-    document.getElementById('theme-indicator').textContent = 'Currently: Dark Mode';
-    document.getElementById('theme-indicator').style.background = 'var(--primary-bg)';
-    document.getElementById('theme-indicator').style.color = 'var(--primary)';
-    document.getElementById('theme-indicator').style.borderColor = 'var(--primary)';
-  }
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.documentElement.setAttribute('data-theme', dark ? 'light' : 'dark');
+  document.getElementById('theme-btn').textContent = dark ? '🌙 Dark' : '☀️ Light';
+  buildGrid();
 }
-</script>
 
+const sections = document.querySelectorAll('section[id]');
+const links = document.querySelectorAll('.doc-nav a[href^="#"]');
+new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      links.forEach(l => l.classList.remove('active'));
+      const a = document.querySelector(`.doc-nav a[href="#${e.target.id}"]`);
+      if (a) a.classList.add('active');
+    }
+  });
+}, { rootMargin: '-10% 0px -75% 0px' }).observe && sections.forEach(s =>
+  new IntersectionObserver(entries => {
+    if (entries[0].isIntersecting) {
+      links.forEach(l => l.classList.remove('active'));
+      const a = document.querySelector(`.doc-nav a[href="#${entries[0].target.id}"]`);
+      if (a) a.classList.add('active');
+    }
+  }, { rootMargin: '-10% 0px -75% 0px' }).observe(s)
+);
+
+function buildGrid() {
+  const grid = document.getElementById('contrib-grid');
+  const ml   = document.getElementById('dash-month-row');
+  const glow = document.getElementById('dash-today-glow');
+  if (!grid) return;
+  grid.innerHTML = ''; if (ml) ml.innerHTML = '';
+
+  const COLS = 52, COL_W = 14; // cell 11 + gap 3
+  const today = new Date(); today.setHours(0,0,0,0);
+  const startDate = new Date(today);
+  startDate.setDate(startDate.getDate() - (COLS * 7 - 1));
+  startDate.setDate(startDate.getDate() - startDate.getDay());
+
+  const am = {};
+  for (let i = 0; i < COLS * 7; i++) {
+    const d = new Date(startDate); d.setDate(d.getDate() + i);
+    const k = d.toISOString().slice(0,10);
+    const r = Math.random(), rec = i / (COLS * 7);
+    am[k] = r < 0.28 + rec * 0.28 ? (r < 0.05 ? 4 : r < 0.13 ? 3 : r < 0.22 ? 2 : 1) : 0;
+  }
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(today); d.setDate(d.getDate() - i);
+    am[d.toISOString().slice(0,10)] = i === 0 ? 'today' : (Math.random() > 0.2 ? 3 : 2);
+  }
+
+  if (ml) {
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    let last = -1;
+    for (let c = 0; c < COLS; c++) {
+      const d = new Date(startDate); d.setDate(d.getDate() + c * 7);
+      const sp = document.createElement('span');
+      sp.className = 'contrib-month-lbl';
+      sp.style.minWidth = COL_W + 'px';
+      if (d.getMonth() !== last) { sp.textContent = months[d.getMonth()]; last = d.getMonth(); }
+      ml.appendChild(sp);
+    }
+  }
+
+  const frag = document.createDocumentFragment();
+  const todayKey = today.toISOString().slice(0,10);
+  let todayCol = -1;
+  for (let i = 0; i < COLS * 7; i++) {
+    const d = new Date(startDate); d.setDate(d.getDate() + i);
+    const k = d.toISOString().slice(0,10);
+    const lv = am[k] ?? 0;
+    if (k === todayKey) todayCol = Math.floor(i / 7);
+    const div = document.createElement('div');
+    div.className = 'cday';
+    if (k === todayKey) div.classList.add('today');
+    else if (lv === 'today') div.classList.add('l4');
+    else if (lv > 0) div.classList.add(`l${lv}`);
+    div.title = `${k}: ${lv === 0 ? 'No activity' : lv + ' lesson(s)'}`;
+    frag.appendChild(div);
+  }
+  grid.appendChild(frag);
+  if (todayCol >= 0 && glow) glow.style.left = (todayCol * COL_W) + 'px';
+}
+buildGrid();
+</script>
 </body>
 </html>
