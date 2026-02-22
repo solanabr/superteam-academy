@@ -6,7 +6,6 @@ import {
   TRACKS_QUERY,
 } from "@/lib/sanity/queries";
 import {
-  SAMPLE_COURSES,
   COURSE_CARDS,
   TRACKS,
   getCourseBySlug as getMockCourseBySlug,
