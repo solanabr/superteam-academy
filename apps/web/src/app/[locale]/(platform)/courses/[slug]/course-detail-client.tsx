@@ -43,6 +43,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
   const [completedLessons, setCompletedLessons] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
 
   const fetchEnrollmentAndProgress = useCallback(async () => {
     try {
@@ -58,6 +59,16 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
       }
 
       setUserId(user.id);
+
+      // Fetch wallet address from profile
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("wallet_address")
+        .eq("id", user.id)
+        .single();
+      if (profile?.wallet_address) {
+        setWalletAddress(profile.wallet_address);
+      }
 
       // Check enrollment status
       const { data: enrollment } = await supabase
@@ -91,7 +102,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
     fetchEnrollmentAndProgress();
   }, [fetchEnrollmentAndProgress]);
 
-  const { isEnrolling, handleEnroll, enrollError } = useOnChainEnroll({
+  const { isEnrolling, handleEnroll } = useOnChainEnroll({
     courseId: course._id,
     userId,
     onSuccess: () => setIsEnrolled(true),
@@ -128,7 +139,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
           </span>
         </div>
 
-        <h1 className="font-display text-3xl font-bold md:text-4xl">
+        <h1 className="font-display text-3xl font-black tracking-[-0.5px] md:text-4xl">
           {course.title}
         </h1>
 
@@ -164,7 +175,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
             )}
 
             {/* XP Reward */}
-            <span className="flex items-center gap-1.5 font-display text-lg font-bold text-accent">
+            <span className="flex items-center gap-1.5 font-display text-lg font-black text-xp">
               <Lightning size={20} weight="duotone" className="text-accent" />
               {course.xpReward} {t("xpReward")}
             </span>
@@ -188,7 +199,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
           <div className="flex shrink-0 flex-col items-start gap-3 md:items-end">
             {!isLoading && userId ? (
               <>
-                {!isEnrolled && !publicKey ? (
+                {!isEnrolled && !publicKey && !walletAddress ? (
                   <Button
                     variant="push"
                     size="lg"
@@ -233,11 +244,6 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                     )}
                   </Button>
                 )}
-                {enrollError && (
-                  <p role="alert" className="text-sm text-destructive">
-                    {t("enrollFailed")}
-                  </p>
-                )}
               </>
             ) : !isLoading ? (
               <AuthModal
@@ -269,7 +275,9 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
 
       {/* Curriculum */}
       <div className="space-y-4">
-        <h2 className="font-display text-2xl font-bold">{t("curriculum")}</h2>
+        <h2 className="font-display text-2xl font-extrabold">
+          {t("curriculum")}
+        </h2>
         <p className="text-sm text-text-3">
           {modules.length} {t("modules")} &middot; {totalLessons} {t("lessons")}
         </p>

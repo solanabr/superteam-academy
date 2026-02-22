@@ -15,24 +15,24 @@ interface CourseCatalogClientProps {
   courses: Course[];
 }
 
+/** v9 difficulty filter pill styles — active filled, inactive ghost with border token */
 const difficultyFilterStyles = {
   beginner: {
     active:
-      "bg-success border-success-dark text-white shadow-[0_2px_0_0_rgba(21,128,61,0.6)]",
+      "bg-primary border-primary-dark text-white shadow-[0_2px_0_0_var(--primary-dark)]",
     inactive:
-      "border-[#E7E4DD] text-text-3 hover:bg-success/10 dark:border-border dark:hover:bg-success/10",
+      "border-border text-text-3 hover:[background:var(--primary-bg)] hover:border-primary hover:text-primary",
   },
   intermediate: {
-    active:
-      "bg-accent border-accent-dark text-white shadow-[0_2px_0_0_rgba(180,83,9,0.6)]",
+    active: "bg-xp border-xp-dark text-white shadow-[0_2px_0_0_var(--xp-dark)]",
     inactive:
-      "border-[#E7E4DD] text-text-3 hover:bg-accent/10 dark:border-border dark:hover:bg-accent/10",
+      "border-border text-text-3 hover:[background:var(--xp-dim)] hover:border-xp hover:text-xp",
   },
   advanced: {
     active:
-      "bg-danger border-[#BE123C] text-white shadow-[0_2px_0_0_rgba(190,18,60,0.6)]",
+      "bg-streak border-streak text-white shadow-[0_2px_0_0_var(--streak)]",
     inactive:
-      "border-[#E7E4DD] text-text-3 hover:bg-danger/10 dark:border-border dark:hover:bg-danger/10",
+      "border-border text-text-3 hover:[background:var(--streak-light)] hover:border-streak hover:text-streak",
   },
 } as const;
 
@@ -107,7 +107,9 @@ export function CourseCatalogClient({ courses }: CourseCatalogClientProps) {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="font-display text-3xl font-bold">{t("catalog")}</h1>
+        <h1 className="font-display text-3xl font-black tracking-[-0.5px]">
+          {t("catalog")}
+        </h1>
         <p className="mt-1 text-text-3">{t("catalogSubtitle")}</p>
       </div>
 
@@ -124,7 +126,7 @@ export function CourseCatalogClient({ courses }: CourseCatalogClientProps) {
             placeholder={tCommon("search") + "..."}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-10 w-full rounded-md border border-border bg-bg pl-10 pr-4 text-sm ring-offset-bg placeholder:text-text-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-10 w-full rounded-md border-[2.5px] border-border bg-card pl-10 pr-4 font-body text-sm text-text outline-none transition-all duration-150 placeholder:text-text-3 focus:border-primary focus:shadow-[0_0_0_3px_var(--primary-dim)]"
             aria-label={tCommon("search")}
           />
           {searchQuery && (
@@ -169,8 +171,8 @@ export function CourseCatalogClient({ courses }: CourseCatalogClientProps) {
 
       {/* Course Grid */}
       {filteredCourses.length > 0 ? (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {filteredCourses.map((course) => (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {filteredCourses.map((course, idx) => (
             <CourseCard
               key={course._id}
               slug={course.slug}
@@ -178,10 +180,14 @@ export function CourseCatalogClient({ courses }: CourseCatalogClientProps) {
               description={course.description}
               difficulty={course.difficulty}
               duration={course.duration}
+              lessonCount={course.modules?.reduce(
+                (sum, m) => sum + (m.lessons?.length ?? 0),
+                0
+              )}
               xpReward={course.xpReward}
-              thumbnail={course.thumbnail || undefined}
               instructorName={course.instructor?.name}
               status={courseStatuses.get(course._id)}
+              courseNum={idx + 1}
             />
           ))}
         </div>

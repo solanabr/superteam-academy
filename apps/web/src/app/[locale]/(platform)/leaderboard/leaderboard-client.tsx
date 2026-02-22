@@ -7,8 +7,6 @@ import { Trophy } from "@phosphor-icons/react";
 import type { LeaderboardEntry } from "@superteam-lms/types";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { getLevelTier } from "@/components/gamification/level-badge";
 import { cn } from "@/lib/utils";
 
 type Timeframe = "weekly" | "monthly" | "alltime";
@@ -17,6 +15,17 @@ interface LeaderboardClientProps {
   initialEntries: LeaderboardEntry[];
   initialTimeframe: Timeframe;
   currentUserId: string;
+}
+
+const RANK_MEDALS: Record<number, string> = {
+  1: "\u{1F947}",
+  2: "\u{1F948}",
+  3: "\u{1F949}",
+};
+
+function truncateWallet(address: string): string {
+  if (address.length <= 10) return address;
+  return `${address.slice(0, 4)}...${address.slice(-4)}`;
 }
 
 export function LeaderboardClient({
@@ -61,21 +70,29 @@ export function LeaderboardClient({
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="font-display text-3xl font-bold">{t("leaderboard")}</h1>
+        <h1 className="font-display text-3xl font-black tracking-[-0.5px]">
+          {t("leaderboard")}
+        </h1>
         <p className="mt-1 text-text-3">
           {t("rank")} — {t(timeframe === "alltime" ? "allTime" : timeframe)}
         </p>
       </div>
 
       <Tabs value={timeframe} onValueChange={handleTimeframeChange}>
-        <TabsList>
-          <TabsTrigger value="weekly" className="font-display font-bold">
+        <TabsList className="lb-tabs">
+          <TabsTrigger value="weekly" className="lb-tab font-display font-bold">
             {t("weekly")}
           </TabsTrigger>
-          <TabsTrigger value="monthly" className="font-display font-bold">
+          <TabsTrigger
+            value="monthly"
+            className="lb-tab font-display font-bold"
+          >
             {t("monthly")}
           </TabsTrigger>
-          <TabsTrigger value="alltime" className="font-display font-bold">
+          <TabsTrigger
+            value="alltime"
+            className="lb-tab font-display font-bold"
+          >
             {t("allTime")}
           </TabsTrigger>
         </TabsList>
@@ -99,72 +116,69 @@ export function LeaderboardClient({
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-2">
+            <div>
               {entries.map((entry) => {
-                const isFirst = entry.rank === 1;
+                const isGold = entry.rank === 1;
                 const isCurrentUser = entry.userId === currentUserId;
-                const tier = getLevelTier(entry.level);
+                const medal = RANK_MEDALS[entry.rank];
+                const initials = entry.username.slice(0, 2).toUpperCase();
 
                 return (
                   <Link
                     key={entry.userId}
                     href={`/${locale}/profile/${encodeURIComponent(entry.username)}`}
-                    className="group block"
+                    className="block no-underline"
                   >
                     <div
                       className={cn(
-                        "flex items-center gap-3.5 rounded-[14px] border-[2.5px] px-4 py-3.5 shadow-card transition-all duration-150 hover:-translate-y-px hover:shadow-card-hover",
-                        isCurrentUser
-                          ? "border-primary bg-primary-bg"
-                          : isFirst
-                            ? "border-accent bg-accent-bg"
-                            : "border-border bg-card"
+                        "lb-row",
+                        isGold && "gold",
+                        isCurrentUser && "me"
                       )}
                     >
                       {/* Rank */}
                       <span
-                        className={cn(
-                          "w-7 font-display text-lg font-black",
-                          isFirst
-                            ? "text-accent-dark dark:text-accent"
-                            : "text-text-3"
-                        )}
+                        className="lb-rank"
+                        aria-label={`Rank ${entry.rank}`}
                       >
-                        {entry.rank}
+                        {medal ?? entry.rank}
                       </span>
 
-                      {/* Avatar */}
-                      <Avatar className="h-10 w-10">
-                        {entry.avatarUrl && (
-                          <AvatarImage
-                            src={entry.avatarUrl}
-                            alt={entry.username}
-                          />
-                        )}
-                        <AvatarFallback className="font-display text-sm font-bold">
-                          {entry.username.slice(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-
-                      {/* Info */}
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate font-display text-[15px] font-bold transition-colors group-hover:text-primary">
-                          {entry.username}
-                          {isCurrentUser && (
-                            <span className="ml-1 text-[11px] font-extrabold text-primary">
-                              ({t("yourRank")})
-                            </span>
-                          )}
-                        </p>
-                        <p className="font-body text-xs text-text-3">
-                          {t("level")} {entry.level} · {t(`tier_${tier}`)}
-                        </p>
+                      {/* Avatar — gradient circle with initials */}
+                      <div
+                        className="lb-av"
+                        style={{
+                          background: entry.avatarUrl
+                            ? `url(${entry.avatarUrl}) center/cover no-repeat`
+                            : "linear-gradient(135deg, var(--primary), var(--xp))",
+                        }}
+                        aria-hidden="true"
+                      >
+                        {!entry.avatarUrl && <span>{initials}</span>}
                       </div>
 
-                      {/* XP */}
-                      <span className="font-display text-base font-black text-accent-dark dark:text-accent">
-                        {entry.totalXp.toLocaleString()} {t("xp")}
-                      </span>
+                      {/* Info — name + wallet address */}
+                      <div className="lb-info">
+                        <div className="lb-name">
+                          <span className="truncate">{entry.username}</span>
+                          {isCurrentUser && (
+                            <span className="lb-me-tag">You</span>
+                          )}
+                        </div>
+                        {entry.walletAddress && (
+                          <div className="lb-wallet">
+                            {truncateWallet(entry.walletAddress)}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Right side — v9 level pill + XP */}
+                      <div className="lb-right">
+                        <span className="lb-level-badge">Lv.{entry.level}</span>
+                        <span className="lb-xp">
+                          {entry.totalXp.toLocaleString()} XP
+                        </span>
+                      </div>
                     </div>
                   </Link>
                 );
