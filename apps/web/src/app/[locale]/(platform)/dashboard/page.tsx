@@ -882,7 +882,7 @@ export default function DashboardPage() {
             ))}
           </div>
         ) : (
-          <Card className="dash-card">
+          <Card className="shadow-[var(--shadow)] hover:-translate-y-[5px] hover:shadow-[0_12px_40px_rgba(0,0,0,0.25)]">
             <CardContent className="flex flex-col items-center justify-center py-8">
               <p className="text-sm text-text-3">{t("noCourses")}</p>
             </CardContent>

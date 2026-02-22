@@ -256,7 +256,10 @@ export function Header() {
 
           {/* Mobile: logo + hamburger */}
           <div className="flex flex-1 items-center justify-between gap-[12px] md:hidden">
-            <Link href={`/${locale}/dashboard`} className="flex items-center">
+            <Link
+              href={user ? `/${locale}/dashboard` : `/${locale}`}
+              className="flex items-center"
+            >
               <Image
                 src="/logo-light.png"
                 alt="Solarium"

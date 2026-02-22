@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
   /* Base — matches .btn in design-system.html */
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap font-body font-bold border-none cursor-pointer no-underline transition-all duration-[120ms] ease rounded-md text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:pointer-events-none disabled:opacity-50 active:translate-y-[2px]",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap font-display font-extrabold border-none cursor-pointer no-underline transition-all duration-[120ms] ease rounded-md text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:pointer-events-none disabled:opacity-50 active:translate-y-[2px]",
   {
     variants: {
       variant: {

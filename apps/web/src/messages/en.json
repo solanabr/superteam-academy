@@ -171,6 +171,7 @@
     "bestStreak": "Best",
     "less": "Less",
     "more": "More",
+    "todayLabel": "Today",
     "dailyQuests": "Daily Quests",
     "resetsIn": "Resets in {hours}h",
     "allQuestsBonus": "Complete all for bonus"
@@ -245,7 +246,8 @@
     "pageTitle": "My Certificates",
     "pageSubtitle": "Your earned NFT certificates on Solana",
     "linkWalletToMint": "Link a wallet in Settings to mint your certificate.",
-    "insertFailed": "Failed to record certificate. Please try again."
+    "insertFailed": "Failed to record certificate. Please try again.",
+    "onChain": "On-chain"
   },
   "profile": {
     "editProfile": "Edit Profile",
@@ -504,6 +506,19 @@
     "credentialAlreadyIssued": "A certificate has already been issued for this enrollment.",
     "achievementNotActive": "This achievement is not currently active.",
     "achievementSupplyExhausted": "This achievement has reached its maximum supply.",
+    "courseIdEmpty": "Course ID cannot be empty.",
+    "courseIdTooLong": "Course ID exceeds maximum length.",
+    "invalidLessonCount": "Lesson count must be at least 1.",
+    "invalidDifficulty": "Difficulty must be beginner, intermediate, or advanced.",
+    "credentialAssetMismatch": "Credential asset does not match enrollment record.",
+    "minterNotActive": "Minter role is not active.",
+    "minterAmountExceeded": "Amount exceeds minter limit.",
+    "labelTooLong": "Label exceeds maximum length.",
+    "achievementIdTooLong": "Achievement ID exceeds maximum length.",
+    "achievementNameTooLong": "Achievement name exceeds maximum length.",
+    "achievementUriTooLong": "Achievement URI exceeds maximum length.",
+    "invalidAmount": "Amount must be greater than zero.",
+    "invalidXpReward": "XP reward must be greater than zero.",
     "unknown": "Transaction failed. Please try again."
   }
 }

@@ -25,6 +25,7 @@
     --card-hover: #1c2333;
     --card-glass: rgba(22, 27, 39, 0.95);
     --card-glass-blur: rgba(22, 27, 39, 0.7);
+    --card-alt: rgba(255, 255, 255, 0.02);
     --input: #1c2333;
 
     /* ── Borders ── */
@@ -181,6 +182,7 @@
     --card-hover: #f7f5f0;
     --card-glass: rgba(255, 255, 255, 0.95);
     --card-glass-blur: rgba(255, 255, 255, 0.7);
+    --card-alt: rgba(0, 0, 0, 0.02);
     --input: #f3f1ec;
 
     /* ── Borders ── */
@@ -328,6 +330,7 @@
     --card-hover: #1c2333;
     --card-glass: rgba(22, 27, 39, 0.95);
     --card-glass-blur: rgba(22, 27, 39, 0.7);
+    --card-alt: rgba(255, 255, 255, 0.02);
     --input: #1c2333;
 
     --border: rgba(255, 255, 255, 0.07);
@@ -499,151 +502,6 @@
     border-color: var(--border-hover);
   }
 
-  /* ── V9 Progress Bars — 14px main track with shimmer + inner 3D highlight ── */
-  .prog-wrap {
-    margin-bottom: 20px;
-  }
-  .prog-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 7px;
-  }
-  .prog-label {
-    font-family: var(--font-display, var(--font-d));
-    font-weight: 700;
-    font-size: 14px;
-  }
-  .prog-val {
-    font-family: var(--font-mono, var(--font-m));
-    font-size: 12px;
-    color: var(--primary);
-  }
-  .prog-track {
-    width: 100%;
-    height: 14px;
-    background: var(--input);
-    border-radius: var(--r-full);
-    border: 1px solid var(--border);
-    overflow: hidden;
-  }
-  .prog-fill {
-    height: 100%;
-    border-radius: var(--r-full);
-    position: relative;
-    transition: width 0.7s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-  /* Shimmer overlay */
-  .prog-fill::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(255, 255, 255, 0.22),
-      transparent
-    );
-    animation: shimmer 2.2s infinite;
-  }
-  /* Inner 3D highlight */
-  .prog-fill::before {
-    content: "";
-    position: absolute;
-    top: 2px;
-    left: 8px;
-    right: 8px;
-    height: 3px;
-    background: rgba(255, 255, 255, 0.22);
-    border-radius: var(--r-full);
-  }
-  /* Fill gradient variants */
-  .pf-primary {
-    background: linear-gradient(90deg, var(--primary-dark), var(--primary));
-  }
-  .pf-xp {
-    background: linear-gradient(90deg, var(--xp-dark), var(--xp));
-  }
-  .pf-success {
-    background: linear-gradient(90deg, #16803d, var(--success));
-  }
-
-  /* ── V9 Thin Progress Bar — 4px (sidebar/dashboard) ── */
-  .prog-thin-track {
-    width: 100%;
-    height: 4px;
-    background: var(--input);
-    border-radius: var(--r-full);
-    overflow: hidden;
-  }
-  .prog-thin-fill {
-    height: 100%;
-    border-radius: var(--r-full);
-    position: relative;
-    transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-  .prog-thin-fill::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(255, 255, 255, 0.28),
-      transparent
-    );
-    animation: shimmer 2.2s infinite;
-  }
-
-  /* ── Legacy compat aliases — map old class names to v9 ── */
-  .progress-fat {
-    width: 100%;
-    height: 14px;
-    background: var(--input);
-    border-radius: var(--r-full);
-    border: 1px solid var(--border);
-    overflow: hidden;
-  }
-  .progress-fat-fill {
-    height: 100%;
-    border-radius: var(--r-full);
-    position: relative;
-    transition: width 0.7s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-  .progress-fat-fill::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(255, 255, 255, 0.22),
-      transparent
-    );
-    animation: shimmer 2.2s infinite;
-  }
-  .progress-fat-fill::before {
-    content: "";
-    position: absolute;
-    top: 2px;
-    left: 8px;
-    right: 8px;
-    height: 3px;
-    background: rgba(255, 255, 255, 0.22);
-    border-radius: var(--r-full);
-  }
-
-  /* ── Progress fill variants (legacy + v9) ── */
-  .progress-fill-teal {
-    background: linear-gradient(90deg, var(--primary-dark), var(--primary));
-  }
-  .progress-fill-amber {
-    background: linear-gradient(90deg, var(--xp-dark), var(--xp));
-  }
-  .progress-fill-green {
-    background: linear-gradient(90deg, #16803d, var(--success));
-  }
-
   /* ── Card banner difficulty gradients ── */
   .banner-beginner {
     background: linear-gradient(
@@ -750,7 +608,7 @@
       #fca5a5 100%
     );
     border-color: #ef4444;
-    color: #1a0000;
+    color: #fff;
     box-shadow: 0 0 18px rgba(239, 68, 68, 0.45);
     animation: lv-canopy-pulse 3s ease-in-out infinite;
   }
@@ -2947,17 +2805,6 @@
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-/* ── Dashboard Card Override — match design-system.html .course-card ── */
-.dash-card {
-  border-width: 1px !important;
-  border-radius: var(--r-lg) !important;
-  box-shadow: var(--shadow) !important;
-}
-.dash-card:hover {
-  transform: translateY(-5px) !important;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25) !important;
 }
 
 /* ── Current Course Card — compact "in-progress" card w/ accent bar ── */
