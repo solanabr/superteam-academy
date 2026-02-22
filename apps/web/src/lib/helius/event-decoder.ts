@@ -67,23 +67,28 @@ export function decodeEventsFromTransaction(tx: HeliusRawTransaction): {
   return { events, signature };
 }
 
+/** Convert snake_case to camelCase (e.g. lesson_index → lessonIndex) */
+function snakeToCamel(s: string): string {
+  return s.replace(/_([a-z])/g, (_, c: string) => c.toUpperCase());
+}
+
 /**
- * Normalize Anchor event data from BN/PublicKey to plain strings/numbers.
- * BorshEventCoder returns BN for integers and PublicKey for pubkeys.
+ * Normalize Anchor event data:
+ * - BN → number, PublicKey → base58 string
+ * - snake_case keys → camelCase (Anchor 0.31+ IDL preserves snake_case)
  */
 export function normalizeEventData(
   data: Record<string, unknown>
 ): Record<string, unknown> {
   const normalized: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(data)) {
+    const camelKey = snakeToCamel(key);
     if (value && typeof value === "object" && "toBase58" in value) {
-      // PublicKey → string
-      normalized[key] = (value as { toBase58(): string }).toBase58();
+      normalized[camelKey] = (value as { toBase58(): string }).toBase58();
     } else if (value && typeof value === "object" && "toNumber" in value) {
-      // BN → number
-      normalized[key] = (value as { toNumber(): number }).toNumber();
+      normalized[camelKey] = (value as { toNumber(): number }).toNumber();
     } else {
-      normalized[key] = value;
+      normalized[camelKey] = value;
     }
   }
   return normalized;
