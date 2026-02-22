@@ -450,15 +450,15 @@ export function AccountTab({
   return (
     <Card>
       <CardContent className="space-y-6 p-6">
-        <h3 className="font-display font-semibold">{t("connectedAccounts")}</h3>
+        <h3 className="font-display font-black">{t("connectedAccounts")}</h3>
 
         {/* Feedback banner */}
         {linkMessage && (
           <div
             className={`rounded-lg border px-4 py-3 text-sm ${
               linkMessage.type === "success"
-                ? "border-success/30 bg-success-light text-success-dark"
-                : "border-danger/30 bg-danger/10 text-danger"
+                ? "bg-success-light text-success-dark [border-color:var(--success-border)]"
+                : "text-danger [background:var(--danger-light)] [border-color:var(--danger-border)]"
             }`}
           >
             {linkMessage.text}
@@ -466,7 +466,7 @@ export function AccountTab({
         )}
 
         {/* Wallet row */}
-        <div className="flex items-center justify-between rounded-lg border border-border p-4">
+        <div className="flex items-center justify-between rounded-lg border-[2.5px] border-border p-4">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-bg">
               <SolanaLogo className="h-5 w-5" />
@@ -501,7 +501,7 @@ export function AccountTab({
         </div>
 
         {/* Google row */}
-        <div className="flex items-center justify-between rounded-lg border border-border p-4">
+        <div className="flex items-center justify-between rounded-lg border-[2.5px] border-border p-4">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-subtle">
               <GoogleLogo className="h-5 w-5" />
@@ -539,7 +539,7 @@ export function AccountTab({
         </div>
 
         {/* GitHub row */}
-        <div className="flex items-center justify-between rounded-lg border border-border p-4">
+        <div className="flex items-center justify-between rounded-lg border-[2.5px] border-border p-4">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-subtle">
               <GithubLogo className="h-5 w-5" weight="fill" />

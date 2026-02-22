@@ -68,8 +68,8 @@ export function LandingPageClient() {
         <section className="relative overflow-hidden">
           {/* Background atmosphere */}
           <div className="absolute inset-0 -z-10" aria-hidden="true">
-            <div className="bg-primary/8 absolute -right-40 -top-40 h-[700px] w-[700px] rounded-full blur-[140px]" />
-            <div className="bg-accent/6 absolute -bottom-20 -left-20 h-[500px] w-[500px] rounded-full blur-[120px]" />
+            <div className="absolute -right-40 -top-40 h-[700px] w-[700px] rounded-full blur-[140px] [background:var(--primary-dim)]" />
+            <div className="absolute -bottom-20 -left-20 h-[500px] w-[500px] rounded-full blur-[120px] [background:var(--accent-bg)]" />
             {/* Dot grid texture */}
             <div
               className="absolute inset-0 opacity-[0.03]"
@@ -143,10 +143,10 @@ export function LandingPageClient() {
         </section>
 
         {/* ── Features ── */}
-        <section className="bg-subtle/50 border-y-[2.5px] border-border">
+        <section className="border-y-[2.5px] border-border [background:var(--subtle)]">
           <div className="container px-4 py-20 md:py-28">
             <div className="mb-14 flex items-end justify-between">
-              <h2 className="font-display text-3xl font-bold md:text-4xl">
+              <h2 className="font-display text-3xl font-black tracking-[-0.5px] md:text-4xl">
                 {t("featuresTitle")}
               </h2>
               <div className="hidden text-sm font-medium text-text-3 md:block">
@@ -194,12 +194,12 @@ export function LandingPageClient() {
           />
           {/* Glow orb */}
           <div
-            className="bg-primary/10 absolute -right-32 -top-32 h-[400px] w-[400px] rounded-full blur-[100px]"
+            className="absolute -right-32 -top-32 h-[400px] w-[400px] rounded-full blur-[100px] [background:var(--primary-bg)]"
             aria-hidden="true"
           />
 
           <div className="container relative px-4 py-20 text-center md:py-28">
-            <h2 className="mb-3 font-display text-3xl font-bold text-white md:text-5xl">
+            <h2 className="mb-3 font-display text-3xl font-black tracking-[-0.5px] text-white md:text-5xl">
               {t("ctaTitle")}
             </h2>
             <p className="mx-auto mb-8 max-w-md text-lg text-white/60">

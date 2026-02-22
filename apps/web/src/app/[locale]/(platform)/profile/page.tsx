@@ -275,7 +275,6 @@ function useProfileData(): ProfileData {
 
 export default function ProfilePage() {
   const t = useTranslations("profile");
-  const tGamification = useTranslations("gamification");
   const tCerts = useTranslations("certificates");
   const data = useProfileData();
 
@@ -313,11 +312,11 @@ export default function ProfilePage() {
 
         <div className="flex-1 space-y-2">
           <div className="flex items-center gap-3">
-            <h1 className="font-display text-2xl font-bold">
+            <h1 className="font-display text-2xl font-black tracking-[-0.5px]">
               {data.user.username}
             </h1>
             <LevelBadge level={data.stats.level} size="sm" />
-            <span className="bg-success/10 rounded-full px-2.5 py-0.5 text-xs font-medium text-success">
+            <span className="rounded-full px-2.5 py-0.5 text-xs font-medium text-success [background:var(--success-bg)]">
               {data.user.isPublic ? t("publicProfile") : t("privateProfile")}
             </span>
           </div>
@@ -367,18 +366,15 @@ export default function ProfilePage() {
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <Card>
           <CardContent className="p-4 text-center">
-            <p className="font-display text-2xl font-black text-primary">
+            <p className="font-display text-2xl font-black text-xp">
               {data.stats.totalXp.toLocaleString()}
             </p>
             <p className="mt-1 text-xs text-text-3">{t("totalXp")}</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4 text-center">
-            <p className="font-display text-2xl font-black">
-              {data.stats.level}
-            </p>
-            <p className="mt-1 text-xs text-text-3">{tGamification("level")}</p>
+          <CardContent className="flex flex-col items-center p-4 text-center">
+            <LevelBadge level={data.stats.level} size="md" />
           </CardContent>
         </Card>
         <Card>
@@ -403,7 +399,7 @@ export default function ProfilePage() {
 
       {/* Skills Radar */}
       <div className="space-y-4">
-        <h2 className="font-display text-xl font-bold">{t("skills")}</h2>
+        <h2 className="font-display text-xl font-extrabold">{t("skills")}</h2>
         <Card>
           <CardContent className="flex items-center justify-center p-6">
             <SkillRadar skills={data.skills} size={280} />
@@ -419,7 +415,9 @@ export default function ProfilePage() {
 
       {/* Certificates */}
       <div className="space-y-4">
-        <h2 className="font-display text-xl font-bold">{tCerts("title")}</h2>
+        <h2 className="font-display text-xl font-extrabold">
+          {tCerts("title")}
+        </h2>
         <CertificateGrid
           certificates={data.certificates}
           recipientName={data.user.username}
