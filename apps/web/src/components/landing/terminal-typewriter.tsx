@@ -312,9 +312,9 @@ export function TerminalTypewriter() {
     <div className="min-h-[400px] rounded-lg border-[2.5px] border-border bg-card shadow-card">
       {/* Terminal title bar */}
       <div className="flex items-center gap-2 border-b-[2.5px] border-border px-4 py-3">
-        <div className="border-danger/40 bg-danger/20 h-3 w-3 rounded-full border-[2px]" />
-        <div className="border-accent/40 bg-accent/20 h-3 w-3 rounded-full border-[2px]" />
-        <div className="border-success/40 bg-success/20 h-3 w-3 rounded-full border-[2px]" />
+        <div className="h-3 w-3 rounded-full border-[2px] [background:var(--danger-bg)] [border-color:var(--danger-border-s)]" />
+        <div className="h-3 w-3 rounded-full border-[2px] [background:var(--accent-bg)] [border-color:var(--accent-border)]" />
+        <div className="h-3 w-3 rounded-full border-[2px] [background:var(--success-bg)] [border-color:var(--success-border-s)]" />
         <span className="ml-2 font-mono text-xs text-text-3">lib.rs</span>
       </div>
 
@@ -323,12 +323,12 @@ export function TerminalTypewriter() {
         {visibleLines.map(
           ({ line, lineIndex, charsForLine, isCurrentLine }) => (
             <div key={line.lineNum} className="text-text-3">
-              <span className="text-text-3/50">{line.lineNum}</span>
+              <span className="text-text-3 opacity-50">{line.lineNum}</span>
               {"  "}
               {renderLine(line, charsForLine, lineIndex)}
               {isCurrentLine && !isComplete && (
                 <span className="relative ml-px inline-block">
-                  <span className="bg-primary/80 inline-block h-[16px] w-[8px] translate-y-[3px] animate-pulse" />
+                  <span className="inline-block h-[16px] w-[8px] translate-y-[3px] animate-pulse bg-primary opacity-80" />
                 </span>
               )}
             </div>
@@ -338,9 +338,9 @@ export function TerminalTypewriter() {
         {/* Cursor on next line after all code is typed */}
         {isComplete && (
           <div className="text-text-3">
-            <span className="text-text-3/50">15</span>
+            <span className="text-text-3 opacity-50">15</span>
             {"  "}
-            <span className="bg-primary/70 inline-block h-[18px] w-[9px] animate-pulse" />
+            <span className="inline-block h-[18px] w-[9px] animate-pulse bg-primary opacity-70" />
           </div>
         )}
       </div>

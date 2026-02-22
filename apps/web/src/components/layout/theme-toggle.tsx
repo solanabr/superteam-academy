@@ -1,29 +1,26 @@
 "use client";
 
-import { SunDim, Moon } from "@phosphor-icons/react";
 import { useTheme } from "next-themes";
 import { useTranslations } from "next-intl";
+import { Sun, Moon } from "@phosphor-icons/react";
 
 export function ThemeToggle() {
-  const { theme, setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
   const tA11y = useTranslations("a11y");
+
+  const isDark = resolvedTheme === "dark";
 
   return (
     <button
-      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-      className="relative inline-flex h-9 w-9 items-center justify-center rounded-md border-[2.5px] border-border bg-card text-text-2 transition-colors hover:bg-subtle hover:text-text"
+      onClick={() => setTheme(isDark ? "light" : "dark")}
+      className="inline-flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-md border-[2.5px] border-border bg-card text-text-2 transition-colors hover:bg-subtle hover:text-text"
       aria-label={tA11y("toggleTheme")}
     >
-      <SunDim
-        size={18}
-        weight="bold"
-        className="rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0"
-      />
-      <Moon
-        size={18}
-        weight="bold"
-        className="absolute rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100"
-      />
+      {isDark ? (
+        <Sun size={16} weight="bold" />
+      ) : (
+        <Moon size={16} weight="bold" />
+      )}
     </button>
   );
 }
