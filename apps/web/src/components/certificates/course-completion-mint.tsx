@@ -78,8 +78,7 @@ export function CourseCompletionMint({
 
         const recipientName =
           profile.username ??
-          `${profile.wallet_address.slice(0, 4)}...${profile.wallet_address.slice(-4)}` ??
-          "Solana Developer";
+          `${profile.wallet_address.slice(0, 4)}...${profile.wallet_address.slice(-4)}`;
 
         // Course is complete — credential will be minted by webhook chain.
         // Show "minting" state if trackCollection exists (webhook is processing).
