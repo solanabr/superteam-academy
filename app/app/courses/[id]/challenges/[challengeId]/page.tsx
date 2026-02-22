@@ -1,7 +1,11 @@
-import { Suspense } from "react";
+import { Suspense, lazy } from "react";
 import type { Metadata } from "next";
 
-import { ChallengeContent } from "./challenge-content";
+const ChallengeContent = lazy(() =>
+	import("@/app/[locale]/courses/[id]/challenges/[challengeId]/challenge-content").then(
+		(mod) => ({ default: mod.ChallengeContent })
+	)
+);
 
 interface ChallengePageProps {
 	params: Promise<{

@@ -133,7 +133,7 @@ async function CourseDetailContent({
 							</TabsContent>
 
 							<TabsContent value="curriculum" className="space-y-6">
-								<CourseModules modules={course.modules} />
+								<CourseModules courseId={courseId} modules={course.modules} />
 							</TabsContent>
 
 							<TabsContent value="reviews" className="space-y-6">

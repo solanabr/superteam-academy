@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import { ArrowLeft, Maximize, Settings, CheckCircle, Clock, BookOpen } from "lucide-react";
+import { ArrowLeft, Maximize, Settings, CheckCircle, Clock, BookOpen, Code } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -77,6 +77,11 @@ async function LessonContentWrapper({
 	const lesson = await getLesson(courseId, lessonId);
 	const progress = await getLessonProgress(courseId, lessonId);
 	const t = await getTranslations("learn");
+
+	// Determine if this lesson has an associated coding challenge
+	const allLessons = course.modules.flatMap((m) => m.lessons);
+	const currentLessonMeta = allLessons.find((l) => l.id === lessonId);
+	const isInteractive = currentLessonMeta?.type === "interactive";
 
 	return (
 		<div className="flex flex-col lg:flex-row min-h-screen">
@@ -196,6 +201,18 @@ async function LessonContentWrapper({
 							<CardTitle className="text-base">{t("quickActions")}</CardTitle>
 						</CardHeader>
 						<CardContent className="space-y-2">
+							{isInteractive && (
+								<Button
+									variant="default"
+									className="w-full justify-start gap-2"
+									asChild={true}
+								>
+									<a href={`/courses/${courseId}/challenges/${lessonId}`}>
+										<Code className="h-4 w-4" />
+										{t("tryChallenge")}
+									</a>
+								</Button>
+							)}
 							<Button variant="outline" className="w-full justify-start gap-2">
 								<BookOpen className="h-4 w-4" />
 								{t("takeNotes")}
@@ -293,6 +310,7 @@ async function getCourse(id: string) {
 			lessons: module.lessonsList.map((lesson) => ({
 				id: lesson.id,
 				title: lesson.title,
+				type: lesson.type,
 				completed: lesson.completed,
 			})),
 		})),

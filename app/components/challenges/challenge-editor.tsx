@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Editor from "@monaco-editor/react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Play, RotateCcw, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useTranslations } from "next-intl";
+import { createMonacoEditor, type MonacoEditorInstance } from "@superteam/editor";
 
 interface Challenge {
 	id: string;
@@ -35,21 +35,60 @@ export function ChallengeEditor({
 	onSubmit,
 }: ChallengeEditorProps) {
 	const t = useTranslations("challenges");
+	const containerRef = useRef<HTMLDivElement>(null);
+	const editorRef = useRef<MonacoEditorInstance | null>(null);
 	const [code, setCode] = useState(initialCode);
 	const [isRunning, setIsRunning] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
+	// Mount the editor from @superteam/editor
 	useEffect(() => {
-		if (code !== initialCode) {
-			setCode(initialCode);
-		}
-	}, [initialCode, code]);
+		const container = containerRef.current;
+		if (!container) return;
 
-	const handleCodeChange = (value: string | undefined) => {
-		const newCode = value || "";
-		setCode(newCode);
-		onCodeChange(newCode);
-	};
+		let disposed = false;
+
+		createMonacoEditor(container, initialCode, {
+			language: challenge.language,
+			theme: "superteam-dark",
+			fontSize: 14,
+			tabSize: 2,
+			wordWrap: "on",
+			minimap: false,
+			lineNumbers: "on",
+			folding: true,
+			bracketMatching: true,
+			autoClosingBrackets: true,
+			autoClosingQuotes: true,
+		}).then((instance) => {
+			if (disposed) {
+				instance.dispose();
+				return;
+			}
+			editorRef.current = instance;
+
+			instance.onChange((value) => {
+				setCode(value);
+				onCodeChange(value);
+			});
+		});
+
+		return () => {
+			disposed = true;
+			editorRef.current?.dispose();
+			editorRef.current = null;
+		};
+	}, [challenge.language]); // Only re-mount when language changes
+
+	// Sync external code resets (e.g. from the Reset button)
+	const syncCode = useCallback(
+		(newCode: string) => {
+			setCode(newCode);
+			editorRef.current?.setValue(newCode);
+			onCodeChange(newCode);
+		},
+		[onCodeChange]
+	);
 
 	const handleRunTests = async () => {
 		setIsRunning(true);
@@ -70,8 +109,7 @@ export function ChallengeEditor({
 	};
 
 	const handleReset = () => {
-		setCode(challenge.starterCode);
-		onCodeChange(challenge.starterCode);
+		syncCode(challenge.starterCode);
 	};
 
 	return (
@@ -121,41 +159,7 @@ export function ChallengeEditor({
 				</div>
 			</div>
 
-			<div className="flex-1 relative">
-				<Editor
-					height="100%"
-					language={getMonacoLanguage(challenge.language)}
-					value={code}
-					onChange={handleCodeChange}
-					theme="vs-dark"
-					options={{
-						fontSize: 14,
-						minimap: { enabled: false },
-						scrollBeyondLastLine: false,
-						automaticLayout: true,
-						tabSize: 2,
-						insertSpaces: true,
-						wordWrap: "on",
-						lineNumbers: "on",
-						glyphMargin: true,
-						folding: true,
-						matchBrackets: "always",
-						autoClosingBrackets: "always",
-						autoClosingQuotes: "always",
-						suggestOnTriggerCharacters: true,
-						quickSuggestions: true,
-						parameterHints: {
-							enabled: true,
-						},
-						hover: {
-							enabled: true,
-						},
-					}}
-					onMount={(_editor, _monaco) => {
-						// Additional language configurations can be added here
-					}}
-				/>
-			</div>
+			<div className="flex-1 relative" ref={containerRef} />
 
 			<div className="border-t px-4 py-2 flex items-center justify-between text-xs text-muted-foreground">
 				<div className="flex items-center gap-4">
@@ -180,32 +184,4 @@ export function ChallengeEditor({
 			</div>
 		</div>
 	);
-}
-
-function getMonacoLanguage(language: string): string {
-	switch (language.toLowerCase()) {
-		case "rust":
-			return "rust";
-		case "javascript":
-		case "js":
-			return "javascript";
-		case "typescript":
-		case "ts":
-			return "typescript";
-		case "python":
-			return "python";
-		case "java":
-			return "java";
-		case "cpp":
-		case "c++":
-			return "cpp";
-		case "c":
-			return "c";
-		case "go":
-			return "go";
-		case "php":
-			return "php";
-		default:
-			return "plaintext";
-	}
 }

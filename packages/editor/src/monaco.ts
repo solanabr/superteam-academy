@@ -174,10 +174,7 @@ export class MonacoEditorAdapter {
 				});
 			},
 			onSave: (callback) => {
-				editor.addCommand(
-					this.monaco?.KeyMod.CtrlCmd | this.monaco?.KeyCode.KeyS,
-					callback
-				);
+				editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, callback);
 				return {
 					dispose: () => {
 						/* commands cannot be individually removed */

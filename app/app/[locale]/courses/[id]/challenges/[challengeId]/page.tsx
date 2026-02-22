@@ -2,6 +2,8 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 
 import { ChallengeContent } from "./challenge-content";
+import { getCourseById } from "@/lib/cms";
+import { getChallengeDefinition } from "@/lib/challenge-data";
 
 interface ChallengePageProps {
 	params: Promise<{
@@ -11,10 +13,12 @@ interface ChallengePageProps {
 }
 
 export async function generateMetadata({ params }: ChallengePageProps): Promise<Metadata> {
-	const { challengeId } = await params;
+	const { id, challengeId } = await params;
+	const course = await getCourseById(id);
+	const challenge = getChallengeDefinition(challengeId);
 	return {
-		title: `Challenge | ${challengeId} | Superteam Academy`,
-		description: "Complete coding challenges to earn XP and advance your skills",
+		title: `${challenge.title} | ${course?.title ?? id} | Superteam Academy`,
+		description: challenge.description,
 	};
 }
 

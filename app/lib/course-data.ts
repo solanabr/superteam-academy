@@ -1,4 +1,4 @@
-import { FRONTEND_SEED_COURSES } from "@superteam/cms";
+import { FRONTEND_SEED_COURSES, ONCHAIN_COURSE_STUBS } from "@superteam/cms";
 import type { Course } from "@superteam/cms";
 import { resolveCourseImageUrl } from "@/lib/cms";
 
@@ -80,6 +80,7 @@ export type CourseDetailView = {
 			completed: boolean;
 		}>;
 	}>;
+
 	reviews: Array<{
 		id: string;
 		user: { name: string; avatar: string };
@@ -142,9 +143,13 @@ export function mapCourseToDetail(
 				lessons: moduleLessons.length,
 				completed: false,
 				lessonsList: moduleLessons.map((lesson, lessonIndex) => {
-					const lessonType: "quiz" | "video" = lesson.title.toLowerCase().includes("quiz")
-						? "quiz"
-						: "video";
+					const stub = ONCHAIN_COURSE_STUBS.find((s) => s.courseId === id);
+					const stubLesson = stub?.lessons.find(
+						(sl) => sl.title.toLowerCase() === lesson.title.toLowerCase()
+					);
+					const lessonType: "video" | "interactive" | "quiz" | "reading" =
+						stubLesson?.kind ??
+						(lesson.title.toLowerCase().includes("quiz") ? "quiz" : "video");
 
 					return {
 						id:

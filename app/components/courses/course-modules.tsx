@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ChevronDown, Play, FileText, Code, CheckCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -7,6 +8,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Badge } from "@/components/ui/badge";
 
 interface CourseModulesProps {
+	courseId: string;
 	modules: Array<{
 		id: string;
 		title: string;
@@ -24,7 +26,7 @@ interface CourseModulesProps {
 	}>;
 }
 
-export function CourseModules({ modules }: CourseModulesProps) {
+export function CourseModules({ courseId, modules }: CourseModulesProps) {
 	const t = useTranslations("courses");
 
 	return (
@@ -41,7 +43,12 @@ export function CourseModules({ modules }: CourseModulesProps) {
 
 			<div className="space-y-3">
 				{modules.map((module, moduleIndex) => (
-					<ModuleCard key={module.id} module={module} moduleNumber={moduleIndex + 1} />
+					<ModuleCard
+						key={module.id}
+						courseId={courseId}
+						module={module}
+						moduleNumber={moduleIndex + 1}
+					/>
 				))}
 			</div>
 		</div>
@@ -49,9 +56,11 @@ export function CourseModules({ modules }: CourseModulesProps) {
 }
 
 function ModuleCard({
+	courseId,
 	module,
 	moduleNumber,
 }: {
+	courseId: string;
 	module: CourseModulesProps["modules"][0];
 	moduleNumber: number;
 }) {
@@ -169,15 +178,23 @@ function ModuleCard({
 										<Badge variant="outline" className="text-xs">
 											{lesson.type}
 										</Badge>
-										{lesson.completed ? (
-											<Button size="sm" variant="ghost" disabled={true}>
-												{t("modules.completed")}
-											</Button>
-										) : (
-											<Button size="sm" variant="ghost">
-												{t("modules.start")}
-											</Button>
-										)}
+										{(() => {
+											const href =
+												lesson.type === "interactive"
+													? `/courses/${courseId}/challenges/${lesson.id}`
+													: `/courses/${courseId}/learn?lesson=${lesson.id}`;
+											return lesson.completed ? (
+												<Button size="sm" variant="ghost" asChild={true}>
+													<Link href={href}>
+														{t("modules.completed")}
+													</Link>
+												</Button>
+											) : (
+												<Button size="sm" variant="ghost" asChild={true}>
+													<Link href={href}>{t("modules.start")}</Link>
+												</Button>
+											);
+										})()}
 									</div>
 								</div>
 							))}
