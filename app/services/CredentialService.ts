@@ -300,4 +300,10 @@ export class CredentialService extends BaseService {
 			isActive: asset.frozen || asset.ownership.frozen,
 		};
 	}
+
+	/** Get the wallet address of the credential owner */
+	async getCredentialOwner(credentialId: string): Promise<string | null> {
+		const asset = await this.fetchDasAssetById(credentialId);
+		return asset?.ownership.owner ?? null;
+	}
 }

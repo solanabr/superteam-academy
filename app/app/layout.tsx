@@ -29,6 +29,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 	return (
 		<html lang={locale} suppressHydrationWarning>
 			<head>
+				<link rel="icon" href="/favicon.ico" type="image/x-icon" />
 				<link rel="manifest" href="/manifest.json" />
 				<meta name="apple-mobile-web-app-capable" content="yes" />
 				<meta name="apple-mobile-web-app-status-bar-style" content="default" />

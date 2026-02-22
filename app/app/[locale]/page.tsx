@@ -15,6 +15,7 @@ import {
 import { getTranslations } from "next-intl/server";
 import HeroWave from "@/public/hero-wave.svg";
 import { NewsletterForm } from "@/components/newsletter-form";
+import { getCoursesCMS } from "@/lib/cms";
 
 const TOPICS = [
 	{ name: "Solana Basics", courses: 12, color: "bg-green/10 text-green" },
@@ -291,6 +292,27 @@ async function FeaturesSection() {
 async function FeaturedCoursesSection() {
 	const t = await getTranslations("home.featured");
 
+	// Try CMS data first, fall back to hardcoded
+	let courses = FEATURED_COURSES;
+	try {
+		const cmsCourses = await getCoursesCMS();
+		if (cmsCourses.length > 0) {
+			courses = cmsCourses.slice(0, 3).map((c, i) => ({
+				title: c.title,
+				description: c.description ?? c.title,
+				level: c.level ?? FEATURED_COURSES[i % FEATURED_COURSES.length].level,
+				duration: c.duration ?? FEATURED_COURSES[i % FEATURED_COURSES.length].duration,
+				lessons: c.lessonCount ?? FEATURED_COURSES[i % FEATURED_COURSES.length].lessons,
+				students: FEATURED_COURSES[i % FEATURED_COURSES.length].students,
+				xp: c.xpReward ?? FEATURED_COURSES[i % FEATURED_COURSES.length].xp,
+				slug: c.slug,
+				gradient: FEATURED_COURSES[i % FEATURED_COURSES.length].gradient,
+			}));
+		}
+	} catch {
+		// Use hardcoded fallback
+	}
+
 	return (
 		<section className="py-20 lg:py-28 bg-muted/30 border-y border-border/60">
 			<div className="mx-auto px-4 sm:px-6">
@@ -310,7 +332,7 @@ async function FeaturedCoursesSection() {
 				</div>
 
 				<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-					{FEATURED_COURSES.map((course) => (
+					{courses.map((course) => (
 						<Link
 							key={course.slug}
 							href={`/courses/${course.slug}`}

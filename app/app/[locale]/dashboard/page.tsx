@@ -10,17 +10,24 @@ import {
 	GraduationCap,
 	Target,
 	TrendingUp,
+	Clock,
 } from "lucide-react";
 import { useConnection } from "@solana/wallet-adapter-react";
 import { countCompletedLessons } from "@superteam/anchor";
 import { calculateLevelFromXP } from "@superteam-academy/gamification";
+import { StreakEventType } from "@superteam-academy/gamification/streak-system";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/contexts/auth-context";
 import { useTranslations } from "next-intl";
+import { useStreak } from "@/hooks/use-streak";
 import { LearningProgressService } from "@/services/LearningProgressService";
-import { getProgramId } from "@/lib/academy";
+import {
+	getProgramId,
+	fetchIndexedLearnerActivity,
+	type IndexedLearnerActivity,
+} from "@/lib/academy";
 
 interface DashboardStats {
 	totalXp: number;
@@ -47,7 +54,20 @@ export default function DashboardPage() {
 	const t = useTranslations("dashboard");
 	const [stats, setStats] = useState<DashboardStats | null>(null);
 	const [recentCourses, setRecentCourses] = useState<RecentCourse[]>([]);
+	const [recommendedCourses, setRecommendedCourses] = useState<
+		{ id: string; title: string; lessonCount: number }[]
+	>([]);
+	const [activity, setActivity] = useState<IndexedLearnerActivity[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
+	const { streakData, recordActivity } = useStreak(wallet.publicKey?.toBase58());
+
+	// Record daily activity on dashboard visit
+	useEffect(() => {
+		if (wallet.publicKey) {
+			recordActivity(StreakEventType.DAILY_LOGIN);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [wallet.publicKey]);
 
 	const loadDashboard = useCallback(async () => {
 		if (!wallet.publicKey) {
@@ -99,15 +119,33 @@ export default function DashboardPage() {
 		setStats({
 			totalXp,
 			level,
-			streak: 0,
+			streak: streakData.current,
 			coursesEnrolled: enrollments.length,
 			coursesCompleted: completedCount,
 			lessonsCompleted: totalLessonsCompleted,
 			achievementsUnlocked: completedCount,
 		});
 		setRecentCourses(courses.slice(0, 3));
+
+		// Recommended courses: any course the learner is not enrolled in
+		const enrolledCourseKeys = new Set(enrollments.map((e) => e.account.course.toBase58()));
+		const recommended = allCourses
+			.filter((c) => !enrolledCourseKeys.has(c.pubkey.toBase58()) && c.account.isActive)
+			.slice(0, 3)
+			.map((c) => ({
+				id: c.account.courseId,
+				title: c.account.courseId,
+				lessonCount: c.account.lessonCount,
+			}));
+		setRecommendedCourses(recommended);
+
+		// Activity feed
+		fetchIndexedLearnerActivity(wallet.publicKey, 10)
+			.then(setActivity)
+			.catch(() => undefined);
+
 		setIsLoading(false);
-	}, [wallet.publicKey, connection]);
+	}, [wallet.publicKey, connection, streakData.current]);
 
 	useEffect(() => {
 		loadDashboard();
@@ -219,6 +257,63 @@ export default function DashboardPage() {
 						</Button>
 					</div>
 				</div>
+
+				{recommendedCourses.length > 0 && (
+					<div className="space-y-4">
+						<h2 className="text-lg font-semibold">{t("recommendedCourses")}</h2>
+						<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+							{recommendedCourses.map((course) => (
+								<Card
+									key={course.id}
+									className="hover:border-primary/50 transition-colors"
+								>
+									<CardHeader className="pb-2">
+										<CardTitle className="text-base">{course.title}</CardTitle>
+									</CardHeader>
+									<CardContent className="space-y-3">
+										<p className="text-sm text-muted-foreground">
+											{course.lessonCount} lessons
+										</p>
+										<Button
+											variant="outline"
+											size="sm"
+											className="w-full"
+											asChild
+										>
+											<Link href={`/courses/${course.id}`}>
+												{t("startLearning")}
+											</Link>
+										</Button>
+									</CardContent>
+								</Card>
+							))}
+						</div>
+					</div>
+				)}
+
+				{activity.length > 0 && (
+					<div className="space-y-4">
+						<h2 className="text-lg font-semibold">{t("recentActivity")}</h2>
+						<Card>
+							<CardContent className="pt-4 space-y-3">
+								{activity.map((entry) => (
+									<div
+										key={entry.signature}
+										className="flex items-center gap-3 text-sm"
+									>
+										<Clock className="w-4 h-4 text-muted-foreground shrink-0" />
+										<span className="font-medium">
+											{entry.instruction.replace(/_/g, " ")}
+										</span>
+										<span className="text-muted-foreground ml-auto">
+											{new Date(entry.timestamp).toLocaleDateString()}
+										</span>
+									</div>
+								))}
+							</CardContent>
+						</Card>
+					</div>
+				)}
 			</div>
 		</div>
 	);

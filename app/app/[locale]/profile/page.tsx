@@ -75,7 +75,7 @@ async function ProfileContent({ walletAddress }: { walletAddress?: string }) {
 				<div className="space-y-6">
 					<StreakTrackerConnected walletAddress={walletAddress} />
 					<SkillRadarConnected courses={courses} />
-					<ProgressStats stats={stats} />
+					<ProgressStats stats={stats} walletAddress={walletAddress} />
 					<ActivityFeed activities={activity} />
 				</div>
 			</div>

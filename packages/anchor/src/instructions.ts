@@ -1,5 +1,12 @@
 import { PublicKey, SystemProgram, TransactionInstruction } from "@solana/web3.js";
-import { findConfigPDA, findCoursePDA, findEnrollmentPDA } from "./pda";
+import {
+	findConfigPDA,
+	findCoursePDA,
+	findEnrollmentPDA,
+	findAchievementTypePDA,
+	findAchievementReceiptPDA,
+	findMinterRolePDA,
+} from "./pda";
 
 // Well-known program IDs
 const TOKEN_2022_PROGRAM_ID_STR = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb";
@@ -288,6 +295,65 @@ export function buildUpgradeCredentialInstruction({
 	];
 
 	return new TransactionInstruction({ keys, programId, data });
+}
+
+// ─── Borsh encoding helpers ──────────────────────────────────────────────────
+
+// Anchor discriminator for award_achievement: sha256("global:award_achievement")[0..8]
+const DISCRIMINATOR_AWARD_ACHIEVEMENT = Buffer.from([
+	0x9a, 0x7e, 0x3b, 0x82, 0x46, 0x72, 0xd2, 0x4f,
+]);
+
+export interface AwardAchievementParams {
+	achievementId: string;
+	recipient: PublicKey;
+	asset: PublicKey;
+	collection: PublicKey;
+	recipientTokenAccount: PublicKey;
+	xpMint: PublicKey;
+	payer: PublicKey;
+	minter: PublicKey;
+	programId: PublicKey;
+}
+
+export function buildAwardAchievementInstruction({
+	achievementId,
+	recipient,
+	asset,
+	collection,
+	recipientTokenAccount,
+	xpMint,
+	payer,
+	minter,
+	programId,
+}: AwardAchievementParams): TransactionInstruction {
+	const [configPda] = findConfigPDA();
+	const [achievementTypePda] = findAchievementTypePDA(achievementId);
+	const [receiptPda] = findAchievementReceiptPDA(achievementId, recipient);
+	const [minterRolePda] = findMinterRolePDA(minter);
+
+	const keys = [
+		{ pubkey: configPda, isSigner: false, isWritable: false },
+		{ pubkey: achievementTypePda, isSigner: false, isWritable: true },
+		{ pubkey: receiptPda, isSigner: false, isWritable: true },
+		{ pubkey: minterRolePda, isSigner: false, isWritable: true },
+		{ pubkey: asset, isSigner: true, isWritable: true },
+		{ pubkey: collection, isSigner: false, isWritable: true },
+		{ pubkey: recipient, isSigner: false, isWritable: false },
+		{ pubkey: recipientTokenAccount, isSigner: false, isWritable: true },
+		{ pubkey: xpMint, isSigner: false, isWritable: true },
+		{ pubkey: payer, isSigner: true, isWritable: true },
+		{ pubkey: minter, isSigner: true, isWritable: false },
+		{ pubkey: MPL_CORE_PROGRAM_ID, isSigner: false, isWritable: false },
+		{ pubkey: TOKEN_2022_PROGRAM_ID, isSigner: false, isWritable: false },
+		{ pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+	];
+
+	return new TransactionInstruction({
+		keys,
+		programId,
+		data: DISCRIMINATOR_AWARD_ACHIEVEMENT,
+	});
 }
 
 // ─── Borsh encoding helpers ──────────────────────────────────────────────────

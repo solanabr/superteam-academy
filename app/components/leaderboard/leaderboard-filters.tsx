@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, X, SlidersHorizontal } from "lucide-react";
+import { Search, X, SlidersHorizontal, CalendarDays } from "lucide-react";
 import {
 	Select,
 	SelectContent,
@@ -19,6 +19,7 @@ interface FilterState {
 	country: string;
 	level: string;
 	sortBy: string;
+	timePeriod: string;
 }
 
 const COUNTRIES = [
@@ -56,12 +57,19 @@ const SORTS = [
 	{ value: "streak", label: "Streak" },
 ];
 
+const TIME_PERIODS = [
+	{ value: "all-time", label: "All Time" },
+	{ value: "monthly", label: "This Month" },
+	{ value: "weekly", label: "This Week" },
+];
+
 export function LeaderboardFilters({ onFiltersChange }: LeaderboardFiltersProps) {
 	const [filters, setFilters] = useState<FilterState>({
 		search: "",
 		country: "",
 		level: "",
 		sortBy: "score",
+		timePeriod: "all-time",
 	});
 
 	const handleFilterChange = (key: keyof FilterState, value: string) => {
@@ -71,11 +79,20 @@ export function LeaderboardFilters({ onFiltersChange }: LeaderboardFiltersProps)
 	};
 
 	const clearFilter = (key: keyof FilterState) => {
-		handleFilterChange(key, key === "sortBy" ? "score" : "");
+		handleFilterChange(
+			key,
+			key === "sortBy" ? "score" : key === "timePeriod" ? "all-time" : ""
+		);
 	};
 
 	const clearAll = () => {
-		const cleared: FilterState = { search: "", country: "", level: "", sortBy: "score" };
+		const cleared: FilterState = {
+			search: "",
+			country: "",
+			level: "",
+			sortBy: "score",
+			timePeriod: "all-time",
+		};
 		setFilters(cleared);
 		onFiltersChange?.(cleared);
 	};
@@ -87,6 +104,12 @@ export function LeaderboardFilters({ onFiltersChange }: LeaderboardFiltersProps)
 			label: COUNTRIES.find((c) => c.value === filters.country)?.label ?? filters.country,
 		},
 		filters.level && { key: "level" as const, label: `Lvl ${filters.level}` },
+		filters.timePeriod !== "all-time" && {
+			key: "timePeriod" as const,
+			label:
+				TIME_PERIODS.find((tp) => tp.value === filters.timePeriod)?.label ??
+				filters.timePeriod,
+		},
 	].filter(Boolean) as { key: keyof FilterState; label: string }[];
 
 	return (
@@ -114,6 +137,23 @@ export function LeaderboardFilters({ onFiltersChange }: LeaderboardFiltersProps)
 
 				<div className="flex items-center gap-2">
 					<SlidersHorizontal className="h-4 w-4 text-muted-foreground hidden sm:block" />
+
+					<Select
+						value={filters.timePeriod}
+						onValueChange={(value) => handleFilterChange("timePeriod", value)}
+					>
+						<SelectTrigger className="w-32 h-9 bg-muted/40 border-border/60 text-sm">
+							<CalendarDays className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
+							<SelectValue />
+						</SelectTrigger>
+						<SelectContent>
+							{TIME_PERIODS.map((tp) => (
+								<SelectItem key={tp.value} value={tp.value}>
+									{tp.label}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
 
 					<Select
 						{...(filters.country ? { value: filters.country } : {})}

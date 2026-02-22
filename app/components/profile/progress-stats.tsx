@@ -1,7 +1,11 @@
+"use client";
+
 import { Clock, BookOpen, Target, Flame, Zap } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { useStreak } from "@/hooks/use-streak";
 
 interface ProgressStatsProps {
+	walletAddress?: string;
 	stats: {
 		level: number;
 		xp: number;
@@ -41,7 +45,10 @@ function formatTime(minutes: number) {
 	return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
 }
 
-export function ProgressStats({ stats }: ProgressStatsProps) {
+export function ProgressStats({ stats, walletAddress }: ProgressStatsProps) {
+	const { streakData } = useStreak(walletAddress);
+	const streakCurrent = streakData.current || stats.streak.current;
+	const streakLongest = streakData.longest || stats.streak.longest;
 	const xpPct = Math.min(Math.round((stats.xp / stats.nextLevelXP) * 100), 100);
 
 	return (
@@ -66,13 +73,13 @@ export function ProgressStats({ stats }: ProgressStatsProps) {
 				{STAT_ITEMS.map(({ key, label, Icon, color }) => {
 					const value =
 						key === "streak"
-							? stats.streak.current
+							? streakCurrent
 							: key === "courses"
 								? stats.courses.completed
 								: stats.lessons.completed;
 					const sub =
 						key === "streak"
-							? `Best: ${stats.streak.longest}`
+							? `Best: ${streakLongest}`
 							: key === "courses"
 								? `${stats.courses.inProgress} active`
 								: `of ${stats.lessons.total}`;

@@ -147,18 +147,23 @@ async function getCertificate(id: string): Promise<Certificate | null> {
 	const programId = getProgramId();
 	const service = new CredentialService(connection, programId);
 
-	const metadata = await service.getCredentialMetadata(id);
-	const verification = await service.verifyCredential(id);
+	const [metadata, verification, owner] = await Promise.all([
+		service.getCredentialMetadata(id),
+		service.verifyCredential(id),
+		service.getCredentialOwner(id),
+	]);
 
 	if (!verification.isValid || !verification.credential) return null;
 
 	const trackAttr = metadata.attributes.find((a) => a.trait_type === "Track");
 	const levelAttr = metadata.attributes.find((a) => a.trait_type === "Level");
 
+	const holder = owner ? `${owner.slice(0, 4)}...${owner.slice(-4)}` : "Unknown";
+
 	return {
 		id,
 		title: metadata.name,
-		holder: "",
+		holder,
 		courseName: metadata.description,
 		track: trackAttr?.value ?? verification.credential.track,
 		level: levelAttr?.value ?? "Beginner",
