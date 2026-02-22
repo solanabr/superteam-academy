@@ -2749,7 +2749,17 @@
 	"topics": {
 		"title": "Topics",
 		"description": "Explore learning paths across the Solana ecosystem. Each topic contains curated courses from beginner to advanced.",
-		"courses": "{count} courses"
+		"courses": "{count} courses",
+		"backToTopics": "Back to topics",
+		"detail": {
+			"count": "{count} course",
+			"countPlural": "{count} courses",
+			"empty": {
+				"title": "No courses found",
+				"description": "No courses are currently available for this topic. Check back later or explore other topics.",
+				"browseCourses": "Browse all courses"
+			}
+		}
 	},
 	"certificates": {
 		"title": "Credential Details",

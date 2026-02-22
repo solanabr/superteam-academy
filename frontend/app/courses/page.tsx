@@ -286,6 +286,7 @@ async function getCourses(searchParams: Awaited<CoursesPageProps["searchParams"]
 			instructor: "",
 			image: resolveCourseImageUrl(c.image, 960, 540) ?? "/courses/default.jpg",
 			tags: [c.track ?? "solana"],
+			topics: [],
 			xpReward: c.xpReward,
 			price: 0,
 			featured: false,

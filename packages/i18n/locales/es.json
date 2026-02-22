@@ -2745,7 +2745,17 @@
 	"topics": {
 		"title": "Temas",
 		"description": "Explora rutas de aprendizaje en el ecosistema Solana. Cada tema contiene cursos curados desde principiante hasta avanzado.",
-		"courses": "{count} cursos"
+		"courses": "{count} cursos",
+		"backToTopics": "Volver a temas",
+		"detail": {
+			"count": "{count} curso",
+			"countPlural": "{count} cursos",
+			"empty": {
+				"title": "No se encontraron cursos",
+				"description": "No hay cursos disponibles actualmente para este tema. Vuelve más tarde o explora otros temas.",
+				"browseCourses": "Ver todos los cursos"
+			}
+		}
 	},
 	"certificates": {
 		"title": "Detalles de la credencial",

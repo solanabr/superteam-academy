@@ -13,6 +13,7 @@ interface SeedCourseDefinition {
 	instructor: string;
 	image: string;
 	tags: string[];
+	topics: string[];
 	xpReward: number;
 	price: number;
 	featured: boolean;
@@ -39,6 +40,7 @@ const COURSE_SEEDS: SeedCourseDefinition[] = [
 		instructor: "Dr. Sarah Chen",
 		image: "/courses/blockchain-intro.jpg",
 		tags: ["solana", "blockchain", "fundamentals"],
+		topics: ["solana-development", "web3-fundamentals"],
 		xpReward: 500,
 		price: 0,
 		featured: true,
@@ -70,6 +72,7 @@ const COURSE_SEEDS: SeedCourseDefinition[] = [
 		instructor: "Mike Johnson",
 		image: "/courses/solidity.jpg",
 		tags: ["anchor", "rust", "programs"],
+		topics: ["solana-development", "smart-contracts"],
 		xpReward: 1200,
 		price: 0,
 		featured: false,
@@ -105,6 +108,7 @@ const COURSE_SEEDS: SeedCourseDefinition[] = [
 		instructor: "Alex Rivera",
 		image: "/courses/defi.jpg",
 		tags: ["defi", "protocols", "amm"],
+		topics: ["defi", "smart-contracts", "solana-development"],
 		xpReward: 2000,
 		price: 0,
 		featured: true,
@@ -142,6 +146,7 @@ const COURSE_SEEDS: SeedCourseDefinition[] = [
 		instructor: "Maria Santos",
 		image: "/courses/token.jpg",
 		tags: ["token-2022", "extensions", "spl"],
+		topics: ["token-economics", "solana-development"],
 		xpReward: 800,
 		price: 0,
 		featured: false,
@@ -175,6 +180,7 @@ const COURSE_SEEDS: SeedCourseDefinition[] = [
 		instructor: "James Wu",
 		image: "/courses/security.jpg",
 		tags: ["security", "auditing", "fuzzing"],
+		topics: ["security", "smart-contracts", "solana-development"],
 		xpReward: 1500,
 		price: 0,
 		featured: true,
@@ -210,6 +216,7 @@ const COURSE_SEEDS: SeedCourseDefinition[] = [
 		instructor: "Lisa Park",
 		image: "/courses/frontend.jpg",
 		tags: ["nextjs", "react", "wallet-adapter"],
+		topics: ["frontend-dapps", "solana-development"],
 		xpReward: 700,
 		price: 0,
 		featured: false,
@@ -243,6 +250,7 @@ export const FRONTEND_SEED_COURSES = COURSE_SEEDS.map((course) => ({
 	instructor: course.instructor,
 	image: course.image,
 	tags: course.tags,
+	topics: course.topics,
 	xpReward: course.xpReward,
 	price: course.price,
 	featured: course.featured,
