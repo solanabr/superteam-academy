@@ -193,6 +193,24 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   if (updatedFields.length === 0) {
+    // Even if no fields changed, sync the PDA address to Sanity
+    // (needed after fresh deploys where the program ID changed)
+    const knownPda = course.onChainStatus?.coursePda;
+    if (knownPda !== coursePda.toBase58()) {
+      try {
+        await writeCourseOnChainStatus(
+          courseId,
+          "synced",
+          coursePda.toBase58(),
+          "noop"
+        );
+      } catch (mutationErr) {
+        console.error(
+          "[admin/courses/sync] Sanity PDA write-back failed:",
+          mutationErr
+        );
+      }
+    }
     return NextResponse.json({ action: "noop", message: "Already synced" });
   }
 
