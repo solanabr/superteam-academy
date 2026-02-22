@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { CourseSyncTable } from "@/components/admin/course-sync-table";
 import { AchievementSyncTable } from "@/components/admin/achievement-sync-table";
+import { DataResyncPanel } from "@/components/admin/data-resync-panel";
 
 interface DiffEntry {
   field: string;
@@ -181,6 +182,16 @@ export function AdminClient({ adminToken }: AdminClientProps) {
               onRefresh={() => void fetchStatus()}
             />
           )}
+        </div>
+      </section>
+
+      {/* Data Resync */}
+      <section>
+        <h2 className="mb-4 font-display text-lg font-bold text-text">
+          Data Resync
+        </h2>
+        <div className="rounded-lg border border-border bg-card p-4 shadow-card">
+          <DataResyncPanel adminToken={adminToken} />
         </div>
       </section>
     </div>
