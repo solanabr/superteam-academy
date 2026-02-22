@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { Connection, PublicKey } from "@solana/web3.js";
 import {
@@ -11,27 +12,58 @@ import { decodeLessonBitmap } from "@/lib/solana/bitmap";
 import { getAllCourses } from "@/lib/sanity/queries";
 
 const ADMIN_SECRET = process.env.ADMIN_SECRET;
-const RPC_URL = process.env.NEXT_PUBLIC_SOLANA_RPC_URL!;
-const XP_MINT = new PublicKey(process.env.NEXT_PUBLIC_XP_MINT_ADDRESS!);
+
+function verifyAdminToken(header: string | null): boolean {
+  if (!ADMIN_SECRET || !header?.startsWith("Bearer ")) return false;
+  const token = header.slice(7);
+  const tokenBuf = Buffer.from(token);
+  const secretBuf = Buffer.from(ADMIN_SECRET);
+  if (tokenBuf.length !== secretBuf.length) return false;
+  return crypto.timingSafeEqual(tokenBuf, secretBuf);
+}
+
+function isValidBase58(value: string): boolean {
+  return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(value);
+}
 
 export async function POST(req: NextRequest) {
-  // Admin auth
-  const authHeader = req.headers.get("authorization");
-  if (!ADMIN_SECRET || authHeader !== `Bearer ${ADMIN_SECRET}`) {
+  // Admin auth (timing-safe comparison)
+  if (!verifyAdminToken(req.headers.get("authorization"))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { walletAddress } = await req.json();
-  if (!walletAddress) {
+  const rpcUrl = process.env.NEXT_PUBLIC_SOLANA_RPC_URL;
+  const xpMintAddress = process.env.NEXT_PUBLIC_XP_MINT_ADDRESS;
+  if (!rpcUrl || !xpMintAddress) {
     return NextResponse.json(
-      { error: "walletAddress required" },
+      { error: "Server misconfigured" },
+      { status: 500 }
+    );
+  }
+
+  let body: { walletAddress?: unknown };
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  const { walletAddress } = body;
+  if (
+    !walletAddress ||
+    typeof walletAddress !== "string" ||
+    !isValidBase58(walletAddress)
+  ) {
+    return NextResponse.json(
+      { error: "walletAddress must be a valid Solana public key" },
       { status: 400 }
     );
   }
 
   const supabase = createAdminClient();
-  const connection = new Connection(RPC_URL);
+  const connection = new Connection(rpcUrl);
   const wallet = new PublicKey(walletAddress);
+  const XP_MINT = new PublicKey(xpMintAddress);
 
   // Resolve user
   const { data: profile } = await supabase
@@ -78,8 +110,16 @@ export async function POST(req: NextRequest) {
         { onConflict: "user_id" }
       );
     results.xp = balance;
-  } catch {
-    // ATA doesn't exist — user has 0 XP
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    if (
+      message.includes("could not find account") ||
+      message.includes("TokenAccountNotFound")
+    ) {
+      // ATA doesn't exist — user has 0 XP on-chain, this is normal
+    } else {
+      console.error("[resync] XP balance fetch failed:", message);
+    }
   }
 
   // 2. Sync enrollments + lesson progress from on-chain Enrollment PDAs
@@ -119,12 +159,13 @@ export async function POST(req: NextRequest) {
         const bitmap = decodeLessonBitmap(enrollment.lesson_flags, lessonCount);
 
         for (let i = 0; i < bitmap.length && i < allLessons.length; i++) {
-          if (bitmap[i]) {
+          const lesson = allLessons[i];
+          if (bitmap[i] && lesson) {
             await supabase.from("user_progress").upsert(
               {
                 user_id: profile.id,
                 course_id: course._id,
-                lesson_id: allLessons[i]._id,
+                lesson_id: lesson._id,
                 completed: true,
                 completed_at: new Date().toISOString(),
               },
@@ -158,7 +199,7 @@ export async function POST(req: NextRequest) {
 
   // 3. Sync NFT assets via Helius DAS API (achievements + certificates)
   try {
-    const dasRes = await fetch(RPC_URL, {
+    const dasRes = await fetch(rpcUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -177,42 +218,47 @@ export async function POST(req: NextRequest) {
     const assets = dasData.result?.items ?? [];
 
     for (const asset of assets) {
-      const attrs =
-        (asset.content?.metadata?.attributes as
-          | { trait_type: string; value: string }[]
-          | undefined) ?? [];
+      try {
+        const attrs =
+          (asset.content?.metadata?.attributes as
+            | { trait_type: string; value: string }[]
+            | undefined) ?? [];
 
-      // Achievement NFTs have achievement_id attribute
-      const achievementAttr = attrs.find(
-        (a) => a.trait_type === "achievement_id"
-      );
-      if (achievementAttr) {
-        await supabase.rpc("unlock_achievement", {
-          p_user_id: profile.id,
-          p_achievement_id: achievementAttr.value,
-          p_asset_address: asset.id as string,
-        });
-        results.achievements++;
-        continue;
-      }
-
-      // Certificate NFTs have Platform = "Solarium" and Course attributes
-      const platformAttr = attrs.find((a) => a.trait_type === "Platform");
-      const courseAttr = attrs.find((a) => a.trait_type === "Course");
-      if (platformAttr?.value === "Solarium" && courseAttr) {
-        await supabase.from("certificates").upsert(
-          {
-            user_id: profile.id,
-            course_id: courseAttr.value,
-            course_title: courseAttr.value,
-            mint_address: asset.id as string,
-            metadata_uri: asset.content?.json_uri ?? "",
-            minted_at: new Date().toISOString(),
-            credential_type: "core",
-          },
-          { onConflict: "user_id,course_id" }
+        // Achievement NFTs have achievement_id attribute
+        const achievementAttr = attrs.find(
+          (a) => a.trait_type === "achievement_id"
         );
-        results.certificates++;
+        if (achievementAttr) {
+          await supabase.rpc("unlock_achievement", {
+            p_user_id: profile.id,
+            p_achievement_id: achievementAttr.value,
+            p_tx_signature: `resync:${asset.id as string}`,
+            p_asset_address: asset.id as string,
+          });
+          results.achievements++;
+          continue;
+        }
+
+        // Certificate NFTs have Platform = "Solarium" and Course attributes
+        const platformAttr = attrs.find((a) => a.trait_type === "Platform");
+        const courseAttr = attrs.find((a) => a.trait_type === "Course");
+        if (platformAttr?.value === "Solarium" && courseAttr) {
+          await supabase.from("certificates").upsert(
+            {
+              user_id: profile.id,
+              course_id: courseAttr.value,
+              course_title: courseAttr.value,
+              mint_address: asset.id as string,
+              metadata_uri: asset.content?.json_uri ?? "",
+              minted_at: new Date().toISOString(),
+              credential_type: "core",
+            },
+            { onConflict: "user_id,course_id" }
+          );
+          results.certificates++;
+        }
+      } catch (assetErr) {
+        console.error(`[resync] Error processing asset ${asset.id}:`, assetErr);
       }
     }
   } catch (err) {

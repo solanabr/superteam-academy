@@ -770,7 +770,6 @@ export default function DashboardPage() {
                     <div className="bg-bg/95 absolute inset-0 z-10 flex flex-col items-center justify-center px-5 backdrop-blur-md">
                       <CourseCompletionMint
                         courseId={course.courseId}
-                        courseTitle={course.title}
                         userId={data.userId}
                         totalLessons={course.totalLessons}
                       />
