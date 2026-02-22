@@ -60,29 +60,8 @@ export function useOnChainEnroll({
         return;
       }
 
-      // On-chain TX succeeded — sync to Supabase via API.
-      // All enrollment writes must go through the server-side route which
-      // verifies the transaction on-chain before writing to the DB.
-      const res = await fetch("/api/enrollment/sync", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          courseId,
-          txSignature: onChainSignature,
-          action: "enroll",
-        }),
-      });
-
-      if (res.ok) {
-        onSuccess?.();
-        return;
-      }
-
-      // Sync failed — the on-chain Enrollment PDA exists but the Supabase
-      // mirror could not be updated. Surface the error so the user can retry.
-      setEnrollError(
-        "Enrollment confirmed on-chain but sync failed. Please refresh the page."
-      );
+      // On-chain TX succeeded — Helius webhook will sync to Supabase.
+      onSuccess?.();
     } finally {
       setIsEnrolling(false);
     }
