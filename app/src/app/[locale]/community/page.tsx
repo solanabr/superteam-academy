@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useTranslations } from "next-intl";
+import { useSession } from "next-auth/react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +15,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Link } from "@/i18n/routing";
 import {
   MessageSquare,
   ThumbsUp,
@@ -21,102 +24,126 @@ import {
   Plus,
   Search,
   Star,
+  LogIn,
 } from "lucide-react";
 
-const MOCK_POSTS = [
-  {
-    id: "p1",
-    author: "Maria Silva",
-    title: "How to handle account validation in Anchor?",
-    content:
-      "I'm building a program that requires multiple account validations. What are the best practices for handling complex constraint validation in Anchor? Should I use custom validation functions or rely on constraint macros?",
-    course: "Anchor Framework Fundamentals",
-    upvotes: 15,
-    replies: 4,
-    createdAt: "2026-02-14T10:30:00Z",
-  },
-  {
-    id: "p2",
-    author: "Pedro Santos",
-    title: "Understanding Token-2022 extensions",
-    content:
-      "Can someone explain the difference between NonTransferable and PermanentDelegate extensions? When would you use one over the other for soulbound tokens?",
-    course: "Introduction to Solana",
-    upvotes: 23,
-    replies: 7,
-    createdAt: "2026-02-13T15:45:00Z",
-  },
-  {
-    id: "p3",
-    author: "Ana Costa",
-    title: "Best resources for learning Rust as a JS dev?",
-    content:
-      "I come from a JavaScript/TypeScript background and I'm starting to learn Rust for Solana development. What resources have you found most helpful for the transition?",
-    upvotes: 31,
-    replies: 12,
-    createdAt: "2026-02-12T09:00:00Z",
-  },
-  {
-    id: "p4",
-    author: "Lucas Oliveira",
-    title: "AMM constant product formula implementation",
-    content:
-      "I'm stuck on implementing the swap function for my AMM. The constant product formula seems straightforward but I'm getting rounding errors. Any tips?",
-    course: "DeFi on Solana",
-    upvotes: 8,
-    replies: 3,
-    createdAt: "2026-02-11T14:20:00Z",
-  },
-];
+interface Post {
+  id: string;
+  author: string;
+  title: string;
+  content: string;
+  course: string | null;
+  upvotes: number;
+  replies: number;
+  createdAt: string;
+}
+
 
 export default function CommunityPage() {
   const t = useTranslations("community");
   const tc = useTranslations("common");
+  const { data: session } = useSession();
   const [search, setSearch] = useState("");
   const [newTitle, setNewTitle] = useState("");
   const [newContent, setNewContent] = useState("");
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
-  const filtered = MOCK_POSTS.filter(
-    (p) =>
-      !search ||
-      p.title.toLowerCase().includes(search.toLowerCase()) ||
-      p.content.toLowerCase().includes(search.toLowerCase()),
+  useEffect(() => {
+    fetch("/api/community")
+      .then((res) => res.json())
+      .then((data) => { if (Array.isArray(data)) setPosts(data); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const filtered = useMemo(
+    () =>
+      posts.filter(
+        (p) =>
+          !search ||
+          p.title.toLowerCase().includes(search.toLowerCase()) ||
+          p.content.toLowerCase().includes(search.toLowerCase()),
+      ),
+    [posts, search],
   );
+
+  async function handleSubmit() {
+    if (!newContent.trim()) return;
+    try {
+      const res = await fetch("/api/community", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: newTitle, content: newContent }),
+      });
+      if (res.ok) {
+        setNewTitle("");
+        setNewContent("");
+        setDialogOpen(false);
+        const data = await fetch("/api/community").then((r) => r.json());
+        if (Array.isArray(data)) setPosts(data);
+      }
+    } catch {
+      // Keep dialog open on error
+    }
+  }
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
       <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">{t("title")}</h1>
-        </div>
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              {t("newPost")}
+        <h1 className="text-3xl font-bold">{t("title")}</h1>
+        {session?.user ? (
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="gap-2">
+                <Plus className="h-4 w-4" />
+                {t("newPost")}
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>{t("newPost")}</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <Input
+                  placeholder={t("postTitle")}
+                  value={newTitle}
+                  onChange={(e) => setNewTitle(e.target.value)}
+                />
+                <Textarea
+                  placeholder={t("writePost")}
+                  value={newContent}
+                  onChange={(e) => setNewContent(e.target.value)}
+                  rows={5}
+                />
+                <Button className="w-full" onClick={handleSubmit}>
+                  {tc("submit")}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        ) : (
+          <Link href="/auth/signin">
+            <Button variant="outline" className="gap-2">
+              <LogIn className="h-4 w-4" />
+              {tc("signIn")}
             </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{t("newPost")}</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <Input
-                placeholder={t("postTitle")}
-                value={newTitle}
-                onChange={(e) => setNewTitle(e.target.value)}
-              />
-              <Textarea
-                placeholder={t("writePost")}
-                value={newContent}
-                onChange={(e) => setNewContent(e.target.value)}
-                rows={5}
-              />
-              <Button className="w-full">{tc("submit")}</Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+          </Link>
+        )}
       </div>
+
+      {!session?.user && (
+        <div className="mb-6 flex items-center gap-3 rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
+          <LogIn className="h-4 w-4 shrink-0" />
+          <span>
+            <Link href="/auth/signin" className="font-medium text-primary hover:underline">
+              {tc("signIn")}
+            </Link>
+            {" "}to create posts, reply, and like discussions.
+          </span>
+        </div>
+      )}
 
       <div className="mb-6">
         <div className="relative">
@@ -131,7 +158,30 @@ export default function CommunityPage() {
       </div>
 
       <div className="space-y-4">
-        {filtered.length === 0 ? (
+        {loading ? (
+          Array.from({ length: 3 }).map((_, i) => (
+            <Card key={i}>
+              <CardContent className="p-6">
+                <div className="flex items-start gap-4">
+                  <div className="flex flex-col items-center gap-1">
+                    <Skeleton className="h-8 w-8 rounded-md" />
+                    <Skeleton className="h-4 w-6" />
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-5 w-2/3" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-4/5" />
+                    <div className="flex gap-3 pt-1">
+                      <Skeleton className="h-3.5 w-20" />
+                      <Skeleton className="h-3.5 w-16" />
+                      <Skeleton className="h-3.5 w-16" />
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        ) : filtered.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
               <MessageSquare className="mx-auto h-12 w-12 text-muted-foreground/30" />
@@ -146,7 +196,6 @@ export default function CommunityPage() {
             >
               <CardContent className="p-6">
                 <div className="flex items-start gap-4">
-                  {/* Upvote */}
                   <div className="flex flex-col items-center gap-1">
                     <Button variant="ghost" size="icon" className="h-8 w-8">
                       <ThumbsUp className="h-4 w-4" />

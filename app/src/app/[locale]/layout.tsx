@@ -7,6 +7,8 @@ import { SolanaWalletProvider } from "@/lib/solana/wallet-provider";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { Toaster } from "sonner";
+import { Suspense } from "react";
+import { AnalyticsProvider } from "@/components/providers/analytics-provider";
 
 export default async function LocaleLayout({
   children,
@@ -27,11 +29,15 @@ export default async function LocaleLayout({
       <SessionProvider>
         <SolanaWalletProvider>
           <ThemeProvider>
-            <div className="flex min-h-screen flex-col">
-              <Header />
-              <main className="flex-1">{children}</main>
-              <Footer />
-            </div>
+            <Suspense>
+              <AnalyticsProvider>
+                <div className="flex min-h-screen flex-col">
+                  <Header />
+                  <main className="flex-1">{children}</main>
+                  <Footer />
+                </div>
+              </AnalyticsProvider>
+            </Suspense>
             <Toaster position="bottom-right" />
           </ThemeProvider>
         </SolanaWalletProvider>

@@ -6,7 +6,6 @@ DROP TABLE IF EXISTS daily_challenge_completions CASCADE;
 DROP TABLE IF EXISTS daily_challenges CASCADE;
 DROP TABLE IF EXISTS community_posts CASCADE;
 DROP TABLE IF EXISTS xp_transactions CASCADE;
-DROP TABLE IF EXISTS enrollments CASCADE;
 DROP TABLE IF EXISTS user_stats CASCADE;
 DROP TABLE IF EXISTS accounts CASCADE;
 DROP TABLE IF EXISTS profiles CASCADE;
@@ -64,18 +63,6 @@ CREATE TABLE user_stats (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
--- Enrollments
-CREATE TABLE enrollments (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
-  course_id TEXT NOT NULL,
-  enrolled_at TIMESTAMPTZ DEFAULT now(),
-  completed_at TIMESTAMPTZ,
-  progress_pct FLOAT DEFAULT 0,
-  lesson_flags BIGINT[] DEFAULT ARRAY[0,0,0,0]::BIGINT[],
-  UNIQUE(user_id, course_id)
-);
-
 -- XP Transaction Log
 CREATE TABLE xp_transactions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -119,8 +106,6 @@ CREATE TABLE daily_challenge_completions (
 );
 
 -- Indexes
-CREATE INDEX idx_enrollments_user ON enrollments(user_id);
-CREATE INDEX idx_enrollments_course ON enrollments(course_id);
 CREATE INDEX idx_xp_transactions_user ON xp_transactions(user_id);
 CREATE INDEX idx_xp_transactions_created ON xp_transactions(created_at);
 CREATE INDEX idx_community_posts_user ON community_posts(user_id);
@@ -130,7 +115,6 @@ CREATE INDEX idx_community_posts_parent ON community_posts(parent_id);
 -- RLS Policies
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_stats ENABLE ROW LEVEL SECURITY;
-ALTER TABLE enrollments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE xp_transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE community_posts ENABLE ROW LEVEL SECURITY;
 
@@ -141,10 +125,6 @@ CREATE POLICY profiles_write ON profiles FOR UPDATE USING (id = auth.uid());
 -- User stats: public read, service write
 CREATE POLICY stats_read ON user_stats FOR SELECT USING (true);
 CREATE POLICY stats_write ON user_stats FOR ALL USING (user_id = auth.uid());
-
--- Enrollments: own read/write
-CREATE POLICY enrollments_read ON enrollments FOR SELECT USING (user_id = auth.uid());
-CREATE POLICY enrollments_write ON enrollments FOR ALL USING (user_id = auth.uid());
 
 -- XP transactions: own read
 CREATE POLICY xp_read ON xp_transactions FOR SELECT USING (user_id = auth.uid());

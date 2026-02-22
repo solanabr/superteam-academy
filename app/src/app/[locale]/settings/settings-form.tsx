@@ -1,12 +1,10 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { signIn, useSession } from "next-auth/react";
-import { useWallet } from "@solana/wallet-adapter-react";
-import { useWalletModal } from "@solana/wallet-adapter-react-ui";
-import bs58 from "bs58";
 import { useTheme } from "@/components/providers/theme-provider";
+import { useWalletLink } from "@/hooks/use-wallet-link";
 import { useRouter } from "@/i18n/routing";
 import { useProfileMutation, useUsernameCheck } from "@/hooks/use-profile";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -51,11 +49,26 @@ export default function SettingsForm({
   walletAddress,
 }: SettingsFormProps) {
   const t = useTranslations("settings");
-  const { update: updateSession } = useSession();
+  const { data: session, update: updateSession } = useSession();
   const tc = useTranslations("common");
   const { theme, setTheme } = useTheme();
   const router = useRouter();
   const { updateProfile, updating } = useProfileMutation();
+
+  // If an OAuth provider (Google/GitHub) was already linked to a different profile,
+  // the session silently switches to that profile after the redirect. Show a one-shot
+  // notification and then clear the flag from the JWT.
+  const shownSwitchNotification = useRef(false);
+  useEffect(() => {
+    const s = session as unknown as Record<string, unknown> | null;
+    if (s?.switchedProfileName && !shownSwitchNotification.current) {
+      shownSwitchNotification.current = true;
+      toast.info(
+        `You are now signed in as "${s.switchedProfileName as string}" because this account was already linked to that profile.`,
+      );
+      updateSession({});
+    }
+  }, [session, updateSession]);
 
   // Profile tab state
   const [displayName, setDisplayName] = useState(initialProfile.displayName);
@@ -214,65 +227,10 @@ export default function SettingsForm({
     signIn("google", { callbackUrl: window.location.href });
   };
 
-  // Wallet connect
-  const wallet = useWallet();
-  const { setVisible: setWalletModalVisible } = useWalletModal();
-  const [connectingWallet, setConnectingWallet] = useState(false);
-  const pendingWalletLink = useRef(false);
-
-  const handleWalletSign = useCallback(async () => {
-    if (!wallet.publicKey || !wallet.signMessage) return;
-
-    setConnectingWallet(true);
-    try {
-      const message = `Link wallet to Superteam Academy\nTimestamp: ${Date.now()}\nAddress: ${wallet.publicKey.toBase58()}`;
-      const encodedMessage = new TextEncoder().encode(message);
-      const signature = await wallet.signMessage(encodedMessage);
-
-      // Set link-intent cookie so JWT callback links to existing profile
-      await fetch("/api/auth/link-intent", { method: "POST" });
-
-      const result = await signIn("solana-wallet", {
-        publicKey: wallet.publicKey.toBase58(),
-        signature: bs58.encode(signature),
-        message,
-        redirect: false,
-      });
-
-      if (result?.ok) {
-        toast.success(t("walletLinked"));
-        router.refresh();
-      } else {
-        toast.error(t("saveError"));
-      }
-    } catch {
-      // User rejected signing
-    } finally {
-      setConnectingWallet(false);
-      pendingWalletLink.current = false;
-    }
-  }, [wallet, t, router]);
-
-  // When wallet connects after clicking "Connect Wallet", auto-trigger signing
-  useEffect(() => {
-    if (
-      pendingWalletLink.current &&
-      wallet.connected &&
-      wallet.publicKey &&
-      wallet.signMessage
-    ) {
-      handleWalletSign();
-    }
-  }, [wallet.connected, wallet.publicKey, handleWalletSign]);
-
-  const handleConnectWallet = () => {
-    if (wallet.connected && wallet.publicKey && wallet.signMessage) {
-      handleWalletSign();
-    } else {
-      pendingWalletLink.current = true;
-      setWalletModalVisible(true);
-    }
-  };
+  // Wallet connect — delegates to shared hook (same flow as course enrollment page)
+  const { linkWallet: handleConnectWallet, linking: connectingWallet } = useWalletLink(
+    () => router.refresh(),
+  );
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">

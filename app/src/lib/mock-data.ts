@@ -86,6 +86,7 @@ export const SAMPLE_COURSES: Course[] = [
     totalLessons: 10,
     totalDuration: 480,
     totalXP: 2500,
+    bonusXP: 1250,
     prerequisites: [],
     tags: ["solana", "blockchain", "beginner", "rust"],
     published: true,
@@ -105,7 +106,6 @@ export const SAMPLE_COURSES: Course[] = [
             slug: "what-is-solana",
             type: "content",
             duration: 20,
-            xpReward: 25,
             order: 0,
             videoUrl: "https://www.youtube.com/embed/1jzROE6EhxM",
             content: `## Welcome to Solana
@@ -150,7 +150,6 @@ This separation enables Sealevel to run transactions in parallel — if two tran
             slug: "setup-environment",
             type: "content",
             duration: 30,
-            xpReward: 25,
             order: 1,
             content: `## Development Environment Setup
 
@@ -225,7 +224,6 @@ my-first-project/
             slug: "understanding-accounts",
             type: "content",
             duration: 25,
-            xpReward: 25,
             order: 2,
             videoUrl: "https://www.youtube.com/embed/pKzGSMVRsKE",
             content: `## The Solana Accounts Model
@@ -291,7 +289,6 @@ PDAs are the backbone of Solana program design. They let programs "own" accounts
             slug: "hello-world",
             type: "content",
             duration: 35,
-            xpReward: 30,
             order: 3,
             content: `## Hello World on Solana
 
@@ -366,7 +363,6 @@ Run with \`anchor test\` and check the logs for "Hello, Solana!".`,
             slug: "program-state",
             type: "content",
             duration: 40,
-            xpReward: 35,
             order: 4,
             content: `## Working with Program State
 
@@ -446,7 +442,6 @@ pub struct Increment<'info> {
             slug: "counter-challenge",
             type: "challenge",
             duration: 45,
-            xpReward: 75,
             order: 5,
             challenge: {
               prompt:
@@ -485,7 +480,6 @@ pub struct Increment<'info> {
             slug: "pdas",
             type: "content",
             duration: 35,
-            xpReward: 35,
             order: 6,
             content: `## Program Derived Addresses (PDAs)
 
@@ -540,7 +534,6 @@ pub profile: Account<'info, UserProfile>,
             slug: "cpis",
             type: "content",
             duration: 40,
-            xpReward: 35,
             order: 7,
             videoUrl: "https://www.youtube.com/embed/H81XgMnkVAA",
             content: `## Cross-Program Invocations (CPIs)
@@ -601,7 +594,6 @@ token::transfer(
             slug: "pda-challenge",
             type: "challenge",
             duration: 30,
-            xpReward: 75,
             order: 8,
             challenge: {
               prompt:
@@ -635,7 +627,6 @@ token::transfer(
             slug: "course-recap",
             type: "content",
             duration: 60,
-            xpReward: 50,
             order: 9,
             content: `## Course Recap
 
@@ -691,6 +682,7 @@ Now that you understand the basics, we recommend:
     totalLessons: 8,
     totalDuration: 420,
     totalXP: 2000,
+    bonusXP: 1000,
     prerequisites: ["intro-to-solana"],
     tags: ["anchor", "rust", "solana", "smart-contracts"],
     published: true,
@@ -709,7 +701,6 @@ Now that you understand the basics, we recommend:
             slug: "anchor-overview",
             type: "content",
             duration: 25,
-            xpReward: 25,
             order: 0,
             videoUrl: "https://www.youtube.com/embed/EvryHUjEmBc",
             content: `## The Anchor Framework
@@ -758,7 +749,6 @@ mod my_program {
             slug: "account-constraints",
             type: "content",
             duration: 35,
-            xpReward: 30,
             order: 1,
             content: `## Account Constraints
 
@@ -819,7 +809,6 @@ pub profile: Account<'info, UserProfile>,
             slug: "error-handling",
             type: "content",
             duration: 30,
-            xpReward: 30,
             order: 2,
             content: `## Custom Errors in Anchor
 
@@ -879,7 +868,6 @@ Unauthorized           → 6003
             slug: "constraint-challenge",
             type: "challenge",
             duration: 35,
-            xpReward: 75,
             order: 3,
             challenge: {
               prompt:
@@ -926,7 +914,6 @@ Unauthorized           → 6003
             slug: "testing-anchor",
             type: "content",
             duration: 40,
-            xpReward: 35,
             order: 4,
             content: `## Testing Anchor Programs
 
@@ -978,7 +965,6 @@ anchor test --skip-local-validator  # Use running validator
             slug: "deployment",
             type: "content",
             duration: 30,
-            xpReward: 25,
             order: 5,
             content: `## Deploying Solana Programs
 
@@ -1031,7 +1017,6 @@ solana program set-upgrade-authority <PROGRAM_ID> --final
             slug: "security",
             type: "content",
             duration: 45,
-            xpReward: 40,
             order: 6,
             content: `## Security Best Practices for Solana Programs
 
@@ -1094,7 +1079,6 @@ require!(!account.is_initialized, ErrorCode::AlreadyInitialized);
             slug: "token-vault",
             type: "challenge",
             duration: 60,
-            xpReward: 100,
             order: 7,
             challenge: {
               prompt:
@@ -1137,6 +1121,7 @@ require!(!account.is_initialized, ErrorCode::AlreadyInitialized);
     totalLessons: 6,
     totalDuration: 360,
     totalXP: 3000,
+    bonusXP: 1500,
     prerequisites: ["intro-to-solana", "anchor-fundamentals"],
     tags: ["defi", "amm", "lending", "solana"],
     published: true,
@@ -1155,7 +1140,6 @@ require!(!account.is_initialized, ErrorCode::AlreadyInitialized);
             slug: "defi-overview",
             type: "content",
             duration: 30,
-            xpReward: 25,
             order: 0,
             videoUrl: "https://www.youtube.com/embed/17GkLB8VsIA",
             content: `## DeFi on Solana
@@ -1187,7 +1171,6 @@ To build DeFi on Solana, you need to understand:
             slug: "token-program",
             type: "content",
             duration: 40,
-            xpReward: 35,
             order: 1,
             content: `## The SPL Token Program
 
@@ -1246,7 +1229,6 @@ Token-2022 adds powerful features:
             slug: "amm-design",
             type: "content",
             duration: 50,
-            xpReward: 40,
             order: 2,
             content: `## Automated Market Makers
 
@@ -1314,7 +1296,6 @@ LP tokens = sqrt(deposit_a * deposit_b)
             slug: "liquidity-pools",
             type: "content",
             duration: 45,
-            xpReward: 40,
             order: 3,
             content: `## Implementing Liquidity Pools
 
@@ -1374,7 +1355,6 @@ pub fn add_liquidity(
             slug: "swap-implementation",
             type: "content",
             duration: 50,
-            xpReward: 45,
             order: 4,
             content: `## Implementing Token Swaps
 
@@ -1432,7 +1412,6 @@ pub fn swap(
             slug: "amm-challenge",
             type: "challenge",
             duration: 60,
-            xpReward: 100,
             order: 5,
             challenge: {
               prompt:
@@ -1478,6 +1457,7 @@ pub fn swap(
     totalLessons: 7,
     totalDuration: 350,
     totalXP: 1800,
+    bonusXP: 900,
     prerequisites: ["intro-to-solana"],
     tags: ["nft", "metaplex", "solana", "digital-assets"],
     published: true,
@@ -1496,7 +1476,6 @@ pub fn swap(
             slug: "nft-standards",
             type: "content",
             duration: 25,
-            xpReward: 25,
             order: 0,
             content: `## NFT Standards on Solana
 
@@ -1537,7 +1516,6 @@ Master Edition Account
             slug: "minting-nfts",
             type: "content",
             duration: 40,
-            xpReward: 35,
             order: 1,
             videoUrl: "https://www.youtube.com/embed/RBQVkLQ_bvI",
             content: `## Minting NFTs with Metaplex
@@ -1591,7 +1569,6 @@ await createNft(umi, {
             slug: "metadata",
             type: "content",
             duration: 35,
-            xpReward: 30,
             order: 2,
             content: `## NFT Metadata & Collections
 
@@ -1648,7 +1625,6 @@ This is how Superteam Academy **evolves credentials** — when a learner levels 
             slug: "compressed-nfts",
             type: "content",
             duration: 45,
-            xpReward: 40,
             order: 3,
             content: `## Compressed NFTs (cNFTs)
 
@@ -1711,7 +1687,6 @@ const response = await fetch(heliusUrl, {
             slug: "listing-buying",
             type: "content",
             duration: 50,
-            xpReward: 45,
             order: 4,
             content: `## NFT Marketplace: Listing & Buying
 
@@ -1772,7 +1747,6 @@ pub fn buy(ctx: Context<Buy>) -> Result<()> {
             slug: "collections",
             type: "content",
             duration: 35,
-            xpReward: 30,
             order: 5,
             content: `## NFT Collections & Enforced Royalties
 
@@ -1822,7 +1796,6 @@ Royalties can be split between multiple creators:
             slug: "nft-challenge",
             type: "challenge",
             duration: 45,
-            xpReward: 75,
             order: 6,
             challenge: {
               prompt:
@@ -1868,6 +1841,7 @@ Royalties can be split between multiple creators:
     totalLessons: 8,
     totalDuration: 400,
     totalXP: 2200,
+    bonusXP: 1100,
     prerequisites: [],
     tags: ["frontend", "nextjs", "wallet", "web3"],
     published: true,
@@ -1886,7 +1860,6 @@ Royalties can be split between multiple creators:
             slug: "web3-overview",
             type: "content",
             duration: 20,
-            xpReward: 20,
             order: 0,
             content: `## Web3 Frontend Development
 
@@ -1947,7 +1920,6 @@ function App({ children }) {
             slug: "wallet-connection",
             type: "content",
             duration: 35,
-            xpReward: 30,
             order: 1,
             content: `## Wallet Connection
 
@@ -2011,7 +1983,6 @@ function formatAddress(address: string): string {
             slug: "reading-data",
             type: "content",
             duration: 30,
-            xpReward: 25,
             order: 2,
             content: `## Reading On-Chain Data
 
@@ -2067,7 +2038,6 @@ console.log(tokenAccount.amount); // BigInt
             slug: "sending-transactions",
             type: "content",
             duration: 40,
-            xpReward: 35,
             order: 3,
             content: `## Sending Transactions
 
@@ -2139,7 +2109,6 @@ await connection.confirmTransaction({
             slug: "frontend-errors",
             type: "content",
             duration: 30,
-            xpReward: 25,
             order: 4,
             content: `## Error Handling in Web3 Apps
 
@@ -2188,7 +2157,6 @@ function parseAnchorError(error: any): { code: number; message: string } | null 
             slug: "realtime-updates",
             type: "content",
             duration: 35,
-            xpReward: 30,
             order: 5,
             content: `## Real-time Updates with WebSockets
 
@@ -2249,7 +2217,6 @@ const { data, refetch } = useQuery({
             slug: "production-patterns",
             type: "content",
             duration: 40,
-            xpReward: 35,
             order: 6,
             content: `## Production Best Practices
 
@@ -2313,7 +2280,6 @@ await sendTransaction(tx, connection);
             slug: "build-dapp",
             type: "challenge",
             duration: 50,
-            xpReward: 100,
             order: 7,
             challenge: {
               prompt:
@@ -2356,6 +2322,7 @@ export const COURSE_CARDS: CourseCardData[] = SAMPLE_COURSES.map((c) => ({
   totalLessons: c.totalLessons,
   totalDuration: c.totalDuration,
   totalXP: c.totalXP,
+  bonusXP: c.bonusXP,
 }));
 
 export function getCourseBySlug(slug: string): Course | undefined {

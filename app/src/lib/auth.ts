@@ -58,6 +58,9 @@ export const authConfig: NextAuthConfig = {
     async jwt({ token, user, account, profile: oauthProfile, trigger }) {
       // Re-fetch profile when the client calls update() after profile/avatar change
       if (trigger === "update" && token.userId) {
+        // Clear one-shot profile-switch notification so it only shows once.
+        delete token.switchedProfileName;
+
         const db = getAdminClient();
         if (db) {
           const { data } = await db
@@ -136,6 +139,14 @@ export const authConfig: NextAuthConfig = {
             if (result.email) token.email = result.email;
             if (result.image) token.picture = result.image;
 
+            // When an account that was already linked to a different profile is
+            // used, the session silently switches to that profile. Surface a
+            // one-shot notification so the client can inform the user.
+            if (result.profileSwitched) {
+              token.switchedProfileName =
+                result.name ?? result.email ?? "another account";
+            }
+
             // Store GitHub username when connecting GitHub
             if (account.provider === "github" && oauthProfile) {
               const ghUsername = (oauthProfile as Record<string, unknown>)
@@ -200,6 +211,8 @@ export const authConfig: NextAuthConfig = {
       s.walletAddress = token.walletAddress as string | undefined;
       s.linkedAccounts = (token.linkedAccounts as string[]) ?? [];
       s.provider = token.provider as string;
+      // One-shot: present only until the client calls update() to clear it.
+      s.switchedProfileName = token.switchedProfileName as string | undefined;
       return session;
     },
   },

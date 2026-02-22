@@ -1,6 +1,6 @@
 # Superteam Brazil Learning Management System Bounty
 
-> **Complete Bounty Details - Retrieved: February 15, 2026**
+> **Complete Bounty Details - Retrieved: February 20, 2026**
 
 ---
 
@@ -14,19 +14,20 @@
 - **Region**: Global
 - **Agent Access**: AGENT_ALLOWED
 - **Published**: February 11, 2026
-- **Submission Deadline**: February 26, 2026 (02:59:59 UTC)
-- **Commitment Date**: March 12, 2026 (02:59:59 UTC)
+- **Last Updated**: February 17, 2026
+- **Submission Deadline**: March 5, 2026 (02:59:59 UTC) — **13 days remaining**
+- **Commitment Date**: March 26, 2026 (02:59:59 UTC)
 - **Winner Announcement**: Within 10 days after deadline
 - **Payment**: Within 15 days after winner announcement
 
 ### Prize Pool
 
-- **Total**: $4,800 USDC
+- **Total**: $5,000 USDG
 - **Token**: USDG
 - **Rewards Breakdown**:
-  - 🥇 **1st Place**: $4,000 USDC
-  - 🥈 **2nd Place**: $500 USDC
-  - 🥉 **3rd Place**: $300 USDC
+  - 🥇 **1st Place**: $3,500 USDG
+  - 🥈 **2nd Place**: $1,000 USDG
+  - 🥉 **3rd Place**: $500 USDG
 
 ### Sponsor
 
@@ -39,8 +40,7 @@
 
 - **Name**: Kaue Cano
 - **Username**: @kaue
-- **Telegram**: https://t.me/kauenet
-- **Twitter**: @SuperteamBR
+- **Twitter**: https://x.com/kauenet
 - **Discord**: discord.gg/superteambrasil
 
 ### Skills Required
@@ -88,39 +88,51 @@ The platform should:
 
 ## On-Chain Program
 
-The platform's gamification and credential logic lives on-chain via an Anchor program. The full spec and code live at **[github.com/solanabr/superteam-academy](https://github.com/solanabr/superteam-academy)** — your delivery should be a **PR to this repo** (inside its according folder following monorepo structure).
+The platform's gamification and credential logic lives on-chain via an Anchor program. The full spec and code live at **[github.com/solanabr/superteam-academy](https://github.com/solanabr/superteam-academy)** — your delivery should be a **PR to this repo** (inside its according folder following monorepo structure):
+
+```
+/root
+   .claude/ (skills & agents)
+   docs/
+   onchain-academy/ (program)
+   -> app (front end client)
+   -> backend (back end client)
+```
 
 ### Key On-Chain Concepts
 
 - **XP is a soulbound fungible token** (Token-2022, NonTransferable). A learner's token balance = their XP. Levels are derived: `Level = floor(sqrt(xp / 100))`.
 
-- **Credentials are evolving compressed NFTs** (Metaplex Bubblegum). One cNFT per learning track that upgrades as the learner progresses — no wallet clutter.
+- **Credentials are Metaplex Core NFTs**, soulbound via PermanentFreezeDelegate. One NFT per learning track that upgrades in place as the learner progresses — no wallet clutter. Attributes like track, level, courses completed, and total XP are stored on-chain.
 
-- **Courses are on-chain PDAs** that spawn Enrollment PDAs per learner. Lesson progress is tracked via bitmaps.
+- **Courses are on-chain PDAs** that spawn Enrollment PDAs per learner. Lesson progress is tracked via a 256-bit bitmap (up to 256 lessons per course).
 
-- **Enrollments are closeable** after completion to reclaim rent. Proof is preserved via the credential cNFT and transaction history.
+- **Enrollments are closeable** after completion to reclaim rent. Proof is preserved via the credential NFT and transaction history.
 
-- **Streaks are activity-derived** — updated as a side effect of `complete_lesson`, not a separate check-in.
+- **Streaks are a frontend-only feature** — daily activity tracking, streak history visualization, and milestone rewards are not tracked on-chain and should be implemented in the frontend (local storage, database, or CMS).
 
-- **Achievements use a bitmap** (256 possible) on the Learner PDA.
+- **Achievements use AchievementType and AchievementReceipt PDAs**. Each achievement award mints a soulbound Metaplex Core NFT to the recipient. AchievementTypes support configurable supply caps and XP rewards.
 
 - **Leaderboard is off-chain** — derived by indexing XP token balances (Helius DAS API or custom indexer).
+
+For the full program specification, see [docs/SPEC.md](https://github.com/solanabr/superteam-academy/blob/main/docs/SPEC.md). For frontend integration patterns (PDA derivation, instruction usage, events, error codes), see [docs/INTEGRATION.md](https://github.com/solanabr/superteam-academy/blob/main/docs/INTEGRATION.md).
 
 ### What to Implement vs. Stub
 
 **Fully implement on Devnet:**
 
 - Wallet authentication (multi-wallet adapter)
-- XP balance display from token accounts
-- Credential (cNFT) display and verification
+- XP balance display from Token-2022 token accounts
+- Credential (Metaplex Core NFT) display and verification
 - Leaderboard by indexing XP balances
+- Course enrollment — the learner signs the enroll transaction directly (no backend needed)
 
 **Stub with clean abstractions** (we connect the on-chain program later):
 
 - Lesson completion flow (backend-signed transactions)
-- Course enrollment
+- Course finalization and credential issuance
 - Achievement claiming
-- Streak tracking
+- Streak tracking (frontend-only)
 
 **Create clean service interfaces so we can swap local storage for on-chain calls:**
 
@@ -134,6 +146,8 @@ interface LearningProgressService {
   getCredentials(wallet: PublicKey): Promise<Credential[]>;
 }
 ```
+
+See [docs/INTEGRATION.md](https://github.com/solanabr/superteam-academy/blob/main/docs/INTEGRATION.md) for the exact account structures, instruction parameters, and event signatures your service layer should map to.
 
 ---
 
@@ -201,7 +215,7 @@ Current courses with completion % and next lesson. XP balance, level progress ba
 
 ### 7. User Profile (`/profile`, `/profile/[username]`)
 
-Profile header with avatar, name, bio, social links, join date. Skill radar chart (Rust, Anchor, Frontend, Security, etc.). Achievement badge showcase. On-chain credential display — evolving cNFTs with track, level, and verification links. Completed courses list. Public/private visibility toggle.
+Profile header with avatar, name, bio, social links, join date. Skill radar chart (Rust, Anchor, Frontend, Security, etc.). Achievement badge showcase. On-chain credential display — Metaplex Core NFTs with track, level, and verification links. Completed courses list. Public/private visibility toggle.
 
 ### 8. Leaderboard (`/leaderboard`)
 
@@ -235,7 +249,7 @@ Rewards are tracked on-chain through interaction with the program at [github.com
 
 ### Streaks
 
-Track consecutive days with activity. Visual calendar showing streak history. Streak freeze (bonus feature). Milestone rewards at 7, 30, and 100 days — these map to on-chain credential upgrades.
+Track consecutive days with activity. Visual calendar showing streak history. Streak freeze (bonus feature). Milestone rewards at 7, 30, and 100 days. **Streaks are a frontend-managed feature** — implement using local storage or your database/CMS.
 
 ### Achievements/Badges
 
@@ -245,7 +259,7 @@ Track consecutive days with activity. Visual calendar showing streak history. St
 - **Community** — "Helper", "First Comment", "Top Contributor"
 - **Special** — "Early Adopter", "Bug Hunter", "Perfect Score"
 
-Up to 256 achievements supported by the on-chain bitmap.
+On-chain, achievements are managed through AchievementType and AchievementReceipt PDAs. Each achievement award mints a soulbound Metaplex Core NFT to the recipient. AchievementTypes support configurable supply caps and XP rewards.
 
 ---
 
@@ -330,7 +344,7 @@ Submit through **Superteam Earn** with:
 
 ## Timeline
 
-- **Submission Deadline:** February 26, 2026 at 02:59:59 UTC (14 days from listing - **11 days remaining from Feb 15, 2026**)
+- **Submission Deadline:** March 5, 2026 at 02:59:59 UTC (**13 days remaining from Feb 20, 2026**)
 - **Winner Announcement:** Within 10 days after deadline
 - **Payment:** Within 15 days after winner announcement
 
@@ -402,7 +416,7 @@ Submit through **Superteam Earn** with:
 ## FAQ
 
 **Q: Do I need to implement the full on-chain program?**
-A: No. The on-chain program is in the repo already. Build the frontend with clean service interfaces. Credential display (reading cNFTs from Devnet) should work — lesson completion and enrollment can be stubbed.
+A: No. The on-chain program is in the repo already. Build the frontend with clean service interfaces. Credential display (reading NFTs from Devnet) should work — lesson completion and enrollment can be stubbed.
 
 **Q: Can I use additional libraries?**
 A: Yes, as long as they don't conflict with required technologies. Document any additions.
@@ -413,13 +427,13 @@ A: No, we provide mock content. You build the platform and CMS structure.
 **Q: Can I use Supabase for user data?**
 A: Yes, for MVP. Design clean abstractions so we can swap to on-chain later.
 
-**Q: What if I can't complete all features in 14 days?**
+**Q: What if I can't complete all features in 21 days?**
 A: Prioritize core features over bonuses. A polished subset beats a buggy complete set.
 
 **Q: Can a team submit?**
 A: Yes. Prize is per submission, not per person.
 
-**Q: Can I submit in Portuguese?**
+**Q: Can I submit in Portuguese/Spanish?**
 A: Yes! Non-English LATAM content is welcome.
 
 ---
@@ -428,11 +442,10 @@ A: Yes! Non-English LATAM content is welcome.
 
 - **Discord:** discord.gg/superteambrasil
 - **Twitter:** [@SuperteamBR](https://twitter.com/SuperteamBR)
-- **Telegram:** https://t.me/kauenet
 
 ---
 
-## Additional Metadata (API Response Details)
+## Additional Metadata (API Response)
 
 ```json
 {
@@ -441,8 +454,9 @@ A: Yes! Non-English LATAM content is welcome.
   "status": "OPEN",
   "type": "bounty",
   "token": "USDG",
-  "rewardAmount": 4800,
-  "usdValue": 4800,
+  "rewardAmount": 5000,
+  "usdValue": 5000,
+  "rewards": { "1": 3500, "2": 1000, "3": 500 },
   "tokenUsdAtPublish": 1,
   "source": "NATIVE",
   "isPublished": true,
@@ -450,8 +464,10 @@ A: Yes! Non-English LATAM content is welcome.
   "isActive": true,
   "isArchived": false,
   "createdAt": "2026-02-11T13:36:17.388Z",
-  "updatedAt": "2026-02-11T14:11:22.566Z",
+  "updatedAt": "2026-02-17T12:18:43.281Z",
   "publishedAt": "2026-02-11T14:08:35.766Z",
+  "deadline": "2026-03-05T02:59:59.000Z",
+  "commitmentDate": "2026-03-26T02:59:59.000Z",
   "isWinnersAnnounced": false,
   "region": "Global",
   "agentAccess": "AGENT_ALLOWED",
@@ -469,5 +485,5 @@ A: Yes! Non-English LATAM content is welcome.
 ---
 
 **End of Bounty Details Document**
-**Retrieved**: February 15, 2026
+**Retrieved**: February 20, 2026
 **Source**: https://superteam.fun/api/agents/listings/details/superteam-academy

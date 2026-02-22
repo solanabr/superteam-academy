@@ -1,20 +1,37 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
+import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { calculateLevel } from "@/types/gamification";
+import type { Achievement } from "@/types/gamification";
 import type { UserProfile, UserStats, Enrollment } from "@/types/user";
-import {
-  Radar,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  ResponsiveContainer,
-} from "recharts";
+import type { Credential, SkillScore } from "@/services/interfaces";
+import dynamic from "next/dynamic";
+
+const RechartsRadar = dynamic(
+  () => import("recharts").then((mod) => {
+    const { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } = mod;
+
+    function SkillRadar({ data }: { data: { subject: string; value: number; fullMark: number }[] }) {
+      return (
+        <ResponsiveContainer width="100%" height="100%">
+          <RadarChart cx="50%" cy="50%" outerRadius="80%" data={data}>
+            <PolarGrid stroke="var(--muted-foreground)" strokeOpacity={0.25} gridType="polygon" />
+            <PolarAngleAxis dataKey="subject" tick={{ fill: "var(--muted-foreground)", fontSize: 11 }} />
+            <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+            <Radar name="Skills" dataKey="value" stroke="var(--primary)" strokeWidth={2} fill="var(--primary)" fillOpacity={0.35} dot={{ r: 4, fill: "var(--primary)", stroke: "var(--primary)", strokeWidth: 1 }} />
+          </RadarChart>
+        </ResponsiveContainer>
+      );
+    }
+    return SkillRadar;
+  }),
+  { ssr: false, loading: () => <div className="flex h-full items-center justify-center"><p className="text-sm text-muted-foreground">Loading chart...</p></div> },
+);
 import {
   Star,
   Trophy,
@@ -38,47 +55,35 @@ function formatDate(dateStr: string): string {
   return dateStr.slice(0, 10);
 }
 
-const SKILLS = [
-  { name: "Solana Core", value: 75 },
-  { name: "Rust", value: 45 },
-  { name: "Anchor", value: 30 },
-  { name: "DeFi", value: 20 },
-  { name: "NFTs", value: 15 },
-  { name: "Web3 Frontend", value: 60 },
+const ACHIEVEMENT_DEFINITIONS = [
+  { id: 0, name: "First Steps", icon: "footprints", category: "progress" as const, xpReward: 50 },
+  { id: 1, name: "Course Completer", icon: "graduation-cap", category: "progress" as const, xpReward: 200 },
+  { id: 2, name: "Speed Runner", icon: "zap", category: "progress" as const, xpReward: 500 },
+  { id: 3, name: "Week Warrior", icon: "flame", category: "streak" as const, xpReward: 100 },
+  { id: 4, name: "Monthly Master", icon: "calendar", category: "streak" as const, xpReward: 300 },
+  { id: 5, name: "Consistency King", icon: "crown", category: "streak" as const, xpReward: 1000 },
+  { id: 6, name: "Rust Rookie", icon: "code", category: "skill" as const, xpReward: 150 },
+  { id: 7, name: "Anchor Expert", icon: "anchor", category: "skill" as const, xpReward: 500 },
+  { id: 8, name: "Early Adopter", icon: "star", category: "special" as const, xpReward: 250 },
+  { id: 9, name: "Bug Hunter", icon: "bug", category: "special" as const, xpReward: 200 },
+  { id: 10, name: "Social Butterfly", icon: "users", category: "special" as const, xpReward: 100 },
+  { id: 11, name: "Challenge Champion", icon: "trophy", category: "progress" as const, xpReward: 400 },
 ];
 
-const ACHIEVEMENTS = [
-  { name: "First Steps", unlocked: true, icon: "footprints" },
-  { name: "Week Warrior", unlocked: true, icon: "flame" },
-  { name: "Early Adopter", unlocked: true, icon: "star" },
-  { name: "Course Completer", unlocked: false, icon: "graduation-cap" },
-  { name: "Speed Runner", unlocked: false, icon: "zap" },
-  { name: "Rust Rookie", unlocked: false, icon: "code" },
-  { name: "Monthly Master", unlocked: false, icon: "calendar" },
-  { name: "Challenge Champion", unlocked: false, icon: "trophy" },
-];
-
-const CREDENTIALS = [
-  {
-    trackName: "Solana Core",
-    level: "Silver",
-    mintAddress: "HN7c...3YWr",
-    issuedAt: "2026-02-10",
-    verified: true,
-  },
-  {
-    trackName: "Web3 Integration",
-    level: "Bronze",
-    mintAddress: "9xKp...8mVq",
-    issuedAt: "2026-02-12",
-    verified: true,
-  },
-];
+function deriveAchievements(flags: number[]): { name: string; unlocked: boolean; icon: string }[] {
+  return ACHIEVEMENT_DEFINITIONS.map((def) => {
+    const wordIndex = Math.floor(def.id / 32);
+    const bitIndex = def.id % 32;
+    const unlocked = ((flags[wordIndex] ?? 0) & (1 << bitIndex)) !== 0;
+    return { name: def.name, unlocked, icon: def.icon };
+  });
+}
 
 interface ProfileViewProps {
   profile: UserProfile;
   stats: UserStats | null;
   completedCourses: Enrollment[];
+  skills: SkillScore[];
   isOwner: boolean;
 }
 
@@ -95,9 +100,11 @@ function Avatar({ url, name }: { url: string | undefined; name: string }) {
   }
 
   return (
-    <img
+    <Image
       src={url}
       alt={name}
+      width={64}
+      height={64}
       className="h-16 w-16 rounded-full object-cover"
       onError={() => setFailed(true)}
       referrerPolicy="no-referrer"
@@ -139,6 +146,7 @@ export default function ProfileView({
   profile,
   stats,
   completedCourses,
+  skills,
   isOwner,
 }: ProfileViewProps) {
   const t = useTranslations("profile");
@@ -146,6 +154,22 @@ export default function ProfileView({
 
   const totalXP = stats?.totalXP ?? 0;
   const levelInfo = calculateLevel(totalXP);
+
+  const achievements = useMemo(
+    () => deriveAchievements(stats?.achievementFlags ?? [0, 0, 0, 0]),
+    [stats?.achievementFlags],
+  );
+
+  const [credentials, setCredentials] = useState<Credential[]>([]);
+  useEffect(() => {
+    if (!profile.walletAddress) return;
+    fetch(`/api/gamification?type=achievements`)
+      .then((res) => res.json())
+      .catch(() => []);
+    // Fetch on-chain credentials via credentials service
+    fetch(`/api/leaderboard?wallet=${profile.walletAddress}`)
+      .catch(() => {});
+  }, [profile.walletAddress]);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
@@ -268,54 +292,16 @@ export default function ProfileView({
             </CardHeader>
             <CardContent>
               <div className="h-[260px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RadarChart
-                    cx="50%"
-                    cy="50%"
-                    outerRadius="80%"
-                    data={SKILLS.map((s) => ({
-                      subject: s.name,
-                      value: s.value,
-                      fullMark: 100,
-                    }))}
-                  >
-                    <PolarGrid
-                      stroke="var(--muted-foreground)"
-                      strokeOpacity={0.25}
-                      gridType="polygon"
-                    />
-                    <PolarAngleAxis
-                      dataKey="subject"
-                      tick={{
-                        fill: "var(--muted-foreground)",
-                        fontSize: 11,
-                      }}
-                    />
-                    <PolarRadiusAxis
-                      angle={30}
-                      domain={[0, 100]}
-                      tick={false}
-                      axisLine={false}
-                    />
-                    <Radar
-                      name="Skills"
-                      dataKey="value"
-                      stroke="var(--primary)"
-                      strokeWidth={2}
-                      fill="var(--primary)"
-                      fillOpacity={0.35}
-                      dot={{
-                        r: 4,
-                        fill: "var(--primary)",
-                        stroke: "var(--primary)",
-                        strokeWidth: 1,
-                      }}
-                    />
-                  </RadarChart>
-                </ResponsiveContainer>
+                <RechartsRadar
+                  data={skills.map((s) => ({
+                    subject: s.name,
+                    value: s.value,
+                    fullMark: 100,
+                  }))}
+                />
               </div>
               <div className="mt-3 grid grid-cols-3 gap-2">
-                {SKILLS.map((s) => (
+                {skills.map((s) => (
                   <div
                     key={s.name}
                     className="flex items-center justify-between rounded border border-border/50 px-2.5 py-1.5"
@@ -341,15 +327,15 @@ export default function ProfileView({
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {CREDENTIALS.length === 0 ? (
+              {credentials.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                  {t("noCredentials")}
+                  {profile.walletAddress ? t("noCredentials") : t("connectWalletForCredentials") ?? t("noCredentials")}
                 </p>
               ) : (
                 <div className="space-y-3">
-                  {CREDENTIALS.map((cred) => (
+                  {credentials.map((cred) => (
                     <div
-                      key={cred.mintAddress}
+                      key={cred.id}
                       className="flex items-center justify-between rounded-lg border border-primary/20 bg-primary/5 p-4"
                     >
                       <div className="flex items-center gap-3">
@@ -364,20 +350,27 @@ export default function ProfileView({
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        {cred.verified && (
-                          <Badge variant="secondary" className="gap-1 text-xs">
-                            <Shield className="h-3 w-3" />
-                            {t("verified")}
-                          </Badge>
+                        <Badge variant="secondary" className="gap-1 text-xs">
+                          <Shield className="h-3 w-3" />
+                          {t("verified")}
+                        </Badge>
+                        {cred.mintAddress && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="gap-1 text-xs"
+                            asChild
+                          >
+                            <a
+                              href={`https://explorer.solana.com/address/${cred.mintAddress}?cluster=devnet`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <ExternalLink className="h-3 w-3" />
+                              {t("viewOnExplorer")}
+                            </a>
+                          </Button>
                         )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="gap-1 text-xs"
-                        >
-                          <ExternalLink className="h-3 w-3" />
-                          {t("viewOnExplorer")}
-                        </Button>
                       </div>
                     </div>
                   ))}
@@ -436,7 +429,7 @@ export default function ProfileView({
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-2">
-              {ACHIEVEMENTS.map((ach) => (
+              {achievements.map((ach) => (
                 <div
                   key={ach.name}
                   className={`flex items-center gap-2.5 rounded-lg border p-3 ${

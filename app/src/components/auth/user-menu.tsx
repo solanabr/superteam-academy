@@ -13,16 +13,36 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
 import { SignInModal } from "./sign-in-modal";
-import { User, Settings, LayoutDashboard, LogOut, Trophy } from "lucide-react";
+import { User, Settings, LayoutDashboard, LogOut, Trophy, Star, Zap, Flame } from "lucide-react";
+
+interface Stats { xp: number; level: number; streak: number }
 
 export function UserMenu() {
   const { data: session, status } = useSession();
   const t = useTranslations("common");
   const [signInOpen, setSignInOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [loadingStats, setLoadingStats] = useState(false);
 
   useEffect(() => setMounted(true), []);
+
+  function handleOpenChange(open: boolean) {
+    if (!open || !session?.user) return;
+    setStats(null);
+    setLoadingStats(true);
+    fetch("/api/gamification?type=stats")
+      .then((r) => r.json())
+      .then((d: { xp?: number; level?: number; streak?: { currentStreak?: number } }) => {
+        if (d.xp !== undefined) {
+          setStats({ xp: d.xp, level: d.level ?? 0, streak: d.streak?.currentStreak ?? 0 });
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoadingStats(false));
+  }
 
   if (!mounted || status === "loading") {
     return <div className="h-9 w-9 animate-pulse rounded-full bg-muted" />;
@@ -53,13 +73,14 @@ export function UserMenu() {
     : "U";
 
   return (
-    <DropdownMenu>
+    <DropdownMenu onOpenChange={handleOpenChange}>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-9 w-9 rounded-full">
           <Avatar className="h-9 w-9">
             <AvatarImage
               src={session.user.image ?? undefined}
               alt={session.user.name ?? "User"}
+              referrerPolicy="no-referrer"
             />
             <AvatarFallback className="bg-primary/10 text-primary text-sm">
               {initials}
@@ -70,7 +91,7 @@ export function UserMenu() {
       <DropdownMenuContent align="end" className="w-56">
         <div className="flex items-center gap-2 p-2">
           <Avatar className="h-8 w-8">
-            <AvatarImage src={session.user.image ?? undefined} />
+            <AvatarImage src={session.user.image ?? undefined} referrerPolicy="no-referrer" />
             <AvatarFallback className="text-xs">{initials}</AvatarFallback>
           </Avatar>
           <div className="flex flex-col">
@@ -79,6 +100,30 @@ export function UserMenu() {
               {session.user.email ?? "Wallet connected"}
             </span>
           </div>
+        </div>
+        <div className="flex items-center justify-center gap-3 px-2 pb-2 text-xs min-h-[1.5rem]">
+          {loadingStats ? (
+            <>
+              <Skeleton className="h-3.5 w-14" />
+              <Skeleton className="h-3.5 w-10" />
+              <Skeleton className="h-3.5 w-8" />
+            </>
+          ) : stats ? (
+            <>
+              <span className="flex items-center gap-1 text-primary">
+                <Star className="h-3 w-3 fill-current" />
+                {stats.xp.toLocaleString()} XP
+              </span>
+              <span className="flex items-center gap-1 text-gold">
+                <Zap className="h-3 w-3" />
+                Lv {stats.level}
+              </span>
+              <span className="flex items-center gap-1 text-orange-500">
+                <Flame className="h-3 w-3" />
+                {stats.streak}d
+              </span>
+            </>
+          ) : null}
         </div>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>

@@ -28,8 +28,20 @@ export const lesson = defineType({
       title: "Duration (minutes)",
       type: "number",
     }),
-    defineField({ name: "xpReward", title: "XP Reward", type: "number" }),
     defineField({ name: "order", title: "Order", type: "number" }),
+    defineField({
+      name: "videoUrl",
+      title: "Video URL",
+      type: "url",
+      description: "YouTube or video embed URL",
+    }),
+    defineField({
+      name: "markdownContent",
+      title: "Markdown Content",
+      type: "text",
+      rows: 20,
+      description: "Alternative to rich text — raw markdown content",
+    }),
     defineField({
       name: "content",
       title: "Content",
@@ -52,7 +64,7 @@ export const lesson = defineType({
           name: "language",
           title: "Language",
           type: "string",
-          options: { list: ["typescript", "rust"] },
+          options: { list: ["typescript", "rust", "json"] },
         }),
         defineField({
           name: "starterCode",
@@ -68,13 +80,22 @@ export const lesson = defineType({
             {
               type: "object",
               fields: [
+                defineField({ name: "label", title: "Label", type: "string" }),
                 defineField({ name: "input", title: "Input", type: "string" }),
                 defineField({
                   name: "expectedOutput",
-                  title: "Expected Output",
+                  title: "Expected Output (literal)",
                   type: "string",
+                  description: "Exact string the function must return. Leave blank when using a Validator.",
                 }),
-                defineField({ name: "label", title: "Label", type: "string" }),
+                defineField({
+                  name: "validator",
+                  title: "Validator (JS expression)",
+                  type: "string",
+                  description:
+                    "JS expression evaluated against `output` (string). Overrides Expected Output. " +
+                    "Examples: output.length >= 32 && output.length <= 44 | Number(output) > 0 | output === 'true'",
+                }),
               ],
             },
           ],

@@ -5,6 +5,8 @@ export interface Track {
   description: string;
   icon: string;
   color: string;
+  trackId?: number;
+  collectionAddress?: string;
 }
 
 export interface Instructor {
@@ -22,7 +24,6 @@ export interface Lesson {
   slug: string;
   type: "content" | "challenge";
   duration: number;
-  xpReward: number;
   content?: string;
   videoUrl?: string;
   challenge?: ChallengeData;
@@ -31,7 +32,7 @@ export interface Lesson {
 
 export interface ChallengeData {
   prompt: string;
-  language: "rust" | "typescript";
+  language: "rust" | "typescript" | "json";
   starterCode: string;
   solution: string;
   testCases: TestCase[];
@@ -42,6 +43,8 @@ export interface TestCase {
   input: string;
   expectedOutput: string;
   label: string;
+  /** Optional JS expression evaluated against `output` (string). Overrides literal comparison. */
+  validator?: string;
 }
 
 export interface Module {
@@ -65,12 +68,25 @@ export interface Course {
   modules: Module[];
   totalLessons: number;
   totalDuration: number;
+  /** Total XP from lessons: xpPerLesson × lessonCount */
   totalXP: number;
-  prerequisites: string[];
+  /** Completion bonus XP from finalize_course: ~50% of totalXP */
+  bonusXP: number;
+  prerequisite?: { id: string; title: string } | null;
   tags: string[];
   published: boolean;
   createdAt: string;
   updatedAt: string;
+  // On-chain create_course parameters
+  courseId?: string;
+  xpPerLesson?: number;
+  lessonCount?: number;
+  trackId?: number;
+  trackLevel?: number;
+  creator?: string;
+  creatorRewardXp?: number;
+  minCompletionsForReward?: number;
+  prerequisiteCourseId?: string;
 }
 
 export interface CourseCardData {
@@ -87,5 +103,8 @@ export interface CourseCardData {
   totalLessons: number;
   totalDuration: number;
   totalXP: number;
+  bonusXP: number;
+  courseId?: string; // on-chain course ID for PDA derivation
+  trackSlug?: string;
   progress?: number;
 }

@@ -7,27 +7,16 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ThemeToggle } from "./theme-toggle";
 import { LocaleSwitcher } from "./locale-switcher";
 import { UserMenu } from "@/components/auth/user-menu";
-import {
-  Menu,
-  GraduationCap,
-  Trophy,
-  LayoutDashboard,
-  Sparkles,
-} from "lucide-react";
+import { Menu, GraduationCap, Trophy, LayoutDashboard, Sparkles } from "lucide-react";
 import { useState } from "react";
 import Image from "next/image";
 
 export function Header() {
   const t = useTranslations("common");
   const [open, setOpen] = useState(false);
-
   const navLinks = [
     { href: "/courses" as const, label: t("courses"), icon: GraduationCap },
-    {
-      href: "/dashboard" as const,
-      label: t("dashboard"),
-      icon: LayoutDashboard,
-    },
+    { href: "/dashboard" as const, label: t("dashboard"), icon: LayoutDashboard },
     { href: "/leaderboard" as const, label: t("leaderboard"), icon: Trophy },
     { href: "/community" as const, label: t("community"), icon: Sparkles },
   ];
@@ -75,7 +64,7 @@ export function Header() {
           </nav>
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-3">
           <LocaleSwitcher />
           <ThemeToggle />
           <div className="hidden md:flex items-center ml-1">
@@ -97,10 +86,7 @@ export function Header() {
                     href={link.href}
                     onClick={() => setOpen(false)}
                   >
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-start gap-3"
-                    >
+                    <Button variant="ghost" className="w-full justify-start gap-3">
                       <link.icon className="h-4 w-4" />
                       {link.label}
                     </Button>

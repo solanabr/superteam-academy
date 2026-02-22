@@ -93,6 +93,8 @@
     "pathCourses": "{count} cursos",
     "pathXP": "{count} XP",
     "pathStart": "Iniciar Trilha",
+    "pathExplore": "Explorar Trilha",
+    "pathContinue": "Continuar",
     "path1Title": "Fundamentos Solana",
     "path1Desc": "Domine Solana do zero. Contas, programas, PDAs e seu primeiro programa implantado.",
     "path2Title": "Desenvolvedor DeFi",

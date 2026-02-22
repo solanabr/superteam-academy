@@ -1,6 +1,6 @@
 #!/bin/bash
 # Reads pubkey from wallets/program-keypair.json and updates declare_id + Anchor.toml
-set -euo pipefail
+set -eu
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
@@ -18,12 +18,12 @@ echo "Program ID: $PUBKEY"
 
 # Update lib.rs
 LIB_RS="$ROOT_DIR/onchain-academy/programs/onchain-academy/src/lib.rs"
-sed -i '' "s/declare_id!(\"[^\"]*\")/declare_id!(\"$PUBKEY\")/" "$LIB_RS"
+sed -i "s/declare_id!(\"[^\"]*\")/declare_id!(\"$PUBKEY\")/" "$LIB_RS"
 echo "Updated $LIB_RS"
 
 # Update Anchor.toml
 ANCHOR_TOML="$ROOT_DIR/onchain-academy/Anchor.toml"
-sed -i '' "s/onchain_academy = \"[^\"]*\"/onchain_academy = \"$PUBKEY\"/" "$ANCHOR_TOML"
+sed -i "s/onchain_academy = \"[^\"]*\"/onchain_academy = \"$PUBKEY\"/" "$ANCHOR_TOML"
 echo "Updated $ANCHOR_TOML"
 
 echo "Done. Run 'anchor build' to rebuild with the new program ID."

@@ -5,7 +5,7 @@ import { fromWeb3JsKeypair, fromWeb3JsPublicKey } from "@metaplex-foundation/umi
 import * as fs from "fs";
 import { Keypair, PublicKey } from "@solana/web3.js";
 
-const PROGRAM_ID = new PublicKey("ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf");
+const PROGRAM_ID = new PublicKey("GuBhF6hk5yKhnvU5712LZwUPaoAmoxtJf9GTh4CHTxsF");
 
 const secret = JSON.parse(fs.readFileSync("../wallets/signer.json", "utf-8"));
 const keypair = Keypair.fromSecretKey(Uint8Array.from(secret));

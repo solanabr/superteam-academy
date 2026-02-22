@@ -26,6 +26,14 @@ interface ResolveResult {
   name?: string;
   email?: string;
   image?: string;
+  /**
+   * True when the sign-in resolved to a *different* profile than the one
+   * currently signed in (existingUserId). Happens when a wallet or OAuth
+   * account that is already linked to profile B is used by a session
+   * currently running as profile A — the session switches to profile B.
+   * The JWT callback uses this to set a one-shot notification token field.
+   */
+  profileSwitched?: boolean;
 }
 
 /** Generate a URL-safe username from a display name or email. */
@@ -73,7 +81,13 @@ export async function resolveUserOnSignIn(
     .single();
 
   if (linked) {
-    return await buildResult(db, linked.user_id);
+    const result = await buildResult(db, linked.user_id);
+    // Detect profile switch: the account is linked to a *different* user than
+    // the one currently signed in. The JWT callback will surface this to the client.
+    if (existingUserId && linked.user_id !== existingUserId) {
+      result.profileSwitched = true;
+    }
+    return result;
   }
 
   // 2. User already signed in → link to existing profile

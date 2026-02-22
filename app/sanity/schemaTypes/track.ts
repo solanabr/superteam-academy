@@ -20,5 +20,17 @@ export const track = defineType({
     defineField({ name: "description", title: "Description", type: "text" }),
     defineField({ name: "icon", title: "Icon", type: "string" }),
     defineField({ name: "color", title: "Color", type: "string" }),
+    defineField({
+      name: "trackId",
+      title: "Track ID (On-Chain)",
+      type: "number",
+      description: "On-chain track identifier matching create_course trackId",
+    }),
+    defineField({
+      name: "collectionAddress",
+      title: "Collection Address",
+      type: "string",
+      description: "Metaplex Core collection address for track credentials",
+    }),
   ],
 });
