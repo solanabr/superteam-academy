@@ -15,7 +15,8 @@ export async function GET() {
         username: true,
         xp: true,
         streak: true,
-        id: true
+        id: true,
+        githubHandle:true
       }
     });
 

@@ -87,50 +87,109 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    // ВАЖНО: Исправляем signIn callback для сохранения githubHandle
-    async signIn({ user, account, profile }) {
+    async signIn({ user, account, profile, email, credentials }) {
+      // Это User из JWT, а не из базы, если стратегия jwt
+      const sessionUser = user as any; 
+      
+      // Сценарий: Вошли через кошелек, а теперь привязываем GitHub
+      // `isNewUser` бывает неточным, поэтому проверяем наличие walletAddress
+      // `account` существует только при OAuth
+      if (account && sessionUser.walletAddress) {
+        console.log("[Auth SignIn] Linking social account to existing wallet user...");
+        
+        // Находим юзера по кошельку
+        const existingWalletUser = await prisma.user.findUnique({
+          where: { walletAddress: sessionUser.walletAddress },
+        });
+
+        if (existingWalletUser) {
+          // Находим OAuth аккаунт
+          const existingAccount = await prisma.account.findUnique({
+            where: {
+              provider_providerAccountId: {
+                provider: account.provider,
+                providerAccountId: account.providerAccountId,
+              },
+            },
+          });
+
+          // Если аккаунт уже привязан к кому-то - ошибка.
+          // Если нет - привязываем к нашему юзеру по кошельку.
+          if (!existingAccount) {
+            await prisma.account.create({
+              data: {
+                userId: existingWalletUser.id,
+                type: account.type,
+                provider: account.provider,
+                providerAccountId: account.providerAccountId,
+                access_token: account.access_token,
+                expires_at: account.expires_at,
+                token_type: account.token_type,
+                scope: account.scope,
+                id_token: account.id_token,
+                session_state: account.session_state as string | undefined,
+              },
+            });
+          }
+          
+          // Обновляем данные профиля
+          await prisma.user.update({
+              where: { id: existingWalletUser.id },
+              data: {
+                name: existingWalletUser.name || (profile as any)?.name || (profile as any)?.login,
+                email: existingWalletUser.email || (profile as any)?.email,
+                image: existingWalletUser.image || (profile as any)?.avatar_url,
+                githubHandle: (account.provider === 'github') ? (profile as any)?.login : existingWalletUser.githubHandle,
+              },
+          });
+
+          // Возвращаем true, чтобы разрешить вход
+          return true;
+        }
+      }
+
+      // Сценарий: Первый вход через GitHub
       if (account?.provider === "github" && profile) {
-        try {
+         try {
             // @ts-ignore
             const githubLogin = profile.login || profile.name;
-            
-            // На этом этапе user.id уже должен быть валидным ObjectID из базы
-            // Но есть нюанс: при первом входе user.id может быть еще не создан адаптером в некоторых версиях flow.
-            // Однако PrismaAdapter обычно создает юзера ДО вызова signIn (если это не credentials).
-            
-            // Чтобы избежать ошибки Malformed ObjectID, мы ищем юзера по email (который уникален)
-            // или доверяем user.id, если он похож на MongoID.
-            
             if (user.email) {
                 await prisma.user.update({
                     where: { email: user.email },
                     data: { githubHandle: githubLogin }
                 });
             }
-        } catch (e) {
-            console.error("Failed to save github handle", e);
-            // Не блокируем вход, если не удалось сохранить хендл
-        }
+        } catch (e) {}
       }
-      return true;
+      
+      return true; // Разрешаем вход
     },
     async session({ session, token }) {
       if (session.user) {
+        const userFromDb = await prisma.user.findUnique({ where: { id: token.sub } });
         // @ts-ignore
-        session.user.id = token.sub; // sub хранит ID из базы
+        session.user.id = token.sub;
         // @ts-ignore
-        session.user.walletAddress = token.walletAddress as string;
+        session.user.walletAddress = userFromDb?.walletAddress;
       }
       return session;
     },
-    async jwt({ token, user, trigger, session }) {
+    async jwt({ token, user, account, profile, trigger, session }) {
       if (user) {
         token.sub = user.id;
         // @ts-ignore
-        token.walletAddress = user.walletAddress || (user as any).address;
+        token.walletAddress = user.walletAddress;
       }
-      if (trigger === "update" && session?.walletAddress) {
-        token.walletAddress = session.walletAddress;
+      // Привязываем GitHub к существующей JWT сессии
+      if (account && profile) {
+        const dbUser = await prisma.user.findUnique({ where: { id: token.sub } });
+        if (dbUser && account.provider === 'github') {
+            await prisma.user.update({
+                where: { id: dbUser.id },
+                // @ts-ignore
+                data: { githubHandle: profile.login }
+            });
+        }
       }
       return token;
     },

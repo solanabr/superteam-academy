@@ -15,6 +15,7 @@ interface Leader {
   username: string | null;
   xp: number;
   streak: number;
+  githubHandle: string | null;
 }
 
 export default function LeaderboardPage() {
@@ -86,7 +87,7 @@ export default function LeaderboardPage() {
                             </Avatar>
                             <div className="flex flex-col">
                                 <span className="font-semibold">
-                                    {leader.username || `${leader.walletAddress.slice(0, 4)}...${leader.walletAddress.slice(-4)}`}
+                                    {leader.username || leader.githubHandle ||`${leader.walletAddress.slice(0, 4)}...${leader.walletAddress.slice(-4)}`}
                                     {isMe && <Badge variant="secondary" className="ml-2 text-xs">You</Badge>}
                                 </span>
                             </div>

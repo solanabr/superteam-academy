@@ -111,7 +111,7 @@ export default function SettingsPage() {
   // Проверяем, привязан ли GitHub, просматривая массив accounts
   const githubAccount = userDb?.accounts?.find((acc: any) => acc.provider === "github");
   // Имя для отображения (берем из сессии или из БД)
-  const githubDisplayName = githubAccount ? (userDb?.githubHandle || session?.user?.name || "Connected") : null;
+  const githubDisplayName = userDb?.githubHandle || (session?.user?.name && userDb?.accounts?.some((a: any) => a.provider === 'github') ? session.user.name : null);
 
   // Заблокирован ли инпут Username? (Если он уже есть в БД и он не пустой)
   const isUsernameLocked = !!userDb?.username && userDb.username.trim() !== "";
@@ -187,9 +187,9 @@ export default function SettingsPage() {
             </div>
 
             {/* Social Connections */}
-            <div className="space-y-2 pt-2 border-t mt-6">
+            <div className="space-y-2">
                 <Label>GitHub Account</Label>
-                {githubAccount ? (
+                {githubDisplayName ? ( // <-- Проверяем наше вычисленное имя
                     <div className="flex items-center justify-between p-3 border rounded-md bg-muted/20">
                         <div className="flex items-center gap-2">
                             <FaGithub className="h-5 w-5" />
