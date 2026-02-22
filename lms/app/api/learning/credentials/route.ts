@@ -12,7 +12,10 @@ export async function GET(req: NextRequest) {
   // Try on-chain first
   try {
     const walletPk = new PublicKey(wallet);
-    const trackMap = new Map<number, { count: number; xp: number; first: string; last: string }>();
+    const trackMap = new Map<
+      number,
+      { count: number; xp: number; first: string; last: string }
+    >();
 
     for (const course of SAMPLE_COURSES) {
       const enrollment = await fetchEnrollment(course.id, walletPk);
@@ -20,9 +23,10 @@ export async function GET(req: NextRequest) {
 
       const completedAtRaw = enrollment.completedAt;
       const completedAt = new Date(
-        (typeof completedAtRaw === "object" && "toNumber" in (completedAtRaw as any)
+        (typeof completedAtRaw === "object" &&
+        "toNumber" in (completedAtRaw as any)
           ? (completedAtRaw as any).toNumber()
-          : Number(completedAtRaw)) * 1000
+          : Number(completedAtRaw)) * 1000,
       ).toISOString();
 
       const existing = trackMap.get(course.trackId);
@@ -69,7 +73,10 @@ export async function GET(req: NextRequest) {
 
   if (completed.length === 0) return NextResponse.json([]);
 
-  const trackMap = new Map<number, { count: number; xp: number; first: string; last: string }>();
+  const trackMap = new Map<
+    number,
+    { count: number; xp: number; first: string; last: string }
+  >();
 
   for (const e of completed) {
     const course = SAMPLE_COURSES.find((c) => c.id === e.courseId);

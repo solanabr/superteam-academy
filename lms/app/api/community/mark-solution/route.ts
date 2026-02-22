@@ -26,10 +26,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "thread not found" }, { status: 404 });
   }
   if (thread.author !== userId) {
-    return NextResponse.json({ error: "only thread author can mark solution" }, { status: 403 });
+    return NextResponse.json(
+      { error: "only thread author can mark solution" },
+      { status: 403 },
+    );
   }
   if (thread.type !== "question") {
-    return NextResponse.json({ error: "only question threads can have solutions" }, { status: 400 });
+    return NextResponse.json(
+      { error: "only question threads can have solutions" },
+      { status: 400 },
+    );
   }
 
   const reply = await Reply.findById(replyId);
@@ -62,17 +68,22 @@ export async function POST(req: NextRequest) {
           fromPubkey: backendKeypair.publicKey,
           toPubkey: recipient,
           lamports: thread.bountyLamports,
-        })
+        }),
       );
       tx.feePayer = backendKeypair.publicKey;
       tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-      bountyTxSignature = await sendAndConfirmTransaction(connection, tx, [backendKeypair]);
+      bountyTxSignature = await sendAndConfirmTransaction(connection, tx, [
+        backendKeypair,
+      ]);
 
       thread.bountyPaid = true;
       thread.bountyTxHash = bountyTxSignature;
     }
   } catch (err) {
-    console.error("[mark-solution] error:", err instanceof Error ? err.message : err);
+    console.error(
+      "[mark-solution] error:",
+      err instanceof Error ? err.message : err,
+    );
   }
 
   thread.isSolved = true;

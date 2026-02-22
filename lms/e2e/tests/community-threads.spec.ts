@@ -67,7 +67,10 @@ test.describe("Community threads listing", () => {
     await expect(threads.tabQuestion).toBeVisible();
   });
 
-  test("clicking discussion tab refetches with type filter", async ({ page, communityApi }) => {
+  test("clicking discussion tab refetches with type filter", async ({
+    page,
+    communityApi,
+  }) => {
     await communityApi.threads(MOCK_THREADS, 2);
 
     const threads = new CommunityThreadsPage(page);
@@ -86,7 +89,10 @@ test.describe("Community threads listing", () => {
     expect(req.url()).toContain("type=discussion");
   });
 
-  test("clicking question tab filters by questions", async ({ page, communityApi }) => {
+  test("clicking question tab filters by questions", async ({
+    page,
+    communityApi,
+  }) => {
     await communityApi.threads(MOCK_THREADS, 2);
 
     const threads = new CommunityThreadsPage(page);
@@ -114,7 +120,10 @@ test.describe("Community threads listing", () => {
     await expect(page.getByText(/no thread/i)).toBeVisible();
   });
 
-  test("pagination controls appear for multiple pages", async ({ page, communityApi }) => {
+  test("pagination controls appear for multiple pages", async ({
+    page,
+    communityApi,
+  }) => {
     await communityApi.stats();
     await page.route("**/api/community/threads?*", (route) =>
       route.fulfill({

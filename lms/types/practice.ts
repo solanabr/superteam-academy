@@ -26,7 +26,10 @@ export interface PracticeChallenge {
   tags: string[];
 }
 
-export const PRACTICE_CATEGORIES: Record<PracticeCategory, { label: string; color: string }> = {
+export const PRACTICE_CATEGORIES: Record<
+  PracticeCategory,
+  { label: string; color: string }
+> = {
   accounts: { label: "Accounts", color: "#34d399" },
   transactions: { label: "Transactions", color: "#60a5fa" },
   pdas: { label: "PDAs", color: "#fbbf24" },
@@ -39,7 +42,10 @@ export const PRACTICE_CATEGORIES: Record<PracticeCategory, { label: string; colo
   advanced: { label: "Advanced", color: "#f87171" },
 };
 
-export const PRACTICE_DIFFICULTY_CONFIG: Record<PracticeDifficulty, { label: string; color: string; xp: number }> = {
+export const PRACTICE_DIFFICULTY_CONFIG: Record<
+  PracticeDifficulty,
+  { label: string; color: string; xp: number }
+> = {
   easy: { label: "Easy", color: "#34d399", xp: 10 },
   medium: { label: "Medium", color: "#fbbf24", xp: 25 },
   hard: { label: "Hard", color: "#f87171", xp: 50 },
@@ -78,7 +84,10 @@ export const DAILY_XP_REWARDS: Record<PracticeDifficulty, number> = {
 
 export const PRACTICE_MILESTONES = [15, 30, 50, 75] as const;
 
-export const MILESTONE_LEVELS: Record<number, { name: string; color: string; solReward: number }> = {
+export const MILESTONE_LEVELS: Record<
+  number,
+  { name: string; color: string; solReward: number }
+> = {
   15: { name: "Bronze", color: "#cd7f32", solReward: 0.05 },
   30: { name: "Silver", color: "#a8b2c1", solReward: 0.1 },
   50: { name: "Gold", color: "#fbbf24", solReward: 0.25 },

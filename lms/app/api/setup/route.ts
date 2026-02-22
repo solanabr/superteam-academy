@@ -35,7 +35,9 @@ export async function POST(req: NextRequest) {
     const tx = await buildInitializeTx(program, authority, 2000, 1000);
     tx.feePayer = authority;
     tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-    const sig = await sendAndConfirmTransaction(connection, tx, [backendKeypair]);
+    const sig = await sendAndConfirmTransaction(connection, tx, [
+      backendKeypair,
+    ]);
     results.push(`initialize: ${sig}`);
     config = await fetchConfig();
   } else {
@@ -45,10 +47,18 @@ export async function POST(req: NextRequest) {
   // Step 2: Create Season 1 (idempotent)
   if (config && config.currentSeason === 0) {
     const mintKeypair = Keypair.generate();
-    const { tx } = await buildCreateSeasonTx(program, authority, mintKeypair, 1);
+    const { tx } = await buildCreateSeasonTx(
+      program,
+      authority,
+      mintKeypair,
+      1,
+    );
     tx.feePayer = authority;
     tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-    const sig = await sendAndConfirmTransaction(connection, tx, [backendKeypair, mintKeypair]);
+    const sig = await sendAndConfirmTransaction(connection, tx, [
+      backendKeypair,
+      mintKeypair,
+    ]);
     results.push(`create_season(1): ${sig}`);
     config = await fetchConfig();
   } else {
@@ -80,7 +90,9 @@ export async function POST(req: NextRequest) {
     });
     tx.feePayer = authority;
     tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-    const sig = await sendAndConfirmTransaction(connection, tx, [backendKeypair]);
+    const sig = await sendAndConfirmTransaction(connection, tx, [
+      backendKeypair,
+    ]);
     results.push(`create_course(${course.id}): ${sig}`);
   }
 

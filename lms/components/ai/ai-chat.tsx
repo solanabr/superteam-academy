@@ -10,21 +10,33 @@ import { useAIChat } from "@/lib/hooks/use-ai-chat";
 import type { ChatMessage } from "@/lib/hooks/use-ai-chat";
 import { highlight } from "@/lib/syntax-highlight";
 
-function MarkdownContent({ content, isUser }: { content: string; isUser: boolean }) {
+function MarkdownContent({
+  content,
+  isUser,
+}: {
+  content: string;
+  isUser: boolean;
+}) {
   const html = renderChatMarkdown(content);
   if (!html) return null;
   return (
     <div
       className={cn(
         "chat-md break-words text-sm leading-relaxed",
-        isUser ? "[&_code]:bg-white/20 [&_code]:text-white" : ""
+        isUser ? "[&_code]:bg-white/20 [&_code]:text-white" : "",
       )}
       dangerouslySetInnerHTML={{ __html: html }}
     />
   );
 }
 
-function ChatImage({ src, onExpand }: { src: string; onExpand: (url: string) => void }) {
+function ChatImage({
+  src,
+  onExpand,
+}: {
+  src: string;
+  onExpand: (url: string) => void;
+}) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
@@ -58,19 +70,20 @@ function ChatImage({ src, onExpand }: { src: string; onExpand: (url: string) => 
 
   return (
     <div className="relative group mt-1.5">
-      {loading && (
-        <div className="h-32 rounded-lg animate-pulse bg-muted" />
-      )}
+      {loading && <div className="h-32 rounded-lg animate-pulse bg-muted" />}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={src}
         alt="AI generated"
         className={cn(
           "rounded-lg max-w-full cursor-pointer transition-opacity",
-          loading ? "h-0 opacity-0 absolute" : "opacity-100"
+          loading ? "h-0 opacity-0 absolute" : "opacity-100",
         )}
         onLoad={() => setLoading(false)}
-        onError={() => { setLoading(false); setError(true); }}
+        onError={() => {
+          setLoading(false);
+          setError(true);
+        }}
         onClick={() => onExpand(src)}
       />
       {!loading && (
@@ -95,7 +108,9 @@ function ChatImage({ src, onExpand }: { src: string; onExpand: (url: string) => 
 
 function ImageLightbox({ src, onClose }: { src: string; onClose: () => void }) {
   useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
   }, [onClose]);
@@ -134,16 +149,24 @@ function MessageBubble({
   const hasImages = msg.images && msg.images.length > 0;
 
   return (
-    <div className={cn("flex gap-2.5", isUser ? "justify-end" : "justify-start")}>
+    <div
+      className={cn("flex gap-2.5", isUser ? "justify-end" : "justify-start")}
+    >
       {!isUser && (
-        <Image src="/logo.png" alt="AI" width={24} height={24} className="rounded-md mt-0.5 shrink-0" />
+        <Image
+          src="/logo.png"
+          alt="AI"
+          width={24}
+          height={24}
+          className="rounded-md mt-0.5 shrink-0"
+        />
       )}
       <div
         className={cn(
           "max-w-[85%] rounded-2xl px-3.5 py-2.5",
           isUser
             ? "bg-solana-purple text-white rounded-br-sm"
-            : "bg-muted rounded-bl-sm"
+            : "bg-muted rounded-bl-sm",
         )}
       >
         {hasText && <MarkdownContent content={msg.content} isUser={isUser} />}
@@ -165,28 +188,43 @@ function MessageBubble({
 }
 
 function renderChatMarkdown(md: string): string {
-  const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  const esc = (s: string) =>
+    s
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
 
   const blocks: string[] = [];
   let html = md.replace(/```(\w*)\n([\s\S]*?)```/g, (_m, lang, code) => {
     const langLabel = lang || "code";
     const idx = blocks.length;
     blocks.push(
-      `<div class="chat-code-block"><div class="chat-code-lang">${langLabel}</div><pre><code>${highlight(code.trim(), langLabel)}</code></pre></div>`
+      `<div class="chat-code-block"><div class="chat-code-lang">${langLabel}</div><pre><code>${highlight(code.trim(), langLabel)}</code></pre></div>`,
     );
     return `\x00CB${idx}\x00`;
   });
 
-  html = html.replace(/`([^`\n]+)`/g, (_m, code) => `<code class="chat-inline-code">${esc(code)}</code>`);
+  html = html.replace(
+    /`([^`\n]+)`/g,
+    (_m, code) => `<code class="chat-inline-code">${esc(code)}</code>`,
+  );
   html = html.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
   html = html.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, "<em>$1</em>");
   html = html.replace(/^### (.+)$/gm, '<p class="font-semibold mt-2">$1</p>');
   html = html.replace(/^## (.+)$/gm, '<p class="font-bold mt-2">$1</p>');
-  html = html.replace(/^# (.+)$/gm, '<p class="font-bold text-base mt-2">$1</p>');
-  html = html.replace(/^(\d+)\.\s+(.+)$/gm,
-    '<div class="chat-list-item"><span class="chat-list-num">$1.</span><span>$2</span></div>');
-  html = html.replace(/^[-*]\s+(.+)$/gm,
-    '<div class="chat-list-item"><span class="chat-list-bullet"></span><span>$1</span></div>');
+  html = html.replace(
+    /^# (.+)$/gm,
+    '<p class="font-bold text-base mt-2">$1</p>',
+  );
+  html = html.replace(
+    /^(\d+)\.\s+(.+)$/gm,
+    '<div class="chat-list-item"><span class="chat-list-num">$1.</span><span>$2</span></div>',
+  );
+  html = html.replace(
+    /^[-*]\s+(.+)$/gm,
+    '<div class="chat-list-item"><span class="chat-list-bullet"></span><span>$1</span></div>',
+  );
   html = html.replace(/\n(?!<)/g, "<br>");
   html = html.replace(/(<br>){3,}/g, "<br><br>");
   html = html.replace(/\x00CB(\d+)\x00/g, (_m, idx) => blocks[Number(idx)]);
@@ -203,7 +241,10 @@ export function AIChat() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+    scrollRef.current?.scrollTo({
+      top: scrollRef.current.scrollHeight,
+      behavior: "smooth",
+    });
   }, [messages]);
 
   useEffect(() => {
@@ -238,7 +279,9 @@ export function AIChat() {
 
   return (
     <>
-      {lightboxSrc && <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />}
+      {lightboxSrc && (
+        <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />
+      )}
 
       {/* Floating trigger */}
       <button
@@ -246,13 +289,19 @@ export function AIChat() {
         className={cn(
           "fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-all hover:scale-105 border border-border/50",
           "bg-background",
-          open && "rotate-90 scale-90"
+          open && "rotate-90 scale-90",
         )}
       >
         {open ? (
           <X className="h-6 w-6 text-foreground" />
         ) : (
-          <Image src="/logo.png" alt="AI" width={32} height={32} className="rounded-full" />
+          <Image
+            src="/logo.png"
+            alt="AI"
+            width={32}
+            height={32}
+            className="rounded-full"
+          />
         )}
       </button>
 
@@ -262,13 +311,26 @@ export function AIChat() {
           {/* Header */}
           <div className="flex items-center justify-between border-b px-4 py-3 bg-gradient-to-r from-solana-purple/5 to-xp-gold/5">
             <div className="flex items-center gap-3">
-              <Image src="/logo.png" alt="Superteam" width={32} height={32} className="rounded-lg" />
+              <Image
+                src="/logo.png"
+                alt="Superteam"
+                width={32}
+                height={32}
+                className="rounded-lg"
+              />
               <div>
                 <p className="text-sm font-semibold">{t("title")}</p>
-                <p className="text-[10px] text-muted-foreground">{t("subtitle")}</p>
+                <p className="text-[10px] text-muted-foreground">
+                  {t("subtitle")}
+                </p>
               </div>
             </div>
-            <Button variant="ghost" size="sm" onClick={clearChat} className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearChat}
+              className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+            >
               <Trash2 className="h-4 w-4" />
             </Button>
           </div>
@@ -277,11 +339,25 @@ export function AIChat() {
           <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
             {messages.length === 0 && (
               <div className="flex flex-col items-center justify-center h-full text-center px-6">
-                <Image src="/logo.png" alt="Superteam" width={48} height={48} className="opacity-30 mb-4" />
-                <p className="text-sm font-medium text-muted-foreground">{t("greeting")}</p>
-                <p className="text-xs text-muted-foreground mt-1">{t("greetingSub")}</p>
+                <Image
+                  src="/logo.png"
+                  alt="Superteam"
+                  width={48}
+                  height={48}
+                  className="opacity-30 mb-4"
+                />
+                <p className="text-sm font-medium text-muted-foreground">
+                  {t("greeting")}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {t("greetingSub")}
+                </p>
                 <div className="mt-5 flex flex-wrap gap-2 justify-center">
-                  {["What is a PDA?", "Explain Token-2022", "How do CPIs work?"].map((q) => (
+                  {[
+                    "What is a PDA?",
+                    "Explain Token-2022",
+                    "How do CPIs work?",
+                  ].map((q) => (
                     <button
                       key={q}
                       onClick={() => sendMessage(q)}
@@ -294,18 +370,30 @@ export function AIChat() {
               </div>
             )}
             {messages.map((msg) => (
-              <MessageBubble key={msg.id} msg={msg} onExpandImage={setLightboxSrc} />
+              <MessageBubble
+                key={msg.id}
+                msg={msg}
+                onExpandImage={setLightboxSrc}
+              />
             ))}
             {isLoading && (
               <div className="flex items-center gap-2.5">
-                <Image src="/logo.png" alt="AI" width={24} height={24} className="rounded-md" />
+                <Image
+                  src="/logo.png"
+                  alt="AI"
+                  width={24}
+                  height={24}
+                  className="rounded-md"
+                />
                 <div className="flex items-center gap-1.5 rounded-2xl bg-muted px-3.5 py-2.5 rounded-bl-sm">
                   <span className="flex gap-1">
                     <span className="h-1.5 w-1.5 rounded-full bg-solana-purple animate-bounce [animation-delay:0ms]" />
                     <span className="h-1.5 w-1.5 rounded-full bg-solana-purple animate-bounce [animation-delay:150ms]" />
                     <span className="h-1.5 w-1.5 rounded-full bg-solana-purple animate-bounce [animation-delay:300ms]" />
                   </span>
-                  <span className="text-xs text-muted-foreground">{t("thinking")}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {t("thinking")}
+                  </span>
                 </div>
               </div>
             )}

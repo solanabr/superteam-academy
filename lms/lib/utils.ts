@@ -13,7 +13,11 @@ export function getXpForLevel(level: number): number {
   return level * level * 100;
 }
 
-export function getXpProgress(xp: number): { current: number; needed: number; percent: number } {
+export function getXpProgress(xp: number): {
+  current: number;
+  needed: number;
+  percent: number;
+} {
   const level = getLevel(xp);
   const currentLevelXp = getXpForLevel(level);
   const nextLevelXp = getXpForLevel(level + 1);

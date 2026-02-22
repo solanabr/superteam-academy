@@ -12,7 +12,9 @@ export class LeaderboardPage {
     this.page = page;
     this.heading = page.getByRole("heading", { level: 1 });
     this.entries = page.locator("[class*=card]");
-    this.timeframeTabs = page.locator("button").filter({ hasText: /week|month|all/i });
+    this.timeframeTabs = page
+      .locator("button")
+      .filter({ hasText: /week|month|all/i });
     this.emptyState = page.getByText(/no ranking/i);
   }
 

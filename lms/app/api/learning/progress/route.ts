@@ -4,7 +4,11 @@ import { connectDB } from "@/lib/db/mongodb";
 import { Enrollment } from "@/lib/db/models/enrollment";
 import { SAMPLE_COURSES } from "@/lib/data/sample-courses";
 import { fetchSanityCourses } from "@/lib/services/sanity-courses";
-import { fetchEnrollment, fetchCourse, bitmapToLessonIndices } from "@/lib/solana/readers";
+import {
+  fetchEnrollment,
+  fetchCourse,
+  bitmapToLessonIndices,
+} from "@/lib/solana/readers";
 
 export async function GET(req: NextRequest) {
   const userId = req.nextUrl.searchParams.get("userId");
@@ -23,13 +27,14 @@ export async function GET(req: NextRequest) {
         lessonsCompleted: e.lessonsCompleted,
         totalLessons: e.totalLessons,
         percentComplete: e.percentComplete,
-        lessonTxHashes: (e as any).lessonTxHashes instanceof Map
-          ? Object.fromEntries((e as any).lessonTxHashes)
-          : ((e as any).lessonTxHashes ?? {}),
+        lessonTxHashes:
+          (e as any).lessonTxHashes instanceof Map
+            ? Object.fromEntries((e as any).lessonTxHashes)
+            : ((e as any).lessonTxHashes ?? {}),
         enrollTxHash: (e as any).enrollTxHash ?? undefined,
         completionTxHash: (e as any).completionTxHash ?? undefined,
       },
-    ])
+    ]),
   );
 
   // Enrich with on-chain data where available
@@ -38,7 +43,9 @@ export async function GET(req: NextRequest) {
     const sanityCourses = await fetchSanityCourses();
     const allCourses = [
       ...SAMPLE_COURSES,
-      ...sanityCourses.filter((sc) => !SAMPLE_COURSES.some((s) => s.id === sc.id)),
+      ...sanityCourses.filter(
+        (sc) => !SAMPLE_COURSES.some((s) => s.id === sc.id),
+      ),
     ];
     for (const knownCourse of allCourses) {
       const enrollment = await fetchEnrollment(knownCourse.id, wallet);
@@ -51,22 +58,25 @@ export async function GET(req: NextRequest) {
       const onChainCompletedAt =
         completedAtRaw &&
         Number(
-          typeof completedAtRaw === "object" && "toNumber" in (completedAtRaw as any)
+          typeof completedAtRaw === "object" &&
+            "toNumber" in (completedAtRaw as any)
             ? (completedAtRaw as any).toNumber()
-            : completedAtRaw
+            : completedAtRaw,
         ) > 0
           ? new Date(
               Number(
-                typeof completedAtRaw === "object" && "toNumber" in (completedAtRaw as any)
+                typeof completedAtRaw === "object" &&
+                  "toNumber" in (completedAtRaw as any)
                   ? (completedAtRaw as any).toNumber()
-                  : completedAtRaw
-              ) * 1000
+                  : completedAtRaw,
+              ) * 1000,
             ).toISOString()
           : undefined;
       const enrolledAt = new Date(
-        (typeof enrollment.enrolledAt === "object" && "toNumber" in (enrollment.enrolledAt as any)
+        (typeof enrollment.enrolledAt === "object" &&
+        "toNumber" in (enrollment.enrolledAt as any)
           ? (enrollment.enrolledAt as any).toNumber()
-          : Number(enrollment.enrolledAt)) * 1000
+          : Number(enrollment.enrolledAt)) * 1000,
       ).toISOString();
 
       const db = dbMap.get(knownCourse.id);
@@ -76,7 +86,8 @@ export async function GET(req: NextRequest) {
         completedAt: onChainCompletedAt ?? db?.completedAt,
         lessonsCompleted,
         totalLessons,
-        percentComplete: totalLessons > 0 ? (lessonsCompleted.length / totalLessons) * 100 : 0,
+        percentComplete:
+          totalLessons > 0 ? (lessonsCompleted.length / totalLessons) * 100 : 0,
         lessonTxHashes: db?.lessonTxHashes ?? {},
         enrollTxHash: db?.enrollTxHash,
         completionTxHash: db?.completionTxHash,

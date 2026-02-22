@@ -25,7 +25,13 @@ export function Footer() {
       )}
 
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className={isLanding ? "grid grid-cols-2 gap-8 md:grid-cols-4" : "grid gap-10 md:grid-cols-[200px_1fr]"}>
+        <div
+          className={
+            isLanding
+              ? "grid grid-cols-2 gap-8 md:grid-cols-4"
+              : "grid gap-10 md:grid-cols-[200px_1fr]"
+          }
+        >
           {!isLanding && (
             <div className="overflow-hidden rounded-xl self-start">
               <Image
@@ -38,47 +44,150 @@ export function Footer() {
             </div>
           )}
 
-          <div className={isLanding ? "contents" : "grid grid-cols-2 gap-8 md:grid-cols-4"}>
+          <div
+            className={
+              isLanding ? "contents" : "grid grid-cols-2 gap-8 md:grid-cols-4"
+            }
+          >
             <div>
               <h3 className="text-sm font-semibold">{t("platform")}</h3>
               <ul className="mt-4 space-y-2">
-                <li><Link href="/courses" className="text-sm text-muted-foreground hover:text-foreground">{t("courses")}</Link></li>
-                <li><Link href="/leaderboard" className="text-sm text-muted-foreground hover:text-foreground">{t("leaderboard")}</Link></li>
-                <li><Link href="/dashboard" className="text-sm text-muted-foreground hover:text-foreground">{t("dashboard")}</Link></li>
+                <li>
+                  <Link
+                    href="/courses"
+                    className="text-sm text-muted-foreground hover:text-foreground"
+                  >
+                    {t("courses")}
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/leaderboard"
+                    className="text-sm text-muted-foreground hover:text-foreground"
+                  >
+                    {t("leaderboard")}
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/dashboard"
+                    className="text-sm text-muted-foreground hover:text-foreground"
+                  >
+                    {t("dashboard")}
+                  </Link>
+                </li>
               </ul>
             </div>
             <div>
               <h3 className="text-sm font-semibold">{t("learningPaths")}</h3>
               <ul className="mt-4 space-y-2">
-                <li><Link href="/courses?track=1" className="text-sm text-muted-foreground hover:text-foreground">{t("anchorFramework")}</Link></li>
-                <li><Link href="/courses?track=2" className="text-sm text-muted-foreground hover:text-foreground">{t("rustForSolana")}</Link></li>
-                <li><Link href="/courses?track=3" className="text-sm text-muted-foreground hover:text-foreground">{t("defiDevelopment")}</Link></li>
-                <li><Link href="/courses?track=4" className="text-sm text-muted-foreground hover:text-foreground">{t("programSecurity")}</Link></li>
+                <li>
+                  <Link
+                    href="/courses?track=1"
+                    className="text-sm text-muted-foreground hover:text-foreground"
+                  >
+                    {t("anchorFramework")}
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/courses?track=2"
+                    className="text-sm text-muted-foreground hover:text-foreground"
+                  >
+                    {t("rustForSolana")}
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/courses?track=3"
+                    className="text-sm text-muted-foreground hover:text-foreground"
+                  >
+                    {t("defiDevelopment")}
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/courses?track=4"
+                    className="text-sm text-muted-foreground hover:text-foreground"
+                  >
+                    {t("programSecurity")}
+                  </Link>
+                </li>
               </ul>
             </div>
             <div>
               <h3 className="text-sm font-semibold">{t("community")}</h3>
               <ul className="mt-4 space-y-2">
-                <li><a href="https://discord.gg/superteambrasil" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-foreground">{t("discord")}</a></li>
-                <li><a href="https://x.com/SuperteamBR" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-foreground">{t("twitter")}</a></li>
-                <li><Link href="/community/threads" className="text-sm text-muted-foreground hover:text-foreground">{t("threads")}</Link></li>
+                <li>
+                  <a
+                    href="https://discord.gg/superteambrasil"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-muted-foreground hover:text-foreground"
+                  >
+                    {t("discord")}
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="https://x.com/SuperteamBR"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-muted-foreground hover:text-foreground"
+                  >
+                    {t("twitter")}
+                  </a>
+                </li>
+                <li>
+                  <Link
+                    href="/community/threads"
+                    className="text-sm text-muted-foreground hover:text-foreground"
+                  >
+                    {t("threads")}
+                  </Link>
+                </li>
               </ul>
             </div>
             <div>
               <h3 className="text-sm font-semibold">{t("resources")}</h3>
               <ul className="mt-4 space-y-2">
-                <li><a href="https://solana.com/docs" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-foreground">{t("documentation")}</a></li>
-                <li><a href="https://solana.com/news" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-foreground">{t("blog")}</a></li>
-                <li><a href="https://github.com/solana-labs/solana/blob/master/CHANGELOG.md" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-foreground">{t("changelog")}</a></li>
+                <li>
+                  <a
+                    href="https://solana.com/docs"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-muted-foreground hover:text-foreground"
+                  >
+                    {t("documentation")}
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="https://solana.com/news"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-muted-foreground hover:text-foreground"
+                  >
+                    {t("blog")}
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="https://github.com/solana-labs/solana/blob/master/CHANGELOG.md"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-muted-foreground hover:text-foreground"
+                  >
+                    {t("changelog")}
+                  </a>
+                </li>
               </ul>
             </div>
           </div>
         </div>
 
         <div className="mt-12 border-t pt-8 text-center">
-          <p className="text-sm text-muted-foreground">
-            {t("tagline")}
-          </p>
+          <p className="text-sm text-muted-foreground">{t("tagline")}</p>
         </div>
       </div>
     </footer>

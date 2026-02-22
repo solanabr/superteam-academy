@@ -11,7 +11,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useDailyChallenge } from "@/lib/hooks/use-service";
 import { PRACTICE_DIFFICULTY_CONFIG } from "@/types/practice";
 
-function getTimeUntilNextChallenge(): { hours: number; minutes: number; seconds: number } {
+function getTimeUntilNextChallenge(): {
+  hours: number;
+  minutes: number;
+  seconds: number;
+} {
   const now = new Date();
   const brt = new Date(now.getTime() - 3 * 60 * 60 * 1000);
   const nextMidnight = new Date(brt);
@@ -58,12 +62,21 @@ export function DailyChallengeBanner() {
               <span className="text-sm font-bold uppercase tracking-wider text-xp-gold">
                 {t("title")}
               </span>
-              <Badge variant="outline" className="text-[10px]" style={{ borderColor: diffConfig.color, color: diffConfig.color }}>
+              <Badge
+                variant="outline"
+                className="text-[10px]"
+                style={{
+                  borderColor: diffConfig.color,
+                  color: diffConfig.color,
+                }}
+              >
                 {diffConfig.label}
               </Badge>
             </div>
             <h3 className="text-lg font-bold truncate">{data.title}</h3>
-            <p className="text-sm text-muted-foreground line-clamp-1 mt-0.5">{data.description}</p>
+            <p className="text-sm text-muted-foreground line-clamp-1 mt-0.5">
+              {data.description}
+            </p>
           </div>
 
           <div className="flex items-center gap-4 sm:gap-6 flex-shrink-0">
@@ -71,14 +84,20 @@ export function DailyChallengeBanner() {
             <div className="flex items-center gap-1.5 text-center">
               <Flame className="h-5 w-5 text-streak-orange" />
               <div>
-                <p className="text-lg font-bold leading-none">{data.dailyStreak?.current ?? 0}</p>
-                <p className="text-[10px] text-muted-foreground">{t("streak")}</p>
+                <p className="text-lg font-bold leading-none">
+                  {data.dailyStreak?.current ?? 0}
+                </p>
+                <p className="text-[10px] text-muted-foreground">
+                  {t("streak")}
+                </p>
               </div>
             </div>
 
             {/* XP reward */}
             <div className="text-center">
-              <p className="text-lg font-bold text-xp-gold leading-none">{data.xpReward}</p>
+              <p className="text-lg font-bold text-xp-gold leading-none">
+                {data.xpReward}
+              </p>
               <p className="text-[10px] text-muted-foreground">XP</p>
             </div>
 
@@ -87,9 +106,12 @@ export function DailyChallengeBanner() {
               <Clock className="h-4 w-4 text-muted-foreground" />
               <div>
                 <p className="text-sm font-mono font-bold leading-none tabular-nums">
-                  {pad(countdown.hours)}:{pad(countdown.minutes)}:{pad(countdown.seconds)}
+                  {pad(countdown.hours)}:{pad(countdown.minutes)}:
+                  {pad(countdown.seconds)}
                 </p>
-                <p className="text-[10px] text-muted-foreground">{t("nextChallenge")}</p>
+                <p className="text-[10px] text-muted-foreground">
+                  {t("nextChallenge")}
+                </p>
               </div>
             </div>
 
@@ -97,7 +119,9 @@ export function DailyChallengeBanner() {
             {data.completed ? (
               <div className="flex items-center gap-1.5">
                 <CheckCircle2 className="h-5 w-5 text-solana-green" />
-                <span className="text-sm font-medium text-solana-green">{t("completed")}</span>
+                <span className="text-sm font-medium text-solana-green">
+                  {t("completed")}
+                </span>
               </div>
             ) : (
               <Button asChild size="sm" variant="solana">

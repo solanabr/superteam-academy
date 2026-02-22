@@ -72,12 +72,17 @@ export async function fetchCourse(courseId: string) {
 
 export async function fetchXPBalance(
   wallet: PublicKey,
-  mint: PublicKey
+  mint: PublicKey,
 ): Promise<number> {
   const connection = getConnection();
   const ata = getLearnerTokenAccount(wallet, mint);
   try {
-    const account = await getAccount(connection, ata, "confirmed", TOKEN_2022_PROGRAM_ID);
+    const account = await getAccount(
+      connection,
+      ata,
+      "confirmed",
+      TOKEN_2022_PROGRAM_ID,
+    );
     return Number(account.amount);
   } catch {
     return 0;

@@ -20,8 +20,11 @@ export async function POST(req: NextRequest) {
   if (existing) return NextResponse.json({ ok: true, txSignature: null });
 
   const sanityCourse = await fetchSanityCourse(courseId);
-  const course = sanityCourse ?? SAMPLE_COURSES.find((c) => c.id === courseId || c.slug === courseId);
-  if (!course) return NextResponse.json({ error: "course not found" }, { status: 404 });
+  const course =
+    sanityCourse ??
+    SAMPLE_COURSES.find((c) => c.id === courseId || c.slug === courseId);
+  if (!course)
+    return NextResponse.json({ error: "course not found" }, { status: 404 });
 
   // Use client-provided tx signature if available, otherwise send memo tx as fallback
   let txSignature: string | null = clientTxSignature ?? null;

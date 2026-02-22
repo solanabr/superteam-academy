@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PublicKey } from "@solana/web3.js";
 import { ensureUser, getLevel } from "@/lib/db/helpers";
-import { fetchConfig, fetchLearnerProfile, fetchXPBalance } from "@/lib/solana/readers";
+import {
+  fetchConfig,
+  fetchLearnerProfile,
+  fetchXPBalance,
+} from "@/lib/solana/readers";
 
 export async function GET(req: NextRequest) {
   const userId = req.nextUrl.searchParams.get("userId");
@@ -21,7 +25,8 @@ export async function GET(req: NextRequest) {
     if (profile && config) {
       const xp = await fetchXPBalance(wallet, config.currentMint);
       const lastActivityTs =
-        typeof profile.lastActivityDate === "object" && "toNumber" in (profile.lastActivityDate as any)
+        typeof profile.lastActivityDate === "object" &&
+        "toNumber" in (profile.lastActivityDate as any)
           ? (profile.lastActivityDate as any).toNumber()
           : Number(profile.lastActivityDate);
 
@@ -37,7 +42,9 @@ export async function GET(req: NextRequest) {
         lastActivityDate: lastActivityTs,
         streakFreezes: profile.streakFreezes,
         achievementFlags: profile.achievementFlags.map((f: any) =>
-          typeof f === "object" && "toString" in f ? Number(f.toString()) : Number(f)
+          typeof f === "object" && "toString" in f
+            ? Number(f.toString())
+            : Number(f),
         ),
         referralCount: profile.referralCount,
         hasReferrer: profile.hasReferrer,

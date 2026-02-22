@@ -3,7 +3,10 @@ import { connectDB } from "@/lib/db/mongodb";
 import { Enrollment } from "@/lib/db/models/enrollment";
 import { SAMPLE_COURSES } from "@/lib/data/sample-courses";
 import { fetchSanityCourses } from "@/lib/services/sanity-courses";
-import { fetchConfigCached, fetchCourse as fetchOnChainCourse } from "@/lib/solana/readers";
+import {
+  fetchConfigCached,
+  fetchCourse as fetchOnChainCourse,
+} from "@/lib/solana/readers";
 
 export async function GET() {
   const sanityCourses = await fetchSanityCourses();
@@ -11,7 +14,10 @@ export async function GET() {
 
   // Check config once (cached) — skip all on-chain fetches if program not deployed
   let useOnChain = false;
-  const onChainStats = new Map<string, { enrolled: number; completed: number }>();
+  const onChainStats = new Map<
+    string,
+    { enrolled: number; completed: number }
+  >();
 
   const config = await fetchConfigCached();
   if (config) {
@@ -20,7 +26,7 @@ export async function GET() {
         courses.map(async (c) => {
           const onChain = await fetchOnChainCourse(c.id);
           return { id: c.id, onChain };
-        })
+        }),
       );
       for (const r of results) {
         if (r.onChain) {

@@ -77,7 +77,9 @@ test.describe("Courses page", () => {
     await page.waitForLoadState("domcontentloaded");
 
     await expect(page.getByText("Introduction to Solana")).toBeVisible();
-    const link = page.getByRole("link", { name: /Introduction to Solana/i }).first();
+    const link = page
+      .getByRole("link", { name: /Introduction to Solana/i })
+      .first();
     if (await link.isVisible()) {
       const href = await link.getAttribute("href");
       expect(href).toBeTruthy();

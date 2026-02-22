@@ -25,14 +25,16 @@ export function StreakFlame({ size = "md" }: StreakFlameProps) {
         className={cn(
           sizes[size],
           isActive ? "text-streak-orange" : "text-muted-foreground",
-          isActive && "animate-pulse"
+          isActive && "animate-pulse",
         )}
       />
-      <span className={cn(
-        "font-bold",
-        size === "sm" ? "text-xs" : size === "md" ? "text-sm" : "text-base",
-        isActive ? "text-streak-orange" : "text-muted-foreground"
-      )}>
+      <span
+        className={cn(
+          "font-bold",
+          size === "sm" ? "text-xs" : size === "md" ? "text-sm" : "text-base",
+          isActive ? "text-streak-orange" : "text-muted-foreground",
+        )}
+      >
         {current}
       </span>
     </div>

@@ -47,7 +47,9 @@ export function WalletModal({ open, onOpenChange }: WalletModalProps) {
         <div className="space-y-3">
           {installed.length > 0 && (
             <div className="space-y-2">
-              <p className="text-xs font-medium text-muted-foreground uppercase">{t("detected")}</p>
+              <p className="text-xs font-medium text-muted-foreground uppercase">
+                {t("detected")}
+              </p>
               {installed.map((wallet) => (
                 <Button
                   key={wallet.adapter.name}
@@ -57,7 +59,13 @@ export function WalletModal({ open, onOpenChange }: WalletModalProps) {
                   disabled={connecting}
                 >
                   {wallet.adapter.icon && (
-                    <Image src={wallet.adapter.icon} alt={wallet.adapter.name} width={24} height={24} className="rounded" />
+                    <Image
+                      src={wallet.adapter.icon}
+                      alt={wallet.adapter.name}
+                      width={24}
+                      height={24}
+                      className="rounded"
+                    />
                   )}
                   {wallet.adapter.name}
                 </Button>
@@ -66,21 +74,32 @@ export function WalletModal({ open, onOpenChange }: WalletModalProps) {
           )}
           {notInstalled.length > 0 && (
             <div className="space-y-2">
-              <p className="text-xs font-medium text-muted-foreground uppercase">{t("moreWallets")}</p>
+              <p className="text-xs font-medium text-muted-foreground uppercase">
+                {t("moreWallets")}
+              </p>
               {notInstalled.slice(0, 3).map((wallet) => (
                 <Button
                   key={wallet.adapter.name}
                   variant="ghost"
                   className="w-full justify-start gap-3 h-12 opacity-60"
                   onClick={() => {
-                    if (wallet.adapter.url) window.open(wallet.adapter.url, "_blank");
+                    if (wallet.adapter.url)
+                      window.open(wallet.adapter.url, "_blank");
                   }}
                 >
                   {wallet.adapter.icon && (
-                    <Image src={wallet.adapter.icon} alt={wallet.adapter.name} width={24} height={24} className="rounded" />
+                    <Image
+                      src={wallet.adapter.icon}
+                      alt={wallet.adapter.name}
+                      width={24}
+                      height={24}
+                      className="rounded"
+                    />
                   )}
                   {wallet.adapter.name}
-                  <span className="ml-auto text-xs text-muted-foreground">{t("install")}</span>
+                  <span className="ml-auto text-xs text-muted-foreground">
+                    {t("install")}
+                  </span>
                 </Button>
               ))}
             </div>

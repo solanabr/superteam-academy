@@ -10,9 +10,20 @@
       "name": "initialize",
       "discriminator": [175, 175, 109, 31, 13, 152, 155, 237],
       "accounts": [
-        { "name": "config", "writable": true, "pda": { "seeds": [{ "kind": "const", "value": [99, 111, 110, 102, 105, 103] }] } },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              { "kind": "const", "value": [99, 111, 110, 102, 105, 103] }
+            ]
+          }
+        },
         { "name": "authority", "writable": true, "signer": true },
-        { "name": "system_program", "address": "11111111111111111111111111111111" }
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
       ],
       "args": [
         { "name": "max_daily_xp", "type": "u32" },
@@ -23,22 +34,42 @@
       "name": "create_season",
       "discriminator": [38, 108, 29, 127, 60, 126, 101, 3],
       "accounts": [
-        { "name": "config", "writable": true, "pda": { "seeds": [{ "kind": "const", "value": [99, 111, 110, 102, 105, 103] }] } },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              { "kind": "const", "value": [99, 111, 110, 102, 105, 103] }
+            ]
+          }
+        },
         { "name": "authority", "writable": true, "signer": true },
         { "name": "mint", "writable": true, "signer": true },
         { "name": "token_program" },
-        { "name": "system_program", "address": "11111111111111111111111111111111" },
-        { "name": "rent", "address": "SysvarRent111111111111111111111111111111111" }
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "rent",
+          "address": "SysvarRent111111111111111111111111111111111"
+        }
       ],
-      "args": [
-        { "name": "season", "type": "u16" }
-      ]
+      "args": [{ "name": "season", "type": "u16" }]
     },
     {
       "name": "close_season",
       "discriminator": [162, 198, 31, 37, 77, 0, 199, 152],
       "accounts": [
-        { "name": "config", "writable": true, "pda": { "seeds": [{ "kind": "const", "value": [99, 111, 110, 102, 105, 103] }] } },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              { "kind": "const", "value": [99, 111, 110, 102, 105, 103] }
+            ]
+          }
+        },
         { "name": "authority", "signer": true }
       ],
       "args": []
@@ -47,7 +78,15 @@
       "name": "update_config",
       "discriminator": [29, 158, 252, 191, 10, 83, 219, 99],
       "accounts": [
-        { "name": "config", "writable": true, "pda": { "seeds": [{ "kind": "const", "value": [99, 111, 110, 102, 105, 103] }] } },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              { "kind": "const", "value": [99, 111, 110, 102, 105, 103] }
+            ]
+          }
+        },
         { "name": "authority", "signer": true }
       ],
       "args": [
@@ -63,10 +102,20 @@
       "name": "create_course",
       "discriminator": [120, 121, 154, 164, 107, 180, 167, 241],
       "accounts": [
-        { "name": "config", "pda": { "seeds": [{ "kind": "const", "value": [99, 111, 110, 102, 105, 103] }] } },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              { "kind": "const", "value": [99, 111, 110, 102, 105, 103] }
+            ]
+          }
+        },
         { "name": "course", "writable": true },
         { "name": "authority", "writable": true, "signer": true },
-        { "name": "system_program", "address": "11111111111111111111111111111111" }
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
       ],
       "args": [
         {
@@ -99,7 +148,10 @@
       "accounts": [
         { "name": "learner", "writable": true },
         { "name": "authority", "writable": true, "signer": true },
-        { "name": "system_program", "address": "11111111111111111111111111111111" }
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
       ],
       "args": []
     },
@@ -118,7 +170,14 @@
       "name": "claim_achievement",
       "discriminator": [107, 181, 102, 247, 207, 212, 251, 24],
       "accounts": [
-        { "name": "config", "pda": { "seeds": [{ "kind": "const", "value": [99, 111, 110, 102, 105, 103] }] } },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              { "kind": "const", "value": [99, 111, 110, 102, 105, 103] }
+            ]
+          }
+        },
         { "name": "learner_profile", "writable": true },
         { "name": "xp_mint", "writable": true },
         { "name": "learner_token_account", "writable": true },
@@ -135,7 +194,14 @@
       "name": "award_streak_freeze",
       "discriminator": [202, 7, 205, 85, 140, 131, 214, 14],
       "accounts": [
-        { "name": "config", "pda": { "seeds": [{ "kind": "const", "value": [99, 111, 110, 102, 105, 103] }] } },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              { "kind": "const", "value": [99, 111, 110, 102, 105, 103] }
+            ]
+          }
+        },
         { "name": "learner_profile", "writable": true },
         { "name": "learner" },
         { "name": "backend_signer", "signer": true }
@@ -150,11 +216,12 @@
         { "name": "enrollment", "writable": true },
         { "name": "prerequisite_enrollment", "optional": true },
         { "name": "learner", "writable": true, "signer": true },
-        { "name": "system_program", "address": "11111111111111111111111111111111" }
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
       ],
-      "args": [
-        { "name": "course_id", "type": "string" }
-      ]
+      "args": [{ "name": "course_id", "type": "string" }]
     },
     {
       "name": "unenroll",
@@ -163,15 +230,20 @@
         { "name": "enrollment", "writable": true },
         { "name": "learner", "writable": true, "signer": true }
       ],
-      "args": [
-        { "name": "course_id", "type": "string" }
-      ]
+      "args": [{ "name": "course_id", "type": "string" }]
     },
     {
       "name": "complete_lesson",
       "discriminator": [77, 217, 53, 132, 204, 150, 169, 58],
       "accounts": [
-        { "name": "config", "pda": { "seeds": [{ "kind": "const", "value": [99, 111, 110, 102, 105, 103] }] } },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              { "kind": "const", "value": [99, 111, 110, 102, 105, 103] }
+            ]
+          }
+        },
         { "name": "course" },
         { "name": "learner_profile", "writable": true },
         { "name": "enrollment", "writable": true },
@@ -190,7 +262,14 @@
       "name": "finalize_course",
       "discriminator": [68, 189, 122, 239, 39, 121, 16, 218],
       "accounts": [
-        { "name": "config", "pda": { "seeds": [{ "kind": "const", "value": [99, 111, 110, 102, 105, 103] }] } },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              { "kind": "const", "value": [99, 111, 110, 102, 105, 103] }
+            ]
+          }
+        },
         { "name": "course", "writable": true },
         { "name": "learner_profile", "writable": true },
         { "name": "enrollment", "writable": true },
@@ -208,7 +287,14 @@
       "name": "issue_credential",
       "discriminator": [255, 193, 171, 224, 68, 171, 194, 87],
       "accounts": [
-        { "name": "config", "pda": { "seeds": [{ "kind": "const", "value": [99, 111, 110, 102, 105, 103] }] } },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              { "kind": "const", "value": [99, 111, 110, 102, 105, 103] }
+            ]
+          }
+        },
         { "name": "course" },
         { "name": "enrollment" },
         { "name": "learner" },
@@ -223,9 +309,7 @@
         { "name": "enrollment", "writable": true },
         { "name": "learner", "writable": true, "signer": true }
       ],
-      "args": [
-        { "name": "course_id", "type": "string" }
-      ]
+      "args": [{ "name": "course_id", "type": "string" }]
     }
   ],
   "accounts": [
@@ -251,24 +335,76 @@
     { "code": 6001, "name": "CourseNotActive", "msg": "Course not active" },
     { "code": 6002, "name": "AlreadyEnrolled", "msg": "Already enrolled" },
     { "code": 6003, "name": "NotEnrolled", "msg": "Not enrolled" },
-    { "code": 6004, "name": "LessonOutOfBounds", "msg": "Lesson index out of bounds" },
-    { "code": 6005, "name": "LessonAlreadyCompleted", "msg": "Lesson already completed" },
-    { "code": 6006, "name": "CourseNotCompleted", "msg": "Course not fully completed" },
-    { "code": 6007, "name": "CourseAlreadyCompleted", "msg": "Course already completed" },
-    { "code": 6008, "name": "AchievementAlreadyClaimed", "msg": "Achievement already claimed" },
-    { "code": 6009, "name": "CourseNotFinalized", "msg": "Course not finalized; issue_credential requires finalize_course first" },
+    {
+      "code": 6004,
+      "name": "LessonOutOfBounds",
+      "msg": "Lesson index out of bounds"
+    },
+    {
+      "code": 6005,
+      "name": "LessonAlreadyCompleted",
+      "msg": "Lesson already completed"
+    },
+    {
+      "code": 6006,
+      "name": "CourseNotCompleted",
+      "msg": "Course not fully completed"
+    },
+    {
+      "code": 6007,
+      "name": "CourseAlreadyCompleted",
+      "msg": "Course already completed"
+    },
+    {
+      "code": 6008,
+      "name": "AchievementAlreadyClaimed",
+      "msg": "Achievement already claimed"
+    },
+    {
+      "code": 6009,
+      "name": "CourseNotFinalized",
+      "msg": "Course not finalized; issue_credential requires finalize_course first"
+    },
     { "code": 6010, "name": "SeasonClosed", "msg": "Season already closed" },
     { "code": 6011, "name": "SelfReferral", "msg": "Cannot refer yourself" },
-    { "code": 6012, "name": "AlreadyReferred", "msg": "Already has a referrer" },
+    {
+      "code": 6012,
+      "name": "AlreadyReferred",
+      "msg": "Already has a referrer"
+    },
     { "code": 6013, "name": "ReferrerNotFound", "msg": "Referrer not found" },
-    { "code": 6014, "name": "PrerequisiteNotMet", "msg": "Prerequisite not met" },
-    { "code": 6015, "name": "DailyXPLimitExceeded", "msg": "Daily XP limit exceeded" },
-    { "code": 6016, "name": "UnenrollCooldown", "msg": "Unenroll cooldown not met (24h)" },
-    { "code": 6017, "name": "EnrollmentCourseMismatch", "msg": "Enrollment/course mismatch" },
+    {
+      "code": 6014,
+      "name": "PrerequisiteNotMet",
+      "msg": "Prerequisite not met"
+    },
+    {
+      "code": 6015,
+      "name": "DailyXPLimitExceeded",
+      "msg": "Daily XP limit exceeded"
+    },
+    {
+      "code": 6016,
+      "name": "UnenrollCooldown",
+      "msg": "Unenroll cooldown not met (24h)"
+    },
+    {
+      "code": 6017,
+      "name": "EnrollmentCourseMismatch",
+      "msg": "Enrollment/course mismatch"
+    },
     { "code": 6018, "name": "SeasonNotActive", "msg": "Season not active" },
-    { "code": 6019, "name": "InvalidSeasonNumber", "msg": "Invalid season number" },
+    {
+      "code": 6019,
+      "name": "InvalidSeasonNumber",
+      "msg": "Invalid season number"
+    },
     { "code": 6020, "name": "InvalidCourseId", "msg": "Invalid course ID" },
-    { "code": 6021, "name": "InvalidLessonCount", "msg": "Invalid lesson count" },
+    {
+      "code": 6021,
+      "name": "InvalidLessonCount",
+      "msg": "Invalid lesson count"
+    },
     { "code": 6022, "name": "ArithmeticOverflow", "msg": "Arithmetic overflow" }
   ],
   "types": [
@@ -380,7 +516,10 @@
       "type": {
         "kind": "struct",
         "fields": [
-          { "name": "content_tx_id", "type": { "option": { "array": ["u8", 32] } } },
+          {
+            "name": "content_tx_id",
+            "type": { "option": { "array": ["u8", 32] } }
+          },
           { "name": "content_type", "type": { "option": "u8" } },
           { "name": "lesson_count", "type": { "option": "u8" } },
           { "name": "challenge_count", "type": { "option": "u8" } },

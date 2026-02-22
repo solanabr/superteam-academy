@@ -38,7 +38,11 @@ import {
   DialogFooter,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useThreads, useCommunityStats, useCreateThread } from "@/lib/hooks/use-community";
+import {
+  useThreads,
+  useCommunityStats,
+  useCreateThread,
+} from "@/lib/hooks/use-community";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -59,7 +63,9 @@ export default function CommunityThreadsPage() {
   // New thread form
   const [newTitle, setNewTitle] = useState("");
   const [newBody, setNewBody] = useState("");
-  const [newType, setNewType] = useState<"discussion" | "question">("discussion");
+  const [newType, setNewType] = useState<"discussion" | "question">(
+    "discussion",
+  );
   const [newTags, setNewTags] = useState("");
   const [newBounty, setNewBounty] = useState("");
 
@@ -79,9 +85,10 @@ export default function CommunityThreadsPage() {
     if (!newTitle.trim() || !newBody.trim()) return;
 
     try {
-      const bountyLamports = newType === "question" && newBounty
-        ? Math.round(parseFloat(newBounty) * 1e9)
-        : undefined;
+      const bountyLamports =
+        newType === "question" && newBounty
+          ? Math.round(parseFloat(newBounty) * 1e9)
+          : undefined;
       const result = await createThread.mutateAsync({
         title: newTitle.trim(),
         body: newBody.trim(),
@@ -90,7 +97,8 @@ export default function CommunityThreadsPage() {
           .split(",")
           .map((t) => t.trim())
           .filter(Boolean),
-        bountyLamports: bountyLamports && bountyLamports > 0 ? bountyLamports : undefined,
+        bountyLamports:
+          bountyLamports && bountyLamports > 0 ? bountyLamports : undefined,
       });
       const sig = result.txSignature;
       if (sig) {
@@ -98,7 +106,11 @@ export default function CommunityThreadsPage() {
           description: `Tx: ${sig.slice(0, 8)}...${sig.slice(-8)}`,
           action: {
             label: tc("view"),
-            onClick: () => window.open(`https://explorer.solana.com/tx/${sig}?cluster=devnet`, "_blank"),
+            onClick: () =>
+              window.open(
+                `https://explorer.solana.com/tx/${sig}?cluster=devnet`,
+                "_blank",
+              ),
           },
         });
       } else {
@@ -137,7 +149,10 @@ export default function CommunityThreadsPage() {
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button disabled={!mounted || !publicKey} data-testid="new-thread-button">
+            <Button
+              disabled={!mounted || !publicKey}
+              data-testid="new-thread-button"
+            >
               <Plus className="mr-2 h-4 w-4" />
               {t("newThread")}
             </Button>
@@ -160,19 +175,24 @@ export default function CommunityThreadsPage() {
                 onChange={(e) => setNewBody(e.target.value)}
                 className="font-mono text-sm"
               />
-              <p className="text-xs text-muted-foreground">
-                {t("codeHint")}
-              </p>
+              <p className="text-xs text-muted-foreground">{t("codeHint")}</p>
               <div className="flex gap-4">
                 <Select
                   value={newType}
-                  onValueChange={(v) => setNewType(v as "discussion" | "question")}
+                  onValueChange={(v) =>
+                    setNewType(v as "discussion" | "question")
+                  }
                 >
-                  <SelectTrigger className="w-40" data-testid="thread-type-select">
+                  <SelectTrigger
+                    className="w-40"
+                    data-testid="thread-type-select"
+                  >
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="discussion">{t("discussion")}</SelectItem>
+                    <SelectItem value="discussion">
+                      {t("discussion")}
+                    </SelectItem>
                     <SelectItem value="question">{t("question")}</SelectItem>
                   </SelectContent>
                 </Select>
@@ -195,14 +215,18 @@ export default function CommunityThreadsPage() {
                     onChange={(e) => setNewBounty(e.target.value)}
                     className="flex-1"
                   />
-                  <span className="text-sm text-muted-foreground">{t("bountyOptional")}</span>
+                  <span className="text-sm text-muted-foreground">
+                    {t("bountyOptional")}
+                  </span>
                 </div>
               )}
             </div>
             <DialogFooter>
               <Button
                 onClick={handleCreateThread}
-                disabled={createThread.isPending || !newTitle.trim() || !newBody.trim()}
+                disabled={
+                  createThread.isPending || !newTitle.trim() || !newBody.trim()
+                }
                 data-testid="create-thread-submit"
               >
                 {createThread.isPending ? t("creating") : t("create")}
@@ -229,7 +253,9 @@ export default function CommunityThreadsPage() {
               <Award className="h-5 w-5 text-solana-purple" />
               <div>
                 <p className="text-2xl font-bold">{stats.endorsementCount}</p>
-                <p className="text-xs text-muted-foreground">{t("endorsements")}</p>
+                <p className="text-xs text-muted-foreground">
+                  {t("endorsements")}
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -237,14 +263,32 @@ export default function CommunityThreadsPage() {
       )}
 
       {/* Tabs + Sort */}
-      <Tabs value={typeFilter} onValueChange={(v) => { setTypeFilter(v); setPage(1); }}>
+      <Tabs
+        value={typeFilter}
+        onValueChange={(v) => {
+          setTypeFilter(v);
+          setPage(1);
+        }}
+      >
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <TabsList data-testid="thread-filter-tabs">
-            <TabsTrigger value="all" data-testid="tab-all">{t("all")}</TabsTrigger>
-            <TabsTrigger value="discussion" data-testid="tab-discussion">{t("discussions")}</TabsTrigger>
-            <TabsTrigger value="question" data-testid="tab-question">{t("questions")}</TabsTrigger>
+            <TabsTrigger value="all" data-testid="tab-all">
+              {t("all")}
+            </TabsTrigger>
+            <TabsTrigger value="discussion" data-testid="tab-discussion">
+              {t("discussions")}
+            </TabsTrigger>
+            <TabsTrigger value="question" data-testid="tab-question">
+              {t("questions")}
+            </TabsTrigger>
           </TabsList>
-          <Select value={sort} onValueChange={(v) => { setSort(v); setPage(1); }}>
+          <Select
+            value={sort}
+            onValueChange={(v) => {
+              setSort(v);
+              setPage(1);
+            }}
+          >
             <SelectTrigger className="w-36">
               <SelectValue />
             </SelectTrigger>
@@ -255,7 +299,6 @@ export default function CommunityThreadsPage() {
             </SelectContent>
           </Select>
         </div>
-
       </Tabs>
 
       {isLoading ? (
@@ -291,12 +334,17 @@ export default function CommunityThreadsPage() {
         <div className="space-y-3">
           {threads.map((thread) => (
             <Link key={thread._id} href={`/community/threads/${thread._id}`}>
-              <Card className="transition-colors hover:bg-accent/50" data-testid="thread-card">
+              <Card
+                className="transition-colors hover:bg-accent/50"
+                data-testid="thread-card"
+              >
                 <CardContent className="flex items-start gap-4 p-4">
                   {/* Upvote count */}
                   <div className="flex flex-col items-center gap-0.5 pt-1 text-muted-foreground">
                     <ArrowBigUp className="h-5 w-5" />
-                    <span className="text-sm font-medium">{thread.upvotes.length}</span>
+                    <span className="text-sm font-medium">
+                      {thread.upvotes.length}
+                    </span>
                   </div>
 
                   {/* Content */}
@@ -315,7 +363,9 @@ export default function CommunityThreadsPage() {
                         </Badge>
                       )}
                       {thread.isPinned && (
-                        <Badge variant="xp" className="shrink-0">{t("pinned")}</Badge>
+                        <Badge variant="xp" className="shrink-0">
+                          {t("pinned")}
+                        </Badge>
                       )}
                       {thread.bountyLamports > 0 && (
                         <Badge
@@ -323,7 +373,10 @@ export default function CommunityThreadsPage() {
                           className="shrink-0"
                         >
                           <Coins className="mr-1 h-3 w-3" />
-                          {(thread.bountyLamports / 1e9).toFixed(thread.bountyLamports % 1e9 === 0 ? 0 : 3)} SOL
+                          {(thread.bountyLamports / 1e9).toFixed(
+                            thread.bountyLamports % 1e9 === 0 ? 0 : 3,
+                          )}{" "}
+                          SOL
                           {thread.bountyPaid && ` - ${t("bountyPaid")}`}
                         </Badge>
                       )}
@@ -343,7 +396,11 @@ export default function CommunityThreadsPage() {
                         {thread.replyCount}
                       </span>
                       {thread.tags.map((tag) => (
-                        <Badge key={tag} variant="secondary" className="text-xs">
+                        <Badge
+                          key={tag}
+                          variant="secondary"
+                          className="text-xs"
+                        >
                           {tag}
                         </Badge>
                       ))}
@@ -354,11 +411,15 @@ export default function CommunityThreadsPage() {
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            window.open(`https://explorer.solana.com/tx/${thread.txHash}?cluster=devnet`, "_blank");
+                            window.open(
+                              `https://explorer.solana.com/tx/${thread.txHash}?cluster=devnet`,
+                              "_blank",
+                            );
                           }}
                         >
                           <ExternalLink className="h-3 w-3" />
-                          {thread.txHash.slice(0, 8)}...{thread.txHash.slice(-4)}
+                          {thread.txHash.slice(0, 8)}...
+                          {thread.txHash.slice(-4)}
                         </span>
                       )}
                     </div>

@@ -6,12 +6,18 @@ import { ensureUser } from "@/lib/db/helpers";
 import { getBackendSigner } from "@/lib/solana/backend-signer";
 import { sendMemoTx } from "@/lib/solana/transactions";
 
-async function resolveDisplayNames(wallets: string[]): Promise<Record<string, string>> {
+async function resolveDisplayNames(
+  wallets: string[],
+): Promise<Record<string, string>> {
   const unique = [...new Set(wallets)];
-  const users = await User.find({ wallet: { $in: unique } }, { wallet: 1, displayName: 1 }).lean();
+  const users = await User.find(
+    { wallet: { $in: unique } },
+    { wallet: 1, displayName: 1 },
+  ).lean();
   const map: Record<string, string> = {};
   for (const u of users) {
-    map[u.wallet] = u.displayName || `${u.wallet.slice(0, 4)}...${u.wallet.slice(-4)}`;
+    map[u.wallet] =
+      u.displayName || `${u.wallet.slice(0, 4)}...${u.wallet.slice(-4)}`;
   }
   for (const w of unique) {
     if (!map[w]) map[w] = `${w.slice(0, 4)}...${w.slice(-4)}`;
@@ -56,17 +62,26 @@ export async function GET(req: NextRequest) {
     authorName: names[t.author],
   }));
 
-  return NextResponse.json({ threads: threadsWithNames, total, page, totalPages: Math.ceil(total / limit) });
+  return NextResponse.json({
+    threads: threadsWithNames,
+    total,
+    page,
+    totalPages: Math.ceil(total / limit),
+  });
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const { userId, title, body, type, tags, bountyLamports } = await req.json();
+    const { userId, title, body, type, tags, bountyLamports } =
+      await req.json();
     if (!userId || !title || !body) {
       return NextResponse.json({ error: "missing fields" }, { status: 400 });
     }
 
-    const bounty = type === "question" && bountyLamports > 0 ? Math.round(bountyLamports) : 0;
+    const bounty =
+      type === "question" && bountyLamports > 0
+        ? Math.round(bountyLamports)
+        : 0;
 
     let txSignature: string | null = null;
 

@@ -36,7 +36,10 @@ test.describe("Practice page", () => {
 
     // Should show empty state or fewer rows
     await expect(async () => {
-      const emptyVisible = await page.getByText("No challenges found").isVisible().catch(() => false);
+      const emptyVisible = await page
+        .getByText("No challenges found")
+        .isVisible()
+        .catch(() => false);
       const currentRows = await practice.challengeRows.count();
       expect(emptyVisible || currentRows < initialCount).toBeTruthy();
     }).toPass({ timeout: 5_000 });

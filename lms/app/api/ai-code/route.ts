@@ -6,7 +6,10 @@ const LYZR_AGENT_ID = "6990319188c3964deca09041";
 export async function POST(req: NextRequest) {
   const apiKey = process.env.LYZR_API_KEY;
   if (!apiKey) {
-    return NextResponse.json({ error: "AI service not configured" }, { status: 500 });
+    return NextResponse.json(
+      { error: "AI service not configured" },
+      { status: 500 },
+    );
   }
 
   const body = await req.json();
@@ -18,7 +21,10 @@ export async function POST(req: NextRequest) {
   };
 
   if (!code || !prompt) {
-    return NextResponse.json({ error: "Code and prompt are required" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Code and prompt are required" },
+      { status: 400 },
+    );
   }
 
   const systemMessage =
@@ -46,14 +52,23 @@ export async function POST(req: NextRequest) {
 
   if (!res.ok) {
     const text = await res.text();
-    return NextResponse.json({ error: "AI service error", detail: text }, { status: res.status });
+    return NextResponse.json(
+      { error: "AI service error", detail: text },
+      { status: res.status },
+    );
   }
 
   const data = await res.json();
-  let raw = typeof data.response === "string" ? data.response : JSON.stringify(data.response);
+  let raw =
+    typeof data.response === "string"
+      ? data.response
+      : JSON.stringify(data.response);
 
   // Strip markdown code fences if the AI wrapped its response
-  raw = raw.replace(/^```[\w]*\n?/gm, "").replace(/\n?```$/gm, "").trim();
+  raw = raw
+    .replace(/^```[\w]*\n?/gm, "")
+    .replace(/\n?```$/gm, "")
+    .trim();
 
   return NextResponse.json({ code: raw });
 }

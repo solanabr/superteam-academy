@@ -20,17 +20,19 @@ export async function POST(req: NextRequest) {
     const tx = await buildAwardStreakFreezeTx(
       program,
       backendKeypair.publicKey,
-      wallet
+      wallet,
     );
     tx.feePayer = backendKeypair.publicKey;
     tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-    const txSignature = await sendAndConfirmTransaction(connection, tx, [backendKeypair]);
+    const txSignature = await sendAndConfirmTransaction(connection, tx, [
+      backendKeypair,
+    ]);
 
     return NextResponse.json({ ok: true, txSignature });
   } catch (err: any) {
     return NextResponse.json(
       { error: "on-chain tx failed", details: err?.message ?? "" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

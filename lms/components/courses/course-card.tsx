@@ -16,7 +16,12 @@ interface CourseCardProps {
   completed?: boolean;
 }
 
-export function CourseCard({ course, progress, prerequisiteMet, completed }: CourseCardProps) {
+export function CourseCard({
+  course,
+  progress,
+  prerequisiteMet,
+  completed,
+}: CourseCardProps) {
   const t = useTranslations("courses");
   const tc = useTranslations("common");
   const difficulty = DIFFICULTY_CONFIG[course.difficulty];
@@ -28,7 +33,11 @@ export function CourseCard({ course, progress, prerequisiteMet, completed }: Cou
         <CardContent className="flex h-full flex-col p-5">
           <div className="flex items-start justify-between">
             <div className="flex gap-2">
-              <Badge variant={course.difficulty as "beginner" | "intermediate" | "advanced"}>
+              <Badge
+                variant={
+                  course.difficulty as "beginner" | "intermediate" | "advanced"
+                }
+              >
                 {difficulty.label}
               </Badge>
               {track && track.name !== "standalone" && (

@@ -15,11 +15,12 @@ const EndorsementSchema = new Schema<IEndorsement>(
     message: { type: String, default: null },
     txHash: { type: String, default: null },
   },
-  { timestamps: { createdAt: true, updatedAt: false } }
+  { timestamps: { createdAt: true, updatedAt: false } },
 );
 
 EndorsementSchema.index({ endorser: 1, endorsee: 1 }, { unique: true });
 EndorsementSchema.index({ endorsee: 1 });
 
 export const Endorsement =
-  mongoose.models.Endorsement || mongoose.model<IEndorsement>("Endorsement", EndorsementSchema);
+  mongoose.models.Endorsement ||
+  mongoose.model<IEndorsement>("Endorsement", EndorsementSchema);

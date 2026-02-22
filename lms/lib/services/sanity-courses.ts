@@ -104,7 +104,9 @@ function mapSanityCourse(raw: any): Course {
   let challengeCount = 0;
   for (const m of modules) {
     lessonCount += m.lessons.length;
-    challengeCount += m.lessons.filter((l: any) => l.type === "challenge").length;
+    challengeCount += m.lessons.filter(
+      (l: any) => l.type === "challenge",
+    ).length;
   }
 
   return {
@@ -136,7 +138,7 @@ export async function fetchSanityCourses(): Promise<Course[]> {
     if (!process.env.NEXT_PUBLIC_SANITY_PROJECT_ID) return [];
 
     const raw = await sanityClient.fetch(
-      `*[_type == "course" && isActive == true] | order(_createdAt asc) { ${COURSE_FIELDS} }`
+      `*[_type == "course" && isActive == true] | order(_createdAt asc) { ${COURSE_FIELDS} }`,
     );
 
     if (!raw || raw.length === 0) return [];
@@ -146,13 +148,15 @@ export async function fetchSanityCourses(): Promise<Course[]> {
   }
 }
 
-export async function fetchSanityCourse(slugOrId: string): Promise<Course | null> {
+export async function fetchSanityCourse(
+  slugOrId: string,
+): Promise<Course | null> {
   try {
     if (!process.env.NEXT_PUBLIC_SANITY_PROJECT_ID) return null;
 
     const raw = await sanityClient.fetch(
       `*[_type == "course" && (slug.current == $slugOrId || _id == $slugOrId)][0] { ${COURSE_FIELDS} }`,
-      { slugOrId }
+      { slugOrId },
     );
 
     if (!raw) return null;

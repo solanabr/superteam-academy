@@ -4,7 +4,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { getService } from "@/lib/services";
 
-export function useThreads(params?: { type?: string; tag?: string; sort?: string; page?: number }) {
+export function useThreads(params?: {
+  type?: string;
+  tag?: string;
+  sort?: string;
+  page?: number;
+}) {
   return useQuery({
     queryKey: ["threads", params],
     queryFn: () => getService().getThreads(params),
@@ -60,8 +65,27 @@ export function useCreateThread() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ title, body, type, tags, bountyLamports }: { title: string; body: string; type: string; tags: string[]; bountyLamports?: number }) =>
-      getService().createThread(userId, title, body, type, tags, bountyLamports),
+    mutationFn: ({
+      title,
+      body,
+      type,
+      tags,
+      bountyLamports,
+    }: {
+      title: string;
+      body: string;
+      type: string;
+      tags: string[];
+      bountyLamports?: number;
+    }) =>
+      getService().createThread(
+        userId,
+        title,
+        body,
+        type,
+        tags,
+        bountyLamports,
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["threads"] });
       queryClient.invalidateQueries({ queryKey: ["communityStats"] });
@@ -78,8 +102,12 @@ export function useCreateReply() {
     mutationFn: ({ threadId, body }: { threadId: string; body: string }) =>
       getService().createReply(userId, threadId, body),
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["replies", variables.threadId] });
-      queryClient.invalidateQueries({ queryKey: ["thread", variables.threadId] });
+      queryClient.invalidateQueries({
+        queryKey: ["replies", variables.threadId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["thread", variables.threadId],
+      });
       queryClient.invalidateQueries({ queryKey: ["communityStats"] });
     },
   });
@@ -91,8 +119,13 @@ export function useUpvote() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ targetId, targetType }: { targetId: string; targetType: "thread" | "reply" }) =>
-      getService().upvote(userId, targetId, targetType),
+    mutationFn: ({
+      targetId,
+      targetType,
+    }: {
+      targetId: string;
+      targetType: "thread" | "reply";
+    }) => getService().upvote(userId, targetId, targetType),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["threads"] });
       queryClient.invalidateQueries({ queryKey: ["thread"] });
@@ -107,10 +140,17 @@ export function useMarkSolution() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ threadId, replyId }: { threadId: string; replyId: string }) =>
-      getService().markSolution(userId, threadId, replyId),
+    mutationFn: ({
+      threadId,
+      replyId,
+    }: {
+      threadId: string;
+      replyId: string;
+    }) => getService().markSolution(userId, threadId, replyId),
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["thread", variables.threadId] });
+      queryClient.invalidateQueries({
+        queryKey: ["thread", variables.threadId],
+      });
       queryClient.invalidateQueries({ queryKey: ["threads"] });
       queryClient.invalidateQueries({ queryKey: ["communityStats"] });
     },
@@ -123,8 +163,13 @@ export function useEndorseUser() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ endorsee, message }: { endorsee: string; message?: string }) =>
-      getService().endorseUser(endorser, endorsee, message),
+    mutationFn: ({
+      endorsee,
+      message,
+    }: {
+      endorsee: string;
+      message?: string;
+    }) => getService().endorseUser(endorser, endorsee, message),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["endorsements"] });
       queryClient.invalidateQueries({ queryKey: ["communityStats"] });

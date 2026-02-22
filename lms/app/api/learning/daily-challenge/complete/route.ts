@@ -35,7 +35,10 @@ export async function POST(req: NextRequest) {
 
   const challenge = await DailyChallenge.findOne({ date: brtDate });
   if (!challenge) {
-    return NextResponse.json({ error: "no daily challenge for today" }, { status: 404 });
+    return NextResponse.json(
+      { error: "no daily challenge for today" },
+      { status: 404 },
+    );
   }
 
   const user = await ensureUser(userId);
@@ -60,7 +63,8 @@ export async function POST(req: NextRequest) {
     const config = await fetchConfig();
     if (config && !config.seasonClosed) {
       const dayNum = Math.floor(
-        (new Date(brtDate).getTime() - new Date("2026-01-01").getTime()) / (24 * 60 * 60 * 1000)
+        (new Date(brtDate).getTime() - new Date("2026-01-01").getTime()) /
+          (24 * 60 * 60 * 1000),
       );
       const achievementIndex = DAILY_ACHIEVEMENT_OFFSET + (dayNum % 64);
 
@@ -70,15 +74,20 @@ export async function POST(req: NextRequest) {
         wallet,
         achievementIndex,
         xpReward,
-        config.currentMint
+        config.currentMint,
       );
       tx.feePayer = backendKeypair.publicKey;
       tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-      txSignature = await sendAndConfirmTransaction(connection, tx, [backendKeypair]);
+      txSignature = await sendAndConfirmTransaction(connection, tx, [
+        backendKeypair,
+      ]);
     }
   } catch (err: any) {
     const errMsg = err?.message ?? "";
-    if (!errMsg.includes("AchievementAlreadyClaimed") && !errMsg.includes("6008")) {
+    if (
+      !errMsg.includes("AchievementAlreadyClaimed") &&
+      !errMsg.includes("6008")
+    ) {
       console.warn("[daily-challenge/complete] on-chain tx failed:", errMsg);
     }
   }
@@ -140,7 +149,10 @@ export async function POST(req: NextRequest) {
         const config = await fetchConfig();
 
         if (config && !config.seasonClosed) {
-          const milestoneIndex = DAILY_ACHIEVEMENT_OFFSET + 64 + DAILY_STREAK_MILESTONES.indexOf(milestone);
+          const milestoneIndex =
+            DAILY_ACHIEVEMENT_OFFSET +
+            64 +
+            DAILY_STREAK_MILESTONES.indexOf(milestone);
           const milestoneXp = milestone * 2;
           const tx = await buildClaimAchievementTx(
             program,
@@ -148,16 +160,21 @@ export async function POST(req: NextRequest) {
             wallet,
             milestoneIndex,
             milestoneXp,
-            config.currentMint
+            config.currentMint,
           );
           tx.feePayer = backendKeypair.publicKey;
-          tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+          tx.recentBlockhash = (
+            await connection.getLatestBlockhash()
+          ).blockhash;
           await sendAndConfirmTransaction(connection, tx, [backendKeypair]);
           user.xp += milestoneXp;
           await user.save();
         }
       } catch (err: any) {
-        console.warn(`[daily-challenge] streak milestone ${milestone} on-chain failed:`, err?.message);
+        console.warn(
+          `[daily-challenge] streak milestone ${milestone} on-chain failed:`,
+          err?.message,
+        );
       }
       break;
     }

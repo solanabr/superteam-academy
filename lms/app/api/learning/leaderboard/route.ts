@@ -2,7 +2,11 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db/mongodb";
 import { User } from "@/lib/db/models/user";
 import { getLevel } from "@/lib/db/helpers";
-import { fetchAllLearnerProfiles, fetchXPBalance, fetchConfig } from "@/lib/solana/readers";
+import {
+  fetchAllLearnerProfiles,
+  fetchXPBalance,
+  fetchConfig,
+} from "@/lib/solana/readers";
 
 export async function GET() {
   // Try on-chain first: fetch all LearnerProfile PDAs + XP balances
@@ -19,19 +23,15 @@ export async function GET() {
               xp,
               streak: profile.currentStreak ?? 0,
             };
-          })
+          }),
         );
 
         // Merge with MongoDB for display names
         await connectDB();
         const wallets = entries.map((e) => e.wallet);
         const users = await User.find({ wallet: { $in: wallets } }).lean();
-        const nameMap = new Map(
-          users.map((u) => [u.wallet, u.displayName])
-        );
-        const avatarMap = new Map(
-          users.map((u) => [u.wallet, u.avatar])
-        );
+        const nameMap = new Map(users.map((u) => [u.wallet, u.displayName]));
+        const avatarMap = new Map(users.map((u) => [u.wallet, u.avatar]));
 
         const ranked = entries
           .filter((e) => e.xp > 0)

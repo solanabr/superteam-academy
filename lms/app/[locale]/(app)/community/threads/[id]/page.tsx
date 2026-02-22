@@ -66,7 +66,11 @@ export default function ThreadDetailPage({
           description: `Tx: ${sig.slice(0, 8)}...${sig.slice(-8)}`,
           action: {
             label: tc("view"),
-            onClick: () => window.open(`https://explorer.solana.com/tx/${sig}?cluster=devnet`, "_blank"),
+            onClick: () =>
+              window.open(
+                `https://explorer.solana.com/tx/${sig}?cluster=devnet`,
+                "_blank",
+              ),
           },
         });
       } else {
@@ -78,7 +82,10 @@ export default function ThreadDetailPage({
     }
   }
 
-  async function handleUpvote(targetId: string, targetType: "thread" | "reply") {
+  async function handleUpvote(
+    targetId: string,
+    targetType: "thread" | "reply",
+  ) {
     if (!publicKey) return;
     try {
       await upvote.mutateAsync({ targetId, targetType });
@@ -97,7 +104,11 @@ export default function ThreadDetailPage({
           description: `Tx: ${sig.slice(0, 8)}...${sig.slice(-8)}`,
           action: {
             label: tc("view"),
-            onClick: () => window.open(`https://explorer.solana.com/tx/${sig}?cluster=devnet`, "_blank"),
+            onClick: () =>
+              window.open(
+                `https://explorer.solana.com/tx/${sig}?cluster=devnet`,
+                "_blank",
+              ),
           },
         });
       } else {
@@ -108,7 +119,11 @@ export default function ThreadDetailPage({
           description: `${(thread!.bountyLamports / 1e9).toFixed(3)} SOL`,
           action: {
             label: tc("view"),
-            onClick: () => window.open(`https://explorer.solana.com/tx/${result.bountyTxSignature}?cluster=devnet`, "_blank"),
+            onClick: () =>
+              window.open(
+                `https://explorer.solana.com/tx/${result.bountyTxSignature}?cluster=devnet`,
+                "_blank",
+              ),
           },
         });
       }
@@ -127,7 +142,11 @@ export default function ThreadDetailPage({
           description: `Tx: ${sig.slice(0, 8)}...${sig.slice(-8)}`,
           action: {
             label: tc("view"),
-            onClick: () => window.open(`https://explorer.solana.com/tx/${sig}?cluster=devnet`, "_blank"),
+            onClick: () =>
+              window.open(
+                `https://explorer.solana.com/tx/${sig}?cluster=devnet`,
+                "_blank",
+              ),
           },
         });
       } else {
@@ -238,12 +257,14 @@ export default function ThreadDetailPage({
                 disabled={!publicKey}
                 className={cn(
                   "rounded-md p-1 transition-colors hover:bg-accent",
-                  hasUpvoted && "text-solana-green"
+                  hasUpvoted && "text-solana-green",
                 )}
               >
                 <ArrowBigUp className="h-6 w-6" />
               </button>
-              <span className="text-sm font-semibold">{thread.upvotes.length}</span>
+              <span className="text-sm font-semibold">
+                {thread.upvotes.length}
+              </span>
             </div>
 
             {/* Content */}
@@ -264,8 +285,13 @@ export default function ThreadDetailPage({
                 {thread.bountyLamports > 0 && (
                   <Badge variant={thread.bountyPaid ? "beginner" : "xp"}>
                     <Coins className="mr-1 h-3 w-3" />
-                    {(thread.bountyLamports / 1e9).toFixed(thread.bountyLamports % 1e9 === 0 ? 0 : 3)} SOL
-                    {thread.bountyPaid ? ` - ${t("bountyPaid")}` : ` - ${t("bountyOpen")}`}
+                    {(thread.bountyLamports / 1e9).toFixed(
+                      thread.bountyLamports % 1e9 === 0 ? 0 : 3,
+                    )}{" "}
+                    SOL
+                    {thread.bountyPaid
+                      ? ` - ${t("bountyPaid")}`
+                      : ` - ${t("bountyOpen")}`}
                   </Badge>
                 )}
               </div>
@@ -364,7 +390,9 @@ export default function ThreadDetailPage({
             return (
               <Card
                 key={reply._id}
-                className={cn(isSolution && "border-solana-green/50 bg-solana-green/5")}
+                className={cn(
+                  isSolution && "border-solana-green/50 bg-solana-green/5",
+                )}
               >
                 <CardContent className="flex gap-4 p-4">
                   {/* Upvote */}
@@ -374,12 +402,14 @@ export default function ThreadDetailPage({
                       disabled={!publicKey}
                       className={cn(
                         "rounded-md p-1 transition-colors hover:bg-accent",
-                        replyHasUpvoted && "text-solana-green"
+                        replyHasUpvoted && "text-solana-green",
                       )}
                     >
                       <ArrowBigUp className="h-5 w-5" />
                     </button>
-                    <span className="text-xs font-semibold">{reply.upvotes.length}</span>
+                    <span className="text-xs font-semibold">
+                      {reply.upvotes.length}
+                    </span>
                     {isSolution && (
                       <CheckCircle2 className="h-5 w-5 text-solana-green" />
                     )}
@@ -407,7 +437,8 @@ export default function ThreadDetailPage({
                             className="inline-flex items-center gap-1 text-solana-green hover:underline"
                           >
                             <ExternalLink className="h-3 w-3" />
-                            {reply.txHash.slice(0, 8)}...{reply.txHash.slice(-4)}
+                            {reply.txHash.slice(0, 8)}...
+                            {reply.txHash.slice(-4)}
                           </a>
                         )}
                         {isSolution && (

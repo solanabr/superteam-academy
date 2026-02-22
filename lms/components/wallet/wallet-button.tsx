@@ -36,7 +36,12 @@ export function WalletButton({ onConnectClick }: WalletButtonProps) {
 
   if (!mounted || !connected || !publicKey) {
     return (
-      <Button onClick={onConnectClick} variant="solana" size="sm" className="min-w-[140px]">
+      <Button
+        onClick={onConnectClick}
+        variant="solana"
+        size="sm"
+        className="min-w-[140px]"
+      >
         <Wallet className="h-4 w-4" />
         {t("connectWallet")}
       </Button>
@@ -53,7 +58,11 @@ export function WalletButton({ onConnectClick }: WalletButtonProps) {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem onClick={handleCopy}>
-          {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+          {copied ? (
+            <Check className="h-4 w-4" />
+          ) : (
+            <Copy className="h-4 w-4" />
+          )}
           {copied ? t("addressCopied") : t("copyAddress")}
         </DropdownMenuItem>
         <DropdownMenuSeparator />

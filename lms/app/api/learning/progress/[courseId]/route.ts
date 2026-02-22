@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PublicKey } from "@solana/web3.js";
 import { findEnrollment } from "@/lib/db/helpers";
-import { fetchEnrollment, fetchCourse, bitmapToLessonIndices } from "@/lib/solana/readers";
+import {
+  fetchEnrollment,
+  fetchCourse,
+  bitmapToLessonIndices,
+} from "@/lib/solana/readers";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: Promise<{ courseId: string }> }
+  { params }: { params: Promise<{ courseId: string }> },
 ) {
   const { courseId } = await params;
   const userId = req.nextUrl.searchParams.get("userId");
@@ -22,15 +26,17 @@ export async function GET(
       const completedAtRaw = enrollment.completedAt;
       const completedAt = completedAtRaw
         ? new Date(
-            (typeof completedAtRaw === "object" && "toNumber" in (completedAtRaw as any)
+            (typeof completedAtRaw === "object" &&
+            "toNumber" in (completedAtRaw as any)
               ? (completedAtRaw as any).toNumber()
-              : Number(completedAtRaw)) * 1000
+              : Number(completedAtRaw)) * 1000,
           ).toISOString()
         : undefined;
       const enrolledAt = new Date(
-        (typeof enrollment.enrolledAt === "object" && "toNumber" in (enrollment.enrolledAt as any)
+        (typeof enrollment.enrolledAt === "object" &&
+        "toNumber" in (enrollment.enrolledAt as any)
           ? (enrollment.enrolledAt as any).toNumber()
-          : Number(enrollment.enrolledAt)) * 1000
+          : Number(enrollment.enrolledAt)) * 1000,
       ).toISOString();
 
       return NextResponse.json({
@@ -39,7 +45,8 @@ export async function GET(
         completedAt,
         lessonsCompleted,
         totalLessons,
-        percentComplete: totalLessons > 0 ? (lessonsCompleted.length / totalLessons) * 100 : 0,
+        percentComplete:
+          totalLessons > 0 ? (lessonsCompleted.length / totalLessons) * 100 : 0,
         lessonTxHashes: {},
         enrollTxHash: undefined,
         completionTxHash: undefined,
@@ -59,9 +66,10 @@ export async function GET(
     lessonsCompleted: enrollment.lessonsCompleted,
     totalLessons: enrollment.totalLessons,
     percentComplete: enrollment.percentComplete,
-    lessonTxHashes: enrollment.lessonTxHashes instanceof Map
-      ? Object.fromEntries(enrollment.lessonTxHashes)
-      : (enrollment.lessonTxHashes ?? {}),
+    lessonTxHashes:
+      enrollment.lessonTxHashes instanceof Map
+        ? Object.fromEntries(enrollment.lessonTxHashes)
+        : (enrollment.lessonTxHashes ?? {}),
     enrollTxHash: enrollment.enrollTxHash ?? undefined,
     completionTxHash: enrollment.completionTxHash ?? undefined,
   });

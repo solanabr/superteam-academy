@@ -10,7 +10,9 @@ export class LandingPage {
   constructor(page: Page) {
     this.page = page;
     this.hero = page.locator("section").first();
-    this.ctaButton = page.getByRole("link", { name: /courses|start|explore/i }).first();
+    this.ctaButton = page
+      .getByRole("link", { name: /courses|start|explore/i })
+      .first();
     this.navLinks = page.locator("nav a, nav button");
     this.featureCards = page.locator("[class*=card]");
   }

@@ -58,7 +58,7 @@ export function parseAnchorError(err: unknown): {
 export async function withRetry<T>(
   fn: () => Promise<T>,
   maxRetries: number = 3,
-  baseDelay: number = 1000
+  baseDelay: number = 1000,
 ): Promise<T> {
   let lastError: unknown;
   for (let attempt = 0; attempt < maxRetries; attempt++) {

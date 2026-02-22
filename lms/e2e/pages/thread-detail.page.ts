@@ -16,10 +16,15 @@ export class ThreadDetailPage {
     this.title = page.getByRole("heading", { level: 1 });
     this.body = page.locator("[class*=whitespace-pre-wrap]").first();
     this.backLink = page.getByRole("link", { name: /back/i });
-    this.replyCards = page.locator("[class*=card]").filter({ hasNot: page.locator("textarea") });
+    this.replyCards = page
+      .locator("[class*=card]")
+      .filter({ hasNot: page.locator("textarea") });
     this.replyTextarea = page.getByPlaceholder(/reply/i);
     this.replyButton = page.getByRole("button", { name: /post|reply|send/i });
-    this.upvoteButton = page.locator("button").filter({ has: page.locator("svg") }).first();
+    this.upvoteButton = page
+      .locator("button")
+      .filter({ has: page.locator("svg") })
+      .first();
   }
 
   async goto(threadId: string, locale?: string) {

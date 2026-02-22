@@ -25,8 +25,10 @@ export async function POST(req: NextRequest) {
 
   if (user.completedPractice.length < milestone) {
     return NextResponse.json(
-      { error: `need ${milestone} solved, have ${user.completedPractice.length}` },
-      { status: 400 }
+      {
+        error: `need ${milestone} solved, have ${user.completedPractice.length}`,
+      },
+      { status: 400 },
     );
   }
 
@@ -49,11 +51,13 @@ export async function POST(req: NextRequest) {
         fromPubkey: backendKeypair.publicKey,
         toPubkey: recipient,
         lamports,
-      })
+      }),
     );
     tx.feePayer = backendKeypair.publicKey;
     tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-    txSignature = await sendAndConfirmTransaction(connection, tx, [backendKeypair]);
+    txSignature = await sendAndConfirmTransaction(connection, tx, [
+      backendKeypair,
+    ]);
   } catch (err: any) {
     console.error("[claim-milestone] SOL transfer failed:", err?.message);
     return NextResponse.json({ error: "transfer failed" }, { status: 500 });

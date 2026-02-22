@@ -46,12 +46,19 @@ export class CommunityThreadsPage {
     await this.newThreadButton.click();
   }
 
-  async fillThread(title: string, body: string, type?: "discussion" | "question", tags?: string) {
+  async fillThread(
+    title: string,
+    body: string,
+    type?: "discussion" | "question",
+    tags?: string,
+  ) {
     await this.titleInput.fill(title);
     await this.bodyTextarea.fill(body);
     if (type) {
       await this.typeSelect.click();
-      await this.page.getByRole("option", { name: new RegExp(type, "i") }).click();
+      await this.page
+        .getByRole("option", { name: new RegExp(type, "i") })
+        .click();
     }
     if (tags) {
       await this.tagsInput.fill(tags);

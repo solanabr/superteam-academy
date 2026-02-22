@@ -3,7 +3,18 @@
 import { useRef, useState, useMemo } from "react";
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
-import { ArrowLeft, Download, Share2, Shield, CheckCircle2, Copy, Check, Award, Trophy, ExternalLink } from "lucide-react";
+import {
+  ArrowLeft,
+  Download,
+  Share2,
+  Shield,
+  CheckCircle2,
+  Copy,
+  Check,
+  Award,
+  Trophy,
+  ExternalLink,
+} from "lucide-react";
 import { highlight } from "@/lib/syntax-highlight";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,7 +23,12 @@ import { Separator } from "@/components/ui/separator";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { usePracticeProgress, useDisplayName } from "@/lib/hooks/use-service";
 import { PRACTICE_CHALLENGES } from "@/lib/data/practice-challenges";
-import { PRACTICE_MILESTONES, MILESTONE_LEVELS, PRACTICE_CATEGORIES, PRACTICE_DIFFICULTY_CONFIG } from "@/types/practice";
+import {
+  PRACTICE_MILESTONES,
+  MILESTONE_LEVELS,
+  PRACTICE_CATEGORIES,
+  PRACTICE_DIFFICULTY_CONFIG,
+} from "@/types/practice";
 import type { PracticeCategory } from "@/types/practice";
 import { toast } from "sonner";
 
@@ -21,13 +37,19 @@ export default function PracticeCertificatePage() {
   const tc = useTranslations("common");
   const tCert = useTranslations("certificates");
   const { publicKey } = useWallet();
-  const { completed: completedIds, txHashes, claimedMilestones, milestoneTxHashes } = usePracticeProgress();
+  const {
+    completed: completedIds,
+    txHashes,
+    claimedMilestones,
+    milestoneTxHashes,
+  } = usePracticeProgress();
   const { data: displayName } = useDisplayName();
   const certRef = useRef<HTMLDivElement>(null);
   const [metaCopied, setMetaCopied] = useState(false);
 
   const wallet = publicKey?.toBase58() ?? "Not Connected";
-  const shortWallet = wallet.length > 10 ? `${wallet.slice(0, 6)}...${wallet.slice(-4)}` : wallet;
+  const shortWallet =
+    wallet.length > 10 ? `${wallet.slice(0, 6)}...${wallet.slice(-4)}` : wallet;
   const solvedCount = completedIds.length;
 
   const { milestone, level, color, nextMilestone } = useMemo(() => {
@@ -37,9 +59,20 @@ export default function PracticeCertificatePage() {
       if (solvedCount >= m) best = m;
       else if (next === null) next = m;
     }
-    if (best === 0) return { milestone: 0, level: "None", color: "#71717a", nextMilestone: PRACTICE_MILESTONES[0] };
+    if (best === 0)
+      return {
+        milestone: 0,
+        level: "None",
+        color: "#71717a",
+        nextMilestone: PRACTICE_MILESTONES[0],
+      };
     const info = MILESTONE_LEVELS[best];
-    return { milestone: best, level: info.name, color: info.color, nextMilestone: next };
+    return {
+      milestone: best,
+      level: info.name,
+      color: info.color,
+      nextMilestone: next,
+    };
   }, [solvedCount]);
 
   const practiceXP = completedIds.reduce((sum, id) => {
@@ -79,7 +112,10 @@ export default function PracticeCertificatePage() {
       { trait_type: "Level", value: level },
       { trait_type: "Challenges Solved", value: solvedCount.toString() },
       { trait_type: "Practice XP", value: practiceXP.toString() },
-      { trait_type: "Categories Mastered", value: categoriesMastered.length.toString() },
+      {
+        trait_type: "Categories Mastered",
+        value: categoriesMastered.length.toString(),
+      },
       ...(displayName ? [{ trait_type: "Learner", value: displayName }] : []),
     ],
   };
@@ -95,7 +131,10 @@ export default function PracticeCertificatePage() {
     if (!certRef.current) return;
     try {
       const { toPng } = await import("html-to-image");
-      const dataUrl = await toPng(certRef.current, { pixelRatio: 2, cacheBust: true });
+      const dataUrl = await toPng(certRef.current, {
+        pixelRatio: 2,
+        cacheBust: true,
+      });
       const link = document.createElement("a");
       link.download = `superteam-practice-${level.toLowerCase()}.png`;
       link.href = dataUrl;
@@ -133,8 +172,12 @@ export default function PracticeCertificatePage() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
-      <Link href="/practice" className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="h-4 w-4" /> {tc("backTo", { page: t("practiceArena") })}
+      <Link
+        href="/practice"
+        className="mb-6 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft className="h-4 w-4" />{" "}
+        {tc("backTo", { page: t("practiceArena") })}
       </Link>
 
       <div ref={certRef}>
@@ -145,7 +188,12 @@ export default function PracticeCertificatePage() {
               background: `radial-gradient(ellipse at 30% 0%, ${color}18 0%, transparent 50%), radial-gradient(ellipse at 70% 100%, ${secondaryColor}18 0%, transparent 50%), linear-gradient(180deg, hsl(var(--card)) 0%, hsl(var(--card)) 100%)`,
             }}
           >
-            <div className="h-1.5" style={{ background: `linear-gradient(90deg, ${color}, ${secondaryColor}, ${color})` }} />
+            <div
+              className="h-1.5"
+              style={{
+                background: `linear-gradient(90deg, ${color}, ${secondaryColor}, ${color})`,
+              }}
+            />
 
             <div className="p-8 sm:p-12">
               {/* Header */}
@@ -153,16 +201,25 @@ export default function PracticeCertificatePage() {
                 <div className="flex items-center gap-3">
                   <div
                     className="flex h-11 w-11 items-center justify-center rounded-xl shadow-lg"
-                    style={{ background: `linear-gradient(135deg, ${color}, ${secondaryColor})` }}
+                    style={{
+                      background: `linear-gradient(135deg, ${color}, ${secondaryColor})`,
+                    }}
                   >
                     <span className="text-sm font-black text-white">S</span>
                   </div>
                   <div>
-                    <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.2em]">Superteam Academy</p>
-                    <p className="text-[11px] text-muted-foreground/70">{t("practiceArenaCredential")}</p>
+                    <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.2em]">
+                      Superteam Academy
+                    </p>
+                    <p className="text-[11px] text-muted-foreground/70">
+                      {t("practiceArenaCredential")}
+                    </p>
                   </div>
                 </div>
-                <Badge variant="outline" className="gap-1.5 text-[10px] font-semibold px-2.5 py-1">
+                <Badge
+                  variant="outline"
+                  className="gap-1.5 text-[10px] font-semibold px-2.5 py-1"
+                >
                   <Shield className="h-3 w-3" /> {tc("soulboundNft")}
                 </Badge>
               </div>
@@ -179,30 +236,43 @@ export default function PracticeCertificatePage() {
                   >
                     <div
                       className="h-full w-full rounded-[22px] flex items-center justify-center relative overflow-hidden"
-                      style={{ background: `linear-gradient(135deg, ${color}, ${color}CC)` }}
+                      style={{
+                        background: `linear-gradient(135deg, ${color}, ${color}CC)`,
+                      }}
                     >
                       <div
                         className="absolute inset-0 opacity-[0.08]"
                         style={{
-                          backgroundImage: "radial-gradient(white 1px, transparent 1px)",
+                          backgroundImage:
+                            "radial-gradient(white 1px, transparent 1px)",
                           backgroundSize: "16px 16px",
                         }}
                       />
                       <div className="text-center relative z-10">
                         <Award className="h-10 w-10 mx-auto mb-1 text-white" />
-                        <p className="text-4xl font-black text-white">{level[0]}</p>
-                        <p className="text-[9px] font-bold text-white/70 uppercase tracking-[0.25em] mt-0.5">{level}</p>
+                        <p className="text-4xl font-black text-white">
+                          {level[0]}
+                        </p>
+                        <p className="text-[9px] font-bold text-white/70 uppercase tracking-[0.25em] mt-0.5">
+                          {level}
+                        </p>
                       </div>
                     </div>
                   </div>
                   <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 rounded-full bg-background px-3.5 py-1.5 border shadow-md">
                     <CheckCircle2 className="h-3.5 w-3.5 text-solana-green" />
-                    <span className="text-xs font-semibold">{tc("verified")}</span>
+                    <span className="text-xs font-semibold">
+                      {tc("verified")}
+                    </span>
                   </div>
                 </div>
 
-                <h1 className="text-2xl font-bold sm:text-3xl tracking-tight">{t("practiceArena")}</h1>
-                <p className="mt-1.5 text-base font-semibold" style={{ color }}>{tCert("credential", { level })}</p>
+                <h1 className="text-2xl font-bold sm:text-3xl tracking-tight">
+                  {t("practiceArena")}
+                </h1>
+                <p className="mt-1.5 text-base font-semibold" style={{ color }}>
+                  {tCert("credential", { level })}
+                </p>
               </div>
 
               <Separator className="my-8" />
@@ -211,15 +281,25 @@ export default function PracticeCertificatePage() {
               <div className="grid grid-cols-3 gap-6 text-center mb-8">
                 <div className="space-y-1">
                   <p className="text-3xl font-black">{solvedCount}</p>
-                  <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">{tc("solved")}</p>
+                  <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+                    {tc("solved")}
+                  </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-3xl font-black text-xp-gold">{practiceXP.toLocaleString()}</p>
-                  <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">{t("practiceXP")}</p>
+                  <p className="text-3xl font-black text-xp-gold">
+                    {practiceXP.toLocaleString()}
+                  </p>
+                  <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+                    {t("practiceXP")}
+                  </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-3xl font-black">{categoriesMastered.length}</p>
-                  <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">{t("categories")}</p>
+                  <p className="text-3xl font-black">
+                    {categoriesMastered.length}
+                  </p>
+                  <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+                    {t("categories")}
+                  </p>
                 </div>
               </div>
 
@@ -227,9 +307,15 @@ export default function PracticeCertificatePage() {
               {nextMilestone && (
                 <div className="mb-8">
                   <div className="flex items-center justify-between text-xs mb-1.5">
-                    <span className="text-muted-foreground">{t("nextMilestone")}</span>
-                    <span className="font-semibold" style={{ color: MILESTONE_LEVELS[nextMilestone].color }}>
-                      {MILESTONE_LEVELS[nextMilestone].name} ({solvedCount}/{nextMilestone})
+                    <span className="text-muted-foreground">
+                      {t("nextMilestone")}
+                    </span>
+                    <span
+                      className="font-semibold"
+                      style={{ color: MILESTONE_LEVELS[nextMilestone].color }}
+                    >
+                      {MILESTONE_LEVELS[nextMilestone].name} ({solvedCount}/
+                      {nextMilestone})
                     </span>
                   </div>
                   <div className="h-2 rounded-full bg-muted overflow-hidden">
@@ -248,10 +334,19 @@ export default function PracticeCertificatePage() {
                 <>
                   <Separator className="my-8" />
                   <div className="text-center">
-                    <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-3">{t("categoriesMastered")}</p>
+                    <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-3">
+                      {t("categoriesMastered")}
+                    </p>
                     <div className="flex flex-wrap justify-center gap-2">
                       {categoriesMastered.map((cat) => (
-                        <Badge key={cat} variant="outline" style={{ borderColor: PRACTICE_CATEGORIES[cat].color, color: PRACTICE_CATEGORIES[cat].color }}>
+                        <Badge
+                          key={cat}
+                          variant="outline"
+                          style={{
+                            borderColor: PRACTICE_CATEGORIES[cat].color,
+                            color: PRACTICE_CATEGORIES[cat].color,
+                          }}
+                        >
                           {PRACTICE_CATEGORIES[cat].label}
                         </Badge>
                       ))}
@@ -264,14 +359,27 @@ export default function PracticeCertificatePage() {
 
               {/* Recipient */}
               <div className="text-center">
-                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">{tc("awardedTo")}</p>
-                {displayName && <p className="text-xl font-bold mb-1">{displayName}</p>}
-                <p className="font-mono text-sm text-muted-foreground">{shortWallet}</p>
-                <p className="mt-3 text-xs text-muted-foreground/70">{earnedDate}</p>
+                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2">
+                  {tc("awardedTo")}
+                </p>
+                {displayName && (
+                  <p className="text-xl font-bold mb-1">{displayName}</p>
+                )}
+                <p className="font-mono text-sm text-muted-foreground">
+                  {shortWallet}
+                </p>
+                <p className="mt-3 text-xs text-muted-foreground/70">
+                  {earnedDate}
+                </p>
               </div>
             </div>
 
-            <div className="h-1.5" style={{ background: `linear-gradient(90deg, ${secondaryColor}, ${color}, ${secondaryColor})` }} />
+            <div
+              className="h-1.5"
+              style={{
+                background: `linear-gradient(90deg, ${secondaryColor}, ${color}, ${secondaryColor})`,
+              }}
+            />
           </div>
         </Card>
       </div>
@@ -282,7 +390,12 @@ export default function PracticeCertificatePage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => window.open(`https://explorer.solana.com/tx/${latestMilestoneTx}?cluster=devnet`, "_blank")}
+            onClick={() =>
+              window.open(
+                `https://explorer.solana.com/tx/${latestMilestoneTx}?cluster=devnet`,
+                "_blank",
+              )
+            }
           >
             <ExternalLink className="h-4 w-4" /> {tc("viewOn")}
           </Button>
@@ -307,33 +420,51 @@ export default function PracticeCertificatePage() {
           <div className="space-y-2.5 text-sm">
             {displayName && (
               <div className="flex justify-between">
-                <span className="text-muted-foreground">{tCert("learner")}</span>
+                <span className="text-muted-foreground">
+                  {tCert("learner")}
+                </span>
                 <span className="font-medium">{displayName}</span>
               </div>
             )}
             <div className="flex justify-between">
-              <span className="text-muted-foreground">{tCert("tokenStandard")}</span>
+              <span className="text-muted-foreground">
+                {tCert("tokenStandard")}
+              </span>
               <span className="font-medium">Token-2022 (NonTransferable)</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">{tCert("track")}</span>
-              <span className="font-medium" style={{ color }}>{t("practiceArena")}</span>
+              <span className="font-medium" style={{ color }}>
+                {t("practiceArena")}
+              </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">{tCert("levelLabel")}</span>
-              <span className="font-bold" style={{ color }}>{level}</span>
+              <span className="text-muted-foreground">
+                {tCert("levelLabel")}
+              </span>
+              <span className="font-bold" style={{ color }}>
+                {level}
+              </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">{tCert("networkLabel")}</span>
+              <span className="text-muted-foreground">
+                {tCert("networkLabel")}
+              </span>
               <span className="font-medium">Solana Devnet</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">{t("challengesSolved")}</span>
-              <span className="font-medium">{solvedCount} / {PRACTICE_CHALLENGES.length}</span>
+              <span className="text-muted-foreground">
+                {t("challengesSolved")}
+              </span>
+              <span className="font-medium">
+                {solvedCount} / {PRACTICE_CHALLENGES.length}
+              </span>
             </div>
             {latestMilestoneTx && (
               <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">{tCert("transaction")}</span>
+                <span className="text-muted-foreground">
+                  {tCert("transaction")}
+                </span>
                 <button
                   className="font-mono text-xs hover:underline cursor-pointer"
                   style={{ color }}
@@ -343,7 +474,8 @@ export default function PracticeCertificatePage() {
                   }}
                   title={latestMilestoneTx}
                 >
-                  {latestMilestoneTx.slice(0, 8)}...{latestMilestoneTx.slice(-8)}
+                  {latestMilestoneTx.slice(0, 8)}...
+                  {latestMilestoneTx.slice(-8)}
                 </button>
               </div>
             )}
@@ -353,19 +485,30 @@ export default function PracticeCertificatePage() {
           {claimedMilestones.length > 0 && (
             <>
               <Separator className="my-4" />
-              <h3 className="text-sm font-semibold mb-2">{t("milestoneHistory")}</h3>
+              <h3 className="text-sm font-semibold mb-2">
+                {t("milestoneHistory")}
+              </h3>
               <div className="space-y-2">
-                {PRACTICE_MILESTONES.filter((m) => claimedMilestones.includes(m)).map((m) => {
+                {PRACTICE_MILESTONES.filter((m) =>
+                  claimedMilestones.includes(m),
+                ).map((m) => {
                   const info = MILESTONE_LEVELS[m];
                   const tx = milestoneTxHashes[String(m)];
                   return (
-                    <div key={m} className="flex items-center justify-between text-sm rounded-md border px-3 py-2">
+                    <div
+                      key={m}
+                      className="flex items-center justify-between text-sm rounded-md border px-3 py-2"
+                    >
                       <div className="flex items-center gap-2">
-                        <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: info.color }} />
+                        <div
+                          className="h-2.5 w-2.5 rounded-full"
+                          style={{ backgroundColor: info.color }}
+                        />
                         <div>
                           <p className="font-medium">{info.name}</p>
                           <p className="text-xs text-muted-foreground">
-                            {m} {tc("solved").toLowerCase()} · {info.solReward} SOL
+                            {m} {tc("solved").toLowerCase()} · {info.solReward}{" "}
+                            SOL
                           </p>
                         </div>
                       </div>
@@ -381,7 +524,9 @@ export default function PracticeCertificatePage() {
                           {tx.slice(0, 6)}...{tx.slice(-4)}
                         </a>
                       ) : (
-                        <span className="text-[11px] text-muted-foreground/60">{tCert("awaitingTx")}</span>
+                        <span className="text-[11px] text-muted-foreground/60">
+                          {tCert("awaitingTx")}
+                        </span>
                       )}
                     </div>
                   );
@@ -397,7 +542,8 @@ export default function PracticeCertificatePage() {
         <Card className="mt-4">
           <CardContent className="p-6">
             <h2 className="font-semibold mb-3 flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-solana-green" /> {t("recentlySolved")}
+              <CheckCircle2 className="h-4 w-4 text-solana-green" />{" "}
+              {t("recentlySolved")}
             </h2>
             <div className="space-y-2 max-h-[400px] overflow-y-auto">
               {solvedChallenges.map((ch) => {
@@ -406,16 +552,28 @@ export default function PracticeCertificatePage() {
                 const diffConfig = PRACTICE_DIFFICULTY_CONFIG[ch.difficulty];
                 const catConfig = PRACTICE_CATEGORIES[ch.category];
                 return (
-                  <div key={ch.id} className="flex items-center justify-between text-sm rounded-md border px-3 py-2">
+                  <div
+                    key={ch.id}
+                    className="flex items-center justify-between text-sm rounded-md border px-3 py-2"
+                  >
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="flex flex-col gap-0.5 min-w-0">
                         <p className="font-medium truncate">{ch.title}</p>
                         <div className="flex items-center gap-2 text-xs">
-                          <span style={{ color: diffConfig.color }} className="font-medium">{diffConfig.label}</span>
+                          <span
+                            style={{ color: diffConfig.color }}
+                            className="font-medium"
+                          >
+                            {diffConfig.label}
+                          </span>
                           <span className="text-muted-foreground">·</span>
-                          <span style={{ color: catConfig.color }}>{catConfig.label}</span>
+                          <span style={{ color: catConfig.color }}>
+                            {catConfig.label}
+                          </span>
                           <span className="text-muted-foreground">·</span>
-                          <span className="text-xp-gold font-medium">{ch.xpReward} XP</span>
+                          <span className="text-xp-gold font-medium">
+                            {ch.xpReward} XP
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -444,22 +602,34 @@ export default function PracticeCertificatePage() {
       {/* NFT Metadata */}
       <Card className="mt-4 overflow-hidden">
         <div className="flex items-center justify-between border-b px-4 py-2 bg-[#16161e]">
-          <span className="text-xs font-semibold uppercase tracking-wider text-[#7f849c]">JSON</span>
+          <span className="text-xs font-semibold uppercase tracking-wider text-[#7f849c]">
+            JSON
+          </span>
           <Button
             variant="ghost"
             size="sm"
             className="h-7 px-2 text-[#7f849c] hover:text-white hover:bg-white/10"
             onClick={copyMetadata}
           >
-            {metaCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-            <span className="text-xs ml-1">{metaCopied ? tc("copied") : tc("copy")}</span>
+            {metaCopied ? (
+              <Check className="h-3.5 w-3.5" />
+            ) : (
+              <Copy className="h-3.5 w-3.5" />
+            )}
+            <span className="text-xs ml-1">
+              {metaCopied ? tc("copied") : tc("copy")}
+            </span>
           </Button>
         </div>
         <div className="bg-[#1e1e2e] p-4 overflow-x-auto">
-          <pre className="m-0"><code
-            className="font-mono text-[13px] leading-relaxed text-[#cdd6f4]"
-            dangerouslySetInnerHTML={{ __html: highlight(JSON.stringify(nftMetadata, null, 2), "json") }}
-          /></pre>
+          <pre className="m-0">
+            <code
+              className="font-mono text-[13px] leading-relaxed text-[#cdd6f4]"
+              dangerouslySetInnerHTML={{
+                __html: highlight(JSON.stringify(nftMetadata, null, 2), "json"),
+              }}
+            />
+          </pre>
         </div>
       </Card>
     </div>

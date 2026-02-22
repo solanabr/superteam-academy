@@ -6,7 +6,10 @@ const LYZR_AGENT_ID = "6990319188c3964deca09041";
 export async function POST(req: NextRequest) {
   const apiKey = process.env.LYZR_API_KEY;
   if (!apiKey) {
-    return NextResponse.json({ error: "AI service not configured" }, { status: 500 });
+    return NextResponse.json(
+      { error: "AI service not configured" },
+      { status: 500 },
+    );
   }
 
   const body = await req.json();
@@ -20,7 +23,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Message is required" }, { status: 400 });
   }
 
-  const sid = sessionId || `${LYZR_AGENT_ID}-${crypto.randomUUID().slice(0, 12)}`;
+  const sid =
+    sessionId || `${LYZR_AGENT_ID}-${crypto.randomUUID().slice(0, 12)}`;
 
   const res = await fetch(LYZR_API_URL, {
     method: "POST",
@@ -40,7 +44,7 @@ export async function POST(req: NextRequest) {
     const text = await res.text();
     return NextResponse.json(
       { error: "AI service error", detail: text },
-      { status: res.status }
+      { status: res.status },
     );
   }
 

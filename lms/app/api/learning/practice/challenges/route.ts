@@ -8,7 +8,8 @@ export async function GET() {
   await connectDB();
 
   const sanityChallenges = await fetchSanityPracticeChallenges();
-  const challenges = sanityChallenges.length > 0 ? sanityChallenges : PRACTICE_CHALLENGES;
+  const challenges =
+    sanityChallenges.length > 0 ? sanityChallenges : PRACTICE_CHALLENGES;
 
   // Count solves per challenge across all users
   const solveCounts = await User.aggregate([

@@ -5,9 +5,19 @@ const testCase = defineArrayMember({
   name: "testCase",
   title: "Test Case",
   fields: [
-    defineField({ name: "name", title: "Name", type: "string", validation: (r) => r.required() }),
+    defineField({
+      name: "name",
+      title: "Name",
+      type: "string",
+      validation: (r) => r.required(),
+    }),
     defineField({ name: "input", title: "Input", type: "text", rows: 2 }),
-    defineField({ name: "expectedOutput", title: "Expected Output", type: "text", rows: 2 }),
+    defineField({
+      name: "expectedOutput",
+      title: "Expected Output",
+      type: "text",
+      rows: 2,
+    }),
   ],
 });
 
@@ -24,9 +34,27 @@ const challenge = {
       initialValue: "typescript",
       validation: (r) => r.required(),
     }),
-    defineField({ name: "prompt", title: "Challenge Prompt", type: "text", rows: 3, validation: (r) => r.required() }),
-    defineField({ name: "starterCode", title: "Starter Code", type: "text", rows: 10, validation: (r) => r.required() }),
-    defineField({ name: "solution", title: "Solution", type: "text", rows: 10, validation: (r) => r.required() }),
+    defineField({
+      name: "prompt",
+      title: "Challenge Prompt",
+      type: "text",
+      rows: 3,
+      validation: (r) => r.required(),
+    }),
+    defineField({
+      name: "starterCode",
+      title: "Starter Code",
+      type: "text",
+      rows: 10,
+      validation: (r) => r.required(),
+    }),
+    defineField({
+      name: "solution",
+      title: "Solution",
+      type: "text",
+      rows: 10,
+      validation: (r) => r.required(),
+    }),
     defineField({
       name: "testCases",
       title: "Test Cases",
@@ -47,9 +75,19 @@ const lesson = defineArrayMember({
   name: "lesson",
   title: "Lesson",
   fields: [
-    defineField({ name: "title", title: "Title", type: "string", validation: (r) => r.required() }),
+    defineField({
+      name: "title",
+      title: "Title",
+      type: "string",
+      validation: (r) => r.required(),
+    }),
     defineField({ name: "description", title: "Description", type: "string" }),
-    defineField({ name: "order", title: "Order", type: "number", validation: (r) => r.required().min(0) }),
+    defineField({
+      name: "order",
+      title: "Order",
+      type: "number",
+      validation: (r) => r.required().min(0),
+    }),
     defineField({
       name: "type",
       title: "Type",
@@ -58,15 +96,38 @@ const lesson = defineArrayMember({
       initialValue: "content",
       validation: (r) => r.required(),
     }),
-    defineField({ name: "xpReward", title: "XP Reward", type: "number", initialValue: 25, validation: (r) => r.required().min(0) }),
-    defineField({ name: "duration", title: "Duration", type: "string", initialValue: "15 min" }),
-    defineField({ name: "content", title: "Content (Markdown)", type: "text", rows: 20, hidden: ({ parent }) => parent?.type === "challenge" }),
-    defineField({ ...challenge, hidden: ({ parent }) => parent?.type !== "challenge" } as never),
+    defineField({
+      name: "xpReward",
+      title: "XP Reward",
+      type: "number",
+      initialValue: 25,
+      validation: (r) => r.required().min(0),
+    }),
+    defineField({
+      name: "duration",
+      title: "Duration",
+      type: "string",
+      initialValue: "15 min",
+    }),
+    defineField({
+      name: "content",
+      title: "Content (Markdown)",
+      type: "text",
+      rows: 20,
+      hidden: ({ parent }) => parent?.type === "challenge",
+    }),
+    defineField({
+      ...challenge,
+      hidden: ({ parent }) => parent?.type !== "challenge",
+    } as never),
   ],
   preview: {
     select: { title: "title", type: "type", order: "order" },
     prepare({ title, type, order }) {
-      return { title: `${order}. ${title}`, subtitle: type === "challenge" ? "Challenge" : "Content" };
+      return {
+        title: `${order}. ${title}`,
+        subtitle: type === "challenge" ? "Challenge" : "Content",
+      };
     },
   },
 });
@@ -76,9 +137,19 @@ const moduleItem = defineArrayMember({
   name: "module",
   title: "Module",
   fields: [
-    defineField({ name: "title", title: "Title", type: "string", validation: (r) => r.required() }),
+    defineField({
+      name: "title",
+      title: "Title",
+      type: "string",
+      validation: (r) => r.required(),
+    }),
     defineField({ name: "description", title: "Description", type: "string" }),
-    defineField({ name: "order", title: "Order", type: "number", validation: (r) => r.required().min(0) }),
+    defineField({
+      name: "order",
+      title: "Order",
+      type: "number",
+      validation: (r) => r.required().min(0),
+    }),
     defineField({
       name: "lessons",
       title: "Lessons",
@@ -89,7 +160,10 @@ const moduleItem = defineArrayMember({
   preview: {
     select: { title: "title", order: "order", lessons: "lessons" },
     prepare({ title, order, lessons }) {
-      return { title: `Module ${order + 1}: ${title}`, subtitle: `${lessons?.length ?? 0} lessons` };
+      return {
+        title: `Module ${order + 1}: ${title}`,
+        subtitle: `${lessons?.length ?? 0} lessons`,
+      };
     },
   },
 });
@@ -99,7 +173,12 @@ export const course = defineType({
   title: "Course",
   type: "document",
   fields: [
-    defineField({ name: "title", title: "Title", type: "string", validation: (r) => r.required() }),
+    defineField({
+      name: "title",
+      title: "Title",
+      type: "string",
+      validation: (r) => r.required(),
+    }),
     defineField({
       name: "slug",
       title: "Slug",
@@ -107,8 +186,19 @@ export const course = defineType({
       options: { source: "title", maxLength: 96 },
       validation: (r) => r.required(),
     }),
-    defineField({ name: "description", title: "Description", type: "text", rows: 3, validation: (r) => r.required() }),
-    defineField({ name: "thumbnail", title: "Thumbnail", type: "image", options: { hotspot: true } }),
+    defineField({
+      name: "description",
+      title: "Description",
+      type: "text",
+      rows: 3,
+      validation: (r) => r.required(),
+    }),
+    defineField({
+      name: "thumbnail",
+      title: "Thumbnail",
+      type: "image",
+      options: { hotspot: true },
+    }),
     defineField({
       name: "creator",
       title: "Creator",
@@ -123,8 +213,19 @@ export const course = defineType({
       initialValue: "beginner",
       validation: (r) => r.required(),
     }),
-    defineField({ name: "duration", title: "Duration", type: "string", initialValue: "3 hours" }),
-    defineField({ name: "xpTotal", title: "Total XP", type: "number", initialValue: 500, validation: (r) => r.required().min(0) }),
+    defineField({
+      name: "duration",
+      title: "Duration",
+      type: "string",
+      initialValue: "3 hours",
+    }),
+    defineField({
+      name: "xpTotal",
+      title: "Total XP",
+      type: "number",
+      initialValue: 500,
+      validation: (r) => r.required().min(0),
+    }),
     defineField({
       name: "track",
       title: "Track",
@@ -140,7 +241,14 @@ export const course = defineType({
       },
       initialValue: "standalone",
     }),
-    defineField({ name: "trackLevel", title: "Track Level", type: "number", initialValue: 1, description: "Position within the track (1 = first course, 2 = second, etc.)" }),
+    defineField({
+      name: "trackLevel",
+      title: "Track Level",
+      type: "number",
+      initialValue: 1,
+      description:
+        "Position within the track (1 = first course, 2 = second, etc.)",
+    }),
     defineField({
       name: "prerequisite",
       title: "Prerequisite Course",
@@ -148,9 +256,26 @@ export const course = defineType({
       to: [{ type: "course" }],
       description: "Course that must be completed before enrolling",
     }),
-    defineField({ name: "isActive", title: "Active", type: "boolean", initialValue: true }),
-    defineField({ name: "totalCompletions", title: "Total Completions", type: "number", initialValue: 0, readOnly: true }),
-    defineField({ name: "totalEnrollments", title: "Total Enrollments", type: "number", initialValue: 0, readOnly: true }),
+    defineField({
+      name: "isActive",
+      title: "Active",
+      type: "boolean",
+      initialValue: true,
+    }),
+    defineField({
+      name: "totalCompletions",
+      title: "Total Completions",
+      type: "number",
+      initialValue: 0,
+      readOnly: true,
+    }),
+    defineField({
+      name: "totalEnrollments",
+      title: "Total Enrollments",
+      type: "number",
+      initialValue: 0,
+      readOnly: true,
+    }),
     defineField({
       name: "modules",
       title: "Modules",

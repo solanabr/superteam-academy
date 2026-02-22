@@ -70,7 +70,9 @@ export function useAllProgress() {
   });
 }
 
-export function useLeaderboard(timeframe: "weekly" | "monthly" | "all-time" = "all-time") {
+export function useLeaderboard(
+  timeframe: "weekly" | "monthly" | "all-time" = "all-time",
+) {
   return useQuery({
     queryKey: ["leaderboard", timeframe],
     queryFn: () => getService().getLeaderboard(timeframe),
@@ -216,7 +218,9 @@ export function useUnenroll() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (courseId: string): Promise<{ txSignature: string | null }> => {
+    mutationFn: async (
+      courseId: string,
+    ): Promise<{ txSignature: string | null }> => {
       if (!publicKey || !signTransaction) {
         throw new Error("Wallet not connected");
       }
@@ -229,21 +233,33 @@ export function useUnenroll() {
         try {
           const provider = new AnchorProvider(
             connection,
-            { publicKey, signTransaction, signAllTransactions: async (txs: any[]) => txs } as any,
-            { commitment: "confirmed" }
+            {
+              publicKey,
+              signTransaction,
+              signAllTransactions: async (txs: any[]) => txs,
+            } as any,
+            { commitment: "confirmed" },
           );
           const program = getProgram(provider);
           const tx = await buildUnenrollTx(program, publicKey, courseId);
           tx.feePayer = publicKey;
-          tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+          tx.recentBlockhash = (
+            await connection.getLatestBlockhash()
+          ).blockhash;
           const signed = await signTransaction(tx);
           txSignature = await connection.sendRawTransaction(signed.serialize());
         } catch (err: any) {
           const msg = err?.message ?? "";
-          if (msg.includes("User rejected") || msg.includes("rejected the request")) {
+          if (
+            msg.includes("User rejected") ||
+            msg.includes("rejected the request")
+          ) {
             throw err;
           }
-          console.warn("[unenroll] on-chain tx failed, falling back to MongoDB:", msg);
+          console.warn(
+            "[unenroll] on-chain tx failed, falling back to MongoDB:",
+            msg,
+          );
         }
       }
 
@@ -265,7 +281,8 @@ export function useClaimAchievement() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (achievementId: number) => getService().claimAchievement(userId, achievementId),
+    mutationFn: (achievementId: number) =>
+      getService().claimAchievement(userId, achievementId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["achievements", userId] });
       queryClient.invalidateQueries({ queryKey: ["xp", userId] });
@@ -281,7 +298,9 @@ export function useEnroll() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (courseId: string): Promise<{ txSignature: string | null }> => {
+    mutationFn: async (
+      courseId: string,
+    ): Promise<{ txSignature: string | null }> => {
       if (!publicKey || !signTransaction) {
         throw new Error("Wallet not connected");
       }
@@ -294,8 +313,12 @@ export function useEnroll() {
         try {
           const provider = new AnchorProvider(
             connection,
-            { publicKey, signTransaction, signAllTransactions: async (txs: any[]) => txs } as any,
-            { commitment: "confirmed" }
+            {
+              publicKey,
+              signTransaction,
+              signAllTransactions: async (txs: any[]) => txs,
+            } as any,
+            { commitment: "confirmed" },
           );
           const program = getProgram(provider);
 
@@ -309,7 +332,11 @@ export function useEnroll() {
           }
 
           // Ensure Token-2022 ATA exists for XP mint
-          const ataIx = await ensureATAInstruction(publicKey, publicKey, config.currentMint);
+          const ataIx = await ensureATAInstruction(
+            publicKey,
+            publicKey,
+            config.currentMint,
+          );
           if (ataIx) tx.add(ataIx);
 
           // Add enroll instruction
@@ -317,20 +344,32 @@ export function useEnroll() {
           tx.add(...enrollTx.instructions);
 
           tx.feePayer = publicKey;
-          tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+          tx.recentBlockhash = (
+            await connection.getLatestBlockhash()
+          ).blockhash;
           const signed = await signTransaction(tx);
           txSignature = await connection.sendRawTransaction(signed.serialize());
         } catch (err: any) {
           const msg = err?.message ?? "";
-          if (msg.includes("User rejected") || msg.includes("rejected the request")) {
+          if (
+            msg.includes("User rejected") ||
+            msg.includes("rejected the request")
+          ) {
             throw err;
           }
-          console.warn("[enroll] on-chain tx failed, falling back to MongoDB:", msg);
+          console.warn(
+            "[enroll] on-chain tx failed, falling back to MongoDB:",
+            msg,
+          );
         }
       }
 
       // Sync to MongoDB + get memo tx if wallet tx failed
-      const result = await getService().enrollInCourse(userId, courseId, txSignature ?? undefined);
+      const result = await getService().enrollInCourse(
+        userId,
+        courseId,
+        txSignature ?? undefined,
+      );
       if (!txSignature && result.txSignature) {
         txSignature = result.txSignature;
       }
@@ -349,7 +388,13 @@ export function useCompleteLesson() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ courseId, lessonIndex }: { courseId: string; lessonIndex: number }) => {
+    mutationFn: async ({
+      courseId,
+      lessonIndex,
+    }: {
+      courseId: string;
+      lessonIndex: number;
+    }) => {
       return getService().completeLesson(userId, courseId, lessonIndex);
     },
     onSuccess: () => {
@@ -372,7 +417,7 @@ export function useCertificates(trackId: number) {
     queryKey: ["certificates", wallet, trackId],
     queryFn: () =>
       fetch(`/api/learning/certificates/${trackId}?wallet=${wallet}`).then(
-        (r) => r.json()
+        (r) => r.json(),
       ) as Promise<
         {
           wallet: string;
@@ -438,8 +483,13 @@ export function useCompletePracticeChallenge() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ challengeId, xpReward }: { challengeId: string; xpReward: number }) =>
-      getService().completePracticeChallenge(userId, challengeId, xpReward),
+    mutationFn: ({
+      challengeId,
+      xpReward,
+    }: {
+      challengeId: string;
+      xpReward: number;
+    }) => getService().completePracticeChallenge(userId, challengeId, xpReward),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["practiceProgress"] });
       queryClient.invalidateQueries({ queryKey: ["xp"] });

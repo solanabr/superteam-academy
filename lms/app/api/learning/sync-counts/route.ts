@@ -28,7 +28,11 @@ export async function POST() {
           totalCompletions: s.completed,
         })
         .commit();
-      results.push({ courseId: s._id, enrolled: s.enrolled, completed: s.completed });
+      results.push({
+        courseId: s._id,
+        enrolled: s.enrolled,
+        completed: s.completed,
+      });
     } catch {
       // Course may not exist in Sanity (sample data only)
     }

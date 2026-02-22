@@ -68,7 +68,7 @@ export async function getCourseBySlug(slug: string) {
       },
       _createdAt
     }`,
-    { slug }
+    { slug },
   );
 }
 

@@ -5,7 +5,7 @@ import { User } from "@/lib/db/models/user";
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
   await connectDB();
@@ -13,22 +13,27 @@ export async function GET(
   const thread = await Thread.findByIdAndUpdate(
     id,
     { $inc: { views: 1 } },
-    { new: true }
+    { new: true },
   ).lean();
 
   if (!thread) {
     return NextResponse.json({ error: "not found" }, { status: 404 });
   }
 
-  const user = await User.findOne({ wallet: thread.author }, { displayName: 1 }).lean();
-  const authorName = user?.displayName || `${thread.author.slice(0, 4)}...${thread.author.slice(-4)}`;
+  const user = await User.findOne(
+    { wallet: thread.author },
+    { displayName: 1 },
+  ).lean();
+  const authorName =
+    user?.displayName ||
+    `${thread.author.slice(0, 4)}...${thread.author.slice(-4)}`;
 
   return NextResponse.json({ ...thread, authorName });
 }
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
   const { searchParams } = new URL(req.url);

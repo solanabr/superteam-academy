@@ -6,7 +6,13 @@ import { useTranslations } from "next-intl";
 import { CourseCard } from "@/components/courses/course-card";
 import { SearchBar } from "@/components/shared/search-bar";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useCourses, useAllProgress } from "@/lib/hooks/use-service";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Difficulty } from "@/types/course";
@@ -21,7 +27,9 @@ export default function CoursesPage() {
   useEffect(() => setMounted(true), []);
   const [search, setSearch] = useState("");
   const [difficulty, setDifficulty] = useState<Difficulty | "all">("all");
-  const [trackFilter, setTrackFilter] = useState<string>(searchParams.get("track") ?? "all");
+  const [trackFilter, setTrackFilter] = useState<string>(
+    searchParams.get("track") ?? "all",
+  );
 
   const { data: courses, isLoading } = useCourses();
   const { data: allProgress } = useAllProgress();
@@ -29,15 +37,17 @@ export default function CoursesPage() {
   const filtered = useMemo(() => {
     if (!courses) return [];
     return courses.filter((c) => {
-      if (search && !c.title.toLowerCase().includes(search.toLowerCase())) return false;
+      if (search && !c.title.toLowerCase().includes(search.toLowerCase()))
+        return false;
       if (difficulty !== "all" && c.difficulty !== difficulty) return false;
-      if (trackFilter !== "all" && c.trackId.toString() !== trackFilter) return false;
+      if (trackFilter !== "all" && c.trackId.toString() !== trackFilter)
+        return false;
       return true;
     });
   }, [courses, search, difficulty, trackFilter]);
 
   const completedCourseIds = new Set(
-    allProgress?.filter((p) => p.completedAt).map((p) => p.courseId) ?? []
+    allProgress?.filter((p) => p.completedAt).map((p) => p.courseId) ?? [],
   );
 
   const getProgress = (courseId: string) => {
@@ -53,7 +63,12 @@ export default function CoursesPage() {
       </div>
 
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center">
-        <SearchBar placeholder={t("searchPlaceholder")} value={search} onChange={setSearch} className="sm:max-w-sm" />
+        <SearchBar
+          placeholder={t("searchPlaceholder")}
+          value={search}
+          onChange={setSearch}
+          className="sm:max-w-sm"
+        />
         <div className="flex flex-wrap gap-2">
           <Badge
             variant={difficulty === "all" ? "default" : "outline"}
@@ -81,7 +96,9 @@ export default function CoursesPage() {
             <SelectContent>
               <SelectItem value="all">{t("allTracks")}</SelectItem>
               {Object.entries(TRACKS).map(([id, track]) => (
-                <SelectItem key={id} value={id}>{track.display}</SelectItem>
+                <SelectItem key={id} value={id}>
+                  {track.display}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -99,7 +116,9 @@ export default function CoursesPage() {
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 text-center">
           <p className="text-lg font-medium">{t("noCoursesFound")}</p>
-          <p className="mt-2 text-sm text-muted-foreground">{t("adjustFilters")}</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {t("adjustFilters")}
+          </p>
         </div>
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -108,8 +127,14 @@ export default function CoursesPage() {
               key={course.id}
               course={course}
               progress={getProgress(course.id)}
-              completed={completedCourseIds.has(course.id) || completedCourseIds.has(course.slug)}
-              prerequisiteMet={!course.prerequisiteId || completedCourseIds.has(course.prerequisiteId)}
+              completed={
+                completedCourseIds.has(course.id) ||
+                completedCourseIds.has(course.slug)
+              }
+              prerequisiteMet={
+                !course.prerequisiteId ||
+                completedCourseIds.has(course.prerequisiteId)
+              }
             />
           ))}
         </div>

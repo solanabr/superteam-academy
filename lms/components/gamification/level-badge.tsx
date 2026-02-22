@@ -15,17 +15,20 @@ export function LevelBadge({ level, size = "md" }: LevelBadgeProps) {
   };
 
   const tierColor =
-    level >= 10 ? "from-[#ffd23f] to-[#008c4c]" :
-    level >= 5 ? "from-[#008c4c] to-[#2f6b3f]" :
-    level >= 1 ? "from-[#ffd23f] to-[#f7eacb]" :
-    "from-[#8a9a8e] to-[#2f6b3f]";
+    level >= 10
+      ? "from-[#ffd23f] to-[#008c4c]"
+      : level >= 5
+        ? "from-[#008c4c] to-[#2f6b3f]"
+        : level >= 1
+          ? "from-[#ffd23f] to-[#f7eacb]"
+          : "from-[#8a9a8e] to-[#2f6b3f]";
 
   return (
     <div
       className={cn(
         "flex items-center justify-center rounded-full bg-gradient-to-br font-bold text-white",
         sizes[size],
-        tierColor
+        tierColor,
       )}
     >
       {level}

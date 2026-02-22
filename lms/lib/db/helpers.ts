@@ -12,7 +12,7 @@ export async function ensureUser(wallet: string): Promise<IUser> {
       new: true,
       upsert: true,
       setDefaultsOnInsert: true,
-    }
+    },
   );
   if (!user) {
     throw new Error(`Failed to ensure user for wallet: ${wallet}`);
@@ -30,13 +30,18 @@ export function getLevel(xp: number): number {
 }
 
 /** Find enrollment by courseId, falling back to slug lookup */
-export async function findEnrollment(userId: string, courseId: string): Promise<IEnrollment | null> {
+export async function findEnrollment(
+  userId: string,
+  courseId: string,
+): Promise<IEnrollment | null> {
   await connectDB();
   let enrollment = await Enrollment.findOne({ userId, courseId });
   if (enrollment) return enrollment;
 
   // Fallback: courseId might be a slug — resolve to actual id
-  const course = SAMPLE_COURSES.find((c) => c.slug === courseId && c.id !== courseId);
+  const course = SAMPLE_COURSES.find(
+    (c) => c.slug === courseId && c.id !== courseId,
+  );
   if (course) {
     enrollment = await Enrollment.findOne({ userId, courseId: course.id });
   }

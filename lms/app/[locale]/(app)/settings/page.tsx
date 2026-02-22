@@ -1,13 +1,26 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { useDisplayName, useSetDisplayName, useBio, useSetBio, useAvatar, useSetAvatar } from "@/lib/hooks/use-service";
+import {
+  useDisplayName,
+  useSetDisplayName,
+  useBio,
+  useSetBio,
+  useAvatar,
+  useSetAvatar,
+} from "@/lib/hooks/use-service";
 import { AVATARS, getAvatarSrc } from "@/lib/data/avatars";
 import Image from "next/image";
 import { toast } from "sonner";
@@ -16,7 +29,11 @@ import { useRouter } from "@/i18n/navigation";
 import { type Locale } from "@/i18n/routing";
 import { FlagUS, FlagBR, FlagES, FlagIN } from "@/components/shared/flags";
 
-const LOCALE_OPTIONS: { code: Locale; flag: React.ComponentType<{ className?: string }>; labelKey: string }[] = [
+const LOCALE_OPTIONS: {
+  code: Locale;
+  flag: React.ComponentType<{ className?: string }>;
+  labelKey: string;
+}[] = [
   { code: "en", flag: FlagUS, labelKey: "english" },
   { code: "pt-BR", flag: FlagBR, labelKey: "portuguese" },
   { code: "es", flag: FlagES, labelKey: "spanish" },
@@ -39,7 +56,9 @@ export default function SettingsPage() {
   const [nameInput, setNameInput] = useState("");
   const [bioInput, setBioInput] = useState("");
   const [selectedAvatar, setSelectedAvatar] = useState<string>("");
-  const [profileVisibility, setProfileVisibility] = useState<"public" | "private">("public");
+  const [profileVisibility, setProfileVisibility] = useState<
+    "public" | "private"
+  >("public");
 
   useEffect(() => {
     if (displayName !== undefined) setNameInput(displayName ?? "");
@@ -80,7 +99,10 @@ export default function SettingsPage() {
     toast.success(t("profileUpdated"));
   };
 
-  const isSaving = setDisplayNameMutation.isPending || setBioMutation.isPending || setAvatarMutation.isPending;
+  const isSaving =
+    setDisplayNameMutation.isPending ||
+    setBioMutation.isPending ||
+    setAvatarMutation.isPending;
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6 lg:px-8">
@@ -96,14 +118,24 @@ export default function SettingsPage() {
           <CardContent className="space-y-4">
             <div>
               <label className="text-sm font-medium">{t("avatar")}</label>
-              <p className="text-xs text-muted-foreground mb-2">{t("chooseAvatar")}</p>
+              <p className="text-xs text-muted-foreground mb-2">
+                {t("chooseAvatar")}
+              </p>
               <div className="flex items-center gap-4 mb-3">
                 <div className="h-16 w-16 rounded-full overflow-hidden bg-gradient-to-br from-[#008c4c] to-[#ffd23f] flex items-center justify-center shrink-0">
                   {getAvatarSrc(selectedAvatar) ? (
-                    <Image src={getAvatarSrc(selectedAvatar)!} alt="Avatar" width={64} height={64} className="h-full w-full object-cover" />
+                    <Image
+                      src={getAvatarSrc(selectedAvatar)!}
+                      alt="Avatar"
+                      width={64}
+                      height={64}
+                      className="h-full w-full object-cover"
+                    />
                   ) : (
                     <span className="text-xl font-bold text-white">
-                      {(displayName ?? publicKey.toBase58()).slice(0, 2).toUpperCase()}
+                      {(displayName ?? publicKey.toBase58())
+                        .slice(0, 2)
+                        .toUpperCase()}
                     </span>
                   )}
                 </div>
@@ -120,7 +152,13 @@ export default function SettingsPage() {
                         : "border-transparent hover:border-muted-foreground/30"
                     }`}
                   >
-                    <Image src={a.src} alt={a.id} width={56} height={56} className="h-full w-full object-cover" />
+                    <Image
+                      src={a.src}
+                      alt={a.id}
+                      width={56}
+                      height={56}
+                      className="h-full w-full object-cover"
+                    />
                   </button>
                 ))}
               </div>
@@ -143,10 +181,7 @@ export default function SettingsPage() {
                 className="mt-1"
               />
             </div>
-            <Button
-              onClick={handleSaveProfile}
-              disabled={isSaving}
-            >
+            <Button onClick={handleSaveProfile} disabled={isSaving}>
               {isSaving ? tc("saving") : tc("save")}
             </Button>
           </CardContent>
@@ -162,7 +197,9 @@ export default function SettingsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium">{t("connectedAddress")}</p>
-                <p className="text-xs text-muted-foreground font-mono">{publicKey.toBase58()}</p>
+                <p className="text-xs text-muted-foreground font-mono">
+                  {publicKey.toBase58()}
+                </p>
               </div>
               <div className="h-2 w-2 rounded-full bg-solana-green" />
             </div>
@@ -171,7 +208,9 @@ export default function SettingsPage() {
               <span className="text-sm font-medium">{t("network")}</span>
               <span className="text-sm text-muted-foreground">Devnet</span>
             </div>
-            <Button variant="outline" onClick={() => disconnect()}>{t("disconnectWallet")}</Button>
+            <Button variant="outline" onClick={() => disconnect()}>
+              {t("disconnectWallet")}
+            </Button>
           </CardContent>
         </Card>
 
@@ -184,11 +223,15 @@ export default function SettingsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium">{t("publicProfile")}</p>
-                <p className="text-xs text-muted-foreground">{t("publicProfileDescription")}</p>
+                <p className="text-xs text-muted-foreground">
+                  {t("publicProfileDescription")}
+                </p>
               </div>
               <Switch
                 checked={profileVisibility === "public"}
-                onCheckedChange={(c) => setProfileVisibility(c ? "public" : "private")}
+                onCheckedChange={(c) =>
+                  setProfileVisibility(c ? "public" : "private")
+                }
               />
             </div>
           </CardContent>

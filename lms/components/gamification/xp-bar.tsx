@@ -21,9 +21,15 @@ export function XPBar() {
         <span className="text-sm font-bold text-xp-gold">{formatXP(xp)}</span>
       </div>
       <div className="flex-1 max-w-32">
-        <Progress value={progress.percent} className="h-1.5" indicatorClassName="bg-xp-gold" />
+        <Progress
+          value={progress.percent}
+          className="h-1.5"
+          indicatorClassName="bg-xp-gold"
+        />
       </div>
-      <span className="text-xs text-muted-foreground">{t("lvl", { level })}</span>
+      <span className="text-xs text-muted-foreground">
+        {t("lvl", { level })}
+      </span>
     </div>
   );
 }

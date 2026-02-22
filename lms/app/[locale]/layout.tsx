@@ -48,9 +48,7 @@ export default async function LocaleLayout({
 
   return (
     <html lang={locale} suppressHydrationWarning>
-      <body
-        className={`${archivo.className} ${archivo.variable} antialiased`}
-      >
+      <body className={`${archivo.className} ${archivo.variable} antialiased`}>
         <NextIntlClientProvider messages={messages}>
           {children}
         </NextIntlClientProvider>

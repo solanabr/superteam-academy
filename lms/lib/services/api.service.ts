@@ -1,10 +1,31 @@
-import type { LearningProgressService, CompleteLessonResult, OnChainResult, MarkSolutionResult, PracticeProgressData, ThreadListResult } from "./types";
+import type {
+  LearningProgressService,
+  CompleteLessonResult,
+  OnChainResult,
+  MarkSolutionResult,
+  PracticeProgressData,
+  ThreadListResult,
+} from "./types";
 import type { Course } from "@/types/course";
-import type { Progress, LeaderboardEntry, StreakData, UserProfile } from "@/types/user";
+import type {
+  Progress,
+  LeaderboardEntry,
+  StreakData,
+  UserProfile,
+} from "@/types/user";
 import type { Achievement } from "@/types/gamification";
 import type { Credential } from "@/types/credential";
-import type { Thread, Reply, Endorsement, CommunityStats } from "@/types/community";
-import type { DailyChallenge, DailyStreakData, PracticeChallenge } from "@/types/practice";
+import type {
+  Thread,
+  Reply,
+  Endorsement,
+  CommunityStats,
+} from "@/types/community";
+import type {
+  DailyChallenge,
+  DailyStreakData,
+  PracticeChallenge,
+} from "@/types/practice";
 
 const BASE = "/api/learning";
 
@@ -18,7 +39,10 @@ async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
 }
 
 export class ApiService implements LearningProgressService {
-  async getProgress(userId: string, courseId: string): Promise<Progress | null> {
+  async getProgress(
+    userId: string,
+    courseId: string,
+  ): Promise<Progress | null> {
     return fetchJson(`${BASE}/progress/${courseId}?userId=${userId}`);
   }
 
@@ -26,7 +50,11 @@ export class ApiService implements LearningProgressService {
     return fetchJson(`${BASE}/progress?userId=${userId}`);
   }
 
-  async completeLesson(userId: string, courseId: string, lessonIndex: number): Promise<CompleteLessonResult> {
+  async completeLesson(
+    userId: string,
+    courseId: string,
+    lessonIndex: number,
+  ): Promise<CompleteLessonResult> {
     return fetchJson(`${BASE}/complete-lesson`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -34,7 +62,11 @@ export class ApiService implements LearningProgressService {
     });
   }
 
-  async enrollInCourse(userId: string, courseId: string, txSignature?: string): Promise<OnChainResult> {
+  async enrollInCourse(
+    userId: string,
+    courseId: string,
+    txSignature?: string,
+  ): Promise<OnChainResult> {
     return fetchJson(`${BASE}/enroll`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -62,7 +94,9 @@ export class ApiService implements LearningProgressService {
     return fetchJson(`${BASE}/streak?userId=${userId}`);
   }
 
-  async getLeaderboard(_timeframe: "weekly" | "monthly" | "all-time"): Promise<LeaderboardEntry[]> {
+  async getLeaderboard(
+    _timeframe: "weekly" | "monthly" | "all-time",
+  ): Promise<LeaderboardEntry[]> {
     return fetchJson(`${BASE}/leaderboard`);
   }
 
@@ -74,7 +108,10 @@ export class ApiService implements LearningProgressService {
     return fetchJson(`${BASE}/achievements?userId=${userId}`);
   }
 
-  async claimAchievement(userId: string, achievementId: number): Promise<OnChainResult> {
+  async claimAchievement(
+    userId: string,
+    achievementId: number,
+  ): Promise<OnChainResult> {
     return fetchJson(`${BASE}/achievements/claim`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -136,7 +173,11 @@ export class ApiService implements LearningProgressService {
     return fetchJson(`${BASE}/practice?userId=${userId}`);
   }
 
-  async completePracticeChallenge(userId: string, challengeId: string, xpReward: number): Promise<OnChainResult> {
+  async completePracticeChallenge(
+    userId: string,
+    challengeId: string,
+    xpReward: number,
+  ): Promise<OnChainResult> {
     return fetchJson(`${BASE}/practice/complete`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -146,7 +187,9 @@ export class ApiService implements LearningProgressService {
 
   // Daily Challenge
 
-  async getDailyChallenge(userId: string): Promise<DailyChallenge & { dailyStreak: DailyStreakData }> {
+  async getDailyChallenge(
+    userId: string,
+  ): Promise<DailyChallenge & { dailyStreak: DailyStreakData }> {
     return fetchJson(`${BASE}/daily-challenge?userId=${userId}`);
   }
 
@@ -168,7 +211,12 @@ export class ApiService implements LearningProgressService {
 
   // Community
 
-  async getThreads(params?: { type?: string; tag?: string; sort?: string; page?: number }): Promise<ThreadListResult> {
+  async getThreads(params?: {
+    type?: string;
+    tag?: string;
+    sort?: string;
+    page?: number;
+  }): Promise<ThreadListResult> {
     const sp = new URLSearchParams();
     if (params?.type) sp.set("type", params.type);
     if (params?.tag) sp.set("tag", params.tag);
@@ -181,11 +229,25 @@ export class ApiService implements LearningProgressService {
     return fetchJson(`/api/community/threads/${id}`);
   }
 
-  async createThread(userId: string, title: string, body: string, type: string, tags: string[], bountyLamports?: number): Promise<OnChainResult & { thread: Thread }> {
+  async createThread(
+    userId: string,
+    title: string,
+    body: string,
+    type: string,
+    tags: string[],
+    bountyLamports?: number,
+  ): Promise<OnChainResult & { thread: Thread }> {
     return fetchJson("/api/community/threads", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, title, body, type, tags, ...(bountyLamports && bountyLamports > 0 && { bountyLamports }) }),
+      body: JSON.stringify({
+        userId,
+        title,
+        body,
+        type,
+        tags,
+        ...(bountyLamports && bountyLamports > 0 && { bountyLamports }),
+      }),
     });
   }
 
@@ -193,7 +255,11 @@ export class ApiService implements LearningProgressService {
     return fetchJson(`/api/community/replies?threadId=${threadId}`);
   }
 
-  async createReply(userId: string, threadId: string, body: string): Promise<OnChainResult & { reply: Reply }> {
+  async createReply(
+    userId: string,
+    threadId: string,
+    body: string,
+  ): Promise<OnChainResult & { reply: Reply }> {
     return fetchJson("/api/community/replies", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -201,7 +267,11 @@ export class ApiService implements LearningProgressService {
     });
   }
 
-  async upvote(userId: string, targetId: string, targetType: "thread" | "reply"): Promise<{ ok: boolean; upvotes: string[] }> {
+  async upvote(
+    userId: string,
+    targetId: string,
+    targetType: "thread" | "reply",
+  ): Promise<{ ok: boolean; upvotes: string[] }> {
     return fetchJson("/api/community/upvote", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -209,7 +279,11 @@ export class ApiService implements LearningProgressService {
     });
   }
 
-  async markSolution(userId: string, threadId: string, replyId: string): Promise<MarkSolutionResult> {
+  async markSolution(
+    userId: string,
+    threadId: string,
+    replyId: string,
+  ): Promise<MarkSolutionResult> {
     return fetchJson("/api/community/mark-solution", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -221,7 +295,11 @@ export class ApiService implements LearningProgressService {
     return fetchJson(`/api/community/endorsements?wallet=${wallet}`);
   }
 
-  async endorseUser(endorser: string, endorsee: string, message?: string): Promise<OnChainResult> {
+  async endorseUser(
+    endorser: string,
+    endorsee: string,
+    message?: string,
+  ): Promise<OnChainResult> {
     return fetchJson("/api/community/endorsements", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

@@ -4,23 +4,46 @@ import { use, useState, useMemo } from "react";
 import { Link } from "@/i18n/navigation";
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
-import { ArrowLeft, ArrowRight, CheckCircle2, Play, Lightbulb, Eye, EyeOff, Sparkles, Copy, Check, ExternalLink } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  Play,
+  Lightbulb,
+  Eye,
+  EyeOff,
+  Sparkles,
+  Copy,
+  Check,
+  ExternalLink,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useCourse, useProgress, useCompleteLesson } from "@/lib/hooks/use-service";
+import {
+  useCourse,
+  useProgress,
+  useCompleteLesson,
+} from "@/lib/hooks/use-service";
 import type { Challenge } from "@/types/course";
 import { highlight } from "@/lib/syntax-highlight";
 import { toast } from "sonner";
 
-const MonacoEditor = dynamic(() => import("@monaco-editor/react").then((m) => m.default), {
-  ssr: false,
-  loading: () => <Skeleton className="h-[400px] rounded-lg" />,
-});
+const MonacoEditor = dynamic(
+  () => import("@monaco-editor/react").then((m) => m.default),
+  {
+    ssr: false,
+    loading: () => <Skeleton className="h-[400px] rounded-lg" />,
+  },
+);
 
-export default function LessonPage({ params }: { params: Promise<{ slug: string; id: string }> }) {
+export default function LessonPage({
+  params,
+}: {
+  params: Promise<{ slug: string; id: string }>;
+}) {
   const { slug, id } = use(params);
   const { data: course } = useCourse(slug);
   const courseId = course?.id ?? slug;
@@ -30,16 +53,26 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string;
   const [code, setCode] = useState<string>("");
   const [showSolution, setShowSolution] = useState(false);
   const [showHints, setShowHints] = useState(false);
-  const [testResults, setTestResults] = useState<{ name: string; passed: boolean; message?: string }[] | null>(null);
+  const [testResults, setTestResults] = useState<
+    { name: string; passed: boolean; message?: string }[] | null
+  >(null);
   const [codeInitialized, setCodeInitialized] = useState(false);
-  const [aiLoading, setAiLoading] = useState<"improve" | "autofill" | null>(null);
+  const [aiLoading, setAiLoading] = useState<"improve" | "autofill" | null>(
+    null,
+  );
   const [copied, setCopied] = useState(false);
 
   const t = useTranslations("lesson");
   const tc = useTranslations("common");
 
   const { lesson, lessonIndex, prevLesson, nextLesson } = useMemo(() => {
-    if (!course) return { lesson: null, lessonIndex: -1, prevLesson: null, nextLesson: null };
+    if (!course)
+      return {
+        lesson: null,
+        lessonIndex: -1,
+        prevLesson: null,
+        nextLesson: null,
+      };
     const allLessons = course.modules.flatMap((m) => m.lessons);
     const idx = allLessons.findIndex((l) => l.id === id);
     const lesson = allLessons[idx] ?? null;
@@ -58,7 +91,10 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string;
   const isCompleted = progress?.lessonsCompleted.includes(lessonIndex) ?? false;
   const lessonTxHash = progress?.lessonTxHashes?.[String(lessonIndex)];
   const isChallenge = lesson?.type === "challenge" && lesson?.challenge;
-  const allTestsPassed = testResults !== null && testResults.length > 0 && testResults.every((r) => r.passed);
+  const allTestsPassed =
+    testResults !== null &&
+    testResults.length > 0 &&
+    testResults.every((r) => r.passed);
 
   const handleComplete = () => {
     if (isChallenge && !allTestsPassed) {
@@ -75,7 +111,11 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string;
               description: `Tx: ${sig.slice(0, 8)}...${sig.slice(-8)}`,
               action: {
                 label: tc("view"),
-                onClick: () => window.open(`https://explorer.solana.com/tx/${sig}?cluster=devnet`, "_blank"),
+                onClick: () =>
+                  window.open(
+                    `https://explorer.solana.com/tx/${sig}?cluster=devnet`,
+                    "_blank",
+                  ),
               },
             });
           } else {
@@ -86,7 +126,11 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string;
               description: `Tx: ${data.finalizeTxSignature.slice(0, 8)}...${data.finalizeTxSignature.slice(-8)}`,
               action: {
                 label: tc("view"),
-                onClick: () => window.open(`https://explorer.solana.com/tx/${data.finalizeTxSignature}?cluster=devnet`, "_blank"),
+                onClick: () =>
+                  window.open(
+                    `https://explorer.solana.com/tx/${data.finalizeTxSignature}?cluster=devnet`,
+                    "_blank",
+                  ),
               },
             });
           }
@@ -95,13 +139,17 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string;
               description: `Tx: ${data.credentialTxSignature.slice(0, 8)}...${data.credentialTxSignature.slice(-8)}`,
               action: {
                 label: tc("view"),
-                onClick: () => window.open(`https://explorer.solana.com/tx/${data.credentialTxSignature}?cluster=devnet`, "_blank"),
+                onClick: () =>
+                  window.open(
+                    `https://explorer.solana.com/tx/${data.credentialTxSignature}?cluster=devnet`,
+                    "_blank",
+                  ),
               },
             });
           }
         },
         onError: () => toast.error(t("failedToComplete")),
-      }
+      },
     );
   };
 
@@ -146,7 +194,9 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string;
     return (
       <div className="mx-auto max-w-4xl px-4 py-24 text-center">
         <h1 className="text-2xl font-bold">{t("lessonNotFound")}</h1>
-        <Button asChild className="mt-4"><Link href={`/courses/${slug}`}>{t("backToCourse")}</Link></Button>
+        <Button asChild className="mt-4">
+          <Link href={`/courses/${slug}`}>{t("backToCourse")}</Link>
+        </Button>
       </div>
     );
   }
@@ -154,11 +204,18 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string;
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
       <div className="mb-4 flex items-center justify-between">
-        <Link href={`/courses/${slug}`} className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+        <Link
+          href={`/courses/${slug}`}
+          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+        >
           <ArrowLeft className="h-4 w-4" /> {course.title}
         </Link>
         <div className="flex items-center gap-2">
-          {isCompleted && <Badge className="bg-solana-green text-white dark:text-black">{tc("completed")}</Badge>}
+          {isCompleted && (
+            <Badge className="bg-solana-green text-white dark:text-black">
+              {tc("completed")}
+            </Badge>
+          )}
           {isCompleted && lessonTxHash && (
             <a
               href={`https://explorer.solana.com/tx/${lessonTxHash}?cluster=devnet`}
@@ -191,7 +248,9 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string;
 
             {showHints && (
               <Card>
-                <CardHeader><CardTitle className="text-base">{t("hints")}</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle className="text-base">{t("hints")}</CardTitle>
+                </CardHeader>
                 <CardContent>
                   <ul className="space-y-2 text-sm">
                     {lesson.challenge!.hints.map((hint, i) => (
@@ -207,7 +266,11 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string;
 
             {testResults && (
               <Card>
-                <CardHeader><CardTitle className="text-base">{t("testResults")}</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle className="text-base">
+                    {t("testResults")}
+                  </CardTitle>
+                </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
                     {testResults.map((r, i) => (
@@ -218,10 +281,20 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string;
                           ) : (
                             <div className="h-4 w-4 rounded-full border-2 border-destructive" />
                           )}
-                          <span className={r.passed ? "text-solana-green" : "text-destructive"}>{r.name}</span>
+                          <span
+                            className={
+                              r.passed
+                                ? "text-solana-green"
+                                : "text-destructive"
+                            }
+                          >
+                            {r.name}
+                          </span>
                         </div>
                         {!r.passed && r.message && (
-                          <p className="ml-6 mt-1 text-xs text-muted-foreground">{r.message}</p>
+                          <p className="ml-6 mt-1 text-xs text-muted-foreground">
+                            {r.message}
+                          </p>
                         )}
                       </div>
                     ))}
@@ -231,11 +304,24 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string;
             )}
 
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => setShowHints(!showHints)}>
-                <Lightbulb className="h-4 w-4" /> {showHints ? t("hideHints") : t("showHints")}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowHints(!showHints)}
+              >
+                <Lightbulb className="h-4 w-4" />{" "}
+                {showHints ? t("hideHints") : t("showHints")}
               </Button>
-              <Button variant="outline" size="sm" onClick={() => setShowSolution(!showSolution)}>
-                {showSolution ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowSolution(!showSolution)}
+              >
+                {showSolution ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
                 {showSolution ? t("hideSolution") : t("showSolution")}
               </Button>
             </div>
@@ -243,7 +329,9 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string;
             {showSolution && (
               <Card className="overflow-hidden">
                 <div className="flex items-center justify-between border-b px-4 py-2 bg-[#16161e]">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-[#7f849c]">Solution — {lesson.challenge!.language}</span>
+                  <span className="text-xs font-semibold uppercase tracking-wider text-[#7f849c]">
+                    Solution — {lesson.challenge!.language}
+                  </span>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -255,15 +343,28 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string;
                       setTimeout(() => setCopied(false), 2000);
                     }}
                   >
-                    {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-                    <span className="text-xs ml-1">{copied ? tc("copied") : tc("copy")}</span>
+                    {copied ? (
+                      <Check className="h-3.5 w-3.5" />
+                    ) : (
+                      <Copy className="h-3.5 w-3.5" />
+                    )}
+                    <span className="text-xs ml-1">
+                      {copied ? tc("copied") : tc("copy")}
+                    </span>
                   </Button>
                 </div>
                 <div className="bg-[#1e1e2e] p-4 overflow-x-auto">
-                  <pre className="m-0"><code
-                    className="font-mono text-[13px] leading-relaxed text-[#cdd6f4]"
-                    dangerouslySetInnerHTML={{ __html: highlight(lesson.challenge!.solution, lesson.challenge!.language) }}
-                  /></pre>
+                  <pre className="m-0">
+                    <code
+                      className="font-mono text-[13px] leading-relaxed text-[#cdd6f4]"
+                      dangerouslySetInnerHTML={{
+                        __html: highlight(
+                          lesson.challenge!.solution,
+                          lesson.challenge!.language,
+                        ),
+                      }}
+                    />
+                  </pre>
                 </div>
               </Card>
             )}
@@ -273,7 +374,9 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string;
           <div className="space-y-4">
             <Card className="overflow-hidden">
               <div className="flex items-center justify-between border-b px-4 py-2">
-                <span className="text-sm font-medium capitalize">{lesson.challenge!.language}</span>
+                <span className="text-sm font-medium capitalize">
+                  {lesson.challenge!.language}
+                </span>
                 <div className="flex gap-2">
                   <Button
                     size="sm"
@@ -288,7 +391,9 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string;
                         <span className="h-1.5 w-1.5 rounded-full bg-solana-purple animate-bounce [animation-delay:150ms]" />
                         <span className="h-1.5 w-1.5 rounded-full bg-solana-purple animate-bounce [animation-delay:300ms]" />
                       </span>
-                    ) : <Sparkles className="h-4 w-4" />}
+                    ) : (
+                      <Sparkles className="h-4 w-4" />
+                    )}
                     {t("improveWithAI")}
                   </Button>
                   <Button size="sm" onClick={handleRunTests}>
@@ -299,22 +404,32 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string;
               <div className="h-[400px]">
                 <MonacoEditor
                   height="100%"
-                  language={lesson.challenge!.language === "rust" ? "rust" : "typescript"}
+                  language={
+                    lesson.challenge!.language === "rust"
+                      ? "rust"
+                      : "typescript"
+                  }
                   theme="vs-dark"
                   value={code}
                   onChange={(v) => setCode(v ?? "")}
                   beforeMount={(monaco) => {
-                    monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
-                      noSemanticValidation: true,
-                      noSyntaxValidation: false,
-                    });
-                    monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
-                      target: monaco.languages.typescript.ScriptTarget.ESNext,
-                      module: monaco.languages.typescript.ModuleKind.ESNext,
-                      moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeJs,
-                      allowNonTsExtensions: true,
-                      noEmit: true,
-                    });
+                    monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions(
+                      {
+                        noSemanticValidation: true,
+                        noSyntaxValidation: false,
+                      },
+                    );
+                    monaco.languages.typescript.typescriptDefaults.setCompilerOptions(
+                      {
+                        target: monaco.languages.typescript.ScriptTarget.ESNext,
+                        module: monaco.languages.typescript.ModuleKind.ESNext,
+                        moduleResolution:
+                          monaco.languages.typescript.ModuleResolutionKind
+                            .NodeJs,
+                        allowNonTsExtensions: true,
+                        noEmit: true,
+                      },
+                    );
                   }}
                   options={{
                     minimap: { enabled: false },
@@ -336,7 +451,11 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string;
                 disabled={completeMutation.isPending || !allTestsPassed}
               >
                 <CheckCircle2 className="h-4 w-4" />
-                {completeMutation.isPending ? t("completing") : allTestsPassed ? t("markComplete") : t("passAllTestsFirst")}
+                {completeMutation.isPending
+                  ? t("completing")
+                  : allTestsPassed
+                    ? t("markComplete")
+                    : t("passAllTestsFirst")}
               </Button>
             )}
           </div>
@@ -346,11 +465,21 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string;
         <div className="max-w-3xl">
           <Card>
             <CardContent className="prose prose-sm dark:prose-invert max-w-none p-6">
-              <div dangerouslySetInnerHTML={{ __html: renderMarkdown(lesson.content ?? "") }} />
+              <div
+                dangerouslySetInnerHTML={{
+                  __html: renderMarkdown(lesson.content ?? ""),
+                }}
+              />
             </CardContent>
           </Card>
           {!isCompleted && (
-            <Button onClick={handleComplete} size="sm" className="mt-6" variant="solana" disabled={completeMutation.isPending}>
+            <Button
+              onClick={handleComplete}
+              size="sm"
+              className="mt-6"
+              variant="solana"
+              disabled={completeMutation.isPending}
+            >
               <CheckCircle2 className="h-4 w-4" />
               {completeMutation.isPending ? t("completing") : t("markComplete")}
             </Button>
@@ -368,7 +497,9 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string;
               <ArrowLeft className="h-4 w-4" /> {prevLesson.title}
             </Link>
           </Button>
-        ) : <div />}
+        ) : (
+          <div />
+        )}
         {nextLesson ? (
           <Button asChild>
             <Link href={`/courses/${slug}/lessons/${nextLesson.id}`}>
@@ -386,7 +517,12 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string;
 }
 
 function renderMarkdown(md: string): string {
-  const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  const esc = (s: string) =>
+    s
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
 
   // 1. Extract fenced code blocks FIRST
   const codeBlocks: string[] = [];
@@ -394,20 +530,21 @@ function renderMarkdown(md: string): string {
     const idx = codeBlocks.length;
     const langLabel = lang || "code";
     codeBlocks.push(
-      `<div class="lesson-code-block"><div class="lesson-code-lang">${langLabel}</div><pre><code>${highlight(code.trimEnd(), langLabel)}</code></pre></div>`
+      `<div class="lesson-code-block"><div class="lesson-code-lang">${langLabel}</div><pre><code>${highlight(code.trimEnd(), langLabel)}</code></pre></div>`,
     );
     return `\x00CB${idx}\x00`;
   });
 
   // 2. Inline code
-  html = html.replace(/`([^`\n]+)`/g, (_m, code) =>
-    `<code class="lesson-inline-code">${esc(code)}</code>`
+  html = html.replace(
+    /`([^`\n]+)`/g,
+    (_m, code) => `<code class="lesson-inline-code">${esc(code)}</code>`,
   );
 
   // 3. Headings
-  html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
-  html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
-  html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+  html = html.replace(/^### (.+)$/gm, "<h3>$1</h3>");
+  html = html.replace(/^## (.+)$/gm, "<h2>$1</h2>");
+  html = html.replace(/^# (.+)$/gm, "<h1>$1</h1>");
 
   // 4. Bold & italic
   html = html.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
@@ -415,14 +552,20 @@ function renderMarkdown(md: string): string {
 
   // 5. Tables — must come before lists/paragraphs
   html = html.replace(/(^\|.+\|$\n?)+/gm, (block) => {
-    const rows = block.trim().split("\n").filter((r) => r.trim());
+    const rows = block
+      .trim()
+      .split("\n")
+      .filter((r) => r.trim());
     if (rows.length < 2) return block;
     // Check if second row is a separator (|---|---|)
     const isSep = /^\|[\s\-:]+(\|[\s\-:]+)+\|?$/.test(rows[1]);
     if (!isSep) return block;
 
     const parseRow = (row: string) =>
-      row.split("|").slice(1, -1).map((c) => c.trim());
+      row
+        .split("|")
+        .slice(1, -1)
+        .map((c) => c.trim());
 
     const headers = parseRow(rows[0]);
     const thead = `<thead><tr>${headers.map((h) => `<th>${h}</th>`).join("")}</tr></thead>`;
@@ -438,21 +581,32 @@ function renderMarkdown(md: string): string {
 
   // 6. Lists
   html = html.replace(/(^[-*]\s+.+$(\n|$))+/gm, (block) => {
-    const items = block.trim().split("\n").map((l) => `<li>${l.replace(/^[-*]\s+/, "")}</li>`).join("");
+    const items = block
+      .trim()
+      .split("\n")
+      .map((l) => `<li>${l.replace(/^[-*]\s+/, "")}</li>`)
+      .join("");
     return `<ul>${items}</ul>`;
   });
   html = html.replace(/(^\d+\.\s+.+$(\n|$))+/gm, (block) => {
-    const items = block.trim().split("\n").map((l) => `<li>${l.replace(/^\d+\.\s+/, "")}</li>`).join("");
+    const items = block
+      .trim()
+      .split("\n")
+      .map((l) => `<li>${l.replace(/^\d+\.\s+/, "")}</li>`)
+      .join("");
     return `<ol>${items}</ol>`;
   });
 
   // 7. Paragraphs
-  html = html.split(/\n{2,}/).map((block) => {
-    const t = block.trim();
-    if (!t) return "";
-    if (/^<[hupoldta]|^\x00CB/.test(t)) return t;
-    return `<p>${t.replace(/\n/g, "<br>")}</p>`;
-  }).join("\n");
+  html = html
+    .split(/\n{2,}/)
+    .map((block) => {
+      const t = block.trim();
+      if (!t) return "";
+      if (/^<[hupoldta]|^\x00CB/.test(t)) return t;
+      return `<p>${t.replace(/\n/g, "<br>")}</p>`;
+    })
+    .join("\n");
 
   // 8. Re-insert code blocks
   html = html.replace(/\x00CB(\d+)\x00/g, (_m, idx) => codeBlocks[Number(idx)]);
@@ -461,7 +615,7 @@ function renderMarkdown(md: string): string {
 
 function runChallengeTests(
   code: string,
-  challenge: Challenge
+  challenge: Challenge,
 ): { name: string; passed: boolean; message?: string }[] {
   const clean = code.replace(/\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
   const hasPlaceholder = /\/\/\s*your code here/i.test(code);
@@ -469,8 +623,15 @@ function runChallengeTests(
   const solutionPatterns = extractPatterns(challenge.solution);
 
   return challenge.testCases.map((tc) => {
-    if (hasPlaceholder && clean.trim() === challenge.starterCode.replace(/\/\/.*$/gm, "").trim()) {
-      return { name: tc.name, passed: false, message: "Replace the placeholder comments with your implementation" };
+    if (
+      hasPlaceholder &&
+      clean.trim() === challenge.starterCode.replace(/\/\/.*$/gm, "").trim()
+    ) {
+      return {
+        name: tc.name,
+        passed: false,
+        message: "Replace the placeholder comments with your implementation",
+      };
     }
 
     const results = solutionPatterns.map((p) => ({
@@ -496,11 +657,16 @@ function runChallengeTests(
 
 function extractPatterns(solution: string): { label: string; regex: RegExp }[] {
   const patterns: { label: string; regex: RegExp }[] = [];
-  const clean = solution.replace(/\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
+  const clean = solution
+    .replace(/\/\/.*$/gm, "")
+    .replace(/\/\*[\s\S]*?\*\//g, "");
 
   // Detect Keypair.generate()
   if (/Keypair\.generate\(\)/.test(clean)) {
-    patterns.push({ label: "Keypair.generate()", regex: /Keypair\.generate\(\)/ });
+    patterns.push({
+      label: "Keypair.generate()",
+      regex: /Keypair\.generate\(\)/,
+    });
   }
   // Detect .toBase58()
   if (/\.toBase58\(\)/.test(clean)) {
@@ -516,19 +682,31 @@ function extractPatterns(solution: string): { label: string; regex: RegExp }[] {
   }
   // Detect SystemProgram.transfer
   if (/SystemProgram\.transfer\(/.test(clean)) {
-    patterns.push({ label: "SystemProgram.transfer()", regex: /SystemProgram\.transfer\(/ });
+    patterns.push({
+      label: "SystemProgram.transfer()",
+      regex: /SystemProgram\.transfer\(/,
+    });
   }
   // Detect sendAndConfirmTransaction
   if (/sendAndConfirmTransaction\(/.test(clean)) {
-    patterns.push({ label: "sendAndConfirmTransaction()", regex: /sendAndConfirmTransaction\(/ });
+    patterns.push({
+      label: "sendAndConfirmTransaction()",
+      regex: /sendAndConfirmTransaction\(/,
+    });
   }
   // Detect Transaction().add
   if (/new\s+Transaction\(\)\.add\(/.test(clean)) {
-    patterns.push({ label: "new Transaction().add()", regex: /new\s+Transaction\(\)\.add\(/ });
+    patterns.push({
+      label: "new Transaction().add()",
+      regex: /new\s+Transaction\(\)\.add\(/,
+    });
   }
   // Detect findProgramAddressSync
   if (/findProgramAddressSync\(/.test(clean)) {
-    patterns.push({ label: "findProgramAddressSync()", regex: /findProgramAddressSync\(/ });
+    patterns.push({
+      label: "findProgramAddressSync()",
+      regex: /findProgramAddressSync\(/,
+    });
   }
   // Detect Buffer.from
   if (/Buffer\.from\(/.test(clean)) {
@@ -545,38 +723,62 @@ function extractPatterns(solution: string): { label: string; regex: RegExp }[] {
 
   // Rust: detect struct definitions
   for (const m of clean.matchAll(/struct\s+(\w+)/g)) {
-    patterns.push({ label: `struct ${m[1]}`, regex: new RegExp(`struct\\s+${m[1]}[^{]*\\{`) });
+    patterns.push({
+      label: `struct ${m[1]}`,
+      regex: new RegExp(`struct\\s+${m[1]}[^{]*\\{`),
+    });
   }
   // Rust: detect enum definitions
   for (const m of clean.matchAll(/enum\s+(\w+)/g)) {
-    patterns.push({ label: `enum ${m[1]}`, regex: new RegExp(`enum\\s+${m[1]}[^{]*\\{`) });
+    patterns.push({
+      label: `enum ${m[1]}`,
+      regex: new RegExp(`enum\\s+${m[1]}[^{]*\\{`),
+    });
   }
   // Rust: detect impl blocks
   for (const m of clean.matchAll(/impl\s+(\w+)/g)) {
-    patterns.push({ label: `impl ${m[1]}`, regex: new RegExp(`impl\\s+${m[1]}`) });
+    patterns.push({
+      label: `impl ${m[1]}`,
+      regex: new RegExp(`impl\\s+${m[1]}`),
+    });
   }
   // Rust: detect pub fn
   for (const m of clean.matchAll(/(?:pub\s+)?fn\s+(\w+)/g)) {
-    patterns.push({ label: `fn ${m[1]}`, regex: new RegExp(`fn\\s+${m[1]}\\s*(?:<[^>]*>)?\\s*\\(`) });
+    patterns.push({
+      label: `fn ${m[1]}`,
+      regex: new RegExp(`fn\\s+${m[1]}\\s*(?:<[^>]*>)?\\s*\\(`),
+    });
   }
   // Rust: detect derive macros
   for (const m of clean.matchAll(/#\[derive\(([^)]+)\)\]/g)) {
-    patterns.push({ label: `#[derive(${m[1]})]`, regex: new RegExp(`#\\[derive\\([^)]*${m[1].split(",")[0].trim()}`) });
+    patterns.push({
+      label: `#[derive(${m[1]})]`,
+      regex: new RegExp(`#\\[derive\\([^)]*${m[1].split(",")[0].trim()}`),
+    });
   }
   // Rust: detect specific field patterns (field_name: Type)
   for (const m of clean.matchAll(/pub\s+(\w+)\s*:\s*(\w+)/g)) {
-    patterns.push({ label: `${m[1]}: ${m[2]}`, regex: new RegExp(`${m[1]}\\s*:\\s*${m[2]}`) });
+    patterns.push({
+      label: `${m[1]}: ${m[2]}`,
+      regex: new RegExp(`${m[1]}\\s*:\\s*${m[2]}`),
+    });
   }
   // Rust: detect CPI calls (system_program::transfer, token::mint_to, etc.)
   for (const m of clean.matchAll(/(\w+)::(\w+)\(/g)) {
     if (!["use", "super", "Self", "self"].includes(m[1])) {
-      patterns.push({ label: `${m[1]}::${m[2]}()`, regex: new RegExp(`${m[1]}::${m[2]}\\(`) });
+      patterns.push({
+        label: `${m[1]}::${m[2]}()`,
+        regex: new RegExp(`${m[1]}::${m[2]}\\(`),
+      });
     }
   }
 
   // Fallback: if no specific patterns detected, check that code differs from a typical starter
   if (patterns.length === 0) {
-    patterns.push({ label: "implementation", regex: /(?:return|=>|=)\s*[^\/\n]+/ });
+    patterns.push({
+      label: "implementation",
+      regex: /(?:return|=>|=)\s*[^\/\n]+/,
+    });
   }
 
   return patterns;

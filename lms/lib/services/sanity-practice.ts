@@ -36,7 +36,9 @@ function mapChallenge(raw: any): PracticeChallenge {
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
-export async function fetchSanityPracticeChallenges(): Promise<PracticeChallenge[]> {
+export async function fetchSanityPracticeChallenges(): Promise<
+  PracticeChallenge[]
+> {
   try {
     if (!process.env.NEXT_PUBLIC_SANITY_PROJECT_ID) return [];
 
@@ -56,7 +58,7 @@ export async function fetchSanityPracticeChallenges(): Promise<PracticeChallenge
         solution,
         testCases[] { _key, name, input, expectedOutput },
         hints
-      }`
+      }`,
     );
 
     if (!raw || raw.length === 0) return [];

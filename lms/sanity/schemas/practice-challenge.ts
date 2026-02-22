@@ -5,9 +5,19 @@ const testCase = defineArrayMember({
   name: "practiceTestCase",
   title: "Test Case",
   fields: [
-    defineField({ name: "name", title: "Name", type: "string", validation: (r) => r.required() }),
+    defineField({
+      name: "name",
+      title: "Name",
+      type: "string",
+      validation: (r) => r.required(),
+    }),
     defineField({ name: "input", title: "Input", type: "text", rows: 2 }),
-    defineField({ name: "expectedOutput", title: "Expected Output", type: "text", rows: 2 }),
+    defineField({
+      name: "expectedOutput",
+      title: "Expected Output",
+      type: "text",
+      rows: 2,
+    }),
   ],
 });
 
@@ -16,7 +26,12 @@ export const practiceChallenge = defineType({
   title: "Practice Challenge",
   type: "document",
   fields: [
-    defineField({ name: "title", title: "Title", type: "string", validation: (r) => r.required() }),
+    defineField({
+      name: "title",
+      title: "Title",
+      type: "string",
+      validation: (r) => r.required(),
+    }),
     defineField({
       name: "slug",
       title: "Slug / ID",
@@ -25,7 +40,13 @@ export const practiceChallenge = defineType({
       validation: (r) => r.required(),
       description: "Used as the challenge ID (e.g., acc-1, txn-2)",
     }),
-    defineField({ name: "description", title: "Description", type: "text", rows: 2, validation: (r) => r.required() }),
+    defineField({
+      name: "description",
+      title: "Description",
+      type: "text",
+      rows: 2,
+      validation: (r) => r.required(),
+    }),
     defineField({
       name: "difficulty",
       title: "Difficulty",
@@ -62,16 +83,40 @@ export const practiceChallenge = defineType({
       initialValue: "typescript",
       validation: (r) => r.required(),
     }),
-    defineField({ name: "xpReward", title: "XP Reward", type: "number", initialValue: 10, validation: (r) => r.required().min(0) }),
+    defineField({
+      name: "xpReward",
+      title: "XP Reward",
+      type: "number",
+      initialValue: 10,
+      validation: (r) => r.required().min(0),
+    }),
     defineField({
       name: "tags",
       title: "Tags",
       type: "array",
       of: [{ type: "string" }],
     }),
-    defineField({ name: "prompt", title: "Challenge Prompt", type: "text", rows: 3, validation: (r) => r.required() }),
-    defineField({ name: "starterCode", title: "Starter Code", type: "text", rows: 10, validation: (r) => r.required() }),
-    defineField({ name: "solution", title: "Solution", type: "text", rows: 10, validation: (r) => r.required() }),
+    defineField({
+      name: "prompt",
+      title: "Challenge Prompt",
+      type: "text",
+      rows: 3,
+      validation: (r) => r.required(),
+    }),
+    defineField({
+      name: "starterCode",
+      title: "Starter Code",
+      type: "text",
+      rows: 10,
+      validation: (r) => r.required(),
+    }),
+    defineField({
+      name: "solution",
+      title: "Solution",
+      type: "text",
+      rows: 10,
+      validation: (r) => r.required(),
+    }),
     defineField({
       name: "testCases",
       title: "Test Cases",
@@ -84,8 +129,19 @@ export const practiceChallenge = defineType({
       type: "array",
       of: [{ type: "string" }],
     }),
-    defineField({ name: "totalSolves", title: "Total Solves", type: "number", initialValue: 0, readOnly: true }),
-    defineField({ name: "isActive", title: "Active", type: "boolean", initialValue: true }),
+    defineField({
+      name: "totalSolves",
+      title: "Total Solves",
+      type: "number",
+      initialValue: 0,
+      readOnly: true,
+    }),
+    defineField({
+      name: "isActive",
+      title: "Active",
+      type: "boolean",
+      initialValue: true,
+    }),
   ],
   preview: {
     select: { title: "title", difficulty: "difficulty", category: "category" },
@@ -97,7 +153,10 @@ export const practiceChallenge = defineType({
     {
       title: "Category",
       name: "categoryAsc",
-      by: [{ field: "category", direction: "asc" }, { field: "difficulty", direction: "asc" }],
+      by: [
+        { field: "category", direction: "asc" },
+        { field: "difficulty", direction: "asc" },
+      ],
     },
   ],
 });

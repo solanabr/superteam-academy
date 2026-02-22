@@ -5,8 +5,16 @@ const LYZR_API_URL = "https://agent-prod.studio.lyzr.ai/v3/inference/chat/";
 const LYZR_AGENT_ID = "6990319188c3964deca09041";
 
 const CATEGORIES: PracticeCategory[] = [
-  "accounts", "transactions", "pdas", "tokens", "cpi",
-  "serialization", "security", "anchor", "defi", "advanced",
+  "accounts",
+  "transactions",
+  "pdas",
+  "tokens",
+  "cpi",
+  "serialization",
+  "security",
+  "anchor",
+  "defi",
+  "advanced",
 ];
 
 const DIFFICULTIES: PracticeDifficulty[] = ["easy", "medium", "hard"];
@@ -36,7 +44,16 @@ function getDayIndex(brtDate: string): number {
   return Math.floor((current - epoch) / (24 * 60 * 60 * 1000));
 }
 
-function buildPrompt(difficulty: PracticeDifficulty, category: PracticeCategory): string {
+function buildPrompt(
+  difficulty: PracticeDifficulty,
+  category: PracticeCategory,
+  recentTitles: string[],
+): string {
+  const exclusion =
+    recentTitles.length > 0
+      ? `\n\nIMPORTANT: Do NOT repeat any of these recent challenges:\n${recentTitles.map((t) => `- "${t}"`).join("\n")}\nGenerate a completely different challenge with a unique concept and title.`
+      : "";
+
   return `Generate a Solana coding challenge with the following requirements:
 - Difficulty: ${difficulty}
 - Category: ${category}
@@ -60,10 +77,13 @@ Return ONLY valid JSON with this exact structure (no markdown fences, no explana
 The challenge should be practical and test real Solana development skills for the "${category}" category.
 For easy: basic concept usage. For medium: combining multiple concepts. For hard: complex real-world patterns.
 The test case names should describe what pattern to check for (we use pattern matching, not execution).
-Make sure starterCode has clear placeholder comments and solution is complete working code.`;
+Make sure starterCode has clear placeholder comments and solution is complete working code.${exclusion}`;
 }
 
-export async function generateDailyChallenge(brtDate: string): Promise<GeneratedChallenge> {
+export async function generateDailyChallenge(
+  brtDate: string,
+  pastTitles: string[] = [],
+): Promise<GeneratedChallenge> {
   const dayIndex = getDayIndex(brtDate);
   const difficulty = DIFFICULTIES[dayIndex % 3];
   const category = CATEGORIES[dayIndex % 10];
@@ -71,11 +91,13 @@ export async function generateDailyChallenge(brtDate: string): Promise<Generated
 
   const apiKey = process.env.LYZR_API_KEY;
   if (!apiKey) {
-    return getFallbackChallenge(difficulty, category, xpReward);
+    return getFallbackChallenge(difficulty, category, xpReward, pastTitles);
   }
 
   try {
-    const message = buildPrompt(difficulty, category);
+    // Send last 50 titles to the AI prompt to keep it concise
+    const promptTitles = pastTitles.slice(-50);
+    const message = buildPrompt(difficulty, category, promptTitles);
     const sid = `daily-${brtDate}-${LYZR_AGENT_ID}`;
 
     const res = await fetch(LYZR_API_URL, {
@@ -94,21 +116,32 @@ export async function generateDailyChallenge(brtDate: string): Promise<Generated
 
     if (!res.ok) {
       console.warn("[generate-challenge] Lyzr API error:", res.status);
-      return getFallbackChallenge(difficulty, category, xpReward);
+      return getFallbackChallenge(difficulty, category, xpReward, pastTitles);
     }
 
     const data = await res.json();
-    let raw = typeof data.response === "string" ? data.response : JSON.stringify(data.response);
+    let raw =
+      typeof data.response === "string"
+        ? data.response
+        : JSON.stringify(data.response);
 
     // Strip markdown code fences
-    raw = raw.replace(/^```[\w]*\n?/gm, "").replace(/\n?```$/gm, "").trim();
+    raw = raw
+      .replace(/^```[\w]*\n?/gm, "")
+      .replace(/\n?```$/gm, "")
+      .trim();
 
     const parsed = JSON.parse(raw);
 
     // Validate required fields
-    if (!parsed.title || !parsed.starterCode || !parsed.solution || !Array.isArray(parsed.testCases)) {
+    if (
+      !parsed.title ||
+      !parsed.starterCode ||
+      !parsed.solution ||
+      !Array.isArray(parsed.testCases)
+    ) {
       console.warn("[generate-challenge] Invalid JSON structure from Lyzr");
-      return getFallbackChallenge(difficulty, category, xpReward);
+      return getFallbackChallenge(difficulty, category, xpReward, pastTitles);
     }
 
     return {
@@ -130,22 +163,35 @@ export async function generateDailyChallenge(brtDate: string): Promise<Generated
     };
   } catch (err) {
     console.warn("[generate-challenge] Failed to generate via Lyzr:", err);
-    return getFallbackChallenge(difficulty, category, xpReward);
+    return getFallbackChallenge(difficulty, category, xpReward, pastTitles);
   }
 }
 
 function getFallbackChallenge(
   difficulty: PracticeDifficulty,
   category: PracticeCategory,
-  xpReward: number
+  xpReward: number,
+  pastTitles: string[] = [],
 ): GeneratedChallenge {
-  // Find a matching challenge from the pool
-  let pool = PRACTICE_CHALLENGES.filter(
-    (c) => c.difficulty === difficulty && c.category === category
+  const usedSet = new Set(pastTitles.map((t) => t.toLowerCase()));
+  const excludeUsed = (challenges: typeof PRACTICE_CHALLENGES) =>
+    challenges.filter((c) => !usedSet.has(c.title.toLowerCase()));
+
+  // Find a matching challenge from the pool, excluding recent titles
+  let pool = excludeUsed(
+    PRACTICE_CHALLENGES.filter(
+      (c) => c.difficulty === difficulty && c.category === category,
+    ),
   );
   if (pool.length === 0) {
-    pool = PRACTICE_CHALLENGES.filter((c) => c.difficulty === difficulty);
+    pool = excludeUsed(
+      PRACTICE_CHALLENGES.filter((c) => c.difficulty === difficulty),
+    );
   }
+  if (pool.length === 0) {
+    pool = excludeUsed(PRACTICE_CHALLENGES);
+  }
+  // If all challenges have been used recently, allow repeats from full pool
   if (pool.length === 0) {
     pool = PRACTICE_CHALLENGES;
   }

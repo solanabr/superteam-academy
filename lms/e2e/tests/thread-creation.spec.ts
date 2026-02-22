@@ -10,7 +10,10 @@ test.describe("Thread creation", () => {
     await communityApi.stats();
   });
 
-  test("discussion creation sends correct POST body", async ({ page, communityApi }) => {
+  test("discussion creation sends correct POST body", async ({
+    page,
+    communityApi,
+  }) => {
     await communityApi.createThread({
       ok: true,
       txSignature: null,
@@ -28,7 +31,10 @@ test.describe("Thread creation", () => {
     await threads.fillThread("Test Discussion", "Discussion body content");
 
     const requestPromise = page.waitForRequest((req) => {
-      if (req.url().includes("/api/community/threads") && req.method() === "POST") {
+      if (
+        req.url().includes("/api/community/threads") &&
+        req.method() === "POST"
+      ) {
         const body = req.postDataJSON();
         return body.title === "Test Discussion";
       }
@@ -63,7 +69,10 @@ test.describe("Thread creation", () => {
     await threads.fillThread("My Question", "How does this work?", "question");
 
     const requestPromise = page.waitForRequest((req) => {
-      if (req.url().includes("/api/community/threads") && req.method() === "POST") {
+      if (
+        req.url().includes("/api/community/threads") &&
+        req.method() === "POST"
+      ) {
         const body = req.postDataJSON();
         return body.type === "question";
       }
@@ -77,7 +86,9 @@ test.describe("Thread creation", () => {
     expect(body.title).toBe("My Question");
   });
 
-  test("submit button is disabled when title or body is empty", async ({ page }) => {
+  test("submit button is disabled when title or body is empty", async ({
+    page,
+  }) => {
     const threads = new CommunityThreadsPage(page);
     await threads.goto();
     await page.waitForLoadState("domcontentloaded");
@@ -143,6 +154,8 @@ test.describe("Thread creation", () => {
     await threads.submitThread();
 
     // Error toast should surface the API error message
-    await expect(page.getByText(/Database connection failed/i)).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(/Database connection failed/i)).toBeVisible({
+      timeout: 10_000,
+    });
   });
 });

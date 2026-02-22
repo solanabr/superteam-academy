@@ -26,7 +26,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "missing fields" }, { status: 400 });
   }
   if (endorser === endorsee) {
-    return NextResponse.json({ error: "cannot endorse yourself" }, { status: 400 });
+    return NextResponse.json(
+      { error: "cannot endorse yourself" },
+      { status: 400 },
+    );
   }
 
   await connectDB();

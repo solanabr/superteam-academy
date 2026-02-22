@@ -18,15 +18,20 @@ export async function GET(req: NextRequest) {
   const replies = await Reply.find({ threadId }).sort({ createdAt: 1 }).lean();
 
   const wallets = [...new Set(replies.map((r) => r.author))];
-  const users = await User.find({ wallet: { $in: wallets } }, { wallet: 1, displayName: 1 }).lean();
+  const users = await User.find(
+    { wallet: { $in: wallets } },
+    { wallet: 1, displayName: 1 },
+  ).lean();
   const nameMap: Record<string, string> = {};
   for (const u of users) {
-    nameMap[u.wallet] = u.displayName || `${u.wallet.slice(0, 4)}...${u.wallet.slice(-4)}`;
+    nameMap[u.wallet] =
+      u.displayName || `${u.wallet.slice(0, 4)}...${u.wallet.slice(-4)}`;
   }
 
   const repliesWithNames = replies.map((r) => ({
     ...r,
-    authorName: nameMap[r.author] || `${r.author.slice(0, 4)}...${r.author.slice(-4)}`,
+    authorName:
+      nameMap[r.author] || `${r.author.slice(0, 4)}...${r.author.slice(-4)}`,
   }));
 
   return NextResponse.json(repliesWithNames);

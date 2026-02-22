@@ -6,7 +6,7 @@ import { SAMPLE_COURSES } from "@/lib/data/sample-courses";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: Promise<{ trackId: string }> }
+  { params }: { params: Promise<{ trackId: string }> },
 ) {
   const { trackId } = await params;
   const wallet = req.nextUrl.searchParams.get("wallet");
@@ -58,6 +58,6 @@ export async function GET(
       xpEarned: c.xpEarned,
       txHash: c.txHash ?? null,
       issuedAt: c.issuedAt.toISOString(),
-    }))
+    })),
   );
 }

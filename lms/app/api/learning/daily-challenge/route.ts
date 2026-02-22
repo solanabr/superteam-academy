@@ -19,7 +19,13 @@ export async function GET(req: NextRequest) {
   let challenge = await DailyChallenge.findOne({ date: brtDate });
 
   if (!challenge) {
-    const generated = await generateDailyChallenge(brtDate);
+    const pastChallenges = await DailyChallenge.find(
+      { date: { $ne: brtDate } },
+      { title: 1, _id: 0 },
+    ).lean();
+    const recentTitles = pastChallenges.map((c) => c.title);
+
+    const generated = await generateDailyChallenge(brtDate, recentTitles);
     challenge = await DailyChallenge.create({
       date: brtDate,
       ...generated,

@@ -1,8 +1,24 @@
 "use client";
 
-import { Trophy, Flame, Zap, BookOpen, Users, Crown, Shield, Code, Timer, Award } from "lucide-react";
+import {
+  Trophy,
+  Flame,
+  Zap,
+  BookOpen,
+  Users,
+  Crown,
+  Shield,
+  Code,
+  Timer,
+  Award,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { Achievement } from "@/types/gamification";
 
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -28,7 +44,10 @@ interface AchievementBadgeProps {
   size?: "sm" | "md" | "lg";
 }
 
-export function AchievementBadge({ achievement, size = "md" }: AchievementBadgeProps) {
+export function AchievementBadge({
+  achievement,
+  size = "md",
+}: AchievementBadgeProps) {
   const Icon = ICON_MAP[achievement.icon] ?? Trophy;
   const sizes = {
     sm: "h-8 w-8",
@@ -51,7 +70,7 @@ export function AchievementBadge({ achievement, size = "md" }: AchievementBadgeP
               sizes[size],
               achievement.claimed
                 ? "bg-solana-purple/10 text-solana-purple"
-                : "bg-muted text-muted-foreground opacity-40"
+                : "bg-muted text-muted-foreground opacity-40",
             )}
           >
             <Icon className={iconSizes[size]} />
@@ -60,8 +79,12 @@ export function AchievementBadge({ achievement, size = "md" }: AchievementBadgeP
         <TooltipContent>
           <div className="text-center">
             <p className="font-medium">{achievement.name}</p>
-            <p className="text-xs text-muted-foreground">{achievement.description}</p>
-            <p className="text-xs text-xp-gold mt-1">+{achievement.xpReward} XP</p>
+            <p className="text-xs text-muted-foreground">
+              {achievement.description}
+            </p>
+            <p className="text-xs text-xp-gold mt-1">
+              +{achievement.xpReward} XP
+            </p>
           </div>
         </TooltipContent>
       </Tooltip>

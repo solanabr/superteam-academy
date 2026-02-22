@@ -58,7 +58,10 @@ export interface TestCase {
   expectedOutput: string;
 }
 
-export const TRACKS: Record<number, { name: string; display: string; color: string }> = {
+export const TRACKS: Record<
+  number,
+  { name: string; display: string; color: string }
+> = {
   0: { name: "standalone", display: "Standalone", color: "#8a9a8e" },
   1: { name: "anchor", display: "Anchor Framework", color: "#008c4c" },
   2: { name: "rust", display: "Rust for Solana", color: "#ffd23f" },
@@ -66,7 +69,10 @@ export const TRACKS: Record<number, { name: string; display: string; color: stri
   4: { name: "security", display: "Program Security", color: "#1b231d" },
 };
 
-export const DIFFICULTY_CONFIG: Record<Difficulty, { label: string; color: string; xp: number }> = {
+export const DIFFICULTY_CONFIG: Record<
+  Difficulty,
+  { label: string; color: string; xp: number }
+> = {
   beginner: { label: "Beginner", color: "#008c4c", xp: 500 },
   intermediate: { label: "Intermediate", color: "#ffd23f", xp: 1000 },
   advanced: { label: "Advanced", color: "#2f6b3f", xp: 2000 },

@@ -12,11 +12,25 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { getLevel } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 
-function LeaderboardAvatar({ src, fallbackChar, size }: { src: string | undefined; fallbackChar: string; size: number }) {
+function LeaderboardAvatar({
+  src,
+  fallbackChar,
+  size,
+}: {
+  src: string | undefined;
+  fallbackChar: string;
+  size: number;
+}) {
   const [loaded, setLoaded] = useState(false);
 
   if (!src) {
-    return <span className={`${size > 40 ? "text-lg" : "text-sm"} font-bold text-white`}>{fallbackChar}</span>;
+    return (
+      <span
+        className={`${size > 40 ? "text-lg" : "text-sm"} font-bold text-white`}
+      >
+        {fallbackChar}
+      </span>
+    );
   }
 
   return (
@@ -50,7 +64,9 @@ const PODIUM_COLORS = [
 
 export default function LeaderboardPage() {
   const t = useTranslations("leaderboard");
-  const [timeframe, setTimeframe] = useState<"weekly" | "monthly" | "all-time">("all-time");
+  const [timeframe, setTimeframe] = useState<"weekly" | "monthly" | "all-time">(
+    "all-time",
+  );
   const { data: entries, isLoading } = useLeaderboard(timeframe);
   const { publicKey } = useWallet();
   const { data: myXP } = useXP();
@@ -93,7 +109,9 @@ export default function LeaderboardPage() {
           <CardContent className="p-12 text-center">
             <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h2 className="text-xl font-semibold mb-2">{t("noRankings")}</h2>
-            <p className="text-muted-foreground">{t("noRankingsDescription")}</p>
+            <p className="text-muted-foreground">
+              {t("noRankingsDescription")}
+            </p>
           </CardContent>
         </Card>
       ) : (
@@ -105,8 +123,13 @@ export default function LeaderboardPage() {
                 const entry = entries[podiumIndex];
                 const isFirst = podiumIndex === 0;
                 return (
-                  <div key={podiumIndex} className={`flex flex-col items-center ${isFirst ? "order-2" : podiumIndex === 1 ? "order-1" : "order-3"}`}>
-                    <div className={`relative flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br ${PODIUM_COLORS[podiumIndex]} ${isFirst ? "h-20 w-20" : ""} overflow-hidden`}>
+                  <div
+                    key={podiumIndex}
+                    className={`flex flex-col items-center ${isFirst ? "order-2" : podiumIndex === 1 ? "order-1" : "order-3"}`}
+                  >
+                    <div
+                      className={`relative flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br ${PODIUM_COLORS[podiumIndex]} ${isFirst ? "h-20 w-20" : ""} overflow-hidden`}
+                    >
                       <LeaderboardAvatar
                         src={getAvatarSrc(entry.avatar)}
                         fallbackChar={entry.displayName?.[0] ?? entry.wallet[0]}
@@ -119,8 +142,12 @@ export default function LeaderboardPage() {
                     <p className="mt-2 text-sm font-semibold truncate max-w-[80px] sm:max-w-[120px]">
                       {entry.displayName ?? `${entry.wallet.slice(0, 4)}...`}
                     </p>
-                    <p className="text-xs text-xp-gold font-medium">{entry.xp.toLocaleString()} XP</p>
-                    <div className={`mt-2 w-20 sm:w-24 rounded-t-lg bg-gradient-to-br ${PODIUM_COLORS[podiumIndex]} ${isFirst ? "h-24" : podiumIndex === 1 ? "h-16" : "h-12"}`} />
+                    <p className="text-xs text-xp-gold font-medium">
+                      {entry.xp.toLocaleString()} XP
+                    </p>
+                    <div
+                      className={`mt-2 w-20 sm:w-24 rounded-t-lg bg-gradient-to-br ${PODIUM_COLORS[podiumIndex]} ${isFirst ? "h-24" : podiumIndex === 1 ? "h-16" : "h-12"}`}
+                    />
                   </div>
                 );
               })}
@@ -132,7 +159,10 @@ export default function LeaderboardPage() {
             {(entries.length >= 3 ? entries.slice(3) : entries).map((entry) => {
               const isCurrentUser = walletAddress === entry.wallet;
               return (
-                <Card key={entry.rank} className={isCurrentUser ? "ring-2 ring-solana-purple" : ""}>
+                <Card
+                  key={entry.rank}
+                  className={isCurrentUser ? "ring-2 ring-solana-purple" : ""}
+                >
                   <CardContent className="p-3 flex items-center gap-4">
                     <span className="w-8 text-center text-sm font-bold text-muted-foreground">
                       #{entry.rank}
@@ -147,18 +177,26 @@ export default function LeaderboardPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-semibold truncate">
-                          {entry.displayName ?? `${entry.wallet.slice(0, 6)}...${entry.wallet.slice(-4)}`}
+                          {entry.displayName ??
+                            `${entry.wallet.slice(0, 6)}...${entry.wallet.slice(-4)}`}
                         </p>
-                        {isCurrentUser && <Badge variant="outline" className="text-[10px]">{t("you")}</Badge>}
+                        {isCurrentUser && (
+                          <Badge variant="outline" className="text-[10px]">
+                            {t("you")}
+                          </Badge>
+                        )}
                       </div>
-                      <p className="text-xs text-muted-foreground">Level {entry.level}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Level {entry.level}
+                      </p>
                     </div>
                     <div className="flex items-center gap-4 shrink-0">
                       <span className="flex items-center gap-1 text-sm text-streak-orange">
                         <Flame className="h-3.5 w-3.5" /> {entry.streak}
                       </span>
                       <span className="flex items-center gap-1 text-sm font-semibold text-xp-gold min-w-[80px] justify-end">
-                        <Zap className="h-3.5 w-3.5" /> {entry.xp.toLocaleString()}
+                        <Zap className="h-3.5 w-3.5" />{" "}
+                        {entry.xp.toLocaleString()}
                       </span>
                     </div>
                   </CardContent>
@@ -168,26 +206,37 @@ export default function LeaderboardPage() {
           </div>
 
           {/* Current user if not in list (0 XP or not found) */}
-          {walletAddress && myXP !== undefined && myXP > 0 && !entries.some((e) => e.wallet === walletAddress) && (
-            <Card className="mt-6 ring-2 ring-solana-purple">
-              <CardContent className="p-3 flex items-center gap-4">
-                <span className="w-8 text-center text-sm font-bold text-muted-foreground">—</span>
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-solana-purple/10 shrink-0">
-                  <Medal className="h-5 w-5 text-solana-purple" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-semibold font-mono">{walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}</p>
-                    <Badge variant="outline" className="text-[10px]">{t("you")}</Badge>
+          {walletAddress &&
+            myXP !== undefined &&
+            myXP > 0 &&
+            !entries.some((e) => e.wallet === walletAddress) && (
+              <Card className="mt-6 ring-2 ring-solana-purple">
+                <CardContent className="p-3 flex items-center gap-4">
+                  <span className="w-8 text-center text-sm font-bold text-muted-foreground">
+                    —
+                  </span>
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-solana-purple/10 shrink-0">
+                    <Medal className="h-5 w-5 text-solana-purple" />
                   </div>
-                  <p className="text-xs text-muted-foreground">Level {getLevel(myXP)}</p>
-                </div>
-                <span className="flex items-center gap-1 text-sm font-semibold text-xp-gold">
-                  <Zap className="h-3.5 w-3.5" /> {myXP.toLocaleString()}
-                </span>
-              </CardContent>
-            </Card>
-          )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-semibold font-mono">
+                        {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
+                      </p>
+                      <Badge variant="outline" className="text-[10px]">
+                        {t("you")}
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Level {getLevel(myXP)}
+                    </p>
+                  </div>
+                  <span className="flex items-center gap-1 text-sm font-semibold text-xp-gold">
+                    <Zap className="h-3.5 w-3.5" /> {myXP.toLocaleString()}
+                  </span>
+                </CardContent>
+              </Card>
+            )}
         </>
       )}
     </div>

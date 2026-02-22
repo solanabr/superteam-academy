@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { PublicKey } from "@solana/web3.js";
 import { ensureUser } from "@/lib/db/helpers";
 import { fetchLearnerProfile, isBitSet } from "@/lib/solana/readers";
-import { PRACTICE_CHALLENGES, achievementIndexToPracticeId } from "@/lib/data/practice-challenges";
+import {
+  PRACTICE_CHALLENGES,
+  achievementIndexToPracticeId,
+} from "@/lib/data/practice-challenges";
 
 const PRACTICE_ACHIEVEMENT_OFFSET = 64;
 
@@ -28,7 +31,7 @@ export async function GET(req: NextRequest) {
 
   // Include daily archive completions as practice IDs
   const dailyCompleted = (user.completedDailyChallenges ?? []).map(
-    (date: string) => `daily-${date}`
+    (date: string) => `daily-${date}`,
   );
   if (user.dailyChallengeTxHashes) {
     for (const [date, hash] of user.dailyChallengeTxHashes.entries()) {
@@ -53,7 +56,12 @@ export async function GET(req: NextRequest) {
       for (const dc of dailyCompleted) {
         if (!completed.includes(dc)) completed.push(dc);
       }
-      return NextResponse.json({ completed, txHashes, claimedMilestones, milestoneTxHashes });
+      return NextResponse.json({
+        completed,
+        txHashes,
+        claimedMilestones,
+        milestoneTxHashes,
+      });
     }
   } catch {
     // fallback to MongoDB

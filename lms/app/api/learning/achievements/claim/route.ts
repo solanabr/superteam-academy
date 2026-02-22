@@ -36,18 +36,26 @@ export async function POST(req: NextRequest) {
         wallet,
         achievementId,
         achievement.xpReward,
-        config.currentMint
+        config.currentMint,
       );
       tx.feePayer = backendKeypair.publicKey;
       tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-      txSignature = await sendAndConfirmTransaction(connection, tx, [backendKeypair]);
+      txSignature = await sendAndConfirmTransaction(connection, tx, [
+        backendKeypair,
+      ]);
     }
   } catch (err: any) {
     const errMsg = err?.message ?? "";
-    if (errMsg.includes("AchievementAlreadyClaimed") || errMsg.includes("6008")) {
+    if (
+      errMsg.includes("AchievementAlreadyClaimed") ||
+      errMsg.includes("6008")
+    ) {
       // proceed with MongoDB sync
     } else {
-      console.warn("[achievements/claim] on-chain tx failed, falling back to MongoDB:", errMsg);
+      console.warn(
+        "[achievements/claim] on-chain tx failed, falling back to MongoDB:",
+        errMsg,
+      );
     }
   }
 

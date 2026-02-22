@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
     });
     if (!existing) {
       const course = SAMPLE_COURSES.find(
-        (c) => c.id === enrollment.courseId || c.slug === enrollment.courseId
+        (c) => c.id === enrollment.courseId || c.slug === enrollment.courseId,
       );
       if (course) {
         await Certificate.create({
@@ -39,7 +39,9 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  const certs = await Certificate.find({ wallet }).sort({ issuedAt: -1 }).lean();
+  const certs = await Certificate.find({ wallet })
+    .sort({ issuedAt: -1 })
+    .lean();
 
   return NextResponse.json(
     certs.map((c) => ({
@@ -50,6 +52,6 @@ export async function GET(req: NextRequest) {
       xpEarned: c.xpEarned,
       txHash: c.txHash ?? null,
       issuedAt: c.issuedAt.toISOString(),
-    }))
+    })),
   );
 }

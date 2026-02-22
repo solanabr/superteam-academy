@@ -18,7 +18,7 @@ const ReplySchema = new Schema<IReply>(
     upvotes: { type: [String], default: [] },
     txHash: { type: String, default: null },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 ReplySchema.index({ threadId: 1, createdAt: 1 });

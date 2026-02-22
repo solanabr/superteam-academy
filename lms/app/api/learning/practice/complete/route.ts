@@ -15,7 +15,9 @@ export async function POST(req: NextRequest) {
   }
 
   const isDailyArchive = challengeId.startsWith("daily-");
-  const achievementIndex = isDailyArchive ? null : practiceIdToAchievementIndex(challengeId);
+  const achievementIndex = isDailyArchive
+    ? null
+    : practiceIdToAchievementIndex(challengeId);
   if (!isDailyArchive && achievementIndex === null) {
     return NextResponse.json({ error: "invalid challenge" }, { status: 400 });
   }
@@ -39,18 +41,26 @@ export async function POST(req: NextRequest) {
           wallet,
           achievementIndex,
           xpReward,
-          config.currentMint
+          config.currentMint,
         );
         tx.feePayer = backendKeypair.publicKey;
         tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-        txSignature = await sendAndConfirmTransaction(connection, tx, [backendKeypair]);
+        txSignature = await sendAndConfirmTransaction(connection, tx, [
+          backendKeypair,
+        ]);
       }
     } catch (err: any) {
       const errMsg = err?.message ?? "";
-      if (errMsg.includes("AchievementAlreadyClaimed") || errMsg.includes("6008")) {
+      if (
+        errMsg.includes("AchievementAlreadyClaimed") ||
+        errMsg.includes("6008")
+      ) {
         // proceed to MongoDB sync
       } else {
-        console.warn("[practice/complete] on-chain tx failed, falling back to MongoDB:", errMsg);
+        console.warn(
+          "[practice/complete] on-chain tx failed, falling back to MongoDB:",
+          errMsg,
+        );
       }
     }
   }

@@ -27,7 +27,11 @@ const ThreadSchema = new Schema<IThread>(
     author: { $type: String, required: true, index: true },
     title: { $type: String, required: true },
     body: { $type: String, required: true },
-    type: { $type: String, enum: ["discussion", "question"], default: "discussion" },
+    type: {
+      $type: String,
+      enum: ["discussion", "question"],
+      default: "discussion",
+    },
     tags: { $type: [String], default: [] },
     views: { $type: Number, default: 0 },
     upvotes: { $type: [String], default: [] },
@@ -40,7 +44,7 @@ const ThreadSchema = new Schema<IThread>(
     bountyPaid: { $type: Boolean, default: false },
     bountyTxHash: { $type: String, default: null },
   },
-  { timestamps: true, typeKey: "$type" }
+  { timestamps: true, typeKey: "$type" },
 );
 
 ThreadSchema.index({ createdAt: -1 });

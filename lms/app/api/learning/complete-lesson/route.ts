@@ -8,7 +8,12 @@ import { fetchSanityCourse } from "@/lib/services/sanity-courses";
 import { getConnection } from "@/lib/solana/connection";
 import { getBackendSigner } from "@/lib/solana/backend-signer";
 import { getBackendProgram } from "@/lib/solana/program";
-import { fetchConfig, fetchCourse as fetchOnChainCourse, fetchEnrollment, popcountBitmap } from "@/lib/solana/readers";
+import {
+  fetchConfig,
+  fetchCourse as fetchOnChainCourse,
+  fetchEnrollment,
+  popcountBitmap,
+} from "@/lib/solana/readers";
 import {
   buildCompleteLessonTx,
   buildFinalizeCourseTx,
@@ -38,7 +43,9 @@ export async function POST(req: NextRequest) {
 
       const onChainCourse = await fetchOnChainCourse(courseId);
       if (onChainCourse) {
-        const xpPerLesson = Math.floor(onChainCourse.xpTotal / onChainCourse.lessonCount);
+        const xpPerLesson = Math.floor(
+          onChainCourse.xpTotal / onChainCourse.lessonCount,
+        );
 
         const tx = await buildCompleteLessonTx(
           program,
@@ -47,11 +54,13 @@ export async function POST(req: NextRequest) {
           courseId,
           lessonIndex,
           xpPerLesson,
-          xpMint
+          xpMint,
         );
         tx.feePayer = backendKeypair.publicKey;
         tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-        txSignature = await sendAndConfirmTransaction(connection, tx, [backendKeypair]);
+        txSignature = await sendAndConfirmTransaction(connection, tx, [
+          backendKeypair,
+        ]);
 
         const enrollment = await fetchEnrollment(courseId, wallet);
         if (enrollment && !enrollment.completedAt) {
@@ -63,22 +72,34 @@ export async function POST(req: NextRequest) {
               wallet,
               courseId,
               xpMint,
-              onChainCourse.creator
+              onChainCourse.creator,
             );
             finalizeTx.feePayer = backendKeypair.publicKey;
-            finalizeTx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-            finalizeTxSignature = await sendAndConfirmTransaction(connection, finalizeTx, [backendKeypair]);
+            finalizeTx.recentBlockhash = (
+              await connection.getLatestBlockhash()
+            ).blockhash;
+            finalizeTxSignature = await sendAndConfirmTransaction(
+              connection,
+              finalizeTx,
+              [backendKeypair],
+            );
 
             try {
               const credentialTx = await buildIssueCredentialTx(
                 program,
                 backendKeypair.publicKey,
                 wallet,
-                courseId
+                courseId,
               );
               credentialTx.feePayer = backendKeypair.publicKey;
-              credentialTx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-              credentialTxSignature = await sendAndConfirmTransaction(connection, credentialTx, [backendKeypair]);
+              credentialTx.recentBlockhash = (
+                await connection.getLatestBlockhash()
+              ).blockhash;
+              credentialTxSignature = await sendAndConfirmTransaction(
+                connection,
+                credentialTx,
+                [backendKeypair],
+              );
             } catch {
               // credential issuance is non-critical
             }
@@ -99,7 +120,9 @@ export async function POST(req: NextRequest) {
   if (!txSignature) {
     try {
       const backendKeypair = getBackendSigner();
-      const course = SAMPLE_COURSES.find((c) => c.id === courseId || c.slug === courseId);
+      const course = SAMPLE_COURSES.find(
+        (c) => c.id === courseId || c.slug === courseId,
+      );
       txSignature = await sendMemoTx(backendKeypair, {
         event: "lesson_complete",
         wallet: userId,
@@ -128,7 +151,8 @@ export async function POST(req: NextRequest) {
       dbEnrollment.lessonTxHashes.set(String(lessonIndex), lessonTx);
     }
 
-    const justCompleted = dbEnrollment.lessonsCompleted.length === dbEnrollment.totalLessons;
+    const justCompleted =
+      dbEnrollment.lessonsCompleted.length === dbEnrollment.totalLessons;
     if (justCompleted) {
       dbEnrollment.completedAt = new Date();
 
@@ -136,7 +160,9 @@ export async function POST(req: NextRequest) {
       if (!finalizeTxSignature) {
         try {
           const backendKeypair = getBackendSigner();
-          const course = SAMPLE_COURSES.find((c) => c.id === courseId || c.slug === courseId);
+          const course = SAMPLE_COURSES.find(
+            (c) => c.id === courseId || c.slug === courseId,
+          );
           finalizeTxSignature = await sendMemoTx(backendKeypair, {
             event: "course_complete",
             wallet: userId,
@@ -149,12 +175,17 @@ export async function POST(req: NextRequest) {
           // no SOL or signer not configured
         }
       }
-      dbEnrollment.completionTxHash = finalizeTxSignature ?? lessonTx ?? undefined;
+      dbEnrollment.completionTxHash =
+        finalizeTxSignature ?? lessonTx ?? undefined;
     }
     await dbEnrollment.save();
 
-    const sampleCourse = SAMPLE_COURSES.find((c) => c.id === courseId || c.slug === courseId);
-    const sanityCourse = !sampleCourse ? await fetchSanityCourse(courseId) : null;
+    const sampleCourse = SAMPLE_COURSES.find(
+      (c) => c.id === courseId || c.slug === courseId,
+    );
+    const sanityCourse = !sampleCourse
+      ? await fetchSanityCourse(courseId)
+      : null;
     const courseXpTotal = sampleCourse?.xpTotal ?? sanityCourse?.xpTotal ?? 250;
     const xpPerLesson = Math.floor(courseXpTotal / dbEnrollment.totalLessons);
     user.xp += xpPerLesson;
@@ -174,7 +205,8 @@ export async function POST(req: NextRequest) {
 
     if (justCompleted) {
       const course = SAMPLE_COURSES.find(
-        (c) => c.id === dbEnrollment.courseId || c.slug === dbEnrollment.courseId
+        (c) =>
+          c.id === dbEnrollment.courseId || c.slug === dbEnrollment.courseId,
       );
       if (course) {
         const existing = await Certificate.findOne({

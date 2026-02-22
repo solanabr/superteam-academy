@@ -30,7 +30,7 @@ import {
 export async function ensureATAInstruction(
   payer: PublicKey,
   wallet: PublicKey,
-  mint: PublicKey
+  mint: PublicKey,
 ): Promise<ReturnType<typeof createAssociatedTokenAccountInstruction> | null> {
   const ata = getLearnerTokenAccount(wallet, mint);
   const connection = getConnection();
@@ -44,7 +44,7 @@ export async function ensureATAInstruction(
       wallet,
       mint,
       TOKEN_2022_PROGRAM_ID,
-      ASSOCIATED_TOKEN_PROGRAM_ID
+      ASSOCIATED_TOKEN_PROGRAM_ID,
     );
   }
 }
@@ -55,7 +55,7 @@ export async function ensureATAInstruction(
 
 export async function buildInitLearnerTx(
   program: Program,
-  wallet: PublicKey
+  wallet: PublicKey,
 ): Promise<Transaction> {
   const [learner] = getLearnerPDA(wallet);
   const ix = await program.methods
@@ -73,7 +73,7 @@ export async function buildEnrollTx(
   program: Program,
   wallet: PublicKey,
   courseId: string,
-  prerequisiteEnrollment?: PublicKey
+  prerequisiteEnrollment?: PublicKey,
 ): Promise<Transaction> {
   const [course] = getCoursePDA(courseId);
   const [enrollment] = getEnrollmentPDA(courseId, wallet);
@@ -93,7 +93,7 @@ export async function buildEnrollTx(
 export async function buildUnenrollTx(
   program: Program,
   wallet: PublicKey,
-  courseId: string
+  courseId: string,
 ): Promise<Transaction> {
   const [enrollment] = getEnrollmentPDA(courseId, wallet);
   const ix = await program.methods
@@ -109,7 +109,7 @@ export async function buildUnenrollTx(
 export async function buildRegisterReferralTx(
   program: Program,
   refereeWallet: PublicKey,
-  referrerWallet: PublicKey
+  referrerWallet: PublicKey,
 ): Promise<Transaction> {
   const [refereeProfile] = getLearnerPDA(refereeWallet);
   const [referrerProfile] = getLearnerPDA(referrerWallet);
@@ -128,7 +128,7 @@ export async function buildRegisterReferralTx(
 export async function buildCloseEnrollmentTx(
   program: Program,
   wallet: PublicKey,
-  courseId: string
+  courseId: string,
 ): Promise<Transaction> {
   const [enrollment] = getEnrollmentPDA(courseId, wallet);
   const ix = await program.methods
@@ -152,7 +152,7 @@ export async function buildCompleteLessonTx(
   courseId: string,
   lessonIndex: number,
   xpAmount: number,
-  xpMint: PublicKey
+  xpMint: PublicKey,
 ): Promise<Transaction> {
   const [config] = getConfigPDA();
   const [course] = getCoursePDA(courseId);
@@ -189,7 +189,7 @@ export async function buildFinalizeCourseTx(
   wallet: PublicKey,
   courseId: string,
   xpMint: PublicKey,
-  creatorWallet: PublicKey
+  creatorWallet: PublicKey,
 ): Promise<Transaction> {
   const [config] = getConfigPDA();
   const [course] = getCoursePDA(courseId);
@@ -201,7 +201,11 @@ export async function buildFinalizeCourseTx(
   const tx = new Transaction();
 
   // Ensure creator ATA exists
-  const creatorAtaIx = await ensureATAInstruction(backendPubkey, creatorWallet, xpMint);
+  const creatorAtaIx = await ensureATAInstruction(
+    backendPubkey,
+    creatorWallet,
+    xpMint,
+  );
   if (creatorAtaIx) tx.add(creatorAtaIx);
 
   const ix = await program.methods
@@ -230,7 +234,7 @@ export async function buildClaimAchievementTx(
   wallet: PublicKey,
   achievementIndex: number,
   xpReward: number,
-  xpMint: PublicKey
+  xpMint: PublicKey,
 ): Promise<Transaction> {
   const [config] = getConfigPDA();
   const [learnerProfile] = getLearnerPDA(wallet);
@@ -260,7 +264,7 @@ export async function buildClaimAchievementTx(
 export async function buildAwardStreakFreezeTx(
   program: Program,
   backendPubkey: PublicKey,
-  wallet: PublicKey
+  wallet: PublicKey,
 ): Promise<Transaction> {
   const [config] = getConfigPDA();
   const [learnerProfile] = getLearnerPDA(wallet);
@@ -280,7 +284,7 @@ export async function buildIssueCredentialTx(
   program: Program,
   backendPubkey: PublicKey,
   wallet: PublicKey,
-  courseId: string
+  courseId: string,
 ): Promise<Transaction> {
   const [config] = getConfigPDA();
   const [course] = getCoursePDA(courseId);
@@ -306,7 +310,7 @@ export async function buildInitializeTx(
   program: Program,
   authority: PublicKey,
   maxDailyXp: number,
-  maxAchievementXp: number
+  maxAchievementXp: number,
 ): Promise<Transaction> {
   const [config] = getConfigPDA();
   const ix = await program.methods
@@ -324,7 +328,7 @@ export async function buildCreateSeasonTx(
   program: Program,
   authority: PublicKey,
   mintKeypair: Keypair,
-  season: number
+  season: number,
 ): Promise<{ tx: Transaction; mintKeypair: Keypair }> {
   const [config] = getConfigPDA();
   const ix = await program.methods
@@ -358,7 +362,7 @@ export async function buildCreateCourseTx(
     prerequisite: PublicKey | null;
     completionRewardXp: number;
     minCompletionsForReward: number;
-  }
+  },
 ): Promise<Transaction> {
   const [config] = getConfigPDA();
   const [course] = getCoursePDA(params.courseId);
@@ -395,7 +399,7 @@ export async function buildUpdateConfigTx(
     backendSigner?: PublicKey | null;
     maxDailyXp?: number | null;
     maxAchievementXp?: number | null;
-  }
+  },
 ): Promise<Transaction> {
   const [config] = getConfigPDA();
   const ix = await program.methods
@@ -414,7 +418,7 @@ export async function buildUpdateConfigTx(
 
 export async function buildCloseSeasonTx(
   program: Program,
-  authority: PublicKey
+  authority: PublicKey,
 ): Promise<Transaction> {
   const [config] = getConfigPDA();
   const ix = await program.methods
@@ -441,7 +445,7 @@ export async function buildUpdateCourseTx(
     completionRewardXp?: number | null;
     minCompletionsForReward?: number | null;
     isActive?: boolean | null;
-  }
+  },
 ): Promise<Transaction> {
   const [course] = getCoursePDA(courseId);
   const ix = await program.methods
@@ -470,12 +474,14 @@ export async function buildUpdateCourseTx(
 
 export async function sendMemoTx(
   signer: Keypair,
-  data: Record<string, string>
+  data: Record<string, string>,
 ): Promise<string | null> {
   try {
     const connection = getConnection();
     const memo = JSON.stringify(data);
-    const tx = new Transaction().add(createMemoInstruction(memo, [signer.publicKey]));
+    const tx = new Transaction().add(
+      createMemoInstruction(memo, [signer.publicKey]),
+    );
     tx.feePayer = signer.publicKey;
     tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
     return await sendAndConfirmTransaction(connection, tx, [signer]);

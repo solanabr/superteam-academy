@@ -11,7 +11,8 @@ export async function GET(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   const { userId, name, bio, avatar } = await req.json();
-  if (!userId) return NextResponse.json({ error: "missing fields" }, { status: 400 });
+  if (!userId)
+    return NextResponse.json({ error: "missing fields" }, { status: 400 });
 
   const user = await ensureUser(userId);
   if (name !== undefined) user.displayName = name || undefined;

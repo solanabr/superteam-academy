@@ -10,7 +10,8 @@ export interface ChatMessage {
   timestamp: number;
 }
 
-const IMAGE_URL_RE = /https?:\/\/[^\s"'<>]+\.(?:png|jpg|jpeg|gif|webp|svg)(?:\?[^\s"'<>]*)?/gi;
+const IMAGE_URL_RE =
+  /https?:\/\/[^\s"'<>]+\.(?:png|jpg|jpeg|gif|webp|svg)(?:\?[^\s"'<>]*)?/gi;
 const MARKDOWN_IMG_RE = /!\[([^\]]*)\]\(([^)]+)\)/g;
 
 function extractImages(text: string): { cleanText: string; images: string[] } {
@@ -72,7 +73,10 @@ export function useAIChat() {
 
       sessionRef.current = data.sessionId;
 
-      const raw = typeof data.response === "string" ? data.response : JSON.stringify(data.response);
+      const raw =
+        typeof data.response === "string"
+          ? data.response
+          : JSON.stringify(data.response);
       const { cleanText, images } = extractImages(raw);
 
       const assistantMsg: ChatMessage = {
@@ -87,7 +91,10 @@ export function useAIChat() {
       const errorMsg: ChatMessage = {
         id: crypto.randomUUID(),
         role: "assistant",
-        content: err instanceof Error ? err.message : "Something went wrong. Try again.",
+        content:
+          err instanceof Error
+            ? err.message
+            : "Something went wrong. Try again.",
         timestamp: Date.now(),
       };
       setMessages((prev) => [...prev, errorMsg]);

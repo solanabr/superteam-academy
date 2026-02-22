@@ -7,7 +7,11 @@ export async function GET(req: NextRequest) {
   const userId = req.nextUrl.searchParams.get("userId");
   if (!userId) {
     return NextResponse.json({
-      current: 0, longest: 0, lastActivityDate: 0, freezesAvailable: 0, history: [],
+      current: 0,
+      longest: 0,
+      lastActivityDate: 0,
+      freezesAvailable: 0,
+      history: [],
     });
   }
 
@@ -24,9 +28,10 @@ export async function GET(req: NextRequest) {
       current = profile.currentStreak;
       longest = profile.longestStreak;
       lastDay = Math.floor(
-        (typeof profile.lastActivityDate === "object" && "toNumber" in profile.lastActivityDate
+        (typeof profile.lastActivityDate === "object" &&
+        "toNumber" in profile.lastActivityDate
           ? (profile.lastActivityDate as any).toNumber()
-          : Number(profile.lastActivityDate)) / 86400
+          : Number(profile.lastActivityDate)) / 86400,
       );
       freezesAvailable = profile.streakFreezes;
     }

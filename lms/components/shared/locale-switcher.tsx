@@ -12,7 +12,11 @@ import {
 import { FlagUS, FlagBR, FlagES, FlagIN } from "@/components/shared/flags";
 import type { Locale } from "@/i18n/routing";
 
-const LOCALES: { value: Locale; label: string; flag: React.ComponentType<{ className?: string }> }[] = [
+const LOCALES: {
+  value: Locale;
+  label: string;
+  flag: React.ComponentType<{ className?: string }>;
+}[] = [
   { value: "en", label: "English", flag: FlagUS },
   { value: "pt-BR", label: "Português", flag: FlagBR },
   { value: "es", label: "Español", flag: FlagES },
@@ -42,7 +46,11 @@ export function LocaleSwitcher() {
           <DropdownMenuItem
             key={l.value}
             onClick={() => handleSelect(l.value)}
-            className={locale === l.value ? "bg-accent text-accent-foreground font-medium" : ""}
+            className={
+              locale === l.value
+                ? "bg-accent text-accent-foreground font-medium"
+                : ""
+            }
           >
             <l.flag className="h-4 w-5" />
             {l.label}

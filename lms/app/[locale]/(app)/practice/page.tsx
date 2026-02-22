@@ -3,15 +3,31 @@
 import { useState, useMemo } from "react";
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
-import { Code2, CheckCircle2, Trophy, Search, ExternalLink } from "lucide-react";
+import {
+  Code2,
+  CheckCircle2,
+  Trophy,
+  Search,
+  ExternalLink,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { DailyChallengeBanner } from "@/components/daily-challenge-banner";
-import { usePracticeProgress, useClaimMilestone, useDailyArchive } from "@/lib/hooks/use-service";
+import {
+  usePracticeProgress,
+  useClaimMilestone,
+  useDailyArchive,
+} from "@/lib/hooks/use-service";
 import { PRACTICE_CHALLENGES } from "@/lib/data/practice-challenges";
 import {
   PRACTICE_CATEGORIES,
@@ -26,12 +42,21 @@ export default function PracticePage() {
   const tc = useTranslations("common");
 
   const [search, setSearch] = useState("");
-  const [difficulty, setDifficulty] = useState<PracticeDifficulty | "all">("all");
+  const [difficulty, setDifficulty] = useState<PracticeDifficulty | "all">(
+    "all",
+  );
   const [category, setCategory] = useState<PracticeCategory | "all">("all");
-  const [language, setLanguage] = useState<"all" | "rust" | "typescript">("all");
+  const [language, setLanguage] = useState<"all" | "rust" | "typescript">(
+    "all",
+  );
   const [status, setStatus] = useState<"all" | "solved" | "unsolved">("all");
 
-  const { completed: completedIds, txHashes, claimedMilestones, milestoneTxHashes } = usePracticeProgress();
+  const {
+    completed: completedIds,
+    txHashes,
+    claimedMilestones,
+    milestoneTxHashes,
+  } = usePracticeProgress();
   const claimMilestone = useClaimMilestone();
   const { data: dailyArchive } = useDailyArchive();
 
@@ -51,7 +76,11 @@ export default function PracticePage() {
     return allChallenges.filter((c) => {
       if (search) {
         const q = search.toLowerCase();
-        if (!c.title.toLowerCase().includes(q) && !c.description.toLowerCase().includes(q)) return false;
+        if (
+          !c.title.toLowerCase().includes(q) &&
+          !c.description.toLowerCase().includes(q)
+        )
+          return false;
       }
       if (difficulty !== "all" && c.difficulty !== difficulty) return false;
       if (category !== "all" && c.category !== category) return false;
@@ -60,7 +89,15 @@ export default function PracticePage() {
       if (status === "unsolved" && completedIds.includes(c.id)) return false;
       return true;
     });
-  }, [search, difficulty, category, language, status, completedIds, allChallenges]);
+  }, [
+    search,
+    difficulty,
+    category,
+    language,
+    status,
+    completedIds,
+    allChallenges,
+  ]);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -80,7 +117,12 @@ export default function PracticePage() {
         </div>
         <div className="flex items-center gap-4 text-sm">
           <div className="text-center">
-            <p className="text-2xl font-bold">{solvedCount}<span className="text-muted-foreground font-normal">/{totalCount}</span></p>
+            <p className="text-2xl font-bold">
+              {solvedCount}
+              <span className="text-muted-foreground font-normal">
+                /{totalCount}
+              </span>
+            </p>
             <p className="text-xs text-muted-foreground">{tc("solved")}</p>
           </div>
           <div className="text-center">
@@ -112,13 +154,25 @@ export default function PracticePage() {
               key={m}
               className={cn(
                 "flex items-center gap-2 rounded-lg border px-3 py-2 text-sm",
-                reached ? "border-transparent" : "border-border opacity-50"
+                reached ? "border-transparent" : "border-border opacity-50",
               )}
-              style={reached ? { borderColor: level.color, backgroundColor: `${level.color}10` } : undefined}
+              style={
+                reached
+                  ? {
+                      borderColor: level.color,
+                      backgroundColor: `${level.color}10`,
+                    }
+                  : undefined
+              }
             >
-              <Trophy className="h-4 w-4" style={{ color: reached ? level.color : undefined }} />
+              <Trophy
+                className="h-4 w-4"
+                style={{ color: reached ? level.color : undefined }}
+              />
               <span className="font-medium">{level.name}</span>
-              <span className="text-xs text-muted-foreground">{t("solvedLabel", { count: m })}</span>
+              <span className="text-xs text-muted-foreground">
+                {t("solvedLabel", { count: m })}
+              </span>
               {reached && claimed && txHash ? (
                 <a
                   href={`https://explorer.solana.com/tx/${txHash}?cluster=devnet`}
@@ -162,34 +216,67 @@ export default function PracticePage() {
           />
         </div>
         <div className="flex flex-wrap gap-2">
-          <Select value={difficulty} onValueChange={(v) => setDifficulty(v as PracticeDifficulty | "all")}>
-            <SelectTrigger className="w-32"><SelectValue placeholder="Difficulty" /></SelectTrigger>
+          <Select
+            value={difficulty}
+            onValueChange={(v) =>
+              setDifficulty(v as PracticeDifficulty | "all")
+            }
+          >
+            <SelectTrigger className="w-32">
+              <SelectValue placeholder="Difficulty" />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t("allLevels")}</SelectItem>
               {(["easy", "medium", "hard"] as const).map((d) => (
-                <SelectItem key={d} value={d}>{PRACTICE_DIFFICULTY_CONFIG[d].label}</SelectItem>
+                <SelectItem key={d} value={d}>
+                  {PRACTICE_DIFFICULTY_CONFIG[d].label}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          <Select value={category} onValueChange={(v) => setCategory(v as PracticeCategory | "all")}>
-            <SelectTrigger className="w-40"><SelectValue placeholder="Category" /></SelectTrigger>
+          <Select
+            value={category}
+            onValueChange={(v) => setCategory(v as PracticeCategory | "all")}
+          >
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Category" />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t("allCategories")}</SelectItem>
-              {(Object.entries(PRACTICE_CATEGORIES) as [PracticeCategory, { label: string }][]).map(([k, v]) => (
-                <SelectItem key={k} value={k}>{v.label}</SelectItem>
+              {(
+                Object.entries(PRACTICE_CATEGORIES) as [
+                  PracticeCategory,
+                  { label: string },
+                ][]
+              ).map(([k, v]) => (
+                <SelectItem key={k} value={k}>
+                  {v.label}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          <Select value={language} onValueChange={(v) => setLanguage(v as "all" | "rust" | "typescript")}>
-            <SelectTrigger className="w-36"><SelectValue placeholder="Language" /></SelectTrigger>
+          <Select
+            value={language}
+            onValueChange={(v) =>
+              setLanguage(v as "all" | "rust" | "typescript")
+            }
+          >
+            <SelectTrigger className="w-36">
+              <SelectValue placeholder="Language" />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t("allLanguages")}</SelectItem>
               <SelectItem value="typescript">TypeScript</SelectItem>
               <SelectItem value="rust">Rust</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={status} onValueChange={(v) => setStatus(v as "all" | "solved" | "unsolved")}>
-            <SelectTrigger className="w-32"><SelectValue placeholder="Status" /></SelectTrigger>
+          <Select
+            value={status}
+            onValueChange={(v) => setStatus(v as "all" | "solved" | "unsolved")}
+          >
+            <SelectTrigger className="w-32">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{tc("all")}</SelectItem>
               <SelectItem value="solved">{tc("solved")}</SelectItem>
@@ -203,7 +290,9 @@ export default function PracticePage() {
       {filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 text-center">
           <p className="text-lg font-medium">{t("noChallenges")}</p>
-          <p className="mt-2 text-sm text-muted-foreground">{t("adjustFilters")}</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {t("adjustFilters")}
+          </p>
         </div>
       ) : (
         <Card>
@@ -214,12 +303,24 @@ export default function PracticePage() {
                   <tr className="border-b text-left text-muted-foreground">
                     <th className="px-4 py-3 font-medium w-10">#</th>
                     <th className="px-4 py-3 font-medium">{t("tableTitle")}</th>
-                    <th className="px-4 py-3 font-medium w-24">{t("tableDifficulty")}</th>
-                    <th className="px-4 py-3 font-medium w-32">{t("tableCategory")}</th>
-                    <th className="px-4 py-3 font-medium w-24">{t("tableLanguage")}</th>
-                    <th className="px-4 py-3 font-medium w-16 text-right">{tc("xp")}</th>
-                    <th className="px-4 py-3 font-medium w-12 text-center">{t("tableStatus")}</th>
-                    <th className="px-4 py-3 font-medium w-24 text-center">{t("tableTx")}</th>
+                    <th className="px-4 py-3 font-medium w-24">
+                      {t("tableDifficulty")}
+                    </th>
+                    <th className="px-4 py-3 font-medium w-32">
+                      {t("tableCategory")}
+                    </th>
+                    <th className="px-4 py-3 font-medium w-24">
+                      {t("tableLanguage")}
+                    </th>
+                    <th className="px-4 py-3 font-medium w-16 text-right">
+                      {tc("xp")}
+                    </th>
+                    <th className="px-4 py-3 font-medium w-12 text-center">
+                      {t("tableStatus")}
+                    </th>
+                    <th className="px-4 py-3 font-medium w-24 text-center">
+                      {t("tableTx")}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -228,27 +329,51 @@ export default function PracticePage() {
                     const diffConfig = PRACTICE_DIFFICULTY_CONFIG[c.difficulty];
                     const catConfig = PRACTICE_CATEGORIES[c.category];
                     return (
-                      <tr key={c.id} className="border-b last:border-0 hover:bg-muted/50 transition-colors">
-                        <td className="px-4 py-3.5 text-muted-foreground/70 tabular-nums">{i + 1}</td>
+                      <tr
+                        key={c.id}
+                        className="border-b last:border-0 hover:bg-muted/50 transition-colors"
+                      >
+                        <td className="px-4 py-3.5 text-muted-foreground/70 tabular-nums">
+                          {i + 1}
+                        </td>
                         <td className="px-4 py-3.5">
-                          <Link href={`/practice/${c.id}`} className="font-medium hover:text-solana-purple transition-colors">
+                          <Link
+                            href={`/practice/${c.id}`}
+                            className="font-medium hover:text-solana-purple transition-colors"
+                          >
                             {c.title}
                           </Link>
                         </td>
                         <td className="px-4 py-3.5">
-                          <span className="text-xs font-bold" style={{ color: diffConfig.color }}>
+                          <span
+                            className="text-xs font-bold"
+                            style={{ color: diffConfig.color }}
+                          >
                             {diffConfig.label}
                           </span>
                         </td>
                         <td className="px-4 py-3.5">
-                          <Badge variant="outline" className="text-xs font-medium" style={{ borderColor: catConfig.color, color: catConfig.color }}>
+                          <Badge
+                            variant="outline"
+                            className="text-xs font-medium"
+                            style={{
+                              borderColor: catConfig.color,
+                              color: catConfig.color,
+                            }}
+                          >
                             {catConfig.label}
                           </Badge>
                         </td>
-                        <td className="px-4 py-3.5 capitalize text-xs font-medium">{c.language === "rust" ? "Rust" : "TypeScript"}</td>
-                        <td className="px-4 py-3.5 text-right font-bold text-xp-gold">{c.xpReward}</td>
+                        <td className="px-4 py-3.5 capitalize text-xs font-medium">
+                          {c.language === "rust" ? "Rust" : "TypeScript"}
+                        </td>
+                        <td className="px-4 py-3.5 text-right font-bold text-xp-gold">
+                          {c.xpReward}
+                        </td>
                         <td className="px-4 py-3.5 text-center">
-                          {solved && <CheckCircle2 className="h-4 w-4 text-solana-green mx-auto" />}
+                          {solved && (
+                            <CheckCircle2 className="h-4 w-4 text-solana-green mx-auto" />
+                          )}
                         </td>
                         <td className="px-4 py-3.5 text-center">
                           {txHashes[c.id] && (
@@ -258,7 +383,8 @@ export default function PracticePage() {
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-1 text-xs text-solana-purple hover:underline"
                             >
-                              {txHashes[c.id].slice(0, 4)}...{txHashes[c.id].slice(-4)}
+                              {txHashes[c.id].slice(0, 4)}...
+                              {txHashes[c.id].slice(-4)}
                               <ExternalLink className="h-3 w-3" />
                             </a>
                           )}

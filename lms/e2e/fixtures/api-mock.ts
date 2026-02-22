@@ -68,7 +68,9 @@ export function mockCommunityApi(page: Page) {
         route.fulfill({
           status: 200,
           contentType: "application/json",
-          body: JSON.stringify(stats ?? { communityPoints: 100, endorsementCount: 5 }),
+          body: JSON.stringify(
+            stats ?? { communityPoints: 100, endorsementCount: 5 },
+          ),
         }),
       );
     },
@@ -124,7 +126,12 @@ export function mockLearningApi(page: Page) {
           status: 200,
           contentType: "application/json",
           body: JSON.stringify(
-            data ?? { completed: [], txHashes: {}, claimedMilestones: [], milestoneTxHashes: {} },
+            data ?? {
+              completed: [],
+              txHashes: {},
+              claimedMilestones: [],
+              milestoneTxHashes: {},
+            },
           ),
         }),
       );

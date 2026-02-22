@@ -4,14 +4,27 @@ import { Link, usePathname } from "@/i18n/navigation";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { useState, useEffect } from "react";
-import { BookOpen, LayoutDashboard, Trophy, Code2, Menu, User, Users } from "lucide-react";
+import {
+  BookOpen,
+  LayoutDashboard,
+  Trophy,
+  Code2,
+  Menu,
+  User,
+  Users,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { LocaleSwitcher } from "@/components/shared/locale-switcher";
 import { WalletButton } from "@/components/wallet/wallet-button";
 import { WalletModal } from "@/components/wallet/wallet-modal";
-import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetTitle,
+} from "@/components/ui/sheet";
 
 const NAV_KEYS = [
   { href: "/courses" as const, key: "courses", icon: BookOpen },
@@ -36,7 +49,12 @@ export function Header() {
           <div className="flex items-center gap-8">
             <Link href="/" className="flex items-center gap-2">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white dark:bg-[#1b231d] shadow-sm">
-                <Image src="/logo.png" alt="Superteam Academy" width={28} height={28} />
+                <Image
+                  src="/logo.png"
+                  alt="Superteam Academy"
+                  width={28}
+                  height={28}
+                />
               </div>
               <span className="hidden text-lg font-bold sm:inline-block">
                 superteam <span className="text-solana-purple">brazil</span>
@@ -49,9 +67,10 @@ export function Header() {
                   href={item.href}
                   className={cn(
                     "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground",
-                    pathname === item.href || pathname.startsWith(item.href + "/")
+                    pathname === item.href ||
+                      pathname.startsWith(item.href + "/")
                       ? "bg-accent text-accent-foreground"
-                      : "text-muted-foreground"
+                      : "text-muted-foreground",
                   )}
                 >
                   <item.icon className="h-4 w-4" />
@@ -81,7 +100,10 @@ export function Header() {
                         onClick={() => setMobileOpen(false)}
                         className={cn(
                           "flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors hover:bg-accent",
-                          pathname === item.href || pathname.startsWith(item.href + "/") ? "bg-accent" : ""
+                          pathname === item.href ||
+                            pathname.startsWith(item.href + "/")
+                            ? "bg-accent"
+                            : "",
                         )}
                       >
                         <item.icon className="h-5 w-5" />
