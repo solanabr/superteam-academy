@@ -9,9 +9,12 @@ import { Twitter, ExternalLink } from "lucide-react";
 import { XpStatCard } from "@/components/xp-stat-card";
 import { SkillChart } from "@/components/skill-chart";
 import { CredentialCard } from "@/components/credential-card";
+import { useUser } from "../../../hooks/useUser"
+
 
 export default function ProfilePage() {
   const { publicKey } = useWallet();
+  const { userDb } = useUser();
 
   const handleShare = () => {
     const text = "I've reached Level 5 on Superteam Academy, the on-chain LMS for Solana developers! Check it out: ";
@@ -61,7 +64,7 @@ export default function ProfilePage() {
             <CardTitle>My Skills</CardTitle>
           </CardHeader>
           <CardContent>
-            <SkillChart />
+            <SkillChart xp={userDb?.xp || 0} />
           </CardContent>
         </Card>
         

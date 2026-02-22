@@ -12,33 +12,43 @@ datasource db {
 model User {
   id            String   @id @default(auto()) @map("_id") @db.ObjectId
   walletAddress String   @unique
+  username      String?
+  bio           String?
+  twitter       String?
+  github        String?
+  
+  xp            Int      @default(0)
+  level         Int      @default(0)
   streak        Int      @default(0)
+  
   lastLogin     DateTime @default(now())
+  lastLessonAt  DateTime? // Новое поле для честного расчета стриков
+
+  // Связи
+  enrollments   UserEnrollment[]
+  progress      LessonProgress[]
 }
 
-model Course {
-  id       String   @id @default(auto()) @map("_id") @db.ObjectId
-  courseId String   @unique
-  metadata Json
-  lessons  Lesson[]
-}
+// Новая модель для быстрого отображения списка курсов в Dashboard
+model UserEnrollment {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  user          User     @relation(fields: [userId], references: [id])
+  userId        String   @db.ObjectId
+  courseId      String   // ID курса (anchor-101)
+  enrolledAt    DateTime @default(now())
 
-model Lesson {
-  id       String @id @default(auto()) @map("_id") @db.ObjectId
-  course   Course @relation(fields: [courseId], references: [id])
-  courseId String @db.ObjectId
-  // УДАЛЯЕМ progress — он больше не нужен
+  @@unique([userId, courseId])
 }
 
 model LessonProgress {
-  id          String    @id @default(auto()) @map("_id") @db.ObjectId
-  userWallet  String
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String   @db.ObjectId // Связь с юзером
   courseId    String
   lessonIndex Int
-  status      String    @default("not_started")
+  status      String   // "in_progress", "completed"
   codeSnippet String?
   completedAt DateTime?
 
-  @@unique([userWallet, courseId, lessonIndex])
-  @@map("LessonProgress")
+  @@unique([userId, courseId, lessonIndex])
 }

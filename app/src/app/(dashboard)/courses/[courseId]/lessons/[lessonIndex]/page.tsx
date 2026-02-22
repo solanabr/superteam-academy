@@ -12,6 +12,7 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/componen
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { Loader2, CheckCircle, ArrowRight, AlertTriangle } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Импортируем наш контент
 import { getLessonContent, LessonContent } from "@/lib/course-content";
@@ -120,19 +121,75 @@ export default function LessonPage() {
         </div>
       </div>
 
-      <ResizablePanelGroup className="flex-1">
-        
-        <ResizablePanel defaultSize={40} minSize={30}>
-          <ScrollArea className="h-full p-6 prose dark:prose-invert max-w-none">
-            <ReactMarkdown>{content.markdown}</ReactMarkdown>
-          </ScrollArea>
-        </ResizablePanel>
+      <div className="hidden md:flex flex-1 overflow-hidden">
+        <ResizablePanelGroup className="flex-1">
+          
+          <ResizablePanel defaultSize={40} minSize={30}>
+            <ScrollArea className="h-full p-6 prose dark:prose-invert max-w-none">
+              <ReactMarkdown>{content.markdown}</ReactMarkdown>
+            </ScrollArea>
+          </ResizablePanel>
 
-        <ResizableHandle withHandle />
+          <ResizableHandle withHandle />
 
-        <ResizablePanel defaultSize={60}>
-            <div className="h-full flex flex-col">
-                <div className="flex-1">
+          <ResizablePanel defaultSize={60}>
+              <div className="h-full flex flex-col">
+                  <div className="flex-1">
+                      <CodeEditor 
+                          initialValue={content.initialCode}
+                          language="rust"
+                          onChange={(val) => setCode(val || "")}
+                          courseId={courseId}
+                          lessonIndex={lessonIndex}
+                      />
+                  </div>
+                  
+                  <div className="border-t bg-background p-4 flex justify-end gap-4">
+                      <Button 
+                          onClick={handleCheckCode} 
+                          disabled={isChecking || isSuccess}
+                          className={isSuccess ? "bg-green-600 hover:bg-green-700" : ""}
+                      >
+                          {isChecking ? (
+                              <>
+                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  Verifying...
+                              </>
+                          ) : isSuccess ? (
+                              <>
+                                  <CheckCircle className="mr-2 h-4 w-4" />
+                                  Completed!
+                              </>
+                          ) : (
+                              "Check Answer"
+                          )}
+                      </Button>
+                  </div>
+              </div>
+          </ResizablePanel>
+
+        </ResizablePanelGroup>
+      </div>
+      
+      {/* MOBILE VIEW (Tabs) - Показываем только на мобильных (md:hidden) */}
+      <div className="md:hidden flex-1 flex flex-col overflow-hidden">
+        <Tabs defaultValue="task" className="flex-1 flex flex-col">
+            <div className="border-b px-4">
+                <TabsList className="w-full">
+                    <TabsTrigger value="task" className="flex-1">Task</TabsTrigger>
+                    <TabsTrigger value="code" className="flex-1">Code Editor</TabsTrigger>
+                </TabsList>
+            </div>
+            
+            <TabsContent value="task" className="flex-1 overflow-auto p-4">
+                <div className="prose dark:prose-invert max-w-none pb-20">
+                    <ReactMarkdown>{content.markdown}</ReactMarkdown>
+                </div>
+            </TabsContent>
+            
+            <TabsContent value="code" className="flex-1 flex flex-col h-full overflow-hidden">
+                <div className="flex-1 relative">
+                    {/* На мобильном можно сделать редактор readonly или упрощенным */}
                     <CodeEditor 
                         initialValue={content.initialCode}
                         language="rust"
@@ -141,32 +198,18 @@ export default function LessonPage() {
                         lessonIndex={lessonIndex}
                     />
                 </div>
-                
-                <div className="border-t bg-background p-4 flex justify-end gap-4">
-                    <Button 
+                <div className="border-t bg-background p-4">
+                     <Button 
                         onClick={handleCheckCode} 
                         disabled={isChecking || isSuccess}
-                        className={isSuccess ? "bg-green-600 hover:bg-green-700" : ""}
+                        className="w-full"
                     >
-                        {isChecking ? (
-                            <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Verifying...
-                            </>
-                        ) : isSuccess ? (
-                            <>
-                                <CheckCircle className="mr-2 h-4 w-4" />
-                                Completed!
-                            </>
-                        ) : (
-                            "Check Answer"
-                        )}
+                        {isChecking ? "Verifying..." : "Check Answer"}
                     </Button>
                 </div>
-            </div>
-        </ResizablePanel>
-
-      </ResizablePanelGroup>
+            </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 }

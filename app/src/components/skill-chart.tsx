@@ -3,16 +3,21 @@
 
 import { PolarAngleAxis, PolarGrid, Radar, RadarChart, ResponsiveContainer } from "recharts";
 
-// Mock data (в реальном проекте - на основе пройденных курсов)
-const data = [
-  { subject: "Rust", A: 80, fullMark: 150 },
-  { subject: "Anchor", A: 98, fullMark: 150 },
-  { subject: "Frontend", A: 86, fullMark: 150 },
-  { subject: "Security", A: 99, fullMark: 150 },
-  { subject: "DeFi", A: 65, fullMark: 150 },
-];
+// Принимаем XP как проп
+export function SkillChart({ xp }: { xp: number }) {
+  
+  // Простая логика: чем больше XP, тем больше скиллов
+  // Максимум 1000 XP для полной диаграммы в начале
+  const ratio = Math.min(xp / 1000, 1); 
 
-export function SkillChart() {
+  const data = [
+    { subject: "Rust", A: 20 + (80 * ratio), fullMark: 100 },
+    { subject: "Anchor", A: 10 + (90 * ratio), fullMark: 100 },
+    { subject: "Frontend", A: 50 + (30 * ratio), fullMark: 100 }, // Фронтенд обычно знают лучше
+    { subject: "Security", A: 5 + (70 * ratio), fullMark: 100 },
+    { subject: "DeFi", A: 0 + (60 * ratio), fullMark: 100 },
+  ];
+  
   return (
     <ResponsiveContainer width="100%" height={350}>
       <RadarChart cx="50%" cy="50%" outerRadius="80%" data={data}>
