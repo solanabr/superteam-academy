@@ -11,7 +11,7 @@ export interface StreakData {
   currentStreak: number;
   longestStreak: number;
   lastActivityDate: string;
-  streakHistory: Record<string, boolean>;
+  streakHistory: Record<string, number>;
 }
 
 export interface LeaderboardEntry {

@@ -348,7 +348,7 @@ Run the development server and navigate to `http://localhost:3000/fr/` to verify
 ### Translation Guidelines
 
 - All UI strings must be externalized in message files -- never hardcode text in components
-- Use nested keys for organization (e.g., `dashboard.welcome`, `courses.difficulty.beginner`)
+- Use nested keys for organization (e.g., `courses.difficulty.beginner`)
 - Keep keys descriptive: `auth.connectWallet` not `btn1`
 - Pluralization is supported via next-intl's ICU message format
 - Root-level files (`not-found.tsx`, `error.tsx`) cannot use `next-intl` because they render outside the `[locale]` layout. They use inline translation objects.

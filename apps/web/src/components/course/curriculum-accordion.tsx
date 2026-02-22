@@ -69,7 +69,7 @@ export function CurriculumAccordion({
               aria-expanded={isOpen}
             >
               <div className="min-w-0 flex-1">
-                <h4 className="truncate font-display font-semibold text-text">
+                <h4 className="truncate font-display font-black text-text">
                   {mod.title}
                 </h4>
                 <p className="mt-0.5 text-sm text-text-3">

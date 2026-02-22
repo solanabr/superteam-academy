@@ -253,7 +253,7 @@ export function ProfileTab({
               </AvatarFallback>
             </Avatar>
             {isUploadingAvatar && (
-              <div className="bg-bg/60 absolute inset-0 flex items-center justify-center rounded-full">
+              <div className="absolute inset-0 flex items-center justify-center rounded-full [background:color-mix(in_srgb,var(--bg)_60%,transparent)]">
                 <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
               </div>
             )}
@@ -303,7 +303,7 @@ export function ProfileTab({
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               maxLength={30}
-              className="h-10 w-full flex-1 rounded-md border border-border bg-bg px-3 font-mono text-sm ring-offset-bg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="h-10 w-full flex-1 rounded-md border-[2.5px] border-border bg-card px-3 font-mono text-sm text-text outline-none transition-all duration-150 placeholder:text-text-3 focus:border-primary focus:shadow-[0_0_0_3px_var(--primary-dim)]"
             />
             {nameRerollsUsed < MAX_REROLLS && (
               <Button
@@ -336,7 +336,7 @@ export function ProfileTab({
             value={bio}
             onChange={(e) => setBio(e.target.value)}
             rows={3}
-            className="w-full rounded-md border border-border bg-bg px-3 py-2 text-sm ring-offset-bg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="w-full resize-y rounded-md border-[2.5px] border-border bg-card px-3 py-2 font-body text-sm text-text outline-none transition-all duration-150 placeholder:text-text-3 focus:border-primary focus:shadow-[0_0_0_3px_var(--primary-dim)]"
           />
         </div>
 
@@ -351,7 +351,7 @@ export function ProfileTab({
               placeholder={t("twitterPlaceholder")}
               value={twitter}
               onChange={(e) => setTwitter(e.target.value)}
-              className="h-10 w-full rounded-md border border-border bg-bg px-3 text-sm ring-offset-bg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="h-10 w-full rounded-md border-[2.5px] border-border bg-card px-3 font-body text-sm text-text outline-none transition-all duration-150 placeholder:text-text-3 focus:border-primary focus:shadow-[0_0_0_3px_var(--primary-dim)]"
             />
           </div>
           <div className="space-y-2">
@@ -364,7 +364,7 @@ export function ProfileTab({
               placeholder={t("githubPlaceholder")}
               value={github}
               onChange={(e) => setGithub(e.target.value)}
-              className="h-10 w-full rounded-md border border-border bg-bg px-3 text-sm ring-offset-bg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="h-10 w-full rounded-md border-[2.5px] border-border bg-card px-3 font-body text-sm text-text outline-none transition-all duration-150 placeholder:text-text-3 focus:border-primary focus:shadow-[0_0_0_3px_var(--primary-dim)]"
             />
           </div>
           <div className="space-y-2">
@@ -377,7 +377,7 @@ export function ProfileTab({
               placeholder={t("discordPlaceholder")}
               value={discord}
               onChange={(e) => setDiscord(e.target.value)}
-              className="h-10 w-full rounded-md border border-border bg-bg px-3 text-sm ring-offset-bg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="h-10 w-full rounded-md border-[2.5px] border-border bg-card px-3 font-body text-sm text-text outline-none transition-all duration-150 placeholder:text-text-3 focus:border-primary focus:shadow-[0_0_0_3px_var(--primary-dim)]"
             />
           </div>
         </div>

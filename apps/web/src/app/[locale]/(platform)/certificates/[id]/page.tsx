@@ -87,7 +87,7 @@ export default function CertificateViewPage() {
   if (certNotFound) {
     return (
       <div className="flex min-h-[50vh] flex-col items-center justify-center">
-        <h1 className="font-display text-2xl font-bold">{t("notFound")}</h1>
+        <h1 className="font-display text-2xl font-black">{t("notFound")}</h1>
       </div>
     );
   }
@@ -129,7 +129,7 @@ export default function CertificateViewPage() {
       <h1 className={v.pageTitle}>{t("title")}</h1>
 
       {/* Certificate card — static (no hover lift) */}
-      <div className={cx(CS.outer, CS.outerStatic)}>
+      <div className={CS.wrap}>
         <div className={cx(CS.inner, v.inner)}>
           {/* Solana icon */}
           <div className={v.icon}>

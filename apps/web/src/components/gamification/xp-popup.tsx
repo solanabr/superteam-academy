@@ -41,17 +41,20 @@ export function XpPopup({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "pointer-events-none fixed bottom-20 left-6 z-50",
+        "pointer-events-none fixed bottom-20 left-6 z-50 flex flex-col gap-2",
         className
       )}
       aria-live="polite"
     >
       {events.map((ev) => (
-        <div
-          key={ev.id}
-          className="animate-xp-pop font-display text-xl font-black text-accent"
-        >
-          +{ev.amount} XP
+        /* v9 .popup-xp — pill card, border-radius: r-full, amber glow */
+        <div key={ev.id} className="popup-xp">
+          {/* v9 .popup-xp-icon — 34px amber circle */}
+          <div className="popup-xp-icon" aria-hidden="true">
+            ⚡
+          </div>
+          {/* v9 .popup-xp-amount — Nunito 900, 20px, --xp */}
+          <span className="popup-xp-amount">+{ev.amount} XP</span>
         </div>
       ))}
     </div>

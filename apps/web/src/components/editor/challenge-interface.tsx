@@ -223,7 +223,7 @@ export function ChallengeInterface({
         <>
           <button
             onClick={() => setShowDescription(!showDescription)}
-            className="hover:bg-subtle/50 flex w-full shrink-0 items-center gap-2 border-b border-border px-4 py-2 text-left text-sm font-medium"
+            className="flex w-full shrink-0 items-center gap-2 border-b border-border px-4 py-2 text-left text-sm font-medium hover:[background:var(--card-hover)]"
             type="button"
           >
             <span
@@ -236,8 +236,8 @@ export function ChallengeInterface({
               ▾
             </span>
             {t("challenge")}
-            <span className="ml-auto flex items-center gap-1 font-display text-xs font-bold text-accent">
-              <Lightning size={14} weight="duotone" className="text-accent" />
+            <span className="ml-auto flex items-center gap-1 font-display text-xs font-black text-xp">
+              <Lightning size={14} weight="duotone" className="text-xp" />
               {xpReward} XP
             </span>
           </button>
@@ -264,7 +264,7 @@ export function ChallengeInterface({
                 {visibleHints.map((hint, index) => (
                   <div
                     key={`hint-${index}`}
-                    className="border-accent/30 bg-accent/5 flex items-start gap-2 rounded-md border p-2"
+                    className="flex items-start gap-2 rounded-md border p-2 [background:var(--accent-bg)] [border-color:var(--accent-border-s)]"
                   >
                     <Lightbulb
                       size={16}
@@ -290,7 +290,7 @@ export function ChallengeInterface({
                     .map((tc) => (
                       <div
                         key={tc.id}
-                        className="bg-subtle/30 rounded-md border border-border p-2 text-xs"
+                        className="rounded-md border border-border p-2 text-xs [background:var(--input)]"
                       >
                         <span className="font-medium">{tc.description}</span>
                         <div className="mt-1 flex gap-4 font-mono text-text-3">
@@ -310,13 +310,13 @@ export function ChallengeInterface({
 
           {/* Description resizer */}
           <div
-            className="bg-subtle/30 hover:bg-primary/20 group relative h-1.5 shrink-0 cursor-row-resize border-y border-border transition-colors"
+            className="group relative h-1.5 shrink-0 cursor-row-resize border-y border-border transition-colors [background:var(--resizer-bg)] hover:[background:var(--primary-dim)]"
             onMouseDown={handleResizeStart("description")}
             role="separator"
             aria-orientation="horizontal"
             tabIndex={0}
           >
-            <div className="bg-text-3/30 group-hover:bg-primary/50 absolute left-1/2 top-1/2 h-0.5 w-8 -translate-x-1/2 -translate-y-1/2 rounded-full transition-colors" />
+            <div className="absolute left-1/2 top-1/2 h-0.5 w-8 -translate-x-1/2 -translate-y-1/2 rounded-full transition-colors [background:var(--resizer-handle)] group-hover:[background:var(--primary)]" />
           </div>
         </>
       )}
@@ -386,7 +386,7 @@ export function ChallengeInterface({
           {visibleHints.map((hint, index) => (
             <div
               key={`hint-${index}`}
-              className="border-accent/30 bg-accent/5 flex items-start gap-2 rounded-md border p-2"
+              className="flex items-start gap-2 rounded-md border p-2 [background:var(--accent-bg)] [border-color:var(--accent-border-s)]"
             >
               <Lightbulb
                 size={16}
@@ -413,7 +413,7 @@ export function ChallengeInterface({
 
         {/* Enroll overlay — tests passed but not enrolled */}
         {pendingSubmit && !isEnrolled && !isComplete && (
-          <div className="bg-bg/60 absolute inset-0 flex items-center justify-center backdrop-blur-sm">
+          <div className="absolute inset-0 flex items-center justify-center backdrop-blur-sm [background:color-mix(in_srgb,var(--bg)_60%,transparent)]">
             <div className="flex flex-col items-center gap-3 rounded-xl border-[2.5px] border-border bg-card p-6 shadow-card">
               <Trophy
                 size={32}
@@ -421,7 +421,7 @@ export function ChallengeInterface({
                 className="text-accent"
                 aria-hidden="true"
               />
-              <p className="font-display text-lg font-bold">
+              <p className="font-display text-lg font-black">
                 {t("testsPassed")}
               </p>
               <p className="text-sm text-text-3">{t("enrollToSaveProgress")}</p>
@@ -434,7 +434,7 @@ export function ChallengeInterface({
 
         {/* Saving overlay — shown while API call is in flight */}
         {isSaving && !isComplete && (
-          <div className="bg-bg/60 pointer-events-none absolute inset-0 flex items-center justify-center backdrop-blur-sm">
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center backdrop-blur-sm [background:color-mix(in_srgb,var(--bg)_60%,transparent)]">
             <div className="flex flex-col items-center gap-2 rounded-xl border-[2.5px] border-border bg-card p-6 shadow-card">
               <div
                 className="h-6 w-6 animate-spin rounded-full border-4 border-primary border-t-transparent"
@@ -447,7 +447,7 @@ export function ChallengeInterface({
 
         {/* Success overlay */}
         {isComplete && (
-          <div className="bg-bg/60 pointer-events-none absolute inset-0 flex items-center justify-center backdrop-blur-sm">
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center backdrop-blur-sm [background:color-mix(in_srgb,var(--bg)_60%,transparent)]">
             <div className="flex flex-col items-center gap-2 rounded-xl border-[2.5px] border-border bg-card p-6 shadow-card">
               <Trophy
                 size={32}
@@ -455,7 +455,7 @@ export function ChallengeInterface({
                 className="text-accent"
                 aria-hidden="true"
               />
-              <p className="font-display text-lg font-bold">
+              <p className="font-display text-lg font-black">
                 {t("lessonComplete")}
               </p>
               <p className="text-sm text-success">
@@ -474,14 +474,14 @@ export function ChallengeInterface({
 
       {/* Resizable divider */}
       <div
-        className="bg-subtle/30 hover:bg-primary/20 group relative h-1.5 shrink-0 cursor-row-resize border-y border-border transition-colors"
+        className="group relative h-1.5 shrink-0 cursor-row-resize border-y border-border transition-colors [background:var(--resizer-bg)] hover:[background:var(--primary-dim)]"
         onMouseDown={handleResizeStart("output")}
         role="separator"
         aria-orientation="horizontal"
         aria-label={tA11y("resizeOutputPanel")}
         tabIndex={0}
       >
-        <div className="bg-text-3/30 group-hover:bg-primary/50 absolute left-1/2 top-1/2 h-0.5 w-8 -translate-x-1/2 -translate-y-1/2 rounded-full transition-colors" />
+        <div className="absolute left-1/2 top-1/2 h-0.5 w-8 -translate-x-1/2 -translate-y-1/2 rounded-full transition-colors [background:var(--resizer-handle)] group-hover:[background:var(--primary)]" />
       </div>
 
       {/* Output panel */}

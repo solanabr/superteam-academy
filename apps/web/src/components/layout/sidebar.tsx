@@ -10,13 +10,13 @@ import {
   Trophy,
   UserCircle,
   Certificate,
-  GearSix,
   CaretLeft,
   CaretRight,
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { dispatchLevelUp } from "@/components/gamification/level-up-overlay";
+import { LevelBadge } from "@/components/gamification/level-badge";
 import { xpToNextLevel } from "@/lib/gamification/xp";
 import { useXpBalance } from "@/lib/solana/hooks";
 
@@ -24,18 +24,22 @@ const sidebarItems = [
   { key: "dashboard", icon: House, href: "/dashboard" },
   { key: "courses", icon: Book, href: "/courses" },
   { key: "leaderboard", icon: Trophy, href: "/leaderboard" },
-  { key: "profile", icon: UserCircle, href: "/profile" },
   { key: "certificates", icon: Certificate, href: "/certificates" },
-  { key: "settings", icon: GearSix, href: "/settings" },
+  { key: "profile", icon: UserCircle, href: "/profile" },
 ] as const;
 
 export function Sidebar() {
   const t = useTranslations("nav");
-  const tGamification = useTranslations("gamification");
   const tA11y = useTranslations("a11y");
   const locale = useLocale();
   const pathname = usePathname();
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
+
+  // Persist collapsed preference
+  useEffect(() => {
+    const saved = localStorage.getItem("sidebar-collapsed");
+    if (saved !== null) setCollapsed(saved === "true");
+  }, []);
   const [displayedXp, setDisplayedXp] = useState(0);
   const [level, setLevel] = useState(0);
   const [glowing, setGlowing] = useState(false);
@@ -144,109 +148,120 @@ export function Sidebar() {
 
   if (!isAuthenticated) return null;
 
+  const { progressPercent, xpInCurrentLevel, xpRequiredForNext } =
+    xpToNextLevel(displayedXp);
+  const xpRemaining = xpRequiredForNext - xpInCurrentLevel;
+
   return (
-    <div className="relative sticky top-16 z-20 hidden h-[calc(100vh-4rem)] shrink-0 lg:block">
-      <aside
-        className={cn(
-          "bg-card/50 flex h-full flex-col overflow-y-auto border-r-[2.5px] border-border transition-all duration-300",
-          collapsed ? "w-[68px]" : "w-[240px]"
-        )}
-      >
-        <nav
-          className="flex-1 space-y-1 p-3"
-          aria-label={tA11y("platformNavigation")}
-        >
-          {sidebarItems.map((item) => {
-            const fullHref = `/${locale}${item.href}`;
-            const isActive = pathname.startsWith(fullHref);
-            const Icon = item.icon;
+    <aside
+      className={cn(
+        "sidebar-scroll relative sticky top-[40vh] hidden shrink-0 -translate-y-1/2 flex-col self-start lg:flex",
+        "rounded-[var(--r-lg)] border border-[var(--border-default)] bg-[var(--surface)] shadow-[var(--shadow)]",
+        "p-[16px_10px]",
+        "ml-[16px]",
+        "transition-all duration-300",
+        collapsed ? "w-[68px]" : "w-[216px]"
+      )}
+      aria-label={tA11y("platformNavigation")}
+    >
+      <nav className="flex flex-col gap-[2px]">
+        {sidebarItems.map((item) => {
+          const fullHref = `/${locale}${item.href}`;
+          const isActive = pathname.startsWith(fullHref);
+          const Icon = item.icon;
 
-            return (
-              <Link
-                key={item.key}
-                href={fullHref}
-                aria-current={isActive ? "page" : undefined}
-                className={cn(
-                  "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
-                  isActive
-                    ? "bg-primary text-white"
-                    : "text-text-2 hover:bg-subtle hover:text-text"
-                )}
-                title={collapsed ? t(item.key) : undefined}
-              >
-                <Icon size={20} weight="bold" className="shrink-0" />
-                {!collapsed && <span>{t(item.key)}</span>}
-              </Link>
-            );
-          })}
-        </nav>
-
-        <div className="border-t-[2.5px] border-border p-3">
-          {!collapsed ? (
-            <div
+          return (
+            <Link
+              key={item.key}
+              href={fullHref}
+              aria-current={isActive ? "page" : undefined}
+              title={collapsed ? t(item.key) : undefined}
               className={cn(
-                "rounded-lg border-[2.5px] border-border bg-card p-3.5 shadow-card transition-all duration-500",
-                glowing &&
-                  "border-accent shadow-[0_0_16px_rgba(13,148,136,0.5),0_0_32px_rgba(245,158,11,0.3)]"
+                "flex items-center gap-[10px] rounded-[var(--r-md)] px-[10px] py-[9px] text-[14px] font-semibold no-underline transition-all duration-150",
+                isActive
+                  ? "bg-[var(--primary-dim)] text-[var(--primary)]"
+                  : "text-[var(--text-3)] hover:bg-[var(--card)] hover:text-[var(--text-2)]",
+                collapsed && "justify-center"
               )}
             >
-              <div className="mb-2 flex items-center justify-between">
-                <span
-                  className={cn(
-                    "font-display text-xs font-black tracking-wide text-accent transition-transform duration-300",
-                    glowing && "scale-110"
-                  )}
-                >
-                  XP
-                </span>
-                <span
-                  className={cn(
-                    "font-display text-sm font-black tabular-nums text-text transition-colors duration-300",
-                    glowing && "text-accent"
-                  )}
-                >
-                  {displayedXp.toLocaleString()} {tGamification("xp")}
-                </span>
-              </div>
-              <div className="mb-2.5 text-xs font-medium text-text-3">
-                {tGamification("level")} {level}
-              </div>
-              <div className="progress-fat">
-                <div
-                  className="progress-fat-fill progress-fill-amber"
-                  style={{
-                    width: `${xpToNextLevel(displayedXp).progressPercent}%`,
-                  }}
-                />
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center gap-1 rounded-lg border-[2.5px] border-border bg-card p-2 shadow-card">
-              <span className="font-display text-xs font-black text-accent">
-                XP
+              <span className="flex w-[20px] shrink-0 items-center justify-center">
+                <Icon size={18} weight="bold" />
               </span>
-              <span className="font-display text-[10px] font-bold tabular-nums text-text">
-                {displayedXp.toLocaleString()}
-              </span>
-            </div>
-          )}
-        </div>
-      </aside>
+              {!collapsed && <span>{t(item.key)}</span>}
+            </Link>
+          );
+        })}
+      </nav>
 
-      {/* Collapse toggle — centered on the sidebar's right edge */}
-      <button
-        onClick={() => setCollapsed(!collapsed)}
-        className="absolute -right-3 top-1/2 z-10 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full border-[2.5px] border-border bg-card text-text-3 shadow-push-sm transition-colors hover:bg-subtle hover:text-text"
-        aria-label={
-          collapsed ? tA11y("expandSidebar") : tA11y("collapseSidebar")
-        }
-      >
-        {collapsed ? (
-          <CaretRight size={12} weight="bold" />
+      {/* Collapse toggle — on the border between nav and XP */}
+      <div className="relative mb-[12px] mt-[40px]">
+        <div className="h-px bg-[var(--border)]" />
+        <button
+          onClick={() => {
+            const next = !collapsed;
+            setCollapsed(next);
+            localStorage.setItem("sidebar-collapsed", String(next));
+          }}
+          className="absolute -right-[22px] top-1/2 z-10 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--card)] text-[var(--text-3)] shadow-[var(--shadow)] transition-colors hover:bg-[var(--card-hover)]"
+          aria-label={
+            collapsed ? tA11y("expandSidebar") : tA11y("collapseSidebar")
+          }
+        >
+          {collapsed ? (
+            <CaretRight size={12} weight="bold" />
+          ) : (
+            <CaretLeft size={12} weight="bold" />
+          )}
+        </button>
+      </div>
+
+      {/* XP panel */}
+      <div>
+        {!collapsed ? (
+          <div
+            className={cn(
+              "rounded-[var(--r-md)] border border-[var(--border)] bg-[var(--card)] p-[12px] transition-all duration-500",
+              glowing && "shadow-glow-xp"
+            )}
+          >
+            <div className="mb-[3px] flex items-baseline justify-between">
+              <span
+                className={cn(
+                  "font-display text-[17px] font-black tabular-nums text-[var(--xp)] transition-colors duration-300",
+                  glowing && "scale-110"
+                )}
+              >
+                {displayedXp.toLocaleString()} XP
+              </span>
+              <LevelBadge level={level} size="sm" />
+            </div>
+            <div className="mb-[7px] font-mono text-[10px] text-[var(--text-3)]">
+              {xpRemaining.toLocaleString()} XP to Level {level + 1}
+            </div>
+            <div
+              className="sidebar-prog overflow-hidden rounded-full"
+              style={{ height: "6px", background: "var(--input)" }}
+            >
+              <div
+                className="sidebar-prog-fill h-full rounded-full"
+                style={{
+                  width: `${progressPercent}%`,
+                  background:
+                    "linear-gradient(90deg, var(--primary-dark), var(--primary))",
+                  transition: "width 0.6s cubic-bezier(0.4,0,0.2,1)",
+                }}
+              />
+            </div>
+          </div>
         ) : (
-          <CaretLeft size={12} weight="bold" />
+          <div className="flex flex-col items-center gap-1 overflow-hidden rounded-[var(--r-md)] border border-[var(--border)] bg-[var(--card)] p-2">
+            <LevelBadge level={level} size="sm" />
+            <span className="font-display text-[10px] font-bold tabular-nums text-[var(--xp)]">
+              {displayedXp.toLocaleString()}
+            </span>
+          </div>
         )}
-      </button>
-    </div>
+      </div>
+    </aside>
   );
 }

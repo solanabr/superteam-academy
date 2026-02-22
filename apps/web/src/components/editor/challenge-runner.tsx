@@ -878,14 +878,9 @@ export function ChallengeRunner({
       </Button>
 
       {allPassed && !isComplete && (!isDeployable || deployComplete) && (
-        <Button
-          onClick={onSubmit}
-          size="sm"
-          variant="pushSuccess"
-          className="gap-1.5"
-        >
+        <Button onClick={onSubmit} size="sm" variant="push" className="gap-1.5">
           {t("submitSolution")}
-          <span className="ml-1 rounded-full bg-primary-foreground/20 px-1.5 py-0.5 text-[10px] font-bold">
+          <span className="ml-1 rounded-full px-1.5 py-0.5 text-[10px] font-bold [background:rgba(255,255,255,0.20)]">
             +{solutionRevealed ? Math.floor(xpReward * 0.5) : xpReward} XP
           </span>
         </Button>

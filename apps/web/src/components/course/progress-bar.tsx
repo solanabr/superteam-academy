@@ -3,13 +3,21 @@ import { cn } from "@/lib/utils";
 interface ProgressBarProps {
   value: number;
   max?: number;
+  variant?: "primary" | "xp" | "success";
   className?: string;
   showLabel?: boolean;
 }
 
+const fillVariantClass = {
+  primary: "pf-primary",
+  xp: "pf-xp",
+  success: "pf-success",
+} as const;
+
 export function ProgressBar({
   value,
   max = 100,
+  variant = "primary",
   className,
   showLabel = false,
 }: ProgressBarProps) {
@@ -18,14 +26,14 @@ export function ProgressBar({
   return (
     <div className={cn("flex items-center gap-3", className)}>
       <div
-        className="progress-fat w-full"
+        className="prog-track w-full"
         role="progressbar"
         aria-valuenow={percent}
         aria-valuemin={0}
         aria-valuemax={100}
       >
         <div
-          className="progress-fat-fill progress-fill-teal"
+          className={cn("prog-fill", fillVariantClass[variant])}
           style={{ width: `${percent}%` }}
         />
       </div>

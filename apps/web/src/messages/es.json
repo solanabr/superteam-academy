@@ -22,6 +22,9 @@
     "signUp": "Registrarse",
     "signIn": "Iniciar Sesión",
     "signOut": "Cerrar Sesión",
+    "settings": "Configuración",
+    "profile": "Perfil",
+    "certificates": "Certificados",
     "courses": "cursos"
   },
   "nav": {
@@ -158,10 +161,19 @@
     "recentActivity": "Actividad",
     "recommendedCourses": "Recomendados Para Ti",
     "removeCourse": "Eliminar curso",
+    "unenrollSuccess": "Desmatriculado del curso exitosamente",
+    "unenrollSyncFailed": "Desmatrícula confirmada on-chain pero la sincronización falló. Actualiza la página.",
+    "unenrollCooldown": "Debes esperar 24 horas después de inscribirte para cancelar la inscripción.",
     "retryLoad": "Actualizar página",
     "startLearning": "Empezar a Aprender",
     "title": "Panel",
-    "welcome": "¡Bienvenido de vuelta, {name}!"
+    "current": "Actual",
+    "bestStreak": "Mejor",
+    "less": "Menos",
+    "more": "Más",
+    "dailyQuests": "Misiones Diarias",
+    "resetsIn": "Se reinicia en {hours}h",
+    "allQuestsBonus": "Completa todas para bono"
   },
   "gamification": {
     "xp": "XP",
@@ -169,6 +181,9 @@
     "streak": "Racha",
     "streakDays": "Racha de {count} días",
     "achievements": "Logros",
+    "yourAchievements": "Tus Logros",
+    "ofUnlocked": "{count} de {total} desbloqueados",
+    "experiencePoints": "Puntos de Experiencia",
     "badges": "Insignias",
     "leaderboard": "Clasificación",
     "rank": "Posición",
@@ -199,7 +214,9 @@
     "tier_seed": "Semilla",
     "tier_sprout": "Brote",
     "tier_sapling": "Retoño",
-    "tier_canopy": "Dosel"
+    "tier_canopy": "Dosel",
+    "viewOnExplorer": "Ver en Explorer",
+    "onChain": "on-chain"
   },
   "certificates": {
     "title": "Certificado de Finalización",
@@ -471,5 +488,22 @@
       "interact": "Interactuar",
       "yourProgram": "Tu Programa Desplegado"
     }
+  },
+  "programErrors": {
+    "unauthorized": "Firmante no autorizado.",
+    "courseNotActive": "Este curso no está activo actualmente.",
+    "lessonOutOfBounds": "Índice de lección fuera de rango.",
+    "lessonAlreadyCompleted": "Ya completaste esta lección.",
+    "courseNotCompleted": "Completa todas las lecciones antes de reclamar el certificado.",
+    "courseAlreadyFinalized": "Este curso ya fue finalizado.",
+    "courseNotFinalized": "Este curso aún no ha sido finalizado.",
+    "prerequisiteNotMet": "Debes completar el curso prerrequisito primero.",
+    "unenrollCooldown": "Debes esperar 24 horas después de inscribirte para cancelar la inscripción.",
+    "enrollmentCourseMismatch": "La inscripción no corresponde a este curso.",
+    "overflow": "Error de cálculo. Inténtalo de nuevo.",
+    "credentialAlreadyIssued": "Ya se emitió un certificado para esta inscripción.",
+    "achievementNotActive": "Este logro no está activo actualmente.",
+    "achievementSupplyExhausted": "Este logro alcanzó su límite máximo.",
+    "unknown": "La transacción falló. Inténtalo de nuevo."
   }
 }
