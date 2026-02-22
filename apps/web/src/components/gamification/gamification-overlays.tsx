@@ -6,27 +6,31 @@ import { XpPopup } from "@/components/gamification/xp-popup";
 import { LevelUpOverlay } from "@/components/gamification/level-up-overlay";
 import { AchievementPopup } from "@/components/gamification/achievement-popup";
 import { CertificatePopup } from "@/components/gamification/certificate-popup";
+import { useGamificationEvents } from "@/hooks/use-gamification-events";
 
 export function GamificationOverlays() {
-  const [show, setShow] = useState(false);
+  const [userId, setUserId] = useState<string | undefined>();
 
   useEffect(() => {
     const supabase = createClient();
 
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setShow(!!session?.user);
+      setUserId(session?.user?.id);
     });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setShow(!!session?.user);
+      setUserId(session?.user?.id);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  if (!show) return null;
+  // Subscribe to Supabase Realtime for gamification popups
+  useGamificationEvents(userId);
+
+  if (!userId) return null;
 
   return (
     <>

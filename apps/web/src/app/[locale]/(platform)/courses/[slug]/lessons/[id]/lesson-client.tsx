@@ -17,10 +17,6 @@ import { Lightning, CheckCircle, ArrowLeft } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { ProgressBar } from "@/components/course/progress-bar";
 import { AuthModal } from "@/components/auth/auth-modal";
-import { dispatchXpGain } from "@/components/gamification/xp-popup";
-import { dispatchAchievementUnlock } from "@/components/gamification/achievement-popup";
-import { dispatchCertificateMinted } from "@/components/gamification/certificate-popup";
-import { dispatchLevelUp } from "@/components/gamification/level-up-overlay";
 import { trackEvent } from "@/lib/analytics";
 import { createClient } from "@/lib/supabase/client";
 import { useOnChainEnroll } from "@/hooks/use-on-chain-enroll";
@@ -151,25 +147,7 @@ interface LessonPageClientProps {
 interface CompletionResponse {
   success: boolean;
   alreadyCompleted: boolean;
-  xpEarned: number;
-  signature?: string;
-  finalized?: boolean;
-  finalizationSignature?: string | null;
-  credentialMinted?: boolean;
-  certificateId?: string;
-  newAchievements: {
-    id: string;
-    name: string;
-    description: string;
-    icon: string;
-  }[];
-  streakData: {
-    currentStreak: number;
-    longestStreak: number;
-    lastActivityDate: string;
-  } | null;
-  leveledUp?: boolean;
-  newLevel?: number;
+  signature: string | null;
 }
 
 async function completeLessonAPI(
@@ -275,48 +253,28 @@ export function LessonPageClient({
       setIsCompleting(false);
       setIsCompleted(true);
 
-      if (!result.alreadyCompleted && result.xpEarned > 0) {
-        setEarnedXp(result.xpEarned);
-        dispatchXpGain(result.xpEarned);
+      if (!result.alreadyCompleted) {
+        setEarnedXp(courseXpPerLesson);
         trackEvent("lesson_completed", {
           lessonId: lesson._id,
           courseId,
-          xpEarned: result.xpEarned,
           signature: result.signature,
         });
-
-        if (result.finalized) {
-          trackEvent("course_finalized", {
-            courseId,
-            finalizationSignature: result.finalizationSignature ?? undefined,
-          });
-        }
-
-        if (result.leveledUp && result.newLevel) {
-          dispatchLevelUp(result.newLevel);
-        }
-
-        if (result.credentialMinted && result.certificateId) {
-          dispatchCertificateMinted(result.certificateId);
-          trackEvent("certificate_minted", {
-            courseId,
-            certificateId: result.certificateId,
-          });
-        }
-
-        for (const achievement of result.newAchievements) {
-          dispatchAchievementUnlock(achievement.id, achievement.name);
-          trackEvent("achievement_unlocked", {
-            achievementId: achievement.id,
-            achievementName: achievement.name,
-          });
-        }
+        // XP, level-up, achievement, and certificate popups are now triggered
+        // by Supabase Realtime via useGamificationEvents (in GamificationOverlays).
       }
     } catch {
       // Allow retry on failure
       setIsCompleting(false);
     }
-  }, [lesson._id, courseId, isCompleted, isCompleting, hasLinkedWallet]);
+  }, [
+    lesson._id,
+    courseId,
+    courseXpPerLesson,
+    isCompleted,
+    isCompleting,
+    hasLinkedWallet,
+  ]);
 
   // Listen for challenge completion events from ChallengeInterface
   useEffect(() => {
