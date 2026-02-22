@@ -158,14 +158,32 @@ export async function handleLessonCompleted(
   event: LessonCompletedEvent,
   txSignature: string
 ): Promise<void> {
+  console.log(
+    `[handleLessonCompleted] learner=${event.learner} course=${event.course} idx=${event.lessonIndex} xp=${event.xpEarned} sig=${txSignature}`
+  );
   const userId = await resolveUserId(event.learner);
-  if (!userId) return;
+  if (!userId) {
+    console.warn(
+      `[handleLessonCompleted] resolveUserId returned null for ${event.learner}`
+    );
+    return;
+  }
+  console.log(`[handleLessonCompleted] userId=${userId}`);
 
   const connection = getConnection();
   const courseId = await resolveCourseId(event.course, connection);
-  if (!courseId) return;
+  if (!courseId) {
+    console.warn(
+      `[handleLessonCompleted] resolveCourseId returned null for ${event.course}`
+    );
+    return;
+  }
+  console.log(`[handleLessonCompleted] courseId=${courseId}`);
 
   const lessonId = await resolveLessonId(courseId, event.lessonIndex);
+  console.log(
+    `[handleLessonCompleted] lessonId=${lessonId} lessonIndex=${event.lessonIndex}`
+  );
 
   const supabase = createAdminClient();
 
@@ -187,6 +205,9 @@ export async function handleLessonCompleted(
       );
 
     if (progressError) {
+      console.error(
+        `[handleLessonCompleted] upsert_progress FAILED: ${progressError.message}`
+      );
       logError({
         errorId: ERROR_IDS.LESSON_COMPLETE_FAILED,
         error: new Error(progressError.message),
@@ -198,6 +219,8 @@ export async function handleLessonCompleted(
           lessonId,
         },
       });
+    } else {
+      console.log(`[handleLessonCompleted] upsert_progress OK`);
     }
   }
 
