@@ -8,7 +8,6 @@ import { createClient } from "@/lib/supabase/client";
 
 interface CourseCompletionMintProps {
   courseId: string;
-  courseTitle: string;
   userId: string;
   totalLessons: number;
   trackCollection?: string;
@@ -29,7 +28,6 @@ type CompletionState =
  */
 export function CourseCompletionMint({
   courseId,
-  courseTitle: _courseTitle,
   userId,
   totalLessons,
   trackCollection,

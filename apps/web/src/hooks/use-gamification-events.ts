@@ -64,7 +64,10 @@ export function useGamificationEvents(userId: string | undefined) {
         (payload) => {
           const row = payload.new as { achievement_id?: string };
           if (row.achievement_id) {
-            dispatchAchievementUnlock(row.achievement_id, row.achievement_id);
+            const displayName = row.achievement_id
+              .replace(/_/g, " ")
+              .replace(/\b\w/g, (c) => c.toUpperCase());
+            dispatchAchievementUnlock(row.achievement_id, displayName);
           }
         }
       )

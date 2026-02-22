@@ -1,8 +1,11 @@
+import "server-only";
+
 import { Connection, PublicKey } from "@solana/web3.js";
 import { BorshCoder, Idl } from "@coral-xyz/anchor";
 import { createAdminClient } from "@/lib/supabase/admin";
 import IDL from "@/lib/solana/idl/superteam_academy.json";
 
+// Double cast: JSON import lacks Anchor's Idl type shape at compile time
 const coder = new BorshCoder(IDL as unknown as Idl);
 
 /**
@@ -13,11 +16,26 @@ export async function resolveUserId(
   walletAddress: string
 ): Promise<string | null> {
   const supabase = createAdminClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("profiles")
     .select("id")
     .eq("wallet_address", walletAddress)
     .maybeSingle();
+
+  if (error) {
+    console.error(
+      `[resolver] resolveUserId failed for ${walletAddress}:`,
+      error.message
+    );
+    return null;
+  }
+
+  if (!data) {
+    console.log(
+      `[resolver] No profile found for wallet ${walletAddress} — skipping event`
+    );
+  }
+
   return data?.id ?? null;
 }
 
@@ -41,13 +59,22 @@ export async function resolveCourseId(
     const accountInfo = await connection.getAccountInfo(
       new PublicKey(coursePda)
     );
-    if (!accountInfo) return null;
+    if (!accountInfo) {
+      console.warn(
+        `[resolver] No on-chain account found for course PDA ${coursePda}`
+      );
+      return null;
+    }
 
     const decoded = coder.accounts.decode("Course", accountInfo.data);
     const courseId = decoded.courseId as string;
     coursePdaCache.set(coursePda, courseId);
     return courseId;
-  } catch {
+  } catch (err) {
+    console.error(
+      `[resolver] resolveCourseId failed for PDA ${coursePda}:`,
+      err
+    );
     return null;
   }
 }
@@ -64,12 +91,25 @@ export async function resolveLessonId(
   const { getCourseById } = await import("@/lib/sanity/queries");
   try {
     const course = await getCourseById(courseId);
-    if (!course) return null;
+    if (!course) {
+      console.warn(`[resolver] No Sanity course found for ${courseId}`);
+      return null;
+    }
     const allLessons = (course.modules ?? []).flatMap(
       (m: { lessons?: { _id: string }[] }) => m.lessons ?? []
     );
-    return allLessons[lessonIndex]?._id ?? null;
-  } catch {
+    const lessonId = allLessons[lessonIndex]?._id ?? null;
+    if (!lessonId) {
+      console.warn(
+        `[resolver] No lesson at index ${lessonIndex} for course ${courseId} (total: ${allLessons.length})`
+      );
+    }
+    return lessonId;
+  } catch (err) {
+    console.error(
+      `[resolver] resolveLessonId failed for course=${courseId} index=${lessonIndex}:`,
+      err
+    );
     return null;
   }
 }

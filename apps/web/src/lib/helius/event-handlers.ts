@@ -307,18 +307,10 @@ export async function handleCredentialIssued(
   if (!userId) return;
 
   // Certificate should already exist from handleCourseFinalized.
-  // Log for observability only.
-  logError({
-    errorId: ERROR_IDS.CREDENTIAL_ISSUE_FAILED,
-    error: new Error("CredentialIssued event received (informational)"),
-    context: {
-      handler: "handleCredentialIssued",
-      userId,
-      credentialAsset: event.credentialAsset,
-      trackId: event.trackId,
-      level: event.currentLevel,
-    },
-  });
+  // Log for observability only — this is NOT an error.
+  console.info(
+    `[webhook] CredentialIssued: userId=${userId} asset=${event.credentialAsset} track=${event.trackId} level=${event.currentLevel}`
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -375,7 +367,7 @@ export async function handleXpRewarded(
 
   if (error) {
     logError({
-      errorId: ERROR_IDS.LESSON_COMPLETE_FAILED,
+      errorId: ERROR_IDS.XP_REWARD_FAILED,
       error: new Error(error.message),
       context: {
         handler: "handleXpRewarded",

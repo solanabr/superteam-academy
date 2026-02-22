@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import {
   decodeEventsFromTransaction,
@@ -19,20 +20,39 @@ import type {
   LessonCompletedEvent,
   CourseFinalizedEvent,
   CredentialIssuedEvent,
+  CredentialUpgradedEvent,
   AchievementAwardedEvent,
   XpRewardedEvent,
 } from "@/lib/helius/types";
 
 const WEBHOOK_SECRET = process.env.HELIUS_WEBHOOK_SECRET;
+const MAX_BODY_SIZE = 1 * 1024 * 1024; // 1 MB
+
+function verifyBearerToken(header: string | null, secret: string): boolean {
+  if (!header?.startsWith("Bearer ")) return false;
+  const token = header.slice(7);
+  const tokenBuf = Buffer.from(token);
+  const secretBuf = Buffer.from(secret);
+  if (tokenBuf.length !== secretBuf.length) return false;
+  return crypto.timingSafeEqual(tokenBuf, secretBuf);
+}
 
 export async function POST(req: NextRequest) {
-  // 1. Validate auth header
-  const authHeader = req.headers.get("authorization");
-  if (!WEBHOOK_SECRET || authHeader !== `Bearer ${WEBHOOK_SECRET}`) {
+  // 1. Validate auth header (timing-safe comparison)
+  if (
+    !WEBHOOK_SECRET ||
+    !verifyBearerToken(req.headers.get("authorization"), WEBHOOK_SECRET)
+  ) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // 2. Parse body
+  // 2. Enforce body size limit
+  const contentLength = Number(req.headers.get("content-length") ?? 0);
+  if (contentLength > MAX_BODY_SIZE) {
+    return NextResponse.json({ error: "Payload too large" }, { status: 413 });
+  }
+
+  // 3. Parse body
   let transactions: HeliusWebhookPayload;
   try {
     transactions = await req.json();
@@ -44,7 +64,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Expected array" }, { status: 400 });
   }
 
-  // 3. Process each transaction
+  // 4. Process each transaction
   for (const tx of transactions) {
     const { events, signature } = decodeEventsFromTransaction(tx);
 
@@ -77,6 +97,11 @@ export async function POST(req: NextRequest) {
             await handleCredentialIssued(
               data as CredentialIssuedEvent,
               signature
+            );
+            break;
+          case "CredentialUpgraded":
+            console.log(
+              `[webhook] CredentialUpgraded: learner=${(data as CredentialUpgradedEvent).learner} level=${(data as CredentialUpgradedEvent).currentLevel} sig=${signature}`
             );
             break;
           case "AchievementAwarded":
