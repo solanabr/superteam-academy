@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
     const { events, signature } = decodeEventsFromTransaction(tx);
 
     for (const event of events) {
-      const data = normalizeEventData(event.data);
+      const data: unknown = normalizeEventData(event.data);
       try {
         switch (event.name) {
           case "Enrolled":

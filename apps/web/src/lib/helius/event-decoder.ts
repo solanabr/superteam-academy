@@ -18,7 +18,7 @@ export function decodeEventsFromTransaction(tx: HeliusRawTransaction): {
   events: DecodedEvent[];
   signature: string;
 } {
-  const signature = tx.transaction.signatures[0];
+  const signature = tx.transaction.signatures[0] ?? "";
   const logs = tx.meta?.logMessages ?? [];
 
   if (tx.meta?.err) {
