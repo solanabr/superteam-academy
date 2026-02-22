@@ -10,16 +10,14 @@ interface CourseCompletionMintProps {
   courseId: string;
   userId: string;
   totalLessons: number;
-  trackCollection?: string;
 }
 
 type CompletionState =
   | { status: "loading" }
   | { status: "incomplete"; completedCount: number }
-  | { status: "complete"; recipientName: string }
+  | { status: "complete" }
   | { status: "no_wallet" }
-  | { status: "already_minted" }
-  | { status: "minting" };
+  | { status: "already_minted" };
 
 /**
  * Displays course completion status and credential mint state.
@@ -30,7 +28,6 @@ export function CourseCompletionMint({
   courseId,
   userId,
   totalLessons,
-  trackCollection,
 }: CourseCompletionMintProps) {
   const t = useTranslations("certificates");
   const tCommon = useTranslations("common");
@@ -74,24 +71,15 @@ export function CourseCompletionMint({
           return;
         }
 
-        const recipientName =
-          profile.username ??
-          `${profile.wallet_address.slice(0, 4)}...${profile.wallet_address.slice(-4)}`;
-
         // Course is complete — credential will be minted by webhook chain.
-        // Show "minting" state if trackCollection exists (webhook is processing).
-        if (trackCollection) {
-          setState({ status: "minting" });
-        } else {
-          setState({ status: "complete", recipientName });
-        }
+        setState({ status: "complete" });
       } else {
         setState({ status: "incomplete", completedCount });
       }
     }
 
     checkCompletion();
-  }, [courseId, userId, totalLessons, trackCollection]);
+  }, [courseId, userId, totalLessons]);
 
   if (state.status === "loading") {
     return (
@@ -131,18 +119,6 @@ export function CourseCompletionMint({
           <Wallet size={14} weight="duotone" aria-hidden="true" />
           {t("linkWalletToMint")}
         </Link>
-      </div>
-    );
-  }
-
-  if (state.status === "minting") {
-    return (
-      <div className="flex items-center gap-2 text-sm text-text-3">
-        <div
-          className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"
-          aria-hidden="true"
-        />
-        {t("minting")}
       </div>
     );
   }

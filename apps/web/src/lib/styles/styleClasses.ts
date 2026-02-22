@@ -1,5 +1,5 @@
 /**
- * Solarium Design System v5 — Centralized Style Classes
+ * Solarium Design System v9 — Centralized Style Classes
  *
  * All components MUST import styles from this file.
  * Never hardcode colors, typography, or shadows in components.
@@ -31,10 +31,10 @@ export const TRANSITIONS = {
 // ─── BORDER RADIUS ──────────────────────────────────────────────────────────
 
 export const BORDER_RADIUS = {
-  sm: "rounded-sm", // 10px
-  md: "rounded-md", // 14px
-  lg: "rounded-lg", // 18px
-  xl: "rounded-xl", // 24px
+  sm: "rounded-sm", // 8px (--r-sm)
+  md: "rounded-md", // 12px (--r-md)
+  lg: "rounded-lg", // 16px (--r-lg)
+  xl: "rounded-xl", // 22px (--r-xl)
   full: "rounded-full",
 } as const;
 

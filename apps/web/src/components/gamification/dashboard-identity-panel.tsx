@@ -71,9 +71,18 @@ const MONTH_FULL = [
 ];
 
 function ordinal(n: number): string {
-  const s = ["th", "st", "nd", "rd"];
   const v = n % 100;
-  return n + (s[(v - 20) % 10] ?? s[v] ?? s[0]!);
+  if (v >= 11 && v <= 13) return `${n}th`;
+  switch (n % 10) {
+    case 1:
+      return `${n}st`;
+    case 2:
+      return `${n}nd`;
+    case 3:
+      return `${n}rd`;
+    default:
+      return `${n}th`;
+  }
 }
 
 function formatCellTooltip(dateStr: string, count: number): string {
@@ -578,7 +587,7 @@ export function DashboardIdentityPanel({
                 className="legend-sq cday today"
                 style={{ background: "var(--sg-today)" }}
               />
-              <span>Today</span>
+              <span>{tDash("todayLabel")}</span>
             </span>
           </div>
         </div>

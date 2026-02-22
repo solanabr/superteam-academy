@@ -48,6 +48,7 @@ export function buildCloseEnrollmentInstruction(
       { pubkey: coursePDA, isSigner: false, isWritable: false },
       { pubkey: enrollmentPDA, isSigner: false, isWritable: true },
       { pubkey: learner, isSigner: true, isWritable: true },
+      { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
     ],
     programId,
     data,

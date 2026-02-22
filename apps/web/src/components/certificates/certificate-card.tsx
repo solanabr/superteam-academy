@@ -73,7 +73,7 @@ export function CertificateCard({
           <div className={CS.foot}>
             <div className={CS.proofPill}>
               <span className={CS.proofDot} />
-              On-chain
+              {t("onChain")}
             </div>
             <div className={CS.network}>Solana</div>
           </div>
