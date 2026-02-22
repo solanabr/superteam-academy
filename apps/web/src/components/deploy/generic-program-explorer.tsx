@@ -928,7 +928,7 @@ export function GenericProgramExplorer({
                     onClick={() => executeInstruction(ix.name)}
                     disabled={isExecuting || hasUnresolved}
                     size="sm"
-                    className="w-full bg-gradient-to-r from-[#9945FF] to-[#14F195] font-semibold text-white hover:opacity-90"
+                    className="w-full bg-gradient-to-r from-solana-purple to-solana-green font-semibold text-white hover:opacity-90"
                   >
                     {isExecuting
                       ? t("executing") + "..."

@@ -5,9 +5,9 @@ import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
 import { Transaction } from "@solana/web3.js";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import {
   BookOpen,
-  Trophy,
   Lightning,
   Medal,
   Scroll,
@@ -20,14 +20,18 @@ import type { StreakData } from "@superteam-lms/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { LevelBadge } from "@/components/gamification/level-badge";
-import { StreakDisplay } from "@/components/gamification/streak-display";
+import { DashboardIdentityPanel } from "@/components/gamification/dashboard-identity-panel";
 import { ProgressBar } from "@/components/course/progress-bar";
 import { CourseCard } from "@/components/course/course-card";
 import { CourseCompletionMint } from "@/components/certificates/course-completion-mint";
 import { WalletNameGenerator } from "@/components/profile/wallet-name-generator";
 import { createClient } from "@/lib/supabase/client";
 import { buildCloseEnrollmentInstruction } from "@/lib/solana/instructions";
+import {
+  parseProgramError,
+  preflightTransaction,
+} from "@/lib/solana/program-errors";
+import { dispatchToast } from "@/components/ui/toast-container";
 import { getProgressService } from "@/lib/services";
 import { calculateLevel } from "@/lib/gamification/xp";
 import {
@@ -65,6 +69,8 @@ interface DashboardData {
   level: number;
   streak: StreakData;
   achievementsCount: number;
+  /** Full Sanity _ids of achievements unlocked by this user */
+  unlockedAchievementIds: string[];
   currentCourses: CurrentCourse[];
   recommendedCourses: RecommendedCourse[];
   recentActivity: {
@@ -95,6 +101,7 @@ function useDashboardData(): DashboardData {
     level: 0,
     streak: defaultStreak,
     achievementsCount: 0,
+    unlockedAchievementIds: [],
     currentCourses: [],
     recommendedCourses: [],
     recentActivity: [],
@@ -154,19 +161,19 @@ function useDashboardData(): DashboardData {
           .order("created_at", { ascending: false })
           .limit(15);
 
-        // Fetch activity dates for streak heatmap (last 30 days)
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        // Fetch activity dates for streak heatmap (last 270 days)
+        const oneYearAgo = new Date();
+        oneYearAgo.setDate(oneYearAgo.getDate() - 270);
         const { data: activityRows } = await supabase
           .from("xp_transactions")
           .select("created_at")
           .eq("user_id", user.id)
-          .gte("created_at", thirtyDaysAgo.toISOString());
+          .gte("created_at", oneYearAgo.toISOString());
 
-        const streakHistory: Record<string, boolean> = {};
+        const streakHistory: Record<string, number> = {};
         for (const row of activityRows ?? []) {
           const dateStr = row.created_at.split("T")[0] as string;
-          streakHistory[dateStr] = true;
+          streakHistory[dateStr] = (streakHistory[dateStr] ?? 0) + 1;
         }
 
         // Fetch enrollments, progress, certificates, and achievements in parallel
@@ -431,6 +438,9 @@ function useDashboardData(): DashboardData {
           level: calculateLevel(totalXp),
           streak,
           achievementsCount: achievementsCount ?? 0,
+          unlockedAchievementIds: (achievementRows ?? []).map(
+            (r) => r.achievement_id
+          ),
           currentCourses,
           recommendedCourses: recommended,
           recentActivity,
@@ -459,13 +469,14 @@ function useDashboardData(): DashboardData {
 
 export default function DashboardPage() {
   const t = useTranslations("dashboard");
-  const tGamification = useTranslations("gamification");
   const tCourses = useTranslations("courses");
+  const tErrors = useTranslations("programErrors");
   const tTime = useTranslations("timeAgo");
   const locale = useLocale();
   const data = useDashboardData();
   const { connection } = useConnection();
   const { publicKey, sendTransaction } = useWallet();
+  const { setVisible: setWalletModalVisible } = useWalletModal();
   const [courses, setCourses] = useState<CurrentCourse[]>([]);
   const [unenrollingId, setUnenrollingId] = useState<string | null>(null);
   const [showNameReveal, setShowNameReveal] = useState(false);
@@ -515,50 +526,57 @@ export default function DashboardPage() {
 
   const handleUnenroll = useCallback(
     async (courseId: string) => {
-      setUnenrollingId(courseId);
-      const supabase = createClient();
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session?.user) {
-        setUnenrollingId(null);
+      if (!publicKey) {
+        setWalletModalVisible(true);
         return;
       }
 
-      // Attempt to close the on-chain Enrollment PDA (returns SOL rent to learner).
-      // If the wallet is connected and the TX succeeds, sync via API.
-      // If no wallet or TX fails, fall through to direct Supabase delete
-      // (the PDA may not exist if the user enrolled before on-chain was live).
-      if (publicKey && sendTransaction) {
-        try {
-          const ix = buildCloseEnrollmentInstruction(courseId, publicKey);
-          const tx = new Transaction().add(ix);
-          const sig = await sendTransaction(tx, connection);
-          await connection.confirmTransaction(sig, "confirmed");
+      setUnenrollingId(courseId);
 
-          // On-chain TX succeeded — Helius webhook will sync Supabase.
-          // Optimistically update UI.
-          setCourses((prev) => prev.filter((c) => c.courseId !== courseId));
-          setUnenrollingId(null);
-          return;
-        } catch {
-          // On-chain close failed (PDA may not exist) — fall through to Supabase delete
-        }
-      }
+      const withTimeout = <T,>(
+        p: Promise<T>,
+        ms: number,
+        label: string
+      ): Promise<T> =>
+        Promise.race([
+          p,
+          new Promise<never>((_, rej) =>
+            setTimeout(() => rej(new Error(`${label} timed out`)), ms)
+          ),
+        ]);
 
-      // Fallback: remove from Supabase directly (no on-chain PDA, or TX failed)
-      const { error } = await supabase
-        .from("enrollments")
-        .delete()
-        .eq("user_id", session.user.id)
-        .eq("course_id", courseId);
+      try {
+        const ix = buildCloseEnrollmentInstruction(courseId, publicKey);
+        const tx = new Transaction().add(ix);
 
-      if (!error) {
+        // Pre-simulate to catch program errors before wallet popup.
+        // Backpack hangs if simulation fails inside sendTransaction.
+        await preflightTransaction(tx, connection, publicKey);
+
+        const sig = await withTimeout(
+          sendTransaction(tx, connection, { skipPreflight: true }),
+          30_000,
+          "Wallet signing"
+        );
+        await withTimeout(
+          connection.confirmTransaction(sig, "confirmed"),
+          30_000,
+          "Confirmation"
+        );
+
+        // On-chain TX succeeded — Helius webhook will sync Supabase.
+        // Optimistically update UI.
         setCourses((prev) => prev.filter((c) => c.courseId !== courseId));
+        dispatchToast(t("unenrollSuccess"), "success");
+      } catch (err: unknown) {
+        const parsed = parseProgramError(err);
+        const msg = parsed.i18nKey ? tErrors(parsed.i18nKey) : parsed.fallback;
+        dispatchToast(msg, "warning");
+      } finally {
+        setUnenrollingId(null);
       }
-      setUnenrollingId(null);
     },
-    [publicKey, sendTransaction, connection]
+    [publicKey, sendTransaction, connection, setWalletModalVisible, t, tErrors]
   );
 
   const formatTimeAgo = (isoDate: string): string => {
@@ -596,7 +614,7 @@ export default function DashboardPage() {
               aria-hidden="true"
             />
             <div>
-              <h2 className="font-display text-lg font-bold">
+              <h2 className="font-display text-lg font-black">
                 {t("fetchError")}
               </h2>
               <p className="mt-1 text-sm text-text-3">
@@ -614,87 +632,22 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      {/* Welcome */}
-      <div>
-        <h1 className="font-display text-3xl font-bold">{t("title")}</h1>
-        <p className="mt-1 text-text-3">
-          {t("welcome", { name: dashboardUsername })}
-        </p>
-      </div>
+      <h1 className="font-display text-3xl font-black tracking-[-0.5px]">
+        {t("title")}
+      </h1>
 
-      {/* Stats Row: Streak (2 cols) | XP | Achievements */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
-        {/* Streak — spans 2 columns */}
-        <div className="lg:col-span-2">
-          <StreakDisplay streak={data.streak} className="h-full" />
-        </div>
-
-        {/* XP Card */}
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-display text-sm font-bold text-text-3">
-                  {tGamification("xp")}
-                </p>
-                <p className="mt-1 font-display text-5xl font-black text-primary">
-                  {data.xp.toLocaleString()}
-                </p>
-              </div>
-              <LevelBadge level={data.level} size="lg" />
-            </div>
-            {(() => {
-              const currentLevelXp = data.level ** 2 * 100;
-              const nextLevelXp = (data.level + 1) ** 2 * 100;
-              const progressInLevel = data.xp - currentLevelXp;
-              const xpNeededForLevel = nextLevelXp - currentLevelXp;
-              return (
-                <>
-                  <ProgressBar
-                    value={progressInLevel}
-                    max={xpNeededForLevel}
-                    className="mt-3"
-                  />
-                  <p className="mt-1.5 text-xs text-text-3">
-                    {tGamification("xpToNextLevel", {
-                      current: progressInLevel,
-                      needed: xpNeededForLevel,
-                      level: data.level + 1,
-                    })}
-                  </p>
-                </>
-              );
-            })()}
-          </CardContent>
-        </Card>
-
-        {/* Achievements */}
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-2">
-              <Trophy
-                size={20}
-                weight="duotone"
-                className="text-accent"
-                aria-hidden="true"
-              />
-              <p className="text-sm text-text-3">
-                {tGamification("achievements")}
-              </p>
-            </div>
-            <p className="mt-1 font-display text-4xl font-black">
-              {data.achievementsCount}
-            </p>
-            <p className="mt-1 text-xs text-text-3">
-              {tGamification("badges")}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+      {/* V9 Dashboard Identity Panel — Level+XP | Medals | Activity Grid */}
+      <DashboardIdentityPanel
+        xp={data.xp}
+        level={data.level}
+        streak={data.streak}
+        achievementsCount={data.achievementsCount}
+        unlockedAchievementIds={data.unlockedAchievementIds}
+      />
 
       {/* Current Courses */}
       <div className="space-y-4">
-        <h2 className="font-display text-xl font-bold">
+        <h2 className="font-display text-xl font-extrabold">
           {t("currentCourses")}
         </h2>
         {courses.length > 0 ? (
@@ -711,16 +664,12 @@ export default function DashboardPage() {
                   : 0;
 
               return (
-                <Card
-                  key={course.courseId}
-                  className="group relative overflow-hidden"
-                >
-                  {/* Remove button — visible on hover */}
+                <div key={course.courseId} className="cc-card group">
                   {!isComplete && (
                     <button
                       onClick={() => handleUnenroll(course.courseId)}
                       disabled={unenrollingId === course.courseId}
-                      className="absolute right-2 top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full text-danger opacity-0 transition-all hover:scale-110 hover:bg-danger hover:text-white hover:shadow-md disabled:cursor-not-allowed disabled:opacity-100 group-hover:opacity-100"
+                      className="absolute right-3 top-4 z-10 flex h-6 w-6 items-center justify-center rounded-full text-danger opacity-0 transition-all hover:scale-110 hover:bg-danger hover:text-white hover:shadow-md disabled:cursor-not-allowed disabled:opacity-100 group-hover:opacity-100"
                       aria-label={t("removeCourse")}
                     >
                       {unenrollingId === course.courseId ? (
@@ -732,40 +681,34 @@ export default function DashboardPage() {
                   )}
 
                   <Link href={`/${locale}/courses/${course.slug}`}>
-                    <CardContent className="p-4 transition-colors group-hover:bg-subtle">
-                      <div className="flex items-start gap-3">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-bg">
+                    <div className="cc-body">
+                      <div className="cc-head">
+                        <div className="cc-icon">
                           <BookOpen
-                            size={18}
+                            size={20}
                             weight="duotone"
-                            className="text-primary"
                             aria-hidden="true"
                           />
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-semibold">
-                            {course.title}
-                          </p>
-                          <p className="mt-0.5 text-xs text-text-3">
+                        <div className="cc-meta">
+                          <div className="cc-title">{course.title}</div>
+                          <div className="cc-sub">
                             {course.completedLessons}/{course.totalLessons}{" "}
                             {tCourses("lessons")}
-                          </p>
+                          </div>
                         </div>
                       </div>
-                      <div className="mt-3 flex items-center gap-2">
+                      <div className="cc-progress">
                         <ProgressBar
                           value={course.completedLessons}
                           max={course.totalLessons}
                           className="flex-1"
                         />
-                        <span className="text-xs font-medium tabular-nums text-text-3">
-                          {percent}%
-                        </span>
+                        <span className="cc-pct">{percent}%</span>
                       </div>
-                    </CardContent>
+                    </div>
                   </Link>
 
-                  {/* Completed course: blurred mint overlay */}
                   {isComplete && data.userId && (
                     <div className="bg-bg/95 absolute inset-0 z-10 flex flex-col items-center justify-center px-5 backdrop-blur-md">
                       <CourseCompletionMint
@@ -775,7 +718,7 @@ export default function DashboardPage() {
                       />
                     </div>
                   )}
-                </Card>
+                </div>
               );
             })}
           </div>
@@ -790,7 +733,7 @@ export default function DashboardPage() {
             <p className="text-text-3">{t("noCourses")}</p>
             <Link
               href={`/${locale}/courses`}
-              className="hover:bg-primary/90 mt-4 inline-flex items-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+              className="mt-4 inline-flex items-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:[background:var(--primary-hover)]"
             >
               {t("browseCourses")}
             </Link>
@@ -800,135 +743,128 @@ export default function DashboardPage() {
 
       {/* Recent Activity */}
       <div className="space-y-4">
-        <h2 className="font-display text-xl font-bold">
+        <h2 className="font-display text-xl font-extrabold">
           {t("recentActivity")}
         </h2>
-        <Card>
-          <CardContent className="p-0">
-            {data.recentActivity.length > 0 ? (
-              <>
-                <div className="divide-y">
-                  {data.recentActivity
-                    .slice(
-                      activityPage * ACTIVITY_PAGE_SIZE,
-                      (activityPage + 1) * ACTIVITY_PAGE_SIZE
-                    )
-                    .map((activity) => {
-                      const iconConfig = {
-                        lesson: { Icon: Lightning, cls: "text-accent" },
-                        challenge: { Icon: Lightning, cls: "text-accent" },
-                        course_complete: {
-                          Icon: GraduationCap,
-                          cls: "text-primary",
-                        },
-                        achievement: { Icon: Medal, cls: "text-accent" },
-                        certificate: { Icon: Scroll, cls: "text-primary" },
-                        enrollment: { Icon: BookOpen, cls: "text-primary" },
-                        xp_other: { Icon: Lightning, cls: "text-accent" },
-                      }[activity.type] ?? {
-                        Icon: Lightning,
-                        cls: "text-accent",
-                      };
-                      const { Icon: ActivityIcon, cls: iconCls } = iconConfig;
+        {data.recentActivity.length > 0 ? (
+          <div className="act-feed">
+            {data.recentActivity
+              .slice(
+                activityPage * ACTIVITY_PAGE_SIZE,
+                (activityPage + 1) * ACTIVITY_PAGE_SIZE
+              )
+              .map((activity) => {
+                const iconMap = {
+                  lesson: Lightning,
+                  challenge: Lightning,
+                  course_complete: GraduationCap,
+                  achievement: Medal,
+                  certificate: Scroll,
+                  enrollment: BookOpen,
+                  xp_other: Lightning,
+                };
+                const ActivityIcon = iconMap[activity.type] ?? Lightning;
 
-                      const content = (
-                        <div className="flex items-center justify-between px-4 py-3">
-                          <div className="flex min-w-0 items-center gap-3">
-                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-subtle">
-                              <ActivityIcon
-                                size={16}
-                                weight="duotone"
-                                className={iconCls}
-                                aria-hidden="true"
-                              />
-                            </div>
-                            <p className="truncate text-sm font-medium">
-                              {activity.action}
-                            </p>
-                          </div>
-                          <div className="flex shrink-0 items-center gap-3">
-                            {activity.xp > 0 && (
-                              <span className="font-display text-xs font-bold text-accent">
-                                +{activity.xp} XP
-                              </span>
-                            )}
-                            <span className="text-xs text-text-3">
-                              {formatTimeAgo(activity.time)}
-                            </span>
-                            {activity.txSignature && (
-                              <ArrowSquareOut
-                                size={14}
-                                className="shrink-0 text-text-3"
-                                aria-hidden="true"
-                              />
-                            )}
-                          </div>
-                        </div>
-                      );
+                const inner = (
+                  <>
+                    <div className="act-left">
+                      <div className={`act-icon ${activity.type}`}>
+                        <ActivityIcon
+                          size={16}
+                          weight="duotone"
+                          aria-hidden="true"
+                        />
+                      </div>
+                      <span className="act-text">{activity.action}</span>
+                    </div>
+                    <div className="act-right">
+                      {activity.xp > 0 && (
+                        <span className="act-xp">+{activity.xp} XP</span>
+                      )}
+                      <span className="act-time">
+                        {formatTimeAgo(activity.time)}
+                      </span>
+                      {activity.txSignature && (
+                        <ArrowSquareOut
+                          size={14}
+                          className="act-tx"
+                          aria-hidden="true"
+                        />
+                      )}
+                    </div>
+                  </>
+                );
 
-                      if (activity.txSignature) {
-                        return (
-                          <a
-                            key={`${activity.type}-${activity.time}`}
-                            href={explorerTxUrl(activity.txSignature)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="block transition-colors hover:bg-subtle"
-                          >
-                            {content}
-                          </a>
-                        );
-                      }
-                      return (
-                        <div key={`${activity.type}-${activity.time}`}>
-                          {content}
-                        </div>
-                      );
-                    })}
-                </div>
-                {data.recentActivity.length > ACTIVITY_PAGE_SIZE && (
-                  <div className="flex items-center justify-end gap-1 border-t px-4 py-3">
-                    {Array.from(
-                      {
-                        length: Math.ceil(
-                          data.recentActivity.length / ACTIVITY_PAGE_SIZE
-                        ),
-                      },
-                      (_, i) => (
-                        <button
-                          key={i}
-                          onClick={() => setActivityPage(i)}
-                          aria-current={activityPage === i ? "page" : undefined}
-                          className={`flex h-7 w-7 items-center justify-center rounded text-sm font-medium transition-colors ${
-                            activityPage === i
-                              ? "bg-primary text-primary-foreground"
-                              : "text-text-3 hover:bg-subtle"
-                          }`}
-                        >
-                          {i + 1}
-                        </button>
-                      )
-                    )}
+                return activity.txSignature ? (
+                  <a
+                    key={`${activity.type}-${activity.time}`}
+                    href={explorerTxUrl(activity.txSignature)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="act-row"
+                  >
+                    {inner}
+                  </a>
+                ) : (
+                  <div
+                    key={`${activity.type}-${activity.time}`}
+                    className="act-row"
+                  >
+                    {inner}
                   </div>
+                );
+              })}
+            {data.recentActivity.length > ACTIVITY_PAGE_SIZE && (
+              <div className="act-pager">
+                {Array.from(
+                  {
+                    length: Math.ceil(
+                      data.recentActivity.length / ACTIVITY_PAGE_SIZE
+                    ),
+                  },
+                  (_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setActivityPage(i)}
+                      aria-current={activityPage === i ? "page" : undefined}
+                      aria-label={`Page ${i + 1}`}
+                      className="act-dot"
+                    />
+                  )
                 )}
-              </>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-8">
-                <p className="text-sm text-text-3">{t("noRecentActivity")}</p>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        ) : (
+          <div className="act-feed">
+            <div className="flex flex-col items-center justify-center py-8">
+              <p className="text-sm text-text-3">{t("noRecentActivity")}</p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Section divider */}
+      <div className="flex items-center justify-center gap-3 py-2">
+        <div className="h-px flex-1 bg-[var(--border)]" />
+        <div className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--card)]">
+          <Lightning
+            size={14}
+            weight="fill"
+            className="text-[var(--primary)]"
+          />
+        </div>
+        <div className="h-px flex-1 bg-[var(--border)]" />
       </div>
 
       {/* Recommended Courses */}
       <div className="space-y-4">
-        <h2 className="font-display text-xl font-bold">
+        <h2 className="font-display text-[24px] font-extrabold">
           {t("recommendedCourses")}
         </h2>
         {data.recommendedCourses.length > 0 ? (
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {data.recommendedCourses.map((course) => (
+            {data.recommendedCourses.map((course, idx) => (
               <CourseCard
                 key={course._id}
                 slug={course.slug}
@@ -938,13 +874,15 @@ export default function DashboardPage() {
                   course.difficulty as "beginner" | "intermediate" | "advanced"
                 }
                 duration={course.duration}
+                lessonCount={course.totalLessons}
                 xpReward={course.xpReward}
                 instructorName={course.instructor?.name ?? ""}
+                courseNum={idx + 1}
               />
             ))}
           </div>
         ) : (
-          <Card>
+          <Card className="dash-card">
             <CardContent className="flex flex-col items-center justify-center py-8">
               <p className="text-sm text-text-3">{t("noCourses")}</p>
             </CardContent>

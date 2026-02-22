@@ -1,8 +1,16 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { Check, Copy } from "@phosphor-icons/react";
+import {
+  Certificate,
+  Check,
+  Copy,
+  GearSix,
+  SignOut,
+  UserCircle,
+} from "@phosphor-icons/react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -105,7 +113,36 @@ export function UserMenu({
           </div>
         </div>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleSignOut}>
+        <DropdownMenuItem asChild>
+          <Link href={`/${locale}/profile`} className="flex items-center gap-2">
+            <UserCircle size={14} weight="bold" />
+            {tCommon("profile")}
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link
+            href={`/${locale}/certificates`}
+            className="flex items-center gap-2"
+          >
+            <Certificate size={14} weight="bold" />
+            {tCommon("certificates")}
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link
+            href={`/${locale}/settings`}
+            className="flex items-center gap-2"
+          >
+            <GearSix size={14} weight="bold" />
+            {tCommon("settings")}
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={handleSignOut}
+          className="flex items-center gap-2"
+        >
+          <SignOut size={14} weight="bold" />
           {tCommon("signOut")}
         </DropdownMenuItem>
       </DropdownMenuContent>

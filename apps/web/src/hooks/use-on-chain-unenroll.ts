@@ -4,7 +4,7 @@ import { useState, useCallback } from "react";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { Transaction } from "@solana/web3.js";
-import { buildEnrollInstruction } from "@/lib/solana/instructions";
+import { buildCloseEnrollmentInstruction } from "@/lib/solana/instructions";
 import { trackEvent } from "@/lib/analytics";
 import {
   parseProgramError,
@@ -30,47 +30,47 @@ function withTimeout<T>(
   ]);
 }
 
-interface UseOnChainEnrollOptions {
+interface UseOnChainUnenrollOptions {
   courseId: string;
   userId: string | null;
   onSuccess?: () => void;
   onError?: (message: string) => void;
 }
 
-interface UseOnChainEnrollResult {
-  isEnrolling: boolean;
-  handleEnroll: () => Promise<void>;
-  enrollError: string | null;
+interface UseOnChainUnenrollResult {
+  isUnenrolling: boolean;
+  handleUnenroll: () => Promise<void>;
+  unenrollError: string | null;
 }
 
-export function useOnChainEnroll({
+export function useOnChainUnenroll({
   courseId,
   userId,
   onSuccess,
   onError,
-}: UseOnChainEnrollOptions): UseOnChainEnrollResult {
+}: UseOnChainUnenrollOptions): UseOnChainUnenrollResult {
   const { connection } = useConnection();
   const { publicKey, sendTransaction } = useWallet();
   const { setVisible: setWalletModalVisible } = useWalletModal();
-  const [isEnrolling, setIsEnrolling] = useState(false);
-  const [enrollError, setEnrollError] = useState<string | null>(null);
+  const [isUnenrolling, setIsUnenrolling] = useState(false);
+  const [unenrollError, setUnenrollError] = useState<string | null>(null);
 
-  const handleEnroll = useCallback(async () => {
-    if (isEnrolling || !userId) return;
+  const handleUnenroll = useCallback(async () => {
+    if (isUnenrolling || !userId) return;
 
     if (!publicKey) {
       setWalletModalVisible(true);
       return;
     }
 
-    setEnrollError(null);
-    setIsEnrolling(true);
+    setUnenrollError(null);
+    setIsUnenrolling(true);
 
     try {
       let onChainSignature: string;
 
       try {
-        const ix = buildEnrollInstruction(courseId, publicKey);
+        const ix = buildCloseEnrollmentInstruction(courseId, publicKey);
         const tx = new Transaction().add(ix);
         await preflightTransaction(tx, connection, publicKey);
         onChainSignature = await withTimeout(
@@ -83,24 +83,42 @@ export function useOnChainEnroll({
           TX_TIMEOUT_MS,
           "Transaction confirmation"
         );
-        trackEvent("enrollment_onchain", {
+        trackEvent("unenrollment_onchain", {
           courseId,
           signature: onChainSignature,
         });
       } catch (err: unknown) {
         const parsed = parseProgramError(err);
         const msg = parsed.fallback;
-        setEnrollError(msg);
+        setUnenrollError(msg);
         dispatchToast(msg, "warning");
         onError?.(msg);
         return;
       }
 
-      // On-chain TX succeeded — Helius webhook will sync to Supabase.
-      dispatchToast("Enrolled successfully!", "success");
-      onSuccess?.();
+      // On-chain TX succeeded — sync to Supabase via API
+      const res = await fetch("/api/enrollment/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          courseId,
+          txSignature: onChainSignature,
+          action: "close",
+        }),
+      });
+
+      if (res.ok) {
+        onSuccess?.();
+        return;
+      }
+
+      const msg =
+        "Unenrollment confirmed on-chain but sync failed. Please refresh the page.";
+      setUnenrollError(msg);
+      dispatchToast(msg, "warning");
+      onError?.(msg);
     } finally {
-      setIsEnrolling(false);
+      setIsUnenrolling(false);
     }
   }, [
     userId,
@@ -111,8 +129,8 @@ export function useOnChainEnroll({
     onSuccess,
     onError,
     setWalletModalVisible,
-    isEnrolling,
+    isUnenrolling,
   ]);
 
-  return { isEnrolling, handleEnroll, enrollError };
+  return { isUnenrolling, handleUnenroll, unenrollError };
 }

@@ -42,7 +42,7 @@ export function updateStreak(streak: StreakData): StreakData {
     lastActivityDate: today,
     streakHistory: {
       ...streak.streakHistory,
-      [today]: true,
+      [today]: (streak.streakHistory[today] ?? 0) + 1,
     },
   };
 }
@@ -67,7 +67,7 @@ export function getNextMilestone(
 }
 
 export function generateStreakCalendar(
-  streakHistory: Record<string, boolean>,
+  streakHistory: Record<string, number>,
   days: number = 30
 ): { date: string; active: boolean }[] {
   const calendar: { date: string; active: boolean }[] = [];
@@ -79,7 +79,7 @@ export function generateStreakCalendar(
     const dateStr = toDateString(date);
     calendar.push({
       date: dateStr,
-      active: streakHistory[dateStr] === true,
+      active: (streakHistory[dateStr] ?? 0) > 0,
     });
   }
 
@@ -87,7 +87,7 @@ export function generateStreakCalendar(
 }
 
 export function generateWeekCalendar(
-  streakHistory: Record<string, boolean>
+  streakHistory: Record<string, number>
 ): { date: string; active: boolean }[] {
   const today = new Date();
   const dayOfWeek = today.getDay(); // 0 = Sunday
@@ -101,7 +101,7 @@ export function generateWeekCalendar(
     const dateStr = toDateString(date);
     calendar.push({
       date: dateStr,
-      active: streakHistory[dateStr] === true,
+      active: (streakHistory[dateStr] ?? 0) > 0,
     });
   }
 

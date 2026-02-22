@@ -22,6 +22,9 @@
     "signUp": "Sign Up",
     "signIn": "Sign In",
     "signOut": "Sign Out",
+    "settings": "Settings",
+    "profile": "Profile",
+    "certificates": "Certificates",
     "courses": "courses"
   },
   "nav": {
@@ -158,10 +161,19 @@
     "recentActivity": "Activity",
     "recommendedCourses": "Recommended For You",
     "removeCourse": "Remove course",
+    "unenrollSuccess": "Successfully unenrolled from course",
+    "unenrollSyncFailed": "Unenrollment confirmed on-chain but sync failed. Please refresh.",
+    "unenrollCooldown": "You must wait 24 hours after enrolling before you can unenroll.",
     "retryLoad": "Refresh page",
     "startLearning": "Start Learning",
     "title": "Dashboard",
-    "welcome": "Welcome back, {name}!"
+    "current": "Current",
+    "bestStreak": "Best",
+    "less": "Less",
+    "more": "More",
+    "dailyQuests": "Daily Quests",
+    "resetsIn": "Resets in {hours}h",
+    "allQuestsBonus": "Complete all for bonus"
   },
   "gamification": {
     "xp": "XP",
@@ -169,6 +181,9 @@
     "streak": "Streak",
     "streakDays": "{count} day streak",
     "achievements": "Achievements",
+    "yourAchievements": "Your Achievements",
+    "ofUnlocked": "{count} of {total} unlocked",
+    "experiencePoints": "Experience Points",
     "badges": "Badges",
     "leaderboard": "Leaderboard",
     "rank": "Rank",
@@ -199,7 +214,9 @@
     "tier_seed": "Seed",
     "tier_sprout": "Sprout",
     "tier_sapling": "Sapling",
-    "tier_canopy": "Canopy"
+    "tier_canopy": "Canopy",
+    "viewOnExplorer": "View on Explorer",
+    "onChain": "on-chain"
   },
   "certificates": {
     "title": "Certificate of Completion",
@@ -471,5 +488,22 @@
       "interact": "Interact",
       "yourProgram": "Your Deployed Program"
     }
+  },
+  "programErrors": {
+    "unauthorized": "Unauthorized signer.",
+    "courseNotActive": "This course is not currently active.",
+    "lessonOutOfBounds": "Lesson index out of bounds.",
+    "lessonAlreadyCompleted": "You have already completed this lesson.",
+    "courseNotCompleted": "You must complete all lessons before claiming the certificate.",
+    "courseAlreadyFinalized": "This course has already been finalized.",
+    "courseNotFinalized": "This course has not been finalized yet.",
+    "prerequisiteNotMet": "You must complete the prerequisite course first.",
+    "unenrollCooldown": "You must wait 24 hours after enrolling before you can unenroll.",
+    "enrollmentCourseMismatch": "Enrollment does not match this course.",
+    "overflow": "Arithmetic overflow. Please try again.",
+    "credentialAlreadyIssued": "A certificate has already been issued for this enrollment.",
+    "achievementNotActive": "This achievement is not currently active.",
+    "achievementSupplyExhausted": "This achievement has reached its maximum supply.",
+    "unknown": "Transaction failed. Please try again."
   }
 }

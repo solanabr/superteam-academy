@@ -7,6 +7,7 @@ import { LevelUpOverlay } from "@/components/gamification/level-up-overlay";
 import { AchievementPopup } from "@/components/gamification/achievement-popup";
 import { CertificatePopup } from "@/components/gamification/certificate-popup";
 import { useGamificationEvents } from "@/hooks/use-gamification-events";
+import { ToastContainer } from "@/components/ui/toast-container";
 
 export function GamificationOverlays() {
   const [userId, setUserId] = useState<string | undefined>();
@@ -30,17 +31,21 @@ export function GamificationOverlays() {
   // Subscribe to Supabase Realtime for gamification popups
   useGamificationEvents(userId);
 
-  if (!userId) return null;
-
   return (
     <>
-      <XpPopup />
-      <LevelUpOverlay />
-      {/* Celebration popups — stacked in bottom-left above XpPopup */}
-      <div className="pointer-events-none fixed bottom-28 left-6 z-50 flex flex-col gap-2">
-        <AchievementPopup className="pointer-events-auto" />
-        <CertificatePopup className="pointer-events-auto" />
-      </div>
+      {/* Toast container always renders — works for auth and non-auth contexts */}
+      <ToastContainer />
+      {!userId ? null : (
+        <>
+          <XpPopup />
+          <LevelUpOverlay />
+          {/* Celebration popups — stacked in bottom-left above XpPopup */}
+          <div className="pointer-events-none fixed bottom-28 left-6 z-50 flex flex-col gap-2">
+            <AchievementPopup className="pointer-events-auto" />
+            <CertificatePopup className="pointer-events-auto" />
+          </div>
+        </>
+      )}
     </>
   );
 }

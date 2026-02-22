@@ -74,7 +74,9 @@ export default function CertificatesPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="font-display text-3xl font-bold">{t("pageTitle")}</h1>
+        <h1 className="font-display text-3xl font-black tracking-[-0.5px]">
+          {t("pageTitle")}
+        </h1>
         <p className="mt-2 text-text-3">{t("pageSubtitle")}</p>
       </div>
 

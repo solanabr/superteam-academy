@@ -126,7 +126,7 @@ export function CourseCompletionMint({
         <span className="text-sm font-medium">{t("courseComplete")}</span>
         <Link
           href={`/${locale}/settings`}
-          className="hover:bg-primary/90 inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white transition-colors"
+          className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 font-display text-xs font-bold text-white shadow-[0_2px_0_0_var(--primary-dark)] transition-all hover:bg-primary-hover active:translate-y-px active:shadow-none"
         >
           <Wallet size={14} weight="duotone" aria-hidden="true" />
           {t("linkWalletToMint")}

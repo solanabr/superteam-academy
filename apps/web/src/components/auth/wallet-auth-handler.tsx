@@ -153,7 +153,7 @@ export function WalletAuthHandler() {
 
   return (
     <div
-      className="bg-bg/80 fixed inset-0 z-[100] flex items-center justify-center backdrop-blur-sm"
+      className="fixed inset-0 z-[100] flex items-center justify-center backdrop-blur-sm [background:color-mix(in_srgb,var(--bg)_80%,transparent)]"
       role="status"
       aria-live="polite"
     >

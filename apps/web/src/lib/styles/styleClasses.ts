@@ -103,11 +103,11 @@ export const TYPOGRAPHY = {
 // ─── BUTTONS — 3D Push Style ────────────────────────────────────────────────
 //
 // All buttons have a visible bottom shadow that compresses on active.
-// Push depth: 4px idle → 1px active + translateY(3px).
+// v9 spec: transition 0.12s ease, active:translateY(2px).
 //
 
 const BUTTON_BASE =
-  "inline-flex items-center justify-center gap-2 font-display font-extrabold border-none cursor-pointer transition-all duration-100 active:translate-y-[3px] disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
+  "inline-flex items-center justify-center gap-2 font-display font-extrabold border-none cursor-pointer transition-all duration-[120ms] ease-out active:translate-y-[2px] disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 
 export const BUTTON_STYLES = {
   base: BUTTON_BASE,
@@ -212,8 +212,8 @@ export const PROGRESS_STYLES = {
 // ─── GAMIFICATION ───────────────────────────────────────────────────────────
 
 export const GAMIFICATION_STYLES = {
-  /** XP value — large teal number */
-  xpValue: "font-display font-black text-[44px] leading-none text-primary",
+  /** XP value — large amber number (v9: --xp warm amber, not primary emerald) */
+  xpValue: "font-display font-black text-[44px] leading-none text-xp",
   /** XP label above value */
   xpLabel: "font-display font-bold text-[13px] text-text-3",
   /** Level circle */
@@ -237,7 +237,7 @@ export const GAMIFICATION_STYLES = {
     "w-10 h-10 rounded-full border-[2.5px] border-primary-dark flex items-center justify-center font-display font-extrabold text-[13px] text-white bg-primary shadow-push animate-pulse-ring",
   /** Achievement badge — earned (amber glow) */
   achievementEarned:
-    "w-[68px] h-[68px] rounded-full border-[3px] border-accent flex items-center justify-center font-display font-black text-sm uppercase text-accent-dark bg-gradient-to-br from-accent-light to-[#FDE68A] shadow-push transition-transform duration-200 hover:scale-[1.08]",
+    "w-[68px] h-[68px] rounded-full border-[3px] border-accent flex items-center justify-center font-display font-black text-sm uppercase text-accent-dark bg-gradient-to-br from-accent-light to-gold-hi shadow-push transition-transform duration-200 hover:scale-[1.08]",
   /** Achievement badge — locked (muted) */
   achievementLocked:
     "w-[68px] h-[68px] rounded-full border-[3px] border-border flex items-center justify-center font-display font-black text-sm uppercase text-text-3 bg-subtle opacity-40",
@@ -246,17 +246,17 @@ export const GAMIFICATION_STYLES = {
   /** Leaderboard row — base */
   leaderboardRow:
     "flex items-center gap-3.5 px-[18px] py-3.5 bg-card border-[2.5px] border-border rounded-md shadow-card transition-all duration-150 hover:-translate-y-0.5 hover:shadow-card-hover",
-  /** Leaderboard row — #1 (amber) */
+  /** Leaderboard row — #1 (XP amber) — v9: border-xp, bg-xp-dim */
   leaderboardFirst:
-    "flex items-center gap-3.5 px-[18px] py-3.5 bg-accent-bg border-[2.5px] border-accent rounded-md shadow-card transition-all duration-150 hover:-translate-y-0.5 hover:shadow-card-hover",
+    "flex items-center gap-3.5 px-[18px] py-3.5 bg-xp-dim border-[2.5px] border-xp rounded-md shadow-card transition-all duration-150 hover:-translate-y-0.5 hover:shadow-card-hover",
   /** Leaderboard row — current user (teal) */
   leaderboardMe:
     "flex items-center gap-3.5 px-[18px] py-3.5 bg-primary-bg border-[2.5px] border-primary rounded-md shadow-card transition-all duration-150 hover:-translate-y-0.5 hover:shadow-card-hover",
-  /** Rank number */
-  leaderboardRank: "font-display font-black text-lg w-7 text-text-3",
-  /** XP display in leaderboard */
-  leaderboardXp:
-    "font-display font-black text-base text-accent-dark dark:text-accent",
+  /** Rank number — v9: font-d (Nunito 900) for rank numbers, tabular-nums */
+  leaderboardRank:
+    "font-display font-black text-base w-7 text-text-3 tabular-nums",
+  /** XP display in leaderboard — v9: var(--xp) warm amber */
+  leaderboardXp: "font-display font-black text-base text-xp",
   /** Avatar circle */
   avatar:
     "w-10 h-10 rounded-full flex items-center justify-center font-display font-extrabold text-sm text-white",
@@ -275,7 +275,7 @@ export const LEVEL_STYLES = {
     "w-14 h-14 rounded-full border-[3px] border-accent bg-accent-light flex items-center justify-center font-display font-black text-[22px] text-accent-dark shadow-[0_0_14px_rgba(245,158,11,0.2)]",
   /** Canopy (Level 20) — gold gradient + glow */
   canopy:
-    "w-14 h-14 rounded-full border-[3px] border-accent-dark bg-gradient-to-br from-[#FDE68A] to-accent flex items-center justify-center font-display font-black text-[22px] text-[#78350F] shadow-[0_0_20px_rgba(245,158,11,0.3)]",
+    "w-14 h-14 rounded-full border-[3px] border-accent-dark bg-gradient-to-br from-gold-hi to-accent flex items-center justify-center font-display font-black text-[22px] text-gold-ink shadow-[0_0_20px_rgba(245,158,11,0.3)]",
   /** Level name label */
   name: "font-display font-bold text-xs text-text-3",
 } as const;
@@ -287,17 +287,20 @@ const PILL_BASE =
 
 export const DIFFICULTY_STYLES = {
   base: PILL_BASE,
+  /** pill-beg — emerald teal */
   beginner: cx(
     PILL_BASE,
     "bg-primary-bg border-primary text-primary-dark dark:text-primary"
   ),
+  /** pill-int — warm amber (v9: XP color for intermediate) */
   intermediate: cx(
     PILL_BASE,
-    "bg-secondary-bg border-secondary-light text-secondary dark:text-secondary-light"
+    "bg-xp-dim [border-color:var(--accent-border)] text-xp-dark dark:text-xp"
   ),
+  /** pill-adv — streak orange */
   advanced: cx(
     PILL_BASE,
-    "bg-streak-light border-streak text-[#9A3412] dark:text-streak"
+    "bg-streak-light border-streak text-streak dark:[background:var(--streak-dim)]"
   ),
 } as const;
 
@@ -315,41 +318,51 @@ export const BANNER_STYLES = {
     "absolute top-3 left-3 px-3.5 py-1 rounded-full font-display font-extrabold text-[11px] border-2",
   /** Badge — beginner */
   badgeBeginner:
-    "absolute top-3 left-3 px-3.5 py-1 rounded-full font-display font-extrabold text-[11px] border-2 bg-card/90 text-primary border-primary/20",
+    "absolute top-3 left-3 px-3.5 py-1 rounded-full font-display font-extrabold text-[11px] border-2 bg-card text-primary [border-color:rgba(46,204,142,0.20)]",
   /** Badge — intermediate */
   badgeIntermediate:
-    "absolute top-3 left-3 px-3.5 py-1 rounded-full font-display font-extrabold text-[11px] border-2 bg-card/90 text-secondary border-secondary/20",
+    "absolute top-3 left-3 px-3.5 py-1 rounded-full font-display font-extrabold text-[11px] border-2 bg-card text-secondary [border-color:rgba(46,204,142,0.20)]",
   /** Badge — advanced */
   badgeAdvanced:
-    "absolute top-3 left-3 px-3.5 py-1 rounded-full font-display font-extrabold text-[11px] border-2 bg-card/90 text-streak border-streak/20",
+    "absolute top-3 left-3 px-3.5 py-1 rounded-full font-display font-extrabold text-[11px] border-2 bg-card text-streak [border-color:rgba(249,115,22,0.20)]",
 } as const;
 
 // ─── FORM ELEMENTS ──────────────────────────────────────────────────────────
 
+/**
+ * v9 form element styles.
+ * Background: var(--input) (slightly darker than card in both modes).
+ * Border: 1px solid var(--border-default) at rest.
+ * Focus: border-color: var(--primary), box-shadow: 0 0 0 3px var(--primary-dim).
+ * Font: var(--font-b) / font-body.
+ */
 export const FORM_STYLES = {
   /** Form group wrapper */
   group: "mb-4",
   /** Label — Nunito bold */
   label: "font-display font-bold text-[13px] text-text-2 mb-1.5 block",
-  /** Input field */
+  /**
+   * Input field — v9 spec:
+   * bg: var(--input), border: 1px var(--border-default), r-sm, font-body.
+   */
   input:
-    "w-full px-4 py-3 bg-card border-[2.5px] border-border rounded-md font-body text-[15px] text-text transition-all duration-150 outline-none placeholder:text-text-3 focus:border-primary focus:shadow-[0_0_0_3px_var(--primary-bg)]",
+    "w-full px-4 py-3 [background:var(--input)] border border-border rounded-md font-body text-[15px] text-text transition-all duration-150 outline-none placeholder:text-text-3 focus:border-primary focus:shadow-[0_0_0_3px_var(--primary-dim)]",
   /** Select dropdown */
   select:
-    "w-full px-4 py-3 bg-card border-[2.5px] border-border rounded-md font-body text-[15px] text-text transition-all duration-150 outline-none cursor-pointer appearance-none focus:border-primary focus:shadow-[0_0_0_3px_var(--primary-bg)]",
+    "w-full px-4 py-3 [background:var(--input)] border border-border rounded-md font-body text-[15px] text-text transition-all duration-150 outline-none cursor-pointer appearance-none focus:border-primary focus:shadow-[0_0_0_3px_var(--primary-dim)]",
   /** Helper text below input */
   helper: "text-xs text-text-3 mt-1",
   /** Error text below input */
   error: "text-xs text-danger font-semibold mt-1",
   /** Textarea */
   textarea:
-    "w-full px-4 py-3 bg-card border-[2.5px] border-border rounded-md font-body text-[15px] text-text transition-all duration-150 outline-none resize-y min-h-[100px] placeholder:text-text-3 focus:border-primary focus:shadow-[0_0_0_3px_var(--primary-bg)]",
+    "w-full px-4 py-3 [background:var(--input)] border border-border rounded-md font-body text-[15px] text-text transition-all duration-150 outline-none resize-y min-h-[100px] placeholder:text-text-3 focus:border-primary focus:shadow-[0_0_0_3px_var(--primary-dim)]",
 } as const;
 
 // ─── TOAST / NOTIFICATIONS ──────────────────────────────────────────────────
 
 const TOAST_BASE =
-  "flex items-center gap-2.5 px-5 py-3.5 rounded-md border-[2.5px] font-body text-sm font-semibold";
+  "flex items-center gap-2 px-3.5 py-2.5 rounded-md border-[2px] font-body text-xs font-semibold";
 
 export const TOAST_STYLES = {
   base: TOAST_BASE,
@@ -371,11 +384,11 @@ export const TOAST_STYLES = {
 // ─── MODAL ──────────────────────────────────────────────────────────────────
 
 export const MODAL_STYLES = {
-  /** Overlay backdrop */
-  overlay: "fixed inset-0 bg-black/50 z-50",
-  /** Modal container */
+  /** Overlay backdrop — v9: rgba(0,0,0,0.7) */
+  overlay: "fixed inset-0 bg-black/70 z-50",
+  /** Modal container — v9: card bg, strong border, xl radius */
   container:
-    "bg-card border-[2.5px] border-border rounded-xl shadow-[0_24px_48px_rgba(0,0,0,0.12)] overflow-hidden max-w-[500px] w-full",
+    "bg-card border-[2.5px] border-border-strong rounded-xl shadow-[0_24px_48px_rgba(0,0,0,0.35)] overflow-hidden max-w-[500px] w-full",
   /** Modal header */
   header: "px-7 pt-6 pb-4 border-b border-border",
   /** Modal title */
@@ -391,18 +404,33 @@ export const MODAL_STYLES = {
 // ─── CHIPS / BADGES ─────────────────────────────────────────────────────────
 
 export const CHIP_STYLES = {
-  /** Base chip */
-  base: "inline-flex items-center gap-1 px-3 py-1 rounded-full font-display font-bold text-[11px] uppercase tracking-wide border-2",
-  /** Primary teal chip */
-  primary: "bg-primary-bg border-primary text-primary",
-  /** Accent amber chip */
-  accent: "bg-accent-bg border-accent text-accent-dark dark:text-accent",
-  /** Success chip */
-  success: "bg-success-bg border-success text-success-dark dark:text-success",
+  /**
+   * Base chip — v9 pill spec.
+   * font-family: var(--font-d), font-weight: 700, font-size: 11px,
+   * text-transform: uppercase, letter-spacing: 0.4px, border: 1px solid.
+   */
+  base: "inline-flex items-center gap-1 px-3 py-1 rounded-full font-display font-bold text-[11px] uppercase tracking-wide border",
+  /** pill-primary — emerald teal */
+  primary: "bg-primary-bg [border-color:rgba(46,204,142,0.22)] text-primary",
+  /** pill-xp — warm amber for XP rewards */
+  xp: "bg-xp-dim [border-color:rgba(245,166,35,0.22)] text-xp",
+  /** pill-streak — flame orange */
+  streak: "bg-streak-light [border-color:rgba(249,115,22,0.22)] text-streak",
+  /** pill-level — purple */
+  level:
+    "[background:var(--level-dim)] border-[rgba(167,139,250,0.22)] text-[var(--level)]",
+  /** pill-sol — Solana purple/teal (NFT/on-chain only) */
+  sol: "bg-[rgba(153,69,255,0.08)] border-[rgba(153,69,255,0.20)] text-[#C4B5FD]",
+  /** pill-done — success green */
+  success:
+    "bg-success-bg [border-color:rgba(63,185,80,0.22)] text-success-dark dark:text-success",
   /** Muted chip */
   muted: "bg-subtle border-border text-text-3",
   /** You tag in leaderboard */
   you: "text-[11px] text-primary font-extrabold",
+  /** Accent amber chip (legacy alias → prefer xp) */
+  accent:
+    "bg-xp-dim [border-color:rgba(245,166,35,0.22)] text-xp-dark dark:text-xp",
 } as const;
 
 // ─── XP POPUP CELEBRATIONS ──────────────────────────────────────────────────
@@ -460,10 +488,11 @@ export const LAYOUT_STYLES = {
   grid2: "grid grid-cols-1 md:grid-cols-2 gap-3.5",
   /** Flex row with gap */
   row: "flex items-center gap-3",
-  /** Sidebar layout */
-  sidebar: "bg-card border-r-[2.5px] border-border min-h-screen",
+  /** Sidebar layout — v9: surface bg, 1px border, sticky full-height */
+  sidebar:
+    "bg-[var(--surface)] border-r border-border sticky top-0 h-screen overflow-y-auto",
   /** Header bar */
-  header: "bg-card border-b-[2.5px] border-border",
+  header: "bg-[var(--surface)] border-b border-border",
   /** Footer */
   footer: "bg-card border-t-[2.5px] border-border",
   /** Divider line */
@@ -476,8 +505,8 @@ export const INTERACTIVE_STATES = {
   /** Hover lift for cards */
   hoverLift:
     "hover:-translate-y-0.5 hover:shadow-card-hover hover:border-border-hover",
-  /** Push down on click */
-  pushDown: "active:translate-y-[3px] active:shadow-push-active",
+  /** Push down on click — v9: 2px */
+  pushDown: "active:translate-y-[2px] active:shadow-push-active",
   /** Focus ring for keyboard nav */
   focusRing:
     "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
@@ -489,74 +518,84 @@ export const INTERACTIVE_STATES = {
 //
 // Certificates are the ONLY place in the design system where the Solana
 // gradient border (purple #9945FF → teal #14F195) appears.
-// Three variants: compact (profile), full (my certificates), verify (public).
+// v9 spec: cert-wrap → cert-inner → cert-body → eyebrow, course, subtitle,
+// divider, meta-row, footer with proof-pill + network label.
+// CSS classes (.cert-wrap, .cert-inner, etc.) live in globals.css.
 
 export const CERTIFICATE_STYLES = {
   /** Solana gradient background — ONLY certificates */
   gradient: "bg-cert-gradient",
 
-  // ── Shared: gradient outer / inner shell ──
-  /** Gradient border wrapper (2.5px via padding trick) */
-  outer:
-    "relative rounded-lg p-[2.5px] bg-cert-gradient shadow-cert transition-all duration-150",
-  /** Interactive outer — lifts on hover */
-  outerClickable:
-    "cursor-pointer hover:-translate-y-0.5 hover:shadow-cert-hover",
-  /** Static outer — verification page (no lift) */
-  outerStatic: "cursor-default shadow-cert-lg",
-  /** White/dark inner card */
-  inner: "bg-card rounded-[calc(var(--r-lg)-2.5px)]",
+  // ── v9 cert-wrap / cert-inner structure (uses CSS classes) ──
+  /** Outer wrapper — Solana gradient border (2px padding trick) */
+  wrap: "cert-wrap",
+  /** Inner card — bg-card, dot grid texture via ::after pseudo */
+  inner: "cert-inner",
+  /** Content body — relative z-1, sits above pseudo-elements */
+  body: "cert-body",
 
-  // ── 1. Compact — profile grid (tight, thumbnail-sized) ──
+  /** Eyebrow — mono 10px uppercase, primary color, gradient fade line */
+  eyebrow: "cert-eyebrow",
+  /** Course title — display 24px 900 */
+  course: "cert-course",
+  /** Subtitle — display 13px 600, text-3, uppercase */
+  subtitle: "cert-subtitle",
+  /** Divider — 1px gradient line */
+  divider: "cert-divider",
+  /** Meta row — 3-column flex */
+  metaRow: "cert-meta-row",
+  /** Meta item wrapper */
+  metaItem: "cert-meta-item",
+  /** Meta key label — mono 10px uppercase */
+  metaKey: "cert-meta-key",
+  /** Meta value — display 14px 800 */
+  metaVal: "cert-meta-val",
+  /** Meta value highlighted (XP) */
+  metaValHighlight: "cert-meta-val highlight",
+  /** Footer — flex between, border-top */
+  foot: "cert-foot",
+  /** Network label in footer */
+  network: "cert-network",
+
+  /** Proof pill — on-chain verification badge */
+  proofPill: "proof-pill",
+  /** Green blinking dot inside proof pill */
+  proofDot: "proof-dot",
+
+  // ── Gradient border card (inline use) ──
+  /** Gradient border card wrapper */
+  gradCard: "grad-card",
+  gradCardInner: "grad-card-inner",
+  gradCardBody: "grad-card-body",
+
+  // ── Compact variant — profile grid (smaller cert cards) ──
   compact: {
-    inner: "px-3.5 pt-4 pb-3",
-    icon: "w-7 h-7 mx-auto mb-2 flex items-center justify-center",
-    iconSvg: "w-5 h-5",
-    title: "font-display font-extrabold text-[13px] text-center text-text",
-    course: "text-[11px] text-center text-text-3 mb-2.5",
-    details: "flex flex-col gap-1",
-    row: "flex justify-between items-center",
-    label: "text-[10px] text-text-3 font-medium",
-    value: "font-display font-bold text-[11px] text-text",
-    valueMono: "font-mono text-[10px] font-medium text-text-2",
-    grid: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3",
+    /** Smaller wrap for grid use */
+    wrap: "cert-wrap cert-wrap-compact",
+    grid: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4",
   },
 
-  // ── 2. Full — my certificates page (medium, with actions) ──
+  // ── Full variant — my certificates page ──
   full: {
-    inner: "px-5 pt-5 pb-4",
-    icon: "w-9 h-9 mx-auto mb-3 flex items-center justify-center",
-    iconSvg: "w-7 h-7",
-    title: "font-display font-extrabold text-[15px] text-center text-text",
-    course: "text-[13px] text-center text-text-3 mb-4",
-    details: "flex flex-col gap-1.5 mb-4",
-    row: "flex justify-between items-center",
-    label: "text-xs text-text-3 font-medium",
-    value: "font-display font-bold text-[13px] text-text",
-    valueMono: "font-mono text-[11px] font-medium text-text-2",
-    actions: "flex items-center gap-2 pt-3 border-t-[2.5px] border-border",
-    grid: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4",
+    grid: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5",
   },
 
-  // ── 3. Verification — /certificates/[id] ──
+  // ── Verification page — /certificates/[id] ──
   verify: {
-    page: "max-w-[520px] mx-auto",
-    pageTitle: "font-display font-black text-[26px] text-center mb-6",
-    inner: "px-9 py-10 text-center",
-    icon: "w-14 h-14 mx-auto mb-5 flex items-center justify-center",
-    iconSvg: "w-12 h-12",
-    heading:
-      "font-display font-extrabold text-xs uppercase tracking-[2px] text-text-3 mb-3",
-    gradientBar: "h-1.5 rounded-full bg-cert-gradient w-4/5 mx-auto mb-6",
-    label: "text-[13px] text-text-3 mb-0.5",
-    recipient: "font-display font-black text-[22px] text-text mb-1",
-    wallet: "font-mono text-[13px] text-text-2 mb-6",
-    date: "text-sm text-text-3 mb-4",
-    verifyLink:
-      "font-display font-bold text-sm text-primary hover:underline cursor-pointer",
-    actions: "flex items-center justify-center gap-2.5 mt-5 flex-wrap",
+    page: "max-w-[480px] mx-auto",
+    pageTitle: "font-display font-black text-[26px] text-center mb-8",
+    inner: "p-8 text-center",
+    icon: "flex justify-center mb-4",
+    iconSvg: "w-10 h-10",
+    heading: "font-display font-black text-[20px] text-text mb-2",
+    gradientBar: "h-[2px] w-16 mx-auto bg-cert-gradient mb-6",
+    label: "font-mono text-[10px] uppercase tracking-[1px] text-text-3 mb-1",
+    recipient: "font-display font-extrabold text-[18px] text-text",
+    wallet: "font-mono text-xs text-text-3 mt-1",
+    date: "text-[13px] text-text-3 mt-4",
+    actions: "flex items-center justify-center gap-2.5 mt-6 flex-wrap",
     nftCard:
-      "bg-card border-[2.5px] border-border rounded-lg p-5 shadow-card mt-5",
+      "bg-card border border-border rounded-[var(--r-lg)] p-5 [box-shadow:var(--shadow)] mt-6",
     nftTitle: "font-display font-extrabold text-[15px] mb-3",
     nftRow:
       "flex justify-between items-center py-2 border-b border-border last:border-b-0",
@@ -569,9 +608,9 @@ export const CERTIFICATE_STYLES = {
   /** Status badge — minted */
   minted:
     "inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-success-bg border border-success text-success-dark dark:text-success",
-  /** Status badge — pending */
+  /** Status badge — pending mint — v9: xp/amber tokens */
   pending:
-    "inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-accent-bg border border-accent text-accent-dark dark:text-accent",
+    "inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-xp-dim border [border-color:var(--accent-border)] text-xp-dark dark:text-xp",
 } as const;
 
 // ─── COMPOSABLE STYLES OBJECT ───────────────────────────────────────────────

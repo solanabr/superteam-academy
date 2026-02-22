@@ -355,13 +355,9 @@ export function LessonPageClient({
               {/* Lesson meta */}
               <div className="flex items-center gap-2 text-xs text-text-3">
                 <span>{t("challenge")}</span>
-                <span className="ml-auto flex items-center gap-1 font-display font-bold text-accent">
-                  <Lightning
-                    size={14}
-                    weight="duotone"
-                    className="text-accent"
-                  />
-                  +{earnedXp ?? courseXpPerLesson} XP
+                <span className="ml-auto flex items-center gap-1 font-display font-black text-xp">
+                  <Lightning size={14} weight="duotone" className="text-xp" />+
+                  {earnedXp ?? courseXpPerLesson} XP
                 </span>
               </div>
 
@@ -389,7 +385,7 @@ export function LessonPageClient({
                     {visibleTests.map((tc) => (
                       <div
                         key={tc.id}
-                        className="bg-subtle/30 rounded-md border border-border p-2 text-xs"
+                        className="rounded-md border border-border p-2 text-xs [background:var(--input)]"
                       >
                         <span className="font-medium">{tc.description}</span>
                         <div className="mt-1 flex gap-4 font-mono text-text-3">
@@ -466,7 +462,7 @@ export function LessonPageClient({
                 className="h-full"
               />
             ) : (
-              <div className="bg-subtle/30 flex h-full items-center justify-center">
+              <div className="flex h-full items-center justify-center [background:var(--input)]">
                 <p className="text-text-3">{t("content")}</p>
               </div>
             )}
@@ -521,8 +517,8 @@ export function LessonPageClient({
       {/* Lesson meta */}
       <div className="flex items-center gap-2 text-xs text-text-3">
         <span>{t("content")}</span>
-        <span className="ml-auto flex items-center gap-1 font-display font-bold text-accent">
-          <Lightning size={14} weight="duotone" className="text-accent" />+
+        <span className="ml-auto flex items-center gap-1 font-display font-black text-xp">
+          <Lightning size={14} weight="duotone" className="text-xp" />+
           {earnedXp ?? courseXpPerLesson} XP
         </span>
       </div>
@@ -622,7 +618,7 @@ export function LessonPageClient({
           ) : (
             <AuthModal
               trigger={
-                <Button variant="pushSuccess" size="lg" className="gap-2">
+                <Button variant="push" size="lg" className="gap-2">
                   {t("signInToTrack")}
                 </Button>
               }
@@ -654,7 +650,7 @@ export function LessonPageClient({
           )}
         </div>
         {enrollError && (
-          <p role="alert" className="text-center text-sm text-destructive">
+          <p role="alert" className="text-center text-sm text-danger">
             {tCourses("enrollFailed")}
           </p>
         )}
