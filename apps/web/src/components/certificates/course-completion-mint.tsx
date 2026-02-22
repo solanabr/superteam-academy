@@ -5,17 +5,6 @@ import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
 import { GraduationCap, CheckCircle, Wallet } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
-import { trackEvent, captureError } from "@/lib/analytics";
-import { dispatchCertificateMinted } from "@/components/gamification/certificate-popup";
-
-interface CredentialIssueResponse {
-  success: boolean;
-  signature: string;
-  mintAddress: string;
-  metadataUri: string;
-  certificateId?: string;
-  error?: string;
-}
 
 interface CourseCompletionMintProps {
   courseId: string;
@@ -31,10 +20,13 @@ type CompletionState =
   | { status: "complete"; recipientName: string }
   | { status: "no_wallet" }
   | { status: "already_minted" }
-  | { status: "insert_failed"; mintAddress: string }
-  | { status: "issuing" }
-  | { status: "issue_error"; message: string };
+  | { status: "minting" };
 
+/**
+ * Displays course completion status and credential mint state.
+ * Credentials are minted automatically by the Helius webhook chain
+ * (LessonCompleted → finalizeCourse → CourseFinalized → issueCredential).
+ */
 export function CourseCompletionMint({
   courseId,
   courseTitle: _courseTitle,
@@ -75,9 +67,9 @@ export function CourseCompletionMint({
       if (completedCount >= totalLessons && totalLessons > 0) {
         const { data: profile } = await supabase
           .from("profiles")
-          .select("username, wallet_address")
+          .select("wallet_address, username")
           .eq("id", userId)
-          .maybeSingle();
+          .single();
 
         if (!profile?.wallet_address) {
           setState({ status: "no_wallet" });
@@ -86,70 +78,23 @@ export function CourseCompletionMint({
 
         const recipientName =
           profile.username ??
-          profile.wallet_address.slice(0, 8) ??
+          `${profile.wallet_address.slice(0, 4)}...${profile.wallet_address.slice(-4)}` ??
           "Solana Developer";
 
-        setState({ status: "complete", recipientName });
+        // Course is complete — credential will be minted by webhook chain.
+        // Show "minting" state if trackCollection exists (webhook is processing).
+        if (trackCollection) {
+          setState({ status: "minting" });
+        } else {
+          setState({ status: "complete", recipientName });
+        }
       } else {
         setState({ status: "incomplete", completedCount });
       }
     }
 
     checkCompletion();
-  }, [courseId, userId, totalLessons]);
-
-  async function handleIssueCredential() {
-    if (!trackCollection) return;
-    setState({ status: "issuing" });
-    try {
-      // Finalize course first (awards bonus XP, marks enrollment complete).
-      // Safe to call if already finalized — the route returns 400 which we accept.
-      const finalizeRes = await fetch(`/api/courses/${courseId}/finalize`, {
-        method: "POST",
-      });
-      if (!finalizeRes.ok && finalizeRes.status !== 400) {
-        const finalizeData = await finalizeRes.json();
-        setState({
-          status: "issue_error",
-          message: finalizeData.error ?? "Failed to finalize course",
-        });
-        return;
-      }
-
-      const res = await fetch("/api/credentials/issue", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ courseId, trackCollection }),
-      });
-      const data = (await res.json()) as CredentialIssueResponse;
-
-      if (!res.ok || !data.success) {
-        setState({
-          status: "issue_error",
-          message: data.error ?? "Failed to issue credential",
-        });
-        return;
-      }
-
-      trackEvent("credential_issued", {
-        courseId,
-        mintAddress: data.mintAddress,
-        signature: data.signature,
-      });
-      if (data.certificateId) {
-        dispatchCertificateMinted(data.certificateId);
-      }
-      setState({ status: "already_minted" });
-    } catch (err) {
-      if (err instanceof Error) {
-        captureError(err, { courseId });
-      }
-      setState({
-        status: "issue_error",
-        message: err instanceof Error ? err.message : "Unknown error",
-      });
-    }
-  }
+  }, [courseId, userId, totalLessons, trackCollection]);
 
   if (state.status === "loading") {
     return (
@@ -193,21 +138,7 @@ export function CourseCompletionMint({
     );
   }
 
-  if (state.status === "insert_failed") {
-    return (
-      <div
-        className="border-warning bg-warning/10 rounded-lg border p-4"
-        role="alert"
-      >
-        <p className="text-warning text-sm font-medium">{t("insertFailed")}</p>
-        <p className="mt-1 text-xs text-text-3">
-          {t("mintAddress")}: {state.mintAddress}
-        </p>
-      </div>
-    );
-  }
-
-  if (state.status === "issuing") {
+  if (state.status === "minting") {
     return (
       <div className="flex items-center gap-2 text-sm text-text-3">
         <div
@@ -219,7 +150,7 @@ export function CourseCompletionMint({
     );
   }
 
-  if (state.status === "issue_error") {
+  if (state.status === "complete") {
     return (
       <div className="flex items-center gap-3">
         <GraduationCap
@@ -228,42 +159,9 @@ export function CourseCompletionMint({
           className="shrink-0 text-primary"
           aria-hidden="true"
         />
-        <div className="space-y-1">
-          <p className="text-sm text-danger">{state.message}</p>
-          <button
-            onClick={handleIssueCredential}
-            className="text-xs font-medium text-primary hover:underline"
-          >
-            {t("mintCertificate")}
-          </button>
-        </div>
+        <span className="text-sm font-medium">{t("courseComplete")}</span>
       </div>
     );
-  }
-
-  if (state.status === "complete") {
-    if (trackCollection) {
-      return (
-        <div className="flex items-center gap-3">
-          <GraduationCap
-            size={18}
-            weight="duotone"
-            className="shrink-0 text-primary"
-            aria-hidden="true"
-          />
-          <span className="text-sm font-medium">{t("courseComplete")}</span>
-          <button
-            onClick={handleIssueCredential}
-            className="hover:bg-primary/90 inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white transition-colors"
-          >
-            {t("mintCertificate")}
-          </button>
-        </div>
-      );
-    }
-
-    // No trackCollection available — course is complete but credential cannot be issued
-    return null;
   }
 
   // incomplete
