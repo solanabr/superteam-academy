@@ -2566,6 +2566,16 @@
 			"description": "Únete a más de 10,000 desarrolladores que ya están construyendo el futuro de Web3. Comienza con nuestros cursos gratuitos hoy.",
 			"getStarted": "Comienza gratis",
 			"viewPricing": "Ver precios"
+		},
+		"newsletter": {
+			"title": "Mantente a la vanguardia",
+			"description": "Recibe información semanal, nuevos cursos y recursos exclusivos en tu bandeja de entrada.",
+			"placeholder": "Ingresa tu correo electrónico",
+			"subscribe": "Suscribirse",
+			"subscribing": "Suscribiendo...",
+			"success": "✓ ¡Suscripción exitosa! Revisa tu bandeja de entrada.",
+			"error": "Algo salió mal. Por favor, inténtalo de nuevo.",
+			"privacy": "Respetamos tu privacidad. Cancela la suscripción en cualquier momento."
 		}
 	},
 	"dashboard": {

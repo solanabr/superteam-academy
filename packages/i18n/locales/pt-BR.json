@@ -2570,6 +2570,16 @@
 			"description": "Junte-se a mais de 10.000 desenvolvedores já construindo o futuro do Web3. Comece com nossos cursos gratuitos hoje.",
 			"getStarted": "Comece gratuitamente",
 			"viewPricing": "Ver preços"
+		},
+		"newsletter": {
+			"title": "Fique à frente da curva",
+			"description": "Receba insights semanais, novos cursos e recursos exclusivos diretamente na sua caixa de entrada.",
+			"placeholder": "Digite seu e-mail",
+			"subscribe": "Inscrever-se",
+			"subscribing": "Inscrevendo...",
+			"success": "✓ Inscrição realizada com sucesso! Verifique sua caixa de entrada.",
+			"error": "Algo deu errado. Por favor, tente novamente.",
+			"privacy": "Respeitamos sua privacidade. Cancele a inscrição a qualquer momento."
 		}
 	},
 	"dashboard": {

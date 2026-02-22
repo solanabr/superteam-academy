@@ -205,3 +205,13 @@ export type CommunityMember = SanityDocument & {
 	streak: number;
 	joinedAt: string;
 };
+
+export type NewsletterSubscriber = SanityDocument & {
+	_type: "newsletterSubscriber";
+	email: string;
+	status: "active" | "unsubscribed" | "bounced";
+	subscribedAt: string;
+	unsubscribedAt?: string;
+	source?: string;
+	locale?: string;
+};

@@ -2562,6 +2562,16 @@
 			"description": "Join 10,000+ developers already building the future of Web3. Start with our free courses today.",
 			"getStarted": "Get started free",
 			"viewPricing": "View pricing"
+		},
+		"newsletter": {
+			"title": "Stay ahead of the curve",
+			"description": "Get weekly insights, new courses, and exclusive resources delivered to your inbox.",
+			"placeholder": "Enter your email",
+			"subscribe": "Subscribe",
+			"subscribing": "Subscribing...",
+			"success": "✓ Successfully subscribed! Check your inbox.",
+			"error": "Something went wrong. Please try again.",
+			"privacy": "We respect your privacy. Unsubscribe at any time."
 		}
 	},
 	"dashboard": {

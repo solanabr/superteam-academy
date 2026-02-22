@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import HeroWave from "@/public/hero-wave.svg";
+import { NewsletterForm } from "@/components/newsletter-form";
 
 const TOPICS = [
 	{ name: "Solana Basics", courses: 12, color: "bg-green/10 text-green" },
@@ -518,37 +519,13 @@ async function HowItWorksSection() {
 }
 
 async function CTASection() {
-	const t = await getTranslations("home.cta");
 	return (
 		<section className="relative py-20 lg:py-28 overflow-hidden">
 			<div className="absolute inset-0 bg-linear-to-br from-forest via-green to-forest" />
 			<div className="absolute inset-0 pattern-dots opacity-10" />
 
-			<div className="relative mx-auto px-4 sm:px-6 text-center">
-				<h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight text-balance">
-					{t("title")}
-				</h2>
-				<p className="mt-4 text-lg text-white/80 max-w-xl mx-auto">{t("description")}</p>
-				<div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
-					<Button
-						size="lg"
-						className="bg-gold text-dark hover:bg-gold/90 text-base px-8 h-12 font-semibold shadow-lg"
-						asChild
-					>
-						<Link href="/courses">
-							{t("getStarted")}
-							<ArrowRight className="ml-2 h-4 w-4" />
-						</Link>
-					</Button>
-					<Button
-						size="lg"
-						variant="outline"
-						className="border-white/30 text-white bg-white/10 text-base px-8 h-12"
-						asChild
-					>
-						<Link href="/pricing">{t("viewPricing")}</Link>
-					</Button>
-				</div>
+			<div className="relative mx-auto px-4 sm:px-6">
+				<NewsletterForm />
 			</div>
 		</section>
 	);

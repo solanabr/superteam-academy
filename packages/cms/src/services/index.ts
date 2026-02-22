@@ -8,3 +8,4 @@ export type {
 	ProjectWithMeta,
 	MemberWithMeta,
 } from "./community-service";
+export { NewsletterService } from "./newsletter-service";
