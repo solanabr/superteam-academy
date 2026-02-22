@@ -40,6 +40,7 @@
 		"@solana/wallet-adapter-wallets": "catalog:",
 		"@solana/web3.js": "catalog:",
 		"@superteam-academy/i18n": "workspace:*",
+		"@superteam-academy/gamification": "workspace:*",
 		"@superteam/analytics": "workspace:*",
 		"@superteam/anchor": "workspace:*",
 		"@superteam/auth": "workspace:*",

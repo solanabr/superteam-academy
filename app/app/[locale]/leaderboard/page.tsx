@@ -9,7 +9,7 @@ import { UserRankCard } from "@/components/leaderboard/user-rank-card";
 import { getAcademyClient } from "@/lib/academy";
 import { LeaderboardService } from "@/services/LeaderboardService";
 import { getLinkedWallet } from "@/lib/auth";
-import { calculateLevelFromXP } from "@superteam/gamification";
+import { calculateLevelFromXP } from "@superteam-academy/gamification";
 
 export const metadata: Metadata = {
 	title: "Leaderboard | Superteam Academy",
@@ -61,18 +61,6 @@ async function LeaderboardContent() {
 						{t("tabs.global")}
 					</TabsTrigger>
 					<TabsTrigger
-						value="weekly"
-						className="rounded-lg text-sm data-[state=active]:shadow-sm"
-					>
-						{t("tabs.weekly")}
-					</TabsTrigger>
-					<TabsTrigger
-						value="monthly"
-						className="rounded-lg text-sm data-[state=active]:shadow-sm"
-					>
-						{t("tabs.monthly")}
-					</TabsTrigger>
-					<TabsTrigger
 						value="courses"
 						className="rounded-lg text-sm data-[state=active]:shadow-sm"
 					>
@@ -85,24 +73,6 @@ async function LeaderboardContent() {
 						title={t("global.title")}
 						description={t("global.description")}
 						entries={globalLeaderboard}
-						showPagination
-					/>
-				</TabsContent>
-
-				<TabsContent value="weekly">
-					<LeaderboardTable
-						title={t("weekly.title")}
-						description={t("weekly.description")}
-						entries={await getWeeklyLeaderboard()}
-						showPagination
-					/>
-				</TabsContent>
-
-				<TabsContent value="monthly">
-					<LeaderboardTable
-						title={t("monthly.title")}
-						description={t("monthly.description")}
-						entries={await getMonthlyLeaderboard()}
 						showPagination
 					/>
 				</TabsContent>
@@ -169,14 +139,6 @@ async function getGlobalLeaderboard() {
 	});
 }
 
-async function getWeeklyLeaderboard() {
-	return getGlobalLeaderboard();
-}
-
-async function getMonthlyLeaderboard() {
-	return getGlobalLeaderboard();
-}
-
 async function getCourseLeaderboards() {
 	const academyClient = getAcademyClient();
 	const config = await academyClient.fetchConfig();
@@ -237,8 +199,6 @@ async function getUserRank() {
 
 	return {
 		globalRank: target?.rank ?? 0,
-		weeklyRank: target?.rank ?? 0,
-		monthlyRank: target?.rank ?? 0,
 		score: target?.score ?? 0,
 		level: target?.level ?? 1,
 		achievements: target?.achievements ?? 0,

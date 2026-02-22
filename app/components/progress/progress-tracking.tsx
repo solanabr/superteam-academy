@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, Trophy, Target, TrendingUp, Calendar, Clock, CheckCircle } from "lucide-react";
+import { BookOpen, Trophy, TrendingUp, Calendar, Clock, CheckCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -13,8 +13,6 @@ interface CourseProgress {
 	courseTitle: string;
 	totalLessons: number;
 	completedLessons: number;
-	totalChallenges: number;
-	completedChallenges: number;
 	xpEarned: number;
 	timeSpent: number; // in minutes
 	lastActivity: Date;
@@ -61,11 +59,6 @@ export function ProgressTracking({
 
 	const totalLessons = courses.reduce((acc, course) => acc + course.totalLessons, 0);
 	const completedLessons = courses.reduce((acc, course) => acc + course.completedLessons, 0);
-	const totalChallenges = courses.reduce((acc, course) => acc + course.totalChallenges, 0);
-	const completedChallenges = courses.reduce(
-		(acc, course) => acc + course.completedChallenges,
-		0
-	);
 	const totalTimeSpent = courses.reduce((acc, course) => acc + course.timeSpent, 0);
 
 	const formatTime = (minutes: number) => {
@@ -91,7 +84,7 @@ export function ProgressTracking({
 
 	return (
 		<div className="space-y-6">
-			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+			<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 				<Card>
 					<CardContent className="pt-6">
 						<div className="flex items-center gap-2">
@@ -102,22 +95,6 @@ export function ProgressTracking({
 								</p>
 								<p className="text-xs text-muted-foreground">
 									{t("lessonsCompleted")}
-								</p>
-							</div>
-						</div>
-					</CardContent>
-				</Card>
-
-				<Card>
-					<CardContent className="pt-6">
-						<div className="flex items-center gap-2">
-							<Target className="h-5 w-5 text-green-600" />
-							<div>
-								<p className="text-2xl font-bold">
-									{completedChallenges}/{totalChallenges}
-								</p>
-								<p className="text-xs text-muted-foreground">
-									{t("challengesCompleted")}
 								</p>
 							</div>
 						</div>
@@ -194,41 +171,22 @@ export function ProgressTracking({
 											)}
 										</div>
 
-										<div className="grid grid-cols-2 gap-4">
-											<div>
-												<div className="flex items-center gap-2 text-sm">
-													<BookOpen className="h-4 w-4" />
-													<span>
-														{course.completedLessons}/
-														{course.totalLessons} {t("lessons")}
-													</span>
-												</div>
-												<Progress
-													value={
-														(course.completedLessons /
-															course.totalLessons) *
-														100
-													}
-													className="h-2 mt-1"
-												/>
+										<div>
+											<div className="flex items-center gap-2 text-sm">
+												<BookOpen className="h-4 w-4" />
+												<span>
+													{course.completedLessons}/{course.totalLessons}{" "}
+													{t("lessons")}
+												</span>
 											</div>
-											<div>
-												<div className="flex items-center gap-2 text-sm">
-													<Target className="h-4 w-4" />
-													<span>
-														{course.completedChallenges}/
-														{course.totalChallenges} {t("challenges")}
-													</span>
-												</div>
-												<Progress
-													value={
-														(course.completedChallenges /
-															course.totalChallenges) *
-														100
-													}
-													className="h-2 mt-1"
-												/>
-											</div>
+											<Progress
+												value={
+													(course.completedLessons /
+														course.totalLessons) *
+													100
+												}
+												className="h-2 mt-1"
+											/>
 										</div>
 
 										<div className="flex items-center justify-between text-sm text-muted-foreground">

@@ -1,4 +1,4 @@
-import { Clock, BookOpen, Target, Award, Flame, Zap } from "lucide-react";
+import { Clock, BookOpen, Target, Flame, Zap } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
 interface ProgressStatsProps {
@@ -20,10 +20,6 @@ interface ProgressStatsProps {
 			completed: number;
 			total: number;
 		};
-		challenges: {
-			completed: number;
-			total: number;
-		};
 		timeSpent: {
 			today: number;
 			thisWeek: number;
@@ -36,7 +32,6 @@ const STAT_ITEMS = [
 	{ key: "streak", label: "Streak", Icon: Flame, color: "text-destructive bg-destructive/10" },
 	{ key: "courses", label: "Courses", Icon: BookOpen, color: "text-green bg-green/10" },
 	{ key: "lessons", label: "Lessons", Icon: Target, color: "text-primary bg-primary/10" },
-	{ key: "challenges", label: "Challenges", Icon: Award, color: "text-gold bg-gold/10" },
 ] as const;
 
 function formatTime(minutes: number) {
@@ -67,24 +62,20 @@ export function ProgressStats({ stats }: ProgressStatsProps) {
 				</p>
 			</div>
 
-			<div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+			<div className="grid grid-cols-3 gap-3">
 				{STAT_ITEMS.map(({ key, label, Icon, color }) => {
 					const value =
 						key === "streak"
 							? stats.streak.current
 							: key === "courses"
 								? stats.courses.completed
-								: key === "lessons"
-									? stats.lessons.completed
-									: stats.challenges.completed;
+								: stats.lessons.completed;
 					const sub =
 						key === "streak"
 							? `Best: ${stats.streak.longest}`
 							: key === "courses"
 								? `${stats.courses.inProgress} active`
-								: key === "lessons"
-									? `of ${stats.lessons.total}`
-									: `of ${stats.challenges.total}`;
+								: `of ${stats.lessons.total}`;
 
 					return (
 						<div key={key} className="rounded-xl border border-border/60 bg-card p-4">

@@ -4,8 +4,6 @@ import { Trophy, Flame, Award, Zap } from "lucide-react";
 
 interface UserRank {
 	globalRank: number;
-	weeklyRank: number;
-	monthlyRank: number;
 	score: number;
 	level: number;
 	achievements: number;
@@ -36,21 +34,6 @@ export function UserRankCard({ userRank }: UserRankCardProps) {
 					</div>
 
 					<div className="hidden md:block w-px h-16 bg-border/60" />
-
-					<div className="flex gap-6 flex-wrap">
-						<div className="text-center">
-							<div className="text-xl font-bold text-primary">
-								#{userRank.weeklyRank}
-							</div>
-							<div className="text-xs text-muted-foreground">This week</div>
-						</div>
-						<div className="text-center">
-							<div className="text-xl font-bold text-forest">
-								#{userRank.monthlyRank}
-							</div>
-							<div className="text-xs text-muted-foreground">This month</div>
-						</div>
-					</div>
 
 					<div className="md:ml-auto flex items-center gap-5">
 						<div className="flex items-center gap-1.5 text-sm">

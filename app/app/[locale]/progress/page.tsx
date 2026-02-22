@@ -7,10 +7,7 @@ import { getAcademyClient, getProgramId, getSolanaConnection } from "@/lib/acade
 import { getLinkedWallet } from "@/lib/auth";
 import { ProgressTracking } from "@/components/progress/progress-tracking";
 import { AchievementService } from "@/services/AchievementService";
-
-function calculateLevel(totalXP: number): number {
-	return Math.floor(Math.sqrt(totalXP / 100));
-}
+import { calculateLevelFromXP } from "@superteam-academy/gamification";
 
 export const metadata: Metadata = {
 	title: "Learning Progress | Superteam Academy",
@@ -68,8 +65,6 @@ async function ProgressContent() {
 			courseTitle: course?.courseId ?? "Course",
 			totalLessons: total,
 			completedLessons: completed,
-			totalChallenges: 0,
-			completedChallenges: 0,
 			xpEarned: completed * (course?.xpPerLesson ?? 0),
 			timeSpent: completed * 10,
 			lastActivity: new Date(entry.account.enrolledAt * 1000),
@@ -77,7 +72,7 @@ async function ProgressContent() {
 		};
 	});
 
-	const level = calculateLevel(totalXp);
+	const level = calculateLevelFromXP(totalXp);
 	const nextLevelXP = (level + 1) ** 2 * 100;
 
 	const achievementService = new AchievementService(connection, programId);

@@ -17,8 +17,6 @@ interface Course {
 	progress: {
 		completedLessons: number;
 		totalLessons: number;
-		completedChallenges: number;
-		totalChallenges: number;
 		timeSpent: number;
 		lastAccessed?: string;
 	};

@@ -1,53 +1,28 @@
 import { NextResponse } from "next/server";
-import type { PublicKey } from "@solana/web3.js";
 import { getAcademyClient } from "@/lib/academy";
+import { countCompletedLessons } from "@superteam/anchor";
+import { calculateLevelFromXP } from "@superteam-academy/gamification";
 
 export async function GET() {
 	const academyClient = getAcademyClient();
-	const courses = await academyClient.fetchAllCourses();
-	const fetchAllEnrollments = (
-		academyClient as unknown as {
-			fetchAllEnrollments?: () => Promise<
-				Array<{
-					pubkey: PublicKey;
-					account: { course: PublicKey; lessonFlags: [bigint, bigint, bigint, bigint] };
-				}>
-			>;
-		}
-	).fetchAllEnrollments;
-
-	const enrollments =
-		typeof fetchAllEnrollments === "function"
-			? await fetchAllEnrollments.call(academyClient)
-			: [];
+	const [courses, enrollments] = await Promise.all([
+		academyClient.fetchAllCourses(),
+		academyClient.fetchAllEnrollments(),
+	]);
 
 	const byCourse = new Map<string, Map<string, number>>();
 	for (const enrollment of enrollments) {
 		const courseKey = enrollment.account.course.toBase58();
-		const course = courses.find(
-			(entry: (typeof courses)[number]) => entry.pubkey.toBase58() === courseKey
-		);
+		const course = courses.find((entry) => entry.pubkey.toBase58() === courseKey);
 		if (!course) continue;
 
-		const completedLessons = enrollment.account.lessonFlags.reduce(
-			(sum: number, word: bigint) => {
-				let value = word;
-				let bits = 0;
-				while (value > 0n) {
-					bits += Number(value & 1n);
-					value >>= 1n;
-				}
-				return sum + bits;
-			},
-			0
-		);
-		const score = completedLessons * course.account.xpPerLesson;
+		const completed = countCompletedLessons(enrollment.account.lessonFlags);
+		const score = completed * course.account.xpPerLesson;
 		const userId = enrollment.pubkey.toBase58();
 
-		if (!byCourse.has(course.account.courseId)) {
-			byCourse.set(course.account.courseId, new Map());
-		}
-		const users = byCourse.get(course.account.courseId)!;
+		const existing = byCourse.get(course.account.courseId);
+		const users = existing ?? new Map<string, number>();
+		if (!existing) byCourse.set(course.account.courseId, users);
 		users.set(userId, Math.max(users.get(userId) ?? 0, score));
 	}
 
@@ -65,7 +40,7 @@ export async function GET() {
 					country: "--",
 				},
 				score,
-				level: Math.max(1, Math.floor(score / 500) + 1),
+				level: calculateLevelFromXP(score),
 				achievements: 0,
 				streak: 0,
 				change: 0,

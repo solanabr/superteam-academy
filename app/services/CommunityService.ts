@@ -110,13 +110,24 @@ export class CommunityService {
 	// ── Analytics & Stats ──────────────────────────────────────
 
 	async getCommunityStats() {
-		// Future: implement on-chain or aggregated stats
+		const [discussions, events, projects, members] = await Promise.all([
+			this.getAllDiscussions().catch(() => []),
+			this.getUpcomingEvents()
+				.then(async (upcoming) => {
+					const past = await this.getPastEvents().catch(() => []);
+					return [...upcoming, ...past];
+				})
+				.catch(() => []),
+			this.getAllProjects().catch(() => []),
+			this.getAllMembers().catch(() => []),
+		]);
+
 		return {
-			totalDiscussions: 0,
-			totalEvents: 0,
-			totalProjects: 0,
-			totalMembers: 0,
-			activeMembers: 0,
+			totalDiscussions: discussions.length,
+			totalEvents: events.length,
+			totalProjects: projects.length,
+			totalMembers: members.length,
+			activeMembers: members.length,
 		};
 	}
 }

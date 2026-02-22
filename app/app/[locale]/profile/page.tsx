@@ -18,7 +18,7 @@ import {
 	getProgramId,
 } from "@/lib/academy";
 import { getLinkedWallet } from "@/lib/auth";
-import { calculateLevelFromXP } from "@superteam/gamification";
+import { calculateLevelFromXP } from "@superteam-academy/gamification";
 import { CredentialService } from "@/services/CredentialService";
 import { AchievementService } from "@/services/AchievementService";
 
@@ -205,8 +205,6 @@ async function getDynamicProfile(walletAddress?: string) {
 			progress: {
 				completedLessons,
 				totalLessons,
-				completedChallenges: 0,
-				totalChallenges: 0,
 				timeSpent: completedLessons * 10,
 				...(entry.account.enrolledAt
 					? { lastAccessed: new Date(entry.account.enrolledAt * 1000).toISOString() }
@@ -309,10 +307,6 @@ async function getDynamicProfile(walletAddress?: string) {
 			completed: totalLessonsCompleted,
 			total: totalLessons,
 		},
-		challenges: {
-			completed: 0,
-			total: 0,
-		},
 		achievements: {
 			unlocked: unlockedCount,
 			total: Math.max(achievements.length, allCourses.length),
@@ -376,7 +370,6 @@ function emptyStats() {
 		},
 		courses: { completed: 0, enrolled: 0, inProgress: 0 },
 		lessons: { completed: 0, total: 0 },
-		challenges: { completed: 0, total: 0 },
 		achievements: { unlocked: 0, total: 10 },
 		timeSpent: { today: 0, thisWeek: 0, total: 0 },
 		levelHistory: [],

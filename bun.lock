@@ -11,7 +11,7 @@
         "typescript": "catalog:",
       },
     },
-    "frontend": {
+    "app": {
       "name": "superteam-academy-frontend",
       "version": "0.1.0",
       "dependencies": {
@@ -43,6 +43,7 @@
         "@solana/wallet-adapter-solflare": "catalog:",
         "@solana/wallet-adapter-wallets": "catalog:",
         "@solana/web3.js": "catalog:",
+        "@superteam-academy/gamification": "workspace:*",
         "@superteam-academy/i18n": "workspace:*",
         "@superteam/analytics": "workspace:*",
         "@superteam/anchor": "workspace:*",
@@ -83,6 +84,20 @@
         "tailwindcss": "catalog:",
         "typescript": "catalog:",
         "vitest": "catalog:",
+      },
+    },
+    "backend": {
+      "name": "superteam-academy-backend",
+      "version": "0.1.0",
+      "dependencies": {
+        "@coral-xyz/anchor": "catalog:",
+        "@solana/web3.js": "catalog:",
+        "@superteam/anchor": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/node": "catalog:",
+        "tsup": "catalog:",
+        "typescript": "catalog:",
       },
     },
     "packages/analytics": {
@@ -183,9 +198,6 @@
         "tsup": "catalog:",
         "typescript": "catalog:",
         "vitest": "catalog:",
-      },
-      "peerDependencies": {
-        "@superteam/services": "workspace:*",
       },
     },
     "packages/i18n": {
@@ -3895,7 +3907,9 @@
 
     "superstruct": ["superstruct@0.15.5", "", {}, "sha512-4AOeU+P5UuE/4nOUkmcQdW5y7i9ndt1cQd/3iUe+LTz3RxESf/W/5lg4B74HbDMMv8PHnPnGCQFH45kBcrQYoQ=="],
 
-    "superteam-academy-frontend": ["superteam-academy-frontend@workspace:frontend"],
+    "superteam-academy-backend": ["superteam-academy-backend@workspace:backend"],
+
+    "superteam-academy-frontend": ["superteam-academy-frontend@workspace:app"],
 
     "supports-color": ["supports-color@7.2.0", "", { "dependencies": { "has-flag": "^4.0.0" } }, "sha512-qpCAvRl9stuOHveKsn7HncJRvv501qIacKzQlO/+Lwxc9+0q2wLyv4Dfvt80/DPn2pqOBsJdDiogXGR9+OvwRw=="],
 

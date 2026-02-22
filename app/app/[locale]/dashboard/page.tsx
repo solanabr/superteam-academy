@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { useConnection } from "@solana/wallet-adapter-react";
 import { countCompletedLessons } from "@superteam/anchor";
-import { calculateLevelFromXP } from "@superteam/gamification";
+import { calculateLevelFromXP } from "@superteam-academy/gamification";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
