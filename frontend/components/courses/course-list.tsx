@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@superteam-academy/i18n/navigation";
 import { Users, Clock, Zap, ArrowRight } from "lucide-react";
 import { useTranslations } from "next-intl";
 

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@superteam-academy/i18n/navigation";
 import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
 
 import { Button } from "@/components/ui/button";

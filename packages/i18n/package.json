@@ -8,10 +8,11 @@
 		".": "./src/index.ts",
 		"./config": "./src/config.ts",
 		"./routing": "./src/routing.ts",
+		"./navigation": "./src/navigation.ts",
 		"./utils": "./src/utils.ts",
 		"./validation": "./src/validation.ts",
 		"./extraction": "./src/extraction.ts",
-		"./middleware": "./src/middleware.ts",
+		"./proxy": "./src/proxy.ts",
 		"./ssr": "./src/ssr.ts"
 	},
 	"files": [

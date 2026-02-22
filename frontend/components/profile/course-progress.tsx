@@ -3,7 +3,7 @@
 import { BookOpen, Clock, CheckCircle, Play, ArrowRight } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
+import { Link } from "@superteam-academy/i18n/navigation";
 
 interface Course {
 	id: string;

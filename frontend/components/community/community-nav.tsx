@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "@superteam-academy/i18n/navigation";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 

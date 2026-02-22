@@ -1,5 +1,5 @@
 import { ChevronRight } from "lucide-react";
-import Link from "next/link";
+import { Link } from "@superteam-academy/i18n/navigation";
 import { useTranslations } from "next-intl";
 
 interface BreadcrumbItem {

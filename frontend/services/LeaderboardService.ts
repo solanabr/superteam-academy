@@ -38,10 +38,8 @@ export class LeaderboardService extends BaseService {
 		const infos = await this.connection.getMultipleAccountsInfo(accountPubkeys);
 
 		const byOwner = new Map<string, bigint>();
-		for (let index = 0; index < infos.length; index += 1) {
-			const info = infos[index];
+		for (const info of infos) {
 			if (!info || info.data.length < 72) continue;
-
 			const owner = new PublicKey(info.data.subarray(32, 64)).toBase58();
 			const amount = info.data.readBigUInt64LE(64);
 			const current = byOwner.get(owner) ?? 0n;
