@@ -14,14 +14,20 @@ Ship a production-ready **backend + frontend app experience** using the existing
   - Frontend app pages and flows
 - Keep implementation simple, modular, and easy to operate.
 
+## Bounty Alignment References
+
+- `context/FRONTEND-PHASES.md` (execution sequence F0-F7)
+- `context/DESIGN-GUIDELINES.md` (dark-first UX rules)
+- `context/BOUNTY-MAPPING.md` (requirement-to-phase mapping and deliverables)
+
 ## Current Snapshot
 
 | Area | Status | Notes |
 |---|---|---|
 | Backend route coverage | Done | All 13 academy routes implemented |
 | Backend modular refactor | Done | Handlers split by domain + shared libs |
-| Backend production hardening | In progress | Auth, rate limits, observability, deployment guardrails pending |
-| Frontend app pages | Not started | Only landing + `/test` page currently |
+| Backend production hardening | In progress | Auth + CORS allowlist complete; rate limits, observability, tests pending |
+| Frontend app pages | In progress | Detailed phase/design plan now documented; implementation pending |
 
 ## Workstream A: Backend Productionization
 
@@ -34,9 +40,9 @@ Detailed checklist: `context/BACKEND-PRODUCTION.md`
 - [ ] Document full request/response schemas for every route
 
 ### A2. Security and Access
-- [ ] Add API auth middleware (service token or signature-based)
+- [x] Add API auth middleware (service token)
 - [ ] Add request rate limiting
-- [ ] Restrict CORS origins by environment
+- [x] Restrict CORS origins by environment
 - [ ] Add input/body size limits
 
 ### A3. Reliability and Operations
@@ -52,7 +58,9 @@ Detailed checklist: `context/BACKEND-PRODUCTION.md`
 
 ## Workstream B: Frontend App Build
 
-Detailed phase list: `context/FRONTEND-PHASES.md`
+Detailed execution: `context/FRONTEND-PHASES.md`  
+Design system and UX rules: `context/DESIGN-GUIDELINES.md`  
+Bounty requirement mapping: `context/BOUNTY-MAPPING.md`
 
 ### B1. Foundation
 - [ ] App shell (`(app)/layout`) + wallet guard
@@ -75,11 +83,13 @@ Detailed phase list: `context/FRONTEND-PHASES.md`
 
 ## Recommended Execution Order
 
-1. Finish Workstream A (backend hardening)
-2. Build Workstream B1 + B2 (core learner flow)
-3. Build Workstream B3 (credentials/leaderboard/achievements)
-4. Build Workstream B4 (admin/settings)
-5. End-to-end QA + deployment checklist
+1. Build BFF API layer in frontend (`app/api/academy/*`) to consume secured backend.
+2. Build Workstream B1 + B2 (core learner flow).
+3. Build Workstream B3 (credentials/leaderboard/achievements).
+4. Build Workstream B4 (admin/settings).
+5. Integrate CMS in later phase (F6) after core learner flow stabilizes.
+6. Continue remaining Workstream A tasks (rate limits, tests, observability) in parallel.
+7. Run F7 analytics/i18n/performance hardening, then end-to-end QA + deployment checklist.
 
 ## Definition of Done
 
