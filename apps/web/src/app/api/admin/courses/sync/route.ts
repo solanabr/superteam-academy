@@ -8,7 +8,7 @@ import {
   AdminAuthError,
 } from "@/lib/admin/auth";
 import { getAllCoursesAdmin } from "@/lib/sanity/queries";
-import { findCoursePDA, PROGRAM_ID } from "@/lib/solana/pda";
+import { findCoursePDA, getProgramId } from "@/lib/solana/pda";
 import {
   deployCoursePda,
   updateCoursePda,
@@ -80,7 +80,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const rpcUrl =
     process.env.NEXT_PUBLIC_SOLANA_RPC_URL ?? "https://api.devnet.solana.com";
   const connection = new Connection(rpcUrl, "confirmed");
-  const [coursePda] = findCoursePDA(courseId, PROGRAM_ID);
+  const [coursePda] = findCoursePDA(courseId, getProgramId());
   const accountInfo = await connection.getAccountInfo(coursePda);
 
   if (!accountInfo) {
@@ -89,7 +89,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     if (course.prerequisiteCourse) {
       const [prereqPda] = findCoursePDA(
         course.prerequisiteCourse._id,
-        PROGRAM_ID
+        getProgramId()
       );
       const prereqInfo = await connection.getAccountInfo(prereqPda);
       if (!prereqInfo) {
@@ -193,6 +193,24 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   if (updatedFields.length === 0) {
+    // Even if no fields changed, sync the PDA address to Sanity
+    // (needed after fresh deploys where the program ID changed)
+    const knownPda = course.onChainStatus?.coursePda;
+    if (knownPda !== coursePda.toBase58()) {
+      try {
+        await writeCourseOnChainStatus(
+          courseId,
+          "synced",
+          coursePda.toBase58(),
+          "noop"
+        );
+      } catch (mutationErr) {
+        console.error(
+          "[admin/courses/sync] Sanity PDA write-back failed:",
+          mutationErr
+        );
+      }
+    }
     return NextResponse.json({ action: "noop", message: "Already synced" });
   }
 

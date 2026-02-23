@@ -8,7 +8,7 @@ import {
   finalizeCourse,
   issueCredential,
 } from "./academy-program";
-import { PROGRAM_ID } from "./pda";
+import { getProgramId } from "./pda";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
@@ -117,7 +117,7 @@ export async function retryPendingOnchainActions(
             achievementId,
             profile.wallet_address,
             connection,
-            PROGRAM_ID
+            getProgramId()
           );
           if (!exists) {
             const result = await withRetry(() =>
@@ -153,7 +153,7 @@ export async function retryPendingOnchainActions(
             courseId,
             wallet,
             connection,
-            PROGRAM_ID
+            getProgramId()
           )) as Record<string, unknown> | null;
 
           if (!enrollment?.credential_asset) {
@@ -203,7 +203,7 @@ export async function retryPendingOnchainActions(
             courseId,
             wallet,
             connection,
-            PROGRAM_ID
+            getProgramId()
           )) as Record<string, unknown> | null;
 
           if (!enrollment?.completed_at) {
@@ -249,7 +249,7 @@ export async function retryPendingOnchainActions(
             courseId,
             enrollmentWallet,
             connection,
-            PROGRAM_ID
+            getProgramId()
           );
           if (!enrollmentAccount) {
             throw new Error(
