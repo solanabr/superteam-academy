@@ -1,4 +1,5 @@
 import type { StreakData } from "@superteam-lms/types";
+import { getNow } from "@/lib/utils";
 
 export const STREAK_MILESTONES = [
   { days: 7, id: "week-warrior", name: "Week Warrior" },
@@ -18,11 +19,11 @@ function daysBetween(a: string, b: string): number {
 }
 
 export function isActiveToday(streak: StreakData): boolean {
-  return streak.lastActivityDate === toDateString(new Date());
+  return streak.lastActivityDate === toDateString(getNow());
 }
 
 export function updateStreak(streak: StreakData): StreakData {
-  const today = toDateString(new Date());
+  const today = toDateString(getNow());
 
   if (streak.lastActivityDate === today) {
     return streak;
@@ -42,14 +43,14 @@ export function updateStreak(streak: StreakData): StreakData {
     lastActivityDate: today,
     streakHistory: {
       ...streak.streakHistory,
-      [today]: true,
+      [today]: (streak.streakHistory[today] ?? 0) + 1,
     },
   };
 }
 
 export function shouldResetStreak(streak: StreakData): boolean {
   if (!streak.lastActivityDate) return false;
-  const today = toDateString(new Date());
+  const today = toDateString(getNow());
   const gap = daysBetween(streak.lastActivityDate, today);
   return gap > 1;
 }
@@ -67,11 +68,11 @@ export function getNextMilestone(
 }
 
 export function generateStreakCalendar(
-  streakHistory: Record<string, boolean>,
+  streakHistory: Record<string, number>,
   days: number = 30
 ): { date: string; active: boolean }[] {
   const calendar: { date: string; active: boolean }[] = [];
-  const today = new Date();
+  const today = getNow();
 
   for (let i = days - 1; i >= 0; i--) {
     const date = new Date(today);
@@ -79,7 +80,7 @@ export function generateStreakCalendar(
     const dateStr = toDateString(date);
     calendar.push({
       date: dateStr,
-      active: streakHistory[dateStr] === true,
+      active: (streakHistory[dateStr] ?? 0) > 0,
     });
   }
 
@@ -87,9 +88,9 @@ export function generateStreakCalendar(
 }
 
 export function generateWeekCalendar(
-  streakHistory: Record<string, boolean>
+  streakHistory: Record<string, number>
 ): { date: string; active: boolean }[] {
-  const today = new Date();
+  const today = getNow();
   const dayOfWeek = today.getDay(); // 0 = Sunday
   const sunday = new Date(today);
   sunday.setDate(today.getDate() - dayOfWeek);
@@ -101,7 +102,7 @@ export function generateWeekCalendar(
     const dateStr = toDateString(date);
     calendar.push({
       date: dateStr,
-      active: streakHistory[dateStr] === true,
+      active: (streakHistory[dateStr] ?? 0) > 0,
     });
   }
 

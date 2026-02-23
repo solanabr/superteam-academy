@@ -7,173 +7,14 @@
 
 /* ============================================================
    SOLARIUM DESIGN SYSTEM v9 — CSS Custom Properties
-   Dark mode default via :root / [data-theme="dark"]
-   Light mode via [data-theme="light"]
-   next-themes .dark class mirrored for Tailwind variant compat
+   Light mode: :root (default baseline)
+   Dark mode:  .dark (next-themes class attribute)
    Source of truth: docs/design-system.html
    ============================================================ */
 
 @layer base {
-  /* ── Dark mode ── */
-  /* :root is the light-mode baseline (next-themes attribute="class" + defaultTheme="light").
-     [data-theme="dark"] targets any explicit data-theme attribute usage.             */
-  [data-theme="dark"] {
-    /* ── Backgrounds ── */
-    --bg: #0e1117;
-    --surface: #131920;
-    --card: #161b27;
-    --card-hover: #1c2333;
-    --card-glass: rgba(22, 27, 39, 0.95);
-    --card-glass-blur: rgba(22, 27, 39, 0.7);
-    --input: #1c2333;
-
-    /* ── Borders ── */
-    --border: rgba(255, 255, 255, 0.07);
-    --border-default: rgba(255, 255, 255, 0.11);
-    --border-strong: rgba(255, 255, 255, 0.2);
-    --border-hover: rgba(255, 255, 255, 0.2);
-
-    /* ── Primary — Forest Emerald ── */
-    --primary: #2ecc8e;
-    --primary-hover: #27bd82;
-    --primary-dark: #0a7055;
-    --primary-dim: rgba(46, 204, 142, 0.13);
-    --primary-glow: 0 0 20px rgba(46, 204, 142, 0.22);
-    /* Tailwind compat aliases */
-    --primary-light: rgba(46, 204, 142, 0.15);
-    --primary-bg: rgba(46, 204, 142, 0.1);
-    --primary-border: rgba(46, 204, 142, 0.4);
-
-    /* ── XP — Warm Amber ── */
-    --xp: #f5a623;
-    --xp-dim: rgba(245, 166, 35, 0.14);
-    --xp-dark: #b45309;
-    /* Tailwind compat: accent aliases map to XP */
-    --accent: #f5a623;
-    --accent-hover: #e09520;
-    --accent-dark: #b45309;
-    --accent-light: rgba(245, 166, 35, 0.15);
-    --accent-bg: rgba(245, 166, 35, 0.1);
-    --accent-border: rgba(245, 166, 35, 0.4);
-    --accent-border-s: rgba(245, 166, 35, 0.3);
-    /* Gold metallic palette (medal/badge gradients) */
-    --gold-hi: #fde68a;
-    --gold-ink: #78350f;
-
-    /* ── Streak — Flame Orange ── */
-    --streak: #f97316;
-    --streak-dim: rgba(249, 115, 22, 0.13);
-    --streak-light: rgba(249, 115, 22, 0.12);
-    --streak-border: rgba(249, 115, 22, 0.4);
-
-    /* ── Level — Purple ── */
-    --level: #a78bfa;
-    --level-dim: rgba(167, 139, 250, 0.13);
-    --level-border: rgba(167, 139, 250, 0.4);
-
-    /* ── Solana — NFT/cert only ── */
-    --sol-grad: linear-gradient(135deg, #9945ff 0%, #00c2ff 50%, #14f195 100%);
-    --sol-subtle: linear-gradient(
-      135deg,
-      rgba(153, 69, 255, 0.1) 0%,
-      rgba(0, 194, 255, 0.08) 50%,
-      rgba(20, 241, 149, 0.1) 100%
-    );
-    --sol-green: #14f195;
-    --sol-purple: #9945ff;
-    /* Tailwind compat aliases */
-    --solana-purple: #9945ff;
-    --solana-green: #14f195;
-
-    /* ── Semantic status ── */
-    --success: #3fb950;
-    --success-dark: #28a745;
-    --success-light: rgba(63, 185, 80, 0.15);
-    --success-bg: rgba(63, 185, 80, 0.1);
-    --success-border: rgba(63, 185, 80, 0.3);
-    --success-border-s: rgba(63, 185, 80, 0.4);
-    --error: #f85149;
-    /* Tailwind compat: danger aliases */
-    --danger: #f85149;
-    --danger-dark: #b91c1c;
-    --danger-light: rgba(248, 81, 73, 0.12);
-    --danger-border: rgba(248, 81, 73, 0.3);
-    --danger-border-s: rgba(248, 81, 73, 0.4);
-    --danger-bg: rgba(248, 81, 73, 0.2);
-
-    /* ── Resizer — theme-adaptive neutral overlays ── */
-    --resizer-bg: rgba(255, 255, 255, 0.04);
-    --resizer-handle: rgba(255, 255, 255, 0.2);
-
-    /* ── Text ── */
-    --text: #e6edf3;
-    --text-2: #8b949e;
-    --text-3: #78838f;
-    --text-disabled: #484f5a;
-
-    /* ── Difficulty track gradients ── */
-    --track-beg: linear-gradient(90deg, #2ecc8e, #34d399);
-    --track-int: linear-gradient(90deg, #0a7055, #2ecc8e);
-    --track-adv: linear-gradient(90deg, #f97316, #fbbf24);
-
-    /* ── Activity streak grid levels ── */
-    --sg-0: #1c2333;
-    --sg-1: #0d4a32;
-    --sg-2: #116b48;
-    --sg-3: #1a9964;
-    --sg-4: #2ecc8e;
-    --sg-today: #f5a623;
-
-    /* ── Typography — v9 shorthand tokens ── */
-    --font-d: "Nunito", sans-serif;
-    --font-b: "Plus Jakarta Sans", sans-serif;
-    --font-m: "JetBrains Mono", monospace;
-    /* Note: --font-sans, --font-display, --font-mono are injected at runtime
-       by the next/font/google loader in layout.tsx and take cascade precedence */
-
-    /* ── Radii ── */
-    --r-xs: 4px;
-    --r-sm: 8px;
-    --r-md: 12px;
-    --r-lg: 16px;
-    --r-xl: 22px;
-    --r-full: 999px;
-    /* Legacy shadcn compat */
-    --radius: 12px;
-
-    /* ── Shadows ── */
-    --shadow: 0 1px 3px rgba(0, 0, 0, 0.5), 0 4px 16px rgba(0, 0, 0, 0.35);
-    --shadow-hover: 0 4px 24px rgba(0, 0, 0, 0.5);
-    --shadow-glow-primary:
-      0 0 0 1px rgba(46, 204, 142, 0.25), 0 4px 20px rgba(46, 204, 142, 0.12);
-    /* Tailwind compat aliases */
-    --shadow-push-color: rgba(0, 0, 0, 0.5);
-    --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.5), 0 4px 16px rgba(0, 0, 0, 0.35);
-    --shadow-card-hover: 0 4px 24px rgba(0, 0, 0, 0.5);
-    --shadow-glow: 0 0 12px rgba(46, 204, 142, 0.08);
-    --shadow-glow-xp:
-      0 0 16px rgba(46, 204, 142, 0.22), 0 0 32px rgba(245, 166, 35, 0.15);
-    --shadow-cert: 0 2px 0 0 rgba(153, 69, 255, 0.45);
-    --shadow-cert-hover: 0 4px 0 0 rgba(153, 69, 255, 0.45);
-    --shadow-cert-lg: 0 4px 0 0 rgba(153, 69, 255, 0.45);
-
-    /* ── v5 compat tokens used in styleClasses.ts / Tailwind config ── */
-    --subtle: #1c2333;
-    --warm: #131920;
-    --secondary: #2ecc8e;
-    --secondary-light: #27bd82;
-    --secondary-bg: rgba(46, 204, 142, 0.12);
-
-    /* ── Misc compat ── */
-    --bw: 1px;
-    --prog-h: 4px;
-    --ring: var(--primary);
-  }
-
-  /* ── Light mode ── */
-  /* :root = light-mode baseline for next-themes attribute="class" setup */
-  :root,
-  [data-theme="light"] {
+  /* ── Light mode (baseline) ── */
+  :root {
     /* ── Backgrounds ── */
     --bg: #fafaf7;
     --surface: #ffffff;
@@ -181,6 +22,7 @@
     --card-hover: #f7f5f0;
     --card-glass: rgba(255, 255, 255, 0.95);
     --card-glass-blur: rgba(255, 255, 255, 0.7);
+    --card-alt: rgba(0, 0, 0, 0.02);
     --input: #f3f1ec;
 
     /* ── Borders ── */
@@ -318,9 +160,9 @@
     --ring: var(--primary);
   }
 
-  /* ── next-themes .dark class — mirrors :root dark token set ──
+  /* ── Dark mode ──
      next-themes toggles .dark on <html>; Tailwind's dark: variant
-     and dark:* utilities depend on this selector.                   */
+     and dark:* utilities depend on this class selector.             */
   .dark {
     --bg: #0e1117;
     --surface: #131920;
@@ -328,6 +170,7 @@
     --card-hover: #1c2333;
     --card-glass: rgba(22, 27, 39, 0.95);
     --card-glass-blur: rgba(22, 27, 39, 0.7);
+    --card-alt: rgba(255, 255, 255, 0.02);
     --input: #1c2333;
 
     --border: rgba(255, 255, 255, 0.07);
@@ -430,6 +273,25 @@
     --secondary: #2ecc8e;
     --secondary-light: #27bd82;
     --secondary-bg: rgba(46, 204, 142, 0.12);
+
+    /* ── Typography — v9 shorthand tokens ── */
+    --font-d: "Nunito", sans-serif;
+    --font-b: "Plus Jakarta Sans", sans-serif;
+    --font-m: "JetBrains Mono", monospace;
+
+    /* ── Radii ── */
+    --r-xs: 4px;
+    --r-sm: 8px;
+    --r-md: 12px;
+    --r-lg: 16px;
+    --r-xl: 22px;
+    --r-full: 999px;
+    --radius: 12px;
+
+    /* ── Misc compat ── */
+    --bw: 1px;
+    --prog-h: 4px;
+    --ring: var(--primary);
   }
 }
 
@@ -497,151 +359,6 @@
     transform: translateY(-2px);
     box-shadow: var(--shadow-card-hover);
     border-color: var(--border-hover);
-  }
-
-  /* ── V9 Progress Bars — 14px main track with shimmer + inner 3D highlight ── */
-  .prog-wrap {
-    margin-bottom: 20px;
-  }
-  .prog-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 7px;
-  }
-  .prog-label {
-    font-family: var(--font-display, var(--font-d));
-    font-weight: 700;
-    font-size: 14px;
-  }
-  .prog-val {
-    font-family: var(--font-mono, var(--font-m));
-    font-size: 12px;
-    color: var(--primary);
-  }
-  .prog-track {
-    width: 100%;
-    height: 14px;
-    background: var(--input);
-    border-radius: var(--r-full);
-    border: 1px solid var(--border);
-    overflow: hidden;
-  }
-  .prog-fill {
-    height: 100%;
-    border-radius: var(--r-full);
-    position: relative;
-    transition: width 0.7s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-  /* Shimmer overlay */
-  .prog-fill::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(255, 255, 255, 0.22),
-      transparent
-    );
-    animation: shimmer 2.2s infinite;
-  }
-  /* Inner 3D highlight */
-  .prog-fill::before {
-    content: "";
-    position: absolute;
-    top: 2px;
-    left: 8px;
-    right: 8px;
-    height: 3px;
-    background: rgba(255, 255, 255, 0.22);
-    border-radius: var(--r-full);
-  }
-  /* Fill gradient variants */
-  .pf-primary {
-    background: linear-gradient(90deg, var(--primary-dark), var(--primary));
-  }
-  .pf-xp {
-    background: linear-gradient(90deg, var(--xp-dark), var(--xp));
-  }
-  .pf-success {
-    background: linear-gradient(90deg, #16803d, var(--success));
-  }
-
-  /* ── V9 Thin Progress Bar — 4px (sidebar/dashboard) ── */
-  .prog-thin-track {
-    width: 100%;
-    height: 4px;
-    background: var(--input);
-    border-radius: var(--r-full);
-    overflow: hidden;
-  }
-  .prog-thin-fill {
-    height: 100%;
-    border-radius: var(--r-full);
-    position: relative;
-    transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-  .prog-thin-fill::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(255, 255, 255, 0.28),
-      transparent
-    );
-    animation: shimmer 2.2s infinite;
-  }
-
-  /* ── Legacy compat aliases — map old class names to v9 ── */
-  .progress-fat {
-    width: 100%;
-    height: 14px;
-    background: var(--input);
-    border-radius: var(--r-full);
-    border: 1px solid var(--border);
-    overflow: hidden;
-  }
-  .progress-fat-fill {
-    height: 100%;
-    border-radius: var(--r-full);
-    position: relative;
-    transition: width 0.7s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-  .progress-fat-fill::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(255, 255, 255, 0.22),
-      transparent
-    );
-    animation: shimmer 2.2s infinite;
-  }
-  .progress-fat-fill::before {
-    content: "";
-    position: absolute;
-    top: 2px;
-    left: 8px;
-    right: 8px;
-    height: 3px;
-    background: rgba(255, 255, 255, 0.22);
-    border-radius: var(--r-full);
-  }
-
-  /* ── Progress fill variants (legacy + v9) ── */
-  .progress-fill-teal {
-    background: linear-gradient(90deg, var(--primary-dark), var(--primary));
-  }
-  .progress-fill-amber {
-    background: linear-gradient(90deg, var(--xp-dark), var(--xp));
-  }
-  .progress-fill-green {
-    background: linear-gradient(90deg, #16803d, var(--success));
   }
 
   /* ── Card banner difficulty gradients ── */
@@ -717,75 +434,79 @@
     transform: scale(1.12);
   }
 
-  /* Lv 1–4: warm amber seed */
+  /* Lv 1–4: seed — gold filled */
   .lv-seed {
-    background: rgba(180, 83, 9, 0.12);
-    border-color: rgba(245, 166, 35, 0.4);
-    color: var(--xp);
-  }
-
-  /* Lv 5–9: deeper gold sprout */
-  .lv-sprout {
-    background: rgba(180, 83, 9, 0.18);
-    border-color: rgba(245, 166, 35, 0.55);
-    color: #f5a623;
-    box-shadow: 0 0 12px rgba(245, 166, 35, 0.2);
-  }
-
-  /* Lv 10–19: crimson sapling */
-  .lv-sapling {
-    background: rgba(185, 28, 28, 0.15);
-    border-color: rgba(239, 68, 68, 0.45);
-    color: #ef4444;
-    box-shadow: 0 0 14px rgba(239, 68, 68, 0.18);
-  }
-
-  /* Lv 20–49: deep red canopy */
-  .lv-canopy {
     background: linear-gradient(
       145deg,
-      #7f1d1d 0%,
-      #b91c1c 30%,
-      #ef4444 70%,
-      #fca5a5 100%
+      #92400e 0%,
+      #b45309 30%,
+      #f5a623 70%,
+      #fde68a 100%
     );
-    border-color: #ef4444;
-    color: #1a0000;
-    box-shadow: 0 0 18px rgba(239, 68, 68, 0.45);
+    border-color: #f5a623;
+    color: var(--bg);
+    box-shadow: 0 0 18px rgba(245, 166, 35, 0.45);
     animation: lv-canopy-pulse 3s ease-in-out infinite;
   }
 
-  /* Lv 50+: Solana legend */
+  /* Lv 5–9: sprout — orange filled */
+  .lv-sprout {
+    background: linear-gradient(
+      145deg,
+      #9a3412 0%,
+      #c2410c 30%,
+      #f97316 70%,
+      #fdba74 100%
+    );
+    border-color: #f97316;
+    color: var(--bg);
+    box-shadow: 0 0 18px rgba(249, 115, 22, 0.45);
+    animation: lv-canopy-pulse 3s ease-in-out infinite;
+  }
+
+  /* Lv 10–19: sapling — magenta-pink */
+  .lv-sapling {
+    background: linear-gradient(
+      145deg,
+      #9f1239 0%,
+      #db2777 30%,
+      #e879f9 70%,
+      #f0abfc 100%
+    );
+    border-color: #e879f9;
+    color: var(--bg);
+    box-shadow: 0 0 18px rgba(232, 121, 249, 0.45);
+    animation: lv-canopy-pulse 3s ease-in-out infinite;
+  }
+
+  /* Lv 20–49: canopy — rich purple filled */
+  .lv-canopy {
+    background: linear-gradient(
+      145deg,
+      #4c1d95 0%,
+      #6d28d9 30%,
+      #9945ff 70%,
+      #c4b5fd 100%
+    );
+    border-color: #9945ff;
+    color: var(--bg);
+    box-shadow: 0 0 20px rgba(153, 69, 255, 0.5);
+    animation: lv-canopy-pulse 3s ease-in-out infinite;
+  }
+
+  /* Lv 50+: legend — Solana iridescent (purple → green) */
   .lv-legend {
     background: linear-gradient(
       145deg,
-      rgba(153, 69, 255, 0.2),
-      rgba(20, 241, 149, 0.15)
+      #7c3aed 0%,
+      #9945ff 30%,
+      #14f195 70%,
+      #6ee7b7 100%
     );
-    border-color: #9945ff;
-    color: var(--level);
-    box-shadow: 0 0 18px rgba(153, 69, 255, 0.35);
+    border-color: #14f195;
+    color: var(--bg);
+    box-shadow: 0 0 24px rgba(153, 69, 255, 0.45);
     animation: lv-legend-pulse 3s ease-in-out infinite;
-  }
-
-  /* Light-mode level badge overrides — boosted opacity for visibility */
-  :root .lv-seed,
-  [data-theme="light"] .lv-seed {
-    background: rgba(180, 83, 9, 0.1);
-    border-color: rgba(180, 83, 9, 0.4);
-    color: #b45309;
-  }
-  :root .lv-sprout,
-  [data-theme="light"] .lv-sprout {
-    color: #92400e;
-    background: rgba(180, 83, 9, 0.14);
-    border-color: rgba(180, 83, 9, 0.5);
-  }
-  :root .lv-sapling,
-  [data-theme="light"] .lv-sapling {
-    background: rgba(185, 28, 28, 0.1);
-    border-color: rgba(239, 68, 68, 0.45);
-    color: #dc2626;
   }
 
   /* ── Achievement Medal Grid — V9 Solarium ── */
@@ -1328,6 +1049,7 @@
   border-radius: var(--r-full);
   background: linear-gradient(90deg, var(--primary-dark), var(--primary));
   position: relative;
+  overflow: hidden;
 }
 .sidebar-prog-fill::after {
   content: "";
@@ -1335,17 +1057,22 @@
   inset: 0;
   background: linear-gradient(
     90deg,
-    transparent,
-    rgba(255, 255, 255, 0.3),
-    transparent
+    transparent 0%,
+    rgba(255, 255, 255, 0.12) 25%,
+    rgba(255, 255, 255, 0.38) 50%,
+    rgba(255, 255, 255, 0.12) 75%,
+    transparent 100%
   );
-  animation: shimmer 2.2s infinite;
+  animation: shimmer 2.4s ease-in-out infinite;
 }
 
-/* ── V9 shimmer — sweeping light effect on progress bars ── */
+/* ── V9 shimmer — sweeping white aura on progress bars ── */
 @keyframes shimmer {
   0% {
     transform: translateX(-100%);
+  }
+  60% {
+    transform: translateX(100%);
   }
   100% {
     transform: translateX(100%);
@@ -1368,31 +1095,35 @@
   height: 100%;
   border-radius: var(--r-full);
   position: relative;
+  overflow: hidden;
   transition: width 0.7s cubic-bezier(0.4, 0, 0.2, 1);
 }
-/* Shimmer — sweeping light overlay */
+/* Shimmer — sweeping white aura across the fill */
 .prog-fill::after {
   content: "";
   position: absolute;
   inset: 0;
   background: linear-gradient(
     90deg,
-    transparent,
-    rgba(255, 255, 255, 0.22),
-    transparent
+    transparent 0%,
+    rgba(255, 255, 255, 0.08) 25%,
+    rgba(255, 255, 255, 0.32) 50%,
+    rgba(255, 255, 255, 0.08) 75%,
+    transparent 100%
   );
-  animation: shimmer 2.2s infinite;
+  animation: shimmer 2.4s ease-in-out infinite;
 }
-/* Inner 3D highlight — subtle white ridge near top */
+/* Inner 3D highlight — white ridge near top */
 .prog-fill::before {
   content: "";
   position: absolute;
   top: 2px;
-  left: 8px;
-  right: 8px;
+  left: 6px;
+  right: 6px;
   height: 3px;
-  background: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.28);
   border-radius: var(--r-full);
+  z-index: 1;
 }
 /* Fill gradient variants */
 .pf-primary {
@@ -1417,6 +1148,7 @@
   height: 100%;
   border-radius: var(--r-full);
   position: relative;
+  overflow: hidden;
   transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .prog-thin-fill::after {
@@ -1425,11 +1157,13 @@
   inset: 0;
   background: linear-gradient(
     90deg,
-    transparent,
-    rgba(255, 255, 255, 0.28),
-    transparent
+    transparent 0%,
+    rgba(255, 255, 255, 0.1) 25%,
+    rgba(255, 255, 255, 0.35) 50%,
+    rgba(255, 255, 255, 0.1) 75%,
+    transparent 100%
   );
-  animation: shimmer 2.2s infinite;
+  animation: shimmer 2.4s ease-in-out infinite;
 }
 
 /* Progress header layout */
@@ -1466,6 +1200,7 @@
   height: 100%;
   border-radius: var(--r-full);
   position: relative;
+  overflow: hidden;
   transition: width 0.7s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .progress-fat-fill::after {
@@ -1474,21 +1209,24 @@
   inset: 0;
   background: linear-gradient(
     90deg,
-    transparent,
-    rgba(255, 255, 255, 0.22),
-    transparent
+    transparent 0%,
+    rgba(255, 255, 255, 0.08) 25%,
+    rgba(255, 255, 255, 0.32) 50%,
+    rgba(255, 255, 255, 0.08) 75%,
+    transparent 100%
   );
-  animation: shimmer 2.2s infinite;
+  animation: shimmer 2.4s ease-in-out infinite;
 }
 .progress-fat-fill::before {
   content: "";
   position: absolute;
   top: 2px;
-  left: 8px;
-  right: 8px;
+  left: 6px;
+  right: 6px;
   height: 3px;
-  background: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.28);
   border-radius: var(--r-full);
+  z-index: 1;
 }
 .progress-fill-teal {
   background: linear-gradient(90deg, var(--primary-dark), var(--primary));
@@ -1531,24 +1269,25 @@
   }
 }
 
-/* ── Level badge tier animations (referenced by .lv-canopy and .lv-legend) ── */
+/* ── Level badge tier animations ── */
+/* Shared glow pulse — uses neutral white so it works for all tier colors */
 @keyframes lv-canopy-pulse {
   0%,
   100% {
-    box-shadow: 0 0 14px rgba(239, 68, 68, 0.38);
+    filter: brightness(1);
   }
   50% {
-    box-shadow: 0 0 22px rgba(239, 68, 68, 0.62);
+    filter: brightness(1.15);
   }
 }
 
 @keyframes lv-legend-pulse {
   0%,
   100% {
-    box-shadow: 0 0 14px rgba(153, 69, 255, 0.3);
+    box-shadow: 0 0 18px rgba(153, 69, 255, 0.35);
   }
   50% {
-    box-shadow: 0 0 24px rgba(20, 241, 149, 0.45);
+    box-shadow: 0 0 28px rgba(20, 241, 149, 0.5);
   }
 }
 
@@ -1618,16 +1357,6 @@
   }
 }
 
-@keyframes col-breathe {
-  0%,
-  100% {
-    opacity: 0.6;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
 /* ═══════════════════════════════════════════════════════════════
    COURSE CARDS — atmospheric left-accent editorial style (V9)
    Left 3px accent bar + radial glow + large ghost background number
@@ -1684,15 +1413,6 @@
       transparent 65%
     );
   }
-  /* data-theme compat */
-  [data-theme="dark"] .course-card.int {
-    border-left-color: #2ecc8e;
-    background-image: radial-gradient(
-      ellipse 120% 80% at 0% 100%,
-      rgba(46, 204, 142, 0.07) 0%,
-      transparent 65%
-    );
-  }
 
   /* ── Advanced track — orange/amber ── */
   .course-card.adv {
@@ -1729,9 +1449,6 @@
     color: rgba(10, 112, 85, 0.07);
   }
   .dark .course-card.int .course-num {
-    color: rgba(46, 204, 142, 0.07);
-  }
-  [data-theme="dark"] .course-card.int .course-num {
     color: rgba(46, 204, 142, 0.07);
   }
   .course-card.adv .course-num {
@@ -1855,6 +1572,21 @@
   100% {
     opacity: 1;
     transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes xp-float {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+  60% {
+    opacity: 1;
+    transform: translate(-50%, 4px) scale(1.05);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, 10px) scale(0.9);
   }
 }
 
@@ -1987,7 +1719,7 @@
   border-color: rgba(46, 204, 142, 0.2);
   color: var(--primary);
 }
-[data-theme="light"] .toast.info {
+.light .toast.info {
   border-color: rgba(10, 112, 85, 0.2);
 }
 
@@ -2209,6 +1941,89 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   HEADER NAV — floating pill bar with glow active states
+   ═══════════════════════════════════════════════════════════════ */
+.nav-bar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 9999px;
+  background: var(--card-glass-blur);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+.nav-bar::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: 9999px;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.06) 0%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.03) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 13px;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-3);
+  text-decoration: none;
+  position: relative;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+}
+.nav-link:hover {
+  color: var(--text-2);
+  background: var(--card-hover);
+}
+.nav-link.active {
+  color: var(--primary);
+  background: var(--primary-dim);
+  box-shadow:
+    0 0 12px rgba(46, 204, 142, 0.12),
+    inset 0 1px 0 rgba(46, 204, 142, 0.08);
+}
+.nav-link.active::after {
+  content: "";
+  position: absolute;
+  bottom: -1px;
+  left: 20%;
+  right: 20%;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--primary);
+  opacity: 0.7;
+  box-shadow: 0 0 8px var(--primary);
+}
+
+/* Light mode adjustments */
+:root .nav-link.active {
+  box-shadow:
+    0 0 8px rgba(10, 112, 85, 0.1),
+    inset 0 1px 0 rgba(10, 112, 85, 0.06);
+}
+
+/* ═══════════════════════════════════════════════════════════════
    DASHBOARD IDENTITY PANEL — v9 spec lines 438-670
    ═══════════════════════════════════════════════════════════════ */
 .dash-panel {
@@ -2275,7 +2090,7 @@
 }
 @media (min-width: 768px) {
   .dash-top {
-    grid-template-columns: 2fr 3fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
   }
 }
 .dash-identity {
@@ -2336,6 +2151,7 @@
   border-radius: var(--r-full);
   background: linear-gradient(90deg, var(--xp-dark), var(--xp));
   position: relative;
+  overflow: hidden;
   transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .dash-xp-fill::after {
@@ -2344,11 +2160,13 @@
   inset: 0;
   background: linear-gradient(
     90deg,
-    transparent,
-    rgba(255, 255, 255, 0.28),
-    transparent
+    transparent 0%,
+    rgba(255, 255, 255, 0.1) 25%,
+    rgba(255, 255, 255, 0.35) 50%,
+    rgba(255, 255, 255, 0.1) 75%,
+    transparent 100%
   );
-  animation: shimmer 2.2s infinite;
+  animation: shimmer 2.4s ease-in-out infinite;
 }
 .dash-ach {
   padding: 24px 26px;
@@ -2663,11 +2481,14 @@
 /* Heatmap cells */
 .contrib-scroll {
   overflow-x: auto;
+  overflow-y: visible;
   -ms-overflow-style: none;
   scrollbar-width: none;
   position: relative;
   z-index: 1;
-  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+  padding: 6px;
 }
 .contrib-scroll::-webkit-scrollbar {
   display: none;
@@ -2716,22 +2537,6 @@
   grid-auto-columns: 11px;
   gap: 3px;
   position: relative;
-}
-.today-col-glow {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 11px;
-  background: linear-gradient(
-    180deg,
-    rgba(245, 166, 35, 0.13),
-    rgba(245, 166, 35, 0.05),
-    transparent
-  );
-  border-radius: 3px;
-  pointer-events: none;
-  z-index: 0;
-  animation: col-breathe 2.5s ease-in-out infinite;
 }
 .cday {
   width: 11px;
@@ -2947,17 +2752,6 @@
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-/* ── Dashboard Card Override — match design-system.html .course-card ── */
-.dash-card {
-  border-width: 1px !important;
-  border-radius: var(--r-lg) !important;
-  box-shadow: var(--shadow) !important;
-}
-.dash-card:hover {
-  transform: translateY(-5px) !important;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25) !important;
 }
 
 /* ── Current Course Card — compact "in-progress" card w/ accent bar ── */
@@ -3209,12 +3003,8 @@
   color: var(--primary);
   border-color: rgba(46, 204, 142, 0.22);
 }
-[data-theme="light"] .pill-primary,
-[data-theme="light"] .pill-beg {
-  border-color: rgba(10, 112, 85, 0.2);
-}
-:root .pill-primary,
-:root .pill-beg {
+.light .pill-primary,
+.light .pill-beg {
   border-color: rgba(10, 112, 85, 0.2);
 }
 .pill-int {
@@ -3222,7 +3012,6 @@
   color: var(--primary-dark);
   border-color: rgba(10, 112, 85, 0.2);
 }
-[data-theme="dark"] .pill-int,
 .dark .pill-int {
   color: var(--primary);
 }
@@ -3231,8 +3020,7 @@
   color: var(--streak);
   border-color: rgba(249, 115, 22, 0.22);
 }
-[data-theme="light"] .pill-adv,
-:root .pill-adv {
+.light .pill-adv {
   border-color: rgba(234, 88, 12, 0.2);
 }
 .pill-xp {
@@ -3240,8 +3028,7 @@
   color: var(--xp);
   border-color: rgba(245, 166, 35, 0.22);
 }
-[data-theme="light"] .pill-xp,
-:root .pill-xp {
+.light .pill-xp {
   border-color: rgba(245, 158, 11, 0.2);
 }
 .pill-streak {
@@ -3249,8 +3036,7 @@
   color: var(--streak);
   border-color: rgba(249, 115, 22, 0.22);
 }
-[data-theme="light"] .pill-streak,
-:root .pill-streak {
+.light .pill-streak {
   border-color: rgba(234, 88, 12, 0.2);
 }
 .pill-level {
@@ -3258,8 +3044,7 @@
   color: var(--level);
   border-color: rgba(167, 139, 250, 0.22);
 }
-[data-theme="light"] .pill-level,
-:root .pill-level {
+.light .pill-level {
   color: var(--level);
   border-color: rgba(124, 58, 237, 0.2);
 }
@@ -3273,8 +3058,7 @@
   color: var(--success);
   border-color: rgba(63, 185, 80, 0.22);
 }
-[data-theme="light"] .pill-done,
-:root .pill-done {
+.light .pill-done {
   color: var(--success);
   border-color: rgba(22, 163, 74, 0.2);
 }

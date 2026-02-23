@@ -40,10 +40,7 @@ export function XpPopup({ className }: { className?: string }) {
 
   return (
     <div
-      className={cn(
-        "pointer-events-none fixed bottom-20 left-6 z-50 flex flex-col gap-2",
-        className
-      )}
+      className={cn("flex flex-col items-end gap-2", className)}
       aria-live="polite"
     >
       {events.map((ev) => (

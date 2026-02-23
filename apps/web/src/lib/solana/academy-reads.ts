@@ -13,14 +13,14 @@ import {
   findCoursePDA,
   findEnrollmentPDA,
   findAchievementReceiptPDA,
-  PROGRAM_ID,
+  getProgramId,
 } from "./pda";
 
 const coder = new BorshCoder(IDL as unknown as Idl);
 
 export async function fetchConfig(
   connection: Connection,
-  programId: PublicKey = PROGRAM_ID
+  programId: PublicKey = getProgramId()
 ) {
   const [pda] = findConfigPDA(programId);
   const accountInfo = await connection.getAccountInfo(pda);
@@ -31,7 +31,7 @@ export async function fetchConfig(
 export async function fetchCourse(
   courseId: string,
   connection: Connection,
-  programId: PublicKey = PROGRAM_ID
+  programId: PublicKey = getProgramId()
 ) {
   const [pda] = findCoursePDA(courseId, programId);
   const accountInfo = await connection.getAccountInfo(pda);
@@ -43,7 +43,7 @@ export async function fetchEnrollment(
   courseId: string,
   user: PublicKey,
   connection: Connection,
-  programId: PublicKey = PROGRAM_ID
+  programId: PublicKey = getProgramId()
 ) {
   const [pda] = findEnrollmentPDA(courseId, user, programId);
   const accountInfo = await connection.getAccountInfo(pda);
@@ -89,7 +89,7 @@ export async function fetchAchievementReceipt(
   achievementId: string,
   recipientAddress: string,
   connection: Connection,
-  programId: PublicKey = PROGRAM_ID
+  programId: PublicKey = getProgramId()
 ): Promise<boolean> {
   try {
     const recipient = new PublicKey(recipientAddress);

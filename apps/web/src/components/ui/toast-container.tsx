@@ -84,7 +84,7 @@ export function ToastContainer() {
   return (
     <div
       className="pointer-events-none fixed bottom-6 right-6 z-50 flex w-full max-w-xs flex-col gap-2"
-      aria-live="assertive"
+      aria-live="polite"
     >
       {toasts.map((t) => {
         const Icon = iconMap[t.variant];

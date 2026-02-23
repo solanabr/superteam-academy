@@ -4,7 +4,34 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"],
+      "env": [
+        "NEXT_PUBLIC_SUPABASE_URL",
+        "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+        "SUPABASE_SERVICE_ROLE_KEY",
+        "NEXT_PUBLIC_SANITY_PROJECT_ID",
+        "NEXT_PUBLIC_SANITY_DATASET",
+        "SANITY_API_TOKEN",
+        "SANITY_ADMIN_TOKEN",
+        "NEXT_PUBLIC_SOLANA_RPC_URL",
+        "NEXT_PUBLIC_SOLANA_NETWORK",
+        "NEXT_PUBLIC_PROGRAM_ID",
+        "NEXT_PUBLIC_XP_MINT_ADDRESS",
+        "NEXT_PUBLIC_BACKEND_SIGNER",
+        "NEXT_PUBLIC_HELIUS_API_KEY",
+        "HELIUS_WEBHOOK_SECRET",
+        "PROGRAM_AUTHORITY_SECRET",
+        "BACKEND_SIGNER_SECRET",
+        "ADMIN_SECRET",
+        "NEXT_PUBLIC_GA4_MEASUREMENT_ID",
+        "NEXT_PUBLIC_POSTHOG_KEY",
+        "NEXT_PUBLIC_POSTHOG_HOST",
+        "SENTRY_DSN",
+        "NEXT_PUBLIC_GOOGLE_CLIENT_ID",
+        "NEXT_PUBLIC_BUILD_SERVER_URL",
+        "BUILD_SERVER_API_KEY",
+        "NEXT_PUBLIC_APP_URL"
+      ]
     },
     "dev": {
       "cache": false,

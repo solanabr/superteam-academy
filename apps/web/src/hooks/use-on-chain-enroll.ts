@@ -96,28 +96,9 @@ export function useOnChainEnroll({
         return;
       }
 
-      // On-chain TX succeeded — sync to Supabase via API.
-      const res = await fetch("/api/enrollment/sync", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          courseId,
-          txSignature: onChainSignature,
-          action: "enroll",
-        }),
-      });
-
-      if (res.ok) {
-        dispatchToast("Enrolled successfully!", "success");
-        onSuccess?.();
-        return;
-      }
-
-      const msg =
-        "Enrollment confirmed on-chain but sync failed. Please refresh the page.";
-      setEnrollError(msg);
-      dispatchToast(msg, "warning");
-      onError?.(msg);
+      // On-chain TX succeeded — Helius webhook will sync to Supabase.
+      dispatchToast("Enrolled successfully!", "success");
+      onSuccess?.();
     } finally {
       setIsEnrolling(false);
     }

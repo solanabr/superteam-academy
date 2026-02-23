@@ -12,9 +12,8 @@ import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { AuthModal } from "@/components/auth/auth-modal";
 import { UserMenu } from "@/components/auth/user-menu";
-import { dispatchLevelUp } from "@/components/gamification/level-up-overlay";
 import { LevelBadge } from "@/components/gamification/level-badge";
-import { xpToNextLevel } from "@/lib/gamification/xp";
+import { xpToNextLevel, calculateLevel } from "@/lib/gamification/xp";
 import { useXpBalance } from "@/lib/solana/hooks";
 import { createClient } from "@/lib/supabase/client";
 
@@ -44,9 +43,11 @@ export function Header() {
   const [displayedXp, setDisplayedXp] = useState(0);
   const [level, setLevel] = useState(0);
   const [glowing, setGlowing] = useState(false);
+  const [xpGainAmount, setXpGainAmount] = useState<number | null>(null);
   const targetXpRef = useRef(0);
   const prevLevelRef = useRef(0);
   const rafRef = useRef<number>(0);
+  const xpGainTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
   const { balance: onChainXp } = useXpBalance();
 
@@ -116,17 +117,14 @@ export function Header() {
       .maybeSingle();
 
     if (data) {
-      const newXp = data.total_xp ?? 0;
+      const supabaseXp = data.total_xp ?? 0;
+      // Preserve any higher on-chain value that was previously reconciled
+      const newXp = Math.max(supabaseXp, targetXpRef.current);
       const prevXp = targetXpRef.current;
       targetXpRef.current = newXp;
-      const newLevel = data.level ?? 0;
-      const prevLevel = prevLevelRef.current;
+      const newLevel = calculateLevel(newXp);
       prevLevelRef.current = newLevel;
       setLevel(newLevel);
-
-      if (newLevel > prevLevel && prevLevel > 0) {
-        dispatchLevelUp(newLevel);
-      }
 
       if (newXp > prevXp && prevXp > 0) {
         setGlowing(true);
@@ -164,13 +162,25 @@ export function Header() {
     if (onChainXp > 0 && onChainXp > targetXpRef.current) {
       targetXpRef.current = onChainXp;
       setDisplayedXp(onChainXp);
+      setLevel(calculateLevel(onChainXp));
     }
   }, [onChainXp]);
 
   useEffect(() => {
-    const handleXpGain = () => setTimeout(fetchXp, 500);
+    const handleXpGain = (e: Event) => {
+      const amount = (e as CustomEvent<{ amount: number }>).detail?.amount;
+      if (amount > 0) {
+        setXpGainAmount(amount);
+        clearTimeout(xpGainTimerRef.current);
+        xpGainTimerRef.current = setTimeout(() => setXpGainAmount(null), 2000);
+      }
+      setTimeout(fetchXp, 500);
+    };
     window.addEventListener("xp-gain", handleXpGain);
-    return () => window.removeEventListener("xp-gain", handleXpGain);
+    return () => {
+      window.removeEventListener("xp-gain", handleXpGain);
+      clearTimeout(xpGainTimerRef.current);
+    };
   }, [fetchXp]);
 
   const isLoggedIn = !!user && !!profile;
@@ -182,13 +192,13 @@ export function Header() {
       {/* Main header bar — bottom border is XP progress */}
       <div className="relative bg-transparent backdrop-blur-md">
         <div className="relative mx-auto flex h-[56px] max-w-[1600px] items-center px-[16px]">
-          {/* Center: nav links (desktop) — absolute to be truly centered */}
-          <nav
-            className="absolute inset-0 hidden items-center justify-center gap-[2px] md:flex"
-            aria-label={tA11y("platformNavigation")}
-          >
-            {isLoggedIn &&
-              navItems.map((item) => {
+          {/* Center: nav pill bar (desktop) */}
+          {isLoggedIn && (
+            <nav
+              className="nav-bar absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 md:flex"
+              aria-label={tA11y("platformNavigation")}
+            >
+              {navItems.map((item) => {
                 const fullHref = `/${locale}${item.href}`;
                 const isActive = pathname.startsWith(fullHref);
                 const Icon = item.icon;
@@ -198,19 +208,15 @@ export function Header() {
                     key={item.key}
                     href={fullHref}
                     aria-current={isActive ? "page" : undefined}
-                    className={cn(
-                      "flex items-center gap-[8px] rounded-[var(--r-md)] px-[14px] py-[7px] text-[13px] font-semibold no-underline transition-all duration-150",
-                      isActive
-                        ? "bg-[var(--primary-dim)] text-[var(--primary)]"
-                        : "text-[var(--text-3)] hover:bg-[var(--card)] hover:text-[var(--text-2)]"
-                    )}
+                    className={cn("nav-link", isActive && "active")}
                   >
-                    <Icon size={16} weight="bold" />
+                    <Icon size={16} weight={isActive ? "fill" : "bold"} />
                     <span>{t(item.key)}</span>
                   </Link>
                 );
               })}
-          </nav>
+            </nav>
+          )}
 
           {/* Right: XP ring → lang → theme → user (desktop) */}
           <div className="relative z-10 ml-auto hidden shrink-0 items-center gap-[10px] md:flex">
@@ -236,6 +242,20 @@ export function Header() {
                     XP
                   </span>
                 </span>
+
+                {/* Floating +XP gain indicator */}
+                {xpGainAmount !== null && (
+                  <span
+                    key={xpGainAmount + Date.now()}
+                    className="absolute -bottom-7 left-1/2 -translate-x-1/2 whitespace-nowrap font-display text-[14px] font-black text-[var(--xp)] duration-300 animate-in fade-in slide-in-from-top-1"
+                    style={{
+                      animation:
+                        "xp-float 2s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+                    }}
+                  >
+                    +{xpGainAmount} XP
+                  </span>
+                )}
               </div>
             )}
             <LanguageSwitcher />
@@ -256,7 +276,10 @@ export function Header() {
 
           {/* Mobile: logo + hamburger */}
           <div className="flex flex-1 items-center justify-between gap-[12px] md:hidden">
-            <Link href={`/${locale}/dashboard`} className="flex items-center">
+            <Link
+              href={user ? `/${locale}/dashboard` : `/${locale}`}
+              className="flex items-center"
+            >
               <Image
                 src="/logo-light.png"
                 alt="Solarium"
