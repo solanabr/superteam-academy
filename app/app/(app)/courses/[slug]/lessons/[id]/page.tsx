@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useState, useEffect } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import {
@@ -19,7 +19,7 @@ import { ProgressBar } from "@/components/app";
 import {
     getLessonById,
     getAllLessonsFlat,
-} from "@/lib/services/mock-content";
+} from "@/lib/services/content-service";
 
 export default function LessonPage({
     params,
@@ -27,9 +27,28 @@ export default function LessonPage({
     params: Promise<{ slug: string; id: string }>;
 }) {
     const { slug, id } = use(params);
-    const result = getLessonById(slug, id);
+    const [result, setResult] = useState<Awaited<ReturnType<typeof getLessonById>>>(undefined);
+    const [isLoading, setIsLoading] = useState(true);
     const [testOutput, setTestOutput] = useState<string | null>(null);
     const [code, setCode] = useState("");
+
+    useEffect(() => {
+        getLessonById(slug, id).then((data) => {
+            setResult(data);
+            setIsLoading(false);
+            if (data?.lesson.challengeCode) {
+                setCode(data.lesson.challengeCode);
+            }
+        });
+    }, [slug, id]);
+
+    if (isLoading) {
+        return (
+            <div className="flex h-[calc(100vh-3.5rem)] items-center justify-center">
+                <div className="h-8 w-32 animate-pulse rounded bg-muted" />
+            </div>
+        );
+    }
 
     if (!result) return notFound();
 
@@ -46,8 +65,10 @@ export default function LessonPage({
     };
 
     const handleReset = () => {
-        setCode(lesson.challengeCode ?? "");
-        setTestOutput(null);
+        if (result) {
+            setCode(result.lesson.challengeCode ?? "");
+            setTestOutput(null);
+        }
     };
 
     return (
