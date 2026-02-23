@@ -557,7 +557,12 @@ export function LessonPageClient({
       <div className="space-y-2">
         <div className="flex flex-wrap items-center justify-center gap-3 border-t border-border pt-6">
           {prevLesson && (
-            <Button variant="pushOutline" size="sm" asChild>
+            <Button
+              variant="pushOutline"
+              size="default"
+              asChild
+              className="min-w-[120px] justify-center"
+            >
               <Link
                 href={`/${locale}/courses/${courseSlug}/lessons/${prevLesson.slug}`}
               >
@@ -580,7 +585,7 @@ export function LessonPageClient({
                 {isCompleting ? (
                   <>
                     <div
-                      className="h-5 w-5 animate-spin rounded-full border-4 border-primary border-t-transparent"
+                      className="h-5 w-5 animate-spin rounded-full border-[3px] border-white/30 border-t-white"
                       aria-hidden="true"
                     />
                     <span className="sr-only">Loading...</span>
@@ -606,7 +611,7 @@ export function LessonPageClient({
                 {isEnrolling && (
                   <>
                     <div
-                      className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent"
+                      className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"
                       aria-hidden="true"
                     />
                     <span className="sr-only">Loading...</span>
@@ -628,8 +633,9 @@ export function LessonPageClient({
           {nextLesson ? (
             <Button
               variant={isCompleted ? "push" : "pushOutline"}
-              size="sm"
+              size="default"
               asChild
+              className="min-w-[120px] justify-center"
             >
               <Link
                 href={`/${locale}/courses/${courseSlug}/lessons/${nextLesson.slug}`}
@@ -640,8 +646,9 @@ export function LessonPageClient({
           ) : (
             <Button
               variant={isCompleted ? "push" : "pushOutline"}
-              size="sm"
+              size="default"
               asChild
+              className="min-w-[120px] justify-center"
             >
               <Link href={`/${locale}/courses/${courseSlug}`}>
                 {t("lessonComplete")}
