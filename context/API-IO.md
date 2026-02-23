@@ -6,6 +6,9 @@ Base URL (local): `http://localhost:3001`
 
 - `GET /health` is the only GET endpoint.
 - All `/academy/*` endpoints are `POST` with `Content-Type: application/json`.
+- `/academy/*` endpoints require one auth header:
+  - `Authorization: Bearer <BACKEND_API_TOKEN>`, or
+  - `X-API-Key: <BACKEND_API_TOKEN>`
 - Success responses are `200` with JSON payloads shown below.
 - Validation/business input errors return `400` with:
 

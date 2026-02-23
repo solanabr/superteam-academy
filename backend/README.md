@@ -25,6 +25,8 @@ Create `.env` from `.env.example`:
 
 ```env
 SOLANA_RPC=https://api.devnet.solana.com
+BACKEND_API_TOKEN=change-me
+CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 ACADEMY_AUTHORITY_KEYPAIR=[64 numbers]   # For create-course
 ACADEMY_BACKEND_SIGNER_KEYPAIR=[64 numbers]  # For complete-lesson, finalize-course
 ```
@@ -41,6 +43,11 @@ pnpm build && pnpm start   # Production
 Default port: 3001. Override with `PORT`.
 
 ## API
+
+All `/academy/*` endpoints require API auth:
+
+- `Authorization: Bearer <BACKEND_API_TOKEN>` or
+- `X-API-Key: <BACKEND_API_TOKEN>`
 
 | Method | Path | Description |
 |--------|------|-------------|
