@@ -3,12 +3,11 @@
 import { motion } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { WalletConnectButton } from "@/components/wallet/WalletConnectButton";
 
 const NAV_LINKS = [
   { label: "Courses", href: "/courses" },
   { label: "Leaderboard", href: "/leaderboard" },
-  { label: "Certifications", href: "/certifications" },
   { label: "Settings", href: "/settings" },
 ];
 
@@ -47,10 +46,11 @@ export function Navbar() {
           </ul>
         </div>
 
-        <Button size="sm" className="hidden sm:inline-flex">
-          Start Building
-        </Button>
+        <div className="hidden sm:block">
+          <WalletConnectButton />
+        </div>
       </nav>
     </motion.header>
   );
 }
+
