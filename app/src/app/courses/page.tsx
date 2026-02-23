@@ -6,23 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useCourses } from "@/hooks/use-courses";
 import { useEnrollment } from "@/hooks/use-enrollment";
+import { mockCourses } from "@/lib/data/mock-courses";
 import { useUserStore } from "@/lib/store/user-store";
 import type { Course } from "@/types";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
-
-const categories = [
-  "All",
-  "Runtime",
-  "Anchor",
-  "Security",
-  "DeFi",
-  "Token-2022",
-  "NFT",
-  "Auditing",
-] as const;
 
 const learningPaths = [
   { title: "Solana Developer", summary: "Account model to production clients", count: "3 courses" },
@@ -36,10 +26,15 @@ export default function CoursesPage() {
   const wallet = useWallet();
   const [query, setQuery] = useState("");
   const [difficulty, setDifficulty] = useState<Course["difficulty"] | undefined>();
-  const [category, setCategory] = useState<(typeof categories)[number]>("All");
+  const [category, setCategory] = useState("All");
   const { courses, loading } = useCourses(query, difficulty);
   const { enrollments } = useUserStore((state) => ({ enrollments: state.enrollments }));
   const enrollment = useEnrollment(wallet);
+
+  const categories = useMemo(() => {
+    const tags = Array.from(new Set(mockCourses.flatMap((course) => course.tags)));
+    return ["All", ...tags.sort((a, b) => a.localeCompare(b))];
+  }, []);
 
   const filters: Array<{ value?: Course["difficulty"]; label: string }> = useMemo(
     () => [
@@ -55,8 +50,7 @@ export default function CoursesPage() {
     if (category === "All") {
       return courses;
     }
-    const normalized = category.toLowerCase();
-    return courses.filter((course) => course.tags.some((tag) => tag.toLowerCase().includes(normalized)));
+    return courses.filter((course) => course.tags.some((tag) => tag.toLowerCase() === category.toLowerCase()));
   }, [category, courses]);
 
   return (

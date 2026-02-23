@@ -5,384 +5,166 @@ import type {
   LeaderboardEntry,
   UserProfile,
 } from "@/types";
+import { courses as referenceCourses } from "../../../REFERENCE_COURSE_CATALOG";
 
-const lesson = (
-  id: string,
-  title: string,
-  kind: "content" | "challenge",
-  objective: string,
-  markdown: string,
-  starterCode?: string,
-) => ({
-  id,
-  title,
-  kind,
-  durationMinutes: kind === "challenge" ? 30 : 18,
-  objective,
-  markdown,
-  starterCode,
-  expectedOutput: kind === "challenge" ? "All assertions pass" : undefined,
-});
+type ReferenceCourse = (typeof referenceCourses)[number];
+type ReferenceModule = ReferenceCourse["modules"][number];
+type ReferenceLesson = ReferenceModule["lessons"][number];
 
-export const mockCourses: Course[] = [
-  {
-    id: "course-solana-fundamentals",
-    slug: "solana-fundamentals",
-    title: "Solana Fundamentals",
-    subtitle: "Runtime, accounts and transactions",
-    description:
-      "Build deep intuition for Solana's account model, transaction lifecycle and compute budgeting.",
-    instructor: "Camila Souza",
-    difficulty: "beginner",
-    durationHours: 12,
-    enrolledCount: 1862,
-    tags: ["Runtime", "Web3.js", "Accounts"],
-    prerequisites: ["JavaScript basics", "CLI usage"],
-    outcomes: [
-      "Read and deserialize account state",
-      "Craft and simulate transactions",
-      "Debug common runtime errors",
-    ],
-    gradient: "from-[#9945FF] via-[#7d53ff] to-[#14F195]",
-    modules: [
-      {
-        id: "sf-m1",
-        title: "Understanding Solana Accounts",
-        description: "Learn rent, ownership and data layouts.",
-        lessons: [
-          lesson(
-            "sf-l1",
-            "Account Model Mental Map",
-            "content",
-            "Differentiate EOAs and Solana accounts.",
-            "### Why accounts matter\nEvery byte on Solana lives in an account. Programs are stateless executables and write data into accounts they own.",
-          ),
-          lesson(
-            "sf-l2",
-            "Rent and Exemption",
-            "content",
-            "Calculate rent exempt balances.",
-            "### Rent basics\nAccounts below rent exemption can be reclaimed. Use `getMinimumBalanceForRentExemption` before allocation.",
-          ),
-          lesson(
-            "sf-l3",
-            "Decode Account Data",
-            "challenge",
-            "Decode binary data using Buffer layouts.",
-            "### Challenge\nImplement a decoder for a user progress account.",
-            "export function decodeProgress(data: Buffer) {\n  // TODO\n}\n",
-          ),
-        ],
-      },
-      {
-        id: "sf-m2",
-        title: "Transactions and Signers",
-        description: "Understand message compilation and signing.",
-        lessons: [
-          lesson(
-            "sf-l4",
-            "Instruction Anatomy",
-            "content",
-            "Explain account metas and instruction data.",
-            "### Instruction anatomy\nEach instruction defines program id, account metas and opaque byte payload.",
-          ),
-          lesson(
-            "sf-l5",
-            "Fee Payer and Recent Blockhash",
-            "content",
-            "Configure transaction context.",
-            "### Context\nWithout a valid blockhash and fee payer, transaction simulation fails.",
-          ),
-          lesson(
-            "sf-l6",
-            "Compose a Transfer Tx",
-            "challenge",
-            "Build and sign a SOL transfer transaction.",
-            "### Challenge\nCreate a transaction with one transfer instruction and serialize it.",
-            "export async function buildTransferTx(connection, from, to) {\n  // TODO\n}\n",
-          ),
-        ],
-      },
-      {
-        id: "sf-m3",
-        title: "Performance and Debugging",
-        description: "Use logs and simulation tools effectively.",
-        lessons: [
-          lesson(
-            "sf-l7",
-            "Simulation and Logs",
-            "content",
-            "Use simulateTransaction for fast feedback.",
-            "### Debug loop\nSimulate first, inspect logs, then send signed transaction.",
-          ),
-          lesson(
-            "sf-l8",
-            "Compute Budget Program",
-            "content",
-            "Increase units for heavy instructions.",
-            "### Compute\nUse ComputeBudgetProgram to set unit limits and priority fees.",
-          ),
-          lesson(
-            "sf-l9",
-            "Fix the Failing CPI",
-            "challenge",
-            "Trace and fix a CPI authorization bug.",
-            "### Challenge\nIdentify why CPI fails due to signer mismatch.",
-            "export function validateSigner(accounts) {\n  // TODO\n}\n",
-          ),
-        ],
-      },
-    ],
-  },
-  {
-    id: "course-anchor-101",
-    slug: "anchor-101",
-    title: "Anchor 101",
-    subtitle: "From IDL to production workflow",
-    description:
-      "Learn Anchor macros, account constraints and testing patterns that teams use in production.",
-    instructor: "Lucas Faria",
-    difficulty: "beginner",
-    durationHours: 14,
-    enrolledCount: 1340,
-    tags: ["Anchor", "Rust", "Testing"],
-    prerequisites: ["Solana fundamentals", "Rust basics"],
-    outcomes: [
-      "Author secure Anchor instructions",
-      "Create deterministic PDAs",
-      "Write complete integration tests",
-    ],
-    gradient: "from-[#3f2d78] via-[#9945FF] to-[#14F195]",
-    modules: [
-      {
-        id: "a1-m1",
-        title: "Anchor Setup",
-        description: "CLI, workspace structure and IDL generation.",
-        lessons: [
-          lesson("a1-l1", "Anchor CLI", "content", "Install and verify toolchain.", "### Setup\nUse `avm` to pin Anchor versions across your team."),
-          lesson("a1-l2", "Program Skeleton", "content", "Create instructions and account structs.", "### Program anatomy\nAnchor wires instruction handlers and account validation macros."),
-          lesson("a1-l3", "First Test", "challenge", "Write your first passing mocha test.", "### Challenge\nInitialize state and assert fields.", "describe('anchor-101', () => {\n  it('initializes state', async () => {\n    // TODO\n  });\n});\n"),
-        ],
-      },
-      {
-        id: "a1-m2",
-        title: "PDAs and Constraints",
-        description: "Deterministic addressing and account rules.",
-        lessons: [
-          lesson("a1-l4", "PDA Seeds", "content", "Build deterministic addresses.", "### Seeds\nDerive PDAs from stable business keys like user + course id."),
-          lesson("a1-l5", "Account Constraints", "content", "Use `has_one`, `seeds`, and `bump`.", "### Validation\nConstraints guard invariants before instruction logic runs."),
-          lesson("a1-l6", "Guard Unauthorized Writes", "challenge", "Prevent unauthorized state updates.", "### Challenge\nAdd constraints to block foreign authority writes.", "#[derive(Accounts)]\npub struct Update<'info> {\n  // TODO\n}\n"),
-        ],
-      },
-      {
-        id: "a1-m3",
-        title: "IDL-Driven Clients",
-        description: "Generate TS clients and improve DX.",
-        lessons: [
-          lesson("a1-l7", "IDL Internals", "content", "Understand instruction and account schemas.", "### IDL\nYour frontend can call methods safely with generated types."),
-          lesson("a1-l8", "Frontend Provider", "content", "Wire Anchor provider in a React app.", "### Provider\nUse wallet adapter + connection + AnchorProvider."),
-          lesson("a1-l9", "Build a Typed Client", "challenge", "Call methods with strict types.", "### Challenge\nBuild a `completeLesson` call wrapper.", "export async function completeLesson(program, accounts) {\n  // TODO\n}\n"),
-        ],
-      },
-    ],
-  },
-  {
-    id: "course-defi-developer",
-    slug: "defi-developer",
-    title: "DeFi Developer",
-    subtitle: "AMMs, lending, and risk controls",
-    description:
-      "Model token economics and build safe DeFi primitives with robust validation and oracle handling.",
-    instructor: "Mariana Prado",
-    difficulty: "intermediate",
-    durationHours: 20,
-    enrolledCount: 942,
-    tags: ["DeFi", "Oracles", "Risk"],
-    prerequisites: ["Anchor 101", "Math for DeFi"],
-    outcomes: ["Build AMM swap math", "Use oracle safety checks", "Design liquidation guardrails"],
-    gradient: "from-[#0b1026] via-[#2f3a77] to-[#14F195]",
-    modules: [
-      {
-        id: "dd-m1",
-        title: "AMM Mechanics",
-        description: "Constant product and fees.",
-        lessons: [
-          lesson("dd-l1", "x*y=k Refresher", "content", "Understand pool invariants.", "### Invariant\nSwaps preserve `x*y=k` with fees and slippage."),
-          lesson("dd-l2", "Slippage and Price Impact", "content", "Estimate output safely.", "### Execution\nProtect users with min output constraints."),
-          lesson("dd-l3", "Implement Quote Function", "challenge", "Calculate output and fee.", "### Challenge\nReturn amount out and effective price.", "export function quote(amountIn, reserveIn, reserveOut) {\n  // TODO\n}\n"),
-        ],
-      },
-      {
-        id: "dd-m2",
-        title: "Oracle Safety",
-        description: "TWAP and stale price protections.",
-        lessons: [
-          lesson("dd-l4", "Oracle Fundamentals", "content", "Use trusted data feeds.", "### Oracle\nNever rely on a single spot price sample."),
-          lesson("dd-l5", "Staleness Checks", "content", "Reject stale prices.", "### Guard\nDefine max age windows for feeds."),
-          lesson("dd-l6", "Liquidation Trigger", "challenge", "Validate liquidation thresholds.", "### Challenge\nOnly liquidate when health factor is below 1.0.", "export function canLiquidate(healthFactor, priceAgeSec) {\n  // TODO\n}\n"),
-        ],
-      },
-      {
-        id: "dd-m3",
-        title: "Protocol Security",
-        description: "Attack surfaces and mitigations.",
-        lessons: [
-          lesson("dd-l7", "Flash Loan Vectors", "content", "Analyze manipulation routes.", "### Security\nAssume adversarial composability in every instruction."),
-          lesson("dd-l8", "Invariant Monitoring", "content", "Track health metrics.", "### Monitoring\nAlert on reserve divergence and liquidity shocks."),
-          lesson("dd-l9", "Exploit Postmortem", "challenge", "Patch an exploited vault flow.", "### Challenge\nIdentify missing checks in withdraw path.", "pub fn withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {\n  // TODO\n}\n"),
-        ],
-      },
-    ],
-  },
-  {
-    id: "course-token-2022",
-    slug: "token-2022",
-    title: "Token-2022 in Practice",
-    subtitle: "Extensions, transfer hooks and metadata",
-    description:
-      "Launch modern tokens using Token-2022 extensions and integrate compliant transfer controls.",
-    instructor: "Eduardo Lima",
-    difficulty: "intermediate",
-    durationHours: 11,
-    enrolledCount: 701,
-    tags: ["SPL", "Token-2022", "Extensions"],
-    prerequisites: ["Solana fundamentals"],
-    outcomes: [
-      "Choose extension sets for products",
-      "Create transfer-fee tokens",
-      "Integrate transfer hooks",
-    ],
-    gradient: "from-[#14203d] via-[#225f84] to-[#14F195]",
-    modules: [
-      {
-        id: "t22-m1",
-        title: "Token Extensions",
-        description: "What changed from legacy SPL token.",
-        lessons: [
-          lesson("t22-l1", "Extension Overview", "content", "Map extension capabilities.", "### Extensions\nMetadata, transfer fee, default account state and more."),
-          lesson("t22-l2", "Mint Setup", "content", "Allocate mint with extension space.", "### Space\nUse `getMintLen` for correct account size."),
-          lesson("t22-l3", "Create Extension Mint", "challenge", "Initialize mint with metadata pointer.", "### Challenge\nConfigure mint + authority accounts.", "export async function createToken2022Mint(connection, payer) {\n  // TODO\n}\n"),
-        ],
-      },
-      {
-        id: "t22-m2",
-        title: "Transfer Controls",
-        description: "Fees and programmable checks.",
-        lessons: [
-          lesson("t22-l4", "Transfer Fees", "content", "Configure basis points and max fee.", "### Fees\nBalance token UX and protocol sustainability."),
-          lesson("t22-l5", "Transfer Hook", "content", "Call custom programs on transfer.", "### Hook\nEnforce business logic for every token movement."),
-          lesson("t22-l6", "Write a Hook Validator", "challenge", "Block unauthorized transfer destinations.", "### Challenge\nValidate account allowlist.", "pub fn validate_transfer(ctx: Context<TransferHook>) -> Result<()> {\n  // TODO\n}\n"),
-        ],
-      },
-      {
-        id: "t22-m3",
-        title: "Production Ops",
-        description: "Monitoring and migration strategy.",
-        lessons: [
-          lesson("t22-l7", "Indexing Token Events", "content", "Track transfers reliably.", "### Indexing\nCapture transfer hooks and standard events for analytics."),
-          lesson("t22-l8", "Wallet Compatibility", "content", "Handle mixed wallet support.", "### Compatibility\nProvide graceful fallbacks for unsupported extensions."),
-          lesson("t22-l9", "Migration Plan", "challenge", "Design token migration without downtime.", "### Challenge\nPlan phased migration with user comms.", "export function migrationChecklist() {\n  // TODO\n}\n"),
-        ],
-      },
-    ],
-  },
-  {
-    id: "course-nft-mastery",
-    slug: "nft-mastery",
-    title: "NFT Mastery",
-    subtitle: "Compressed NFTs and collection engineering",
-    description:
-      "Ship performant NFT collections with metadata standards, compressed assets and royalty strategy.",
-    instructor: "Ana Beatriz",
-    difficulty: "intermediate",
-    durationHours: 13,
-    enrolledCount: 1150,
-    tags: ["NFT", "Compressed", "Metaplex"],
-    prerequisites: ["Solana fundamentals"],
-    outcomes: ["Mint compressed NFTs", "Model royalty policy", "Build collection UX"],
-    gradient: "from-[#2d1e4f] via-[#8d4ef0] to-[#14F195]",
-    modules: [
-      {
-        id: "nm-m1",
-        title: "Metadata Standards",
-        description: "Token metadata and collection verification.",
-        lessons: [
-          lesson("nm-l1", "Metadata Fields", "content", "Design useful metadata schemas.", "### Metadata\nPrefer stable, explicit attributes for indexers."),
-          lesson("nm-l2", "Collection Authority", "content", "Verify and manage collections.", "### Authority\nOnly trusted authority can verify items."),
-          lesson("nm-l3", "Create Collection Metadata", "challenge", "Publish metadata JSON and verify items.", "### Challenge\nMint and verify collection NFT.", "export async function verifyCollection(connection, wallet) {\n  // TODO\n}\n"),
-        ],
-      },
-      {
-        id: "nm-m2",
-        title: "Compressed NFTs",
-        description: "Merkle trees and cheap minting.",
-        lessons: [
-          lesson("nm-l4", "Compression Basics", "content", "Understand bubblegum model.", "### Compression\nState is stored in Merkle trees for large scale minting."),
-          lesson("nm-l5", "Tree Authority", "content", "Manage tree updates.", "### Tree\nDefine update authority and retention policy."),
-          lesson("nm-l6", "Mint to Tree", "challenge", "Mint compressed assets with proofs.", "### Challenge\nMint cNFT and verify leaf index.", "export async function mintCompressedNft(client, tree) {\n  // TODO\n}\n"),
-        ],
-      },
-      {
-        id: "nm-m3",
-        title: "Marketplace Readiness",
-        description: "Royalties, listing and analytics.",
-        lessons: [
-          lesson("nm-l7", "Royalty Tradeoffs", "content", "Balance creator earnings and liquidity.", "### Royalties\nConsider optional royalty enforcement in modern markets."),
-          lesson("nm-l8", "Trait Analytics", "content", "Analyze rarity and floor movement.", "### Analytics\nTrack traits tied to market activity."),
-          lesson("nm-l9", "Launch Checklist", "challenge", "Plan mint launch operations.", "### Challenge\nBuild pre-launch checklist and failover plan.", "export const launchChecklist = [\n  // TODO\n];\n"),
-        ],
-      },
-    ],
-  },
-  {
-    id: "course-security-auditing",
-    slug: "security-auditing",
-    title: "Security Auditing",
-    subtitle: "Threat modeling for Solana programs",
-    description:
-      "Perform practical audits for Solana programs with repeatable methodology and exploit simulations.",
-    instructor: "Rafael Mendonca",
-    difficulty: "advanced",
-    durationHours: 24,
-    enrolledCount: 620,
-    tags: ["Security", "Auditing", "Rust"],
-    prerequisites: ["Anchor 101", "DeFi Developer"],
-    outcomes: ["Run threat models", "Write PoCs", "Produce client-ready reports"],
-    gradient: "from-[#140f1f] via-[#3b2b58] to-[#14F195]",
-    modules: [
-      {
-        id: "sa-m1",
-        title: "Audit Methodology",
-        description: "Scope, assumptions and risk scoring.",
-        lessons: [
-          lesson("sa-l1", "Threat Model Setup", "content", "Define attacker capabilities.", "### Scope\nStart with assets, invariants and trust boundaries."),
-          lesson("sa-l2", "Risk Prioritization", "content", "Score exploitability and impact.", "### Severity\nUse a consistent severity matrix across reports."),
-          lesson("sa-l3", "Invariant Inventory", "challenge", "Document all protocol invariants.", "### Challenge\nWrite invariant list and test mapping.", "export const invariants = [\n  // TODO\n];\n"),
-        ],
-      },
-      {
-        id: "sa-m2",
-        title: "Exploit Development",
-        description: "Build deterministic proof-of-concept exploits.",
-        lessons: [
-          lesson("sa-l4", "Unauthorized CPI", "content", "Detect signer and authority gaps.", "### CPI\nAssume arbitrary invocation contexts."),
-          lesson("sa-l5", "Arithmetic Bugs", "content", "Prevent precision and overflow issues.", "### Math\nUse checked arithmetic and bounded conversions."),
-          lesson("sa-l6", "Write Exploit Test", "challenge", "Create a failing exploit regression test.", "### Challenge\nReproduce exploit before patching.", "it('exploit: drains vault', async () => {\n  // TODO\n});\n"),
-        ],
-      },
-      {
-        id: "sa-m3",
-        title: "Reporting and Remediation",
-        description: "Deliver actionable reports.",
-        lessons: [
-          lesson("sa-l7", "Writing Findings", "content", "Describe root cause and remediation.", "### Findings\nInclude impact, PoC, and concrete fixes."),
-          lesson("sa-l8", "Patch Validation", "content", "Ensure fixes hold under edge cases.", "### Validation\nAdd regression tests before closure."),
-          lesson("sa-l9", "Final Audit Delivery", "challenge", "Produce executive + technical summary.", "### Challenge\nDraft complete report for stakeholders.", "# Security Report\n\n## Executive Summary\n- TODO\n"),
-        ],
-      },
-    ],
-  },
+const GRADIENTS = [
+  "from-[#9945FF] via-[#8752F3] to-[#14F195]",
+  "from-[#14F195] via-[#4BE3C2] to-[#9945FF]",
+  "from-[#5B4B8A] via-[#9945FF] to-[#14F195]",
+  "from-[#0FA6C9] via-[#3C78D8] to-[#14F195]",
+  "from-[#9945FF] via-[#4F6AFF] to-[#14F195]",
+  "from-[#0A1F44] via-[#2D46B9] to-[#14F195]",
 ];
+
+function parseDurationMinutes(duration: string): number {
+  const hours = Number(duration.match(/(\d+)\s*h/i)?.[1] ?? 0);
+  const minutes = Number(duration.match(/(\d+)\s*m/i)?.[1] ?? 0);
+  if (hours === 0 && minutes === 0) {
+    return Number(duration.match(/\d+/)?.[0] ?? 15);
+  }
+  return hours * 60 + minutes;
+}
+
+function parseDurationHours(duration: string): number {
+  const hours = Number(duration.match(/(\d+)\s*h/i)?.[1] ?? 0);
+  const minutes = Number(duration.match(/(\d+)\s*m/i)?.[1] ?? 0);
+  return Number((hours + minutes / 60).toFixed(1));
+}
+
+function extractObjective(markdown: string, lessonTitle: string): string {
+  const lines = markdown.replace(/\r\n/g, "\n").split("\n");
+  const paragraph: string[] = [];
+  let inCodeBlock = false;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith("```")) {
+      inCodeBlock = !inCodeBlock;
+      continue;
+    }
+    if (inCodeBlock) {
+      continue;
+    }
+    if (!trimmed) {
+      if (paragraph.length > 0) {
+        break;
+      }
+      continue;
+    }
+    if (trimmed.startsWith("#") || trimmed.startsWith("|")) {
+      continue;
+    }
+    if (/^[-*]\s/.test(trimmed) || /^\d+\.\s/.test(trimmed)) {
+      if (paragraph.length > 0) {
+        break;
+      }
+      continue;
+    }
+    paragraph.push(trimmed);
+  }
+
+  if (paragraph.length === 0) {
+    return `Complete: ${lessonTitle}`;
+  }
+  return paragraph.join(" ");
+}
+
+function mapLessonKind(type: ReferenceLesson["type"]): "content" | "challenge" {
+  return type === "challenge" ? "challenge" : "content";
+}
+
+function expectedOutputFromTests(testCases?: Array<{ name: string; expected: string }>): string | undefined {
+  if (!testCases || testCases.length === 0) {
+    return undefined;
+  }
+  return testCases.map((test) => `${test.name}: ${test.expected}`).join("\n");
+}
+
+function derivePrerequisites(course: ReferenceCourse): string[] {
+  const requirements = new Set<string>();
+  if (course.difficulty === "Beginner") {
+    requirements.add("Basic JavaScript or TypeScript familiarity");
+  }
+  if (course.difficulty === "Intermediate") {
+    requirements.add("Solana fundamentals");
+  }
+  if (course.difficulty === "Advanced") {
+    requirements.add("Intermediate Solana development experience");
+  }
+  if (course.tags.some((tag) => ["Anchor", "Rust", "Security", "Validator"].includes(tag))) {
+    requirements.add("Rust basics");
+  }
+  if (course.tags.some((tag) => ["React", "React Native", "Frontend", "Mobile"].includes(tag))) {
+    requirements.add("Frontend development basics");
+  }
+  if (course.tags.some((tag) => ["DeFi", "AMM", "DEX", "Trading", "Oracles"].includes(tag))) {
+    requirements.add("Token and DeFi concepts");
+  }
+  return Array.from(requirements);
+}
+
+function deriveOutcomes(course: ReferenceCourse): string[] {
+  const lessonTitles = course.modules.flatMap((module) => module.lessons).slice(0, 3).map((lesson) =>
+    lesson.title.replace(/^Challenge:\s*/i, ""),
+  );
+  const first = lessonTitles[0] ?? "core concepts";
+  const second = lessonTitles[1] ?? "hands-on implementation";
+  const third = lessonTitles[2] ?? "production-oriented workflows";
+  return [
+    `Master ${first.toLowerCase()} in ${course.title}`,
+    `Apply ${second.toLowerCase()} with practical code exercises`,
+    `Ship ${third.toLowerCase()} using Solana tooling and best practices`,
+  ];
+}
+
+function deriveSubtitle(description: string): string {
+  const firstSentence = description.split(".")[0]?.trim();
+  return firstSentence && firstSentence.length > 0 ? firstSentence : "Comprehensive Solana course";
+}
+
+const selectedReferenceCourses = referenceCourses.slice(0, 16);
+
+export const mockCourses: Course[] = selectedReferenceCourses.map((course, courseIndex) => ({
+  id: `course-${course.slug}`,
+  slug: course.slug,
+  title: course.title,
+  subtitle: deriveSubtitle(course.description),
+  description: course.description,
+  instructor: course.instructor,
+  difficulty: course.difficulty.toLowerCase() as Course["difficulty"],
+  durationHours: parseDurationHours(course.duration),
+  enrolledCount: course.enrolled,
+  tags: course.tags,
+  prerequisites: derivePrerequisites(course),
+  outcomes: deriveOutcomes(course),
+  gradient: GRADIENTS[courseIndex % GRADIENTS.length],
+  modules: course.modules.map((module, moduleIndex) => {
+    const lessons = module.lessons.map((sourceLesson, lessonIndex) => {
+      const kind = mapLessonKind(sourceLesson.type);
+      const markdown = sourceLesson.content ?? "";
+      return {
+        id: sourceLesson.id || `${course.slug}-m${moduleIndex + 1}-l${lessonIndex + 1}`,
+        title: sourceLesson.title,
+        kind,
+        durationMinutes: parseDurationMinutes(sourceLesson.duration),
+        objective: extractObjective(markdown, sourceLesson.title),
+        markdown,
+        starterCode: sourceLesson.starterCode,
+        expectedOutput: expectedOutputFromTests(sourceLesson.testCases),
+      };
+    });
+    return {
+      id: `${course.slug}-m${moduleIndex + 1}`,
+      title: module.title,
+      description: lessons[0]?.objective ?? `Complete ${module.title}`,
+      lessons,
+    };
+  }),
+}));
 
 export const mockLeaderboard: LeaderboardEntry[] = [
   {
