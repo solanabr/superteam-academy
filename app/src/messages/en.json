@@ -180,6 +180,7 @@
     "privateProfile": "Private Profile",
     "noAchievements": "No achievements unlocked yet.",
     "noCredentials": "No credentials earned yet. Complete courses to earn on-chain credentials.",
+    "connectWalletForCredentials": "Connect a wallet to view your on-chain credentials.",
     "noCourses": "No courses completed yet.",
     "viewOnExplorer": "Explorer",
     "verified": "Verified",

@@ -28,9 +28,12 @@ export function SignInModal({ open, onOpenChange }: SignInModalProps) {
   const { setVisible: setWalletModalVisible } = useWalletModal();
   const [signingIn, setSigningIn] = useState(false);
   const pendingWalletSignIn = useRef(false);
+  const signingRef = useRef(false);
 
   const handleWalletSign = useCallback(async () => {
     if (!wallet.publicKey || !wallet.signMessage) return;
+    if (signingRef.current) return;
+    signingRef.current = true;
 
     setSigningIn(true);
     try {
@@ -51,6 +54,7 @@ export function SignInModal({ open, onOpenChange }: SignInModalProps) {
     } finally {
       setSigningIn(false);
       pendingWalletSignIn.current = false;
+      signingRef.current = false;
     }
   }, [wallet, onOpenChange]);
 
@@ -58,6 +62,7 @@ export function SignInModal({ open, onOpenChange }: SignInModalProps) {
   useEffect(() => {
     if (
       pendingWalletSignIn.current &&
+      !signingRef.current &&
       wallet.connected &&
       wallet.publicKey &&
       wallet.signMessage

@@ -102,7 +102,7 @@ export function useEnrollment(courseId?: string, totalLessons = 0, prerequisiteC
           tx,
         });
 
-        toast.success("Enrolled! Confirming on-chain… It may take upto 10-15 secs based on RPC lag…");
+        toast.success("Enrolled! Confirming on-chain… It may take upto 10-15 secs based on RPC lag…", { duration: 12000 });
 
         // Poll until the enrollment PDA is visible on the RPC node.
         // loading stays true throughout so the button stays in loading state.

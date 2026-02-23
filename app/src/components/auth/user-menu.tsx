@@ -2,6 +2,7 @@
 
 import { useSession, signOut } from "next-auth/react";
 import { useState, useEffect } from "react";
+import { useWallet } from "@solana/wallet-adapter-react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ interface Stats { xp: number; level: number; streak: number }
 export function UserMenu() {
   const { data: session, status } = useSession();
   const t = useTranslations("common");
+  const wallet = useWallet();
   const [signInOpen, setSignInOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [stats, setStats] = useState<Stats | null>(null);
@@ -40,7 +42,7 @@ export function UserMenu() {
           setStats({ xp: d.xp, level: d.level ?? 0, streak: d.streak?.currentStreak ?? 0 });
         }
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoadingStats(false));
   }
 
@@ -153,7 +155,12 @@ export function UserMenu() {
         <DropdownMenuSeparator />
         <DropdownMenuItem
           className="cursor-pointer text-destructive focus:text-destructive"
-          onClick={() => signOut({ redirectTo: "/" })}
+          onClick={async () => {
+            if (wallet.connected) {
+              try { await wallet.disconnect(); } catch { /* ignore */ }
+            }
+            signOut({ redirectTo: "/" });
+          }}
         >
           <LogOut className="mr-2 h-4 w-4" />
           {t("signOut")}

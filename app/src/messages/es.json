@@ -180,6 +180,7 @@
     "privateProfile": "Perfil Privado",
     "noAchievements": "Ningun logro desbloqueado aun.",
     "noCredentials": "Ninguna credencial ganada aun. Completa cursos para ganar credenciales on-chain.",
+    "connectWalletForCredentials": "Conecta una billetera para ver tus credenciales on-chain.",
     "noCourses": "Ningun curso completado aun.",
     "viewOnExplorer": "Explorer",
     "verified": "Verificado",

@@ -24,9 +24,14 @@ export function useWalletLink(onLinked?: () => void) {
   const { update } = useSession();
   const [linking, setLinking] = useState(false);
   const pendingLink = useRef(false);
+  const signingRef = useRef(false);
 
   const performSign = useCallback(async () => {
     if (!wallet.publicKey || !wallet.signMessage) return;
+    // Prevent concurrent sign requests — the useEffect can re-fire when
+    // performSign changes reference mid-flight.
+    if (signingRef.current) return;
+    signingRef.current = true;
 
     setLinking(true);
     try {
@@ -52,7 +57,7 @@ export function useWalletLink(onLinked?: () => void) {
             `You are now signed in as "${freshSession.switchedProfileName}" because this wallet was already linked to that profile.`,
           );
         } else {
-          toast.success("Wallet linked to your account!");
+          toast.success("Wallet connected!");
         }
         // Clear the one-shot notification from the JWT.
         await update({});
@@ -65,12 +70,13 @@ export function useWalletLink(onLinked?: () => void) {
     } finally {
       setLinking(false);
       pendingLink.current = false;
+      signingRef.current = false;
     }
   }, [wallet, onLinked, update]);
 
   // After wallet connects (triggered by opening modal), auto-sign if a link is pending
   useEffect(() => {
-    if (pendingLink.current && wallet.connected && wallet.publicKey && wallet.signMessage) {
+    if (pendingLink.current && !signingRef.current && wallet.connected && wallet.publicKey && wallet.signMessage) {
       performSign();
     }
   }, [wallet.connected, wallet.publicKey, performSign]);

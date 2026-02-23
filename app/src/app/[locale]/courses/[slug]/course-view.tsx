@@ -38,9 +38,28 @@ import Image from "next/image";
 export default function CourseView({ course, slug }: { course: Course; slug: string }) {
   const t = useTranslations("courses");
   const tc = useTranslations("common");
-  const { publicKey } = useWallet();
+  const wallet = useWallet();
+  const { publicKey } = wallet;
   const { data: session } = useSession();
   const { linkWallet, linking: linkingWallet } = useWalletLink();
+  const sessionData = session as unknown as Record<string, unknown> | null;
+  const walletAddress = sessionData?.walletAddress as string | undefined;
+  const sessionProvider = sessionData?.provider as string | undefined;
+
+  // Disconnect wallet adapter when signed in via non-wallet provider (Google/GitHub)
+  // so the user must explicitly reconnect their wallet for enrollment.
+  useEffect(() => {
+    if (
+      session?.user &&
+      sessionProvider &&
+      sessionProvider !== "solana-wallet" &&
+      wallet.connected
+    ) {
+      wallet.disconnect();
+    }
+    // Only run when session/provider changes, not on every wallet state change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.user, sessionProvider]);
   const [signInOpen, setSignInOpen] = useState(false);
   const {
     enroll,
@@ -176,11 +195,10 @@ export default function CourseView({ course, slug }: { course: Course; slug: str
                                   </div>
                                 </div>
                                 <CheckCircle2
-                                  className={`h-4 w-4 shrink-0 transition-colors ${
-                                    done
-                                      ? "text-green-500"
-                                      : "text-muted-foreground/30"
-                                  }`}
+                                  className={`h-4 w-4 shrink-0 transition-colors ${done
+                                    ? "text-green-500"
+                                    : "text-muted-foreground/30"
+                                    }`}
                                 />
                               </div>
                             </Link>
@@ -243,8 +261,19 @@ export default function CourseView({ course, slug }: { course: Course; slug: str
                   </Button>
                   <SignInModal open={signInOpen} onOpenChange={setSignInOpen} />
                 </>
+              ) : !publicKey && walletAddress ? (
+                // Logged in, wallet linked in DB but adapter not connected
+                <Button
+                  className="w-full gap-2"
+                  size="lg"
+                  onClick={linkWallet}
+                  disabled={linkingWallet}
+                >
+                  <Wallet className="h-4 w-4" />
+                  {linkingWallet ? "Connecting wallet..." : "Connect Wallet to Enroll"}
+                </Button>
               ) : !publicKey ? (
-                // Logged in but no wallet → full link+persist flow
+                // Logged in but no wallet linked at all
                 <Button
                   className="w-full gap-2"
                   size="lg"
