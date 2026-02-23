@@ -120,13 +120,13 @@ export default function HomePage() {
 
   return (
     <div className="space-y-10 pb-4">
-      <section className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#090d16] p-8 sm:p-12">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_15%,rgba(153,69,255,0.35),transparent_45%),radial-gradient(circle_at_80%_22%,rgba(20,241,149,0.25),transparent_40%),radial-gradient(circle_at_65%_80%,rgba(153,69,255,0.18),transparent_35%)]" />
+      <section className="relative overflow-hidden rounded-2xl border border-border bg-st-dark p-8 sm:p-12">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_15%,rgba(153,69,255,0.35),transparent_45%),radial-gradient(circle_at_80%_22%,rgba(255,210,63,0.25),transparent_40%),radial-gradient(circle_at_65%_80%,rgba(153,69,255,0.18),transparent_35%)]" />
 
         {floatingShapes.map((shape) => (
           <motion.div
             key={shape.id}
-            className="pointer-events-none absolute rounded-lg border border-white/10 bg-white/5 backdrop-blur-sm"
+            className="pointer-events-none absolute rounded-lg border border-border bg-foreground/5 backdrop-blur-sm"
             style={{ width: shape.size, height: shape.size, top: shape.top, left: shape.left }}
             animate={{ y: [-8, 8, -8], rotate: [0, 18, 0], opacity: [0.35, 0.6, 0.35] }}
             transition={{ duration: 5 + shape.id * 0.35, repeat: Infinity, delay: shape.delay }}
@@ -134,25 +134,25 @@ export default function HomePage() {
         ))}
 
         <div className="relative max-w-3xl space-y-5">
-          <Badge className="w-fit border-[#14F195]/35 bg-[#14F195]/10 text-[#14F195]">
+          <Badge className="w-fit border-[#ffd23f]/35 bg-[#ffd23f]/10 text-[#ffd23f]">
             <Sparkles className="mr-1 size-3.5" />
             Now with Solana 2.0 Support
           </Badge>
-          <h1 className="text-3xl font-semibold text-white sm:text-5xl">
+          <h1 className="text-3xl font-semibold text-foreground sm:text-5xl">
             Level up your Solana skills with on-chain learning.
           </h1>
-          <p className="max-w-2xl text-zinc-300">
+          <p className="max-w-2xl text-muted-foreground">
             Build production-ready dApps, earn verifiable credentials, and learn from practical,
             security-focused lessons built for ecosystem contributors.
           </p>
           <div className="flex flex-wrap gap-3">
-            <Button asChild className="bg-gradient-to-r from-[#9945FF] to-[#14F195] text-black">
+            <Button asChild className="bg-gradient-to-r from-[#2f6b3f] to-[#ffd23f] text-st-dark">
               <Link href="/courses">
                 Start learning
                 <ArrowRight className="size-4" />
               </Link>
             </Button>
-            <Button asChild variant="outline" className="border-white/20 bg-transparent text-white">
+            <Button asChild variant="outline" className="border-border bg-transparent text-foreground">
               <Link href="/dashboard">View dashboard</Link>
             </Button>
           </div>
@@ -165,24 +165,24 @@ export default function HomePage() {
       </section>
 
       <section className="space-y-4">
-        <h2 className="text-2xl font-semibold text-zinc-100">Learning paths</h2>
+        <h2 className="text-2xl font-semibold text-foreground">Learning paths</h2>
         <div className="grid gap-4 lg:grid-cols-3">
           {learningTracks.map((track) => (
-            <Card key={track.title} className="border-white/10 bg-zinc-900/70">
+            <Card key={track.title} className="border-border bg-card">
               <CardHeader>
-                <CardTitle className="text-zinc-100">{track.title}</CardTitle>
-                <p className="text-sm text-zinc-400">{track.description}</p>
+                <CardTitle className="text-foreground">{track.title}</CardTitle>
+                <p className="text-sm text-muted-foreground">{track.description}</p>
               </CardHeader>
               <CardContent className="space-y-3">
                 {track.modules.map((module, index) => (
                   <div
                     key={module}
-                    className="flex items-center gap-3 rounded-lg border border-white/10 bg-zinc-950/60 px-3 py-2"
+                    className="flex items-center gap-3 rounded-lg border border-border bg-st-dark/60 px-3 py-2"
                   >
-                    <span className="inline-flex size-6 items-center justify-center rounded-full border border-[#14F195]/50 text-xs text-[#14F195]">
+                    <span className="inline-flex size-6 items-center justify-center rounded-full border border-[#ffd23f]/50 text-xs text-[#ffd23f]">
                       {index + 1}
                     </span>
-                    <p className="text-sm text-zinc-200">{module}</p>
+                    <p className="text-sm text-foreground/90">{module}</p>
                   </div>
                 ))}
               </CardContent>
@@ -192,24 +192,24 @@ export default function HomePage() {
       </section>
 
       <section className="space-y-4">
-        <h2 className="text-2xl font-semibold text-zinc-100">Why builders choose Superteam Academy</h2>
+        <h2 className="text-2xl font-semibold text-foreground">Why builders choose Superteam Academy</h2>
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {featureGrid.map((feature) => {
             const Icon = feature.icon;
             return (
               <motion.article
                 key={feature.title}
-                className="rounded-xl border border-white/10 bg-zinc-900/70 p-4"
+                className="rounded-xl border border-border bg-card p-4"
                 initial={{ opacity: 0, y: 16 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.35 }}
               >
-                <div className="mb-3 inline-flex rounded-lg border border-[#9945FF]/40 bg-[#9945FF]/15 p-2 text-[#14F195]">
+                <div className="mb-3 inline-flex rounded-lg border border-[#2f6b3f]/40 bg-[#2f6b3f]/15 p-2 text-[#ffd23f]">
                   <Icon className="size-4" />
                 </div>
-                <h3 className="text-sm font-semibold text-zinc-100">{feature.title}</h3>
-                <p className="mt-2 text-sm text-zinc-400">{feature.description}</p>
+                <h3 className="text-sm font-semibold text-foreground">{feature.title}</h3>
+                <p className="mt-2 text-sm text-muted-foreground">{feature.description}</p>
               </motion.article>
             );
           })}
@@ -217,14 +217,14 @@ export default function HomePage() {
       </section>
 
       <section className="space-y-4">
-        <h2 className="text-2xl font-semibold text-zinc-100">What learners are shipping</h2>
+        <h2 className="text-2xl font-semibold text-foreground">What learners are shipping</h2>
         <div className="grid gap-4 md:grid-cols-3">
           {landingTestimonials.map((item) => (
-            <article key={item.name} className="rounded-xl border border-white/10 bg-zinc-900/70 p-4">
-              <p className="text-sm leading-relaxed text-zinc-200">"{item.quote}"</p>
+            <article key={item.name} className="rounded-xl border border-border bg-card p-4">
+              <p className="text-sm leading-relaxed text-foreground/90">"{item.quote}"</p>
               <div className="mt-4 flex items-center gap-3">
-                <Avatar className="border border-white/15 bg-zinc-950">
-                  <AvatarFallback className="bg-zinc-900 text-xs text-zinc-200">
+                <Avatar className="border border-border bg-st-dark">
+                  <AvatarFallback className="bg-card text-xs text-foreground/90">
                     {item.name
                       .split(" ")
                       .map((chunk) => chunk[0])
@@ -234,8 +234,8 @@ export default function HomePage() {
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="text-sm font-semibold text-zinc-100">{item.name}</p>
-                  <p className="text-xs text-zinc-400">{item.role}</p>
+                  <p className="text-sm font-semibold text-foreground">{item.name}</p>
+                  <p className="text-xs text-muted-foreground">{item.role}</p>
                 </div>
               </div>
             </article>
@@ -243,16 +243,16 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="relative overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/75 p-8">
-        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,rgba(153,69,255,0.18),transparent_40%,rgba(20,241,149,0.18))]" />
+      <section className="relative overflow-hidden rounded-2xl border border-border bg-card/75 p-8">
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,rgba(153,69,255,0.18),transparent_40%,rgba(255,210,63,0.18))]" />
         <div className="relative flex flex-col items-start justify-between gap-5 md:flex-row md:items-center">
           <div>
-            <h2 className="text-2xl font-semibold text-zinc-100">Ready to Build the Future?</h2>
-            <p className="mt-2 max-w-xl text-zinc-300">
+            <h2 className="text-2xl font-semibold text-foreground">Ready to Build the Future?</h2>
+            <p className="mt-2 max-w-xl text-muted-foreground">
               Join Solana engineers advancing from fundamentals to production architecture.
             </p>
           </div>
-          <Button asChild className="bg-gradient-to-r from-[#9945FF] to-[#14F195] text-black">
+          <Button asChild className="bg-gradient-to-r from-[#2f6b3f] to-[#ffd23f] text-st-dark">
             <Link href="/courses">
               Start your path
               <Bot className="size-4" />
@@ -268,9 +268,9 @@ function AnimatedStat({ label, value }: { label: string; value: number }) {
   const count = useCountUp(value);
 
   return (
-    <div className="rounded-xl border border-white/10 bg-zinc-900/60 p-3">
-      <p className="text-2xl font-semibold text-zinc-100">{formatNumber(count)}</p>
-      <p className="text-xs text-zinc-400">{label}</p>
+    <div className="rounded-xl border border-border bg-card p-3">
+      <p className="text-2xl font-semibold text-foreground">{formatNumber(count)}</p>
+      <p className="text-xs text-muted-foreground">{label}</p>
     </div>
   );
 }

@@ -25,24 +25,24 @@ export function CourseCard({
   const totalLessons = course.modules.reduce((sum, module) => sum + module.lessons.length, 0);
 
   return (
-    <Card className="group overflow-hidden border-white/10 bg-zinc-900/65 transition hover:-translate-y-1 hover:border-[#14F195]/35">
+    <Card className="group overflow-hidden border-border bg-card transition hover:-translate-y-1 hover:border-[#ffd23f]/35">
       <div className={`h-24 w-full bg-gradient-to-r ${course.gradient} p-4`}>
-        <p className="text-xs uppercase tracking-wide text-black/75">{course.difficulty}</p>
-        <h3 className="mt-1 text-lg font-semibold text-black">{course.title}</h3>
+        <p className="text-xs uppercase tracking-wide text-st-dark/75">{course.difficulty}</p>
+        <h3 className="mt-1 text-lg font-semibold text-st-dark">{course.title}</h3>
       </div>
       <CardHeader>
-        <CardTitle className="text-base text-zinc-100">{course.subtitle}</CardTitle>
+        <CardTitle className="text-base text-foreground">{course.subtitle}</CardTitle>
         <div className="flex flex-wrap gap-2 pt-1">
           {course.tags.slice(0, 3).map((tag) => (
-            <Badge key={tag} variant="outline" className="border-white/20 text-zinc-300">
+            <Badge key={tag} variant="outline" className="border-border text-muted-foreground">
               {tag}
             </Badge>
           ))}
         </div>
       </CardHeader>
       <CardContent>
-        <p className="line-clamp-3 text-sm leading-relaxed text-zinc-300">{course.description}</p>
-        <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-zinc-400">
+        <p className="line-clamp-3 text-sm leading-relaxed text-muted-foreground">{course.description}</p>
+        <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
             <Layers className="size-3.5" />
             {course.modules.length} {t("totalModules")}
@@ -62,11 +62,11 @@ export function CourseCard({
         </div>
       </CardContent>
       <CardFooter className="gap-2">
-        <Button asChild variant="outline" className="flex-1 border-white/20 bg-transparent text-zinc-100">
+        <Button asChild variant="outline" className="flex-1 border-border bg-transparent text-foreground">
           <Link href={`/courses/${course.slug}`}>{t("openCourse")}</Link>
         </Button>
         <Button
-          className="flex-1 bg-gradient-to-r from-[#9945FF] to-[#14F195] text-black"
+          className="flex-1 bg-gradient-to-r from-[#2f6b3f] to-[#ffd23f] text-st-dark"
           disabled={enrolled || enrollPending}
           onClick={() => onEnroll?.(course.id)}
         >

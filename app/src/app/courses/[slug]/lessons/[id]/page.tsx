@@ -26,7 +26,7 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string;
 
   if (!course || !lesson) {
     return (
-      <div className="rounded-xl border border-white/10 bg-zinc-900/70 p-8 text-center text-zinc-300">
+      <div className="rounded-xl border border-border bg-card p-8 text-center text-muted-foreground">
         Lesson not found.
       </div>
     );
@@ -57,45 +57,45 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string;
 
   return (
     <div className="space-y-5">
-      <header className="space-y-4 rounded-2xl border border-white/10 bg-zinc-900/65 p-5">
+      <header className="space-y-4 rounded-2xl border border-border bg-card p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="text-xs uppercase tracking-wide text-zinc-500">{course.title}</p>
-            <h1 className="mt-1 text-2xl font-semibold text-zinc-100">{lesson.title}</h1>
-            <p className="mt-2 text-sm text-zinc-300">{lesson.objective}</p>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground/70">{course.title}</p>
+            <h1 className="mt-1 text-2xl font-semibold text-foreground">{lesson.title}</h1>
+            <p className="mt-2 text-sm text-muted-foreground">{lesson.objective}</p>
           </div>
-          <Badge className="border-white/15 bg-zinc-950 text-zinc-200">
+          <Badge className="border-border bg-st-dark text-foreground/90">
             {lesson.kind === "challenge" ? "Challenge lesson" : "Content lesson"}
           </Badge>
         </div>
 
         <div>
-          <div className="mb-2 flex items-center justify-between text-xs text-zinc-400">
+          <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
             <span>
               Lesson {lessonIndex + 1} of {lessons.length}
             </span>
             <span>{completion}%</span>
           </div>
-          <Progress value={completion} className="h-2 bg-zinc-800" />
+          <Progress value={completion} className="h-2 bg-secondary" />
         </div>
       </header>
 
       <section className={lesson.kind === "challenge" ? "grid gap-4 xl:grid-cols-2" : "space-y-4"}>
-        <article className="rounded-xl border border-white/10 bg-zinc-900/70 p-5">
-          <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-zinc-400">Lesson content</h2>
+        <article className="rounded-xl border border-border bg-card p-5">
+          <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground">Lesson content</h2>
           <MarkdownBlocks markdown={lesson.markdown} />
         </article>
 
         {lesson.kind === "challenge" ? (
-          <article className="rounded-xl border border-white/10 bg-zinc-900/70 p-5">
+          <article className="rounded-xl border border-border bg-card p-5">
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="flex items-center gap-2 text-sm font-semibold text-zinc-100">
-                <Code2 className="size-4 text-[#14F195]" />
+              <h2 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                <Code2 className="size-4 text-[#ffd23f]" />
                 Coding challenge
               </h2>
-              <p className="text-xs text-zinc-500">Runtime: TypeScript / Rust-ready</p>
+              <p className="text-xs text-muted-foreground/70">Runtime: TypeScript / Rust-ready</p>
             </div>
-            <div className="h-[420px] overflow-hidden rounded-xl border border-white/10 bg-zinc-950/80">
+            <div className="h-[420px] overflow-hidden rounded-xl border border-border bg-st-dark/80">
               <CodeEditor
                 value={code}
                 onChange={setCode}
@@ -106,12 +106,12 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string;
         ) : null}
       </section>
 
-      <section className="flex flex-col gap-3 rounded-xl border border-white/10 bg-zinc-900/60 p-4 sm:flex-row sm:items-center sm:justify-between">
+      <section className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap gap-2">
           <Button
             asChild
             variant="outline"
-            className="border-white/20 bg-transparent text-zinc-100"
+            className="border-border bg-transparent text-foreground"
             disabled={!prevLesson}
           >
             <Link href={prevLesson ? `/courses/${course.slug}/lessons/${prevLesson.id}` : "#"}>
@@ -122,7 +122,7 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string;
           <Button
             asChild
             variant="outline"
-            className="border-white/20 bg-transparent text-zinc-100"
+            className="border-border bg-transparent text-foreground"
             disabled={!nextLesson}
           >
             <Link href={nextLesson ? `/courses/${course.slug}/lessons/${nextLesson.id}` : "#"}>
@@ -137,7 +137,7 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string;
             void handleComplete();
           }}
           disabled={isCompleted || submitting}
-          className="bg-gradient-to-r from-[#9945FF] to-[#14F195] text-black"
+          className="bg-gradient-to-r from-[#2f6b3f] to-[#ffd23f] text-st-dark"
         >
           <CheckCircle2 className="size-4" />
           {isCompleted ? "Completed" : `Mark as complete (+${XP_PER_LESSON} XP)`}
@@ -149,11 +149,11 @@ export default function LessonPage({ params }: { params: Promise<{ slug: string;
 
 function MarkdownBlocks({ markdown }: { markdown: string }) {
   return (
-    <div className="space-y-3 text-sm leading-relaxed text-zinc-300">
+    <div className="space-y-3 text-sm leading-relaxed text-muted-foreground">
       {markdown.split("\n").map((line, index) => {
         if (line.startsWith("### ")) {
           return (
-            <h3 key={`${line}-${index}`} className="text-base font-semibold text-zinc-100">
+            <h3 key={`${line}-${index}`} className="text-base font-semibold text-foreground">
               {line.replace("### ", "")}
             </h3>
           );
@@ -163,7 +163,7 @@ function MarkdownBlocks({ markdown }: { markdown: string }) {
             <p key={`${line}-${index}`}>
               {line.split("`").map((chunk, chunkIndex) =>
                 chunkIndex % 2 === 1 ? (
-                  <code key={`${chunk}-${chunkIndex}`} className="rounded bg-zinc-950 px-1 py-0.5 text-[#14F195]">
+                  <code key={`${chunk}-${chunkIndex}`} className="rounded bg-st-dark px-1 py-0.5 text-[#ffd23f]">
                     {chunk}
                   </code>
                 ) : (

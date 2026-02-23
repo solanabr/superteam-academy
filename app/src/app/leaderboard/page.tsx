@@ -33,8 +33,8 @@ export default function LeaderboardPage() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-3xl font-semibold text-zinc-100">{t("title")}</h1>
-        <p className="mt-2 text-zinc-400">{t("subtitle")}</p>
+        <h1 className="text-3xl font-semibold text-foreground">{t("title")}</h1>
+        <p className="mt-2 text-muted-foreground">{t("subtitle")}</p>
       </header>
 
       <div className="flex gap-2">
@@ -53,23 +53,23 @@ export default function LeaderboardPage() {
             transition={{ duration: 0.35, delay: index * 0.08 }}
           >
             <div className="flex items-center justify-between">
-              <span className="text-xs uppercase tracking-wide text-zinc-400">Rank #{index + 1}</span>
+              <span className="text-xs uppercase tracking-wide text-muted-foreground">Rank #{index + 1}</span>
               <motion.div animate={{ y: [0, -3, 0] }} transition={{ repeat: Infinity, duration: 1.8, delay: index * 0.12 }}>
-                <Crown className={`size-4 ${index === 0 ? "text-amber-300" : index === 1 ? "text-zinc-300" : "text-orange-300"}`} />
+                <Crown className={`size-4 ${index === 0 ? "text-amber-300" : index === 1 ? "text-muted-foreground" : "text-orange-300"}`} />
               </motion.div>
             </div>
             <div className="mt-3 flex items-center gap-3">
-              <Avatar className="size-12 border border-white/20">
+              <Avatar className="size-12 border border-border">
                 <AvatarImage src={entry.avatar} alt={entry.username} />
                 <AvatarFallback>{entry.username.slice(0, 2).toUpperCase()}</AvatarFallback>
               </Avatar>
               <div>
-                <p className="font-semibold text-zinc-100">{entry.username}</p>
-                <p className="text-xs text-zinc-400">{entry.country}</p>
+                <p className="font-semibold text-foreground">{entry.username}</p>
+                <p className="text-xs text-muted-foreground">{entry.country}</p>
               </div>
             </div>
-            <p className="mt-3 text-lg font-semibold text-zinc-100">{entry.xp.toLocaleString()} XP</p>
-            <p className="flex items-center gap-1 text-xs text-[#14F195]">
+            <p className="mt-3 text-lg font-semibold text-foreground">{entry.xp.toLocaleString()} XP</p>
+            <p className="flex items-center gap-1 text-xs text-[#ffd23f]">
               <TrendingUp className="size-3.5" />+{entry.weeklyGain}
             </p>
           </motion.article>
@@ -83,7 +83,7 @@ export default function LeaderboardPage() {
           return (
             <motion.article
               key={entry.userId}
-              className="rounded-xl border border-white/10 bg-zinc-900/70 px-4 py-3"
+              className="rounded-xl border border-border bg-card px-4 py-3"
               initial={{ opacity: 0, x: 10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.25, delay: index * 0.04 }}
@@ -91,33 +91,33 @@ export default function LeaderboardPage() {
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <motion.div
-                    className="inline-flex w-8 justify-center rounded-full border border-white/10 bg-zinc-950 px-2 py-1 text-sm font-semibold text-zinc-200"
+                    className="inline-flex w-8 justify-center rounded-full border border-border bg-st-dark px-2 py-1 text-sm font-semibold text-foreground/90"
                     animate={{ scale: [1, 1.03, 1] }}
                     transition={{ duration: 1.5, repeat: Infinity, delay: index * 0.07 }}
                   >
                     {rank}
                   </motion.div>
-                  <Avatar className="border border-white/15">
+                  <Avatar className="border border-border">
                     <AvatarImage src={entry.avatar} alt={entry.username} />
                     <AvatarFallback>{entry.username.slice(0, 2).toUpperCase()}</AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="text-sm font-semibold text-zinc-100">{entry.username}</p>
-                    <p className="text-xs text-zinc-400">Lv {entry.level}</p>
+                    <p className="text-sm font-semibold text-foreground">{entry.username}</p>
+                    <p className="text-xs text-muted-foreground">Lv {entry.level}</p>
                   </div>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
                   {entry.badges.map((badge) => (
-                    <Badge key={`${entry.userId}-${badge}`} variant="outline" className="border-white/20 text-zinc-300">
+                    <Badge key={`${entry.userId}-${badge}`} variant="outline" className="border-border text-muted-foreground">
                       {badge}
                     </Badge>
                   ))}
-                  <span className="text-sm text-zinc-200">{entry.xp.toLocaleString()} XP</span>
+                  <span className="text-sm text-foreground/90">{entry.xp.toLocaleString()} XP</span>
                 </div>
               </div>
 
-              <Progress value={ratio} className="mt-3 h-1.5 bg-zinc-800" />
+              <Progress value={ratio} className="mt-3 h-1.5 bg-secondary" />
             </motion.article>
           );
         })}
@@ -142,8 +142,8 @@ function TimeframeButton({
       variant={current === value ? "default" : "outline"}
       className={
         current === value
-          ? "bg-gradient-to-r from-[#9945FF] to-[#14F195] text-black"
-          : "border-white/20 bg-transparent text-zinc-200"
+          ? "bg-gradient-to-r from-[#2f6b3f] to-[#ffd23f] text-st-dark"
+          : "border-border bg-transparent text-foreground/90"
       }
       onClick={() => onChange(value)}
     >

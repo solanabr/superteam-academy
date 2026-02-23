@@ -3,10 +3,20 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * Superteam Brasil Brand Palette
+ * ──────────────────────────────
+ * Yellow (accent/CTA):  #ffd23f
+ * Cream (light bg):     #f7eacb
+ * Dark Green (primary): #2f6b3f
+ * Emerald (secondary):  #008c4c
+ * Near-black:           #1b231d
+ */
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: "Avenir Next", "Segoe UI", "Helvetica Neue", "Noto Sans", sans-serif;
+  --font-sans: "Inter", "Archivo", "Segoe UI", "Helvetica Neue", sans-serif;
   --font-mono: "JetBrains Mono", "Fira Code", "SFMono-Regular", Menlo, monospace;
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
@@ -24,6 +34,11 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-st-yellow: #ffd23f;
+  --color-st-cream: #f7eacb;
+  --color-st-green: #2f6b3f;
+  --color-st-emerald: #008c4c;
+  --color-st-dark: #1b231d;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -32,45 +47,45 @@
 
 :root {
   --radius: 0.9rem;
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  --background: #f7eacb;
+  --foreground: #1b231d;
   --card: #ffffff;
-  --card-foreground: #0f172a;
+  --card-foreground: #1b231d;
   --popover: #ffffff;
-  --popover-foreground: #0f172a;
-  --primary: #2f3a77;
+  --popover-foreground: #1b231d;
+  --primary: #2f6b3f;
   --primary-foreground: #ffffff;
-  --secondary: #e2e8f0;
-  --secondary-foreground: #111827;
-  --muted: #e2e8f0;
-  --muted-foreground: #475569;
-  --accent: #dcfce7;
-  --accent-foreground: #14532d;
+  --secondary: #e8dfc4;
+  --secondary-foreground: #1b231d;
+  --muted: #e8dfc4;
+  --muted-foreground: #4a5548;
+  --accent: #ffd23f;
+  --accent-foreground: #1b231d;
   --destructive: #ef4444;
-  --border: #cbd5e1;
-  --input: #cbd5e1;
-  --ring: #2f3a77;
+  --border: #c5b990;
+  --input: #c5b990;
+  --ring: #2f6b3f;
 }
 
 .dark {
-  --background: #090d16;
-  --foreground: #f2f5fb;
-  --card: #0f1422;
-  --card-foreground: #eff2fa;
-  --popover: #111827;
-  --popover-foreground: #f3f4f6;
-  --primary: #9945ff;
-  --primary-foreground: #06090f;
-  --secondary: #1f2937;
-  --secondary-foreground: #f9fafb;
-  --muted: #18202f;
-  --muted-foreground: #9ca3af;
-  --accent: #14f195;
-  --accent-foreground: #04110b;
+  --background: #1b231d;
+  --foreground: #f7eacb;
+  --card: #222c24;
+  --card-foreground: #f7eacb;
+  --popover: #222c24;
+  --popover-foreground: #f7eacb;
+  --primary: #ffd23f;
+  --primary-foreground: #1b231d;
+  --secondary: #2a3a2e;
+  --secondary-foreground: #f7eacb;
+  --muted: #2a3a2e;
+  --muted-foreground: #9ca88e;
+  --accent: #008c4c;
+  --accent-foreground: #f7eacb;
   --destructive: #f87171;
-  --border: rgba(255, 255, 255, 0.12);
-  --input: rgba(255, 255, 255, 0.15);
-  --ring: #14f195;
+  --border: rgba(247, 234, 203, 0.12);
+  --input: rgba(247, 234, 203, 0.15);
+  --ring: #ffd23f;
 }
 
 @layer base {

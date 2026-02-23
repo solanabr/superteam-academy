@@ -23,11 +23,11 @@ export function ShareActions({ url }: { url: string }) {
 
   return (
     <div className="flex flex-wrap gap-2">
-      <Button variant="outline" className="border-white/20 bg-transparent text-zinc-100" onClick={() => void handleCopy()}>
+      <Button variant="outline" className="border-border bg-transparent text-foreground" onClick={() => void handleCopy()}>
         <Copy className="size-4" />
         {copied ? "Copied" : "Copy link"}
       </Button>
-      <Button asChild variant="outline" className="border-white/20 bg-transparent text-zinc-100">
+      <Button asChild variant="outline" className="border-border bg-transparent text-foreground">
         <a href={twitterUrl} target="_blank" rel="noreferrer">
           Share on X
           <ExternalLink className="size-4" />

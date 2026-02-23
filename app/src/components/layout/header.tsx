@@ -36,15 +36,22 @@ export function Header() {
   }, [wallet.publicKey, setWalletAddress]);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/10 bg-[#090c14]/80 backdrop-blur-md">
+    <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6">
         <div className="flex items-center gap-5">
-          <div>
-            <Link href="/" className="font-mono text-sm font-semibold tracking-[0.2em] text-white">
-              {tCommon("brand")}
-            </Link>
-            <p className="hidden text-xs text-zinc-400 md:block">{tHeader("tagline")}</p>
-          </div>
+          <Link href="/" className="flex items-center gap-2">
+            <img
+              src="/New Logo/Logo/HORIZONTAL/SVG/ST-OFF-WHITE-HORIZONTAL.svg"
+              alt="Superteam Brasil"
+              className="hidden h-8 dark:block"
+            />
+            <img
+              src="/New Logo/Logo/HORIZONTAL/SVG/ST-DARK-GREEN-HORIZONTAL.svg"
+              alt="Superteam Brasil"
+              className="block h-8 dark:hidden"
+            />
+            <span className="sr-only">{tCommon("brand")}</span>
+          </Link>
 
           <nav className="hidden items-center gap-2 md:flex">
             {navItems.map((item) => {
@@ -55,7 +62,7 @@ export function Header() {
                   href={item.href}
                   className={cn(
                     "rounded-md px-3 py-2 text-sm transition",
-                    active ? "bg-white/10 text-zinc-100" : "text-zinc-400 hover:text-zinc-200",
+                    active ? "bg-white/10 text-foreground" : "text-muted-foreground hover:text-foreground/90",
                   )}
                 >
                   {item.label}
@@ -67,7 +74,7 @@ export function Header() {
 
         <div className="flex items-center gap-2">
           <Select value={locale} onValueChange={(value) => setLocale(value as Locale)}>
-            <SelectTrigger className="hidden h-9 w-[108px] border-white/15 bg-zinc-900/60 text-xs text-zinc-200 sm:flex">
+            <SelectTrigger className="hidden h-9 w-[108px] border-border bg-card text-xs text-foreground/90 sm:flex">
               <SelectValue placeholder={tCommon("language")} />
             </SelectTrigger>
             <SelectContent>
@@ -80,7 +87,7 @@ export function Header() {
           <Button
             variant="outline"
             size="icon"
-            className="h-9 w-9 border-white/15 bg-zinc-900/60"
+            className="h-9 w-9 border-border bg-card"
             onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
             aria-label="Toggle theme"
           >
@@ -88,16 +95,16 @@ export function Header() {
           </Button>
 
           <div className="hidden md:block">
-            <WalletMultiButton className="!h-9 !rounded-md !bg-gradient-to-r !from-[#9945FF] !to-[#14F195] !px-3 !text-black" />
+            <WalletMultiButton className="!h-9 !rounded-md !bg-gradient-to-r !from-[#2f6b3f] !to-[#ffd23f] !px-3 !text-st-dark" />
           </div>
 
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="outline" size="icon" className="border-white/15 bg-zinc-900/60 md:hidden">
+              <Button variant="outline" size="icon" className="border-border bg-card md:hidden">
                 <Menu className="size-4" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="border-white/10 bg-[#090d16] text-zinc-100">
+            <SheetContent side="right" className="border-border bg-st-dark text-foreground">
               <SheetHeader>
                 <SheetTitle>Navigation</SheetTitle>
               </SheetHeader>
@@ -110,7 +117,7 @@ export function Header() {
                       href={item.href}
                       className={cn(
                         "block rounded-md px-3 py-2 text-sm",
-                        active ? "bg-white/10 text-zinc-100" : "text-zinc-300",
+                        active ? "bg-white/10 text-foreground" : "text-muted-foreground",
                       )}
                     >
                       {item.label}
@@ -120,7 +127,7 @@ export function Header() {
               </div>
               <div className="mt-6 space-y-3">
                 <Select value={locale} onValueChange={(value) => setLocale(value as Locale)}>
-                  <SelectTrigger className="h-9 w-full border-white/15 bg-zinc-900/60 text-xs text-zinc-200">
+                  <SelectTrigger className="h-9 w-full border-border bg-card text-xs text-foreground/90">
                     <SelectValue placeholder={tCommon("language")} />
                   </SelectTrigger>
                   <SelectContent>
@@ -129,7 +136,7 @@ export function Header() {
                     <SelectItem value="es">ES</SelectItem>
                   </SelectContent>
                 </Select>
-                <WalletMultiButton className="!h-9 !w-full !rounded-md !bg-gradient-to-r !from-[#9945FF] !to-[#14F195] !px-3 !text-black" />
+                <WalletMultiButton className="!h-9 !w-full !rounded-md !bg-gradient-to-r !from-[#2f6b3f] !to-[#ffd23f] !px-3 !text-st-dark" />
               </div>
             </SheetContent>
           </Sheet>

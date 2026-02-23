@@ -18,29 +18,29 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
 
   return (
     <div className="space-y-6">
-      <header className="rounded-2xl border border-white/10 bg-zinc-900/70 p-6">
-        <h1 className="text-3xl font-semibold text-zinc-100">{profile.displayName}</h1>
-        <p className="mt-2 max-w-2xl text-zinc-300">{profile.bio}</p>
+      <header className="rounded-2xl border border-border bg-card p-6">
+        <h1 className="text-3xl font-semibold text-foreground">{profile.displayName}</h1>
+        <p className="mt-2 max-w-2xl text-muted-foreground">{profile.bio}</p>
         <div className="mt-4 flex flex-wrap gap-2">
           {profile.interests.map((interest) => (
-            <Badge key={interest} variant="outline" className="border-white/20 text-zinc-300">{interest}</Badge>
+            <Badge key={interest} variant="outline" className="border-border text-muted-foreground">{interest}</Badge>
           ))}
         </div>
       </header>
 
       <section className="grid gap-4 lg:grid-cols-[1.2fr_1fr]">
-        <article className="rounded-xl border border-white/10 bg-zinc-900/65 p-4">
-          <h2 className="mb-3 text-sm font-semibold text-zinc-100">Skill radar</h2>
+        <article className="rounded-xl border border-border bg-card p-4">
+          <h2 className="mb-3 text-sm font-semibold text-foreground">Skill radar</h2>
           <RadarChart values={profile.skills} />
         </article>
-        <article className="rounded-xl border border-white/10 bg-zinc-900/65 p-4">
-          <h2 className="mb-3 text-sm font-semibold text-zinc-100">Enrolled courses</h2>
-          <ul className="space-y-2 text-sm text-zinc-300">
+        <article className="rounded-xl border border-border bg-card p-4">
+          <h2 className="mb-3 text-sm font-semibold text-foreground">Enrolled courses</h2>
+          <ul className="space-y-2 text-sm text-muted-foreground">
             {mockCourses
               .filter((course) => profile.enrolledCourseIds.includes(course.id))
               .map((course) => (
                 <li key={course.id}>
-                  <Link href={`/courses/${course.slug}`} className="hover:text-[#14F195]">{course.title}</Link>
+                  <Link href={`/courses/${course.slug}`} className="hover:text-[#ffd23f]">{course.title}</Link>
                 </li>
               ))}
           </ul>
@@ -48,7 +48,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold text-zinc-100">Achievements</h2>
+        <h2 className="text-lg font-semibold text-foreground">Achievements</h2>
         <div className="grid gap-3 md:grid-cols-3">
           {mockAchievements.map((achievement) => (
             <AchievementCard key={achievement.id} achievement={achievement} />
@@ -57,13 +57,13 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold text-zinc-100">Credentials</h2>
+        <h2 className="text-lg font-semibold text-foreground">Credentials</h2>
         <div className="grid gap-3 md:grid-cols-2">
           {credentials.map((credential) => (
             <Link
               key={credential.id}
               href={`/certificates/${credential.id}`}
-              className="overflow-hidden rounded-xl border border-white/10 bg-zinc-900/70"
+              className="overflow-hidden rounded-xl border border-border bg-card"
             >
               <Image
                 src={credential.imageUri}
@@ -73,8 +73,8 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
                 className="h-44 w-full object-cover"
               />
               <div className="p-4">
-                <p className="text-sm font-semibold text-zinc-100">{credential.title}</p>
-                <p className="text-xs text-zinc-400">Issued {new Date(credential.issuedAt).toLocaleDateString()}</p>
+                <p className="text-sm font-semibold text-foreground">{credential.title}</p>
+                <p className="text-xs text-muted-foreground">Issued {new Date(credential.issuedAt).toLocaleDateString()}</p>
               </div>
             </Link>
           ))}
@@ -111,9 +111,9 @@ function RadarChart({ values }: { values: Record<string, number> }) {
             stroke="rgba(255,255,255,0.12)"
           />
         ))}
-        <polygon points={points} fill="rgba(20,241,149,0.22)" stroke="#14F195" strokeWidth="2" />
+        <polygon points={points} fill="rgba(255,210,63,0.22)" stroke="#ffd23f" strokeWidth="2" />
       </svg>
-      <div className="grid w-full grid-cols-2 gap-2 text-xs text-zinc-400">
+      <div className="grid w-full grid-cols-2 gap-2 text-xs text-muted-foreground">
         {entries.map(([name, value]) => (
           <p key={name}>{name}: {value}</p>
         ))}

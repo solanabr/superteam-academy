@@ -23,7 +23,7 @@ export function CourseGrid({
     return (
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {Array.from({ length: 6 }).map((_, index) => (
-          <Skeleton key={index} className="h-72 rounded-xl bg-zinc-900/70" />
+          <Skeleton key={index} className="h-72 rounded-xl bg-card" />
         ))}
       </div>
     );

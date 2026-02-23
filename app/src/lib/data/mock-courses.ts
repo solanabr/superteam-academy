@@ -12,12 +12,12 @@ type ReferenceModule = ReferenceCourse["modules"][number];
 type ReferenceLesson = ReferenceModule["lessons"][number];
 
 const GRADIENTS = [
-  "from-[#9945FF] via-[#8752F3] to-[#14F195]",
-  "from-[#14F195] via-[#4BE3C2] to-[#9945FF]",
-  "from-[#5B4B8A] via-[#9945FF] to-[#14F195]",
-  "from-[#0FA6C9] via-[#3C78D8] to-[#14F195]",
-  "from-[#9945FF] via-[#4F6AFF] to-[#14F195]",
-  "from-[#0A1F44] via-[#2D46B9] to-[#14F195]",
+  "from-[#2f6b3f] via-[#3a7d4a] to-[#ffd23f]",
+  "from-[#ffd23f] via-[#008c4c] to-[#2f6b3f]",
+  "from-[#1b231d] via-[#2f6b3f] to-[#ffd23f]",
+  "from-[#008c4c] via-[#2f6b3f] to-[#ffd23f]",
+  "from-[#2f6b3f] via-[#008c4c] to-[#ffd23f]",
+  "from-[#1b231d] via-[#2f6b3f] to-[#ffd23f]",
 ];
 
 function parseDurationMinutes(duration: string): number {

@@ -55,14 +55,14 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <section className="relative overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/75 p-5">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(153,69,255,0.25),transparent_40%),radial-gradient(circle_at_90%_30%,rgba(20,241,149,0.2),transparent_35%)]" />
+      <section className="relative overflow-hidden rounded-2xl border border-border bg-card/75 p-5">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(153,69,255,0.25),transparent_40%),radial-gradient(circle_at_90%_30%,rgba(255,210,63,0.2),transparent_35%)]" />
         <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-zinc-100">Welcome back, {profile.displayName}</h1>
-            <p className="mt-2 text-zinc-300">{t("subtitle")}</p>
+            <h1 className="text-2xl font-semibold text-foreground">Welcome back, {profile.displayName}</h1>
+            <p className="mt-2 text-muted-foreground">{t("subtitle")}</p>
           </div>
-          <Avatar className="size-14 border border-white/15">
+          <Avatar className="size-14 border border-border">
             <AvatarImage src={profile.avatar} alt={profile.displayName} />
             <AvatarFallback>{profile.displayName.slice(0, 2).toUpperCase()}</AvatarFallback>
           </Avatar>
@@ -70,17 +70,17 @@ export default function DashboardPage() {
       </section>
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard title="Total XP" value={xp.totalXp.toLocaleString()} icon={Sparkles} accent="text-[#14F195]" />
+        <StatCard title="Total XP" value={xp.totalXp.toLocaleString()} icon={Sparkles} accent="text-[#ffd23f]" />
         <StatCard title="Current Level" value={`Lv ${xp.level}`} icon={Trophy} accent="text-amber-300" />
         <StatCard title="Current Streak" value={`${xp.streak?.currentStreak ?? 0} days`} icon={Flame} accent="text-orange-300" />
         <StatCard title="Courses Enrolled" value={enrolledCourses.length.toString()} icon={BookOpenCheck} accent="text-[#8f9bff]" />
       </section>
 
       <section className="grid gap-4 xl:grid-cols-[1.35fr_1fr]">
-        <article className="space-y-4 rounded-xl border border-white/10 bg-zinc-900/70 p-4">
+        <article className="space-y-4 rounded-xl border border-border bg-card p-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">Enrolled courses</h2>
-            <Layers3 className="size-4 text-zinc-500" />
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Enrolled courses</h2>
+            <Layers3 className="size-4 text-muted-foreground/70" />
           </div>
           <div className="space-y-3">
             {enrolledCourses.map((course) => {
@@ -88,25 +88,25 @@ export default function DashboardPage() {
               const total = course.modules.reduce((sum, module) => sum + module.lessons.length, 0);
               const ratio = total === 0 ? 0 : Math.round((completed / total) * 100);
               return (
-                <div key={course.id} className="rounded-lg border border-white/10 bg-zinc-950/60 p-3">
+                <div key={course.id} className="rounded-lg border border-border bg-st-dark/60 p-3">
                   <div className="mb-2 flex items-center justify-between gap-3 text-sm">
-                    <p className="font-medium text-zinc-100">{course.title}</p>
-                    <span className="text-xs text-zinc-400">
+                    <p className="font-medium text-foreground">{course.title}</p>
+                    <span className="text-xs text-muted-foreground">
                       {completed}/{total} lessons
                     </span>
                   </div>
-                  <Progress value={ratio} className="h-2 bg-zinc-800" />
+                  <Progress value={ratio} className="h-2 bg-secondary" />
                 </div>
               );
             })}
           </div>
         </article>
 
-        <article className="rounded-xl border border-white/10 bg-zinc-900/70 p-4">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">Recent activity</h2>
+        <article className="rounded-xl border border-border bg-card p-4">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Recent activity</h2>
           <ul className="mt-3 space-y-2">
             {activityFeed.map((entry) => (
-              <li key={entry} className="rounded-md border border-white/10 bg-zinc-950/60 px-3 py-2 text-sm text-zinc-300">
+              <li key={entry} className="rounded-md border border-border bg-st-dark/60 px-3 py-2 text-sm text-muted-foreground">
                 {entry}
               </li>
             ))}
@@ -115,18 +115,18 @@ export default function DashboardPage() {
       </section>
 
       <section className="grid gap-4 xl:grid-cols-[1.35fr_1fr]">
-        <article className="rounded-xl border border-white/10 bg-zinc-900/70 p-4">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">Weekly XP</h2>
+        <article className="rounded-xl border border-border bg-card p-4">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Weekly XP</h2>
           <div className="mt-4 grid grid-cols-7 gap-2">
             {weeklyXp.map((value, index) => (
               <div key={index} className="flex flex-col items-center gap-2">
-                <div className="flex h-36 w-full items-end rounded-md bg-zinc-950/80 p-1">
+                <div className="flex h-36 w-full items-end rounded-md bg-st-dark/80 p-1">
                   <div
-                    className="w-full rounded-sm bg-gradient-to-t from-[#9945FF] to-[#14F195]"
+                    className="w-full rounded-sm bg-gradient-to-t from-[#2f6b3f] to-[#ffd23f]"
                     style={{ height: `${Math.max(10, Math.min(100, Math.round((value / 130) * 100)))}%` }}
                   />
                 </div>
-                <span className="text-xs text-zinc-500">D{index + 1}</span>
+                <span className="text-xs text-muted-foreground/70">D{index + 1}</span>
               </div>
             ))}
           </div>
@@ -135,22 +135,22 @@ export default function DashboardPage() {
       </section>
 
       <section className="grid gap-4 xl:grid-cols-[1fr_1.2fr]">
-        <article className="space-y-3 rounded-xl border border-white/10 bg-zinc-900/70 p-4">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">Quick actions</h2>
-          <Button asChild className="w-full justify-start bg-gradient-to-r from-[#9945FF] to-[#14F195] text-black">
+        <article className="space-y-3 rounded-xl border border-border bg-card p-4">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Quick actions</h2>
+          <Button asChild className="w-full justify-start bg-gradient-to-r from-[#2f6b3f] to-[#ffd23f] text-st-dark">
             <Link href="/courses">Continue learning</Link>
           </Button>
-          <Button asChild variant="outline" className="w-full justify-start border-white/20 bg-transparent text-zinc-200">
+          <Button asChild variant="outline" className="w-full justify-start border-border bg-transparent text-foreground/90">
             <Link href="/courses">Browse courses</Link>
           </Button>
-          <Button asChild variant="outline" className="w-full justify-start border-white/20 bg-transparent text-zinc-200">
+          <Button asChild variant="outline" className="w-full justify-start border-border bg-transparent text-foreground/90">
             <Link href="/leaderboard">View leaderboard</Link>
           </Button>
         </article>
 
-        <article className="space-y-3 rounded-xl border border-white/10 bg-zinc-900/70 p-4">
+        <article className="space-y-3 rounded-xl border border-border bg-card p-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">Achievements</h2>
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Achievements</h2>
             <LevelBadge level={xp.level} />
           </div>
           <div className="grid gap-3 md:grid-cols-2">
@@ -177,12 +177,12 @@ function StatCard({
   accent: string;
 }) {
   return (
-    <article className="rounded-xl border border-white/10 bg-zinc-900/70 p-4">
+    <article className="rounded-xl border border-border bg-card p-4">
       <div className="flex items-center justify-between">
-        <p className="text-xs uppercase tracking-wide text-zinc-500">{title}</p>
+        <p className="text-xs uppercase tracking-wide text-muted-foreground/70">{title}</p>
         <Icon className={`size-4 ${accent}`} />
       </div>
-      <p className="mt-2 text-2xl font-semibold text-zinc-100">{value}</p>
+      <p className="mt-2 text-2xl font-semibold text-foreground">{value}</p>
     </article>
   );
 }

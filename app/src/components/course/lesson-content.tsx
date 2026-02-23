@@ -44,20 +44,20 @@ export function LessonContent({ lesson, onComplete, completed }: LessonContentPr
     <article className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold text-zinc-100">{lesson.title}</h1>
-          <p className="mt-2 text-sm text-zinc-400">{lesson.objective}</p>
+          <h1 className="text-2xl font-semibold text-foreground">{lesson.title}</h1>
+          <p className="mt-2 text-sm text-muted-foreground">{lesson.objective}</p>
         </div>
-        <Badge variant="outline" className="border-white/20 text-zinc-300">
+        <Badge variant="outline" className="border-border text-muted-foreground">
           {lesson.kind === "challenge" ? t("challenge") : t("content")}
         </Badge>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-white/10 bg-zinc-950/65">
+      <div className="overflow-hidden rounded-xl border border-border bg-st-dark/65">
         <div className="flex min-h-[60vh] flex-col lg:flex-row">
           <div className="p-5" style={{ width: `${split}%` }}>
-            <h2 className="mb-2 text-sm font-semibold text-zinc-200">{t("lessonObjective")}</h2>
+            <h2 className="mb-2 text-sm font-semibold text-foreground/90">{t("lessonObjective")}</h2>
             <Separator className="mb-4 bg-white/10" />
-            <div className="prose prose-invert max-w-none text-sm leading-relaxed text-zinc-300">
+            <div className="prose prose-invert max-w-none text-sm leading-relaxed text-muted-foreground">
               {lesson.markdown.split("\n").map((line, index) => (
                 <p key={index}>{line.replace(/^###\s*/, "")}</p>
               ))}
@@ -67,13 +67,13 @@ export function LessonContent({ lesson, onComplete, completed }: LessonContentPr
           <button
             type="button"
             aria-label="Resize panels"
-            className="hidden w-6 items-center justify-center border-x border-white/10 bg-zinc-900 lg:flex"
+            className="hidden w-6 items-center justify-center border-x border-border bg-card lg:flex"
             onMouseDown={handleDrag}
           >
-            <GripVertical className="size-4 text-zinc-500" />
+            <GripVertical className="size-4 text-muted-foreground/70" />
           </button>
 
-          <div className="min-h-[320px] flex-1 border-t border-white/10 lg:border-t-0">
+          <div className="min-h-[320px] flex-1 border-t border-border lg:border-t-0">
             <CodeEditor value={code} onChange={setCode} />
           </div>
         </div>
@@ -82,7 +82,7 @@ export function LessonContent({ lesson, onComplete, completed }: LessonContentPr
       <Button
         onClick={() => void onComplete()}
         disabled={completed}
-        className="bg-gradient-to-r from-[#9945FF] to-[#14F195] text-black"
+        className="bg-gradient-to-r from-[#2f6b3f] to-[#ffd23f] text-st-dark"
       >
         {completed ? "Completed" : t("markComplete")}
       </Button>

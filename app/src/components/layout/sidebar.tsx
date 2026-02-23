@@ -23,7 +23,7 @@ export function Sidebar() {
   const profile = useUserStore((state) => state.profile);
 
   return (
-    <aside className="hidden w-64 flex-col border-r border-white/10 bg-zinc-950/60 p-4 lg:flex">
+    <aside className="hidden w-64 flex-col border-r border-border bg-st-dark/60 p-4 lg:flex">
       <nav className="flex flex-col gap-2">
         {nav.map((item) => {
           const active = item.href === "/" ? pathname === "/" : pathname === item.href || pathname.startsWith(`${item.href}/`);
@@ -36,8 +36,8 @@ export function Sidebar() {
               className={cn(
                 "flex items-center gap-3 rounded-lg border px-3 py-2 text-sm transition",
                 active
-                  ? "border-[#14F195]/30 bg-gradient-to-r from-[#9945FF]/25 to-[#14F195]/10 text-white"
-                  : "border-transparent text-zinc-400 hover:border-white/10 hover:bg-zinc-900/70 hover:text-zinc-200",
+                  ? "border-[#ffd23f]/30 bg-gradient-to-r from-[#2f6b3f]/25 to-[#ffd23f]/10 text-foreground"
+                  : "border-transparent text-muted-foreground hover:border-border hover:bg-card hover:text-foreground/90",
               )}
             >
               <Icon className="size-4" />
@@ -47,20 +47,20 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="mt-auto space-y-3 rounded-xl border border-white/10 bg-zinc-900/70 p-3">
+      <div className="mt-auto space-y-3 rounded-xl border border-border bg-card p-3">
         <div className="flex items-center gap-3">
-          <Avatar className="size-9 border border-white/15">
+          <Avatar className="size-9 border border-border">
             <AvatarImage src={profile.avatar} alt={profile.displayName} />
             <AvatarFallback>{profile.displayName.slice(0, 2).toUpperCase()}</AvatarFallback>
           </Avatar>
           <div>
-            <p className="text-sm font-medium text-zinc-100">{profile.displayName}</p>
-            <p className="text-xs text-zinc-400">@{profile.username}</p>
+            <p className="text-sm font-medium text-foreground">{profile.displayName}</p>
+            <p className="text-xs text-muted-foreground">@{profile.username}</p>
           </div>
         </div>
-        <div className="rounded-md border border-white/10 bg-zinc-950/70 px-3 py-2">
-          <p className="text-xs uppercase tracking-wide text-zinc-500">XP</p>
-          <p className="text-sm font-semibold text-[#14F195]">{profile.xp.toLocaleString()}</p>
+        <div className="rounded-md border border-border bg-st-dark/70 px-3 py-2">
+          <p className="text-xs uppercase tracking-wide text-muted-foreground/70">XP</p>
+          <p className="text-sm font-semibold text-[#ffd23f]">{profile.xp.toLocaleString()}</p>
         </div>
       </div>
     </aside>

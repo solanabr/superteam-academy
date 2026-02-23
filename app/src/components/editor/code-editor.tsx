@@ -6,7 +6,7 @@ import { useTheme } from "next-themes";
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), {
   ssr: false,
   loading: () => (
-    <div className="flex h-full min-h-[320px] items-center justify-center rounded-xl border border-white/10 bg-zinc-950 text-sm text-zinc-400">
+    <div className="flex h-full min-h-[320px] items-center justify-center rounded-xl border border-border bg-st-dark text-sm text-muted-foreground">
       Loading editor...
     </div>
   ),

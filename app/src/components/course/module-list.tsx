@@ -13,20 +13,20 @@ export function ModuleList({ slug, modules }: ModuleListProps) {
   return (
     <div className="space-y-3">
       {modules.map((module, moduleIndex) => (
-        <section key={module.id} className="rounded-xl border border-white/10 bg-zinc-900/65 p-4">
-          <h3 className="text-sm font-semibold text-zinc-100">
+        <section key={module.id} className="rounded-xl border border-border bg-card p-4">
+          <h3 className="text-sm font-semibold text-foreground">
             {moduleIndex + 1}. {module.title}
           </h3>
-          <p className="mt-1 text-sm text-zinc-400">{module.description}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{module.description}</p>
           <ul className="mt-3 space-y-2">
             {module.lessons.map((lesson) => (
               <li key={lesson.id}>
                 <Link
                   href={`/courses/${slug}/lessons/${lesson.id}`}
-                  className="flex items-center justify-between rounded-md border border-white/10 bg-zinc-900/90 px-3 py-2 text-sm text-zinc-200 transition hover:border-[#14F195]/35"
+                  className="flex items-center justify-between rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground/90 transition hover:border-[#ffd23f]/35"
                 >
                   <span>{lesson.title}</span>
-                  <ChevronRight className="size-4 text-zinc-400" />
+                  <ChevronRight className="size-4 text-muted-foreground" />
                 </Link>
               </li>
             ))}
