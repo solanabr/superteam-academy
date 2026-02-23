@@ -6,46 +6,48 @@ import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 import { PROGRAM_ID, XP_MINT } from "@/lib/constants";
 import * as anchor from "@coral-xyz/anchor";
 import idl from "@/lib/idl/onchain_academy.json";
+import { OnchainAcademy } from "@/types/onchain_academy";
+import { BN } from "@coral-xyz/anchor";
 
-// Инициализация Read-Only программы для чека состояния
 const getReadOnlyProgram = () => {
   const provider = new anchor.AnchorProvider(connection, { publicKey: PublicKey.default } as any, {});
-  return new anchor.Program(idl as any, provider);
+  return new anchor.Program<OnchainAcademy>(idl as any, provider);
 };
+
+// Функция проверки бита (есть ли урок в карте)
+function isLessonComplete(lessonFlags: BN[] | number[], lessonIndex: number): boolean {
+    if (!lessonFlags) return false;
+    
+    // Anchor возвращает BN[], но иногда это может быть number[] в JSON
+    const wordIndex = Math.floor(lessonIndex / 64);
+    const bitIndex = lessonIndex % 64;
+    
+    const word = lessonFlags[wordIndex];
+    if (!word) return false;
+
+    // Работаем с BN
+    const bnWord = new BN(word);
+    return !bnWord.and(new BN(1).shln(bitIndex)).isZero();
+}
 
 export async function syncBlockchainData(userId: string, walletAddress: string) {
   if (!walletAddress) return;
 
-  console.log(`[Sync] Starting blockchain sync for ${walletAddress}...`);
+  console.log(`[Sync] Starting full sync for ${walletAddress}...`);
   const program = getReadOnlyProgram();
   const walletPubkey = new PublicKey(walletAddress);
 
-  // 1. Синхронизация XP (Token Account -> DB)
+  // 1. XP Sync (уже было)
   try {
-    const learnerXpAta = getAssociatedTokenAddressSync(
-        XP_MINT,
-        walletPubkey,
-        false,
-        new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb")
-    );
-    
-    // Проверяем баланс
+    const learnerXpAta = getAssociatedTokenAddressSync(XP_MINT, walletPubkey, false, new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"));
     const balance = await connection.getTokenAccountBalance(learnerXpAta);
     const realXp = Number(balance.value.amount);
+    await prisma.user.update({ where: { id: userId }, data: { xp: realXp } });
+    console.log(`[Sync] XP restored: ${realXp}`);
+  } catch (e) {}
 
-    // Обновляем в БД
-    await prisma.user.update({
-        where: { id: userId },
-        data: { xp: realXp }
-    });
-    console.log(`[Sync] XP synced: ${realXp}`);
-  } catch (e) {
-    // Аккаунта нет -> 0 XP, ничего не делаем
-  }
-
-  // 2. Синхронизация Курсов (Enrollment PDA -> DB)
-  // Это сложнее: нужно знать ID всех курсов. Для хакатона захардкодим список известных курсов.
-  // В идеале: fetch all courses from DB -> check each PDA.
+  // 2. Courses & Lessons Sync (НОВАЯ ЛОГИКА)
+  // Список всех известных курсов (в проде fetch from DB)
   const knownCourseIds = ["anchor-101", "solana-mock-test"]; 
 
   for (const courseId of knownCourseIds) {
@@ -55,22 +57,56 @@ export async function syncBlockchainData(userId: string, walletAddress: string) 
               PROGRAM_ID
           );
 
-          // Проверяем, существует ли аккаунт в чейне
-          const accountInfo = await connection.getAccountInfo(enrollmentPda);
+          // Читаем аккаунт Enrollment через Anchor (чтобы он распарсил данные)
+          // fetchNullable не работает в node.js без провайдера с кошельком иногда, поэтому try/catch
+          const enrollmentAccount = await program.account.enrollment.fetch(enrollmentPda);
           
-          if (accountInfo) {
-              // Если аккаунт есть в чейне, но нет в БД -> создаем
+          if (enrollmentAccount) {
+              console.log(`[Sync] Found enrollment for ${courseId}`);
+
+              // А. Восстанавливаем запись на курс
               await prisma.userEnrollment.upsert({
-                  where: {
-                      userId_courseId: { userId, courseId }
-                  },
+                  where: { userId_courseId: { userId, courseId } },
                   create: { userId, courseId },
                   update: {} 
               });
-              console.log(`[Sync] Restored enrollment for ${courseId}`);
+
+              // Б. Восстанавливаем прогресс уроков
+              // Проверяем первые 256 уроков (максимум битмапа)
+              // В реальности можно брать lessonCount из курса, но пока так
+              const lessonFlags = enrollmentAccount.lessonFlags as BN[];
+              
+              // Проходимся по предполагаемым урокам (например, до 50)
+              for (let i = 0; i < 50; i++) {
+                  if (isLessonComplete(lessonFlags, i)) {
+                      // Урок пройден в чейне -> Пишем в БД
+                      await prisma.lessonProgress.upsert({
+                          where: {
+                              userId_courseId_lessonIndex: {
+                                  userId,
+                                  courseId,
+                                  lessonIndex: i
+                              }
+                          },
+                          update: { status: "completed" }, // Если было in_progress -> completed
+                          create: {
+                              userId,
+                              courseId,
+                              lessonIndex: i,
+                              status: "completed",
+                              completedAt: new Date(), // Время примерное (сейчас)
+                              codeSnippet: "// Restored from blockchain" // Кода нет в чейне
+                          }
+                      });
+                      console.log(`[Sync] Restored lesson ${i} for ${courseId}`);
+                  }
+              }
           }
-      } catch (e) {
-          console.error(`[Sync] Error checking course ${courseId}`, e);
+      } catch (e: any) {
+          // Ошибка "Account does not exist" нормальна, если не записан
+          if (!e.message?.includes("Account does not exist")) {
+             console.error(`[Sync] Error checking course ${courseId}`, e);
+          }
       }
   }
 }

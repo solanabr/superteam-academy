@@ -14,6 +14,8 @@ import { toast } from "sonner";
 import { Loader2, CheckCircle, ArrowRight, AlertTriangle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
+
+
 // Импортируем наш контент
 import { getLessonContent, LessonContent } from "@/lib/course-content";
 
@@ -21,6 +23,8 @@ export default function LessonPage() {
   const params = useParams();
   const router = useRouter();
   const { publicKey } = useWallet();
+  const [isCompleted, setIsCompleted] = useState(false); 
+  const [dbCode, setDbCode] = useState<string | null>(null);
 
   const courseId = params.courseId as string;
   const lessonIndex = parseInt(params.lessonIndex as string);
@@ -37,12 +41,24 @@ export default function LessonPage() {
     if (lessonData) {
       setContent(lessonData);
       setCode(lessonData.initialCode);
-    } else {
-      toast.error("Lesson not found");
-      // Можно редиректнуть обратно к курсам
-      // router.push("/courses");
+      
+      // Проверяем статус в БД (через API)
+      // Нам нужно создать маленький API endpoint или расширить useUser.
+      // Для скорости сделаем fetch к /api/lesson/status
+      if (publicKey) {
+          fetch(`/api/lesson/status?wallet=${publicKey.toString()}&courseId=${courseId}&lessonIndex=${lessonIndex}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === "completed") {
+                    setIsCompleted(true);
+                    if (data.codeSnippet) {
+                        setCode(data.codeSnippet); // Показываем решение юзера
+                    }
+                }
+            });
+      }
     }
-  }, [courseId, lessonIndex]);
+  }, [courseId, lessonIndex, publicKey]);
 
   const handleCheckCode = async () => {
     if (!publicKey) {
@@ -134,38 +150,41 @@ export default function LessonPage() {
 
           <ResizablePanel defaultSize={60}>
               <div className="h-full flex flex-col">
-                  <div className="flex-1">
-                      <CodeEditor 
-                          initialValue={content.initialCode}
-                          language="rust"
-                          onChange={(val) => setCode(val || "")}
-                          courseId={courseId}
-                          lessonIndex={lessonIndex}
-                      />
-                  </div>
-                  
-                  <div className="border-t bg-background p-4 flex justify-end gap-4">
-                      <Button 
-                          onClick={handleCheckCode} 
-                          disabled={isChecking || isSuccess}
-                          className={isSuccess ? "bg-green-600 hover:bg-green-700" : ""}
-                      >
-                          {isChecking ? (
-                              <>
-                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                  Verifying...
-                              </>
-                          ) : isSuccess ? (
-                              <>
-                                  <CheckCircle className="mr-2 h-4 w-4" />
-                                  Completed!
-                              </>
-                          ) : (
-                              "Check Answer"
-                          )}
-                      </Button>
-                  </div>
-              </div>
+                <div className="flex-1 relative">
+                    {isCompleted && (
+                        <div className="absolute top-2 right-4 z-20 bg-green-500/10 text-green-500 px-3 py-1 rounded-full text-xs font-medium border border-green-500/20 flex items-center gap-1">
+                            <CheckCircle className="h-3 w-3" /> Completed
+                        </div>
+                    )}
+                    <CodeEditor 
+                        initialValue={content.initialCode}
+                        language="rust"
+                        onChange={(val) => setCode(val || "")}
+                        courseId={courseId}
+                        lessonIndex={lessonIndex}
+                        readOnly={isCompleted}
+                    />
+                </div>
+                
+                <div className="border-t bg-background p-4 flex justify-end gap-4">
+                    {/* Если пройден - кнопка Next Lesson */}
+                    {isCompleted ? (
+                        <Button 
+                            className="bg-green-600 hover:bg-green-700"
+                            onClick={() => router.push(`/courses/${courseId}/lessons/${lessonIndex + 1}`)}
+                        >
+                            Next Lesson <ArrowRight className="ml-2 h-4 w-4" />
+                        </Button>
+                    ) : (
+                        <Button 
+                            onClick={handleCheckCode} 
+                            disabled={isChecking || isSuccess}
+                        >
+                            {isChecking ? "Verifying..." : "Check Answer"}
+                        </Button>
+                    )}
+                </div>
+            </div>
           </ResizablePanel>
 
         </ResizablePanelGroup>
