@@ -1,9 +1,17 @@
 import { PublicKey } from "@solana/web3.js";
 
-export const PROGRAM_ID = new PublicKey(
-  process.env.NEXT_PUBLIC_PROGRAM_ID ??
-    "GmLKszNTdCgYYkrspmi9sRFWj3ZiCamkc4YrppKJRUhh"
-);
+let _programId: PublicKey | undefined;
+
+export function getProgramId(): PublicKey {
+  if (!_programId) {
+    const id = process.env.NEXT_PUBLIC_PROGRAM_ID;
+    if (!id) {
+      throw new Error("NEXT_PUBLIC_PROGRAM_ID env var is required");
+    }
+    _programId = new PublicKey(id);
+  }
+  return _programId;
+}
 
 const MAX_COURSE_ID_BYTES = 32;
 const MAX_ACHIEVEMENT_ID_BYTES = 32;
@@ -16,14 +24,14 @@ function assertIdLength(id: string, max: number, label: string): void {
 }
 
 export function findConfigPDA(
-  programId: PublicKey = PROGRAM_ID
+  programId: PublicKey = getProgramId()
 ): [PublicKey, number] {
   return PublicKey.findProgramAddressSync([Buffer.from("config")], programId);
 }
 
 export function findCoursePDA(
   courseId: string,
-  programId: PublicKey = PROGRAM_ID
+  programId: PublicKey = getProgramId()
 ): [PublicKey, number] {
   assertIdLength(courseId, MAX_COURSE_ID_BYTES, "courseId");
   return PublicKey.findProgramAddressSync(
@@ -35,7 +43,7 @@ export function findCoursePDA(
 export function findEnrollmentPDA(
   courseId: string,
   user: PublicKey,
-  programId: PublicKey = PROGRAM_ID
+  programId: PublicKey = getProgramId()
 ): [PublicKey, number] {
   assertIdLength(courseId, MAX_COURSE_ID_BYTES, "courseId");
   return PublicKey.findProgramAddressSync(
@@ -46,7 +54,7 @@ export function findEnrollmentPDA(
 
 export function findMinterRolePDA(
   minter: PublicKey,
-  programId: PublicKey = PROGRAM_ID
+  programId: PublicKey = getProgramId()
 ): [PublicKey, number] {
   return PublicKey.findProgramAddressSync(
     [Buffer.from("minter"), minter.toBuffer()],
@@ -56,7 +64,7 @@ export function findMinterRolePDA(
 
 export function findAchievementTypePDA(
   achievementId: string,
-  programId: PublicKey = PROGRAM_ID
+  programId: PublicKey = getProgramId()
 ): [PublicKey, number] {
   assertIdLength(achievementId, MAX_ACHIEVEMENT_ID_BYTES, "achievementId");
   return PublicKey.findProgramAddressSync(
@@ -68,7 +76,7 @@ export function findAchievementTypePDA(
 export function findAchievementReceiptPDA(
   achievementId: string,
   recipient: PublicKey,
-  programId: PublicKey = PROGRAM_ID
+  programId: PublicKey = getProgramId()
 ): [PublicKey, number] {
   assertIdLength(achievementId, MAX_ACHIEVEMENT_ID_BYTES, "achievementId");
   return PublicKey.findProgramAddressSync(

@@ -71,6 +71,25 @@ export const ACHIEVEMENT_META: AchievementMeta[] = [
     name: "Full Stack",
     hint: "Complete all Solana Developer Path courses",
   },
+  // Community
+  {
+    id: "achievement-helper",
+    glyph: "\u2661",
+    name: "Helper",
+    hint: "Help another learner in the community",
+  },
+  {
+    id: "achievement-first-comment",
+    glyph: "\u2709",
+    name: "1st Comment",
+    hint: "Leave your first comment on a lesson",
+  },
+  {
+    id: "achievement-top-contributor",
+    glyph: "\u2605",
+    name: "Top Contrib",
+    hint: "Reach the top 10 community contributors",
+  },
   // Special
   {
     id: "achievement-early-adopter",

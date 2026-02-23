@@ -1,5 +1,5 @@
 /**
- * Solarium Design System v5 — Centralized Style Classes
+ * Solarium Design System v9 — Centralized Style Classes
  *
  * All components MUST import styles from this file.
  * Never hardcode colors, typography, or shadows in components.
@@ -31,10 +31,10 @@ export const TRANSITIONS = {
 // ─── BORDER RADIUS ──────────────────────────────────────────────────────────
 
 export const BORDER_RADIUS = {
-  sm: "rounded-sm", // 10px
-  md: "rounded-md", // 14px
-  lg: "rounded-lg", // 18px
-  xl: "rounded-xl", // 24px
+  sm: "rounded-sm", // 8px (--r-sm)
+  md: "rounded-md", // 12px (--r-md)
+  lg: "rounded-lg", // 16px (--r-lg)
+  xl: "rounded-xl", // 22px (--r-xl)
   full: "rounded-full",
 } as const;
 
@@ -265,17 +265,16 @@ export const GAMIFICATION_STYLES = {
 // ─── LEVEL BADGES ───────────────────────────────────────────────────────────
 
 export const LEVEL_STYLES = {
-  /** Seed (Level 1) */
-  seed: "w-14 h-14 rounded-full border-[3px] border-primary bg-primary-light flex items-center justify-center font-display font-black text-[22px] text-primary",
-  /** Sprout (Level 5) */
-  sprout:
-    "w-14 h-14 rounded-full border-[3px] border-secondary-light bg-secondary-bg flex items-center justify-center font-display font-black text-[22px] text-secondary",
-  /** Sapling (Level 10) — subtle amber glow */
-  sapling:
-    "w-14 h-14 rounded-full border-[3px] border-accent bg-accent-light flex items-center justify-center font-display font-black text-[22px] text-accent-dark shadow-[0_0_14px_rgba(245,158,11,0.2)]",
-  /** Canopy (Level 20) — gold gradient + glow */
-  canopy:
-    "w-14 h-14 rounded-full border-[3px] border-accent-dark bg-gradient-to-br from-gold-hi to-accent flex items-center justify-center font-display font-black text-[22px] text-gold-ink shadow-[0_0_20px_rgba(245,158,11,0.3)]",
+  /** Seed (Level 1–4) — gold filled (matches design-system .lv-canopy) */
+  seed: "lv-seed",
+  /** Sprout (Level 5–9) — orange filled */
+  sprout: "lv-sprout",
+  /** Sapling (Level 10–19) — magenta-pink transition */
+  sapling: "lv-sapling",
+  /** Canopy (Level 20–49) — rich purple filled */
+  canopy: "lv-canopy",
+  /** Legend (Level 50+) — Solana iridescent */
+  legend: "lv-legend",
   /** Level name label */
   name: "font-display font-bold text-xs text-text-3",
 } as const;

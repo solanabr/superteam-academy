@@ -171,6 +171,7 @@
     "bestStreak": "Melhor",
     "less": "Menos",
     "more": "Mais",
+    "todayLabel": "Hoje",
     "dailyQuests": "Missões Diárias",
     "resetsIn": "Reseta em {hours}h",
     "allQuestsBonus": "Complete todas para bônus"
@@ -245,7 +246,8 @@
     "pageTitle": "Meus Certificados",
     "pageSubtitle": "Seus certificados NFT conquistados na Solana",
     "linkWalletToMint": "Vincule uma carteira em Configurações para cunhar seu certificado.",
-    "insertFailed": "Falha ao registrar o certificado. Por favor, tente novamente."
+    "insertFailed": "Falha ao registrar o certificado. Por favor, tente novamente.",
+    "onChain": "On-chain"
   },
   "profile": {
     "editProfile": "Editar Perfil",
@@ -504,6 +506,19 @@
     "credentialAlreadyIssued": "Um certificado já foi emitido para esta matrícula.",
     "achievementNotActive": "Esta conquista não está ativa no momento.",
     "achievementSupplyExhausted": "Esta conquista atingiu o limite máximo.",
+    "courseIdEmpty": "O ID do curso não pode estar vazio.",
+    "courseIdTooLong": "O ID do curso excede o comprimento máximo.",
+    "invalidLessonCount": "A contagem de aulas deve ser pelo menos 1.",
+    "invalidDifficulty": "A dificuldade deve ser iniciante, intermediário ou avançado.",
+    "credentialAssetMismatch": "O ativo da credencial não corresponde ao registro de matrícula.",
+    "minterNotActive": "O papel de minter não está ativo.",
+    "minterAmountExceeded": "A quantidade excede o limite do minter.",
+    "labelTooLong": "O rótulo excede o comprimento máximo.",
+    "achievementIdTooLong": "O ID da conquista excede o comprimento máximo.",
+    "achievementNameTooLong": "O nome da conquista excede o comprimento máximo.",
+    "achievementUriTooLong": "A URI da conquista excede o comprimento máximo.",
+    "invalidAmount": "A quantidade deve ser maior que zero.",
+    "invalidXpReward": "A recompensa de XP deve ser maior que zero.",
     "unknown": "Transação falhou. Tente novamente."
   }
 }

@@ -7,13 +7,15 @@ import {
   findMinterRolePDA,
   findAchievementTypePDA,
   findAchievementReceiptPDA,
-  PROGRAM_ID,
+  getProgramId,
 } from "../pda";
+
+const PROGRAM_ID = getProgramId();
 
 describe("PDA helpers", () => {
   it("exports the correct program ID", () => {
     expect(PROGRAM_ID.toBase58()).toBe(
-      "3YchgRgR65gdRqgTZTM5qQXqtTZn5Kt2i6FPnZVu34Qb"
+      "7NeJaSRyb4Wxay3Tcd9bdpD7T3GWYUQSFyrhG8SgwE8V"
     );
   });
 

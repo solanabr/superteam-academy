@@ -8,7 +8,7 @@ import {
   AdminAuthError,
 } from "@/lib/admin/auth";
 import { getAllAchievementsAdmin } from "@/lib/sanity/queries";
-import { findAchievementTypePDA, PROGRAM_ID } from "@/lib/solana/pda";
+import { findAchievementTypePDA, getProgramId } from "@/lib/solana/pda";
 import { deployAchievementType } from "@/lib/solana/admin-signer";
 import { getMissingAchievementFields, isDraftId } from "@/lib/admin/sync-diff";
 import { writeAchievementOnChainStatus } from "@/lib/sanity/admin-mutations";
@@ -69,7 +69,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const rpcUrl =
     process.env.NEXT_PUBLIC_SOLANA_RPC_URL ?? "https://api.devnet.solana.com";
   const connection = new Connection(rpcUrl, "confirmed");
-  const [achPda] = findAchievementTypePDA(achievementId, PROGRAM_ID);
+  const [achPda] = findAchievementTypePDA(achievementId, getProgramId());
   const accountInfo = await connection.getAccountInfo(achPda);
 
   if (accountInfo) {

@@ -2,29 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { PublicKey } from "@solana/web3.js";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { checkNewAchievements } from "@/lib/gamification/achievements";
-import {
-  getAllCourseLessonCounts,
-  getCourseById,
-  getDeployedAchievements,
-} from "@/lib/sanity/queries";
+import { getCourseById } from "@/lib/sanity/queries";
 import { logError } from "@/lib/logging";
 import { ERROR_IDS } from "@/constants/errorIds";
 import {
   isOnChainProgramLive,
   completeLesson as onChainCompleteLesson,
-  finalizeCourse as onChainFinalizeCourse,
-  issueCredential as onChainIssueCredential,
-  awardAchievement,
   getConnection,
-  PROGRAM_ID,
+  getProgramId,
 } from "@/lib/solana/academy-program";
-import { fetchEnrollment, fetchCourse } from "@/lib/solana/academy-reads";
-import {
-  withRetry,
-  queueFailedOnchainAction,
-} from "@/lib/solana/onchain-queue";
-import { isAllLessonsComplete, isLessonComplete } from "@/lib/solana/bitmap";
+import { fetchEnrollment } from "@/lib/solana/academy-reads";
+import { isLessonComplete } from "@/lib/solana/bitmap";
 
 interface LessonCompleteRequest {
   lessonId: string;
@@ -49,14 +37,16 @@ async function deriveLessonIndex(
   return index;
 }
 
+/**
+ * Mark a lesson as complete on-chain. Supabase writes (XP, progress,
+ * achievements, credentials) are handled by the Helius webhook handler.
+ */
 export async function POST(request: NextRequest) {
   try {
-    // Guard: ensure required Supabase environment variables are set
     if (
       !process.env.NEXT_PUBLIC_SUPABASE_URL ||
       !process.env.SUPABASE_SERVICE_ROLE_KEY
     ) {
-      console.error("Missing required Supabase environment variables");
       return NextResponse.json(
         { error: "Server configuration error" },
         { status: 500 }
@@ -64,7 +54,6 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = await createClient();
-
     const {
       data: { user },
       error: authError,
@@ -93,59 +82,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid input" }, { status: 400 });
     }
 
-    // Create admin client for SECURITY DEFINER functions
-    const supabaseAdmin = createAdminClient();
-
-    // 1. Verify user is enrolled in this course
-    const { data: enrollment, error: enrollError } = await supabaseAdmin
-      .from("enrollments")
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("course_id", courseId)
-      .single();
-
-    if (enrollError || !enrollment) {
-      return NextResponse.json(
-        { error: "Not enrolled in this course" },
-        { status: 403 }
-      );
-    }
-
-    // 2. Check if lesson is already completed (prevent double-awarding + wasteful on-chain tx)
-    const { data: existing } = await supabaseAdmin
-      .from("user_progress")
-      .select("id, completed")
-      .eq("user_id", user.id)
-      .eq("lesson_id", lessonId)
-      .maybeSingle();
-
-    if (existing?.completed) {
-      return NextResponse.json({
-        success: true,
-        alreadyCompleted: true,
-        xpEarned: 0,
-        newAchievements: [],
-        streakData: null,
-      });
-    }
-
     // Look up user's wallet — required for on-chain operations
-    const { data: profile, error: profileError } = await supabaseAdmin
+    const supabaseAdmin = createAdminClient();
+    const { data: profile } = await supabaseAdmin
       .from("profiles")
-      .select("wallet_address, username")
+      .select("wallet_address")
       .eq("id", user.id)
       .single();
-
-    if (profileError) {
-      logError({
-        errorId: ERROR_IDS.LESSON_COMPLETE_FAILED,
-        error: new Error(profileError.message),
-        context: {
-          route: "/api/lessons/complete",
-          note: "profile lookup failed",
-        },
-      });
-    }
 
     if (!profile?.wallet_address) {
       return NextResponse.json(
@@ -156,578 +99,59 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let onChainSignature: string | undefined;
-    let finalizeSig: string | null = null;
-    let finalized = false;
-    let credentialMinted = false;
-    let newCertificateId: string | undefined;
-    let lessonIndex: number | null = null;
-    // On-chain value is set below when programLive; 0 is never reached in practice.
-    let xpReward = 0;
-
-    const programLive =
-      profile?.wallet_address && (await isOnChainProgramLive());
-
-    if (programLive && profile?.wallet_address) {
-      const walletPubkey = new PublicKey(profile.wallet_address);
-      const connection = getConnection();
-
-      // Fetch on-chain course to get XP amount BEFORE the completeLesson call
-      const onChainCourse = await fetchCourse(courseId, connection, PROGRAM_ID);
-      if (onChainCourse) {
-        xpReward = Number(onChainCourse.xp_per_lesson);
-      }
-
-      // Derive lesson index from Sanity content order
-      lessonIndex = await deriveLessonIndex(courseId, lessonId);
-
-      // Read enrollment BEFORE completeLesson for idempotency.
-      // If a previous request confirmed the TX on-chain but the DB write failed,
-      // we skip the on-chain call and fall through to the DB upsert below.
-      let onChainEnrollment = await fetchEnrollment(
-        courseId,
-        walletPubkey,
-        connection,
-        PROGRAM_ID
-      );
-
-      if (!onChainEnrollment) {
-        return NextResponse.json(
-          {
-            error:
-              "On-chain enrollment not found. Please re-enroll the course.",
-          },
-          { status: 403 }
-        );
-      }
-
-      const lessonAlreadyOnChain =
-        onChainEnrollment !== null &&
-        isLessonComplete(
-          onChainEnrollment.lesson_flags as (bigint | number)[],
-          lessonIndex
-        );
-
-      if (!lessonAlreadyOnChain) {
-        onChainSignature = await onChainCompleteLesson(
-          courseId,
-          walletPubkey,
-          lessonIndex
-        );
-        // Re-fetch so the finalization check sees the updated bitmap
-        onChainEnrollment = await fetchEnrollment(
-          courseId,
-          walletPubkey,
-          connection,
-          PROGRAM_ID
-        );
-      }
-
-      if (onChainEnrollment && onChainCourse) {
-        const totalLessons = (onChainCourse.lesson_count as number) ?? 0;
-
-        // Idempotency for finalize: completed_at already set means a previous
-        // request finalized — mark it so the credential check runs.
-        if (onChainEnrollment.completed_at) {
-          finalized = true;
-        } else if (
-          isAllLessonsComplete(
-            onChainEnrollment.lesson_flags as (bigint | number)[],
-            totalLessons
-          )
-        ) {
-          try {
-            finalizeSig = await withRetry(() =>
-              onChainFinalizeCourse(courseId, walletPubkey)
-            );
-            finalized = true;
-
-            // Mirror finalization into Supabase enrollments table.
-            // Non-fatal: on-chain is the source of truth.
-            const { error: finalizeUpdateError } = await supabaseAdmin
-              .from("enrollments")
-              .update({ completed_at: new Date().toISOString() })
-              .eq("user_id", user.id)
-              .eq("course_id", courseId);
-
-            if (finalizeUpdateError) {
-              logError({
-                errorId: ERROR_IDS.COURSE_FINALIZE_FAILED,
-                error: new Error(finalizeUpdateError.message),
-                context: {
-                  route: "/api/lessons/complete",
-                  note: "On-chain finalized but enrollments.completed_at update failed",
-                  courseId,
-                },
-              });
-            }
-          } catch (err) {
-            const xpForFinalize = onChainCourse
-              ? Number(onChainCourse.xp_per_lesson) *
-                (Number(onChainCourse.lesson_count) || 1)
-              : 0;
-            await queueFailedOnchainAction(
-              user.id,
-              "course_finalize",
-              courseId,
-              {
-                courseId,
-                walletAddress: walletPubkey.toBase58(),
-                xpAmount: xpForFinalize,
-                reason: `Completed course: ${courseId}`,
-              },
-              err instanceof Error ? err.message : String(err)
-            );
-          }
-        }
-
-        // Auto-mint credential after finalization.
-        // credentialAsset is set by issue_credential — if already populated,
-        // a previous request minted successfully; skip silently.
-        if (finalized && !onChainEnrollment.credential_asset) {
-          let metadataRow: { id: string } | undefined;
-          let sanityCourse: Awaited<ReturnType<typeof getCourseById>> | null =
-            null;
-          let trackCollectionAddress: string | undefined;
-          try {
-            sanityCourse = await getCourseById(courseId);
-            trackCollectionAddress =
-              sanityCourse?.trackCollectionAddress ?? undefined;
-
-            if (trackCollectionAddress) {
-              const trackCollectionPubkey = new PublicKey(
-                trackCollectionAddress
-              );
-
-              // Interim collection validation: verify the account exists on-chain
-              // and is owned by the Metaplex Core program. This catches stale or
-              // incorrect CMS data before we invoke issue_credential.
-              // Full trustless validation requires storing the collection address
-              // in the Course PDA (future program upgrade).
-              const MPL_CORE_PROGRAM_ID = new PublicKey(
-                "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d"
-              );
-              const collectionAccountInfo = await connection.getAccountInfo(
-                trackCollectionPubkey
-              );
-              if (!collectionAccountInfo) {
-                throw new Error(
-                  `Collection account ${trackCollectionAddress} not found on-chain`
-                );
-              }
-              if (!collectionAccountInfo.owner.equals(MPL_CORE_PROGRAM_ID)) {
-                throw new Error(
-                  `Collection account ${trackCollectionAddress} is not owned by Metaplex Core`
-                );
-              }
-
-              const courseName = sanityCourse?.title ?? courseId;
-
-              // Truncate credential name to 32 UTF-8 bytes (on-chain limit)
-              let credentialName = `Solarium: ${courseName}`;
-              const encoder = new TextEncoder();
-              while (encoder.encode(credentialName).length > 32) {
-                credentialName = credentialName.slice(0, -1);
-              }
-
-              const totalXp =
-                Number(onChainCourse.xp_per_lesson) *
-                (Number(onChainCourse.lesson_count) || 1);
-
-              const metadataJson = {
-                name: credentialName,
-                symbol: "STACAD",
-                description: `Certificate of completion for ${courseName} on Solarium.`,
-                image: "",
-                attributes: [
-                  { trait_type: "Course", value: courseName },
-                  {
-                    trait_type: "Completion Date",
-                    value: new Date().toISOString().split("T")[0],
-                  },
-                  {
-                    trait_type: "Recipient",
-                    value: profile.username ?? profile.wallet_address,
-                  },
-                  { trait_type: "Platform", value: "Solarium" },
-                ],
-                properties: { category: "certificate", creators: [] },
-                external_url: `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/certificates`,
-                seller_fee_basis_points: 0,
-              };
-
-              // Store metadata in Supabase nft_metadata table
-              const { data: metaRow, error: metaError } = await supabaseAdmin
-                .from("nft_metadata")
-                .insert({ data: metadataJson })
-                .select("id")
-                .single();
-
-              if (metaError || !metaRow) {
-                throw new Error(
-                  metaError?.message ?? "Failed to store NFT metadata"
-                );
-              }
-              metadataRow = metaRow;
-
-              const metadataUri = `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/api/certificates/metadata?id=${metadataRow.id}`;
-
-              let credSig: string;
-              let mintAddress: PublicKey;
-              try {
-                const result = await withRetry(() =>
-                  onChainIssueCredential(
-                    courseId,
-                    walletPubkey,
-                    credentialName,
-                    metadataUri,
-                    1,
-                    totalXp,
-                    trackCollectionPubkey
-                  )
-                );
-                credSig = result.signature;
-                mintAddress = result.mintAddress;
-              } catch (mintErr) {
-                // Clean up orphaned metadata row before re-throwing
-                await supabaseAdmin
-                  .from("nft_metadata")
-                  .delete()
-                  .eq("id", metadataRow.id);
-                throw mintErr;
-              }
-
-              // Mirror credential in Supabase certificates table
-              const { data: certRow, error: certInsertError } =
-                await supabaseAdmin
-                  .from("certificates")
-                  .insert({
-                    user_id: user.id,
-                    course_id: courseId,
-                    course_title: courseName,
-                    mint_address: mintAddress.toBase58(),
-                    metadata_uri: metadataUri,
-                    minted_at: new Date().toISOString(),
-                    tx_signature: credSig,
-                    credential_type: "core",
-                  })
-                  .select("id")
-                  .single();
-
-              if (certInsertError) {
-                logError({
-                  errorId: ERROR_IDS.CREDENTIAL_ISSUE_FAILED,
-                  error: new Error(certInsertError.message),
-                  context: {
-                    route: "/api/lessons/complete",
-                    note: "On-chain credential minted but Supabase insert failed",
-                    mintAddress: mintAddress.toBase58(),
-                    signature: credSig,
-                  },
-                });
-              } else {
-                credentialMinted = true;
-                newCertificateId = certRow.id as string;
-              }
-            }
-          } catch (credErr) {
-            // sanityCourse and trackCollectionAddress already populated above — no second fetch needed
-            if (trackCollectionAddress) {
-              await queueFailedOnchainAction(
-                user.id,
-                "certificate",
-                courseId,
-                {
-                  courseId,
-                  walletAddress: walletPubkey.toBase58(),
-                  courseTitle: sanityCourse?.title ?? courseId,
-                  credentialName: (() => {
-                    let n = `Solarium: ${sanityCourse?.title ?? courseId}`;
-                    const enc = new TextEncoder();
-                    while (enc.encode(n).length > 32) n = n.slice(0, -1);
-                    return n;
-                  })(),
-                  metadataUri: metadataRow
-                    ? `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/api/certificates/metadata?id=${metadataRow.id}`
-                    : undefined,
-                  metadataId: metadataRow?.id,
-                  trackCollection: trackCollectionAddress,
-                  coursesCompleted: 1,
-                  totalXp: onChainCourse
-                    ? Number(onChainCourse.xp_per_lesson) *
-                      (Number(onChainCourse.lesson_count) || 1)
-                    : 0,
-                },
-                credErr instanceof Error ? credErr.message : String(credErr)
-              );
-            } else {
-              logError({
-                errorId: ERROR_IDS.CREDENTIAL_ISSUE_FAILED,
-                error:
-                  credErr instanceof Error
-                    ? credErr
-                    : new Error(String(credErr)),
-                context: {
-                  route: "/api/lessons/complete",
-                  note: "no trackCollectionAddress — cannot queue",
-                  courseId,
-                },
-              });
-            }
-          }
-        }
-      }
-    }
-
-    // 3. Upsert user_progress to mark lesson complete
-    const { error: progressError } = await supabaseAdmin
-      .from("user_progress")
-      .upsert(
-        {
-          user_id: user.id,
-          course_id: courseId,
-          lesson_id: lessonId,
-          completed: true,
-          completed_at: new Date().toISOString(),
-          tx_signature: onChainSignature ?? null,
-          lesson_index: lessonIndex,
-        },
-        { onConflict: "user_id,lesson_id" }
-      );
-
-    if (progressError) {
+    const programLive = await isOnChainProgramLive();
+    if (!programLive) {
       return NextResponse.json(
-        { error: "Failed to save progress" },
-        { status: 500 }
+        { error: "On-chain program not available" },
+        { status: 503 }
       );
     }
 
-    // Award XP via SECURITY DEFINER function (also handles streak in SQL).
-    // Non-fatal: on-chain XP is the source of truth; Supabase is the mirror for
-    // streaks/leaderboards. A mirror failure never 500s the user.
-    const { error: xpError } = await supabaseAdmin.rpc("award_xp", {
-      p_user_id: user.id,
-      p_amount: xpReward,
-      p_reason: `Completed lesson: ${lessonId}`,
-      p_tx_signature: onChainSignature ?? null,
-    });
+    const walletPubkey = new PublicKey(profile.wallet_address);
+    const connection = getConnection();
 
-    if (xpError) {
-      logError({
-        errorId: ERROR_IDS.LESSON_COMPLETE_FAILED,
-        error: new Error(xpError.message),
-        context: {
-          route: "/api/lessons/complete",
-          note: "award_xp failed; on-chain XP already minted",
-          userId: user.id,
-          lessonId,
+    // Verify on-chain enrollment exists
+    const onChainEnrollment = await fetchEnrollment(
+      courseId,
+      walletPubkey,
+      connection,
+      getProgramId()
+    );
+
+    if (!onChainEnrollment) {
+      return NextResponse.json(
+        {
+          error: "On-chain enrollment not found. Please re-enroll the course.",
         },
-      });
-
-      if (lessonIndex !== null) {
-        await queueFailedOnchainAction(
-          user.id,
-          "xp",
-          lessonId,
-          {
-            lessonId,
-            walletAddress: profile?.wallet_address ?? "",
-            xpAmount: xpReward,
-            courseId,
-            reason: `Completed lesson: ${lessonId}`,
-          },
-          xpError.message
-        );
-      }
-    }
-
-    // 5. Fetch updated user state for achievement checks
-    const { data: xpData } = await supabaseAdmin
-      .from("user_xp")
-      .select(
-        "total_xp, level, current_streak, longest_streak, last_activity_date"
-      )
-      .eq("user_id", user.id)
-      .single();
-
-    const { data: completedLessons } = await supabaseAdmin
-      .from("user_progress")
-      .select("lesson_id, course_id, completed")
-      .eq("user_id", user.id)
-      .eq("completed", true);
-
-    const completedLessonCount = completedLessons?.length ?? 0;
-
-    // Count completed courses (all lessons in a course completed)
-    const courseLessonCounts = new Map<string, number>();
-    for (const lp of completedLessons ?? []) {
-      courseLessonCounts.set(
-        lp.course_id,
-        (courseLessonCounts.get(lp.course_id) ?? 0) + 1
+        { status: 403 }
       );
     }
 
-    const { data: existingAchievements } = await supabaseAdmin
-      .from("user_achievements")
-      .select("achievement_id")
-      .eq("user_id", user.id);
+    // Derive lesson index from Sanity content order
+    const lessonIndex = await deriveLessonIndex(courseId, lessonId);
 
-    const alreadyUnlocked = (existingAchievements ?? []).map(
-      (a) => a.achievement_id
+    // Idempotency: skip on-chain TX if lesson already completed in bitmap
+    const alreadyOnChain = isLessonComplete(
+      onChainEnrollment.lesson_flags as (bigint | number)[],
+      lessonIndex
     );
 
-    // 6. Check for new achievements
-    // Fetch real lesson counts from Sanity to accurately detect course completion.
-    // Only achievements with a confirmed on-chain PDA (achievementPda set in Sanity)
-    // are eligible — ensures the on-chain TX can succeed before Supabase is written.
-    const [sanityCourseCounts, deployedAchievements] = await Promise.all([
-      getAllCourseLessonCounts(),
-      getDeployedAchievements(),
-    ]);
-    const totalLessonsPerCourse = new Map(
-      sanityCourseCounts.map((c) => [c._id, c.totalLessons])
-    );
-
-    // A course is complete when the user has finished ALL its Sanity lessons
-    let completedCourseCount = 0;
-    const completedCourseIds = new Set<string>();
-    for (const [cid, completedCount] of courseLessonCounts) {
-      const total = totalLessonsPerCourse.get(cid);
-      if (total && total > 0 && completedCount >= total) {
-        completedCourseCount++;
-        completedCourseIds.add(cid);
-      }
+    if (alreadyOnChain) {
+      return NextResponse.json({
+        success: true,
+        alreadyCompleted: true,
+        signature: null,
+      });
     }
 
-    // Course IDs that make up the Solana Developer Path learning path
-    const SOLANA_DEV_PATH_COURSES = [
-      "course-solana-fundamentals",
-      "course-rust-for-solana",
-      "course-anchor-framework",
-      "course-solana-frontend",
-    ];
-
-    const { data: userProfile } = await supabaseAdmin
-      .from("profiles")
-      .select("created_at")
-      .eq("id", user.id)
-      .single();
-
-    const { count: userNumber } = await supabaseAdmin
-      .from("profiles")
-      .select("id", { count: "exact", head: true })
-      .lte("created_at", userProfile?.created_at ?? new Date().toISOString());
-
-    const newAchievements = checkNewAchievements(
-      deployedAchievements,
-      {
-        completedLessons: completedLessonCount,
-        completedCourses: completedCourseCount,
-        currentStreak: xpData?.current_streak ?? 0,
-        hasCompletedRustLesson:
-          (courseLessonCounts.get("course-rust-for-solana") ?? 0) >= 1,
-        hasCompletedAnchorCourse: completedCourseIds.has(
-          "course-anchor-framework"
-        ),
-        hasCompletedAllTracks: SOLANA_DEV_PATH_COURSES.every((id) =>
-          completedCourseIds.has(id)
-        ),
-        courseCompletionTimeHours: null,
-        allTestsPassedFirstTry: false,
-        userNumber: userNumber ?? 999,
-      },
-      alreadyUnlocked
+    // Execute on-chain completeLesson — webhook handles all Supabase writes
+    const signature = await onChainCompleteLesson(
+      courseId,
+      walletPubkey,
+      lessonIndex
     );
 
-    // 7. Unlock new achievements — on-chain first, queue failures for retry.
-    const successfullyUnlocked: typeof newAchievements = [];
-
-    if (programLive && profile?.wallet_address) {
-      for (const achievement of newAchievements) {
-        try {
-          const { signature: achSig, assetAddress: achAsset } = await withRetry(
-            () =>
-              awardAchievement(
-                achievement.id,
-                new PublicKey(profile.wallet_address!)
-              )
-          );
-          const { error: unlockError } = await supabaseAdmin.rpc(
-            "unlock_achievement",
-            {
-              p_user_id: user.id,
-              p_achievement_id: achievement.id,
-              p_tx_signature: achSig,
-              p_asset_address: achAsset.toBase58(),
-            }
-          );
-          if (unlockError) {
-            await queueFailedOnchainAction(
-              user.id,
-              "achievement",
-              achievement.id,
-              {
-                achievementId: achievement.id,
-                walletAddress: profile.wallet_address,
-                txSignature: achSig,
-                assetAddress: achAsset.toBase58(),
-              },
-              unlockError.message
-            );
-          } else {
-            successfullyUnlocked.push(achievement);
-          }
-        } catch (onChainErr) {
-          await queueFailedOnchainAction(
-            user.id,
-            "achievement",
-            achievement.id,
-            {
-              achievementId: achievement.id,
-              walletAddress: profile.wallet_address,
-            },
-            onChainErr instanceof Error
-              ? onChainErr.message
-              : String(onChainErr)
-          );
-        }
-      }
-    }
-
-    // Detect level-up: compare level after award vs level before award.
-    // level before = floor(sqrt((total_xp_after - xpReward) / 100))
-    const newLevel = xpData?.level ?? 0;
-    const prevLevel =
-      xpData && !xpError
-        ? Math.floor(Math.sqrt((xpData.total_xp - xpReward) / 100))
-        : newLevel;
-    const leveledUp = newLevel > prevLevel;
-
-    return NextResponse.json({
-      success: true,
-      alreadyCompleted: false,
-      xpEarned: xpReward,
-      signature: onChainSignature,
-      finalized,
-      finalizationSignature: finalizeSig,
-      credentialMinted,
-      certificateId: newCertificateId,
-      newAchievements: successfullyUnlocked.map((a) => ({
-        id: a.id,
-        name: a.name,
-        description: a.description,
-        icon: a.icon,
-      })),
-      streakData: xpData
-        ? {
-            currentStreak: xpData.current_streak,
-            longestStreak: xpData.longest_streak,
-            lastActivityDate: xpData.last_activity_date,
-          }
-        : null,
-      leveledUp,
-      newLevel: leveledUp ? newLevel : undefined,
-    });
+    return NextResponse.json({ success: true, signature });
   } catch (err: unknown) {
     logError({
       errorId: ERROR_IDS.LESSON_COMPLETE_FAILED,
