@@ -25,6 +25,7 @@ import {
   useAchievements,
   useClaimAchievement,
   usePracticeProgress,
+  useProfile,
 } from "@/lib/hooks/use-service";
 import { useWallet } from "@solana/wallet-adapter-react";
 import {
@@ -47,6 +48,7 @@ export default function DashboardPage() {
   const { data: courses } = useCourses();
   const { data: achievements } = useAchievements();
   const { completed: practiceCompleted } = usePracticeProgress();
+  const { data: profile } = useProfile();
   const claimAchievement = useClaimAchievement();
   const [claimingId, setClaimingId] = useState<number | null>(null);
   const t = useTranslations("dashboard");
@@ -103,7 +105,7 @@ export default function DashboardPage() {
     practiceCount: practiceCompleted.length,
     completedTrackIds,
     hasSpeedRun,
-    referralCount: 0,
+    referralCount: profile?.referralCount ?? 0,
   };
 
   const getCourse = (courseId: string) =>

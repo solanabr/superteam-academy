@@ -30,6 +30,7 @@ import {
   useBio,
   usePracticeProgress,
   useAvatar,
+  useProfile,
 } from "@/lib/hooks/use-service";
 import { getAvatarSrc } from "@/lib/data/avatars";
 import { getXpProgress, formatXP, shortenAddress } from "@/lib/utils";
@@ -108,6 +109,7 @@ export default function ProfilePage() {
     claimedMilestones,
     milestoneTxHashes,
   } = usePracticeProgress();
+  const { data: profile } = useProfile();
   const claimAchievement = useClaimAchievement();
   const [claimingId, setClaimingId] = useState<number | null>(null);
 
@@ -153,7 +155,7 @@ export default function ProfilePage() {
     practiceCount: practiceCompleted.length,
     completedTrackIds,
     hasSpeedRun,
-    referralCount: 0,
+    referralCount: profile?.referralCount ?? 0,
   };
 
   const ta = useTranslations("achievements");
@@ -291,7 +293,7 @@ export default function ProfilePage() {
                   {t("solEarned")}
                 </p>
                 <p className="text-2xl font-bold mt-1 text-solana-green">
-                  {solEarned > 0 ? `${solEarned} SOL` : "0 SOL"}
+                  {solEarned > 0 ? `${solEarned.toFixed(2)} SOL` : "0 SOL"}
                 </p>
                 {claimedMilestones.length > 0 && (
                   <p className="text-xs text-muted-foreground mt-1">
