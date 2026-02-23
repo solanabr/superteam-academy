@@ -10,13 +10,14 @@ import {
   getAuthorityProgram,
   getBackendProgram,
   getBackendSignerKeypair,
-} from "../program.js";
+} from "@/program.js";
 import {
   getAchievementTypePda,
   getConfigPda,
   getCoursePda,
-} from "../pdas.js";
-import { badRequest, internalError } from "../lib/errors.js";
+} from "@/pdas.js";
+import { badRequest, internalError } from "@/lib/errors.js";
+import { withRpcRetry } from "@/lib/rpc.js";
 
 export const MPL_CORE_PROGRAM_ID = new PublicKey(
   "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d"
@@ -87,13 +88,17 @@ export async function fetchConfig(program: Program): Promise<{
   config: ConfigAccount;
 }> {
   const configPda = getConfigPda(program.programId);
-  const config = await (
-    program.account as {
-      config: {
-        fetch: (pda: PublicKey) => Promise<ConfigAccount>;
-      };
-    }
-  ).config.fetch(configPda);
+  const config = await withRpcRetry(
+    () =>
+      (
+        program.account as {
+          config: {
+            fetch: (pda: PublicKey) => Promise<ConfigAccount>;
+          };
+        }
+      ).config.fetch(configPda),
+    { label: "fetchConfig" }
+  );
 
   return { configPda, config };
 }
@@ -108,13 +113,17 @@ export async function fetchCourseOrThrow(
 }> {
   const coursePda = getCoursePda(courseId, program.programId);
   try {
-    const course = await (
-      program.account as {
-        course: {
-          fetch: (pda: PublicKey) => Promise<CourseAccount>;
-        };
-      }
-    ).course.fetch(coursePda);
+    const course = await withRpcRetry(
+      () =>
+        (
+          program.account as {
+            course: {
+              fetch: (pda: PublicKey) => Promise<CourseAccount>;
+            };
+          }
+        ).course.fetch(coursePda),
+      { label: "fetchCourse" }
+    );
     return { coursePda, course };
   } catch (error) {
     if (accountNotFound(error)) {
@@ -136,13 +145,17 @@ export async function fetchAchievementType(
     program.programId
   );
 
-  const achievementType = await (
-    program.account as {
-      achievementType: {
-        fetch: (pda: PublicKey) => Promise<AchievementTypeAccount>;
-      };
-    }
-  ).achievementType.fetch(achievementTypePda);
+  const achievementType = await withRpcRetry(
+    () =>
+      (
+        program.account as {
+          achievementType: {
+            fetch: (pda: PublicKey) => Promise<AchievementTypeAccount>;
+          };
+        }
+      ).achievementType.fetch(achievementTypePda),
+    { label: "fetchAchievementType" }
+  );
 
   return { achievementTypePda, achievementType };
 }
@@ -159,7 +172,10 @@ export async function ensureToken2022Ata(
     TOKEN_2022_PROGRAM_ID
   );
 
-  const accountInfo = await program.provider.connection.getAccountInfo(ata);
+  const accountInfo = await withRpcRetry(
+    () => program.provider.connection.getAccountInfo(ata),
+    { label: "getAccountInfo(ata)" }
+  );
   if (accountInfo) {
     return ata;
   }

@@ -21,9 +21,13 @@ Last updated: February 23, 2026
   - `context/DESIGN-GUIDELINES.md`
   - `context/BOUNTY-MAPPING.md`
 - Postman collection/environment created and endpoint suite validated.
+- **Admin API key generation**:
+  - `POST /v1/admin/login` (ADMIN_PASSWORD → JWT)
+  - `POST /v1/admin/generate-api-key` (JWT → API key)
+  - Generated keys + bootstrap token work for academy endpoints
 - **Frontend BFF layer complete**:
-  - Catch-all proxy at `app/api/academy/[action]/route.ts`
-  - `BACKEND_API_TOKEN` attached server-side via `X-API-Key`
+  - Catch-all proxy at `app/api/academy/[action]/route.ts`, `app/api/admin/[action]/route.ts`
+  - `BACKEND_API_TOKEN` or generated API key attached server-side via `X-API-Key`
   - `.env.local` created with token + Solana devnet config
 - **Frontend app shell complete**:
   - Global Navbar (persistent across all pages) with wallet connect

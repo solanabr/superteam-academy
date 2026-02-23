@@ -2,20 +2,20 @@ import anchor from "@coral-xyz/anchor";
 import type { BN as BNType } from "@coral-xyz/anchor";
 import type { Hono } from "hono";
 import { Keypair, PublicKey, SystemProgram } from "@solana/web3.js";
-import { getConfigPda, getCoursePda, getEnrollmentPda } from "../../pdas.js";
-import { badRequest, withRouteErrorHandling } from "../../lib/errors.js";
+import { getConfigPda, getCoursePda, getEnrollmentPda } from "@/pdas.js";
+import { badRequest, withRouteErrorHandling } from "@/lib/errors.js";
 import {
   readJsonObject,
   readOptionalNumber,
   readOptionalString,
   readRequiredPublicKey,
   readRequiredString,
-} from "../../lib/validation.js";
+} from "@/lib/validation.js";
 import {
   MPL_CORE_PROGRAM_ID,
   requireBackendProgram,
   requireProviderPublicKey,
-} from "../shared.js";
+} from "@/academy/shared.js";
 
 const { BN } = anchor;
 

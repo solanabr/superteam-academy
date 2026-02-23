@@ -1,7 +1,8 @@
 function resolveUrl(path: string): string {
-  const base = process.env.NEXT_PUBLIC_BACKEND_URL;
-  if (!base) throw new Error("NEXT_PUBLIC_BACKEND_URL is required");
-  return `${base.replace(/\/$/, "")}/academy${path}`;
+  // Client calls BFF (/api/academy) which proxies to backend with API token.
+  // Empty base = same-origin; set NEXT_PUBLIC_APP_URL only for custom app URL.
+  const base = (process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, "");
+  return base ? `${base}/api/academy${path}` : `/api/academy${path}`;
 }
 
 export interface CreateCourseParams {
@@ -98,95 +99,69 @@ export interface BackendApiResponse {
   asset?: string;
 }
 
-export async function createCourse(
-  params: CreateCourseParams
-): Promise<BackendApiResponse> {
-  const url = resolveUrl("/create-course");
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(params),
-  });
-  const data = (await res.json().catch(() => ({}))) as BackendApiResponse;
-  if (!res.ok) {
-    return { error: data.error ?? res.statusText };
-  }
-  return data;
-}
-
-export async function completeLesson(
-  params: CompleteLessonParams
-): Promise<BackendApiResponse> {
-  const url = resolveUrl("/complete-lesson");
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(params),
-  });
-  const data = (await res.json().catch(() => ({}))) as BackendApiResponse;
-  if (!res.ok) {
-    return { error: data.error ?? res.statusText };
-  }
-  return data;
-}
-
-export async function finalizeCourse(
-  params: FinalizeCourseParams
-): Promise<BackendApiResponse> {
-  const url = resolveUrl("/finalize-course");
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(params),
-  });
-  const data = (await res.json().catch(() => ({}))) as BackendApiResponse;
-  if (!res.ok) {
-    return { error: data.error ?? res.statusText };
-  }
-  return data;
-}
-
-async function postBackend(path: string, params: object): Promise<BackendApiResponse> {
+async function postBff(path: string, params: object): Promise<BackendApiResponse> {
   const url = resolveUrl(path);
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(params),
   });
-  const data = (await res.json().catch(() => ({}))) as BackendApiResponse;
+  const body = (await res.json().catch(() => ({}))) as
+    | { ok: true; data: BackendApiResponse }
+    | { ok: false; error?: string };
   if (!res.ok) {
-    return { error: data.error ?? res.statusText };
+    const err = "error" in body ? body.error : undefined;
+    return { error: err ?? res.statusText };
   }
-  return data;
+  return body.ok && body.data ? body.data : (body as unknown as BackendApiResponse);
 }
 
+export async function createCourse(
+  params: CreateCourseParams
+): Promise<BackendApiResponse> {
+  return postBff("/create-course", params);
+}
+
+export async function completeLesson(
+  params: CompleteLessonParams
+): Promise<BackendApiResponse> {
+  return postBff("/complete-lesson", params);
+}
+
+export async function finalizeCourse(
+  params: FinalizeCourseParams
+): Promise<BackendApiResponse> {
+  return postBff("/finalize-course", params);
+}
+
+
 export const updateConfig = (params: UpdateConfigParams) =>
-  postBackend("/update-config", params);
+  postBff("/update-config", params);
 
 export const updateCourse = (params: UpdateCourseParams) =>
-  postBackend("/update-course", params);
+  postBff("/update-course", params);
 
 export const issueCredential = (params: IssueCredentialParams) =>
-  postBackend("/issue-credential", params);
+  postBff("/issue-credential", params);
 
 export const upgradeCredential = (params: UpgradeCredentialParams) =>
-  postBackend("/upgrade-credential", params);
+  postBff("/upgrade-credential", params);
 
 export const registerMinter = (params: RegisterMinterParams) =>
-  postBackend("/register-minter", params);
+  postBff("/register-minter", params);
 
 export const revokeMinter = (params: RevokeMinterParams) =>
-  postBackend("/revoke-minter", params);
+  postBff("/revoke-minter", params);
 
 export const rewardXp = (params: RewardXpParams) =>
-  postBackend("/reward-xp", params);
+  postBff("/reward-xp", params);
 
 export const createAchievementType = (params: CreateAchievementTypeParams) =>
-  postBackend("/create-achievement-type", params);
+  postBff("/create-achievement-type", params);
 
 export const awardAchievement = (params: AwardAchievementParams) =>
-  postBackend("/award-achievement", params);
+  postBff("/award-achievement", params);
 
 export const deactivateAchievementType = (
   params: DeactivateAchievementTypeParams
-) => postBackend("/deactivate-achievement-type", params);
+) => postBff("/deactivate-achievement-type", params);

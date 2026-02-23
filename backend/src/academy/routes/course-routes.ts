@@ -1,8 +1,8 @@
 import type { Hono } from "hono";
 import { PublicKey, SystemProgram } from "@solana/web3.js";
 import { TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
-import { getCoursePda, getEnrollmentPda } from "../../pdas.js";
-import { badRequest, withRouteErrorHandling } from "../../lib/errors.js";
+import { getCoursePda, getEnrollmentPda } from "@/pdas.js";
+import { badRequest, withRouteErrorHandling } from "@/lib/errors.js";
 import {
   readFixedLengthNumberArrayOrNull,
   readJsonObject,
@@ -12,7 +12,7 @@ import {
   readOptionalPublicKey,
   readOptionalString,
   readRequiredPublicKey,
-} from "../../lib/validation.js";
+} from "@/lib/validation.js";
 import {
   ensureToken2022Ata,
   fetchConfig,
@@ -20,7 +20,7 @@ import {
   requireAuthorityProgram,
   requireBackendProgram,
   requireProviderPublicKey,
-} from "../shared.js";
+} from "@/academy/shared.js";
 
 type CreateCourseMethods = {
   createCourse: (params: {
@@ -152,7 +152,7 @@ export function registerCourseRoutes(app: Hono): void {
       const { coursePda } = await fetchCourseOrThrow(
         program,
         courseId,
-        `Course "${courseId}" not found. Create it first via POST /academy/create-course.`
+        `Course "${courseId}" not found. Create it first via POST /v1/academy/create-course.`
       );
 
       const enrollmentPda = getEnrollmentPda(courseId, learner, program.programId);
@@ -199,7 +199,7 @@ export function registerCourseRoutes(app: Hono): void {
       const { coursePda, course } = await fetchCourseOrThrow(
         program,
         courseId,
-        `Course "${courseId}" not found. Create it first via POST /academy/create-course.`
+        `Course "${courseId}" not found. Create it first via POST /v1/academy/create-course.`
       );
 
       const enrollmentPda = getEnrollmentPda(courseId, learner, program.programId);

@@ -5,10 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc",
+    "build": "tsc && tsc-alias -p tsconfig.json",
     "lint": "eslint src",
     "start": "node dist/index.js",
-    "copy-idl": "mkdir -p src/idl && cp ../onchain-academy/target/idl/onchain_academy.json src/idl/ 2>/dev/null || true"
+    "copy-idl": "mkdir -p src/idl && cp ../onchain-academy/target/idl/onchain_academy.json src/idl/ 2>/dev/null || true",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "smoke": "tsx scripts/smoke-test-academy.ts"
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.31.1",
@@ -16,14 +19,18 @@
     "@solana/spl-token": "^0.4.9",
     "@solana/web3.js": "^1.98.4",
     "dotenv": "^17.3.1",
-    "hono": "^4.6.0"
+    "hono": "^4.6.0",
+    "hono-rate-limiter": "^0.5.3",
+    "jose": "^6.1.3"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/node": "^25.3.0",
     "eslint": "^10.0.0",
+    "tsc-alias": "^1.8.16",
     "tsx": "^4.19.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.56.0"
+    "typescript-eslint": "^8.56.0",
+    "vitest": "^4.0.18"
   }
 }

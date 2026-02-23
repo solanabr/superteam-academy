@@ -43,7 +43,7 @@ export async function POST(
         const body = await request.json().catch(() => ({}));
 
         const upstream = await fetch(
-            `${BACKEND_URL.replace(/\/$/, "")}/academy/${action}`,
+            `${BACKEND_URL.replace(/\/$/, "")}/v1/academy/${action}`,
             {
                 method: "POST",
                 headers: {

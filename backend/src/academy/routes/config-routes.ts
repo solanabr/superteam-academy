@@ -1,9 +1,9 @@
 import type { Hono } from "hono";
 import { PublicKey } from "@solana/web3.js";
-import { getConfigPda } from "../../pdas.js";
-import { withRouteErrorHandling } from "../../lib/errors.js";
-import { readJsonObject, readRequiredPublicKey } from "../../lib/validation.js";
-import { requireAuthorityProgram, requireProviderPublicKey } from "../shared.js";
+import { getConfigPda } from "@/pdas.js";
+import { withRouteErrorHandling } from "@/lib/errors.js";
+import { readJsonObject, readRequiredPublicKey } from "@/lib/validation.js";
+import { requireAuthorityProgram, requireProviderPublicKey } from "@/academy/shared.js";
 
 type UpdateConfigMethods = {
   updateConfig: (params: { newBackendSigner: PublicKey }) => {

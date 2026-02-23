@@ -3,22 +3,22 @@ import type { BN as BNType } from "@coral-xyz/anchor";
 import type { Hono } from "hono";
 import { PublicKey, SystemProgram } from "@solana/web3.js";
 import { TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
-import { getConfigPda, getMinterRolePda } from "../../pdas.js";
-import { withRouteErrorHandling } from "../../lib/errors.js";
+import { getConfigPda, getMinterRolePda } from "@/pdas.js";
+import { withRouteErrorHandling } from "@/lib/errors.js";
 import {
   readJsonObject,
   readOptionalNumber,
   readOptionalString,
   readRequiredNumber,
   readRequiredPublicKey,
-} from "../../lib/validation.js";
+} from "@/lib/validation.js";
 import {
   ensureToken2022Ata,
   fetchConfig,
   requireAuthorityProgram,
   requireBackendProgram,
   requireProviderPublicKey,
-} from "../shared.js";
+} from "@/academy/shared.js";
 
 const { BN } = anchor;
 
