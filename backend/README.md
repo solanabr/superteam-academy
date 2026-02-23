@@ -4,15 +4,15 @@ Standalone server for backend-signed on-chain transactions (lesson completion, c
 
 ## Code Structure
 
-The backend is split by concern:
-
-- `src/index.ts` — Hono server bootstrap, middleware, route mounting
-- `src/routes/academy.ts` — route composition
-- `src/academy/routes/*.ts` — domain handlers (`course`, `credential`, `minter`, `achievement`, `config`)
-- `src/academy/shared.ts` — shared Solana helpers (program access, config/account fetchers, ATA setup, tx sending)
-- `src/lib/errors.ts` — consistent API error mapping
-- `src/lib/validation.ts` — request body/public key validation
-- `src/program.ts` — keypair parsing + cached Anchor program clients
+- `src/index.ts` — server entry (imports `createApp`, serves on PORT)
+- `src/app.ts` — Hono app factory, middleware, route mounting
+- `src/routes/academy.ts` — academy route composition
+- `src/academy/routes/*.ts` — domain handlers (course, credential, minter, achievement, config)
+- `src/academy/shared.ts` — shared Solana helpers (program, fetchers, ATA, tx)
+- `src/admin/` — admin login + API key generation
+- `src/middleware/` — auth, rate-limit, body-guard, request-logger
+- `src/contract/openapi.ts` — OpenAPI contract (GET /v1/contract)
+- `src/lib/` — errors, validation, health, rpc retry, api-key-store
 
 ## Setup
 
@@ -29,6 +29,8 @@ BACKEND_API_TOKEN=change-me
 CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 ACADEMY_AUTHORITY_KEYPAIR=[64 numbers]   # For create-course
 ACADEMY_BACKEND_SIGNER_KEYPAIR=[64 numbers]  # For complete-lesson, finalize-course
+ADMIN_SECRET=   # Optional. With ADMIN_PASSWORD, enables /v1/admin/*
+ADMIN_PASSWORD=
 ```
 
 Use the same keypairs as the on-chain program (wallets/signer.json for devnet).
