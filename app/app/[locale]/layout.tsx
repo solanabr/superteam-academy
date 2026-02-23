@@ -5,7 +5,7 @@ import { routing } from "@/i18n/routing";
 import { Providers } from "@/components/providers/providers";
 import { Inter } from "next/font/google";
 
-const inter = Inter({ subsets: ["latin"], display: "optional" });
+const inter = Inter({ subsets: ["latin"], display: "swap" });
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));

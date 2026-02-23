@@ -1,11 +1,15 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "sonner";
 import { AnalyticsProvider } from "@/components/analytics/analytics-provider";
 import { SessionProvider } from "next-auth/react";
 import { useState } from "react";
-import { SolanaProvider } from "./solana-provider";
+
+const SolanaProvider = dynamic(
+  () => import("./solana-provider").then((mod) => mod.SolanaProvider),
+);
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
