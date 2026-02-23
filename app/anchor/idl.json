@@ -1,0 +1,2869 @@
+{
+  "address": "G7VbZqvJfeQdnTZa7r31YNA1DSXpPXLrgoXx49YjzU7p",
+  "metadata": {
+    "name": "onchain_academy",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Superteam Academy on-chain program — courses, XP, credentials, achievements"
+  },
+  "instructions": [
+    {
+      "name": "award_achievement",
+      "discriminator": [
+        75,
+        47,
+        156,
+        253,
+        124,
+        231,
+        84,
+        12
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "achievement_type",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  99,
+                  104,
+                  105,
+                  101,
+                  118,
+                  101,
+                  109,
+                  101,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "achievement_type.achievement_id",
+                "account": "AchievementType"
+              }
+            ]
+          }
+        },
+        {
+          "name": "achievement_receipt",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  99,
+                  104,
+                  105,
+                  101,
+                  118,
+                  101,
+                  109,
+                  101,
+                  110,
+                  116,
+                  95,
+                  114,
+                  101,
+                  99,
+                  101,
+                  105,
+                  112,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "achievement_type.achievement_id",
+                "account": "AchievementType"
+              },
+              {
+                "kind": "account",
+                "path": "recipient"
+              }
+            ]
+          }
+        },
+        {
+          "name": "minter_role",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  105,
+                  110,
+                  116,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "minter"
+              }
+            ]
+          }
+        },
+        {
+          "name": "asset",
+          "docs": [
+            "New achievement NFT keypair"
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "collection",
+          "writable": true
+        },
+        {
+          "name": "recipient"
+        },
+        {
+          "name": "recipient_token_account",
+          "writable": true
+        },
+        {
+          "name": "xp_mint",
+          "writable": true
+        },
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "minter",
+          "signer": true
+        },
+        {
+          "name": "mpl_core_program",
+          "address": "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d"
+        },
+        {
+          "name": "token_program",
+          "address": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "close_enrollment",
+      "discriminator": [
+        236,
+        137,
+        133,
+        253,
+        91,
+        138,
+        217,
+        91
+      ],
+      "accounts": [
+        {
+          "name": "course",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  117,
+                  114,
+                  115,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "course.course_id",
+                "account": "Course"
+              }
+            ]
+          }
+        },
+        {
+          "name": "enrollment",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  110,
+                  114,
+                  111,
+                  108,
+                  108,
+                  109,
+                  101,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "course.course_id",
+                "account": "Course"
+              },
+              {
+                "kind": "account",
+                "path": "learner"
+              }
+            ]
+          }
+        },
+        {
+          "name": "learner",
+          "writable": true,
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "complete_lesson",
+      "discriminator": [
+        77,
+        217,
+        53,
+        132,
+        204,
+        150,
+        169,
+        58
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "course",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  117,
+                  114,
+                  115,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "course.course_id",
+                "account": "Course"
+              }
+            ]
+          }
+        },
+        {
+          "name": "enrollment",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  110,
+                  114,
+                  111,
+                  108,
+                  108,
+                  109,
+                  101,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "course.course_id",
+                "account": "Course"
+              },
+              {
+                "kind": "account",
+                "path": "learner"
+              }
+            ]
+          }
+        },
+        {
+          "name": "learner"
+        },
+        {
+          "name": "learner_token_account",
+          "writable": true
+        },
+        {
+          "name": "xp_mint",
+          "writable": true
+        },
+        {
+          "name": "backend_signer",
+          "signer": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+        }
+      ],
+      "args": [
+        {
+          "name": "lesson_index",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "create_achievement_type",
+      "discriminator": [
+        231,
+        38,
+        39,
+        228,
+        103,
+        4,
+        229,
+        19
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "achievement_type",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  99,
+                  104,
+                  105,
+                  101,
+                  118,
+                  101,
+                  109,
+                  101,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "params.achievement_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "collection",
+          "docs": [
+            "New Metaplex Core collection keypair"
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "mpl_core_program",
+          "address": "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "params",
+          "type": {
+            "defined": {
+              "name": "CreateAchievementTypeParams"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "create_course",
+      "discriminator": [
+        120,
+        121,
+        154,
+        164,
+        107,
+        180,
+        167,
+        241
+      ],
+      "accounts": [
+        {
+          "name": "course",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  117,
+                  114,
+                  115,
+                  101
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "params.course_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "config"
+          ]
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "params",
+          "type": {
+            "defined": {
+              "name": "CreateCourseParams"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "deactivate_achievement_type",
+      "discriminator": [
+        185,
+        21,
+        222,
+        243,
+        192,
+        118,
+        71,
+        191
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "achievement_type",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  99,
+                  104,
+                  105,
+                  101,
+                  118,
+                  101,
+                  109,
+                  101,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "achievement_type.achievement_id",
+                "account": "AchievementType"
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "enroll",
+      "discriminator": [
+        58,
+        12,
+        36,
+        3,
+        142,
+        28,
+        1,
+        43
+      ],
+      "accounts": [
+        {
+          "name": "course",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  117,
+                  114,
+                  115,
+                  101
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "course_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "enrollment",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  110,
+                  114,
+                  111,
+                  108,
+                  108,
+                  109,
+                  101,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "course_id"
+              },
+              {
+                "kind": "account",
+                "path": "learner"
+              }
+            ]
+          }
+        },
+        {
+          "name": "learner",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "course_id",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "finalize_course",
+      "discriminator": [
+        68,
+        189,
+        122,
+        239,
+        39,
+        121,
+        16,
+        218
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "course",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  117,
+                  114,
+                  115,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "course.course_id",
+                "account": "Course"
+              }
+            ]
+          }
+        },
+        {
+          "name": "enrollment",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  110,
+                  114,
+                  111,
+                  108,
+                  108,
+                  109,
+                  101,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "course.course_id",
+                "account": "Course"
+              },
+              {
+                "kind": "account",
+                "path": "learner"
+              }
+            ]
+          }
+        },
+        {
+          "name": "learner"
+        },
+        {
+          "name": "learner_token_account",
+          "writable": true
+        },
+        {
+          "name": "creator_token_account",
+          "writable": true
+        },
+        {
+          "name": "creator"
+        },
+        {
+          "name": "xp_mint",
+          "writable": true
+        },
+        {
+          "name": "backend_signer",
+          "signer": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initialize",
+      "discriminator": [
+        175,
+        175,
+        109,
+        31,
+        13,
+        152,
+        155,
+        237
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "xp_mint",
+          "docs": [
+            "Passed as a signer (new keypair) so create_account can assign ownership",
+            "to the Token-2022 program."
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "backend_minter_role",
+          "docs": [
+            "Auto-registered MinterRole for the backend signer (defaults to authority)"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  105,
+                  110,
+                  116,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "token_program",
+          "address": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "issue_credential",
+      "discriminator": [
+        255,
+        193,
+        171,
+        224,
+        68,
+        171,
+        194,
+        87
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "course",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  117,
+                  114,
+                  115,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "course.course_id",
+                "account": "Course"
+              }
+            ]
+          }
+        },
+        {
+          "name": "enrollment",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  110,
+                  114,
+                  111,
+                  108,
+                  108,
+                  109,
+                  101,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "course.course_id",
+                "account": "Course"
+              },
+              {
+                "kind": "account",
+                "path": "learner"
+              }
+            ]
+          }
+        },
+        {
+          "name": "learner"
+        },
+        {
+          "name": "credential_asset",
+          "docs": [
+            "New credential NFT asset keypair — must sign the transaction."
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "track_collection",
+          "writable": true
+        },
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "backend_signer",
+          "signer": true
+        },
+        {
+          "name": "mpl_core_program",
+          "address": "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "credential_name",
+          "type": "string"
+        },
+        {
+          "name": "metadata_uri",
+          "type": "string"
+        },
+        {
+          "name": "courses_completed",
+          "type": "u32"
+        },
+        {
+          "name": "total_xp",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "register_minter",
+      "discriminator": [
+        58,
+        224,
+        74,
+        142,
+        170,
+        95,
+        116,
+        191
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "minter_role",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  105,
+                  110,
+                  116,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "params.minter"
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "params",
+          "type": {
+            "defined": {
+              "name": "RegisterMinterParams"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "revoke_minter",
+      "discriminator": [
+        33,
+        91,
+        131,
+        167,
+        62,
+        37,
+        38,
+        105
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "minter_role",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  105,
+                  110,
+                  116,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "minter_role.minter",
+                "account": "MinterRole"
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "reward_xp",
+      "discriminator": [
+        144,
+        187,
+        117,
+        238,
+        89,
+        118,
+        224,
+        145
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "minter_role",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  109,
+                  105,
+                  110,
+                  116,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "minter"
+              }
+            ]
+          }
+        },
+        {
+          "name": "xp_mint",
+          "docs": [
+            "Token-2022 XP mint"
+          ],
+          "writable": true
+        },
+        {
+          "name": "recipient_token_account",
+          "docs": [
+            "Recipient's Token-2022 ATA for XP"
+          ],
+          "writable": true
+        },
+        {
+          "name": "minter",
+          "signer": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        },
+        {
+          "name": "memo",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "update_config",
+      "discriminator": [
+        29,
+        158,
+        252,
+        191,
+        10,
+        83,
+        219,
+        99
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "signer": true,
+          "relations": [
+            "config"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "params",
+          "type": {
+            "defined": {
+              "name": "UpdateConfigParams"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "update_course",
+      "discriminator": [
+        81,
+        217,
+        18,
+        192,
+        129,
+        233,
+        129,
+        231
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "course",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  117,
+                  114,
+                  115,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "course.course_id",
+                "account": "Course"
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "signer": true,
+          "relations": [
+            "config"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "params",
+          "type": {
+            "defined": {
+              "name": "UpdateCourseParams"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "upgrade_credential",
+      "discriminator": [
+        2,
+        121,
+        77,
+        255,
+        103,
+        187,
+        252,
+        169
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "course",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  117,
+                  114,
+                  115,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "course.course_id",
+                "account": "Course"
+              }
+            ]
+          }
+        },
+        {
+          "name": "enrollment",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  110,
+                  114,
+                  111,
+                  108,
+                  108,
+                  109,
+                  101,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "course.course_id",
+                "account": "Course"
+              },
+              {
+                "kind": "account",
+                "path": "learner"
+              }
+            ]
+          }
+        },
+        {
+          "name": "learner"
+        },
+        {
+          "name": "credential_asset",
+          "docs": [
+            "Existing credential NFT asset — not a signer, validated against enrollment record."
+          ],
+          "writable": true
+        },
+        {
+          "name": "track_collection",
+          "writable": true
+        },
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "backend_signer",
+          "signer": true
+        },
+        {
+          "name": "mpl_core_program",
+          "address": "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "credential_name",
+          "type": "string"
+        },
+        {
+          "name": "metadata_uri",
+          "type": "string"
+        },
+        {
+          "name": "courses_completed",
+          "type": "u32"
+        },
+        {
+          "name": "total_xp",
+          "type": "u64"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "AchievementReceipt",
+      "discriminator": [
+        149,
+        5,
+        79,
+        178,
+        116,
+        231,
+        43,
+        248
+      ]
+    },
+    {
+      "name": "AchievementType",
+      "discriminator": [
+        13,
+        187,
+        114,
+        66,
+        217,
+        154,
+        85,
+        137
+      ]
+    },
+    {
+      "name": "Config",
+      "discriminator": [
+        155,
+        12,
+        170,
+        224,
+        30,
+        250,
+        204,
+        130
+      ]
+    },
+    {
+      "name": "Course",
+      "discriminator": [
+        206,
+        6,
+        78,
+        228,
+        163,
+        138,
+        241,
+        106
+      ]
+    },
+    {
+      "name": "Enrollment",
+      "discriminator": [
+        249,
+        210,
+        64,
+        145,
+        197,
+        241,
+        57,
+        51
+      ]
+    },
+    {
+      "name": "MinterRole",
+      "discriminator": [
+        21,
+        246,
+        6,
+        133,
+        142,
+        211,
+        33,
+        193
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "AchievementAwarded",
+      "discriminator": [
+        127,
+        212,
+        93,
+        231,
+        175,
+        0,
+        69,
+        150
+      ]
+    },
+    {
+      "name": "AchievementTypeCreated",
+      "discriminator": [
+        189,
+        36,
+        173,
+        243,
+        25,
+        232,
+        198,
+        153
+      ]
+    },
+    {
+      "name": "AchievementTypeDeactivated",
+      "discriminator": [
+        133,
+        12,
+        218,
+        127,
+        151,
+        28,
+        1,
+        222
+      ]
+    },
+    {
+      "name": "ConfigUpdated",
+      "discriminator": [
+        40,
+        241,
+        230,
+        122,
+        11,
+        19,
+        198,
+        194
+      ]
+    },
+    {
+      "name": "CourseCreated",
+      "discriminator": [
+        205,
+        144,
+        55,
+        47,
+        150,
+        170,
+        123,
+        214
+      ]
+    },
+    {
+      "name": "CourseFinalized",
+      "discriminator": [
+        18,
+        195,
+        195,
+        25,
+        165,
+        189,
+        194,
+        56
+      ]
+    },
+    {
+      "name": "CourseUpdated",
+      "discriminator": [
+        124,
+        141,
+        110,
+        224,
+        149,
+        124,
+        26,
+        141
+      ]
+    },
+    {
+      "name": "CredentialIssued",
+      "discriminator": [
+        194,
+        216,
+        28,
+        159,
+        89,
+        29,
+        72,
+        177
+      ]
+    },
+    {
+      "name": "CredentialUpgraded",
+      "discriminator": [
+        198,
+        142,
+        252,
+        191,
+        210,
+        200,
+        253,
+        133
+      ]
+    },
+    {
+      "name": "Enrolled",
+      "discriminator": [
+        129,
+        156,
+        102,
+        214,
+        94,
+        196,
+        220,
+        127
+      ]
+    },
+    {
+      "name": "EnrollmentClosed",
+      "discriminator": [
+        197,
+        4,
+        145,
+        238,
+        217,
+        4,
+        175,
+        77
+      ]
+    },
+    {
+      "name": "LessonCompleted",
+      "discriminator": [
+        248,
+        174,
+        148,
+        235,
+        186,
+        49,
+        11,
+        163
+      ]
+    },
+    {
+      "name": "MinterRegistered",
+      "discriminator": [
+        104,
+        203,
+        87,
+        105,
+        23,
+        33,
+        231,
+        1
+      ]
+    },
+    {
+      "name": "MinterRevoked",
+      "discriminator": [
+        138,
+        76,
+        227,
+        247,
+        141,
+        92,
+        77,
+        127
+      ]
+    },
+    {
+      "name": "XpRewarded",
+      "discriminator": [
+        140,
+        182,
+        232,
+        144,
+        16,
+        155,
+        237,
+        182
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "Unauthorized",
+      "msg": "Unauthorized signer"
+    },
+    {
+      "code": 6001,
+      "name": "CourseNotActive",
+      "msg": "Course not active"
+    },
+    {
+      "code": 6002,
+      "name": "LessonOutOfBounds",
+      "msg": "Lesson index out of bounds"
+    },
+    {
+      "code": 6003,
+      "name": "LessonAlreadyCompleted",
+      "msg": "Lesson already completed"
+    },
+    {
+      "code": 6004,
+      "name": "CourseNotCompleted",
+      "msg": "Not all lessons completed"
+    },
+    {
+      "code": 6005,
+      "name": "CourseAlreadyFinalized",
+      "msg": "Course already finalized"
+    },
+    {
+      "code": 6006,
+      "name": "CourseNotFinalized",
+      "msg": "Course not finalized"
+    },
+    {
+      "code": 6007,
+      "name": "PrerequisiteNotMet",
+      "msg": "Prerequisite not met"
+    },
+    {
+      "code": 6008,
+      "name": "UnenrollCooldown",
+      "msg": "Close cooldown not met (24h)"
+    },
+    {
+      "code": 6009,
+      "name": "EnrollmentCourseMismatch",
+      "msg": "Enrollment/course mismatch"
+    },
+    {
+      "code": 6010,
+      "name": "Overflow",
+      "msg": "Arithmetic overflow"
+    },
+    {
+      "code": 6011,
+      "name": "CourseIdEmpty",
+      "msg": "Course ID is empty"
+    },
+    {
+      "code": 6012,
+      "name": "CourseIdTooLong",
+      "msg": "Course ID exceeds max length"
+    },
+    {
+      "code": 6013,
+      "name": "InvalidLessonCount",
+      "msg": "Lesson count must be at least 1"
+    },
+    {
+      "code": 6014,
+      "name": "InvalidDifficulty",
+      "msg": "Difficulty must be 1, 2, or 3"
+    },
+    {
+      "code": 6015,
+      "name": "CredentialAssetMismatch",
+      "msg": "Credential asset does not match enrollment record"
+    },
+    {
+      "code": 6016,
+      "name": "CredentialAlreadyIssued",
+      "msg": "Credential already issued for this enrollment"
+    },
+    {
+      "code": 6017,
+      "name": "MinterNotActive",
+      "msg": "Minter role is not active"
+    },
+    {
+      "code": 6018,
+      "name": "MinterAmountExceeded",
+      "msg": "Amount exceeds minter's per-call limit"
+    },
+    {
+      "code": 6019,
+      "name": "LabelTooLong",
+      "msg": "Minter label exceeds max length"
+    },
+    {
+      "code": 6020,
+      "name": "AchievementNotActive",
+      "msg": "Achievement type is not active"
+    },
+    {
+      "code": 6021,
+      "name": "AchievementSupplyExhausted",
+      "msg": "Achievement max supply reached"
+    },
+    {
+      "code": 6022,
+      "name": "AchievementIdTooLong",
+      "msg": "Achievement ID exceeds max length"
+    },
+    {
+      "code": 6023,
+      "name": "AchievementNameTooLong",
+      "msg": "Achievement name exceeds max length"
+    },
+    {
+      "code": 6024,
+      "name": "AchievementUriTooLong",
+      "msg": "Achievement URI exceeds max length"
+    },
+    {
+      "code": 6025,
+      "name": "InvalidAmount",
+      "msg": "Amount must be greater than zero"
+    },
+    {
+      "code": 6026,
+      "name": "InvalidXpReward",
+      "msg": "XP reward must be greater than zero"
+    }
+  ],
+  "types": [
+    {
+      "name": "AchievementAwarded",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "achievement_id",
+            "type": "string"
+          },
+          {
+            "name": "recipient",
+            "type": "pubkey"
+          },
+          {
+            "name": "asset",
+            "type": "pubkey"
+          },
+          {
+            "name": "xp_reward",
+            "type": "u32"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "AchievementReceipt",
+      "docs": [
+        "Thin PDA for on-chain double-award prevention.",
+        "Seeds: [\"achievement_receipt\", achievement_id.as_bytes(), recipient.key()]"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "asset",
+            "docs": [
+              "Metaplex Core NFT address"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "awarded_at",
+            "type": "i64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "AchievementType",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "achievement_id",
+            "type": "string"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "metadata_uri",
+            "docs": [
+              "Default metadata URI for minted NFTs"
+            ],
+            "type": "string"
+          },
+          {
+            "name": "collection",
+            "docs": [
+              "Metaplex Core collection for this achievement"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "creator",
+            "type": "pubkey"
+          },
+          {
+            "name": "max_supply",
+            "docs": [
+              "0 = unlimited supply"
+            ],
+            "type": "u32"
+          },
+          {
+            "name": "current_supply",
+            "type": "u32"
+          },
+          {
+            "name": "xp_reward",
+            "docs": [
+              "XP awarded alongside the NFT (0 = no XP)"
+            ],
+            "type": "u32"
+          },
+          {
+            "name": "is_active",
+            "type": "bool"
+          },
+          {
+            "name": "created_at",
+            "type": "i64"
+          },
+          {
+            "name": "_reserved",
+            "type": {
+              "array": [
+                "u8",
+                8
+              ]
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "AchievementTypeCreated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "achievement_id",
+            "type": "string"
+          },
+          {
+            "name": "collection",
+            "type": "pubkey"
+          },
+          {
+            "name": "creator",
+            "type": "pubkey"
+          },
+          {
+            "name": "max_supply",
+            "type": "u32"
+          },
+          {
+            "name": "xp_reward",
+            "type": "u32"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "AchievementTypeDeactivated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "achievement_id",
+            "type": "string"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Config",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "docs": [
+              "Platform multisig (Squads)"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "backend_signer",
+            "docs": [
+              "Rotatable backend signer for completions"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "xp_mint",
+            "docs": [
+              "Token-2022 mint for XP"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "_reserved",
+            "docs": [
+              "Reserved for future use"
+            ],
+            "type": {
+              "array": [
+                "u8",
+                8
+              ]
+            }
+          },
+          {
+            "name": "bump",
+            "docs": [
+              "PDA bump"
+            ],
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ConfigUpdated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "field",
+            "type": "string"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Course",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "course_id",
+            "type": "string"
+          },
+          {
+            "name": "creator",
+            "docs": [
+              "XP recipient for creator rewards (not an authority — all admin goes through Config)"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "content_tx_id",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "version",
+            "type": "u16"
+          },
+          {
+            "name": "lesson_count",
+            "type": "u8"
+          },
+          {
+            "name": "difficulty",
+            "type": "u8"
+          },
+          {
+            "name": "xp_per_lesson",
+            "type": "u32"
+          },
+          {
+            "name": "track_id",
+            "type": "u16"
+          },
+          {
+            "name": "track_level",
+            "type": "u8"
+          },
+          {
+            "name": "prerequisite",
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "creator_reward_xp",
+            "type": "u32"
+          },
+          {
+            "name": "min_completions_for_reward",
+            "type": "u16"
+          },
+          {
+            "name": "total_completions",
+            "type": "u32"
+          },
+          {
+            "name": "total_enrollments",
+            "type": "u32"
+          },
+          {
+            "name": "is_active",
+            "type": "bool"
+          },
+          {
+            "name": "created_at",
+            "type": "i64"
+          },
+          {
+            "name": "updated_at",
+            "type": "i64"
+          },
+          {
+            "name": "_reserved",
+            "type": {
+              "array": [
+                "u8",
+                8
+              ]
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CourseCreated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "course",
+            "type": "pubkey"
+          },
+          {
+            "name": "course_id",
+            "type": "string"
+          },
+          {
+            "name": "creator",
+            "type": "pubkey"
+          },
+          {
+            "name": "track_id",
+            "type": "u16"
+          },
+          {
+            "name": "track_level",
+            "type": "u8"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CourseFinalized",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "learner",
+            "type": "pubkey"
+          },
+          {
+            "name": "course",
+            "type": "pubkey"
+          },
+          {
+            "name": "total_xp",
+            "type": "u32"
+          },
+          {
+            "name": "bonus_xp",
+            "type": "u64"
+          },
+          {
+            "name": "creator",
+            "type": "pubkey"
+          },
+          {
+            "name": "creator_xp",
+            "type": "u32"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CourseUpdated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "course",
+            "type": "pubkey"
+          },
+          {
+            "name": "version",
+            "type": "u16"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CreateAchievementTypeParams",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "achievement_id",
+            "type": "string"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "metadata_uri",
+            "type": "string"
+          },
+          {
+            "name": "max_supply",
+            "type": "u32"
+          },
+          {
+            "name": "xp_reward",
+            "type": "u32"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CreateCourseParams",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "course_id",
+            "type": "string"
+          },
+          {
+            "name": "creator",
+            "type": "pubkey"
+          },
+          {
+            "name": "content_tx_id",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "lesson_count",
+            "type": "u8"
+          },
+          {
+            "name": "difficulty",
+            "type": "u8"
+          },
+          {
+            "name": "xp_per_lesson",
+            "type": "u32"
+          },
+          {
+            "name": "track_id",
+            "type": "u16"
+          },
+          {
+            "name": "track_level",
+            "type": "u8"
+          },
+          {
+            "name": "prerequisite",
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "creator_reward_xp",
+            "type": "u32"
+          },
+          {
+            "name": "min_completions_for_reward",
+            "type": "u16"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CredentialIssued",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "learner",
+            "type": "pubkey"
+          },
+          {
+            "name": "track_id",
+            "type": "u16"
+          },
+          {
+            "name": "credential_asset",
+            "type": "pubkey"
+          },
+          {
+            "name": "current_level",
+            "type": "u8"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CredentialUpgraded",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "learner",
+            "type": "pubkey"
+          },
+          {
+            "name": "track_id",
+            "type": "u16"
+          },
+          {
+            "name": "credential_asset",
+            "type": "pubkey"
+          },
+          {
+            "name": "current_level",
+            "type": "u8"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Enrolled",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "learner",
+            "type": "pubkey"
+          },
+          {
+            "name": "course",
+            "type": "pubkey"
+          },
+          {
+            "name": "course_version",
+            "type": "u16"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Enrollment",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "course",
+            "docs": [
+              "The Course PDA this enrollment belongs to"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "enrolled_at",
+            "docs": [
+              "When learner enrolled"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "completed_at",
+            "docs": [
+              "When course was completed (None if in progress)"
+            ],
+            "type": {
+              "option": "i64"
+            }
+          },
+          {
+            "name": "lesson_flags",
+            "docs": [
+              "Lesson completion bitmap: 4 × u64 = 256 bits.",
+              "lesson_count is u8 (max 255), so all valid indices fit within this bitmap."
+            ],
+            "type": {
+              "array": [
+                "u64",
+                4
+              ]
+            }
+          },
+          {
+            "name": "credential_asset",
+            "docs": [
+              "Credential NFT address for this track (set by issue_credential)"
+            ],
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "_reserved",
+            "docs": [
+              "Reserved for future use (4 bytes — differs from 8 on other accounts; cannot resize without migration)"
+            ],
+            "type": {
+              "array": [
+                "u8",
+                4
+              ]
+            }
+          },
+          {
+            "name": "bump",
+            "docs": [
+              "PDA bump"
+            ],
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "EnrollmentClosed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "learner",
+            "type": "pubkey"
+          },
+          {
+            "name": "course",
+            "type": "pubkey"
+          },
+          {
+            "name": "completed",
+            "type": "bool"
+          },
+          {
+            "name": "rent_reclaimed",
+            "type": "u64"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "LessonCompleted",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "learner",
+            "type": "pubkey"
+          },
+          {
+            "name": "course",
+            "type": "pubkey"
+          },
+          {
+            "name": "lesson_index",
+            "type": "u8"
+          },
+          {
+            "name": "xp_earned",
+            "type": "u32"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "MinterRegistered",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "minter",
+            "type": "pubkey"
+          },
+          {
+            "name": "label",
+            "type": "string"
+          },
+          {
+            "name": "max_xp_per_call",
+            "type": "u64"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "MinterRevoked",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "minter",
+            "type": "pubkey"
+          },
+          {
+            "name": "total_xp_minted",
+            "type": "u64"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "MinterRole",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "minter",
+            "docs": [
+              "Wallet or program PDA authorized to mint XP"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "label",
+            "docs": [
+              "Human-readable label (\"streak-program\", \"irl-events\", etc.)"
+            ],
+            "type": "string"
+          },
+          {
+            "name": "max_xp_per_call",
+            "docs": [
+              "Per-call XP cap. 0 = unlimited."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "total_xp_minted",
+            "docs": [
+              "Lifetime XP minted through this role"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "is_active",
+            "type": "bool"
+          },
+          {
+            "name": "created_at",
+            "type": "i64"
+          },
+          {
+            "name": "_reserved",
+            "type": {
+              "array": [
+                "u8",
+                8
+              ]
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RegisterMinterParams",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "minter",
+            "type": "pubkey"
+          },
+          {
+            "name": "label",
+            "type": "string"
+          },
+          {
+            "name": "max_xp_per_call",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UpdateConfigParams",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "new_backend_signer",
+            "type": {
+              "option": "pubkey"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "UpdateCourseParams",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "new_content_tx_id",
+            "type": {
+              "option": {
+                "array": [
+                  "u8",
+                  32
+                ]
+              }
+            }
+          },
+          {
+            "name": "new_is_active",
+            "type": {
+              "option": "bool"
+            }
+          },
+          {
+            "name": "new_xp_per_lesson",
+            "type": {
+              "option": "u32"
+            }
+          },
+          {
+            "name": "new_creator_reward_xp",
+            "type": {
+              "option": "u32"
+            }
+          },
+          {
+            "name": "new_min_completions_for_reward",
+            "type": {
+              "option": "u16"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "XpRewarded",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "minter",
+            "type": "pubkey"
+          },
+          {
+            "name": "recipient",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "memo",
+            "type": "string"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    }
+  ]
+}

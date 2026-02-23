@@ -1,0 +1,113 @@
+{
+  "courses": [
+    {
+      "_type": "course",
+      "courseId": "solana-101",
+      "title": { "en": "Solana 101: Fundamentals", "ptBR": "Solana 101: Fundamentos", "es": "Solana 101: Fundamentos" },
+      "description": {
+        "en": "Learn the core concepts of Solana blockchain: accounts, programs, transactions, and the Solana runtime.",
+        "ptBR": "Aprenda os conceitos fundamentais da blockchain Solana: contas, programas, transações e o runtime Solana.",
+        "es": "Aprende los conceptos fundamentales de la blockchain Solana: cuentas, programas, transacciones y el runtime de Solana."
+      },
+      "trackId": 1
+    },
+    {
+      "_type": "course",
+      "courseId": "anchor-101",
+      "title": { "en": "Anchor 101: Framework Basics", "ptBR": "Anchor 101: Básico do Framework", "es": "Anchor 101: Fundamentos del Framework" },
+      "description": {
+        "en": "Build Solana programs with the Anchor framework. Covers accounts, instructions, PDAs, and testing.",
+        "ptBR": "Construa programas Solana com o framework Anchor. Cobre contas, instruções, PDAs e testes.",
+        "es": "Construye programas Solana con el framework Anchor. Cubre cuentas, instrucciones, PDAs y pruebas."
+      },
+      "trackId": 1
+    },
+    {
+      "_type": "course",
+      "courseId": "defi-fundamentals",
+      "title": { "en": "DeFi Fundamentals", "ptBR": "Fundamentos de DeFi", "es": "Fundamentos de DeFi" },
+      "description": {
+        "en": "Understand AMMs, liquidity pools, yield farming, and the DeFi ecosystem on Solana.",
+        "ptBR": "Entenda AMMs, pools de liquidez, yield farming e o ecossistema DeFi na Solana.",
+        "es": "Entiende AMMs, pools de liquidez, yield farming y el ecosistema DeFi en Solana."
+      },
+      "trackId": 2
+    }
+  ],
+  "lessons": [
+    {
+      "_type": "lesson",
+      "courseRef": "solana-101",
+      "lessonIndex": 0,
+      "title": { "en": "Introduction to Solana", "ptBR": "Introdução à Solana", "es": "Introducción a Solana" },
+      "quizQuestions": [
+        { "question": "What consensus mechanism does Solana use?", "options": ["Proof of Work", "Proof of Stake", "Proof of History + Tower BFT", "Delegated Proof of Stake"], "correctIndex": 2 }
+      ]
+    },
+    {
+      "_type": "lesson",
+      "courseRef": "solana-101",
+      "lessonIndex": 1,
+      "title": { "en": "SPL Tokens", "ptBR": "Tokens SPL", "es": "Tokens SPL" },
+      "quizQuestions": [
+        { "question": "What is an SPL Token?", "options": ["A Solana smart contract", "Solana Program Library token standard", "A consensus algorithm", "A wallet type"], "correctIndex": 1 }
+      ]
+    },
+    {
+      "_type": "lesson",
+      "courseRef": "solana-101",
+      "lessonIndex": 2,
+      "title": { "en": "Program Derived Addresses", "ptBR": "Endereços Derivados de Programa", "es": "Direcciones Derivadas de Programa" },
+      "quizQuestions": [
+        { "question": "What are PDAs?", "options": ["Private Data Accounts", "Program Derived Addresses", "Public Data Arrays", "Protocol Data Anchors"], "correctIndex": 1 }
+      ],
+      "codeChallenge": {
+        "initialCode": "// Derive a PDA for a user profile\nconst [pda, bump] = PublicKey.findProgramAddressSync(\n  [Buffer.from(\"profile\"), wallet.toBuffer()],\n  programId\n);\nconsole.log(pda.toBase58());",
+        "language": "typescript",
+        "expectedOutput": "PDA derived successfully",
+        "instructions": "Complete the PDA derivation code. The output should contain the PDA public key."
+      }
+    },
+    {
+      "_type": "lesson",
+      "courseRef": "anchor-101",
+      "lessonIndex": 0,
+      "title": { "en": "What is Anchor?", "ptBR": "O que é Anchor?", "es": "¿Qué es Anchor?" },
+      "quizQuestions": [
+        { "question": "What is Anchor?", "options": ["A Solana wallet", "A framework for Solana programs", "A token standard", "A consensus mechanism"], "correctIndex": 1 }
+      ]
+    },
+    {
+      "_type": "lesson",
+      "courseRef": "anchor-101",
+      "lessonIndex": 1,
+      "title": { "en": "Account Macros", "ptBR": "Macros de Conta", "es": "Macros de Cuenta" },
+      "quizQuestions": [
+        { "question": "What does #[account] do in Anchor?", "options": ["Creates a wallet", "Defines account serialization/deserialization", "Sends transactions", "Generates keypairs"], "correctIndex": 1 }
+      ]
+    },
+    {
+      "_type": "lesson",
+      "courseRef": "defi-fundamentals",
+      "lessonIndex": 0,
+      "title": { "en": "AMMs Explained", "ptBR": "AMMs Explicados", "es": "AMMs Explicados" },
+      "quizQuestions": [
+        { "question": "What is an AMM?", "options": ["Automated Market Maker", "Advanced Mining Module", "Atomic Message Manager", "Asset Management Model"], "correctIndex": 0 }
+      ]
+    }
+  ],
+  "tracks": [
+    {
+      "_type": "track",
+      "trackId": 1,
+      "name": { "en": "Solana Development", "ptBR": "Desenvolvimento Solana", "es": "Desarrollo Solana" },
+      "description": { "en": "Core Solana development skills", "ptBR": "Habilidades core de desenvolvimento Solana", "es": "Habilidades core de desarrollo Solana" }
+    },
+    {
+      "_type": "track",
+      "trackId": 2,
+      "name": { "en": "DeFi", "ptBR": "DeFi", "es": "DeFi" },
+      "description": { "en": "Decentralized Finance on Solana", "ptBR": "Finanças Descentralizadas na Solana", "es": "Finanzas Descentralizadas en Solana" }
+    }
+  ]
+}
