@@ -13,7 +13,7 @@ export async function GET(
   const thread = await Thread.findByIdAndUpdate(
     id,
     { $inc: { views: 1 } },
-    { new: true },
+    { returnDocument: "after" },
   ).lean();
 
   if (!thread) {
