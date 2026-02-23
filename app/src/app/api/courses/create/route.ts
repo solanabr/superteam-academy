@@ -128,6 +128,7 @@ export async function POST(request: NextRequest) {
     // Create course document in Sanity
     // NOTE: This uses YOUR SANITY_API_TOKEN (developer credentials), but we store
     // the professor's info in createdBy for attribution.
+    // Create course document in Sanity
     const course = await serverClient.create({
       _type: "course",
       title,
@@ -145,6 +146,33 @@ export async function POST(request: NextRequest) {
         role: user.role,
       },
     });
+
+    // AUTO-SYNC ON-CHAIN if published immediately
+    if (body.published === true) {
+      try {
+        const { syncCourseOnChain } = await import("@/lib/onchain-admin");
+
+        // Count total lessons across all modules
+        let lessonCount = 0;
+        if (Array.isArray(modules)) {
+          modules.forEach(m => {
+            if (Array.isArray(m.lessons)) {
+              lessonCount += m.lessons.length;
+            }
+          });
+        }
+        if (lessonCount === 0) lessonCount = 1; // Fallback
+
+        console.log(`[api/courses/create] Auto-syncing course ${course._id} on-chain...`);
+        await syncCourseOnChain({
+          courseId: course._id,
+          wallet: wallet,
+          lessonCount: lessonCount,
+        });
+      } catch (syncError) {
+        console.error("[api/courses/create] On-chain sync failed (continuing):", syncError);
+      }
+    }
 
     return NextResponse.json({
       success: true,

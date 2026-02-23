@@ -29,6 +29,7 @@ export interface LeaderboardEntry {
 export interface Credential {
   id: string;
   userId: string;
+  walletAddress?: string;
   trackId: string;
   trackName: string;
   level: number;
@@ -36,6 +37,8 @@ export interface Credential {
   totalXpEarned: number;
   earnedAt: Date;
   metadataUrl: string | null;
+  mintAddress?: string | null;
+  verificationUrl?: string | null;
   image?: string;
 }
 

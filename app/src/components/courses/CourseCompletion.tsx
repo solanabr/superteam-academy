@@ -153,30 +153,33 @@ export function CourseCompletion({ courseId, totalLessons }: CourseCompletionPro
                             variant="default"
                             className={`flex items-center gap-3 rounded-lg bg-solana text-[#0A0A0B] hover:brightness-110 shadow-[0_0_20px_-5px_rgba(20,240,148,0.4)] px-6 py-3 font-bold transition-all h-auto`}
                         >
-                            <Link href="/profile">
+                            <Link href={`/profile/${walletAddress}`}>
                                 <Medal className="h-5 w-5" />
                                 View Your Certificate
                             </Link>
                         </Button>
 
                         {onChainActive && (
-                            <Button
-                                onClick={handleReclaimRent}
-                                disabled={isReclaimLoading}
-                                variant="outline"
-                                className="flex items-center gap-2 rounded-lg border-white/20 bg-white/5 px-6 py-3 text-sm font-medium text-white hover:bg-white/10 disabled:opacity-50 h-auto"
-                            >
-                                {isReclaimLoading ? (
-                                    <>
+                            <div className="flex items-center gap-3">
+                                <Button
+                                    onClick={handleReclaimRent}
+                                    disabled={isReclaimLoading}
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-10 w-10 rounded-full bg-white/5 border border-white/10 text-white/40 hover:text-rust hover:bg-rust/10 hover:border-rust/30 transition-all"
+                                    title="Reclaim Rent & Close Enrollment"
+                                >
+                                    {isReclaimLoading ? (
                                         <Loader2 className="h-4 w-4 animate-spin" />
-                                        Reclaiming...
-                                    </>
-                                ) : (
-                                    <>
-                                        Reclaim Enrollment Rent
-                                    </>
-                                )}
-                            </Button>
+                                    ) : (
+                                        <span className="material-symbols-outlined text-xl">delete_forever</span>
+                                    )}
+                                </Button>
+                                <span className="flex items-center gap-1 bg-solana/10 text-solana px-2 py-1 rounded text-[10px] font-bold border border-solana/20 uppercase tracking-tight">
+                                    <span className="material-symbols-outlined text-[14px]">account_balance_wallet</span>
+                                    Rent Reclaimable
+                                </span>
+                            </div>
                         )}
                     </div>
 

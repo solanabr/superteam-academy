@@ -102,28 +102,35 @@ export function EnrollButton({ courseId, courseTitle, className }: EnrollButtonP
         <Button disabled className={className}>
           {t("enrolled")}
         </Button>
-        <Button
-          variant="link"
-          size="sm"
-          onClick={async () => {
-            setIsUnenrolling(true);
-            try {
-              await handleUnenroll();
-            } finally {
-              setIsUnenrolling(false);
-            }
-          }}
-          disabled={loading || isUnenrolling}
-          className="text-xs text-text-muted hover:text-rust transition-colors underline underline-offset-4 opacity-70 hover:opacity-100 flex items-center gap-2 h-auto p-0"
-        >
-          {isUnenrolling ? "Processing..." : "Close Enrollment & Reclaim Rent"}
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={async () => {
+              setIsUnenrolling(true);
+              try {
+                await handleUnenroll();
+              } finally {
+                setIsUnenrolling(false);
+              }
+            }}
+            disabled={loading || isUnenrolling}
+            className="h-8 w-8 rounded-full text-text-muted hover:text-rust hover:bg-rust/10 transition-colors"
+            title="Close Enrollment & Reclaim Rent"
+          >
+            {isUnenrolling ? (
+              <span className="animate-spin text-sm">⌛</span>
+            ) : (
+              <span className="material-symbols-outlined text-lg">delete_forever</span>
+            )}
+          </Button>
           {!isUnenrolling && (
             <span className="flex items-center gap-1 bg-solana/10 text-solana px-1.5 py-0.5 rounded text-[10px] font-medium border border-solana/20">
               <span className="material-symbols-outlined text-[12px]">account_balance_wallet</span>
               Reclaimable
             </span>
           )}
-        </Button>
+        </div>
       </div>
     );
   }

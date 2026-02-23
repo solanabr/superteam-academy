@@ -41,11 +41,11 @@ export function CredentialList({ walletAddress: propAddress }: { walletAddress?:
             .finally(() => setLoading(false));
     }, [resolvedAddress]);
 
-    if (!authenticated) return null;
-
     if (loading) {
         return <Loader2 className="h-6 w-6 animate-spin text-solana" />;
     }
+
+    if (!resolvedAddress) return null;
 
     if (credentials.length === 0) {
         return (
@@ -73,16 +73,11 @@ export function CredentialList({ walletAddress: propAddress }: { walletAddress?:
                     ) : null}
 
                     <div className="relative z-10 flex flex-col gap-2">
-                        <div className="flex items-center gap-2 text-solana">
+                        <div className="flex items-center gap-2 text-solana mb-4">
                             <Medal className="h-6 w-6" />
                             <span className="font-display font-bold uppercase tracking-wider text-sm">
                                 {cred.trackName}
                             </span>
-                        </div>
-                        <div className="text-3xl font-bold text-white">Level {cred.level}</div>
-                        <div className="text-text-secondary text-sm">
-                            <p>{cred.coursesCompleted} courses completed</p>
-                            <p>{cred.totalXpEarned} XP earned</p>
                         </div>
                         <div className="mt-2 text-xs text-text-secondary opacity-50">
                             {new Date(cred.earnedAt).toLocaleDateString()}

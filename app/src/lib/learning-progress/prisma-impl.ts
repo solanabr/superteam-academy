@@ -205,11 +205,13 @@ export function createLearningProgressService(prisma: PrismaClient): LearningPro
   const getCredential = async (id: string): Promise<Credential | null> => {
     const cred = await prisma.credential.findUnique({
       where: { id },
+      include: { user: { select: { walletAddress: true } } }
     });
     if (!cred) return null;
     return {
       id: cred.id,
       userId: cred.userId,
+      walletAddress: cred.user.walletAddress,
       trackId: cred.trackId,
       trackName: cred.trackName,
       level: cred.level,
@@ -217,6 +219,8 @@ export function createLearningProgressService(prisma: PrismaClient): LearningPro
       totalXpEarned: cred.totalXpEarned,
       earnedAt: cred.earnedAt,
       metadataUrl: cred.metadataUrl,
+      mintAddress: cred.mintAddress,
+      verificationUrl: cred.verificationUrl,
       // Mock image for DB mode if missing
       image: `/certificates/${cred.trackId}.png`,
     };

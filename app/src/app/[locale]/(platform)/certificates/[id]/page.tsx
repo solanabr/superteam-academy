@@ -15,8 +15,9 @@ interface CredentialDetail {
     totalXpEarned: number;
     earnedAt: string;
     image?: string;
+    walletAddress?: string;
     owner?: string;
-    txHash?: string;
+    mintAddress?: string;
 }
 
 export default function CertificatePage() {
@@ -31,23 +32,22 @@ export default function CertificatePage() {
         if (!id) return;
 
         setLoading(true);
-        // We reuse the credentials API but in a real app would fetch a specific asset via DAS
-        // For MVP, if they land here, we'll just mock a fetch to render the UI using the id.
-        const timer = setTimeout(() => {
-            setCredential({
-                id,
-                trackName: "Rust Fundamentals",
-                level: 2,
-                coursesCompleted: 1,
-                totalXpEarned: 1540,
-                earnedAt: new Date().toISOString(),
-                owner: "3B5v...9Tq2",
-                txHash: "5N2a...r8xZ"
-            });
-            setLoading(false);
-        }, 1000);
-
-        return () => clearTimeout(timer);
+        fetch(`/api/credentials/${id}`)
+            .then(res => {
+                if (!res.ok) throw new Error("Credential not found");
+                return res.json();
+            })
+            .then(data => {
+                setCredential({
+                    ...data,
+                    owner: data.walletAddress || data.userId, // Fallback for various sources
+                });
+            })
+            .catch(err => {
+                console.error("Failed to fetch credential:", err);
+                setError(err.message);
+            })
+            .finally(() => setLoading(false));
     }, [id]);
 
     const handleShareTwitter = () => {
@@ -83,7 +83,7 @@ export default function CertificatePage() {
                                 {credential.trackName}
                             </h1>
                             <p className="text-text-muted text-lg">
-                                Awarded to <span className="text-white font-mono bg-white/5 px-2 py-0.5 rounded">{credential.owner}</span>
+                                Awarded to <span className="text-white font-mono bg-white/5 px-2 py-0.5 rounded">{credential.owner?.slice(0, 4)}...{credential.owner?.slice(-4)}</span>
                             </p>
                         </div>
 
@@ -103,14 +103,10 @@ export default function CertificatePage() {
                                     <p className="text-text-muted mb-8 text-lg">
                                         This certifies that the recipient has successfully completed the <strong className="text-white">{credential.trackName}</strong> track on Superteam Academy, demonstrating practical knowledge and on-chain proficiency.
                                     </p>
-                                    <div className="grid grid-cols-2 gap-8 w-full border-t border-white/10 pt-6">
+                                    <div className="flex flex-col items-center w-full border-t border-white/10 pt-6">
                                         <div>
-                                            <p className="text-xs uppercase font-mono text-solana tracking-widest mb-1">Level Reached</p>
-                                            <p className="text-2xl font-mono text-white">{credential.level}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-xs uppercase font-mono text-solana tracking-widest mb-1">Date Issued</p>
-                                            <p className="text-lg font-mono text-white mt-1">
+                                            <p className="text-xs uppercase font-mono text-solana tracking-widest mb-1 text-center">Date Issued</p>
+                                            <p className="text-lg font-mono text-white mt-1 text-center">
                                                 {new Date(credential.earnedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
                                             </p>
                                         </div>
@@ -130,10 +126,6 @@ export default function CertificatePage() {
                                 <div className="flex justify-between items-center py-2 border-b border-white/5">
                                     <span className="text-text-muted text-sm">Standard</span>
                                     <span className="font-mono text-xs text-solana">Metaplex Core</span>
-                                </div>
-                                <div className="flex justify-between items-center py-2 border-b border-white/5">
-                                    <span className="text-text-muted text-sm">Total XP</span>
-                                    <span className="font-mono text-xs text-white">{credential.totalXpEarned.toLocaleString()}</span>
                                 </div>
                                 <div className="pt-2">
                                     <a href={`https://explorer.solana.com/address/${credential.id}?cluster=devnet`} target="_blank" rel="noreferrer" className="text-solana text-sm hover:underline flex items-center gap-1">

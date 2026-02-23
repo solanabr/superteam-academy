@@ -69,72 +69,18 @@ export async function POST(
     const publishedId = id.startsWith("drafts.") ? id.replace("drafts.", "") : id;
 
     // Auto-sync to blockchain if not already explicitly done, or as part of this step
-    if (BACKEND_WALLET_KEY && process.env.NEXT_PUBLIC_USE_ONCHAIN === "true") {
+    if (process.env.NEXT_PUBLIC_USE_ONCHAIN === "true") {
       try {
-        await withFallbackRPC(async (connection) => {
-          const backendWallet = Keypair.fromSecretKey(bs58.decode(BACKEND_WALLET_KEY));
-
-          const provider = new AnchorProvider(
-            connection,
-            // @ts-ignore
-            { publicKey: backendWallet.publicKey, signTransaction: async (tx) => { tx.sign(backendWallet); return tx; }, signAllTransactions: async (txs) => { txs.forEach(t => t.sign(backendWallet)); return txs; } },
-            AnchorProvider.defaultOptions()
-          );
-
-          const program = new Program(onchainAcademyIdl as any, provider);
-
-          const [coursePda] = PublicKey.findProgramAddressSync(
-            [Buffer.from("course"), Buffer.from(publishedId)],
-            program.programId
-          );
-          const [configPda] = PublicKey.findProgramAddressSync(
-            [Buffer.from("config")],
-            program.programId
-          );
-
-          // Check if course account already exists
-          const courseAccountInfo = await connection.getAccountInfo(coursePda);
-
-          if (!courseAccountInfo) {
-            console.log(`Creating course on-chain: ${publishedId}`);
-            const creatorPubkey = new PublicKey(wallet);
-            const lessonCount = course.lessonCount || 1;
-
-            const tx = await program.methods
-              .createCourse({
-                courseId: publishedId.substring(0, 32),
-                creator: creatorPubkey,
-                contentTxId: Array(32).fill(0),
-                lessonCount: lessonCount,
-                difficulty: 1,
-                xpPerLesson: 100,
-                trackId: 1,
-                trackLevel: 1,
-                prerequisite: null,
-                creatorRewardXp: 500,
-                minCompletionsForReward: 10,
-              } as any)
-              .accounts({
-                course: coursePda,
-                config: configPda,
-                authority: backendWallet.publicKey,
-                systemProgram: SystemProgram.programId,
-              } as any)
-              .transaction();
-
-            tx.feePayer = backendWallet.publicKey;
-            tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-            tx.sign(backendWallet);
-
-            const sig = await connection.sendRawTransaction(tx.serialize());
-            await connection.confirmTransaction(sig);
-            console.log("On-chain course created, tx signature:", sig);
-          }
+        const { syncCourseOnChain } = await import("@/lib/onchain-admin");
+        console.log(`[api/courses/publish] Syncing course ${publishedId} on-chain...`);
+        await syncCourseOnChain({
+          courseId: publishedId,
+          wallet: wallet,
+          lessonCount: course.lessonCount || 1,
         });
       } catch (onchainError) {
         console.error("Failed to sync course on-chain during publish:", onchainError);
         // We log the error but still proceed with Sanity publishing to unblock user
-        // An ideal system might enqueue this for retry.
       }
     }
 

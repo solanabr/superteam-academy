@@ -19,22 +19,35 @@ export async function GET(request: NextRequest) {
     // Check if we are using ONCHAIN mode
     const USE_ONCHAIN = process.env.NEXT_PUBLIC_USE_ONCHAIN === "true";
 
+    let onChainCredentials: any[] = [];
     if (USE_ONCHAIN) {
-        // On-Chain service expects Wallet Address as ID
-        const credentials = await learningProgressService.getCredentials(wallet);
-        return NextResponse.json({ credentials });
-    } else {
-        const user = await prisma.user.findUnique({
-            where: { walletAddress: wallet },
-            select: { id: true },
-        });
-
-        if (!user) {
-            return NextResponse.json({ credentials: [] });
-        }
-
-        // Prisma service expects User UUID
-        const credentials = await learningProgressService.getCredentials(user.id);
-        return NextResponse.json({ credentials });
+        // On-Chain service handles Helius DAS (expects wallet)
+        onChainCredentials = await learningProgressService.getCredentials(wallet);
     }
+
+    // Fetch from Prisma for consistency (always handles DB credentials)
+    let prismaCredentials: any[] = [];
+    const user = await prisma.user.findUnique({
+        where: { walletAddress: wallet },
+        select: { id: true },
+    });
+
+    if (user) {
+        // If we are in ONCHAIN mode, the learningProgressService is OnChain.
+        // We need to fetch from DB specifically.
+        prismaCredentials = await prisma.credential.findMany({
+            where: { userId: user.id },
+            include: { user: { select: { walletAddress: true, profile: true } } }
+        });
+    }
+
+    // Merge and deduplicate by ID/Mint Address
+    const merged = [...onChainCredentials];
+    prismaCredentials.forEach(pc => {
+        if (!merged.find(mc => mc.id === pc.id || mc.mintAddress === pc.mintAddress)) {
+            merged.push(pc);
+        }
+    });
+
+    return NextResponse.json({ credentials: merged });
 }

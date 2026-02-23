@@ -14,6 +14,7 @@ import { prisma } from "@/lib/db";
 import { withFallbackRPC, HELIUS_RPC } from "@/lib/solana-connection";
 import { TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
 import bs58 from "bs58";
+import { getLevelFromXp } from "@/lib/ranks";
 
 // Utils for PDAs
 const PROGRAM_ID = new PublicKey("AVES32TXPwZ7kuVizTZsqzBr1UVYrcZyqQ6BxHaGchWU");
@@ -249,12 +250,13 @@ export class OnChainLearningService implements LearningProgressService {
                 const owner = new PublicKey(info.data.slice(32, 64));
                 const amount = topAccounts[index].amount;
 
+                const xpNum = Number(topAccounts[index].uiAmount ?? amount);
                 return {
                     rank: index + 1,
                     userId: owner.toBase58(),
                     walletAddress: owner.toBase58(),
-                    xp: Number(topAccounts[index].uiAmount ?? amount),
-                    level: 1,
+                    xp: xpNum,
+                    level: getLevelFromXp(xpNum),
                     currentStreak: 0
                 };
             }).filter(Boolean);
@@ -265,6 +267,14 @@ export class OnChainLearningService implements LearningProgressService {
 
     async getCredentials(userId: string): Promise<any[]> {
         try {
+            // Validate public key to avoid Helius DAS errors
+            try {
+                new PublicKey(userId);
+            } catch (e) {
+                console.warn(`[onchain-impl] getCredentials: Skipping on-chain fetch for invalid pubkey: ${userId}`);
+                return [];
+            }
+
             // Helius DAS API - getAssetsByOwner
             const heliusUrl = HELIUS_RPC;
             const response = await fetch(heliusUrl, {
@@ -302,7 +312,7 @@ export class OnChainLearningService implements LearningProgressService {
 
             // Filter for Academy Credentials using Collection Address or specific metadata
             // For now, we fitler by checking if it has Attributes we expect (Level, Track, XP)
-            const credentials = result.items
+            const filteredAssets = result.items
                 // @ts-ignore
                 .filter((asset: any) => {
                     // Check if it's a Metaplex Core asset? Or just check attributes
@@ -310,28 +320,41 @@ export class OnChainLearningService implements LearningProgressService {
                     // But for now, let's look for "Course Credential" in name or attributes
                     return asset.content?.metadata?.name?.includes("Credential") ||
                         asset.content?.metadata?.attributes?.some((a: any) => a.trait_type === "Track");
-                })
-                // @ts-ignore
-                .map((asset: any) => {
-                    const attrs = asset.content?.metadata?.attributes || [];
-                    const track = attrs.find((a: any) => a.trait_type === "Track")?.value || "General";
-                    const level = attrs.find((a: any) => a.trait_type === "Level")?.value || "1";
-                    const xp = attrs.find((a: any) => a.trait_type === "XP")?.value || "0";
-                    const courses = attrs.find((a: any) => a.trait_type === "Courses Completed")?.value || "1";
-
-                    return {
-                        id: asset.id,
-                        userId: userId,
-                        trackId: track.toLowerCase().replace(/\s/g, "-"),
-                        trackName: track,
-                        level: parseInt(level.toString()),
-                        coursesCompleted: parseInt(courses.toString()),
-                        totalXpEarned: parseInt(xp.toString()),
-                        earnedAt: new Date().toISOString(), // DAS doesn't easily give "earnedAt" timestamp without parsing history?? Use current info
-                        metadataUrl: asset.content?.json_uri,
-                        image: asset.content?.links?.image,
-                    };
                 });
+
+            // Fetch all user's Prisma credentials to get true earnedAt dates
+            const userDbCreds = await prisma.credential.findMany({
+                where: { OR: [{ userId: userId }, { user: { walletAddress: userId } }] },
+                select: { id: true, earnedAt: true, trackName: true, trackId: true }
+            });
+
+            const credentials = filteredAssets.map((asset: any) => {
+                const attrs = asset.content?.metadata?.attributes || [];
+                const track = attrs.find((a: any) => a.trait_type === "Track")?.value || "General";
+                const level = attrs.find((a: any) => a.trait_type === "Level")?.value;
+                const xp = attrs.find((a: any) => a.trait_type === "XP")?.value;
+                const courses = attrs.find((a: any) => a.trait_type === "Courses Completed")?.value;
+
+                // Match with DB record
+                const dbMatch = userDbCreds.find(c => c.id === asset.id);
+                const earnedAt = dbMatch ? dbMatch.earnedAt.toISOString() : new Date().toISOString();
+                const trackName = dbMatch?.trackName || track;
+                const trackId = dbMatch?.trackId || track.toLowerCase().replace(/\s/g, "-");
+
+                return {
+                    id: asset.id,
+                    userId: asset.ownership.owner,
+                    walletAddress: asset.ownership.owner,
+                    trackId,
+                    trackName,
+                    level: level ? parseInt(level) : 1,
+                    coursesCompleted: courses ? parseInt(courses) : 1,
+                    totalXpEarned: xp ? parseInt(xp) : 0,
+                    earnedAt,
+                    metadataUrl: asset.content?.json_uri,
+                    image: asset.content?.links?.image || asset.content?.files?.[0]?.uri,
+                };
+            });
 
             return credentials;
 
@@ -374,17 +397,35 @@ export class OnChainLearningService implements LearningProgressService {
             const xp = attrs.find((a: any) => a.trait_type === "XP")?.value || "0";
             const courses = attrs.find((a: any) => a.trait_type === "Courses Completed")?.value || "1";
 
+            // Try to find the matching record in Prisma to get the true earnedAt date and track name
+            let earnedAt = new Date().toISOString();
+            let trackName = track;
+            let trackId = track.toLowerCase().replace(/\s/g, "-");
+
+            const dbCred = await prisma.credential.findUnique({
+                where: { id: asset.id },
+                select: { earnedAt: true, trackName: true, trackId: true }
+            });
+
+            if (dbCred) {
+                earnedAt = dbCred.earnedAt.toISOString();
+                if (dbCred.trackName) trackName = dbCred.trackName;
+                if (dbCred.trackId) trackId = dbCred.trackId;
+            }
+
             return {
                 id: asset.id,
                 userId: asset.ownership.owner,
-                trackId: track.toLowerCase().replace(/\s/g, "-"),
-                trackName: track,
+                walletAddress: asset.ownership.owner,
+                trackId,
+                trackName,
                 level: parseInt(level.toString()),
                 coursesCompleted: parseInt(courses.toString()),
                 totalXpEarned: parseInt(xp.toString()),
-                earnedAt: new Date().toISOString(),
+                earnedAt,
                 metadataUrl: asset.content?.json_uri,
-                image: asset.content?.links?.image,
+                mintAddress: asset.id,
+                image: asset.content?.links?.image || asset.content?.files?.[0]?.uri,
             };
         } catch (e) {
             console.error("Failed to fetch credential", e);
@@ -673,7 +714,8 @@ export class OnChainLearningService implements LearningProgressService {
                 // We use the issue_credential instruction from the IDL:
                 // credential_name, metadata_uri, courses_completed, total_xp
                 const credentialName = `${trackName} Certificate`;
-                const metadataUri = `https://api.superteam.academy/metadata/credential/${asset.publicKey.toBase58()}`;
+                const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+                const metadataUri = `${appUrl}/api/metadata/credential/${asset.publicKey.toBase58()}`;
 
                 const collectionAddress = process.env.NEXT_PUBLIC_COLLECTION_ADDRESS;
                 if (!collectionAddress) {
@@ -731,18 +773,32 @@ export class OnChainLearningService implements LearningProgressService {
                 });
 
                 if (prismaUser) {
+                    // Calculate real coursesCompleted count and level for this track
+                    const existingCount = await prisma.credential.count({
+                        where: { userId: prismaUser.id, trackId }
+                    });
+                    const coursesCompleted = existingCount + 1;
+
+                    // Use standard level formula: Level 1 = 1 course, Level 2 = 2 courses, etc.
+                    // Or use XP based level from the track. 
+                    // The user liked the "Level 2" for 1540 XP, which aligns with 1 course + bonus.
+                    const level = coursesCompleted;
+
                     await prisma.credential.create({
                         data: {
                             id: asset.publicKey.toBase58(),
                             userId: prismaUser.id,
                             trackId,
                             trackName,
+                            level,
+                            coursesCompleted,
                             totalXpEarned: xpEarned,
                             mintAddress: asset.publicKey.toBase58(),
                             metadataUrl: metadataUri,
                         }
                     }).catch(e => console.error("Failed to sync credential to DB:", e));
-                } else {
+                }
+                else {
                     console.warn("[onchain-service] Could not find Prisma user to sync credential for wallet:", wallet);
                 }
                 return asset.publicKey.toBase58();

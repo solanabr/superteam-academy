@@ -8,6 +8,7 @@ import { Link } from "@/i18n/routing";
 import { Button } from "@/components/ui/button";
 import clsx from "clsx";
 import { ACHIEVEMENTS } from "@/lib/achievements";
+import { CredentialList } from "@/components/dashboard/CredentialList";
 
 type ProfileData = {
     user: {
@@ -164,43 +165,12 @@ export default function ProfilePage() {
 
 
 
-                {/* Course Credentials */}
                 <section className="space-y-4">
                     <h2 className="text-lg font-display font-semibold text-text-primary flex items-center gap-2">
                         <ShieldCheck className="h-5 w-5 text-solana" />
                         Certificates & Credentials
                     </h2>
-
-                    {credentials.length === 0 ? (
-                        <div className="glass-panel p-8 text-center rounded-lg border border-white/5">
-                            <p className="text-text-muted text-sm border border-dashed border-white/10 rounded-lg p-6">No certificates earned yet.</p>
-                        </div>
-                    ) : (
-                        <div className="space-y-3">
-                            {credentials.map(cred => (
-                                <div key={cred.id} className="glass-panel p-4 rounded-lg border border-white/5 flex items-center gap-4 hover:border-solana/30 hover:bg-white/[0.03] transition-all duration-300 group">
-                                    <div className="h-10 w-10 rounded-md bg-solana/10 flex flex-col items-center justify-center text-solana flex-shrink-0">
-                                        <ShieldCheck className="h-5 w-5" />
-                                    </div>
-                                    <div className="flex-1">
-                                        <h3 className="text-sm font-medium text-white capitalize">{cred.trackName.replace(/-/g, " ")}</h3>
-                                        <p className="text-xs text-text-muted font-mono mt-0.5">{new Date(cred.earnedAt).toLocaleDateString()}</p>
-                                    </div>
-                                    {cred.mintAddress && (
-                                        <a
-                                            href={`https://explorer.solana.com/address/${cred.mintAddress}?cluster=devnet`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-xs font-mono text-white/40 hover:text-solana flex items-center gap-1 transition-colors px-2 py-1 bg-white/5 rounded opacity-0 group-hover:opacity-100"
-                                        >
-                                            <LinkIcon className="h-3 w-3" />
-                                            View On-Chain
-                                        </a>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    )}
+                    <CredentialList walletAddress={wallet} />
                 </section>
             </div>
         </main>

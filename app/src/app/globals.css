@@ -18,8 +18,7 @@
 
     /* Fonts */
     --font-heading: 'Space Grotesk', sans-serif;
-    --font-body: 'Satoshi', 'Inter', sans-serif;
-    /* Fallback to Inter if Satoshi unavailable */
+    --font-body: 'Inter', sans-serif;
     --font-code: 'JetBrains Mono', monospace;
 
     /* Shadcn UI / Radix Colors (Mapped to Theme) */
@@ -52,7 +51,10 @@
   }
 
   body {
-    @apply antialiased min-h-screen relative;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    min-height: 100vh;
+    position: relative;
     background-color: var(--void);
     color: var(--text-primary);
   }
