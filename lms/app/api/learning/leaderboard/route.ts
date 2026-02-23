@@ -17,7 +17,7 @@ export async function GET() {
       if (profiles.length > 0) {
         const entries = await Promise.all(
           profiles.map(async ({ wallet, profile }) => {
-            const xp = await fetchXPBalance(wallet, config.currentMint);
+            const xp = await fetchXPBalance(wallet, config.xpMint);
             return {
               wallet: wallet.toBase58(),
               xp,

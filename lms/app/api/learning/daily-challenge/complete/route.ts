@@ -7,7 +7,7 @@ import { getConnection } from "@/lib/solana/connection";
 import { getBackendSigner } from "@/lib/solana/backend-signer";
 import { getBackendProgram } from "@/lib/solana/program";
 import { fetchConfig } from "@/lib/solana/readers";
-import { buildClaimAchievementTx, sendMemoTx } from "@/lib/solana/transactions";
+import { buildClaimAchievementTx } from "@/lib/solana/transactions";
 
 const DAILY_ACHIEVEMENT_OFFSET = 200;
 const DAILY_STREAK_MILESTONES = [7, 30, 100];
@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
         wallet,
         achievementIndex,
         xpReward,
-        config.currentMint,
+        config.xpMint,
       );
       tx.feePayer = backendKeypair.publicKey;
       tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
@@ -92,23 +92,7 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Fallback: memo tx
-  if (!txSignature) {
-    try {
-      const backendKeypair = getBackendSigner();
-      txSignature = await sendMemoTx(backendKeypair, {
-        event: "daily_challenge_complete",
-        wallet: userId,
-        date: brtDate,
-        xpReward: String(xpReward),
-        timestamp: new Date().toISOString(),
-      });
-    } catch {
-      // no SOL or signer not configured
-    }
-  }
-
-  // MongoDB: update user
+  // MongoDB sync (backup)
   const practiceId = `daily-${brtDate}`;
   user.completedDailyChallenges.push(brtDate);
   if (!user.completedPractice.includes(practiceId)) {
@@ -160,7 +144,7 @@ export async function POST(req: NextRequest) {
             wallet,
             milestoneIndex,
             milestoneXp,
-            config.currentMint,
+            config.xpMint,
           );
           tx.feePayer = backendKeypair.publicKey;
           tx.recentBlockhash = (

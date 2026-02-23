@@ -2,8 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { PublicKey } from "@solana/web3.js";
 import { connectDB } from "@/lib/db/mongodb";
 import { Enrollment } from "@/lib/db/models/enrollment";
-import { SAMPLE_COURSES } from "@/lib/data/sample-courses";
-import { fetchEnrollment, bitmapToLessonIndices } from "@/lib/solana/readers";
+import { getAllCourses, getCourseById } from "@/lib/db/course-helpers";
+import {
+  fetchEnrollment,
+  fetchCredentialForEnrollment,
+} from "@/lib/solana/readers";
 
 export async function GET(req: NextRequest) {
   const wallet = req.nextUrl.searchParams.get("wallet");
@@ -14,10 +17,17 @@ export async function GET(req: NextRequest) {
     const walletPk = new PublicKey(wallet);
     const trackMap = new Map<
       number,
-      { count: number; xp: number; first: string; last: string }
+      {
+        count: number;
+        xp: number;
+        first: string;
+        last: string;
+        credentialAsset: string | null;
+      }
     >();
 
-    for (const course of SAMPLE_COURSES) {
+    const allCourses = await getAllCourses();
+    for (const course of allCourses) {
       const enrollment = await fetchEnrollment(course.id, walletPk);
       if (!enrollment || !enrollment.completedAt) continue;
 
@@ -29,18 +39,32 @@ export async function GET(req: NextRequest) {
           : Number(completedAtRaw)) * 1000,
       ).toISOString();
 
+      // Check for credential NFT
+      let credentialAsset: string | null = null;
+      if (enrollment.credentialAsset) {
+        const pk =
+          enrollment.credentialAsset instanceof PublicKey
+            ? enrollment.credentialAsset
+            : new PublicKey(enrollment.credentialAsset);
+        if (!pk.equals(PublicKey.default)) {
+          credentialAsset = pk.toBase58();
+        }
+      }
+
       const existing = trackMap.get(course.trackId);
       if (existing) {
         existing.count++;
         existing.xp += course.xpTotal;
         if (completedAt < existing.first) existing.first = completedAt;
         if (completedAt > existing.last) existing.last = completedAt;
+        if (credentialAsset) existing.credentialAsset = credentialAsset;
       } else {
         trackMap.set(course.trackId, {
           count: 1,
           xp: course.xpTotal,
           first: completedAt,
           last: completedAt,
+          credentialAsset,
         });
       }
     }
@@ -56,7 +80,7 @@ export async function GET(req: NextRequest) {
           totalXpEarned: data.xp,
           firstEarned: data.first,
           lastUpdated: data.last,
-          metadataHash: "",
+          credentialAsset: data.credentialAsset,
         });
       }
       return NextResponse.json(credentials);
@@ -79,7 +103,7 @@ export async function GET(req: NextRequest) {
   >();
 
   for (const e of completed) {
-    const course = SAMPLE_COURSES.find((c) => c.id === e.courseId);
+    const course = await getCourseById(e.courseId);
     if (!course) continue;
     const completedAt = e.completedAt!.toISOString();
     const existing = trackMap.get(course.trackId);
@@ -108,7 +132,7 @@ export async function GET(req: NextRequest) {
       totalXpEarned: data.xp,
       firstEarned: data.first,
       lastUpdated: data.last,
-      metadataHash: "",
+      credentialAsset: null,
     });
   }
 

@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
     const config = await fetchConfig();
     if (config) {
       const wallet = new PublicKey(userId);
-      const balance = await fetchXPBalance(wallet, config.currentMint);
+      const balance = await fetchXPBalance(wallet, config.xpMint);
       if (balance > 0) return NextResponse.json(getLevel(balance));
     }
   } catch {

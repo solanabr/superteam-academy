@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db/mongodb";
 import { Enrollment } from "@/lib/db/models/enrollment";
-import { SAMPLE_COURSES } from "@/lib/data/sample-courses";
+import { getCourseById } from "@/lib/db/course-helpers";
 import { fetchSanityCourse } from "@/lib/services/sanity-courses";
 import {
   fetchConfigCached,
@@ -15,10 +15,7 @@ export async function GET(
   const { courseId } = await params;
 
   const sanityCourse = await fetchSanityCourse(courseId);
-  const course =
-    sanityCourse ??
-    SAMPLE_COURSES.find((c) => c.id === courseId || c.slug === courseId) ??
-    null;
+  const course = sanityCourse ?? (await getCourseById(courseId)) ?? null;
 
   if (!course) return NextResponse.json(null);
 

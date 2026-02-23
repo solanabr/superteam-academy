@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db/mongodb";
 import { Enrollment } from "@/lib/db/models/enrollment";
-import { SAMPLE_COURSES } from "@/lib/data/sample-courses";
+import { getAllCourses } from "@/lib/db/course-helpers";
 import { fetchSanityCourses } from "@/lib/services/sanity-courses";
 import {
   fetchConfigCached,
@@ -10,7 +10,8 @@ import {
 
 export async function GET() {
   const sanityCourses = await fetchSanityCourses();
-  const courses = sanityCourses.length > 0 ? sanityCourses : SAMPLE_COURSES;
+  const dbCourses = await getAllCourses();
+  const courses = sanityCourses.length > 0 ? sanityCourses : dbCourses;
 
   // Check config once (cached) — skip all on-chain fetches if program not deployed
   let useOnChain = false;

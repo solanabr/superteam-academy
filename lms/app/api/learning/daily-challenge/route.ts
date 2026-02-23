@@ -19,17 +19,30 @@ export async function GET(req: NextRequest) {
   let challenge = await DailyChallenge.findOne({ date: brtDate });
 
   if (!challenge) {
+    // Collect ALL past daily challenge titles (sorted by date desc)
     const pastChallenges = await DailyChallenge.find(
       { date: { $ne: brtDate } },
       { title: 1, _id: 0 },
-    ).lean();
-    const recentTitles = pastChallenges.map((c) => c.title);
+    )
+      .sort({ date: -1 })
+      .lean();
+    const pastDailyTitles = pastChallenges.map((c) => c.title);
 
-    const generated = await generateDailyChallenge(brtDate, recentTitles);
-    challenge = await DailyChallenge.create({
-      date: brtDate,
-      ...generated,
-    });
+    const generated = await generateDailyChallenge(brtDate, pastDailyTitles);
+
+    // Race condition guard: another request might have created today's challenge
+    try {
+      challenge = await DailyChallenge.create({
+        date: brtDate,
+        ...generated,
+      });
+    } catch (err: any) {
+      if (err?.code === 11000) {
+        challenge = await DailyChallenge.findOne({ date: brtDate });
+      } else {
+        throw err;
+      }
+    }
   }
 
   let completed = false;
