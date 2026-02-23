@@ -10,6 +10,13 @@ import { ensureUser } from "@/lib/db/helpers";
 import { getConnection } from "@/lib/solana/connection";
 import { getBackendSigner } from "@/lib/solana/backend-signer";
 import { MILESTONE_LEVELS, PRACTICE_MILESTONES } from "@/types/practice";
+import { fetchLearnerProfile, isBitSet } from "@/lib/solana/readers";
+import {
+  PRACTICE_CHALLENGES,
+  achievementIndexToPracticeId,
+} from "@/lib/data/practice-challenges";
+
+const PRACTICE_ACHIEVEMENT_OFFSET = 64;
 
 export async function POST(req: NextRequest) {
   const { userId, milestone } = await req.json();
@@ -23,11 +30,42 @@ export async function POST(req: NextRequest) {
 
   const user = await ensureUser(userId);
 
-  if (user.completedPractice.length < milestone) {
+  // Merge on-chain + MongoDB + daily challenges to get true solved count
+  const completedSet = new Set<string>(user.completedPractice);
+
+  // Add daily challenge completions
+  for (const date of user.completedDailyChallenges ?? []) {
+    completedSet.add(`daily-${date}`);
+  }
+
+  try {
+    const wallet = new PublicKey(userId);
+    const profile = await fetchLearnerProfile(wallet);
+    if (profile) {
+      for (let i = 0; i < PRACTICE_CHALLENGES.length; i++) {
+        const bitIndex = PRACTICE_ACHIEVEMENT_OFFSET + i;
+        if (isBitSet(profile.achievementFlags, bitIndex)) {
+          const id = achievementIndexToPracticeId(bitIndex);
+          if (id) completedSet.add(id);
+        }
+      }
+    }
+  } catch {
+    // continue with MongoDB count
+  }
+
+  const solvedCount = completedSet.size;
+  console.log("[claim-milestone]", {
+    userId,
+    milestone,
+    solvedCount,
+    mongoCount: user.completedPractice.length,
+    claimedMilestones: user.claimedMilestones,
+  });
+
+  if (solvedCount < milestone) {
     return NextResponse.json(
-      {
-        error: `need ${milestone} solved, have ${user.completedPractice.length}`,
-      },
+      { error: `need ${milestone} solved, have ${solvedCount}` },
       { status: 400 },
     );
   }
