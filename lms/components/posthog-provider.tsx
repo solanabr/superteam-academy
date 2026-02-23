@@ -27,12 +27,20 @@ function PostHogPageview() {
 
 export function CSPostHogProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
-    if (!POSTHOG_KEY || process.env.NODE_ENV !== "production") return;
+    if (!POSTHOG_KEY) {
+      console.warn("[posthog] No API key found");
+      return;
+    }
+    console.log("[posthog] Initializing with key:", POSTHOG_KEY.slice(0, 8) + "...", "host:", POSTHOG_HOST);
     posthog.init(POSTHOG_KEY, {
       api_host: POSTHOG_HOST,
       person_profiles: "identified_only",
       capture_pageview: false,
       capture_pageleave: true,
+      debug: true,
+      loaded: (ph) => {
+        console.log("[posthog] Loaded successfully, distinct_id:", ph.get_distinct_id());
+      },
     });
   }, []);
 
