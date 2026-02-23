@@ -2,26 +2,28 @@
 
 import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { useCourses } from "@/hooks/use-courses";
+import { useCourses, type CourseAccount } from "@/hooks/use-courses";
 import { CourseGrid } from "@/components/course/course-grid";
 import { CourseFilters } from "@/components/course/course-filters";
-import { CardSkeleton } from "@/components/ui/skeleton";
 
-export function CatalogSection() {
+export function CatalogSection({ initialCourses }: { initialCourses?: CourseAccount[] }) {
   const t = useTranslations("courses");
-  const { data: courses, isLoading } = useCourses();
+  const { data: courses } = useCourses(initialCourses);
   const [selectedTrack, setSelectedTrack] = useState<number | null>(null);
   const [selectedDifficulty, setSelectedDifficulty] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
+  const allCourses = useMemo(
+    () => courses ?? initialCourses ?? [],
+    [courses, initialCourses]
+  );
+
   const tracks = useMemo(() => {
-    if (!courses) return [];
-    return Array.from(new Set(courses.map((c) => c.trackId))).sort();
-  }, [courses]);
+    return Array.from(new Set(allCourses.map((c) => c.trackId))).sort();
+  }, [allCourses]);
 
   const filtered = useMemo(() => {
-    if (!courses) return [];
-    let result = courses;
+    let result = allCourses;
     if (selectedTrack !== null) {
       result = result.filter((c) => c.trackId === selectedTrack);
     }
@@ -33,7 +35,7 @@ export function CatalogSection() {
       result = result.filter((c) => c.courseId.toLowerCase().includes(q));
     }
     return result;
-  }, [courses, selectedTrack, selectedDifficulty, searchQuery]);
+  }, [allCourses, selectedTrack, selectedDifficulty, searchQuery]);
 
   return (
     <div id="catalog" className="mx-auto max-w-7xl px-4 py-8">
@@ -54,15 +56,7 @@ export function CatalogSection() {
         />
       </div>
 
-      {isLoading ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {[...Array(6)].map((_, i) => (
-            <CardSkeleton key={i} />
-          ))}
-        </div>
-      ) : (
-        <CourseGrid courses={filtered} />
-      )}
+      <CourseGrid courses={filtered} />
     </div>
   );
 }

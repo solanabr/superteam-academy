@@ -20,7 +20,7 @@ export interface CourseAccount {
   createdAt: number;
 }
 
-export function useCourses() {
+export function useCourses(initialData?: CourseAccount[]) {
   const program = useProgram();
 
   return useQuery({
@@ -52,5 +52,6 @@ export function useCourses() {
     },
     enabled: !!program,
     staleTime: 30_000,
+    initialData,
   });
 }
