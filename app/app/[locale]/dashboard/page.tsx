@@ -66,8 +66,7 @@ export default function DashboardPage() {
 		if (wallet.publicKey) {
 			recordActivity(StreakEventType.DAILY_LOGIN);
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [wallet.publicKey]);
+	}, [wallet.publicKey, recordActivity]);
 
 	const loadDashboard = useCallback(async () => {
 		if (!wallet.publicKey) {

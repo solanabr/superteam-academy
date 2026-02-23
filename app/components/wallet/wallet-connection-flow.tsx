@@ -214,7 +214,8 @@ export function WalletConnectionFlow({
 					<h4 className="text-sm font-medium">{t("supportedWallets")}</h4>
 					<div className="grid grid-cols-2 gap-2">
 						{SUPPORTED_WALLETS.map((wallet) => (
-							<div
+							<button
+								type="button"
 								key={wallet.name}
 								className="flex items-center gap-2 p-2 border rounded-lg hover:bg-muted cursor-pointer"
 								onClick={() => window.open(wallet.url, "_blank")}
@@ -230,7 +231,7 @@ export function WalletConnectionFlow({
 									</p>
 								</div>
 								<ExternalLink className="h-3 w-3 text-muted-foreground" />
-							</div>
+							</button>
 						))}
 					</div>
 				</div>

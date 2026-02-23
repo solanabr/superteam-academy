@@ -78,7 +78,7 @@ export function ChallengeEditor({
 			editorRef.current?.dispose();
 			editorRef.current = null;
 		};
-	}, [challenge.language]); // Only re-mount when language changes
+	}, [challenge.language, initialCode, onCodeChange]); // Only re-mount when language changes
 
 	// Sync external code resets (e.g. from the Reset button)
 	const syncCode = useCallback(

@@ -5,7 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { useStreak } from "@/hooks/use-streak";
 
 interface ProgressStatsProps {
-	walletAddress?: string;
+	walletAddress?: string | undefined;
 	stats: {
 		level: number;
 		xp: number;

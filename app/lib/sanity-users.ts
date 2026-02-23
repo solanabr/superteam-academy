@@ -32,7 +32,9 @@ function isSuperAdminIdentifier(emailOrWallet: string): boolean {
 	const ids = identifier.split(",").map((id) => id.trim());
 	// Exact match first (wallet addresses are case-sensitive Base58)
 	// then case-insensitive fallback (emails)
-	return ids.some((id) => id === emailOrWallet || id.toLowerCase() === emailOrWallet.toLowerCase());
+	return ids.some(
+		(id) => id === emailOrWallet || id.toLowerCase() === emailOrWallet.toLowerCase()
+	);
 }
 
 function determineRole(email: string, walletAddress?: string): UserRole {

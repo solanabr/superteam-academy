@@ -401,7 +401,7 @@ export class CodeQualityAnalyzer {
 		let score = 0;
 
 		// Maintainability index (higher is better)
-		score += (metrics.maintainabilityIndex! / 100) * weights.maintainabilityIndex;
+		score += ((metrics.maintainabilityIndex ?? 0) / 100) * weights.maintainabilityIndex;
 
 		// Cyclomatic complexity (lower is better)
 		const complexityScore = Math.max(0, 1 - (metrics.cyclomaticComplexity ?? 0) / 50);

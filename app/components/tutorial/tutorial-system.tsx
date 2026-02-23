@@ -113,6 +113,11 @@ export function TutorialSystem({
 					handleSkip();
 				}
 			}}
+			onKeyDown={(e) => {
+				if (e.key === "Escape") {
+					handleSkip();
+				}
+			}}
 		>
 			<div className="absolute inset-0 tutorial-overlay" />
 
@@ -242,9 +247,9 @@ export function TutorialTrigger({ tutorialId, steps, children, className }: Tuto
 
 	return (
 		<>
-			<div className={className} onClick={handleStartTutorial}>
+			<button type="button" className={className} onClick={handleStartTutorial}>
 				{children}
-			</div>
+			</button>
 
 			{showTutorial && (
 				<TutorialSystem

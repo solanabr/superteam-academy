@@ -300,13 +300,18 @@ async function FeaturedCoursesSection() {
 			courses = cmsCourses.slice(0, 3).map((c, i) => ({
 				title: c.title,
 				description: c.description ?? c.title,
-				level: c.level ?? FEATURED_COURSES[i % FEATURED_COURSES.length].level,
-				duration: c.duration ?? FEATURED_COURSES[i % FEATURED_COURSES.length].duration,
-				lessons: c.lessonCount ?? FEATURED_COURSES[i % FEATURED_COURSES.length].lessons,
-				students: FEATURED_COURSES[i % FEATURED_COURSES.length].students,
-				xp: c.xpReward ?? FEATURED_COURSES[i % FEATURED_COURSES.length].xp,
-				slug: c.slug,
-				gradient: FEATURED_COURSES[i % FEATURED_COURSES.length].gradient,
+				level: c.level,
+				duration: c.duration ?? "",
+				lessons: 0,
+				students: 0,
+				xp: c.xpReward,
+				slug: c.slug.current,
+				gradient:
+					i === 0
+						? "from-green to-forest"
+						: i === 1
+							? "from-forest to-dark"
+							: "from-gold via-amber-500 to-gold",
 			}));
 		}
 	} catch {

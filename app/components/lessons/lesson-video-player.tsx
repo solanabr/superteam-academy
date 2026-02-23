@@ -146,7 +146,9 @@ export function LessonVideoPlayer({
 				className="w-full aspect-video"
 				onClick={togglePlay}
 				poster={`/api/video-thumbnail?title=${encodeURIComponent(title)}`}
-			/>
+			>
+				<track kind="captions" />
+			</video>
 
 			<div
 				className={`absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent transition-opacity duration-300 ${

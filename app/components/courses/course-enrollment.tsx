@@ -51,7 +51,9 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 				courseId: course.id,
 				learner: wallet.publicKey,
 				programId: getProgramId(),
-				prerequisiteCourseId: course.prerequisiteCourseId,
+				...(course.prerequisiteCourseId
+					? { prerequisiteCourseId: course.prerequisiteCourseId }
+					: {}),
 			});
 
 			const tx = new Transaction().add(ix);

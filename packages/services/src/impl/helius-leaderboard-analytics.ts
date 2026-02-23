@@ -94,9 +94,10 @@ export class HeliusLeaderboardAnalyticsService implements LeaderboardAnalyticsSe
 					};
 				}
 
-				const scores = entries.data?.entries.map((entry: LeaderboardEntry) =>
-					this.getScoreFromEntry(entry, category)
-				);
+				const scores =
+					entries.data?.entries.map((entry: LeaderboardEntry) =>
+						this.getScoreFromEntry(entry, category)
+					) ?? [];
 
 				const distribution = this.calculateScoreDistribution(scores, buckets);
 				return {
@@ -105,9 +106,16 @@ export class HeliusLeaderboardAnalyticsService implements LeaderboardAnalyticsSe
 				};
 			}
 
+			if (!analytics.data?.scoreDistribution) {
+				return {
+					success: false,
+					error: "No score distribution available",
+				};
+			}
+
 			return {
 				success: true,
-				data: analytics.data?.scoreDistribution,
+				data: analytics.data.scoreDistribution,
 			};
 		} catch (error) {
 			const msg = error instanceof Error ? error.message : "Unknown error";
@@ -147,7 +155,7 @@ export class HeliusLeaderboardAnalyticsService implements LeaderboardAnalyticsSe
 
 				// Simulate trend data (in real implementation, this would come from historical data)
 				const participation = Math.floor(
-					currentAnalytics.data?.totalEntries * (0.8 + Math.random() * 0.4)
+					(currentAnalytics.data?.totalEntries ?? 0) * (0.8 + Math.random() * 0.4)
 				);
 
 				trends.push({
@@ -251,7 +259,7 @@ export class HeliusLeaderboardAnalyticsService implements LeaderboardAnalyticsSe
 			if (query.includeInsights) {
 				const insights = await this.getLeaderboardInsights(query.category, query.timeframe);
 				if (insights.success) {
-					results.insights = insights.data?.insights;
+					results.insights = insights.data?.insights ?? [];
 				}
 			}
 

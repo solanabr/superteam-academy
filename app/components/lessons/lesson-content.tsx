@@ -81,7 +81,9 @@ export function LessonContent({ content }: LessonContentProps) {
 							src={section.content}
 							controls={true}
 							className="w-full h-full rounded-lg"
-						/>
+						>
+							<track kind="captions" />
+						</video>
 					</div>
 				);
 			case "quiz":

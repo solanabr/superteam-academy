@@ -71,7 +71,7 @@ export async function fetchIndexedLearnerActivity(
 	const activity = transactions
 		.filter(({ transaction }) => transaction !== null)
 		.map(({ entry, transaction }) => {
-			const parsed = transaction!;
+			const parsed = transaction as NonNullable<typeof transaction>;
 			const hasProgramInstruction = parsed.transaction.message.instructions.some(
 				(instruction) =>
 					"programId" in instruction ? instruction.programId.equals(programId) : false

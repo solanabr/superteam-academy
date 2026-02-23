@@ -54,7 +54,7 @@ export function useApiManagement(_userId: string) {
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 
-	const toDate = (value?: string) => (value ? new Date(value) : undefined);
+	const toDate = useCallback((value?: string) => (value ? new Date(value) : undefined), []);
 
 	const loadApiData = useCallback(async () => {
 		try {

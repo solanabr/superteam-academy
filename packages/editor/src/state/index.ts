@@ -64,6 +64,7 @@ export class EditorStateManager {
 		this.states.set(id, newState);
 
 		// Limit the number of stored states
+		// biome-ignore lint/style/noNonNullAssertion: defaults set in constructor
 		if (this.states.size > this.options.maxStates!) {
 			this.cleanupOldStates();
 		}
@@ -116,6 +117,7 @@ export class EditorStateManager {
 
 	private loadFromStorage(): void {
 		try {
+			// biome-ignore lint/style/noNonNullAssertion: defaults set in constructor
 			const stored = localStorage.getItem(this.options.storageKey!);
 			if (stored) {
 				const parsed = JSON.parse(stored);
@@ -137,6 +139,7 @@ export class EditorStateManager {
 			for (const [id, state] of this.states) {
 				data[id] = state;
 			}
+			// biome-ignore lint/style/noNonNullAssertion: defaults set in constructor
 			localStorage.setItem(this.options.storageKey!, JSON.stringify(data));
 		} catch (error) {
 			console.error("Failed to save editor states to storage:", error);
@@ -148,6 +151,7 @@ export class EditorStateManager {
 			([, a], [, b]) => a.lastModified.getTime() - b.lastModified.getTime()
 		);
 
+		// biome-ignore lint/style/noNonNullAssertion: defaults set in constructor
 		const toRemove = sortedStates.slice(0, sortedStates.length - this.options.maxStates! + 1);
 		for (const [id] of toRemove) {
 			this.states.delete(id);

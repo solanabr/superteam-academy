@@ -350,13 +350,13 @@ describe("Accessibility Tests", () => {
 		it("groups related form controls", async () => {
 			const { container } = render(
 				<form>
-					<div role="group" aria-labelledby="contact-info">
+					<fieldset aria-labelledby="contact-info">
 						<h3 id="contact-info">Contact Information</h3>
 						<label htmlFor="phone">Phone</label>
 						<Input id="phone" />
 						<label htmlFor="address">Address</label>
 						<Input id="address" />
-					</div>
+					</fieldset>
 				</form>
 			);
 			await expectToBeAccessible(container);

@@ -452,7 +452,7 @@ export function ChallengeSubmissionFlow({
 							</div>
 
 							<Button
-								onClick={() => onSuccess?.(challenge.id, result!)}
+								onClick={() => result && onSuccess?.(challenge.id, result)}
 								className="w-full"
 							>
 								<Trophy className="h-4 w-4 mr-2" />

@@ -179,6 +179,7 @@ export class EditorPerformanceManager {
 		this.isUpdating = true;
 
 		while (this.updateQueue.length > 0) {
+			// biome-ignore lint/style/noNonNullAssertion: length check guarantees element exists
 			const updateFn = this.updateQueue.shift()!;
 			await updateFn();
 

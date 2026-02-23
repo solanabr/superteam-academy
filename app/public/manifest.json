@@ -7,10 +7,7 @@
 	"background_color": "#faf6ee",
 	"theme_color": "#008c4c",
 	"orientation": "portrait-primary",
-	"categories": [
-		"education",
-		"developer tools"
-	],
+	"categories": ["education", "developer tools"],
 	"icons": [
 		{
 			"src": "/icons/icon-192.png",

@@ -404,7 +404,7 @@ export const DEFAULT_LEVELS: Level[] = [
 	{
 		level: 10,
 		name: "Transcendent",
-		xpRequired: 10000, // 10² × 100
+		xpRequired: 10_000, // 10² × 100
 		rewards: [
 			{
 				type: RewardType.XP_BONUS,

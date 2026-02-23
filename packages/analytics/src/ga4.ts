@@ -529,6 +529,10 @@ export interface FunnelResult {
 
 // Audience Segmentation
 export class AudienceSegmentation {
+	// biome-ignore lint/complexity/noUselessConstructor: accepts ga4Service for API compatibility
+	// biome-ignore lint/suspicious/noEmptyBlockStatements: intentionally empty
+	constructor(_ga4Service: GA4AnalyticsService) {}
+
 	// Create audience segment
 	async createSegment(
 		_segmentId: string,
@@ -576,6 +580,10 @@ export interface SegmentAnalysis {
 
 // Custom Reports and Dashboards
 export class CustomReports {
+	// biome-ignore lint/complexity/noUselessConstructor: accepts ga4Service for API compatibility
+	// biome-ignore lint/suspicious/noEmptyBlockStatements: intentionally empty
+	constructor(_ga4Service: GA4AnalyticsService) {}
+
 	// Create custom report
 	async createReport(
 		_reportId: string,
@@ -700,6 +708,10 @@ export class PrivacyControls {
 
 // Data Retention Management
 export class DataRetentionManager {
+	// biome-ignore lint/complexity/noUselessConstructor: accepts ga4Service for API compatibility
+	// biome-ignore lint/suspicious/noEmptyBlockStatements: intentionally empty
+	constructor(_ga4Service: GA4AnalyticsService) {}
+
 	// Set data retention policy
 	async setRetentionPolicy(_propertyId: string, _retentionDays: number): Promise<void> {
 		// ignored

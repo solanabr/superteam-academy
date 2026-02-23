@@ -13,23 +13,15 @@ import {
 	type ScoreDistribution,
 } from "../interfaces/leaderboard";
 import type { ServiceResponse, PaginatedResponse } from "../types";
-import {
-	HeliusDASClient,
-	CredentialParser,
-	LeaderboardAggregator,
-} from "../leaderboard/helius-das-integration";
+import { LeaderboardAggregator } from "../leaderboard/helius-das-integration";
 
 // Enhanced Leaderboard Service with Helius DAS Integration
 export class HeliusLeaderboardService implements LeaderboardService {
-	private dasClient: HeliusDASClient;
-	private credentialParser: CredentialParser;
 	private aggregator: LeaderboardAggregator;
 	private cache: Map<string, CachedResult> = new Map();
 
-	constructor(heliusApiKey: string, collectionAddresses: Record<string, string> = {}) {
-		this.dasClient = new HeliusDASClient(heliusApiKey);
-		this.credentialParser = new CredentialParser(collectionAddresses);
-		this.aggregator = new LeaderboardAggregator(this.dasClient, this.credentialParser);
+	constructor(_heliusApiKey: string, _collectionAddresses: Record<string, string> = {}) {
+		this.aggregator = new LeaderboardAggregator();
 	}
 
 	// Legacy methods for backward compatibility
@@ -53,8 +45,8 @@ export class HeliusLeaderboardService implements LeaderboardService {
 
 			return {
 				success: true,
-				data: result.data?.entries,
-				total: result.data?.totalCount,
+				data: result.data?.entries ?? [],
+				total: result.data?.totalCount ?? 0,
 				page: pagination?.page || 1,
 				limit: pagination?.limit || 50,
 			};
@@ -96,7 +88,7 @@ export class HeliusLeaderboardService implements LeaderboardService {
 			});
 
 			const entry =
-				leaderboardQuery.success && leaderboardQuery.data?.entries.length > 0
+				leaderboardQuery.success && (leaderboardQuery.data?.entries.length ?? 0) > 0
 					? leaderboardQuery.data?.entries[0]
 					: null;
 
@@ -110,7 +102,7 @@ export class HeliusLeaderboardService implements LeaderboardService {
 			return {
 				success: true,
 				data: {
-					rank: rankResult.data?.rank,
+					rank: rankResult.data?.rank ?? 0,
 					entry,
 				},
 			};
@@ -156,7 +148,7 @@ export class HeliusLeaderboardService implements LeaderboardService {
 
 			return {
 				success: result.success,
-				data: result.success ? result.data?.entries : [],
+				data: result.success ? (result.data?.entries ?? []) : [],
 				...(!result.success && result.error !== undefined ? { error: result.error } : {}),
 			};
 		} catch (error) {
@@ -198,8 +190,8 @@ export class HeliusLeaderboardService implements LeaderboardService {
 
 			return {
 				success: true,
-				data: result.data?.entries,
-				total: result.data?.totalCount,
+				data: result.data?.entries ?? [],
+				total: result.data?.totalCount ?? 0,
 				page: pagination?.page || 1,
 				limit: pagination?.limit || 50,
 			};

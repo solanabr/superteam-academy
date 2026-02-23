@@ -405,7 +405,7 @@ export class HybridIndexerService {
 			() => {
 				this.checkDataConsistency()
 					.then((result) => {
-						if (result.success && result.data?.conflicts.length > 0) {
+						if (result.success && (result.data?.conflicts.length ?? 0) > 0) {
 							console.warn(
 								`Data consistency issues found: ${result.data?.conflicts.length} conflicts`
 							);

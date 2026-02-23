@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { PublicKey, Connection } from "@solana/web3.js";
+import { PublicKey, type Connection } from "@solana/web3.js";
 
 // Mock @superteam/anchor
 vi.mock("@superteam/anchor", () => {
@@ -36,7 +36,9 @@ function createMockConnection() {
 }
 
 describe("AchievementService", () => {
-	let service: Awaited<typeof import("@/services/AchievementService")>["AchievementService"];
+	let service: InstanceType<
+		Awaited<typeof import("@/services/AchievementService")>["AchievementService"]
+	>;
 	let mockClient: ReturnType<typeof getMockClient>;
 
 	function getMockClient() {
@@ -64,7 +66,7 @@ describe("AchievementService", () => {
 					maxSupply: 0,
 					currentSupply: 5,
 					isActive: true,
-					createdAt: 1700000000,
+					createdAt: 1_700_000_000,
 				},
 			},
 		];
@@ -77,7 +79,7 @@ describe("AchievementService", () => {
 	});
 
 	it("hasAchievement returns true when receipt exists", async () => {
-		mockClient.fetchAchievementReceipt.mockResolvedValue({ awardedAt: 1700000000 });
+		mockClient.fetchAchievementReceipt.mockResolvedValue({ awardedAt: 1_700_000_000 });
 		const result = await service.hasAchievement("first-course", MOCK_LEARNER);
 		expect(result).toBe(true);
 	});
@@ -101,25 +103,27 @@ describe("AchievementService", () => {
 					maxSupply: 0,
 					currentSupply: 0,
 					isActive: true,
-					createdAt: 1700000000,
+					createdAt: 1_700_000_000,
 				},
 			},
 		];
 		mockClient.fetchAllAchievementTypes.mockResolvedValue(mockTypes);
 		mockClient.fetchAchievementReceipt.mockResolvedValue({
-			awardedAt: 1700001000,
+			awardedAt: 1_700_001_000,
 			asset: PublicKey.default,
 		});
 
 		const result = await service.getLearnerAchievements(MOCK_LEARNER);
 		expect(result).toHaveLength(1);
 		expect(result[0].earned).toBe(true);
-		expect(result[0].awardedAt).toBe(1700001000);
+		expect(result[0].awardedAt).toBe(1_700_001_000);
 	});
 });
 
 describe("LeaderboardService", () => {
-	let service: Awaited<typeof import("@/services/LeaderboardService")>["LeaderboardService"];
+	let service: InstanceType<
+		Awaited<typeof import("@/services/LeaderboardService")>["LeaderboardService"]
+	>;
 
 	beforeEach(async () => {
 		vi.clearAllMocks();
@@ -150,7 +154,9 @@ describe("LeaderboardService", () => {
 });
 
 describe("CredentialService", () => {
-	let service: Awaited<typeof import("@/services/CredentialService")>["CredentialService"];
+	let service: InstanceType<
+		Awaited<typeof import("@/services/CredentialService")>["CredentialService"]
+	>;
 
 	beforeEach(async () => {
 		vi.clearAllMocks();
