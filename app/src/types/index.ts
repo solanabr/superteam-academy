@@ -76,6 +76,7 @@ export interface LeaderboardEntry {
   level: number;
   weeklyGain: number;
   badges: string[];
+  isCurrentUser?: boolean;
 }
 
 export interface Achievement {

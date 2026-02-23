@@ -36,17 +36,28 @@ export default function DashboardPage() {
     [enrollments],
   );
 
-  const activityFeed = useMemo(
-    () => [
-      "Completed lesson: Decode Account Data",
-      "Earned achievement: Anchor Sprint",
-      "Reached a 6-day learning streak",
-      "Submitted challenge: Transfer Hook Validator",
-      "Enrolled in Security Auditing",
-      "Minted credential: Solana Fundamentals",
-    ],
-    [],
-  );
+  const activityFeed = useMemo(() => {
+    const activities: string[] = [];
+    for (const courseId of enrollments) {
+      const course = mockCourses.find((c) => c.id === courseId);
+      if (course) {
+        activities.push(`Enrolled in ${course.title}`);
+      }
+      const lessons = completedLessons[courseId] ?? [];
+      for (const lessonId of lessons.slice(-3)) {
+        const lesson = course?.modules
+          .flatMap((m) => m.lessons)
+          .find((l) => l.id === lessonId);
+        if (lesson) {
+          activities.push(`Completed lesson: ${lesson.title}`);
+        }
+      }
+    }
+    if (activities.length === 0) {
+      activities.push("No activity yet — enroll in a course to get started!");
+    }
+    return activities.slice(0, 8);
+  }, [enrollments, completedLessons]);
 
   const weeklyXp = useMemo(
     () => [60, 95, 40, 85, 120, 75, 110],

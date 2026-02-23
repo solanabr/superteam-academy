@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { leaderboardService } from "@/lib/services/leaderboard-service";
+import { useUserStore } from "@/lib/store/user-store";
 import type { LeaderboardEntry, LeaderboardTimeframe } from "@/types";
 import { motion } from "framer-motion";
 import { Crown, TrendingUp } from "lucide-react";
@@ -21,10 +22,18 @@ export default function LeaderboardPage() {
   const t = useTranslations("Leaderboard");
   const [timeframe, setTimeframe] = useState<LeaderboardTimeframe>("weekly");
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
+  const profile = useUserStore((state) => state.profile);
 
   useEffect(() => {
-    leaderboardService.getEntries(timeframe).then(setEntries);
-  }, [timeframe]);
+    leaderboardService
+      .getEntriesWithUser(timeframe, {
+        userId: profile.id,
+        username: profile.displayName,
+        avatar: profile.avatar,
+        xp: profile.xp,
+      })
+      .then(setEntries);
+  }, [timeframe, profile]);
 
   const topThree = entries.slice(0, 3);
   const remaining = entries.slice(3);
@@ -83,7 +92,11 @@ export default function LeaderboardPage() {
           return (
             <motion.article
               key={entry.userId}
-              className="rounded-xl border border-border bg-card px-4 py-3"
+              className={`rounded-xl border px-4 py-3 ${
+                entry.isCurrentUser
+                  ? "border-st-yellow/50 bg-st-yellow/5 ring-1 ring-st-yellow/30"
+                  : "border-border bg-card"
+              }`}
               initial={{ opacity: 0, x: 10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.25, delay: index * 0.04 }}
