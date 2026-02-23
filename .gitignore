@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Rust / Anchor build artifacts
+target/
+.anchor/
+
+# Solana test validator
+test-ledger/
+
+# Secrets - NEVER commit
+backend-signer.json
+*.keypair
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# OS junk
+.DS_Store
+Thumbs.db
+C:\\*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Lighthouse reports
+lighthouse-desktop.json
+lighthouse-results.json
+
+# Claude worktrees
+.claude/worktrees/
+
+# Misc
+*.log

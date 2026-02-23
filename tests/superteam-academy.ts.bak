@@ -1,0 +1,1186 @@
+import * as anchor from "@coral-xyz/anchor";
+import { Program } from "@coral-xyz/anchor";
+import { SuperteamAcademy } from "../target/types/superteam_academy";
+import { assert } from "chai";
+import {
+  Keypair,
+  PublicKey,
+  SystemProgram,
+  LAMPORTS_PER_SOL,
+  Transaction,
+  sendAndConfirmTransaction,
+} from "@solana/web3.js";
+
+const TOKEN_2022_PROGRAM_ID = new PublicKey(
+  "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+);
+
+const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey(
+  "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+);
+
+function getAssociatedTokenAddress(
+  mint: PublicKey,
+  owner: PublicKey,
+  tokenProgramId: PublicKey = TOKEN_2022_PROGRAM_ID
+): PublicKey {
+  const [ata] = PublicKey.findProgramAddressSync(
+    [owner.toBuffer(), tokenProgramId.toBuffer(), mint.toBuffer()],
+    ASSOCIATED_TOKEN_PROGRAM_ID
+  );
+  return ata;
+}
+
+function createAssociatedTokenAccountInstruction(
+  payer: PublicKey,
+  ata: PublicKey,
+  owner: PublicKey,
+  mint: PublicKey,
+  tokenProgramId: PublicKey = TOKEN_2022_PROGRAM_ID
+): anchor.web3.TransactionInstruction {
+  return new anchor.web3.TransactionInstruction({
+    programId: ASSOCIATED_TOKEN_PROGRAM_ID,
+    keys: [
+      { pubkey: payer, isSigner: true, isWritable: true },
+      { pubkey: ata, isSigner: false, isWritable: true },
+      { pubkey: owner, isSigner: false, isWritable: false },
+      { pubkey: mint, isSigner: false, isWritable: false },
+      { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+      { pubkey: tokenProgramId, isSigner: false, isWritable: false },
+    ],
+    data: Buffer.alloc(0),
+  });
+}
+
+describe("superteam-academy", () => {
+  const provider = anchor.AnchorProvider.env();
+  anchor.setProvider(provider);
+
+  const program = anchor.workspace
+    .SuperteamAcademy as Program<SuperteamAcademy>;
+
+  // Keypairs
+  const authority = provider.wallet as anchor.Wallet;
+  const backendSigner = Keypair.generate();
+  const learnerKeypair = Keypair.generate();
+  const creatorKeypair = Keypair.generate();
+  const referrerKeypair = Keypair.generate();
+  const mintKeypair = Keypair.generate();
+
+  // PDAs
+  let configPda: PublicKey;
+  let learnerPda: PublicKey;
+  let referrerPda: PublicKey;
+  let coursePda: PublicKey;
+  let enrollmentPda: PublicKey;
+
+  // Token accounts
+  let learnerAta: PublicKey;
+  let creatorAta: PublicKey;
+
+  const courseId = "anchor-beginner";
+
+  // Track the active season mint
+  let activeMintPubkey: PublicKey;
+
+  before(async () => {
+    [configPda] = PublicKey.findProgramAddressSync(
+      [Buffer.from("config")],
+      program.programId
+    );
+
+    [learnerPda] = PublicKey.findProgramAddressSync(
+      [Buffer.from("learner"), learnerKeypair.publicKey.toBuffer()],
+      program.programId
+    );
+
+    [referrerPda] = PublicKey.findProgramAddressSync(
+      [Buffer.from("learner"), referrerKeypair.publicKey.toBuffer()],
+      program.programId
+    );
+
+    [coursePda] = PublicKey.findProgramAddressSync(
+      [Buffer.from("course"), Buffer.from(courseId)],
+      program.programId
+    );
+
+    [enrollmentPda] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from("enrollment"),
+        Buffer.from(courseId),
+        learnerKeypair.publicKey.toBuffer(),
+      ],
+      program.programId
+    );
+
+    // Airdrop SOL to test accounts
+    const airdropPromises = [
+      learnerKeypair.publicKey,
+      creatorKeypair.publicKey,
+      referrerKeypair.publicKey,
+      backendSigner.publicKey,
+    ].map(async (pubkey) => {
+      const sig = await provider.connection.requestAirdrop(
+        pubkey,
+        5 * LAMPORTS_PER_SOL
+      );
+      await provider.connection.confirmTransaction(sig);
+    });
+    await Promise.all(airdropPromises);
+  });
+
+  // ═══════════════════════════════════════════════════
+  // Phase 1: Platform Management
+  // ═══════════════════════════════════════════════════
+
+  describe("Phase 1: Config + Seasons", () => {
+    it("initializes config", async () => {
+      await program.methods
+        .initialize(2000, 500)
+        .accounts({
+          authority: authority.publicKey,
+          config: configPda,
+          backendSigner: backendSigner.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+
+      const config = await program.account.config.fetch(configPda);
+      assert.equal(
+        config.authority.toBase58(),
+        authority.publicKey.toBase58()
+      );
+      assert.equal(
+        config.backendSigner.toBase58(),
+        backendSigner.publicKey.toBase58()
+      );
+      assert.equal(config.currentSeason, 0);
+      assert.equal(config.seasonClosed, true);
+      assert.equal(config.maxDailyXp, 2000);
+      assert.equal(config.maxAchievementXp, 500);
+    });
+
+    it("fails to create season with wrong authority", async () => {
+      const fakeMint = Keypair.generate();
+      try {
+        await program.methods
+          .createSeason(1)
+          .accounts({
+            authority: learnerKeypair.publicKey,
+            config: configPda,
+            mint: fakeMint.publicKey,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+            systemProgram: SystemProgram.programId,
+          })
+          .signers([learnerKeypair, fakeMint])
+          .rpc();
+        assert.fail("Should have failed");
+      } catch (e: any) {
+        assert.include(e.toString(), "Unauthorized");
+      }
+    });
+
+    it("creates season 1", async () => {
+      await program.methods
+        .createSeason(1)
+        .accounts({
+          authority: authority.publicKey,
+          config: configPda,
+          mint: mintKeypair.publicKey,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([mintKeypair])
+        .rpc();
+
+      const config = await program.account.config.fetch(configPda);
+      assert.equal(config.currentSeason, 1);
+      assert.equal(config.seasonClosed, false);
+      assert.equal(
+        config.currentMint.toBase58(),
+        mintKeypair.publicKey.toBase58()
+      );
+
+      activeMintPubkey = mintKeypair.publicKey;
+    });
+
+    it("fails to create season with wrong number", async () => {
+      const wrongMint = Keypair.generate();
+      try {
+        await program.methods
+          .createSeason(5)
+          .accounts({
+            authority: authority.publicKey,
+            config: configPda,
+            mint: wrongMint.publicKey,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+            systemProgram: SystemProgram.programId,
+          })
+          .signers([wrongMint])
+          .rpc();
+        assert.fail("Should have failed");
+      } catch (e: any) {
+        assert.include(e.toString(), "InvalidSeason");
+      }
+    });
+
+    it("closes season", async () => {
+      await program.methods
+        .closeSeason()
+        .accounts({
+          authority: authority.publicKey,
+          config: configPda,
+        })
+        .rpc();
+
+      const config = await program.account.config.fetch(configPda);
+      assert.equal(config.seasonClosed, true);
+    });
+
+    it("fails to close already closed season", async () => {
+      try {
+        await program.methods
+          .closeSeason()
+          .accounts({
+            authority: authority.publicKey,
+            config: configPda,
+          })
+          .rpc();
+        assert.fail("Should have failed");
+      } catch (e: any) {
+        assert.include(e.toString(), "SeasonClosed");
+      }
+    });
+
+    it("creates season 2 after closing season 1", async () => {
+      const mint2 = Keypair.generate();
+      await program.methods
+        .createSeason(2)
+        .accounts({
+          authority: authority.publicKey,
+          config: configPda,
+          mint: mint2.publicKey,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([mint2])
+        .rpc();
+
+      const config = await program.account.config.fetch(configPda);
+      assert.equal(config.currentSeason, 2);
+      assert.equal(config.seasonClosed, false);
+
+      activeMintPubkey = mint2.publicKey;
+
+      // Create ATAs for learner and creator
+      learnerAta = getAssociatedTokenAddress(
+        activeMintPubkey,
+        learnerKeypair.publicKey
+      );
+      creatorAta = getAssociatedTokenAddress(
+        activeMintPubkey,
+        creatorKeypair.publicKey
+      );
+
+      const tx = new Transaction();
+      tx.add(
+        createAssociatedTokenAccountInstruction(
+          authority.publicKey,
+          learnerAta,
+          learnerKeypair.publicKey,
+          activeMintPubkey
+        )
+      );
+      tx.add(
+        createAssociatedTokenAccountInstruction(
+          authority.publicKey,
+          creatorAta,
+          creatorKeypair.publicKey,
+          activeMintPubkey
+        )
+      );
+      await provider.sendAndConfirm(tx);
+    });
+
+    it("updates config", async () => {
+      const newBackend = Keypair.generate();
+      await program.methods
+        .updateConfig({
+          newBackendSigner: newBackend.publicKey,
+          newMaxDailyXp: 3000,
+          newMaxAchievementXp: null,
+        })
+        .accounts({
+          authority: authority.publicKey,
+          config: configPda,
+        })
+        .rpc();
+
+      const config = await program.account.config.fetch(configPda);
+      assert.equal(
+        config.backendSigner.toBase58(),
+        newBackend.publicKey.toBase58()
+      );
+      assert.equal(config.maxDailyXp, 3000);
+      assert.equal(config.maxAchievementXp, 500);
+
+      // Reset backend signer for subsequent tests
+      await program.methods
+        .updateConfig({
+          newBackendSigner: backendSigner.publicKey,
+          newMaxDailyXp: 2000,
+          newMaxAchievementXp: null,
+        })
+        .accounts({
+          authority: authority.publicKey,
+          config: configPda,
+        })
+        .rpc();
+    });
+  });
+
+  // ═══════════════════════════════════════════════════
+  // Phase 2: Learner Profile
+  // ═══════════════════════════════════════════════════
+
+  describe("Phase 2: Learner Profile", () => {
+    it("initializes learner profile", async () => {
+      await program.methods
+        .initLearner()
+        .accounts({
+          user: learnerKeypair.publicKey,
+          learner: learnerPda,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([learnerKeypair])
+        .rpc();
+
+      const learner = await program.account.learnerProfile.fetch(learnerPda);
+      assert.equal(
+        learner.authority.toBase58(),
+        learnerKeypair.publicKey.toBase58()
+      );
+      assert.equal(learner.currentStreak, 0);
+      assert.equal(learner.longestStreak, 0);
+      assert.equal(learner.streakFreezes, 0);
+      assert.equal(learner.xpEarnedToday, 0);
+      assert.equal(learner.referralCount, 0);
+      assert.equal(learner.hasReferrer, false);
+    });
+
+    it("initializes referrer profile", async () => {
+      await program.methods
+        .initLearner()
+        .accounts({
+          user: referrerKeypair.publicKey,
+          learner: referrerPda,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([referrerKeypair])
+        .rpc();
+
+      const referrer = await program.account.learnerProfile.fetch(referrerPda);
+      assert.equal(
+        referrer.authority.toBase58(),
+        referrerKeypair.publicKey.toBase58()
+      );
+    });
+
+    it("fails to re-initialize learner profile", async () => {
+      try {
+        await program.methods
+          .initLearner()
+          .accounts({
+            user: learnerKeypair.publicKey,
+            learner: learnerPda,
+            systemProgram: SystemProgram.programId,
+          })
+          .signers([learnerKeypair])
+          .rpc();
+        assert.fail("Should have failed");
+      } catch (e: any) {
+        // PDA already initialized
+        assert.ok(e.toString().length > 0);
+      }
+    });
+  });
+
+  // ═══════════════════════════════════════════════════
+  // Phase 3: Course Registry
+  // ═══════════════════════════════════════════════════
+
+  describe("Phase 3: Course Registry", () => {
+    it("creates a course", async () => {
+      const contentTxId = Buffer.alloc(32);
+      contentTxId.fill(0xab);
+
+      await program.methods
+        .createCourse({
+          courseId: courseId,
+          creator: creatorKeypair.publicKey,
+          contentTxId: Array.from(contentTxId),
+          contentType: 0,
+          lessonCount: 5,
+          challengeCount: 2,
+          difficulty: 1,
+          xpPerLesson: 100,
+          completionBonusXp: 200,
+          trackId: 1,
+          trackLevel: 1,
+          prerequisite: null,
+          creatorRewardXp: 50,
+          minCompletionsForReward: 0,
+        })
+        .accounts({
+          authority: authority.publicKey,
+          config: configPda,
+          course: coursePda,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+
+      const course = await program.account.course.fetch(coursePda);
+      assert.equal(course.courseId, courseId);
+      assert.equal(
+        course.creator.toBase58(),
+        creatorKeypair.publicKey.toBase58()
+      );
+      assert.equal(course.lessonCount, 5);
+      assert.equal(course.xpPerLesson, 100);
+      assert.equal(course.completionBonusXp, 200);
+      assert.equal(course.xpTotal, 700); // 5*100 + 200
+      assert.equal(course.trackId, 1);
+      assert.equal(course.isActive, true);
+      assert.equal(course.version, 1);
+      assert.equal(course.totalEnrollments, 0);
+      assert.equal(course.totalCompletions, 0);
+      assert.equal(course.creatorRewardXp, 50);
+      assert.equal(course.minCompletionsForReward, 0);
+    });
+
+    it("rejects course ID longer than 32 bytes (PDA seed limit)", async () => {
+      // IDs > 32 bytes fail at PDA derivation (seed length limit)
+      // This proves the on-chain MAX_ID_LEN=32 is enforced by Solana's PDA constraints
+      const longId = "a".repeat(33);
+      try {
+        PublicKey.findProgramAddressSync(
+          [Buffer.from("course"), Buffer.from(longId)],
+          program.programId
+        );
+        assert.fail("Should have failed");
+      } catch (e: any) {
+        assert.include(e.toString(), "Max seed length exceeded");
+      }
+    });
+
+    it("updates a course", async () => {
+      const newTxId = Buffer.alloc(32);
+      newTxId.fill(0xcd);
+
+      await program.methods
+        .updateCourse({
+          contentTxId: Array.from(newTxId),
+          contentType: null,
+          isActive: null,
+          creatorRewardXp: null,
+          minCompletionsForReward: null,
+        })
+        .accounts({
+          authority: authority.publicKey,
+          course: coursePda,
+        })
+        .rpc();
+
+      const course = await program.account.course.fetch(coursePda);
+      assert.equal(course.version, 2);
+    });
+
+    it("fails to update course with wrong authority", async () => {
+      try {
+        await program.methods
+          .updateCourse({
+            contentTxId: null,
+            contentType: null,
+            isActive: false,
+            creatorRewardXp: null,
+            minCompletionsForReward: null,
+          })
+          .accounts({
+            authority: learnerKeypair.publicKey,
+            course: coursePda,
+          })
+          .signers([learnerKeypair])
+          .rpc();
+        assert.fail("Should have failed");
+      } catch (e: any) {
+        assert.include(e.toString(), "Unauthorized");
+      }
+    });
+  });
+
+  // ═══════════════════════════════════════════════════
+  // Phase 4: Enrollment + Lessons
+  // ═══════════════════════════════════════════════════
+
+  describe("Phase 4: Enrollment + Lessons", () => {
+    it("enrolls learner in course", async () => {
+      await program.methods
+        .enroll()
+        .accounts({
+          user: learnerKeypair.publicKey,
+          course: coursePda,
+          enrollment: enrollmentPda,
+          prerequisiteEnrollment: null,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([learnerKeypair])
+        .rpc();
+
+      const enrollment = await program.account.enrollment.fetch(enrollmentPda);
+      assert.equal(enrollment.course.toBase58(), coursePda.toBase58());
+      assert.equal(enrollment.enrolledVersion, 2);
+      assert.isNull(enrollment.completedAt);
+      assert.equal(enrollment.bonusClaimed, false);
+
+      const course = await program.account.course.fetch(coursePda);
+      assert.equal(course.totalEnrollments, 1);
+    });
+
+    it("completes lesson 0", async () => {
+      await program.methods
+        .completeLesson(0)
+        .accounts({
+          backendSigner: backendSigner.publicKey,
+          config: configPda,
+          course: coursePda,
+          enrollment: enrollmentPda,
+          learner: learnerPda,
+          xpMint: activeMintPubkey,
+          learnerTokenAccount: learnerAta,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .signers([backendSigner])
+        .rpc();
+
+      const enrollment = await program.account.enrollment.fetch(enrollmentPda);
+      // Lesson 0 bit should be set
+      assert.notEqual(enrollment.lessonFlags[0].toNumber() & 1, 0);
+
+      const learner = await program.account.learnerProfile.fetch(learnerPda);
+      assert.equal(learner.xpEarnedToday, 100);
+      assert.equal(learner.currentStreak, 1);
+    });
+
+    it("fails to complete same lesson twice", async () => {
+      try {
+        await program.methods
+          .completeLesson(0)
+          .accounts({
+            backendSigner: backendSigner.publicKey,
+            config: configPda,
+            course: coursePda,
+            enrollment: enrollmentPda,
+            learner: learnerPda,
+            xpMint: activeMintPubkey,
+            learnerTokenAccount: learnerAta,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+          })
+          .signers([backendSigner])
+          .rpc();
+        assert.fail("Should have failed");
+      } catch (e: any) {
+        assert.include(e.toString(), "LessonAlreadyCompleted");
+      }
+    });
+
+    it("fails to complete lesson out of bounds", async () => {
+      try {
+        await program.methods
+          .completeLesson(10) // Course only has 5 lessons
+          .accounts({
+            backendSigner: backendSigner.publicKey,
+            config: configPda,
+            course: coursePda,
+            enrollment: enrollmentPda,
+            learner: learnerPda,
+            xpMint: activeMintPubkey,
+            learnerTokenAccount: learnerAta,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+          })
+          .signers([backendSigner])
+          .rpc();
+        assert.fail("Should have failed");
+      } catch (e: any) {
+        assert.include(e.toString(), "LessonOutOfBounds");
+      }
+    });
+
+    it("fails to complete lesson with wrong signer", async () => {
+      try {
+        await program.methods
+          .completeLesson(1)
+          .accounts({
+            backendSigner: learnerKeypair.publicKey, // Wrong signer
+            config: configPda,
+            course: coursePda,
+            enrollment: enrollmentPda,
+            learner: learnerPda,
+            xpMint: activeMintPubkey,
+            learnerTokenAccount: learnerAta,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+          })
+          .signers([learnerKeypair])
+          .rpc();
+        assert.fail("Should have failed");
+      } catch (e: any) {
+        assert.include(e.toString(), "Unauthorized");
+      }
+    });
+
+    it("completes remaining lessons (1-4)", async () => {
+      for (let i = 1; i <= 4; i++) {
+        await program.methods
+          .completeLesson(i)
+          .accounts({
+            backendSigner: backendSigner.publicKey,
+            config: configPda,
+            course: coursePda,
+            enrollment: enrollmentPda,
+            learner: learnerPda,
+            xpMint: activeMintPubkey,
+            learnerTokenAccount: learnerAta,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+          })
+          .signers([backendSigner])
+          .rpc();
+      }
+
+      const enrollment = await program.account.enrollment.fetch(enrollmentPda);
+      // All 5 bits should be set: 0b11111 = 31
+      assert.equal(enrollment.lessonFlags[0].toNumber() & 31, 31);
+
+      const learner = await program.account.learnerProfile.fetch(learnerPda);
+      assert.equal(learner.xpEarnedToday, 500); // 5 * 100
+    });
+  });
+
+  // ═══════════════════════════════════════════════════
+  // Phase 5: Finalize Course
+  // ═══════════════════════════════════════════════════
+
+  describe("Phase 5: Finalize Course", () => {
+    it("finalizes course after all lessons completed", async () => {
+      await program.methods
+        .finalizeCourse()
+        .accounts({
+          backendSigner: backendSigner.publicKey,
+          config: configPda,
+          course: coursePda,
+          enrollment: enrollmentPda,
+          learner: learnerPda,
+          xpMint: activeMintPubkey,
+          learnerTokenAccount: learnerAta,
+          creatorTokenAccount: creatorAta,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .signers([backendSigner])
+        .rpc();
+
+      const enrollment = await program.account.enrollment.fetch(enrollmentPda);
+      assert.isNotNull(enrollment.completedAt);
+
+      const course = await program.account.course.fetch(coursePda);
+      assert.equal(course.totalCompletions, 1);
+    });
+
+    it("fails to finalize already finalized course", async () => {
+      try {
+        await program.methods
+          .finalizeCourse()
+          .accounts({
+            backendSigner: backendSigner.publicKey,
+            config: configPda,
+            course: coursePda,
+            enrollment: enrollmentPda,
+            learner: learnerPda,
+            xpMint: activeMintPubkey,
+            learnerTokenAccount: learnerAta,
+            creatorTokenAccount: creatorAta,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+          })
+          .signers([backendSigner])
+          .rpc();
+        assert.fail("Should have failed");
+      } catch (e: any) {
+        assert.include(e.toString(), "CourseAlreadyFinalized");
+      }
+    });
+  });
+
+  // ═══════════════════════════════════════════════════
+  // Phase 5b: Claim Completion Bonus
+  // ═══════════════════════════════════════════════════
+
+  describe("Phase 5b: Claim Completion Bonus", () => {
+    it("claims completion bonus XP", async () => {
+      await program.methods
+        .claimCompletionBonus()
+        .accounts({
+          user: learnerKeypair.publicKey,
+          config: configPda,
+          course: coursePda,
+          enrollment: enrollmentPda,
+          learner: learnerPda,
+          xpMint: activeMintPubkey,
+          learnerTokenAccount: learnerAta,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .signers([learnerKeypair])
+        .rpc();
+
+      const enrollment = await program.account.enrollment.fetch(enrollmentPda);
+      assert.equal(enrollment.bonusClaimed, true);
+
+      const learner = await program.account.learnerProfile.fetch(learnerPda);
+      assert.equal(learner.xpEarnedToday, 700); // 500 (lessons) + 200 (bonus)
+    });
+
+    it("fails to claim bonus twice", async () => {
+      try {
+        await program.methods
+          .claimCompletionBonus()
+          .accounts({
+            user: learnerKeypair.publicKey,
+            config: configPda,
+            course: coursePda,
+            enrollment: enrollmentPda,
+            learner: learnerPda,
+            xpMint: activeMintPubkey,
+            learnerTokenAccount: learnerAta,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+          })
+          .signers([learnerKeypair])
+          .rpc();
+        assert.fail("Should have failed");
+      } catch (e: any) {
+        assert.include(e.toString(), "BonusAlreadyClaimed");
+      }
+    });
+  });
+
+  // ═══════════════════════════════════════════════════
+  // Phase 6: Issue Credential (Metaplex Core)
+  // ═══════════════════════════════════════════════════
+
+  const MPL_CORE_PROGRAM_ID = new PublicKey(
+    "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d"
+  );
+  let credentialAssetKeypair: Keypair;
+
+  describe("Phase 6: Issue Credential", () => {
+    it("issues soulbound credential via Metaplex Core", async () => {
+      credentialAssetKeypair = Keypair.generate();
+
+      await program.methods
+        .issueCredential("https://example.com/metadata.json")
+        .accounts({
+          backendSigner: backendSigner.publicKey,
+          config: configPda,
+          course: coursePda,
+          enrollment: enrollmentPda,
+          learner: learnerKeypair.publicKey,
+          asset: credentialAssetKeypair.publicKey,
+          mplCoreProgram: MPL_CORE_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([backendSigner, credentialAssetKeypair])
+        .rpc();
+
+      // Verify enrollment stores the credential
+      const enrollment = await program.account.enrollment.fetch(enrollmentPda);
+      assert.isNotNull(enrollment.credentialAsset);
+      assert.equal(
+        enrollment.credentialAsset.toBase58(),
+        credentialAssetKeypair.publicKey.toBase58()
+      );
+
+      // Verify the asset account exists and is owned by mpl-core
+      const assetInfo = await provider.connection.getAccountInfo(
+        credentialAssetKeypair.publicKey
+      );
+      assert.isNotNull(assetInfo);
+      assert.equal(
+        assetInfo.owner.toBase58(),
+        MPL_CORE_PROGRAM_ID.toBase58()
+      );
+    });
+
+    it("fails to issue credential twice (CredentialAlreadyIssued)", async () => {
+      const secondAsset = Keypair.generate();
+      try {
+        await program.methods
+          .issueCredential("https://example.com/metadata2.json")
+          .accounts({
+            backendSigner: backendSigner.publicKey,
+            config: configPda,
+            course: coursePda,
+            enrollment: enrollmentPda,
+            learner: learnerKeypair.publicKey,
+            asset: secondAsset.publicKey,
+            mplCoreProgram: MPL_CORE_PROGRAM_ID,
+            systemProgram: SystemProgram.programId,
+          })
+          .signers([backendSigner, secondAsset])
+          .rpc();
+        assert.fail("Should have failed");
+      } catch (e: any) {
+        assert.include(e.toString(), "CredentialAlreadyIssued");
+      }
+    });
+
+    it("upgrades credential name and URI", async () => {
+      await program.methods
+        .upgradeCredential("Track 1 Level 2", "https://example.com/upgraded.json")
+        .accounts({
+          backendSigner: backendSigner.publicKey,
+          config: configPda,
+          course: coursePda,
+          enrollment: enrollmentPda,
+          asset: credentialAssetKeypair.publicKey,
+          mplCoreProgram: MPL_CORE_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([backendSigner])
+        .rpc();
+
+      // Verify asset still exists after upgrade
+      const assetInfo = await provider.connection.getAccountInfo(
+        credentialAssetKeypair.publicKey
+      );
+      assert.isNotNull(assetInfo);
+      assert.equal(
+        assetInfo.owner.toBase58(),
+        MPL_CORE_PROGRAM_ID.toBase58()
+      );
+    });
+  });
+
+  // ═══════════════════════════════════════════════════
+  // Phase 7: Achievements
+  // ═══════════════════════════════════════════════════
+
+  describe("Phase 7: Achievements", () => {
+    it("claims achievement", async () => {
+      await program.methods
+        .claimAchievement(0, 100) // Achievement index 0, 100 XP
+        .accounts({
+          backendSigner: backendSigner.publicKey,
+          config: configPda,
+          learner: learnerPda,
+          xpMint: activeMintPubkey,
+          learnerTokenAccount: learnerAta,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .signers([backendSigner])
+        .rpc();
+
+      const learner = await program.account.learnerProfile.fetch(learnerPda);
+      // Achievement flag 0 should be set
+      assert.notEqual(learner.achievementFlags[0].toNumber() & 1, 0);
+      assert.equal(learner.xpEarnedToday, 800); // 700 + 100
+    });
+
+    it("fails to claim same achievement twice", async () => {
+      try {
+        await program.methods
+          .claimAchievement(0, 100)
+          .accounts({
+            backendSigner: backendSigner.publicKey,
+            config: configPda,
+            learner: learnerPda,
+            xpMint: activeMintPubkey,
+            learnerTokenAccount: learnerAta,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+          })
+          .signers([backendSigner])
+          .rpc();
+        assert.fail("Should have failed");
+      } catch (e: any) {
+        assert.include(e.toString(), "AchievementAlreadyClaimed");
+      }
+    });
+
+    it("caps achievement XP at max_achievement_xp", async () => {
+      // max_achievement_xp = 500, requesting 1000 → should be capped to 500
+      await program.methods
+        .claimAchievement(1, 1000) // Achievement index 1, 1000 XP (capped to 500)
+        .accounts({
+          backendSigner: backendSigner.publicKey,
+          config: configPda,
+          learner: learnerPda,
+          xpMint: activeMintPubkey,
+          learnerTokenAccount: learnerAta,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .signers([backendSigner])
+        .rpc();
+
+      const learner = await program.account.learnerProfile.fetch(learnerPda);
+      // 800 + 500 (capped) = 1300
+      assert.equal(learner.xpEarnedToday, 1300);
+    });
+
+    it("fails when daily XP limit exceeded", async () => {
+      // Current daily = 1300, max = 2000. Requesting another 1000 (capped to 500) = 1800 OK
+      // But requesting more to exceed: 2000 - 1300 = 700 remaining
+      await program.methods
+        .claimAchievement(2, 500)
+        .accounts({
+          backendSigner: backendSigner.publicKey,
+          config: configPda,
+          learner: learnerPda,
+          xpMint: activeMintPubkey,
+          learnerTokenAccount: learnerAta,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .signers([backendSigner])
+        .rpc();
+
+      // Now at 1800. Requesting another 500 (capped to 500) → 2300 > 2000 → fail
+      try {
+        await program.methods
+          .claimAchievement(3, 500)
+          .accounts({
+            backendSigner: backendSigner.publicKey,
+            config: configPda,
+            learner: learnerPda,
+            xpMint: activeMintPubkey,
+            learnerTokenAccount: learnerAta,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+          })
+          .signers([backendSigner])
+          .rpc();
+        assert.fail("Should have failed");
+      } catch (e: any) {
+        assert.include(e.toString(), "DailyXPLimitExceeded");
+      }
+    });
+  });
+
+  // ═══════════════════════════════════════════════════
+  // Phase 8: Streak Freezes
+  // ═══════════════════════════════════════════════════
+
+  describe("Phase 8: Streak Freezes", () => {
+    it("awards streak freeze", async () => {
+      await program.methods
+        .awardStreakFreeze()
+        .accounts({
+          backendSigner: backendSigner.publicKey,
+          config: configPda,
+          learner: learnerPda,
+        })
+        .signers([backendSigner])
+        .rpc();
+
+      const learner = await program.account.learnerProfile.fetch(learnerPda);
+      assert.equal(learner.streakFreezes, 1);
+    });
+  });
+
+  // ═══════════════════════════════════════════════════
+  // Phase 9: Referrals
+  // ═══════════════════════════════════════════════════
+
+  describe("Phase 9: Referrals", () => {
+    it("registers referral", async () => {
+      await program.methods
+        .registerReferral()
+        .accounts({
+          user: learnerKeypair.publicKey,
+          referee: learnerPda,
+          referrer: referrerPda,
+        })
+        .signers([learnerKeypair])
+        .rpc();
+
+      const referee = await program.account.learnerProfile.fetch(learnerPda);
+      assert.equal(referee.hasReferrer, true);
+
+      const referrer = await program.account.learnerProfile.fetch(referrerPda);
+      assert.equal(referrer.referralCount, 1);
+    });
+
+    it("fails on double referral", async () => {
+      try {
+        await program.methods
+          .registerReferral()
+          .accounts({
+            user: learnerKeypair.publicKey,
+            referee: learnerPda,
+            referrer: referrerPda,
+          })
+          .signers([learnerKeypair])
+          .rpc();
+        assert.fail("Should have failed");
+      } catch (e: any) {
+        assert.include(e.toString(), "AlreadyReferred");
+      }
+    });
+
+    it("fails on self-referral", async () => {
+      // Create a fresh learner to test self-referral
+      const selfKeypair = Keypair.generate();
+      const sig = await provider.connection.requestAirdrop(
+        selfKeypair.publicKey,
+        2 * LAMPORTS_PER_SOL
+      );
+      await provider.connection.confirmTransaction(sig);
+
+      const [selfPda] = PublicKey.findProgramAddressSync(
+        [Buffer.from("learner"), selfKeypair.publicKey.toBuffer()],
+        program.programId
+      );
+
+      await program.methods
+        .initLearner()
+        .accounts({
+          user: selfKeypair.publicKey,
+          learner: selfPda,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([selfKeypair])
+        .rpc();
+
+      try {
+        await program.methods
+          .registerReferral()
+          .accounts({
+            user: selfKeypair.publicKey,
+            referee: selfPda,
+            referrer: selfPda,
+          })
+          .signers([selfKeypair])
+          .rpc();
+        assert.fail("Should have failed");
+      } catch (e: any) {
+        assert.include(e.toString(), "SelfReferral");
+      }
+    });
+  });
+
+  // ═══════════════════════════════════════════════════
+  // Phase 10: Close Enrollment
+  // ═══════════════════════════════════════════════════
+
+  describe("Phase 10: Close Enrollment", () => {
+    it("closes completed enrollment (reclaims rent)", async () => {
+      const balanceBefore = await provider.connection.getBalance(
+        learnerKeypair.publicKey
+      );
+
+      await program.methods
+        .closeEnrollment(courseId)
+        .accounts({
+          user: learnerKeypair.publicKey,
+          enrollment: enrollmentPda,
+        })
+        .signers([learnerKeypair])
+        .rpc();
+
+      const balanceAfter = await provider.connection.getBalance(
+        learnerKeypair.publicKey
+      );
+      assert.isAbove(balanceAfter, balanceBefore);
+
+      // Enrollment should no longer exist
+      try {
+        await program.account.enrollment.fetch(enrollmentPda);
+        assert.fail("Enrollment should have been closed");
+      } catch (e: any) {
+        assert.include(e.toString(), "Account does not exist");
+      }
+    });
+
+    it("unenroll path: fails before 24h cooldown", async () => {
+      // Re-enroll for the unenroll test
+      await program.methods
+        .enroll()
+        .accounts({
+          user: learnerKeypair.publicKey,
+          course: coursePda,
+          enrollment: enrollmentPda,
+          prerequisiteEnrollment: null,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([learnerKeypair])
+        .rpc();
+
+      try {
+        await program.methods
+          .closeEnrollment(courseId)
+          .accounts({
+            user: learnerKeypair.publicKey,
+            enrollment: enrollmentPda,
+          })
+          .signers([learnerKeypair])
+          .rpc();
+        assert.fail("Should have failed");
+      } catch (e: any) {
+        assert.include(e.toString(), "UnenrollCooldown");
+      }
+    });
+  });
+
+  // ═══════════════════════════════════════════════════
+  // Season-closed guard tests
+  // ═══════════════════════════════════════════════════
+
+  describe("Season-closed guard", () => {
+    it("blocks lesson completion when season is closed", async () => {
+      // Close the current season
+      await program.methods
+        .closeSeason()
+        .accounts({
+          authority: authority.publicKey,
+          config: configPda,
+        })
+        .rpc();
+
+      try {
+        await program.methods
+          .completeLesson(0)
+          .accounts({
+            backendSigner: backendSigner.publicKey,
+            config: configPda,
+            course: coursePda,
+            enrollment: enrollmentPda,
+            learner: learnerPda,
+            xpMint: activeMintPubkey,
+            learnerTokenAccount: learnerAta,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+          })
+          .signers([backendSigner])
+          .rpc();
+        assert.fail("Should have failed");
+      } catch (e: any) {
+        assert.include(e.toString(), "SeasonClosed");
+      }
+
+      // Reopen season for any subsequent tests
+      const newMint = Keypair.generate();
+      await program.methods
+        .createSeason(3)
+        .accounts({
+          authority: authority.publicKey,
+          config: configPda,
+          mint: newMint.publicKey,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([newMint])
+        .rpc();
+      activeMintPubkey = newMint.publicKey;
+    });
+  });
+});

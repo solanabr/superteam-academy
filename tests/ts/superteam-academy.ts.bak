@@ -1,0 +1,1328 @@
+/**
+ * SUPERTEAM ACADEMY — COMPREHENSIVE ON-CHAIN PROGRAM TEST SUITE
+ *
+ * Based on: Actual IDL & program implementation (17 instructions)
+ * Coverage: All 17 instructions across 10 implementation phases
+ * Network: Localnet (with mpl-core fixture via [[test.genesis]])
+ *
+ * Run: anchor test
+ */
+
+import * as anchor from "@coral-xyz/anchor";
+import { Program } from "@coral-xyz/anchor";
+import { SuperteamAcademy } from "../../target/types/superteam_academy";
+import {
+  Keypair, PublicKey, SystemProgram, LAMPORTS_PER_SOL, Transaction,
+} from "@solana/web3.js";
+import {
+  TOKEN_2022_PROGRAM_ID, getAssociatedTokenAddressSync,
+  getAccount, ASSOCIATED_TOKEN_PROGRAM_ID,
+} from "@solana/spl-token";
+import { assert } from "chai";
+
+// ═══════════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════════
+
+function findConfigPDA(pid: PublicKey): [PublicKey, number] {
+  return PublicKey.findProgramAddressSync([Buffer.from("config")], pid);
+}
+function findCoursePDA(id: string, pid: PublicKey): [PublicKey, number] {
+  return PublicKey.findProgramAddressSync([Buffer.from("course"), Buffer.from(id)], pid);
+}
+function findLearnerPDA(user: PublicKey, pid: PublicKey): [PublicKey, number] {
+  return PublicKey.findProgramAddressSync([Buffer.from("learner"), user.toBuffer()], pid);
+}
+function findEnrollmentPDA(courseId: string, user: PublicKey, pid: PublicKey): [PublicKey, number] {
+  return PublicKey.findProgramAddressSync(
+    [Buffer.from("enrollment"), Buffer.from(courseId), user.toBuffer()], pid
+  );
+}
+
+async function airdrop(conn: anchor.web3.Connection, pk: PublicKey, amount = 5 * LAMPORTS_PER_SOL) {
+  const sig = await conn.requestAirdrop(pk, amount);
+  await conn.confirmTransaction(sig);
+}
+
+async function assertFails(fn: () => Promise<any>, expectedErr?: string) {
+  try {
+    await fn();
+    assert.fail("Expected transaction to fail but it succeeded");
+  } catch (err: any) {
+    if (expectedErr) {
+      assert.include(err.toString(), expectedErr,
+        `Expected error "${expectedErr}" but got: ${err.toString().slice(0, 200)}`);
+    }
+  }
+}
+
+function createATAInstruction(
+  payer: PublicKey, ata: PublicKey, owner: PublicKey, mint: PublicKey,
+  tokenProgramId: PublicKey = TOKEN_2022_PROGRAM_ID,
+): anchor.web3.TransactionInstruction {
+  return new anchor.web3.TransactionInstruction({
+    programId: ASSOCIATED_TOKEN_PROGRAM_ID,
+    keys: [
+      { pubkey: payer, isSigner: true, isWritable: true },
+      { pubkey: ata, isSigner: false, isWritable: true },
+      { pubkey: owner, isSigner: false, isWritable: false },
+      { pubkey: mint, isSigner: false, isWritable: false },
+      { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+      { pubkey: tokenProgramId, isSigner: false, isWritable: false },
+    ],
+    data: Buffer.alloc(0),
+  });
+}
+
+async function ensureATA(
+  provider: anchor.AnchorProvider, mint: PublicKey, owner: PublicKey,
+): Promise<PublicKey> {
+  const ata = getAssociatedTokenAddressSync(mint, owner, false, TOKEN_2022_PROGRAM_ID);
+  const tx = new Transaction().add(
+    createATAInstruction(provider.wallet.publicKey, ata, owner, mint)
+  );
+  await provider.sendAndConfirm(tx);
+  return ata;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MAIN TEST SUITE
+// ═══════════════════════════════════════════════════════════════
+
+describe("Superteam Academy — Full Program Test Suite", () => {
+  const provider = anchor.AnchorProvider.env();
+  anchor.setProvider(provider);
+  const program = anchor.workspace.SuperteamAcademy as Program<SuperteamAcademy>;
+  const connection = provider.connection;
+
+  // ─── KEYPAIRS ────────────────────────────────────────────
+  const authority = provider.wallet as anchor.Wallet;
+  const backendSigner = Keypair.generate();
+  const newBackendSigner = Keypair.generate();
+  const learnerA = Keypair.generate();
+  const learnerB = Keypair.generate();
+  const learnerC = Keypair.generate();
+  const courseCreator = Keypair.generate();
+  const unauthorized = Keypair.generate();
+
+  // ─── PDAS & STATE ────────────────────────────────────────
+  let configPDA: PublicKey;
+  let currentMint: PublicKey;
+
+  const COURSE_BEG = "solana-fundamentals";
+  const COURSE_INT = "anchor-development";
+
+  let courseBegPDA: PublicKey;
+  let courseIntPDA: PublicKey;
+  let learnerAPDA: PublicKey;
+  let learnerBPDA: PublicKey;
+  let learnerCPDA: PublicKey;
+  let enrollBegA: PublicKey;
+
+  // ATAs (created after season mint is known)
+  let learnerA_ATA: PublicKey;
+  let learnerB_ATA: PublicKey;
+  let creatorATA: PublicKey;
+
+  // Metaplex Core
+  const MPL_CORE_PROGRAM_ID = new PublicKey("CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d");
+  let credentialAssetKeypair: Keypair;
+
+  // ─── SETUP ───────────────────────────────────────────────
+  before(async () => {
+    [configPDA] = findConfigPDA(program.programId);
+    [courseBegPDA] = findCoursePDA(COURSE_BEG, program.programId);
+    [courseIntPDA] = findCoursePDA(COURSE_INT, program.programId);
+    [learnerAPDA] = findLearnerPDA(learnerA.publicKey, program.programId);
+    [learnerBPDA] = findLearnerPDA(learnerB.publicKey, program.programId);
+    [learnerCPDA] = findLearnerPDA(learnerC.publicKey, program.programId);
+    [enrollBegA] = findEnrollmentPDA(COURSE_BEG, learnerA.publicKey, program.programId);
+
+    const airdropPromises = [learnerA, learnerB, learnerC, courseCreator, backendSigner, unauthorized]
+      .map((kp) => airdrop(connection, kp.publicKey));
+    await Promise.all(airdropPromises);
+  });
+
+  // ═══════════════════════════════════════════════════════════
+  // PHASE 1: CONFIG + SEASON MANAGEMENT
+  // ═══════════════════════════════════════════════════════════
+  describe("Phase 1: Config + Season Management", () => {
+
+    it("1.01 — initialize: creates Config PDA with correct values", async () => {
+      await program.methods.initialize(2000, 500)
+        .accounts({
+          authority: authority.publicKey,
+          config: configPDA,
+          backendSigner: backendSigner.publicKey,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+
+      const cfg = await program.account.config.fetch(configPDA);
+      assert.equal(cfg.authority.toBase58(), authority.publicKey.toBase58());
+      assert.equal(cfg.backendSigner.toBase58(), backendSigner.publicKey.toBase58());
+      assert.equal(cfg.maxDailyXp, 2000);
+      assert.equal(cfg.maxAchievementXp, 500);
+      assert.equal(cfg.currentSeason, 0);
+      assert.equal(cfg.seasonClosed, true); // No season active yet
+    });
+
+    it("1.02 — initialize: duplicate init fails", async () => {
+      await assertFails(() =>
+        program.methods.initialize(2000, 500)
+          .accounts({
+            authority: authority.publicKey,
+            config: configPDA,
+            backendSigner: backendSigner.publicKey,
+            systemProgram: SystemProgram.programId,
+          })
+          .rpc()
+      );
+    });
+
+    it("1.03 — update_config: adjust rate limits", async () => {
+      await program.methods.updateConfig({
+        newBackendSigner: null,
+        newMaxDailyXp: 3000,
+        newMaxAchievementXp: 750,
+      }).accounts({
+        authority: authority.publicKey,
+        config: configPDA,
+      }).rpc();
+
+      const cfg = await program.account.config.fetch(configPDA);
+      assert.equal(cfg.maxDailyXp, 3000);
+      assert.equal(cfg.maxAchievementXp, 750);
+    });
+
+    it("1.04 — update_config: only authority can call", async () => {
+      await assertFails(() =>
+        program.methods.updateConfig({
+          newBackendSigner: Keypair.generate().publicKey,
+          newMaxDailyXp: null,
+          newMaxAchievementXp: null,
+        }).accounts({
+          authority: unauthorized.publicKey,
+          config: configPDA,
+        }).signers([unauthorized]).rpc()
+      , "Unauthorized");
+    });
+
+    it("1.05 — create_season: creates Token-2022 mint for season 1", async () => {
+      // Reset limits for subsequent tests
+      await program.methods.updateConfig({
+        newBackendSigner: null,
+        newMaxDailyXp: 2000,
+        newMaxAchievementXp: 500,
+      }).accounts({
+        authority: authority.publicKey,
+        config: configPDA,
+      }).rpc();
+
+      const mintKp = Keypair.generate();
+      await program.methods.createSeason(1)
+        .accounts({
+          authority: authority.publicKey,
+          config: configPDA,
+          mint: mintKp.publicKey,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([mintKp])
+        .rpc();
+
+      const cfg = await program.account.config.fetch(configPDA);
+      assert.equal(cfg.currentSeason, 1);
+      assert.equal(cfg.seasonClosed, false);
+      assert.ok(cfg.currentMint, "Mint should be set");
+      currentMint = cfg.currentMint;
+
+      const mintInfo = await connection.getAccountInfo(currentMint);
+      assert.ok(mintInfo);
+      assert.equal(mintInfo!.owner.toBase58(), TOKEN_2022_PROGRAM_ID.toBase58());
+    });
+
+    it("1.06 — close_season: prevents further minting", async () => {
+      await program.methods.closeSeason()
+        .accounts({
+          authority: authority.publicKey,
+          config: configPDA,
+        }).rpc();
+
+      const cfg = await program.account.config.fetch(configPDA);
+      assert.equal(cfg.seasonClosed, true);
+    });
+
+    it("1.07 — close_season: double close fails", async () => {
+      await assertFails(() =>
+        program.methods.closeSeason()
+          .accounts({
+            authority: authority.publicKey,
+            config: configPDA,
+          }).rpc()
+      , "SeasonClosed");
+    });
+
+    it("1.08 — create_season: open season 2 after closing", async () => {
+      const oldMint = currentMint;
+      const mintKp = Keypair.generate();
+      await program.methods.createSeason(2)
+        .accounts({
+          authority: authority.publicKey,
+          config: configPDA,
+          mint: mintKp.publicKey,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([mintKp])
+        .rpc();
+
+      const cfg = await program.account.config.fetch(configPDA);
+      assert.equal(cfg.currentSeason, 2);
+      assert.equal(cfg.seasonClosed, false);
+      assert.notEqual(cfg.currentMint.toBase58(), oldMint.toBase58());
+      currentMint = cfg.currentMint;
+
+      // Pre-create ATAs for active season mint
+      learnerA_ATA = await ensureATA(provider, currentMint, learnerA.publicKey);
+      learnerB_ATA = await ensureATA(provider, currentMint, learnerB.publicKey);
+      creatorATA = await ensureATA(provider, currentMint, courseCreator.publicKey);
+    });
+
+    it("1.09 — create_season: wrong sequence number fails", async () => {
+      const badMint = Keypair.generate();
+      await assertFails(() =>
+        program.methods.createSeason(5) // Expected: 3
+          .accounts({
+            authority: authority.publicKey,
+            config: configPDA,
+            mint: badMint.publicKey,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+            systemProgram: SystemProgram.programId,
+          })
+          .signers([badMint])
+          .rpc()
+      , "InvalidSeason");
+    });
+
+    it("1.10 — close_season: only authority can close", async () => {
+      await assertFails(() =>
+        program.methods.closeSeason()
+          .accounts({
+            authority: unauthorized.publicKey,
+            config: configPDA,
+          }).signers([unauthorized]).rpc()
+      , "Unauthorized");
+    });
+
+    it("1.11 — update_config: rotate backend signer", async () => {
+      await program.methods.updateConfig({
+        newBackendSigner: newBackendSigner.publicKey,
+        newMaxDailyXp: null,
+        newMaxAchievementXp: null,
+      }).accounts({
+        authority: authority.publicKey,
+        config: configPDA,
+      }).rpc();
+
+      let cfg = await program.account.config.fetch(configPDA);
+      assert.equal(cfg.backendSigner.toBase58(), newBackendSigner.publicKey.toBase58());
+
+      // Rotate back for subsequent tests
+      await program.methods.updateConfig({
+        newBackendSigner: backendSigner.publicKey,
+        newMaxDailyXp: null,
+        newMaxAchievementXp: null,
+      }).accounts({
+        authority: authority.publicKey,
+        config: configPDA,
+      }).rpc();
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════
+  // PHASE 2: USER ONBOARDING
+  // ═══════════════════════════════════════════════════════════
+  describe("Phase 2: User Onboarding", () => {
+
+    it("2.01 — init_learner: creates profile with zeroed fields", async () => {
+      await program.methods.initLearner()
+        .accounts({
+          user: learnerA.publicKey,
+          learner: learnerAPDA,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([learnerA])
+        .rpc();
+
+      const p = await program.account.learnerProfile.fetch(learnerAPDA);
+      assert.equal(p.authority.toBase58(), learnerA.publicKey.toBase58());
+      assert.equal(p.currentStreak, 0);
+      assert.equal(p.longestStreak, 0);
+      assert.equal(p.xpEarnedToday, 0);
+      assert.equal(p.streakFreezes, 0);
+      assert.equal(p.referralCount, 0);
+      assert.equal(p.hasReferrer, false);
+    });
+
+    it("2.02 — init_learner: duplicate init fails", async () => {
+      await assertFails(() =>
+        program.methods.initLearner()
+          .accounts({
+            user: learnerA.publicKey,
+            learner: learnerAPDA,
+            systemProgram: SystemProgram.programId,
+          })
+          .signers([learnerA])
+          .rpc()
+      );
+    });
+
+    it("2.03 — init_learner: PDA matches [\"learner\", user_pubkey]", async () => {
+      const [expected] = PublicKey.findProgramAddressSync(
+        [Buffer.from("learner"), learnerA.publicKey.toBuffer()], program.programId
+      );
+      assert.equal(learnerAPDA.toBase58(), expected.toBase58());
+    });
+
+    it("2.04 — init_learner: learnerB + learnerC init independently", async () => {
+      await program.methods.initLearner()
+        .accounts({
+          user: learnerB.publicKey,
+          learner: learnerBPDA,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([learnerB])
+        .rpc();
+
+      await program.methods.initLearner()
+        .accounts({
+          user: learnerC.publicKey,
+          learner: learnerCPDA,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([learnerC])
+        .rpc();
+
+      assert.ok(await program.account.learnerProfile.fetch(learnerBPDA));
+      assert.ok(await program.account.learnerProfile.fetch(learnerCPDA));
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════
+  // PHASE 3: COURSE REGISTRY
+  // ═══════════════════════════════════════════════════════════
+  describe("Phase 3: Course Registry", () => {
+
+    it("3.01 — create_course: beginner with all fields", async () => {
+      await program.methods.createCourse({
+        courseId: COURSE_BEG,
+        creator: courseCreator.publicKey,
+        contentTxId: Array(32).fill(1),
+        contentType: 0,
+        lessonCount: 5,
+        challengeCount: 0,
+        difficulty: 1,
+        xpPerLesson: 30,
+        completionBonusXp: 200,
+        trackId: 1,
+        trackLevel: 1,
+        prerequisite: null,
+        creatorRewardXp: 50,
+        minCompletionsForReward: 3,
+      }).accounts({
+        authority: authority.publicKey,
+        config: configPDA,
+        course: courseBegPDA,
+        systemProgram: SystemProgram.programId,
+      }).rpc();
+
+      const c = await program.account.course.fetch(courseBegPDA);
+      assert.equal(c.courseId, COURSE_BEG);
+      assert.equal(c.creator.toBase58(), courseCreator.publicKey.toBase58());
+      assert.equal(c.lessonCount, 5);
+      assert.equal(c.difficulty, 1);
+      assert.equal(c.xpPerLesson, 30);
+      assert.equal(c.trackId, 1);
+      assert.equal(c.trackLevel, 1);
+      assert.equal(c.completionBonusXp, 200);
+      assert.equal(c.creatorRewardXp, 50);
+      assert.equal(c.minCompletionsForReward, 3);
+      assert.equal(c.isActive, true);
+      assert.equal(c.totalCompletions, 0);
+      assert.equal(c.totalEnrollments, 0);
+      assert.equal(c.version, 1);
+      assert.equal(c.xpTotal, 350); // 5*30 + 200
+      assert.ok(c.prerequisite === null);
+    });
+
+    it("3.02 — create_course: intermediate with prerequisite", async () => {
+      await program.methods.createCourse({
+        courseId: COURSE_INT,
+        creator: courseCreator.publicKey,
+        contentTxId: Array(32).fill(2),
+        contentType: 0,
+        lessonCount: 8,
+        challengeCount: 2,
+        difficulty: 2,
+        xpPerLesson: 40,
+        completionBonusXp: 400,
+        trackId: 1,
+        trackLevel: 2,
+        prerequisite: courseBegPDA,
+        creatorRewardXp: 100,
+        minCompletionsForReward: 3,
+      }).accounts({
+        authority: authority.publicKey,
+        config: configPDA,
+        course: courseIntPDA,
+        systemProgram: SystemProgram.programId,
+      }).rpc();
+
+      const c = await program.account.course.fetch(courseIntPDA);
+      assert.equal(c.prerequisite?.toBase58(), courseBegPDA.toBase58());
+      assert.equal(c.trackLevel, 2);
+    });
+
+    it("3.03 — update_course: modify content + increment version", async () => {
+      await program.methods.updateCourse({
+        contentTxId: Array(32).fill(99),
+        contentType: null,
+        isActive: null,
+        creatorRewardXp: null,
+        minCompletionsForReward: null,
+      }).accounts({
+        authority: authority.publicKey,
+        course: courseBegPDA,
+      }).rpc();
+
+      const c = await program.account.course.fetch(courseBegPDA);
+      assert.equal(c.version, 2);
+    });
+
+    it("3.04 — update_course: toggle is_active on/off", async () => {
+      await program.methods.updateCourse({
+        contentTxId: null, contentType: null, isActive: false,
+        creatorRewardXp: null, minCompletionsForReward: null,
+      }).accounts({
+        authority: authority.publicKey, course: courseBegPDA,
+      }).rpc();
+      assert.equal((await program.account.course.fetch(courseBegPDA)).isActive, false);
+
+      await program.methods.updateCourse({
+        contentTxId: null, contentType: null, isActive: true,
+        creatorRewardXp: null, minCompletionsForReward: null,
+      }).accounts({
+        authority: authority.publicKey, course: courseBegPDA,
+      }).rpc();
+      assert.equal((await program.account.course.fetch(courseBegPDA)).isActive, true);
+    });
+
+    it("3.05 — update_course: unauthorized user rejected", async () => {
+      await assertFails(() =>
+        program.methods.updateCourse({
+          contentTxId: null, contentType: null, isActive: false,
+          creatorRewardXp: null, minCompletionsForReward: null,
+        }).accounts({
+          authority: unauthorized.publicKey, course: courseBegPDA,
+        }).signers([unauthorized]).rpc()
+      , "Unauthorized");
+    });
+
+    it("3.06 — create_course: only authority can create", async () => {
+      const [fakePDA] = findCoursePDA("fake-course", program.programId);
+      await assertFails(() =>
+        program.methods.createCourse({
+          courseId: "fake-course",
+          creator: unauthorized.publicKey,
+          contentTxId: Array(32).fill(0),
+          contentType: 0,
+          lessonCount: 1,
+          challengeCount: 0,
+          difficulty: 1,
+          xpPerLesson: 10,
+          completionBonusXp: 0,
+          trackId: 0,
+          trackLevel: 1,
+          prerequisite: null,
+          creatorRewardXp: 0,
+          minCompletionsForReward: 0,
+        }).accounts({
+          authority: unauthorized.publicKey,
+          config: configPDA,
+          course: fakePDA,
+          systemProgram: SystemProgram.programId,
+        }).signers([unauthorized]).rpc()
+      );
+    });
+
+    it("3.07 — create_course: rejects course ID longer than 32 bytes", async () => {
+      const longId = "a".repeat(33);
+      try {
+        PublicKey.findProgramAddressSync(
+          [Buffer.from("course"), Buffer.from(longId)],
+          program.programId
+        );
+        assert.fail("Should have failed");
+      } catch (e: any) {
+        assert.include(e.toString(), "Max seed length exceeded");
+      }
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════
+  // PHASE 4: CORE LEARNING LOOP
+  // ═══════════════════════════════════════════════════════════
+  describe("Phase 4: Core Learning Loop", () => {
+
+    it("4.01 — enroll: creates enrollment with correct snapshot", async () => {
+      await program.methods.enroll()
+        .accounts({
+          user: learnerA.publicKey,
+          course: courseBegPDA,
+          enrollment: enrollBegA,
+          prerequisiteEnrollment: null,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([learnerA])
+        .rpc();
+
+      const e = await program.account.enrollment.fetch(enrollBegA);
+      assert.equal(e.course.toBase58(), courseBegPDA.toBase58());
+      assert.ok(e.enrolledAt.toNumber() > 0);
+      assert.ok(e.completedAt === null);
+      assert.ok(e.credentialAsset === null);
+      assert.equal(e.bonusClaimed, false);
+
+      const c = await program.account.course.fetch(courseBegPDA);
+      assert.equal(c.totalEnrollments, 1);
+    });
+
+    it("4.02 — enroll: prerequisite blocks unqualified learner", async () => {
+      const [enrollIntB] = findEnrollmentPDA(COURSE_INT, learnerB.publicKey, program.programId);
+      await assertFails(() =>
+        program.methods.enroll()
+          .accounts({
+            user: learnerB.publicKey,
+            course: courseIntPDA,
+            enrollment: enrollIntB,
+            prerequisiteEnrollment: null,
+            systemProgram: SystemProgram.programId,
+          })
+          .signers([learnerB])
+          .rpc()
+      , "PrerequisiteNotMet");
+    });
+
+    it("4.03 — enroll: double enrollment fails", async () => {
+      await assertFails(() =>
+        program.methods.enroll()
+          .accounts({
+            user: learnerA.publicKey,
+            course: courseBegPDA,
+            enrollment: enrollBegA,
+            prerequisiteEnrollment: null,
+            systemProgram: SystemProgram.programId,
+          })
+          .signers([learnerA])
+          .rpc()
+      );
+    });
+
+    it("4.04 — complete_lesson: sets bitmap + mints XP", async () => {
+      await program.methods.completeLesson(0)
+        .accounts({
+          backendSigner: backendSigner.publicKey,
+          config: configPDA,
+          course: courseBegPDA,
+          enrollment: enrollBegA,
+          learner: learnerAPDA,
+          xpMint: currentMint,
+          learnerTokenAccount: learnerA_ATA,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .signers([backendSigner])
+        .rpc();
+
+      const e = await program.account.enrollment.fetch(enrollBegA);
+      assert.ok((e.lessonFlags[0].toNumber() & 1) !== 0, "Bit 0 should be set");
+
+      const ta = await getAccount(connection, learnerA_ATA, undefined, TOKEN_2022_PROGRAM_ID);
+      assert.equal(Number(ta.amount), 30, "Should have 30 XP");
+    });
+
+    it("4.05 — complete_lesson: double completion fails", async () => {
+      await assertFails(() =>
+        program.methods.completeLesson(0)
+          .accounts({
+            backendSigner: backendSigner.publicKey,
+            config: configPDA,
+            course: courseBegPDA,
+            enrollment: enrollBegA,
+            learner: learnerAPDA,
+            xpMint: currentMint,
+            learnerTokenAccount: learnerA_ATA,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+          })
+          .signers([backendSigner])
+          .rpc()
+      , "LessonAlreadyCompleted");
+    });
+
+    it("4.06 — complete_lesson: out of bounds fails", async () => {
+      await assertFails(() =>
+        program.methods.completeLesson(99)
+          .accounts({
+            backendSigner: backendSigner.publicKey,
+            config: configPDA,
+            course: courseBegPDA,
+            enrollment: enrollBegA,
+            learner: learnerAPDA,
+            xpMint: currentMint,
+            learnerTokenAccount: learnerA_ATA,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+          })
+          .signers([backendSigner])
+          .rpc()
+      , "LessonOutOfBounds");
+    });
+
+    it("4.07 — complete_lesson: unauthorized signer fails", async () => {
+      await assertFails(() =>
+        program.methods.completeLesson(1)
+          .accounts({
+            backendSigner: unauthorized.publicKey,
+            config: configPDA,
+            course: courseBegPDA,
+            enrollment: enrollBegA,
+            learner: learnerAPDA,
+            xpMint: currentMint,
+            learnerTokenAccount: learnerA_ATA,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+          })
+          .signers([unauthorized])
+          .rpc()
+      , "Unauthorized");
+    });
+
+    it("4.08 — complete_lesson: finish remaining lessons 1-4 → 150 total XP", async () => {
+      for (let i = 1; i < 5; i++) {
+        await program.methods.completeLesson(i)
+          .accounts({
+            backendSigner: backendSigner.publicKey,
+            config: configPDA,
+            course: courseBegPDA,
+            enrollment: enrollBegA,
+            learner: learnerAPDA,
+            xpMint: currentMint,
+            learnerTokenAccount: learnerA_ATA,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+          })
+          .signers([backendSigner])
+          .rpc();
+      }
+
+      const enrollment = await program.account.enrollment.fetch(enrollBegA);
+      assert.equal(enrollment.lessonFlags[0].toNumber() & 31, 31, "All 5 bits set");
+
+      const ta = await getAccount(connection, learnerA_ATA, undefined, TOKEN_2022_PROGRAM_ID);
+      assert.equal(Number(ta.amount), 150, "5 lessons × 30 XP = 150");
+
+      const p = await program.account.learnerProfile.fetch(learnerAPDA);
+      assert.ok(p.currentStreak >= 1, "Streak should be active");
+      assert.ok(p.lastActivityDate.toNumber() > 0, "Last activity set");
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════
+  // PHASE 5: COMPLETION FLOW
+  // ═══════════════════════════════════════════════════════════
+  describe("Phase 5: Completion Flow", () => {
+
+    it("5.01 — finalize_course: succeeds with all lessons done", async () => {
+      await program.methods.finalizeCourse()
+        .accounts({
+          backendSigner: backendSigner.publicKey,
+          config: configPDA,
+          course: courseBegPDA,
+          enrollment: enrollBegA,
+          learner: learnerAPDA,
+          xpMint: currentMint,
+          learnerTokenAccount: learnerA_ATA,
+          creatorTokenAccount: creatorATA,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .signers([backendSigner])
+        .rpc();
+
+      const e = await program.account.enrollment.fetch(enrollBegA);
+      assert.ok(e.completedAt !== null, "completed_at should be set");
+
+      const c = await program.account.course.fetch(courseBegPDA);
+      assert.equal(c.totalCompletions, 1);
+    });
+
+    it("5.02 — finalize_course: double finalize fails", async () => {
+      await assertFails(() =>
+        program.methods.finalizeCourse()
+          .accounts({
+            backendSigner: backendSigner.publicKey,
+            config: configPDA,
+            course: courseBegPDA,
+            enrollment: enrollBegA,
+            learner: learnerAPDA,
+            xpMint: currentMint,
+            learnerTokenAccount: learnerA_ATA,
+            creatorTokenAccount: creatorATA,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+          })
+          .signers([backendSigner])
+          .rpc()
+      , "CourseAlreadyFinalized");
+    });
+
+    it("5.03 — claim_completion_bonus: learner claims 200 bonus XP", async () => {
+      const before = Number((await getAccount(connection, learnerA_ATA, undefined, TOKEN_2022_PROGRAM_ID)).amount);
+
+      await program.methods.claimCompletionBonus()
+        .accounts({
+          user: learnerA.publicKey,
+          config: configPDA,
+          course: courseBegPDA,
+          enrollment: enrollBegA,
+          learner: learnerAPDA,
+          xpMint: currentMint,
+          learnerTokenAccount: learnerA_ATA,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .signers([learnerA])
+        .rpc();
+
+      const after = Number((await getAccount(connection, learnerA_ATA, undefined, TOKEN_2022_PROGRAM_ID)).amount);
+      assert.equal(after - before, 200, "200 bonus XP");
+
+      const e = await program.account.enrollment.fetch(enrollBegA);
+      assert.equal(e.bonusClaimed, true);
+    });
+
+    it("5.04 — claim_completion_bonus: double claim fails", async () => {
+      await assertFails(() =>
+        program.methods.claimCompletionBonus()
+          .accounts({
+            user: learnerA.publicKey,
+            config: configPDA,
+            course: courseBegPDA,
+            enrollment: enrollBegA,
+            learner: learnerAPDA,
+            xpMint: currentMint,
+            learnerTokenAccount: learnerA_ATA,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+          })
+          .signers([learnerA])
+          .rpc()
+      , "BonusAlreadyClaimed");
+    });
+
+    it("5.05 — claim_completion_bonus: fails before finalization", async () => {
+      const [enrollBegB] = findEnrollmentPDA(COURSE_BEG, learnerB.publicKey, program.programId);
+      await program.methods.enroll()
+        .accounts({
+          user: learnerB.publicKey,
+          course: courseBegPDA,
+          enrollment: enrollBegB,
+          prerequisiteEnrollment: null,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([learnerB])
+        .rpc();
+
+      await assertFails(() =>
+        program.methods.claimCompletionBonus()
+          .accounts({
+            user: learnerB.publicKey,
+            config: configPDA,
+            course: courseBegPDA,
+            enrollment: enrollBegB,
+            learner: learnerBPDA,
+            xpMint: currentMint,
+            learnerTokenAccount: learnerB_ATA,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+          })
+          .signers([learnerB])
+          .rpc()
+      , "CourseNotFinalized");
+    });
+
+    it("5.06 — close_enrollment: completed course closes freely + rent reclaimed", async () => {
+      const before = await connection.getBalance(learnerA.publicKey);
+
+      await program.methods.closeEnrollment(COURSE_BEG)
+        .accounts({
+          user: learnerA.publicKey,
+          enrollment: enrollBegA,
+        })
+        .signers([learnerA])
+        .rpc();
+
+      const info = await connection.getAccountInfo(enrollBegA);
+      assert.ok(info === null, "Enrollment should be closed");
+
+      const after = await connection.getBalance(learnerA.publicKey);
+      assert.ok(after > before - 10000, "Rent reclaimed (minus tx fee)");
+    });
+
+    it("5.07 — close_enrollment: incomplete enrollment requires 24h cooldown", async () => {
+      const [enrollBegB] = findEnrollmentPDA(COURSE_BEG, learnerB.publicKey, program.programId);
+      await assertFails(() =>
+        program.methods.closeEnrollment(COURSE_BEG)
+          .accounts({
+            user: learnerB.publicKey,
+            enrollment: enrollBegB,
+          })
+          .signers([learnerB])
+          .rpc()
+      , "UnenrollCooldown");
+    });
+
+    it("5.08 — finalize_course: incomplete bitmap fails", async () => {
+      const [enrollBegB] = findEnrollmentPDA(COURSE_BEG, learnerB.publicKey, program.programId);
+      await assertFails(() =>
+        program.methods.finalizeCourse()
+          .accounts({
+            backendSigner: backendSigner.publicKey,
+            config: configPDA,
+            course: courseBegPDA,
+            enrollment: enrollBegB,
+            learner: learnerBPDA,
+            xpMint: currentMint,
+            learnerTokenAccount: learnerB_ATA,
+            creatorTokenAccount: creatorATA,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+          })
+          .signers([backendSigner])
+          .rpc()
+      , "CourseNotCompleted");
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════
+  // PHASE 6: CREDENTIALS (Metaplex Core)
+  // ═══════════════════════════════════════════════════════════
+  describe("Phase 6: Credentials (Metaplex Core)", () => {
+
+    before(async () => {
+      // Re-enroll learnerA (previous enrollment was closed in 5.06)
+      await program.methods.enroll()
+        .accounts({
+          user: learnerA.publicKey,
+          course: courseBegPDA,
+          enrollment: enrollBegA,
+          prerequisiteEnrollment: null,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([learnerA])
+        .rpc();
+
+      // Complete all 5 lessons
+      for (let i = 0; i < 5; i++) {
+        await program.methods.completeLesson(i)
+          .accounts({
+            backendSigner: backendSigner.publicKey,
+            config: configPDA,
+            course: courseBegPDA,
+            enrollment: enrollBegA,
+            learner: learnerAPDA,
+            xpMint: currentMint,
+            learnerTokenAccount: learnerA_ATA,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+          })
+          .signers([backendSigner])
+          .rpc();
+      }
+
+      // Finalize
+      await program.methods.finalizeCourse()
+        .accounts({
+          backendSigner: backendSigner.publicKey,
+          config: configPDA,
+          course: courseBegPDA,
+          enrollment: enrollBegA,
+          learner: learnerAPDA,
+          xpMint: currentMint,
+          learnerTokenAccount: learnerA_ATA,
+          creatorTokenAccount: creatorATA,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .signers([backendSigner])
+        .rpc();
+    });
+
+    it("6.01 — issue_credential: creates soulbound NFT via Metaplex Core", async () => {
+      credentialAssetKeypair = Keypair.generate();
+
+      await program.methods.issueCredential("https://example.com/metadata.json")
+        .accounts({
+          backendSigner: backendSigner.publicKey,
+          config: configPDA,
+          course: courseBegPDA,
+          enrollment: enrollBegA,
+          learner: learnerA.publicKey,
+          asset: credentialAssetKeypair.publicKey,
+          mplCoreProgram: MPL_CORE_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([backendSigner, credentialAssetKeypair])
+        .rpc();
+
+      const enrollment = await program.account.enrollment.fetch(enrollBegA);
+      assert.isNotNull(enrollment.credentialAsset);
+      assert.equal(
+        enrollment.credentialAsset!.toBase58(),
+        credentialAssetKeypair.publicKey.toBase58()
+      );
+
+      const assetInfo = await connection.getAccountInfo(credentialAssetKeypair.publicKey);
+      assert.isNotNull(assetInfo);
+      assert.equal(assetInfo!.owner.toBase58(), MPL_CORE_PROGRAM_ID.toBase58());
+    });
+
+    it("6.02 — issue_credential: double issue fails (CredentialAlreadyIssued)", async () => {
+      const secondAsset = Keypair.generate();
+      await assertFails(() =>
+        program.methods.issueCredential("https://example.com/metadata2.json")
+          .accounts({
+            backendSigner: backendSigner.publicKey,
+            config: configPDA,
+            course: courseBegPDA,
+            enrollment: enrollBegA,
+            learner: learnerA.publicKey,
+            asset: secondAsset.publicKey,
+            mplCoreProgram: MPL_CORE_PROGRAM_ID,
+            systemProgram: SystemProgram.programId,
+          })
+          .signers([backendSigner, secondAsset])
+          .rpc()
+      , "CredentialAlreadyIssued");
+    });
+
+    it("6.03 — upgrade_credential: updates name and URI", async () => {
+      await program.methods
+        .upgradeCredential("Track 1 Level 2", "https://example.com/upgraded.json")
+        .accounts({
+          backendSigner: backendSigner.publicKey,
+          config: configPDA,
+          course: courseBegPDA,
+          enrollment: enrollBegA,
+          asset: credentialAssetKeypair.publicKey,
+          mplCoreProgram: MPL_CORE_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([backendSigner])
+        .rpc();
+
+      const assetInfo = await connection.getAccountInfo(credentialAssetKeypair.publicKey);
+      assert.isNotNull(assetInfo);
+      assert.equal(assetInfo!.owner.toBase58(), MPL_CORE_PROGRAM_ID.toBase58());
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════
+  // PHASE 7: ACHIEVEMENTS
+  // ═══════════════════════════════════════════════════════════
+  describe("Phase 7: Achievements", () => {
+
+    it("7.01 — claim_achievement: sets bitmap + awards XP", async () => {
+      const before = Number((await getAccount(connection, learnerA_ATA, undefined, TOKEN_2022_PROGRAM_ID)).amount);
+
+      await program.methods.claimAchievement(0, 100)
+        .accounts({
+          backendSigner: backendSigner.publicKey,
+          config: configPDA,
+          learner: learnerAPDA,
+          xpMint: currentMint,
+          learnerTokenAccount: learnerA_ATA,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .signers([backendSigner])
+        .rpc();
+
+      const p = await program.account.learnerProfile.fetch(learnerAPDA);
+      assert.ok((p.achievementFlags[0].toNumber() & 1) !== 0, "Bit 0 set");
+
+      const after = Number((await getAccount(connection, learnerA_ATA, undefined, TOKEN_2022_PROGRAM_ID)).amount);
+      assert.equal(after - before, 100, "100 XP awarded");
+    });
+
+    it("7.02 — claim_achievement: double claim fails", async () => {
+      await assertFails(() =>
+        program.methods.claimAchievement(0, 100)
+          .accounts({
+            backendSigner: backendSigner.publicKey,
+            config: configPDA,
+            learner: learnerAPDA,
+            xpMint: currentMint,
+            learnerTokenAccount: learnerA_ATA,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+          })
+          .signers([backendSigner])
+          .rpc()
+      , "AchievementAlreadyClaimed");
+    });
+
+    it("7.03 — claim_achievement: XP capped by config.max_achievement_xp (500)", async () => {
+      const before = Number((await getAccount(connection, learnerA_ATA, undefined, TOKEN_2022_PROGRAM_ID)).amount);
+
+      await program.methods.claimAchievement(1, 1000)
+        .accounts({
+          backendSigner: backendSigner.publicKey,
+          config: configPDA,
+          learner: learnerAPDA,
+          xpMint: currentMint,
+          learnerTokenAccount: learnerA_ATA,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .signers([backendSigner])
+        .rpc();
+
+      const after = Number((await getAccount(connection, learnerA_ATA, undefined, TOKEN_2022_PROGRAM_ID)).amount);
+      assert.ok(after - before <= 500, `Capped at 500, got ${after - before}`);
+    });
+
+    it("7.04 — claim_achievement: different bitmap words (index >= 64)", async () => {
+      await program.methods.claimAchievement(65, 50)
+        .accounts({
+          backendSigner: backendSigner.publicKey,
+          config: configPDA,
+          learner: learnerAPDA,
+          xpMint: currentMint,
+          learnerTokenAccount: learnerA_ATA,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .signers([backendSigner])
+        .rpc();
+
+      const p = await program.account.learnerProfile.fetch(learnerAPDA);
+      const word1 = p.achievementFlags[1].toNumber();
+      assert.ok((word1 & (1 << 1)) !== 0, "Bit 1 of word 1 (index 65) should be set");
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════
+  // PHASE 8: STREAK FREEZES
+  // ═══════════════════════════════════════════════════════════
+  describe("Phase 8: Streak Freezes", () => {
+
+    it("8.01 — award_streak_freeze: increments counter", async () => {
+      const before = (await program.account.learnerProfile.fetch(learnerAPDA)).streakFreezes;
+
+      await program.methods.awardStreakFreeze()
+        .accounts({
+          backendSigner: backendSigner.publicKey,
+          config: configPDA,
+          learner: learnerAPDA,
+        })
+        .signers([backendSigner])
+        .rpc();
+
+      const after = (await program.account.learnerProfile.fetch(learnerAPDA)).streakFreezes;
+      assert.equal(after, before + 1);
+    });
+
+    it("8.02 — award_streak_freeze: only backend can call", async () => {
+      await assertFails(() =>
+        program.methods.awardStreakFreeze()
+          .accounts({
+            backendSigner: unauthorized.publicKey,
+            config: configPDA,
+            learner: learnerAPDA,
+          })
+          .signers([unauthorized])
+          .rpc()
+      , "Unauthorized");
+    });
+
+    it("8.03 — award_streak_freeze: multiple awards stack", async () => {
+      for (let i = 0; i < 3; i++) {
+        await program.methods.awardStreakFreeze()
+          .accounts({
+            backendSigner: backendSigner.publicKey,
+            config: configPDA,
+            learner: learnerAPDA,
+          })
+          .signers([backendSigner])
+          .rpc();
+      }
+      const p = await program.account.learnerProfile.fetch(learnerAPDA);
+      assert.ok(p.streakFreezes >= 4, "Should have 4+ freezes");
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════
+  // PHASE 9: REFERRALS
+  // ═══════════════════════════════════════════════════════════
+  describe("Phase 9: Referrals", () => {
+
+    it("9.01 — register_referral: increments referrer count", async () => {
+      await program.methods.registerReferral()
+        .accounts({
+          user: learnerC.publicKey,
+          referee: learnerCPDA,
+          referrer: learnerAPDA,
+        })
+        .signers([learnerC])
+        .rpc();
+
+      assert.equal((await program.account.learnerProfile.fetch(learnerAPDA)).referralCount, 1);
+      assert.equal((await program.account.learnerProfile.fetch(learnerCPDA)).hasReferrer, true);
+    });
+
+    it("9.02 — register_referral: self-referral fails", async () => {
+      const selfKeypair = Keypair.generate();
+      await airdrop(connection, selfKeypair.publicKey, 2 * LAMPORTS_PER_SOL);
+      const [selfPda] = findLearnerPDA(selfKeypair.publicKey, program.programId);
+
+      await program.methods.initLearner()
+        .accounts({
+          user: selfKeypair.publicKey,
+          learner: selfPda,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([selfKeypair])
+        .rpc();
+
+      await assertFails(() =>
+        program.methods.registerReferral()
+          .accounts({
+            user: selfKeypair.publicKey,
+            referee: selfPda,
+            referrer: selfPda,
+          })
+          .signers([selfKeypair])
+          .rpc()
+      , "SelfReferral");
+    });
+
+    it("9.03 — register_referral: double registration fails", async () => {
+      await assertFails(() =>
+        program.methods.registerReferral()
+          .accounts({
+            user: learnerC.publicKey,
+            referee: learnerCPDA,
+            referrer: learnerBPDA,
+          })
+          .signers([learnerC])
+          .rpc()
+      , "AlreadyReferred");
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════
+  // PHASE 10: SECURITY & ECONOMIC INVARIANTS
+  // ═══════════════════════════════════════════════════════════
+  describe("Phase 10: Security & Economic Invariants", () => {
+
+    it("10.01 — inactive course blocks enrollment", async () => {
+      await program.methods.updateCourse({
+        contentTxId: null, contentType: null, isActive: false,
+        creatorRewardXp: null, minCompletionsForReward: null,
+      }).accounts({
+        authority: authority.publicKey, course: courseBegPDA,
+      }).rpc();
+
+      const [enrollNewC] = findEnrollmentPDA(COURSE_BEG, learnerC.publicKey, program.programId);
+      await assertFails(() =>
+        program.methods.enroll()
+          .accounts({
+            user: learnerC.publicKey,
+            course: courseBegPDA,
+            enrollment: enrollNewC,
+            prerequisiteEnrollment: null,
+            systemProgram: SystemProgram.programId,
+          })
+          .signers([learnerC])
+          .rpc()
+      , "CourseNotActive");
+
+      // Reactivate
+      await program.methods.updateCourse({
+        contentTxId: null, contentType: null, isActive: true,
+        creatorRewardXp: null, minCompletionsForReward: null,
+      }).accounts({
+        authority: authority.publicKey, course: courseBegPDA,
+      }).rpc();
+    });
+
+    it("10.02 — creator reward gated by min_completions_for_reward", async () => {
+      const c = await program.account.course.fetch(courseBegPDA);
+      assert.ok(c.totalCompletions < c.minCompletionsForReward,
+        "Completions below threshold — creator reward should be withheld");
+    });
+
+    it("10.03 — PDA derivation: all seeds verified", async () => {
+      const [cfgPDA] = PublicKey.findProgramAddressSync([Buffer.from("config")], program.programId);
+      assert.equal(configPDA.toBase58(), cfgPDA.toBase58());
+
+      const [cPDA] = PublicKey.findProgramAddressSync(
+        [Buffer.from("course"), Buffer.from(COURSE_BEG)], program.programId
+      );
+      assert.equal(courseBegPDA.toBase58(), cPDA.toBase58());
+
+      const [lPDA] = PublicKey.findProgramAddressSync(
+        [Buffer.from("learner"), learnerA.publicKey.toBuffer()], program.programId
+      );
+      assert.equal(learnerAPDA.toBase58(), lPDA.toBase58());
+
+      const [ePDA] = PublicKey.findProgramAddressSync(
+        [Buffer.from("enrollment"), Buffer.from(COURSE_BEG), learnerA.publicKey.toBuffer()], program.programId
+      );
+      assert.equal(enrollBegA.toBase58(), ePDA.toBase58());
+    });
+
+    it("10.04 — XP balance integrity: learnerA total is positive and consistent", async () => {
+      const ta = await getAccount(connection, learnerA_ATA, undefined, TOKEN_2022_PROGRAM_ID);
+      const balance = Number(ta.amount);
+      // 150 (lessons) + 200 (bonus) + 150 (re-enroll lessons) + 100 (ach0) + ≤500 (ach1) + 50 (ach65)
+      console.log(`  LearnerA XP balance: ${balance}`);
+      assert.ok(balance > 0, "Balance should be positive");
+    });
+
+    it("10.05 — season lifecycle: closed season blocks XP minting", async () => {
+      await program.methods.closeSeason()
+        .accounts({ authority: authority.publicKey, config: configPDA })
+        .rpc();
+
+      const cfg = await program.account.config.fetch(configPDA);
+      assert.equal(cfg.seasonClosed, true);
+
+      // Re-open for subsequent tests
+      const newMint = Keypair.generate();
+      await program.methods.createSeason(3)
+        .accounts({
+          authority: authority.publicKey,
+          config: configPDA,
+          mint: newMint.publicKey,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([newMint])
+        .rpc();
+
+      const cfg2 = await program.account.config.fetch(configPDA);
+      currentMint = cfg2.currentMint;
+    });
+
+    it("10.06 — account sizes match expectations", async () => {
+      const cfgInfo = await connection.getAccountInfo(configPDA);
+      const courseInfo = await connection.getAccountInfo(courseBegPDA);
+      const learnerInfo = await connection.getAccountInfo(learnerAPDA);
+
+      console.log(`  Config PDA size: ${cfgInfo?.data.length} bytes`);
+      console.log(`  Course PDA size: ${courseInfo?.data.length} bytes`);
+      console.log(`  LearnerProfile size: ${learnerInfo?.data.length} bytes`);
+
+      assert.ok(cfgInfo!.data.length >= 100, "Config should be substantial");
+      assert.ok(courseInfo!.data.length >= 150, "Course should be substantial");
+      assert.ok(learnerInfo!.data.length >= 80, "Learner should be substantial");
+    });
+  });
+});

@@ -1,0 +1,85 @@
+import { NextResponse } from "next/server";
+import { PublicKey } from "@solana/web3.js";
+import {
+  getAssociatedTokenAddressSync,
+  TOKEN_2022_PROGRAM_ID,
+} from "@solana/spl-token";
+import { getBackendProgram } from "@/lib/solana/backend-signer";
+import {
+  findConfigPDA,
+  findCoursePDA,
+  findEnrollmentPDA,
+} from "@/lib/solana/pda";
+import {
+  parseAnchorError,
+  isIdempotentError,
+  isClientError,
+} from "@/lib/solana/anchor-errors";
+
+export async function POST(req: Request) {
+  try {
+    const body = await req.json();
+    const { learner, courseId, lessonIndex } = body as {
+      learner?: string;
+      courseId?: string;
+      lessonIndex?: number;
+    };
+
+    if (!learner || !courseId || lessonIndex === undefined) {
+      return NextResponse.json(
+        { error: "Missing required fields: learner, courseId, lessonIndex" },
+        { status: 400 },
+      );
+    }
+
+    const { program, signer } = getBackendProgram();
+    const learnerKey = new PublicKey(learner);
+    const [configPDA] = findConfigPDA();
+    const [coursePDA] = findCoursePDA(courseId);
+    const [enrollmentPDA] = findEnrollmentPDA(courseId, learnerKey);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const config = await (program.account as any).config.fetch(configPDA);
+    const xpMint = config.xpMint as PublicKey;
+    const learnerATA = getAssociatedTokenAddressSync(
+      xpMint,
+      learnerKey,
+      true,
+      TOKEN_2022_PROGRAM_ID,
+    );
+
+    const tx = await program.methods
+      .completeLesson(lessonIndex)
+      .accounts({
+        config: configPDA,
+        course: coursePDA,
+        enrollment: enrollmentPDA,
+        learner: learnerKey,
+        learnerTokenAccount: learnerATA,
+        xpMint,
+        backendSigner: signer.publicKey,
+        tokenProgram: TOKEN_2022_PROGRAM_ID,
+      })
+      .signers([signer])
+      .rpc();
+
+    return NextResponse.json({ signature: tx });
+  } catch (err: unknown) {
+    const anchor = parseAnchorError(err);
+    if (anchor && isIdempotentError(anchor.code)) {
+      return NextResponse.json({
+        alreadyDone: true,
+        message: anchor.message,
+      });
+    }
+    if (anchor && isClientError(anchor.code)) {
+      return NextResponse.json(
+        { error: anchor.message, code: anchor.name },
+        { status: 400 },
+      );
+    }
+    const message = err instanceof Error ? err.message : "Transaction failed";
+    console.error("complete-lesson error:", err);
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}

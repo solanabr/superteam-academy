@@ -1,0 +1,21 @@
+[package]
+name = "onchain-academy"
+version = "0.1.0"
+description = "Superteam Academy on-chain program — courses, XP, credentials, achievements"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "onchain_academy"
+
+[features]
+default = []
+cpi = ["no-entrypoint"]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+idl-build = ["anchor-lang/idl-build"]
+
+[dependencies]
+anchor-lang = "0.31.1"
+mpl-core = { version = "0.11.1", features = ["anchor"] }
