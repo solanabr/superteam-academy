@@ -47,18 +47,16 @@ export function Header() {
       <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-8">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white dark:bg-[#1b231d] shadow-sm">
+            <Link href="/" className="flex items-center">
+              <div className="rounded-lg p-1 bg-black dark:bg-transparent">
                 <Image
                   src="/logo.png"
                   alt="Superteam Academy"
-                  width={28}
-                  height={28}
+                  width={58}
+                  height={58}
+                  className="h-10 w-10"
                 />
               </div>
-              <span className="hidden text-lg font-bold sm:inline-block">
-                superteam <span className="text-solana-purple">brazil</span>
-              </span>
             </Link>
             <nav className="hidden items-center gap-1 md:flex">
               {NAV_KEYS.map((item) => (
