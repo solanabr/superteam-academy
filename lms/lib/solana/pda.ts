@@ -44,3 +44,33 @@ export function getLearnerTokenAccount(
     TOKEN_2022_PROGRAM_ID,
   );
 }
+
+export function getMinterRolePDA(minter: PublicKey): [PublicKey, number] {
+  return PublicKey.findProgramAddressSync(
+    [Buffer.from("minter"), minter.toBuffer()],
+    PROGRAM_ID,
+  );
+}
+
+export function getAchievementTypePDA(
+  achievementId: string,
+): [PublicKey, number] {
+  return PublicKey.findProgramAddressSync(
+    [Buffer.from("achievement"), Buffer.from(achievementId)],
+    PROGRAM_ID,
+  );
+}
+
+export function getAchievementReceiptPDA(
+  achievementId: string,
+  recipient: PublicKey,
+): [PublicKey, number] {
+  return PublicKey.findProgramAddressSync(
+    [
+      Buffer.from("achievement_receipt"),
+      Buffer.from(achievementId),
+      recipient.toBuffer(),
+    ],
+    PROGRAM_ID,
+  );
+}

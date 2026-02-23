@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 
 use crate::errors::AcademyError;
+use crate::events::Unenrolled;
 use crate::state::Enrollment;
 
 #[derive(Accounts)]
@@ -43,11 +44,4 @@ pub fn handler(ctx: Context<Unenroll>, _course_id: String) -> Result<()> {
     });
 
     Ok(())
-}
-
-#[event]
-pub struct Unenrolled {
-    pub learner: Pubkey,
-    pub course: Pubkey,
-    pub timestamp: i64,
 }

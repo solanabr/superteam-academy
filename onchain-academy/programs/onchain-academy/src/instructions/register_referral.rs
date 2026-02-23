@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 
 use crate::errors::AcademyError;
+use crate::events::ReferralRegistered;
 use crate::state::LearnerProfile;
 
 #[derive(Accounts)]
@@ -50,11 +51,4 @@ pub fn handler(ctx: Context<RegisterReferral>) -> Result<()> {
     });
 
     Ok(())
-}
-
-#[event]
-pub struct ReferralRegistered {
-    pub referrer: Pubkey,
-    pub referee: Pubkey,
-    pub timestamp: i64,
 }

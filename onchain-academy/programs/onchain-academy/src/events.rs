@@ -126,3 +126,65 @@ pub struct AchievementTypeDeactivated {
     pub achievement_id: String,
     pub timestamp: i64,
 }
+
+#[event]
+pub struct LearnerInitialized {
+    pub learner: Pubkey,
+    pub timestamp: i64,
+}
+
+#[event]
+pub struct ReferralRegistered {
+    pub referrer: Pubkey,
+    pub referee: Pubkey,
+    pub timestamp: i64,
+}
+
+#[event]
+pub struct AchievementClaimed {
+    pub learner: Pubkey,
+    pub achievement_index: u8,
+    pub xp_reward: u32,
+    pub timestamp: i64,
+}
+
+#[event]
+pub struct StreakFreezeAwarded {
+    pub learner: Pubkey,
+    pub freezes_remaining: u8,
+    pub timestamp: i64,
+}
+
+#[event]
+pub struct Unenrolled {
+    pub learner: Pubkey,
+    pub course: Pubkey,
+    pub timestamp: i64,
+}
+
+#[event]
+pub struct SeasonCreated {
+    pub season: u16,
+    pub mint: Pubkey,
+    pub timestamp: i64,
+}
+
+#[event]
+pub struct SeasonClosedEvent {
+    pub season: u16,
+    pub timestamp: i64,
+}
+
+#[event]
+pub struct StreakBroken {
+    pub learner: Pubkey,
+    pub final_streak: u16,
+    pub timestamp: i64,
+}
+
+#[event]
+pub struct StreakMilestone {
+    pub learner: Pubkey,
+    pub milestone: u16,
+    pub timestamp: i64,
+}

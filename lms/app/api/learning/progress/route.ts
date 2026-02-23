@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { PublicKey } from "@solana/web3.js";
 import { connectDB } from "@/lib/db/mongodb";
 import { Enrollment } from "@/lib/db/models/enrollment";
-import { SAMPLE_COURSES } from "@/lib/data/sample-courses";
+import { getAllCourses } from "@/lib/db/course-helpers";
 import { fetchSanityCourses } from "@/lib/services/sanity-courses";
 import {
   fetchEnrollment,
@@ -40,12 +40,11 @@ export async function GET(req: NextRequest) {
   // Enrich with on-chain data where available
   try {
     const wallet = new PublicKey(userId);
+    const dbCourses = await getAllCourses();
     const sanityCourses = await fetchSanityCourses();
     const allCourses = [
-      ...SAMPLE_COURSES,
-      ...sanityCourses.filter(
-        (sc) => !SAMPLE_COURSES.some((s) => s.id === sc.id),
-      ),
+      ...dbCourses,
+      ...sanityCourses.filter((sc) => !dbCourses.some((s) => s.id === sc.id)),
     ];
     for (const knownCourse of allCourses) {
       const enrollment = await fetchEnrollment(knownCourse.id, wallet);

@@ -2,7 +2,7 @@ import { PublicKey } from "@solana/web3.js";
 
 export const PROGRAM_ID = new PublicKey(
   process.env.NEXT_PUBLIC_PROGRAM_ID ||
-    "8M2cmZPb3grNi479qCDVwx3DjZMWCk8UEyH3H7x95Cxs",
+    "FBL7RFCfVd5MG3wrcjcrcYC5tht8nNi1QeGebtdFichD",
 );
 
 export const RPC_ENDPOINT =
@@ -21,3 +21,7 @@ export const TRACKS: Record<
 
 export const MAX_DAILY_XP = 2000;
 export const XP_DECIMALS = 0;
+
+export const MPL_CORE_PROGRAM_ID = new PublicKey(
+  "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d",
+);

@@ -1,4 +1,5 @@
 import { PublicKey } from "@solana/web3.js";
+import { RPC_ENDPOINT } from "./constants";
 import { getAccount, TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
 import { getConnection } from "./connection";
 import { getReadonlyProgram } from "./program";
@@ -167,4 +168,98 @@ export async function fetchAllCourses(): Promise<
   } catch {
     return [];
   }
+}
+
+export async function fetchAllMinterRoles(): Promise<
+  { publicKey: PublicKey; minterRole: any }[]
+> {
+  const program = getReadonlyProgram();
+  try {
+    const accounts = await (program.account as any).minterRole.all();
+    return accounts.map((a: any) => ({
+      publicKey: a.publicKey as PublicKey,
+      minterRole: a.account,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+export async function fetchAllAchievementTypes(): Promise<
+  { publicKey: PublicKey; achievementType: any }[]
+> {
+  const program = getReadonlyProgram();
+  try {
+    const accounts = await (program.account as any).achievementType.all();
+    return accounts.map((a: any) => ({
+      publicKey: a.publicKey as PublicKey,
+      achievementType: a.account,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+export async function fetchAsset(assetId: PublicKey): Promise<any | null> {
+  try {
+    const res = await fetch(RPC_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: "getAsset",
+        method: "getAsset",
+        params: { id: assetId.toBase58() },
+      }),
+    });
+    const json = await res.json();
+    return json.result ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchAssetsByOwner(owner: PublicKey): Promise<any[]> {
+  try {
+    const res = await fetch(RPC_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: "getAssetsByOwner",
+        method: "getAssetsByOwner",
+        params: {
+          ownerAddress: owner.toBase58(),
+          page: 1,
+          limit: 100,
+        },
+      }),
+    });
+    const json = await res.json();
+    return json.result?.items ?? [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Fetch credential NFT for a completed enrollment.
+ * Returns the Metaplex Core asset data if the enrollment has a credential_asset.
+ */
+export async function fetchCredentialForEnrollment(
+  courseId: string,
+  wallet: PublicKey,
+): Promise<any | null> {
+  const enrollment = await fetchEnrollment(courseId, wallet);
+  if (!enrollment?.completedAt || !enrollment?.credentialAsset) return null;
+
+  const assetPk =
+    enrollment.credentialAsset instanceof PublicKey
+      ? enrollment.credentialAsset
+      : new PublicKey(enrollment.credentialAsset);
+
+  // Skip if it's the default pubkey (no credential issued)
+  if (assetPk.equals(PublicKey.default)) return null;
+
+  return fetchAsset(assetPk);
 }

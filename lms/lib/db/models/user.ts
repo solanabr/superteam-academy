@@ -23,6 +23,8 @@ export interface IUser extends Document {
   };
   completedDailyChallenges: string[];
   dailyChallengeTxHashes: Map<string, string>;
+  referrer?: string;
+  referralCount: number;
   communityPoints: number;
   endorsementCount: number;
   joinedAt: Date;
@@ -51,6 +53,8 @@ const UserSchema = new Schema<IUser>({
   },
   completedDailyChallenges: { type: [String], default: [] },
   dailyChallengeTxHashes: { type: Map, of: String, default: new Map() },
+  referrer: { type: String, default: undefined },
+  referralCount: { type: Number, default: 0 },
   communityPoints: { type: Number, default: 0 },
   endorsementCount: { type: Number, default: 0 },
   joinedAt: { type: Date, default: Date.now },

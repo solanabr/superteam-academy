@@ -1,10 +1,11 @@
 "use client";
 
-import { type ReactNode, useMemo, useState } from "react";
+import { type ReactNode, useMemo, useCallback, useState } from "react";
 import {
   ConnectionProvider,
   WalletProvider,
 } from "@solana/wallet-adapter-react";
+import { type WalletError } from "@solana/wallet-adapter-base";
 import {
   PhantomWalletAdapter,
   SolflareWalletAdapter,
@@ -21,9 +22,13 @@ function WalletContextProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const onError = useCallback((error: WalletError) => {
+    console.warn("[wallet]", error.name, error.message);
+  }, []);
+
   return (
     <ConnectionProvider endpoint={RPC_ENDPOINT}>
-      <WalletProvider wallets={wallets} autoConnect>
+      <WalletProvider wallets={wallets} autoConnect onError={onError}>
         {children}
       </WalletProvider>
     </ConnectionProvider>

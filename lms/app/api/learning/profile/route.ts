@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
     ]);
 
     if (profile && config) {
-      const xp = await fetchXPBalance(wallet, config.currentMint);
+      const xp = await fetchXPBalance(wallet, config.xpMint);
       const lastActivityTs =
         typeof profile.lastActivityDate === "object" &&
         "toNumber" in (profile.lastActivityDate as any)
@@ -67,8 +67,8 @@ export async function GET(req: NextRequest) {
     lastActivityDate: user.streak.lastDay * 86400,
     streakFreezes: 0,
     achievementFlags: [0, 0, 0, 0],
-    referralCount: 0,
-    hasReferrer: false,
+    referralCount: user.referralCount ?? 0,
+    hasReferrer: !!user.referrer,
     joinedAt: user.joinedAt.toISOString(),
   });
 }

@@ -1,7 +1,7 @@
 import { connectDB } from "./mongodb";
 import { User, type IUser } from "./models/user";
 import { Enrollment, type IEnrollment } from "./models/enrollment";
-import { SAMPLE_COURSES } from "@/lib/data/sample-courses";
+import { CourseModel } from "./models/course";
 
 export async function ensureUser(wallet: string): Promise<IUser> {
   await connectDB();
@@ -9,7 +9,7 @@ export async function ensureUser(wallet: string): Promise<IUser> {
     { wallet },
     { $setOnInsert: { wallet } },
     {
-      new: true,
+      returnDocument: "after",
       upsert: true,
       setDefaultsOnInsert: true,
     },
@@ -39,11 +39,15 @@ export async function findEnrollment(
   if (enrollment) return enrollment;
 
   // Fallback: courseId might be a slug — resolve to actual id
-  const course = SAMPLE_COURSES.find(
-    (c) => c.slug === courseId && c.id !== courseId,
-  );
+  const course = await CourseModel.findOne({
+    slug: courseId,
+    courseId: { $ne: courseId },
+  }).lean();
   if (course) {
-    enrollment = await Enrollment.findOne({ userId, courseId: course.id });
+    enrollment = await Enrollment.findOne({
+      userId,
+      courseId: course.courseId,
+    });
   }
   return enrollment;
 }

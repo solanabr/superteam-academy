@@ -21,7 +21,11 @@ import {
   getLearnerPDA,
   getEnrollmentPDA,
   getLearnerTokenAccount,
+  getMinterRolePDA,
+  getAchievementTypePDA,
+  getAchievementReceiptPDA,
 } from "./pda";
+import { MPL_CORE_PROGRAM_ID } from "./constants";
 
 // ---------------------------------------------------------------------------
 // ATA Helper
@@ -73,20 +77,29 @@ export async function buildEnrollTx(
   program: Program,
   wallet: PublicKey,
   courseId: string,
-  prerequisiteEnrollment?: PublicKey,
+  prerequisiteCourseId?: string,
 ): Promise<Transaction> {
   const [course] = getCoursePDA(courseId);
   const [enrollment] = getEnrollmentPDA(courseId, wallet);
-  const ix = await program.methods
-    .enroll(courseId)
-    .accountsPartial({
-      course,
-      enrollment,
-      prerequisiteEnrollment: prerequisiteEnrollment ?? undefined,
-      learner: wallet,
-      systemProgram: SystemProgram.programId,
-    })
-    .instruction();
+
+  const builder = program.methods.enroll(courseId).accountsPartial({
+    course,
+    enrollment,
+    learner: wallet,
+    systemProgram: SystemProgram.programId,
+  });
+
+  // Prerequisites are handled via remaining accounts
+  if (prerequisiteCourseId) {
+    const [prereqCourse] = getCoursePDA(prerequisiteCourseId);
+    const [prereqEnrollment] = getEnrollmentPDA(prerequisiteCourseId, wallet);
+    builder.remainingAccounts([
+      { pubkey: prereqCourse, isSigner: false, isWritable: false },
+      { pubkey: prereqEnrollment, isSigner: false, isWritable: false },
+    ]);
+  }
+
+  const ix = await builder.instruction();
   return new Transaction().add(ix);
 }
 
@@ -130,10 +143,12 @@ export async function buildCloseEnrollmentTx(
   wallet: PublicKey,
   courseId: string,
 ): Promise<Transaction> {
+  const [course] = getCoursePDA(courseId);
   const [enrollment] = getEnrollmentPDA(courseId, wallet);
   const ix = await program.methods
-    .closeEnrollment(courseId)
+    .closeEnrollment()
     .accountsPartial({
+      course,
       enrollment,
       learner: wallet,
     })
@@ -151,12 +166,10 @@ export async function buildCompleteLessonTx(
   wallet: PublicKey,
   courseId: string,
   lessonIndex: number,
-  xpAmount: number,
   xpMint: PublicKey,
 ): Promise<Transaction> {
   const [config] = getConfigPDA();
   const [course] = getCoursePDA(courseId);
-  const [learnerProfile] = getLearnerPDA(wallet);
   const [enrollment] = getEnrollmentPDA(courseId, wallet);
   const learnerTokenAccount = getLearnerTokenAccount(wallet, xpMint);
 
@@ -166,15 +179,14 @@ export async function buildCompleteLessonTx(
   if (ataIx) tx.add(ataIx);
 
   const ix = await program.methods
-    .completeLesson(lessonIndex, xpAmount)
+    .completeLesson(lessonIndex)
     .accountsPartial({
       config,
       course,
-      learnerProfile,
       enrollment,
-      xpMint,
-      learnerTokenAccount,
       learner: wallet,
+      learnerTokenAccount,
+      xpMint,
       backendSigner: backendPubkey,
       tokenProgram: TOKEN_2022_PROGRAM_ID,
     })
@@ -193,7 +205,6 @@ export async function buildFinalizeCourseTx(
 ): Promise<Transaction> {
   const [config] = getConfigPDA();
   const [course] = getCoursePDA(courseId);
-  const [learnerProfile] = getLearnerPDA(wallet);
   const [enrollment] = getEnrollmentPDA(courseId, wallet);
   const learnerTokenAccount = getLearnerTokenAccount(wallet, xpMint);
   const creatorTokenAccount = getLearnerTokenAccount(creatorWallet, xpMint);
@@ -213,13 +224,12 @@ export async function buildFinalizeCourseTx(
     .accountsPartial({
       config,
       course,
-      learnerProfile,
       enrollment,
-      xpMint,
+      learner: wallet,
       learnerTokenAccount,
       creatorTokenAccount,
-      learner: wallet,
       creator: creatorWallet,
+      xpMint,
       backendSigner: backendPubkey,
       tokenProgram: TOKEN_2022_PROGRAM_ID,
     })
@@ -285,21 +295,151 @@ export async function buildIssueCredentialTx(
   backendPubkey: PublicKey,
   wallet: PublicKey,
   courseId: string,
-): Promise<Transaction> {
+  credentialAssetKeypair: Keypair,
+  trackCollection: PublicKey,
+  credentialName: string,
+  metadataUri: string,
+  coursesCompleted: number,
+  totalXp: number,
+): Promise<{ tx: Transaction; credentialAssetKeypair: Keypair }> {
   const [config] = getConfigPDA();
   const [course] = getCoursePDA(courseId);
   const [enrollment] = getEnrollmentPDA(courseId, wallet);
   const ix = await program.methods
-    .issueCredential()
+    .issueCredential(credentialName, metadataUri, coursesCompleted, totalXp)
     .accountsPartial({
       config,
       course,
       enrollment,
       learner: wallet,
+      credentialAsset: credentialAssetKeypair.publicKey,
+      trackCollection,
+      payer: backendPubkey,
       backendSigner: backendPubkey,
+      mplCoreProgram: MPL_CORE_PROGRAM_ID,
+      systemProgram: SystemProgram.programId,
+    })
+    .instruction();
+  return { tx: new Transaction().add(ix), credentialAssetKeypair };
+}
+
+export async function buildUpgradeCredentialTx(
+  program: Program,
+  backendPubkey: PublicKey,
+  wallet: PublicKey,
+  courseId: string,
+  credentialAsset: PublicKey,
+  trackCollection: PublicKey,
+  credentialName: string,
+  metadataUri: string,
+  coursesCompleted: number,
+  totalXp: number,
+): Promise<Transaction> {
+  const [config] = getConfigPDA();
+  const [course] = getCoursePDA(courseId);
+  const [enrollment] = getEnrollmentPDA(courseId, wallet);
+  const ix = await program.methods
+    .upgradeCredential(credentialName, metadataUri, coursesCompleted, totalXp)
+    .accountsPartial({
+      config,
+      course,
+      enrollment,
+      learner: wallet,
+      credentialAsset,
+      trackCollection,
+      payer: backendPubkey,
+      backendSigner: backendPubkey,
+      mplCoreProgram: MPL_CORE_PROGRAM_ID,
+      systemProgram: SystemProgram.programId,
     })
     .instruction();
   return new Transaction().add(ix);
+}
+
+export async function buildRewardXpTx(
+  program: Program,
+  minterKeypair: PublicKey,
+  recipientWallet: PublicKey,
+  amount: number,
+  memo: string,
+  xpMint: PublicKey,
+): Promise<Transaction> {
+  const [config] = getConfigPDA();
+  const [minterRole] = getMinterRolePDA(minterKeypair);
+  const recipientTokenAccount = getLearnerTokenAccount(recipientWallet, xpMint);
+
+  const tx = new Transaction();
+
+  const ataIx = await ensureATAInstruction(
+    minterKeypair,
+    recipientWallet,
+    xpMint,
+  );
+  if (ataIx) tx.add(ataIx);
+
+  const ix = await program.methods
+    .rewardXp(amount, memo)
+    .accountsPartial({
+      config,
+      minterRole,
+      xpMint,
+      recipientTokenAccount,
+      minter: minterKeypair,
+      tokenProgram: TOKEN_2022_PROGRAM_ID,
+    })
+    .instruction();
+  tx.add(ix);
+  return tx;
+}
+
+export async function buildAwardAchievementTx(
+  program: Program,
+  minterPubkey: PublicKey,
+  achievementId: string,
+  recipientWallet: PublicKey,
+  assetKeypair: Keypair,
+  xpMint: PublicKey,
+  collection: PublicKey,
+): Promise<{ tx: Transaction; assetKeypair: Keypair }> {
+  const [config] = getConfigPDA();
+  const [achievementType] = getAchievementTypePDA(achievementId);
+  const [achievementReceipt] = getAchievementReceiptPDA(
+    achievementId,
+    recipientWallet,
+  );
+  const [minterRole] = getMinterRolePDA(minterPubkey);
+  const recipientTokenAccount = getLearnerTokenAccount(recipientWallet, xpMint);
+
+  const tx = new Transaction();
+
+  const ataIx = await ensureATAInstruction(
+    minterPubkey,
+    recipientWallet,
+    xpMint,
+  );
+  if (ataIx) tx.add(ataIx);
+
+  const ix = await program.methods
+    .awardAchievement()
+    .accountsPartial({
+      config,
+      achievementType,
+      achievementReceipt,
+      minterRole,
+      asset: assetKeypair.publicKey,
+      collection,
+      recipient: recipientWallet,
+      recipientTokenAccount,
+      xpMint,
+      payer: minterPubkey,
+      minter: minterPubkey,
+      mplCoreProgram: MPL_CORE_PROGRAM_ID,
+      tokenProgram: TOKEN_2022_PROGRAM_ID,
+      systemProgram: SystemProgram.programId,
+    })
+    .instruction();
+  tx.add(ix);
+  return { tx, assetKeypair };
 }
 
 // ---------------------------------------------------------------------------
@@ -309,19 +449,22 @@ export async function buildIssueCredentialTx(
 export async function buildInitializeTx(
   program: Program,
   authority: PublicKey,
-  maxDailyXp: number,
-  maxAchievementXp: number,
-): Promise<Transaction> {
+  xpMintKeypair: Keypair,
+): Promise<{ tx: Transaction; xpMintKeypair: Keypair }> {
   const [config] = getConfigPDA();
+  const [backendMinterRole] = getMinterRolePDA(authority);
   const ix = await program.methods
-    .initialize(maxDailyXp, maxAchievementXp)
+    .initialize()
     .accountsPartial({
       config,
+      xpMint: xpMintKeypair.publicKey,
       authority,
+      backendMinterRole,
       systemProgram: SystemProgram.programId,
+      tokenProgram: TOKEN_2022_PROGRAM_ID,
     })
     .instruction();
-  return new Transaction().add(ix);
+  return { tx: new Transaction().add(ix), xpMintKeypair };
 }
 
 export async function buildCreateSeasonTx(
@@ -352,15 +495,13 @@ export async function buildCreateCourseTx(
     courseId: string;
     creator: PublicKey;
     contentTxId: number[];
-    contentType: number;
     lessonCount: number;
-    challengeCount: number;
     difficulty: number;
-    xpTotal: number;
+    xpPerLesson: number;
     trackId: number;
     trackLevel: number;
     prerequisite: PublicKey | null;
-    completionRewardXp: number;
+    creatorRewardXp: number;
     minCompletionsForReward: number;
   },
 ): Promise<Transaction> {
@@ -371,20 +512,18 @@ export async function buildCreateCourseTx(
       courseId: params.courseId,
       creator: params.creator,
       contentTxId: params.contentTxId,
-      contentType: params.contentType,
       lessonCount: params.lessonCount,
-      challengeCount: params.challengeCount,
       difficulty: params.difficulty,
-      xpTotal: params.xpTotal,
+      xpPerLesson: params.xpPerLesson,
       trackId: params.trackId,
       trackLevel: params.trackLevel,
       prerequisite: params.prerequisite,
-      completionRewardXp: params.completionRewardXp,
+      creatorRewardXp: params.creatorRewardXp,
       minCompletionsForReward: params.minCompletionsForReward,
     })
     .accountsPartial({
-      config,
       course,
+      config,
       authority,
       systemProgram: SystemProgram.programId,
     })
@@ -396,7 +535,7 @@ export async function buildUpdateConfigTx(
   program: Program,
   authority: PublicKey,
   params: {
-    backendSigner?: PublicKey | null;
+    newBackendSigner?: PublicKey | null;
     maxDailyXp?: number | null;
     maxAchievementXp?: number | null;
   },
@@ -404,7 +543,7 @@ export async function buildUpdateConfigTx(
   const [config] = getConfigPDA();
   const ix = await program.methods
     .updateConfig({
-      backendSigner: params.backendSigner ?? null,
+      newBackendSigner: params.newBackendSigner ?? null,
       maxDailyXp: params.maxDailyXp ?? null,
       maxAchievementXp: params.maxAchievementXp ?? null,
     })
@@ -436,31 +575,25 @@ export async function buildUpdateCourseTx(
   authority: PublicKey,
   courseId: string,
   params: {
-    contentTxId?: number[] | null;
-    contentType?: number | null;
-    lessonCount?: number | null;
-    challengeCount?: number | null;
-    difficulty?: number | null;
-    xpTotal?: number | null;
-    completionRewardXp?: number | null;
-    minCompletionsForReward?: number | null;
-    isActive?: boolean | null;
+    newContentTxId?: number[] | null;
+    newIsActive?: boolean | null;
+    newXpPerLesson?: number | null;
+    newCreatorRewardXp?: number | null;
+    newMinCompletionsForReward?: number | null;
   },
 ): Promise<Transaction> {
+  const [config] = getConfigPDA();
   const [course] = getCoursePDA(courseId);
   const ix = await program.methods
     .updateCourse({
-      contentTxId: params.contentTxId ?? null,
-      contentType: params.contentType ?? null,
-      lessonCount: params.lessonCount ?? null,
-      challengeCount: params.challengeCount ?? null,
-      difficulty: params.difficulty ?? null,
-      xpTotal: params.xpTotal ?? null,
-      completionRewardXp: params.completionRewardXp ?? null,
-      minCompletionsForReward: params.minCompletionsForReward ?? null,
-      isActive: params.isActive ?? null,
+      newContentTxId: params.newContentTxId ?? null,
+      newIsActive: params.newIsActive ?? null,
+      newXpPerLesson: params.newXpPerLesson ?? null,
+      newCreatorRewardXp: params.newCreatorRewardXp ?? null,
+      newMinCompletionsForReward: params.newMinCompletionsForReward ?? null,
     })
     .accountsPartial({
+      config,
       course,
       authority,
     })
@@ -468,8 +601,107 @@ export async function buildUpdateCourseTx(
   return new Transaction().add(ix);
 }
 
+export async function buildRegisterMinterTx(
+  program: Program,
+  authority: PublicKey,
+  params: {
+    minter: PublicKey;
+    label: string;
+    maxXpPerCall: number;
+  },
+): Promise<Transaction> {
+  const [config] = getConfigPDA();
+  const [minterRole] = getMinterRolePDA(params.minter);
+  const ix = await program.methods
+    .registerMinter({
+      minter: params.minter,
+      label: params.label,
+      maxXpPerCall: params.maxXpPerCall,
+    })
+    .accountsPartial({
+      config,
+      minterRole,
+      authority,
+      payer: authority,
+      systemProgram: SystemProgram.programId,
+    })
+    .instruction();
+  return new Transaction().add(ix);
+}
+
+export async function buildRevokeMinterTx(
+  program: Program,
+  authority: PublicKey,
+  minterPubkey: PublicKey,
+): Promise<Transaction> {
+  const [config] = getConfigPDA();
+  const [minterRole] = getMinterRolePDA(minterPubkey);
+  const ix = await program.methods
+    .revokeMinter()
+    .accountsPartial({
+      config,
+      minterRole,
+      authority,
+    })
+    .instruction();
+  return new Transaction().add(ix);
+}
+
+export async function buildCreateAchievementTypeTx(
+  program: Program,
+  authority: PublicKey,
+  collectionKeypair: Keypair,
+  params: {
+    achievementId: string;
+    name: string;
+    metadataUri: string;
+    maxSupply: number;
+    xpReward: number;
+  },
+): Promise<{ tx: Transaction; collectionKeypair: Keypair }> {
+  const [config] = getConfigPDA();
+  const [achievementType] = getAchievementTypePDA(params.achievementId);
+  const ix = await program.methods
+    .createAchievementType({
+      achievementId: params.achievementId,
+      name: params.name,
+      metadataUri: params.metadataUri,
+      maxSupply: params.maxSupply,
+      xpReward: params.xpReward,
+    })
+    .accountsPartial({
+      config,
+      achievementType,
+      collection: collectionKeypair.publicKey,
+      authority,
+      payer: authority,
+      mplCoreProgram: MPL_CORE_PROGRAM_ID,
+      systemProgram: SystemProgram.programId,
+    })
+    .instruction();
+  return { tx: new Transaction().add(ix), collectionKeypair };
+}
+
+export async function buildDeactivateAchievementTypeTx(
+  program: Program,
+  authority: PublicKey,
+  achievementId: string,
+): Promise<Transaction> {
+  const [config] = getConfigPDA();
+  const [achievementType] = getAchievementTypePDA(achievementId);
+  const ix = await program.methods
+    .deactivateAchievementType()
+    .accountsPartial({
+      config,
+      achievementType,
+      authority,
+    })
+    .instruction();
+  return new Transaction().add(ix);
+}
+
 // ---------------------------------------------------------------------------
-// Memo Transaction (real on-chain proof when program isn't deployed)
+// Memo Transaction (for community features without on-chain instructions)
 // ---------------------------------------------------------------------------
 
 export async function sendMemoTx(

@@ -11,6 +11,8 @@ import {
   buildInitLearnerTx,
   buildEnrollTx,
   buildUnenrollTx,
+  buildCloseEnrollmentTx,
+  buildRegisterReferralTx,
   ensureATAInstruction,
 } from "@/lib/solana/transactions";
 import { getLearnerTokenAccount } from "@/lib/solana/pda";
@@ -275,6 +277,106 @@ export function useUnenroll() {
   });
 }
 
+export function useCloseEnrollment() {
+  const { publicKey, signTransaction } = useWallet();
+  const { connection } = useConnection();
+  const userId = publicKey?.toBase58() ?? "guest";
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (
+      courseId: string,
+    ): Promise<{ txSignature: string | null }> => {
+      if (!publicKey || !signTransaction) {
+        throw new Error("Wallet not connected");
+      }
+
+      let txSignature: string | null = null;
+
+      const config = await fetchConfig();
+      if (config) {
+        const provider = new AnchorProvider(
+          connection,
+          {
+            publicKey,
+            signTransaction,
+            signAllTransactions: async (txs: any[]) => txs,
+          } as any,
+          { commitment: "confirmed" },
+        );
+        const program = getProgram(provider);
+        const tx = await buildCloseEnrollmentTx(program, publicKey, courseId);
+        tx.feePayer = publicKey;
+        tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+        const signed = await signTransaction(tx);
+        txSignature = await connection.sendRawTransaction(signed.serialize());
+      }
+
+      return { txSignature };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["allProgress", userId] });
+      queryClient.invalidateQueries({ queryKey: ["progress"] });
+    },
+  });
+}
+
+export function useRegisterReferral() {
+  const { publicKey, signTransaction } = useWallet();
+  const { connection } = useConnection();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (
+      referrerWallet: string,
+    ): Promise<{ txSignature: string | null }> => {
+      if (!publicKey || !signTransaction) {
+        throw new Error("Wallet not connected");
+      }
+
+      const { PublicKey: PK } = await import("@solana/web3.js");
+      const referrer = new PK(referrerWallet);
+      let txSignature: string | null = null;
+
+      const config = await fetchConfig();
+      if (config) {
+        const provider = new AnchorProvider(
+          connection,
+          {
+            publicKey,
+            signTransaction,
+            signAllTransactions: async (txs: any[]) => txs,
+          } as any,
+          { commitment: "confirmed" },
+        );
+        const program = getProgram(provider);
+        const tx = await buildRegisterReferralTx(program, publicKey, referrer);
+        tx.feePayer = publicKey;
+        tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+        const signed = await signTransaction(tx);
+        txSignature = await connection.sendRawTransaction(signed.serialize());
+      }
+
+      // MongoDB backup
+      await fetch("/api/learning/referral", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          refereeId: publicKey.toBase58(),
+          referrerId: referrerWallet,
+          txSignature,
+        }),
+      });
+
+      return { txSignature };
+    },
+    onSuccess: () => {
+      const userId = publicKey?.toBase58() ?? "guest";
+      queryClient.invalidateQueries({ queryKey: ["profile", userId] });
+    },
+  });
+}
+
 export function useClaimAchievement() {
   const { publicKey } = useWallet();
   const userId = publicKey?.toBase58() ?? "guest";
@@ -335,7 +437,7 @@ export function useEnroll() {
           const ataIx = await ensureATAInstruction(
             publicKey,
             publicKey,
-            config.currentMint,
+            config.xpMint,
           );
           if (ataIx) tx.add(ataIx);
 
@@ -427,6 +529,11 @@ export function useCertificates(trackId: number) {
           xpEarned: number;
           txHash: string;
           issuedAt: string;
+          nftMetadata: {
+            name: string;
+            uri: string;
+            attributes: { trait_type: string; value: string }[];
+          } | null;
         }[]
       >,
     enabled: !!publicKey,
