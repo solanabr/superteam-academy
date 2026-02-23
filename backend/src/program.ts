@@ -11,13 +11,29 @@ import idl from "./idl/onchain_academy.json" with { type: "json" };
 const rpc =
   process.env.SOLANA_RPC ?? "https://api.devnet.solana.com";
 
+const keypairCache = new Map<string, Keypair | null>();
+let authorityProgramCache: Program | null | undefined;
+let backendProgramCache: Program | null | undefined;
+
 function getKeypair(envKey: string): Keypair | null {
+  const cached = keypairCache.get(envKey);
+  if (cached !== undefined) {
+    return cached;
+  }
+
   const raw = process.env[envKey];
-  if (!raw) return null;
+  if (!raw) {
+    keypairCache.set(envKey, null);
+    return null;
+  }
+
   try {
     const arr = JSON.parse(raw) as number[];
-    return Keypair.fromSecretKey(Uint8Array.from(arr));
+    const keypair = Keypair.fromSecretKey(Uint8Array.from(arr));
+    keypairCache.set(envKey, keypair);
+    return keypair;
   } catch {
+    keypairCache.set(envKey, null);
     return null;
   }
 }
@@ -55,9 +71,7 @@ export function getBackendSignerKeypair(): Keypair | null {
   return getKeypair("ACADEMY_BACKEND_SIGNER_KEYPAIR");
 }
 
-export function getAuthorityProgram(): Program | null {
-  const keypair = getAuthorityKeypair();
-  if (!keypair) return null;
+function createProgram(keypair: Keypair): Program {
   const connection = new Connection(rpc);
   const wallet = walletFromKeypair(keypair);
   const provider = new AnchorProvider(connection, wallet, {
@@ -66,13 +80,22 @@ export function getAuthorityProgram(): Program | null {
   return new Program(idl as Idl, provider);
 }
 
+export function getAuthorityProgram(): Program | null {
+  if (authorityProgramCache !== undefined) {
+    return authorityProgramCache;
+  }
+
+  const keypair = getAuthorityKeypair();
+  authorityProgramCache = keypair ? createProgram(keypair) : null;
+  return authorityProgramCache;
+}
+
 export function getBackendProgram(): Program | null {
-  const keypair = getKeypair("ACADEMY_BACKEND_SIGNER_KEYPAIR");
-  if (!keypair) return null;
-  const connection = new Connection(rpc);
-  const wallet = walletFromKeypair(keypair);
-  const provider = new AnchorProvider(connection, wallet, {
-    commitment: "confirmed",
-  });
-  return new Program(idl as Idl, provider);
+  if (backendProgramCache !== undefined) {
+    return backendProgramCache;
+  }
+
+  const keypair = getBackendSignerKeypair();
+  backendProgramCache = keypair ? createProgram(keypair) : null;
+  return backendProgramCache;
 }

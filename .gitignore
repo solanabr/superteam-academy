@@ -59,3 +59,6 @@ onchain-academy/target/verifiable/
 *.log
 *.tmp
 .cache/
+
+.academy-authority.json
+academy-authority.json

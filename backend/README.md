@@ -2,6 +2,18 @@
 
 Standalone server for backend-signed on-chain transactions (lesson completion, course finalization, credential issuance).
 
+## Code Structure
+
+The backend is split by concern:
+
+- `src/index.ts` — Hono server bootstrap, middleware, route mounting
+- `src/routes/academy.ts` — route composition
+- `src/academy/routes/*.ts` — domain handlers (`course`, `credential`, `minter`, `achievement`, `config`)
+- `src/academy/shared.ts` — shared Solana helpers (program access, config/account fetchers, ATA setup, tx sending)
+- `src/lib/errors.ts` — consistent API error mapping
+- `src/lib/validation.ts` — request body/public key validation
+- `src/program.ts` — keypair parsing + cached Anchor program clients
+
 ## Setup
 
 ```bash
