@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Superteam Academy API",
-    "description": "Postman collection for testing backend endpoints under /health and /academy/*.",
+    "description": "Postman collection for testing backend endpoints under /health and /v1/academy/*.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -58,7 +58,7 @@
       "name": "Courses",
       "item": [
         {
-          "name": "POST /academy/create-course",
+          "name": "POST /v1/academy/create-course",
           "request": {
             "method": "POST",
             "header": [
@@ -72,7 +72,7 @@
               "raw": "{\n  \"courseId\": \"{{courseId}}\",\n  \"lessonCount\": 3,\n  \"xpPerLesson\": 100,\n  \"creator\": \"{{creatorPubkey}}\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/academy/create-course",
+              "raw": "{{baseUrl}}/v1/academy/create-course",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -85,7 +85,7 @@
           "response": []
         },
         {
-          "name": "POST /academy/update-course",
+          "name": "POST /v1/academy/update-course",
           "request": {
             "method": "POST",
             "header": [
@@ -99,7 +99,7 @@
               "raw": "{\n  \"courseId\": \"{{courseId}}\",\n  \"newContentTxId\": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],\n  \"newIsActive\": true,\n  \"newXpPerLesson\": 150,\n  \"newCreatorRewardXp\": 75,\n  \"newMinCompletionsForReward\": 3\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/academy/update-course",
+              "raw": "{{baseUrl}}/v1/academy/update-course",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -112,7 +112,7 @@
           "response": []
         },
         {
-          "name": "POST /academy/complete-lesson",
+          "name": "POST /v1/academy/complete-lesson",
           "request": {
             "method": "POST",
             "header": [
@@ -126,7 +126,7 @@
               "raw": "{\n  \"courseId\": \"{{courseId}}\",\n  \"learner\": \"{{learnerPubkey}}\",\n  \"lessonIndex\": 0\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/academy/complete-lesson",
+              "raw": "{{baseUrl}}/v1/academy/complete-lesson",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -139,7 +139,7 @@
           "response": []
         },
         {
-          "name": "POST /academy/finalize-course",
+          "name": "POST /v1/academy/finalize-course",
           "request": {
             "method": "POST",
             "header": [
@@ -153,7 +153,7 @@
               "raw": "{\n  \"courseId\": \"{{courseId}}\",\n  \"learner\": \"{{learnerPubkey}}\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/academy/finalize-course",
+              "raw": "{{baseUrl}}/v1/academy/finalize-course",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -171,7 +171,7 @@
       "name": "Config",
       "item": [
         {
-          "name": "POST /academy/update-config",
+          "name": "POST /v1/academy/update-config",
           "request": {
             "method": "POST",
             "header": [
@@ -185,7 +185,7 @@
               "raw": "{\n  \"newBackendSigner\": \"{{newBackendSignerPubkey}}\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/academy/update-config",
+              "raw": "{{baseUrl}}/v1/academy/update-config",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -203,7 +203,7 @@
       "name": "Credentials",
       "item": [
         {
-          "name": "POST /academy/issue-credential",
+          "name": "POST /v1/academy/issue-credential",
           "event": [
             {
               "listen": "test",
@@ -235,7 +235,7 @@
               "raw": "{\n  \"courseId\": \"{{courseId}}\",\n  \"learner\": \"{{learnerPubkey}}\",\n  \"credentialName\": \"{{credentialName}}\",\n  \"metadataUri\": \"{{credentialMetadataUri}}\",\n  \"coursesCompleted\": 1,\n  \"totalXp\": 350,\n  \"trackCollection\": \"{{trackCollectionPubkey}}\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/academy/issue-credential",
+              "raw": "{{baseUrl}}/v1/academy/issue-credential",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -248,7 +248,7 @@
           "response": []
         },
         {
-          "name": "POST /academy/upgrade-credential",
+          "name": "POST /v1/academy/upgrade-credential",
           "request": {
             "method": "POST",
             "header": [
@@ -262,7 +262,7 @@
               "raw": "{\n  \"courseId\": \"{{courseId}}\",\n  \"learner\": \"{{learnerPubkey}}\",\n  \"credentialAsset\": \"{{credentialAssetPubkey}}\",\n  \"credentialName\": \"{{credentialName}}\",\n  \"metadataUri\": \"{{credentialUpgradeMetadataUri}}\",\n  \"coursesCompleted\": 2,\n  \"totalXp\": 800,\n  \"trackCollection\": \"{{trackCollectionPubkey}}\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/academy/upgrade-credential",
+              "raw": "{{baseUrl}}/v1/academy/upgrade-credential",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -280,7 +280,7 @@
       "name": "Minters",
       "item": [
         {
-          "name": "POST /academy/register-minter",
+          "name": "POST /v1/academy/register-minter",
           "request": {
             "method": "POST",
             "header": [
@@ -294,7 +294,7 @@
               "raw": "{\n  \"minter\": \"{{minterPubkey}}\",\n  \"label\": \"custom\",\n  \"maxXpPerCall\": 1000\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/academy/register-minter",
+              "raw": "{{baseUrl}}/v1/academy/register-minter",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -307,7 +307,7 @@
           "response": []
         },
         {
-          "name": "POST /academy/revoke-minter",
+          "name": "POST /v1/academy/revoke-minter",
           "request": {
             "method": "POST",
             "header": [
@@ -321,7 +321,7 @@
               "raw": "{\n  \"minter\": \"{{minterPubkey}}\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/academy/revoke-minter",
+              "raw": "{{baseUrl}}/v1/academy/revoke-minter",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -334,7 +334,7 @@
           "response": []
         },
         {
-          "name": "POST /academy/reward-xp",
+          "name": "POST /v1/academy/reward-xp",
           "request": {
             "method": "POST",
             "header": [
@@ -348,7 +348,7 @@
               "raw": "{\n  \"recipient\": \"{{recipientPubkey}}\",\n  \"amount\": 100,\n  \"memo\": \"bonus\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/academy/reward-xp",
+              "raw": "{{baseUrl}}/v1/academy/reward-xp",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -366,7 +366,7 @@
       "name": "Achievements",
       "item": [
         {
-          "name": "POST /academy/create-achievement-type",
+          "name": "POST /v1/academy/create-achievement-type",
           "event": [
             {
               "listen": "test",
@@ -398,7 +398,7 @@
               "raw": "{\n  \"achievementId\": \"{{achievementId}}\",\n  \"name\": \"{{achievementName}}\",\n  \"metadataUri\": \"{{achievementMetadataUri}}\",\n  \"maxSupply\": 0,\n  \"xpReward\": 100\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/academy/create-achievement-type",
+              "raw": "{{baseUrl}}/v1/academy/create-achievement-type",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -411,7 +411,7 @@
           "response": []
         },
         {
-          "name": "POST /academy/award-achievement",
+          "name": "POST /v1/academy/award-achievement",
           "request": {
             "method": "POST",
             "header": [
@@ -425,7 +425,7 @@
               "raw": "{\n  \"achievementId\": \"{{achievementId}}\",\n  \"recipient\": \"{{recipientPubkey}}\",\n  \"collection\": \"{{achievementCollectionPubkey}}\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/academy/award-achievement",
+              "raw": "{{baseUrl}}/v1/academy/award-achievement",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -438,7 +438,7 @@
           "response": []
         },
         {
-          "name": "POST /academy/deactivate-achievement-type",
+          "name": "POST /v1/academy/deactivate-achievement-type",
           "request": {
             "method": "POST",
             "header": [
@@ -452,7 +452,7 @@
               "raw": "{\n  \"achievementId\": \"{{achievementId}}\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/academy/deactivate-achievement-type",
+              "raw": "{{baseUrl}}/v1/academy/deactivate-achievement-type",
               "host": [
                 "{{baseUrl}}"
               ],

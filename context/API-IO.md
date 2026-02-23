@@ -2,13 +2,34 @@
 
 Base URL (local): `http://localhost:3001`
 
+## Versioning
+
+- API uses **URL path versioning**: `/v1/academy/*` for all academy endpoints.
+- `GET /v1/contract` returns the OpenAPI 3.0 contract (request/response schemas and examples). No auth required.
+- `GET /health`, `GET /v1/health` — liveness (process alive).
+- `GET /ready`, `GET /v1/ready` — readiness (keypairs + RPC). Returns 503 when not ready.
+
+## Reliability
+
+- All responses include `X-Request-Id` for tracing.
+- Error responses include `retriable: boolean` (4xx=false, 5xx/429=true).
+
 ## Conventions
 
-- `GET /health` is the only GET endpoint.
-- All `/academy/*` endpoints are `POST` with `Content-Type: application/json`.
-- `/academy/*` endpoints require one auth header:
-  - `Authorization: Bearer <BACKEND_API_TOKEN>`, or
-  - `X-API-Key: <BACKEND_API_TOKEN>`
+- `GET /health` and `GET /v1/health` are health endpoints; `GET /v1/contract` returns the API contract.
+- All `/v1/academy/*` endpoints are `POST` with `Content-Type: application/json`.
+- `/v1/academy/*` endpoints require one auth header:
+  - `Authorization: Bearer <token>`, or
+  - `X-API-Key: <token>`
+  - Token: `BACKEND_API_TOKEN` (bootstrap) or any key from `POST /v1/admin/generate-api-key`.
+
+## Admin (optional)
+
+Set `ADMIN_SECRET` and `ADMIN_PASSWORD` to enable:
+
+- **POST /v1/admin/login** (no auth) — body `{ "password": "<ADMIN_PASSWORD>" }` → `{ "token": "<JWT>" }`
+- **POST /v1/admin/generate-api-key** (Bearer JWT) — body `{ "role": "admin"|"client", "label": "optional" }` → `{ "apiKey", "role", "label" }`
+
 - Success responses are `200` with JSON payloads shown below.
 - Validation/business input errors return `400` with:
 
@@ -40,7 +61,7 @@ Base URL (local): `http://localhost:3001`
 
 ### Request
 - Method: `POST`
-- Path: `/academy/create-course`
+- Path: `/v1/academy/create-course`
 
 ```json
 {
@@ -68,7 +89,7 @@ Base URL (local): `http://localhost:3001`
 
 ### Request
 - Method: `POST`
-- Path: `/academy/update-config`
+- Path: `/v1/academy/update-config`
 
 ```json
 {

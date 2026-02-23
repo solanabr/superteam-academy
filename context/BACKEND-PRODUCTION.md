@@ -11,30 +11,33 @@
 - [x] Split route logic by domain
 - [x] Shared request validation helpers
 - [x] Shared error mapper
-- [ ] Publish request/response contract examples for each endpoint
-- [ ] Add versioning approach (`/v1` or header versioning)
+- [x] Publish request/response contract examples for each endpoint
+- [x] Add versioning approach (`/v1` or header versioning)
 
 ## Phase P2: Security
 
-- [ ] API auth middleware
+- [x] API auth middleware
   - Option A: static service token (fastest)
   - Option B: signed nonce workflow (stronger)
-- [ ] Rate limiting middleware (per IP + per wallet where possible)
-- [ ] Environment-based CORS allowlist
-- [ ] Max body size and malformed body guards
+- [x] Admin JWT + API key generation
+  - `ADMIN_SECRET` + `ADMIN_PASSWORD` enable `/v1/admin/login`, `/v1/admin/generate-api-key`
+  - Generated keys work for academy endpoints
+- [x] Rate limiting middleware (per IP + per wallet where possible)
+- [x] Environment-based CORS allowlist
+- [x] Max body size and malformed body guards
 
 ## Phase P3: Reliability
 
-- [ ] Structured logging (`requestId`, route, status, duration)
-- [ ] Timeout + retry strategy for non-transaction RPC calls
-- [ ] Distinguish retriable vs non-retriable failures
-- [ ] Health and readiness endpoints
+- [x] Structured logging (`requestId`, route, status, duration)
+- [x] Timeout + retry strategy for non-transaction RPC calls
+- [x] Distinguish retriable vs non-retriable failures
+- [x] Health and readiness endpoints
 
 ## Phase P4: Testing
 
-- [ ] Unit tests for validation helpers
-- [ ] Route tests for all 13 endpoints (happy + invalid payload)
-- [ ] Smoke test script for critical flows:
+- [x] Unit tests for validation helpers
+- [x] Route tests for all 13 endpoints (happy + invalid payload)
+- [x] Smoke test script for critical flows:
   - create-course
   - complete-lesson
   - finalize-course

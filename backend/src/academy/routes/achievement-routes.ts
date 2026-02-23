@@ -1,19 +1,19 @@
-import type { Hono } from "hono";
-import { Keypair, PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
 import { TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
-import {
-  getAchievementReceiptPda,
-  getAchievementTypePda,
-  getConfigPda,
-  getMinterRolePda,
-} from "../../pdas.js";
-import { badRequest, withRouteErrorHandling } from "../../lib/errors.js";
+import { Keypair, PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
+import type { Hono } from "hono";
+import { badRequest, withRouteErrorHandling } from "@/lib/errors.js";
 import {
   readJsonObject,
   readOptionalNumber,
   readRequiredPublicKey,
   readRequiredString,
-} from "../../lib/validation.js";
+} from "@/lib/validation.js";
+import {
+  getAchievementReceiptPda,
+  getAchievementTypePda,
+  getConfigPda,
+  getMinterRolePda,
+} from "@/pdas.js";
 import {
   ensureToken2022Ata,
   fetchAchievementType,
@@ -25,7 +25,7 @@ import {
   requireBackendSigner,
   requireProviderPublicKey,
   sendLegacyTransaction,
-} from "../shared.js";
+} from "@/academy/shared.js";
 
 type CreateAchievementTypeMethods = {
   createAchievementType: (params: {

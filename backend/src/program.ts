@@ -47,7 +47,6 @@ function walletFromKeypair(keypair: Keypair) {
       if (tx instanceof VersionedTransaction) {
         tx.sign([keypair]);
       } else {
-        // Preserve existing partial signatures (e.g. credential asset signer).
         tx.partialSign(keypair);
       }
       return tx;

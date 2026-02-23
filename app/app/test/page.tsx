@@ -3,6 +3,10 @@
 import { Logo } from "@/components/Logo";
 import { WalletConnectButton } from "@/components/wallet/WalletConnectButton";
 import {
+  useAdminLogin,
+  useGenerateApiKey,
+} from "@/hooks/useAdminAuth";
+import {
   useConfig,
   useAllCourses,
   useEnrollment,
@@ -379,6 +383,162 @@ function LearnerSection() {
   );
 }
 
+function AdminAuthSection() {
+  const { login, logout, token, loading: loginLoading, error: loginError } =
+    useAdminLogin();
+  const {
+    generate,
+    result: genResult,
+    loading: genLoading,
+    clear: clearGen,
+  } = useGenerateApiKey();
+  const [password, setPassword] = useState("");
+  const [keyRole, setKeyRole] = useState<"admin" | "client">("client");
+  const [keyLabel, setKeyLabel] = useState("");
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyKey = async () => {
+    if (!genResult?.apiKey) return;
+    await navigator.clipboard.writeText(genResult.apiKey);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Admin Auth & API Keys</CardTitle>
+        <CardDescription>
+          Login with ADMIN_PASSWORD (backend .env) to get a JWT. Use JWT to generate
+          API keys (admin or client). Generated keys work for academy endpoints. Set
+          as app BACKEND_API_TOKEN or use for direct backend calls.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="space-y-4">
+          <Label className="text-base font-semibold">Login</Label>
+          {token ? (
+            <div className="space-y-2">
+              <p className="text-muted-foreground text-sm">
+                Logged in. JWT active.
+              </p>
+              <Button variant="outline" size="sm" onClick={logout}>
+                Logout
+              </Button>
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-4 items-end">
+              <div className="space-y-2 min-w-[240px]">
+                <Label htmlFor="admin-password">ADMIN_PASSWORD</Label>
+                <Input
+                  id="admin-password"
+                  type="password"
+                  placeholder="admin password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+              <Button
+                size="sm"
+                onClick={() => login(password)}
+                disabled={loginLoading || !password}
+              >
+                {loginLoading ? "Logging in…" : "Login"}
+              </Button>
+            </div>
+          )}
+          {loginError && (
+            <p className="text-destructive text-sm">{loginError}</p>
+          )}
+        </div>
+
+        <Separator />
+
+        <div className="space-y-4">
+          <Label className="text-base font-semibold">Generate API key</Label>
+          <p className="text-muted-foreground text-sm">
+            Requires login. New keys can call academy endpoints. Store securely.
+          </p>
+          {token ? (
+            <div className="flex flex-wrap gap-4 items-end">
+              <div className="space-y-2">
+                <Label>role</Label>
+                <Select
+                  value={keyRole}
+                  onValueChange={(v) => setKeyRole(v as "admin" | "client")}
+                >
+                  <SelectTrigger className="w-[120px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin">admin</SelectItem>
+                    <SelectItem value="client">client</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2 min-w-[200px]">
+                <Label>label (optional)</Label>
+                <Input
+                  placeholder="e.g. BFF prod"
+                  value={keyLabel}
+                  onChange={(e) => setKeyLabel(e.target.value)}
+                />
+              </div>
+              <Button
+                size="sm"
+                onClick={() => {
+                  clearGen();
+                  generate(token, {
+                    role: keyRole,
+                    label: keyLabel || undefined,
+                  });
+                }}
+                disabled={genLoading}
+              >
+                {genLoading ? "Generating…" : "Generate"}
+              </Button>
+            </div>
+          ) : (
+            <p className="text-muted-foreground text-sm">
+              Login first to generate API keys.
+            </p>
+          )}
+          {genResult && (
+            <div className="space-y-1">
+              {genResult.error ? (
+                <p className="text-destructive text-sm">{genResult.error}</p>
+              ) : (
+                <div className="rounded-md bg-muted p-3 font-mono text-sm break-all space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="break-all">
+                      <strong>API Key:</strong> {genResult.apiKey}
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleCopyKey}
+                      className="shrink-0"
+                    >
+                      {copied ? "Copied" : "Copy"}
+                    </Button>
+                  </div>
+                  <p className="text-muted-foreground text-xs">
+                    role: {genResult.role}
+                    {genResult.label ? ` | label: ${genResult.label}` : ""}
+                  </p>
+                  <p className="text-muted-foreground text-xs">
+                    Copy and set as app BACKEND_API_TOKEN. Not shown again.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function AdminApiSection() {
   const [createRes, setCreateRes] = useState<string | null>(null);
   const [completeRes, setCompleteRes] = useState<string | null>(null);
@@ -632,9 +792,10 @@ function AdminApiSection() {
       <CardHeader>
         <CardTitle>Admin / Backend (API)</CardTitle>
         <CardDescription>
-          Backend-signed transactions. Requires NEXT_PUBLIC_BACKEND_URL and backend
-          with ACADEMY_AUTHORITY_KEYPAIR and ACADEMY_BACKEND_SIGNER_KEYPAIR.
-          Use courseId from create-course (e.g. test-course-1).
+          Backend-signed transactions via BFF. App needs BACKEND_URL and
+          BACKEND_API_TOKEN (bootstrap or generated key). Backend needs
+          ACADEMY_AUTHORITY_KEYPAIR and ACADEMY_BACKEND_SIGNER_KEYPAIR. Use
+          courseId from create-course (e.g. test-course-1).
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-8">
@@ -1560,10 +1721,6 @@ export default function TestPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="flex items-center justify-between border-b border-border px-4 py-3">
-        <Logo />
-        <WalletConnectButton />
-      </header>
       <main className="mx-auto max-w-5xl space-y-8 p-6">
         <Card>
           <CardHeader>
@@ -1572,12 +1729,10 @@ export default function TestPage() {
               Devnet test page. All instructions and data.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-4">
             <div>
               <Label className="text-muted-foreground">Program ID</Label>
-              <CopyablePubkey
-                value={programId?.toBase58() ?? "—"}
-              />
+              <CopyablePubkey value={programId?.toBase58() ?? "—"} />
             </div>
             <Separator />
             <div>
@@ -1588,12 +1743,34 @@ export default function TestPage() {
                   : "Disconnected"}
               </p>
             </div>
+            <Separator />
+            <div>
+              <Label className="text-base font-semibold">Setup</Label>
+              <ul className="text-muted-foreground text-sm mt-2 space-y-1 list-disc list-inside">
+                <li>
+                  <strong>Backend</strong> (.env): BACKEND_API_TOKEN, ADMIN_SECRET,
+                  ADMIN_PASSWORD, ACADEMY_AUTHORITY_KEYPAIR, ACADEMY_BACKEND_SIGNER_KEYPAIR,
+                  SOLANA_RPC, CORS_ALLOWED_ORIGINS
+                </li>
+                <li>
+                  <strong>App</strong> (.env): BACKEND_URL, BACKEND_API_TOKEN, NEXT_PUBLIC_*
+                </li>
+                <li>
+                  Generate secrets: <code className="text-xs">openssl rand -base64 24</code>
+                </li>
+                <li>
+                  Run: <code className="text-xs">backend: pnpm dev</code>,{" "}
+                  <code className="text-xs">app: pnpm dev</code>
+                </li>
+              </ul>
+            </div>
           </CardContent>
         </Card>
 
         <ConfigSection />
         <CoursesSection />
         <LearnerSection />
+        <AdminAuthSection />
         <AdminApiSection />
       </main>
     </div>

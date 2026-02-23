@@ -10,7 +10,7 @@ Build a production-ready Solana LMS frontend in the `app/` folder that satisfies
 
 ## 2.1 Security boundary
 
-- Backend `/academy/*` requires `BACKEND_API_TOKEN`.
+- Backend `/academy/*` requires `BACKEND_API_TOKEN` or generated API key.
 - This token must remain server-side only.
 - Browser calls must go through Next server routes (`app/api/*`) for backend-signed actions.
 

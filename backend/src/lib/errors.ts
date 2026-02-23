@@ -12,6 +12,10 @@ export class HttpError extends Error {
   }
 }
 
+export function isRetriableHttpError(status: number): boolean {
+  return status >= 500 || status === 429;
+}
+
 export function badRequest(message: string): HttpError {
   return new HttpError(400, message);
 }
@@ -33,9 +37,10 @@ function getMessage(error: unknown): string {
 
 export function jsonError(c: Context, error: unknown): Response {
   if (error instanceof HttpError) {
-    return c.json({ error: error.message }, error.status);
+    const retriable = isRetriableHttpError(error.status);
+    return c.json({ error: error.message, retriable }, error.status);
   }
-  return c.json({ error: getMessage(error) }, 500);
+  return c.json({ error: getMessage(error), retriable: true }, 500);
 }
 
 export function withRouteErrorHandling(
