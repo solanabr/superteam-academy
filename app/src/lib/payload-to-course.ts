@@ -1,0 +1,150 @@
+import { convertLexicalToHTML } from "@payloadcms/richtext-lexical/html";
+import type { Course } from "@/types";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type PayloadRecord = Record<string, any>;
+
+function extractRawText(data: unknown): string | undefined {
+  if (!data || typeof data !== "object") return undefined;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const root = (data as any).root;
+  if (!Array.isArray(root?.children) || root.children.length !== 1)
+    return undefined;
+  const para = root.children[0];
+  if (para.type !== "paragraph" || para.children?.length !== 1)
+    return undefined;
+  const textNode = para.children[0];
+  if (textNode.type !== "text" || typeof textNode.text !== "string")
+    return undefined;
+  if (!/^#|\*\*|`/.test(textNode.text)) return undefined;
+  return textNode.text;
+}
+
+function lexicalToHtml(data: unknown): string | undefined {
+  if (!data) return undefined;
+  try {
+    const html = convertLexicalToHTML({
+      data: data as Parameters<typeof convertLexicalToHTML>[0]["data"],
+    });
+    return html || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Converts a Payload course doc + separately-fetched modules (with nested lessons)
+ * into the frontend Course type.
+ *
+ * @param doc       - Payload course document
+ * @param payloadModules - Array of module docs, each with a `lessons` array attached
+ */
+export function payloadCourseToCourse(
+  doc: PayloadRecord,
+  payloadModules: PayloadRecord[] = [],
+): Course {
+  const modules = payloadModules.map((m: PayloadRecord, mIdx: number) => {
+    const lessons = (m.lessons ?? []).map((l: PayloadRecord, lIdx: number) => {
+      const content = extractRawText(l.content) ?? lexicalToHtml(l.content);
+      const isChallenge = l.type === "challenge";
+
+      return {
+        id: String(l.id ?? `${doc.id}-m${mIdx}-l${lIdx}`),
+        title: l.title ?? "",
+        description: l.description ?? "",
+        type: (l.type ?? "content") as "content" | "challenge",
+        order: l.order ?? lIdx,
+        xpReward: l.xpReward ?? 0,
+        duration: l.duration ?? undefined,
+        videoUrl: l.videoUrl ?? undefined,
+        content,
+        challenge:
+          isChallenge && l.challenge
+            ? {
+                id: String(l.id ?? `${doc.id}-m${mIdx}-l${lIdx}-c`),
+                prompt:
+                  extractRawText(l.challenge.prompt) ??
+                  lexicalToHtml(l.challenge.prompt) ??
+                  l.challenge.prompt ??
+                  "",
+                starterCode: l.challenge.starterCode ?? "",
+                language: (l.challenge.language ?? "typescript") as
+                  | "rust"
+                  | "typescript"
+                  | "json",
+                hints: (l.challenge.hints ?? []).map(
+                  (h: PayloadRecord) => h.hint ?? h,
+                ),
+                testCases: (l.challenge.testCases ?? []).map(
+                  (t: PayloadRecord, tIdx: number) => ({
+                    id: String(t.id ?? `${doc.id}-m${mIdx}-l${lIdx}-t${tIdx}`),
+                    name: t.name ?? "",
+                    input: t.input ?? "",
+                    expectedOutput: t.expectedOutput ?? "",
+                  }),
+                ),
+              }
+            : undefined,
+      };
+    });
+
+    const lessonCount = lessons.length;
+    const challengeCount = lessons.filter(
+      (l: { type: string }) => l.type === "challenge",
+    ).length;
+
+    return {
+      id: String(m.id ?? `${doc.id}-m${mIdx}`),
+      title: m.title ?? "",
+      description: m.description ?? "",
+      order: m.order ?? mIdx,
+      lessons,
+      lessonCount,
+      challengeCount,
+    };
+  });
+
+  const allLessons = modules.flatMap((m) => m.lessons);
+  const lessonCount = allLessons.length;
+  const challengeCount = allLessons.filter(
+    (l) => l.type === "challenge",
+  ).length;
+
+  const thumbnail =
+    typeof doc.thumbnail === "object" && doc.thumbnail?.url
+      ? (doc.thumbnail.url as string)
+      : ((doc.thumbnail as string | undefined) ?? "");
+
+  return {
+    id: String(doc.id),
+    slug: doc.slug ?? "",
+    title: doc.title ?? "",
+    description: doc.description ?? "",
+    thumbnail,
+    difficulty:
+      (doc.difficultyValue as string) ??
+      (typeof doc.difficulty === "object"
+        ? ((doc.difficulty as PayloadRecord)?.value as string)
+        : (doc.difficulty as string)) ??
+      "beginner",
+    duration: doc.duration ?? "",
+    lessonCount,
+    challengeCount,
+    xpTotal: doc.xpTotal ?? 0,
+    trackId: doc.trackNumId ?? doc.trackId ?? 1,
+    trackLevel: doc.trackLevel ?? 1,
+    trackName: doc.trackName ?? "",
+    creator: doc.creator ?? "",
+    creatorAvatar: doc.creatorAvatar ?? undefined,
+    isActive: doc.isActive ?? true,
+    totalEnrollments: 0,
+    totalCompletions: 0,
+    modules,
+    prerequisites: (doc.prerequisites ?? []).map(
+      (p: PayloadRecord) => p.slug ?? p,
+    ),
+    tags: (doc.tags ?? []).map((t: PayloadRecord) => t.tag ?? t),
+    createdAt: doc.createdAt ?? new Date().toISOString(),
+    updatedAt: doc.updatedAt ?? new Date().toISOString(),
+  };
+}
