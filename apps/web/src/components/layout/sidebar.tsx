@@ -15,9 +15,8 @@ import {
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
-import { dispatchLevelUp } from "@/components/gamification/level-up-overlay";
 import { LevelBadge } from "@/components/gamification/level-badge";
-import { xpToNextLevel } from "@/lib/gamification/xp";
+import { xpToNextLevel, calculateLevel } from "@/lib/gamification/xp";
 import { useXpBalance } from "@/lib/solana/hooks";
 
 const sidebarItems = [
@@ -67,18 +66,14 @@ export function Sidebar() {
       .eq("user_id", session.user.id)
       .maybeSingle();
     if (data) {
-      const newXp = data.total_xp ?? 0;
+      const supabaseXp = data.total_xp ?? 0;
+      // Preserve any higher on-chain value that was previously reconciled
+      const newXp = Math.max(supabaseXp, targetXpRef.current);
       const prevXp = targetXpRef.current;
       targetXpRef.current = newXp;
-      const newLevel = data.level ?? 0;
-      const prevLevel = prevLevelRef.current;
+      const newLevel = calculateLevel(newXp);
       prevLevelRef.current = newLevel;
       setLevel(newLevel);
-
-      // Fire level-up celebration if level increased
-      if (newLevel > prevLevel && prevLevel > 0) {
-        dispatchLevelUp(newLevel);
-      }
 
       // If XP increased, animate the count-up + glow
       if (newXp > prevXp && prevXp > 0) {
@@ -133,6 +128,7 @@ export function Sidebar() {
     if (onChainXp > 0 && onChainXp > targetXpRef.current) {
       targetXpRef.current = onChainXp;
       setDisplayedXp(onChainXp);
+      setLevel(calculateLevel(onChainXp));
     }
   }, [onChainXp]);
 
