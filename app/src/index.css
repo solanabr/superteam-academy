@@ -1,0 +1,223 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+/* ============================================================
+   SOLANA ACADEMY DESIGN SYSTEM
+   Dark developer-first aesthetic with Solana brand gradients
+   ============================================================ */
+
+@layer base {
+  :root {
+    /* Core backgrounds */
+    --background: 220 27% 6%;
+    --background-secondary: 222 25% 9%;
+    --background-tertiary: 220 22% 12%;
+
+    --foreground: 210 40% 96%;
+
+    --card: 222 24% 10%;
+    --card-foreground: 210 40% 96%;
+    --card-border: 220 20% 16%;
+
+    --popover: 222 24% 10%;
+    --popover-foreground: 210 40% 96%;
+
+    /* Solana brand: purple → green */
+    --primary: 270 100% 63%;           /* #9945FF purple */
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 270 100% 63%;
+
+    --secondary: 150 100% 64%;         /* #14F195 green */
+    --secondary-foreground: 220 27% 6%;
+
+    --accent: 180 100% 55%;            /* cyan */
+    --accent-foreground: 220 27% 6%;
+
+    --muted: 220 20% 15%;
+    --muted-foreground: 215 20% 55%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 220 20% 18%;
+    --input: 220 20% 15%;
+    --ring: 270 100% 63%;
+
+    --radius: 0.75rem;
+
+    /* Gradients */
+    --gradient-solana: linear-gradient(135deg, hsl(270 100% 63%), hsl(150 100% 64%));
+    --gradient-solana-subtle: linear-gradient(135deg, hsl(270 100% 63% / 0.15), hsl(150 100% 64% / 0.15));
+    --gradient-dark: linear-gradient(180deg, hsl(220 27% 6%), hsl(222 25% 9%));
+    --gradient-card: linear-gradient(145deg, hsl(222 24% 11%), hsl(220 22% 9%));
+    --gradient-glow-purple: radial-gradient(ellipse at center, hsl(270 100% 63% / 0.15) 0%, transparent 70%);
+    --gradient-glow-green: radial-gradient(ellipse at center, hsl(150 100% 64% / 0.1) 0%, transparent 70%);
+
+    /* Glow shadows */
+    --shadow-purple: 0 0 30px hsl(270 100% 63% / 0.25), 0 4px 20px hsl(270 100% 63% / 0.15);
+    --shadow-green: 0 0 30px hsl(150 100% 64% / 0.2), 0 4px 20px hsl(150 100% 64% / 0.1);
+    --shadow-card: 0 4px 24px hsl(220 27% 3% / 0.5);
+    --shadow-glow: 0 0 60px hsl(270 100% 63% / 0.12);
+
+    /* Sidebar */
+    --sidebar-background: 222 27% 8%;
+    --sidebar-foreground: 210 30% 80%;
+    --sidebar-primary: 270 100% 63%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 20% 14%;
+    --sidebar-accent-foreground: 210 40% 90%;
+    --sidebar-border: 220 20% 14%;
+    --sidebar-ring: 270 100% 63%;
+
+    /* XP / gamification colors */
+    --xp-gold: 43 100% 60%;
+    --xp-silver: 210 20% 70%;
+    --streak-orange: 25 100% 60%;
+    --success: 150 100% 64%;
+    --warning: 43 100% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', sans-serif;
+    background: hsl(var(--background));
+  }
+
+  code, pre, .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--background));
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--primary) / 0.5);
+  }
+}
+
+@layer components {
+  /* Gradient text */
+  .gradient-text {
+    background: var(--gradient-solana);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Glass card effect */
+  .glass-card {
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--card-border));
+    backdrop-filter: blur(12px);
+    box-shadow: var(--shadow-card);
+  }
+
+  .glass-card-hover {
+    @apply glass-card transition-all duration-300;
+  }
+  .glass-card-hover:hover {
+    border-color: hsl(var(--primary) / 0.4);
+    box-shadow: var(--shadow-purple);
+    transform: translateY(-2px);
+  }
+
+  /* Glow button */
+  .btn-solana {
+    background: var(--gradient-solana);
+    color: hsl(var(--background));
+    font-weight: 600;
+    border: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px hsl(270 100% 63% / 0.3);
+  }
+  .btn-solana:hover {
+    box-shadow: 0 6px 25px hsl(270 100% 63% / 0.5);
+    transform: translateY(-1px);
+  }
+
+  /* Subtle grid background */
+  .grid-bg {
+    background-image:
+      linear-gradient(hsl(var(--border) / 0.3) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--border) / 0.3) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  /* XP badge */
+  .xp-badge {
+    background: linear-gradient(135deg, hsl(var(--xp-gold) / 0.2), hsl(var(--xp-gold) / 0.1));
+    border: 1px solid hsl(var(--xp-gold) / 0.4);
+    color: hsl(var(--xp-gold));
+  }
+
+  /* Progress bar */
+  .progress-bar {
+    background: hsl(var(--muted));
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    background: var(--gradient-solana);
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.6s ease;
+  }
+
+  /* Lesson status */
+  .lesson-completed {
+    border-left: 3px solid hsl(var(--secondary));
+  }
+  .lesson-locked {
+    opacity: 0.5;
+  }
+}
+
+/* Animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px hsl(270 100% 63% / 0.3); }
+  50% { box-shadow: 0 0 40px hsl(270 100% 63% / 0.6); }
+}
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-float { animation: float 3s ease-in-out infinite; }
+.animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+.animate-slide-up { animation: slideUp 0.5s ease forwards; }
+.animate-fade-in { animation: fadeIn 0.3s ease forwards; }
