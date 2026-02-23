@@ -23,11 +23,8 @@ export function HeroSection() {
       </div>
 
       <div className="mx-auto max-w-7xl px-4 text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-        >
+        {/* No motion wrapper on LCP element — h1 must be visible from SSR */}
+        <div>
           <p className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-solana-purple">
             {t("badge")}
           </p>
@@ -38,7 +35,7 @@ export function HeroSection() {
             </span>{" "}
             {t("titlePost")}
           </h1>
-        </motion.div>
+        </div>
 
         <motion.p
           className="mx-auto mt-6 max-w-2xl text-lg text-content-secondary sm:text-xl"
