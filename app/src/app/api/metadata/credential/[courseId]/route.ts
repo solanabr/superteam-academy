@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sanityClient } from "@/lib/sanity/client";
-import { trackLabels, difficultyLabels } from "@/lib/constants";
+import { trackLabels, difficultyLabels, courseThumbnails } from "@/lib/constants";
 
 const PRODUCTION_URL = process.env.NEXT_PUBLIC_PRODUCTION_URL ?? "https://superteam-academy-six.vercel.app";
+const DEFAULT_IMAGE = "https://i.ibb.co/FLrYxm5Y/solana.webp";
 
 const CREDENTIAL_FIELDS = `
   courseId,
@@ -43,7 +44,7 @@ export async function GET(
     return NextResponse.json({ error: "Course not found" }, { status: 404 });
   }
 
-  const imageUrl = course.thumbnailUrl ?? `${PRODUCTION_URL}/og.png`;
+  const imageUrl = course.thumbnailUrl ?? courseThumbnails[courseId] ?? DEFAULT_IMAGE;
 
   // If imageOnly param is set, redirect to the image URL directly
   if (request.nextUrl.searchParams.get("imageOnly") === "true") {
