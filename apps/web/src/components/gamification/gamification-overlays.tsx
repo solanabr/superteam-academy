@@ -37,12 +37,12 @@ export function GamificationOverlays() {
       <ToastContainer />
       {!userId ? null : (
         <>
-          <XpPopup />
           <LevelUpOverlay />
-          {/* Celebration popups — stacked in bottom-left above XpPopup */}
-          <div className="pointer-events-none fixed bottom-28 left-6 z-50 flex flex-col gap-2">
-            <AchievementPopup className="pointer-events-auto" />
+          {/* Single stacking container for all bottom-right popups */}
+          <div className="pointer-events-none fixed bottom-20 right-6 z-50 flex flex-col items-end gap-2">
             <CertificatePopup className="pointer-events-auto" />
+            <AchievementPopup className="pointer-events-auto" />
+            <XpPopup />
           </div>
         </>
       )}

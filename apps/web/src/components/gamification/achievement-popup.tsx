@@ -9,6 +9,7 @@ interface AchievementEvent {
   id: string;
   name: string;
   uid: number;
+  xpReward: number;
 }
 
 let counter = 0;
@@ -18,7 +19,20 @@ export function dispatchAchievementUnlock(id: string, name: string): void {
   counter++;
   window.dispatchEvent(
     new CustomEvent("superteam:achievement-unlock", {
-      detail: { id, name, uid: counter },
+      detail: { id, name, uid: counter, xpReward: 0 },
+    })
+  );
+}
+
+/** Enrich an already-displayed achievement popup with its XP reward amount. */
+export function dispatchAchievementXp(
+  achievementId: string,
+  amount: number
+): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(
+    new CustomEvent("superteam:achievement-xp", {
+      detail: { achievementId, amount },
     })
   );
 }
@@ -39,11 +53,26 @@ export function AchievementPopup({ className }: { className?: string }) {
     }, 7000);
   }, []);
 
+  // Enrich an existing popup with its XP amount (arrives from xp_transactions INSERT)
+  const handleXpEnrich = useCallback((e: Event) => {
+    const { achievementId, amount } = (
+      e as CustomEvent<{ achievementId: string; amount: number }>
+    ).detail;
+    setEvents((prev) =>
+      prev.map((ev) =>
+        ev.id === achievementId ? { ...ev, xpReward: amount } : ev
+      )
+    );
+  }, []);
+
   useEffect(() => {
     window.addEventListener("superteam:achievement-unlock", handleUnlock);
-    return () =>
+    window.addEventListener("superteam:achievement-xp", handleXpEnrich);
+    return () => {
       window.removeEventListener("superteam:achievement-unlock", handleUnlock);
-  }, [handleUnlock]);
+      window.removeEventListener("superteam:achievement-xp", handleXpEnrich);
+    };
+  }, [handleUnlock, handleXpEnrich]);
 
   if (events.length === 0) return null;
 
@@ -73,12 +102,17 @@ export function AchievementPopup({ className }: { className?: string }) {
                 🏆
               </div>
             </div>
-            <div>
+            <div className="flex-1">
               {/* v9 .popup-label — mono 10px uppercase primary */}
               <div className="popup-label">{t("newAchievement")}</div>
               {/* v9 .popup-name — Nunito 800, 15px */}
               <div className="popup-name">{ev.name}</div>
             </div>
+            {ev.xpReward > 0 && (
+              <div className="popup-xp ml-2 !animate-none">
+                <span className="popup-xp-amount">+{ev.xpReward} XP</span>
+              </div>
+            )}
           </div>
         </button>
       ))}
