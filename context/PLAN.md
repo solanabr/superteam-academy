@@ -1,6 +1,6 @@
 # Superteam Academy Plan
 
-Last updated: February 23, 2026
+Last updated: February 23, 2026 (updated after F0–F5 frontend build)
 
 ## Goal
 
@@ -27,7 +27,10 @@ Ship a production-ready **backend + frontend app experience** using the existing
 | Backend route coverage | Done | All 13 academy routes implemented |
 | Backend modular refactor | Done | Handlers split by domain + shared libs |
 | Backend production hardening | In progress | Auth + CORS allowlist complete; rate limits, observability, tests pending |
-| Frontend app pages | In progress | Detailed phase/design plan now documented; implementation pending |
+| Frontend BFF layer | Done | Catch-all proxy at `app/api/academy/[action]` with server-side token |
+| Frontend app shell | Done | Global navbar, sidebar, WalletGuard, shared primitives |
+| Frontend learner pages | Done | Courses, lessons, dashboard, leaderboard, profile, certificates, settings |
+| Frontend admin pages | Not started | `(admin)` layout and CRUD pages pending |
 
 ## Workstream A: Backend Productionization
 
@@ -63,22 +66,24 @@ Design system and UX rules: `context/DESIGN-GUIDELINES.md`
 Bounty requirement mapping: `context/BOUNTY-MAPPING.md`
 
 ### B1. Foundation
-- [ ] App shell (`(app)/layout`) + wallet guard
-- [ ] Shared UI primitives (page header, empty state, XP badge, progress bar)
+- [x] App shell (`(app)/layout`) + wallet guard
+- [x] Shared UI primitives (page header, empty state, XP badge, progress bar)
+- [x] BFF proxy routes (`app/api/academy/*`)
+- [x] Global navbar with wallet connect
 
 ### B2. Learner Core Flow
-- [ ] Courses list + course detail + enroll
-- [ ] Lesson player + complete lesson + finalize course
-- [ ] Dashboard progress view
+- [x] Courses list + course detail + enroll
+- [x] Lesson player + complete lesson + finalize course
+- [x] Dashboard progress view
 
 ### B3. Credentials and Growth
-- [ ] Certifications page
-- [ ] Leaderboard page
-- [ ] Profile page
+- [x] Certifications page
+- [x] Leaderboard page (standalone, dark podium design)
+- [x] Profile page
 - [ ] Achievements view
 
 ### B4. Admin and Settings
-- [ ] Settings page
+- [x] Settings page
 - [ ] Admin pages (courses, minters, achievements, config)
 
 ## Recommended Execution Order

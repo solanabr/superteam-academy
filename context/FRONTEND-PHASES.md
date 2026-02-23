@@ -1,6 +1,6 @@
 # Frontend Implementation Guidelines
 
-Last updated: February 23, 2026
+Last updated: February 23, 2026 (phases F0–F5 implemented)
 
 ## 1. Bounty-Aligned Objective
 
@@ -67,7 +67,7 @@ Define interfaces so implementation can swap between local/CMS/backend/on-chain.
 
 ## 4. Delivery Phases
 
-## Phase F0: Platform Foundation
+## Phase F0: Platform Foundation ✅
 
 Deliverables:
 - `/(app)` shell layout, sidebar, header, wallet guard
@@ -80,7 +80,7 @@ Done criteria:
 - backend token never exposed to client
 - all new UI strings externalized for i18n
 
-## Phase F1: Core Learning Surfaces
+## Phase F1: Core Learning Surfaces ✅
 
 Deliverables:
 - `/courses`
@@ -92,7 +92,7 @@ Done criteria:
 - user can browse, filter, search, and enroll in courses
 - prerequisite messaging clear
 
-## Phase F2: Lesson + Challenge UX
+## Phase F2: Lesson + Challenge UX ✅
 
 Deliverables:
 - `/courses/[slug]/lessons/[id]`
@@ -104,7 +104,7 @@ Done criteria:
 - lesson flow usable end-to-end in UI
 - completion states persist through service layer abstraction
 
-## Phase F3: Dashboard + Gamification UI
+## Phase F3: Dashboard + Gamification UI ✅
 
 Deliverables:
 - `/dashboard`
@@ -115,7 +115,7 @@ Deliverables:
 Done criteria:
 - dashboard surfaces current course, progress, XP, streaks, and recommendations
 
-## Phase F4: Credentials + Leaderboard + Profiles
+## Phase F4: Credentials + Leaderboard + Profiles ✅
 
 Deliverables:
 - `/certificates/[id]`
@@ -126,7 +126,7 @@ Done criteria:
 - credential cards show verification links
 - leaderboard supports weekly/monthly/all-time filters
 
-## Phase F5: Settings + Admin
+## Phase F5: Settings + Admin (partial — settings done, admin pending)
 
 Deliverables:
 - `/settings`
