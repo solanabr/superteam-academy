@@ -8,6 +8,8 @@ import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import {
   BookOpen,
+  CaretLeft,
+  CaretRight,
   Lightning,
   Medal,
   Scroll,
@@ -153,13 +155,12 @@ function useDashboardData(): DashboardData {
           .select("id", { count: "exact", head: true })
           .eq("user_id", user.id);
 
-        // Fetch recent XP transactions (15 to have headroom for multi-source merge)
+        // Fetch all XP transactions for the activity feed
         const { data: transactions } = await supabase
           .from("xp_transactions")
           .select("amount, reason, created_at, tx_signature")
           .eq("user_id", user.id)
-          .order("created_at", { ascending: false })
-          .limit(15);
+          .order("created_at", { ascending: false });
 
         // Fetch activity dates for streak heatmap (last 270 days)
         const oneYearAgo = new Date();
@@ -419,12 +420,12 @@ function useDashboardData(): DashboardData {
           });
         }
 
-        // Sort all sources by time descending, take top 10
+        // Sort all sources by time descending
         raw.sort(
           (a: RawActivity, b: RawActivity) =>
             new Date(b.time).getTime() - new Date(a.time).getTime()
         );
-        const recentActivity = raw.slice(0, 10).map((item) => ({
+        const recentActivity = raw.map((item) => ({
           type: item.type,
           action: item.action,
           xp: item.xp,
@@ -469,6 +470,7 @@ function useDashboardData(): DashboardData {
 
 export default function DashboardPage() {
   const t = useTranslations("dashboard");
+  const tCommon = useTranslations("common");
   const tCourses = useTranslations("courses");
   const tErrors = useTranslations("programErrors");
   const tTime = useTranslations("timeAgo");
@@ -482,7 +484,10 @@ export default function DashboardPage() {
   const [showNameReveal, setShowNameReveal] = useState(false);
   const [dashboardUsername, setDashboardUsername] = useState(data.username);
   const [activityPage, setActivityPage] = useState(0);
-  const ACTIVITY_PAGE_SIZE = 5;
+  const ACTIVITY_PAGE_SIZE = 8;
+  const totalActivityPages = Math.ceil(
+    data.recentActivity.length / ACTIVITY_PAGE_SIZE
+  );
 
   // Show name reveal modal on first visit (rerolls === 0 means never seen)
   useEffect(() => {
@@ -814,24 +819,31 @@ export default function DashboardPage() {
                   </div>
                 );
               })}
-            {data.recentActivity.length > ACTIVITY_PAGE_SIZE && (
-              <div className="act-pager">
-                {Array.from(
-                  {
-                    length: Math.ceil(
-                      data.recentActivity.length / ACTIVITY_PAGE_SIZE
-                    ),
-                  },
-                  (_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setActivityPage(i)}
-                      aria-current={activityPage === i ? "page" : undefined}
-                      aria-label={`Page ${i + 1}`}
-                      className="act-dot"
-                    />
-                  )
-                )}
+            {totalActivityPages > 1 && (
+              <div className="flex items-center justify-end gap-1 px-4 pb-3 pt-1">
+                <button
+                  onClick={() => setActivityPage((p) => Math.max(0, p - 1))}
+                  disabled={activityPage === 0}
+                  className="flex h-7 w-7 items-center justify-center rounded-md text-text-2 transition-colors hover:bg-[var(--bg-2)] hover:text-text disabled:pointer-events-none disabled:opacity-30"
+                  aria-label={tCommon("previous")}
+                >
+                  <CaretLeft size={14} weight="bold" />
+                </button>
+                <span className="min-w-[3ch] text-center font-mono text-xs text-text-3">
+                  {activityPage + 1}/{totalActivityPages}
+                </span>
+                <button
+                  onClick={() =>
+                    setActivityPage((p) =>
+                      Math.min(totalActivityPages - 1, p + 1)
+                    )
+                  }
+                  disabled={activityPage >= totalActivityPages - 1}
+                  className="flex h-7 w-7 items-center justify-center rounded-md text-text-2 transition-colors hover:bg-[var(--bg-2)] hover:text-text disabled:pointer-events-none disabled:opacity-30"
+                  aria-label={tCommon("next")}
+                >
+                  <CaretRight size={14} weight="bold" />
+                </button>
               </div>
             )}
           </div>
@@ -842,19 +854,6 @@ export default function DashboardPage() {
             </div>
           </div>
         )}
-      </div>
-
-      {/* Section divider */}
-      <div className="flex items-center justify-center gap-3 py-2">
-        <div className="h-px flex-1 bg-[var(--border)]" />
-        <div className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--card)]">
-          <Lightning
-            size={14}
-            weight="fill"
-            className="text-[var(--primary)]"
-          />
-        </div>
-        <div className="h-px flex-1 bg-[var(--border)]" />
       </div>
 
       {/* Recommended Courses */}
