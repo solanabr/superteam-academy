@@ -158,32 +158,14 @@ export async function handleLessonCompleted(
   event: LessonCompletedEvent,
   txSignature: string
 ): Promise<void> {
-  console.log(
-    `[handleLessonCompleted] learner=${event.learner} course=${event.course} idx=${event.lessonIndex} xp=${event.xpEarned} sig=${txSignature}`
-  );
   const userId = await resolveUserId(event.learner);
-  if (!userId) {
-    console.warn(
-      `[handleLessonCompleted] resolveUserId returned null for ${event.learner}`
-    );
-    return;
-  }
-  console.log(`[handleLessonCompleted] userId=${userId}`);
+  if (!userId) return;
 
   const connection = getConnection();
   const courseId = await resolveCourseId(event.course, connection);
-  if (!courseId) {
-    console.warn(
-      `[handleLessonCompleted] resolveCourseId returned null for ${event.course}`
-    );
-    return;
-  }
-  console.log(`[handleLessonCompleted] courseId=${courseId}`);
+  if (!courseId) return;
 
   const lessonId = await resolveLessonId(courseId, event.lessonIndex);
-  console.log(
-    `[handleLessonCompleted] lessonId=${lessonId} lessonIndex=${event.lessonIndex}`
-  );
 
   const supabase = createAdminClient();
 
@@ -205,9 +187,6 @@ export async function handleLessonCompleted(
       );
 
     if (progressError) {
-      console.error(
-        `[handleLessonCompleted] upsert_progress FAILED: ${progressError.message}`
-      );
       logError({
         errorId: ERROR_IDS.LESSON_COMPLETE_FAILED,
         error: new Error(progressError.message),
@@ -219,8 +198,6 @@ export async function handleLessonCompleted(
           lessonId,
         },
       });
-    } else {
-      console.log(`[handleLessonCompleted] upsert_progress OK`);
     }
   }
 
@@ -314,7 +291,34 @@ export async function handleCourseFinalized(
     }
   }
 
-  // 3. Issue credential NFT
+  // 3. Award creator reward XP (minted on-chain to the course creator)
+  if (event.creatorXp > 0) {
+    const creatorUserId = await resolveUserId(event.creator);
+    if (creatorUserId) {
+      const { error: creatorXpError } = await supabase.rpc("award_xp", {
+        p_user_id: creatorUserId,
+        p_amount: event.creatorXp,
+        p_reason: `Creator reward: ${courseId}`,
+        p_idempotency_key: `${txSignature}:CourseFinalized:creator`,
+        p_tx_signature: txSignature,
+      });
+
+      if (creatorXpError) {
+        logError({
+          errorId: ERROR_IDS.COURSE_FINALIZE_FAILED,
+          error: new Error(creatorXpError.message),
+          context: {
+            handler: "handleCourseFinalized",
+            step: "award_creator_xp",
+            creatorUserId,
+            courseId,
+          },
+        });
+      }
+    }
+  }
+
+  // 4. Issue credential NFT
   await tryIssueCredential(userId, courseId, event.learner, connection);
 }
 
@@ -365,6 +369,32 @@ export async function handleAchievementAwarded(
         achievementId: event.achievementId,
       },
     });
+  }
+
+  // The on-chain award_achievement instruction also mints XP tokens.
+  // Mirror the XP to Supabase so the activity feed and totals stay in sync.
+  if (event.xpReward > 0) {
+    const { error: xpError } = await supabase.rpc("award_xp", {
+      p_user_id: userId,
+      p_amount: event.xpReward,
+      p_reason: `Achievement reward: ${event.achievementId}`,
+      p_idempotency_key: `${txSignature}:AchievementAwarded:xp`,
+      p_tx_signature: txSignature,
+    });
+
+    if (xpError) {
+      logError({
+        errorId: ERROR_IDS.ACHIEVEMENT_UNLOCK_FAILED,
+        error: new Error(xpError.message),
+        context: {
+          handler: "handleAchievementAwarded",
+          step: "award_xp",
+          userId,
+          achievementId: event.achievementId,
+          xpReward: event.xpReward,
+        },
+      });
+    }
   }
 }
 

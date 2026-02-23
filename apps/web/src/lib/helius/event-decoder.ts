@@ -3,7 +3,6 @@ import type { DecodedEvent, HeliusRawTransaction } from "./types";
 import IDL from "@/lib/solana/idl/superteam_academy.json";
 
 const PROGRAM_ID = process.env.NEXT_PUBLIC_PROGRAM_ID!;
-console.log(`[event-decoder] PROGRAM_ID="${PROGRAM_ID}"`);
 // Double cast: JSON import lacks Anchor's Idl type shape at compile time
 const eventCoder = new BorshEventCoder(IDL as unknown as Idl);
 

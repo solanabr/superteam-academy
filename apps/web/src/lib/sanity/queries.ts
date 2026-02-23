@@ -321,6 +321,8 @@ export interface DeployedAchievement {
   description: string;
   icon: string;
   category: string;
+  /** XP minted alongside the achievement NFT on-chain (0 = no XP). */
+  xpReward: number;
 }
 
 /**
@@ -339,10 +341,11 @@ export async function getDeployedAchievements(): Promise<
       description: string;
       icon: string;
       category: string;
+      xpReward: number;
     }>
   >(
     `*[_type == "achievement" && defined(onChainStatus.achievementPda)] | order(name asc) {
-      _id, name, description, icon, category
+      _id, name, description, icon, category, xpReward
     }`
   );
   return raw.map((a) => ({
@@ -351,6 +354,7 @@ export async function getDeployedAchievements(): Promise<
     description: a.description,
     icon: a.icon,
     category: a.category,
+    xpReward: a.xpReward ?? 0,
   }));
 }
 
@@ -367,10 +371,11 @@ export async function getAllAchievements(): Promise<DeployedAchievement[]> {
       description: string;
       icon: string;
       category: string;
+      xpReward: number;
     }>
   >(
     `*[_type == "achievement"] | order(name asc) {
-      _id, name, description, icon, category
+      _id, name, description, icon, category, xpReward
     }`
   );
   return raw.map((a) => ({
@@ -379,6 +384,7 @@ export async function getAllAchievements(): Promise<DeployedAchievement[]> {
     description: a.description,
     icon: a.icon,
     category: a.category,
+    xpReward: a.xpReward ?? 0,
   }));
 }
 

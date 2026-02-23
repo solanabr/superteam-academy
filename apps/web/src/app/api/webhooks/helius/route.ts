@@ -65,17 +65,8 @@ export async function POST(req: NextRequest) {
   }
 
   // 4. Process each transaction
-  console.log(`[webhook] Received ${transactions.length} transaction(s)`);
   for (const tx of transactions) {
-    const logCount = tx.meta?.logMessages?.length ?? 0;
-    const sig = tx.transaction?.signatures?.[0] ?? "unknown";
-    console.log(
-      `[webhook] TX ${sig.slice(0, 12)}… logs=${logCount} err=${tx.meta?.err ? "yes" : "no"}`
-    );
     const { events, signature } = decodeEventsFromTransaction(tx);
-    console.log(
-      `[webhook] Decoded ${events.length} event(s): ${events.map((e) => e.name).join(", ") || "(none)"}`
-    );
 
     for (const event of events) {
       const data: unknown = normalizeEventData(event.data);
