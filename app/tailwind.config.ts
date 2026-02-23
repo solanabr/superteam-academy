@@ -28,13 +28,13 @@ const config: Config = {
           soft: "var(--border-secondary)",
         },
         solana: {
-          purple: "#9945FF",
+          purple: "#a855f7",
           green: "#14F195",
           cyan: "#00C2FF",
         },
       },
       backgroundImage: {
-        "solana-gradient": "linear-gradient(to right, #9945FF, #00C2FF)",
+        "solana-gradient": "linear-gradient(to right, #a855f7, #00C2FF)",
       },
     },
   },

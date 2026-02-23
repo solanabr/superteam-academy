@@ -10,7 +10,7 @@
   --bg-card-hover: rgba(0, 0, 0, 0.04);
   --text-primary: #09090b;
   --text-secondary: #52525b;
-  --text-muted: #a1a1aa;
+  --text-muted: #71717a;
   --border-primary: rgba(0, 0, 0, 0.1);
   --border-secondary: rgba(0, 0, 0, 0.06);
 }
@@ -23,7 +23,7 @@
   --bg-card-hover: rgba(255, 255, 255, 0.04);
   --text-primary: #fafafa;
   --text-secondary: #a1a1aa;
-  --text-muted: #52525b;
+  --text-muted: #7a7a85;
   --border-primary: rgba(255, 255, 255, 0.1);
   --border-secondary: rgba(255, 255, 255, 0.06);
 }
@@ -40,7 +40,7 @@ body {
 
 /* Focus visible ring for keyboard navigation */
 *:focus-visible {
-  outline: 2px solid #9945FF;
+  outline: 2px solid #a855f7;
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -52,7 +52,7 @@ body {
   left: 16px;
   z-index: 100;
   padding: 8px 16px;
-  background: #9945FF;
+  background: #a855f7;
   color: white;
   border-radius: 8px;
   font-size: 14px;
