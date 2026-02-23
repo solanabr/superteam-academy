@@ -39,42 +39,31 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // Try on-chain first: read achievement_flags bitmap bits 64-138
+  // Merge on-chain bitmap + MongoDB completions (neither source is complete alone)
+  const completedSet = new Set<string>(user.completedPractice);
+
   try {
     const wallet = new PublicKey(userId);
     const profile = await fetchLearnerProfile(wallet);
     if (profile) {
-      const completed: string[] = [];
       for (let i = 0; i < PRACTICE_CHALLENGES.length; i++) {
         const bitIndex = PRACTICE_ACHIEVEMENT_OFFSET + i;
         if (isBitSet(profile.achievementFlags, bitIndex)) {
           const id = achievementIndexToPracticeId(bitIndex);
-          if (id) completed.push(id);
+          if (id) completedSet.add(id);
         }
       }
-      // Merge daily archive completions
-      for (const dc of dailyCompleted) {
-        if (!completed.includes(dc)) completed.push(dc);
-      }
-      return NextResponse.json({
-        completed,
-        txHashes,
-        claimedMilestones,
-        milestoneTxHashes,
-      });
     }
   } catch {
-    // fallback to MongoDB
+    // on-chain read failed, continue with MongoDB data
   }
 
-  // Merge daily archive IDs into completedPractice
-  const allCompleted = [...user.completedPractice];
   for (const dc of dailyCompleted) {
-    if (!allCompleted.includes(dc)) allCompleted.push(dc);
+    completedSet.add(dc);
   }
 
   return NextResponse.json({
-    completed: allCompleted,
+    completed: Array.from(completedSet),
     txHashes,
     claimedMilestones,
     milestoneTxHashes,

@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PublicKey, sendAndConfirmTransaction } from "@solana/web3.js";
+import { PublicKey, Keypair, sendAndConfirmTransaction } from "@solana/web3.js";
 import { connectDB } from "@/lib/db/mongodb";
 import { ensureUser, getUtcDay, findEnrollment } from "@/lib/db/helpers";
 import { Certificate } from "@/lib/db/models/certificate";
-import { SAMPLE_COURSES } from "@/lib/data/sample-courses";
+import { getCourseById, getCoursesByTrack } from "@/lib/db/course-helpers";
 import { fetchSanityCourse } from "@/lib/services/sanity-courses";
 import { getConnection } from "@/lib/solana/connection";
 import { getBackendSigner } from "@/lib/solana/backend-signer";
@@ -14,11 +14,12 @@ import {
   fetchEnrollment,
   popcountBitmap,
 } from "@/lib/solana/readers";
+import { TRACKS } from "@/lib/solana/constants";
 import {
   buildCompleteLessonTx,
   buildFinalizeCourseTx,
   buildIssueCredentialTx,
-  sendMemoTx,
+  buildUpgradeCredentialTx,
 } from "@/lib/solana/transactions";
 
 export async function POST(req: NextRequest) {
@@ -39,21 +40,16 @@ export async function POST(req: NextRequest) {
     const program = getBackendProgram(backendKeypair);
     const config = await fetchConfig();
     if (config && !config.seasonClosed) {
-      const xpMint = config.currentMint;
+      const xpMint = config.xpMint;
 
       const onChainCourse = await fetchOnChainCourse(courseId);
       if (onChainCourse) {
-        const xpPerLesson = Math.floor(
-          onChainCourse.xpTotal / onChainCourse.lessonCount,
-        );
-
         const tx = await buildCompleteLessonTx(
           program,
           backendKeypair.publicKey,
           wallet,
           courseId,
           lessonIndex,
-          xpPerLesson,
           xpMint,
         );
         tx.feePayer = backendKeypair.publicKey;
@@ -85,21 +81,88 @@ export async function POST(req: NextRequest) {
             );
 
             try {
-              const credentialTx = await buildIssueCredentialTx(
-                program,
-                backendKeypair.publicKey,
-                wallet,
-                courseId,
-              );
-              credentialTx.feePayer = backendKeypair.publicKey;
-              credentialTx.recentBlockhash = (
-                await connection.getLatestBlockhash()
-              ).blockhash;
-              credentialTxSignature = await sendAndConfirmTransaction(
-                connection,
-                credentialTx,
-                [backendKeypair],
-              );
+              const trackId = onChainCourse.trackId;
+              const trackInfo = TRACKS[trackId];
+              const trackCourses = await getCoursesByTrack(trackId);
+
+              // Count completed courses in this track
+              let trackCompletedCount = 0;
+              let trackTotalXp = 0;
+              let existingCredentialAsset: PublicKey | null = null;
+
+              for (const tc of trackCourses) {
+                const tcEnrollment = await fetchEnrollment(tc.id, wallet);
+                if (tcEnrollment?.completedAt) {
+                  trackCompletedCount++;
+                  const tcCourse = await fetchOnChainCourse(tc.id);
+                  if (tcCourse) {
+                    trackTotalXp +=
+                      Number(tcCourse.xpPerLesson) * tcCourse.lessonCount;
+                  }
+                  if (
+                    tcEnrollment.credentialAsset &&
+                    !new PublicKey(tcEnrollment.credentialAsset).equals(
+                      PublicKey.default,
+                    )
+                  ) {
+                    existingCredentialAsset = new PublicKey(
+                      tcEnrollment.credentialAsset,
+                    );
+                  }
+                }
+              }
+
+              const credentialName = `${trackInfo?.display ?? "Superteam"} - Level ${onChainCourse.trackLevel}`;
+
+              if (existingCredentialAsset) {
+                // Upgrade existing credential
+                const credentialTx = await buildUpgradeCredentialTx(
+                  program,
+                  backendKeypair.publicKey,
+                  wallet,
+                  courseId,
+                  existingCredentialAsset,
+                  PublicKey.default,
+                  credentialName,
+                  "",
+                  trackCompletedCount,
+                  trackTotalXp,
+                );
+                credentialTx.feePayer = backendKeypair.publicKey;
+                credentialTx.recentBlockhash = (
+                  await connection.getLatestBlockhash()
+                ).blockhash;
+                credentialTxSignature = await sendAndConfirmTransaction(
+                  connection,
+                  credentialTx,
+                  [backendKeypair],
+                );
+              } else {
+                // Issue new credential
+                const credentialAssetKeypair = Keypair.generate();
+                const { tx: credentialTx, credentialAssetKeypair: assetKp } =
+                  await buildIssueCredentialTx(
+                    program,
+                    backendKeypair.publicKey,
+                    wallet,
+                    courseId,
+                    credentialAssetKeypair,
+                    PublicKey.default,
+                    credentialName,
+                    "",
+                    trackCompletedCount,
+                    trackTotalXp,
+                  );
+                credentialTx.feePayer = backendKeypair.publicKey;
+                credentialTx.recentBlockhash = (
+                  await connection.getLatestBlockhash()
+                ).blockhash;
+                credentialTxSignature = await sendAndConfirmTransaction(
+                  connection,
+                  credentialTx,
+                  [backendKeypair, assetKp],
+                );
+              }
             } catch {
               // credential issuance is non-critical
             }
@@ -109,34 +172,14 @@ export async function POST(req: NextRequest) {
     }
   } catch (err: any) {
     const errMsg = err?.message ?? "";
-    if (errMsg.includes("LessonAlreadyCompleted") || errMsg.includes("6005")) {
+    if (errMsg.includes("LessonAlreadyCompleted") || errMsg.includes("6003")) {
       // Already completed on-chain
     } else {
       console.warn("[complete-lesson] program tx failed:", errMsg);
     }
   }
 
-  // Fallback: send Memo tx as on-chain proof if program tx didn't work
-  if (!txSignature) {
-    try {
-      const backendKeypair = getBackendSigner();
-      const course = SAMPLE_COURSES.find(
-        (c) => c.id === courseId || c.slug === courseId,
-      );
-      txSignature = await sendMemoTx(backendKeypair, {
-        event: "lesson_complete",
-        wallet: userId,
-        courseId,
-        lessonIndex: String(lessonIndex),
-        courseTitle: course?.title ?? courseId,
-        timestamp: new Date().toISOString(),
-      });
-    } catch {
-      // no SOL or signer not configured
-    }
-  }
-
-  // MongoDB sync
+  // MongoDB sync (backup)
   await connectDB();
   const user = await ensureUser(userId);
   const dbEnrollment = await findEnrollment(userId, courseId);
@@ -155,38 +198,14 @@ export async function POST(req: NextRequest) {
       dbEnrollment.lessonsCompleted.length === dbEnrollment.totalLessons;
     if (justCompleted) {
       dbEnrollment.completedAt = new Date();
-
-      // Send course completion memo if no finalize tx
-      if (!finalizeTxSignature) {
-        try {
-          const backendKeypair = getBackendSigner();
-          const course = SAMPLE_COURSES.find(
-            (c) => c.id === courseId || c.slug === courseId,
-          );
-          finalizeTxSignature = await sendMemoTx(backendKeypair, {
-            event: "course_complete",
-            wallet: userId,
-            courseId,
-            courseTitle: course?.title ?? courseId,
-            xpEarned: String(course?.xpTotal ?? 0),
-            timestamp: new Date().toISOString(),
-          });
-        } catch {
-          // no SOL or signer not configured
-        }
-      }
       dbEnrollment.completionTxHash =
-        finalizeTxSignature ?? lessonTx ?? undefined;
+        finalizeTxSignature ?? txSignature ?? undefined;
     }
     await dbEnrollment.save();
 
-    const sampleCourse = SAMPLE_COURSES.find(
-      (c) => c.id === courseId || c.slug === courseId,
-    );
-    const sanityCourse = !sampleCourse
-      ? await fetchSanityCourse(courseId)
-      : null;
-    const courseXpTotal = sampleCourse?.xpTotal ?? sanityCourse?.xpTotal ?? 250;
+    const dbCourse = await getCourseById(courseId);
+    const sanityCourse = !dbCourse ? await fetchSanityCourse(courseId) : null;
+    const courseXpTotal = dbCourse?.xpTotal ?? sanityCourse?.xpTotal ?? 250;
     const xpPerLesson = Math.floor(courseXpTotal / dbEnrollment.totalLessons);
     user.xp += xpPerLesson;
     const today = getUtcDay();
@@ -204,10 +223,7 @@ export async function POST(req: NextRequest) {
     await user.save();
 
     if (justCompleted) {
-      const course = SAMPLE_COURSES.find(
-        (c) =>
-          c.id === dbEnrollment.courseId || c.slug === dbEnrollment.courseId,
-      );
+      const course = await getCourseById(dbEnrollment.courseId);
       if (course) {
         const existing = await Certificate.findOne({
           wallet: userId,

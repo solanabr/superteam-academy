@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
+import { PublicKey } from "@solana/web3.js";
 import { connectDB } from "@/lib/db/mongodb";
 import { Certificate } from "@/lib/db/models/certificate";
 import { Enrollment } from "@/lib/db/models/enrollment";
-import { SAMPLE_COURSES } from "@/lib/data/sample-courses";
+import { getCoursesByTrack } from "@/lib/db/course-helpers";
+import {
+  fetchEnrollment,
+  fetchCredentialForEnrollment,
+} from "@/lib/solana/readers";
 
 export async function GET(
   req: NextRequest,
@@ -13,10 +18,78 @@ export async function GET(
   if (!wallet) return NextResponse.json([]);
 
   const trackIdNum = parseInt(trackId);
+  const trackCourses = await getCoursesByTrack(trackIdNum);
+
+  // Try on-chain enrollments first
+  try {
+    const walletPk = new PublicKey(wallet);
+    const onChainCerts: any[] = [];
+
+    for (const course of trackCourses) {
+      const enrollment = await fetchEnrollment(course.id, walletPk);
+      if (!enrollment?.completedAt) continue;
+
+      const completedAtRaw = enrollment.completedAt;
+      const completedAt = new Date(
+        (typeof completedAtRaw === "object" &&
+        "toNumber" in (completedAtRaw as any)
+          ? (completedAtRaw as any).toNumber()
+          : Number(completedAtRaw)) * 1000,
+      ).toISOString();
+
+      let credentialTxHash: string | null = null;
+      let nftMetadata: any = null;
+
+      const asset = await fetchCredentialForEnrollment(course.id, walletPk);
+      if (asset) {
+        credentialTxHash = asset.id ?? null;
+        nftMetadata = {
+          name: asset.content?.metadata?.name ?? null,
+          uri: asset.content?.json_uri ?? null,
+          attributes: asset.content?.metadata?.attributes ?? [],
+        };
+      }
+
+      onChainCerts.push({
+        wallet,
+        courseId: course.id,
+        courseTitle: course.title,
+        trackId: course.trackId,
+        xpEarned: course.xpTotal,
+        txHash: credentialTxHash,
+        issuedAt: completedAt,
+        nftMetadata,
+      });
+    }
+
+    if (onChainCerts.length > 0) {
+      // Fill missing txHash from MongoDB certificates
+      await connectDB();
+      for (const cert of onChainCerts) {
+        if (!cert.txHash) {
+          const dbCert = await Certificate.findOne({
+            wallet,
+            courseId: cert.courseId,
+          }).lean();
+          if (dbCert?.txHash) {
+            cert.txHash = dbCert.txHash;
+          }
+        }
+      }
+      return NextResponse.json(
+        onChainCerts.sort(
+          (a, b) =>
+            new Date(b.issuedAt).getTime() - new Date(a.issuedAt).getTime(),
+        ),
+      );
+    }
+  } catch {
+    // fallback to MongoDB
+  }
+
   await connectDB();
 
   // Backfill: create certificates for completed enrollments in this track
-  const trackCourses = SAMPLE_COURSES.filter((c) => c.trackId === trackIdNum);
   for (const course of trackCourses) {
     const enrollment = await Enrollment.findOne({
       userId: wallet,
@@ -58,6 +131,7 @@ export async function GET(
       xpEarned: c.xpEarned,
       txHash: c.txHash ?? null,
       issuedAt: c.issuedAt.toISOString(),
+      nftMetadata: null,
     })),
   );
 }
