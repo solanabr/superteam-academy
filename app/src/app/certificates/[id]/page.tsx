@@ -26,7 +26,7 @@ export default async function CertificatePage({ params }: { params: Promise<{ id
       </header>
 
       <section className="relative overflow-hidden rounded-2xl border border-border bg-card p-6">
-        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(130deg,rgba(153,69,255,0.3),rgba(255,210,63,0.18),rgba(9,13,22,0.85))]" />
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(130deg,rgba(47,107,63,0.3),rgba(255,210,63,0.18),rgba(27,35,29,0.85))]" />
         <div className="relative rounded-xl border border-border bg-[#090d16]/85 p-8">
           <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Superteam Academy Credential</p>
           <h2 className="mt-4 text-3xl font-semibold text-foreground">{credential.title}</h2>

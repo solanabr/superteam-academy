@@ -16,7 +16,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body className="min-h-screen bg-background text-foreground">
         <AppProviders>
           <div className="relative flex min-h-screen flex-col">
-            <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_20%_10%,rgba(153,69,255,0.24),transparent_40%),radial-gradient(circle_at_80%_30%,rgba(255,210,63,0.2),transparent_35%),linear-gradient(180deg,#070911_0%,#0a0f1b_100%)]" />
+            <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_20%_10%,rgba(47,107,63,0.24),transparent_40%),radial-gradient(circle_at_80%_30%,rgba(255,210,63,0.2),transparent_35%),linear-gradient(180deg,var(--background)_0%,var(--background)_100%)]" />
             <Header />
             <div className="mx-auto flex w-full max-w-7xl flex-1">
               <Sidebar />

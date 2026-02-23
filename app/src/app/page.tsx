@@ -121,7 +121,7 @@ export default function HomePage() {
   return (
     <div className="space-y-10 pb-4">
       <section className="relative overflow-hidden rounded-2xl border border-border bg-st-dark p-8 sm:p-12">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_15%,rgba(153,69,255,0.35),transparent_45%),radial-gradient(circle_at_80%_22%,rgba(255,210,63,0.25),transparent_40%),radial-gradient(circle_at_65%_80%,rgba(153,69,255,0.18),transparent_35%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_15%,rgba(47,107,63,0.35),transparent_45%),radial-gradient(circle_at_80%_22%,rgba(255,210,63,0.25),transparent_40%),radial-gradient(circle_at_65%_80%,rgba(47,107,63,0.18),transparent_35%)]" />
 
         {floatingShapes.map((shape) => (
           <motion.div
@@ -244,7 +244,7 @@ export default function HomePage() {
       </section>
 
       <section className="relative overflow-hidden rounded-2xl border border-border bg-card/75 p-8">
-        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,rgba(153,69,255,0.18),transparent_40%,rgba(255,210,63,0.18))]" />
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,rgba(47,107,63,0.18),transparent_40%,rgba(255,210,63,0.18))]" />
         <div className="relative flex flex-col items-start justify-between gap-5 md:flex-row md:items-center">
           <div>
             <h2 className="text-2xl font-semibold text-foreground">Ready to Build the Future?</h2>

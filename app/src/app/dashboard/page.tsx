@@ -67,7 +67,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <section className="relative overflow-hidden rounded-2xl border border-border bg-card/75 p-5">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(153,69,255,0.25),transparent_40%),radial-gradient(circle_at_90%_30%,rgba(255,210,63,0.2),transparent_35%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(47,107,63,0.25),transparent_40%),radial-gradient(circle_at_90%_30%,rgba(255,210,63,0.2),transparent_35%)]" />
         <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-semibold text-foreground">Welcome back, {profile.displayName}</h1>

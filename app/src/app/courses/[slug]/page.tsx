@@ -15,6 +15,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ slug: s
   const { slug } = use(params);
   const enrollments = useUserStore((state) => state.enrollments);
   const completedLessons = useUserStore((state) => state.completedLessons);
+  const enroll = useUserStore((state) => state.enroll);
   const course = mockCourses.find((item) => item.slug === slug);
 
   if (!course) {
@@ -40,7 +41,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ slug: s
       </Button>
 
       <section className="relative overflow-hidden rounded-2xl border border-border bg-card/75 p-6">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(153,69,255,0.35),transparent_45%),radial-gradient(circle_at_85%_30%,rgba(255,210,63,0.22),transparent_40%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(47,107,63,0.35),transparent_45%),radial-gradient(circle_at_85%_30%,rgba(255,210,63,0.22),transparent_40%)]" />
         <div className="relative space-y-4">
           <Badge className="w-fit bg-st-dark/80 text-foreground/90">{course.difficulty}</Badge>
           <h1 className="text-3xl font-semibold text-foreground">{course.title}</h1>
@@ -55,9 +56,20 @@ export default function CourseDetailPage({ params }: { params: Promise<{ slug: s
             ))}
           </div>
 
-          <Button className="bg-gradient-to-r from-[#2f6b3f] to-[#ffd23f] text-st-dark">
-            {isEnrolled ? "Continue course" : "Enroll now"}
-          </Button>
+          {isEnrolled ? (
+            <Button asChild className="bg-gradient-to-r from-[#2f6b3f] to-[#ffd23f] text-st-dark">
+              <Link href={`/courses/${course.slug}/lessons/${course.modules[0]?.lessons[0]?.id ?? ""}`}>
+                Continue course
+              </Link>
+            </Button>
+          ) : (
+            <Button
+              className="bg-gradient-to-r from-[#2f6b3f] to-[#ffd23f] text-st-dark"
+              onClick={() => enroll(course.id)}
+            >
+              Enroll now
+            </Button>
+          )}
         </div>
       </section>
 

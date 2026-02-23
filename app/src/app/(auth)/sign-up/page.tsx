@@ -12,7 +12,7 @@ export default function SignUpPage() {
 
   return (
     <div className="relative mx-auto max-w-5xl overflow-hidden rounded-2xl border border-border bg-card">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(153,69,255,0.3),transparent_45%),radial-gradient(circle_at_85%_70%,rgba(255,210,63,0.2),transparent_40%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(47,107,63,0.3),transparent_45%),radial-gradient(circle_at_85%_70%,rgba(255,210,63,0.2),transparent_40%)]" />
       <div className="relative grid min-h-[600px] md:grid-cols-[1fr_460px]">
         <section className="hidden p-10 md:block">
           <p className="inline-flex rounded-full border border-[#2f6b3f]/35 bg-[#2f6b3f]/15 px-3 py-1 text-xs text-[#f7eacb]">
