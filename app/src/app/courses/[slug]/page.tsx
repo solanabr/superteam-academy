@@ -6,16 +6,24 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { mockCourses } from "@/lib/data/mock-courses";
+import { buildEnrollInstruction } from "@/lib/solana/enroll-course";
+import { connection } from "@/lib/solana/program";
 import { useUserStore } from "@/lib/store/user-store";
-import { ArrowLeft, BookOpen, Clock3, Layers, Signal, Users } from "lucide-react";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { Transaction } from "@solana/web3.js";
+import { ArrowLeft, BookOpen, Clock3, Layers, Loader2, Signal, Users } from "lucide-react";
 import Link from "next/link";
-import { use, type ComponentType } from "react";
+import { use, useState, type ComponentType } from "react";
 
 export default function CourseDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
   const enrollments = useUserStore((state) => state.enrollments);
   const completedLessons = useUserStore((state) => state.completedLessons);
   const enroll = useUserStore((state) => state.enroll);
+  const wallet = useWallet();
+  const [enrolling, setEnrolling] = useState(false);
+  const [enrollError, setEnrollError] = useState<string | null>(null);
   const course = mockCourses.find((item) => item.slug === slug);
 
   if (!course) {
@@ -62,13 +70,44 @@ export default function CourseDetailPage({ params }: { params: Promise<{ slug: s
                 Continue course
               </Link>
             </Button>
+          ) : !wallet.connected ? (
+            <WalletMultiButton className="!rounded-md !bg-gradient-to-r !from-[#2f6b3f] !to-[#ffd23f] !px-6 !py-2 !text-st-dark" />
           ) : (
-            <Button
-              className="bg-gradient-to-r from-[#2f6b3f] to-[#ffd23f] text-st-dark"
-              onClick={() => enroll(course.id)}
-            >
-              Enroll now
-            </Button>
+            <div className="space-y-2">
+              <Button
+                className="bg-gradient-to-r from-[#2f6b3f] to-[#ffd23f] text-st-dark"
+                disabled={enrolling}
+                onClick={async () => {
+                  if (!wallet.publicKey || !wallet.sendTransaction) return;
+                  setEnrolling(true);
+                  setEnrollError(null);
+                  try {
+                    // Try on-chain enrollment first
+                    const ix = await buildEnrollInstruction(course.id, wallet.publicKey);
+                    const tx = new Transaction().add(ix);
+                    tx.feePayer = wallet.publicKey;
+                    tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+                    await wallet.sendTransaction(tx, connection);
+                    enroll(course.id);
+                  } catch {
+                    // On-chain may fail (course not registered on devnet), fall back to local
+                    enroll(course.id);
+                  } finally {
+                    setEnrolling(false);
+                  }
+                }}
+              >
+                {enrolling ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" />
+                    Enrolling...
+                  </>
+                ) : (
+                  "Enroll now"
+                )}
+              </Button>
+              {enrollError && <p className="text-sm text-destructive">{enrollError}</p>}
+            </div>
           )}
         </div>
       </section>

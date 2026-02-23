@@ -240,25 +240,6 @@ export const mockProfiles: UserProfile[] = [
       "Frontend dApps": 64,
     },
   },
-  {
-    id: "u-local",
-    username: "you",
-    displayName: "You",
-    bio: "Builder on Superteam Academy, tracking progress daily.",
-    location: "Remote",
-    avatar: "https://api.dicebear.com/9.x/glass/svg?seed=you",
-    xp: 1320,
-    level: 3,
-    enrolledCourseIds: ["course-solana-fundamentals", "course-anchor-101"],
-    interests: ["Solana", "Learning", "DevRel"],
-    skills: {
-      "Smart Contract Security": 28,
-      Anchor: 44,
-      DeFi: 32,
-      "Token Engineering": 41,
-      "Frontend dApps": 53,
-    },
-  },
 ];
 
 export const mockAchievements: Achievement[] = [

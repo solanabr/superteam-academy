@@ -23,21 +23,15 @@ interface UserState {
 const defaultProfile: UserProfile = {
   id: "u-local",
   username: "you",
-  displayName: "Local Builder",
-  bio: "Learning Solana end-to-end with Superteam Academy.",
-  location: "Remote",
+  displayName: "Learner",
+  bio: "",
+  location: "",
   avatar: "https://api.dicebear.com/9.x/glass/svg?seed=you",
-  xp: 1320,
-  level: levelFromXp(1320),
-  enrolledCourseIds: ["course-solana-fundamentals", "course-anchor-101"],
-  interests: ["Solana", "Anchor", "Security"],
-  skills: {
-    "Smart Contract Security": 31,
-    Anchor: 48,
-    DeFi: 36,
-    "Token Engineering": 40,
-    "Frontend dApps": 55,
-  },
+  xp: 0,
+  level: 0,
+  enrolledCourseIds: [],
+  interests: [],
+  skills: {},
 };
 
 export const useUserStore = create<UserState>()(
@@ -47,7 +41,7 @@ export const useUserStore = create<UserState>()(
       locale: "en",
       theme: "dark",
       walletAddress: undefined,
-      enrollments: defaultProfile.enrolledCourseIds,
+      enrollments: [],
       completedLessons: {},
       setLocale: (locale) => set({ locale }),
       setTheme: (theme) => set({ theme }),

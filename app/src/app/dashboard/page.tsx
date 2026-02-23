@@ -12,7 +12,9 @@ import { mockCourses } from "@/lib/data/mock-courses";
 import { achievementService } from "@/lib/services/achievement-service";
 import { useUserStore } from "@/lib/store/user-store";
 import type { Achievement } from "@/types";
-import { BookOpenCheck, Flame, Layers3, Sparkles, Trophy } from "lucide-react";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { BookOpenCheck, Flame, Layers3, Sparkles, Trophy, Wallet } from "lucide-react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
@@ -25,6 +27,7 @@ export default function DashboardPage() {
   const enrollments = useUserStore((state) => state.enrollments);
   const completedLessons = useUserStore((state) => state.completedLessons);
   const xp = useXp(walletAddress, profile.id);
+  const wallet = useWallet();
   const [achievements, setAchievements] = useState<Achievement[]>([]);
 
   useEffect(() => {
@@ -35,6 +38,28 @@ export default function DashboardPage() {
     () => mockCourses.filter((course) => enrollments.includes(course.id)),
     [enrollments],
   );
+
+  if (!wallet.connected) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-6 text-center">
+        <div className="rounded-2xl border border-border bg-card p-8">
+          <Wallet className="mx-auto mb-4 size-12 text-muted-foreground" />
+          <h1 className="text-2xl font-semibold text-foreground">Connect your wallet</h1>
+          <p className="mt-2 max-w-md text-muted-foreground">
+            Connect your Solana wallet to access your dashboard, track progress, and earn XP.
+          </p>
+          <div className="mt-6">
+            <WalletMultiButton className="!rounded-md !bg-gradient-to-r !from-[#2f6b3f] !to-[#ffd23f] !px-6 !py-2 !text-st-dark" />
+          </div>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          New here?{" "}
+          <Link href="/courses" className="text-st-yellow hover:underline">Browse courses</Link>
+          {" "}to get started.
+        </p>
+      </div>
+    );
+  }
 
   const activityFeed = useMemo(() => {
     const activities: string[] = [];

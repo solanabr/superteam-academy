@@ -11,6 +11,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { Wallet } from "lucide-react";
 
 export default function ProfilePage() {
   const { username } = useParams<{ username: string }>();
@@ -21,8 +24,26 @@ export default function ProfilePage() {
 
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [credentials, setCredentials] = useState<Credential[]>([]);
+  const wallet = useWallet();
 
   const isCurrentUser = username === "you" || username === storeProfile.username;
+
+  if (isCurrentUser && !wallet.connected) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-6 text-center">
+        <div className="rounded-2xl border border-border bg-card p-8">
+          <Wallet className="mx-auto mb-4 size-12 text-muted-foreground" />
+          <h1 className="text-2xl font-semibold text-foreground">Connect your wallet</h1>
+          <p className="mt-2 max-w-md text-muted-foreground">
+            Connect your Solana wallet to view your profile, achievements, and credentials.
+          </p>
+          <div className="mt-6">
+            <WalletMultiButton className="!rounded-md !bg-gradient-to-r !from-[#2f6b3f] !to-[#ffd23f] !px-6 !py-2 !text-st-dark" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const profile: UserProfile | undefined = useMemo(() => {
     if (isCurrentUser) {

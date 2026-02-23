@@ -1,7 +1,6 @@
 import {
   mockCredentials,
   mockLeaderboard,
-  mockProfiles,
 } from "@/lib/data/mock-courses";
 import { XP_PER_LESSON, levelFromXp } from "@/lib/solana/constants";
 import type {
@@ -102,9 +101,8 @@ class LocalLearningProgressService implements LearningProgressService {
   }
 
   async getXpBalance(walletAddress: string): Promise<number> {
-    const base = mockProfiles.find((profile) => profile.walletAddress === walletAddress)?.xp ?? 0;
     const extra = readJson<Record<string, number>>(xpKey, {});
-    return base + (extra[walletAddress] ?? 0);
+    return extra[walletAddress] ?? 0;
   }
 
   async getStreakData(userId: string): Promise<StreakData> {
