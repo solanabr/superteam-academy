@@ -27,9 +27,12 @@ export function WalletModal({ open, onOpenChange }: WalletModalProps) {
     onOpenChange(false);
   };
 
-  // Deduplicate wallets by name (MetaMask can register multiple adapters)
+  // Filter out non-Solana wallets (e.g. MetaMask) and deduplicate by name
+  const NON_SOLANA_WALLETS = ["metamask", "coinbase wallet"];
   const seen = new Set<string>();
   const deduped = wallets.filter((w) => {
+    const name = w.adapter.name.toLowerCase();
+    if (NON_SOLANA_WALLETS.some((ns) => name.includes(ns))) return false;
     if (seen.has(w.adapter.name)) return false;
     seen.add(w.adapter.name);
     return true;

@@ -80,9 +80,90 @@ The test case names should describe what pattern to check for (we use pattern ma
 Make sure starterCode has clear placeholder comments and solution is complete working code.${exclusion}`;
 }
 
+function isTitleDuplicate(title: string, existingTitles: string[]): boolean {
+  const normalized = title.toLowerCase().trim();
+  return existingTitles.some((t) => t.toLowerCase().trim() === normalized);
+}
+
+async function callLyzrApi(
+  apiKey: string,
+  brtDate: string,
+  difficulty: PracticeDifficulty,
+  category: PracticeCategory,
+  excludeTitles: string[],
+  attempt: number,
+): Promise<GeneratedChallenge | null> {
+  const sid = `daily-${brtDate}-attempt${attempt}-${LYZR_AGENT_ID}`;
+  const message = buildPrompt(difficulty, category, excludeTitles);
+
+  const res = await fetch(LYZR_API_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": apiKey,
+    },
+    body: JSON.stringify({
+      user_id: "daily-challenge@superteam.academy",
+      agent_id: LYZR_AGENT_ID,
+      session_id: sid,
+      message,
+    }),
+  });
+
+  if (!res.ok) {
+    console.warn("[generate-challenge] Lyzr API error:", res.status);
+    return null;
+  }
+
+  const data = await res.json();
+  let raw =
+    typeof data.response === "string"
+      ? data.response
+      : JSON.stringify(data.response);
+
+  raw = raw
+    .replace(/^```[\w]*\n?/gm, "")
+    .replace(/\n?```$/gm, "")
+    .replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g, "")
+    .trim();
+
+  const parsed = JSON.parse(raw);
+
+  if (
+    !parsed.title ||
+    !parsed.starterCode ||
+    !parsed.solution ||
+    !Array.isArray(parsed.testCases)
+  ) {
+    console.warn("[generate-challenge] Invalid JSON structure from Lyzr");
+    return null;
+  }
+
+  const xpReward = XP_BY_DIFFICULTY[difficulty];
+  return {
+    title: parsed.title,
+    description: parsed.description || "",
+    difficulty,
+    category,
+    language: parsed.language === "rust" ? "rust" : "typescript",
+    xpReward,
+    starterCode: parsed.starterCode,
+    solution: parsed.solution,
+    testCases: (parsed.testCases as any[]).map((tc: any, i: number) => ({
+      id: tc.id || `t${i + 1}`,
+      name: tc.name || `Test ${i + 1}`,
+      input: tc.input || "",
+      expected: tc.expected || tc.expectedOutput || "",
+    })),
+    hints: Array.isArray(parsed.hints) ? parsed.hints : [],
+  };
+}
+
+const MAX_AI_RETRIES = 5;
+
 export async function generateDailyChallenge(
   brtDate: string,
-  pastTitles: string[] = [],
+  pastDailyTitles: string[] = [],
 ): Promise<GeneratedChallenge> {
   const dayIndex = getDayIndex(brtDate);
   const difficulty = DIFFICULTIES[dayIndex % 3];
@@ -91,93 +172,92 @@ export async function generateDailyChallenge(
 
   const apiKey = process.env.LYZR_API_KEY;
   if (!apiKey) {
-    return getFallbackChallenge(difficulty, category, xpReward, pastTitles);
+    return getFallbackChallenge(difficulty, category, xpReward, pastDailyTitles);
   }
 
-  try {
-    // Send last 50 titles to the AI prompt to keep it concise
-    const promptTitles = pastTitles.slice(-50);
-    const message = buildPrompt(difficulty, category, promptTitles);
-    const sid = `daily-${brtDate}-${LYZR_AGENT_ID}`;
+  // AI should avoid both past dailies and practice titles
+  const practiceTitles = PRACTICE_CHALLENGES.map((c) => c.title);
+  const allKnownTitles = Array.from(
+    new Set([...pastDailyTitles, ...practiceTitles]),
+  );
+  const excludeTitles = [...allKnownTitles];
 
-    const res = await fetch(LYZR_API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-      },
-      body: JSON.stringify({
-        user_id: "daily-challenge@superteam.academy",
-        agent_id: LYZR_AGENT_ID,
-        session_id: sid,
-        message,
-      }),
-    });
+  for (let attempt = 0; attempt < MAX_AI_RETRIES; attempt++) {
+    try {
+      const result = await callLyzrApi(
+        apiKey,
+        brtDate,
+        difficulty,
+        category,
+        excludeTitles,
+        attempt,
+      );
 
-    if (!res.ok) {
-      console.warn("[generate-challenge] Lyzr API error:", res.status);
-      return getFallbackChallenge(difficulty, category, xpReward, pastTitles);
+      if (!result) continue;
+
+      if (!isTitleDuplicate(result.title, allKnownTitles)) {
+        return result;
+      }
+
+      console.warn(
+        `[generate-challenge] Duplicate title "${result.title}" on attempt ${attempt + 1}, retrying...`,
+      );
+      excludeTitles.push(result.title);
+    } catch (err) {
+      console.warn(
+        `[generate-challenge] Lyzr attempt ${attempt + 1} failed:`,
+        err,
+      );
     }
-
-    const data = await res.json();
-    let raw =
-      typeof data.response === "string"
-        ? data.response
-        : JSON.stringify(data.response);
-
-    // Strip markdown code fences
-    raw = raw
-      .replace(/^```[\w]*\n?/gm, "")
-      .replace(/\n?```$/gm, "")
-      .trim();
-
-    const parsed = JSON.parse(raw);
-
-    // Validate required fields
-    if (
-      !parsed.title ||
-      !parsed.starterCode ||
-      !parsed.solution ||
-      !Array.isArray(parsed.testCases)
-    ) {
-      console.warn("[generate-challenge] Invalid JSON structure from Lyzr");
-      return getFallbackChallenge(difficulty, category, xpReward, pastTitles);
-    }
-
-    return {
-      title: parsed.title,
-      description: parsed.description || "",
-      difficulty,
-      category,
-      language: parsed.language === "rust" ? "rust" : "typescript",
-      xpReward,
-      starterCode: parsed.starterCode,
-      solution: parsed.solution,
-      testCases: (parsed.testCases as any[]).map((tc: any, i: number) => ({
-        id: tc.id || `t${i + 1}`,
-        name: tc.name || `Test ${i + 1}`,
-        input: tc.input || "",
-        expected: tc.expected || tc.expectedOutput || "",
-      })),
-      hints: Array.isArray(parsed.hints) ? parsed.hints : [],
-    };
-  } catch (err) {
-    console.warn("[generate-challenge] Failed to generate via Lyzr:", err);
-    return getFallbackChallenge(difficulty, category, xpReward, pastTitles);
   }
+
+  console.warn(
+    "[generate-challenge] All AI attempts failed or produced duplicates, using fallback",
+  );
+  return getFallbackChallenge(difficulty, category, xpReward, pastDailyTitles);
+}
+
+const VARIATION_PREFIXES = [
+  "Advanced",
+  "Optimized",
+  "Refactored",
+  "Production",
+  "Secure",
+  "Efficient",
+  "Modular",
+  "Scalable",
+  "Robust",
+  "Enhanced",
+];
+
+function makeUniqueTitle(
+  baseTitle: string,
+  usedSet: Set<string>,
+  cycle: number,
+): string {
+  const prefix = VARIATION_PREFIXES[cycle % VARIATION_PREFIXES.length];
+  let candidate = `${prefix}: ${baseTitle}`;
+  if (!usedSet.has(candidate.toLowerCase().trim())) return candidate;
+
+  // Append cycle number if prefix alone isn't enough
+  candidate = `${baseTitle} (v${cycle + 2})`;
+  while (usedSet.has(candidate.toLowerCase().trim())) {
+    candidate = `${baseTitle} (v${cycle + Math.floor(Math.random() * 9999)})`;
+  }
+  return candidate;
 }
 
 function getFallbackChallenge(
   difficulty: PracticeDifficulty,
   category: PracticeCategory,
   xpReward: number,
-  pastTitles: string[] = [],
+  pastDailyTitles: string[] = [],
 ): GeneratedChallenge {
-  const usedSet = new Set(pastTitles.map((t) => t.toLowerCase()));
+  const usedSet = new Set(pastDailyTitles.map((t) => t.toLowerCase().trim()));
   const excludeUsed = (challenges: typeof PRACTICE_CHALLENGES) =>
-    challenges.filter((c) => !usedSet.has(c.title.toLowerCase()));
+    challenges.filter((c) => !usedSet.has(c.title.toLowerCase().trim()));
 
-  // Find a matching challenge from the pool, excluding recent titles
+  // Try to find an unused challenge matching difficulty + category
   let pool = excludeUsed(
     PRACTICE_CHALLENGES.filter(
       (c) => c.difficulty === difficulty && c.category === category,
@@ -191,28 +271,50 @@ function getFallbackChallenge(
   if (pool.length === 0) {
     pool = excludeUsed(PRACTICE_CHALLENGES);
   }
-  // If all challenges have been used recently, allow repeats from full pool
-  if (pool.length === 0) {
-    pool = PRACTICE_CHALLENGES;
+
+  if (pool.length > 0) {
+    const dayCount = pastDailyTitles.length;
+    const pick = pool[dayCount % pool.length];
+    return {
+      title: pick.title,
+      description: pick.description,
+      difficulty,
+      category,
+      language: pick.language,
+      xpReward,
+      starterCode: pick.challenge.starterCode,
+      solution: pick.challenge.solution,
+      testCases: pick.challenge.testCases.map((tc) => ({
+        id: tc.id,
+        name: tc.name,
+        input: tc.input,
+        expected: tc.expectedOutput,
+      })),
+      hints: pick.challenge.hints,
+    };
   }
 
-  const pick = pool[Math.floor(Math.random() * pool.length)];
+  // All 75 practice challenges exhausted — create a unique variation
+  const cycle = Math.floor(pastDailyTitles.length / PRACTICE_CHALLENGES.length);
+  const baseIdx = pastDailyTitles.length % PRACTICE_CHALLENGES.length;
+  const base = PRACTICE_CHALLENGES[baseIdx];
+  const uniqueTitle = makeUniqueTitle(base.title, usedSet, cycle);
 
   return {
-    title: pick.title,
-    description: pick.description,
+    title: uniqueTitle,
+    description: base.description,
     difficulty,
     category,
-    language: pick.language,
+    language: base.language,
     xpReward,
-    starterCode: pick.challenge.starterCode,
-    solution: pick.challenge.solution,
-    testCases: pick.challenge.testCases.map((tc) => ({
+    starterCode: base.challenge.starterCode,
+    solution: base.challenge.solution,
+    testCases: base.challenge.testCases.map((tc) => ({
       id: tc.id,
       name: tc.name,
       input: tc.input,
       expected: tc.expectedOutput,
     })),
-    hints: pick.challenge.hints,
+    hints: base.challenge.hints,
   };
 }
