@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     title: "Superteam Academy",
     description: "On-chain learning platform on Solana",
   },
-  metadataBase: new URL("https://superteam-academy-beige.vercel.app"),
+  metadataBase: new URL("https://superteam-academy.vercel.app"),
 };
 
 export default function RootLayout({

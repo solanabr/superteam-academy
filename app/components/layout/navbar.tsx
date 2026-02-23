@@ -96,7 +96,6 @@ export function Navbar() {
           <select
             value={currentLocale}
             onChange={(e) => switchLocale(e.target.value as Locale)}
-            aria-label={t("language")}
             className="hidden rounded-lg border border-edge bg-transparent px-2 py-1 text-xs text-content-secondary sm:block"
           >
             {routing.locales.map((l) => (

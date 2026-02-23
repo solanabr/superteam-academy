@@ -59,9 +59,9 @@ export function FeatureCards() {
             <div className={`mb-4 inline-flex rounded-xl border p-3 ${feature.color}`}>
               {feature.icon}
             </div>
-            <h2 className="mb-2 text-base font-bold text-content">
+            <h3 className="mb-2 text-base font-bold text-content">
               {t(`feature_${feature.key}_title`)}
-            </h2>
+            </h3>
             <p className="text-sm leading-relaxed text-content-secondary">
               {t(`feature_${feature.key}_desc`)}
             </p>

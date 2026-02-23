@@ -42,7 +42,6 @@ export function CompletionModal({
           onClick={onClose}
           role="dialog"
           aria-modal="true"
-          aria-labelledby="completion-modal-title"
         >
           <motion.div
             className="relative w-full max-w-sm overflow-hidden rounded-2xl border border-edge bg-surface p-px"
@@ -68,7 +67,6 @@ export function CompletionModal({
               </div>
 
               <motion.h2
-                id="completion-modal-title"
                 className="mb-1 text-2xl font-black text-content"
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
