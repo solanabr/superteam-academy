@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { PlatformLayout } from "@/components/layout";
@@ -241,13 +240,11 @@ export default function ProfilePage() {
                       className="rounded-xl border bg-card p-5 hover:shadow-sm transition-all hover:border-primary/20 group"
                     >
                       <div className="aspect-[4/3] rounded-lg bg-muted mb-3 overflow-hidden relative">
-                        {cred.imageUrl && (
-                          <Image
+                        {cred.imageUrl && !cred.imageUrl.endsWith("/og.png") && (
+                          <img
                             src={cred.imageUrl}
                             alt={cred.name}
-                            fill
-                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                            className="object-cover"
+                            className="absolute inset-0 w-full h-full object-cover"
                           />
                         )}
                       </div>

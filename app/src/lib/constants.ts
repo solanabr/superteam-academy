@@ -3,7 +3,6 @@ export const siteConfig = {
   description:
     "The ultimate learning platform for Solana developers. From zero to deploying production-ready dApps.",
   url: "https://academy.superteam.fun",
-  ogImage: "/og.png",
   links: {
     twitter: "https://twitter.com/SuperteamBR",
     discord: "https://discord.gg/superteambrasil",

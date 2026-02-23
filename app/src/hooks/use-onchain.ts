@@ -307,21 +307,45 @@ export function useOnChainCredentials(walletAddress?: string | null) {
             (item: {
               id: string;
               content: {
-                metadata?: { name?: string; attributes?: Array<{ trait_type: string; value: string }> };
+                metadata?: { name?: string; attributes?: Array<{ trait_type: string; value: string | number }> };
                 links?: { image?: string };
                 json_uri?: string;
               };
-            }) => ({
-              id: item.id,
-              name: item.content?.metadata?.name ?? "Credential",
-              image: item.content?.links?.image ?? "",
-              uri: item.content?.json_uri ?? "",
-              attributes: Object.fromEntries(
-                (item.content?.metadata?.attributes ?? []).map(
-                  (a: { trait_type: string; value: string }) => [a.trait_type, a.value]
+              plugins?: {
+                attributes?: {
+                  data?: {
+                    attribute_list?: Array<{ key: string; value: string }>;
+                  };
+                };
+              };
+            }) => {
+              // On-chain plugin attributes (canonical source)
+              const pluginAttrs = Object.fromEntries(
+                (item.plugins?.attributes?.data?.attribute_list ?? []).map(
+                  (a: { key: string; value: string }) => [a.key, a.value]
                 )
-              ),
-            })
+              );
+
+              // Image: filter out broken og.png URLs cached by DAS
+              let image = item.content?.links?.image ?? "";
+              if (!image || image.endsWith("/og.png")) {
+                const jsonUri = item.content?.json_uri ?? "";
+                const match = jsonUri.match(/\/api\/metadata\/credential\/([^/?]+)/);
+                if (match) {
+                  image = `/api/metadata/credential/${match[1]}?imageOnly=true`;
+                } else {
+                  image = "";
+                }
+              }
+
+              return {
+                id: item.id,
+                name: item.content?.metadata?.name ?? "Credential",
+                image,
+                uri: item.content?.json_uri ?? "",
+                attributes: pluginAttrs,
+              };
+            }
           );
 
         setCredentials(creds);

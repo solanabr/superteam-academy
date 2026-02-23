@@ -13,7 +13,7 @@ interface DASAsset {
   content?: {
     metadata?: {
       name?: string;
-      attributes?: Array<{ trait_type: string; value: string }>;
+      attributes?: Array<{ trait_type: string; value: string | number }>;
     };
     json_uri?: string;
     links?: { image?: string };
@@ -21,20 +21,32 @@ interface DASAsset {
   grouping?: { group_key: string; group_value: string }[];
   ownership?: { owner?: string };
   creators?: { address: string }[];
+  plugins?: {
+    attributes?: {
+      data?: {
+        attribute_list?: Array<{ key: string; value: string }>;
+      };
+    };
+  };
 }
 
 function assetToCredential(asset: DASAsset): Credential {
-  const attrs = Object.fromEntries(
-    (asset.content?.metadata?.attributes ?? []).map((a) => [a.trait_type, a.value]),
+  // On-chain plugin attributes (canonical source: snake_case keys)
+  const pluginAttrs = Object.fromEntries(
+    (asset.plugins?.attributes?.data?.attribute_list ?? []).map((a) => [a.key, a.value]),
   );
 
-  // Try DAS image first, then fall back to fetching from metadata URI
+  // Metadata endpoint attributes (display-friendly keys from JSON)
+  const metaAttrs = Object.fromEntries(
+    (asset.content?.metadata?.attributes ?? []).map((a) => [a.trait_type, String(a.value)]),
+  );
+
+  // Image: DAS resolved image → metadata endpoint redirect
   let imageUrl = asset.content?.links?.image ?? "";
-  if (!imageUrl && asset.content?.json_uri) {
-    // Extract courseId from our metadata endpoint URL pattern
+  // If DAS cached a broken/missing image, try metadata endpoint redirect
+  if ((!imageUrl || imageUrl.endsWith("/og.png")) && asset.content?.json_uri) {
     const match = asset.content.json_uri.match(/\/api\/metadata\/credential\/([^/?]+)/);
     if (match) {
-      // Use internal API path — will be resolved client-side relative to current origin
       imageUrl = `/api/metadata/credential/${match[1]}?imageOnly=true`;
     }
   }
@@ -44,10 +56,10 @@ function assetToCredential(asset: DASAsset): Credential {
     name: asset.content?.metadata?.name ?? "Credential",
     metadataUri: asset.content?.json_uri ?? "",
     imageUrl,
-    trackId: parseInt(attrs["track_id"] ?? attrs["track"] ?? "0"),
-    trackLevel: parseInt(attrs["level"] ?? "0"),
-    coursesCompleted: parseInt(attrs["courses_completed"] ?? "0"),
-    totalXp: parseInt(attrs["total_xp"] ?? "0"),
+    trackId: parseInt(pluginAttrs["track_id"] ?? metaAttrs["Track"] ?? "0"),
+    trackLevel: parseInt(pluginAttrs["level"] ?? "0"),
+    coursesCompleted: parseInt(pluginAttrs["courses_completed"] ?? metaAttrs["Courses Completed"] ?? "0"),
+    totalXp: parseInt(pluginAttrs["total_xp"] ?? metaAttrs["Total XP"] ?? "0"),
     owner: asset.ownership?.owner ?? "",
     collection: asset.grouping?.[0]?.group_value ?? COLLECTION,
   };

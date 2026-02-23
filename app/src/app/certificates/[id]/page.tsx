@@ -93,13 +93,14 @@ export default function CertificatePage({
         <div data-certificate-card className="rounded-2xl border bg-card overflow-hidden">
           {/* Image / placeholder */}
           <div className="aspect-[16/9] bg-gradient-to-br from-primary/10 via-primary/5 to-transparent flex items-center justify-center relative">
-            {(credential?.imageUrl || resolvedImageUrl) ? (
+            {(credential?.imageUrl || resolvedImageUrl) && !(credential?.imageUrl ?? "").endsWith("/og.png") ? (
               <Image
                 src={credential?.imageUrl || resolvedImageUrl}
                 alt={credential?.name ?? "Credential"}
                 fill
                 sizes="(max-width: 768px) 100vw, 700px"
                 className="object-cover"
+                unoptimized
               />
             ) : (
               <div className="text-center space-y-3">

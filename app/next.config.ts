@@ -19,6 +19,7 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "arweave.net" },
       { protocol: "https", hostname: "**.supabase.co" },
       { protocol: "https", hostname: "i.ibb.co" },
+      { protocol: "https", hostname: "superteam-academy-six.vercel.app" },
     ],
   },
   webpack: (config) => {

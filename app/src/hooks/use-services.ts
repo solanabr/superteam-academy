@@ -433,7 +433,7 @@ export function useCredentials() {
     name: c.name,
     metadataUri: c.uri,
     imageUrl: c.image,
-    trackId: parseInt(c.attributes["track"] ?? "0"),
+    trackId: parseInt(c.attributes["track_id"] ?? "0"),
     trackLevel: parseInt(c.attributes["level"] ?? "0"),
     coursesCompleted: parseInt(c.attributes["courses_completed"] ?? "0"),
     totalXp: parseInt(c.attributes["total_xp"] ?? "0"),
