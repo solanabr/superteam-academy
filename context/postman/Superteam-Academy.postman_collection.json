@@ -1,0 +1,450 @@
+{
+  "info": {
+    "name": "Superteam Academy API",
+    "description": "Postman collection for testing backend endpoints under /health and /academy/*.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3001"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "GET /health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": "Health check endpoint"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Courses",
+      "item": [
+        {
+          "name": "POST /academy/create-course",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courseId\": \"{{courseId}}\",\n  \"lessonCount\": 3,\n  \"xpPerLesson\": 100,\n  \"creator\": \"{{creatorPubkey}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/academy/create-course",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "academy",
+                "create-course"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /academy/update-course",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courseId\": \"{{courseId}}\",\n  \"newContentTxId\": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],\n  \"newIsActive\": true,\n  \"newXpPerLesson\": 150,\n  \"newCreatorRewardXp\": 75,\n  \"newMinCompletionsForReward\": 3\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/academy/update-course",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "academy",
+                "update-course"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /academy/complete-lesson",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courseId\": \"{{courseId}}\",\n  \"learner\": \"{{learnerPubkey}}\",\n  \"lessonIndex\": 0\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/academy/complete-lesson",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "academy",
+                "complete-lesson"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /academy/finalize-course",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courseId\": \"{{courseId}}\",\n  \"learner\": \"{{learnerPubkey}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/academy/finalize-course",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "academy",
+                "finalize-course"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Config",
+      "item": [
+        {
+          "name": "POST /academy/update-config",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"newBackendSigner\": \"{{newBackendSignerPubkey}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/academy/update-config",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "academy",
+                "update-config"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Credentials",
+      "item": [
+        {
+          "name": "POST /academy/issue-credential",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "var json = {};",
+                  "try { json = pm.response.json(); } catch (e) {}",
+                  "if (json.credentialAsset) {",
+                  "  pm.environment.set('credentialAssetPubkey', json.credentialAsset);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courseId\": \"{{courseId}}\",\n  \"learner\": \"{{learnerPubkey}}\",\n  \"credentialName\": \"{{credentialName}}\",\n  \"metadataUri\": \"{{credentialMetadataUri}}\",\n  \"coursesCompleted\": 1,\n  \"totalXp\": 350,\n  \"trackCollection\": \"{{trackCollectionPubkey}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/academy/issue-credential",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "academy",
+                "issue-credential"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /academy/upgrade-credential",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courseId\": \"{{courseId}}\",\n  \"learner\": \"{{learnerPubkey}}\",\n  \"credentialAsset\": \"{{credentialAssetPubkey}}\",\n  \"credentialName\": \"{{credentialName}}\",\n  \"metadataUri\": \"{{credentialUpgradeMetadataUri}}\",\n  \"coursesCompleted\": 2,\n  \"totalXp\": 800,\n  \"trackCollection\": \"{{trackCollectionPubkey}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/academy/upgrade-credential",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "academy",
+                "upgrade-credential"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Minters",
+      "item": [
+        {
+          "name": "POST /academy/register-minter",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"minter\": \"{{minterPubkey}}\",\n  \"label\": \"custom\",\n  \"maxXpPerCall\": 1000\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/academy/register-minter",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "academy",
+                "register-minter"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /academy/revoke-minter",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"minter\": \"{{minterPubkey}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/academy/revoke-minter",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "academy",
+                "revoke-minter"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /academy/reward-xp",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"recipient\": \"{{recipientPubkey}}\",\n  \"amount\": 100,\n  \"memo\": \"bonus\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/academy/reward-xp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "academy",
+                "reward-xp"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Achievements",
+      "item": [
+        {
+          "name": "POST /academy/create-achievement-type",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "var json = {};",
+                  "try { json = pm.response.json(); } catch (e) {}",
+                  "if (json.collection) {",
+                  "  pm.environment.set('achievementCollectionPubkey', json.collection);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"achievementId\": \"{{achievementId}}\",\n  \"name\": \"{{achievementName}}\",\n  \"metadataUri\": \"{{achievementMetadataUri}}\",\n  \"maxSupply\": 0,\n  \"xpReward\": 100\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/academy/create-achievement-type",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "academy",
+                "create-achievement-type"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /academy/award-achievement",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"achievementId\": \"{{achievementId}}\",\n  \"recipient\": \"{{recipientPubkey}}\",\n  \"collection\": \"{{achievementCollectionPubkey}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/academy/award-achievement",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "academy",
+                "award-achievement"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /academy/deactivate-achievement-type",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"achievementId\": \"{{achievementId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/academy/deactivate-achievement-type",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "academy",
+                "deactivate-achievement-type"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
