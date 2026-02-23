@@ -1,10 +1,7 @@
-"use client";
+import { getTranslations } from "next-intl/server";
 
-import { motion } from "motion/react";
-import { useTranslations } from "next-intl";
-
-export function HeroSection() {
-  const t = useTranslations("landing");
+export async function HeroSection() {
+  const t = await getTranslations("landing");
 
   return (
     <section className="relative overflow-hidden py-20 sm:py-32">
@@ -23,7 +20,6 @@ export function HeroSection() {
       </div>
 
       <div className="mx-auto max-w-7xl px-4 text-center">
-        {/* No motion wrapper on LCP element — h1 must be visible from SSR */}
         <div>
           <p className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-solana-purple">
             {t("badge")}
@@ -37,21 +33,11 @@ export function HeroSection() {
           </h1>
         </div>
 
-        <motion.p
-          className="mx-auto mt-6 max-w-2xl text-lg text-content-secondary sm:text-xl"
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.15 }}
-        >
+        <p className="animate-fade-in-up mx-auto mt-6 max-w-2xl text-lg text-content-secondary sm:text-xl">
           {t("subtitle")}
-        </motion.p>
+        </p>
 
-        <motion.div
-          className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center"
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-        >
+        <div className="animate-fade-in-up mx-auto mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center [animation-delay:150ms]">
           <a
             href="#catalog"
             className="rounded-xl bg-solana-gradient px-8 py-3.5 text-sm font-bold text-white transition-all hover:opacity-90 hover:scale-[1.02] active:scale-[0.98]"
@@ -64,15 +50,9 @@ export function HeroSection() {
           >
             {t("ctaSecondary")}
           </a>
-        </motion.div>
+        </div>
 
-        {/* Animated stats */}
-        <motion.div
-          className="mx-auto mt-16 grid max-w-2xl grid-cols-3 gap-8"
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.45 }}
-        >
+        <div className="animate-fade-in-up mx-auto mt-16 grid max-w-2xl grid-cols-3 gap-8 [animation-delay:300ms]">
           {[
             { value: t("stat1Value"), label: t("stat1Label") },
             { value: t("stat2Value"), label: t("stat2Label") },
@@ -87,7 +67,7 @@ export function HeroSection() {
               </p>
             </div>
           ))}
-        </motion.div>
+        </div>
       </div>
     </section>
   );
