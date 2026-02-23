@@ -1,0 +1,111 @@
+{
+  "Common": {
+    "brand": "Superteam Academy",
+    "connectWallet": "Conectar billetera",
+    "disconnect": "Desconectar",
+    "dashboard": "Panel",
+    "courses": "Cursos",
+    "leaderboard": "Clasificación",
+    "settings": "Ajustes",
+    "profile": "Perfil",
+    "light": "Claro",
+    "dark": "Oscuro",
+    "system": "Sistema",
+    "language": "Idioma",
+    "search": "Buscar",
+    "all": "Todos",
+    "beginner": "Principiante",
+    "intermediate": "Intermedio",
+    "advanced": "Avanzado",
+    "loading": "Cargando",
+    "back": "Atrás",
+    "continue": "Continuar"
+  },
+  "Header": {
+    "tagline": "LMS nativo de Solana para builders",
+    "signin": "Iniciar sesión",
+    "signup": "Crear cuenta"
+  },
+  "Landing": {
+    "heroTitle": "Sube de nivel tus habilidades en Solana con aprendizaje on-chain.",
+    "heroSubtitle": "Sigue tu progreso, gana XP y desbloquea credenciales mientras construyes dApps reales.",
+    "startLearning": "Comenzar",
+    "exploreTracks": "Explorar rutas",
+    "activeLearners": "Aprendices activos",
+    "coursesLive": "Cursos activos",
+    "credentialsMinted": "Credenciales emitidas",
+    "sectionFeatured": "Rutas destacadas",
+    "sectionTestimonials": "Lo que están construyendo"
+  },
+  "Auth": {
+    "welcomeBack": "Bienvenido de nuevo",
+    "createAccount": "Crea tu cuenta",
+    "email": "Correo",
+    "password": "Contraseña",
+    "username": "Usuario",
+    "submitSignIn": "Entrar",
+    "submitSignUp": "Crear cuenta"
+  },
+  "Courses": {
+    "catalogTitle": "Catálogo de Cursos",
+    "catalogSubtitle": "Rutas de Solana de nivel producción curadas por expertos.",
+    "filterDifficulty": "Dificultad",
+    "totalModules": "módulos",
+    "totalLessons": "lecciones",
+    "duration": "horas",
+    "enroll": "Inscribirse",
+    "enrolled": "Inscrito",
+    "openCourse": "Abrir curso",
+    "courseOverview": "Resumen",
+    "prerequisites": "Prerequisitos",
+    "learningOutcomes": "Resultados de aprendizaje",
+    "moduleList": "Desglose de módulos",
+    "lessonObjective": "Objetivo",
+    "markComplete": "Marcar completada",
+    "challenge": "Desafío",
+    "content": "Contenido"
+  },
+  "Dashboard": {
+    "title": "Tu Panel de Aprendizaje",
+    "subtitle": "Sigue tu ritmo, XP y progreso en todos los cursos.",
+    "totalXp": "XP total",
+    "level": "Nivel",
+    "currentStreak": "Racha actual",
+    "activity": "Actividad reciente",
+    "weeklyGoal": "Meta semanal"
+  },
+  "Leaderboard": {
+    "title": "Clasificación",
+    "subtitle": "Compite con builders en todo el ecosistema Superteam.",
+    "weekly": "Semanal",
+    "monthly": "Mensual",
+    "allTime": "Histórico",
+    "xp": "XP"
+  },
+  "Profile": {
+    "skills": "Radar de Habilidades",
+    "achievements": "Logros",
+    "credentials": "Credenciales",
+    "enrolledCourses": "Cursos inscritos"
+  },
+  "Settings": {
+    "title": "Ajustes",
+    "subtitle": "Controla tus preferencias de aprendizaje y billetera.",
+    "appearance": "Apariencia",
+    "preferences": "Preferencias",
+    "notifications": "Notificaciones",
+    "wallet": "Billetera",
+    "compactView": "Vista compacta de lecciones",
+    "autoplay": "Reproducción automática",
+    "emailUpdates": "Actualizaciones por correo"
+  },
+  "Certificate": {
+    "title": "Credencial",
+    "issuedBy": "Emitido por",
+    "issuedOn": "Emitido el",
+    "verify": "Verificar en cadena"
+  },
+  "Footer": {
+    "copyright": "Construido para el ecosistema de Superteam Brasil"
+  }
+}

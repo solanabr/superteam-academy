@@ -1,0 +1,91 @@
+"use client";
+
+import { CodeEditor } from "@/components/editor/code-editor";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import type { Lesson } from "@/types";
+import { useState } from "react";
+import { GripVertical } from "lucide-react";
+import { useTranslations } from "next-intl";
+
+interface LessonContentProps {
+  lesson: Lesson;
+  onComplete: () => Promise<void> | void;
+  completed?: boolean;
+}
+
+export function LessonContent({ lesson, onComplete, completed }: LessonContentProps) {
+  const t = useTranslations("Courses");
+  const [code, setCode] = useState(lesson.starterCode ?? "// No coding challenge in this lesson.");
+  const [split, setSplit] = useState(52);
+
+  const handleDrag = (event: React.MouseEvent<HTMLButtonElement>) => {
+    const startX = event.clientX;
+    const startSplit = split;
+
+    const onMove = (moveEvent: MouseEvent) => {
+      const delta = moveEvent.clientX - startX;
+      const width = window.innerWidth;
+      const next = Math.max(30, Math.min(70, startSplit + (delta / width) * 100));
+      setSplit(next);
+    };
+
+    const onUp = () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  };
+
+  return (
+    <article className="space-y-4">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold text-zinc-100">{lesson.title}</h1>
+          <p className="mt-2 text-sm text-zinc-400">{lesson.objective}</p>
+        </div>
+        <Badge variant="outline" className="border-white/20 text-zinc-300">
+          {lesson.kind === "challenge" ? t("challenge") : t("content")}
+        </Badge>
+      </div>
+
+      <div className="overflow-hidden rounded-xl border border-white/10 bg-zinc-950/65">
+        <div className="flex min-h-[60vh] flex-col lg:flex-row">
+          <div className="p-5" style={{ width: `${split}%` }}>
+            <h2 className="mb-2 text-sm font-semibold text-zinc-200">{t("lessonObjective")}</h2>
+            <Separator className="mb-4 bg-white/10" />
+            <div className="prose prose-invert max-w-none text-sm leading-relaxed text-zinc-300">
+              {lesson.markdown.split("\n").map((line, index) => (
+                <p key={index}>{line.replace(/^###\s*/, "")}</p>
+              ))}
+            </div>
+          </div>
+
+          <button
+            type="button"
+            aria-label="Resize panels"
+            className="hidden w-6 items-center justify-center border-x border-white/10 bg-zinc-900 lg:flex"
+            onMouseDown={handleDrag}
+          >
+            <GripVertical className="size-4 text-zinc-500" />
+          </button>
+
+          <div className="min-h-[320px] flex-1 border-t border-white/10 lg:border-t-0">
+            <CodeEditor value={code} onChange={setCode} />
+          </div>
+        </div>
+      </div>
+
+      <Button
+        onClick={() => void onComplete()}
+        disabled={completed}
+        className="bg-gradient-to-r from-[#9945FF] to-[#14F195] text-black"
+      >
+        {completed ? "Completed" : t("markComplete")}
+      </Button>
+    </article>
+  );
+}
