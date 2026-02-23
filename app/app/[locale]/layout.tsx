@@ -5,7 +5,7 @@ import { routing } from "@/i18n/routing";
 import { Providers } from "@/components/providers/providers";
 import { Inter } from "next/font/google";
 
-const inter = Inter({ subsets: ["latin"], display: "swap" });
+const inter = Inter({ subsets: ["latin"], display: "optional" });
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -24,10 +24,7 @@ export default async function LocaleLayout({
 
   return (
     <html lang={locale} suppressHydrationWarning>
-      <head>
-        <link rel="preconnect" href="https://api.devnet.solana.com" />
-        <link rel="dns-prefetch" href="https://api.devnet.solana.com" />
-      </head>
+      <head />
       <body className={inter.className}>
         <a href="#main-content" className="skip-link">
           Skip to content

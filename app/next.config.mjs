@@ -5,6 +5,15 @@ const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  experimental: {
+    optimizePackageImports: [
+      "@solana/wallet-adapter-react",
+      "@solana/wallet-adapter-wallets",
+      "motion/react",
+      "@tanstack/react-query",
+      "sonner",
+    ],
+  },
   images: {
     remotePatterns: [
       { hostname: "lh3.googleusercontent.com" },
