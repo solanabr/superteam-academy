@@ -6,8 +6,11 @@ This guide explains how to customize theme, course content, layout, and translat
 
 Superteam/Solana brand colors used across the app:
 
-- Purple: `#9945FF`
-- Green: `#14F195`
+- Yellow (accent): `#ffd23f`
+- Dark Green (primary): `#2f6b3f`
+- Emerald: `#008c4c`
+- Cream: `#f7eacb`
+- Near-black: `#1b231d`
 
 ### Primary files
 
@@ -21,10 +24,10 @@ Superteam/Solana brand colors used across the app:
 1. Global tokens:
    - Update CSS variables in `:root` and `.dark` inside `src/app/globals.css`.
 2. Branded gradients:
-   - Search for `from-[#9945FF]` and `to-[#14F195]` and replace consistently.
+   - Search for `from-[#2f6b3f]` and `to-[#ffd23f]` and replace consistently.
 
 ```bash
-rg -n "9945FF|14F195" src
+rg -n "2f6b3f|ffd23f|008c4c" src
 ```
 
 ### Theme mode behavior

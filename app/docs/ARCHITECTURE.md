@@ -24,7 +24,7 @@ The app uses Next.js App Router in `src/app` with route groups and dynamic segme
 ### Server components (current)
 
 - `src/app/layout.tsx` (root layout shell).
-- `src/app/profile/[username]/page.tsx` (async server route).
+- `src/app/profile/[username]/page.tsx` (client component — reads from Zustand store for current user, mock data for others).
 - `src/app/certificates/[id]/page.tsx` (async server route).
 - `src/app/loading.tsx`, `src/app/not-found.tsx`.
 
