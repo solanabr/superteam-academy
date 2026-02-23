@@ -9,7 +9,8 @@ import {
 import { createAdminClient } from "@/lib/supabase/admin";
 import { fetchEnrollment } from "@/lib/solana/academy-reads";
 import { decodeLessonBitmap } from "@/lib/solana/bitmap";
-import { getAllCourses } from "@/lib/sanity/queries";
+import { getAllCourses, getDeployedAchievements } from "@/lib/sanity/queries";
+import { calculateLevel } from "@/lib/gamification/xp";
 
 const ADMIN_SECRET = process.env.ADMIN_SECRET;
 
@@ -88,7 +89,8 @@ export async function POST(req: NextRequest) {
     certificates: 0,
   };
 
-  // 1. Sync XP balance from Token-2022 ATA
+  // 1. Sync XP balance from Token-2022 ATA (also recalculate level)
+  let onChainXp = 0;
   try {
     const ata = getAssociatedTokenAddressSync(
       XP_MINT,
@@ -102,14 +104,16 @@ export async function POST(req: NextRequest) {
       "confirmed",
       TOKEN_2022_PROGRAM_ID
     );
-    const balance = Number(account.amount);
-    await supabase
-      .from("user_xp")
-      .upsert(
-        { user_id: profile.id, total_xp: balance },
-        { onConflict: "user_id" }
-      );
-    results.xp = balance;
+    onChainXp = Number(account.amount);
+    await supabase.from("user_xp").upsert(
+      {
+        user_id: profile.id,
+        total_xp: onChainXp,
+        level: calculateLevel(onChainXp),
+      },
+      { onConflict: "user_id" }
+    );
+    results.xp = onChainXp;
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
     if (
@@ -198,6 +202,12 @@ export async function POST(req: NextRequest) {
   }
 
   // 3. Sync NFT assets via Helius DAS API (achievements + certificates)
+  // Pre-fetch achievement definitions from Sanity for XP lookup
+  const deployedAchievements = await getDeployedAchievements();
+  const achievementXpMap = new Map(
+    deployedAchievements.map((a) => [a.id, a.xpReward])
+  );
+
   try {
     const dasRes = await fetch(rpcUrl, {
       method: "POST",
@@ -229,12 +239,26 @@ export async function POST(req: NextRequest) {
           (a) => a.trait_type === "achievement_id"
         );
         if (achievementAttr) {
+          const achievementId = achievementAttr.value;
           await supabase.rpc("unlock_achievement", {
             p_user_id: profile.id,
-            p_achievement_id: achievementAttr.value,
+            p_achievement_id: achievementId,
             p_tx_signature: `resync:${asset.id as string}`,
             p_asset_address: asset.id as string,
           });
+
+          // Mirror achievement XP to Supabase (idempotency key prevents duplicates)
+          const xpReward = achievementXpMap.get(achievementId) ?? 0;
+          if (xpReward > 0) {
+            await supabase.rpc("award_xp", {
+              p_user_id: profile.id,
+              p_amount: xpReward,
+              p_reason: `Achievement reward: ${achievementId}`,
+              p_idempotency_key: `resync:${asset.id as string}:xp`,
+              p_tx_signature: `resync:${asset.id as string}`,
+            });
+          }
+
           results.achievements++;
           continue;
         }
@@ -263,6 +287,17 @@ export async function POST(req: NextRequest) {
     }
   } catch (err) {
     console.error("[resync] DAS API error:", err);
+  }
+
+  // 4. Final correction: overwrite total_xp + level from on-chain balance
+  // This ensures Supabase matches the authoritative on-chain state even if
+  // individual award_xp calls drifted the total (e.g. Sanity xpReward differs
+  // from on-chain AchievementType.xp_reward).
+  if (onChainXp > 0) {
+    await supabase
+      .from("user_xp")
+      .update({ total_xp: onChainXp, level: calculateLevel(onChainXp) })
+      .eq("user_id", profile.id);
   }
 
   return NextResponse.json({
