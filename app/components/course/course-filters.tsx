@@ -59,7 +59,7 @@ export function CourseFilters({
             onClick={() => onTrackChange(null)}
             className={`rounded-full px-3 py-1.5 text-sm transition-colors ${
               selectedTrack === null
-                ? "border border-solana-purple text-solana-purple font-medium"
+                ? "border border-solana-purple text-[#a855f7] font-medium"
                 : "border border-edge text-content-secondary hover:text-content"
             }`}
           >
@@ -71,7 +71,7 @@ export function CourseFilters({
               onClick={() => onTrackChange(track)}
               className={`rounded-full px-3 py-1.5 text-sm transition-colors ${
                 selectedTrack === track
-                  ? "border border-solana-purple text-solana-purple font-medium"
+                  ? "border border-solana-purple text-[#a855f7] font-medium"
                   : "border border-edge text-content-secondary hover:text-content"
               }`}
             >

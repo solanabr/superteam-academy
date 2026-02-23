@@ -21,7 +21,7 @@ export async function HeroSection() {
 
       <div className="mx-auto max-w-7xl px-4 text-center">
         <div>
-          <p className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-solana-purple">
+          <p className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-[#a855f7]">
             {t("badge")}
           </p>
           <h1 className="mx-auto max-w-4xl text-4xl font-black leading-[1.1] tracking-tight text-content sm:text-6xl lg:text-7xl">
