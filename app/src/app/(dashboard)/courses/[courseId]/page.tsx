@@ -8,11 +8,24 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
-import { CheckCircle, Lock, PlayCircle, Loader2 } from "lucide-react";
+import { Loader2, Users, Star, BookOpen } from "lucide-react";
+import { ModuleList } from "@/components/module-list";
 
 // Импортируем контент (заголовки уроков)
 import { COURSE_CONTENT } from "@/lib/course-content";
+
+// Хелпер для подсчета (можно вынести в utils)
+function getCompletedIndices(lessonFlags: any): number[] {
+    if (!lessonFlags) return [];
+    const indices: number[] = [];
+    // Простейшая логика для демо: если флаги есть, парсим.
+    // Пока для хакатона можно использовать упрощенную проверку или тот код из sync.ts
+    // Для скорости пока вернем пустой массив или реализуем позже.
+    return [];
+}
 
 export default function CourseDetailsPage() {
   const params = useParams();
@@ -79,60 +92,91 @@ export default function CourseDetailsPage() {
   }
 
   const isEnrolled = !!enrollment;
+  // TODO: Реализовать парсинг lessonFlags для получения списка completedIndices
+  const completedIndices: number[] = []; 
 
-  return (
-    <div className="container py-8 max-w-4xl">
-      <div className="flex justify-between items-start mb-8">
-        <div>
-            <h1 className="text-4xl font-bold mb-2">{courseContent.title}</h1>
-            <p className="text-muted-foreground text-lg">Master the basics of Solana development.</p>
-        </div>
+  
+
+    return (
+    <div className="container py-8 max-w-6xl">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        {/* Кнопка действия (Enroll или Continue) */}
-        {!isEnrolled ? (
-            <Button size="lg" onClick={handleEnroll} disabled={enrolling}>
-                {enrolling ? (
-                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enrolling...</>
+        {/* Main Content (Left) */}
+        <div className="lg:col-span-2 space-y-8">
+            <div>
+                <Badge variant="outline" className="mb-4 text-purple-400 border-purple-400/30">Official Course</Badge>
+                <h1 className="text-4xl font-extrabold mb-4">{courseContent.title}</h1>
+                <p className="text-xl text-muted-foreground">
+                    Master the basics of Solana development. Build real dApps, earn XP, and get certified.
+                </p>
+            </div>
+
+            {/* Stats Bar */}
+            <div className="flex gap-6 text-sm text-muted-foreground border-y py-4">
+                <div className="flex items-center gap-2"><BookOpen className="h-4 w-4" /> {courseContent.lessons.length} Lessons</div>
+                <div className="flex items-center gap-2"><Users className="h-4 w-4" /> 1,204 Students</div>
+                <div className="flex items-center gap-2"><Star className="h-4 w-4 text-yellow-500" /> 4.9/5</div>
+            </div>
+
+            {/* Curriculum */}
+            <div>
+                <h2 className="text-2xl font-bold mb-4">Curriculum</h2>
+                <ModuleList 
+                    courseId={courseId} 
+                    lessons={courseContent.lessons.map((l, i) => ({ ...l, index: i }))}
+                    isEnrolled={isEnrolled}
+                    completedIndices={completedIndices}
+                />
+            </div>
+        </div>
+
+        {/* Sidebar (Right) */}
+        <div className="space-y-6">
+            <Card className="p-6 sticky top-24 border-purple-500/20 bg-purple-500/5">
+                <div className="mb-6">
+                    <div className="aspect-video bg-gradient-to-br from-purple-900 to-indigo-900 rounded-lg flex items-center justify-center mb-4 shadow-inner">
+                        <span className="text-4xl font-bold text-white/20">RPC</span>
+                    </div>
+                    <div className="flex justify-between items-center mb-2">
+                        <span className="font-semibold">Course Progress</span>
+                        <span className="text-sm text-muted-foreground">0%</span>
+                    </div>
+                    <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                        <div className="h-full bg-purple-500 w-0" />
+                    </div>
+                </div>
+
+                {!isEnrolled ? (
+                    <Button size="lg" className="w-full text-lg" onClick={handleEnroll} disabled={enrolling}>
+                        {enrolling ? <Loader2 className="animate-spin mr-2" /> : "Enroll Now - Free"}
+                    </Button>
                 ) : (
-                    "Enroll in Course"
+                    <Button size="lg" className="w-full text-lg" onClick={() => router.push(`/courses/${courseId}/lessons/0`)}>
+                        Continue Learning
+                    </Button>
                 )}
-            </Button>
-        ) : (
-            <Button size="lg" variant="secondary" disabled>
-                You are enrolled
-            </Button>
-        )}
-      </div>
+                
+                <p className="text-xs text-center text-muted-foreground mt-4">
+                    Includes 500 XP & Certificate of Completion
+                </p>
+            </Card>
 
-      <div className="grid gap-4">
-        {courseContent.lessons.map((lesson, index) => {
-            // Для хакатона показываем все уроки открытыми, если записан
-            const isLocked = !isEnrolled;
+            {/* Instructor */}
+            <div className="border rounded-lg p-6">
+                <h3 className="font-semibold mb-4">Instructor</h3>
+                <div className="flex items-center gap-4">
+                    <Avatar className="h-12 w-12">
+                        <AvatarImage src="https://github.com/shadcn.png" />
+                        <AvatarFallback>ST</AvatarFallback>
+                    </Avatar>
+                    <div>
+                        <p className="font-medium">Superteam Brazil</p>
+                        <p className="text-sm text-muted-foreground">Core Contributors</p>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-            return (
-                <Card key={lesson.id} className={isLocked ? "opacity-70" : ""}>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <div className="flex flex-col">
-                            <CardTitle className="text-lg">
-                                {index + 1}. {lesson.title}
-                            </CardTitle>
-                        </div>
-                        
-                        {isLocked ? (
-                            <Lock className="h-5 w-5 text-muted-foreground" />
-                        ) : (
-                            <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => router.push(`/courses/${courseId}/lessons/${index}`)}
-                            >
-                                <PlayCircle className="mr-2 h-4 w-4" /> Start
-                            </Button>
-                        )}
-                    </CardHeader>
-                </Card>
-            );
-        })}
       </div>
     </div>
   );
