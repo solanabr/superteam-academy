@@ -82,6 +82,28 @@ export default function EditCoursePage() {
     image: null as any,
   });
 
+  const [titleStatus, setTitleStatus] = useState<'idle' | 'checking' | 'unique' | 'duplicate'>('idle');
+  const [titleMessage, setTitleMessage] = useState("");
+
+  const checkTitleUniqueness = async () => {
+    if (!formData.title.trim()) return;
+    setTitleStatus('checking');
+    try {
+      const res = await fetch(`/api/courses/check-title?title=${encodeURIComponent(formData.title.trim())}&id=${courseId}`);
+      const data = await res.json();
+      if (data.unique) {
+        setTitleStatus('unique');
+        setTitleMessage("Title is available!");
+      } else {
+        setTitleStatus('duplicate');
+        setTitleMessage("A course with this name or slug already exists.");
+      }
+    } catch (e) {
+      setTitleStatus('duplicate');
+      setTitleMessage("Check failed.");
+    }
+  };
+
   useEffect(() => {
     if (!authenticated || !walletAddress || !courseId) {
       setLoading(false);
@@ -200,6 +222,12 @@ export default function EditCoursePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!walletAddress || !courseId) return;
+
+    // Only block if title has changed and hasn't been verified
+    if (formData.title !== course?.title && titleStatus !== 'unique') {
+      setError("Please verify the course title is unique first.");
+      return;
+    }
 
     setSaving(true);
     setError(null);
@@ -354,11 +382,37 @@ export default function EditCoursePage() {
               id="title"
               type="text"
               value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              onChange={(e) => {
+                setFormData({ ...formData, title: e.target.value });
+                if (e.target.value !== course?.title) {
+                  setTitleStatus('idle');
+                  setTitleMessage("");
+                } else {
+                  setTitleStatus('idle');
+                  setTitleMessage("");
+                }
+              }}
               required
               placeholder="Introduction to Solana"
               className="flex h-10 w-full rounded-md border border-border-subtle bg-transparent px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-solana"
             />
+            <div className="mt-2 flex items-center justify-between">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="text-rust hover:text-rust/80 hover:bg-rust/10"
+                onClick={checkTitleUniqueness}
+                disabled={titleStatus === 'checking' || !formData.title.trim()}
+              >
+                {titleStatus === 'checking' ? "Checking..." : "Check Availability"}
+              </Button>
+              {titleMessage && (
+                <span className={`text-xs ${titleStatus === 'unique' ? 'text-green-500' : 'text-red-500'}`}>
+                  {titleMessage}
+                </span>
+              )}
+            </div>
           </div>
 
           <div>
@@ -597,7 +651,7 @@ export default function EditCoursePage() {
           </div>
 
           <div className="flex gap-3">
-            <Button type="submit" disabled={saving || uploading}>
+            <Button type="submit" disabled={saving || uploading || (formData.title !== course?.title && titleStatus !== 'unique')}>
               {saving ? t("saving") : t("save_changes")}
             </Button>
             <Button

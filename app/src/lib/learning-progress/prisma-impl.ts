@@ -118,21 +118,70 @@ export function createLearningProgressService(prisma: PrismaClient): LearningPro
     };
   };
 
-  const getLeaderboard = async (options?: { limit?: number }): Promise<LeaderboardEntry[]> => {
+  const getLeaderboard = async (options?: { limit?: number; timeframe?: "daily" | "weekly" | "all-time" }): Promise<LeaderboardEntry[]> => {
     const limit = options?.limit ?? 50;
-    const rows = await prisma.progress.findMany({
-      orderBy: { xp: "desc" },
-      take: limit,
-      include: { user: { select: { walletAddress: true } } },
-    });
-    return rows.map((row: (typeof rows)[number], i: number) => ({
-      rank: i + 1,
-      userId: row.userId,
-      walletAddress: row.user.walletAddress,
-      xp: row.xp,
-      level: getLevelFromXp(row.xp),
-      currentStreak: row.currentStreak,
-    }));
+    const timeframe = options?.timeframe ?? "all-time";
+
+    let dateFilter: Date | null = null;
+    if (timeframe === "daily") {
+      const d = new Date();
+      d.setUTCHours(0, 0, 0, 0); // Start of today UTC
+      dateFilter = d;
+    } else if (timeframe === "weekly") {
+      const d = new Date();
+      d.setUTCDate(d.getUTCDate() - 7);
+      d.setUTCHours(0, 0, 0, 0); // Start of day 7 days ago UTC
+      dateFilter = d;
+    }
+
+    if (dateFilter) {
+      // Group by userId on XpEvent
+      const agg = await prisma.xpEvent.groupBy({
+        by: ['userId'],
+        where: { createdAt: { gte: dateFilter } },
+        _sum: { amount: true },
+        orderBy: { _sum: { amount: 'desc' } },
+        take: limit,
+      });
+
+      if (agg.length === 0) return [];
+
+      // Fetch user wallet, total XP, and currentStreak
+      const userIds = agg.map((a: { userId: string, _sum: { amount: number | null } }) => a.userId);
+      const rows = await prisma.progress.findMany({
+        where: { userId: { in: userIds } },
+        include: { user: { select: { walletAddress: true } } },
+      });
+
+      // Merge agg and rows
+      return agg.map((a: { userId: string, _sum: { amount: number | null } }, i: number) => {
+        const r = rows.find(x => x.userId === a.userId);
+        const timeframeXp = a._sum.amount ?? 0;
+        return {
+          rank: i + 1,
+          userId: a.userId,
+          walletAddress: r?.user?.walletAddress ?? 'Unknown',
+          xp: timeframeXp,
+          level: r ? getLevelFromXp(r.xp) : getLevelFromXp(timeframeXp), // Level based on true total XP
+          currentStreak: r?.currentStreak ?? 0,
+        };
+      });
+    } else {
+      // All-time: just use the Progress table which tracks total XP cleanly
+      const rows = await prisma.progress.findMany({
+        orderBy: { xp: "desc" },
+        take: limit,
+        include: { user: { select: { walletAddress: true } } },
+      });
+      return rows.map((row: (typeof rows)[number], i: number) => ({
+        rank: i + 1,
+        userId: row.userId,
+        walletAddress: row.user.walletAddress,
+        xp: row.xp,
+        level: getLevelFromXp(row.xp),
+        currentStreak: row.currentStreak,
+      }));
+    }
   };
 
   const getCredentials = async (userId: string): Promise<Credential[]> => {
@@ -175,13 +224,16 @@ export function createLearningProgressService(prisma: PrismaClient): LearningPro
 
   const issueCredential = async (params: {
     userId: string;
+    wallet?: string;
+    courseId: string;
     trackId: string;
     trackName: string;
     xpEarned: number;
     mintAddress?: string;
     verificationUrl?: string;
-  }): Promise<void> => {
-    const { userId, trackId, trackName, xpEarned, mintAddress, verificationUrl } = params;
+  }): Promise<string> => {
+    const { userId, wallet, courseId, trackId, trackName, xpEarned, mintAddress, verificationUrl } = params;
+    const targetUserId = userId; // Prisma usually uses internal userId, but we could use wallet if needed.
 
     const existing = await prisma.credential.findFirst({
       where: { userId, trackId },
@@ -202,8 +254,9 @@ export function createLearningProgressService(prisma: PrismaClient): LearningPro
           verificationUrl: verificationUrl ?? (existing as any).verificationUrl,
         },
       });
+      return mintAddress ?? existing.id;
     } else {
-      await prisma.credential.create({
+      const created = await prisma.credential.create({
         data: {
           userId,
           trackId,
@@ -215,6 +268,7 @@ export function createLearningProgressService(prisma: PrismaClient): LearningPro
           verificationUrl,
         },
       });
+      return mintAddress ?? created.id;
     }
   };
 
@@ -413,6 +467,13 @@ export function createLearningProgressService(prisma: PrismaClient): LearningPro
         },
         update: updateData,
       }),
+      prisma.xpEvent.create({
+        data: {
+          userId,
+          amount: xpReward,
+          source: "lesson",
+        }
+      })
     ]);
 
     // Achievements are claimed manually by the user from the achievements page.
@@ -443,6 +504,7 @@ export function createLearningProgressService(prisma: PrismaClient): LearningPro
     try {
       await issueCredential({
         userId,
+        courseId,
         trackId: courseId,
         trackName: courseId,
         xpEarned: 0
@@ -470,6 +532,13 @@ export function createLearningProgressService(prisma: PrismaClient): LearningPro
         where: { userId },
         data: { xp: { increment: xpAmount } },
       }),
+      prisma.xpEvent.create({
+        data: {
+          userId,
+          amount: xpAmount,
+          source: "course_bonus"
+        }
+      })
     ]);
   };
 

@@ -5,6 +5,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { useTranslations } from "next-intl";
 import { useWallets } from "@privy-io/react-auth/solana";
 import { usePrivy } from "@privy-io/react-auth";
+import { Button } from "../ui/button";
 
 export function Footer() {
   const t = useTranslations("footer");
@@ -60,7 +61,7 @@ export function Footer() {
         <p className="text-text-secondary text-base font-mono flex items-center justify-center gap-2 select-none">
           {t("made_with")}
           <span
-            className="text-rust text-xl cursor-pointer transition-transform duration-200 inline-block relative"
+            className="text-rust text-xl cursor-pointer transition-all duration-300 inline-block relative hover:scale-125 hover:rotate-12 active:scale-95"
             style={{ transform: `translate(${position.x}px, ${position.y}px)` }}
             onClick={handleHeartClick}
           >
@@ -108,9 +109,9 @@ export function Footer() {
 
               <div className="mt-8 flex justify-end">
                 <Dialog.Close asChild>
-                  <button className="px-6 py-2 bg-solana/10 hover:bg-solana text-white hover:text-void border border-solana/30 rounded font-mono text-xs transition-all duration-300">
+                  <Button variant="outline" size="sm" className="bg-solana/10 hover:bg-solana text-white hover:text-void border-solana/30 font-mono text-xs">
                     {t("exit")}
-                  </button>
+                  </Button>
                 </Dialog.Close>
               </div>
             </div>

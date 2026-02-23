@@ -11,6 +11,8 @@ import { Footer } from "@/components/layout/Footer";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { CredentialList } from "@/components/dashboard/CredentialList";
+import { Button } from "@/components/ui/button";
+import { withFallbackRPC } from "@/lib/solana-connection";
 
 export default function DashboardPage() {
     const t = useTranslations("dashboard");
@@ -33,12 +35,18 @@ export default function DashboardPage() {
             fetchProgress(user.walletAddress);
             fetchAchievements(user.walletAddress);
 
-            import("@solana/web3.js").then(({ Connection, PublicKey }) => {
-                const conn = new Connection(process.env.NEXT_PUBLIC_RPC_URL || "https://api.devnet.solana.com");
-                conn.getBalance(new PublicKey(user.walletAddress))
-                    .then(b => setSolBalance(b / 1e9))
-                    .catch(e => console.error("Failed to fetch balance", e));
-            });
+            const fetchBalance = async () => {
+                try {
+                    const { PublicKey } = await import("@solana/web3.js");
+                    await withFallbackRPC(async (conn) => {
+                        const b = await conn.getBalance(new PublicKey(user.walletAddress));
+                        setSolBalance(b / 1e9);
+                    });
+                } catch (e) {
+                    console.error("Failed to fetch balance", e);
+                }
+            };
+            fetchBalance();
         }
     }, [user?.walletAddress, fetchProgress, fetchAchievements]);
 
@@ -112,12 +120,12 @@ export default function DashboardPage() {
                     </div>
                 </div>
                 <div className="flex gap-3">
-                    <Link href="/courses">
-                        <button className="flex items-center gap-2 px-4 py-2 bg-solana/10 hover:bg-solana/20 border border-solana/20 text-solana rounded-lg text-sm font-medium transition-all shadow-[0_0_15px_rgba(20,241,149,0.1)] hover:shadow-[0_0_20px_rgba(20,241,149,0.2)]">
+                    <Button asChild variant="default" className="flex items-center gap-2 px-4 py-2 bg-solana/10 hover:bg-solana/20 border border-solana/20 text-solana rounded-lg text-sm font-medium transition-all shadow-[0_0_15px_rgba(20,241,149,0.1)] hover:shadow-[0_0_20px_rgba(20,241,149,0.2)] h-auto">
+                        <Link href="/courses">
                             <span className="material-symbols-outlined notranslate text-lg">code</span>
                             {t("browse_courses")}
-                        </button>
-                    </Link>
+                        </Link>
+                    </Button>
                 </div>
             </header>
 
@@ -133,15 +141,20 @@ export default function DashboardPage() {
                             You have {solBalance.toFixed(2)} SOL. You need Devnet SOL to pay for gas fees when enrolling in courses and completing lessons.
                         </p>
                     </div>
-                    <a
-                        href="https://faucet.solana.com"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="whitespace-nowrap flex items-center gap-2 px-4 py-2 bg-rust hover:bg-rust/90 text-white rounded-lg text-sm font-medium transition-all shadow-[0_0_15px_rgba(255,100,100,0.2)]"
+                    <Button
+                        asChild
+                        variant="destructive"
+                        className="whitespace-nowrap flex items-center gap-2 px-4 py-2 bg-rust hover:bg-rust/90 text-white rounded-lg text-sm font-medium transition-all shadow-[0_0_15px_rgba(255,100,100,0.2)] h-auto"
                     >
-                        Get Devnet SOL
-                        <span className="material-symbols-outlined text-base">open_in_new</span>
-                    </a>
+                        <a
+                            href="https://faucet.solana.com"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            Get Devnet SOL
+                            <span className="material-symbols-outlined text-base">open_in_new</span>
+                        </a>
+                    </Button>
                 </div>
             )}
 

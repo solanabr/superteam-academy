@@ -1,6 +1,6 @@
 # Superteam Academy — Frontend Integration Guide
 
-Program ID: `ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf`
+Program ID: `AVES32TXPwZ7kuVizTZsqzBr1UVYrcZyqQ6BxHaGchWU`
 
 ## Architecture
 
@@ -31,7 +31,7 @@ import { PublicKey, SystemProgram, Keypair } from "@solana/web3.js";
 import { getAssociatedTokenAddressSync, createAssociatedTokenAccountInstruction } from "@solana/spl-token";
 import { OnchainAcademy, IDL } from "../target/types/onchain_academy";
 
-const PROGRAM_ID = new PublicKey("ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf");
+const PROGRAM_ID = new PublicKey("AVES32TXPwZ7kuVizTZsqzBr1UVYrcZyqQ6BxHaGchWU");
 const TOKEN_2022_PROGRAM_ID = new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb");
 const MPL_CORE_PROGRAM_ID = new PublicKey("CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d");
 

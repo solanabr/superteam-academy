@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { Button } from "@/components/ui/button";
 
 type TerminalOutputProps = {
   output: string;
@@ -27,7 +28,7 @@ function parseTerminalOutput(output: string, hasError: boolean): OutputLine[] {
 
   for (const line of lines) {
     const trimmed = line.trim();
-    
+
     // Detect error patterns
     if (
       hasError ||
@@ -85,12 +86,14 @@ export function TerminalOutput({
     <div className="flex min-h-[180px] flex-col rounded-md border border-border-subtle bg-black/90 text-xs font-mono">
       {/* JDoodle daily limit banner */}
       {dailyLimitReached && (
-        <div
-          className="flex items-center justify-center border-b border-rust/50 bg-rust/15 px-3 py-2.5 text-center"
+        <Button
+          variant="ghost"
+          size="sm"
+          className="flex items-center gap-2 px-4 py-2 bg-solana/10 hover:bg-solana/20 border border-solana/20 text-solana rounded-lg text-sm font-medium transition-all shadow-[0_0_15px_rgba(20,241,149,0.1)] hover:shadow-[0_0_20px_rgba(20,241,149,0.2)] font-semibold text-rust"
           role="alert"
         >
-          <span className="font-semibold text-rust">{DAILY_LIMIT_MESSAGE}</span>
-        </div>
+          {DAILY_LIMIT_MESSAGE}
+        </Button>
       )}
       {/* Terminal Header */}
       <div className="flex items-center justify-between border-b border-border-subtle/60 bg-white/5 px-3 py-1.5">
@@ -107,24 +110,25 @@ export function TerminalOutput({
             </span>
           )}
           {onClear && !isEmpty && (
-            <button
+            <Button
               onClick={onClear}
-              className="text-[10px] text-text-secondary hover:text-text-primary transition-colors"
+              variant="ghost"
+              size="sm"
+              className="ml-auto text-[10px] text-text-secondary hover:text-text-primary transition-colors"
               title="Clear terminal"
             >
               Clear
-            </button>
+            </Button>
           )}
           <span
-            className={`text-[10px] ${
-              status === "running"
-                ? "text-text-secondary"
-                : status === "success"
-                  ? "text-solana"
-                  : status === "error"
-                    ? "text-rust"
-                    : "text-text-secondary"
-            }`}
+            className={`text-[10px] ${status === "running"
+              ? "text-text-secondary"
+              : status === "success"
+                ? "text-solana"
+                : status === "error"
+                  ? "text-rust"
+                  : "text-text-secondary"
+              }`}
           >
             {status === "running"
               ? "Running…"

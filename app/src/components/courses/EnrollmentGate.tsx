@@ -40,12 +40,10 @@ export function EnrollmentGate({ courseId, courseSlug, children }: EnrollmentGat
         }
     }, [walletAddress, courseId, enrollment, enrollmentLoading, fetchEnrollment]);
 
-    // Professors and admins can always view lessons
-    const canBypass = user?.role === "professor" || user?.role === "admin";
-    if (canBypass) return <>{children}</>;
+
 
     // Still loading auth or enrollment
-    const isLoading = userLoading || (walletAddress && enrollment === undefined);
+    const isLoading = userLoading || (walletAddress && enrollment === undefined && enrollmentLoading);
     if (isLoading) {
         return (
             <div className="flex h-[60vh] items-center justify-center">

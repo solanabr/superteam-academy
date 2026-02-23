@@ -3,6 +3,7 @@
 import { PrivyProvider } from "@privy-io/react-auth";
 import { toSolanaWalletConnectors } from "@privy-io/react-auth/solana";
 
+import { createSolanaRpc, createSolanaRpcSubscriptions } from "@solana/kit";
 // Use test app ID when not set so build/prerender succeeds; replace with your own for production.
 const appId = process.env.NEXT_PUBLIC_PRIVY_APP_ID ?? "clpispdty00ycl80fpueukbhl";
 
@@ -35,6 +36,14 @@ const privyConfig: any = {
   embeddedWallets: {
     solana: {
       createOnLogin: "users-without-wallets",
+    },
+  },
+  solana: {
+    rpcs: {
+      "solana:devnet": {
+        rpc: createSolanaRpc(process.env.NEXT_PUBLIC_HELIUS_RPC_URL || process.env.NEXT_PUBLIC_RPC_URL || "https://api.devnet.solana.com"),
+        rpcSubscriptions: createSolanaRpcSubscriptions(process.env.NEXT_PUBLIC_RPC_WS_URL || "wss://api.devnet.solana.com"),
+      },
     },
   },
 };

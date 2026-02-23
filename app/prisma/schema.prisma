@@ -21,6 +21,7 @@ model User {
   enrollments  Enrollment[]
   progress     Progress?
   credentials  Credential[]
+  xpEvents     XpEvent[]
 
   referralCode String  @unique @default(cuid()) @map("referral_code")
   referrerId   String? @map("referrer_id")
@@ -37,6 +38,7 @@ model Enrollment {
   lessonFlags  Bytes     @map("lesson_flags")
   completedAt  DateTime? @map("completed_at")
   bonusClaimed Boolean   @default(false) @map("bonus_claimed")
+
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
 
@@ -81,4 +83,18 @@ model Credential {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("credentials")
+}
+
+model XpEvent {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  amount    Int
+  source    String   @default("unknown")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([createdAt])
+  @@map("xp_events")
 }

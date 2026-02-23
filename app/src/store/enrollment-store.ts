@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { withFallbackRPC } from "@/lib/solana-connection";
 
 export type EnrollmentProgress = {
   courseId: string;
@@ -6,6 +7,7 @@ export type EnrollmentProgress = {
   totalLessons: number;
   completedAt: string | null;
   bonusClaimed: boolean;
+  onChainActive?: boolean;
 };
 
 type EnrollmentState = {
@@ -17,9 +19,11 @@ type EnrollmentState = {
   errors: Record<string, string | null>;
   // Actions
   fetchEnrollment: (walletAddress: string, courseId: string, force?: boolean) => Promise<void>;
-  enroll: (walletAddress: string, courseId: string) => Promise<void>;
+  enroll: (walletAddress: string, courseId: string, signTx?: (input: { transaction: Uint8Array; wallet: any; chain?: string; options?: { uiOptions?: any } }) => Promise<{ signedTransaction: Uint8Array }>, wallet?: any, uiOptions?: any) => Promise<void>;
+  unenroll: (walletAddress: string, courseId: string, signTx?: (input: { transaction: Uint8Array; wallet: any; chain?: string; options?: { uiOptions?: any } }) => Promise<{ signedTransaction: Uint8Array }>, wallet?: any, uiOptions?: any) => Promise<void>;
   finalize: (walletAddress: string, courseId: string, lessonCount: number) => Promise<void>;
   claimBonus: (walletAddress: string, courseId: string, xpAmount: number) => Promise<void>;
+  reclaimRent: (walletAddress: string, courseId: string, signTx?: (input: { transaction: Uint8Array; wallet: any; chain?: string; options?: { uiOptions?: any } }) => Promise<{ signedTransaction: Uint8Array }>, wallet?: any, uiOptions?: any) => Promise<void>;
   setEnrollment: (courseId: string, progress: EnrollmentProgress | null) => void;
   setLoading: (courseId: string, loading: boolean) => void;
   setError: (courseId: string, error: string | null) => void;
@@ -37,12 +41,7 @@ export const useEnrollmentStore = create<EnrollmentState>((set, get) => ({
 
   setEnrollment: (courseId, progress) => {
     set((state) => ({
-      enrollments: progress
-        ? { ...state.enrollments, [courseId]: progress }
-        : (() => {
-          const { [courseId]: _, ...rest } = state.enrollments;
-          return rest;
-        })(),
+      enrollments: { ...state.enrollments, [courseId]: progress as any },
       errors: { ...state.errors, [courseId]: null },
     }));
   },
@@ -133,65 +132,81 @@ export const useEnrollmentStore = create<EnrollmentState>((set, get) => ({
     }
   },
 
-  enroll: async (walletAddress, courseId) => {
+  enroll: async (walletAddress, courseId, signTx, wallet, uiOptions) => {
     const state = get();
     state.setLoading(courseId, true);
     state.setError(courseId, null);
 
     try {
-      // Check Devnet SOL balance before allowing enrollment
-      const { Connection, PublicKey } = await import("@solana/web3.js");
-      const connection = new Connection(process.env.NEXT_PUBLIC_RPC_URL || "https://api.devnet.solana.com");
-      const pubkey = new PublicKey(walletAddress);
-      const balance = await connection.getBalance(pubkey);
-
-      // Require at least 0.01 SOL (10,000,000 lamports) for gas
-      if (balance < 0.01 * 1_000_000_000) {
-        throw new Error("Insufficient Devnet SOL for gas. Please claim your Airdrop in Settings.");
+      if (!wallet) {
+        throw new Error("No wallet connected. Please connect your Solana wallet.");
       }
 
-      const res = await fetch("/api/enroll", {
+      await withFallbackRPC(async (connection) => {
+        const { PublicKey, SystemProgram } = await import("@solana/web3.js");
+        const { Program } = await import("@coral-xyz/anchor");
+        // @ts-ignore
+        const onchainAcademyIdl = (await import("@/lib/idl/onchain_academy.json")).default;
+
+        const pubkey = new PublicKey(walletAddress);
+        const balance = await connection.getBalance(pubkey);
+        if (balance < 0.003 * 1_000_000_000) {
+          throw new Error("Insufficient Devnet SOL for enrollment rent. Please claim your Airdrop in Settings.");
+        }
+
+        console.log("Processing User-Paid enrollment via signTransaction...");
+        const program = new Program(onchainAcademyIdl as any, { connection } as any);
+        const [coursePda] = PublicKey.findProgramAddressSync([Buffer.from("course"), Buffer.from(courseId)], program.programId);
+        const [enrollmentPda] = PublicKey.findProgramAddressSync([Buffer.from("enrollment"), Buffer.from(courseId), pubkey.toBuffer()], program.programId);
+
+        const tx = await program.methods
+          .enroll(courseId)
+          .accounts({
+            course: coursePda,
+            enrollment: enrollmentPda,
+            learner: pubkey,
+            systemProgram: SystemProgram.programId,
+          } as any)
+          .transaction();
+
+        tx.feePayer = pubkey;
+        const { blockhash } = await connection.getLatestBlockhash();
+        tx.recentBlockhash = blockhash;
+
+        let signature: string;
+        if (signTx && wallet) {
+          // Serialize and sign via Privy
+          const serializedTx = tx.serialize({ verifySignatures: false });
+          const { signedTransaction } = await signTx({
+            transaction: serializedTx,
+            wallet: wallet,
+            chain: "solana:devnet",
+            options: { uiOptions }
+          });
+
+          // Broadcast via our fallback-aware connection
+          signature = await connection.sendRawTransaction(signedTransaction);
+        } else if (wallet && typeof wallet.sendTransaction === 'function') {
+          // Fallback for direct wallet adapter if available
+          signature = await wallet.sendTransaction(tx, connection, { uiOptions });
+        } else {
+          throw new Error("Wallet does not support signing or sending transactions.");
+        }
+
+        await connection.confirmTransaction(signature, "confirmed");
+        console.log("Enrollment successful:", signature);
+      });
+
+      // Hit local API to sync Prisma
+      await fetch("/api/enroll", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ wallet: walletAddress, courseId }),
       });
 
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data?.error ?? "Enrollment failed");
-      }
-
-      // Assume enrollment succeeded instantly for snappy UI
       state.setEnrollmentOptimistic(courseId, 0);
-
-      // Fetch actual enrollment data from server with backoff for RPC sync delays
-      // Run this asynchronously to not block the UI
-      (async () => {
-        let retries = 5;
-        while (retries > 0) {
-          try {
-            const pollRes = await fetch(
-              `/api/enrollment?wallet=${encodeURIComponent(walletAddress)}&courseId=${encodeURIComponent(courseId)}`
-            );
-
-            if (pollRes.ok) {
-              const data = await pollRes.json();
-              if (data && typeof data.bonusClaimed === 'undefined') {
-                data.bonusClaimed = false;
-              }
-              // Successfully found on-chain data, finalize our optimistic UI with the real data
-              get().setEnrollment(courseId, data);
-              break;
-            }
-          } catch (e) {
-            // Ignore network errors during polling
-          }
-
-          await new Promise((r) => setTimeout(r, 2000));
-          retries--;
-        }
-        state.setLoading(courseId, false);
-      })();
+      await get().fetchEnrollment(walletAddress, courseId, true);
+      state.setLoading(courseId, false);
     } catch (error) {
       state.setError(
         courseId,
@@ -202,16 +217,100 @@ export const useEnrollmentStore = create<EnrollmentState>((set, get) => ({
     }
   },
 
+  unenroll: async (walletAddress, courseId, signTx, wallet, uiOptions) => {
+    const state = get();
+    state.setLoading(courseId, true);
+    state.setError(courseId, null);
+
+    try {
+      if (!wallet) {
+        throw new Error("No wallet connected. Please connect your Solana wallet.");
+      }
+
+      if (process.env.NEXT_PUBLIC_USE_ONCHAIN === "true") {
+        await withFallbackRPC(async (connection) => {
+          const { PublicKey } = await import("@solana/web3.js");
+          const { Program } = await import("@coral-xyz/anchor");
+          // @ts-ignore
+          const onchainAcademyIdl = (await import("@/lib/idl/onchain_academy.json")).default;
+
+          const program = new Program(onchainAcademyIdl as any, { connection } as any);
+
+          const pubkey = new PublicKey(walletAddress);
+          const [coursePda] = PublicKey.findProgramAddressSync([Buffer.from("course"), Buffer.from(courseId)], program.programId);
+          const [enrollmentPda] = PublicKey.findProgramAddressSync([Buffer.from("enrollment"), Buffer.from(courseId), pubkey.toBuffer()], program.programId);
+
+          const tx = await program.methods
+            .closeEnrollment()
+            .accounts({
+              course: coursePda,
+              enrollment: enrollmentPda,
+              learner: pubkey,
+            } as any)
+            .transaction();
+
+          tx.feePayer = pubkey;
+          const { blockhash } = await connection.getLatestBlockhash();
+          tx.recentBlockhash = blockhash;
+
+          let signature: string;
+          if (signTx && wallet) {
+            const serializedTx = tx.serialize({ verifySignatures: false });
+            const { signedTransaction } = await signTx({
+              transaction: serializedTx,
+              wallet: wallet,
+              chain: "solana:devnet",
+              options: { uiOptions }
+            });
+            signature = await connection.sendRawTransaction(signedTransaction);
+          } else if (wallet && typeof wallet.sendTransaction === 'function') {
+            signature = await wallet.sendTransaction(tx, connection, { uiOptions });
+          } else {
+            throw new Error("Wallet does not support signing or sending transactions");
+          }
+
+          await connection.confirmTransaction(signature, "confirmed");
+          console.log("Unenrollment on-chain successful:", signature);
+        });
+      }
+
+      const res = await fetch("/api/unenroll", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ wallet: walletAddress, courseId }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data?.error ?? "Unenrollment failed");
+      }
+
+      state.setEnrollment(courseId, null);
+    } catch (error) {
+      state.setError(
+        courseId,
+        error instanceof Error ? error.message : "Unenrollment failed"
+      );
+      throw error;
+    } finally {
+      state.setLoading(courseId, false);
+    }
+  },
+
   finalize: async (walletAddress, courseId, lessonCount) => {
     const state = get();
     state.setLoading(courseId, true);
     state.setError(courseId, null);
 
     try {
-      const res = await fetch(`/api/courses/${courseId}/finalize`, {
+      const res = await fetch(`/api/graduation`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ wallet: walletAddress, lessonCount }),
+        body: JSON.stringify({
+          wallet: walletAddress,
+          courseId: courseId,
+          lessonCount
+        }),
       });
 
       if (!res.ok) {
@@ -264,6 +363,75 @@ export const useEnrollmentStore = create<EnrollmentState>((set, get) => ({
       );
       state.setLoading(courseId, false);
       throw error;
+    }
+  },
+
+  reclaimRent: async (walletAddress, courseId, signTx, wallet, uiOptions) => {
+    const state = get();
+    state.setLoading(courseId, true);
+    state.setError(courseId, null);
+
+    try {
+      if (!wallet) {
+        throw new Error("No wallet connected.");
+      }
+
+      await withFallbackRPC(async (connection) => {
+        const { PublicKey, Transaction } = await import("@solana/web3.js");
+        const { Program } = await import("@coral-xyz/anchor");
+        // @ts-ignore
+        const onchainAcademyIdl = (await import("@/lib/idl/onchain_academy.json")).default;
+
+        const program = new Program(onchainAcademyIdl as any, { connection } as any);
+
+        const pubkey = new PublicKey(walletAddress);
+        const [coursePda] = PublicKey.findProgramAddressSync([Buffer.from("course"), Buffer.from(courseId)], program.programId);
+        const [enrollmentPda] = PublicKey.findProgramAddressSync([Buffer.from("enrollment"), Buffer.from(courseId), pubkey.toBuffer()], program.programId);
+
+        const tx = await program.methods
+          .closeEnrollment()
+          .accounts({
+            course: coursePda,
+            enrollment: enrollmentPda,
+            learner: pubkey,
+          } as any)
+          .transaction();
+
+        tx.feePayer = pubkey;
+        const { blockhash } = await connection.getLatestBlockhash();
+        tx.recentBlockhash = blockhash;
+
+        let signature: string;
+        if (signTx && wallet) {
+          const serializedTx = tx.serialize({ verifySignatures: false });
+          const { signedTransaction } = await signTx({
+            transaction: serializedTx,
+            wallet: wallet,
+            chain: "solana:devnet",
+            options: { uiOptions }
+          });
+          signature = await connection.sendRawTransaction(signedTransaction);
+        } else if (wallet && typeof wallet.sendTransaction === 'function') {
+          signature = await wallet.sendTransaction(tx, connection, { uiOptions });
+        } else {
+          throw new Error("Wallet does not support signing or sending transactions");
+        }
+
+        await connection.confirmTransaction(signature, "confirmed");
+        console.log("Rent reclaimed successfully:", signature);
+      });
+
+      // Refresh enrollment status. Since the on-chain account is gone, 
+      // our hybrid service should now return the Prisma-only record.
+      await state.fetchEnrollment(walletAddress, courseId, true);
+    } catch (error) {
+      state.setError(
+        courseId,
+        error instanceof Error ? error.message : "Reclaiming rent failed"
+      );
+      throw error;
+    } finally {
+      state.setLoading(courseId, false);
     }
   },
 

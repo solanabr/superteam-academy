@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { useWallets } from "@privy-io/react-auth/solana";
 import { Copy, Users, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import clsx from "clsx";
 
 type UserData = {
@@ -87,15 +88,17 @@ export function ReferralCard() {
                     <code className="bg-black/30 rounded px-3 py-2 text-sm text-solana flex-1 truncate border border-white/10">
                         {data.referralCode}
                     </code>
-                    <button
+                    <Button
                         onClick={copyToClipboard}
+                        variant="outline"
+                        size="icon"
                         className={clsx(
                             "p-2 rounded bg-white/5 border border-white/10 hover:bg-white/10 transition-colors",
                             copied ? "text-green-400" : "text-text-secondary"
                         )}
                     >
                         <Copy className="h-4 w-4" />
-                    </button>
+                    </Button>
                 </div>
                 {copied && <span className="text-green-400 text-xs mt-1 block">Copied to clipboard!</span>}
             </div>

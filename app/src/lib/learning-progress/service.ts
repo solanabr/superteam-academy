@@ -4,8 +4,10 @@ import { createLearningProgressService } from "@/lib/learning-progress/prisma-im
 import { OnChainLearningService } from "@/lib/learning-progress/onchain-impl";
 import { Connection } from "@solana/web3.js";
 
+import { RPC_URL } from "@/lib/solana-connection";
+
 const USE_ONCHAIN = process.env.NEXT_PUBLIC_USE_ONCHAIN === "true";
 
 export const learningProgressService = USE_ONCHAIN
-    ? new OnChainLearningService(new Connection(process.env.NEXT_PUBLIC_RPC_URL || "https://api.devnet.solana.com"))
+    ? new OnChainLearningService(new Connection(RPC_URL))
     : createLearningProgressService(prisma);

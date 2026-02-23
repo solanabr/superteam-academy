@@ -111,6 +111,15 @@ export async function getCourseBySlug(slug: string): Promise<CourseDetail | null
   }
 }
 
+export async function getCourseById(id: string): Promise<CourseDetail | null> {
+  try {
+    const course = await client.fetch<CourseDetail | null>(courseByIdQuery, { id });
+    return course ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export async function getLessonById(id: string): Promise<LessonRef | null> {
   const lesson = await client.fetch<LessonRef | null>(lessonByIdQuery, { id });
   return lesson ?? null;

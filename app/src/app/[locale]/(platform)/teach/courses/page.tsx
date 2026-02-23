@@ -194,17 +194,17 @@ export default function TeachCoursesPage() {
                     </Button>
                   </Link>
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
                     onClick={() => handlePublish(course._id, course.published)}
                   >
                     {course.published ? "Unpublish" : "Publish"}
                   </Button>
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
                     onClick={() => handleDelete(course._id)}
-                    className="text-red-400 hover:text-red-300"
+                    className="text-red-400 hover:text-red-300 border-red-500/20 hover:border-red-500/50"
                   >
                     Delete
                   </Button>

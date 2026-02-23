@@ -1,5 +1,6 @@
 import { Link } from "@/i18n/routing";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 interface ActiveCourseProps {
     courseTitle: string;
@@ -25,7 +26,7 @@ export function ActiveCourse({
                 <h3 className="text-lg font-display font-semibold text-white">Active Course</h3>
                 <Link className="text-xs font-mono text-solana hover:underline" href="/courses">View All Courses -&gt;</Link>
             </div>
-            <div className="glass-panel rounded-2xl p-1 border border-white/10 group glass-card-hover transition-all duration-300">
+            <div className="glass-panel rounded-2xl p-1 border border-white/5 group hover:border-solana/30 glass-card-hover transition-all duration-300 bg-white/[0.02] hover:bg-white/[0.04]">
                 <div className="relative flex flex-col md:flex-row h-full rounded-xl overflow-hidden bg-void/40">
                     {/* Visual representation */}
                     <div className="w-full md:w-1/3 min-h-[160px] relative overflow-hidden bg-gradient-to-br from-void to-gray-900 border-r border-white/5">
@@ -56,10 +57,10 @@ export function ActiveCourse({
                             <div className="flex items-center justify-between flex-wrap gap-4">
                                 <span className="text-xs text-text-muted font-mono">Last lesson: {lastLessonTitle}</span>
                                 <Link href={`/courses/${courseSlug}/lessons/${lastLessonId}`}>
-                                    <button className="px-5 py-2 bg-white text-void font-display font-bold rounded hover:scale-105 transition-transform shadow-[0_0_15px_rgba(255,255,255,0.1)] flex items-center gap-2">
+                                    <Button className="px-5 font-bold shadow-[0_0_15px_rgba(255,255,255,0.1)] group-hover:scale-105 transition-transform">
                                         Continue
                                         <span className="material-symbols-outlined text-sm">arrow_forward</span>
-                                    </button>
+                                    </Button>
                                 </Link>
                             </div>
                         </div>

@@ -1,10 +1,10 @@
 
 import { create } from "zustand";
-import { Connection } from "@solana/web3.js";
+import { withFallbackRPC } from "@/lib/solana-connection";
 import { OnChainLearningService } from "@/lib/learning-progress/onchain-impl";
+import { HELIUS_RPC } from "@/lib/solana-connection";
 
 const USE_ONCHAIN = process.env.NEXT_PUBLIC_USE_ONCHAIN === "true";
-const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || "https://api.devnet.solana.com";
 
 export type LessonCompletion = {
     courseId: string;
@@ -18,7 +18,7 @@ type LessonState = {
 
     fetchCompletionStatus: (walletAddress: string, courseId: string) => Promise<void>;
     markComplete: (walletAddress: string, courseId: string, lessonIndex: number) => Promise<void>;
-    enroll: (walletAddress: string, courseId: string, signTransaction: (tx: any) => Promise<any>) => Promise<void>;
+    enroll: (walletAddress: string, courseId: string, signTx?: (input: { transaction: Uint8Array; wallet: any; chain?: string; options?: { uiOptions?: any } }) => Promise<{ signedTransaction: Uint8Array }>, wallet?: any, uiOptions?: any) => Promise<void>;
 
     setCompletionOptimistic: (courseId: string, lessonIndex: number, completed: boolean) => void;
     isLessonCompleted: (courseId: string, lessonIndex: number) => boolean;
@@ -53,29 +53,27 @@ export const useLessonStore = create<LessonState>((set, get) => ({
 
         try {
             if (USE_ONCHAIN) {
-                const connection = new Connection(RPC_URL);
-                const service = new OnChainLearningService(connection);
-                const enrollment = await service.getEnrollmentProgress(walletAddress, courseId);
+                await withFallbackRPC(async (connection) => {
+                    const service = new OnChainLearningService(connection);
+                    const enrollment = await service.getEnrollmentProgress(walletAddress, courseId);
 
-                if (enrollment) {
-                    // enrollment.lessonFlags is Buffer. Convert to number[]
-                    const flags = Array.from(enrollment.lessonFlags as unknown as Buffer || []);
-                    set((state) => ({
-                        completions: {
-                            ...state.completions,
-                            [courseId]: { courseId, lessonFlags: flags }
-                        },
-                        errors: { ...state.errors, [courseId]: null }
-                    }));
-                } else {
-                    // Not enrolled
-                    set((state) => ({
-                        completions: {
-                            ...state.completions,
-                            [courseId]: { courseId, lessonFlags: [] }
-                        },
-                    }));
-                }
+                    if (enrollment) {
+                        const flags = Array.from(enrollment.lessonFlags as unknown as Buffer || []);
+                        set((state) => ({
+                            completions: {
+                                ...state.completions,
+                                [courseId]: { courseId, lessonFlags: flags }
+                            },
+                        }));
+                    } else {
+                        set((state) => ({
+                            completions: {
+                                ...state.completions,
+                                [courseId]: { courseId, lessonFlags: [] }
+                            },
+                        }));
+                    }
+                });
             } else {
                 const res = await fetch(
                     `/api/enrollment?wallet=${encodeURIComponent(walletAddress)}&courseId=${encodeURIComponent(courseId)}`
@@ -145,23 +143,37 @@ export const useLessonStore = create<LessonState>((set, get) => ({
         }
     },
 
-    enroll: async (walletAddress, courseId, signTransaction) => {
+    enroll: async (walletAddress, courseId, signTx, wallet, uiOptions) => {
         const state = get();
         state.setLoading(courseId, true);
         state.setError(courseId, null);
 
         try {
             if (USE_ONCHAIN) {
-                const connection = new Connection(RPC_URL);
-                const service = new OnChainLearningService(connection);
+                await withFallbackRPC(async (connection) => {
+                    const service = new OnChainLearningService(connection);
 
-                const tx = await service.enroll(walletAddress, courseId);
-                const signedTx = await signTransaction(tx);
+                    const tx = await service.enroll(walletAddress, courseId);
 
-                const sig = await connection.sendRawTransaction(signedTx.serialize());
-                await connection.confirmTransaction(sig);
+                    let signature: string;
+                    if (signTx && wallet) {
+                        const serializedTx = tx.serialize({ verifySignatures: false });
+                        const { signedTransaction } = await signTx({
+                            transaction: serializedTx,
+                            wallet: wallet,
+                            chain: "solana:devnet",
+                            options: { uiOptions }
+                        });
+                        signature = await connection.sendRawTransaction(signedTransaction);
+                    } else if (wallet && typeof wallet.sendTransaction === 'function') {
+                        signature = await wallet.sendTransaction(tx, connection, { uiOptions });
+                    } else {
+                        throw new Error("Wallet does not support signing or sending transactions.");
+                    }
 
-                await state.fetchCompletionStatus(walletAddress, courseId);
+                    await connection.confirmTransaction(signature, "confirmed");
+                    await state.fetchCompletionStatus(walletAddress, courseId);
+                });
             } else {
                 // Stub enrollment usually happens automatically or via legacy API
                 // For now, do nothing or call an API if exists

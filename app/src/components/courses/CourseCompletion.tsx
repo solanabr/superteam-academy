@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { useWallets } from "@privy-io/react-auth/solana";
 import { useEnrollmentStore } from "@/store/enrollment-store";
-import { Loader2, Trophy, CheckCircle } from "lucide-react";
+import { Link } from "@/i18n/routing";
+import { Button } from "@/components/ui/button";
+import { Loader2, Trophy, CheckCircle, Medal } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 type CourseCompletionProps = {
@@ -28,42 +30,81 @@ export function CourseCompletion({ courseId, totalLessons }: CourseCompletionPro
     const completedAt = useEnrollmentStore((state) =>
         state.enrollments[courseId]?.completedAt ?? null
     );
+    const onChainActive = useEnrollmentStore((state) =>
+        state.enrollments[courseId]?.onChainActive ?? false
+    );
     const bonusClaimed = useEnrollmentStore((state) =>
         state.enrollments[courseId]?.bonusClaimed ?? false
     );
     const loading = useEnrollmentStore((state) => state.loading[courseId] ?? false);
     const finalize = useEnrollmentStore((state) => state.finalize);
-    const claimBonus = useEnrollmentStore((state) => state.claimBonus);
+    const fetchEnrollment = useEnrollmentStore((state) => state.fetchEnrollment);
+    const reclaimRent = useEnrollmentStore((state) => state.reclaimRent);
 
     const [isActionLoading, setIsActionLoading] = useState(false);
+    const [isReclaimLoading, setIsReclaimLoading] = useState(false);
 
-    if (!authenticated || !walletAddress || completedCount === 0) return null;
+    // State for tracking the newly minted Certificate NFT
+    const [mintedCredentialId, setMintedCredentialId] = useState<string | null>(null);
 
-    const isComplete = completedCount >= totalLessons;
+    const isComplete = completedCount >= totalLessons || !!completedAt;
+
+    if (!authenticated || !walletAddress || (completedCount === 0 && !completedAt)) return null;
 
     const handleFinalize = async () => {
         if (isActionLoading) return;
         setIsActionLoading(true);
         try {
-            await finalize(walletAddress, courseId, totalLessons);
-        } catch (error) {
+            console.log(`[CourseCompletion] Requesting graduation for course ${courseId}`);
+            const res = await fetch(`/api/graduation`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    wallet: walletAddress,
+                    courseId: courseId,
+                    lessonCount: totalLessons
+                }),
+            });
+
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                throw new Error(data?.error ?? "Finalize failed");
+            }
+
+            const data = await res.json();
+            if (data.mintAddress) {
+                setMintedCredentialId(data.mintAddress);
+            }
+            if (data.warning || data.message) {
+                alert(data.warning || data.message);
+            }
+
+            // Refresh state
+            await fetchEnrollment(walletAddress, courseId, true);
+        } catch (error: any) {
             console.error("Finalize failed", error);
-            alert(t("finalize_failed"));
+            const errorMsg = error instanceof Error ? error.message : t("finalize_failed");
+            alert(errorMsg);
         } finally {
             setIsActionLoading(false);
         }
     };
 
-    const handleClaim = async () => {
-        if (isActionLoading) return;
-        setIsActionLoading(true);
+    const handleReclaimRent = async () => {
+        if (isReclaimLoading) return;
+        const confirm = window.confirm("Reclaiming rent will close your on-chain enrollment account and return approximately 0.003 SOL to your wallet. Your progress will remain archived in our database. Proceed?");
+        if (!confirm) return;
+
+        setIsReclaimLoading(true);
         try {
-            await claimBonus(walletAddress, courseId, 500);
-        } catch (error) {
-            console.error("Claim failed", error);
-            alert(t("claim_failed"));
+            const { wallet } = wallets[0] as any; // Privy wallet for signing
+            await reclaimRent(walletAddress, courseId, wallets[0]?.signTransaction as any, wallets[0]);
+            alert("Rent reclaimed successfully!");
+        } catch (error: any) {
+            console.error("Reclaim rent failed", error);
+            alert(error instanceof Error ? error.message : "Reclaim rent failed");
         } finally {
-            setIsActionLoading(false);
+            setIsReclaimLoading(false);
         }
     };
 
@@ -75,34 +116,75 @@ export function CourseCompletion({ courseId, totalLessons }: CourseCompletionPro
                 <div className="flex flex-col gap-4 items-start">
                     <h3 className="text-xl font-bold text-white">{t("completion_title")}</h3>
                     <p className="text-text-secondary">{t("completion_info")}</p>
-                    <button
+                    <Button
                         onClick={handleFinalize}
                         disabled={isActionLoading || loading}
+                        variant="default"
                         className="flex items-center gap-2 rounded-md bg-solana px-4 py-2 text-sm font-medium text-black hover:bg-solana/90 disabled:opacity-50"
                     >
-                        {isActionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
-                        {t("finalize_button")}
-                    </button>
-                </div>
-            ) : !bonusClaimed ? (
-                <div className="flex flex-col gap-4 items-start bg-solana/10 p-4 rounded-lg border border-solana/20">
-                    <h3 className="text-xl font-bold text-solana flex items-center gap-2">
-                        <Trophy className="h-6 w-6" />
-                        {t("bonus_available")}
-                    </h3>
-                    <p className="text-text-secondary">{t("bonus_info", { xp: 500 })}</p>
-                    <button
-                        onClick={handleClaim}
-                        disabled={isActionLoading || loading}
-                        className="flex items-center gap-2 rounded-md bg-solana px-4 py-2 text-sm font-medium text-black hover:bg-solana/90 disabled:opacity-50"
-                    >
-                        {isActionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : t("claim_button", { xp: 500 })}
-                    </button>
+                        {isActionLoading ? (
+                            <>
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                Finalizing & Minting...
+                            </>
+                        ) : (
+                            <>
+                                <Medal className="h-4 w-4" />
+                                Get Certificate
+                            </>
+                        )}
+                    </Button>
                 </div>
             ) : (
-                <div className="flex items-center gap-2 text-solana">
-                    <CheckCircle className="h-5 w-5" />
-                    <span className="font-medium">{t("course_finished_claimed")}</span>
+                <div className="flex flex-col gap-6 items-start bg-solana/10 p-6 rounded-xl border border-solana/30 shadow-[0_0_30px_-5px_rgba(20,240,148,0.2)] w-full">
+                    <div className="flex flex-col gap-4">
+                        <h3 className="text-xl font-bold text-solana flex items-center gap-2">
+                            <CheckCircle className="h-6 w-6" />
+                            Course Complete & Graduation NFT Issued!
+                        </h3>
+                        <p className="text-text-secondary leading-relaxed text-sm max-w-lg">
+                            You have successfully completed this course. A unique <strong>Metaplex Core NFT Certificate</strong> has been minted and permanently written to the Solana blockchain to verify your accomplishment!
+                        </p>
+                    </div>
+
+                    <div className="flex flex-wrap gap-4">
+                        <Button
+                            asChild
+                            variant="default"
+                            className={`flex items-center gap-3 rounded-lg bg-solana text-[#0A0A0B] hover:brightness-110 shadow-[0_0_20px_-5px_rgba(20,240,148,0.4)] px-6 py-3 font-bold transition-all h-auto`}
+                        >
+                            <Link href="/profile">
+                                <Medal className="h-5 w-5" />
+                                View Your Certificate
+                            </Link>
+                        </Button>
+
+                        {onChainActive && (
+                            <Button
+                                onClick={handleReclaimRent}
+                                disabled={isReclaimLoading}
+                                variant="outline"
+                                className="flex items-center gap-2 rounded-lg border-white/20 bg-white/5 px-6 py-3 text-sm font-medium text-white hover:bg-white/10 disabled:opacity-50 h-auto"
+                            >
+                                {isReclaimLoading ? (
+                                    <>
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                        Reclaiming...
+                                    </>
+                                ) : (
+                                    <>
+                                        Reclaim Enrollment Rent
+                                    </>
+                                )}
+                            </Button>
+                        )}
+                    </div>
+
+                    {!onChainActive && (
+                        <p className="text-white/40 text-xs italic">
+                            On-chain enrollment account closed. Progress archived off-chain.
+                        </p>
+                    )}
                 </div>
             )}
         </div>

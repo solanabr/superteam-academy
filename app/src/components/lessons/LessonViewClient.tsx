@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useRef, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 import type { CourseDetail, LessonRef, ModuleRef } from "@/sanity/lib/queries";
 import { ChallengeRunner } from "./ChallengeRunner";
 import dynamic from "next/dynamic";
@@ -14,6 +15,7 @@ import { TerminalOutput } from "./TerminalOutput";
 import { useAppUser } from "@/hooks/useAppUser";
 import { Link, useRouter } from "@/i18n/routing";
 import { useLessonStore } from "@/store/lesson-store";
+import { useWallets, useSignTransaction } from "@privy-io/react-auth/solana";
 import { usePlaygroundStore } from "@/store/playground-store";
 import { useTranslations } from "next-intl";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
@@ -57,6 +59,8 @@ export function LessonViewClient({ course, lesson }: LessonViewClientProps) {
   const router = useRouter();
   const lessonId = lesson._id;
   const getCodeFromEditorRef = useRef<(() => string) | null>(null);
+  const { wallets } = useWallets();
+  const { signTransaction } = useSignTransaction();
 
   const flattened = useMemo(() => flattenLessons(course.modules), [course.modules]);
   const current = flattened.find((l) => l.lesson._id === lesson._id);
@@ -178,21 +182,7 @@ export function LessonViewClient({ course, lesson }: LessonViewClientProps) {
             <span className="text-white text-sm font-medium bg-white/5 px-2 py-0.5 rounded border border-white/10 truncate max-w-[200px]">{lesson.title}</span>
           </div>
         </div>
-        <div className="flex items-center gap-4">
-          {/* Progress Pill */}
-          <div className="hidden md:flex items-center gap-3 px-3 py-1.5 rounded-full bg-white/5 border border-white/5">
-            <span className="text-xs text-text-secondary font-mono">XP: 8,420</span>
-            <div className="w-px h-3 bg-white/10"></div>
-            <div className="flex items-center gap-1 text-rust text-xs font-bold">
-              <span className="material-symbols-outlined text-[14px]">local_fire_department</span>
-              5
-            </div>
-          </div>
-          {/* Profile */}
-          <div className="size-9 rounded-full bg-solana/20 flex items-center justify-center border border-white/10 text-xs font-bold text-solana">
-            {user?.walletAddress ? user.walletAddress.slice(0, 2).toUpperCase() : "??"}
-          </div>
-        </div>
+
       </header>
 
       {/* Main Workspace Area */}
@@ -239,10 +229,13 @@ export function LessonViewClient({ course, lesson }: LessonViewClientProps) {
 
                   {isCompleted && !nextLesson ? (
                     /* Last lesson completed — finished state */
-                    <div className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold bg-solana/20 text-solana border border-solana/30 cursor-default">
+                    <Link
+                      href={`/courses/${course.slug}`}
+                      className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold bg-solana text-[#0A0A0B] hover:brightness-110 active:scale-[0.98] transition-all shadow-[0_0_20px_-5px_rgba(20,240,148,0.4)]"
+                    >
                       <span className="material-symbols-outlined text-lg">check_circle</span>
-                      {t("course_complete_grad")}
-                    </div>
+                      Return to Course Page
+                    </Link>
                   ) : isCompleted && nextLesson ? (
                     /* Lesson completed — go to next */
                     <Link
@@ -254,7 +247,7 @@ export function LessonViewClient({ course, lesson }: LessonViewClientProps) {
                     </Link>
                   ) : (
                     /* Not completed yet */
-                    <button
+                    <Button
                       onClick={async () => {
                         if (!isCompleted) await handleComplete();
                         if (nextLesson) {
@@ -262,11 +255,12 @@ export function LessonViewClient({ course, lesson }: LessonViewClientProps) {
                         }
                       }}
                       disabled={isCompleting}
+                      variant="default"
                       className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold bg-solana text-[#0A0A0B] hover:brightness-110 active:scale-[0.98] transition-all shadow-[0_0_20px_-5px_rgba(20,240,148,0.4)] disabled:opacity-50"
                     >
                       {isCompleting ? t("completing") : (nextLesson ? t("continue") : t("finish_course"))}
                       <span className="material-symbols-outlined text-lg">arrow_forward</span>
-                    </button>
+                    </Button>
                   )}
                 </div>
               </div>
@@ -294,13 +288,21 @@ export function LessonViewClient({ course, lesson }: LessonViewClientProps) {
                             : t("course_complete_cta")}
                         </p>
                       </div>
-                      {nextLesson && (
+                      {nextLesson ? (
                         <Link
                           href={`/courses/${course.slug}/lessons/${nextLesson._id}`}
                           className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold bg-solana text-[#0A0A0B] hover:brightness-110 active:scale-[0.98] transition-all shadow-[0_0_20px_-5px_rgba(20,240,148,0.4)]"
                         >
                           {t("next_lesson")}
                           <span className="material-symbols-outlined text-lg">arrow_forward</span>
+                        </Link>
+                      ) : (
+                        <Link
+                          href={`/courses/${course.slug}`}
+                          className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold bg-solana text-[#0A0A0B] hover:brightness-110 active:scale-[0.98] transition-all shadow-[0_0_20px_-5px_rgba(20,240,148,0.4)]"
+                        >
+                          Return to Course Page
+                          <span className="material-symbols-outlined text-lg">check_circle</span>
                         </Link>
                       )}
                     </div>
@@ -317,9 +319,15 @@ export function LessonViewClient({ course, lesson }: LessonViewClientProps) {
                     </div>
                     <div className="flex items-center gap-3 pr-2">
                       {!isCompleted && (
-                        <button className="text-text-secondary hover:text-white transition-colors p-1 rounded hover:bg-white/5" onClick={() => setCode(lessonId, "")} title={t("reset_code")}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-text-secondary hover:text-white transition-colors p-1 rounded hover:bg-white/5"
+                          onClick={() => setCode(lessonId, "")}
+                          title={t("reset_code")}
+                        >
                           <span className="material-symbols-outlined text-[18px]">restart_alt</span>
-                        </button>
+                        </Button>
                       )}
                     </div>
                   </div>
@@ -337,16 +345,17 @@ export function LessonViewClient({ course, lesson }: LessonViewClientProps) {
                     {/* Floating Run Action — hidden when completed */}
                     {!isCompleted && (
                       <div className="absolute bottom-6 right-6 z-20">
-                        <button
+                        <Button
                           onClick={handleRunCode}
                           disabled={playgroundStatus === "running"}
-                          className="flex items-center gap-3 pl-5 pr-6 py-3.5 bg-white text-black rounded-xl font-bold shadow-[0_10px_40px_-10px_rgba(255,255,255,0.3)] hover:scale-105 active:scale-95 transition-all group disabled:opacity-70"
+                          variant="default"
+                          className="flex items-center gap-3 pl-5 pr-6 py-3.5 bg-white text-black hover:bg-white/90 rounded-xl font-bold shadow-[0_10px_40px_-10px_rgba(255,255,255,0.3)] hover:scale-105 active:scale-95 transition-all group disabled:opacity-70 border-none"
                         >
                           <span className={`material-symbols-outlined ${playgroundStatus === "running" ? "animate-spin" : "group-hover:animate-spin"}`}>
                             {playgroundStatus === "running" ? "progress_activity" : "settings"}
                           </span>
                           <span>{playgroundStatus === "running" ? t("building") : t("build_deploy")}</span>
-                        </button>
+                        </Button>
                       </div>
                     )}
                   </div>

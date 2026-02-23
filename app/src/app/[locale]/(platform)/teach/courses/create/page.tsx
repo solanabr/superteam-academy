@@ -156,8 +156,9 @@ export default function CreateCoursePage() {
             <div className="mt-2 flex items-center justify-between">
               <Button
                 type="button"
-                variant="outline"
+                variant="ghost"
                 size="sm"
+                className="text-rust hover:text-rust/80 hover:bg-rust/10"
                 onClick={checkTitleUniqueness}
                 disabled={titleStatus === 'checking' || !formData.title.trim()}
               >
@@ -271,15 +272,17 @@ export default function CreateCoursePage() {
                       <span>
                         {idx + 1}. {t}
                       </span>
-                      <button
+                      <Button
                         type="button"
+                        variant="ghost"
+                        size="sm"
                         onClick={() =>
                           setLessonTitles((prev) => prev.filter((_, i) => i !== idx))
                         }
-                        className="text-xs text-red-400 hover:text-red-300"
+                        className="text-xs text-red-400 hover:text-red-300 h-auto p-1"
                       >
                         Remove
-                      </button>
+                      </Button>
                     </li>
                   ))}
                 </ul>

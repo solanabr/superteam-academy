@@ -7,9 +7,10 @@ import onchainAcademyIdl from "@/lib/idl/onchain_academy.json";
 import bs58 from "bs58";
 import { prisma } from "@/lib/db";
 import { ACHIEVEMENTS } from "@/lib/achievements";
+import { withFallbackRPC } from "@/lib/solana-connection";
 import { createLearningProgressService } from "@/lib/learning-progress/prisma-impl";
 
-const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || "https://api.devnet.solana.com";
+const RPC_URL = process.env.NEXT_PUBLIC_HELIUS_RPC_URL || process.env.NEXT_PUBLIC_RPC_URL || "https://api.devnet.solana.com";
 const BACKEND_WALLET_KEY = process.env.BACKEND_WALLET_PRIVATE_KEY;
 const MPL_CORE_PROGRAM_ID = new PublicKey("CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d");
 const TOKEN_2022_PROGRAM_ID = new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb");
@@ -41,84 +42,84 @@ export async function POST(req: NextRequest) {
         }
 
         // --- On-Chain Minting Logic ---
-        const connection = new Connection(RPC_URL, "confirmed");
-        const backendWallet = Keypair.fromSecretKey(bs58.decode(BACKEND_WALLET_KEY));
-
-        const provider = new AnchorProvider(
-            connection,
-            // @ts-ignore
-            { publicKey: backendWallet.publicKey, signTransaction: async (tx) => { tx.sign(backendWallet); return tx; }, signAllTransactions: async (txs) => { txs.forEach(t => t.sign(backendWallet)); return txs; } },
-            AnchorProvider.defaultOptions()
-        );
-
-        const program = new Program(onchainAcademyIdl as any, provider);
-        const learner = new PublicKey(wallet);
-
-        // PDAs
-        const [configPda] = PublicKey.findProgramAddressSync([Buffer.from("config")], program.programId);
-        const [achievementTypePda] = PublicKey.findProgramAddressSync([Buffer.from("achievement"), Buffer.from(achievementId)], program.programId);
-        const [receiptPda] = PublicKey.findProgramAddressSync([Buffer.from("achievement_receipt"), Buffer.from(achievementId), learner.toBuffer()], program.programId);
-        const [minterPda] = PublicKey.findProgramAddressSync([Buffer.from("minter"), backendWallet.publicKey.toBuffer()], program.programId);
-
-        // Fetch Accounts
-        const config = await (program.account as any).config.fetch(configPda);
-        const achievementType = await (program.account as any).achievementType.fetch(achievementTypePda);
-
-        const learnerTokenAccount = getAssociatedTokenAddressSync(
-            config.xpMint,
-            learner,
-            true,
-            TOKEN_2022_PROGRAM_ID
-        );
-
-        const learnerTokenAccountInfo = await connection.getAccountInfo(learnerTokenAccount);
-        const instructions = [];
-
-        if (!learnerTokenAccountInfo) {
-            console.log(`Creating XP token account for learner ${wallet}`);
-            instructions.push(
-                createAssociatedTokenAccountIdempotentInstruction(
-                    backendWallet.publicKey, // payer
-                    learnerTokenAccount,     // ata
-                    learner,                 // owner
-                    config.xpMint,           // mint
-                    TOKEN_2022_PROGRAM_ID    // programId
-                )
+        const sig = await withFallbackRPC(async (connection) => {
+            const backendWallet = Keypair.fromSecretKey(bs58.decode(BACKEND_WALLET_KEY));
+            const provider = new AnchorProvider(
+                connection,
+                // @ts-ignore
+                { publicKey: backendWallet.publicKey, signTransaction: async (tx) => { tx.sign(backendWallet); return tx; }, signAllTransactions: async (txs) => { txs.forEach(t => t.sign(backendWallet)); return txs; } },
+                AnchorProvider.defaultOptions()
             );
-        }
 
-        const credentialAsset = Keypair.generate();
+            const program = new Program(onchainAcademyIdl as any, provider);
+            const learner = new PublicKey(wallet);
 
-        const awardAchievementIx = await program.methods
-            .awardAchievement()
-            .accounts({
-                config: configPda,
-                achievementType: achievementTypePda,
-                achievementReceipt: receiptPda,
-                minter: backendWallet.publicKey,
-                minterRole: minterPda,
-                asset: credentialAsset.publicKey,
-                collection: achievementType.collection,
-                recipient: learner,
-                recipientTokenAccount: learnerTokenAccount,
-                xpMint: config.xpMint,
-                payer: backendWallet.publicKey,
-                mplCoreProgram: MPL_CORE_PROGRAM_ID,
-                tokenProgram: TOKEN_2022_PROGRAM_ID,
-                systemProgram: SystemProgram.programId,
-            } as any)
-            .instruction();
+            // PDAs
+            const [configPda] = PublicKey.findProgramAddressSync([Buffer.from("config")], program.programId);
+            const [achievementTypePda] = PublicKey.findProgramAddressSync([Buffer.from("achievement"), Buffer.from(achievementId)], program.programId);
+            const [receiptPda] = PublicKey.findProgramAddressSync([Buffer.from("achievement_receipt"), Buffer.from(achievementId), learner.toBuffer()], program.programId);
+            const [minterPda] = PublicKey.findProgramAddressSync([Buffer.from("minter"), backendWallet.publicKey.toBuffer()], program.programId);
 
-        instructions.push(awardAchievementIx);
+            // Fetch Accounts
+            const config = await (program.account as any).config.fetch(configPda);
+            const achievementType = await (program.account as any).achievementType.fetch(achievementTypePda);
 
-        const tx = new Transaction().add(...instructions);
+            const learnerTokenAccount = getAssociatedTokenAddressSync(
+                config.xpMint,
+                learner,
+                true,
+                TOKEN_2022_PROGRAM_ID
+            );
 
-        tx.feePayer = backendWallet.publicKey;
-        tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-        tx.sign(backendWallet, credentialAsset);
+            const learnerTokenAccountInfo = await connection.getAccountInfo(learnerTokenAccount);
+            const instructions = [];
 
-        const sig = await connection.sendRawTransaction(tx.serialize());
-        await connection.confirmTransaction(sig);
+            if (!learnerTokenAccountInfo) {
+                console.log(`Creating XP token account for learner ${wallet}`);
+                instructions.push(
+                    createAssociatedTokenAccountIdempotentInstruction(
+                        backendWallet.publicKey, // payer
+                        learnerTokenAccount,     // ata
+                        learner,                 // owner
+                        config.xpMint,           // mint
+                        TOKEN_2022_PROGRAM_ID    // programId
+                    )
+                );
+            }
+
+            const credentialAsset = Keypair.generate();
+
+            const awardAchievementIx = await program.methods
+                .awardAchievement()
+                .accounts({
+                    config: configPda,
+                    achievementType: achievementTypePda,
+                    achievementReceipt: receiptPda,
+                    minter: backendWallet.publicKey,
+                    minterRole: minterPda,
+                    asset: credentialAsset.publicKey,
+                    collection: achievementType.collection,
+                    recipient: learner,
+                    recipientTokenAccount: learnerTokenAccount,
+                    xpMint: config.xpMint,
+                    payer: backendWallet.publicKey,
+                    mplCoreProgram: MPL_CORE_PROGRAM_ID,
+                    tokenProgram: TOKEN_2022_PROGRAM_ID,
+                    systemProgram: SystemProgram.programId,
+                } as any)
+                .instruction();
+
+            instructions.push(awardAchievementIx);
+
+            const tx = new Transaction().add(...instructions);
+            tx.feePayer = backendWallet.publicKey;
+            tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+            tx.sign(backendWallet, credentialAsset);
+
+            const signature = await connection.sendRawTransaction(tx.serialize());
+            await connection.confirmTransaction(signature);
+            return signature;
+        });
 
         return NextResponse.json({ success: true, claimed: true, signature: sig });
 

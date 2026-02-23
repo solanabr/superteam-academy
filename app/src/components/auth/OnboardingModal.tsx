@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useUserStore } from "@/store/user-store";
+import { Button } from "@/components/ui/button";
 
 type OnboardingModalProps = {
     walletAddress: string;
@@ -105,10 +106,11 @@ export function OnboardingModal({ walletAddress, onComplete }: OnboardingModalPr
                     <div className="space-y-4">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {ROLES.map((role) => (
-                                <button
+                                <Button
                                     key={role.id}
                                     onClick={() => setSelectedRole(role.id)}
-                                    className={`relative flex flex-col items-center gap-3 p-6 rounded-xl border-2 transition-all duration-300 group ${selectedRole === role.id
+                                    variant="ghost"
+                                    className={`relative flex flex-col items-center gap-3 p-6 rounded-xl border-2 transition-all duration-300 group h-auto ${selectedRole === role.id
                                         ? "border-solana bg-solana/10 shadow-[0_0_30px_rgba(20,241,149,0.15)]"
                                         : "border-white/10 bg-white/[0.02] hover:border-white/20 hover:bg-white/5"
                                         }`}
@@ -128,17 +130,18 @@ export function OnboardingModal({ walletAddress, onComplete }: OnboardingModalPr
                                             <span className="material-symbols-outlined text-sm text-void">check</span>
                                         </div>
                                     )}
-                                </button>
+                                </Button>
                             ))}
                         </div>
 
-                        <button
+                        <Button
                             onClick={() => selectedRole && setStep(2)}
                             disabled={!selectedRole}
+                            variant="default"
                             className="w-full mt-6 h-12 rounded-xl font-display font-bold text-sm bg-solana text-[#0A0A0B] hover:brightness-110 active:scale-[0.98] transition-all shadow-[0_0_20px_-5px_rgba(20,240,148,0.4)] disabled:opacity-30 disabled:cursor-not-allowed"
                         >
                             Continue
-                        </button>
+                        </Button>
                     </div>
                 )}
 
@@ -171,15 +174,17 @@ export function OnboardingModal({ walletAddress, onComplete }: OnboardingModalPr
                         )}
 
                         <div className="flex gap-3">
-                            <button
+                            <Button
                                 onClick={() => setStep(1)}
+                                variant="outline"
                                 className="h-12 px-6 rounded-xl font-medium text-sm text-text-secondary hover:text-white hover:bg-white/5 border border-white/10 transition-all"
                             >
                                 Back
-                            </button>
-                            <button
+                            </Button>
+                            <Button
                                 onClick={handleSubmit}
                                 disabled={!displayName.trim() || saving}
+                                variant="default"
                                 className="flex-1 h-12 rounded-xl font-display font-bold text-sm bg-solana text-[#0A0A0B] hover:brightness-110 active:scale-[0.98] transition-all shadow-[0_0_20px_-5px_rgba(20,240,148,0.4)] disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                             >
                                 {saving ? (
@@ -193,7 +198,7 @@ export function OnboardingModal({ walletAddress, onComplete }: OnboardingModalPr
                                         <span className="material-symbols-outlined text-lg">rocket_launch</span>
                                     </>
                                 )}
-                            </button>
+                            </Button>
                         </div>
                     </div>
                 )}

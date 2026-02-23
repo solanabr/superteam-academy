@@ -8,6 +8,8 @@ import { learningProgressService } from "@/lib/learning-progress/service";
 export async function GET(request: NextRequest) {
   const wallet = request.nextUrl.searchParams.get("wallet");
   const courseId = request.nextUrl.searchParams.get("courseId");
+  const isPolling = request.nextUrl.searchParams.get("poll") === "true";
+
   if (!wallet) {
     return NextResponse.json({ error: "Missing wallet" }, { status: 400 });
   }
@@ -19,6 +21,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!user) {
+      if (isPolling) return NextResponse.json({ status: "pending" }, { status: 202 });
       return NextResponse.json(null, { status: 404 });
     }
 
@@ -29,6 +32,7 @@ export async function GET(request: NextRequest) {
       const identifier = process.env.NEXT_PUBLIC_USE_ONCHAIN === "true" ? (wallet as string) : user.id;
       const progress = await service.getEnrollmentProgress(identifier, courseId);
       if (!progress) {
+        if (isPolling) return NextResponse.json({ status: "pending" }, { status: 202 });
         return NextResponse.json(null, { status: 404 });
       }
       return NextResponse.json({
@@ -38,6 +42,7 @@ export async function GET(request: NextRequest) {
         completedAt: progress.completedAt,
         bonusClaimed: progress.bonusClaimed,
         lessonFlags: Array.from(progress.lessonFlags),
+        onChainActive: progress.onChainActive,
       });
     } else {
       // List all enrollments with calculated progress

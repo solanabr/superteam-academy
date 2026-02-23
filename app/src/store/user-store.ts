@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { getLevelFromXp } from "@/lib/ranks";
 
 export type UserProfile = {
     displayName?: string;
@@ -124,7 +125,7 @@ export const useUserStore = create<UserState>((set, get) => ({
 
             // Calculate level and rank from XP
             const xp = data.xp ?? 0;
-            const level = Math.floor(xp / 1000);
+            const level = getLevelFromXp(xp);
 
             // Rank calculation
             let rank = "Newbie";

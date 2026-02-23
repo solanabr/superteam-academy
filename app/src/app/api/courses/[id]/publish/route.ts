@@ -6,8 +6,9 @@ import { Program, AnchorProvider } from "@coral-xyz/anchor";
 // @ts-ignore
 import onchainAcademyIdl from "@/lib/idl/onchain_academy.json";
 import bs58 from "bs58";
+import { withFallbackRPC } from "@/lib/solana-connection";
 
-const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || "https://api.devnet.solana.com";
+const RPC_URL = process.env.NEXT_PUBLIC_HELIUS_RPC_URL || process.env.NEXT_PUBLIC_RPC_URL || "https://api.devnet.solana.com";
 const BACKEND_WALLET_KEY = process.env.BACKEND_WALLET_PRIVATE_KEY;
 
 /**
@@ -70,67 +71,66 @@ export async function POST(
     // Auto-sync to blockchain if not already explicitly done, or as part of this step
     if (BACKEND_WALLET_KEY && process.env.NEXT_PUBLIC_USE_ONCHAIN === "true") {
       try {
-        const connection = new Connection(RPC_URL, "confirmed");
-        const backendWallet = Keypair.fromSecretKey(bs58.decode(BACKEND_WALLET_KEY));
+        await withFallbackRPC(async (connection) => {
+          const backendWallet = Keypair.fromSecretKey(bs58.decode(BACKEND_WALLET_KEY));
 
-        const provider = new AnchorProvider(
-          connection,
-          // @ts-ignore
-          { publicKey: backendWallet.publicKey, signTransaction: async (tx) => { tx.sign(backendWallet); return tx; }, signAllTransactions: async (txs) => { txs.forEach(t => t.sign(backendWallet)); return txs; } },
-          AnchorProvider.defaultOptions()
-        );
+          const provider = new AnchorProvider(
+            connection,
+            // @ts-ignore
+            { publicKey: backendWallet.publicKey, signTransaction: async (tx) => { tx.sign(backendWallet); return tx; }, signAllTransactions: async (txs) => { txs.forEach(t => t.sign(backendWallet)); return txs; } },
+            AnchorProvider.defaultOptions()
+          );
 
-        const program = new Program(onchainAcademyIdl as any, provider);
+          const program = new Program(onchainAcademyIdl as any, provider);
 
-        const [coursePda] = PublicKey.findProgramAddressSync(
-          [Buffer.from("course"), Buffer.from(publishedId)],
-          program.programId
-        );
-        const [configPda] = PublicKey.findProgramAddressSync(
-          [Buffer.from("config")],
-          program.programId
-        );
+          const [coursePda] = PublicKey.findProgramAddressSync(
+            [Buffer.from("course"), Buffer.from(publishedId)],
+            program.programId
+          );
+          const [configPda] = PublicKey.findProgramAddressSync(
+            [Buffer.from("config")],
+            program.programId
+          );
 
-        // Check if course account already exists
-        const courseAccountInfo = await connection.getAccountInfo(coursePda);
+          // Check if course account already exists
+          const courseAccountInfo = await connection.getAccountInfo(coursePda);
 
-        if (!courseAccountInfo) {
-          console.log(`Creating course on-chain: ${publishedId}`);
-          // Send transaction to initialize the course
-          // Assuming 100 XP per lesson, Level 1, Track 1 defaults. We will refine this later if needed.
-          const creatorPubkey = new PublicKey(wallet);
-          const lessonCount = course.lessonCount || 1;
+          if (!courseAccountInfo) {
+            console.log(`Creating course on-chain: ${publishedId}`);
+            const creatorPubkey = new PublicKey(wallet);
+            const lessonCount = course.lessonCount || 1;
 
-          const tx = await program.methods
-            .createCourse({
-              courseId: publishedId.substring(0, 32), // Ensure valid slice for string limitations if any
-              creator: creatorPubkey,
-              contentTxId: Array(32).fill(0), // Placeholder content tx id
-              lessonCount: lessonCount,
-              difficulty: 1, // Default difficulty
-              xpPerLesson: 100, // Default xp per lesson
-              trackId: 1,
-              trackLevel: 1,
-              prerequisite: null,
-              creatorRewardXp: 500, // Reward for creator
-              minCompletionsForReward: 10,
-            } as any)
-            .accounts({
-              course: coursePda,
-              config: configPda,
-              authority: backendWallet.publicKey,
-              systemProgram: SystemProgram.programId,
-            } as any)
-            .transaction();
+            const tx = await program.methods
+              .createCourse({
+                courseId: publishedId.substring(0, 32),
+                creator: creatorPubkey,
+                contentTxId: Array(32).fill(0),
+                lessonCount: lessonCount,
+                difficulty: 1,
+                xpPerLesson: 100,
+                trackId: 1,
+                trackLevel: 1,
+                prerequisite: null,
+                creatorRewardXp: 500,
+                minCompletionsForReward: 10,
+              } as any)
+              .accounts({
+                course: coursePda,
+                config: configPda,
+                authority: backendWallet.publicKey,
+                systemProgram: SystemProgram.programId,
+              } as any)
+              .transaction();
 
-          tx.feePayer = backendWallet.publicKey;
-          tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-          tx.sign(backendWallet);
+            tx.feePayer = backendWallet.publicKey;
+            tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+            tx.sign(backendWallet);
 
-          const sig = await connection.sendRawTransaction(tx.serialize());
-          await connection.confirmTransaction(sig);
-          console.log("On-chain course created, tx signature:", sig);
-        }
+            const sig = await connection.sendRawTransaction(tx.serialize());
+            await connection.confirmTransaction(sig);
+            console.log("On-chain course created, tx signature:", sig);
+          }
+        });
       } catch (onchainError) {
         console.error("Failed to sync course on-chain during publish:", onchainError);
         // We log the error but still proceed with Sanity publishing to unblock user

@@ -6,9 +6,10 @@ import { usePrivy } from "@privy-io/react-auth";
 import { Link } from "@/i18n/routing";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Save, Lock, Mail, Wallet, Coins, Info } from "lucide-react";
+import { Loader2, Save, Lock, Mail, Wallet, Coins, Info, ExternalLink } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Connection, PublicKey, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { PublicKey, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { withFallbackRPC } from "@/lib/solana-connection";
 import { useUserStore } from "@/store/user-store";
 
 // ─── Provider Icons ────────────────────────────────────────────────────────────
@@ -55,8 +56,10 @@ function LinkedAccountRow({ icon, label, value, tooltip, linkedText }: LinkedAcc
         <div className="flex items-center gap-3 h-10 px-3 rounded-md border border-white/10 bg-black/20 opacity-70">
           <span className="flex-shrink-0">{icon}</span>
           <span className="text-sm text-text-primary font-mono flex-1 truncate">{value}</span>
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="icon"
             className="flex-shrink-0 text-text-muted hover:text-text-secondary transition-colors"
             onMouseEnter={() => setShowTip(true)}
             onMouseLeave={() => setShowTip(false)}
@@ -65,7 +68,7 @@ function LinkedAccountRow({ icon, label, value, tooltip, linkedText }: LinkedAcc
             aria-label="Why can't I edit this?"
           >
             <Lock className="h-3.5 w-3.5" />
-          </button>
+          </Button>
         </div>
         {showTip && (
           <div className="absolute right-0 top-full mt-1.5 z-10 w-64 rounded-md bg-[#1a1a1f] border border-white/10 px-3 py-2 text-xs text-text-secondary shadow-xl">
@@ -160,7 +163,10 @@ export default function SettingsPage() {
 
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
-  const [email, setEmail] = useState("");
+  const [twitter, setTwitter] = useState("");
+  const [website, setWebsite] = useState("");
+
+  const [activeTab, setActiveTab] = useState<"account" | "profile">("account");
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "success" | "error">("idle");
   const [showRoleTip, setShowRoleTip] = useState(false);
@@ -170,6 +176,7 @@ export default function SettingsPage() {
   // Zustand
   const progress = useUserStore((s) => s.progress);
   const fetchProgress = useUserStore((s) => s.fetchProgress);
+  const fetchUser = useUserStore((s) => s.fetchUser);
 
   // Detect linked OAuth providers from Privy
   const linkedGoogle = privyUser?.linkedAccounts?.find((a) => a.type === "google_oauth") as any;
@@ -184,10 +191,8 @@ export default function SettingsPage() {
       const profile = user.profile as any;
       setDisplayName(profile?.displayName ?? "");
       setBio(profile?.bio ?? "");
-      // Only pre-fill editable email for wallet-only accounts
-      if (!hasOAuthProvider) {
-        setEmail(user.email ?? linkedEmail?.address ?? "");
-      }
+      setTwitter(profile?.twitter ?? "");
+      setWebsite(profile?.website ?? "");
 
       // Fetch Progress (for EXP balance)
       if (user.walletAddress && !progress) {
@@ -197,9 +202,10 @@ export default function SettingsPage() {
       // Fetch SOL Balance
       const fetchSol = async () => {
         try {
-          const conn = new Connection(process.env.NEXT_PUBLIC_RPC_URL || "https://api.devnet.solana.com");
-          const balance = await conn.getBalance(new PublicKey(user.walletAddress));
-          setSolBalance(balance / LAMPORTS_PER_SOL);
+          await withFallbackRPC(async (conn) => {
+            const balance = await conn.getBalance(new PublicKey(user.walletAddress));
+            setSolBalance(balance / LAMPORTS_PER_SOL);
+          });
         } catch (e) {
           console.error("Failed to fetch SOL balance", e);
         }
@@ -220,12 +226,16 @@ export default function SettingsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           wallet: user.walletAddress,
-          ...(!hasOAuthProvider && email ? { email } : {}),
-          profile: { displayName, bio },
+          profile: { displayName, bio, twitter, website },
         }),
       });
 
       setSaveStatus(res.ok ? "success" : "error");
+
+      if (res.ok) {
+        await fetchUser(user.walletAddress);
+      }
+
       setTimeout(() => setSaveStatus("idle"), 3000);
     } catch {
       setSaveStatus("error");
@@ -259,243 +269,286 @@ export default function SettingsPage() {
           <span className="text-white/20">/</span>
           <span className="text-solana">{t("title")}</span>
         </nav>
-        <div className="mb-8">
-          <h1 className="font-display text-text-primary text-3xl font-bold tracking-tight">{t("title")}</h1>
-          <p className="text-text-muted mt-2 text-sm">Manage your profile and account settings</p>
+        <div className="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div>
+            <h1 className="font-display text-text-primary text-3xl font-bold tracking-tight">{t("title")}</h1>
+            <p className="text-text-muted mt-2 text-sm">Manage your profile and account settings</p>
+          </div>
+
+          <div className="flex p-1 bg-black/40 rounded-lg border border-white/10 w-full sm:w-auto">
+            <Button
+              variant="ghost"
+              onClick={() => setActiveTab("account")}
+              className={`flex-1 sm:flex-none px-4 py-2 text-sm font-medium rounded-md transition-all h-auto ${activeTab === "account" ? "bg-white/10 text-white shadow-sm" : "text-text-secondary hover:text-white hover:bg-white/5"}`}
+            >
+              Account Settings
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => setActiveTab("profile")}
+              className={`flex-1 sm:flex-none px-4 py-2 text-sm font-medium rounded-md transition-all h-auto ${activeTab === "profile" ? "bg-white/10 text-white shadow-sm" : "text-text-secondary hover:text-white hover:bg-white/5"}`}
+            >
+              Public Profile
+            </Button>
+          </div>
         </div>
 
         <div className="glass-panel rounded-lg border border-white/5 p-8">
-          <form onSubmit={handleSave} className="space-y-6">
+          {activeTab === "account" ? (
+            <>
+              <div className="space-y-6">
 
-            {/* Wallet Address */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-text-secondary flex items-center justify-between">
-                <span>{t("wallet_address")}</span>
-                <div className="relative flex items-center">
-                  <button
-                    type="button"
-                    className="text-text-muted hover:text-text-secondary transition-colors"
-                    onMouseEnter={() => setShowWalletTip(true)}
-                    onMouseLeave={() => setShowWalletTip(false)}
-                    onFocus={() => setShowWalletTip(true)}
-                    onBlur={() => setShowWalletTip(false)}
-                  >
-                    <Info className="h-4 w-4" />
-                  </button>
-                  {showWalletTip && (
-                    <div className="absolute right-0 bottom-full mb-2 z-20 w-64 rounded-md bg-[#1a1a1f] border border-white/10 px-3 py-2 text-[11px] leading-relaxed text-text-secondary shadow-xl font-body">
-                      {t("wallet_tooltip")}
-                    </div>
-                  )}
-                </div>
-              </label>
-              <Input
-                value={user.walletAddress}
-                disabled
-                className="font-mono text-xs opacity-50 bg-black/20"
-              />
-            </div>
-
-            {/* Account Role */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-text-secondary">{t("account_role")}</label>
-              <div className="flex items-center gap-3 h-10 px-3 rounded-md border border-white/10 bg-black/20">
-                <span className={`material-symbols-outlined text-lg ${user.role === "admin" ? "text-amber-400" :
-                  user.role === "professor" ? "text-blue-400" : "text-solana"
-                  }`}>
-                  {user.role === "admin" ? "admin_panel_settings" :
-                    user.role === "professor" ? "psychology" : "school"}
-                </span>
-                <span className={`text-sm font-display font-semibold capitalize ${user.role === "admin" ? "text-amber-400" :
-                  user.role === "professor" ? "text-blue-400" : "text-solana"
-                  }`}>
-                  {user.role === "professor" ? "Teacher" : user.role ?? "Student"}
-                </span>
-                <div className="ml-auto relative flex items-center">
-                  <button
-                    type="button"
-                    className="text-text-muted hover:text-text-secondary transition-colors"
-                    onMouseEnter={() => setShowRoleTip(true)}
-                    onMouseLeave={() => setShowRoleTip(false)}
-                    onFocus={() => setShowRoleTip(true)}
-                    onBlur={() => setShowRoleTip(false)}
-                  >
-                    <Lock className="h-3.5 w-3.5" />
-                  </button>
-                  {showRoleTip && (
-                    <div className="absolute right-0 bottom-full mb-2 z-10 w-64 rounded-md bg-[#1a1a1f] border border-white/10 px-3 py-2 text-xs text-text-secondary shadow-xl normal-case font-body">
-                      {t("role_info")}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* ── Wallet Balances ─────────────────────────────── */}
-            <div className="pt-4 border-t border-white/5 space-y-4">
-              <h3 className="text-sm font-medium text-text-primary flex items-center gap-2">
-                <Wallet className="h-4 w-4 text-solana" />
-                {t("balance_title")}
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="p-4 rounded-lg bg-black/20 border border-white/5 flex flex-col gap-1 relative overflow-visible">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-mono text-text-muted uppercase tracking-widest">{t("sol_balance")}</span>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[10px] font-mono font-bold text-amber-500/80 uppercase px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20">
-                        {t("devnet_label")}
-                      </span>
-                      <button
+                {/* Wallet Address */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-text-secondary flex items-center justify-between">
+                    <span>{t("wallet_address")}</span>
+                    <div className="relative flex items-center">
+                      <Button
                         type="button"
-                        onMouseEnter={() => setShowAirdropTip(true)}
-                        onMouseLeave={() => setShowAirdropTip(false)}
-                        className="text-text-muted hover:text-text-secondary transition-colors"
+                        variant="ghost"
+                        size="icon"
+                        className="text-text-muted hover:text-text-secondary transition-colors h-auto w-auto p-0.5"
+                        onMouseEnter={() => setShowWalletTip(true)}
+                        onMouseLeave={() => setShowWalletTip(false)}
+                        onFocus={() => setShowWalletTip(true)}
+                        onBlur={() => setShowWalletTip(false)}
                       >
-                        <Info className="h-3 w-3" />
-                      </button>
+                        <Info className="h-4 w-4" />
+                      </Button>
+                      {showWalletTip && (
+                        <div className="absolute right-0 bottom-full mb-2 z-20 w-64 rounded-md bg-[#1a1a1f] border border-white/10 px-3 py-2 text-[11px] leading-relaxed text-text-secondary shadow-xl font-body">
+                          {t("wallet_tooltip")}
+                        </div>
+                      )}
+                    </div>
+                  </label>
+                  <Input
+                    value={user.walletAddress}
+                    disabled
+                    className="font-mono text-xs opacity-50 bg-black/20"
+                  />
+                </div>
+
+                {/* Account Role */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-text-secondary">{t("account_role")}</label>
+                  <div className="flex items-center gap-3 h-10 px-3 rounded-md border border-white/10 bg-black/20">
+                    <span className={`material-symbols-outlined text-lg ${user.role === "admin" ? "text-amber-400" :
+                      user.role === "professor" ? "text-blue-400" : "text-solana"
+                      }`}>
+                      {user.role === "admin" ? "admin_panel_settings" :
+                        user.role === "professor" ? "psychology" : "school"}
+                    </span>
+                    <span className={`text-sm font-display font-semibold capitalize ${user.role === "admin" ? "text-amber-400" :
+                      user.role === "professor" ? "text-blue-400" : "text-solana"
+                      }`}>
+                      {user.role === "professor" ? "Teacher" : user.role ?? "Student"}
+                    </span>
+                    <div className="ml-auto relative flex items-center">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="text-text-muted hover:text-text-secondary transition-colors h-auto w-auto p-0.5"
+                        onMouseEnter={() => setShowRoleTip(true)}
+                        onMouseLeave={() => setShowRoleTip(false)}
+                        onFocus={() => setShowRoleTip(true)}
+                        onBlur={() => setShowRoleTip(false)}
+                      >
+                        <Lock className="h-3.5 w-3.5" />
+                      </Button>
+                      {showRoleTip && (
+                        <div className="absolute right-0 bottom-full mb-2 z-10 w-64 rounded-md bg-[#1a1a1f] border border-white/10 px-3 py-2 text-xs text-text-secondary shadow-xl normal-case font-body">
+                          {t("role_info")}
+                        </div>
+                      )}
                     </div>
                   </div>
+                </div>
 
-                  {showAirdropTip && (
-                    <div className="absolute right-0 bottom-full mb-2 z-20 w-64 rounded-md bg-[#1a1a1f] border border-white/10 px-3 py-2 text-[11px] leading-relaxed text-text-secondary shadow-xl font-body">
-                      {t("airdrop_tooltip")}
+                {/* ── Wallet Balances ─────────────────────────────── */}
+                <div className="pt-4 border-t border-white/5 space-y-4">
+                  <h3 className="text-sm font-medium text-text-primary flex items-center gap-2">
+                    <Wallet className="h-4 w-4 text-solana" />
+                    {t("balance_title")}
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="p-4 rounded-lg bg-black/20 border border-white/5 flex flex-col gap-1 relative overflow-visible">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-mono text-text-muted uppercase tracking-widest">{t("sol_balance")}</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] font-mono font-bold text-amber-500/80 uppercase px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20">
+                            {t("devnet_label")}
+                          </span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onMouseEnter={() => setShowAirdropTip(true)}
+                            onMouseLeave={() => setShowAirdropTip(false)}
+                            className="text-text-muted hover:text-text-secondary transition-colors h-auto w-auto p-0.5"
+                          >
+                            <Info className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+
+                      {showAirdropTip && (
+                        <div className="absolute right-0 bottom-full mb-2 z-20 w-64 rounded-md bg-[#1a1a1f] border border-white/10 px-3 py-2 text-[11px] leading-relaxed text-text-secondary shadow-xl font-body">
+                          {t("airdrop_tooltip")}
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-between mt-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xl font-mono font-bold text-white">
+                            {solBalance !== null ? solBalance.toFixed(4) : "..."}
+                          </span>
+                          <span className="text-xs text-text-muted font-mono">SOL</span>
+                        </div>
+
+                        {solBalance !== null && solBalance < 0.5 && (
+                          <Button
+                            asChild
+                            variant="ghost"
+                            size="sm"
+                            className="text-[10px] font-bold text-solana hover:text-white transition-colors flex items-center gap-1 bg-solana/10 px-2 py-1 rounded border border-solana/20 h-auto"
+                          >
+                            <a
+                              href="https://faucet.solana.com"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <span className="material-symbols-outlined text-[12px]">open_in_new</span>
+                              Get SOL
+                            </a>
+                          </Button>
+                        )}
+                      </div>
                     </div>
+
+                    <div className="p-4 rounded-lg bg-black/20 border border-white/5 flex flex-col gap-1">
+                      <span className="text-[10px] font-mono text-text-muted uppercase tracking-widest">{t("exp_balance")}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl font-mono font-bold text-solana">
+                          {progress?.xp ? progress.xp.toLocaleString() : "0"}
+                        </span>
+                        <Coins className="h-4 w-4 text-solana" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ── Linked Accounts ─────────────────────────────── */}
+                <div className="space-y-4 pt-4 border-t border-white/5">
+                  {linkedGoogle && (
+                    <LinkedAccountRow
+                      icon={<GoogleIcon className="h-4 w-4" />}
+                      label={t("linked_accounts.google")}
+                      value={linkedGoogle.email ?? linkedGoogle.name ?? "Connected"}
+                      tooltip={t("linked_accounts.tooltip", { provider: "Google" })}
+                      linkedText={t("linked_accounts.linked")}
+                    />
                   )}
 
-                  <div className="flex items-center justify-between mt-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xl font-mono font-bold text-white">
-                        {solBalance !== null ? solBalance.toFixed(4) : "..."}
-                      </span>
-                      <span className="text-xs text-text-muted font-mono">SOL</span>
-                    </div>
+                  {linkedGithub && (
+                    <LinkedAccountRow
+                      icon={<GitHubIcon className="h-4 w-4 text-white" />}
+                      label={t("linked_accounts.github")}
+                      value={linkedGithub.username ?? linkedGithub.name ?? linkedGithub.email ?? "Connected"}
+                      tooltip={t("linked_accounts.tooltip", { provider: "GitHub" })}
+                      linkedText={t("linked_accounts.linked")}
+                    />
+                  )}
 
-                    {solBalance !== null && solBalance < 0.5 && (
-                      <a
-                        href="https://faucet.solana.com"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[10px] font-bold text-solana hover:text-white transition-colors flex items-center gap-1 bg-solana/10 px-2 py-1 rounded border border-solana/20"
-                      >
-                        <span className="material-symbols-outlined text-[12px]">open_in_new</span>
-                        Get SOL
-                      </a>
-                    )}
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-lg bg-black/20 border border-white/5 flex flex-col gap-1">
-                  <span className="text-[10px] font-mono text-text-muted uppercase tracking-widest">{t("exp_balance")}</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl font-mono font-bold text-solana">
-                      {progress?.xp ? progress.xp.toLocaleString() : "0"}
-                    </span>
-                    <Coins className="h-4 w-4 text-solana" />
-                  </div>
+                  {linkedEmail && !linkedGoogle && !linkedGithub && (
+                    <LinkedAccountRow
+                      icon={<Mail className="h-4 w-4 text-text-secondary" />}
+                      label={t("linked_accounts.email")}
+                      value={linkedEmail.address ?? "Connected"}
+                      tooltip={t("linked_accounts.tooltip", { provider: "email" })}
+                      linkedText={t("linked_accounts.linked")}
+                    />
+                  )}
                 </div>
               </div>
-            </div>
 
-            {/* ── Linked Accounts ─────────────────────────────── */}
-            <div className="space-y-4 pt-4 border-t border-white/5">
-              {linkedGoogle && (
-                <LinkedAccountRow
-                  icon={<GoogleIcon className="h-4 w-4" />}
-                  label={t("linked_accounts.google")}
-                  value={linkedGoogle.email ?? linkedGoogle.name ?? "Connected"}
-                  tooltip={t("linked_accounts.tooltip", { provider: "Google" })}
-                  linkedText={t("linked_accounts.linked")}
+              {/* ── Delete Account ────────────────────────────── */}
+              {user && privyUser && (
+                <DeleteAccountSection
+                  wallet={user.walletAddress}
+                  privyId={privyUser.id}
+                  logout={logout}
                 />
               )}
-
-              {linkedGithub && (
-                <LinkedAccountRow
-                  icon={<GitHubIcon className="h-4 w-4 text-white" />}
-                  label={t("linked_accounts.github")}
-                  value={linkedGithub.username ?? linkedGithub.name ?? linkedGithub.email ?? "Connected"}
-                  tooltip={t("linked_accounts.tooltip", { provider: "GitHub" })}
-                  linkedText={t("linked_accounts.linked")}
-                />
-              )}
-
-              {linkedEmail && !linkedGoogle && !linkedGithub && (
-                <LinkedAccountRow
-                  icon={<Mail className="h-4 w-4 text-text-secondary" />}
-                  label={t("linked_accounts.email")}
-                  value={linkedEmail.address ?? "Connected"}
-                  tooltip={t("linked_accounts.tooltip", { provider: "email" })}
-                  linkedText={t("linked_accounts.linked")}
-                />
-              )}
-            </div>
-
-            {/* Display Name */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-text-primary">{t("display_name")}</label>
-              <Input
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                placeholder={t("display_name_placeholder")}
-                className="bg-black/20 border-white/10 focus:border-solana/50"
-              />
-            </div>
-
-            {/* Email — only editable for wallet-only accounts */}
-            {!hasOAuthProvider && (
+            </>
+          ) : (
+            <form onSubmit={handleSave} className="space-y-6">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-text-primary">{t("email")}</label>
+                <label className="text-sm font-medium text-text-primary">{t("display_name")}</label>
                 <Input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder={t("email_placeholder")}
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  placeholder={t("display_name_placeholder")}
                   className="bg-black/20 border-white/10 focus:border-solana/50"
                 />
               </div>
-            )}
 
-            {/* Bio */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-text-primary">{t("bio")}</label>
-              <textarea
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
-                placeholder={t("bio_placeholder")}
-                className="flex min-h-[80px] w-full rounded-md border border-white/10 bg-black/20 px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-solana/50 disabled:cursor-not-allowed disabled:opacity-50"
-              />
-            </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-text-primary">{t("bio")}</label>
+                <textarea
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  placeholder={t("bio_placeholder")}
+                  className="flex min-h-[80px] w-full rounded-md border border-white/10 bg-black/20 px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-solana/50 disabled:cursor-not-allowed disabled:opacity-50"
+                />
+              </div>
 
-            {/* Save */}
-            <div className="flex items-center gap-4 pt-4">
-              <Button type="submit" disabled={saving} className="w-full sm:w-auto">
-                {saving ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {t("saving")}
-                  </>
-                ) : (
-                  <>
-                    <Save className="mr-2 h-4 w-4" />
-                    {t("save_changes")}
-                  </>
+              <div className="space-y-2 pt-4 border-t border-white/5">
+                <label className="text-sm font-medium text-text-primary">Twitter (X) URL</label>
+                <Input
+                  value={twitter}
+                  onChange={(e) => setTwitter(e.target.value)}
+                  placeholder="https://x.com/username"
+                  className="bg-black/20 border-white/10 focus:border-solana/50"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-text-primary">Personal Website</label>
+                <Input
+                  value={website}
+                  onChange={(e) => setWebsite(e.target.value)}
+                  placeholder="https://yourwebsite.com"
+                  className="bg-black/20 border-white/10 focus:border-solana/50"
+                />
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4">
+                <Button type="submit" disabled={saving} className="w-full sm:w-auto">
+                  {saving ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {t("saving")}
+                    </>
+                  ) : (
+                    t("save_changes")
+                  )}
+                </Button>
+
+                {user && (
+                  <Link href={`/profile/${user.walletAddress}`} className="text-sm font-medium text-solana hover:text-solana/80 flex items-center justify-center w-full sm:w-auto gap-2 transition-colors py-2 px-4 bg-solana/10 rounded-md">
+                    View Public Profile <ExternalLink className="h-4 w-4" />
+                  </Link>
                 )}
-              </Button>
+              </div>
               {saveStatus === "success" && (
                 <span className="text-sm text-solana font-medium">{t("save_success")}</span>
               )}
               {saveStatus === "error" && (
                 <span className="text-sm text-rust font-medium">{t("save_error")}</span>
               )}
-            </div>
-          </form>
-
-          {/* ── Delete Account ────────────────────────────── */}
-          {user && privyUser && (
-            <DeleteAccountSection
-              wallet={user.walletAddress}
-              privyId={privyUser.id}
-              logout={logout}
-            />
+            </form>
           )}
         </div>
       </div>

@@ -1,4 +1,5 @@
 import { Link } from "@/i18n/routing";
+import { Button } from "@/components/ui/button";
 
 export function Sidebar() {
     return (
@@ -67,9 +68,9 @@ export function Sidebar() {
                         <p className="text-xs font-medium text-white truncate">DevUser</p>
                         <p className="text-[10px] font-mono text-solana truncate">0x3a...8f92</p>
                     </div>
-                    <button className="ml-auto text-text-muted hover:text-white transition-colors">
+                    <Button variant="ghost" size="icon" className="ml-auto text-text-muted hover:text-white transition-colors">
                         <span className="material-symbols-outlined notranslate text-sm">logout</span>
-                    </button>
+                    </Button>
                 </div>
             </div>
         </aside>

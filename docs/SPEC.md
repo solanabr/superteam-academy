@@ -1,7 +1,7 @@
 # Superteam Academy — On-Chain Program Specification
 
 **Version:** 3.0
-**Network:** Solana Mainnet
+**Network:** Solana Devnet
 **Framework:** Anchor + Metaplex Core
 
 ---

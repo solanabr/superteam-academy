@@ -1,7 +1,8 @@
 import { Connection } from "@solana/web3.js";
 
-const HELIUS_RPC = process.env.NEXT_PUBLIC_HELIUS_RPC_URL || "https://devnet.helius-rpc.com/?api-key=387cb3e9-0527-4194-98e1-b2acb4791c57";
-const FALLBACK_RPC = process.env.NEXT_PUBLIC_FALLBACK_RPC_URL || "https://api.devnet.solana.com";
+export const HELIUS_RPC = process.env.NEXT_PUBLIC_HELIUS_RPC_URL || process.env.NEXT_PUBLIC_RPC_URL || "https://api.devnet.solana.com";
+export const FALLBACK_RPC = "https://api.devnet.solana.com";
+export const RPC_URL = HELIUS_RPC; // For backward compatibility
 
 /**
  * Executes a function with the primary RPC, falling back to the secondary RPC on failure.
@@ -12,9 +13,21 @@ export async function withFallbackRPC<T>(operation: (connection: Connection) => 
     try {
         return await operation(primaryConnection);
     } catch (error: any) {
-        console.warn(`Primary RPC failed: ${error.message}. Falling back to secondary...`);
+        const errorMsg = error.message || String(error);
+
+        // If the primary and fallback are the same, don't bother falling back
+        if (HELIUS_RPC === FALLBACK_RPC) {
+            throw error;
+        }
+
+        console.warn(`[solana-connection] Primary RPC failed: ${errorMsg}. Falling back to ${FALLBACK_RPC}...`);
         const fallbackConnection = new Connection(FALLBACK_RPC, "confirmed");
-        return await operation(fallbackConnection);
+        try {
+            return await operation(fallbackConnection);
+        } catch (fallbackError: any) {
+            console.error(`[solana-connection] Fallback RPC also failed: ${fallbackError.message || fallbackError}`);
+            throw fallbackError;
+        }
     }
 }
 

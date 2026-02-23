@@ -9,14 +9,50 @@ export const courseType = defineType({
       name: "title",
       title: "Title",
       type: "string",
-      validation: (r) => r.required(),
+      validation: (Rule) =>
+        Rule.required().custom(async (title, context) => {
+          if (!title) return true;
+
+          const client = context.getClient({ apiVersion: "2024-01-01" });
+          const id = context.document?._id?.replace(/^drafts\./, "");
+
+          // Check for title collisions across all documents including drafts
+          const query = `*[_type == "course" && title == $title && _id != $id && _id != "drafts." + $id][0] { _id }`;
+          const params = { title, id };
+
+          const isDuplicate = await client.fetch(query, params);
+
+          if (isDuplicate) {
+            return `A course with the title "${title}" already exists. Please choose a unique title to prevent routing issues.`;
+          }
+
+          return true;
+        }),
     }),
     defineField({
       name: "slug",
       title: "Slug",
       type: "slug",
       options: { source: "title", maxLength: 96 },
-      validation: (r) => r.required(),
+      validation: (Rule) =>
+        Rule.required().custom(async (slug, context) => {
+          if (!slug?.current) return true;
+
+          const client = context.getClient({ apiVersion: "2024-01-01" });
+          const id = context.document?._id?.replace(/^drafts\./, "");
+
+          // Check for slug collisions across all documents including drafts
+          const query = `*[_type == "course" && slug.current == $slug && _id != $id && _id != "drafts." + $id][0] { _id }`;
+          const params = { slug: slug.current, id };
+
+          const isDuplicate = await client.fetch(query, params);
+
+          if (isDuplicate) {
+            return `A course with the slug "${slug.current}" already exists. Slugs must be unique for routing.`;
+          }
+
+          return true;
+        }),
     }),
     defineField({
       name: "description",

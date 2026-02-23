@@ -5,6 +5,7 @@ import { usePrivy } from "@privy-io/react-auth";
 import { useWallets } from "@privy-io/react-auth/solana";
 import { ACHIEVEMENTS, type Achievement } from "@/lib/achievements";
 import { Loader2, CheckCircle, Unlock } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import clsx from "clsx";
 import confetti from "canvas-confetti";
 
@@ -133,12 +134,14 @@ export function AchievementList() {
                     )}
                 >
                     <span>{toast.message}</span>
-                    <button
+                    <Button
+                        variant="ghost"
+                        size="icon"
                         onClick={() => setToast(null)}
-                        className="text-current opacity-60 hover:opacity-100 transition-opacity shrink-0"
+                        className="text-current opacity-60 hover:opacity-100 shrink-0"
                     >
                         <span className="material-symbols-outlined text-lg">close</span>
-                    </button>
+                    </Button>
                 </div>
             )}
 
@@ -150,8 +153,8 @@ export function AchievementList() {
                         <div
                             key={a.id}
                             className={clsx(
-                                "glass-panel flex flex-col gap-4 rounded-lg border p-6 transition-all",
-                                isClaimed ? "border-solana/50 bg-solana/5" : "border-white/5 opacity-80"
+                                "glass-panel flex flex-col gap-4 rounded-lg border p-6 transition-all duration-300 hover:bg-white/[0.03]",
+                                isClaimed ? "border-solana/50 bg-solana/5 hover:border-solana" : "border-white/5 opacity-80 hover:border-white/20 hover:opacity-100"
                             )}
                         >
                             <div className="flex items-start justify-between">
@@ -159,14 +162,16 @@ export function AchievementList() {
                                 {isClaimed ? (
                                     <CheckCircle className="h-6 w-6 text-solana" />
                                 ) : (
-                                    <button
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
                                         onClick={() => handleClaim(a)}
                                         disabled={!!claimingId}
-                                        className="text-text-secondary hover:text-white disabled:opacity-50 transition-colors"
+                                        className="text-text-secondary hover:text-white"
                                         title="Try to unlock"
                                     >
                                         {claimingId === a.id ? <Loader2 className="h-5 w-5 animate-spin" /> : <Unlock className="h-5 w-5" />}
-                                    </button>
+                                    </Button>
                                 )}
                             </div>
                             <div>

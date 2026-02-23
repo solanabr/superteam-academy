@@ -12,6 +12,7 @@ import { useLessonStore } from "@/store/lesson-store";
 import { usePlaygroundStore } from "@/store/playground-store";
 import { useAppUser } from "@/hooks/useAppUser";
 import { LocaleSwitcher } from "../layout/LocaleSwitcher";
+import { Button } from "../ui/button";
 
 export function PlatformNavbar() {
     const pathname = usePathname();
@@ -123,9 +124,10 @@ export function PlatformNavbar() {
                     className="relative"
                     onMouseLeave={() => setProfileOpen(false)}
                 >
-                    <button
+                    <Button
+                        variant="ghost"
                         onClick={toggleProfile}
-                        className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-white/5 transition-all"
+                        className="flex items-center gap-2 px-2 h-auto py-1.5 rounded-lg hover:bg-white/10 transition-all border border-transparent hover:border-white/5"
                     >
                         <div className="size-8 rounded-full bg-gradient-to-tr from-gray-700 to-gray-600 flex items-center justify-center border border-white/10 overflow-hidden">
                             {(user?.profile as any)?.image ? (
@@ -138,10 +140,10 @@ export function PlatformNavbar() {
                                 </span>
                             )}
                         </div>
-                        <span className="material-symbols-outlined notranslate text-text-muted text-sm hidden md:block">
+                        <span className="material-symbols-outlined notranslate text-text-muted text-sm hidden md:block group-hover:text-white">
                             {isProfileOpen ? "expand_less" : "expand_more"}
                         </span>
-                    </button>
+                    </Button>
 
                     {/* Dropdown Menu - Wrapped with invisible expanded padding for better UX */}
                     {isProfileOpen && (
@@ -164,13 +166,14 @@ export function PlatformNavbar() {
                                         <span className="material-symbols-outlined notranslate text-lg">settings</span>
                                         <span className="text-sm font-medium">{t("settings")}</span>
                                     </Link>
-                                    <button
+                                    <Button
                                         onClick={handleLogout}
-                                        className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 text-text-muted hover:text-white transition-all"
+                                        variant="ghost"
+                                        className="w-full flex items-center justify-start gap-3 px-3 py-2 rounded-lg hover:bg-white/5 text-text-muted hover:text-white transition-all h-auto"
                                     >
                                         <span className="material-symbols-outlined notranslate text-lg">logout</span>
                                         <span className="text-sm font-medium">{t("logout")}</span>
-                                    </button>
+                                    </Button>
                                 </div>
                             </div>
                         </div>
@@ -178,14 +181,16 @@ export function PlatformNavbar() {
                 </div>
 
                 {/* Mobile Menu Toggle */}
-                <button
+                <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={toggleMobileMenu}
-                    className="md:hidden p-2 rounded-lg hover:bg-white/5 transition-all"
+                    className="md:hidden"
                 >
                     <span className="material-symbols-outlined notranslate text-white">
                         {isMobileMenuOpen ? "close" : "menu"}
                     </span>
-                </button>
+                </Button>
             </div>
 
             {/* Mobile Menu */}
@@ -219,13 +224,14 @@ export function PlatformNavbar() {
                                 <span>{t("settings")}</span>
                             </Link>
 
-                            <button
+                            <Button
                                 onClick={handleLogout}
-                                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg font-display font-medium text-sm text-text-muted hover:text-white hover:bg-white/5 transition-all"
+                                variant="ghost"
+                                className="w-full flex items-center justify-start gap-3 px-4 py-3 rounded-lg font-display font-medium text-sm text-text-muted hover:text-white hover:bg-white/5 transition-all h-auto"
                             >
                                 <span className="material-symbols-outlined notranslate text-lg">logout</span>
                                 <span>{t("logout")}</span>
-                            </button>
+                            </Button>
                         </div>
                     </div>
                 )

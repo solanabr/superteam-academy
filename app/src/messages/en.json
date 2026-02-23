@@ -86,7 +86,8 @@
             "rust": "Rust",
             "anchor": "Anchor",
             "security": "Security",
-            "solana": "Solana"
+            "solana": "Solana",
+            "other": "Other"
         },
         "loading": "Loading courses...",
         "none_available": "No courses available yet.",

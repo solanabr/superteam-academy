@@ -43,10 +43,8 @@ cargo test --manifest-path tests/rust/Cargo.toml
 
 The program is live on devnet:
 
-| | Address |
-|---|---|
-| **Program** | [`AVEskHawcLAjVP8AweAbKHQUyS1jzeB2PY2Fw7UAK1qv`](https://explorer.solana.com/address/AVEskHawcLAjVP8AweAbKHQUyS1jzeB2PY2Fw7UAK1qv?cluster=devnet) |
-| **XP Mint** | [`BCsF1T75cvdvcZwnyD4TNsvRPGBGn3k2fiMujkfX75t`](https://explorer.solana.com/address/BCsF1T75cvdvcZwnyD4TNsvRPGBGn3k2fiMujkfX75t?cluster=devnet) |
+| **Program** | [`AVES32TXPwZ7kuVizTZsqzBr1UVYrcZyqQ6BxHaGchWU`](https://explorer.solana.com/address/AVES32TXPwZ7kuVizTZsqzBr1UVYrcZyqQ6BxHaGchWU?cluster=devnet) |
+| **XP Mint** | [`DKn9Mf8BDy6Suu2fmJmkYkY2RyyTxwR5EjhHbtPz9RBU`](https://explorer.solana.com/address/DKn9Mf8BDy6Suu2fmJmkYkY2RyyTxwR5EjhHbtPz9RBU?cluster=devnet) |
 | **Authority** | [`2rwDSwX9pUwc9gVDSHgvDFAZWn41DodaeAvwS1rrZho7`](https://explorer.solana.com/address/2rwDSwX9pUwc9gVDSHgvDFAZWn41DodaeAvwS1rrZho7?cluster=devnet) |
 
 Frontend bounty applicants: [deploy your own instance](docs/DEPLOY-PROGRAM.md) on devnet.
@@ -60,10 +58,20 @@ Frontend bounty applicants: [deploy your own instance](docs/DEPLOY-PROGRAM.md) o
 | **Credentials** | Metaplex Core NFTs (soulbound via PermanentFreezeDelegate) |
 | **Testing** | ts-mocha/Chai, Cargo test |
 | **Client** | TypeScript, @coral-xyz/anchor, @solana/web3.js |
-| **Frontend** | Next.js 14+, React, Tailwind CSS |
-| **RPC** | Helius (DAS API for credential queries + XP leaderboard) |
-| **Content** | Arweave (immutable course content) |
+| **Frontend** | Next.js 14+ (App Router), React, Tailwind CSS |
+| **RPC** | Helius (DAS API for credential queries) |
+| **Content** | Sanity.io Headless CMS (Embedded Studio) |
+| **Database** | PostgreSQL via Prisma (Leaderboard/State abstraction) |
 | **Multisig** | Squads (platform authority) |
+
+## Hackathon Delivery Notes
+
+For the hackathon submission, this repository includes a fully functional frontend combined with a live Anchor program on Devnet. 
+
+**Architectural Focus:**
+- **Leaderboard Abstraction:** Since Solana Token-2022 accounts cannot be queried historically for daily/weekly metrics without an off-chain indexer, the Leaderboard relies on the local Postgres database (`XpEvent` logs) as a clean abstraction and read-cache for the on-chain Token-2022 mints.
+- **Sanity CMS:** Course content is mastered in Sanity Studio rather than Arweave for this iteration, providing an exceptional content management experience directly at `[Domain]/studio`.
+- **Privy Auth:** Users authenticate seamlessly via Privy, which provisions embedded Solana Wallets allowing for direct on-chain actions like "Reclaiming Rent" to be signed from the browser without a browser extension.
 
 ## Documentation
 
@@ -72,6 +80,10 @@ Frontend bounty applicants: [deploy your own instance](docs/DEPLOY-PROGRAM.md) o
 - **[Frontend Integration](docs/INTEGRATION.md)** — PDA derivation, instruction usage, events, error handling
 - **[Deployment Guide](docs/DEPLOY-PROGRAM.md)** — Deploy your own program instance on devnet
 - **[Frontend Bounty](docs/bounty.md)** — $4,800 USDC bounty for building the frontend
+
+## Future Feature Plans
+
+- **Signless Transactions**: Implement [Privy Delegated Actions](https://docs.privy.io/wallets/delegated-actions/overview) to provide a frictionless "signless" experience for background tasks like reclaiming rent and small token operations, once user-awareness preferences are met.
 
 ## Contributing
 

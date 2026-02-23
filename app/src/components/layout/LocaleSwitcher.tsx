@@ -3,6 +3,7 @@
 import { useLocale, useTranslations } from "next-intl";
 import { usePathname, useRouter } from "@/i18n/routing";
 import { useState, useRef, useEffect } from "react";
+import { Button } from "../ui/button";
 
 const locales = [
   { code: "en", label: "English" },
@@ -38,29 +39,31 @@ export function LocaleSwitcher() {
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <button
+      <Button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-white/5 transition-all text-sm font-medium text-text-muted hover:text-white"
+        variant="ghost"
+        className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-white/5 transition-all text-sm font-medium text-text-muted hover:text-white h-auto"
       >
         <span className="material-symbols-outlined notranslate text-lg">language</span>
         <span className="hidden sm:inline">{currentLabel}</span>
         <span className="material-symbols-outlined notranslate text-sm">
           {isOpen ? "expand_less" : "expand_more"}
         </span>
-      </button>
+      </Button>
 
       {isOpen && (
         <div className="absolute right-0 mt-2 w-40 rounded-lg bg-void/95 backdrop-blur-md border border-white/10 shadow-xl overflow-hidden z-50">
           <div className="py-1">
             {locales.map((l) => (
-              <button
+              <Button
                 key={l.code}
                 onClick={() => onSelectChange(l.code)}
-                className={`w-full text-left px-4 py-2 text-sm transition-colors hover:bg-white/5 ${locale === l.code ? "text-solana font-medium" : "text-text-secondary"
+                variant="ghost"
+                className={`w-full text-left justify-start px-4 py-2 text-sm transition-colors hover:bg-white/5 h-auto rounded-none ${locale === l.code ? "text-solana font-medium" : "text-text-secondary"
                   }`}
               >
                 {l.label}
-              </button>
+              </Button>
             ))}
           </div>
         </div>

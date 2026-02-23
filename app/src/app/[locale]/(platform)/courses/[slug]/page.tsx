@@ -7,6 +7,7 @@ import { EnrollButton } from "@/components/courses/EnrollButton";
 import { CourseEnrollmentBlock } from "@/components/courses/CourseEnrollmentBlock";
 import { CourseCompletion } from "@/components/courses/CourseCompletion";
 import { getTranslations } from "next-intl/server";
+import { ModuleList } from "@/components/courses/ModuleList";
 
 
 export default async function CourseDetailPage({
@@ -76,37 +77,11 @@ export default async function CourseDetailPage({
             <h2 className="font-display text-text-primary mb-4 text-xl font-semibold">
               {t("course_content")}
             </h2>
-            <div className="flex flex-col gap-4">
-              {course.modules
-                .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
-                .map((mod, modIndex) => (
-                  <div
-                    key={mod._id}
-                    className="glass-panel rounded-lg border p-4 border-white/5"
-                  >
-                    <h3 className="font-display text-text-primary font-medium">
-                      {t("module_label", { index: modIndex + 1 })}: {mod.title}
-                    </h3>
-                    <ul className="mt-3 flex flex-col gap-2">
-                      {(mod.lessons ?? [])
-                        .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
-                        .map((lesson, lessonIndex) => (
-                          <li key={lesson._id}>
-                            <Link
-                              href={`/courses/${course.slug}/lessons/${lesson._id}`}
-                              className="text-text-secondary hover:text-solana flex items-center gap-2 text-sm transition-colors"
-                            >
-                              <span className="text-text-secondary shrink-0">
-                                {lesson.lessonType === "challenge" ? "⌘" : "◦"}
-                              </span>
-                              {lesson.title}
-                            </Link>
-                          </li>
-                        ))}
-                    </ul>
-                  </div>
-                ))}
-            </div>
+            <ModuleList
+              courseId={course._id}
+              courseSlug={course.slug}
+              modules={course.modules as any}
+            />
           </section>
         )}
 

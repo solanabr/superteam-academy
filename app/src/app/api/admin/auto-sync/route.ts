@@ -4,8 +4,9 @@ import { Program, AnchorProvider } from "@coral-xyz/anchor";
 // @ts-ignore
 import onchainAcademyIdl from "@/lib/idl/onchain_academy.json";
 import bs58 from "bs58";
+import { withFallbackRPC } from "@/lib/solana-connection";
 
-const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || "https://api.devnet.solana.com";
+const RPC_URL = process.env.NEXT_PUBLIC_HELIUS_RPC_URL || process.env.NEXT_PUBLIC_RPC_URL || "https://api.devnet.solana.com";
 const ADMIN_WALLET_KEY = process.env.ADMIN_WALLET_PRIVATE_KEY || process.env.BACKEND_WALLET_PRIVATE_KEY;
 
 export async function POST(req: NextRequest) {
@@ -37,58 +38,59 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Backend server wallet not configured" }, { status: 500 });
         }
 
-        const connection = new Connection(RPC_URL, "confirmed");
-        const adminWallet = Keypair.fromSecretKey(bs58.decode(ADMIN_WALLET_KEY as string));
+        const sig = await withFallbackRPC(async (connection) => {
+            const adminWallet = Keypair.fromSecretKey(bs58.decode(ADMIN_WALLET_KEY as string));
+            const provider = new AnchorProvider(
+                connection,
+                // @ts-ignore
+                { publicKey: adminWallet.publicKey, signTransaction: async (tx) => { tx.sign(adminWallet); return tx; }, signAllTransactions: async (txs) => { txs.forEach(t => t.sign(adminWallet)); return txs; } },
+                AnchorProvider.defaultOptions()
+            );
 
-        const provider = new AnchorProvider(
-            connection,
-            // @ts-ignore
-            { publicKey: adminWallet.publicKey, signTransaction: async (tx) => { tx.sign(adminWallet); return tx; }, signAllTransactions: async (txs) => { txs.forEach(t => t.sign(adminWallet)); return txs; } },
-            AnchorProvider.defaultOptions()
-        );
+            const program = new Program(onchainAcademyIdl as any, provider);
 
-        const program = new Program(onchainAcademyIdl as any, provider);
+            const [coursePda] = PublicKey.findProgramAddressSync(
+                [Buffer.from("course"), Buffer.from(slug)],
+                program.programId
+            );
 
-        const [coursePda] = PublicKey.findProgramAddressSync(
-            [Buffer.from("course"), Buffer.from(slug)],
-            program.programId
-        );
+            const [configPda] = PublicKey.findProgramAddressSync([Buffer.from("config")], program.programId);
 
-        const [configPda] = PublicKey.findProgramAddressSync([Buffer.from("config")], program.programId);
+            console.log(`Received Sanity Webhook. Auto-Syncing Course on-chain: ${slug} (${lessonCount} lessons)...`);
 
-        console.log(`Received Sanity Webhook. Auto-Syncing Course on-chain: ${slug} (${lessonCount} lessons)...`);
+            try {
+                const tx = await program.methods
+                    .createCourse({
+                        courseId: slug,
+                        creator: adminWallet.publicKey,
+                        version: 1,
+                        lessonCount: lessonCount,
+                        difficulty: 1, // Defaulting for auto-sync
+                        xpPerLesson: 50,
+                        trackId: trackId,
+                        trackLevel: 1, // Defaulting for auto-sync
+                        prerequisite: null,
+                        creatorRewardXp: 500,
+                        minCompletionsForReward: 10
+                    })
+                    .accounts({
+                        config: configPda,
+                        course: coursePda,
+                        authority: adminWallet.publicKey,
+                        systemProgram: SystemProgram.programId
+                    } as any)
+                    .signers([adminWallet])
+                    .rpc();
 
-        try {
-            const tx = await program.methods
-                .createCourse({
-                    courseId: slug,
-                    creator: adminWallet.publicKey,
-                    version: 1,
-                    lessonCount: lessonCount,
-                    difficulty: 1, // Defaulting for auto-sync
-                    xpPerLesson: 50,
-                    trackId: trackId,
-                    trackLevel: 1, // Defaulting for auto-sync
-                    prerequisite: null,
-                    creatorRewardXp: 500,
-                    minCompletionsForReward: 10
-                })
-                .accounts({
-                    config: configPda,
-                    course: coursePda,
-                    authority: adminWallet.publicKey,
-                    systemProgram: SystemProgram.programId
-                } as any)
-                .signers([adminWallet])
-                .rpc();
+                console.log(`Course Auto-Synced Successfully! Tx: ${tx}`);
+                return tx;
+            } catch (err: any) {
+                console.warn(`Course auto-sync bounded failure (already initialized?) for ${slug}:`, err.message);
+                throw err;
+            }
+        });
 
-            console.log(`Course Auto-Synced Successfully! Tx: ${tx}`);
-            return NextResponse.json({ success: true, signature: tx, coursePda: coursePda.toBase58() });
-        } catch (err: any) {
-            console.warn(`Course auto-sync bounded failure (already initialized?) for ${slug}:`, err.message);
-            // Return 200 with success false instead of throwing 500 so Sanity does not continuously retry failing webhooks on existing courses
-            return NextResponse.json({ success: false, message: err.message });
-        }
+        return NextResponse.json({ success: true, signature: sig });
     } catch (error: any) {
         console.error("Sanity Webhook Auto-Sync Error:", error);
         return NextResponse.json({ error: error.message || "Failed to process auto-sync webhook" }, { status: 500 });

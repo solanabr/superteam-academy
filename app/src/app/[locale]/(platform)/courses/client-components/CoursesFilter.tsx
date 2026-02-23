@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Link } from "@/i18n/routing";
 import { useTranslations } from "next-intl";
+import { Button } from "@/components/ui/button";
 import type { CourseListItem } from "@/sanity/lib/queries";
 
 export function CoursesFilter({ courses }: { courses: CourseListItem[] }) {
@@ -30,13 +31,15 @@ export function CoursesFilter({ courses }: { courses: CourseListItem[] }) {
             {/* Filters */}
             <div className="flex flex-wrap gap-3 overflow-x-auto pb-2 no-scrollbar">
                 {tracks.map((track) => (
-                    <button
+                    <Button
                         key={track}
+                        variant={filter === track ? "default" : "outline"}
+                        size="sm"
                         onClick={() => setFilter(track)}
-                        className={`px-3 py-1 rounded text-[11px] font-mono transition-all uppercase tracking-wider ${filter === track ? "bg-[#1F1F1F] text-white border border-[#383838]" : "border border-[#1F1F1F] bg-transparent text-[#8F9099] hover:bg-white/5"}`}
+                        className="uppercase tracking-wider text-[11px] font-mono h-8"
                     >
                         {t(`filters.${track}`)}
-                    </button>
+                    </Button>
                 ))}
             </div>
 
@@ -49,7 +52,7 @@ export function CoursesFilter({ courses }: { courses: CourseListItem[] }) {
                 ) : (
                     filteredCourses.map((course) => (
                         <Link key={course._id} href={`/courses/${course.slug}`}>
-                            <div className="glass-panel group rounded-xl overflow-hidden flex flex-col h-full cursor-pointer relative border border-[#1F1F1F] bg-[#0D0D0E]">
+                            <div className="glass-panel group rounded-xl overflow-hidden flex flex-col h-full cursor-pointer relative border border-white/5 bg-[#0D0D0E] hover:border-solana/30 hover:bg-white/[0.03] transition-all duration-300">
                                 <div className={`h-48 w-full relative overflow-hidden bg-gradient-to-br ${course.track === "rust" ? "from-rust/10" : course.track === "solana" ? "from-solana/10" : "from-purple-500/10"} to-void`}>
                                     <div className="absolute inset-0 flex items-center justify-center opacity-80 group-hover:scale-105 transition-transform duration-500">
                                         <span className={`material-symbols-outlined notranslate text-[100px] ${course.track === "rust" ? "text-rust/40" : course.track === "solana" ? "text-solana/40" : "text-purple-500/40"}`}>
