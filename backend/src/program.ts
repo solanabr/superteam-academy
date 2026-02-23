@@ -47,7 +47,8 @@ function walletFromKeypair(keypair: Keypair) {
       if (tx instanceof VersionedTransaction) {
         tx.sign([keypair]);
       } else {
-        tx.sign(keypair);
+        // Preserve existing partial signatures (e.g. credential asset signer).
+        tx.partialSign(keypair);
       }
       return tx;
     },
@@ -56,7 +57,7 @@ function walletFromKeypair(keypair: Keypair) {
     ): Promise<T[]> => {
       txs.forEach((tx) => {
         if (tx instanceof VersionedTransaction) tx.sign([keypair]);
-        else tx.sign(keypair);
+        else tx.partialSign(keypair);
       });
       return txs;
     },
