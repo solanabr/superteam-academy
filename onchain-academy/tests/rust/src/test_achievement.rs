@@ -1,7 +1,7 @@
 use crate::helpers::*;
 use anchor_lang::{AnchorDeserialize, AnchorSerialize};
 use solana_sdk::pubkey::Pubkey;
-use superteam_academy::state::{
+use onchain_academy::state::{
     AchievementReceipt, AchievementType, MAX_ACHIEVEMENT_ID_LEN, MAX_ACHIEVEMENT_NAME_LEN,
     MAX_ACHIEVEMENT_URI_LEN,
 };

@@ -12,7 +12,7 @@ superteam_academy = "FBL7RFCfVd5MG3wrcjcrcYC5tht8nNi1QeGebtdFichD"
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "localnet"
+cluster = "devnet"
 wallet = "../wallets/signer.json"
 
 [test.validator]

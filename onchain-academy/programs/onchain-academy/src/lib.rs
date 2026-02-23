@@ -11,7 +11,7 @@ use instructions::*;
 declare_id!("FBL7RFCfVd5MG3wrcjcrcYC5tht8nNi1QeGebtdFichD");
 
 #[program]
-pub mod superteam_academy {
+pub mod onchain_academy {
     use super::*;
 
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {

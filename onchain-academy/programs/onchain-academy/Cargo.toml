@@ -6,7 +6,7 @@ edition = "2021"
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "superteam_academy"
+name = "onchain_academy"
 
 [features]
 default = []

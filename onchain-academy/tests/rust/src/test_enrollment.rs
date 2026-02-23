@@ -1,7 +1,7 @@
 use crate::helpers::*;
 use anchor_lang::{AnchorDeserialize, AnchorSerialize};
 use solana_sdk::pubkey::Pubkey;
-use superteam_academy::state::Enrollment;
+use onchain_academy::state::Enrollment;
 
 #[test]
 fn enrollment_size_constant_is_correct() {

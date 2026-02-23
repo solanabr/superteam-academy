@@ -13,5 +13,5 @@ solana-program = "=2.0.25"
 borsh = "0.10"
 
 [lib]
-name = "superteam_academy_tests"
+name = "onchain_academy_tests"
 path = "src/lib.rs"
