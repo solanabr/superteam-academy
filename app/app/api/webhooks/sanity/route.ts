@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { revalidateTag, revalidatePath } from "next/cache";
 import { headers } from "next/headers";
-import { createSanityClient } from "@superteam/cms";
+import { createSanityClient } from "@superteam-academy/cms";
 import {
 	enqueueCourseSyncJob,
 	getCourseSyncJobs,

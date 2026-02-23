@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { PublicKey, type Connection } from "@solana/web3.js";
 
-// Mock @superteam/anchor
-vi.mock("@superteam/anchor", () => {
+// Mock @superteam-academy/anchor
+vi.mock("@superteam-academy/anchor", () => {
 	const mockClient = {
 		fetchConfig: vi.fn(),
 		fetchCourse: vi.fn(),
@@ -21,7 +21,7 @@ vi.mock("@superteam/anchor", () => {
 	};
 });
 
-vi.mock("@superteam/solana", () => ({
+vi.mock("@superteam-academy/solana", () => ({
 	findToken2022ATA: vi.fn(() => PublicKey.default),
 }));
 
@@ -37,18 +37,18 @@ function createMockConnection() {
 
 describe("AchievementService", () => {
 	let service: InstanceType<
-		Awaited<typeof import("@/services/AchievementService")>["AchievementService"]
+		Awaited<typeof import("@/services/achievement-service")>["AchievementService"]
 	>;
 	let mockClient: ReturnType<typeof getMockClient>;
 
 	function getMockClient() {
 		// eslint-disable-next-line @typescript-eslint/no-require-imports
-		return require("@superteam/anchor").__mockClient;
+		return require("@superteam-academy/anchor").__mockClient;
 	}
 
 	beforeEach(async () => {
 		vi.clearAllMocks();
-		const mod = await import("@/services/AchievementService");
+		const mod = await import("@/services/achievement-service");
 		service = new mod.AchievementService(createMockConnection(), PROGRAM_ID);
 		mockClient = getMockClient();
 	});
@@ -122,17 +122,17 @@ describe("AchievementService", () => {
 
 describe("LeaderboardService", () => {
 	let service: InstanceType<
-		Awaited<typeof import("@/services/LeaderboardService")>["LeaderboardService"]
+		Awaited<typeof import("@/services/leaderboard-service")>["LeaderboardService"]
 	>;
 
 	beforeEach(async () => {
 		vi.clearAllMocks();
-		const mod = await import("@/services/LeaderboardService");
+		const mod = await import("@/services/leaderboard-service");
 		service = new mod.LeaderboardService(createMockConnection(), PROGRAM_ID);
 	});
 
 	it("getUserXp returns 0n when no balance", async () => {
-		const mockClient = require("@superteam/anchor").__mockClient;
+		const mockClient = require("@superteam-academy/anchor").__mockClient;
 		mockClient.fetchXpBalance.mockResolvedValue(null);
 
 		const result = await service.getUserXp(MOCK_LEARNER, PublicKey.default);
@@ -140,7 +140,7 @@ describe("LeaderboardService", () => {
 	});
 
 	it("getUserXp returns balance when available", async () => {
-		const mockClient = require("@superteam/anchor").__mockClient;
+		const mockClient = require("@superteam-academy/anchor").__mockClient;
 		mockClient.fetchXpBalance.mockResolvedValue(500n);
 
 		const result = await service.getUserXp(MOCK_LEARNER, PublicKey.default);
@@ -155,12 +155,12 @@ describe("LeaderboardService", () => {
 
 describe("CredentialService", () => {
 	let service: InstanceType<
-		Awaited<typeof import("@/services/CredentialService")>["CredentialService"]
+		Awaited<typeof import("@/services/credential-service")>["CredentialService"]
 	>;
 
 	beforeEach(async () => {
 		vi.clearAllMocks();
-		const mod = await import("@/services/CredentialService");
+		const mod = await import("@/services/credential-service");
 		service = new mod.CredentialService(createMockConnection(), PROGRAM_ID);
 	});
 

@@ -1,4 +1,4 @@
-import { createServerAuth, type ServerAuthConfig } from "@superteam/auth";
+import { createServerAuth, type ServerAuthConfig } from "@superteam-academy/auth";
 import { headers } from "next/headers";
 import type { NextRequest } from "next/server";
 import { PublicKey } from "@solana/web3.js";

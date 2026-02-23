@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { serverAuth } from "@/lib/auth";
 import { isUserAdmin, isUserSuperAdmin, updateUserRole, getAdminUsers } from "@/lib/sanity-users";
-import type { UserRole } from "@superteam/cms";
+import type { UserRole } from "@superteam-academy/cms";
 
 export async function GET() {
 	const requestHeaders = await headers();

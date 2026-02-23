@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { Keypair, PublicKey, Transaction } from "@solana/web3.js";
-import { buildFinalizeCourseInstruction, countCompletedLessons } from "@superteam/anchor";
-import { findToken2022ATA } from "@superteam/solana";
+import { buildFinalizeCourseInstruction, countCompletedLessons } from "@superteam-academy/anchor";
+import { findToken2022ATA } from "@superteam-academy/solana";
 import { getLinkedWallet } from "@/lib/auth";
 import { getAcademyClient, getProgramId, getSolanaConnection } from "@/lib/academy";
 

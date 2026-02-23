@@ -1,12 +1,12 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { PublicKey } from "@solana/web3.js";
-import { findToken2022ATA } from "@superteam/solana";
-import { countCompletedLessons } from "@superteam/anchor";
+import { findToken2022ATA } from "@superteam-academy/solana";
+import { countCompletedLessons } from "@superteam-academy/anchor";
 import { getAcademyClient, getProgramId, getSolanaConnection } from "@/lib/academy";
 import { getLinkedWallet } from "@/lib/auth";
 import { ProgressTracking } from "@/components/progress/progress-tracking";
-import { AchievementService } from "@/services/AchievementService";
+import { AchievementService } from "@/services/achievement-service";
 import { calculateLevelFromXP } from "@superteam-academy/gamification";
 
 export const metadata: Metadata = {

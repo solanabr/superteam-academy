@@ -5,7 +5,7 @@ import { Play, RotateCcw, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useTranslations } from "next-intl";
-import { createMonacoEditor, type MonacoEditorInstance } from "@superteam/editor";
+import { createMonacoEditor, type MonacoEditorInstance } from "@superteam-academy/editor";
 
 interface Challenge {
 	id: string;
@@ -41,7 +41,7 @@ export function ChallengeEditor({
 	const [isRunning, setIsRunning] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
-	// Mount the editor from @superteam/editor
+	// Mount the editor from @superteam-academy/editor
 	useEffect(() => {
 		const container = containerRef.current;
 		if (!container) return;

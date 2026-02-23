@@ -6,8 +6,8 @@ import {
 	type EnrollmentAccount,
 	countCompletedLessons,
 	isLessonCompleted,
-} from "@superteam/anchor";
-import { findToken2022ATA } from "@superteam/solana";
+} from "@superteam-academy/anchor";
+import { findToken2022ATA } from "@superteam-academy/solana";
 
 export interface CourseProgress {
 	courseId: string;

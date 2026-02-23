@@ -51,14 +51,12 @@ export function LessonQuiz({ quiz, onComplete, onRetry }: LessonQuizProps) {
 		onComplete?.(score, passed);
 	}, [quiz.questions, quiz.passingScore, answers, onComplete]);
 
-	// Initialize timer
 	useEffect(() => {
 		if (quiz.timeLimit && !showResults && !quizCompleted) {
 			setTimeRemaining(quiz.timeLimit * 60); // convert to seconds
 		}
 	}, [quiz.timeLimit, showResults, quizCompleted]);
 
-	// Timer countdown
 	useEffect(() => {
 		if (timeRemaining === null || timeRemaining <= 0) return;
 

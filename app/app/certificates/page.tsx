@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getTranslations } from "next-intl/server";
 import { getSolanaConnection, getProgramId } from "@/lib/academy";
 import { getLinkedWallet } from "@/lib/auth";
-import { CredentialService } from "@/services/CredentialService";
+import { CredentialService } from "@/services/credential-service";
 import { PublicKey } from "@solana/web3.js";
 
 export const metadata: Metadata = {

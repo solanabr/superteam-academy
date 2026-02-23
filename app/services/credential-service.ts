@@ -7,7 +7,7 @@ import {
 	type VerifyResult,
 	type TrackRequirements,
 } from "./types";
-import { AcademyClient } from "@superteam/anchor";
+import { AcademyClient } from "@superteam-academy/anchor";
 
 const TRACK_REQUIREMENTS: Record<string, TrackRequirements> = {
 	Beginner: { courses: 1, xp: 100 },

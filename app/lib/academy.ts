@@ -1,5 +1,5 @@
 import { Connection, PublicKey } from "@solana/web3.js";
-import { AcademyClient, PROGRAM_ID as DEFAULT_PROGRAM_ID } from "@superteam/anchor";
+import { AcademyClient, PROGRAM_ID as DEFAULT_PROGRAM_ID } from "@superteam-academy/anchor";
 
 let cachedConnection: Connection | null = null;
 let cachedClient: AcademyClient | null = null;

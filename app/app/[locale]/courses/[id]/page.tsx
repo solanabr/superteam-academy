@@ -22,7 +22,7 @@ import { getAcademyClient } from "@/lib/academy";
 import { getLinkedWallet } from "@/lib/auth";
 import { mapCourseToDetail } from "@/lib/course-data";
 import { PublicKey } from "@solana/web3.js";
-import { countCompletedLessons } from "@superteam/anchor";
+import { countCompletedLessons } from "@superteam-academy/anchor";
 
 interface CourseDetailPageProps {
 	params: Promise<{

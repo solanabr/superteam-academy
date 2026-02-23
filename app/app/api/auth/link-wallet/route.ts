@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { verifyWalletSignature, walletAuthSchema } from "@superteam/auth";
+import { verifyWalletSignature, walletAuthSchema } from "@superteam-academy/auth";
 
 export async function POST(request: NextRequest) {
 	try {

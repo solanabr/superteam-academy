@@ -2,8 +2,8 @@ import { type NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { serverAuth } from "@/lib/auth";
 import { isUserAdmin } from "@/lib/sanity-users";
-import { createSanityClient } from "@superteam/cms";
-import { courseFields } from "@superteam/cms/queries";
+import { createSanityClient } from "@superteam-academy/cms";
+import { courseFields } from "@superteam-academy/cms/queries";
 
 function sanityWriteClient() {
 	const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;

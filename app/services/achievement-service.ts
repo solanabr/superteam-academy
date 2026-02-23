@@ -1,6 +1,6 @@
 import type { PublicKey } from "@solana/web3.js";
 import { BaseService } from "./types";
-import { AcademyClient, type AchievementTypeAccount } from "@superteam/anchor";
+import { AcademyClient, type AchievementTypeAccount } from "@superteam-academy/anchor";
 
 export interface AchievementInfo {
 	achievementId: string;

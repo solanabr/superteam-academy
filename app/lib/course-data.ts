@@ -1,5 +1,5 @@
-import { FRONTEND_SEED_COURSES, ONCHAIN_COURSE_STUBS } from "@superteam/cms";
-import type { Course } from "@superteam/cms";
+import { FRONTEND_SEED_COURSES, ONCHAIN_COURSE_STUBS } from "@superteam-academy/cms";
+import type { Course } from "@superteam-academy/cms";
 import { resolveCourseImageUrl } from "@/lib/cms";
 
 export type CourseReviewView = {

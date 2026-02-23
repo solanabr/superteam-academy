@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Wallet, CreditCard, CheckCircle, AlertCircle } from "lucide-react";
 import { useConnection } from "@solana/wallet-adapter-react";
 import { Transaction } from "@solana/web3.js";
-import { buildEnrollInstruction, buildCloseEnrollmentInstruction } from "@superteam/anchor";
+import { buildEnrollInstruction, buildCloseEnrollmentInstruction } from "@superteam-academy/anchor";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";

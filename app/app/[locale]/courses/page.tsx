@@ -10,7 +10,7 @@ import { CourseList } from "@/components/courses/course-list";
 import { CoursesFilters } from "@/components/courses/courses-filters";
 import { Pagination } from "@/components/ui/pagination";
 import { getCoursesCMS, isSanityConfigured, resolveCourseImageUrl } from "@/lib/cms";
-import { FRONTEND_SEED_COURSES } from "@superteam/cms";
+import { FRONTEND_SEED_COURSES } from "@superteam-academy/cms";
 import { getTranslations } from "next-intl/server";
 
 export const metadata: Metadata = {

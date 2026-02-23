@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getTranslations } from "next-intl/server";
 import { getSolanaConnection, getProgramId } from "@/lib/academy";
-import { CredentialService } from "@/services/CredentialService";
+import { CredentialService } from "@/services/credential-service";
 import { CertificateActions } from "@/components/credentials/certificate-actions";
 
 interface CertificatePageProps {

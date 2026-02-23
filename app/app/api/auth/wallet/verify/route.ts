@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { verifyWalletSignature, walletAuthSchema } from "@superteam/auth";
+import { verifyWalletSignature, walletAuthSchema } from "@superteam-academy/auth";
 import { issueWalletBetterAuthSession } from "@/lib/auth";
 
 function nonceDeleteCookie() {

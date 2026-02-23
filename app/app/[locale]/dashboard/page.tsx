@@ -13,7 +13,7 @@ import {
 	Clock,
 } from "lucide-react";
 import { useConnection } from "@solana/wallet-adapter-react";
-import { countCompletedLessons } from "@superteam/anchor";
+import { countCompletedLessons } from "@superteam-academy/anchor";
 import { calculateLevelFromXP } from "@superteam-academy/gamification";
 import { StreakEventType } from "@superteam-academy/gamification/streak-system";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,7 +22,7 @@ import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/contexts/auth-context";
 import { useTranslations } from "next-intl";
 import { useStreak } from "@/hooks/use-streak";
-import { LearningProgressService } from "@/services/LearningProgressService";
+import { LearningProgressService } from "@/services/learning-progress-service";
 import {
 	getProgramId,
 	fetchIndexedLearnerActivity,
@@ -86,7 +86,7 @@ export default function DashboardPage() {
 
 		let totalXp = 0;
 		if (config?.xpMint) {
-			const { findToken2022ATA } = await import("@superteam/solana");
+			const { findToken2022ATA } = await import("@superteam-academy/solana");
 			const ata = findToken2022ATA(wallet.publicKey, config.xpMint);
 			const balance = await client.fetchXpBalance(ata);
 			totalXp = Number(balance ?? 0n);

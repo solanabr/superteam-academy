@@ -1,4 +1,4 @@
-import { createNewsletterService } from "@superteam/cms";
+import { createNewsletterService } from "@superteam-academy/cms";
 import { cmsContext, isSanityConfigured } from "./cms-context";
 
 const newsletterService = createNewsletterService(cmsContext);

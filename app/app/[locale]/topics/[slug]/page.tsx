@@ -23,7 +23,7 @@ import { CoursesFilters } from "@/components/courses/courses-filters";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { getCoursesCMS, isSanityConfigured, resolveCourseImageUrl } from "@/lib/cms";
-import { FRONTEND_SEED_COURSES } from "@superteam/cms";
+import { FRONTEND_SEED_COURSES } from "@superteam-academy/cms";
 
 const TOPICS = [
 	{

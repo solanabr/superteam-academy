@@ -1,7 +1,7 @@
 import { PublicKey } from "@solana/web3.js";
 import { BaseService } from "./types";
-import { AcademyClient, countCompletedLessons } from "@superteam/anchor";
-import { findToken2022ATA } from "@superteam/solana";
+import { AcademyClient, countCompletedLessons } from "@superteam-academy/anchor";
+import { findToken2022ATA } from "@superteam-academy/solana";
 
 export interface LeaderboardEntry {
 	rank: number;

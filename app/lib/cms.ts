@@ -1,5 +1,5 @@
-import { createCourseService } from "@superteam/cms";
-import type { Course } from "@superteam/cms";
+import { createCourseService } from "@superteam-academy/cms";
+import type { Course } from "@superteam-academy/cms";
 import { cmsContext, isSanityConfigured } from "./cms-context";
 const courseService = createCourseService(cmsContext);
 

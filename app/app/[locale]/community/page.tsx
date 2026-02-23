@@ -21,7 +21,7 @@ import {
 	getDiscussionsByTag,
 	isSanityConfigured,
 } from "@/lib/community-cms";
-import type { DiscussionCategory } from "@superteam/cms";
+import type { DiscussionCategory } from "@superteam-academy/cms";
 
 export const metadata: Metadata = {
 	title: "Discussions | Community | Superteam Academy",

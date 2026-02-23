@@ -3,7 +3,7 @@ import { Keypair, PublicKey, Transaction } from "@solana/web3.js";
 import {
 	buildIssueCredentialInstruction,
 	buildUpgradeCredentialInstruction,
-} from "@superteam/anchor";
+} from "@superteam-academy/anchor";
 import { getLinkedWallet } from "@/lib/auth";
 import { getAcademyClient, getProgramId, getSolanaConnection } from "@/lib/academy";
 

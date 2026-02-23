@@ -7,7 +7,7 @@ import { LeaderboardTable } from "@/components/leaderboard/leaderboard-table";
 import { LeaderboardFilters } from "@/components/leaderboard/leaderboard-filters";
 import { UserRankCard } from "@/components/leaderboard/user-rank-card";
 import { getAcademyClient } from "@/lib/academy";
-import { LeaderboardService } from "@/services/LeaderboardService";
+import { LeaderboardService } from "@/services/leaderboard-service";
 import { getLinkedWallet } from "@/lib/auth";
 import { calculateLevelFromXP } from "@superteam-academy/gamification";
 

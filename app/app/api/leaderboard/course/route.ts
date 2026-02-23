@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAcademyClient } from "@/lib/academy";
-import { countCompletedLessons } from "@superteam/anchor";
+import { countCompletedLessons } from "@superteam-academy/anchor";
 import { calculateLevelFromXP } from "@superteam-academy/gamification";
 
 export async function GET() {

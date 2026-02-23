@@ -17,7 +17,7 @@ import {
 	isSanityConfigured,
 	type ProjectWithMeta,
 } from "@/lib/community-cms";
-import type { ProjectCategory } from "@superteam/cms";
+import type { ProjectCategory } from "@superteam-academy/cms";
 
 const CATEGORIES = ["all", "defi", "nft", "tooling", "gaming", "social", "infra"] as const;
 

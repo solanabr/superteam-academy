@@ -1,7 +1,5 @@
-// Custom Analytics Pipeline Implementation
 import { z } from "zod";
 
-// Analytics Event Types
 export enum AnalyticsEventType {
 	USER_REGISTRATION = "user_registration",
 	USER_LOGIN = "user_login",
@@ -26,7 +24,6 @@ export enum AnalyticsEventType {
 	CUSTOM_EVENT = "custom_event",
 }
 
-// Analytics Event Schema
 export const AnalyticsEventSchema = z.object({
 	id: z.string().uuid(),
 	type: z.nativeEnum(AnalyticsEventType),
@@ -362,7 +359,6 @@ export class AnalyticsService {
 		this.config = config;
 	}
 
-	// Start analytics collection
 	async start(): Promise<void> {
 		if (this.isRunning) return;
 
@@ -370,7 +366,6 @@ export class AnalyticsService {
 		this.startFlushTimer();
 	}
 
-	// Stop analytics collection
 	async stop(): Promise<void> {
 		if (!this.isRunning) return;
 
@@ -384,7 +379,6 @@ export class AnalyticsService {
 		await this.flush();
 	}
 
-	// Track an event
 	async track(
 		eventType: AnalyticsEventType,
 		userId: string,
@@ -433,7 +427,6 @@ export class AnalyticsService {
 		}
 	}
 
-	// Track user registration
 	async trackUserRegistration(
 		userId: string,
 		registrationMethod: string,

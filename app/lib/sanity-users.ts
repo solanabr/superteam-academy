@@ -1,5 +1,5 @@
-import { createSanityClient } from "@superteam/cms";
-import type { AcademyUser, UserRole } from "@superteam/cms";
+import { createSanityClient } from "@superteam-academy/cms";
+import type { AcademyUser, UserRole } from "@superteam-academy/cms";
 import {
 	userByAuthIdQuery,
 	userByEmailQuery,
@@ -8,7 +8,7 @@ import {
 	adminUsersQuery,
 	userStatsQuery,
 	userCountQuery,
-} from "@superteam/cms/queries";
+} from "@superteam-academy/cms/queries";
 
 function sanityWriteClient() {
 	const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;

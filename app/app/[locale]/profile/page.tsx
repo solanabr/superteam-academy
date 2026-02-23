@@ -11,7 +11,7 @@ import { SkillRadarConnected } from "@/components/profile/skill-radar-connected"
 import { CourseProgress } from "@/components/profile/course-progress";
 import { CredentialList } from "@/components/credentials/credential-list";
 import { PublicKey } from "@solana/web3.js";
-import { findToken2022ATA } from "@superteam/solana";
+import { findToken2022ATA } from "@superteam-academy/solana";
 import {
 	fetchIndexedLearnerActivity,
 	getAcademyClient,
@@ -20,8 +20,8 @@ import {
 } from "@/lib/academy";
 import { getLinkedWallet } from "@/lib/auth";
 import { calculateLevelFromXP } from "@superteam-academy/gamification";
-import { CredentialService } from "@/services/CredentialService";
-import { AchievementService } from "@/services/AchievementService";
+import { CredentialService } from "@/services/credential-service";
+import { AchievementService } from "@/services/achievement-service";
 
 export const metadata: Metadata = {
 	title: "Profile | Superteam Academy",

@@ -1,7 +1,5 @@
-// Error Monitoring and Alerting Implementation
 import { z } from "zod";
 
-// Error Severity Levels
 export enum ErrorSeverity {
 	LOW = "low",
 	MEDIUM = "medium",
@@ -9,7 +7,6 @@ export enum ErrorSeverity {
 	CRITICAL = "critical",
 }
 
-// Error Categories
 export enum ErrorCategory {
 	NETWORK = "network",
 	DATABASE = "database",
@@ -257,17 +254,14 @@ export class ErrorMonitoringService {
 		this.alertConfig = alertConfig;
 	}
 
-	// Start error monitoring
 	async start(): Promise<void> {
 		this.isRunning = true;
 	}
 
-	// Stop error monitoring
 	async stop(): Promise<void> {
 		this.isRunning = false;
 	}
 
-	// Capture an error
 	async captureError(
 		error: Error,
 		context: Partial<ErrorContext> = {},
@@ -323,7 +317,6 @@ export class ErrorMonitoringService {
 		return report.id;
 	}
 
-	// Capture exception with automatic categorization
 	async captureException(error: Error, context: Partial<ErrorContext> = {}): Promise<string> {
 		const category = this.categorizeError(error);
 		const severity = this.determineSeverity(error, category);
@@ -331,7 +324,6 @@ export class ErrorMonitoringService {
 		return this.captureError(error, context, severity, category);
 	}
 
-	// Manually create alert
 	async createAlert(
 		type: AlertType,
 		title: string,
@@ -370,7 +362,6 @@ export class ErrorMonitoringService {
 		await Promise.all(this.alertConfig.channels.map((channel) => channel.sendAlert(alert)));
 	}
 
-	// Get error reports
 	getErrorReports(resolved = false, limit = 100, offset = 0): ErrorReport[] {
 		const reports = Array.from(this.errorReports.values())
 			.filter((report) => report.resolved === resolved)
@@ -380,12 +371,10 @@ export class ErrorMonitoringService {
 		return reports;
 	}
 
-	// Get error report by ID
 	getErrorReport(id: string): ErrorReport | undefined {
 		return Array.from(this.errorReports.values()).find((report) => report.id === id);
 	}
 
-	// Resolve error report
 	async resolveError(id: string, comment?: string): Promise<boolean> {
 		const report = this.getErrorReport(id);
 		if (!report || report.resolved) return false;
@@ -406,7 +395,6 @@ export class ErrorMonitoringService {
 		return true;
 	}
 
-	// Get error statistics
 	getErrorStats(): {
 		totalErrors: number;
 		unresolvedErrors: number;

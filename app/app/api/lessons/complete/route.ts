@@ -6,12 +6,12 @@ import {
 	Transaction,
 	TransactionInstruction,
 } from "@solana/web3.js";
-import { buildCompleteLessonInstruction, isLessonCompleted } from "@superteam/anchor";
+import { buildCompleteLessonInstruction, isLessonCompleted } from "@superteam-academy/anchor";
 import {
 	findToken2022ATA,
 	TOKEN_2022_PROGRAM_ID,
 	ASSOCIATED_TOKEN_PROGRAM_ID,
-} from "@superteam/solana";
+} from "@superteam-academy/solana";
 import { getLinkedWallet } from "@/lib/auth";
 import { getAcademyClient, getProgramId, getSolanaConnection } from "@/lib/academy";
 

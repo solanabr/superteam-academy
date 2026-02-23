@@ -12,8 +12,8 @@ import { ConnectionProvider, WalletProvider, useWallet } from "@solana/wallet-ad
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import { PhantomWalletAdapter, SolflareWalletAdapter } from "@solana/wallet-adapter-wallets";
 import { clusterApiUrl } from "@solana/web3.js";
-import { createAuthClient, type AuthClient } from "@superteam/auth";
-import { createSignInMessage } from "@superteam/auth";
+import { createAuthClient, type AuthClient } from "@superteam-academy/auth";
+import { createSignInMessage } from "@superteam-academy/auth";
 
 import "@solana/wallet-adapter-react-ui/styles.css";
 
