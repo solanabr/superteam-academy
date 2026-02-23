@@ -1575,6 +1575,21 @@
   }
 }
 
+@keyframes xp-float {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+  60% {
+    opacity: 1;
+    transform: translate(-50%, 4px) scale(1.05);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, 10px) scale(0.9);
+  }
+}
+
 .popup-xp {
   display: inline-flex;
   align-items: center;
@@ -2075,7 +2090,7 @@
 }
 @media (min-width: 768px) {
   .dash-top {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
   }
 }
 .dash-identity {
