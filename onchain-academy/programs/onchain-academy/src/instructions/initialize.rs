@@ -79,6 +79,11 @@ pub fn handler(ctx: Context<Initialize>) -> Result<()> {
     config.authority = ctx.accounts.authority.key();
     config.backend_signer = ctx.accounts.authority.key();
     config.xp_mint = mint_key;
+    config.current_season = 0;
+    config.season_closed = false;
+    config.season_started_at = 0;
+    config.max_daily_xp = 500;
+    config.max_achievement_xp = 100;
     config._reserved = [0u8; 8];
     config.bump = bump;
 

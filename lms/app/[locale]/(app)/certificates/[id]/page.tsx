@@ -94,21 +94,32 @@ export default function CertificatePage({
   const primaryColor = track?.color ?? "#008c4c";
   const secondaryColor = "#ffd23f";
 
-  const nftMetadata = {
-    name: `Superteam Academy — ${track?.display ?? "Solana"} ${levelName}`,
-    symbol: "STACRED",
-    description: `On-chain credential for completing the ${track?.display ?? "Solana"} track at ${levelName} level on Superteam Academy.`,
-    attributes: [
-      { trait_type: "Track", value: track?.display ?? "Unknown" },
-      { trait_type: "Level", value: levelName },
-      {
-        trait_type: "Courses Completed",
-        value: trackCompletedCount.toString(),
-      },
-      { trait_type: "Total XP", value: totalXP.toString() },
-      ...(displayName ? [{ trait_type: "Learner", value: displayName }] : []),
-    ],
-  };
+  const onChainNft = latestCert?.nftMetadata ?? null;
+  const nftMetadata = onChainNft
+    ? {
+        name: onChainNft.name,
+        symbol: "STACRED",
+        description: `On-chain credential for completing the ${track?.display ?? "Solana"} track at ${levelName} level on Superteam Academy.`,
+        uri: onChainNft.uri,
+        attributes: onChainNft.attributes,
+      }
+    : {
+        name: `Superteam Academy — ${track?.display ?? "Solana"} ${levelName}`,
+        symbol: "STACRED",
+        description: `On-chain credential for completing the ${track?.display ?? "Solana"} track at ${levelName} level on Superteam Academy.`,
+        attributes: [
+          { trait_type: "Track", value: track?.display ?? "Unknown" },
+          { trait_type: "Level", value: levelName },
+          {
+            trait_type: "Courses Completed",
+            value: trackCompletedCount.toString(),
+          },
+          { trait_type: "Total XP", value: totalXP.toString() },
+          ...(displayName
+            ? [{ trait_type: "Learner", value: displayName }]
+            : []),
+        ],
+      };
 
   const copyMetadata = () => {
     navigator.clipboard.writeText(JSON.stringify(nftMetadata, null, 2));
@@ -352,7 +363,7 @@ export default function CertificatePage({
               <span className="text-muted-foreground">
                 {t("tokenStandard")}
               </span>
-              <span className="font-medium">Token-2022 (NonTransferable)</span>
+              <span className="font-medium">Metaplex Core (Soulbound)</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">{t("track")}</span>
