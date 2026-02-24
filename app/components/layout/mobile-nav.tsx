@@ -24,7 +24,7 @@ export function MobileNav() {
         </svg>
       </button>
       {open && (
-        <div className="absolute left-0 right-0 top-16 border-b border-edge bg-surface/95 backdrop-blur-lg p-4">
+        <div className="absolute left-0 right-0 top-16 z-50 border-b border-edge bg-surface shadow-lg backdrop-blur-lg p-4">
           <div className="flex flex-col gap-3">
             <Link href="/" onClick={() => setOpen(false)} className="text-sm text-content-secondary hover:text-content">
               {t("backToCourses")}

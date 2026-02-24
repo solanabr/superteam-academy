@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useProgram } from "./use-program";
+import { getTypedAccounts } from "@/anchor/idl";
 
 export interface CourseAccount {
   publicKey: string;
@@ -27,11 +28,11 @@ export function useCourses(initialData?: CourseAccount[]) {
     queryKey: ["courses"],
     queryFn: async (): Promise<CourseAccount[]> => {
       if (!program) return [];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const all: any[] = await (program.account as any).course.all();
+      const accounts = getTypedAccounts(program);
+      const all = await accounts.course.all();
       return all
-        .filter((c: any) => c.account.isActive)
-        .map((c: any) => ({
+        .filter((c) => c.account.isActive)
+        .map((c) => ({
           publicKey: c.publicKey.toBase58(),
           courseId: c.account.courseId,
           creator: c.account.creator.toBase58(),
@@ -45,9 +46,7 @@ export function useCourses(initialData?: CourseAccount[]) {
           totalCompletions: c.account.totalCompletions,
           totalEnrollments: c.account.totalEnrollments,
           isActive: c.account.isActive,
-          createdAt: c.account.createdAt
-            ? (c.account.createdAt as unknown as { toNumber(): number }).toNumber()
-            : 0,
+          createdAt: c.account.createdAt?.toNumber() ?? 0,
         }));
     },
     enabled: !!program,

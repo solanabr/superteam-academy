@@ -21,6 +21,15 @@ export const metadata: Metadata = {
     description: "On-chain learning platform on Solana",
   },
   metadataBase: new URL("https://superteam-academy.vercel.app"),
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Academy",
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
+  },
 };
 
 export default function RootLayout({

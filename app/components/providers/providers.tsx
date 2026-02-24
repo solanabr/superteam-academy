@@ -5,10 +5,14 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "sonner";
 import { AnalyticsProvider } from "@/components/analytics/analytics-provider";
 import { SessionProvider } from "next-auth/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-const SolanaProvider = dynamic(
-  () => import("./solana-provider").then((mod) => mod.SolanaProvider),
+const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
+
+const WalletProvider = dynamic(() =>
+  isDemoMode
+    ? import("./demo-wallet-provider").then((mod) => mod.DemoWalletProvider)
+    : import("./solana-provider").then((mod) => mod.SolanaProvider),
 );
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -24,10 +28,18 @@ export function Providers({ children }: { children: React.ReactNode }) {
       })
   );
 
+  useEffect(() => {
+    if (!isDemoMode) return;
+    (window as unknown as Record<string, unknown>).__demoQueryClient = queryClient;
+    import("bn.js").then((mod) => {
+      (window as unknown as Record<string, unknown>).__BN = mod.default;
+    });
+  }, [queryClient]);
+
   return (
     <SessionProvider>
     <QueryClientProvider client={queryClient}>
-      <SolanaProvider>
+      <WalletProvider>
         <AnalyticsProvider>
         {children}
         </AnalyticsProvider>
@@ -42,7 +54,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
             },
           }}
         />
-      </SolanaProvider>
+      </WalletProvider>
     </QueryClientProvider>
     </SessionProvider>
   );

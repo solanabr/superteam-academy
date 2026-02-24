@@ -26,13 +26,11 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
 
   // Page view tracking
   useEffect(() => {
-    if (GA_ID && typeof window !== "undefined" && "gtag" in window) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (window as any).gtag("config", GA_ID, { page_path: pathname });
+    if (GA_ID && typeof window !== "undefined") {
+      window.gtag?.("config", GA_ID, { page_path: pathname });
     }
-    if (POSTHOG_KEY && typeof window !== "undefined" && "posthog" in window) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (window as any).posthog?.capture("$pageview");
+    if (POSTHOG_KEY && typeof window !== "undefined") {
+      window.posthog?.capture("$pageview");
     }
   }, [pathname]);
 

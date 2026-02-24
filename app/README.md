@@ -17,7 +17,7 @@ A production-ready, on-chain learning management system for Solana developers. C
 | Code Editor | Monaco Editor (@monaco-editor/react) |
 | i18n | next-intl (EN, PT-BR, ES) |
 | Charts | Recharts (skill radar, progress) |
-| Testing | Playwright E2E (76 tests, chromium + mobile) |
+| Testing | Vitest (102 unit tests), Playwright (67 E2E tests) |
 
 ## Pages
 
@@ -28,7 +28,7 @@ A production-ready, on-chain learning management system for Solana developers. C
 | Course Detail | `/courses/[courseId]` | Syllabus, enrollment, lesson progress grid |
 | Lesson View | `/courses/[courseId]/lessons/[i]` | Split-pane: content + Monaco code editor |
 | Dashboard | `/my-learning` | XP stats, courses, streak calendar, recommendations |
-| Profile | `/profile` | Skill radar, XP/level, credentials, achievements |
+| Profile | `/profile`, `/profile/[address]` | Skill radar, XP/level, credentials, achievements, public profiles |
 | Leaderboard | `/leaderboard` | XP rankings with weekly/monthly/all-time filters |
 | Settings | `/settings` | Theme, language, notifications, privacy, OAuth |
 | Certificate | `/certificates/[assetId]` | Visual credential with on-chain verification, share/download |
@@ -60,7 +60,8 @@ Open [http://localhost:3000](http://localhost:3000). Connect a Solana wallet (de
 | `NEXT_PUBLIC_PROGRAM_ID` | Yes | Anchor program address |
 | `NEXT_PUBLIC_XP_MINT` | Yes | XP token mint (Token-2022) |
 | `NEXT_PUBLIC_TRACK_COLLECTION` | Yes | Metaplex Core collection |
-| `BACKEND_SIGNER_KEYPAIR` | Yes | Base58 backend signer private key |
+| `BACKEND_SIGNER_KEY` | Yes | Backend signer keypair (JSON byte array) |
+| `HELIUS_URL` | No | Helius RPC with API key (server-side, preferred over public) |
 | `NEXT_PUBLIC_SANITY_PROJECT_ID` | No | Sanity CMS project ID |
 | `NEXT_PUBLIC_SANITY_DATASET` | No | Sanity dataset (default: `production`) |
 | `NEXT_PUBLIC_GA_ID` | No | Google Analytics 4 measurement ID |
@@ -79,7 +80,8 @@ Open [http://localhost:3000](http://localhost:3000). Connect a Solana wallet (de
 npm run dev          # Development server
 npm run build        # Production build
 npm run lint         # ESLint
-npx playwright test  # E2E tests (76 tests)
+npm run test:unit    # Vitest unit tests (102 tests)
+npx playwright test  # Playwright E2E tests (67 tests)
 ```
 
 ## On-Chain Integration
@@ -87,7 +89,7 @@ npx playwright test  # E2E tests (76 tests)
 The app interacts with a deployed Anchor program on Solana devnet:
 
 - **Wallet signs**: `enroll`, `close_enrollment`
-- **Backend signs**: `complete_lesson`, `finalize_course`, `issue_credential`
+- **Backend signs**: `complete_lesson`, `finalize_course`, `issue_credential`, `upgrade_credential`
 - **XP**: Soulbound Token-2022 tokens (NonTransferable, PermanentDelegate)
 - **Credentials**: Metaplex Core NFTs with PermanentFreezeDelegate (soulbound)
 - **Lesson progress**: 256-bit bitmap per enrollment PDA

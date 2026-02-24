@@ -8,7 +8,7 @@ import { useXpBalance } from "@/hooks/use-xp-balance";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { EnrollButton } from "@/components/enrollment/enroll-button";
 import { UnenrollButton } from "@/components/enrollment/unenroll-button";
-import { LessonGrid } from "@/components/enrollment/lesson-grid";
+import { LessonModules } from "@/components/enrollment/lesson-modules";
 import { ProgressBar } from "@/components/enrollment/progress-bar";
 import { CompletionModal } from "@/components/enrollment/completion-modal";
 import { PrerequisiteBadge } from "@/components/course/prerequisite-badge";
@@ -238,12 +238,13 @@ export default function CourseDetailClient({ courseId }: { courseId: string }) {
                   total: course.lessonCount,
                 })}
               />
-              <LessonGrid
+              <LessonModules
                 lessonCount={course.lessonCount}
                 lessonFlags={lessonFlags}
                 nextLesson={nextLesson}
                 onLessonClick={handleLessonClick}
                 disabled={submitting}
+                xpPerLesson={course.xpPerLesson}
               />
               <div className="flex justify-end">
                 <UnenrollButton courseId={courseId} />

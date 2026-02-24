@@ -6,7 +6,8 @@ import {
   Transaction,
 } from "@solana/web3.js";
 import { sendWithRetry } from "@/lib/tx-retry";
-import { Program, AnchorProvider } from "@coral-xyz/anchor";
+import { type Idl, Program, AnchorProvider } from "@coral-xyz/anchor";
+import { getTypedAccounts } from "@/anchor/idl";
 import { BackendWallet } from "@/lib/backend-wallet";
 import {
   getAssociatedTokenAddressSync,
@@ -76,8 +77,7 @@ export async function POST(req: NextRequest) {
       new BackendWallet(backendSigner),
       { commitment: "confirmed" }
     );
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const program = new Program(IDL as any, provider) as any;
+    const program = new Program(IDL as Idl, provider);
 
     // Derive PDAs
     const [configPda] = PublicKey.findProgramAddressSync(
@@ -94,7 +94,8 @@ export async function POST(req: NextRequest) {
     );
 
     // Fetch course to get creator
-    const course = await program.account.course.fetch(coursePda);
+    const accounts = getTypedAccounts(program);
+    const course = await accounts.course.fetch(coursePda);
     const creator = course.creator;
 
     const learnerXpAta = getAssociatedTokenAddressSync(xpMint, learner, false, TOKEN_2022);

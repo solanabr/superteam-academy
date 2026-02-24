@@ -3,72 +3,57 @@ import { test, expect } from "@playwright/test";
 test.describe("Theme System", () => {
   test("default theme is dark", async ({ page }) => {
     await page.goto("/en/settings");
-    await page.waitForTimeout(2000);
-    // next-themes sets data-theme or class on html
+    await expect(page.locator("h1")).toBeVisible({ timeout: 15000 });
     const html = page.locator("html");
-    const classes = await html.getAttribute("class");
-    const dataTheme = await html.getAttribute("data-theme");
-    expect(classes?.includes("dark") || dataTheme === "dark").toBe(true);
+    await expect(html).toHaveClass(/dark/);
   });
 
-  test("switching theme updates html attribute", async ({ page }) => {
+  test("switching to light theme updates html class", async ({ page }) => {
     await page.goto("/en/settings");
-    await page.waitForTimeout(2000);
+    await expect(page.locator("h1")).toBeVisible({ timeout: 15000 });
 
-    // Find and click the Light button
-    const lightBtn = page.locator("button").filter({ hasText: /^Light$|^Claro$/ });
-    if ((await lightBtn.count()) > 0) {
-      await lightBtn.first().click();
-      await page.waitForTimeout(500);
-      const html = page.locator("html");
-      const classes = await html.getAttribute("class");
-      const dataTheme = await html.getAttribute("data-theme");
-      expect(classes?.includes("light") || dataTheme === "light").toBe(true);
-    }
+    await page.locator("button").filter({ hasText: "Light" }).first().click();
+    await expect(page.locator("html")).toHaveClass(/light/);
   });
 
-  test("theme persists on page reload", async ({ page }) => {
+  test("theme persists on reload", async ({ page }) => {
     await page.goto("/en/settings");
-    await page.waitForTimeout(2000);
+    await expect(page.locator("h1")).toBeVisible({ timeout: 15000 });
 
-    // Switch to light
-    const lightBtn = page.locator("button").filter({ hasText: /^Light$|^Claro$/ });
-    if ((await lightBtn.count()) > 0) {
-      await lightBtn.first().click();
-      await page.waitForTimeout(500);
+    await page.locator("button").filter({ hasText: "Light" }).first().click();
+    await expect(page.locator("html")).toHaveClass(/light/);
 
-      // Reload
-      await page.reload();
-      await page.waitForTimeout(2000);
-      const html = page.locator("html");
-      const classes = await html.getAttribute("class");
-      const dataTheme = await html.getAttribute("data-theme");
-      expect(classes?.includes("light") || dataTheme === "light").toBe(true);
-    }
+    await page.reload();
+    await expect(page.locator("h1")).toBeVisible({ timeout: 15000 });
+    await expect(page.locator("html")).toHaveClass(/light/);
   });
 
-  test("CSS custom properties change with theme", async ({ page }) => {
+  test("CSS custom properties differ between themes", async ({ page }) => {
     await page.goto("/en/settings");
-    await page.waitForTimeout(2000);
+    await expect(page.locator("h1")).toBeVisible({ timeout: 15000 });
 
-    // Get dark theme bg
     const darkBg = await page.evaluate(() =>
       getComputedStyle(document.documentElement).getPropertyValue("--bg-primary").trim()
     );
 
-    // Switch to light
-    const lightBtn = page.locator("button").filter({ hasText: /^Light$|^Claro$/ });
-    if ((await lightBtn.count()) > 0) {
-      await lightBtn.first().click();
-      await page.waitForTimeout(500);
+    await page.locator("button").filter({ hasText: "Light" }).first().click();
+    await page.waitForTimeout(300);
 
-      const lightBg = await page.evaluate(() =>
-        getComputedStyle(document.documentElement).getPropertyValue("--bg-primary").trim()
-      );
-      // Values should differ between themes
-      if (darkBg && lightBg) {
-        expect(darkBg).not.toBe(lightBg);
-      }
-    }
+    const lightBg = await page.evaluate(() =>
+      getComputedStyle(document.documentElement).getPropertyValue("--bg-primary").trim()
+    );
+
+    expect(darkBg).not.toBe(lightBg);
+  });
+
+  test("switching back to dark works", async ({ page }) => {
+    await page.goto("/en/settings");
+    await expect(page.locator("h1")).toBeVisible({ timeout: 15000 });
+
+    await page.locator("button").filter({ hasText: "Light" }).first().click();
+    await expect(page.locator("html")).toHaveClass(/light/);
+
+    await page.locator("button").filter({ hasText: "Dark" }).first().click();
+    await expect(page.locator("html")).toHaveClass(/dark/);
   });
 });

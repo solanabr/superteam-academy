@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useProgram } from "./use-program";
 import { getCoursePda } from "@/lib/pda";
+import { getTypedAccounts } from "@/anchor/idl";
 import type { CourseAccount } from "./use-courses";
 
 export function useCourse(courseId: string | undefined) {
@@ -14,7 +15,8 @@ export function useCourse(courseId: string | undefined) {
       if (!program || !courseId) return null;
       const pda = getCoursePda(courseId);
       try {
-        const c = await (program.account as any).course.fetch(pda);
+        const accounts = getTypedAccounts(program);
+        const c = await accounts.course.fetch(pda);
         return {
           publicKey: pda.toBase58(),
           courseId: c.courseId,
@@ -29,9 +31,7 @@ export function useCourse(courseId: string | undefined) {
           totalCompletions: c.totalCompletions,
           totalEnrollments: c.totalEnrollments,
           isActive: c.isActive,
-          createdAt: c.createdAt
-            ? (c.createdAt as unknown as { toNumber(): number }).toNumber()
-            : 0,
+          createdAt: c.createdAt?.toNumber() ?? 0,
         };
       } catch {
         return null;

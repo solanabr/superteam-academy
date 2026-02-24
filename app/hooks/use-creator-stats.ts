@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useProgram } from "./use-program";
 import { useWallet } from "@solana/wallet-adapter-react";
+import { getTypedAccounts } from "@/anchor/idl";
 
 export interface CreatorCourseStats {
   courseId: string;
@@ -29,13 +30,13 @@ export function useCreatorStats() {
       if (!program || !publicKey) {
         return { totalCourses: 0, totalEnrollments: 0, totalCompletions: 0, courses: [] };
       }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const all: any[] = await (program.account as any).course.all();
+      const accounts = getTypedAccounts(program);
+      const all = await accounts.course.all();
       const myCourses = all.filter(
-        (c: any) => c.account.creator.toBase58() === publicKey.toBase58()
+        (c) => c.account.creator.toBase58() === publicKey.toBase58()
       );
 
-      const courses: CreatorCourseStats[] = myCourses.map((c: any) => ({
+      const courses: CreatorCourseStats[] = myCourses.map((c) => ({
         courseId: c.account.courseId,
         enrollments: c.account.totalEnrollments,
         completions: c.account.totalCompletions,

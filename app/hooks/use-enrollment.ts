@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useProgram } from "./use-program";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { getEnrollmentPda } from "@/lib/pda";
+import { getTypedAccounts } from "@/anchor/idl";
 import { useEffect } from "react";
 import BN from "bn.js";
 
@@ -28,14 +29,13 @@ export function useEnrollment(courseId: string | undefined) {
     queryFn: async (): Promise<EnrollmentAccount | null> => {
       if (!program || !courseId || !publicKey) return null;
       const pda = getEnrollmentPda(courseId, publicKey);
-      const enrollment = await (program.account as any).enrollment.fetchNullable(pda);
+      const accounts = getTypedAccounts(program);
+      const enrollment = await accounts.enrollment.fetchNullable(pda);
       if (!enrollment) return null;
       return {
         course: enrollment.course.toBase58(),
-        enrolledAt: (enrollment.enrolledAt as unknown as { toNumber(): number }).toNumber(),
-        completedAt: enrollment.completedAt
-          ? (enrollment.completedAt as unknown as { toNumber(): number }).toNumber()
-          : null,
+        enrolledAt: enrollment.enrolledAt.toNumber(),
+        completedAt: enrollment.completedAt?.toNumber() ?? null,
         lessonFlags: enrollment.lessonFlags as BN[],
         credentialAsset: enrollment.credentialAsset?.toBase58() ?? null,
       };

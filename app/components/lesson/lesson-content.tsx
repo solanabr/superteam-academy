@@ -1,6 +1,6 @@
 "use client";
 
-import { PortableText, type PortableTextReactComponents } from "@portabletext/react";
+import { PortableText, type PortableTextReactComponents, type PortableTextBlock } from "@portabletext/react";
 
 const components: Partial<PortableTextReactComponents> = {
   block: {
@@ -50,7 +50,7 @@ const components: Partial<PortableTextReactComponents> = {
   },
 };
 
-export function LessonContent({ body }: { body: unknown[] }) {
+export function LessonContent({ body }: { body: PortableTextBlock[] }) {
   if (!body?.length) {
     return (
       <div className="rounded-xl border border-edge-soft bg-card p-8 text-center">
@@ -63,8 +63,7 @@ export function LessonContent({ body }: { body: unknown[] }) {
 
   return (
     <article className="prose-sm max-w-none">
-      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-      <PortableText value={body as any} components={components} />
+      <PortableText value={body} components={components} />
     </article>
   );
 }

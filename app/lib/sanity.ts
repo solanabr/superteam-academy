@@ -1,4 +1,5 @@
 import { createClient } from "@sanity/client";
+import type { PortableTextBlock } from "@portabletext/react";
 
 export const sanityClient = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || "placeholder",
@@ -41,7 +42,7 @@ export async function getQuizQuestions(
 
 export interface SanityLessonContent {
   title: Record<string, string>;
-  body: unknown[];
+  body: PortableTextBlock[];
   codeChallenge?: {
     initialCode: string;
     language: string;

@@ -1,7 +1,7 @@
 import { Connection } from "@solana/web3.js";
-import { Program } from "@coral-xyz/anchor";
+import { type Idl, Program } from "@coral-xyz/anchor";
 import type { CourseAccount } from "@/hooks/use-courses";
-import IDL from "@/anchor/idl.json";
+import { IDL, getTypedAccounts } from "@/anchor/idl";
 
 const RPC_URL =
   process.env.HELIUS_URL ||
@@ -16,10 +16,9 @@ export async function fetchCourses(): Promise<CourseAccount[]> {
 
   try {
     const connection = new Connection(RPC_URL);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const program = new Program(IDL as any, { connection });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const all: any[] = await (program.account as any).course.all();
+    const program = new Program(IDL as Idl, { connection });
+    const accounts = getTypedAccounts(program);
+    const all = await accounts.course.all();
 
     const courses: CourseAccount[] = all
       .filter((c) => c.account.isActive)
@@ -37,9 +36,7 @@ export async function fetchCourses(): Promise<CourseAccount[]> {
         totalCompletions: c.account.totalCompletions,
         totalEnrollments: c.account.totalEnrollments,
         isActive: c.account.isActive,
-        createdAt: c.account.createdAt
-          ? (c.account.createdAt as unknown as { toNumber(): number }).toNumber()
-          : 0,
+        createdAt: c.account.createdAt?.toNumber() ?? 0,
       }));
 
     cached = { data: courses, ts: Date.now() };

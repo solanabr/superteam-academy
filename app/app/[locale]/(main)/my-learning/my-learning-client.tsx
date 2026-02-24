@@ -14,6 +14,7 @@ import { getStreak } from "@/lib/streak";
 import { getLevel } from "@/lib/level";
 import { useLeaderboard } from "@/hooks/use-leaderboard";
 import { getMockAchievements } from "@/lib/achievements";
+import { DailyChallenge } from "@/components/dashboard/daily-challenge";
 import Link from "next/link";
 
 function EnrolledCourseCard({ course }: { course: { courseId: string; xpPerLesson: number; lessonCount: number; trackId: number } }) {
@@ -208,6 +209,8 @@ export default function LearnerDashboard() {
               </div>
             );
           })()}
+
+          <DailyChallenge />
 
           <StreakCalendar />
 

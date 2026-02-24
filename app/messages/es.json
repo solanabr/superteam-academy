@@ -58,7 +58,9 @@
     "unenrolling": "Cancelando...",
     "unenrollConfirmAction": "Confirmar",
     "reviews": "Reseñas",
-    "noReviews": "Sin reseñas aún. Completa el curso para dejar una reseña."
+    "noReviews": "Sin reseñas aún. Completa el curso para dejar una reseña.",
+    "module": "Módulo",
+    "lessonsRange": "Lecciones {start}–{end}"
   },
   "profile": {
     "title": "Mi Perfil",
@@ -70,7 +72,10 @@
     "enrolledCourses": "Cursos Inscritos",
     "noEnrollments": "Sin inscripciones aún. ¡Explora los cursos!",
     "streakTitle": "Racha Actual",
-    "skills": "Radar de Habilidades"
+    "skills": "Radar de Habilidades",
+    "publicTitle": "Perfil del Estudiante",
+    "shareProfile": "Compartir perfil",
+    "invalidAddress": "Dirección de billetera inválida"
   },
   "leaderboard": {
     "title": "Clasificación",
@@ -195,7 +200,17 @@
     "recentAchievements": "Logros Recientes",
     "viewAll": "Ver todos",
     "activityFeed": "Actividad",
-    "noActivity": "Sin actividad reciente"
+    "noActivity": "Sin actividad reciente",
+    "dailyChallenge": "Desafío Diario",
+    "lesson": "Lección"
+  },
+  "onboarding": {
+    "title": "Bienvenido a Superteam Academy",
+    "subtitle": "Aprende desarrollo Solana, gana tokens XP y colecciona credenciales soulbound — todo verificado on-chain.",
+    "step1": "Conecta tu billetera Solana para seguir tu progreso",
+    "step2": "Inscríbete en cursos y completa lecciones para ganar XP",
+    "step3": "Colecciona credenciales NFT y sube en la clasificación",
+    "browseCourses": "Explorar Cursos"
   },
   "footer": {
     "tagline": "Aprende desarrollo Solana con credenciales on-chain.",

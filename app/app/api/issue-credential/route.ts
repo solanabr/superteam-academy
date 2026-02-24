@@ -7,10 +7,10 @@ import {
   SystemProgram,
 } from "@solana/web3.js";
 import { sendWithRetry } from "@/lib/tx-retry";
-import { Program, AnchorProvider, BN } from "@coral-xyz/anchor";
+import { type Idl, Program, AnchorProvider, BN } from "@coral-xyz/anchor";
 import { BackendWallet } from "@/lib/backend-wallet";
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
-import { IDL } from "@/anchor/idl";
+import { IDL, getTypedAccounts } from "@/anchor/idl";
 import { isRateLimited } from "@/lib/rate-limit";
 
 const TOKEN_2022 = new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb");
@@ -85,8 +85,7 @@ export async function POST(req: NextRequest) {
       new BackendWallet(backendSigner),
       { commitment: "confirmed" }
     );
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const program = new Program(IDL as any, provider) as any;
+    const program = new Program(IDL as Idl, provider);
 
     // Derive PDAs
     const [configPda] = PublicKey.findProgramAddressSync(
@@ -103,7 +102,8 @@ export async function POST(req: NextRequest) {
     );
 
     // Fetch enrollment to check status
-    const enrollment = await program.account.enrollment.fetch(enrollmentPda);
+    const accounts = getTypedAccounts(program);
+    const enrollment = await accounts.enrollment.fetch(enrollmentPda);
 
     if (!enrollment.completedAt) {
       return NextResponse.json({ error: "Course not finalized" }, { status: 400 });

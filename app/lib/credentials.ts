@@ -2,6 +2,7 @@ import { HELIUS_URL } from "./constants";
 
 export interface CredentialAsset {
   id: string;
+  interface: string;
   content: {
     metadata: {
       name: string;
@@ -30,8 +31,7 @@ export async function getCredentialsByOwner(
   const items: CredentialAsset[] = data.result?.items ?? [];
 
   return items.filter((item) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const isCoreAsset = (item as any).interface === "MplCoreAsset";
+    const isCoreAsset = item.interface === "MplCoreAsset";
     if (!isCoreAsset) return false;
     if (!trackCollection) return true;
     return item.grouping?.some(

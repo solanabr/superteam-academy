@@ -5,6 +5,7 @@ import { useProgram } from "@/hooks/use-program";
 import { useTransaction } from "@/hooks/use-transaction";
 import { useEnrollment } from "@/hooks/use-enrollment";
 import { getCoursePda, getEnrollmentPda } from "@/lib/pda";
+import { getTypedAccounts } from "@/anchor/idl";
 import { SystemProgram, PublicKey } from "@solana/web3.js";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
@@ -44,8 +45,8 @@ export function EnrollButton({ courseId, prerequisite }: EnrollButtonProps) {
 
       if (prerequisite) {
         const prereqCoursePda = new PublicKey(prerequisite);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const prereqCourse = await (program.account as any).course.fetch(prereqCoursePda);
+        const accounts = getTypedAccounts(program);
+        const prereqCourse = await accounts.course.fetch(prereqCoursePda);
         const prereqEnrollmentPda = getEnrollmentPda(prereqCourse.courseId, publicKey);
         tx = tx.remainingAccounts([
           { pubkey: prereqCoursePda, isWritable: false, isSigner: false },

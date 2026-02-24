@@ -11,11 +11,12 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import * as Switch from "@radix-ui/react-switch";
 
-function SettingsSwitch({ checked, onCheckedChange }: { checked: boolean; onCheckedChange: (v: boolean) => void }) {
+function SettingsSwitch({ checked, onCheckedChange, label }: { checked: boolean; onCheckedChange: (v: boolean) => void; label: string }) {
   return (
     <Switch.Root
       checked={checked}
       onCheckedChange={onCheckedChange}
+      aria-label={label}
       className={`relative h-6 w-11 rounded-full transition-colors ${
         checked ? "bg-solana-green" : "bg-edge"
       }`}
@@ -135,6 +136,7 @@ export default function SettingsPage() {
             <SettingsSwitch
               checked={notifications}
               onCheckedChange={(v) => { setNotifications(v); setPreference("notifications", v); }}
+              label={t("notifications")}
             />
           </div>
         </section>
@@ -153,6 +155,7 @@ export default function SettingsPage() {
               <SettingsSwitch
                 checked={showOnLeaderboard}
                 onCheckedChange={(v) => { setShowOnLeaderboard(v); setPreference("showOnLeaderboard", v); }}
+                label={t("showOnLeaderboard")}
               />
             </div>
             <div className="flex items-center justify-between rounded-xl border border-edge bg-card p-4">
@@ -163,6 +166,7 @@ export default function SettingsPage() {
               <SettingsSwitch
                 checked={publicProfile}
                 onCheckedChange={(v) => { setPublicProfile(v); setPreference("publicProfile", v); }}
+                label={t("publicProfile")}
               />
             </div>
           </div>

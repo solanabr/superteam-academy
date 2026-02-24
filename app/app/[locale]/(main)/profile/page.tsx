@@ -14,10 +14,12 @@ const SkillRadar = dynamic(
   () => import("@/components/profile/skill-radar").then((m) => m.SkillRadar),
   { ssr: false, loading: () => <div className="h-[250px] w-full animate-pulse rounded-xl bg-card" /> },
 );
+import { WalletAvatar } from "@/components/profile/wallet-avatar";
 import { getStreak, isActiveToday } from "@/lib/streak";
 import { truncateWallet } from "@/lib/format";
 import { motion } from "motion/react";
 import { useState, useEffect } from "react";
+import Link from "next/link";
 
 export default function ProfilePage() {
   const t = useTranslations("profile");
@@ -49,12 +51,24 @@ export default function ProfilePage() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="mb-8"
+        className="mb-8 flex items-center gap-4"
       >
-        <h1 className="text-3xl font-bold text-content">{t("title")}</h1>
-        <p className="mt-1 font-mono text-sm text-content-muted">
-          {truncateWallet(publicKey.toBase58(), 8)}
-        </p>
+        <WalletAvatar address={publicKey.toBase58()} size={56} />
+        <div className="flex-1">
+          <h1 className="text-3xl font-bold text-content">{t("title")}</h1>
+          <p className="mt-1 font-mono text-sm text-content-muted">
+            {truncateWallet(publicKey.toBase58(), 8)}
+          </p>
+        </div>
+        <Link
+          href={`/profile/${publicKey.toBase58()}`}
+          className="rounded-lg border border-edge px-3 py-1.5 text-xs text-content-secondary hover:text-content transition-colors"
+          title={t("shareProfile")}
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+          </svg>
+        </Link>
       </motion.div>
 
       <motion.div

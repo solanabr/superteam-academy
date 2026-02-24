@@ -45,7 +45,7 @@ app/[locale]/layout.tsx
 ├── NextIntlClientProvider
 └── Providers
     ├── QueryClientProvider
-    ├── SolanaProvider (dynamic, no SSR)
+    ├── SolanaProvider (dynamic import, SSR-compatible)
     ├── AnalyticsProvider
     └── Toaster (sonner)
 
@@ -77,6 +77,32 @@ app/[locale]/layout.tsx
 - **Theme**: next-themes (persisted in localStorage)
 - **Preferences**: `lib/preferences.ts` (localStorage wrapper)
 - **Streak**: `lib/streak.ts` (localStorage with date tracking)
+
+## Account Linking
+
+The platform supports three authentication methods: **Solana wallet**, **Google OAuth**, and **GitHub OAuth**.
+
+**Current implementation**:
+- Wallet connection via `@solana/wallet-adapter-react` (Phantom, Solflare, Torus, Ledger)
+- OAuth via `next-auth` (Google, GitHub) — managed on the Settings page
+- Both methods work independently; wallet signs on-chain transactions, OAuth provides profile metadata
+
+**Design for linking** (future phase):
+- A `user_links` table maps `{ wallet_pubkey, oauth_provider, oauth_id }` tuples
+- Linking flow: connect wallet → sign message proving ownership → associate OAuth identity
+- Any linked method can initiate a session; wallet is required for on-chain actions
+- Service interface: `LearningProgressService` (in `lib/learning-progress.ts`) abstracts all data access, making it straightforward to add a database layer behind it
+
+**Why not implemented now**: The on-chain program uses wallet pubkeys as account owners. Adding a database layer for account linking requires infrastructure beyond the program's scope. The current `LearningProgressService` abstraction is designed to be extended with a persistence layer (e.g., Prisma + PostgreSQL) without changing consumer code.
+
+## Testing
+
+| Layer | Framework | Count | Scope |
+|---|---|---|---|
+| Unit | Vitest + happy-dom | 102 tests (8 files) | bitmap, level, format, errors, quiz-data, pda, rate-limit, streak |
+| E2E | Playwright (chromium) | 67 tests (11 files) | navigation, theme, i18n, responsive, SEO, catalog, a11y, dashboard, course-detail, onboarding, error-pages |
+
+Run: `npm run test:unit` (unit) / `npx playwright test` (E2E)
 
 ## Key Libraries
 
