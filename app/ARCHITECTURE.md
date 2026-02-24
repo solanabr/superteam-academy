@@ -33,7 +33,7 @@
 | Who Signs | Instructions |
 |---|---|
 | **Learner wallet** | `enroll`, `close_enrollment` |
-| **Backend signer** (API routes) | `complete_lesson`, `finalize_course`, `issue_credential`, `upgrade_credential` |
+| **Backend signer** (API routes) | `complete_lesson`, `finalize_course`, `issue_credential` |
 
 The backend holds a rotatable keypair. API routes validate quiz answers before signing on-chain transactions.
 
@@ -53,7 +53,7 @@ app/[locale]/layout.tsx
 ├── Navbar
 │   ├── Logo + NetworkBadge
 │   ├── Nav links
-│   ├── LanguageSelector
+│   ├── Language <select>
 │   ├── ConnectButton
 │   └── MobileNav
 ├── ErrorBoundary
@@ -63,12 +63,13 @@ app/[locale]/layout.tsx
 
 ## Data Flow
 
-1. **Courses**: Anchor program `gProgramAccounts` → `useCourses` hook → React Query cache
+1. **Courses**: Anchor `getTypedAccounts` → `useCourses` hook → React Query cache
 2. **Enrollment**: PDA derivation → `useEnrollment` hook → bitmap parsing
 3. **XP Balance**: Token-2022 ATA query → `useXpBalance` hook
 4. **Credentials**: Helius DAS `getAssetsByOwner` → `useCredentials` hook
 5. **Leaderboard**: `/api/leaderboard` → all Token-2022 holders sorted by balance
-6. **Lesson Content**: Sanity GROQ query → fallback to `quiz-data.ts`
+6. **Lesson Content**: Sanity GROQ query → PortableText render (placeholder if unavailable)
+7. **Quiz Answers**: Sanity quiz → fallback to `lib/quiz-data.ts` (server-only, has `correctIndex`) — client gets `lib/quiz-questions.ts` (no answers)
 
 ## State Management
 

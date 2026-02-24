@@ -12,9 +12,10 @@ The app uses CSS custom properties with Tailwind semantic tokens. All colors are
   --bg-secondary: #f4f4f5;
   --bg-tertiary: #e4e4e7;
   --bg-card: rgba(0, 0, 0, 0.02);
+  --bg-card-hover: rgba(0, 0, 0, 0.04);
   --text-primary: #09090b;
   --text-secondary: #52525b;
-  --text-muted: #a1a1aa;
+  --text-muted: #71717a;
   --border-primary: rgba(0, 0, 0, 0.1);
   --border-secondary: rgba(0, 0, 0, 0.06);
 }
@@ -31,6 +32,7 @@ The app uses CSS custom properties with Tailwind semantic tokens. All colors are
 | `bg-surface` | `--bg-primary` | Page background |
 | `bg-surface-secondary` | `--bg-secondary` | Card/section background |
 | `bg-card` | `--bg-card` | Subtle card backgrounds |
+| `bg-card-hover` | `--bg-card-hover` | Card hover state |
 | `text-content` | `--text-primary` | Primary text |
 | `text-content-secondary` | `--text-secondary` | Secondary text |
 | `text-content-muted` | `--text-muted` | Muted labels |

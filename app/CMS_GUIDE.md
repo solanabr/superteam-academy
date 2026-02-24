@@ -2,7 +2,7 @@
 
 ## Overview
 
-The app uses Sanity as a headless CMS for lesson content, quiz questions, and course metadata. **Sanity is optional** — the app falls back to `lib/quiz-data.ts` for quizzes and shows a placeholder for lesson content when Sanity is not configured.
+The app uses Sanity as a headless CMS for lesson content, quiz questions, and course metadata. **Sanity is optional** — the app falls back to hardcoded quiz data and shows a placeholder for lesson content when Sanity is not configured. Quiz security: `lib/quiz-questions.ts` (client, no answers) and `lib/quiz-data.ts` (server-only, has `correctIndex`) are separate files. Sanity quiz questions override both when available.
 
 ## Setup
 
@@ -61,7 +61,7 @@ The app uses Sanity as a headless CMS for lesson content, quiz questions, and co
 
 1. Create courses in Sanity matching on-chain `courseId` values
 2. Add lessons with `lessonIndex` matching on-chain lesson order (0-indexed)
-3. Add quiz questions to lessons — these override `lib/quiz-data.ts`
+3. Add quiz questions to lessons — these override both `lib/quiz-questions.ts` (client) and `lib/quiz-data.ts` (server)
 4. Add rich text body content — rendered via PortableText on the lesson page
 5. Add code challenges for interactive coding exercises
 
@@ -76,7 +76,7 @@ The app uses Sanity as a headless CMS for lesson content, quiz questions, and co
 
 ## Locale Handling
 
-All text fields use a `{ en, ptBR, es }` object structure. The lesson page reads the current locale and selects the appropriate field, falling back to `en`.
+All text fields use a `{ en, ptBR, es }` object structure. The lesson page currently renders the `en` field. Locale-aware content selection is supported by the schema but not yet wired to the frontend — UI strings are fully translated via `next-intl`, while CMS content defaults to English.
 
 ## API Route Integration
 
