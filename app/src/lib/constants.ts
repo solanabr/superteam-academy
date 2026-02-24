@@ -10,8 +10,6 @@ export const HELIUS_RPC_URL = HELIUS_KEY
     ? "https://api.devnet.solana.com"
     : "https://api.mainnet-beta.solana.com";
 
-/** Client-side RPC endpoint (proxied through /api/rpc to hide API key). */
-export const CLIENT_RPC_URL = "/api/rpc";
 export const XP_MINT_ADDRESS = process.env.NEXT_PUBLIC_XP_MINT_ADDRESS ?? "";
 export const PROGRAM_ID =
   process.env.NEXT_PUBLIC_PROGRAM_ID ||
