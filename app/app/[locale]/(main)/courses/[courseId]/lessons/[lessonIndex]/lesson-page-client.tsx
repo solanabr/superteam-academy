@@ -104,16 +104,24 @@ export default function LessonPageClient({
       }, 0);
 
       if (course && totalDone + 1 >= course.lessonCount) {
-        await fetch("/api/finalize-course", {
+        const finRes = await fetch("/api/finalize-course", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ courseId, learnerPubkey: publicKey.toBase58() }),
         });
-        await fetch("/api/issue-credential", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ courseId, learnerPubkey: publicKey.toBase58() }),
-        });
+        if (finRes.ok) {
+          const credRes = await fetch("/api/issue-credential", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ courseId, learnerPubkey: publicKey.toBase58() }),
+          });
+          if (!credRes.ok) console.warn("Credential issuance failed:", credRes.status);
+        } else {
+          const data = await finRes.json().catch(() => ({}));
+          if (!data.error?.includes("already finalized")) {
+            toast.error("Finalization failed");
+          }
+        }
         await queryClient.invalidateQueries({ queryKey: ["enrollment", courseId] });
         await queryClient.invalidateQueries({ queryKey: ["credentials"] });
       }

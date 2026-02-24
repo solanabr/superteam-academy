@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-const BASE = "https://superteam-academy.vercel.app";
+const BASE = "https://superteam-academy-beige.vercel.app";
 const LOCALES = ["en", "pt-BR", "es"];
 const PAGES = [
   "",

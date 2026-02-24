@@ -138,18 +138,24 @@ export default function CourseDetailClient({ courseId }: { courseId: string }) {
       if (res.ok) {
         setShowCompletion(true);
 
-        await fetch("/api/issue-credential", {
+        const credRes = await fetch("/api/issue-credential", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ courseId, learnerPubkey: publicKey.toBase58() }),
         });
+        if (!credRes.ok) console.warn("Credential issuance failed:", credRes.status);
 
         await queryClient.invalidateQueries({ queryKey: ["enrollment", courseId] });
         await queryClient.invalidateQueries({ queryKey: ["credentials"] });
         await refetchXp();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        if (!data.error?.includes("already finalized")) {
+          toast.error("Finalization failed");
+        }
       }
     } catch {
-      // Finalization can fail gracefully
+      toast.error("Network error");
     }
   };
 

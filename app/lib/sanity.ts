@@ -25,6 +25,8 @@ export async function getQuizQuestions(
   const cached = quizCache.get(key);
   if (cached && Date.now() - cached.ts < CACHE_TTL) return cached.data;
 
+  if (!process.env.NEXT_PUBLIC_SANITY_PROJECT_ID) return null;
+
   try {
     const result = await sanityClient.fetch<{ quizQuestions: SanityQuizQuestion[] } | null>(
       `*[_type == "lesson" && course->courseId == $courseId && lessonIndex == $lessonIndex][0]{quizQuestions}`,
@@ -36,7 +38,7 @@ export async function getQuizQuestions(
     }
     return null;
   } catch {
-    return null;
+    throw new Error("Sanity quiz fetch failed — refusing to bypass verification");
   }
 }
 

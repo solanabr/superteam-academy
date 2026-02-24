@@ -38,28 +38,28 @@ async function fetchSanityQuiz(courseId: string, lessonIndex: number): Promise<Q
   return null;
 }
 
-// Hardcoded fallback quiz data
+// Hardcoded fallback quiz data — must match app/lib/quiz-data.ts
 const QUIZ_DATA: Record<string, Record<number, QuizQuestion[]>> = {
   "solana-101": {
-    0: [{ question: "What consensus mechanism does Solana use?", options: ["Proof of Work", "Proof of Stake", "Proof of History + Tower BFT", "Delegated Proof of Stake"], correctIndex: 2 }],
-    1: [{ question: "What is an SPL Token?", options: ["A Solana smart contract", "Solana Program Library token standard", "A consensus algorithm", "A wallet type"], correctIndex: 1 }],
-    2: [{ question: "What are PDAs?", options: ["Private Data Accounts", "Program Derived Addresses", "Public Data Arrays", "Protocol Data Anchors"], correctIndex: 1 }],
-    3: [{ question: "What is the Solana runtime?", options: ["JavaScript engine", "Sealevel parallel execution engine", "Docker container", "WebAssembly runtime"], correctIndex: 1 }],
-    4: [{ question: "What is Solana's block time?", options: ["10 minutes", "12 seconds", "~400 milliseconds", "1 second"], correctIndex: 2 }],
+    0: [{ question: "What consensus mechanism does Solana use?", options: ["Proof of Work", "Proof of History", "Proof of Authority", "Delegated PoS"], correctIndex: 1 }],
+    1: [{ question: "What is a Program Derived Address (PDA)?", options: ["A wallet address", "A deterministic address derived from seeds and a program ID", "An NFT address", "A validator address"], correctIndex: 1 }],
+    2: [{ question: "Which token standard does Solana XP use?", options: ["SPL Token", "Token-2022", "ERC-20", "Metaplex"], correctIndex: 1 }],
+    3: [{ question: "What makes Token-2022 different from SPL Token?", options: ["Nothing", "Extensions like NonTransferable and PermanentDelegate", "It only works on devnet", "It uses more SOL"], correctIndex: 1 }],
+    4: [{ question: "What framework is used to build this program?", options: ["Hardhat", "Foundry", "Anchor", "Truffle"], correctIndex: 2 }],
   },
   "anchor-101": {
-    0: [{ question: "What is Anchor?", options: ["A Solana wallet", "A framework for Solana programs", "A token standard", "A consensus mechanism"], correctIndex: 1 }],
-    1: [{ question: "What does #[account] do in Anchor?", options: ["Creates a wallet", "Defines account serialization/deserialization", "Sends transactions", "Generates keypairs"], correctIndex: 1 }],
-    2: [{ question: "What is an IDL?", options: ["Interface Definition Language for program API", "Internal Data Layer", "Integrated Development Library", "Input Data Logger"], correctIndex: 0 }],
-    3: [{ question: "How are errors handled in Anchor?", options: ["Try-catch blocks", "Error enum with #[error_code]", "Panic messages", "Return codes"], correctIndex: 1 }],
-    4: [{ question: "What is anchor test?", options: ["Unit test runner", "Integration test runner with local validator", "Linter", "Formatter"], correctIndex: 1 }],
+    0: [{ question: "What does the #[account] attribute do in Anchor?", options: ["Creates a new token", "Defines account deserialization and validation", "Sends a transaction", "Deploys a program"], correctIndex: 1 }],
+    1: [{ question: "How are PDAs derived in Anchor?", options: ["Random generation", "Using seeds and findProgramAddressSync", "Manual assignment", "From the wallet"], correctIndex: 1 }],
+    2: [{ question: "What is the purpose of the bump seed?", options: ["To increase gas fees", "To ensure the PDA is off the ed25519 curve", "To validate transactions", "To create tokens"], correctIndex: 1 }],
+    3: [{ question: "Which constraint ensures only the authority can call an instruction?", options: ["has_one", "init", "mut", "seeds"], correctIndex: 0 }],
+    4: [{ question: "What does #[error_code] generate?", options: ["Transaction logs", "Custom error types with codes and messages", "Account structs", "Event listeners"], correctIndex: 1 }],
   },
   "defi-fundamentals": {
-    0: [{ question: "What is an AMM?", options: ["Automated Market Maker", "Advanced Mining Module", "Atomic Message Manager", "Asset Management Model"], correctIndex: 0 }],
-    1: [{ question: "What is impermanent loss?", options: ["Permanent token loss", "Temporary loss vs holding due to price divergence", "Transaction fee loss", "Slippage loss"], correctIndex: 1 }],
-    2: [{ question: "What is a liquidity pool?", options: ["A mining pool", "Token reserves enabling trading", "A staking mechanism", "A governance vault"], correctIndex: 1 }],
-    3: [{ question: "What is TVL?", options: ["Token Value Locked", "Total Value Locked in a protocol", "Transaction Verification Layer", "Token Validation Logic"], correctIndex: 1 }],
-    4: [{ question: "What is yield farming?", options: ["Mining cryptocurrency", "Earning rewards by providing liquidity", "Staking tokens", "Day trading"], correctIndex: 1 }],
+    0: [{ question: "What is an Automated Market Maker (AMM)?", options: ["A centralized exchange", "A protocol that uses math formulas for asset pricing", "A wallet", "A blockchain"], correctIndex: 1 }],
+    1: [{ question: "What is impermanent loss?", options: ["Losing your private key", "Loss from price divergence between pooled assets", "Transaction fee", "Slippage"], correctIndex: 1 }],
+    2: [{ question: "What is TVL?", options: ["Transaction Verification Layer", "Total Value Locked in a protocol", "Token Validation Logic", "Transfer Volume Limit"], correctIndex: 1 }],
+    3: [{ question: "What is a flash loan?", options: ["A loan with high interest", "An uncollateralized loan repaid within one transaction", "A bank loan", "A staking reward"], correctIndex: 1 }],
+    4: [{ question: "Which Solana DEX uses concentrated liquidity?", options: ["Raydium", "Orca", "Jupiter", "Marinade"], correctIndex: 1 }],
   },
 };
 

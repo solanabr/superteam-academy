@@ -3,6 +3,6 @@ import type { MetadataRoute } from "next";
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: { userAgent: "*", allow: "/" },
-    sitemap: "https://superteam-academy.vercel.app/sitemap.xml",
+    sitemap: "https://superteam-academy-beige.vercel.app/sitemap.xml",
   };
 }

@@ -1,7 +1,11 @@
 import { Keypair, PublicKey, Transaction, VersionedTransaction } from "@solana/web3.js";
 
 export class BackendWallet {
-  constructor(private readonly keypair: Keypair) {}
+  readonly payer: Keypair;
+
+  constructor(private readonly keypair: Keypair) {
+    this.payer = keypair;
+  }
 
   get publicKey(): PublicKey {
     return this.keypair.publicKey;

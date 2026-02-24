@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { Keypair, PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
-import { Program, AnchorProvider, BN } from "@coral-xyz/anchor";
+import { Program, AnchorProvider, BN, type Idl } from "@coral-xyz/anchor";
+import idl from "../../idl.json";
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 import { getBackendSigner, getConnection, getProgramId, getXpMint, getTrackCollection, TOKEN_2022, MPL_CORE } from "../lib/config";
 import { BackendWallet } from "../lib/backend-wallet";
@@ -31,8 +32,9 @@ export async function issueCredentialHandler(req: Request, res: Response) {
     const programId = getProgramId();
     const xpMint = getXpMint();
 
-    const provider = new AnchorProvider(connection, new BackendWallet(backendSigner) as any, { commitment: "confirmed" });
-    const program = new Program(require("../../idl.json") as any, provider) as any;
+    const provider = new AnchorProvider(connection, new BackendWallet(backendSigner), { commitment: "confirmed" });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const program: any = new Program(idl as Idl, provider);
 
     const [configPda] = PublicKey.findProgramAddressSync([Buffer.from("config")], programId);
     const [coursePda] = PublicKey.findProgramAddressSync([Buffer.from("course"), Buffer.from(courseId)], programId);

@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { PublicKey, Transaction } from "@solana/web3.js";
-import { Program, AnchorProvider } from "@coral-xyz/anchor";
+import { Program, AnchorProvider, type Idl } from "@coral-xyz/anchor";
+import idl from "../../idl.json";
 import {
   getAssociatedTokenAddressSync,
   createAssociatedTokenAccountInstruction,
@@ -32,8 +33,9 @@ export async function finalizeCourseHandler(req: Request, res: Response) {
     const programId = getProgramId();
     const xpMint = getXpMint();
 
-    const provider = new AnchorProvider(connection, new BackendWallet(backendSigner) as any, { commitment: "confirmed" });
-    const program = new Program(require("../../idl.json") as any, provider) as any;
+    const provider = new AnchorProvider(connection, new BackendWallet(backendSigner), { commitment: "confirmed" });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const program: any = new Program(idl as Idl, provider);
 
     const [configPda] = PublicKey.findProgramAddressSync([Buffer.from("config")], programId);
     const [coursePda] = PublicKey.findProgramAddressSync([Buffer.from("course"), Buffer.from(courseId)], programId);

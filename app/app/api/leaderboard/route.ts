@@ -23,7 +23,7 @@ export async function GET() {
       return NextResponse.json(cache.data);
     }
 
-    const heliusUrl = process.env.NEXT_PUBLIC_HELIUS_URL || "https://api.devnet.solana.com";
+    const heliusUrl = process.env.HELIUS_URL || process.env.NEXT_PUBLIC_HELIUS_URL || "https://api.devnet.solana.com";
     const xpMint = getXpMint();
 
     // Use getTokenAccounts via Helius DAS
@@ -65,7 +65,7 @@ export async function GET() {
     // Fallback: use getProgramAccounts if Helius DAS not available
     try {
       const connection = new Connection(
-        process.env.NEXT_PUBLIC_HELIUS_URL || "https://api.devnet.solana.com"
+        process.env.HELIUS_URL || process.env.NEXT_PUBLIC_HELIUS_URL || "https://api.devnet.solana.com"
       );
       const xpMint = getXpMint();
       const accounts = await connection.getProgramAccounts(TOKEN_2022, {
@@ -90,7 +90,7 @@ export async function GET() {
       cache = { data: entries, timestamp: Date.now() };
       return NextResponse.json(entries);
     } catch {
-      return NextResponse.json([], { status: 200 });
+      return NextResponse.json({ error: "Service unavailable" }, { status: 503 });
     }
   }
 }

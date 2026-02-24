@@ -33,7 +33,7 @@ export function EnrollButton({ courseId, prerequisite }: EnrollButtonProps) {
     const coursePda = getCoursePda(courseId);
     const enrollmentPda = getEnrollmentPda(courseId, publicKey);
 
-    await execute(async () => {
+    const sig = await execute(async () => {
       let tx = program.methods
         .enroll(courseId)
         .accountsPartial({
@@ -57,9 +57,11 @@ export function EnrollButton({ courseId, prerequisite }: EnrollButtonProps) {
       return await tx.rpc();
     });
 
-    queryClient.invalidateQueries({ queryKey: ["enrollment", courseId] });
-    queryClient.invalidateQueries({ queryKey: ["courses"] });
-    trackEvent("course_enrolled", { courseId });
+    if (sig) {
+      queryClient.invalidateQueries({ queryKey: ["enrollment", courseId] });
+      queryClient.invalidateQueries({ queryKey: ["courses"] });
+      trackEvent("course_enrolled", { courseId });
+    }
   };
 
   if (!publicKey) {

@@ -5,7 +5,7 @@ import { useProgram } from "./use-program";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { getEnrollmentPda } from "@/lib/pda";
 import { getTypedAccounts } from "@/anchor/idl";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import BN from "bn.js";
 
 export interface EnrollmentAccount {
@@ -22,7 +22,8 @@ export function useEnrollment(courseId: string | undefined) {
   const { connection } = useConnection();
   const queryClient = useQueryClient();
 
-  const queryKey = ["enrollment", courseId, publicKey?.toBase58()];
+  const walletBase58 = publicKey?.toBase58();
+  const queryKey = useMemo(() => ["enrollment", courseId, walletBase58], [courseId, walletBase58]);
 
   const query = useQuery({
     queryKey,
