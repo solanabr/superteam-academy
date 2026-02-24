@@ -77,7 +77,6 @@ export default function LessonPage({
   const isComplete = progress?.completedLessons.includes(lessonIndex) ?? false;
   const hasPrev = lessonIndex > 0;
   const hasNext = lessonInfo ? lessonIndex < lessonInfo.totalLessons - 1 : false;
-  const isLastLesson = lessonInfo ? lessonIndex === lessonInfo.totalLessons - 1 : false;
   const isQuizLesson = lessonInfo?.lesson.type === "quiz" && !!lessonInfo.lesson.quiz;
 
   const handleComplete = useCallback(async () => {

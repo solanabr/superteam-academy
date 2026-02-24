@@ -1,5 +1,3 @@
-import { PublicKey } from "@solana/web3.js";
-
 // ─── Course ─────────────────────────────────────────────
 export interface Course {
   id: string;
@@ -108,6 +106,7 @@ export interface UserProfile {
   isPublic: boolean;
   preferredLanguage: string;
   theme: "light" | "dark" | "system";
+  onboardingCompleted: boolean;
 }
 
 // ─── Gamification ───────────────────────────────────────

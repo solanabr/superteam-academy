@@ -22,6 +22,7 @@ import {
   ShieldCheck,
   FolderOpen,
   MessageSquare,
+  FileText,
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -82,7 +83,7 @@ export function Navbar() {
             height={32}
             className="rounded-lg"
           />
-          <span className="hidden sm:inline">Superteam Academy</span>
+          <span>Superteam Academy</span>
         </NextLink>
 
         {/* Desktop Nav */}
@@ -157,6 +158,13 @@ export function Navbar() {
 
         {/* Right side */}
         <div className="flex items-center gap-2">
+          {/* Docs */}
+          <NextLink href="/docs">
+            <Button variant="ghost" size="icon" className="h-9 w-9" aria-label="Documentation">
+              <FileText className="h-4 w-4" />
+            </Button>
+          </NextLink>
+
           {/* Language */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -285,6 +293,15 @@ export function Navbar() {
                       Admin
                     </Link>
                   )}
+                  {/* Mobile: Docs */}
+                  <NextLink
+                    href="/docs"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors"
+                  >
+                    <FileText className="h-4 w-4" />
+                    Docs
+                  </NextLink>
                 </div>
                 <div className="mt-auto border-t p-4 space-y-3">
                   <UserMenu />

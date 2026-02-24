@@ -46,7 +46,7 @@ export async function GET(
   const allComments = [post, ...(replies ?? [])];
   const userIds = [...new Set(allComments.map((c) => c.user_id))];
 
-  let profileMap: Record<string, ProfileRow> = {};
+  const profileMap: Record<string, ProfileRow> = {};
   if (userIds.length > 0) {
     const { data: profiles } = await supabaseAdmin
       .from("profiles")

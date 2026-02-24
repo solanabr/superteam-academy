@@ -14,7 +14,6 @@ import {
   Send,
   Loader2,
 } from "lucide-react";
-import { toast } from "sonner";
 import type { Comment } from "@/types";
 
 interface CommentSectionProps {

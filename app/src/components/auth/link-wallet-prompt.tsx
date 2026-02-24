@@ -24,7 +24,7 @@ const DISMISS_KEY = "link-wallet-prompt-dismissed";
  */
 export function LinkWalletPrompt() {
   const t = useTranslations("auth");
-  const { user, profile, isLoading, walletLinked, linkWallet } = useAuth();
+  const { user, isLoading, walletLinked, linkWallet } = useAuth();
   const { connected } = useWallet();
   const { setVisible } = useWalletModal();
 

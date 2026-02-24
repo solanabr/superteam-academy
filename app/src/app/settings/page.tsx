@@ -24,7 +24,6 @@ import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { toast } from "sonner";
 import {
   User,
-  Globe,
   Palette,
   Shield,
   Wallet,

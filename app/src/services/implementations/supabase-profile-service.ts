@@ -17,6 +17,7 @@ function rowToProfile(row: Record<string, unknown>): UserProfile {
     isPublic: (row.is_public as boolean) ?? true,
     preferredLanguage: (row.preferred_language as string) ?? "en",
     theme: ((row.theme as string) ?? "light") as UserProfile["theme"],
+    onboardingCompleted: (row.onboarding_completed as boolean) ?? false,
   };
 }
 

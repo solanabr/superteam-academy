@@ -19,7 +19,7 @@ export function XPDisplay({
   size = "md",
   className,
 }: XPDisplayProps) {
-  const { level, progress, nextLevelXp, currentLevelXp } = xpProgress(xp);
+  const { level, nextLevelXp } = xpProgress(xp);
 
   return (
     <div className={cn("flex flex-col", className)}>

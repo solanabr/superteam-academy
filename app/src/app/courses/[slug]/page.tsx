@@ -105,6 +105,7 @@ export default function CourseDetailPage({
 
       // Step 3: Try credential tx (best-effort)
       let credentialSig: string | null = null;
+      // Step 3: Credential + auto-close enrollment (reclaims rent)
       if (data.credentialTx) {
         try {
           const credTx = VersionedTransaction.deserialize(
@@ -118,6 +119,36 @@ export default function CourseDetailPage({
           await connection.confirmTransaction(credentialSig, "confirmed");
         } catch (credErr) {
           console.error("Credential tx failed (finalize succeeded):", credErr);
+          // Fallback: try standalone close_enrollment if credential+close failed
+          if (data.closeEnrollmentTx) {
+            try {
+              const closeTx = VersionedTransaction.deserialize(
+                Buffer.from(data.closeEnrollmentTx, "base64"),
+              );
+              const signedClose = await signTransaction(closeTx);
+              await connection.sendRawTransaction(signedClose.serialize(), {
+                skipPreflight: false,
+                maxRetries: 3,
+              });
+            } catch (closeErr) {
+              console.error("Close enrollment fallback also failed:", closeErr);
+            }
+          }
+        }
+      } else if (data.closeEnrollmentTx) {
+        // No credential tx built — still close enrollment to reclaim rent
+        try {
+          const closeTx = VersionedTransaction.deserialize(
+            Buffer.from(data.closeEnrollmentTx, "base64"),
+          );
+          const signedClose = await signTransaction(closeTx);
+          const closeSig = await connection.sendRawTransaction(signedClose.serialize(), {
+            skipPreflight: false,
+            maxRetries: 3,
+          });
+          await connection.confirmTransaction(closeSig, "confirmed");
+        } catch (closeErr) {
+          console.error("Close enrollment failed:", closeErr);
         }
       }
 

@@ -1,9 +1,6 @@
-const CACHE_NAME = "superteam-academy-v1";
+const CACHE_NAME = "superteam-academy-v2";
 
 const PRECACHE_URLS = ["/", "/offline"];
-
-const RUNTIME_CACHE_MAX = 100;
-const RUNTIME_CACHE_MAX_AGE = 7 * 24 * 60 * 60; // 7 days in seconds
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -53,22 +50,22 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Cache-first for static assets (JS, CSS, images, fonts)
+  // Next.js hashed static assets — filename contains content hash, so
+  // stale-while-revalidate is safe: serve cache instantly, update in background
   if (
     url.pathname.startsWith("/_next/static/") ||
     url.pathname.startsWith("/icons/") ||
     url.pathname.match(/\.(js|css|png|jpg|jpeg|svg|webp|woff2?)$/)
   ) {
     event.respondWith(
-      caches.match(request).then(
-        (cached) =>
-          cached ||
-          fetch(request).then((response) => {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-            return response;
-          })
-      )
+      caches.match(request).then((cached) => {
+        const fetchPromise = fetch(request).then((response) => {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          return response;
+        });
+        return cached || fetchPromise;
+      })
     );
     return;
   }

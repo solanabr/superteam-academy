@@ -6,10 +6,10 @@ Anchor program for the Superteam Academy learning platform — courses, soulboun
 
 | | Address |
 |---|---|
-| **Program** | `ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf` |
-| **Config PDA** | `GjsatVW8i6vvHHGtTd59xhRPud1SfoS8ckxL5bGeM7sc` |
-| **XP Mint** | `xpXPUjkfk7t4AJF1tYUoyAYxzuM5DhinZWS1WjfjAu3` |
-| **Authority / Signer** | `ACAd3USj2sMV6drKcMY2wZtNkhVDHWpC4tfJe93hgqYn` |
+| **Program** | `FEjumbmTCGxTwqikEcyC13czHfTwsnk7B9erNEEuHeBB` |
+| **Config PDA** | `5EzcihtLatMMqRanQZqcmZaufctgH3rWf6Mq8sQgbdHV` |
+| **XP Mint** | `5S5pSBFe968KdjAaG5yUXX1detFrE9vR4RGvT7JqRGjd` |
+| **Authority / Signer** | `GovRkQrjmipeWeM5CZPECM63iUNmLuHvAr4jMdCYQAcq` |
 | **Mock Course** | `7MRgCuJAbDCP1T5b3B5hkE36wAU7hvZQT7eNAn8Ag3rC` |
 | **Mock Track Collection** | `HgbTmCi4wUWAWLx4LD6zJ2AQdayaCe7mVfhJpGwXfeVX` |
 

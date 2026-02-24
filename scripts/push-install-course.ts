@@ -2,11 +2,16 @@
  * Push the "Setting Up Your Solana Dev Environment" course to Sanity CMS.
  * Real production content based on https://solana.com/docs/intro/installation
  *
- * Run: npx ts-node scripts/push-install-course.ts
+ * Run: cd app && npx tsx ../scripts/push-install-course.ts
  */
 
-const SANITY_PROJECT_ID = "ch446cft";
-const SANITY_DATASET = "production";
+import * as dotenv from "dotenv";
+import { resolve } from "path";
+
+dotenv.config({ path: resolve(__dirname, "../app/.env.local") });
+
+const SANITY_PROJECT_ID = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!;
+const SANITY_DATASET = process.env.NEXT_PUBLIC_SANITY_DATASET ?? "production";
 const SANITY_TOKEN = process.env.SANITY_API_TOKEN!;
 
 const courseId = "solana-dev-setup";

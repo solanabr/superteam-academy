@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
   const posts = (data ?? []) as CommentRow[];
   const userIds = [...new Set(posts.map((p) => p.user_id))];
 
-  let profileMap: Record<string, ProfileRow> = {};
+  const profileMap: Record<string, ProfileRow> = {};
   if (userIds.length > 0) {
     const { data: profiles } = await supabaseAdmin
       .from("profiles")
@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
 
   // Get reply counts for each post
   const postIds = posts.map((p) => p.id);
-  let replyCounts: Record<string, number> = {};
+  const replyCounts: Record<string, number> = {};
   if (postIds.length > 0) {
     const { data: replies } = await supabaseAdmin
       .from("comments")
@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
 
   // Fetch course info from Sanity for lesson-linked posts
   const courseIds = [...new Set(posts.filter((p) => p.course_id).map((p) => p.course_id!))];
-  let courseMap: Record<string, { title: string; slug: string; lessons: { index: number; title: string }[] }> = {};
+  const courseMap: Record<string, { title: string; slug: string; lessons: { index: number; title: string }[] }> = {};
   if (courseIds.length > 0) {
     const courses = await sanityClient.fetch<
       { courseId: string; title: string; slug: string; modules: { lessons: { title: string }[] }[] }[]

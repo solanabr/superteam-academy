@@ -41,6 +41,7 @@ const CREDENTIAL_COLLECTION = new PublicKey(
 const COMPLETE_LESSON_DISC = Buffer.from([77, 217, 53, 132, 204, 150, 169, 58]);
 const FINALIZE_COURSE_DISC = Buffer.from([68, 189, 122, 239, 39, 121, 16, 218]);
 const ISSUE_CREDENTIAL_DISC = Buffer.from([255, 193, 171, 224, 68, 171, 194, 87]);
+const CLOSE_ENROLLMENT_DISC = Buffer.from([236, 137, 133, 253, 91, 138, 217, 91]);
 
 // CU budget for lesson completion batches
 const CU_PER_LESSON = 20_000;
@@ -193,10 +194,26 @@ function buildIssueCredentialIx(
   });
 }
 
+function buildCloseEnrollmentIx(
+  course: PublicKey,
+  enrollment: PublicKey,
+  learner: PublicKey,
+): TransactionInstruction {
+  return new TransactionInstruction({
+    programId: PROGRAM_ID,
+    keys: [
+      { pubkey: course, isSigner: false, isWritable: false },
+      { pubkey: enrollment, isSigner: false, isWritable: true },
+      { pubkey: learner, isSigner: true, isWritable: true },
+    ],
+    data: CLOSE_ENROLLMENT_DISC,
+  });
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { courseId, learnerWallet, userId, action, finalizeSig } = body;
+    const { courseId, learnerWallet, userId, action } = body;
 
     if (!courseId || !learnerWallet || !userId) {
       return NextResponse.json(
@@ -358,7 +375,8 @@ export async function POST(request: NextRequest) {
     const finalizeTx = new VersionedTransaction(finalizeMsg);
     finalizeTx.sign([backendKeypair]);
 
-    // Build credential tx (best-effort, separate tx)
+    // Build credential + close_enrollment tx (auto-close reclaims rent)
+    const closeIx = buildCloseEnrollmentIx(coursePda, enrollmentPda, learnerKey);
     let credentialTxBase64: string | null = null;
     let credentialAssetAddress: string | null = null;
     try {
@@ -380,19 +398,33 @@ export async function POST(request: NextRequest) {
       const { blockhash: bh2 } =
         await connection.getLatestBlockhash("confirmed");
 
+      // Credential first, then close enrollment to reclaim rent
       const credMsg = new TransactionMessage({
-        payerKey: learnerKey, // learner pays
+        payerKey: learnerKey,
         recentBlockhash: bh2,
-        instructions: [issueIx],
+        instructions: [issueIx, closeIx],
       }).compileToV0Message();
 
       const credTx = new VersionedTransaction(credMsg);
-      credTx.sign([backendKeypair, credentialKeypair]); // backend + asset keypair
+      credTx.sign([backendKeypair, credentialKeypair]);
 
       credentialTxBase64 = Buffer.from(credTx.serialize()).toString("base64");
       credentialAssetAddress = credentialKeypair.publicKey.toBase58();
     } catch (err) {
       console.error("Failed to build credential tx:", err);
+    }
+
+    // Standalone close_enrollment tx if credential build failed
+    let closeEnrollmentTxBase64: string | null = null;
+    if (!credentialTxBase64) {
+      const { blockhash: bh3 } = await connection.getLatestBlockhash("confirmed");
+      const closeMsg = new TransactionMessage({
+        payerKey: learnerKey,
+        recentBlockhash: bh3,
+        instructions: [closeIx],
+      }).compileToV0Message();
+      const closeTx = new VersionedTransaction(closeMsg);
+      closeEnrollmentTxBase64 = Buffer.from(closeTx.serialize()).toString("base64");
     }
 
     return NextResponse.json({
@@ -402,6 +434,7 @@ export async function POST(request: NextRequest) {
       finalizeTx: Buffer.from(finalizeTx.serialize()).toString("base64"),
       credentialTx: credentialTxBase64,
       credentialAssetAddress,
+      closeEnrollmentTx: closeEnrollmentTxBase64,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

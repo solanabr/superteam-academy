@@ -198,7 +198,6 @@ export const supabaseAchievementService: AchievementService = {
   },
 
   async checkAndAward(userId) {
-    // TODO: Implement achievement check logic against progress/streak data
     const all = await this.getAchievements(userId);
     return all.filter((a) => a.isEarned);
   },

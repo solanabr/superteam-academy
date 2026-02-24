@@ -2,8 +2,8 @@
 
 import { cn } from "@/lib/utils";
 import { LevelRing } from "./level-ring";
-import { XPDisplay, StreakBadge } from "@/components/shared";
-import { Trophy, Flame, Star } from "lucide-react";
+import { XPDisplay } from "@/components/shared";
+import { Trophy, Flame } from "lucide-react";
 
 interface GamificationStatsProps {
   xp: number;

@@ -169,8 +169,8 @@ See [docs/CUSTOMIZATION.md](docs/CUSTOMIZATION.md) for theme, i18n, and gamifica
 
 The platform integrates with the [Superteam Academy Solana program](../onchain-academy/):
 
-- **Program ID**: `ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf`
-- **XP Mint**: `XPTkMWRRH1QLbAYGSkwNmmHF8Q75RURmC269nHVhUoe`
+- **Program ID**: `FEjumbmTCGxTwqikEcyC13czHfTwsnk7B9erNEEuHeBB`
+- **XP Mint**: `5S5pSBFe968KdjAaG5yUXX1detFrE9vR4RGvT7JqRGjd`
 - **Network**: Devnet
 
 ### Hooks

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { PlatformLayout } from "@/components/layout";
@@ -49,8 +50,6 @@ export default function ProfilePage() {
   const { credentials } = useCredentials();
 
   const completed = progressList.filter((p) => p.isCompleted);
-  const earnedAchievements = achievements.filter((a) => a.isEarned);
-
   // Sort: earned first, then unearned
   const sortedAchievements = [...achievements].sort((a, b) => {
     if (a.isEarned && !b.isEarned) return -1;
@@ -241,10 +240,11 @@ export default function ProfilePage() {
                     >
                       <div className="aspect-[4/3] rounded-lg bg-muted mb-3 overflow-hidden relative">
                         {cred.imageUrl && !cred.imageUrl.endsWith("/og.png") && (
-                          <img
+                          <Image
                             src={cred.imageUrl}
                             alt={cred.name}
-                            className="absolute inset-0 w-full h-full object-cover"
+                            fill
+                            className="object-cover"
                           />
                         )}
                       </div>

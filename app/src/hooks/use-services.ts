@@ -46,6 +46,7 @@ export function useCourses(params?: SearchParams) {
       .then(setCourses)
       .catch(() => setCourses([]))
       .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params?.difficulty, params?.track, params?.search, params?.page]);
 
   return { courses, loading };
@@ -118,14 +119,14 @@ export function useEnrollment(courseId: string, totalLessons?: number) {
     }
 
     setLocalEnrolling(true);
-    let onChainSuccess = false;
+    let _onChainSuccess = false;
 
     try {
       // 1. Try on-chain enrollment if wallet connected
       if (walletKey) {
         try {
           await enrollOnChain(courseId);
-          onChainSuccess = true;
+          _onChainSuccess = true;
         } catch (err: unknown) {
           const msg = err instanceof Error ? err.message : String(err);
           // User rejected = not an error, just cancelled
@@ -135,7 +136,7 @@ export function useEnrollment(courseId: string, totalLessons?: number) {
           }
           // Already enrolled on-chain is fine
           if (msg.includes("already in use")) {
-            onChainSuccess = true;
+            _onChainSuccess = true;
           } else {
             console.error("On-chain enrollment failed:", msg);
             toast.error("On-chain enrollment failed. Please try again.");
@@ -151,7 +152,7 @@ export function useEnrollment(courseId: string, totalLessons?: number) {
       if (!walletKey) {
         toast.success("Enrolled! Connect a wallet for on-chain enrollment.");
       }
-      // If onChainSuccess, enrollOnChain already showed a success toast
+      // If _onChainSuccess, enrollOnChain already showed a success toast
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       console.error("Enrollment failed:", msg);

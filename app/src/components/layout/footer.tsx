@@ -111,6 +111,20 @@ export function Footer() {
                 </svg>
               </a>
             </div>
+            <div className="mt-4 flex flex-col gap-1.5">
+              <Link
+                href="/docs"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Documentation
+              </Link>
+              <Link
+                href="/docs/admin"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Admin Manual
+              </Link>
+            </div>
           </div>
 
           {/* Platform */}

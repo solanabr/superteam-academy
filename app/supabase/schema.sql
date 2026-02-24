@@ -14,6 +14,8 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   is_public BOOLEAN DEFAULT true,
   preferred_language TEXT DEFAULT 'en',
   theme TEXT DEFAULT 'light',
+  onboarding_completed BOOLEAN DEFAULT false,
+  onboarding_completed_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -112,6 +114,7 @@ CREATE INDEX IF NOT EXISTS idx_comments_lesson ON public.comments(course_id, les
 CREATE INDEX IF NOT EXISTS idx_comments_user ON public.comments(user_id);
 CREATE INDEX IF NOT EXISTS idx_comments_parent ON public.comments(parent_id);
 CREATE INDEX IF NOT EXISTS idx_comments_created ON public.comments(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_comments_forum ON public.comments(created_at DESC) WHERE course_id IS NULL;
 CREATE INDEX IF NOT EXISTS idx_community_help_helper ON public.community_help(helper_id);
 CREATE INDEX IF NOT EXISTS idx_community_help_helped ON public.community_help(helped_user_id);
 

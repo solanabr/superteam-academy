@@ -39,7 +39,7 @@ export function useAuth() {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const supabase = createSupabaseBrowserClient();
-  const { publicKey, signMessage, connected } = useWallet();
+  const { publicKey, signMessage } = useWallet();
   const { setUser } = useAppStore();
 
   const [user, setAuthUser] = useState<User | null>(null);
@@ -63,6 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     is_public: boolean | null;
     preferred_language: string | null;
     theme: string | null;
+    onboarding_completed: boolean | null;
   }
 
   const mapRowToProfile = useCallback(
@@ -79,6 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isPublic: data.is_public ?? true,
       preferredLanguage: data.preferred_language ?? "en",
       theme: (data.theme as UserProfile["theme"]) ?? "light",
+      onboardingCompleted: data.onboarding_completed ?? false,
     }),
     []
   );

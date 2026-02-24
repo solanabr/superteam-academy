@@ -1,10 +1,12 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { PlatformLayout } from "@/components/layout";
 import { ProtectedRoute } from "@/components/auth";
 import { LinkWalletPrompt } from "@/components/auth";
+import { OnboardingModal } from "@/components/onboarding";
 import { XPDisplay, StreakBadge } from "@/components/shared";
 import {
   StreakCalendar,
@@ -39,6 +41,14 @@ export default function DashboardPage() {
   const { balance, loading: xpLoading } = useXP();
   const { streak } = useStreak();
   const { activities } = useActivities(10);
+  // Show onboarding only to users who haven't completed it
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  useEffect(() => {
+    if (profile && !profile.onboardingCompleted) {
+      setShowOnboarding(true);
+    }
+  }, [profile]);
 
   const inProgress = progressList.filter((p) => !p.isCompleted);
   const completed = progressList.filter((p) => p.isCompleted);
@@ -46,6 +56,7 @@ export default function DashboardPage() {
   return (
     <ProtectedRoute>
       <PlatformLayout>
+        <OnboardingModal open={showOnboarding} onOpenChange={setShowOnboarding} />
         <LinkWalletPrompt />
         <div className="container mx-auto px-4 py-8 lg:py-12">
           {/* Welcome */}
