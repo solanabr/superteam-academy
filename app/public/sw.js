@@ -5,7 +5,7 @@ const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const PAGES_CACHE = `pages-${CACHE_VERSION}`;
 
 // App shell resources to pre-cache on install
-const APP_SHELL = ["/", "/icon.svg"];
+const APP_SHELL = ["/", "/icon.svg", "/en/offline"];
 
 // File extensions that should use cache-first strategy
 const STATIC_EXTENSIONS = [
@@ -137,7 +137,11 @@ async function networkFirst(request, cacheName) {
     const cached = await caches.match(request);
     if (cached) return cached;
 
-    // Last resort: try to serve the cached root page
+    // Last resort: serve the offline page
+    const offlinePage = await caches.match("/en/offline");
+    if (offlinePage) return offlinePage;
+
+    // Absolute fallback if offline page is not cached
     const fallback = await caches.match("/");
     if (fallback) return fallback;
 

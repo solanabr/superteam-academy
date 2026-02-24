@@ -242,7 +242,7 @@ export default async function CourseDetail({
             borderBottom: "1px solid rgba(26,25,24,0.1)",
           }}
         >
-          Course Content &mdash; {course.modules.length} Modules &middot;{" "}
+          Course Content &middot; {course.modules.length} Modules &middot;{" "}
           {totalLessons} Lessons &middot; {course.duration}
         </div>
 
@@ -342,6 +342,31 @@ export default async function CourseDetail({
             </p>
           </div>
         ))}
+
+        {/* Discuss this course */}
+        <div
+          style={{
+            marginTop: "40px",
+            paddingTop: "24px",
+            borderTop: "1px solid rgba(26,25,24,0.1)",
+            textAlign: "center",
+          }}
+        >
+          <Link
+            href={`/${locale}/community?course=${slug}`}
+            style={{
+              fontFamily: "var(--v9-mono)",
+              fontSize: "11px",
+              letterSpacing: "0.15em",
+              textTransform: "uppercase" as const,
+              color: "var(--v9-accent)",
+              textDecoration: "none",
+              transition: "opacity 0.2s",
+            }}
+          >
+            Discuss this course in the community →
+          </Link>
+        </div>
       </section>
     </div>
   );

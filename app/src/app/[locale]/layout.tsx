@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import { AppProviders } from "@/providers/app-providers";
 import { Navbar } from "@/components/layout/navbar";
+import { InstallPrompt } from "@/components/pwa/install-prompt";
+import { OfflineIndicator } from "@/components/pwa/offline-indicator";
 
 export default async function LocaleLayout({
   children,
@@ -41,6 +43,8 @@ export default async function LocaleLayout({
           <main id="main-content" className="relative z-[1]">
             {children}
           </main>
+          <InstallPrompt />
+          <OfflineIndicator />
         </div>
       </AppProviders>
     </NextIntlClientProvider>

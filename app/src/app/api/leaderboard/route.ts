@@ -30,8 +30,11 @@ export async function GET() {
       const accountInfo = await connection.getParsedAccountInfo(
         account.address,
       );
-      const parsed = (accountInfo.value?.data as any)?.parsed;
-      const owner = parsed?.info?.owner as string | undefined;
+      const data = accountInfo.value?.data;
+      const parsed = (typeof data === "object" && data !== null && "parsed" in data)
+        ? (data as { parsed: { info?: { owner?: string } } }).parsed
+        : undefined;
+      const owner = parsed?.info?.owner;
       if (!owner) continue;
 
       const xp = account.uiAmount;
@@ -49,7 +52,7 @@ export async function GET() {
 
     cache = { data: entries, ts: Date.now() };
     return NextResponse.json(entries);
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Leaderboard error:", err);
     return NextResponse.json([]);
   }

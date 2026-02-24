@@ -59,7 +59,7 @@ export function LandingContent({
             inset: 0,
             pointerEvents: "none",
             backgroundImage:
-              "linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px)",
+              "linear-gradient(var(--overlay-divider) 1px, transparent 1px), linear-gradient(90deg, var(--overlay-divider) 1px, transparent 1px)",
             backgroundSize: "80px 80px",
           }}
         />
@@ -121,7 +121,7 @@ export function LandingContent({
                   color: M,
                 }}
               >
-                SUPERTEAM ACADEMY — BUILT ON SOLANA
+                SUPERTEAM ACADEMY // BUILT ON SOLANA
               </span>
             </div>
           </div>
@@ -157,7 +157,7 @@ export function LandingContent({
               style={{
                 fontFamily: FONT_SANS,
                 fontSize: "clamp(16px, 2vw, 20px)",
-                color: "rgba(255,255,255,0.45)",
+                color: "var(--c-text-muted)",
                 maxWidth: 560,
                 lineHeight: 1.6,
                 margin: "0 0 40px",
@@ -169,7 +169,7 @@ export function LandingContent({
                   color: C,
                   fontWeight: 700,
                   padding: "2px 10px",
-                  background: "rgba(255,255,255,0.06)",
+                  background: "var(--overlay-divider)",
                   fontSize: "0.85em",
                   letterSpacing: 2,
                 }}
@@ -227,7 +227,7 @@ export function LandingContent({
             right: 0,
             display: "flex",
             flexWrap: "wrap",
-            borderTop: "1px solid rgba(255,255,255,0.06)",
+            borderTop: "1px solid var(--overlay-divider)",
             background: "rgba(10, 10, 9, 0.85)",
             backdropFilter: "blur(12px)",
             zIndex: 20,
@@ -269,7 +269,7 @@ export function LandingContent({
         style={{
           background: D,
           position: "relative",
-          borderTop: "1px solid rgba(255,255,255,0.04)",
+          borderTop: "1px solid var(--overlay-divider)",
         }}
       >
         <Reveal>
@@ -309,8 +309,8 @@ export function LandingContent({
             <Reveal key={i} delay={i * 200}>
               <TiltCard
                 style={{
-                  background: "rgba(255,255,255,0.02)",
-                  border: "1px solid rgba(255,255,255,0.04)",
+                  background: "var(--overlay-divider)",
+                  border: "1px solid var(--overlay-divider)",
                   padding: "40px 32px",
                   height: "100%",
                 }}
@@ -343,7 +343,7 @@ export function LandingContent({
                   style={{
                     fontFamily: FONT_SANS,
                     fontSize: 13,
-                    color: "rgba(255,255,255,0.4)",
+                    color: "var(--c-text-dim)",
                     lineHeight: 1.7,
                     margin: 0,
                   }}
@@ -361,7 +361,7 @@ export function LandingContent({
         className="landing-cta-section"
         style={{
           textAlign: "center",
-          borderTop: "1px solid rgba(255,255,255,0.04)",
+          borderTop: "1px solid var(--overlay-divider)",
         }}
       >
         <Reveal>

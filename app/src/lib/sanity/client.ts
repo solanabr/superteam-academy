@@ -31,9 +31,9 @@ export const sanityClient: SanityClient = new Proxy({} as SanityClient, {
         useCdn: process.env.NODE_ENV === "production",
       });
     }
-    const value = (_client as any)[prop];
+    const value = _client[prop as keyof SanityClient];
     if (typeof value === "function") {
-      return value.bind(_client);
+      return (value as Function).bind(_client);
     }
     return value;
   },

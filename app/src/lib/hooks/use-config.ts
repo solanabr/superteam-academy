@@ -2,15 +2,14 @@
 
 import { useConnection } from "@solana/wallet-adapter-react";
 import { useState, useEffect, useCallback } from "react";
-import { getReadonlyProgram } from "@/lib/solana/program";
+import {
+  getReadonlyProgram,
+  getAccounts,
+  type ConfigAccount,
+} from "@/lib/solana/program";
 import { findConfigPDA } from "@/lib/solana/pda";
 
-export interface OnChainConfig {
-  authority: any;
-  backendSigner: any;
-  xpMint: any;
-  bump: number;
-}
+export type OnChainConfig = ConfigAccount;
 
 export function useConfig() {
   const { connection } = useConnection();
@@ -22,8 +21,8 @@ export function useConfig() {
     try {
       const program = getReadonlyProgram(connection);
       const [pda] = findConfigPDA();
-      const account = await (program.account as any).config.fetch(pda);
-      setConfig(account as unknown as OnChainConfig);
+      const config = await getAccounts(program).config.fetch(pda);
+      setConfig(config);
     } catch {
       setConfig(null);
     }

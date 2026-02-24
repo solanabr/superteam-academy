@@ -1,6 +1,7 @@
 import { Program } from "@coral-xyz/anchor";
 import { PublicKey, SystemProgram } from "@solana/web3.js";
 import { findConfigPDA, findCoursePDA, findEnrollmentPDA } from "./pda";
+import { getAccounts } from "./program";
 
 /**
  * Enroll the connected wallet in a course.
@@ -16,16 +17,21 @@ export async function enroll(
   const [enrollment] = findEnrollmentPDA(courseId, user);
 
   // Read on-chain course to get actual prerequisite
-  const courseAccount = await (program.account as any).course.fetch(coursePDA);
+  const accounts = getAccounts(program);
+  const courseAccount = await accounts.course.fetch(coursePDA);
 
-  const remainingAccounts: any[] = [];
+  const remainingAccounts: {
+    pubkey: PublicKey;
+    isWritable: boolean;
+    isSigner: boolean;
+  }[] = [];
   if (courseAccount.prerequisite) {
-    const prereqCoursePubkey = courseAccount.prerequisite as PublicKey;
+    const prereqCoursePubkey = courseAccount.prerequisite;
     // Read prerequisite course to get its course_id for enrollment PDA derivation
-    const prereqCourseAccount = await (program.account as any).course.fetch(
+    const prereqCourseAccount = await accounts.course.fetch(
       prereqCoursePubkey,
     );
-    const prereqCourseId = prereqCourseAccount.courseId as string;
+    const prereqCourseId = prereqCourseAccount.courseId;
     const [prereqEnrollment] = findEnrollmentPDA(prereqCourseId, user);
     remainingAccounts.push(
       { pubkey: prereqCoursePubkey, isWritable: false, isSigner: false },

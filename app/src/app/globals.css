@@ -139,6 +139,14 @@ html { scroll-behavior: smooth; }
   /* Code editor bg */
   --code-bg: #000000;
 
+  /* Overlay surfaces (menus, mobile nav, dropdowns) */
+  --overlay-bg: #1A1918;
+  --overlay-border: rgba(255,255,255,0.1);
+  --overlay-text: rgba(255,255,255,0.7);
+  --overlay-text-active: #FFFFFF;
+  --overlay-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  --overlay-divider: rgba(255,255,255,0.06);
+
   color-scheme: dark;
 }
 
@@ -194,6 +202,14 @@ html { scroll-behavior: smooth; }
   --nd-border-hovered: #00000033;
 
   --code-bg: #FAFAFA;
+
+  /* Overlay surfaces — inverted for light mode */
+  --overlay-bg: #FFFFFF;
+  --overlay-border: rgba(0,0,0,0.1);
+  --overlay-text: rgba(0,0,0,0.6);
+  --overlay-text-active: #09090B;
+  --overlay-shadow: 0 8px 32px rgba(0,0,0,0.12);
+  --overlay-divider: rgba(0,0,0,0.06);
 
   color-scheme: light;
 }
@@ -310,8 +326,10 @@ html.light body {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(115, 115, 115, 0.7); }
 
 /* Light mode scrollbar */
-.light ::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.15); border: 1px solid rgba(0, 0, 0, 0.05); }
-.light ::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.25); }
+.light ::-webkit-scrollbar-thumb,
+html.light ::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.15); border: 1px solid rgba(0, 0, 0, 0.05); }
+.light ::-webkit-scrollbar-thumb:hover,
+html.light ::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.25); }
 
 /* Solana gradient — ONLY on small logo icons (navbar/footer) */
 .gradient-solana {
@@ -765,6 +783,11 @@ summary::-webkit-details-marker { display: none; }
   .landing-stat-item:nth-child(odd) { border-right: 1px solid rgba(255,255,255,0.06); }
   .landing-stat-item:nth-child(-n+2) { border-bottom: 1px solid rgba(255,255,255,0.06); }
 }
+html.light .landing-stat-item:not(:last-child) { border-right-color: rgba(0,0,0,0.06); }
+@media (max-width: 767px) {
+  html.light .landing-stat-item:nth-child(odd) { border-right-color: rgba(0,0,0,0.06); }
+  html.light .landing-stat-item:nth-child(-n+2) { border-bottom-color: rgba(0,0,0,0.06); }
+}
 
 /* ============================================================
    Clip-Path Reveal Animations — Precision Terminal
@@ -1148,6 +1171,9 @@ summary::-webkit-details-marker { display: none; }
 .v9-page-dark .v9-viewport-border::before {
   box-shadow: inset 0 0 0 6px rgba(255,255,255,0.03);
 }
+html.light .v9-viewport-border::before {
+  box-shadow: inset 0 0 0 6px var(--c-border);
+}
 
 /* V9 Dot grid background (Vercel technique) */
 .v9-grid-bg {
@@ -1266,6 +1292,9 @@ summary::-webkit-details-marker { display: none; }
   background: rgba(255,255,255,0.1);
   position: relative;
 }
+html.light .v9-progress-track {
+  background: rgba(0,0,0,0.1);
+}
 .v9-progress-fill {
   height: 100%;
   transition: width 0.8s var(--v9-ease);
@@ -1277,6 +1306,9 @@ summary::-webkit-details-marker { display: none; }
   font-size: 9px;
   letter-spacing: 2px;
   color: rgba(255,255,255,0.4);
+}
+html.light .v9-progress-label {
+  color: rgba(0,0,0,0.4);
 }
 
 /* V9 Slider controls (Mercedes-Benz) */
@@ -1400,6 +1432,16 @@ summary::-webkit-details-marker { display: none; }
   color: var(--v9-white);
   padding: 60px 40px;
 }
+html.light .v9-leader-entry {
+  border-top-color: var(--c-border);
+}
+html.light .v9-leader-entry:hover {
+  background: var(--c-bg-surface);
+}
+html.light .v9-leader-entry.expanded {
+  background: var(--c-bg-elevated);
+  color: var(--c-text);
+}
 
 /* V9 "YOU" badge */
 .v9-your-position::after {
@@ -1424,6 +1466,13 @@ summary::-webkit-details-marker { display: none; }
 }
 .v9-feature-col:hover {
   background: rgba(255,255,255,0.06);
+}
+html.light .v9-feature-col {
+  background: rgba(0,0,0,0.02);
+  border-color: rgba(0,0,0,0.06);
+}
+html.light .v9-feature-col:hover {
+  background: rgba(0,0,0,0.04);
 }
 
 /* ============================================================

@@ -114,9 +114,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html suppressHydrationWarning className="dark">
+    <html suppressHydrationWarning>
       <head>
-        <meta name="theme-color" content="#000000" />
+        <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+        <meta name="theme-color" content="#FAFAFA" media="(prefers-color-scheme: light)" />
         <link rel="dns-prefetch" href="https://api.devnet.solana.com" />
         <link
           rel="preconnect"

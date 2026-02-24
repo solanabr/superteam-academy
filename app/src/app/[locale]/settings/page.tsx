@@ -30,7 +30,9 @@ export default function SettingsPage() {
   const { user, connected } = useUser();
   const { theme, setTheme } = useTheme();
 
-  const linkedAccounts = (session as any)?.linkedAccounts ?? {};
+  const linkedAccounts =
+    (session as unknown as { linkedAccounts?: Record<string, { email?: string; name?: string }> })
+      ?.linkedAccounts ?? {};
 
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [streakReminders, setStreakReminders] = useState(true);

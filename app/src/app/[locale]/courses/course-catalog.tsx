@@ -113,7 +113,7 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
             letterSpacing: "1px",
             background: "transparent",
             border: "none",
-            borderBottom: "1px solid rgba(255,255,255,0.12)",
+            borderBottom: "1px solid var(--overlay-border)",
             color: "var(--v9-white)",
             padding: "12px 0",
             width: "100%",
@@ -156,7 +156,7 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
             style={{
               width: 1,
               height: 16,
-              background: "rgba(255,255,255,0.1)",
+              background: "var(--overlay-border)",
               margin: "0 8px",
             }}
           />
@@ -191,7 +191,7 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
                 fontSize: 9,
                 letterSpacing: "2px",
                 textTransform: "uppercase" as const,
-                color: "rgba(255,255,255,0.35)",
+                color: "var(--overlay-text)",
                 background: "none",
                 border: "none",
                 cursor: "pointer",
@@ -203,7 +203,7 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
                 (e.currentTarget.style.color = "var(--v9-white)")
               }
               onMouseLeave={(e) =>
-                (e.currentTarget.style.color = "rgba(255,255,255,0.35)")
+                (e.currentTarget.style.color = "var(--overlay-text)")
               }
             >
               CLEAR
@@ -222,7 +222,7 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
               textTransform: "uppercase" as const,
               color: "var(--v9-white)",
               background: "none",
-              border: "1px solid rgba(255,255,255,0.15)",
+              border: "1px solid var(--overlay-border)",
               cursor: "pointer",
               padding: "8px 16px",
             }}
@@ -254,7 +254,7 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
                   justifyContent: "center",
                   cursor: "pointer",
                   overflow: "hidden",
-                  borderTop: "1px solid rgba(255,255,255,0.06)",
+                  borderTop: "1px solid var(--overlay-divider)",
                   background: isHovered ? bgColor : "transparent",
                   transition: "all 0.5s cubic-bezier(0.16, 1, 0.3, 1)",
                   animationDelay: `${0.1 + i * 0.08}s`,
@@ -451,19 +451,19 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
                 textTransform: "uppercase" as const,
                 color: "var(--v9-white)",
                 background: "none",
-                border: "1px solid rgba(255,255,255,0.15)",
+                border: "1px solid var(--overlay-border)",
                 cursor: "pointer",
                 padding: "12px 32px",
                 marginTop: 32,
                 transition: "all 0.3s",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = "rgba(255,255,255,0.08)";
-                e.currentTarget.style.borderColor = "rgba(255,255,255,0.3)";
+                e.currentTarget.style.background = "var(--overlay-divider)";
+                e.currentTarget.style.borderColor = "var(--c-border-hovered)";
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.background = "none";
-                e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)";
+                e.currentTarget.style.borderColor = "var(--overlay-border)";
               }}
             >
               CLEAR FILTERS
@@ -481,15 +481,15 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
         >
           <div
             className="absolute inset-0"
-            style={{ background: "rgba(0,0,0,0.8)" }}
+            style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }}
             onClick={() => setMobileFiltersOpen(false)}
             aria-hidden="true"
           />
           <div
             className="absolute bottom-0 inset-x-0 animate-slide-in"
             style={{
-              background: "var(--v9-near-black)",
-              borderTop: "1px solid rgba(255,255,255,0.08)",
+              background: "var(--overlay-bg)",
+              borderTop: "1px solid var(--overlay-divider)",
               padding: 32,
               maxHeight: "75vh",
               overflowY: "auto",
@@ -643,15 +643,15 @@ function FilterPill({
         textTransform: "uppercase" as const,
         padding: "6px 14px",
         border: active
-          ? "1px solid rgba(255,255,255,0.2)"
-          : "1px solid rgba(255,255,255,0.08)",
-        background: active ? "rgba(255,255,255,0.1)" : "transparent",
+          ? "1px solid var(--overlay-border)"
+          : "1px solid var(--overlay-divider)",
+        background: active ? "var(--overlay-border)" : "transparent",
         color:
           active && accentColor
             ? accentColor
             : active
               ? "var(--v9-white)"
-              : "rgba(255,255,255,0.4)",
+              : "var(--c-text-dim)",
         cursor: "pointer",
         transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
         lineHeight: 1,

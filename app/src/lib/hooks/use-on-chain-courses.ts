@@ -1,30 +1,15 @@
 "use client";
 
 import { useConnection } from "@solana/wallet-adapter-react";
+import type { PublicKey } from "@solana/web3.js";
 import { useState, useEffect, useCallback } from "react";
-import { getReadonlyProgram } from "@/lib/solana/program";
+import {
+  getReadonlyProgram,
+  getAccounts,
+  type CourseAccount,
+} from "@/lib/solana/program";
 
-export interface OnChainCourse {
-  publicKey: any; // PublicKey
-  courseId: string;
-  creator: any;
-  contentTxId: number[];
-  version: number;
-  lessonCount: number;
-  difficulty: number;
-  xpPerLesson: number;
-  trackId: number;
-  trackLevel: number;
-  prerequisite: any | null;
-  creatorRewardXp: number;
-  minCompletionsForReward: number;
-  totalCompletions: number;
-  totalEnrollments: number;
-  isActive: boolean;
-  createdAt: any;
-  updatedAt: any;
-  bump: number;
-}
+export type OnChainCourse = CourseAccount & { publicKey: PublicKey };
 
 export function useOnChainCourses() {
   const { connection } = useConnection();
@@ -35,11 +20,11 @@ export function useOnChainCourses() {
     setLoading(true);
     try {
       const program = getReadonlyProgram(connection);
-      const allCourses = await (program.account as any).course.all();
+      const allCourses = await getAccounts(program).course.all();
       setCourses(
-        allCourses.map((acc: any) => ({
+        allCourses.map((acc) => ({
+          ...acc.account,
           publicKey: acc.publicKey,
-          ...(acc.account as any),
         })),
       );
     } catch {

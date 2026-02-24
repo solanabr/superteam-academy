@@ -734,7 +734,7 @@ export default function LeaderboardPage() {
                           fontSize: "10px",
                           letterSpacing: "3px",
                           textTransform: "uppercase",
-                          border: "1px solid rgba(255,255,255,0.15)",
+                          border: "1px solid var(--overlay-border)",
                           padding: "8px 16px",
                           marginTop: "32px",
                           display: "inline-block",
@@ -744,7 +744,7 @@ export default function LeaderboardPage() {
                         onClick={(e) => e.stopPropagation()}
                         onMouseEnter={(e) => {
                           (e.target as HTMLDivElement).style.background =
-                            "rgba(255,255,255,0.1)";
+                            "var(--overlay-divider)";
                         }}
                         onMouseLeave={(e) => {
                           (e.target as HTMLDivElement).style.background =

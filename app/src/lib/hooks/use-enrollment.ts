@@ -2,17 +2,14 @@
 
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import { useState, useEffect, useCallback } from "react";
-import { getReadonlyProgram } from "@/lib/solana/program";
+import {
+  getReadonlyProgram,
+  getAccounts,
+  type EnrollmentAccount,
+} from "@/lib/solana/program";
 import { findEnrollmentPDA } from "@/lib/solana/pda";
 
-export interface OnChainEnrollment {
-  course: any; // PublicKey
-  enrolledAt: any; // BN
-  completedAt: any | null; // BN | null
-  lessonFlags: any[]; // BN[] (4 u64s)
-  credentialAsset: any | null; // PublicKey | null
-  bump: number;
-}
+export type OnChainEnrollment = EnrollmentAccount;
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const BN = require("bn.js");
@@ -68,8 +65,8 @@ export function useEnrollment(courseId: string | null) {
     try {
       const program = getReadonlyProgram(connection);
       const [pda] = findEnrollmentPDA(courseId, publicKey);
-      const account = await (program.account as any).enrollment.fetch(pda);
-      setEnrollment(account as unknown as OnChainEnrollment);
+      const enrollment = await getAccounts(program).enrollment.fetch(pda);
+      setEnrollment(enrollment);
       setExists(true);
     } catch {
       setEnrollment(null);

@@ -13,12 +13,14 @@ import {
   xpForLevel,
   TRACK_LABELS,
 } from "@/lib/constants";
+import { DailyChallenges } from "@/components/gamification/daily-challenges";
+import { SeasonalEventBanner } from "@/components/gamification/seasonal-event-banner";
 
-const G = "#00D282";
-const D = "#0a0a09";
-const C = "#f5f5f0";
-const M = "#666";
-const BORDER = "rgba(255,255,255,0.04)";
+const G = "var(--nd-highlight-green)";
+const D = "var(--background)";
+const C = "var(--foreground)";
+const M = "var(--c-text-muted)";
+const BORDER = "var(--overlay-divider)";
 const SPRING = "cubic-bezier(0.16, 1, 0.3, 1)";
 
 // ─── SCROLL REVEAL ──────────────────────────────────────────
@@ -116,7 +118,7 @@ const TiltCard: React.FC<{
           position: "absolute",
           inset: 0,
           pointerEvents: "none",
-          background: `radial-gradient(circle at ${glare.x}% ${glare.y}%, rgba(255,255,255,0.05) 0%, transparent 60%)`,
+          background: `radial-gradient(circle at ${glare.x}% ${glare.y}%, var(--overlay-divider) 0%, transparent 60%)`,
           transition: "background 0.3s",
         }}
       />
@@ -473,7 +475,7 @@ const StreakHeatmap: React.FC<{
                   width: 11,
                   height: 11,
                   borderRadius: 2,
-                  background: level > 0 ? G : "rgba(255,255,255,0.04)",
+                  background: level > 0 ? G : "var(--overlay-divider)",
                   opacity: baseOpacity,
                   transition: "transform 0.2s, opacity 0.2s",
                   cursor: "pointer",
@@ -685,7 +687,7 @@ export default function DashboardPage() {
                   <span
                     style={{
                       fontStyle: "italic",
-                      color: "rgba(255,255,255,0.15)",
+                      color: "var(--overlay-border)",
                     }}
                   >
                     building.
@@ -767,7 +769,7 @@ export default function DashboardPage() {
                         top: -30,
                         fontFamily: "'Instrument Serif', serif",
                         fontSize: 180,
-                        color: "rgba(255,255,255,0.02)",
+                        color: "var(--c-text-faint)",
                       }}
                     >
                       {String(courses.indexOf(currentCourse) + 1).padStart(
@@ -799,8 +801,8 @@ export default function DashboardPage() {
                                 fontSize: 9,
                                 letterSpacing: 1.5,
                                 padding: "3px 8px",
-                                border: "1px solid rgba(255,255,255,0.12)",
-                                color: "rgba(255,255,255,0.4)",
+                                border: "1px solid var(--overlay-border)",
+                                color: "var(--c-text-dim)",
                               }}
                             >
                               {tag}
@@ -822,7 +824,7 @@ export default function DashboardPage() {
                           style={{
                             fontFamily: "'Space Grotesk', sans-serif",
                             fontSize: 12,
-                            color: "rgba(255,255,255,0.35)",
+                            color: "var(--c-text-dim)",
                             margin: 0,
                           }}
                         >
@@ -839,7 +841,7 @@ export default function DashboardPage() {
                         style={{
                           width: "100%",
                           height: 2,
-                          background: "rgba(255,255,255,0.06)",
+                          background: "var(--overlay-divider)",
                         }}
                       >
                         <div
@@ -859,7 +861,7 @@ export default function DashboardPage() {
                           fontFamily: "'Space Grotesk', sans-serif",
                           fontSize: 10,
                           letterSpacing: 1,
-                          color: "rgba(255,255,255,0.25)",
+                          color: "var(--c-text-faint)",
                         }}
                       >
                         <span>
@@ -1025,7 +1027,7 @@ export default function DashboardPage() {
                           style={{
                             fontFamily: "'Instrument Serif', serif",
                             fontSize: 22,
-                            color: "rgba(255,255,255,0.12)",
+                            color: "var(--overlay-border)",
                             fontStyle: "italic",
                             width: 24,
                           }}
@@ -1093,6 +1095,9 @@ export default function DashboardPage() {
                 gap: mobile ? 20 : 28,
               }}
             >
+              {/* Seasonal Event Banner */}
+              <SeasonalEventBanner />
+
               {/* XP Orbital */}
               <Reveal delay={200}>
                 <p
@@ -1110,7 +1115,7 @@ export default function DashboardPage() {
                   style={{
                     width: "100%",
                     height: mobile ? 260 : 340,
-                    background: "rgba(255,255,255,0.01)",
+                    background: "var(--overlay-divider)",
                     border: `1px solid ${BORDER}`,
                     position: "relative",
                   }}
@@ -1140,7 +1145,7 @@ export default function DashboardPage() {
                         fontFamily: "'Space Grotesk', sans-serif",
                         fontSize: 10,
                         letterSpacing: 2,
-                        color: "rgba(255,255,255,0.2)",
+                        color: "var(--c-text-faint)",
                       }}
                     >
                       / {nextLevelXp.toLocaleString()} XP
@@ -1154,7 +1159,7 @@ export default function DashboardPage() {
                       fontFamily: "'Space Grotesk', sans-serif",
                       fontSize: 9,
                       letterSpacing: 1,
-                      color: "rgba(255,255,255,0.2)",
+                      color: "var(--c-text-faint)",
                     }}
                   >
                     {xpRemaining.toLocaleString()} XP TO LVL{" "}
@@ -1212,7 +1217,7 @@ export default function DashboardPage() {
                   style={{
                     padding: mobile ? 14 : 20,
                     border: `1px solid ${BORDER}`,
-                    background: "rgba(255,255,255,0.01)",
+                    background: "var(--overlay-divider)",
                     overflowX: "auto",
                     WebkitOverflowScrolling: "touch",
                   }}
@@ -1305,7 +1310,7 @@ export default function DashboardPage() {
                       fontWeight: 700,
                       letterSpacing: 2,
                       padding: "18px 16px",
-                      background: resumeTarget ? C : "rgba(255,255,255,0.06)",
+                      background: resumeTarget ? C : "var(--overlay-divider)",
                       color: resumeTarget ? D : M,
                       border: "none",
                       cursor: resumeTarget ? "pointer" : "default",
@@ -1342,7 +1347,7 @@ export default function DashboardPage() {
                     }}
                     onMouseEnter={(e) => {
                       (e.target as HTMLButtonElement).style.borderColor =
-                        "rgba(255,255,255,0.2)";
+                        "var(--c-text-faint)";
                     }}
                     onMouseLeave={(e) => {
                       (e.target as HTMLButtonElement).style.borderColor =
@@ -1352,6 +1357,11 @@ export default function DashboardPage() {
                     VIEW CERTS
                   </button>
                 </div>
+              </Reveal>
+
+              {/* Daily Challenges */}
+              <Reveal delay={750}>
+                <DailyChallenges />
               </Reveal>
             </div>
           </div>

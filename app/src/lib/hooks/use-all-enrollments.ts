@@ -2,11 +2,10 @@
 
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import { useState, useEffect, useCallback } from "react";
-import { getReadonlyProgram } from "@/lib/solana/program";
+import { getReadonlyProgram, getAccounts } from "@/lib/solana/program";
 import { findEnrollmentPDA } from "@/lib/solana/pda";
 import { courses } from "@/lib/services/courses";
 import { learningService } from "@/lib/services/learning-progress";
-import type { OnChainEnrollment } from "./use-enrollment";
 import { countCompletedLessons } from "./use-enrollment";
 
 export interface CourseProgress {
@@ -39,11 +38,11 @@ export function useAllEnrollments() {
     // 1. Try on-chain enrollment PDAs
     try {
       const program = getReadonlyProgram(connection);
+      const accounts = getAccounts(program);
       const results = await Promise.allSettled(
         courses.map(async (course) => {
           const [pda] = findEnrollmentPDA(course.id, publicKey!);
-          const account = await (program.account as any).enrollment.fetch(pda);
-          const enrollment = account as unknown as OnChainEnrollment;
+          const enrollment = await accounts.enrollment.fetch(pda);
           const completed = countCompletedLessons(enrollment.lessonFlags);
           return {
             courseId: course.id,

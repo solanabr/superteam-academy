@@ -3,6 +3,12 @@
 import { useEffect, useRef } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
+declare global {
+  interface Window {
+    gtag?: (...args: [string, ...unknown[]]) => void;
+  }
+}
+
 const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID ?? "";
 const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY ?? "";
 const POSTHOG_HOST =
@@ -29,16 +35,16 @@ async function getPostHog() {
 
 // GA4 helpers
 function gtagPageview(url: string) {
-  if (typeof window !== "undefined" && GA_ID && (window as any).gtag) {
-    (window as any).gtag("config", GA_ID, { page_path: url });
+  if (typeof window !== "undefined" && GA_ID && window.gtag) {
+    window.gtag("config", GA_ID, { page_path: url });
   }
 }
 
 // Custom event tracking
-export function trackEvent(name: string, properties?: Record<string, any>) {
+export function trackEvent(name: string, properties?: Record<string, unknown>) {
   // GA4
-  if (typeof window !== "undefined" && GA_ID && (window as any).gtag) {
-    (window as any).gtag("event", name, properties);
+  if (typeof window !== "undefined" && GA_ID && window.gtag) {
+    window.gtag("event", name, properties);
   }
   // PostHog (lazy)
   if (POSTHOG_KEY) {
@@ -87,7 +93,7 @@ export function AnalyticsProvider() {
     if (initialized.current || !POSTHOG_KEY) return;
     initialized.current = true;
     if ("requestIdleCallback" in window) {
-      (window as any).requestIdleCallback(() => getPostHog());
+      (window.requestIdleCallback as (cb: () => void) => number)(() => getPostHog());
     } else {
       setTimeout(() => getPostHog(), 2000);
     }

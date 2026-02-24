@@ -9,6 +9,7 @@ import { courses } from "./courses";
 import { getCredentialsByOwner } from "./credentials";
 import { getXPBalance } from "./xp";
 import { getLeaderboard as fetchLeaderboard } from "./leaderboard";
+import { challengeService } from "./challenge-service";
 
 const STORAGE_PREFIX = "stacad:progress:";
 const STREAK_PREFIX = "stacad:streak:";
@@ -98,6 +99,11 @@ export class LocalStorageProgressService implements LearningProgressService {
         .flatMap((m) => m.lessons)
         .find((_, i) => i === lessonIndex)?.xpReward ?? 40;
     await this.recordActivity(userId, lessonXp);
+
+    // Update daily challenge progress
+    challengeService.updateProgress(userId, "complete_lesson", 1);
+    challengeService.updateProgress(userId, "earn_xp", lessonXp);
+    challengeService.updateProgress(userId, "maintain_streak", 1);
   }
 
   // --- Enrollment (stubbed — localStorage) ---
@@ -111,6 +117,9 @@ export class LocalStorageProgressService implements LearningProgressService {
       percentage: 0,
       startedAt: new Date().toISOString(),
     });
+
+    // Update daily challenge progress
+    challengeService.updateProgress(userId, "enroll_course", 1);
   }
 
   async unenrollFromCourse(userId: string, courseId: string): Promise<void> {

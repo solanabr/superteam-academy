@@ -3,12 +3,12 @@
 import { useState, useEffect, useRef } from "react";
 
 // ═══════════════════════════════════════════════════════════════════════
-//  Design tokens for dark landing/dashboard theme
+//  Design tokens — theme-aware via CSS variables
 // ═══════════════════════════════════════════════════════════════════════
-export const G = "#00D282";
-export const D = "#0a0a09";
-export const C = "#f5f5f0";
-export const M = "#666";
+export const G = "var(--nd-highlight-green)";
+export const D = "var(--background)";
+export const C = "var(--foreground)";
+export const M = "var(--c-text-muted)";
 
 const FONT_SANS = "var(--font-space-grotesk), 'Space Grotesk', sans-serif";
 const FONT_SERIF = "var(--font-instrument-serif), 'Instrument Serif', serif";
@@ -442,7 +442,7 @@ export function MagneticBtn({
     padding: "20px 44px",
     background: primary ? C : "transparent",
     color: primary ? D : C,
-    border: primary ? "none" : "1px solid rgba(255,255,255,0.2)",
+    border: primary ? "none" : "1px solid var(--overlay-border)",
     cursor: "pointer",
     position: "relative",
     overflow: "hidden",
@@ -871,7 +871,7 @@ export function DarkHeatmap({
                   width: 11,
                   height: 11,
                   borderRadius: 2,
-                  background: v > 0 ? G : "rgba(255,255,255,0.04)",
+                  background: v > 0 ? G : "var(--overlay-divider)",
                   opacity: v === 0 ? 1 : 0.15 + v * 0.17,
                   transition: "transform 0.2s, opacity 0.2s",
                   cursor: "pointer",

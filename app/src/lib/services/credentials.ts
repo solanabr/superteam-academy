@@ -7,7 +7,7 @@ import {
   SOLANA_NETWORK,
 } from "@/lib/constants";
 import { courses } from "./courses";
-import { getReadonlyProgram } from "@/lib/solana/program";
+import { getReadonlyProgram, getAccounts } from "@/lib/solana/program";
 import { findEnrollmentPDA } from "@/lib/solana/pda";
 
 /**
@@ -59,8 +59,8 @@ export async function getCredentialsByOwner(
         }
 
         // Fallback: accept Metaplex Core assets with frozen status (soulbound)
-        const frozen = (item as any).frozen;
-        const iface = (item as any).interface;
+        const frozen = item.frozen as boolean | undefined;
+        const iface = item.interface as string | undefined;
         return frozen === true || iface === "MplCoreAsset";
       })
       .map((item: Record<string, unknown>): Credential => {
@@ -140,7 +140,7 @@ export async function getCredentialsFromEnrollments(
   const results = await Promise.allSettled(
     courses.map(async (course) => {
       const [pda] = findEnrollmentPDA(course.id, wallet);
-      const account = await (program.account as any).enrollment.fetch(pda);
+      const account = await getAccounts(program).enrollment.fetch(pda);
       return { course, account };
     }),
   );

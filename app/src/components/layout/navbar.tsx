@@ -31,15 +31,19 @@ export function Navbar({ locale }: { locale: string }) {
     setMounted(true);
   }, []);
 
-  // Detect courses listing page (not /courses/[slug]) to disable mix-blend-mode
+  // Detect pages that need normal blend mode (not mix-blend-mode: difference)
   const isCoursesPage =
     pathname === `/${locale}/courses` || pathname === `/${locale}/courses/`;
+  const isCommunityPage =
+    pathname === `/${locale}/community` ||
+    pathname.startsWith(`/${locale}/community/`);
 
   const links = [
     { href: `/${locale}`, label: t("home") },
     { href: `/${locale}/courses`, label: t("courses") },
     { href: `/${locale}/dashboard`, label: t("dashboard") },
     { href: `/${locale}/leaderboard`, label: t("leaderboard") },
+    { href: `/${locale}/community`, label: t("community") },
   ];
 
   const isActive = (href: string) => {
@@ -54,7 +58,7 @@ export function Navbar({ locale }: { locale: string }) {
       <header
         className="v9-nav"
         style={{
-          mixBlendMode: isCoursesPage ? "normal" : undefined,
+          mixBlendMode: isCoursesPage || isCommunityPage ? "normal" : undefined,
         }}
         role="banner"
       >
@@ -68,7 +72,7 @@ export function Navbar({ locale }: { locale: string }) {
             className="flex items-center gap-2.5"
             aria-label="Superteam Academy home"
           >
-            <SuperteamLogo size={20} className="text-white" />
+            <SuperteamLogo size={20} />
             <span className="v9-nav-logo">Superteam</span>
           </Link>
 
@@ -84,8 +88,8 @@ export function Navbar({ locale }: { locale: string }) {
                   aria-current={active ? "page" : undefined}
                   className={cn("v9-nav-link", active && "active")}
                   style={
-                    isCoursesPage
-                      ? { color: "rgba(255,255,255,0.7)" }
+                    isCoursesPage || isCommunityPage
+                      ? { color: "var(--c-text-muted)" }
                       : undefined
                   }
                 >
@@ -106,7 +110,7 @@ export function Navbar({ locale }: { locale: string }) {
                   : "Toggle theme"
               }
               style={
-                isCoursesPage ? { color: "rgba(255,255,255,0.7)" } : undefined
+                isCoursesPage ? { color: "var(--c-text-muted)" } : undefined
               }
             >
               {mounted && theme === "dark" ? (
@@ -125,7 +129,7 @@ export function Navbar({ locale }: { locale: string }) {
                 aria-expanded={langOpen}
                 aria-haspopup="true"
                 style={
-                  isCoursesPage ? { color: "rgba(255,255,255,0.7)" } : undefined
+                  isCoursesPage ? { color: "var(--c-text-muted)" } : undefined
                 }
               >
                 <Globe className="h-3.5 w-3.5" />
@@ -141,13 +145,15 @@ export function Navbar({ locale }: { locale: string }) {
                 role="menu"
                 aria-label="Language options"
                 className={cn(
-                  "absolute right-0 top-full z-50 mt-3 min-w-[120px] overflow-hidden border border-[rgba(255,255,255,0.1)] shadow-[0_8px_32px_rgba(0,0,0,0.6)] transition-all duration-200 origin-top-right",
+                  "absolute right-0 top-full z-50 mt-3 min-w-[120px] overflow-hidden transition-all duration-200 origin-top-right",
                   langOpen
                     ? "opacity-100 scale-100 translate-y-0"
                     : "opacity-0 scale-95 -translate-y-1 pointer-events-none",
                 )}
                 style={{
-                  background: "var(--v9-dark)",
+                  background: "var(--overlay-bg)",
+                  border: "1px solid var(--overlay-border)",
+                  boxShadow: "var(--overlay-shadow)",
                   fontFamily: "var(--v9-mono)",
                   fontSize: "10px",
                   letterSpacing: "2px",
@@ -161,12 +167,12 @@ export function Navbar({ locale }: { locale: string }) {
                     onClick={() => setLangOpen(false)}
                     role="menuitem"
                     aria-current={locale === loc ? "true" : undefined}
-                    className={cn(
-                      "block w-full px-4 py-3 transition-colors",
-                      locale === loc
-                        ? "text-[var(--v9-sol-green)]"
-                        : "text-[rgba(255,255,255,0.5)] hover:text-white",
-                    )}
+                    className="block w-full px-4 py-3 transition-colors"
+                    style={{
+                      color: locale === loc
+                        ? "var(--v9-sol-green)"
+                        : "var(--overlay-text)",
+                    }}
                   >
                     {localeLabels[loc as Locale]}
                   </Link>
@@ -179,7 +185,7 @@ export function Navbar({ locale }: { locale: string }) {
               <WalletMultiButton
                 style={{
                   background: "transparent",
-                  border: "1px solid rgba(255,255,255,0.3)",
+                  border: "1px solid var(--overlay-border)",
                   borderRadius: "9999px",
                   height: "30px",
                   padding: "0 16px",
@@ -187,7 +193,7 @@ export function Navbar({ locale }: { locale: string }) {
                   fontSize: "10px",
                   letterSpacing: "2px",
                   textTransform: "uppercase",
-                  color: "#fff",
+                  color: "var(--foreground)",
                   fontWeight: 400,
                   lineHeight: 1,
                 }}
@@ -199,7 +205,7 @@ export function Navbar({ locale }: { locale: string }) {
                   height: "30px",
                   width: "120px",
                   borderRadius: "9999px",
-                  border: "1px solid rgba(255,255,255,0.1)",
+                  border: "1px solid var(--overlay-border)",
                 }}
               />
             )}
@@ -248,7 +254,7 @@ export function Navbar({ locale }: { locale: string }) {
         <div
           className="fixed inset-0 z-[89] flex flex-col md:hidden"
           style={{
-            background: "var(--v9-dark)",
+            background: "var(--overlay-bg)",
             paddingTop: "80px",
           }}
         >
@@ -270,8 +276,8 @@ export function Navbar({ locale }: { locale: string }) {
                     fontSize: "11px",
                     letterSpacing: "3px",
                     textTransform: "uppercase" as const,
-                    color: "var(--v9-white)",
-                    borderBottom: "1px solid rgba(255,255,255,0.06)",
+                    color: "var(--overlay-text-active)",
+                    borderBottom: "1px solid var(--overlay-divider)",
                   }}
                 >
                   {link.label}
@@ -294,13 +300,13 @@ export function Navbar({ locale }: { locale: string }) {
             <div
               className="mt-8 flex items-center gap-4"
               style={{
-                borderTop: "1px solid rgba(255,255,255,0.06)",
+                borderTop: "1px solid var(--overlay-divider)",
                 paddingTop: "24px",
               }}
             >
               <Globe
                 className="h-3.5 w-3.5"
-                style={{ color: "rgba(255,255,255,0.3)" }}
+                style={{ color: "var(--overlay-text)" }}
               />
               {locales.map((loc) => (
                 <Link
@@ -324,7 +330,7 @@ export function Navbar({ locale }: { locale: string }) {
                     color:
                       locale === loc
                         ? "var(--v9-sol-green)"
-                        : "var(--v9-white)",
+                        : "var(--overlay-text-active)",
                   }}
                 >
                   {localeLabels[loc as Locale]}
@@ -338,7 +344,7 @@ export function Navbar({ locale }: { locale: string }) {
                 <WalletMultiButton
                   style={{
                     background: "transparent",
-                    border: "1px solid rgba(255,255,255,0.2)",
+                    border: "1px solid var(--overlay-border)",
                     borderRadius: "9999px",
                     height: "36px",
                     padding: "0 20px",
@@ -346,7 +352,7 @@ export function Navbar({ locale }: { locale: string }) {
                     fontSize: "10px",
                     letterSpacing: "2px",
                     textTransform: "uppercase",
-                    color: "var(--v9-white)",
+                    color: "var(--overlay-text-active)",
                     fontWeight: 400,
                     width: "100%",
                     display: "flex",
@@ -359,7 +365,7 @@ export function Navbar({ locale }: { locale: string }) {
                   style={{
                     height: "36px",
                     borderRadius: "9999px",
-                    border: "1px solid rgba(255,255,255,0.1)",
+                    border: "1px solid var(--overlay-border)",
                   }}
                 />
               )}

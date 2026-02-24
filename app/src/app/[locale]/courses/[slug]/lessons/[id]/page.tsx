@@ -1025,7 +1025,9 @@ function LessonInner({
     const cId = courseData?.id ?? slug;
 
     // Mark completed locally first (prevents duplicate completions on re-visit)
-    learningService.completeLesson(userId, cId, lessonIndex).catch(() => {});
+    learningService
+      .completeLesson(userId, cId, lessonIndex)
+      .catch((e) => console.error("local completeLesson error:", e));
 
     if (walletAddress && courseData) {
       fetch("/api/complete-lesson", {

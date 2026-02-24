@@ -123,7 +123,7 @@ export function WalletGate({ children }: WalletGateProps) {
               transition={panelTransition}
               style={{
                 position: "absolute",
-                background: "var(--v9-dark)",
+                background: "var(--overlay-bg)",
                 ...(isMobile
                   ? { top: 0, left: 0, right: 0, height: "50%" }
                   : { top: 0, left: 0, bottom: 0, width: "50%" }),
@@ -137,8 +137,8 @@ export function WalletGate({ children }: WalletGateProps) {
                   left: 24,
                   width: 20,
                   height: 20,
-                  borderTop: "1px solid rgba(255,255,255,0.15)",
-                  borderLeft: "1px solid rgba(255,255,255,0.15)",
+                  borderTop: "1px solid var(--overlay-border)",
+                  borderLeft: "1px solid var(--overlay-border)",
                 }}
               />
               <div
@@ -148,8 +148,8 @@ export function WalletGate({ children }: WalletGateProps) {
                   left: 24,
                   width: 20,
                   height: 20,
-                  borderBottom: "1px solid rgba(255,255,255,0.15)",
-                  borderLeft: "1px solid rgba(255,255,255,0.15)",
+                  borderBottom: "1px solid var(--overlay-border)",
+                  borderLeft: "1px solid var(--overlay-border)",
                 }}
               />
               {/* Dashed line */}
@@ -162,14 +162,14 @@ export function WalletGate({ children }: WalletGateProps) {
                         left: "10%",
                         right: "10%",
                         height: 0,
-                        borderBottom: "1px dashed rgba(255,255,255,0.06)",
+                        borderBottom: "1px dashed var(--overlay-divider)",
                       }
                     : {
                         top: "10%",
                         bottom: "10%",
                         right: 0,
                         width: 0,
-                        borderRight: "1px dashed rgba(255,255,255,0.06)",
+                        borderRight: "1px dashed var(--overlay-divider)",
                       }),
                 }}
               />
@@ -182,7 +182,7 @@ export function WalletGate({ children }: WalletGateProps) {
               transition={panelTransition}
               style={{
                 position: "absolute",
-                background: "var(--v9-dark)",
+                background: "var(--overlay-bg)",
                 ...(isMobile
                   ? { bottom: 0, left: 0, right: 0, height: "50%" }
                   : { top: 0, right: 0, bottom: 0, width: "50%" }),
@@ -196,8 +196,8 @@ export function WalletGate({ children }: WalletGateProps) {
                   right: 24,
                   width: 20,
                   height: 20,
-                  borderTop: "1px solid rgba(255,255,255,0.15)",
-                  borderRight: "1px solid rgba(255,255,255,0.15)",
+                  borderTop: "1px solid var(--overlay-border)",
+                  borderRight: "1px solid var(--overlay-border)",
                 }}
               />
               <div
@@ -207,8 +207,8 @@ export function WalletGate({ children }: WalletGateProps) {
                   right: 24,
                   width: 20,
                   height: 20,
-                  borderBottom: "1px solid rgba(255,255,255,0.15)",
-                  borderRight: "1px solid rgba(255,255,255,0.15)",
+                  borderBottom: "1px solid var(--overlay-border)",
+                  borderRight: "1px solid var(--overlay-border)",
                 }}
               />
               {/* Dashed line */}
@@ -221,14 +221,14 @@ export function WalletGate({ children }: WalletGateProps) {
                         left: "10%",
                         right: "10%",
                         height: 0,
-                        borderTop: "1px dashed rgba(255,255,255,0.06)",
+                        borderTop: "1px dashed var(--overlay-divider)",
                       }
                     : {
                         top: "10%",
                         bottom: "10%",
                         left: 0,
                         width: 0,
-                        borderLeft: "1px dashed rgba(255,255,255,0.06)",
+                        borderLeft: "1px dashed var(--overlay-divider)",
                       }),
                 }}
               />
@@ -273,7 +273,7 @@ export function WalletGate({ children }: WalletGateProps) {
                   width: 72,
                   height: 72,
                   borderRadius: "50%",
-                  border: "1px solid rgba(255,255,255,0.1)",
+                  border: "1px solid var(--overlay-border)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -287,7 +287,7 @@ export function WalletGate({ children }: WalletGateProps) {
                   style={{
                     width: 28,
                     height: 28,
-                    color: "rgba(255,255,255,0.5)",
+                    color: "var(--overlay-text)",
                   }}
                 />
               </div>
@@ -299,7 +299,7 @@ export function WalletGate({ children }: WalletGateProps) {
                   fontSize: "9px",
                   letterSpacing: "4px",
                   textTransform: "uppercase",
-                  color: "rgba(255,255,255,0.3)",
+                  color: "var(--c-text-dim)",
                   marginBottom: 16,
                 }}
               >
@@ -312,7 +312,7 @@ export function WalletGate({ children }: WalletGateProps) {
                   fontFamily: "var(--v9-serif)",
                   fontSize: "clamp(36px, 6vw, 64px)",
                   fontWeight: 900,
-                  color: "white",
+                  color: "var(--foreground)",
                   letterSpacing: "-2px",
                   lineHeight: 1,
                   margin: 0,
@@ -337,7 +337,7 @@ export function WalletGate({ children }: WalletGateProps) {
                 style={{
                   fontFamily: "var(--v9-sans)",
                   fontSize: "15px",
-                  color: "rgba(255,255,255,0.4)",
+                  color: "var(--c-text-dim)",
                   maxWidth: 420,
                   textAlign: "center",
                   lineHeight: 1.6,
@@ -359,12 +359,12 @@ export function WalletGate({ children }: WalletGateProps) {
                   textTransform: "uppercase",
                   padding: "16px 48px",
                   background: isConnecting
-                    ? "rgba(255,255,255,0.05)"
+                    ? "var(--overlay-divider)"
                     : "transparent",
                   color: isConnecting
-                    ? "rgba(255,255,255,0.5)"
+                    ? "var(--overlay-text)"
                     : "var(--v9-sol-green)",
-                  border: `1px solid ${isConnecting ? "rgba(255,255,255,0.1)" : "var(--v9-sol-green)"}`,
+                  border: `1px solid ${isConnecting ? "var(--overlay-border)" : "var(--v9-sol-green)"}`,
                   cursor: isConnecting ? "not-allowed" : "pointer",
                   transition: "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
                   animation: isConnecting
@@ -381,7 +381,7 @@ export function WalletGate({ children }: WalletGateProps) {
                   fontFamily: "var(--v9-mono)",
                   fontSize: "9px",
                   letterSpacing: "2px",
-                  color: "rgba(255,255,255,0.15)",
+                  color: "var(--c-text-faint)",
                   marginTop: 16,
                 }}
               >
@@ -471,7 +471,7 @@ export function WalletGate({ children }: WalletGateProps) {
                     fontSize: "9px",
                     letterSpacing: "2px",
                     textTransform: "uppercase",
-                    color: "rgba(255,255,255,0.25)",
+                    color: "var(--c-text-dim)",
                   }}
                 >
                   {isConnecting ? t("connecting") : t("noWallet")}
