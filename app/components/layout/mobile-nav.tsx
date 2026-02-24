@@ -26,7 +26,7 @@ export function MobileNav() {
       {open && (
         <div className="absolute left-0 right-0 top-16 z-50 border-b border-edge bg-surface shadow-lg backdrop-blur-lg p-4">
           <div className="flex flex-col gap-3">
-            <Link href="/#catalog" onClick={() => setOpen(false)} className="text-sm text-content-secondary hover:text-content">
+            <Link href="/courses" onClick={() => setOpen(false)} className="text-sm text-content-secondary hover:text-content">
               {t("courses")}
             </Link>
             <Link href="/my-learning" onClick={() => setOpen(false)} className="text-sm text-content-secondary hover:text-content">

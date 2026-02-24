@@ -46,7 +46,7 @@ export function Navbar() {
           <NetworkBadge />
           <div className="hidden items-center gap-4 md:flex">
             <Link
-              href="/#catalog"
+              href="/courses"
               className="text-sm text-content-secondary transition-colors hover:text-content"
             >
               {t("courses")}

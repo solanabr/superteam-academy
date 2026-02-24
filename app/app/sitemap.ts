@@ -4,6 +4,7 @@ const BASE = "https://superteam-academy-beige.vercel.app";
 const LOCALES = ["en", "pt-BR", "es"];
 const PAGES = [
   "",
+  "/courses",
   "/leaderboard",
   "/profile",
   "/settings",
