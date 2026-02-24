@@ -1,12 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Edit, MapPin, Calendar, Github, Linkedin, Wallet, Zap, Flame, Award } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/auth-context";
-import { getGravatarUrl } from "@/lib/utils";
 
 interface User {
 	id: string;
@@ -47,13 +45,7 @@ export function ProfileHeader({ user, stats }: ProfileHeaderProps) {
 	const { isAuthenticated, user: authUser, wallet } = useAuth();
 	const pathname = usePathname();
 	const walletAddress = wallet.publicKey?.toBase58();
-	const [avatarSrc, setAvatarSrc] = useState(user.avatar);
-
-	useEffect(() => {
-		if (!user.avatar && user.email) {
-			getGravatarUrl(user.email).then(setAvatarSrc);
-		}
-	}, [user.avatar, user.email]);
+	const avatarSrc = user.avatar || authUser?.image || "";
 	const isSelfProfileRoute = pathname === "/profile";
 	const identifiersMatch =
 		(authUser?.id !== undefined && authUser.id === user.id) ||

@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { useSettings } from "@/hooks/use-settings";
-import { getGravatarUrl } from "@/lib/utils";
+import { useAuth } from "@/contexts/auth-context";
 
 interface ProfileData {
 	name: string;
@@ -23,6 +23,7 @@ interface ProfileData {
 export function ProfileSettings() {
 	const { toast } = useToast();
 	const { data, loading, save } = useSettings();
+	const { user: authUser } = useAuth();
 	const [isLoading, setIsLoading] = useState(false);
 	const [profile, setProfile] = useState<ProfileData>({
 		name: "",
@@ -35,19 +36,15 @@ export function ProfileSettings() {
 
 	useEffect(() => {
 		if (!data) return;
-		const loadProfile = async () => {
-			const avatar = data.profile.image || (await getGravatarUrl(data.profile.email));
-			setProfile({
-				name: data.profile.name,
-				email: data.profile.email,
-				bio: data.profile.bio,
-				location: data.profile.location,
-				website: data.profile.website,
-				avatar,
-			});
-		};
-		loadProfile();
-	}, [data]);
+		setProfile({
+			name: data.profile.name,
+			email: data.profile.email,
+			bio: data.profile.bio,
+			location: data.profile.location,
+			website: data.profile.website,
+			avatar: data.profile.image || authUser?.image || "",
+		});
+	}, [data, authUser]);
 
 	const handleSave = async () => {
 		setIsLoading(true);
