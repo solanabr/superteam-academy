@@ -32,11 +32,12 @@ import {
   Camera,
   Loader2,
   Link,
+  Unlink,
 } from "lucide-react";
 
 export default function SettingsPage() {
   const t = useTranslations("settings");
-  const { user, profile, walletLinked, linkWallet, refreshProfile } = useAuth();
+  const { user, profile, walletLinked, linkWallet, unlinkWallet, refreshProfile } = useAuth();
   const { connected } = useWallet();
   const { setVisible } = useWalletModal();
   const { theme, setTheme } = useAppStore();
@@ -54,6 +55,7 @@ export default function SettingsPage() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [linkingWallet, setLinkingWallet] = useState(false);
+  const [unlinkingWallet, setUnlinkingWallet] = useState(false);
   const pendingLink = useRef(false);
 
   useEffect(() => {
@@ -97,6 +99,23 @@ export default function SettingsPage() {
       toast.error(err instanceof Error ? err.message : "Failed to link wallet");
     } finally {
       setLinkingWallet(false);
+    }
+  };
+
+  const handleUnlinkWallet = async () => {
+    const confirmed = window.confirm(
+      "Are you sure you want to unlink your wallet? You can link a new one afterwards.",
+    );
+    if (!confirmed) return;
+
+    setUnlinkingWallet(true);
+    try {
+      await unlinkWallet();
+      toast.success("Wallet unlinked successfully");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to unlink wallet");
+    } finally {
+      setUnlinkingWallet(false);
     }
   };
 
@@ -389,15 +408,31 @@ export default function SettingsPage() {
             </div>
 
             {walletLinked ? (
-              <div className="flex items-center gap-2 rounded-lg border bg-card p-4">
-                <Check className="h-4 w-4 text-emerald-500" />
-                <span className="text-sm font-mono">
-                  {profile?.walletAddress?.slice(0, 6)}...
-                  {profile?.walletAddress?.slice(-4)}
-                </span>
-                <span className="text-xs text-muted-foreground ml-auto">
-                  Linked
-                </span>
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 rounded-lg border bg-card p-4">
+                  <Check className="h-4 w-4 text-emerald-500" />
+                  <span className="text-sm font-mono">
+                    {profile?.walletAddress?.slice(0, 6)}...
+                    {profile?.walletAddress?.slice(-4)}
+                  </span>
+                  <span className="text-xs text-muted-foreground ml-auto">
+                    Linked
+                  </span>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleUnlinkWallet}
+                  disabled={unlinkingWallet}
+                  className="gap-2 text-destructive hover:text-destructive"
+                >
+                  {unlinkingWallet ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Unlink className="h-4 w-4" />
+                  )}
+                  {unlinkingWallet ? "Unlinking..." : "Unlink Wallet"}
+                </Button>
               </div>
             ) : (
               <div className="space-y-3">

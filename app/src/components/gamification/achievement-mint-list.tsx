@@ -134,6 +134,9 @@ export function AchievementMintList() {
       // Remove from list
       setMintable((prev) => prev.filter((a) => a.id !== achievement.id));
 
+      // Signal XP changed so dashboard stats refresh immediately
+      window.dispatchEvent(new Event("xp-updated"));
+
       toast.success(`${achievement.name} minted!`, {
         description: `+${achievement.xpReward} XP · ${data.assetAddress?.slice(0, 8)}...`,
         action: {

@@ -26,6 +26,7 @@ interface AuthState {
   signInWithGithub: () => Promise<void>;
   signInWithWallet: () => Promise<void>;
   linkWallet: () => Promise<void>;
+  unlinkWallet: () => Promise<void>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -360,6 +361,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await refreshProfile();
   };
 
+  const unlinkWallet = async () => {
+    if (!user) {
+      throw new Error("Must be signed in to unlink a wallet");
+    }
+
+    const res = await fetch("/api/auth/unlink-wallet", { method: "POST" });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error ?? "Failed to unlink wallet");
+    }
+
+    await refreshProfile();
+  };
+
   const refreshProfile = async () => {
     if (!user) return;
     await fetchProfile(user.id);
@@ -378,6 +394,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signInWithGithub,
         signInWithWallet,
         linkWallet,
+        unlinkWallet,
         signOut,
         refreshProfile,
       }}

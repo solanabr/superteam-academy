@@ -189,6 +189,8 @@ export default function CourseDetailPage({
           </a>
         </div>,
       );
+      // Signal XP changed so dashboard stats refresh immediately
+      window.dispatchEvent(new Event("xp-updated"));
       await refreshProgress();
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Unknown error";

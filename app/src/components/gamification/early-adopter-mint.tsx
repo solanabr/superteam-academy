@@ -138,6 +138,9 @@ export function EarlyAdopterMint() {
       setAlreadyMinted(true);
       setMinted(data.minted ?? minted + 1);
 
+      // Signal XP changed so dashboard stats refresh immediately
+      window.dispatchEvent(new Event("xp-updated"));
+
       toast.success("Early Adopter NFT minted!", {
         description: `NFT ${data.assetAddress?.slice(0, 8)}...`,
         action: {

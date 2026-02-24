@@ -1,8 +1,9 @@
 "use client";
 
-import { use, useMemo, useCallback, useEffect, useRef } from "react";
+import { use, useMemo, useCallback, useState, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
+import { useRouter } from "next/navigation";
 import { PlatformLayout } from "@/components/layout";
 import { CodeEditor } from "@/components/lesson";
 import { LessonQuiz } from "@/components/lesson/quiz";
@@ -25,6 +26,7 @@ import {
   BookOpen,
   Zap,
   WifiOff,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { trackEvent } from "@/components/providers/analytics-provider";
@@ -49,6 +51,8 @@ export default function LessonPage({
     markHelpful,
   } = useComments(course?.courseId ?? "", lessonIndex);
   const isOnline = useOnlineStatus();
+  const router = useRouter();
+  const [completing, setCompleting] = useState(false);
 
   // Find the lesson
   const lessonInfo = useMemo(() => {
@@ -73,58 +77,71 @@ export default function LessonPage({
   const isVideoLesson = lessonInfo?.lesson.type === "video" && !!lessonInfo.lesson.videoUrl;
 
   const handleComplete = useCallback(async () => {
-    if (!lessonInfo || isComplete) return;
+    if (!lessonInfo || isComplete || completing) return;
+    setCompleting(true);
     try {
       const result = await completeLesson(lessonIndex, lessonInfo.lesson.xp);
-      if (!result) return; // user not loaded yet — pendingComplete will retry
-      pendingComplete.current = false;
-      trackEvent("lesson_completed", { slug, lessonIndex, xp: lessonInfo.lesson.xp });
-      toast.success(`+${lessonInfo.lesson.xp} XP earned!`);
+      if (result) {
+        trackEvent("lesson_completed", { slug, lessonIndex, xp: lessonInfo.lesson.xp });
+        toast.success(`+${lessonInfo.lesson.xp} XP earned!`);
+      }
     } catch {
       toast.error("Failed to save progress. Please try again.");
+    } finally {
+      setCompleting(false);
     }
-  }, [lessonInfo, lessonIndex, isComplete, completeLesson, slug]);
+  }, [lessonInfo, lessonIndex, isComplete, completing, completeLesson, slug]);
 
-  // Auto-complete content lessons when user scrolls to bottom
+  // Next: complete lesson (if not already) then navigate
+  const handleNext = useCallback(async () => {
+    if (!lessonInfo) return;
+    if (!isComplete && !isQuizLesson) {
+      setCompleting(true);
+      try {
+        const result = await completeLesson(lessonIndex, lessonInfo.lesson.xp);
+        if (result) {
+          trackEvent("lesson_completed", { slug, lessonIndex, xp: lessonInfo.lesson.xp });
+          toast.success(`+${lessonInfo.lesson.xp} XP earned!`);
+        }
+      } catch {
+        toast.error("Failed to save progress. Please try again.");
+        setCompleting(false);
+        return;
+      }
+      setCompleting(false);
+    }
+    if (hasNext) {
+      router.push(`/courses/${slug}/lessons/${lessonIndex + 1}`);
+    } else {
+      router.push(`/courses/${slug}`);
+    }
+  }, [lessonInfo, isComplete, isQuizLesson, hasNext, completeLesson, lessonIndex, slug, router]);
+
+  // Auto-complete content lessons when user scrolls to bottom (convenience — not sole mechanism)
   const contentEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const autoCompleted = useRef(false);
-  const pendingComplete = useRef(false);
 
   useEffect(() => {
     autoCompleted.current = false;
-    pendingComplete.current = false;
   }, [lessonIndex]);
 
-  // Flush pending completion once progress hook has a user/connection ready
   useEffect(() => {
-    if (pendingComplete.current && !isComplete && lessonInfo) {
-      pendingComplete.current = false;
-      handleComplete();
-    }
-  }, [isComplete, lessonInfo, handleComplete, progress]);
-
-  useEffect(() => {
-    if (!contentEndRef.current || isComplete || isQuizLesson || lessonInfo?.lesson.type === "challenge") return;
-
-    // Use root: null (viewport) as fallback — the scroll container ref may not
-    // be assigned yet on the first effect run in production builds
-    const root = scrollContainerRef.current ?? null;
+    const sentinel = contentEndRef.current;
+    const root = scrollContainerRef.current;
+    if (!sentinel || !root || isComplete || isQuizLesson || lessonInfo?.lesson.type === "challenge") return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting && !autoCompleted.current) {
           autoCompleted.current = true;
-          // completeLesson silently no-ops when user isn't loaded yet.
-          // Mark pending so it retries once auth resolves.
-          pendingComplete.current = true;
           handleComplete();
         }
       },
       { threshold: 0.1, root },
     );
 
-    observer.observe(contentEndRef.current);
+    observer.observe(sentinel);
     return () => observer.disconnect();
   }, [isComplete, isQuizLesson, lessonInfo, handleComplete]);
 
@@ -306,7 +323,7 @@ export default function LessonPage({
                     <div className="mt-8 text-center">
                       <div className="inline-flex items-center gap-2 text-sm text-emerald-500 font-medium">
                         <CheckCircle2 className="h-4 w-4" />
-                        Lesson completed
+                        Lesson completed — +{lesson.xp} XP
                       </div>
                     </div>
                   )}
@@ -358,12 +375,32 @@ export default function LessonPage({
 
               <div>
                 {hasNext ? (
-                  <Button asChild size="sm" className="gap-1.5">
-                    <Link href={`/courses/${slug}/lessons/${lessonIndex + 1}`}>
+                  isComplete ? (
+                    <Button asChild size="sm" className="gap-1.5">
+                      <Link href={`/courses/${slug}/lessons/${lessonIndex + 1}`}>
+                        {t("next")}
+                        <ArrowRight className="h-3.5 w-3.5" />
+                      </Link>
+                    </Button>
+                  ) : isQuizLesson ? (
+                    <Button size="sm" className="gap-1.5" disabled>
                       {t("next")}
                       <ArrowRight className="h-3.5 w-3.5" />
-                    </Link>
-                  </Button>
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      className="gap-1.5"
+                      onClick={handleNext}
+                      disabled={completing}
+                    >
+                      {completing ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : null}
+                      {t("next")}
+                      {!completing && <ArrowRight className="h-3.5 w-3.5" />}
+                    </Button>
+                  )
                 ) : (
                   <Button asChild size="sm" className="gap-1.5">
                     <Link href={`/courses/${slug}`}>

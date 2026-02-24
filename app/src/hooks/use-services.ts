@@ -266,6 +266,22 @@ export function useXP() {
     refresh().finally(() => setLoading(false));
   }, [user, refresh]);
 
+  // Auto-refresh when other components signal XP changed (e.g. achievement mint, course finalize)
+  useEffect(() => {
+    const handler = () => { refresh(); };
+    window.addEventListener("xp-updated", handler);
+    return () => window.removeEventListener("xp-updated", handler);
+  }, [refresh]);
+
+  // Auto-refresh when navigating back to the dashboard tab
+  useEffect(() => {
+    const handler = () => {
+      if (document.visibilityState === "visible") refresh();
+    };
+    document.addEventListener("visibilitychange", handler);
+    return () => document.removeEventListener("visibilitychange", handler);
+  }, [refresh]);
+
   // Prefer on-chain XP from the linked wallet when available
   const useOnChain = !!linkedWallet && !onChainLoading && onChainXP > 0;
   const amount = useOnChain ? onChainXP : supabaseBalance.amount;

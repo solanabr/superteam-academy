@@ -24,7 +24,7 @@ const DISMISS_KEY = "link-wallet-prompt-dismissed";
  */
 export function LinkWalletPrompt() {
   const t = useTranslations("auth");
-  const { user, isLoading, walletLinked, linkWallet } = useAuth();
+  const { user, isLoading, walletLinked, linkWallet, profile } = useAuth();
   const { connected } = useWallet();
   const { setVisible } = useWalletModal();
 
@@ -40,9 +40,11 @@ export function LinkWalletPrompt() {
     !user.app_metadata.provider.includes("wallet");
 
   // Show prompt after auth loads, user is OAuth, no wallet linked, not dismissed
+  // Skip if onboarding hasn't been completed yet (wallet step is part of onboarding)
   useEffect(() => {
     if (isLoading || hasShown.current) return;
     if (!user || !isOAuthUser || walletLinked) return;
+    if (!profile?.onboardingCompleted) return;
 
     const dismissed = sessionStorage.getItem(DISMISS_KEY);
     if (dismissed) return;
