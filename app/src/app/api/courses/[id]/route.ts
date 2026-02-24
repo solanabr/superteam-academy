@@ -127,9 +127,9 @@ export async function PUT(
 
     const { id } = await params;
 
-    // Verify ownership
+    // Verify ownership and get existing courseId
     const existing = await sanityClient.fetch(
-      `*[_type == "course" && _id == $id && creator == $wallet][0] { _id }`,
+      `*[_type == "course" && _id == $id && creator == $wallet][0] { _id, courseId }`,
       { id, wallet },
     );
 
@@ -284,6 +284,7 @@ export async function PUT(
     const patch: Record<string, unknown> = {
       title,
       slug: { _type: "slug", current: slug },
+      courseId: existing.courseId || slug,
       description,
       difficulty: Number(difficulty),
       trackId: trackId ? Number(trackId) : 1,

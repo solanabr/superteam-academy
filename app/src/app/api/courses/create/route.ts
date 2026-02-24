@@ -155,6 +155,7 @@ export async function POST(req: NextRequest) {
       _type: "course",
       title,
       slug: { _type: "slug", current: slug },
+      courseId: slug,
       description,
       difficulty: Number(difficulty),
       trackId: trackId ? Number(trackId) : 1,

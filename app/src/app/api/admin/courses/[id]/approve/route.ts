@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { sanityWriteClient } from "@/lib/sanity/write-client";
 import { sanityClient } from "@/lib/sanity/client";
 import { isAdminWallet } from "@/lib/admin";
-import { createCourseOnChain } from "@/lib/solana/create-course";
+import { createCourseOnChain, updateCourseOnChain, courseExistsOnChain } from "@/lib/solana/create-course";
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -47,7 +47,7 @@ export async function POST(
 
     const course = await sanityClient.fetch(
       `*[_type == "course" && _id == $id][0]{
-        _id, status, courseId, lessonCount, difficulty, xpPerLesson, trackId, trackLevel
+        _id, status, courseId, "slug": slug.current, lessonCount, difficulty, xpPerLesson, trackId, trackLevel
       }`,
       { id },
     );
@@ -67,18 +67,33 @@ export async function POST(
       })
       .commit();
 
-    // Create course on-chain (authority pays rent)
+    // Create or update course on-chain (authority pays rent)
     let onChainTx: string | null = null;
-    if (course.courseId) {
+    const onChainCourseId = course.courseId || course.slug;
+    if (onChainCourseId) {
+      // Backfill courseId in Sanity if it was missing
+      if (!course.courseId && course.slug) {
+        await sanityWriteClient.patch(id).set({ courseId: course.slug }).commit();
+      }
       try {
-        onChainTx = await createCourseOnChain({
-          courseId: course.courseId,
-          lessonCount: course.lessonCount ?? 1,
-          difficulty: course.difficulty ?? 1,
-          xpPerLesson: course.xpPerLesson ?? 30,
-          trackId: course.trackId ?? 1,
-          trackLevel: course.trackLevel ?? 0,
-        });
+        const exists = await courseExistsOnChain(onChainCourseId);
+        if (exists) {
+          // PDA already exists (re-approval after edit) — update on-chain data
+          onChainTx = await updateCourseOnChain({
+            courseId: onChainCourseId,
+            xpPerLesson: course.xpPerLesson ?? 30,
+            lessonCount: course.lessonCount ?? 1,
+          });
+        } else {
+          onChainTx = await createCourseOnChain({
+            courseId: onChainCourseId,
+            lessonCount: course.lessonCount ?? 1,
+            difficulty: course.difficulty ?? 1,
+            xpPerLesson: course.xpPerLesson ?? 30,
+            trackId: course.trackId ?? 1,
+            trackLevel: course.trackLevel ?? 0,
+          });
+        }
       } catch (err) {
         console.error("[admin/courses/approve] on-chain creation failed:", err);
       }

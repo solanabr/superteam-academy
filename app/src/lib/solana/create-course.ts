@@ -175,3 +175,99 @@ export async function createCourseOnChain(
   const sig = await sendAndConfirmTransaction(connection, tx, [authority]);
   return sig;
 }
+
+// Anchor discriminator for "update_course"
+const UPDATE_COURSE_DISC = Buffer.from([
+  81, 217, 18, 192, 129, 233, 129, 231,
+]);
+
+/**
+ * Borsh-serialize UpdateCourseParams.
+ * All fields are Option<T> — serialized as 0 (None) or 1 + value (Some).
+ */
+function serializeUpdateCourseParams(params: {
+  xpPerLesson?: number;
+  creatorRewardXp?: number;
+}): Buffer {
+  // new_content_tx_id: Option<[u8;32]> + new_is_active: Option<bool>
+  // + new_xp_per_lesson: Option<u32> + new_creator_reward_xp: Option<u32>
+  // + new_min_completions_for_reward: Option<u16>
+  const buf = Buffer.alloc(1 + 1 + 5 + 5 + 1);
+  let offset = 0;
+
+  // new_content_tx_id: None
+  buf.writeUInt8(0, offset);
+  offset += 1;
+
+  // new_is_active: None
+  buf.writeUInt8(0, offset);
+  offset += 1;
+
+  // new_xp_per_lesson: Some(value)
+  if (params.xpPerLesson !== undefined) {
+    buf.writeUInt8(1, offset);
+    offset += 1;
+    buf.writeUInt32LE(params.xpPerLesson, offset);
+    offset += 4;
+  } else {
+    buf.writeUInt8(0, offset);
+    offset += 1;
+  }
+
+  // new_creator_reward_xp: Some(value)
+  if (params.creatorRewardXp !== undefined) {
+    buf.writeUInt8(1, offset);
+    offset += 1;
+    buf.writeUInt32LE(params.creatorRewardXp, offset);
+    offset += 4;
+  } else {
+    buf.writeUInt8(0, offset);
+    offset += 1;
+  }
+
+  // new_min_completions_for_reward: None
+  buf.writeUInt8(0, offset);
+
+  return buf.subarray(0, offset + 1);
+}
+
+export interface UpdateCourseOnChainParams {
+  courseId: string;
+  xpPerLesson: number;
+  lessonCount: number;
+}
+
+/**
+ * Update an existing course on-chain.
+ * Returns the transaction signature.
+ */
+export async function updateCourseOnChain(
+  params: UpdateCourseOnChainParams
+): Promise<string> {
+  const connection = getConnection();
+  const authority = getBackendSigner();
+  const coursePda = getCoursePda(params.courseId);
+  const configPda = getConfigPda();
+
+  const creatorRewardXp = params.lessonCount * params.xpPerLesson;
+
+  const paramsData = serializeUpdateCourseParams({
+    xpPerLesson: params.xpPerLesson,
+    creatorRewardXp,
+  });
+
+  const data = Buffer.concat([UPDATE_COURSE_DISC, paramsData]);
+
+  const ix = new TransactionInstruction({
+    programId: PROGRAM_ID,
+    keys: [
+      { pubkey: configPda, isSigner: false, isWritable: false },
+      { pubkey: coursePda, isSigner: false, isWritable: true },
+      { pubkey: authority.publicKey, isSigner: true, isWritable: false },
+    ],
+    data,
+  });
+
+  const tx = new Transaction().add(ix);
+  return sendAndConfirmTransaction(connection, tx, [authority]);
+}

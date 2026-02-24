@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { AnimatePresence } from "framer-motion";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
+import { useAuth } from "@/components/providers/auth-provider";
 import {
   Dialog,
   DialogContent,
@@ -23,6 +24,7 @@ interface OnboardingModalProps {
 
 export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
   const t = useTranslations("onboarding");
+  const { refreshProfile } = useAuth();
   const [step, setStep] = useState(0);
   const { visible: walletModalVisible } = useWalletModal();
 
@@ -33,11 +35,13 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
   const completeOnboarding = useCallback(async () => {
     try {
       await fetch("/api/onboarding/complete", { method: "POST" });
+      // Refresh profile so onboardingCompleted reflects the DB update
+      await refreshProfile();
     } catch {
       // Non-blocking
     }
     onOpenChange(false);
-  }, [onOpenChange]);
+  }, [onOpenChange, refreshProfile]);
 
   const next = useCallback(() => {
     setStep((s) => Math.min(s + 1, TOTAL_STEPS - 1));

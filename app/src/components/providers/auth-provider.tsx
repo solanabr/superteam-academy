@@ -6,6 +6,7 @@ import {
   useEffect,
   useState,
   useCallback,
+  useRef,
   type ReactNode,
 } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
@@ -37,6 +38,40 @@ export function useAuth() {
   return ctx;
 }
 
+interface ProfileRow {
+  id: string;
+  wallet_address: string | null;
+  email: string | null;
+  username: string | null;
+  display_name: string | null;
+  bio: string | null;
+  avatar_url: string | null;
+  social_links: Record<string, string> | null;
+  created_at: string;
+  is_public: boolean | null;
+  preferred_language: string | null;
+  theme: string | null;
+  onboarding_completed: boolean | null;
+}
+
+function mapRowToProfile(data: ProfileRow): UserProfile {
+  return {
+    id: data.id,
+    walletAddress: data.wallet_address,
+    email: data.email,
+    username: data.username ?? data.id.slice(0, 8),
+    displayName: data.display_name ?? "Learner",
+    bio: data.bio ?? "",
+    avatarUrl: data.avatar_url,
+    socialLinks: data.social_links ?? {},
+    joinedAt: data.created_at,
+    isPublic: data.is_public ?? true,
+    preferredLanguage: data.preferred_language ?? "en",
+    theme: (data.theme as UserProfile["theme"]) ?? "light",
+    onboardingCompleted: data.onboarding_completed ?? false,
+  };
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const supabase = createSupabaseBrowserClient();
   const { publicKey, signMessage } = useWallet();
@@ -46,83 +81,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const initializedRef = useRef(false);
 
   const isAuthenticated = !!user;
   const walletLinked = !!profile?.walletAddress;
 
-  interface ProfileRow {
-    id: string;
-    wallet_address: string | null;
-    email: string | null;
-    username: string | null;
-    display_name: string | null;
-    bio: string | null;
-    avatar_url: string | null;
-    social_links: Record<string, string> | null;
-    created_at: string;
-    is_public: boolean | null;
-    preferred_language: string | null;
-    theme: string | null;
-    onboarding_completed: boolean | null;
-  }
-
-  const mapRowToProfile = useCallback(
-    (data: ProfileRow): UserProfile => ({
-      id: data.id,
-      walletAddress: data.wallet_address,
-      email: data.email,
-      username: data.username ?? data.id.slice(0, 8),
-      displayName: data.display_name ?? "Learner",
-      bio: data.bio ?? "",
-      avatarUrl: data.avatar_url,
-      socialLinks: data.social_links ?? {},
-      joinedAt: data.created_at,
-      isPublic: data.is_public ?? true,
-      preferredLanguage: data.preferred_language ?? "en",
-      theme: (data.theme as UserProfile["theme"]) ?? "light",
-      onboardingCompleted: data.onboarding_completed ?? false,
-    }),
-    []
+  const applyProfile = useCallback(
+    (p: UserProfile) => {
+      setProfile(p);
+      setUser(p);
+    },
+    [setUser]
   );
 
   const fetchProfile = useCallback(
-    async (userId: string) => {
-      // Try server API first (reliable for wallet-authenticated users)
-      try {
-        const res = await fetch("/api/profile");
-        if (res.ok) {
-          const { profile: row } = await res.json();
-          if (row && row.id === userId) {
-            const userProfile = mapRowToProfile(row);
-            setProfile(userProfile);
-            setUser(userProfile);
-            return userProfile;
-          }
-        }
-      } catch {
-        // Server API unavailable — fall through to browser client
-      }
-
-      // Fallback: browser client (works for OAuth users)
+    async (userId: string): Promise<UserProfile | null> => {
+      // Try browser Supabase client first (fastest, no server round-trip)
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", userId)
         .single();
 
-      if (error) {
-        console.error("[Auth] Failed to fetch profile:", error.message);
+      if (data) {
+        const p = mapRowToProfile(data);
+        applyProfile(p);
+        return p;
       }
 
-      if (data) {
-        const userProfile = mapRowToProfile(data);
-        setProfile(userProfile);
-        setUser(userProfile);
-        return userProfile;
+      // Fallback: server API (handles wallet-auth cookie sessions)
+      if (error) {
+        try {
+          const res = await fetch("/api/profile");
+          if (res.ok) {
+            const { profile: row } = await res.json();
+            if (row && row.id === userId) {
+              const p = mapRowToProfile(row);
+              applyProfile(p);
+              return p;
+            }
+          }
+        } catch {
+          // Both methods failed
+        }
       }
+
       return null;
     },
-    [supabase, setUser, mapRowToProfile]
+    [supabase, applyProfile]
   );
 
   const ensureProfile = useCallback(
@@ -130,14 +136,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const existing = await fetchProfile(authUser.id);
       if (existing) return existing;
 
-      // Try client-side upsert first
+      // Profile doesn't exist yet — create it
+      // Try server fallback first (admin client bypasses RLS, most reliable)
+      try {
+        const res = await fetch("/api/auth/ensure-profile", { method: "POST" });
+        if (res.ok) {
+          const created = await fetchProfile(authUser.id);
+          if (created) return created;
+        }
+      } catch {
+        // Server unavailable
+      }
+
+      // Last resort: client-side upsert
       const username =
         authUser.user_metadata?.preferred_username ??
         authUser.user_metadata?.user_name ??
         authUser.email?.split("@")[0] ??
         authUser.id.slice(0, 8);
 
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("profiles")
         .upsert(
           {
@@ -159,96 +177,63 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .select()
         .single();
 
-      if (error || !data) {
-        console.error("[Auth] Client upsert failed, trying server fallback:", error?.message ?? "no data returned");
-        // Fallback: ask the server to create the profile (admin client bypasses RLS)
-        try {
-          const res = await fetch("/api/auth/ensure-profile", { method: "POST" });
-          if (!res.ok) {
-            const body = await res.json().catch(() => ({}));
-            console.error("[Auth] Server ensure-profile returned", res.status, body);
-          }
-        } catch (fetchErr) {
-          console.error("[Auth] Server ensure-profile network error:", fetchErr);
-        }
-        // Retry fetch after server-side profile creation (with short delay for DB propagation)
-        await new Promise((r) => setTimeout(r, 300));
-        const retryProfile = await fetchProfile(authUser.id);
-        if (retryProfile) return retryProfile;
-
-        // Final retry via browser client (handles case where /api/profile is unavailable)
-        const { data: fallbackData } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", authUser.id)
-          .single();
-        if (fallbackData) {
-          const fp = mapRowToProfile(fallbackData);
-          setProfile(fp);
-          setUser(fp);
-          return fp;
-        }
-
-        console.error("[Auth] All profile creation attempts failed for user:", authUser.id);
-        return null;
+      if (data) {
+        const p = mapRowToProfile(data);
+        applyProfile(p);
+        return p;
       }
 
-      return fetchProfile(authUser.id);
+      console.error("[Auth] All profile creation attempts failed for user:", authUser.id);
+      return null;
     },
-    [supabase, fetchProfile, mapRowToProfile, setUser]
+    [supabase, fetchProfile, applyProfile]
   );
 
-  // Listen for auth changes
+  // Bootstrap session + listen for changes
   useEffect(() => {
+    let cancelled = false;
+
     // Safety timeout — ensure isLoading resolves even if profile fetch hangs
     const safetyTimeout = setTimeout(() => {
-      setIsLoading(false);
+      if (!cancelled) setIsLoading(false);
     }, 5000);
 
-    // Track whether profile was loaded from onAuthStateChange to avoid
-    // duplicate work from getSession running concurrently
-    let profileLoaded = false;
+    // 1) Bootstrap: get existing session (fast, uses cookies)
+    supabase.auth.getSession().then(async ({ data: { session: s } }) => {
+      if (cancelled) return;
+      setSession(s);
+      setAuthUser(s?.user ?? null);
+      if (s?.user) {
+        await ensureProfile(s.user).catch(() => {});
+      }
+      initializedRef.current = true;
+      if (!cancelled) setIsLoading(false);
+    });
 
+    // 2) Listen for subsequent auth events (sign-in, sign-out, token refresh)
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, newSession) => {
+      if (cancelled) return;
+      // Skip initial event if we already bootstrapped
+      if (!initializedRef.current) return;
+
       setSession(newSession);
       setAuthUser(newSession?.user ?? null);
 
       if (newSession?.user) {
-        try {
-          await ensureProfile(newSession.user);
-          profileLoaded = true;
-        } catch (err) {
-          console.error("[Auth] ensureProfile failed in onAuthStateChange:", err);
+        // Only re-fetch profile on actual sign-in, not token refreshes
+        if (event === "SIGNED_IN") {
+          await ensureProfile(newSession.user).catch(() => {});
         }
       } else {
         setProfile(null);
         setUser(null);
       }
-      setIsLoading(false);
-    });
-
-    // Fallback initial session check — only load profile if onAuthStateChange
-    // hasn't already handled it (avoids double-fetching race condition)
-    supabase.auth.getSession().then(async ({ data: { session: s } }) => {
-      if (profileLoaded) {
-        // onAuthStateChange already handled this session
-        return;
-      }
-      setSession(s);
-      setAuthUser(s?.user ?? null);
-      if (s?.user) {
-        try {
-          await ensureProfile(s.user);
-        } catch (err) {
-          console.error("[Auth] ensureProfile failed in getSession:", err);
-        }
-      }
-      setIsLoading(false);
     });
 
     return () => {
+      cancelled = true;
       clearTimeout(safetyTimeout);
       subscription.unsubscribe();
     };

@@ -74,30 +74,54 @@ export default function LessonPage({
 
   const handleComplete = useCallback(async () => {
     if (!lessonInfo || isComplete) return;
-    await completeLesson(lessonIndex, lessonInfo.lesson.xp);
-    trackEvent("lesson_completed", { slug, lessonIndex, xp: lessonInfo.lesson.xp });
-    toast.success(`+${lessonInfo.lesson.xp} XP earned!`);
+    try {
+      const result = await completeLesson(lessonIndex, lessonInfo.lesson.xp);
+      if (!result) return; // user not loaded yet — pendingComplete will retry
+      pendingComplete.current = false;
+      trackEvent("lesson_completed", { slug, lessonIndex, xp: lessonInfo.lesson.xp });
+      toast.success(`+${lessonInfo.lesson.xp} XP earned!`);
+    } catch {
+      toast.error("Failed to save progress. Please try again.");
+    }
   }, [lessonInfo, lessonIndex, isComplete, completeLesson, slug]);
 
   // Auto-complete content lessons when user scrolls to bottom
   const contentEndRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const autoCompleted = useRef(false);
+  const pendingComplete = useRef(false);
 
   useEffect(() => {
     autoCompleted.current = false;
+    pendingComplete.current = false;
   }, [lessonIndex]);
+
+  // Flush pending completion once progress hook has a user/connection ready
+  useEffect(() => {
+    if (pendingComplete.current && !isComplete && lessonInfo) {
+      pendingComplete.current = false;
+      handleComplete();
+    }
+  }, [isComplete, lessonInfo, handleComplete, progress]);
 
   useEffect(() => {
     if (!contentEndRef.current || isComplete || isQuizLesson || lessonInfo?.lesson.type === "challenge") return;
+
+    // Use root: null (viewport) as fallback — the scroll container ref may not
+    // be assigned yet on the first effect run in production builds
+    const root = scrollContainerRef.current ?? null;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting && !autoCompleted.current) {
           autoCompleted.current = true;
+          // completeLesson silently no-ops when user isn't loaded yet.
+          // Mark pending so it retries once auth resolves.
+          pendingComplete.current = true;
           handleComplete();
         }
       },
-      { threshold: 0.5 },
+      { threshold: 0.1, root },
     );
 
     observer.observe(contentEndRef.current);
@@ -238,7 +262,7 @@ export default function LessonPage({
               </ResizablePanelGroup>
             ) : (
               /* Content / Quiz lesson */
-              <div className="h-full overflow-y-auto">
+              <div ref={scrollContainerRef} className="h-full overflow-y-auto">
                 <div className="container mx-auto max-w-3xl px-4 py-8">
                   {/* Video embed for video lessons */}
                   {isVideoLesson && (
@@ -275,7 +299,7 @@ export default function LessonPage({
                   )}
 
                   {/* Auto-complete sentinel for content lessons */}
-                  {!isQuizLesson && <div ref={contentEndRef} className="h-1" />}
+                  {!isQuizLesson && <div ref={contentEndRef} className="h-4" />}
 
                   {/* Completion status */}
                   {isComplete && !isQuizLesson && (
