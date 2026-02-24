@@ -211,7 +211,7 @@ export async function mapCourseToDetail(
 				gravatarKey = sanityUser.email;
 			}
 		}
-		instructorAvatar = await getGravatarUrl(gravatarKey);
+		instructorAvatar = getGravatarUrl(gravatarKey);
 	}
 
 	return {

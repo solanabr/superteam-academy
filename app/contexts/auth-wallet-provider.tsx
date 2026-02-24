@@ -42,7 +42,7 @@ function AuthProviderInner({
 			userId: result.data.user.id,
 		});
 
-		const image = result.data.user.image || (await getGravatarUrl(result.data.user.email));
+		const image = result.data.user.image || getGravatarUrl(result.data.user.email);
 		const userData: AuthUser = {
 			id: result.data.user.id,
 			name: result.data.user.name,

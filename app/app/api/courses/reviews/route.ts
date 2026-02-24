@@ -122,7 +122,7 @@ export async function POST(request: Request) {
 		id: reviewId,
 		user: {
 			name: session.user.name,
-			avatar: session.user.image || (await getGravatarUrl(session.user.email)),
+			avatar: session.user.image || getGravatarUrl(session.user.email),
 		},
 		rating: payload.rating,
 		date: createdAt,

@@ -23,6 +23,7 @@ import { calculateLevelFromXP } from "@superteam-academy/gamification";
 import { CredentialService } from "@/services/credential-service";
 import { AchievementService } from "@/services/achievement-service";
 import { getGravatarUrl } from "@/lib/utils";
+import { getUserByWallet } from "@/lib/sanity-users";
 
 export const metadata: Metadata = {
 	title: "Profile | Superteam Academy",
@@ -119,7 +120,7 @@ async function getDynamicProfile(walletAddress?: string) {
 				id: "anonymous",
 				name: "Connect Wallet",
 				email: "",
-				avatar: await getGravatarUrl("anonymous"),
+				avatar: getGravatarUrl("anonymous"),
 				bio: "Add ?wallet=<public-key> to view on-chain profile data.",
 				joinDate: new Date().toISOString(),
 				location: "",
@@ -144,7 +145,7 @@ async function getDynamicProfile(walletAddress?: string) {
 				id: "invalid-wallet",
 				name: "Invalid Wallet",
 				email: "",
-				avatar: await getGravatarUrl("invalid-wallet"),
+				avatar: getGravatarUrl("invalid-wallet"),
 				bio: "Wallet address is invalid. Use a valid Solana public key.",
 				joinDate: new Date().toISOString(),
 				location: "",
@@ -334,12 +335,15 @@ async function getDynamicProfile(walletAddress?: string) {
 		},
 	}));
 
+	const sanityUser = await getUserByWallet(learner.toBase58());
+	const gravatarKey = sanityUser?.email || learner.toBase58();
+
 	return {
 		user: {
 			id: learner.toBase58(),
-			name: `Learner ${learner.toBase58().slice(0, 6)}`,
-			email: "",
-			avatar: await getGravatarUrl(learner.toBase58()),
+			name: sanityUser?.name || `Learner ${learner.toBase58().slice(0, 6)}`,
+			email: sanityUser?.email || "",
+			avatar: getGravatarUrl(gravatarKey),
 			bio: "On-chain academy profile",
 			joinDate: enrollments[0]
 				? new Date(enrollments[0].account.enrolledAt * 1000).toISOString()
