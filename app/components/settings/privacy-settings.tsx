@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Eye, Users, Lock, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -13,6 +13,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useSettings } from "@/hooks/use-settings";
 
 interface PrivacyState {
 	profileVisibility: "public" | "friends" | "private";
@@ -23,6 +24,16 @@ interface PrivacyState {
 	dataSharing: boolean;
 	analyticsTracking: boolean;
 }
+
+const DEFAULTS: PrivacyState = {
+	profileVisibility: "public",
+	showProgress: true,
+	showAchievements: true,
+	showActivity: false,
+	allowMessaging: true,
+	dataSharing: false,
+	analyticsTracking: true,
+};
 
 const TOGGLE_ITEMS = [
 	{
@@ -73,46 +84,22 @@ const VISIBILITY_OPTIONS = [
 	},
 ];
 
-const PRIVACY_STORAGE_KEY = "superteam-academy-privacy";
-
-function loadPrivacySettings(): PrivacyState {
-	if (typeof window === "undefined")
-		return {
-			profileVisibility: "public",
-			showProgress: true,
-			showAchievements: true,
-			showActivity: false,
-			allowMessaging: true,
-			dataSharing: false,
-			analyticsTracking: true,
-		};
-	try {
-		const raw = localStorage.getItem(PRIVACY_STORAGE_KEY);
-		if (raw) return JSON.parse(raw);
-	} catch {
-		/* ignore parse errors */
-	}
-	return {
-		profileVisibility: "public",
-		showProgress: true,
-		showAchievements: true,
-		showActivity: false,
-		allowMessaging: true,
-		dataSharing: false,
-		analyticsTracking: true,
-	};
-}
-
 export function PrivacySettings() {
 	const { toast } = useToast();
+	const { data, save } = useSettings();
 	const [isLoading, setIsLoading] = useState(false);
 	const [isExporting, setIsExporting] = useState(false);
-	const [settings, setSettings] = useState<PrivacyState>(loadPrivacySettings);
+	const [settings, setSettings] = useState<PrivacyState>(DEFAULTS);
+
+	useEffect(() => {
+		if (!data?.settings?.privacy) return;
+		setSettings((prev) => ({ ...prev, ...data.settings.privacy }));
+	}, [data]);
 
 	const handleSave = async () => {
 		setIsLoading(true);
 		try {
-			localStorage.setItem(PRIVACY_STORAGE_KEY, JSON.stringify(settings));
+			await save({ settings: { privacy: settings } });
 			toast({ title: "Privacy updated", description: "Your preferences have been saved." });
 		} catch {
 			toast({ title: "Error", description: "Failed to save.", variant: "destructive" });

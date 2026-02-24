@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { ArrowLeft, Wallet } from "lucide-react";
+import { ArrowLeft, Wallet, RefreshCw } from "lucide-react";
 import { useTranslations } from "next-intl";
+import type { WalletName } from "@solana/wallet-adapter-base";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -12,6 +13,14 @@ import {
 	DialogDescription,
 } from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/auth-context";
+
+const WALLET_ICONS: Record<string, string> = {
+	Phantom: "/wallets/phantom.png",
+	Solflare: "/wallets/solflare.png",
+	Backpack: "/wallets/backpack.png",
+	Glow: "/wallets/glow.png",
+	"Coinbase Wallet": "/wallets/coinbase.png",
+};
 
 interface LoginModalProps {
 	open: boolean;
@@ -26,11 +35,13 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
 	const [step, setStep] = useState<Step>("choose");
 	const [isLoading, setIsLoading] = useState<string | null>(null);
 	const [error, setError] = useState<string | null>(null);
+	const [showWalletPicker, setShowWalletPicker] = useState(false);
 
 	const reset = useCallback(() => {
 		setStep("choose");
 		setIsLoading(null);
 		setError(null);
+		setShowWalletPicker(false);
 	}, []);
 
 	const handleOpenChange = useCallback(
@@ -74,6 +85,24 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
 		}
 		setStep("wallet-verify");
 	}, [wallet, isWalletConnected, t]);
+
+	const handleSelectSpecificWallet = useCallback(
+		async (walletName: string) => {
+			setError(null);
+			setIsLoading(`wallet-switch-${walletName}`);
+			try {
+				await wallet.disconnect();
+				await wallet.select(walletName as WalletName);
+				await wallet.connect();
+				setShowWalletPicker(false);
+			} catch {
+				setError(t("walletConnectError"));
+			} finally {
+				setIsLoading(null);
+			}
+		},
+		[wallet, t]
+	);
 
 	const handleWalletVerify = useCallback(async () => {
 		setIsLoading("wallet-verify");
@@ -222,6 +251,67 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
 						>
 							{isLoading === "wallet-verify" ? t("signing") : t("signAndVerify")}
 						</Button>
+
+						{!showWalletPicker && (
+							<Button
+								type="button"
+								variant="outline"
+								size="sm"
+								className="w-full gap-2"
+								onClick={() => setShowWalletPicker(true)}
+							>
+								<RefreshCw className="w-3.5 h-3.5" />
+								{t("switchWallet")}
+							</Button>
+						)}
+
+						{showWalletPicker && (
+							<div className="space-y-2 rounded-lg border border-border p-3">
+								<p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+									{t("selectWallet")}
+								</p>
+								{wallet.wallets.map((w) => {
+									const name = w.adapter.name;
+									const icon = WALLET_ICONS[name] ?? w.adapter.icon;
+									const isCurrentWallet = wallet.wallet?.adapter.name === name;
+									const isSwitching = isLoading === `wallet-switch-${name}`;
+									return (
+										<Button
+											key={name}
+											variant={isCurrentWallet ? "secondary" : "ghost"}
+											size="sm"
+											className="w-full justify-start gap-3 h-10"
+											onClick={() => handleSelectSpecificWallet(name)}
+											disabled={isCurrentWallet || isSwitching}
+										>
+											{icon.startsWith("/") ? (
+												<img
+													src={icon}
+													alt={name}
+													className="w-5 h-5 rounded-sm"
+												/>
+											) : (
+												<img
+													src={icon}
+													alt={name}
+													className="w-5 h-5 rounded-sm"
+												/>
+											)}
+											<span className="flex-1 text-left">{name}</span>
+											{isCurrentWallet && (
+												<span className="text-[10px] text-muted-foreground">
+													{t("connected")}
+												</span>
+											)}
+											{isSwitching && (
+												<RefreshCw className="w-3 h-3 animate-spin" />
+											)}
+										</Button>
+									);
+								})}
+							</div>
+						)}
+
 						<Button
 							type="button"
 							variant="ghost"
@@ -230,6 +320,7 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
 							onClick={() => {
 								setStep("choose");
 								setError(null);
+								setShowWalletPicker(false);
 							}}
 						>
 							<ArrowLeft className="w-3.5 h-3.5 mr-2" />

@@ -18,7 +18,15 @@ export const courseFields = /* groq */ `
   arweaveTxId,
   coursePda,
   createSignature,
-  lastSyncError
+  lastSyncError,
+  "author": author->{
+    _id,
+    name,
+    slug,
+    image,
+    bio,
+    walletAddress
+  }
 `;
 
 export const moduleFields = /* groq */ `
@@ -115,10 +123,15 @@ export const userFields = /* groq */ `
   email,
   walletAddress,
   image,
+  bio,
+  location,
+  website,
   role,
   xpBalance,
   enrolledCourses,
   completedCourses,
+  savedCourses,
+  settings,
   lastActiveAt
 `;
 

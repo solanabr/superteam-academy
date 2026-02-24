@@ -97,6 +97,7 @@ export async function syncUserToSanity(params: {
 		xpBalance: 0,
 		enrolledCourses: [] as string[],
 		completedCourses: [] as string[],
+		savedCourses: [] as string[],
 		lastActiveAt: now,
 	};
 

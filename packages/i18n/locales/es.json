@@ -129,6 +129,13 @@
 			"preview": "Vista previa",
 			"watchPreview": "Ver vista previa"
 		},
+		"share": {
+			"copyLink": "Copiar enlace",
+			"copied": "¡Copiado!",
+			"x": "Compartir en X",
+			"linkedin": "Compartir en LinkedIn",
+			"email": "Compartir por correo"
+		},
 		"enroll": {
 			"enrolled": "Inscrito",
 			"hasAccess": "Tienes acceso a este curso",
@@ -199,6 +206,7 @@
 			"averageRating": "Calificación promedio",
 			"topInstructor": "Instructor destacado",
 			"otherCourses": "Otros cursos de {name}",
+			"noCourses": "No hay otros cursos disponibles aún.",
 			"viewCourse": "Ver curso",
 			"viewAllCourses": "Ver todos los cursos de {name}"
 		},
@@ -2820,6 +2828,9 @@
 		"continueWithGithub": "Continuar con GitHub",
 		"walletSignMessage": "Firma un mensaje con tu billetera para demostrar la propiedad. Esto no cuesta SOL.",
 		"signing": "Firmando...",
+		"switchWallet": "Usar otra billetera",
+		"selectWallet": "Seleccionar billetera",
+		"connected": "Conectada",
 		"signAndVerify": "Firmar y verificar",
 		"backToOptions": "Volver a las opciones de inicio de sesión",
 		"termsNotice": "Al continuar, aceptas nuestros Términos de servicio y Política de privacidad."

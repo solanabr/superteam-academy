@@ -41,6 +41,7 @@ export function createCourseService(context: CMSContext) {
 		return fetch<Course | null>(
 			`*[_type == "course" && _id == $id][0] {
 				_id,_type,_createdAt,_updatedAt,title,slug,description,level,duration,image,published,xpReward,track,onchainStatus,arweaveTxId,coursePda,createSignature,lastSyncError,
+				"author": author->{_id,name,slug,image,bio,walletAddress},
 				"modules": *[_type == "module" && references(^._id)] | order(order asc) {
 					_id,_type,title,slug,description,order,"lessonCount": count(lessons),
 					"lessons": *[_type == "lesson" && references(^._id)] | order(order asc) {

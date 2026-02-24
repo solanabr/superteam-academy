@@ -2,13 +2,16 @@
 
 import Image from "next/image";
 import { Link } from "@superteam-academy/i18n/navigation";
-import { Play, Share2, Heart, Star, Users, Clock, Award } from "lucide-react";
+import { Play, Heart, Star, Users, Clock, Award } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { useAuth } from "@/contexts/auth-context";
+import { LoginModal } from "@/components/auth/login-modal";
+import { ShareMenu } from "@/components/courses/share-menu";
 
 interface CourseHeroProps {
 	course: {
@@ -36,43 +39,40 @@ interface CourseHeroProps {
 
 export function CourseHero({ course }: CourseHeroProps) {
 	const t = useTranslations("courses");
+	const { isAuthenticated } = useAuth();
 	const [isSaved, setIsSaved] = useState(false);
-	const [isSharing, setIsSharing] = useState(false);
-	const storageKey = "savedCourses";
+	const [loginOpen, setLoginOpen] = useState(false);
 
 	useEffect(() => {
-		const savedCourses = JSON.parse(localStorage.getItem(storageKey) ?? "[]") as string[];
-		setIsSaved(savedCourses.includes(course.id));
-	}, [course.id]);
+		if (!isAuthenticated) return;
+		fetch("/api/courses/save")
+			.then((res) => res.json())
+			.then((data: { savedCourses?: string[] }) => {
+				setIsSaved(data.savedCourses?.includes(course.id) ?? false);
+			})
+			.catch(() => {
+				/* auth not required to view */
+			});
+	}, [course.id, isAuthenticated]);
 
 	const handleSaveCourse = async () => {
-		setIsSaved((prev) => {
-			const next = !prev;
-			const savedCourses = JSON.parse(localStorage.getItem(storageKey) ?? "[]") as string[];
-			const updatedCourses = next
-				? Array.from(new Set([...savedCourses, course.id]))
-				: savedCourses.filter((savedId) => savedId !== course.id);
-			localStorage.setItem(storageKey, JSON.stringify(updatedCourses));
-			return next;
-		});
-	};
-
-	const handleShareCourse = async () => {
-		setIsSharing(true);
+		if (!isAuthenticated) {
+			setLoginOpen(true);
+			return;
+		}
+		const prev = isSaved;
+		setIsSaved(!prev);
 		try {
-			if (navigator.share) {
-				await navigator.share({
-					title: course.title,
-					text: course.shortDescription,
-					url: window.location.href,
-				});
-			} else {
-				await navigator.clipboard.writeText(window.location.href);
+			const res = await fetch("/api/courses/save", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ courseId: course.id }),
+			});
+			if (!res.ok) {
+				setIsSaved(prev);
 			}
-		} catch (error) {
-			console.error("Error sharing course:", error);
-		} finally {
-			setIsSharing(false);
+		} catch {
+			setIsSaved(prev);
 		}
 	};
 
@@ -163,12 +163,24 @@ export function CourseHero({ course }: CourseHeroProps) {
 									</Link>
 								</Button>
 							) : (
-								<Button size="lg" asChild={true}>
-									<Link href={`/courses/${course.id}?tab=overview#enroll`}>
-										{course.price === 0
-											? t("hero.enrollFree")
-											: t("hero.enrollFor", { price: course.price })}
-									</Link>
+								<Button
+									size="lg"
+									onClick={() => {
+										if (isAuthenticated) {
+											const enrollSection = document.getElementById("enroll");
+											if (enrollSection) {
+												enrollSection.scrollIntoView({
+													behavior: "smooth",
+												});
+											}
+										} else {
+											setLoginOpen(true);
+										}
+									}}
+								>
+									{course.price === 0
+										? t("hero.enrollFree")
+										: t("hero.enrollFor", { price: course.price })}
 								</Button>
 							)}
 
@@ -184,16 +196,7 @@ export function CourseHero({ course }: CourseHeroProps) {
 								{t("hero.save")}
 							</Button>
 
-							<Button
-								variant="outline"
-								size="lg"
-								className="gap-2"
-								onClick={handleShareCourse}
-								disabled={isSharing}
-							>
-								<Share2 className="h-4 w-4" />
-								{t("hero.share")}
-							</Button>
+							<ShareMenu title={course.title} description={course.shortDescription} />
 
 							{course.videoPreview && (
 								<Button
@@ -261,6 +264,7 @@ export function CourseHero({ course }: CourseHeroProps) {
 					</div>
 				</div>
 			</div>
+			<LoginModal open={loginOpen} onOpenChange={setLoginOpen} />
 		</div>
 	);
 }

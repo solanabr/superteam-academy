@@ -1,5 +1,5 @@
 import { FRONTEND_SEED_COURSES, ONCHAIN_COURSE_STUBS } from "@superteam-academy/cms";
-import type { Course } from "@superteam-academy/cms";
+import type { Course, CourseAuthor } from "@superteam-academy/cms";
 import { resolveCourseImageUrl } from "@/lib/cms";
 
 export type CourseReviewView = {
@@ -46,7 +46,7 @@ export type CourseDetailView = {
 	price: number;
 	enrolled: boolean;
 	finalized: boolean;
-	prerequisiteCourseId?: string;
+	prerequisiteCourseId?: string | undefined;
 	progress: {
 		percentage: number;
 		completedLessons: number;
@@ -92,6 +92,7 @@ export type CourseDetailView = {
 		helpful: number;
 	}>;
 	prerequisites: Array<{ id: string; title: string; completed: boolean }>;
+	otherCourses: Array<{ title: string; slug: string; rating: string; students: string }>;
 };
 
 export function seedCourseById(id: string) {
@@ -119,6 +120,7 @@ export function mapCourseToDetail(
 			finalized: boolean;
 			lessonStates?: boolean[];
 		} | null;
+		otherCourses?: Array<{ title: string; slug: string; rating: string; students: string }>;
 	}
 ): CourseDetailView {
 	const seed = seedCourseById(id);
@@ -136,6 +138,14 @@ export function mapCourseToDetail(
 					).toFixed(1)
 				)
 			: 4.7;
+
+	// Resolve author from expanded GROQ projection
+	const expandedAuthor =
+		course?.author && "name" in course.author ? (course.author as CourseAuthor) : null;
+	const authorBio =
+		expandedAuthor?.bio
+			?.flatMap((block) => block.children?.map((c) => c.text) ?? [])
+			.join(" ") ?? "";
 
 	const lessonStates = options?.enrollment?.lessonStates ?? [];
 	let lessonIndexPointer = 0;
@@ -197,13 +207,16 @@ export function mapCourseToDetail(
 		reviewCount: reviews.length,
 		students: onchain?.totalEnrollments ?? seed?.students ?? 0,
 		instructor: {
-			name: seed?.instructor ?? "Superteam Instructor",
+			name: expandedAuthor?.name ?? seed?.instructor ?? "Superteam Instructor",
 			title: "Course Instructor",
-			avatar: "/instructors/default.jpg",
-			bio: "",
+			avatar: expandedAuthor?.image
+				? (resolveCourseImageUrl(expandedAuthor.image, 256, 256) ??
+					"/instructors/default.jpg")
+				: "/instructors/default.jpg",
+			bio: authorBio,
 			courses: 1,
-			students: seed?.students ?? 0,
-			rating: 4.7,
+			students: onchain?.totalEnrollments ?? seed?.students ?? 0,
+			rating: averageRating,
 			socialLinks: {
 				twitter: "",
 				linkedin: "",
@@ -275,5 +288,6 @@ export function mapCourseToDetail(
 						},
 					]
 				: [],
+		otherCourses: options?.otherCourses ?? [],
 	};
 }

@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "next-themes";
+import { useSettings } from "@/hooks/use-settings";
 
 type ThemeVal = "light" | "dark" | "system";
 
@@ -25,6 +26,7 @@ const FONT_SIZES = [
 export function AppearanceSettings() {
 	const { toast } = useToast();
 	const { theme, setTheme } = useTheme();
+	const { data, save } = useSettings();
 	const [isLoading, setIsLoading] = useState(false);
 	const [currentTheme, setCurrentTheme] = useState<ThemeVal>((theme as ThemeVal) || "system");
 	const [fontSize, setFontSize] = useState("medium");
@@ -34,11 +36,23 @@ export function AppearanceSettings() {
 		setCurrentTheme((theme as ThemeVal) || "system");
 	}, [theme]);
 
+	useEffect(() => {
+		if (!data?.settings?.appearance) return;
+		const a = data.settings.appearance;
+		if (a.theme) setCurrentTheme(a.theme);
+		if (a.fontSize) setFontSize(a.fontSize);
+		if (typeof a.reducedMotion === "boolean") setReducedMotion(a.reducedMotion);
+	}, [data]);
+
 	const handleSave = async () => {
 		setIsLoading(true);
 		try {
 			setTheme(currentTheme);
-			await new Promise((resolve) => setTimeout(resolve, 500));
+			await save({
+				settings: {
+					appearance: { theme: currentTheme, fontSize, reducedMotion },
+				},
+			});
 			toast({
 				title: "Appearance updated",
 				description: "Your preferences have been saved.",

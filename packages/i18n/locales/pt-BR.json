@@ -129,6 +129,13 @@
 			"preview": "Visualizar",
 			"watchPreview": "Assistir Prévia"
 		},
+		"share": {
+			"copyLink": "Copiar link",
+			"copied": "Copiado!",
+			"x": "Compartilhar no X",
+			"linkedin": "Compartilhar no LinkedIn",
+			"email": "Compartilhar por email"
+		},
 		"enroll": {
 			"enrolled": "Matriculado",
 			"hasAccess": "Você tem acesso a este curso",
@@ -199,6 +206,7 @@
 			"averageRating": "Avaliação Média",
 			"topInstructor": "Melhor Instrutor",
 			"otherCourses": "Outros Cursos de {name}",
+			"noCourses": "Nenhum outro curso disponível ainda.",
 			"viewCourse": "Ver Curso",
 			"viewAllCourses": "Ver Todos os Cursos de {name}"
 		},
@@ -2821,6 +2829,9 @@
 		"walletSignMessage": "Sign a message with your wallet to prove ownership. This does not cost any SOL.",
 		"signing": "Signing...",
 		"signAndVerify": "Sign & Verify",
+		"switchWallet": "Usar outra carteira",
+		"selectWallet": "Selecionar carteira",
+		"connected": "Conectada",
 		"backToOptions": "Back to sign in options",
 		"termsNotice": "By continuing, you agree to our Terms of Service and Privacy Policy."
 	},

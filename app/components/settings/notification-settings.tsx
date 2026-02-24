@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Mail, MessageSquare, Trophy, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -13,6 +13,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useSettings } from "@/hooks/use-settings";
 
 interface NotificationState {
 	emailNotifications: boolean;
@@ -24,6 +25,17 @@ interface NotificationState {
 	emailFrequency: "immediate" | "daily" | "weekly";
 	pushFrequency: "immediate" | "daily" | "weekly";
 }
+
+const DEFAULTS: NotificationState = {
+	emailNotifications: true,
+	pushNotifications: true,
+	courseUpdates: true,
+	achievementAlerts: true,
+	weeklyDigest: true,
+	marketingEmails: false,
+	emailFrequency: "daily",
+	pushFrequency: "immediate",
+};
 
 const TOGGLE_ITEMS = [
 	{
@@ -70,22 +82,19 @@ const TOGGLE_ITEMS = [
 
 export function NotificationSettings() {
 	const { toast } = useToast();
+	const { data, save } = useSettings();
 	const [isLoading, setIsLoading] = useState(false);
-	const [settings, setSettings] = useState<NotificationState>({
-		emailNotifications: true,
-		pushNotifications: true,
-		courseUpdates: true,
-		achievementAlerts: true,
-		weeklyDigest: true,
-		marketingEmails: false,
-		emailFrequency: "daily",
-		pushFrequency: "immediate",
-	});
+	const [settings, setSettings] = useState<NotificationState>(DEFAULTS);
+
+	useEffect(() => {
+		if (!data?.settings?.notifications) return;
+		setSettings((prev) => ({ ...prev, ...data.settings.notifications }));
+	}, [data]);
 
 	const handleSave = async () => {
 		setIsLoading(true);
 		try {
-			await new Promise((resolve) => setTimeout(resolve, 1000));
+			await save({ settings: { notifications: settings } });
 			toast({
 				title: "Notifications updated",
 				description: "Your preferences have been saved.",

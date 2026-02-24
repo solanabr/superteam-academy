@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import { ArrowLeft, Maximize, Settings, CheckCircle, Clock, BookOpen, Code } from "lucide-react";
+import { ArrowLeft, Maximize, Settings, Clock, BookOpen, Code } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +13,7 @@ import {
 	LessonVideoPlayerWrapper,
 	LessonQuizWrapper,
 	LessonNavigationWrapper,
+	LessonMarkCompleteWrapper,
 } from "@/components/lessons/lesson-interactive";
 import { LessonContent } from "@/components/lessons/lesson-content";
 import { LessonProgress } from "@/components/lessons/lesson-progress";
@@ -217,10 +218,11 @@ async function LessonContentWrapper({
 								<BookOpen className="h-4 w-4" />
 								{t("takeNotes")}
 							</Button>
-							<Button variant="outline" className="w-full justify-start gap-2">
-								<CheckCircle className="h-4 w-4" />
-								{t("markComplete")}
-							</Button>
+							<LessonMarkCompleteWrapper
+								courseId={courseId}
+								lessonIndex={progress.lessonIndex}
+								label={t("markComplete")}
+							/>
 							<Button variant="outline" className="w-full justify-start gap-2">
 								<Maximize className="h-4 w-4" />
 								{t("fullscreen")}

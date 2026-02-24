@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
+import { useSettings } from "@/hooks/use-settings";
 
 interface ProfileData {
 	name: string;
@@ -20,20 +21,38 @@ interface ProfileData {
 
 export function ProfileSettings() {
 	const { toast } = useToast();
+	const { data, loading, save } = useSettings();
 	const [isLoading, setIsLoading] = useState(false);
 	const [profile, setProfile] = useState<ProfileData>({
-		name: "Alex Chen",
-		email: "alex@example.com",
-		bio: "Solana developer passionate about Web3 education",
-		location: "San Francisco, CA",
-		website: "https://github.com/alexchen",
-		avatar: "/avatars/alex.jpg",
+		name: "",
+		email: "",
+		bio: "",
+		location: "",
+		website: "",
+		avatar: "",
 	});
+
+	useEffect(() => {
+		if (!data) return;
+		setProfile({
+			name: data.profile.name,
+			email: data.profile.email,
+			bio: data.profile.bio,
+			location: data.profile.location,
+			website: data.profile.website,
+			avatar: data.profile.image,
+		});
+	}, [data]);
 
 	const handleSave = async () => {
 		setIsLoading(true);
 		try {
-			await new Promise((resolve) => setTimeout(resolve, 1000));
+			await save({
+				name: profile.name,
+				bio: profile.bio,
+				location: profile.location,
+				website: profile.website,
+			});
 			toast({ title: "Profile updated", description: "Your changes have been saved." });
 		} catch {
 			toast({
@@ -53,6 +72,18 @@ export function ProfileSettings() {
 			setProfile((prev) => ({ ...prev, avatar: url }));
 		}
 	};
+
+	if (loading) {
+		return (
+			<div className="rounded-2xl border border-border/60 bg-card p-6">
+				<div className="animate-pulse space-y-4">
+					<div className="h-16 w-16 rounded-full bg-muted" />
+					<div className="h-4 w-48 bg-muted rounded" />
+					<div className="h-4 w-32 bg-muted rounded" />
+				</div>
+			</div>
+		);
+	}
 
 	return (
 		<div className="rounded-2xl border border-border/60 bg-card overflow-hidden">

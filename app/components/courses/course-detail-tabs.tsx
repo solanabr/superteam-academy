@@ -123,7 +123,10 @@ export function CourseDetailTabs({ course, courseId, initialTab }: CourseDetailT
 			</TabsContent>
 
 			<TabsContent value="instructor" className="space-y-6">
-				<CourseInstructor instructor={course.instructor} />
+				<CourseInstructor
+					instructor={course.instructor}
+					otherCourses={course.otherCourses}
+				/>
 			</TabsContent>
 		</Tabs>
 	);

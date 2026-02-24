@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -12,6 +12,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useSettings } from "@/hooks/use-settings";
 
 type Language = "en" | "pt-BR" | "es";
 type DateFormat = "DD/MM/YYYY" | "MM/DD/YYYY" | "YYYY-MM-DD";
@@ -51,6 +52,7 @@ function getLocale(lang: Language) {
 
 export function LanguageSettings() {
 	const { toast } = useToast();
+	const { data, save } = useSettings();
 	const [saving, setSaving] = useState(false);
 	const [settings, setSettings] = useState<LangState>({
 		language: "en",
@@ -60,14 +62,24 @@ export function LanguageSettings() {
 		timezone: "America/New_York",
 	});
 
+	useEffect(() => {
+		if (!data?.settings?.language) return;
+		setSettings((prev) => ({ ...prev, ...data.settings.language }));
+	}, [data]);
+
 	const update = <K extends keyof LangState>(key: K, value: LangState[K]) =>
 		setSettings((prev) => ({ ...prev, [key]: value }));
 
 	const handleSave = async () => {
 		setSaving(true);
-		await new Promise((r) => setTimeout(r, 800));
-		setSaving(false);
-		toast({ title: "Language settings saved" });
+		try {
+			await save({ settings: { language: settings } });
+			toast({ title: "Language settings saved" });
+		} catch {
+			toast({ title: "Error", description: "Failed to save.", variant: "destructive" });
+		} finally {
+			setSaving(false);
+		}
 	};
 
 	const locale = getLocale(settings.language);

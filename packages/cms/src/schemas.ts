@@ -29,6 +29,16 @@ export type SanityBlock = {
 
 export type CourseLevel = "beginner" | "intermediate" | "advanced";
 
+/** Expanded author data returned by GROQ projections */
+export type CourseAuthor = {
+	_id: string;
+	name: string;
+	slug: SanitySlug;
+	image?: SanityImage;
+	bio?: SanityBlock[];
+	walletAddress?: string;
+};
+
 export type Course = SanityDocument & {
 	_type: "course";
 	title: string;
@@ -40,6 +50,7 @@ export type Course = SanityDocument & {
 	published: boolean;
 	xpReward: number;
 	track?: string;
+	author?: { _ref: string } | CourseAuthor;
 	onchainStatus?: "queued" | "running" | "succeeded" | "failed" | "draft";
 	arweaveTxId?: string;
 	coursePda?: string;
@@ -89,6 +100,53 @@ export type Track = SanityDocument & {
 
 export type UserRole = "learner" | "admin" | "superadmin";
 
+export interface UserNotificationSettings {
+	emailNotifications: boolean;
+	pushNotifications: boolean;
+	courseUpdates: boolean;
+	achievementAlerts: boolean;
+	weeklyDigest: boolean;
+	marketingEmails: boolean;
+	emailFrequency: "immediate" | "daily" | "weekly";
+	pushFrequency: "immediate" | "daily" | "weekly";
+}
+
+export interface UserPrivacySettings {
+	profileVisibility: "public" | "friends" | "private";
+	showProgress: boolean;
+	showAchievements: boolean;
+	showActivity: boolean;
+	allowMessaging: boolean;
+	dataSharing: boolean;
+	analyticsTracking: boolean;
+}
+
+export interface UserAppearanceSettings {
+	theme: "light" | "dark" | "system";
+	fontSize: "small" | "medium" | "large";
+	reducedMotion: boolean;
+}
+
+export interface UserLanguageSettings {
+	language: "en" | "pt-BR" | "es";
+	dateFormat: "DD/MM/YYYY" | "MM/DD/YYYY" | "YYYY-MM-DD";
+	timeFormat: "12h" | "24h";
+	numberFormat: "pt-BR" | "en-US" | "es-ES";
+	timezone: string;
+}
+
+export interface UserWalletSettings {
+	autoConnect: boolean;
+}
+
+export interface UserSettings {
+	notifications?: UserNotificationSettings;
+	privacy?: UserPrivacySettings;
+	appearance?: UserAppearanceSettings;
+	language?: UserLanguageSettings;
+	wallet?: UserWalletSettings;
+}
+
 export type AcademyUser = SanityDocument & {
 	_type: "academyUser";
 	authId: string;
@@ -96,10 +154,15 @@ export type AcademyUser = SanityDocument & {
 	email: string;
 	walletAddress?: string;
 	image?: string;
+	bio?: string;
+	location?: string;
+	website?: string;
 	role: UserRole;
 	xpBalance: number;
 	enrolledCourses: string[];
 	completedCourses: string[];
+	savedCourses: string[];
+	settings?: UserSettings;
 	lastActiveAt?: string;
 };
 
