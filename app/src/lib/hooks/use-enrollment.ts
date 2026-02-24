@@ -145,15 +145,17 @@ export function useEnrollment(courseId: string): UseEnrollmentReturn {
           );
         }
 
-        const data = (await response.json()) as {
-          completedLessons: number;
-          totalLessons: number;
-        };
+        // Consume response body; the API returns { signature, lessonIndex, courseId }
+        // but we compute progress locally from the existing enrollment state.
+        await response.json();
 
+        // Increment the completed count by 1 from the current enrollment state.
+        const currentCompleted = enrollment?.completedLessons ?? 0;
+        const currentTotal = enrollment?.totalLessons ?? 0;
         updateEnrollmentProgress(
           courseId,
-          data.completedLessons,
-          data.totalLessons,
+          currentCompleted + 1,
+          currentTotal,
         );
       } catch (err) {
         const message =
@@ -164,7 +166,7 @@ export function useEnrollment(courseId: string): UseEnrollmentReturn {
         setIsLoading(false);
       }
     },
-    [publicKey, courseId, isEnrolled, updateEnrollmentProgress],
+    [publicKey, courseId, isEnrolled, enrollment, updateEnrollmentProgress],
   );
 
   const finalizeCourse = useCallback(async (): Promise<void> => {

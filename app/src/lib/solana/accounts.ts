@@ -95,11 +95,25 @@ export async function fetchAllCourses(connection: Connection): Promise<Course[]>
 
 /**
  * Fetches all Enrollment accounts for a specific learner.
- * Uses getProgramAccounts with data size and memcmp on the learner pubkey.
  *
- * Note: The exact byte offset of the learner field within Enrollment depends
- * on the Borsh serialization layout. Once the IDL is integrated, we can use
- * a precise memcmp filter on the learner field offset.
+ * Uses `getProgramAccounts` filtered by data size to locate Enrollment
+ * accounts. Currently returns an empty array because:
+ *
+ * 1. Borsh deserialization requires a compiled Anchor IDL which is not yet
+ *    integrated. Without it we cannot decode account data into `Enrollment`.
+ * 2. A `memcmp` filter on the learner pubkey field requires knowing the
+ *    exact byte offset within the serialized Enrollment layout. That offset
+ *    will be derived from the IDL once available, enabling server-side
+ *    filtering so only the target learner's enrollments are returned.
+ *
+ * When IDL integration lands, this function will:
+ * - Add a `memcmp` filter for `_learner` at the correct byte offset
+ * - Deserialize each account via `program.account.Enrollment.fetch()`
+ * - Return the fully typed `Enrollment[]`
+ *
+ * @param connection - Solana RPC connection
+ * @param _learner  - Public key of the learner (unused until IDL integration)
+ * @returns Empty array pending IDL deserialization support
  */
 export async function fetchUserEnrollments(
   connection: Connection,
@@ -107,14 +121,12 @@ export async function fetchUserEnrollments(
 ): Promise<Enrollment[]> {
   const ENROLLMENT_ACCOUNT_SIZE = DISCRIMINATOR_SIZE + 127;
 
-  // TODO: Add memcmp filter on _learner field offset once IDL deserialization is wired
   const accounts = await connection.getProgramAccounts(PROGRAM_ID, {
     filters: [{ dataSize: ENROLLMENT_ACCOUNT_SIZE }],
   });
 
   if (accounts.length === 0) return [];
 
-  // Deserialization and learner filtering pending IDL integration
   return [];
 }
 

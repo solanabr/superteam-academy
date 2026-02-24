@@ -53,7 +53,7 @@ export interface CourseState {
   error: string | null;
 
   // Actions
-  fetchCourses: () => Promise<void>;
+  fetchCourses: (locale?: string) => Promise<void>;
   selectCourse: (courseId: string) => void;
   setFilter: <K extends keyof CourseFilters>(key: K, value: CourseFilters[K]) => void;
   resetFilters: () => void;
@@ -91,8 +91,8 @@ const ESTIMATED_MINUTES_PER_LESSON = 15;
 interface SanityCourseRaw {
   _id: string;
   courseId: string;
-  title: { en?: string; pt?: string; es?: string } | null;
-  description: { en?: string; pt?: string; es?: string } | null;
+  title: { [locale: string]: string | undefined; en?: string; pt?: string; es?: string } | null;
+  description: { [locale: string]: string | undefined; en?: string; pt?: string; es?: string } | null;
   thumbnail: { asset?: { _ref?: string } } | null;
   difficulty: string | null;
   xpPerLesson: number | null;
@@ -113,7 +113,7 @@ function difficultyStringToNumber(difficulty: string | null): number {
   return DIFFICULTY_MAP[difficulty] ?? 0;
 }
 
-function sanityCourseToMeta(raw: SanityCourseRaw): CourseWithMeta {
+function sanityCourseToMeta(raw: SanityCourseRaw, locale: string = 'en'): CourseWithMeta {
   const lessonCount = raw.lessonCount ?? 0;
   const xpPerLesson = raw.xpPerLesson ?? DEFAULT_XP_PER_LESSON;
   const difficultyNum = difficultyStringToNumber(raw.difficulty);
@@ -129,9 +129,9 @@ function sanityCourseToMeta(raw: SanityCourseRaw): CourseWithMeta {
     isActive: true,
 
     // CMS data
-    title: raw.title?.en ?? '',
+    title: raw.title?.[locale] ?? raw.title?.en ?? '',
     slug: raw.courseId,
-    description: raw.description?.en ?? '',
+    description: raw.description?.[locale] ?? raw.description?.en ?? '',
     imageUrl: raw.thumbnail?.asset?._ref ?? '',
     modules: [],
     tags: raw.skills ?? [],
@@ -192,12 +192,12 @@ export const useCourseStore = create<CourseState>()((set, get) => ({
   isLoading: false,
   error: null,
 
-  fetchCourses: async () => {
+  fetchCourses: async (locale: string = 'en') => {
     set({ isLoading: true, error: null });
 
     try {
       const rawCourses: SanityCourseRaw[] = await client.fetch(allCoursesQuery);
-      const courses = rawCourses.map(sanityCourseToMeta);
+      const courses = rawCourses.map((raw) => sanityCourseToMeta(raw, locale));
       set({ courses, isLoading: false });
     } catch (err) {
       const message =
