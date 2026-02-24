@@ -297,7 +297,7 @@ async function getCourse(id: string) {
 		}
 	}
 
-	return mapCourseToDetail(
+	return await mapCourseToDetail(
 		id,
 		cmsCourse,
 		{

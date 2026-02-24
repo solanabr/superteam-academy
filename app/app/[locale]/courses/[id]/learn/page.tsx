@@ -301,7 +301,7 @@ async function getCourse(id: string) {
 		...(prerequisiteLabel ? { prerequisiteLabel } : {}),
 	};
 
-	const detail = mapCourseToDetail(id, cmsCourse, onchainMeta);
+	const detail = await mapCourseToDetail(id, cmsCourse, onchainMeta);
 
 	return {
 		id: detail.id,

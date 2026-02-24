@@ -1,6 +1,8 @@
 import { FRONTEND_SEED_COURSES, ONCHAIN_COURSE_STUBS } from "@superteam-academy/cms";
 import type { Course, CourseAuthor } from "@superteam-academy/cms";
 import { resolveCourseImageUrl } from "@/lib/cms";
+import { getGravatarUrl } from "@/lib/utils";
+import { getUserByWallet } from "@/lib/sanity-users";
 
 export type CourseReviewView = {
 	id: string;
@@ -99,7 +101,7 @@ export function seedCourseById(id: string) {
 	return FRONTEND_SEED_COURSES.find((course) => course.id === id) ?? null;
 }
 
-export function mapCourseToDetail(
+export async function mapCourseToDetail(
 	id: string,
 	course: Course | null,
 	onchain: {
@@ -122,7 +124,7 @@ export function mapCourseToDetail(
 		} | null;
 		otherCourses?: Array<{ title: string; slug: string; rating: string; students: string }>;
 	}
-): CourseDetailView {
+): Promise<CourseDetailView> {
 	const seed = seedCourseById(id);
 	const lessons = course?.modules?.flatMap((module) => module.lessons ?? []) ?? [];
 	const lessonCount = onchain?.lessonCount ?? Math.max(1, lessons.length);
@@ -195,6 +197,23 @@ export function mapCourseToDetail(
 	const progressPercent =
 		lessonCount > 0 ? Math.round((completedLessonsCount / lessonCount) * 100) : 0;
 
+	const instructorName = expandedAuthor?.name ?? seed?.instructor ?? "Superteam Instructor";
+
+	// Resolve instructor avatar: CMS image > Gravatar (email from Sanity user > author name)
+	let instructorAvatar = expandedAuthor?.image
+		? resolveCourseImageUrl(expandedAuthor.image, 256, 256)
+		: null;
+	if (!instructorAvatar) {
+		let gravatarKey = instructorName;
+		if (expandedAuthor?.walletAddress) {
+			const sanityUser = await getUserByWallet(expandedAuthor.walletAddress);
+			if (sanityUser?.email) {
+				gravatarKey = sanityUser.email;
+			}
+		}
+		instructorAvatar = await getGravatarUrl(gravatarKey);
+	}
+
 	return {
 		id,
 		title: course?.title ?? seed?.title ?? id,
@@ -207,12 +226,9 @@ export function mapCourseToDetail(
 		reviewCount: reviews.length,
 		students: onchain?.totalEnrollments ?? seed?.students ?? 0,
 		instructor: {
-			name: expandedAuthor?.name ?? seed?.instructor ?? "Superteam Instructor",
+			name: instructorName,
 			title: "Course Instructor",
-			avatar: expandedAuthor?.image
-				? (resolveCourseImageUrl(expandedAuthor.image, 256, 256) ??
-					"/instructors/default.jpg")
-				: "/instructors/default.jpg",
+			avatar: instructorAvatar,
 			bio: authorBio,
 			courses: 1,
 			students: onchain?.totalEnrollments ?? seed?.students ?? 0,
