@@ -52,21 +52,36 @@ export default function NewDiscussionPage() {
 		setIsSubmitting(true);
 
 		try {
-			// TODO: Implement Sanity mutation to create discussion
-			// const formData = new FormData(e.currentTarget);
-			// Extract: title, content, category, tags
-			await new Promise((resolve) => setTimeout(resolve, 1000));
+			const formData = new FormData(e.currentTarget);
+			const title = formData.get("title") as string;
+			const content = formData.get("content") as string;
+			const category = formData.get("category") as string;
+
+			const res = await fetch("/api/community/discussions", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ title, content, category, tags }),
+			});
+
+			const data = await res.json();
+
+			if (!res.ok) {
+				throw new Error(data.error || "Failed to create discussion");
+			}
 
 			toast({
 				title: "Discussion created!",
 				description: "Your discussion has been posted to the community.",
 			});
 
-			router.push("/community");
-		} catch {
+			router.push(`/community/discussions/${data.slug}`);
+		} catch (err) {
 			toast({
 				title: "Error",
-				description: "Failed to create discussion. Please try again.",
+				description:
+					err instanceof Error
+						? err.message
+						: "Failed to create discussion. Please try again.",
 				variant: "destructive",
 			});
 		} finally {

@@ -4,6 +4,7 @@ export { createCourseService } from "./course-service";
 export type { CourseReview } from "./course-service";
 export { createCommunityService } from "./community-service";
 export type {
+	CreateDiscussionInput,
 	DiscussionWithMeta,
 	EventWithMeta,
 	ProjectWithMeta,

@@ -57,8 +57,16 @@ export interface MemberWithMeta extends Omit<CommunityMember, "user"> {
 	achievementCount: number;
 }
 
+export interface CreateDiscussionInput {
+	title: string;
+	content: string;
+	category: DiscussionCategory;
+	tags: string[];
+	authorId: string;
+}
+
 export function createCommunityService(context: CMSContext) {
-	const { fetch, resolveImageUrl, readClient } = context;
+	const { fetch, resolveImageUrl, readClient, writeClient } = context;
 
 	const getAllDiscussions = async (): Promise<DiscussionWithMeta[]> => {
 		if (!readClient) return [];
@@ -172,7 +180,46 @@ export function createCommunityService(context: CMSContext) {
 		size = 128
 	): string | null => resolveImageUrl(image, size, size);
 
+	const createDiscussion = async (
+		input: CreateDiscussionInput
+	): Promise<{ success: boolean; slug?: string; error?: string }> => {
+		if (!writeClient) {
+			return { success: false, error: "Sanity write client not configured" };
+		}
+
+		const slug = input.title
+			.toLowerCase()
+			.replace(/[^a-z0-9]+/g, "-")
+			.replace(/^-|-$/g, "");
+
+		const doc = await writeClient.create({
+			_type: "discussion" as const,
+			title: input.title,
+			slug: { _type: "slug", current: slug },
+			excerpt: input.content.slice(0, 200),
+			content: [
+				{
+					_type: "block",
+					style: "normal",
+					children: [{ _type: "span", text: input.content }],
+				},
+			],
+			author: { _type: "reference", _ref: input.authorId },
+			category: input.category,
+			tags: input.tags,
+			pinned: false,
+			solved: false,
+			locked: false,
+			views: 0,
+			points: 0,
+			publishedAt: new Date().toISOString(),
+		});
+
+		return { success: true, slug: doc.slug?.current || slug };
+	};
+
 	return {
+		createDiscussion,
 		getAllDiscussions,
 		getDiscussionBySlug,
 		getDiscussionsByCategory,
