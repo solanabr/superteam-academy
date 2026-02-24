@@ -150,19 +150,21 @@ export function ConstellationCanvas() {
     resize();
     window.addEventListener("resize", resize);
 
-    canvas.addEventListener("mousemove", (e) => {
+    const onMove = (e: MouseEvent) => {
       const r = canvas.getBoundingClientRect();
       mouse.current = { x: e.clientX - r.left, y: e.clientY - r.top };
-    });
-    canvas.addEventListener("mouseleave", () => {
+    };
+    const onLeave = () => {
       mouse.current = { x: -999, y: -999 };
-    });
+    };
+    window.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseleave", onLeave);
 
-    const nodes = Array.from({ length: 100 }, () => ({
+    const nodes = Array.from({ length: 140 }, () => ({
       x: Math.random() * 1600,
       y: Math.random() * 900,
-      vx: (Math.random() - 0.5) * 0.3,
-      vy: (Math.random() - 0.5) * 0.3,
+      vx: (Math.random() - 0.5) * 0.6,
+      vy: (Math.random() - 0.5) * 0.6,
       r: 1 + Math.random() * 2,
       baseA: 0.15 + Math.random() * 0.4,
       pulse: Math.random() * Math.PI * 2,
@@ -184,13 +186,13 @@ export function ConstellationCanvas() {
         const dx = mouse.current.x - n.x;
         const dy = mouse.current.y - n.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 200 && dist > 0) {
-          const force = ((200 - dist) / 200) * 0.015;
+        if (dist < 250 && dist > 0) {
+          const force = ((250 - dist) / 250) * 0.04;
           n.vx += (dx / dist) * force;
           n.vy += (dy / dist) * force;
         }
-        n.vx *= 0.998;
-        n.vy *= 0.998;
+        n.vx *= 0.995;
+        n.vy *= 0.995;
 
         const a = n.baseA + Math.sin(n.pulse) * 0.1;
         ctx.beginPath();
@@ -243,6 +245,8 @@ export function ConstellationCanvas() {
     draw();
     return () => {
       window.removeEventListener("resize", resize);
+      window.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseleave", onLeave);
       cancelAnimationFrame(raf);
     };
   }, []);

@@ -1159,21 +1159,6 @@ html.light .landing-stat-item:not(:last-child) { border-right-color: rgba(0,0,0,
   --v9-ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* V9 Viewport inset border (Igloo Inc SOTY 2024) */
-.v9-viewport-border::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  box-shadow: inset 0 0 0 6px var(--v9-off-white);
-  pointer-events: none;
-  z-index: 100;
-}
-.v9-page-dark .v9-viewport-border::before {
-  box-shadow: inset 0 0 0 6px rgba(255,255,255,0.03);
-}
-html.light .v9-viewport-border::before {
-  box-shadow: inset 0 0 0 6px var(--c-border);
-}
 
 /* V9 Dot grid background (Vercel technique) */
 .v9-grid-bg {
@@ -2215,6 +2200,10 @@ html.light .v9-feature-col:hover {
 @keyframes onb-rotate {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+@keyframes sentinel-pulse {
+  0%, 100% { opacity: 1; text-shadow: 0 0 6px rgba(0,210,130,0.4); }
+  50% { opacity: 0.4; text-shadow: 0 0 0px transparent; }
 }
 @keyframes onb-shine {
   to { background-position: 200% center; }

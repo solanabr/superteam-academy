@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import Link from "next/link";
@@ -16,11 +16,19 @@ import {
   AlertTriangle,
   Download,
   Moon,
-  Sun,
+  Loader2,
 } from "lucide-react";
-import { useTheme } from "next-themes";
 
 type ConfiguredProviders = { google: boolean; github: boolean };
+
+interface ProfileData {
+  display_name: string;
+  bio: string;
+  is_public: boolean;
+  show_on_leaderboard: boolean;
+  email_notifications: boolean;
+  streak_reminders: boolean;
+}
 
 export default function SettingsPage() {
   const t = useTranslations("settings");
@@ -30,8 +38,6 @@ export default function SettingsPage() {
   useEffect(() => setMounted(true), []);
   const { data: session } = useSession();
   const { user, connected } = useUser();
-  const { theme, setTheme } = useTheme();
-
   const linkedAccounts =
     (session as unknown as { linkedAccounts?: Record<string, { email?: string; name?: string }> })
       ?.linkedAccounts ?? {};
@@ -44,17 +50,66 @@ export default function SettingsPage() {
       .catch(() => setConfiguredProviders({ google: false, github: false }));
   }, []);
 
+  // Profile state
+  const [displayName, setDisplayName] = useState("");
+  const [bio, setBio] = useState("");
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [streakReminders, setStreakReminders] = useState(true);
   const [isPublic, setIsPublic] = useState(true);
   const [showOnLeaderboard, setShowOnLeaderboard] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [loadingProfile, setLoadingProfile] = useState(true);
   const [activeSection, setActiveSection] = useState("profile");
 
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
-  };
+  // Load profile from API
+  useEffect(() => {
+    if (!session) {
+      setLoadingProfile(false);
+      return;
+    }
+    fetch("/api/user/profile")
+      .then((r) => {
+        if (!r.ok) throw new Error("Failed to load profile");
+        return r.json();
+      })
+      .then((data: ProfileData) => {
+        setDisplayName(data.display_name ?? "");
+        setBio(data.bio ?? "");
+        setIsPublic(data.is_public ?? true);
+        setShowOnLeaderboard(data.show_on_leaderboard ?? true);
+        setEmailNotifications(data.email_notifications ?? true);
+        setStreakReminders(data.streak_reminders ?? true);
+      })
+      .catch(() => {})
+      .finally(() => setLoadingProfile(false));
+  }, [session]);
+
+  const handleSave = useCallback(async () => {
+    setSaving(true);
+    setSaved(false);
+    try {
+      const res = await fetch("/api/user/profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          display_name: displayName,
+          bio,
+          is_public: isPublic,
+          show_on_leaderboard: showOnLeaderboard,
+          email_notifications: emailNotifications,
+          streak_reminders: streakReminders,
+        }),
+      });
+      if (!res.ok) throw new Error("Save failed");
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch {
+      // Could show error toast, but keeping it simple
+    } finally {
+      setSaving(false);
+    }
+  }, [displayName, bio, isPublic, showOnLeaderboard, emailNotifications, streakReminders]);
 
   const handleExportData = () => {
     const data = {
@@ -139,10 +194,13 @@ export default function SettingsPage() {
                 </label>
                 <Input
                   id="settings-display-name"
-                  defaultValue=""
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  maxLength={50}
                   placeholder={t("displayNamePlaceholder", {
                     defaultMessage: "Your display name",
                   })}
+                  disabled={loadingProfile}
                 />
               </div>
               <div>
@@ -154,17 +212,24 @@ export default function SettingsPage() {
                 </label>
                 <textarea
                   id="settings-bio"
-                  className="flex min-h-[80px] w-full rounded-sm bg-[var(--c-bg)] border border-[var(--c-border-subtle)] px-3 py-2 text-sm text-[var(--c-text)] placeholder:text-[var(--c-text-2)] transition-colors focus:outline-none focus:border-[#55E9AB] focus:ring-1 focus:ring-[#55E9AB] resize-none"
-                  defaultValue=""
+                  className="flex min-h-[80px] w-full rounded-sm bg-[var(--c-bg)] border border-[var(--c-border-subtle)] px-3 py-2 text-sm text-[var(--c-text)] placeholder:text-[var(--c-text-2)] transition-colors focus:outline-none focus:border-[#55E9AB] focus:ring-1 focus:ring-[#55E9AB] resize-none disabled:opacity-50"
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  maxLength={300}
                   placeholder={t("bioPlaceholder", {
                     defaultMessage: "Tell others about yourself",
                   })}
+                  disabled={loadingProfile}
                 />
               </div>
-              <Button size="sm" onClick={handleSave}>
-                {saved
-                  ? t("saved", { defaultMessage: "Saved" })
-                  : t("saveChanges")}
+              <Button size="sm" onClick={handleSave} disabled={saving || loadingProfile}>
+                {saving ? (
+                  <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> {t("saving", { defaultMessage: "Saving..." })}</>
+                ) : saved ? (
+                  t("saved", { defaultMessage: "Saved" })
+                ) : (
+                  t("saveChanges")
+                )}
               </Button>
             </div>
           </section>
@@ -179,28 +244,12 @@ export default function SettingsPage() {
                 <label className="mb-3 block text-sm font-medium text-[var(--c-text-em)]">
                   {t("theme")}
                 </label>
-                <div className="flex gap-3">
-                  {[
-                    { value: "dark", icon: Moon, label: t("dark") },
-                    {
-                      value: "light",
-                      icon: Sun,
-                      label: t("light", { defaultMessage: "Light" }),
-                    },
-                  ].map(({ value, icon: Icon, label }) => (
-                    <button
-                      key={value}
-                      onClick={() => setTheme(value)}
-                      className={`flex items-center gap-2 rounded border px-4 py-3 text-sm transition-colors cursor-pointer ${
-                        mounted && theme === value
-                          ? "border-[#55E9AB] bg-[#55E9AB]/10 text-[#55E9AB]"
-                          : "border-[var(--c-border-subtle)] text-[var(--c-text-2)] hover:border-[var(--c-border-prominent)] hover:text-[var(--c-text-em)]"
-                      }`}
-                    >
-                      <Icon className="h-4 w-4" />
-                      {label}
-                    </button>
-                  ))}
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 rounded border border-[#55E9AB] bg-[#55E9AB]/10 text-[#55E9AB] px-4 py-3 text-sm">
+                    <Moon className="h-4 w-4" />
+                    {t("dark")}
+                  </div>
+                  <span className="text-xs text-[var(--c-text-2)]">{t("darkModeNote")}</span>
                 </div>
               </div>
 
@@ -310,7 +359,9 @@ export default function SettingsPage() {
                     defaultMessage: "Receive course updates and announcements",
                   }),
                   enabled: emailNotifications,
-                  toggle: () => setEmailNotifications((v) => !v),
+                  toggle: () => {
+                    setEmailNotifications((v) => !v);
+                  },
                 },
                 {
                   label: t("streakReminders"),
@@ -318,7 +369,9 @@ export default function SettingsPage() {
                     defaultMessage: "Daily reminders to maintain your streak",
                   }),
                   enabled: streakReminders,
-                  toggle: () => setStreakReminders((v) => !v),
+                  toggle: () => {
+                    setStreakReminders((v) => !v);
+                  },
                 },
               ].map(({ label, description, enabled, toggle }) => (
                 <div

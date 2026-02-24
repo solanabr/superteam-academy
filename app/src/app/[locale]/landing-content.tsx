@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
@@ -33,7 +33,13 @@ export function LandingContent({
   const router = useRouter();
   const [warping, setWarping] = useState(false);
   const [hoverSentinel, setHoverSentinel] = useState(false);
+  const [sentinelVisible, setSentinelVisible] = useState(true);
   const streakLayerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setSentinelVisible(false), 15000);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleInitOnboarding = () => {
     if (warping) return;
@@ -113,33 +119,38 @@ export function LandingContent({
       >
         <LazyConstellationCanvas />
 
-        {/* ── Sentinel Trigger (right side) ── */}
+        {/* ── Sentinel Trigger (right side) — auto-fades after 5s ── */}
         <div
           style={{
             position: "absolute",
-            right: "clamp(24px, 4vw, 80px)",
+            right: "clamp(24px, 5vw, 100px)",
             top: "50%",
             transform: "translateY(-50%)",
             zIndex: 30,
             display: "flex",
             alignItems: "center",
             gap: 0,
+            opacity: sentinelVisible || hoverSentinel ? 1 : 0,
+            transition: "opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1)",
+            pointerEvents: sentinelVisible || hoverSentinel ? "auto" : "none",
           }}
+          onMouseEnter={() => setHoverSentinel(true)}
+          onMouseLeave={() => setHoverSentinel(false)}
         >
-          {/* Hand-drawn arrow annotation */}
+          {/* Hand-drawn arrow — to the left, clear of the circle */}
           <div
             style={{
               position: "relative",
-              marginRight: -8,
-              marginTop: -40,
+              marginRight: 12,
+              marginTop: -30,
             }}
           >
             <SwirlArrow
-              delay={2000}
+              delay={1200}
               width={120}
-              height={80}
+              height={70}
               color={G}
-              label="Start here"
+              label="Start onboarding"
               labelPosition="start"
             />
           </div>
@@ -147,21 +158,19 @@ export function LandingContent({
           {/* Sentinel button */}
           <div
             onClick={handleInitOnboarding}
-            onMouseEnter={() => setHoverSentinel(true)}
-            onMouseLeave={() => setHoverSentinel(false)}
             style={{
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
-              gap: 20,
+              gap: 14,
               cursor: "pointer",
             }}
           >
             <div
               style={{
                 position: "relative",
-                width: 70,
-                height: 70,
+                width: 64,
+                height: 64,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -169,6 +178,7 @@ export function LandingContent({
                 transform: hoverSentinel ? "scale(1.15)" : "scale(1)",
               }}
             >
+              {/* Outer dashed ring — spins */}
               <div
                 style={{
                   position: "absolute",
@@ -176,24 +186,26 @@ export function LandingContent({
                   borderRadius: "50%",
                   border: `1px dashed ${hoverSentinel ? G : "var(--overlay-border)"}`,
                   animation: hoverSentinel
-                    ? "onb-rotate 4s linear infinite"
-                    : "onb-rotate 15s linear infinite",
+                    ? "onb-rotate 2s linear infinite"
+                    : "onb-rotate 6s linear infinite",
                   transition: "border-color 0.3s",
                 }}
               />
+              {/* Center dot */}
               <div
                 style={{
-                  width: hoverSentinel ? 16 : 8,
-                  height: hoverSentinel ? 16 : 8,
+                  width: hoverSentinel ? 14 : 8,
+                  height: hoverSentinel ? 14 : 8,
                   borderRadius: "50%",
                   background: G,
                   boxShadow: hoverSentinel
-                    ? `0 0 20px rgba(0,210,130,0.6), 0 0 40px rgba(0,210,130,0.3)`
+                    ? `0 0 20px rgba(0,210,130,0.7), 0 0 40px rgba(0,210,130,0.3)`
                     : `0 0 8px rgba(0,210,130,0.4)`,
                   transition: "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
                 }}
               />
             </div>
+            {/* Label — pulses green */}
             <div
               style={{
                 writingMode: "vertical-rl",
@@ -201,12 +213,12 @@ export function LandingContent({
                 fontSize: 9,
                 letterSpacing: 4,
                 textTransform: "uppercase",
-                color: hoverSentinel ? G : M,
-                transition: "color 0.3s",
+                color: G,
                 userSelect: "none",
+                animation: "sentinel-pulse 2s ease-in-out infinite",
               }}
             >
-              INITIALIZE
+              START ONBOARDING
             </div>
           </div>
         </div>
@@ -454,9 +466,8 @@ export function LandingContent({
               lineHeight: 1.05,
             }}
           >
-            Your credentials should be{" "}
-            <span style={{ color: G, fontStyle: "italic" }}>yours</span> — not
-            locked in someone else&apos;s database.
+            Learn it. Prove it.{" "}
+            <span style={{ color: G, fontStyle: "italic" }}>Own it</span> forever.
           </h2>
         </Reveal>
 

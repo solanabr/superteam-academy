@@ -4,9 +4,8 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Menu, X, Globe, Sun, Moon, Shield } from "lucide-react";
+import { Menu, X, Globe, Shield, Settings } from "lucide-react";
 import { useState, useEffect } from "react";
-import { useTheme } from "next-themes";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { cn } from "@/lib/utils";
 import { SuperteamLogo } from "@/components/ui/superteam-logo";
@@ -22,7 +21,6 @@ export function Navbar({ locale }: { locale: string }) {
   const t = useTranslations("nav");
   const pathname = usePathname();
   const { connected } = useWallet();
-  const { theme, setTheme } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -157,28 +155,6 @@ export function Navbar({ locale }: { locale: string }) {
               </div>
             </div>
 
-            {/* Theme toggle */}
-            <button
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="v9-nav-link"
-              aria-label={
-                mounted
-                  ? theme === "dark"
-                    ? "Switch to light mode"
-                    : "Switch to dark mode"
-                  : "Toggle theme"
-              }
-              style={
-                isCoursesPage ? { color: "var(--c-text-muted)" } : undefined
-              }
-            >
-              {mounted && theme === "dark" ? (
-                <Sun className="h-3.5 w-3.5" />
-              ) : (
-                <Moon className="h-3.5 w-3.5" />
-              )}
-            </button>
-
             {/* Language selector */}
             <div className="relative">
               <button
@@ -268,29 +244,24 @@ export function Navbar({ locale }: { locale: string }) {
                 }}
               />
             )}
+
+            {/* Settings */}
+            <Link
+              href={`/${locale}/settings`}
+              className={cn("v9-nav-link", isActive(`/${locale}/settings`) && "active")}
+              aria-label="Settings"
+              style={
+                isCoursesPage || isCommunityPage
+                  ? { color: "var(--c-text-muted)" }
+                  : undefined
+              }
+            >
+              <Settings className="h-3.5 w-3.5" />
+            </Link>
           </div>
 
           {/* Mobile: actions + hamburger */}
           <div className="flex items-center gap-4 md:hidden">
-            {/* Mobile theme toggle */}
-            <button
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="v9-nav-link"
-              aria-label={
-                mounted
-                  ? theme === "dark"
-                    ? "Switch to light mode"
-                    : "Switch to dark mode"
-                  : "Toggle theme"
-              }
-            >
-              {mounted && theme === "dark" ? (
-                <Sun className="h-3.5 w-3.5" />
-              ) : (
-                <Moon className="h-3.5 w-3.5" />
-              )}
-            </button>
-
             {/* Mobile hamburger */}
             <button
               className="v9-nav-link"
@@ -375,6 +346,38 @@ export function Navbar({ locale }: { locale: string }) {
               <Shield className="h-3.5 w-3.5" />
               Admin
               {isActive(`/${locale}/admin`) && (
+                <span
+                  className="ml-3 inline-block"
+                  style={{
+                    width: "4px",
+                    height: "4px",
+                    borderRadius: "1px",
+                    background: "var(--v9-sol-green)",
+                  }}
+                />
+              )}
+            </Link>
+
+            {/* Mobile settings link */}
+            <Link
+              href={`/${locale}/settings`}
+              onClick={() => setMobileOpen(false)}
+              className={cn(
+                "py-4 transition-opacity flex items-center gap-2",
+                isActive(`/${locale}/settings`) ? "opacity-100" : "opacity-50 hover:opacity-80",
+              )}
+              style={{
+                fontFamily: "var(--v9-mono)",
+                fontSize: "11px",
+                letterSpacing: "3px",
+                textTransform: "uppercase" as const,
+                color: "var(--overlay-text-active)",
+                borderBottom: "1px solid var(--overlay-divider)",
+              }}
+            >
+              <Settings className="h-3.5 w-3.5" />
+              Settings
+              {isActive(`/${locale}/settings`) && (
                 <span
                   className="ml-3 inline-block"
                   style={{

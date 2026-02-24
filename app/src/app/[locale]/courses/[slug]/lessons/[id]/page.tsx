@@ -1711,27 +1711,6 @@ function LessonInner({
             flexShrink: 0,
           }}
         >
-          {!isMobile &&
-            [
-              { label: "HOME", href: `/${locale}` },
-              { label: "COURSES", href: `/${locale}/courses` },
-              { label: "DASHBOARD", href: `/${locale}/dashboard` },
-              { label: "LEADERBOARD", href: `/${locale}/leaderboard` },
-            ].map((l) => (
-              <Link
-                key={l.label}
-                href={l.href}
-                style={{
-                  fontFamily: "var(--v9-mono)",
-                  fontSize: 9,
-                  letterSpacing: "0.12em",
-                  color: l.label === "COURSES" ? "#FF5C28" : "#8A8784",
-                  textDecoration: "none",
-                }}
-              >
-                {l.label}
-              </Link>
-            ))}
           <span
             style={{
               fontFamily: "var(--v9-mono)",
