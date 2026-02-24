@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { useSettings } from "@/hooks/use-settings";
+import { getGravatarUrl } from "@/lib/utils";
 
 interface ProfileData {
 	name: string;
@@ -34,14 +35,18 @@ export function ProfileSettings() {
 
 	useEffect(() => {
 		if (!data) return;
-		setProfile({
-			name: data.profile.name,
-			email: data.profile.email,
-			bio: data.profile.bio,
-			location: data.profile.location,
-			website: data.profile.website,
-			avatar: data.profile.image,
-		});
+		const loadProfile = async () => {
+			const avatar = data.profile.image || (await getGravatarUrl(data.profile.email));
+			setProfile({
+				name: data.profile.name,
+				email: data.profile.email,
+				bio: data.profile.bio,
+				location: data.profile.location,
+				website: data.profile.website,
+				avatar,
+			});
+		};
+		loadProfile();
 	}, [data]);
 
 	const handleSave = async () => {

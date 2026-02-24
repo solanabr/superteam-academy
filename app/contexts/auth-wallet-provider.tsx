@@ -6,6 +6,7 @@ import { PhantomWalletAdapter, SolflareWalletAdapter } from "@solana/wallet-adap
 import { createAuthClient, type AuthClient } from "@superteam-academy/auth";
 import { createSignInMessage } from "@superteam-academy/auth";
 import { AuthContext, type AuthSession, type AuthUser, type AuthContextType } from "./auth-context";
+import { getGravatarUrl } from "@/lib/utils";
 
 import "@solana/wallet-adapter-react-ui/styles.css";
 
@@ -41,11 +42,12 @@ function AuthProviderInner({
 			userId: result.data.user.id,
 		});
 
+		const image = result.data.user.image || (await getGravatarUrl(result.data.user.email));
 		const userData: AuthUser = {
 			id: result.data.user.id,
 			name: result.data.user.name,
 			email: result.data.user.email,
-			image: result.data.user.image ?? "",
+			image,
 		};
 		setUser(userData);
 

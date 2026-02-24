@@ -19,6 +19,7 @@ const nextConfig: NextConfig = {
 		remotePatterns: [
 			{ protocol: "https", hostname: "cdn.sanity.io" },
 			{ protocol: "https", hostname: "arweave.net" },
+			{ protocol: "https", hostname: "gravatar.com" },
 			{ protocol: "http", hostname: "localhost" },
 		],
 	},
