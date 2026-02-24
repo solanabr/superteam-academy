@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/contexts/auth-context";
 import { getProgramId } from "@/lib/academy";
+import { useRouter } from "@superteam-academy/i18n/navigation";
 
 interface CourseEnrollmentProps {
 	course: {
@@ -33,6 +34,7 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 	const t = useTranslations("courses");
 	const { wallet } = useAuth();
 	const { connection } = useConnection();
+	const router = useRouter();
 	const [enrollmentMethod, setEnrollmentMethod] = useState<"wallet" | "card" | null>(null);
 	const [isEnrolling, setIsEnrolling] = useState(false);
 	const [isClosing, setIsClosing] = useState(false);
@@ -62,6 +64,12 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 
 			const signature = await wallet.sendTransaction(tx, connection);
 			await connection.confirmTransaction(signature, "confirmed");
+
+			// Redirect to learning page on successful enrollment
+			router.push(`/courses/${course.id}/learn`);
+		} catch (error) {
+			console.error("Enrollment failed:", error);
+			// You could add error handling/toast here
 		} finally {
 			setIsEnrolling(false);
 		}
@@ -84,6 +92,12 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 
 			const signature = await wallet.sendTransaction(tx, connection);
 			await connection.confirmTransaction(signature, "confirmed");
+
+			// Redirect back to courses page after closing enrollment
+			router.push("/courses");
+		} catch (error) {
+			console.error("Failed to close enrollment:", error);
+			// You could add error handling/toast here
 		} finally {
 			setIsClosing(false);
 		}
@@ -106,8 +120,8 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 					</div>
 				</div>
 
-				<Button className="w-full" size="lg">
-					{t("enroll.continueLearning")}
+				<Button className="w-full" size="lg" asChild={true}>
+					<a href={`/courses/${course.id}/learn`}>{t("enroll.continueLearning")}</a>
 				</Button>
 
 				<Button

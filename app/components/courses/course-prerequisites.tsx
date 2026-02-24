@@ -1,8 +1,12 @@
-import { CheckCircle, AlertCircle, BookOpen } from "lucide-react";
+"use client";
+
+import { CheckCircle, AlertCircle, BookOpen, ExternalLink } from "lucide-react";
+import { Link } from "@superteam-academy/i18n/navigation";
 import { useTranslations } from "next-intl";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 interface CoursePrerequisitesProps {
 	prerequisites: Array<{
@@ -64,6 +68,13 @@ export function CoursePrerequisites({ prerequisites }: CoursePrerequisitesProps)
 										: t("prerequisites.notCompleted")}
 								</div>
 							</div>
+
+							<Button variant="outline" size="sm" asChild={true}>
+								<Link href={`/courses/${prerequisite.id}`}>
+									<ExternalLink className="h-4 w-4 mr-1" />
+									{t("instructor.viewCourse")}
+								</Link>
+							</Button>
 						</div>
 					))}
 				</div>

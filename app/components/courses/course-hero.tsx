@@ -1,7 +1,10 @@
+"use client";
+
 import Image from "next/image";
 import { Link } from "@superteam-academy/i18n/navigation";
 import { Play, Share2, Heart, Star, Users, Clock, Award } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -33,6 +36,51 @@ interface CourseHeroProps {
 
 export function CourseHero({ course }: CourseHeroProps) {
 	const t = useTranslations("courses");
+	const [isSaved, setIsSaved] = useState(false);
+	const [isSharing, setIsSharing] = useState(false);
+	const storageKey = "savedCourses";
+
+	useEffect(() => {
+		const savedCourses = JSON.parse(localStorage.getItem(storageKey) ?? "[]") as string[];
+		setIsSaved(savedCourses.includes(course.id));
+	}, [course.id]);
+
+	const handleSaveCourse = async () => {
+		setIsSaved((prev) => {
+			const next = !prev;
+			const savedCourses = JSON.parse(localStorage.getItem(storageKey) ?? "[]") as string[];
+			const updatedCourses = next
+				? Array.from(new Set([...savedCourses, course.id]))
+				: savedCourses.filter((savedId) => savedId !== course.id);
+			localStorage.setItem(storageKey, JSON.stringify(updatedCourses));
+			return next;
+		});
+	};
+
+	const handleShareCourse = async () => {
+		setIsSharing(true);
+		try {
+			if (navigator.share) {
+				await navigator.share({
+					title: course.title,
+					text: course.shortDescription,
+					url: window.location.href,
+				});
+			} else {
+				await navigator.clipboard.writeText(window.location.href);
+			}
+		} catch (error) {
+			console.error("Error sharing course:", error);
+		} finally {
+			setIsSharing(false);
+		}
+	};
+
+	const handlePreviewVideo = () => {
+		if (course.videoPreview) {
+			window.open(course.videoPreview, "_blank");
+		}
+	};
 
 	return (
 		<div className="relative overflow-hidden bg-linear-to-br from-primary/10 via-background to-secondary/10">
@@ -124,18 +172,36 @@ export function CourseHero({ course }: CourseHeroProps) {
 								</Button>
 							)}
 
-							<Button variant="outline" size="lg" className="gap-2">
-								<Heart className="h-4 w-4" />
+							<Button
+								variant="outline"
+								size="lg"
+								className="gap-2"
+								onClick={handleSaveCourse}
+							>
+								<Heart
+									className={`h-4 w-4 ${isSaved ? "fill-current text-red-500" : ""}`}
+								/>
 								{t("hero.save")}
 							</Button>
 
-							<Button variant="outline" size="lg" className="gap-2">
+							<Button
+								variant="outline"
+								size="lg"
+								className="gap-2"
+								onClick={handleShareCourse}
+								disabled={isSharing}
+							>
 								<Share2 className="h-4 w-4" />
 								{t("hero.share")}
 							</Button>
 
 							{course.videoPreview && (
-								<Button variant="outline" size="lg" className="gap-2">
+								<Button
+									variant="outline"
+									size="lg"
+									className="gap-2"
+									onClick={handlePreviewVideo}
+								>
 									<Play className="h-4 w-4" />
 									{t("hero.preview")}
 								</Button>
@@ -155,7 +221,12 @@ export function CourseHero({ course }: CourseHeroProps) {
 							/>
 							{course.videoPreview && (
 								<div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-									<Button size="lg" variant="secondary" className="gap-2">
+									<Button
+										size="lg"
+										variant="secondary"
+										className="gap-2"
+										onClick={handlePreviewVideo}
+									>
 										<Play className="h-5 w-5" />
 										{t("hero.watchPreview")}
 									</Button>
@@ -163,7 +234,7 @@ export function CourseHero({ course }: CourseHeroProps) {
 							)}
 						</div>
 
-						<Card className="absolute -bottom-6 -left-6 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-lg">
+						<Card className="absolute -bottom-6 -left-6 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 shadow-lg">
 							<CardContent className="p-4">
 								<div className="text-center space-y-2">
 									<div className="text-2xl font-bold text-primary">

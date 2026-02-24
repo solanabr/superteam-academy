@@ -1,5 +1,8 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
-import { ChevronDown, Play, FileText, Code, CheckCircle } from "lucide-react";
+import { ChevronDown, Play, FileText, Code, CheckCircle, Lock, Clock } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
@@ -28,6 +31,17 @@ interface CourseModulesProps {
 
 export function CourseModules({ courseId, modules }: CourseModulesProps) {
 	const t = useTranslations("courses");
+	const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
+
+	const toggleModule = (moduleId: string) => {
+		const newExpanded = new Set(expandedModules);
+		if (newExpanded.has(moduleId)) {
+			newExpanded.delete(moduleId);
+		} else {
+			newExpanded.add(moduleId);
+		}
+		setExpandedModules(newExpanded);
+	};
 
 	return (
 		<div className="space-y-4">
@@ -48,6 +62,8 @@ export function CourseModules({ courseId, modules }: CourseModulesProps) {
 						courseId={courseId}
 						module={module}
 						moduleNumber={moduleIndex + 1}
+						expandedModules={expandedModules}
+						toggleModule={toggleModule}
 					/>
 				))}
 			</div>
@@ -59,12 +75,17 @@ function ModuleCard({
 	courseId,
 	module,
 	moduleNumber,
+	expandedModules,
+	toggleModule,
 }: {
 	courseId: string;
 	module: CourseModulesProps["modules"][0];
 	moduleNumber: number;
+	expandedModules: Set<string>;
+	toggleModule: (moduleId: string) => void;
 }) {
 	const t = useTranslations("courses");
+
 	const getLessonIcon = (type: string) => {
 		switch (type) {
 			case "video":
@@ -85,7 +106,10 @@ function ModuleCard({
 
 	return (
 		<Card>
-			<Collapsible>
+			<Collapsible
+				open={expandedModules.has(module.id)}
+				onOpenChange={() => toggleModule(module.id)}
+			>
 				<CollapsibleTrigger asChild={true}>
 					<CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
 						<div className="flex items-center justify-between">
@@ -166,10 +190,16 @@ function ModuleCard({
 
 										<div>
 											<div className="font-medium">{lesson.title}</div>
-											<div className="text-sm text-muted-foreground">
-												{lesson.type.charAt(0).toUpperCase() +
-													lesson.type.slice(1)}{" "}
-												• {lesson.duration}
+											<div className="flex items-center gap-2 text-sm text-muted-foreground">
+												<span>
+													{lesson.type.charAt(0).toUpperCase() +
+														lesson.type.slice(1)}
+												</span>
+												<span>•</span>
+												<div className="flex items-center gap-1">
+													<Clock className="h-3 w-3" />
+													<span>{lesson.duration}</span>
+												</div>
 											</div>
 										</div>
 									</div>
@@ -183,6 +213,28 @@ function ModuleCard({
 												lesson.type === "interactive"
 													? `/courses/${courseId}/challenges/${lesson.id}`
 													: `/courses/${courseId}/learn?lesson=${lesson.id}`;
+
+											// Check if lesson is locked (previous lesson not completed)
+											const lessonIndex = module.lessonsList.findIndex(
+												(l) => l.id === lesson.id
+											);
+											const isLocked =
+												lessonIndex > 0 &&
+												!module.lessonsList[lessonIndex - 1].completed;
+
+											if (isLocked) {
+												return (
+													<Button
+														size="sm"
+														variant="ghost"
+														disabled={true}
+													>
+														<Lock className="h-4 w-4 mr-1" />
+														{t("modules.start")}
+													</Button>
+												);
+											}
+
 											return lesson.completed ? (
 												<Button size="sm" variant="ghost" asChild={true}>
 													<Link href={href}>

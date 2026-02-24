@@ -22,7 +22,7 @@ import { getAcademyClient } from "@/lib/academy";
 import { getLinkedWallet } from "@/lib/auth";
 import { mapCourseToDetail } from "@/lib/course-data";
 import { PublicKey } from "@solana/web3.js";
-import { countCompletedLessons } from "@superteam-academy/anchor";
+import { countCompletedLessons, type CourseAccount } from "@superteam-academy/anchor";
 
 interface CourseDetailPageProps {
 	params: Promise<{
@@ -219,7 +219,9 @@ async function CourseDetailContent({
 							<CoursePrerequisites prerequisites={course.prerequisites} />
 						)}
 
-						{course.enrolled && <CourseProgress progress={course.progress} />}
+						{course.enrolled && (
+							<CourseProgress courseId={courseId} progress={course.progress} />
+						)}
 					</div>
 				</div>
 			</div>
@@ -266,13 +268,22 @@ function CourseDetailSkeleton() {
 
 async function getCourse(id: string) {
 	const academyClient = getAcademyClient();
-	const [cmsCourse, onchainCourse, onchainCourses, reviews, wallet] = await Promise.all([
+	const [cmsCourse, reviews, wallet] = await Promise.all([
 		getCourseById(id),
-		academyClient.fetchCourse(id),
-		academyClient.fetchAllCourses(),
 		getCourseReviews(id),
 		getLinkedWallet(),
 	]);
+
+	let onchainCourse: CourseAccount | null = null;
+	let onchainCourses: Array<{ pubkey: PublicKey; account: CourseAccount }> = [];
+	try {
+		[onchainCourse, onchainCourses] = await Promise.all([
+			academyClient.fetchCourse(id),
+			academyClient.fetchAllCourses(),
+		]);
+	} catch (error) {
+		console.warn("Onchain course fetch failed", error);
+	}
 
 	let prerequisiteLabel: string | null = null;
 	const prerequisite = onchainCourse?.prerequisite ?? null;
@@ -289,16 +300,20 @@ async function getCourse(id: string) {
 	} | null = null;
 
 	if (wallet && onchainCourse) {
-		const learner = new PublicKey(wallet);
-		const enrollmentData = await academyClient.fetchEnrollment(id, learner);
-		if (enrollmentData) {
-			const completed = countCompletedLessons(enrollmentData.lessonFlags);
-			enrollment = {
-				enrolled: true,
-				completedLessons: completed,
-				xpEarned: completed * onchainCourse.xpPerLesson,
-				finalized: !!enrollmentData.completedAt,
-			};
+		try {
+			const learner = new PublicKey(wallet);
+			const enrollmentData = await academyClient.fetchEnrollment(id, learner);
+			if (enrollmentData) {
+				const completed = countCompletedLessons(enrollmentData.lessonFlags);
+				enrollment = {
+					enrolled: true,
+					completedLessons: completed,
+					xpEarned: completed * onchainCourse.xpPerLesson,
+					finalized: !!enrollmentData.completedAt,
+				};
+			}
+		} catch (error) {
+			console.warn("Onchain enrollment fetch failed", error);
 		}
 	}
 

@@ -1,4 +1,7 @@
+"use client";
+
 import { TrendingUp, Calendar, Award, Target, Rocket, PartyPopper } from "lucide-react";
+import { Link } from "@superteam-academy/i18n/navigation";
 import { useTranslations } from "next-intl";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,9 +21,10 @@ interface CourseProgressProps {
 		estimatedCompletion: string;
 		lastActivity: string;
 	};
+	courseId: string;
 }
 
-export function CourseProgress({ progress }: CourseProgressProps) {
+export function CourseProgress({ progress, courseId }: CourseProgressProps) {
 	const t = useTranslations("courses");
 
 	return (
@@ -110,12 +114,20 @@ export function CourseProgress({ progress }: CourseProgressProps) {
 				</div>
 
 				<div className="flex gap-2">
-					<Button className="flex-1" size="sm">
-						{t("progress.continueLearning")}
+					<Button className="flex-1" size="sm" asChild={true}>
+						<Link href={`/courses/${courseId}/learn`}>
+							{t("progress.continueLearning")}
+						</Link>
 					</Button>
-					<Button variant="outline" size="sm">
-						{t("progress.viewCertificate")}
-					</Button>
+					{progress.percentage === 100 ? (
+						<Button variant="outline" size="sm" asChild={true}>
+							<Link href="/certificates">{t("progress.viewCertificate")}</Link>
+						</Button>
+					) : (
+						<Button variant="outline" size="sm" disabled={true}>
+							{t("progress.viewCertificate")}
+						</Button>
+					)}
 				</div>
 
 				{progress.percentage < 100 && (

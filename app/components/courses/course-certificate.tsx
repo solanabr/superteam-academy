@@ -1,3 +1,5 @@
+"use client";
+
 import { Award, Download, Share2, ExternalLink } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -16,6 +18,45 @@ interface CourseCertificateProps {
 
 export function CourseCertificate({ certificate }: CourseCertificateProps) {
 	const t = useTranslations("courses");
+
+	const handleDownloadCertificate = async () => {
+		const content = [
+			`Certificate: ${certificate.title}`,
+			`Issuer: ${certificate.issuer}`,
+			`Type: ${certificate.type}`,
+			"Blockchain: Solana",
+		].join("\n");
+
+		const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+		const url = URL.createObjectURL(blob);
+		const link = document.createElement("a");
+		link.href = url;
+		link.download = `${certificate.title.replace(/\s+/g, "-").toLowerCase()}-certificate.txt`;
+		link.click();
+		URL.revokeObjectURL(url);
+	};
+
+	const handleShareCertificate = async () => {
+		try {
+			if (navigator.share) {
+				await navigator.share({
+					title: certificate.title,
+					text: certificate.issuer,
+					url: window.location.href,
+				});
+			} else {
+				await navigator.clipboard.writeText(window.location.href);
+			}
+		} catch (error) {
+			console.error("Error sharing certificate:", error);
+		}
+	};
+
+	const handleVerifyCertificate = () => {
+		if (certificate.verifiable) {
+			window.open("/certificates", "_blank");
+		}
+	};
 
 	return (
 		<Card>
@@ -46,7 +87,11 @@ export function CourseCertificate({ certificate }: CourseCertificateProps) {
 					<div className="flex items-center justify-center gap-2">
 						<Badge variant="secondary">{certificate.type}</Badge>
 						{certificate.verifiable && (
-							<Badge variant="outline" className="gap-1">
+							<Badge
+								variant="outline"
+								className="gap-1 cursor-pointer hover:bg-primary/10"
+								onClick={handleVerifyCertificate}
+							>
 								<ExternalLink className="h-3 w-3" />
 								{t("certificate.verifiable")}
 							</Badge>
@@ -96,18 +141,25 @@ export function CourseCertificate({ certificate }: CourseCertificateProps) {
 					</div>
 
 					<div className="flex gap-2">
-						<Button className="flex-1 gap-2">
+						<Button className="flex-1 gap-2" onClick={handleDownloadCertificate}>
 							<Download className="h-4 w-4" />
 							{t("certificate.download")}
 						</Button>
-						<Button variant="outline" className="gap-2">
+						<Button
+							variant="outline"
+							className="gap-2"
+							onClick={handleShareCertificate}
+						>
 							<Share2 className="h-4 w-4" />
 							{t("certificate.share")}
 						</Button>
 					</div>
 
 					{certificate.verifiable && (
-						<div className="p-3 bg-muted/50 rounded-lg">
+						<div
+							className="p-3 bg-muted/50 rounded-lg cursor-pointer hover:bg-muted/70 transition-colors"
+							onClick={handleVerifyCertificate}
+						>
 							<div className="flex items-start gap-3">
 								<ExternalLink className="h-4 w-4 text-primary shrink-0 mt-0.5" />
 								<div className="text-sm">

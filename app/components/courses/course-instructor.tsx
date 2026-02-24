@@ -1,4 +1,7 @@
+"use client";
+
 import { Star, Users, BookOpen, Award, Twitter, Linkedin, Globe } from "lucide-react";
+import { Link } from "@superteam-academy/i18n/navigation";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
@@ -25,6 +28,11 @@ interface CourseInstructorProps {
 
 export function CourseInstructor({ instructor }: CourseInstructorProps) {
 	const t = useTranslations("courses");
+
+	const otherCourses = [
+		{ title: "Advanced DeFi Strategies", rating: "4.9", students: "2,340" },
+		{ title: "Smart Contract Security", rating: "4.8", students: "1,890" },
+	];
 
 	return (
 		<div className="space-y-6">
@@ -167,42 +175,38 @@ export function CourseInstructor({ instructor }: CourseInstructorProps) {
 							{t("instructor.otherCourses", { name: instructor.name.split(" ")[0] })}
 						</h3>
 						<div className="space-y-3">
-							<div className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-								<div className="w-12 h-12 bg-muted rounded shrink-0" />
-								<div className="flex-1 min-w-0">
-									<h4 className="font-medium truncate">
-										Advanced DeFi Strategies
-									</h4>
-									<p className="text-sm text-muted-foreground">
-										4.9 • 2,340 students
-									</p>
+							{otherCourses.map((course) => (
+								<div
+									key={course.title}
+									className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors"
+								>
+									<div className="w-12 h-12 bg-muted rounded shrink-0" />
+									<div className="flex-1 min-w-0">
+										<h4 className="font-medium truncate">{course.title}</h4>
+										<p className="text-sm text-muted-foreground">
+											{course.rating} • {course.students} students
+										</p>
+									</div>
+									<Button variant="outline" size="sm" asChild={true}>
+										<Link
+											href={`/courses?search=${encodeURIComponent(course.title)}`}
+										>
+											{t("instructor.viewCourse")}
+										</Link>
+									</Button>
 								</div>
-								<Button variant="outline" size="sm">
-									{t("instructor.viewCourse")}
-								</Button>
-							</div>
-
-							<div className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-								<div className="w-12 h-12 bg-muted rounded shrink-0" />
-								<div className="flex-1 min-w-0">
-									<h4 className="font-medium truncate">
-										Smart Contract Security
-									</h4>
-									<p className="text-sm text-muted-foreground">
-										4.8 • 1,890 students
-									</p>
-								</div>
-								<Button variant="outline" size="sm">
-									{t("instructor.viewCourse")}
-								</Button>
-							</div>
+							))}
 						</div>
 
 						<div className="mt-4">
-							<Button variant="outline" className="w-full">
-								{t("instructor.viewAllCourses", {
-									name: instructor.name.split(" ")[0],
-								})}
+							<Button variant="outline" className="w-full" asChild={true}>
+								<Link
+									href={`/courses?instructor=${encodeURIComponent(instructor.name)}`}
+								>
+									{t("instructor.viewAllCourses", {
+										name: instructor.name.split(" ")[0],
+									})}
+								</Link>
 							</Button>
 						</div>
 					</div>

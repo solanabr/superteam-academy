@@ -162,6 +162,12 @@
 		"reviewsSection": {
 			"title": "Student Reviews",
 			"writeReview": "Write a Review",
+			"rating": "Rating",
+			"yourReview": "Your review",
+			"commentPlaceholder": "Share your experience with this course...",
+			"submitReview": "Submit review",
+			"cancel": "Cancel",
+			"you": "You",
 			"basedOn": "Based on {count} reviews",
 			"helpful": "Helpful ({count})",
 			"wasHelpful": "Was this review helpful?",

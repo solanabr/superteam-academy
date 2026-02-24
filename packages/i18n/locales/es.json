@@ -162,6 +162,12 @@
 		"reviewsSection": {
 			"title": "Reseñas de estudiantes",
 			"writeReview": "Escribir una reseña",
+			"rating": "Calificación",
+			"yourReview": "Tu reseña",
+			"commentPlaceholder": "Comparte tu experiencia con este curso...",
+			"submitReview": "Enviar reseña",
+			"cancel": "Cancelar",
+			"you": "Tú",
 			"basedOn": "Basado en {count} reseñas",
 			"helpful": "Útil ({count})",
 			"wasHelpful": "¿Fue útil esta reseña?",

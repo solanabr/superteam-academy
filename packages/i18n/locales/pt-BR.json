@@ -162,6 +162,12 @@
 		"reviewsSection": {
 			"title": "Avaliações dos Alunos",
 			"writeReview": "Escrever uma Avaliação",
+			"rating": "Avaliação",
+			"yourReview": "Sua avaliação",
+			"commentPlaceholder": "Compartilhe sua experiência com este curso...",
+			"submitReview": "Enviar avaliação",
+			"cancel": "Cancelar",
+			"you": "Você",
 			"basedOn": "Com base em {count} avaliações",
 			"helpful": "Útil ({count})",
 			"wasHelpful": "Esta avaliação foi útil?",
