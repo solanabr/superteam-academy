@@ -6,12 +6,12 @@ import {
   WalletProvider as SolanaWalletProvider,
 } from "@solana/wallet-adapter-react";
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
-import { HELIUS_RPC_URL } from "@/lib/constants";
+import { CLIENT_RPC_URL } from "@/lib/constants";
 
 import "@solana/wallet-adapter-react-ui/styles.css";
 
 export function WalletProvider({ children }: { children: ReactNode }) {
-  const endpoint = useMemo(() => HELIUS_RPC_URL, []);
+  const endpoint = useMemo(() => CLIENT_RPC_URL, []);
   // Wallet Standard auto-detects installed wallets (Phantom, Solflare, Backpack, etc.)
   // No manual adapter imports needed with @solana/wallet-adapter v0.9+
   const wallets = useMemo(() => [], []);

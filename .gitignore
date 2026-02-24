@@ -38,3 +38,4 @@ lighthouse-results.json
 
 # Misc
 *.log
+.vercel

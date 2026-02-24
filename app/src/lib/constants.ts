@@ -1,12 +1,17 @@
 export const SOLANA_NETWORK = (process.env.NEXT_PUBLIC_SOLANA_NETWORK ??
   "devnet") as "mainnet-beta" | "devnet";
 
-const HELIUS_KEY = process.env.NEXT_PUBLIC_HELIUS_API_KEY ?? "";
+const HELIUS_KEY = process.env.HELIUS_API_KEY ?? "";
+
+/** Server-side RPC URL (includes API key). Use only in server components / API routes. */
 export const HELIUS_RPC_URL = HELIUS_KEY
   ? `https://${SOLANA_NETWORK === "devnet" ? "devnet" : "mainnet"}.helius-rpc.com/?api-key=${HELIUS_KEY}`
   : SOLANA_NETWORK === "devnet"
     ? "https://api.devnet.solana.com"
     : "https://api.mainnet-beta.solana.com";
+
+/** Client-side RPC endpoint (proxied through /api/rpc to hide API key). */
+export const CLIENT_RPC_URL = "/api/rpc";
 export const XP_MINT_ADDRESS = process.env.NEXT_PUBLIC_XP_MINT_ADDRESS ?? "";
 export const PROGRAM_ID =
   process.env.NEXT_PUBLIC_PROGRAM_ID ||
