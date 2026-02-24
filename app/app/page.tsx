@@ -5,6 +5,7 @@ import {
   FeaturesSection,
   CoursesSection,
   AssessmentSection,
+  LeaderboardSection,
   TestimonialsSection,
   Footer,
 } from "@/components/landing";
@@ -17,6 +18,7 @@ export default function HomePage() {
         <FeaturesSection />
         <CoursesSection />
         <AssessmentSection />
+        <LeaderboardSection />
         <TestimonialsSection />
       </main>
       <Footer />

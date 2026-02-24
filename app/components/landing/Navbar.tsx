@@ -3,7 +3,8 @@
 import { motion } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
-import { WalletConnectButton } from "@/components/wallet/WalletConnectButton";
+import { ThemeToggle } from "@/components/app/ThemeToggle";
+import { useIsAdmin } from "@/hooks";
 
 const NAV_LINKS = [
   { label: "Courses", href: "/courses" },
@@ -12,6 +13,8 @@ const NAV_LINKS = [
 ];
 
 export function Navbar() {
+  const { isAdmin } = useIsAdmin();
+
   return (
     <motion.header
       initial={{ opacity: 0, y: -12 }}
@@ -27,7 +30,15 @@ export function Navbar() {
               alt="Superteam Academy"
               width={160}
               height={36}
-              className="h-7 w-auto"
+              className="h-7 w-auto dark:hidden"
+              priority
+            />
+            <Image
+              src="/HORIZONTAL-LOGO/ST-OFF-WHITE-HORIZONTAL.png"
+              alt="Superteam Academy"
+              width={160}
+              height={36}
+              className="h-7 w-auto hidden dark:block"
               priority
             />
           </Link>
@@ -43,11 +54,21 @@ export function Navbar() {
                 </Link>
               </li>
             ))}
+            {isAdmin && (
+              <li>
+                <Link
+                  href="/admin"
+                  className="rounded-md px-3 py-1.5 text-sm font-medium text-foreground/70 transition-colors hover:bg-primary/5 hover:text-foreground"
+                >
+                  Admin
+                </Link>
+              </li>
+            )}
           </ul>
         </div>
 
-        <div className="hidden sm:block">
-          <WalletConnectButton />
+        <div className="hidden sm:flex items-center gap-2">
+          <ThemeToggle />
         </div>
       </nav>
     </motion.header>

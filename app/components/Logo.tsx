@@ -1,8 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 
-const LOGO_SRC = "/HORIZONTAL-LOGO/ST-DARK-GREEN-HORIZONTAL.png";
-
 export function Logo() {
   return (
     <Link
@@ -11,11 +9,19 @@ export function Logo() {
       aria-label="Superteam Brasil — Início"
     >
       <Image
-        src={LOGO_SRC}
+        src="/HORIZONTAL-LOGO/ST-DARK-GREEN-HORIZONTAL.png"
         alt="Superteam Brasil"
         width={180}
         height={40}
-        className="h-8 w-auto"
+        className="h-8 w-auto dark:hidden"
+        priority
+      />
+      <Image
+        src="/HORIZONTAL-LOGO/ST-OFF-WHITE-HORIZONTAL.png"
+        alt="Superteam Brasil"
+        width={180}
+        height={40}
+        className="h-8 w-auto hidden dark:block"
         priority
       />
     </Link>

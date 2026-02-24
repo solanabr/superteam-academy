@@ -1,17 +1,33 @@
 "use client";
 
 import { useWallet } from "@solana/wallet-adapter-react";
-import { Settings as SettingsIcon, User, Bell, Palette } from "lucide-react";
+import { User, Bell, Palette } from "lucide-react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { PageHeader } from "@/components/app";
+import { PageHeader, ThemeSelect } from "@/components/app";
+import { getDisplayName, setDisplayName } from "@/lib/display-name";
 import { toast } from "sonner";
 
 export default function SettingsPage() {
     const { publicKey } = useWallet();
+    const [displayName, setDisplayNameInput] = useState("");
+
+    useEffect(() => {
+        if (publicKey) {
+            setDisplayNameInput(getDisplayName(publicKey.toBase58()) ?? "");
+        } else {
+            setDisplayNameInput("");
+        }
+    }, [publicKey]);
+
+    const handleSave = () => {
+        if (!publicKey) return;
+        setDisplayName(publicKey.toBase58(), displayName);
+        toast.success("Settings saved!");
+    };
 
     return (
         <div className="mx-auto max-w-2xl space-y-6">
@@ -34,7 +50,11 @@ export default function SettingsPage() {
                     </div>
                     <div className="space-y-2">
                         <Label>Display Name</Label>
-                        <Input placeholder="Enter your display name" />
+                        <Input
+                            placeholder="Enter your display name"
+                            value={displayName}
+                            onChange={(e) => setDisplayNameInput(e.target.value)}
+                        />
                     </div>
                 </div>
             </Card>
@@ -50,19 +70,8 @@ export default function SettingsPage() {
                 </p>
             </Card>
 
-            {/* Appearance */}
-            <Card className="p-5">
-                <div className="flex items-center gap-2 mb-4">
-                    <Palette className="h-4 w-4 text-muted-foreground" />
-                    <h3 className="font-semibold">Appearance</h3>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                    Theme and appearance settings will be available in a future update.
-                </p>
-            </Card>
-
             <div className="flex justify-end">
-                <Button onClick={() => toast.success("Settings saved!")}>
+                <Button onClick={handleSave}>
                     Save Changes
                 </Button>
             </div>

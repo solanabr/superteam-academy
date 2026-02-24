@@ -1,6 +1,9 @@
 export { useProgram } from "./useProgram";
 export { useConfig, type ConfigAccount } from "./useConfig";
+export { useIsAdmin, type AdminRole } from "./useIsAdmin";
 export { useAllCourses } from "./useAllCourses";
+export { useAllMinters } from "./useAllMinters";
+export { useAllAchievementTypes } from "./useAllAchievementTypes";
 export { useCourse } from "./useCourse";
 export { useEnrollment } from "./useEnrollment";
 export { useXpBalance } from "./useXpBalance";

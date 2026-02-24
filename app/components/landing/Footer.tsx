@@ -10,7 +10,6 @@ const LINK_COLUMNS = [
             { label: "All Courses", href: "/courses" },
             { label: "Learning Tracks", href: "/tracks" },
             { label: "Certifications", href: "/certifications" },
-            { label: "Leaderboard", href: "/leaderboard" },
         ],
     },
     {

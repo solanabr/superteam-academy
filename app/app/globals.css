@@ -89,13 +89,13 @@
   --chart-4: var(--palette-cream);
   --chart-5: var(--palette-nearblack);
 
-  --sidebar: var(--palette-darkgreen);
-  --sidebar-foreground: var(--palette-cream);
-  --sidebar-primary: var(--palette-gold);
-  --sidebar-primary-foreground: var(--palette-nearblack);
-  --sidebar-accent: var(--palette-midgreen);
-  --sidebar-accent-foreground: var(--palette-cream);
-  --sidebar-border: rgb(47 107 63 / 0.4);
+  --sidebar: var(--palette-cream);
+  --sidebar-foreground: var(--palette-nearblack);
+  --sidebar-primary: var(--palette-darkgreen);
+  --sidebar-primary-foreground: var(--palette-cream);
+  --sidebar-accent: rgb(47 107 63 / 0.12);
+  --sidebar-accent-foreground: var(--palette-nearblack);
+  --sidebar-border: rgb(47 107 63 / 0.15);
   --sidebar-ring: var(--palette-gold);
 }
 
@@ -133,13 +133,13 @@
   --chart-4: var(--palette-cream);
   --chart-5: var(--palette-nearblack);
 
-  --sidebar: var(--palette-darkgreen);
+  --sidebar: oklch(0.18 0.02 160);
   --sidebar-foreground: var(--palette-cream);
   --sidebar-primary: var(--palette-gold);
   --sidebar-primary-foreground: var(--palette-nearblack);
-  --sidebar-accent: var(--palette-midgreen);
+  --sidebar-accent: rgb(255 255 255 / 0.08);
   --sidebar-accent-foreground: var(--palette-cream);
-  --sidebar-border: rgb(247 234 203 / 0.12);
+  --sidebar-border: rgb(255 255 255 / 0.08);
   --sidebar-ring: var(--palette-gold);
 }
 

@@ -6,12 +6,34 @@ import { useRef, useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { getDisplayName, onDisplayNameChanged } from "@/lib/display-name";
 
 export function WalletConnectButton() {
   const { setVisible } = useWalletModal();
   const { publicKey, connected, disconnect } = useWallet();
   const [open, setOpen] = useState(false);
+  const [displayName, setDisplayNameState] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
+
+  const refreshDisplayName = () => {
+    if (publicKey) {
+      setDisplayNameState(getDisplayName(publicKey.toBase58()));
+    } else {
+      setDisplayNameState(null);
+    }
+  };
+
+  useEffect(() => {
+    refreshDisplayName();
+  }, [publicKey]);
+
+  useEffect(() => {
+    return onDisplayNameChanged((walletAddress) => {
+      if (publicKey && publicKey.toBase58() === walletAddress) {
+        setDisplayNameState(getDisplayName(walletAddress));
+      }
+    });
+  }, [publicKey]);
 
   useEffect(() => {
     if (!open) return;
@@ -24,7 +46,7 @@ export function WalletConnectButton() {
 
   const label =
     connected && publicKey
-      ? `${publicKey.toBase58().slice(0, 4)}…${publicKey.toBase58().slice(-4)}`
+      ? displayName?.trim() || `${publicKey.toBase58().slice(0, 4)}…${publicKey.toBase58().slice(-4)}`
       : "Connect wallet";
 
   if (connected) {

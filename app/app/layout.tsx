@@ -1,7 +1,8 @@
 import { QueryProvider } from "@/providers/QueryProvider";
 import { SolanaProvider } from "@/providers/SolanaProvider";
+import { ThemeProvider } from "@/providers/ThemeProvider";
 import { Toaster } from "@/components/ui/sonner";
-import { Navbar } from "@/components/landing/Navbar";
+import { NavbarWrapper } from "@/components/landing/NavbarWrapper";
 import { siteConfig } from "@/config/siteConfig";
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -40,12 +41,14 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-        <SolanaProvider>
-          <QueryProvider>
-            <Navbar />
-            {children}
-          </QueryProvider>
-        </SolanaProvider>
+        <ThemeProvider>
+          <SolanaProvider>
+            <QueryProvider>
+              <NavbarWrapper />
+              {children}
+            </QueryProvider>
+          </SolanaProvider>
+        </ThemeProvider>
         <Toaster />
       </body>
     </html>

@@ -19,6 +19,7 @@ import {
     getLessonById,
     getAllLessonsFlat,
 } from "@/lib/services/content-service";
+import { toast } from "sonner";
 
 export default function LessonPage({
     params,
