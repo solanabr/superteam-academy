@@ -1,0 +1,98 @@
+'use client';
+
+import { useEffect } from 'react';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { useUserStore } from '@/lib/stores/user-store';
+import { useCourseStore } from '@/lib/stores/course-store';
+import { useXp } from '@/lib/hooks/use-xp';
+import { useStreak } from '@/lib/hooks/use-streak';
+import { useAchievements } from '@/lib/hooks/use-achievements';
+import { useCredentials } from '@/lib/hooks/use-credentials';
+import { WelcomeBanner } from '@/components/dashboard/welcome-banner';
+import { QuickStats } from '@/components/dashboard/quick-stats';
+import { ContinueLearning } from '@/components/dashboard/continue-learning';
+import { ActivityHeatmap } from '@/components/dashboard/activity-heatmap';
+import { RecentAchievements } from '@/components/dashboard/recent-achievements';
+import { CredentialGallery } from '@/components/credentials/credential-gallery';
+import { RecommendedCourses } from '@/components/dashboard/recommended-courses';
+
+export default function DashboardPage() {
+  const { publicKey } = useWallet();
+  const fetchUserData = useUserStore((s) => s.fetchUserData);
+  const enrollments = useUserStore((s) => s.enrollments);
+  const storeLoading = useUserStore((s) => s.isLoading);
+
+  const { xp, level, progress, levelTitle, isLoading: xpLoading } = useXp();
+  const { currentStreak, longestStreak } = useStreak();
+  const { achievements, isLoading: achievementsLoading } = useAchievements();
+  const { credentials, isLoading: credentialsLoading } = useCredentials();
+
+  const courses = useCourseStore((s) => s.courses);
+  const fetchCourses = useCourseStore((s) => s.fetchCourses);
+
+  // Fetch user data when wallet connects
+  useEffect(() => {
+    if (publicKey) {
+      fetchUserData(publicKey);
+    }
+  }, [publicKey, fetchUserData]);
+
+  // Fetch course catalog for enrichment
+  useEffect(() => {
+    if (courses.length === 0) {
+      fetchCourses();
+    }
+  }, [courses.length, fetchCourses]);
+
+  const isLoading = storeLoading || xpLoading;
+
+  return (
+    <div className="flex flex-col gap-6">
+      {/* Welcome Banner */}
+      <WelcomeBanner
+        level={level}
+        levelTitle={levelTitle}
+        currentStreak={currentStreak}
+        longestStreak={longestStreak}
+        isLoading={isLoading}
+      />
+
+      {/* Stats Row */}
+      <QuickStats
+        xp={xp}
+        xpProgress={progress}
+        level={level}
+        levelTitle={levelTitle}
+        currentStreak={currentStreak}
+        enrolledCount={enrollments.size}
+        isLoading={isLoading}
+      />
+
+      {/* Two-Column Layout */}
+      <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+        {/* Left Column: Continue Learning + Activity */}
+        <div className="flex flex-col gap-6">
+          <ContinueLearning
+            enrollments={enrollments}
+            courses={courses}
+            isLoading={isLoading}
+          />
+          <ActivityHeatmap />
+        </div>
+
+        {/* Right Column: Achievements + Credentials + Recommended */}
+        <div className="flex flex-col gap-6">
+          <RecentAchievements
+            achievements={achievements}
+            isLoading={achievementsLoading}
+          />
+          <CredentialGallery
+            credentials={credentials}
+            isLoading={credentialsLoading}
+          />
+          <RecommendedCourses />
+        </div>
+      </div>
+    </div>
+  );
+}
