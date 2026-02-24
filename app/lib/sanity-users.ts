@@ -10,20 +10,34 @@ import {
 	userCountQuery,
 } from "@superteam-academy/cms/queries";
 
+// Cache clients at module level to reuse connections across requests
+let _writeClient: ReturnType<typeof createSanityClient> | null | undefined;
+let _readClient: ReturnType<typeof createSanityClient> | null | undefined;
+
 function sanityWriteClient() {
+	if (_writeClient !== undefined) return _writeClient;
 	const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
 	const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET ?? "production";
 	const token = process.env.SANITY_API_WRITE_TOKEN;
-	if (!projectId || !token) return null;
-	return createSanityClient({ projectId, dataset, token, useCdn: false });
+	if (!projectId || !token) {
+		_writeClient = null;
+		return null;
+	}
+	_writeClient = createSanityClient({ projectId, dataset, token, useCdn: false });
+	return _writeClient;
 }
 
 function sanityReadClient() {
+	if (_readClient !== undefined) return _readClient;
 	const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
 	const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET ?? "production";
 	const token = process.env.SANITY_API_READ_TOKEN;
-	if (!projectId || !token) return null;
-	return createSanityClient({ projectId, dataset, token, useCdn: false });
+	if (!projectId || !token) {
+		_readClient = null;
+		return null;
+	}
+	_readClient = createSanityClient({ projectId, dataset, token, useCdn: false });
+	return _readClient;
 }
 
 function isSuperAdminIdentifier(emailOrWallet: string): boolean {

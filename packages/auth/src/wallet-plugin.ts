@@ -2,8 +2,9 @@ import { createAuthEndpoint } from "better-auth/api";
 import { setSessionCookie } from "better-auth/cookies";
 import type { AuthContext } from "better-auth";
 import { APIError } from "better-call";
-import { PublicKey } from "@solana/web3.js";
 import { z } from "zod";
+
+const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 
 const WALLET_PROVIDER_ID = "wallet";
 const WALLET_EMAIL_DOMAIN = "wallet.superteam.local";
@@ -86,10 +87,8 @@ export function walletAuthPlugin() {
 						});
 					}
 
-					let normalizedPublicKey: string;
-					try {
-						normalizedPublicKey = new PublicKey(ctx.body.publicKey).toBase58();
-					} catch {
+					const normalizedPublicKey = ctx.body.publicKey.trim();
+					if (!BASE58_RE.test(normalizedPublicKey)) {
 						throw new APIError("BAD_REQUEST", {
 							message: "Invalid wallet public key",
 						});

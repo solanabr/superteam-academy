@@ -1,7 +1,8 @@
 import { createServerAuth, type ServerAuthConfig } from "@superteam-academy/auth";
 import { headers } from "next/headers";
 import type { NextRequest } from "next/server";
-import { PublicKey } from "@solana/web3.js";
+
+const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 
 const authConfig: ServerAuthConfig = {
 	baseURL: process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000",
@@ -26,11 +27,7 @@ function extractWalletFromEmail(email: string) {
 
 	const candidate = email.slice(0, email.length - `@${WALLET_EMAIL_DOMAIN}`.length);
 
-	try {
-		return new PublicKey(candidate).toBase58();
-	} catch {
-		return undefined;
-	}
+	return BASE58_RE.test(candidate) ? candidate : undefined;
 }
 
 export async function issueWalletBetterAuthSession(request: NextRequest, publicKey: string) {

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { serverAuth } from "@/lib/auth";
-import { syncUserToSanity } from "@/lib/sanity-users";
+import { getUserByAuthId, syncUserToSanity } from "@/lib/sanity-users";
 
 const WALLET_EMAIL_DOMAIN = "wallet.superteam.local";
 
@@ -19,6 +19,25 @@ export async function POST() {
 		? user.email.slice(0, user.email.length - `@${WALLET_EMAIL_DOMAIN}`.length)
 		: undefined;
 
+	// Fast path: return cached role if user already exists in Sanity
+	const existing = await getUserByAuthId(user.id);
+	if (existing) {
+		// Fire-and-forget background update for lastActiveAt etc.
+		syncUserToSanity({
+			authId: user.id,
+			name: user.name,
+			email: user.email,
+			...(walletAddress ? { walletAddress } : {}),
+			...(user.image ? { image: user.image } : {}),
+		}).catch(() => undefined);
+
+		return NextResponse.json({
+			synced: true,
+			role: existing.role,
+		});
+	}
+
+	// New user: need to wait for creation to get the role
 	const sanityUser = await syncUserToSanity({
 		authId: user.id,
 		name: user.name,
