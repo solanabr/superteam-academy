@@ -1,0 +1,14 @@
+{
+    "Navigation": {
+        "courses": "Cursos",
+        "leaderboard": "Clasificación",
+        "credentials": "Credenciales",
+        "dashboard": "Panel",
+        "signIn": "Iniciar sesión",
+        "startBuilding": "Empieza a Construir"
+    },
+    "Index": {
+        "title": "Domina el Desarrollo en Solana",
+        "description": "Aprende a construir en Solana con cursos interactivos."
+    }
+}

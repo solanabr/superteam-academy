@@ -2,8 +2,10 @@
   "Navigation": {
     "courses": "Cursos",
     "leaderboard": "Tabela de Classificação",
+    "credentials": "Credenciais",
     "dashboard": "Painel",
-    "signIn": "Entrar"
+    "signIn": "Entrar",
+    "startBuilding": "Começar a Construir"
   },
   "Index": {
     "title": "Domine o Desenvolvimento na Solana",

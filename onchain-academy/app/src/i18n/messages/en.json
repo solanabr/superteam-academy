@@ -1,0 +1,14 @@
+{
+  "Navigation": {
+    "courses": "Courses",
+    "leaderboard": "Leaderboard",
+    "credentials": "Credentials",
+    "dashboard": "Dashboard",
+    "signIn": "Sign In",
+    "startBuilding": "Start Building"
+  },
+  "Index": {
+    "title": "Master Solana Development",
+    "description": "Learn to build on Solana with interactive courses."
+  }
+}

@@ -1,18 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Link } from "@/src/i18n/routing";
+import { useTranslations } from "next-intl";
 
 import { Hexagon, Menu, X } from "lucide-react";
 import { motion, AnimatePresence, useMotionValueEvent, useScroll } from "framer-motion";
 import { useState, useRef, useCallback } from "react";
-
-const navLinks = [
-    { href: "/auth", label: "Courses" },
-    { href: "/auth", label: "Leaderboard" },
-    { href: "/auth", label: "Credentials" },
-    { href: "/auth", label: "Dashboard" },
-];
 
 /* ─── Nav Hacker Button (text scramble CTA) ─── */
 const GLITCH_CHARS = "!@#$%^&*()_+-=[]{}|;:,.<>?/~`0123456789ABCDEF";
@@ -60,6 +54,14 @@ function NavHackerButton({ text }: { text: string }) {
 }
 
 export function Navigation() {
+    const t = useTranslations("Navigation");
+    const navLinks = [
+        { href: "/courses", label: t("courses") },
+        { href: "/leaderboard", label: t("leaderboard") },
+        { href: "/certificates", label: t("credentials") },
+        { href: "/dashboard", label: t("dashboard") },
+    ];
+
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileOpen, setIsMobileOpen] = useState(false);
     const { scrollY } = useScroll();
@@ -110,7 +112,7 @@ export function Navigation() {
                     {/* Desktop CTA */}
                     <div className="hidden md:flex items-center gap-3">
                         <Link href="/auth">
-                            <NavHackerButton text="Start Building" />
+                            <NavHackerButton text={t("startBuilding")} />
                         </Link>
                     </div>
 
@@ -168,7 +170,7 @@ export function Navigation() {
                             <div className="mt-6 pt-6 border-t border-white/10 space-y-3">
                                 <Link href="/auth" onClick={() => setIsMobileOpen(false)} className="block w-full">
                                     <Button variant="neon" className="btn-hacker w-full font-mono font-semibold uppercase tracking-widest">
-                                        Start Building
+                                        {t("startBuilding")}
                                     </Button>
                                 </Link>
                             </div>
