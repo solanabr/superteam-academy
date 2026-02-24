@@ -1,6 +1,6 @@
 "use client";
 
-import { use } from "react";
+import { use, useState, useEffect } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import {
@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { PageHeader, ProgressBar } from "@/components/app";
-import { getCourseBySlug, getAllLessonsFlat } from "@/lib/services/mock-content";
+import { getCourseBySlug, getAllLessonsFlat } from "@/lib/services/content-service";
 import { useEnroll, useEnrollment } from "@/hooks";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { toast } from "sonner";
@@ -35,10 +35,27 @@ export default function CourseDetailPage({
     params: Promise<{ slug: string }>;
 }) {
     const { slug } = use(params);
-    const course = getCourseBySlug(slug);
+    const [course, setCourse] = useState<Awaited<ReturnType<typeof getCourseBySlug>>>(undefined);
+    const [isLoading, setIsLoading] = useState(true);
     const { publicKey } = useWallet();
     const enroll = useEnroll();
     const { data: enrollment } = useEnrollment(course?.id ?? null);
+
+    useEffect(() => {
+        getCourseBySlug(slug).then((data) => {
+            setCourse(data);
+            setIsLoading(false);
+        });
+    }, [slug]);
+
+    if (isLoading) {
+        return (
+            <div className="space-y-6">
+                <div className="h-8 w-32 animate-pulse rounded bg-muted" />
+                <div className="h-64 animate-pulse rounded-xl border border-border bg-card" />
+            </div>
+        );
+    }
 
     if (!course) return notFound();
 

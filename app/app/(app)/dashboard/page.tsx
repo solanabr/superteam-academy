@@ -14,14 +14,26 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader, ProgressBar } from "@/components/app";
-import { MOCK_COURSES } from "@/lib/services/mock-content";
+import { getAllCourses } from "@/lib/services/content-service";
 import { getMockStreakData } from "@/lib/services/mock-leaderboard";
 import { useXpBalance } from "@/hooks";
+import { useState, useEffect } from "react";
+import type { MockCourse } from "@/lib/services/content-service";
 
 export default function DashboardPage() {
     const { data: xp } = useXpBalance();
     const streak = getMockStreakData();
-    const currentCourse = MOCK_COURSES[0];
+    const [courses, setCourses] = useState<MockCourse[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        getAllCourses().then((data) => {
+            setCourses(data);
+            setIsLoading(false);
+        });
+    }, []);
+
+    const currentCourse = courses[0];
 
     const xpValue = xp ?? 0;
     const level = Math.floor(xpValue / 500) + 1;
@@ -101,36 +113,38 @@ export default function DashboardPage() {
             </Card>
 
             {/* Continue Learning */}
-            <Card className="p-5">
-                <div className="mb-4 flex items-center justify-between">
-                    <h3 className="font-semibold">Continue Learning</h3>
-                    <Button asChild variant="ghost" size="sm">
-                        <Link href="/courses">
-                            View All <ArrowRight className="ml-1 h-4 w-4" />
-                        </Link>
-                    </Button>
-                </div>
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="space-y-1">
-                        <p className="font-medium">{currentCourse.title}</p>
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                            <span className="inline-flex items-center gap-1">
-                                <BookOpen className="h-3.5 w-3.5" />
-                                {currentCourse.lessonCount} lessons
-                            </span>
-                            <span className="inline-flex items-center gap-1">
-                                <Clock className="h-3.5 w-3.5" />
-                                {currentCourse.duration}
-                            </span>
-                        </div>
+            {currentCourse && (
+                <Card className="p-5">
+                    <div className="mb-4 flex items-center justify-between">
+                        <h3 className="font-semibold">Continue Learning</h3>
+                        <Button asChild variant="ghost" size="sm">
+                            <Link href="/courses">
+                                View All <ArrowRight className="ml-1 h-4 w-4" />
+                            </Link>
+                        </Button>
                     </div>
-                    <Button asChild size="sm">
-                        <Link href={`/courses/${currentCourse.slug}`}>
-                            Resume <ArrowRight className="ml-1 h-4 w-4" />
-                        </Link>
-                    </Button>
-                </div>
-            </Card>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="space-y-1">
+                            <p className="font-medium">{currentCourse.title}</p>
+                            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                                <span className="inline-flex items-center gap-1">
+                                    <BookOpen className="h-3.5 w-3.5" />
+                                    {currentCourse.lessonCount} lessons
+                                </span>
+                                <span className="inline-flex items-center gap-1">
+                                    <Clock className="h-3.5 w-3.5" />
+                                    {currentCourse.duration}
+                                </span>
+                            </div>
+                        </div>
+                        <Button asChild size="sm">
+                            <Link href={`/courses/${currentCourse.slug}`}>
+                                Resume <ArrowRight className="ml-1 h-4 w-4" />
+                            </Link>
+                        </Button>
+                    </div>
+                </Card>
+            )}
 
             {/* Streak calendar */}
             <Card className="p-5">
@@ -151,10 +165,11 @@ export default function DashboardPage() {
             </Card>
 
             {/* Recommended courses */}
-            <div className="space-y-3">
-                <h3 className="font-semibold">Recommended Courses</h3>
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {MOCK_COURSES.slice(1, 4).map((c) => (
+            {courses.length > 1 && (
+                <div className="space-y-3">
+                    <h3 className="font-semibold">Recommended Courses</h3>
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        {courses.slice(1, 4).map((c) => (
                         <Link
                             key={c.id}
                             href={`/courses/${c.slug}`}
@@ -177,9 +192,10 @@ export default function DashboardPage() {
                                 </span>
                             </div>
                         </Link>
-                    ))}
+                        ))}
+                    </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 }

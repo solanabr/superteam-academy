@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { Search, BookOpen, Sparkles, Clock, Filter } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -13,7 +13,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { PageHeader, EmptyState, ProgressBar } from "@/components/app";
-import { MOCK_COURSES, type MockCourse } from "@/lib/services/mock-content";
+import { getAllCourses, type MockCourse } from "@/lib/services/content-service";
 import { useAllCourses } from "@/hooks";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useEnrollment } from "@/hooks";
@@ -75,9 +75,18 @@ function CourseCard({ course }: { course: MockCourse }) {
 export default function CoursesPage() {
     const [search, setSearch] = useState("");
     const [difficulty, setDifficulty] = useState<string>("all");
+    const [courses, setCourses] = useState<MockCourse[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        getAllCourses().then((data) => {
+            setCourses(data);
+            setIsLoading(false);
+        });
+    }, []);
 
     const filtered = useMemo(() => {
-        return MOCK_COURSES.filter((c) => {
+        return courses.filter((c) => {
             const matchSearch =
                 !search ||
                 c.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -85,7 +94,7 @@ export default function CoursesPage() {
             const matchDiff = difficulty === "all" || c.difficulty === difficulty;
             return matchSearch && matchDiff;
         });
-    }, [search, difficulty]);
+    }, [courses, search, difficulty]);
 
     return (
         <div className="space-y-6">
@@ -120,7 +129,13 @@ export default function CoursesPage() {
             </div>
 
             {/* Course grid */}
-            {filtered.length > 0 ? (
+            {isLoading ? (
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {[1, 2, 3].map((i) => (
+                        <div key={i} className="h-48 animate-pulse rounded-xl border border-border bg-card" />
+                    ))}
+                </div>
+            ) : filtered.length > 0 ? (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {filtered.map((course) => (
                         <CourseCard key={course.id} course={course} />
