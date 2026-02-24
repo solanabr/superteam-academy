@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import Link from "next/link";
@@ -46,6 +46,14 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
   const [selectedTrack, setSelectedTrack] = useState<Track | "all">("all");
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [hoveredCourse, setHoveredCourse] = useState<string | null>(null);
+  const [mobile, setMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   const filtered = courses.filter((course) => {
     const matchesSearch =
@@ -68,39 +76,53 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
 
   return (
     <div
-      className="v9-page-dark min-h-screen"
-      style={{ background: "var(--v9-near-black)", color: "var(--v9-white)" }}
+      className="min-h-screen"
+      style={{ background: "var(--background)", color: "var(--foreground)" }}
     >
-      {/* ── Header ── */}
-      <header className="v9-catalog-header">
+      {/* -- Header -- */}
+      <header
+        style={{
+          padding: mobile ? "100px 20px 24px" : "140px 40px 40px",
+        }}
+      >
         <h1
-          className="v9-fade-up v9-fade-d1"
+          className="sa-fade-up sa-fade-d1"
           style={{
-            fontFamily: "var(--v9-serif)",
+            fontFamily: "var(--font-brand)",
             fontSize: "clamp(48px, 8vw, 120px)",
             fontWeight: 900,
             letterSpacing: "-3px",
             lineHeight: 0.9,
-            color: "var(--v9-white)",
+            color: "var(--foreground)",
             margin: 0,
             opacity: 0,
           }}
         >
-          Curriculum
+          {t("curriculum")}
         </h1>
         <p
-          className="v9-overline v9-fade-up v9-fade-d2"
-          style={{ marginTop: 20, opacity: 0 }}
+          className="sa-fade-up sa-fade-d2"
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: "10px",
+            letterSpacing: "4px",
+            textTransform: "uppercase",
+            color: "var(--c-text-muted)",
+            marginTop: 20,
+            opacity: 0,
+          }}
         >
-          {courses.length} COURSES &middot; {totalLessons} LESSONS &middot;
-          BEGINNER &rarr; ADVANCED
+          {t("coursesAndLessons", { courseCount: courses.length, lessonCount: totalLessons })}
         </p>
       </header>
 
-      {/* ── Search ── */}
+      {/* -- Search -- */}
       <div
-        className="v9-catalog-search-wrap v9-fade-up v9-fade-d3"
-        style={{ opacity: 0 }}
+        className="sa-fade-up sa-fade-d3"
+        style={{
+          padding: mobile ? "0 20px 12px" : "0 40px 12px",
+          opacity: 0,
+        }}
       >
         <input
           type="text"
@@ -108,13 +130,13 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
           onChange={(e) => setSearch(e.target.value)}
           placeholder={t("search")}
           style={{
-            fontFamily: "var(--v9-mono)",
+            fontFamily: "var(--font-mono)",
             fontSize: 13,
             letterSpacing: "1px",
             background: "transparent",
             border: "none",
             borderBottom: "1px solid var(--overlay-border)",
-            color: "var(--v9-white)",
+            color: "var(--foreground)",
             padding: "12px 0",
             width: "100%",
             maxWidth: 480,
@@ -123,10 +145,13 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
         />
       </div>
 
-      {/* ── Filter Pills ── */}
+      {/* -- Filter Pills -- */}
       <div
-        className="v9-catalog-filter-bar v9-fade-up v9-fade-d4"
-        style={{ opacity: 0 }}
+        className="sa-fade-up sa-fade-d4"
+        style={{
+          padding: mobile ? "16px 20px 0" : "16px 40px 0",
+          opacity: 0,
+        }}
       >
         {/* Desktop: filter pills */}
         <div
@@ -137,7 +162,7 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
             active={selectedDifficulty === "all"}
             onClick={() => setSelectedDifficulty("all")}
           >
-            ALL LEVELS
+            {t("allLevels")}
           </FilterPill>
           {DIFFICULTY_LEVELS.map((d) => (
             <FilterPill
@@ -165,7 +190,7 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
             active={selectedTrack === "all"}
             onClick={() => setSelectedTrack("all")}
           >
-            ALL TRACKS
+            {t("allTracks")}
           </FilterPill>
           {TRACK_TYPES.map((track) => (
             <FilterPill
@@ -187,7 +212,7 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
                 setSelectedTrack("all");
               }}
               style={{
-                fontFamily: "var(--v9-mono)",
+                fontFamily: "var(--font-mono)",
                 fontSize: 9,
                 letterSpacing: "2px",
                 textTransform: "uppercase" as const,
@@ -200,13 +225,13 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
                 transition: "color 0.3s",
               }}
               onMouseEnter={(e) =>
-                (e.currentTarget.style.color = "var(--v9-white)")
+                (e.currentTarget.style.color = "var(--foreground)")
               }
               onMouseLeave={(e) =>
                 (e.currentTarget.style.color = "var(--overlay-text)")
               }
             >
-              CLEAR
+              {t("clear")}
             </button>
           )}
         </div>
@@ -216,20 +241,20 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
           <button
             onClick={() => setMobileFiltersOpen(true)}
             style={{
-              fontFamily: "var(--v9-mono)",
+              fontFamily: "var(--font-mono)",
               fontSize: 9,
               letterSpacing: "2px",
               textTransform: "uppercase" as const,
-              color: "var(--v9-white)",
+              color: "var(--foreground)",
               background: "none",
               border: "1px solid var(--overlay-border)",
               cursor: "pointer",
               padding: "8px 16px",
             }}
           >
-            FILTERS
+            {t("filters")}
             {activeFilterCount > 0 && (
-              <span style={{ marginLeft: 6, color: "var(--v9-sol-green)" }}>
+              <span style={{ marginLeft: 6, color: "var(--xp)" }}>
                 {activeFilterCount}
               </span>
             )}
@@ -237,7 +262,7 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
         </div>
       </div>
 
-      {/* ── Course Sections ── */}
+      {/* -- Course Sections -- */}
       <div style={{ marginTop: 40 }}>
         {filtered.length > 0 ? (
           filtered.map((course, i) => {
@@ -247,8 +272,10 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
             return (
               <section
                 key={course.id}
-                className="relative v9-fade-up v9-catalog-section"
+                className="relative sa-fade-up"
                 style={{
+                  padding: mobile ? "48px 20px" : "80px 40px",
+                  minHeight: mobile ? "auto" : "50vh",
                   display: "flex",
                   flexDirection: "column" as const,
                   justifyContent: "center",
@@ -266,14 +293,17 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
                 {/* Big background number */}
                 <span
                   aria-hidden="true"
-                  className="v9-catalog-bg-num"
                   style={{
-                    fontFamily: "var(--v9-serif)",
+                    fontFamily: "var(--font-brand)",
+                    fontSize: mobile
+                      ? "clamp(80px, 22vw, 140px)"
+                      : "clamp(120px, 20vw, 280px)",
                     fontWeight: 900,
                     fontStyle: "italic",
                     lineHeight: 0.8,
                     position: "absolute",
                     top: "50%",
+                    right: mobile ? "16px" : "40px",
                     transform: "translateY(-50%)",
                     opacity: isHovered ? 0.12 : 0.04,
                     pointerEvents: "none",
@@ -298,19 +328,80 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
                   }}
                 >
                   <span
-                    className="v9-course-tag"
-                    style={{ color: DIFFICULTY_COLORS[course.difficulty] }}
+                    style={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: "9px",
+                      letterSpacing: "3px",
+                      textTransform: "uppercase",
+                      padding: "4px 0",
+                      opacity: 0.5,
+                      color: DIFFICULTY_COLORS[course.difficulty],
+                    }}
                   >
                     {course.difficulty.toUpperCase()}
                   </span>
-                  <span className="v9-course-tag-sep">&middot;</span>
-                  <span className="v9-course-tag">
-                    {course.lessonCount} LESSONS
+                  <span
+                    style={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: "9px",
+                      opacity: 0.2,
+                    }}
+                  >
+                    &middot;
                   </span>
-                  <span className="v9-course-tag-sep">&middot;</span>
-                  <span className="v9-course-tag">SOLANA</span>
-                  <span className="v9-course-tag-sep">&middot;</span>
-                  <span className="v9-course-tag" style={{ color }}>
+                  <span
+                    style={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: "9px",
+                      letterSpacing: "3px",
+                      textTransform: "uppercase",
+                      padding: "4px 0",
+                      opacity: 0.5,
+                    }}
+                  >
+                    {t("lessonsCount", { count: course.lessonCount })}
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: "9px",
+                      opacity: 0.2,
+                    }}
+                  >
+                    &middot;
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: "9px",
+                      letterSpacing: "3px",
+                      textTransform: "uppercase",
+                      padding: "4px 0",
+                      opacity: 0.5,
+                    }}
+                  >
+                    {t("solana")}
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: "9px",
+                      opacity: 0.2,
+                    }}
+                  >
+                    &middot;
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: "9px",
+                      letterSpacing: "3px",
+                      textTransform: "uppercase",
+                      padding: "4px 0",
+                      opacity: 0.5,
+                      color,
+                    }}
+                  >
                     {TRACK_LABELS[course.track].toUpperCase()}
                   </span>
                 </div>
@@ -328,7 +419,7 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
                 >
                   <span
                     style={{
-                      fontFamily: "var(--v9-serif)",
+                      fontFamily: "var(--font-brand)",
                       fontSize: 14,
                       fontStyle: "italic",
                       opacity: 0.3,
@@ -340,12 +431,12 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
                   <Link
                     href={`/${locale}/courses/${course.slug}`}
                     style={{
-                      fontFamily: "var(--v9-serif)",
+                      fontFamily: "var(--font-brand)",
                       fontSize: "clamp(32px, 5vw, 64px)",
                       fontWeight: 900,
                       letterSpacing: "-2px",
                       lineHeight: 1.05,
-                      color: isHovered ? color : "var(--v9-white)",
+                      color: isHovered ? color : "var(--foreground)",
                       textDecoration: "none",
                       transition: "color 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
                     }}
@@ -357,7 +448,7 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
                 {/* Description */}
                 <p
                   style={{
-                    fontFamily: "var(--v9-serif)",
+                    fontFamily: "var(--font-brand)",
                     fontSize: "clamp(18px, 2.2vw, 28px)",
                     fontWeight: 400,
                     lineHeight: 1.5,
@@ -376,7 +467,7 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
                 {/* Subtitle */}
                 <p
                   style={{
-                    fontFamily: "var(--v9-sans)",
+                    fontFamily: "var(--font-sans)",
                     fontSize: 13,
                     fontStyle: "italic",
                     opacity: 0.4,
@@ -392,9 +483,8 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
 
                 {/* Enter label */}
                 <span
-                  className="v9-catalog-enter-label"
                   style={{
-                    fontFamily: "var(--v9-mono)",
+                    fontFamily: "var(--font-mono)",
                     fontSize: 10,
                     letterSpacing: "3px",
                     textTransform: "uppercase" as const,
@@ -402,23 +492,32 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
                     marginTop: 24,
                     position: "relative",
                     zIndex: 1,
-                    opacity: isHovered ? 0.6 : 0,
-                    transform: isHovered ? "translateY(0)" : "translateY(8px)",
+                    opacity: mobile ? 0.5 : isHovered ? 0.6 : 0,
+                    transform: mobile
+                      ? "translateY(0)"
+                      : isHovered
+                        ? "translateY(0)"
+                        : "translateY(8px)",
                     transition: "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
                     display: "inline-block",
                   }}
                 >
-                  ENTER COURSE &rarr;
+                  {t("enterCourse")} →
                 </span>
               </section>
             );
           })
         ) : (
           /* Empty state */
-          <div className="v9-catalog-empty" style={{ textAlign: "center" }}>
+          <div
+            style={{
+              padding: mobile ? "80px 20px" : "120px 40px",
+              textAlign: "center",
+            }}
+          >
             <p
               style={{
-                fontFamily: "var(--v9-serif)",
+                fontFamily: "var(--font-brand)",
                 fontSize: "clamp(24px, 4vw, 48px)",
                 fontWeight: 900,
                 letterSpacing: "-2px",
@@ -430,13 +529,13 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
             </p>
             <p
               style={{
-                fontFamily: "var(--v9-sans)",
+                fontFamily: "var(--font-sans)",
                 fontSize: 14,
                 opacity: 0.4,
                 marginTop: 16,
               }}
             >
-              Try adjusting your filters or search term to find courses.
+              {t("noResultsHint")}
             </p>
             <button
               onClick={() => {
@@ -445,11 +544,11 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
                 setSelectedTrack("all");
               }}
               style={{
-                fontFamily: "var(--v9-mono)",
+                fontFamily: "var(--font-mono)",
                 fontSize: 10,
                 letterSpacing: "3px",
                 textTransform: "uppercase" as const,
-                color: "var(--v9-white)",
+                color: "var(--foreground)",
                 background: "none",
                 border: "1px solid var(--overlay-border)",
                 cursor: "pointer",
@@ -466,13 +565,13 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
                 e.currentTarget.style.borderColor = "var(--overlay-border)";
               }}
             >
-              CLEAR FILTERS
+              {t("clearFilters")}
             </button>
           </div>
         )}
       </div>
 
-      {/* ── Mobile Filters Drawer ── */}
+      {/* -- Mobile Filters Drawer -- */}
       {mobileFiltersOpen && (
         <div
           className="fixed inset-0 z-[60] lg:hidden"
@@ -505,21 +604,21 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
             >
               <span
                 style={{
-                  fontFamily: "var(--v9-mono)",
+                  fontFamily: "var(--font-mono)",
                   fontSize: 10,
                   letterSpacing: "4px",
                   textTransform: "uppercase" as const,
-                  color: "var(--v9-white)",
+                  color: "var(--foreground)",
                 }}
               >
-                FILTERS
+                {t("filters")}
               </span>
               <button
                 onClick={() => setMobileFiltersOpen(false)}
                 style={{
                   background: "none",
                   border: "none",
-                  color: "var(--v9-warm-grey)",
+                  color: "var(--c-text-2)",
                   cursor: "pointer",
                 }}
                 aria-label="Close filters"
@@ -532,22 +631,22 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
             <div style={{ marginBottom: 24 }}>
               <p
                 style={{
-                  fontFamily: "var(--v9-mono)",
+                  fontFamily: "var(--font-mono)",
                   fontSize: 9,
                   letterSpacing: "3px",
                   textTransform: "uppercase" as const,
-                  color: "var(--v9-mid-grey)",
+                  color: "var(--c-text-muted)",
                   marginBottom: 12,
                 }}
               >
-                LEVEL
+                {t("level")}
               </p>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                 <FilterPill
                   active={selectedDifficulty === "all"}
                   onClick={() => setSelectedDifficulty("all")}
                 >
-                  ALL
+                  {t("all")}
                 </FilterPill>
                 {DIFFICULTY_LEVELS.map((d) => (
                   <FilterPill
@@ -566,22 +665,22 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
             <div style={{ marginBottom: 24 }}>
               <p
                 style={{
-                  fontFamily: "var(--v9-mono)",
+                  fontFamily: "var(--font-mono)",
                   fontSize: 9,
                   letterSpacing: "3px",
                   textTransform: "uppercase" as const,
-                  color: "var(--v9-mid-grey)",
+                  color: "var(--c-text-muted)",
                   marginBottom: 12,
                 }}
               >
-                TRACK
+                {t("track")}
               </p>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                 <FilterPill
                   active={selectedTrack === "all"}
                   onClick={() => setSelectedTrack("all")}
                 >
-                  ALL
+                  {t("all")}
                 </FilterPill>
                 {TRACK_TYPES.map((track) => (
                   <FilterPill
@@ -599,20 +698,20 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
             <button
               onClick={() => setMobileFiltersOpen(false)}
               style={{
-                fontFamily: "var(--v9-mono)",
+                fontFamily: "var(--font-mono)",
                 fontSize: 10,
                 letterSpacing: "2px",
                 textTransform: "uppercase" as const,
                 width: "100%",
                 padding: "14px 0",
-                background: "var(--v9-white)",
-                color: "var(--v9-near-black)",
+                background: "var(--foreground)",
+                color: "var(--background)",
                 border: "none",
                 cursor: "pointer",
                 marginTop: 8,
               }}
             >
-              SHOW {filtered.length} RESULTS
+              {t("showResults", { count: filtered.length })}
             </button>
           </div>
         </div>
@@ -621,7 +720,7 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
   );
 }
 
-/* ── Inline FilterPill ── */
+/* -- Inline FilterPill -- */
 function FilterPill({
   active,
   onClick,
@@ -637,7 +736,7 @@ function FilterPill({
     <button
       onClick={onClick}
       style={{
-        fontFamily: "var(--v9-mono)",
+        fontFamily: "var(--font-mono)",
         fontSize: 9,
         letterSpacing: "2px",
         textTransform: "uppercase" as const,
@@ -650,7 +749,7 @@ function FilterPill({
           active && accentColor
             ? accentColor
             : active
-              ? "var(--v9-white)"
+              ? "var(--foreground)"
               : "var(--c-text-dim)",
         cursor: "pointer",
         transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",

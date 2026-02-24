@@ -1,12 +1,17 @@
 "use client";
 
+import { useState, useEffect, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import {
+  BookOpen,
+  Calendar,
+  CheckCircle2,
   Copy,
   ExternalLink,
   Info,
+  LinkIcon,
   Settings,
   Share2,
   Wallet,
@@ -23,7 +28,8 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { StreakCalendar } from "@/components/gamification/streak-calendar";
 import { AchievementBadge } from "@/components/gamification/achievement-badge";
 import { SkillConstellation } from "@/components/gamification/skill-constellation";
-import { achievements } from "@/lib/services/courses";
+import { achievements, courses } from "@/lib/services/courses";
+import { learningService } from "@/lib/services/learning-progress";
 import { useUser } from "@/lib/hooks/use-user";
 import { TRACK_LABELS, TRACK_COLORS } from "@/lib/constants";
 import type { Track, UserProfile, Credential } from "@/lib/services/types";
@@ -143,7 +149,46 @@ export default function ProfilePage() {
   const t = useTranslations("profile");
   const params = useParams();
   const locale = params.locale as string;
-  const { user, connected, loading } = useUser();
+  const { user, connected, loading, walletAddress } = useUser();
+
+  const isDemo = !connected;
+  const profileUser = isDemo ? DEMO_USER : user;
+
+  const socialLinks = useMemo(() => {
+    if (isDemo) {
+      return {
+        twitter: "https://twitter.com/soldev",
+        github: "https://github.com/soldev",
+      };
+    }
+    if (typeof window === "undefined" || !profileUser.wallet) return null;
+    const raw = localStorage.getItem("stacad:social:" + profileUser.wallet);
+    return raw ? (JSON.parse(raw) as { twitter?: string; github?: string }) : null;
+  }, [isDemo, profileUser.wallet]);
+
+  const [completedCourses, setCompletedCourses] = useState<
+    { courseId: string; title: string; track: Track; completedAt?: string }[]
+  >([]);
+
+  useEffect(() => {
+    const wallet = walletAddress ?? "local";
+    learningService.getAllProgress(wallet).then((allProgress) => {
+      const result: typeof completedCourses = [];
+      for (const p of allProgress) {
+        if (p.percentage < 100) continue;
+        const course = courses.find((c) => c.id === p.courseId);
+        if (course) {
+          result.push({
+            courseId: p.courseId,
+            title: course.title,
+            track: course.track as Track,
+            completedAt: p.completedAt,
+          });
+        }
+      }
+      setCompletedCourses(result);
+    });
+  }, [walletAddress]);
 
   if (loading) {
     return (
@@ -160,9 +205,6 @@ export default function ProfilePage() {
       </div>
     );
   }
-
-  const isDemo = !connected;
-  const profileUser = isDemo ? DEMO_USER : user;
 
   const userAchievements = achievements.map((a) => {
     const unlocked = profileUser.achievements.find((ua) => ua.id === a.id);
@@ -219,24 +261,40 @@ export default function ProfilePage() {
           </p>
           {/* Social Links */}
           <div className="flex items-center gap-3 mt-2">
-            <a
-              href="https://twitter.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[var(--c-text-2)] hover:text-[#55E9AB] transition-colors"
-              aria-label="Twitter profile"
-            >
-              <Twitter className="h-4 w-4" />
-            </a>
-            <a
-              href="https://github.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[var(--c-text-2)] hover:text-[#55E9AB] transition-colors"
-              aria-label="GitHub profile"
-            >
-              <Github className="h-4 w-4" />
-            </a>
+            {socialLinks?.twitter || socialLinks?.github ? (
+              <>
+                {socialLinks.twitter && (
+                  <a
+                    href={socialLinks.twitter}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[var(--c-text-2)] hover:text-[#55E9AB] transition-colors"
+                    aria-label="Twitter profile"
+                  >
+                    <Twitter className="h-4 w-4" />
+                  </a>
+                )}
+                {socialLinks.github && (
+                  <a
+                    href={socialLinks.github}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[var(--c-text-2)] hover:text-[#55E9AB] transition-colors"
+                    aria-label="GitHub profile"
+                  >
+                    <Github className="h-4 w-4" />
+                  </a>
+                )}
+              </>
+            ) : (
+              <Link
+                href={`/${locale}/settings`}
+                className="flex items-center gap-1.5 text-xs text-[var(--c-text-2)] hover:text-[#55E9AB] transition-colors"
+              >
+                <LinkIcon className="h-3.5 w-3.5" />
+                {t("addSocialLinks", { defaultMessage: "Add social links" })}
+              </Link>
+            )}
           </div>
         </div>
         <div className="flex gap-2 shrink-0">
@@ -311,6 +369,9 @@ export default function ProfilePage() {
       <Tabs defaultValue="skills">
         <TabsList className="mb-6">
           <TabsTrigger value="skills">{t("skills")}</TabsTrigger>
+          <TabsTrigger value="courses">
+            {t("completedCourses", { defaultMessage: "Courses" })}
+          </TabsTrigger>
           <TabsTrigger value="credentials">{t("credentials")}</TabsTrigger>
           <TabsTrigger value="achievements">{t("achievements")}</TabsTrigger>
         </TabsList>
@@ -320,9 +381,9 @@ export default function ProfilePage() {
           {/* Skill Constellation */}
           <div className="mb-6">
             <div className="flex items-center justify-between mb-4 px-1">
-              <h3 className="text-sm font-medium text-[var(--c-text-2)] uppercase tracking-wider">
+              <h2 className="text-sm font-medium text-[var(--c-text-2)] uppercase tracking-wider">
                 {t("skillConstellation")}
-              </h3>
+              </h2>
               <span className="text-xs font-mono text-[#00FFA3]">
                 {t("interactive")}
               </span>
@@ -332,9 +393,9 @@ export default function ProfilePage() {
 
           {/* Track Progress Bars */}
           <div className="bg-[var(--c-bg-card)] border border-[var(--c-border-subtle)] rounded-[2px] p-6">
-            <h3 className="text-sm font-medium text-[var(--c-text-2)] uppercase tracking-wider mb-6">
+            <h2 className="text-sm font-medium text-[var(--c-text-2)] uppercase tracking-wider mb-6">
               {t("trackProgress")}
-            </h3>
+            </h2>
             <div className="grid gap-5 sm:grid-cols-2">
               {(Object.entries(profileUser.skills) as [Track, number][]).map(
                 ([track, level]) => (
@@ -366,11 +427,59 @@ export default function ProfilePage() {
           </div>
 
           <div className="bg-[var(--c-bg-card)] border border-[var(--c-border-subtle)] rounded-[2px] p-6 mt-6">
-            <h3 className="text-sm font-medium text-[var(--c-text-2)] uppercase tracking-wider mb-6">
+            <h2 className="text-sm font-medium text-[var(--c-text-2)] uppercase tracking-wider mb-6">
               {t("activity")}
-            </h3>
+            </h2>
             <StreakCalendar streak={profileUser.streak} />
           </div>
+        </TabsContent>
+
+        {/* Courses Tab */}
+        <TabsContent value="courses">
+          {completedCourses.length > 0 ? (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {completedCourses.map((course) => (
+                <Link
+                  key={course.courseId}
+                  href={`/${locale}/courses/${course.courseId}`}
+                  className="group bg-[var(--c-bg-card)] border border-[var(--c-border-subtle)] rounded-[2px] p-5 hover:border-[var(--c-border-prominent)] transition-colors"
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <Badge
+                      variant="outline"
+                      style={{
+                        borderColor: TRACK_COLORS[course.track],
+                        color: TRACK_COLORS[course.track],
+                      }}
+                    >
+                      {TRACK_LABELS[course.track]}
+                    </Badge>
+                    <CheckCircle2 className="h-4 w-4 text-[#00FFA3] shrink-0" />
+                  </div>
+                  <h3 className="text-sm font-semibold text-[var(--c-text)] group-hover:text-[#55E9AB] transition-colors mb-2">
+                    {course.title}
+                  </h3>
+                  {course.completedAt && (
+                    <p className="flex items-center gap-1.5 text-xs text-[var(--c-text-2)]">
+                      <Calendar className="h-3 w-3" />
+                      {t("completedOn", { defaultMessage: "Completed" })}{" "}
+                      {new Date(course.completedAt).toLocaleDateString()}
+                    </p>
+                  )}
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-[var(--c-bg-card)] border border-[var(--c-border-subtle)] rounded-[2px] flex flex-col items-center justify-center py-16">
+              <EmptyState
+                icon={BookOpen}
+                title={t("noCourses", { defaultMessage: "No completed courses yet" })}
+                description={t("noCoursesHint", {
+                  defaultMessage: "Start learning to see your completed courses here.",
+                })}
+              />
+            </div>
+          )}
         </TabsContent>
 
         {/* Credentials Tab */}
@@ -403,9 +512,9 @@ export default function ProfilePage() {
                           {TRACK_LABELS[cred.track].charAt(0)}
                         </span>
                       </div>
-                      <h3 className="text-lg font-bold text-[var(--c-text)] mb-1">
+                      <h2 className="text-lg font-bold text-[var(--c-text)] mb-1">
                         {TRACK_LABELS[cred.track]} {t("credential")}
-                      </h3>
+                      </h2>
                       <p className="text-sm text-[var(--c-text-2)]">
                         {cred.coursesCompleted} {t("coursesCompleted")}
                       </p>

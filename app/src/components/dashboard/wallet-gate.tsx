@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useState, useEffect, useRef } from "react";
+import { type ReactNode, useState, useEffect, useRef, useCallback } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { useTranslations } from "next-intl";
@@ -21,6 +21,44 @@ export function WalletGate({ children }: WalletGateProps) {
   const [isMobile, setIsMobile] = useState(false);
   const autoConnectChecked = useRef(false);
   const prefersReducedMotion = useReducedMotion();
+  const gateRef = useRef<HTMLDivElement>(null);
+
+  // Focus trap for the gate dialog
+  const trapFocus = useCallback((e: KeyboardEvent) => {
+    if (e.key !== "Tab") return;
+    const dialog = gateRef.current;
+    if (!dialog) return;
+    const focusable = dialog.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])',
+    );
+    if (focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (e.shiftKey) {
+      if (document.activeElement === first) {
+        e.preventDefault();
+        last?.focus();
+      }
+    } else {
+      if (document.activeElement === last) {
+        e.preventDefault();
+        first?.focus();
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (gate === null || gate === "opening") return;
+    const timer = setTimeout(() => {
+      const btn = gateRef.current?.querySelector<HTMLElement>("button");
+      btn?.focus();
+    }, 200);
+    document.addEventListener("keydown", trapFocus);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("keydown", trapFocus);
+    };
+  }, [gate, trapFocus]);
 
   // Detect mobile
   useEffect(() => {
@@ -106,6 +144,7 @@ export function WalletGate({ children }: WalletGateProps) {
       <AnimatePresence>
         {gate !== null && (
           <div
+            ref={gateRef}
             role="dialog"
             aria-modal="true"
             aria-label={t("label")}
@@ -295,7 +334,7 @@ export function WalletGate({ children }: WalletGateProps) {
               {/* Label */}
               <p
                 style={{
-                  fontFamily: "var(--v9-mono)",
+                  fontFamily: "var(--font-mono)",
                   fontSize: "9px",
                   letterSpacing: "4px",
                   textTransform: "uppercase",
@@ -309,7 +348,7 @@ export function WalletGate({ children }: WalletGateProps) {
               {/* Heading */}
               <h1
                 style={{
-                  fontFamily: "var(--v9-serif)",
+                  fontFamily: "var(--font-brand)",
                   fontSize: "clamp(36px, 6vw, 64px)",
                   fontWeight: 900,
                   color: "var(--foreground)",
@@ -325,7 +364,7 @@ export function WalletGate({ children }: WalletGateProps) {
                   style={{
                     fontWeight: 300,
                     fontStyle: "italic",
-                    color: "var(--v9-sol-green)",
+                    color: "var(--xp)",
                   }}
                 >
                   {t("sealed")}
@@ -335,7 +374,7 @@ export function WalletGate({ children }: WalletGateProps) {
               {/* Subtext */}
               <p
                 style={{
-                  fontFamily: "var(--v9-sans)",
+                  fontFamily: "var(--font-sans)",
                   fontSize: "15px",
                   color: "var(--c-text-dim)",
                   maxWidth: 420,
@@ -353,7 +392,7 @@ export function WalletGate({ children }: WalletGateProps) {
                 disabled={isConnecting}
                 aria-busy={isConnecting}
                 style={{
-                  fontFamily: "var(--v9-mono)",
+                  fontFamily: "var(--font-mono)",
                   fontSize: "11px",
                   letterSpacing: "3px",
                   textTransform: "uppercase",
@@ -363,8 +402,8 @@ export function WalletGate({ children }: WalletGateProps) {
                     : "transparent",
                   color: isConnecting
                     ? "var(--overlay-text)"
-                    : "var(--v9-sol-green)",
-                  border: `1px solid ${isConnecting ? "var(--overlay-border)" : "var(--v9-sol-green)"}`,
+                    : "var(--xp)",
+                  border: `1px solid ${isConnecting ? "var(--overlay-border)" : "var(--xp)"}`,
                   cursor: isConnecting ? "not-allowed" : "pointer",
                   transition: "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
                   animation: isConnecting
@@ -378,7 +417,7 @@ export function WalletGate({ children }: WalletGateProps) {
               {/* Wallet hints */}
               <p
                 style={{
-                  fontFamily: "var(--v9-mono)",
+                  fontFamily: "var(--font-mono)",
                   fontSize: "9px",
                   letterSpacing: "2px",
                   color: "var(--c-text-faint)",
@@ -417,17 +456,17 @@ export function WalletGate({ children }: WalletGateProps) {
                     style={{
                       width: 48,
                       height: 48,
-                      color: "var(--v9-sol-green)",
+                      color: "var(--xp)",
                       marginBottom: 16,
                     }}
                   />
                   <p
                     style={{
-                      fontFamily: "var(--v9-mono)",
+                      fontFamily: "var(--font-mono)",
                       fontSize: "14px",
                       letterSpacing: "6px",
                       textTransform: "uppercase",
-                      color: "var(--v9-sol-green)",
+                      color: "var(--xp)",
                       fontWeight: 700,
                     }}
                   >
@@ -458,7 +497,7 @@ export function WalletGate({ children }: WalletGateProps) {
                     height: 6,
                     borderRadius: "1px",
                     background: isConnecting
-                      ? "var(--v9-sol-green)"
+                      ? "var(--xp)"
                       : "#EF4444",
                     boxShadow: isConnecting
                       ? "0 0 6px rgba(20,241,149,0.5)"
@@ -467,7 +506,7 @@ export function WalletGate({ children }: WalletGateProps) {
                 />
                 <span
                   style={{
-                    fontFamily: "var(--v9-mono)",
+                    fontFamily: "var(--font-mono)",
                     fontSize: "9px",
                     letterSpacing: "2px",
                     textTransform: "uppercase",

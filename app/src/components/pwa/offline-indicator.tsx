@@ -86,7 +86,7 @@ export function OfflineIndicator() {
               width: 6,
               height: 6,
               borderRadius: "1px",
-              background: isOffline ? "#EF4444" : "var(--v9-sol-green)",
+              background: isOffline ? "#EF4444" : "var(--xp)",
               boxShadow: isOffline
                 ? "0 0 6px rgba(239,68,68,0.5)"
                 : "0 0 6px rgba(20,241,149,0.5)",
@@ -100,18 +100,18 @@ export function OfflineIndicator() {
             />
           ) : (
             <Wifi
-              style={{ width: 14, height: 14, color: "var(--v9-sol-green)" }}
+              style={{ width: 14, height: 14, color: "var(--xp)" }}
             />
           )}
 
           {/* Text */}
           <span
             style={{
-              fontFamily: "var(--v9-mono)",
+              fontFamily: "var(--font-mono)",
               fontSize: "10px",
               letterSpacing: "2px",
               textTransform: "uppercase",
-              color: isOffline ? "#EF4444" : "var(--v9-sol-green)",
+              color: isOffline ? "#EF4444" : "var(--xp)",
             }}
           >
             {isOffline ? t("offlineBanner") : isBackOnline ? t("backOnline") : null}

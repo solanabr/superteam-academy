@@ -89,7 +89,8 @@ export const onboardingService = {
     if (!raw) return null;
     try {
       return JSON.parse(raw) as OnboardingAssessment;
-    } catch {
+    } catch (error) {
+      console.error("[onboarding] Failed to parse assessment data:", error);
       return null;
     }
   },

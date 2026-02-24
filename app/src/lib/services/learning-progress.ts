@@ -249,7 +249,8 @@ export class LocalStorageProgressService implements LearningProgressService {
       // Freeze covers the day after last activity
       if (data.usedOn) return false; // already consumed
       return true;
-    } catch {
+    } catch (error) {
+      console.error("[learningProgress] Failed to check streak freeze:", error);
       return false;
     }
   }
@@ -275,8 +276,8 @@ export class LocalStorageProgressService implements LearningProgressService {
       try {
         const data = JSON.parse(raw) as { week: string };
         if (data.week === currentWeek) return false;
-      } catch {
-        // corrupt data, allow claim
+      } catch (error) {
+        console.error("[learningProgress] Corrupt streak freeze data:", error);
       }
     }
 

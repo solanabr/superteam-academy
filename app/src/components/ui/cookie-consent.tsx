@@ -16,15 +16,20 @@ export function CookieConsent() {
   const respond = (accepted: boolean) => {
     localStorage.setItem(CONSENT_KEY, accepted ? "granted" : "denied");
     setVisible(false);
-    if (!accepted && typeof window !== "undefined" && window.gtag) {
-      window.gtag("consent", "update", {
-        analytics_storage: "denied",
-      });
+    if (accepted && typeof window !== "undefined") {
+      if (window.gtag) {
+        window.gtag("consent", "update", { analytics_storage: "granted" });
+      }
+      window.dispatchEvent(new Event("analytics-consent-granted"));
     }
   };
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 z-50 mx-auto max-w-lg rounded-lg border border-[var(--c-border-subtle)] bg-[var(--c-bg-card)] p-4 shadow-lg sm:left-auto sm:right-6 sm:max-w-sm">
+    <div
+      role="dialog"
+      aria-label="Cookie consent"
+      className="fixed bottom-4 left-4 right-4 z-50 mx-auto max-w-lg rounded-lg border border-[var(--c-border-subtle)] bg-[var(--c-bg-card)] p-4 shadow-lg sm:left-auto sm:right-6 sm:max-w-sm"
+    >
       <p className="mb-3 text-sm text-[var(--c-text-2)]">
         We use cookies for analytics to improve your experience.
       </p>

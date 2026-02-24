@@ -65,7 +65,8 @@ function loadState(wallet: string, date: string): DailyChallengeState | null {
   if (!raw) return null;
   try {
     return JSON.parse(raw);
-  } catch {
+  } catch (error) {
+    console.error("[challengeService] Failed to parse challenge state:", error);
     return null;
   }
 }

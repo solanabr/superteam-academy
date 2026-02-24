@@ -23,10 +23,10 @@ export function CourseProgressBar({ courseId }: CourseProgressBarProps) {
 
   return (
     <div
-      className="v9-fade-up"
+      className="sa-fade-up"
       style={{
         padding: "0 clamp(20px, 8vw, 120px)",
-        background: "var(--v9-white)",
+        background: "var(--background)",
       }}
     >
       <div
@@ -39,30 +39,30 @@ export function CourseProgressBar({ courseId }: CourseProgressBarProps) {
       >
         <span
           style={{
-            fontFamily: "var(--v9-mono)",
+            fontFamily: "var(--font-mono)",
             fontSize: "10px",
             letterSpacing: "0.2em",
             textTransform: "uppercase" as const,
-            color: "var(--v9-mid-grey)",
+            color: "var(--c-text-muted)",
           }}
         >
           YOUR PROGRESS
         </span>
         <span
           style={{
-            fontFamily: "var(--v9-mono)",
+            fontFamily: "var(--font-mono)",
             fontSize: "12px",
             fontWeight: 600,
-            color: pct >= 100 ? "var(--v9-sol-green)" : "var(--v9-dark)",
+            color: pct >= 100 ? "var(--xp)" : "var(--foreground)",
           }}
         >
           {pct}%
         </span>
         <span
           style={{
-            fontFamily: "var(--v9-mono)",
+            fontFamily: "var(--font-mono)",
             fontSize: "10px",
-            color: "var(--v9-mid-grey)",
+            color: "var(--c-text-muted)",
           }}
         >
           {completed}/{total} lessons
@@ -72,7 +72,7 @@ export function CourseProgressBar({ courseId }: CourseProgressBarProps) {
         style={{
           height: "4px",
           width: "100%",
-          background: "rgba(26,25,24,0.08)",
+          background: "rgba(255,255,255,0.08)",
           overflow: "hidden",
         }}
       >
@@ -86,8 +86,8 @@ export function CourseProgressBar({ courseId }: CourseProgressBarProps) {
             width: `${pct}%`,
             background:
               pct >= 100
-                ? "var(--v9-sol-green)"
-                : "linear-gradient(90deg, var(--v9-sol-green), var(--v9-accent))",
+                ? "var(--xp)"
+                : "linear-gradient(90deg, var(--xp), var(--nd-highlight-orange))",
             transition: "width 0.6s cubic-bezier(0.16, 1, 0.3, 1)",
           }}
         />

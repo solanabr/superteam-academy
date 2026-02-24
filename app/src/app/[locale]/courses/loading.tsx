@@ -2,7 +2,7 @@ export default function CoursesLoading() {
   return (
     <div
       className="min-h-screen"
-      style={{ background: "var(--v9-near-black)", color: "var(--v9-white)" }}
+      style={{ background: "var(--c-bg)", color: "var(--foreground)" }}
     >
       {/* Header */}
       <div style={{ padding: "140px 40px 40px" }}>

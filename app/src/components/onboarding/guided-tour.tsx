@@ -54,7 +54,7 @@ const TOUR_STEPS: TourStep[] = [
 // ─── SVG Arrow Paths ──────────────────────────────────────────
 function TourArrow({
   direction,
-  color = "var(--v9-sol-green)",
+  color = "var(--xp)",
 }: {
   direction: "top" | "bottom" | "left" | "right";
   color?: string;
@@ -223,7 +223,7 @@ export function GuidedTour({ onComplete }: { onComplete: () => void }) {
           top: targetRect.top - 8,
           width: targetRect.width + 16,
           height: targetRect.height + 16,
-          border: "2px dashed var(--v9-sol-green)",
+          border: "2px dashed var(--xp)",
           borderRadius: 8,
           zIndex: 9999,
           pointerEvents: "none",
@@ -333,7 +333,7 @@ export function GuidedTour({ onComplete }: { onComplete: () => void }) {
             style={{
               fontFamily: CAVEAT,
               fontSize: 17,
-              color: "var(--v9-sol-green)",
+              color: "var(--xp)",
               display: "block",
               transform: "rotate(-2deg)",
               marginBottom: 16,
@@ -346,14 +346,14 @@ export function GuidedTour({ onComplete }: { onComplete: () => void }) {
           <button
             onClick={handleNext}
             style={{
-              fontFamily: "var(--v9-mono)",
+              fontFamily: "var(--font-mono)",
               fontSize: 10,
               letterSpacing: 2,
               textTransform: "uppercase",
               padding: "10px 28px",
               background: "transparent",
-              color: "var(--v9-sol-green)",
-              border: "1px solid var(--v9-sol-green)",
+              color: "var(--xp)",
+              border: "1px solid var(--xp)",
               cursor: "pointer",
               transition: "all 0.3s",
               width: "100%",

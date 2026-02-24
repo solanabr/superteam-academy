@@ -110,7 +110,7 @@ export default function OfflinePage() {
         {/* Overline label */}
         <p
           style={{
-            fontFamily: "var(--v9-mono)",
+            fontFamily: "var(--font-mono)",
             fontSize: "9px",
             letterSpacing: "4px",
             textTransform: "uppercase",
@@ -124,7 +124,7 @@ export default function OfflinePage() {
         {/* Heading */}
         <h1
           style={{
-            fontFamily: "var(--v9-serif)",
+            fontFamily: "var(--font-brand)",
             fontSize: "clamp(32px, 5vw, 48px)",
             fontWeight: 900,
             fontStyle: "italic",
@@ -140,7 +140,7 @@ export default function OfflinePage() {
         {/* Subtext */}
         <p
           style={{
-            fontFamily: "var(--v9-sans)",
+            fontFamily: "var(--font-sans)",
             fontSize: "15px",
             color: "var(--c-text-dim)",
             lineHeight: 1.6,
@@ -157,16 +157,16 @@ export default function OfflinePage() {
         <button
           onClick={() => window.location.reload()}
           style={{
-            fontFamily: "var(--v9-mono)",
+            fontFamily: "var(--font-mono)",
             fontSize: "11px",
             letterSpacing: "3px",
             textTransform: "uppercase",
             padding: "14px 40px",
             background: "transparent",
-            color: "var(--v9-sol-green)",
-            border: "1px solid var(--v9-sol-green)",
+            color: "var(--xp)",
+            border: "1px solid var(--xp)",
             cursor: "pointer",
-            transition: "all 0.3s var(--v9-ease)",
+            transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
           }}
         >
           {t("retry")}
@@ -193,7 +193,7 @@ export default function OfflinePage() {
           />
           <span
             style={{
-              fontFamily: "var(--v9-mono)",
+              fontFamily: "var(--font-mono)",
               fontSize: "9px",
               letterSpacing: "2px",
               textTransform: "uppercase",

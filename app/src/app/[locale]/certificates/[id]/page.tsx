@@ -12,6 +12,7 @@ import {
   CheckCircle2,
   GitBranch,
   Layers,
+  Download,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { getCourseById, courses } from "@/lib/services/courses";
@@ -46,6 +47,7 @@ export default function CertificatePage() {
   const id = params.id as string;
   const { user, connected } = useUser();
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [downloading, setDownloading] = useState(false);
 
   // Find credential by ID or mint address
   const credential: Credential | null = connected
@@ -76,6 +78,26 @@ export default function CertificatePage() {
     navigator.clipboard.writeText(text);
     setCopiedField(field);
     setTimeout(() => setCopiedField(null), 2000);
+  }
+
+  async function handleDownload() {
+    const element = document.getElementById("certificate-card");
+    if (!element) return;
+
+    setDownloading(true);
+    try {
+      const html2canvas = (await import("html2canvas")).default;
+      const canvas = await html2canvas(element, {
+        backgroundColor: null,
+        scale: 2,
+      });
+      const link = document.createElement("a");
+      link.download = `${course.title.replace(/\s+/g, "-").toLowerCase()}-certificate.png`;
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    } finally {
+      setDownloading(false);
+    }
   }
 
   return (
@@ -193,11 +215,11 @@ export default function CertificatePage() {
         <div className="rounded-[2px] border border-[var(--c-border-subtle)] bg-[var(--c-bg-card)] p-5">
           <div className="flex items-center gap-2 mb-4">
             <ShieldCheck className="h-4 w-4 text-[#55E9AB]" />
-            <h3 className="text-sm font-semibold text-[var(--c-text)]">
+            <h2 className="text-sm font-semibold text-[var(--c-text)]">
               {t("verifiedOnChain", {
                 defaultMessage: "On-Chain Verification",
               })}
-            </h3>
+            </h2>
           </div>
 
           <div className="space-y-3">
@@ -243,9 +265,9 @@ export default function CertificatePage() {
         <div className="rounded-[2px] border border-[var(--c-border-subtle)] bg-[var(--c-bg-card)] p-5">
           <div className="flex items-center gap-2 mb-4">
             <Layers className="h-4 w-4 text-[#CA9FF5]" />
-            <h3 className="text-sm font-semibold text-[var(--c-text)]">
+            <h2 className="text-sm font-semibold text-[var(--c-text)]">
               {t("nftDetails", { defaultMessage: "Credential Details" })}
-            </h3>
+            </h2>
           </div>
 
           <div className="space-y-3">
@@ -342,6 +364,18 @@ export default function CertificatePage() {
 
       {/* Share Row */}
       <ShareActions courseTitle={course.title} certificateId={id} />
+
+      {/* Download Button */}
+      <div className="mt-6 w-full max-w-3xl flex justify-center">
+        <button
+          onClick={handleDownload}
+          disabled={downloading}
+          className="inline-flex items-center gap-2 text-sm font-medium text-[var(--c-text)] bg-[var(--c-bg-card)] border border-[var(--c-border-subtle)] rounded-[2px] px-5 py-2.5 hover:border-[var(--c-border-prominent)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <Download className="h-4 w-4" />
+          {downloading ? "..." : t("download")}
+        </button>
+      </div>
     </div>
   );
 }

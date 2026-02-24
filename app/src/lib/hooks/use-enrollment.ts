@@ -69,7 +69,8 @@ export function useEnrollment(courseId: string | null) {
       const enrollment = await getAccounts(program).enrollment.fetch(pda);
       setEnrollment(enrollment);
       setExists(true);
-    } catch {
+    } catch (error) {
+      console.error("[useEnrollment] Failed to fetch enrollment:", error);
       setEnrollment(null);
       setExists(false);
     }

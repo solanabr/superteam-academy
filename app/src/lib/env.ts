@@ -57,6 +57,11 @@ export const SUPABASE_SERVICE_ROLE_KEY = optional(
   "",
 );
 
+export const GOOGLE_CLIENT_ID = optional("GOOGLE_CLIENT_ID", "");
+export const GOOGLE_CLIENT_SECRET = optional("GOOGLE_CLIENT_SECRET", "");
+export const GITHUB_CLIENT_ID = optional("GITHUB_CLIENT_ID", "");
+export const GITHUB_CLIENT_SECRET = optional("GITHUB_CLIENT_SECRET", "");
+
 // --- Derived ---
 
 export const HELIUS_RPC_URL = HELIUS_API_KEY

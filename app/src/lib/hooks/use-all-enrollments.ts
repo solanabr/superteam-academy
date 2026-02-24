@@ -63,8 +63,8 @@ export function useAllEnrollments() {
           map[result.value.courseId] = result.value;
         }
       }
-    } catch {
-      // On-chain program unavailable
+    } catch (error) {
+      console.error("[useAllEnrollments] On-chain fetch failed:", error);
     }
 
     // 2. Merge localStorage progress (fills gaps when on-chain is unavailable)
@@ -99,8 +99,8 @@ export function useAllEnrollments() {
           };
         }
       }
-    } catch {
-      // localStorage unavailable (SSR)
+    } catch (error) {
+      console.error("[useAllEnrollments] localStorage fallback failed:", error);
     }
 
     setProgressMap(map);

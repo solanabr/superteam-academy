@@ -33,6 +33,7 @@
     "clsx": "^2.1.1",
     "esbuild-wasm": "^0.27.3",
     "framer-motion": "^12.34.0",
+    "html2canvas": "^1.4.1",
     "lucide-react": "^0.563.0",
     "next": "16.1.6",
     "next-auth": "5.0.0-beta.30",
@@ -43,12 +44,11 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-markdown": "^10.1.0",
-    "react-resizable-panels": "^4.6.2",
+    "react-resizable-panels": "^4.6.5",
     "recharts": "^3.7.0",
     "rehype-highlight": "^7.0.2",
     "remark-gfm": "^4.0.1",
     "sanity": "^5.9.0",
-    "styled-components": "^6.3.9",
     "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {

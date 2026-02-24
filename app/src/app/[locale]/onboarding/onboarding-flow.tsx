@@ -395,13 +395,13 @@ export function OnboardingFlow() {
             width: 6,
             height: 6,
             borderRadius: 1,
-            background: "var(--v9-sol-green)",
+            background: "var(--xp)",
             boxShadow: "0 0 6px rgba(20,241,149,0.5)",
           }}
         />
         <span
           style={{
-            fontFamily: "var(--v9-mono)",
+            fontFamily: "var(--font-mono)",
             fontSize: 9,
             letterSpacing: 2,
             textTransform: "uppercase" as const,

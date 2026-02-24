@@ -38,8 +38,8 @@ export function VoteButton({ count, threadId, replyId, wallet, className }: Vote
         setVoted(false);
         setLocalCount((c) => Math.max(0, c - 1));
       }
-    } catch {
-      // Silent fail
+    } catch (error) {
+      console.error("[VoteButton] Failed to submit vote:", error);
     } finally {
       setSubmitting(false);
     }

@@ -108,8 +108,8 @@ export async function getCredentialsByOwner(
           credentialAddress: item.id as string,
         };
       });
-  } catch {
-    // Helius API unavailable
+  } catch (error) {
+    console.error("[credentials] Helius DAS API unavailable:", error);
   }
 
   return [];

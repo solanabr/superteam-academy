@@ -77,7 +77,7 @@ function SignInContent() {
         <div style={{ textAlign: "center", marginBottom: 32 }}>
           <div
             style={{
-              fontFamily: "'Space Mono', monospace",
+              fontFamily: "var(--font-mono)",
               fontSize: 11,
               letterSpacing: "0.2em",
               color: "#FF5C28",
@@ -118,7 +118,7 @@ function SignInContent() {
               marginBottom: 24,
               background: "rgba(239,68,68,0.08)",
               borderLeft: "3px solid #EF4444",
-              fontFamily: "'Space Mono', monospace",
+              fontFamily: "var(--font-mono)",
               fontSize: 12,
               color: "#EF4444",
               lineHeight: 1.5,
@@ -135,7 +135,7 @@ function SignInContent() {
               style={{
                 textAlign: "center",
                 padding: 20,
-                fontFamily: "'Space Mono', monospace",
+                fontFamily: "var(--font-mono)",
                 fontSize: 11,
                 color: "#8A8784",
               }}
@@ -180,7 +180,7 @@ function SignInContent() {
                   style={{
                     textAlign: "center",
                     padding: "20px",
-                    fontFamily: "'Space Mono', monospace",
+                    fontFamily: "var(--font-mono)",
                     fontSize: 11,
                     color: "#8A8784",
                     lineHeight: 1.6,
@@ -206,7 +206,7 @@ function SignInContent() {
           <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
           <span
             style={{
-              fontFamily: "'Space Mono', monospace",
+              fontFamily: "var(--font-mono)",
               fontSize: 9,
               letterSpacing: "0.15em",
               color: "#8A8784",
@@ -252,7 +252,7 @@ function SignInContent() {
           <a
             href="/en"
             style={{
-              fontFamily: "'Space Mono', monospace",
+              fontFamily: "var(--font-mono)",
               fontSize: 10,
               letterSpacing: "0.1em",
               color: "#8A8784",
@@ -279,7 +279,7 @@ export default function SignInPage() {
           background: "#0F0E0D",
         }}>
           <div style={{
-            fontFamily: "'Space Mono', monospace",
+            fontFamily: "var(--font-mono)",
             fontSize: 11,
             color: "#8A8784",
           }}>

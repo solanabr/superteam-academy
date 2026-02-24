@@ -23,8 +23,8 @@ export function V9ChallengeSidebar({
     <aside
       style={{
         gridRow: "2 / 4",
-        background: "#F6F5F2",
-        borderRight: "1px solid rgba(26,25,24,0.07)",
+        background: "var(--background)",
+        borderRight: "1px solid var(--c-border-subtle)",
         overflowY: "auto",
         padding: "16px 0",
       }}
@@ -33,11 +33,11 @@ export function V9ChallengeSidebar({
         <div key={mod.id} style={{ marginBottom: 2 }}>
           <div
             style={{
-              fontFamily: "'Space Mono', monospace",
+              fontFamily: "var(--font-mono)",
               fontSize: 8.5,
               letterSpacing: "0.18em",
               textTransform: "uppercase" as const,
-              color: "#B5B2AE",
+              color: "var(--c-text-muted)",
               padding: "14px 16px 6px",
             }}
           >
@@ -55,11 +55,11 @@ export function V9ChallengeSidebar({
                   gap: 8,
                   padding: "8px 16px",
                   fontSize: 12.5,
-                  fontFamily: "'DM Sans', system-ui, sans-serif",
-                  color: active ? "#1A1918" : "#8A8784",
+                  fontFamily: "var(--font-sans)",
+                  color: active ? "var(--foreground)" : "var(--c-text-muted)",
                   fontWeight: active ? 600 : 400,
                   borderLeft: active
-                    ? "2px solid #FF5C28"
+                    ? "2px solid var(--nd-highlight-orange)"
                     : "2px solid transparent",
                   background: active ? "rgba(255,92,40,0.03)" : "transparent",
                   cursor: "pointer",
@@ -73,7 +73,7 @@ export function V9ChallengeSidebar({
                     height: 5,
                     borderRadius: "50%",
                     flexShrink: 0,
-                    background: active ? "#FF5C28" : "rgba(26,25,24,0.12)",
+                    background: active ? "var(--nd-highlight-orange)" : "rgba(255,255,255,0.15)",
                   }}
                 />
                 <span
@@ -88,9 +88,9 @@ export function V9ChallengeSidebar({
                 </span>
                 <span
                   style={{
-                    fontFamily: "'Space Mono', monospace",
+                    fontFamily: "var(--font-mono)",
                     fontSize: 7.5,
-                    color: "#B5B2AE",
+                    color: "var(--c-text-muted)",
                     flexShrink: 0,
                   }}
                 >

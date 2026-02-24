@@ -85,6 +85,7 @@ export interface LeaderboardEntry {
   xp: number;
   level: number;
   streak: number;
+  coursesCompleted?: number;
 }
 
 export interface Credential {

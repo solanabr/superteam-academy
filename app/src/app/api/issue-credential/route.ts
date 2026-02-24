@@ -11,6 +11,7 @@ import {
   isIdempotentError,
   isClientError,
 } from "@/lib/solana/anchor-errors";
+import { withRetry } from "@/lib/solana/retry";
 
 const MPL_CORE_PROGRAM_ID = new PublicKey(
   "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d",
@@ -62,27 +63,29 @@ export async function POST(req: Request) {
     // Generate a fresh keypair for the Metaplex Core asset
     const assetKeypair = Keypair.generate();
 
-    const tx = await program.methods
-      .issueCredential(
-        credentialName,
-        metadataUri,
-        coursesCompleted ?? 1,
-        totalXp != null ? totalXp : 0,
-      )
-      .accounts({
-        config: configPDA,
-        course: coursePDA,
-        enrollment: enrollmentPDA,
-        learner: learnerKey,
-        credentialAsset: assetKeypair.publicKey,
-        trackCollection: new PublicKey(trackCollection),
-        payer: signer.publicKey,
-        backendSigner: signer.publicKey,
-        mplCoreProgram: MPL_CORE_PROGRAM_ID,
-        systemProgram: SystemProgram.programId,
-      })
-      .signers([signer, assetKeypair])
-      .rpc();
+    const tx = await withRetry(() =>
+      program.methods
+        .issueCredential(
+          credentialName,
+          metadataUri,
+          coursesCompleted ?? 1,
+          totalXp != null ? totalXp : 0,
+        )
+        .accounts({
+          config: configPDA,
+          course: coursePDA,
+          enrollment: enrollmentPDA,
+          learner: learnerKey,
+          credentialAsset: assetKeypair.publicKey,
+          trackCollection: new PublicKey(trackCollection),
+          payer: signer.publicKey,
+          backendSigner: signer.publicKey,
+          mplCoreProgram: MPL_CORE_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([signer, assetKeypair])
+        .rpc(),
+    );
 
     return NextResponse.json({
       signature: tx,

@@ -16,7 +16,8 @@ export function useAdmin() {
       const res = await fetch("/api/admin/auth");
       const data = await res.json();
       setIsAdmin(data.authenticated === true);
-    } catch {
+    } catch (error) {
+      console.error("[useAdmin] Auth check failed:", error);
       setIsAdmin(false);
     }
     setLoading(false);
@@ -39,7 +40,8 @@ export function useAdmin() {
         return true;
       }
       return false;
-    } catch {
+    } catch (error) {
+      console.error("[useAdmin] Login failed:", error);
       return false;
     }
   }, []);
@@ -47,8 +49,8 @@ export function useAdmin() {
   const logout = useCallback(async () => {
     try {
       await fetch("/api/admin/auth", { method: "DELETE" });
-    } catch {
-      // ignore
+    } catch (error) {
+      console.error("[useAdmin] Logout failed:", error);
     }
     setIsAdmin(false);
   }, []);

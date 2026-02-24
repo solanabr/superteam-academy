@@ -1,14 +1,14 @@
 import { jwtVerify } from "jose";
 
-const COOKIE_NAME = "admin-session";
+export const COOKIE_NAME = "admin-session";
 
-function getSecret(): Uint8Array {
+export function getSecret(): Uint8Array {
   const secret = process.env.AUTH_SECRET;
   if (!secret) throw new Error("AUTH_SECRET not configured");
   return new TextEncoder().encode(secret);
 }
 
-function parseCookie(header: string, name: string): string | null {
+export function parseCookie(header: string, name: string): string | null {
   const match = header.match(new RegExp(`(?:^|;\\s*)${name}=([^;]*)`));
   return match ? decodeURIComponent(match[1]) : null;
 }
@@ -23,7 +23,8 @@ export async function isAdminRequest(req: Request): Promise<boolean> {
     if (!cookie) return false;
     await jwtVerify(cookie, getSecret());
     return true;
-  } catch {
+  } catch (error) {
+    console.error("[admin] Session verification failed:", error);
     return false;
   }
 }

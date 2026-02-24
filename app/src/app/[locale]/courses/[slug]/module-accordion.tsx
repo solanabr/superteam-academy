@@ -32,41 +32,41 @@ export function ModuleAccordion({
         const modXP = modLessons.reduce((s, l) => s + l.xpReward, 0);
 
         return (
-          <div className="v9-module" key={mod.id}>
+          <div className="sa-module" key={mod.id}>
             <div
-              className="v9-module-header"
+              className="sa-module-header"
               onClick={() => setExpandedModule(isOpen ? -1 : mi)}
             >
-              <div className="v9-module-num">
+              <div className="sa-module-num">
                 {String(mi + 1).padStart(2, "0")}
               </div>
               <div style={{ flex: 1 }}>
-                <div className="v9-module-title">{mod.title}</div>
-                <div className="v9-module-meta">
+                <div className="sa-module-title">{mod.title}</div>
+                <div className="sa-module-meta">
                   {modLessons.length} Lessons &middot; {modXP} XP
                 </div>
               </div>
-              <div className={`v9-module-toggle ${isOpen ? "open" : ""}`}>
+              <div className={`sa-module-toggle ${isOpen ? "open" : ""}`}>
                 +
               </div>
             </div>
-            <div className={`v9-module-lessons ${isOpen ? "open" : ""}`}>
+            <div className={`sa-module-lessons ${isOpen ? "open" : ""}`}>
               {modLessons.map((lesson) => (
                 <Link
                   key={lesson.id}
                   href={`/${locale}/courses/${slug}/lessons/${lesson.id}`}
-                  className="v9-lesson-row"
+                  className="sa-lesson-row"
                 >
-                  <div className="v9-lesson-type-icon">
+                  <div className="sa-lesson-type-icon">
                     {TYPE_ICONS[lesson.type] ?? "\u25EB"}
                   </div>
                   <div style={{ flex: 1 }}>
-                    <div className="v9-lesson-title-text">{lesson.title}</div>
-                    <div className="v9-lesson-sub">
+                    <div className="sa-lesson-title-text">{lesson.title}</div>
+                    <div className="sa-lesson-sub">
                       {lesson.type} &middot; {lesson.duration}
                     </div>
                   </div>
-                  <div className="v9-lesson-xp">+{lesson.xpReward} XP</div>
+                  <div className="sa-lesson-xp">+{lesson.xpReward} XP</div>
                 </Link>
               ))}
             </div>

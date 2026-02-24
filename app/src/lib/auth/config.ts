@@ -5,6 +5,12 @@ import GitHub from "next-auth/providers/github";
 import Credentials from "next-auth/providers/credentials";
 import { PublicKey } from "@solana/web3.js";
 import type { JWT } from "next-auth/jwt";
+import {
+  GOOGLE_CLIENT_ID,
+  GOOGLE_CLIENT_SECRET,
+  GITHUB_CLIENT_ID,
+  GITHUB_CLIENT_SECRET,
+} from "@/lib/env";
 
 /** Extended JWT with wallet + linked-account tracking. */
 interface AcademyJWT extends JWT {
@@ -27,8 +33,8 @@ export interface AcademySession {
 
 /** Which OAuth providers are actually configured (have credentials). */
 export const configuredProviders = {
-  google: !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),
-  github: !!(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET),
+  google: !!(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET),
+  github: !!(GITHUB_CLIENT_ID && GITHUB_CLIENT_SECRET),
 };
 
 // Build providers list dynamically — only include OAuth providers with credentials
@@ -37,8 +43,14 @@ const providers: Provider[] = [];
 if (configuredProviders.google) {
   providers.push(
     Google({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      clientId: GOOGLE_CLIENT_ID,
+      clientSecret: GOOGLE_CLIENT_SECRET,
+      // SECURITY: Required for multi-provider account linking (wallet + OAuth).
+      // Risk: if an attacker controls an email at one provider, they could link
+      // to an existing account at another provider sharing that email.
+      // Mitigations: (1) Google verifies email ownership before returning it,
+      // (2) primary auth is wallet-based (not email), (3) linked accounts are
+      // additive metadata — no elevated privileges from linking.
       allowDangerousEmailAccountLinking: true,
     }),
   );
@@ -47,8 +59,9 @@ if (configuredProviders.google) {
 if (configuredProviders.github) {
   providers.push(
     GitHub({
-      clientId: process.env.GITHUB_CLIENT_ID!,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+      clientId: GITHUB_CLIENT_ID,
+      clientSecret: GITHUB_CLIENT_SECRET,
+      // SECURITY: Same rationale as Google above. GitHub also verifies emails.
       allowDangerousEmailAccountLinking: true,
     }),
   );
@@ -79,7 +92,8 @@ providers.push(
           name: wallet.slice(0, 4) + "..." + wallet.slice(-4),
           wallet,
         };
-      } catch {
+      } catch (error) {
+        console.error("[auth] Invalid wallet public key:", error);
         return null;
       }
     },

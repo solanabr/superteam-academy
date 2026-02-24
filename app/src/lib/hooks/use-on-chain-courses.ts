@@ -27,7 +27,8 @@ export function useOnChainCourses() {
           publicKey: acc.publicKey,
         })),
       );
-    } catch {
+    } catch (error) {
+      console.error("[useOnChainCourses] Failed to fetch courses:", error);
       setCourses([]);
     }
     setLoading(false);

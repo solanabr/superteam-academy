@@ -348,9 +348,9 @@ export default function PublicProfilePage() {
         <TabsContent value="skills">
           <div className="mb-6">
             <div className="flex items-center justify-between mb-4 px-1">
-              <h3 className="text-sm font-medium text-[var(--c-text-2)] uppercase tracking-wider">
+              <h2 className="text-sm font-medium text-[var(--c-text-2)] uppercase tracking-wider">
                 {t("skillConstellation")}
-              </h3>
+              </h2>
               <span className="text-xs font-mono text-[#00FFA3]">
                 {t("interactive")}
               </span>
@@ -358,9 +358,9 @@ export default function PublicProfilePage() {
             <SkillConstellation skills={profileUser.skills} />
           </div>
           <div className="bg-[var(--c-bg-card)] border border-[var(--c-border-subtle)] rounded-[2px] p-6">
-            <h3 className="text-sm font-medium text-[var(--c-text-2)] uppercase tracking-wider mb-6">
+            <h2 className="text-sm font-medium text-[var(--c-text-2)] uppercase tracking-wider mb-6">
               {t("trackProgress")}
-            </h3>
+            </h2>
             <div className="grid gap-5 sm:grid-cols-2">
               {(Object.entries(profileUser.skills) as [Track, number][]).map(
                 ([track, level]) => (
@@ -391,9 +391,9 @@ export default function PublicProfilePage() {
             </div>
           </div>
           <div className="bg-[var(--c-bg-card)] border border-[var(--c-border-subtle)] rounded-[2px] p-6 mt-6">
-            <h3 className="text-sm font-medium text-[var(--c-text-2)] uppercase tracking-wider mb-6">
+            <h2 className="text-sm font-medium text-[var(--c-text-2)] uppercase tracking-wider mb-6">
               {t("activity")}
-            </h3>
+            </h2>
             <StreakCalendar streak={profileUser.streak} />
           </div>
         </TabsContent>
@@ -422,9 +422,9 @@ export default function PublicProfilePage() {
                           {TRACK_LABELS[cred.track].charAt(0)}
                         </span>
                       </div>
-                      <h3 className="text-lg font-bold text-[var(--c-text)] mb-1">
+                      <h2 className="text-lg font-bold text-[var(--c-text)] mb-1">
                         {TRACK_LABELS[cred.track]} {t("credential")}
-                      </h3>
+                      </h2>
                       <p className="text-sm text-[var(--c-text-2)]">
                         {cred.coursesCompleted} {t("coursesCompleted")}
                       </p>

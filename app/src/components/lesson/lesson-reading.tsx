@@ -183,7 +183,14 @@ export function LessonReading({
   }, [slug, walletAddress, course]);
 
   return (
-    <div className="v9-reader-layout" style={{ minHeight: "100vh" }}>
+    <div
+      style={{
+        display: "flex",
+        minHeight: "100vh",
+        paddingTop: 0,
+        background: "var(--background)",
+      }}
+    >
       <XPToast amount={lesson.xpReward} show={showXP} />
       <CourseCompleteOverlay
         show={showCourseComplete}
@@ -203,22 +210,69 @@ export function LessonReading({
         />
       )}
 
-      <main className="v9-reader-main">
-        <div className="v9-reader-content">
+      <main
+        style={{
+          marginLeft: isMobile ? 0 : "clamp(220px, 18vw, 280px)",
+          flex: 1,
+          maxWidth: "100%",
+        }}
+      >
+        <div
+          style={{
+            maxWidth: "720px",
+            margin: "0 auto",
+            padding: "clamp(40px, 6vh, 80px) clamp(20px, 4vw, 60px)",
+            paddingBottom: "120px",
+          }}
+        >
           <div
-            className="v9-fade-up"
+            className="sa-fade-up"
             style={{ marginBottom: "clamp(40px, 6vh, 64px)" }}
           >
-            <div className="v9-lesson-type-badge">
-              <span className="v9-lesson-type-badge-icon">
+            <div
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: "9px",
+                letterSpacing: "0.2em",
+                textTransform: "uppercase",
+                color: "var(--c-text-muted)",
+                marginBottom: "12px",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+              }}
+            >
+              <span>
                 {TYPE_ICONS[lesson.type] ?? "\u25EB"}
               </span>
               {lesson.type} &middot; {lesson.duration}
             </div>
-            <h1 className="v9-lesson-main-title">{lesson.title}</h1>
-            <div className="v9-lesson-meta-row">
+            <h1
+              style={{
+                fontFamily: "var(--font-brand)",
+                fontSize: "clamp(36px, 5vw, 64px)",
+                fontWeight: 900,
+                lineHeight: 1.05,
+                letterSpacing: "-0.02em",
+                color: "var(--foreground)",
+                marginBottom: "16px",
+              }}
+            >
+              {lesson.title}
+            </h1>
+            <div
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: "10px",
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
+                color: "var(--c-text-muted)",
+                display: "flex",
+                gap: "20px",
+              }}
+            >
               <span>
-                Lesson {lessonIndex + 1} of {allLessons.length}
+                {t("lessonOf", { current: lessonIndex + 1, total: allLessons.length })}
               </span>
               <span>+{lesson.xpReward} XP</span>
             </div>
@@ -244,7 +298,7 @@ export function LessonReading({
               style={{
                 marginTop: "64px",
                 paddingTop: "32px",
-                borderTop: "1px solid rgba(26,25,24,0.06)",
+                borderTop: "1px solid var(--c-border-subtle)",
               }}
             >
               {completed ? (
@@ -266,14 +320,14 @@ export function LessonReading({
                       style={{
                         width: 16,
                         height: 16,
-                        color: "var(--v9-sol-green)",
+                        color: "var(--xp)",
                       }}
                     />
                     <span
                       style={{
-                        fontFamily: "var(--v9-mono)",
+                        fontFamily: "var(--font-mono)",
                         fontSize: "12px",
-                        color: "var(--v9-sol-green)",
+                        color: "var(--xp)",
                       }}
                     >
                       +{lesson.xpReward} XP
@@ -281,14 +335,22 @@ export function LessonReading({
                   </div>
                   <button
                     onClick={navigateNext}
-                    className="v9-complete-btn v9-complete-btn-ghost"
                     style={{
                       display: "flex",
                       alignItems: "center",
                       gap: "8px",
+                      fontFamily: "var(--font-mono)",
+                      fontSize: "11px",
+                      letterSpacing: "0.15em",
+                      textTransform: "uppercase",
+                      padding: "14px 36px",
+                      background: "none",
+                      color: "var(--c-text-muted)",
+                      border: "1px solid var(--c-border-subtle)",
+                      cursor: "pointer",
                     }}
                   >
-                    {nextLesson ? t("nextLesson") : "Back to Course"}
+                    {nextLesson ? t("nextLesson") : t("backToCourse")}
                     <ArrowRight style={{ width: 14, height: 14 }} />
                   </button>
                 </div>
@@ -299,17 +361,35 @@ export function LessonReading({
                     triggerCelebration();
                     callCompleteLessonAPI();
                   }}
-                  className="v9-complete-btn v9-complete-btn-primary"
                   style={{
                     width: "100%",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     gap: "8px",
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "11px",
+                    letterSpacing: "0.15em",
+                    textTransform: "uppercase",
+                    padding: "14px 36px",
+                    border: "none",
+                    cursor: "pointer",
+                    background: "var(--foreground)",
+                    color: "var(--background)",
                   }}
                 >
-                  Complete Lesson
-                  <span className="v9-xp-badge">+{lesson.xpReward} XP</span>
+                  {t("completeLesson")}
+                  <span
+                    style={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: "11px",
+                      letterSpacing: "0.1em",
+                      color: "var(--nd-highlight-orange)",
+                      marginLeft: "8px",
+                    }}
+                  >
+                    +{lesson.xpReward} XP
+                  </span>
                 </button>
               )}
             </div>
@@ -320,7 +400,7 @@ export function LessonReading({
               style={{
                 marginTop: "32px",
                 paddingTop: "24px",
-                borderTop: "1px solid rgba(26,25,24,0.06)",
+                borderTop: "1px solid var(--c-border-subtle)",
               }}
             >
               <div
@@ -341,29 +421,37 @@ export function LessonReading({
                     style={{
                       width: 16,
                       height: 16,
-                      color: "var(--v9-sol-green)",
+                      color: "var(--xp)",
                     }}
                   />
                   <span
                     style={{
-                      fontFamily: "var(--v9-mono)",
+                      fontFamily: "var(--font-mono)",
                       fontSize: "12px",
-                      color: "var(--v9-sol-green)",
+                      color: "var(--xp)",
                     }}
                   >
-                    Quiz Complete
+                    {t("quizComplete")}
                   </span>
                 </div>
                 <button
                   onClick={navigateNext}
-                  className="v9-complete-btn v9-complete-btn-ghost"
                   style={{
                     display: "flex",
                     alignItems: "center",
                     gap: "8px",
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "11px",
+                    letterSpacing: "0.15em",
+                    textTransform: "uppercase",
+                    padding: "14px 36px",
+                    background: "none",
+                    color: "var(--c-text-muted)",
+                    border: "1px solid var(--c-border-subtle)",
+                    cursor: "pointer",
                   }}
                 >
-                  {nextLesson ? t("nextLesson") : "Back to Course"}
+                  {nextLesson ? t("nextLesson") : t("backToCourse")}
                   <ArrowRight style={{ width: 14, height: 14 }} />
                 </button>
               </div>
@@ -371,25 +459,69 @@ export function LessonReading({
           )}
         </div>
 
-        <div className="v9-complete-bar">
-          <div className="v9-complete-text">
-            Lesson {lessonIndex + 1}/{allLessons.length}
+        <div
+          style={{
+            position: "fixed",
+            bottom: 0,
+            left: isMobile ? 0 : "clamp(220px, 18vw, 280px)",
+            right: 0,
+            padding: "20px clamp(20px, 4vw, 60px)",
+            background: "var(--background)",
+            borderTop: "1px solid var(--c-border-subtle)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            zIndex: 50,
+          }}
+        >
+          <div
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: "10px",
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              color: "var(--c-text-muted)",
+            }}
+          >
+            {t("lessonOf", { current: lessonIndex + 1, total: allLessons.length })}
           </div>
           <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
             {prevLesson && (
               <Link
                 href={`/${locale}/courses/${slug}/lessons/${prevLesson.id}`}
-                className="v9-complete-btn v9-complete-btn-ghost"
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "11px",
+                  letterSpacing: "0.15em",
+                  textTransform: "uppercase",
+                  padding: "14px 36px",
+                  background: "none",
+                  color: "var(--c-text-muted)",
+                  border: "1px solid var(--c-border-subtle)",
+                  cursor: "pointer",
+                  textDecoration: "none",
+                }}
               >
-                &#8592; Prev
+                ← {t("prev")}
               </Link>
             )}
             {nextLesson && (
               <Link
                 href={`/${locale}/courses/${slug}/lessons/${nextLesson.id}`}
-                className="v9-complete-btn v9-complete-btn-ghost"
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "11px",
+                  letterSpacing: "0.15em",
+                  textTransform: "uppercase",
+                  padding: "14px 36px",
+                  background: "none",
+                  color: "var(--c-text-muted)",
+                  border: "1px solid var(--c-border-subtle)",
+                  cursor: "pointer",
+                  textDecoration: "none",
+                }}
               >
-                Next &#8594;
+                {t("next")} →
               </Link>
             )}
           </div>

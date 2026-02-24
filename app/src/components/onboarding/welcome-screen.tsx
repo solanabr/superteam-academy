@@ -67,11 +67,11 @@ export function WelcomeScreen({ onStart, onSkip }: WelcomeScreenProps) {
         {/* Label */}
         <p
           style={{
-            fontFamily: "var(--v9-mono)",
+            fontFamily: "var(--font-mono)",
             fontSize: 9,
             letterSpacing: 4,
             textTransform: "uppercase",
-            color: "var(--v9-sol-green)",
+            color: "var(--xp)",
             marginBottom: 24,
             opacity: visible ? 0.8 : 0,
             transform: visible ? "translateY(0)" : "translateY(8px)",
@@ -102,7 +102,7 @@ export function WelcomeScreen({ onStart, onSkip }: WelcomeScreenProps) {
             style={{
               fontStyle: "italic",
               backgroundImage:
-                "linear-gradient(90deg, var(--v9-sol-green), #9945FF, var(--v9-sol-green))",
+                "linear-gradient(90deg, var(--xp), #9945FF, var(--xp))",
               backgroundSize: "200% auto",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
@@ -195,7 +195,7 @@ export function WelcomeScreen({ onStart, onSkip }: WelcomeScreenProps) {
               position: "absolute",
               inset: 0,
               borderRadius: "50%",
-              border: `1px dashed ${hoverSentinel ? "var(--v9-sol-green)" : "rgba(255,255,255,0.25)"}`,
+              border: `1px dashed ${hoverSentinel ? "var(--xp)" : "rgba(255,255,255,0.25)"}`,
               animation: hoverSentinel
                 ? "onb-rotate 4s linear infinite"
                 : "onb-rotate 15s linear infinite",
@@ -208,7 +208,7 @@ export function WelcomeScreen({ onStart, onSkip }: WelcomeScreenProps) {
               width: hoverSentinel ? 16 : 8,
               height: hoverSentinel ? 16 : 8,
               borderRadius: "50%",
-              background: "var(--v9-sol-green)",
+              background: "var(--xp)",
               boxShadow: hoverSentinel
                 ? "0 0 20px rgba(20,241,149,0.6), 0 0 40px rgba(20,241,149,0.3)"
                 : "0 0 8px rgba(20,241,149,0.4)",
@@ -222,11 +222,11 @@ export function WelcomeScreen({ onStart, onSkip }: WelcomeScreenProps) {
         <div
           style={{
             writingMode: "vertical-rl",
-            fontFamily: "var(--v9-mono)",
+            fontFamily: "var(--font-mono)",
             fontSize: 9,
             letterSpacing: 4,
             textTransform: "uppercase",
-            color: hoverSentinel ? "var(--v9-sol-green)" : "var(--c-text-2)",
+            color: hoverSentinel ? "var(--xp)" : "var(--c-text-2)",
             transition: "color 0.3s",
             userSelect: "none",
           }}

@@ -95,8 +95,8 @@ export function InstallPrompt() {
                 left: -1,
                 width: 12,
                 height: 12,
-                borderTop: "1px solid var(--v9-sol-green)",
-                borderLeft: "1px solid var(--v9-sol-green)",
+                borderTop: "1px solid var(--xp)",
+                borderLeft: "1px solid var(--xp)",
               }}
             />
             <div
@@ -106,8 +106,8 @@ export function InstallPrompt() {
                 right: -1,
                 width: 12,
                 height: 12,
-                borderTop: "1px solid var(--v9-sol-green)",
-                borderRight: "1px solid var(--v9-sol-green)",
+                borderTop: "1px solid var(--xp)",
+                borderRight: "1px solid var(--xp)",
               }}
             />
             <div
@@ -117,8 +117,8 @@ export function InstallPrompt() {
                 left: -1,
                 width: 12,
                 height: 12,
-                borderBottom: "1px solid var(--v9-sol-green)",
-                borderLeft: "1px solid var(--v9-sol-green)",
+                borderBottom: "1px solid var(--xp)",
+                borderLeft: "1px solid var(--xp)",
               }}
             />
             <div
@@ -128,8 +128,8 @@ export function InstallPrompt() {
                 right: -1,
                 width: 12,
                 height: 12,
-                borderBottom: "1px solid var(--v9-sol-green)",
-                borderRight: "1px solid var(--v9-sol-green)",
+                borderBottom: "1px solid var(--xp)",
+                borderRight: "1px solid var(--xp)",
               }}
             />
 
@@ -144,11 +144,11 @@ export function InstallPrompt() {
             >
               <SuperteamLogo
                 size={20}
-                className="text-[var(--v9-sol-green)]"
+                className="text-[var(--xp)]"
               />
               <span
                 style={{
-                  fontFamily: "var(--v9-mono)",
+                  fontFamily: "var(--font-mono)",
                   fontSize: "10px",
                   letterSpacing: "3px",
                   textTransform: "uppercase",
@@ -179,7 +179,7 @@ export function InstallPrompt() {
             {/* Description */}
             <p
               style={{
-                fontFamily: "var(--v9-sans)",
+                fontFamily: "var(--font-sans)",
                 fontSize: "13px",
                 color: "var(--c-text-2)",
                 lineHeight: 1.5,
@@ -199,19 +199,19 @@ export function InstallPrompt() {
               <button
                 onClick={handleInstall}
                 style={{
-                  fontFamily: "var(--v9-mono)",
+                  fontFamily: "var(--font-mono)",
                   fontSize: "10px",
                   letterSpacing: "2px",
                   textTransform: "uppercase",
                   padding: "10px 20px",
                   background: "transparent",
-                  color: "var(--v9-sol-green)",
-                  border: "1px solid var(--v9-sol-green)",
+                  color: "var(--xp)",
+                  border: "1px solid var(--xp)",
                   cursor: "pointer",
                   display: "flex",
                   alignItems: "center",
                   gap: 8,
-                  transition: "all 0.3s var(--v9-ease)",
+                  transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
                 }}
               >
                 <Download style={{ width: 12, height: 12 }} />
@@ -220,7 +220,7 @@ export function InstallPrompt() {
               <button
                 onClick={handleDismiss}
                 style={{
-                  fontFamily: "var(--v9-mono)",
+                  fontFamily: "var(--font-mono)",
                   fontSize: "10px",
                   letterSpacing: "2px",
                   textTransform: "uppercase",
@@ -229,7 +229,7 @@ export function InstallPrompt() {
                   color: "var(--c-text-dim)",
                   border: "1px solid var(--c-border-subtle)",
                   cursor: "pointer",
-                  transition: "all 0.3s var(--v9-ease)",
+                  transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
                 }}
               >
                 {t("dismiss")}

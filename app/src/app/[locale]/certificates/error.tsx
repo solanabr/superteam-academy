@@ -16,9 +16,9 @@ export default function CertificatesError({
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center px-4">
       <div className="max-w-md text-center">
-        <h2 className="mb-4 text-2xl font-bold text-[var(--c-text)]">
+        <h1 className="mb-4 text-2xl font-bold text-[var(--c-text)]">
           Failed to load certificates
-        </h2>
+        </h1>
         <p className="mb-6 text-[var(--c-text-2)]">
           Something went wrong while loading your certificates.
         </p>

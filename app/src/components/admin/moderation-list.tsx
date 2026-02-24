@@ -38,8 +38,8 @@ export function ModerationList() {
         const data = await res.json();
         setThreads(data.threads ?? data ?? []);
       }
-    } catch {
-      // ignore
+    } catch (error) {
+      console.error("[ModerationList] Failed to fetch threads:", error);
     }
     setLoading(false);
   }, [configured]);
@@ -59,8 +59,8 @@ export function ModerationList() {
       if (res.ok) {
         setThreads((prev) => prev.filter((t) => t.id !== id));
       }
-    } catch {
-      // ignore
+    } catch (error) {
+      console.error("[ModerationList] Failed to remove thread:", error);
     }
     setRemoving(null);
   };

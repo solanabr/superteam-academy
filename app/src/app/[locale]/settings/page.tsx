@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { useSession, signIn } from "next-auth/react";
+import { useSession, signIn, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { locales, localeLabels, type Locale } from "@/i18n/config";
@@ -16,8 +16,10 @@ import {
   AlertTriangle,
   Download,
   Moon,
+  Sun,
   Loader2,
 } from "lucide-react";
+import { useTheme } from "next-themes";
 
 type ConfiguredProviders = { google: boolean; github: boolean };
 
@@ -61,6 +63,10 @@ export default function SettingsPage() {
   const [saved, setSaved] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [activeSection, setActiveSection] = useState("profile");
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   // Load profile from API
   useEffect(() => {
@@ -104,8 +110,8 @@ export default function SettingsPage() {
       if (!res.ok) throw new Error("Save failed");
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
-    } catch {
-      // Could show error toast, but keeping it simple
+    } catch (error) {
+      console.error("[Settings] Failed to save settings:", error);
     } finally {
       setSaving(false);
     }
@@ -244,13 +250,7 @@ export default function SettingsPage() {
                 <label className="mb-3 block text-sm font-medium text-[var(--c-text-em)]">
                   {t("theme")}
                 </label>
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2 rounded border border-[#55E9AB] bg-[#55E9AB]/10 text-[#55E9AB] px-4 py-3 text-sm">
-                    <Moon className="h-4 w-4" />
-                    {t("dark")}
-                  </div>
-                  <span className="text-xs text-[var(--c-text-2)]">{t("darkModeNote")}</span>
-                </div>
+                <ThemeToggle t={t} />
               </div>
 
               <div className="border-t border-[var(--c-border-subtle)] pt-6">
@@ -519,6 +519,11 @@ export default function SettingsPage() {
               <Button
                 className="bg-[#EF4444]/10 text-[#EF4444] hover:bg-[#EF4444]/20 border border-[#EF4444]/20"
                 size="sm"
+                onClick={() => {
+                  setShowDeleteModal(true);
+                  setDeleteConfirmation("");
+                  setDeleteError("");
+                }}
               >
                 {t("deleteAccount", { defaultMessage: "Delete Account" })}
               </Button>
@@ -526,6 +531,137 @@ export default function SettingsPage() {
           </section>
         </div>
       </div>
+
+      {/* Delete Account Confirmation Modal */}
+      {showDeleteModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+          onClick={() => !deleting && setShowDeleteModal(false)}
+        >
+          <div
+            className="w-full max-w-md mx-4 bg-[var(--c-bg-card)] border border-[var(--c-border-subtle)] rounded-xl p-6 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <AlertTriangle className="h-5 w-5 text-[#EF4444] shrink-0" />
+              <h3 className="text-lg font-semibold text-[var(--c-text)]">
+                {t("deleteConfirmTitle", { defaultMessage: "Are you sure?" })}
+              </h3>
+            </div>
+            <p className="text-sm text-[var(--c-text-2)] mb-6">
+              {t("deleteConfirmDesc", {
+                defaultMessage:
+                  "This action cannot be undone. Type DELETE to confirm.",
+              })}
+            </p>
+            <div className="mb-4">
+              <label
+                htmlFor="delete-confirmation-input"
+                className="mb-2 block text-sm font-medium text-[var(--c-text-em)]"
+              >
+                {t("typeDelete", { defaultMessage: "Type DELETE to confirm" })}
+              </label>
+              <Input
+                id="delete-confirmation-input"
+                value={deleteConfirmation}
+                onChange={(e) => setDeleteConfirmation(e.target.value)}
+                placeholder="DELETE"
+                disabled={deleting}
+                autoFocus
+              />
+            </div>
+            {deleteError && (
+              <p className="text-sm text-[#EF4444] mb-4">{deleteError}</p>
+            )}
+            <div className="flex justify-end gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowDeleteModal(false)}
+                disabled={deleting}
+              >
+                {t("cancel", { defaultMessage: "Cancel" })}
+              </Button>
+              <Button
+                className="bg-[#EF4444] text-white hover:bg-[#DC2626] border-0"
+                size="sm"
+                disabled={deleteConfirmation !== "DELETE" || deleting}
+                onClick={async () => {
+                  setDeleting(true);
+                  setDeleteError("");
+                  try {
+                    const res = await fetch("/api/user/delete", {
+                      method: "DELETE",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ confirmation: deleteConfirmation }),
+                    });
+                    if (!res.ok) {
+                      const data = await res.json();
+                      throw new Error(data.error || "Failed to delete account");
+                    }
+                    await signOut({ callbackUrl: "/" });
+                  } catch (err) {
+                    setDeleteError(
+                      err instanceof Error ? err.message : "Failed to delete account"
+                    );
+                    setDeleting(false);
+                  }
+                }}
+              >
+                {deleting ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+                    {t("deleting", { defaultMessage: "Deleting..." })}
+                  </>
+                ) : (
+                  t("deleteAccount", { defaultMessage: "Delete Account" })
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ThemeToggle({ t }: { t: ReturnType<typeof useTranslations> }) {
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  if (!mounted) {
+    return (
+      <div className="flex items-center gap-3">
+        <div className="h-11 w-[180px] rounded border border-[var(--c-border-subtle)] bg-[var(--c-bg-surface)]" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-3">
+      <button
+        onClick={() => setTheme("dark")}
+        className={`flex items-center gap-2 rounded border px-4 py-3 text-sm transition-colors ${
+          theme === "dark"
+            ? "border-[#55E9AB] bg-[#55E9AB]/10 text-[#55E9AB]"
+            : "border-[var(--c-border-subtle)] text-[var(--c-text-2)] hover:border-[var(--c-border-prominent)] hover:text-[var(--c-text-em)]"
+        }`}
+      >
+        <Moon className="h-4 w-4" />
+        {t("dark")}
+      </button>
+      <button
+        onClick={() => setTheme("light")}
+        className={`flex items-center gap-2 rounded border px-4 py-3 text-sm transition-colors ${
+          theme === "light"
+            ? "border-[#55E9AB] bg-[#55E9AB]/10 text-[#55E9AB]"
+            : "border-[var(--c-border-subtle)] text-[var(--c-text-2)] hover:border-[var(--c-border-prominent)] hover:text-[var(--c-text-em)]"
+        }`}
+      >
+        <Sun className="h-4 w-4" />
+        {t("light", { defaultMessage: "Light" })}
+      </button>
     </div>
   );
 }

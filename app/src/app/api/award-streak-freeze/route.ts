@@ -51,7 +51,8 @@ export async function POST(req: Request) {
       freezesAvailable: FREEZES_PER_WEEK,
       currentWeek,
     });
-  } catch {
+  } catch (error) {
+    console.error("[award-streak-freeze] Request failed:", error);
     return NextResponse.json(
       { error: "Invalid request" },
       { status: 400 },

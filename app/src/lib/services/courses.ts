@@ -1,6 +1,7 @@
 import type { Course, Achievement, Lesson, CodeChallenge, TestCase } from "./types";
 import { sanityClient, isSanityConfigured } from "@/lib/sanity";
 import { allCoursesQuery, courseBySlugQuery } from "@/lib/sanity";
+import { NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } from "@/lib/env";
 
 /**
  * Course catalog — static curriculum content.
@@ -1679,8 +1680,8 @@ export async function fetchCourses(): Promise<Course[]> {
     try {
       const { createClient } = await import("@supabase/supabase-js");
       const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        NEXT_PUBLIC_SUPABASE_URL,
+        SUPABASE_SERVICE_ROLE_KEY,
       );
       const { data: dbCourses } = await supabase
         .from("courses")
@@ -1707,8 +1708,8 @@ export async function fetchCourses(): Promise<Course[]> {
           ),
         );
       }
-    } catch {
-      // Fall through to Sanity / static
+    } catch (error) {
+      console.error("[courses] Supabase fetch failed, falling through:", error);
     }
   }
 
@@ -1717,8 +1718,8 @@ export async function fetchCourses(): Promise<Course[]> {
     try {
       const raw = await sanityClient.fetch(allCoursesQuery);
       if (raw && raw.length > 0) return raw.map(transformSanityCourse);
-    } catch {
-      // Fall through to static
+    } catch (error) {
+      console.error("[courses] Sanity fetch failed, falling through:", error);
     }
   }
 
@@ -1736,8 +1737,8 @@ export async function fetchCourseBySlug(
     try {
       const { createClient } = await import("@supabase/supabase-js");
       const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        NEXT_PUBLIC_SUPABASE_URL,
+        SUPABASE_SERVICE_ROLE_KEY,
       );
       const { data: row } = await supabase
         .from("courses")
@@ -1764,8 +1765,8 @@ export async function fetchCourseBySlug(
           (dbLessons ?? []) as SupabaseLessonRow[],
         );
       }
-    } catch {
-      // Fall through
+    } catch (error) {
+      console.error("[courses] Supabase slug fetch failed, falling through:", error);
     }
   }
 
@@ -1774,8 +1775,8 @@ export async function fetchCourseBySlug(
     try {
       const raw = await sanityClient.fetch(courseBySlugQuery, { slug });
       if (raw) return transformSanityCourse(raw);
-    } catch {
-      // Fall through
+    } catch (error) {
+      console.error("[courses] Sanity slug fetch failed, falling through:", error);
     }
   }
 

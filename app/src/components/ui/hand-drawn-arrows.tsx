@@ -31,7 +31,7 @@ function useDrawIn(delay = 0) {
 // ─── Swirl Arrow ──────────────────────────────────────────────
 // A classic hand-drawn swirl that curves from left to right-down
 export function SwirlArrow({
-  color = "var(--v9-sol-green)",
+  color = "var(--xp)",
   width = 160,
   height = 100,
   delay = 0,
@@ -103,7 +103,7 @@ export function SwirlArrow({
 // ─── Curved Pointer ───────────────────────────────────────────
 // Points downward — good for "click here" annotations
 export function CurvedPointer({
-  color = "var(--v9-sol-green)",
+  color = "var(--xp)",
   width = 100,
   height = 80,
   delay = 0,
@@ -169,7 +169,7 @@ export function CurvedPointer({
 // ─── Loopy Arrow ──────────────────────────────────────────────
 // Playful with a loop — draws attention in a fun way
 export function LoopyArrow({
-  color = "var(--v9-sol-green)",
+  color = "var(--xp)",
   width = 180,
   height = 100,
   delay = 0,
@@ -252,7 +252,7 @@ export function LoopyArrow({
 // ─── Circle Highlight ─────────────────────────────────────────
 // Dashed circle that draws around something + label
 export function CircleHighlight({
-  color = "var(--v9-sol-green)",
+  color = "var(--xp)",
   size = 80,
   delay = 0,
   label,
@@ -337,7 +337,7 @@ export function CircleHighlight({
 // Standalone handwritten text with optional underline squiggle
 export function HandLabel({
   children,
-  color = "var(--v9-sol-green)",
+  color = "var(--xp)",
   size = 20,
   rotate = -3,
   underline = false,

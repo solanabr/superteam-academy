@@ -151,8 +151,8 @@ export default function CourseEditorPage() {
         });
         if (!res.ok) throw new Error("Save failed");
         hasUnsavedRef.current = false;
-      } catch {
-        // Silent fail — user will see the saving indicator
+      } catch (error) {
+        console.error("[CourseEditor] Auto-save failed:", error);
       } finally {
         setSaving(false);
       }

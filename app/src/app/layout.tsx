@@ -3,9 +3,6 @@ import Script from "next/script";
 import {
   Geist,
   Geist_Mono,
-  Playfair_Display,
-  DM_Sans,
-  Space_Mono,
   Space_Grotesk,
   Instrument_Serif,
   Caveat,
@@ -38,28 +35,6 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
-  display: "swap",
-  preload: false,
-});
-const playfairDisplay = Playfair_Display({
-  variable: "--font-playfair",
-  subsets: ["latin"],
-  weight: ["400", "700", "900"],
-  style: ["normal", "italic"],
-  display: "swap",
-  preload: false,
-});
-const dmSans = DM_Sans({
-  variable: "--font-dm-sans",
-  subsets: ["latin"],
-  weight: ["400", "500", "700"],
-  display: "swap",
-  preload: false,
-});
-const spaceMono = Space_Mono({
-  variable: "--font-space-mono",
-  subsets: ["latin"],
-  weight: ["400", "700"],
   display: "swap",
   preload: false,
 });
@@ -144,7 +119,7 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.json" />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${playfairDisplay.variable} ${dmSans.variable} ${spaceMono.variable} ${spaceGrotesk.variable} ${instrumentSerif.variable} ${caveat.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable} ${instrumentSerif.variable} ${caveat.variable} antialiased`}
       >
         {children}
         <PWARegister />
@@ -172,8 +147,14 @@ export default function RootLayout({
             <Script id="ga4-init" strategy="afterInteractive">{`
               window.dataLayer = window.dataLayer || [];
               function gtag(){dataLayer.push(arguments);}
+              gtag('consent', 'default', { analytics_storage: 'denied' });
               gtag('js', new Date());
               gtag('config', '${GA_ID}');
+              try {
+                if (localStorage.getItem('sa_cookie_consent') === 'granted') {
+                  gtag('consent', 'update', { analytics_storage: 'granted' });
+                }
+              } catch(e) {}
             `}</Script>
           </>
         )}

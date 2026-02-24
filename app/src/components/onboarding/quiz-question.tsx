@@ -40,7 +40,7 @@ export function QuizQuestion({
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3 }}
         style={{
-          fontFamily: "var(--v9-mono)",
+          fontFamily: "var(--font-mono)",
           fontSize: 10,
           letterSpacing: 3,
           textTransform: "uppercase" as const,
@@ -61,7 +61,7 @@ export function QuizQuestion({
           fontSize: 10,
           letterSpacing: 2,
           textTransform: "uppercase" as const,
-          color: "var(--v9-sol-green)",
+          color: "var(--xp)",
           padding: "4px 12px",
           border: "1px solid rgba(20, 241, 149, 0.2)",
           marginBottom: 20,
@@ -148,11 +148,11 @@ export function QuizQuestion({
               {/* Letter indicator */}
               <span
                 style={{
-                  fontFamily: "var(--v9-mono)",
+                  fontFamily: "var(--font-mono)",
                   fontSize: 11,
                   fontWeight: 700,
                   color: isSelected
-                    ? "var(--v9-sol-green)"
+                    ? "var(--xp)"
                     : "var(--c-text-dim)",
                   width: 24,
                   height: 24,
@@ -199,7 +199,7 @@ export function QuizQuestion({
                     width: 8,
                     height: 8,
                     borderRadius: "50%",
-                    background: "var(--v9-sol-green)",
+                    background: "var(--xp)",
                     boxShadow: "0 0 8px rgba(20, 241, 149, 0.4)",
                     flexShrink: 0,
                   }}

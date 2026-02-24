@@ -55,7 +55,8 @@ export function OnchainRegistration({
           (c.courseId === courseSlug || c.courseId === courseId) && c.onChain,
       );
       setStatus(found ? "registered" : "unregistered");
-    } catch {
+    } catch (error) {
+      console.error("[OnchainRegistration] Status check failed:", error);
       setStatus("error");
     }
   }, [courseSlug, courseId]);

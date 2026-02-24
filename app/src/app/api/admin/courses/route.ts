@@ -49,8 +49,8 @@ export async function GET(req: Request) {
       const program = getReadonlyProgram(connection);
       const accounts = getAccounts(program);
       onChainCourses = await accounts.course.all();
-    } catch {
-      // Program unavailable
+    } catch (error) {
+      console.error("[admin/courses] Failed to fetch on-chain courses:", error);
     }
 
     const onChainMap = new Map<string, (typeof onChainCourses)[number]>();

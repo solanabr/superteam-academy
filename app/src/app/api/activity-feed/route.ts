@@ -113,8 +113,8 @@ export async function GET() {
           if (signerKey) {
             user = shortenWallet(signerKey.toBase58());
           }
-        } catch {
-          // Fall through with "unknown"
+        } catch (error) {
+          console.error("[activity-feed] Failed to extract signer:", error);
         }
 
         events.push({
@@ -125,8 +125,8 @@ export async function GET() {
           timestamp: (sig.blockTime ?? 0) * 1000,
           signature: sig.signature,
         });
-      } catch {
-        // Skip transactions that fail to parse
+      } catch (error) {
+        console.error("[activity-feed] Failed to parse transaction:", error);
       }
     }
 

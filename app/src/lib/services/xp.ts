@@ -29,8 +29,8 @@ export async function getXPBalance(walletAddress: string): Promise<number> {
       TOKEN_2022_PROGRAM_ID,
     );
     return Number(account.amount);
-  } catch {
-    // ATA doesn't exist or RPC error — user has 0 XP
+  } catch (error) {
+    console.error("[xp] Failed to fetch XP balance:", error);
   }
 
   return 0;

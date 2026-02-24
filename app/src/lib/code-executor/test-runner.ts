@@ -86,7 +86,8 @@ export function runTestAssertions(
             actual: allLogText.slice(0, 200) || "(no output)",
           };
         }
-      } catch {
+      } catch (error) {
+        console.error("[testRunner] Invalid regex pattern:", error);
         return {
           name: tc.name,
           passed: false,

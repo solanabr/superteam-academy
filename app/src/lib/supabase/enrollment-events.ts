@@ -19,8 +19,8 @@ export async function logEnrollmentEvent(event: EnrollmentEvent): Promise<void> 
       lesson_index: event.lessonIndex ?? null,
       signature: event.signature ?? null,
     });
-  } catch {
-    // Non-critical logging — never block the main operation
+  } catch (error) {
+    console.error("[enrollmentEvents] Failed to log event:", error);
   }
 }
 
@@ -59,7 +59,8 @@ export async function getEnrollmentsByDay(
     }
 
     return result;
-  } catch {
+  } catch (error) {
+    console.error("[enrollmentEvents] Failed to fetch enrollment stats:", error);
     return [];
   }
 }

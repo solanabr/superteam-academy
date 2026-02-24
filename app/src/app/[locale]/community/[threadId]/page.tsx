@@ -38,8 +38,8 @@ export default function ThreadDetailPage() {
       if (res.ok) {
         router.push(`/${locale}/community`);
       }
-    } catch {
-      // Silent fail
+    } catch (error) {
+      console.error("[ThreadPage] Failed to moderate thread:", error);
     }
   };
 
@@ -56,8 +56,8 @@ export default function ThreadDetailPage() {
       if (res.ok) {
         refresh();
       }
-    } catch {
-      // Silent fail
+    } catch (error) {
+      console.error("[ThreadPage] Failed to accept answer:", error);
     }
   };
 
@@ -76,9 +76,9 @@ export default function ThreadDetailPage() {
   if (error || !thread) {
     return (
       <div className="mx-auto max-w-4xl px-4 pb-20 pt-24 text-center">
-        <h2 className="mb-2 text-lg font-semibold text-[var(--c-text)]">
+        <h1 className="mb-2 text-lg font-semibold text-[var(--c-text)]">
           Thread Not Found
-        </h2>
+        </h1>
         <p className="mb-6 text-sm text-[var(--c-text-2)]">
           {error || "This thread does not exist or has been removed."}
         </p>

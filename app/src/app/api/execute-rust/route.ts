@@ -32,7 +32,8 @@ export async function POST(req: NextRequest) {
   let body: { code?: string };
   try {
     body = await req.json();
-  } catch {
+  } catch (error) {
+    console.error("[execute-rust] Failed to parse request body:", error);
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 

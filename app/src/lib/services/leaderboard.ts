@@ -21,7 +21,8 @@ export async function getLeaderboard(
     // Support both old flat-array and new paginated response
     if (Array.isArray(data)) return data;
     return (data as LeaderboardResponse).entries ?? [];
-  } catch {
+  } catch (error) {
+    console.error("[leaderboard] Failed to fetch leaderboard:", error);
     return [];
   }
 }
@@ -41,7 +42,8 @@ export async function getLeaderboardPaginated(
       return { entries: data, page: 1, limit: data.length, total: data.length };
     }
     return data as LeaderboardResponse;
-  } catch {
+  } catch (error) {
+    console.error("[leaderboard] Failed to fetch paginated leaderboard:", error);
     return { entries: [], page, limit, total: 0 };
   }
 }

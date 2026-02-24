@@ -27,7 +27,7 @@ export function QuizProgressBar({ current, total }: QuizProgressBarProps) {
             animate={{
               width: isActive ? 28 : 8,
               background: isActive
-                ? "var(--v9-sol-green)"
+                ? "var(--xp)"
                 : isCompleted
                   ? "rgba(20, 241, 149, 0.4)"
                   : "var(--overlay-divider)",

@@ -11,6 +11,7 @@ import {
   isIdempotentError,
   isClientError,
 } from "@/lib/solana/anchor-errors";
+import { withRetry } from "@/lib/solana/retry";
 
 const MPL_CORE_PROGRAM_ID = new PublicKey(
   "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d",
@@ -58,22 +59,24 @@ export async function POST(req: Request) {
     const [coursePDA] = findCoursePDA(courseId);
     const [enrollmentPDA] = findEnrollmentPDA(courseId, learnerKey);
 
-    const tx = await program.methods
-      .upgradeCredential(newName, newUri)
-      .accounts({
-        config: configPDA,
-        course: coursePDA,
-        enrollment: enrollmentPDA,
-        learner: learnerKey,
-        credentialAsset: new PublicKey(credentialAsset),
-        trackCollection: new PublicKey(trackCollection),
-        payer: signer.publicKey,
-        backendSigner: signer.publicKey,
-        mplCoreProgram: MPL_CORE_PROGRAM_ID,
-        systemProgram: SystemProgram.programId,
-      })
-      .signers([signer])
-      .rpc();
+    const tx = await withRetry(() =>
+      program.methods
+        .upgradeCredential(newName, newUri)
+        .accounts({
+          config: configPDA,
+          course: coursePDA,
+          enrollment: enrollmentPDA,
+          learner: learnerKey,
+          credentialAsset: new PublicKey(credentialAsset),
+          trackCollection: new PublicKey(trackCollection),
+          payer: signer.publicKey,
+          backendSigner: signer.publicKey,
+          mplCoreProgram: MPL_CORE_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([signer])
+        .rpc(),
+    );
 
     return NextResponse.json({ signature: tx });
   } catch (err: unknown) {

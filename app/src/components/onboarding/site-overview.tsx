@@ -21,7 +21,7 @@ const SECTIONS: SiteSection[] = [
     titleKey: "coursesTitle",
     descriptionKey: "coursesDesc",
     handNoteKey: "coursesNote",
-    color: "var(--v9-sol-green)",
+    color: "var(--xp)",
     path: "/courses",
   },
   {
@@ -114,7 +114,7 @@ export function SiteOverview({ onFinish }: { onFinish: () => void }) {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4 }}
         style={{
-          fontFamily: "var(--v9-mono)",
+          fontFamily: "var(--font-mono)",
           fontSize: 9,
           letterSpacing: 4,
           textTransform: "uppercase" as const,
@@ -132,7 +132,7 @@ export function SiteOverview({ onFinish }: { onFinish: () => void }) {
         style={{
           fontFamily: CAVEAT,
           fontSize: 26,
-          color: "var(--v9-sol-green)",
+          color: "var(--xp)",
           transform: "rotate(-2deg)",
           display: "block",
           marginBottom: 8,
@@ -304,7 +304,7 @@ export function SiteOverview({ onFinish }: { onFinish: () => void }) {
           height={16}
           viewBox="0 0 24 24"
           fill="none"
-          stroke="var(--v9-sol-green)"
+          stroke="var(--xp)"
           strokeWidth={1.5}
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -324,7 +324,7 @@ export function SiteOverview({ onFinish }: { onFinish: () => void }) {
           style={{
             fontFamily: CAVEAT,
             fontSize: 15,
-            color: "var(--v9-sol-green)",
+            color: "var(--xp)",
             transform: "rotate(-2deg)",
             display: "inline-block",
           }}
@@ -340,14 +340,14 @@ export function SiteOverview({ onFinish }: { onFinish: () => void }) {
         transition={{ delay: 1.2, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
         onClick={onFinish}
         style={{
-          fontFamily: "var(--v9-mono)",
+          fontFamily: "var(--font-mono)",
           fontSize: 11,
           letterSpacing: 3,
           textTransform: "uppercase" as const,
           padding: "16px 48px",
           background: "transparent",
-          color: "var(--v9-sol-green)",
-          border: "1px solid var(--v9-sol-green)",
+          color: "var(--xp)",
+          border: "1px solid var(--xp)",
           cursor: "pointer",
           transition: "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
         }}

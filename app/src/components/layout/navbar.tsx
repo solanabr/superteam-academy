@@ -17,6 +17,19 @@ const WalletMultiButton = dynamic(
   { ssr: false },
 );
 
+const NAV_LINK_STYLE: React.CSSProperties = {
+  fontFamily: "var(--font-mono)",
+  fontSize: "10px",
+  letterSpacing: "2px",
+  textTransform: "uppercase",
+  color: "var(--foreground)",
+  cursor: "pointer",
+  position: "relative",
+  padding: "4px 0",
+  background: "none",
+  border: "none",
+};
+
 export function Navbar({ locale }: { locale: string }) {
   const t = useTranslations("nav");
   const pathname = usePathname();
@@ -26,6 +39,8 @@ export function Navbar({ locale }: { locale: string }) {
   const [mounted, setMounted] = useState(false);
   const mobileToggleRef = useRef<HTMLButtonElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
+  const langMenuRef = useRef<HTMLDivElement>(null);
+  const langButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -69,6 +84,43 @@ export function Navbar({ locale }: { locale: string }) {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [mobileOpen]);
 
+  // Keyboard navigation for language dropdown
+  useEffect(() => {
+    if (!langOpen) return;
+    const menu = langMenuRef.current;
+    if (!menu) return;
+
+    const items = menu.querySelectorAll<HTMLElement>('[role="menuitem"]');
+    if (items.length === 0) return;
+
+    let idx = Array.from(items).findIndex(
+      (el) => el.getAttribute("aria-current") === "true",
+    );
+    if (idx < 0) idx = 0;
+    items[idx]?.focus();
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        idx = (idx + 1) % items.length;
+        items[idx]?.focus();
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        idx = (idx - 1 + items.length) % items.length;
+        items[idx]?.focus();
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        setLangOpen(false);
+        langButtonRef.current?.focus();
+      } else if (e.key === "Enter") {
+        // Let the link handle navigation naturally
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [langOpen]);
+
   // Detect pages that need normal blend mode (not mix-blend-mode: difference)
   const isCoursesPage =
     pathname === `/${locale}/courses` || pathname === `/${locale}/courses/`;
@@ -94,9 +146,17 @@ export function Navbar({ locale }: { locale: string }) {
   return (
     <>
       <header
-        className="v9-nav"
         style={{
-          mixBlendMode: isCoursesPage || isCommunityPage ? "normal" : undefined,
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 90,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "20px 40px",
+          transition: "all 0.6s cubic-bezier(0.16, 1, 0.3, 1)",
         }}
         role="banner"
       >
@@ -111,7 +171,16 @@ export function Navbar({ locale }: { locale: string }) {
             aria-label={t("superteamHome")}
           >
             <SuperteamLogo size={20} />
-            <span className="v9-nav-logo">Superteam</span>
+            <span
+              style={{
+                fontFamily: "var(--font-brand)",
+                fontSize: "18px",
+                fontWeight: 700,
+                color: "var(--foreground)",
+                letterSpacing: "-0.5px",
+                cursor: "pointer",
+              }}
+            >Superteam</span>
           </Link>
 
           {/* Right: Nav links + actions */}
@@ -124,12 +193,12 @@ export function Navbar({ locale }: { locale: string }) {
                   key={link.href}
                   href={link.href}
                   aria-current={active ? "page" : undefined}
-                  className={cn("v9-nav-link", active && "active")}
-                  style={
-                    isCoursesPage || isCommunityPage
+                  style={{
+                    ...NAV_LINK_STYLE,
+                    ...(isCoursesPage || isCommunityPage
                       ? { color: "var(--c-text-muted)" }
-                      : undefined
-                  }
+                      : {}),
+                  }}
                 >
                   {link.label}
                 </Link>
@@ -140,12 +209,12 @@ export function Navbar({ locale }: { locale: string }) {
             <div className="relative group">
               <Link
                 href={`/${locale}/admin`}
-                className={cn("v9-nav-link", isActive(`/${locale}/admin`) && "active")}
-                style={
-                  isCoursesPage || isCommunityPage
+                style={{
+                  ...NAV_LINK_STYLE,
+                  ...(isCoursesPage || isCommunityPage
                     ? { color: "var(--c-text-muted)" }
-                    : undefined
-                }
+                    : {}),
+                }}
                 aria-label={t("adminPanel")}
               >
                 <Shield className="h-3.5 w-3.5" />
@@ -165,7 +234,7 @@ export function Navbar({ locale }: { locale: string }) {
                 >
                   <path
                     d="M30,2 C26,8 20,14 22,22 C24,28 30,30 34,26"
-                    stroke="var(--v9-sol-green)"
+                    stroke="var(--xp)"
                     strokeWidth="1.8"
                     strokeLinecap="round"
                     strokeDasharray="80"
@@ -174,7 +243,7 @@ export function Navbar({ locale }: { locale: string }) {
                   />
                   <polygon
                     points="30,32 38,24 34,22"
-                    fill="var(--v9-sol-green)"
+                    fill="var(--xp)"
                     className="opacity-0 group-hover:animate-[tour-fade_0.2s_ease_forwards_0.5s]"
                   />
                 </svg>
@@ -182,7 +251,7 @@ export function Navbar({ locale }: { locale: string }) {
                   style={{
                     fontFamily: "var(--font-caveat), 'Caveat', cursive",
                     fontSize: 15,
-                    color: "var(--v9-sol-green)",
+                    color: "var(--xp)",
                     display: "block",
                     textAlign: "center",
                     transform: "rotate(-3deg)",
@@ -198,14 +267,16 @@ export function Navbar({ locale }: { locale: string }) {
             {/* Language selector */}
             <div className="relative">
               <button
+                ref={langButtonRef}
                 onClick={() => setLangOpen(!langOpen)}
-                className="v9-nav-link flex items-center gap-1"
+                className="flex items-center gap-1"
                 aria-label={t("switchLanguage")}
                 aria-expanded={langOpen}
                 aria-haspopup="true"
-                style={
-                  isCoursesPage ? { color: "var(--c-text-muted)" } : undefined
-                }
+                style={{
+                  ...NAV_LINK_STYLE,
+                  ...(isCoursesPage ? { color: "var(--c-text-muted)" } : {}),
+                }}
               >
                 <Globe className="h-3.5 w-3.5" />
               </button>
@@ -217,6 +288,7 @@ export function Navbar({ locale }: { locale: string }) {
                 />
               )}
               <div
+                ref={langMenuRef}
                 role="menu"
                 aria-label={t("languageOptions")}
                 className={cn(
@@ -229,7 +301,7 @@ export function Navbar({ locale }: { locale: string }) {
                   background: "var(--overlay-bg)",
                   border: "1px solid var(--overlay-border)",
                   boxShadow: "var(--overlay-shadow)",
-                  fontFamily: "var(--v9-mono)",
+                  fontFamily: "var(--font-mono)",
                   fontSize: "10px",
                   letterSpacing: "2px",
                   textTransform: "uppercase" as const,
@@ -241,11 +313,12 @@ export function Navbar({ locale }: { locale: string }) {
                     href={pathname.replace(`/${locale}`, `/${loc}`)}
                     onClick={() => setLangOpen(false)}
                     role="menuitem"
+                    tabIndex={langOpen ? 0 : -1}
                     aria-current={locale === loc ? "true" : undefined}
                     className="block w-full px-4 py-3 transition-colors min-h-[48px] flex items-center"
                     style={{
                       color: locale === loc
-                        ? "var(--v9-sol-green)"
+                        ? "var(--xp)"
                         : "var(--overlay-text)",
                     }}
                   >
@@ -264,7 +337,7 @@ export function Navbar({ locale }: { locale: string }) {
                   borderRadius: "9999px",
                   height: "30px",
                   padding: "0 16px",
-                  fontFamily: "var(--v9-mono)",
+                  fontFamily: "var(--font-mono)",
                   fontSize: "10px",
                   letterSpacing: "2px",
                   textTransform: "uppercase",
@@ -288,13 +361,13 @@ export function Navbar({ locale }: { locale: string }) {
             {/* Settings */}
             <Link
               href={`/${locale}/settings`}
-              className={cn("v9-nav-link", isActive(`/${locale}/settings`) && "active")}
               aria-label={t("settings")}
-              style={
-                isCoursesPage || isCommunityPage
+              style={{
+                ...NAV_LINK_STYLE,
+                ...(isCoursesPage || isCommunityPage
                   ? { color: "var(--c-text-muted)" }
-                  : undefined
-              }
+                  : {}),
+              }}
             >
               <Settings className="h-3.5 w-3.5" />
             </Link>
@@ -305,7 +378,7 @@ export function Navbar({ locale }: { locale: string }) {
             {/* Mobile hamburger */}
             <button
               ref={mobileToggleRef}
-              className="v9-nav-link"
+              style={NAV_LINK_STYLE}
               onClick={() => setMobileOpen(!mobileOpen)}
               aria-label={mobileOpen ? t("closeMenu") : t("openMenu")}
               aria-expanded={mobileOpen}
@@ -344,7 +417,7 @@ export function Navbar({ locale }: { locale: string }) {
                     active ? "opacity-100" : "opacity-50 hover:opacity-80",
                   )}
                   style={{
-                    fontFamily: "var(--v9-mono)",
+                    fontFamily: "var(--font-mono)",
                     fontSize: "11px",
                     letterSpacing: "3px",
                     textTransform: "uppercase" as const,
@@ -360,7 +433,7 @@ export function Navbar({ locale }: { locale: string }) {
                         width: "4px",
                         height: "4px",
                         borderRadius: "1px",
-                        background: "var(--v9-sol-green)",
+                        background: "var(--xp)",
                       }}
                     />
                   )}
@@ -377,7 +450,7 @@ export function Navbar({ locale }: { locale: string }) {
                 isActive(`/${locale}/admin`) ? "opacity-100" : "opacity-50 hover:opacity-80",
               )}
               style={{
-                fontFamily: "var(--v9-mono)",
+                fontFamily: "var(--font-mono)",
                 fontSize: "11px",
                 letterSpacing: "3px",
                 textTransform: "uppercase" as const,
@@ -394,7 +467,7 @@ export function Navbar({ locale }: { locale: string }) {
                     width: "4px",
                     height: "4px",
                     borderRadius: "1px",
-                    background: "var(--v9-sol-green)",
+                    background: "var(--xp)",
                   }}
                 />
               )}
@@ -409,7 +482,7 @@ export function Navbar({ locale }: { locale: string }) {
                 isActive(`/${locale}/settings`) ? "opacity-100" : "opacity-50 hover:opacity-80",
               )}
               style={{
-                fontFamily: "var(--v9-mono)",
+                fontFamily: "var(--font-mono)",
                 fontSize: "11px",
                 letterSpacing: "3px",
                 textTransform: "uppercase" as const,
@@ -426,7 +499,7 @@ export function Navbar({ locale }: { locale: string }) {
                     width: "4px",
                     height: "4px",
                     borderRadius: "1px",
-                    background: "var(--v9-sol-green)",
+                    background: "var(--xp)",
                   }}
                 />
               )}
@@ -459,13 +532,13 @@ export function Navbar({ locale }: { locale: string }) {
                       : "opacity-40 hover:opacity-70",
                   )}
                   style={{
-                    fontFamily: "var(--v9-mono)",
+                    fontFamily: "var(--font-mono)",
                     fontSize: "10px",
                     letterSpacing: "2px",
                     textTransform: "uppercase" as const,
                     color:
                       locale === loc
-                        ? "var(--v9-sol-green)"
+                        ? "var(--xp)"
                         : "var(--overlay-text-active)",
                   }}
                 >
@@ -484,7 +557,7 @@ export function Navbar({ locale }: { locale: string }) {
                     borderRadius: "9999px",
                     height: "36px",
                     padding: "0 20px",
-                    fontFamily: "var(--v9-mono)",
+                    fontFamily: "var(--font-mono)",
                     fontSize: "10px",
                     letterSpacing: "2px",
                     textTransform: "uppercase",

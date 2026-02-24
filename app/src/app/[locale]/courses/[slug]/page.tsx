@@ -110,13 +110,13 @@ export default async function CourseDetail({
   const courseNum = COURSE_NUM_MAP[slug] ?? "01";
 
   return (
-    <div style={{ background: "var(--v9-white)" }}>
+    <div style={{ background: "var(--background)" }}>
       {/* ═══ HERO ═══ */}
-      <section className="v9-course-hero">
-        <div className="v9-course-ghost">{courseNum}</div>
+      <section className="sa-course-hero">
+        <div className="sa-course-ghost">{courseNum}</div>
 
         <div
-          className="v9-fade-up"
+          className="sa-fade-up"
           style={{
             display: "flex",
             alignItems: "center",
@@ -124,17 +124,17 @@ export default async function CourseDetail({
             marginBottom: "24px",
           }}
         >
-          <span className="v9-course-meta-tag">
+          <span className="sa-course-meta-tag">
             {TRACK_LABELS[course.track]}
           </span>
-          <span className="v9-course-meta-tag accent">{course.difficulty}</span>
+          <span className="sa-course-meta-tag accent">{course.difficulty}</span>
           <span
             style={{
-              fontFamily: "var(--v9-mono)",
+              fontFamily: "var(--font-mono)",
               fontSize: "11px",
               letterSpacing: "0.2em",
               textTransform: "uppercase" as const,
-              color: "var(--v9-mid-grey)",
+              color: "var(--c-text-muted)",
             }}
           >
             MODULE {courseNum}
@@ -142,50 +142,50 @@ export default async function CourseDetail({
         </div>
 
         <h1
-          className="v9-course-title v9-fade-up v9-fade-d1"
+          className="sa-course-title sa-fade-up sa-fade-d1"
           style={{ marginBottom: "32px", maxWidth: "900px" }}
         >
           {course.title}
         </h1>
 
-        <p className="v9-course-desc v9-fade-up v9-fade-d2">
+        <p className="sa-course-desc sa-fade-up sa-fade-d2">
           {course.description}
         </p>
       </section>
 
       {/* ═══ STATS STRIP ═══ */}
-      <div className="v9-stats-strip v9-fade-up v9-fade-d3">
-        <div className="v9-stat-cell">
-          <div className="v9-stat-value">
+      <div className="sa-stats-strip sa-fade-up sa-fade-d3">
+        <div className="sa-stat-cell">
+          <div className="sa-stat-value">
             {totalLessons}
-            <span className="v9-stat-unit">{t("lessons")}</span>
+            <span className="sa-stat-unit">{t("lessons")}</span>
           </div>
-          <div className="v9-stat-label">Course length</div>
+          <div className="sa-stat-label">Course length</div>
         </div>
-        <div className="v9-stat-cell">
-          <div className="v9-stat-value">
+        <div className="sa-stat-cell">
+          <div className="sa-stat-value">
             {course.duration.replace(/\s*hours?\s*/i, "")}
-            <span className="v9-stat-unit">hrs</span>
+            <span className="sa-stat-unit">hrs</span>
           </div>
-          <div className="v9-stat-label">Estimated time</div>
+          <div className="sa-stat-label">Estimated time</div>
         </div>
-        <div className="v9-stat-cell">
+        <div className="sa-stat-cell">
           <div
-            className="v9-stat-value"
-            style={{ color: "var(--v9-sol-green)" }}
+            className="sa-stat-value"
+            style={{ color: "var(--xp)" }}
           >
             {totalXP}
-            <span className="v9-stat-unit">XP</span>
+            <span className="sa-stat-unit">XP</span>
           </div>
-          <div className="v9-stat-label">Total rewards</div>
+          <div className="sa-stat-label">Total rewards</div>
         </div>
-        <div className="v9-stat-cell">
-          <div className="v9-stat-value">
+        <div className="sa-stat-cell">
+          <div className="sa-stat-value">
             {course.enrolledCount > 0
               ? course.enrolledCount.toLocaleString()
               : "---"}
           </div>
-          <div className="v9-stat-label">{t("enrolled")}</div>
+          <div className="sa-stat-label">{t("enrolled")}</div>
         </div>
       </div>
 
@@ -210,21 +210,21 @@ export default async function CourseDetail({
         <div
           style={{
             padding: "0 clamp(20px, 8vw, 120px)",
-            background: "var(--v9-white)",
+            background: "var(--background)",
           }}
         >
           <p
             style={{
-              fontFamily: "var(--v9-mono)",
+              fontFamily: "var(--font-mono)",
               fontSize: "11px",
               letterSpacing: "0.1em",
-              color: "var(--v9-mid-grey)",
+              color: "var(--c-text-muted)",
             }}
           >
             {t("prerequisite")}{" "}
             <Link
               href={`/${locale}/courses/${getCourseById(course.prerequisiteId!)?.slug}`}
-              style={{ color: "var(--v9-accent)", textDecoration: "underline" }}
+              style={{ color: "var(--nd-highlight-orange)", textDecoration: "underline" }}
             >
               {getCourseById(course.prerequisiteId!)?.title}
             </Link>
@@ -233,17 +233,17 @@ export default async function CourseDetail({
       )}
 
       {/* ═══ MODULES ═══ */}
-      <section className="v9-modules-section">
+      <section className="sa-modules-section">
         <div
           style={{
-            fontFamily: "var(--v9-mono)",
+            fontFamily: "var(--font-mono)",
             fontSize: "11px",
             letterSpacing: "0.2em",
             textTransform: "uppercase" as const,
-            color: "var(--v9-mid-grey)",
+            color: "var(--c-text-muted)",
             marginBottom: "48px",
             paddingBottom: "16px",
-            borderBottom: "1px solid rgba(26,25,24,0.1)",
+            borderBottom: "1px solid var(--c-border-subtle)",
           }}
         >
           Course Content &middot; {course.modules.length} Modules &middot;{" "}
@@ -254,23 +254,23 @@ export default async function CourseDetail({
       </section>
 
       {/* ═══ REVIEWS ═══ */}
-      <section className="v9-reviews-section">
+      <section className="sa-reviews-section">
         <div
           style={{
-            fontFamily: "var(--v9-mono)",
+            fontFamily: "var(--font-mono)",
             fontSize: "11px",
             letterSpacing: "0.2em",
             textTransform: "uppercase" as const,
-            color: "var(--v9-mid-grey)",
+            color: "var(--c-text-muted)",
             marginBottom: "40px",
             paddingBottom: "16px",
-            borderBottom: "1px solid rgba(26,25,24,0.1)",
+            borderBottom: "1px solid var(--c-border-subtle)",
           }}
         >
           {t("studentReviews")}
         </div>
         {REVIEW_DATA.map((review) => (
-          <div className="v9-review-card" key={review.name}>
+          <div className="sa-review-card" key={review.name}>
             <div
               style={{
                 display: "flex",
@@ -286,24 +286,24 @@ export default async function CourseDetail({
                   style={{
                     width: "32px",
                     height: "32px",
-                    background: "rgba(26,25,24,0.05)",
+                    background: "rgba(255,255,255,0.06)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    fontFamily: "var(--v9-serif)",
+                    fontFamily: "var(--font-brand)",
                     fontSize: "14px",
                     fontWeight: 700,
-                    color: "var(--v9-dark)",
+                    color: "var(--foreground)",
                   }}
                 >
                   {review.initial}
                 </div>
                 <span
                   style={{
-                    fontFamily: "var(--v9-sans)",
+                    fontFamily: "var(--font-sans)",
                     fontSize: "14px",
                     fontWeight: 500,
-                    color: "var(--v9-dark)",
+                    color: "var(--foreground)",
                   }}
                 >
                   {review.name}
@@ -311,10 +311,10 @@ export default async function CourseDetail({
               </div>
               <span
                 style={{
-                  fontFamily: "var(--v9-mono)",
+                  fontFamily: "var(--font-mono)",
                   fontSize: "10px",
                   letterSpacing: "0.1em",
-                  color: "var(--v9-mid-grey)",
+                  color: "var(--c-text-muted)",
                 }}
               >
                 {review.date}
@@ -325,7 +325,7 @@ export default async function CourseDetail({
                 <span
                   key={i}
                   style={{
-                    color: i < review.rating ? "#F59E0B" : "rgba(26,25,24,0.1)",
+                    color: i < review.rating ? "#FFC526" : "rgba(255,255,255,0.1)",
                     fontSize: "14px",
                   }}
                 >
@@ -335,10 +335,10 @@ export default async function CourseDetail({
             </div>
             <p
               style={{
-                fontFamily: "var(--v9-sans)",
+                fontFamily: "var(--font-sans)",
                 fontSize: "15px",
                 lineHeight: 1.6,
-                color: "rgba(26,25,24,0.7)",
+                color: "var(--c-text-body)",
                 fontWeight: 300,
               }}
             >
@@ -352,18 +352,18 @@ export default async function CourseDetail({
           style={{
             marginTop: "40px",
             paddingTop: "24px",
-            borderTop: "1px solid rgba(26,25,24,0.1)",
+            borderTop: "1px solid var(--c-border-subtle)",
             textAlign: "center",
           }}
         >
           <Link
             href={`/${locale}/community?course=${slug}`}
             style={{
-              fontFamily: "var(--v9-mono)",
+              fontFamily: "var(--font-mono)",
               fontSize: "11px",
               letterSpacing: "0.15em",
               textTransform: "uppercase" as const,
-              color: "var(--v9-accent)",
+              color: "var(--nd-highlight-orange)",
               textDecoration: "none",
               transition: "opacity 0.2s",
             }}

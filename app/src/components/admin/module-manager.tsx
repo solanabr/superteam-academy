@@ -101,8 +101,8 @@ export function ModuleManager({
       setNewModuleTitle("");
       setAddingModule(false);
       onUpdate();
-    } catch {
-      // Error handled silently
+    } catch (error) {
+      console.error("[ModuleManager] Failed to create module:", error);
     } finally {
       setLoading(null);
     }
@@ -118,8 +118,8 @@ export function ModuleManager({
       if (!res.ok) throw new Error("Failed to delete module");
       setDeleteConfirm(null);
       onUpdate();
-    } catch {
-      // Error handled silently
+    } catch (error) {
+      console.error("[ModuleManager] Failed to delete module:", error);
     } finally {
       setLoading(null);
     }
@@ -149,8 +149,8 @@ export function ModuleManager({
         }),
       ]);
       onUpdate();
-    } catch {
-      // Error handled silently
+    } catch (error) {
+      console.error("[ModuleManager] Failed to reorder module:", error);
     } finally {
       setLoading(null);
     }
@@ -176,8 +176,8 @@ export function ModuleManager({
       setNewLessonTitle("");
       setAddingLessonToModule(null);
       onUpdate();
-    } catch {
-      // Error handled silently
+    } catch (error) {
+      console.error("[ModuleManager] Failed to create lesson:", error);
     } finally {
       setLoading(null);
     }
@@ -193,8 +193,8 @@ export function ModuleManager({
       if (!res.ok) throw new Error("Failed to delete lesson");
       setDeleteConfirm(null);
       onUpdate();
-    } catch {
-      // Error handled silently
+    } catch (error) {
+      console.error("[ModuleManager] Failed to delete lesson:", error);
     } finally {
       setLoading(null);
     }

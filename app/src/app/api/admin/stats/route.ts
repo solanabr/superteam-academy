@@ -42,8 +42,8 @@ export async function GET(req: Request) {
     let onChainCourses: Awaited<ReturnType<typeof accounts.course.all>> = [];
     try {
       onChainCourses = await accounts.course.all();
-    } catch {
-      // Program may not be deployed or no courses created yet
+    } catch (error) {
+      console.error("[admin/stats] Failed to fetch on-chain courses:", error);
     }
 
     const totalCourses =
@@ -95,8 +95,8 @@ export async function GET(req: Request) {
         activeLearners = largestAccounts.value.filter(
           (a) => a.uiAmount !== null && a.uiAmount > 0,
         ).length;
-      } catch {
-        // Mint may not exist on current network
+      } catch (error) {
+        console.error("[admin/stats] Failed to fetch XP mint data:", error);
       }
     }
 

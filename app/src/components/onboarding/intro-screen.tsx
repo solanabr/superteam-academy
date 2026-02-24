@@ -50,7 +50,7 @@ export function IntroScreen({ onContinue, onSkip }: IntroScreenProps) {
           style={{
             fontFamily: CAVEAT,
             fontSize: "clamp(28px, 5vw, 42px)",
-            color: "var(--v9-sol-green)",
+            color: "var(--xp)",
             display: "block",
             transform: "rotate(-2deg)",
           }}
@@ -76,7 +76,7 @@ export function IntroScreen({ onContinue, onSkip }: IntroScreenProps) {
       >
         {t("introTitle")}
         <br />
-        <span style={{ fontStyle: "italic", color: "var(--v9-sol-green)" }}>
+        <span style={{ fontStyle: "italic", color: "var(--xp)" }}>
           {t("introTitleAccent")}
         </span>
       </h1>
@@ -199,14 +199,14 @@ export function IntroScreen({ onContinue, onSkip }: IntroScreenProps) {
       <button
         onClick={onContinue}
         style={{
-          fontFamily: "var(--v9-mono)",
+          fontFamily: "var(--font-mono)",
           fontSize: 11,
           letterSpacing: 3,
           textTransform: "uppercase",
           padding: "16px 48px",
           background: "transparent",
-          color: "var(--v9-sol-green)",
-          border: "1px solid var(--v9-sol-green)",
+          color: "var(--xp)",
+          border: "1px solid var(--xp)",
           cursor: "pointer",
           transition: "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
           marginTop: 16,

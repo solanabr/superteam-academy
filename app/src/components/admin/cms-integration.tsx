@@ -50,7 +50,8 @@ export function CmsIntegration() {
         message: data.message ?? "Unknown error",
         courseCount: data.courseCount,
       });
-    } catch {
+    } catch (error) {
+      console.error("[CmsIntegration] Connection test failed:", error);
       setStatus({
         connected: false,
         message: t("failedToReachServer"),

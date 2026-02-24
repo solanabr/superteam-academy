@@ -162,6 +162,226 @@ Streak milestones trigger achievement unlocks:
 
 4. Create courses with the new track in `courses.ts` or Sanity CMS
 
+## Extending the Component Library
+
+The project uses a custom component library in `app/src/components/ui/` built with [CVA](https://cva.style) (class-variance-authority) for variant management.
+
+### Adding a New Component
+
+1. Create the component file in `app/src/components/ui/`:
+
+```typescript
+// app/src/components/ui/tooltip.tsx
+import { cva, type VariantProps } from "class-variance-authority";
+import { cn } from "@/lib/utils";
+
+const tooltipVariants = cva(
+  "absolute z-50 rounded-[2px] px-3 py-1.5 text-xs font-mono",
+  {
+    variants: {
+      variant: {
+        default: "bg-[var(--c-bg-card)] text-[var(--c-text)] border border-[var(--c-border-subtle)]",
+        accent: "bg-[#00FFA3] text-black",
+      },
+    },
+    defaultVariants: { variant: "default" },
+  },
+);
+
+interface TooltipProps extends VariantProps<typeof tooltipVariants> {
+  content: string;
+  children: React.ReactNode;
+}
+
+export function Tooltip({ content, variant, children }: TooltipProps) {
+  // implementation
+}
+```
+
+2. Follow these conventions:
+   - Use `cva()` for all variant-based styling
+   - Import `cn()` from `@/lib/utils` for class merging
+   - Use design tokens (`var(--c-*)`, `var(--nd-*)`) instead of hardcoded colors
+   - Use `rounded-[2px]` (sharp corners matching the platform aesthetic)
+   - Export named components (not default exports)
+
+### Adding CVA Variants to Existing Components
+
+To add a new variant to an existing component (e.g., a new button variant):
+
+```typescript
+// In app/src/components/ui/button.tsx, add to the variants object:
+variant: {
+  // ... existing variants ...
+  accent: "bg-[#03E1FF] text-black hover:bg-[#03E1FF]/90",
+},
+```
+
+### Available Base Components
+
+| Component | File | Variants |
+|-----------|------|----------|
+| Button | `button.tsx` | default, secondary, outline, ghost, destructive, link, retro |
+| Badge | `badge.tsx` | default, secondary, outline, destructive |
+| Card | `card.tsx` | default |
+| Input | `input.tsx` | default |
+| Progress | `progress.tsx` | default |
+| Tabs | `tabs.tsx` | TabsList, TabsTrigger, TabsContent |
+| Avatar | `avatar.tsx` | default |
+| Skeleton | `skeleton.tsx` | default |
+| EmptyState | `empty-state.tsx` | icon + title + description pattern |
+| ErrorState | `error-state.tsx` | error display with retry |
+| FilterPill | `filter-pill.tsx` | active/inactive pill filter |
+| SearchInput | `search-input.tsx` | search with icon |
+| Toast | `toast.tsx` | success, error, info |
+
+## Adding New Page Routes
+
+All pages live under `app/src/app/[locale]/` for i18n support.
+
+### Step 1: Create the page file
+
+```bash
+mkdir -p app/src/app/\[locale\]/my-page
+```
+
+Create `page.tsx`:
+
+```typescript
+// app/src/app/[locale]/my-page/page.tsx
+"use client";
+
+import { useTranslations } from "next-intl";
+import { useParams } from "next/navigation";
+
+export default function MyPage() {
+  const t = useTranslations("myPage");
+  const params = useParams();
+  const locale = params.locale as string;
+
+  return (
+    <div className="px-4 pb-8 pt-24 sm:px-6 lg:px-8">
+      <h1 className="text-2xl font-semibold text-[var(--c-text)]">
+        {t("title")}
+      </h1>
+      {/* Page content */}
+    </div>
+  );
+}
+```
+
+### Step 2: Add translations
+
+Add the key namespace to each locale file (`app/src/messages/en.json`, `pt-br.json`, `es.json`):
+
+```json
+{
+  "myPage": {
+    "title": "My Page"
+  }
+}
+```
+
+### Step 3: Add navigation link (optional)
+
+Edit `app/src/components/layout/navbar.tsx` and add to the `links` array:
+
+```typescript
+const links = [
+  // ... existing links ...
+  { href: `/${locale}/my-page`, label: t("myPage") },
+];
+```
+
+Add the nav translation key to `messages/en.json` under the `nav` namespace.
+
+### Step 4: Add error boundary
+
+Create `error.tsx` alongside your page:
+
+```typescript
+// app/src/app/[locale]/my-page/error.tsx
+"use client";
+
+import { useEffect } from "react";
+
+export default function MyPageError({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
+  useEffect(() => {
+    console.error("MyPage error:", error);
+  }, [error]);
+
+  return (
+    <div className="flex min-h-[60vh] flex-col items-center justify-center px-4">
+      <div className="max-w-md text-center">
+        <h1 className="mb-4 text-2xl font-bold text-[var(--c-text)]">
+          Failed to load page
+        </h1>
+        <button onClick={reset} className="rounded-[2px] border border-[var(--solana-green)] bg-transparent px-6 py-2.5 text-sm font-medium text-[var(--solana-green)]">
+          Try again
+        </button>
+      </div>
+    </div>
+  );
+}
+```
+
+### Page conventions
+
+- Always include `"use client"` for interactive pages
+- Use `pt-24` top padding to clear the fixed navbar
+- Every page must have exactly one `<h1>` element
+- Heading hierarchy must not skip levels (h1 -> h2 -> h3)
+- Use `useTranslations()` for all user-facing strings
+
+## Extending Gamification (Concrete Examples)
+
+### Example: Adding a "Code Streak" achievement
+
+1. **Define the achievement** in `app/src/lib/services/courses.ts`:
+
+```typescript
+{
+  id: "code-streak-7",
+  name: "Code Streak",
+  description: "Complete coding challenges 7 days in a row",
+  icon: "code",
+  xpReward: 300,
+  category: "streak",
+}
+```
+
+2. **Add the on-chain achievement type** (requires program authority):
+
+```typescript
+await program.methods
+  .createAchievementType({
+    achievementId: "code-streak-7",
+    name: "Code Streak",
+    uri: "https://arweave.net/<metadata-hash>",
+    xpReward: new BN(300),
+    maxSupply: null, // unlimited
+  })
+  .rpc();
+```
+
+3. **Trigger in the backend** when the streak condition is met, call `award_achievement`.
+
+### Example: Adding a seasonal XP multiplier
+
+1. Edit the XP calculation in the backend lesson completion handler
+2. Display the multiplier in the `SeasonalEventBanner` component (`app/src/components/gamification/seasonal-event-banner.tsx`)
+3. The on-chain `complete_lesson` instruction accepts the XP amount as a parameter, so the backend controls multiplied values
+
+### Example: Adding a new daily challenge type
+
+Edit `app/src/components/gamification/daily-challenges.tsx` to add a new challenge variant to the challenges array. Challenges are currently client-side generated; for persistent challenges, store them in Supabase and fetch via API.
+
 ## CMS Integration
 
 See [CMS_GUIDE.md](CMS_GUIDE.md) for detailed Sanity CMS setup and course creation workflow.

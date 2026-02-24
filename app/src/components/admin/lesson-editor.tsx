@@ -122,8 +122,8 @@ export function LessonEditor({ lesson, wallet, onSave }: LessonEditorProps) {
 
       if (!res.ok) throw new Error("Failed to save");
       onSave();
-    } catch {
-      // Silent fail
+    } catch (error) {
+      console.error("[LessonEditor] Failed to save lesson:", error);
     } finally {
       setSaving(false);
     }

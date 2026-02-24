@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
+import { hasAnalyticsConsent } from "@/components/ui/cookie-consent";
 
 declare global {
   interface Window {
@@ -18,7 +19,7 @@ const POSTHOG_HOST =
 let posthogInstance: typeof import("posthog-js").default | null = null;
 
 async function getPostHog() {
-  if (!POSTHOG_KEY) return null;
+  if (!POSTHOG_KEY || !hasAnalyticsConsent()) return null;
   if (posthogInstance) return posthogInstance;
   const { default: posthog } = await import("posthog-js");
   posthog.init(POSTHOG_KEY, {
@@ -35,6 +36,7 @@ async function getPostHog() {
 
 // GA4 helpers
 function gtagPageview(url: string) {
+  if (!hasAnalyticsConsent()) return;
   if (typeof window !== "undefined" && GA_ID && window.gtag) {
     window.gtag("config", GA_ID, { page_path: url });
   }
@@ -42,6 +44,7 @@ function gtagPageview(url: string) {
 
 // Custom event tracking
 export function trackEvent(name: string, properties?: Record<string, unknown>) {
+  if (!hasAnalyticsConsent()) return;
   // GA4
   if (typeof window !== "undefined" && GA_ID && window.gtag) {
     window.gtag("event", name, properties);
@@ -94,18 +97,29 @@ export function AnalyticsProvider() {
   const searchParams = useSearchParams();
   const initialized = useRef(false);
 
-  // Lazy-initialize PostHog on first interaction or after idle
+  // Lazy-initialize PostHog only if consent is granted
   useEffect(() => {
     if (initialized.current || !POSTHOG_KEY) return;
-    initialized.current = true;
-    if ("requestIdleCallback" in window) {
-      (window.requestIdleCallback as (cb: () => void) => number)(() => getPostHog());
-    } else {
-      setTimeout(() => getPostHog(), 2000);
-    }
+
+    const initIfConsented = () => {
+      if (!hasAnalyticsConsent() || initialized.current) return;
+      initialized.current = true;
+      if ("requestIdleCallback" in window) {
+        (window.requestIdleCallback as (cb: () => void) => number)(() => getPostHog());
+      } else {
+        setTimeout(() => getPostHog(), 2000);
+      }
+    };
+
+    initIfConsented();
+
+    const handler = () => initIfConsented();
+    window.addEventListener("analytics-consent-granted", handler);
+    return () => window.removeEventListener("analytics-consent-granted", handler);
   }, []);
 
   useEffect(() => {
+    if (!hasAnalyticsConsent()) return;
     const url =
       pathname +
       (searchParams?.toString() ? `?${searchParams.toString()}` : "");

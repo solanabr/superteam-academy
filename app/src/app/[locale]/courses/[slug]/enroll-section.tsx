@@ -6,6 +6,8 @@ import { useProgram } from "@/lib/hooks/use-program";
 import { useEnrollment } from "@/lib/hooks/use-enrollment";
 import { enroll } from "@/lib/solana/transactions";
 import { analytics } from "@/providers/analytics-provider";
+import { parseAnchorError } from "@/lib/solana/anchor-errors";
+import { useTranslations } from "next-intl";
 
 interface EnrollSectionProps {
   courseId: string;
@@ -26,6 +28,7 @@ export function EnrollSection({
   creator,
   t,
 }: EnrollSectionProps) {
+  const tl = useTranslations("lesson");
   const { publicKey, connected } = useWallet();
   const program = useProgram();
   const {
@@ -49,13 +52,22 @@ export function EnrollSection({
       await refreshEnrollment();
     } catch (e: unknown) {
       console.error("Enroll failed:", e);
-      const msg = e instanceof Error ? e.message : "";
-      if (msg.includes("PrerequisiteNotMet")) {
-        setError("You must complete the prerequisite course first.");
-      } else if (msg.includes("custom program error")) {
-        setError("Enrollment failed. Check prerequisites.");
+      const anchor = parseAnchorError(e);
+      if (anchor) {
+        switch (anchor.name) {
+          case "PrerequisiteNotMet":
+            setError(tl("prerequisiteNotMet"));
+            break;
+          case "CourseNotActive":
+          case "CourseIdEmpty":
+          case "CourseIdTooLong":
+            setError(tl("enrollmentFailedPrereq"));
+            break;
+          default:
+            setError(anchor.message || tl("enrollmentFailed"));
+        }
       } else {
-        setError("Enrollment failed. Please try again.");
+        setError(tl("enrollmentFailed"));
       }
     }
     setLoading(false);
@@ -64,12 +76,12 @@ export function EnrollSection({
   const metaText = (
     <span
       className="text-sm"
-      style={{ fontFamily: "var(--v9-sans)", color: "var(--v9-mid-grey)" }}
+      style={{ fontFamily: "var(--font-sans)", color: "var(--c-text-muted)" }}
     >
       {totalCompletions > 0 &&
         `${totalCompletions.toLocaleString()} ${t.completions} \u00B7 `}
       {t.by}{" "}
-      <strong style={{ color: "var(--v9-dark)", fontWeight: 500 }}>
+      <strong style={{ color: "var(--foreground)", fontWeight: 500 }}>
         {creator}
       </strong>
     </span>
@@ -77,20 +89,20 @@ export function EnrollSection({
 
   if (!connected) {
     return (
-      <div className="v9-enroll-section">
-        <button className="v9-enroll-btn" disabled>
+      <div className="sa-enroll-section">
+        <button className="sa-enroll-btn" disabled>
           {t.enrollNow}
         </button>
         <span
           className="text-sm"
           style={{
-            fontFamily: "var(--v9-mono)",
+            fontFamily: "var(--font-mono)",
             fontSize: "11px",
             letterSpacing: "0.1em",
-            color: "var(--v9-mid-grey)",
+            color: "var(--c-text-muted)",
           }}
         >
-          Connect wallet to enroll
+          {tl("connectToEnroll")}
         </span>
       </div>
     );
@@ -98,16 +110,16 @@ export function EnrollSection({
 
   if (enrollmentLoading) {
     return (
-      <div className="v9-enroll-section">
+      <div className="sa-enroll-section">
         <span
           style={{
-            fontFamily: "var(--v9-mono)",
+            fontFamily: "var(--font-mono)",
             fontSize: "11px",
             letterSpacing: "0.1em",
-            color: "var(--v9-mid-grey)",
+            color: "var(--c-text-muted)",
           }}
         >
-          Loading...
+          {tl("enrolling")}
         </span>
       </div>
     );
@@ -115,8 +127,8 @@ export function EnrollSection({
 
   if (isComplete) {
     return (
-      <div className="v9-enroll-section">
-        <button className="v9-enroll-btn completed">
+      <div className="sa-enroll-section">
+        <button className="sa-enroll-btn completed">
           &#10003;&nbsp;&nbsp;{t.completed}
         </button>
         {metaText}
@@ -126,8 +138,8 @@ export function EnrollSection({
 
   if (isEnrolled) {
     return (
-      <div className="v9-enroll-section">
-        <button className="v9-enroll-btn enrolled">
+      <div className="sa-enroll-section">
+        <button className="sa-enroll-btn enrolled">
           &#10003;&nbsp;&nbsp;{t.enrolled}
         </button>
         {metaText}
@@ -136,19 +148,19 @@ export function EnrollSection({
   }
 
   return (
-    <div className="v9-enroll-section">
+    <div className="sa-enroll-section">
       <button
-        className="v9-enroll-btn"
+        className="sa-enroll-btn"
         onClick={handleEnroll}
         disabled={loading}
       >
-        {loading ? "Enrolling..." : t.enrollNow}
+        {loading ? tl("enrolling") : t.enrollNow}
       </button>
       {metaText}
       {error && (
         <p
           style={{
-            fontFamily: "var(--v9-mono)",
+            fontFamily: "var(--font-mono)",
             fontSize: "11px",
             color: "#EF4444",
           }}

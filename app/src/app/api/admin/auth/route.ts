@@ -1,15 +1,9 @@
 import { NextResponse } from "next/server";
 import { compare } from "bcryptjs";
 import { SignJWT, jwtVerify } from "jose";
+import { getSecret, parseCookie, COOKIE_NAME } from "@/lib/auth/admin";
 
-const COOKIE_NAME = "admin-session";
 const JWT_EXPIRY = "24h";
-
-function getSecret(): Uint8Array {
-  const secret = process.env.AUTH_SECRET;
-  if (!secret) throw new Error("AUTH_SECRET not configured");
-  return new TextEncoder().encode(secret);
-}
 
 /** POST — login with password, set httpOnly JWT cookie */
 export async function POST(req: Request) {
@@ -72,7 +66,8 @@ export async function GET(req: Request) {
 
     await jwtVerify(cookie, getSecret());
     return NextResponse.json({ authenticated: true });
-  } catch {
+  } catch (error) {
+    console.error("[admin/auth] Session verification failed:", error);
     return NextResponse.json({ authenticated: false });
   }
 }
@@ -88,9 +83,4 @@ export async function DELETE() {
     maxAge: 0,
   });
   return res;
-}
-
-function parseCookie(header: string, name: string): string | null {
-  const match = header.match(new RegExp(`(?:^|;\\s*)${name}=([^;]*)`));
-  return match ? decodeURIComponent(match[1]) : null;
 }

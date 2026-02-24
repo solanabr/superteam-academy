@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { getLeaderboard } from "@/lib/services/leaderboard";
 import type { LeaderboardEntry } from "@/lib/services/types";
@@ -15,6 +16,7 @@ const DEMO_ENTRIES_ALL_TIME: LeaderboardEntry[] = [
     xp: 4250,
     level: 6,
     streak: 31,
+    coursesCompleted: 12,
   },
   {
     rank: 2,
@@ -23,6 +25,7 @@ const DEMO_ENTRIES_ALL_TIME: LeaderboardEntry[] = [
     xp: 3800,
     level: 6,
     streak: 18,
+    coursesCompleted: 10,
   },
   {
     rank: 3,
@@ -31,6 +34,7 @@ const DEMO_ENTRIES_ALL_TIME: LeaderboardEntry[] = [
     xp: 3200,
     level: 5,
     streak: 24,
+    coursesCompleted: 8,
   },
   {
     rank: 4,
@@ -39,6 +43,7 @@ const DEMO_ENTRIES_ALL_TIME: LeaderboardEntry[] = [
     xp: 2900,
     level: 5,
     streak: 12,
+    coursesCompleted: 7,
   },
   {
     rank: 5,
@@ -47,6 +52,7 @@ const DEMO_ENTRIES_ALL_TIME: LeaderboardEntry[] = [
     xp: 2650,
     level: 5,
     streak: 15,
+    coursesCompleted: 6,
   },
   {
     rank: 6,
@@ -55,6 +61,7 @@ const DEMO_ENTRIES_ALL_TIME: LeaderboardEntry[] = [
     xp: 2100,
     level: 4,
     streak: 9,
+    coursesCompleted: 5,
   },
   {
     rank: 7,
@@ -63,6 +70,7 @@ const DEMO_ENTRIES_ALL_TIME: LeaderboardEntry[] = [
     xp: 1800,
     level: 4,
     streak: 7,
+    coursesCompleted: 4,
   },
   {
     rank: 8,
@@ -71,6 +79,7 @@ const DEMO_ENTRIES_ALL_TIME: LeaderboardEntry[] = [
     xp: 1500,
     level: 3,
     streak: 14,
+    coursesCompleted: 4,
   },
   {
     rank: 9,
@@ -79,6 +88,7 @@ const DEMO_ENTRIES_ALL_TIME: LeaderboardEntry[] = [
     xp: 1200,
     level: 3,
     streak: 5,
+    coursesCompleted: 3,
   },
   {
     rank: 10,
@@ -87,6 +97,7 @@ const DEMO_ENTRIES_ALL_TIME: LeaderboardEntry[] = [
     xp: 900,
     level: 3,
     streak: 3,
+    coursesCompleted: 2,
   },
   {
     rank: 11,
@@ -95,6 +106,7 @@ const DEMO_ENTRIES_ALL_TIME: LeaderboardEntry[] = [
     xp: 750,
     level: 2,
     streak: 8,
+    coursesCompleted: 2,
   },
   {
     rank: 12,
@@ -103,6 +115,7 @@ const DEMO_ENTRIES_ALL_TIME: LeaderboardEntry[] = [
     xp: 600,
     level: 2,
     streak: 2,
+    coursesCompleted: 2,
   },
   {
     rank: 13,
@@ -111,6 +124,7 @@ const DEMO_ENTRIES_ALL_TIME: LeaderboardEntry[] = [
     xp: 450,
     level: 2,
     streak: 6,
+    coursesCompleted: 1,
   },
   {
     rank: 14,
@@ -119,6 +133,7 @@ const DEMO_ENTRIES_ALL_TIME: LeaderboardEntry[] = [
     xp: 300,
     level: 1,
     streak: 1,
+    coursesCompleted: 1,
   },
   {
     rank: 15,
@@ -127,6 +142,7 @@ const DEMO_ENTRIES_ALL_TIME: LeaderboardEntry[] = [
     xp: 150,
     level: 1,
     streak: 4,
+    coursesCompleted: 1,
   },
 ];
 
@@ -138,6 +154,7 @@ const DEMO_ENTRIES_WEEKLY: LeaderboardEntry[] = [
     xp: 820,
     level: 5,
     streak: 24,
+    coursesCompleted: 2,
   },
   {
     rank: 2,
@@ -146,6 +163,7 @@ const DEMO_ENTRIES_WEEKLY: LeaderboardEntry[] = [
     xp: 690,
     level: 5,
     streak: 15,
+    coursesCompleted: 1,
   },
   {
     rank: 3,
@@ -154,6 +172,7 @@ const DEMO_ENTRIES_WEEKLY: LeaderboardEntry[] = [
     xp: 540,
     level: 6,
     streak: 31,
+    coursesCompleted: 1,
   },
   {
     rank: 4,
@@ -162,6 +181,7 @@ const DEMO_ENTRIES_WEEKLY: LeaderboardEntry[] = [
     xp: 480,
     level: 3,
     streak: 14,
+    coursesCompleted: 1,
   },
   {
     rank: 5,
@@ -170,6 +190,7 @@ const DEMO_ENTRIES_WEEKLY: LeaderboardEntry[] = [
     xp: 350,
     level: 6,
     streak: 18,
+    coursesCompleted: 1,
   },
   {
     rank: 6,
@@ -178,6 +199,7 @@ const DEMO_ENTRIES_WEEKLY: LeaderboardEntry[] = [
     xp: 290,
     level: 2,
     streak: 8,
+    coursesCompleted: 1,
   },
   {
     rank: 7,
@@ -186,6 +208,7 @@ const DEMO_ENTRIES_WEEKLY: LeaderboardEntry[] = [
     xp: 210,
     level: 5,
     streak: 12,
+    coursesCompleted: 0,
   },
   {
     rank: 8,
@@ -194,6 +217,7 @@ const DEMO_ENTRIES_WEEKLY: LeaderboardEntry[] = [
     xp: 180,
     level: 2,
     streak: 6,
+    coursesCompleted: 0,
   },
   {
     rank: 9,
@@ -202,6 +226,7 @@ const DEMO_ENTRIES_WEEKLY: LeaderboardEntry[] = [
     xp: 120,
     level: 4,
     streak: 9,
+    coursesCompleted: 0,
   },
   {
     rank: 10,
@@ -210,6 +235,7 @@ const DEMO_ENTRIES_WEEKLY: LeaderboardEntry[] = [
     xp: 90,
     level: 1,
     streak: 4,
+    coursesCompleted: 0,
   },
 ];
 
@@ -221,6 +247,7 @@ const DEMO_ENTRIES_MONTHLY: LeaderboardEntry[] = [
     xp: 1850,
     level: 6,
     streak: 31,
+    coursesCompleted: 5,
   },
   {
     rank: 2,
@@ -229,6 +256,7 @@ const DEMO_ENTRIES_MONTHLY: LeaderboardEntry[] = [
     xp: 1620,
     level: 5,
     streak: 24,
+    coursesCompleted: 4,
   },
   {
     rank: 3,
@@ -237,6 +265,7 @@ const DEMO_ENTRIES_MONTHLY: LeaderboardEntry[] = [
     xp: 1400,
     level: 6,
     streak: 18,
+    coursesCompleted: 3,
   },
   {
     rank: 4,
@@ -245,6 +274,7 @@ const DEMO_ENTRIES_MONTHLY: LeaderboardEntry[] = [
     xp: 1280,
     level: 5,
     streak: 15,
+    coursesCompleted: 3,
   },
   {
     rank: 5,
@@ -253,6 +283,7 @@ const DEMO_ENTRIES_MONTHLY: LeaderboardEntry[] = [
     xp: 980,
     level: 3,
     streak: 14,
+    coursesCompleted: 2,
   },
   {
     rank: 6,
@@ -261,6 +292,7 @@ const DEMO_ENTRIES_MONTHLY: LeaderboardEntry[] = [
     xp: 850,
     level: 5,
     streak: 12,
+    coursesCompleted: 2,
   },
   {
     rank: 7,
@@ -269,6 +301,7 @@ const DEMO_ENTRIES_MONTHLY: LeaderboardEntry[] = [
     xp: 720,
     level: 4,
     streak: 9,
+    coursesCompleted: 2,
   },
   {
     rank: 8,
@@ -277,6 +310,7 @@ const DEMO_ENTRIES_MONTHLY: LeaderboardEntry[] = [
     xp: 540,
     level: 2,
     streak: 8,
+    coursesCompleted: 1,
   },
   {
     rank: 9,
@@ -285,6 +319,7 @@ const DEMO_ENTRIES_MONTHLY: LeaderboardEntry[] = [
     xp: 460,
     level: 4,
     streak: 7,
+    coursesCompleted: 1,
   },
   {
     rank: 10,
@@ -293,6 +328,7 @@ const DEMO_ENTRIES_MONTHLY: LeaderboardEntry[] = [
     xp: 320,
     level: 2,
     streak: 6,
+    coursesCompleted: 1,
   },
   {
     rank: 11,
@@ -301,6 +337,7 @@ const DEMO_ENTRIES_MONTHLY: LeaderboardEntry[] = [
     xp: 250,
     level: 3,
     streak: 5,
+    coursesCompleted: 1,
   },
   {
     rank: 12,
@@ -309,6 +346,7 @@ const DEMO_ENTRIES_MONTHLY: LeaderboardEntry[] = [
     xp: 150,
     level: 1,
     streak: 4,
+    coursesCompleted: 0,
   },
 ];
 
@@ -321,6 +359,37 @@ function getDemoEntries(timeframe: string): LeaderboardEntry[] {
     default:
       return DEMO_ENTRIES_ALL_TIME;
   }
+}
+
+const TRACK_FILTERS = [
+  { key: "all", label: "allTracks" },
+  { key: "rust", label: "Rust" },
+  { key: "anchor", label: "Anchor" },
+  { key: "frontend", label: "Frontend" },
+  { key: "security", label: "Security" },
+  { key: "defi", label: "DeFi" },
+  { key: "mobile", label: "Mobile" },
+] as const;
+
+const TRACK_NAME_PATTERNS: Record<string, RegExp> = {
+  rust: /rust/i,
+  anchor: /anchor/i,
+  frontend: /web3|frontend|builder/i,
+  security: /security|chain.?link/i,
+  defi: /defi|token|degen/i,
+  mobile: /mobile/i,
+};
+
+function filterByTrack(
+  entries: LeaderboardEntry[],
+  track: string,
+): LeaderboardEntry[] {
+  if (track === "all") return entries;
+  const pattern = TRACK_NAME_PATTERNS[track];
+  if (!pattern) return entries;
+  return entries
+    .filter((e) => pattern.test(e.displayName ?? "") || pattern.test(e.wallet))
+    .map((e, i) => ({ ...e, rank: i + 1 }));
 }
 
 function formatRank(rank: number): string {
@@ -348,11 +417,14 @@ export default function LeaderboardPage() {
   const [timeframe, setTimeframe] = useState<"weekly" | "monthly" | "alltime">(
     "alltime",
   );
+  const params = useParams();
+  const locale = params.locale as string;
   const [selectedTrack, setSelectedTrack] = useState<string>("all");
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDemo, setIsDemo] = useState(false);
   const [expandedLeader, setExpandedLeader] = useState<number | null>(null);
+  const [hoveredEntry, setHoveredEntry] = useState<number | null>(null);
   const [mobile, setMobile] = useState(false);
   useEffect(() => {
     const check = () => setMobile(window.innerWidth < 768);
@@ -361,8 +433,13 @@ export default function LeaderboardPage() {
     return () => window.removeEventListener("resize", check);
   }, []);
 
+  const filteredEntries = useMemo(
+    () => filterByTrack(entries, selectedTrack),
+    [entries, selectedTrack],
+  );
+
   const userEntry = shortWallet
-    ? entries.find((e) => e.wallet === shortWallet)
+    ? filteredEntries.find((e) => e.wallet === shortWallet)
     : null;
   const userRank = userEntry?.rank ?? null;
 
@@ -379,27 +456,27 @@ export default function LeaderboardPage() {
     key: "weekly" | "monthly" | "alltime";
     label: string;
   }[] = [
-    { key: "weekly", label: "THIS WEEK" },
-    { key: "monthly", label: "THIS MONTH" },
-    { key: "alltime", label: "ALL TIME" },
+    { key: "weekly", label: t("thisWeek") },
+    { key: "monthly", label: t("thisMonth") },
+    { key: "alltime", label: t("allTimeFilter") },
   ];
 
   return (
-    <div style={{ background: "var(--v9-white)", color: "var(--v9-dark)" }}>
+    <div style={{ background: "var(--background)", color: "var(--foreground)" }}>
       {/* Demo banner */}
       {isDemo && !loading && (
         <div
           style={{
-            fontFamily: "var(--v9-mono)",
+            fontFamily: "var(--font-mono)",
             fontSize: "10px",
             letterSpacing: "2px",
-            color: "var(--v9-mid-grey)",
+            color: "var(--c-text-muted)",
             textAlign: "center",
             padding: mobile ? "12px 20px" : "12px 40px",
             textTransform: "uppercase",
           }}
         >
-          DEMO DATA &middot; CONNECT WALLET FOR LIVE RANKINGS
+          {t("demoBanner")}
         </div>
       )}
 
@@ -408,26 +485,33 @@ export default function LeaderboardPage() {
         style={{ padding: mobile ? "100px 20px 24px" : "140px 40px 40px" }}
       >
         <h1
-          className="v9-fade-up v9-fade-d1"
+          className="sa-fade-up sa-fade-d1"
           style={{
-            fontFamily: "var(--v9-serif)",
+            fontFamily: "var(--font-brand)",
             fontSize: "clamp(48px, 8vw, 120px)",
             fontWeight: 900,
             letterSpacing: "-3px",
             lineHeight: 0.9,
-            color: "var(--v9-dark)",
+            color: "var(--foreground)",
             margin: 0,
             opacity: 0,
           }}
         >
-          Leaderboard
+          {t("title")}
         </h1>
         <p
-          className="v9-overline v9-fade-up v9-fade-d2"
-          style={{ marginTop: "24px", opacity: 0 }}
+          className="sa-fade-up sa-fade-d2"
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: "10px",
+            letterSpacing: "4px",
+            textTransform: "uppercase",
+            color: "var(--c-text-muted)",
+            marginTop: "24px",
+            opacity: 0,
+          }}
         >
-          {entries.length} BUILDERS &middot; RANKED BY ON-CHAIN XP &middot;
-          UPDATED LIVE
+          {t("buildersCount", { count: entries.length })}
         </p>
       </header>
 
@@ -445,7 +529,7 @@ export default function LeaderboardPage() {
             key={filter.key}
             onClick={() => setTimeframe(filter.key)}
             style={{
-              fontFamily: "var(--v9-mono)",
+              fontFamily: "var(--font-mono)",
               fontSize: "10px",
               letterSpacing: "2px",
               textTransform: "uppercase",
@@ -453,85 +537,200 @@ export default function LeaderboardPage() {
               border: "none",
               borderBottom:
                 timeframe === filter.key
-                  ? "1px solid var(--v9-dark)"
+                  ? "1px solid var(--foreground)"
                   : "1px solid transparent",
               color:
                 timeframe === filter.key
-                  ? "var(--v9-dark)"
-                  : "var(--v9-mid-grey)",
+                  ? "var(--foreground)"
+                  : "var(--c-text-muted)",
               cursor: "pointer",
               padding: "8px 0",
               transition: "color 0.3s, border-color 0.3s",
             }}
             onMouseEnter={(e) => {
               if (timeframe !== filter.key) {
-                (e.target as HTMLButtonElement).style.color = "var(--v9-dark)";
+                (e.target as HTMLButtonElement).style.color =
+                  "var(--foreground)";
               }
             }}
             onMouseLeave={(e) => {
               if (timeframe !== filter.key) {
                 (e.target as HTMLButtonElement).style.color =
-                  "var(--v9-mid-grey)";
+                  "var(--c-text-muted)";
               }
             }}
           >
             {filter.label}
           </button>
         ))}
+
+        {/* Track filter */}
+        <div
+          style={{
+            marginLeft: "auto",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+          }}
+        >
+          <label
+            htmlFor="track-filter"
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: "10px",
+              letterSpacing: "2px",
+              textTransform: "uppercase",
+              color: "var(--c-text-muted)",
+            }}
+          >
+            {t("filterByTrack", { defaultMessage: "Track" })}
+          </label>
+          <select
+            id="track-filter"
+            value={selectedTrack}
+            onChange={(e) => setSelectedTrack(e.target.value)}
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: "10px",
+              letterSpacing: "2px",
+              textTransform: "uppercase",
+              background: "var(--c-bg-card)",
+              color: "var(--foreground)",
+              border: "1px solid var(--c-border-subtle)",
+              padding: "8px 12px",
+              cursor: "pointer",
+              appearance: "none",
+              WebkitAppearance: "none",
+              backgroundImage:
+                "url(\"data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e\")",
+              backgroundRepeat: "no-repeat",
+              backgroundPosition: "right 8px center",
+              backgroundSize: "12px",
+              paddingRight: "28px",
+              outline: "none",
+              transition: "border-color 0.3s",
+            }}
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = "var(--foreground)";
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = "var(--c-border-subtle)";
+            }}
+          >
+            {TRACK_FILTERS.map((track) => (
+              <option key={track.key} value={track.key}>
+                {track.key === "all"
+                  ? t("allTracks", { defaultMessage: "All Tracks" })
+                  : track.label}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {/* Loading state */}
       {loading ? (
         <div
           style={{
-            fontFamily: "var(--v9-mono)",
+            fontFamily: "var(--font-mono)",
             fontSize: "11px",
             letterSpacing: "3px",
             textTransform: "uppercase",
-            color: "var(--v9-mid-grey)",
+            color: "var(--c-text-muted)",
             textAlign: "center",
             padding: mobile ? "80px 20px" : "160px 40px",
-            animation: "v9-fade-up 0.8s var(--v9-ease) forwards",
+            animation: "sa-fade-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards",
           }}
         >
-          LOADING...
+          {t("loading")}
         </div>
       ) : (
         <>
           {/* Leader entries */}
           <div aria-live="polite" aria-atomic="false">
-            {entries.map((entry, i) => {
+            {filteredEntries.map((entry, i) => {
               const isExpanded = expandedLeader === entry.rank;
+              const isHovered = hoveredEntry === entry.rank;
               const xpFormatted = formatXp(entry.xp);
+              const isUserRow = userRank != null && entry.rank === userRank;
 
               return (
                 <div
                   key={entry.rank}
-                  className={`v9-leader-entry v9-fade-up ${isExpanded ? "expanded" : ""} ${userRank && entry.rank === userRank ? "v9-your-position" : ""}`}
-                  style={{ animationDelay: `${0.15 + i * 0.06}s`, opacity: 0 }}
+                  className="sa-fade-up"
+                  style={{
+                    position: "relative",
+                    padding: isExpanded
+                      ? mobile
+                        ? "60px 20px"
+                        : "60px 40px"
+                      : mobile
+                        ? "40px 20px"
+                        : "40px 40px",
+                    borderTop: "1px solid var(--c-border-subtle)",
+                    cursor: "pointer",
+                    transition: "all 0.5s cubic-bezier(0.16, 1, 0.3, 1)",
+                    overflow: "hidden",
+                    background: isExpanded
+                      ? "var(--c-bg-card)"
+                      : isHovered
+                        ? "var(--c-bg-elevated)"
+                        : "transparent",
+                    color: isExpanded
+                      ? "var(--foreground)"
+                      : "var(--foreground)",
+                    animationDelay: `${0.15 + i * 0.06}s`,
+                    opacity: 0,
+                  }}
                   onClick={() =>
                     setExpandedLeader(isExpanded ? null : entry.rank)
                   }
+                  onMouseEnter={() => setHoveredEntry(entry.rank)}
+                  onMouseLeave={() => setHoveredEntry(null)}
                 >
-                  {/* Background rank number (Don't Board Me) */}
+                  {/* "YOU" badge for user's own row */}
+                  {isUserRow && (
+                    <span
+                      style={{
+                        position: "absolute",
+                        top: "12px",
+                        right: "12px",
+                        fontFamily: "var(--font-mono)",
+                        fontSize: "8px",
+                        letterSpacing: "2px",
+                        background: "var(--xp)",
+                        color: "var(--background)",
+                        padding: "3px 8px",
+                        zIndex: 3,
+                      }}
+                    >
+                      YOU
+                    </span>
+                  )}
+
+                  {/* Background rank number */}
                   <span
                     style={{
                       position: "absolute",
                       right: mobile ? "16px" : "40px",
                       top: "50%",
                       transform: "translateY(-50%)",
-                      fontFamily: "var(--v9-serif)",
+                      fontFamily: "var(--font-brand)",
                       fontSize: mobile
                         ? "clamp(60px, 20vw, 120px)"
                         : "clamp(100px, 18vw, 240px)",
                       fontWeight: 900,
                       fontStyle: "italic",
-                      opacity: isExpanded ? 0.06 : 0.04,
+                      opacity: isExpanded
+                        ? 0.06
+                        : isHovered
+                          ? 0.08
+                          : 0.04,
                       pointerEvents: "none",
                       letterSpacing: "-8px",
                       lineHeight: 0.8,
                       transition: "opacity 0.5s",
-                      color: isExpanded ? "var(--v9-white)" : "inherit",
+                      color: "var(--foreground)",
                       userSelect: "none",
                     }}
                   >
@@ -551,7 +750,7 @@ export default function LeaderboardPage() {
                     {/* Rank */}
                     <span
                       style={{
-                        fontFamily: "var(--v9-serif)",
+                        fontFamily: "var(--font-brand)",
                         fontSize: "14px",
                         fontStyle: "italic",
                         opacity: 0.3,
@@ -563,16 +762,15 @@ export default function LeaderboardPage() {
 
                     {/* Name */}
                     <span
-                      className="v9-leader-name"
                       style={{
-                        fontFamily: "var(--v9-serif)",
+                        fontFamily: "var(--font-brand)",
                         fontSize: mobile
                           ? "clamp(18px, 5vw, 28px)"
                           : "clamp(24px, 4vw, 52px)",
                         fontWeight: 900,
-                        letterSpacing: "-1.5px",
+                        letterSpacing: isHovered && !isExpanded ? "1px" : "-1.5px",
                         lineHeight: 1,
-                        transition: "letter-spacing 0.5s var(--v9-ease)",
+                        transition: "letter-spacing 0.5s cubic-bezier(0.16, 1, 0.3, 1)",
                         flexShrink: mobile ? 1 : 0,
                         minWidth: 0,
                         overflow: "hidden",
@@ -580,20 +778,19 @@ export default function LeaderboardPage() {
                         whiteSpace: "nowrap" as const,
                       }}
                     >
-                      {entry.displayName ?? "Anonymous"}
+                      {entry.displayName ?? t("anonymous")}
                     </span>
 
-                    {/* Handle */}
+                    {/* Handle (desktop only) */}
                     <span
+                      className="hidden sm:inline"
                       style={{
-                        fontFamily: "var(--v9-mono)",
+                        fontFamily: "var(--font-mono)",
                         fontSize: "11px",
                         letterSpacing: "1px",
                         opacity: 0.3,
                         flexShrink: 0,
-                        display: "none",
                       }}
-                      className="v9-leader-handle"
                     >
                       @{(entry.displayName ?? "anon").toLowerCase()}.sol
                     </span>
@@ -601,7 +798,7 @@ export default function LeaderboardPage() {
                     {/* XP (right-aligned) */}
                     <span
                       style={{
-                        fontFamily: "var(--v9-serif)",
+                        fontFamily: "var(--font-brand)",
                         fontSize: mobile ? "20px" : "28px",
                         fontWeight: 200,
                         letterSpacing: "-1px",
@@ -625,7 +822,7 @@ export default function LeaderboardPage() {
                     </span>
                   </div>
 
-                  {/* Expanded details (KPR-verse layered reveal) */}
+                  {/* Expanded details */}
                   {isExpanded && (
                     <div style={{ position: "relative", zIndex: 2 }}>
                       <div
@@ -640,21 +837,21 @@ export default function LeaderboardPage() {
                         <div>
                           <div
                             style={{
-                              fontFamily: "var(--v9-serif)",
+                              fontFamily: "var(--font-brand)",
                               fontSize: "32px",
                               fontWeight: 200,
                               letterSpacing: "-1px",
                               color:
                                 entry.rank <= 3
-                                  ? "var(--v9-sol-green)"
+                                  ? "var(--xp)"
                                   : "inherit",
                             }}
                           >
-                            {estimateCoursesCompleted(entry.xp)}
+                            {entry.coursesCompleted ?? estimateCoursesCompleted(entry.xp)}
                           </div>
                           <div
                             style={{
-                              fontFamily: "var(--v9-mono)",
+                              fontFamily: "var(--font-mono)",
                               fontSize: "9px",
                               letterSpacing: "3px",
                               textTransform: "uppercase",
@@ -662,7 +859,7 @@ export default function LeaderboardPage() {
                               marginTop: "4px",
                             }}
                           >
-                            COURSES COMPLETED
+                            {t("coursesCompleted")}
                           </div>
                         </div>
 
@@ -670,13 +867,13 @@ export default function LeaderboardPage() {
                         <div>
                           <div
                             style={{
-                              fontFamily: "var(--v9-serif)",
+                              fontFamily: "var(--font-brand)",
                               fontSize: "32px",
                               fontWeight: 200,
                               letterSpacing: "-1px",
                               color:
                                 entry.rank <= 3
-                                  ? "var(--v9-sol-green)"
+                                  ? "var(--xp)"
                                   : "inherit",
                             }}
                           >
@@ -684,7 +881,7 @@ export default function LeaderboardPage() {
                           </div>
                           <div
                             style={{
-                              fontFamily: "var(--v9-mono)",
+                              fontFamily: "var(--font-mono)",
                               fontSize: "9px",
                               letterSpacing: "3px",
                               textTransform: "uppercase",
@@ -692,7 +889,7 @@ export default function LeaderboardPage() {
                               marginTop: "4px",
                             }}
                           >
-                            DAY STREAK
+                            {t("dayStreakLabel")}
                           </div>
                         </div>
 
@@ -700,13 +897,13 @@ export default function LeaderboardPage() {
                         <div>
                           <div
                             style={{
-                              fontFamily: "var(--v9-serif)",
+                              fontFamily: "var(--font-brand)",
                               fontSize: "32px",
                               fontWeight: 200,
                               letterSpacing: "-1px",
                               color:
                                 entry.rank <= 3
-                                  ? "var(--v9-sol-green)"
+                                  ? "var(--xp)"
                                   : "inherit",
                             }}
                           >
@@ -714,7 +911,7 @@ export default function LeaderboardPage() {
                           </div>
                           <div
                             style={{
-                              fontFamily: "var(--v9-mono)",
+                              fontFamily: "var(--font-mono)",
                               fontSize: "9px",
                               letterSpacing: "3px",
                               textTransform: "uppercase",
@@ -722,18 +919,22 @@ export default function LeaderboardPage() {
                               marginTop: "4px",
                             }}
                           >
-                            LEVEL
+                            {t("level")}
                           </div>
                         </div>
                       </div>
 
-                      {/* View on-chain profile badge */}
-                      <div
+                      {/* View on-chain profile link */}
+                      <Link
+                        href={`/${locale}/profile/${entry.displayName || entry.wallet}`}
+                        onClick={(e) => e.stopPropagation()}
                         style={{
-                          fontFamily: "var(--v9-mono)",
+                          fontFamily: "var(--font-mono)",
                           fontSize: "10px",
                           letterSpacing: "3px",
                           textTransform: "uppercase",
+                          textDecoration: "none",
+                          color: "inherit",
                           border: "1px solid var(--overlay-border)",
                           padding: "8px 16px",
                           marginTop: "32px",
@@ -741,18 +942,16 @@ export default function LeaderboardPage() {
                           cursor: "pointer",
                           transition: "background 0.3s, color 0.3s",
                         }}
-                        onClick={(e) => e.stopPropagation()}
                         onMouseEnter={(e) => {
-                          (e.target as HTMLDivElement).style.background =
+                          e.currentTarget.style.background =
                             "var(--overlay-divider)";
                         }}
                         onMouseLeave={(e) => {
-                          (e.target as HTMLDivElement).style.background =
-                            "transparent";
+                          e.currentTarget.style.background = "transparent";
                         }}
                       >
-                        VIEW ON-CHAIN PROFILE &rarr;
-                      </div>
+                        {t("viewProfile")} &rarr;
+                      </Link>
                     </div>
                   )}
                 </div>
@@ -765,27 +964,28 @@ export default function LeaderboardPage() {
             style={{
               padding: mobile ? "48px 20px" : "80px 40px",
               textAlign: "center",
-              borderTop: "1px solid var(--v9-off-white)",
+              borderTop: "1px solid var(--c-border-subtle)",
             }}
           >
             <div
-              className="v9-overline"
               style={{
+                fontFamily: "var(--font-mono)",
                 fontSize: "10px",
                 letterSpacing: "4px",
-                color: "var(--v9-mid-grey)",
+                textTransform: "uppercase",
+                color: "var(--c-text-muted)",
               }}
             >
-              YOUR POSITION
+              {t("yourPosition")}
             </div>
             <div
               style={{
-                fontFamily: "var(--v9-serif)",
+                fontFamily: "var(--font-brand)",
                 fontSize: "clamp(48px, 8vw, 96px)",
                 fontWeight: 900,
                 fontStyle: "italic",
                 letterSpacing: "-3px",
-                color: "var(--v9-dark)",
+                color: "var(--foreground)",
                 marginTop: "16px",
               }}
             >
@@ -793,48 +993,48 @@ export default function LeaderboardPage() {
             </div>
             <div
               style={{
-                fontFamily: "var(--v9-sans)",
+                fontFamily: "var(--font-sans)",
                 fontSize: "16px",
-                color: "var(--v9-mid-grey)",
+                color: "var(--c-text-muted)",
                 marginTop: "8px",
               }}
             >
               {connected
                 ? userRank
-                  ? "Keep building to move up"
-                  : "Complete courses to appear on the leaderboard"
-                : "Connect wallet to see your rank"}
+                  ? t("keepBuilding")
+                  : t("completeToAppear")
+                : t("connectForRank")}
             </div>
             <Link href="/courses" style={{ textDecoration: "none" }}>
-              <button className="v9-cta-primary" style={{ marginTop: "32px" }}>
-                Continue Learning &rarr;
+              <button
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "11px",
+                  letterSpacing: "2px",
+                  textTransform: "uppercase",
+                  padding: "16px 40px",
+                  background: "var(--foreground)",
+                  color: "var(--background)",
+                  border: "none",
+                  cursor: "pointer",
+                  marginTop: "32px",
+                  transition: "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "var(--nd-highlight-orange)";
+                  e.currentTarget.style.color = "var(--foreground)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "var(--foreground)";
+                  e.currentTarget.style.color = "var(--background)";
+                }}
+              >
+                {t("continueLearning")} &rarr;
               </button>
             </Link>
           </div>
         </>
       )}
-
-      {/* Inline styles for hover effects that CSS classes don't cover */}
-      <style>{`
-        .v9-leader-entry:hover .v9-leader-name {
-          letter-spacing: 1px !important;
-        }
-        .v9-leader-entry.expanded .v9-leader-name {
-          letter-spacing: -1.5px !important;
-        }
-        .v9-leader-entry:hover > span:first-child {
-          opacity: 0.08 !important;
-        }
-        .v9-leader-entry.expanded > span:first-child {
-          opacity: 0.06 !important;
-          color: var(--v9-white) !important;
-        }
-        @media (min-width: 640px) {
-          .v9-leader-handle {
-            display: inline !important;
-          }
-        }
-      `}</style>
     </div>
   );
 }

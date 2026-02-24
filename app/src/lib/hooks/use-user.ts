@@ -1,7 +1,7 @@
 "use client";
 
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import type {
   UserProfile,
   Credential,
@@ -16,8 +16,11 @@ import { getXPBalance } from "@/lib/services/xp";
 import { calculateLevel } from "@/lib/constants";
 import { learningService } from "@/lib/services/learning-progress";
 import { achievements as achievementDefs, courses } from "@/lib/services/courses";
+import { analytics } from "@/providers/analytics-provider";
 
 const ACHIEVEMENT_STORAGE = "stacad:achievements:";
+const REFERRAL_STORAGE = "stacad:referrals:";
+const PROGRESS_STORAGE = "stacad:progress:";
 
 const EMPTY_STREAK: StreakData = {
   currentStreak: 0,
@@ -46,7 +49,8 @@ function getUnlockTime(wallet: string, id: string): string | undefined {
   if (!raw) return undefined;
   try {
     return (JSON.parse(raw) as Record<string, string>)[id];
-  } catch {
+  } catch (error) {
+    console.error("[useUser] Failed to parse achievement data:", error);
     return undefined;
   }
 }
@@ -58,6 +62,39 @@ function saveUnlock(wallet: string, id: string): string {
   if (!obj[id]) obj[id] = new Date().toISOString();
   localStorage.setItem(ACHIEVEMENT_STORAGE + wallet, JSON.stringify(obj));
   return obj[id];
+}
+
+function getReferralCount(wallet: string): number {
+  if (typeof window === "undefined") return 0;
+  const raw = localStorage.getItem(REFERRAL_STORAGE + wallet);
+  if (!raw) return 0;
+  const parsed = parseInt(raw, 10);
+  return Number.isNaN(parsed) ? 0 : parsed;
+}
+
+function hasSpeedRun(wallet: string): boolean {
+  if (typeof window === "undefined") return false;
+  const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (!key?.startsWith(PROGRESS_STORAGE + wallet + ":")) continue;
+    const raw = localStorage.getItem(key);
+    if (!raw) continue;
+    try {
+      const progress = JSON.parse(raw) as {
+        startedAt?: string;
+        completedAt?: string;
+      };
+      if (!progress.startedAt || !progress.completedAt) continue;
+      const elapsed =
+        new Date(progress.completedAt).getTime() -
+        new Date(progress.startedAt).getTime();
+      if (elapsed > 0 && elapsed < TWO_HOURS_MS) return true;
+    } catch {
+      continue;
+    }
+  }
+  return false;
 }
 
 interface LearningStats {
@@ -97,7 +134,10 @@ function evaluateAchievements(
   wallet: string,
   stats: LearningStats,
   streak: StreakData,
+  leaderboardRank: number | null,
 ): Achievement[] {
+  const referralCount = getReferralCount(wallet);
+
   const checks: Record<string, boolean> = {
     "first-lesson": stats.totalLessons >= 1,
     "first-course": stats.totalCourses >= 1,
@@ -105,6 +145,10 @@ function evaluateAchievements(
     "streak-30": streak.longestStreak >= 30,
     "all-tracks": stats.tracksCompleted.size >= 6,
     "code-10": stats.totalChallenges >= 10,
+    "referral-5": referralCount >= 5,
+    "top-10": (leaderboardRank ?? Infinity) <= 10,
+    "security-audit": stats.tracksCompleted.has("security"),
+    "speed-run": hasSpeedRun(wallet),
   };
 
   return achievementDefs.map((def) => {
@@ -113,6 +157,7 @@ function evaluateAchievements(
 
     if (earned && !unlockedAt) {
       unlockedAt = saveUnlock(wallet, def.id);
+      analytics.achievementUnlocked(def.id);
     }
 
     return { ...def, unlockedAt: earned ? unlockedAt : undefined };
@@ -124,6 +169,8 @@ export function useUser() {
   const { connection } = useConnection();
   const [user, setUser] = useState<UserProfile>(DEFAULT_PROFILE);
   const [loading, setLoading] = useState(false);
+  const [newAchievements, setNewAchievements] = useState<Achievement[]>([]);
+  const previousAchievementIds = useRef<Set<string>>(new Set());
 
   const fetchUserData = useCallback(async () => {
     if (!publicKey) {
@@ -181,7 +228,19 @@ export function useUser() {
 
     const streak = await learningService.getStreak(walletAddress);
     const stats = await computeLearningStats(walletAddress);
-    const achievements = evaluateAchievements(walletAddress, stats, streak);
+    const achievements = evaluateAchievements(walletAddress, stats, streak, null);
+
+    // Detect newly unlocked achievements
+    const prevIds = previousAchievementIds.current;
+    const justUnlocked = achievements.filter(
+      (a) => a.unlockedAt && !prevIds.has(a.id),
+    );
+    if (justUnlocked.length > 0) {
+      setNewAchievements(justUnlocked);
+    }
+    previousAchievementIds.current = new Set(
+      achievements.filter((a) => a.unlockedAt).map((a) => a.id),
+    );
 
     setUser({
       wallet: shortWallet,
@@ -203,11 +262,17 @@ export function useUser() {
     fetchUserData();
   }, [fetchUserData]);
 
+  const clearNewAchievements = useCallback(() => {
+    setNewAchievements([]);
+  }, []);
+
   return {
     user,
     loading,
     connected,
     walletAddress: publicKey?.toBase58() ?? null,
     refresh: fetchUserData,
+    newAchievements,
+    clearNewAchievements,
   };
 }

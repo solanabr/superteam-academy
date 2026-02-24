@@ -51,10 +51,10 @@ export default function LessonPage() {
           alignItems: "center",
           justifyContent: "center",
           height: "100vh",
-          background: "var(--v9-white)",
+          background: "var(--background)",
         }}
       >
-        <Loader2 className="h-5 w-5 animate-spin" style={{ color: "var(--v9-mid-grey)" }} />
+        <Loader2 className="h-5 w-5 animate-spin" style={{ color: "var(--c-text-muted)" }} />
       </div>
     );
   }
@@ -67,15 +67,15 @@ export default function LessonPage() {
           alignItems: "center",
           justifyContent: "center",
           height: "100vh",
-          background: "var(--v9-white)",
+          background: "var(--background)",
         }}
       >
         <div style={{ textAlign: "center" }}>
           <p
             style={{
-              fontFamily: "var(--v9-mono)",
+              fontFamily: "var(--font-mono)",
               fontSize: "12px",
-              color: "var(--v9-mid-grey)",
+              color: "var(--c-text-muted)",
             }}
           >
             Lesson not found
@@ -83,9 +83,9 @@ export default function LessonPage() {
           <Link
             href={`/${locale}/courses`}
             style={{
-              fontFamily: "var(--v9-mono)",
+              fontFamily: "var(--font-mono)",
               fontSize: "11px",
-              color: "var(--v9-accent)",
+              color: "var(--nd-highlight-orange)",
               marginTop: "8px",
               display: "inline-block",
             }}

@@ -58,7 +58,7 @@ export function QuizResults({
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4 }}
         style={{
-          fontFamily: "var(--v9-mono)",
+          fontFamily: "var(--font-mono)",
           fontSize: 9,
           letterSpacing: 4,
           textTransform: "uppercase" as const,
@@ -115,7 +115,7 @@ export function QuizResults({
             cy={70}
             r={68}
             fill="none"
-            stroke="var(--v9-sol-green)"
+            stroke="var(--xp)"
             strokeWidth={2}
             strokeLinecap="round"
             strokeDasharray={Math.PI * 2 * 68}
@@ -284,14 +284,14 @@ export function QuizResults({
         <button
           onClick={onNext}
           style={{
-            fontFamily: "var(--v9-mono)",
+            fontFamily: "var(--font-mono)",
             fontSize: 11,
             letterSpacing: 3,
             textTransform: "uppercase" as const,
             padding: "16px 40px",
             background: "transparent",
-            color: "var(--v9-sol-green)",
-            border: "1px solid var(--v9-sol-green)",
+            color: "var(--xp)",
+            border: "1px solid var(--xp)",
             cursor: "pointer",
             transition: "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
           }}
@@ -311,7 +311,7 @@ export function QuizResults({
         <button
           onClick={onViewRecommendations}
           style={{
-            fontFamily: "var(--v9-mono)",
+            fontFamily: "var(--font-mono)",
             fontSize: 11,
             letterSpacing: 3,
             textTransform: "uppercase" as const,

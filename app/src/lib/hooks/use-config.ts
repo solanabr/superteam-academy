@@ -23,7 +23,8 @@ export function useConfig() {
       const [pda] = findConfigPDA();
       const config = await getAccounts(program).config.fetch(pda);
       setConfig(config);
-    } catch {
+    } catch (error) {
+      console.error("[useConfig] Failed to fetch config:", error);
       setConfig(null);
     }
     setLoading(false);

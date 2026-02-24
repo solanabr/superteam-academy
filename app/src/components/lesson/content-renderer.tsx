@@ -9,7 +9,17 @@ function renderInline(text: string): React.ReactNode[] {
   while ((match = regex.exec(text)) !== null) {
     if (match.index > last) parts.push(text.slice(last, match.index));
     parts.push(
-      <code className="v9-inline-code" key={`ic-${key++}`}>
+      <code
+        key={`ic-${key++}`}
+        style={{
+          fontFamily: "var(--font-mono)",
+          fontSize: "0.88em",
+          background: "rgba(255,255,255,0.06)",
+          padding: "2px 6px",
+          borderRadius: "3px",
+          color: "var(--nd-highlight-blue)",
+        }}
+      >
         {match[1]}
       </code>,
     );
@@ -108,8 +118,23 @@ export function V9ContentRenderer({ text }: { text: string }) {
 
         if (isCodeBlock(trimmed) || isCommandBlock(trimmed)) {
           return (
-            <div className="v9-content-block" key={i}>
-              <pre className="v9-content-code">{trimmed}</pre>
+            <div style={{ marginBottom: "clamp(28px, 4vh, 40px)" }} key={i}>
+              <pre
+                style={{
+                  background: "var(--code-bg)",
+                  color: "#e0e0e0",
+                  padding: "clamp(16px, 2vh, 24px) clamp(16px, 2vw, 24px)",
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "13px",
+                  lineHeight: 1.7,
+                  overflowX: "auto",
+                  whiteSpace: "pre-wrap",
+                  margin: "clamp(24px, 3vh, 36px) 0",
+                  borderLeft: "3px solid var(--xp)",
+                }}
+              >
+                {trimmed}
+              </pre>
             </div>
           );
         }
@@ -120,13 +145,52 @@ export function V9ContentRenderer({ text }: { text: string }) {
           const label = lines[0].trim().replace(/:?\s*$/, "");
           const bodyLines = lines.slice(1);
           return (
-            <div className="v9-content-block v9-content-callout" key={i}>
-              <div className="v9-callout-label">{label}</div>
+            <div
+              key={i}
+              style={{
+                marginBottom: "clamp(28px, 4vh, 40px)",
+                padding: "clamp(24px, 3vh, 36px) clamp(24px, 3vw, 40px)",
+                background: "rgba(255,255,255,0.03)",
+                borderLeft: "3px solid var(--nd-highlight-orange)",
+                margin: "clamp(32px, 4vh, 48px) 0",
+              }}
+            >
+              <div
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "9px",
+                  letterSpacing: "0.2em",
+                  textTransform: "uppercase",
+                  color: "var(--nd-highlight-orange)",
+                  marginBottom: "12px",
+                  fontWeight: 700,
+                }}
+              >
+                {label}
+              </div>
               {bodyLines.length > 0 && (
-                <div className="v9-content-bullets">
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "8px",
+                  }}
+                >
                   {bodyLines.map((line, j) => (
-                    <div className="v9-content-bullet" key={j}>
-                      <span className="v9-content-bullet-marker">&#x25B8;</span>
+                    <div
+                      key={j}
+                      style={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        gap: "10px",
+                        fontFamily: "var(--font-sans)",
+                        fontSize: "clamp(17px, 1.8vw, 20px)",
+                        lineHeight: 1.75,
+                        color: "var(--c-text-body)",
+                        fontWeight: 300,
+                      }}
+                    >
+                      <span style={{ color: "var(--nd-highlight-orange)" }}>&#x25B8;</span>
                       <span>
                         {renderInline(
                           line
@@ -159,25 +223,75 @@ export function V9ContentRenderer({ text }: { text: string }) {
           );
 
           return (
-            <div className="v9-content-block" key={i}>
+            <div style={{ marginBottom: "clamp(28px, 4vh, 40px)" }} key={i}>
               {headerLines.length > 0 && (
-                <p className="v9-content-subheading">
+                <p
+                  style={{
+                    fontFamily: "var(--font-sans)",
+                    fontSize: "clamp(18px, 2vw, 22px)",
+                    fontWeight: 600,
+                    color: "var(--foreground)",
+                    lineHeight: 1.4,
+                    marginBottom: "12px",
+                  }}
+                >
                   {renderInline(headerLines.join(" "))}
                 </p>
               )}
               {isNumbered ? (
-                <ol className="v9-content-ordered">
+                <ol
+                  style={{
+                    listStyle: "none",
+                    counterReset: "ordered",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "8px",
+                    padding: 0,
+                    margin: 0,
+                  }}
+                >
                   {bulletLines.map((line, j) => (
-                    <li className="v9-content-ordered-item" key={j}>
+                    <li
+                      key={j}
+                      style={{
+                        counterIncrement: "ordered",
+                        display: "flex",
+                        alignItems: "flex-start",
+                        gap: "10px",
+                        fontFamily: "var(--font-sans)",
+                        fontSize: "clamp(17px, 1.8vw, 20px)",
+                        lineHeight: 1.75,
+                        color: "var(--c-text-body)",
+                        fontWeight: 300,
+                      }}
+                    >
                       {renderInline(line.trim().replace(/^\d+[.)]\s+/, ""))}
                     </li>
                   ))}
                 </ol>
               ) : (
-                <div className="v9-content-bullets">
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "8px",
+                  }}
+                >
                   {bulletLines.map((line, j) => (
-                    <div className="v9-content-bullet" key={j}>
-                      <span className="v9-content-bullet-marker">&#x25B8;</span>
+                    <div
+                      key={j}
+                      style={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        gap: "10px",
+                        fontFamily: "var(--font-sans)",
+                        fontSize: "clamp(17px, 1.8vw, 20px)",
+                        lineHeight: 1.75,
+                        color: "var(--c-text-body)",
+                        fontWeight: 300,
+                      }}
+                    >
+                      <span style={{ color: "var(--nd-highlight-orange)" }}>&#x25B8;</span>
                       <span>
                         {renderInline(line.trim().replace(/^[•\-*]\s+/, ""))}
                       </span>
@@ -191,10 +305,30 @@ export function V9ContentRenderer({ text }: { text: string }) {
 
         if (lines.length > 1 && lines.every((l) => BULLET_RE.test(l.trim()))) {
           return (
-            <div className="v9-content-block v9-content-bullets" key={i}>
+            <div
+              key={i}
+              style={{
+                marginBottom: "clamp(28px, 4vh, 40px)",
+                display: "flex",
+                flexDirection: "column",
+                gap: "8px",
+              }}
+            >
               {lines.map((line, j) => (
-                <div className="v9-content-bullet" key={j}>
-                  <span className="v9-content-bullet-marker">&#x25B8;</span>
+                <div
+                  key={j}
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: "10px",
+                    fontFamily: "var(--font-sans)",
+                    fontSize: "clamp(17px, 1.8vw, 20px)",
+                    lineHeight: 1.75,
+                    color: "var(--c-text-body)",
+                    fontWeight: 300,
+                  }}
+                >
+                  <span style={{ color: "var(--nd-highlight-orange)" }}>&#x25B8;</span>
                   <span>
                     {renderInline(line.trim().replace(/^[•\-*]\s+/, ""))}
                   </span>
@@ -209,10 +343,33 @@ export function V9ContentRenderer({ text }: { text: string }) {
           lines.every((l) => NUMBERED_RE.test(l.trim()))
         ) {
           return (
-            <div className="v9-content-block" key={i}>
-              <ol className="v9-content-ordered">
+            <div style={{ marginBottom: "clamp(28px, 4vh, 40px)" }} key={i}>
+              <ol
+                style={{
+                  listStyle: "none",
+                  counterReset: "ordered",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "8px",
+                  padding: 0,
+                  margin: 0,
+                }}
+              >
                 {lines.map((line, j) => (
-                  <li className="v9-content-ordered-item" key={j}>
+                  <li
+                    key={j}
+                    style={{
+                      counterIncrement: "ordered",
+                      display: "flex",
+                      alignItems: "flex-start",
+                      gap: "10px",
+                      fontFamily: "var(--font-sans)",
+                      fontSize: "clamp(17px, 1.8vw, 20px)",
+                      lineHeight: 1.75,
+                      color: "var(--c-text-body)",
+                      fontWeight: 300,
+                    }}
+                  >
                     {renderInline(line.trim().replace(/^\d+[.)]\s+/, ""))}
                   </li>
                 ))}
@@ -223,8 +380,17 @@ export function V9ContentRenderer({ text }: { text: string }) {
 
         if (lines.length === 1 && isHeadingLine(lines[0])) {
           return (
-            <div className="v9-content-block" key={i}>
-              <h3 className="v9-content-heading">
+            <div style={{ marginBottom: "clamp(28px, 4vh, 40px)" }} key={i}>
+              <h3
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  fontSize: "clamp(18px, 2vw, 22px)",
+                  fontWeight: 600,
+                  color: "var(--foreground)",
+                  lineHeight: 1.4,
+                  marginBottom: "12px",
+                }}
+              >
                 {renderInline(lines[0].trim().replace(/:$/, ""))}
               </h3>
             </div>
@@ -235,9 +401,28 @@ export function V9ContentRenderer({ text }: { text: string }) {
           const heading = lines[0].trim().replace(/:$/, "");
           const rest = lines.slice(1);
           return (
-            <div className="v9-content-block" key={i}>
-              <h3 className="v9-content-heading">{renderInline(heading)}</h3>
-              <p className="v9-content-text">
+            <div style={{ marginBottom: "clamp(28px, 4vh, 40px)" }} key={i}>
+              <h3
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  fontSize: "clamp(18px, 2vw, 22px)",
+                  fontWeight: 600,
+                  color: "var(--foreground)",
+                  lineHeight: 1.4,
+                  marginBottom: "12px",
+                }}
+              >
+                {renderInline(heading)}
+              </h3>
+              <p
+                style={{
+                  fontFamily: "var(--font-sans)",
+                  fontSize: "clamp(17px, 1.8vw, 20px)",
+                  lineHeight: 1.75,
+                  color: "var(--c-text-body)",
+                  fontWeight: 300,
+                }}
+              >
                 {rest.map((line, j) => (
                   <span key={j}>
                     {j > 0 && <br />}
@@ -250,8 +435,16 @@ export function V9ContentRenderer({ text }: { text: string }) {
         }
 
         return (
-          <div className="v9-content-block" key={i}>
-            <p className="v9-content-text">
+          <div style={{ marginBottom: "clamp(28px, 4vh, 40px)" }} key={i}>
+            <p
+              style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: "clamp(17px, 1.8vw, 20px)",
+                lineHeight: 1.75,
+                color: "var(--c-text-body)",
+                fontWeight: 300,
+              }}
+            >
               {lines.map((line, j) => (
                 <span key={j}>
                   {j > 0 && <br />}

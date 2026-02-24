@@ -65,7 +65,16 @@ export function QuizRenderer({
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
       {intro && (
-        <p className="v9-content-text" style={{ fontStyle: "italic" }}>
+        <p
+          style={{
+            fontFamily: "var(--font-sans)",
+            fontSize: "clamp(17px, 1.8vw, 20px)",
+            lineHeight: 1.75,
+            color: "var(--c-text-body)",
+            fontWeight: 300,
+            fontStyle: "italic",
+          }}
+        >
           {intro}
         </p>
       )}
@@ -86,11 +95,11 @@ export function QuizRenderer({
               borderLeft: `3px solid ${
                 submitted
                   ? isCorrect
-                    ? "var(--v9-sol-green)"
+                    ? "var(--xp)"
                     : isWrong
                       ? "#EF4444"
-                      : "var(--v9-mid-grey)"
-                  : "rgba(26,25,24,0.1)"
+                      : "var(--c-text-muted)"
+                  : "rgba(255,255,255,0.1)"
               }`,
               background: submitted
                 ? isCorrect
@@ -98,22 +107,22 @@ export function QuizRenderer({
                   : isWrong
                     ? "rgba(239,68,68,0.05)"
                     : "transparent"
-                : "rgba(26,25,24,0.02)",
+                : "rgba(255,255,255,0.02)",
             }}
           >
             <p
               style={{
-                fontFamily: "var(--v9-sans)",
+                fontFamily: "var(--font-sans)",
                 fontSize: "16px",
                 fontWeight: 500,
-                color: "var(--v9-dark)",
+                color: "var(--foreground)",
                 marginBottom: "16px",
               }}
             >
               <span
                 style={{
-                  fontFamily: "var(--v9-mono)",
-                  color: "var(--v9-accent)",
+                  fontFamily: "var(--font-mono)",
+                  color: "var(--nd-highlight-orange)",
                   marginRight: "8px",
                 }}
               >
@@ -144,18 +153,18 @@ export function QuizRenderer({
                       gap: "12px",
                       padding: "12px 16px",
                       textAlign: "left",
-                      fontFamily: "var(--v9-sans)",
+                      fontFamily: "var(--font-sans)",
                       fontSize: "14px",
                       border: `1px solid ${
                         submitted
                           ? isThisCorrect
-                            ? "var(--v9-sol-green)"
+                            ? "var(--xp)"
                             : isThisWrong
                               ? "#EF4444"
-                              : "rgba(26,25,24,0.08)"
+                              : "var(--c-border-subtle)"
                           : isSelected
-                            ? "var(--v9-accent)"
-                            : "rgba(26,25,24,0.08)"
+                            ? "var(--nd-highlight-orange)"
+                            : "var(--c-border-subtle)"
                       }`,
                       background: submitted
                         ? isThisCorrect
@@ -166,14 +175,14 @@ export function QuizRenderer({
                         : isSelected
                           ? "rgba(255,92,40,0.05)"
                           : "transparent",
-                      color: "var(--v9-dark)",
+                      color: "var(--foreground)",
                       cursor: submitted ? "default" : "pointer",
                       transition: "all 0.2s",
                     }}
                   >
                     <span
                       style={{
-                        fontFamily: "var(--v9-mono)",
+                        fontFamily: "var(--font-mono)",
                         fontSize: "11px",
                         opacity: 0.5,
                       }}
@@ -186,7 +195,7 @@ export function QuizRenderer({
                         style={{
                           width: 16,
                           height: 16,
-                          color: "var(--v9-sol-green)",
+                          color: "var(--xp)",
                         }}
                       />
                     )}
@@ -208,7 +217,7 @@ export function QuizRenderer({
                 style={{
                   marginTop: "12px",
                   paddingTop: "12px",
-                  borderTop: "1px solid rgba(26,25,24,0.06)",
+                  borderTop: "1px solid rgba(255,255,255,0.06)",
                   display: "flex",
                   alignItems: "flex-start",
                   gap: "8px",
@@ -225,15 +234,15 @@ export function QuizRenderer({
                 />
                 <p
                   style={{
-                    fontFamily: "var(--v9-sans)",
+                    fontFamily: "var(--font-sans)",
                     fontSize: "13px",
-                    color: "rgba(26,25,24,0.6)",
+                    color: "var(--c-text-2)",
                     lineHeight: 1.5,
                   }}
                 >
                   <span
                     style={{
-                      fontFamily: "var(--v9-mono)",
+                      fontFamily: "var(--font-mono)",
                       fontWeight: 700,
                       color: "#F59E0B",
                     }}
@@ -251,7 +260,7 @@ export function QuizRenderer({
       <div
         style={{
           paddingTop: "16px",
-          borderTop: "1px solid rgba(26,25,24,0.06)",
+          borderTop: "1px solid rgba(255,255,255,0.06)",
         }}
       >
         {submitted ? (
@@ -264,7 +273,7 @@ export function QuizRenderer({
               style={{
                 padding: "24px",
                 textAlign: "center",
-                borderLeft: `3px solid ${passed ? "var(--v9-sol-green)" : "#EF4444"}`,
+                borderLeft: `3px solid ${passed ? "var(--xp)" : "#EF4444"}`,
                 background: passed
                   ? "rgba(20,241,149,0.05)"
                   : "rgba(239,68,68,0.05)",
@@ -272,10 +281,10 @@ export function QuizRenderer({
             >
               <p
                 style={{
-                  fontFamily: "var(--v9-serif)",
+                  fontFamily: "var(--font-brand)",
                   fontSize: "32px",
                   fontWeight: 300,
-                  color: "var(--v9-dark)",
+                  color: "var(--foreground)",
                   marginBottom: "4px",
                 }}
               >
@@ -283,10 +292,10 @@ export function QuizRenderer({
               </p>
               <p
                 style={{
-                  fontFamily: "var(--v9-mono)",
+                  fontFamily: "var(--font-mono)",
                   fontSize: "11px",
                   letterSpacing: "0.1em",
-                  color: passed ? "var(--v9-sol-green)" : "#EF4444",
+                  color: passed ? "var(--xp)" : "#EF4444",
                 }}
               >
                 {passed
@@ -298,13 +307,21 @@ export function QuizRenderer({
             {!passed && (
               <button
                 onClick={handleRetry}
-                className="v9-complete-btn v9-complete-btn-ghost"
                 style={{
                   width: "100%",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   gap: "8px",
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "11px",
+                  letterSpacing: "0.15em",
+                  textTransform: "uppercase",
+                  padding: "14px 36px",
+                  background: "none",
+                  color: "var(--c-text-muted)",
+                  border: "1px solid var(--c-border-subtle)",
+                  cursor: "pointer",
                 }}
               >
                 <RotateCcw style={{ width: 14, height: 14 }} />
@@ -316,7 +333,6 @@ export function QuizRenderer({
           <button
             onClick={handleSubmit}
             disabled={!allAnswered}
-            className="v9-complete-btn v9-complete-btn-primary"
             style={{
               width: "100%",
               display: "flex",
@@ -325,11 +341,29 @@ export function QuizRenderer({
               gap: "8px",
               opacity: allAnswered ? 1 : 0.4,
               cursor: allAnswered ? "pointer" : "not-allowed",
+              fontFamily: "var(--font-mono)",
+              fontSize: "11px",
+              letterSpacing: "0.15em",
+              textTransform: "uppercase",
+              padding: "14px 36px",
+              border: "none",
+              background: "var(--foreground)",
+              color: "var(--background)",
             }}
           >
             <Check style={{ width: 14, height: 14 }} />
             Submit Quiz
-            <span className="v9-xp-badge">+{xpReward} XP</span>
+            <span
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: "11px",
+                letterSpacing: "0.1em",
+                color: "var(--nd-highlight-orange)",
+                marginLeft: "8px",
+              }}
+            >
+              +{xpReward} XP
+            </span>
           </button>
         )}
       </div>

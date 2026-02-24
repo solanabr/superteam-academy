@@ -175,10 +175,10 @@ export default function CertificatesPage() {
                       {TRACK_LABELS[cred.track].charAt(0)}
                     </span>
                   </div>
-                  <h3 className="text-lg font-bold text-[var(--c-text)] mb-1">
+                  <h2 className="text-lg font-bold text-[var(--c-text)] mb-1">
                     {TRACK_LABELS[cred.track]}{" "}
                     {t("credential", { defaultMessage: "Credential" })}
-                  </h3>
+                  </h2>
                   <p className="text-sm text-[var(--c-text-2)]">
                     {cred.coursesCompleted}{" "}
                     {t("coursesLabel", { defaultMessage: "courses completed" })}
@@ -277,9 +277,9 @@ export default function CertificatesPage() {
           <p className="font-mono text-xs text-[var(--c-text-2)]/50 mb-3">
             &#47;&#47; no credentials
           </p>
-          <h3 className="text-xl font-medium text-[var(--c-text-em)] mb-2">
+          <h2 className="text-xl font-medium text-[var(--c-text-em)] mb-2">
             {t("noCredentials", { defaultMessage: "No credentials yet" })}
-          </h3>
+          </h2>
           <p className="text-sm text-[var(--c-text-2)] max-w-md mx-auto text-center mb-8">
             {t("noCredentialsDescription", {
               defaultMessage:

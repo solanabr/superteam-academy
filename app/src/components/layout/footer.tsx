@@ -13,21 +13,80 @@ export function Footer({ locale }: { locale: string }) {
   if (/\/courses\/[^/]+\/lessons\//.test(pathname)) return null;
 
   return (
-    <footer className="v9-footer" role="contentinfo" aria-label={t("siteFooter")}>
-      <div className="v9-footer-left">
+    <footer
+      role="contentinfo"
+      aria-label={t("siteFooter")}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "24px clamp(20px, 8vw, 120px)",
+        borderTop: "1px solid var(--c-border-subtle)",
+        background: "var(--background)",
+        fontFamily: "var(--font-mono)",
+        fontSize: "10px",
+        letterSpacing: "0.1em",
+        color: "var(--c-text-muted)",
+        flexWrap: "wrap",
+        gap: "16px",
+      }}
+    >
+      <div>
         <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
           <SuperteamLogo size={14} className="currentColor" />
-          <em>{t("tagline")}</em>
+          <em
+            style={{
+              fontStyle: "italic",
+              fontFamily: "var(--font-brand)",
+              fontSize: "12px",
+              letterSpacing: 0,
+            }}
+          >
+            {t("tagline")}
+          </em>
         </span>
       </div>
 
-      <nav className="v9-footer-nav" aria-label={t("footerNavigation")}>
-        <Link href={`/${locale}/courses`}>{t("courses")}</Link>
-        <Link href={`/${locale}/dashboard`}>{t("dashboard")}</Link>
-        <Link href={`/${locale}/leaderboard`}>{t("leaderboard")}</Link>
+      <nav
+        aria-label={t("footerNavigation")}
+        style={{ display: "flex", gap: "24px" }}
+      >
+        <Link
+          href={`/${locale}/courses`}
+          style={{
+            textTransform: "uppercase",
+            color: "var(--c-text-muted)",
+            textDecoration: "none",
+            transition: "color 0.2s",
+          }}
+        >
+          {t("courses")}
+        </Link>
+        <Link
+          href={`/${locale}/dashboard`}
+          style={{
+            textTransform: "uppercase",
+            color: "var(--c-text-muted)",
+            textDecoration: "none",
+            transition: "color 0.2s",
+          }}
+        >
+          {t("dashboard")}
+        </Link>
+        <Link
+          href={`/${locale}/leaderboard`}
+          style={{
+            textTransform: "uppercase",
+            color: "var(--c-text-muted)",
+            textDecoration: "none",
+            transition: "color 0.2s",
+          }}
+        >
+          {t("leaderboard")}
+        </Link>
       </nav>
 
-      <div className="v9-footer-right">{t("builtOn")}</div>
+      <div style={{ textTransform: "uppercase" }}>{t("builtOn")}</div>
     </footer>
   );
 }
