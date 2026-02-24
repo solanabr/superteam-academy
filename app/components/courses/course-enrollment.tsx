@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Wallet, CheckCircle, AlertCircle } from "lucide-react";
 import { useConnection } from "@solana/wallet-adapter-react";
-import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { Transaction } from "@solana/web3.js";
 import { buildEnrollInstruction, buildCloseEnrollmentInstruction } from "@superteam-academy/anchor";
 import { useTranslations } from "next-intl";
@@ -12,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { LoginModal } from "@/components/auth/login-modal";
 import { useAuth } from "@/contexts/auth-context";
 import { getProgramId } from "@/lib/academy";
 import { useRouter } from "@superteam-academy/i18n/navigation";
@@ -36,7 +36,7 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 	const { wallet, isWalletConnected, isWalletVerified, verifyWallet } = useAuth();
 	const { connection } = useConnection();
 	const router = useRouter();
-	const { setVisible } = useWalletModal();
+	const [loginOpen, setLoginOpen] = useState(false);
 	const [isEnrolling, setIsEnrolling] = useState(false);
 	const [isClosing, setIsClosing] = useState(false);
 	const [isVerifying, setIsVerifying] = useState(false);
@@ -49,8 +49,8 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 	const canEnroll = prerequisitesMet && Boolean(canTransact);
 	const canClose = Boolean(canTransact);
 
-	const handleConnectWallet = () => {
-		setVisible(true);
+	const handleOpenLoginModal = () => {
+		setLoginOpen(true);
 	};
 
 	const handleVerifyWallet = async () => {
@@ -201,8 +201,8 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 			)}
 
 			{!isWalletConnected && (
-				<Button className="w-full" size="lg" onClick={handleConnectWallet}>
-					{t("enroll.connectWallet")}
+				<Button className="w-full" size="lg" onClick={handleOpenLoginModal}>
+					{t("enroll.loginSignup")}
 				</Button>
 			)}
 
@@ -275,6 +275,8 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 				<p>{t("enroll.lifetimeAccess")}</p>
 				<p>{t("enroll.certificateIncluded")}</p>
 			</div>
+
+			<LoginModal open={loginOpen} onOpenChange={setLoginOpen} />
 		</div>
 	);
 }

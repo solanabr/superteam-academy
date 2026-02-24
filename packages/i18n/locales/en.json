@@ -135,6 +135,7 @@
 			"continueLearning": "Continue Learning",
 			"walletRequired": "Connect a wallet to enroll and track progress on-chain.",
 			"connectWallet": "Connect wallet",
+			"loginSignup": "Login / Sign Up",
 			"verifyWalletPrompt": "Verify your wallet to enroll and sign transactions.",
 			"verifyWallet": "Verify wallet",
 			"verificationFailed": "Wallet verification failed. Please try again.",

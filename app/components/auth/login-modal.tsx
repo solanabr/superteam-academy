@@ -41,18 +41,21 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
 		[onOpenChange, reset]
 	);
 
-	const handleOAuthSignIn = async (provider: "google" | "github") => {
-		setIsLoading(provider);
-		setError(null);
-		try {
-			await signInWithOAuth(provider);
-			handleOpenChange(false);
-		} catch {
-			setError(t("oauthError", { provider }));
-		} finally {
-			setIsLoading(null);
-		}
-	};
+	const handleOAuthSignIn = useCallback(
+		async (provider: "google" | "github") => {
+			setIsLoading(provider);
+			setError(null);
+			try {
+				await signInWithOAuth(provider);
+				handleOpenChange(false);
+			} catch {
+				setError(t("oauthError", { provider }));
+			} finally {
+				setIsLoading(null);
+			}
+		},
+		[signInWithOAuth, handleOpenChange, t]
+	);
 
 	const handleWalletConnect = useCallback(async () => {
 		setError(null);
@@ -114,16 +117,47 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
 					<div className="space-y-3 pt-2">
 						<Button
 							variant="outline"
-							className="w-full justify-start h-11"
+							className="w-full justify-between h-11 px-4"
 							onClick={handleWalletConnect}
 							disabled={isLoading === "wallet"}
 						>
-							<Wallet className="w-4 h-4 mr-3" />
-							{isLoading === "wallet"
-								? t("connecting")
-								: isWalletConnected && truncatedAddress
-									? t("continueWithWalletAddress", { address: truncatedAddress })
-									: t("continueWithWallet")}
+							<span className="flex items-center">
+								<Wallet className="w-4 h-4 mr-3" />
+								{isLoading === "wallet"
+									? t("connecting")
+									: isWalletConnected && truncatedAddress
+										? t("continueWithWalletAddress", {
+												address: truncatedAddress,
+											})
+										: t("continueWithWallet")}
+							</span>
+							<div className="flex items-center gap-1.5">
+								<img
+									src="/wallets/phantom.png"
+									alt="Phantom"
+									className="w-5 h-5 rounded-sm"
+								/>
+								<img
+									src="/wallets/solflare.png"
+									alt="Solflare"
+									className="w-5 h-5 rounded-sm"
+								/>
+								<img
+									src="/wallets/backpack.png"
+									alt="Backpack"
+									className="w-5 h-5 rounded-sm"
+								/>
+								<img
+									src="/wallets/glow.png"
+									alt="Glow"
+									className="w-5 h-5 rounded-sm"
+								/>
+								<img
+									src="/wallets/coinbase.png"
+									alt="Coinbase"
+									className="w-5 h-5 rounded-sm"
+								/>
+							</div>
 						</Button>
 
 						<div className="relative my-4">

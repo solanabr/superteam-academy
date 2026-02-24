@@ -135,6 +135,7 @@
 			"continueLearning": "Continuar aprendiendo",
 			"walletRequired": "Conecta una billetera para inscribirte y registrar el progreso en cadena.",
 			"connectWallet": "Conectar billetera",
+			"loginSignup": "Iniciar sesión / Registrarse",
 			"verifyWalletPrompt": "Verifica tu billetera para inscribirte y firmar transacciones.",
 			"verifyWallet": "Verificar billetera",
 			"verificationFailed": "La verificacion de la billetera fallo. Intentalo de nuevo.",

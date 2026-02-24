@@ -40,7 +40,7 @@ yarn-error.log
 bun.lockb
 
 # Keypair files (contain private keys — NEVER commit)
-wallets/
+/wallets/
 
 # Claude local settings (user-specific permissions)
 .claude/settings.local.json

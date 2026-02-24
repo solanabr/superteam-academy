@@ -135,6 +135,7 @@
 			"continueLearning": "Continuar Aprendendo",
 			"walletRequired": "Conecte uma carteira para se matricular e registrar o progresso on-chain.",
 			"connectWallet": "Conectar carteira",
+			"loginSignup": "Fazer Login / Cadastro",
 			"verifyWalletPrompt": "Verifique sua carteira para se matricular e assinar transacoes.",
 			"verifyWallet": "Verificar carteira",
 			"verificationFailed": "Falha na verificacao da carteira. Tente novamente.",
