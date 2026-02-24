@@ -38,3 +38,6 @@ playwright-report/
 
 # Sanity
 .sanity/
+
+# Upstream reference repo (cloned for docs)
+onchain-academy/

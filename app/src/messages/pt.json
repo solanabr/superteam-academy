@@ -1,0 +1,128 @@
+{
+  "common": {
+    "connect_wallet": "Conectar Carteira",
+    "loading": "Carregando...",
+    "error": "Algo deu errado",
+    "back": "Voltar",
+    "next": "Próximo",
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "search": "Buscar...",
+    "view_all": "Ver Tudo",
+    "coming_soon": "Em Breve"
+  },
+  "nav": {
+    "courses": "Cursos",
+    "dashboard": "Painel",
+    "leaderboard": "Ranking",
+    "community": "Comunidade",
+    "settings": "Configurações",
+    "challenges": "Desafios Diários",
+    "profile": "Perfil",
+    "admin": "Admin"
+  },
+  "landing": {
+    "hero_title": "Domine o Desenvolvimento Solana",
+    "hero_subtitle": "Aprenda, construa e ganhe credenciais on-chain através de cursos e desafios interativos.",
+    "hero_cta": "Começar a Aprender",
+    "featured_courses": "Cursos em Destaque",
+    "how_it_works": "Como Funciona",
+    "step_1_title": "Conecte & Inscreva-se",
+    "step_1_desc": "Conecte sua carteira e inscreva-se em cursos adequados ao seu nível.",
+    "step_2_title": "Aprenda & Construa",
+    "step_2_desc": "Complete lições interativas com desafios práticos de código.",
+    "step_3_title": "Ganhe & Comprove",
+    "step_3_desc": "Ganhe tokens XP soulbound e NFTs de credenciais verificáveis.",
+    "tracks_title": "Trilhas de Aprendizado",
+    "gamification_title": "Eleve Suas Habilidades",
+    "social_proof_title": "Junte-se à Comunidade",
+    "cta_title": "Pronto para Começar a Construir?",
+    "cta_subtitle": "Junte-se a milhares de desenvolvedores aprendendo Solana."
+  },
+  "courses": {
+    "catalog_title": "Catálogo de Cursos",
+    "search_placeholder": "Buscar cursos...",
+    "filter_track": "Trilha",
+    "filter_difficulty": "Dificuldade",
+    "filter_status": "Status",
+    "sort_by": "Ordenar Por",
+    "lessons": "aulas",
+    "enrolled": "Inscrito",
+    "enroll": "Inscrever-se",
+    "continue": "Continuar Aprendendo",
+    "completed": "Concluído",
+    "prerequisite_required": "Pré-requisito Necessário",
+    "beginner": "Iniciante",
+    "intermediate": "Intermediário",
+    "advanced": "Avançado"
+  },
+  "lesson": {
+    "complete": "Completar Aula",
+    "completing": "Completando...",
+    "next_lesson": "Próxima Aula",
+    "previous_lesson": "Aula Anterior",
+    "run_code": "Executar Código",
+    "submit": "Enviar",
+    "reset_code": "Resetar Código",
+    "hint": "Mostrar Dica"
+  },
+  "dashboard": {
+    "welcome": "Bem-vindo de volta",
+    "continue_learning": "Continuar Aprendendo",
+    "recent_achievements": "Conquistas Recentes",
+    "credentials": "Suas Credenciais",
+    "recommended": "Recomendado Para Você",
+    "activity": "Atividade",
+    "quick_stats": "Estatísticas Rápidas"
+  },
+  "leaderboard": {
+    "title": "Ranking",
+    "weekly": "Semanal",
+    "monthly": "Mensal",
+    "all_time": "Geral",
+    "your_rank": "Sua Posição",
+    "rank": "Posição",
+    "wallet": "Carteira",
+    "level": "Nível",
+    "xp": "XP",
+    "courses_completed": "Cursos"
+  },
+  "profile": {
+    "member_since": "Membro desde",
+    "skills": "Habilidades",
+    "achievements": "Conquistas",
+    "credentials": "Credenciais",
+    "completed_courses": "Cursos Concluídos"
+  },
+  "settings": {
+    "title": "Configurações",
+    "profile": "Perfil",
+    "appearance": "Aparência",
+    "language": "Idioma",
+    "notifications": "Notificações",
+    "wallet": "Carteira",
+    "privacy": "Privacidade",
+    "theme_light": "Claro",
+    "theme_dark": "Escuro",
+    "theme_system": "Sistema"
+  },
+  "gamification": {
+    "xp": "XP",
+    "level": "Nível",
+    "streak": "Dias Seguidos",
+    "xp_earned": "+{amount} XP",
+    "level_up": "Subiu de Nível!",
+    "achievement_unlocked": "Conquista Desbloqueada"
+  },
+  "credentials": {
+    "title": "Credencial",
+    "verify": "Verificar On-Chain",
+    "share": "Compartilhar",
+    "download": "Baixar",
+    "copy_link": "Copiar Link",
+    "verified": "Verificado",
+    "owner": "Proprietário",
+    "collection": "Coleção",
+    "attributes": "Atributos"
+  }
+}

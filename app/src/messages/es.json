@@ -1,0 +1,128 @@
+{
+  "common": {
+    "connect_wallet": "Conectar Billetera",
+    "loading": "Cargando...",
+    "error": "Algo salió mal",
+    "back": "Volver",
+    "next": "Siguiente",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "search": "Buscar...",
+    "view_all": "Ver Todo",
+    "coming_soon": "Próximamente"
+  },
+  "nav": {
+    "courses": "Cursos",
+    "dashboard": "Panel",
+    "leaderboard": "Clasificación",
+    "community": "Comunidad",
+    "settings": "Configuración",
+    "challenges": "Desafíos Diarios",
+    "profile": "Perfil",
+    "admin": "Admin"
+  },
+  "landing": {
+    "hero_title": "Domina el Desarrollo en Solana",
+    "hero_subtitle": "Aprende, construye y gana credenciales on-chain a través de cursos y desafíos interactivos.",
+    "hero_cta": "Empezar a Aprender",
+    "featured_courses": "Cursos Destacados",
+    "how_it_works": "Cómo Funciona",
+    "step_1_title": "Conecta e Inscríbete",
+    "step_1_desc": "Conecta tu billetera e inscríbete en cursos adaptados a tu nivel.",
+    "step_2_title": "Aprende y Construye",
+    "step_2_desc": "Completa lecciones interactivas con desafíos prácticos de código.",
+    "step_3_title": "Gana y Demuestra",
+    "step_3_desc": "Gana tokens XP soulbound y NFTs de credenciales verificables.",
+    "tracks_title": "Rutas de Aprendizaje",
+    "gamification_title": "Sube de Nivel",
+    "social_proof_title": "Únete a la Comunidad",
+    "cta_title": "¿Listo para Empezar a Construir?",
+    "cta_subtitle": "Únete a miles de desarrolladores aprendiendo Solana."
+  },
+  "courses": {
+    "catalog_title": "Catálogo de Cursos",
+    "search_placeholder": "Buscar cursos...",
+    "filter_track": "Ruta",
+    "filter_difficulty": "Dificultad",
+    "filter_status": "Estado",
+    "sort_by": "Ordenar Por",
+    "lessons": "lecciones",
+    "enrolled": "Inscrito",
+    "enroll": "Inscribirse",
+    "continue": "Continuar Aprendiendo",
+    "completed": "Completado",
+    "prerequisite_required": "Prerrequisito Necesario",
+    "beginner": "Principiante",
+    "intermediate": "Intermedio",
+    "advanced": "Avanzado"
+  },
+  "lesson": {
+    "complete": "Completar Lección",
+    "completing": "Completando...",
+    "next_lesson": "Siguiente Lección",
+    "previous_lesson": "Lección Anterior",
+    "run_code": "Ejecutar Código",
+    "submit": "Enviar",
+    "reset_code": "Resetear Código",
+    "hint": "Mostrar Pista"
+  },
+  "dashboard": {
+    "welcome": "Bienvenido de vuelta",
+    "continue_learning": "Continuar Aprendiendo",
+    "recent_achievements": "Logros Recientes",
+    "credentials": "Tus Credenciales",
+    "recommended": "Recomendado Para Ti",
+    "activity": "Actividad",
+    "quick_stats": "Estadísticas Rápidas"
+  },
+  "leaderboard": {
+    "title": "Clasificación",
+    "weekly": "Semanal",
+    "monthly": "Mensual",
+    "all_time": "General",
+    "your_rank": "Tu Posición",
+    "rank": "Posición",
+    "wallet": "Billetera",
+    "level": "Nivel",
+    "xp": "XP",
+    "courses_completed": "Cursos"
+  },
+  "profile": {
+    "member_since": "Miembro desde",
+    "skills": "Habilidades",
+    "achievements": "Logros",
+    "credentials": "Credenciales",
+    "completed_courses": "Cursos Completados"
+  },
+  "settings": {
+    "title": "Configuración",
+    "profile": "Perfil",
+    "appearance": "Apariencia",
+    "language": "Idioma",
+    "notifications": "Notificaciones",
+    "wallet": "Billetera",
+    "privacy": "Privacidad",
+    "theme_light": "Claro",
+    "theme_dark": "Oscuro",
+    "theme_system": "Sistema"
+  },
+  "gamification": {
+    "xp": "XP",
+    "level": "Nivel",
+    "streak": "Días Seguidos",
+    "xp_earned": "+{amount} XP",
+    "level_up": "¡Subiste de Nivel!",
+    "achievement_unlocked": "Logro Desbloqueado"
+  },
+  "credentials": {
+    "title": "Credencial",
+    "verify": "Verificar On-Chain",
+    "share": "Compartir",
+    "download": "Descargar",
+    "copy_link": "Copiar Enlace",
+    "verified": "Verificado",
+    "owner": "Propietario",
+    "collection": "Colección",
+    "attributes": "Atributos"
+  }
+}
