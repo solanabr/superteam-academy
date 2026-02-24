@@ -67,7 +67,7 @@ export function UserTable({ users, loading, title, description, showAll = false 
     }
   };
 
-  const SortIcon = ({ field }: { field: SortField }) => {
+  const sortIcon = (field: SortField) => {
     if (sortBy !== field) return null;
     return sortDir === "desc" ? (
       <ChevronDown className="h-3 w-3 inline ml-0.5" />
@@ -122,7 +122,7 @@ export function UserTable({ users, loading, title, description, showAll = false 
                 >
                   <Trophy className="h-3.5 w-3.5 inline mr-1" />
                   XP
-                  <SortIcon field="xpEarned" />
+                  {sortIcon("xpEarned")}
                 </th>
                 <th
                   className="py-2 pr-3 cursor-pointer hover:text-foreground whitespace-nowrap"
@@ -130,7 +130,7 @@ export function UserTable({ users, loading, title, description, showAll = false 
                 >
                   <BookOpen className="h-3.5 w-3.5 inline mr-1" />
                   Lessons
-                  <SortIcon field="lessonsCompleted" />
+                  {sortIcon("lessonsCompleted")}
                 </th>
                 <th
                   className="py-2 pr-3 cursor-pointer hover:text-foreground whitespace-nowrap"
@@ -138,7 +138,7 @@ export function UserTable({ users, loading, title, description, showAll = false 
                 >
                   <GraduationCap className="h-3.5 w-3.5 inline mr-1" />
                   Courses
-                  <SortIcon field="coursesCompleted" />
+                  {sortIcon("coursesCompleted")}
                 </th>
                 <th
                   className="py-2 pr-3 cursor-pointer hover:text-foreground whitespace-nowrap"
@@ -146,14 +146,14 @@ export function UserTable({ users, loading, title, description, showAll = false 
                 >
                   <Flame className="h-3.5 w-3.5 inline mr-1" />
                   Streak
-                  <SortIcon field="currentStreak" />
+                  {sortIcon("currentStreak")}
                 </th>
                 <th
                   className="py-2 pr-3 cursor-pointer hover:text-foreground whitespace-nowrap"
                   onClick={() => toggleSort("achievementCount")}
                 >
                   Achievements
-                  <SortIcon field="achievementCount" />
+                  {sortIcon("achievementCount")}
                 </th>
                 <th
                   className="py-2 pr-3 cursor-pointer hover:text-foreground whitespace-nowrap"
@@ -161,7 +161,7 @@ export function UserTable({ users, loading, title, description, showAll = false 
                 >
                   <MessageSquare className="h-3.5 w-3.5 inline mr-1" />
                   Comments
-                  <SortIcon field="commentCount" />
+                  {sortIcon("commentCount")}
                 </th>
               </tr>
             </thead>
@@ -172,6 +172,7 @@ export function UserTable({ users, loading, title, description, showAll = false 
                   <td className="py-2.5 pr-4">
                     <div className="flex items-center gap-2">
                       {user.avatarUrl ? (
+                        /* eslint-disable-next-line @next/next/no-img-element */
                         <img
                           src={user.avatarUrl}
                           alt=""

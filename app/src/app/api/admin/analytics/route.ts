@@ -138,8 +138,6 @@ export async function GET(req: NextRequest) {
         : 0;
 
     // ─── Course Statistics ─────────────────────────────
-    const courseMap = new Map(sanityCourses.map((c) => [c._id, c]));
-
     const courseStats = sanityCourses.map((course) => {
       // Match by courseId (on-chain ID used by enrollment), slug, or _id (Sanity internal ID)
       const enrollments = courseProgress.filter(

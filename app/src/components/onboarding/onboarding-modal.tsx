@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { AnimatePresence } from "framer-motion";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";

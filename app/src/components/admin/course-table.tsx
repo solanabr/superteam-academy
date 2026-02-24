@@ -60,7 +60,7 @@ export function CourseTable({ courses, loading }: CourseTableProps) {
     }
   };
 
-  const SortIcon = ({ field }: { field: SortField }) => {
+  const sortIcon = (field: SortField) => {
     if (sortBy !== field) return null;
     return sortDir === "desc" ? (
       <ChevronDown className="h-3 w-3 inline ml-0.5" />
@@ -126,7 +126,7 @@ export function CourseTable({ courses, loading }: CourseTableProps) {
                 >
                   <Users className="h-3.5 w-3.5 inline mr-1" />
                   Enrolled
-                  <SortIcon field="enrollments" />
+                  {sortIcon("enrollments")}
                 </th>
                 <th
                   className="py-2 pr-3 cursor-pointer hover:text-foreground whitespace-nowrap"
@@ -134,21 +134,21 @@ export function CourseTable({ courses, loading }: CourseTableProps) {
                 >
                   <GraduationCap className="h-3.5 w-3.5 inline mr-1" />
                   Completed
-                  <SortIcon field="completions" />
+                  {sortIcon("completions")}
                 </th>
                 <th
                   className="py-2 pr-3 cursor-pointer hover:text-foreground whitespace-nowrap"
                   onClick={() => toggleSort("completionRate")}
                 >
                   Rate
-                  <SortIcon field="completionRate" />
+                  {sortIcon("completionRate")}
                 </th>
                 <th
                   className="py-2 pr-3 cursor-pointer hover:text-foreground whitespace-nowrap"
                   onClick={() => toggleSort("avgProgress")}
                 >
                   Avg Progress
-                  <SortIcon field="avgProgress" />
+                  {sortIcon("avgProgress")}
                 </th>
                 <th
                   className="py-2 pr-3 cursor-pointer hover:text-foreground whitespace-nowrap"
@@ -156,7 +156,7 @@ export function CourseTable({ courses, loading }: CourseTableProps) {
                 >
                   <Zap className="h-3.5 w-3.5 inline mr-1" />
                   XP
-                  <SortIcon field="xpGenerated" />
+                  {sortIcon("xpGenerated")}
                 </th>
               </tr>
             </thead>

@@ -25,7 +25,6 @@ function SidebarSection({
   section: NavSection;
   currentPath: string;
 }) {
-  const hasActive = section.items.some((item) => item.href === currentPath);
   const [open, setOpen] = useState<boolean>(true);
 
   return (
