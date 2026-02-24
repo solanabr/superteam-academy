@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Download, Share2, Link as LinkIcon } from "lucide-react";
+import { Share2, Link as LinkIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface ShareActionsProps {
@@ -11,7 +11,6 @@ interface ShareActionsProps {
 
 export function ShareActions({
   courseTitle,
-  certificateId,
 }: ShareActionsProps) {
   const t = useTranslations("certificate");
   const shareUrl = typeof window !== "undefined" ? window.location.href : "";
@@ -35,30 +34,8 @@ export function ShareActions({
     await navigator.clipboard.writeText(shareUrl);
   };
 
-  const handleDownloadImage = async () => {
-    const element = document.getElementById("certificate-card");
-    if (!element) return;
-    const html2canvas = (await import("html2canvas")).default;
-    const canvas = await html2canvas(element, {
-      backgroundColor: "#000000",
-      scale: 2,
-    });
-    const link = document.createElement("a");
-    link.download = `superteam-certificate-${certificateId}.png`;
-    link.href = canvas.toDataURL();
-    link.click();
-  };
-
   return (
     <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-      <Button
-        variant="outline"
-        className="gap-2"
-        onClick={handleDownloadImage}
-        aria-label="Download certificate as image"
-      >
-        <Download className="h-4 w-4" /> {t("download")}
-      </Button>
       <Button
         variant="outline"
         className="gap-2"
