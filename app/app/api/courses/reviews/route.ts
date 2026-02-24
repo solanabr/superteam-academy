@@ -7,6 +7,7 @@ import { getCourseById } from "@/lib/cms";
 import { cmsContext } from "@/lib/cms-context";
 import { getAcademyClient } from "@/lib/academy";
 import { syncUserToSanity } from "@/lib/sanity-users";
+import { getGravatarUrl } from "@/lib/utils";
 
 const MIN_RATING = 1;
 const MAX_RATING = 5;
@@ -121,7 +122,7 @@ export async function POST(request: Request) {
 		id: reviewId,
 		user: {
 			name: session.user.name,
-			avatar: session.user.image ?? "",
+			avatar: session.user.image || (await getGravatarUrl(session.user.email)),
 		},
 		rating: payload.rating,
 		date: createdAt,

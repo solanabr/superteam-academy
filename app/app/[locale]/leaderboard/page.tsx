@@ -10,6 +10,7 @@ import { getAcademyClient } from "@/lib/academy";
 import { LeaderboardService } from "@/services/leaderboard-service";
 import { getLinkedWallet } from "@/lib/auth";
 import { calculateLevelFromXP } from "@superteam-academy/gamification";
+import { getGravatarUrl } from "@/lib/utils";
 
 export const metadata: Metadata = {
 	title: "Leaderboard | Superteam Academy",
@@ -120,23 +121,25 @@ async function getGlobalLeaderboard() {
 	const service = new LeaderboardService(academyClient.connection, academyClient.programId);
 	const entries = await service.getLeaderboard(config.xpMint, 50);
 
-	return entries.map((entry) => {
-		const xp = Number(entry.xpBalance);
-		return {
-			rank: entry.rank,
-			user: {
-				id: entry.publicKey,
-				name: `${entry.publicKey.slice(0, 4)}...${entry.publicKey.slice(-4)}`,
-				avatar: "",
-				country: "--",
-			},
-			score: xp,
-			level: calculateLevelFromXP(xp),
-			achievements: 0,
-			streak: 0,
-			change: 0,
-		};
-	});
+	return Promise.all(
+		entries.map(async (entry) => {
+			const xp = Number(entry.xpBalance);
+			return {
+				rank: entry.rank,
+				user: {
+					id: entry.publicKey,
+					name: `${entry.publicKey.slice(0, 4)}...${entry.publicKey.slice(-4)}`,
+					avatar: await getGravatarUrl(entry.publicKey),
+					country: "--",
+				},
+				score: xp,
+				level: calculateLevelFromXP(xp),
+				achievements: 0,
+				streak: 0,
+				change: 0,
+			};
+		})
+	);
 }
 
 async function getCourseLeaderboards() {
@@ -166,23 +169,25 @@ async function getCourseLeaderboards() {
 			return {
 				courseId: course.account.courseId,
 				courseName: course.account.courseId,
-				entries: entries.map((entry) => {
-					const xp = Number(entry.xpBalance);
-					return {
-						rank: entry.rank,
-						user: {
-							id: entry.publicKey,
-							name: `${entry.publicKey.slice(0, 4)}...${entry.publicKey.slice(-4)}`,
-							avatar: "",
-							country: "--",
-						},
-						score: xp,
-						level: calculateLevelFromXP(xp),
-						achievements: 0,
-						streak: 0,
-						change: 0,
-					};
-				}),
+				entries: await Promise.all(
+					entries.map(async (entry) => {
+						const xp = Number(entry.xpBalance);
+						return {
+							rank: entry.rank,
+							user: {
+								id: entry.publicKey,
+								name: `${entry.publicKey.slice(0, 4)}...${entry.publicKey.slice(-4)}`,
+								avatar: await getGravatarUrl(entry.publicKey),
+								country: "--",
+							},
+							score: xp,
+							level: calculateLevelFromXP(xp),
+							achievements: 0,
+							streak: 0,
+							change: 0,
+						};
+					})
+				),
 			};
 		})
 	);

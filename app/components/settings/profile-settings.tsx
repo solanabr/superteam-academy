@@ -9,7 +9,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { useSettings } from "@/hooks/use-settings";
-import { useAuth } from "@/contexts/auth-context";
 
 interface ProfileData {
 	name: string;
@@ -23,7 +22,6 @@ interface ProfileData {
 export function ProfileSettings() {
 	const { toast } = useToast();
 	const { data, loading, save } = useSettings();
-	const { user: authUser } = useAuth();
 	const [isLoading, setIsLoading] = useState(false);
 	const [profile, setProfile] = useState<ProfileData>({
 		name: "",
@@ -42,9 +40,9 @@ export function ProfileSettings() {
 			bio: data.profile.bio,
 			location: data.profile.location,
 			website: data.profile.website,
-			avatar: data.profile.image || authUser?.image || "",
+			avatar: data.profile.image || "",
 		});
-	}, [data, authUser]);
+	}, [data]);
 
 	const handleSave = async () => {
 		setIsLoading(true);

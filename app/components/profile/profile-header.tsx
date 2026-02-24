@@ -45,7 +45,6 @@ export function ProfileHeader({ user, stats }: ProfileHeaderProps) {
 	const { isAuthenticated, user: authUser, wallet } = useAuth();
 	const pathname = usePathname();
 	const walletAddress = wallet.publicKey?.toBase58();
-	const avatarSrc = user.avatar || authUser?.image || "";
 	const isSelfProfileRoute = pathname === "/profile";
 	const identifiersMatch =
 		(authUser?.id !== undefined && authUser.id === user.id) ||
@@ -69,7 +68,7 @@ export function ProfileHeader({ user, stats }: ProfileHeaderProps) {
 			<div className="px-5 pb-5 -mt-10">
 				<div className="flex flex-col sm:flex-row gap-4 sm:items-end">
 					<Avatar className="h-20 w-20 ring-4 ring-card">
-						<AvatarImage src={avatarSrc} alt={user.name} />
+						<AvatarImage src={user.avatar} alt={user.name} />
 						<AvatarFallback className="text-lg bg-primary text-primary-foreground">
 							{initials}
 						</AvatarFallback>
