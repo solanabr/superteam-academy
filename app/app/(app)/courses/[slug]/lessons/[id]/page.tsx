@@ -8,18 +8,18 @@ import {
     ChevronRight,
     CheckCircle2,
     Code2,
-    Play,
     RotateCcw,
     BookOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { ProgressBar } from "@/components/app";
+import { ProgressBar, SolanaPlayground } from "@/components/app";
 import {
     getLessonById,
     getAllLessonsFlat,
 } from "@/lib/services/mock-content";
+import { toast } from "sonner";
 
 export default function LessonPage({
     params,
@@ -28,8 +28,6 @@ export default function LessonPage({
 }) {
     const { slug, id } = use(params);
     const result = getLessonById(slug, id);
-    const [testOutput, setTestOutput] = useState<string | null>(null);
-    const [code, setCode] = useState("");
 
     if (!result) return notFound();
 
@@ -41,14 +39,14 @@ export default function LessonPage({
 
     const isChallenge = lesson.type === "challenge";
 
-    const handleRunTests = () => {
-        setTestOutput("Running tests...\n\n✅ All tests passed!");
-    };
-
-    const handleReset = () => {
-        setCode(lesson.challengeCode ?? "");
-        setTestOutput(null);
-    };
+    // Debug logging
+    console.log("Lesson data:", {
+        id: lesson.id,
+        title: lesson.title,
+        type: lesson.type,
+        isChallenge,
+        hasChallengeCode: !!lesson.challengeCode,
+    });
 
     return (
         <div className="flex h-[calc(100vh-3.5rem)] flex-col overflow-hidden -m-4 sm:-m-6">
@@ -151,50 +149,38 @@ export default function LessonPage({
                     </div>
                 </div>
 
-                {/* Right: Code editor pane (challenges only) */}
-                {isChallenge && (
-                    <div className="flex w-1/2 flex-col overflow-hidden">
-                        {/* Code editor area */}
-                        <div className="flex-1 overflow-y-auto bg-muted/20 p-4">
-                            <div className="mb-2 flex items-center justify-between">
-                                <span className="text-xs font-medium text-muted-foreground">
-                                    Editor
-                                </span>
+                {/* Right: Solana Playground (challenges only) */}
+                {isChallenge ? (
+                    <div className="flex w-1/2 flex-col overflow-hidden border-l border-border bg-background">
+                        <div className="flex items-center justify-between border-b border-border bg-muted/30 px-4 py-2">
+                            <div className="flex items-center gap-2">
+                                <Code2 className="h-4 w-4 text-muted-foreground" />
+                                <span className="text-sm font-medium">Solana Playground</span>
+                            </div>
+                            {lesson.challengeCode && (
                                 <Button
                                     variant="ghost"
                                     size="sm"
-                                    onClick={handleReset}
+                                    onClick={async () => {
+                                        try {
+                                            await navigator.clipboard.writeText(lesson.challengeCode || "");
+                                            toast.success("Starter code copied to clipboard!");
+                                        } catch (err) {
+                                            toast.error("Failed to copy code. Please copy manually.");
+                                        }
+                                    }}
                                     className="h-7 text-xs"
                                 >
                                     <RotateCcw className="mr-1 h-3 w-3" />
-                                    Reset
+                                    Copy Starter Code
                                 </Button>
-                            </div>
-                            <textarea
-                                className="w-full min-h-[300px] rounded-lg border border-border bg-background p-4 font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring"
-                                value={code || lesson.challengeCode || ""}
-                                onChange={(e) => setCode(e.target.value)}
-                                spellCheck={false}
-                            />
+                            )}
                         </div>
-
-                        {/* Test output */}
-                        <div className="border-t border-border bg-background p-4">
-                            <div className="mb-2 flex items-center justify-between">
-                                <span className="text-xs font-medium text-muted-foreground">
-                                    Test Output
-                                </span>
-                                <Button size="sm" onClick={handleRunTests} className="h-7">
-                                    <Play className="mr-1 h-3 w-3" />
-                                    Run Tests
-                                </Button>
-                            </div>
-                            <pre className="min-h-[80px] rounded-lg bg-muted/30 p-3 text-xs font-mono text-muted-foreground">
-                                {testOutput ?? "Click 'Run Tests' to check your solution."}
-                            </pre>
+                        <div className="flex-1 overflow-hidden relative">
+                            <SolanaPlayground starterCode={lesson.challengeCode} />
                         </div>
                     </div>
-                )}
+                ) : null}
             </div>
         </div>
     );
