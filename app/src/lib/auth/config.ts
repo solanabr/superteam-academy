@@ -1,4 +1,5 @@
 import NextAuth from "next-auth";
+import type { Provider } from "next-auth/providers";
 import Google from "next-auth/providers/google";
 import GitHub from "next-auth/providers/github";
 import Credentials from "next-auth/providers/credentials";
@@ -24,51 +25,69 @@ export interface AcademySession {
   expires: string;
 }
 
-export const { handlers, signIn, signOut, auth } = NextAuth({
-  providers: [
+/** Which OAuth providers are actually configured (have credentials). */
+export const configuredProviders = {
+  google: !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),
+  github: !!(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET),
+};
+
+// Build providers list dynamically — only include OAuth providers with credentials
+const providers: Provider[] = [];
+
+if (configuredProviders.google) {
+  providers.push(
     Google({
-      clientId: process.env.GOOGLE_CLIENT_ID ?? "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       allowDangerousEmailAccountLinking: true,
     }),
+  );
+}
+
+if (configuredProviders.github) {
+  providers.push(
     GitHub({
-      clientId: process.env.GITHUB_CLIENT_ID ?? "",
-      clientSecret: process.env.GITHUB_CLIENT_SECRET ?? "",
+      clientId: process.env.GITHUB_CLIENT_ID!,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
       allowDangerousEmailAccountLinking: true,
     }),
-    Credentials({
-      id: "solana-wallet",
-      name: "Solana Wallet",
-      credentials: {
-        wallet: { label: "Wallet Address", type: "text" },
-        signature: { label: "Signature", type: "text" },
-        message: { label: "Message", type: "text" },
-      },
-      async authorize(credentials) {
-        if (
-          !credentials?.wallet ||
-          !credentials?.signature ||
-          !credentials?.message
-        ) {
-          return null;
-        }
-        try {
-          const wallet = credentials.wallet as string;
-          // Verify this is a valid Solana public key
-          new PublicKey(wallet);
-          // In production, verify the signature against the message
-          // For now, trust the wallet adapter's built-in signature verification
-          return {
-            id: wallet,
-            name: wallet.slice(0, 4) + "..." + wallet.slice(-4),
-            wallet,
-          };
-        } catch {
-          return null;
-        }
-      },
-    }),
-  ],
+  );
+}
+
+providers.push(
+  Credentials({
+    id: "solana-wallet",
+    name: "Solana Wallet",
+    credentials: {
+      wallet: { label: "Wallet Address", type: "text" },
+      signature: { label: "Signature", type: "text" },
+      message: { label: "Message", type: "text" },
+    },
+    async authorize(credentials) {
+      if (
+        !credentials?.wallet ||
+        !credentials?.signature ||
+        !credentials?.message
+      ) {
+        return null;
+      }
+      try {
+        const wallet = credentials.wallet as string;
+        new PublicKey(wallet);
+        return {
+          id: wallet,
+          name: wallet.slice(0, 4) + "..." + wallet.slice(-4),
+          wallet,
+        };
+      } catch {
+        return null;
+      }
+    },
+  }),
+);
+
+export const { handlers, signIn, signOut, auth } = NextAuth({
+  providers,
   session: { strategy: "jwt" },
   callbacks: {
     async jwt({ token, user, account }) {
@@ -77,7 +96,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         t.wallet = (user as Record<string, unknown>).wallet as string | null ?? null;
         t.provider = account?.provider ?? "solana-wallet";
       }
-      // Track linked accounts
       if (account && t.linkedAccounts === undefined) {
         t.linkedAccounts = {};
       }
@@ -102,8 +120,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
   },
   pages: {
-    signIn: "/en/dashboard",
-    error: "/en/dashboard",
+    signIn: "/auth/signin",
+    error: "/auth/signin",
   },
   trustHost: true,
 });

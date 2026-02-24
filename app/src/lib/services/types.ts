@@ -54,6 +54,10 @@ export interface TestCase {
   name: string;
   input: string;
   expectedOutput: string;
+  expectLogContains?: string;
+  expectLogMatch?: string;
+  expectCodeContains?: string;
+  expectNoError?: boolean;
 }
 
 export interface Progress {

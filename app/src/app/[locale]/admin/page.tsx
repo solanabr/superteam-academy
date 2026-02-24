@@ -14,6 +14,7 @@ import {
   LogOut,
   ChevronDown,
   ChevronUp,
+  Database,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AdminGuard } from "@/components/admin/admin-guard";
@@ -23,6 +24,7 @@ import { UserTable } from "@/components/admin/user-table";
 import { AnalyticsCharts } from "@/components/admin/analytics-charts";
 import { ModerationList } from "@/components/admin/moderation-list";
 import { PlatformSettings } from "@/components/admin/platform-settings";
+import { CmsIntegration } from "@/components/admin/cms-integration";
 import { useAdmin } from "@/lib/hooks/use-admin";
 
 type SectionId =
@@ -31,6 +33,7 @@ type SectionId =
   | "credentials"
   | "analytics"
   | "moderation"
+  | "cms"
   | "settings";
 
 export default function AdminDashboard() {
@@ -157,6 +160,18 @@ export default function AdminDashboard() {
               onToggle={() => toggleSection("moderation")}
             >
               <ModerationList />
+            </AdminSection>
+
+            {/* CMS Integration */}
+            <AdminSection
+              id="cms"
+              title="CMS Integration"
+              desc="Connect Sanity CMS for content management alongside Supabase"
+              icon={Database}
+              expanded={expandedSection === "cms"}
+              onToggle={() => toggleSection("cms")}
+            >
+              <CmsIntegration />
             </AdminSection>
 
             {/* Platform Settings */}

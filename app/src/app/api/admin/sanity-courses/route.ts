@@ -1,19 +1,33 @@
 import { NextResponse } from "next/server";
-import { getSanityWriteClient } from "@/lib/sanity/write-client";
-import { adminAllCoursesQuery } from "@/lib/sanity/admin-queries";
+import { getSupabaseAdmin } from "@/lib/supabase/server";
 import { isAdminRequest } from "@/lib/auth/admin";
 
-/** GET /api/admin/sanity-courses — List all CMS courses */
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+/** GET /api/admin/sanity-courses — List all courses from Supabase */
 export async function GET(req: Request) {
   try {
     if (!(await isAdminRequest(req))) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
-    const sanity = getSanityWriteClient();
-    const courses = await sanity.fetch(adminAllCoursesQuery);
+    const supabase = getSupabaseAdmin();
+    const { data, error } = await supabase
+      .from("courses")
+      .select("*")
+      .order("title");
 
-    return NextResponse.json({ courses });
+    if (error) {
+      console.error("admin sanity-courses GET supabase error:", error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ courses: data });
   } catch (err: unknown) {
     const message =
       err instanceof Error ? err.message : "Failed to fetch courses";
@@ -22,7 +36,7 @@ export async function GET(req: Request) {
   }
 }
 
-/** POST /api/admin/sanity-courses — Create a new course in Sanity CMS */
+/** POST /api/admin/sanity-courses — Create a new course in Supabase */
 export async function POST(req: Request) {
   try {
     if (!(await isAdminRequest(req))) {
@@ -48,35 +62,43 @@ export async function POST(req: Request) {
       estimatedHours?: number;
     };
 
-    if (!title || !slug) {
+    if (!title) {
       return NextResponse.json(
-        { error: "Missing required fields: title, slug" },
+        { error: "Missing required field: title" },
         { status: 400 },
       );
     }
 
-    const sanity = getSanityWriteClient();
+    const courseSlug = slug ? slugify(slug) : slugify(title);
 
-    const course = await sanity.create({
-      _type: "course",
-      title,
-      slug: { _type: "slug", current: slug },
-      description: description ?? "",
-      track: track ?? "rust",
-      difficulty: difficulty ?? "beginner",
-      xpReward: xpReward ?? 500,
-      estimatedHours: estimatedHours ?? 4,
-      published: false,
-      modules: [],
-      learningOutcomes: [],
-    });
+    const supabase = getSupabaseAdmin();
+    const { data, error } = await supabase
+      .from("courses")
+      .insert({
+        slug: courseSlug,
+        title,
+        description: description ?? "",
+        track: track ?? "rust",
+        difficulty: difficulty ?? "beginner",
+        xp_reward: xpReward ?? 500,
+        estimated_hours: estimatedHours ?? 4,
+        published: false,
+        is_active: true,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error("admin sanity-courses POST supabase error:", error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
     return NextResponse.json({
       success: true,
       course: {
-        _id: course._id,
-        title: course.title,
-        slug,
+        _id: data.id,
+        title: data.title,
+        slug: data.slug,
       },
     });
   } catch (err: unknown) {

@@ -1,5 +1,7 @@
 "use client";
 
+import { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
   G,
@@ -16,6 +18,9 @@ import {
   Counter,
 } from "@/components/ui/landing-animations";
 import { LazyConstellationCanvas } from "@/components/ui/lazy-constellation";
+import { SwirlArrow } from "@/components/ui/hand-drawn-arrows";
+
+const CAVEAT = "var(--font-caveat), 'Caveat', cursive";
 
 export function LandingContent({
   stats,
@@ -25,6 +30,41 @@ export function LandingContent({
   locale: string;
 }) {
   const t = useTranslations("landing");
+  const router = useRouter();
+  const [warping, setWarping] = useState(false);
+  const [hoverSentinel, setHoverSentinel] = useState(false);
+  const streakLayerRef = useRef<HTMLDivElement>(null);
+
+  const handleInitOnboarding = () => {
+    if (warping) return;
+    setWarping(true);
+
+    if (streakLayerRef.current) {
+      const container = streakLayerRef.current;
+      container.innerHTML = "";
+      for (let i = 0; i < 100; i++) {
+        const streak = document.createElement("div");
+        const angle = Math.random() * 360;
+        const length = 80 + Math.random() * 200;
+        const delay = Math.random() * 0.3;
+        const duration = 0.6 + Math.random() * 0.5;
+        streak.style.cssText = `
+          position: absolute; top: 50%; left: 50%;
+          width: ${length}px; height: 1px;
+          background: linear-gradient(90deg, transparent, rgba(20,241,149,${0.3 + Math.random() * 0.5}), rgba(153,69,255,${0.2 + Math.random() * 0.3}), transparent);
+          transform-origin: 0% 50%;
+          --streak-angle: ${angle}deg;
+          opacity: 0;
+          animation: onb-streakJump ${duration}s cubic-bezier(0.2, 0.8, 0.2, 1) ${delay}s forwards;
+        `;
+        container.appendChild(streak);
+      }
+    }
+
+    setTimeout(() => {
+      router.push(`/${locale}/onboarding?start=1`);
+    }, 1400);
+  };
 
   const features = [
     { title: t("onChainCredentials"), desc: t("onChainCredentialsDesc") },
@@ -35,8 +75,29 @@ export function LandingContent({
   const numerals = ["i", "ii", "iii"];
 
   return (
-    <div className="landing-cursor" style={{ background: D, color: C }}>
+    <div className="landing-cursor" style={{ background: D, color: C, perspective: warping ? "2000px" : undefined, overflow: "hidden" }}>
       <CustomCursor />
+
+      {/* Warp streak layer */}
+      <div
+        ref={streakLayerRef}
+        style={{
+          position: "fixed",
+          inset: 0,
+          pointerEvents: "none",
+          zIndex: 500,
+        }}
+      />
+
+      <div
+        style={{
+          transformStyle: "preserve-3d",
+          transition: warping ? "all 1.2s cubic-bezier(0.7, 0, 0.1, 1)" : "none",
+          transform: warping ? "translateZ(1200px) rotateX(-15deg) rotateY(5deg)" : "translateZ(0)",
+          opacity: warping ? 0 : 1,
+          filter: warping ? "blur(40px) brightness(2)" : "none",
+        }}
+      >
       {/* ──────────────── HERO ──────────────── */}
       <section
         className="landing-hero"
@@ -51,6 +112,104 @@ export function LandingContent({
         }}
       >
         <LazyConstellationCanvas />
+
+        {/* ── Sentinel Trigger (right side) ── */}
+        <div
+          style={{
+            position: "absolute",
+            right: "clamp(24px, 4vw, 80px)",
+            top: "50%",
+            transform: "translateY(-50%)",
+            zIndex: 30,
+            display: "flex",
+            alignItems: "center",
+            gap: 0,
+          }}
+        >
+          {/* Hand-drawn arrow annotation */}
+          <div
+            style={{
+              position: "relative",
+              marginRight: -8,
+              marginTop: -40,
+            }}
+          >
+            <SwirlArrow
+              delay={2000}
+              width={120}
+              height={80}
+              color={G}
+              label="Start here"
+              labelPosition="start"
+            />
+          </div>
+
+          {/* Sentinel button */}
+          <div
+            onClick={handleInitOnboarding}
+            onMouseEnter={() => setHoverSentinel(true)}
+            onMouseLeave={() => setHoverSentinel(false)}
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 20,
+              cursor: "pointer",
+            }}
+          >
+            <div
+              style={{
+                position: "relative",
+                width: 70,
+                height: 70,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                transition: "transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+                transform: hoverSentinel ? "scale(1.15)" : "scale(1)",
+              }}
+            >
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  borderRadius: "50%",
+                  border: `1px dashed ${hoverSentinel ? G : "var(--overlay-border)"}`,
+                  animation: hoverSentinel
+                    ? "onb-rotate 4s linear infinite"
+                    : "onb-rotate 15s linear infinite",
+                  transition: "border-color 0.3s",
+                }}
+              />
+              <div
+                style={{
+                  width: hoverSentinel ? 16 : 8,
+                  height: hoverSentinel ? 16 : 8,
+                  borderRadius: "50%",
+                  background: G,
+                  boxShadow: hoverSentinel
+                    ? `0 0 20px rgba(0,210,130,0.6), 0 0 40px rgba(0,210,130,0.3)`
+                    : `0 0 8px rgba(0,210,130,0.4)`,
+                  transition: "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+                }}
+              />
+            </div>
+            <div
+              style={{
+                writingMode: "vertical-rl",
+                fontFamily: FONT_SANS,
+                fontSize: 9,
+                letterSpacing: 4,
+                textTransform: "uppercase",
+                color: hoverSentinel ? G : M,
+                transition: "color 0.3s",
+                userSelect: "none",
+              }}
+            >
+              INITIALIZE
+            </div>
+          </div>
+        </div>
 
         {/* Grid overlay */}
         <div
@@ -396,6 +555,8 @@ export function LandingContent({
           </div>
         </Reveal>
       </section>
+      </div>{/* end warp wrapper */}
+
     </div>
   );
 }

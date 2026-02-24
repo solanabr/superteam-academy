@@ -8,6 +8,7 @@ import {
   Space_Mono,
   Space_Grotesk,
   Instrument_Serif,
+  Caveat,
 } from "next/font/google";
 import { PWARegister } from "@/components/pwa-register";
 import "./globals.css";
@@ -17,14 +18,14 @@ const spaceGrotesk = Space_Grotesk({
   variable: "--font-space-grotesk",
   subsets: ["latin"],
   weight: ["400", "500", "700"],
-  display: "optional",
+  display: "swap",
 });
 const instrumentSerif = Instrument_Serif({
   variable: "--font-instrument-serif",
   subsets: ["latin"],
   weight: ["400"],
   style: ["normal", "italic"],
-  display: "optional",
+  display: "swap",
 });
 
 // Secondary fonts — loaded on demand, not preloaded (saves ~180KB on initial load)
@@ -48,14 +49,20 @@ const playfairDisplay = Playfair_Display({
 const dmSans = DM_Sans({
   variable: "--font-dm-sans",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "700"],
-  style: ["normal", "italic"],
+  weight: ["400", "500", "700"],
+  display: "swap",
   preload: false,
 });
 const spaceMono = Space_Mono({
   variable: "--font-space-mono",
   subsets: ["latin"],
   weight: ["400", "700"],
+  preload: false,
+});
+const caveat = Caveat({
+  variable: "--font-caveat",
+  subsets: ["latin"],
+  weight: ["400", "600", "700"],
   preload: false,
 });
 
@@ -106,6 +113,9 @@ export const metadata: Metadata = {
     images: ["/opengraph-image"],
   },
   robots: { index: true, follow: true },
+  alternates: {
+    canonical: "/",
+  },
 };
 
 export default function RootLayout({
@@ -128,7 +138,7 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${playfairDisplay.variable} ${dmSans.variable} ${spaceMono.variable} ${spaceGrotesk.variable} ${instrumentSerif.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${playfairDisplay.variable} ${dmSans.variable} ${spaceMono.variable} ${spaceGrotesk.variable} ${instrumentSerif.variable} ${caveat.variable} antialiased`}
       >
         {children}
         <PWARegister />

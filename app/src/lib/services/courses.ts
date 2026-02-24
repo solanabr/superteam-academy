@@ -1534,34 +1534,166 @@ function transformSanityCourse(raw: any): Course {
   };
 }
 
-/**
- * Fetch all courses. Tries Sanity CMS first; falls back to static data
- * when Sanity is not configured or the fetch fails.
- */
-export async function fetchCourses(): Promise<Course[]> {
-  if (!isSanityConfigured()) return courses;
-  try {
-    const raw = await sanityClient.fetch(allCoursesQuery);
-    if (!raw || raw.length === 0) return courses;
-    return raw.map(transformSanityCourse);
-  } catch {
-    return courses;
-  }
+/* ------------------------------------------------------------------ */
+/*  Supabase integration — reads from DB with static-data fallback      */
+/* ------------------------------------------------------------------ */
+
+function isSupabaseConfigured(): boolean {
+  return !!(
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function transformSupabaseCourse(row: any, modules: any[], lessons: any[]): Course {
+  const courseModules = modules
+    .filter((m: any) => m.course_id === row.id)
+    .sort((a: any, b: any) => a.order - b.order);
+
+  return {
+    id: row.id,
+    slug: row.slug,
+    title: row.title,
+    description: row.description,
+    track: row.track,
+    difficulty: row.difficulty,
+    lessonCount: row.lesson_count,
+    duration: row.duration,
+    xpReward: row.xp_reward,
+    creator: row.creator,
+    imageUrl: row.image_url ?? undefined,
+    modules: courseModules.map((m: any) => ({
+      id: m.id,
+      title: m.title,
+      lessons: lessons
+        .filter((l: any) => l.module_id === m.id)
+        .sort((a: any, b: any) => a.order - b.order)
+        .map((l: any) => ({
+          id: l.id,
+          title: l.title,
+          type: l.type,
+          duration: l.duration,
+          xpReward: l.xp_reward,
+          content: l.content ?? undefined,
+          challenge: l.challenge_instructions
+            ? {
+                instructions: l.challenge_instructions,
+                starterCode: l.challenge_starter_code,
+                solution: l.challenge_solution,
+                language: l.challenge_language,
+                testCases: l.challenge_test_cases,
+              }
+            : undefined,
+        })),
+    })),
+    prerequisiteId: row.prerequisite_id ?? undefined,
+    isActive: row.is_active,
+    totalCompletions: row.total_completions,
+    enrolledCount: row.enrolled_count,
+  };
 }
 
 /**
- * Fetch a single course by slug. Tries Sanity CMS first; falls back to
- * the static helper when Sanity is not configured or the fetch fails.
+ * Fetch all courses. Priority: Supabase > Sanity CMS > static data.
+ */
+export async function fetchCourses(): Promise<Course[]> {
+  // Try Supabase first
+  if (isSupabaseConfigured()) {
+    try {
+      const { createClient } = await import("@supabase/supabase-js");
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      );
+      const { data: dbCourses } = await supabase
+        .from("courses")
+        .select("*")
+        .eq("published", true)
+        .eq("is_active", true)
+        .order("title");
+
+      if (dbCourses && dbCourses.length > 0) {
+        const { data: dbModules } = await supabase
+          .from("modules")
+          .select("*")
+          .order("order");
+        const { data: dbLessons } = await supabase
+          .from("lessons")
+          .select("*")
+          .order("order");
+
+        return dbCourses.map((row: any) =>
+          transformSupabaseCourse(row, dbModules ?? [], dbLessons ?? []),
+        );
+      }
+    } catch {
+      // Fall through to Sanity / static
+    }
+  }
+
+  // Try Sanity CMS
+  if (isSanityConfigured()) {
+    try {
+      const raw = await sanityClient.fetch(allCoursesQuery);
+      if (raw && raw.length > 0) return raw.map(transformSanityCourse);
+    } catch {
+      // Fall through to static
+    }
+  }
+
+  return courses;
+}
+
+/**
+ * Fetch a single course by slug. Priority: Supabase > Sanity CMS > static data.
  */
 export async function fetchCourseBySlug(
   slug: string,
 ): Promise<Course | undefined> {
-  if (!isSanityConfigured()) return getCourseBySlug(slug);
-  try {
-    const raw = await sanityClient.fetch(courseBySlugQuery, { slug });
-    if (!raw) return getCourseBySlug(slug);
-    return transformSanityCourse(raw);
-  } catch {
-    return getCourseBySlug(slug);
+  // Try Supabase first
+  if (isSupabaseConfigured()) {
+    try {
+      const { createClient } = await import("@supabase/supabase-js");
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      );
+      const { data: row } = await supabase
+        .from("courses")
+        .select("*")
+        .eq("slug", slug)
+        .single();
+
+      if (row) {
+        const { data: dbModules } = await supabase
+          .from("modules")
+          .select("*")
+          .eq("course_id", row.id)
+          .order("order");
+        const moduleIds = (dbModules ?? []).map((m: any) => m.id);
+        const { data: dbLessons } = await supabase
+          .from("lessons")
+          .select("*")
+          .in("module_id", moduleIds.length > 0 ? moduleIds : ["__none__"])
+          .order("order");
+
+        return transformSupabaseCourse(row, dbModules ?? [], dbLessons ?? []);
+      }
+    } catch {
+      // Fall through
+    }
   }
+
+  // Try Sanity CMS
+  if (isSanityConfigured()) {
+    try {
+      const raw = await sanityClient.fetch(courseBySlugQuery, { slug });
+      if (raw) return transformSanityCourse(raw);
+    } catch {
+      // Fall through
+    }
+  }
+
+  return getCourseBySlug(slug);
 }

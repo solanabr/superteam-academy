@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { Search, Plus, Eye, Edit2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,13 +12,8 @@ import type { AdminCourse } from "@/app/api/admin/courses/route";
 
 const DIFFICULTY_NAMES = ["Beginner", "Intermediate", "Advanced"] as const;
 
-interface CourseTableProps {
-  onEdit?: (course: AdminCourse) => void;
-  onCreate?: () => void;
-  onView?: (course: AdminCourse) => void;
-}
-
-export function CourseTable({ onEdit, onCreate, onView }: CourseTableProps) {
+export function CourseTable() {
+  const router = useRouter();
   const { isAdmin } = useAdmin();
   const [courses, setCourses] = useState<AdminCourse[]>([]);
   const [loading, setLoading] = useState(false);
@@ -79,11 +75,9 @@ export function CourseTable({ onEdit, onCreate, onView }: CourseTableProps) {
               className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`}
             />
           </Button>
-          {onCreate && (
-            <Button size="sm" className="gap-1.5" onClick={onCreate}>
-              <Plus className="h-3.5 w-3.5" /> New Course
-            </Button>
-          )}
+          <Button size="sm" className="gap-1.5" onClick={() => router.push("/en/admin/courses/new")}>
+            <Plus className="h-3.5 w-3.5" /> New Course
+          </Button>
         </div>
       </div>
 
@@ -186,24 +180,20 @@ export function CourseTable({ onEdit, onCreate, onView }: CourseTableProps) {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        {onView && (
-                          <button
-                            className="p-1.5 rounded hover:bg-[var(--c-border-subtle)] text-[var(--c-text-2)] hover:text-[var(--c-text)] transition-colors"
-                            aria-label="View course"
-                            onClick={() => onView(course)}
-                          >
-                            <Eye className="h-3.5 w-3.5" />
-                          </button>
-                        )}
-                        {onEdit && (
-                          <button
-                            className="p-1.5 rounded hover:bg-[var(--c-border-subtle)] text-[var(--c-text-2)] hover:text-[var(--c-text)] transition-colors"
-                            aria-label="Edit course"
-                            onClick={() => onEdit(course)}
-                          >
-                            <Edit2 className="h-3.5 w-3.5" />
-                          </button>
-                        )}
+                        <button
+                          className="p-1.5 rounded hover:bg-[var(--c-border-subtle)] text-[var(--c-text-2)] hover:text-[var(--c-text)] transition-colors cursor-pointer"
+                          aria-label="View course"
+                          onClick={() => router.push(`/en/courses/${course.courseId}`)}
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          className="p-1.5 rounded hover:bg-[var(--c-border-subtle)] text-[var(--c-text-2)] hover:text-[var(--c-text)] transition-colors cursor-pointer"
+                          aria-label="Edit course"
+                          onClick={() => router.push(`/en/admin/courses/${course.courseId}`)}
+                        >
+                          <Edit2 className="h-3.5 w-3.5" />
+                        </button>
                       </div>
                     </td>
                   </tr>

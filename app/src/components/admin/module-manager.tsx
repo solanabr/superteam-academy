@@ -48,7 +48,7 @@ interface ModuleData {
 interface ModuleManagerProps {
   courseId: string;
   modules: ModuleData[];
-  wallet: string;
+  wallet?: string;
   onUpdate: () => void;
 }
 

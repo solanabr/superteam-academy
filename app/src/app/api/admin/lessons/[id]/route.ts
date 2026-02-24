@@ -1,7 +1,15 @@
 import { NextResponse } from "next/server";
-import { getSanityWriteClient } from "@/lib/sanity/write-client";
+import { getSupabaseAdmin } from "@/lib/supabase/server";
 import { isAdminRequest } from "@/lib/auth/admin";
 
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+/** PATCH /api/admin/lessons/[id] — Update lesson fields */
 export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -36,26 +44,24 @@ export async function PATCH(
       };
     };
 
-    const sanity = getSanityWriteClient();
     const updates: Record<string, unknown> = {};
 
     if (title !== undefined) {
       updates.title = title;
-      updates.slug = {
-        _type: "slug",
-        current: title
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, "-")
-          .replace(/^-|-$/g, ""),
-      };
+      updates.slug = slugify(title);
     }
     if (type !== undefined) updates.type = type;
-    if (markdownContent !== undefined) updates.markdownContent = markdownContent;
-    if (xpReward !== undefined) updates.xpReward = xpReward;
+    if (markdownContent !== undefined) updates.content = markdownContent;
+    if (xpReward !== undefined) updates.xp_reward = xpReward;
     if (estimatedMinutes !== undefined)
-      updates.estimatedMinutes = estimatedMinutes;
+      updates.estimated_minutes = estimatedMinutes;
     if (order !== undefined) updates.order = order;
-    if (challenge !== undefined) updates.challenge = challenge;
+    if (challenge !== undefined) {
+      updates.challenge_instructions = challenge.instructions ?? null;
+      updates.challenge_starter_code = challenge.starterCode ?? null;
+      updates.challenge_solution = challenge.solution ?? null;
+      updates.challenge_language = challenge.language ?? null;
+    }
 
     if (Object.keys(updates).length === 0) {
       return NextResponse.json(
@@ -64,14 +70,25 @@ export async function PATCH(
       );
     }
 
-    const result = await sanity.patch(id).set(updates).commit();
+    const supabase = getSupabaseAdmin();
+    const { data, error } = await supabase
+      .from("lessons")
+      .update(updates)
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("update-lesson supabase error:", error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
     return NextResponse.json({
       success: true,
       lesson: {
-        _id: result._id,
-        title: result.title,
-        type: result.type,
+        _id: data.id,
+        title: data.title,
+        type: data.type,
       },
     });
   } catch (err: unknown) {
@@ -82,6 +99,7 @@ export async function PATCH(
   }
 }
 
+/** DELETE /api/admin/lessons/[id] — Delete lesson */
 export async function DELETE(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -93,21 +111,13 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
-    const sanity = getSanityWriteClient();
+    const supabase = getSupabaseAdmin();
+    const { error } = await supabase.from("lessons").delete().eq("id", id);
 
-    // Remove lesson reference from any module that references it
-    const modules = await sanity.fetch<{ _id: string }[]>(
-      `*[_type == "module" && references($id)]{ _id }`,
-      { id },
-    );
-    for (const mod of modules) {
-      await sanity
-        .patch(mod._id)
-        .unset([`lessons[_ref == "${id}"]`])
-        .commit();
+    if (error) {
+      console.error("delete-lesson supabase error:", error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
-
-    await sanity.delete(id);
 
     return NextResponse.json({ success: true });
   } catch (err: unknown) {

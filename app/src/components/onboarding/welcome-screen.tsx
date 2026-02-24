@@ -1,7 +1,6 @@
 "use client";
 
-import React from "react";
-import { motion } from "framer-motion";
+import React, { useEffect, useRef, useState } from "react";
 
 interface WelcomeScreenProps {
   onStart: () => void;
@@ -9,147 +8,232 @@ interface WelcomeScreenProps {
 }
 
 export function WelcomeScreen({ onStart, onSkip }: WelcomeScreenProps) {
+  const bgRef = useRef<HTMLDivElement>(null);
+  const [hoverSentinel, setHoverSentinel] = useState(false);
+  const [visible, setVisible] = useState(false);
+
+  // Fade in on mount
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setVisible(true));
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  // Parallax on mouse move
+  useEffect(() => {
+    const handleMove = (e: MouseEvent) => {
+      if (!bgRef.current) return;
+      const x = (e.clientX / window.innerWidth - 0.5) * 30;
+      const y = (e.clientY / window.innerHeight - 0.5) * 30;
+      bgRef.current.style.transform = `translate(${x}px, ${y}px)`;
+    };
+    window.addEventListener("mousemove", handleMove);
+    return () => window.removeEventListener("mousemove", handleMove);
+  }, []);
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+    <div
       style={{
+        position: "absolute",
+        inset: 0,
         display: "flex",
-        flexDirection: "column",
         alignItems: "center",
-        textAlign: "center",
+        justifyContent: "space-between",
+        padding: "0 clamp(40px, 8vw, 120px)",
+        opacity: visible ? 1 : 0,
+        transition: "opacity 0.8s ease",
       }}
     >
-      {/* Label */}
-      <motion.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.15, duration: 0.5 }}
+      {/* Animated background */}
+      <div
+        ref={bgRef}
         style={{
-          fontFamily: "var(--v9-mono)",
-          fontSize: 9,
-          letterSpacing: 4,
-          textTransform: "uppercase" as const,
-          color: "var(--c-text-dim)",
-          marginBottom: 16,
-        }}
-      >
-        ONBOARDING
-      </motion.p>
-
-      {/* Heading */}
-      <motion.h1
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-        style={{
-          fontFamily: "'Instrument Serif', serif",
-          fontSize: "clamp(36px, 6vw, 56px)",
-          fontWeight: 400,
-          color: "var(--foreground)",
-          lineHeight: 1.05,
-          margin: "0 0 8px",
-          letterSpacing: "-1px",
-        }}
-      >
-        Welcome to
-        <br />
-        <span style={{ fontStyle: "italic", color: "var(--v9-sol-green)" }}>
-          Superteam Academy
-        </span>
-      </motion.h1>
-
-      {/* Divider */}
-      <motion.div
-        initial={{ scaleX: 0 }}
-        animate={{ scaleX: 1 }}
-        transition={{ delay: 0.4, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        style={{
-          width: 48,
-          height: 1,
-          background: "var(--overlay-divider)",
-          margin: "24px 0",
-          transformOrigin: "center",
+          position: "fixed",
+          inset: "-60px",
+          zIndex: 0,
+          background: `
+            radial-gradient(ellipse 80% 60% at 25% 50%, rgba(20,241,149,0.07) 0%, transparent 60%),
+            radial-gradient(ellipse 60% 80% at 75% 50%, rgba(99,102,241,0.06) 0%, transparent 60%)
+          `,
+          pointerEvents: "none",
+          transition: "transform 0.15s ease-out",
+          willChange: "transform",
         }}
       />
 
-      {/* Subtitle */}
-      <motion.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5, duration: 0.5 }}
-        style={{
-          fontFamily: "'Space Grotesk', sans-serif",
-          fontSize: 15,
-          lineHeight: 1.7,
-          color: "var(--c-text-2)",
-          maxWidth: 440,
-          margin: "0 0 40px",
-        }}
-      >
-        Answer 8 quick questions so we can gauge your experience level and
-        recommend the right learning path. It takes less than 2 minutes.
-      </motion.p>
+      {/* Left — hero content */}
+      <div style={{ position: "relative", zIndex: 1, maxWidth: 600 }}>
+        {/* Label */}
+        <p
+          style={{
+            fontFamily: "var(--v9-mono)",
+            fontSize: 9,
+            letterSpacing: 4,
+            textTransform: "uppercase",
+            color: "var(--v9-sol-green)",
+            marginBottom: 24,
+            opacity: visible ? 0.8 : 0,
+            transform: visible ? "translateY(0)" : "translateY(8px)",
+            transition: "all 0.6s ease 0.2s",
+          }}
+        >
+          SKILL ASSESSMENT // CALIBRATION
+        </p>
 
-      {/* Start button */}
-      <motion.button
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.65, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        {/* Title */}
+        <h1
+          style={{
+            fontFamily: "'Instrument Serif', serif",
+            fontSize: "clamp(60px, 12vw, 160px)",
+            fontWeight: 400,
+            color: "var(--foreground)",
+            lineHeight: 0.95,
+            margin: 0,
+            letterSpacing: "-2px",
+            opacity: visible ? 1 : 0,
+            transform: visible ? "translateY(0)" : "translateY(20px)",
+            transition: "all 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.3s",
+          }}
+        >
+          Elevate
+          <br />
+          <span
+            style={{
+              fontStyle: "italic",
+              backgroundImage:
+                "linear-gradient(90deg, var(--v9-sol-green), #9945FF, var(--v9-sol-green))",
+              backgroundSize: "200% auto",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+              animation: "onb-shine 6s linear infinite",
+            }}
+          >
+            on-chain.
+          </span>
+        </h1>
+
+        {/* Subtitle */}
+        <p
+          style={{
+            fontFamily: "'Space Grotesk', sans-serif",
+            fontSize: 15,
+            lineHeight: 1.7,
+            color: "var(--c-text-2)",
+            maxWidth: 400,
+            marginTop: 32,
+            opacity: visible ? 1 : 0,
+            transform: visible ? "translateY(0)" : "translateY(12px)",
+            transition: "all 0.7s ease 0.5s",
+          }}
+        >
+          Answer 8 quick questions so we can gauge your experience level and
+          recommend the right learning path. It takes less than 2 minutes.
+        </p>
+
+        {/* Skip link */}
+        <button
+          onClick={onSkip}
+          style={{
+            fontFamily: "'Space Grotesk', sans-serif",
+            fontSize: 12,
+            color: "var(--c-text-2)",
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            marginTop: 32,
+            padding: "4px 0",
+            transition: "color 0.3s",
+            opacity: visible ? 1 : 0,
+            transitionDelay: "0.7s",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = "var(--c-text)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = "var(--c-text-2)";
+          }}
+        >
+          Skip for now
+        </button>
+      </div>
+
+      {/* Right — sentinel trigger */}
+      <div
+        style={{
+          position: "relative",
+          zIndex: 1,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 20,
+          cursor: "pointer",
+          opacity: visible ? 1 : 0,
+          transform: visible ? "translateX(0)" : "translateX(20px)",
+          transition: "opacity 0.7s ease 0.6s, transform 0.7s ease 0.6s",
+        }}
         onClick={onStart}
-        style={{
-          fontFamily: "var(--v9-mono)",
-          fontSize: 11,
-          letterSpacing: 3,
-          textTransform: "uppercase" as const,
-          padding: "16px 48px",
-          background: "transparent",
-          color: "var(--v9-sol-green)",
-          border: "1px solid var(--v9-sol-green)",
-          cursor: "pointer",
-          transition: "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
-        }}
-        onMouseEnter={(e) => {
-          const el = e.currentTarget;
-          el.style.background = "rgba(20, 241, 149, 0.08)";
-          el.style.boxShadow = "0 0 24px rgba(20, 241, 149, 0.15)";
-        }}
-        onMouseLeave={(e) => {
-          const el = e.currentTarget;
-          el.style.background = "transparent";
-          el.style.boxShadow = "none";
-        }}
+        onMouseEnter={() => setHoverSentinel(true)}
+        onMouseLeave={() => setHoverSentinel(false)}
       >
-        Start Assessment
-      </motion.button>
+        {/* Ring + core */}
+        <div
+          style={{
+            position: "relative",
+            width: 70,
+            height: 70,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            transition: "transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+            transform: hoverSentinel ? "scale(1.15)" : "scale(1)",
+          }}
+        >
+          {/* Rotating dashed ring */}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              borderRadius: "50%",
+              border: `1px dashed ${hoverSentinel ? "var(--v9-sol-green)" : "rgba(255,255,255,0.25)"}`,
+              animation: hoverSentinel
+                ? "onb-rotate 4s linear infinite"
+                : "onb-rotate 15s linear infinite",
+              transition: "border-color 0.3s",
+            }}
+          />
+          {/* Inner core */}
+          <div
+            style={{
+              width: hoverSentinel ? 16 : 8,
+              height: hoverSentinel ? 16 : 8,
+              borderRadius: "50%",
+              background: "var(--v9-sol-green)",
+              boxShadow: hoverSentinel
+                ? "0 0 20px rgba(20,241,149,0.6), 0 0 40px rgba(20,241,149,0.3)"
+                : "0 0 8px rgba(20,241,149,0.4)",
+              transition:
+                "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+            }}
+          />
+        </div>
 
-      {/* Skip link */}
-      <motion.button
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.8, duration: 0.4 }}
-        onClick={onSkip}
-        style={{
-          fontFamily: "'Space Grotesk', sans-serif",
-          fontSize: 12,
-          color: "var(--c-text-muted)",
-          background: "none",
-          border: "none",
-          cursor: "pointer",
-          marginTop: 20,
-          padding: "4px 8px",
-          transition: "color 0.3s",
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.color = "var(--c-text-2)";
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.color = "var(--c-text-muted)";
-        }}
-      >
-        Skip for now
-      </motion.button>
-    </motion.div>
+        {/* Vertical label */}
+        <div
+          style={{
+            writingMode: "vertical-rl",
+            fontFamily: "var(--v9-mono)",
+            fontSize: 9,
+            letterSpacing: 4,
+            textTransform: "uppercase",
+            color: hoverSentinel ? "var(--v9-sol-green)" : "var(--c-text-2)",
+            transition: "color 0.3s",
+            userSelect: "none",
+          }}
+        >
+          INITIALIZE
+        </div>
+      </div>
+
+    </div>
   );
 }

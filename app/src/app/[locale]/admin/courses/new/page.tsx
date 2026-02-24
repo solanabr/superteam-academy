@@ -2,7 +2,6 @@
 
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useWallet } from "@solana/wallet-adapter-react";
 import {
   ArrowLeft,
   BookOpen,
@@ -30,7 +29,6 @@ function slugify(text: string): string {
 
 export default function NewCoursePage() {
   const router = useRouter();
-  const { publicKey } = useWallet();
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -46,7 +44,6 @@ export default function NewCoursePage() {
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
-      if (!publicKey) return;
 
       setSubmitting(true);
       setError(null);
@@ -56,7 +53,6 @@ export default function NewCoursePage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            wallet: publicKey.toBase58(),
             title,
             slug,
             description,
@@ -87,7 +83,7 @@ export default function NewCoursePage() {
         setSubmitting(false);
       }
     },
-    [publicKey, title, slug, description, track, difficulty, xpReward, estimatedHours, router],
+    [title, slug, description, track, difficulty, xpReward, estimatedHours, router],
   );
 
   return (
@@ -276,7 +272,7 @@ export default function NewCoursePage() {
             >
               Cancel
             </Link>
-            <Button type="submit" disabled={submitting || !title || !description}>
+            <Button type="submit" disabled={submitting || !title.trim() || !description.trim()}>
               {submitting ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />

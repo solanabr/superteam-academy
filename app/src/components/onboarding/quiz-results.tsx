@@ -11,6 +11,7 @@ interface QuizResultsProps {
   recommendedTrack: Track;
   recommendedDifficulty: Difficulty;
   onViewRecommendations: () => void;
+  onNext?: () => void;
 }
 
 export function QuizResults({
@@ -19,6 +20,7 @@ export function QuizResults({
   recommendedTrack,
   recommendedDifficulty,
   onViewRecommendations,
+  onNext,
 }: QuizResultsProps) {
   const [animatedScore, setAnimatedScore] = useState(0);
   const trackColor = TRACK_COLORS[recommendedTrack];
@@ -279,37 +281,66 @@ export function QuizResults({
         level.
       </motion.p>
 
-      {/* CTA */}
-      <motion.button
+      {/* CTAs */}
+      <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.9, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-        onClick={onViewRecommendations}
-        style={{
-          fontFamily: "var(--v9-mono)",
-          fontSize: 11,
-          letterSpacing: 3,
-          textTransform: "uppercase" as const,
-          padding: "16px 40px",
-          background: "transparent",
-          color: "var(--v9-sol-green)",
-          border: "1px solid var(--v9-sol-green)",
-          cursor: "pointer",
-          transition: "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
-        }}
-        onMouseEnter={(e) => {
-          const el = e.currentTarget;
-          el.style.background = "rgba(20, 241, 149, 0.08)";
-          el.style.boxShadow = "0 0 24px rgba(20, 241, 149, 0.15)";
-        }}
-        onMouseLeave={(e) => {
-          const el = e.currentTarget;
-          el.style.background = "transparent";
-          el.style.boxShadow = "none";
-        }}
+        style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center" }}
       >
-        View Recommended Courses
-      </motion.button>
+        <button
+          onClick={onNext}
+          style={{
+            fontFamily: "var(--v9-mono)",
+            fontSize: 11,
+            letterSpacing: 3,
+            textTransform: "uppercase" as const,
+            padding: "16px 40px",
+            background: "transparent",
+            color: "var(--v9-sol-green)",
+            border: "1px solid var(--v9-sol-green)",
+            cursor: "pointer",
+            transition: "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+          }}
+          onMouseEnter={(e) => {
+            const el = e.currentTarget;
+            el.style.background = "rgba(20, 241, 149, 0.08)";
+            el.style.boxShadow = "0 0 24px rgba(20, 241, 149, 0.15)";
+          }}
+          onMouseLeave={(e) => {
+            const el = e.currentTarget;
+            el.style.background = "transparent";
+            el.style.boxShadow = "none";
+          }}
+        >
+          Next
+        </button>
+        <button
+          onClick={onViewRecommendations}
+          style={{
+            fontFamily: "var(--v9-mono)",
+            fontSize: 11,
+            letterSpacing: 3,
+            textTransform: "uppercase" as const,
+            padding: "16px 40px",
+            background: "transparent",
+            color: "var(--c-text-muted)",
+            border: "1px solid var(--overlay-border)",
+            cursor: "pointer",
+            transition: "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+          }}
+          onMouseEnter={(e) => {
+            const el = e.currentTarget;
+            el.style.borderColor = "var(--c-text-muted)";
+          }}
+          onMouseLeave={(e) => {
+            const el = e.currentTarget;
+            el.style.borderColor = "var(--overlay-border)";
+          }}
+        >
+          View Courses
+        </button>
+      </motion.div>
     </div>
   );
 }

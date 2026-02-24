@@ -20,6 +20,8 @@ import {
 } from "lucide-react";
 import { useTheme } from "next-themes";
 
+type ConfiguredProviders = { google: boolean; github: boolean };
+
 export default function SettingsPage() {
   const t = useTranslations("settings");
   const params = useParams();
@@ -33,6 +35,14 @@ export default function SettingsPage() {
   const linkedAccounts =
     (session as unknown as { linkedAccounts?: Record<string, { email?: string; name?: string }> })
       ?.linkedAccounts ?? {};
+
+  const [configuredProviders, setConfiguredProviders] = useState<ConfiguredProviders | null>(null);
+  useEffect(() => {
+    fetch("/api/auth/configured-providers")
+      .then((r) => r.json())
+      .then(setConfiguredProviders)
+      .catch(() => setConfiguredProviders({ google: false, github: false }));
+  }, []);
 
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [streakReminders, setStreakReminders] = useState(true);
@@ -224,20 +234,20 @@ export default function SettingsPage() {
             </h2>
             <div className="bg-[var(--c-bg-card)] border border-[var(--c-border-subtle)] rounded-xl p-6 space-y-3">
               {[
-                {
+                ...(configuredProviders?.google ? [{
                   provider: "Google",
                   providerId: "google",
                   icon: Chrome,
                   isConnected: !!linkedAccounts.google,
                   detail: linkedAccounts.google?.email ?? null,
-                },
-                {
+                }] : []),
+                ...(configuredProviders?.github ? [{
                   provider: "GitHub",
                   providerId: "github",
                   icon: Github,
                   isConnected: !!linkedAccounts.github,
                   detail: linkedAccounts.github?.name ?? null,
-                },
+                }] : []),
                 {
                   provider: "Wallet",
                   providerId: "solana-wallet",

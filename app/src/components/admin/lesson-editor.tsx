@@ -50,7 +50,7 @@ interface TestCase {
 
 interface LessonEditorProps {
   lesson: LessonData;
-  wallet: string;
+  wallet?: string;
   onSave: () => void;
 }
 

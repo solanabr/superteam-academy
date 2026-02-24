@@ -4,7 +4,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Menu, X, Globe, Sun, Moon } from "lucide-react";
+import { Menu, X, Globe, Sun, Moon, Shield } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import { useWallet } from "@solana/wallet-adapter-react";
@@ -70,7 +70,7 @@ export function Navbar({ locale }: { locale: string }) {
           <Link
             href={`/${locale}`}
             className="flex items-center gap-2.5"
-            aria-label="Superteam Academy home"
+            aria-label="Superteam home"
           >
             <SuperteamLogo size={20} />
             <span className="v9-nav-logo">Superteam</span>
@@ -97,6 +97,65 @@ export function Navbar({ locale }: { locale: string }) {
                 </Link>
               );
             })}
+
+            {/* Admin link with hand-drawn arrow */}
+            <div className="relative group">
+              <Link
+                href={`/${locale}/admin`}
+                className={cn("v9-nav-link", isActive(`/${locale}/admin`) && "active")}
+                style={
+                  isCoursesPage || isCommunityPage
+                    ? { color: "var(--c-text-muted)" }
+                    : undefined
+                }
+                aria-label="Admin panel"
+              >
+                <Shield className="h-3.5 w-3.5" />
+              </Link>
+              {/* Hand-drawn arrow + label */}
+              <div
+                className="pointer-events-none absolute left-1/2 top-full pt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                style={{ transform: "translateX(-50%)" }}
+              >
+                {/* SVG hand-drawn arrow curving down */}
+                <svg
+                  width={60}
+                  height={36}
+                  viewBox="0 0 60 36"
+                  fill="none"
+                  style={{ display: "block", margin: "0 auto" }}
+                >
+                  <path
+                    d="M30,2 C26,8 20,14 22,22 C24,28 30,30 34,26"
+                    stroke="var(--v9-sol-green)"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeDasharray="80"
+                    strokeDashoffset="80"
+                    className="group-hover:animate-[tour-draw_0.6s_ease_forwards_0.1s]"
+                  />
+                  <polygon
+                    points="30,32 38,24 34,22"
+                    fill="var(--v9-sol-green)"
+                    className="opacity-0 group-hover:animate-[tour-fade_0.2s_ease_forwards_0.5s]"
+                  />
+                </svg>
+                <span
+                  style={{
+                    fontFamily: "var(--font-caveat), 'Caveat', cursive",
+                    fontSize: 15,
+                    color: "var(--v9-sol-green)",
+                    display: "block",
+                    textAlign: "center",
+                    transform: "rotate(-3deg)",
+                    whiteSpace: "nowrap",
+                    marginTop: -2,
+                  }}
+                >
+                  admin login here
+                </span>
+              </div>
+            </div>
 
             {/* Theme toggle */}
             <button
@@ -167,7 +226,7 @@ export function Navbar({ locale }: { locale: string }) {
                     onClick={() => setLangOpen(false)}
                     role="menuitem"
                     aria-current={locale === loc ? "true" : undefined}
-                    className="block w-full px-4 py-3 transition-colors"
+                    className="block w-full px-4 py-3 transition-colors min-h-[48px] flex items-center"
                     style={{
                       color: locale === loc
                         ? "var(--v9-sol-green)"
@@ -295,6 +354,38 @@ export function Navbar({ locale }: { locale: string }) {
                 </Link>
               );
             })}
+
+            {/* Mobile admin link */}
+            <Link
+              href={`/${locale}/admin`}
+              onClick={() => setMobileOpen(false)}
+              className={cn(
+                "py-4 transition-opacity flex items-center gap-2",
+                isActive(`/${locale}/admin`) ? "opacity-100" : "opacity-50 hover:opacity-80",
+              )}
+              style={{
+                fontFamily: "var(--v9-mono)",
+                fontSize: "11px",
+                letterSpacing: "3px",
+                textTransform: "uppercase" as const,
+                color: "var(--overlay-text-active)",
+                borderBottom: "1px solid var(--overlay-divider)",
+              }}
+            >
+              <Shield className="h-3.5 w-3.5" />
+              Admin
+              {isActive(`/${locale}/admin`) && (
+                <span
+                  className="ml-3 inline-block"
+                  style={{
+                    width: "4px",
+                    height: "4px",
+                    borderRadius: "1px",
+                    background: "var(--v9-sol-green)",
+                  }}
+                />
+              )}
+            </Link>
 
             {/* Mobile language selector */}
             <div

@@ -1,7 +1,15 @@
 import { NextResponse } from "next/server";
-import { getSanityWriteClient } from "@/lib/sanity/write-client";
+import { getSupabaseAdmin } from "@/lib/supabase/server";
 import { isAdminRequest } from "@/lib/auth/admin";
 
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+/** POST /api/admin/lessons — Create a lesson in Supabase */
 export async function POST(req: Request) {
   try {
     if (!(await isAdminRequest(req))) {
@@ -41,52 +49,47 @@ export async function POST(req: Request) {
       );
     }
 
-    const sanity = getSanityWriteClient();
+    const slug = slugify(title);
 
-    // Generate slug from title
-    const slug = title
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "");
-
-    const lessonDoc: Record<string, unknown> = {
-      _type: "lesson",
+    const insertData: Record<string, unknown> = {
+      module_id: moduleId,
       title,
-      slug: { _type: "slug", current: slug },
+      slug,
       type,
-      markdownContent: markdownContent ?? "",
-      xpReward: xpReward ?? 25,
-      estimatedMinutes: estimatedMinutes ?? 10,
+      content: markdownContent ?? "",
+      xp_reward: xpReward ?? 25,
+      estimated_minutes: estimatedMinutes ?? 10,
       order: order ?? 0,
     };
 
     if (type === "challenge" && challenge) {
-      lessonDoc.challenge = {
-        instructions: challenge.instructions ?? "",
-        starterCode: challenge.starterCode ?? "",
-        solution: challenge.solution ?? "",
-        language: challenge.language ?? "typescript",
-      };
+      insertData.challenge_instructions = challenge.instructions ?? "";
+      insertData.challenge_starter_code = challenge.starterCode ?? "";
+      insertData.challenge_solution = challenge.solution ?? "";
+      insertData.challenge_language = challenge.language ?? "typescript";
     }
 
-    const lesson = await sanity.create(lessonDoc as { _type: string; [key: string]: unknown });
+    const supabase = getSupabaseAdmin();
+    const { data, error } = await supabase
+      .from("lessons")
+      .insert(insertData)
+      .select()
+      .single();
 
-    // Append lesson reference to module.lessons array
-    await sanity
-      .patch(moduleId)
-      .setIfMissing({ lessons: [] })
-      .append("lessons", [{ _type: "reference", _ref: lesson._id }])
-      .commit();
+    if (error) {
+      console.error("create-lesson supabase error:", error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
     return NextResponse.json({
       success: true,
       lesson: {
-        _id: lesson._id,
-        title: lesson.title,
-        slug,
-        type: lesson.type,
-        xpReward: lesson.xpReward,
-        order: lesson.order,
+        _id: data.id,
+        title: data.title,
+        slug: data.slug,
+        type: data.type,
+        xpReward: data.xp_reward,
+        order: data.order,
       },
     });
   } catch (err: unknown) {

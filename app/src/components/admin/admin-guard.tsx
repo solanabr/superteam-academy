@@ -1,7 +1,6 @@
 "use client";
 
 import { type ReactNode, useState } from "react";
-import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { Lock, Loader2, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAdmin } from "@/lib/hooks/use-admin";
@@ -11,8 +10,7 @@ interface AdminGuardProps {
 }
 
 export function AdminGuard({ children }: AdminGuardProps) {
-  const { isAdmin, loading, connected, login } = useAdmin();
-  const { setVisible } = useWalletModal();
+  const { isAdmin, loading, login } = useAdmin();
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -26,28 +24,6 @@ export function AdminGuard({ children }: AdminGuardProps) {
         <p className="text-sm text-[var(--c-text-2)] font-mono tracking-wider uppercase">
           Verifying access...
         </p>
-      </div>
-    );
-  }
-
-  if (!connected) {
-    return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center px-4">
-        <div className="max-w-md w-full text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-[2px] border border-[var(--c-border-subtle)] bg-[var(--c-bg-card)] mx-auto mb-6">
-            <Lock className="h-7 w-7 text-[var(--c-text-2)]" />
-          </div>
-          <h2 className="text-xl font-bold text-[var(--c-text)] mb-2">
-            Wallet Required
-          </h2>
-          <p className="text-sm text-[var(--c-text-2)] mb-6 leading-relaxed">
-            Connect a wallet to access the admin dashboard.
-          </p>
-          <Button onClick={() => setVisible(true)} className="gap-2">
-            <Lock className="h-4 w-4" />
-            Connect Wallet
-          </Button>
-        </div>
       </div>
     );
   }

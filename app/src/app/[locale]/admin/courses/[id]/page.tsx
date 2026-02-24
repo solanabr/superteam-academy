@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useWallet } from "@solana/wallet-adapter-react";
 import {
   ArrowLeft,
   Save,
@@ -73,7 +72,6 @@ interface CourseData {
 export default function CourseEditorPage() {
   const params = useParams();
   const router = useRouter();
-  const { publicKey } = useWallet();
   const courseId = params.id as string;
 
   const [course, setCourse] = useState<CourseData | null>(null);
@@ -97,15 +95,10 @@ export default function CourseEditorPage() {
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const hasUnsavedRef = useRef(false);
 
-  const wallet = publicKey?.toBase58() ?? "";
-
-  // Fetch course data
+  // Fetch course data from Supabase-backed API
   const fetchCourse = useCallback(async () => {
-    if (!wallet) return;
     try {
-      const res = await fetch(
-        `/api/admin/sanity-courses/${courseId}?wallet=${wallet}`,
-      );
+      const res = await fetch(`/api/admin/sanity-courses/${courseId}`);
       if (!res.ok) throw new Error("Failed to fetch course");
       const data = await res.json();
       const c = data.course as CourseData;
@@ -125,7 +118,7 @@ export default function CourseEditorPage() {
     } finally {
       setLoading(false);
     }
-  }, [courseId, wallet]);
+  }, [courseId]);
 
   useEffect(() => {
     fetchCourse();
@@ -136,14 +129,13 @@ export default function CourseEditorPage() {
     hasUnsavedRef.current = true;
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(async () => {
-      if (!hasUnsavedRef.current || !wallet) return;
+      if (!hasUnsavedRef.current) return;
       setSaving(true);
       try {
         const res = await fetch(`/api/admin/sanity-courses/${courseId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            wallet,
             title,
             description,
             longDescription,
@@ -162,7 +154,7 @@ export default function CourseEditorPage() {
         setSaving(false);
       }
     }, 1500);
-  }, [wallet, courseId, title, description, longDescription, track, difficulty, xpReward, estimatedHours, learningOutcomes]);
+  }, [courseId, title, description, longDescription, track, difficulty, xpReward, estimatedHours, learningOutcomes]);
 
   useEffect(() => {
     if (course) triggerAutoSave();
@@ -384,7 +376,6 @@ export default function CourseEditorPage() {
             <ModuleManager
               courseId={courseId}
               modules={course.modules ?? []}
-              wallet={wallet}
               onUpdate={fetchCourse}
             />
           </TabsContent>

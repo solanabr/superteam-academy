@@ -2210,3 +2210,33 @@ html.light .v9-feature-col:hover {
     transform: translateY(0) !important;
   }
 }
+
+/* ── Onboarding Keyframes ─────────────────────────────────── */
+@keyframes onb-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes onb-shine {
+  to { background-position: 200% center; }
+}
+@keyframes onb-streakJump {
+  0% { transform: rotate(var(--streak-angle, 0deg)) translateX(0px) scaleX(0); opacity: 0; }
+  15% { opacity: 1; transform: rotate(var(--streak-angle, 0deg)) translateX(20px) scaleX(0.5); }
+  100% { transform: rotate(var(--streak-angle, 0deg)) translateX(110vmax) scaleX(1.5); opacity: 0; }
+}
+@keyframes tour-draw {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes tour-fade {
+  to { opacity: 1; }
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -21,12 +21,19 @@ import {
   Award,
 } from "lucide-react";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { courses } from "@/lib/services/courses";
+import { courses, fetchCourseBySlug } from "@/lib/services/courses";
 import { learningService } from "@/lib/services/learning-progress";
 import { XPToast } from "@/components/gamification/xp-toast";
 const lazyConfetti = () => import("canvas-confetti").then((m) => m.default);
 import type { Monaco } from "@monaco-editor/react";
-import type { Lesson, Module } from "@/lib/services/types";
+import type { Course, Lesson, Module } from "@/lib/services/types";
+import {
+  executeJS,
+  formatLogs,
+  initTranspiler,
+  transpileAndProtect,
+  runTestAssertions,
+} from "@/lib/code-executor";
 
 /* ------------------------------------------------------------------ */
 /*  Monaco — lazy loaded, SSR disabled                                */
@@ -909,7 +916,7 @@ function LessonInner({
   slug,
 }: {
   lesson: Lesson;
-  course: { title: string; modules: Module[] };
+  course: { id?: string; title: string; modules: Module[]; xpReward?: number };
   allLessons: Lesson[];
   lessonIndex: number;
   locale: string;
@@ -919,7 +926,7 @@ function LessonInner({
   const router = useRouter();
   const { publicKey } = useWallet();
   const walletAddress = publicKey?.toBase58() ?? null;
-  const courseData = courses.find((c) => c.slug === slug);
+  const courseData = course;
 
   const prevLesson = lessonIndex > 0 ? allLessons[lessonIndex - 1] : null;
   const nextLesson =
@@ -934,6 +941,13 @@ function LessonInner({
     quiz: "\u25EF",
   };
 
+  const MONACO_LANG_MAP: Record<string, string> = {
+    rust: "rust",
+    typescript: "typescript",
+    javascript: "javascript",
+    json: "json",
+  };
+
   // --- State ---
   const [code, setCode] = useState(() => {
     if (typeof window !== "undefined" && isChallenge) {
@@ -944,7 +958,7 @@ function LessonInner({
   });
   const [output, setOutput] = useState("");
   const [testResults, setTestResults] = useState<
-    { name: string; passed: boolean }[]
+    { name: string; passed: boolean; expected?: string; actual?: string }[]
   >([]);
   const [isRunning, setIsRunning] = useState(false);
   const [completed, setCompleted] = useState(false);
@@ -1046,24 +1060,69 @@ function LessonInner({
     if (!lesson.challenge) return;
     setIsRunning(true);
     setOutput("");
+    setTestResults([]);
     setShowOutput(true);
 
-    await new Promise((r) => setTimeout(r, 1200));
-    setOutput("Compiled successfully.\n\n> Output ready.");
+    try {
+      const lang = lesson.challenge.language;
 
-    const results = lesson.challenge.testCases.map((tc) => ({
-      name: tc.name,
-      passed: code.length > 30,
-    }));
-    setTestResults(results);
+      if (lang === "rust") {
+        const res = await fetch("/api/execute-rust", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code }),
+        });
+        const data = await res.json();
+        if (data.error) {
+          setOutput(`Error: ${data.error}`);
+          setIsRunning(false);
+          return;
+        }
+        const rustOutput = data.stderr
+          ? `${data.stderr}\n${data.stdout}`.trim()
+          : data.stdout || "(no output)";
+        setOutput(rustOutput);
 
-    if (results.every((r) => r.passed) && !completed) {
-      setCompleted(true);
-      triggerCelebration();
-      callCompleteLessonAPI();
+        const execResult = {
+          logs: [{ type: "log" as const, args: [data.stdout ?? ""] }],
+          error: data.success ? null : (data.stderr ?? "Compilation failed"),
+          timedOut: false,
+        };
+        const results = runTestAssertions(lesson.challenge.testCases, execResult, code);
+        setTestResults(results);
+
+        if (results.every((r) => r.passed) && !completed) {
+          setCompleted(true);
+          triggerCelebration();
+          callCompleteLessonAPI();
+        }
+      } else {
+        // JS/TS: client-side sandbox execution
+        await initTranspiler();
+        const transpiled = await transpileAndProtect(code);
+        if (transpiled.error) {
+          setOutput(`Compile error:\n${transpiled.error}`);
+          setIsRunning(false);
+          return;
+        }
+        const execResult = await executeJS(transpiled.code);
+        setOutput(formatLogs(execResult));
+
+        const results = runTestAssertions(lesson.challenge.testCases, execResult, code);
+        setTestResults(results);
+
+        if (results.every((r) => r.passed) && !completed) {
+          setCompleted(true);
+          triggerCelebration();
+          callCompleteLessonAPI();
+        }
+      }
+    } catch (err) {
+      setOutput(`Unexpected error: ${err instanceof Error ? err.message : String(err)}`);
     }
+
     setIsRunning(false);
-  }, [code, lesson.challenge, triggerCelebration, callCompleteLessonAPI]);
+  }, [code, lesson.challenge, completed, triggerCelebration, callCompleteLessonAPI]);
 
   const handleReset = useCallback(() => {
     setCode(lesson.challenge?.starterCode ?? "");
@@ -1085,8 +1144,8 @@ function LessonInner({
   const handleFinalizeCourse = useCallback(async () => {
     setIsFinalizing(true);
     try {
-      const cd = courses.find((c) => c.slug === slug);
-      if (!cd) return;
+      if (!courseData) return;
+      const cd = courseData;
 
       if (walletAddress) {
         const res = await fetch(`/api/courses/${slug}/finalize`, {
@@ -1101,7 +1160,7 @@ function LessonInner({
           credentialIssued: true,
         });
       } else {
-        const result = await learningService.finalizeCourse("local", cd.id);
+        const result = await learningService.finalizeCourse("local", cd.id ?? slug);
         setFinalizationResult(result);
       }
 
@@ -1533,8 +1592,13 @@ function LessonInner({
   /*  CHALLENGE layout — V9 light-theme grid IDE (inline styles)     */
   /* ============================================================== */
 
-  const fileName =
-    lesson.challenge?.language === "rust" ? "main.rs" : "index.ts";
+  const fileNameMap: Record<string, string> = {
+    rust: "main.rs",
+    typescript: "index.ts",
+    javascript: "index.js",
+    json: "data.json",
+  };
+  const fileName = fileNameMap[lesson.challenge?.language ?? "typescript"] ?? "index.ts";
   const doneCount = allLessons.filter((_, i) => i < lessonIndex).length;
   const walletShort = walletAddress
     ? `${walletAddress.slice(0, 4)}..${walletAddress.slice(-4)}`
@@ -2093,7 +2157,7 @@ function LessonInner({
           <div style={{ flex: 1, minHeight: 0, position: "relative" as const }}>
             <MonacoEditor
               height="100%"
-              language={lesson.challenge?.language ?? "typescript"}
+              language={MONACO_LANG_MAP[lesson.challenge?.language ?? "typescript"] ?? "typescript"}
               theme="academy"
               value={code}
               onChange={(v) => setCode(v ?? "")}
@@ -2112,6 +2176,11 @@ function LessonInner({
                 lineHeight: 21,
                 lineNumbers: "on",
                 lineNumbersMinChars: 3,
+                suggestOnTriggerCharacters: true,
+                quickSuggestions: true,
+                wordBasedSuggestions: "currentDocument",
+                formatOnPaste: true,
+                tabCompletion: "on",
               }}
             />
           </div>
@@ -2340,15 +2409,53 @@ export default function LessonPage() {
   const slug = params.slug as string;
   const lessonId = params.id as string;
 
-  const course = courses.find((c) => c.slug === slug);
+  const [courseData, setCourseData] = useState<Course | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Try fetching from API (Supabase-backed), fall back to static
+    fetch(`/api/courses/${slug}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data) {
+          setCourseData(data);
+        } else {
+          // Fall back to static courses
+          const staticCourse = courses.find((c) => c.slug === slug);
+          if (staticCourse) setCourseData(staticCourse);
+        }
+      })
+      .catch(() => {
+        const staticCourse = courses.find((c) => c.slug === slug);
+        if (staticCourse) setCourseData(staticCourse);
+      })
+      .finally(() => setLoading(false));
+  }, [slug]);
+
   const allLessons = useMemo(
-    () => course?.modules.flatMap((m) => m.lessons) ?? [],
-    [course],
+    () => courseData?.modules.flatMap((m) => m.lessons) ?? [],
+    [courseData],
   );
   const lessonIndex = allLessons.findIndex((l) => l.id === lessonId);
   const lesson = allLessons[lessonIndex];
 
-  if (!course || !lesson) {
+  if (loading) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          height: "100vh",
+          background: "var(--v9-white)",
+        }}
+      >
+        <Loader2 className="h-5 w-5 animate-spin" style={{ color: "var(--v9-mid-grey)" }} />
+      </div>
+    );
+  }
+
+  if (!courseData || !lesson) {
     return (
       <div
         style={{
@@ -2390,7 +2497,7 @@ export default function LessonPage() {
     <LessonInner
       key={lessonId}
       lesson={lesson}
-      course={course}
+      course={courseData}
       allLessons={allLessons}
       lessonIndex={lessonIndex}
       locale={locale}

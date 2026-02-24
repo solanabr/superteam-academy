@@ -1,14 +1,15 @@
 import { NextResponse } from "next/server";
-import { getSanityWriteClient } from "@/lib/sanity/write-client";
+import { getSupabaseAdmin } from "@/lib/supabase/server";
 import { isAdminRequest } from "@/lib/auth/admin";
 
+/** POST /api/admin/modules — Create a module in Supabase */
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
     if (!(await isAdminRequest(req))) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
+    const body = await req.json();
     const { courseId, title, description, order } = body as {
       courseId?: string;
       title?: string;
@@ -23,31 +24,30 @@ export async function POST(req: Request) {
       );
     }
 
-    const sanity = getSanityWriteClient();
+    const supabase = getSupabaseAdmin();
+    const { data, error } = await supabase
+      .from("modules")
+      .insert({
+        course_id: courseId,
+        title,
+        description: description ?? "",
+        order: order ?? 0,
+      })
+      .select()
+      .single();
 
-    // Create module document
-    const module = await sanity.create({
-      _type: "module",
-      title,
-      description: description ?? "",
-      order: order ?? 0,
-      lessons: [],
-    });
-
-    // Append module reference to course.modules array
-    await sanity
-      .patch(courseId)
-      .setIfMissing({ modules: [] })
-      .append("modules", [{ _type: "reference", _ref: module._id }])
-      .commit();
+    if (error) {
+      console.error("create-module supabase error:", error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
     return NextResponse.json({
       success: true,
       module: {
-        _id: module._id,
-        title: module.title,
-        description: module.description,
-        order: module.order,
+        _id: data.id,
+        title: data.title,
+        description: data.description,
+        order: data.order,
       },
     });
   } catch (err: unknown) {
