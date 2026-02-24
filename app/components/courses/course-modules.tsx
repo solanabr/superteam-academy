@@ -2,16 +2,27 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronDown, Play, FileText, Code, CheckCircle, Lock, Clock } from "lucide-react";
+import {
+	ChevronDown,
+	Play,
+	FileText,
+	Code,
+	CheckCircle,
+	Lock,
+	Clock,
+	AlertCircle,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface CourseModulesProps {
 	courseId: string;
+	isEnrolled: boolean;
 	modules: Array<{
 		id: string;
 		title: string;
@@ -29,7 +40,7 @@ interface CourseModulesProps {
 	}>;
 }
 
-export function CourseModules({ courseId, modules }: CourseModulesProps) {
+export function CourseModules({ courseId, modules, isEnrolled }: CourseModulesProps) {
 	const t = useTranslations("courses");
 	const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
 
@@ -45,6 +56,12 @@ export function CourseModules({ courseId, modules }: CourseModulesProps) {
 
 	return (
 		<div className="space-y-4">
+			{!isEnrolled && (
+				<Alert>
+					<AlertCircle className="h-4 w-4" />
+					<AlertDescription>{t("modules.enrollToUnlock")}</AlertDescription>
+				</Alert>
+			)}
 			<div className="flex items-center justify-between">
 				<h2 className="text-2xl font-bold">{t("modules.title")}</h2>
 				<div className="text-sm text-muted-foreground">
@@ -64,6 +81,7 @@ export function CourseModules({ courseId, modules }: CourseModulesProps) {
 						moduleNumber={moduleIndex + 1}
 						expandedModules={expandedModules}
 						toggleModule={toggleModule}
+						isEnrolled={isEnrolled}
 					/>
 				))}
 			</div>
@@ -77,12 +95,14 @@ function ModuleCard({
 	moduleNumber,
 	expandedModules,
 	toggleModule,
+	isEnrolled,
 }: {
 	courseId: string;
 	module: CourseModulesProps["modules"][0];
 	moduleNumber: number;
 	expandedModules: Set<string>;
 	toggleModule: (moduleId: string) => void;
+	isEnrolled: boolean;
 }) {
 	const t = useTranslations("courses");
 
@@ -219,8 +239,12 @@ function ModuleCard({
 												(l) => l.id === lesson.id
 											);
 											const isLocked =
-												lessonIndex > 0 &&
-												!module.lessonsList[lessonIndex - 1].completed;
+												!isEnrolled ||
+												(lessonIndex > 0 &&
+													!module.lessonsList[lessonIndex - 1].completed);
+											const lockedLabel = isEnrolled
+												? t("modules.start")
+												: t("modules.enrollToStart");
 
 											if (isLocked) {
 												return (
@@ -230,7 +254,7 @@ function ModuleCard({
 														disabled={true}
 													>
 														<Lock className="h-4 w-4 mr-1" />
-														{t("modules.start")}
+														{lockedLabel}
 													</Button>
 												);
 											}

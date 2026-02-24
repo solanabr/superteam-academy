@@ -1,18 +1,15 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
-import { ArrowLeft, Star, BookOpen, CheckCircle, Zap } from "lucide-react";
+import { ArrowLeft, Star, BookOpen, Zap } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { CourseHero } from "@/components/courses/course-hero";
-import { CourseModules } from "@/components/courses/course-modules";
-import { CourseReviews } from "@/components/courses/course-reviews";
-import { CourseInstructor } from "@/components/courses/course-instructor";
+import { CourseDetailTabs } from "@/components/courses/course-detail-tabs";
 import { CoursePrerequisites } from "@/components/courses/course-prerequisites";
 import { CourseCertificate } from "@/components/courses/course-certificate";
 import { CourseEnrollment } from "@/components/courses/course-enrollment";
@@ -22,7 +19,11 @@ import { getAcademyClient } from "@/lib/academy";
 import { getLinkedWallet } from "@/lib/auth";
 import { mapCourseToDetail } from "@/lib/course-data";
 import { PublicKey } from "@solana/web3.js";
-import { countCompletedLessons, type CourseAccount } from "@superteam-academy/anchor";
+import {
+	countCompletedLessons,
+	isLessonCompleted,
+	type CourseAccount,
+} from "@superteam-academy/anchor";
 
 interface CourseDetailPageProps {
 	params: Promise<{
@@ -91,67 +92,15 @@ async function CourseDetailContent({
 			<div className="container mx-auto px-4">
 				<div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 					<div className="lg:col-span-2 space-y-8">
-						<Tabs value={activeTab} className="w-full">
-							<TabsList className="grid w-full grid-cols-4">
-								<TabsTrigger value="overview">{t("tabs.overview")}</TabsTrigger>
-								<TabsTrigger value="curriculum">{t("tabs.curriculum")}</TabsTrigger>
-								<TabsTrigger value="reviews">{t("tabs.reviews")}</TabsTrigger>
-								<TabsTrigger value="instructor">{t("tabs.instructor")}</TabsTrigger>
-							</TabsList>
-
-							<TabsContent value="overview" className="space-y-6">
-								<div className="prose prose-gray dark:prose-invert max-w-none">
-									<h2>{t("overview.title")}</h2>
-									<p className="text-lg leading-relaxed">{course.description}</p>
-
-									<h3>{t("overview.whatYouWillLearn")}</h3>
-									<ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
-										{course.learningObjectives.map((objective, index) => (
-											<li key={index} className="flex items-start gap-2">
-												<CheckCircle className="h-5 w-5 text-green-500 mt-0.5 shrink-0" />
-												<span>{objective}</span>
-											</li>
-										))}
-									</ul>
-
-									<h3>{t("overview.requirements")}</h3>
-									<ul>
-										{course.requirements.map((requirement, index) => (
-											<li key={index}>{requirement}</li>
-										))}
-									</ul>
-
-									<h3>{t("overview.skills")}</h3>
-									<div className="flex flex-wrap gap-2">
-										{course.skills.map((skill) => (
-											<Badge key={skill} variant="secondary">
-												{skill}
-											</Badge>
-										))}
-									</div>
-								</div>
-							</TabsContent>
-
-							<TabsContent value="curriculum" className="space-y-6">
-								<CourseModules courseId={courseId} modules={course.modules} />
-							</TabsContent>
-
-							<TabsContent value="reviews" className="space-y-6">
-								<CourseReviews
-									reviews={course.reviews}
-									averageRating={course.rating}
-									totalReviews={course.reviewCount}
-								/>
-							</TabsContent>
-
-							<TabsContent value="instructor" className="space-y-6">
-								<CourseInstructor instructor={course.instructor} />
-							</TabsContent>
-						</Tabs>
+						<CourseDetailTabs
+							course={course}
+							courseId={courseId}
+							initialTab={activeTab}
+						/>
 					</div>
 
 					<div className="space-y-6">
-						<Card className="sticky top-24">
+						<Card className="sticky top-24" id="enroll">
 							<CardHeader>
 								<CardTitle className="flex items-center gap-2">
 									<BookOpen className="h-5 w-5" />
@@ -207,7 +156,7 @@ async function CourseDetailContent({
 									</div>
 								</div>
 
-								{course.certificate && (
+								{course.finalized && course.certificate && (
 									<div className="pt-4 border-t">
 										<CourseCertificate certificate={course.certificate} />
 									</div>
@@ -285,11 +234,38 @@ async function getCourse(id: string) {
 		console.warn("Onchain course fetch failed", error);
 	}
 
-	let prerequisiteLabel: string | null = null;
+	const learner = wallet ? new PublicKey(wallet) : null;
+	let prerequisiteInfo: {
+		id: string;
+		title: string;
+		completed: boolean;
+	} | null = null;
+	let prerequisiteCourseId: string | null = null;
+
 	const prerequisite = onchainCourse?.prerequisite ?? null;
 	if (prerequisite) {
 		const prereq = onchainCourses.find((course) => course.pubkey.equals(prerequisite));
-		prerequisiteLabel = prereq?.account.courseId ?? prerequisite.toBase58();
+		prerequisiteCourseId = prereq?.account.courseId ?? null;
+		const prerequisiteTitle = prereq?.account.courseId ?? prerequisite.toBase58();
+		let completed = false;
+
+		if (learner && prerequisiteCourseId) {
+			try {
+				const prereqEnrollment = await academyClient.fetchEnrollment(
+					prerequisiteCourseId,
+					learner
+				);
+				completed = Boolean(prereqEnrollment?.completedAt);
+			} catch (error) {
+				console.warn("Onchain prerequisite enrollment fetch failed", error);
+			}
+		}
+
+		prerequisiteInfo = {
+			id: prerequisiteCourseId ?? prerequisite.toBase58(),
+			title: prerequisiteTitle,
+			completed,
+		};
 	}
 
 	let enrollment: {
@@ -297,19 +273,23 @@ async function getCourse(id: string) {
 		completedLessons: number;
 		xpEarned: number;
 		finalized: boolean;
+		lessonStates: boolean[];
 	} | null = null;
 
 	if (wallet && onchainCourse) {
 		try {
-			const learner = new PublicKey(wallet);
 			const enrollmentData = await academyClient.fetchEnrollment(id, learner);
 			if (enrollmentData) {
 				const completed = countCompletedLessons(enrollmentData.lessonFlags);
+				const lessonStates = Array.from({ length: onchainCourse.lessonCount }, (_, index) =>
+					isLessonCompleted(enrollmentData.lessonFlags, index)
+				);
 				enrollment = {
 					enrolled: true,
 					completedLessons: completed,
 					xpEarned: completed * onchainCourse.xpPerLesson,
 					finalized: !!enrollmentData.completedAt,
+					lessonStates,
 				};
 			}
 		} catch (error) {
@@ -327,10 +307,14 @@ async function getCourse(id: string) {
 						lessonCount: onchainCourse.lessonCount,
 						trackId: onchainCourse.trackId,
 						trackLevel: onchainCourse.trackLevel,
+						totalEnrollments: onchainCourse.totalEnrollments,
 					}
 				: {}),
-			...(prerequisiteLabel ? { prerequisiteLabel } : {}),
+			...(prerequisiteInfo ? { prerequisite: prerequisiteInfo } : {}),
 		},
-		{ reviews, enrollment }
+		{
+			reviews,
+			enrollment,
+		}
 	);
 }

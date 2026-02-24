@@ -7,15 +7,16 @@ import {
 	Zap,
 	Shield,
 	Code,
-	Layers,
 	Award,
 	TrendingUp,
 	Clock,
 } from "lucide-react";
 import { getTranslations } from "next-intl/server";
+import { Suspense } from "react";
 import HeroWave from "@/public/hero-wave.svg";
 import { NewsletterForm } from "@/components/newsletter-form";
 import { getCoursesCMS } from "@/lib/cms";
+import { FeaturedCoursesSkeleton } from "@/components/home/featured-courses-skeleton";
 
 const TOPICS = [
 	{ name: "Solana Basics", courses: 12, color: "bg-green/10 text-green" },
@@ -406,79 +407,6 @@ async function FeaturedCoursesSection() {
 	);
 }
 
-async function PathsSection() {
-	const t = await getTranslations("home.paths");
-	const paths = [
-		{
-			key: "coreDev",
-			courses: 6,
-			duration: "40 hours",
-			icon: Code,
-		},
-		{
-			key: "auditor",
-			courses: 4,
-			duration: "28 hours",
-			icon: Shield,
-		},
-		{
-			key: "fullStack",
-			courses: 8,
-			duration: "52 hours",
-			icon: Layers,
-		},
-	];
-	return (
-		<section className="py-20 lg:py-28">
-			<div className="mx-auto px-4 sm:px-6">
-				<div className="text-center max-w-2xl mx-auto mb-14">
-					<h2 className="text-3xl sm:text-4xl font-bold tracking-tight">{t("title")}</h2>
-					<p className="mt-4 text-lg text-muted-foreground leading-relaxed">
-						{t("description")}
-					</p>
-				</div>
-
-				<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-					{paths.map((path) => (
-						<div
-							key={path.key}
-							className="group relative p-6 rounded-2xl border border-border bg-card hover:shadow-lg hover:border-primary/30 transition-all duration-300"
-						>
-							<div className="w-12 h-12 rounded-xl bg-linear-to-br from-green/10 to-forest/10 flex items-center justify-center mb-5">
-								<path.icon className="h-6 w-6 text-primary" />
-							</div>
-							<h3 className="text-xl font-semibold mb-2">{t(path.key)}</h3>
-							<p className="text-sm text-muted-foreground mb-5 leading-relaxed">
-								{t(`${path.key}Desc`)}
-							</p>
-							<div className="flex items-center gap-4 text-sm text-muted-foreground mb-5">
-								<span className="flex items-center gap-1.5">
-									<BookOpen className="h-4 w-4" />
-									{t("courses", { count: path.courses })}
-								</span>
-								<span className="flex items-center gap-1.5">
-									<Clock className="h-4 w-4" />
-									{path.duration}
-								</span>
-							</div>
-							<Button
-								variant="outline"
-								className="w-full group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-all"
-								asChild
-							>
-								<Link href="/courses?view=paths">
-									{t("viewPath")}
-									<ArrowRight className="ml-2 h-4 w-4" />
-								</Link>
-							</Button>
-						</div>
-					))}
-				</div>
-			</div>
-		</section>
-	);
-}
-
 async function TestimonialsSection() {
 	const t = await getTranslations("home.testimonials");
 	return (
@@ -564,8 +492,9 @@ export default function Home() {
 			<HeroSection />
 			<TopicsStrip />
 			<FeaturesSection />
-			<FeaturedCoursesSection />
-			<PathsSection />
+			<Suspense fallback={<FeaturedCoursesSkeleton />}>
+				<FeaturedCoursesSection />
+			</Suspense>
 			<HowItWorksSection />
 			<TestimonialsSection />
 			<CTASection />

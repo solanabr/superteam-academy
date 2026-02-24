@@ -8,8 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useAuth } from "@/contexts/auth-context";
 
 interface CourseReviewsProps {
+	courseId: string;
 	reviews: Array<{
 		id: string;
 		user: {
@@ -25,14 +28,24 @@ interface CourseReviewsProps {
 	totalReviews: number;
 }
 
-export function CourseReviews({ reviews, averageRating, totalReviews }: CourseReviewsProps) {
+export function CourseReviews({
+	courseId,
+	reviews,
+	averageRating,
+	totalReviews,
+}: CourseReviewsProps) {
 	const t = useTranslations("courses");
+	const { isAuthenticated, isWalletVerified } = useAuth();
 	const [localReviews, setLocalReviews] = useState(reviews);
 	const [helpfulReviews, setHelpfulReviews] = useState<Set<string>>(new Set());
 	const [flaggedReviews, setFlaggedReviews] = useState<Set<string>>(new Set());
 	const [showWriteReview, setShowWriteReview] = useState(false);
 	const [draftRating, setDraftRating] = useState(5);
 	const [draftComment, setDraftComment] = useState("");
+	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [submitError, setSubmitError] = useState<string | null>(null);
+	const canReview = isWalletVerified;
+	const canInteract = isWalletVerified;
 
 	const totalCount = localReviews.length || totalReviews;
 	const averageScore =
@@ -47,6 +60,7 @@ export function CourseReviews({ reviews, averageRating, totalReviews }: CourseRe
 	});
 
 	const handleHelpful = async (reviewId: string) => {
+		if (!canInteract) return;
 		const newHelpful = new Set(helpfulReviews);
 		if (newHelpful.has(reviewId)) {
 			newHelpful.delete(reviewId);
@@ -57,6 +71,7 @@ export function CourseReviews({ reviews, averageRating, totalReviews }: CourseRe
 	};
 
 	const handleFlag = async (reviewId: string) => {
+		if (!canInteract) return;
 		const newFlagged = new Set(flaggedReviews);
 		if (newFlagged.has(reviewId)) {
 			newFlagged.delete(reviewId);
@@ -67,44 +82,75 @@ export function CourseReviews({ reviews, averageRating, totalReviews }: CourseRe
 	};
 
 	const handleWriteReview = () => {
+		if (!canReview) return;
 		setShowWriteReview((prev) => !prev);
 	};
 
-	const handleSubmitReview = () => {
+	const handleSubmitReview = async () => {
 		if (!draftComment.trim()) {
 			return;
 		}
+		if (!canReview) return;
 
-		const newReview = {
-			id: `local-${Date.now()}`,
-			user: {
-				name: t("reviewsSection.you"),
-				avatar: "",
-			},
-			rating: draftRating,
-			date: new Date().toISOString(),
-			comment: draftComment.trim(),
-			helpful: 0,
-		};
+		setIsSubmitting(true);
+		setSubmitError(null);
+		try {
+			const response = await fetch("/api/courses/reviews", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					courseId,
+					rating: draftRating,
+					comment: draftComment.trim(),
+				}),
+			});
 
-		setLocalReviews((prev) => [newReview, ...prev]);
-		setDraftComment("");
-		setDraftRating(5);
-		setShowWriteReview(false);
+			if (!response.ok) {
+				setSubmitError(t("reviewsSection.submitError"));
+				return;
+			}
+
+			const newReview = (await response.json()) as CourseReviewsProps["reviews"][number];
+			setLocalReviews((prev) => [newReview, ...prev]);
+			setDraftComment("");
+			setDraftRating(5);
+			setShowWriteReview(false);
+		} catch (error) {
+			console.error("Review submission failed", error);
+			setSubmitError(t("reviewsSection.submitError"));
+		} finally {
+			setIsSubmitting(false);
+		}
 	};
 
 	return (
 		<div className="space-y-6">
 			<div className="flex items-center justify-between">
 				<h2 className="text-2xl font-bold">{t("reviewsSection.title")}</h2>
-				<Button variant="outline" onClick={handleWriteReview}>
+				<Button variant="outline" onClick={handleWriteReview} disabled={!canReview}>
 					{t("reviewsSection.writeReview")}
 				</Button>
 			</div>
 
+			{!isAuthenticated && (
+				<Alert>
+					<AlertDescription>{t("reviewsSection.signInToWrite")}</AlertDescription>
+				</Alert>
+			)}
+			{isAuthenticated && !isWalletVerified && (
+				<Alert>
+					<AlertDescription>{t("reviewsSection.walletRequiredToWrite")}</AlertDescription>
+				</Alert>
+			)}
+
 			{showWriteReview && (
 				<Card>
 					<CardContent className="space-y-4 pt-6">
+						{submitError && (
+							<Alert>
+								<AlertDescription>{submitError}</AlertDescription>
+							</Alert>
+						)}
 						<div className="space-y-2">
 							<div className="text-sm font-medium">{t("reviewsSection.rating")}</div>
 							<div className="flex items-center gap-1">
@@ -114,6 +160,7 @@ export function CourseReviews({ reviews, averageRating, totalReviews }: CourseRe
 										variant="ghost"
 										size="sm"
 										onClick={() => setDraftRating(i + 1)}
+										disabled={isSubmitting}
 									>
 										<Star
 											className={`h-4 w-4 ${
@@ -135,18 +182,33 @@ export function CourseReviews({ reviews, averageRating, totalReviews }: CourseRe
 								onChange={(event) => setDraftComment(event.target.value)}
 								placeholder={t("reviewsSection.commentPlaceholder")}
 								rows={4}
+								disabled={isSubmitting}
 							/>
 						</div>
 						<div className="flex items-center gap-2">
-							<Button onClick={handleSubmitReview}>
-								{t("reviewsSection.submitReview")}
+							<Button onClick={handleSubmitReview} disabled={isSubmitting}>
+								{isSubmitting
+									? t("reviewsSection.submitting")
+									: t("reviewsSection.submitReview")}
 							</Button>
-							<Button variant="ghost" onClick={() => setShowWriteReview(false)}>
+							<Button
+								variant="ghost"
+								onClick={() => setShowWriteReview(false)}
+								disabled={isSubmitting}
+							>
 								{t("reviewsSection.cancel")}
 							</Button>
 						</div>
 					</CardContent>
 				</Card>
+			)}
+
+			{!canInteract && (
+				<div className="text-sm text-muted-foreground">
+					{isAuthenticated
+						? t("reviewsSection.walletRequiredToInteract")
+						: t("reviewsSection.signInToInteract")}
+				</div>
 			)}
 
 			<div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -236,6 +298,7 @@ export function CourseReviews({ reviews, averageRating, totalReviews }: CourseRe
 										className={
 											flaggedReviews.has(review.id) ? "text-red-500" : ""
 										}
+										disabled={!canInteract}
 									>
 										<Flag className="h-4 w-4" />
 									</Button>
@@ -252,9 +315,14 @@ export function CourseReviews({ reviews, averageRating, totalReviews }: CourseRe
 									size="sm"
 									className="gap-2"
 									onClick={() => handleHelpful(review.id)}
+									disabled={!canInteract}
 								>
 									<ThumbsUp
-										className={`h-4 w-4 ${helpfulReviews.has(review.id) ? "fill-current text-blue-500" : ""}`}
+										className={`h-4 w-4 ${
+											helpfulReviews.has(review.id)
+												? "fill-current text-blue-500"
+												: ""
+										}`}
 									/>
 									{t("reviewsSection.helpful", {
 										count:

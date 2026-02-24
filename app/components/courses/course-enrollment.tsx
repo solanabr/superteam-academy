@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Wallet, CreditCard, CheckCircle, AlertCircle } from "lucide-react";
+import { Wallet, CheckCircle, AlertCircle } from "lucide-react";
 import { useConnection } from "@solana/wallet-adapter-react";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { Transaction } from "@solana/web3.js";
 import { buildEnrollInstruction, buildCloseEnrollmentInstruction } from "@superteam-academy/anchor";
 import { useTranslations } from "next-intl";
@@ -32,20 +33,46 @@ interface CourseEnrollmentProps {
 
 export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 	const t = useTranslations("courses");
-	const { wallet } = useAuth();
+	const { wallet, isWalletConnected, isWalletVerified, verifyWallet } = useAuth();
 	const { connection } = useConnection();
 	const router = useRouter();
-	const [enrollmentMethod, setEnrollmentMethod] = useState<"wallet" | "card" | null>(null);
+	const { setVisible } = useWalletModal();
 	const [isEnrolling, setIsEnrolling] = useState(false);
 	const [isClosing, setIsClosing] = useState(false);
+	const [isVerifying, setIsVerifying] = useState(false);
+	const [authError, setAuthError] = useState<string | null>(null);
 
 	const prerequisitesMet = course.prerequisites
 		? course.prerequisites.every((p) => p.completed)
 		: true;
+	const canTransact = isWalletVerified && wallet.publicKey && wallet.sendTransaction;
+	const canEnroll = prerequisitesMet && Boolean(canTransact);
+	const canClose = Boolean(canTransact);
+
+	const handleConnectWallet = () => {
+		setVisible(true);
+	};
+
+	const handleVerifyWallet = async () => {
+		setIsVerifying(true);
+		setAuthError(null);
+		try {
+			await verifyWallet();
+		} catch (error) {
+			console.error("Wallet verification failed", error);
+			setAuthError(t("enroll.verificationFailed"));
+		} finally {
+			setIsVerifying(false);
+		}
+	};
 
 	const handleEnrollment = async () => {
 		if (!prerequisitesMet) return;
 		if (!wallet.publicKey || !wallet.sendTransaction) return;
+		if (!isWalletVerified) {
+			setAuthError(t("enroll.verifyWalletPrompt"));
+			return;
+		}
 
 		setIsEnrolling(true);
 		try {
@@ -65,11 +92,9 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 			const signature = await wallet.sendTransaction(tx, connection);
 			await connection.confirmTransaction(signature, "confirmed");
 
-			// Redirect to learning page on successful enrollment
 			router.push(`/courses/${course.id}/learn`);
 		} catch (error) {
 			console.error("Enrollment failed:", error);
-			// You could add error handling/toast here
 		} finally {
 			setIsEnrolling(false);
 		}
@@ -77,6 +102,10 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 
 	const handleCloseEnrollment = async () => {
 		if (!wallet.publicKey || !wallet.sendTransaction) return;
+		if (!isWalletVerified) {
+			setAuthError(t("enroll.verifyWalletPrompt"));
+			return;
+		}
 
 		setIsClosing(true);
 		try {
@@ -93,11 +122,9 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 			const signature = await wallet.sendTransaction(tx, connection);
 			await connection.confirmTransaction(signature, "confirmed");
 
-			// Redirect back to courses page after closing enrollment
 			router.push("/courses");
 		} catch (error) {
 			console.error("Failed to close enrollment:", error);
-			// You could add error handling/toast here
 		} finally {
 			setIsClosing(false);
 		}
@@ -106,6 +133,12 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 	if (course.enrolled) {
 		return (
 			<div className="space-y-4">
+				{authError && (
+					<Alert>
+						<AlertCircle className="h-4 w-4" />
+						<AlertDescription>{authError}</AlertDescription>
+					</Alert>
+				)}
 				<div className="p-4 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg">
 					<div className="flex items-center gap-3">
 						<CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
@@ -129,7 +162,7 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 					size="sm"
 					className="w-full text-muted-foreground"
 					onClick={handleCloseEnrollment}
-					disabled={isClosing}
+					disabled={!canClose || isClosing}
 				>
 					{isClosing ? t("enroll.processing") : t("enroll.closeEnrollment")}
 				</Button>
@@ -139,6 +172,27 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 
 	return (
 		<div className="space-y-4">
+			{authError && (
+				<Alert>
+					<AlertCircle className="h-4 w-4" />
+					<AlertDescription>{authError}</AlertDescription>
+				</Alert>
+			)}
+
+			{!isWalletConnected && (
+				<Alert>
+					<AlertCircle className="h-4 w-4" />
+					<AlertDescription>{t("enroll.walletRequired")}</AlertDescription>
+				</Alert>
+			)}
+
+			{isWalletConnected && !isWalletVerified && (
+				<Alert>
+					<AlertCircle className="h-4 w-4" />
+					<AlertDescription>{t("enroll.verifyWalletPrompt")}</AlertDescription>
+				</Alert>
+			)}
+
 			{!prerequisitesMet && (
 				<Alert>
 					<AlertCircle className="h-4 w-4" />
@@ -146,7 +200,24 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 				</Alert>
 			)}
 
-			{course.price === 0 ? (
+			{!isWalletConnected && (
+				<Button className="w-full" size="lg" onClick={handleConnectWallet}>
+					{t("enroll.connectWallet")}
+				</Button>
+			)}
+
+			{isWalletConnected && !isWalletVerified && (
+				<Button
+					className="w-full"
+					size="lg"
+					onClick={handleVerifyWallet}
+					disabled={isVerifying}
+				>
+					{isVerifying ? t("enroll.processing") : t("enroll.verifyWallet")}
+				</Button>
+			)}
+
+			{isWalletVerified && course.price === 0 ? (
 				<div className="space-y-4">
 					<div className="text-center p-6 bg-muted/50 rounded-lg">
 						<div className="text-3xl font-bold text-green-600 mb-2">
@@ -159,81 +230,45 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 						className="w-full"
 						size="lg"
 						onClick={handleEnrollment}
-						disabled={!prerequisitesMet || isEnrolling}
+						disabled={!canEnroll || isEnrolling}
 					>
 						{isEnrolling ? t("enroll.enrolling") : t("enroll.enrollFree")}
 					</Button>
 				</div>
-			) : (
+			) : isWalletVerified ? (
 				<div className="space-y-4">
 					<div className="text-center p-6 bg-muted/50 rounded-lg">
 						<div className="text-3xl font-bold mb-2">${course.price}</div>
 						<p className="text-muted-foreground">{t("enroll.oneTimePayment")}</p>
 					</div>
 
-					<div className="space-y-3">
-						<div className="text-sm font-medium">{t("enroll.choosePayment")}</div>
-
-						<div className="space-y-2">
-							<Card
-								className={`cursor-pointer transition-colors ${
-									enrollmentMethod === "wallet"
-										? "border-primary bg-primary/5"
-										: ""
-								}`}
-								onClick={() => setEnrollmentMethod("wallet")}
-							>
-								<CardContent className="p-4">
-									<div className="flex items-center gap-3">
-										<Wallet className="h-5 w-5" />
-										<div className="flex-1">
-											<div className="font-medium">
-												{t("enroll.cryptoWallet")}
-											</div>
-											<div className="text-sm text-muted-foreground">
-												{t("enroll.payWithCrypto")}
-											</div>
-										</div>
-										<Badge variant="secondary">{t("enroll.recommended")}</Badge>
+					<Card>
+						<CardContent className="p-4">
+							<div className="flex items-center gap-3">
+								<Wallet className="h-5 w-5" />
+								<div className="flex-1">
+									<div className="font-medium">{t("enroll.cryptoWallet")}</div>
+									<div className="text-sm text-muted-foreground">
+										{t("enroll.payWithCrypto")}
 									</div>
-								</CardContent>
-							</Card>
-
-							<Card
-								className={`cursor-pointer transition-colors ${
-									enrollmentMethod === "card" ? "border-primary bg-primary/5" : ""
-								}`}
-								onClick={() => setEnrollmentMethod("card")}
-							>
-								<CardContent className="p-4">
-									<div className="flex items-center gap-3">
-										<CreditCard className="h-5 w-5" />
-										<div className="flex-1">
-											<div className="font-medium">
-												{t("enroll.creditCard")}
-											</div>
-											<div className="text-sm text-muted-foreground">
-												{t("enroll.creditCardDesc")}
-											</div>
-										</div>
-									</div>
-								</CardContent>
-							</Card>
-						</div>
-					</div>
+								</div>
+								<Badge variant="secondary">{t("enroll.recommended")}</Badge>
+							</div>
+						</CardContent>
+					</Card>
 
 					<Button
 						className="w-full"
 						size="lg"
 						onClick={handleEnrollment}
-						disabled={!prerequisitesMet || !enrollmentMethod || isEnrolling}
+						disabled={!canEnroll || isEnrolling}
 					>
 						{isEnrolling
 							? t("enroll.processing")
 							: t("enroll.enrollFor", { price: course.price })}
 					</Button>
 				</div>
-			)}
+			) : null}
 
 			<div className="text-xs text-muted-foreground text-center space-y-1">
 				<p>{t("enroll.moneyBack")}</p>
