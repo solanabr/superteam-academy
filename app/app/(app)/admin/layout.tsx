@@ -10,6 +10,7 @@ import {
   KeyRound,
   Award,
   ChevronRight,
+  Key,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +20,7 @@ const adminNavItems = [
   { href: "/admin/courses", label: "Courses", icon: BookOpen },
   { href: "/admin/minters", label: "Minters", icon: KeyRound },
   { href: "/admin/achievements", label: "Achievements", icon: Award },
+  { href: "/admin/api-keys", label: "API Keys", icon: Key },
 ];
 
 export default function AdminLayout({

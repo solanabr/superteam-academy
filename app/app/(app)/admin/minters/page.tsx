@@ -80,7 +80,7 @@ export default function AdminMintersPage() {
                     }
                   />
                 </div>
-                <div className="space-y-2 w-32">
+                <div className="space-y-2">
                   <Label>maxXpPerCall (0=unlimited)</Label>
                   <Input
                     type="number"

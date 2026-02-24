@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/app";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useIsAdmin, useConfig } from "@/hooks";
 import Link from "next/link";
-import { Settings, BookOpen, KeyRound, Award, ArrowRight } from "lucide-react";
+import { Settings, BookOpen, KeyRound, Award, ArrowRight, Key } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 const adminSections = [
@@ -34,6 +34,13 @@ const adminSections = [
     title: "Achievements",
     description: "Create and deactivate achievement types.",
     icon: Award,
+    authorityOnly: true,
+  },
+  {
+    href: "/admin/api-keys",
+    title: "API Keys",
+    description: "Generate admin or client API keys for backend and integrations.",
+    icon: Key,
     authorityOnly: true,
   },
 ];
