@@ -46,10 +46,10 @@ export function Navbar() {
           <NetworkBadge />
           <div className="hidden items-center gap-4 md:flex">
             <Link
-              href="/"
+              href="/#catalog"
               className="text-sm text-content-secondary transition-colors hover:text-content"
             >
-              {t("backToCourses")}
+              {t("courses")}
             </Link>
             <Link
               href="/my-learning"
