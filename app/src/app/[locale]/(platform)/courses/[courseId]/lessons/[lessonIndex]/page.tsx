@@ -9,6 +9,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
 } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { Link } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -24,9 +25,23 @@ import { Badge } from '@/components/ui/badge';
 import { LessonSidebar } from '@/components/lessons/lesson-sidebar';
 import { LessonContent } from '@/components/lessons/lesson-content';
 import { LessonCompleteButton } from '@/components/lessons/lesson-complete-button';
-import { MonacoEditorWrapper } from '@/components/editor/monaco-editor-wrapper';
-import { OutputPanel } from '@/components/editor/output-panel';
 import type { TestResult } from '@/components/editor/output-panel';
+
+const MonacoEditorWrapper = dynamic(
+  () => import('@/components/editor/monaco-editor-wrapper').then((m) => m.MonacoEditorWrapper),
+  {
+    ssr: false,
+    loading: () => <Skeleton className="h-64 w-full" />,
+  },
+);
+
+const OutputPanel = dynamic(
+  () => import('@/components/editor/output-panel').then((m) => m.OutputPanel),
+  {
+    ssr: false,
+    loading: () => <Skeleton className="h-40 w-full" />,
+  },
+);
 import { useEnrollment } from '@/lib/hooks/use-enrollment';
 import { useCourseStore } from '@/lib/stores/course-store';
 

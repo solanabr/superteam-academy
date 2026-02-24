@@ -10,15 +10,30 @@ import {
   Send,
   CheckCircle2,
 } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { Link } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ChallengeInstructions } from '@/components/challenges/challenge-instructions';
-import { TestResultsPanel } from '@/components/challenges/test-results-panel';
 import type { TestResult } from '@/components/challenges/test-case-row';
-import { MonacoEditorWrapper } from '@/components/editor/monaco-editor-wrapper';
 import { XpToast } from '@/components/gamification/xp-toast';
+
+const MonacoEditorWrapper = dynamic(
+  () => import('@/components/editor/monaco-editor-wrapper').then((m) => m.MonacoEditorWrapper),
+  {
+    ssr: false,
+    loading: () => <Skeleton className="h-64 w-full" />,
+  },
+);
+
+const TestResultsPanel = dynamic(
+  () => import('@/components/challenges/test-results-panel').then((m) => m.TestResultsPanel),
+  {
+    ssr: false,
+    loading: () => <Skeleton className="h-64 w-full" />,
+  },
+);
 import { ConfettiAnimation } from '@/components/gamification/confetti-animation';
 import { useEnrollment } from '@/lib/hooks/use-enrollment';
 import { useStreak } from '@/lib/hooks/use-streak';

@@ -96,7 +96,7 @@ export function StatsSummary({ stats, isLoading = false, className }: StatsSumma
 
   if (isLoading) {
     return (
-      <div className={cn('grid grid-cols-2 gap-3 lg:grid-cols-4', className)}>
+      <div className={cn('grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 lg:grid-cols-4', className)}>
         {Array.from({ length: 8 }).map((_, i) => (
           <StatItemSkeleton key={i} />
         ))}
@@ -105,7 +105,7 @@ export function StatsSummary({ stats, isLoading = false, className }: StatsSumma
   }
 
   return (
-    <div className={cn('grid grid-cols-2 gap-3 lg:grid-cols-4', className)}>
+    <div className={cn('grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 lg:grid-cols-4', className)}>
       <StatItem
         icon={<Zap className="size-4 text-yellow-600 dark:text-yellow-400" />}
         iconBg="bg-yellow-100 dark:bg-yellow-900/40"

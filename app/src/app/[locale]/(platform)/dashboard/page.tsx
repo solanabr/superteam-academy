@@ -2,19 +2,28 @@
 
 import { useEffect } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
+import dynamic from 'next/dynamic';
 import { useUserStore } from '@/lib/stores/user-store';
 import { useCourseStore } from '@/lib/stores/course-store';
 import { useXp } from '@/lib/hooks/use-xp';
 import { useStreak } from '@/lib/hooks/use-streak';
 import { useAchievements } from '@/lib/hooks/use-achievements';
 import { useCredentials } from '@/lib/hooks/use-credentials';
+import { Skeleton } from '@/components/ui/skeleton';
 import { WelcomeBanner } from '@/components/dashboard/welcome-banner';
 import { QuickStats } from '@/components/dashboard/quick-stats';
 import { ContinueLearning } from '@/components/dashboard/continue-learning';
-import { ActivityHeatmap } from '@/components/dashboard/activity-heatmap';
 import { RecentAchievements } from '@/components/dashboard/recent-achievements';
 import { CredentialGallery } from '@/components/credentials/credential-gallery';
 import { RecommendedCourses } from '@/components/dashboard/recommended-courses';
+
+const ActivityHeatmap = dynamic(
+  () => import('@/components/dashboard/activity-heatmap').then((m) => m.ActivityHeatmap),
+  {
+    ssr: false,
+    loading: () => <Skeleton className="h-40 w-full" />,
+  },
+);
 
 export default function DashboardPage() {
   const { publicKey } = useWallet();

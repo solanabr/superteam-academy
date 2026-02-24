@@ -1,6 +1,14 @@
+import type { Metadata } from 'next';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { AdminSidebar } from '@/components/admin/admin-sidebar';
+
+export const metadata: Metadata = {
+  title: {
+    default: 'Admin',
+    template: '%s | Admin | Superteam Academy',
+  },
+};
 
 /**
  * Admin layout with dedicated admin sidebar navigation.

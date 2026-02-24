@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 // Wallet context provided by layout
 import { PublicKey } from '@solana/web3.js';
 import { useTranslations } from 'next-intl';
+import dynamic from 'next/dynamic';
 import { useUserStore } from '@/lib/stores/user-store';
 import { useCourseStore } from '@/lib/stores/course-store';
 import { useXp } from '@/lib/hooks/use-xp';
@@ -12,12 +13,21 @@ import { useStreak } from '@/lib/hooks/use-streak';
 import { useAchievements } from '@/lib/hooks/use-achievements';
 import { useCredentials } from '@/lib/hooks/use-credentials';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Skeleton } from '@/components/ui/skeleton';
 import { ProfileHeader } from '@/components/profile/profile-header';
 import { StatsSummary, type ProfileStats } from '@/components/profile/stats-summary';
-import { SkillRadar, type SkillAxis } from '@/components/profile/skill-radar';
+import type { SkillAxis } from '@/components/profile/skill-radar';
 import { AchievementGrid } from '@/components/profile/achievement-grid';
 import { CompletedCoursesList } from '@/components/profile/completed-courses-list';
 import { CredentialGallery } from '@/components/credentials/credential-gallery';
+
+const SkillRadar = dynamic(
+  () => import('@/components/profile/skill-radar').then((m) => m.SkillRadar),
+  {
+    ssr: false,
+    loading: () => <Skeleton className="h-64 w-full" />,
+  },
+);
 
 /**
  * Track ID to label mapping for skill radar.

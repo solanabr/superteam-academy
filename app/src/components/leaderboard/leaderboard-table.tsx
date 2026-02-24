@@ -69,7 +69,7 @@ export function LeaderboardTable({
 
   if (isLoading) {
     return (
-      <div className={cn('rounded-xl border bg-card', className)}>
+      <div className={cn('rounded-xl border bg-card overflow-x-auto', className)}>
         <Table>
           <TableHeader>
             <TableRow>
@@ -95,7 +95,7 @@ export function LeaderboardTable({
 
   return (
     <div className={cn('space-y-4', className)}>
-      <div className="rounded-xl border bg-card overflow-hidden">
+      <div className="rounded-xl border bg-card overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>

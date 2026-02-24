@@ -1,6 +1,14 @@
+import type { Metadata } from 'next';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { Sidebar } from '@/components/layout/sidebar';
+
+export const metadata: Metadata = {
+  title: {
+    default: 'Platform',
+    template: '%s | Superteam Academy',
+  },
+};
 
 export default function PlatformLayout({
   children,
