@@ -134,34 +134,30 @@ const socialLinks: SocialLink[] = [
 ];
 
 export function Footer() {
-  const t = useTranslations('nav');
+  const nav = useTranslations('nav');
+  const t = useTranslations('footer');
 
-  /**
-   * Platform links use existing translation keys from the nav namespace.
-   * Resource and legal links use static English text — when footer-specific
-   * translation keys are added to locale files, swap these for t() calls.
-   */
   const columns: FooterColumn[] = [
     {
-      title: 'Platform',
+      title: t('column_platform'),
       links: [
-        { label: t('courses'), href: '/courses' },
-        { label: t('leaderboard'), href: '/leaderboard' },
-        { label: t('community'), href: '/community' },
-        { label: t('dashboard'), href: '/dashboard' },
+        { label: nav('courses'), href: '/courses' },
+        { label: nav('leaderboard'), href: '/leaderboard' },
+        { label: nav('community'), href: '/community' },
+        { label: nav('dashboard'), href: '/dashboard' },
       ],
     },
     {
-      title: 'Resources',
+      title: t('column_resources'),
       links: [
-        { label: 'Documentation', href: '/docs' },
+        { label: t('link_documentation'), href: '/docs' },
         {
           label: 'GitHub',
           href: 'https://github.com/superteam-fun',
           external: true,
         },
         {
-          label: 'Solana Docs',
+          label: t('link_solana_docs'),
           href: 'https://solana.com/docs',
           external: true,
         },
@@ -173,11 +169,11 @@ export function Footer() {
       ],
     },
     {
-      title: 'Legal',
+      title: t('column_legal'),
       links: [
-        { label: 'Terms', href: '/terms' },
-        { label: 'Privacy', href: '/privacy' },
-        { label: 'Contact', href: '/contact' },
+        { label: t('link_terms'), href: '/terms' },
+        { label: t('link_privacy'), href: '/privacy' },
+        { label: t('link_contact'), href: '/contact' },
       ],
     },
   ];
@@ -204,7 +200,7 @@ export function Footer() {
               <span className="font-bold text-lg">Superteam Academy</span>
             </Link>
             <p className="mt-4 max-w-xs text-sm text-muted-foreground">
-              Learn Solana. Earn Credentials.
+              {t('brand_tagline')}
             </p>
           </div>
 
@@ -247,14 +243,14 @@ export function Footer() {
         <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
           {/* Copyright */}
           <p className="text-xs text-muted-foreground">
-            &copy; {currentYear} Superteam Academy. All rights reserved.
+            {t('copyright', { year: currentYear })}
           </p>
 
           {/* Built on Solana Badge */}
           <div className="flex items-center gap-1.5 rounded-full border border-border/50 bg-muted/50 px-3 py-1">
             <SolanaLogo className="h-3.5 w-3.5" />
             <span className="text-xs font-medium text-muted-foreground">
-              Built on Solana
+              {t('built_on_solana')}
             </span>
           </div>
 

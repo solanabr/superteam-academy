@@ -294,5 +294,18 @@
     "difficulty_intermediate": "Intermediate",
     "difficulty_advanced": "Advanced",
     "start_learning": "Start Learning"
+  },
+  "footer": {
+    "brand_tagline": "Learn Solana. Earn Credentials.",
+    "column_platform": "Platform",
+    "column_resources": "Resources",
+    "column_legal": "Legal",
+    "link_documentation": "Documentation",
+    "link_solana_docs": "Solana Docs",
+    "link_terms": "Terms",
+    "link_privacy": "Privacy",
+    "link_contact": "Contact",
+    "copyright": "\u00A9 {year} Superteam Academy. All rights reserved.",
+    "built_on_solana": "Built on Solana"
   }
 }
