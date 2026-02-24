@@ -1,25 +1,21 @@
-export const SOLANA_NETWORK = (process.env.NEXT_PUBLIC_SOLANA_NETWORK ??
-  "devnet") as "mainnet-beta" | "devnet";
+import {
+  NEXT_PUBLIC_SOLANA_NETWORK,
+  NEXT_PUBLIC_PROGRAM_ID,
+  NEXT_PUBLIC_XP_MINT_ADDRESS,
+  NEXT_PUBLIC_CREDENTIAL_COLLECTION,
+  HELIUS_RPC_URL as ENV_HELIUS_RPC_URL,
+  SOLANA_EXPLORER_URL as ENV_SOLANA_EXPLORER_URL,
+} from "./env";
 
-const HELIUS_KEY = process.env.HELIUS_API_KEY ?? "";
+export const SOLANA_NETWORK = NEXT_PUBLIC_SOLANA_NETWORK;
 
 /** Server-side RPC URL (includes API key). Use only in server components / API routes. */
-export const HELIUS_RPC_URL = HELIUS_KEY
-  ? `https://${SOLANA_NETWORK === "devnet" ? "devnet" : "mainnet"}.helius-rpc.com/?api-key=${HELIUS_KEY}`
-  : SOLANA_NETWORK === "devnet"
-    ? "https://api.devnet.solana.com"
-    : "https://api.mainnet-beta.solana.com";
+export const HELIUS_RPC_URL = ENV_HELIUS_RPC_URL;
 
-export const XP_MINT_ADDRESS = process.env.NEXT_PUBLIC_XP_MINT_ADDRESS ?? "";
-export const PROGRAM_ID =
-  process.env.NEXT_PUBLIC_PROGRAM_ID ||
-  "EHgTQKSeAAoh7JVMij46CFVzThh4xUi7RDjZjHnA7qR6";
-export const CREDENTIAL_COLLECTION =
-  process.env.NEXT_PUBLIC_CREDENTIAL_COLLECTION ?? "";
-export const SOLANA_EXPLORER_URL =
-  SOLANA_NETWORK === "devnet"
-    ? "https://explorer.solana.com/address/%s?cluster=devnet"
-    : "https://explorer.solana.com/address/%s";
+export const XP_MINT_ADDRESS = NEXT_PUBLIC_XP_MINT_ADDRESS;
+export const PROGRAM_ID = NEXT_PUBLIC_PROGRAM_ID;
+export const CREDENTIAL_COLLECTION = NEXT_PUBLIC_CREDENTIAL_COLLECTION;
+export const SOLANA_EXPLORER_URL = ENV_SOLANA_EXPLORER_URL;
 export const APP_NAME = "Superteam Academy";
 
 export const DIFFICULTY_LEVELS = [

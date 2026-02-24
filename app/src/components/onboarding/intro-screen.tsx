@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { SwirlArrow, HandLabel } from "@/components/ui/hand-drawn-arrows";
 
 interface IntroScreenProps {
@@ -11,6 +12,7 @@ interface IntroScreenProps {
 const CAVEAT = "var(--font-caveat), 'Caveat', cursive";
 
 export function IntroScreen({ onContinue, onSkip }: IntroScreenProps) {
+  const t = useTranslations("onboarding");
   const [phase, setPhase] = useState(0);
 
   // Stagger content in
@@ -53,7 +55,7 @@ export function IntroScreen({ onContinue, onSkip }: IntroScreenProps) {
             transform: "rotate(-2deg)",
           }}
         >
-          Hey there, builder
+          {t("heyBuilder")}
         </span>
       </div>
 
@@ -72,10 +74,10 @@ export function IntroScreen({ onContinue, onSkip }: IntroScreenProps) {
           transition: "all 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.1s",
         }}
       >
-        Before you dive in,
+        {t("introTitle")}
         <br />
         <span style={{ fontStyle: "italic", color: "var(--v9-sol-green)" }}>
-          let&apos;s calibrate.
+          {t("introTitleAccent")}
         </span>
       </h1>
 
@@ -108,18 +110,18 @@ export function IntroScreen({ onContinue, onSkip }: IntroScreenProps) {
         {[
           {
             num: "01",
-            text: "8 quick questions about your Solana experience",
-            note: "takes ~90 seconds",
+            text: t("introStep1"),
+            note: t("introStep1Note"),
           },
           {
             num: "02",
-            text: "We figure out your skill level and preferred track",
-            note: "Rust, DeFi, NFTs, or Frontend",
+            text: t("introStep2"),
+            note: t("introStep2Note"),
           },
           {
             num: "03",
-            text: "Get a personalized learning path built for you",
-            note: "skip what you already know",
+            text: t("introStep3"),
+            note: t("introStep3Note"),
           },
         ].map((item, i) => (
           <div
@@ -187,7 +189,7 @@ export function IntroScreen({ onContinue, onSkip }: IntroScreenProps) {
           delay={phase >= 4 ? 0 : 99999}
           width={80}
           height={50}
-          label="ready?"
+          label={t("ready")}
           labelPosition="start"
           style={{ transform: "rotate(85deg) scaleX(-1)", margin: "0 auto" }}
         />
@@ -223,7 +225,7 @@ export function IntroScreen({ onContinue, onSkip }: IntroScreenProps) {
           el.style.boxShadow = "none";
         }}
       >
-        Begin Assessment
+        {t("beginAssessment")}
       </button>
 
       {/* Skip */}
@@ -249,7 +251,7 @@ export function IntroScreen({ onContinue, onSkip }: IntroScreenProps) {
           e.currentTarget.style.color = "var(--c-text-muted)";
         }}
       >
-        Skip for now
+        {t("skip")}
       </button>
 
       {/* Handwritten aside */}
@@ -266,7 +268,7 @@ export function IntroScreen({ onContinue, onSkip }: IntroScreenProps) {
           rotate={-2}
           delay={phase >= 4 ? 2400 : 99999}
         >
-          no wrong answers, promise
+          {t("noWrongAnswers")}
         </HandLabel>
       </div>
     </div>

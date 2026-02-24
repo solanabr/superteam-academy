@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useTranslations } from "next-intl";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { Download, X } from "lucide-react";
 import { SuperteamLogo } from "@/components/ui/superteam-logo";
 
@@ -55,14 +55,16 @@ export function InstallPrompt() {
     deferredPrompt.current = null;
   }, []);
 
+  const prefersReducedMotion = useReducedMotion();
+
   return (
     <AnimatePresence>
       {show && (
         <motion.div
-          initial={{ y: 100, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 100, opacity: 0 }}
-          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          initial={prefersReducedMotion ? false : { y: 100, opacity: 0 }}
+          animate={prefersReducedMotion ? { opacity: 1 } : { y: 0, opacity: 1 }}
+          exit={prefersReducedMotion ? { opacity: 0 } : { y: 100, opacity: 0 }}
+          transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
           role="dialog"
           aria-label={t("installTitle")}
           style={{

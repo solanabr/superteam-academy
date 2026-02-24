@@ -1,8 +1,7 @@
 import { PublicKey } from "@solana/web3.js";
+import { PROGRAM_ID as PROGRAM_ID_STR } from "@/lib/constants";
 
-const PROGRAM_ID = new PublicKey(
-  "EHgTQKSeAAoh7JVMij46CFVzThh4xUi7RDjZjHnA7qR6",
-);
+const PROGRAM_ID = new PublicKey(PROGRAM_ID_STR);
 
 export function findConfigPDA(programIdOverride?: PublicKey) {
   return PublicKey.findProgramAddressSync(

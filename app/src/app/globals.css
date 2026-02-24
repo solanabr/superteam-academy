@@ -331,10 +331,6 @@ html.light ::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.15); border: 
 .light ::-webkit-scrollbar-thumb:hover,
 html.light ::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.25); }
 
-/* Solana gradient — ONLY on small logo icons (navbar/footer) */
-.gradient-solana {
-  background: linear-gradient(135deg, var(--solana-purple), var(--solana-green));
-}
 
 /* ============================================================
    Solana Foundation Signature Border Effects
@@ -407,21 +403,6 @@ html.light ::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.25); }
   100% { --rotation: 360deg; }
 }
 
-/* Credential card — premium gradient border (legacy compat) */
-.credential-border {
-  position: relative;
-  border-radius: var(--radius);
-  background: var(--card);
-}
-.credential-border::before {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  border-radius: calc(var(--radius) + 1px);
-  background: linear-gradient(135deg, var(--solana-purple), var(--solana-green));
-  z-index: -1;
-}
-
 /* Holographic sheen overlay for credential cards */
 .credential-sheen {
   position: absolute;
@@ -444,41 +425,11 @@ html.light ::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.25); }
   outline: none;
 }
 
-/* Focus ring utility class */
-.focus-ring {
-  outline: none;
-  box-shadow: 0 0 0 2px var(--background), 0 0 0 4px rgba(85, 233, 171, 0.5);
-}
 
 /* ============================================================
    Animations
    ============================================================ */
 
-/* Solana Foundation scroll animations */
-@keyframes nd-fade-in-up {
-  from { opacity: 0; transform: translateY(50px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.animate-nd-fade-in-up {
-  animation: nd-fade-in-up 0.6s ease-out forwards;
-  opacity: 0;
-}
-
-@keyframes nd-curtain-ltr {
-  from { clip-path: inset(0 100% 0 0); }
-  to { clip-path: inset(0 0 0 0); }
-}
-.animate-nd-curtain-ltr {
-  animation: nd-curtain-ltr 0.8s ease-out forwards;
-  clip-path: inset(0 100% 0 0);
-}
-
-/* XP float animation */
-@keyframes float-up {
-  0% { opacity: 1; transform: translateY(0) scale(1); }
-  100% { opacity: 0; transform: translateY(-32px) scale(0.9); }
-}
-.animate-float-up { animation: float-up 1.2s ease-out forwards; }
 
 /* Pop animation — XP badge gain */
 @keyframes pop {
@@ -500,13 +451,6 @@ html.light ::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.25); }
 .animate-slide-in { animation: slide-in-bottom 300ms ease-out; }
 .animate-slide-out { animation: slide-out-bottom 200ms ease-in forwards; }
 
-/* XP flash */
-@keyframes xp-flash {
-  0% { color: var(--nd-highlight-green); }
-  100% { color: var(--foreground); }
-}
-.animate-xp-flash { animation: xp-flash 600ms ease-out; }
-
 /* Smooth transitions on interactive elements */
 a, button, input, select, textarea,
 [role="button"], [role="checkbox"], [role="switch"],
@@ -520,18 +464,6 @@ summary, details, label {
 /* ============================================================
    Hero + Premium Gradients
    ============================================================ */
-
-.gradient-text-hero {
-  background: linear-gradient(135deg, #00FFA3 0%, #03E1FF 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.gradient-divider {
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--nd-border-prominent) 20%, var(--nd-border-prominent) 80%, transparent);
-}
 
 /* Skeleton shimmer */
 .skeleton-shimmer {
@@ -548,118 +480,7 @@ summary, details, label {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
-@keyframes gradient-shift {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-}
-@keyframes gradient-sweep {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
-
 summary::-webkit-details-marker { display: none; }
-
-/* ============================================================
-   Solana Foundation Typography Scale (nd-*)
-   ============================================================ */
-
-.nd-heading-2xl {
-  font-family: "Diatype", var(--font-geist-sans), sans-serif;
-  font-weight: 500;
-  font-size: 40px;
-  line-height: 1.1;
-  letter-spacing: -1.2px;
-}
-@media (min-width: 768px) {
-  .nd-heading-2xl { font-size: 56px; line-height: 1.0; letter-spacing: -1.68px; }
-}
-@media (min-width: 1280px) {
-  .nd-heading-2xl { font-size: 88px; line-height: 1.0; letter-spacing: -2.64px; }
-}
-
-.nd-heading-xl {
-  font-family: "Diatype", var(--font-geist-sans), sans-serif;
-  font-weight: 500;
-  font-size: 40px;
-  line-height: 1.1;
-}
-@media (min-width: 768px) {
-  .nd-heading-xl { font-size: 48px; line-height: 1.083; }
-}
-@media (min-width: 1280px) {
-  .nd-heading-xl { font-size: 80px; line-height: 1.0; }
-}
-
-.nd-heading-l {
-  font-family: "Diatype", var(--font-geist-sans), sans-serif;
-  font-weight: 500;
-  font-size: 32px;
-  line-height: 1.25;
-  letter-spacing: -1.28px;
-}
-@media (min-width: 768px) {
-  .nd-heading-l { font-size: 40px; line-height: 1.1; letter-spacing: -1.6px; }
-}
-@media (min-width: 1280px) {
-  .nd-heading-l { font-size: 64px; line-height: 1.125; letter-spacing: -2.56px; }
-}
-
-.nd-heading-m {
-  font-family: "Diatype", var(--font-geist-sans), sans-serif;
-  font-weight: 500;
-  font-size: 18px;
-  line-height: 1.333;
-  letter-spacing: -0.54px;
-}
-@media (min-width: 768px) {
-  .nd-heading-m { font-size: 32px; line-height: 1.25; letter-spacing: -0.96px; }
-}
-@media (min-width: 1280px) {
-  .nd-heading-m { font-size: 36px; line-height: 1.222; letter-spacing: -1.08px; }
-}
-
-.nd-heading-s {
-  font-family: "Diatype", var(--font-geist-sans), sans-serif;
-  font-weight: 500;
-  font-size: 16px;
-  line-height: 1.5;
-  letter-spacing: -0.32px;
-}
-@media (min-width: 768px) {
-  .nd-heading-s { font-size: 24px; line-height: 1.333; letter-spacing: -0.48px; }
-}
-
-.nd-heading-xs {
-  font-family: "Diatype", var(--font-geist-sans), sans-serif;
-  font-weight: 500;
-  font-size: 16px;
-  line-height: 1.5;
-}
-@media (min-width: 768px) {
-  .nd-heading-xs { font-size: 18px; line-height: 1.333; }
-}
-@media (min-width: 1280px) {
-  .nd-heading-xs { font-size: 22px; line-height: 1.273; }
-}
-
-.nd-body-2xl { font-size: 20px; line-height: 1.4; }
-@media (min-width: 768px) { .nd-body-2xl { font-size: 32px; line-height: 1.25; } }
-
-.nd-body-xl { font-size: 18px; line-height: 1.33; letter-spacing: -0.36px; }
-@media (min-width: 768px) { .nd-body-xl { font-size: 24px; letter-spacing: -0.48px; } }
-
-.nd-body-l { font-size: 16px; line-height: 1.375; letter-spacing: -0.16px; }
-@media (min-width: 768px) { .nd-body-l { font-size: 18px; line-height: 1.33; letter-spacing: -0.18px; } }
-@media (min-width: 1280px) { .nd-body-l { font-size: 20px; line-height: 1.5; letter-spacing: -0.2px; } }
-
-.nd-body-m { font-size: 16px; line-height: 1.25; letter-spacing: -0.16px; }
-@media (min-width: 768px) { .nd-body-m { font-size: 18px; line-height: 1.44; letter-spacing: -0.18px; } }
-
-.nd-body-s { font-size: 14px; line-height: 1.42; letter-spacing: -0.14px; }
-@media (min-width: 768px) { .nd-body-s { font-size: 16px; line-height: 1.5; letter-spacing: -0.16px; } }
-
-.nd-body-xs { font-size: 12px; line-height: 1.33; }
-@media (min-width: 768px) { .nd-body-xs { font-size: 14px; line-height: 1.43; } }
 
 /* ============================================================
    Typography — Tailwind prose overrides for lesson content
@@ -694,31 +515,6 @@ summary::-webkit-details-marker { display: none; }
 .heatmap-2 { background-color: rgba(85, 233, 171, 0.4); }
 .heatmap-3 { background-color: rgba(85, 233, 171, 0.7); }
 .heatmap-4 { background-color: #55E9AB; }
-
-/* ============================================================
-   Polish Utilities
-   ============================================================ */
-
-/* CTA glow */
-.cta-glow { transition: box-shadow 200ms ease-out, background-color 200ms ease-out; }
-.cta-glow:hover { box-shadow: 0 0 24px -4px rgba(85, 233, 171, 0.3); }
-
-/* Noise texture overlay */
-.bg-noise {
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
-}
-
-/* ============================================================
-   Glow Border Utility — Precision Terminal
-   ============================================================ */
-.glow-border {
-  border: 1px solid var(--nd-border-light);
-  transition: border-color 200ms ease-out, box-shadow 200ms ease-out;
-}
-.glow-border:hover {
-  border-color: rgba(0, 255, 163, 0.4);
-  box-shadow: 0 0 12px -2px rgba(0, 255, 163, 0.15), inset 0 0 12px -4px rgba(0, 255, 163, 0.05);
-}
 
 /* ============================================================
    Hero LCP — CSS-only character reveal + section reveals
@@ -789,54 +585,7 @@ html.light .landing-stat-item:not(:last-child) { border-right-color: rgba(0,0,0,
   html.light .landing-stat-item:nth-child(-n+2) { border-bottom-color: rgba(0,0,0,0.06); }
 }
 
-/* ============================================================
-   Clip-Path Reveal Animations — Precision Terminal
-   ============================================================ */
-@keyframes clip-reveal-up {
-  from { clip-path: inset(100% 0 0 0); }
-  to { clip-path: inset(0 0 0 0); }
-}
-@keyframes clip-reveal-down {
-  from { clip-path: inset(0 0 100% 0); }
-  to { clip-path: inset(0 0 0 0); }
-}
-@keyframes clip-reveal-right {
-  from { clip-path: inset(0 100% 0 0); }
-  to { clip-path: inset(0 0 0 0); }
-}
-@keyframes clip-diagonal {
-  from { clip-path: polygon(0 0, 0 0, 0 100%, 0 100%); }
-  to { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); }
-}
-.animate-clip-reveal-up { animation: clip-reveal-up 0.6s ease-out forwards; clip-path: inset(100% 0 0 0); }
-.animate-clip-reveal-down { animation: clip-reveal-down 0.6s ease-out forwards; clip-path: inset(0 0 100% 0); }
-.animate-clip-reveal-right { animation: clip-reveal-right 0.7s ease-out forwards; clip-path: inset(0 100% 0 0); }
-.animate-clip-diagonal { animation: clip-diagonal 0.7s ease-out forwards; clip-path: polygon(0 0, 0 0, 0 100%, 0 100%); }
 
-/* ============================================================
-   Terminal Effects — Precision Terminal (Competition Mode)
-   ============================================================ */
-
-/* Terminal cursor blink */
-@keyframes cursor-blink {
-  0%, 49% { opacity: 1; }
-  50%, 100% { opacity: 0; }
-}
-.terminal-cursor::after {
-  content: '\2588';
-  color: #00FFA3;
-  animation: cursor-blink 1s step-end infinite;
-  margin-left: 2px;
-}
-
-/* Glow pulse — for live status indicators */
-@keyframes glow-pulse {
-  0%, 100% { box-shadow: 0 0 4px rgba(0, 255, 163, 0.4); }
-  50% { box-shadow: 0 0 12px rgba(0, 255, 163, 0.8), 0 0 24px rgba(0, 255, 163, 0.3); }
-}
-.glow-pulse {
-  animation: glow-pulse 2s ease-in-out infinite;
-}
 
 /* Green dot — live status */
 @keyframes dot-pulse {
@@ -852,213 +601,15 @@ html.light .landing-stat-item:not(:last-child) { border-right-color: rgba(0,0,0,
   box-shadow: 0 0 6px rgba(0, 255, 163, 0.5);
 }
 
-/* Scanline overlay — subtle retro CRT effect */
-.scanlines {
-  pointer-events: none;
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(0, 0, 0, 0.015) 2px,
-    rgba(0, 0, 0, 0.015) 4px
-  );
-  opacity: 0.4;
-}
 
-/* Text typing animation */
-@keyframes typing {
-  from { width: 0; }
-  to { width: 100%; }
-}
-.typing-text {
-  overflow: hidden;
-  white-space: nowrap;
-  animation: typing 1.5s steps(30) forwards;
-  width: 0;
-}
-
-/* Border beam — animated border light traveling around element */
-@property --border-angle {
-  syntax: "<angle>";
-  initial-value: 0deg;
-  inherits: false;
-}
-@keyframes border-beam {
-  to { --border-angle: 360deg; }
-}
-.border-beam {
-  --beam-size: 120px;
-  position: relative;
-  overflow: hidden;
-  border-radius: 2px;
-}
-.border-beam::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background: conic-gradient(from var(--border-angle), transparent 80%, #00FFA3 90%, #03E1FF 95%, transparent 100%);
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  animation: border-beam 4s linear infinite;
-  pointer-events: none;
-}
-
-/* Glitch text effect — for section headers on hover */
-@keyframes glitch-1 {
-  0%, 100% { clip-path: inset(0 0 80% 0); transform: translate(-2px, 2px); }
-  20% { clip-path: inset(20% 0 60% 0); transform: translate(2px, -1px); }
-  40% { clip-path: inset(40% 0 40% 0); transform: translate(-1px, 1px); }
-  60% { clip-path: inset(60% 0 20% 0); transform: translate(1px, -2px); }
-  80% { clip-path: inset(80% 0 0 0); transform: translate(-2px, 2px); }
-}
-@keyframes glitch-2 {
-  0%, 100% { clip-path: inset(80% 0 0 0); transform: translate(2px, -2px); }
-  20% { clip-path: inset(60% 0 20% 0); transform: translate(-2px, 1px); }
-  40% { clip-path: inset(40% 0 40% 0); transform: translate(1px, -1px); }
-  60% { clip-path: inset(20% 0 60% 0); transform: translate(-1px, 2px); }
-  80% { clip-path: inset(0 0 80% 0); transform: translate(2px, -2px); }
-}
-.glitch-hover {
-  position: relative;
-}
-.glitch-hover::before,
-.glitch-hover::after {
-  content: attr(data-text);
-  position: absolute;
-  inset: 0;
-  color: inherit;
-  opacity: 0;
-  pointer-events: none;
-}
-.glitch-hover:hover::before {
-  opacity: 0.8;
-  color: #00FFA3;
-  animation: glitch-1 0.3s linear;
-}
-.glitch-hover:hover::after {
-  opacity: 0.8;
-  color: #03E1FF;
-  animation: glitch-2 0.3s linear;
-}
-
-/* Card 3D tilt on hover */
-.card-tilt {
-  transition: transform 300ms ease-out;
-  transform-style: preserve-3d;
-  perspective: 800px;
-}
-.card-tilt:hover {
-  transform: rotateX(-2deg) rotateY(2deg) scale(1.01);
-}
-
-/* Animated gradient mesh background for hero */
-@keyframes mesh-drift {
-  0%, 100% {
-    background-position: 0% 0%, 100% 100%, 50% 50%;
-  }
-  33% {
-    background-position: 100% 0%, 0% 100%, 50% 0%;
-  }
-  66% {
-    background-position: 50% 100%, 50% 0%, 0% 50%;
-  }
-}
-.gradient-mesh {
-  background:
-    radial-gradient(ellipse at 20% 50%, rgba(0, 255, 163, 0.06) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 20%, rgba(3, 225, 255, 0.04) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 80%, rgba(220, 31, 255, 0.03) 0%, transparent 50%);
-  background-size: 200% 200%, 200% 200%, 200% 200%;
-  animation: mesh-drift 20s ease-in-out infinite;
-}
-
-/* Number counter roll effect */
-@keyframes number-roll {
-  0% { transform: translateY(100%); opacity: 0; }
-  60% { opacity: 1; }
-  100% { transform: translateY(0); }
-}
-.number-roll {
-  display: inline-block;
-  animation: number-roll 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-/* Stagger utility for children */
-.stagger-children > * { opacity: 0; animation: nd-fade-in-up 0.5s ease-out forwards; }
-.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
-.stagger-children > *:nth-child(2) { animation-delay: 80ms; }
-.stagger-children > *:nth-child(3) { animation-delay: 160ms; }
-.stagger-children > *:nth-child(4) { animation-delay: 240ms; }
-.stagger-children > *:nth-child(5) { animation-delay: 320ms; }
-.stagger-children > *:nth-child(6) { animation-delay: 400ms; }
-
-/* Ambient glow — section background accent */
-.ambient-glow {
-  position: relative;
-}
-.ambient-glow::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 600px;
-  height: 300px;
-  background: radial-gradient(ellipse, rgba(0, 255, 163, 0.04) 0%, transparent 70%);
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* Data stream decoration — vertical falling characters */
-@keyframes data-fall {
-  0% { transform: translateY(-100%); opacity: 0; }
-  10% { opacity: 0.3; }
-  90% { opacity: 0.3; }
-  100% { transform: translateY(100vh); opacity: 0; }
-}
 
 /* ============================================================
    Crypto-Native Micro-Interactions
    ============================================================ */
 
-/* Holographic shimmer on hover — for premium elements */
-@keyframes holo-shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-.holo-shimmer {
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(0, 255, 163, 0.04) 25%,
-    rgba(153, 69, 255, 0.06) 50%,
-    rgba(3, 225, 255, 0.04) 75%,
-    transparent 100%
-  );
-  background-size: 200% 100%;
-}
-.group:hover .holo-shimmer,
-.holo-shimmer:hover {
-  animation: holo-shimmer 2s linear infinite;
-}
-
 /* Neon text glow for XP values */
 .neon-green {
   text-shadow: 0 0 4px rgba(0, 255, 163, 0.3), 0 0 12px rgba(0, 255, 163, 0.15);
-}
-
-/* Particle canvas layer */
-.particle-canvas {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
 }
 
 /* Live ticker — pure CSS infinite scroll */
@@ -1085,53 +636,6 @@ html.light .landing-stat-item:not(:last-child) { border-right-color: rgba(0,0,0,
   animation: ticker-pulse 2s ease-in-out infinite;
 }
 
-/* Claim XP button glow sweep */
-@keyframes claim-sweep {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(200%); }
-}
-.claim-sweep::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(0, 255, 163, 0.15), transparent);
-  transform: translateX(-100%);
-  animation: claim-sweep 2s ease-in-out infinite;
-}
-
-/* Constellation node pulse */
-@keyframes node-pulse {
-  0%, 100% { transform: scale(1); filter: brightness(1); }
-  50% { transform: scale(1.08); filter: brightness(1.3); }
-}
-
-/* Leaderboard row "on fire" effect */
-.on-fire {
-  position: relative;
-}
-.on-fire::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(255, 197, 38, 0.03), transparent);
-  pointer-events: none;
-}
-
-/* Smooth entrance for ticker items */
-@keyframes ticker-entrance {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* Badge earn pop animation */
-@keyframes badge-earn {
-  0% { transform: scale(0) rotate(-15deg); opacity: 0; }
-  50% { transform: scale(1.2) rotate(5deg); opacity: 1; }
-  100% { transform: scale(1) rotate(0deg); opacity: 1; }
-}
-.animate-badge-earn {
-  animation: badge-earn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-}
 
 /* ============================================================
    V9 Awwwards-Quality Design System
@@ -1159,18 +663,6 @@ html.light .landing-stat-item:not(:last-child) { border-right-color: rgba(0,0,0,
   --v9-ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-
-/* V9 Dot grid background (Vercel technique) */
-.v9-grid-bg {
-  position: absolute;
-  inset: 0;
-  background-image:
-    radial-gradient(circle at 1px 1px, rgba(26,25,24,0.08) 1px, transparent 0);
-  background-size: 32px 32px;
-  mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black 20%, transparent 70%);
-  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black 20%, transparent 70%);
-  pointer-events: none;
-}
 
 /* V9 Fade-up animation */
 @keyframes v9-fade-up {
@@ -1242,33 +734,6 @@ html.light .landing-stat-item:not(:last-child) { border-right-color: rgba(0,0,0,
   color: var(--v9-mid-grey);
 }
 
-/* V9 Section label with slider controls */
-.v9-section-label {
-  font-family: var(--v9-mono);
-  font-size: 10px;
-  letter-spacing: 4px;
-  text-transform: uppercase;
-  color: var(--v9-mid-grey);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-/* V9 Course big numbers (Don't Board Me technique) */
-.v9-big-num {
-  font-family: var(--v9-serif);
-  font-weight: 900;
-  font-style: italic;
-  line-height: 0.8;
-  position: absolute;
-  right: 40px;
-  top: 50%;
-  transform: translateY(-50%);
-  opacity: 0.04;
-  pointer-events: none;
-  letter-spacing: -8px;
-  transition: opacity 0.5s;
-}
 
 /* V9 Progress track (Star Atlas HUD style) */
 .v9-progress-track {
@@ -1294,26 +759,6 @@ html.light .v9-progress-track {
 }
 html.light .v9-progress-label {
   color: rgba(0,0,0,0.4);
-}
-
-/* V9 Slider controls (Mercedes-Benz) */
-.v9-slider-btn {
-  width: 36px;
-  height: 36px;
-  border: 1px solid var(--v9-off-white);
-  background: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  color: var(--v9-dark);
-  transition: all 0.3s;
-}
-.v9-slider-btn:hover {
-  background: var(--v9-dark);
-  color: var(--v9-white);
-  border-color: var(--v9-dark);
 }
 
 /* V9 CTA buttons */
@@ -1357,33 +802,6 @@ html.light .v9-progress-label {
 }
 .v9-page-dark .v9-cta-ghost { color: var(--v9-warm-grey); }
 .v9-page-dark .v9-cta-ghost:hover { color: var(--v9-white); }
-.v9-page-dark .v9-slider-btn {
-  border-color: rgba(255,255,255,0.1);
-  color: var(--v9-white);
-}
-.v9-page-dark .v9-slider-btn:hover {
-  background: var(--v9-white);
-  color: var(--v9-dark);
-  border-color: var(--v9-white);
-}
-
-/* V9 Inline tag (pill) within hero paragraph */
-.v9-inline-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: var(--v9-dark);
-  color: var(--v9-white);
-  font-family: var(--v9-mono);
-  font-size: 11px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  padding: 6px 14px;
-  border-radius: 100px;
-  vertical-align: middle;
-  position: relative;
-  top: -2px;
-}
 
 /* V9 Course tags row */
 .v9-course-tag {
@@ -1440,24 +858,6 @@ html.light .v9-leader-entry.expanded {
   position: absolute;
   top: 12px;
   left: 40px;
-}
-
-/* V9 Feature columns (Locomotive editorial) */
-.v9-feature-col {
-  padding: 40px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.06);
-  transition: background 0.4s;
-}
-.v9-feature-col:hover {
-  background: rgba(255,255,255,0.06);
-}
-html.light .v9-feature-col {
-  background: rgba(0,0,0,0.02);
-  border-color: rgba(0,0,0,0.06);
-}
-html.light .v9-feature-col:hover {
-  background: rgba(0,0,0,0.04);
 }
 
 /* ============================================================

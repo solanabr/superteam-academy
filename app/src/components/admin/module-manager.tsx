@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   ChevronDown,
   ChevronUp,
@@ -65,6 +66,8 @@ export function ModuleManager({
   wallet,
   onUpdate,
 }: ModuleManagerProps) {
+  const t = useTranslations("admin");
+  const tc = useTranslations("common");
   const [expandedModule, setExpandedModule] = useState<string | null>(
     modules[0]?._id ?? null,
   );
@@ -203,7 +206,7 @@ export function ModuleManager({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold text-[var(--c-text)]">
-          Modules ({modules.length})
+          {t("modulesCount", { count: modules.length })}
         </h2>
         <Button
           size="sm"
@@ -211,7 +214,7 @@ export function ModuleManager({
           onClick={() => setAddingModule(true)}
           className="gap-1.5"
         >
-          <Plus className="h-3.5 w-3.5" /> Add Module
+          <Plus className="h-3.5 w-3.5" /> {t("addModule")}
         </Button>
       </div>
 
@@ -221,7 +224,7 @@ export function ModuleManager({
           <Input
             value={newModuleTitle}
             onChange={(e) => setNewModuleTitle(e.target.value)}
-            placeholder="Module title..."
+            placeholder={t("moduleTitlePlaceholder")}
             autoFocus
             onKeyDown={(e) => {
               if (e.key === "Enter") createModule();
@@ -237,7 +240,7 @@ export function ModuleManager({
                 setNewModuleTitle("");
               }}
             >
-              Cancel
+              {tc("cancel")}
             </Button>
             <Button
               size="sm"
@@ -247,7 +250,7 @@ export function ModuleManager({
               {loading === "create-module" ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
               ) : (
-                "Create Module"
+                t("createModule")
               )}
             </Button>
           </div>
@@ -258,7 +261,7 @@ export function ModuleManager({
       {sortedModules.length === 0 && !addingModule && (
         <div className="rounded-[2px] border border-[var(--c-border-subtle)] bg-[var(--c-bg-card)] p-8 text-center">
           <p className="text-sm text-[var(--c-text-2)]">
-            No modules yet. Add a module to start building your course.
+            {t("noModulesYet")}
           </p>
         </div>
       )}
@@ -287,8 +290,9 @@ export function ModuleManager({
                   {mod.title}
                 </h3>
                 <p className="text-[10px] text-[var(--c-text-2)]">
-                  {mod.lessons?.length ?? 0} lesson
-                  {(mod.lessons?.length ?? 0) !== 1 ? "s" : ""}
+                  {(mod.lessons?.length ?? 0) === 1
+                    ? t("lessonCount", { count: mod.lessons?.length ?? 0 })
+                    : t("lessonCountPlural", { count: mod.lessons?.length ?? 0 })}
                 </p>
               </div>
             </button>
@@ -297,7 +301,7 @@ export function ModuleManager({
                 onClick={() => reorderModule(mod._id, "up")}
                 disabled={modIdx === 0}
                 className="p-1.5 rounded hover:bg-[var(--c-border-subtle)] text-[var(--c-text-2)] hover:text-[var(--c-text)] transition-colors disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed"
-                aria-label="Move module up"
+                aria-label={t("moveModuleUp")}
               >
                 <ArrowUp className="h-3.5 w-3.5" />
               </button>
@@ -305,7 +309,7 @@ export function ModuleManager({
                 onClick={() => reorderModule(mod._id, "down")}
                 disabled={modIdx === sortedModules.length - 1}
                 className="p-1.5 rounded hover:bg-[var(--c-border-subtle)] text-[var(--c-text-2)] hover:text-[var(--c-text)] transition-colors disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed"
-                aria-label="Move module down"
+                aria-label={t("moveModuleDown")}
               >
                 <ArrowDown className="h-3.5 w-3.5" />
               </button>
@@ -321,7 +325,7 @@ export function ModuleManager({
                     {loading === `delete-${mod._id}` ? (
                       <Loader2 className="h-3 w-3 animate-spin" />
                     ) : (
-                      "Confirm"
+                      t("confirm")
                     )}
                   </Button>
                   <Button
@@ -330,14 +334,14 @@ export function ModuleManager({
                     onClick={() => setDeleteConfirm(null)}
                     className="text-[10px] h-6 px-2"
                   >
-                    Cancel
+                    {tc("cancel")}
                   </Button>
                 </div>
               ) : (
                 <button
                   onClick={() => setDeleteConfirm(mod._id)}
                   className="p-1.5 rounded hover:bg-[#EF4444]/10 text-[var(--c-text-2)] hover:text-[#EF4444] transition-colors cursor-pointer ml-1"
-                  aria-label="Delete module"
+                  aria-label={t("deleteModule")}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
@@ -415,7 +419,7 @@ export function ModuleManager({
                                   `delete-lesson-${lesson._id}` ? (
                                     <Loader2 className="h-3 w-3 animate-spin" />
                                   ) : (
-                                    "Delete"
+                                    t("delete")
                                   )}
                                 </Button>
                                 <Button
@@ -424,7 +428,7 @@ export function ModuleManager({
                                   onClick={() => setDeleteConfirm(null)}
                                   className="text-[10px] h-6 px-2"
                                 >
-                                  No
+                                  {t("no")}
                                 </Button>
                               </div>
                             ) : (
@@ -462,7 +466,7 @@ export function ModuleManager({
                   <Input
                     value={newLessonTitle}
                     onChange={(e) => setNewLessonTitle(e.target.value)}
-                    placeholder="Lesson title..."
+                    placeholder={t("lessonTitlePlaceholder")}
                     autoFocus
                     onKeyDown={(e) => {
                       if (e.key === "Enter") createLesson(mod._id);
@@ -474,20 +478,20 @@ export function ModuleManager({
                   />
                   <div className="flex items-center gap-2">
                     <label className="text-xs text-[var(--c-text-2)]">
-                      Type:
+                      {t("type")}
                     </label>
-                    {["reading", "video", "challenge", "quiz"].map((t) => (
+                    {["reading", "video", "challenge", "quiz"].map((lt) => (
                       <button
-                        key={t}
+                        key={lt}
                         type="button"
-                        onClick={() => setNewLessonType(t)}
+                        onClick={() => setNewLessonType(lt)}
                         className={`px-2 py-1 text-[10px] rounded-[1px] border transition-all cursor-pointer ${
-                          newLessonType === t
+                          newLessonType === lt
                             ? "border-[#00FFA3] text-[#00FFA3] bg-[#00FFA3]/10"
                             : "border-[var(--c-border-subtle)] text-[var(--c-text-2)]"
                         }`}
                       >
-                        {t}
+                        {lt}
                       </button>
                     ))}
                   </div>
@@ -500,7 +504,7 @@ export function ModuleManager({
                         setNewLessonTitle("");
                       }}
                     >
-                      Cancel
+                      {tc("cancel")}
                     </Button>
                     <Button
                       size="sm"
@@ -513,7 +517,7 @@ export function ModuleManager({
                       {loading === `create-lesson-${mod._id}` ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
                       ) : (
-                        "Add Lesson"
+                        t("addLesson")
                       )}
                     </Button>
                   </div>
@@ -524,7 +528,7 @@ export function ModuleManager({
                   className="mt-3 flex items-center gap-2 w-full rounded-[2px] border border-dashed border-[var(--c-border-subtle)] px-3 py-2.5 text-xs text-[var(--c-text-2)] hover:border-[#00FFA3]/40 hover:text-[#00FFA3] transition-colors cursor-pointer"
                 >
                   <Plus className="h-3.5 w-3.5" />
-                  Add Lesson
+                  {t("addLesson")}
                 </button>
               )}
             </div>

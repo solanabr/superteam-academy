@@ -13,6 +13,10 @@ import { challengeService } from "./challenge-service";
 
 const STORAGE_PREFIX = "stacad:progress:";
 const STREAK_PREFIX = "stacad:streak:";
+const STREAK_FREEZE_PREFIX = "stacad:streak-freeze:";
+
+export type StreakMilestone = 7 | 30;
+const STREAK_MILESTONES: StreakMilestone[] = [7, 30];
 
 /**
  * LocalStorage-backed implementation of LearningProgressService.
@@ -180,11 +184,17 @@ export class LocalStorageProgressService implements LearningProgressService {
 
   /**
    * Update streak as a side-effect of lesson completion.
+   * Returns any newly-hit milestone (7 or 30 days) for celebration UI.
    * In production, this is handled on-chain by the complete_lesson instruction.
    */
-  async recordActivity(userId: string, xpEarned: number = 40): Promise<void> {
+  async recordActivity(
+    userId: string,
+    xpEarned: number = 40,
+  ): Promise<StreakMilestone | null> {
     const streak = await this.getStreak(userId);
     const today = new Date().toISOString().slice(0, 10);
+    let milestone: StreakMilestone | null = null;
+    const prevStreak = streak.currentStreak;
 
     // Accumulate XP for today
     const todayXp = streak.activityHistory[today] ?? 0;
@@ -196,7 +206,11 @@ export class LocalStorageProgressService implements LearningProgressService {
       const yesterday = new Date(Date.now() - 86_400_000)
         .toISOString()
         .slice(0, 10);
+
       if (streak.lastActivityDate === yesterday) {
+        streak.currentStreak += 1;
+      } else if (this.hasActiveFreeze(userId, streak.lastActivityDate)) {
+        // Streak freeze was active -- preserve the streak
         streak.currentStreak += 1;
       } else {
         streak.currentStreak = 1;
@@ -207,11 +221,76 @@ export class LocalStorageProgressService implements LearningProgressService {
         streak.currentStreak,
       );
       streak.lastActivityDate = today;
+
+      // Detect newly crossed milestones
+      for (const m of STREAK_MILESTONES) {
+        if (streak.currentStreak >= m && prevStreak < m) {
+          milestone = m;
+        }
+      }
     }
 
     if (typeof window !== "undefined") {
       localStorage.setItem(STREAK_PREFIX + userId, JSON.stringify(streak));
     }
+
+    return milestone;
+  }
+
+  /**
+   * Check if a streak freeze was active covering the gap between lastActivity and today.
+   */
+  private hasActiveFreeze(userId: string, lastActivityDate: string): boolean {
+    if (typeof window === "undefined" || !lastActivityDate) return false;
+    const raw = localStorage.getItem(STREAK_FREEZE_PREFIX + userId);
+    if (!raw) return false;
+    try {
+      const data = JSON.parse(raw) as { week: string; usedOn?: string };
+      // Freeze covers the day after last activity
+      if (data.usedOn) return false; // already consumed
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Claim a streak freeze for this week. Returns true if granted.
+   * Each wallet gets 1 free freeze per calendar week (UTC).
+   */
+  async claimStreakFreeze(userId: string): Promise<boolean> {
+    if (typeof window === "undefined") return false;
+
+    const now = new Date();
+    const d = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    const weekNo = Math.ceil(
+      ((d.getTime() - yearStart.getTime()) / 86_400_000 + 1) / 7,
+    );
+    const currentWeek = `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, "0")}`;
+
+    const raw = localStorage.getItem(STREAK_FREEZE_PREFIX + userId);
+    if (raw) {
+      try {
+        const data = JSON.parse(raw) as { week: string };
+        if (data.week === currentWeek) return false;
+      } catch {
+        // corrupt data, allow claim
+      }
+    }
+
+    localStorage.setItem(
+      STREAK_FREEZE_PREFIX + userId,
+      JSON.stringify({ week: currentWeek }),
+    );
+
+    // Update freezesAvailable in streak data
+    const streak = await this.getStreak(userId);
+    streak.freezesAvailable = 1;
+    localStorage.setItem(STREAK_PREFIX + userId, JSON.stringify(streak));
+
+    return true;
   }
 
   // --- Leaderboard (real on-chain read — XP token balances) ---

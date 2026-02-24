@@ -56,6 +56,10 @@ export function trackEvent(name: string, properties?: Record<string, unknown>) {
 export const analytics = {
   courseViewed: (courseId: string, track: string) =>
     trackEvent("course_viewed", { course_id: courseId, track }),
+  courseStarted: (courseId: string) =>
+    trackEvent("course_started", { course_id: courseId }),
+  courseCompleted: (courseId: string, totalXp: number) =>
+    trackEvent("course_completed", { course_id: courseId, total_xp: totalXp }),
   lessonStarted: (courseId: string, lessonId: string) =>
     trackEvent("lesson_started", { course_id: courseId, lesson_id: lessonId }),
   lessonCompleted: (courseId: string, lessonId: string, xp: number) =>
@@ -81,6 +85,8 @@ export const analytics = {
   searchPerformed: (query: string) => trackEvent("search_performed", { query }),
   filterApplied: (filterType: string, value: string) =>
     trackEvent("filter_applied", { filter_type: filterType, value }),
+  languageChanged: (locale: string, previousLocale: string) =>
+    trackEvent("language_changed", { locale, previous_locale: previousLocale }),
 };
 
 export function AnalyticsProvider() {

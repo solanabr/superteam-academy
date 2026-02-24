@@ -8,6 +8,7 @@ import {
   getCourseById,
 } from "@/lib/services/courses";
 import { EnrollSection } from "./enroll-section";
+import { CourseProgressBar } from "./course-progress-bar";
 import { TRACK_LABELS } from "@/lib/constants";
 import { locales } from "@/i18n/config";
 import { ModuleAccordion } from "./module-accordion";
@@ -187,6 +188,9 @@ export default async function CourseDetail({
           <div className="v9-stat-label">{t("enrolled")}</div>
         </div>
       </div>
+
+      {/* ═══ PROGRESS ═══ */}
+      <CourseProgressBar courseId={course.id} />
 
       {/* ═══ ENROLL ═══ */}
       <EnrollSection

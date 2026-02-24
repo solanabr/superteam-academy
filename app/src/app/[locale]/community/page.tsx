@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Plus, Search, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,7 @@ import { ThreadList } from "@/components/community/thread-list";
 import { useThreads } from "@/lib/hooks/use-threads";
 
 export default function CommunityPage() {
+  const t = useTranslations("community");
   const params = useParams();
   const locale = (params.locale as string) || "en";
   const { publicKey } = useWallet();
@@ -45,11 +47,11 @@ export default function CommunityPage() {
             <MessageSquare className="h-5 w-5 text-[#55E9AB]" />
           </div>
           <h1 className="text-2xl font-semibold text-[var(--c-text)]">
-            Community
+            {t("title")}
           </h1>
         </div>
         <p className="text-sm text-[var(--c-text-2)]">
-          Ask questions, share projects, and connect with fellow builders.
+          {t("description")}
         </p>
       </div>
 
@@ -63,7 +65,7 @@ export default function CommunityPage() {
             <Input
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Search threads..."
+              placeholder={t("searchThreads")}
               className="h-9 w-48 pl-8 text-xs"
             />
           </form>
@@ -72,13 +74,13 @@ export default function CommunityPage() {
             <Link href={`/${locale}/community/new`}>
               <Button size="sm" className="gap-1.5">
                 <Plus className="h-3.5 w-3.5" />
-                New Thread
+                {t("newThread")}
               </Button>
             </Link>
           ) : (
             <Button size="sm" variant="outline" disabled className="gap-1.5">
               <Plus className="h-3.5 w-3.5" />
-              Connect Wallet
+              {t("connectWallet")}
             </Button>
           )}
         </div>
@@ -114,7 +116,7 @@ export default function CommunityPage() {
                 disabled={loading}
                 className="font-mono text-[10px] uppercase tracking-wider"
               >
-                {loading ? "Loading..." : "Load More"}
+                {loading ? t("loadingMore") : t("loadMore")}
               </Button>
             </div>
           )}

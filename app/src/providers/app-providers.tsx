@@ -6,6 +6,7 @@ import { ThemeProvider } from "./theme-provider";
 import { WalletProvider } from "./wallet-provider";
 import { ToastProvider } from "@/lib/hooks/use-toast";
 import { AnalyticsProvider } from "./analytics-provider";
+import { CookieConsent } from "@/components/ui/cookie-consent";
 
 export function AppProviders({ children }: { children: ReactNode }) {
   return (
@@ -17,6 +18,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
               <AnalyticsProvider />
             </Suspense>
             {children}
+            <CookieConsent />
           </ToastProvider>
         </WalletProvider>
       </ThemeProvider>

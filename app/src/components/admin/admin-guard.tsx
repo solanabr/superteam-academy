@@ -1,6 +1,7 @@
 "use client";
 
 import { type ReactNode, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Lock, Loader2, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAdmin } from "@/lib/hooks/use-admin";
@@ -10,6 +11,7 @@ interface AdminGuardProps {
 }
 
 export function AdminGuard({ children }: AdminGuardProps) {
+  const t = useTranslations("admin");
   const { isAdmin, loading, login } = useAdmin();
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -22,7 +24,7 @@ export function AdminGuard({ children }: AdminGuardProps) {
           <Loader2 className="h-7 w-7 text-[var(--c-text-2)] animate-spin" />
         </div>
         <p className="text-sm text-[var(--c-text-2)] font-mono tracking-wider uppercase">
-          Verifying access...
+          {t("verifyingAccess")}
         </p>
       </div>
     );
@@ -36,7 +38,7 @@ export function AdminGuard({ children }: AdminGuardProps) {
       setError(null);
       const ok = await login(password);
       if (!ok) {
-        setError("Invalid password");
+        setError(t("invalidPassword"));
       }
       setSubmitting(false);
     };
@@ -48,17 +50,17 @@ export function AdminGuard({ children }: AdminGuardProps) {
             <KeyRound className="h-7 w-7 text-[#00FFA3]" />
           </div>
           <h2 className="text-xl font-bold text-[var(--c-text)] text-center mb-2">
-            Admin Access
+            {t("adminAccess")}
           </h2>
           <p className="text-sm text-[var(--c-text-2)] text-center mb-6">
-            Enter the admin password to continue.
+            {t("enterPassword")}
           </p>
           <form onSubmit={handleSubmit} className="space-y-4">
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password"
+              placeholder={t("password")}
               autoFocus
               className="w-full h-10 rounded-[2px] bg-[var(--c-bg)] border border-[var(--c-border-subtle)] px-3 text-sm text-[var(--c-text)] font-mono placeholder:text-[var(--c-text-dim)] focus:outline-none focus:border-[#00FFA3] focus:ring-1 focus:ring-[#00FFA3]"
             />
@@ -75,7 +77,7 @@ export function AdminGuard({ children }: AdminGuardProps) {
               ) : (
                 <Lock className="h-4 w-4" />
               )}
-              {submitting ? "Verifying..." : "Unlock"}
+              {submitting ? t("verifying") : t("unlock")}
             </Button>
           </form>
         </div>

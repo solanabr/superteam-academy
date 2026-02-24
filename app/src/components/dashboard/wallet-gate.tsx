@@ -4,7 +4,7 @@ import { type ReactNode, useState, useEffect, useRef } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { useTranslations } from "next-intl";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { Lock, ShieldCheck } from "lucide-react";
 
 type GateState = "sealed" | "connecting" | "opening" | null;
@@ -20,6 +20,7 @@ export function WalletGate({ children }: WalletGateProps) {
   const [gate, setGate] = useState<GateState>("sealed");
   const [isMobile, setIsMobile] = useState(false);
   const autoConnectChecked = useRef(false);
+  const prefersReducedMotion = useReducedMotion();
 
   // Detect mobile
   useEffect(() => {
@@ -80,10 +81,9 @@ export function WalletGate({ children }: WalletGateProps) {
   const isOpening = gate === "opening";
 
   // Panel animation variants
-  const panelTransition = {
-    duration: 1.2,
-    ease: [0.16, 1, 0.3, 1] as const,
-  };
+  const panelTransition = prefersReducedMotion
+    ? { duration: 0 }
+    : { duration: 1.2, ease: [0.16, 1, 0.3, 1] as const };
 
   const leftPanel = {
     sealed: isMobile ? { y: 0 } : { x: 0 },
@@ -393,10 +393,10 @@ export function WalletGate({ children }: WalletGateProps) {
             <AnimatePresence>
               {isOpening && (
                 <motion.div
-                  initial={{ scale: 3, rotate: -12, opacity: 0 }}
-                  animate={{ scale: 1, rotate: 0, opacity: 1 }}
+                  initial={prefersReducedMotion ? false : { scale: 3, rotate: -12, opacity: 0 }}
+                  animate={prefersReducedMotion ? { opacity: 1 } : { scale: 1, rotate: 0, opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  transition={{
+                  transition={prefersReducedMotion ? { duration: 0 } : {
                     type: "spring",
                     stiffness: 300,
                     damping: 20,

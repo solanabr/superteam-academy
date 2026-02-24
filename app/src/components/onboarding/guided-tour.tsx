@@ -1,56 +1,52 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
+import { useTranslations } from "next-intl";
 
 const CAVEAT = "var(--font-caveat), 'Caveat', cursive";
 
 interface TourStep {
   target: string; // CSS selector or "center" for freestanding
-  title: string;
-  description: string;
-  handNote: string; // handwritten annotation
+  titleKey: string;
+  descriptionKey: string;
+  handNoteKey: string;
   arrowDir: "top" | "bottom" | "left" | "right";
 }
 
 const TOUR_STEPS: TourStep[] = [
   {
     target: 'a[href*="/courses"]',
-    title: "Courses",
-    description:
-      "Browse all available tracks — Rust, DeFi, NFTs, and Frontend. Each course earns you XP and credentials.",
-    handNote: "your learning paths live here",
+    titleKey: "coursesTitle",
+    descriptionKey: "tourCoursesDesc",
+    handNoteKey: "tourCoursesNote",
     arrowDir: "top",
   },
   {
     target: 'a[href*="/dashboard"]',
-    title: "Dashboard",
-    description:
-      "Track your XP, streaks, level progression, and earned credentials. Your mission control.",
-    handNote: "all your stats at a glance",
+    titleKey: "dashboardTitle",
+    descriptionKey: "tourDashboardDesc",
+    handNoteKey: "tourDashboardNote",
     arrowDir: "top",
   },
   {
     target: 'a[href*="/leaderboard"]',
-    title: "Leaderboard",
-    description:
-      "See how you stack up against other builders. Climb the ranks as you earn more XP.",
-    handNote: "compete with fellow builders",
+    titleKey: "leaderboardTitle",
+    descriptionKey: "tourLeaderboardDesc",
+    handNoteKey: "tourLeaderboardNote",
     arrowDir: "top",
   },
   {
     target: 'a[href*="/community"]',
-    title: "Community",
-    description:
-      "Ask questions, share knowledge, and connect with other Solana developers.",
-    handNote: "your builder tribe",
+    titleKey: "communityTitle",
+    descriptionKey: "tourCommunityDesc",
+    handNoteKey: "tourCommunityNote",
     arrowDir: "top",
   },
   {
     target: ".wallet-adapter-button",
-    title: "Wallet",
-    description:
-      "Connect your Solana wallet to earn on-chain XP and soulbound credentials.",
-    handNote: "connect to go on-chain",
+    titleKey: "walletTitle",
+    descriptionKey: "tourWalletDesc",
+    handNoteKey: "tourWalletNote",
     arrowDir: "top",
   },
 ];
@@ -121,6 +117,7 @@ function TourArrow({
 
 // ─── Tour Overlay ─────────────────────────────────────────────
 export function GuidedTour({ onComplete }: { onComplete: () => void }) {
+  const t = useTranslations("onboarding");
   const [currentStep, setCurrentStep] = useState(0);
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
   const [visible, setVisible] = useState(false);
@@ -301,7 +298,7 @@ export function GuidedTour({ onComplete }: { onComplete: () => void }) {
                 padding: "2px 6px",
               }}
             >
-              Skip tour
+              {t("skipTour")}
             </button>
           </div>
 
@@ -315,7 +312,7 @@ export function GuidedTour({ onComplete }: { onComplete: () => void }) {
               margin: "0 0 8px",
             }}
           >
-            {step.title}
+            {t(step.titleKey)}
           </h3>
 
           {/* Description */}
@@ -328,7 +325,7 @@ export function GuidedTour({ onComplete }: { onComplete: () => void }) {
               margin: "0 0 12px",
             }}
           >
-            {step.description}
+            {t(step.descriptionKey)}
           </p>
 
           {/* Handwritten note */}
@@ -342,7 +339,7 @@ export function GuidedTour({ onComplete }: { onComplete: () => void }) {
               marginBottom: 16,
             }}
           >
-            {step.handNote}
+            {t(step.handNoteKey)}
           </span>
 
           {/* Next button */}
@@ -369,8 +366,8 @@ export function GuidedTour({ onComplete }: { onComplete: () => void }) {
             }}
           >
             {currentStep < TOUR_STEPS.length - 1
-              ? "Next"
-              : "Start Learning"}
+              ? t("next")
+              : t("startLearning")}
           </button>
         </div>
       </div>

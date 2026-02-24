@@ -1,15 +1,16 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { motion } from "framer-motion";
 
 const CAVEAT = "var(--font-caveat), 'Caveat', cursive";
 
 interface SiteSection {
   icon: string;
-  title: string;
-  description: string;
-  handNote: string;
+  titleKey: string;
+  descriptionKey: string;
+  handNoteKey: string;
   color: string;
   path: string;
 }
@@ -17,33 +18,33 @@ interface SiteSection {
 const SECTIONS: SiteSection[] = [
   {
     icon: "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253",
-    title: "Courses",
-    description: "Browse tracks in Rust, DeFi, NFTs, and Frontend. Each course awards XP.",
-    handNote: "start learning here",
+    titleKey: "coursesTitle",
+    descriptionKey: "coursesDesc",
+    handNoteKey: "coursesNote",
     color: "var(--v9-sol-green)",
     path: "/courses",
   },
   {
     icon: "M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z",
-    title: "Dashboard",
-    description: "Track XP, streaks, level progression, and earned credentials.",
-    handNote: "your mission control",
+    titleKey: "dashboardTitle",
+    descriptionKey: "dashboardDesc",
+    handNoteKey: "dashboardNote",
     color: "#a855f7",
     path: "/dashboard",
   },
   {
     icon: "M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 14.25a7.454 7.454 0 00.981-3.172M5.25 4.236c-.982.143-1.954.317-2.916.52A6.003 6.003 0 007.73 9.728M5.25 4.236V4.5c0 2.108.966 3.99 2.48 5.228M5.25 4.236V2.721C7.456 2.41 9.71 2.25 12 2.25c2.291 0 4.545.16 6.75.47v1.516M18.75 4.236c.982.143 1.954.317 2.916.52A6.003 6.003 0 0016.27 9.728M18.75 4.236V4.5c0 2.108-.966 3.99-2.48 5.228m0 0a6.023 6.023 0 01-2.77.67 6.023 6.023 0 01-2.77-.67",
-    title: "Leaderboard",
-    description: "See how you rank against other builders. Climb with more XP.",
-    handNote: "compete with builders",
+    titleKey: "leaderboardTitle",
+    descriptionKey: "leaderboardDesc",
+    handNoteKey: "leaderboardNote",
     color: "#f59e0b",
     path: "/leaderboard",
   },
   {
     icon: "M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z",
-    title: "Community",
-    description: "Ask questions, share knowledge, and connect with Solana devs.",
-    handNote: "your builder tribe",
+    titleKey: "communityTitle",
+    descriptionKey: "communityDesc",
+    handNoteKey: "communityNote",
     color: "#06b6d4",
     path: "/community",
   },
@@ -97,6 +98,7 @@ function HandArrow({ color, delay }: { color: string; delay: number }) {
 }
 
 export function SiteOverview({ onFinish }: { onFinish: () => void }) {
+  const t = useTranslations("onboarding");
   return (
     <div
       style={{
@@ -120,7 +122,7 @@ export function SiteOverview({ onFinish }: { onFinish: () => void }) {
           marginBottom: 16,
         }}
       >
-        QUICK ORIENTATION
+        {t("quickOrientation")}
       </motion.p>
 
       <motion.span
@@ -136,7 +138,7 @@ export function SiteOverview({ onFinish }: { onFinish: () => void }) {
           marginBottom: 8,
         }}
       >
-        here's what you'll find
+        {t("heresWhatYoullFind")}
       </motion.span>
 
       <motion.p
@@ -152,7 +154,7 @@ export function SiteOverview({ onFinish }: { onFinish: () => void }) {
           marginBottom: 28,
         }}
       >
-        A quick look at the key areas of the platform before you dive in.
+        {t("orientationSubtitle")}
       </motion.p>
 
       {/* Section cards */}
@@ -168,7 +170,7 @@ export function SiteOverview({ onFinish }: { onFinish: () => void }) {
       >
         {SECTIONS.map((section, i) => (
           <motion.div
-            key={section.title}
+            key={section.titleKey}
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{
@@ -227,7 +229,7 @@ export function SiteOverview({ onFinish }: { onFinish: () => void }) {
                     color: "var(--foreground)",
                   }}
                 >
-                  {section.title}
+                  {t(section.titleKey)}
                 </span>
                 <span
                   style={{
@@ -249,7 +251,7 @@ export function SiteOverview({ onFinish }: { onFinish: () => void }) {
                   margin: 0,
                 }}
               >
-                {section.description}
+                {t(section.descriptionKey)}
               </p>
             </div>
 
@@ -276,7 +278,7 @@ export function SiteOverview({ onFinish }: { onFinish: () => void }) {
                   display: "inline-block",
                 }}
               >
-                {section.handNote}
+                {t(section.handNoteKey)}
               </motion.span>
             </div>
           </motion.div>
@@ -316,7 +318,7 @@ export function SiteOverview({ onFinish }: { onFinish: () => void }) {
             color: "var(--c-text-muted)",
           }}
         >
-          Connect your wallet to earn on-chain XP and soulbound credentials
+          {t("walletNote")}
         </span>
         <span
           style={{
@@ -327,7 +329,7 @@ export function SiteOverview({ onFinish }: { onFinish: () => void }) {
             display: "inline-block",
           }}
         >
-          go on-chain
+          {t("walletHandNote")}
         </span>
       </motion.div>
 
@@ -360,7 +362,7 @@ export function SiteOverview({ onFinish }: { onFinish: () => void }) {
           el.style.boxShadow = "none";
         }}
       >
-        Start Learning
+        {t("startLearning")}
       </motion.button>
     </div>
   );

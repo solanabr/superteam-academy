@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { WifiOff, Wifi } from "lucide-react";
 
 type BannerState = "offline" | "back-online" | null;
@@ -47,15 +47,16 @@ export function OfflineIndicator() {
 
   const isOffline = state === "offline";
   const isBackOnline = state === "back-online";
+  const prefersReducedMotion = useReducedMotion();
 
   return (
     <AnimatePresence>
       {state !== null && (
         <motion.div
-          initial={{ y: -48, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: -48, opacity: 0 }}
-          transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+          initial={prefersReducedMotion ? false : { y: -48, opacity: 0 }}
+          animate={prefersReducedMotion ? { opacity: 1 } : { y: 0, opacity: 1 }}
+          exit={prefersReducedMotion ? { opacity: 0 } : { y: -48, opacity: 0 }}
+          transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
           role="status"
           aria-live="polite"
           style={{

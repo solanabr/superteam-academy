@@ -150,7 +150,7 @@ export function LandingContent({
               width={120}
               height={70}
               color={G}
-              label="Start onboarding"
+              label={t("startOnboarding")}
               labelPosition="start"
             />
           </div>
@@ -218,7 +218,7 @@ export function LandingContent({
                 animation: "sentinel-pulse 2s ease-in-out infinite",
               }}
             >
-              START ONBOARDING
+              {t("startOnboarding").toUpperCase()}
             </div>
           </div>
         </div>
@@ -292,7 +292,7 @@ export function LandingContent({
                   color: M,
                 }}
               >
-                SUPERTEAM ACADEMY // BUILT ON SOLANA
+                {t("eyebrow")}
               </span>
             </div>
           </div>
@@ -310,10 +310,10 @@ export function LandingContent({
                 "hero-slide-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards",
             }}
           >
-            Learn
+            {t("heroHeadline")}
             <br />
             <GlitchText>
-              <span style={{ fontStyle: "italic", color: G }}>on-chain.</span>
+              <span style={{ fontStyle: "italic", color: G }}>{t("heroOnChain")}</span>
             </GlitchText>
           </h1>
 
@@ -383,7 +383,7 @@ export function LandingContent({
                 {t("exploreCourses")} →
               </MagneticBtn>
               <MagneticBtn href={`/${locale}/leaderboard`}>
-                View Leaderboard
+                {t("viewLeaderboard")}
               </MagneticBtn>
             </div>
           </div>
@@ -407,10 +407,10 @@ export function LandingContent({
           }}
         >
           {[
-            { val: stats.courseCount, label: "COURSES LIVE" },
-            { val: stats.totalLessons, label: "TOTAL LESSONS" },
-            { val: 2400, label: "ACTIVE BUILDERS", suffix: "+" },
-            { val: stats.totalXP, label: "XP AVAILABLE" },
+            { val: stats.courseCount, label: t("coursesLive") },
+            { val: stats.totalLessons, label: t("totalLessons") },
+            { val: 2400, label: t("activeBuilders"), suffix: "+" },
+            { val: stats.totalXP, label: t("xpAvailable") },
           ].map((s, i) => (
             <div key={i} className="landing-stat-item">
               <div
@@ -453,7 +453,7 @@ export function LandingContent({
               marginBottom: 12,
             }}
           >
-            WHY ON-CHAIN LEARNING
+            {t("whyOnChainLearning")}
           </p>
           <h2
             style={{

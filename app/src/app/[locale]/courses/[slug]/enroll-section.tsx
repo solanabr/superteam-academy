@@ -5,6 +5,7 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { useProgram } from "@/lib/hooks/use-program";
 import { useEnrollment } from "@/lib/hooks/use-enrollment";
 import { enroll } from "@/lib/solana/transactions";
+import { analytics } from "@/providers/analytics-provider";
 
 interface EnrollSectionProps {
   courseId: string;
@@ -44,6 +45,7 @@ export function EnrollSection({
     setError(null);
     try {
       await enroll(program, publicKey, courseId);
+      analytics.courseEnrolled(courseId);
       await refreshEnrollment();
     } catch (e: unknown) {
       console.error("Enroll failed:", e);

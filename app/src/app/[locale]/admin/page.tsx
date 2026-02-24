@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
+import { useTranslations } from "next-intl";
 import {
   BookOpen,
   Users,
@@ -37,6 +38,7 @@ type SectionId =
   | "settings";
 
 export default function AdminDashboard() {
+  const t = useTranslations("admin");
   const { connected, publicKey } = useWallet();
   const { logout } = useAdmin();
   const [expandedSection, setExpandedSection] = useState<SectionId | null>(
@@ -59,11 +61,11 @@ export default function AdminDashboard() {
                   <Layers className="h-5 w-5 text-[#00FFA3]" />
                 </div>
                 <h1 className="text-2xl font-bold text-[var(--c-text)]">
-                  Admin Dashboard
+                  {t("title")}
                 </h1>
               </div>
               <p className="text-sm text-[var(--c-text-2)]">
-                Platform administration and content management
+                {t("subtitle")}
               </p>
             </div>
             {connected && publicKey && (
@@ -82,7 +84,7 @@ export default function AdminDashboard() {
                   className="gap-1.5 text-[var(--c-text-2)] hover:text-[#EF4444]"
                 >
                   <LogOut className="h-3.5 w-3.5" />
-                  Logout
+                  {t("logout")}
                 </Button>
               </div>
             )}
@@ -93,14 +95,14 @@ export default function AdminDashboard() {
 
           {/* Management Sections */}
           <h2 className="text-lg font-semibold text-[var(--c-text)] mb-4">
-            Management
+            {t("management")}
           </h2>
           <div className="space-y-3">
             {/* Course Management */}
             <AdminSection
               id="courses"
-              title="Course Management"
-              desc="Create, edit, and publish courses and lessons"
+              title={t("courseManagement")}
+              desc={t("courseManagementDesc")}
               icon={BookOpen}
               expanded={expandedSection === "courses"}
               onToggle={() => toggleSection("courses")}
@@ -111,8 +113,8 @@ export default function AdminDashboard() {
             {/* User Management */}
             <AdminSection
               id="users"
-              title="User Management"
-              desc="View learner profiles, XP history, and credentials"
+              title={t("userManagement")}
+              desc={t("userManagementDesc")}
               icon={Users}
               expanded={expandedSection === "users"}
               onToggle={() => toggleSection("users")}
@@ -123,17 +125,15 @@ export default function AdminDashboard() {
             {/* Credential Issuance */}
             <AdminSection
               id="credentials"
-              title="Credential Issuance"
-              desc="Mint and manage on-chain credentials (Metaplex Core)"
+              title={t("credentialIssuance")}
+              desc={t("credentialIssuanceDesc")}
               icon={Award}
               expanded={expandedSection === "credentials"}
               onToggle={() => toggleSection("credentials")}
             >
               <div className="flex items-center justify-between mb-4">
                 <p className="text-xs text-[var(--c-text-2)]">
-                  Credential issuance is handled automatically when learners
-                  finalize a course. View credential activity in the Analytics
-                  section.
+                  {t("credentialIssuanceInfo")}
                 </p>
               </div>
             </AdminSection>
@@ -141,8 +141,8 @@ export default function AdminDashboard() {
             {/* Analytics */}
             <AdminSection
               id="analytics"
-              title="Analytics Dashboard"
-              desc="Course completion rates, engagement metrics"
+              title={t("analytics")}
+              desc={t("analyticsDesc")}
               icon={BarChart3}
               expanded={expandedSection === "analytics"}
               onToggle={() => toggleSection("analytics")}
@@ -153,8 +153,8 @@ export default function AdminDashboard() {
             {/* Content Moderation */}
             <AdminSection
               id="moderation"
-              title="Content Moderation"
-              desc="Review community threads and manage reports"
+              title={t("contentModeration")}
+              desc={t("contentModerationDesc")}
               icon={Shield}
               expanded={expandedSection === "moderation"}
               onToggle={() => toggleSection("moderation")}
@@ -165,8 +165,8 @@ export default function AdminDashboard() {
             {/* CMS Integration */}
             <AdminSection
               id="cms"
-              title="CMS Integration"
-              desc="Connect Sanity CMS for content management alongside Supabase"
+              title={t("cmsIntegration")}
+              desc={t("cmsIntegrationDesc")}
               icon={Database}
               expanded={expandedSection === "cms"}
               onToggle={() => toggleSection("cms")}
@@ -177,8 +177,8 @@ export default function AdminDashboard() {
             {/* Platform Settings */}
             <AdminSection
               id="settings"
-              title="Platform Settings"
-              desc="Configure XP rates, season management, backend signer"
+              title={t("platformSettings")}
+              desc={t("platformSettingsDesc")}
               icon={Settings}
               expanded={expandedSection === "settings"}
               onToggle={() => toggleSection("settings")}

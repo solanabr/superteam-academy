@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Search, Plus, Eye, Edit2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,11 +11,14 @@ import { TRACK_LABELS, TRACK_COLORS, type TrackType } from "@/lib/constants";
 import { useAdmin } from "@/lib/hooks/use-admin";
 import type { AdminCourse } from "@/app/api/admin/courses/route";
 
-const DIFFICULTY_NAMES = ["Beginner", "Intermediate", "Advanced"] as const;
-
 export function CourseTable() {
+  const t = useTranslations("admin");
+  const tc = useTranslations("common");
   const router = useRouter();
+  const params = useParams();
+  const locale = (params.locale as string) || "en";
   const { isAdmin } = useAdmin();
+  const DIFFICULTY_NAMES = [tc("beginner"), tc("intermediate"), tc("advanced")] as const;
   const [courses, setCourses] = useState<AdminCourse[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -57,7 +61,7 @@ export function CourseTable() {
         <div className="flex items-center gap-2 flex-1 max-w-xs">
           <Search className="h-4 w-4 text-[var(--c-text-2)]" />
           <Input
-            placeholder="Search courses..."
+            placeholder={t("searchCourses")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="h-8 text-xs"
@@ -75,8 +79,8 @@ export function CourseTable() {
               className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`}
             />
           </Button>
-          <Button size="sm" className="gap-1.5" onClick={() => router.push("/en/admin/courses/new")}>
-            <Plus className="h-3.5 w-3.5" /> New Course
+          <Button size="sm" className="gap-1.5" onClick={() => router.push(`/${locale}/admin/courses/new`)}>
+            <Plus className="h-3.5 w-3.5" /> {t("newCourse")}
           </Button>
         </div>
       </div>
@@ -91,15 +95,15 @@ export function CourseTable() {
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-[var(--c-bg-elevated)] text-[var(--c-text-2)] text-xs uppercase tracking-wider">
-              <th className="px-4 py-2.5 text-left font-medium">Course</th>
-              <th className="px-4 py-2.5 text-left font-medium">Track</th>
-              <th className="px-4 py-2.5 text-center font-medium">Lessons</th>
-              <th className="px-4 py-2.5 text-center font-medium">XP/Lesson</th>
+              <th className="px-4 py-2.5 text-left font-medium">{t("course")}</th>
+              <th className="px-4 py-2.5 text-left font-medium">{t("track")}</th>
+              <th className="px-4 py-2.5 text-center font-medium">{t("lessons")}</th>
+              <th className="px-4 py-2.5 text-center font-medium">{t("xpPerLesson")}</th>
               <th className="px-4 py-2.5 text-center font-medium">
-                Enrollments
+                {t("enrollments")}
               </th>
-              <th className="px-4 py-2.5 text-center font-medium">Status</th>
-              <th className="px-4 py-2.5 text-right font-medium">Actions</th>
+              <th className="px-4 py-2.5 text-center font-medium">{t("status")}</th>
+              <th className="px-4 py-2.5 text-right font-medium">{t("actions")}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[var(--c-border-subtle)]">
@@ -118,8 +122,8 @@ export function CourseTable() {
                   className="px-4 py-8 text-center text-sm text-[var(--c-text-2)]"
                 >
                   {searchQuery
-                    ? "No courses match your search"
-                    : "No courses found"}
+                    ? t("noCoursesMatch")
+                    : t("noCoursesFound")}
                 </td>
               </tr>
             ) : (
@@ -164,16 +168,16 @@ export function CourseTable() {
                       <div className="flex items-center justify-center gap-1.5">
                         {course.isActive ? (
                           <Badge variant="beginner" className="text-[10px]">
-                            Active
+                            {t("active")}
                           </Badge>
                         ) : (
                           <Badge variant="advanced" className="text-[10px]">
-                            Inactive
+                            {t("inactive")}
                           </Badge>
                         )}
                         {course.onChain && (
                           <Badge className="text-[10px] bg-[#03E1FF]/10 text-[#03E1FF] border-[#03E1FF]/20">
-                            On-chain
+                            {t("onChain")}
                           </Badge>
                         )}
                       </div>
@@ -182,15 +186,15 @@ export function CourseTable() {
                       <div className="flex items-center justify-end gap-1">
                         <button
                           className="p-1.5 rounded hover:bg-[var(--c-border-subtle)] text-[var(--c-text-2)] hover:text-[var(--c-text)] transition-colors cursor-pointer"
-                          aria-label="View course"
-                          onClick={() => router.push(`/en/courses/${course.courseId}`)}
+                          aria-label={t("viewCourse")}
+                          onClick={() => router.push(`/${locale}/courses/${course.courseId}`)}
                         >
                           <Eye className="h-3.5 w-3.5" />
                         </button>
                         <button
                           className="p-1.5 rounded hover:bg-[var(--c-border-subtle)] text-[var(--c-text-2)] hover:text-[var(--c-text)] transition-colors cursor-pointer"
-                          aria-label="Edit course"
-                          onClick={() => router.push(`/en/admin/courses/${course.courseId}`)}
+                          aria-label={t("editCourse")}
+                          onClick={() => router.push(`/${locale}/admin/courses/${course.courseId}`)}
                         >
                           <Edit2 className="h-3.5 w-3.5" />
                         </button>
@@ -206,7 +210,7 @@ export function CourseTable() {
 
       <div className="flex items-center justify-between mt-3">
         <p className="text-xs text-[var(--c-text-2)]">
-          {filtered.length} of {courses.length} courses
+          {t("coursesCount", { filtered: filtered.length, total: courses.length })}
         </p>
       </div>
     </div>

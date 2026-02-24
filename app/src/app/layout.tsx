@@ -32,11 +32,13 @@ const instrumentSerif = Instrument_Serif({
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  display: "swap",
   preload: false,
 });
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: "swap",
   preload: false,
 });
 const playfairDisplay = Playfair_Display({
@@ -44,6 +46,7 @@ const playfairDisplay = Playfair_Display({
   subsets: ["latin"],
   weight: ["400", "700", "900"],
   style: ["normal", "italic"],
+  display: "swap",
   preload: false,
 });
 const dmSans = DM_Sans({
@@ -57,12 +60,14 @@ const spaceMono = Space_Mono({
   variable: "--font-space-mono",
   subsets: ["latin"],
   weight: ["400", "700"],
+  display: "swap",
   preload: false,
 });
 const caveat = Caveat({
   variable: "--font-caveat",
   subsets: ["latin"],
   weight: ["400", "600", "700"],
+  display: "swap",
   preload: false,
 });
 
@@ -136,6 +141,7 @@ export default function RootLayout({
         />
         <link rel="dns-prefetch" href="https://us.i.posthog.com" />
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+        <link rel="manifest" href="/manifest.json" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${playfairDisplay.variable} ${dmSans.variable} ${spaceMono.variable} ${spaceGrotesk.variable} ${instrumentSerif.variable} ${caveat.variable} antialiased`}

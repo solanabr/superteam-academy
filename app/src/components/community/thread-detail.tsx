@@ -3,6 +3,7 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
+import { useLocale } from "next-intl";
 import { Clock, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,8 +17,15 @@ function shortWallet(wallet: string): string {
   return `${wallet.slice(0, 4)}...${wallet.slice(-4)}`;
 }
 
-function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString("en-US", {
+const LOCALE_MAP: Record<string, string> = {
+  en: "en-US",
+  "pt-br": "pt-BR",
+  es: "es-419",
+};
+
+function formatDate(dateStr: string, locale: string): string {
+  const intlLocale = LOCALE_MAP[locale] ?? locale;
+  return new Date(dateStr).toLocaleDateString(intlLocale, {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -34,6 +42,7 @@ interface ThreadDetailProps {
 }
 
 export function ThreadDetail({ thread, wallet, isAdmin, onDelete }: ThreadDetailProps) {
+  const locale = useLocale();
   return (
     <div className="rounded-[2px] border border-[var(--c-border-subtle)] bg-[var(--c-bg-card)]">
       <div className="flex gap-4 p-6">
@@ -71,7 +80,7 @@ export function ThreadDetail({ thread, wallet, isAdmin, onDelete }: ThreadDetail
             </span>
             <span className="flex items-center gap-1 text-[10px]">
               <Clock className="h-3 w-3" />
-              {formatDate(thread.created_at)}
+              {formatDate(thread.created_at, locale)}
             </span>
           </div>
 

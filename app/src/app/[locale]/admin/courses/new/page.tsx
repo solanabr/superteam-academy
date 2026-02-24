@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   ArrowLeft,
   BookOpen,
@@ -28,7 +29,10 @@ function slugify(text: string): string {
 }
 
 export default function NewCoursePage() {
+  const t = useTranslations("admin");
   const router = useRouter();
+  const params = useParams();
+  const locale = (params.locale as string) || "en";
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -71,9 +75,9 @@ export default function NewCoursePage() {
         const data = await res.json();
         const courseId = data.course?._id;
         if (courseId) {
-          router.push(`/en/admin/courses/${courseId}`);
+          router.push(`/${locale}/admin/courses/${courseId}`);
         } else {
-          router.push("/en/admin");
+          router.push(`/${locale}/admin`);
         }
       } catch (err) {
         setError(
@@ -92,17 +96,17 @@ export default function NewCoursePage() {
         {/* Header */}
         <div className="flex items-center gap-3 mb-8">
           <Link
-            href="/en/admin"
+            href={`/${locale}/admin`}
             className="flex h-9 w-9 items-center justify-center rounded-[2px] border border-[var(--c-border-subtle)] bg-[var(--c-bg-card)] hover:bg-[var(--c-bg-elevated)] transition-colors"
           >
             <ArrowLeft className="h-4 w-4 text-[var(--c-text-2)]" />
           </Link>
           <div>
             <h1 className="text-xl font-bold text-[var(--c-text)]">
-              Create New Course
+              {t("createNewCourse")}
             </h1>
             <p className="text-xs text-[var(--c-text-2)]">
-              Set up course metadata, then add modules and lessons
+              {t("createNewCourseDesc")}
             </p>
           </div>
         </div>
@@ -118,17 +122,17 @@ export default function NewCoursePage() {
           <div className="rounded-[2px] border border-[var(--c-border-subtle)] bg-[var(--c-bg-card)] p-5 space-y-4">
             <h2 className="text-sm font-semibold text-[var(--c-text)] flex items-center gap-2">
               <BookOpen className="h-4 w-4 text-[var(--c-text-2)]" />
-              Course Details
+              {t("courseDetails")}
             </h2>
 
             <div>
               <label className="block text-xs font-medium text-[var(--c-text-2)] mb-1.5">
-                Title *
+                {t("titleRequired")}
               </label>
               <Input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g., Introduction to Anchor Development"
+                placeholder={t("titlePlaceholder")}
                 required
                 maxLength={200}
               />
@@ -138,7 +142,7 @@ export default function NewCoursePage() {
             {slug && (
               <div className="flex items-center gap-2">
                 <Eye className="h-3.5 w-3.5 text-[var(--c-text-2)]" />
-                <span className="text-xs text-[var(--c-text-2)]">Slug:</span>
+                <span className="text-xs text-[var(--c-text-2)]">{t("slug")}</span>
                 <code className="text-xs font-mono text-[#00FFA3] bg-[var(--c-bg-elevated)] px-2 py-0.5 rounded-[1px]">
                   /courses/{slug}
                 </code>
@@ -147,12 +151,12 @@ export default function NewCoursePage() {
 
             <div>
               <label className="block text-xs font-medium text-[var(--c-text-2)] mb-1.5">
-                Description *
+                {t("descriptionRequired")}
               </label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Brief description of what learners will gain from this course..."
+                placeholder={t("descriptionPlaceholder")}
                 required
                 rows={3}
                 maxLength={500}
@@ -167,13 +171,13 @@ export default function NewCoursePage() {
           {/* Track & Difficulty */}
           <div className="rounded-[2px] border border-[var(--c-border-subtle)] bg-[var(--c-bg-card)] p-5 space-y-4">
             <h2 className="text-sm font-semibold text-[var(--c-text)]">
-              Classification
+              {t("classification")}
             </h2>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium text-[var(--c-text-2)] mb-1.5">
-                  Track
+                  {t("track")}
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {TRACK_TYPES.map((t) => (
@@ -198,7 +202,7 @@ export default function NewCoursePage() {
 
               <div>
                 <label className="block text-xs font-medium text-[var(--c-text-2)] mb-1.5">
-                  Difficulty
+                  {t("difficulty")}
                 </label>
                 <div className="flex gap-2">
                   {DIFFICULTY_LEVELS.map((d) => (
@@ -228,13 +232,13 @@ export default function NewCoursePage() {
           {/* XP & Duration */}
           <div className="rounded-[2px] border border-[var(--c-border-subtle)] bg-[var(--c-bg-card)] p-5 space-y-4">
             <h2 className="text-sm font-semibold text-[var(--c-text)]">
-              Rewards & Duration
+              {t("rewardsAndDuration")}
             </h2>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium text-[var(--c-text-2)] mb-1.5">
-                  Total XP Reward
+                  {t("totalXpReward")}
                 </label>
                 <Input
                   type="number"
@@ -245,12 +249,12 @@ export default function NewCoursePage() {
                   step={50}
                 />
                 <p className="text-[10px] text-[var(--c-text-dim)] mt-1">
-                  Distributed across lessons + completion bonus
+                  {t("xpDistributionHint")}
                 </p>
               </div>
               <div>
                 <label className="block text-xs font-medium text-[var(--c-text-2)] mb-1.5">
-                  Estimated Hours
+                  {t("estimatedHours")}
                 </label>
                 <Input
                   type="number"
@@ -267,19 +271,19 @@ export default function NewCoursePage() {
           {/* Submit */}
           <div className="flex items-center justify-between pt-2">
             <Link
-              href="/en/admin"
+              href={`/${locale}/admin`}
               className="text-sm text-[var(--c-text-2)] hover:text-[var(--c-text)] transition-colors"
             >
-              Cancel
+              {t("cancel")}
             </Link>
             <Button type="submit" disabled={submitting || !title.trim() || !description.trim()}>
               {submitting ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Creating...
+                  {t("creating")}
                 </>
               ) : (
-                "Create Course"
+                t("createCourse")
               )}
             </Button>
           </div>

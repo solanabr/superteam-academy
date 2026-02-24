@@ -13,7 +13,7 @@ export function Footer({ locale }: { locale: string }) {
   if (/\/courses\/[^/]+\/lessons\//.test(pathname)) return null;
 
   return (
-    <footer className="v9-footer" role="contentinfo" aria-label="Site footer">
+    <footer className="v9-footer" role="contentinfo" aria-label={t("siteFooter")}>
       <div className="v9-footer-left">
         <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
           <SuperteamLogo size={14} className="currentColor" />
@@ -21,7 +21,7 @@ export function Footer({ locale }: { locale: string }) {
         </span>
       </div>
 
-      <nav className="v9-footer-nav" aria-label="Footer navigation">
+      <nav className="v9-footer-nav" aria-label={t("footerNavigation")}>
         <Link href={`/${locale}/courses`}>{t("courses")}</Link>
         <Link href={`/${locale}/dashboard`}>{t("dashboard")}</Link>
         <Link href={`/${locale}/leaderboard`}>{t("leaderboard")}</Link>

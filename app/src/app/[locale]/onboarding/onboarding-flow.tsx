@@ -2,6 +2,7 @@
 
 import React, { useState, useCallback, useRef } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { quizQuestions } from "@/lib/data/quiz-questions";
@@ -59,6 +60,7 @@ function spawnStreaks(container: HTMLDivElement) {
 }
 
 export function OnboardingFlow() {
+  const t = useTranslations("onboarding");
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
@@ -407,16 +409,16 @@ export function OnboardingFlow() {
           }}
         >
           {step === "welcome"
-            ? "SKILL ASSESSMENT"
+            ? t("statusSkillAssessment")
             : step === "intro"
-              ? "CALIBRATION"
+              ? t("statusCalibration")
               : step === "quiz"
-                ? `QUESTION ${questionIndex + 1} OF ${quizQuestions.length}`
+                ? t("statusQuestionOf", { current: questionIndex + 1, total: quizQuestions.length })
                 : step === "results"
-                  ? "ASSESSMENT COMPLETE"
+                  ? t("statusAssessmentComplete")
                   : step === "overview"
-                    ? "QUICK ORIENTATION"
-                    : "RECOMMENDED PATH"}
+                    ? t("statusQuickOrientation")
+                    : t("statusRecommendedPath")}
         </span>
       </div>
 

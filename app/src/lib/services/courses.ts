@@ -1,4 +1,4 @@
-import type { Course, Achievement } from "./types";
+import type { Course, Achievement, Lesson, CodeChallenge, TestCase } from "./types";
 import { sanityClient, isSanityConfigured } from "@/lib/sanity";
 import { allCoursesQuery, courseBySlugQuery } from "@/lib/sanity";
 
@@ -1492,28 +1492,101 @@ export function getCourseById(id: string): Course | undefined {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Raw response shapes for Sanity and Supabase                       */
+/* ------------------------------------------------------------------ */
+
+interface SanityLessonRaw {
+  _id?: string;
+  slug?: string;
+  title: string;
+  type?: string;
+  estimatedMinutes?: number;
+  xpReward?: number;
+}
+
+interface SanityModuleRaw {
+  _id: string;
+  title: string;
+  lessons?: SanityLessonRaw[];
+}
+
+interface SanityCourseRaw {
+  _id: string;
+  slug: string;
+  title: string;
+  description: string;
+  track: string;
+  difficulty: string;
+  lessonCount?: number;
+  estimatedHours?: number;
+  xpReward?: number;
+  instructor?: { name?: string };
+  modules?: SanityModuleRaw[];
+}
+
+interface SupabaseCourseRow {
+  id: string;
+  slug: string;
+  title: string;
+  description: string;
+  track: string;
+  difficulty: string;
+  lesson_count: number;
+  duration: string;
+  xp_reward: number;
+  creator: string;
+  image_url?: string | null;
+  prerequisite_id?: string | null;
+  is_active: boolean;
+  total_completions: number;
+  enrolled_count: number;
+}
+
+interface SupabaseModuleRow {
+  id: string;
+  course_id: string;
+  title: string;
+  order: number;
+}
+
+interface SupabaseLessonRow {
+  id: string;
+  module_id: string;
+  title: string;
+  type: string;
+  duration: string;
+  xp_reward: number;
+  order: number;
+  content?: string | null;
+  challenge_instructions?: string | null;
+  challenge_starter_code?: string;
+  challenge_solution?: string;
+  challenge_language?: string;
+  challenge_test_cases?: TestCase[];
+}
+
+/* ------------------------------------------------------------------ */
 /*  Sanity CMS integration — async fetchers with static-data fallback */
 /* ------------------------------------------------------------------ */
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function transformSanityCourse(raw: any): Course {
+function transformSanityCourse(raw: SanityCourseRaw): Course {
   return {
     id: raw._id,
     slug: raw.slug,
     title: raw.title,
     description: raw.description,
-    track: raw.track,
-    difficulty: raw.difficulty,
+    track: raw.track as Course["track"],
+    difficulty: raw.difficulty as Course["difficulty"],
     lessonCount: raw.lessonCount || 0,
     duration: raw.estimatedHours ? `${raw.estimatedHours} hours` : "0 hours",
     xpReward: raw.xpReward ?? 0,
     creator: raw.instructor?.name || "Superteam Academy",
     imageUrl: undefined,
-    modules: (raw.modules || []).map((m: any) => ({
+    modules: (raw.modules || []).map((m) => ({
       id: m._id,
       title: m.title,
-      lessons: (m.lessons || []).map((l: any) => ({
-        id: l._id || l.slug,
+      lessons: (m.lessons || []).map((l) => ({
+        id: l._id || l.slug || "",
         title: l.title,
         type:
           l.type === "challenge"
@@ -1545,44 +1618,47 @@ function isSupabaseConfigured(): boolean {
   );
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function transformSupabaseCourse(row: any, modules: any[], lessons: any[]): Course {
+function transformSupabaseCourse(
+  row: SupabaseCourseRow,
+  modules: SupabaseModuleRow[],
+  lessons: SupabaseLessonRow[],
+): Course {
   const courseModules = modules
-    .filter((m: any) => m.course_id === row.id)
-    .sort((a: any, b: any) => a.order - b.order);
+    .filter((m) => m.course_id === row.id)
+    .sort((a, b) => a.order - b.order);
 
   return {
     id: row.id,
     slug: row.slug,
     title: row.title,
     description: row.description,
-    track: row.track,
-    difficulty: row.difficulty,
+    track: row.track as Course["track"],
+    difficulty: row.difficulty as Course["difficulty"],
     lessonCount: row.lesson_count,
     duration: row.duration,
     xpReward: row.xp_reward,
     creator: row.creator,
     imageUrl: row.image_url ?? undefined,
-    modules: courseModules.map((m: any) => ({
+    modules: courseModules.map((m) => ({
       id: m.id,
       title: m.title,
       lessons: lessons
-        .filter((l: any) => l.module_id === m.id)
-        .sort((a: any, b: any) => a.order - b.order)
-        .map((l: any) => ({
+        .filter((l) => l.module_id === m.id)
+        .sort((a, b) => a.order - b.order)
+        .map((l) => ({
           id: l.id,
           title: l.title,
-          type: l.type,
+          type: l.type as Lesson["type"],
           duration: l.duration,
           xpReward: l.xp_reward,
           content: l.content ?? undefined,
           challenge: l.challenge_instructions
             ? {
                 instructions: l.challenge_instructions,
-                starterCode: l.challenge_starter_code,
-                solution: l.challenge_solution,
-                language: l.challenge_language,
-                testCases: l.challenge_test_cases,
+                starterCode: l.challenge_starter_code ?? "",
+                solution: l.challenge_solution ?? "",
+                language: (l.challenge_language ?? "typescript") as CodeChallenge["language"],
+                testCases: l.challenge_test_cases ?? [],
               }
             : undefined,
         })),
@@ -1623,8 +1699,12 @@ export async function fetchCourses(): Promise<Course[]> {
           .select("*")
           .order("order");
 
-        return dbCourses.map((row: any) =>
-          transformSupabaseCourse(row, dbModules ?? [], dbLessons ?? []),
+        return (dbCourses as SupabaseCourseRow[]).map((row) =>
+          transformSupabaseCourse(
+            row,
+            (dbModules ?? []) as SupabaseModuleRow[],
+            (dbLessons ?? []) as SupabaseLessonRow[],
+          ),
         );
       }
     } catch {
@@ -1671,14 +1751,18 @@ export async function fetchCourseBySlug(
           .select("*")
           .eq("course_id", row.id)
           .order("order");
-        const moduleIds = (dbModules ?? []).map((m: any) => m.id);
+        const moduleIds = ((dbModules ?? []) as SupabaseModuleRow[]).map((m) => m.id);
         const { data: dbLessons } = await supabase
           .from("lessons")
           .select("*")
           .in("module_id", moduleIds.length > 0 ? moduleIds : ["__none__"])
           .order("order");
 
-        return transformSupabaseCourse(row, dbModules ?? [], dbLessons ?? []);
+        return transformSupabaseCourse(
+          row as SupabaseCourseRow,
+          (dbModules ?? []) as SupabaseModuleRow[],
+          (dbLessons ?? []) as SupabaseLessonRow[],
+        );
       }
     } catch {
       // Fall through

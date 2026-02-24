@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   ArrowLeft,
   Save,
@@ -70,8 +71,10 @@ interface CourseData {
 }
 
 export default function CourseEditorPage() {
+  const t = useTranslations("admin");
   const params = useParams();
   const router = useRouter();
+  const locale = (params.locale as string) || "en";
   const courseId = params.id as string;
 
   const [course, setCourse] = useState<CourseData | null>(null);
@@ -192,13 +195,13 @@ export default function CourseEditorPage() {
         <div className="max-w-3xl mx-auto px-4">
           <div className="rounded-[2px] border border-[#EF4444]/20 bg-[#EF4444]/5 p-6 text-center">
             <p className="text-sm text-[#EF4444]">
-              {error || "Course not found"}
+              {error || t("courseNotFound")}
             </p>
             <Link
-              href="/en/admin"
+              href={`/${locale}/admin`}
               className="text-xs text-[var(--c-text-2)] hover:text-[var(--c-text)] mt-3 inline-block"
             >
-              Back to dashboard
+              {t("backToDashboard")}
             </Link>
           </div>
         </div>
@@ -213,26 +216,26 @@ export default function CourseEditorPage() {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <Link
-              href="/en/admin"
+              href={`/${locale}/admin`}
               className="flex h-9 w-9 items-center justify-center rounded-[2px] border border-[var(--c-border-subtle)] bg-[var(--c-bg-card)] hover:bg-[var(--c-bg-elevated)] transition-colors"
             >
               <ArrowLeft className="h-4 w-4 text-[var(--c-text-2)]" />
             </Link>
             <div>
               <h1 className="text-xl font-bold text-[var(--c-text)]">
-                {title || "Untitled Course"}
+                {title || t("untitledCourse")}
               </h1>
               <div className="flex items-center gap-2 mt-0.5">
                 <Badge
                   variant={course.published ? "beginner" : "default"}
                   className="text-[10px]"
                 >
-                  {course.published ? "Published" : "Draft"}
+                  {course.published ? t("published") : t("draft")}
                 </Badge>
                 {saving && (
                   <span className="flex items-center gap-1 text-[10px] text-[var(--c-text-2)]">
                     <Loader2 className="h-3 w-3 animate-spin" />
-                    Saving...
+                    {t("saving")}
                   </span>
                 )}
               </div>
@@ -244,7 +247,7 @@ export default function CourseEditorPage() {
               size="sm"
               onClick={() => setShowPublishDialog(true)}
             >
-              {course.published ? "Unpublish" : "Publish"}
+              {course.published ? t("unpublish") : t("publish")}
             </Button>
           </div>
         </div>
@@ -254,19 +257,19 @@ export default function CourseEditorPage() {
           <TabsList className="mb-6">
             <TabsTrigger value="overview">
               <FileText className="h-3.5 w-3.5 mr-1.5" />
-              Overview
+              {t("overview")}
             </TabsTrigger>
             <TabsTrigger value="modules">
               <Layers className="h-3.5 w-3.5 mr-1.5" />
-              Modules
+              {t("modules")}
             </TabsTrigger>
             <TabsTrigger value="settings">
               <Settings className="h-3.5 w-3.5 mr-1.5" />
-              Settings
+              {t("settingsTab")}
             </TabsTrigger>
             <TabsTrigger value="preview">
               <Eye className="h-3.5 w-3.5 mr-1.5" />
-              Preview
+              {t("preview")}
             </TabsTrigger>
           </TabsList>
 
@@ -275,12 +278,12 @@ export default function CourseEditorPage() {
             <div className="space-y-6">
               <div className="rounded-[2px] border border-[var(--c-border-subtle)] bg-[var(--c-bg-card)] p-5 space-y-4">
                 <h2 className="text-sm font-semibold text-[var(--c-text)]">
-                  Basic Information
+                  {t("basicInformation")}
                 </h2>
 
                 <div>
                   <label className="block text-xs font-medium text-[var(--c-text-2)] mb-1.5">
-                    Title
+                    {t("titleLabel")}
                   </label>
                   <Input
                     value={title}
@@ -291,12 +294,12 @@ export default function CourseEditorPage() {
 
                 <div>
                   <label className="block text-xs font-medium text-[var(--c-text-2)] mb-1.5">
-                    Short Description
+                    {t("shortDescription")}
                   </label>
                   <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Brief description..."
+                    placeholder={t("shortDescPlaceholder")}
                     rows={2}
                     maxLength={500}
                     className="flex w-full rounded-[2px] bg-[var(--c-bg)] border border-[var(--c-border-subtle)] px-3 py-2 text-sm text-[var(--c-text)] placeholder:text-[var(--c-text-2)] transition-colors focus:outline-none focus:border-[#55E9AB] focus:ring-1 focus:ring-[#55E9AB] resize-none"
@@ -305,12 +308,12 @@ export default function CourseEditorPage() {
 
                 <div>
                   <label className="block text-xs font-medium text-[var(--c-text-2)] mb-1.5">
-                    Long Description
+                    {t("longDescription")}
                   </label>
                   <textarea
                     value={longDescription}
                     onChange={(e) => setLongDescription(e.target.value)}
-                    placeholder="Detailed description of the course..."
+                    placeholder={t("longDescPlaceholder")}
                     rows={6}
                     className="flex w-full rounded-[2px] bg-[var(--c-bg)] border border-[var(--c-border-subtle)] px-3 py-2 text-sm text-[var(--c-text)] placeholder:text-[var(--c-text-2)] transition-colors focus:outline-none focus:border-[#55E9AB] focus:ring-1 focus:ring-[#55E9AB] resize-none"
                   />
@@ -320,7 +323,7 @@ export default function CourseEditorPage() {
               {/* Learning Outcomes */}
               <div className="rounded-[2px] border border-[var(--c-border-subtle)] bg-[var(--c-bg-card)] p-5 space-y-4">
                 <h2 className="text-sm font-semibold text-[var(--c-text)]">
-                  Learning Outcomes
+                  {t("learningOutcomes")}
                 </h2>
                 <div className="space-y-2">
                   {learningOutcomes.map((outcome, idx) => (
@@ -339,7 +342,7 @@ export default function CourseEditorPage() {
                         onClick={() => removeOutcome(idx)}
                         className="text-[var(--c-text-2)] hover:text-[#EF4444] transition-colors text-xs cursor-pointer"
                       >
-                        Remove
+                        {t("remove")}
                       </button>
                     </div>
                   ))}
@@ -348,7 +351,7 @@ export default function CourseEditorPage() {
                   <Input
                     value={newOutcome}
                     onChange={(e) => setNewOutcome(e.target.value)}
-                    placeholder="Add a learning outcome..."
+                    placeholder={t("addOutcomePlaceholder")}
                     className="flex-1"
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
@@ -364,7 +367,7 @@ export default function CourseEditorPage() {
                     onClick={addOutcome}
                     disabled={!newOutcome.trim()}
                   >
-                    Add
+                    {t("add")}
                   </Button>
                 </div>
               </div>
@@ -385,12 +388,12 @@ export default function CourseEditorPage() {
             <div className="space-y-6">
               <div className="rounded-[2px] border border-[var(--c-border-subtle)] bg-[var(--c-bg-card)] p-5 space-y-4">
                 <h2 className="text-sm font-semibold text-[var(--c-text)]">
-                  Classification
+                  {t("classification")}
                 </h2>
 
                 <div>
                   <label className="block text-xs font-medium text-[var(--c-text-2)] mb-1.5">
-                    Track
+                    {t("track")}
                   </label>
                   <div className="flex flex-wrap gap-2">
                     {TRACK_TYPES.map((t) => (
@@ -415,7 +418,7 @@ export default function CourseEditorPage() {
 
                 <div>
                   <label className="block text-xs font-medium text-[var(--c-text-2)] mb-1.5">
-                    Difficulty
+                    {t("difficulty")}
                   </label>
                   <div className="flex gap-2">
                     {DIFFICULTY_LEVELS.map((d) => (
@@ -443,13 +446,13 @@ export default function CourseEditorPage() {
 
               <div className="rounded-[2px] border border-[var(--c-border-subtle)] bg-[var(--c-bg-card)] p-5 space-y-4">
                 <h2 className="text-sm font-semibold text-[var(--c-text)]">
-                  Rewards & Duration
+                  {t("rewardsAndDuration")}
                 </h2>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-medium text-[var(--c-text-2)] mb-1.5">
-                      Total XP Reward
+                      {t("totalXpReward")}
                     </label>
                     <Input
                       type="number"
@@ -462,7 +465,7 @@ export default function CourseEditorPage() {
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-[var(--c-text-2)] mb-1.5">
-                      Estimated Hours
+                      {t("estimatedHours")}
                     </label>
                     <Input
                       type="number"

@@ -19,6 +19,7 @@ import {
   isClientError,
 } from "@/lib/solana/anchor-errors";
 import { logEnrollmentEvent } from "@/lib/supabase/enrollment-events";
+import { withRetry } from "@/lib/solana/retry";
 
 async function ensureATA(
   connection: import("@solana/web3.js").Connection,
@@ -81,22 +82,24 @@ export async function POST(req: Request) {
       ensureATA(connection, signer, xpMint, creatorKey),
     ]);
 
-    const tx = await program.methods
-      .finalizeCourse()
-      .accounts({
-        config: configPDA,
-        course: coursePDA,
-        enrollment: enrollmentPDA,
-        learner: learnerKey,
-        learnerTokenAccount: learnerATA,
-        creatorTokenAccount: creatorATA,
-        creator: creatorKey,
-        xpMint,
-        backendSigner: signer.publicKey,
-        tokenProgram: TOKEN_2022_PROGRAM_ID,
-      })
-      .signers([signer])
-      .rpc();
+    const tx = await withRetry(() =>
+      program.methods
+        .finalizeCourse()
+        .accounts({
+          config: configPDA,
+          course: coursePDA,
+          enrollment: enrollmentPDA,
+          learner: learnerKey,
+          learnerTokenAccount: learnerATA,
+          creatorTokenAccount: creatorATA,
+          creator: creatorKey,
+          xpMint,
+          backendSigner: signer.publicKey,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+        })
+        .signers([signer])
+        .rpc(),
+    );
 
     logEnrollmentEvent({
       eventType: "finalize_course",

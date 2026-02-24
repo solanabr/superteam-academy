@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 
 interface WelcomeScreenProps {
   onStart: () => void;
@@ -8,6 +9,7 @@ interface WelcomeScreenProps {
 }
 
 export function WelcomeScreen({ onStart, onSkip }: WelcomeScreenProps) {
+  const t = useTranslations("onboarding");
   const bgRef = useRef<HTMLDivElement>(null);
   const [hoverSentinel, setHoverSentinel] = useState(false);
   const [visible, setVisible] = useState(false);
@@ -76,7 +78,7 @@ export function WelcomeScreen({ onStart, onSkip }: WelcomeScreenProps) {
             transition: "all 0.6s ease 0.2s",
           }}
         >
-          SKILL ASSESSMENT // CALIBRATION
+          {t("skillAssessmentCalibration")}
         </p>
 
         {/* Title */}
@@ -94,7 +96,7 @@ export function WelcomeScreen({ onStart, onSkip }: WelcomeScreenProps) {
             transition: "all 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.3s",
           }}
         >
-          Elevate
+          {t("elevate")}
           <br />
           <span
             style={{
@@ -108,7 +110,7 @@ export function WelcomeScreen({ onStart, onSkip }: WelcomeScreenProps) {
               animation: "onb-shine 6s linear infinite",
             }}
           >
-            on-chain.
+            {t("onChain")}
           </span>
         </h1>
 
@@ -126,8 +128,7 @@ export function WelcomeScreen({ onStart, onSkip }: WelcomeScreenProps) {
             transition: "all 0.7s ease 0.5s",
           }}
         >
-          Answer 8 quick questions so we can gauge your experience level and
-          recommend the right learning path. It takes less than 2 minutes.
+          {t("welcomeBody")}
         </p>
 
         {/* Skip link */}
@@ -153,7 +154,7 @@ export function WelcomeScreen({ onStart, onSkip }: WelcomeScreenProps) {
             e.currentTarget.style.color = "var(--c-text-2)";
           }}
         >
-          Skip for now
+          {t("skip")}
         </button>
       </div>
 
@@ -230,7 +231,7 @@ export function WelcomeScreen({ onStart, onSkip }: WelcomeScreenProps) {
             userSelect: "none",
           }}
         >
-          INITIALIZE
+          {t("initialize")}
         </div>
       </div>
 

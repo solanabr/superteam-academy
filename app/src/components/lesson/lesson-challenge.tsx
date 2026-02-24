@@ -1,0 +1,1079 @@
+"use client";
+
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState, useEffect, useCallback } from "react";
+import { useTranslations } from "next-intl";
+import dynamic from "next/dynamic";
+import { Check, Loader2 } from "lucide-react";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { learningService } from "@/lib/services/learning-progress";
+import { XPToast } from "@/components/gamification/xp-toast";
+import {
+  executeJS,
+  formatLogs,
+  initTranspiler,
+  transpileAndProtect,
+  runTestAssertions,
+} from "@/lib/code-executor";
+import { setupMonacoTheme } from "@/lib/utils/monaco-theme";
+import { V9ChallengeSidebar } from "./challenge-sidebar";
+import { CourseCompleteOverlay } from "./course-complete-overlay";
+import type { Lesson, Module } from "@/lib/services/types";
+
+const lazyConfetti = () => import("canvas-confetti").then((m) => m.default);
+
+const MonacoEditor = dynamic(() => import("@monaco-editor/react"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex-1 flex items-center justify-center bg-[var(--c-bg)]">
+      <Loader2 className="h-5 w-5 animate-spin text-[var(--c-text-faint)]" />
+    </div>
+  ),
+});
+
+const MONACO_LANG_MAP: Record<string, string> = {
+  rust: "rust",
+  typescript: "typescript",
+  javascript: "javascript",
+  json: "json",
+};
+
+const FILE_NAME_MAP: Record<string, string> = {
+  rust: "main.rs",
+  typescript: "index.ts",
+  javascript: "index.js",
+  json: "data.json",
+};
+
+export function LessonChallenge({
+  lesson,
+  course,
+  allLessons,
+  lessonIndex,
+  locale,
+  slug,
+}: {
+  lesson: Lesson;
+  course: { id?: string; title: string; modules: Module[]; xpReward?: number };
+  allLessons: Lesson[];
+  lessonIndex: number;
+  locale: string;
+  slug: string;
+}) {
+  const t = useTranslations("lesson");
+  const router = useRouter();
+  const { publicKey } = useWallet();
+  const walletAddress = publicKey?.toBase58() ?? null;
+
+  const prevLesson = lessonIndex > 0 ? allLessons[lessonIndex - 1] : null;
+  const nextLesson =
+    lessonIndex < allLessons.length - 1 ? allLessons[lessonIndex + 1] : null;
+  const isLastLesson = !nextLesson;
+
+  const fileName = FILE_NAME_MAP[lesson.challenge?.language ?? "typescript"] ?? "index.ts";
+  const doneCount = allLessons.filter((_, i) => i < lessonIndex).length;
+
+  const [code, setCode] = useState(() => {
+    if (typeof window !== "undefined" && lesson.challenge) {
+      const saved = localStorage.getItem(`stacad:code:${slug}:${lesson.id}`);
+      if (saved) return saved;
+    }
+    return lesson.challenge?.starterCode ?? "";
+  });
+  const [output, setOutput] = useState("");
+  const [testResults, setTestResults] = useState<
+    { name: string; passed: boolean; expected?: string; actual?: string }[]
+  >([]);
+  const [isRunning, setIsRunning] = useState(false);
+  const [completed, setCompleted] = useState(false);
+  const [showXP, setShowXP] = useState(false);
+  const [showSolution, setShowSolution] = useState(false);
+  const [showHints, setShowHints] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [mobileTab, setMobileTab] = useState<"instructions" | "code">(
+    "instructions",
+  );
+  const [showCourseComplete, setShowCourseComplete] = useState(false);
+  const [isFinalizing, setIsFinalizing] = useState(false);
+  const [finalizationResult, setFinalizationResult] = useState<{
+    xpAwarded: number;
+    credentialIssued: boolean;
+  } | null>(null);
+
+  useEffect(() => {
+    const userId = walletAddress ?? "local";
+    const cId = course?.id ?? slug;
+    learningService.getProgress(userId, cId).then((progress) => {
+      if (progress.completedLessons.includes(lessonIndex)) {
+        setCompleted(true);
+      }
+    });
+  }, [walletAddress, course, slug, lessonIndex]);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 1024);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  useEffect(() => {
+    if (!lesson.challenge) return;
+    const timer = setTimeout(() => {
+      localStorage.setItem(`stacad:code:${slug}:${lesson.id}`, code);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [code, slug, lesson.id, lesson.challenge]);
+
+  const triggerCelebration = useCallback(async () => {
+    setShowXP(true);
+    setTimeout(() => setShowXP(false), 3000);
+    const confetti = await lazyConfetti();
+    const colors = ["#00FFA3", "#03E1FF", "#9945FF"];
+    confetti({ particleCount: 60, spread: 65, origin: { y: 0.65 }, colors });
+    const end = Date.now() + 600;
+    (function burst() {
+      confetti({
+        particleCount: 3,
+        angle: 60,
+        spread: 50,
+        origin: { x: 0 },
+        colors,
+      });
+      confetti({
+        particleCount: 3,
+        angle: 120,
+        spread: 50,
+        origin: { x: 1 },
+        colors,
+      });
+      if (Date.now() < end) requestAnimationFrame(burst);
+    })();
+    if (isLastLesson) {
+      setTimeout(() => setShowCourseComplete(true), 1500);
+    }
+  }, [isLastLesson]);
+
+  const callCompleteLessonAPI = useCallback(() => {
+    const userId = walletAddress ?? "local";
+    const cId = course?.id ?? slug;
+
+    learningService
+      .completeLesson(userId, cId, lessonIndex)
+      .catch((e) => console.error("local completeLesson error:", e));
+
+    if (walletAddress && course) {
+      fetch("/api/complete-lesson", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          learner: walletAddress,
+          courseId: course.id,
+          lessonIndex,
+        }),
+      }).catch((e) => console.error("complete-lesson API error:", e));
+    }
+  }, [walletAddress, course, lessonIndex, slug]);
+
+  const handleRun = useCallback(async () => {
+    if (!lesson.challenge) return;
+    setIsRunning(true);
+    setOutput("");
+    setTestResults([]);
+
+    try {
+      const lang = lesson.challenge.language;
+
+      if (lang === "rust") {
+        const res = await fetch("/api/execute-rust", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code }),
+        });
+        const data = await res.json();
+        if (data.error) {
+          setOutput(`Error: ${data.error}`);
+          setIsRunning(false);
+          return;
+        }
+        const rustOutput = data.stderr
+          ? `${data.stderr}\n${data.stdout}`.trim()
+          : data.stdout || "(no output)";
+        setOutput(rustOutput);
+
+        const execResult = {
+          logs: [{ type: "log" as const, args: [data.stdout ?? ""] }],
+          error: data.success ? null : (data.stderr ?? "Compilation failed"),
+          timedOut: false,
+        };
+        const results = runTestAssertions(lesson.challenge.testCases, execResult, code);
+        setTestResults(results);
+
+        if (results.every((r) => r.passed) && !completed) {
+          setCompleted(true);
+          triggerCelebration();
+          callCompleteLessonAPI();
+        }
+      } else {
+        await initTranspiler();
+        const transpiled = await transpileAndProtect(code);
+        if (transpiled.error) {
+          setOutput(`Compile error:\n${transpiled.error}`);
+          setIsRunning(false);
+          return;
+        }
+        const execResult = await executeJS(transpiled.code);
+        setOutput(formatLogs(execResult));
+
+        const results = runTestAssertions(lesson.challenge.testCases, execResult, code);
+        setTestResults(results);
+
+        if (results.every((r) => r.passed) && !completed) {
+          setCompleted(true);
+          triggerCelebration();
+          callCompleteLessonAPI();
+        }
+      }
+    } catch (err) {
+      setOutput(`Unexpected error: ${err instanceof Error ? err.message : String(err)}`);
+    }
+
+    setIsRunning(false);
+  }, [code, lesson.challenge, completed, triggerCelebration, callCompleteLessonAPI]);
+
+  const handleReset = useCallback(() => {
+    setCode(lesson.challenge?.starterCode ?? "");
+    setOutput("");
+    setTestResults([]);
+    setCompleted(false);
+    localStorage.removeItem(`stacad:code:${slug}:${lesson.id}`);
+  }, [lesson.challenge, slug, lesson.id]);
+
+  const navigateNext = useCallback(() => {
+    if (nextLesson) {
+      router.push(`/${locale}/courses/${slug}/lessons/${nextLesson.id}`);
+    } else {
+      router.push(`/${locale}/courses/${slug}`);
+    }
+  }, [nextLesson, router, locale, slug]);
+
+  const handleFinalizeCourse = useCallback(async () => {
+    setIsFinalizing(true);
+    try {
+      if (!course) return;
+
+      if (walletAddress) {
+        const res = await fetch(`/api/courses/${slug}/finalize`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ walletAddress }),
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        setFinalizationResult({
+          xpAwarded: data.xpAwarded ?? course.xpReward,
+          credentialIssued: true,
+        });
+      } else {
+        const result = await learningService.finalizeCourse("local", course.id ?? slug);
+        setFinalizationResult(result);
+      }
+
+      const confetti = await lazyConfetti();
+      const colors = ["#00FFA3", "#CA9FF5", "#03E1FF", "#9945FF"];
+      confetti({ particleCount: 120, spread: 80, origin: { y: 0.5 }, colors });
+      setTimeout(() => {
+        confetti({
+          particleCount: 40,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0 },
+          colors,
+        });
+        confetti({
+          particleCount: 40,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1 },
+          colors,
+        });
+      }, 300);
+    } catch (e) {
+      console.error("finalizeCourse error:", e);
+      setFinalizationResult({ xpAwarded: 0, credentialIssued: false });
+    } finally {
+      setIsFinalizing(false);
+    }
+  }, [slug, walletAddress, course]);
+
+  return (
+    <div
+      style={{
+        width: "100%",
+        height: "100vh",
+        display: "grid",
+        gridTemplateColumns: isMobile ? "1fr" : "220px 1fr",
+        gridTemplateRows: isMobile ? "48px 38px 1fr 40px" : "48px 1fr 40px",
+        fontFamily: "'DM Sans', system-ui, sans-serif",
+        background: "#F6F5F2",
+        color: "#1A1918",
+        overflow: "hidden",
+        paddingTop: "61px",
+        boxSizing: "border-box",
+      }}
+    >
+      <XPToast amount={lesson.xpReward} show={showXP} />
+      <CourseCompleteOverlay
+        show={showCourseComplete}
+        locale={locale}
+        isFinalizing={isFinalizing}
+        finalizationResult={finalizationResult}
+        onFinalize={handleFinalizeCourse}
+        onDismiss={() => setShowCourseComplete(false)}
+      />
+
+      {/* NAV */}
+      <nav
+        style={{
+          gridColumn: "1 / -1",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: isMobile ? "0 12px" : "0 20px",
+          background: "#F6F5F2",
+          borderBottom: "1px solid rgba(26,25,24,0.07)",
+          zIndex: 10,
+          overflow: "hidden",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: isMobile ? 8 : 14,
+            minWidth: 0,
+          }}
+        >
+          <Link
+            href={`/${locale}`}
+            style={{
+              fontFamily: "var(--v9-mono)",
+              fontSize: isMobile ? 9 : 11,
+              fontWeight: 700,
+              letterSpacing: "0.1em",
+              color: "#1A1918",
+              textDecoration: "none",
+              flexShrink: 0,
+            }}
+          >
+            {isMobile ? "SA" : "SUPERTEAM"}
+          </Link>
+          <span style={{ color: "#B5B2AE", fontSize: 11, flexShrink: 0 }}>
+            /
+          </span>
+          <div
+            style={{
+              fontFamily: "var(--v9-mono)",
+              fontSize: 9.5,
+              letterSpacing: "0.08em",
+              color: "#8A8784",
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              minWidth: 0,
+              overflow: "hidden",
+            }}
+          >
+            {!isMobile && (
+              <>
+                <Link
+                  href={`/${locale}/courses/${slug}`}
+                  style={{
+                    color: "#8A8784",
+                    textDecoration: "none",
+                    textTransform: "uppercase" as const,
+                  }}
+                >
+                  {course.title}
+                </Link>
+                <span style={{ opacity: 0.4 }}>{"\u203A"}</span>
+              </>
+            )}
+            <span
+              style={{
+                color: "#1A1918",
+                fontWeight: 700,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap" as const,
+              }}
+            >
+              {lesson.title}
+            </span>
+          </div>
+        </div>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: isMobile ? 8 : 18,
+            flexShrink: 0,
+          }}
+        >
+          <span
+            style={{
+              fontFamily: "var(--v9-mono)",
+              fontSize: isMobile ? 9 : 10.5,
+              color: "#FF5C28",
+              fontWeight: 700,
+              letterSpacing: "0.06em",
+            }}
+          >
+            +{lesson.xpReward} XP
+          </span>
+          {completed && (
+            <span
+              style={{
+                fontFamily: "var(--v9-mono)",
+                fontSize: 9,
+                letterSpacing: "0.1em",
+                padding: "4px 10px",
+                background: "rgba(20,241,149,0.08)",
+                color: "#14F195",
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
+              }}
+            >
+              <Check style={{ width: 10, height: 10 }} /> DONE
+            </span>
+          )}
+        </div>
+      </nav>
+
+      {/* SIDEBAR */}
+      {!isMobile && (
+        <V9ChallengeSidebar
+          modules={course.modules}
+          activeId={lesson.id}
+          locale={locale}
+          slug={slug}
+        />
+      )}
+
+      {/* MOBILE TAB SWITCHER */}
+      {isMobile && (
+        <div
+          style={{
+            gridColumn: "1 / -1",
+            display: "flex",
+            background: "#F6F5F2",
+            borderBottom: "1px solid rgba(26,25,24,0.07)",
+          }}
+        >
+          {(["instructions", "code"] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setMobileTab(tab)}
+              style={{
+                flex: 1,
+                fontFamily: "var(--v9-mono)",
+                fontSize: 10,
+                letterSpacing: "0.12em",
+                textTransform: "uppercase" as const,
+                padding: "10px 0",
+                border: "none",
+                background:
+                  mobileTab === tab
+                    ? tab === "code"
+                      ? "#0F0E0D"
+                      : "#F6F5F2"
+                    : "transparent",
+                color:
+                  mobileTab === tab
+                    ? tab === "code"
+                      ? "#14F195"
+                      : "#1A1918"
+                    : "#8A8784",
+                cursor: "pointer",
+                borderBottom:
+                  mobileTab === tab
+                    ? `2px solid ${tab === "code" ? "#14F195" : "#FF5C28"}`
+                    : "2px solid transparent",
+                fontWeight: mobileTab === tab ? 700 : 400,
+                transition: "all 0.2s",
+              }}
+            >
+              {tab === "instructions" ? "Instructions" : `Code (${fileName})`}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* MAIN: Instructions + Editor */}
+      <main
+        style={{
+          gridRow: isMobile ? 3 : 2,
+          display: isMobile ? "flex" : "grid",
+          gridTemplateColumns: isMobile ? undefined : "1fr 1fr",
+          overflow: "hidden",
+        }}
+      >
+        {/* LEFT: Instructions */}
+        <div
+          style={{
+            background: "#F6F5F2",
+            borderRight: isMobile ? "none" : "1px solid rgba(26,25,24,0.07)",
+            overflowY: "auto",
+            padding: isMobile ? "20px 16px 80px" : "28px 24px 80px",
+            display:
+              isMobile && mobileTab !== "instructions" ? "none" : "block",
+            width: isMobile ? "100%" : undefined,
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              marginBottom: 18,
+            }}
+          >
+            <span
+              style={{
+                fontFamily: "var(--v9-mono)",
+                fontSize: 9,
+                letterSpacing: "0.14em",
+                padding: "3px 10px",
+                border: "1px solid #FF5C28",
+                color: "#FF5C28",
+                textTransform: "uppercase" as const,
+              }}
+            >
+              Challenge
+            </span>
+            <span
+              style={{
+                fontFamily: "var(--v9-mono)",
+                fontSize: 11,
+                color: "#14F195",
+                fontWeight: 700,
+              }}
+            >
+              +{lesson.xpReward} XP
+            </span>
+          </div>
+
+          <h1
+            style={{
+              fontFamily: "var(--v9-serif)",
+              fontSize: "clamp(26px, 2.8vw, 38px)",
+              fontWeight: 900,
+              lineHeight: 1.08,
+              letterSpacing: "-0.02em",
+              marginBottom: 18,
+              color: "#1A1918",
+            }}
+          >
+            {lesson.title}
+          </h1>
+
+          {lesson.challenge && (
+            <>
+              <p
+                style={{
+                  fontSize: 14.5,
+                  lineHeight: 1.7,
+                  color: "#8A8784",
+                  fontWeight: 300,
+                  marginBottom: 20,
+                  whiteSpace: "pre-wrap" as const,
+                }}
+              >
+                {lesson.challenge.instructions}
+              </p>
+
+              <div
+                style={{
+                  padding: "14px 18px",
+                  background: "rgba(26,25,24,0.02)",
+                  borderLeft: "2px solid #FF5C28",
+                  marginBottom: 28,
+                  fontSize: 13.5,
+                  color: "#8A8784",
+                  fontStyle: "italic",
+                  lineHeight: 1.6,
+                }}
+              >
+                Use the provided starter code and fill in the TODO sections.
+              </div>
+
+              {lesson.challenge.testCases.length > 0 && (
+                <>
+                  <div
+                    style={{
+                      fontFamily: "var(--v9-mono)",
+                      fontSize: 8.5,
+                      letterSpacing: "0.18em",
+                      color: "#8A8784",
+                      paddingBottom: 10,
+                      marginBottom: 10,
+                      borderBottom: "1px solid rgba(26,25,24,0.06)",
+                      textTransform: "uppercase" as const,
+                    }}
+                  >
+                    Test Cases
+                  </div>
+                  {lesson.challenge.testCases.map((tc, i) => {
+                    const r = testResults[i];
+                    return (
+                      <div
+                        key={tc.name}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 10,
+                          padding: "9px 0",
+                          fontSize: 13,
+                          color: r
+                            ? r.passed
+                              ? "#1A1918"
+                              : "#EF4444"
+                            : "#8A8784",
+                          borderBottom: "1px solid rgba(26,25,24,0.03)",
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: 16,
+                            height: 16,
+                            borderRadius: 3,
+                            border: `1.5px solid ${r ? (r.passed ? "#14F195" : "#EF4444") : "rgba(26,25,24,0.15)"}`,
+                            background: r
+                              ? r.passed
+                                ? "#14F195"
+                                : "#EF4444"
+                              : "transparent",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: 9,
+                            color: r
+                              ? r.passed
+                                ? "#0D0C0B"
+                                : "#fff"
+                              : "transparent",
+                            flexShrink: 0,
+                          }}
+                        >
+                          {r ? (r.passed ? "\u2713" : "\u2717") : ""}
+                        </div>
+                        <span style={{ flex: 1 }}>{tc.name}</span>
+                        {r && (
+                          <span
+                            style={{
+                              fontFamily: "var(--v9-mono)",
+                              fontSize: 9,
+                              letterSpacing: "0.1em",
+                              color: r.passed ? "#14F195" : "#EF4444",
+                            }}
+                          >
+                            {r.passed ? "PASS" : "FAIL"}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </>
+              )}
+
+              <button
+                onClick={() => setShowHints(!showHints)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  fontFamily: "var(--v9-mono)",
+                  fontSize: 9.5,
+                  letterSpacing: "0.08em",
+                  color: "#8A8784",
+                  cursor: "pointer",
+                  background: "none",
+                  border: "none",
+                  padding: "14px 0",
+                  marginTop: 8,
+                  textTransform: "uppercase" as const,
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: 12,
+                    transition: "transform 0.3s",
+                    transform: showHints ? "rotate(90deg)" : "none",
+                    display: "inline-block",
+                  }}
+                >
+                  {"\u203A"}
+                </span>
+                Hints
+              </button>
+              {showHints && (
+                <div
+                  style={{
+                    padding: "12px 16px",
+                    background: "rgba(26,25,24,0.02)",
+                    borderLeft: "2px solid rgba(26,25,24,0.08)",
+                    marginBottom: 8,
+                    fontSize: 13,
+                    color: "#8A8784",
+                    lineHeight: 1.65,
+                  }}
+                >
+                  <p>1. Read the requirements and identify inputs/outputs.</p>
+                  <p>2. Build the structure first, then handle edge cases.</p>
+                  <p>3. Run tests frequently to check progress.</p>
+                </div>
+              )}
+
+              {lesson.challenge.solution && (
+                <button
+                  onClick={() => setShowSolution(!showSolution)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    fontFamily: "var(--v9-mono)",
+                    fontSize: 9.5,
+                    letterSpacing: "0.08em",
+                    color: "#8A8784",
+                    cursor: "pointer",
+                    background: "none",
+                    border: "none",
+                    padding: "6px 0",
+                    textTransform: "uppercase" as const,
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: 12,
+                      transition: "transform 0.3s",
+                      transform: showSolution ? "rotate(90deg)" : "none",
+                      display: "inline-block",
+                    }}
+                  >
+                    {"\u203A"}
+                  </span>
+                  {showSolution ? "Hide Solution" : "Show Solution"}
+                </button>
+              )}
+              {showSolution && lesson.challenge.solution && (
+                <pre
+                  style={{
+                    padding: "12px 16px",
+                    background: "#0F0E0D",
+                    borderLeft: "2px solid #14F195",
+                    marginTop: 4,
+                    marginBottom: 8,
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontSize: 12,
+                    lineHeight: 1.6,
+                    color: "rgba(255,255,255,0.7)",
+                    overflowX: "auto",
+                    whiteSpace: "pre-wrap" as const,
+                  }}
+                >
+                  {lesson.challenge.solution}
+                </pre>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* RIGHT: Code Editor (DARK) */}
+        <div
+          style={{
+            background: "#0F0E0D",
+            display: isMobile && mobileTab !== "code" ? "none" : "flex",
+            flexDirection: "column" as const,
+            overflow: "hidden",
+            width: isMobile ? "100%" : undefined,
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              height: 34,
+              background: "#1A1918",
+              borderBottom: "1px solid rgba(255,255,255,0.04)",
+              padding: "0 12px",
+              flexShrink: 0,
+            }}
+          >
+            <div
+              style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: 11,
+                color: "rgba(255,255,255,0.8)",
+                padding: "7px 14px",
+                position: "relative" as const,
+              }}
+            >
+              {fileName}
+              <div
+                style={{
+                  position: "absolute" as const,
+                  bottom: -1,
+                  left: 10,
+                  right: 10,
+                  height: 2,
+                  background: "#FF5C28",
+                }}
+              />
+            </div>
+          </div>
+
+          <div style={{ flex: 1, minHeight: 0, position: "relative" as const }}>
+            <MonacoEditor
+              height="100%"
+              language={MONACO_LANG_MAP[lesson.challenge?.language ?? "typescript"] ?? "typescript"}
+              theme="academy"
+              value={code}
+              onChange={(v) => setCode(v ?? "")}
+              beforeMount={setupMonacoTheme}
+              options={{
+                minimap: { enabled: false },
+                fontSize: 12.5,
+                fontFamily: "'JetBrains Mono', monospace",
+                padding: { top: 14, bottom: 14 },
+                scrollBeyondLastLine: false,
+                wordWrap: "on",
+                smoothScrolling: true,
+                cursorSmoothCaretAnimation: "on",
+                cursorBlinking: "smooth",
+                renderLineHighlight: "line",
+                lineHeight: 21,
+                lineNumbers: "on",
+                lineNumbersMinChars: 3,
+                suggestOnTriggerCharacters: true,
+                quickSuggestions: true,
+                wordBasedSuggestions: "currentDocument",
+                formatOnPaste: true,
+                tabCompletion: "on",
+              }}
+            />
+          </div>
+
+          <div
+            style={{
+              background: "#0A0908",
+              borderTop: "1px solid rgba(255,255,255,0.04)",
+              padding: "10px 14px",
+              minHeight: 56,
+              maxHeight: 100,
+              overflowY: "auto" as const,
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: 11.5,
+              color: "rgba(255,255,255,0.4)",
+              lineHeight: 1.5,
+              whiteSpace: "pre-wrap" as const,
+              flexShrink: 0,
+            }}
+          >
+            {isRunning && (
+              <span style={{ animation: "v9-pulse 0.8s infinite" }}>
+                Running...
+              </span>
+            )}
+            {output && !isRunning && (
+              <span>
+                {output.split("\n").map((line, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      color: line.toLowerCase().includes("error")
+                        ? "#EF4444"
+                        : line.toLowerCase().includes("success") ||
+                            line.toLowerCase().includes("compiled")
+                          ? "#14F195"
+                          : "rgba(255,255,255,0.4)",
+                    }}
+                  >
+                    {line}
+                  </div>
+                ))}
+              </span>
+            )}
+            {!output && !isRunning && (
+              <span style={{ opacity: 0.35 }}>Output will appear here...</span>
+            )}
+          </div>
+        </div>
+      </main>
+
+      {/* BOTTOM BAR */}
+      <footer
+        style={{
+          gridColumn: "1 / -1",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: isMobile ? "0 12px" : "0 20px",
+          background: "#F6F5F2",
+          borderTop: "1px solid rgba(26,25,24,0.07)",
+          height: 40,
+          gap: 8,
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: isMobile ? 8 : 18,
+            minWidth: 0,
+          }}
+        >
+          <span
+            style={{
+              fontFamily: "var(--v9-mono)",
+              fontSize: isMobile ? 8 : 9.5,
+              letterSpacing: "0.08em",
+              color: "#8A8784",
+              textTransform: "uppercase" as const,
+              whiteSpace: "nowrap" as const,
+            }}
+          >
+            {isMobile
+              ? `${lessonIndex + 1}/${allLessons.length}`
+              : `Lesson ${lessonIndex + 1}/${allLessons.length} ${"\u00B7"} ${doneCount}/${allLessons.length} Completed`}
+          </span>
+          {!isMobile && (
+            <span
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 5,
+                fontFamily: "var(--v9-mono)",
+                fontSize: 8.5,
+                color: "#B5B2AE",
+              }}
+            >
+              <span
+                style={{
+                  width: 4,
+                  height: 4,
+                  borderRadius: "50%",
+                  background: "#14F195",
+                }}
+              />
+              auto-saved
+            </span>
+          )}
+        </div>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: isMobile ? 6 : 8,
+            flexShrink: 0,
+          }}
+        >
+          {prevLesson && (
+            <Link
+              href={`/${locale}/courses/${slug}/lessons/${prevLesson.id}`}
+              style={{
+                fontFamily: "var(--v9-mono)",
+                fontSize: 9,
+                letterSpacing: "0.08em",
+                padding: "5px 14px",
+                border: "1px solid rgba(26,25,24,0.1)",
+                background: "none",
+                color: "#8A8784",
+                cursor: "pointer",
+                textDecoration: "none",
+                textTransform: "uppercase" as const,
+              }}
+            >
+              {"\u2190"} Prev
+            </Link>
+          )}
+          <button
+            onClick={handleReset}
+            style={{
+              fontFamily: "var(--v9-mono)",
+              fontSize: 9,
+              letterSpacing: "0.08em",
+              padding: "5px 14px",
+              border: "1px solid rgba(26,25,24,0.1)",
+              background: "none",
+              color: "#8A8784",
+              cursor: "pointer",
+              textTransform: "uppercase" as const,
+            }}
+          >
+            Reset
+          </button>
+          <button
+            onClick={handleRun}
+            disabled={isRunning}
+            style={{
+              fontFamily: "var(--v9-mono)",
+              fontSize: 10,
+              letterSpacing: "0.1em",
+              padding: "6px 20px",
+              border: "none",
+              background: isRunning ? "#FF5C28" : "#14F195",
+              color: isRunning ? "#fff" : "#0D0C0B",
+              cursor: isRunning ? "wait" : "pointer",
+              fontWeight: 700,
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              transition: "all 0.3s cubic-bezier(0.16,1,0.3,1)",
+              textTransform: "uppercase" as const,
+            }}
+          >
+            {"\u25B6"} {isRunning ? "Running..." : "Run Code"}
+          </button>
+          {completed ? (
+            <button
+              onClick={navigateNext}
+              style={{
+                fontFamily: "var(--v9-mono)",
+                fontSize: 9,
+                letterSpacing: "0.08em",
+                padding: "5px 14px",
+                border: "none",
+                background: "#1A1918",
+                color: "#F6F5F2",
+                cursor: "pointer",
+                textTransform: "uppercase" as const,
+              }}
+            >
+              {nextLesson ? "Next" : "Finish"} {"\u2192"}
+            </button>
+          ) : nextLesson ? (
+            <Link
+              href={`/${locale}/courses/${slug}/lessons/${nextLesson.id}`}
+              style={{
+                fontFamily: "var(--v9-mono)",
+                fontSize: 9,
+                letterSpacing: "0.08em",
+                padding: "5px 14px",
+                border: "1px solid rgba(26,25,24,0.1)",
+                background: "none",
+                color: "#8A8784",
+                cursor: "pointer",
+                textDecoration: "none",
+                textTransform: "uppercase" as const,
+              }}
+            >
+              Next {"\u2192"}
+            </Link>
+          ) : null}
+        </div>
+      </footer>
+    </div>
+  );
+}

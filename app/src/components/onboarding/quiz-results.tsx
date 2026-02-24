@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { motion } from "framer-motion";
 import type { Track, Difficulty } from "@/lib/services/types";
 import { TRACK_LABELS, TRACK_COLORS, DIFFICULTY_COLORS } from "@/lib/constants";
@@ -22,6 +23,7 @@ export function QuizResults({
   onViewRecommendations,
   onNext,
 }: QuizResultsProps) {
+  const t = useTranslations("onboarding");
   const [animatedScore, setAnimatedScore] = useState(0);
   const trackColor = TRACK_COLORS[recommendedTrack];
   const difficultyColor = DIFFICULTY_COLORS[recommendedDifficulty];
@@ -64,7 +66,7 @@ export function QuizResults({
           marginBottom: 24,
         }}
       >
-        ASSESSMENT RESULTS
+        {t("assessmentResults")}
       </motion.p>
 
       {/* Score ring */}
@@ -169,11 +171,7 @@ export function QuizResults({
           marginBottom: 32,
         }}
       >
-        You scored{" "}
-        <span style={{ color: "var(--v9-sol-green)", fontWeight: 700 }}>
-          {score}
-        </span>{" "}
-        out of {totalQuestions} questions correctly
+        {t("youScoredOutOf", { score, total: totalQuestions })}
       </motion.p>
 
       {/* Recommendation badges */}
@@ -218,7 +216,7 @@ export function QuizResults({
               textTransform: "uppercase" as const,
             }}
           >
-            {TRACK_LABELS[recommendedTrack]} Track
+            {TRACK_LABELS[recommendedTrack]} {t("trackSuffix")}
           </span>
         </div>
 
@@ -270,15 +268,10 @@ export function QuizResults({
           marginBottom: 36,
         }}
       >
-        Based on your answers, we recommend starting with the{" "}
-        <span style={{ color: trackColor, fontWeight: 500 }}>
-          {TRACK_LABELS[recommendedTrack]}
-        </span>{" "}
-        track at the{" "}
-        <span style={{ color: difficultyColor, fontWeight: 500 }}>
-          {recommendedDifficulty}
-        </span>{" "}
-        level.
+        {t("recommendationExplanation", {
+          track: TRACK_LABELS[recommendedTrack],
+          difficulty: recommendedDifficulty,
+        })}
       </motion.p>
 
       {/* CTAs */}
@@ -313,7 +306,7 @@ export function QuizResults({
             el.style.boxShadow = "none";
           }}
         >
-          Next
+          {t("next")}
         </button>
         <button
           onClick={onViewRecommendations}
@@ -338,7 +331,7 @@ export function QuizResults({
             el.style.borderColor = "var(--overlay-border)";
           }}
         >
-          View Courses
+          {t("viewCourses")}
         </button>
       </motion.div>
     </div>

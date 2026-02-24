@@ -14,17 +14,18 @@ export type OnChainEnrollment = EnrollmentAccount;
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const BN = require("bn.js");
 
-// Helper: convert a lesson flag word to BN safely
-function toBN(val: any): any {
+type BNInstance = InstanceType<typeof BN>;
+type BNConvertible = number | string | BNInstance;
+
+function toBN(val: BNConvertible): BNInstance {
   if (val instanceof BN) return val;
   if (typeof val === "number" || typeof val === "string") return new BN(val);
-  if (typeof val?.toString === "function") return new BN(val.toString());
-  return new BN(0);
+  return new BN(val.toString());
 }
 
-// Helper: check if bit is set in the lesson bitmap (safe for all 256 bits)
+// Check if bit is set in the lesson bitmap (safe for all 256 bits)
 export function isLessonComplete(
-  lessonFlags: any[],
+  lessonFlags: BNConvertible[],
   lessonIndex: number,
 ): boolean {
   const word = Math.floor(lessonIndex / 64);
@@ -35,7 +36,7 @@ export function isLessonComplete(
 }
 
 // Count completed lessons from bitmap (safe for all 256 bits)
-export function countCompletedLessons(lessonFlags: any[]): number {
+export function countCompletedLessons(lessonFlags: BNConvertible[]): number {
   let count = 0;
   for (const flag of lessonFlags) {
     let w = toBN(flag).clone();

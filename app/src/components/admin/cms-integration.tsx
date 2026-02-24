@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   Database,
   CheckCircle2,
@@ -19,6 +20,7 @@ interface ConnectionStatus {
 }
 
 export function CmsIntegration() {
+  const t = useTranslations("admin");
   const [projectId, setProjectId] = useState("");
   const [dataset, setDataset] = useState("production");
   const [apiToken, setApiToken] = useState("");
@@ -51,7 +53,7 @@ export function CmsIntegration() {
     } catch {
       setStatus({
         connected: false,
-        message: "Failed to reach the server",
+        message: t("failedToReachServer"),
       });
     } finally {
       setTesting(false);
@@ -62,8 +64,7 @@ export function CmsIntegration() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-xs text-[var(--c-text-2)]">
-          Connect your Sanity CMS to manage and import course content. Courses
-          from both Supabase (database) and Sanity (CMS) will be available.
+          {t("cmsDescription")}
         </p>
       </div>
 
@@ -72,15 +73,15 @@ export function CmsIntegration() {
         <div className="flex items-center gap-2 mb-2">
           <Database className="h-4 w-4 text-[var(--c-text-2)]" />
           <h3 className="text-xs font-semibold text-[var(--c-text)]">
-            Sanity CMS Connection
+            {t("sanityCmsConnection")}
           </h3>
-          <Badge className="text-[9px]">Optional</Badge>
+          <Badge className="text-[9px]">{t("optional")}</Badge>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="block text-[10px] font-medium text-[var(--c-text-2)] mb-1">
-              Project ID *
+              {t("projectIdRequired")}
             </label>
             <Input
               value={projectId}
@@ -91,7 +92,7 @@ export function CmsIntegration() {
           </div>
           <div>
             <label className="block text-[10px] font-medium text-[var(--c-text-2)] mb-1">
-              Dataset
+              {t("dataset")}
             </label>
             <Input
               value={dataset}
@@ -104,7 +105,7 @@ export function CmsIntegration() {
 
         <div>
           <label className="block text-[10px] font-medium text-[var(--c-text-2)] mb-1">
-            API Token (for write access)
+            {t("apiTokenLabel")}
           </label>
           <Input
             type="password"
@@ -114,7 +115,7 @@ export function CmsIntegration() {
             className="h-8 text-xs font-mono"
           />
           <p className="text-[9px] text-[var(--c-text-dim)] mt-1">
-            Get your token from{" "}
+            {t("getToken")}{" "}
             <a
               href="https://www.sanity.io/manage"
               target="_blank"
@@ -143,7 +144,7 @@ export function CmsIntegration() {
                 <span>{status.message}</span>
                 {status.courseCount !== undefined && (
                   <Badge className="text-[9px] ml-1">
-                    {status.courseCount} courses
+                    {t("coursesCountBadge", { count: status.courseCount })}
                   </Badge>
                 )}
               </div>
@@ -159,10 +160,10 @@ export function CmsIntegration() {
             {testing ? (
               <>
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                Testing...
+                {t("testing")}
               </>
             ) : (
-              "Test Connection"
+              t("testConnection")
             )}
           </Button>
         </div>
@@ -171,30 +172,27 @@ export function CmsIntegration() {
       {/* How it works */}
       <div className="rounded-[2px] border border-[var(--c-border-subtle)] bg-[var(--c-bg)] p-4">
         <h3 className="text-xs font-semibold text-[var(--c-text)] mb-2">
-          How CMS Integration Works
+          {t("howCmsWorks")}
         </h3>
         <div className="space-y-2 text-[11px] text-[var(--c-text-2)]">
           <div className="flex items-start gap-2">
             <span className="text-[#00FFA3] font-mono shrink-0">1.</span>
             <span>
-              <strong className="text-[var(--c-text)]">Database courses</strong>{" "}
-              (Supabase) are managed directly from this admin panel — edit
-              titles, descriptions, modules, and lessons.
+              <strong className="text-[var(--c-text)]">{t("cmsStep1Title")}</strong>{" "}
+              {t("cmsStep1Desc")}
             </span>
           </div>
           <div className="flex items-start gap-2">
             <span className="text-[#00FFA3] font-mono shrink-0">2.</span>
             <span>
-              <strong className="text-[var(--c-text)]">CMS courses</strong>{" "}
-              (Sanity) let content creators use Sanity Studio to author rich
-              course content with their familiar tools.
+              <strong className="text-[var(--c-text)]">{t("cmsStep2Title")}</strong>{" "}
+              {t("cmsStep2Desc")}
             </span>
           </div>
           <div className="flex items-start gap-2">
             <span className="text-[#00FFA3] font-mono shrink-0">3.</span>
             <span>
-              The platform merges both sources — Supabase courses appear first,
-              then Sanity courses, with static fallback data as a safety net.
+              {t("cmsStep3Desc")}
             </span>
           </div>
         </div>

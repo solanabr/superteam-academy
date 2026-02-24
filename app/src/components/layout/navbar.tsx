@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Menu, X, Globe, Shield, Settings } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { cn } from "@/lib/utils";
 import { SuperteamLogo } from "@/components/ui/superteam-logo";
@@ -24,10 +24,50 @@ export function Navbar({ locale }: { locale: string }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const mobileToggleRef = useRef<HTMLButtonElement>(null);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Focus trap for mobile menu
+  useEffect(() => {
+    if (!mobileOpen) return;
+
+    const menu = mobileMenuRef.current;
+    if (!menu) return;
+
+    const focusable = menu.querySelectorAll<HTMLElement>(
+      'a[href], button, input, [tabindex]:not([tabindex="-1"])',
+    );
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setMobileOpen(false);
+        mobileToggleRef.current?.focus();
+        return;
+      }
+      if (e.key !== "Tab") return;
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last?.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault();
+          first?.focus();
+        }
+      }
+    }
+
+    first?.focus();
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [mobileOpen]);
 
   // Detect pages that need normal blend mode (not mix-blend-mode: difference)
   const isCoursesPage =
@@ -62,13 +102,13 @@ export function Navbar({ locale }: { locale: string }) {
       >
         <nav
           className="flex w-full items-center justify-between"
-          aria-label="Main navigation"
+          aria-label={t("mainNavigation")}
         >
           {/* Left: Logo */}
           <Link
             href={`/${locale}`}
             className="flex items-center gap-2.5"
-            aria-label="Superteam home"
+            aria-label={t("superteamHome")}
           >
             <SuperteamLogo size={20} />
             <span className="v9-nav-logo">Superteam</span>
@@ -106,7 +146,7 @@ export function Navbar({ locale }: { locale: string }) {
                     ? { color: "var(--c-text-muted)" }
                     : undefined
                 }
-                aria-label="Admin panel"
+                aria-label={t("adminPanel")}
               >
                 <Shield className="h-3.5 w-3.5" />
               </Link>
@@ -150,7 +190,7 @@ export function Navbar({ locale }: { locale: string }) {
                     marginTop: -2,
                   }}
                 >
-                  admin login here
+                  {t("adminLoginHere")}
                 </span>
               </div>
             </div>
@@ -160,7 +200,7 @@ export function Navbar({ locale }: { locale: string }) {
               <button
                 onClick={() => setLangOpen(!langOpen)}
                 className="v9-nav-link flex items-center gap-1"
-                aria-label="Switch language"
+                aria-label={t("switchLanguage")}
                 aria-expanded={langOpen}
                 aria-haspopup="true"
                 style={
@@ -178,7 +218,7 @@ export function Navbar({ locale }: { locale: string }) {
               )}
               <div
                 role="menu"
-                aria-label="Language options"
+                aria-label={t("languageOptions")}
                 className={cn(
                   "absolute right-0 top-full z-50 mt-3 min-w-[120px] overflow-hidden transition-all duration-200 origin-top-right",
                   langOpen
@@ -249,7 +289,7 @@ export function Navbar({ locale }: { locale: string }) {
             <Link
               href={`/${locale}/settings`}
               className={cn("v9-nav-link", isActive(`/${locale}/settings`) && "active")}
-              aria-label="Settings"
+              aria-label={t("settings")}
               style={
                 isCoursesPage || isCommunityPage
                   ? { color: "var(--c-text-muted)" }
@@ -264,9 +304,10 @@ export function Navbar({ locale }: { locale: string }) {
           <div className="flex items-center gap-4 md:hidden">
             {/* Mobile hamburger */}
             <button
+              ref={mobileToggleRef}
               className="v9-nav-link"
               onClick={() => setMobileOpen(!mobileOpen)}
-              aria-label={mobileOpen ? "Close menu" : "Open menu"}
+              aria-label={mobileOpen ? t("closeMenu") : t("openMenu")}
               aria-expanded={mobileOpen}
             >
               {mobileOpen ? (
@@ -282,6 +323,7 @@ export function Navbar({ locale }: { locale: string }) {
       {/* Mobile menu overlay */}
       {mobileOpen && (
         <div
+          ref={mobileMenuRef}
           className="fixed inset-0 z-[89] flex flex-col md:hidden"
           style={{
             background: "var(--overlay-bg)",
@@ -344,7 +386,7 @@ export function Navbar({ locale }: { locale: string }) {
               }}
             >
               <Shield className="h-3.5 w-3.5" />
-              Admin
+              {t("admin")}
               {isActive(`/${locale}/admin`) && (
                 <span
                   className="ml-3 inline-block"
@@ -376,7 +418,7 @@ export function Navbar({ locale }: { locale: string }) {
               }}
             >
               <Settings className="h-3.5 w-3.5" />
-              Settings
+              {t("settings")}
               {isActive(`/${locale}/settings`) && (
                 <span
                   className="ml-3 inline-block"

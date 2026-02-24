@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import dynamic from "next/dynamic";
+import { useTranslations } from "next-intl";
 import {
   Save,
   Loader2,
@@ -67,6 +68,7 @@ const MONACO_LANG_MAP: Record<string, string> = {
 };
 
 export function LessonEditor({ lesson, wallet, onSave }: LessonEditorProps) {
+  const t = useTranslations("admin");
   const [title, setTitle] = useState(lesson.title);
   const [xpReward, setXpReward] = useState(lesson.xpReward);
   const [estimatedMinutes, setEstimatedMinutes] = useState(
@@ -167,7 +169,7 @@ export function LessonEditor({ lesson, wallet, onSave }: LessonEditorProps) {
       <div className="grid grid-cols-3 gap-3">
         <div className="col-span-1">
           <label className="block text-[10px] font-medium text-[var(--c-text-2)] mb-1">
-            Title
+            {t("titleLabel")}
           </label>
           <Input
             value={title}
@@ -177,7 +179,7 @@ export function LessonEditor({ lesson, wallet, onSave }: LessonEditorProps) {
         </div>
         <div>
           <label className="block text-[10px] font-medium text-[var(--c-text-2)] mb-1">
-            XP Reward
+            {t("xpRewardLabel")}
           </label>
           <Input
             type="number"
@@ -190,7 +192,7 @@ export function LessonEditor({ lesson, wallet, onSave }: LessonEditorProps) {
         </div>
         <div>
           <label className="block text-[10px] font-medium text-[var(--c-text-2)] mb-1">
-            Minutes
+            {t("minutesLabel")}
           </label>
           <Input
             type="number"
@@ -207,7 +209,7 @@ export function LessonEditor({ lesson, wallet, onSave }: LessonEditorProps) {
       <div>
         <div className="flex items-center justify-between mb-1.5">
           <label className="text-[10px] font-medium text-[var(--c-text-2)]">
-            Content (Markdown)
+            {t("contentMarkdown")}
           </label>
           <button
             type="button"
@@ -216,11 +218,11 @@ export function LessonEditor({ lesson, wallet, onSave }: LessonEditorProps) {
           >
             {showPreview ? (
               <>
-                <Code className="h-3 w-3" /> Edit
+                <Code className="h-3 w-3" /> {t("edit")}
               </>
             ) : (
               <>
-                <Eye className="h-3 w-3" /> Preview
+                <Eye className="h-3 w-3" /> {t("preview")}
               </>
             )}
           </button>
@@ -248,7 +250,7 @@ export function LessonEditor({ lesson, wallet, onSave }: LessonEditorProps) {
           <textarea
             value={markdownContent}
             onChange={(e) => setMarkdownContent(e.target.value)}
-            placeholder="Write lesson content in markdown..."
+            placeholder={t("writeLessonContent")}
             rows={8}
             className="flex w-full rounded-[2px] bg-[var(--c-bg)] border border-[var(--c-border-subtle)] px-3 py-2 text-xs font-mono text-[var(--c-text)] placeholder:text-[var(--c-text-2)] transition-colors focus:outline-none focus:border-[#55E9AB] focus:ring-1 focus:ring-[#55E9AB] resize-y"
           />
@@ -260,13 +262,13 @@ export function LessonEditor({ lesson, wallet, onSave }: LessonEditorProps) {
         <div className="space-y-4 border-t border-[var(--c-border-subtle)] pt-4">
           <h3 className="text-xs font-semibold text-[var(--c-text)] flex items-center gap-2">
             <Code className="h-3.5 w-3.5 text-[var(--c-text-2)]" />
-            Challenge Configuration
+            {t("challengeConfiguration")}
           </h3>
 
           {/* Language Selector */}
           <div>
             <label className="block text-[10px] font-medium text-[var(--c-text-2)] mb-1">
-              Language
+              {t("language")}
             </label>
             <div className="flex gap-2">
               {LANGUAGE_OPTIONS.map((lang) => (
@@ -289,12 +291,12 @@ export function LessonEditor({ lesson, wallet, onSave }: LessonEditorProps) {
           {/* Instructions */}
           <div>
             <label className="block text-[10px] font-medium text-[var(--c-text-2)] mb-1">
-              Instructions
+              {t("instructionsLabel")}
             </label>
             <textarea
               value={instructions}
               onChange={(e) => setInstructions(e.target.value)}
-              placeholder="Describe what the learner should implement..."
+              placeholder={t("instructionsPlaceholder")}
               rows={4}
               className="flex w-full rounded-[2px] bg-[var(--c-bg)] border border-[var(--c-border-subtle)] px-3 py-2 text-xs text-[var(--c-text)] placeholder:text-[var(--c-text-2)] transition-colors focus:outline-none focus:border-[#55E9AB] focus:ring-1 focus:ring-[#55E9AB] resize-y"
             />
@@ -303,7 +305,7 @@ export function LessonEditor({ lesson, wallet, onSave }: LessonEditorProps) {
           {/* Starter Code */}
           <div>
             <label className="block text-[10px] font-medium text-[var(--c-text-2)] mb-1">
-              Starter Code
+              {t("starterCode")}
             </label>
             <div className="rounded-[2px] border border-[var(--c-border-subtle)] overflow-hidden">
               <MonacoEditor
@@ -327,7 +329,7 @@ export function LessonEditor({ lesson, wallet, onSave }: LessonEditorProps) {
           {/* Solution */}
           <div>
             <label className="block text-[10px] font-medium text-[var(--c-text-2)] mb-1">
-              Solution
+              {t("solution")}
             </label>
             <div className="rounded-[2px] border border-[var(--c-border-subtle)] overflow-hidden">
               <MonacoEditor
@@ -352,14 +354,14 @@ export function LessonEditor({ lesson, wallet, onSave }: LessonEditorProps) {
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="text-[10px] font-medium text-[var(--c-text-2)]">
-                Test Cases ({testCases.length})
+                {t("testCases")} ({testCases.length})
               </label>
               <button
                 type="button"
                 onClick={addTestCase}
                 className="flex items-center gap-1 text-[10px] text-[#00FFA3] hover:text-[#00FFA3]/80 transition-colors cursor-pointer"
               >
-                <Plus className="h-3 w-3" /> Add Test Case
+                <Plus className="h-3 w-3" /> {t("addTestCase")}
               </button>
             </div>
             <div className="space-y-2">
@@ -374,7 +376,7 @@ export function LessonEditor({ lesson, wallet, onSave }: LessonEditorProps) {
                       onChange={(e) =>
                         updateTestCase(idx, "name", e.target.value)
                       }
-                      placeholder="Test name..."
+                      placeholder={t("testNamePlaceholder")}
                       className="h-7 text-[10px] flex-1 mr-2"
                     />
                     <button
@@ -388,7 +390,7 @@ export function LessonEditor({ lesson, wallet, onSave }: LessonEditorProps) {
                   <div className="grid grid-cols-2 gap-2">
                     <div>
                       <label className="block text-[9px] text-[var(--c-text-dim)] mb-0.5">
-                        Input
+                        {t("input")}
                       </label>
                       <Input
                         value={tc.input}
@@ -400,7 +402,7 @@ export function LessonEditor({ lesson, wallet, onSave }: LessonEditorProps) {
                     </div>
                     <div>
                       <label className="block text-[9px] text-[var(--c-text-dim)] mb-0.5">
-                        Expected Output
+                        {t("expectedOutput")}
                       </label>
                       <Input
                         value={tc.expectedOutput}
@@ -428,12 +430,12 @@ export function LessonEditor({ lesson, wallet, onSave }: LessonEditorProps) {
           {saving ? (
             <>
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              Saving...
+              {t("savingLesson")}
             </>
           ) : (
             <>
               <Save className="h-3.5 w-3.5" />
-              Save Lesson
+              {t("saveLesson")}
             </>
           )}
         </Button>
