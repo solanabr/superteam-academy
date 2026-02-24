@@ -7,6 +7,7 @@ import type {
 import { calculateLevel } from "@/types/gamification";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { rowToUserStats } from "@/lib/supabase/mappers";
+import { getCoursePDA } from "@/lib/solana/on-chain";
 
 const DAILY_XP_CAP = 2000;
 
@@ -234,7 +235,7 @@ class SupabaseGamificationService implements GamificationService {
       .from("xp_transactions")
       .select("amount")
       .eq("user_id", userId)
-      .gte("created_at", `${today}T00:00:00Z`);
+      .gte("transaction_at", `${today}T00:00:00Z`);
 
     const todayXP = (todayTxs ?? []).reduce(
       (sum: number, t: { amount: number }) => sum + t.amount,
@@ -243,12 +244,23 @@ class SupabaseGamificationService implements GamificationService {
     const cappedAmount = Math.min(amount, DAILY_XP_CAP - todayXP);
     if (cappedAmount <= 0) return;
 
+    // Convert slug to PDA if provided for consistent indexing
+    let coursePdaString: string | undefined = undefined;
+    if (sourceId) {
+      try {
+        coursePdaString = getCoursePDA(sourceId)[0].toBase58();
+      } catch (err) {
+        // Achievement IDs or other non-slug sourceIds fall back to original
+        coursePdaString = sourceId;
+      }
+    }
+
     // Insert XP transaction
     await this.db.from("xp_transactions").insert({
       user_id: userId,
       amount: cappedAmount,
       source,
-      source_id: sourceId,
+      course_pda: coursePdaString,
     });
 
     // Get current stats
@@ -391,7 +403,7 @@ class SupabaseGamificationService implements GamificationService {
       .from("xp_transactions")
       .select("*")
       .eq("user_id", userId)
-      .order("created_at", { ascending: false })
+      .order("transaction_at", { ascending: false })
       .limit(limit);
 
     if (error || !data) return [];
@@ -402,8 +414,8 @@ class SupabaseGamificationService implements GamificationService {
         userId: row.user_id as string,
         amount: row.amount as number,
         source: row.source as XPTransaction["source"],
-        sourceId: (row.source_id as string) || undefined,
-        createdAt: row.created_at as string,
+        sourceId: (row.course_pda as string) || undefined,
+        createdAt: row.transaction_at as string,
       }),
     );
   }

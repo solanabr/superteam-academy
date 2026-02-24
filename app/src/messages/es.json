@@ -194,7 +194,20 @@
     "monthly": "Mensual",
     "allTime": "General",
     "yourRank": "Tu Posicion",
-    "topLearners": "Mejores Estudiantes"
+    "topLearners": "Otros Estudiantes Destacados",
+    "refreshNow": "Actualizar Ahora",
+    "lastUpdated": "Ultima actualizacion:",
+    "noData": "No se encontraron datos para este periodo/curso.",
+    "allCourses": "Todos los Cursos",
+    "justNow": "Recien",
+    "minutesAgo": "hace {count}m",
+    "hoursAgo": "hace {count}h",
+    "levelShort": "Niv",
+    "refreshOnChain": "Actualizar Clasificacion con Datos On-Chain",
+    "signInToRefresh": "Iniciar Sesion para Actualizar Clasificacion",
+    "lastSyncedOnChain": "Ultima actualizacion on-chain el {date}",
+    "autoRefreshNotice": "La clasificacion se sincroniza automaticamente cada 24 horas.",
+    "nothingToRefresh": "Nada que actualizar - tus datos ya estan al dia!"
   },
   "settings": {
     "title": "Configuracion",

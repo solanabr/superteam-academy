@@ -2,6 +2,8 @@
 
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
+import { useSession } from "next-auth/react";
+import { PublicKey } from "@solana/web3.js";
 import { Program, AnchorProvider } from "@coral-xyz/anchor";
 import { SystemProgram } from "@solana/web3.js";
 import { toast } from "sonner";
@@ -28,8 +30,23 @@ export function parseEnrollError(err: unknown): string {
 }
 
 export function useEnrollment(courseId?: string, totalLessons = 0, prerequisiteCourseId?: string) {
-  const { publicKey, signTransaction, signAllTransactions } = useWallet();
+  const { publicKey: adapterKey, signTransaction, signAllTransactions } = useWallet();
+  const { data: session } = useSession();
   const { connection } = useConnection();
+
+  // Determine the effective wallet address to check
+  const publicKey = useMemo(() => {
+    if (adapterKey) return adapterKey;
+    if (session?.walletAddress) {
+      try {
+        return new PublicKey(session.walletAddress);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  }, [adapterKey, session]);
+
   const [loading, setLoading] = useState(false);
   const [closing, setClosing] = useState(false);
   const [error, setError] = useState<string | null>(null);

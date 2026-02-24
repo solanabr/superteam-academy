@@ -5,7 +5,6 @@
 DROP TABLE IF EXISTS daily_challenge_completions CASCADE;
 DROP TABLE IF EXISTS daily_challenges CASCADE;
 DROP TABLE IF EXISTS community_posts CASCADE;
-DROP TABLE IF EXISTS xp_transactions CASCADE;
 DROP TABLE IF EXISTS user_stats CASCADE;
 DROP TABLE IF EXISTS accounts CASCADE;
 DROP TABLE IF EXISTS profiles CASCADE;
@@ -63,16 +62,6 @@ CREATE TABLE user_stats (
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
--- XP Transaction Log
-CREATE TABLE xp_transactions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
-  amount INTEGER NOT NULL,
-  source TEXT NOT NULL,
-  source_id TEXT,
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-
 -- Community Posts
 CREATE TABLE community_posts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -106,8 +95,6 @@ CREATE TABLE daily_challenge_completions (
 );
 
 -- Indexes
-CREATE INDEX idx_xp_transactions_user ON xp_transactions(user_id);
-CREATE INDEX idx_xp_transactions_created ON xp_transactions(created_at);
 CREATE INDEX idx_community_posts_user ON community_posts(user_id);
 CREATE INDEX idx_community_posts_course ON community_posts(course_id);
 CREATE INDEX idx_community_posts_parent ON community_posts(parent_id);
@@ -115,7 +102,6 @@ CREATE INDEX idx_community_posts_parent ON community_posts(parent_id);
 -- RLS Policies
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_stats ENABLE ROW LEVEL SECURITY;
-ALTER TABLE xp_transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE community_posts ENABLE ROW LEVEL SECURITY;
 
 -- Profiles: public read, own write
@@ -125,9 +111,6 @@ CREATE POLICY profiles_write ON profiles FOR UPDATE USING (id = auth.uid());
 -- User stats: public read, service write
 CREATE POLICY stats_read ON user_stats FOR SELECT USING (true);
 CREATE POLICY stats_write ON user_stats FOR ALL USING (user_id = auth.uid());
-
--- XP transactions: own read
-CREATE POLICY xp_read ON xp_transactions FOR SELECT USING (user_id = auth.uid());
 
 -- Community posts: public read, own write
 CREATE POLICY posts_read ON community_posts FOR SELECT USING (true);

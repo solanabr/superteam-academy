@@ -61,12 +61,22 @@ export interface GamificationService {
 }
 
 export interface LeaderboardService {
-  getLeaderboard(
-    timeframe: "weekly" | "monthly" | "alltime",
-    limit?: number,
-  ): Promise<LeaderboardEntry[]>;
-  getUserRank(userId: string, timeframe: string): Promise<number>;
+  getLeaderboard(params: {
+    timeframe: "weekly" | "monthly" | "alltime";
+    courseId?: string;
+  }): Promise<{
+    entries: LeaderboardEntry[];
+    lastSyncedAt: string | null;
+  }>;
+  getUserRank(params: {
+    userId: string;
+    timeframe: "weekly" | "monthly" | "alltime";
+    courseId?: string;
+  }): Promise<number>;
+  syncLeaderboardWithOnchainData(): Promise<{ processed: number; lastSignature: string | null }>;
 }
+
+export type { OnChainSyncService, XpMintRecord } from "./onchain-sync";
 
 export interface CredentialService {
   getCredentials(walletAddress: string): Promise<Credential[]>;

@@ -194,7 +194,20 @@
     "monthly": "Mensal",
     "allTime": "Geral",
     "yourRank": "Sua Posicao",
-    "topLearners": "Melhores Alunos"
+    "topLearners": "Outros Melhores Alunos",
+    "refreshNow": "Atualizar Agora",
+    "lastUpdated": "Ultima atualizacao:",
+    "noData": "Nenhum dado encontrado para este periodo/curso.",
+    "allCourses": "Todos os Cursos",
+    "justNow": "Agora mesmo",
+    "minutesAgo": "{count}m atras",
+    "hoursAgo": "{count}h atras",
+    "levelShort": "Nvl",
+    "refreshOnChain": "Atualizar Ranking com Dados On-Chain",
+    "signInToRefresh": "Entrar para Atualizar Ranking",
+    "lastSyncedOnChain": "Ultima atualizacao on-chain em {date}",
+    "autoRefreshNotice": "O ranking e atualizado automaticamente a cada 24 horas.",
+    "nothingToRefresh": "Nada para atualizar - seus dados ja estao em dia!"
   },
   "settings": {
     "title": "Configuracoes",

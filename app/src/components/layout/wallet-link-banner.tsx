@@ -13,8 +13,7 @@ export function WalletLinkBanner() {
     const { data: session } = useSession();
     const [dismissed, setDismissed] = useState(false);
 
-    const sessionData = session as unknown as Record<string, unknown> | null;
-    const walletAddress = sessionData?.walletAddress as string | undefined;
+    const walletAddress = session?.walletAddress;
 
     // Only show for signed-in users without a linked wallet
     if (!session?.user || walletAddress || dismissed) return null;

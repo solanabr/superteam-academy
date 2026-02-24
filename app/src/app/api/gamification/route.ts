@@ -12,15 +12,14 @@ export async function GET(req: NextRequest) {
   const type = req.nextUrl.searchParams.get("type") ?? "stats";
 
   if (type === "stats") {
-    const s = session as unknown as Record<string, unknown>;
-    const walletAddress = s.walletAddress as string | undefined;
+    const walletAddress = session.walletAddress;
 
     // XP is on-chain (Token-2022 ATA); streak is off-chain (Supabase)
     const [xp, streak] = await Promise.all([
       walletAddress
         ? import("@/lib/solana/on-chain").then(({ getXPBalance }) =>
             getXPBalance(new PublicKey(walletAddress)).catch(() => 0),
-          )
+        )
         : Promise.resolve(0),
       gamificationService.getStreak(session.user.id),
     ]);

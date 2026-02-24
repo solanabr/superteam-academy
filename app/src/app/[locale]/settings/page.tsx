@@ -22,10 +22,8 @@ export default async function SettingsPage({
     return null;
   }
 
-  // Extract linked accounts and wallet from session
-  const sessionData = session as unknown as Record<string, unknown>;
-  const linkedAccounts = (sessionData.linkedAccounts as string[]) ?? [];
-  const walletAddress = sessionData.walletAddress as string | undefined;
+  const linkedAccounts = session.linkedAccounts ?? [];
+  const walletAddress = session.walletAddress;
 
   return (
     <SettingsForm

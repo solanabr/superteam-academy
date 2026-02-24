@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getCourseCards } from "@/lib/courses";
-import { useEnrollments } from "@/hooks/use-enrollments";
+import { useBulkEnrollments } from "@/hooks/use-bulk-enrollments";
 import { RentReclaimBanner } from "@/components/dashboard/rent-reclaim-banner";
 import type { CourseCardData } from "@/types/course";
 import type { StreakData, Achievement, XPTransaction } from "@/types/gamification";
@@ -75,7 +75,7 @@ export default function DashboardPage() {
   }, []);
 
   // Batch on-chain enrollment check
-  const { enrollments, loading: loadingEnrollments } = useEnrollments(allCourses);
+  const { enrollments, loading: loadingEnrollments } = useBulkEnrollments(allCourses);
 
   const enrolledCourses = allCourses
     .filter((c) => c.courseId && enrollments.some((e) => e.courseId === c.courseId))

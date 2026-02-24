@@ -42,9 +42,8 @@ export default function CourseView({ course, slug }: { course: Course; slug: str
   const { publicKey } = wallet;
   const { data: session } = useSession();
   const { linkWallet, linking: linkingWallet } = useWalletLink();
-  const sessionData = session as unknown as Record<string, unknown> | null;
-  const walletAddress = sessionData?.walletAddress as string | undefined;
-  const sessionProvider = sessionData?.provider as string | undefined;
+  const walletAddress = session?.walletAddress;
+  const sessionProvider = session?.provider;
 
   // Disconnect wallet adapter when signed in via non-wallet provider (Google/GitHub)
   // so the user must explicitly reconnect their wallet for enrollment.
@@ -229,6 +228,46 @@ export default function CourseView({ course, slug }: { course: Course; slug: str
                 <Button className="w-full gap-2" size="lg" variant="secondary" disabled>
                   Checking...
                 </Button>
+              ) : !session?.user ? (
+                <>
+                  <Button
+                    className="w-full gap-2"
+                    size="lg"
+                    onClick={() => setSignInOpen(true)}
+                  >
+                    <LogIn className="h-4 w-4" />
+                    Sign In to Enroll
+                  </Button>
+                  <SignInModal open={signInOpen} onOpenChange={setSignInOpen} />
+                </>
+              ) : !publicKey && walletAddress ? (
+                <div className="space-y-2">
+                  {enrolled && (
+                    <Button className="w-full gap-2" size="lg" variant="secondary" disabled>
+                      <CheckCircle2 className="h-4 w-4" />
+                      {t("enrolled") || "Enrolled"}
+                    </Button>
+                  )}
+                  <Button
+                    className="w-full gap-2"
+                    size="lg"
+                    onClick={linkWallet}
+                    disabled={linkingWallet}
+                  >
+                    <Wallet className="h-4 w-4" />
+                    {linkingWallet ? "Connecting wallet..." : enrolled ? "Connect Wallet to Manage" : "Connect Wallet to Enroll"}
+                  </Button>
+                </div>
+              ) : !publicKey ? (
+                <Button
+                  className="w-full gap-2"
+                  size="lg"
+                  onClick={linkWallet}
+                  disabled={linkingWallet}
+                >
+                  <Wallet className="h-4 w-4" />
+                  {linkingWallet ? "Linking wallet..." : "Link Wallet to Enroll"}
+                </Button>
               ) : enrolled ? (
                 <div className="space-y-2">
                   <Button className="w-full gap-2" size="lg" variant="secondary" disabled>
@@ -248,41 +287,6 @@ export default function CourseView({ course, slug }: { course: Course; slug: str
                     {closing ? "Closing..." : "Close Enrollment"}
                   </Button>
                 </div>
-              ) : !session?.user ? (
-                // Guest: sign in first
-                <>
-                  <Button
-                    className="w-full gap-2"
-                    size="lg"
-                    onClick={() => setSignInOpen(true)}
-                  >
-                    <LogIn className="h-4 w-4" />
-                    Sign In to Enroll
-                  </Button>
-                  <SignInModal open={signInOpen} onOpenChange={setSignInOpen} />
-                </>
-              ) : !publicKey && walletAddress ? (
-                // Logged in, wallet linked in DB but adapter not connected
-                <Button
-                  className="w-full gap-2"
-                  size="lg"
-                  onClick={linkWallet}
-                  disabled={linkingWallet}
-                >
-                  <Wallet className="h-4 w-4" />
-                  {linkingWallet ? "Connecting wallet..." : "Connect Wallet to Enroll"}
-                </Button>
-              ) : !publicKey ? (
-                // Logged in but no wallet linked at all
-                <Button
-                  className="w-full gap-2"
-                  size="lg"
-                  onClick={linkWallet}
-                  disabled={linkingWallet}
-                >
-                  <Wallet className="h-4 w-4" />
-                  {linkingWallet ? "Linking wallet..." : "Link Wallet to Enroll"}
-                </Button>
               ) : (
                 <Button
                   className="w-full gap-2"

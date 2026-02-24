@@ -60,11 +60,10 @@ export default function SettingsForm({
   // notification and then clear the flag from the JWT.
   const shownSwitchNotification = useRef(false);
   useEffect(() => {
-    const s = session as unknown as Record<string, unknown> | null;
-    if (s?.switchedProfileName && !shownSwitchNotification.current) {
+    if (session?.switchedProfileName && !shownSwitchNotification.current) {
       shownSwitchNotification.current = true;
       toast.info(
-        `You are now signed in as "${s.switchedProfileName as string}" because this account was already linked to that profile.`,
+        `You are now signed in as "${session.switchedProfileName}" because this account was already linked to that profile.`,
       );
       updateSession({});
     }

@@ -6,8 +6,21 @@ export async function GET(req: NextRequest) {
     | "weekly"
     | "monthly"
     | "alltime";
-  const limit = parseInt(req.nextUrl.searchParams.get("limit") ?? "100", 10);
+  const courseId = req.nextUrl.searchParams.get("courseId") ?? undefined;
+  const userId = req.nextUrl.searchParams.get("userId") ?? undefined;
 
-  const entries = await leaderboardService.getLeaderboard(timeframe, limit);
-  return NextResponse.json(entries);
+  const { entries, lastSyncedAt } = await leaderboardService.getLeaderboard({
+    timeframe,
+    courseId,
+  });
+
+  let userRank = -1;
+  let userEntry = null;
+
+  if (userId) {
+    userRank = await leaderboardService.getUserRank({ userId, timeframe, courseId });
+    userEntry = entries.find((e) => e.userId === userId) || null;
+  }
+
+  return NextResponse.json({ entries, userRank, userEntry, lastSyncedAt });
 }

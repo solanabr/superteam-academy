@@ -194,7 +194,20 @@
     "monthly": "Monthly",
     "allTime": "All Time",
     "yourRank": "Your Rank",
-    "topLearners": "Top Learners"
+    "topLearners": "Other Top Learners",
+    "refreshNow": "Refresh Now",
+    "lastUpdated": "Last updated:",
+    "noData": "No data found for this period/course.",
+    "allCourses": "All Courses",
+    "justNow": "Just now",
+    "minutesAgo": "{count}m ago",
+    "hoursAgo": "{count}h ago",
+    "levelShort": "Lvl",
+    "refreshOnChain": "Refresh Leaderboard with On-Chain Data",
+    "signInToRefresh": "Sign In to Refresh Leaderboard",
+    "lastSyncedOnChain": "Last refreshed with on-chain data on {date}",
+    "autoRefreshNotice": "Leaderboard is automatically synced every 24 hours.",
+    "nothingToRefresh": "Nothing to refresh - your data is already up to date!"
   },
   "settings": {
     "title": "Settings",

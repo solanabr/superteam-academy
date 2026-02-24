@@ -27,7 +27,8 @@ export interface XPTransaction {
     | "course"
     | "streak"
     | "achievement"
-    | "daily_first";
+    | "daily_first"
+    | "onchain_sync";
   sourceId?: string;
   createdAt: string;
 }

@@ -207,12 +207,10 @@ export const authConfig: NextAuthConfig = {
         if (token.email) session.user.email = token.email as string;
         if (token.picture) session.user.image = token.picture as string;
       }
-      const s = session as unknown as Record<string, unknown>;
-      s.walletAddress = token.walletAddress as string | undefined;
-      s.linkedAccounts = (token.linkedAccounts as string[]) ?? [];
-      s.provider = token.provider as string;
-      // One-shot: present only until the client calls update() to clear it.
-      s.switchedProfileName = token.switchedProfileName as string | undefined;
+      session.walletAddress = token.walletAddress as string | undefined;
+      session.linkedAccounts = (token.linkedAccounts as string[]) ?? [];
+      session.provider = token.provider as string;
+      session.switchedProfileName = token.switchedProfileName as string | undefined;
       return session;
     },
   },

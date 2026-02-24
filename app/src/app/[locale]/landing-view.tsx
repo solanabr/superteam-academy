@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { TESTIMONIALS } from "@/lib/mock-data";
 import type { CourseCardData, Track } from "@/types/course";
-import { useEnrollments } from "@/hooks/use-enrollments";
+import { useBulkEnrollments } from "@/hooks/use-bulk-enrollments";
 import {
   GraduationCap,
   Code,
@@ -166,7 +166,7 @@ export default function LandingView({ courseCards, activeTracks }: LandingViewPr
   const isLoggedIn = !!session?.user;
   const [signInOpen, setSignInOpen] = useState(false);
 
-  const { enrollments } = useEnrollments(courseCards);
+  const { enrollments } = useBulkEnrollments(courseCards);
 
   function getTrackCourses(track: Track): CourseCardData[] {
     return courseCards.filter((c) => c.trackName === track.name);

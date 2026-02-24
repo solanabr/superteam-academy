@@ -82,6 +82,19 @@ export function SignInModal({ open, onOpenChange }: SignInModalProps) {
     }
   }, [wallet, handleWalletSign, onOpenChange, setWalletModalVisible]);
 
+  // Clean up any leftover body scroll lock from Radix Dialog when the
+  // wallet modal takes over or after OAuth redirect completes.
+  useEffect(() => {
+    if (!open) {
+      // Give Radix a tick to clean up, then force-remove scroll lock
+      const timer = setTimeout(() => {
+        document.body.style.removeProperty("overflow");
+        document.body.style.removeProperty("pointer-events");
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [open]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">

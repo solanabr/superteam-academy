@@ -24,8 +24,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const s = session as unknown as Record<string, unknown>;
-  const walletAddress = s.walletAddress as string | undefined;
+  const walletAddress = session.walletAddress;
 
   if (!walletAddress) {
     return NextResponse.json(

@@ -2,37 +2,37 @@ import type { LeaderboardService } from "./interfaces";
 import type { LeaderboardEntry } from "@/types/gamification";
 import { calculateLevel } from "@/types/gamification";
 import { getAdminClient } from "@/lib/supabase/admin";
+import { getSyncService } from "./onchain-sync";
+import { getCoursePDA } from "@/lib/solana/on-chain";
 
-// --- Mock Implementation ---
-
-const MOCK_LEADERBOARD: LeaderboardEntry[] = [
-  { rank: 1, userId: "u1", username: "solana_dev", displayName: "Maria Silva", avatarUrl: "", totalXP: 12500, level: 11, currentStreak: 45 },
-  { rank: 2, userId: "u2", username: "rust_master", displayName: "Pedro Santos", avatarUrl: "", totalXP: 10200, level: 10, currentStreak: 30 },
-  { rank: 3, userId: "u3", username: "web3_builder", displayName: "Ana Costa", avatarUrl: "", totalXP: 8900, level: 9, currentStreak: 22 },
-  { rank: 4, userId: "u4", username: "anchor_pro", displayName: "Lucas Oliveira", avatarUrl: "", totalXP: 7600, level: 8, currentStreak: 15 },
-  { rank: 5, userId: "u5", username: "defi_wizard", displayName: "Julia Ferreira", avatarUrl: "", totalXP: 6300, level: 7, currentStreak: 12 },
-  { rank: 6, userId: "u6", username: "nft_creator", displayName: "Rafael Lima", avatarUrl: "", totalXP: 5100, level: 7, currentStreak: 8 },
-  { rank: 7, userId: "u7", username: "token_king", displayName: "Beatriz Souza", avatarUrl: "", totalXP: 4200, level: 6, currentStreak: 5 },
-  { rank: 8, userId: "u8", username: "chain_dev", displayName: "Gabriel Almeida", avatarUrl: "", totalXP: 3500, level: 5, currentStreak: 3 },
-  { rank: 9, userId: "u9", username: "crypto_coder", displayName: "Isabela Rodrigues", avatarUrl: "", totalXP: 2800, level: 5, currentStreak: 7 },
-  { rank: 10, userId: "u10", username: "block_builder", displayName: "Thiago Martins", avatarUrl: "", totalXP: 2100, level: 4, currentStreak: 2 },
-];
-
-class MockLeaderboardService implements LeaderboardService {
-  async getLeaderboard(
-    _timeframe: "weekly" | "monthly" | "alltime",
-    limit = 100,
-  ): Promise<LeaderboardEntry[]> {
-    return MOCK_LEADERBOARD.slice(0, limit);
-  }
-
-  async getUserRank(userId: string, _timeframe: string): Promise<number> {
-    const entry = MOCK_LEADERBOARD.find((e) => e.userId === userId);
-    return entry?.rank ?? -1;
-  }
+interface ProfileRow {
+  username: string | null;
+  display_name: string | null;
+  avatar_url: string | null;
 }
 
-// --- Supabase Implementation ---
+function resolveProfile(raw: ProfileRow | ProfileRow[]): ProfileRow | undefined {
+  return Array.isArray(raw) ? raw[0] : raw;
+}
+
+function toEntry(userId: string, xp: number, profile: ProfileRow, streak: number, rank = 0): LeaderboardEntry {
+  return {
+    rank,
+    userId,
+    username: profile.username || "",
+    displayName: profile.display_name || "Anonymous",
+    avatarUrl: profile.avatar_url || "",
+    totalXP: xp,
+    level: calculateLevel(xp).level,
+    currentStreak: streak,
+  };
+}
+
+function ranked(entries: LeaderboardEntry[]): LeaderboardEntry[] {
+  return entries
+    .sort((a, b) => b.totalXP - a.totalXP)
+    .map((e, i) => ({ ...e, rank: i + 1 }));
+}
 
 class SupabaseLeaderboardService implements LeaderboardService {
   private get db() {
@@ -41,153 +41,177 @@ class SupabaseLeaderboardService implements LeaderboardService {
     return client;
   }
 
-  async getLeaderboard(
-    timeframe: "weekly" | "monthly" | "alltime",
-    limit = 100,
-  ): Promise<LeaderboardEntry[]> {
-    if (timeframe === "alltime") {
-      return this.getAllTimeLeaderboard(limit);
-    }
+  private async getLastSyncedAt(): Promise<string | null> {
+    const { data } = await this.db
+      .from("system_config")
+      .select("value")
+      .eq("key", "leaderboard_last_synced_at")
+      .single();
+    return data?.value ?? null;
+  }
 
-    // For weekly/monthly, sum XP transactions within the time window
-    const now = new Date();
-    const cutoff = new Date();
-    if (timeframe === "weekly") {
-      cutoff.setDate(now.getDate() - 7);
-    } else {
-      cutoff.setDate(now.getDate() - 30);
+  private courseIdToPda(courseId: string): string | null {
+    try {
+      return getCoursePDA(courseId)[0].toBase58();
+    } catch {
+      return null;
     }
+  }
 
-    const { data: txData } = await this.db
+  async getLeaderboard(params: {
+    timeframe: "weekly" | "monthly" | "alltime";
+    courseId?: string;
+  }): Promise<{ entries: LeaderboardEntry[]; lastSyncedAt: string | null }> {
+    const { timeframe, courseId } = params;
+    const lastSyncedAt = await this.getLastSyncedAt();
+    const entries = await this.fromTransactions(timeframe, courseId);
+    return { entries, lastSyncedAt };
+  }
+
+  private async fromTransactions(timeframe: string, courseId?: string): Promise<LeaderboardEntry[]> {
+    const query = this.db
       .from("xp_transactions")
-      .select("user_id, amount")
-      .gte("created_at", cutoff.toISOString());
+      .select("user_id, amount, profiles!inner(username, display_name, avatar_url)");
 
-    if (!txData || txData.length === 0) {
-      return this.getAllTimeLeaderboard(limit);
+    const coursePda = courseId ? this.courseIdToPda(courseId) : null;
+    if (coursePda) query.eq("course_pda", coursePda);
+
+    if (timeframe === "weekly" || timeframe === "monthly") {
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - (timeframe === "weekly" ? 7 : 30));
+      query.gte("transaction_at", cutoff.toISOString());
     }
 
-    // Aggregate XP per user
-    const userXP = new Map<string, number>();
+    const { data: txData, error } = await query;
+    if (error || !txData?.length) return [];
+
+    // Group XP by user
+    const groups = new Map<string, { xp: number; profile: ProfileRow }>();
     for (const tx of txData) {
-      userXP.set(
-        tx.user_id,
-        (userXP.get(tx.user_id) ?? 0) + tx.amount,
-      );
+      const profile = resolveProfile(tx.profiles);
+      if (!profile) continue;
+      const g = groups.get(tx.user_id) || { xp: 0, profile };
+      g.xp += Number(tx.amount || 0);
+      groups.set(tx.user_id, g);
     }
 
-    // Sort by XP
-    const sorted = Array.from(userXP.entries())
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, limit);
-
-    // Fetch profiles for these users
-    const userIds = sorted.map(([id]) => id);
-    const { data: profiles } = await this.db
-      .from("profiles")
-      .select("id, username, display_name, avatar_url")
-      .in("id", userIds);
-
+    // Fetch user_stats for streak
+    const userIds = Array.from(groups.keys());
     const { data: statsData } = await this.db
       .from("user_stats")
-      .select("user_id, total_xp, current_streak")
+      .select("user_id, current_streak")
       .in("user_id", userIds);
 
-    const profileMap = new Map(
-      (profiles ?? []).map((p: Record<string, unknown>) => [p.id, p]),
-    );
-    const statsMap = new Map(
-      (statsData ?? []).map((s: Record<string, unknown>) => [s.user_id, s]),
-    );
-
-    return sorted.map(([userId, periodXP], idx) => {
-      const profile = profileMap.get(userId) as Record<string, unknown> | undefined;
-      const stats = statsMap.get(userId) as Record<string, unknown> | undefined;
-      const totalXP = (stats?.total_xp as number) ?? periodXP;
-
-      return {
-        rank: idx + 1,
-        userId,
-        username: (profile?.username as string) ?? "",
-        displayName: (profile?.display_name as string) ?? "Anonymous",
-        avatarUrl: (profile?.avatar_url as string) ?? "",
-        totalXP: periodXP,
-        level: calculateLevel(totalXP).level,
-        currentStreak: (stats?.current_streak as number) ?? 0,
-      };
-    });
-  }
-
-  private async getAllTimeLeaderboard(
-    limit: number,
-  ): Promise<LeaderboardEntry[]> {
-    const { data, error } = await this.db
-      .from("user_stats")
-      .select(
-        "user_id, total_xp, current_streak, profiles!inner(username, display_name, avatar_url)",
-      )
-      .order("total_xp", { ascending: false })
-      .limit(limit);
-
-    if (error || !data) return MOCK_LEADERBOARD.slice(0, limit);
-
-    return data.map(
-      (row: Record<string, unknown>, idx: number): LeaderboardEntry => {
-        const profile = row.profiles as Record<string, unknown>;
-        const totalXP = (row.total_xp as number) ?? 0;
-        return {
-          rank: idx + 1,
-          userId: row.user_id as string,
-          username: (profile?.username as string) ?? "",
-          displayName: (profile?.display_name as string) ?? "Anonymous",
-          avatarUrl: (profile?.avatar_url as string) ?? "",
-          totalXP,
-          level: calculateLevel(totalXP).level,
-          currentStreak: (row.current_streak as number) ?? 0,
-        };
-      },
-    );
-  }
-
-  async getUserRank(userId: string, timeframe: string): Promise<number> {
-    if (timeframe === "alltime") {
-      // Count users with more XP
-      const { data: userStats } = await this.db
-        .from("user_stats")
-        .select("total_xp")
-        .eq("user_id", userId)
-        .single();
-
-      if (!userStats) return -1;
-
-      const { count } = await this.db
-        .from("user_stats")
-        .select("*", { count: "exact", head: true })
-        .gt("total_xp", userStats.total_xp);
-
-      return (count ?? 0) + 1;
+    const streakMap = new Map<string, number>();
+    for (const row of statsData ?? []) {
+      streakMap.set(row.user_id, row.current_streak ?? 0);
     }
 
-    // For timeframes, get the full leaderboard and find position
-    const leaderboard = await this.getLeaderboard(
-      timeframe as "weekly" | "monthly",
-      1000,
-    );
-    const entry = leaderboard.find((e) => e.userId === userId);
-    return entry?.rank ?? -1;
+    return ranked(Array.from(groups.entries()).map(([userId, { xp, profile }]) =>
+      toEntry(userId, xp, profile, streakMap.get(userId) ?? 0)
+    ));
+  }
+
+  async getUserRank(params: {
+    userId: string;
+    timeframe: "weekly" | "monthly" | "alltime";
+    courseId?: string;
+  }): Promise<number> {
+    const { entries } = await this.getLeaderboard({ timeframe: params.timeframe, courseId: params.courseId });
+    return entries.find((e) => e.userId === params.userId)?.rank ?? -1;
+  }
+
+  async syncLeaderboardWithOnchainData(): Promise<{ processed: number; lastSignature: string | null }> {
+    const syncService = getSyncService();
+
+    const { data: config } = await this.db
+      .from("system_config")
+      .select("value")
+      .eq("key", "leaderboard_last_synced_signature")
+      .single();
+
+    const lastSig = config?.value || undefined;
+    const { records, latestSignature } = await syncService.syncXpTransactions(lastSig);
+
+    let processed = 0;
+    for (const record of [...records].reverse()) {
+      if (await this.recordXpEvent(record)) processed++;
+    }
+
+    if (latestSignature && (processed > 0 || !config?.value)) {
+      await this.db.from("system_config").upsert([
+        { key: "leaderboard_last_synced_signature", value: latestSignature },
+        { key: "leaderboard_last_synced_at", value: new Date().toISOString() },
+      ]);
+    }
+
+    return { processed, lastSignature: latestSignature };
+  }
+
+  private async recordXpEvent(record: {
+    walletAddress: string;
+    amount: number;
+    coursePda: string;
+    signature: string;
+    timestamp: number;
+  }): Promise<boolean> {
+    const { data: profile } = await this.db
+      .from("profiles")
+      .select("id")
+      .eq("wallet_address", record.walletAddress)
+      .single();
+
+    if (!profile) return false;
+
+    const { data: existing } = await this.db
+      .from("xp_transactions")
+      .select("id")
+      .eq("tx_signature", record.signature)
+      .eq("user_id", profile.id)
+      .maybeSingle();
+
+    if (existing) return false;
+
+    const transactionAt = new Date(record.timestamp * 1000).toISOString();
+
+    const { error } = await this.db.from("xp_transactions").insert({
+      user_id: profile.id,
+      amount: record.amount,
+      source: "onchain_sync",
+      course_pda: record.coursePda,
+      tx_signature: record.signature,
+      transaction_at: transactionAt,
+    });
+
+    if (error) {
+      console.error(`[Leaderboard] Insert failed for ${record.signature}:`, error);
+      return false;
+    }
+
+    const { data: stats } = await this.db
+      .from("user_stats")
+      .select("total_xp")
+      .eq("user_id", profile.id)
+      .single();
+
+    const newTotal = (stats?.total_xp || 0) + record.amount;
+    await this.db.from("user_stats").upsert({
+      user_id: profile.id,
+      total_xp: newTotal,
+      level: calculateLevel(newTotal).level,
+      last_activity_date: transactionAt.slice(0, 10),
+    });
+
+    return true;
   }
 }
 
-// --- Singleton with fallback ---
+let instance: LeaderboardService | null = null;
 
-function createService(): LeaderboardService {
-  if (
-    process.env.NEXT_PUBLIC_SUPABASE_URL &&
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-  ) {
-    return new SupabaseLeaderboardService();
-  }
-  return new MockLeaderboardService();
+export function getLeaderboardService(): LeaderboardService {
+  if (instance) return instance;
+  instance = new SupabaseLeaderboardService();
+  return instance;
 }
 
-export const leaderboardService: LeaderboardService = createService();
+export const leaderboardService = getLeaderboardService();

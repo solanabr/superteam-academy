@@ -2,6 +2,12 @@
   "framework": "nextjs",
   "buildCommand": "pnpm build",
   "installCommand": "pnpm install",
+  "crons": [
+    {
+      "path": "/api/leaderboard/sync",
+      "schedule": "0 0 * * *"
+    }
+  ],
   "headers": [
     {
       "source": "/sw.js",
