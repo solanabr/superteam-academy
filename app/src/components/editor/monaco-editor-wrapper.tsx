@@ -2,9 +2,15 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { useTheme } from 'next-themes';
+import Editor, { type OnMount, type OnChange } from '@monaco-editor/react';
 import { Copy, Check, Play, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+
+/** Extract the editor instance type from the OnMount callback signature */
+type MonacoEditorInstance = Parameters<OnMount>[0];
 
 // ---------------------------------------------------------------------------
 // Types
@@ -17,6 +23,7 @@ interface MonacoEditorWrapperProps {
   onRun?: () => void;
   onReset?: () => void;
   isRunning?: boolean;
+  readOnly?: boolean;
   className?: string;
 }
 
@@ -33,6 +40,17 @@ const LANGUAGE_LABELS: Record<string, string> = {
   javascript: 'JavaScript',
   python: 'Python',
   solidity: 'Solidity',
+  json: 'JSON',
+};
+
+/** Map our language keys to Monaco's language identifiers */
+const MONACO_LANGUAGE_MAP: Record<string, string> = {
+  rust: 'rust',
+  typescript: 'typescript',
+  javascript: 'javascript',
+  python: 'python',
+  solidity: 'sol',
+  json: 'json',
 };
 
 // ---------------------------------------------------------------------------
@@ -40,7 +58,6 @@ const LANGUAGE_LABELS: Record<string, string> = {
 // ---------------------------------------------------------------------------
 
 function getStorageKey(language: string, defaultValue: string): string {
-  // Simple hash from first 64 chars of defaultValue for uniqueness
   const hash = defaultValue.slice(0, 64).replace(/\s/g, '').slice(0, 16);
   return `${STORAGE_PREFIX}${language}-${hash}`;
 }
@@ -62,13 +79,31 @@ function persistValue(key: string, value: string): void {
 }
 
 // ---------------------------------------------------------------------------
+// Loading Skeleton
+// ---------------------------------------------------------------------------
+
+function EditorLoadingSkeleton() {
+  return (
+    <div className="flex flex-1 flex-col gap-2 bg-[#1e1e1e] p-4">
+      <Skeleton className="h-4 w-3/4 bg-neutral-700" />
+      <Skeleton className="h-4 w-1/2 bg-neutral-700" />
+      <Skeleton className="h-4 w-5/6 bg-neutral-700" />
+      <Skeleton className="h-4 w-2/3 bg-neutral-700" />
+      <Skeleton className="h-4 w-4/5 bg-neutral-700" />
+      <Skeleton className="h-4 w-1/3 bg-neutral-700" />
+      <Skeleton className="h-4 w-3/5 bg-neutral-700" />
+      <Skeleton className="h-4 w-2/4 bg-neutral-700" />
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
 /**
- * Lightweight code editor styled to look like a professional IDE.
- * Uses a textarea with line numbers instead of actual Monaco
- * to avoid heavy bundle size. Supports auto-save to localStorage.
+ * Monaco Editor wrapper with toolbar, auto-save, and theme support.
+ * Dynamically imported with `ssr: false` in parent pages.
  */
 export function MonacoEditorWrapper({
   defaultValue,
@@ -77,11 +112,12 @@ export function MonacoEditorWrapper({
   onRun,
   onReset,
   isRunning = false,
+  readOnly = false,
   className,
 }: MonacoEditorWrapperProps) {
   const t = useTranslations('lesson');
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const lineNumbersRef = useRef<HTMLDivElement>(null);
+  const { resolvedTheme } = useTheme();
+  const editorRef = useRef<MonacoEditorInstance | null>(null);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const storageKey = getStorageKey(language, defaultValue);
@@ -89,73 +125,64 @@ export function MonacoEditorWrapper({
   const [copied, setCopied] = useState(false);
   const [cursorLine, setCursorLine] = useState(1);
 
-  const lineCount = value.split('\n').length;
+  const monacoLanguage = MONACO_LANGUAGE_MAP[language] ?? language;
+  const monacoTheme = resolvedTheme === 'dark' ? 'vs-dark' : 'vs-dark'; // Editor always dark per VS Code style
 
-  // Sync scroll between line numbers and textarea
-  const handleScroll = useCallback(() => {
-    if (textareaRef.current && lineNumbersRef.current) {
-      lineNumbersRef.current.scrollTop = textareaRef.current.scrollTop;
-    }
-  }, []);
+  // -----------------------------------------------------------------------
+  // Editor mount — configure keybindings and cursor tracking
+  // -----------------------------------------------------------------------
 
-  // Track cursor position
-  const handleSelect = useCallback(() => {
-    if (!textareaRef.current) return;
-    const pos = textareaRef.current.selectionStart;
-    const lines = value.slice(0, pos).split('\n');
-    setCursorLine(lines.length);
-  }, [value]);
+  const handleEditorMount: OnMount = useCallback(
+    (editorInstance, monaco) => {
+      editorRef.current = editorInstance;
 
-  // Handle text changes with debounced auto-save
-  const handleChange = useCallback(
-    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      const newValue = e.target.value;
-      setValue(newValue);
-      onChange(newValue);
+      // Track cursor line changes
+      editorInstance.onDidChangeCursorPosition((e) => {
+        setCursorLine(e.position.lineNumber);
+      });
+
+      // Ctrl/Cmd + Enter to run
+      if (onRun) {
+        editorInstance.addAction({
+          id: 'run-code',
+          label: 'Run Code',
+          keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
+          run: () => onRun(),
+        });
+      }
+
+      // Focus the editor on mount
+      editorInstance.focus();
+    },
+    [onRun],
+  );
+
+  // -----------------------------------------------------------------------
+  // Value change handler with debounced auto-save
+  // -----------------------------------------------------------------------
+
+  const handleEditorChange: OnChange = useCallback(
+    (newValue) => {
+      const updated = newValue ?? '';
+      setValue(updated);
+      onChange(updated);
 
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
       saveTimerRef.current = setTimeout(() => {
-        persistValue(storageKey, newValue);
+        persistValue(storageKey, updated);
       }, AUTO_SAVE_DELAY_MS);
     },
     [onChange, storageKey],
   );
 
-  // Handle tab key for indentation
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (e.key === 'Tab') {
-        e.preventDefault();
-        const textarea = textareaRef.current;
-        if (!textarea) return;
+  // -----------------------------------------------------------------------
+  // Toolbar actions
+  // -----------------------------------------------------------------------
 
-        const start = textarea.selectionStart;
-        const end = textarea.selectionEnd;
-        const newValue = value.slice(0, start) + '  ' + value.slice(end);
-
-        setValue(newValue);
-        onChange(newValue);
-
-        // Restore cursor after indent
-        requestAnimationFrame(() => {
-          textarea.selectionStart = start + 2;
-          textarea.selectionEnd = start + 2;
-        });
-      }
-
-      // Ctrl/Cmd + Enter to run
-      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && onRun) {
-        e.preventDefault();
-        onRun();
-      }
-    },
-    [value, onChange, onRun],
-  );
-
-  // Copy to clipboard
   const handleCopy = useCallback(async () => {
+    const currentValue = editorRef.current?.getValue() ?? value;
     try {
-      await navigator.clipboard.writeText(value);
+      await navigator.clipboard.writeText(currentValue);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
@@ -163,15 +190,23 @@ export function MonacoEditorWrapper({
     }
   }, [value]);
 
-  // Reset to default value
   const handleReset = useCallback(() => {
     setValue(defaultValue);
     onChange(defaultValue);
     persistValue(storageKey, defaultValue);
+
+    // Update Monaco editor content directly
+    if (editorRef.current) {
+      editorRef.current.setValue(defaultValue);
+    }
+
     onReset?.();
   }, [defaultValue, onChange, storageKey, onReset]);
 
-  // Cleanup save timer
+  // -----------------------------------------------------------------------
+  // Cleanup
+  // -----------------------------------------------------------------------
+
   useEffect(() => {
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
@@ -231,47 +266,58 @@ export function MonacoEditorWrapper({
         </div>
       </div>
 
-      {/* Editor area */}
-      <div className="relative flex flex-1 overflow-hidden">
-        {/* Line numbers */}
-        <div
-          ref={lineNumbersRef}
-          className="flex-none select-none overflow-hidden border-r border-neutral-700 bg-[#1e1e1e] py-3 pr-3 pl-3 text-right font-mono text-xs leading-[1.625rem] text-neutral-600"
-          aria-hidden="true"
-        >
-          {Array.from({ length: lineCount }, (_, i) => (
-            <div
-              key={i}
-              className={cn(
-                'transition-colors',
-                i + 1 === cursorLine && 'text-neutral-400',
-              )}
-            >
-              {i + 1}
-            </div>
-          ))}
-        </div>
-
-        {/* Textarea */}
-        <textarea
-          ref={textareaRef}
-          value={value}
-          onChange={handleChange}
-          onScroll={handleScroll}
-          onSelect={handleSelect}
-          onKeyDown={handleKeyDown}
-          spellCheck={false}
-          autoComplete="off"
-          autoCorrect="off"
-          autoCapitalize="off"
-          className={cn(
-            'flex-1 resize-none bg-[#1e1e1e] p-3 font-mono text-sm leading-[1.625rem] text-[#d4d4d4] caret-white outline-none',
-            'placeholder:text-neutral-600',
-            'scrollbar-thin scrollbar-track-transparent scrollbar-thumb-neutral-700',
-          )}
-          style={{
+      {/* Monaco Editor */}
+      <div className="relative flex-1" style={{ minHeight: '300px' }}>
+        <Editor
+          defaultValue={value}
+          language={monacoLanguage}
+          theme={monacoTheme}
+          onChange={handleEditorChange}
+          onMount={handleEditorMount}
+          loading={<EditorLoadingSkeleton />}
+          options={{
+            readOnly,
+            fontSize: 14,
+            fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', Menlo, Monaco, 'Courier New', monospace",
+            lineNumbers: 'on',
+            minimap: { enabled: false },
+            wordWrap: 'on',
+            scrollBeyondLastLine: false,
+            automaticLayout: true,
             tabSize: 2,
-            minHeight: '300px',
+            insertSpaces: true,
+            renderLineHighlight: 'line',
+            cursorBlinking: 'smooth',
+            cursorSmoothCaretAnimation: 'on',
+            smoothScrolling: true,
+            padding: { top: 12, bottom: 12 },
+            suggestOnTriggerCharacters: true,
+            quickSuggestions: true,
+            acceptSuggestionOnEnter: 'on',
+            parameterHints: { enabled: true },
+            bracketPairColorization: { enabled: true },
+            autoClosingBrackets: 'always',
+            autoClosingQuotes: 'always',
+            autoIndent: 'full',
+            formatOnPaste: true,
+            formatOnType: true,
+            folding: true,
+            foldingStrategy: 'indentation',
+            showFoldingControls: 'mouseover',
+            matchBrackets: 'always',
+            renderWhitespace: 'selection',
+            guides: {
+              indentation: true,
+              bracketPairs: true,
+            },
+            scrollbar: {
+              verticalScrollbarSize: 8,
+              horizontalScrollbarSize: 8,
+              verticalSliderSize: 8,
+              horizontalSliderSize: 8,
+            },
+            overviewRulerBorder: false,
+            hideCursorInOverviewRuler: true,
           }}
         />
       </div>
