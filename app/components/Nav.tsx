@@ -16,8 +16,10 @@ import {
   BookOpen,
   LayoutDashboard,
   Users2,
+  Shield,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { localePath } from '@/lib/paths';
 
 const LOCALES = [
   { code: 'pt-BR', label: 'PT', flag: '🇧🇷' },
@@ -98,6 +100,23 @@ export default function Nav() {
                 </Link>
               );
             })}
+          </div>
+
+          {/* Admin link — access-controlled on the page itself */}
+          <div className="hidden md:block">
+            <Link
+              href={localePath(locale, '/admin')}
+              className={cn(
+                'flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-all border',
+                pathname.includes('/admin')
+                  ? 'bg-purple-900/50 text-purple-300 border-purple-700/50'
+                  : 'text-gray-600 hover:text-gray-400 border-gray-800 hover:border-gray-700'
+              )}
+              title="Admin"
+            >
+              <Shield className="h-3.5 w-3.5" />
+              Admin
+            </Link>
           </div>
 
           {/* Right controls */}
