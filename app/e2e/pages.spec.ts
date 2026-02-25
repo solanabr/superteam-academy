@@ -16,12 +16,12 @@ test.describe('Landing page', () => {
 
   test('pt-BR landing has Portuguese content', async ({ page }) => {
     await page.goto('/pt-BR');
-    await expect(page.locator('text=Aprenda')).toBeVisible();
+    await expect(page.locator('text=Aprenda').first()).toBeVisible();
   });
 
   test('es landing has Spanish content', async ({ page }) => {
     await page.goto('/es');
-    await expect(page.locator('text=Aprende')).toBeVisible();
+    await expect(page.locator('text=Aprende').first()).toBeVisible();
   });
 
   test('featured courses section renders', async ({ page }) => {
@@ -73,7 +73,7 @@ test.describe('Dashboard page', () => {
   test('shows connect wallet prompt when not connected', async ({ page }) => {
     await page.goto('/en/dashboard');
     // Should prompt wallet connection
-    await expect(page.locator('text=Connect')).toBeVisible();
+    await expect(page.locator('text=Connect').first()).toBeVisible();
   });
 
   test('renders without JS errors', async ({ page }) => {

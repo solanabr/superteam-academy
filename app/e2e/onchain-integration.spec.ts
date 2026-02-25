@@ -37,7 +37,7 @@ test.describe('On-chain program visibility', () => {
 test.describe('Wallet connection prompts', () => {
   test('dashboard prompts wallet connection', async ({ page }) => {
     await page.goto('/en/dashboard');
-    await expect(page.locator('text=Connect')).toBeVisible();
+    await expect(page.locator('text=Connect').first()).toBeVisible();
   });
 
   test('certificates page prompts wallet or shows empty state', async ({ page }) => {
