@@ -13,11 +13,11 @@ import { ModuleList } from "@/components/courses/ModuleList";
 export default async function CourseDetailPage({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ slug: string; locale: string }>;
 }) {
+  const { slug, locale } = await params;
   const t = await getTranslations("courses");
-  const { slug } = await params;
-  const course = await getCourseBySlug(slug);
+  const course = await getCourseBySlug(slug, locale);
   if (!course) notFound();
 
   const lessonCount =

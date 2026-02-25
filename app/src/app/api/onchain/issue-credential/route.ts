@@ -14,7 +14,7 @@ const MPL_CORE_PROGRAM_ID = new PublicKey("CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4
 
 export async function POST(req: NextRequest) {
     try {
-        const { wallet, trackId, trackName, xpEarned } = await req.json();
+        const { wallet, courseId, trackId, trackName, xpEarned } = await req.json();
 
         if (!BACKEND_WALLET_KEY) return NextResponse.json({ error: "Backend wallet missing" }, { status: 500 });
         if (!wallet || !trackId) return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -76,11 +76,26 @@ export async function POST(req: NextRequest) {
             tx.sign(backendWallet, credentialAsset);
 
             const signature = await connection.sendRawTransaction(tx.serialize());
-            await connection.confirmTransaction(signature);
+            // Instead of waiting for confirmation here:
+            // await connection.confirmTransaction(signature);
+
+            // Trigger Inngest background job
+            const { inngest } = await import("@/lib/inngest/client");
+            await inngest.send({
+                name: "solana/transaction.sent",
+                data: {
+                    signature,
+                    wallet,
+                    trackId,
+                    trackName,
+                    xpEarned: totalXp
+                }
+            });
+
             return signature;
         });
 
-        return NextResponse.json({ success: true, signature: sig });
+        return NextResponse.json({ success: true, signature: sig, status: "processing" });
 
     } catch (error: any) {
         console.error("Issue Credential Error:", error);

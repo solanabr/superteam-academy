@@ -147,10 +147,10 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // AUTO-SYNC ON-CHAIN if published immediately
-    if (body.published === true) {
+    // AUTO-SYNC ON-CHAIN if published immediately (Offload to Inngest)
+    if (body.published === true && process.env.NEXT_PUBLIC_USE_ONCHAIN === "true") {
       try {
-        const { syncCourseOnChain } = await import("@/lib/onchain-admin");
+        const { inngest } = await import("@/lib/inngest/client");
 
         // Count total lessons across all modules
         let lessonCount = 0;
@@ -161,16 +161,23 @@ export async function POST(request: NextRequest) {
             }
           });
         }
-        if (lessonCount === 0) lessonCount = 1; // Fallback
+        if (lessonCount === 0) lessonCount = 1;
 
-        console.log(`[api/courses/create] Auto-syncing course ${course._id} on-chain...`);
-        await syncCourseOnChain({
-          courseId: course._id,
-          wallet: wallet,
-          lessonCount: lessonCount,
+        console.log(`[api/courses/create] Dispatching background sync for course ${course._id}...`);
+        await inngest.send({
+          name: "solana/course.published",
+          data: {
+            courseId: course._id,
+            wallet: wallet,
+            lessonCount: lessonCount,
+            difficulty: 1, // Default, can be expanded
+            xpPerLesson: 100,
+            trackId: 1,
+            trackLevel: 1
+          }
         });
       } catch (syncError) {
-        console.error("[api/courses/create] On-chain sync failed (continuing):", syncError);
+        console.error("[api/courses/create] Background sync dispatch failed:", syncError);
       }
     }
 

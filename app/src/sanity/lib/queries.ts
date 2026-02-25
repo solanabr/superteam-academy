@@ -93,21 +93,30 @@ export type CourseDetail = CourseListItem & {
   modules?: ModuleRef[];
 };
 
-export async function getCourses(): Promise<CourseListItem[]> {
+export async function getCourses(locale: string = "en"): Promise<CourseListItem[]> {
   try {
-    const list = await client.fetch<CourseListItem[]>(coursesQuery);
-    return list ?? [];
+    const { getCached } = await import("@/lib/cache");
+    return await getCached(`${locale}:sanity:courses`, async () => {
+      const list = await client.fetch<CourseListItem[]>(coursesQuery);
+      return list ?? [];
+    }, { ttl: 300 }); // Cache courses for 5 minutes
   } catch {
-    return [];
+    // Fallback to direct fetch if cache fails
+    const list = await client.fetch<CourseListItem[]>(coursesQuery).catch(() => []);
+    return list ?? [];
   }
 }
 
-export async function getCourseBySlug(slug: string): Promise<CourseDetail | null> {
+export async function getCourseBySlug(slug: string, locale: string = "en"): Promise<CourseDetail | null> {
   try {
-    const course = await client.fetch<CourseDetail | null>(courseBySlugQuery, { slug });
-    return course ?? null;
+    const { getCached } = await import("@/lib/cache");
+    return await getCached(`${locale}:sanity:course:${slug}`, async () => {
+      const course = await client.fetch<CourseDetail | null>(courseBySlugQuery, { slug });
+      return course ?? null;
+    }, { ttl: 300 });
   } catch {
-    return null;
+    const course = await client.fetch<CourseDetail | null>(courseBySlugQuery, { slug }).catch(() => null);
+    return course ?? null;
   }
 }
 

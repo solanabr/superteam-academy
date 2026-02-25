@@ -84,14 +84,17 @@ export class OnChainLearningService implements LearningProgressService {
     // --- READ Methods ---
 
     async getProgress(userId: string): Promise<any> {
-        // Get XP from on-chain balance
-        const xp = await this.getXP(userId);
+        // Parallelize XP fetch (RPC) and Database fetch (Prisma)
+        const [xpResult, userResult] = await Promise.allSettled([
+            this.getXP(userId),
+            prisma.user.findFirst({
+                where: { OR: [{ walletAddress: userId }, { id: userId }] },
+                include: { progress: true }
+            })
+        ]);
 
-        // Get streak and achievement flags from DB (off-chain) using Prisma
-        const user = await prisma.user.findFirst({
-            where: { OR: [{ walletAddress: userId }, { id: userId }] },
-            include: { progress: true }
-        });
+        const xp = xpResult.status === "fulfilled" ? xpResult.value : 0;
+        const user = userResult.status === "fulfilled" ? userResult.value : null;
 
         if (!user || !user.progress) {
             return { xp, currentStreak: 0, longestStreak: 0, lastActivityDate: null, achievementFlags: [] };
@@ -126,15 +129,20 @@ export class OnChainLearningService implements LearningProgressService {
             }
         }
 
-        // 2. Try fetching from On-Chain
+        // 2. Fetch from On-Chain (Parallelize Enrollment and Course fetches)
         return await this.withProgram(async (program, connection) => {
             try {
                 const userKey = new PublicKey(walletAddress);
                 const enrollmentPda = this.getEnrollmentPDA(courseId, userKey);
+                const coursePda = this.getCoursePDA(courseId);
 
-                const enrollment = await (program.account as any).enrollment.fetchNullable(enrollmentPda);
-                if (!enrollment) {
-                    // Not on-chain yet? Fall back to Prisma for hybrid sync
+                const [enrollmentResult, courseResult] = await Promise.allSettled([
+                    (program.account as any).enrollment.fetchNullable(enrollmentPda),
+                    (program.account as any).course.fetch(coursePda)
+                ]);
+
+                if (enrollmentResult.status === "rejected" || !enrollmentResult.value) {
+                    // Not on-chain yet or fetch failed? Fall back to Prisma for hybrid sync
                     const { createLearningProgressService } = await import("./prisma-impl");
                     const prismaService = createLearningProgressService(prisma);
                     const progress = await prismaService.getEnrollmentProgress(walletAddress, courseId);
@@ -144,9 +152,8 @@ export class OnChainLearningService implements LearningProgressService {
                     return null;
                 }
 
-                // Fetch course to get total lesson count for simulation/UI consistency
-                const coursePda = this.getCoursePDA(courseId);
-                const courseAccount = await (program.account as any).course.fetch(coursePda);
+                const enrollment = enrollmentResult.value;
+                const courseAccount = courseResult.status === "fulfilled" ? courseResult.value : { lessonCount: 0 };
 
                 const buffer = Buffer.alloc(32);
                 enrollment.lessonFlags.forEach((bn: BN, i: number) => {
@@ -176,7 +183,7 @@ export class OnChainLearningService implements LearningProgressService {
                     onChainActive: true
                 };
             } catch (e) {
-                // Fallback to Prisma on any error (e.g. PublicKey conversion if walletAddress is still invalid)
+                // Fallback to Prisma on any error
                 const { createLearningProgressService } = await import("./prisma-impl");
                 const prismaService = createLearningProgressService(prisma);
                 const progress = await prismaService.getEnrollmentProgress(walletAddress, courseId);
@@ -569,7 +576,7 @@ export class OnChainLearningService implements LearningProgressService {
         }
     }
 
-    async finalizeCourse(userId: string, courseId: string): Promise<void> {
+    async finalizeCourse(userId: string, courseId: string, lessonCount: number): Promise<void> {
         if (typeof window === "undefined") {
             // Server-side: Execute on-chain logic directly using backend signer
             console.log(`[onchain-service] finalizeCourse: START for user ${userId}, course ${courseId}`);
@@ -809,6 +816,7 @@ export class OnChainLearningService implements LearningProgressService {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     wallet: params.userId,
+                    courseId: params.courseId,
                     trackId: params.trackId,
                     trackName: params.trackName,
                     xpEarned: params.xpEarned

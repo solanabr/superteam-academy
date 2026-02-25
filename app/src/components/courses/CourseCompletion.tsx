@@ -47,12 +47,24 @@ export function CourseCompletion({ courseId, totalLessons }: CourseCompletionPro
     // State for tracking the newly minted Certificate NFT
     const [mintedCredentialId, setMintedCredentialId] = useState<string | null>(null);
 
+    // Persists after API success — prevents button from reverting to "Get Certificate"
+    const [graduated, setGraduated] = useState(false);
+
     const isComplete = completedCount >= totalLessons || !!completedAt;
+
+    // Once the graduation API returns success, poll until completedAt is set by Inngest
+    useEffect(() => {
+        if (!graduated || completedAt || !walletAddress) return;
+        const interval = setInterval(() => {
+            fetchEnrollment(walletAddress, courseId, true);
+        }, 3000);
+        return () => clearInterval(interval);
+    }, [graduated, completedAt, walletAddress, courseId, fetchEnrollment]);
 
     if (!authenticated || !walletAddress || (completedCount === 0 && !completedAt)) return null;
 
     const handleFinalize = async () => {
-        if (isActionLoading) return;
+        if (isActionLoading || graduated) return;
         setIsActionLoading(true);
         try {
             console.log(`[CourseCompletion] Requesting graduation for course ${courseId}`);
@@ -75,11 +87,15 @@ export function CourseCompletion({ courseId, totalLessons }: CourseCompletionPro
             if (data.mintAddress) {
                 setMintedCredentialId(data.mintAddress);
             }
+
+            // Mark as graduated — this prevents the button from ever reverting
+            setGraduated(true);
+
             if (data.warning || data.message) {
                 alert(data.warning || data.message);
             }
 
-            // Refresh state
+            // Refresh state (may or may not have completedAt yet — polling handles the rest)
             await fetchEnrollment(walletAddress, courseId, true);
         } catch (error: any) {
             console.error("Finalize failed", error);
@@ -112,7 +128,7 @@ export function CourseCompletion({ courseId, totalLessons }: CourseCompletionPro
 
     return (
         <div className="mt-6 border-t border-white/10 pt-6">
-            {!completedAt ? (
+            {!completedAt && !graduated ? (
                 <div className="flex flex-col gap-4 items-start">
                     <h3 className="text-xl font-bold text-white">{t("completion_title")}</h3>
                     <p className="text-text-secondary">{t("completion_info")}</p>
@@ -133,6 +149,19 @@ export function CourseCompletion({ courseId, totalLessons }: CourseCompletionPro
                                 Get Certificate
                             </>
                         )}
+                    </Button>
+                </div>
+            ) : !completedAt && graduated ? (
+                <div className="flex flex-col gap-4 items-start">
+                    <h3 className="text-xl font-bold text-white">{t("completion_title")}</h3>
+                    <p className="text-text-secondary">Your certificate is being minted on-chain. This may take a moment...</p>
+                    <Button
+                        disabled
+                        variant="default"
+                        className="flex items-center gap-2 rounded-md bg-solana/70 px-4 py-2 text-sm font-medium text-black disabled:opacity-80"
+                    >
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Finalizing & Minting...
                     </Button>
                 </div>
             ) : (
@@ -159,28 +188,6 @@ export function CourseCompletion({ courseId, totalLessons }: CourseCompletionPro
                             </Link>
                         </Button>
 
-                        {onChainActive && (
-                            <div className="flex items-center gap-3">
-                                <Button
-                                    onClick={handleReclaimRent}
-                                    disabled={isReclaimLoading}
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-10 w-10 rounded-full bg-white/5 border border-white/10 text-white/40 hover:text-rust hover:bg-rust/10 hover:border-rust/30 transition-all"
-                                    title="Reclaim Rent & Close Enrollment"
-                                >
-                                    {isReclaimLoading ? (
-                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                    ) : (
-                                        <span className="material-symbols-outlined text-xl">delete_forever</span>
-                                    )}
-                                </Button>
-                                <span className="flex items-center gap-1 bg-solana/10 text-solana px-2 py-1 rounded text-[10px] font-bold border border-solana/20 uppercase tracking-tight">
-                                    <span className="material-symbols-outlined text-[14px]">account_balance_wallet</span>
-                                    Rent Reclaimable
-                                </span>
-                            </div>
-                        )}
                     </div>
 
                     {!onChainActive && (

@@ -68,19 +68,25 @@ export async function POST(
     // We patch by query to update both draft and published if they exist
     const publishedId = id.startsWith("drafts.") ? id.replace("drafts.", "") : id;
 
-    // Auto-sync to blockchain if not already explicitly done, or as part of this step
+    // Auto-sync to blockchain if not already explicitly done, or as part of this step (Offload to Inngest)
     if (process.env.NEXT_PUBLIC_USE_ONCHAIN === "true") {
       try {
-        const { syncCourseOnChain } = await import("@/lib/onchain-admin");
-        console.log(`[api/courses/publish] Syncing course ${publishedId} on-chain...`);
-        await syncCourseOnChain({
-          courseId: publishedId,
-          wallet: wallet,
-          lessonCount: course.lessonCount || 1,
+        const { inngest } = await import("@/lib/inngest/client");
+        console.log(`[api/courses/publish] Dispatching background sync for course ${publishedId}...`);
+        await inngest.send({
+          name: "solana/course.published",
+          data: {
+            courseId: publishedId,
+            wallet: wallet,
+            lessonCount: course.lessonCount || 1,
+            difficulty: 1,
+            xpPerLesson: 100,
+            trackId: 1,
+            trackLevel: 1
+          }
         });
       } catch (onchainError) {
-        console.error("Failed to sync course on-chain during publish:", onchainError);
-        // We log the error but still proceed with Sanity publishing to unblock user
+        console.error("Failed to dispatch background sync during publish:", onchainError);
       }
     }
 

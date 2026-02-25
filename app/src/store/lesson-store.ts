@@ -129,12 +129,14 @@ export const useLessonStore = create<LessonState>((set, get) => ({
                 }
             }
 
-            // Sync user progress (streak, xp) without needing a page reload
-            const { useUserStore } = await import("@/store/user-store");
-            await useUserStore.getState().fetchProgress(walletAddress);
-
-            // Only update local state visually AFTER server confirms success
+            // Immediately flip the UI (optimistic) — the API already confirmed success
             get().setCompletionOptimistic(courseId, lessonIndex, true);
+
+            // Sync user progress in the background (fire-and-forget)
+            import("@/store/user-store").then(({ useUserStore }) => {
+                useUserStore.getState().updateXpOptimistic(100);
+                useUserStore.getState().fetchProgress(walletAddress);
+            });
         } catch (error) {
             state.setError(courseId, error instanceof Error ? error.message : "Failed to complete");
             throw error;

@@ -1,15 +1,9 @@
-"use client";
-
-import { Link } from "@/i18n/routing";
 import { Footer } from "@/components/layout/Footer";
-import { WalletButton } from "@/components/auth/WalletButton";
 import { ScrollJourney } from "@/components/landing/ScrollJourney";
-import { usePrivy } from "@privy-io/react-auth";
-import { useRouter } from "next/navigation";
+import { LandingHeaderActions } from "@/components/landing/LandingHeaderActions";
+import { LandingCTA } from "@/components/landing/LandingCTA";
 
 export default function LandingPage() {
-    const { ready, authenticated } = usePrivy();
-
     return (
         <div className="relative min-h-screen flex flex-col bg-void text-text-primary overflow-x-hidden">
             {/* Noise Texture Overlay — z-30 keeps it below navbar (z-40) and modals (z-50+) */}
@@ -28,17 +22,8 @@ export default function LandingPage() {
                     </div>
                     <span className="font-display font-bold text-xl tracking-tight text-white">Superteam Academy</span>
                 </div>
-                <div className="flex items-center gap-6">
-                    {ready && authenticated && (
-                        <Link
-                            href="/dashboard"
-                            className="font-code text-xs font-medium uppercase tracking-wider text-text-muted hover:text-solana transition-colors"
-                        >
-                            Dashboard
-                        </Link>
-                    )}
-                    <WalletButton className="font-code text-xs font-medium uppercase tracking-wider bg-white/5 hover:bg-white/10 border border-white/10" />
-                </div>
+
+                <LandingHeaderActions />
             </nav>
 
             {/* Main Content */}
@@ -115,7 +100,6 @@ export default function LandingPage() {
                     </div>
                 </div>
 
-                {/* Visual Journey Elements */}
                 <ScrollJourney />
             </main>
             <Footer />

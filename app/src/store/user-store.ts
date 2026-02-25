@@ -17,6 +17,16 @@ export type AppUser = {
     createdAt: string;
 };
 
+export type Credential = {
+    id: string;
+    trackName: string;
+    level: number;
+    coursesCompleted: number;
+    totalXpEarned: number;
+    earnedAt: string;
+    image?: string;
+};
+
 export type UserProgress = {
     xp: number;
     level: number;
@@ -30,10 +40,12 @@ export type UserState = {
     // User data
     user: AppUser | null;
     progress: UserProgress | null;
+    credentials: Credential[];
 
     // Loading states
     isLoading: boolean;
     isProgressLoading: boolean;
+    isCredentialsLoading: boolean;
 
     // Error states
     error: string | null;
@@ -49,6 +61,7 @@ export type UserState = {
 
     fetchUser: (walletAddress: string) => Promise<void>;
     fetchProgress: (walletAddress: string) => Promise<void>;
+    fetchCredentials: (walletAddress: string) => Promise<void>;
     updateXpOptimistic: (xpGain: number) => void;
 
     // Reset store
@@ -58,8 +71,10 @@ export type UserState = {
 const initialState = {
     user: null,
     progress: null,
+    credentials: [],
     isLoading: false,
     isProgressLoading: false,
+    isCredentialsLoading: false,
     error: null,
     progressError: null,
 };
@@ -151,6 +166,25 @@ export const useUserStore = create<UserState>((set, get) => ({
             });
         } finally {
             set({ isProgressLoading: false });
+        }
+    },
+
+    fetchCredentials: async (walletAddress) => {
+        const state = get();
+        if (state.isCredentialsLoading) return;
+
+        set({ isCredentialsLoading: true });
+
+        try {
+            const res = await fetch(`/api/credentials?wallet=${encodeURIComponent(walletAddress)}`);
+            if (!res.ok) throw new Error("Failed to fetch credentials");
+
+            const data = await res.json();
+            set({ credentials: data.credentials || [] });
+        } catch (error) {
+            console.error("fetchCredentials error:", error);
+        } finally {
+            set({ isCredentialsLoading: false });
         }
     },
 

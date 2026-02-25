@@ -23,32 +23,24 @@ type ProfileData = {
     credentials: { id: string; trackId: string; trackName: string; mintAddress: string | null; earnedAt: string }[];
 };
 
+import { useProfileStore } from "@/store/profile-store";
+
 export default function ProfilePage() {
     const { user } = useAppUser();
     const params = useParams();
     const wallet = params.wallet as string;
 
-    const [data, setData] = useState<ProfileData | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const { profiles, isLoading, error: storeError, fetchProfile } = useProfileStore();
 
     useEffect(() => {
-        if (!wallet) return;
+        if (wallet) {
+            fetchProfile(wallet);
+        }
+    }, [wallet, fetchProfile]);
 
-        setLoading(true);
-        fetch(`/api/user/${wallet}`)
-            .then(res => {
-                if (!res.ok) throw new Error("User not found");
-                return res.json();
-            })
-            .then(resData => {
-                setData(resData);
-            })
-            .catch(err => {
-                setError(err.message);
-            })
-            .finally(() => setLoading(false));
-    }, [wallet]);
+    const data = profiles[wallet] || null;
+    const loading = isLoading && !data;
+    const error = storeError;
 
     if (loading) {
         return (

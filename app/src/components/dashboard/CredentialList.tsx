@@ -5,43 +5,29 @@ import { Link } from "@/i18n/routing";
 import { usePrivy } from "@privy-io/react-auth";
 import { useWallets } from "@privy-io/react-auth/solana";
 import { Loader2, Medal } from "lucide-react";
+import { useUserStore, type Credential } from "@/store/user-store";
 
-type Credential = {
-    id: string;
-    trackName: string;
-    level: number;
-    coursesCompleted: number;
-    totalXpEarned: number;
-    earnedAt: string;
-    image?: string;
-};
 
 export function CredentialList({ walletAddress: propAddress }: { walletAddress?: string }) {
-    const { authenticated, user } = usePrivy();
+    const { user: privyUser } = usePrivy();
     const { wallets } = useWallets();
-    const [credentials, setCredentials] = useState<Credential[]>([]);
-    const [loading, setLoading] = useState(false);
+    const {
+        credentials,
+        isCredentialsLoading: loading,
+        fetchCredentials
+    } = useUserStore();
 
     const linkedAddress =
-        user?.wallet?.address ?? user?.linkedAccounts?.find((a) => a.type === "wallet")?.address;
+        privyUser?.wallet?.address ?? privyUser?.linkedAccounts?.find((a) => a.type === "wallet")?.address;
     const resolvedAddress = propAddress ?? linkedAddress ?? wallets?.[0]?.address;
 
     useEffect(() => {
-        if (!resolvedAddress) return;
+        if (resolvedAddress) {
+            fetchCredentials(resolvedAddress);
+        }
+    }, [resolvedAddress, fetchCredentials]);
 
-        setLoading(true);
-        fetch(`/api/credentials?wallet=${encodeURIComponent(resolvedAddress)}`)
-            .then((res) => res.json())
-            .then((data) => {
-                if (data.credentials) {
-                    setCredentials(data.credentials);
-                }
-            })
-            .catch((err) => console.error("Failed to fetch credentials", err))
-            .finally(() => setLoading(false));
-    }, [resolvedAddress]);
-
-    if (loading) {
+    if (loading && credentials.length === 0) {
         return <Loader2 className="h-6 w-6 animate-spin text-solana" />;
     }
 

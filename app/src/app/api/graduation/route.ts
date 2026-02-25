@@ -42,62 +42,51 @@ export async function POST(request: NextRequest) {
 
         const identifier = process.env.NEXT_PUBLIC_USE_ONCHAIN === "true" ? wallet : user.id;
 
-        // 0. Sync completion status in Prisma
-        await prisma.enrollment.updateMany({
-            where: { userId: user.id, courseId },
-            data: { completedAt: new Date() }
-        });
-        console.log("[api/graduation] Prisma updated");
-
-        // 1. Finalize on-chain (updates enrollment PDA state and distributes XP)
-        if (process.env.NEXT_PUBLIC_USE_ONCHAIN === "true") {
-            console.log("[api/graduation] STEP 1: Finalizing course on-chain...");
-            try {
-                await service.finalizeCourse(wallet, courseId, lessonCount);
-                console.log("[api/graduation] STEP 1: Success");
-            } catch (err: any) {
-                console.error("[api/graduation] STEP 1 FAILED:", err.message);
-                throw new Error(`On-chain finalization failed: ${err.message}`);
-            }
-
-            // 2. Issue Credential (NFT Minting)
-            console.log("[api/graduation] STEP 2: Minting NFT Credential...");
-            try {
-                const { getCourseById } = await import("@/sanity/lib/queries");
-                const course = await getCourseById(courseId);
-
-                if (!course || !course.track) {
-                    console.warn(`[api/graduation] Course track missing for ID: ${courseId}. Skipping NFT.`);
-                    return NextResponse.json({ ok: true, message: "Graduated, but track metadata missing for NFT" });
+        // 0. Sync completion status and award 500 XP in Prisma Transactionally
+        await prisma.$transaction([
+            prisma.enrollment.updateMany({
+                where: { userId: user.id, courseId },
+                data: { completedAt: new Date() }
+            }),
+            prisma.progress.update({
+                where: { userId: user.id },
+                data: { xp: { increment: 500 } }
+            }),
+            prisma.xpEvent.create({
+                data: {
+                    userId: user.id,
+                    amount: 500,
+                    source: "graduation"
                 }
+            })
+        ]);
+        console.log("[api/graduation] Prisma updated (Completion + 500 XP)");
 
-                const trackName = course.track.charAt(0).toUpperCase() + course.track.slice(1);
-                const mintAddress = await service.issueCredential({
-                    userId: identifier,
+        // 1. Finalize on-chain (updates enrollment PDA state and distributes XP) & 2. Issue Credential (NFT Minting)
+        // Offload to Inngest for background processing
+        if (process.env.NEXT_PUBLIC_USE_ONCHAIN === "true") {
+            const { inngest } = await import("@/lib/inngest/client");
+            console.log(`[api/graduation] Dispatching background graduation for user ${wallet}, Course: ${courseId}`);
+
+            await inngest.send({
+                name: "solana/graduation.started",
+                data: {
                     wallet: wallet,
                     courseId: courseId,
-                    trackId: course.track,
-                    trackName: trackName,
-                    xpEarned: 500 // Base XP for course completion
-                });
-
-                if (mintAddress === "SKIPPED_NO_COLLECTION") {
-                    console.log("[api/graduation] STEP 2: Skipped (no collection address)");
-                    return NextResponse.json({ ok: true, message: "Graduated, but NFT minting skipped due to configuration" });
+                    lessonCount: lessonCount
                 }
+            });
 
-                console.log(`[api/graduation] STEP 2: Success! NFT: ${mintAddress}`);
-                return NextResponse.json({ ok: true, mintAddress });
-            } catch (err: any) {
-                console.error("[api/graduation] STEP 2 FAILED (non-fatal):", err.message);
-                // We return ok: true because the user HAS graduated (Step 1 succeeded)
-                return NextResponse.json({
-                    ok: true,
-                    warning: `Graduated, but NFT minting failed: ${err.message}`
-                });
-            }
+            return NextResponse.json({
+                ok: true,
+                status: "processing",
+                message: "Graduation started. Your certificate will appear in your profile shortly. If the certificate doesn't appear, please regenerate."
+            });
         }
 
+        // Final Cache Clear for Off-chain mode
+        const { invalidatePattern } = await import("@/lib/cache");
+        await invalidatePattern(`user:${wallet}*`);
         return NextResponse.json({ ok: true });
     } catch (e: any) {
         console.error(`[api/graduation] FATAL ERROR: ${e.message}`, e.stack);

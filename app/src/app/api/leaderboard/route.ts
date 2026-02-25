@@ -13,9 +13,14 @@ export async function GET(request: NextRequest) {
 
         const limit = parseInt(searchParams.get("limit") || "50", 10);
 
-        const leaderboard = await learningProgressService.getLeaderboard({ limit, timeframe });
+        const { getCached } = await import("@/lib/cache");
+        const leaderboard = await getCached(`leaderboard:${timeframe}:${limit}`, async () => {
+            return await learningProgressService.getLeaderboard({ limit, timeframe });
+        }, { ttl: 60 });
+
         return NextResponse.json(leaderboard);
     } catch (e) {
+        console.error("Leaderboard fetch error:", e);
         return NextResponse.json({ error: "Failed to fetch leaderboard" }, { status: 500 });
     }
 }

@@ -193,20 +193,26 @@ export const useEnrollmentStore = create<EnrollmentState>((set, get) => ({
           throw new Error("Wallet does not support signing or sending transactions.");
         }
 
-        await connection.confirmTransaction(signature, "confirmed");
-        console.log("Enrollment successful:", signature);
+        console.log("Enrollment TX sent:", signature);
+
+        // Background: confirm + sync (don't block the UI)
+        connection.confirmTransaction(signature, "confirmed")
+          .then(() => console.log("Enrollment confirmed:", signature))
+          .catch((e) => console.error("Enrollment confirmation failed:", e));
       });
 
-      // Hit local API to sync Prisma
-      await fetch("/api/enroll", {
+      // Immediately flip UI to "Enrolled"
+      state.setEnrollmentOptimistic(courseId, 0);
+      state.setLoading(courseId, false);
+
+      // Background: sync to DB + fetch fresh data
+      fetch("/api/enroll", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ wallet: walletAddress, courseId }),
-      });
-
-      state.setEnrollmentOptimistic(courseId, 0);
-      await get().fetchEnrollment(walletAddress, courseId, true);
-      state.setLoading(courseId, false);
+      })
+        .then(() => get().fetchEnrollment(walletAddress, courseId, true))
+        .catch((e) => console.error("Enrollment DB sync failed:", e));
     } catch (error) {
       state.setError(
         courseId,

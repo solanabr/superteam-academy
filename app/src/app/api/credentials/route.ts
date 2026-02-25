@@ -11,43 +11,46 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: "Wallet address required" }, { status: 400 });
     }
 
-    // We can use wallet directly if service supports it, or fetch user ID first
-    // On-Chain impl takes wallet address as userId. Prisma impl takes internal User ID.
-    // This is a discrepancy. "onchain-impl.ts" getCredentials takes "userId".
-    // In Prisma impl, getCredentials takes "userId" (UUID).
+    try {
+        const { getCached } = await import("@/lib/cache");
 
-    // Check if we are using ONCHAIN mode
-    const USE_ONCHAIN = process.env.NEXT_PUBLIC_USE_ONCHAIN === "true";
+        const credentials = await getCached(`user:${wallet}:credentials`, async () => {
+            const USE_ONCHAIN = process.env.NEXT_PUBLIC_USE_ONCHAIN === "true";
 
-    let onChainCredentials: any[] = [];
-    if (USE_ONCHAIN) {
-        // On-Chain service handles Helius DAS (expects wallet)
-        onChainCredentials = await learningProgressService.getCredentials(wallet);
+            // Parallelize RPC and DB lookups
+            const [onChainResult, userResult] = await Promise.allSettled([
+                USE_ONCHAIN ? learningProgressService.getCredentials(wallet) : Promise.resolve([]),
+                prisma.user.findUnique({
+                    where: { walletAddress: wallet },
+                    select: { id: true }
+                })
+            ]);
+
+            const onChainCredentials = onChainResult.status === "fulfilled" ? onChainResult.value : [];
+            const user = userResult.status === "fulfilled" ? userResult.value : null;
+
+            let prismaCredentials: any[] = [];
+            if (user) {
+                prismaCredentials = await prisma.credential.findMany({
+                    where: { userId: user.id },
+                    include: { user: { select: { walletAddress: true, profile: true } } }
+                });
+            }
+
+            // Merge and deduplicate by ID/Mint Address
+            const merged = [...onChainCredentials];
+            prismaCredentials.forEach(pc => {
+                if (!merged.find(mc => mc.id === pc.id || mc.mintAddress === pc.mintAddress)) {
+                    merged.push(pc);
+                }
+            });
+
+            return merged;
+        }, { ttl: 60 });
+
+        return NextResponse.json({ credentials });
+    } catch (error: any) {
+        console.error("GET /api/credentials error:", error);
+        return NextResponse.json({ error: "Failed to fetch credentials" }, { status: 500 });
     }
-
-    // Fetch from Prisma for consistency (always handles DB credentials)
-    let prismaCredentials: any[] = [];
-    const user = await prisma.user.findUnique({
-        where: { walletAddress: wallet },
-        select: { id: true },
-    });
-
-    if (user) {
-        // If we are in ONCHAIN mode, the learningProgressService is OnChain.
-        // We need to fetch from DB specifically.
-        prismaCredentials = await prisma.credential.findMany({
-            where: { userId: user.id },
-            include: { user: { select: { walletAddress: true, profile: true } } }
-        });
-    }
-
-    // Merge and deduplicate by ID/Mint Address
-    const merged = [...onChainCredentials];
-    prismaCredentials.forEach(pc => {
-        if (!merged.find(mc => mc.id === pc.id || mc.mintAddress === pc.mintAddress)) {
-            merged.push(pc);
-        }
-    });
-
-    return NextResponse.json({ credentials: merged });
 }

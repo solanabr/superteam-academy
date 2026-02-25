@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
       userId: user.id,
       courseId,
       lessonIndex,
-      xpReward: xpReward ?? 100, // Simple stub XP reward per lesson
+      xpReward: xpReward ?? 100,
     });
   } catch (e: any) {
     return NextResponse.json(
@@ -50,26 +50,5 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Fetch updated progress and enrollment to return
-  const progress = await service.getProgress(user.id);
-  const enrollment = await service.getEnrollmentProgress(user.id, courseId);
-  const streak = await service.getStreak(user.id);
-
-  // Use the achievement flags to determine new achievements (not fully implemented in stub)
-  // For now, we return the flags and let the frontend check diffs if needed, 
-  // or (better) we should return explicit "newAchievements" if the service can track that.
-  // The service currently doesn't return "newly unlocked" from completeLesson.
-  // We will enhance the service to return that later or let the frontend poll.
-  // For now, returning the basics allows the frontend to show "XP: 100", "Streak: 1".
-
-  return NextResponse.json({
-    ok: true,
-    data: {
-      xp: progress?.xp ?? 0,
-      streak: streak.currentStreak,
-      completed: true, // Should be true if completeLesson didn't throw
-      // enrollment: enrollment, // Optional if frontend needs it
-    }
-  });
+  return NextResponse.json({ ok: true });
 }
-

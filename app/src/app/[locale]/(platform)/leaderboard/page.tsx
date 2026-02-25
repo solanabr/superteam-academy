@@ -6,29 +6,21 @@ import { Loader2, Trophy, ExternalLink } from "lucide-react";
 import { Link } from "@/i18n/routing";
 import { Button } from "@/components/ui/button";
 import clsx from "clsx";
+import { useLeaderboardStore } from "@/store/leaderboard-store";
 import type { LeaderboardEntry } from "@/lib/learning-progress/types";
 
 export default function LeaderboardPage() {
   const { user } = useAppUser();
-  const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { entries: allEntries, isLoading, fetchLeaderboard } = useLeaderboardStore();
 
   const [timeframe, setTimeframe] = useState<"daily" | "weekly" | "all-time">("all-time");
 
   useEffect(() => {
-    setLoading(true);
-    fetch(`/api/leaderboard?timeframe=${timeframe}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) {
-          setEntries(data);
-        } else {
-          setEntries([]);
-        }
-      })
-      .catch((err) => console.error(err))
-      .finally(() => setLoading(false));
-  }, [timeframe]);
+    fetchLeaderboard(timeframe);
+  }, [timeframe, fetchLeaderboard]);
+
+  const entries = allEntries[timeframe] || [];
+  const loading = isLoading && entries.length === 0;
 
   // Removed full-page loading to keep header visible
 

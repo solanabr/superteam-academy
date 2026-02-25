@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Backend wallet not configured" }, { status: 500 });
         }
 
-        const { signature, willGraduate, onchainCourse } = await withFallbackRPC(async (connection) => {
+        const { signature, willGraduate } = await withFallbackRPC(async (connection) => {
             const backendWallet = Keypair.fromSecretKey(bs58.decode(BACKEND_WALLET_KEY!));
             const provider = new AnchorProvider(
                 connection,
@@ -35,128 +35,81 @@ export async function POST(req: NextRequest) {
 
             const program = new Program(onchainAcademyIdl as any, provider);
 
-            // PDAs
+            // PDAs (synchronous derivation — no RPC needed)
             const learner = new PublicKey(wallet);
-            const [coursePda] = PublicKey.findProgramAddressSync(
-                [Buffer.from("course"), Buffer.from(courseId)],
-                program.programId
-            );
-            const [enrollmentPda] = PublicKey.findProgramAddressSync(
-                [Buffer.from("enrollment"), Buffer.from(courseId), learner.toBuffer()],
-                program.programId
-            );
-            const [configPda] = PublicKey.findProgramAddressSync(
-                [Buffer.from("config")],
-                program.programId
-            );
+            const [coursePda] = PublicKey.findProgramAddressSync([Buffer.from("course"), Buffer.from(courseId)], program.programId);
+            const [enrollmentPda] = PublicKey.findProgramAddressSync([Buffer.from("enrollment"), Buffer.from(courseId), learner.toBuffer()], program.programId);
+            const [configPda] = PublicKey.findProgramAddressSync([Buffer.from("config")], program.programId);
 
-            const enrollmentInfo = await connection.getAccountInfo(enrollmentPda);
+            // ── Batch 1: Parallel RPC reads (3 independent calls → 1 round-trip) ──
+            const [enrollmentInfo, config, onchainCourseInner] = await Promise.all([
+                connection.getAccountInfo(enrollmentPda),
+                (program.account as any).config.fetch(configPda),
+                (program.account as any).course.fetch(coursePda),
+            ]);
+
+            if (!enrollmentInfo) throw new Error("No on-chain enrollment found.");
+
+            const learnerTokenAccount = getAssociatedTokenAddressSync(config.xpMint, learner, true, TOKEN_2022_PROGRAM_ID);
+
+            // ── Batch 2: ATA check + blockhash in parallel ──
+            const [learnerTokenAccountInfo, { blockhash }] = await Promise.all([
+                connection.getAccountInfo(learnerTokenAccount),
+                connection.getLatestBlockhash(),
+            ]);
+
             const instructions = [];
-
-            if (!enrollmentInfo) {
-                throw new Error("No on-chain enrollment found. Students must enroll themselves (user-paid) before completing lessons.");
-            }
-
-            // Fetch Config & Course to get XP Mint and verify Graduation
-            const config = await (program.account as any).config.fetch(configPda);
-            const onchainCourseInner = await (program.account as any).course.fetch(coursePda);
-
-            const learnerTokenAccount = getAssociatedTokenAddressSync(
-                config.xpMint,
-                learner,
-                true,
-                TOKEN_2022_PROGRAM_ID
-            );
-
-            const learnerTokenAccountInfo = await connection.getAccountInfo(learnerTokenAccount);
-
             if (!learnerTokenAccountInfo) {
-                instructions.push(
-                    createAssociatedTokenAccountIdempotentInstruction(
-                        backendWallet.publicKey, // payer
-                        learnerTokenAccount,     // ata
-                        learner,                 // owner
-                        config.xpMint,           // mint
-                        TOKEN_2022_PROGRAM_ID    // programId
-                    )
-                );
+                instructions.push(createAssociatedTokenAccountIdempotentInstruction(backendWallet.publicKey, learnerTokenAccount, learner, config.xpMint, TOKEN_2022_PROGRAM_ID));
             }
 
-            // Complete current lesson instruction
-            const completeLessonIx = await program.methods
-                .completeLesson(lessonIndex)
-                .accounts({
-                    config: configPda,
-                    course: coursePda,
-                    enrollment: enrollmentPda,
-                    learner: learner,
-                    learnerTokenAccount: learnerTokenAccount,
-                    xpMint: config.xpMint,
-                    backendSigner: backendWallet.publicKey,
-                    tokenProgram: TOKEN_2022_PROGRAM_ID,
-                } as any)
-                .instruction();
+            const completeLessonIx = await program.methods.completeLesson(lessonIndex).accounts({
+                config: configPda,
+                course: coursePda,
+                enrollment: enrollmentPda,
+                learner: learner,
+                learnerTokenAccount: learnerTokenAccount,
+                xpMint: config.xpMint,
+                backendSigner: backendWallet.publicKey,
+                tokenProgram: TOKEN_2022_PROGRAM_ID,
+            } as any).instruction();
 
             instructions.push(completeLessonIx);
 
             const tx = new Transaction().add(...instructions);
             tx.feePayer = backendWallet.publicKey;
-            if (instructions.length > 2) {
-                const { ComputeBudgetProgram } = require('@solana/web3.js');
-                tx.add(ComputeBudgetProgram.setComputeUnitLimit({ units: 500000 }));
-            }
+            tx.recentBlockhash = blockhash;
+            tx.sign(backendWallet);
 
-            tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-            const signers = [backendWallet];
-            tx.sign(...signers);
-
+            // Send without awaiting confirmation
             const signatureInner = await connection.sendRawTransaction(tx.serialize());
-            await connection.confirmTransaction(signatureInner);
 
-            // Check if this completion leads to graduation (to trigger frontend refresh/button)
-            let completedLessonsCount = 0;
-            const enrollmentState = await (program.account as any).enrollment.fetch(enrollmentPda);
-            const lessonFlags = Buffer.from(enrollmentState.lessonFlags);
-            for (const byte of lessonFlags) {
-                let currentByte = byte;
-                while (currentByte > 0) {
-                    completedLessonsCount += currentByte & 1;
-                    currentByte >>= 1;
-                }
-            }
-            const totalLessons = onchainCourseInner.lessonCount;
-            const willGraduateInner = completedLessonsCount === totalLessons;
+            // ── Batch 3: Graduation check + Inngest dispatch in parallel ──
+            const { countSetBits } = await import("@/lib/bitmap");
+            const [enrollmentState] = await Promise.all([
+                (program.account as any).enrollment.fetch(enrollmentPda),
+            ]);
+            const completedCount = countSetBits(enrollmentState.lessonFlags) + 1; // +1 for the one we just sent
+            const willGraduateInner = completedCount >= onchainCourseInner.lessonCount;
 
-            return {
-                signature: signatureInner,
-                willGraduate: willGraduateInner,
-                onchainCourse: onchainCourseInner
-            };
+            return { signature: signatureInner, willGraduate: willGraduateInner };
         });
 
-        // Sync to Off-Chain DB so Achievements and UI load properly
-        try {
-            const { prisma } = await import("@/lib/db");
-            const user = await prisma.user.findUnique({ where: { walletAddress: wallet }, select: { id: true } });
-            if (user) {
-                const { createLearningProgressService } = await import("@/lib/learning-progress/prisma-impl");
-                const prismaService = createLearningProgressService(prisma);
-                await prismaService.completeLesson({
-                    userId: user.id,
+        // Fire-and-forget: Inngest handles DB sync, cache invalidation, and tx confirmation
+        import("@/lib/inngest/client").then(({ inngest }) => {
+            inngest.send({
+                name: "solana/lesson.completed",
+                data: {
+                    signature,
+                    wallet,
                     courseId,
                     lessonIndex,
                     xpReward: 100
-                });
-
-                if (willGraduate) {
-                    console.log(`Course ${courseId} is ready for graduation for user ${user.id}`);
                 }
-            }
-        } catch (dbErr) {
-            console.error("Failed to sync off-chain completion:", dbErr);
-        }
+            }).catch(e => console.error("[complete-lesson] Inngest dispatch failed:", e));
+        });
 
-        return NextResponse.json({ success: true, signature: signature });
+        return NextResponse.json({ success: true, signature, willGraduate });
 
     } catch (error: any) {
         console.error("Complete Lesson Error:", error);

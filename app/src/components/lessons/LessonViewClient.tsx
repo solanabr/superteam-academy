@@ -250,16 +250,22 @@ export function LessonViewClient({ course, lesson }: LessonViewClientProps) {
                     <Button
                       onClick={async () => {
                         if (!isCompleted) await handleComplete();
-                        if (nextLesson) {
-                          router.push(`/courses/${course.slug}/lessons/${nextLesson._id}`);
-                        }
                       }}
                       disabled={isCompleting}
                       variant="default"
                       className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold bg-solana text-[#0A0A0B] hover:brightness-110 active:scale-[0.98] transition-all shadow-[0_0_20px_-5px_rgba(20,240,148,0.4)] disabled:opacity-50"
                     >
-                      {isCompleting ? t("completing") : (nextLesson ? t("continue") : t("finish_course"))}
-                      <span className="material-symbols-outlined text-lg">arrow_forward</span>
+                      {isCompleting ? (
+                        <>
+                          <span className="material-symbols-outlined text-lg animate-spin">progress_activity</span>
+                          {t("completing")}
+                        </>
+                      ) : (
+                        <>
+                          {nextLesson ? t("continue") : t("finish_course")}
+                          <span className="material-symbols-outlined text-lg">arrow_forward</span>
+                        </>
+                      )}
                     </Button>
                   )}
                 </div>

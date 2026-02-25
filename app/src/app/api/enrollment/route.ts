@@ -30,7 +30,12 @@ export async function GET(request: NextRequest) {
     if (courseId) {
       // For On-Chain, we pass the wallet address directly as the identifier
       const identifier = process.env.NEXT_PUBLIC_USE_ONCHAIN === "true" ? (wallet as string) : user.id;
-      const progress = await service.getEnrollmentProgress(identifier, courseId);
+
+      const { getCached } = await import("@/lib/cache");
+      const progress = await getCached(`user:${wallet}:enrollment:${courseId}`, async () => {
+        return await service.getEnrollmentProgress(identifier, courseId);
+      }, { ttl: 60 });
+
       if (!progress) {
         if (isPolling) return NextResponse.json({ status: "pending" }, { status: 202 });
         return NextResponse.json(null, { status: 404 });
@@ -45,53 +50,45 @@ export async function GET(request: NextRequest) {
         onChainActive: progress.onChainActive,
       });
     } else {
-      // List all enrollments with calculated progress
-      const enrollments = await prisma.enrollment.findMany({
-        where: { userId: user.id },
-        orderBy: { createdAt: 'desc' }
-      });
+      // List all enrollments with calculated progress - Wrapped in Cache
+      const { getCached } = await import("@/lib/cache");
+      const enrichedEnrollments = await getCached(`user:${wallet}:enrollments`, async () => {
+        const enrollments = await prisma.enrollment.findMany({
+          where: { userId: user.id },
+          orderBy: { createdAt: 'desc' }
+        });
 
-      // Calculate progress for each enrollment
-      const enrichedEnrollments = await Promise.all(
-        enrollments.map(async (enrollment) => {
-          // Fetch course to get total lesson count
-          const course = await serverClient.fetch(
-            `*[_type == "course" && _id == $id][0] {
-              "totalLessons": count(modules[]->lessons[]->_id)
-            }`,
-            { id: enrollment.courseId }
-          );
+        if (enrollments.length === 0) return [];
 
+        const courseIds = enrollments.map(e => e.courseId);
+        const courses = await serverClient.fetch(
+          `*[_type == "course" && _id in $ids] {
+            _id,
+            "totalLessons": count(modules[]->lessons[]->_id)
+          }`,
+          { ids: courseIds }
+        );
+
+        const { countSetBits } = await import("@/lib/bitmap");
+
+        return enrollments.map((enrollment) => {
+          const course = courses.find((c: any) => c._id === enrollment.courseId);
           const totalLessons = course?.totalLessons || 0;
-
-          // Count completed lessons from bitmap
-          let completedLessons = 0;
-          const flags = enrollment.lessonFlags;
-          for (let i = 0; i < flags.length * 8; i++) {
-            const byteIdx = Math.floor(i / 8);
-            const bitIdx = i % 8;
-            if (flags[byteIdx] && (flags[byteIdx] & (1 << bitIdx))) {
-              completedLessons++;
-            }
-          }
-
-          const progressPercent = totalLessons > 0
-            ? Math.round((completedLessons / totalLessons) * 100)
-            : 0;
+          const completedLessons = countSetBits(enrollment.lessonFlags);
 
           return {
             id: enrollment.id,
             courseId: enrollment.courseId,
             completedLessons,
             totalLessons,
-            progressPercent,
+            progressPercent: totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0,
             completedAt: enrollment.completedAt,
             bonusClaimed: enrollment.bonusClaimed,
             createdAt: enrollment.createdAt,
             updatedAt: enrollment.updatedAt,
           };
-        })
-      );
+        });
+      }, { ttl: 60 });
 
       return NextResponse.json(enrichedEnrollments);
     }

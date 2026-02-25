@@ -51,7 +51,7 @@ export function EnrollButton({ courseId, courseTitle, className }: EnrollButtonP
         buttonText: "Approve Enrollment",
         transactionInfo: {
           action: "0.003 SOL",
-          title: "Enrollment Rent"
+          title: "Wallet Balance"
         }
       };
       await enroll(walletAddress, courseId, signTransaction as any, activeWallet, enrollUiOptions);
@@ -66,12 +66,12 @@ export function EnrollButton({ courseId, courseTitle, className }: EnrollButtonP
 
     try {
       const unenrollUiOptions = {
-        title: "Close Enrollment",
+        title: "Rent Reclamation",
         description: `Closing enrollment for ${courseTitle}. You will reclaim your rent deposit.`,
         buttonText: "Reclaim Rent",
         transactionInfo: {
           action: "Reclaim 0.003 SOL",
-          title: "Rent Reclamation"
+          title: "Wallet Balance"
         }
       };
       // Update off-chain and on-chain state via store
@@ -95,6 +95,7 @@ export function EnrollButton({ courseId, courseTitle, className }: EnrollButtonP
   }
 
   const enrolled = !!enrollment;
+  const isComplete = enrollment && (enrollment.completedAt || enrollment.completedCount >= enrollment.totalLessons);
 
   if (enrolled) {
     return (
@@ -102,10 +103,10 @@ export function EnrollButton({ courseId, courseTitle, className }: EnrollButtonP
         <Button disabled className={className}>
           {t("enrolled")}
         </Button>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-1.5">
           <Button
-            variant="ghost"
-            size="icon"
+            variant="outline"
+            size="sm"
             onClick={async () => {
               setIsUnenrolling(true);
               try {
@@ -115,20 +116,19 @@ export function EnrollButton({ courseId, courseTitle, className }: EnrollButtonP
               }
             }}
             disabled={loading || isUnenrolling}
-            className="h-8 w-8 rounded-full text-text-muted hover:text-rust hover:bg-rust/10 transition-colors"
-            title="Close Enrollment & Reclaim Rent"
+            className="h-9 gap-2 rounded-lg bg-solana/10 border border-solana/20 text-solana hover:bg-solana/20 transition-all font-mono text-[10px] uppercase font-bold tracking-tight"
           >
             {isUnenrolling ? (
               <span className="animate-spin text-sm">⌛</span>
             ) : (
-              <span className="material-symbols-outlined text-lg">delete_forever</span>
+              <span className="material-symbols-outlined text-[16px]">account_balance_wallet</span>
             )}
+            {isComplete ? "Reclaim Enrollment Rent" : "Close Enrollment & Reclaim"}
           </Button>
-          {!isUnenrolling && (
-            <span className="flex items-center gap-1 bg-solana/10 text-solana px-1.5 py-0.5 rounded text-[10px] font-medium border border-solana/20">
-              <span className="material-symbols-outlined text-[12px]">account_balance_wallet</span>
-              Reclaimable
-            </span>
+          {!isComplete && !isUnenrolling && (
+            <p className="text-[10px] text-text-muted italic max-w-[200px] leading-tight">
+              Note: Unfinished courses require a 24h cooldown after enrollment before rent can be reclaimed.
+            </p>
           )}
         </div>
       </div>
@@ -140,9 +140,16 @@ export function EnrollButton({ courseId, courseTitle, className }: EnrollButtonP
       <Button
         onClick={handleEnroll}
         disabled={loading}
-        className={className}
+        className={`${className ?? ""} bg-solana/80 hover:bg-solana hover:shadow-[0_0_24px_-4px_rgba(20,240,148,0.5)] transition-all duration-200`}
       >
-        {loading ? t("enrolling") : t("enroll_cta")}
+        {loading ? (
+          <>
+            <span className="material-symbols-outlined text-lg animate-spin">progress_activity</span>
+            {t("enrolling")}
+          </>
+        ) : (
+          t("enroll_cta")
+        )}
       </Button>
       {error && <p className="text-rust text-sm">{error}</p>}
     </div>

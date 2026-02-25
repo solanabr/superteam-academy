@@ -23,13 +23,17 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Delete the enrollment from Prisma so the frontend is in-sync
+    // 1. Delete from Prisma
     await prisma.enrollment.deleteMany({
         where: {
             userId: user.id,
             courseId: courseId
         }
     });
+
+    // 2. Invalidate Cache immediately
+    const { invalidatePattern } = await import("@/lib/cache");
+    await invalidatePattern(`user:${wallet}*`);
 
     return NextResponse.json({ ok: true });
 }

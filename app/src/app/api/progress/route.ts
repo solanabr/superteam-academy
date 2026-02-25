@@ -21,14 +21,20 @@ export async function GET(request: NextRequest) {
     // Use unified service (resolves to onchain or prisma based on env)
     const identifier = process.env.NEXT_PUBLIC_USE_ONCHAIN === "true" ? wallet : user.id;
 
-    // Asynchronously log activity to increment streak if applicable
+    // 1. Log activity in background (independent of response)
     service.logActivity(identifier).catch(err => {
       console.error("Failed to log activity behind the scenes", err);
     });
 
-    const progress = await service.getProgress(identifier);
+    // 2. Fetch progress via Hybrid Cache (L1/L2)
+    const { getCached } = await import("@/lib/cache");
+    const progress = await getCached(`user:${wallet}:progress`, async () => {
+      return await service.getProgress(identifier);
+    }, { ttl: 60 });
+
     const xp = progress?.xp ?? 0;
     const level = Math.floor(Math.sqrt(xp / 100));
+
     return NextResponse.json({
       xp,
       level,

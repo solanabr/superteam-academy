@@ -3,11 +3,16 @@ import { getCourses } from "@/sanity/lib/queries";
 import { getTranslations } from "next-intl/server";
 import { CoursesFilter } from "./client-components/CoursesFilter";
 
-export default async function CoursesPage() {
+export default async function CoursesPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
   const t = await getTranslations("courses");
 
-  // Fetch courses directly on the server
-  const courses = await getCourses();
+  // Fetch courses directly on the server with locale for caching
+  const courses = await getCourses(locale);
 
   return (
     <main className="min-h-screen bg-void pt-4 pb-12">

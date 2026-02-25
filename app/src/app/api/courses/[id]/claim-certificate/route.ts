@@ -50,10 +50,10 @@ export async function POST(
 
         await service.issueCredential({
             userId: user.id,
+            courseId,
             trackId,
             trackName,
-            xpEarned: 0, // XP already awarded during lessons
-            // mintAddress: ... // Future: invoke Solana mint logic here
+            xpEarned: 0,
         });
 
         return NextResponse.json({ ok: true });
