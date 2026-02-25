@@ -13,6 +13,8 @@ import { TRACK_LABELS } from "@/lib/constants";
 import { locales } from "@/i18n/config";
 import { ModuleAccordion } from "./module-accordion";
 
+export const revalidate = 3600;
+
 export async function generateStaticParams() {
   const courses = await fetchCourses();
   return courses.flatMap((course) =>

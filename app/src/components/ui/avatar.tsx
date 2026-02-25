@@ -37,7 +37,7 @@ export function Avatar({
       {src ? (
         <Image
           src={src}
-          alt={alt ?? ""}
+          alt={alt ?? "User avatar"}
           width={px}
           height={px}
           className="aspect-square h-full w-full object-cover"

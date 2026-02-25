@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { fetchCourses } from "@/lib/services/courses";
 import { locales } from "@/i18n/config";
 
+export const revalidate = 3600;
+
 export async function generateStaticParams() {
   const courses = await fetchCourses();
   return courses.flatMap((course) =>
