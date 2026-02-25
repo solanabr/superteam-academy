@@ -5,6 +5,7 @@ import Script from 'next/script';
 const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 const HOTJAR_ID = process.env.NEXT_PUBLIC_HOTJAR_ID;
 const HOTJAR_VERSION = process.env.NEXT_PUBLIC_HOTJAR_VERSION ?? '6';
+const CLARITY_ID = process.env.NEXT_PUBLIC_CLARITY_ID;
 
 /**
  * Analytics — Google Analytics 4 + Hotjar heatmaps
@@ -13,6 +14,7 @@ const HOTJAR_VERSION = process.env.NEXT_PUBLIC_HOTJAR_VERSION ?? '6';
  *   NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX
  *   NEXT_PUBLIC_HOTJAR_ID=XXXXXXX
  *   NEXT_PUBLIC_HOTJAR_VERSION=6
+ *   NEXT_PUBLIC_CLARITY_ID=XXXXXXXXXX
  *
  * Set these in Vercel project settings → Environment Variables.
  * Scripts are loaded with strategy="afterInteractive" to avoid blocking paint.
@@ -38,6 +40,19 @@ export default function Analytics() {
             `}
           </Script>
         </>
+      )}
+
+      {/* Microsoft Clarity Heatmaps & Session Recordings */}
+      {CLARITY_ID && (
+        <Script id="microsoft-clarity" strategy="afterInteractive">
+          {`
+            (function(c,l,a,r,i,t,y){
+              c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+              t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+              y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+            })(window,document,"clarity","script","${CLARITY_ID}");
+          `}
+        </Script>
       )}
 
       {/* Hotjar Heatmaps & Session Recordings */}
@@ -67,6 +82,7 @@ declare global {
   interface Window {
     gtag?: (...args: unknown[]) => void;
     hj?: (...args: unknown[]) => void;
+    clarity?: (...args: unknown[]) => void;
   }
 }
 
