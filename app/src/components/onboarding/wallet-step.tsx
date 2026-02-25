@@ -42,7 +42,7 @@ export function WalletStep({ onNext, onBack, pendingLink, setPendingLink }: Wall
         })
         .finally(() => setLinking(false));
     }
-  }, [connected, pendingLink, walletLinked, linking, linkWallet, tAuth, onNext]);
+  }, [connected, pendingLink, walletLinked, linking, linkWallet, tAuth, onNext, setPendingLink]);
 
   const handleConnectWallet = useCallback(async () => {
     if (!connected) {
@@ -61,7 +61,7 @@ export function WalletStep({ onNext, onBack, pendingLink, setPendingLink }: Wall
     } finally {
       setLinking(false);
     }
-  }, [connected, linkWallet, setVisible, tAuth, onNext]);
+  }, [connected, linkWallet, setVisible, tAuth, onNext, setPendingLink]);
 
   const benefits = [
     { icon: Sparkles, color: "text-amber-500", label: tAuth("linkBenefitXp"), desc: tAuth("linkBenefitXpDesc") },

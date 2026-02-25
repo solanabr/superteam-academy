@@ -540,7 +540,10 @@ export function useComments(courseId: string, lessonIndex: number) {
   const [loading, setLoading] = useState(true);
 
   const fetchComments = useCallback(() => {
-    if (!courseId) return;
+    if (!courseId) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     supabaseCommentService
       .getComments(courseId, lessonIndex)

@@ -72,26 +72,30 @@ export async function GET(
   let courseSlug: string | null = null;
   let lessonTitle: string | null = null;
   if (post.course_id) {
-    const course = await sanityClient.fetch<
-      { title: string; slug: string; modules: { lessons: { title: string }[] }[] } | null
-    >(
-      `*[_type == "course" && courseId == $courseId][0] { title, "slug": slug.current, "modules": modules[]{ "lessons": lessons[]{ title } } }`,
-      { courseId: post.course_id },
-    );
-    if (course) {
-      courseName = course.title;
-      courseSlug = course.slug;
-      if (post.lesson_index != null) {
-        let idx = 0;
-        for (const m of course.modules ?? []) {
-          for (const l of m.lessons ?? []) {
-            if (idx === post.lesson_index) {
-              lessonTitle = l.title;
+    try {
+      const course = await sanityClient.fetch<
+        { title: string; slug: string; modules: { lessons: { title: string }[] }[] } | null
+      >(
+        `*[_type == "course" && courseId == $courseId][0] { title, "slug": slug.current, "modules": modules[]{ "lessons": lessons[]{ title } } }`,
+        { courseId: post.course_id },
+      );
+      if (course) {
+        courseName = course.title;
+        courseSlug = course.slug;
+        if (post.lesson_index != null) {
+          let idx = 0;
+          for (const m of course.modules ?? []) {
+            for (const l of m.lessons ?? []) {
+              if (idx === post.lesson_index) {
+                lessonTitle = l.title;
+              }
+              idx++;
             }
-            idx++;
           }
         }
       }
+    } catch (sanityErr) {
+      console.error("[Forum GET] Sanity fetch error:", sanityErr);
     }
   }
 

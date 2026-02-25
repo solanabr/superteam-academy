@@ -85,23 +85,26 @@ export default function TopicPage() {
   const [replyContent, setReplyContent] = useState("");
   const [posting, setPosting] = useState(false);
 
+  const postNotFoundMsg = t("postNotFound");
+  const loadErrorMsg = t("loadError");
+
   const fetchPost = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch(`/api/forum/${id}`);
       if (!res.ok) {
-        toast.error(t("postNotFound"));
+        toast.error(postNotFoundMsg);
         return;
       }
       const data = await res.json();
       setPost(data.post);
       setReplies(data.replies ?? []);
     } catch {
-      toast.error(t("loadError"));
+      toast.error(loadErrorMsg);
     } finally {
       setLoading(false);
     }
-  }, [id, t]);
+  }, [id, postNotFoundMsg, loadErrorMsg]);
 
   useEffect(() => {
     fetchPost();

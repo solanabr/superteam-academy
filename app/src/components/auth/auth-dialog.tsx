@@ -12,7 +12,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Github, LogOut, Wallet } from "lucide-react";
+import { LogOut, Wallet } from "lucide-react";
+import { GitHubIcon } from "@/components/icons/github-icon";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
@@ -124,7 +125,7 @@ export function AuthDialog({ children }: { children?: React.ReactNode }) {
               setOpen(false);
             }}
           >
-            <Github className="h-4 w-4" />
+            <GitHubIcon className="h-4 w-4" />
             {t("signInWith")} GitHub
           </Button>
 

@@ -4,7 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
-import { Github, Mail } from "lucide-react";
+import { Mail } from "lucide-react";
+import { GitHubIcon } from "@/components/icons/github-icon";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -99,7 +100,7 @@ export function Footer() {
                 className="text-muted-foreground hover:text-foreground transition-colors"
                 aria-label="GitHub"
               >
-                <Github className="h-4 w-4" />
+                <GitHubIcon className="h-4 w-4" />
               </a>
               <a
                 href={siteConfig.links.discord}

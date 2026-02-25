@@ -56,7 +56,7 @@ export function LinkWalletPrompt() {
     }, 1500);
 
     return () => clearTimeout(timer);
-  }, [isLoading, user, isOAuthUser, walletLinked]);
+  }, [isLoading, user, isOAuthUser, walletLinked, profile?.onboardingCompleted]);
 
   // Auto-trigger link after wallet connects via modal
   useEffect(() => {

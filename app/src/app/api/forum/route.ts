@@ -97,22 +97,26 @@ export async function GET(request: NextRequest) {
   const courseIds = [...new Set(posts.filter((p) => p.course_id).map((p) => p.course_id!))];
   const courseMap: Record<string, { title: string; slug: string; lessons: { index: number; title: string }[] }> = {};
   if (courseIds.length > 0) {
-    const courses = await sanityClient.fetch<
-      { courseId: string; title: string; slug: string; modules: { lessons: { title: string }[] }[] }[]
-    >(
-      `*[_type == "course" && courseId in $courseIds] { courseId, title, "slug": slug.current, "modules": modules[]{ "lessons": lessons[]{ title } } }`,
-      { courseIds },
-    );
-    for (const c of courses) {
-      const flatLessons: { index: number; title: string }[] = [];
-      let idx = 0;
-      for (const m of c.modules ?? []) {
-        for (const l of m.lessons ?? []) {
-          flatLessons.push({ index: idx, title: l.title });
-          idx++;
+    try {
+      const courses = await sanityClient.fetch<
+        { courseId: string; title: string; slug: string; modules: { lessons: { title: string }[] }[] }[]
+      >(
+        `*[_type == "course" && courseId in $courseIds] { courseId, title, "slug": slug.current, "modules": modules[]{ "lessons": lessons[]{ title } } }`,
+        { courseIds },
+      );
+      for (const c of courses) {
+        const flatLessons: { index: number; title: string }[] = [];
+        let idx = 0;
+        for (const m of c.modules ?? []) {
+          for (const l of m.lessons ?? []) {
+            flatLessons.push({ index: idx, title: l.title });
+            idx++;
+          }
         }
+        courseMap[c.courseId] = { title: c.title, slug: c.slug, lessons: flatLessons };
       }
-      courseMap[c.courseId] = { title: c.title, slug: c.slug, lessons: flatLessons };
+    } catch (sanityErr) {
+      console.error("[Forum GET] Sanity fetch error:", sanityErr);
     }
   }
 
