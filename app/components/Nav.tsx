@@ -5,8 +5,21 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { useTranslations, useLocale } from 'next-intl';
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import dynamic from 'next/dynamic';
 import GoogleSignInButton from './GoogleSignInButton';
+
+const WalletMultiButton = dynamic(
+  () => import('@solana/wallet-adapter-react-ui').then((m) => m.WalletMultiButton),
+  {
+    ssr: false,
+    loading: () => (
+      <div
+        style={{ width: '140px', height: '36px', borderRadius: '0.5rem', background: 'linear-gradient(135deg, #7c3aed55, #4f46e555)' }}
+        aria-hidden="true"
+      />
+    ),
+  }
+);
 import {
   GraduationCap,
   Moon,
@@ -66,16 +79,16 @@ export default function Nav() {
   }
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-gray-800 bg-gray-950/90 backdrop-blur-md">
+    <nav className="sticky top-0 z-50 border-b border-gray-800 bg-gray-950 backdrop-blur-md">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <Link href={`/${locale}`} className="flex items-center gap-2 group">
+          <Link href={`/${locale}`} aria-label="Superteam Academy — Home" className="flex items-center gap-2 group">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-purple-600 to-indigo-600 group-hover:from-purple-500 group-hover:to-indigo-500 transition-all">
               <GraduationCap className="h-5 w-5 text-white" />
             </div>
             <span className="font-bold text-white text-lg hidden sm:block">
-              Superteam <span className="text-purple-400">Academy</span>
+              Superteam <span className="text-purple-300">Academy</span>
             </span>
           </Link>
 
@@ -93,7 +106,7 @@ export default function Nav() {
                     'flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all',
                     active
                       ? 'bg-purple-900/50 text-purple-300'
-                      : 'text-gray-400 hover:bg-gray-800 hover:text-gray-100'
+                      : 'text-gray-300 hover:bg-gray-800 hover:text-white'
                   )}
                 >
                   <Icon className="h-4 w-4" />
@@ -111,7 +124,7 @@ export default function Nav() {
                 'flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-all border',
                 pathname.includes('/admin')
                   ? 'bg-purple-900/50 text-purple-300 border-purple-700/50'
-                  : 'text-gray-600 hover:text-gray-400 border-gray-800 hover:border-gray-700'
+                  : 'text-gray-400 hover:text-gray-200 border-gray-700 hover:border-gray-600'
               )}
               title="Admin"
             >
@@ -129,10 +142,10 @@ export default function Nav() {
                   key={loc.code}
                   onClick={() => switchLocale(loc.code)}
                   className={cn(
-                    'flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-colors',
+                    'flex items-center gap-1 px-3 py-2 rounded-md text-xs font-medium transition-colors min-h-[36px]',
                     locale === loc.code
                       ? 'bg-purple-600 text-white'
-                      : 'text-gray-400 hover:text-white hover:bg-gray-700'
+                      : 'text-gray-300 hover:text-white hover:bg-gray-700'
                   )}
                   aria-label={`Switch to ${loc.label}`}
                 >
@@ -220,7 +233,7 @@ export default function Nav() {
                   setMobileOpen(false);
                 }}
                 className={cn(
-                  'flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
+                  'flex items-center gap-1 px-3 py-2 rounded-md text-xs font-medium transition-colors min-h-[36px]',
                   locale === loc.code
                     ? 'bg-purple-600 text-white'
                     : 'text-gray-400 hover:text-white hover:bg-gray-700'

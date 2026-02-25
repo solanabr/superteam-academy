@@ -236,9 +236,9 @@ export default async function LandingPage({
                         {[...Array(5)].map((_, j) => (
                           <Star key={j} className={cn('h-3.5 w-3.5', j < Math.floor(course.rating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-600')} />
                         ))}
-                        <span className="text-xs text-gray-500 ml-1">{course.rating} ({course.students})</span>
+                        <span className="text-xs text-gray-400 ml-1">{course.rating} ({course.students})</span>
                       </div>
-                      <div className="flex items-center justify-between text-xs text-gray-500">
+                      <div className="flex items-center justify-between text-xs text-gray-400">
                         <span>{t('n_lessons', { count: course.lessons })}</span>
                         <span className="font-semibold text-yellow-400">+{course.xp.toLocaleString()} XP</span>
                       </div>
