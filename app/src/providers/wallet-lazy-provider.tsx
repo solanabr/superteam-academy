@@ -3,8 +3,11 @@
 import { useState, useEffect, type ReactNode, type ComponentType } from "react";
 import {
   WalletBridgeContext,
+  ConnectionBridgeContext,
+  AnchorWalletBridgeContext,
   type WalletContextState,
 } from "@/lib/wallet/context";
+import { connection as defaultConnection } from "@/lib/solana/connection";
 
 const WALLET_DEFAULTS: WalletContextState = {
   connected: false,
@@ -42,8 +45,12 @@ export function LazyWalletProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <WalletBridgeContext.Provider value={WALLET_DEFAULTS}>
-      {children}
-    </WalletBridgeContext.Provider>
+    <ConnectionBridgeContext.Provider value={{ connection: defaultConnection }}>
+      <WalletBridgeContext.Provider value={WALLET_DEFAULTS}>
+        <AnchorWalletBridgeContext.Provider value={undefined}>
+          {children}
+        </AnchorWalletBridgeContext.Provider>
+      </WalletBridgeContext.Provider>
+    </ConnectionBridgeContext.Provider>
   );
 }

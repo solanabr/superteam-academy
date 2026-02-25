@@ -3,6 +3,7 @@
 import { createContext, useContext } from "react";
 import type { PublicKey, Connection, Transaction, VersionedTransaction, TransactionSignature, SendOptions } from "@solana/web3.js";
 import type { WalletReadyState } from "@solana/wallet-adapter-base";
+import { connection as defaultConnection } from "@/lib/solana/connection";
 
 /**
  * Lightweight wallet context that mirrors @solana/wallet-adapter-react's
@@ -75,4 +76,42 @@ export const WalletBridgeContext =
  */
 export function useWallet(): WalletContextState {
   return useContext(WalletBridgeContext);
+}
+
+/* ── Connection bridge ─────────────────────────────────────────────── */
+
+export interface ConnectionContextState {
+  connection: Connection;
+}
+
+export const ConnectionBridgeContext = createContext<ConnectionContextState>({
+  connection: defaultConnection,
+});
+
+/**
+ * Drop-in replacement for `useConnection()` from @solana/wallet-adapter-react.
+ * Falls back to the singleton Connection when the adapter hasn't loaded yet.
+ */
+export function useConnection(): ConnectionContextState {
+  return useContext(ConnectionBridgeContext);
+}
+
+/* ── AnchorWallet bridge ───────────────────────────────────────────── */
+
+export interface AnchorWallet {
+  publicKey: PublicKey;
+  signTransaction<T extends Transaction | VersionedTransaction>(tx: T): Promise<T>;
+  signAllTransactions<T extends Transaction | VersionedTransaction>(txs: T[]): Promise<T[]>;
+}
+
+export const AnchorWalletBridgeContext = createContext<AnchorWallet | undefined>(
+  undefined,
+);
+
+/**
+ * Drop-in replacement for `useAnchorWallet()` from @solana/wallet-adapter-react.
+ * Returns undefined when no wallet is connected.
+ */
+export function useAnchorWallet(): AnchorWallet | undefined {
+  return useContext(AnchorWalletBridgeContext);
 }

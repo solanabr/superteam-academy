@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { Check } from "lucide-react";
 import { useWallet } from "@/lib/wallet/context";
 import { learningService } from "@/lib/services/learning-progress";
+import { useEnrollment, isLessonComplete } from "@/lib/hooks/use-enrollment";
 import { Panel, Group, Separator } from "react-resizable-panels";
 import { XPToast } from "@/components/gamification/xp-toast";
 import { useChallengeRunner } from "@/lib/hooks/use-challenge-runner";
@@ -72,6 +73,7 @@ export function LessonChallenge({
     return lesson.challenge?.starterCode ?? "";
   });
   const [completed, setCompleted] = useState(false);
+  const completedOnChainRef = useRef(false);
   const [showXP, setShowXP] = useState(false);
   const [showSolution, setShowSolution] = useState(false);
   const [showHints, setShowHints] = useState(false);
@@ -86,6 +88,8 @@ export function LessonChallenge({
     credentialIssued: boolean;
   } | null>(null);
 
+  const { enrollment } = useEnrollment(course?.id ?? null);
+
   useEffect(() => {
     const userId = walletAddress ?? "local";
     const cId = course?.id ?? slug;
@@ -95,6 +99,14 @@ export function LessonChallenge({
       }
     });
   }, [walletAddress, course, slug, lessonIndex]);
+
+  // On-chain enrollment bitmap is authoritative — seed completed state from it
+  useEffect(() => {
+    if (enrollment?.lessonFlags && isLessonComplete(enrollment.lessonFlags, lessonIndex)) {
+      completedOnChainRef.current = true;
+      setCompleted(true);
+    }
+  }, [enrollment, lessonIndex]);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 1024);
@@ -172,7 +184,9 @@ export function LessonChallenge({
   const handleReset = useCallback(() => {
     setCode(lesson.challenge?.starterCode ?? "");
     resetOutput();
-    setCompleted(false);
+    if (!completedOnChainRef.current) {
+      setCompleted(false);
+    }
     localStorage.removeItem(`stacad:code:${slug}:${lesson.id}`);
   }, [lesson.challenge, slug, lesson.id, resetOutput]);
 

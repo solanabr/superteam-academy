@@ -5,18 +5,28 @@ import {
   ConnectionProvider,
   WalletProvider as SolanaWalletProvider,
   useWallet as useAdapterWallet,
+  useConnection as useAdapterConnection,
+  useAnchorWallet as useAdapterAnchorWallet,
 } from "@solana/wallet-adapter-react";
-import { WalletBridgeContext, type WalletContextState } from "@/lib/wallet/context";
+import {
+  WalletBridgeContext,
+  ConnectionBridgeContext,
+  AnchorWalletBridgeContext,
+  type WalletContextState,
+  type AnchorWallet,
+} from "@/lib/wallet/context";
 import { HELIUS_RPC_URL } from "@/lib/constants";
 import { analytics } from "@/providers/analytics-provider";
 
 /**
- * Bridges adapter state into our lightweight WalletBridgeContext so that
+ * Bridges adapter state into our lightweight bridge contexts so that
  * all consumers (importing from @/lib/wallet/context) get real values
  * once this provider is loaded.
  */
 function WalletBridge({ children }: { children: ReactNode }) {
   const adapterWallet = useAdapterWallet();
+  const adapterConnection = useAdapterConnection();
+  const adapterAnchorWallet = useAdapterAnchorWallet();
   const prevConnected = useRef(false);
 
   useEffect(() => {
@@ -36,9 +46,13 @@ function WalletBridge({ children }: { children: ReactNode }) {
   }, [adapterWallet.connected, adapterWallet.wallet]);
 
   return (
-    <WalletBridgeContext.Provider value={adapterWallet as unknown as WalletContextState}>
-      {children}
-    </WalletBridgeContext.Provider>
+    <ConnectionBridgeContext.Provider value={adapterConnection}>
+      <WalletBridgeContext.Provider value={adapterWallet as unknown as WalletContextState}>
+        <AnchorWalletBridgeContext.Provider value={adapterAnchorWallet as AnchorWallet | undefined}>
+          {children}
+        </AnchorWalletBridgeContext.Provider>
+      </WalletBridgeContext.Provider>
+    </ConnectionBridgeContext.Provider>
   );
 }
 

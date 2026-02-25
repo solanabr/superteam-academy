@@ -1,6 +1,6 @@
 "use client";
 
-import { useWallet, useConnection } from "@solana/wallet-adapter-react";
+import { useWallet, useConnection } from "@/lib/wallet/context";
 import { useState, useEffect, useCallback } from "react";
 import {
   getReadonlyProgram,

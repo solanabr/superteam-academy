@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { useWallet } from "@/lib/wallet/context";
 import { learningService } from "@/lib/services/learning-progress";
+import { useEnrollment, isLessonComplete } from "@/lib/hooks/use-enrollment";
 import { XPToast } from "@/components/gamification/xp-toast";
 import { V9LessonSidebar } from "./lesson-sidebar";
 import { QuizRenderer } from "./lesson-quiz";
@@ -49,6 +50,7 @@ export function LessonReading({
   const isLastLesson = !nextLesson;
 
   const [completed, setCompleted] = useState(false);
+  const completedOnChainRef = useRef(false);
   const [showXP, setShowXP] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [showCourseComplete, setShowCourseComplete] = useState(false);
@@ -57,6 +59,8 @@ export function LessonReading({
     xpAwarded: number;
     credentialIssued: boolean;
   } | null>(null);
+
+  const { enrollment } = useEnrollment(course?.id ?? null);
 
   useEffect(() => {
     const userId = walletAddress ?? "local";
@@ -67,6 +71,14 @@ export function LessonReading({
       }
     });
   }, [walletAddress, course, slug, lessonIndex]);
+
+  // On-chain enrollment bitmap is authoritative — seed completed state from it
+  useEffect(() => {
+    if (enrollment?.lessonFlags && isLessonComplete(enrollment.lessonFlags, lessonIndex)) {
+      completedOnChainRef.current = true;
+      setCompleted(true);
+    }
+  }, [enrollment, lessonIndex]);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 1024);
@@ -283,7 +295,7 @@ export function LessonReading({
               content={lesson.content ?? ""}
               xpReward={lesson.xpReward}
               onComplete={() => {
-                if (completed) return;
+                if (completed || completedOnChainRef.current) return;
                 setCompleted(true);
                 triggerCelebration();
                 callCompleteLessonAPI();
@@ -357,6 +369,7 @@ export function LessonReading({
               ) : (
                 <button
                   onClick={() => {
+                    if (completedOnChainRef.current) return;
                     setCompleted(true);
                     triggerCelebration();
                     callCompleteLessonAPI();

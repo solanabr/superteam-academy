@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, useRef } from "react";
-import { useWallet } from "@solana/wallet-adapter-react";
+import { useWallet } from "@/lib/wallet/context";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { buildSignInMessage } from "@/lib/auth/message";
 

@@ -105,18 +105,31 @@ export function runTestAssertions(
       tc.expectNoError;
 
     if (!hasNewFields && tc.expectedOutput) {
-      // Structural check: if code is long enough and doesn't error, pass
-      // This preserves backward compat with old "expectedOutput" that wasn't
-      // actually testable (e.g. "base58 string", "mint created")
-      if (!result.error && !result.timedOut && sourceCode.length > 30) {
-        return { name: tc.name, passed: true };
+      if (result.error) {
+        return {
+          name: tc.name,
+          passed: false,
+          expected: tc.expectedOutput,
+          actual: result.error,
+        };
       }
-      return {
-        name: tc.name,
-        passed: false,
-        expected: tc.expectedOutput,
-        actual: (result.error ?? allLogText.slice(0, 200)) || "(no output)",
-      };
+      if (result.timedOut) {
+        return {
+          name: tc.name,
+          passed: false,
+          expected: tc.expectedOutput,
+          actual: "Execution timed out",
+        };
+      }
+      if (!allLogText.trim()) {
+        return {
+          name: tc.name,
+          passed: false,
+          expected: tc.expectedOutput,
+          actual: "(no output — your code must produce console output)",
+        };
+      }
+      return { name: tc.name, passed: true };
     }
 
     // All assertions passed

@@ -19,20 +19,16 @@ export default function LessonPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const staticCourse = courses.find((c) => c.slug === slug);
+    if (staticCourse) {
+      setCourseData(staticCourse);
+      setLoading(false);
+      return;
+    }
     fetch(`/api/courses/${slug}`)
       .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data) {
-          setCourseData(data);
-        } else {
-          const staticCourse = courses.find((c) => c.slug === slug);
-          if (staticCourse) setCourseData(staticCourse);
-        }
-      })
-      .catch(() => {
-        const staticCourse = courses.find((c) => c.slug === slug);
-        if (staticCourse) setCourseData(staticCourse);
-      })
+      .then((data) => { if (data) setCourseData(data); })
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, [slug]);
 

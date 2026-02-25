@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useConnection } from "@solana/wallet-adapter-react";
+import { useConnection } from "@/lib/wallet/context";
 import { getReadonlyProgram, getAccounts } from "@/lib/solana/program";
 import { findConfigPDA } from "@/lib/solana/pda";
 import type { ConfigAccount } from "@/lib/solana/program";

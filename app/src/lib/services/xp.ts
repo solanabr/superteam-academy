@@ -1,10 +1,5 @@
 import { PublicKey } from "@solana/web3.js";
-import {
-  TOKEN_2022_PROGRAM_ID,
-  getAssociatedTokenAddressSync,
-  getAccount,
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-} from "@solana/spl-token";
+import { TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
 import { connection } from "@/lib/solana/connection";
 import { XP_MINT_ADDRESS } from "@/lib/constants";
 import { calculateLevel, xpForLevel } from "@/lib/constants";
@@ -13,22 +8,21 @@ export async function getXPBalance(walletAddress: string): Promise<number> {
   if (!XP_MINT_ADDRESS || !walletAddress) return 0;
 
   try {
-    const mint = new PublicKey(XP_MINT_ADDRESS);
     const owner = new PublicKey(walletAddress);
-    const ata = getAssociatedTokenAddressSync(
-      mint,
+    const { value } = await connection.getParsedTokenAccountsByOwner(
       owner,
-      false,
-      TOKEN_2022_PROGRAM_ID,
-      ASSOCIATED_TOKEN_PROGRAM_ID,
-    );
-    const account = await getAccount(
-      connection,
-      ata,
+      { programId: TOKEN_2022_PROGRAM_ID },
       "confirmed",
-      TOKEN_2022_PROGRAM_ID,
     );
-    return Number(account.amount);
+    const xpMint = XP_MINT_ADDRESS;
+    let total = 0;
+    for (const entry of value) {
+      const info = entry.account.data.parsed?.info;
+      if (info?.mint === xpMint) {
+        total += Number(info.tokenAmount?.amount ?? 0);
+      }
+    }
+    return total;
   } catch (error) {
     console.error("[xp] Failed to fetch XP balance:", error);
   }

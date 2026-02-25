@@ -52,8 +52,8 @@ export interface CodeChallenge {
 
 export interface TestCase {
   name: string;
-  input: string;
-  expectedOutput: string;
+  input?: string;
+  expectedOutput?: string;
   expectLogContains?: string;
   expectLogMatch?: string;
   expectCodeContains?: string;

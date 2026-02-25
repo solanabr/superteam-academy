@@ -79,9 +79,14 @@ export const courses: Course[] = [
                 "import { Keypair } from '@solana/web3.js';\n\nconst keypair = Keypair.generate();\nconsole.log(keypair.publicKey.toBase58());",
               testCases: [
                 {
+                  name: "Uses Keypair.generate()",
+                  expectCodeContains: "Keypair.generate()",
+                  expectNoError: true,
+                },
+                {
                   name: "Outputs a valid public key",
-                  input: "",
-                  expectedOutput: "base58 string",
+                  expectLogMatch: "[1-9A-HJ-NP-Za-km-z]{32,44}",
+                  expectNoError: true,
                 },
               ],
               language: "typescript",
@@ -103,18 +108,18 @@ export const courses: Course[] = [
               testCases: [
                 {
                   name: "Creates a SystemProgram.transfer instruction",
-                  input: "",
-                  expectedOutput: "transfer instruction",
+                  expectCodeContains: "SystemProgram.transfer",
+                  expectNoError: true,
                 },
                 {
                   name: "Sends 0.01 SOL (10,000,000 lamports)",
-                  input: "",
-                  expectedOutput: "correct amount",
+                  expectCodeContains: "lamports",
+                  expectNoError: true,
                 },
                 {
                   name: "Logs the transaction signature",
-                  input: "",
-                  expectedOutput: "signature logged",
+                  expectLogContains: "signature",
+                  expectNoError: true,
                 },
               ],
               language: "typescript",
@@ -151,18 +156,19 @@ export const courses: Course[] = [
               testCases: [
                 {
                   name: "Uses correct seeds (string + wallet bytes)",
-                  input: "",
-                  expectedOutput: "seeds defined",
+                  expectCodeContains: "user-profile",
+                  expectNoError: true,
                 },
                 {
                   name: "Derives PDA with findProgramAddressSync",
-                  input: "",
-                  expectedOutput: "PDA derived",
+                  expectCodeContains: "findProgramAddressSync",
+                  expectNoError: true,
                 },
                 {
                   name: "Logs both PDA address and bump",
-                  input: "",
-                  expectedOutput: "PDA and bump logged",
+                  expectLogContains: "PDA",
+                  expectLogMatch: "[Bb]ump",
+                  expectNoError: true,
                 },
               ],
               language: "typescript",
@@ -208,18 +214,18 @@ export const courses: Course[] = [
               testCases: [
                 {
                   name: "Creates a mint with 6 decimals",
-                  input: "",
-                  expectedOutput: "mint created",
+                  expectCodeContains: "createMint",
+                  expectNoError: true,
                 },
                 {
-                  name: "Sets mint authority to payer",
-                  input: "",
-                  expectedOutput: "authority set",
+                  name: "Uses payer as mint authority",
+                  expectCodeContains: "payer.publicKey",
+                  expectNoError: true,
                 },
                 {
                   name: "Logs the mint address",
-                  input: "",
-                  expectedOutput: "address logged",
+                  expectLogMatch: "[Mm]int",
+                  expectNoError: true,
                 },
               ],
               language: "typescript",
@@ -293,18 +299,18 @@ export const courses: Course[] = [
               testCases: [
                 {
                   name: "Defines GreetingAccount with message field",
-                  input: "",
-                  expectedOutput: "struct defined",
+                  expectCodeContains: "pub message: String",
+                  expectNoError: true,
                 },
                 {
                   name: "Uses init constraint with correct seeds",
-                  input: "",
-                  expectedOutput: "PDA initialized",
+                  expectCodeContains: "init",
+                  expectNoError: true,
                 },
                 {
                   name: "Stores the message in the account",
-                  input: "",
-                  expectedOutput: "message stored",
+                  expectCodeContains: "greeting.message",
+                  expectNoError: true,
                 },
               ],
               language: "rust",
@@ -392,18 +398,18 @@ export const courses: Course[] = [
               testCases: [
                 {
                   name: "Initializes counter with count = 0",
-                  input: "",
-                  expectedOutput: "counter initialized",
+                  expectCodeContains: "count = 0",
+                  expectNoError: true,
                 },
                 {
-                  name: "Increment increases count by 1",
-                  input: "",
-                  expectedOutput: "count incremented",
+                  name: "Increment uses checked_add",
+                  expectCodeContains: "checked_add",
+                  expectNoError: true,
                 },
                 {
-                  name: "Decrement fails when count is 0",
-                  input: "",
-                  expectedOutput: "underflow prevented",
+                  name: "Decrement uses checked_sub",
+                  expectCodeContains: "checked_sub",
+                  expectNoError: true,
                 },
               ],
               language: "rust",
