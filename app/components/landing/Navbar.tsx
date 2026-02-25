@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/app/ThemeToggle";
 import { WalletConnectButton } from "@/components/wallet/WalletConnectButton";
@@ -23,36 +24,40 @@ const NAV_LINKS = [
 const COURSES = [
   {
     title: "Solana Fundamentals",
-    description:
-      "",
+    description: "",
     level: "Beginner",
     href: "/courses/solana-fundamentals",
   },
   {
     title: "Anchor Program Development",
-    description:
-      "",
+    description: "",
     level: "Beginner",
     href: "/courses/anchor-development",
   },
   {
     title: "Token Extensions",
-    description:
-      "",
+    description: "",
     level: "Advanced",
     href: "/courses/token-extensions",
   },
   {
     title: "Metaplex Core NFTs",
-    description:
-      "",
+    description: "",
     level: "Advanced",
     href: "/courses/defi",
   },
 ];
 
+const LANGUAGES = [
+  { code: "EN", label: "English" },
+  { code: "PT-BR", label: "Português" },
+  { code: "ES", label: "Español" },
+] as const;
+
 export function Navbar() {
   const { isAdmin } = useIsAdmin();
+  const [lang, setLang] = useState("EN");
+  const activeLang = LANGUAGES.find((l) => l.code === lang) ?? LANGUAGES[0];
 
   return (
     <header className="sticky top-0 z-50 w-full">
@@ -70,9 +75,9 @@ export function Navbar() {
             </Link>
 
             {/* Desktop Nav */}
-            <nav className="hidden md:flex items-center gap-8">
+            <nav className="hidden md:flex items-center gap-8 ">
               <NavigationMenu>
-                <NavigationMenuList>
+                <NavigationMenuList className="gap-4">
                   {/* Courses dropdown */}
                   <NavigationMenuItem>
                     <NavigationMenuTrigger className="font-game text-xl">
@@ -120,6 +125,36 @@ export function Navbar() {
                       </NavigationMenuLink>
                     </NavigationMenuItem>
                   ))}
+
+                  {/* Language selector */}
+                  {/* Language selector — own NavigationMenu so content anchors correctly */}
+                  <NavigationMenu>
+                    <NavigationMenuList>
+                      <NavigationMenuItem>
+                        <NavigationMenuTrigger className="font-game text-xl">
+                          {activeLang.code}
+                        </NavigationMenuTrigger>
+                        <NavigationMenuContent>
+                          <ul className="flex flex-col gap-1 p-2 w-[180px]">
+                            {LANGUAGES.map((l) => (
+                              <li key={l.code}>
+                                <button
+                                  onClick={() => setLang(l.code)}
+                                  className={`w-full flex items-center gap-3 rounded-lg px-4 py-2.5 font-game text-lg text-left transition-colors
+                  ${lang === l.code
+                                      ? "bg-yellow-400/10 text-yellow-400"
+                                      : "hover:bg-accent"
+                                    }`}
+                                >
+                                  {l.label}
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        </NavigationMenuContent>
+                      </NavigationMenuItem>
+                    </NavigationMenuList>
+                  </NavigationMenu>
 
                   {isAdmin && (
                     <NavigationMenuItem>
