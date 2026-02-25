@@ -7,7 +7,7 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import { ThemeProvider } from 'next-themes';
 import Nav from '../../components/Nav';
 import Footer from '../../components/Footer';
-import WalletProviderWrapper from '../../components/WalletProviderWrapper';
+import LazyWalletProvider from '../../components/LazyWalletProvider';
 import AuthProviderWrapper from '../../components/AuthProviderWrapper';
 import Analytics from '../../components/Analytics';
 
@@ -67,19 +67,19 @@ export default async function LocaleLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale} suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable}`}>
+    <html lang={locale} suppressHydrationWarning className={`dark ${geistSans.variable} ${geistMono.variable}`}>
       <body className="antialiased bg-gray-950 text-gray-100 min-h-screen">
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
           <NextIntlClientProvider messages={messages}>
             <AuthProviderWrapper>
-              <WalletProviderWrapper>
+              <LazyWalletProvider>
                 <Analytics />
                 <div className="flex flex-col min-h-screen">
                   <Nav />
                   <main className="flex-1">{children}</main>
                   <Footer />
                 </div>
-              </WalletProviderWrapper>
+              </LazyWalletProvider>
             </AuthProviderWrapper>
           </NextIntlClientProvider>
         </ThemeProvider>
