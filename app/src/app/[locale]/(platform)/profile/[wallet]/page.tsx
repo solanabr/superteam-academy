@@ -1,11 +1,13 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 // Wallet context provided by layout
 import { PublicKey } from '@solana/web3.js';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { useTranslations } from 'next-intl';
 import dynamic from 'next/dynamic';
+import { Lock } from 'lucide-react';
 import { useUserStore } from '@/lib/stores/user-store';
 import { useCourseStore } from '@/lib/stores/course-store';
 import { useXp } from '@/lib/hooks/use-xp';
@@ -20,6 +22,51 @@ import type { SkillAxis } from '@/components/profile/skill-radar';
 import { AchievementGrid } from '@/components/profile/achievement-grid';
 import { CompletedCoursesList } from '@/components/profile/completed-courses-list';
 import { CredentialGallery } from '@/components/credentials/credential-gallery';
+
+const PROFILE_KEY = 'superteam-profile';
+
+interface SocialLinks {
+  twitter: string;
+  github: string;
+  website: string;
+}
+
+interface ProfileData {
+  displayName: string;
+  avatarInitials: string;
+  bio: string;
+  socialLinks: SocialLinks;
+  isPublic: boolean;
+  joinDate: string;
+}
+
+const defaultProfile: ProfileData = {
+  displayName: '',
+  avatarInitials: '',
+  bio: '',
+  socialLinks: { twitter: '', github: '', website: '' },
+  isPublic: true,
+  joinDate: '',
+};
+
+function loadProfile(): ProfileData {
+  if (typeof window === 'undefined') return defaultProfile;
+  try {
+    const raw = localStorage.getItem(PROFILE_KEY);
+    if (!raw) return defaultProfile;
+    const parsed = JSON.parse(raw);
+    return {
+      ...defaultProfile,
+      ...parsed,
+      socialLinks: {
+        ...defaultProfile.socialLinks,
+        ...(parsed.socialLinks ?? {}),
+      },
+    };
+  } catch {
+    return defaultProfile;
+  }
+}
 
 const SkillRadar = dynamic(
   () => import('@/components/profile/skill-radar').then((m) => m.SkillRadar),
@@ -50,6 +97,26 @@ export default function ProfilePage() {
   const params = useParams<{ wallet: string }>();
   const walletAddress = params.wallet;
   const tProfile = useTranslations('profile');
+  const { publicKey } = useWallet();
+
+  // Profile data from localStorage
+  const [profileData, setProfileData] = useState<ProfileData>(defaultProfile);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    setProfileData(loadProfile());
+  }, []);
+
+  // Determine if the viewer is the profile owner
+  const isOwnProfile = useMemo(() => {
+    if (!publicKey || !walletAddress) return false;
+    try {
+      return publicKey.toBase58() === walletAddress;
+    } catch {
+      return false;
+    }
+  }, [publicKey, walletAddress]);
 
   // Store selectors
   const fetchUserData = useUserStore((s) => s.fetchUserData);
@@ -202,6 +269,20 @@ export default function ProfilePage() {
     );
   }
 
+  // If viewing someone else's private profile, show restricted message
+  if (mounted && !isOwnProfile && !profileData.isPublic) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-4 py-24 text-center">
+        <div className="flex size-16 items-center justify-center rounded-full bg-muted">
+          <Lock className="size-7 text-muted-foreground" />
+        </div>
+        <div>
+          <p className="text-lg font-semibold">{tProfile('private_profile')}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6">
       {/* Profile Header */}
@@ -213,6 +294,9 @@ export default function ProfilePage() {
         xpProgress={progress}
         streak={currentStreak}
         coursesCompleted={coursesCompletedCount}
+        bio={profileData.bio}
+        socialLinks={profileData.socialLinks}
+        joinDate={profileData.joinDate}
         isLoading={isLoading}
       />
 
