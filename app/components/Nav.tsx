@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { useTranslations, useLocale } from 'next-intl';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import GoogleSignInButton from './GoogleSignInButton';
 import {
   GraduationCap,
   Moon,
@@ -154,6 +155,11 @@ export default function Nav() {
               )}
             </button>
 
+            {/* Google sign-in (optional, only renders when GOOGLE_CLIENT_ID is set) */}
+            <div className="hidden sm:block">
+              <GoogleSignInButton />
+            </div>
+
             {/* Wallet button */}
             <div className="hidden sm:block">
               <WalletMultiButton
@@ -226,17 +232,20 @@ export default function Nav() {
             ))}
           </div>
 
-          {/* Mobile wallet */}
-          <div className="pt-1 pb-2">
-            <WalletMultiButton
-              style={{
-                background: 'linear-gradient(135deg, #7c3aed, #4f46e5)',
-                borderRadius: '0.5rem',
-                fontSize: '0.875rem',
-                width: '100%',
-                height: '2.5rem',
-              }}
-            />
+          {/* Mobile: Google + Wallet */}
+          <div className="flex items-center gap-2 pt-1 pb-2">
+            <GoogleSignInButton compact />
+            <div className="flex-1">
+              <WalletMultiButton
+                style={{
+                  background: 'linear-gradient(135deg, #7c3aed, #4f46e5)',
+                  borderRadius: '0.5rem',
+                  fontSize: '0.875rem',
+                  width: '100%',
+                  height: '2.5rem',
+                }}
+              />
+            </div>
           </div>
         </div>
       )}

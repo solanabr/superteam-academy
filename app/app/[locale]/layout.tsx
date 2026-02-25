@@ -8,6 +8,7 @@ import { ThemeProvider } from 'next-themes';
 import Nav from '../../components/Nav';
 import Footer from '../../components/Footer';
 import WalletProviderWrapper from '../../components/WalletProviderWrapper';
+import AuthProviderWrapper from '../../components/AuthProviderWrapper';
 import Analytics from '../../components/Analytics';
 
 const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] });
@@ -70,14 +71,16 @@ export default async function LocaleLayout({
       <body className="antialiased bg-gray-950 text-gray-100 min-h-screen">
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
           <NextIntlClientProvider messages={messages}>
-            <WalletProviderWrapper>
-              <Analytics />
-              <div className="flex flex-col min-h-screen">
-                <Nav />
-                <main className="flex-1">{children}</main>
-                <Footer />
-              </div>
-            </WalletProviderWrapper>
+            <AuthProviderWrapper>
+              <WalletProviderWrapper>
+                <Analytics />
+                <div className="flex flex-col min-h-screen">
+                  <Nav />
+                  <main className="flex-1">{children}</main>
+                  <Footer />
+                </div>
+              </WalletProviderWrapper>
+            </AuthProviderWrapper>
           </NextIntlClientProvider>
         </ThemeProvider>
       </body>
