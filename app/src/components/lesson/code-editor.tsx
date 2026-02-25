@@ -14,11 +14,14 @@ import {
   CheckCircle2,
   XCircle,
   Loader2,
+  AlertTriangle,
 } from "lucide-react";
 import type { Challenge, TestCase } from "@/types";
 
 interface CodeEditorProps {
   challenge: Challenge;
+  courseSlug: string;
+  lessonId: string;
   onSubmit?: (passed: boolean) => void;
 }
 
@@ -28,7 +31,34 @@ interface TestResult {
   output?: string;
 }
 
-export function CodeEditor({ challenge, onSubmit }: CodeEditorProps) {
+/** Strip single-line (//) and multi-line comments from source code. */
+function stripComments(source: string): string {
+  return source
+    .replace(/\/\/.*$/gm, "")   // single-line comments
+    .replace(/\/\*[\s\S]*?\*\//g, ""); // multi-line comments
+}
+
+/** Get Monaco diagnostics (syntax/type errors) for the current editor model. */
+function getEditorDiagnostics(
+  monaco: Monaco,
+  modelUri: Parameters<typeof monaco.editor.getModelMarkers>[0] extends { resource?: infer R } ? R : never,
+): Promise<Array<{ message: string; line: number }>> {
+  return new Promise((resolve) => {
+    // Wait briefly for Monaco workers to process changes
+    setTimeout(() => {
+      const markers = monaco.editor.getModelMarkers({ resource: modelUri })
+        .filter((m: { severity: number }) => m.severity >= monaco.MarkerSeverity.Error);
+      resolve(
+        markers.map((m: { message: string; startLineNumber: number }) => ({
+          message: m.message,
+          line: m.startLineNumber,
+        })),
+      );
+    }, 500);
+  });
+}
+
+export function CodeEditor({ challenge, courseSlug, lessonId, onSubmit }: CodeEditorProps) {
   const t = useTranslations("lesson.challenge");
   const { theme } = useAppStore();
   const editorRef = useRef<Parameters<OnMount>[0] | null>(null);
@@ -36,6 +66,7 @@ export function CodeEditor({ challenge, onSubmit }: CodeEditorProps) {
   const [code, setCode] = useState(challenge.starterCode);
   const [results, setResults] = useState<TestResult[]>([]);
   const [running, setRunning] = useState(false);
+  const [diagnosticErrors, setDiagnosticErrors] = useState<string[]>([]);
   const [showHints, setShowHints] = useState(false);
   const [showSolution, setShowSolution] = useState(false);
 
@@ -53,10 +84,12 @@ export function CodeEditor({ challenge, onSubmit }: CodeEditorProps) {
   const runTests = useCallback(async () => {
     setRunning(true);
     setResults([]);
+    setDiagnosticErrors([]);
 
-    // Clear previous error markers
     const editor = editorRef.current;
     const monaco = monacoRef.current;
+
+    // Clear previous error markers
     if (editor && monaco) {
       const model = editor.getModel();
       if (model) {
@@ -64,51 +97,133 @@ export function CodeEditor({ challenge, onSubmit }: CodeEditorProps) {
       }
     }
 
-    // Simulate test execution
-    await new Promise((resolve) => setTimeout(resolve, 1200));
-
-    const testResults: TestResult[] = challenge.testCases.map((tc) => {
-      // Simple pattern matching to simulate test results
-      const hasExpectedPattern = code.includes(tc.expectedOutput) ||
-        code.length > challenge.starterCode.length + 20;
-      return {
-        testCase: tc,
-        passed: hasExpectedPattern,
-        output: hasExpectedPattern ? tc.expectedOutput : "No output",
-      };
-    });
-
-    setResults(testResults);
-    setRunning(false);
-
-    // Set error markers on the editor for failed tests
-    if (editor && monaco) {
+    // Step 1: Client-side diagnostics pre-check (TS only — fast feedback)
+    if (
+      challenge.language === "typescript" &&
+      editor &&
+      monaco
+    ) {
       const model = editor.getModel();
       if (model) {
-        const failedTests = testResults.filter((r) => !r.passed);
-        if (failedTests.length > 0) {
-          const markers = failedTests.map((r, i) => ({
-            severity: monaco.MarkerSeverity.Error,
-            message: `Test failed: ${r.testCase.name} — expected "${r.testCase.expectedOutput}", got "${r.output ?? "no output"}"`,
-            startLineNumber: Math.max(1, model.getLineCount() - failedTests.length + i),
-            startColumn: 1,
-            endLineNumber: Math.max(1, model.getLineCount() - failedTests.length + i),
-            endColumn: model.getLineMaxColumn(Math.max(1, model.getLineCount() - failedTests.length + i)),
+        const diagnostics = await getEditorDiagnostics(monaco, model.uri);
+        if (diagnostics.length > 0) {
+          const errorMessages = diagnostics.map(
+            (d) => `Line ${d.line}: ${d.message}`,
+          );
+          setDiagnosticErrors(errorMessages);
+          const testResults: TestResult[] = challenge.testCases.map((tc) => ({
+            testCase: tc,
+            passed: false,
+            output: "Compile error",
           }));
-          monaco.editor.setModelMarkers(model, "tests", markers);
+          setResults(testResults);
+          setRunning(false);
+          return;
         }
       }
     }
 
-    const allPassed = testResults.every((r) => r.passed);
-    if (allPassed) {
-      onSubmit?.(true);
+    // Step 2: Server-side validation — test cases are verified on the server
+    try {
+      const res = await fetch("/api/challenges/run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          courseSlug,
+          lessonId,
+          code,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        // API error — fall back to client-side pattern matching
+        console.warn("Server validation failed, using client fallback:", data.error);
+        const strippedCode = stripComments(code);
+        const fallbackResults: TestResult[] = challenge.testCases.map((tc) => ({
+          testCase: tc,
+          passed: strippedCode.includes(tc.expectedOutput),
+          output: strippedCode.includes(tc.expectedOutput)
+            ? tc.expectedOutput
+            : "Pattern not found in code",
+        }));
+        setResults(fallbackResults);
+        setRunning(false);
+
+        if (fallbackResults.every((r) => r.passed)) {
+          onSubmit?.(true);
+        }
+        return;
+      }
+
+      // Map server results back to TestResult format
+      const serverResults: TestResult[] = (data.results as Array<{
+        id: string;
+        name: string;
+        passed: boolean;
+        output?: string;
+        hidden: boolean;
+      }>).map((sr) => ({
+        testCase: {
+          id: sr.id,
+          name: sr.name,
+          expectedOutput: "",
+          hidden: sr.hidden,
+        },
+        passed: sr.passed,
+        output: sr.output,
+      }));
+
+      setResults(serverResults);
+      setRunning(false);
+
+      // Set error markers for failed tests
+      if (editor && monaco) {
+        const model = editor.getModel();
+        if (model) {
+          const failedTests = serverResults.filter((r) => !r.passed && !r.testCase.hidden);
+          if (failedTests.length > 0) {
+            const markers = failedTests.map((r, i) => ({
+              severity: monaco.MarkerSeverity.Error,
+              message: `Test failed: ${r.testCase.name}`,
+              startLineNumber: Math.max(1, model.getLineCount() - failedTests.length + i),
+              startColumn: 1,
+              endLineNumber: Math.max(1, model.getLineCount() - failedTests.length + i),
+              endColumn: model.getLineMaxColumn(Math.max(1, model.getLineCount() - failedTests.length + i)),
+            }));
+            monaco.editor.setModelMarkers(model, "tests", markers);
+          }
+        }
+      }
+
+      if (data.passed) {
+        onSubmit?.(true);
+      }
+    } catch {
+      // Network error — fall back to client-side
+      console.warn("Network error, using client fallback");
+      const strippedCode = stripComments(code);
+      const fallbackResults: TestResult[] = challenge.testCases.map((tc) => ({
+        testCase: tc,
+        passed: strippedCode.includes(tc.expectedOutput),
+        output: strippedCode.includes(tc.expectedOutput)
+          ? tc.expectedOutput
+          : "Pattern not found in code",
+      }));
+      setResults(fallbackResults);
+      setRunning(false);
+
+      if (fallbackResults.every((r) => r.passed)) {
+        onSubmit?.(true);
+      }
     }
-  }, [code, challenge, onSubmit]);
+  }, [code, challenge, courseSlug, lessonId, onSubmit]);
 
   const reset = () => {
     setCode(challenge.starterCode);
     setResults([]);
+    setDiagnosticErrors([]);
     setShowHints(false);
     setShowSolution(false);
   };
@@ -205,6 +320,27 @@ export function CodeEditor({ challenge, onSubmit }: CodeEditorProps) {
               </Badge>
             ) : null}
           </div>
+
+          {/* Diagnostic errors (compile/syntax) */}
+          {diagnosticErrors.length > 0 && (
+            <div className="px-4 py-2 bg-destructive/5 border-b">
+              <div className="flex items-center gap-1.5 text-xs font-medium text-destructive mb-1">
+                <AlertTriangle className="h-3.5 w-3.5" />
+                Compile errors
+              </div>
+              <ul className="text-xs text-destructive/80 space-y-0.5 font-mono">
+                {diagnosticErrors.slice(0, 5).map((err, i) => (
+                  <li key={i} className="truncate">{err}</li>
+                ))}
+                {diagnosticErrors.length > 5 && (
+                  <li className="text-muted-foreground">
+                    +{diagnosticErrors.length - 5} more...
+                  </li>
+                )}
+              </ul>
+            </div>
+          )}
+
           <div className="divide-y max-h-48 overflow-y-auto">
             {results
               .filter((r) => !r.testCase.hidden)

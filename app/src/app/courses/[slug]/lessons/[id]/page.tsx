@@ -259,6 +259,8 @@ export default function LessonPage({
                       <div className="h-full p-4">
                         <CodeEditor
                           challenge={lesson.challenge}
+                          courseSlug={slug}
+                          lessonId={lesson.id}
                           onSubmit={handleChallengeSubmit}
                         />
                       </div>
@@ -269,6 +271,8 @@ export default function LessonPage({
                     <div className="h-full p-4">
                       <CodeEditor
                         challenge={lesson.challenge}
+                        courseSlug={slug}
+                        lessonId={lesson.id}
                         onSubmit={handleChallengeSubmit}
                       />
                     </div>

@@ -30,12 +30,14 @@ export default async function Home() {
 
   return (
     <PlatformLayout hideFooter={false}>
+      {/* Hero + Stats fill the viewport */}
+      <div className="flex min-h-[calc(100vh-4rem)] flex-col">
       {/* Hero */}
-      <section className="relative overflow-hidden">
+      <section className="relative flex-1 flex items-center overflow-hidden">
         <div className="absolute inset-0 -z-10">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(120,119,198,0.15),transparent)]" />
         </div>
-        <div className="container mx-auto px-4 py-16 sm:py-24 lg:py-32">
+        <div className="container mx-auto px-4 py-12 sm:py-16 lg:py-20">
           <div className="mx-auto max-w-3xl text-center">
             <Badge variant="secondary" className="mb-6 gap-1.5 px-3 py-1 text-sm font-medium">
               <Zap className="h-3.5 w-3.5" />
@@ -65,7 +67,7 @@ export default async function Home() {
       </section>
 
       {/* Stats */}
-      <section className="border-y bg-muted/30">
+      <section className="border-y bg-muted/30 shrink-0">
         <div className="container mx-auto grid grid-cols-2 gap-8 px-4 py-12 sm:py-16 sm:grid-cols-4">
           {stats.map((stat) => (
             <div key={stat.key} className="text-center">
@@ -79,6 +81,7 @@ export default async function Home() {
           ))}
         </div>
       </section>
+      </div>
 
       {/* Features */}
       <section className="container mx-auto px-4 py-12 sm:py-16">

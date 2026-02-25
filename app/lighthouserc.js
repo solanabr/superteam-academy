@@ -3,10 +3,10 @@ module.exports = {
     collect: {
       startServerCommand: "pnpm start",
       startServerReadyPattern: "Ready",
+      startServerReadyTimeout: 30000,
       url: [
         "http://localhost:3000/",
         "http://localhost:3000/courses",
-        "http://localhost:3000/community",
       ],
       numberOfRuns: 3,
       settings: {

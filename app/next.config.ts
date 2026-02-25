@@ -2,9 +2,12 @@ import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 import createNextIntlPlugin from "next-intl/plugin";
 
+import path from "node:path";
+
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 const nextConfig: NextConfig = {
+  outputFileTracingRoot: path.join(import.meta.dirname, "../"),
   experimental: {
     optimizePackageImports: [
       "lucide-react",
