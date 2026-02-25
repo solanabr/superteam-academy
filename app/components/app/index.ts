@@ -8,3 +8,7 @@ export { AppHeader } from "./AppHeader";
 export { ThemeToggle } from "./ThemeToggle";
 export { ThemeSelect } from "./ThemeSelect";
 export { SolanaPlayground } from "./SolanaPlayground";
+export { AchievementToast, showAchievement } from "./AchievementToast";
+export { StreakCalendar } from "./StreakCalendar";
+export { CompletionBadge } from "./CompletionBadge";
+export { DailyReward } from "./DailyReward";

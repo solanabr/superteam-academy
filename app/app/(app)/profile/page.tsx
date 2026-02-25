@@ -8,10 +8,9 @@ import {
     Award,
     Copy,
     ExternalLink,
+    Flame,
 } from "lucide-react";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { PageHeader, EmptyState } from "@/components/app";
 import { useXpBalance } from "@/hooks";
 import { toast } from "sonner";
@@ -30,81 +29,74 @@ export default function ProfilePage() {
         toast.success("Wallet address copied");
     };
 
+    const xpValue = xp ?? 0;
+    const level = Math.floor(xpValue / 500) + 1;
+
     return (
-        <div className="space-y-6">
-            <PageHeader title="Profile" subtitle="Your academy profile and stats" />
+        <div className="p-10 md:px-20">
+            <h2 className="text-4xl mb-4 font-game">Profile</h2>
 
             {/* Profile card */}
-            <Card className="p-6">
-                <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-                        <User className="h-8 w-8 text-primary" />
+            <div className="p-4 border-4 rounded-2xl">
+                <div className="flex gap-3 items-center">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-yellow-400 text-black">
+                        <User className="h-8 w-8" />
                     </div>
-                    <div className="flex-1 space-y-2 text-center sm:text-left">
-                        <div className="flex items-center justify-center gap-2 sm:justify-start">
-                            <p className="font-mono text-sm font-medium">
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <p className="font-game text-2xl">
                                 {truncateWallet(walletAddress)}
                             </p>
                             <button
                                 onClick={handleCopy}
-                                className="text-muted-foreground hover:text-foreground transition-colors"
+                                className="text-gray-400 hover:text-white transition-colors"
                             >
-                                <Copy className="h-3.5 w-3.5" />
+                                <Copy className="h-4 w-4" />
                             </button>
                             <a
                                 href={`https://explorer.solana.com/address/${walletAddress}?cluster=devnet`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-muted-foreground hover:text-foreground transition-colors"
+                                className="text-gray-400 hover:text-white transition-colors"
                             >
-                                <ExternalLink className="h-3.5 w-3.5" />
+                                <ExternalLink className="h-4 w-4" />
                             </a>
                         </div>
-                        <div className="flex items-center justify-center gap-4 sm:justify-start">
-                            <Badge variant="outline" className="gap-1">
-                                <Sparkles className="h-3 w-3" />
-                                {(xp ?? 0).toLocaleString()} XP
-                            </Badge>
-                            <Badge variant="outline" className="gap-1">
-                                Level {Math.floor((xp ?? 0) / 500) + 1}
-                            </Badge>
-                        </div>
+                        <p className="font-game text-xl text-gray-500">Level {level}</p>
                     </div>
                 </div>
-            </Card>
+            </div>
 
             {/* Stats grid */}
-            <div className="grid gap-4 sm:grid-cols-3">
-                <Card className="p-4 text-center">
-                    <BookOpen className="mx-auto mb-2 h-6 w-6 text-muted-foreground" />
-                    <p className="text-2xl font-bold">0</p>
-                    <p className="text-xs text-muted-foreground">Courses Completed</p>
-                </Card>
-                <Card className="p-4 text-center">
-                    <Award className="mx-auto mb-2 h-6 w-6 text-muted-foreground" />
-                    <p className="text-2xl font-bold">0</p>
-                    <p className="text-xs text-muted-foreground">Credentials</p>
-                </Card>
-                <Card className="p-4 text-center">
-                    <Sparkles className="mx-auto mb-2 h-6 w-6 text-muted-foreground" />
-                    <p className="text-2xl font-bold">{(xp ?? 0).toLocaleString()}</p>
-                    <p className="text-xs text-muted-foreground">Total XP</p>
-                </Card>
+            <div className="grid grid-cols-3 gap-5 mt-6">
+                <div className="p-4 border-4 rounded-2xl text-center">
+                    <BookOpen className="mx-auto mb-2 h-8 w-8 text-yellow-400" />
+                    <h2 className="font-game text-3xl">0</h2>
+                    <h2 className="font-game text-xl text-gray-500">Courses Completed</h2>
+                </div>
+                <div className="p-4 border-4 rounded-2xl text-center">
+                    <Award className="mx-auto mb-2 h-8 w-8 text-yellow-400" />
+                    <h2 className="font-game text-3xl">0</h2>
+                    <h2 className="font-game text-xl text-gray-500">Credentials</h2>
+                </div>
+                <div className="p-4 border-4 rounded-2xl text-center">
+                    <Sparkles className="mx-auto mb-2 h-8 w-8 text-yellow-400" />
+                    <h2 className="font-game text-3xl">{xpValue.toLocaleString()}</h2>
+                    <h2 className="font-game text-xl text-gray-500">Total XP</h2>
+                </div>
             </div>
 
             {/* Credentials */}
-            <div className="space-y-3">
-                <h3 className="font-semibold">Credentials</h3>
-                <EmptyState
-                    icon={Award}
-                    title="No credentials yet"
-                    description="Complete courses to earn on-chain credential NFTs."
-                    action={
-                        <Button asChild variant="outline" size="sm">
-                            <a href="/courses">Browse Courses</a>
-                        </Button>
-                    }
-                />
+            <div className="mt-8">
+                <h2 className="text-4xl mb-2 font-game">Credentials</h2>
+                <div className="flex flex-col items-center gap-3 p-7 border rounded-2xl bg-zinc-900">
+                    <Award className="w-12 h-12 text-gray-500" />
+                    <h2 className="font-game text-2xl">No credentials yet</h2>
+                    <p className="font-game text-gray-400">Complete courses to earn on-chain credential NFTs.</p>
+                    <Button variant="pixel" className="font-game text-lg">
+                        <a href="/courses">Browse Courses</a>
+                    </Button>
+                </div>
             </div>
         </div>
     );

@@ -31,3 +31,4 @@ export { useRewardXp, type RewardXpParams } from "./useRewardXp";
 export { useCreateAchievementType } from "./useCreateAchievementType";
 export { useAwardAchievement } from "./useAwardAchievement";
 export { useDeactivateAchievementType } from "./useDeactivateAchievementType";
+export { useSfx } from "./useSfx";

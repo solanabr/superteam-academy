@@ -2,7 +2,8 @@
 
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -14,6 +15,7 @@ export function WalletConnectButton() {
   const [open, setOpen] = useState(false);
   const [displayName, setDisplayNameState] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   const refreshDisplayName = () => {
     if (publicKey) {
@@ -44,19 +46,29 @@ export function WalletConnectButton() {
     return () => document.removeEventListener("click", handleClick);
   }, [open]);
 
+  // Redirect to dashboard only on the *moment* of connection (false → true),
+  // not on every render — so visiting `/` while already connected won't bounce you.
+  const prevConnected = useRef(connected);
+  useEffect(() => {
+    if (connected && !prevConnected.current) {
+      router.push("/dashboard");
+    }
+    prevConnected.current = connected;
+  }, [connected, router]);
+
   const label =
     connected && publicKey
       ? displayName?.trim() || `${publicKey.toBase58().slice(0, 4)}…${publicKey.toBase58().slice(-4)}`
-      : "Connect wallet";
+      : "Connect";
 
   if (connected) {
     return (
       <div ref={ref} className="relative">
         <Button
-          variant="default"
+          variant="pixel"
           size="default"
           onClick={() => setOpen((o) => !o)}
-          className="min-w-[140px] truncate"
+          className="min-w-[140px] truncate font-game text-xl"
           aria-expanded={open}
           aria-haspopup="true"
         >
@@ -65,15 +77,22 @@ export function WalletConnectButton() {
         {open && (
           <div
             className={cn(
-              "absolute right-0 top-full z-50 mt-2 min-w-[200px] rounded-xl border border-border bg-card px-2 py-2 shadow-xl"
+              "absolute right-0 top-full z-50 mt-2 min-w-[200px] rounded-xl border-2 border-zinc-700 bg-zinc-900 px-2 py-2 shadow-xl"
             )}
           >
             <button
               type="button"
-              className={cn(
-                "flex w-full items-center rounded-lg px-4 py-2.5 text-left text-sm font-medium transition-colors",
-                "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
-              )}
+              className="flex w-full items-center rounded-lg px-4 py-2.5 text-left font-game text-lg transition-colors hover:bg-zinc-800"
+              onClick={() => {
+                setOpen(false);
+                router.push("/dashboard");
+              }}
+            >
+              Dashboard
+            </button>
+            <button
+              type="button"
+              className="flex w-full items-center rounded-lg px-4 py-2.5 text-left font-game text-lg transition-colors hover:bg-zinc-800"
               onClick={() => {
                 setOpen(false);
                 setVisible(true);
@@ -83,10 +102,7 @@ export function WalletConnectButton() {
             </button>
             <button
               type="button"
-              className={cn(
-                "flex w-full items-center rounded-lg px-4 py-2.5 text-left text-sm font-medium transition-colors",
-                "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
-              )}
+              className="flex w-full items-center rounded-lg px-4 py-2.5 text-left font-game text-lg transition-colors hover:bg-zinc-800"
               onClick={() => {
                 if (publicKey) {
                   navigator.clipboard.writeText(publicKey.toBase58());
@@ -99,10 +115,7 @@ export function WalletConnectButton() {
             </button>
             <button
               type="button"
-              className={cn(
-                "flex w-full items-center rounded-lg px-4 py-2.5 text-left text-sm font-medium transition-colors",
-                "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
-              )}
+              className="flex w-full items-center rounded-lg px-4 py-2.5 text-left font-game text-lg text-red-400 transition-colors hover:bg-zinc-800"
               onClick={() => {
                 setOpen(false);
                 disconnect();
@@ -118,10 +131,10 @@ export function WalletConnectButton() {
 
   return (
     <Button
-      variant="default"
+      variant="pixel"
       size="default"
       onClick={() => setVisible(true)}
-      className="min-w-[140px]"
+      className="min-w-[140px] font-game text-xl"
     >
       {label}
     </Button>

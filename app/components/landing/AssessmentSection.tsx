@@ -74,7 +74,7 @@ export function AssessmentSection() {
     }
 
     return (
-        <section className="w-full bg-primary/[0.03] py-20">
+        <section className="w-full bg-zinc-900 py-20">
             <div className="mx-auto max-w-2xl px-6">
                 <motion.div
                     ref={sectionRef}
@@ -83,22 +83,22 @@ export function AssessmentSection() {
                     transition={{ duration: 0.5 }}
                     className="text-center"
                 >
-                    <p className="mb-2 text-sm font-medium tracking-widest text-accent uppercase">
+                    <p className="mb-2 font-game text-lg tracking-widest text-yellow-400 uppercase">
                         Assessment
                     </p>
-                    <h2 className="text-2xl font-bold text-foreground sm:text-3xl">
+                    <h2 className="text-4xl font-game">
                         Find the right course for yourself
                     </h2>
-                    <p className="mt-3 text-sm text-muted-foreground">
+                    <p className="mt-3 font-game text-xl text-gray-400">
                         Answer {totalSteps} questions to figure out which course to start
                         with
                     </p>
                 </motion.div>
 
                 {/* Progress bar */}
-                <div className="mt-10 h-2 overflow-hidden rounded-full bg-border">
+                <div className="mt-10 h-3 overflow-hidden rounded-full bg-zinc-800">
                     <motion.div
-                        className="h-full rounded-full bg-primary"
+                        className="h-full rounded-full bg-yellow-400"
                         initial={{ width: 0 }}
                         animate={{ width: `${progress}%` }}
                         transition={{ duration: 0.4, ease: "easeOut" }}
@@ -107,8 +107,8 @@ export function AssessmentSection() {
 
                 {/* Question */}
                 <div className="mt-10">
-                    <p className="mb-6 text-base font-medium text-foreground">
-                        <span className="mr-2 text-primary">{currentStep + 1}.</span>
+                    <p className="mb-6 font-game text-2xl">
+                        <span className="mr-2 text-yellow-400">{currentStep + 1}.</span>
                         {question.question}
                     </p>
 
@@ -119,9 +119,9 @@ export function AssessmentSection() {
                                 <button
                                     key={i}
                                     onClick={() => selectOption(i)}
-                                    className={`rounded-lg border px-4 py-3 text-left text-sm transition-all ${isSelected
-                                            ? "border-primary bg-primary/10 font-medium text-primary"
-                                            : "border-border bg-card text-foreground hover:border-primary/30 hover:bg-primary/[0.03]"
+                                    className={`rounded-xl border-2 px-5 py-4 text-left font-game text-xl transition-all ${isSelected
+                                        ? "border-yellow-400 bg-yellow-400/10 text-yellow-400"
+                                        : "border-zinc-700 hover:border-yellow-400/40 hover:bg-zinc-800"
                                         }`}
                                 >
                                     {option}
@@ -135,24 +135,27 @@ export function AssessmentSection() {
                 <div className="mt-8 flex items-center justify-between">
                     <Button
                         variant="outline"
-                        size="sm"
+                        size="lg"
                         disabled={currentStep === 0}
                         onClick={() => setCurrentStep((s) => s - 1)}
+                        className="font-game text-xl"
                     >
-                        <ArrowLeft className="size-3.5" />
+                        <ArrowLeft className="size-4" />
                         Back
                     </Button>
                     <Button
-                        size="sm"
+                        variant="pixel"
+                        size="lg"
                         disabled={answers[currentStep] === undefined}
                         onClick={() => {
                             if (currentStep < totalSteps - 1) {
                                 setCurrentStep((s) => s + 1);
                             }
                         }}
+                        className="font-game text-xl"
                     >
                         {currentStep === totalSteps - 1 ? "See Results" : "Next"}
-                        <ArrowRight className="size-3.5" />
+                        <ArrowRight className="size-4" />
                     </Button>
                 </div>
             </div>

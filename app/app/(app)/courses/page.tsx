@@ -2,71 +2,45 @@
 
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
-import { Search, BookOpen, Sparkles, Clock, Filter } from "lucide-react";
+import { Search, BookOpen, Sparkles, Clock, ChartNoAxesColumnIncreasing } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
-import { PageHeader, EmptyState, ProgressBar } from "@/components/app";
+import { PageHeader, EmptyState } from "@/components/app";
 import { getAllCourses, type MockCourse } from "@/lib/services/content-service";
-import { useAllCourses } from "@/hooks";
-import { useWallet } from "@solana/wallet-adapter-react";
-import { useEnrollment } from "@/hooks";
-
-const difficultyColors = {
-    beginner: "bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20",
-    intermediate: "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500/20",
-    advanced: "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20",
-};
 
 function CourseCard({ course }: { course: MockCourse }) {
     return (
-        <Link
-            href={`/courses/${course.slug}`}
-            className="group flex flex-col rounded-xl border border-border bg-card p-5 transition-all hover:border-primary/30 hover:shadow-md"
-        >
-            {/* Tags row */}
-            <div className="mb-3 flex flex-wrap gap-1.5">
-                <Badge
-                    variant="outline"
-                    className={difficultyColors[course.difficulty]}
-                >
-                    {course.difficulty}
-                </Badge>
-                {course.tags.slice(0, 2).map((tag) => (
-                    <Badge key={tag} variant="outline" className="text-xs">
-                        {tag}
-                    </Badge>
-                ))}
-            </div>
+        <Link href={`/courses/${course.slug}`} className="block h-full">
+            <div className="border-4 rounded-xl hover:bg-zinc-900 cursor-pointer h-full">
+                <div className="p-4 h-full flex flex-col">
+                    {/* Title + description */}
+                    <div>
+                        <h2 className="font-game text-2xl line-clamp-2">
+                            {course.title}
+                        </h2>
 
-            {/* Title + desc */}
-            <h3 className="mb-1.5 text-lg font-semibold group-hover:text-primary transition-colors">
-                {course.title}
-            </h3>
-            <p className="mb-4 line-clamp-2 text-sm text-muted-foreground">
-                {course.description}
-            </p>
+                        <p className="font-game text-xl text-gray-400 line-clamp-2 mt-1">
+                            {course.description}
+                        </p>
+                    </div>
 
-            {/* Stats row */}
-            <div className="mt-auto flex items-center gap-4 text-xs text-muted-foreground">
-                <span className="inline-flex items-center gap-1">
-                    <BookOpen className="h-3.5 w-3.5" />
-                    {course.lessonCount} lessons
-                </span>
-                <span className="inline-flex items-center gap-1">
-                    <Sparkles className="h-3.5 w-3.5" />
-                    {course.lessonCount * course.xpPerLesson} XP
-                </span>
-                <span className="inline-flex items-center gap-1">
-                    <Clock className="h-3.5 w-3.5" />
-                    {course.duration}
-                </span>
+                    {/* Push this to bottom */}
+                    <div className="flex items-center gap-3 mt-auto pt-4 flex-nowrap overflow-hidden">
+                        <h2 className="bg-zinc-800 gap-2 font-game p-1 px-4 rounded-2xl inline-flex items-center whitespace-nowrap">
+                            <ChartNoAxesColumnIncreasing className="h-4 w-4" />
+                            {course.difficulty}
+                        </h2>
+
+                        <span className="font-game text-gray-500 inline-flex items-center gap-1 whitespace-nowrap">
+                            <BookOpen className="h-4 w-4" />
+                            {course.lessonCount} lessons
+                        </span>
+
+                        <span className="font-game text-yellow-400 inline-flex items-center gap-1 whitespace-nowrap">
+                            <Sparkles className="h-4 w-4" />
+                            {course.lessonCount * course.xpPerLesson} XP
+                        </span>
+                    </div>
+                </div>
             </div>
         </Link>
     );
@@ -74,7 +48,6 @@ function CourseCard({ course }: { course: MockCourse }) {
 
 export default function CoursesPage() {
     const [search, setSearch] = useState("");
-    const [difficulty, setDifficulty] = useState<string>("all");
     const [courses, setCourses] = useState<MockCourse[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -91,52 +64,34 @@ export default function CoursesPage() {
                 !search ||
                 c.title.toLowerCase().includes(search.toLowerCase()) ||
                 c.tags.some((t) => t.toLowerCase().includes(search.toLowerCase()));
-            const matchDiff = difficulty === "all" || c.difficulty === difficulty;
-            return matchSearch && matchDiff;
+            return matchSearch;
         });
-    }, [courses, search, difficulty]);
+    }, [courses, search]);
 
     return (
-        <div className="space-y-6">
-            <PageHeader
-                title="Courses"
-                subtitle="Browse and enroll in Solana development courses"
-            />
+        <div className="p-10 md:px-12">
+            <h2 className="text-4xl mb-2 font-game">All Courses</h2>
 
-            {/* Filters */}
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                        placeholder="Search courses..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="pl-9"
-                    />
-                </div>
-                <Select value={difficulty} onValueChange={setDifficulty}>
-                    <SelectTrigger className="w-full sm:w-44">
-                        <Filter className="mr-2 h-4 w-4" />
-                        <SelectValue placeholder="Difficulty" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">All levels</SelectItem>
-                        <SelectItem value="beginner">Beginner</SelectItem>
-                        <SelectItem value="intermediate">Intermediate</SelectItem>
-                        <SelectItem value="advanced">Advanced</SelectItem>
-                    </SelectContent>
-                </Select>
+            {/* Search */}
+            <div className="relative max-w-md mb-6">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                    placeholder="Search courses..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="pl-9"
+                />
             </div>
 
             {/* Course grid */}
             {isLoading ? (
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                     {[1, 2, 3].map((i) => (
-                        <div key={i} className="h-48 animate-pulse rounded-xl border border-border bg-card" />
+                        <div key={i} className="h-40 animate-pulse rounded-xl border-4" />
                     ))}
                 </div>
             ) : filtered.length > 0 ? (
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                     {filtered.map((course) => (
                         <CourseCard key={course.id} course={course} />
                     ))}
@@ -145,7 +100,7 @@ export default function CoursesPage() {
                 <EmptyState
                     icon={BookOpen}
                     title="No courses found"
-                    description="Try adjusting your search or filter to find courses."
+                    description="Try adjusting your search to find courses."
                 />
             )}
         </div>

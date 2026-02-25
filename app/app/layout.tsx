@@ -4,8 +4,24 @@ import { ThemeProvider } from "@/providers/ThemeProvider";
 import { Toaster } from "@/components/ui/sonner";
 import { NavbarWrapper } from "@/components/landing/NavbarWrapper";
 import { siteConfig } from "@/config/siteConfig";
-import { Inter } from "next/font/google";
+import { Geist, Geist_Mono, Jersey_10, Inter } from "next/font/google";
 import "./globals.css";
+
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
+const gameFont = Jersey_10({
+  subsets: ["latin"],
+  variable: "--font-game",
+  weight: ["400"],
+});
 
 const inter = Inter({
   subsets: ["latin"],
@@ -30,8 +46,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR" suppressHydrationWarning>
-      <body className={`${inter.className} antialiased`}>
+    <html lang="pt-BR" suppressHydrationWarning className="dark">
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} ${gameFont.variable} ${inter.variable} antialiased bg-zinc-900`}
+      >
         <script
           dangerouslySetInnerHTML={{
             __html: `globalThis.litIssuedWarnings=globalThis.litIssuedWarnings||new Set();globalThis.litIssuedWarnings.add("Lit is in dev mode. Not recommended for production! See https://lit.dev/msg/dev-mode for more information.");`,
@@ -54,4 +72,3 @@ export default function RootLayout({
     </html>
   );
 }
-

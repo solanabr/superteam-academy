@@ -1,19 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import {
     BookOpen,
-    Sparkles,
-    Flame,
-    Trophy,
     ArrowRight,
-    Award,
     Clock,
 } from "lucide-react";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { PageHeader, ProgressBar } from "@/components/app";
+import { ProgressBar, PageHeader, StreakCalendar, DailyReward } from "@/components/app";
 import { getAllCourses } from "@/lib/services/content-service";
 import { getMockStreakData } from "@/lib/services/mock-leaderboard";
 import { useXpBalance } from "@/hooks";
@@ -33,169 +28,187 @@ export default function DashboardPage() {
         });
     }, []);
 
-    const currentCourse = courses[0];
-
     const xpValue = xp ?? 0;
     const level = Math.floor(xpValue / 500) + 1;
-    const xpToNextLevel = 500 - (xpValue % 500);
 
     return (
-        <div className="space-y-6">
-            <PageHeader
-                title="Dashboard"
-                subtitle="Track your progress and continue learning"
-            />
-
-            {/* Stats row */}
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <Card className="p-4">
-                    <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary/20">
-                            <Sparkles className="h-5 w-5 text-secondary" />
+        <>
+            <DailyReward streakCount={streak.current} />
+            <div className="p-8 md:px-10 lg:px-12  ">
+                <div className="grid grid-cols-3 gap-7">
+                    {/* Main column (2/3) */}
+                    <div className="col-span-2">
+                        {/* Welcome banner — robot + speech bubble */}
+                        <div className="flex gap-3 items-center">
+                            <Image
+                                src="/machine.webp"
+                                alt="robo"
+                                width={120}
+                                height={120}
+                            />
+                            <h2 className="font-game text-2xl p-4 border bg-zinc-800 rounded-lg rounded-bl-none">
+                                Welcome back <span className="text-yellow-400">Builder</span>, Start learning something new...
+                            </h2>
                         </div>
-                        <div>
-                            <p className="text-2xl font-bold">{xpValue.toLocaleString()}</p>
-                            <p className="text-xs text-muted-foreground">Total XP</p>
+
+                        {/* Enrolled Courses */}
+                        <div className="mt-8">
+                            <h2 className="text-4xl mb-2 font-game">Your Enrolled Courses</h2>
+                            {courses.length === 0 && !isLoading ? (
+                                <div className="flex flex-col items-center gap-3 p-7 border rounded-2xl bg-zinc-900">
+                                    <Image src="/books.png" alt="book" width={90} height={90} />
+                                    <h2 className="font-game text-2xl">
+                                        You Don&apos;t have any enrolled courses
+                                    </h2>
+                                    <Link href="/courses">
+                                        <Button variant="pixel" className="font-game text-lg" size="lg">
+                                            Browse All Courses
+                                        </Button>
+                                    </Link>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 auto-rows-fr">
+                                    {courses.slice(0, 2).map((course) => (
+                                        <Link href={`/courses/${course.slug}`} key={course.id} className="h-full">
+                                            <div className="border-4 rounded-2xl h-full">
+                                                <div className="font-game p-4 h-full flex flex-col">
+                                                    {/* Top content */}
+                                                    <div>
+                                                        <h2 className="text-lg font-light text-gray-500">
+                                                            Course
+                                                        </h2>
+
+                                                        <h2 className="text-3xl line-clamp-2 min-h-[4.5rem]">
+                                                            {course.title}
+                                                        </h2>
+                                                    </div>
+
+                                                    {/* Bottom content */}
+                                                    <div className="mt-auto pt-4">
+                                                        <h2 className="text-lg text-gray-400">
+                                                            0 Completed <span>out {course.lessonCount}</span>
+                                                        </h2>
+
+                                                        <ProgressBar value={0} max={100} />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </Link>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Explore More */}
+                        <div className="mt-8">
+                            <h2 className="text-4xl mb-2 font-game">Explore More</h2>
+                            <div className="grid grid-cols-2 gap-5">
+                                <div className="flex gap-2 p-2 border rounded-xl bg-zinc-900">
+                                    <Image src="/tree.png" alt="Quizz" width={80} height={80} />
+                                    <div>
+                                        <h2 className="font-medium text-2xl font-game">Quiz Pack</h2>
+                                        <p className="font-game text-gray-400">Practice what you learned with bite-sized challenges.</p>
+                                    </div>
+                                </div>
+                                <div className="flex gap-2 p-2 border rounded-xl bg-zinc-900">
+                                    <Image src="/game.png" alt="Projects" width={80} height={80} />
+                                    <div>
+                                        <h2 className="font-medium text-2xl font-game">Projects</h2>
+                                        <p className="font-game text-gray-400">Build real-world Solana dApps from scratch.</p>
+                                    </div>
+                                </div>
+                                <div className="flex gap-2 p-2 border rounded-xl bg-zinc-900">
+                                    <Image src="/growth.png" alt="Community" width={80} height={80} />
+                                    <div>
+                                        <h2 className="font-medium text-2xl font-game">Community</h2>
+                                        <p className="font-game text-gray-400">Collaborate with Solana builders worldwide.</p>
+                                    </div>
+                                </div>
+                                <div className="flex gap-2 p-2 border rounded-xl bg-zinc-900">
+                                    <Image src="/start-up.png" alt="Apps" width={80} height={80} />
+                                    <div>
+                                        <h2 className="font-medium text-2xl font-game">Explore dApps</h2>
+                                        <p className="font-game text-gray-400">Explore prebuilt apps to kickstart your journey.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Invite Friend */}
+                        <div className="flex flex-col items-center mt-8 p-4 border rounded-2xl bg-zinc-900">
+                            <Image src="/mail.png" alt="invite friend" width={80} height={80} />
+                            <h2 className="text-3xl font-game">Invite Friend</h2>
+                            <p className="font-game">Having Fun? Share the love with a friend! Enter an email and we will send them a personal invite</p>
+                            <div className="flex gap-2 items-center mt-5">
+                                <input placeholder="Enter Invitee Email" className="border rounded-md bg-zinc-800 px-3 py-2 font-game min-w-[280px]" />
+                                <Button variant="pixel" className="font-game">Invite</Button>
+                            </div>
                         </div>
                     </div>
-                </Card>
 
-                <Card className="p-4">
-                    <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                            <Trophy className="h-5 w-5 text-primary" />
+                    {/* Side column (1/3) */}
+                    <div>
+                        {/* User Status — with pixel art icons */}
+                        <div className="p-4 border-4 rounded-2xl">
+                            <div className="flex gap-3 items-center mb-4">
+                                <Image src="/alex_walk.gif" alt="Alex walking" width={70} height={70} unoptimized />
+                                <h2 className="font-game text-2xl">Your Stats</h2>
+                            </div>
+                            <div className="grid grid-cols-2 gap-5">
+                                <div className="flex gap-3 items-center">
+                                    <Image src="/star.png" alt="Star" width={35} height={35} />
+                                    <div>
+                                        <h2 className="font-game text-3xl">{xpValue}</h2>
+                                        <h2 className="font-game text-xl text-gray-500">Total XP</h2>
+                                    </div>
+                                </div>
+                                <div className="flex gap-3 items-center">
+                                    <Image src="/badge.png" alt="Badge" width={35} height={35} />
+                                    <div>
+                                        <h2 className="font-game text-3xl">0</h2>
+                                        <h2 className="font-game text-xl text-gray-500">Badge</h2>
+                                    </div>
+                                </div>
+                                <div className="flex gap-3 items-center">
+                                    <Image src="/fire.png" alt="fire" width={35} height={35} />
+                                    <div>
+                                        <h2 className="font-game text-3xl">{streak.current}</h2>
+                                        <h2 className="font-game text-xl text-gray-500">Daily Streak</h2>
+                                    </div>
+                                </div>
+                                <div className="flex gap-3 items-center">
+                                    <Image src="/book.png" alt="level" width={35} height={35} />
+                                    <div>
+                                        <h2 className="font-game text-3xl">Lv.{level}</h2>
+                                        <h2 className="font-game text-xl text-gray-500">Rank</h2>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div>
-                            <p className="text-2xl font-bold">Level {level}</p>
-                            <p className="text-xs text-muted-foreground">
-                                {xpToNextLevel} XP to next
-                            </p>
-                        </div>
-                    </div>
-                </Card>
 
-                <Card className="p-4">
-                    <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-500/10">
-                            <Flame className="h-5 w-5 text-orange-500" />
+                        {/* Upgrade to Pro / Get Certified */}
+                        <div className="flex p-4 items-center flex-col border-4 rounded-2xl mt-8">
+                            <Image
+                                src="/HORIZONTAL-LOGO/ST-OFF-WHITE-HORIZONTAL.png"
+                                alt="logo"
+                                width={70}
+                                height={70}
+                                className="h-16 w-16 object-contain"
+                            />
+                            <h2 className="text-3xl font-game">Get Certified</h2>
+                            <p className="font-game text-gray-500 text-xl text-center">Complete courses to earn on-chain credential NFTs</p>
+                            <Link href="/certificates">
+                                <Button className="font-game text-2xl mt-3" variant="pixel" size="lg">
+                                    View Certs
+                                </Button>
+                            </Link>
                         </div>
-                        <div>
-                            <p className="text-2xl font-bold">{streak.current} days</p>
-                            <p className="text-xs text-muted-foreground">Current streak</p>
-                        </div>
-                    </div>
-                </Card>
 
-                <Card className="p-4">
-                    <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/20">
-                            <Award className="h-5 w-5 text-accent" />
-                        </div>
-                        <div>
-                            <p className="text-2xl font-bold">0</p>
-                            <p className="text-xs text-muted-foreground">Credentials</p>
-                        </div>
+                        {/* Weekly Streak Calendar */}
+                        <StreakCalendar currentStreak={streak.current} />
                     </div>
-                </Card>
+                </div>
             </div>
-
-            {/* Level progress */}
-            <Card className="p-5">
-                <div className="mb-3 flex items-center justify-between">
-                    <h3 className="font-semibold">Level Progress</h3>
-                    <Badge variant="outline">Level {level}</Badge>
-                </div>
-                <ProgressBar
-                    value={xpValue % 500}
-                    max={500}
-                    label={`${xpValue % 500} / 500 XP`}
-                />
-            </Card>
-
-            {/* Continue Learning */}
-            {currentCourse && (
-                <Card className="p-5">
-                    <div className="mb-4 flex items-center justify-between">
-                        <h3 className="font-semibold">Continue Learning</h3>
-                        <Button asChild variant="ghost" size="sm">
-                            <Link href="/courses">
-                                View All <ArrowRight className="ml-1 h-4 w-4" />
-                            </Link>
-                        </Button>
-                    </div>
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="space-y-1">
-                            <p className="font-medium">{currentCourse.title}</p>
-                            <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                                <span className="inline-flex items-center gap-1">
-                                    <BookOpen className="h-3.5 w-3.5" />
-                                    {currentCourse.lessonCount} lessons
-                                </span>
-                                <span className="inline-flex items-center gap-1">
-                                    <Clock className="h-3.5 w-3.5" />
-                                    {currentCourse.duration}
-                                </span>
-                            </div>
-                        </div>
-                        <Button asChild size="sm">
-                            <Link href={`/courses/${currentCourse.slug}`}>
-                                Resume <ArrowRight className="ml-1 h-4 w-4" />
-                            </Link>
-                        </Button>
-                    </div>
-                </Card>
-            )}
-
-            {/* Streak calendar */}
-            <Card className="p-5">
-                <h3 className="mb-3 font-semibold">Learning Streak</h3>
-                <div className="flex gap-1.5">
-                    {streak.history.map((day, i) => (
-                        <div
-                            key={i}
-                            className={`h-8 w-8 rounded-md transition-colors ${day
-                                    ? "bg-primary"
-                                    : "bg-muted"
-                                }`}
-                            title={day ? "Active" : "Missed"}
-                        />
-                    ))}
-                </div>
-                <p className="mt-2 text-xs text-muted-foreground">Last 14 days</p>
-            </Card>
-
-            {/* Recommended courses */}
-            {courses.length > 1 && (
-                <div className="space-y-3">
-                    <h3 className="font-semibold">Recommended Courses</h3>
-                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                        {courses.slice(1, 4).map((c) => (
-                        <Link
-                            key={c.id}
-                            href={`/courses/${c.slug}`}
-                            className="group rounded-xl border border-border bg-card p-4 transition-all hover:border-primary/30 hover:shadow-md"
-                        >
-                            <h4 className="mb-1 font-medium group-hover:text-primary transition-colors">
-                                {c.title}
-                            </h4>
-                            <p className="mb-3 line-clamp-2 text-xs text-muted-foreground">
-                                {c.description}
-                            </p>
-                            <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                                <span className="inline-flex items-center gap-1">
-                                    <BookOpen className="h-3 w-3" />
-                                    {c.lessonCount}
-                                </span>
-                                <span className="inline-flex items-center gap-1">
-                                    <Sparkles className="h-3 w-3" />
-                                    {c.lessonCount * c.xpPerLesson} XP
-                                </span>
-                            </div>
-                        </Link>
-                        ))}
-                    </div>
-                </div>
-            )}
-        </div>
+        </>
     );
 }

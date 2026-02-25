@@ -5,6 +5,8 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  --font-game: var(--font-game);
+  --font-inter: var(--font-inter);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
@@ -43,261 +45,104 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
   --radius-2xl: calc(var(--radius) + 8px);
-  --radius-3xl: calc(var(--radius) + 12px);
-  --radius-4xl: calc(var(--radius) + 16px);
 }
 
 :root {
   --radius: 0.625rem;
-
-  --palette-gold: #ffd23f;
-  --palette-cream: #f7eacb;
-  --palette-darkgreen: #2f6b3f;
-  --palette-midgreen: #008c4c;
-  --palette-nearblack: #1b231d;
-
-  --background: var(--palette-cream);
-  --foreground: var(--palette-nearblack);
-
-  --card: var(--palette-cream);
-  --card-foreground: var(--palette-nearblack);
-
-  --popover: var(--palette-cream);
-  --popover-foreground: var(--palette-nearblack);
-
-  --primary: var(--palette-darkgreen);
-  --primary-foreground: var(--palette-cream);
-
-  --secondary: var(--palette-gold);
-  --secondary-foreground: var(--palette-nearblack);
-
-  --muted: color-mix(in srgb, var(--palette-darkgreen) 10%, var(--palette-cream));
-  --muted-foreground: var(--palette-darkgreen);
-
-  --accent: var(--palette-midgreen);
-  --accent-foreground: var(--palette-cream);
-
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.141 0.005 285.823);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.141 0.005 285.823);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.141 0.005 285.823);
+  --primary: oklch(0.21 0.006 285.885);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.967 0.001 286.375);
+  --secondary-foreground: oklch(0.21 0.006 285.885);
+  --muted: oklch(0.967 0.001 286.375);
+  --muted-foreground: oklch(0.552 0.016 285.938);
+  --accent: oklch(0.967 0.001 286.375);
+  --accent-foreground: oklch(0.21 0.006 285.885);
   --destructive: oklch(0.577 0.245 27.325);
-
-  --border: rgb(47 107 63 / 0.2);
-  --input: rgb(47 107 63 / 0.25);
-  --ring: var(--palette-gold);
-
-  --chart-1: var(--palette-gold);
-  --chart-2: var(--palette-midgreen);
-  --chart-3: var(--palette-darkgreen);
-  --chart-4: var(--palette-cream);
-  --chart-5: var(--palette-nearblack);
-
-  --sidebar: var(--palette-cream);
-  --sidebar-foreground: var(--palette-nearblack);
-  --sidebar-primary: var(--palette-darkgreen);
-  --sidebar-primary-foreground: var(--palette-cream);
-  --sidebar-accent: rgb(47 107 63 / 0.12);
-  --sidebar-accent-foreground: var(--palette-nearblack);
-  --sidebar-border: rgb(47 107 63 / 0.15);
-  --sidebar-ring: var(--palette-gold);
+  --border: oklch(0.92 0.004 286.32);
+  --input: oklch(0.92 0.004 286.32);
+  --ring: oklch(0.705 0.015 286.067);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.141 0.005 285.823);
+  --sidebar-primary: oklch(0.21 0.006 285.885);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.967 0.001 286.375);
+  --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
+  --sidebar-border: oklch(0.92 0.004 286.32);
+  --sidebar-ring: oklch(0.705 0.015 286.067);
 }
 
 .dark {
-  --background: var(--palette-nearblack);
-  --foreground: var(--palette-cream);
-
-  --card: var(--palette-nearblack);
-  --card-foreground: var(--palette-cream);
-
-  --popover: var(--palette-nearblack);
-  --popover-foreground: var(--palette-cream);
-
-  --primary: var(--palette-gold);
-  --primary-foreground: var(--palette-nearblack);
-
-  --secondary: var(--palette-midgreen);
-  --secondary-foreground: var(--palette-cream);
-
-  --muted: var(--palette-darkgreen);
-  --muted-foreground: var(--palette-cream);
-
-  --accent: var(--palette-darkgreen);
-  --accent-foreground: var(--palette-cream);
-
+  --background: oklch(0.21 0.006 285.885);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.21 0.006 285.885);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.21 0.006 285.885);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.92 0.004 286.32);
+  --primary-foreground: oklch(0.21 0.006 285.885);
+  --secondary: oklch(0.274 0.006 286.033);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.274 0.006 286.033);
+  --muted-foreground: oklch(0.705 0.015 286.067);
+  --accent: oklch(0.274 0.006 286.033);
+  --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
-
-  --border: rgb(247 234 203 / 0.12);
-  --input: rgb(247 234 203 / 0.15);
-  --ring: var(--palette-gold);
-
-  --chart-1: var(--palette-gold);
-  --chart-2: var(--palette-midgreen);
-  --chart-3: var(--palette-darkgreen);
-  --chart-4: var(--palette-cream);
-  --chart-5: var(--palette-nearblack);
-
-  --sidebar: oklch(0.18 0.02 160);
-  --sidebar-foreground: var(--palette-cream);
-  --sidebar-primary: var(--palette-gold);
-  --sidebar-primary-foreground: var(--palette-nearblack);
-  --sidebar-accent: rgb(255 255 255 / 0.08);
-  --sidebar-accent-foreground: var(--palette-cream);
-  --sidebar-border: rgb(255 255 255 / 0.08);
-  --sidebar-ring: var(--palette-gold);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.552 0.016 285.938);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.21 0.006 285.885);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.274 0.006 286.033);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.552 0.016 285.938);
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
-  /* Remove number input up/down arrows */
+
+  /* Remove number input arrows */
   input[type="number"]::-webkit-inner-spin-button,
   input[type="number"]::-webkit-outer-spin-button {
     -webkit-appearance: none;
     margin: 0;
   }
+
   input[type="number"] {
     -moz-appearance: textfield;
   }
 }
 
-/* Wallet adapter modal + list: app theme (no default purple/dark UI) */
-.wallet-adapter-button {
-  background-color: transparent;
-  border: 1px solid var(--border);
-  color: var(--foreground);
-  font-family: var(--font-sans), system-ui, sans-serif;
-  font-size: 0.875rem;
-  font-weight: 500;
-  height: 2.25rem;
-  padding: 0 1rem;
-  border-radius: var(--radius-md);
-  transition: background-color 0.15s, color 0.15s;
-}
-.wallet-adapter-button-trigger {
-  background-color: var(--primary);
-  color: var(--primary-foreground);
-  border-color: transparent;
-}
-.wallet-adapter-button:not([disabled]):focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
-}
-.wallet-adapter-button:not([disabled]):hover {
-  background-color: var(--primary);
-  color: var(--primary-foreground);
-  border-color: transparent;
-  opacity: 0.9;
-}
-.wallet-adapter-button[disabled] {
-  background-color: var(--muted);
-  color: var(--muted-foreground);
-  border-color: var(--border);
-  cursor: not-allowed;
-}
-.wallet-adapter-button-end-icon,
-.wallet-adapter-button-start-icon,
-.wallet-adapter-button-end-icon img,
-.wallet-adapter-button-start-icon img {
-  width: 1.25rem;
-  height: 1.25rem;
-}
-.wallet-adapter-button-end-icon { margin-left: 0.5rem; }
-.wallet-adapter-button-start-icon { margin-right: 0.5rem; }
-
-.wallet-adapter-dropdown-list {
-  background: var(--popover);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: 0 10px 38px -10px rgb(0 0 0 / 0.2);
-  padding: 0.5rem;
-}
-.wallet-adapter-dropdown-list-item {
-  color: var(--foreground);
-  font-size: 0.875rem;
-  font-weight: 500;
-  border-radius: var(--radius-md);
-}
-.wallet-adapter-dropdown-list-item:not([disabled]):hover {
-  background-color: var(--accent);
-  color: var(--accent-foreground);
-}
-
-.wallet-adapter-modal-overlay {
-  background: rgba(0, 0, 0, 0.5);
-}
-.wallet-adapter-modal-wrapper {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-xl);
-  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
-  color: var(--foreground);
-}
-.wallet-adapter-modal-wrapper .wallet-adapter-button {
-  width: 100%;
-  background-color: transparent;
-  border: none;
-  border-radius: var(--radius-md);
-  justify-content: flex-start;
-  height: 2.75rem;
-}
-.wallet-adapter-modal-wrapper .wallet-adapter-button:hover {
-  background-color: var(--accent);
-  color: var(--accent-foreground);
-}
-.wallet-adapter-modal-wrapper .wallet-adapter-button:hover span {
-  color: inherit;
-}
-.wallet-adapter-modal-title {
-  color: var(--foreground);
-  font-weight: 500;
-  font-size: 1.25rem;
-}
-.wallet-adapter-modal-list .wallet-adapter-button {
-  font-size: 1rem;
-  font-weight: 400;
-}
-.wallet-adapter-modal-list .wallet-adapter-button span {
-  color: var(--muted-foreground);
-}
-.wallet-adapter-modal-button-close {
-  background: var(--muted);
-  border-radius: 50%;
-  color: var(--foreground);
-}
-.wallet-adapter-modal-button-close:hover {
-  background: var(--accent);
-  color: var(--accent-foreground);
-}
-.wallet-adapter-modal-button-close svg {
-  fill: currentColor;
-}
-.wallet-adapter-modal-collapse-button svg {
-  fill: var(--muted-foreground);
-}
-.wallet-adapter-modal-list-more {
-  background-color: transparent;
-  color: var(--foreground);
-}
-.wallet-adapter-modal-list-more svg {
-  fill: currentColor;
-}
-.wallet-adapter-modal-middle-button {
-  background-color: var(--primary);
-  color: var(--primary-foreground);
-  border: none;
-  border-radius: var(--radius-md);
-  font-weight: 500;
-}
-.wallet-adapter-modal-middle-button:hover {
-  opacity: 0.9;
-}
-
-/* Marquee animations for testimonials */
+/* ─── Animations ─────────────────────────────────────────────── */
 @keyframes marquee-left {
   0% {
     transform: translateX(0);
   }
+
   100% {
     transform: translateX(-50%);
   }
@@ -307,6 +152,7 @@
   0% {
     transform: translateX(-50%);
   }
+
   100% {
     transform: translateX(0);
   }
@@ -318,4 +164,274 @@
 
 .animate-marquee-right {
   animation: marquee-right 40s linear infinite;
+}
+
+/* ─── Gamified Animations ────────────────────────────────────── */
+@keyframes achievement-bounce {
+  0% {
+    transform: scale(0.5) translateY(20px);
+    opacity: 0;
+  }
+
+  50% {
+    transform: scale(1.1) translateY(-8px);
+    opacity: 1;
+  }
+
+  70% {
+    transform: scale(0.95) translateY(2px);
+  }
+
+  100% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-achievement-bounce {
+  animation: achievement-bounce 0.5s ease-out;
+}
+
+@keyframes badge-shake {
+
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+
+  15% {
+    transform: rotate(-12deg);
+  }
+
+  30% {
+    transform: rotate(10deg);
+  }
+
+  45% {
+    transform: rotate(-8deg);
+  }
+
+  60% {
+    transform: rotate(6deg);
+  }
+
+  75% {
+    transform: rotate(-3deg);
+  }
+}
+
+/* ─── Floating Sidebar ───────────────────────────────────────── */
+.floating-sidebar [data-sidebar="sidebar"] {
+  background: rgba(9, 9, 11, 0.85) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(63, 63, 70, 0.6) !important;
+  border-radius: 1rem !important;
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(250, 204, 21, 0.04);
+}
+
+.animate-badge-shake {
+  animation: badge-shake 0.8s ease-in-out;
+}
+
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 3s linear infinite;
+}
+
+/* ─── Pixel Cursor ───────────────────────────────────────────── */
+body {
+  cursor: url('/cursor.png') 0 0, auto;
+}
+
+a,
+button,
+[role="button"],
+input[type="submit"],
+.cursor-pointer,
+[data-slot="button"] {
+  cursor: url('/cursor.png') 0 0, pointer;
+}
+
+/* ─── XP Progress Bar ────────────────────────────────────────── */
+.xp-bar {
+  height: 12px;
+  border-radius: 6px;
+  background: #3f3f46;
+  overflow: hidden;
+  border: 2px solid #52525b;
+}
+
+.xp-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: #facc15;
+  box-shadow: 0 0 8px rgba(250, 204, 21, 0.4);
+  transition: width 0.6s ease-out;
+}
+
+/* ─── Wallet Adapter Theme Override ──────────────────────────── */
+.wallet-adapter-button {
+  background-color: transparent;
+  border: 1px solid var(--border);
+  color: var(--foreground);
+  font-size: 0.875rem;
+  font-weight: 600;
+  height: 2.25rem;
+  padding: 0 1rem;
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease;
+}
+
+.wallet-adapter-button-trigger {
+  background-color: #facc15;
+  color: #000;
+  border: 2px solid #000;
+  font-weight: 700;
+  box-shadow: 2px 2px 0 0 #c69405;
+}
+
+.wallet-adapter-button:not([disabled]):focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.wallet-adapter-button:not([disabled]):hover {
+  background-color: #facc15;
+  color: #000;
+  border-color: #000;
+}
+
+.wallet-adapter-button[disabled] {
+  background-color: var(--muted);
+  color: var(--muted-foreground);
+  border-color: var(--border);
+  cursor: not-allowed;
+}
+
+.wallet-adapter-button-end-icon,
+.wallet-adapter-button-start-icon,
+.wallet-adapter-button-end-icon img,
+.wallet-adapter-button-start-icon img {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.wallet-adapter-button-end-icon {
+  margin-left: 0.5rem;
+}
+
+.wallet-adapter-button-start-icon {
+  margin-right: 0.5rem;
+}
+
+.wallet-adapter-dropdown-list {
+  background: var(--popover);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 10px 38px -10px rgba(0, 0, 0, 0.5);
+  padding: 0.5rem;
+}
+
+.wallet-adapter-dropdown-list-item {
+  color: var(--foreground);
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: var(--radius-md);
+}
+
+.wallet-adapter-dropdown-list-item:not([disabled]):hover {
+  background-color: var(--accent);
+}
+
+.wallet-adapter-modal-overlay {
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+}
+
+.wallet-adapter-modal-wrapper {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.6);
+  color: var(--foreground);
+}
+
+.wallet-adapter-modal-wrapper .wallet-adapter-button {
+  width: 100%;
+  background-color: transparent;
+  border: none;
+  border-radius: var(--radius-md);
+  justify-content: flex-start;
+  height: 2.75rem;
+}
+
+.wallet-adapter-modal-wrapper .wallet-adapter-button:hover {
+  background-color: var(--accent);
+}
+
+.wallet-adapter-modal-title {
+  color: var(--foreground);
+  font-weight: 700;
+  font-size: 1.25rem;
+}
+
+.wallet-adapter-modal-list .wallet-adapter-button {
+  font-size: 1rem;
+  font-weight: 400;
+}
+
+.wallet-adapter-modal-list .wallet-adapter-button span {
+  color: var(--muted-foreground);
+}
+
+.wallet-adapter-modal-button-close {
+  background: var(--muted);
+  border-radius: 50%;
+  color: var(--foreground);
+}
+
+.wallet-adapter-modal-button-close:hover {
+  background: var(--accent);
+}
+
+.wallet-adapter-modal-button-close svg {
+  fill: currentColor;
+}
+
+.wallet-adapter-modal-collapse-button svg {
+  fill: var(--muted-foreground);
+}
+
+.wallet-adapter-modal-list-more {
+  background-color: transparent;
+  color: var(--foreground);
+}
+
+.wallet-adapter-modal-list-more svg {
+  fill: currentColor;
+}
+
+.wallet-adapter-modal-middle-button {
+  background-color: #facc15;
+  color: #000;
+  border: 2px solid #000;
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  box-shadow: 2px 2px 0 0 #c69405;
+}
+
+.wallet-adapter-modal-middle-button:hover {
+  opacity: 0.9;
 }

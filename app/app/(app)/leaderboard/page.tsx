@@ -61,10 +61,10 @@ export default function LeaderboardPage() {
         () =>
             search.trim()
                 ? entries.filter(
-                      (e) =>
-                          e.wallet.toLowerCase().includes(search.toLowerCase()) ||
-                          truncateWallet(e.wallet).toLowerCase().includes(search.toLowerCase())
-                  )
+                    (e) =>
+                        e.wallet.toLowerCase().includes(search.toLowerCase()) ||
+                        truncateWallet(e.wallet).toLowerCase().includes(search.toLowerCase())
+                )
                 : entries,
         [entries, search]
     );
@@ -79,14 +79,47 @@ export default function LeaderboardPage() {
 
     return (
         <div className="flex h-[calc(100vh-6rem)] flex-col justify-center overflow-hidden sm:h-[calc(100vh-7rem)]">
-            <header className="shrink-0 bg-foreground text-background px-6 py-6 sm:px-8 sm:py-8 rounded-lg">
-                <h1 className="text-xl font-bold sm:text-2xl">
+            <header className="shrink-0 bg-zinc-800 px-6 py-6 sm:px-8 sm:py-8 rounded-lg">
+                <h1 className="text-4xl font-game">
                     Talent Leaderboard
                 </h1>
-                <p className="mt-0.5 text-sm text-background/80">
+                <p className="mt-0.5 font-game text-xl text-gray-400">
                     See where you stand amongst Solana&apos;s top contributors
                 </p>
             </header>
+
+            {/* Podium — Top 3 */}
+            {entries.length >= 3 && (
+                <div className="shrink-0 flex items-end justify-center gap-3 py-4">
+                    {/* #2 — Silver */}
+                    <div className="flex flex-col items-center w-28">
+                        <Avatar wallet={entries[1].wallet} />
+                        <p className="font-game text-sm mt-1 truncate w-full text-center">{truncateWallet(entries[1].wallet)}</p>
+                        <p className="font-game text-lg text-gray-400">{entries[1].xp.toLocaleString()} XP</p>
+                        <div className="w-full h-16 bg-zinc-700 border-4 border-gray-400 rounded-t-lg flex items-center justify-center">
+                            <span className="font-game text-2xl text-gray-400">#2</span>
+                        </div>
+                    </div>
+                    {/* #1 — Gold */}
+                    <div className="flex flex-col items-center w-32">
+                        <Avatar wallet={entries[0].wallet} />
+                        <p className="font-game text-sm mt-1 truncate w-full text-center">{truncateWallet(entries[0].wallet)}</p>
+                        <p className="font-game text-lg text-yellow-400">{entries[0].xp.toLocaleString()} XP</p>
+                        <div className="w-full h-24 bg-zinc-700 border-4 border-yellow-400 rounded-t-lg flex items-center justify-center">
+                            <span className="font-game text-3xl text-yellow-400">#1</span>
+                        </div>
+                    </div>
+                    {/* #3 — Bronze */}
+                    <div className="flex flex-col items-center w-28">
+                        <Avatar wallet={entries[2].wallet} />
+                        <p className="font-game text-sm mt-1 truncate w-full text-center">{truncateWallet(entries[2].wallet)}</p>
+                        <p className="font-game text-lg text-orange-400">{entries[2].xp.toLocaleString()} XP</p>
+                        <div className="w-full h-12 bg-zinc-700 border-4 border-orange-400 rounded-t-lg flex items-center justify-center">
+                            <span className="font-game text-2xl text-orange-400">#3</span>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <div className="shrink-0 flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:py-3">
                 <div className="flex gap-1 overflow-x-auto">
@@ -98,10 +131,10 @@ export default function LeaderboardPage() {
                                 setPage(1);
                             }}
                             className={cn(
-                                "shrink-0 rounded-none px-3 py-2 text-sm font-medium transition-colors",
+                                "shrink-0 font-game text-xl px-4 py-1 rounded-2xl border-2 transition-all",
                                 timeframe === value
-                                    ? "border-primary border-b-2 text-primary"
-                                    : "border-transparent text-muted-foreground hover:text-foreground"
+                                    ? "bg-yellow-400 text-black border-black shadow-[2px_2px_0_0_#c69405]"
+                                    : "bg-zinc-800 border-zinc-700 hover:bg-zinc-700"
                             )}
                         >
                             {label}
@@ -133,43 +166,54 @@ export default function LeaderboardPage() {
                     ) : (
                         <div className="h-fit w-full">
                             <Table>
-                            <TableHeader>
-                                <TableRow className="hover:bg-transparent border-b border-border">
-                                    <TableHead className="sticky top-0 z-10 w-20 bg-background px-4 py-3 font-medium">
-                                        Rank
-                                    </TableHead>
-                                    <TableHead className="sticky top-0 z-10 bg-background px-4 py-3 font-medium">
-                                        Name
-                                    </TableHead>
-                                    <TableHead className="sticky top-0 z-10 bg-background px-4 py-3 text-right font-medium">
-                                        XP
-                                    </TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {pageEntries.map((entry) => (
-                                    <TableRow
-                                        key={entry.wallet}
-                                        className="border-b border-border/80 last:border-b-0"
-                                    >
-                                        <TableCell className="px-4 py-2.5 font-medium text-muted-foreground">
-                                            #{entry.rank}
-                                        </TableCell>
-                                        <TableCell className="px-4 py-2.5">
-                                            <div className="flex items-center gap-3">
-                                                <Avatar wallet={entry.wallet} />
-                                                <span className="font-medium text-foreground">
-                                                    {truncateWallet(entry.wallet)}
-                                                </span>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="px-4 py-2.5 text-right font-semibold tabular-nums">
-                                            {entry.xp.toLocaleString()}
-                                        </TableCell>
+                                <TableHeader>
+                                    <TableRow className="hover:bg-transparent border-b border-border">
+                                        <TableHead className="sticky top-0 z-10 w-20 bg-background px-4 py-3 font-game text-xl">
+                                            Rank
+                                        </TableHead>
+                                        <TableHead className="sticky top-0 z-10 bg-background px-4 py-3 font-game text-xl">
+                                            Player
+                                        </TableHead>
+                                        <TableHead className="sticky top-0 z-10 bg-background px-4 py-3 text-right font-game text-xl">
+                                            XP
+                                        </TableHead>
                                     </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
+                                </TableHeader>
+                                <TableBody>
+                                    {pageEntries.map((entry) => {
+                                        const isTop3 = entry.rank <= 3;
+                                        return (
+                                            <TableRow
+                                                key={entry.wallet}
+                                                className={cn(
+                                                    "border-b border-border/80 last:border-b-0",
+                                                    isTop3 && "bg-zinc-800/50"
+                                                )}
+                                            >
+                                                <TableCell className="px-4 py-2.5">
+                                                    <span className={cn(
+                                                        "font-game text-xl",
+                                                        isTop3 ? "text-yellow-400" : "text-gray-500"
+                                                    )}>
+                                                        #{entry.rank}
+                                                    </span>
+                                                </TableCell>
+                                                <TableCell className="px-4 py-2.5">
+                                                    <div className="flex items-center gap-3">
+                                                        <Avatar wallet={entry.wallet} />
+                                                        <span className="font-game text-lg">
+                                                            {truncateWallet(entry.wallet)}
+                                                        </span>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="px-4 py-2.5 text-right font-game text-xl tabular-nums text-yellow-400">
+                                                    {entry.xp.toLocaleString()}
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })}
+                                </TableBody>
+                            </Table>
                         </div>
                     )}
                 </div>
