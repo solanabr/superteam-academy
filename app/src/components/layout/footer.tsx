@@ -28,12 +28,32 @@ const footerLinks = {
 export function Footer() {
   const t = useTranslations("navigation");
   const [email, setEmail] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubscribe = (e: React.FormEvent) => {
+  const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) return;
-    toast.success("Subscribed!", { description: "You'll receive updates about new courses." });
-    setEmail("");
+    if (!email || submitting) return;
+
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/newsletter/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error ?? "Failed to subscribe");
+      }
+
+      toast.success("Subscribed!", { description: "You'll receive updates about new courses." });
+      setEmail("");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to subscribe");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -58,8 +78,8 @@ export function Footer() {
                 required
                 className="flex-1"
               />
-              <Button type="submit" size="sm" className="shrink-0">
-                Subscribe
+              <Button type="submit" size="sm" className="shrink-0" disabled={submitting}>
+                {submitting ? "..." : "Subscribe"}
               </Button>
             </form>
           </div>

@@ -373,7 +373,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error(err.error ?? "Failed to unlink wallet");
     }
 
-    await refreshProfile();
+    // Optimistically clear wallet from local state so UI updates immediately
+    if (profile) {
+      applyProfile({ ...profile, walletAddress: null });
+    }
+
+    // Best-effort full refresh from server
+    await refreshProfile().catch(() => {});
   };
 
   const refreshProfile = async () => {

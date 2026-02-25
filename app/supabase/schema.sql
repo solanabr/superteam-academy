@@ -267,6 +267,14 @@ CREATE POLICY "Users can delete own review"
   TO authenticated
   USING (auth.uid() = user_id);
 
+-- Newsletter subscribers
+CREATE TABLE IF NOT EXISTS public.newsletter_subscribers (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email TEXT NOT NULL UNIQUE,
+  subscribed_at TIMESTAMPTZ DEFAULT NOW(),
+  unsubscribed_at TIMESTAMPTZ
+);
+
 -- Auto-update updated_at
 CREATE OR REPLACE FUNCTION update_updated_at()
 RETURNS TRIGGER AS $$
