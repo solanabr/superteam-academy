@@ -6,6 +6,7 @@ import {
   Play, Lock, Award, BarChart2, ArrowLeft, GraduationCap
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { localePath } from '@/lib/paths';
 
 const L = (obj: Record<string, string>, locale: string) => obj[locale] ?? obj['pt-BR'];
 
@@ -299,7 +300,7 @@ export default async function CourseDetailPage({
       <div className="border-b border-gray-800 bg-gray-900/40 px-4 py-3">
         <div className="mx-auto max-w-6xl">
           <Link
-            href={`/${locale}/cursos`}
+            href={localePath(locale, '/courses')}
             className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-purple-400 transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />

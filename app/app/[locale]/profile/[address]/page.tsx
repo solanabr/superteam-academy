@@ -15,6 +15,7 @@ import {
   BarChart2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { localePath } from '@/lib/paths';
 
 const L = (obj: Record<string, string>, locale: string) => obj[locale] ?? obj['pt-BR'];
 
@@ -370,7 +371,7 @@ export default async function ProfilePage({
             {COURSES_COMPLETED.map((c) => (
               <Link
                 key={c.slug}
-                href={`/${locale}/cursos/${c.slug}`}
+                href={localePath(locale, `/courses/${c.slug}`)}
                 className="flex items-center gap-4 rounded-xl border border-gray-800 bg-gray-900/40 px-4 py-3.5 hover:border-gray-700 transition-all group"
               >
                 <div className={cn('h-9 w-9 shrink-0 rounded-xl bg-gradient-to-br flex items-center justify-center', c.color)}>

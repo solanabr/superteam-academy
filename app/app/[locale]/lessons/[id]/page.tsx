@@ -10,6 +10,7 @@ import {
   BookOpen, ArrowLeft, Play, FileText
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { localePath } from '@/lib/paths';
 
 const L = (obj: Record<string, string>, locale: string) => obj[locale] ?? obj['pt-BR'];
 
@@ -229,7 +230,7 @@ export default function LessonPage() {
       <div className="hidden lg:flex w-72 flex-col border-r border-gray-800 bg-gray-900/60 overflow-y-auto shrink-0">
         <div className="p-4 border-b border-gray-800">
           <Link
-            href={`/${locale}/cursos/intro-solana`}
+            href={localePath(locale, '/courses/intro-solana')}
             className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-purple-400 transition-colors mb-2"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
@@ -457,7 +458,7 @@ console.log(\`Saldo: \${balance / 1e9} SOL\`);`}
               </Link>
             ) : (
               <Link
-                href={`/${locale}/cursos/intro-solana`}
+                href={localePath(locale, '/courses/intro-solana')}
                 className="flex items-center gap-1.5 rounded-xl bg-green-700 px-3 py-2 text-xs font-medium text-white hover:bg-green-600 transition-all"
               >
                 {t('finish')}

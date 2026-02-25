@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useTranslations, useLocale } from 'next-intl';
 import { Home, Search } from 'lucide-react';
+import { localePath } from '@/lib/paths';
 
 export default function NotFound() {
   const t = useTranslations('common');
@@ -27,7 +28,7 @@ export default function NotFound() {
             {t('home')}
           </Link>
           <Link
-            href={`/${locale}/cursos`}
+            href={localePath(locale, '/courses')}
             className="flex items-center gap-2 rounded-lg border border-gray-700 px-6 py-3 text-sm font-medium text-gray-300 transition-colors hover:border-gray-600 hover:text-white"
           >
             <Search className="h-4 w-4" />

@@ -8,6 +8,7 @@ import {
   ArrowRight, Star, CheckCircle, Wallet, ChevronRight, Award
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { localePath } from '@/lib/paths';
 
 const MOCK_COURSES = [
   {
@@ -141,14 +142,14 @@ export default function LandingPage() {
             className="flex flex-col sm:flex-row items-center justify-center gap-4"
           >
             <Link
-              href={`/${locale}/cursos`}
+              href={localePath(locale, '/courses')}
               className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 px-8 py-3.5 text-base font-semibold text-white shadow-lg shadow-purple-900/30 hover:from-purple-500 hover:to-indigo-500 transition-all hover:shadow-purple-800/40 hover:scale-105"
             >
               <BookOpen className="h-5 w-5" />
               {t('explore_courses')}
             </Link>
             <Link
-              href={`/${locale}/painel`}
+              href={localePath(locale, '/dashboard')}
               className="inline-flex items-center gap-2 rounded-xl border border-gray-700 bg-gray-800/50 px-8 py-3.5 text-base font-semibold text-gray-200 hover:bg-gray-700 hover:border-gray-600 transition-all"
             >
               <Wallet className="h-5 w-5" />
@@ -239,7 +240,7 @@ export default function LandingPage() {
               <p className="text-gray-400">{t('most_popular')}</p>
             </div>
             <Link
-              href={`/${locale}/cursos`}
+              href={localePath(locale, '/courses')}
               className="hidden sm:flex items-center gap-1 text-sm font-medium text-purple-400 hover:text-purple-300 transition-colors"
             >
               {t('view_all')} <ChevronRight className="h-4 w-4" />
@@ -256,7 +257,7 @@ export default function LandingPage() {
                 viewport={{ once: true }}
                 variants={fadeUp}
               >
-                <Link href={`/${locale}/cursos/${course.slug}`}>
+                <Link href={localePath(locale, `/courses/${course.slug}`)}>
                   <div className="group relative rounded-2xl border border-gray-800 bg-gray-900 overflow-hidden hover:border-gray-700 transition-all hover:scale-[1.02] hover:shadow-xl hover:shadow-gray-900/50">
                     {/* Card gradient header */}
                     <div className={cn('h-32 bg-gradient-to-br', course.color, 'relative overflow-hidden')}>
@@ -297,7 +298,7 @@ export default function LandingPage() {
 
           <div className="mt-8 text-center sm:hidden">
             <Link
-              href={`/${locale}/cursos`}
+              href={localePath(locale, '/courses')}
               className="inline-flex items-center gap-1 text-sm font-medium text-purple-400 hover:text-purple-300"
             >
               {t('view_all_courses')} <ChevronRight className="h-4 w-4" />
@@ -372,7 +373,7 @@ export default function LandingPage() {
                 {t('cta_subtitle')}
               </p>
               <Link
-                href={`/${locale}/cursos`}
+                href={localePath(locale, '/courses')}
                 className="inline-flex items-center gap-2 rounded-xl bg-white px-8 py-3.5 text-base font-bold text-gray-900 hover:bg-gray-100 transition-all hover:scale-105 shadow-lg"
               >
                 {t('hero_cta')}

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { GraduationCap, Github, Twitter, Globe } from 'lucide-react';
+import { localePath } from '@/lib/paths';
 
 export default function Footer() {
   const locale = useLocale();
@@ -43,13 +44,13 @@ export default function Footer() {
               {tFooter('section_learn')}
             </h3>
             <ul className="space-y-2 text-sm text-gray-400">
-              <li><Link href={`/${locale}/cursos`} className="hover:text-purple-400 transition-colors">{tNav('courses')}</Link></li>
-              <li><Link href={`/${locale}/cursos?level=iniciante`} className="hover:text-purple-400 transition-colors">
+              <li><Link href={localePath(locale, '/courses')} className="hover:text-purple-400 transition-colors">{tNav('courses')}</Link></li>
+              <li><Link href={`${localePath(locale, '/courses')}?level=beginner`} className="hover:text-purple-400 transition-colors">
                 {tFooter('for_beginners')}
               </Link></li>
-              <li><Link href={`/${locale}/cursos?track=DeFi`} className="hover:text-purple-400 transition-colors">DeFi</Link></li>
-              <li><Link href={`/${locale}/cursos?track=NFTs`} className="hover:text-purple-400 transition-colors">NFTs & Metaplex</Link></li>
-              <li><Link href={`/${locale}/cursos?track=Anchor`} className="hover:text-purple-400 transition-colors">Anchor Framework</Link></li>
+              <li><Link href={`${localePath(locale, '/courses')}?track=DeFi`} className="hover:text-purple-400 transition-colors">DeFi</Link></li>
+              <li><Link href={`${localePath(locale, '/courses')}?track=NFTs`} className="hover:text-purple-400 transition-colors">NFTs & Metaplex</Link></li>
+              <li><Link href={`${localePath(locale, '/courses')}?track=Anchor`} className="hover:text-purple-400 transition-colors">Anchor Framework</Link></li>
             </ul>
           </div>
 
@@ -59,7 +60,7 @@ export default function Footer() {
               {tFooter('section_community')}
             </h3>
             <ul className="space-y-2 text-sm text-gray-400">
-              <li><Link href={`/${locale}/classificacao`} className="hover:text-purple-400 transition-colors">{tNav('leaderboard')}</Link></li>
+              <li><Link href={localePath(locale, '/leaderboard')} className="hover:text-purple-400 transition-colors">{tNav('leaderboard')}</Link></li>
               <li><a href="https://superteam.fun/brasil" className="hover:text-purple-400 transition-colors">Superteam Brasil</a></li>
               <li><a href="https://discord.gg/superteambr" className="hover:text-purple-400 transition-colors">Discord</a></li>
               <li><a href="https://twitter.com/SuperteamBR" className="hover:text-purple-400 transition-colors">Twitter / X</a></li>
@@ -72,8 +73,8 @@ export default function Footer() {
               {tFooter('section_platform')}
             </h3>
             <ul className="space-y-2 text-sm text-gray-400">
-              <li><Link href={`/${locale}/painel`} className="hover:text-purple-400 transition-colors">{tNav('dashboard')}</Link></li>
-              <li><Link href={`/${locale}/configuracoes`} className="hover:text-purple-400 transition-colors">{tNav('settings')}</Link></li>
+              <li><Link href={localePath(locale, '/dashboard')} className="hover:text-purple-400 transition-colors">{tNav('dashboard')}</Link></li>
+              <li><Link href={localePath(locale, '/settings')} className="hover:text-purple-400 transition-colors">{tNav('settings')}</Link></li>
               <li><a href="https://solana.com" className="hover:text-purple-400 transition-colors">Solana Network</a></li>
               <li><a href="https://explorer.solana.com" className="hover:text-purple-400 transition-colors">Solana Explorer</a></li>
             </ul>

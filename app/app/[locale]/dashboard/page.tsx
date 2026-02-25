@@ -12,6 +12,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 import { cn } from '@/lib/utils';
+import { localePath } from '@/lib/paths';
 
 const L = (obj: Record<string, string>, locale: string) => obj[locale] ?? obj['pt-BR'];
 
@@ -420,7 +421,7 @@ export default function DashboardPage() {
             </div>
           </div>
           <Link
-            href={`/${locale}/classificacao`}
+            href={localePath(locale, '/leaderboard')}
             className="shrink-0 rounded-xl bg-purple-700 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-600 transition-all"
           >
             {t('view_ranking')}

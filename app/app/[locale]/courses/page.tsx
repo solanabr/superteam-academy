@@ -7,6 +7,7 @@ import {
   Search, BookOpen, Clock, Users, Zap, Star, SlidersHorizontal, X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { localePath } from '@/lib/paths';
 
 const L = (obj: Record<string, string>, locale: string) => obj[locale] ?? obj['pt-BR'];
 
@@ -348,9 +349,7 @@ export default function CoursesPage() {
 
         {/* Results count */}
         <div className="mb-6 text-sm text-gray-500">
-          {filtered.length === MOCK_COURSES.length
-            ? t('available_count', { count: MOCK_COURSES.length })
-            : `${filtered.length} curso${filtered.length !== 1 ? 's' : ''} encontrado${filtered.length !== 1 ? 's' : ''}`}
+          {t('available_count', { count: filtered.length })}
         </div>
 
         {/* Course grid */}
@@ -368,7 +367,7 @@ export default function CoursesPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {filtered.map((course) => (
-              <Link key={course.slug} href={`/${locale}/cursos/${course.slug}`}>
+              <Link key={course.slug} href={localePath(locale, `/courses/${course.slug}`)}>
                 <div className="group relative rounded-2xl border border-gray-800 bg-gray-900 overflow-hidden hover:border-gray-600 transition-all hover:scale-[1.02] hover:shadow-xl hover:shadow-gray-950/50 h-full flex flex-col">
                   {/* Gradient header */}
                   <div className={cn('h-28 bg-gradient-to-br', course.color, 'relative overflow-hidden flex-shrink-0')}>
@@ -403,7 +402,7 @@ export default function CoursesPage() {
                     <div className="grid grid-cols-3 gap-1 text-xs text-gray-500 border-t border-gray-800 pt-3">
                       <div className="flex flex-col items-center gap-0.5">
                         <BookOpen className="h-3.5 w-3.5" />
-                        <span>{course.lessons} aulas</span>
+                        <span>{course.lessons} {t('lessons')}</span>
                       </div>
                       <div className="flex flex-col items-center gap-0.5">
                         <Clock className="h-3.5 w-3.5" />
