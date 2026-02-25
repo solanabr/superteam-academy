@@ -1,8 +1,5 @@
-'use client';
-
 import Link from 'next/link';
-import { useTranslations, useLocale } from 'next-intl';
-import { motion, type Variants } from 'framer-motion';
+import { getTranslations } from 'next-intl/server';
 import {
   GraduationCap, Trophy, Code2, Zap, Users, BookOpen,
   ArrowRight, Star, CheckCircle, Wallet, ChevronRight, Award
@@ -60,25 +57,20 @@ const STEPS = [
   { n: 4, titleKey: 'step4_title' as const, descKey: 'step4_desc' as const, icon: Trophy },
 ];
 
-const fadeUp: Variants = {
-  hidden: { opacity: 0, y: 24 },
-  visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: { delay: i * 0.1, duration: 0.5 },
-  }),
-};
-
 const LEVEL_COLORS: Record<string, string> = {
   Beginner: 'bg-green-900/60 text-green-300 border border-green-700',
   Intermediate: 'bg-yellow-900/60 text-yellow-300 border border-yellow-700',
   Advanced: 'bg-red-900/60 text-red-300 border border-red-700',
 };
 
-export default function LandingPage() {
-  const locale = useLocale();
-  const t = useTranslations('landing');
-  const tc = useTranslations('courses');
+export default async function LandingPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  const t = await getTranslations('landing');
+  const tc = await getTranslations('courses');
 
   const L = (obj: Record<string, string>) => obj[locale] ?? obj['pt-BR'];
 
@@ -99,20 +91,14 @@ export default function LandingPage() {
         </div>
 
         <div className="relative mx-auto max-w-5xl text-center">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
+          <div
             className="mb-6 inline-flex items-center gap-2 rounded-full border border-purple-700 bg-purple-900/30 px-4 py-1.5 text-sm font-medium text-purple-300"
           >
             <Star className="h-3.5 w-3.5 fill-current" />
             {t('official_platform')}
-          </motion.div>
+          </div>
 
-          <motion.h1
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
+          <h1
             className="mb-6 text-5xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight"
           >
             <span className="bg-gradient-to-r from-purple-400 via-indigo-400 to-cyan-400 bg-clip-text text-transparent">
@@ -124,21 +110,15 @@ export default function LandingPage() {
             <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
               {t('onchain')}
             </span>
-          </motion.h1>
+          </h1>
 
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
+          <p
             className="mx-auto mb-10 max-w-2xl text-lg text-gray-400 leading-relaxed"
           >
             {t('hero_subtitle')}
-          </motion.p>
+          </p>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
+          <div
             className="flex flex-col sm:flex-row items-center justify-center gap-4"
           >
             <Link
@@ -150,12 +130,12 @@ export default function LandingPage() {
             </Link>
             <Link
               href={localePath(locale, '/dashboard')}
-              className="inline-flex items-center gap-2 rounded-xl border border-gray-700 bg-gray-800/50 px-8 py-3.5 text-base font-semibold text-gray-200 hover:bg-gray-700 hover:border-gray-600 transition-all"
+              className="inline-flex items-center gap-2 rounded-xl border border-gray-700 bg-gray-800 px-8 py-3.5 text-base font-semibold text-gray-100 hover:bg-gray-700 hover:border-gray-600 transition-all"
             >
               <Wallet className="h-5 w-5" />
               {t('connect_wallet')}
             </Link>
-          </motion.div>
+          </div>
         </div>
       </section>
 
@@ -168,20 +148,15 @@ export default function LandingPage() {
               { value: '24', labelKey: 'stats_courses' as const, icon: BookOpen, color: 'text-indigo-400' },
               { value: '2.1M', labelKey: 'stats_xp' as const, icon: Zap, color: 'text-yellow-400' },
               { value: '847', labelKey: 'stats_nft_creds' as const, icon: Award, color: 'text-green-400' },
-            ].map(({ value, labelKey, icon: Icon, color }, i) => (
-              <motion.div
+            ].map(({ value, labelKey, icon: Icon, color }) => (
+              <div
                 key={labelKey}
-                custom={i}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
-                variants={fadeUp}
                 className="text-center"
               >
                 <Icon className={cn('mx-auto mb-2 h-6 w-6', color)} />
                 <div className="text-3xl font-extrabold text-white">{value}</div>
                 <div className="text-sm text-gray-400">{t(labelKey)}</div>
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>
@@ -190,29 +165,19 @@ export default function LandingPage() {
       {/* Features */}
       <section className="py-24 px-4">
         <div className="mx-auto max-w-6xl">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="mb-14 text-center"
-          >
+          <div className="mb-14 text-center">
             <h2 className="text-4xl font-bold text-white mb-4">
               {t('features_title')}
             </h2>
             <p className="text-gray-400 max-w-xl mx-auto">
               {t('not_just_learning')}
             </p>
-          </motion.div>
+          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {FEATURES.map(({ icon: Icon, titleKey, descKey, color }, i) => (
-              <motion.div
+            {FEATURES.map(({ icon: Icon, titleKey, descKey, color }) => (
+              <div
                 key={titleKey}
-                custom={i}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
-                variants={fadeUp}
                 className="group rounded-2xl border border-gray-800 bg-gray-900/60 p-6 hover:border-gray-700 hover:bg-gray-900 transition-all"
               >
                 <div className={cn('mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br', color)}>
@@ -220,7 +185,7 @@ export default function LandingPage() {
                 </div>
                 <h3 className="mb-2 text-base font-semibold text-white">{t(titleKey)}</h3>
                 <p className="text-sm text-gray-400 leading-relaxed">{t(descKey)}</p>
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>
@@ -229,12 +194,7 @@ export default function LandingPage() {
       {/* Featured courses */}
       <section className="bg-gray-900/40 py-24 px-4">
         <div className="mx-auto max-w-6xl">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="mb-12 flex items-end justify-between"
-          >
+          <div className="mb-12 flex items-end justify-between">
             <div>
               <h2 className="text-4xl font-bold text-white mb-2">{t('featured_courses')}</h2>
               <p className="text-gray-400">{t('most_popular')}</p>
@@ -245,18 +205,11 @@ export default function LandingPage() {
             >
               {t('view_all')} <ChevronRight className="h-4 w-4" />
             </Link>
-          </motion.div>
+          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {MOCK_COURSES.map((course, i) => (
-              <motion.div
-                key={course.slug}
-                custom={i}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
-                variants={fadeUp}
-              >
+            {MOCK_COURSES.map((course) => (
+              <div key={course.slug}>
                 <Link href={localePath(locale, `/courses/${course.slug}`)}>
                   <div className="group relative rounded-2xl border border-gray-800 bg-gray-900 overflow-hidden hover:border-gray-700 transition-all hover:scale-[1.02] hover:shadow-xl hover:shadow-gray-900/50">
                     {/* Card gradient header */}
@@ -292,7 +245,7 @@ export default function LandingPage() {
                     </div>
                   </div>
                 </Link>
-              </motion.div>
+              </div>
             ))}
           </div>
 
@@ -310,29 +263,19 @@ export default function LandingPage() {
       {/* How it works */}
       <section className="py-24 px-4">
         <div className="mx-auto max-w-5xl">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="mb-14 text-center"
-          >
+          <div className="mb-14 text-center">
             <h2 className="text-4xl font-bold text-white mb-4">{t('how_it_works')}</h2>
             <p className="text-gray-400">{t('four_steps')}</p>
-          </motion.div>
+          </div>
 
           <div className="relative">
             {/* Connector line */}
             <div className="absolute top-8 left-8 right-8 hidden lg:block h-0.5 bg-gradient-to-r from-purple-800 via-indigo-800 to-purple-800" />
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              {STEPS.map(({ n, titleKey, descKey, icon: Icon }, i) => (
-                <motion.div
+              {STEPS.map(({ n, titleKey, descKey, icon: Icon }) => (
+                <div
                   key={n}
-                  custom={i}
-                  initial="hidden"
-                  whileInView="visible"
-                  viewport={{ once: true }}
-                  variants={fadeUp}
                   className="relative text-center"
                 >
                   <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border-2 border-purple-700 bg-gray-900 relative z-10">
@@ -343,7 +286,7 @@ export default function LandingPage() {
                   </div>
                   <h3 className="mb-2 text-sm font-semibold text-white">{t(titleKey)}</h3>
                   <p className="text-xs text-gray-400 leading-relaxed">{t(descKey)}</p>
-                </motion.div>
+                </div>
               ))}
             </div>
           </div>
@@ -353,12 +296,7 @@ export default function LandingPage() {
       {/* CTA */}
       <section className="py-20 px-4">
         <div className="mx-auto max-w-3xl">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            className="relative rounded-3xl overflow-hidden"
-          >
+          <div className="relative rounded-3xl overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-purple-900/80 via-indigo-900/80 to-gray-900" />
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-purple-600/20 via-transparent to-transparent" />
             <div className="relative border border-purple-800/50 rounded-3xl p-10 text-center">
@@ -380,7 +318,7 @@ export default function LandingPage() {
                 <ArrowRight className="h-5 w-5" />
               </Link>
             </div>
-          </motion.div>
+          </div>
         </div>
       </section>
     </div>
