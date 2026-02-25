@@ -92,7 +92,7 @@ export function SeasonalEventBanner({ className }: SeasonalEventBannerProps) {
             {/* Dismiss */}
             <button
               onClick={() => setDismissed(true)}
-              className="flex items-center justify-center w-6 h-6 rounded-[2px] text-white/50 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+              className="flex items-center justify-center w-6 h-6 rounded-[2px] text-white/60 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
               aria-label="Dismiss banner"
             >
               <X className="w-3.5 h-3.5" />

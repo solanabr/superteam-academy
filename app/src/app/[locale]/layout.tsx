@@ -24,16 +24,9 @@ export default async function LocaleLayout({
   const messages = await getMessages();
   const t = await getTranslations("nav");
 
-  const htmlLang = locale === "pt-br" ? "pt-BR" : locale;
-
   return (
     <NextIntlClientProvider messages={messages}>
       <AppProviders>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `document.documentElement.lang="${htmlLang}";`,
-          }}
-        />
         <div className="relative min-h-screen">
           <a
             href="#main-content"

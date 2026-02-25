@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import Link from "next/link";
@@ -46,14 +46,6 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
   const [selectedTrack, setSelectedTrack] = useState<Track | "all">("all");
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [hoveredCourse, setHoveredCourse] = useState<string | null>(null);
-  const [mobile, setMobile] = useState(false);
-
-  useEffect(() => {
-    const check = () => setMobile(window.innerWidth < 768);
-    check();
-    window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
-  }, []);
 
   const filtered = courses.filter((course) => {
     const matchesSearch =
@@ -80,11 +72,7 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
       style={{ background: "var(--background)", color: "var(--foreground)" }}
     >
       {/* -- Header -- */}
-      <header
-        style={{
-          padding: mobile ? "100px 20px 24px" : "140px 40px 40px",
-        }}
-      >
+      <header className="cc-header">
         <h1
           className="sa-fade-up sa-fade-d1"
           style={{
@@ -118,9 +106,8 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
 
       {/* -- Search -- */}
       <div
-        className="sa-fade-up sa-fade-d3"
+        className="sa-fade-up sa-fade-d3 cc-search"
         style={{
-          padding: mobile ? "0 20px 12px" : "0 40px 12px",
           opacity: 0,
         }}
       >
@@ -147,9 +134,8 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
 
       {/* -- Filter Pills -- */}
       <div
-        className="sa-fade-up sa-fade-d4"
+        className="sa-fade-up sa-fade-d4 cc-filters"
         style={{
-          padding: mobile ? "16px 20px 0" : "16px 40px 0",
           opacity: 0,
         }}
       >
@@ -272,10 +258,8 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
             return (
               <section
                 key={course.id}
-                className="relative sa-fade-up"
+                className="relative sa-fade-up cc-section"
                 style={{
-                  padding: mobile ? "48px 20px" : "80px 40px",
-                  minHeight: mobile ? "auto" : "50vh",
                   display: "flex",
                   flexDirection: "column" as const,
                   justifyContent: "center",
@@ -293,17 +277,14 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
                 {/* Big background number */}
                 <span
                   aria-hidden="true"
+                  className="cc-bg-num"
                   style={{
                     fontFamily: "var(--font-brand)",
-                    fontSize: mobile
-                      ? "clamp(80px, 22vw, 140px)"
-                      : "clamp(120px, 20vw, 280px)",
                     fontWeight: 900,
                     fontStyle: "italic",
                     lineHeight: 0.8,
                     position: "absolute",
                     top: "50%",
-                    right: mobile ? "16px" : "40px",
                     transform: "translateY(-50%)",
                     opacity: isHovered ? 0.12 : 0.04,
                     pointerEvents: "none",
@@ -334,7 +315,6 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
                       letterSpacing: "3px",
                       textTransform: "uppercase",
                       padding: "4px 0",
-                      opacity: 0.5,
                       color: DIFFICULTY_COLORS[course.difficulty],
                     }}
                   >
@@ -344,7 +324,7 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
                     style={{
                       fontFamily: "var(--font-mono)",
                       fontSize: "9px",
-                      opacity: 0.2,
+                      color: "var(--c-text-muted)",
                     }}
                   >
                     &middot;
@@ -356,7 +336,7 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
                       letterSpacing: "3px",
                       textTransform: "uppercase",
                       padding: "4px 0",
-                      opacity: 0.5,
+                      color: "var(--c-text-muted)",
                     }}
                   >
                     {t("lessonsCount", { count: course.lessonCount })}
@@ -365,7 +345,7 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
                     style={{
                       fontFamily: "var(--font-mono)",
                       fontSize: "9px",
-                      opacity: 0.2,
+                      color: "var(--c-text-muted)",
                     }}
                   >
                     &middot;
@@ -377,7 +357,7 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
                       letterSpacing: "3px",
                       textTransform: "uppercase",
                       padding: "4px 0",
-                      opacity: 0.5,
+                      color: "var(--c-text-muted)",
                     }}
                   >
                     {t("solana")}
@@ -386,7 +366,7 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
                     style={{
                       fontFamily: "var(--font-mono)",
                       fontSize: "9px",
-                      opacity: 0.2,
+                      color: "var(--c-text-muted)",
                     }}
                   >
                     &middot;
@@ -398,7 +378,6 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
                       letterSpacing: "3px",
                       textTransform: "uppercase",
                       padding: "4px 0",
-                      opacity: 0.5,
                       color,
                     }}
                   >
@@ -422,7 +401,7 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
                       fontFamily: "var(--font-brand)",
                       fontSize: 14,
                       fontStyle: "italic",
-                      opacity: 0.3,
+                      opacity: 0.6,
                       flexShrink: 0,
                     }}
                   >
@@ -470,7 +449,7 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
                     fontFamily: "var(--font-sans)",
                     fontSize: 13,
                     fontStyle: "italic",
-                    opacity: 0.4,
+                    opacity: 0.6,
                     marginTop: 8,
                     marginBottom: 0,
                     position: "relative",
@@ -483,6 +462,7 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
 
                 {/* Enter label */}
                 <span
+                  className="cc-enter-label"
                   style={{
                     fontFamily: "var(--font-mono)",
                     fontSize: 10,
@@ -492,12 +472,8 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
                     marginTop: 24,
                     position: "relative",
                     zIndex: 1,
-                    opacity: mobile ? 0.5 : isHovered ? 0.6 : 0,
-                    transform: mobile
-                      ? "translateY(0)"
-                      : isHovered
-                        ? "translateY(0)"
-                        : "translateY(8px)",
+                    opacity: isHovered ? 1 : undefined,
+                    transform: isHovered ? "translateY(0)" : undefined,
                     transition: "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
                     display: "inline-block",
                   }}
@@ -510,8 +486,8 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
         ) : (
           /* Empty state */
           <div
+            className="cc-empty"
             style={{
-              padding: mobile ? "80px 20px" : "120px 40px",
               textAlign: "center",
             }}
           >
@@ -521,7 +497,7 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
                 fontSize: "clamp(24px, 4vw, 48px)",
                 fontWeight: 900,
                 letterSpacing: "-2px",
-                opacity: 0.2,
+                opacity: 0.6,
                 lineHeight: 1.1,
               }}
             >
@@ -531,7 +507,7 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
               style={{
                 fontFamily: "var(--font-sans)",
                 fontSize: 14,
-                opacity: 0.4,
+                opacity: 0.6,
                 marginTop: 16,
               }}
             >

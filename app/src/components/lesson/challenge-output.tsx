@@ -50,7 +50,7 @@ export function ChallengeOutput({
       )}
 
       {!output && !isRunning && testResults.length === 0 && (
-        <span style={{ opacity: 0.35 }}>{t("outputPlaceholder")}</span>
+        <span style={{ opacity: 0.6 }}>{t("outputPlaceholder")}</span>
       )}
     </div>
   );

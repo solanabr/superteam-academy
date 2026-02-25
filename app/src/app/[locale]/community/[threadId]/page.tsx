@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { useWallet } from "@solana/wallet-adapter-react";
+import { useWallet } from "@/lib/wallet/context";
 import { ArrowLeft, Wallet } from "lucide-react";
 import { ThreadDetail } from "@/components/community/thread-detail";
 import { ReplyItem } from "@/components/community/reply-item";

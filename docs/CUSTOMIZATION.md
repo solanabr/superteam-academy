@@ -110,34 +110,85 @@ The navbar and settings language switcher auto-populate from the config, so no a
 
 ### Adding Achievements
 
+#### Step 1: Define the Achievement
+
 Achievements are defined in `app/src/lib/services/courses.ts` in the `achievements` array:
 
 ```typescript
 {
-  id: "new-achievement",
-  name: "Bug Hunter",
-  description: "Report 5 bugs in course content",
-  icon: "shield",       // Lucide icon name
-  xpReward: 200,
-  category: "special",   // learning | streak | social | special
+  id: 'my-new-achievement',
+  name: 'Achievement Name',
+  description: 'How to earn this',
+  category: 'progress' | 'streak' | 'skill' | 'community' | 'special',
+  icon: 'trophy',        // Lucide icon name
+  xpReward: 100,
+  condition: (progress) => {
+    // Return true when achievement should unlock
+    return progress.coursesCompleted >= 5;
+  }
 }
 ```
+
+Available categories: `progress` (course milestones), `streak` (daily consistency), `skill` (track mastery), `community` (social engagement), `special` (events/promotions).
 
 Available icons: trophy, flame, fire, code, users, star, shield, zap, crown, rocket.
 
 The on-chain program supports up to 256 achievements via bitmap.
 
+#### Step 2: Add the On-Chain AchievementType (for production)
+
+The on-chain program uses AchievementType PDAs. Register a new achievement type with supply cap and XP reward:
+
+```typescript
+await program.methods
+  .createAchievementType({
+    achievementId: "my-new-achievement",
+    name: "Achievement Name",
+    uri: "https://arweave.net/<metadata-hash>",
+    xpReward: new BN(100),
+    maxSupply: null, // null = unlimited, or set a cap
+  })
+  .rpc();
+```
+
+Then trigger the `award_achievement` instruction from the backend when the condition is met.
+
+#### Step 3: Add Badge Art
+
+Place the badge SVG/PNG in `public/achievements/` and reference it in the achievement metadata URI uploaded to Arweave.
+
 ### XP Configuration
 
-XP rewards are configurable per course in `courses.ts`:
+#### Per-Course XP Rewards
 
-| Action | Default Range |
-|--------|---------------|
-| Complete lesson | 10-50 XP |
-| Complete challenge | 25-100 XP |
-| Complete course | 500-2,000 XP |
-| Daily streak bonus | 10 XP |
-| First completion of day | 25 XP |
+XP values are configured per course in the CMS or `courses.ts`:
+
+| Action | Default Range | Notes |
+|--------|---------------|-------|
+| `lessonXP` | 10-50 XP | Based on lesson difficulty |
+| `challengeXP` | 25-100 XP | Code challenges award more |
+| `completionXP` | 500-2,000 XP | Full course completion bonus |
+
+#### Level Formula
+
+```
+Level = floor(sqrt(totalXP / 100))
+```
+
+To adjust the curve, modify `calculateLevel()` in `app/src/lib/services/xp.ts`:
+
+- **Steeper curve** (slower leveling): divide by 200 instead of 100
+- **Flatter curve** (faster leveling): divide by 50 instead of 100
+
+#### Streak Bonuses
+
+| Trigger | XP | Configurable in |
+|---------|-----|-----------------|
+| Daily streak bonus | 10 XP | Streak service |
+| First completion of day | 25 XP | Streak service |
+| 7-day milestone | Configurable | Achievement system |
+| 30-day milestone | Configurable | Achievement system |
+| 100-day milestone | Configurable | Achievement system |
 
 ### Streak Milestones
 
@@ -404,7 +455,7 @@ See [CMS_GUIDE.md](CMS_GUIDE.md) for detailed Sanity CMS setup and course creati
 
 ### PostHog
 
-PostHog captures all GA4 events plus automatic page views and session recordings. Configure heatmaps in the PostHog dashboard.
+PostHog captures all GA4 events plus automatic page views. Session recording is enabled by default in `analytics-provider.tsx` with `maskAllInputs: true` (all form inputs are masked for privacy). Elements with `data-mask` attribute are also masked. Configure heatmaps and replay settings in the PostHog dashboard.
 
 ### Sentry
 

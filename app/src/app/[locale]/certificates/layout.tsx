@@ -1,25 +1,36 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 
 const BASE_URL = "https://superteam-academy.vercel.app";
 
-export const metadata: Metadata = {
-  title: "Credentials",
-  description:
-    "View your verifiable on-chain credentials. Bubblegum cNFT certificates earned through Solana development courses.",
-  openGraph: {
-    title: "Credentials | Superteam Academy",
-    description:
-      "View your verifiable on-chain credentials. Bubblegum cNFT certificates earned through Solana development courses.",
-  },
-  alternates: {
-    canonical: `${BASE_URL}/en/certificates`,
-    languages: {
-      en: "/en/certificates",
-      "pt-BR": "/pt-br/certificates",
-      es: "/es/certificates",
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations("metadata");
+  const title = t("credentialsTitle");
+  const description = t("credentialsDescription");
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title: `${title} | Superteam Academy`,
+      description,
     },
-  },
-};
+    alternates: {
+      canonical: `${BASE_URL}/${locale}/certificates`,
+      languages: {
+        en: `${BASE_URL}/en/certificates`,
+        "pt-BR": `${BASE_URL}/pt-br/certificates`,
+        es: `${BASE_URL}/es/certificates`,
+        "x-default": `${BASE_URL}/en/certificates`,
+      },
+    },
+  };
+}
 
 export default function CertificatesLayout({
   children,

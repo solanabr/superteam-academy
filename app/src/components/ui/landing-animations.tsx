@@ -126,6 +126,51 @@ export function CustomCursor() {
   );
 }
 
+// ─── SOLANA LOGO FORMATION POINTS ───────────────────────────
+function getLogoOffsets(canvasWidth: number) {
+  const offsets: { offsetX: number; offsetY: number }[] = [];
+  const scale = Math.min(1, canvasWidth / 1400);
+  const W = 160 * scale;
+  const H = 26 * scale;
+  const S = 35 * scale;
+  const G = 16 * scale;
+
+  function addLine(
+    x1: number, y1: number, x2: number, y2: number, count: number,
+  ) {
+    for (let i = 0; i < count; i++) {
+      const t = count <= 1 ? 0.5 : i / (count - 1);
+      offsets.push({
+        offsetX: x1 + (x2 - x1) * t,
+        offsetY: y1 + (y2 - y1) * t,
+      });
+    }
+  }
+
+  // Top bar (right slant: top edge shifted right)
+  const cy0 = -H - G;
+  addLine(-W / 2, cy0 + H / 2, W / 2, cy0 + H / 2, 16);
+  addLine(-W / 2 + S, cy0 - H / 2, W / 2 + S, cy0 - H / 2, 16);
+  addLine(-W / 2, cy0 + H / 2, -W / 2 + S, cy0 - H / 2, 4);
+  addLine(W / 2, cy0 + H / 2, W / 2 + S, cy0 - H / 2, 4);
+
+  // Middle bar (left slant: bottom edge shifted right)
+  const cy1 = 0;
+  addLine(-W / 2 + S, cy1 + H / 2, W / 2 + S, cy1 + H / 2, 16);
+  addLine(-W / 2, cy1 - H / 2, W / 2, cy1 - H / 2, 16);
+  addLine(-W / 2 + S, cy1 + H / 2, -W / 2, cy1 - H / 2, 4);
+  addLine(W / 2 + S, cy1 + H / 2, W / 2, cy1 - H / 2, 4);
+
+  // Bottom bar (right slant)
+  const cy2 = H + G;
+  addLine(-W / 2, cy2 + H / 2, W / 2, cy2 + H / 2, 16);
+  addLine(-W / 2 + S, cy2 - H / 2, W / 2 + S, cy2 - H / 2, 16);
+  addLine(-W / 2, cy2 + H / 2, -W / 2 + S, cy2 - H / 2, 4);
+  addLine(W / 2, cy2 + H / 2, W / 2 + S, cy2 - H / 2, 4);
+
+  return offsets;
+}
+
 // ─── CONSTELLATION CANVAS ───────────────────────────────────
 export function ConstellationCanvas() {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -138,7 +183,7 @@ export function ConstellationCanvas() {
     if (!ctx) return;
     const dpr = window.devicePixelRatio || 1;
 
-    let w: number, h: number;
+    let w = 0, h = 0;
     const resize = () => {
       const r = canvas.getBoundingClientRect();
       w = r.width;
@@ -169,6 +214,52 @@ export function ConstellationCanvas() {
       baseA: 0.15 + Math.random() * 0.4,
       pulse: Math.random() * Math.PI * 2,
     }));
+
+    // Solana logo formation particles (separate layer, no interaction with bg nodes)
+    const logoOffsets = getLogoOffsets(w);
+    const logoParticles = logoOffsets.map((off) => ({
+      x: Math.random() * 1600,
+      y: Math.random() * 900,
+      vx: (Math.random() - 0.5) * 2,
+      vy: (Math.random() - 0.5) * 2,
+      radius: Math.random() * 1.5 + 1.2,
+      offsetX: off.offsetX,
+      offsetY: off.offsetY,
+    }));
+    const formationStart = performance.now();
+    let disbanded = false;
+
+    function drawCrispBars(
+      c: CanvasRenderingContext2D, cx: number, cy: number, opacity: number,
+    ) {
+      const s = Math.min(1, w / 1400);
+      const bW = 160 * s, bH = 26 * s, bS = 35 * s, bG = 16 * s;
+      c.fillStyle = `rgba(20, 241, 149, ${opacity * 0.1})`;
+      c.strokeStyle = `rgba(20, 241, 149, ${opacity * 0.6})`;
+      c.lineWidth = 1.5;
+
+      function poly(yOff: number, rightSlant: boolean) {
+        c.beginPath();
+        if (rightSlant) {
+          c.moveTo(cx - bW / 2 + bS, cy + yOff - bH / 2);
+          c.lineTo(cx + bW / 2 + bS, cy + yOff - bH / 2);
+          c.lineTo(cx + bW / 2, cy + yOff + bH / 2);
+          c.lineTo(cx - bW / 2, cy + yOff + bH / 2);
+        } else {
+          c.moveTo(cx - bW / 2, cy + yOff - bH / 2);
+          c.lineTo(cx + bW / 2, cy + yOff - bH / 2);
+          c.lineTo(cx + bW / 2 + bS, cy + yOff + bH / 2);
+          c.lineTo(cx - bW / 2 + bS, cy + yOff + bH / 2);
+        }
+        c.closePath();
+        c.fill();
+        c.stroke();
+      }
+
+      poly(-bH - bG, true);
+      poly(0, false);
+      poly(bH + bG, true);
+    }
 
     let raf: number;
     const draw = () => {
@@ -238,6 +329,67 @@ export function ConstellationCanvas() {
         grd.addColorStop(1, "rgba(0, 210, 130, 0)");
         ctx.fillStyle = grd;
         ctx.fillRect(0, 0, w, h);
+      }
+
+      // --- Solana logo formation overlay ---
+      const now = performance.now();
+      const elapsed = now - formationStart;
+
+      let progress = 0;
+      if (elapsed > 500 && elapsed <= 3500) {
+        progress = (elapsed - 500) / 3000;
+      } else if (elapsed > 3500 && elapsed <= 7500) {
+        progress = 1;
+      } else if (elapsed > 7500 && elapsed <= 9000) {
+        progress = 1 - (elapsed - 7500) / 1500;
+        if (!disbanded) {
+          disbanded = true;
+          for (const lp of logoParticles) {
+            lp.vx += (Math.random() - 0.5) * 12;
+            lp.vy += (Math.random() - 0.5) * 12;
+          }
+        }
+      }
+
+      let ease = Math.max(0, Math.min(1, progress));
+      ease = ease * ease * (3 - 2 * ease); // smoothstep
+
+      const mobile = w < 768;
+      const baseCx = mobile ? w * 0.5 : w * 0.75;
+      const baseCy = mobile ? h * 0.25 : h * 0.45;
+      const logoCx = baseCx + Math.sin(now * 0.001) * 15;
+      const logoCy = baseCy + Math.cos(now * 0.0008) * 15;
+
+      if (ease > 0) drawCrispBars(ctx, logoCx, logoCy, ease);
+
+      // Fade logo particles out after disband so they don't linger
+      const fadeAlpha =
+        elapsed > 9000 ? Math.max(0, 1 - (elapsed - 9000) / 2000) : 1;
+
+      if (fadeAlpha > 0) {
+        for (const lp of logoParticles) {
+          const tx = logoCx + lp.offsetX;
+          const ty = logoCy + lp.offsetY;
+          const spring = disbanded ? 0 : 0.05 * ease;
+
+          lp.vx +=
+            (tx - lp.x) * spring +
+            (Math.random() - 0.5) * 0.2 * (1 - ease);
+          lp.vy +=
+            (ty - lp.y) * spring +
+            (Math.random() - 0.5) * 0.2 * (1 - ease);
+
+          const friction = disbanded ? 0.99 : 0.99 - 0.24 * ease;
+          lp.vx *= friction;
+          lp.vy *= friction;
+          lp.x += lp.vx;
+          lp.y += lp.vy;
+
+          ctx.beginPath();
+          ctx.arc(lp.x, lp.y, lp.radius, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(20, 241, 149, ${(0.4 + ease * 0.6) * fadeAlpha})`;
+          ctx.fill();
+        }
       }
 
       raf = requestAnimationFrame(draw);

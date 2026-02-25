@@ -47,9 +47,10 @@ export async function generateMetadata({
     alternates: {
       canonical: `${BASE_URL}/${locale}/courses/${slug}`,
       languages: {
-        en: `/en/courses/${slug}`,
-        "pt-BR": `/pt-br/courses/${slug}`,
-        es: `/es/courses/${slug}`,
+        en: `${BASE_URL}/en/courses/${slug}`,
+        "pt-BR": `${BASE_URL}/pt-br/courses/${slug}`,
+        es: `${BASE_URL}/es/courses/${slug}`,
+        "x-default": `${BASE_URL}/en/courses/${slug}`,
       },
     },
   };

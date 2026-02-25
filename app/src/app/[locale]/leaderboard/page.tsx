@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useWallet } from "@solana/wallet-adapter-react";
+import { useWallet } from "@/lib/wallet/context";
 import { getLeaderboard } from "@/lib/services/leaderboard";
 import { getDemoEntries } from "@/lib/services/leaderboard-demo";
 import type { LeaderboardEntry } from "@/lib/services/types";
@@ -74,14 +74,6 @@ export default function LeaderboardPage() {
   const [snapshotUnavailable, setSnapshotUnavailable] = useState(false);
   const [expandedLeader, setExpandedLeader] = useState<number | null>(null);
   const [hoveredEntry, setHoveredEntry] = useState<number | null>(null);
-  const [mobile, setMobile] = useState(false);
-  useEffect(() => {
-    const check = () => setMobile(window.innerWidth < 768);
-    check();
-    window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
-  }, []);
-
   const filteredEntries = useMemo(
     () => filterByTrack(entries, selectedTrack),
     [entries, selectedTrack],
@@ -129,46 +121,46 @@ export default function LeaderboardPage() {
   ];
 
   return (
-    <div style={{ background: "var(--background)", color: "var(--foreground)" }}>
-      {/* Demo banner */}
-      {isDemo && !loading && (
-        <div
-          style={{
-            fontFamily: "var(--font-mono)",
-            fontSize: "10px",
-            letterSpacing: "2px",
-            color: "var(--c-text-muted)",
-            textAlign: "center",
-            padding: mobile ? "12px 20px" : "12px 40px",
-            textTransform: "uppercase",
-          }}
-        >
-          {t("demoBanner")}
-        </div>
-      )}
+    <div style={{ background: "var(--background)", color: "var(--foreground)", contain: "layout style" }}>
+      {/* Demo banner — collapses to zero height when inactive to avoid CLS */}
+      <div
+        style={{
+          fontFamily: "var(--font-mono)",
+          fontSize: "10px",
+          letterSpacing: "2px",
+          color: "var(--c-text-muted)",
+          textAlign: "center",
+          textTransform: "uppercase",
+          visibility: isDemo && !loading ? "visible" : "hidden",
+          height: isDemo && !loading ? "auto" : 0,
+          padding: isDemo && !loading ? undefined : 0,
+          overflow: "hidden",
+        }}
+      >
+        {t("demoBanner")}
+      </div>
 
-      {/* Snapshot data unavailable notice for weekly/monthly */}
-      {snapshotUnavailable && !loading && (
-        <div
-          style={{
-            fontFamily: "var(--font-mono)",
-            fontSize: "10px",
-            letterSpacing: "2px",
-            color: "var(--xp)",
-            textAlign: "center",
-            padding: mobile ? "12px 20px" : "12px 40px",
-            textTransform: "uppercase",
-            borderBottom: "1px solid var(--c-border-subtle)",
-          }}
-        >
-          {t("snapshotUnavailable")}
-        </div>
-      )}
+      {/* Snapshot data unavailable notice — uses visibility to avoid CLS */}
+      <div
+        style={{
+          fontFamily: "var(--font-mono)",
+          fontSize: "10px",
+          letterSpacing: "2px",
+          color: "var(--xp)",
+          textAlign: "center",
+          textTransform: "uppercase",
+          borderBottom: snapshotUnavailable && !loading ? "1px solid var(--c-border-subtle)" : "none",
+          visibility: snapshotUnavailable && !loading ? "visible" : "hidden",
+          height: snapshotUnavailable && !loading ? "auto" : 0,
+          padding: snapshotUnavailable && !loading ? undefined : 0,
+          overflow: "hidden",
+        }}
+      >
+        {t("snapshotUnavailable")}
+      </div>
 
       {/* Header */}
-      <header
-        style={{ padding: mobile ? "100px 20px 24px" : "140px 40px 40px" }}
-      >
+      <header className="lb-header">
         <h1
           className="sa-fade-up sa-fade-d1"
           style={{
@@ -201,14 +193,7 @@ export default function LeaderboardPage() {
       </header>
 
       {/* Time filter */}
-      <div
-        style={{
-          padding: mobile ? "0 20px 32px" : "0 40px 48px",
-          display: "flex",
-          gap: mobile ? "16px" : "24px",
-          alignItems: "center",
-        }}
-      >
+      <div className="lb-filters">
         {timeFilters.map((filter) => (
           <button
             key={filter.key}
@@ -313,26 +298,57 @@ export default function LeaderboardPage() {
         </div>
       </div>
 
-      {/* Loading state */}
+      {/* Loading state — skeleton entries match loaded layout to prevent CLS */}
       {loading ? (
-        <div
-          style={{
-            fontFamily: "var(--font-mono)",
-            fontSize: "11px",
-            letterSpacing: "3px",
-            textTransform: "uppercase",
-            color: "var(--c-text-muted)",
-            textAlign: "center",
-            padding: mobile ? "80px 20px" : "160px 40px",
-            animation: "sa-fade-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards",
-          }}
-        >
-          {t("loading")}
+        <div style={{ minHeight: "60vh" }}>
+          {Array.from({ length: 10 }).map((_, i) => (
+            <div
+              key={i}
+              className="lb-entry"
+              style={{
+                borderTop: "1px solid var(--c-border-subtle)",
+                display: "flex",
+                alignItems: "baseline",
+                gap: "24px",
+              }}
+            >
+              <div
+                className="animate-pulse"
+                style={{
+                  width: 20,
+                  height: 16,
+                  background: "var(--c-bg-elevated)",
+                  borderRadius: 2,
+                  flexShrink: 0,
+                }}
+              />
+              <div
+                className="animate-pulse"
+                style={{
+                  width: `${140 + (i % 4) * 30}px`,
+                  height: 32,
+                  background: "var(--c-bg-elevated)",
+                  borderRadius: 2,
+                }}
+              />
+              <div
+                className="animate-pulse"
+                style={{
+                  width: 64,
+                  height: 24,
+                  background: "var(--c-bg-elevated)",
+                  borderRadius: 2,
+                  marginLeft: "auto",
+                  flexShrink: 0,
+                }}
+              />
+            </div>
+          ))}
         </div>
       ) : (
         <>
           {/* Leader entries */}
-          <div aria-live="polite" aria-atomic="false">
+          <div aria-live="polite" aria-atomic="false" style={{ minHeight: "60vh" }}>
             {filteredEntries.map((entry, i) => {
               const isExpanded = expandedLeader === entry.rank;
               const isHovered = hoveredEntry === entry.rank;
@@ -342,30 +358,21 @@ export default function LeaderboardPage() {
               return (
                 <div
                   key={entry.rank}
-                  className="sa-fade-up"
+                  className={`sa-fade-up ${isExpanded ? "lb-entry-expanded" : "lb-entry"}`}
                   style={{
                     position: "relative",
-                    padding: isExpanded
-                      ? mobile
-                        ? "60px 20px"
-                        : "60px 40px"
-                      : mobile
-                        ? "40px 20px"
-                        : "40px 40px",
                     borderTop: "1px solid var(--c-border-subtle)",
                     cursor: "pointer",
-                    transition: "all 0.5s cubic-bezier(0.16, 1, 0.3, 1)",
+                    transition: "background 0.5s cubic-bezier(0.16, 1, 0.3, 1), padding 0.5s cubic-bezier(0.16, 1, 0.3, 1)",
                     overflow: "hidden",
+                    contain: "layout style",
                     background: isExpanded
                       ? "var(--c-bg-card)"
                       : isHovered
                         ? "var(--c-bg-elevated)"
                         : "transparent",
-                    color: isExpanded
-                      ? "var(--foreground)"
-                      : "var(--foreground)",
+                    color: "var(--foreground)",
                     animationDelay: `${0.15 + i * 0.06}s`,
-                    opacity: 0,
                   }}
                   onClick={() =>
                     setExpandedLeader(isExpanded ? null : entry.rank)
@@ -395,15 +402,12 @@ export default function LeaderboardPage() {
 
                   {/* Background rank number */}
                   <span
+                    className="lb-rank-bg"
                     style={{
                       position: "absolute",
-                      right: mobile ? "16px" : "40px",
                       top: "50%",
                       transform: "translateY(-50%)",
                       fontFamily: "var(--font-brand)",
-                      fontSize: mobile
-                        ? "clamp(60px, 20vw, 120px)"
-                        : "clamp(100px, 18vw, 240px)",
                       fontWeight: 900,
                       fontStyle: "italic",
                       opacity: isExpanded
@@ -424,10 +428,10 @@ export default function LeaderboardPage() {
 
                   {/* Top row */}
                   <div
+                    className="lb-entry-row"
                     style={{
                       display: "flex",
                       alignItems: "baseline",
-                      gap: mobile ? "12px" : "24px",
                       position: "relative",
                       zIndex: 2,
                     }}
@@ -438,7 +442,7 @@ export default function LeaderboardPage() {
                         fontFamily: "var(--font-brand)",
                         fontSize: "14px",
                         fontStyle: "italic",
-                        opacity: 0.3,
+                        opacity: 0.6,
                         flexShrink: 0,
                       }}
                     >
@@ -447,16 +451,13 @@ export default function LeaderboardPage() {
 
                     {/* Name */}
                     <span
+                      className="lb-entry-name"
                       style={{
                         fontFamily: "var(--font-brand)",
-                        fontSize: mobile
-                          ? "clamp(18px, 5vw, 28px)"
-                          : "clamp(24px, 4vw, 52px)",
                         fontWeight: 900,
                         letterSpacing: isHovered && !isExpanded ? "1px" : "-1.5px",
                         lineHeight: 1,
                         transition: "letter-spacing 0.5s cubic-bezier(0.16, 1, 0.3, 1)",
-                        flexShrink: mobile ? 1 : 0,
                         minWidth: 0,
                         overflow: "hidden",
                         textOverflow: "ellipsis",
@@ -473,7 +474,7 @@ export default function LeaderboardPage() {
                         fontFamily: "var(--font-mono)",
                         fontSize: "11px",
                         letterSpacing: "1px",
-                        opacity: 0.3,
+                        opacity: 0.6,
                         flexShrink: 0,
                       }}
                     >
@@ -482,9 +483,9 @@ export default function LeaderboardPage() {
 
                     {/* XP (right-aligned) */}
                     <span
+                      className="lb-entry-xp"
                       style={{
                         fontFamily: "var(--font-brand)",
-                        fontSize: mobile ? "20px" : "28px",
                         fontWeight: 200,
                         letterSpacing: "-1px",
                         marginLeft: "auto",
@@ -498,7 +499,7 @@ export default function LeaderboardPage() {
                         style={{
                           fontSize: "12px",
                           fontWeight: 400,
-                          opacity: 0.4,
+                          opacity: 0.6,
                           marginLeft: "2px",
                         }}
                       >
@@ -511,10 +512,9 @@ export default function LeaderboardPage() {
                   {isExpanded && (
                     <div style={{ position: "relative", zIndex: 2 }}>
                       <div
+                        className="lb-expanded-stats"
                         style={{
                           display: "flex",
-                          gap: mobile ? "24px" : "48px",
-                          marginTop: mobile ? "20px" : "32px",
                           flexWrap: "wrap",
                         }}
                       >
@@ -540,7 +540,7 @@ export default function LeaderboardPage() {
                               fontSize: "9px",
                               letterSpacing: "3px",
                               textTransform: "uppercase",
-                              opacity: 0.3,
+                              opacity: 0.6,
                               marginTop: "4px",
                             }}
                           >
@@ -570,7 +570,7 @@ export default function LeaderboardPage() {
                               fontSize: "9px",
                               letterSpacing: "3px",
                               textTransform: "uppercase",
-                              opacity: 0.3,
+                              opacity: 0.6,
                               marginTop: "4px",
                             }}
                           >
@@ -600,7 +600,7 @@ export default function LeaderboardPage() {
                               fontSize: "9px",
                               letterSpacing: "3px",
                               textTransform: "uppercase",
-                              opacity: 0.3,
+                              opacity: 0.6,
                               marginTop: "4px",
                             }}
                           >
@@ -646,8 +646,8 @@ export default function LeaderboardPage() {
 
           {/* Your position summary */}
           <div
+            className="lb-position"
             style={{
-              padding: mobile ? "48px 20px" : "80px 40px",
               textAlign: "center",
               borderTop: "1px solid var(--c-border-subtle)",
             }}

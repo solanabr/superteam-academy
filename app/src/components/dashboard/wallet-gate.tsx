@@ -1,8 +1,7 @@
 "use client";
 
 import { type ReactNode, useState, useEffect, useRef, useCallback } from "react";
-import { useWallet } from "@solana/wallet-adapter-react";
-import { useWalletModal } from "@solana/wallet-adapter-react-ui";
+import { useWallet } from "@/lib/wallet/context";
 import { useTranslations } from "next-intl";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { Lock, ShieldCheck } from "lucide-react";
@@ -15,7 +14,6 @@ interface WalletGateProps {
 
 export function WalletGate({ children }: WalletGateProps) {
   const { connected, connecting } = useWallet();
-  const { setVisible } = useWalletModal();
   const t = useTranslations("dashboard.walletGate");
   const [gate, setGate] = useState<GateState>("sealed");
   const [isMobile, setIsMobile] = useState(false);
@@ -60,7 +58,8 @@ export function WalletGate({ children }: WalletGateProps) {
     };
   }, [gate, trapFocus]);
 
-  // Detect mobile
+  // Detect mobile — only used for framer-motion animation direction,
+  // NOT for panel positioning (that's CSS-driven to prevent CLS)
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 768px)");
     setIsMobile(mq.matches);
@@ -98,7 +97,6 @@ export function WalletGate({ children }: WalletGateProps) {
     } else if (connected && (gate === "sealed" || gate === "connecting")) {
       setGate("opening");
     } else if (!connected && gate === null) {
-      // Wallet disconnected mid-session
       setGate("sealed");
     }
   }, [connected, connecting, gate]);
@@ -110,15 +108,11 @@ export function WalletGate({ children }: WalletGateProps) {
     return () => clearTimeout(timer);
   }, [gate]);
 
-  // Gate is fully open — render children directly
-  if (gate === null) {
-    return <>{children}</>;
-  }
-
   const isConnecting = gate === "connecting";
   const isOpening = gate === "opening";
 
-  // Panel animation variants
+  // Panel animation variants — isMobile only affects animation DIRECTION
+  // (the opening slide), not initial positioning (which is pure CSS)
   const panelTransition = prefersReducedMotion
     ? { duration: 0 }
     : { duration: 1.2, ease: [0.16, 1, 0.3, 1] as const };
@@ -136,10 +130,7 @@ export function WalletGate({ children }: WalletGateProps) {
 
   return (
     <>
-      {/* Hidden content for accessibility */}
-      <div aria-hidden={gate !== null} style={{ display: "none" }}>
-        {children}
-      </div>
+      {children}
 
       <AnimatePresence>
         {gate !== null && (
@@ -155,18 +146,12 @@ export function WalletGate({ children }: WalletGateProps) {
               overflow: "hidden",
             }}
           >
-            {/* Left / Top Panel */}
+            {/* Left / Top Panel — positioned via CSS class (globals.css) */}
             <motion.div
+              className="gate-panel-left"
               initial={false}
               animate={leftPanel[animState]}
               transition={panelTransition}
-              style={{
-                position: "absolute",
-                background: "var(--overlay-bg)",
-                ...(isMobile
-                  ? { top: 0, left: 0, right: 0, height: "50%" }
-                  : { top: 0, left: 0, bottom: 0, width: "50%" }),
-              }}
             >
               {/* Corner brackets */}
               <div
@@ -191,41 +176,16 @@ export function WalletGate({ children }: WalletGateProps) {
                   borderLeft: "1px solid var(--overlay-border)",
                 }}
               />
-              {/* Dashed line */}
-              <div
-                style={{
-                  position: "absolute",
-                  ...(isMobile
-                    ? {
-                        bottom: 0,
-                        left: "10%",
-                        right: "10%",
-                        height: 0,
-                        borderBottom: "1px dashed var(--overlay-divider)",
-                      }
-                    : {
-                        top: "10%",
-                        bottom: "10%",
-                        right: 0,
-                        width: 0,
-                        borderRight: "1px dashed var(--overlay-divider)",
-                      }),
-                }}
-              />
+              {/* Dashed line — positioned via CSS class */}
+              <div className="gate-dashed-left" />
             </motion.div>
 
-            {/* Right / Bottom Panel */}
+            {/* Right / Bottom Panel — positioned via CSS class (globals.css) */}
             <motion.div
+              className="gate-panel-right"
               initial={false}
               animate={rightPanel[animState]}
               transition={panelTransition}
-              style={{
-                position: "absolute",
-                background: "var(--overlay-bg)",
-                ...(isMobile
-                  ? { bottom: 0, left: 0, right: 0, height: "50%" }
-                  : { top: 0, right: 0, bottom: 0, width: "50%" }),
-              }}
             >
               {/* Corner brackets */}
               <div
@@ -250,27 +210,8 @@ export function WalletGate({ children }: WalletGateProps) {
                   borderRight: "1px solid var(--overlay-border)",
                 }}
               />
-              {/* Dashed line */}
-              <div
-                style={{
-                  position: "absolute",
-                  ...(isMobile
-                    ? {
-                        top: 0,
-                        left: "10%",
-                        right: "10%",
-                        height: 0,
-                        borderTop: "1px dashed var(--overlay-divider)",
-                      }
-                    : {
-                        top: "10%",
-                        bottom: "10%",
-                        left: 0,
-                        width: 0,
-                        borderLeft: "1px dashed var(--overlay-divider)",
-                      }),
-                }}
-              />
+              {/* Dashed line — positioned via CSS class */}
+              <div className="gate-dashed-right" />
             </motion.div>
 
             {/* Scan line */}
@@ -388,7 +329,7 @@ export function WalletGate({ children }: WalletGateProps) {
 
               {/* Connect button */}
               <button
-                onClick={() => setVisible(true)}
+                onClick={() => window.dispatchEvent(new Event("open-wallet-gateway"))}
                 disabled={isConnecting}
                 aria-busy={isConnecting}
                 style={{
@@ -420,7 +361,7 @@ export function WalletGate({ children }: WalletGateProps) {
                   fontFamily: "var(--font-mono)",
                   fontSize: "9px",
                   letterSpacing: "2px",
-                  color: "var(--c-text-faint)",
+                  color: "var(--c-text-dim)",
                   marginTop: 16,
                 }}
               >

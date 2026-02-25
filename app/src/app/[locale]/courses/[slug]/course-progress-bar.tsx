@@ -1,6 +1,6 @@
 "use client";
 
-import { useWallet } from "@solana/wallet-adapter-react";
+import { useWallet } from "@/lib/wallet/context";
 import { useEnrollment, countCompletedLessons } from "@/lib/hooks/use-enrollment";
 import { courses } from "@/lib/services/courses";
 

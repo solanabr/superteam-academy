@@ -1,25 +1,36 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 
 const BASE_URL = "https://superteam-academy.vercel.app";
 
-export const metadata: Metadata = {
-  title: "Leaderboard",
-  description:
-    "See the top Solana developers ranked by XP. Compete with other learners and climb the leaderboard.",
-  openGraph: {
-    title: "Leaderboard | Superteam Academy",
-    description:
-      "See the top Solana developers ranked by XP. Compete with other learners and climb the leaderboard.",
-  },
-  alternates: {
-    canonical: `${BASE_URL}/en/leaderboard`,
-    languages: {
-      en: "/en/leaderboard",
-      "pt-BR": "/pt-br/leaderboard",
-      es: "/es/leaderboard",
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations("metadata");
+  const title = t("leaderboardTitle");
+  const description = t("leaderboardDescription");
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title: `${title} | Superteam Academy`,
+      description,
     },
-  },
-};
+    alternates: {
+      canonical: `${BASE_URL}/${locale}/leaderboard`,
+      languages: {
+        en: `${BASE_URL}/en/leaderboard`,
+        "pt-BR": `${BASE_URL}/pt-br/leaderboard`,
+        es: `${BASE_URL}/es/leaderboard`,
+        "x-default": `${BASE_URL}/en/leaderboard`,
+      },
+    },
+  };
+}
 
 export default function LeaderboardLayout({
   children,

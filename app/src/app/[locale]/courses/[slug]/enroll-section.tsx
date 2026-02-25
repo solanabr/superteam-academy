@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useWallet } from "@solana/wallet-adapter-react";
+import { useWallet } from "@/lib/wallet/context";
 import { useProgram } from "@/lib/hooks/use-program";
 import { useEnrollment } from "@/lib/hooks/use-enrollment";
 import { enroll } from "@/lib/solana/transactions";

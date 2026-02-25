@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
-import { useWallet } from "@solana/wallet-adapter-react";
+import { useWallet } from "@/lib/wallet/context";
 import { learningService } from "@/lib/services/learning-progress";
 import { XPToast } from "@/components/gamification/xp-toast";
 import { V9LessonSidebar } from "./lesson-sidebar";

@@ -4,8 +4,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { AnimatePresence, motion } from "framer-motion";
 import { Award, Loader2, Wallet } from "lucide-react";
-import { useWallet } from "@solana/wallet-adapter-react";
-import { useWalletModal } from "@solana/wallet-adapter-react-ui";
+import { useWallet } from "@/lib/wallet/context";
 import { useEffect, useRef, useCallback } from "react";
 
 export function CourseCompleteOverlay({
@@ -26,7 +25,6 @@ export function CourseCompleteOverlay({
   const t = useTranslations("lesson");
   const router = useRouter();
   const { connected } = useWallet();
-  const { setVisible } = useWalletModal();
   const dialogRef = useRef<HTMLDivElement>(null);
   const previousFocus = useRef<HTMLElement | null>(null);
 
@@ -260,7 +258,7 @@ export function CourseCompleteOverlay({
                 </p>
               </div>
               <button
-                onClick={() => setVisible(true)}
+                onClick={() => window.dispatchEvent(new Event("open-wallet-gateway"))}
                 style={{
                   width: "100%",
                   display: "flex",

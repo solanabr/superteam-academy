@@ -6,44 +6,9 @@
    + Academy gamification accents
    ============================================================ */
 
-/* Diatype — Solana Foundation brand font (headings) */
-@font-face {
-  font-family: "Diatype";
-  src: url("../fonts/diatype/ABCDiatype-Regular.woff2") format("woff2");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Diatype";
-  src: url("../fonts/diatype/ABCDiatype-Medium.woff2") format("woff2");
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Diatype";
-  src: url("../fonts/diatype/ABCDiatype-Bold.woff2") format("woff2");
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-
-/* DSemi — Solana Foundation semi-mono (stats, numbers) */
-@font-face {
-  font-family: "DSemi";
-  src: url("../fonts/semimono/ABCDiatypeSemi-Mono-Regular.woff2") format("woff2");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "DSemi";
-  src: url("../fonts/semimono/ABCDiatypeSemi-Mono-Medium.woff2") format("woff2");
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
+/* Diatype + DSemi fonts are now loaded via next/font/local in layout.tsx
+   for automatic preloading and optimization. See --font-diatype, --font-dsemi
+   CSS variables applied on <body>. */
 
 html { scroll-behavior: smooth; }
 
@@ -91,9 +56,9 @@ html { scroll-behavior: smooth; }
   --c-text-body: #D4D4D8;
   --c-text-2: #ABABBA;
   --c-text-2a: #A1A1AA;
-  --c-text-muted: #71717A;
-  --c-text-dim: #52525B;
-  --c-text-faint: #3F3F46;
+  --c-text-muted: #8B8B96;
+  --c-text-dim: #848490;
+  --c-text-faint: #71717A;
   --c-border: #27272A;
   --c-border-subtle: #ECE4FD1F;
   --c-border-prominent: #ECE4FD33;
@@ -186,8 +151,8 @@ html { scroll-behavior: smooth; }
   --c-text-2: #52525B;
   --c-text-2a: #52525B;
   --c-text-muted: #71717A;
-  --c-text-dim: #A1A1AA;
-  --c-text-faint: #D4D4D8;
+  --c-text-dim: #6B6B73;
+  --c-text-faint: #71717A;
   --c-border: #E4E4E7;
   --c-border-subtle: #0000000F;
   --c-border-prominent: #0000001A;
@@ -268,8 +233,8 @@ html { scroll-behavior: smooth; }
   --radius-xl: 4px;
 
   /* Fonts — hybrid Diatype + Geist */
-  --font-brand: "Diatype", var(--font-geist-sans), sans-serif;
-  --font-brand-mono: "DSemi", var(--font-geist-mono), monospace;
+  --font-brand: var(--font-diatype), var(--font-geist-sans), sans-serif;
+  --font-brand-mono: var(--font-dsemi), var(--font-geist-mono), monospace;
   --font-sans: var(--font-geist-sans), sans-serif;
   --font-mono: var(--font-geist-mono), monospace;
 
@@ -991,7 +956,7 @@ html.light .landing-stat-item:not(:last-child) { border-right-color: rgba(0,0,0,
 }
 @keyframes sentinel-pulse {
   0%, 100% { opacity: 1; text-shadow: 0 0 6px rgba(0,210,130,0.4); }
-  50% { opacity: 0.4; text-shadow: 0 0 0px transparent; }
+  50% { opacity: 0.7; text-shadow: 0 0 0px transparent; }
 }
 @keyframes onb-shine {
   to { background-position: 200% center; }
@@ -1006,6 +971,391 @@ html.light .landing-stat-item:not(:last-child) { border-right-color: rgba(0,0,0,
 }
 @keyframes tour-fade {
   to { opacity: 1; }
+}
+
+/* ============================================================
+   V2 Components — Wallet Gateway, X-Ray Courses, Singularity CTA
+   ============================================================ */
+
+/* Wallet pill — shimmer hover effect */
+.wallet-pill {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.wallet-pill::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  transition: left 0.5s ease;
+}
+.wallet-pill:hover::before { left: 100%; }
+.wallet-pill:hover {
+  transform: scale(1.02) translateX(10px);
+  border-color: #00FFA3 !important;
+  box-shadow: 0 0 30px rgba(0, 255, 163, 0.1);
+}
+
+/* X-Ray courses — flashlight reveal (no clip-path transition for perf) */
+.xray-reveal {
+  will-change: clip-path;
+}
+.xray-row:hover .xray-reveal {
+  clip-path: circle(22vw at var(--mouse-x, 50%) var(--mouse-y, 50%)) !important;
+}
+
+/* Marquee — infinite scroll text */
+@keyframes marquee-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.marquee-track {
+  animation: marquee-scroll 25s linear infinite;
+}
+.marquee-reverse {
+  animation-direction: reverse;
+}
+
+/* Kinetic Path Matrix — height expansion with overflow hidden */
+.path-row {
+  position: relative;
+  height: 160px;
+  overflow: hidden;
+  transition: height 0.55s cubic-bezier(0.76, 0, 0.24, 1), background-color 0.3s ease-out;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.path-row:hover {
+  height: 420px;
+  background-color: rgba(255,255,255,0.015);
+}
+.path-hud-wrap {
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.3s ease-out 0.1s, transform 0.3s ease-out 0.1s;
+}
+.path-row:hover .path-hud-wrap {
+  opacity: 1;
+  transform: translateY(0);
+}
+.path-title {
+  font-size: clamp(4rem, 8vw, 10rem);
+  line-height: 0.8;
+  letter-spacing: -0.05em;
+  font-weight: 900;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(255,255,255,0.2);
+  transition: color 0.2s ease-out, -webkit-text-stroke 0.2s ease-out, transform 0.3s cubic-bezier(0.76, 0, 0.24, 1);
+  transform-origin: left center;
+}
+.path-row:hover .path-title {
+  -webkit-text-stroke: 1px transparent;
+  color: var(--hover-color, #fff);
+  transform: scale(1.05);
+}
+.path-tech-bg {
+  position: absolute;
+  right: -10%;
+  top: -50%;
+  width: 60%;
+  height: 200%;
+  background-image:
+    linear-gradient(var(--path-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--path-color) 1px, transparent 1px);
+  background-size: 40px 40px;
+  opacity: 0;
+  transition: opacity 0.3s ease-out;
+  pointer-events: none;
+  z-index: 0;
+}
+.path-row:hover .path-tech-bg {
+  opacity: 0.1;
+}
+
+/* Singularity CTA — text inversion */
+.singularity-section:hover .singularity-sub {
+  opacity: 1;
+}
+
+/* Methodology — keyframes for visualizers */
+@keyframes pulseFast {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* ============================================================
+   Dashboard — CSS-driven layout to prevent CLS
+   JS `mobile` state causes false→true flip after hydration,
+   shifting the grid. Media queries apply the correct layout
+   from the very first paint.
+   ============================================================ */
+.dash-grid {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  min-height: 100vh;
+}
+.dash-col-left {
+  padding: 80px 44px 40px;
+  border-right: 1px solid var(--overlay-divider);
+}
+.dash-col-right {
+  padding: 80px 28px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+.dash-heading {
+  font-size: 56px;
+  margin: 0 0 36px;
+}
+.dash-stats-grid {
+  grid-template-columns: repeat(4, 1fr);
+}
+.dash-xp-canvas {
+  height: 340px;
+  min-height: 340px;
+}
+.dash-streak-heatmap {
+  padding: 20px;
+  min-height: 117px;
+}
+@media (max-width: 767px) {
+  .dash-grid {
+    grid-template-columns: 1fr;
+  }
+  .dash-col-left {
+    padding: 72px 20px 24px;
+    border-right: none;
+  }
+  .dash-col-right {
+    padding: 24px 20px;
+    gap: 20px;
+  }
+  .dash-heading {
+    font-size: 40px;
+    margin: 0 0 24px;
+  }
+  .dash-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .dash-xp-canvas {
+    height: 260px;
+    min-height: 260px;
+  }
+  .dash-streak-heatmap {
+    padding: 14px;
+    min-height: 105px;
+  }
+}
+
+/* Wallet Gate — panels positioned via CSS media queries to prevent CLS */
+.gate-panel-left {
+  position: absolute;
+  background: var(--overlay-bg);
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 50%;
+}
+.gate-panel-right {
+  position: absolute;
+  background: var(--overlay-bg);
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 50%;
+}
+.gate-dashed-left {
+  position: absolute;
+  top: 10%;
+  bottom: 10%;
+  right: 0;
+  width: 0;
+  border-right: 1px dashed var(--overlay-divider);
+}
+.gate-dashed-right {
+  position: absolute;
+  top: 10%;
+  bottom: 10%;
+  left: 0;
+  width: 0;
+  border-left: 1px dashed var(--overlay-divider);
+}
+@media (max-width: 768px) {
+  .gate-panel-left {
+    bottom: auto;
+    width: auto;
+    right: 0;
+    height: 50%;
+  }
+  .gate-panel-right {
+    top: auto;
+    width: auto;
+    left: 0;
+    height: 50%;
+  }
+  .gate-dashed-left {
+    top: auto;
+    bottom: 0;
+    left: 10%;
+    right: 10%;
+    width: auto;
+    height: 0;
+    border-right: none;
+    border-bottom: 1px dashed var(--overlay-divider);
+  }
+  .gate-dashed-right {
+    bottom: auto;
+    top: 0;
+    left: 10%;
+    right: 10%;
+    width: auto;
+    height: 0;
+    border-left: none;
+    border-top: 1px dashed var(--overlay-divider);
+  }
+}
+
+/* Leaderboard — CSS-driven layout to prevent CLS from JS mobile state */
+.lb-header {
+  padding: 140px 40px 40px;
+}
+.lb-filters {
+  padding: 0 40px 48px;
+  display: flex;
+  gap: 24px;
+  align-items: center;
+}
+.lb-entry {
+  padding: 40px 40px;
+}
+.lb-entry-expanded {
+  padding: 60px 40px;
+}
+.lb-position {
+  padding: 80px 40px;
+}
+.lb-banner {
+  padding: 12px 40px;
+}
+/* Leaderboard entry internals */
+.lb-rank-bg {
+  right: 40px;
+  font-size: clamp(100px, 18vw, 240px);
+}
+.lb-entry-row {
+  gap: 24px;
+}
+.lb-entry-name {
+  font-size: clamp(24px, 4vw, 52px);
+  flex-shrink: 0;
+}
+.lb-entry-xp {
+  font-size: 28px;
+}
+.lb-expanded-stats {
+  gap: 48px;
+  margin-top: 32px;
+}
+@media (max-width: 767px) {
+  .lb-header {
+    padding: 100px 20px 24px;
+  }
+  .lb-filters {
+    padding: 0 20px 32px;
+    gap: 16px;
+  }
+  .lb-entry {
+    padding: 40px 20px;
+  }
+  .lb-entry-expanded {
+    padding: 60px 20px;
+  }
+  .lb-position {
+    padding: 48px 20px;
+  }
+  .lb-banner {
+    padding: 12px 20px;
+  }
+  .lb-rank-bg {
+    right: 16px;
+    font-size: clamp(60px, 20vw, 120px);
+  }
+  .lb-entry-row {
+    gap: 12px;
+  }
+  .lb-entry-name {
+    font-size: clamp(18px, 5vw, 28px);
+    flex-shrink: 1;
+  }
+  .lb-entry-xp {
+    font-size: 20px;
+  }
+  .lb-expanded-stats {
+    gap: 24px;
+    margin-top: 20px;
+  }
+}
+
+/* Course Catalog — CSS-driven layout to prevent CLS from JS mobile state */
+.cc-header {
+  padding: 140px 40px 40px;
+}
+.cc-search {
+  padding: 0 40px 12px;
+}
+.cc-filters {
+  padding: 16px 40px 0;
+}
+.cc-section {
+  padding: 80px 40px;
+  min-height: 50vh;
+}
+.cc-bg-num {
+  right: 40px;
+  font-size: clamp(120px, 20vw, 280px);
+}
+.cc-empty {
+  padding: 120px 40px;
+}
+.cc-enter-label {
+  opacity: 0;
+  transform: translateY(8px);
+}
+@media (max-width: 767px) {
+  .cc-header {
+    padding: 100px 20px 24px;
+  }
+  .cc-search {
+    padding: 0 20px 12px;
+  }
+  .cc-filters {
+    padding: 16px 20px 0;
+  }
+  .cc-section {
+    padding: 48px 20px;
+    min-height: auto;
+  }
+  .cc-bg-num {
+    right: 16px;
+    font-size: clamp(80px, 22vw, 140px);
+  }
+  .cc-empty {
+    padding: 80px 20px;
+  }
+  .cc-enter-label {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Reduce motion for accessibility */

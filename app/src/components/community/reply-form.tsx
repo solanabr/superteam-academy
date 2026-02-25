@@ -62,6 +62,7 @@ export function ReplyForm({
         value={content}
         onChange={(e) => setContent(e.target.value)}
         placeholder="Write your reply... (Markdown supported)"
+        aria-label="Reply content"
         className={cn(
           "w-full rounded-[2px] border border-[var(--c-border-subtle)] bg-[var(--c-bg)] px-3 py-2 text-sm text-[var(--c-text)] placeholder:text-[var(--c-text-2)] transition-colors focus:border-[#55E9AB] focus:outline-none focus:ring-1 focus:ring-[#55E9AB] resize-none",
           compact ? "min-h-[60px]" : "min-h-[100px]",

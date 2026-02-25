@@ -7,6 +7,8 @@ import {
   Instrument_Serif,
   Caveat,
 } from "next/font/google";
+import localFont from "next/font/local";
+import { getLocale } from "next-intl/server";
 import { PWARegister } from "@/components/pwa-register";
 import "./globals.css";
 
@@ -23,6 +25,28 @@ const instrumentSerif = Instrument_Serif({
   weight: ["400"],
   style: ["normal", "italic"],
   display: "swap",
+});
+
+// Diatype — Solana Foundation brand font (preloaded via next/font/local)
+const diatype = localFont({
+  src: [
+    { path: "../fonts/diatype/ABCDiatype-Regular.woff2", weight: "400", style: "normal" },
+    { path: "../fonts/diatype/ABCDiatype-Medium.woff2", weight: "500", style: "normal" },
+    { path: "../fonts/diatype/ABCDiatype-Bold.woff2", weight: "700", style: "normal" },
+  ],
+  variable: "--font-diatype",
+  display: "swap",
+});
+
+// DSemi — Solana Foundation semi-mono (stats, numbers) — not preloaded (not LCP-critical)
+const dsemi = localFont({
+  src: [
+    { path: "../fonts/semimono/ABCDiatypeSemi-Mono-Regular.woff2", weight: "400", style: "normal" },
+    { path: "../fonts/semimono/ABCDiatypeSemi-Mono-Medium.woff2", weight: "500", style: "normal" },
+  ],
+  variable: "--font-dsemi",
+  display: "swap",
+  preload: false,
 });
 
 // Secondary fonts — loaded on demand, not preloaded (saves ~180KB on initial load)
@@ -94,17 +118,26 @@ export const metadata: Metadata = {
   },
   robots: { index: true, follow: true },
   alternates: {
-    canonical: "/",
+    canonical: "https://superteam-academy.vercel.app",
+    languages: {
+      en: "https://superteam-academy.vercel.app/en",
+      "pt-BR": "https://superteam-academy.vercel.app/pt-br",
+      es: "https://superteam-academy.vercel.app/es",
+      "x-default": "https://superteam-academy.vercel.app/en",
+    },
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const locale = await getLocale();
+  const lang = locale === "pt-br" ? "pt-BR" : locale;
+
   return (
-    <html suppressHydrationWarning>
+    <html lang={lang} suppressHydrationWarning>
       <head>
         <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
         <meta name="theme-color" content="#FAFAFA" media="(prefers-color-scheme: light)" />
@@ -119,7 +152,7 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.json" />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable} ${instrumentSerif.variable} ${caveat.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable} ${instrumentSerif.variable} ${caveat.variable} ${diatype.variable} ${dsemi.variable} antialiased`}
       >
         {children}
         <PWARegister />

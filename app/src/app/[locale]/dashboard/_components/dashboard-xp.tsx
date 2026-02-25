@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useEffect, useRef } from "react";
+import { useLocale } from "next-intl";
+import { formatNumber } from "@/lib/format";
 import { Reveal } from "./dashboard-primitives";
 import { G, D, C, BORDER, SPRING } from "./dashboard-primitives";
 
@@ -8,6 +10,7 @@ const OrbitalXP: React.FC<{
   xp?: number;
   level?: number;
 }> = ({ xp = 960, level = 3 }) => {
+  const locale = useLocale();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mouse = useRef({ x: -999, y: -999 });
 
@@ -151,7 +154,7 @@ const OrbitalXP: React.FC<{
       ctx.lineWidth = 0.5;
       ctx.stroke();
 
-      ctx.fillStyle = "#555";
+      ctx.fillStyle = "#999";
       ctx.font = "500 8px 'Space Grotesk', monospace";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
@@ -180,8 +183,9 @@ export const DashboardXP: React.FC<{
   level: number;
   nextLevelXp: number;
   xpRemaining: number;
-  mobile: boolean;
-}> = ({ xp, level, nextLevelXp, xpRemaining, mobile }) => (
+}> = ({ xp, level, nextLevelXp, xpRemaining }) => {
+  const locale = useLocale();
+  return (
   <Reveal delay={200}>
     <p
       style={{
@@ -195,12 +199,13 @@ export const DashboardXP: React.FC<{
       XP ORBIT · HOVER TO INTERACT
     </p>
     <div
+      className="dash-xp-canvas"
       style={{
         width: "100%",
-        height: mobile ? 260 : 340,
         background: "var(--overlay-divider)",
         border: `1px solid ${BORDER}`,
         position: "relative",
+        contain: "layout",
       }}
     >
       <OrbitalXP xp={xp} level={level} />
@@ -221,17 +226,17 @@ export const DashboardXP: React.FC<{
             color: G,
           }}
         >
-          {xp.toLocaleString()}
+          {formatNumber(xp, locale)}
         </span>
         <span
           style={{
             fontFamily: "'Space Grotesk', sans-serif",
             fontSize: 10,
             letterSpacing: 2,
-            color: "var(--c-text-faint)",
+            color: "var(--c-text-dim)",
           }}
         >
-          / {nextLevelXp.toLocaleString()} XP
+          / {formatNumber(nextLevelXp, locale)} XP
         </span>
       </div>
       <div
@@ -242,12 +247,13 @@ export const DashboardXP: React.FC<{
           fontFamily: "'Space Grotesk', sans-serif",
           fontSize: 9,
           letterSpacing: 1,
-          color: "var(--c-text-faint)",
+          color: "var(--c-text-dim)",
         }}
       >
-        {xpRemaining.toLocaleString()} XP TO LVL{" "}
+        {formatNumber(xpRemaining, locale)} XP TO LVL{" "}
         {String(level + 1).padStart(2, "0")}
       </div>
     </div>
   </Reveal>
-);
+  );
+};

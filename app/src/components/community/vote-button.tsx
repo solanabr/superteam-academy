@@ -49,6 +49,7 @@ export function VoteButton({ count, threadId, replyId, wallet, className }: Vote
     <button
       onClick={handleVote}
       disabled={!wallet || submitting}
+      aria-label={voted ? `Remove vote (${localCount})` : `Vote (${localCount})`}
       className={cn(
         "flex flex-col items-center gap-0.5 rounded-[2px] border px-2 py-1.5 transition-all duration-150",
         voted

@@ -10,13 +10,12 @@ export const DashboardStatsGrid: React.FC<{
   totalCourses: number;
   streakDays: number;
   level: number;
-  mobile: boolean;
-}> = ({ xp, completedCount, totalCourses, streakDays, level, mobile }) => (
+}> = ({ xp, completedCount, totalCourses, streakDays, level }) => (
   <Reveal delay={100}>
     <div
+      className="dash-stats-grid"
       style={{
         display: "grid",
-        gridTemplateColumns: mobile ? "repeat(2, 1fr)" : "repeat(4, 1fr)",
         gap: 1,
         background: BORDER,
         marginBottom: 32,
@@ -28,7 +27,7 @@ export const DashboardStatsGrid: React.FC<{
         { v: streakDays, u: "d", l: "STREAK" },
         { v: level, u: "", l: "LEVEL" },
       ].map((s, i) => (
-        <div key={i} style={{ background: D, padding: "20px 16px" }}>
+        <div key={i} style={{ background: D, padding: "20px 16px", minHeight: 76 }}>
           <div
             style={{
               fontFamily: "'Instrument Serif', serif",
@@ -74,7 +73,7 @@ export const DashboardStatsList: React.FC<{
     >
       YOUR STATS
     </p>
-    <div style={{ border: `1px solid ${BORDER}` }}>
+    <div style={{ border: `1px solid ${BORDER}`, minHeight: 192 }}>
       {[
         { label: "LEVEL", value: `${level}` },
         { label: "ENROLLED", value: `${enrolledCount} courses` },

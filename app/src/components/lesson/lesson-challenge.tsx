@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { Check } from "lucide-react";
-import { useWallet } from "@solana/wallet-adapter-react";
+import { useWallet } from "@/lib/wallet/context";
 import { learningService } from "@/lib/services/learning-progress";
 import { Panel, Group, Separator } from "react-resizable-panels";
 import { XPToast } from "@/components/gamification/xp-toast";
@@ -333,7 +333,7 @@ export function LessonChallenge({
                 >
                   {course.title}
                 </Link>
-                <span style={{ opacity: 0.4 }}>{"\u203A"}</span>
+                <span style={{ opacity: 0.6 }}>{"\u203A"}</span>
               </>
             )}
             <span

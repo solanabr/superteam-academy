@@ -26,6 +26,10 @@ async function getPostHog() {
     api_host: POSTHOG_HOST,
     person_profiles: "identified_only",
     capture_pageview: false,
+    session_recording: {
+      maskAllInputs: true,
+      maskTextSelector: "[data-mask]",
+    },
     loaded: (ph) => {
       if (process.env.NODE_ENV === "development") ph.debug();
     },

@@ -197,7 +197,7 @@ export default function OfflinePage() {
               fontSize: "9px",
               letterSpacing: "2px",
               textTransform: "uppercase",
-              color: "var(--c-text-faint)",
+              color: "var(--c-text-dim)",
             }}
           >
             {t("status")}

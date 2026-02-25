@@ -1,6 +1,6 @@
 "use client";
 
-import { useWallet } from "@solana/wallet-adapter-react";
+import { useWallet } from "@/lib/wallet/context";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { NewThreadForm } from "@/components/community/new-thread-form";

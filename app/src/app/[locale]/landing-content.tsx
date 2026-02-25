@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -12,15 +13,32 @@ import {
   FONT_SERIF,
   CustomCursor,
   GlitchText,
-  TiltCard,
   MagneticBtn,
-  Reveal,
-  Counter,
 } from "@/components/ui/landing-animations";
 import { LazyConstellationCanvas } from "@/components/ui/lazy-constellation";
 import { SwirlArrow } from "@/components/ui/hand-drawn-arrows";
 
-const CAVEAT = "var(--font-caveat), 'Caveat', cursive";
+// Below-fold sections: lazy-loaded so they don't block the hero LCP paint.
+const MethodologySection = dynamic(
+  () => import("@/components/sections/methodology-section").then((m) => m.MethodologySection),
+  { ssr: false },
+);
+const MarqueeProof = dynamic(
+  () => import("@/components/sections/marquee-proof").then((m) => m.MarqueeProof),
+  { ssr: false },
+);
+const PathMatrix = dynamic(
+  () => import("@/components/sections/path-matrix").then((m) => m.PathMatrix),
+  { ssr: false },
+);
+const XRayCourses = dynamic(
+  () => import("@/components/sections/xray-courses").then((m) => m.XRayCourses),
+  { ssr: false },
+);
+const SingularityCTA = dynamic(
+  () => import("@/components/sections/singularity-cta").then((m) => m.SingularityCTA),
+  { ssr: false },
+);
 
 export function LandingContent({
   stats,
@@ -72,16 +90,8 @@ export function LandingContent({
     }, 1400);
   };
 
-  const features = [
-    { title: t("onChainCredentials"), desc: t("onChainCredentialsDesc") },
-    { title: t("gamifiedLearning"), desc: t("gamifiedLearningDesc") },
-    { title: t("handsonCoding"), desc: t("handsonCodingDesc") },
-  ];
-
-  const numerals = ["i", "ii", "iii"];
-
   return (
-    <div className="landing-cursor" style={{ background: D, color: C, perspective: warping ? "2000px" : undefined, overflow: "hidden" }}>
+    <div className="landing-cursor" style={{ background: D, color: C, perspective: warping ? "2000px" : undefined, overflow: warping ? "hidden" : undefined }}>
       <CustomCursor />
 
       {/* Warp streak layer */}
@@ -99,7 +109,7 @@ export function LandingContent({
         style={{
           transformStyle: "preserve-3d",
           transition: warping ? "all 1.2s cubic-bezier(0.7, 0, 0.1, 1)" : "none",
-          transform: warping ? "translateZ(1200px) rotateX(-15deg) rotateY(5deg)" : "translateZ(0)",
+          transform: warping ? "translateZ(1200px) rotateX(-15deg) rotateY(5deg)" : "none",
           opacity: warping ? 0 : 1,
           filter: warping ? "blur(40px) brightness(2)" : "none",
         }}
@@ -364,295 +374,49 @@ export function LandingContent({
           </div>
         </div>
 
-        {/* Stats strip */}
-        <div
-          style={{
-            position: "absolute",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            display: "flex",
-            flexWrap: "wrap",
-            borderTop: "1px solid var(--overlay-divider)",
-            background: "rgba(10, 10, 9, 0.85)",
-            backdropFilter: "blur(12px)",
-            zIndex: 20,
-            animation:
-              "hero-fade-in 0.9s cubic-bezier(0.16, 1, 0.3, 1) 1s backwards",
-          }}
-        >
+      </section>
+
+      {/* ──────────────── KINETIC STATS ──────────────── */}
+      <section className="py-20 border-y border-white/5 bg-black/50 backdrop-blur-xl">
+        <div className="max-w-screen-2xl mx-auto px-6 md:px-12 grid grid-cols-2 md:grid-cols-4 gap-12">
           {[
-            { val: stats.courseCount, label: t("coursesLive") },
-            { val: stats.totalLessons, label: t("totalLessons") },
-            { val: 2400, label: t("activeBuilders"), suffix: "+" },
-            { val: stats.totalXP, label: t("xpAvailable") },
+            { label: t("coursesLive"), display: String(stats.courseCount).padStart(2, "0") },
+            { label: t("totalLessons"), display: String(stats.totalLessons) },
+            { label: t("activeBuilders"), display: "2.4k" },
+            { label: t("xpAvailable"), display: "4.3k" },
           ].map((s, i) => (
-            <div key={i} className="landing-stat-item">
-              <div
-                className="landing-stat-value"
-                style={{ fontFamily: FONT_SERIF, color: C }}
-              >
-                <Counter
-                  to={s.val}
-                  duration={2000 + i * 300}
-                  suffix={s.suffix || ""}
-                />
-              </div>
-              <div
-                className="landing-stat-label"
-                style={{ fontFamily: FONT_SANS, color: M, marginTop: 4 }}
+            <div key={i} className="group">
+              <p
+                className="text-[10px] uppercase tracking-[0.3em] font-bold text-white/60 mb-4"
+                style={{ fontFamily: FONT_SANS }}
               >
                 {s.label}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ──────────────── FEATURES ──────────────── */}
-      <section
-        className="landing-features"
-        style={{
-          background: D,
-          position: "relative",
-          borderTop: "1px solid var(--overlay-divider)",
-        }}
-      >
-        <Reveal>
-          <p
-            style={{
-              fontFamily: FONT_SANS,
-              fontSize: 11,
-              letterSpacing: 4,
-              color: M,
-              marginBottom: 12,
-            }}
-          >
-            {t("whyOnChainLearning")}
-          </p>
-          <h2
-            style={{
-              fontFamily: FONT_SERIF,
-              fontSize: "clamp(36px, 5vw, 64px)",
-              fontWeight: 400,
-              color: C,
-              margin: "0 0 60px",
-              maxWidth: 700,
-              lineHeight: 1.05,
-            }}
-          >
-            {t("featureHeadlinePart1")}{" "}
-            <span style={{ color: G, fontStyle: "italic" }}>{t("featureHeadlineAccent")}</span> {t("featureHeadlinePart2")}
-          </h2>
-        </Reveal>
-
-        <div
-          className="landing-features-grid"
-          style={{ display: "grid", gap: 2 }}
-        >
-          {features.map((f, i) => (
-            <Reveal key={i} delay={i * 200}>
-              <TiltCard
-                style={{
-                  background: "var(--overlay-divider)",
-                  border: "1px solid var(--overlay-divider)",
-                  padding: "40px 32px",
-                  height: "100%",
-                }}
-              >
-                <span
-                  style={{
-                    fontFamily: FONT_SERIF,
-                    fontSize: 28,
-                    color: G,
-                    fontStyle: "italic",
-                    display: "block",
-                    marginBottom: 20,
-                  }}
-                >
-                  {numerals[i]}
-                </span>
-                <h3
-                  style={{
-                    fontFamily: FONT_SANS,
-                    fontSize: 16,
-                    fontWeight: 700,
-                    color: C,
-                    margin: "0 0 12px",
-                    letterSpacing: 0.5,
-                  }}
-                >
-                  {f.title}
-                </h3>
-                <p
-                  style={{
-                    fontFamily: FONT_SANS,
-                    fontSize: 13,
-                    color: "var(--c-text-dim)",
-                    lineHeight: 1.7,
-                    margin: 0,
-                  }}
-                >
-                  {f.desc}
-                </p>
-              </TiltCard>
-            </Reveal>
-          ))}
-        </div>
-      </section>
-
-      {/* ──────────────── SOCIAL PROOF ──────────────── */}
-      <section style={{ padding: "clamp(60px, 8vw, 120px) clamp(20px, 5vw, 60px)", borderTop: "1px solid var(--overlay-divider)", background: D }}>
-        <Reveal>
-          <p style={{ fontFamily: FONT_SANS, fontSize: 11, letterSpacing: 4, color: M, marginBottom: 12 }}>
-            {t("socialProof")}
-          </p>
-          <h2 style={{ fontFamily: FONT_SERIF, fontSize: "clamp(28px, 4vw, 48px)", fontWeight: 400, color: C, margin: "0 0 48px", lineHeight: 1.1 }}>
-            {t("socialProofHeadline")}
-          </h2>
-        </Reveal>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 24 }}>
-          {[
-            { name: "Alex R.", role: t("testimonialRole1"), quote: t("testimonial1") },
-            { name: "Maria S.", role: t("testimonialRole2"), quote: t("testimonial2") },
-            { name: "Carlos M.", role: t("testimonialRole3"), quote: t("testimonial3") },
-          ].map((testimonial, i) => (
-            <Reveal key={i} delay={i * 150}>
-              <div style={{ padding: "32px 28px", border: "1px solid var(--overlay-divider)", background: "var(--overlay-divider)" }}>
-                <p style={{ fontFamily: FONT_SANS, fontSize: 14, color: C, lineHeight: 1.7, margin: "0 0 20px", fontStyle: "italic" }}>
-                  &ldquo;{testimonial.quote}&rdquo;
-                </p>
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: "50%", background: G, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: FONT_SANS, fontSize: 14, fontWeight: 700, color: D }}>
-                    {testimonial.name.charAt(0)}
-                  </div>
-                  <div>
-                    <p style={{ fontFamily: FONT_SANS, fontSize: 13, fontWeight: 600, color: C, margin: 0 }}>{testimonial.name}</p>
-                    <p style={{ fontFamily: FONT_SANS, fontSize: 11, color: M, margin: 0 }}>{testimonial.role}</p>
-                  </div>
-                </div>
-              </div>
-            </Reveal>
-          ))}
-        </div>
-      </section>
-
-      {/* ──────────────── LEARNING PATHS ──────────────── */}
-      <section style={{ padding: "clamp(60px, 8vw, 120px) clamp(20px, 5vw, 60px)", borderTop: "1px solid var(--overlay-divider)", background: D }}>
-        <Reveal>
-          <p style={{ fontFamily: FONT_SANS, fontSize: 11, letterSpacing: 4, color: M, marginBottom: 12 }}>
-            {t("learningPaths")}
-          </p>
-          <h2 style={{ fontFamily: FONT_SERIF, fontSize: "clamp(28px, 4vw, 48px)", fontWeight: 400, color: C, margin: "0 0 48px", lineHeight: 1.1 }}>
-            {t("learningPathsHeadline")}
-          </h2>
-        </Reveal>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 2 }}>
-          {[
-            { track: "Rust", color: "#EF4444", courses: 4, desc: t("rustPathDesc") },
-            { track: "Anchor", color: "#9945FF", courses: 3, desc: t("anchorPathDesc") },
-            { track: "Frontend", color: "#03E1FF", courses: 3, desc: t("frontendPathDesc") },
-            { track: "Security", color: "#FF6B35", courses: 2, desc: t("securityPathDesc") },
-            { track: "DeFi", color: "#00FFA3", courses: 2, desc: t("defiPathDesc") },
-            { track: "Mobile", color: "#CA9FF5", courses: 1, desc: t("mobilePathDesc") },
-          ].map((path, i) => (
-            <Reveal key={i} delay={i * 100}>
-              <TiltCard style={{ background: "var(--overlay-divider)", border: "1px solid var(--overlay-divider)", padding: "32px 24px", height: "100%" }}>
-                <div style={{ width: 40, height: 4, background: path.color, marginBottom: 20 }} />
-                <h3 style={{ fontFamily: FONT_SANS, fontSize: 18, fontWeight: 700, color: C, margin: "0 0 8px" }}>{path.track}</h3>
-                <p style={{ fontFamily: FONT_SANS, fontSize: 13, color: M, lineHeight: 1.6, margin: "0 0 16px" }}>{path.desc}</p>
-                <p style={{ fontFamily: FONT_SANS, fontSize: 11, letterSpacing: 2, color: path.color, textTransform: "uppercase" as const }}>
-                  {path.courses} {t("coursesAvailable")}
-                </p>
-              </TiltCard>
-            </Reveal>
-          ))}
-        </div>
-      </section>
-
-      {/* ──────────────── FEATURED COURSES ──────────────── */}
-      <section style={{ padding: "clamp(60px, 8vw, 120px) clamp(20px, 5vw, 60px)", borderTop: "1px solid var(--overlay-divider)", background: D }}>
-        <Reveal>
-          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 48, flexWrap: "wrap", gap: 16 }}>
-            <div>
-              <p style={{ fontFamily: FONT_SANS, fontSize: 11, letterSpacing: 4, color: M, marginBottom: 12 }}>
-                {t("featuredCourses")}
               </p>
-              <h2 style={{ fontFamily: FONT_SERIF, fontSize: "clamp(28px, 4vw, 48px)", fontWeight: 400, color: C, margin: 0, lineHeight: 1.1 }}>
-                {t("startLearning")}
-              </h2>
+              <p
+                className="text-6xl md:text-8xl text-white group-hover:text-[#00FFA3] transition-colors duration-500"
+                style={{ fontFamily: FONT_SERIF, fontStyle: "italic" }}
+              >
+                {s.display}
+              </p>
             </div>
-            <MagneticBtn href={`/${locale}/courses`}>
-              {t("exploreCourses")} →
-            </MagneticBtn>
-          </div>
-        </Reveal>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 2 }}>
-          {[
-            { title: t("featuredCourse1"), track: "Rust", level: t("beginner"), lessons: 12, xp: 600, color: "#EF4444" },
-            { title: t("featuredCourse2"), track: "Anchor", level: t("intermediate"), lessons: 15, xp: 900, color: "#9945FF" },
-            { title: t("featuredCourse3"), track: "Frontend", level: t("beginner"), lessons: 10, xp: 500, color: "#03E1FF" },
-          ].map((course, i) => (
-            <Reveal key={i} delay={i * 150}>
-              <TiltCard style={{ background: "var(--overlay-divider)", border: "1px solid var(--overlay-divider)", padding: 0, height: "100%", overflow: "hidden" }}>
-                <div style={{ height: 4, background: course.color }} />
-                <div style={{ padding: "28px 24px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-                    <span style={{ fontFamily: FONT_SANS, fontSize: 10, letterSpacing: 2, padding: "4px 10px", border: `1px solid ${course.color}44`, color: course.color, textTransform: "uppercase" as const }}>{course.track}</span>
-                    <span style={{ fontFamily: FONT_SANS, fontSize: 10, letterSpacing: 2, color: M, textTransform: "uppercase" as const }}>{course.level}</span>
-                  </div>
-                  <h3 style={{ fontFamily: FONT_SANS, fontSize: 18, fontWeight: 700, color: C, margin: "0 0 12px", lineHeight: 1.3 }}>{course.title}</h3>
-                  <div style={{ display: "flex", gap: 20, fontFamily: FONT_SANS, fontSize: 12, color: M }}>
-                    <span>{course.lessons} {t("lessonsLabel")}</span>
-                    <span style={{ color: G }}>+{course.xp} XP</span>
-                  </div>
-                </div>
-              </TiltCard>
-            </Reveal>
           ))}
         </div>
       </section>
 
-      {/* ──────────────── EDITORIAL CTA ──────────────── */}
-      <section
-        className="landing-cta-section"
-        style={{
-          textAlign: "center",
-          borderTop: "1px solid var(--overlay-divider)",
-        }}
-      >
-        <Reveal>
-          <h2
-            style={{
-              fontFamily: FONT_SERIF,
-              fontSize: "clamp(40px, 7vw, 96px)",
-              fontWeight: 400,
-              fontStyle: "italic",
-              letterSpacing: "-3px",
-              color: C,
-            }}
-          >
-            {t("ctaTitle")}
-          </h2>
-          <p
-            style={{
-              fontFamily: FONT_SANS,
-              fontSize: 18,
-              color: M,
-              maxWidth: 500,
-              margin: "24px auto 0",
-              lineHeight: 1.5,
-            }}
-          >
-            {t("ctaDescription")}
-          </p>
-          <div style={{ marginTop: 48 }}>
-            <MagneticBtn primary href={`/${locale}/courses`}>
-              {t("exploreCourses")} →
-            </MagneticBtn>
-          </div>
-        </Reveal>
-      </section>
+      {/* ──────────────── METHODOLOGY (V2) ──────────────── */}
+      <MethodologySection />
+
+      {/* ──────────────── MARQUEE SOCIAL PROOF (V2) ──────────────── */}
+      <MarqueeProof />
+
+      {/* ──────────────── PATH MATRIX (V2) ──────────────── */}
+      <PathMatrix locale={locale} />
+
+      {/* ──────────────── X-RAY COURSES (V2) ──────────────── */}
+      <XRayCourses locale={locale} />
+
+      {/* ──────────────── SINGULARITY CTA (V2) ──────────────── */}
+      <SingularityCTA />
       </div>{/* end warp wrapper */}
 
     </div>

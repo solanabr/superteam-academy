@@ -1,20 +1,32 @@
 "use client";
 
-import Link from "next/link";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Menu, X, Globe, Shield, Settings } from "lucide-react";
-import { useState, useEffect, useRef, useCallback } from "react";
-import { useWallet } from "@solana/wallet-adapter-react";
+import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { SuperteamLogo } from "@/components/ui/superteam-logo";
 import { locales, localeLabels, type Locale } from "@/i18n/config";
 
-const WalletMultiButton = dynamic(
-  () =>
-    import("@solana/wallet-adapter-react-ui").then((m) => m.WalletMultiButton),
-  { ssr: false },
+// Lazy-load wallet controls to keep @solana/wallet-adapter out of the navbar's critical bundle
+const LazyNavbarWallet = dynamic(
+  () => import("./navbar-wallet").then((m) => m.NavbarWallet),
+  {
+    ssr: false,
+    loading: () => (
+      <div
+        className="animate-pulse"
+        style={{
+          height: "30px",
+          width: "120px",
+          borderRadius: "9999px",
+          border: "1px solid var(--overlay-border)",
+        }}
+      />
+    ),
+  },
 );
 
 const NAV_LINK_STYLE: React.CSSProperties = {
@@ -33,18 +45,12 @@ const NAV_LINK_STYLE: React.CSSProperties = {
 export function Navbar({ locale }: { locale: string }) {
   const t = useTranslations("nav");
   const pathname = usePathname();
-  const { connected } = useWallet();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const mobileToggleRef = useRef<HTMLButtonElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const langMenuRef = useRef<HTMLDivElement>(null);
   const langButtonRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   // Focus trap for mobile menu
   useEffect(() => {
@@ -168,7 +174,6 @@ export function Navbar({ locale }: { locale: string }) {
           <Link
             href={`/${locale}`}
             className="flex items-center gap-2.5"
-            aria-label={t("superteamHome")}
           >
             <SuperteamLogo size={20} />
             <span
@@ -328,35 +333,8 @@ export function Navbar({ locale }: { locale: string }) {
               </div>
             </div>
 
-            {/* Wallet button */}
-            {mounted ? (
-              <WalletMultiButton
-                style={{
-                  background: "transparent",
-                  border: "1px solid var(--overlay-border)",
-                  borderRadius: "9999px",
-                  height: "30px",
-                  padding: "0 16px",
-                  fontFamily: "var(--font-mono)",
-                  fontSize: "10px",
-                  letterSpacing: "2px",
-                  textTransform: "uppercase",
-                  color: "var(--foreground)",
-                  fontWeight: 400,
-                  lineHeight: 1,
-                }}
-              />
-            ) : (
-              <div
-                className="animate-pulse"
-                style={{
-                  height: "30px",
-                  width: "120px",
-                  borderRadius: "9999px",
-                  border: "1px solid var(--overlay-border)",
-                }}
-              />
-            )}
+            {/* Wallet button (lazy-loaded) */}
+            <LazyNavbarWallet variant="desktop" />
 
             {/* Settings */}
             <Link
@@ -547,37 +525,9 @@ export function Navbar({ locale }: { locale: string }) {
               ))}
             </div>
 
-            {/* Mobile wallet button */}
+            {/* Mobile wallet button (lazy-loaded) */}
             <div className="mt-8">
-              {mounted ? (
-                <WalletMultiButton
-                  style={{
-                    background: "transparent",
-                    border: "1px solid var(--overlay-border)",
-                    borderRadius: "9999px",
-                    height: "36px",
-                    padding: "0 20px",
-                    fontFamily: "var(--font-mono)",
-                    fontSize: "10px",
-                    letterSpacing: "2px",
-                    textTransform: "uppercase",
-                    color: "var(--overlay-text-active)",
-                    fontWeight: 400,
-                    width: "100%",
-                    display: "flex",
-                    justifyContent: "center",
-                  }}
-                />
-              ) : (
-                <div
-                  className="animate-pulse"
-                  style={{
-                    height: "36px",
-                    borderRadius: "9999px",
-                    border: "1px solid var(--overlay-border)",
-                  }}
-                />
-              )}
+              <LazyNavbarWallet variant="mobile" />
             </div>
           </nav>
         </div>

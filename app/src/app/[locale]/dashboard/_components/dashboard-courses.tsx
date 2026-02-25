@@ -104,6 +104,7 @@ export const DashboardCourses: React.FC<{
             background: "linear-gradient(135deg, #1a1040, #0d0a25)",
             padding: 28,
             marginBottom: 28,
+            minHeight: 180,
             position: "relative",
             overflow: "hidden",
             cursor: "pointer",
@@ -204,7 +205,7 @@ export const DashboardCourses: React.FC<{
                 fontFamily: "'Space Grotesk', sans-serif",
                 fontSize: 10,
                 letterSpacing: 1,
-                color: "var(--c-text-faint)",
+                color: "var(--c-text-dim)",
               }}
             >
               <span>
@@ -224,6 +225,7 @@ export const DashboardCourses: React.FC<{
           style={{
             padding: 28,
             marginBottom: 28,
+            minHeight: 80,
             border: `1px solid ${BORDER}`,
             textAlign: "center",
           }}
@@ -244,6 +246,7 @@ export const DashboardCourses: React.FC<{
           style={{
             padding: 28,
             marginBottom: 28,
+            minHeight: 80,
             border: `1px solid ${BORDER}`,
             textAlign: "center",
           }}
@@ -294,6 +297,7 @@ export const DashboardCourses: React.FC<{
           gap: 10,
           flexWrap: "wrap",
           marginBottom: 32,
+          minHeight: 48,
         }}
       >
         {credentials.length > 0 ? (
@@ -365,7 +369,7 @@ export const DashboardCourses: React.FC<{
                 style={{
                   fontFamily: "'Instrument Serif', serif",
                   fontSize: 22,
-                  color: "var(--overlay-border)",
+                  color: "var(--c-text-dim)",
                   fontStyle: "italic",
                   width: 24,
                 }}

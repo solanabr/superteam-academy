@@ -69,8 +69,7 @@ const StreakHeatmap: React.FC<{
 export const DashboardStreak: React.FC<{
   streakDays: number;
   activityHistory: Record<string, number>;
-  mobile: boolean;
-}> = ({ streakDays, activityHistory, mobile }) => (
+}> = ({ streakDays, activityHistory }) => (
   <Reveal delay={350}>
     <div
       style={{
@@ -114,8 +113,8 @@ export const DashboardStreak: React.FC<{
       </div>
     </div>
     <div
+      className="dash-streak-heatmap"
       style={{
-        padding: mobile ? 14 : 20,
         border: `1px solid ${BORDER}`,
         background: "var(--overlay-divider)",
         overflowX: "auto",

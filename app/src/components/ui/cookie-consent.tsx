@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 
 const CONSENT_KEY = "sa_cookie_consent";
 
 export function CookieConsent() {
   const [visible, setVisible] = useState(false);
+  const t = useTranslations("cookieConsent");
 
   useEffect(() => {
     if (!localStorage.getItem(CONSENT_KEY)) setVisible(true);
@@ -27,24 +29,24 @@ export function CookieConsent() {
   return (
     <div
       role="dialog"
-      aria-label="Cookie consent"
+      aria-label={t("ariaLabel")}
       className="fixed bottom-4 left-4 right-4 z-50 mx-auto max-w-lg rounded-lg border border-[var(--c-border-subtle)] bg-[var(--c-bg-card)] p-4 shadow-lg sm:left-auto sm:right-6 sm:max-w-sm"
     >
       <p className="mb-3 text-sm text-[var(--c-text-2)]">
-        We use cookies for analytics to improve your experience.
+        {t("description")}
       </p>
       <div className="flex gap-2">
         <button
           onClick={() => respond(true)}
           className="rounded bg-[#00FFA3] px-4 py-1.5 text-xs font-medium text-black transition-opacity hover:opacity-90"
         >
-          Accept
+          {t("accept")}
         </button>
         <button
           onClick={() => respond(false)}
           className="rounded border border-[var(--c-border-subtle)] px-4 py-1.5 text-xs font-medium text-[var(--c-text-2)] transition-colors hover:text-[var(--c-text)]"
         >
-          Decline
+          {t("decline")}
         </button>
       </div>
     </div>

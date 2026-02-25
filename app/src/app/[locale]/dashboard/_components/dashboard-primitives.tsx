@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { useLocale } from "next-intl";
+import { formatNumber } from "@/lib/format";
 
 export const G = "var(--nd-highlight-green)";
 export const D = "var(--background)";
@@ -115,6 +117,7 @@ export const AnimCounter: React.FC<{
   duration?: number;
   suffix?: string;
 }> = ({ to, duration = 2200, suffix = "" }) => {
+  const locale = useLocale();
   const [v, setV] = useState(0);
   const rafRef = useRef<number>(0);
   const started = useRef(false);
@@ -150,7 +153,7 @@ export const AnimCounter: React.FC<{
 
   return (
     <span ref={divRef}>
-      {v.toLocaleString()}
+      {formatNumber(v, locale)}
       {suffix}
     </span>
   );

@@ -1,25 +1,36 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 
 const BASE_URL = "https://superteam-academy.vercel.app";
 
-export const metadata: Metadata = {
-  title: "Profile",
-  description:
-    "View your Solana developer profile. Track skills, credentials, achievements, and learning activity.",
-  openGraph: {
-    title: "Profile | Superteam Academy",
-    description:
-      "View your Solana developer profile. Track skills, credentials, achievements, and learning activity.",
-  },
-  alternates: {
-    canonical: `${BASE_URL}/en/profile`,
-    languages: {
-      en: "/en/profile",
-      "pt-BR": "/pt-br/profile",
-      es: "/es/profile",
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations("metadata");
+  const title = t("profileTitle");
+  const description = t("profileDescription");
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title: `${title} | Superteam Academy`,
+      description,
     },
-  },
-};
+    alternates: {
+      canonical: `${BASE_URL}/${locale}/profile`,
+      languages: {
+        en: `${BASE_URL}/en/profile`,
+        "pt-BR": `${BASE_URL}/pt-br/profile`,
+        es: `${BASE_URL}/es/profile`,
+        "x-default": `${BASE_URL}/en/profile`,
+      },
+    },
+  };
+}
 
 export default function ProfileLayout({
   children,

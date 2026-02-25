@@ -16,7 +16,7 @@ import { DailyChallenges } from "@/components/gamification/daily-challenges";
 import { SeasonalEventBanner } from "@/components/gamification/seasonal-event-banner";
 
 import { Reveal } from "./_components/dashboard-primitives";
-import { D, C, M, BORDER } from "./_components/dashboard-primitives";
+import { D, C, M } from "./_components/dashboard-primitives";
 import { DashboardXP } from "./_components/dashboard-xp";
 import { DashboardStreak } from "./_components/dashboard-streak";
 import { DashboardCourses } from "./_components/dashboard-courses";
@@ -100,21 +100,12 @@ export default function DashboardPage() {
     <div style={{ cursor: mobile ? "auto" : "none" }}>
       {!mobile && <CustomCursor />}
       <WalletGate>
-        <div style={{ background: D, color: C, minHeight: "100vh" }}>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: mobile ? "1fr" : "1fr 400px",
-              minHeight: "100vh",
-            }}
-          >
+        <div style={{ background: D, color: C, minHeight: "100vh", contain: "layout style" }}>
+          {/* Grid layout driven by CSS media queries (globals.css .dash-grid)
+              to prevent CLS from JS mobile state flip */}
+          <div className="dash-grid">
             {/* Left Column */}
-            <div
-              style={{
-                padding: mobile ? "72px 20px 24px" : "80px 44px 40px",
-                borderRight: mobile ? "none" : `1px solid ${BORDER}`,
-              }}
-            >
+            <div className="dash-col-left">
               <Reveal>
                 <p
                   style={{
@@ -128,12 +119,11 @@ export default function DashboardPage() {
                   WELCOME BACK
                 </p>
                 <h1
+                  className="dash-heading"
                   style={{
                     fontFamily: "'Instrument Serif', serif",
-                    fontSize: mobile ? 40 : 56,
                     fontWeight: 400,
                     color: C,
-                    margin: mobile ? "0 0 24px" : "0 0 36px",
                     lineHeight: 1,
                   }}
                 >
@@ -142,7 +132,7 @@ export default function DashboardPage() {
                   <span
                     style={{
                       fontStyle: "italic",
-                      color: "var(--overlay-border)",
+                      color: "var(--c-text-dim)",
                     }}
                   >
                     building.
@@ -156,7 +146,6 @@ export default function DashboardPage() {
                 totalCourses={courses.length}
                 streakDays={streakDays}
                 level={level}
-                mobile={mobile}
               />
 
               <DashboardCourses
@@ -174,28 +163,21 @@ export default function DashboardPage() {
             </div>
 
             {/* Right Column */}
-            <div
-              style={{
-                padding: mobile ? "24px 20px" : "80px 28px 40px",
-                display: "flex",
-                flexDirection: "column",
-                gap: mobile ? 20 : 28,
-              }}
-            >
-              <SeasonalEventBanner />
+            <div className="dash-col-right">
+              <div style={{ minHeight: 0, contain: "layout" }}>
+                <SeasonalEventBanner />
+              </div>
 
               <DashboardXP
                 xp={xp}
                 level={level}
                 nextLevelXp={nextLevelXp}
                 xpRemaining={xpRemaining}
-                mobile={mobile}
               />
 
               <DashboardStreak
                 streakDays={streakDays}
                 activityHistory={user.streak.activityHistory}
-                mobile={mobile}
               />
 
               <DashboardStatsList

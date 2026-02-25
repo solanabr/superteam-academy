@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { fetchCourses } from "@/lib/services/courses";
 import { LandingContent } from "./landing-content";
 
@@ -10,13 +11,22 @@ export async function generateMetadata({
   params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
   const { locale } = await params;
+  const t = await getTranslations("metadata");
+
   return {
+    title: t("title"),
+    description: t("description"),
+    openGraph: {
+      title: t("title"),
+      description: t("description"),
+    },
     alternates: {
       canonical: `${BASE_URL}/${locale}`,
       languages: {
-        en: "/en",
-        "pt-BR": "/pt-br",
-        es: "/es",
+        en: `${BASE_URL}/en`,
+        "pt-BR": `${BASE_URL}/pt-br`,
+        es: `${BASE_URL}/es`,
+        "x-default": `${BASE_URL}/en`,
       },
     },
   };

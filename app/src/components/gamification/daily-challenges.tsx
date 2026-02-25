@@ -45,12 +45,12 @@ export function DailyChallenges({ className }: DailyChallengesProps) {
     <section className={cn("space-y-4", className)}>
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h3
+        <h2
           className="text-[10px] font-medium uppercase tracking-[0.15em] text-[var(--c-text-2)]"
           style={{ fontFamily: "var(--font-body, 'Space Grotesk', sans-serif)" }}
         >
           Daily Challenges
-        </h3>
+        </h2>
         <div className="flex items-center gap-1.5 text-[var(--c-text-muted)]">
           <Timer className="w-3 h-3" />
           <span className="font-mono text-[11px] tabular-nums">

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
+import { formatNumber } from "@/lib/format";
 import { Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -18,6 +19,7 @@ interface XPDisplayProps {
 
 export function XPDisplay({ xp, compact }: XPDisplayProps) {
   const t = useTranslations("xpDisplay");
+  const locale = useLocale();
   const level = calculateLevel(xp);
   const progress = levelProgress(xp);
   const toNext = xpToNextLevel(xp);
@@ -48,7 +50,7 @@ export function XPDisplay({ xp, compact }: XPDisplayProps) {
             animate ? "text-[#00FFA3]" : "text-[var(--c-text)]",
           )}
         >
-          {xp.toLocaleString()}
+          {formatNumber(xp, locale)}
         </span>
       </div>
     );
@@ -88,10 +90,10 @@ export function XPDisplay({ xp, compact }: XPDisplayProps) {
         </div>
         <div className="text-right">
           <p className="text-2xl font-bold font-mono text-[#00FFA3]">
-            {xp.toLocaleString()}
+            {formatNumber(xp, locale)}
           </p>
           <p className="text-xs text-[var(--c-text-2)]">
-            / {nextLevelXP.toLocaleString()} XP
+            / {formatNumber(nextLevelXP, locale)} XP
           </p>
         </div>
       </div>
@@ -114,7 +116,7 @@ export function XPDisplay({ xp, compact }: XPDisplayProps) {
         />
       </div>
       <p className="text-xs text-[var(--c-text-2)]">
-        {t("xpToNextLevel", { xp: toNext.toLocaleString(), level: level + 1 })}
+        {t("xpToNextLevel", { xp: formatNumber(toNext, locale), level: level + 1 })}
       </p>
     </div>
   );

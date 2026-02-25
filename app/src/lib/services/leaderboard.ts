@@ -5,25 +5,30 @@ export interface LeaderboardResponse {
   page: number;
   limit: number;
   total: number;
+  timeframe?: string;
+  snapshotDataAvailable?: boolean;
 }
 
 export async function getLeaderboard(
   timeframe: "weekly" | "monthly" | "alltime",
   page = 1,
   limit = 50,
-): Promise<LeaderboardEntry[]> {
+): Promise<{ entries: LeaderboardEntry[]; snapshotDataAvailable: boolean }> {
   try {
     const res = await fetch(
       `/api/leaderboard?timeframe=${timeframe}&page=${page}&limit=${limit}`,
     );
-    if (!res.ok) return [];
+    if (!res.ok) return { entries: [], snapshotDataAvailable: true };
     const data = await res.json();
-    // Support both old flat-array and new paginated response
-    if (Array.isArray(data)) return data;
-    return (data as LeaderboardResponse).entries ?? [];
+    if (Array.isArray(data)) return { entries: data, snapshotDataAvailable: true };
+    const resp = data as LeaderboardResponse;
+    return {
+      entries: resp.entries ?? [],
+      snapshotDataAvailable: resp.snapshotDataAvailable ?? true,
+    };
   } catch (error) {
     console.error("[leaderboard] Failed to fetch leaderboard:", error);
-    return [];
+    return { entries: [], snapshotDataAvailable: true };
   }
 }
 

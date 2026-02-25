@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Flame } from "lucide-react";
+import { useTranslations } from "next-intl";
 import type { StreakData } from "@/lib/services/types";
 
 interface StreakCalendarProps {
@@ -16,6 +17,7 @@ export function StreakCalendar({ streak, className }: StreakCalendarProps) {
     x: number;
     y: number;
   } | null>(null);
+  const t = useTranslations("streakCalendar");
 
   // Build 12 weeks (84 days) of history
   const days = (() => {
@@ -65,15 +67,15 @@ export function StreakCalendar({ streak, className }: StreakCalendarProps) {
           <span className="font-mono text-sm font-semibold text-[var(--c-text)]">
             {streak.currentStreak}
           </span>
-          <span className="text-xs text-[var(--c-text-2)]">day streak</span>
+          <span className="text-xs text-[var(--c-text-2)]">{t("dayStreak")}</span>
         </div>
         <div className="text-right text-sm text-[var(--c-text-2)]">
           <span>
-            Best: <span className="font-mono">{streak.longestStreak}</span>
+            {t("best")} <span className="font-mono">{streak.longestStreak}</span>
           </span>
           {streak.freezesAvailable > 0 && (
             <span className="ml-3 text-[#03E1FF]">
-              {streak.freezesAvailable} freezes
+              {streak.freezesAvailable} {t("freezes")}
             </span>
           )}
         </div>
@@ -135,13 +137,13 @@ export function StreakCalendar({ streak, className }: StreakCalendarProps) {
 
       {/* Legend */}
       <div className="flex items-center gap-1.5 text-[10px] text-[var(--c-text-2)]">
-        <span>Less</span>
+        <span>{t("less")}</span>
         <div className="w-3 h-3 rounded-[2px] heatmap-0" />
         <div className="w-3 h-3 rounded-[2px] heatmap-1" />
         <div className="w-3 h-3 rounded-[2px] heatmap-2" />
         <div className="w-3 h-3 rounded-[2px] heatmap-3" />
         <div className="w-3 h-3 rounded-[2px] heatmap-4" />
-        <span>More</span>
+        <span>{t("more")}</span>
       </div>
     </div>
   );

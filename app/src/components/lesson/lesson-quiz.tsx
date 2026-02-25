@@ -184,7 +184,7 @@ export function QuizRenderer({
                       style={{
                         fontFamily: "var(--font-mono)",
                         fontSize: "11px",
-                        opacity: 0.5,
+                        opacity: 0.6,
                       }}
                     >
                       {opt.label})

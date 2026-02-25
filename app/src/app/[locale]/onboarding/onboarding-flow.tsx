@@ -3,7 +3,7 @@
 import React, { useState, useCallback, useRef } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useWallet } from "@solana/wallet-adapter-react";
+import { useWallet } from "@/lib/wallet/context";
 import { AnimatePresence, motion } from "framer-motion";
 import { quizQuestions } from "@/lib/data/quiz-questions";
 import { onboardingService } from "@/lib/services/onboarding-service";
