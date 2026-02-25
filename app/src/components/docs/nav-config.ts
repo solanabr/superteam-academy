@@ -34,6 +34,7 @@ export const userDocsNav: NavSection[] = [
       { title: "Browsing Courses", href: "/docs/courses" },
       { title: "Enrolling in Courses", href: "/docs/enrollment" },
       { title: "Completing Lessons", href: "/docs/lessons" },
+      { title: "Course Reviews", href: "/docs/course-reviews" },
     ],
   },
   {

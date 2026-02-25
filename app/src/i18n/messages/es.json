@@ -92,6 +92,8 @@
     },
     "detail": {
       "enroll": "Inscribirse",
+      "enrollRefundInfo": "Rent totalmente reembolsable",
+      "enrollRefundTooltip": "El SOL pagado para inscribirse (rent de la cuenta) será devuelto a tu billetera al cerrar la inscripción después de completar el curso.",
       "continue": "Continuar Aprendiendo",
       "start": "Comenzar a Aprender",
       "completed": "Completado",
@@ -102,7 +104,21 @@
       "difficulty": "Dificultad",
       "xpReward": "Recompensa XP",
       "totalXp": "XP total",
-      "reviews": "Reseñas"
+      "reviews": "Reseñas",
+      "noReviews": "Aún no hay reseñas. ¡Completa el curso para dejar una reseña!",
+      "reviewForm": {
+        "title": "Escribir una Reseña",
+        "editTitle": "Editar Tu Reseña",
+        "yourRating": "Tu calificación",
+        "placeholder": "Comparte tu experiencia con este curso (opcional)",
+        "submit": "Enviar Reseña",
+        "update": "Actualizar Reseña",
+        "saving": "Guardando...",
+        "submitted": "¡Reseña enviada!",
+        "updated": "¡Reseña actualizada!",
+        "error": "Error al enviar la reseña",
+        "ratingRequired": "Selecciona una calificación"
+      }
     }
   },
   "lesson": {
@@ -253,7 +269,7 @@
     "bioLabel": "Bio",
     "bioPlaceholder": "Una breve presentación sobre ti",
     "socialsLabel": "Enlaces sociales (opcional)",
-    "twitterPlaceholder": "@usuario",
+    "twitterPlaceholder": "usuario",
     "githubPlaceholder": "usuario",
     "websitePlaceholder": "https://tu.sitio",
     "walletTitle": "Conecta tu billetera",
@@ -264,6 +280,7 @@
     "walletDontHave": "No, necesito crear una",
     "walletLinkedTitle": "¡Billetera conectada!",
     "walletLinkedDesc": "Tu billetera está vinculada. Estás listo para ganar XP y credenciales on-chain.",
+    "walletSignMessage": "Por favor, aprueba la solicitud de firma en tu billetera para completar la vinculación.",
     "walletConnectDesc": "Selecciona tu proveedor de billetera y aprueba la conexión. Es gratis — no necesitas SOL.",
     "walletGuideTitle": "Crea una billetera Solana",
     "walletGuideSubtitle": "Sigue estos pasos rápidos para configurar Solflare — solo toma unos minutos",

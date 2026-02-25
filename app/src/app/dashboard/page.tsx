@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { PlatformLayout } from "@/components/layout";
@@ -44,11 +44,11 @@ export default function DashboardPage() {
 
   // Only show onboarding when profile is loaded AND onboarding is incomplete
   // Don't show while auth is still loading (profile is null during loading)
-  const showOnboarding = !authLoading && !!profile && !profile.onboardingCompleted;
+  const [onboardingDismissed, setOnboardingDismissed] = useState(false);
+  const showOnboarding = !onboardingDismissed && !authLoading && !!profile && !profile.onboardingCompleted;
 
-  const handleOnboardingChange = useCallback(() => {
-    // Closing is handled by completeOnboarding in the modal,
-    // which calls refreshProfile to update the flag
+  const handleOnboardingChange = useCallback((open: boolean) => {
+    if (!open) setOnboardingDismissed(true);
   }, []);
 
   const inProgress = progressList.filter((p) => !p.isCompleted);

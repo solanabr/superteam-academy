@@ -20,6 +20,9 @@ import {
   User,
   Layers,
   FileText,
+  EyeOff,
+  Eye,
+  Trash2,
 } from "lucide-react";
 
 interface CourseDetail {
@@ -80,6 +83,7 @@ export default function AdminCourseReviewPage() {
   const [acting, setActing] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
   const [showRejectForm, setShowRejectForm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const getToken = useCallback(async () => {
     const supabase = createSupabaseBrowserClient();
@@ -167,6 +171,60 @@ export default function AdminCourseReviewPage() {
       toast.error("Failed to reject");
     } finally {
       setActing(false);
+    }
+  };
+
+  const handleToggleHide = async () => {
+    if (!course) return;
+    const effectivelyActive = course.isActive !== false;
+    setActing(true);
+    try {
+      const token = await getToken();
+      const res = await fetch(`/api/admin/courses/${id}/hide`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ hidden: effectivelyActive }),
+      });
+
+      if (res.ok) {
+        const action = effectivelyActive ? "hidden" : "visible";
+        toast.success(`Course is now ${action}`);
+        fetchCourse();
+      } else {
+        const { error } = await res.json();
+        toast.error(error ?? "Failed to update visibility");
+      }
+    } catch {
+      toast.error("Failed to update visibility");
+    } finally {
+      setActing(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setActing(true);
+    try {
+      const token = await getToken();
+      const res = await fetch(`/api/admin/courses/${id}/delete`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (res.ok) {
+        toast.success("Course permanently deleted");
+        router.push("/admin/courses");
+      } else {
+        const { error } = await res.json();
+        toast.error(error ?? "Failed to delete");
+      }
+    } catch {
+      toast.error("Failed to delete");
+    } finally {
+      setActing(false);
+      setShowDeleteConfirm(false);
     }
   };
 
@@ -320,7 +378,7 @@ export default function AdminCourseReviewPage() {
                 </div>
               )}
 
-              {/* Actions */}
+              {/* Review Actions */}
               {(course.status === "pending_review" || course.status === "draft") && (
                 <div className="rounded-xl border bg-card p-6 space-y-4">
                   <h3 className="font-semibold text-lg">Review Actions</h3>
@@ -374,6 +432,72 @@ export default function AdminCourseReviewPage() {
                   )}
                 </div>
               )}
+
+              {/* Visibility & Delete */}
+              {(() => {
+                const effectivelyActive = course.isActive !== false;
+                return (
+              <div className="rounded-xl border bg-card p-6 space-y-4">
+                <h3 className="font-semibold text-lg">Course Management</h3>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <Button
+                    variant="outline"
+                    onClick={handleToggleHide}
+                    disabled={acting}
+                  >
+                    {effectivelyActive ? (
+                      <>
+                        <EyeOff className="h-4 w-4 mr-2" />
+                        {acting ? "Hiding..." : "Hide Course"}
+                      </>
+                    ) : (
+                      <>
+                        <Eye className="h-4 w-4 mr-2" />
+                        {acting ? "Showing..." : "Show Course"}
+                      </>
+                    )}
+                  </Button>
+
+                  {showDeleteConfirm ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-destructive font-medium">Are you sure? This is permanent.</span>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={handleDelete}
+                        disabled={acting}
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        {acting ? "Deleting..." : "Yes, Delete"}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowDeleteConfirm(false)}
+                        disabled={acting}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      variant="destructive"
+                      onClick={() => setShowDeleteConfirm(true)}
+                      disabled={acting}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete Course
+                    </Button>
+                  )}
+                </div>
+                {!effectivelyActive && (
+                  <p className="text-sm text-amber-600 dark:text-amber-400">
+                    This course is currently hidden from the public catalog.
+                  </p>
+                )}
+              </div>
+                );
+              })()}
             </div>
           )}
         </div>

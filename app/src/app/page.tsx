@@ -9,28 +9,13 @@ import {
   Zap,
   Users,
   ArrowRight,
-  BookOpen,
-  Layers,
-  Terminal,
-  Palette,
-  Globe,
-  ChevronRight,
 } from "lucide-react";
-import { trackLabels } from "@/lib/constants";
 
 const features = [
   { key: "interactive" as const, icon: Code2 },
   { key: "credentials" as const, icon: Award },
   { key: "xp" as const, icon: Zap },
   { key: "community" as const, icon: Users },
-];
-
-const tracks = [
-  { id: 1, icon: BookOpen, color: "bg-blue-500/10 text-blue-600 dark:text-blue-400" },
-  { id: 2, icon: Layers, color: "bg-violet-500/10 text-violet-600 dark:text-violet-400" },
-  { id: 3, icon: Terminal, color: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" },
-  { id: 4, icon: Palette, color: "bg-amber-500/10 text-amber-600 dark:text-amber-400" },
-  { id: 5, icon: Globe, color: "bg-rose-500/10 text-rose-600 dark:text-rose-400" },
 ];
 
 const stats = [
@@ -50,7 +35,7 @@ export default async function Home() {
         <div className="absolute inset-0 -z-10">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(120,119,198,0.15),transparent)]" />
         </div>
-        <div className="container mx-auto px-4 py-24 sm:py-32 lg:py-40">
+        <div className="container mx-auto px-4 py-16 sm:py-24 lg:py-32">
           <div className="mx-auto max-w-3xl text-center">
             <Badge variant="secondary" className="mb-6 gap-1.5 px-3 py-1 text-sm font-medium">
               <Zap className="h-3.5 w-3.5" />
@@ -81,7 +66,7 @@ export default async function Home() {
 
       {/* Stats */}
       <section className="border-y bg-muted/30">
-        <div className="container mx-auto grid grid-cols-2 gap-8 px-4 py-12 sm:grid-cols-4">
+        <div className="container mx-auto grid grid-cols-2 gap-8 px-4 py-12 sm:py-16 sm:grid-cols-4">
           {stats.map((stat) => (
             <div key={stat.key} className="text-center">
               <p className="text-3xl font-bold tracking-tight sm:text-4xl">
@@ -96,19 +81,19 @@ export default async function Home() {
       </section>
 
       {/* Features */}
-      <section className="container mx-auto px-4 py-20 sm:py-28">
+      <section className="container mx-auto px-4 py-12 sm:py-16">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
             {t("features.title")}
           </h2>
         </div>
-        <div className="mx-auto mt-16 grid max-w-5xl gap-8 sm:grid-cols-2">
+        <div className="mx-auto mt-12 grid max-w-5xl gap-8 sm:grid-cols-2">
           {features.map(({ key, icon: Icon }) => (
             <div
               key={key}
               className="group relative rounded-2xl border bg-card p-8 transition-all hover:shadow-md hover:border-primary/20"
             >
-              <div className="mb-4 inline-flex rounded-xl bg-primary/10 p-3 text-primary">
+              <div className="mb-4 text-primary">
                 <Icon className="h-6 w-6" />
               </div>
               <h3 className="text-lg font-semibold">
@@ -123,7 +108,7 @@ export default async function Home() {
       </section>
 
       {/* Testimonials / Social Proof */}
-      <section className="container mx-auto px-4 py-20 sm:py-28">
+      <section className="container mx-auto px-4 py-12 sm:py-16">
         <div className="mx-auto max-w-2xl text-center mb-16">
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
             {t("testimonials.title")}
@@ -133,7 +118,13 @@ export default async function Home() {
           </p>
         </div>
         <div className="mx-auto max-w-5xl grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {([1, 2, 3] as const).map((i) => (
+          {([1, 2, 3] as const).map((i) => {
+            const avatars: Record<number, string> = {
+              1: "https://i.ibb.co/v68yKfgT/image.png",
+              2: "https://i.ibb.co/670LQgmY/image.png",
+              3: "https://i.ibb.co/fY3hMGmL/image.png",
+            };
+            return (
             <div
               key={i}
               className="rounded-2xl border bg-card p-6 space-y-4"
@@ -142,16 +133,21 @@ export default async function Home() {
                 &ldquo;{t(`testimonials.${i}.quote`)}&rdquo;
               </p>
               <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
-                  {t(`testimonials.${i}.name`).charAt(0)}
-                </div>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={avatars[i]}
+                  alt={t(`testimonials.${i}.name`)}
+                  className="h-9 w-9 rounded-full object-cover"
+                  loading="lazy"
+                />
                 <div>
                   <p className="text-sm font-medium">{t(`testimonials.${i}.name`)}</p>
                   <p className="text-xs text-muted-foreground">{t(`testimonials.${i}.role`)}</p>
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Partner logos */}
@@ -164,41 +160,8 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Learning Paths */}
-      <section className="border-y bg-muted/30">
-        <div className="container mx-auto px-4 py-20 sm:py-28">
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              {t("paths.title")}
-            </h2>
-            <p className="mt-4 text-muted-foreground">
-              {t("paths.subtitle")}
-            </p>
-          </div>
-          <div className="mx-auto mt-12 grid max-w-4xl gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {tracks.map(({ id, icon: Icon, color }) => (
-              <Link
-                key={id}
-                href={`/courses?track=${id}`}
-                className="group flex items-center gap-4 rounded-xl border bg-card p-5 transition-all hover:shadow-md hover:border-primary/20"
-              >
-                <div className={`rounded-lg p-2.5 ${color}`}>
-                  <Icon className="h-5 w-5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">
-                    {trackLabels[id]}
-                  </p>
-                </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Final CTA */}
-      <section className="container mx-auto px-4 py-20 sm:py-28">
+      <section className="container mx-auto px-4 py-12 sm:py-16">
         <div className="mx-auto max-w-3xl rounded-2xl border bg-card p-8 sm:p-12 text-center">
           <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
             {t("cta.title")}

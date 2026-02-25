@@ -168,6 +168,27 @@ export interface LeaderboardEntry {
   streak?: number;
 }
 
+// ─── Course Review ──────────────────────────────────────
+export interface CourseReview {
+  id: string;
+  userId: string;
+  courseId: string;
+  rating: number;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+  author: {
+    username: string;
+    displayName: string;
+    avatarUrl: string | null;
+  };
+}
+
+export interface ReviewSummary {
+  count: number;
+  avgRating: number;
+}
+
 // ─── Comment ────────────────────────────────────────────
 export interface Comment {
   id: string;
@@ -177,6 +198,7 @@ export interface Comment {
   parentId?: string;
   content: string;
   isHelpful: boolean;
+  helpfulCount: number;
   createdAt: string;
   updatedAt: string;
   author: {
@@ -184,7 +206,6 @@ export interface Comment {
     displayName: string;
     avatarUrl: string | null;
   };
-  helpfulCount: number;
   replies: Comment[];
 }
 

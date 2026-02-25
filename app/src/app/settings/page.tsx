@@ -9,6 +9,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   Select,
@@ -56,6 +64,7 @@ export default function SettingsPage() {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [linkingWallet, setLinkingWallet] = useState(false);
   const [unlinkingWallet, setUnlinkingWallet] = useState(false);
+  const [showUnlinkDialog, setShowUnlinkDialog] = useState(false);
   const pendingLink = useRef(false);
 
   useEffect(() => {
@@ -103,11 +112,7 @@ export default function SettingsPage() {
   };
 
   const handleUnlinkWallet = async () => {
-    const confirmed = window.confirm(
-      "Are you sure you want to unlink your wallet? You can link a new one afterwards.",
-    );
-    if (!confirmed) return;
-
+    setShowUnlinkDialog(false);
     setUnlinkingWallet(true);
     try {
       await unlinkWallet();
@@ -293,22 +298,36 @@ export default function SettingsPage() {
 
               <div className="grid gap-4 sm:grid-cols-3">
                 <div className="space-y-2">
-                  <Label htmlFor="twitter">Twitter</Label>
-                  <Input
-                    id="twitter"
-                    value={twitter}
-                    onChange={(e) => setTwitter(e.target.value)}
-                    placeholder="@handle"
-                  />
+                  <Label htmlFor="twitter">X (Twitter)</Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">@</span>
+                    <Input
+                      id="twitter"
+                      value={twitter}
+                      onChange={(e) => {
+                        const v = e.target.value.replace(/^@/, "").replace(/https?:\/\/(www\.)?(twitter|x)\.com\//i, "").replace(/\//g, "");
+                        setTwitter(v);
+                      }}
+                      placeholder="username"
+                      className="pl-7"
+                    />
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="github">GitHub</Label>
-                  <Input
-                    id="github"
-                    value={github}
-                    onChange={(e) => setGithub(e.target.value)}
-                    placeholder="username"
-                  />
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">@</span>
+                    <Input
+                      id="github"
+                      value={github}
+                      onChange={(e) => {
+                        const v = e.target.value.replace(/^@/, "").replace(/https?:\/\/(www\.)?github\.com\//i, "").replace(/\//g, "");
+                        setGithub(v);
+                      }}
+                      placeholder="username"
+                      className="pl-7"
+                    />
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="website">Website</Label>
@@ -408,7 +427,7 @@ export default function SettingsPage() {
             </div>
 
             {walletLinked ? (
-              <div className="space-y-3">
+              <>
                 <div className="flex items-center gap-2 rounded-lg border bg-card p-4">
                   <Check className="h-4 w-4 text-emerald-500" />
                   <span className="text-sm font-mono">
@@ -418,22 +437,47 @@ export default function SettingsPage() {
                   <span className="text-xs text-muted-foreground ml-auto">
                     Linked
                   </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowUnlinkDialog(true)}
+                    disabled={unlinkingWallet}
+                    className="gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10 h-8 px-2.5"
+                  >
+                    {unlinkingWallet ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Unlink className="h-3.5 w-3.5" />
+                    )}
+                    {unlinkingWallet ? "Unlinking..." : "Unlink"}
+                  </Button>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleUnlinkWallet}
-                  disabled={unlinkingWallet}
-                  className="gap-2 text-destructive hover:text-destructive"
-                >
-                  {unlinkingWallet ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Unlink className="h-4 w-4" />
-                  )}
-                  {unlinkingWallet ? "Unlinking..." : "Unlink Wallet"}
-                </Button>
-              </div>
+
+                <Dialog open={showUnlinkDialog} onOpenChange={setShowUnlinkDialog}>
+                  <DialogContent className="max-w-sm">
+                    <DialogHeader>
+                      <DialogTitle>Unlink Wallet</DialogTitle>
+                      <DialogDescription>
+                        Are you sure you want to unlink your wallet? You can link a new one afterwards.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowUnlinkDialog(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        onClick={handleUnlinkWallet}
+                      >
+                        Unlink
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </>
             ) : (
               <div className="space-y-3">
                 <p className="text-sm text-muted-foreground">

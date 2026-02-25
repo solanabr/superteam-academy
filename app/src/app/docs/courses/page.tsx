@@ -88,6 +88,7 @@ export default function CoursesPage() {
         <li>Estimated duration and XP per lesson</li>
         <li>Prerequisite courses (if any)</li>
         <li>Enroll button</li>
+        <li>Student reviews from learners who completed the course (see <a href="/docs/course-reviews">Course Reviews</a>)</li>
       </ul>
 
       <DocsPagination />

@@ -26,6 +26,7 @@ export interface CourseAnalytics {
   difficulty: number;
   trackId: number;
   status: string;
+  isActive: boolean | null;
   lessonCount: number;
   enrollments: number;
   completions: number;

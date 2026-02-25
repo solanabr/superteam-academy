@@ -4,9 +4,9 @@ export const siteConfig = {
     "The ultimate learning platform for Solana developers. From zero to deploying production-ready dApps.",
   url: "https://academy.superteam.fun",
   links: {
-    twitter: "https://twitter.com/SuperteamBR",
+    twitter: "https://x.com/SuperteamBR",
     discord: "https://discord.gg/superteambrasil",
-    github: "https://github.com/solanabr/superteam-academy",
+    github: "https://github.com/solanabr",
   },
 } as const;
 

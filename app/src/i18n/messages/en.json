@@ -92,6 +92,8 @@
     },
     "detail": {
       "enroll": "Enroll Now",
+      "enrollRefundInfo": "Rent is fully reclaimable",
+      "enrollRefundTooltip": "The SOL paid to enroll (account rent) will be returned to your wallet when you close the enrollment after completing the course.",
       "continue": "Continue Learning",
       "start": "Start Learning",
       "completed": "Completed",
@@ -102,7 +104,21 @@
       "difficulty": "Difficulty",
       "xpReward": "XP Reward",
       "totalXp": "total XP",
-      "reviews": "Student Reviews"
+      "reviews": "Student Reviews",
+      "noReviews": "No reviews yet. Complete the course to leave a review!",
+      "reviewForm": {
+        "title": "Write a Review",
+        "editTitle": "Edit Your Review",
+        "yourRating": "Your rating",
+        "placeholder": "Share your experience with this course (optional)",
+        "submit": "Submit Review",
+        "update": "Update Review",
+        "saving": "Saving...",
+        "submitted": "Review submitted!",
+        "updated": "Review updated!",
+        "error": "Failed to submit review",
+        "ratingRequired": "Please select a rating"
+      }
     }
   },
   "lesson": {
@@ -253,7 +269,7 @@
     "bioLabel": "Bio",
     "bioPlaceholder": "A short intro about yourself",
     "socialsLabel": "Social links (optional)",
-    "twitterPlaceholder": "@username",
+    "twitterPlaceholder": "username",
     "githubPlaceholder": "username",
     "websitePlaceholder": "https://your.site",
     "walletTitle": "Connect your wallet",
@@ -264,6 +280,7 @@
     "walletDontHave": "No, I need to create one",
     "walletLinkedTitle": "Wallet connected!",
     "walletLinkedDesc": "Your wallet is linked. You're ready to earn on-chain XP and credentials.",
+    "walletSignMessage": "Please approve the signature request in your wallet to complete linking.",
     "walletConnectDesc": "Select your wallet provider and approve the connection. It's free — no SOL required.",
     "walletGuideTitle": "Create a Solana wallet",
     "walletGuideSubtitle": "Follow these quick steps to set up Solflare — it only takes a few minutes",

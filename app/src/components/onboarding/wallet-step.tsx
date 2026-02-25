@@ -1,21 +1,23 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/components/providers/auth-provider";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { Button } from "@/components/ui/button";
-import { Wallet, Sparkles, Shield, Trophy, ExternalLink, BookOpen } from "lucide-react";
+import { Wallet, Sparkles, Shield, Trophy, ExternalLink, BookOpen, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface WalletStepProps {
   onNext: () => void;
   onBack: () => void;
+  pendingLink: boolean;
+  setPendingLink: (v: boolean) => void;
 }
 
-export function WalletStep({ onNext, onBack }: WalletStepProps) {
+export function WalletStep({ onNext, onBack, pendingLink, setPendingLink }: WalletStepProps) {
   const t = useTranslations("onboarding");
   const tAuth = useTranslations("auth");
   const { walletLinked, linkWallet } = useAuth();
@@ -23,13 +25,12 @@ export function WalletStep({ onNext, onBack }: WalletStepProps) {
   const { setVisible } = useWalletModal();
 
   const [linking, setLinking] = useState(false);
-  const [view, setView] = useState<"ask" | "connect" | "guide">("ask");
-  const pendingLink = useRef(false);
+  const [view, setView] = useState<"ask" | "guide">("ask");
 
   // Auto-trigger link after wallet connects via modal
   useEffect(() => {
-    if (connected && pendingLink.current && !walletLinked) {
-      pendingLink.current = false;
+    if (connected && pendingLink && !walletLinked && !linking) {
+      setPendingLink(false);
       setLinking(true);
       linkWallet()
         .then(() => {
@@ -41,11 +42,11 @@ export function WalletStep({ onNext, onBack }: WalletStepProps) {
         })
         .finally(() => setLinking(false));
     }
-  }, [connected, walletLinked, linkWallet, tAuth, onNext]);
+  }, [connected, pendingLink, walletLinked, linking, linkWallet, tAuth, onNext]);
 
   const handleConnectWallet = useCallback(async () => {
     if (!connected) {
-      pendingLink.current = true;
+      setPendingLink(true);
       setTimeout(() => setVisible(true), 100);
       return;
     }
@@ -90,6 +91,29 @@ export function WalletStep({ onNext, onBack }: WalletStepProps) {
         <Button onClick={onNext} className="w-full max-w-sm">
           {t("next")}
         </Button>
+      </motion.div>
+    );
+  }
+
+  // Show linking state while wallet is connected and signature is pending
+  if (linking || pendingLink) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: -20 }}
+        transition={{ duration: 0.3 }}
+        className="flex flex-col items-center px-2"
+      >
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl">
+          <Loader2 className="h-7 w-7 text-primary animate-spin" />
+        </div>
+        <h2 className="text-xl font-bold tracking-tight mb-1 text-center">
+          {tAuth("linkingWallet")}
+        </h2>
+        <p className="text-sm text-muted-foreground text-center">
+          {t("walletSignMessage")}
+        </p>
       </motion.div>
     );
   }
@@ -148,9 +172,9 @@ export function WalletStep({ onNext, onBack }: WalletStepProps) {
 
             {/* Two choices */}
             <div className="flex flex-col gap-2 w-full max-w-sm">
-              <Button onClick={() => setView("connect")} className="gap-2">
+              <Button onClick={handleConnectWallet} disabled={linking} className="gap-2">
                 <Wallet className="h-4 w-4" />
-                {t("walletHaveOne")}
+                {linking ? tAuth("linkingWallet") : t("walletHaveOne")}
               </Button>
               <Button
                 variant="outline"
@@ -168,37 +192,6 @@ export function WalletStep({ onNext, onBack }: WalletStepProps) {
                   {t("skipForNow")}
                 </Button>
               </div>
-            </div>
-          </motion.div>
-        )}
-
-        {/* Connect wallet flow */}
-        {view === "connect" && (
-          <motion.div
-            key="connect"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            className="flex flex-col items-center w-full"
-          >
-            <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl">
-              <Wallet className="h-7 w-7 text-primary" />
-            </div>
-            <h2 className="text-xl font-bold tracking-tight mb-1 text-center">
-              {t("connectWallet")}
-            </h2>
-            <p className="text-sm text-muted-foreground text-center mb-6">
-              {t("walletConnectDesc")}
-            </p>
-
-            <div className="flex flex-col gap-2 w-full max-w-sm">
-              <Button onClick={handleConnectWallet} disabled={linking} className="gap-2">
-                <Wallet className="h-4 w-4" />
-                {linking ? tAuth("linkingWallet") : t("connectWallet")}
-              </Button>
-              <Button variant="outline" onClick={() => setView("ask")}>
-                {t("back")}
-              </Button>
             </div>
           </motion.div>
         )}
@@ -266,9 +259,9 @@ export function WalletStep({ onNext, onBack }: WalletStepProps) {
             </a>
 
             <div className="flex flex-col gap-2 w-full max-w-sm">
-              <Button onClick={() => setView("connect")} className="gap-2">
+              <Button onClick={handleConnectWallet} disabled={linking} className="gap-2">
                 <Wallet className="h-4 w-4" />
-                {t("walletGuideReady")}
+                {linking ? tAuth("linkingWallet") : t("walletGuideReady")}
               </Button>
               <Button variant="outline" onClick={() => setView("ask")}>
                 {t("back")}

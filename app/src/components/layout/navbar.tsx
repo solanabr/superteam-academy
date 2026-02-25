@@ -23,6 +23,7 @@ import {
   FolderOpen,
   MessageSquare,
   FileText,
+  ChevronDown,
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
@@ -75,7 +77,7 @@ export function Navbar() {
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
       <nav className="container mx-auto flex h-16 items-center justify-between px-4 lg:px-8">
         {/* Logo */}
-        <NextLink href="/" className="flex items-center gap-2.5 font-semibold text-lg tracking-tight">
+        <NextLink href="/" className="flex items-center gap-2.5 font-semibold text-lg tracking-tight shrink-0">
           <Image
             src="/superteam-logo.jpg"
             alt="Superteam"
@@ -86,8 +88,8 @@ export function Navbar() {
           <span>Superteam Academy</span>
         </NextLink>
 
-        {/* Desktop Nav */}
-        <div className="hidden md:flex items-center gap-1">
+        {/* Desktop Nav — full inline (lg+) */}
+        <div className="hidden lg:flex items-center gap-1">
           {navItems.map((item) => {
             const isActive = pathname.startsWith(item.href);
             return (
@@ -95,7 +97,7 @@ export function Navbar() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                  "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap",
                   isActive
                     ? "bg-secondary text-foreground"
                     : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
@@ -107,12 +109,11 @@ export function Navbar() {
             );
           })}
 
-          {/* My Courses (only if user has created courses) */}
           {showMyCourses && (
             <Link
               href="/my-courses"
               className={cn(
-                "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap",
                 pathname.startsWith("/my-courses") || pathname.startsWith("/edit-course")
                   ? "bg-secondary text-foreground"
                   : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
@@ -123,12 +124,11 @@ export function Navbar() {
             </Link>
           )}
 
-          {/* Create Course */}
           {isAuthenticated && (
             <Link
               href="/create-course"
               className={cn(
-                "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap",
                 pathname.startsWith("/create-course")
                   ? "bg-secondary text-foreground"
                   : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
@@ -139,12 +139,11 @@ export function Navbar() {
             </Link>
           )}
 
-          {/* Admin link */}
           {isAdmin && (
             <Link
               href="/admin"
               className={cn(
-                "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap",
                 pathname.startsWith("/admin")
                   ? "bg-secondary text-foreground"
                   : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
@@ -156,8 +155,71 @@ export function Navbar() {
           )}
         </div>
 
+        {/* Compact Nav — dropdown (md only) */}
+        <div className="hidden md:flex lg:hidden">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="gap-1.5 text-sm font-medium">
+                <Menu className="h-4 w-4" />
+                Navigate
+                <ChevronDown className="h-3.5 w-3.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-48">
+              {navItems.map((item) => {
+                const isActive = pathname.startsWith(item.href);
+                return (
+                  <DropdownMenuItem key={item.href} asChild>
+                    <Link
+                      href={item.href}
+                      className={cn(
+                        "flex items-center gap-2 w-full",
+                        isActive && "font-semibold"
+                      )}
+                    >
+                      <item.icon className="h-4 w-4" />
+                      {t(item.labelKey)}
+                    </Link>
+                  </DropdownMenuItem>
+                );
+              })}
+
+              {(showMyCourses || isAuthenticated || isAdmin) && (
+                <DropdownMenuSeparator />
+              )}
+
+              {showMyCourses && (
+                <DropdownMenuItem asChild>
+                  <Link href="/my-courses" className="flex items-center gap-2 w-full">
+                    <FolderOpen className="h-4 w-4" />
+                    My Courses
+                  </Link>
+                </DropdownMenuItem>
+              )}
+
+              {isAuthenticated && (
+                <DropdownMenuItem asChild>
+                  <Link href="/create-course" className="flex items-center gap-2 w-full">
+                    <PlusCircle className="h-4 w-4" />
+                    Create
+                  </Link>
+                </DropdownMenuItem>
+              )}
+
+              {isAdmin && (
+                <DropdownMenuItem asChild>
+                  <Link href="/admin" className="flex items-center gap-2 w-full">
+                    <ShieldCheck className="h-4 w-4" />
+                    Admin
+                  </Link>
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
         {/* Right side */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {/* Docs */}
           <NextLink href="/docs">
             <Button variant="ghost" size="icon" className="h-9 w-9" aria-label="Documentation">

@@ -9,6 +9,7 @@ export type { AchievementService } from "./achievement-service";
 export type { ProfileService } from "./profile-service";
 export type { ActivityService } from "./activity-service";
 export type { CommentService } from "./comment-service";
+export type { ReviewService } from "./review-service";
 
 // Course service — Sanity CMS (all courses live there now)
 import { sanityCourseService } from "./implementations/sanity-course-service";
@@ -25,4 +26,5 @@ export { supabaseAchievementService } from "./implementations/supabase-achieveme
 export { supabaseProfileService } from "./implementations/supabase-profile-service";
 export { supabaseActivityService } from "./implementations/supabase-activity-service";
 export { supabaseCommentService } from "./implementations/supabase-comment-service";
+export { supabaseReviewService } from "./implementations/supabase-review-service";
 export { heliusCredentialService } from "./implementations/helius-credential-service";

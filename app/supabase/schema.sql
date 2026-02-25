@@ -92,6 +92,18 @@ CREATE TABLE IF NOT EXISTS public.comments (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Course reviews (student reviews after completion)
+CREATE TABLE IF NOT EXISTS public.course_reviews (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  course_id TEXT NOT NULL,
+  rating INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
+  content TEXT CHECK (char_length(content) BETWEEN 0 AND 1000),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, course_id)
+);
+
 -- Community help tracking (for "Helper" achievement)
 CREATE TABLE IF NOT EXISTS public.community_help (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -117,6 +129,10 @@ CREATE INDEX IF NOT EXISTS idx_comments_created ON public.comments(created_at DE
 CREATE INDEX IF NOT EXISTS idx_comments_forum ON public.comments(created_at DESC) WHERE course_id IS NULL;
 CREATE INDEX IF NOT EXISTS idx_community_help_helper ON public.community_help(helper_id);
 CREATE INDEX IF NOT EXISTS idx_community_help_helped ON public.community_help(helped_user_id);
+CREATE INDEX IF NOT EXISTS idx_course_reviews_course ON public.course_reviews(course_id);
+CREATE INDEX IF NOT EXISTS idx_course_reviews_user ON public.course_reviews(user_id);
+CREATE INDEX IF NOT EXISTS idx_course_reviews_rating ON public.course_reviews(course_id, rating);
+CREATE INDEX IF NOT EXISTS idx_course_reviews_created ON public.course_reviews(created_at DESC);
 
 -- RLS policies
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
@@ -127,6 +143,7 @@ ALTER TABLE public.user_achievements ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.activities ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.comments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.community_help ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.course_reviews ENABLE ROW LEVEL SECURITY;
 
 -- Profiles: public read, own write
 CREATE POLICY "Public profiles are viewable by everyone"
@@ -230,6 +247,26 @@ CREATE POLICY "Users can mark comments as helpful"
   TO authenticated
   WITH CHECK (auth.uid() = helped_user_id);
 
+-- Course reviews: public read, own write
+CREATE POLICY "Reviews are viewable by everyone"
+  ON public.course_reviews FOR SELECT
+  USING (true);
+
+CREATE POLICY "Users can create own review"
+  ON public.course_reviews FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own review"
+  ON public.course_reviews FOR UPDATE
+  TO authenticated
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own review"
+  ON public.course_reviews FOR DELETE
+  TO authenticated
+  USING (auth.uid() = user_id);
+
 -- Auto-update updated_at
 CREATE OR REPLACE FUNCTION update_updated_at()
 RETURNS TRIGGER AS $$
@@ -249,4 +286,8 @@ CREATE TRIGGER streaks_updated_at
 
 CREATE TRIGGER comments_updated_at
   BEFORE UPDATE ON public.comments
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+CREATE TRIGGER course_reviews_updated_at
+  BEFORE UPDATE ON public.course_reviews
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();

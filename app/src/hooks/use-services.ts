@@ -22,6 +22,8 @@ import {
 import type {
   Course,
   CourseProgress,
+  CourseReview,
+  ReviewSummary,
   XPBalance,
   StreakData,
   ActivityItem,
@@ -459,6 +461,75 @@ export function useCredentials() {
   }));
 
   return { credentials, loading: loading || onChainLoading };
+}
+
+// ─── Reviews ────────────────────────────────────────────
+
+export function useReviews(courseId: string) {
+  const { user } = useAuth();
+  const [reviews, setReviews] = useState<CourseReview[]>([]);
+  const [summary, setSummary] = useState<ReviewSummary>({ count: 0, avgRating: 0 });
+  const [userReview, setUserReview] = useState<CourseReview | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const fetchReviews = useCallback(() => {
+    if (!courseId) return;
+    setLoading(true);
+    fetch(`/api/reviews?courseId=${encodeURIComponent(courseId)}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setReviews(data.reviews ?? []);
+        setSummary(data.summary ?? { count: 0, avgRating: 0 });
+        if (user) {
+          const mine = (data.reviews ?? []).find(
+            (r: CourseReview) => r.userId === user.id,
+          );
+          setUserReview(mine ?? null);
+        }
+      })
+      .catch(() => {
+        setReviews([]);
+        setSummary({ count: 0, avgRating: 0 });
+      })
+      .finally(() => setLoading(false));
+  }, [courseId, user]);
+
+  useEffect(() => {
+    fetchReviews();
+  }, [fetchReviews]);
+
+  const submitReview = useCallback(
+    async (rating: number, content: string) => {
+      if (!user) return;
+      const res = await fetch("/api/reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ courseId, rating, content }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error ?? "Failed to submit review");
+      }
+
+      fetchReviews();
+    },
+    [user, courseId, fetchReviews],
+  );
+
+  const deleteReview = useCallback(
+    async (reviewId: string) => {
+      const res = await fetch(`/api/reviews?id=${reviewId}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Failed to delete review");
+      setUserReview(null);
+      fetchReviews();
+    },
+    [fetchReviews],
+  );
+
+  return { reviews, summary, userReview, loading, submitReview, deleteReview };
 }
 
 // ─── Comments ───────────────────────────────────────────

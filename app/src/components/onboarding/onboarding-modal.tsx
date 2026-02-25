@@ -8,6 +8,7 @@ import { useAuth } from "@/components/providers/auth-provider";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { WelcomeStep } from "./welcome-step";
@@ -27,20 +28,23 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
   const { refreshProfile } = useAuth();
   const [step, setStep] = useState(0);
   const { visible: walletModalVisible } = useWalletModal();
+  // Lifted from WalletStep so it survives Dialog unmount when wallet modal opens
+  const [walletPendingLink, setWalletPendingLink] = useState(false);
 
   // Hide onboarding dialog while wallet adapter modal is open
   // so Radix focus trap doesn't block wallet selection
   const dialogOpen = open && !walletModalVisible;
 
   const completeOnboarding = useCallback(async () => {
+    // Close dialog immediately for responsiveness
+    onOpenChange(false);
+    // Then persist in background
     try {
       await fetch("/api/onboarding/complete", { method: "POST" });
-      // Refresh profile so onboardingCompleted reflects the DB update
       await refreshProfile();
     } catch {
       // Non-blocking
     }
-    onOpenChange(false);
   }, [onOpenChange, refreshProfile]);
 
   const next = useCallback(() => {
@@ -62,6 +66,9 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
         showCloseButton={false}
       >
         <DialogTitle className="sr-only">{t("welcome")}</DialogTitle>
+        <DialogDescription className="sr-only">
+          {t("welcome")}
+        </DialogDescription>
 
         {/* Progress dots */}
         <div className="flex items-center justify-center gap-1.5 mb-6">
@@ -97,7 +104,7 @@ export function OnboardingModal({ open, onOpenChange }: OnboardingModalProps) {
         <AnimatePresence mode="wait">
           {step === 0 && <WelcomeStep key="welcome" onNext={next} />}
           {step === 1 && <ProfileStep key="profile" onNext={next} onBack={back} />}
-          {step === 2 && <WalletStep key="wallet" onNext={next} onBack={back} />}
+          {step === 2 && <WalletStep key="wallet" onNext={next} onBack={back} pendingLink={walletPendingLink} setPendingLink={setWalletPendingLink} />}
           {step === 3 && <ExploreStep key="explore" onComplete={completeOnboarding} />}
         </AnimatePresence>
       </DialogContent>

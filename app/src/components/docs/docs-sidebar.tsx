@@ -74,7 +74,7 @@ export function DocsSidebar() {
     <div className="flex flex-col h-full">
       {/* Logo */}
       <div className="px-4 py-4 border-b border-border">
-        <Link href="/docs" className="flex items-center gap-2">
+        <Link href="/" className="flex items-center gap-2">
           <Image
             src="/superteam-logo.jpg"
             alt="Superteam"

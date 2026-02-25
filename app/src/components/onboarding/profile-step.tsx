@@ -29,7 +29,6 @@ export function ProfileStep({ onNext, onBack }: ProfileStepProps) {
   const [website, setWebsite] = useState(profile?.socialLinks?.website ?? "");
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatarUrl ?? null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
-  const [saving, setSaving] = useState(false);
 
   const initials = (displayName || "L").slice(0, 2).toUpperCase();
 
@@ -60,28 +59,21 @@ export function ProfileStep({ onNext, onBack }: ProfileStepProps) {
     }
   };
 
-  const handleNext = async () => {
-    setSaving(true);
-    try {
-      const res = await fetch("/api/profile", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          displayName,
-          username,
-          bio,
-          socialLinks: { twitter, github, website },
-        }),
-      });
-      if (res.ok) {
-        await refreshProfile();
-      }
-    } catch {
-      // Non-blocking — proceed even if save fails
-    } finally {
-      setSaving(false);
-      onNext();
-    }
+  const handleNext = () => {
+    // Fire-and-forget: save profile in background, advance immediately
+    fetch("/api/profile", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        displayName,
+        username,
+        bio,
+        socialLinks: { twitter, github, website },
+      }),
+    })
+      .then((res) => { if (res.ok) refreshProfile(); })
+      .catch(() => {});
+    onNext();
   };
 
   return (
@@ -172,11 +164,14 @@ export function ProfileStep({ onNext, onBack }: ProfileStepProps) {
           <p className="text-xs text-muted-foreground mb-2">{t("socialsLabel")}</p>
           <div className="space-y-2">
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">𝕏</span>
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
               <Input
                 id="onboarding-twitter"
                 value={twitter}
-                onChange={(e) => setTwitter(e.target.value)}
+                onChange={(e) => {
+                  const v = e.target.value.replace(/^@/, "").replace(/https?:\/\/(www\.)?(twitter|x)\.com\//i, "").replace(/\//g, "");
+                  setTwitter(v);
+                }}
                 placeholder={t("twitterPlaceholder")}
                 className="h-9 pl-8"
               />
@@ -186,7 +181,10 @@ export function ProfileStep({ onNext, onBack }: ProfileStepProps) {
               <Input
                 id="onboarding-github"
                 value={github}
-                onChange={(e) => setGithub(e.target.value)}
+                onChange={(e) => {
+                  const v = e.target.value.replace(/^@/, "").replace(/https?:\/\/(www\.)?github\.com\//i, "").replace(/\//g, "");
+                  setGithub(v);
+                }}
                 placeholder={t("githubPlaceholder")}
                 className="h-9 pl-8"
               />
@@ -209,8 +207,8 @@ export function ProfileStep({ onNext, onBack }: ProfileStepProps) {
         <Button variant="outline" onClick={onBack} className="flex-1">
           {t("back")}
         </Button>
-        <Button onClick={handleNext} disabled={saving} className="flex-1">
-          {saving ? t("saving") : t("next")}
+        <Button onClick={handleNext} className="flex-1">
+          {t("next")}
         </Button>
       </div>
     </motion.div>

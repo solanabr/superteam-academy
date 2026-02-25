@@ -126,7 +126,12 @@ function buildFilters(params?: SearchParams): string {
 export const sanityCourseService: CourseService = {
   async getCourses(params) {
     const filter = buildFilters(params);
-    const offset = params?.page ? (Number(params.page) - 1) * 12 : 0;
+    // When no page specified, fetch all courses for client-side filtering
+    if (!params?.page) {
+      const query = `*[${filter}] | order(trackId asc, trackLevel asc) { ${COURSE_LIST_FIELDS} }`;
+      return sanityClient.fetch<Course[]>(query);
+    }
+    const offset = (Number(params.page) - 1) * 12;
     const query = `*[${filter}] | order(trackId asc, trackLevel asc) [${offset}...${offset + 12}] { ${COURSE_LIST_FIELDS} }`;
     return sanityClient.fetch<Course[]>(query);
   },

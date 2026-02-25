@@ -8,6 +8,7 @@ import { AnalyticsProvider } from "./analytics-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import { ServiceWorkerRegistration } from "./sw-registration";
+import { RouteScrollRestore } from "./route-scroll-restore";
 
 const SolanaProvider = dynamic(
   () => import("./solana-provider").then((m) => ({ default: m.SolanaProvider })),
@@ -27,6 +28,7 @@ export function Providers({ children }: { children: ReactNode }) {
             </Suspense>
             <Toaster position="top-right" />
             <ServiceWorkerRegistration />
+            <RouteScrollRestore />
           </TooltipProvider>
         </AuthProvider>
       </SolanaProvider>

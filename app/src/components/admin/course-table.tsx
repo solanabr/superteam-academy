@@ -2,14 +2,18 @@
 
 import { useState, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
+import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { toast } from "sonner";
 import type { CourseAnalytics } from "@/types/admin";
-import { Search, ChevronDown, ChevronUp, Users, GraduationCap, Zap } from "lucide-react";
+import { Search, ChevronDown, ChevronUp, Users, GraduationCap, Zap, EyeOff, Eye, Trash2 } from "lucide-react";
 
 interface CourseTableProps {
   courses: CourseAnalytics[];
   loading: boolean;
+  onRefresh?: () => void;
 }
 
 const difficultyLabels: Record<number, string> = { 1: "Beginner", 2: "Intermediate", 3: "Advanced" };
@@ -24,15 +28,85 @@ const statusColors: Record<string, string> = {
   pending_review: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
   approved: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
   rejected: "bg-red-500/10 text-red-600 dark:text-red-400",
+  hidden: "bg-orange-500/10 text-orange-600 dark:text-orange-400",
 };
+
+const statusLabels: Record<string, string> = {
+  draft: "Draft",
+  pending_review: "Pending",
+  approved: "Approved",
+  rejected: "Rejected",
+  hidden: "Hidden",
+};
+
+function getEffectiveStatus(course: CourseAnalytics): string {
+  if (course.isActive === false) return "hidden";
+  return course.status ?? "approved";
+}
 
 type SortField = "enrollments" | "completions" | "completionRate" | "avgProgress" | "xpGenerated";
 
-export function CourseTable({ courses, loading }: CourseTableProps) {
+export function CourseTable({ courses, loading, onRefresh }: CourseTableProps) {
   const [sortBy, setSortBy] = useState<SortField>("enrollments");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [searchQuery, setSearchQuery] = useState("");
   const [filterDifficulty, setFilterDifficulty] = useState<number | null>(null);
+  const [filterStatus, setFilterStatus] = useState<string | null>(null);
+  const [actingOn, setActingOn] = useState<string | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
+  const getToken = async () => {
+    const supabase = createSupabaseBrowserClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.access_token ?? null;
+  };
+
+  const handleToggleHide = async (courseId: string, isApproved: boolean) => {
+    setActingOn(courseId);
+    try {
+      const token = await getToken();
+      // For approved courses, hide them. For hidden ones (status approved but isActive false), show them.
+      const res = await fetch(`/api/admin/courses/${courseId}/hide`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ hidden: isApproved }),
+      });
+      if (res.ok) {
+        toast.success(isApproved ? "Course hidden" : "Course is now visible");
+        onRefresh?.();
+      } else {
+        const { error } = await res.json();
+        toast.error(error ?? "Failed to update visibility");
+      }
+    } catch {
+      toast.error("Failed to update visibility");
+    } finally {
+      setActingOn(null);
+    }
+  };
+
+  const handleDelete = async (courseId: string) => {
+    setActingOn(courseId);
+    try {
+      const token = await getToken();
+      const res = await fetch(`/api/admin/courses/${courseId}/delete`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        toast.success("Course deleted permanently");
+        onRefresh?.();
+      } else {
+        const { error } = await res.json();
+        toast.error(error ?? "Failed to delete");
+      }
+    } catch {
+      toast.error("Failed to delete");
+    } finally {
+      setActingOn(null);
+      setDeleteConfirmId(null);
+    }
+  };
 
   const filtered = useMemo(() => {
     let result = [...courses];
@@ -43,13 +117,16 @@ export function CourseTable({ courses, loading }: CourseTableProps) {
     if (filterDifficulty !== null) {
       result = result.filter((c) => c.difficulty === filterDifficulty);
     }
+    if (filterStatus !== null) {
+      result = result.filter((c) => getEffectiveStatus(c) === filterStatus);
+    }
     result.sort((a, b) => {
       const aVal = a[sortBy] ?? 0;
       const bVal = b[sortBy] ?? 0;
       return sortDir === "desc" ? bVal - aVal : aVal - bVal;
     });
     return result;
-  }, [courses, searchQuery, filterDifficulty, sortBy, sortDir]);
+  }, [courses, searchQuery, filterDifficulty, filterStatus, sortBy, sortDir]);
 
   const toggleSort = (field: SortField) => {
     if (sortBy === field) {
@@ -79,6 +156,21 @@ export function CourseTable({ courses, loading }: CourseTableProps) {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <div className="flex gap-1">
+            {[null, "approved", "hidden", "pending_review", "rejected", "draft"].map((s) => (
+              <button
+                key={s ?? "all"}
+                onClick={() => setFilterStatus(s)}
+                className={`px-2.5 py-1 text-xs rounded-md border transition-colors ${
+                  filterStatus === s
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-background hover:bg-accent border-border"
+                }`}
+              >
+                {s === null ? "All" : statusLabels[s] ?? s}
+              </button>
+            ))}
+          </div>
           <div className="flex gap-1">
             {[null, 1, 2, 3].map((d) => (
               <button
@@ -158,10 +250,13 @@ export function CourseTable({ courses, loading }: CourseTableProps) {
                   XP
                   {sortIcon("xpGenerated")}
                 </th>
+                <th className="py-2 pr-3 whitespace-nowrap">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((course) => (
+              {filtered.map((course) => {
+                const effectivelyActive = course.isActive !== false;
+                return (
                 <tr
                   key={course.courseId}
                   className="border-b border-border/50 hover:bg-accent/30"
@@ -180,9 +275,14 @@ export function CourseTable({ courses, loading }: CourseTableProps) {
                     </div>
                   </td>
                   <td className="py-3 pr-3">
-                    <Badge className={statusColors[course.status] ?? ""} variant="outline">
-                      {course.status?.replace("_", " ") ?? "—"}
-                    </Badge>
+                    {(() => {
+                      const effectiveStatus = getEffectiveStatus(course);
+                      return (
+                        <Badge className={statusColors[effectiveStatus] ?? ""} variant="outline">
+                          {statusLabels[effectiveStatus] ?? effectiveStatus}
+                        </Badge>
+                      );
+                    })()}
                   </td>
                   <td className="py-3 pr-3 tabular-nums font-medium">{course.enrollments}</td>
                   <td className="py-3 pr-3 tabular-nums">{course.completions}</td>
@@ -210,11 +310,64 @@ export function CourseTable({ courses, loading }: CourseTableProps) {
                   <td className="py-3 pr-3 tabular-nums">
                     {course.xpGenerated.toLocaleString()}
                   </td>
+                  <td className="py-3 pr-3">
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        disabled={actingOn === course.courseId}
+                        title={effectivelyActive ? "Hide course" : "Show course"}
+                        onClick={() => handleToggleHide(course.courseId, effectivelyActive)}
+                      >
+                        {effectivelyActive ? (
+                          <EyeOff className="h-3.5 w-3.5 text-muted-foreground" />
+                        ) : (
+                          <Eye className="h-3.5 w-3.5 text-muted-foreground" />
+                        )}
+                      </Button>
+
+                      {deleteConfirmId === course.courseId ? (
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            className="h-7 text-xs px-2"
+                            disabled={actingOn === course.courseId}
+                            onClick={() => handleDelete(course.courseId)}
+                          >
+                            {actingOn === course.courseId ? "..." : "Yes"}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 text-xs px-2"
+                            disabled={actingOn === course.courseId}
+                            onClick={() => setDeleteConfirmId(null)}
+                          >
+                            No
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          disabled={actingOn === course.courseId}
+                          title="Delete course"
+                          onClick={() => setDeleteConfirmId(course.courseId)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                    </div>
+                  </td>
                 </tr>
-              ))}
+                );
+              })}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-muted-foreground">
+                  <td colSpan={8} className="py-8 text-center text-muted-foreground">
                     No courses found
                   </td>
                 </tr>

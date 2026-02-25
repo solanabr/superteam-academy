@@ -102,7 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .from("profiles")
         .select("*")
         .eq("id", userId)
-        .single();
+        .maybeSingle();
 
       if (data) {
         const p = mapRowToProfile(data);
@@ -111,7 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // Fallback: server API (handles wallet-auth cookie sessions)
-      if (error) {
+      if (error || !data) {
         try {
           const res = await fetch("/api/profile");
           if (res.ok) {

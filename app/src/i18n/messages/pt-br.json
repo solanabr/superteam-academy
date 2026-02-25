@@ -92,6 +92,8 @@
     },
     "detail": {
       "enroll": "Matricular-se",
+      "enrollRefundInfo": "Rent totalmente reembolsável",
+      "enrollRefundTooltip": "O SOL pago para se matricular (rent da conta) será devolvido à sua carteira ao encerrar a matrícula após concluir o curso.",
       "continue": "Continuar Aprendendo",
       "start": "Começar a Aprender",
       "completed": "Concluído",
@@ -102,7 +104,21 @@
       "difficulty": "Dificuldade",
       "xpReward": "Recompensa XP",
       "totalXp": "XP total",
-      "reviews": "Avaliações"
+      "reviews": "Avaliações",
+      "noReviews": "Nenhuma avaliação ainda. Conclua o curso para deixar uma avaliação!",
+      "reviewForm": {
+        "title": "Escrever uma Avaliação",
+        "editTitle": "Editar Sua Avaliação",
+        "yourRating": "Sua nota",
+        "placeholder": "Compartilhe sua experiência com este curso (opcional)",
+        "submit": "Enviar Avaliação",
+        "update": "Atualizar Avaliação",
+        "saving": "Salvando...",
+        "submitted": "Avaliação enviada!",
+        "updated": "Avaliação atualizada!",
+        "error": "Falha ao enviar avaliação",
+        "ratingRequired": "Selecione uma nota"
+      }
     }
   },
   "lesson": {
@@ -253,7 +269,7 @@
     "bioLabel": "Bio",
     "bioPlaceholder": "Uma breve apresentação sobre você",
     "socialsLabel": "Links sociais (opcional)",
-    "twitterPlaceholder": "@usuario",
+    "twitterPlaceholder": "usuario",
     "githubPlaceholder": "usuario",
     "websitePlaceholder": "https://seu.site",
     "walletTitle": "Conecte sua carteira",
@@ -264,6 +280,7 @@
     "walletDontHave": "Não, preciso criar uma",
     "walletLinkedTitle": "Carteira conectada!",
     "walletLinkedDesc": "Sua carteira está vinculada. Você está pronto para ganhar XP e credenciais on-chain.",
+    "walletSignMessage": "Por favor, aprove a solicitação de assinatura na sua carteira para concluir a vinculação.",
     "walletConnectDesc": "Selecione seu provedor de carteira e aprove a conexão. É grátis — não precisa de SOL.",
     "walletGuideTitle": "Crie uma carteira Solana",
     "walletGuideSubtitle": "Siga estes passos rápidos para configurar o Solflare — leva apenas alguns minutos",

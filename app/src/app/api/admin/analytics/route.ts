@@ -101,9 +101,9 @@ export async function GET(req: NextRequest) {
 
       // Sanity courses for mapping IDs to titles
       sanityClient.fetch<
-        { _id: string; courseId: string | null; title: string; slug: string; difficulty: number; trackId: number; lessonCount: number; status: string; xpPerLesson: number }[]
+        { _id: string; courseId: string | null; title: string; slug: string; difficulty: number; trackId: number; lessonCount: number; status: string; isActive: boolean | null; xpPerLesson: number }[]
       >(
-        `*[_type == "course"]{ _id, courseId, title, "slug": slug.current, difficulty, trackId, lessonCount, status, xpPerLesson }`,
+        `*[_type == "course"]{ _id, courseId, title, "slug": slug.current, difficulty, trackId, lessonCount, status, isActive, xpPerLesson }`,
       ),
     ]);
 
@@ -166,6 +166,7 @@ export async function GET(req: NextRequest) {
         difficulty: course.difficulty,
         trackId: course.trackId,
         status: course.status,
+        isActive: course.isActive,
         lessonCount: course.lessonCount,
         enrollments: enrollments.length,
         completions: completions.length,

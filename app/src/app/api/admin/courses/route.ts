@@ -80,9 +80,17 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const status = searchParams.get("status") ?? "pending_review";
 
-    const filter = status === "all"
-      ? `_type == "course"`
-      : `_type == "course" && status == "${status}"`;
+    let filter: string;
+    if (status === "all") {
+      filter = `_type == "course"`;
+    } else if (status === "hidden") {
+      filter = `_type == "course" && isActive == false`;
+    } else if (status === "approved") {
+      // Include legacy courses (no status field) that are active
+      filter = `_type == "course" && (status == "approved" || (!defined(status) && isActive == true))`;
+    } else {
+      filter = `_type == "course" && status == "${status}"`;
+    }
 
     const courses = await sanityClient.fetch(
       `*[${filter}] | order(submittedAt desc) { ${COURSE_FIELDS} }`,

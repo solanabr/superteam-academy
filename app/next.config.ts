@@ -26,6 +26,15 @@ const nextConfig: NextConfig = {
     config.externals.push("pino-pretty", "encoding");
     return config;
   },
+  // Silence 404s for third-party source map requests (e.g. PostHog)
+  async rewrites() {
+    return [
+      {
+        source: "/:path*.map",
+        destination: "/api/noop",
+      },
+    ];
+  },
 };
 
 export default withSentryConfig(withNextIntl(nextConfig), {

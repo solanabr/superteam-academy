@@ -398,6 +398,7 @@ export default function AdminPage() {
                 <CourseTable
                   courses={analytics?.courseStats ?? []}
                   loading={analyticsLoading}
+                  onRefresh={handleRefresh}
                 />
               </div>
 

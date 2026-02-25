@@ -114,6 +114,99 @@ npx ts-node scripts/push-anchor-course.ts`}</code></pre>
         when creating the course on-chain.
       </p>
 
+      <h2>Hide / Show Courses</h2>
+      <p>
+        Admins can hide courses from the public catalog without deleting them.
+        This is useful for temporarily removing a course or taking it offline for updates.
+      </p>
+
+      <h3>How to Hide a Course</h3>
+      <ol>
+        <li>Go to <strong>Admin → Courses</strong> (<code>/admin/courses</code>)</li>
+        <li>Find the course in the list (use the search bar or status tabs to filter)</li>
+        <li>Click the <strong>eye-off icon</strong> (👁️‍🗨️) on the right side of the course row</li>
+        <li>The course status changes to <strong>Hidden</strong> and it disappears from the public catalog</li>
+      </ol>
+
+      <h3>How to Show a Hidden Course</h3>
+      <ol>
+        <li>Go to <strong>Admin → Courses</strong> and click the <strong>Hidden</strong> tab</li>
+        <li>Find the hidden course</li>
+        <li>Click the <strong>eye icon</strong> (👁️) to restore visibility</li>
+        <li>The course returns to the public catalog as <strong>Approved</strong></li>
+      </ol>
+
+      <h3>What Happens When You Hide</h3>
+      <table>
+        <thead><tr><th>Field</th><th>Hidden</th><th>Visible</th></tr></thead>
+        <tbody>
+          <tr><td><code>isActive</code></td><td><code>false</code></td><td><code>true</code></td></tr>
+          <tr><td><code>isPublished</code></td><td><code>false</code></td><td><code>true</code></td></tr>
+          <tr><td><code>status</code></td><td>unchanged</td><td>unchanged</td></tr>
+        </tbody>
+      </table>
+      <p>
+        The <code>status</code> field is preserved (stays &quot;approved&quot;).
+        The effective display status is derived from <code>isActive</code> — if <code>false</code>, the course shows as &quot;Hidden&quot; in the admin panel.
+      </p>
+      <p>
+        Public queries filter with: <code>isActive == true &amp;&amp; (status == &quot;approved&quot; || !defined(status))</code>
+      </p>
+
+      <h3>API</h3>
+      <pre><code>{`POST /api/admin/courses/[id]/hide
+Headers: Authorization: Bearer <token>
+Body: { "hidden": true }   // hide
+       { "hidden": false }  // unhide`}</code></pre>
+
+      <h2>Delete Courses</h2>
+      <p>
+        Admins can permanently delete a course. <strong>This cannot be undone.</strong>
+      </p>
+
+      <h3>How to Delete</h3>
+      <ol>
+        <li>Go to <strong>Admin → Courses</strong> (<code>/admin/courses</code>)</li>
+        <li>Find the course and click the <strong>trash icon</strong> (🗑️)</li>
+        <li>A confirmation prompt appears — click <strong>Confirm</strong> to proceed</li>
+        <li>The course and all associated data are permanently removed</li>
+      </ol>
+
+      <h3>What Gets Deleted</h3>
+      <ol>
+        <li><code>course_reviews</code> — all reviews for this course (Supabase)</li>
+        <li><code>course_progress</code> — all enrollment and progress records (Supabase)</li>
+        <li>Course document — the course itself (Sanity CMS)</li>
+      </ol>
+      <p>
+        <strong>Note:</strong> On-chain PDAs are not affected. If the course was
+        already created on-chain, the PDA will remain but become orphaned.
+      </p>
+
+      <h3>API</h3>
+      <pre><code>{`DELETE /api/admin/courses/[id]/delete
+Headers: Authorization: Bearer <token>`}</code></pre>
+
+      <h2>Filtering &amp; Status</h2>
+      <p>
+        The admin courses page (<code>/admin/courses</code>) provides tabs to filter by status:
+      </p>
+      <table>
+        <thead><tr><th>Tab</th><th>Shows</th></tr></thead>
+        <tbody>
+          <tr><td><strong>All</strong></td><td>Every course regardless of status</td></tr>
+          <tr><td><strong>Approved</strong></td><td>Active courses visible to learners</td></tr>
+          <tr><td><strong>Hidden</strong></td><td>Courses hidden from public (<code>isActive == false</code>)</td></tr>
+          <tr><td><strong>Pending</strong></td><td>Courses awaiting admin review</td></tr>
+          <tr><td><strong>Rejected</strong></td><td>Courses rejected by admin</td></tr>
+          <tr><td><strong>Draft</strong></td><td>Courses still being edited</td></tr>
+        </tbody>
+      </table>
+      <p>
+        The <strong>Course Performance</strong> table on the main admin dashboard
+        (<code>/admin</code>) also has status and difficulty filters.
+      </p>
+
       <h2>Available Courses</h2>
       <p>Pre-built course scripts cover:</p>
       <table>

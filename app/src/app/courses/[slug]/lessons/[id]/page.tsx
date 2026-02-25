@@ -117,9 +117,8 @@ export default function LessonPage({
     }
   }, [lessonInfo, isComplete, isQuizLesson, hasNext, completeLesson, lessonIndex, slug, router]);
 
-  // Auto-complete content lessons when user scrolls to bottom (convenience — not sole mechanism)
+  // Auto-complete content lessons when user scrolls to bottom
   const contentEndRef = useRef<HTMLDivElement>(null);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const autoCompleted = useRef(false);
 
   useEffect(() => {
@@ -128,8 +127,7 @@ export default function LessonPage({
 
   useEffect(() => {
     const sentinel = contentEndRef.current;
-    const root = scrollContainerRef.current;
-    if (!sentinel || !root || isComplete || isQuizLesson || lessonInfo?.lesson.type === "challenge") return;
+    if (!sentinel || isComplete || isQuizLesson || lessonInfo?.lesson.type === "challenge") return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -138,7 +136,7 @@ export default function LessonPage({
           handleComplete();
         }
       },
-      { threshold: 0.1, root },
+      { threshold: 0.1 },
     );
 
     observer.observe(sentinel);
@@ -189,10 +187,10 @@ export default function LessonPage({
 
   return (
     <ProtectedRoute>
-      <PlatformLayout hideFooter>
-        <div className="flex flex-col h-[calc(100vh-4rem)]">
+      <PlatformLayout>
+        <div className="flex flex-col">
           {/* Top bar */}
-          <div className="border-b bg-background/80 backdrop-blur-sm">
+          <div className="sticky top-16 z-40 border-b bg-background/80 backdrop-blur-sm">
             <div className="container mx-auto flex items-center justify-between px-4 py-3">
               <div className="flex items-center gap-3 min-w-0">
                 <Link
@@ -241,10 +239,10 @@ export default function LessonPage({
           )}
 
           {/* Content */}
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1">
             {lesson.type === "challenge" && lesson.challenge ? (
               /* Challenge: Resizable split — content left, editor right */
-              <ResizablePanelGroup orientation="horizontal" className="h-full">
+              <ResizablePanelGroup orientation="horizontal" className="h-[calc(100vh-10rem)]">
                 {lesson.content ? (
                   <>
                     <ResizablePanel defaultSize={40} minSize={25}>
@@ -279,8 +277,7 @@ export default function LessonPage({
               </ResizablePanelGroup>
             ) : (
               /* Content / Quiz lesson */
-              <div ref={scrollContainerRef} className="h-full overflow-y-auto">
-                <div className="container mx-auto max-w-3xl px-4 py-8">
+              <div className="container mx-auto max-w-3xl px-4 py-8">
                   {/* Video embed for video lessons */}
                   {isVideoLesson && (
                     <div className="mb-8">
@@ -348,13 +345,12 @@ export default function LessonPage({
                     onDelete={deleteComment}
                     onMarkHelpful={markHelpful}
                   />
-                </div>
               </div>
             )}
           </div>
 
           {/* Bottom nav */}
-          <div className="border-t bg-background/80 backdrop-blur-sm">
+          <div className="sticky bottom-0 z-40 border-t bg-background/80 backdrop-blur-sm">
             <div className="container mx-auto flex items-center justify-between px-4 py-3">
               <div>
                 {hasPrev ? (
