@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import { routing } from '@/i18n/routing';
 import { ThemeProvider } from '@/components/providers/theme-provider';
+import { AuthProvider } from '@/components/providers/auth-provider';
 import { WalletProvider } from '@/components/providers/wallet-provider';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Toaster } from '@/components/ui/sonner';
@@ -54,16 +55,18 @@ export default async function LocaleLayout({
     <html lang={locale} suppressHydrationWarning>
       <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
         <ThemeProvider>
-          <WalletProvider>
-            <NextIntlClientProvider messages={messages}>
-              <TooltipProvider>
-                {children}
-                <Toaster />
-                <AnalyticsProvider />
-                <ServiceWorkerProvider />
-              </TooltipProvider>
-            </NextIntlClientProvider>
-          </WalletProvider>
+          <AuthProvider>
+            <WalletProvider>
+              <NextIntlClientProvider messages={messages}>
+                <TooltipProvider>
+                  {children}
+                  <Toaster />
+                  <AnalyticsProvider />
+                  <ServiceWorkerProvider />
+                </TooltipProvider>
+              </NextIntlClientProvider>
+            </WalletProvider>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { LanguageSwitcher } from '@/components/layout/language-switcher';
 import { MobileNav } from '@/components/layout/mobile-nav';
+import { SignInMenu } from '@/components/auth/sign-in-menu';
 import { GraduationCap, Wallet } from 'lucide-react';
 
 interface NavItem {
@@ -68,6 +69,7 @@ export function Header() {
         <div className="hidden items-center gap-2 md:flex">
           <ThemeToggle />
           <LanguageSwitcher />
+          <SignInMenu />
           <Button
             variant={connected ? 'outline' : 'default'}
             size="sm"

@@ -15,6 +15,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { LanguageSwitcher } from '@/components/layout/language-switcher';
+import { SignInMenu } from '@/components/auth/sign-in-menu';
 import {
   Menu,
   BookOpen,
@@ -100,6 +101,10 @@ export function MobileNav() {
         <div className="flex items-center gap-2 px-4">
           <ThemeToggle />
           <LanguageSwitcher />
+        </div>
+
+        <div className="px-4">
+          <SignInMenu />
         </div>
 
         <div className="mt-auto px-4 pb-4">
