@@ -27,7 +27,8 @@ const instrumentSerif = Instrument_Serif({
   display: "swap",
 });
 
-// Diatype — Solana Foundation brand font (preloaded via next/font/local)
+// Diatype — Solana Foundation brand font (not preloaded — hero uses Instrument Serif,
+// so preloading 182 KiB of Diatype wastes critical-path bandwidth)
 const diatype = localFont({
   src: [
     { path: "../fonts/diatype/ABCDiatype-Regular.woff2", weight: "400", style: "normal" },
@@ -36,6 +37,7 @@ const diatype = localFont({
   ],
   variable: "--font-diatype",
   display: "swap",
+  preload: false,
 });
 
 // DSemi — Solana Foundation semi-mono (stats, numbers) — not preloaded (not LCP-critical)

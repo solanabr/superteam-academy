@@ -955,8 +955,8 @@ html.light .landing-stat-item:not(:last-child) { border-right-color: rgba(0,0,0,
   to { transform: rotate(360deg); }
 }
 @keyframes sentinel-pulse {
-  0%, 100% { opacity: 1; text-shadow: 0 0 6px rgba(0,210,130,0.4); }
-  50% { opacity: 0.7; text-shadow: 0 0 0px transparent; }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
 }
 @keyframes onb-shine {
   to { background-position: 200% center; }
