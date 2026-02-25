@@ -501,7 +501,7 @@ export default async function CourseDetailPage({
                 </div>
 
                 <Link
-                  href={`/${locale}/aulas/intro-1`}
+                  href={localePath(locale, '/lessons/intro-1')}
                   className="mb-3 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 py-3.5 text-sm font-bold text-white hover:from-purple-500 hover:to-indigo-500 transition-all hover:scale-[1.02]"
                 >
                   <Play className="h-4 w-4" />

@@ -15,14 +15,15 @@
 import { sanityFetch, isSanityConfigured, QUERIES } from './sanity';
 import {
   type Course,
-  type LeaderboardUser,
+  type MockLearner,
   type MockCertificate,
   MOCK_COURSES,
   MOCK_LEADERBOARD,
   MOCK_CERTIFICATES,
 } from './mock-data';
 
-export type { Course, LeaderboardUser, MockCertificate };
+export type LeaderboardUser = MockLearner;
+export type { Course, MockCertificate };
 
 // ---------------------------------------------------------------------------
 // Courses

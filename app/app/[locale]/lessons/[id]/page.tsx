@@ -245,7 +245,7 @@ export default function LessonPage() {
           {LESSON_SIDEBAR.map((l, i) => (
             <Link
               key={l.id}
-              href={`/${locale}/aulas/${l.id}`}
+              href={localePath(locale, `/lessons/${l.id}`)}
               className={cn(
                 'flex items-start gap-2.5 rounded-lg px-3 py-2.5 mb-0.5 text-xs transition-all',
                 l.id === lesson.id
@@ -418,7 +418,7 @@ console.log(\`Saldo: \${balance / 1e9} SOL\`);`}
           <div className="flex items-center justify-between gap-4">
             {prevLesson ? (
               <Link
-                href={`/${locale}/aulas/${prevLesson.id}`}
+                href={localePath(locale, `/lessons/${prevLesson.id}`)}
                 className="flex items-center gap-1.5 rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-xs font-medium text-gray-300 hover:border-gray-600 hover:text-white transition-all"
               >
                 <ChevronLeft className="h-3.5 w-3.5" />
@@ -450,7 +450,7 @@ console.log(\`Saldo: \${balance / 1e9} SOL\`);`}
 
             {nextLesson ? (
               <Link
-                href={`/${locale}/aulas/${nextLesson.id}`}
+                href={localePath(locale, `/lessons/${nextLesson.id}`)}
                 className="flex items-center gap-1.5 rounded-xl bg-gray-700 px-3 py-2 text-xs font-medium text-gray-200 hover:bg-gray-600 transition-all"
               >
                 {tCommon('next')}

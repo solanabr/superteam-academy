@@ -50,5 +50,10 @@ export const routing = defineRouting({
       'en': '/challenges/[id]',
       'es': '/desafios/[id]',
     },
+    '/community': {
+      'pt-BR': '/comunidade',
+      'en': '/community',
+      'es': '/comunidad',
+    },
   }
 });

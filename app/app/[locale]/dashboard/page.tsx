@@ -396,7 +396,7 @@ export default function DashboardPage() {
                       {t('next_prefix')} <span className="text-gray-300">{L(c.nextLesson, locale)}</span>
                     </p>
                     <Link
-                      href={`/${locale}/aulas/${c.nextLessonId}`}
+                      href={localePath(locale, `/lessons/${c.nextLessonId}`)}
                       className="flex items-center gap-1 rounded-lg bg-purple-900/50 border border-purple-700/50 px-2.5 py-1.5 text-xs font-medium text-purple-300 hover:bg-purple-900/70 transition-all"
                     >
                       {t('continue_learning')}

@@ -38,6 +38,9 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     title: m.title,
     description: m.description,
     openGraph: { title: 'Superteam Academy', description: m.ogDesc, type: 'website' },
+    manifest: '/manifest.json',
+    appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: 'ST Academy' },
+    other: { 'mobile-web-app-capable': 'yes' },
   };
 }
 

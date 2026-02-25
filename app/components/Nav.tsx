@@ -15,6 +15,7 @@ import {
   Trophy,
   BookOpen,
   LayoutDashboard,
+  Users2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -28,6 +29,7 @@ const NAV_ITEMS = [
   { key: 'courses', path: '/cursos', enPath: '/courses', esPath: '/cursos' as const, icon: BookOpen },
   { key: 'dashboard', path: '/painel', enPath: '/dashboard', esPath: '/panel' as const, icon: LayoutDashboard },
   { key: 'leaderboard', path: '/classificacao', enPath: '/leaderboard', esPath: '/clasificacion' as const, icon: Trophy },
+  { key: 'community', path: '/comunidade', enPath: '/community', esPath: '/comunidad' as const, icon: Users2 },
 ] as const;
 
 type LocaleCode = 'pt-BR' | 'en' | 'es';
@@ -92,7 +94,7 @@ export default function Nav() {
                   )}
                 >
                   <Icon className="h-4 w-4" />
-                  {t(item.key as 'courses' | 'dashboard' | 'leaderboard')}
+                  {t(item.key as 'courses' | 'dashboard' | 'leaderboard' | 'community')}
                 </Link>
               );
             })}
@@ -178,7 +180,7 @@ export default function Nav() {
                 )}
               >
                 <Icon className="h-4 w-4" />
-                {t(item.key as 'courses' | 'dashboard' | 'leaderboard')}
+                {t(item.key as 'courses' | 'dashboard' | 'leaderboard' | 'community')}
               </Link>
             );
           })}

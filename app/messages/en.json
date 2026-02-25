@@ -7,7 +7,8 @@
     "profile": "Profile",
     "settings": "Settings",
     "connect_wallet": "Connect Wallet",
-    "disconnect": "Disconnect"
+    "disconnect": "Disconnect",
+    "community": "Community"
   },
   "landing": {
     "hero_title": "Learn Solana & Web3",
@@ -317,5 +318,29 @@
     "page_not_found_desc": "The page you are looking for does not exist or has been moved.",
     "home": "Home",
     "browse_courses": "Browse Courses"
+  },
+  "community": {
+    "title": "Community Forum",
+    "subtitle": "Ask questions, share knowledge, connect with developers",
+    "new_thread": "New Thread",
+    "search": "Search discussions...",
+    "sort_latest": "Latest",
+    "sort_replies": "Most Replies",
+    "sort_top": "Top Voted",
+    "filter_all": "All",
+    "filter_solana": "Solana",
+    "filter_anchor": "Anchor",
+    "filter_defi": "DeFi",
+    "filter_nft": "NFTs",
+    "filter_general": "General",
+    "stats_threads": "Threads",
+    "stats_members": "Members",
+    "stats_today": "Posts Today",
+    "replies": "replies",
+    "views": "views",
+    "pinned": "Pinned",
+    "no_results": "No threads found",
+    "connect_to_post": "Connect wallet to post",
+    "hot": "Hot"
   }
 }

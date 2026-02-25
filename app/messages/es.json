@@ -7,7 +7,8 @@
     "profile": "Perfil",
     "settings": "Configuración",
     "connect_wallet": "Conectar Billetera",
-    "disconnect": "Desconectar"
+    "disconnect": "Desconectar",
+    "community": "Comunidad"
   },
   "landing": {
     "hero_title": "Aprende Solana y Web3",
@@ -317,5 +318,29 @@
     "page_not_found_desc": "La página que buscas no existe o ha sido movida.",
     "home": "Inicio",
     "browse_courses": "Ver Cursos"
+  },
+  "community": {
+    "title": "Foro de la Comunidad",
+    "subtitle": "Haz preguntas, comparte conocimiento, conecta con desarrolladores",
+    "new_thread": "Nuevo Hilo",
+    "search": "Buscar discusiones...",
+    "sort_latest": "Más Recientes",
+    "sort_replies": "Más Respuestas",
+    "sort_top": "Más Votados",
+    "filter_all": "Todos",
+    "filter_solana": "Solana",
+    "filter_anchor": "Anchor",
+    "filter_defi": "DeFi",
+    "filter_nft": "NFTs",
+    "filter_general": "General",
+    "stats_threads": "Hilos",
+    "stats_members": "Miembros",
+    "stats_today": "Posts Hoy",
+    "replies": "respuestas",
+    "views": "vistas",
+    "pinned": "Fijado",
+    "no_results": "No se encontraron hilos",
+    "connect_to_post": "Conecta tu billetera para publicar",
+    "hot": "Popular"
   }
 }
