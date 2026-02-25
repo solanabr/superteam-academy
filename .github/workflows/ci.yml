@@ -20,7 +20,7 @@ jobs:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: app/package-lock.json
-      - run: npm ci
+      - run: npm ci --legacy-peer-deps
       - run: npm run type-check
 
   lint:
@@ -36,7 +36,7 @@ jobs:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: app/package-lock.json
-      - run: npm ci
+      - run: npm ci --legacy-peer-deps
       - run: npm run lint
 
   build:
@@ -56,7 +56,7 @@ jobs:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: app/package-lock.json
-      - run: npm ci
+      - run: npm ci --legacy-peer-deps
       - run: npm run build
 
   e2e:
@@ -73,7 +73,7 @@ jobs:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: app/package-lock.json
-      - run: npm ci
+      - run: npm ci --legacy-peer-deps
       - run: npx playwright install --with-deps chromium
       - run: npm run build
       - name: Run Playwright tests
