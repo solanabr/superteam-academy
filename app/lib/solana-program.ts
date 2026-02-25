@@ -1,8 +1,9 @@
 import { Connection, PublicKey } from '@solana/web3.js';
 
-// Placeholder program ID — will be replaced after Anchor deployment
+// On-chain program deployed to Solana devnet
+// Source of truth: onchain-academy/Anchor.toml → programs.devnet.onchain_academy
 export const PROGRAM_ID = new PublicKey(
-  'ACadEMy1111111111111111111111111111111111111'
+  'ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf'
 );
 
 export const RPC_ENDPOINT =
