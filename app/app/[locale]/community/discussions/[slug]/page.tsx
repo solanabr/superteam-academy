@@ -20,7 +20,7 @@ export default async function DiscussionPage({ params }: DiscussionPageProps) {
 	const t = await getTranslations("community.discussions");
 
 	return (
-		<div className="max-w-3xl mx-auto space-y-6">
+		<div className="mx-auto space-y-6">
 			<Button variant="ghost" size="sm" asChild>
 				<Link href="/community">
 					<ArrowLeft className="h-4 w-4 mr-1" />

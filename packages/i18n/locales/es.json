@@ -2698,6 +2698,7 @@
 			"solved": "Resuelto",
 			"empty": "No se encontraron discusiones",
 			"emptyDescription": "Intenta ajustar tus filtros o inicia una nueva discusión.",
+			"backToDiscussions": "Volver a Discusiones",
 			"tabs": {
 				"recent": "Recientes",
 				"trending": "Tendencias",

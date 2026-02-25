@@ -2698,6 +2698,7 @@
 			"solved": "Solved",
 			"empty": "No discussions found",
 			"emptyDescription": "Try adjusting your filters or start a new discussion.",
+			"backToDiscussions": "Back to Discussions",
 			"tabs": {
 				"recent": "Recent",
 				"trending": "Trending",
