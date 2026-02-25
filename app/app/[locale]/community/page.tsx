@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { useTranslations, useLocale } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import {
   MessageSquare,
   ThumbsUp,
@@ -23,13 +23,13 @@ type SortKey = 'latest' | 'replies' | 'top';
 
 interface Thread {
   id: number;
-  title: string;
+  titleKey: string;
   category: Exclude<Category, 'all'>;
   author: string;
   replies: number;
   views: number;
   upvotes: number;
-  timestamp: string;
+  hoursAgo: number;
   pinned?: boolean;
   hot?: boolean;
 }
@@ -37,112 +37,16 @@ interface Thread {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const MOCK_THREADS: Thread[] = [
-  {
-    id: 1,
-    title: 'Como criar um programa Anchor do zero?',
-    category: 'anchor',
-    author: '7xKX...9mNp',
-    replies: 23,
-    views: 156,
-    upvotes: 41,
-    timestamp: '2h ago',
-    pinned: true,
-  },
-  {
-    id: 2,
-    title: 'Diferença entre Transaction e VersionedTransaction',
-    category: 'solana',
-    author: '3fBZ...2qRt',
-    replies: 18,
-    views: 89,
-    upvotes: 27,
-    timestamp: '5h ago',
-  },
-  {
-    id: 3,
-    title: 'Implementando AMM simples com Anchor',
-    category: 'defi',
-    author: 'Ap9S...7kLm',
-    replies: 31,
-    views: 203,
-    upvotes: 68,
-    timestamp: '1d ago',
-    pinned: true,
-    hot: true,
-  },
-  {
-    id: 4,
-    title: 'Recursos para aprender Rust para Solana',
-    category: 'general',
-    author: '9mQR...4nVz',
-    replies: 45,
-    views: 312,
-    upvotes: 94,
-    timestamp: '2d ago',
-    hot: true,
-  },
-  {
-    id: 5,
-    title: 'Mintar NFTs com Metaplex Core — novo padrão 2025',
-    category: 'nft',
-    author: '2kTp...8jWx',
-    replies: 12,
-    views: 78,
-    upvotes: 19,
-    timestamp: '3d ago',
-  },
-  {
-    id: 6,
-    title: 'Erro: Transaction too large — como resolver?',
-    category: 'solana',
-    author: 'HnRs...1cBq',
-    replies: 27,
-    views: 145,
-    upvotes: 53,
-    timestamp: '4d ago',
-    hot: true,
-  },
-  {
-    id: 7,
-    title: 'PDAs e como usar address derivation corretamente',
-    category: 'anchor',
-    author: 'QmKv...5pLz',
-    replies: 19,
-    views: 94,
-    upvotes: 35,
-    timestamp: '5d ago',
-  },
-  {
-    id: 8,
-    title: 'Jupiter Swap integration tutorial',
-    category: 'defi',
-    author: 'WrXd...0tGy',
-    replies: 8,
-    views: 52,
-    upvotes: 14,
-    timestamp: '6d ago',
-  },
-  {
-    id: 9,
-    title: 'Oportunidades em Web3 para desenvolvedores brasileiros',
-    category: 'general',
-    author: 'TbFq...6hJn',
-    replies: 67,
-    views: 445,
-    upvotes: 112,
-    timestamp: '1w ago',
-    hot: true,
-  },
-  {
-    id: 10,
-    title: 'Entendendo Fees e Priority Fees no Solana 2025',
-    category: 'solana',
-    author: 'VpYc...3mDk',
-    replies: 14,
-    views: 88,
-    upvotes: 22,
-    timestamp: '1w ago',
-  },
+  { id: 1, titleKey: 'thread_1_title', category: 'anchor', author: '7xKX...9mNp', replies: 23, views: 156, upvotes: 41, hoursAgo: 2, pinned: true },
+  { id: 2, titleKey: 'thread_2_title', category: 'solana', author: '3fBZ...2qRt', replies: 18, views: 89, upvotes: 27, hoursAgo: 5 },
+  { id: 3, titleKey: 'thread_3_title', category: 'defi', author: 'Ap9S...7kLm', replies: 31, views: 203, upvotes: 68, hoursAgo: 24, pinned: true, hot: true },
+  { id: 4, titleKey: 'thread_4_title', category: 'general', author: '9mQR...4nVz', replies: 45, views: 312, upvotes: 94, hoursAgo: 48, hot: true },
+  { id: 5, titleKey: 'thread_5_title', category: 'nft', author: '2kTp...8jWx', replies: 12, views: 78, upvotes: 19, hoursAgo: 72 },
+  { id: 6, titleKey: 'thread_6_title', category: 'solana', author: 'HnRs...1cBq', replies: 27, views: 145, upvotes: 53, hoursAgo: 96, hot: true },
+  { id: 7, titleKey: 'thread_7_title', category: 'anchor', author: 'QmKv...5pLz', replies: 19, views: 94, upvotes: 35, hoursAgo: 120 },
+  { id: 8, titleKey: 'thread_8_title', category: 'defi', author: 'WrXd...0tGy', replies: 8, views: 52, upvotes: 14, hoursAgo: 144 },
+  { id: 9, titleKey: 'thread_9_title', category: 'general', author: 'TbFq...6hJn', replies: 67, views: 445, upvotes: 112, hoursAgo: 168, hot: true },
+  { id: 10, titleKey: 'thread_10_title', category: 'solana', author: 'VpYc...3mDk', replies: 14, views: 88, upvotes: 22, hoursAgo: 168 },
 ];
 
 const CATEGORY_STYLES: Record<Exclude<Category, 'all'>, string> = {
@@ -196,6 +100,12 @@ interface ThreadRowProps {
   t: TFunc;
 }
 
+function formatRelativeTime(hoursAgo: number, t: TFunc): string {
+  if (hoursAgo < 24) return t('time_hours_ago', { count: hoursAgo });
+  if (hoursAgo < 168) return t('time_days_ago', { count: Math.floor(hoursAgo / 24) });
+  return t('time_weeks_ago', { count: Math.floor(hoursAgo / 168) });
+}
+
 function ThreadRow({ thread, t }: ThreadRowProps) {
   return (
     <div
@@ -235,18 +145,18 @@ function ThreadRow({ thread, t }: ThreadRowProps) {
               CATEGORY_STYLES[thread.category]
             )}
           >
-            {thread.category.charAt(0).toUpperCase() + thread.category.slice(1)}
+            {t(`filter_${thread.category}`)}
           </span>
         </div>
 
         <h3 className="text-sm font-semibold text-gray-100 group-hover:text-white truncate leading-snug">
-          {thread.title}
+          {t(thread.titleKey)}
         </h3>
 
         <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-500">
           <span className="font-mono">{thread.author}</span>
           <span>·</span>
-          <span>{thread.timestamp}</span>
+          <span>{formatRelativeTime(thread.hoursAgo, t)}</span>
         </div>
       </div>
 
@@ -280,7 +190,7 @@ function ThreadRow({ thread, t }: ThreadRowProps) {
 
 export default function CommunityPage() {
   const t = useTranslations('community');
-  const _locale = useLocale();
+  // locale used implicitly by useTranslations
 
   const [selectedCategory, setSelectedCategory] = useState<Category>('all');
   const [sortKey, setSortKey] = useState<SortKey>('latest');
@@ -320,10 +230,12 @@ export default function CommunityPage() {
       threads = threads.filter((th) => th.category === selectedCategory);
     }
 
-    // Filter by search
+    // Filter by search (search translated titles)
     if (search.trim()) {
       const query = search.trim().toLowerCase();
-      threads = threads.filter((th) => th.title.toLowerCase().includes(query));
+      threads = threads.filter((th) =>
+        t(th.titleKey).toLowerCase().includes(query)
+      );
     }
 
     // Sort — pinned always first within each sort

@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { localePath } from '@/lib/paths';
+import EnrollButton from '@/components/EnrollButton';
 
 const L = (obj: Record<string, string>, locale: string) => obj[locale] ?? obj['pt-BR'];
 
@@ -500,13 +501,15 @@ export default async function CourseDetailPage({
                   <div className="text-sm text-gray-400">{t('full_access')}</div>
                 </div>
 
-                <Link
-                  href={localePath(locale, '/lessons/intro-1')}
-                  className="mb-3 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 py-3.5 text-sm font-bold text-white hover:from-purple-500 hover:to-indigo-500 transition-all hover:scale-[1.02]"
-                >
-                  <Play className="h-4 w-4" />
-                  {t('start_course')}
-                </Link>
+                <EnrollButton
+                  courseId={slug}
+                  lessonPath={localePath(locale, '/lessons/intro-1')}
+                  startText={t('start_course')}
+                  enrollingText={t('enrolling')}
+                  enrolledText={t('enrolled_success')}
+                  connectText={t('connect_to_enroll')}
+                  viewTxText={t('view_transaction')}
+                />
 
                 <div className="space-y-2.5 text-sm text-gray-400 mt-4">
                   {[

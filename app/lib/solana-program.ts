@@ -3,7 +3,7 @@ import { Connection, PublicKey } from '@solana/web3.js';
 // On-chain program deployed to Solana devnet
 // Source of truth: onchain-academy/Anchor.toml → programs.devnet.onchain_academy
 export const PROGRAM_ID = new PublicKey(
-  'ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf'
+  '3Yr5EZrq8t4fMunuHUZoN9Q6cn4Sf6p3AFAdvWEMaxKU'
 );
 
 export const RPC_ENDPOINT =

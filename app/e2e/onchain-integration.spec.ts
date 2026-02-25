@@ -12,7 +12,7 @@ test.describe('On-chain program visibility', () => {
     await page.goto('/en/admin');
     await page.locator('button', { hasText: /System|Sistema/ }).click();
     // Should show the actual devnet program ID
-    await expect(page.locator('text=ACADBRCB3z')).toBeVisible();
+    await expect(page.locator('text=3Yr5EZrq8t')).toBeVisible();
   });
 
   test('program ID shown in admin is not placeholder', async ({ page }) => {

@@ -726,7 +726,7 @@ export default function AdminDashboard() {
               {[
                 {
                   name: t('sys_program'),
-                  detail: 'ACADBRCB3z...',
+                  detail: '3Yr5EZrq8t...',
                   status: 'online',
                   icon: Database,
                   meta: 'Devnet · 16 instructions',
@@ -787,7 +787,7 @@ export default function AdminDashboard() {
               <SectionHeader title={t('program_config')} subtitle={t('program_config_sub')} />
               <div className="space-y-3">
                 {[
-                  { key: t('cfg_program_id'), value: 'ACADBRCB3zuCe5u7VuFbqj96m44EKhMnuPjqiAgqPMEz', type: 'address' },
+                  { key: t('cfg_program_id'), value: '3Yr5EZrq8t4fMunuHUZoN9Q6cn4Sf6p3AFAdvWEMaxKU', type: 'address' },
                   { key: t('cfg_authority'), value: 'GpXHXs5KfzfXbNKcMLNbAMsJsgPsBE7y5GtwVoiuxYvH', type: 'address' },
                   { key: t('cfg_xp_mint'), value: 'XPMint...7x9 (Token-2022, NonTransferable)', type: 'text' },
                   { key: t('cfg_network'), value: 'devnet', type: 'badge' },

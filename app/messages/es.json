@@ -112,7 +112,11 @@
     "nft_certificate": "Certificado NFT on-chain",
     "upon_completion": "al completar el curso",
     "of_content": "de contenido",
-    "contributors": "Contribuidores y Desarrolladores Core"
+    "contributors": "Contribuidores y Desarrolladores Core",
+    "enrolling": "Inscribiendo en cadena...",
+    "enrolled_success": "¡Inscrito! Iniciando...",
+    "view_transaction": "Ver transacción en Solana Explorer",
+    "connect_to_enroll": "Conecta tu wallet para inscribirte en cadena"
   },
   "dashboard": {
     "welcome": "Bienvenido de vuelta",
@@ -341,7 +345,20 @@
     "pinned": "Fijado",
     "no_results": "No se encontraron hilos",
     "connect_to_post": "Conecta tu billetera para publicar",
-    "hot": "Popular"
+    "hot": "Popular",
+    "thread_1_title": "¿Cómo crear un programa Anchor desde cero?",
+    "thread_2_title": "Diferencia entre Transaction y VersionedTransaction",
+    "thread_3_title": "Implementando un AMM simple con Anchor",
+    "thread_4_title": "Recursos para aprender Rust para Solana",
+    "thread_5_title": "Crear NFTs con Metaplex Core — nuevo estándar 2025",
+    "thread_6_title": "Error: Transaction too large — ¿cómo resolverlo?",
+    "thread_7_title": "PDAs y cómo usar address derivation correctamente",
+    "thread_8_title": "Tutorial de integración con Jupiter Swap",
+    "thread_9_title": "Oportunidades Web3 para desarrolladores",
+    "thread_10_title": "Entendiendo Fees y Priority Fees en Solana 2025",
+    "time_hours_ago": "hace {count}h",
+    "time_days_ago": "hace {count}d",
+    "time_weeks_ago": "hace {count}sem"
   },
   "admin": {
     "title": "Panel de Administración",

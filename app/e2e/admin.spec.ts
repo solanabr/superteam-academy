@@ -159,7 +159,7 @@ test.describe('Admin system tab', () => {
   });
 
   test('program config section shows program ID', async ({ page }) => {
-    await expect(page.locator('text=ACADBRCB3z')).toBeVisible();
+    await expect(page.locator('text=3Yr5EZrq8t')).toBeVisible();
   });
 
   test('admin action buttons render', async ({ page }) => {
