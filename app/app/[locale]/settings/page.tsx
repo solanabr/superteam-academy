@@ -1,350 +1,324 @@
 'use client';
 
-import { useParams, useRouter } from 'next/navigation';
-import { useState } from 'react';
-import { useTheme } from 'next-themes';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useState, useEffect } from 'react';
 import {
-  Settings, Globe, Moon, Sun, Monitor, Bell, Shield,
-  LogOut, Download, Save, CheckCircle, User
+  Globe,
+  Moon,
+  Sun,
+  Monitor,
+  Bell,
+  ShieldCheck,
+  CheckCircle,
+  ChevronRight,
 } from 'lucide-react';
 import { clsx } from 'clsx';
 
 const cn = (...args: Parameters<typeof clsx>) => clsx(args);
 
-type Section = 'profile' | 'language' | 'theme' | 'notifications' | 'privacy' | 'account';
+// ---------- types ----------
 
-const LANGUAGES = [
-  { code: 'pt-BR', label: 'Português (Brasil)', flag: '🇧🇷' },
-  { code: 'en', label: 'English', flag: '🇺🇸' },
-  { code: 'es', label: 'Español', flag: '🇪🇸' },
-];
+type Language = 'pt-BR' | 'en' | 'es';
+type Theme    = 'dark' | 'light' | 'system';
 
-const NAV_ITEMS: { id: Section; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
-  { id: 'profile', label: 'Perfil', icon: User },
-  { id: 'language', label: 'Idioma', icon: Globe },
-  { id: 'theme', label: 'Tema', icon: Moon },
-  { id: 'notifications', label: 'Notificações', icon: Bell },
-  { id: 'privacy', label: 'Privacidade', icon: Shield },
-  { id: 'account', label: 'Conta', icon: LogOut },
-];
-
-function Toggle({
-  checked, onChange, label, desc
-}: {
-  checked: boolean;
-  onChange: (v: boolean) => void;
+interface ToggleSetting {
+  key: string;
   label: string;
-  desc?: string;
+  description: string;
+}
+
+const LANGUAGES: { value: Language; label: string; flag: string; region: string }[] = [
+  { value: 'pt-BR', label: 'Português',   flag: '🇧🇷', region: 'Brasil'      },
+  { value: 'en',    label: 'English',     flag: '🇺🇸', region: 'United States' },
+  { value: 'es',    label: 'Español',     flag: '🇪🇸', region: 'España'      },
+];
+
+const THEMES: { value: Theme; label: string; icon: typeof Moon; desc: string }[] = [
+  { value: 'dark',   label: 'Escuro',  icon: Moon,    desc: 'Fundo preto, ideal para noite'   },
+  { value: 'light',  label: 'Claro',   icon: Sun,     desc: 'Fundo branco, ideal para dia'    },
+  { value: 'system', label: 'Sistema', icon: Monitor, desc: 'Segue a preferência do sistema'  },
+];
+
+const NOTIFICATION_TOGGLES: ToggleSetting[] = [
+  {
+    key: 'newCourses',
+    label: 'Novos cursos',
+    description: 'Notifique quando novos cursos forem lançados',
+  },
+  {
+    key: 'achievements',
+    label: 'Conquistas desbloqueadas',
+    description: 'Notifique quando você desbloquear uma conquista',
+  },
+];
+
+const PRIVACY_TOGGLES: ToggleSetting[] = [
+  {
+    key: 'publicProfile',
+    label: 'Perfil público',
+    description: 'Outros usuários podem ver seu perfil e progresso',
+  },
+  {
+    key: 'showXpRanking',
+    label: 'Mostrar XP no ranking',
+    description: 'Seu XP aparece na tabela de classificação',
+  },
+];
+
+// ---------- sub-components ----------
+
+function SectionHeading({
+  icon: Icon,
+  title,
+  color,
+}: {
+  icon: typeof Globe;
+  title: string;
+  color: string;
 }) {
   return (
-    <div className="flex items-start justify-between gap-4 py-3.5 border-b border-gray-800 last:border-0">
-      <div>
-        <div className="text-sm font-medium text-gray-200">{label}</div>
-        {desc && <div className="text-xs text-gray-500 mt-0.5">{desc}</div>}
-      </div>
-      <button
-        onClick={() => onChange(!checked)}
-        className={cn(
-          'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-all',
-          checked ? 'bg-purple-600' : 'bg-gray-700'
-        )}
-      >
-        <span
-          className={cn(
-            'inline-block h-4 w-4 rounded-full bg-white shadow transition-transform',
-            checked ? 'translate-x-6' : 'translate-x-1'
-          )}
-        />
-      </button>
+    <div className="flex items-center gap-2 mb-4">
+      <Icon className={cn('h-5 w-5', color)} />
+      <h2 className="text-base font-bold text-white">{title}</h2>
     </div>
   );
 }
 
+function Toggle({
+  checked,
+  onChange,
+  id,
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  id: string;
+}) {
+  return (
+    <button
+      id={id}
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className={cn(
+        'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-offset-2 focus:ring-offset-gray-900',
+        checked ? 'bg-purple-600' : 'bg-gray-700'
+      )}
+    >
+      <span
+        className={cn(
+          'pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-md transform transition-transform duration-200',
+          checked ? 'translate-x-5' : 'translate-x-0'
+        )}
+      />
+    </button>
+  );
+}
+
+// ---------- page ----------
+
 export default function SettingsPage() {
-  const params = useParams();
-  const router = useRouter();
-  const locale = (params.locale as string) || 'pt-BR';
-  const { setTheme, theme } = useTheme();
-  const { disconnect, connected } = useWallet();
+  const [language,  setLanguage]  = useState<Language>('pt-BR');
+  const [theme,     setTheme]     = useState<Theme>('dark');
 
-  const [activeSection, setActiveSection] = useState<Section>('profile');
-  const [saved, setSaved] = useState(false);
+  const [notifications, setNotifications] = useState<Record<string, boolean>>({
+    newCourses:   true,
+    achievements: true,
+  });
 
-  // Profile state
-  const [displayName, setDisplayName] = useState('');
-  const [bio, setBio] = useState('');
+  const [privacy, setPrivacy] = useState<Record<string, boolean>>({
+    publicProfile: true,
+    showXpRanking: true,
+  });
 
-  // Language
-  const [selectedLang, setSelectedLang] = useState(locale);
+  const [toast, setToast] = useState(false);
 
-  // Notifications
-  const [emailNotifs, setEmailNotifs] = useState(true);
-  const [browserNotifs, setBrowserNotifs] = useState(false);
-  const [weeklyDigest, setWeeklyDigest] = useState(true);
-  const [streakReminder, setStreakReminder] = useState(true);
+  // Auto-hide toast
+  useEffect(() => {
+    if (!toast) return;
+    const id = setTimeout(() => setToast(false), 3000);
+    return () => clearTimeout(id);
+  }, [toast]);
 
-  // Privacy
-  const [publicProfile, setPublicProfile] = useState(true);
-  const [showXP, setShowXP] = useState(true);
-  const [showAchievements, setShowAchievements] = useState(true);
-  const [showCourses, setShowCourses] = useState(true);
-
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
-  };
-
-  const handleDisconnect = () => {
-    if (connected) disconnect();
-    router.push(`/${locale}`);
-  };
-
-  const renderSection = () => {
-    switch (activeSection) {
-      case 'profile':
-        return (
-          <div className="space-y-5">
-            <div>
-              <h2 className="text-lg font-bold text-white mb-1">Perfil Público</h2>
-              <p className="text-sm text-gray-400">Informações opcionais que aparecem no seu perfil</p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                Nome de Exibição <span className="text-gray-600">(opcional)</span>
-              </label>
-              <input
-                type="text"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="Ex: João Silva"
-                maxLength={40}
-                className="w-full rounded-xl border border-gray-700 bg-gray-800 px-4 py-2.5 text-sm text-gray-100 placeholder-gray-600 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all"
-              />
-              <p className="mt-1 text-xs text-gray-600">{displayName.length}/40 caracteres</p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                Bio <span className="text-gray-600">(opcional)</span>
-              </label>
-              <textarea
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
-                placeholder="Conte um pouco sobre você e seus interesses em Web3..."
-                maxLength={200}
-                rows={3}
-                className="w-full rounded-xl border border-gray-700 bg-gray-800 px-4 py-2.5 text-sm text-gray-100 placeholder-gray-600 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 transition-all resize-none"
-              />
-              <p className="mt-1 text-xs text-gray-600">{bio.length}/200 caracteres</p>
-            </div>
-          </div>
-        );
-
-      case 'language':
-        return (
-          <div className="space-y-5">
-            <div>
-              <h2 className="text-lg font-bold text-white mb-1">Idioma da Interface</h2>
-              <p className="text-sm text-gray-400">Escolha o idioma preferido para a plataforma</p>
-            </div>
-            <div className="space-y-2">
-              {LANGUAGES.map(({ code, label, flag }) => (
-                <button
-                  key={code}
-                  onClick={() => setSelectedLang(code)}
-                  className={cn(
-                    'flex w-full items-center gap-3 rounded-xl border px-4 py-3.5 text-left transition-all',
-                    selectedLang === code
-                      ? 'border-purple-600 bg-purple-900/20 text-white'
-                      : 'border-gray-700 bg-gray-800/40 text-gray-300 hover:border-gray-600'
-                  )}
-                >
-                  <span className="text-2xl">{flag}</span>
-                  <div className="flex-1">
-                    <div className="text-sm font-medium">{label}</div>
-                    <div className="text-xs text-gray-500">{code}</div>
-                  </div>
-                  {selectedLang === code && (
-                    <CheckCircle className="h-5 w-5 text-purple-400" />
-                  )}
-                </button>
-              ))}
-            </div>
-            {selectedLang !== locale && (
-              <div className="rounded-xl border border-blue-800/50 bg-blue-900/10 p-3 text-xs text-blue-300">
-                Salve para aplicar o idioma. A página será recarregada.
-              </div>
-            )}
-          </div>
-        );
-
-      case 'theme':
-        return (
-          <div className="space-y-5">
-            <div>
-              <h2 className="text-lg font-bold text-white mb-1">Tema Visual</h2>
-              <p className="text-sm text-gray-400">Escolha como a interface aparece para você</p>
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              {[
-                { value: 'dark', label: 'Escuro', icon: Moon, preview: 'bg-gray-900 border-gray-700' },
-                { value: 'light', label: 'Claro', icon: Sun, preview: 'bg-gray-100 border-gray-300' },
-                { value: 'system', label: 'Sistema', icon: Monitor, preview: 'bg-gradient-to-br from-gray-900 to-gray-100 border-gray-500' },
-              ].map(({ value, label, icon: Icon, preview }) => (
-                <button
-                  key={value}
-                  onClick={() => setTheme(value)}
-                  className={cn(
-                    'flex flex-col items-center gap-3 rounded-2xl border-2 p-4 transition-all',
-                    theme === value
-                      ? 'border-purple-600 bg-purple-900/20'
-                      : 'border-gray-700 bg-gray-800/40 hover:border-gray-600'
-                  )}
-                >
-                  {/* Preview swatch */}
-                  <div className={cn('h-12 w-full rounded-xl border', preview)} />
-                  <Icon className={cn('h-5 w-5', theme === value ? 'text-purple-400' : 'text-gray-500')} />
-                  <span className={cn('text-sm font-medium', theme === value ? 'text-white' : 'text-gray-400')}>
-                    {label}
-                  </span>
-                  {theme === value && <CheckCircle className="h-4 w-4 text-purple-400" />}
-                </button>
-              ))}
-            </div>
-          </div>
-        );
-
-      case 'notifications':
-        return (
-          <div className="space-y-5">
-            <div>
-              <h2 className="text-lg font-bold text-white mb-1">Notificações</h2>
-              <p className="text-sm text-gray-400">Configure quando e como receber alertas</p>
-            </div>
-            <div className="rounded-2xl border border-gray-800 bg-gray-900/40 px-4 divide-y-0">
-              <Toggle checked={emailNotifs} onChange={setEmailNotifs} label="Notificações por Email" desc="Receba atualizações sobre novos cursos e conquistas" />
-              <Toggle checked={browserNotifs} onChange={setBrowserNotifs} label="Notificações no Navegador" desc="Alertas em tempo real no seu browser" />
-              <Toggle checked={weeklyDigest} onChange={setWeeklyDigest} label="Resumo Semanal" desc="Um email com seu progresso da semana" />
-              <Toggle checked={streakReminder} onChange={setStreakReminder} label="Lembrete de Sequência" desc="Alerta quando você está prestes a perder sua streak" />
-            </div>
-          </div>
-        );
-
-      case 'privacy':
-        return (
-          <div className="space-y-5">
-            <div>
-              <h2 className="text-lg font-bold text-white mb-1">Privacidade</h2>
-              <p className="text-sm text-gray-400">Controle o que outros usuários podem ver</p>
-            </div>
-            <div className="rounded-2xl border border-gray-800 bg-gray-900/40 px-4 divide-y-0">
-              <Toggle checked={publicProfile} onChange={setPublicProfile} label="Perfil Público" desc="Seu perfil pode ser visto por outros usuários" />
-              <Toggle checked={showXP} onChange={setShowXP} label="Mostrar XP Total" desc="Exibir seu XP no ranking e no perfil público" />
-              <Toggle checked={showAchievements} onChange={setShowAchievements} label="Mostrar Conquistas" desc="Exibir suas conquistas desbloqueadas no perfil" />
-              <Toggle checked={showCourses} onChange={setShowCourses} label="Mostrar Cursos Concluídos" desc="Listar cursos completados no perfil público" />
-            </div>
-          </div>
-        );
-
-      case 'account':
-        return (
-          <div className="space-y-5">
-            <div>
-              <h2 className="text-lg font-bold text-white mb-1">Conta</h2>
-              <p className="text-sm text-gray-400">Gerencie sua conta e dados</p>
-            </div>
-
-            <div className="rounded-2xl border border-gray-800 bg-gray-900/40 p-5 space-y-4">
-              <div>
-                <h3 className="text-sm font-semibold text-gray-300 mb-1">Exportar Dados</h3>
-                <p className="text-xs text-gray-500 mb-3">Baixe todos os seus dados da plataforma em formato JSON.</p>
-                <button className="flex items-center gap-2 rounded-xl border border-gray-700 bg-gray-800 px-4 py-2.5 text-sm text-gray-300 hover:border-gray-600 hover:text-white transition-all">
-                  <Download className="h-4 w-4" />
-                  Exportar meus dados
-                </button>
-              </div>
-
-              <div className="border-t border-gray-800 pt-4">
-                <h3 className="text-sm font-semibold text-gray-300 mb-1">Desconectar Carteira</h3>
-                <p className="text-xs text-gray-500 mb-3">Desconecte sua carteira Solana desta sessão.</p>
-                <button
-                  onClick={handleDisconnect}
-                  className="flex items-center gap-2 rounded-xl border border-red-800/60 bg-red-900/20 px-4 py-2.5 text-sm font-medium text-red-400 hover:bg-red-900/30 hover:border-red-700 transition-all"
-                >
-                  <LogOut className="h-4 w-4" />
-                  Desconectar Carteira
-                </button>
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-gray-800 bg-gray-900/30 p-4 text-xs text-gray-500 leading-relaxed">
-              <p className="font-medium text-gray-400 mb-1">Sobre seus dados</p>
-              A Superteam Academy não armazena sua chave privada. Seu progresso é vinculado ao endereço público da sua carteira. Credenciais NFT são armazenadas on-chain na Solana.
-            </div>
-          </div>
-        );
-    }
-  };
+  function handleSave() {
+    // Simulate save
+    setToast(true);
+  }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100 pb-12">
+    <div className="min-h-screen bg-gray-950 text-gray-100">
       {/* Header */}
-      <div className="border-b border-gray-800 bg-gray-900/60 py-8 px-4">
-        <div className="mx-auto max-w-4xl">
-          <div className="flex items-center gap-3">
-            <Settings className="h-6 w-6 text-purple-400" />
-            <h1 className="text-2xl font-bold text-white">Configurações</h1>
-          </div>
+      <div className="border-b border-gray-800 bg-gray-900/60 py-10 px-4">
+        <div className="mx-auto max-w-2xl">
+          <h1 className="text-3xl font-extrabold text-white mb-1">Configurações</h1>
+          <p className="text-gray-400 text-sm">Personalize sua experiência na Superteam Academy</p>
         </div>
       </div>
 
-      <div className="mx-auto max-w-4xl px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Nav sidebar */}
-          <div className="lg:col-span-1">
-            <nav className="space-y-1">
-              {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
-                <button
-                  key={id}
-                  onClick={() => setActiveSection(id)}
+      <div className="mx-auto max-w-2xl px-4 py-8 space-y-8">
+
+        {/* Idioma */}
+        <section className="rounded-2xl border border-gray-800 bg-gray-900/60 p-6">
+          <SectionHeading icon={Globe} title="Idioma" color="text-blue-400" />
+          <div className="space-y-2">
+            {LANGUAGES.map((lang) => {
+              const selected = language === lang.value;
+              return (
+                <label
+                  key={lang.value}
                   className={cn(
-                    'flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition-all text-left',
-                    activeSection === id
-                      ? 'bg-purple-900/40 border border-purple-800/50 text-purple-300'
-                      : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200'
+                    'flex cursor-pointer items-center gap-4 rounded-xl border px-4 py-3.5 transition-all',
+                    selected
+                      ? 'border-purple-600/60 bg-purple-900/20 ring-1 ring-purple-600/30'
+                      : 'border-gray-800 hover:border-gray-700 hover:bg-gray-800/40'
                   )}
                 >
-                  <Icon className="h-4 w-4" />
-                  {label}
-                </button>
-              ))}
-            </nav>
-          </div>
-
-          {/* Content */}
-          <div className="lg:col-span-3">
-            <div className="rounded-2xl border border-gray-800 bg-gray-900/60 p-6">
-              {renderSection()}
-
-              {activeSection !== 'account' && (
-                <div className="mt-6 flex items-center gap-3 pt-4 border-t border-gray-800">
-                  <button
-                    onClick={handleSave}
-                    className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 px-5 py-2.5 text-sm font-bold text-white hover:from-purple-500 hover:to-indigo-500 transition-all hover:scale-[1.02]"
-                  >
-                    {saved ? <CheckCircle className="h-4 w-4" /> : <Save className="h-4 w-4" />}
-                    {saved ? 'Configurações Salvas!' : 'Salvar Configurações'}
-                  </button>
-                  {saved && (
-                    <span className="text-sm text-green-400 flex items-center gap-1">
-                      <CheckCircle className="h-3.5 w-3.5" />
-                      Salvo com sucesso
-                    </span>
+                  <input
+                    type="radio"
+                    name="language"
+                    value={lang.value}
+                    checked={selected}
+                    onChange={() => setLanguage(lang.value)}
+                    className="sr-only"
+                  />
+                  <span className="text-2xl" aria-hidden="true">{lang.flag}</span>
+                  <div className="flex-1">
+                    <div className="text-sm font-semibold text-white">{lang.label}</div>
+                    <div className="text-xs text-gray-500">{lang.region}</div>
+                  </div>
+                  {selected && (
+                    <CheckCircle className="h-5 w-5 text-purple-400 shrink-0" />
                   )}
-                </div>
-              )}
-            </div>
+                </label>
+              );
+            })}
           </div>
+        </section>
+
+        {/* Tema */}
+        <section className="rounded-2xl border border-gray-800 bg-gray-900/60 p-6">
+          <SectionHeading icon={Sun} title="Tema" color="text-yellow-400" />
+          <div className="space-y-2">
+            {THEMES.map(({ value, label, icon: Icon, desc }) => {
+              const selected = theme === value;
+              return (
+                <label
+                  key={value}
+                  className={cn(
+                    'flex cursor-pointer items-center gap-4 rounded-xl border px-4 py-3.5 transition-all',
+                    selected
+                      ? 'border-purple-600/60 bg-purple-900/20 ring-1 ring-purple-600/30'
+                      : 'border-gray-800 hover:border-gray-700 hover:bg-gray-800/40'
+                  )}
+                >
+                  <input
+                    type="radio"
+                    name="theme"
+                    value={value}
+                    checked={selected}
+                    onChange={() => setTheme(value)}
+                    className="sr-only"
+                  />
+                  <div
+                    className={cn(
+                      'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border',
+                      selected
+                        ? 'border-purple-600/40 bg-purple-900/30 text-purple-400'
+                        : 'border-gray-700 bg-gray-800 text-gray-500'
+                    )}
+                  >
+                    <Icon className="h-4 w-4" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-sm font-semibold text-white">{label}</div>
+                    <div className="text-xs text-gray-500">{desc}</div>
+                  </div>
+                  {selected && (
+                    <CheckCircle className="h-5 w-5 text-purple-400 shrink-0" />
+                  )}
+                </label>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* Notificações */}
+        <section className="rounded-2xl border border-gray-800 bg-gray-900/60 p-6">
+          <SectionHeading icon={Bell} title="Notificações" color="text-orange-400" />
+          <div className="space-y-1 divide-y divide-gray-800/60">
+            {NOTIFICATION_TOGGLES.map((item) => (
+              <div
+                key={item.key}
+                className="flex items-center justify-between gap-4 py-4 first:pt-0 last:pb-0"
+              >
+                <div className="flex-1">
+                  <div className="text-sm font-medium text-gray-200">{item.label}</div>
+                  <div className="text-xs text-gray-500 mt-0.5">{item.description}</div>
+                </div>
+                <Toggle
+                  id={`notif-${item.key}`}
+                  checked={notifications[item.key] ?? false}
+                  onChange={(v) =>
+                    setNotifications((prev) => ({ ...prev, [item.key]: v }))
+                  }
+                />
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Privacidade */}
+        <section className="rounded-2xl border border-gray-800 bg-gray-900/60 p-6">
+          <SectionHeading icon={ShieldCheck} title="Privacidade" color="text-green-400" />
+          <div className="space-y-1 divide-y divide-gray-800/60">
+            {PRIVACY_TOGGLES.map((item) => (
+              <div
+                key={item.key}
+                className="flex items-center justify-between gap-4 py-4 first:pt-0 last:pb-0"
+              >
+                <div className="flex-1">
+                  <div className="text-sm font-medium text-gray-200">{item.label}</div>
+                  <div className="text-xs text-gray-500 mt-0.5">{item.description}</div>
+                </div>
+                <Toggle
+                  id={`privacy-${item.key}`}
+                  checked={privacy[item.key] ?? false}
+                  onChange={(v) =>
+                    setPrivacy((prev) => ({ ...prev, [item.key]: v }))
+                  }
+                />
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Save button */}
+        <div className="flex items-center justify-between gap-4 pt-2">
+          <p className="text-xs text-gray-600">
+            As configurações são salvas localmente neste dispositivo
+          </p>
+          <button
+            onClick={handleSave}
+            className="flex items-center gap-2 rounded-xl bg-purple-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-purple-500 active:scale-95 transition-all shadow-lg shadow-purple-900/40"
+          >
+            <CheckCircle className="h-4 w-4" />
+            Salvar
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Success toast */}
+      <div
+        className={cn(
+          'fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-2xl border border-green-700/50 bg-gray-900 px-5 py-3.5 shadow-xl transition-all duration-300',
+          toast ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
+        )}
+        role="status"
+        aria-live="polite"
+      >
+        <CheckCircle className="h-5 w-5 text-green-400 shrink-0" />
+        <div>
+          <div className="text-sm font-semibold text-white">Configurações salvas!</div>
+          <div className="text-xs text-gray-400">Suas preferências foram atualizadas.</div>
         </div>
       </div>
     </div>

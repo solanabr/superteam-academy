@@ -8,7 +8,6 @@ import { ThemeProvider } from 'next-themes';
 import Nav from '../../components/Nav';
 import Footer from '../../components/Footer';
 import WalletProviderWrapper from '../../components/WalletProviderWrapper';
-import '@solana/wallet-adapter-react-ui/styles.css';
 
 const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] });
 const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] });
@@ -42,10 +41,8 @@ export default async function LocaleLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale} suppressHydrationWarning>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-950 text-gray-100 min-h-screen`}
-      >
+    <html lang={locale} suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable}`}>
+      <body className="antialiased bg-gray-950 text-gray-100 min-h-screen">
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
           <NextIntlClientProvider messages={messages}>
             <WalletProviderWrapper>
