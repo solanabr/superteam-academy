@@ -1,3 +1,58 @@
+// ---------------------------------------------------------------------------
+// XP Reward Configuration
+// ---------------------------------------------------------------------------
+
+/** Difficulty tiers matching the CMS course/challenge schema. */
+export type DifficultyTier = 'beginner' | 'intermediate' | 'advanced';
+
+interface DifficultyReward {
+  base: number;
+  byDifficulty: Record<DifficultyTier, number>;
+}
+
+/**
+ * Canonical XP reward table. All reward amounts flow from this single config
+ * so they can be tuned without hunting through multiple files.
+ */
+export const XP_REWARDS = {
+  lessonComplete: { base: 25, byDifficulty: { beginner: 10, intermediate: 25, advanced: 50 } },
+  challengeComplete: { base: 50, byDifficulty: { beginner: 25, intermediate: 50, advanced: 100 } },
+  courseComplete: { base: 1000, byDifficulty: { beginner: 500, intermediate: 1000, advanced: 2000 } },
+  dailyStreak: 10,
+  firstCompletionOfDay: 25,
+} as const;
+
+/** Reward types that support per-difficulty scaling. */
+export type XpRewardType = keyof typeof XP_REWARDS;
+
+/**
+ * Resolve the XP amount for a given reward type and optional difficulty.
+ *
+ * - For flat rewards (`dailyStreak`, `firstCompletionOfDay`) the difficulty
+ *   parameter is ignored and the flat value is returned.
+ * - For tiered rewards (`lessonComplete`, `challengeComplete`, `courseComplete`)
+ *   the difficulty selects the scaled amount; if omitted, the base value is used.
+ */
+export function getXpReward(type: XpRewardType, difficulty?: DifficultyTier): number {
+  const entry = XP_REWARDS[type];
+
+  // Flat reward — just a number
+  if (typeof entry === 'number') {
+    return entry;
+  }
+
+  // Tiered reward — look up by difficulty or fall back to base
+  const tiered = entry as DifficultyReward;
+  if (difficulty && difficulty in tiered.byDifficulty) {
+    return tiered.byDifficulty[difficulty];
+  }
+  return tiered.base;
+}
+
+// ---------------------------------------------------------------------------
+// Level Calculations
+// ---------------------------------------------------------------------------
+
 /**
  * Calculate level from raw XP. Formula: floor(sqrt(xp / 100)).
  */
