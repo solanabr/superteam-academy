@@ -20,17 +20,29 @@ export default function LessonPage() {
 
   useEffect(() => {
     const staticCourse = courses.find((c) => c.slug === slug);
-    if (staticCourse) {
+    const staticLessons = staticCourse?.modules.flatMap((m) => m.lessons);
+    const foundInStatic = staticLessons?.some((l) => l.id === lessonId);
+
+    if (staticCourse && foundInStatic) {
       setCourseData(staticCourse);
       setLoading(false);
       return;
     }
+
     fetch(`/api/courses/${slug}`)
       .then((res) => (res.ok ? res.json() : null))
-      .then((data) => { if (data) setCourseData(data); })
-      .catch(() => {})
+      .then((data) => {
+        if (data) {
+          setCourseData(data);
+        } else if (staticCourse) {
+          setCourseData(staticCourse);
+        }
+      })
+      .catch(() => {
+        if (staticCourse) setCourseData(staticCourse);
+      })
       .finally(() => setLoading(false));
-  }, [slug]);
+  }, [slug, lessonId]);
 
   const allLessons = useMemo(
     () => courseData?.modules.flatMap((m) => m.lessons) ?? [],
