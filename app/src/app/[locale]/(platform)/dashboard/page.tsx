@@ -16,6 +16,7 @@ import { ContinueLearning } from '@/components/dashboard/continue-learning';
 import { RecentAchievements } from '@/components/dashboard/recent-achievements';
 import { CredentialGallery } from '@/components/credentials/credential-gallery';
 import { RecommendedCourses } from '@/components/dashboard/recommended-courses';
+import { ActivityFeed } from '@/components/dashboard/activity-feed';
 
 const ActivityHeatmap = dynamic(
   () => import('@/components/dashboard/activity-heatmap').then((m) => m.ActivityHeatmap),
@@ -90,6 +91,7 @@ export default function DashboardPage() {
             isLoading={isLoading}
           />
           <ActivityHeatmap />
+          <ActivityFeed />
         </div>
 
         {/* Right Column: Achievements + Credentials + Recommended */}
