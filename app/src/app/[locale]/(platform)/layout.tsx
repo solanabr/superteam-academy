@@ -1,5 +1,6 @@
 import { PlatformNavbar } from "@/components/navigation/PlatformNavbar";
 import { AuthGuard } from "@/components/auth/AuthGuard";
+import { Footer } from "@/components/layout/Footer";
 
 export default function PlatformLayout({
     children,
@@ -10,7 +11,7 @@ export default function PlatformLayout({
         <AuthGuard>
             <div className="flex flex-col min-h-screen bg-void text-text-primary">
                 {/* Noise Texture Overlay */}
-                <div className="fixed inset-0 pointer-events-none bg-noise opacity-30 z-50"></div>
+                <div className="fixed inset-0 pointer-events-none bg-noise opacity-15 z-50"></div>
 
                 {/* Background Gradients */}
                 <div className="fixed top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-solana/5 blur-[120px] pointer-events-none z-0"></div>
@@ -21,6 +22,7 @@ export default function PlatformLayout({
                 <main className="relative z-10 flex-1 pt-16">
                     {children}
                 </main>
+                <Footer />
             </div>
         </AuthGuard>
     );

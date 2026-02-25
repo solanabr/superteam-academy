@@ -56,7 +56,7 @@ export function Footer() {
   };
 
   return (
-    <footer className="border-t border-white/10 py-8 mt-12 bg-[#0A0A0B]">
+    <footer className="w-full border-t border-white/10 py-8 mt-auto bg-[#0A0A0B] relative z-20">
       <div className="max-w-7xl mx-auto px-6 text-center">
         <p className="text-text-secondary text-base font-mono flex items-center justify-center gap-2 select-none">
           {t("made_with")}
@@ -69,9 +69,6 @@ export function Footer() {
           </span>
           {t("from")}
         </p>
-        <div className="mt-4 flex justify-center gap-4 opacity-50">
-          <span className="text-xs text-text-secondary/50">Solana Foundation</span>
-        </div>
       </div>
 
       <Dialog.Root open={isOpen} onOpenChange={setIsOpen}>

@@ -52,7 +52,7 @@ export default async function RootLayout({
       <body
         className={`${spaceGrotesk.variable} ${inter.variable} ${jetbrainsMono.variable} flex min-h-screen flex-col font-body antialiased bg-void text-text-primary selection:bg-solana/20 selection:text-solana`}
       >
-        <div className="bg-noise"></div>
+        <div className="bg-noise opacity-15 pointer-events-none fixed inset-0 z-50 mix-blend-overlay"></div>
         <NextIntlClientProvider messages={messages}>
           <AuthProvider>
             <SyncUserOnLogin />

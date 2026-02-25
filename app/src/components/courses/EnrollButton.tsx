@@ -105,7 +105,7 @@ export function EnrollButton({ courseId, courseTitle, className }: EnrollButtonP
         </Button>
         <div className="flex flex-col gap-1.5">
           <Button
-            variant="outline"
+            variant="solana-ghost"
             size="sm"
             onClick={async () => {
               setIsUnenrolling(true);
@@ -116,7 +116,7 @@ export function EnrollButton({ courseId, courseTitle, className }: EnrollButtonP
               }
             }}
             disabled={loading || isUnenrolling}
-            className="h-9 gap-2 rounded-lg bg-solana/10 border border-solana/20 text-solana hover:bg-solana/20 transition-all font-mono text-[10px] uppercase font-bold tracking-tight"
+            className="font-mono text-[10px] uppercase font-bold tracking-tight"
           >
             {isUnenrolling ? (
               <span className="animate-spin text-sm">⌛</span>

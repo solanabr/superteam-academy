@@ -7,7 +7,6 @@ import { useAchievementStore } from "@/store/achievement-store";
 import { ACHIEVEMENTS } from "@/lib/achievements";
 import { getRankFromXp, getRankProgress, getLevelFromXp } from "@/lib/ranks";
 import { Link } from "@/i18n/routing";
-import { Footer } from "@/components/layout/Footer";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { CredentialList } from "@/components/dashboard/CredentialList";
@@ -270,8 +269,6 @@ export default function DashboardPage() {
                 </div>
                 <CredentialList />
             </section>
-
-            <Footer />
         </div>
     );
 }

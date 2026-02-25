@@ -160,7 +160,7 @@ export function LessonViewClient({ course, lesson }: LessonViewClientProps) {
   return (
     <div className="bg-[#0A0A0B] text-[#EDEDEF] font-body overflow-hidden h-screen flex flex-col relative selection:bg-solana/20 selection:text-solana">
       {/* Ambient Noise Overlay */}
-      <div className="absolute inset-0 z-0 pointer-events-none bg-noise opacity-40 mix-blend-overlay"></div>
+      <div className="absolute inset-0 z-0 pointer-events-none bg-noise opacity-15 mix-blend-overlay"></div>
 
       {/* Top Navigation */}
       <header className="relative z-20 flex items-center justify-between border-b border-white/10 bg-[#0A0A0B]/80 backdrop-blur-md px-6 py-3 h-16 shrink-0">

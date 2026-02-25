@@ -135,8 +135,8 @@ export function CourseCompletion({ courseId, totalLessons }: CourseCompletionPro
                     <Button
                         onClick={handleFinalize}
                         disabled={isActionLoading || loading}
-                        variant="default"
-                        className="flex items-center gap-2 rounded-md bg-solana px-4 py-2 text-sm font-medium text-black hover:bg-solana/90 disabled:opacity-50"
+                        variant="solana-ghost"
+                        className="flex items-center gap-2"
                     >
                         {isActionLoading ? (
                             <>

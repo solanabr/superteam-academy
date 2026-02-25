@@ -350,7 +350,7 @@ export default function CreateCoursePage() {
           </div>
 
           <div className="flex gap-3">
-            <Button type="submit" disabled={loading || titleStatus !== 'unique'}>
+            <Button type="submit" disabled={loading || titleStatus !== 'unique'} variant="solana-ghost">
               {loading ? "Creating..." : "Create Course"}
             </Button>
             <Button

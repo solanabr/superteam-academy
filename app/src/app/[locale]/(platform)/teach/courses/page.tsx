@@ -131,7 +131,7 @@ export default function TeachCoursesPage() {
         </nav>
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold">My Courses</h1>
-          <Button onClick={() => router.push("/teach/courses/create")}>
+          <Button onClick={() => router.push("/teach/courses/create")} variant="solana-ghost">
             Create Course
           </Button>
         </div>
@@ -145,7 +145,7 @@ export default function TeachCoursesPage() {
         {courses.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-text-secondary mb-4">No courses yet.</p>
-            <Button onClick={() => router.push("/teach/courses/create")}>
+            <Button onClick={() => router.push("/teach/courses/create")} variant="solana-ghost">
               Create your first course
             </Button>
           </div>

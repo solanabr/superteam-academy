@@ -14,6 +14,7 @@ const buttonVariants = cva(
         secondary: "bg-white/5 text-text-primary hover:bg-white/10 border border-white/5 transition-all duration-200",
         ghost: "hover:bg-white/5 hover:text-white transition-all duration-200",
         link: "text-solana underline-offset-4 hover:underline transition-all duration-200",
+        "solana-ghost": "bg-solana/10 border border-solana/20 text-solana hover:bg-solana/20 shadow-[0_0_15px_rgba(20,241,149,0.1)] hover:shadow-[0_0_20px_rgba(20,241,149,0.2)] transition-all duration-200",
       },
       size: {
         default: "h-10 px-4 py-2",

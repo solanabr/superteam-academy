@@ -1,4 +1,3 @@
-import { Footer } from "@/components/layout/Footer";
 import { getCourses } from "@/sanity/lib/queries";
 import { getTranslations } from "next-intl/server";
 import { CoursesFilter } from "./client-components/CoursesFilter";
@@ -26,7 +25,6 @@ export default async function CoursesPage({
         <CoursesFilter courses={courses} />
 
       </div>
-      <Footer />
     </main>
   );
 }

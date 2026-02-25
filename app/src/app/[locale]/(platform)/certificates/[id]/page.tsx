@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 
-import { Footer } from "@/components/layout/Footer";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -157,7 +156,6 @@ export default function CertificatePage() {
                     </>
                 )}
             </div>
-            <Footer />
         </main>
     );
 }
