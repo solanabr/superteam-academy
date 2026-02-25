@@ -8,6 +8,7 @@ import {
   Zap, Trophy, Flame, Award, BookOpen, TrendingUp,
   Lock, CheckCircle, Clock, BarChart2, Wallet, Star
 } from 'lucide-react';
+import GoogleSignIn, { useGoogleUser } from '@/components/GoogleSignIn';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
@@ -178,8 +179,12 @@ export default function DashboardPage() {
   const t = useTranslations('dashboard');
   const tc = useTranslations('courses');
   const { connected, publicKey } = useWallet();
+  const googleUser = useGoogleUser();
 
-  if (!connected) {
+  // Allow access via Solana wallet OR Google sign-in
+  const isAuthenticated = connected || Boolean(googleUser);
+
+  if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
         <div className="text-center max-w-md">
@@ -192,6 +197,7 @@ export default function DashboardPage() {
           <p className="mb-8 text-gray-400 text-sm leading-relaxed">
             {t('connect_subtitle')}
           </p>
+          {/* Primary: Solana wallet */}
           <WalletMultiButton
             style={{
               background: 'linear-gradient(135deg, #7c3aed, #4f46e5)',
@@ -203,6 +209,27 @@ export default function DashboardPage() {
               justifyContent: 'center',
             }}
           />
+          {/* Divider */}
+          <div className="my-4 flex items-center gap-3">
+            <div className="flex-1 h-px bg-gray-800" />
+            <span className="text-xs text-gray-600 uppercase tracking-widest">ou</span>
+            <div className="flex-1 h-px bg-gray-800" />
+          </div>
+          {/* Secondary: Google sign-in */}
+          <div className="flex justify-center">
+            <GoogleSignIn
+              onSuccess={(user) => {
+                // Reload to trigger re-render with googleUser populated
+                window.location.reload();
+              }}
+              theme="filled_black"
+              size="large"
+              text="continue_with"
+            />
+          </div>
+          <p className="mt-4 text-xs text-gray-600">
+            Google sign-in provides a preview dashboard. For on-chain credentials, connect a Solana wallet.
+          </p>
         </div>
       </div>
     );
