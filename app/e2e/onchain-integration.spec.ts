@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
 
 /**
  * On-chain integration & blockchain feature E2E tests
@@ -7,16 +7,23 @@ import { test, expect } from '@playwright/test';
  * blockchain credential display, and Solana-specific UI elements.
  */
 
+/** Wait for the admin dashboard to render after dynamic import */
+async function waitForDashboard(page: Page) {
+  await page.locator('h1').first().waitFor({ timeout: 15000 });
+}
+
 test.describe('On-chain program visibility', () => {
   test('admin system tab shows real program ID', async ({ page }) => {
     await page.goto('/en/admin');
+    await waitForDashboard(page);
     await page.locator('button', { hasText: /System|Sistema/ }).click();
     // Should show the actual devnet program ID
-    await expect(page.locator('text=3Yr5EZrq8t')).toBeVisible();
+    await expect(page.locator('text=3Yr5EZrq8t').first()).toBeVisible();
   });
 
   test('program ID shown in admin is not placeholder', async ({ page }) => {
     await page.goto('/en/admin');
+    await waitForDashboard(page);
     await page.locator('button', { hasText: /System|Sistema/ }).click();
     // Should NOT be a placeholder
     const placeholder = page.locator('text=YOUR_PROGRAM_ID_HERE, text=TODO, text=placeholder');
@@ -25,6 +32,7 @@ test.describe('On-chain program visibility', () => {
 
   test('admin shows network status (devnet)', async ({ page }) => {
     await page.goto('/en/admin');
+    await waitForDashboard(page);
     await page.locator('button', { hasText: /System|Sistema/ }).click();
     const devnetText = page.locator('text=devnet, text=Devnet, text=Solana, text=mainnet').first();
     await expect(devnetText).toBeVisible().catch(() => {
@@ -121,6 +129,7 @@ test.describe('i18n — Solana-specific content', () => {
 test.describe('Analytics charts (admin dashboard)', () => {
   test('admin overview shows enrollment trend chart', async ({ page }) => {
     await page.goto('/en/admin');
+    await waitForDashboard(page);
     // Charts use recharts — should render SVG elements
     await page.waitForTimeout(1000);
     const chart = page.locator('svg, [class*="recharts"], [class*="chart"]').first();
@@ -130,6 +139,7 @@ test.describe('Analytics charts (admin dashboard)', () => {
 
   test('admin overview shows KPI cards', async ({ page }) => {
     await page.goto('/en/admin');
+    await waitForDashboard(page);
     // KPI cards should show numbers
     const kpiCard = page.locator('[class*="card"], [class*="stat"]').first();
     await expect(kpiCard).toBeVisible().catch(() => {});
@@ -138,6 +148,7 @@ test.describe('Analytics charts (admin dashboard)', () => {
 
   test('admin analytics section shows completion funnel', async ({ page }) => {
     await page.goto('/en/admin');
+    await waitForDashboard(page);
     // Should have some form of analytics visualization
     await page.waitForTimeout(1000);
     await expect(page.locator('h1, h2').first()).toBeVisible();

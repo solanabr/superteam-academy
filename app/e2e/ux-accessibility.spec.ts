@@ -1,4 +1,9 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
+
+/** Wait for admin dashboard dynamic import */
+async function waitForDashboard(page: Page) {
+  await page.locator('h1').first().waitFor({ timeout: 15000 });
+}
 
 /**
  * UX, Accessibility & Responsive Design E2E tests
@@ -42,7 +47,7 @@ test.describe('Responsive design — mobile viewport', () => {
 
   test('admin page loads on mobile', async ({ page }) => {
     await page.goto('/en/admin');
-    await expect(page.locator('h1, h2').first()).toBeVisible();
+    await waitForDashboard(page);
   });
 });
 
@@ -120,6 +125,7 @@ test.describe('Accessibility basics', () => {
 
   test('admin table has proper headers', async ({ page }) => {
     await page.goto('/en/admin');
+    await waitForDashboard(page);
     await page.locator('button', { hasText: /Courses|Cursos/ }).click();
     await expect(page.locator('thead, th').first()).toBeVisible();
   });

@@ -38,14 +38,27 @@ test.describe('Locale routing', () => {
   }
 
   test('locale switcher changes URL prefix', async ({ page }) => {
+    const viewport = page.viewportSize();
+    const isMobile = viewport && viewport.width < 768;
+
     await page.goto('/pt-BR');
-    // Switch to English
+
+    // On mobile, locale switcher is inside hamburger menu
+    async function openMobileMenu() {
+      if (isMobile) {
+        await page.locator('button[aria-label="Toggle menu"]').click();
+      }
+    }
+
+    await openMobileMenu();
     await page.locator('button', { hasText: 'EN' }).click();
     await expect(page).toHaveURL(/\/en/);
-    // Switch to Spanish
+
+    await openMobileMenu();
     await page.locator('button', { hasText: 'ES' }).click();
     await expect(page).toHaveURL(/\/es/);
-    // Switch back to Portuguese
+
+    await openMobileMenu();
     await page.locator('button', { hasText: 'PT' }).click();
     await expect(page).toHaveURL(/\/pt-BR/);
   });

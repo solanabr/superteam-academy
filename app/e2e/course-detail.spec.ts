@@ -85,40 +85,38 @@ test.describe('Course detail pages', () => {
 test.describe('Lesson viewer', () => {
   test('lesson page loads for intro-1', async ({ page }) => {
     await page.goto('/en/lessons/intro-1');
-    // Scope to main content to avoid hidden sidebar headings on mobile
-    await expect(page.locator('main h1, main h2, main h3, main p').first()).toBeVisible();
+    // Use h1/h2/p (not h3) to avoid matching hidden sidebar heading on mobile
+    await expect(page.locator('main h1, main h2, main p').first()).toBeVisible();
   });
 
   test('lesson page loads for intro-2', async ({ page }) => {
     await page.goto('/en/lessons/intro-2');
-    await expect(page.locator('main h1, main h2, main h3, main p').first()).toBeVisible();
+    await expect(page.locator('main h1, main h2, main p').first()).toBeVisible();
   });
 
   test('lesson page loads for intro-3', async ({ page }) => {
     await page.goto('/en/lessons/intro-3');
-    await expect(page.locator('main h1, main h2, main h3, main p').first()).toBeVisible();
+    await expect(page.locator('main h1, main h2, main p').first()).toBeVisible();
   });
 
   test('pt-BR lesson path works', async ({ page }) => {
     await page.goto('/pt-BR/aulas/intro-1');
     await expect(page).toHaveURL('/pt-BR/aulas/intro-1');
-    await expect(page.locator('main h1, main h2, main h3, main p').first()).toBeVisible();
+    await expect(page.locator('main h1, main h2, main p').first()).toBeVisible();
   });
 
   test('es lesson path works', async ({ page }) => {
     await page.goto('/es/lecciones/intro-1');
     await expect(page).toHaveURL('/es/lecciones/intro-1');
-    await expect(page.locator('main h1, main h2, main h3, main p').first()).toBeVisible();
+    await expect(page.locator('main h1, main h2, main p').first()).toBeVisible();
   });
 
-  test('lesson sidebar is visible', async ({ page }) => {
+  test('lesson sidebar is present', async ({ page }) => {
     await page.goto('/en/lessons/intro-1');
-    // Sidebar with lesson list should be present
-    const sidebar = page.locator('[class*="sidebar"], aside, nav').first();
-    await expect(sidebar).toBeVisible().catch(() => {
-      // May be in a different structure
-    });
-    await expect(page.locator('main h1, main h2, main h3, main p').first()).toBeVisible();
+    // Sidebar is hidden on mobile (hidden lg:flex) — check DOM presence
+    const sidebar = page.locator('[class*="sidebar"], aside').first();
+    await expect(sidebar).toBeAttached();
+    await expect(page.locator('main h1, main h2, main p').first()).toBeVisible();
   });
 
   test('lesson has navigation buttons', async ({ page }) => {
@@ -128,7 +126,7 @@ test.describe('Lesson viewer', () => {
       hasText: /Next|Previous|Continue|Back|Forward/i,
     });
     await expect(navButton.first()).toBeVisible().catch(() => {});
-    await expect(page.locator('main h1, main h2, main h3, main p').first()).toBeVisible();
+    await expect(page.locator('main h1, main h2, main p').first()).toBeVisible();
   });
 
   test('code editor renders', async ({ page }) => {
@@ -137,9 +135,9 @@ test.describe('Lesson viewer', () => {
     await page.waitForTimeout(2000);
     const editor = page.locator('.monaco-editor, [class*="editor"]').first();
     await expect(editor).toBeVisible().catch(() => {
-      // Editor may be in a loading state
+      // Editor may be in a loading state or tabbed on mobile
     });
-    await expect(page.locator('main h1, main h2, main h3, main p').first()).toBeVisible();
+    await expect(page.locator('main h1, main h2, main p').first()).toBeVisible();
   });
 
   test('mark complete button exists', async ({ page }) => {
@@ -148,14 +146,15 @@ test.describe('Lesson viewer', () => {
       hasText: /Complete|Mark|Done|Finish|Completed/i,
     });
     await expect(completeBtn.first()).toBeVisible().catch(() => {});
-    await expect(page.locator('main h1, main h2, main h3, main p').first()).toBeVisible();
+    await expect(page.locator('main h1, main h2, main p').first()).toBeVisible();
   });
 
   test('back to course link is present', async ({ page }) => {
     await page.goto('/en/lessons/intro-1');
+    // Back link may be in sidebar (hidden on mobile) — check DOM presence
     const backLink = page.locator('a').filter({ hasText: /Back|Course|Courses/i }).first();
-    await expect(backLink).toBeVisible().catch(() => {});
-    await expect(page.locator('main h1, main h2, main h3, main p').first()).toBeVisible();
+    await expect(backLink).toBeAttached();
+    await expect(page.locator('main h1, main h2, main p').first()).toBeVisible();
   });
 });
 
