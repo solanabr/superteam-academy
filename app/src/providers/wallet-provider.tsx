@@ -6,10 +6,9 @@ import {
   WalletProvider as SolanaWalletProvider,
   useWallet as useAdapterWallet,
 } from "@solana/wallet-adapter-react";
-import { WalletBridgeContext } from "@/lib/wallet/context";
+import { WalletBridgeContext, type WalletContextState } from "@/lib/wallet/context";
 import { HELIUS_RPC_URL } from "@/lib/constants";
 import { analytics } from "@/providers/analytics-provider";
-import { useWalletAuth } from "@/lib/hooks/use-wallet-auth";
 
 /**
  * Bridges adapter state into our lightweight WalletBridgeContext so that
@@ -36,18 +35,11 @@ function WalletBridge({ children }: { children: ReactNode }) {
     prevConnected.current = adapterWallet.connected;
   }, [adapterWallet.connected, adapterWallet.wallet]);
 
-  // Cast is safe — adapter's WalletContextState is a superset of ours
   return (
-    <WalletBridgeContext.Provider value={adapterWallet as any}>
-      <WalletAuthRunner />
+    <WalletBridgeContext.Provider value={adapterWallet as unknown as WalletContextState}>
       {children}
     </WalletBridgeContext.Provider>
   );
-}
-
-function WalletAuthRunner() {
-  useWalletAuth();
-  return null;
 }
 
 export function WalletProvider({ children }: { children: ReactNode }) {

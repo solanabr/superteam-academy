@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useWallet } from "@/lib/wallet/context";
 import { useProgram } from "@/lib/hooks/use-program";
 import { useEnrollment } from "@/lib/hooks/use-enrollment";
+import { useRequireAuth } from "@/lib/hooks/use-require-auth";
 import { enroll } from "@/lib/solana/transactions";
 import { analytics } from "@/providers/analytics-provider";
 import { parseAnchorError } from "@/lib/solana/anchor-errors";
@@ -31,6 +32,7 @@ export function EnrollSection({
   const tl = useTranslations("lesson");
   const { publicKey, connected } = useWallet();
   const program = useProgram();
+  const { requireAuth } = useRequireAuth();
   const {
     enrollment,
     exists: isEnrolled,
@@ -90,20 +92,14 @@ export function EnrollSection({
   if (!connected) {
     return (
       <div className="sa-enroll-section">
-        <button className="sa-enroll-btn" disabled>
-          {t.enrollNow}
-        </button>
-        <span
-          className="text-sm"
-          style={{
-            fontFamily: "var(--font-mono)",
-            fontSize: "11px",
-            letterSpacing: "0.1em",
-            color: "var(--c-text-muted)",
-          }}
+        <button
+          className="sa-enroll-btn"
+          onClick={() => requireAuth(() => handleEnroll())}
+          disabled={loading}
         >
-          {tl("connectToEnroll")}
-        </span>
+          {loading ? tl("enrolling") : t.enrollNow}
+        </button>
+        {metaText}
       </div>
     );
   }

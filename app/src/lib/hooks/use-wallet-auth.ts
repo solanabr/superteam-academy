@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { buildSignInMessage } from "@/lib/auth/message";
@@ -8,11 +8,10 @@ import { buildSignInMessage } from "@/lib/auth/message";
 export type WalletAuthState = "idle" | "signing" | "authenticated" | "error";
 
 export function useWalletAuth() {
-  const { publicKey, connected, signMessage, disconnect } = useWallet();
-  const { data: session, status: sessionStatus } = useSession();
+  const { publicKey, connected, signMessage } = useWallet();
+  const { data: session } = useSession();
   const [state, setState] = useState<WalletAuthState>("idle");
   const [error, setError] = useState<string | null>(null);
-  const authAttempted = useRef(false);
   const prevPubkey = useRef<string | null>(null);
 
   // Session already has this wallet authenticated
@@ -64,36 +63,22 @@ export function useWalletAuth() {
     }
   }, [publicKey, signMessage, connected]);
 
-  // Auto-authenticate when wallet connects (if not already authenticated)
+  // Track wallet changes — reset auth state when pubkey changes
   useEffect(() => {
     const currentPubkey = publicKey?.toBase58() ?? null;
-
-    // Wallet changed — reset state
     if (currentPubkey !== prevPubkey.current) {
-      authAttempted.current = false;
       prevPubkey.current = currentPubkey;
+      if (currentPubkey && state === "authenticated") {
+        setState("idle");
+      }
     }
-
-    if (
-      connected &&
-      publicKey &&
-      signMessage &&
-      !isAuthenticated &&
-      !authAttempted.current &&
-      state !== "signing" &&
-      sessionStatus !== "loading"
-    ) {
-      authAttempted.current = true;
-      authenticate();
-    }
-  }, [connected, publicKey, signMessage, isAuthenticated, state, sessionStatus, authenticate]);
+  }, [publicKey, state]);
 
   // Sign out of NextAuth when wallet disconnects
   useEffect(() => {
     if (!connected && session?.user?.id) {
       signOut({ redirect: false });
       setState("idle");
-      authAttempted.current = false;
     }
   }, [connected, session]);
 

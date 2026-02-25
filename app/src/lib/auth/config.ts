@@ -107,8 +107,8 @@ providers.push(
           return null;
         }
 
-        // Consume nonce (single-use, TTL-enforced)
-        if (!consumeNonce(nonceMatch[1])) {
+        // Consume nonce (single-use, cookie-backed)
+        if (!(await consumeNonce(nonceMatch[1]))) {
           console.error("[auth] Invalid or expired nonce");
           return null;
         }

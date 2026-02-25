@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { useWallet } from "@/lib/wallet/context";
-import type { Wallet } from "@solana/wallet-adapter-react";
+import { useWallet, type Wallet } from "@/lib/wallet/context";
 import { WalletReadyState } from "@solana/wallet-adapter-base";
 import { X } from "lucide-react";
 

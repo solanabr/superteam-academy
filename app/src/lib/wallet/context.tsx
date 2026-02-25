@@ -1,31 +1,53 @@
 "use client";
 
 import { createContext, useContext } from "react";
+import type { PublicKey, Connection, Transaction, VersionedTransaction, TransactionSignature, SendOptions } from "@solana/web3.js";
+import type { WalletReadyState } from "@solana/wallet-adapter-base";
 
 /**
  * Lightweight wallet context that mirrors @solana/wallet-adapter-react's
- * WalletContextState. This module has ZERO runtime imports from the adapter,
- * so it can live in the main bundle without pulling in the heavy wallet JS.
+ * WalletContextState. Only TYPE imports are used — zero runtime cost,
+ * so this module stays in the main bundle without pulling in heavy wallet JS.
  *
  * The real wallet provider lazily bridges adapter state into this context.
  * Until then, consumers get safe defaults (disconnected / null pubkey).
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+export interface Wallet {
+  adapter: { name: string; icon: string };
+  readyState: WalletReadyState;
+}
+
+type SendTransactionFn = (
+  transaction: Transaction | VersionedTransaction,
+  connection: Connection,
+  options?: SendOptions,
+) => Promise<TransactionSignature>;
+
+type SignTransactionFn = (
+  transaction: Transaction | VersionedTransaction,
+) => Promise<Transaction | VersionedTransaction>;
+
+type SignAllTransactionsFn = (
+  transactions: (Transaction | VersionedTransaction)[],
+) => Promise<(Transaction | VersionedTransaction)[]>;
+
+type SignMessageFn = (message: Uint8Array) => Promise<Uint8Array>;
+
 export interface WalletContextState {
   connected: boolean;
   connecting: boolean;
   disconnecting: boolean;
-  publicKey: any;
-  wallet: any;
-  wallets: any[];
-  select: (walletName: any) => void;
+  publicKey: PublicKey | null;
+  wallet: Wallet | null;
+  wallets: Wallet[];
+  select: (walletName: string | null) => void;
   connect: () => Promise<void>;
   disconnect: () => Promise<void>;
-  sendTransaction: any;
-  signTransaction: any;
-  signAllTransactions: any;
-  signMessage: any;
+  sendTransaction: SendTransactionFn | undefined;
+  signTransaction: SignTransactionFn | undefined;
+  signAllTransactions: SignAllTransactionsFn | undefined;
+  signMessage: SignMessageFn | undefined;
 }
 
 const WALLET_DEFAULTS: WalletContextState = {

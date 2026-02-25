@@ -87,11 +87,25 @@ export default function CertificatePage() {
 
     setDownloading(true);
     try {
+      // html2canvas cannot render conic-gradient with CSS custom properties
+      // (produces non-finite addColorStop values). Swap to a static border.
+      const hadMetallic = element.classList.contains("metallic-border");
+      if (hadMetallic) {
+        element.classList.remove("metallic-border");
+        element.style.border = "1px solid rgba(168, 176, 189, 0.4)";
+      }
+
       const html2canvas = (await import("html2canvas")).default;
       const canvas = await html2canvas(element, {
         backgroundColor: null,
         scale: 2,
       });
+
+      if (hadMetallic) {
+        element.style.border = "";
+        element.classList.add("metallic-border");
+      }
+
       const link = document.createElement("a");
       link.download = `${course.title.replace(/\s+/g, "-").toLowerCase()}-certificate.png`;
       link.href = canvas.toDataURL("image/png");

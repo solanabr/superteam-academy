@@ -3,8 +3,8 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { CustomCursor } from "@/components/ui/landing-animations";
-import { WalletGate } from "@/components/dashboard/wallet-gate";
 import { useUser } from "@/lib/hooks/use-user";
+import { useTranslations } from "next-intl";
 import { useAllEnrollments } from "@/lib/hooks/use-all-enrollments";
 import { courses } from "@/lib/services/courses";
 import {
@@ -28,6 +28,7 @@ export default function DashboardPage() {
   const params = useParams();
   const locale = params.locale as string;
   const { user, connected } = useUser();
+  const t = useTranslations("dashboard");
   const { progressMap } = useAllEnrollments();
   const [mobile, setMobile] = useState(false);
 
@@ -99,8 +100,71 @@ export default function DashboardPage() {
   return (
     <div style={{ cursor: mobile ? "auto" : "none" }}>
       {!mobile && <CustomCursor />}
-      <WalletGate>
         <div style={{ background: D, color: C, minHeight: "100vh", contain: "layout style" }}>
+          {/* Inline connect banner — visible when wallet not connected */}
+          {!connected && (
+            <div
+              style={{
+                margin: "0 auto",
+                maxWidth: 720,
+                padding: "80px 24px 0",
+              }}
+            >
+              <div
+                style={{
+                  border: "1px solid var(--c-border-subtle)",
+                  padding: "32px 28px",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 16,
+                  textAlign: "center",
+                }}
+              >
+                <p
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    fontSize: 9,
+                    letterSpacing: 3,
+                    textTransform: "uppercase",
+                    color: "var(--c-text-dim)",
+                    margin: 0,
+                  }}
+                >
+                  {t("walletGate.label")}
+                </p>
+                <p
+                  style={{
+                    fontFamily: "var(--font-sans)",
+                    fontSize: 15,
+                    color: "var(--c-text-dim)",
+                    maxWidth: 400,
+                    lineHeight: 1.6,
+                    margin: 0,
+                  }}
+                >
+                  {t("walletGate.subtext")}
+                </p>
+                <button
+                  onClick={() => window.dispatchEvent(new Event("open-wallet-gateway"))}
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    fontSize: 11,
+                    letterSpacing: 3,
+                    textTransform: "uppercase",
+                    padding: "14px 40px",
+                    background: "transparent",
+                    color: "var(--xp)",
+                    border: "1px solid var(--xp)",
+                    cursor: "pointer",
+                  }}
+                >
+                  {t("walletGate.connectWallet")}
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Grid layout driven by CSS media queries (globals.css .dash-grid)
               to prevent CLS from JS mobile state flip */}
           <div className="dash-grid">
@@ -206,7 +270,6 @@ export default function DashboardPage() {
           }
         `}</style>
         </div>
-      </WalletGate>
     </div>
   );
 }

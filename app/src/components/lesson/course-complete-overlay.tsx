@@ -3,8 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { AnimatePresence, motion } from "framer-motion";
-import { Award, Loader2, Wallet } from "lucide-react";
-import { useWallet } from "@/lib/wallet/context";
+import { Award, Loader2 } from "lucide-react";
+import { useRequireAuth } from "@/lib/hooks/use-require-auth";
 import { useEffect, useRef, useCallback } from "react";
 
 export function CourseCompleteOverlay({
@@ -24,7 +24,7 @@ export function CourseCompleteOverlay({
 }) {
   const t = useTranslations("lesson");
   const router = useRouter();
-  const { connected } = useWallet();
+  const { requireAuth } = useRequireAuth();
   const dialogRef = useRef<HTMLDivElement>(null);
   const previousFocus = useRef<HTMLElement | null>(null);
 
@@ -236,73 +236,12 @@ export function CourseCompleteOverlay({
                 </button>
               </div>
             )
-          ) : !connected ? (
-            <div
-              style={{ display: "flex", flexDirection: "column", gap: "12px" }}
-            >
-              <div
-                style={{
-                  padding: "16px",
-                  borderLeft: "3px solid var(--nd-highlight-orange)",
-                  background: "rgba(255,165,0,0.05)",
-                }}
-              >
-                <p
-                  style={{
-                    fontFamily: "var(--font-mono)",
-                    fontSize: "12px",
-                    color: "var(--nd-highlight-orange)",
-                  }}
-                >
-                  {t("connectToFinalize")}
-                </p>
-              </div>
-              <button
-                onClick={() => window.dispatchEvent(new Event("open-wallet-gateway"))}
-                style={{
-                  width: "100%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "8px",
-                  fontFamily: "var(--font-mono)",
-                  fontSize: "11px",
-                  letterSpacing: "0.15em",
-                  textTransform: "uppercase",
-                  padding: "14px 36px",
-                  border: "none",
-                  cursor: "pointer",
-                  background: "var(--foreground)",
-                  color: "var(--background)",
-                }}
-              >
-                <Wallet style={{ width: 14, height: 14 }} />
-                {t("connectWallet")}
-              </button>
-              <button
-                onClick={onDismiss}
-                style={{
-                  width: "100%",
-                  fontFamily: "var(--font-mono)",
-                  fontSize: "11px",
-                  letterSpacing: "0.15em",
-                  textTransform: "uppercase",
-                  padding: "14px 36px",
-                  background: "none",
-                  color: "var(--c-text-muted)",
-                  border: "1px solid var(--c-border-subtle)",
-                  cursor: "pointer",
-                }}
-              >
-                {t("later")}
-              </button>
-            </div>
           ) : (
             <div
               style={{ display: "flex", flexDirection: "column", gap: "12px" }}
             >
               <button
-                onClick={onFinalize}
+                onClick={() => requireAuth(onFinalize)}
                 disabled={isFinalizing}
                 style={{
                   width: "100%",
