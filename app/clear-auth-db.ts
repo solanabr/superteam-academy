@@ -7,14 +7,20 @@ async function clearAuthData() {
   try {
     console.log('Начинаем очистку...');
 
-    const usersDeleted = await prisma.user.deleteMany({});
-    console.log(`Удалено пользователей: ${usersDeleted.count}`);
+    //const usersDeleted = await prisma.user.deleteMany({});
+    //console.log(`Удалено пользователей: ${usersDeleted.count}`);
 
-    const accountsDeleted = await prisma.account.deleteMany({});
-    console.log(`Удалено аккаунтов (OAuth): ${accountsDeleted.count}`);
+    //const accountsDeleted = await prisma.account.deleteMany({});
+    //console.log(`Удалено аккаунтов (OAuth): ${accountsDeleted.count}`);
 
-    const sessionsDeleted = await prisma.session.deleteMany({});
-    console.log(`Удалено сессий: ${sessionsDeleted.count}`);
+    //const sessionsDeleted = await prisma.session.deleteMany({});
+    //console.log(`Удалено сессий: ${sessionsDeleted.count}`);
+    const LessonProgressDeleted = await prisma.lessonProgress.deleteMany({});
+    console.log (`Удалено пройденных уроков: ${LessonProgressDeleted.count}`)
+
+    const userEnrollmentDeleted= await prisma.userEnrollment.deleteMany({});
+    console.log (`Удалено записанных пользователь: ${userEnrollmentDeleted.count}`)
+
 
     console.log('Очистка завершена успешно!');
   } catch (error) {

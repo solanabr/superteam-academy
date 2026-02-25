@@ -1,76 +1,74 @@
 // app/src/components/module-list.tsx
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Circle, PlayCircle, Lock } from "lucide-react";
+import { CheckCircle2, Circle, Lock, Play } from "lucide-react"; // CheckCircle2 красивее
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 
-// Типы для контента (можно импортировать из course-content)
-interface Lesson {
-    id: string;
-    title: string;
-    index: number;
-}
-
 interface ModuleListProps {
     courseId: string;
-    lessons: any[]; // В реальности список уроков
+    lessons: any[];
     isEnrolled: boolean;
-    // Прогресс - какие уроки пройдены (индексы)
     completedIndices: number[]; 
 }
 
 export function ModuleList({ courseId, lessons, isEnrolled, completedIndices }: ModuleListProps) {
   const router = useRouter();
 
-  // Для хакатона: Все уроки кладем в "Module 1: Fundamentals"
-  // В будущем можно расширить структуру COURSE_CONTENT
-  
   return (
     <Accordion type="single" collapsible defaultValue="module-1" className="w-full">
       <AccordionItem value="module-1" className="border rounded-lg px-4 mb-4 bg-card">
-        <AccordionTrigger className="hover:no-underline">
+        <AccordionTrigger className="hover:no-underline py-4">
             <div className="flex flex-col items-start text-left">
                 <span className="font-semibold text-lg">Module 1: Fundamentals</span>
-                <span className="text-sm text-muted-foreground font-normal">
+                <span className="text-sm text-muted-foreground font-normal mt-1">
                     {completedIndices.length}/{lessons.length} Lessons Completed
                 </span>
             </div>
         </AccordionTrigger>
-        <AccordionContent className="pt-2 pb-4 space-y-2">
+        <AccordionContent className="pt-0 pb-4 space-y-2">
             {lessons.map((lesson, index) => {
                 const isCompleted = completedIndices.includes(index);
-                // Заблокирован если не записан
                 const isLocked = !isEnrolled;
                 
+                // Активный урок - это первый непройденный (или последний, если все пройдены)
+                const isNextUp = !isCompleted && !isLocked && (index === 0 || completedIndices.includes(index - 1));
+
                 return (
                     <div 
                         key={index}
                         className={cn(
-                            "flex items-center justify-between p-3 rounded-md transition-colors",
-                            isCompleted ? "bg-green-500/10 hover:bg-green-500/20" : "hover:bg-muted"
+                            "flex items-center justify-between p-3 rounded-md transition-all border",
+                            isNextUp ? "bg-accent/50 border-accent" : "border-transparent hover:bg-muted/50"
                         )}
                     >
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-4">
                             {isCompleted ? (
-                                <CheckCircle className="h-5 w-5 text-green-500" />
+                                <CheckCircle2 className="h-5 w-5 text-green-500 fill-green-500/10" />
+                            ) : isLocked ? (
+                                <Lock className="h-5 w-5 text-muted-foreground" />
                             ) : (
-                                <Circle className="h-5 w-5 text-muted-foreground" />
+                                <div className={cn("h-5 w-5 rounded-full border-2 flex items-center justify-center", isNextUp ? "border-primary" : "border-muted-foreground")}>
+                                    {isNextUp && <div className="h-2.5 w-2.5 bg-primary rounded-full" />}
+                                </div>
                             )}
-                            <span className={cn("font-medium", isCompleted && "text-green-600 dark:text-green-400")}>
-                                {index + 1}. {lesson.title}
-                            </span>
+                            <div className="flex flex-col">
+                                <span className={cn("font-medium text-sm", isCompleted && "text-muted-foreground line-through decoration-transparent")}>
+                                    {index + 1}. {lesson.title}
+                                </span>
+                            </div>
                         </div>
 
                         {isLocked ? (
-                            <Lock className="h-4 w-4 text-muted-foreground" />
+                            <Button size="sm" variant="ghost" disabled><Lock className="h-4 w-4" /></Button>
                         ) : (
                             <Button 
                                 size="sm" 
-                                variant={isCompleted ? "ghost" : "secondary"}
+                                variant={isCompleted ? "ghost" : (isNextUp ? "default" : "secondary")}
                                 onClick={() => router.push(`/courses/${courseId}/lessons/${index}`)}
+                                className="h-8 px-3"
                             >
-                                {isCompleted ? "Review" : "Start"}
+                                {isCompleted ? "Review" : (isNextUp ? "Start" : "Start")}
                             </Button>
                         )}
                     </div>

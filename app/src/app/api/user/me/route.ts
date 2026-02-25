@@ -22,7 +22,15 @@ export async function GET(request: Request) {
       if (userId && /^[0-9a-fA-F]{24}$/.test(userId)) {
           user = await prisma.user.findUnique({
             where: { id: userId },
-            include: { accounts: true, enrollments: true }
+            include: { 
+              accounts: true, 
+              enrollments: true,
+              achievements: { // <-- Добавь это
+                include: {
+                  achievement: true
+                }
+              }
+            }
           });
       }
     } 
@@ -31,7 +39,15 @@ export async function GET(request: Request) {
     if (!user && walletParam && walletParam !== "null" && walletParam !== "undefined") {
       user = await prisma.user.findUnique({
         where: { walletAddress: walletParam },
-        include: { accounts: true, enrollments: true }
+        include: { 
+          accounts: true, 
+          enrollments: true,
+          achievements: { // <-- Добавь это
+            include: {
+              achievement: true
+            }
+          }
+        }
       });
     }
 

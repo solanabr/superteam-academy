@@ -41,6 +41,7 @@ model User {
   sessions      Session[]
   enrollments   UserEnrollment[]
   progress      LessonProgress[]
+  achievements  UserAchievement[]
 }
 
 
@@ -95,4 +96,30 @@ model LessonProgress {
   completedAt DateTime?
 
   @@unique([userId, courseId, lessonIndex])
+}
+
+model Achievement {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  slug              String   @unique
+  name              String
+  description       String
+  image             String
+  xpReward          Int
+  
+  // НОВОЕ ПОЛЕ: Адрес коллекции (Mint) этого типа ачивки
+  collectionAddress String?  @unique 
+  
+  users             UserAchievement[]
+}
+
+model UserAchievement {
+  id            String      @id @default(auto()) @map("_id") @db.ObjectId
+  user          User        @relation(fields: [userId], references: [id])
+  userId        String      @db.ObjectId
+  achievement   Achievement @relation(fields: [achievementId], references: [id])
+  achievementId String      @db.ObjectId
+  earnedAt      DateTime    @default(now())
+  mintAddress   String?     // Адрес NFT в блокчейне (после минта)
+
+  @@unique([userId, achievementId])
 }

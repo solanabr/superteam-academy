@@ -5,6 +5,8 @@ export const PROGRAM_ID = new PublicKey(
   process.env.NEXT_PUBLIC_PROGRAM_ID ?? ""
 );
 
+export const ACHIEVEMENTS_COLLECTION = new PublicKey(process.env.NEXT_PUBLIC_ACHIEVEMENTS_COLLECTION ?? "");
+
 export const XP_MINT = new PublicKey(
   process.env.NEXT_PUBLIC_XP_MINT ?? ""
 );

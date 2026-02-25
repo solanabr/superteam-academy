@@ -59,8 +59,10 @@ export function useUser() {
   return {
     userDb,
     enrollments: userDb?.enrollments || [],
+    // ИСПРАВЛЕНИЕ: Добавляем achievements
+    achievements: userDb?.achievements || [],
     loading,
     saveCode,
-    refetchUser: fetchUser // Экспортируем функцию для ручного обновления
+    refetchUser: fetchUser
   };
 }

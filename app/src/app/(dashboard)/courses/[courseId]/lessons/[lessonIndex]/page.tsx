@@ -5,6 +5,8 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useWallet } from "@solana/wallet-adapter-react";
 import ReactMarkdown from "react-markdown";
+import Confetti from 'react-confetti';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 import { CodeEditor } from "@/components/code-editor";
 import { Button } from "@/components/ui/button";
@@ -30,6 +32,8 @@ export default function LessonPage() {
   const [isChecking, setIsChecking] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
   const [logs, setLogs] = useState<string[]>([]);
+  const [showCertificateModal, setShowCertificateModal] = useState(false);
+  const [certificateId, setCertificateId] = useState<string | null>(null);
 
   // 1. Загрузка контента и статуса
   useEffect(() => {
@@ -91,6 +95,10 @@ export default function LessonPage() {
       setIsCompleted(true);
       setLogs(prev => [...prev, "✅ Build successful", "✅ Tests passed", `Transaction confirmed: ${data.txSignature.slice(0, 8)}...`]);
       toast.success("Lesson completed!");
+      if (data.certificateMint) {
+        setCertificateId(data.certificateMint);
+        setShowCertificateModal(true);
+      }
 
     } catch (error: any) {
       console.error("Check failed:", error);
@@ -106,14 +114,15 @@ export default function LessonPage() {
   }
 
   return (
-    <div className="h-[calc(100vh-4rem)] flex flex-col">
+    <div className="flex flex-col h-[calc(100vh-4rem)] overflow-hidden"> 
+    {showCertificateModal && <Confetti recycle={false} numberOfPieces={500} />}
       {/* Header */}
-      <div className="border-b bg-background p-3 flex justify-between items-center shrink-0">
+      <div className="h-14 border-b bg-background px-4 flex justify-between items-center shrink-0 z-10">
         <div className="flex items-center gap-4">
             <Button variant="ghost" size="sm" onClick={() => router.push(`/courses/${courseId}`)}>
                 <ArrowLeft className="mr-2 h-4 w-4" /> Back to Course
             </Button>
-            <h2 className="font-semibold text-sm md:text-base hidden sm:block">
+            <h2 className="font-medium text-sm">
                 {lessonIndex + 1}. {content.title}
             </h2>
         </div>
@@ -134,86 +143,81 @@ export default function LessonPage() {
       </div>
 
       {/* DESKTOP VIEW */}
-      <div className="hidden md:flex flex-1 overflow-hidden">
-          <ResizablePanelGroup>
-            
-            {/* Left: Content */}
-            <ResizablePanel defaultSize={40} minSize={25} maxSize={60}>
-              <ScrollArea className="h-full p-6 prose dark:prose-invert max-w-none">
-                <ReactMarkdown>{content.markdown}</ReactMarkdown>
-              </ScrollArea>
-            </ResizablePanel>
+      {/* Main Workspace */}
+      <div className="flex-1 overflow-hidden relative">
+          
+          {/* DESKTOP VIEW */}
+          <div className="hidden md:block h-full w-full">
+              <ResizablePanelGroup className="h-full w-full border-t">
+                
+                {/* Left: Content (Markdown) */}
+                <ResizablePanel defaultSize={40} minSize={20} className="bg-background">
+                  <ScrollArea className="h-full">
+                    <div className="p-8 prose dark:prose-invert max-w-none">
+                        <ReactMarkdown>{content.markdown}</ReactMarkdown>
+                    </div>
+                  </ScrollArea>
+                </ResizablePanel>
 
-            <ResizableHandle withHandle />
+                <ResizableHandle withHandle />
 
-            {/* Right: Editor & Terminal */}
-            <ResizablePanel defaultSize={60}>
-                <ResizablePanelGroup>
-                    
-                    {/* Code Editor */}
-                    <ResizablePanel defaultSize={75}>
-                        <div className="h-full relative">
-                            {isCompleted && (
-                                <div className="absolute top-2 right-4 z-20 bg-green-500/10 text-green-500 px-3 py-1 rounded-full text-xs font-medium border border-green-500/20 flex items-center gap-1 backdrop-blur">
-                                    <CheckCircle className="h-3 w-3" /> Completed
-                                </div>
-                            )}
-                            <CodeEditor 
-                                initialValue={content.initialCode}
-                                language="rust"
-                                onChange={(val) => !isCompleted && setCode(val || "")}
-                                courseId={courseId}
-                                lessonIndex={lessonIndex}
-                                readOnly={isCompleted}
-                            />
-                        </div>
-                    </ResizablePanel>
+                {/* Right: Code & Terminal */}
+                <ResizablePanel defaultSize={60} minSize={30}>
+                    <ResizablePanelGroup>
+                        
+                        {/* Editor */}
+                        <ResizablePanel defaultSize={70} minSize={30}>
+                            <div className="h-full relative flex flex-col">
+                                {isCompleted && (
+                                    <div className="absolute top-2 right-4 z-20 bg-green-500/10 text-green-500 px-3 py-1 rounded-full text-xs font-medium border border-green-500/20 flex items-center gap-1 backdrop-blur">
+                                        <CheckCircle className="h-3 w-3" /> Completed
+                                    </div>
+                                )}
+                                <CodeEditor 
+                                    initialValue={content.initialCode}
+                                    language="rust"
+                                    onChange={(val) => !isCompleted && setCode(val || "")}
+                                    courseId={courseId}
+                                    lessonIndex={lessonIndex}
+                                    readOnly={isCompleted}
+                                />
+                            </div>
+                        </ResizablePanel>
 
-                    <ResizableHandle />
+                        <ResizableHandle withHandle />
 
-                    {/* Terminal & Actions */}
-                    <ResizablePanel defaultSize={25} minSize={10}>
-                        <div className="h-full flex flex-col bg-[#1e1e1e] border-t border-white/10">
-                            {/* Toolbar */}
-                            <div className="flex justify-between items-center px-4 py-2 bg-[#252526] border-b border-white/5">
-                                <span className="text-xs font-mono text-muted-foreground flex items-center gap-2">
-                                    <Terminal className="h-3 w-3" /> TERMINAL
-                                </span>
-                                <div className="flex gap-2">
+                        {/* Terminal */}
+                        <ResizablePanel defaultSize={30} minSize={10} className="bg-[#1e1e1e] border-t border-white/10">
+                            <div className="flex flex-col h-full">
+                                <div className="flex justify-between items-center px-4 py-1.5 bg-[#252526] border-b border-white/5 shrink-0">
+                                    <span className="text-[11px] font-mono text-muted-foreground uppercase flex items-center gap-2">
+                                        <Terminal className="h-3 w-3" /> Console
+                                    </span>
                                     <Button 
                                         size="sm" 
-                                        className="h-7 text-xs bg-green-600 hover:bg-green-700 text-white"
+                                        className="h-6 text-[10px] px-3 bg-green-600 hover:bg-green-700 text-white"
                                         onClick={handleCheckCode}
                                         disabled={isChecking || isCompleted}
                                     >
                                         {isChecking ? <Loader2 className="h-3 w-3 animate-spin" /> : <Play className="h-3 w-3 mr-1" />}
-                                        {isCompleted ? "Completed" : "Run Tests"}
+                                        {isCompleted ? "DONE" : "RUN"}
                                     </Button>
                                 </div>
+                                <div className="flex-1 p-3 font-mono text-xs overflow-auto text-gray-300">
+                                    {logs.map((log, i) => (
+                                        <div key={i} className="mb-1">{log}</div>
+                                    ))}
+                                    {logs.length === 0 && <span className="text-gray-600 italic">Ready...</span>}
+                                </div>
                             </div>
-                            
-                            {/* Logs Output */}
-                            <div className="flex-1 p-4 font-mono text-xs overflow-auto text-gray-300">
-                                {logs.length === 0 ? (
-                                    <span className="text-gray-600">Click "Run Tests" to verify your solution...</span>
-                                ) : (
-                                    logs.map((log, i) => (
-                                        <div key={i} className="mb-1 break-words">
-                                            {log.startsWith("✅") ? <span className="text-green-400">{log}</span> :
-                                             log.startsWith("❌") ? <span className="text-red-400">{log}</span> :
-                                             log}
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-                        </div>
-                    </ResizablePanel>
+                        </ResizablePanel>
 
-                </ResizablePanelGroup>
-            </ResizablePanel>
+                    </ResizablePanelGroup>
+                </ResizablePanel>
 
-          </ResizablePanelGroup>
-      </div>
+              </ResizablePanelGroup>
+          </div>
+        </div>
 
       {/* MOBILE VIEW (Tabs) */}
       <div className="md:hidden flex-1 flex flex-col overflow-hidden">
@@ -257,6 +261,31 @@ export default function LessonPage() {
             </TabsContent>
         </Tabs>
       </div>
+
+      <Dialog open={showCertificateModal} onOpenChange={setShowCertificateModal}>
+        <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+                <DialogTitle className="text-center text-2xl">🎉 Course Completed!</DialogTitle>
+                <DialogDescription className="text-center">
+                    You have mastered the basics of Anchor and earned a verifiable on-chain credential.
+                </DialogDescription>
+            </DialogHeader>
+            <div className="flex justify-center py-4">
+                {/* Здесь можно показать превью сертификата */}
+                <div className="h-40 w-40 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl shadow-2xl flex items-center justify-center text-white font-bold text-4xl">
+                    🏆
+                </div>
+            </div>
+            <DialogFooter className="sm:justify-center gap-2">
+                <Button variant="outline" onClick={() => setShowCertificateModal(false)}>
+                    Close
+                </Button>
+                <Button className="bg-green-600 hover:bg-green-700" onClick={() => window.open(`/certificates/${certificateId}`, '_blank')}>
+                    View Certificate
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

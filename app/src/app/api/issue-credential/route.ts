@@ -4,6 +4,7 @@ import { getServerProgram, getBackendWallet } from "@/lib/server";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { PROGRAM_ID } from "@/lib/constants";
 import { BN } from "@coral-xyz/anchor";
+import { SystemProgram } from "@solana/web3.js";
 
 export async function POST(request: Request) {
   try {
@@ -29,7 +30,7 @@ export async function POST(request: Request) {
     // И ее адрес нам нужно знать. Для хакатона захардкодим адрес коллекции трека "Solana Basic"
     // Тебе нужно будет выполнить скрипт create-mock-track.ts и вставить сюда адрес
     // Пока оставим заглушку, но это место надо будет обновить
-    const TRACK_COLLECTION_ADDRESS = new PublicKey("AvGWDqCTVmpb2q88tw2DxPCysmkpijTU47UdYqE1d8Vu"); // Пример из доки
+    const TRACK_COLLECTION_ADDRESS = new PublicKey("29yDngMCMH3y3AP26iGkgjsU8uU19H2FFkuTrXM33eSS"); // Пример из доки
 
     // Данные для метаданных
     // В идеале мы должны прочитать реальный прогресс из чейна, но для скорости передадим пока так
@@ -53,7 +54,7 @@ export async function POST(request: Request) {
             payer: backendWallet.publicKey,
             backendSigner: backendWallet.publicKey,
             mplCoreProgram: new PublicKey("CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d"),
-            systemProgram: new PublicKey("11111111111111111111111111111111"),
+            systemProgram: SystemProgram.programId,
         } as any)
         .signers([backendWallet.payer, credentialAsset])
         .rpc();

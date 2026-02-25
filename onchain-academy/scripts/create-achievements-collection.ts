@@ -1,14 +1,18 @@
+// onchain-academy/scripts/create-achievements-collection.ts
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
 import { mplCore, createCollectionV2 } from "@metaplex-foundation/mpl-core";
 import { generateSigner, keypairIdentity, publicKey } from "@metaplex-foundation/umi";
 import { fromWeb3JsKeypair, fromWeb3JsPublicKey } from "@metaplex-foundation/umi-web3js-adapters";
 import * as fs from "fs";
 import { Keypair, PublicKey } from "@solana/web3.js";
+import path from "path";
 
+// Твой Program ID (обязательно проверь!)
 const PROGRAM_ID = new PublicKey("Df2bLNGMb5FanSxsrS32rpuTNs6Dhss975Eyae4Qwcdb");
 
-const secret = JSON.parse(fs.readFileSync("../wallets/signer.json", "utf-8"));
-const keypair = Keypair.fromSecretKey(Uint8Array.from(secret));
+const WALLET_PATH = path.resolve(__dirname, "../../wallets/signer.json");
+const walletFile = JSON.parse(fs.readFileSync(WALLET_PATH, 'utf-8'));
+const keypair = Keypair.fromSecretKey(new Uint8Array(walletFile));
 
 const umi = createUmi("https://api.devnet.solana.com")
   .use(mplCore())
@@ -22,18 +26,18 @@ const [configPda] = PublicKey.findProgramAddressSync(
 async function main() {
   const collectionSigner = generateSigner(umi);
 
-  console.log("Creating collection with updateAuthority = Config PDA:", configPda.toBase58());
+  console.log("Creating Achievements Collection...");
+  console.log("Update Authority will be set to Config PDA:", configPda.toBase58());
 
-  const { signature } = await createCollectionV2(umi, {
+  await createCollectionV2(umi, {
     collection: collectionSigner,
-    name: "Superteam Academy Track 1",
-    uri: "https://arweave.net/testestest",
+    name: "Superteam Academy Achievements",
+    uri: "https://arweave.net/achievements_collection_metadata", // Заглушка, но это метаданные коллекции
     updateAuthority: fromWeb3JsPublicKey(configPda),
   }).sendAndConfirm(umi);
 
-  console.log("Collection created:", collectionSigner.publicKey.toString());
-  console.log("Signature:", signature);
-  console.log("\nUpdate your README and e2e-flow.ts trackCollection with this address.");
+  console.log("✅ Achievements Collection Created:", collectionSigner.publicKey.toString());
+  console.log("👉 Add this address to `app/src/lib/constants.ts` as ACHIEVEMENTS_COLLECTION");
 }
 
 main().catch(console.error);

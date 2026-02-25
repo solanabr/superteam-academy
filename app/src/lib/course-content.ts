@@ -63,6 +63,24 @@ pub mod hello_anchor {
 Everything in Solana is an Account. In this lesson...
         `,
         initialCode: `// Lesson 2 placeholder code...`
+      },
+      {
+        id: "lesson-2",
+        title: "PDAs (Program Derived Addresses)",
+        markdown: "# Understanding PDAs\n\nPDAs allow programs to sign for accounts...",
+        initialCode: "// Write a PDA derivation..."
+      },
+      {
+        id: "lesson-3",
+        title: "CPI (Cross-Program Invocations)",
+        markdown: "# Calling other programs\n\nLearn how to call the Token Program...",
+        initialCode: "// CPI call..."
+      },
+      {
+        id: "lesson-4",
+        title: "Errors & Events",
+        markdown: "# Handling Errors\n\nDefine custom errors and emit events...",
+        initialCode: "// Custom error..."
       }
     ]
   }

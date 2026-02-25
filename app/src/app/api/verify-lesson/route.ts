@@ -4,10 +4,17 @@ import { PublicKey, Transaction, sendAndConfirmTransaction } from "@solana/web3.
 import { PROGRAM_ID, XP_MINT } from "@/lib/constants";
 import { getAssociatedTokenAddressSync, createAssociatedTokenAccountInstruction, getAccount, TokenAccountNotFoundError, TokenInvalidAccountOwnerError } from "@solana/spl-token";
 import { prisma, updateStreak } from "@/lib/db";
+import { BN } from "@coral-xyz/anchor";
+import { Keypair } from "@solana/web3.js";
+import { SystemProgram } from "@solana/web3.js";
+import { ACHIEVEMENTS_COLLECTION } from "@/lib/constants";
+import { checkAndAwardAchievement } from "@/lib/achievements";
 
 // Точная награда по ТЗ
 const XP_REWARD = 50; 
 const TOKEN_2022_PROGRAM_ID = new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb");
+const TRACK_COLLECTION = new PublicKey("29yDngMCMH3y3AP26iGkgjsU8uU19H2FFkuTrXM33eSS");
+const MPL_CORE_ID = new PublicKey("CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d");
 
 export async function POST(request: Request) {
   try {
@@ -55,6 +62,9 @@ export async function POST(request: Request) {
     const backendWallet = getBackendWallet();
     const learnerPubkey = new PublicKey(walletAddress);
     const learnerXpAta = getAssociatedTokenAddressSync(XP_MINT, learnerPubkey, false, TOKEN_2022_PROGRAM_ID);
+    const [configPda] = PublicKey.findProgramAddressSync([Buffer.from("config")], PROGRAM_ID);
+    const [coursePda] = PublicKey.findProgramAddressSync([Buffer.from("course"), Buffer.from(courseId)], PROGRAM_ID);
+    const [enrollmentPda] = PublicKey.findProgramAddressSync([Buffer.from("enrollment"), Buffer.from(courseId), learnerPubkey.toBuffer()], PROGRAM_ID);
 
     // 3.1 Проверка/Создание ATA (если нет)
     try {
@@ -154,7 +164,135 @@ export async function POST(request: Request) {
     // 5. Обновляем Стрик (вынесено в отдельную логику)
     await updateStreak(walletAddress);
 
-    return NextResponse.json({ success: true, txSignature });
+    // 6. Проверка на завершение курса
+    let certificateMint = null;
+    let completedCount = 0;
+    let totalLessons = 0;
+    
+    try {
+        // Читаем обновленный аккаунт Enrollment из чейна
+        const enrollmentAccount = await program.account.enrollment.fetch(enrollmentPda);
+        const lessonFlags = enrollmentAccount.lessonFlags as BN[];
+        
+        // Читаем аккаунт Course, чтобы узнать lessonCount
+        const courseAccount = await program.account.course.fetch(coursePda);
+        const totalLessons = courseAccount.lessonCount; // 5
+        
+        // Считаем пройденные уроки (биты)
+
+        for(let i=0; i < totalLessons; i++) {
+             const wordIndex = Math.floor(i / 64);
+             const bitIndex = i % 64;
+             if (!lessonFlags[wordIndex].and(new BN(1).shln(bitIndex)).isZero()) {
+                 completedCount++;
+             }
+        }
+
+        console.log(`[Verify] Progress: ${completedCount}/${totalLessons}`);
+
+        // ЕСЛИ КУРС ЗАВЕРШЕН (Все уроки пройдены)
+        if (completedCount >= totalLessons) {
+            console.log("[Verify] Course completed! Finalizing...");
+
+            // А. Finalize Course
+            // Проверяем, не финализирован ли уже (completed_at != null)
+            if (enrollmentAccount.completedAt === null) {
+                const creatorXpAta = getAssociatedTokenAddressSync(XP_MINT, courseAccount.creator, false, TOKEN_2022_PROGRAM_ID);
+                
+                await program.methods.finalizeCourse()
+                    .accountsPartial({
+                        config: configPda,
+                        course: coursePda,
+                        enrollment: enrollmentPda,
+                        learner: learnerPubkey,
+                        learnerTokenAccount: learnerXpAta,
+                        creatorTokenAccount: creatorXpAta,
+                        creator: courseAccount.creator,
+                        xpMint: XP_MINT,
+                        backendSigner: backendWallet.publicKey,
+                        tokenProgram: TOKEN_2022_PROGRAM_ID,
+                    }as any)
+                    .signers([backendWallet.payer])
+                    .rpc();
+                console.log("[Verify] Course finalized.");
+            }
+
+            // Б. Issue Credential
+            // Проверяем, есть ли уже сертификат
+            if (enrollmentAccount.credentialAsset === null) {
+                console.log("[Verify] Issuing credential...");
+                console.log(`[Verify] Program ID used: ${PROGRAM_ID.toString()}`);
+                console.log(`[Verify] Track Collection: ${TRACK_COLLECTION.toString()}`);
+                console.log(`[Verify] Config PDA (Signer): ${configPda.toString()}`);
+                const credentialAsset = Keypair.generate(); // Новый адрес для NFT
+
+                console.log(`[Verify] New Asset Keypair: ${credentialAsset.publicKey.toString()}`);
+
+                const totalLessonXp = totalLessons * courseAccount.xpPerLesson;
+                const bonusXp = Math.floor(totalLessonXp / 2);
+                const totalXpInCourse = totalLessonXp + bonusXp
+                
+                try {
+                    await program.methods.issueCredential(
+                        `${courseId.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())} Certificate`, // "Solana Mock Test Certificate"
+                        "https://arweave.net/Yx0n2TqR0GqNeJnoYx4SMCjZt0r9uS-KRwQoK_vG2Wc", // Красивая картинка
+                        1, // coursesCompleted
+                        new BN(totalXpInCourse)
+                    )
+                    .accountsPartial({
+                        config: configPda,
+                        course: coursePda,
+                        enrollment: enrollmentPda,
+                        learner: learnerPubkey,
+                        credentialAsset: credentialAsset.publicKey,
+                        trackCollection: TRACK_COLLECTION,
+                        payer: backendWallet.publicKey,
+                        backendSigner: backendWallet.publicKey,
+                        mplCoreProgram: MPL_CORE_ID,
+                        systemProgram: SystemProgram.programId, // Используем импорт, а не хардкод
+                    }as any)
+                    .signers([backendWallet.payer, credentialAsset])
+                    .rpc();
+                    
+                    certificateMint = credentialAsset.publicKey.toString();
+                    console.log("[Verify] ✅ Credential successfully issued:", certificateMint);
+                } catch (issueErr: any) {
+                    console.error("[Verify] ❌ FAILED TO ISSUE CREDENTIAL!");
+                    console.error("[Verify] Error message:", issueErr.message);
+                    if (issueErr.logs) {
+                        console.error("[Verify] Transaction Logs:", issueErr.logs);
+                    }
+                    throw issueErr; // Пробрасываем ошибку дальше, чтобы увидеть в консоли фронтенда
+                }
+            } else {
+                certificateMint = (enrollmentAccount.credentialAsset as PublicKey).toString();
+                console.log("[Verify] Credential already exists:", certificateMint);
+            }
+        }
+
+    } catch (e) {
+        console.error("[Verify] Auto-finalize failed:", e);
+        // Не фейлим запрос, если не удалось выдать сертификат (юзер всё равно прошел урок)
+    }
+
+        // Условие 1: Первый урок ("first-steps")
+        // Проверяем, сколько уроков пройдено всего
+        const totalCompletedInDb = await prisma.lessonProgress.count({
+            where: { userId: user.id, status: "completed" }
+        });
+        
+        // Если это был первый урок (totalCompletedInDb сейчас будет >= 1, т.к. мы только что сохранили)
+        if (totalCompletedInDb === 1) {
+            // Запускаем асинхронно, не ждем ответа, чтобы не тормозить юзера
+            checkAndAwardAchievement(user.id, walletAddress, "first-steps");
+        }
+
+        // Условие 2: Завершение курса ("course-champion")
+        if (typeof completedCount !== 'undefined' && completedCount >= totalLessons) {
+             checkAndAwardAchievement(user.id, walletAddress, "course-champion");
+        }
+
+    return NextResponse.json({ success: true, txSignature, certificateMint: certificateMint});
 
   } catch (error: any) {
     console.error("API verify-lesson error:", error);

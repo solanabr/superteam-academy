@@ -6,26 +6,14 @@ import { useParams, useRouter } from "next/navigation";
 import { useProgram } from "@/hooks/useProgram";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { Loader2, Users, Star, BookOpen } from "lucide-react";
-import { ModuleList } from "@/components/module-list";
-
-// Импортируем контент (заголовки уроков)
+import { Loader2, Users, Star, BookOpen, Share2, Play } from "lucide-react";
 import { COURSE_CONTENT } from "@/lib/course-content";
-
-// Хелпер для подсчета (можно вынести в utils)
-function getCompletedIndices(lessonFlags: any): number[] {
-    if (!lessonFlags) return [];
-    const indices: number[] = [];
-    // Простейшая логика для демо: если флаги есть, парсим.
-    // Пока для хакатона можно использовать упрощенную проверку или тот код из sync.ts
-    // Для скорости пока вернем пустой массив или реализуем позже.
-    return [];
-}
+import { ModuleList } from "@/components/module-list";
 
 export default function CourseDetailsPage() {
   const params = useParams();
@@ -36,143 +24,159 @@ export default function CourseDetailsPage() {
   const courseId = params.courseId as string;
   const courseContent = COURSE_CONTENT[courseId];
 
-  const [enrollment, setEnrollment] = useState<any>(null);
+  const [isEnrolled, setIsEnrolled] = useState(false);
+  const [completedIndices, setCompletedIndices] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [enrolling, setEnrolling] = useState(false);
 
-  // Проверка записи при загрузке
   useEffect(() => {
-    if (publicKey && courseId) {
-      getUserEnrollment(courseId)
-        .then((data) => {
-          setEnrollment(data); // Если null, значит не записан
-        })
-        .finally(() => setLoading(false));
-    } else {
-        setLoading(false);
-    }
+    if (!courseContent) return;
+
+    const checkStatus = async () => {
+        if (!publicKey) {
+            setLoading(false);
+            return;
+        }
+
+        try {
+            // 1. Проверяем запись в блокчейне (или через useUser, но тут надежнее напрямую)
+            const enrollment = await getUserEnrollment(courseId);
+            setIsEnrolled(!!enrollment);
+
+            // 2. Получаем прогресс из БД
+            const res = await fetch(`/api/course/progress?wallet=${publicKey.toString()}&courseId=${courseId}`);
+            const indices = await res.json();
+            setCompletedIndices(indices);
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    checkStatus();
   }, [publicKey, courseId, getUserEnrollment]);
 
   const handleEnroll = async () => {
-    if (!publicKey) {
-      toast.error("Please connect your wallet");
-      return;
-    }
-
-    setEnrolling(true);
-    try {
-      const tx = await enrollInCourse(courseId);
-      toast.success("Enrolled successfully!", {
-        description: `Tx: ${tx.slice(0, 8)}...`,
-      });
-      
-      // Обновляем состояние (имитируем успешную запись, чтобы не ждать RPC)
-      setEnrollment({ lessonFlags: [] }); // Заглушка, чтобы показать интерфейс "записан"
-      
-      // Через пару секунд подтянем реальные данные
-      setTimeout(() => {
-        getUserEnrollment(courseId).then(setEnrollment);
-      }, 2000);
-
-    } catch (error: any) {
-      toast.error("Enrollment failed", {
-        description: error.message,
-      });
-    } finally {
-      setEnrolling(false);
-    }
+      if (!publicKey) { toast.error("Connect wallet first"); return; }
+      setEnrolling(true);
+      try {
+          await enrollInCourse(courseId);
+          toast.success("Enrolled successfully!");
+          setIsEnrolled(true);
+      } catch(e: any) { 
+          toast.error("Enrollment failed", { description: e.message }); 
+      } finally { 
+          setEnrolling(false); 
+      }
   };
 
-  if (!courseContent) {
-      return <div className="p-8">Course content not found for ID: {courseId}</div>;
-  }
+  if (!courseContent) return <div className="p-8 text-center">Course not found</div>;
+  if (loading) return <div className="container py-8 max-w-6xl"><Skeleton className="h-[400px] w-full rounded-xl" /></div>;
 
-  if (loading) {
-      return <div className="p-8"><Skeleton className="h-[200px] w-full" /></div>;
-  }
+  // Расчет прогресса
+  const totalLessons = courseContent.lessons.length;
+  const completedCount = completedIndices.length;
+  const progressPercent = Math.round((completedCount / totalLessons) * 100);
 
-  const isEnrolled = !!enrollment;
-  // TODO: Реализовать парсинг lessonFlags для получения списка completedIndices
-  const completedIndices: number[] = []; 
+  // Находим первый непройденный урок для кнопки "Continue"
+  const nextLessonIndex = courseContent.lessons.findIndex((_, i) => !completedIndices.includes(i));
+  const continueIndex = nextLessonIndex === -1 ? 0 : nextLessonIndex; // Если все пройдены, ведем на 0
 
-  
-
-    return (
-    <div className="container py-8 max-w-6xl">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+  return (
+    <div className="container py-10 max-w-7xl">
+      {/* Grid Layout: На десктопах 3 колонки (2 контент, 1 сайдбар) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
         
-        {/* Main Content (Left) */}
-        <div className="lg:col-span-2 space-y-8">
-            <div>
-                <Badge variant="outline" className="mb-4 text-purple-400 border-purple-400/30">Official Course</Badge>
-                <h1 className="text-4xl font-extrabold mb-4">{courseContent.title}</h1>
-                <p className="text-xl text-muted-foreground">
-                    Master the basics of Solana development. Build real dApps, earn XP, and get certified.
+        {/* Main Content (Left - 8 cols) */}
+        <div className="lg:col-span-8 space-y-8">
+            <div className="space-y-4">
+                <div className="flex gap-2">
+                    <Badge variant="outline" className="text-purple-400 border-purple-400/30">Official Course</Badge>
+                    <Badge variant="secondary">Beginner</Badge>
+                </div>
+                <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">{courseContent.title}</h1>
+                <p className="text-xl text-muted-foreground leading-relaxed">
+                    Master the basics of Solana development. Build real dApps, earn XP, and get certified on-chain.
                 </p>
-            </div>
-
-            {/* Stats Bar */}
-            <div className="flex gap-6 text-sm text-muted-foreground border-y py-4">
-                <div className="flex items-center gap-2"><BookOpen className="h-4 w-4" /> {courseContent.lessons.length} Lessons</div>
-                <div className="flex items-center gap-2"><Users className="h-4 w-4" /> 1,204 Students</div>
-                <div className="flex items-center gap-2"><Star className="h-4 w-4 text-yellow-500" /> 4.9/5</div>
+                
+                <div className="flex flex-wrap gap-6 text-sm text-muted-foreground pt-2">
+                    <div className="flex items-center gap-2"><BookOpen className="h-4 w-4" /> {totalLessons} Lessons</div>
+                    <div className="flex items-center gap-2"><Users className="h-4 w-4" /> 1,200+ Students</div>
+                    <div className="flex items-center gap-2"><Star className="h-4 w-4 text-yellow-500 fill-yellow-500" /> 4.9 (120 reviews)</div>
+                </div>
             </div>
 
             {/* Curriculum */}
-            <div>
-                <h2 className="text-2xl font-bold mb-4">Curriculum</h2>
+            <div className="pt-4">
+                <h2 className="text-2xl font-bold mb-6">Curriculum</h2>
                 <ModuleList 
                     courseId={courseId} 
-                    lessons={courseContent.lessons.map((l, i) => ({ ...l, index: i }))}
+                    lessons={courseContent.lessons}
                     isEnrolled={isEnrolled}
                     completedIndices={completedIndices}
                 />
             </div>
         </div>
 
-        {/* Sidebar (Right) */}
-        <div className="space-y-6">
-            <Card className="p-6 sticky top-24 border-purple-500/20 bg-purple-500/5">
-                <div className="mb-6">
-                    <div className="aspect-video bg-gradient-to-br from-purple-900 to-indigo-900 rounded-lg flex items-center justify-center mb-4 shadow-inner">
-                        <span className="text-4xl font-bold text-white/20">RPC</span>
-                    </div>
-                    <div className="flex justify-between items-center mb-2">
-                        <span className="font-semibold">Course Progress</span>
-                        <span className="text-sm text-muted-foreground">0%</span>
-                    </div>
-                    <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                        <div className="h-full bg-purple-500 w-0" />
+        {/* Sidebar (Right - 4 cols) */}
+        <div className="lg:col-span-4 space-y-6">
+            {/* Карточка прогресса / записи - Sticky */}
+            <Card className="p-6 sticky top-24 border-purple-500/20 bg-card/50 backdrop-blur-sm shadow-xl">
+                <div className="mb-6 rounded-lg overflow-hidden border border-white/5">
+                    {/* Placeholder видео/картинки */}
+                    <div className="aspect-video bg-gradient-to-br from-indigo-900 to-purple-900 flex items-center justify-center relative">
+                        <Play className="h-12 w-12 text-white/80 opacity-50" />
+                        <div className="absolute inset-0 bg-black/20" />
                     </div>
                 </div>
 
-                {!isEnrolled ? (
-                    <Button size="lg" className="w-full text-lg" onClick={handleEnroll} disabled={enrolling}>
-                        {enrolling ? <Loader2 className="animate-spin mr-2" /> : "Enroll Now - Free"}
-                    </Button>
+                {isEnrolled ? (
+                    <div className="space-y-4">
+                        <div className="space-y-2">
+                            <div className="flex justify-between text-sm font-medium">
+                                <span>Course Progress</span>
+                                <span>{progressPercent}%</span>
+                            </div>
+                            <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                                <div 
+                                    className="h-full bg-green-500 transition-all duration-500" 
+                                    style={{ width: `${progressPercent}%` }} 
+                                />
+                            </div>
+                        </div>
+                        <Button size="lg" className="w-full font-bold text-md" onClick={() => router.push(`/courses/${courseId}/lessons/${continueIndex}`)}>
+                            {progressPercent === 100 ? "Review Course" : "Continue Learning"}
+                        </Button>
+                    </div>
                 ) : (
-                    <Button size="lg" className="w-full text-lg" onClick={() => router.push(`/courses/${courseId}/lessons/0`)}>
-                        Continue Learning
-                    </Button>
+                    <div className="space-y-4">
+                        <Button size="lg" className="w-full font-bold text-md bg-white text-black hover:bg-gray-200" onClick={handleEnroll} disabled={enrolling}>
+                            {enrolling ? <Loader2 className="animate-spin mr-2" /> : "Enroll Now • Free"}
+                        </Button>
+                        <p className="text-xs text-center text-muted-foreground">
+                            Includes 500 XP & Certificate of Completion
+                        </p>
+                    </div>
                 )}
-                
-                <p className="text-xs text-center text-muted-foreground mt-4">
-                    Includes 500 XP & Certificate of Completion
-                </p>
             </Card>
 
-            {/* Instructor */}
-            <div className="border rounded-lg p-6">
-                <h3 className="font-semibold mb-4">Instructor</h3>
+            {/* Instructor Card */}
+            <div className="border rounded-lg p-6 bg-card/30">
+                <h3 className="font-semibold mb-4 text-sm uppercase tracking-wider text-muted-foreground">Instructor</h3>
                 <div className="flex items-center gap-4">
-                    <Avatar className="h-12 w-12">
+                    <Avatar className="h-12 w-12 border-2 border-background">
                         <AvatarImage src="https://github.com/shadcn.png" />
                         <AvatarFallback>ST</AvatarFallback>
                     </Avatar>
                     <div>
-                        <p className="font-medium">Superteam Brazil</p>
-                        <p className="text-sm text-muted-foreground">Core Contributors</p>
+                        <p className="font-bold text-base">Superteam Brazil</p>
+                        <p className="text-xs text-muted-foreground">Core Contributors</p>
                     </div>
+                </div>
+                <div className="mt-4 flex gap-2">
+                    <Button variant="outline" size="sm" className="w-full h-8 text-xs">View Profile</Button>
+                    <Button variant="outline" size="sm" className="w-full h-8 text-xs"><Share2 className="h-3 w-3 mr-1"/> Share</Button>
                 </div>
             </div>
         </div>
