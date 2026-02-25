@@ -1,0 +1,98 @@
+import { test, expect } from '@playwright/test';
+
+/**
+ * Navigation & i18n E2E tests
+ *
+ * Verifies that:
+ * - The platform loads correctly in all 3 locales
+ * - URL routing is locale-prefixed
+ * - Locale switching preserves context
+ * - Nav links resolve to correct locale paths
+ */
+
+const LOCALES = [
+  { code: 'pt-BR', coursesPath: '/pt-BR/cursos', dashPath: '/pt-BR/painel', lbPath: '/pt-BR/classificacao' },
+  { code: 'en', coursesPath: '/en/courses', dashPath: '/en/dashboard', lbPath: '/en/leaderboard' },
+  { code: 'es', coursesPath: '/es/cursos', dashPath: '/es/panel', lbPath: '/es/clasificacion' },
+] as const;
+
+test.describe('Locale routing', () => {
+  test('root redirects to default locale (pt-BR)', async ({ page }) => {
+    await page.goto('/');
+    await expect(page).toHaveURL(/\/pt-BR/);
+  });
+
+  for (const { code, coursesPath } of LOCALES) {
+    test(`/${code} home page loads correctly`, async ({ page }) => {
+      await page.goto(`/${code}`);
+      await expect(page).toHaveURL(`/${code}`);
+      await expect(page.locator('nav')).toBeVisible();
+    });
+
+    test(`${code}: courses page resolves to ${coursesPath}`, async ({ page }) => {
+      await page.goto(`/${code}`);
+      const nav = page.locator('nav');
+      // Find the courses link by href pattern
+      const coursesLink = nav.locator(`a[href="${coursesPath}"]`);
+      await expect(coursesLink).toBeVisible();
+    });
+  }
+
+  test('locale switcher changes URL prefix', async ({ page }) => {
+    await page.goto('/pt-BR');
+    // Switch to English
+    await page.locator('button', { hasText: 'EN' }).click();
+    await expect(page).toHaveURL(/\/en/);
+    // Switch to Spanish
+    await page.locator('button', { hasText: 'ES' }).click();
+    await expect(page).toHaveURL(/\/es/);
+    // Switch back to Portuguese
+    await page.locator('button', { hasText: 'PT' }).click();
+    await expect(page).toHaveURL(/\/pt-BR/);
+  });
+});
+
+test.describe('Navigation links', () => {
+  test('desktop nav renders all main links', async ({ page }) => {
+    await page.goto('/en');
+    const nav = page.locator('nav');
+    await expect(nav.locator('a[href="/en/courses"]')).toBeVisible();
+    await expect(nav.locator('a[href="/en/dashboard"]')).toBeVisible();
+    await expect(nav.locator('a[href="/en/leaderboard"]')).toBeVisible();
+    await expect(nav.locator('a[href="/en/community"]')).toBeVisible();
+  });
+
+  test('admin link is present in nav', async ({ page }) => {
+    await page.goto('/en');
+    const nav = page.locator('nav');
+    await expect(nav.locator('a[href="/en/admin"]')).toBeVisible();
+  });
+
+  test('logo links to locale home', async ({ page }) => {
+    await page.goto('/en/courses');
+    const logoLink = page.locator('nav a').first();
+    await logoLink.click();
+    await expect(page).toHaveURL('/en');
+  });
+});
+
+test.describe('Mobile nav', () => {
+  test.use({ viewport: { width: 375, height: 667 } });
+
+  test('hamburger opens mobile menu', async ({ page }) => {
+    await page.goto('/en');
+    const hamburger = page.locator('button[aria-label="Toggle menu"]');
+    await hamburger.click();
+    // Mobile menu should contain nav links
+    await expect(page.locator('text=Courses')).toBeVisible();
+    await expect(page.locator('text=Dashboard')).toBeVisible();
+  });
+
+  test('mobile menu closes on link click', async ({ page }) => {
+    await page.goto('/en');
+    await page.locator('button[aria-label="Toggle menu"]').click();
+    // Click a nav link
+    await page.locator('nav a[href="/en/courses"]').last().click();
+    await expect(page).toHaveURL('/en/courses');
+  });
+});
