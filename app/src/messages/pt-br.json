@@ -74,7 +74,29 @@
       "courses": "Cursos Disponiveis",
       "credentials": "Credenciais Emitidas",
       "xpAwarded": "XP Total Concedido"
-    }
+    },
+    "socialProof": "CONFIADO POR BUILDERS",
+    "socialProofHeadline": "Builders constroem mais rapido com o Superteam Academy",
+    "testimonialRole1": "Desenvolvedor Anchor",
+    "testimonialRole2": "Builder Full-Stack",
+    "testimonialRole3": "Dev de Protocolo DeFi",
+    "testimonial1": "Os desafios praticos fizeram o Anchor fazer sentido pra mim. Fui do zero ao deploy do meu primeiro programa em duas semanas.",
+    "testimonial2": "Credenciais on-chain que realmente comprovam suas habilidades. E assim que a educacao Web3 deveria ser.",
+    "testimonial3": "A trilha de seguranca me ajudou a auditar meu proprio protocolo. Encontrei dois bugs criticos antes do lancamento.",
+    "learningPathsHeadline": "Escolha sua trilha",
+    "rustPathDesc": "Domine programacao de sistemas para Solana",
+    "anchorPathDesc": "Construa programas com o framework Anchor",
+    "frontendPathDesc": "Crie interfaces de dApps com React e Web3",
+    "securityPathDesc": "Audite e proteja programas Solana",
+    "defiPathDesc": "Construa protocolos de financas descentralizadas",
+    "mobilePathDesc": "Desenvolvimento com Solana Mobile Stack",
+    "coursesAvailable": "CURSOS",
+    "featuredCourse1": "Introducao a Solana e Rust",
+    "featuredCourse2": "Desenvolvimento de Programas com Anchor",
+    "featuredCourse3": "Construindo dApps na Solana",
+    "beginner": "Iniciante",
+    "intermediate": "Intermediario",
+    "lessonsLabel": "aulas"
   },
   "courses": {
     "catalog": "Catalogo de Cursos",
@@ -242,7 +264,8 @@
     "completeToAppear": "Complete cursos para aparecer no ranking",
     "connectForRank": "Conecte sua carteira para ver sua posicao",
     "continueLearning": "Continuar Aprendendo",
-    "anonymous": "Anonimo"
+    "anonymous": "Anonimo",
+    "filterByTrack": "Trilha"
   },
   "profile": {
     "skills": "Habilidades",
@@ -269,7 +292,16 @@
     "noCredentialsHint": "Complete cursos para ganhar credenciais verificaveis on-chain.",
     "credential": "Credencial",
     "coursesCompleted": "cursos concluidos",
-    "copyMintAddress": "Copiar endereco do mint"
+    "copyMintAddress": "Copiar endereco do mint",
+    "addSocialLinks": "Adicionar redes sociais",
+    "completedCourses": "Cursos",
+    "completedOn": "Concluido",
+    "noCourses": "Nenhum curso concluido ainda",
+    "noCoursesHint": "Comece a aprender para ver seus cursos concluidos aqui.",
+    "profileNotFound": "Perfil nao encontrado",
+    "profileNotFoundDesc": "Este usuario nao existe ou possui perfil privado.",
+    "viewLeaderboard": "Ver Ranking",
+    "publicProfileBanner": "Voce esta visualizando um perfil publico. Algumas informacoes podem estar ocultas com base nas configuracoes de privacidade do usuario."
   },
   "settings": {
     "title": "Configuracoes",
@@ -308,7 +340,13 @@
     "export": "Exportar",
     "deleteAccount": "Excluir Conta",
     "deleteAccountDesc": "Remover permanentemente sua conta e todos os dados associados. Esta acao nao pode ser desfeita. Suas credenciais on-chain permanecerao na Solana.",
-    "darkModeNote": "O tema escuro e o padrao da plataforma."
+    "darkModeNote": "O tema escuro e o padrao da plataforma.",
+    "saving": "Salvando...",
+    "deleteConfirmTitle": "Tem certeza?",
+    "deleteConfirmDesc": "Esta acao nao pode ser desfeita. Digite DELETE para confirmar.",
+    "typeDelete": "Digite DELETE para confirmar",
+    "cancel": "Cancelar",
+    "deleting": "Excluindo..."
   },
   "certificate": {
     "title": "Certificado de Conclusao",

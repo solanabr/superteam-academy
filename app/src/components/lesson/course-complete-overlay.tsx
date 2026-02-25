@@ -128,7 +128,7 @@ export function CourseCompleteOverlay({
               marginBottom: "8px",
             }}
           >
-            {t("courseComplete", { defaultMessage: "Course Complete!" })}
+            {t("courseComplete")}
           </h2>
           <p
             style={{
@@ -138,9 +138,7 @@ export function CourseCompleteOverlay({
               marginBottom: "24px",
             }}
           >
-            {t("courseCompleteDesc", {
-              defaultMessage: "You've completed all lessons in this course.",
-            })}
+            {t("courseCompleteDesc")}
           </p>
 
           {finalizationResult ? (
@@ -258,10 +256,7 @@ export function CourseCompleteOverlay({
                     color: "var(--nd-highlight-orange)",
                   }}
                 >
-                  {t("connectToFinalize", {
-                    defaultMessage:
-                      "Connect a Solana wallet to finalize your course and claim your credential.",
-                  })}
+                  {t("connectToFinalize")}
                 </p>
               </div>
               <button
@@ -284,7 +279,7 @@ export function CourseCompleteOverlay({
                 }}
               >
                 <Wallet style={{ width: 14, height: 14 }} />
-                {t("connectWallet", { defaultMessage: "Connect Wallet" })}
+                {t("connectWallet")}
               </button>
               <button
                 onClick={onDismiss}

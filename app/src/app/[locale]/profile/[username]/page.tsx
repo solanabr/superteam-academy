@@ -11,6 +11,7 @@ import {
   Twitter,
   Shield,
 } from "lucide-react";
+import { formatDate, formatNumber } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -195,18 +196,16 @@ export default function PublicProfilePage() {
           <Shield className="w-12 h-12 text-[var(--c-text-2)]/30" />
         </div>
         <h1 className="text-xl font-semibold text-[var(--c-text)] mb-2">
-          {t("profileNotFound", { defaultMessage: "Profile not found" })}
+          {t("profileNotFound")}
         </h1>
         <p className="text-sm text-[var(--c-text-2)] mb-6">
-          {t("profileNotFoundDesc", {
-            defaultMessage: "This user doesn't exist or has a private profile.",
-          })}
+          {t("profileNotFoundDesc")}
         </p>
         <Link
           href={`/${locale}/leaderboard`}
           className="text-sm text-[#00FFA3] hover:underline"
         >
-          {t("viewLeaderboard", { defaultMessage: "View Leaderboard" })}
+          {t("viewLeaderboard")}
         </Link>
       </div>
     );
@@ -223,10 +222,7 @@ export default function PublicProfilePage() {
       <div className="mb-6 rounded-[2px] border border-[#55E9AB]/20 bg-[#55E9AB]/5 p-3 flex items-center gap-3">
         <Shield className="h-4 w-4 text-[#55E9AB] shrink-0" />
         <p className="text-xs text-[var(--c-text-2)]">
-          {t("publicProfileBanner", {
-            defaultMessage:
-              "You are viewing a public profile. Some information may be hidden based on the user's privacy settings.",
-          })}
+          {t("publicProfileBanner")}
         </p>
       </div>
 
@@ -261,7 +257,7 @@ export default function PublicProfilePage() {
             </p>
           )}
           <p className="mt-2 text-xs text-[var(--c-text-2)]">
-            {t("joined")} {new Date(profileUser.joinedAt).toLocaleDateString()}
+            {t("joined")} {formatDate(profileUser.joinedAt, locale)}
           </p>
           <div className="flex items-center gap-3 mt-2">
             <a
@@ -290,7 +286,7 @@ export default function PublicProfilePage() {
       <dl className="flex flex-wrap gap-4 border-y border-[var(--c-border-subtle)] py-6 mb-8">
         <div className="flex-1 min-w-[100px] text-center">
           <dd className="text-3xl font-mono text-[var(--c-text)] tabular-nums">
-            {profileUser.xp.toLocaleString()}
+            {formatNumber(profileUser.xp, locale)}
           </dd>
           <dt className="text-xs font-medium text-[var(--c-text-2)] uppercase tracking-wider mt-1">
             {t("totalXP")}
@@ -429,7 +425,7 @@ export default function PublicProfilePage() {
                         {cred.coursesCompleted} {t("coursesCompleted")}
                       </p>
                       <p className="text-sm font-mono font-semibold text-[#00FFA3] mt-1">
-                        {cred.xpEarned.toLocaleString()} XP
+                        {formatNumber(cred.xpEarned, locale)} XP
                       </p>
                     </div>
                     <div className="space-y-2 text-sm border-t border-[var(--c-border-subtle)] pt-4 mt-auto">
@@ -446,7 +442,7 @@ export default function PublicProfilePage() {
                           {t("issuedOn")}
                         </span>
                         <span className="text-[var(--c-text-em)]">
-                          {new Date(cred.issuedAt).toLocaleDateString()}
+                          {formatDate(cred.issuedAt, locale)}
                         </span>
                       </div>
                     </div>

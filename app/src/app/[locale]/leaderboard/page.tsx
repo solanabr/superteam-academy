@@ -161,10 +161,7 @@ export default function LeaderboardPage() {
             borderBottom: "1px solid var(--c-border-subtle)",
           }}
         >
-          {t("snapshotUnavailable", {
-            defaultMessage:
-              "Time-filtered rankings will be available once enough XP snapshot data is collected. Showing all-time data.",
-          })}
+          {t("snapshotUnavailable")}
         </div>
       )}
 
@@ -271,7 +268,7 @@ export default function LeaderboardPage() {
               color: "var(--c-text-muted)",
             }}
           >
-            {t("filterByTrack", { defaultMessage: "Track" })}
+            {t("filterByTrack")}
           </label>
           <select
             id="track-filter"
@@ -308,7 +305,7 @@ export default function LeaderboardPage() {
             {TRACK_FILTERS.map((track) => (
               <option key={track.key} value={track.key}>
                 {track.key === "all"
-                  ? t("allTracks", { defaultMessage: "All Tracks" })
+                  ? t("allTracks")
                   : track.label}
               </option>
             ))}

@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Award, ExternalLink, Copy, Wallet } from "lucide-react";
+import { formatDate, formatNumber } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -58,13 +59,10 @@ export default function CertificatesPage() {
           </div>
           <div>
             <h1 className="text-2xl font-semibold text-[var(--c-text)]">
-              {t("title", { defaultMessage: "Credentials" })}
+              {t("title")}
             </h1>
             <p className="text-sm text-[var(--c-text-2)]">
-              {t("subtitle", {
-                defaultMessage:
-                  "Verifiable on-chain certificates earned through learning",
-              })}
+              {t("subtitle")}
             </p>
           </div>
         </div>
@@ -72,7 +70,7 @@ export default function CertificatesPage() {
         {!connected && (
           <Badge className="gap-1.5 bg-[#CA9FF5]/10 text-[#CA9FF5] border-[#CA9FF5]/20">
             <Wallet className="h-3 w-3" />
-            {t("connectWallet", { defaultMessage: "Connect Wallet" })}
+            {t("connectWallet")}
           </Badge>
         )}
       </div>
@@ -84,7 +82,7 @@ export default function CertificatesPage() {
             {credentials.length}
           </dd>
           <dt className="text-xs font-medium text-[var(--c-text-2)] uppercase tracking-wider mt-1">
-            {t("totalCredentials", { defaultMessage: "Credentials" })}
+            {t("totalCredentials")}
           </dt>
         </div>
         <div
@@ -93,12 +91,13 @@ export default function CertificatesPage() {
         />
         <div className="flex-1 min-w-[100px] text-center">
           <dd className="text-2xl font-mono text-[#00FFA3] tabular-nums">
-            {credentials
-              .reduce((sum, c) => sum + c.xpEarned, 0)
-              .toLocaleString()}
+            {formatNumber(
+              credentials.reduce((sum, c) => sum + c.xpEarned, 0),
+              locale,
+            )}
           </dd>
           <dt className="text-xs font-medium text-[var(--c-text-2)] uppercase tracking-wider mt-1">
-            {t("totalXP", { defaultMessage: "Total XP" })}
+            {t("totalXP")}
           </dt>
         </div>
         <div
@@ -110,7 +109,7 @@ export default function CertificatesPage() {
             {new Set(credentials.map((c) => c.track)).size}
           </dd>
           <dt className="text-xs font-medium text-[var(--c-text-2)] uppercase tracking-wider mt-1">
-            {t("tracksCompleted", { defaultMessage: "Tracks" })}
+            {t("tracksCompleted")}
           </dt>
         </div>
         <div
@@ -122,7 +121,7 @@ export default function CertificatesPage() {
             {credentials.reduce((sum, c) => sum + c.coursesCompleted, 0)}
           </dd>
           <dt className="text-xs font-medium text-[var(--c-text-2)] uppercase tracking-wider mt-1">
-            {t("coursesCompleted", { defaultMessage: "Courses" })}
+            {t("coursesCompleted")}
           </dt>
         </div>
       </dl>
@@ -161,7 +160,7 @@ export default function CertificatesPage() {
                     {TRACK_LABELS[cred.track]}
                   </Badge>
                   <span className="text-sm font-bold tabular-nums text-[var(--c-text)]">
-                    {t("level", { defaultMessage: "Level" })} {cred.level}
+                    {t("level")} {cred.level}
                   </span>
                 </div>
 
@@ -177,14 +176,14 @@ export default function CertificatesPage() {
                   </div>
                   <h2 className="text-lg font-bold text-[var(--c-text)] mb-1">
                     {TRACK_LABELS[cred.track]}{" "}
-                    {t("credential", { defaultMessage: "Credential" })}
+                    {t("credential")}
                   </h2>
                   <p className="text-sm text-[var(--c-text-2)]">
                     {cred.coursesCompleted}{" "}
-                    {t("coursesLabel", { defaultMessage: "courses completed" })}
+                    {t("coursesLabel")}
                   </p>
                   <p className="text-sm font-mono font-semibold text-[#00FFA3] mt-1 neon-green">
-                    {cred.xpEarned.toLocaleString()} XP
+                    {formatNumber(cred.xpEarned, locale)} XP
                   </p>
                 </div>
 
@@ -193,7 +192,7 @@ export default function CertificatesPage() {
                   {cred.mint ? (
                     <div className="flex items-center justify-between">
                       <span className="text-[var(--c-text-2)]">
-                        {t("mintAddress", { defaultMessage: "Mint" })}
+                        {t("mintAddress")}
                       </span>
                       <span className="flex items-center gap-1 font-mono text-xs text-[var(--c-text-em)]">
                         {cred.mint.slice(0, 6)}...{cred.mint.slice(-4)}
@@ -203,15 +202,13 @@ export default function CertificatesPage() {
                             handleCopy(cred.mint);
                           }}
                           className="hover:text-[var(--c-text)] transition-colors"
-                          aria-label={t("copyMint", {
-                            defaultMessage: "Copy mint address",
-                          })}
+                          aria-label={t("copyMint")}
                         >
                           <Copy className="h-3 w-3" />
                         </button>
                         {copiedMint === cred.mint && (
                           <span className="text-[10px] text-[#55E9AB] ml-1">
-                            {t("copied", { defaultMessage: "Copied" })}
+                            {t("copied")}
                           </span>
                         )}
                       </span>
@@ -219,21 +216,19 @@ export default function CertificatesPage() {
                   ) : (
                     <div className="flex items-center justify-between">
                       <span className="text-[var(--c-text-2)]">
-                        {t("mintAddress", { defaultMessage: "Mint" })}
+                        {t("mintAddress")}
                       </span>
                       <span className="font-mono text-xs text-[var(--c-text-2)]">
-                        {t("pendingMint", {
-                          defaultMessage: "Pending",
-                        })}
+                        {t("pendingMint")}
                       </span>
                     </div>
                   )}
                   <div className="flex items-center justify-between">
                     <span className="text-[var(--c-text-2)]">
-                      {t("issuedOn", { defaultMessage: "Issued" })}
+                      {t("issuedOn")}
                     </span>
                     <span className="text-[var(--c-text-em)] text-xs">
-                      {new Date(cred.issuedAt).toLocaleDateString()}
+                      {formatDate(cred.issuedAt, locale)}
                     </span>
                   </div>
                 </div>
@@ -242,9 +237,7 @@ export default function CertificatesPage() {
                 <div className="flex gap-2 mt-4">
                   <span className="flex-1 inline-flex items-center justify-center gap-2 rounded-[2px] text-xs font-medium border border-[var(--c-border-subtle)] text-[var(--c-text)] group-hover:bg-[var(--c-border-subtle)] group-hover:border-[var(--c-border-prominent)] transition-colors duration-150 h-8 px-3">
                     <Award className="h-3.5 w-3.5" />
-                    {t("viewCertificate", {
-                      defaultMessage: "View Certificate",
-                    })}
+                    {t("viewCertificate")}
                   </span>
                   {cred.explorerUrl && (
                     <button
@@ -257,9 +250,7 @@ export default function CertificatesPage() {
                         );
                       }}
                       className="inline-flex items-center justify-center rounded-[2px] text-[var(--c-text-2)] hover:bg-[var(--c-border-subtle)] hover:text-[var(--c-text)] transition-colors duration-150 h-8 w-8 shrink-0"
-                      aria-label={t("viewOnExplorer", {
-                        defaultMessage: "View on Explorer",
-                      })}
+                      aria-label={t("viewOnExplorer")}
                     >
                       <ExternalLink className="h-3.5 w-3.5" />
                     </button>
@@ -278,17 +269,14 @@ export default function CertificatesPage() {
             &#47;&#47; no credentials
           </p>
           <h2 className="text-xl font-medium text-[var(--c-text-em)] mb-2">
-            {t("noCredentials", { defaultMessage: "No credentials yet" })}
+            {t("noCredentials")}
           </h2>
           <p className="text-sm text-[var(--c-text-2)] max-w-md mx-auto text-center mb-8">
-            {t("noCredentialsDescription", {
-              defaultMessage:
-                "Complete courses to earn verifiable on-chain credentials as ZK compressed credentials on Solana.",
-            })}
+            {t("noCredentialsDescription")}
           </p>
           <Link href={`/${locale}/courses`}>
             <Button>
-              {t("browseCourses", { defaultMessage: "Browse Courses" })}
+              {t("browseCourses")}
             </Button>
           </Link>
         </div>
@@ -300,10 +288,7 @@ export default function CertificatesPage() {
           <div className="inline-flex items-center gap-2 rounded-[2px] border border-[var(--c-border-subtle)] bg-[var(--c-bg-card)] px-5 py-3">
             <div className="status-dot" />
             <span className="text-sm text-[var(--c-text-2)]">
-              {t("onChainFooter", {
-                defaultMessage:
-                  "Credentials are fetched from on-chain enrollment data and Metaplex Core assets.",
-              })}
+              {t("onChainFooter")}
             </span>
           </div>
         </div>

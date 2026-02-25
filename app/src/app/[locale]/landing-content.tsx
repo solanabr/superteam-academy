@@ -505,17 +505,17 @@ export function LandingContent({
       <section style={{ padding: "clamp(60px, 8vw, 120px) clamp(20px, 5vw, 60px)", borderTop: "1px solid var(--overlay-divider)", background: D }}>
         <Reveal>
           <p style={{ fontFamily: FONT_SANS, fontSize: 11, letterSpacing: 4, color: M, marginBottom: 12 }}>
-            {t("socialProof", { defaultMessage: "TRUSTED BY BUILDERS" })}
+            {t("socialProof")}
           </p>
           <h2 style={{ fontFamily: FONT_SERIF, fontSize: "clamp(28px, 4vw, 48px)", fontWeight: 400, color: C, margin: "0 0 48px", lineHeight: 1.1 }}>
-            {t("socialProofHeadline", { defaultMessage: "Builders ship faster with Superteam Academy" })}
+            {t("socialProofHeadline")}
           </h2>
         </Reveal>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 24 }}>
           {[
-            { name: "Alex R.", role: t("testimonialRole1", { defaultMessage: "Anchor Developer" }), quote: t("testimonial1", { defaultMessage: "The hands-on challenges made Anchor click for me. Went from zero to deploying my first program in two weeks." }) },
-            { name: "Maria S.", role: t("testimonialRole2", { defaultMessage: "Full-Stack Builder" }), quote: t("testimonial2", { defaultMessage: "On-chain credentials that actually prove your skills. This is what Web3 education should look like." }) },
-            { name: "Carlos M.", role: t("testimonialRole3", { defaultMessage: "DeFi Protocol Dev" }), quote: t("testimonial3", { defaultMessage: "The security track helped me audit my own protocol. Found two critical bugs before launch." }) },
+            { name: "Alex R.", role: t("testimonialRole1"), quote: t("testimonial1") },
+            { name: "Maria S.", role: t("testimonialRole2"), quote: t("testimonial2") },
+            { name: "Carlos M.", role: t("testimonialRole3"), quote: t("testimonial3") },
           ].map((testimonial, i) => (
             <Reveal key={i} delay={i * 150}>
               <div style={{ padding: "32px 28px", border: "1px solid var(--overlay-divider)", background: "var(--overlay-divider)" }}>
@@ -541,20 +541,20 @@ export function LandingContent({
       <section style={{ padding: "clamp(60px, 8vw, 120px) clamp(20px, 5vw, 60px)", borderTop: "1px solid var(--overlay-divider)", background: D }}>
         <Reveal>
           <p style={{ fontFamily: FONT_SANS, fontSize: 11, letterSpacing: 4, color: M, marginBottom: 12 }}>
-            {t("learningPaths", { defaultMessage: "LEARNING PATHS" })}
+            {t("learningPaths")}
           </p>
           <h2 style={{ fontFamily: FONT_SERIF, fontSize: "clamp(28px, 4vw, 48px)", fontWeight: 400, color: C, margin: "0 0 48px", lineHeight: 1.1 }}>
-            {t("learningPathsHeadline", { defaultMessage: "Choose your track" })}
+            {t("learningPathsHeadline")}
           </h2>
         </Reveal>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 2 }}>
           {[
-            { track: "Rust", color: "#EF4444", courses: 4, desc: t("rustPathDesc", { defaultMessage: "Master systems programming for Solana" }) },
-            { track: "Anchor", color: "#9945FF", courses: 3, desc: t("anchorPathDesc", { defaultMessage: "Build programs with the Anchor framework" }) },
-            { track: "Frontend", color: "#03E1FF", courses: 3, desc: t("frontendPathDesc", { defaultMessage: "Create dApp interfaces with React & Web3" }) },
-            { track: "Security", color: "#FF6B35", courses: 2, desc: t("securityPathDesc", { defaultMessage: "Audit and secure Solana programs" }) },
-            { track: "DeFi", color: "#00FFA3", courses: 2, desc: t("defiPathDesc", { defaultMessage: "Build decentralized finance protocols" }) },
-            { track: "Mobile", color: "#CA9FF5", courses: 1, desc: t("mobilePathDesc", { defaultMessage: "Solana Mobile Stack development" }) },
+            { track: "Rust", color: "#EF4444", courses: 4, desc: t("rustPathDesc") },
+            { track: "Anchor", color: "#9945FF", courses: 3, desc: t("anchorPathDesc") },
+            { track: "Frontend", color: "#03E1FF", courses: 3, desc: t("frontendPathDesc") },
+            { track: "Security", color: "#FF6B35", courses: 2, desc: t("securityPathDesc") },
+            { track: "DeFi", color: "#00FFA3", courses: 2, desc: t("defiPathDesc") },
+            { track: "Mobile", color: "#CA9FF5", courses: 1, desc: t("mobilePathDesc") },
           ].map((path, i) => (
             <Reveal key={i} delay={i * 100}>
               <TiltCard style={{ background: "var(--overlay-divider)", border: "1px solid var(--overlay-divider)", padding: "32px 24px", height: "100%" }}>
@@ -562,7 +562,7 @@ export function LandingContent({
                 <h3 style={{ fontFamily: FONT_SANS, fontSize: 18, fontWeight: 700, color: C, margin: "0 0 8px" }}>{path.track}</h3>
                 <p style={{ fontFamily: FONT_SANS, fontSize: 13, color: M, lineHeight: 1.6, margin: "0 0 16px" }}>{path.desc}</p>
                 <p style={{ fontFamily: FONT_SANS, fontSize: 11, letterSpacing: 2, color: path.color, textTransform: "uppercase" as const }}>
-                  {path.courses} {t("coursesAvailable", { defaultMessage: "COURSES" })}
+                  {path.courses} {t("coursesAvailable")}
                 </p>
               </TiltCard>
             </Reveal>
@@ -576,10 +576,10 @@ export function LandingContent({
           <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 48, flexWrap: "wrap", gap: 16 }}>
             <div>
               <p style={{ fontFamily: FONT_SANS, fontSize: 11, letterSpacing: 4, color: M, marginBottom: 12 }}>
-                {t("featuredCourses", { defaultMessage: "FEATURED COURSES" })}
+                {t("featuredCourses")}
               </p>
               <h2 style={{ fontFamily: FONT_SERIF, fontSize: "clamp(28px, 4vw, 48px)", fontWeight: 400, color: C, margin: 0, lineHeight: 1.1 }}>
-                {t("startLearning", { defaultMessage: "Start learning today" })}
+                {t("startLearning")}
               </h2>
             </div>
             <MagneticBtn href={`/${locale}/courses`}>
@@ -589,9 +589,9 @@ export function LandingContent({
         </Reveal>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 2 }}>
           {[
-            { title: t("featuredCourse1", { defaultMessage: "Intro to Solana & Rust" }), track: "Rust", level: t("beginner", { defaultMessage: "Beginner" }), lessons: 12, xp: 600, color: "#EF4444" },
-            { title: t("featuredCourse2", { defaultMessage: "Anchor Program Development" }), track: "Anchor", level: t("intermediate", { defaultMessage: "Intermediate" }), lessons: 15, xp: 900, color: "#9945FF" },
-            { title: t("featuredCourse3", { defaultMessage: "Building Solana dApps" }), track: "Frontend", level: t("beginner", { defaultMessage: "Beginner" }), lessons: 10, xp: 500, color: "#03E1FF" },
+            { title: t("featuredCourse1"), track: "Rust", level: t("beginner"), lessons: 12, xp: 600, color: "#EF4444" },
+            { title: t("featuredCourse2"), track: "Anchor", level: t("intermediate"), lessons: 15, xp: 900, color: "#9945FF" },
+            { title: t("featuredCourse3"), track: "Frontend", level: t("beginner"), lessons: 10, xp: 500, color: "#03E1FF" },
           ].map((course, i) => (
             <Reveal key={i} delay={i * 150}>
               <TiltCard style={{ background: "var(--overlay-divider)", border: "1px solid var(--overlay-divider)", padding: 0, height: "100%", overflow: "hidden" }}>
@@ -603,7 +603,7 @@ export function LandingContent({
                   </div>
                   <h3 style={{ fontFamily: FONT_SANS, fontSize: 18, fontWeight: 700, color: C, margin: "0 0 12px", lineHeight: 1.3 }}>{course.title}</h3>
                   <div style={{ display: "flex", gap: 20, fontFamily: FONT_SANS, fontSize: 12, color: M }}>
-                    <span>{course.lessons} {t("lessonsLabel", { defaultMessage: "lessons" })}</span>
+                    <span>{course.lessons} {t("lessonsLabel")}</span>
                     <span style={{ color: G }}>+{course.xp} XP</span>
                   </div>
                 </div>

@@ -74,7 +74,29 @@
       "courses": "Courses Available",
       "credentials": "Credentials Issued",
       "xpAwarded": "Total XP Awarded"
-    }
+    },
+    "socialProof": "TRUSTED BY BUILDERS",
+    "socialProofHeadline": "Builders ship faster with Superteam Academy",
+    "testimonialRole1": "Anchor Developer",
+    "testimonialRole2": "Full-Stack Builder",
+    "testimonialRole3": "DeFi Protocol Dev",
+    "testimonial1": "The hands-on challenges made Anchor click for me. Went from zero to deploying my first program in two weeks.",
+    "testimonial2": "On-chain credentials that actually prove your skills. This is what Web3 education should look like.",
+    "testimonial3": "The security track helped me audit my own protocol. Found two critical bugs before launch.",
+    "learningPathsHeadline": "Choose your track",
+    "rustPathDesc": "Master systems programming for Solana",
+    "anchorPathDesc": "Build programs with the Anchor framework",
+    "frontendPathDesc": "Create dApp interfaces with React & Web3",
+    "securityPathDesc": "Audit and secure Solana programs",
+    "defiPathDesc": "Build decentralized finance protocols",
+    "mobilePathDesc": "Solana Mobile Stack development",
+    "coursesAvailable": "COURSES",
+    "featuredCourse1": "Intro to Solana & Rust",
+    "featuredCourse2": "Anchor Program Development",
+    "featuredCourse3": "Building Solana dApps",
+    "beginner": "Beginner",
+    "intermediate": "Intermediate",
+    "lessonsLabel": "lessons"
   },
   "courses": {
     "catalog": "Course Catalog",
@@ -242,7 +264,8 @@
     "completeToAppear": "Complete courses to appear on the leaderboard",
     "connectForRank": "Connect wallet to see your rank",
     "continueLearning": "Continue Learning",
-    "anonymous": "Anonymous"
+    "anonymous": "Anonymous",
+    "filterByTrack": "Track"
   },
   "profile": {
     "skills": "Skills",
@@ -269,7 +292,16 @@
     "noCredentialsHint": "Complete courses to earn verifiable on-chain credentials.",
     "credential": "Credential",
     "coursesCompleted": "courses completed",
-    "copyMintAddress": "Copy mint address"
+    "copyMintAddress": "Copy mint address",
+    "addSocialLinks": "Add social links",
+    "completedCourses": "Courses",
+    "completedOn": "Completed",
+    "noCourses": "No completed courses yet",
+    "noCoursesHint": "Start learning to see your completed courses here.",
+    "profileNotFound": "Profile not found",
+    "profileNotFoundDesc": "This user doesn't exist or has a private profile.",
+    "viewLeaderboard": "View Leaderboard",
+    "publicProfileBanner": "You are viewing a public profile. Some information may be hidden based on the user's privacy settings."
   },
   "settings": {
     "title": "Settings",
@@ -308,7 +340,13 @@
     "export": "Export",
     "deleteAccount": "Delete Account",
     "deleteAccountDesc": "Permanently remove your account and all associated data. This action cannot be undone. Your on-chain credentials will remain on Solana.",
-    "darkModeNote": "Dark mode is the platform default."
+    "darkModeNote": "Dark mode is the platform default.",
+    "saving": "Saving...",
+    "deleteConfirmTitle": "Are you sure?",
+    "deleteConfirmDesc": "This action cannot be undone. Type DELETE to confirm.",
+    "typeDelete": "Type DELETE to confirm",
+    "cancel": "Cancel",
+    "deleting": "Deleting..."
   },
   "certificate": {
     "title": "Certificate of Completion",

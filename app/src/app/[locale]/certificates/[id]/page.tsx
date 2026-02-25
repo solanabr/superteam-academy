@@ -14,6 +14,7 @@ import {
   Layers,
   Download,
 } from "lucide-react";
+import { formatDate } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
 import { getCourseById, courses } from "@/lib/services/courses";
 import { TRACK_LABELS, TRACK_COLORS, SOLANA_NETWORK } from "@/lib/constants";
@@ -66,8 +67,8 @@ export default function CertificatePage() {
   const mintAddress = credential?.mint || "";
   const walletName = user.wallet ?? "";
   const completionDate = credential
-    ? new Date(credential.issuedAt).toLocaleDateString()
-    : new Date().toLocaleDateString();
+    ? formatDate(credential.issuedAt, locale)
+    : formatDate(new Date(), locale);
   const xpEarned = credential?.xpEarned ?? course.xpReward;
   const explorerUrl =
     credential?.explorerUrl || (mintAddress ? getExplorerUrl(mintAddress) : "");
@@ -109,7 +110,7 @@ export default function CertificatePage() {
           className="inline-flex items-center gap-2 text-sm text-[var(--c-text-2)] hover:text-[var(--c-text)] transition-colors cursor-pointer bg-transparent border-none p-0"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
-          {t("title", { defaultMessage: "Credentials" })}
+          {t("title")}
         </button>
       </div>
 
@@ -134,7 +135,7 @@ export default function CertificatePage() {
 
         {/* Heading */}
         <p className="text-xs font-medium text-[var(--c-text-2)] uppercase tracking-[0.25em]">
-          {t("title", { defaultMessage: "Certificate of Completion" })}
+          {t("title")}
         </p>
 
         {/* Course Title */}
@@ -161,7 +162,7 @@ export default function CertificatePage() {
 
         {/* Certifies section */}
         <p className="text-sm text-[var(--c-text-2)]">
-          {t("certifiesThat", { defaultMessage: "This certifies that" })}
+          {t("certifiesThat")}
         </p>
         <p className="mt-2 text-xl md:text-2xl font-bold text-[var(--c-text)] font-mono">
           {walletName}
@@ -169,13 +170,11 @@ export default function CertificatePage() {
 
         {/* Completion details */}
         <p className="mt-4 text-sm text-[var(--c-text-2)]">
-          {t("completedAll", {
-            defaultMessage: "has successfully completed all",
-          })}{" "}
+          {t("completedAll")}{" "}
           <span className="font-mono font-semibold text-[var(--c-text-em)]">
             {course.lessonCount}
           </span>{" "}
-          {t("lessonsAndEarned", { defaultMessage: "lessons and earned" })}
+          {t("lessonsAndEarned")}
         </p>
         <p className="mt-2 text-3xl font-bold text-[#00FFA3] tabular-nums font-mono">
           +{xpEarned} XP
@@ -188,21 +187,21 @@ export default function CertificatePage() {
         <div className="flex flex-wrap items-center justify-center gap-6 md:gap-8 text-sm">
           <div>
             <p className="font-medium text-[var(--c-text)]">
-              {t("completedOn", { defaultMessage: "Completed" })}
+              {t("completedOn")}
             </p>
             <p className="text-[var(--c-text-2)] mt-0.5">{completionDate}</p>
           </div>
           <div className="w-px h-8 bg-[var(--c-border-subtle)]" />
           <div>
             <p className="font-medium text-[var(--c-text)]">
-              {t("issuer", { defaultMessage: "Issuer" })}
+              {t("issuer")}
             </p>
             <p className="text-[var(--c-text-2)] mt-0.5">Superteam Academy</p>
           </div>
           <div className="w-px h-8 bg-[var(--c-border-subtle)]" />
           <div>
             <p className="font-medium text-[var(--c-text)]">
-              {t("network", { defaultMessage: "Network" })}
+              {t("network")}
             </p>
             <p className="text-[var(--c-text-2)] mt-0.5">{network}</p>
           </div>
@@ -216,9 +215,7 @@ export default function CertificatePage() {
           <div className="flex items-center gap-2 mb-4">
             <ShieldCheck className="h-4 w-4 text-[#55E9AB]" />
             <h2 className="text-sm font-semibold text-[var(--c-text)]">
-              {t("verifiedOnChain", {
-                defaultMessage: "On-Chain Verification",
-              })}
+              {t("verifiedOnChain")}
             </h2>
           </div>
 
@@ -227,7 +224,7 @@ export default function CertificatePage() {
             <div className="flex items-center gap-2 p-2.5 rounded-[1px] bg-[#00FFA3]/5 border border-[#00FFA3]/20">
               <CheckCircle2 className="h-4 w-4 text-[#00FFA3] shrink-0" />
               <span className="text-xs font-mono text-[#00FFA3]">
-                {t("verified", { defaultMessage: "Verified on Solana" })}
+                {t("verified")}
               </span>
             </div>
 
@@ -235,9 +232,7 @@ export default function CertificatePage() {
             <div className="flex items-center gap-2 p-2.5 rounded-[1px] bg-[#03E1FF]/5 border border-[#03E1FF]/20">
               <GitBranch className="h-4 w-4 text-[#03E1FF] shrink-0" />
               <span className="text-xs font-mono text-[#03E1FF]">
-                {t("merkleProof", {
-                  defaultMessage: "ZK Compression proof valid (Light Protocol)",
-                })}
+                {t("merkleProof")}
               </span>
             </div>
 
@@ -250,9 +245,7 @@ export default function CertificatePage() {
                 className="flex items-center gap-2 text-sm text-[#55E9AB] hover:text-[#00FFA3] transition-colors mt-2"
               >
                 <ExternalLink className="h-3.5 w-3.5" />
-                {t("viewExplorer", {
-                  defaultMessage: "View on Solana Explorer",
-                })}
+                {t("viewExplorer")}
                 <span className="text-[10px] font-mono text-[var(--c-text-2)]">
                   ({SOLANA_NETWORK})
                 </span>
@@ -266,7 +259,7 @@ export default function CertificatePage() {
           <div className="flex items-center gap-2 mb-4">
             <Layers className="h-4 w-4 text-[#CA9FF5]" />
             <h2 className="text-sm font-semibold text-[var(--c-text)]">
-              {t("nftDetails", { defaultMessage: "Credential Details" })}
+              {t("nftDetails")}
             </h2>
           </div>
 
@@ -274,7 +267,7 @@ export default function CertificatePage() {
             {/* Mint Address */}
             <div className="flex items-center justify-between">
               <span className="text-xs text-[var(--c-text-2)]">
-                {t("mintAddr", { defaultMessage: "Mint Address" })}
+                {t("mintAddr")}
               </span>
               {mintAddress ? (
                 <div className="flex items-center gap-1.5">
@@ -295,7 +288,7 @@ export default function CertificatePage() {
                 </div>
               ) : (
                 <span className="font-mono text-xs text-[var(--c-text-2)]">
-                  {t("pendingMint", { defaultMessage: "Pending" })}
+                  {t("pendingMint")}
                 </span>
               )}
             </div>
@@ -303,7 +296,7 @@ export default function CertificatePage() {
             {/* Collection */}
             <div className="flex items-center justify-between">
               <span className="text-xs text-[var(--c-text-2)]">
-                {t("collection", { defaultMessage: "Collection" })}
+                {t("collection")}
               </span>
               <span className="font-mono text-xs text-[var(--c-text-em)]">
                 Superteam Academy
@@ -313,7 +306,7 @@ export default function CertificatePage() {
             {/* Standard */}
             <div className="flex items-center justify-between">
               <span className="text-xs text-[var(--c-text-2)]">
-                {t("standard", { defaultMessage: "Standard" })}
+                {t("standard")}
               </span>
               <span className="font-mono text-xs text-[var(--c-text-em)]">
                 ZK Compressed (Light Protocol)
@@ -323,7 +316,7 @@ export default function CertificatePage() {
             {/* Attributes */}
             <div className="border-t border-[var(--c-border-subtle)] pt-3 mt-3">
               <p className="text-[10px] font-mono uppercase tracking-wider text-[var(--c-text-2)] mb-2">
-                {t("attributes", { defaultMessage: "Attributes" })}
+                {t("attributes")}
               </p>
               <div className="grid grid-cols-2 gap-2">
                 {[

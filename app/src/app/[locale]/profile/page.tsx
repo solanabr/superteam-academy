@@ -19,6 +19,7 @@ import {
   Github,
   Twitter,
 } from "lucide-react";
+import { formatDate, formatNumber } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
@@ -257,7 +258,7 @@ export default function ProfilePage() {
             </p>
           )}
           <p className="mt-2 text-xs text-[var(--c-text-2)]">
-            {t("joined")} {new Date(profileUser.joinedAt).toLocaleDateString()}
+            {t("joined")} {formatDate(profileUser.joinedAt, locale)}
           </p>
           {/* Social Links */}
           <div className="flex items-center gap-3 mt-2">
@@ -292,7 +293,7 @@ export default function ProfilePage() {
                 className="flex items-center gap-1.5 text-xs text-[var(--c-text-2)] hover:text-[#55E9AB] transition-colors"
               >
                 <LinkIcon className="h-3.5 w-3.5" />
-                {t("addSocialLinks", { defaultMessage: "Add social links" })}
+                {t("addSocialLinks")}
               </Link>
             )}
           </div>
@@ -318,7 +319,7 @@ export default function ProfilePage() {
       <dl className="flex flex-wrap gap-4 border-y border-[var(--c-border-subtle)] py-6 mb-8">
         <div className="flex-1 min-w-[100px] text-center">
           <dd className="text-3xl font-mono text-[var(--c-text)] tabular-nums">
-            {profileUser.xp.toLocaleString()}
+            {formatNumber(profileUser.xp, locale)}
           </dd>
           <dt className="text-xs font-medium text-[var(--c-text-2)] uppercase tracking-wider mt-1">
             {t("totalXP")}
@@ -370,7 +371,7 @@ export default function ProfilePage() {
         <TabsList className="mb-6">
           <TabsTrigger value="skills">{t("skills")}</TabsTrigger>
           <TabsTrigger value="courses">
-            {t("completedCourses", { defaultMessage: "Courses" })}
+            {t("completedCourses")}
           </TabsTrigger>
           <TabsTrigger value="credentials">{t("credentials")}</TabsTrigger>
           <TabsTrigger value="achievements">{t("achievements")}</TabsTrigger>
@@ -462,8 +463,8 @@ export default function ProfilePage() {
                   {course.completedAt && (
                     <p className="flex items-center gap-1.5 text-xs text-[var(--c-text-2)]">
                       <Calendar className="h-3 w-3" />
-                      {t("completedOn", { defaultMessage: "Completed" })}{" "}
-                      {new Date(course.completedAt).toLocaleDateString()}
+                      {t("completedOn")}{" "}
+                      {formatDate(course.completedAt, locale)}
                     </p>
                   )}
                 </Link>
@@ -473,10 +474,8 @@ export default function ProfilePage() {
             <div className="bg-[var(--c-bg-card)] border border-[var(--c-border-subtle)] rounded-[2px] flex flex-col items-center justify-center py-16">
               <EmptyState
                 icon={BookOpen}
-                title={t("noCourses", { defaultMessage: "No completed courses yet" })}
-                description={t("noCoursesHint", {
-                  defaultMessage: "Start learning to see your completed courses here.",
-                })}
+                title={t("noCourses")}
+                description={t("noCoursesHint")}
               />
             </div>
           )}
@@ -519,7 +518,7 @@ export default function ProfilePage() {
                         {cred.coursesCompleted} {t("coursesCompleted")}
                       </p>
                       <p className="text-sm font-mono font-semibold text-[#00FFA3] mt-1">
-                        {cred.xpEarned.toLocaleString()} XP
+                        {formatNumber(cred.xpEarned, locale)} XP
                       </p>
                     </div>
 
@@ -547,7 +546,7 @@ export default function ProfilePage() {
                           {t("issuedOn")}
                         </span>
                         <span className="text-[var(--c-text-em)]">
-                          {new Date(cred.issuedAt).toLocaleDateString()}
+                          {formatDate(cred.issuedAt, locale)}
                         </span>
                       </div>
                     </div>

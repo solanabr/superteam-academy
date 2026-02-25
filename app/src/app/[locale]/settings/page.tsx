@@ -151,8 +151,8 @@ export default function SettingsPage() {
     { id: "appearance", label: t("appearance") },
     { id: "accounts", label: t("linkedAccounts") },
     { id: "notifications", label: t("notifications") },
-    { id: "privacy", label: t("privacy", { defaultMessage: "Privacy" }) },
-    { id: "danger", label: t("dangerZone", { defaultMessage: "Danger Zone" }) },
+    { id: "privacy", label: t("privacy") },
+    { id: "danger", label: t("dangerZone") },
   ];
 
   return (
@@ -203,9 +203,7 @@ export default function SettingsPage() {
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   maxLength={50}
-                  placeholder={t("displayNamePlaceholder", {
-                    defaultMessage: "Your display name",
-                  })}
+                  placeholder={t("displayNamePlaceholder")}
                   disabled={loadingProfile}
                 />
               </div>
@@ -222,17 +220,15 @@ export default function SettingsPage() {
                   value={bio}
                   onChange={(e) => setBio(e.target.value)}
                   maxLength={300}
-                  placeholder={t("bioPlaceholder", {
-                    defaultMessage: "Tell others about yourself",
-                  })}
+                  placeholder={t("bioPlaceholder")}
                   disabled={loadingProfile}
                 />
               </div>
               <Button size="sm" onClick={handleSave} disabled={saving || loadingProfile}>
                 {saving ? (
-                  <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> {t("saving", { defaultMessage: "Saving..." })}</>
+                  <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> {t("saving")}</>
                 ) : saved ? (
-                  t("saved", { defaultMessage: "Saved" })
+                  t("saved")
                 ) : (
                   t("saveChanges")
                 )}
@@ -303,9 +299,7 @@ export default function SettingsPage() {
                   icon: Wallet,
                   isConnected: connected,
                   detail: connected
-                    ? t("walletConnected", {
-                        defaultMessage: "Solana wallet connected",
-                      })
+                    ? t("walletConnected")
                     : null,
                 },
               ].map(
@@ -329,15 +323,15 @@ export default function SettingsPage() {
                     </div>
                     {isConnected ? (
                       <span className="text-xs font-medium text-[#55E9AB] px-2 py-1 rounded bg-[#55E9AB]/10">
-                        {t("connected", { defaultMessage: "Connected" })}
+                        {t("connected")}
                       </span>
                     ) : providerId !== "solana-wallet" ? (
                       <Button size="sm" onClick={() => signIn(providerId)}>
-                        {t("connect", { defaultMessage: "Connect" })}
+                        {t("connect")}
                       </Button>
                     ) : (
                       <Button size="sm" variant="outline" disabled>
-                        {t("useNavbar", { defaultMessage: "Use navbar" })}
+                        {t("useNavbar")}
                       </Button>
                     )}
                   </div>
@@ -355,9 +349,7 @@ export default function SettingsPage() {
               {[
                 {
                   label: t("emailNotifications"),
-                  description: t("emailNotificationsDesc", {
-                    defaultMessage: "Receive course updates and announcements",
-                  }),
+                  description: t("emailNotificationsDesc"),
                   enabled: emailNotifications,
                   toggle: () => {
                     setEmailNotifications((v) => !v);
@@ -365,9 +357,7 @@ export default function SettingsPage() {
                 },
                 {
                   label: t("streakReminders"),
-                  description: t("streakRemindersDesc", {
-                    defaultMessage: "Daily reminders to maintain your streak",
-                  }),
+                  description: t("streakRemindersDesc"),
                   enabled: streakReminders,
                   toggle: () => {
                     setStreakReminders((v) => !v);
@@ -412,28 +402,23 @@ export default function SettingsPage() {
           {/* Privacy */}
           <section id="privacy">
             <h2 className="text-sm font-medium text-[var(--c-text-2)] uppercase tracking-wider mb-4">
-              {t("privacy", { defaultMessage: "Privacy" })}
+              {t("privacy")}
             </h2>
             <div className="rounded-xl border border-[var(--c-border-subtle)] bg-[var(--c-bg-card)] p-6">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-[var(--c-text)]">
-                      {t("publicProfile", { defaultMessage: "Public Profile" })}
+                      {t("publicProfile")}
                     </p>
                     <p className="text-xs text-[var(--c-text-2)]">
-                      {t("publicProfileDesc", {
-                        defaultMessage:
-                          "Allow others to view your profile, skills, and achievements",
-                      })}
+                      {t("publicProfileDesc")}
                     </p>
                   </div>
                   <button
                     role="switch"
                     aria-checked={isPublic}
-                    aria-label={t("publicProfile", {
-                      defaultMessage: "Public Profile",
-                    })}
+                    aria-label={t("publicProfile")}
                     onClick={() => setIsPublic(!isPublic)}
                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0 ml-4 ${isPublic ? "bg-[#55E9AB]" : "bg-[var(--c-border-subtle)]"}`}
                   >
@@ -445,23 +430,16 @@ export default function SettingsPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-[var(--c-text)]">
-                      {t("showOnLeaderboard", {
-                        defaultMessage: "Show on Leaderboard",
-                      })}
+                      {t("showOnLeaderboard")}
                     </p>
                     <p className="text-xs text-[var(--c-text-2)]">
-                      {t("showOnLeaderboardDesc", {
-                        defaultMessage:
-                          "Display your name and rank on the public leaderboard",
-                      })}
+                      {t("showOnLeaderboardDesc")}
                     </p>
                   </div>
                   <button
                     role="switch"
                     aria-checked={showOnLeaderboard}
-                    aria-label={t("showOnLeaderboard", {
-                      defaultMessage: "Show on Leaderboard",
-                    })}
+                    aria-label={t("showOnLeaderboard")}
                     onClick={() => setShowOnLeaderboard(!showOnLeaderboard)}
                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0 ml-4 ${showOnLeaderboard ? "bg-[#55E9AB]" : "bg-[var(--c-border-subtle)]"}`}
                   >
@@ -473,13 +451,10 @@ export default function SettingsPage() {
                 <div className="flex items-center justify-between pt-4 border-t border-[var(--c-border-subtle)]">
                   <div>
                     <p className="text-sm font-medium text-[var(--c-text)]">
-                      {t("exportData", { defaultMessage: "Export Your Data" })}
+                      {t("exportData")}
                     </p>
                     <p className="text-xs text-[var(--c-text-2)]">
-                      {t("exportDataDesc", {
-                        defaultMessage:
-                          "Download all your profile data, achievements, and credentials as JSON",
-                      })}
+                      {t("exportDataDesc")}
                     </p>
                   </div>
                   <Button
@@ -489,7 +464,7 @@ export default function SettingsPage() {
                     onClick={handleExportData}
                   >
                     <Download className="h-4 w-4" />{" "}
-                    {t("export", { defaultMessage: "Export" })}
+                    {t("export")}
                   </Button>
                 </div>
               </div>
@@ -499,20 +474,17 @@ export default function SettingsPage() {
           {/* Danger Zone */}
           <section id="danger">
             <h2 className="text-sm font-medium text-[var(--c-text-2)] uppercase tracking-wider mb-4">
-              {t("dangerZone", { defaultMessage: "Danger Zone" })}
+              {t("dangerZone")}
             </h2>
             <div className="border border-[#EF4444]/20 bg-[#EF4444]/5 p-6 rounded-xl">
               <div className="flex items-start gap-3 mb-4">
                 <AlertTriangle className="h-5 w-5 text-[#EF4444] shrink-0 mt-0.5" />
                 <div>
                   <p className="text-sm font-medium text-[var(--c-text)]">
-                    {t("deleteAccount", { defaultMessage: "Delete Account" })}
+                    {t("deleteAccount")}
                   </p>
                   <p className="text-xs text-[var(--c-text-2)] mt-1">
-                    {t("deleteAccountDesc", {
-                      defaultMessage:
-                        "Permanently remove your account and all associated data. This action cannot be undone. Your on-chain credentials will remain on Solana.",
-                    })}
+                    {t("deleteAccountDesc")}
                   </p>
                 </div>
               </div>
@@ -525,7 +497,7 @@ export default function SettingsPage() {
                   setDeleteError("");
                 }}
               >
-                {t("deleteAccount", { defaultMessage: "Delete Account" })}
+                {t("deleteAccount")}
               </Button>
             </div>
           </section>
@@ -545,21 +517,18 @@ export default function SettingsPage() {
             <div className="flex items-center gap-3 mb-4">
               <AlertTriangle className="h-5 w-5 text-[#EF4444] shrink-0" />
               <h3 className="text-lg font-semibold text-[var(--c-text)]">
-                {t("deleteConfirmTitle", { defaultMessage: "Are you sure?" })}
+                {t("deleteConfirmTitle")}
               </h3>
             </div>
             <p className="text-sm text-[var(--c-text-2)] mb-6">
-              {t("deleteConfirmDesc", {
-                defaultMessage:
-                  "This action cannot be undone. Type DELETE to confirm.",
-              })}
+              {t("deleteConfirmDesc")}
             </p>
             <div className="mb-4">
               <label
                 htmlFor="delete-confirmation-input"
                 className="mb-2 block text-sm font-medium text-[var(--c-text-em)]"
               >
-                {t("typeDelete", { defaultMessage: "Type DELETE to confirm" })}
+                {t("typeDelete")}
               </label>
               <Input
                 id="delete-confirmation-input"
@@ -580,7 +549,7 @@ export default function SettingsPage() {
                 onClick={() => setShowDeleteModal(false)}
                 disabled={deleting}
               >
-                {t("cancel", { defaultMessage: "Cancel" })}
+                {t("cancel")}
               </Button>
               <Button
                 className="bg-[#EF4444] text-white hover:bg-[#DC2626] border-0"
@@ -611,10 +580,10 @@ export default function SettingsPage() {
                 {deleting ? (
                   <>
                     <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
-                    {t("deleting", { defaultMessage: "Deleting..." })}
+                    {t("deleting")}
                   </>
                 ) : (
-                  t("deleteAccount", { defaultMessage: "Delete Account" })
+                  t("deleteAccount")
                 )}
               </Button>
             </div>
@@ -660,7 +629,7 @@ function ThemeToggle({ t }: { t: ReturnType<typeof useTranslations> }) {
         }`}
       >
         <Sun className="h-4 w-4" />
-        {t("light", { defaultMessage: "Light" })}
+        {t("light")}
       </button>
     </div>
   );
