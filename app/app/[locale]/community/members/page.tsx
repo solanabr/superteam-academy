@@ -3,13 +3,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getTranslations } from "next-intl/server";
-import {
-	getAllMembers,
-	getTopMembers,
-	getMembersByBadge,
-	isSanityConfigured,
-	type MemberWithMeta,
-} from "@/lib/community-cms";
+import { getAllUsers, type AcademyUser } from "@/lib/sanity-users";
+import type { MemberWithMeta } from "@superteam-academy/cms";
 
 export const metadata = {
 	title: "Members | Community | Superteam Academy",
@@ -41,13 +36,43 @@ function getInitials(name: string): string {
 		.slice(0, 2);
 }
 
-function normalizeMember(member: MemberWithMeta | (typeof MEMBERS)[number]): NormalizedMember {
+function normalizeMember(
+	member: MemberWithMeta | AcademyUser | NormalizedMember
+): NormalizedMember {
 	// If already normalized (mock data), return as-is
 	if ("initials" in member && "name" in member && typeof member.initials === "string") {
 		return member as NormalizedMember;
 	}
 
-	// Normalize Sanity data
+	// Handle AcademyUser (all users of the app)
+	if ("authId" in member) {
+		const user = member as AcademyUser;
+		return {
+			id: user._id,
+			name: user.name,
+			initials: getInitials(user.name),
+			title:
+				user.role === "superadmin"
+					? "Super Admin"
+					: user.role === "admin"
+						? "Admin"
+						: "Solana Developer",
+			xp: user.xpBalance,
+			level: Math.floor(user.xpBalance / 1000),
+			courses: user.completedCourses?.length || 0,
+			streak: 0, // Not available in AcademyUser
+			achievements: 0, // Not available in AcademyUser
+			joinedAt: user._createdAt
+				? new Date(user._createdAt).toLocaleDateString("en-US", {
+						month: "short",
+						year: "numeric",
+					})
+				: "Unknown",
+			badges: user.role === "superadmin" || user.role === "admin" ? ["top-contributor"] : [],
+		};
+	}
+
+	// Handle MemberWithMeta (legacy community members)
 	const sanityMember = member as MemberWithMeta;
 	return {
 		id: sanityMember._id,
@@ -88,15 +113,27 @@ const BADGE_LABELS: Record<string, { icon: typeof Crown; color: string }> = {
 export default async function MembersPage() {
 	const t = await getTranslations("community");
 
-	// Fetch members from Sanity
-	const allMembers = isSanityConfigured ? (await getAllMembers()).map(normalizeMember) : [];
-	const topMembers = isSanityConfigured ? (await getTopMembers(5)).map(normalizeMember) : [];
-	const mentorMembers = isSanityConfigured
-		? (await getMembersByBadge("mentor")).map(normalizeMember)
-		: [];
-	const risingStarMembers = isSanityConfigured
-		? (await getMembersByBadge("rising-star")).map(normalizeMember)
-		: [];
+	// Fetch members from Sanity or use mock data
+	let allMembers: NormalizedMember[] = [];
+	let topMembers: NormalizedMember[] = [];
+	let mentorMembers: NormalizedMember[] = [];
+	let risingStarMembers: NormalizedMember[] = [];
+
+	try {
+		// Use all users of the app
+		const sanityUsers = await getAllUsers();
+		allMembers = sanityUsers.map(normalizeMember);
+		topMembers = allMembers.sort((a, b) => b.xp - a.xp).slice(0, 5);
+		mentorMembers = allMembers.filter((m) => m.badges.includes("mentor"));
+		risingStarMembers = allMembers.filter((m) => m.badges.includes("rising-star"));
+	} catch (error) {
+		// Fall back to empty arrays if Sanity fails
+		console.error("Failed to fetch members from Sanity:", error);
+		allMembers = [];
+		topMembers = [];
+		mentorMembers = [];
+		risingStarMembers = [];
+	}
 
 	return (
 		<div className="space-y-8">

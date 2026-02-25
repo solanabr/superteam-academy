@@ -10,6 +10,8 @@ import {
 	userCountQuery,
 } from "@superteam-academy/cms/queries";
 
+export type { AcademyUser };
+
 // Cache clients at module level to reuse connections across requests
 let _writeClient: ReturnType<typeof createSanityClient> | null | undefined;
 let _readClient: ReturnType<typeof createSanityClient> | null | undefined;
