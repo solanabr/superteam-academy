@@ -52,10 +52,41 @@ export default function NewEventPage() {
 		setIsSubmitting(true);
 
 		try {
-			// TODO: Implement Sanity mutation to create event
-			// const formData = new FormData(e.currentTarget);
-			// Extract: title, description, type, dates, location, maxAttendees, registrationUrl, tags
-			await new Promise((resolve) => setTimeout(resolve, 1000));
+			const formData = new FormData(e.currentTarget);
+			const title = formData.get("title") as string;
+			const description = formData.get("description") as string;
+			const type = formData.get("type") as string;
+			const startDate = formData.get("startDate") as string;
+			const endDate = (formData.get("endDate") as string) || undefined;
+			const timezone = formData.get("timezone") as string;
+			const location = isOnline ? undefined : (formData.get("location") as string);
+			const maxAttendeesRaw = formData.get("maxAttendees") as string;
+			const maxAttendees = maxAttendeesRaw ? Number(maxAttendeesRaw) : undefined;
+			const registrationUrl = (formData.get("registrationUrl") as string) || undefined;
+
+			const res = await fetch("/api/community/events", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					title,
+					description,
+					type,
+					startDate,
+					endDate,
+					timezone,
+					location,
+					isOnline,
+					maxAttendees,
+					registrationUrl,
+					tags,
+				}),
+			});
+
+			const data = await res.json();
+
+			if (!res.ok) {
+				throw new Error(data.error || "Failed to create event");
+			}
 
 			toast({
 				title: "Event created!",
@@ -63,10 +94,13 @@ export default function NewEventPage() {
 			});
 
 			router.push("/community/events");
-		} catch {
+		} catch (err) {
 			toast({
 				title: "Error",
-				description: "Failed to create event. Please try again.",
+				description:
+					err instanceof Error
+						? err.message
+						: "Failed to create event. Please try again.",
 				variant: "destructive",
 			});
 		} finally {

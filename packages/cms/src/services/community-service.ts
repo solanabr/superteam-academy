@@ -5,6 +5,7 @@ import type {
 	CommunityMember,
 	DiscussionCategory,
 	EventStatus,
+	EventType,
 	ProjectCategory,
 } from "../schemas";
 import type { CMSContext } from "./cms-service";
@@ -63,6 +64,31 @@ export interface CreateDiscussionInput {
 	category: DiscussionCategory;
 	tags: string[];
 	authorId: string;
+}
+
+export interface CreateEventInput {
+	title: string;
+	description: string;
+	type: EventType;
+	startDate: string;
+	endDate?: string | undefined;
+	timezone: string;
+	location?: string | undefined;
+	isOnline: boolean;
+	maxAttendees?: number;
+	registrationUrl?: string | undefined;
+	tags: string[];
+}
+
+export interface CreateProjectInput {
+	title: string;
+	description: string;
+	category: ProjectCategory;
+	tags: string[];
+	authorId: string;
+	githubUrl?: string | undefined;
+	liveUrl?: string | undefined;
+	xpReward?: number | undefined;
 }
 
 export function createCommunityService(context: CMSContext) {
@@ -218,8 +244,76 @@ export function createCommunityService(context: CMSContext) {
 		return { success: true, slug: doc.slug?.current || slug };
 	};
 
+	const createEvent = async (
+		input: CreateEventInput
+	): Promise<{ success: boolean; slug?: string; error?: string }> => {
+		if (!writeClient) {
+			return { success: false, error: "Sanity write client not configured" };
+		}
+
+		const slug = input.title
+			.toLowerCase()
+			.replace(/[^a-z0-9]+/g, "-")
+			.replace(/^-|-$/g, "");
+
+		const doc = await writeClient.create({
+			_type: "event" as const,
+			title: input.title,
+			slug: { _type: "slug", current: slug },
+			description: input.description,
+			type: input.type,
+			status: "upcoming" as const,
+			startDate: input.startDate,
+			endDate: input.endDate,
+			timezone: input.timezone,
+			location: input.location,
+			isOnline: input.isOnline,
+			maxAttendees: input.maxAttendees,
+			registrationUrl: input.registrationUrl,
+			speakers: [],
+			tags: input.tags,
+			publishedAt: new Date().toISOString(),
+		});
+
+		return { success: true, slug: doc.slug?.current || slug };
+	};
+
+	const createProject = async (
+		input: CreateProjectInput
+	): Promise<{ success: boolean; slug?: string; error?: string }> => {
+		if (!writeClient) {
+			return { success: false, error: "Sanity write client not configured" };
+		}
+
+		const slug = input.title
+			.toLowerCase()
+			.replace(/[^a-z0-9]+/g, "-")
+			.replace(/^-|-$/g, "");
+
+		const doc = await writeClient.create({
+			_type: "project" as const,
+			title: input.title,
+			slug: { _type: "slug", current: slug },
+			description: input.description,
+			author: { _type: "reference", _ref: input.authorId },
+			category: input.category,
+			tags: input.tags,
+			githubUrl: input.githubUrl,
+			liveUrl: input.liveUrl,
+			featured: false,
+			stars: 0,
+			contributors: 0,
+			xpReward: input.xpReward,
+			publishedAt: new Date().toISOString(),
+		});
+
+		return { success: true, slug: doc.slug?.current || slug };
+	};
+
 	return {
 		createDiscussion,
+		createEvent,
+		createProject,
 		getAllDiscussions,
 		getDiscussionBySlug,
 		getDiscussionsByCategory,

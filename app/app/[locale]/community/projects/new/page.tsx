@@ -52,21 +52,48 @@ export default function NewProjectPage() {
 		setIsSubmitting(true);
 
 		try {
-			// TODO: Implement Sanity mutation to create project
-			// const formData = new FormData(e.currentTarget);
-			// Extract: title, description, category, githubUrl, liveUrl, xpReward, tags
-			await new Promise((resolve) => setTimeout(resolve, 1000));
+			const formData = new FormData(e.currentTarget);
+			const title = formData.get("title") as string;
+			const description = formData.get("description") as string;
+			const category = formData.get("category") as string;
+			const githubUrl = (formData.get("githubUrl") as string) || undefined;
+			const liveUrl = (formData.get("liveUrl") as string) || undefined;
+			const xpRewardRaw = formData.get("xpReward") as string;
+			const xpReward = xpRewardRaw ? Number(xpRewardRaw) : undefined;
+
+			const res = await fetch("/api/community/projects", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					title,
+					description,
+					category,
+					githubUrl,
+					liveUrl,
+					xpReward,
+					tags,
+				}),
+			});
+
+			const data = await res.json();
+
+			if (!res.ok) {
+				throw new Error(data.error || "Failed to submit project");
+			}
 
 			toast({
 				title: "Project submitted!",
 				description: "Your project has been shared with the community.",
 			});
 
-			router.push("/community/projects");
-		} catch {
+			router.push(`/community/projects/${data.slug}`);
+		} catch (err) {
 			toast({
 				title: "Error",
-				description: "Failed to submit project. Please try again.",
+				description:
+					err instanceof Error
+						? err.message
+						: "Failed to submit project. Please try again.",
 				variant: "destructive",
 			});
 		} finally {

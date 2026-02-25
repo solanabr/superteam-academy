@@ -9,6 +9,8 @@ import type {
 	EventStatus,
 	ProjectCategory,
 	CreateDiscussionInput,
+	CreateEventInput,
+	CreateProjectInput,
 } from "@superteam-academy/cms";
 
 const communityService = createCommunityService(cmsContext);
@@ -41,6 +43,14 @@ export async function getUnansweredDiscussions(): Promise<DiscussionWithMeta[]> 
 
 export async function createDiscussion(input: CreateDiscussionInput) {
 	return communityService.createDiscussion(input);
+}
+
+export async function createEvent(input: CreateEventInput) {
+	return communityService.createEvent(input);
+}
+
+export async function createProject(input: CreateProjectInput) {
+	return communityService.createProject(input);
 }
 
 export async function getUpcomingEvents(): Promise<EventWithMeta[]> {
@@ -120,6 +130,8 @@ export type {
 	EventStatus,
 	ProjectCategory,
 	CreateDiscussionInput,
+	CreateEventInput,
+	CreateProjectInput,
 };
 
 export { isSanityConfigured };
