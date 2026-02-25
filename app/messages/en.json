@@ -445,5 +445,27 @@
     "action_rotate_signer": "Rotate Backend Signer",
     "action_update_config": "Update Config",
     "action_announce": "Send Announcement"
+  },
+  "onboarding": {
+    "welcome_title": "Welcome to Superteam Academy",
+    "welcome_subtitle": "The on-chain learning platform for Web3 developers in Brazil. Learn Solana, earn XP tokens, and build your career.",
+    "welcome_cta": "Let's Get Started",
+    "step_wallet_title": "Connect Your Wallet",
+    "step_wallet_subtitle": "Connect a Solana wallet to track progress on-chain and earn verifiable credentials.",
+    "step_wallet_phantom": "Phantom, Backpack, Solflare, or any Solana wallet",
+    "step_wallet_skip": "Continue with Google",
+    "step_wallet_skip_note": "Google sign-in provides preview access. For on-chain XP and credentials, connect a Solana wallet.",
+    "step_wallet_connected": "Wallet Connected",
+    "step_course_title": "Choose Your First Course",
+    "step_course_subtitle": "We recommend starting with one of these courses. You can always explore more later.",
+    "step_ready_title": "You're All Set!",
+    "step_ready_subtitle": "Your on-chain learning journey begins now. Complete lessons, earn XP tokens, and unlock NFT credentials.",
+    "step_ready_cta": "Go to Dashboard",
+    "step_ready_explore": "Explore Courses",
+    "step": "Step",
+    "of": "of",
+    "next": "Next",
+    "back": "Back",
+    "skip": "Skip for now"
   }
 }

@@ -56,5 +56,10 @@ export const routing = defineRouting({
       'en': '/community',
       'es': '/comunidad',
     },
+    '/onboarding': {
+      'pt-BR': '/boas-vindas',
+      'en': '/onboarding',
+      'es': '/bienvenida',
+    },
   }
 });
