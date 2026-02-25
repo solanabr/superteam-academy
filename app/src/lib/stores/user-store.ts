@@ -56,6 +56,13 @@ const STREAK_STORAGE_KEY = 'superteam-streak';
 const FREEZE_MILESTONE_INTERVAL = 7;
 const DEFAULT_FREEZES = 1;
 
+/** Streak thresholds that auto-award achievements. */
+const STREAK_MILESTONES = [
+  { days: 7, achievementId: 'streak-7' },
+  { days: 30, achievementId: 'streak-30' },
+  { days: 100, achievementId: 'streak-100' },
+] as const;
+
 const initialStreak: StreakState = {
   currentStreak: 0,
   longestStreak: 0,
@@ -259,6 +266,13 @@ export const useUserStore = create<UserState>((set, get) => ({
 
     persistStreak(newStreak);
     set({ streak: newStreak });
+
+    // Auto-award streak milestone achievements
+    for (const milestone of STREAK_MILESTONES) {
+      if (newStreak.currentStreak >= milestone.days) {
+        get().addAchievement(milestone.achievementId);
+      }
+    }
   },
 
   useFreeze: () => {

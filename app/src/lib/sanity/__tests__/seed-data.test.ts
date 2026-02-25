@@ -161,8 +161,8 @@ describe('seedLessonContents', () => {
 // ---------------------------------------------------------------------------
 
 describe('seedAchievements', () => {
-  it('have 5 entries', () => {
-    expect(seedAchievements).toHaveLength(5);
+  it('have 7 entries', () => {
+    expect(seedAchievements).toHaveLength(7);
   });
 
   it('have unique IDs', () => {

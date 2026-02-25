@@ -51,6 +51,11 @@ const ACHIEVEMENT_META: Record<string, { name: string; description: string; colo
     description: '30-day learning streak',
     color: 'from-red-400 to-red-600',
   },
+  'streak-100': {
+    name: 'Legendary Streak',
+    description: '100-day learning streak',
+    color: 'from-amber-500 to-red-700',
+  },
   'xp-1000': {
     name: 'XP Hunter',
     description: 'Earned 1,000 XP',

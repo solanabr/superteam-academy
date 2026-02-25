@@ -1902,6 +1902,42 @@ export const seedAchievements: SeedAchievement[] = [
     condition: { type: 'streak_days', value: 7 },
   },
   {
+    _id: 'achievement-streak-30',
+    achievementId: 'streak-30',
+    name: {
+      en: 'Unstoppable Force',
+      pt: 'Forca Imparavel',
+      es: 'Fuerza Imparable',
+    },
+    description: {
+      en: 'Maintain a 30-day learning streak. True dedication to your craft.',
+      pt: 'Mantenha uma sequencia de aprendizado de 30 dias. Verdadeira dedicacao ao seu oficio.',
+      es: 'Mantiene una racha de aprendizaje de 30 dias. Verdadera dedicacion a tu oficio.',
+    },
+    icon: 'flame',
+    category: 'streak',
+    xpReward: 1000,
+    condition: { type: 'streak_days', value: 30 },
+  },
+  {
+    _id: 'achievement-streak-100',
+    achievementId: 'streak-100',
+    name: {
+      en: 'Legendary Streak',
+      pt: 'Sequencia Lendaria',
+      es: 'Racha Legendaria',
+    },
+    description: {
+      en: 'Maintain a 100-day learning streak. You are a true legend.',
+      pt: 'Mantenha uma sequencia de aprendizado de 100 dias. Voce e uma verdadeira lenda.',
+      es: 'Mantiene una racha de aprendizaje de 100 dias. Eres una verdadera leyenda.',
+    },
+    icon: 'crown',
+    category: 'streak',
+    xpReward: 5000,
+    condition: { type: 'streak_days', value: 100 },
+  },
+  {
     _id: 'achievement-first-challenge',
     achievementId: 'first-challenge',
     name: {

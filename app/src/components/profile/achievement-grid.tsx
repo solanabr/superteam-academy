@@ -39,6 +39,12 @@ export const ALL_ACHIEVEMENTS: AchievementDefinition[] = [
     color: 'from-red-400 to-red-600',
   },
   {
+    id: 'streak-100',
+    name: 'Legendary Streak',
+    description: 'Maintained a 100-day consecutive learning streak.',
+    color: 'from-amber-500 to-red-700',
+  },
+  {
     id: 'xp-1000',
     name: 'XP Hunter',
     description: 'Accumulated 1,000 XP through lessons and challenges.',
