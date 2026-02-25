@@ -70,113 +70,6 @@ function normalizeMember(member: MemberWithMeta | (typeof MEMBERS)[number]): Nor
 	};
 }
 
-const MEMBERS = [
-	{
-		id: "1",
-		name: "Alex Chen",
-		initials: "AC",
-		title: "Solana Core Developer",
-		xp: 24_500,
-		level: 28,
-		courses: 18,
-		streak: 45,
-		achievements: 47,
-		joinedAt: "Jun 2025",
-		badges: ["top-contributor", "mentor"],
-	},
-	{
-		id: "2",
-		name: "Maria Santos",
-		initials: "MS",
-		title: "DeFi Protocol Engineer",
-		xp: 22_100,
-		level: 26,
-		courses: 15,
-		streak: 32,
-		achievements: 43,
-		joinedAt: "Jul 2025",
-		badges: ["top-contributor"],
-	},
-	{
-		id: "3",
-		name: "James Wilson",
-		initials: "JW",
-		title: "Security Researcher",
-		xp: 19_800,
-		level: 24,
-		courses: 14,
-		streak: 28,
-		achievements: 41,
-		joinedAt: "Aug 2025",
-		badges: ["mentor"],
-	},
-	{
-		id: "4",
-		name: "Priya Patel",
-		initials: "PP",
-		title: "Full-Stack Solana Dev",
-		xp: 18_200,
-		level: 22,
-		courses: 13,
-		streak: 21,
-		achievements: 38,
-		joinedAt: "Sep 2025",
-		badges: [],
-	},
-	{
-		id: "5",
-		name: "Yuki Tanaka",
-		initials: "YT",
-		title: "NFT & Token Engineer",
-		xp: 17_500,
-		level: 21,
-		courses: 12,
-		streak: 18,
-		achievements: 35,
-		joinedAt: "Aug 2025",
-		badges: [],
-	},
-	{
-		id: "6",
-		name: "Carlos Rodriguez",
-		initials: "CR",
-		title: "Anchor Developer",
-		xp: 16_200,
-		level: 20,
-		courses: 11,
-		streak: 15,
-		achievements: 32,
-		joinedAt: "Oct 2025",
-		badges: ["rising-star"],
-	},
-	{
-		id: "7",
-		name: "Lisa Park",
-		initials: "LP",
-		title: "Frontend & Wallet UX",
-		xp: 14_800,
-		level: 19,
-		courses: 10,
-		streak: 22,
-		achievements: 29,
-		joinedAt: "Sep 2025",
-		badges: [],
-	},
-	{
-		id: "8",
-		name: "Pedro Lima",
-		initials: "PL",
-		title: "ZK Researcher",
-		xp: 13_500,
-		level: 18,
-		courses: 9,
-		streak: 14,
-		achievements: 26,
-		joinedAt: "Nov 2025",
-		badges: ["rising-star"],
-	},
-];
-
 const BADGE_LABELS: Record<string, { icon: typeof Crown; color: string }> = {
 	"top-contributor": {
 		icon: Crown,
@@ -195,17 +88,15 @@ const BADGE_LABELS: Record<string, { icon: typeof Crown; color: string }> = {
 export default async function MembersPage() {
 	const t = await getTranslations("community");
 
-	// Fetch members from Sanity or use mock data
-	const allMembers = isSanityConfigured ? (await getAllMembers()).map(normalizeMember) : MEMBERS;
-	const topMembers = isSanityConfigured
-		? (await getTopMembers(5)).map(normalizeMember)
-		: MEMBERS.slice(0, 5);
+	// Fetch members from Sanity
+	const allMembers = isSanityConfigured ? (await getAllMembers()).map(normalizeMember) : [];
+	const topMembers = isSanityConfigured ? (await getTopMembers(5)).map(normalizeMember) : [];
 	const mentorMembers = isSanityConfigured
 		? (await getMembersByBadge("mentor")).map(normalizeMember)
-		: allMembers.filter((m) => m.badges.includes("mentor"));
+		: [];
 	const risingStarMembers = isSanityConfigured
 		? (await getMembersByBadge("rising-star")).map(normalizeMember)
-		: allMembers.filter((m) => m.badges.includes("rising-star"));
+		: [];
 
 	return (
 		<div className="space-y-8">
@@ -270,21 +161,57 @@ export default async function MembersPage() {
 				</TabsList>
 
 				<TabsContent value="all" className="space-y-3">
-					{allMembers.map((user, i) => (
-						<MemberRow key={user.id} member={user} rank={i + 1} t={t} />
-					))}
+					{allMembers.length > 0 ? (
+						allMembers.map((user, i) => (
+							<MemberRow key={user.id} member={user} rank={i + 1} t={t} />
+						))
+					) : (
+						<div className="text-center py-16 space-y-3">
+							<div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center mx-auto">
+								<Search className="h-6 w-6 text-muted-foreground" />
+							</div>
+							<h3 className="text-lg font-semibold">{t("members.empty")}</h3>
+							<p className="text-sm text-muted-foreground max-w-sm mx-auto">
+								{t("members.emptyDescription")}
+							</p>
+						</div>
+					)}
 				</TabsContent>
 
 				<TabsContent value="mentors" className="space-y-3">
-					{mentorMembers.map((user, i) => (
-						<MemberRow key={user.id} member={user} rank={i + 1} t={t} />
-					))}
+					{mentorMembers.length > 0 ? (
+						mentorMembers.map((user, i) => (
+							<MemberRow key={user.id} member={user} rank={i + 1} t={t} />
+						))
+					) : (
+						<div className="text-center py-16 space-y-3">
+							<div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center mx-auto">
+								<Award className="h-6 w-6 text-muted-foreground" />
+							</div>
+							<h3 className="text-lg font-semibold">{t("members.noMentors")}</h3>
+							<p className="text-sm text-muted-foreground max-w-sm mx-auto">
+								{t("members.noMentorsDescription")}
+							</p>
+						</div>
+					)}
 				</TabsContent>
 
 				<TabsContent value="rising" className="space-y-3">
-					{risingStarMembers.map((user, i) => (
-						<MemberRow key={user.id} member={user} rank={i + 1} t={t} />
-					))}
+					{risingStarMembers.length > 0 ? (
+						risingStarMembers.map((user, i) => (
+							<MemberRow key={user.id} member={user} rank={i + 1} t={t} />
+						))
+					) : (
+						<div className="text-center py-16 space-y-3">
+							<div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center mx-auto">
+								<Flame className="h-6 w-6 text-muted-foreground" />
+							</div>
+							<h3 className="text-lg font-semibold">{t("members.noRisingStars")}</h3>
+							<p className="text-sm text-muted-foreground max-w-sm mx-auto">
+								{t("members.noRisingStarsDescription")}
+							</p>
+						</div>
+					)}
 				</TabsContent>
 			</Tabs>
 		</div>
@@ -296,7 +223,7 @@ function MemberRow({
 	rank,
 	t,
 }: {
-	member: (typeof MEMBERS)[number];
+	member: NormalizedMember;
 	rank: number;
 	t: Awaited<ReturnType<typeof getTranslations<"community">>>;
 }) {

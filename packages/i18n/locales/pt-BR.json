@@ -2746,7 +2746,13 @@
 				"courses": "Cursos",
 				"streak": "Sequência",
 				"achievements": "Conquistas"
-			}
+			},
+			"empty": "Nenhum membro encontrado",
+			"emptyDescription": "Os membros aparecerão aqui assim que se juntarem à comunidade.",
+			"noMentors": "Nenhum mentor encontrado",
+			"noMentorsDescription": "Os mentores aparecerão aqui assim que se juntarem à comunidade.",
+			"noRisingStars": "Nenhuma estrela em ascensão encontrada",
+			"noRisingStarsDescription": "As estrelas em ascensão aparecerão aqui assim que se juntarem à comunidade."
 		},
 		"projects": {
 			"searchPlaceholder": "Buscar projetos...",

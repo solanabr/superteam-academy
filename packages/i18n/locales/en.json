@@ -2746,7 +2746,13 @@
 				"courses": "Courses",
 				"streak": "Streak",
 				"achievements": "Achievements"
-			}
+			},
+			"empty": "No members found",
+			"emptyDescription": "Members will appear here once they join the community.",
+			"noMentors": "No mentors found",
+			"noMentorsDescription": "Mentors will appear here once they join the community.",
+			"noRisingStars": "No rising stars found",
+			"noRisingStarsDescription": "Rising stars will appear here once they join the community."
 		},
 		"projects": {
 			"searchPlaceholder": "Search projects...",

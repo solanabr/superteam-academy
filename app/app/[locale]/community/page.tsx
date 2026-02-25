@@ -65,9 +65,12 @@ function formatRelativeTime(date: string): string {
 	return past.toLocaleDateString();
 }
 
-function normalizeDiscussion(d: Awaited<ReturnType<typeof getAllDiscussions>>[number]) {
+function normalizeDiscussion(
+	d: Awaited<ReturnType<typeof getAllDiscussions>>[number]
+): NormalizedDiscussion {
 	return {
 		id: d._id,
+		slug: typeof d.slug === "string" ? d.slug : d.slug?.current || d._id,
 		title: d.title,
 		excerpt: d.excerpt,
 		author: { name: d.author.name, initials: getInitials(d.author.name) },
@@ -85,6 +88,7 @@ function normalizeDiscussion(d: Awaited<ReturnType<typeof getAllDiscussions>>[nu
 const DISCUSSIONS = [
 	{
 		id: "1",
+		slug: "best-practices-for-pda-design-in-complex-programs",
 		title: "Best practices for PDA design in complex programs?",
 		excerpt:
 			"I'm building a multi-vault system and wondering about the best approach to PDA derivation when you have nested accounts that reference each other...",
@@ -100,6 +104,7 @@ const DISCUSSIONS = [
 	},
 	{
 		id: "2",
+		slug: "season-3-launch-zk-compression-track-everything-you-need-to-know",
 		title: "Season 3 Launch: ZK Compression Track — Everything you need to know",
 		excerpt:
 			"We're excited to announce the launch of our ZK Compression learning track. This track covers Light Protocol, compressed state, and building efficient dApps...",
@@ -115,6 +120,7 @@ const DISCUSSIONS = [
 	},
 	{
 		id: "3",
+		slug: "how-i-built-a-dex-aggregator-in-2-weeks-lessons-learned",
 		title: "How I built a DEX aggregator in 2 weeks — lessons learned",
 		excerpt:
 			"After completing the DeFi track, I decided to build a real DEX aggregator. Here's what I learned about routing algorithms, Jupiter integration, and CU optimization...",
@@ -130,6 +136,7 @@ const DISCUSSIONS = [
 	},
 	{
 		id: "4",
+		slug: "token-2022-transfer-hooks-when-to-use-them",
 		title: "Token-2022 transfer hooks: when to use them?",
 		excerpt:
 			"I'm confused about when transfer hooks are the right choice vs. just using a custom instruction. What are the tradeoffs in terms of CU cost and composability?",
@@ -145,6 +152,7 @@ const DISCUSSIONS = [
 	},
 	{
 		id: "5",
+		slug: "request-interactive-solana-explorer-in-course-labs",
 		title: "Request: Interactive Solana Explorer in course labs",
 		excerpt:
 			"It would be amazing to have a built-in explorer panel in the lab environment so we can inspect accounts and transactions without leaving the page...",
@@ -160,6 +168,7 @@ const DISCUSSIONS = [
 	},
 	{
 		id: "6",
+		slug: "study-group-anchor-masterclass-week-3-check-in",
 		title: "Study group: Anchor Masterclass — Week 3 check-in",
 		excerpt:
 			"Hey everyone! How's week 3 going? Let's share our progress on the PDAs and CPIs section. I found the CPI signing examples really helpful...",
@@ -175,6 +184,7 @@ const DISCUSSIONS = [
 	},
 	{
 		id: "7",
+		slug: "on-chain-credential-verification-my-experience-using-the-api",
 		title: "On-chain credential verification — my experience using the API",
 		excerpt:
 			"I integrated the credential verification API into my portfolio site. Here are some tips for displaying Metaplex Core NFT metadata correctly...",
@@ -384,12 +394,12 @@ function DiscussionRow({
 	discussion: d,
 	t,
 }: {
-	discussion: (typeof DISCUSSIONS)[number];
+	discussion: NormalizedDiscussion;
 	t: Awaited<ReturnType<typeof getTranslations<"community">>>;
 }) {
 	return (
 		<Link
-			href={`/community/discussions/${d.id}`}
+			href={`/community/discussions/${d.slug || d.id}`}
 			className="block rounded-2xl border border-border/60 bg-card p-5 hover:border-primary/40 transition-colors"
 		>
 			<div className="flex items-start gap-4">

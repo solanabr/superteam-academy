@@ -2746,7 +2746,13 @@
 				"courses": "Cursos",
 				"streak": "Racha",
 				"achievements": "Logros"
-			}
+			},
+			"empty": "No se encontraron miembros",
+			"emptyDescription": "Los miembros aparecerán aquí una vez que se unan a la comunidad.",
+			"noMentors": "No se encontraron mentores",
+			"noMentorsDescription": "Los mentores aparecerán aquí una vez que se unan a la comunidad.",
+			"noRisingStars": "No se encontraron estrellas emergentes",
+			"noRisingStarsDescription": "Las estrellas emergentes aparecerán aquí una vez que se unan a la comunidad."
 		},
 		"projects": {
 			"searchPlaceholder": "Buscar proyectos...",

@@ -16,7 +16,12 @@ export function CommunityNav({ items }: CommunityNavProps) {
 			<div className="mx-auto px-4 sm:px-6">
 				<nav className="flex gap-1 overflow-x-auto scrollbar-none -mb-px">
 					{items.map((item) => {
-						const isActive = pathname === item.href;
+						// Check if current path matches the nav item or is a sub-route
+						const isActive =
+							pathname === item.href ||
+							(item.href !== "/community" && pathname.startsWith(item.href)) ||
+							(item.href === "/community" &&
+								pathname.startsWith("/community/discussions"));
 
 						return (
 							<Link
