@@ -13,6 +13,8 @@ interface StreakState {
   currentStreak: number;
   longestStreak: number;
   lastActiveDate: string | null;
+  freezesAvailable: number;
+  freezeActiveDate: string | null;
 }
 
 interface EnrollmentData {
@@ -39,6 +41,7 @@ interface UserState {
   fetchUserData: (wallet: PublicKey) => Promise<void>;
   updateXp: (newXp: number) => void;
   updateStreak: () => void;
+  useFreeze: () => boolean;
   addEnrollment: (enrollment: EnrollmentData) => void;
   updateEnrollmentProgress: (courseId: string, completedLessons: number, totalLessons: number) => void;
   addCredential: (credential: Credential) => void;
@@ -50,10 +53,15 @@ export type { StreakState, EnrollmentData, UserState };
 
 const STREAK_STORAGE_KEY = 'superteam-streak';
 
+const FREEZE_MILESTONE_INTERVAL = 7;
+const DEFAULT_FREEZES = 1;
+
 const initialStreak: StreakState = {
   currentStreak: 0,
   longestStreak: 0,
   lastActiveDate: null,
+  freezesAvailable: DEFAULT_FREEZES,
+  freezeActiveDate: null,
 };
 
 const initialState = {
@@ -98,7 +106,17 @@ function loadPersistedStreak(): StreakState {
       typeof parsed.longestStreak === 'number' &&
       (parsed.lastActiveDate === null || typeof parsed.lastActiveDate === 'string')
     ) {
-      return parsed as StreakState;
+      return {
+        currentStreak: parsed.currentStreak,
+        longestStreak: parsed.longestStreak,
+        lastActiveDate: parsed.lastActiveDate,
+        freezesAvailable: typeof parsed.freezesAvailable === 'number'
+          ? parsed.freezesAvailable
+          : DEFAULT_FREEZES,
+        freezeActiveDate: typeof parsed.freezeActiveDate === 'string'
+          ? parsed.freezeActiveDate
+          : null,
+      };
     }
     return initialStreak;
   } catch {
@@ -211,13 +229,22 @@ export const useUserStore = create<UserState>((set, get) => ({
     const yesterday = yesterdayISO();
     let newStreak: StreakState;
 
-    if (streak.lastActiveDate === yesterday) {
-      // Consecutive day
+    // A freeze was used yesterday (covers the gap), so this is still consecutive
+    const frozeYesterday = streak.freezeActiveDate === yesterday;
+
+    if (streak.lastActiveDate === yesterday || frozeYesterday) {
+      // Consecutive day (either natural or freeze-protected)
       const next = streak.currentStreak + 1;
+      const earnedFreeze =
+        next > 0 &&
+        next % FREEZE_MILESTONE_INTERVAL === 0 &&
+        streak.currentStreak % FREEZE_MILESTONE_INTERVAL !== 0;
       newStreak = {
         currentStreak: next,
         longestStreak: Math.max(streak.longestStreak, next),
         lastActiveDate: today,
+        freezesAvailable: streak.freezesAvailable + (earnedFreeze ? 1 : 0),
+        freezeActiveDate: streak.freezeActiveDate,
       };
     } else {
       // First activity or gap — reset to 1
@@ -225,11 +252,33 @@ export const useUserStore = create<UserState>((set, get) => ({
         currentStreak: 1,
         longestStreak: Math.max(streak.longestStreak, 1),
         lastActiveDate: today,
+        freezesAvailable: streak.freezesAvailable,
+        freezeActiveDate: null,
       };
     }
 
     persistStreak(newStreak);
     set({ streak: newStreak });
+  },
+
+  useFreeze: () => {
+    const { streak } = get();
+    const today = todayISO();
+
+    // Cannot freeze if no freezes available, already active today, or already frozen today
+    if (streak.freezesAvailable <= 0) return false;
+    if (streak.lastActiveDate === today) return false;
+    if (streak.freezeActiveDate === today) return false;
+
+    const newStreak: StreakState = {
+      ...streak,
+      freezesAvailable: streak.freezesAvailable - 1,
+      freezeActiveDate: today,
+    };
+
+    persistStreak(newStreak);
+    set({ streak: newStreak });
+    return true;
   },
 
   addEnrollment: (enrollment) => {

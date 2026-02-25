@@ -184,6 +184,8 @@ describe('User Store — updateStreak', () => {
         currentStreak: 5,
         longestStreak: 5,
         lastActiveDate: yesterdayStr,
+        freezesAvailable: 1,
+        freezeActiveDate: null,
       },
     });
 
@@ -204,6 +206,8 @@ describe('User Store — updateStreak', () => {
         currentStreak: 10,
         longestStreak: 10,
         lastActiveDate: twoDaysAgoStr,
+        freezesAvailable: 1,
+        freezeActiveDate: null,
       },
     });
 
@@ -233,6 +237,8 @@ describe('User Store — updateStreak', () => {
         currentStreak: 3,
         longestStreak: 15,
         lastActiveDate: twoDaysAgo.toISOString().split('T')[0]!,
+        freezesAvailable: 1,
+        freezeActiveDate: null,
       },
     });
 
@@ -400,6 +406,8 @@ describe('User Store — reset', () => {
         currentStreak: 0,
         longestStreak: 0,
         lastActiveDate: null,
+        freezesAvailable: 1,
+        freezeActiveDate: null,
       }),
     );
   });

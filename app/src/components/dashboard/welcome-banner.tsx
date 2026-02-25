@@ -13,6 +13,9 @@ interface WelcomeBannerProps {
   levelTitle: string;
   currentStreak: number;
   longestStreak: number;
+  freezesAvailable: number;
+  isFreezeActiveToday: boolean;
+  onUseFreeze?: () => void;
   isLoading: boolean;
   className?: string;
 }
@@ -27,6 +30,9 @@ export function WelcomeBanner({
   levelTitle,
   currentStreak,
   longestStreak,
+  freezesAvailable,
+  isFreezeActiveToday,
+  onUseFreeze,
   isLoading,
   className,
 }: WelcomeBannerProps) {
@@ -96,6 +102,9 @@ export function WelcomeBanner({
           <StreakCounter
             currentStreak={currentStreak}
             longestStreak={longestStreak}
+            freezesAvailable={freezesAvailable}
+            isFreezeActiveToday={isFreezeActiveToday}
+            onUseFreeze={onUseFreeze}
           />
         )}
       </div>

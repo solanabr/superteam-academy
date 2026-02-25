@@ -32,7 +32,7 @@ export default function DashboardPage() {
   const storeLoading = useUserStore((s) => s.isLoading);
 
   const { xp, level, progress, levelTitle, isLoading: xpLoading } = useXp();
-  const { currentStreak, longestStreak } = useStreak();
+  const { currentStreak, longestStreak, freezesAvailable, isFreezeActiveToday, useFreeze } = useStreak();
   const { achievements, isLoading: achievementsLoading } = useAchievements();
   const { credentials, isLoading: credentialsLoading } = useCredentials();
 
@@ -63,6 +63,9 @@ export default function DashboardPage() {
         levelTitle={levelTitle}
         currentStreak={currentStreak}
         longestStreak={longestStreak}
+        freezesAvailable={freezesAvailable}
+        isFreezeActiveToday={isFreezeActiveToday}
+        onUseFreeze={useFreeze}
         isLoading={isLoading}
       />
 
