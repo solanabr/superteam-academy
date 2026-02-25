@@ -5,9 +5,11 @@ import {
   BookOpen, Clock, Users, Zap, Star, CheckCircle, ChevronRight,
   Play, Lock, Award, BarChart2, ArrowLeft, GraduationCap
 } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { cn } from '@/lib/utils';
 import { localePath } from '@/lib/paths';
-import EnrollButton from '@/components/EnrollButton';
+
+const EnrollButton = dynamic(() => import('@/components/EnrollButton'), { ssr: false });
 
 const L = (obj: Record<string, string>, locale: string) => obj[locale] ?? obj['pt-BR'];
 

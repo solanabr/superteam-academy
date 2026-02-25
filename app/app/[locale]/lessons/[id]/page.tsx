@@ -227,7 +227,7 @@ export default function LessonPage() {
   return (
     <div className="flex h-[calc(100vh-4rem)] bg-gray-950 text-gray-100 overflow-hidden">
       {/* Sidebar */}
-      <div className="hidden lg:flex w-72 flex-col border-r border-gray-800 bg-gray-900/60 overflow-y-auto shrink-0">
+      <div data-testid="lesson-sidebar" className="hidden lg:flex w-72 flex-col border-r border-gray-800 bg-gray-900/60 overflow-y-auto shrink-0">
         <div className="p-4 border-b border-gray-800">
           <Link
             href={localePath(locale, '/courses/intro-solana')}

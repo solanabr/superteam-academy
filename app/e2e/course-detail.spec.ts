@@ -114,7 +114,7 @@ test.describe('Lesson viewer', () => {
   test('lesson sidebar is present', async ({ page }) => {
     await page.goto('/en/lessons/intro-1');
     // Sidebar is hidden on mobile (hidden lg:flex) — check DOM presence
-    const sidebar = page.locator('[class*="sidebar"], aside').first();
+    const sidebar = page.locator('[data-testid="lesson-sidebar"]').first();
     await expect(sidebar).toBeAttached();
     await expect(page.locator('main h1, main h2, main p').first()).toBeVisible();
   });

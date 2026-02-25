@@ -24,7 +24,7 @@ test.describe('Admin access control', () => {
   test('shows admin panel in demo mode (no wallet connected)', async ({ page }) => {
     await page.goto(ADMIN_URL);
     await waitForDashboard(page);
-    await expect(page.locator('text=Admin Dashboard, text=Panel de Administración, text=Painel Administrativo').first())
+    await expect(page.locator(':text-matches("Admin Dashboard|Panel de Administración|Painel Administrativo")').first())
       .toBeVisible()
       .catch(() => {
         // If access denied is shown, that's also valid behavior
@@ -56,7 +56,7 @@ test.describe('Admin tab navigation', () => {
 
   test('Overview tab is active by default', async ({ page }) => {
     // KPI cards should be visible on overview
-    const overviewContent = page.locator('text=Total Learners, text=Total de Alunos').first();
+    const overviewContent = page.locator(':text-matches("Total Learners|Total de Alunos|Total de Alumnos")').first();
     await expect(overviewContent).toBeVisible();
   });
 
@@ -69,7 +69,7 @@ test.describe('Admin tab navigation', () => {
 
   test('Users tab renders top learners', async ({ page }) => {
     await page.locator('button', { hasText: /Users|Usuários|Usuarios/ }).click();
-    await expect(page.locator('text=Top Learners, text=Melhores Alunos, text=Mejores Alumnos').first()).toBeVisible();
+    await expect(page.locator(':text-matches("Top Learners|Melhores Alunos|Mejores Alumnos")').first()).toBeVisible();
     // Should have a table
     await expect(page.locator('table')).toBeVisible();
   });
@@ -77,14 +77,14 @@ test.describe('Admin tab navigation', () => {
   test('Moderation tab renders flagged posts', async ({ page }) => {
     await page.locator('button', { hasText: /Moderation|Moderação|Moderación/ }).click();
     // Should show pending reports count or all-clear
-    const reportBadge = page.locator('text=pending, text=pendentes, text=pendientes').first();
-    const allClear = page.locator('text=All Clear, text=Tudo Limpo, text=Todo Limpio').first();
+    const reportBadge = page.locator(':text-matches("pending|pendentes|pendientes")').first();
+    const allClear = page.locator(':text-matches("All Clear|Tudo Limpo|Todo Limpio")').first();
     await expect(reportBadge.or(allClear)).toBeVisible();
   });
 
   test('System tab shows health grid', async ({ page }) => {
     await page.locator('button', { hasText: /System|Sistema/ }).click();
-    await expect(page.locator('text=Online, text=En Línea').first()).toBeVisible();
+    await expect(page.locator(':text-matches("Online|En Línea")').first()).toBeVisible();
   });
 });
 
@@ -135,13 +135,13 @@ test.describe('Admin content moderation', () => {
     const approveButton = page.locator('button', { hasText: /Approve|Aprovar|Aprobar/ }).first();
     await approveButton.click();
     // Should now show "Approved" label
-    await expect(page.locator('text=Approved, text=Aprovado, text=Aprobado').first()).toBeVisible();
+    await expect(page.locator(':text-matches("Approved|Aprovado|Aprobado")').first()).toBeVisible();
   });
 
   test('removing a post updates its status', async ({ page }) => {
     const removeButton = page.locator('button', { hasText: /Remove|Remover|Eliminar/ }).first();
     await removeButton.click();
-    await expect(page.locator('text=Removed, text=Removido, text=Eliminado').first()).toBeVisible();
+    await expect(page.locator(':text-matches("Removed|Removido|Eliminado")').first()).toBeVisible();
   });
 
   test('all-clear state shown after all posts actioned', async ({ page }) => {
@@ -152,7 +152,7 @@ test.describe('Admin content moderation', () => {
         await approveBtn.click();
       }
     }
-    await expect(page.locator('text=All Clear, text=Tudo Limpo, text=Todo Limpio').first()).toBeVisible();
+    await expect(page.locator(':text-matches("All Clear|Tudo Limpo|Todo Limpio")').first()).toBeVisible();
   });
 });
 
@@ -164,7 +164,7 @@ test.describe('Admin system tab', () => {
   });
 
   test('all 6 system services shown as online', async ({ page }) => {
-    const onlineIndicators = page.locator('text=Online, text=En Línea');
+    const onlineIndicators = page.locator(':text-matches("Online|En Línea")');
     await expect(onlineIndicators).toHaveCount(6);
   });
 

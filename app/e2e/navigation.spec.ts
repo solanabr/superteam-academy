@@ -50,16 +50,21 @@ test.describe('Locale routing', () => {
       }
     }
 
+    // clickLocale: on mobile the menu button has no aria-label, so use last() to pick the mobile menu button
+    async function clickLocale(label: string) {
+      await page.locator('button', { hasText: label }).last().click();
+    }
+
     await openMobileMenu();
-    await page.locator('button', { hasText: 'EN' }).click();
+    await clickLocale('EN');
     await expect(page).toHaveURL(/\/en/);
 
     await openMobileMenu();
-    await page.locator('button', { hasText: 'ES' }).click();
+    await clickLocale('ES');
     await expect(page).toHaveURL(/\/es/);
 
     await openMobileMenu();
-    await page.locator('button', { hasText: 'PT' }).click();
+    await clickLocale('PT');
     await expect(page).toHaveURL(/\/pt-BR/);
   });
 });
