@@ -110,7 +110,7 @@ export class LocalStorageProgressService implements LearningProgressService {
     challengeService.updateProgress(userId, "maintain_streak", 1);
   }
 
-  // --- Enrollment (stubbed — localStorage) ---
+  // --- Enrollment (localStorage + on-chain via /api/enroll) ---
 
   async enrollInCourse(userId: string, courseId: string): Promise<void> {
     const course = courses.find((c) => c.id === courseId);
@@ -124,6 +124,24 @@ export class LocalStorageProgressService implements LearningProgressService {
 
     // Update daily challenge progress
     challengeService.updateProgress(userId, "enroll_course", 1);
+
+    // Attempt on-chain enrollment (non-blocking, graceful degradation)
+    this.tryOnChainEnroll(userId, courseId);
+  }
+
+  private async tryOnChainEnroll(
+    learner: string,
+    courseId: string,
+  ): Promise<void> {
+    try {
+      await fetch("/api/enroll", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ learner, courseId }),
+      });
+    } catch {
+      // Non-critical: on-chain enrollment is also handled by enroll-section.tsx
+    }
   }
 
   async unenrollFromCourse(userId: string, courseId: string): Promise<void> {
@@ -299,7 +317,8 @@ export class LocalStorageProgressService implements LearningProgressService {
   async getLeaderboard(
     timeframe: "weekly" | "monthly" | "alltime",
   ): Promise<LeaderboardEntry[]> {
-    return fetchLeaderboard(timeframe);
+    const { entries } = await fetchLeaderboard(timeframe);
+    return entries;
   }
 
   // --- Credentials (real on-chain read — ZK Compressed credentials (Light Protocol, Photon indexer)) ---

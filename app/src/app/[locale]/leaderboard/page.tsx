@@ -6,360 +6,8 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { getLeaderboard } from "@/lib/services/leaderboard";
+import { getDemoEntries } from "@/lib/services/leaderboard-demo";
 import type { LeaderboardEntry } from "@/lib/services/types";
-
-const DEMO_ENTRIES_ALL_TIME: LeaderboardEntry[] = [
-  {
-    rank: 1,
-    wallet: "7Rq1...dK4f",
-    displayName: "SolDev.eth",
-    xp: 4250,
-    level: 6,
-    streak: 31,
-    coursesCompleted: 12,
-  },
-  {
-    rank: 2,
-    wallet: "Bx9Y...mP2r",
-    displayName: "AnchorMaster",
-    xp: 3800,
-    level: 6,
-    streak: 18,
-    coursesCompleted: 10,
-  },
-  {
-    rank: 3,
-    wallet: "Dk3W...nL7s",
-    displayName: "RustyCoder",
-    xp: 3200,
-    level: 5,
-    streak: 24,
-    coursesCompleted: 8,
-  },
-  {
-    rank: 4,
-    wallet: "Fs5K...vQ9a",
-    displayName: "DeFiDegen42",
-    xp: 2900,
-    level: 5,
-    streak: 12,
-    coursesCompleted: 7,
-  },
-  {
-    rank: 5,
-    wallet: "Hm7R...bT4c",
-    displayName: "Web3Builder",
-    xp: 2650,
-    level: 5,
-    streak: 15,
-    coursesCompleted: 6,
-  },
-  {
-    rank: 6,
-    wallet: "Jt2E...kW8d",
-    displayName: "SolanaNoob",
-    xp: 2100,
-    level: 4,
-    streak: 9,
-    coursesCompleted: 5,
-  },
-  {
-    rank: 7,
-    wallet: "Lp4G...yX3f",
-    displayName: "ChainLink_Dev",
-    xp: 1800,
-    level: 4,
-    streak: 7,
-    coursesCompleted: 4,
-  },
-  {
-    rank: 8,
-    wallet: "Nq6I...zR5h",
-    displayName: "TokenWizard",
-    xp: 1500,
-    level: 3,
-    streak: 14,
-    coursesCompleted: 4,
-  },
-  {
-    rank: 9,
-    wallet: "Ps8K...aT7j",
-    displayName: "CryptoLearner",
-    xp: 1200,
-    level: 3,
-    streak: 5,
-    coursesCompleted: 3,
-  },
-  {
-    rank: 10,
-    wallet: "Rv1M...bU9l",
-    displayName: "BlockchainBob",
-    xp: 900,
-    level: 3,
-    streak: 3,
-    coursesCompleted: 2,
-  },
-  {
-    rank: 11,
-    wallet: "Tx3O...cV2n",
-    displayName: "SolProgrammer",
-    xp: 750,
-    level: 2,
-    streak: 8,
-    coursesCompleted: 2,
-  },
-  {
-    rank: 12,
-    wallet: "Vz5Q...dW4p",
-    displayName: "AnchorDev99",
-    xp: 600,
-    level: 2,
-    streak: 2,
-    coursesCompleted: 2,
-  },
-  {
-    rank: 13,
-    wallet: "Xb7S...eX6r",
-    displayName: "RustBeginner",
-    xp: 450,
-    level: 2,
-    streak: 6,
-    coursesCompleted: 1,
-  },
-  {
-    rank: 14,
-    wallet: "Zd9U...fY8t",
-    displayName: "NewToSolana",
-    xp: 300,
-    level: 1,
-    streak: 1,
-    coursesCompleted: 1,
-  },
-  {
-    rank: 15,
-    wallet: "Bf2W...gZ1v",
-    displayName: "Web3Student",
-    xp: 150,
-    level: 1,
-    streak: 4,
-    coursesCompleted: 1,
-  },
-];
-
-const DEMO_ENTRIES_WEEKLY: LeaderboardEntry[] = [
-  {
-    rank: 1,
-    wallet: "Dk3W...nL7s",
-    displayName: "RustyCoder",
-    xp: 820,
-    level: 5,
-    streak: 24,
-    coursesCompleted: 2,
-  },
-  {
-    rank: 2,
-    wallet: "Hm7R...bT4c",
-    displayName: "Web3Builder",
-    xp: 690,
-    level: 5,
-    streak: 15,
-    coursesCompleted: 1,
-  },
-  {
-    rank: 3,
-    wallet: "7Rq1...dK4f",
-    displayName: "SolDev.eth",
-    xp: 540,
-    level: 6,
-    streak: 31,
-    coursesCompleted: 1,
-  },
-  {
-    rank: 4,
-    wallet: "Nq6I...zR5h",
-    displayName: "TokenWizard",
-    xp: 480,
-    level: 3,
-    streak: 14,
-    coursesCompleted: 1,
-  },
-  {
-    rank: 5,
-    wallet: "Bx9Y...mP2r",
-    displayName: "AnchorMaster",
-    xp: 350,
-    level: 6,
-    streak: 18,
-    coursesCompleted: 1,
-  },
-  {
-    rank: 6,
-    wallet: "Tx3O...cV2n",
-    displayName: "SolProgrammer",
-    xp: 290,
-    level: 2,
-    streak: 8,
-    coursesCompleted: 1,
-  },
-  {
-    rank: 7,
-    wallet: "Fs5K...vQ9a",
-    displayName: "DeFiDegen42",
-    xp: 210,
-    level: 5,
-    streak: 12,
-    coursesCompleted: 0,
-  },
-  {
-    rank: 8,
-    wallet: "Xb7S...eX6r",
-    displayName: "RustBeginner",
-    xp: 180,
-    level: 2,
-    streak: 6,
-    coursesCompleted: 0,
-  },
-  {
-    rank: 9,
-    wallet: "Jt2E...kW8d",
-    displayName: "SolanaNoob",
-    xp: 120,
-    level: 4,
-    streak: 9,
-    coursesCompleted: 0,
-  },
-  {
-    rank: 10,
-    wallet: "Bf2W...gZ1v",
-    displayName: "Web3Student",
-    xp: 90,
-    level: 1,
-    streak: 4,
-    coursesCompleted: 0,
-  },
-];
-
-const DEMO_ENTRIES_MONTHLY: LeaderboardEntry[] = [
-  {
-    rank: 1,
-    wallet: "7Rq1...dK4f",
-    displayName: "SolDev.eth",
-    xp: 1850,
-    level: 6,
-    streak: 31,
-    coursesCompleted: 5,
-  },
-  {
-    rank: 2,
-    wallet: "Dk3W...nL7s",
-    displayName: "RustyCoder",
-    xp: 1620,
-    level: 5,
-    streak: 24,
-    coursesCompleted: 4,
-  },
-  {
-    rank: 3,
-    wallet: "Bx9Y...mP2r",
-    displayName: "AnchorMaster",
-    xp: 1400,
-    level: 6,
-    streak: 18,
-    coursesCompleted: 3,
-  },
-  {
-    rank: 4,
-    wallet: "Hm7R...bT4c",
-    displayName: "Web3Builder",
-    xp: 1280,
-    level: 5,
-    streak: 15,
-    coursesCompleted: 3,
-  },
-  {
-    rank: 5,
-    wallet: "Nq6I...zR5h",
-    displayName: "TokenWizard",
-    xp: 980,
-    level: 3,
-    streak: 14,
-    coursesCompleted: 2,
-  },
-  {
-    rank: 6,
-    wallet: "Fs5K...vQ9a",
-    displayName: "DeFiDegen42",
-    xp: 850,
-    level: 5,
-    streak: 12,
-    coursesCompleted: 2,
-  },
-  {
-    rank: 7,
-    wallet: "Jt2E...kW8d",
-    displayName: "SolanaNoob",
-    xp: 720,
-    level: 4,
-    streak: 9,
-    coursesCompleted: 2,
-  },
-  {
-    rank: 8,
-    wallet: "Tx3O...cV2n",
-    displayName: "SolProgrammer",
-    xp: 540,
-    level: 2,
-    streak: 8,
-    coursesCompleted: 1,
-  },
-  {
-    rank: 9,
-    wallet: "Lp4G...yX3f",
-    displayName: "ChainLink_Dev",
-    xp: 460,
-    level: 4,
-    streak: 7,
-    coursesCompleted: 1,
-  },
-  {
-    rank: 10,
-    wallet: "Xb7S...eX6r",
-    displayName: "RustBeginner",
-    xp: 320,
-    level: 2,
-    streak: 6,
-    coursesCompleted: 1,
-  },
-  {
-    rank: 11,
-    wallet: "Ps8K...aT7j",
-    displayName: "CryptoLearner",
-    xp: 250,
-    level: 3,
-    streak: 5,
-    coursesCompleted: 1,
-  },
-  {
-    rank: 12,
-    wallet: "Bf2W...gZ1v",
-    displayName: "Web3Student",
-    xp: 150,
-    level: 1,
-    streak: 4,
-    coursesCompleted: 0,
-  },
-];
-
-function getDemoEntries(timeframe: string): LeaderboardEntry[] {
-  switch (timeframe) {
-    case "weekly":
-      return DEMO_ENTRIES_WEEKLY;
-    case "monthly":
-      return DEMO_ENTRIES_MONTHLY;
-    default:
-      return DEMO_ENTRIES_ALL_TIME;
-  }
-}
 
 const TRACK_FILTERS = [
   { key: "all", label: "allTracks" },
@@ -423,6 +71,7 @@ export default function LeaderboardPage() {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDemo, setIsDemo] = useState(false);
+  const [snapshotUnavailable, setSnapshotUnavailable] = useState(false);
   const [expandedLeader, setExpandedLeader] = useState<number | null>(null);
   const [hoveredEntry, setHoveredEntry] = useState<number | null>(null);
   const [mobile, setMobile] = useState(false);
@@ -445,9 +94,27 @@ export default function LeaderboardPage() {
 
   useEffect(() => {
     setLoading(true);
-    getLeaderboard(timeframe).then((data) => {
-      setEntries(data.length > 0 ? data : getDemoEntries(timeframe));
-      setIsDemo(data.length === 0);
+    getLeaderboard(timeframe).then(({ entries: data, snapshotDataAvailable }) => {
+      if (data.length > 0) {
+        setEntries(data);
+        setIsDemo(false);
+        setSnapshotUnavailable(false);
+      } else if (!snapshotDataAvailable && timeframe !== "alltime") {
+        // No snapshot data yet — show all-time as fallback with notice
+        setSnapshotUnavailable(true);
+        setIsDemo(false);
+        // Re-fetch all-time data as fallback
+        getLeaderboard("alltime").then(({ entries: fallback }) => {
+          setEntries(fallback.length > 0 ? fallback : getDemoEntries(timeframe));
+          setIsDemo(fallback.length === 0);
+          setLoading(false);
+        });
+        return;
+      } else {
+        setEntries(getDemoEntries(timeframe));
+        setIsDemo(true);
+        setSnapshotUnavailable(false);
+      }
       setLoading(false);
     });
   }, [timeframe]);
@@ -477,6 +144,27 @@ export default function LeaderboardPage() {
           }}
         >
           {t("demoBanner")}
+        </div>
+      )}
+
+      {/* Snapshot data unavailable notice for weekly/monthly */}
+      {snapshotUnavailable && !loading && (
+        <div
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: "10px",
+            letterSpacing: "2px",
+            color: "var(--xp)",
+            textAlign: "center",
+            padding: mobile ? "12px 20px" : "12px 40px",
+            textTransform: "uppercase",
+            borderBottom: "1px solid var(--c-border-subtle)",
+          }}
+        >
+          {t("snapshotUnavailable", {
+            defaultMessage:
+              "Time-filtered rankings will be available once enough XP snapshot data is collected. Showing all-time data.",
+          })}
         </div>
       )}
 

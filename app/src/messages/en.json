@@ -228,6 +228,7 @@
     "noLearnersYet": "No learners yet",
     "noLearnersDesc": "Leaderboard data will appear as learners earn XP.",
     "demoBanner": "DEMO DATA · CONNECT WALLET FOR LIVE RANKINGS",
+    "snapshotUnavailable": "TIME-FILTERED RANKINGS WILL BE AVAILABLE ONCE ENOUGH XP SNAPSHOT DATA IS COLLECTED. SHOWING ALL-TIME DATA.",
     "buildersCount": "{count} BUILDERS · RANKED BY ON-CHAIN XP · UPDATED LIVE",
     "thisWeek": "THIS WEEK",
     "thisMonth": "THIS MONTH",
@@ -390,6 +391,9 @@
     "deployed": "deployed",
     "hit": "hit",
     "completed": "completed",
+    "finalized": "finalized",
+    "receivedCredentialFor": "received credential for",
+    "enrolledIn": "enrolled in",
     "dayStreak": "{count} Day Streak",
     "badge": "Badge",
     "streakLabel": "{count} Day Streak"
@@ -699,8 +703,58 @@
     "intermediate": "Intermediate",
     "advanced": "Advanced"
   },
+  "cookieConsent": {
+    "description": "We use cookies for analytics to improve your experience.",
+    "accept": "Accept",
+    "decline": "Decline",
+    "ariaLabel": "Cookie consent"
+  },
+  "errors": {
+    "title": "Something went wrong",
+    "description": "An unexpected error occurred. Please try again or return to the home page.",
+    "tryAgain": "Try again",
+    "details": "Details",
+    "goHome": "Go home",
+    "dashboardTitle": "Failed to load dashboard",
+    "dashboardDescription": "Something went wrong while loading your dashboard.",
+    "adminTitle": "Failed to load admin panel",
+    "adminDescription": "Something went wrong while loading the admin dashboard.",
+    "coursesTitle": "Failed to load courses",
+    "coursesDescription": "Something went wrong while loading the course catalog.",
+    "certificatesTitle": "Failed to load certificates",
+    "certificatesDescription": "Something went wrong while loading your certificates.",
+    "communityTitle": "Failed to load community",
+    "communityDescription": "Something went wrong while loading the community forums.",
+    "leaderboardTitle": "Failed to load leaderboard",
+    "leaderboardDescription": "Something went wrong while loading the leaderboard.",
+    "onboardingTitle": "Failed to load onboarding",
+    "onboardingDescription": "Something went wrong while setting up your account.",
+    "profileTitle": "Failed to load profile",
+    "profileDescription": "Something went wrong while loading the profile.",
+    "settingsTitle": "Failed to load settings",
+    "settingsDescription": "Something went wrong while loading your settings."
+  },
+  "streakCalendar": {
+    "dayStreak": "day streak",
+    "best": "Best:",
+    "freezes": "freezes",
+    "less": "Less",
+    "more": "More"
+  },
   "metadata": {
     "title": "Superteam Academy | Master Solana Development",
-    "description": "The gamified learning platform for Solana developers. Earn XP, collect on-chain credentials, and level up your skills."
+    "description": "The gamified learning platform for Solana developers. Earn XP, collect on-chain credentials, and level up your skills.",
+    "coursesTitle": "Courses",
+    "coursesDescription": "Browse Solana development courses. Learn Rust, Anchor, DeFi, and more with hands-on coding challenges.",
+    "dashboardTitle": "Dashboard",
+    "dashboardDescription": "Track your Solana learning progress, XP, streaks, and achievements on your personalized dashboard.",
+    "leaderboardTitle": "Leaderboard",
+    "leaderboardDescription": "See the top Solana developers ranked by XP. Compete with other learners and climb the leaderboard.",
+    "settingsTitle": "Settings",
+    "settingsDescription": "Manage your Superteam Academy account settings, display preferences, and wallet configuration.",
+    "credentialsTitle": "Credentials",
+    "credentialsDescription": "View your verifiable on-chain credentials. Certificates earned through Solana development courses.",
+    "profileTitle": "Profile",
+    "profileDescription": "View your Solana developer profile. Track skills, credentials, achievements, and learning activity."
   }
 }

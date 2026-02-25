@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useActivityFeed } from "@/lib/hooks/use-activity-feed";
 import type { ActivityEvent } from "@/lib/services/activity-feed-service";
 
@@ -7,16 +8,18 @@ interface LiveTickerProps {
   className?: string;
 }
 
-const ACTION_LABELS: Record<string, string> = {
+const ACTION_KEYS: Record<string, string> = {
   lesson_complete: "completed",
   course_finalize: "finalized",
   xp_earned: "earned",
-  credential_issued: "received credential for",
-  enrollment: "enrolled in",
+  credential_issued: "receivedCredentialFor",
+  enrollment: "enrolledIn",
 };
 
 function TickerItem({ event }: { event: ActivityEvent }) {
-  const actionLabel = ACTION_LABELS[event.type] ?? event.type;
+  const t = useTranslations("ticker");
+  const key = ACTION_KEYS[event.type];
+  const actionLabel = key ? t(key) : event.type;
   return (
     <div className="flex items-center gap-3 mx-6 shrink-0">
       <div

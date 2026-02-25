@@ -4,8 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
-import dynamic from "next/dynamic";
-import { Check, Loader2 } from "lucide-react";
+import { Check } from "lucide-react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { learningService } from "@/lib/services/learning-progress";
 import { Panel, Group, Separator } from "react-resizable-panels";
@@ -17,28 +16,13 @@ import {
   transpileAndProtect,
   runTestAssertions,
 } from "@/lib/code-executor";
-import { setupMonacoTheme } from "@/lib/utils/monaco-theme";
 import { V9ChallengeSidebar } from "./challenge-sidebar";
 import { CourseCompleteOverlay } from "./course-complete-overlay";
+import { ChallengeEditor } from "./challenge-editor";
+import { ChallengeOutput } from "./challenge-output";
 import type { Lesson, Module } from "@/lib/services/types";
 
 const lazyConfetti = () => import("canvas-confetti").then((m) => m.default);
-
-const MonacoEditor = dynamic(() => import("@monaco-editor/react"), {
-  ssr: false,
-  loading: () => (
-    <div className="flex-1 flex items-center justify-center bg-[var(--c-bg)]">
-      <Loader2 className="h-5 w-5 animate-spin text-[var(--c-text-faint)]" />
-    </div>
-  ),
-});
-
-const MONACO_LANG_MAP: Record<string, string> = {
-  rust: "rust",
-  typescript: "typescript",
-  javascript: "javascript",
-  json: "json",
-};
 
 const FILE_NAME_MAP: Record<string, string> = {
   rust: "main.rs",
@@ -72,7 +56,8 @@ export function LessonChallenge({
     lessonIndex < allLessons.length - 1 ? allLessons[lessonIndex + 1] : null;
   const isLastLesson = !nextLesson;
 
-  const fileName = FILE_NAME_MAP[lesson.challenge?.language ?? "typescript"] ?? "index.ts";
+  const language = lesson.challenge?.language ?? "typescript";
+  const fileName = FILE_NAME_MAP[language] ?? "index.ts";
   const doneCount = allLessons.filter((_, i) => i < lessonIndex).length;
 
   const [code, setCode] = useState(() => {
@@ -308,6 +293,22 @@ export function LessonChallenge({
     }
   }, [slug, walletAddress, course]);
 
+  const editorPanel = (
+    <>
+      <ChallengeEditor
+        code={code}
+        onChange={setCode}
+        language={language}
+        fileName={fileName}
+      />
+      <ChallengeOutput
+        testResults={testResults}
+        logs={output}
+        isRunning={isRunning}
+      />
+    </>
+  );
+
   return (
     <div
       style={{
@@ -521,7 +522,6 @@ export function LessonChallenge({
       >
         {isMobile ? (
           <div style={{ display: "flex", height: "100%" }}>
-            {/* Instructions (mobile) */}
             <div
               style={{
                 background: "var(--background)",
@@ -533,7 +533,6 @@ export function LessonChallenge({
             >
               <InstructionsContent lesson={lesson} testResults={testResults} showHints={showHints} setShowHints={setShowHints} showSolution={showSolution} setShowSolution={setShowSolution} t={t} />
             </div>
-            {/* Code Editor (mobile) */}
             <div
               style={{
                 background: "var(--code-bg)",
@@ -543,7 +542,7 @@ export function LessonChallenge({
                 width: "100%",
               }}
             >
-              <EditorContent fileName={fileName} lesson={lesson} code={code} setCode={setCode} isRunning={isRunning} output={output} t={t} />
+              {editorPanel}
             </div>
           </div>
         ) : (
@@ -582,7 +581,7 @@ export function LessonChallenge({
                   height: "100%",
                 }}
               >
-                <EditorContent fileName={fileName} lesson={lesson} code={code} setCode={setCode} isRunning={isRunning} output={output} t={t} />
+                {editorPanel}
               </div>
             </Panel>
           </Group>
@@ -601,6 +600,7 @@ export function LessonChallenge({
           borderTop: "1px solid var(--c-border-subtle)",
           height: 40,
           gap: 8,
+          overflowX: "auto",
         }}
       >
         <div
@@ -755,8 +755,6 @@ export function LessonChallenge({
   );
 }
 
-/* Sub-components extracted to avoid duplication between mobile/desktop layouts */
-
 function InstructionsContent({
   lesson,
   testResults,
@@ -848,84 +846,6 @@ function InstructionsContent({
           )}
         </>
       )}
-    </>
-  );
-}
-
-function EditorContent({
-  fileName,
-  lesson,
-  code,
-  setCode,
-  isRunning,
-  output,
-  t,
-}: {
-  fileName: string;
-  lesson: Lesson;
-  code: string;
-  setCode: (v: string) => void;
-  isRunning: boolean;
-  output: string;
-  t: ReturnType<typeof useTranslations>;
-}) {
-  return (
-    <>
-      <div style={{ display: "flex", alignItems: "center", height: 34, background: "rgba(255,255,255,0.04)", borderBottom: "1px solid rgba(255,255,255,0.04)", padding: "0 12px", flexShrink: 0 }}>
-        <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "rgba(255,255,255,0.8)", padding: "7px 14px", position: "relative" as const }}>
-          {fileName}
-          <div style={{ position: "absolute" as const, bottom: -1, left: 10, right: 10, height: 2, background: "var(--nd-highlight-orange)" }} />
-        </div>
-      </div>
-
-      <div style={{ flex: 1, minHeight: 0, position: "relative" as const }}>
-        <MonacoEditor
-          height="100%"
-          language={MONACO_LANG_MAP[lesson.challenge?.language ?? "typescript"] ?? "typescript"}
-          theme="academy"
-          value={code}
-          onChange={(v) => setCode(v ?? "")}
-          beforeMount={setupMonacoTheme}
-          options={{
-            minimap: { enabled: false },
-            fontSize: 12.5,
-            fontFamily: "var(--font-mono)",
-            padding: { top: 14, bottom: 14 },
-            scrollBeyondLastLine: false,
-            wordWrap: "on",
-            smoothScrolling: true,
-            cursorSmoothCaretAnimation: "on",
-            cursorBlinking: "smooth",
-            renderLineHighlight: "line",
-            lineHeight: 21,
-            lineNumbers: "on",
-            lineNumbersMinChars: 3,
-            suggestOnTriggerCharacters: true,
-            quickSuggestions: true,
-            wordBasedSuggestions: "currentDocument",
-            formatOnPaste: true,
-            tabCompletion: "on",
-          }}
-        />
-      </div>
-
-      <div style={{ background: "rgba(0,0,0,0.3)", borderTop: "1px solid rgba(255,255,255,0.04)", padding: "10px 14px", minHeight: 56, maxHeight: 100, overflowY: "auto" as const, fontFamily: "var(--font-mono)", fontSize: 11.5, color: "rgba(255,255,255,0.4)", lineHeight: 1.5, whiteSpace: "pre-wrap" as const, flexShrink: 0 }}>
-        {isRunning && (
-          <span style={{ animation: "sa-pulse 0.8s infinite" }}>{t("running")}</span>
-        )}
-        {output && !isRunning && (
-          <span>
-            {output.split("\n").map((line, i) => (
-              <div key={i} style={{ color: line.toLowerCase().includes("error") ? "#EF4444" : line.toLowerCase().includes("success") || line.toLowerCase().includes("compiled") ? "#14F195" : "rgba(255,255,255,0.4)" }}>
-                {line}
-              </div>
-            ))}
-          </span>
-        )}
-        {!output && !isRunning && (
-          <span style={{ opacity: 0.35 }}>{t("outputPlaceholder")}</span>
-        )}
-      </div>
     </>
   );
 }

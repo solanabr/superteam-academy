@@ -228,6 +228,7 @@
     "noLearnersYet": "Aun no hay aprendices",
     "noLearnersDesc": "Los datos de la clasificacion apareceran cuando los aprendices ganen XP.",
     "demoBanner": "DATOS DEMO · CONECTA TU BILLETERA PARA RANKING EN VIVO",
+    "snapshotUnavailable": "LOS RANKINGS FILTRADOS POR TIEMPO ESTARAN DISPONIBLES CUANDO SE RECOPILEN SUFICIENTES DATOS DE XP. MOSTRANDO DATOS DE TODOS LOS TIEMPOS.",
     "buildersCount": "{count} BUILDERS · RANKING POR XP ON-CHAIN · EN VIVO",
     "thisWeek": "ESTA SEMANA",
     "thisMonth": "ESTE MES",
@@ -390,6 +391,9 @@
     "deployed": "desplego",
     "hit": "alcanzo",
     "completed": "completo",
+    "finalized": "finalizo",
+    "receivedCredentialFor": "recibio credencial de",
+    "enrolledIn": "se inscribio en",
     "dayStreak": "Racha de {count} Dias",
     "badge": "Insignia",
     "streakLabel": "Racha de {count} Dias"
@@ -699,8 +703,58 @@
     "intermediate": "Intermedio",
     "advanced": "Avanzado"
   },
+  "cookieConsent": {
+    "description": "Usamos cookies de analisis para mejorar tu experiencia.",
+    "accept": "Aceptar",
+    "decline": "Rechazar",
+    "ariaLabel": "Consentimiento de cookies"
+  },
+  "errors": {
+    "title": "Algo salio mal",
+    "description": "Ocurrio un error inesperado. Intenta de nuevo o vuelve a la pagina principal.",
+    "tryAgain": "Intentar de nuevo",
+    "details": "Detalles",
+    "goHome": "Ir al inicio",
+    "dashboardTitle": "Error al cargar el panel",
+    "dashboardDescription": "Algo salio mal al cargar tu panel.",
+    "adminTitle": "Error al cargar el panel de admin",
+    "adminDescription": "Algo salio mal al cargar el panel de administracion.",
+    "coursesTitle": "Error al cargar los cursos",
+    "coursesDescription": "Algo salio mal al cargar el catalogo de cursos.",
+    "certificatesTitle": "Error al cargar los certificados",
+    "certificatesDescription": "Algo salio mal al cargar tus certificados.",
+    "communityTitle": "Error al cargar la comunidad",
+    "communityDescription": "Algo salio mal al cargar los foros de la comunidad.",
+    "leaderboardTitle": "Error al cargar la clasificacion",
+    "leaderboardDescription": "Algo salio mal al cargar la clasificacion.",
+    "onboardingTitle": "Error al cargar el onboarding",
+    "onboardingDescription": "Algo salio mal al configurar tu cuenta.",
+    "profileTitle": "Error al cargar el perfil",
+    "profileDescription": "Algo salio mal al cargar el perfil.",
+    "settingsTitle": "Error al cargar los ajustes",
+    "settingsDescription": "Algo salio mal al cargar tus ajustes."
+  },
+  "streakCalendar": {
+    "dayStreak": "dias de racha",
+    "best": "Mejor:",
+    "freezes": "pausas",
+    "less": "Menos",
+    "more": "Mas"
+  },
   "metadata": {
     "title": "Superteam Academy | Domina el Desarrollo en Solana",
-    "description": "La plataforma gamificada de aprendizaje para devs Solana. Gana XP, colecciona credenciales on-chain y sube de nivel tus habilidades."
+    "description": "La plataforma gamificada de aprendizaje para devs Solana. Gana XP, colecciona credenciales on-chain y sube de nivel tus habilidades.",
+    "coursesTitle": "Cursos",
+    "coursesDescription": "Explora cursos de desarrollo en Solana. Aprende Rust, Anchor, DeFi y mas con desafios de codigo practicos.",
+    "dashboardTitle": "Panel de Control",
+    "dashboardDescription": "Sigue tu progreso de aprendizaje en Solana, XP, rachas y logros en tu panel personalizado.",
+    "leaderboardTitle": "Clasificacion",
+    "leaderboardDescription": "Ve los mejores desarrolladores de Solana clasificados por XP. Compite con otros estudiantes y escala posiciones.",
+    "settingsTitle": "Configuracion",
+    "settingsDescription": "Administra la configuracion de tu cuenta, preferencias de visualizacion y configuracion de wallet.",
+    "credentialsTitle": "Credenciales",
+    "credentialsDescription": "Ve tus credenciales verificables on-chain. Certificados obtenidos a traves de cursos de desarrollo en Solana.",
+    "profileTitle": "Perfil",
+    "profileDescription": "Ve tu perfil de desarrollador Solana. Sigue tus habilidades, credenciales, logros y actividad de aprendizaje."
   }
 }

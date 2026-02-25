@@ -209,3 +209,263 @@ Add your production domain to the Sanity CORS origins:
 | Content not updating | Clear CDN cache or wait ~60s for propagation |
 | Missing lessons in course | Check module references point to correct lesson documents |
 | Challenge panel hidden | Set lesson type to "Challenge" first |
+
+---
+
+## Schema Reference
+
+Derived from the Sanity schema definitions in `app/src/sanity/schemas/`.
+
+### Course
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `title` | `string` | Yes | Course title |
+| `slug` | `slug` | Yes | URL-friendly identifier, auto-generated from title. Max 120 chars |
+| `description` | `text` | Yes | Short description. Max 300 characters |
+| `longDescription` | `blockContent` | No | Detailed course description with rich text formatting |
+| `track` | `string` (enum) | Yes | One of: `rust`, `anchor`, `frontend`, `security`, `defi`, `mobile` |
+| `difficulty` | `string` (enum) | Yes | One of: `beginner`, `intermediate`, `advanced` |
+| `estimatedHours` | `number` | Yes | Expected completion time in hours. Range: 1-100 |
+| `xpReward` | `number` | Yes | Total XP awarded on course completion. Min: 0 |
+| `image` | `image` | No | Cover image with hotspot cropping |
+| `instructor` | `reference` -> `instructor` | No | Reference to the course instructor |
+| `modules` | `array` of `reference` -> `module` | No | Ordered list of modules in this course |
+| `prerequisites` | `array` of `reference` -> `course` | No | Courses that should be completed first |
+| `learningOutcomes` | `array` of `string` | No | What learners will be able to do after completion |
+| `order` | `number` | No | Controls display order in course listings |
+| `published` | `boolean` | No | Whether the course is visible. Default: `true` |
+
+### Module
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `title` | `string` | Yes | Module title |
+| `description` | `text` | No | Module description. 3-row text area |
+| `order` | `number` | Yes | Display order within the parent course |
+| `lessons` | `array` of `reference` -> `lesson` | No | Ordered list of lessons in this module |
+
+### Lesson
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `title` | `string` | Yes | Lesson title |
+| `slug` | `slug` | Yes | URL-friendly identifier, auto-generated from title. Max 120 chars |
+| `type` | `string` (enum) | Yes | One of: `content`, `challenge`. Default: `content` |
+| `content` | `blockContent` | No | Rich text content (block text, code blocks, images) |
+| `markdownContent` | `text` | No | Markdown alternative for code-heavy lessons. 30-row text area |
+| `challenge` | `object` | No | Challenge data (only visible when `type` is `challenge`). See sub-fields below |
+| `xpReward` | `number` | Yes | XP awarded on lesson completion. Min: 0. Default: `10` |
+| `estimatedMinutes` | `number` | No | Approximate completion time in minutes. Min: 1 |
+| `order` | `number` | Yes | Display order within the parent module |
+
+#### Lesson Challenge Sub-fields
+
+These fields exist inside the `challenge` object and are only visible when `type` is `"challenge"`.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `challenge.prompt` | `text` | No | Description of what the learner must accomplish |
+| `challenge.language` | `string` (enum) | No | Code editor language: `rust`, `typescript`, or `json` |
+| `challenge.starterCode` | `text` | No | Pre-populated code template |
+| `challenge.solutionCode` | `text` | No | Correct implementation (hidden from learners) |
+| `challenge.testCases` | `array` of `object` | No | Automated checks. Each has `name` (required), `input`, `expectedOutput` (required) |
+| `challenge.hints` | `array` of `text` | No | Progressive hints revealed on request |
+
+### Instructor
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | `string` | Yes | Instructor display name |
+| `bio` | `text` | No | Short biography. 4-row text area |
+| `avatar` | `image` | No | Profile image with hotspot cropping |
+| `twitter` | `string` | No | Twitter handle (without the `@`) |
+| `github` | `string` | No | GitHub username |
+
+### blockContent (shared type)
+
+Used by `course.longDescription` and `lesson.content`. An array that supports:
+
+- **Block text** — Styles: Normal, H2, H3, H4, Blockquote. Lists: Bullet, Numbered. Marks: Bold, Italic, Inline Code. Annotations: URL links (http, https, mailto, relative).
+- **Code blocks** — Languages: Rust, TypeScript, JavaScript, JSON, Bash, TOML. Supports filename display.
+- **Images** — With hotspot cropping, required `alt` text, optional `caption`.
+
+---
+
+## Example Documents
+
+### Course
+
+```json
+{
+  "_type": "course",
+  "title": "Solana Program Development with Anchor",
+  "slug": { "current": "solana-program-development-with-anchor" },
+  "description": "Build production-ready Solana programs using the Anchor framework.",
+  "track": "anchor",
+  "difficulty": "intermediate",
+  "estimatedHours": 12,
+  "xpReward": 500,
+  "image": {
+    "_type": "image",
+    "asset": { "_ref": "image-abc123-1200x630-png", "_type": "reference" }
+  },
+  "instructor": { "_ref": "instructor-doc-id", "_type": "reference" },
+  "modules": [
+    { "_ref": "module-doc-id-1", "_type": "reference", "_key": "m1" },
+    { "_ref": "module-doc-id-2", "_type": "reference", "_key": "m2" }
+  ],
+  "prerequisites": [
+    { "_ref": "course-rust-fundamentals-id", "_type": "reference", "_key": "p1" }
+  ],
+  "learningOutcomes": [
+    "Write and deploy Anchor programs to devnet",
+    "Implement PDAs, CPIs, and token operations",
+    "Write comprehensive tests with Anchor's TypeScript client"
+  ],
+  "order": 3,
+  "published": true
+}
+```
+
+### Module
+
+```json
+{
+  "_type": "module",
+  "title": "Account Design Patterns",
+  "description": "Learn how to structure on-chain accounts for efficiency and upgradability.",
+  "order": 2,
+  "lessons": [
+    { "_ref": "lesson-doc-id-1", "_type": "reference", "_key": "l1" },
+    { "_ref": "lesson-doc-id-2", "_type": "reference", "_key": "l2" },
+    { "_ref": "lesson-doc-id-3", "_type": "reference", "_key": "l3" }
+  ]
+}
+```
+
+### Lesson (Content)
+
+```json
+{
+  "_type": "lesson",
+  "title": "Understanding PDAs",
+  "slug": { "current": "understanding-pdas" },
+  "type": "content",
+  "markdownContent": "# Program Derived Addresses\n\nPDAs are deterministic addresses derived from a program ID and a set of seeds...",
+  "xpReward": 15,
+  "estimatedMinutes": 20,
+  "order": 1
+}
+```
+
+### Lesson (Challenge)
+
+```json
+{
+  "_type": "lesson",
+  "title": "Create a Counter Program",
+  "slug": { "current": "create-a-counter-program" },
+  "type": "challenge",
+  "challenge": {
+    "prompt": "Implement an Anchor program with initialize and increment instructions. The counter account should store a u64 count value.",
+    "language": "rust",
+    "starterCode": "use anchor_lang::prelude::*;\n\ndeclare_id!(\"...\");\n\n#[program]\nmod counter {\n    // TODO: implement initialize and increment\n}",
+    "solutionCode": "use anchor_lang::prelude::*;\n\ndeclare_id!(\"...\");\n\n#[program]\nmod counter {\n    use super::*;\n\n    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {\n        ctx.accounts.counter.count = 0;\n        Ok(())\n    }\n\n    pub fn increment(ctx: Context<Increment>) -> Result<()> {\n        ctx.accounts.counter.count += 1;\n        Ok(())\n    }\n}",
+    "testCases": [
+      {
+        "name": "Initialize sets count to 0",
+        "input": "initialize",
+        "expectedOutput": "count == 0",
+        "_key": "tc1"
+      },
+      {
+        "name": "Increment increases count by 1",
+        "input": "increment",
+        "expectedOutput": "count == 1",
+        "_key": "tc2"
+      }
+    ],
+    "hints": [
+      "Start by defining the Counter account struct with a single u64 field.",
+      "Use #[account(init, payer = user, space = 8 + 8)] for the initialize context.",
+      "The increment instruction just needs a mutable reference to the counter account."
+    ]
+  },
+  "xpReward": 25,
+  "estimatedMinutes": 30,
+  "order": 2
+}
+```
+
+### Instructor
+
+```json
+{
+  "_type": "instructor",
+  "name": "Maria Santos",
+  "bio": "Solana core contributor and educator. Building open-source tools for the Superteam ecosystem since 2023.",
+  "avatar": {
+    "_type": "image",
+    "asset": { "_ref": "image-def456-400x400-jpg", "_type": "reference" }
+  },
+  "twitter": "mariasantos",
+  "github": "mariasantos"
+}
+```
+
+---
+
+## Advanced Queries
+
+### Courses Filtered by Track
+
+Fetch all published courses for a specific track, with instructor info and lesson counts.
+
+```groq
+*[_type == "course" && published == true && track == $track] | order(order asc) {
+  _id,
+  title,
+  "slug": slug.current,
+  description,
+  difficulty,
+  estimatedHours,
+  xpReward,
+  "lessonCount": count(modules[]->lessons[]),
+  "instructor": instructor->{name, avatar, twitter}
+}
+```
+
+Pass `$track` as a parameter (e.g. `"anchor"`, `"security"`).
+
+### Lessons with Challenge Data
+
+Fetch all challenge-type lessons across the platform, with their test case count and language.
+
+```groq
+*[_type == "lesson" && type == "challenge"] | order(order asc) {
+  _id,
+  title,
+  "slug": slug.current,
+  xpReward,
+  estimatedMinutes,
+  "language": challenge.language,
+  "prompt": challenge.prompt,
+  "testCaseCount": count(challenge.testCases),
+  "hintCount": count(challenge.hints)
+}
+```
+
+### Recently Updated Content
+
+Fetch the 20 most recently updated documents across all content types. Useful for editorial dashboards.
+
+```groq
+*[_type in ["course", "module", "lesson", "instructor"]] | order(_updatedAt desc) [0...20] {
+  _id,
+  _type,
+  _updatedAt,
+  title,
+  "slug": slug.current
+}
+```
