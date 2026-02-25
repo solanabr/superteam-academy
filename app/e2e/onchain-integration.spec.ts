@@ -89,12 +89,12 @@ test.describe('Credential flow UI', () => {
 test.describe('i18n — Solana-specific content', () => {
   test('pt-BR home mentions Solana in Portuguese context', async ({ page }) => {
     await page.goto('/pt-BR');
-    await expect(page.locator('text=Solana')).toBeVisible();
+    await expect(page.locator('text=Solana').first()).toBeVisible();
   });
 
   test('es home mentions Solana in Spanish context', async ({ page }) => {
     await page.goto('/es');
-    await expect(page.locator('text=Solana')).toBeVisible();
+    await expect(page.locator('text=Solana').first()).toBeVisible();
   });
 
   test('course titles are localized in pt-BR', async ({ page }) => {

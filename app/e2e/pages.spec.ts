@@ -11,7 +11,7 @@ test.describe('Landing page', () => {
   test('renders hero section', async ({ page }) => {
     await page.goto('/en');
     await expect(page.locator('h1')).toBeVisible();
-    await expect(page.locator('text=Solana')).toBeVisible();
+    await expect(page.locator('text=Solana').first()).toBeVisible();
   });
 
   test('pt-BR landing has Portuguese content', async ({ page }) => {
@@ -33,7 +33,8 @@ test.describe('Landing page', () => {
 
   test('CTA links work', async ({ page }) => {
     await page.goto('/en');
-    const ctaButton = page.locator('a[href="/en/courses"]').first();
+    // Use main-scoped locator to avoid hidden desktop nav links on mobile
+    const ctaButton = page.locator('main a[href="/en/courses"]').first();
     await expect(ctaButton).toBeVisible();
   });
 });
@@ -52,8 +53,8 @@ test.describe('Courses page', () => {
 
   test('course cards are present', async ({ page }) => {
     await page.goto('/en/courses');
-    // Should have at least one course card
-    const cards = page.locator('[class*="rounded"][class*="border"]');
+    // Scope to main content to avoid picking up hidden nav elements on mobile
+    const cards = page.locator('main [class*="rounded"][class*="border"]');
     await expect(cards.first()).toBeVisible();
   });
 
@@ -122,8 +123,8 @@ test.describe('Community page', () => {
 
   test('thread list renders', async ({ page }) => {
     await page.goto('/en/community');
-    // Should show at least one thread
-    const threads = page.locator('[class*="rounded"][class*="border"]');
+    // Scope to main content to avoid picking up hidden nav elements on mobile
+    const threads = page.locator('main [class*="rounded"][class*="border"]');
     await expect(threads.first()).toBeVisible();
   });
 

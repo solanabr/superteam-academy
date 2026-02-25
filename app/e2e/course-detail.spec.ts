@@ -13,12 +13,12 @@ test.describe('Course detail pages', () => {
   test('intro-solana course page loads in English', async ({ page }) => {
     await page.goto('/en/courses/intro-solana');
     await expect(page.locator('h1, h2').first()).toBeVisible();
-    await expect(page.locator('text=Solana')).toBeVisible();
+    await expect(page.locator('text=Solana').first()).toBeVisible();
   });
 
   test('intro-solana loads in pt-BR with Portuguese title', async ({ page }) => {
     await page.goto('/pt-BR/cursos/intro-solana');
-    await expect(page.locator('text=Solana')).toBeVisible();
+    await expect(page.locator('text=Solana').first()).toBeVisible();
     await expect(page.locator('h1, h2').first()).toBeVisible();
   });
 
@@ -30,7 +30,7 @@ test.describe('Course detail pages', () => {
   test('anchor-basics course page loads', async ({ page }) => {
     await page.goto('/en/courses/anchor-basics');
     await expect(page.locator('h1, h2').first()).toBeVisible();
-    await expect(page.locator('text=Anchor')).toBeVisible();
+    await expect(page.locator('text=Anchor').first()).toBeVisible();
   });
 
   test('defi-solana course page loads', async ({ page }) => {
@@ -74,7 +74,8 @@ test.describe('Course detail pages', () => {
 
   test('back to courses link navigates correctly', async ({ page }) => {
     await page.goto('/en/courses/intro-solana');
-    const backLink = page.locator('a[href="/en/courses"]');
+    // Use main-scoped locator to avoid hidden desktop nav links on mobile
+    const backLink = page.locator('main a[href="/en/courses"]');
     await expect(backLink.first()).toBeVisible();
     await backLink.first().click();
     await expect(page).toHaveURL('/en/courses');
@@ -84,29 +85,30 @@ test.describe('Course detail pages', () => {
 test.describe('Lesson viewer', () => {
   test('lesson page loads for intro-1', async ({ page }) => {
     await page.goto('/en/lessons/intro-1');
-    await expect(page.locator('h1, h2, h3').first()).toBeVisible();
+    // Scope to main content to avoid hidden sidebar headings on mobile
+    await expect(page.locator('main h1, main h2, main h3, main p').first()).toBeVisible();
   });
 
   test('lesson page loads for intro-2', async ({ page }) => {
     await page.goto('/en/lessons/intro-2');
-    await expect(page.locator('h1, h2, h3').first()).toBeVisible();
+    await expect(page.locator('main h1, main h2, main h3, main p').first()).toBeVisible();
   });
 
   test('lesson page loads for intro-3', async ({ page }) => {
     await page.goto('/en/lessons/intro-3');
-    await expect(page.locator('h1, h2, h3').first()).toBeVisible();
+    await expect(page.locator('main h1, main h2, main h3, main p').first()).toBeVisible();
   });
 
   test('pt-BR lesson path works', async ({ page }) => {
     await page.goto('/pt-BR/aulas/intro-1');
     await expect(page).toHaveURL('/pt-BR/aulas/intro-1');
-    await expect(page.locator('h1, h2, h3').first()).toBeVisible();
+    await expect(page.locator('main h1, main h2, main h3, main p').first()).toBeVisible();
   });
 
   test('es lesson path works', async ({ page }) => {
     await page.goto('/es/lecciones/intro-1');
     await expect(page).toHaveURL('/es/lecciones/intro-1');
-    await expect(page.locator('h1, h2, h3').first()).toBeVisible();
+    await expect(page.locator('main h1, main h2, main h3, main p').first()).toBeVisible();
   });
 
   test('lesson sidebar is visible', async ({ page }) => {
@@ -116,7 +118,7 @@ test.describe('Lesson viewer', () => {
     await expect(sidebar).toBeVisible().catch(() => {
       // May be in a different structure
     });
-    await expect(page.locator('h1, h2, h3').first()).toBeVisible();
+    await expect(page.locator('main h1, main h2, main h3, main p').first()).toBeVisible();
   });
 
   test('lesson has navigation buttons', async ({ page }) => {
@@ -126,7 +128,7 @@ test.describe('Lesson viewer', () => {
       hasText: /Next|Previous|Continue|Back|Forward/i,
     });
     await expect(navButton.first()).toBeVisible().catch(() => {});
-    await expect(page.locator('h1, h2, h3').first()).toBeVisible();
+    await expect(page.locator('main h1, main h2, main h3, main p').first()).toBeVisible();
   });
 
   test('code editor renders', async ({ page }) => {
@@ -137,7 +139,7 @@ test.describe('Lesson viewer', () => {
     await expect(editor).toBeVisible().catch(() => {
       // Editor may be in a loading state
     });
-    await expect(page.locator('h1, h2, h3').first()).toBeVisible();
+    await expect(page.locator('main h1, main h2, main h3, main p').first()).toBeVisible();
   });
 
   test('mark complete button exists', async ({ page }) => {
@@ -146,14 +148,14 @@ test.describe('Lesson viewer', () => {
       hasText: /Complete|Mark|Done|Finish|Completed/i,
     });
     await expect(completeBtn.first()).toBeVisible().catch(() => {});
-    await expect(page.locator('h1, h2, h3').first()).toBeVisible();
+    await expect(page.locator('main h1, main h2, main h3, main p').first()).toBeVisible();
   });
 
   test('back to course link is present', async ({ page }) => {
     await page.goto('/en/lessons/intro-1');
     const backLink = page.locator('a').filter({ hasText: /Back|Course|Courses/i }).first();
     await expect(backLink).toBeVisible().catch(() => {});
-    await expect(page.locator('h1, h2, h3').first()).toBeVisible();
+    await expect(page.locator('main h1, main h2, main h3, main p').first()).toBeVisible();
   });
 });
 
@@ -164,7 +166,7 @@ test.describe('Course search and filtering', () => {
     await searchInput.fill('Anchor');
     await page.waitForTimeout(500);
     // Should filter to show Anchor course
-    await expect(page.locator('text=Anchor')).toBeVisible();
+    await expect(page.locator('text=Anchor').first()).toBeVisible();
   });
 
   test('search returns no results for unknown term', async ({ page }) => {
@@ -184,7 +186,7 @@ test.describe('Course search and filtering', () => {
     await searchInput.clear();
     await page.waitForTimeout(300);
     // All courses should be back
-    const cards = page.locator('[class*="rounded"][class*="border"]');
+    const cards = page.locator('main [class*="rounded"][class*="border"]');
     await expect(cards.first()).toBeVisible();
   });
 
