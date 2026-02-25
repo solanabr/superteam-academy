@@ -48,7 +48,7 @@ const CREDENTIALS = [
     track: 'Solana',
     color: 'from-purple-600 to-indigo-600',
     xp: 1000,
-    issuedDate: '10 Jan 2025',
+    issuedDate: '10 Jan 2026',
     mintAddress: '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU',
     mintShort: '7xKX...sAsU',
   },
@@ -62,7 +62,7 @@ const CREDENTIALS = [
     track: 'NFTs',
     color: 'from-pink-600 to-purple-600',
     xp: 1800,
-    issuedDate: '05 Fev 2025',
+    issuedDate: '05 Fev 2026',
     mintAddress: 'Ap9Stg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosg7kLm',
     mintShort: 'Ap9S...7kLm',
   },
@@ -116,7 +116,7 @@ const COURSES_COMPLETED = [
       'es': 'Introducción a Solana',
     },
     xp: 1000,
-    completedDate: '10 Jan 2025',
+    completedDate: '10 Jan 2026',
     color: 'from-purple-600 to-indigo-600',
   },
   {
@@ -127,7 +127,7 @@ const COURSES_COMPLETED = [
       'es': 'NFTs con Metaplex',
     },
     xp: 1800,
-    completedDate: '05 Fev 2025',
+    completedDate: '05 Fev 2026',
     color: 'from-pink-600 to-purple-600',
   },
   {
@@ -138,7 +138,7 @@ const COURSES_COMPLETED = [
       'es': 'DeFi en Solana',
     },
     xp: 1200,
-    completedDate: '20 Fev 2025',
+    completedDate: '20 Fev 2026',
     color: 'from-blue-600 to-cyan-600',
   },
 ];
@@ -146,7 +146,7 @@ const COURSES_COMPLETED = [
 const TOTAL_XP   = 8250;
 const LEVEL      = 12;
 const STREAK     = 14;
-const JOIN_DATE  = 'Jan 2025';
+const JOIN_DATE  = 'Jan 2026';
 
 function truncate(addr: string): string {
   if (addr.length <= 12) return addr;

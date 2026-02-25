@@ -246,7 +246,7 @@ const REVIEWS = [
   {
     author: '7xKX...9mNp',
     rating: 5,
-    date: 'Jan 2025',
+    date: 'Jan 2026',
     text: {
       'pt-BR': 'Curso excelente! Consegui fazer deploy do meu primeiro programa Solana em 2 dias. O conteúdo é muito bem estruturado.',
       'en': 'Excellent course! I managed to deploy my first Solana program in 2 days. The content is very well structured.',
@@ -256,7 +256,7 @@ const REVIEWS = [
   {
     author: 'Ap9S...7kLm',
     rating: 5,
-    date: 'Fev 2025',
+    date: 'Fev 2026',
     text: {
       'pt-BR': 'Melhor material em português sobre Solana. Os desafios de código são muito bem pensados.',
       'en': 'Best material in Portuguese about Solana. The code challenges are very well thought out.',
@@ -266,7 +266,7 @@ const REVIEWS = [
   {
     author: '3fBZ...2qRt',
     rating: 4,
-    date: 'Mar 2025',
+    date: 'Mar 2026',
     text: {
       'pt-BR': 'Ótimo para iniciantes. Poderia ter mais exercícios práticos, mas no geral é muito bom.',
       'en': 'Great for beginners. Could have more practical exercises, but overall it\'s very good.',
