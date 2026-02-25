@@ -1,11 +1,10 @@
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 import {
   BookOpen, Clock, Users, Zap, Star, CheckCircle, ChevronRight,
   Play, Lock, Award, BarChart2, ArrowLeft, GraduationCap
 } from 'lucide-react';
-import { clsx } from 'clsx';
-
-const cn = (...args: Parameters<typeof clsx>) => clsx(args);
+import { cn } from '@/lib/utils';
 
 const MOCK_COURSES: Record<string, {
   slug: string; title: string; desc: string; level: string;
@@ -160,7 +159,8 @@ export default async function CourseDetailPage({
   params: Promise<{ locale: string; slug: string }>;
 }) {
   const { locale, slug } = await params;
-  const course = MOCK_COURSES[slug] ?? DEFAULT_COURSE;
+  const course = MOCK_COURSES[slug];
+  if (!course) notFound();
 
   const totalDuration = course.curriculum.reduce((a, l) => a + l.duration, 0);
 

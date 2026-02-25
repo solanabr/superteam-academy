@@ -6,9 +6,7 @@ import { useState, useMemo } from 'react';
 import {
   Search, BookOpen, Clock, Users, Zap, Star, SlidersHorizontal, X
 } from 'lucide-react';
-import { clsx } from 'clsx';
-
-const cn = (...args: Parameters<typeof clsx>) => clsx(args);
+import { cn } from '@/lib/utils';
 
 const MOCK_COURSES = [
   {

@@ -11,9 +11,7 @@ import {
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
-import { clsx } from 'clsx';
-
-const cn = (...args: Parameters<typeof clsx>) => clsx(args);
+import { cn } from '@/lib/utils';
 
 const XP_CHART_DATA = [
   { day: '1 Fev', xp: 200 },

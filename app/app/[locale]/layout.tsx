@@ -12,16 +12,33 @@ import WalletProviderWrapper from '../../components/WalletProviderWrapper';
 const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] });
 const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] });
 
-export const metadata: Metadata = {
-  title: 'Superteam Academy — Aprenda Solana & Web3',
-  description:
-    'A plataforma de aprendizado definitiva para desenvolvedores Web3 no Brasil. Aprenda, construa e ganhe credenciais on-chain.',
-  openGraph: {
-    title: 'Superteam Academy',
-    description: 'Aprenda Solana & Web3 com credenciais on-chain.',
-    type: 'website',
+const META: Record<string, { title: string; description: string; ogDesc: string }> = {
+  'pt-BR': {
+    title: 'Superteam Academy — Aprenda Solana & Web3',
+    description: 'A plataforma de aprendizado definitiva para desenvolvedores Web3 no Brasil. Aprenda, construa e ganhe credenciais on-chain.',
+    ogDesc: 'Aprenda Solana & Web3 com credenciais on-chain.',
+  },
+  en: {
+    title: 'Superteam Academy — Learn Solana & Web3',
+    description: 'The ultimate learning platform for Web3 developers in Brazil. Learn, build, and earn on-chain credentials.',
+    ogDesc: 'Learn Solana & Web3 with on-chain credentials.',
+  },
+  es: {
+    title: 'Superteam Academy — Aprende Solana y Web3',
+    description: 'La plataforma de aprendizaje definitiva para desarrolladores Web3 en Brasil. Aprende, construye y gana credenciales on-chain.',
+    ogDesc: 'Aprende Solana y Web3 con credenciales on-chain.',
   },
 };
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params;
+  const m = META[locale] ?? META['pt-BR'];
+  return {
+    title: m.title,
+    description: m.description,
+    openGraph: { title: 'Superteam Academy', description: m.ogDesc, type: 'website' },
+  };
+}
 
 type Locale = (typeof routing.locales)[number];
 

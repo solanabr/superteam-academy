@@ -8,9 +8,7 @@ import {
   ChevronLeft, ChevronRight, CheckCircle, Circle, Zap, Code2,
   BookOpen, ArrowLeft, Play, FileText
 } from 'lucide-react';
-import { clsx } from 'clsx';
-
-const cn = (...args: Parameters<typeof clsx>) => clsx(args);
+import { cn } from '@/lib/utils';
 
 const MonacoEditor = dynamic(() => import('@monaco-editor/react'), {
   ssr: false,

@@ -11,9 +11,7 @@ import {
   CheckCircle,
   ChevronRight,
 } from 'lucide-react';
-import { clsx } from 'clsx';
-
-const cn = (...args: Parameters<typeof clsx>) => clsx(args);
+import { cn } from '@/lib/utils';
 
 // ---------- types ----------
 

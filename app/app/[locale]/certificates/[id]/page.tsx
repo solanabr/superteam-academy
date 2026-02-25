@@ -8,9 +8,7 @@ import {
   BookOpen,
   Shield,
 } from 'lucide-react';
-import { clsx } from 'clsx';
-
-const cn = (...args: Parameters<typeof clsx>) => clsx(args);
+import { cn } from '@/lib/utils';
 
 // ---------- mock certificate data keyed by id ----------
 

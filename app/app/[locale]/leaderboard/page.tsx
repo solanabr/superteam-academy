@@ -2,9 +2,7 @@
 
 import { useState } from 'react';
 import { Trophy, Flame, Zap, Crown } from 'lucide-react';
-import { clsx } from 'clsx';
-
-const cn = (...args: Parameters<typeof clsx>) => clsx(args);
+import { cn } from '@/lib/utils';
 
 const LEADERBOARD = [
   { rank: 1, address: '7xKX...9mNp', xp: 45000, level: 21, streak: 45, badge: '🏆', color: 'from-yellow-500 to-orange-500' },

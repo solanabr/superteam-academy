@@ -7,9 +7,7 @@ import {
   Play, Send, CheckCircle, XCircle, Zap, Lightbulb, RotateCcw,
   Trophy, Eye, ChevronDown, ChevronUp, Code2
 } from 'lucide-react';
-import { clsx } from 'clsx';
-
-const cn = (...args: Parameters<typeof clsx>) => clsx(args);
+import { cn } from '@/lib/utils';
 
 const MonacoEditor = dynamic(() => import('@monaco-editor/react'), {
   ssr: false,

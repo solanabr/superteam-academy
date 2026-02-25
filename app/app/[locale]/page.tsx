@@ -7,9 +7,7 @@ import {
   GraduationCap, Trophy, Code2, Shield, Zap, Users, BookOpen,
   ArrowRight, Star, CheckCircle, Wallet, ChevronRight, Award
 } from 'lucide-react';
-import { clsx } from 'clsx';
-
-const cn = (...args: Parameters<typeof clsx>) => clsx(args);
+import { cn } from '@/lib/utils';
 
 const MOCK_COURSES = [
   {
@@ -81,7 +79,6 @@ const STEPS = [
   { n: 4, title: 'Ganhe sua credencial NFT', desc: 'Receba um certificado on-chain verificável automaticamente.', icon: Trophy },
 ];
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const fadeUp: Variants = {
   hidden: { opacity: 0, y: 24 },
   visible: (i: number) => ({
@@ -89,7 +86,7 @@ const fadeUp: Variants = {
     y: 0,
     transition: { delay: i * 0.1, duration: 0.5 },
   }),
-} as any;
+};
 
 const LEVEL_COLORS: Record<string, string> = {
   Iniciante: 'bg-green-900/60 text-green-300 border border-green-700',

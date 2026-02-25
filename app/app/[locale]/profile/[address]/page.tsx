@@ -13,9 +13,7 @@ import {
   Lock,
   BarChart2,
 } from 'lucide-react';
-import { clsx } from 'clsx';
-
-const cn = (...args: Parameters<typeof clsx>) => clsx(args);
+import { cn } from '@/lib/utils';
 
 // ---------- mock data ----------
 
