@@ -2,6 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
+import { useLocale, useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import {
@@ -10,20 +11,37 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+const L = (obj: Record<string, string>, locale: string) => obj[locale] ?? obj['pt-BR'];
+
+function EditorLoadingFallback() {
+  const tLesson = useTranslations('lesson');
+  return (
+    <div className="flex h-full items-center justify-center bg-gray-900 text-gray-500 text-sm">
+      {tLesson('loading_editor')}
+    </div>
+  );
+}
+
 const MonacoEditor = dynamic(() => import('@monaco-editor/react'), {
   ssr: false,
-  loading: () => (
-    <div className="flex h-full items-center justify-center bg-gray-900 text-gray-500 text-sm">
-      Carregando editor...
-    </div>
-  ),
+  loading: () => <EditorLoadingFallback />,
 });
+
+const COURSE_TITLE: Record<string, string> = {
+  'pt-BR': 'Introdução ao Solana',
+  'en': 'Introduction to Solana',
+  'es': 'Introducción a Solana',
+};
 
 const LESSONS = [
   {
     id: 'intro-1',
-    title: 'O que é Solana? Arquitetura e Proof of History',
-    course: 'Introdução ao Solana',
+    title: {
+      'pt-BR': 'O que é Solana? Arquitetura e Proof of History',
+      'en': 'What is Solana? Architecture and Proof of History',
+      'es': '¿Qué es Solana? Arquitectura y Proof of History',
+    },
+    course: COURSE_TITLE,
     xp: 100,
     duration: 25,
     completed: true,
@@ -91,8 +109,12 @@ main().catch(console.error);
   },
   {
     id: 'intro-2',
-    title: 'Contas, Lamports e o modelo de dados',
-    course: 'Introdução ao Solana',
+    title: {
+      'pt-BR': 'Contas, Lamports e o modelo de dados',
+      'en': 'Accounts, Lamports, and the data model',
+      'es': 'Cuentas, Lamports y el modelo de datos',
+    },
+    course: COURSE_TITLE,
     xp: 100,
     duration: 30,
     completed: true,
@@ -129,8 +151,12 @@ explorarContas();
   },
   {
     id: 'intro-3',
-    title: 'Configurando o ambiente: Solana CLI + Phantom',
-    course: 'Introdução ao Solana',
+    title: {
+      'pt-BR': 'Configurando o ambiente: Solana CLI + Phantom',
+      'en': 'Setting up the environment: Solana CLI + Phantom',
+      'es': 'Configurando el entorno: Solana CLI + Phantom',
+    },
+    course: COURSE_TITLE,
     xp: 100,
     duration: 20,
     completed: false,
@@ -180,7 +206,9 @@ type TabType = 'content' | 'editor';
 
 export default function LessonPage() {
   const params = useParams();
-  const locale = (params.locale as string) || 'pt-BR';
+  const locale = useLocale();
+  const t = useTranslations('lesson');
+  const tCommon = useTranslations('common');
   const lessonId = (params.id as string) || 'intro-1';
 
   const currentIndex = LESSON_SIDEBAR.findIndex((l) => l.id === lessonId);
@@ -193,7 +221,7 @@ export default function LessonPage() {
   const [activeTab, setActiveTab] = useState<TabType>('content');
   const [language, setLanguage] = useState('typescript');
 
-  const totalXp = LESSON_SIDEBAR.filter((l) => l.completed).reduce((a, l) => a + l.xp, 0);
+  const completedCount = LESSON_SIDEBAR.filter((l) => l.completed).length;
 
   return (
     <div className="flex h-[calc(100vh-4rem)] bg-gray-950 text-gray-100 overflow-hidden">
@@ -205,11 +233,11 @@ export default function LessonPage() {
             className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-purple-400 transition-colors mb-2"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
-            Introdução ao Solana
+            {L(COURSE_TITLE, locale)}
           </Link>
-          <h3 className="text-sm font-semibold text-white">Lições do Curso</h3>
+          <h3 className="text-sm font-semibold text-white">{t('course_lessons')}</h3>
           <div className="mt-1 text-xs text-gray-500">
-            {LESSON_SIDEBAR.filter((l) => l.completed).length}/{LESSON_SIDEBAR.length} completadas
+            {completedCount}/{LESSON_SIDEBAR.length} {t('completed_count')}
           </div>
         </div>
         <div className="flex-1 p-2">
@@ -233,7 +261,7 @@ export default function LessonPage() {
               </div>
               <div className="min-w-0 flex-1">
                 <span className={cn('block leading-snug', l.id === lesson.id ? 'font-medium' : '')}>
-                  {i + 1}. {l.title}
+                  {i + 1}. {L(l.title, locale)}
                 </span>
                 <div className="flex items-center gap-2 mt-0.5 text-gray-600">
                   <span>{l.duration}min</span>
@@ -260,7 +288,7 @@ export default function LessonPage() {
               )}
             >
               <FileText className="h-3.5 w-3.5" />
-              Conteúdo
+              {t('content_tab')}
             </button>
             <button
               onClick={() => setActiveTab('editor')}
@@ -272,7 +300,7 @@ export default function LessonPage() {
               )}
             >
               <Code2 className="h-3.5 w-3.5" />
-              Editor
+              {t('editor_tab')}
             </button>
           </div>
           <div className="flex items-center gap-2">
@@ -293,8 +321,8 @@ export default function LessonPage() {
             activeTab === 'editor' ? 'hidden lg:flex' : 'flex'
           )}>
             <div className="p-6 flex-1">
-              <h1 className="mb-1 text-xl font-bold text-white leading-tight">{lesson.title}</h1>
-              <p className="mb-6 text-xs text-gray-500">{lesson.course}</p>
+              <h1 className="mb-1 text-xl font-bold text-white leading-tight">{L(lesson.title, locale)}</h1>
+              <p className="mb-6 text-xs text-gray-500">{L(lesson.course, locale)}</p>
 
               {/* Render markdown-ish content */}
               <div className="prose-lesson space-y-4">
@@ -349,7 +377,7 @@ console.log(\`Saldo: \${balance / 1e9} SOL\`);`}
             activeTab === 'content' ? 'hidden lg:flex' : 'flex'
           )}>
             <div className="flex items-center justify-between border-b border-gray-800 bg-gray-900 px-4 py-2 shrink-0">
-              <span className="text-xs text-gray-400 font-medium">Playground</span>
+              <span className="text-xs text-gray-400 font-medium">{t('playground')}</span>
               <select
                 value={language}
                 onChange={(e) => setLanguage(e.target.value)}
@@ -393,7 +421,7 @@ console.log(\`Saldo: \${balance / 1e9} SOL\`);`}
                 className="flex items-center gap-1.5 rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-xs font-medium text-gray-300 hover:border-gray-600 hover:text-white transition-all"
               >
                 <ChevronLeft className="h-3.5 w-3.5" />
-                Anterior
+                {t('previous')}
               </Link>
             ) : <div />}
 
@@ -409,12 +437,12 @@ console.log(\`Saldo: \${balance / 1e9} SOL\`);`}
               {completed ? (
                 <>
                   <CheckCircle className="h-4 w-4" />
-                  Concluído
+                  {t('already_complete')}
                 </>
               ) : (
                 <>
                   <Zap className="h-4 w-4" />
-                  Marcar como Completo (+{lesson.xp} XP)
+                  {t('mark_complete')} (+{lesson.xp} XP)
                 </>
               )}
             </button>
@@ -424,7 +452,7 @@ console.log(\`Saldo: \${balance / 1e9} SOL\`);`}
                 href={`/${locale}/aulas/${nextLesson.id}`}
                 className="flex items-center gap-1.5 rounded-xl bg-gray-700 px-3 py-2 text-xs font-medium text-gray-200 hover:bg-gray-600 transition-all"
               >
-                Próxima
+                {tCommon('next')}
                 <ChevronRight className="h-3.5 w-3.5" />
               </Link>
             ) : (
@@ -432,7 +460,7 @@ console.log(\`Saldo: \${balance / 1e9} SOL\`);`}
                 href={`/${locale}/cursos/intro-solana`}
                 className="flex items-center gap-1.5 rounded-xl bg-green-700 px-3 py-2 text-xs font-medium text-white hover:bg-green-600 transition-all"
               >
-                Finalizar
+                {t('finish')}
                 <BookOpen className="h-3.5 w-3.5" />
               </Link>
             )}

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useLocale, useTranslations } from 'next-intl';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import {
@@ -13,59 +13,153 @@ import {
 } from 'recharts';
 import { cn } from '@/lib/utils';
 
-const XP_CHART_DATA = [
-  { day: '1 Fev', xp: 200 },
-  { day: '5 Fev', xp: 450 },
-  { day: '8 Fev', xp: 380 },
-  { day: '10 Fev', xp: 620 },
-  { day: '13 Fev', xp: 800 },
-  { day: '15 Fev', xp: 750 },
-  { day: '17 Fev', xp: 1100 },
-  { day: '19 Fev', xp: 950 },
-  { day: '21 Fev', xp: 1350 },
-  { day: '23 Fev', xp: 1200 },
-  { day: '25 Fev', xp: 1600 },
-];
+const L = (obj: Record<string, string>, locale: string) => obj[locale] ?? obj['pt-BR'];
+
+function getXpChartData(locale: string) {
+  const dates = [
+    { 'pt-BR': '1 Fev', 'en': '1 Feb', 'es': '1 Feb' },
+    { 'pt-BR': '5 Fev', 'en': '5 Feb', 'es': '5 Feb' },
+    { 'pt-BR': '8 Fev', 'en': '8 Feb', 'es': '8 Feb' },
+    { 'pt-BR': '10 Fev', 'en': '10 Feb', 'es': '10 Feb' },
+    { 'pt-BR': '13 Fev', 'en': '13 Feb', 'es': '13 Feb' },
+    { 'pt-BR': '15 Fev', 'en': '15 Feb', 'es': '15 Feb' },
+    { 'pt-BR': '17 Fev', 'en': '17 Feb', 'es': '17 Feb' },
+    { 'pt-BR': '19 Fev', 'en': '19 Feb', 'es': '19 Feb' },
+    { 'pt-BR': '21 Fev', 'en': '21 Feb', 'es': '21 Feb' },
+    { 'pt-BR': '23 Fev', 'en': '23 Feb', 'es': '23 Feb' },
+    { 'pt-BR': '25 Fev', 'en': '25 Feb', 'es': '25 Feb' },
+  ];
+  const xp = [200, 450, 380, 620, 800, 750, 1100, 950, 1350, 1200, 1600];
+  return dates.map((d, i) => ({ day: L(d, locale), xp: xp[i] }));
+}
 
 const ENROLLED_COURSES = [
   {
     slug: 'intro-solana',
-    title: 'Introdução ao Solana',
+    title: {
+      'pt-BR': 'Introdução ao Solana',
+      'en': 'Introduction to Solana',
+      'es': 'Introducción a Solana',
+    },
     track: 'Solana',
     color: 'from-purple-600 to-indigo-600',
     progress: 75,
     lessonsCompleted: 6,
     totalLessons: 8,
-    nextLesson: 'PDAs: Program Derived Addresses',
+    nextLesson: {
+      'pt-BR': 'PDAs: Program Derived Addresses',
+      'en': 'PDAs: Program Derived Addresses',
+      'es': 'PDAs: Program Derived Addresses',
+    },
     nextLessonId: 'intro-6',
   },
   {
     slug: 'anchor-basics',
-    title: 'Fundamentos do Anchor',
+    title: {
+      'pt-BR': 'Fundamentos do Anchor',
+      'en': 'Anchor Fundamentals',
+      'es': 'Fundamentos de Anchor',
+    },
     track: 'Anchor',
     color: 'from-green-600 to-teal-600',
     progress: 30,
     lessonsCompleted: 3,
     totalLessons: 10,
-    nextLesson: 'Constraints e validações de conta',
+    nextLesson: {
+      'pt-BR': 'Constraints e validações de conta',
+      'en': 'Constraints and account validations',
+      'es': 'Restricciones y validaciones de cuenta',
+    },
     nextLessonId: 'anchor-3',
   },
 ];
 
 const ACHIEVEMENTS = [
-  { id: 1, emoji: '🚀', name: 'Primeiro Voo', desc: 'Complete sua primeira aula', unlocked: true },
-  { id: 2, emoji: '🔥', name: 'Em Chamas', desc: '7 dias de sequência', unlocked: true },
-  { id: 3, emoji: '💻', name: 'Coder', desc: 'Complete seu primeiro desafio', unlocked: true },
-  { id: 4, emoji: '🏆', name: 'Top 10', desc: 'Entre no top 10 do ranking', unlocked: false },
-  { id: 5, emoji: '🎓', name: 'Diplomado', desc: 'Complete um curso completo', unlocked: false },
-  { id: 6, emoji: '⚡', name: 'Velocista', desc: 'Complete 5 aulas em 1 dia', unlocked: false },
+  {
+    id: 1,
+    emoji: '🚀',
+    name: { 'pt-BR': 'Primeiro Voo', 'en': 'First Flight', 'es': 'Primer Vuelo' },
+    desc: { 'pt-BR': 'Complete sua primeira aula', 'en': 'Complete your first lesson', 'es': 'Completa tu primera lección' },
+    unlocked: true,
+  },
+  {
+    id: 2,
+    emoji: '🔥',
+    name: { 'pt-BR': 'Em Chamas', 'en': 'On Fire', 'es': 'En Llamas' },
+    desc: { 'pt-BR': '7 dias de sequência', 'en': '7-day streak', 'es': '7 días de racha' },
+    unlocked: true,
+  },
+  {
+    id: 3,
+    emoji: '💻',
+    name: { 'pt-BR': 'Coder', 'en': 'Coder', 'es': 'Coder' },
+    desc: { 'pt-BR': 'Complete seu primeiro desafio', 'en': 'Complete your first challenge', 'es': 'Completa tu primer desafío' },
+    unlocked: true,
+  },
+  {
+    id: 4,
+    emoji: '🏆',
+    name: { 'pt-BR': 'Top 10', 'en': 'Top 10', 'es': 'Top 10' },
+    desc: { 'pt-BR': 'Entre no top 10 do ranking', 'en': 'Enter the top 10 ranking', 'es': 'Entra en el top 10 del ranking' },
+    unlocked: false,
+  },
+  {
+    id: 5,
+    emoji: '🎓',
+    name: { 'pt-BR': 'Diplomado', 'en': 'Graduate', 'es': 'Graduado' },
+    desc: { 'pt-BR': 'Complete um curso completo', 'en': 'Complete a full course', 'es': 'Completa un curso completo' },
+    unlocked: false,
+  },
+  {
+    id: 6,
+    emoji: '⚡',
+    name: { 'pt-BR': 'Velocista', 'en': 'Speedster', 'es': 'Velocista' },
+    desc: { 'pt-BR': 'Complete 5 aulas em 1 dia', 'en': 'Complete 5 lessons in 1 day', 'es': 'Completa 5 lecciones en 1 día' },
+    unlocked: false,
+  },
 ];
 
 const RECENT_ACTIVITY = [
-  { type: 'lesson', text: 'Completou: Token Program: criar e transferir tokens SPL', xp: 150, time: '2h atrás' },
-  { type: 'challenge', text: 'Desafio concluído: Transfer SOL Between Wallets', xp: 200, time: '1 dia atrás' },
-  { type: 'lesson', text: 'Completou: Primeira transação com @solana/web3.js', xp: 150, time: '2 dias atrás' },
-  { type: 'achievement', text: 'Conquista desbloqueada: Em Chamas 🔥', xp: 100, time: '3 dias atrás' },
+  {
+    type: 'lesson',
+    text: {
+      'pt-BR': 'Completou: Token Program: criar e transferir tokens SPL',
+      'en': 'Completed: Token Program: create and transfer SPL tokens',
+      'es': 'Completó: Token Program: crear y transferir tokens SPL',
+    },
+    xp: 150,
+    time: { 'pt-BR': '2h atrás', 'en': '2h ago', 'es': 'hace 2h' },
+  },
+  {
+    type: 'challenge',
+    text: {
+      'pt-BR': 'Desafio concluído: Transfer SOL Between Wallets',
+      'en': 'Challenge completed: Transfer SOL Between Wallets',
+      'es': 'Desafío completado: Transfer SOL Between Wallets',
+    },
+    xp: 200,
+    time: { 'pt-BR': '1 dia atrás', 'en': '1 day ago', 'es': 'hace 1 día' },
+  },
+  {
+    type: 'lesson',
+    text: {
+      'pt-BR': 'Completou: Primeira transação com @solana/web3.js',
+      'en': 'Completed: First transaction with @solana/web3.js',
+      'es': 'Completó: Primera transacción con @solana/web3.js',
+    },
+    xp: 150,
+    time: { 'pt-BR': '2 dias atrás', 'en': '2 days ago', 'es': 'hace 2 días' },
+  },
+  {
+    type: 'achievement',
+    text: {
+      'pt-BR': 'Conquista desbloqueada: Em Chamas 🔥',
+      'en': 'Achievement unlocked: On Fire 🔥',
+      'es': 'Logro desbloqueado: En Llamas 🔥',
+    },
+    xp: 100,
+    time: { 'pt-BR': '3 dias atrás', 'en': '3 days ago', 'es': 'hace 3 días' },
+  },
 ];
 
 const TOTAL_XP = 8250;
@@ -79,8 +173,9 @@ function truncateAddress(addr: string): string {
 }
 
 export default function DashboardPage() {
-  const params = useParams();
-  const locale = (params.locale as string) || 'pt-BR';
+  const locale = useLocale();
+  const t = useTranslations('dashboard');
+  const tc = useTranslations('courses');
   const { connected, publicKey } = useWallet();
 
   if (!connected) {
@@ -92,9 +187,9 @@ export default function DashboardPage() {
               <Wallet className="h-10 w-10 text-gray-600" />
             </div>
           </div>
-          <h2 className="mb-3 text-2xl font-bold text-white">Conecte sua carteira</h2>
+          <h2 className="mb-3 text-2xl font-bold text-white">{t('connect_prompt')}</h2>
           <p className="mb-8 text-gray-400 text-sm leading-relaxed">
-            Para acessar seu painel pessoal, acompanhar seu progresso e ganhar XP, você precisa conectar uma carteira Solana.
+            {t('connect_subtitle')}
           </p>
           <WalletMultiButton
             style={{
@@ -107,15 +202,13 @@ export default function DashboardPage() {
               justifyContent: 'center',
             }}
           />
-          <p className="mt-4 text-xs text-gray-600">
-            Suportamos Phantom, Backpack, Solflare e mais
-          </p>
         </div>
       </div>
     );
   }
 
   const address = publicKey?.toBase58() ?? '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU';
+  const xpChartData = getXpChartData(locale);
 
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100 pb-12">
@@ -124,11 +217,11 @@ export default function DashboardPage() {
         <div className="mx-auto max-w-6xl">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <p className="text-gray-500 text-sm mb-1">Bem-vindo de volta</p>
+              <p className="text-gray-500 text-sm mb-1">{t('welcome')}</p>
               <h1 className="text-2xl font-bold text-white font-mono">
                 {truncateAddress(address)}
               </h1>
-              <p className="text-sm text-purple-400 mt-1">Nível {LEVEL} · Continue de onde parou</p>
+              <p className="text-sm text-purple-400 mt-1">{t('welcome_sub', { level: LEVEL })}</p>
             </div>
             <div className="flex items-center gap-3">
               <div className="rounded-xl border border-yellow-700/50 bg-yellow-900/20 px-4 py-2 text-center">
@@ -136,7 +229,7 @@ export default function DashboardPage() {
                   <Flame className="h-4 w-4 text-orange-400" />
                   <span className="text-xl font-extrabold">{STREAK}</span>
                 </div>
-                <div className="text-xs text-yellow-600">dias de sequência</div>
+                <div className="text-xs text-yellow-600">{t('day_streak')}</div>
               </div>
             </div>
           </div>
@@ -152,13 +245,13 @@ export default function DashboardPage() {
                 {LEVEL}
               </div>
               <div>
-                <div className="text-sm font-semibold text-white">Nível {LEVEL}</div>
+                <div className="text-sm font-semibold text-white">{t('level')} {LEVEL}</div>
                 <div className="text-xs text-gray-500">Solana Developer</div>
               </div>
             </div>
             <div className="text-right">
               <div className="text-sm font-semibold text-white">{XP_IN_LEVEL.toLocaleString()} / {XP_FOR_NEXT.toLocaleString()} XP</div>
-              <div className="text-xs text-gray-500">{XP_FOR_NEXT - XP_IN_LEVEL} para nível {LEVEL + 1}</div>
+              <div className="text-xs text-gray-500">{XP_FOR_NEXT - XP_IN_LEVEL} {t('to_level', { level: LEVEL + 1 })}</div>
             </div>
           </div>
           <div className="h-3 rounded-full bg-gray-800 overflow-hidden">
@@ -172,10 +265,10 @@ export default function DashboardPage() {
         {/* Stats cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[
-            { label: 'XP Total', value: TOTAL_XP.toLocaleString(), icon: Zap, color: 'text-yellow-400', bg: 'from-yellow-900/30 to-orange-900/20', border: 'border-yellow-800/30' },
-            { label: 'Nível Atual', value: String(LEVEL), icon: Star, color: 'text-purple-400', bg: 'from-purple-900/30 to-indigo-900/20', border: 'border-purple-800/30' },
-            { label: 'Sequência', value: `${STREAK} dias`, icon: Flame, color: 'text-orange-400', bg: 'from-orange-900/30 to-red-900/20', border: 'border-orange-800/30' },
-            { label: 'Credenciais', value: '2', icon: Award, color: 'text-green-400', bg: 'from-green-900/30 to-teal-900/20', border: 'border-green-800/30' },
+            { label: t('xp_total'), value: TOTAL_XP.toLocaleString(), icon: Zap, color: 'text-yellow-400', bg: 'from-yellow-900/30 to-orange-900/20', border: 'border-yellow-800/30' },
+            { label: t('current_level'), value: String(LEVEL), icon: Star, color: 'text-purple-400', bg: 'from-purple-900/30 to-indigo-900/20', border: 'border-purple-800/30' },
+            { label: t('streak'), value: `${STREAK} ${t('streak_days')}`, icon: Flame, color: 'text-orange-400', bg: 'from-orange-900/30 to-red-900/20', border: 'border-orange-800/30' },
+            { label: t('credentials'), value: '2', icon: Award, color: 'text-green-400', bg: 'from-green-900/30 to-teal-900/20', border: 'border-green-800/30' },
           ].map(({ label, value, icon: Icon, color, bg, border }) => (
             <div key={label} className={cn('rounded-2xl border bg-gradient-to-br p-5', bg, border)}>
               <Icon className={cn('mb-2 h-5 w-5', color)} />
@@ -191,10 +284,10 @@ export default function DashboardPage() {
           <div className="lg:col-span-2 rounded-2xl border border-gray-800 bg-gray-900/60 p-5">
             <div className="flex items-center gap-2 mb-4">
               <TrendingUp className="h-4 w-4 text-purple-400" />
-              <h3 className="text-sm font-semibold text-white">XP nos Últimos 30 Dias</h3>
+              <h3 className="text-sm font-semibold text-white">{t('xp_last_30')}</h3>
             </div>
             <ResponsiveContainer width="100%" height={180}>
-              <AreaChart data={XP_CHART_DATA} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+              <AreaChart data={xpChartData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="xpGradient" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#7c3aed" stopOpacity={0.4} />
@@ -207,7 +300,7 @@ export default function DashboardPage() {
                 <Tooltip
                   contentStyle={{ background: '#111827', border: '1px solid #374151', borderRadius: '0.75rem', color: '#f3f4f6', fontSize: '12px' }}
                   labelStyle={{ color: '#9ca3af' }}
-                  formatter={(value) => [`${value} XP`, 'XP Ganhos']}
+                  formatter={(value) => [`${value} XP`, t('xp_gained')]}
                 />
                 <Area type="monotone" dataKey="xp" stroke="#7c3aed" strokeWidth={2} fill="url(#xpGradient)" />
               </AreaChart>
@@ -218,7 +311,7 @@ export default function DashboardPage() {
           <div className="rounded-2xl border border-gray-800 bg-gray-900/60 p-5">
             <div className="flex items-center gap-2 mb-4">
               <Clock className="h-4 w-4 text-purple-400" />
-              <h3 className="text-sm font-semibold text-white">Atividade Recente</h3>
+              <h3 className="text-sm font-semibold text-white">{t('recent_activity')}</h3>
             </div>
             <div className="space-y-3">
               {RECENT_ACTIVITY.map((a, i) => (
@@ -234,10 +327,10 @@ export default function DashboardPage() {
                      <Trophy className="h-3 w-3" />}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs text-gray-300 leading-snug line-clamp-2">{a.text}</p>
+                    <p className="text-xs text-gray-300 leading-snug line-clamp-2">{L(a.text, locale)}</p>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className="text-xs text-yellow-400/80 font-medium">+{a.xp} XP</span>
-                      <span className="text-xs text-gray-600">{a.time}</span>
+                      <span className="text-xs text-gray-600">{L(a.time, locale)}</span>
                     </div>
                   </div>
                 </div>
@@ -250,7 +343,7 @@ export default function DashboardPage() {
         <div>
           <div className="flex items-center gap-2 mb-4">
             <BookOpen className="h-5 w-5 text-purple-400" />
-            <h2 className="text-lg font-bold text-white">Cursos em Andamento</h2>
+            <h2 className="text-lg font-bold text-white">{t('courses_in_progress')}</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {ENROLLED_COURSES.map((c) => (
@@ -259,8 +352,8 @@ export default function DashboardPage() {
                 <div className="p-5">
                   <div className="flex items-start justify-between gap-2 mb-3">
                     <div>
-                      <h3 className="text-sm font-semibold text-white">{c.title}</h3>
-                      <p className="text-xs text-gray-500 mt-0.5">{c.lessonsCompleted}/{c.totalLessons} aulas</p>
+                      <h3 className="text-sm font-semibold text-white">{L(c.title, locale)}</h3>
+                      <p className="text-xs text-gray-500 mt-0.5">{c.lessonsCompleted}/{c.totalLessons} {tc('lessons')}</p>
                     </div>
                     <span className="text-xs font-bold text-purple-300">{c.progress}%</span>
                   </div>
@@ -272,13 +365,13 @@ export default function DashboardPage() {
                   </div>
                   <div className="flex items-center justify-between">
                     <p className="text-xs text-gray-500 truncate max-w-[60%]">
-                      Próxima: <span className="text-gray-300">{c.nextLesson}</span>
+                      {t('next_prefix')} <span className="text-gray-300">{L(c.nextLesson, locale)}</span>
                     </p>
                     <Link
                       href={`/${locale}/aulas/${c.nextLessonId}`}
                       className="flex items-center gap-1 rounded-lg bg-purple-900/50 border border-purple-700/50 px-2.5 py-1.5 text-xs font-medium text-purple-300 hover:bg-purple-900/70 transition-all"
                     >
-                      Continuar
+                      {t('continue_learning')}
                     </Link>
                   </div>
                 </div>
@@ -291,7 +384,7 @@ export default function DashboardPage() {
         <div>
           <div className="flex items-center gap-2 mb-4">
             <Trophy className="h-5 w-5 text-yellow-400" />
-            <h2 className="text-lg font-bold text-white">Conquistas</h2>
+            <h2 className="text-lg font-bold text-white">{t('achievements')}</h2>
             <span className="text-xs text-gray-500">
               {ACHIEVEMENTS.filter((a) => a.unlocked).length}/{ACHIEVEMENTS.length}
             </span>
@@ -310,8 +403,8 @@ export default function DashboardPage() {
                 <div className="text-3xl mb-2">
                   {ach.unlocked ? ach.emoji : <Lock className="mx-auto h-6 w-6 text-gray-600" />}
                 </div>
-                <div className="text-xs font-semibold text-gray-300">{ach.name}</div>
-                <div className="text-xs text-gray-500 mt-0.5 leading-tight">{ach.desc}</div>
+                <div className="text-xs font-semibold text-gray-300">{L(ach.name, locale)}</div>
+                <div className="text-xs text-gray-500 mt-0.5 leading-tight">{L(ach.desc, locale)}</div>
               </div>
             ))}
           </div>
@@ -322,7 +415,7 @@ export default function DashboardPage() {
           <div className="flex items-center gap-3">
             <BarChart2 className="h-8 w-8 text-purple-400 shrink-0" />
             <div>
-              <h3 className="text-sm font-semibold text-white">Você está no Top 15%</h3>
+              <h3 className="text-sm font-semibold text-white">{t('top_percent', { percent: 15 })}</h3>
               <p className="text-xs text-gray-400">Sua posição atual é #42 no ranking geral</p>
             </div>
           </div>
@@ -330,7 +423,7 @@ export default function DashboardPage() {
             href={`/${locale}/classificacao`}
             className="shrink-0 rounded-xl bg-purple-700 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-600 transition-all"
           >
-            Ver Classificação
+            {t('view_ranking')}
           </Link>
         </div>
       </div>

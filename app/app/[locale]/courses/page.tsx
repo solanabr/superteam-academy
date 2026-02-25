@@ -1,19 +1,29 @@
 'use client';
 
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useLocale, useTranslations } from 'next-intl';
 import { useState, useMemo } from 'react';
 import {
   Search, BookOpen, Clock, Users, Zap, Star, SlidersHorizontal, X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+const L = (obj: Record<string, string>, locale: string) => obj[locale] ?? obj['pt-BR'];
+
 const MOCK_COURSES = [
   {
     slug: 'intro-solana',
-    title: 'Introdução ao Solana',
-    desc: 'Aprenda os fundamentos da blockchain Solana: arquitetura, contas, transações e programas.',
-    level: 'Iniciante',
+    title: {
+      'pt-BR': 'Introdução ao Solana',
+      'en': 'Introduction to Solana',
+      'es': 'Introducción a Solana',
+    },
+    desc: {
+      'pt-BR': 'Aprenda os fundamentos da blockchain Solana: arquitetura, contas, transações e programas.',
+      'en': 'Learn the fundamentals of the Solana blockchain: architecture, accounts, transactions, and programs.',
+      'es': 'Aprende los fundamentos de la blockchain Solana: arquitectura, cuentas, transacciones y programas.',
+    },
+    level: 'Beginner' as const,
     xp: 1000,
     lessons: 8,
     hours: 4,
@@ -24,9 +34,17 @@ const MOCK_COURSES = [
   },
   {
     slug: 'anchor-basics',
-    title: 'Fundamentos do Anchor',
-    desc: 'Domine o framework Anchor para escrever smart contracts Solana em Rust de forma produtiva.',
-    level: 'Intermediário',
+    title: {
+      'pt-BR': 'Fundamentos do Anchor',
+      'en': 'Anchor Fundamentals',
+      'es': 'Fundamentos de Anchor',
+    },
+    desc: {
+      'pt-BR': 'Domine o framework Anchor para escrever smart contracts Solana em Rust de forma produtiva.',
+      'en': 'Master the Anchor framework for writing Solana smart contracts in Rust productively.',
+      'es': 'Domina el framework Anchor para escribir smart contracts de Solana en Rust de forma productiva.',
+    },
+    level: 'Intermediate' as const,
     xp: 1500,
     lessons: 10,
     hours: 6,
@@ -37,9 +55,17 @@ const MOCK_COURSES = [
   },
   {
     slug: 'defi-solana',
-    title: 'DeFi no Solana',
-    desc: 'Construa protocolos DeFi: AMMs, lending, staking e yield farming na Solana.',
-    level: 'Avançado',
+    title: {
+      'pt-BR': 'DeFi no Solana',
+      'en': 'DeFi on Solana',
+      'es': 'DeFi en Solana',
+    },
+    desc: {
+      'pt-BR': 'Construa protocolos DeFi: AMMs, lending, staking e yield farming na Solana.',
+      'en': 'Build DeFi protocols: AMMs, lending, staking, and yield farming on Solana.',
+      'es': 'Construye protocolos DeFi: AMMs, lending, staking y yield farming en Solana.',
+    },
+    level: 'Advanced' as const,
     xp: 2000,
     lessons: 12,
     hours: 8,
@@ -50,9 +76,17 @@ const MOCK_COURSES = [
   },
   {
     slug: 'nft-metaplex',
-    title: 'NFTs com Metaplex',
-    desc: 'Crie coleções NFT, royalties e marketplaces usando o padrão Metaplex na Solana.',
-    level: 'Intermediário',
+    title: {
+      'pt-BR': 'NFTs com Metaplex',
+      'en': 'NFTs with Metaplex',
+      'es': 'NFTs con Metaplex',
+    },
+    desc: {
+      'pt-BR': 'Crie coleções NFT, royalties e marketplaces usando o padrão Metaplex na Solana.',
+      'en': 'Create NFT collections, royalties, and marketplaces using the Metaplex standard on Solana.',
+      'es': 'Crea colecciones NFT, regalías y marketplaces usando el estándar Metaplex en Solana.',
+    },
+    level: 'Intermediate' as const,
     xp: 1800,
     lessons: 9,
     hours: 5,
@@ -63,22 +97,38 @@ const MOCK_COURSES = [
   },
   {
     slug: 'solana-security',
-    title: 'Segurança em Contratos Solana',
-    desc: 'Identifique e corrija vulnerabilidades comuns em programas Solana. Auditorias e melhores práticas.',
-    level: 'Avançado',
+    title: {
+      'pt-BR': 'Segurança em Contratos Solana',
+      'en': 'Solana Contract Security',
+      'es': 'Seguridad en Contratos Solana',
+    },
+    desc: {
+      'pt-BR': 'Identifique e corrija vulnerabilidades comuns em programas Solana. Auditorias e melhores práticas.',
+      'en': 'Identify and fix common vulnerabilities in Solana programs. Audits and best practices.',
+      'es': 'Identifica y corrige vulnerabilidades comunes en programas Solana. Auditorías y mejores prácticas.',
+    },
+    level: 'Advanced' as const,
     xp: 2500,
     lessons: 11,
     hours: 9,
-    track: 'Segurança',
+    track: 'Security',
     color: 'from-red-600 to-orange-600',
     students: 143,
     rating: 4.9,
   },
   {
     slug: 'token-extensions',
-    title: 'Token Extensions (Token-2022)',
-    desc: 'Explore o novo padrão Token-2022: transfer fees, confidential transfers, interest-bearing tokens.',
-    level: 'Intermediário',
+    title: {
+      'pt-BR': 'Token Extensions (Token-2022)',
+      'en': 'Token Extensions (Token-2022)',
+      'es': 'Token Extensions (Token-2022)',
+    },
+    desc: {
+      'pt-BR': 'Explore o novo padrão Token-2022: transfer fees, confidential transfers, interest-bearing tokens.',
+      'en': 'Explore the new Token-2022 standard: transfer fees, confidential transfers, interest-bearing tokens.',
+      'es': 'Explora el nuevo estándar Token-2022: comisiones de transferencia, transferencias confidenciales, tokens con interés.',
+    },
+    level: 'Intermediate' as const,
     xp: 1600,
     lessons: 8,
     hours: 5,
@@ -89,9 +139,17 @@ const MOCK_COURSES = [
   },
   {
     slug: 'solana-mobile',
-    title: 'Solana Mobile (dApp Store)',
-    desc: 'Construa aplicativos móveis Web3 para Android usando Mobile Wallet Adapter e Solana Pay.',
-    level: 'Intermediário',
+    title: {
+      'pt-BR': 'Solana Mobile (dApp Store)',
+      'en': 'Solana Mobile (dApp Store)',
+      'es': 'Solana Mobile (dApp Store)',
+    },
+    desc: {
+      'pt-BR': 'Construa aplicativos móveis Web3 para Android usando Mobile Wallet Adapter e Solana Pay.',
+      'en': 'Build Web3 mobile apps for Android using Mobile Wallet Adapter and Solana Pay.',
+      'es': 'Construye aplicaciones móviles Web3 para Android usando Mobile Wallet Adapter y Solana Pay.',
+    },
+    level: 'Intermediate' as const,
     xp: 1700,
     lessons: 9,
     hours: 6,
@@ -102,9 +160,17 @@ const MOCK_COURSES = [
   },
   {
     slug: 'solana-pay',
-    title: 'Solana Pay & Commerce',
-    desc: 'Integre pagamentos Solana em aplicações web e POS físicos. Checkout, QR codes e confirmações.',
-    level: 'Iniciante',
+    title: {
+      'pt-BR': 'Solana Pay & Commerce',
+      'en': 'Solana Pay & Commerce',
+      'es': 'Solana Pay & Commerce',
+    },
+    desc: {
+      'pt-BR': 'Integre pagamentos Solana em aplicações web e POS físicos. Checkout, QR codes e confirmações.',
+      'en': 'Integrate Solana payments into web apps and physical POS. Checkout, QR codes, and confirmations.',
+      'es': 'Integra pagos de Solana en aplicaciones web y POS físicos. Checkout, códigos QR y confirmaciones.',
+    },
+    level: 'Beginner' as const,
     xp: 800,
     lessons: 6,
     hours: 3,
@@ -115,27 +181,49 @@ const MOCK_COURSES = [
   },
 ];
 
-const LEVEL_OPTIONS = ['Todos', 'Iniciante', 'Intermediário', 'Avançado'];
-const TRACK_OPTIONS = ['Todos os Tracks', 'Solana', 'DeFi', 'NFTs', 'Anchor', 'Tokens', 'Segurança', 'Mobile'];
-const SORT_OPTIONS = [
-  { value: 'popular', label: 'Mais Popular' },
-  { value: 'newest', label: 'Mais Recente' },
-  { value: 'xp', label: 'Mais XP' },
-];
+// Internal level keys — locale-independent for filter logic
+type LevelKey = 'Beginner' | 'Intermediate' | 'Advanced';
 
-const LEVEL_COLORS: Record<string, string> = {
-  Iniciante: 'bg-green-900/60 text-green-300 border border-green-700/50',
-  Intermediário: 'bg-yellow-900/60 text-yellow-300 border border-yellow-700/50',
-  Avançado: 'bg-red-900/60 text-red-300 border border-red-700/50',
+const LEVEL_COLORS: Record<LevelKey, string> = {
+  Beginner:     'bg-green-900/60 text-green-300 border border-green-700/50',
+  Intermediate: 'bg-yellow-900/60 text-yellow-300 border border-yellow-700/50',
+  Advanced:     'bg-red-900/60 text-red-300 border border-red-700/50',
 };
 
+// Track display names keyed by internal value — tracks are shown in original language except the "all" option
+const FIXED_TRACKS = ['Solana', 'DeFi', 'NFTs', 'Anchor', 'Tokens', 'Security', 'Mobile'] as const;
+
 export default function CoursesPage() {
-  const params = useParams();
-  const locale = (params.locale as string) || 'pt-BR';
+  const locale = useLocale();
+  const t = useTranslations('courses');
+
+  const LEVEL_OPTIONS: { key: string; label: string }[] = [
+    { key: 'all',          label: t('filter_all') },
+    { key: 'Beginner',     label: t('filter_beginner') },
+    { key: 'Intermediate', label: t('filter_intermediate') },
+    { key: 'Advanced',     label: t('filter_advanced') },
+  ];
+
+  const TRACK_OPTIONS: { key: string; label: string }[] = [
+    { key: 'all',      label: t('track_all') },
+    { key: 'Solana',   label: 'Solana' },
+    { key: 'DeFi',     label: 'DeFi' },
+    { key: 'NFTs',     label: 'NFTs' },
+    { key: 'Anchor',   label: t('track_anchor') },
+    { key: 'Tokens',   label: t('track_tokens') },
+    { key: 'Security', label: t('track_security') },
+    { key: 'Mobile',   label: t('track_mobile') },
+  ];
+
+  const SORT_OPTIONS = [
+    { value: 'popular', label: t('sort_popular') },
+    { value: 'newest',  label: t('sort_recent') },
+    { value: 'xp',      label: t('sort_xp') },
+  ];
 
   const [search, setSearch] = useState('');
-  const [levelFilter, setLevelFilter] = useState('Todos');
-  const [trackFilter, setTrackFilter] = useState('Todos os Tracks');
+  const [levelFilter, setLevelFilter] = useState('all');
+  const [trackFilter, setTrackFilter] = useState('all');
   const [sortBy, setSortBy] = useState('popular');
 
   const filtered = useMemo(() => {
@@ -144,13 +232,16 @@ export default function CoursesPage() {
     if (search.trim()) {
       const q = search.toLowerCase();
       result = result.filter(
-        (c) => c.title.toLowerCase().includes(q) || c.track.toLowerCase().includes(q) || c.desc.toLowerCase().includes(q)
+        (c) =>
+          L(c.title, locale).toLowerCase().includes(q) ||
+          c.track.toLowerCase().includes(q) ||
+          L(c.desc, locale).toLowerCase().includes(q)
       );
     }
-    if (levelFilter !== 'Todos') {
+    if (levelFilter !== 'all') {
       result = result.filter((c) => c.level === levelFilter);
     }
-    if (trackFilter !== 'Todos os Tracks') {
+    if (trackFilter !== 'all') {
       result = result.filter((c) => c.track === trackFilter);
     }
 
@@ -159,18 +250,24 @@ export default function CoursesPage() {
     if (sortBy === 'newest') result.reverse();
 
     return result;
-  }, [search, levelFilter, trackFilter, sortBy]);
+  }, [search, levelFilter, trackFilter, sortBy, locale]);
 
-  const hasFilters = levelFilter !== 'Todos' || trackFilter !== 'Todos os Tracks' || search.trim();
+  const hasFilters = levelFilter !== 'all' || trackFilter !== 'all' || search.trim();
+
+  const levelBadgeLabel = (level: LevelKey): string => {
+    if (level === 'Beginner')     return t('level_badge_beginner');
+    if (level === 'Intermediate') return t('level_badge_intermediate');
+    return t('level_badge_advanced');
+  };
 
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100">
       {/* Header */}
       <div className="border-b border-gray-800 bg-gray-900/60 py-12 px-4">
         <div className="mx-auto max-w-6xl">
-          <h1 className="mb-2 text-4xl font-extrabold text-white">Catálogo de Cursos</h1>
+          <h1 className="mb-2 text-4xl font-extrabold text-white">{t('catalog_title')}</h1>
           <p className="text-gray-400">
-            Explore nossa biblioteca Web3 — {MOCK_COURSES.length} cursos disponíveis
+            {t('catalog_subtitle')} — {t('available_count', { count: MOCK_COURSES.length })}
           </p>
         </div>
       </div>
@@ -182,7 +279,7 @@ export default function CoursesPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
             <input
               type="text"
-              placeholder="Buscar cursos, tracks, tópicos..."
+              placeholder={t('search_placeholder')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full rounded-xl border border-gray-700 bg-gray-800 pl-10 pr-4 py-2.5 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/30 transition-all"
@@ -210,41 +307,41 @@ export default function CoursesPage() {
 
         {/* Filter pills — Level */}
         <div className="mb-4 flex flex-wrap gap-2">
-          {LEVEL_OPTIONS.map((lvl) => (
+          {LEVEL_OPTIONS.map(({ key, label }) => (
             <button
-              key={lvl}
-              onClick={() => setLevelFilter(lvl)}
+              key={key}
+              onClick={() => setLevelFilter(key)}
               className={cn(
                 'rounded-full px-4 py-1.5 text-sm font-medium border transition-all',
-                levelFilter === lvl
+                levelFilter === key
                   ? 'bg-purple-600 border-purple-500 text-white'
                   : 'border-gray-700 bg-gray-800/50 text-gray-400 hover:border-gray-600 hover:text-gray-200'
               )}
             >
-              {lvl}
+              {label}
             </button>
           ))}
           <div className="h-6 w-px bg-gray-700 self-center mx-1" />
-          {TRACK_OPTIONS.map((track) => (
+          {TRACK_OPTIONS.map(({ key, label }) => (
             <button
-              key={track}
-              onClick={() => setTrackFilter(track)}
+              key={key}
+              onClick={() => setTrackFilter(key)}
               className={cn(
                 'rounded-full px-4 py-1.5 text-sm font-medium border transition-all',
-                trackFilter === track
+                trackFilter === key
                   ? 'bg-indigo-600 border-indigo-500 text-white'
                   : 'border-gray-700 bg-gray-800/50 text-gray-400 hover:border-gray-600 hover:text-gray-200'
               )}
             >
-              {track === 'Todos os Tracks' ? 'Todos' : track}
+              {label}
             </button>
           ))}
           {hasFilters && (
             <button
-              onClick={() => { setLevelFilter('Todos'); setTrackFilter('Todos os Tracks'); setSearch(''); }}
+              onClick={() => { setLevelFilter('all'); setTrackFilter('all'); setSearch(''); }}
               className="flex items-center gap-1 rounded-full px-3 py-1.5 text-xs text-red-400 border border-red-800/50 bg-red-900/20 hover:bg-red-900/30 transition-all"
             >
-              <X className="h-3 w-3" /> Limpar
+              <X className="h-3 w-3" /> {t('clear')}
             </button>
           )}
         </div>
@@ -252,7 +349,7 @@ export default function CoursesPage() {
         {/* Results count */}
         <div className="mb-6 text-sm text-gray-500">
           {filtered.length === MOCK_COURSES.length
-            ? `${MOCK_COURSES.length} cursos disponíveis`
+            ? t('available_count', { count: MOCK_COURSES.length })
             : `${filtered.length} curso${filtered.length !== 1 ? 's' : ''} encontrado${filtered.length !== 1 ? 's' : ''}`}
         </div>
 
@@ -260,12 +357,12 @@ export default function CoursesPage() {
         {filtered.length === 0 ? (
           <div className="text-center py-20">
             <BookOpen className="mx-auto h-12 w-12 text-gray-700 mb-3" />
-            <p className="text-gray-500 text-lg">Nenhum curso encontrado.</p>
+            <p className="text-gray-500 text-lg">{t('no_results')}</p>
             <button
-              onClick={() => { setLevelFilter('Todos'); setTrackFilter('Todos os Tracks'); setSearch(''); }}
+              onClick={() => { setLevelFilter('all'); setTrackFilter('all'); setSearch(''); }}
               className="mt-4 text-sm text-purple-400 hover:text-purple-300"
             >
-              Limpar filtros
+              {t('clear_filters')}
             </button>
           </div>
         ) : (
@@ -281,17 +378,17 @@ export default function CoursesPage() {
                         {course.track}
                       </span>
                       <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium', LEVEL_COLORS[course.level])}>
-                        {course.level}
+                        {levelBadgeLabel(course.level)}
                       </span>
                     </div>
                   </div>
 
                   <div className="p-4 flex flex-col flex-1">
                     <h3 className="mb-1.5 text-sm font-semibold text-white leading-snug group-hover:text-purple-300 transition-colors line-clamp-2">
-                      {course.title}
+                      {L(course.title, locale)}
                     </h3>
                     <p className="mb-3 text-xs text-gray-500 leading-relaxed line-clamp-2 flex-1">
-                      {course.desc}
+                      {L(course.desc, locale)}
                     </p>
 
                     {/* Rating */}
@@ -328,7 +425,7 @@ export default function CoursesPage() {
         <div className="mt-12 flex items-center justify-center gap-2 text-sm text-gray-600">
           <Users className="h-4 w-4" />
           <span>
-            {MOCK_COURSES.reduce((a, c) => a + c.students, 0).toLocaleString()} aprendizes matriculados nos cursos
+            {MOCK_COURSES.reduce((a, c) => a + c.students, 0).toLocaleString()} {t('enrolled_learners')}
           </span>
         </div>
       </div>

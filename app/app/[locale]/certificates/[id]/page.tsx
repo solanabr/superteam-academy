@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { getLocale, getTranslations } from 'next-intl/server';
 import {
   GraduationCap,
   CheckCircle,
@@ -10,10 +11,12 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+const L = (obj: Record<string, string>, locale: string) => obj[locale] ?? obj['pt-BR'];
+
 // ---------- mock certificate data keyed by id ----------
 
 interface CertData {
-  credentialName: string;
+  credentialName: Record<string, string>;
   track: string;
   address: string;
   issuedDate: string;
@@ -27,7 +30,11 @@ interface CertData {
 
 const CERT_DATA: Record<string, CertData> = {
   'cred-1': {
-    credentialName: 'Introdução ao Solana',
+    credentialName: {
+      'pt-BR': 'Introdução ao Solana',
+      'en': 'Introduction to Solana',
+      'es': 'Introducción a Solana',
+    },
     track: 'Solana Core',
     address: '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU',
     issuedDate: '10 de Janeiro de 2025',
@@ -39,7 +46,11 @@ const CERT_DATA: Record<string, CertData> = {
     glowColor: 'shadow-purple-900/50',
   },
   'cred-2': {
-    credentialName: 'Especialista em Solana',
+    credentialName: {
+      'pt-BR': 'Especialista em Solana',
+      'en': 'Solana Specialist',
+      'es': 'Especialista en Solana',
+    },
     track: 'NFTs & Metaplex',
     address: 'Ap9Stg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosg7kLm',
     issuedDate: '05 de Fevereiro de 2025',
@@ -54,7 +65,11 @@ const CERT_DATA: Record<string, CertData> = {
 
 // Fallback for unknown IDs
 const DEFAULT_CERT: CertData = {
-  credentialName: 'Especialista em Solana',
+  credentialName: {
+    'pt-BR': 'Especialista em Solana',
+    'en': 'Solana Specialist',
+    'es': 'Especialista en Solana',
+  },
   track: 'Solana Development',
   address: '2kTpMnRs8jWx4fBq1cBqHnRs1cBq4fBq1cBqHnRs1cBq',
   issuedDate: '25 de Fevereiro de 2025',
@@ -93,12 +108,16 @@ export default async function CertificatePage({
   params: Promise<{ id: string; locale: string }>;
 }) {
   const { id, locale } = await params;
+  const t = await getTranslations('certificate');
+  const tCommon = await getTranslations('common');
+  const tProfile = await getTranslations('profile');
 
   const cert = CERT_DATA[id] ?? DEFAULT_CERT;
+  const credName = L(cert.credentialName, locale);
 
   const explorerUrl = `https://explorer.solana.com/address/${cert.mintAddress}?cluster=devnet`;
-  const twitterUrl  = buildTwitterIntent(cert.credentialName);
-  const linkedinUrl = buildLinkedInIntent(cert.credentialName);
+  const twitterUrl  = buildTwitterIntent(credName);
+  const linkedinUrl = buildLinkedInIntent(credName);
 
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100 py-10 px-4">
@@ -109,7 +128,7 @@ export default async function CertificatePage({
           href={`/${locale}/perfil/${cert.address}`}
           className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-300 transition-colors"
         >
-          ← Voltar ao perfil
+          {t('back_to_profile')}
         </Link>
 
         {/* Certificate card */}
@@ -148,7 +167,7 @@ export default async function CertificatePage({
                 Superteam Academy
               </p>
               <p className="text-xs font-semibold tracking-[0.15em] text-purple-400 uppercase">
-                Certificado de Conclusão
+                {t('completion')}
               </p>
             </div>
 
@@ -157,22 +176,22 @@ export default async function CertificatePage({
 
             {/* Credential name */}
             <div className="text-center mb-8">
-              <p className="text-sm text-gray-500 mb-2">Este certificado é conferido a</p>
+              <p className="text-sm text-gray-500 mb-2">{t('awarded_to')}</p>
               <p className="font-mono text-base text-gray-300 mb-4">
                 {truncate(cert.address)}
               </p>
               <h1 className="text-3xl sm:text-4xl font-extrabold text-white leading-tight mb-2">
-                {cert.credentialName}
+                {credName}
               </h1>
-              <p className="text-sm text-gray-400">Track: {cert.track}</p>
+              <p className="text-sm text-gray-400">{t('track_label')}: {cert.track}</p>
             </div>
 
             {/* Stats row */}
             <div className="grid grid-cols-3 gap-4 mb-8">
               {[
-                { label: 'XP Total',          value: cert.totalXp.toLocaleString(),    icon: Zap,      color: 'text-yellow-400' },
-                { label: 'Cursos Concluídos', value: String(cert.coursesCompleted),    icon: BookOpen, color: 'text-blue-400'   },
-                { label: 'Track',             value: cert.track.split(' ')[0],         icon: Award,    color: 'text-green-400'  },
+                { label: tProfile('xp_total'),           value: cert.totalXp.toLocaleString(),    icon: Zap,      color: 'text-yellow-400' },
+                { label: tProfile('courses_completed'),  value: String(cert.coursesCompleted),    icon: BookOpen, color: 'text-blue-400'   },
+                { label: t('track_label'),               value: cert.track.split(' ')[0],         icon: Award,    color: 'text-green-400'  },
               ].map(({ label, value, icon: Icon, color }) => (
                 <div
                   key={label}
@@ -189,7 +208,7 @@ export default async function CertificatePage({
             <div className="rounded-xl border border-gray-800 bg-gray-950/40 p-5 mb-8">
               <div className="flex items-center gap-2 mb-3">
                 <Shield className="h-4 w-4 text-purple-400" />
-                <h3 className="text-sm font-semibold text-white">Habilidades Certificadas</h3>
+                <h3 className="text-sm font-semibold text-white">{t('certified_skills')}</h3>
               </div>
               <ul className="space-y-2">
                 {cert.skills.map((skill) => (
@@ -214,7 +233,7 @@ export default async function CertificatePage({
               )}
             >
               <ExternalLink className="h-4 w-4" />
-              Verificar On-Chain — Solana Explorer
+              {t('verify_solana_explorer')}
             </a>
 
             {/* Share buttons */}
@@ -252,7 +271,7 @@ export default async function CertificatePage({
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-600">
               <div className="flex items-center gap-1.5">
                 <GraduationCap className="h-4 w-4 text-gray-700" />
-                <span>Emitido pela Superteam Academy</span>
+                <span>{t('issued_by')}</span>
               </div>
               <span>{cert.issuedDate}</span>
               <span className="font-mono text-gray-700 text-[10px]">
@@ -267,7 +286,7 @@ export default async function CertificatePage({
 
         {/* Helper note */}
         <p className="text-center text-xs text-gray-700">
-          Este certificado está permanentemente registrado na blockchain Solana e pode ser verificado publicamente a qualquer momento.
+          {t('permanently_recorded')}
         </p>
       </div>
     </div>

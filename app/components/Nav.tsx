@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
+import { useTranslations, useLocale } from 'next-intl';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import {
   GraduationCap,
@@ -24,9 +25,9 @@ const LOCALES = [
 ] as const;
 
 const NAV_ITEMS = [
-  { key: 'courses', path: '/cursos', enPath: '/courses', esPath: '/cursos', label: { 'pt-BR': 'Cursos', en: 'Courses', es: 'Cursos' }, icon: BookOpen },
-  { key: 'dashboard', path: '/painel', enPath: '/dashboard', esPath: '/panel', label: { 'pt-BR': 'Painel', en: 'Dashboard', es: 'Panel' }, icon: LayoutDashboard },
-  { key: 'leaderboard', path: '/classificacao', enPath: '/leaderboard', esPath: '/clasificacion', label: { 'pt-BR': 'Classificação', en: 'Leaderboard', es: 'Clasificación' }, icon: Trophy },
+  { key: 'courses', path: '/cursos', enPath: '/courses', esPath: '/cursos' as const, icon: BookOpen },
+  { key: 'dashboard', path: '/painel', enPath: '/dashboard', esPath: '/panel' as const, icon: LayoutDashboard },
+  { key: 'leaderboard', path: '/classificacao', enPath: '/leaderboard', esPath: '/clasificacion' as const, icon: Trophy },
 ] as const;
 
 type LocaleCode = 'pt-BR' | 'en' | 'es';
@@ -36,8 +37,8 @@ export default function Nav() {
   const router = useRouter();
   const { theme, setTheme } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
-
-  const locale = (pathname.split('/')[1] as LocaleCode) || 'pt-BR';
+  const t = useTranslations('nav');
+  const locale = useLocale() as LocaleCode;
 
   function getNavPath(item: typeof NAV_ITEMS[number]): string {
     if (locale === 'en') return `/${locale}${item.enPath}`;
@@ -79,7 +80,6 @@ export default function Nav() {
               const href = getNavPath(item);
               const active = isActive(item);
               const Icon = item.icon;
-              const label = item.label[locale] ?? item.label['pt-BR'];
               return (
                 <Link
                   key={item.key}
@@ -92,7 +92,7 @@ export default function Nav() {
                   )}
                 >
                   <Icon className="h-4 w-4" />
-                  {label}
+                  {t(item.key as 'courses' | 'dashboard' | 'leaderboard')}
                 </Link>
               );
             })}
@@ -165,7 +165,6 @@ export default function Nav() {
             const href = getNavPath(item);
             const active = isActive(item);
             const Icon = item.icon;
-            const label = item.label[locale] ?? item.label['pt-BR'];
             return (
               <Link
                 key={item.key}
@@ -179,7 +178,7 @@ export default function Nav() {
                 )}
               >
                 <Icon className="h-4 w-4" />
-                {label}
+                {t(item.key as 'courses' | 'dashboard' | 'leaderboard')}
               </Link>
             );
           })}

@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { xpToNextLevel, getLevelTitle, getStreakBonus } from '@/lib/gamification';
 import { cn } from '@/lib/utils';
 import { Flame, Star, Zap } from 'lucide-react';
@@ -17,6 +18,7 @@ export function XPBar({ totalXP, streakDays = 0, className, compact = false }: X
   const title = getLevelTitle(level);
   const bonus = getStreakBonus(streakDays);
   const hasBonus = streakDays >= 7;
+  const t = useTranslations('dashboard');
 
   if (compact) {
     return (
@@ -60,7 +62,7 @@ export function XPBar({ totalXP, streakDays = 0, className, compact = false }: X
           <div>
             <div className="text-white font-semibold text-sm">{title}</div>
             <div className="text-gray-400 text-xs">
-              Nível {level}
+              {t('level')} {level}
             </div>
           </div>
         </div>
@@ -100,13 +102,13 @@ export function XPBar({ totalXP, streakDays = 0, className, compact = false }: X
           </div>
         </div>
         <div className="text-right text-xs text-gray-500">
-          {(required - current).toLocaleString()} XP para nível {level + 1}
+          {(required - current).toLocaleString()} XP {t('to_level', { level: level + 1 })}
         </div>
       </div>
 
       {/* Total XP */}
       <div className="mt-3 pt-3 border-t border-gray-800 flex items-center justify-between">
-        <span className="text-gray-400 text-xs">XP Total</span>
+        <span className="text-gray-400 text-xs">{t('xp_total')}</span>
         <span className="text-white font-bold text-sm">
           {totalXP.toLocaleString()} XP
         </span>

@@ -1,6 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
+import { useTheme } from 'next-themes';
+import { useRouter, usePathname } from 'next/navigation';
 import {
   Globe,
   Moon,
@@ -25,41 +28,9 @@ interface ToggleSetting {
 }
 
 const LANGUAGES: { value: Language; label: string; flag: string; region: string }[] = [
-  { value: 'pt-BR', label: 'Português',   flag: '🇧🇷', region: 'Brasil'      },
+  { value: 'pt-BR', label: 'Português',   flag: '🇧🇷', region: 'Brasil'        },
   { value: 'en',    label: 'English',     flag: '🇺🇸', region: 'United States' },
-  { value: 'es',    label: 'Español',     flag: '🇪🇸', region: 'España'      },
-];
-
-const THEMES: { value: Theme; label: string; icon: typeof Moon; desc: string }[] = [
-  { value: 'dark',   label: 'Escuro',  icon: Moon,    desc: 'Fundo preto, ideal para noite'   },
-  { value: 'light',  label: 'Claro',   icon: Sun,     desc: 'Fundo branco, ideal para dia'    },
-  { value: 'system', label: 'Sistema', icon: Monitor, desc: 'Segue a preferência do sistema'  },
-];
-
-const NOTIFICATION_TOGGLES: ToggleSetting[] = [
-  {
-    key: 'newCourses',
-    label: 'Novos cursos',
-    description: 'Notifique quando novos cursos forem lançados',
-  },
-  {
-    key: 'achievements',
-    label: 'Conquistas desbloqueadas',
-    description: 'Notifique quando você desbloquear uma conquista',
-  },
-];
-
-const PRIVACY_TOGGLES: ToggleSetting[] = [
-  {
-    key: 'publicProfile',
-    label: 'Perfil público',
-    description: 'Outros usuários podem ver seu perfil e progresso',
-  },
-  {
-    key: 'showXpRanking',
-    label: 'Mostrar XP no ranking',
-    description: 'Seu XP aparece na tabela de classificação',
-  },
+  { value: 'es',    label: 'Español',     flag: '🇪🇸', region: 'España'        },
 ];
 
 // ---------- sub-components ----------
@@ -114,6 +85,11 @@ function Toggle({
 // ---------- page ----------
 
 export default function SettingsPage() {
+  const t = useTranslations('settings');
+  const { setTheme: applyTheme } = useTheme();
+  const router = useRouter();
+  const pathname = usePathname();
+
   const [language,  setLanguage]  = useState<Language>('pt-BR');
   const [theme,     setTheme]     = useState<Theme>('dark');
 
@@ -129,6 +105,31 @@ export default function SettingsPage() {
 
   const [toast, setToast] = useState(false);
 
+  // Load settings from localStorage on mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('academy-settings');
+      if (stored) {
+        const parsed = JSON.parse(stored) as {
+          language?: Language;
+          theme?: Theme;
+          notifications?: Record<string, boolean>;
+          privacy?: Record<string, boolean>;
+        };
+        if (parsed.language) setLanguage(parsed.language);
+        if (parsed.theme) {
+          setTheme(parsed.theme);
+          applyTheme(parsed.theme);
+        }
+        if (parsed.notifications) setNotifications(parsed.notifications);
+        if (parsed.privacy) setPrivacy(parsed.privacy);
+      }
+    } catch {
+      // ignore malformed data
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Auto-hide toast
   useEffect(() => {
     if (!toast) return;
@@ -136,26 +137,74 @@ export default function SettingsPage() {
     return () => clearTimeout(id);
   }, [toast]);
 
+  function handleThemeChange(newTheme: Theme) {
+    setTheme(newTheme);
+    applyTheme(newTheme);
+  }
+
+  function handleLanguageChange(newLocale: Language) {
+    setLanguage(newLocale);
+    // Navigate to the same path but with the new locale segment
+    const segments = pathname.split('/');
+    // pathname starts with /<locale>/...
+    segments[1] = newLocale;
+    router.push(segments.join('/'));
+  }
+
   function handleSave() {
-    // Simulate save
+    const settings = { language, theme, notifications, privacy };
+    localStorage.setItem('academy-settings', JSON.stringify(settings));
     setToast(true);
   }
+
+  // Build theme options inside the component so t() can be called
+  const THEMES: { value: Theme; label: string; icon: typeof Moon; desc: string }[] = [
+    { value: 'dark',   label: t('dark'),   icon: Moon,    desc: t('dark_desc')   },
+    { value: 'light',  label: t('light'),  icon: Sun,     desc: t('light_desc')  },
+    { value: 'system', label: t('system'), icon: Monitor, desc: t('system_desc') },
+  ];
+
+  const NOTIFICATION_TOGGLES: ToggleSetting[] = [
+    {
+      key: 'newCourses',
+      label: t('new_courses'),
+      description: t('new_courses_desc'),
+    },
+    {
+      key: 'achievements',
+      label: t('achievements_unlocked'),
+      description: t('achievements_unlocked_desc'),
+    },
+  ];
+
+  const PRIVACY_TOGGLES: ToggleSetting[] = [
+    {
+      key: 'publicProfile',
+      label: t('public_profile'),
+      description: t('public_profile_desc'),
+    },
+    {
+      key: 'showXpRanking',
+      label: t('show_xp'),
+      description: t('show_xp_desc'),
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100">
       {/* Header */}
       <div className="border-b border-gray-800 bg-gray-900/60 py-10 px-4">
         <div className="mx-auto max-w-2xl">
-          <h1 className="text-3xl font-extrabold text-white mb-1">Configurações</h1>
-          <p className="text-gray-400 text-sm">Personalize sua experiência na Superteam Academy</p>
+          <h1 className="text-3xl font-extrabold text-white mb-1">{t('title')}</h1>
+          <p className="text-gray-400 text-sm">{t('subtitle')}</p>
         </div>
       </div>
 
       <div className="mx-auto max-w-2xl px-4 py-8 space-y-8">
 
-        {/* Idioma */}
+        {/* Language */}
         <section className="rounded-2xl border border-gray-800 bg-gray-900/60 p-6">
-          <SectionHeading icon={Globe} title="Idioma" color="text-blue-400" />
+          <SectionHeading icon={Globe} title={t('language')} color="text-blue-400" />
           <div className="space-y-2">
             {LANGUAGES.map((lang) => {
               const selected = language === lang.value;
@@ -174,7 +223,7 @@ export default function SettingsPage() {
                     name="language"
                     value={lang.value}
                     checked={selected}
-                    onChange={() => setLanguage(lang.value)}
+                    onChange={() => handleLanguageChange(lang.value)}
                     className="sr-only"
                   />
                   <span className="text-2xl" aria-hidden="true">{lang.flag}</span>
@@ -191,9 +240,9 @@ export default function SettingsPage() {
           </div>
         </section>
 
-        {/* Tema */}
+        {/* Theme */}
         <section className="rounded-2xl border border-gray-800 bg-gray-900/60 p-6">
-          <SectionHeading icon={Sun} title="Tema" color="text-yellow-400" />
+          <SectionHeading icon={Sun} title={t('theme')} color="text-yellow-400" />
           <div className="space-y-2">
             {THEMES.map(({ value, label, icon: Icon, desc }) => {
               const selected = theme === value;
@@ -212,7 +261,7 @@ export default function SettingsPage() {
                     name="theme"
                     value={value}
                     checked={selected}
-                    onChange={() => setTheme(value)}
+                    onChange={() => handleThemeChange(value)}
                     className="sr-only"
                   />
                   <div
@@ -238,9 +287,9 @@ export default function SettingsPage() {
           </div>
         </section>
 
-        {/* Notificações */}
+        {/* Notifications */}
         <section className="rounded-2xl border border-gray-800 bg-gray-900/60 p-6">
-          <SectionHeading icon={Bell} title="Notificações" color="text-orange-400" />
+          <SectionHeading icon={Bell} title={t('notifications')} color="text-orange-400" />
           <div className="space-y-1 divide-y divide-gray-800/60">
             {NOTIFICATION_TOGGLES.map((item) => (
               <div
@@ -263,9 +312,9 @@ export default function SettingsPage() {
           </div>
         </section>
 
-        {/* Privacidade */}
+        {/* Privacy */}
         <section className="rounded-2xl border border-gray-800 bg-gray-900/60 p-6">
-          <SectionHeading icon={ShieldCheck} title="Privacidade" color="text-green-400" />
+          <SectionHeading icon={ShieldCheck} title={t('privacy')} color="text-green-400" />
           <div className="space-y-1 divide-y divide-gray-800/60">
             {PRIVACY_TOGGLES.map((item) => (
               <div
@@ -291,14 +340,14 @@ export default function SettingsPage() {
         {/* Save button */}
         <div className="flex items-center justify-between gap-4 pt-2">
           <p className="text-xs text-gray-600">
-            As configurações são salvas localmente neste dispositivo
+            {t('local_disclaimer')}
           </p>
           <button
             onClick={handleSave}
             className="flex items-center gap-2 rounded-xl bg-purple-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-purple-500 active:scale-95 transition-all shadow-lg shadow-purple-900/40"
           >
             <CheckCircle className="h-4 w-4" />
-            Salvar
+            {t('save')}
             <ChevronRight className="h-4 w-4" />
           </button>
         </div>
@@ -315,8 +364,8 @@ export default function SettingsPage() {
       >
         <CheckCircle className="h-5 w-5 text-green-400 shrink-0" />
         <div>
-          <div className="text-sm font-semibold text-white">Configurações salvas!</div>
-          <div className="text-xs text-gray-400">Suas preferências foram atualizadas.</div>
+          <div className="text-sm font-semibold text-white">{t('saved')}</div>
+          <div className="text-xs text-gray-400">{t('prefs_updated')}</div>
         </div>
       </div>
     </div>

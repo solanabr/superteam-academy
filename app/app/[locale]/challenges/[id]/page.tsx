@@ -3,19 +3,25 @@
 import dynamic from 'next/dynamic';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Play, Send, CheckCircle, XCircle, Zap, Lightbulb, RotateCcw,
   Trophy, Eye, ChevronDown, ChevronUp, Code2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+function EditorLoadingFallback() {
+  const t = useTranslations('challenge');
+  return (
+    <div className="flex h-full items-center justify-center bg-gray-900 text-gray-500 text-sm">
+      {t('loading_editor')}
+    </div>
+  );
+}
+
 const MonacoEditor = dynamic(() => import('@monaco-editor/react'), {
   ssr: false,
-  loading: () => (
-    <div className="flex h-full items-center justify-center bg-gray-900 text-gray-500 text-sm">
-      Carregando editor...
-    </div>
-  ),
+  loading: EditorLoadingFallback,
 });
 
 const CHALLENGES: Record<string, {
@@ -28,7 +34,7 @@ const CHALLENGES: Record<string, {
   'transfer-sol': {
     id: 'transfer-sol',
     title: 'Transfer SOL Between Wallets',
-    difficulty: 'Iniciante',
+    difficulty: 'Beginner',
     xp: 200,
     description: `## Transferir SOL Entre Carteiras
 
@@ -124,7 +130,7 @@ export async function transferSOL(
   'create-token': {
     id: 'create-token',
     title: 'Criar Token SPL',
-    difficulty: 'Intermediário',
+    difficulty: 'Intermediate',
     xp: 350,
     description: `## Criar um Token SPL
 
@@ -169,14 +175,85 @@ export async function createSPLToken(
 const DEFAULT_CHALLENGE = CHALLENGES['transfer-sol'];
 
 const DIFF_COLORS: Record<string, string> = {
-  Iniciante: 'bg-green-900/50 text-green-300 border border-green-700/50',
-  Intermediário: 'bg-yellow-900/50 text-yellow-300 border border-yellow-700/50',
-  Avançado: 'bg-red-900/50 text-red-300 border border-red-700/50',
+  Beginner:     'bg-green-900/50 text-green-300 border border-green-700/50',
+  Intermediate: 'bg-yellow-900/50 text-yellow-300 border border-yellow-700/50',
+  Advanced:     'bg-red-900/50 text-red-300 border border-red-700/50',
 };
 
 type TestResult = 'pending' | 'pass' | 'fail' | 'running';
 
+// ---------- test runner ----------
+
+function validateTest(challengeId: string, testIndex: number, code: string): TestResult {
+  const validators: Record<string, ((code: string) => TestResult)[]> = {
+    'transfer-sol': [
+      // Test 0: Basic transfer of 0.001 SOL
+      (c) => {
+        const hasTransfer = c.includes('SystemProgram.transfer');
+        const hasSend = c.includes('sendAndConfirmTransaction');
+        const hasFromPubkey = /fromPubkey\s*:\s*sender\.publicKey/.test(c);
+        const hasToPubkey = /toPubkey\s*:\s*recipient/.test(c);
+        return (hasTransfer && hasSend && hasFromPubkey && hasToPubkey) ? 'pass' : 'fail';
+      },
+      // Test 1: Correct lamport conversion
+      (c) => {
+        const hasLamportConversion =
+          c.includes('LAMPORTS_PER_SOL') ||
+          c.includes('1_000_000_000') ||
+          c.includes('1000000000') ||
+          c.includes('1e9');
+        const hasMultiply =
+          /amountSOL\s*\*/.test(c) ||
+          /\*\s*amountSOL/.test(c) ||
+          /amount\s*\*/.test(c);
+        return (hasLamportConversion && hasMultiply) ? 'pass' : 'fail';
+      },
+      // Test 2: Rejects insufficient balance
+      (c) => {
+        const hasErrorHandling =
+          (c.includes('try') && c.includes('catch')) ||
+          c.includes('throw') ||
+          c.includes('getBalance') ||
+          c.includes('balance') ||
+          c.includes('insufficient');
+        return hasErrorHandling ? 'pass' : 'fail';
+      },
+    ],
+    'create-token': [
+      // Test 0: Creates mint with 6 decimals
+      (c) => {
+        const hasCreateMint = c.includes('createMint');
+        const hasConnection = /createMint\s*\(/.test(c) && c.includes('connection');
+        return (hasCreateMint && hasConnection) ? 'pass' : 'fail';
+      },
+      // Test 1: Creates mint with 0 decimals (NFT-like)
+      (c) => {
+        const hasCreateMint = c.includes('createMint');
+        const hasDecimals = c.includes('decimals');
+        return (hasCreateMint && hasDecimals) ? 'pass' : 'fail';
+      },
+      // Test 2: Mint authority configured correctly
+      (c) => {
+        const hasMintAuth = c.includes('payer.publicKey') || c.includes('mintAuthority');
+        const hasCreateMint = c.includes('createMint');
+        return (hasMintAuth && hasCreateMint) ? 'pass' : 'fail';
+      },
+    ],
+  };
+
+  const challengeValidators = validators[challengeId];
+  if (!challengeValidators || !challengeValidators[testIndex]) return 'fail';
+  try {
+    return challengeValidators[testIndex](code);
+  } catch {
+    return 'fail';
+  }
+}
+
+// ---------- page ----------
+
 export default function ChallengePage() {
+  const t = useTranslations('challenge');
   const params = useParams();
   const challengeId = (params.id as string) || 'transfer-sol';
   const challenge = CHALLENGES[challengeId] ?? DEFAULT_CHALLENGE;
@@ -192,12 +269,10 @@ export default function ChallengePage() {
   const runTests = async () => {
     setRunning(true);
     setTestResults(challenge.testCases.map(() => 'running'));
-    await new Promise((r) => setTimeout(r, 800));
-    // Simulate: all pass after a delay
+    await new Promise((r) => setTimeout(r, 600));
+
     const results: TestResult[] = challenge.testCases.map((_, i) => {
-      // Mock: first 2 pass, check code length to determine 3rd
-      if (i < 2) return 'pass';
-      return code.includes('lamports') && code.includes('sendAndConfirmTransaction') ? 'pass' : 'fail';
+      return validateTest(challengeId, i, code);
     });
     setTestResults(results);
     setRunning(false);
@@ -268,7 +343,7 @@ export default function ChallengePage() {
 
           {/* Examples */}
           <div>
-            <h3 className="mb-3 text-sm font-semibold text-white">Exemplos</h3>
+            <h3 className="mb-3 text-sm font-semibold text-white">{t('examples')}</h3>
             {challenge.examples.map((ex, i) => (
               <div key={i} className="rounded-xl border border-gray-700 bg-gray-900 overflow-hidden mb-3">
                 <div className="grid grid-cols-2 divide-x divide-gray-700">
@@ -283,7 +358,7 @@ export default function ChallengePage() {
                 </div>
                 {ex.explanation && (
                   <div className="border-t border-gray-700 p-3">
-                    <span className="text-xs text-gray-500 font-medium">Explicação: </span>
+                    <span className="text-xs text-gray-500 font-medium">{t('explanation')} </span>
                     <span className="text-xs text-gray-400">{ex.explanation}</span>
                   </div>
                 )}
@@ -296,19 +371,19 @@ export default function ChallengePage() {
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-sm font-semibold text-white flex items-center gap-1.5">
                 <Lightbulb className="h-4 w-4 text-yellow-400" />
-                Dicas ({hintsShown}/{challenge.hints.length})
+                {t('hints_count', { shown: hintsShown, total: challenge.hints.length })}
               </h3>
               {hintsShown < challenge.hints.length && (
                 <button
                   onClick={() => setHintsShown((n) => n + 1)}
                   className="text-xs text-yellow-400 hover:text-yellow-300 border border-yellow-700/50 rounded-lg px-2 py-1 hover:bg-yellow-900/20 transition-all"
                 >
-                  Revelar dica
+                  {t('reveal_hint')}
                 </button>
               )}
             </div>
             {hintsShown === 0 && (
-              <p className="text-xs text-gray-500">Tente resolver sozinho primeiro!</p>
+              <p className="text-xs text-gray-500">{t('try_yourself')}</p>
             )}
             {challenge.hints.slice(0, hintsShown).map((hint, i) => (
               <div key={i} className="mb-2 rounded-lg border border-yellow-800/40 bg-yellow-900/10 p-3">
@@ -325,7 +400,7 @@ export default function ChallengePage() {
                 className="flex items-center gap-1.5 text-xs text-purple-400 hover:text-purple-300"
               >
                 <Eye className="h-3.5 w-3.5" />
-                {showSolution ? 'Ocultar' : 'Ver'} solução de referência
+                {showSolution ? t('hide') : t('show')} {t('reference_solution')}
               </button>
               {showSolution && (
                 <pre className="mt-2 rounded-xl bg-gray-900 border border-gray-700 p-4 text-xs text-gray-300 font-mono overflow-x-auto whitespace-pre-wrap">
@@ -351,7 +426,7 @@ export default function ChallengePage() {
               className="flex items-center gap-1.5 rounded-lg border border-gray-700 px-3 py-1.5 text-xs text-gray-400 hover:text-gray-200 hover:bg-gray-800 transition-all"
             >
               <RotateCcw className="h-3.5 w-3.5" />
-              Reset
+              {t('reset')}
             </button>
             <button
               onClick={runTests}
@@ -359,7 +434,7 @@ export default function ChallengePage() {
               className="flex items-center gap-1.5 rounded-lg border border-green-700 bg-green-900/30 px-3 py-1.5 text-xs font-medium text-green-300 hover:bg-green-900/50 transition-all disabled:opacity-50"
             >
               <Play className="h-3.5 w-3.5" />
-              {running ? 'Executando...' : 'Executar Testes'}
+              {running ? t('running') : t('run_tests')}
             </button>
             <button
               onClick={submitSolution}
@@ -367,7 +442,7 @@ export default function ChallengePage() {
               className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:from-purple-500 hover:to-indigo-500 transition-all disabled:opacity-50"
             >
               <Send className="h-3.5 w-3.5" />
-              Enviar Solução
+              {t('submit_solution')}
             </button>
           </div>
         </div>
@@ -404,13 +479,13 @@ export default function ChallengePage() {
             className="flex w-full items-center justify-between px-4 py-2.5 text-xs font-medium text-gray-400 hover:text-gray-200"
           >
             <div className="flex items-center gap-2">
-              <span>Casos de Teste</span>
+              <span>{t('test_cases')}</span>
               {testResults.some((r) => r !== 'pending') && (
                 <span className={cn(
                   'rounded-full px-2 py-0.5 text-xs font-bold',
                   allPassing ? 'bg-green-900/50 text-green-300' : 'bg-red-900/50 text-red-300'
                 )}>
-                  {passing}/{challenge.testCases.length} passando
+                  {t('passing_count', { passing, total: challenge.testCases.length })}
                 </span>
               )}
             </div>
@@ -459,8 +534,8 @@ export default function ChallengePage() {
                 <Trophy className="h-10 w-10 text-white" />
               </div>
             </div>
-            <h2 className="mb-2 text-2xl font-extrabold text-white">Desafio Concluído!</h2>
-            <p className="mb-4 text-gray-400 text-sm">Todos os {challenge.testCases.length} testes passando. Excelente trabalho!</p>
+            <h2 className="mb-2 text-2xl font-extrabold text-white">{t('success')}</h2>
+            <p className="mb-4 text-gray-400 text-sm">{t('all_passing_msg', { count: challenge.testCases.length })}</p>
             <div className="flex items-center justify-center gap-2 mb-6">
               <Zap className="h-6 w-6 text-yellow-400" />
               <span className="text-3xl font-extrabold text-yellow-300">+{challenge.xp} XP</span>
@@ -469,7 +544,7 @@ export default function ChallengePage() {
               onClick={() => setSubmitted(false)}
               className="w-full rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 py-3 text-sm font-bold text-white hover:from-purple-500 hover:to-indigo-500 transition-all"
             >
-              Continuar
+              {t('continue')}
             </button>
           </div>
         </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Trophy, Flame, Zap, Crown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -19,14 +20,15 @@ const LEADERBOARD = [
 
 type Period = 'semana' | 'mes' | 'todo';
 
-const PERIOD_LABELS: Record<Period, string> = {
-  semana: 'Esta Semana',
-  mes: 'Este Mês',
-  todo: 'Todo Tempo',
-};
-
 export default function LeaderboardPage() {
+  const t = useTranslations('leaderboard');
   const [period, setPeriod] = useState<Period>('todo');
+
+  const PERIOD_LABELS: Record<Period, string> = {
+    semana: t('this_week'),
+    mes: t('this_month'),
+    todo: t('all_time'),
+  };
 
   // Row index 4 = rank 5 = "você"
   const YOU_INDEX = 4;
@@ -41,9 +43,9 @@ export default function LeaderboardPage() {
         <div className="mx-auto max-w-4xl">
           <div className="flex items-center gap-3 mb-2">
             <Trophy className="h-8 w-8 text-yellow-400" />
-            <h1 className="text-4xl font-extrabold text-white">Classificação</h1>
+            <h1 className="text-4xl font-extrabold text-white">{t('title')}</h1>
           </div>
-          <p className="text-gray-400">Os melhores aprendizes da Superteam Academy</p>
+          <p className="text-gray-400">{t('subtitle')}</p>
         </div>
       </div>
 
@@ -104,12 +106,12 @@ export default function LeaderboardPage() {
                 {entry.xp.toLocaleString()} XP
               </div>
 
-              <div className="text-xs text-gray-500 mt-1">Nível {entry.level}</div>
+              <div className="text-xs text-gray-500 mt-1">{t('level')} {entry.level}</div>
 
               {entry.streak > 0 && (
                 <div className="flex items-center justify-center gap-1 mt-2 text-xs text-orange-400">
                   <Flame className="h-3 w-3" />
-                  {entry.streak} dias
+                  {entry.streak} {t('days')}
                 </div>
               )}
             </div>
@@ -122,19 +124,19 @@ export default function LeaderboardPage() {
             <thead>
               <tr className="border-b border-gray-800 bg-gray-900/60">
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  #
+                  {t('rank')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Aprendiz
+                  {t('learner')}
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  XP
+                  {t('xp')}
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
-                  Nível
+                  {t('level')}
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
-                  Sequência
+                  {t('streak')}
                 </th>
               </tr>
             </thead>
@@ -167,7 +169,7 @@ export default function LeaderboardPage() {
                       </span>
                     </td>
 
-                    {/* Aprendiz */}
+                    {/* Learner */}
                     <td className="px-4 py-3.5">
                       <div className="flex items-center gap-3">
                         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-800 text-sm font-medium text-gray-300">
@@ -178,7 +180,7 @@ export default function LeaderboardPage() {
                             {entry.address}
                           </div>
                           {isYou && (
-                            <div className="text-xs text-purple-400 font-medium">← você</div>
+                            <div className="text-xs text-purple-400 font-medium">{t('you_marker')}</div>
                           )}
                         </div>
                       </div>
@@ -192,19 +194,19 @@ export default function LeaderboardPage() {
                       </div>
                     </td>
 
-                    {/* Nível */}
+                    {/* Level */}
                     <td className="px-4 py-3.5 text-right hidden sm:table-cell">
                       <span className="inline-flex items-center rounded-full bg-purple-900/40 px-2 py-0.5 text-xs font-medium text-purple-300 border border-purple-700/30">
-                        Nível {entry.level}
+                        {t('level')} {entry.level}
                       </span>
                     </td>
 
-                    {/* Sequência */}
+                    {/* Streak */}
                     <td className="px-4 py-3.5 text-right hidden md:table-cell">
                       {entry.streak > 0 ? (
                         <div className="flex items-center justify-end gap-1 text-sm text-orange-400">
                           <Flame className="h-3.5 w-3.5" />
-                          <span>{entry.streak}d</span>
+                          <span>{entry.streak} {t('days')}</span>
                         </div>
                       ) : (
                         <span className="text-gray-700 text-sm">—</span>
@@ -218,7 +220,7 @@ export default function LeaderboardPage() {
         </div>
 
         <p className="mt-4 text-center text-sm text-gray-600">
-          {LEADERBOARD.length} aprendizes no ranking
+          {t('learners_in_ranking', { count: LEADERBOARD.length })}
         </p>
       </div>
     </div>
