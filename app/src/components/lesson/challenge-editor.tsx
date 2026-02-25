@@ -40,8 +40,9 @@ export function ChallengeEditor({
         </div>
       </div>
 
-      <div style={{ flex: 1, minHeight: 0, position: "relative" as const }}>
+      <div style={{ flex: 1, minHeight: 200, width: "100%", overflow: "hidden", position: "relative" as const }}>
         <MonacoEditor
+          width="100%"
           height="100%"
           language={MONACO_LANG_MAP[language] ?? "typescript"}
           theme="academy"
@@ -67,6 +68,7 @@ export function ChallengeEditor({
             wordBasedSuggestions: "currentDocument",
             formatOnPaste: true,
             tabCompletion: "on",
+            automaticLayout: true,
           }}
         />
       </div>

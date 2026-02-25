@@ -9,13 +9,7 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { learningService } from "@/lib/services/learning-progress";
 import { Panel, Group, Separator } from "react-resizable-panels";
 import { XPToast } from "@/components/gamification/xp-toast";
-import {
-  executeJS,
-  formatLogs,
-  initTranspiler,
-  transpileAndProtect,
-  runTestAssertions,
-} from "@/lib/code-executor";
+import { useChallengeRunner } from "@/lib/hooks/use-challenge-runner";
 import { V9ChallengeSidebar } from "./challenge-sidebar";
 import { CourseCompleteOverlay } from "./course-complete-overlay";
 import { ChallengeEditor } from "./challenge-editor";
@@ -60,6 +54,16 @@ export function LessonChallenge({
   const fileName = FILE_NAME_MAP[language] ?? "index.ts";
   const doneCount = allLessons.filter((_, i) => i < lessonIndex).length;
 
+  const {
+    output,
+    testResults,
+    isRunning,
+    resetOutput,
+    runChallenge,
+    completeLesson: completeLessonAPI,
+    finalizeCourse: finalizeCourseAPI,
+  } = useChallengeRunner();
+
   const [code, setCode] = useState(() => {
     if (typeof window !== "undefined" && lesson.challenge) {
       const saved = localStorage.getItem(`stacad:code:${slug}:${lesson.id}`);
@@ -67,11 +71,6 @@ export function LessonChallenge({
     }
     return lesson.challenge?.starterCode ?? "";
   });
-  const [output, setOutput] = useState("");
-  const [testResults, setTestResults] = useState<
-    { name: string; passed: boolean; expected?: string; actual?: string }[]
-  >([]);
-  const [isRunning, setIsRunning] = useState(false);
   const [completed, setCompleted] = useState(false);
   const [showXP, setShowXP] = useState(false);
   const [showSolution, setShowSolution] = useState(false);
@@ -150,91 +149,32 @@ export function LessonChallenge({
       .catch((e) => console.error("local completeLesson error:", e));
 
     if (walletAddress && course) {
-      fetch("/api/complete-lesson", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          learner: walletAddress,
-          courseId: course.id,
-          lessonIndex,
-        }),
-      }).catch((e) => console.error("complete-lesson API error:", e));
+      completeLessonAPI(walletAddress, course.id ?? slug, lessonIndex);
     }
-  }, [walletAddress, course, lessonIndex, slug]);
+  }, [walletAddress, course, lessonIndex, slug, completeLessonAPI]);
 
   const handleRun = useCallback(async () => {
     if (!lesson.challenge) return;
-    setIsRunning(true);
-    setOutput("");
-    setTestResults([]);
 
-    try {
-      const lang = lesson.challenge.language;
+    const { allPassed } = await runChallenge(
+      code,
+      lesson.challenge.language,
+      lesson.challenge.testCases,
+    );
 
-      if (lang === "rust") {
-        const res = await fetch("/api/execute-rust", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ code }),
-        });
-        const data = await res.json();
-        if (data.error) {
-          setOutput(`Error: ${data.error}`);
-          setIsRunning(false);
-          return;
-        }
-        const rustOutput = data.stderr
-          ? `${data.stderr}\n${data.stdout}`.trim()
-          : data.stdout || "(no output)";
-        setOutput(rustOutput);
-
-        const execResult = {
-          logs: [{ type: "log" as const, args: [data.stdout ?? ""] }],
-          error: data.success ? null : (data.stderr ?? "Compilation failed"),
-          timedOut: false,
-        };
-        const results = runTestAssertions(lesson.challenge.testCases, execResult, code);
-        setTestResults(results);
-
-        if (results.every((r) => r.passed) && !completed) {
-          setCompleted(true);
-          triggerCelebration();
-          callCompleteLessonAPI();
-        }
-      } else {
-        await initTranspiler();
-        const transpiled = await transpileAndProtect(code);
-        if (transpiled.error) {
-          setOutput(`Compile error:\n${transpiled.error}`);
-          setIsRunning(false);
-          return;
-        }
-        const execResult = await executeJS(transpiled.code);
-        setOutput(formatLogs(execResult));
-
-        const results = runTestAssertions(lesson.challenge.testCases, execResult, code);
-        setTestResults(results);
-
-        if (results.every((r) => r.passed) && !completed) {
-          setCompleted(true);
-          triggerCelebration();
-          callCompleteLessonAPI();
-        }
-      }
-    } catch (err) {
-      setOutput(`Unexpected error: ${err instanceof Error ? err.message : String(err)}`);
+    if (allPassed && !completed) {
+      setCompleted(true);
+      triggerCelebration();
+      callCompleteLessonAPI();
     }
-
-    setIsRunning(false);
-  }, [code, lesson.challenge, completed, triggerCelebration, callCompleteLessonAPI]);
+  }, [code, lesson.challenge, completed, triggerCelebration, callCompleteLessonAPI, runChallenge]);
 
   const handleReset = useCallback(() => {
     setCode(lesson.challenge?.starterCode ?? "");
-    setOutput("");
-    setTestResults([]);
+    resetOutput();
     setCompleted(false);
     localStorage.removeItem(`stacad:code:${slug}:${lesson.id}`);
-  }, [lesson.challenge, slug, lesson.id]);
+  }, [lesson.challenge, slug, lesson.id, resetOutput]);
 
   const navigateNext = useCallback(() => {
     if (nextLesson) {
@@ -250,16 +190,10 @@ export function LessonChallenge({
       if (!course) return;
 
       if (walletAddress) {
-        const res = await fetch(`/api/courses/${slug}/finalize`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ walletAddress }),
-        });
-        const data = await res.json();
-        if (data.error) throw new Error(data.error);
+        const result = await finalizeCourseAPI(slug, walletAddress);
         setFinalizationResult({
-          xpAwarded: data.xpAwarded ?? course.xpReward,
-          credentialIssued: true,
+          xpAwarded: result.xpAwarded || (course.xpReward ?? 0),
+          credentialIssued: result.credentialIssued,
         });
       } else {
         const result = await learningService.finalizeCourse("local", course.id ?? slug);
@@ -291,7 +225,7 @@ export function LessonChallenge({
     } finally {
       setIsFinalizing(false);
     }
-  }, [slug, walletAddress, course]);
+  }, [slug, walletAddress, course, finalizeCourseAPI]);
 
   const editorPanel = (
     <>
@@ -540,6 +474,8 @@ export function LessonChallenge({
                 flexDirection: "column" as const,
                 overflow: "hidden",
                 width: "100%",
+                height: "100%",
+                minHeight: 0,
               }}
             >
               {editorPanel}
