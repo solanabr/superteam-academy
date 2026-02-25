@@ -141,7 +141,7 @@
     },
     "footer": {
         "made_with": "Hecho con",
-        "from": "por Superteam Brazil",
+        "from": "por",
         "ubuntu_quote": "ubuntu - Soy porque somos.",
         "motivation": "En este futuro descentralizado, nadie construye solo. Tu crecimiento es nuestro crecimiento, y tu seguridad es nuestra fortaleza colectiva.",
         "mission": "esforcémonos por el desarrollo de una blockchain mejor y más segura",
@@ -190,11 +190,100 @@
         "lesson_title": "Título de lección {index}",
         "lesson_content": "Contenido de lección",
         "lesson_content_info": "Solo texto básico. El formato enriquecido y los desafíos se añadirán en una fase posterior.",
-        "published": "Publicado"
+        "published": "Publicado",
+        "login_view_courses": "Por favor inicia sesión para ver tus cursos.",
+        "login_create_course": "Por favor inicia sesión para crear un curso.",
+        "loading_courses": "Cargando cursos...",
+        "studio": "Estudio",
+        "new_course": "Nuevo Curso"
     },
     "locale": {
         "en": "English",
         "es": "Español",
         "pt-BR": "Português (BR)"
+    },
+    "landing": {
+        "title": "Superteam Academy",
+        "system_status": "Sistema en línea v1.4.0",
+        "tagline_start": "Domina Solana al",
+        "tagline_end": "nivel del metal."
+    },
+    "certificates": {
+        "not_found_title": "Certificado no encontrado",
+        "not_found_desc": "La credencial que buscas no existe o ha sido quemada.",
+        "verified": "Credencial Verificada"
+    },
+    "leaderboard": {
+        "title": "Tabla de clasificación",
+        "subtitle": "Mejores estudiantes por XP",
+        "col_user": "Usuario",
+        "col_level": "Nivel"
+    },
+    "profile": {
+        "not_found_title": "Perfil no encontrado",
+        "not_found_desc": "No pudimos encontrar un usuario con esta dirección de billetera.",
+        "back_to_leaderboard": "Volver a la Tabla",
+        "get_started_cta": "¿Listo para comenzar tu viaje? ¡Inscríbete en un curso para ganar XP y subir en la tabla!"
+    },
+    "auth": {
+        "authenticating": "Autenticando...",
+        "redirecting": "Redirigiendo...",
+        "sync_error": "Error de sincronización",
+        "retry_connection": "Reintentar conexión",
+        "welcome": "Bienvenido",
+        "continue": "Continuar",
+        "loading": "Cargando…",
+        "log_in": "Iniciar sesión",
+        "setting_up": "Configurando tu cuenta...",
+        "loading_profile": "Cargando perfil..."
+    },
+    "components": {
+        "active_course_title": "Curso Activo",
+        "view_all_courses": "Ver Todos los Cursos ->",
+        "active_course_desc": "Continúa tu viaje en Web3 a través de nuestro currículo estructurado.",
+        "no_credentials": "Aún no hay credenciales. ¡Completa cursos para ganarlas!",
+        "referrals_title": "Referencias",
+        "referrals_desc": "Invita a tus amigos y ganen XP juntos.",
+        "referred_users": "Usuarios referidos",
+        "sidebar_dashboard": "Panel",
+        "sidebar_brand": "Superteam .academy",
+        "sidebar_courses": "Cursos",
+        "sidebar_library": "Biblioteca",
+        "sidebar_achievements": "Logros",
+        "sidebar_settings": "Ajustes",
+        "stats_total_xp": "Experiencia Total",
+        "stats_current_streak": "Racha Actual",
+        "stats_days": "Días",
+        "stats_consistency": "¡Sigue así! La consistencia es la clave.",
+        "stats_current_rank": "Rango Actual",
+        "stats_next_rank": "Siguiente Rango: {xp} XP",
+        "active_course_last_lesson": "Última lección: {title}",
+        "active_course_continue": "Continuar",
+        "referral_your_link": "Tu Enlace de Referencia",
+        "referral_copied": "¡Copiado al portapapeles!"
+    },
+    "ide": {
+        "loading_editor": "Cargando editor...",
+        "terminal": "Terminal",
+        "clear": "Limpiar",
+        "ready_prompt": "Listo. Escribe código y haz clic en \"Ejecutar Código\" para probar.\n",
+        "limit_reached": "Límite diario de compilación alcanzado. Inténtalo de nuevo en 24 horas.",
+        "memory": "Memoria",
+        "cpu": "CPU",
+        "status_running": "Ejecutando…",
+        "status_success": "Ejecución exitosa",
+        "status_error": "Ejecución fallida",
+        "status_idle": "Inactivo",
+        "run_tests": "Ejecutar pruebas",
+        "mark_complete": "Marcar completado",
+        "marking": "Marcando…",
+        "language": "Idioma",
+        "test_cases": "Casos de prueba",
+        "passed": "aprobado",
+        "test_n": "Prueba {n}",
+        "input": "Entrada",
+        "expected": "Esperado",
+        "got": "Recibido",
+        "error": "Error"
     }
 }

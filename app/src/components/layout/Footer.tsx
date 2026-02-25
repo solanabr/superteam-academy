@@ -68,6 +68,11 @@ export function Footer() {
             ♥
           </span>
           {t("from")}
+          <img
+            src="/logo/st-brazil-horizontal.svg"
+            alt="Superteam Brazil"
+            className="h-5 w-auto"
+          />
         </p>
       </div>
 

@@ -144,7 +144,7 @@
     },
     "footer": {
         "made_with": "Made with",
-        "from": "from Superteam Brazil",
+        "from": "from",
         "ubuntu_quote": "ubuntu - I am because we are.",
         "motivation": "In this decentralized future, no one builds alone. Your growth is our growth, and your security is our collective strength.",
         "mission": "lets strive towards development of safer/better blockchain",
@@ -193,11 +193,100 @@
         "lesson_title": "Lesson {index} title",
         "lesson_content": "Lesson content",
         "lesson_content_info": "Basic text only. Rich formatting and challenges will be added in a later phase.",
-        "published": "Published"
+        "published": "Published",
+        "login_view_courses": "Please log in to view your courses.",
+        "login_create_course": "Please log in to create a course.",
+        "loading_courses": "Loading courses...",
+        "studio": "Studio",
+        "new_course": "New Course"
     },
     "locale": {
         "en": "English",
         "es": "Español",
         "pt-BR": "Português (BR)"
+    },
+    "landing": {
+        "title": "Superteam Academy",
+        "system_status": "System Online v1.4.0",
+        "tagline_start": "Master Solana at the",
+        "tagline_end": "metal level."
+    },
+    "certificates": {
+        "not_found_title": "Certificate Not Found",
+        "not_found_desc": "The credential you are looking for does not exist or has been burned.",
+        "verified": "Verified Credential"
+    },
+    "leaderboard": {
+        "title": "Leaderboard",
+        "subtitle": "Top learners by XP",
+        "col_user": "User",
+        "col_level": "Level"
+    },
+    "profile": {
+        "not_found_title": "Profile Not Found",
+        "not_found_desc": "We couldn't find a user with this wallet address.",
+        "back_to_leaderboard": "Back to Leaderboard",
+        "get_started_cta": "Ready to start your journey? Enroll in a course to earn XP and climb the leaderboard!"
+    },
+    "auth": {
+        "authenticating": "Authenticating...",
+        "redirecting": "Redirecting...",
+        "sync_error": "Profile Sync Error",
+        "retry_connection": "Retry Connection",
+        "welcome": "Welcome",
+        "continue": "Continue",
+        "loading": "Loading…",
+        "log_in": "Log in",
+        "setting_up": "Setting up your account...",
+        "loading_profile": "Loading profile..."
+    },
+    "components": {
+        "active_course_title": "Active Course",
+        "view_all_courses": "View All Courses ->",
+        "active_course_desc": "Continue your journey in Web3 through our structured curriculum.",
+        "no_credentials": "No credentials yet. Complete courses to earn them!",
+        "referrals_title": "Referrals",
+        "referrals_desc": "Invite friends and earn XP together.",
+        "referred_users": "Referred Users",
+        "sidebar_dashboard": "Dashboard",
+        "sidebar_brand": "Superteam .academy",
+        "sidebar_courses": "Courses",
+        "sidebar_library": "Library",
+        "sidebar_achievements": "Achievements",
+        "sidebar_settings": "Settings",
+        "stats_total_xp": "Total Experience",
+        "stats_current_streak": "Current Streak",
+        "stats_days": "Days",
+        "stats_consistency": "Keep it up! Consistency is key.",
+        "stats_current_rank": "Current Rank",
+        "stats_next_rank": "Next Rank: {xp} XP",
+        "active_course_last_lesson": "Last lesson: {title}",
+        "active_course_continue": "Continue",
+        "referral_your_link": "Your Referral Link",
+        "referral_copied": "Copied to clipboard!"
+    },
+    "ide": {
+        "loading_editor": "Loading Editor...",
+        "terminal": "Terminal",
+        "clear": "Clear",
+        "ready_prompt": "Ready. Write code and click \"Run Code\" to execute.\n",
+        "limit_reached": "Daily code compiling limit reached. Please try again in 24 hours.",
+        "memory": "Memory",
+        "cpu": "CPU",
+        "status_running": "Running…",
+        "status_success": "Execution successful",
+        "status_error": "Execution failed",
+        "status_idle": "Idle",
+        "run_tests": "Run tests",
+        "mark_complete": "Mark complete",
+        "marking": "Marking…",
+        "language": "Language",
+        "test_cases": "Test Cases",
+        "passed": "passed",
+        "test_n": "Test {n}",
+        "input": "Input",
+        "expected": "Expected",
+        "got": "Got",
+        "error": "Error"
     }
 }

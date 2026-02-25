@@ -4,6 +4,7 @@ import { usePrivy } from "@privy-io/react-auth";
 import { useWallets } from "@privy-io/react-auth/solana";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useTranslations } from "next-intl";
 
 type WalletButtonProps = {
   className?: string;
@@ -12,6 +13,7 @@ type WalletButtonProps = {
 export function WalletButton({ className }: WalletButtonProps) {
   const { ready, authenticated, login, logout, user } = usePrivy();
   const { wallets } = useWallets();
+  const t = useTranslations("auth");
 
   const linkedAddress = user?.wallet?.address ?? user?.linkedAccounts?.find((a) => a.type === "wallet")?.address;
   const solanaWalletAddress = wallets?.[0]?.address;
@@ -20,7 +22,7 @@ export function WalletButton({ className }: WalletButtonProps) {
   if (!ready) {
     return (
       <Button variant="outline" size="sm" className={cn("min-w-[120px]", className)} disabled>
-        Loading…
+        {t("loading")}
       </Button>
     );
   }
@@ -46,7 +48,7 @@ export function WalletButton({ className }: WalletButtonProps) {
       className={cn("min-w-[120px]", className)}
       onClick={login}
     >
-      Log in
+      {t("log_in")}
     </Button>
   );
 }

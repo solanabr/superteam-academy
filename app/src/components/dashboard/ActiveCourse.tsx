@@ -1,6 +1,7 @@
 import { Link } from "@/i18n/routing";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { useTranslations } from "next-intl";
 
 interface ActiveCourseProps {
     courseTitle: string;
@@ -20,11 +21,12 @@ export function ActiveCourse({
     lastLessonId,
     className
 }: ActiveCourseProps) {
+    const t = useTranslations("components");
     return (
         <section className={cn(className)}>
             <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-display font-semibold text-white">Active Course</h3>
-                <Link className="text-xs font-mono text-solana hover:underline" href="/courses">View All Courses -&gt;</Link>
+                <h3 className="text-lg font-display font-semibold text-white">{t("active_course_title")}</h3>
+                <Link className="text-xs font-mono text-solana hover:underline" href="/courses">{t("view_all_courses")}</Link>
             </div>
             <div className="glass-panel rounded-2xl p-1 border border-white/5 group hover:border-solana/30 glass-card-hover transition-all duration-300 bg-white/[0.02] hover:bg-white/[0.04]">
                 <div className="relative flex flex-col md:flex-row h-full rounded-xl overflow-hidden bg-void/40">
@@ -44,7 +46,7 @@ export function ActiveCourse({
                             <h4 className="text-2xl font-display font-bold text-white leading-tight mb-1">{courseTitle}</h4>
                             <span className="font-mono text-solana text-lg font-bold">{Math.round(progress)}%</span>
                         </div>
-                        <p className="text-text-muted text-sm mb-6 max-w-md">Continue your journey in Web3 through our structured curriculum.</p>
+                        <p className="text-text-muted text-sm mb-6 max-w-md">{t("active_course_desc")}</p>
                         <div className="flex flex-col gap-4">
                             <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
                                 <div
@@ -55,10 +57,10 @@ export function ActiveCourse({
                                 </div>
                             </div>
                             <div className="flex items-center justify-between flex-wrap gap-4">
-                                <span className="text-xs text-text-muted font-mono">Last lesson: {lastLessonTitle}</span>
+                                <span className="text-xs text-text-muted font-mono">{t("active_course_last_lesson", { title: lastLessonTitle })}</span>
                                 <Link href={`/courses/${courseSlug}/lessons/${lastLessonId}`}>
                                     <Button className="px-5 font-bold shadow-[0_0_15px_rgba(255,255,255,0.1)] group-hover:scale-105 transition-transform">
-                                        Continue
+                                        {t("active_course_continue")}
                                         <span className="material-symbols-outlined text-sm">arrow_forward</span>
                                     </Button>
                                 </Link>

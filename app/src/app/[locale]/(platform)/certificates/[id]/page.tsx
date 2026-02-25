@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useTranslations } from "next-intl";
 
 interface CredentialDetail {
     id: string;
@@ -22,6 +23,7 @@ interface CredentialDetail {
 export default function CertificatePage() {
     const params = useParams();
     const id = Array.isArray(params?.id) ? params.id[0] : params?.id;
+    const t = useTranslations("certificates");
 
     const [credential, setCredential] = useState<CredentialDetail | null>(null);
     const [loading, setLoading] = useState(true);
@@ -69,14 +71,14 @@ export default function CertificatePage() {
                     </div>
                 ) : error || !credential ? (
                     <div className="glass-panel p-10 text-center rounded-xl border border-rust/30">
-                        <h2 className="text-2xl font-display font-bold text-rust mb-2">Certificate Not Found</h2>
-                        <p className="text-text-muted">The credential you are looking for does not exist or has been burned.</p>
+                        <h2 className="text-2xl font-display font-bold text-rust mb-2">{t("not_found_title")}</h2>
+                        <p className="text-text-muted">{t("not_found_desc")}</p>
                     </div>
                 ) : (
                     <>
                         <div className="text-center space-y-2">
                             <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-solana/10 text-solana uppercase tracking-wider border border-solana/20">
-                                Verified Credential
+                                {t("verified")}
                             </span>
                             <h1 className="text-4xl md:text-5xl font-display font-bold text-white tracking-tight pt-4">
                                 {credential.trackName}

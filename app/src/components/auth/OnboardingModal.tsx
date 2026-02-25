@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useUserStore } from "@/store/user-store";
 import { Button } from "@/components/ui/button";
+import { useTranslations } from "next-intl";
 
 type OnboardingModalProps = {
     walletAddress: string;
@@ -36,6 +37,7 @@ export function OnboardingModal({ walletAddress, onComplete }: OnboardingModalPr
     const [displayName, setDisplayName] = useState("");
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const t = useTranslations("auth");
 
     const fetchUser = useUserStore((s) => s.fetchUser);
 
@@ -83,7 +85,7 @@ export function OnboardingModal({ walletAddress, onComplete }: OnboardingModalPr
                 <div className="text-center mb-8">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-solana/10 border border-solana/20 mb-4">
                         <span className="w-2 h-2 rounded-full bg-solana animate-pulse" />
-                        <span className="font-code text-xs text-solana uppercase tracking-widest">Welcome</span>
+                        <span className="font-code text-xs text-solana uppercase tracking-widest">{t("welcome")}</span>
                     </div>
                     <h1 className="font-display text-3xl font-bold text-white mb-2">
                         {step === 1 ? "Choose your path" : "What should we call you?"}
@@ -140,7 +142,7 @@ export function OnboardingModal({ walletAddress, onComplete }: OnboardingModalPr
                             variant="default"
                             className="w-full mt-6 h-12 rounded-xl font-display font-bold text-sm bg-solana text-[#0A0A0B] hover:brightness-110 active:scale-[0.98] transition-all shadow-[0_0_20px_-5px_rgba(20,240,148,0.4)] disabled:opacity-30 disabled:cursor-not-allowed"
                         >
-                            Continue
+                            {t("continue")}
                         </Button>
                     </div>
                 )}

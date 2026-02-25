@@ -7,6 +7,7 @@ import { Loader2, Coins, CalendarDays, ExternalLink, ShieldCheck, Trophy, Github
 import { Link } from "@/i18n/routing";
 import { Button } from "@/components/ui/button";
 import clsx from "clsx";
+import { useTranslations } from "next-intl";
 import { ACHIEVEMENTS } from "@/lib/achievements";
 import { CredentialList } from "@/components/dashboard/CredentialList";
 
@@ -29,6 +30,7 @@ export default function ProfilePage() {
     const { user } = useAppUser();
     const params = useParams();
     const wallet = params.wallet as string;
+    const t = useTranslations("profile");
 
     const { profiles, isLoading, error: storeError, fetchProfile } = useProfileStore();
 
@@ -54,11 +56,11 @@ export default function ProfilePage() {
         return (
             <div className="mx-auto max-w-2xl px-4 py-16 text-center">
                 <ShieldCheck className="mx-auto h-12 w-12 text-white/10 mb-4" />
-                <h1 className="text-2xl font-display font-semibold text-text-primary mb-2">Profile Not Found</h1>
-                <p className="text-text-secondary">We couldn't find a user with this wallet address.</p>
+                <h1 className="text-2xl font-display font-semibold text-text-primary mb-2">{t("not_found_title")}</h1>
+                <p className="text-text-secondary">{t("not_found_desc")}</p>
                 <Link href="/leaderboard" className="mt-6 inline-block">
                     <Button variant="outline" size="sm">
-                        Back to Leaderboard
+                        {t("back_to_leaderboard")}
                     </Button>
                 </Link>
             </div>
@@ -85,7 +87,7 @@ export default function ProfilePage() {
                         <div className="flex items-center gap-3">
                             <ShieldCheck className="h-5 w-5 text-solana" />
                             <p className="text-sm text-text-secondary">
-                                Ready to start your journey? Enroll in a course to earn XP and climb the leaderboard!
+                                {t("get_started_cta")}
                             </p>
                         </div>
                         <Link href="/courses" className="text-xs font-bold uppercase tracking-wider text-solana hover:underline whitespace-nowrap">

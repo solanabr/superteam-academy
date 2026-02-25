@@ -6,6 +6,7 @@ import { useWallets } from "@privy-io/react-auth/solana";
 import { Copy, Users, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import clsx from "clsx";
+import { useTranslations } from "next-intl";
 
 type UserData = {
     referralCode: string;
@@ -15,6 +16,7 @@ type UserData = {
 export function ReferralCard() {
     const { authenticated, user } = usePrivy();
     const { wallets } = useWallets();
+    const t = useTranslations("components");
     const linkedAddress =
         user?.wallet?.address ?? user?.linkedAccounts?.find((a) => a.type === "wallet")?.address;
     const walletAddress = linkedAddress ?? wallets?.[0]?.address;
@@ -70,20 +72,20 @@ export function ReferralCard() {
             <div className="relative z-10">
                 <h3 className="text-xl font-bold text-white flex items-center gap-2">
                     <Users className="h-5 w-5 text-solana" />
-                    Referrals
+                    {t("referrals_title")}
                 </h3>
                 <p className="text-text-secondary text-sm mt-1">
-                    Invite friends and earn XP together.
+                    {t("referrals_desc")}
                 </p>
             </div>
 
             <div className="relative z-10 mt-2">
                 <div className="text-3xl font-bold text-white">{data.referralsCount}</div>
-                <div className="text-text-secondary text-xs uppercase tracking-wider font-medium">Referred Users</div>
+                <div className="text-text-secondary text-xs uppercase tracking-wider font-medium">{t("referred_users")}</div>
             </div>
 
             <div className="relative z-10 mt-auto pt-4">
-                <label className="text-xs text-text-secondary block mb-1">Your Referral Link</label>
+                <label className="text-xs text-text-secondary block mb-1">{t("referral_your_link")}</label>
                 <div className="flex gap-2">
                     <code className="bg-black/30 rounded px-3 py-2 text-sm text-solana flex-1 truncate border border-white/10">
                         {data.referralCode}
@@ -100,7 +102,7 @@ export function ReferralCard() {
                         <Copy className="h-4 w-4" />
                     </Button>
                 </div>
-                {copied && <span className="text-green-400 text-xs mt-1 block">Copied to clipboard!</span>}
+                {copied && <span className="text-green-400 text-xs mt-1 block">{t("referral_copied")}</span>}
             </div>
         </div>
     );

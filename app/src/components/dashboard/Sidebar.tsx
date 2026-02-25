@@ -1,7 +1,9 @@
 import { Link } from "@/i18n/routing";
 import { Button } from "@/components/ui/button";
+import { useTranslations } from "next-intl";
 
 export function Sidebar() {
+    const t = useTranslations("components");
     return (
         <aside className="relative z-10 hidden md:flex w-64 flex-col border-r border-white/10 bg-void/80 backdrop-blur-md h-screen fixed left-0 top-0 bottom-0">
             <div className="p-6">
@@ -10,7 +12,7 @@ export function Sidebar() {
                         <span className="material-symbols-outlined notranslate text-void font-bold text-lg">terminal</span>
                     </div>
                     <h1 className="font-display font-bold text-xl tracking-tight text-white">
-                        Superteam<span className="text-solana">.academy</span>
+                        {t("sidebar_brand").split(" ")[0]}<span className="text-solana"> {t("sidebar_brand").split(" ")[1]}</span>
                     </h1>
                 </div>
             </div>
@@ -22,7 +24,7 @@ export function Sidebar() {
                     className="group flex items-center gap-3 px-3 py-3 rounded-r-lg border-l-2 border-solana bg-solana/5 text-white transition-all"
                 >
                     <span className="material-symbols-outlined notranslate text-solana group-hover:text-white transition-colors">dashboard</span>
-                    <span className="font-display font-medium text-sm">Dashboard</span>
+                    <span className="font-display font-medium text-sm">{t("sidebar_dashboard")}</span>
                 </Link>
 
                 {/* Inactive Items */}
@@ -31,7 +33,7 @@ export function Sidebar() {
                     className="group flex items-center gap-3 px-3 py-3 rounded-r-lg border-l-2 border-transparent hover:bg-white/5 hover:border-white/20 text-text-muted transition-all"
                 >
                     <span className="material-symbols-outlined notranslate group-hover:text-white transition-colors">school</span>
-                    <span className="font-display font-medium text-sm group-hover:text-white">Courses</span>
+                    <span className="font-display font-medium text-sm group-hover:text-white">{t("sidebar_courses")}</span>
                 </Link>
 
                 <Link
@@ -39,7 +41,7 @@ export function Sidebar() {
                     className="group flex items-center gap-3 px-3 py-3 rounded-r-lg border-l-2 border-transparent hover:bg-white/5 hover:border-white/20 text-text-muted transition-all"
                 >
                     <span className="material-symbols-outlined notranslate group-hover:text-white transition-colors">library_books</span>
-                    <span className="font-display font-medium text-sm group-hover:text-white">Library</span>
+                    <span className="font-display font-medium text-sm group-hover:text-white">{t("sidebar_library")}</span>
                 </Link>
 
                 <Link
@@ -47,7 +49,7 @@ export function Sidebar() {
                     className="group flex items-center gap-3 px-3 py-3 rounded-r-lg border-l-2 border-transparent hover:bg-white/5 hover:border-white/20 text-text-muted transition-all"
                 >
                     <span className="material-symbols-outlined notranslate group-hover:text-white transition-colors">trophy</span>
-                    <span className="font-display font-medium text-sm group-hover:text-white">Achievements</span>
+                    <span className="font-display font-medium text-sm group-hover:text-white">{t("sidebar_achievements")}</span>
                 </Link>
             </nav>
 
@@ -57,7 +59,7 @@ export function Sidebar() {
                     className="group flex items-center gap-3 px-3 py-3 rounded-r-lg border-l-2 border-transparent hover:bg-white/5 hover:border-white/20 text-text-muted transition-all mb-2"
                 >
                     <span className="material-symbols-outlined notranslate group-hover:text-white transition-colors">settings</span>
-                    <span className="font-display font-medium text-sm group-hover:text-white">Settings</span>
+                    <span className="font-display font-medium text-sm group-hover:text-white">{t("sidebar_settings")}</span>
                 </Link>
 
                 <div className="flex items-center gap-3 px-3 py-3 mt-2 rounded-lg bg-white/5 border border-white/5">

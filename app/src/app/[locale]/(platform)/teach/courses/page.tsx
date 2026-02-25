@@ -6,6 +6,7 @@ import { Link } from "@/i18n/routing";
 import { usePrivy } from "@privy-io/react-auth";
 import { useWallets } from "@privy-io/react-auth/solana";
 import { Button } from "@/components/ui/button";
+import { useTranslations } from "next-intl";
 
 type Course = {
   _id: string;
@@ -25,6 +26,7 @@ export default function TeachCoursesPage() {
   const router = useRouter();
   const { authenticated, user } = usePrivy();
   const { wallets } = useWallets();
+  const t = useTranslations("teach");
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -108,7 +110,7 @@ export default function TeachCoursesPage() {
   if (!authenticated) {
     return (
       <div className="container py-8">
-        <p>Please log in to view your courses.</p>
+        <p>{t("login_view_courses")}</p>
       </div>
     );
   }
@@ -116,7 +118,7 @@ export default function TeachCoursesPage() {
   if (loading) {
     return (
       <div className="container py-8">
-        <p>Loading courses...</p>
+        <p>{t("loading_courses")}</p>
       </div>
     );
   }
@@ -127,7 +129,7 @@ export default function TeachCoursesPage() {
         <nav className="flex items-center gap-2 text-xs font-mono text-text-muted mb-6 uppercase tracking-widest">
           <Link href="/dashboard" className="hover:text-solana transition-colors">Dashboard</Link>
           <span className="text-white/20">/</span>
-          <span className="text-solana">Teacher Studio</span>
+          <span className="text-solana">{t("studio")}</span>
         </nav>
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold">My Courses</h1>

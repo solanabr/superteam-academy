@@ -5,11 +5,13 @@ import { useAppUser } from "@/hooks/useAppUser";
 import { Loader2, Trophy, ExternalLink } from "lucide-react";
 import { Link } from "@/i18n/routing";
 import { Button } from "@/components/ui/button";
+import { useTranslations } from "next-intl";
 import clsx from "clsx";
 import { useLeaderboardStore } from "@/store/leaderboard-store";
 import type { LeaderboardEntry } from "@/lib/learning-progress/types";
 
 export default function LeaderboardPage() {
+  const t = useTranslations("leaderboard");
   const { user } = useAppUser();
   const { entries: allEntries, isLoading, fetchLeaderboard } = useLeaderboardStore();
 
@@ -27,8 +29,8 @@ export default function LeaderboardPage() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
       <div className="mb-8 text-center">
-        <h1 className="font-display text-text-primary text-3xl font-semibold">Leaderboard</h1>
-        <p className="text-text-secondary mt-2">Top learners by XP</p>
+        <h1 className="font-display text-text-primary text-3xl font-semibold">{t("title")}</h1>
+        <p className="text-text-secondary mt-2">{t("subtitle")}</p>
 
         <div className="mt-8 flex items-center justify-center gap-2">
           {(["daily", "weekly", "all-time"] as const).map((tf) => (
@@ -51,8 +53,8 @@ export default function LeaderboardPage() {
       <div className="glass-panel overflow-hidden rounded-lg border border-white/5">
         <div className="grid grid-cols-[auto_1fr_auto_auto] gap-4 border-b border-white/5 bg-white/5 px-6 py-3 text-xs font-medium uppercase tracking-wider text-text-secondary">
           <div className="w-8 text-center">#</div>
-          <div>User</div>
-          <div className="text-right">Level</div>
+          <div>{t("col_user")}</div>
+          <div className="text-right">{t("col_level")}</div>
           <div className="w-24 text-right">XP</div>
         </div>
 

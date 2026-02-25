@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
+import { useTranslations } from "next-intl";
 
 type TerminalOutputProps = {
   output: string;
@@ -60,8 +61,6 @@ function parseTerminalOutput(output: string, hasError: boolean): OutputLine[] {
   return parsed;
 }
 
-const DAILY_LIMIT_MESSAGE = "Daily code compiling limit reached. Please try again in 24 hours.";
-
 export function TerminalOutput({
   output,
   status,
@@ -70,6 +69,7 @@ export function TerminalOutput({
   dailyLimitReached = false,
 }: TerminalOutputProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const t = useTranslations("ide");
 
   // Auto-scroll to bottom when new output arrives
   useEffect(() => {
@@ -92,21 +92,21 @@ export function TerminalOutput({
           className="flex items-center gap-2 px-4 py-2 bg-solana/10 hover:bg-solana/20 border border-solana/20 text-solana rounded-lg text-sm font-medium transition-all shadow-[0_0_15px_rgba(20,241,149,0.1)] hover:shadow-[0_0_20px_rgba(20,241,149,0.2)] font-semibold text-rust"
           role="alert"
         >
-          {DAILY_LIMIT_MESSAGE}
+          {t("limit_reached")}
         </Button>
       )}
       {/* Terminal Header */}
       <div className="flex items-center justify-between border-b border-border-subtle/60 bg-white/5 px-3 py-1.5">
-        <span className="uppercase tracking-wide text-text-secondary">Terminal</span>
+        <span className="uppercase tracking-wide text-text-secondary">{t("terminal")}</span>
         <div className="flex items-center gap-3">
           {executionStats?.memory && (
             <span className="text-[10px] text-text-secondary">
-              Memory: {executionStats.memory} KB
+              {t("memory")}: {executionStats.memory} KB
             </span>
           )}
           {executionStats?.cpuTime && (
             <span className="text-[10px] text-text-secondary">
-              CPU: {executionStats.cpuTime}s
+              {t("cpu")}: {executionStats.cpuTime}s
             </span>
           )}
           {onClear && !isEmpty && (
@@ -117,7 +117,7 @@ export function TerminalOutput({
               className="ml-auto text-[10px] text-text-secondary hover:text-text-primary transition-colors"
               title="Clear terminal"
             >
-              Clear
+              {t("clear")}
             </Button>
           )}
           <span
@@ -131,12 +131,12 @@ export function TerminalOutput({
               }`}
           >
             {status === "running"
-              ? "Running…"
+              ? t("status_running")
               : status === "success"
-                ? "Execution successful"
+                ? t("status_success")
                 : status === "error"
-                  ? "Execution failed"
-                  : "Idle"}
+                  ? t("status_error")
+                  : t("status_idle")}
           </span>
         </div>
       </div>
@@ -149,7 +149,7 @@ export function TerminalOutput({
       >
         {isEmpty ? (
           <pre className="whitespace-pre-wrap break-words text-text-secondary">
-            {"> Ready. Write code and click \"Run Code\" to execute.\n"}
+            {"> " + t("ready_prompt")}
           </pre>
         ) : (
           <pre className="whitespace-pre-wrap break-words">

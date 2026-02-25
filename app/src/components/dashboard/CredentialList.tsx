@@ -7,6 +7,7 @@ import { useWallets } from "@privy-io/react-auth/solana";
 import { Loader2, Medal } from "lucide-react";
 import { useUserStore, type Credential } from "@/store/user-store";
 import { Button } from "@/components/ui/button";
+import { useTranslations } from "next-intl";
 
 
 export function CredentialList({ walletAddress: propAddress }: { walletAddress?: string }) {
@@ -17,6 +18,7 @@ export function CredentialList({ walletAddress: propAddress }: { walletAddress?:
         isCredentialsLoading: loading,
         fetchCredentials
     } = useUserStore();
+    const t = useTranslations("components");
 
     const linkedAddress =
         privyUser?.wallet?.address ?? privyUser?.linkedAccounts?.find((a) => a.type === "wallet")?.address;
@@ -40,7 +42,7 @@ export function CredentialList({ walletAddress: propAddress }: { walletAddress?:
     if (credentials.length === 0) {
         return (
             <div className="glass-panel rounded-lg border p-6 text-center">
-                <p className="text-text-secondary">No credentials yet. Complete courses to earn them!</p>
+                <p className="text-text-secondary">{t("no_credentials")}</p>
             </div>
         );
     }

@@ -10,6 +10,7 @@ const CodeEditor = dynamic(() => import("./CodeEditor").then((mod) => mod.CodeEd
 });
 import { Button } from "@/components/ui/button";
 import { TerminalOutput } from "./TerminalOutput";
+import { useTranslations } from "next-intl";
 
 type ChallengeRunnerProps = {
   language: SupportedLanguage;
@@ -46,6 +47,7 @@ export function ChallengeRunner({
     memory?: string;
     cpuTime?: string;
   }>({});
+  const t = useTranslations("ide");
 
   const handleRun = async () => {
     setStatus("running");
@@ -58,7 +60,7 @@ export function ChallengeRunner({
     if (!code.trim()) {
       setStatus("failed");
       setMessage("Add some code before running the challenge.");
-      setOutput("> error: no code provided. Please write a solution first.\n");
+      setOutput(`> ${t("error")}: no code provided. Please write a solution first.\n`);
       return;
     }
 
@@ -77,7 +79,7 @@ export function ChallengeRunner({
         const errorData = await res.json().catch(() => ({}));
         setStatus("failed");
         setMessage("Failed to execute code. Please check your code and try again.");
-        setOutput(`> error: ${errorData.stderr || errorData.error || "API request failed"}\n`);
+        setOutput(`> ${t("error")}: ${errorData.stderr || errorData.error || "API request failed"}\n`);
         return;
       }
 
@@ -131,7 +133,7 @@ export function ChallengeRunner({
       console.error("run-code error", err);
       setStatus("failed");
       setMessage("Running code failed. Please try again.");
-      setOutput(`> error: ${err instanceof Error ? err.message : "Failed to contact runner API"}\n`);
+      setOutput(`> ${t("error")}: ${err instanceof Error ? err.message : "Failed to contact runner API"}\n`);
     }
   };
 
@@ -154,7 +156,7 @@ export function ChallengeRunner({
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 text-xs text-text-secondary">
           <span className="inline-flex h-2 w-2 rounded-full bg-solana" />
-          <span>Language: {language}</span>
+          <span>{t("language")}: {language}</span>
         </div>
         <div className="flex items-center gap-2 text-xs">
           <Button
@@ -163,14 +165,14 @@ export function ChallengeRunner({
             onClick={handleRun}
             disabled={status === "running"}
           >
-            {status === "running" ? "Running…" : "Run tests"}
+            {status === "running" ? t("running") : t("run_tests")}
           </Button>
           <Button
             size="sm"
             onClick={handleMarkComplete}
             disabled={marking}
           >
-            {marking ? "Marking…" : "Mark complete"}
+            {marking ? t("marking") : t("mark_complete")}
           </Button>
         </div>
       </div>
@@ -201,10 +203,10 @@ export function ChallengeRunner({
       {testCases.length > 0 && (
         <div className="rounded-md border border-border-subtle bg-surface-high/40 p-3 text-xs text-text-secondary">
           <p className="mb-2 font-semibold text-text-primary">
-            Test Cases
+            {t("test_cases")}
             {testResults.length > 0 && (
               <span className="ml-2 text-xs font-normal">
-                ({testResults.filter((t) => t.passed).length}/{testResults.length} passed)
+                ({testResults.filter((t_res) => t_res.passed).length}/{testResults.length} {t("passed")})
               </span>
             )}
           </p>
@@ -218,10 +220,10 @@ export function ChallengeRunner({
                 <li
                   key={i}
                   className={`rounded border p-2 ${showResult
-                      ? isPassed
-                        ? "border-solana/30 bg-solana/5"
-                        : "border-rust/30 bg-rust/5"
-                      : "border-border-subtle"
+                    ? isPassed
+                      ? "border-solana/30 bg-solana/5"
+                      : "border-rust/30 bg-rust/5"
+                    : "border-border-subtle"
                     }`}
                 >
                   <div className="flex items-start gap-2">
@@ -232,11 +234,11 @@ export function ChallengeRunner({
                     )}
                     <div className="flex-1">
                       <span className="font-semibold text-text-primary">
-                        {tc.name ?? `Test ${i + 1}`}
+                        {tc.name ?? t("test_n", { n: i + 1 })}
                       </span>
                       {tc.input && (
                         <div className="mt-1">
-                          <span className="text-text-secondary">Input: </span>
+                          <span className="text-text-secondary">{t("input")}: </span>
                           <code className="rounded bg-void/80 px-1 text-text-primary">
                             {tc.input}
                           </code>
@@ -244,7 +246,7 @@ export function ChallengeRunner({
                       )}
                       {tc.expected && (
                         <div className="mt-1">
-                          <span className="text-text-secondary">Expected: </span>
+                          <span className="text-text-secondary">{t("expected")}: </span>
                           <code className="rounded bg-void/80 px-1 text-text-primary">
                             {tc.expected}
                           </code>
@@ -252,7 +254,7 @@ export function ChallengeRunner({
                       )}
                       {result?.actual !== undefined && (
                         <div className="mt-1">
-                          <span className="text-text-secondary">Got: </span>
+                          <span className="text-text-secondary">{t("got")}: </span>
                           <code className="rounded bg-void/80 px-1 text-text-primary">
                             {result.actual}
                           </code>
@@ -260,7 +262,7 @@ export function ChallengeRunner({
                       )}
                       {result?.error && (
                         <div className="mt-1 text-rust">
-                          <span className="font-semibold">Error: </span>
+                          <span className="font-semibold">{t("error")}: </span>
                           {result.error}
                         </div>
                       )}

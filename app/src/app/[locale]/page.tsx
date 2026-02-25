@@ -2,8 +2,10 @@ import { Footer } from "@/components/layout/Footer";
 import { ScrollJourney } from "@/components/landing/ScrollJourney";
 import { LandingHeaderActions } from "@/components/landing/LandingHeaderActions";
 import { LandingCTA } from "@/components/landing/LandingCTA";
+import { getTranslations } from "next-intl/server";
 
-export default function LandingPage() {
+export default async function LandingPage() {
+    const t = await getTranslations("landing");
     return (
         <div className="relative min-h-screen flex flex-col bg-void text-text-primary overflow-x-hidden">
             {/* Noise Texture Overlay — z-30 keeps it below navbar (z-40) and modals (z-50+) */}
@@ -20,7 +22,7 @@ export default function LandingPage() {
                     <div className="w-9 h-9 bg-solana/10 border border-solana/20 rounded flex items-center justify-center">
                         <span className="material-symbols-outlined notranslate text-solana text-xl">terminal</span>
                     </div>
-                    <span className="font-display font-bold text-xl tracking-tight text-white">Superteam Academy</span>
+                    <span className="font-display font-bold text-xl tracking-tight text-white">{t("title")}</span>
                 </div>
 
                 <LandingHeaderActions />
@@ -33,12 +35,12 @@ export default function LandingPage() {
                     {/* Badge */}
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 mb-2 backdrop-blur-sm">
                         <span className="w-2 h-2 rounded-full bg-solana animate-pulse"></span>
-                        <span className="font-code text-xs text-text-muted uppercase tracking-widest">System Online v1.4.0</span>
+                        <span className="font-code text-xs text-text-muted uppercase tracking-widest">{t("system_status")}</span>
                     </div>
 
                     <h1 className="font-display font-bold text-6xl md:text-8xl lg:text-[6.5rem] leading-[0.95] tracking-tighter text-white mb-4">
-                        Master Solana at the <br />
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-solana via-white to-rust">metal level.</span>
+                        {t("tagline_start")} <br />
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-solana via-white to-rust">{t("tagline_end")}</span>
                     </h1>
 
                     <p className="font-body text-lg md:text-xl text-text-muted max-w-2xl leading-relaxed">

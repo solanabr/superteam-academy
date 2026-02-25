@@ -6,9 +6,11 @@ import { Link } from "@/i18n/routing";
 import { usePrivy } from "@privy-io/react-auth";
 import { useWallets } from "@privy-io/react-auth/solana";
 import { Button } from "@/components/ui/button";
+import { useTranslations } from "next-intl";
 
 export default function CreateCoursePage() {
   const router = useRouter();
+  const t = useTranslations("teach");
   const { authenticated, user } = usePrivy();
   const { wallets } = useWallets();
   const [loading, setLoading] = useState(false);
@@ -114,7 +116,7 @@ export default function CreateCoursePage() {
   if (!authenticated) {
     return (
       <div className="container py-8">
-        <p>Please log in to create a course.</p>
+        <p>{t("login_create_course")}</p>
       </div>
     );
   }
@@ -123,9 +125,9 @@ export default function CreateCoursePage() {
     <main className="min-h-screen bg-void pt-4 pb-12">
       <div className="mx-auto max-w-2xl px-4">
         <nav className="flex items-center gap-2 text-xs font-mono text-text-muted mb-6 uppercase tracking-widest">
-          <Link href="/teach/courses" className="hover:text-solana transition-colors">Studio</Link>
+          <Link href="/teach/courses" className="hover:text-solana transition-colors">{t("studio")}</Link>
           <span className="text-white/20">/</span>
-          <span className="text-solana">New Course</span>
+          <span className="text-solana">{t("new_course")}</span>
         </nav>
         <h1 className="text-2xl font-bold mb-6">Create New Course</h1>
 

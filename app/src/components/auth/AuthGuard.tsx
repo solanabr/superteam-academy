@@ -7,6 +7,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useUserStore } from "@/store/user-store";
 import { OnboardingModal } from "./OnboardingModal";
 import { Button } from "../ui/button";
+import { useTranslations } from "next-intl";
 
 /**
  * Client-side auth guard. Wraps protected pages.
@@ -21,6 +22,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     const { wallets } = useWallets();
     const router = useRouter();
     const pathname = usePathname();
+    const t = useTranslations("auth");
 
     const user = useUserStore((s) => s.user);
     const isLoading = useUserStore((s) => s.isLoading);
@@ -111,7 +113,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-void">
                 <div className="flex flex-col items-center gap-4">
                     <div className="size-10 rounded-full border-2 border-solana/30 border-t-solana animate-spin" />
-                    <span className="text-sm font-mono text-text-muted">Authenticating...</span>
+                    <span className="text-sm font-mono text-text-muted">{t("authenticating")}</span>
                 </div>
             </div>
         );
@@ -123,7 +125,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-void">
                 <div className="flex flex-col items-center gap-4">
                     <div className="size-10 rounded-full border-2 border-solana/30 border-t-solana animate-spin" />
-                    <span className="text-sm font-mono text-text-muted">Redirecting...</span>
+                    <span className="text-sm font-mono text-text-muted">{t("redirecting")}</span>
                 </div>
             </div>
         );
@@ -139,7 +141,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
                             <div className="size-12 rounded-full bg-red-500/10 flex items-center justify-center mb-2">
                                 <span className="material-symbols-outlined text-red-500 text-2xl">error</span>
                             </div>
-                            <h2 className="text-xl font-bold text-text-primary">Profile Sync Error</h2>
+                            <h2 className="text-xl font-bold text-text-primary">{t("sync_error")}</h2>
                             <p className="text-text-secondary max-w-xs">{error}</p>
                             <Button
                                 onClick={() => {
@@ -149,14 +151,14 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
                                 variant="default"
                                 className="mt-4 px-6 py-2 bg-solana text-void font-bold rounded-lg hover:bg-solana-light transition-colors"
                             >
-                                Retry Connection
+                                {t("retry_connection")}
                             </Button>
                         </>
                     ) : (
                         <>
                             <div className="size-10 rounded-full border-2 border-solana/30 border-t-solana animate-spin" />
                             <span className="text-sm font-mono text-text-muted">
-                                {!walletAddress ? "Setting up your account..." : "Loading profile..."}
+                                {!walletAddress ? t("setting_up") : t("loading_profile")}
                             </span>
                         </>
                     )}
