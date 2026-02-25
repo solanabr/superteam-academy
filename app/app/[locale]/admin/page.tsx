@@ -1,3 +1,5 @@
+'use client';
+
 import dynamic from 'next/dynamic';
 
 // Load the admin dashboard client-side only to avoid SSR issues with wallet adapters
