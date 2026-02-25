@@ -5,6 +5,7 @@ import { useRef } from "react";
 import Link from "next/link";
 import { Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PixelAvatar } from "@/components/app";
 import { getMockLeaderboard } from "@/lib/services/mock-leaderboard";
 
 function truncateWallet(wallet: string) {
@@ -53,11 +54,7 @@ export function LeaderboardSection() {
                             key={entry.wallet}
                             className="flex items-center gap-4 rounded-xl border-2 border-zinc-700 px-5 py-4"
                         >
-                            <div
-                                className={`flex size-10 shrink-0 items-center justify-center rounded-full bg-zinc-800 ${rankColors[i]}`}
-                            >
-                                <Trophy className="h-5 w-5" />
-                            </div>
+                            <PixelAvatar wallet={entry.wallet} size="md" />
                             <span className="w-10 font-game text-xl text-gray-500">
                                 #{entry.rank}
                             </span>

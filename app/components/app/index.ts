@@ -12,3 +12,4 @@ export { AchievementToast, showAchievement } from "./AchievementToast";
 export { StreakCalendar } from "./StreakCalendar";
 export { CompletionBadge } from "./CompletionBadge";
 export { DailyReward } from "./DailyReward";
+export { PixelAvatar, getAvatarUrl, getAvatarVersion, setAvatarVersion } from "./PixelAvatar";
