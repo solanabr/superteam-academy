@@ -96,7 +96,8 @@
     "featuredCourse3": "Building Solana dApps",
     "beginner": "Beginner",
     "intermediate": "Intermediate",
-    "lessonsLabel": "lessons"
+    "lessonsLabel": "lessons",
+    "trustedBy": "TRUSTED BY LEADING SOLANA TEAMS"
   },
   "courses": {
     "catalog": "Course Catalog",
@@ -135,7 +136,12 @@
     "level": "LEVEL",
     "track": "TRACK",
     "all": "ALL",
-    "showResults": "SHOW {count} RESULTS"
+    "showResults": "SHOW {count} RESULTS",
+    "durationLabel": "DURATION",
+    "allDurations": "ALL DURATIONS",
+    "under3h": "< 3H",
+    "between3and6h": "3-6H",
+    "over6h": "> 6H"
   },
   "lesson": {
     "challenge": "Code Challenge",
@@ -302,7 +308,9 @@
     "profileNotFound": "Profile not found",
     "profileNotFoundDesc": "This user doesn't exist or has a private profile.",
     "viewLeaderboard": "View Leaderboard",
-    "publicProfileBanner": "You are viewing a public profile. Some information may be hidden based on the user's privacy settings."
+    "publicProfileBanner": "You are viewing a public profile. Some information may be hidden based on the user's privacy settings.",
+    "public": "Public",
+    "private": "Private"
   },
   "settings": {
     "title": "Settings",

@@ -406,6 +406,57 @@ export function LandingContent({
       {/* ──────────────── METHODOLOGY (V2) ──────────────── */}
       <MethodologySection />
 
+      {/* ──────────────── PARTNER STRIP ──────────────── */}
+      <section
+        style={{
+          padding: "48px 0",
+          borderTop: "1px solid var(--overlay-divider)",
+          borderBottom: "1px solid var(--overlay-divider)",
+        }}
+      >
+        <p
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: 10,
+            letterSpacing: 3,
+            textTransform: "uppercase",
+            color: "var(--c-text-muted)",
+            textAlign: "center",
+            margin: "0 0 24px",
+          }}
+        >
+          {t("trustedBy")}
+        </p>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            gap: 32,
+            flexWrap: "wrap",
+            padding: "0 24px",
+          }}
+        >
+          {["SOLANA FOUNDATION", "HELIUS", "SUPERTEAM", "METAPLEX", "LIGHT PROTOCOL"].map(
+            (name) => (
+              <span
+                key={name}
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 10,
+                  letterSpacing: 3,
+                  textTransform: "uppercase",
+                  color: "var(--c-text-dim)",
+                  userSelect: "none",
+                }}
+              >
+                {name}
+              </span>
+            ),
+          )}
+        </div>
+      </section>
+
       {/* ──────────────── MARQUEE SOCIAL PROOF (V2) ──────────────── */}
       <MarqueeProof />
 

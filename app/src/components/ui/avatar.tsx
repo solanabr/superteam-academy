@@ -41,7 +41,6 @@ export function Avatar({
           width={px}
           height={px}
           className="aspect-square h-full w-full object-cover"
-          unoptimized
         />
       ) : (
         <div className="flex h-full w-full items-center justify-center bg-[#00FFA3]/15 text-[#00FFA3] font-semibold">

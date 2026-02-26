@@ -96,7 +96,8 @@
     "featuredCourse3": "Construindo dApps na Solana",
     "beginner": "Iniciante",
     "intermediate": "Intermediario",
-    "lessonsLabel": "aulas"
+    "lessonsLabel": "aulas",
+    "trustedBy": "CONFIADO PELAS PRINCIPAIS EQUIPES SOLANA"
   },
   "courses": {
     "catalog": "Catalogo de Cursos",
@@ -135,7 +136,12 @@
     "level": "NIVEL",
     "track": "TRILHA",
     "all": "TODOS",
-    "showResults": "MOSTRAR {count} RESULTADOS"
+    "showResults": "MOSTRAR {count} RESULTADOS",
+    "durationLabel": "DURACAO",
+    "allDurations": "TODAS AS DURACOES",
+    "under3h": "< 3H",
+    "between3and6h": "3-6H",
+    "over6h": "> 6H"
   },
   "lesson": {
     "challenge": "Desafio de Codigo",
@@ -302,7 +308,9 @@
     "profileNotFound": "Perfil nao encontrado",
     "profileNotFoundDesc": "Este usuario nao existe ou possui perfil privado.",
     "viewLeaderboard": "Ver Ranking",
-    "publicProfileBanner": "Voce esta visualizando um perfil publico. Algumas informacoes podem estar ocultas com base nas configuracoes de privacidade do usuario."
+    "publicProfileBanner": "Voce esta visualizando um perfil publico. Algumas informacoes podem estar ocultas com base nas configuracoes de privacidade do usuario.",
+    "public": "Publico",
+    "private": "Privado"
   },
   "settings": {
     "title": "Configuracoes",

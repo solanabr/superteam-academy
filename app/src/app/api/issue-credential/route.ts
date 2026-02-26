@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireWalletSession } from "@/lib/auth/require-session";
 import { Keypair, PublicKey, SystemProgram } from "@solana/web3.js";
 import { getBackendProgram } from "@/lib/solana/backend-signer";
 import {
@@ -19,9 +20,11 @@ const MPL_CORE_PROGRAM_ID = new PublicKey(
 
 export async function POST(req: Request) {
   try {
+    const session = await requireWalletSession();
+    if ("error" in session) return session.error;
+
     const body = await req.json();
     const {
-      learner,
       courseId,
       credentialName,
       metadataUri,
@@ -29,7 +32,6 @@ export async function POST(req: Request) {
       coursesCompleted,
       totalXp,
     } = body as {
-      learner?: string;
       courseId?: string;
       credentialName?: string;
       metadataUri?: string;
@@ -39,7 +41,6 @@ export async function POST(req: Request) {
     };
 
     if (
-      !learner ||
       !courseId ||
       !credentialName ||
       !metadataUri ||
@@ -48,14 +49,14 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           error:
-            "Missing required fields: learner, courseId, credentialName, metadataUri, trackCollection",
+            "Missing required fields: courseId, credentialName, metadataUri, trackCollection",
         },
         { status: 400 },
       );
     }
 
     const { program, signer } = getBackendProgram();
-    const learnerKey = new PublicKey(learner);
+    const learnerKey = new PublicKey(session.wallet);
     const [configPDA] = findConfigPDA();
     const [coursePDA] = findCoursePDA(courseId);
     const [enrollmentPDA] = findEnrollmentPDA(courseId, learnerKey);

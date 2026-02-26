@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireWalletSession } from "@/lib/auth/require-session";
 import { PublicKey, Transaction, sendAndConfirmTransaction } from "@solana/web3.js";
 import {
   getAssociatedTokenAddressSync,
@@ -51,22 +52,24 @@ async function ensureATA(
 
 export async function POST(req: Request) {
   try {
+    const session = await requireWalletSession();
+    if ("error" in session) return session.error;
+
     const body = await req.json();
-    const { learner, courseId, lessonIndex } = body as {
-      learner?: string;
+    const { courseId, lessonIndex } = body as {
       courseId?: string;
       lessonIndex?: number;
     };
 
-    if (!learner || !courseId || lessonIndex === undefined) {
+    if (!courseId || lessonIndex === undefined) {
       return NextResponse.json(
-        { error: "Missing required fields: learner, courseId, lessonIndex" },
+        { error: "Missing required fields: courseId, lessonIndex" },
         { status: 400 },
       );
     }
 
     const { program, signer, connection } = getBackendProgram();
-    const learnerKey = new PublicKey(learner);
+    const learnerKey = new PublicKey(session.wallet);
     const [configPDA] = findConfigPDA();
     const [coursePDA] = findCoursePDA(courseId);
     const [enrollmentPDA] = findEnrollmentPDA(courseId, learnerKey);
@@ -96,7 +99,7 @@ export async function POST(req: Request) {
 
     logEnrollmentEvent({
       eventType: "complete_lesson",
-      wallet: learner,
+      wallet: session.wallet,
       courseId,
       lessonIndex,
       signature: tx,

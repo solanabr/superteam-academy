@@ -155,6 +155,20 @@ export default function ProfilePage() {
   const isDemo = !connected;
   const profileUser = isDemo ? DEMO_USER : user;
 
+  const [profileIsPublic, setProfileIsPublic] = useState<boolean | null>(null);
+  useEffect(() => {
+    if (isDemo) {
+      setProfileIsPublic(true);
+      return;
+    }
+    fetch("/api/user/profile")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data) setProfileIsPublic(data.is_public ?? true);
+      })
+      .catch(() => setProfileIsPublic(true));
+  }, [isDemo]);
+
   const socialLinks = useMemo(() => {
     if (isDemo) {
       return {
@@ -235,9 +249,22 @@ export default function ProfilePage() {
           className="h-24 w-24 rounded-[2px] ring-4 ring-[var(--c-bg-card)] shadow-xl"
         />
         <div className="flex-1 text-center md:text-left min-w-0">
-          <h1 className="text-2xl font-semibold text-[var(--c-text)]">
-            {profileUser.displayName}
-          </h1>
+          <div className="flex items-center gap-3 justify-center md:justify-start">
+            <h1 className="text-2xl font-semibold text-[var(--c-text)]">
+              {profileUser.displayName}
+            </h1>
+            {profileIsPublic !== null && (
+              <span
+                className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wider ${
+                  profileIsPublic
+                    ? "bg-[#00FFA3]/10 text-[#00FFA3] border border-[#00FFA3]/20"
+                    : "bg-[var(--c-border-subtle)]/50 text-[var(--c-text-2)] border border-[var(--c-border-subtle)]"
+                }`}
+              >
+                {profileIsPublic ? t("public") : t("private")}
+              </span>
+            )}
+          </div>
           {profileUser.wallet && (
             <p className="mt-1 flex items-center justify-center md:justify-start gap-2 font-mono text-sm text-[var(--c-text-2)]">
               {profileUser.wallet}

@@ -255,7 +255,7 @@ export default async function CourseDetail({
           {totalLessons} Lessons &middot; {course.duration}
         </div>
 
-        <ModuleAccordion modules={course.modules} locale={locale} slug={slug} />
+        <ModuleAccordion modules={course.modules} locale={locale} slug={slug} courseId={course.id} />
       </section>
 
       {/* ═══ REVIEWS ═══ */}

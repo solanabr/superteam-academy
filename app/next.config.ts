@@ -14,6 +14,7 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "cdn.sanity.io" },
       { protocol: "https", hostname: "arweave.net" },
       { protocol: "https", hostname: "avatars.githubusercontent.com" },
+      { protocol: "https", hostname: "lh3.googleusercontent.com" },
     ],
     formats: ["image/avif", "image/webp"],
   },
@@ -49,6 +50,18 @@ const nextConfig: NextConfig = {
             key: "Permissions-Policy",
             value: "camera=(), microphone=(), geolocation=()",
           },
+        ],
+      },
+      {
+        source: "/:path*.(js|css|woff2|png|jpg|jpeg|gif|svg|ico|webp|avif)",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+        ],
+      },
+      {
+        source: "/:path(robots.txt|sitemap.xml|manifest.webmanifest)",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=86400" },
         ],
       },
     ];

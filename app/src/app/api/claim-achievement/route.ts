@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireWalletSession } from "@/lib/auth/require-session";
 import { PublicKey, SystemProgram } from "@solana/web3.js";
 import { getBackendProgram } from "@/lib/solana/backend-signer";
 import { findConfigPDA } from "@/lib/solana/pda";
@@ -21,25 +22,27 @@ const MPL_CORE_PROGRAM_ID = new PublicKey(
  */
 export async function POST(req: Request) {
   try {
+    const session = await requireWalletSession();
+    if ("error" in session) return session.error;
+
     const body = await req.json();
-    const { recipient, achievementId, collection } = body as {
-      recipient?: string;
+    const { achievementId, collection } = body as {
       achievementId?: string;
       collection?: string;
     };
 
-    if (!recipient || !achievementId || !collection) {
+    if (!achievementId || !collection) {
       return NextResponse.json(
         {
           error:
-            "Missing required fields: recipient, achievementId, collection",
+            "Missing required fields: achievementId, collection",
         },
         { status: 400 },
       );
     }
 
     const { program, signer } = getBackendProgram();
-    const recipientKey = new PublicKey(recipient);
+    const recipientKey = new PublicKey(session.wallet);
     const [configPDA] = findConfigPDA();
     const collectionKey = new PublicKey(collection);
 

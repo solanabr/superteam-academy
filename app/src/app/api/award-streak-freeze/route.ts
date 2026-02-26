@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireWalletSession } from "@/lib/auth/require-session";
 
 /**
  * POST /api/award-streak-freeze
@@ -27,15 +28,11 @@ function getISOWeek(date: Date): string {
 
 export async function POST(req: Request) {
   try {
-    const body = (await req.json()) as FreezeRequest;
-    const { wallet, lastFreezeWeek } = body;
+    const session = await requireWalletSession();
+    if ("error" in session) return session.error;
 
-    if (!wallet) {
-      return NextResponse.json(
-        { error: "Missing required field: wallet" },
-        { status: 400 },
-      );
-    }
+    const body = (await req.json()) as FreezeRequest;
+    const { lastFreezeWeek } = body;
 
     const currentWeek = getISOWeek(new Date());
 

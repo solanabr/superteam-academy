@@ -102,6 +102,7 @@ interface LearningStats {
   totalCourses: number;
   totalChallenges: number;
   tracksCompleted: Set<string>;
+  completedCourseIds: Set<string>;
 }
 
 async function computeLearningStats(wallet: string): Promise<LearningStats> {
@@ -110,11 +111,13 @@ async function computeLearningStats(wallet: string): Promise<LearningStats> {
   let totalCourses = 0;
   let totalChallenges = 0;
   const tracksCompleted = new Set<string>();
+  const completedCourseIds = new Set<string>();
 
   for (const p of allProgress) {
     totalLessons += p.completedLessons.length;
     if (p.percentage >= 100) {
       totalCourses += 1;
+      completedCourseIds.add(p.courseId);
       const course = courses.find((c) => c.id === p.courseId);
       if (course) tracksCompleted.add(course.track);
     }
@@ -127,7 +130,7 @@ async function computeLearningStats(wallet: string): Promise<LearningStats> {
     }
   }
 
-  return { totalLessons, totalCourses, totalChallenges, tracksCompleted };
+  return { totalLessons, totalCourses, totalChallenges, tracksCompleted, completedCourseIds };
 }
 
 function evaluateAchievements(
@@ -138,17 +141,23 @@ function evaluateAchievements(
 ): Achievement[] {
   const referralCount = getReferralCount(wallet);
 
+  const rustTrackCourseIds = courses.filter((c) => c.track === "rust").map((c) => c.id);
+
   const checks: Record<string, boolean> = {
     "first-lesson": stats.totalLessons >= 1,
     "first-course": stats.totalCourses >= 1,
     "streak-7": streak.longestStreak >= 7,
     "streak-30": streak.longestStreak >= 30,
+    "streak-100": streak.longestStreak >= 100,
     "all-tracks": stats.tracksCompleted.size >= 6,
     "code-10": stats.totalChallenges >= 10,
     "referral-5": referralCount >= 5,
     "top-10": (leaderboardRank ?? Infinity) <= 10,
     "security-audit": stats.tracksCompleted.has("security"),
     "speed-run": hasSpeedRun(wallet),
+    "rust-rookie": rustTrackCourseIds.some((id) => stats.completedCourseIds.has(id)),
+    "anchor-expert": stats.completedCourseIds.has("anchor-dev"),
+    "full-stack-solana": stats.tracksCompleted.has("rust") && stats.tracksCompleted.has("frontend") && stats.tracksCompleted.has("defi"),
   };
 
   return achievementDefs.map((def) => {

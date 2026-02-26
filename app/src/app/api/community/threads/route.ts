@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireWalletSession } from "@/lib/auth/require-session";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 
 export async function GET(req: NextRequest) {
@@ -49,19 +50,17 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const session = await requireWalletSession();
+    if ("error" in session) return session.error;
+
     const db = getSupabaseAdmin();
     const body = await req.json();
-    const { title, content, category, courseId, wallet } = body as {
+    const { title, content, category, courseId } = body as {
       title?: string;
       content?: string;
       category?: string;
       courseId?: string;
-      wallet?: string;
     };
-
-    if (!wallet) {
-      return NextResponse.json({ error: "Wallet address required" }, { status: 401 });
-    }
     if (!title || !title.trim()) {
       return NextResponse.json({ error: "Title is required" }, { status: 400 });
     }
@@ -77,7 +76,7 @@ export async function POST(req: NextRequest) {
       .insert({
         title: title.trim(),
         body: content.trim(),
-        author_wallet: wallet,
+        author_wallet: session.wallet,
         course_id: courseId || null,
         category: threadCategory,
       })

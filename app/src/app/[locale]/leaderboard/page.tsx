@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useWallet } from "@/lib/wallet/context";
+import { Avatar } from "@/components/ui/avatar";
 import { getLeaderboard } from "@/lib/services/leaderboard";
 import { getDemoEntries } from "@/lib/services/leaderboard-demo";
 import type { LeaderboardEntry } from "@/lib/services/types";
@@ -431,7 +432,7 @@ export default function LeaderboardPage() {
                     className="lb-entry-row"
                     style={{
                       display: "flex",
-                      alignItems: "baseline",
+                      alignItems: "center",
                       position: "relative",
                       zIndex: 2,
                     }}
@@ -448,6 +449,11 @@ export default function LeaderboardPage() {
                     >
                       {formatRank(entry.rank)}
                     </span>
+
+                    <Avatar
+                      size="sm"
+                      fallback={(entry.displayName ?? "?").charAt(0).toUpperCase()}
+                    />
 
                     {/* Name */}
                     <span

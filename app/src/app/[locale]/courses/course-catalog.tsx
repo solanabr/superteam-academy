@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { X } from "lucide-react";
 import {
   DIFFICULTY_LEVELS,
@@ -30,6 +31,36 @@ function getTrackColor(track: string) {
   return courseColors[track] ?? { color: "#F6F5F2", bgColor: "#1A1918" };
 }
 
+type DurationFilter = "all" | "< 3h" | "3-6h" | "> 6h";
+
+const DURATION_FILTERS: DurationFilter[] = ["< 3h", "3-6h", "> 6h"];
+
+const DURATION_LABELS: Record<DurationFilter, string> = {
+  all: "allDurations",
+  "< 3h": "under3h",
+  "3-6h": "between3and6h",
+  "> 6h": "over6h",
+};
+
+function parseDurationHours(duration: string): number {
+  const lower = duration.toLowerCase().trim();
+  const hourMatch = lower.match(/([\d.]+)\s*h/);
+  if (hourMatch) return parseFloat(hourMatch[1]);
+  const minMatch = lower.match(/([\d.]+)\s*min/);
+  if (minMatch) return parseFloat(minMatch[1]) / 60;
+  const numMatch = lower.match(/([\d.]+)/);
+  if (numMatch) return parseFloat(numMatch[1]);
+  return 0;
+}
+
+function matchesDurationFilter(duration: string, filter: DurationFilter): boolean {
+  if (filter === "all") return true;
+  const hours = parseDurationHours(duration);
+  if (filter === "< 3h") return hours < 3;
+  if (filter === "3-6h") return hours >= 3 && hours <= 6;
+  return hours > 6;
+}
+
 function padIndex(i: number): string {
   return String(i + 1).padStart(2, "0");
 }
@@ -44,6 +75,7 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
     Difficulty | "all"
   >("all");
   const [selectedTrack, setSelectedTrack] = useState<Track | "all">("all");
+  const [selectedDuration, setSelectedDuration] = useState<DurationFilter>("all");
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [hoveredCourse, setHoveredCourse] = useState<string | null>(null);
 
@@ -55,7 +87,8 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
       selectedDifficulty === "all" || course.difficulty === selectedDifficulty;
     const matchesTrack =
       selectedTrack === "all" || course.track === selectedTrack;
-    return matchesSearch && matchesDifficulty && matchesTrack;
+    const matchesDuration = matchesDurationFilter(course.duration, selectedDuration);
+    return matchesSearch && matchesDifficulty && matchesTrack && matchesDuration;
   });
 
   const totalLessons = useMemo(
@@ -64,7 +97,9 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
   );
 
   const activeFilterCount =
-    (selectedDifficulty !== "all" ? 1 : 0) + (selectedTrack !== "all" ? 1 : 0);
+    (selectedDifficulty !== "all" ? 1 : 0) +
+    (selectedTrack !== "all" ? 1 : 0) +
+    (selectedDuration !== "all" ? 1 : 0);
 
   return (
     <div
@@ -191,11 +226,39 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
             </FilterPill>
           ))}
 
+          <span
+            style={{
+              width: 1,
+              height: 16,
+              background: "var(--overlay-border)",
+              margin: "0 8px",
+            }}
+          />
+
+          <FilterPill
+            active={selectedDuration === "all"}
+            onClick={() => setSelectedDuration("all")}
+          >
+            {t("allDurations")}
+          </FilterPill>
+          {DURATION_FILTERS.map((d) => (
+            <FilterPill
+              key={d}
+              active={selectedDuration === d}
+              onClick={() =>
+                setSelectedDuration(selectedDuration === d ? "all" : d)
+              }
+            >
+              {t(DURATION_LABELS[d])}
+            </FilterPill>
+          ))}
+
           {activeFilterCount > 0 && (
             <button
               onClick={() => {
                 setSelectedDifficulty("all");
                 setSelectedTrack("all");
+                setSelectedDuration("all");
               }}
               style={{
                 fontFamily: "var(--font-mono)",
@@ -296,6 +359,31 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
                 >
                   {padIndex(i)}
                 </span>
+
+                {course.imageUrl && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      right: "clamp(16px, 4vw, 48px)",
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      zIndex: 2,
+                      opacity: isHovered ? 1 : 0.6,
+                      transition: "opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1)",
+                    }}
+                  >
+                    <Image
+                      src={course.imageUrl}
+                      alt=""
+                      width={80}
+                      height={80}
+                      style={{
+                        borderRadius: 8,
+                        objectFit: "cover",
+                      }}
+                    />
+                  </div>
+                )}
 
                 {/* Tag row */}
                 <div
@@ -518,6 +606,7 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
                 setSearch("");
                 setSelectedDifficulty("all");
                 setSelectedTrack("all");
+                setSelectedDuration("all");
               }}
               style={{
                 fontFamily: "var(--font-mono)",
@@ -666,6 +755,39 @@ export default function CourseCatalog({ courses }: CourseCatalogProps) {
                     accentColor={courseColors[track]?.color}
                   >
                     {TRACK_LABELS[track].toUpperCase()}
+                  </FilterPill>
+                ))}
+              </div>
+            </div>
+
+            {/* Duration */}
+            <div style={{ marginBottom: 24 }}>
+              <p
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 9,
+                  letterSpacing: "3px",
+                  textTransform: "uppercase" as const,
+                  color: "var(--c-text-muted)",
+                  marginBottom: 12,
+                }}
+              >
+                {t("durationLabel")}
+              </p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                <FilterPill
+                  active={selectedDuration === "all"}
+                  onClick={() => setSelectedDuration("all")}
+                >
+                  {t("all")}
+                </FilterPill>
+                {DURATION_FILTERS.map((d) => (
+                  <FilterPill
+                    key={d}
+                    active={selectedDuration === d}
+                    onClick={() => setSelectedDuration(d)}
+                  >
+                    {t(DURATION_LABELS[d])}
                   </FilterPill>
                 ))}
               </div>

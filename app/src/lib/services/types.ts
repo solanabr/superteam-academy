@@ -109,7 +109,7 @@ export interface Achievement {
   icon: string;
   xpReward: number;
   unlockedAt?: string;
-  category: "learning" | "streak" | "social" | "special";
+  category: "learning" | "streak" | "social" | "special" | "skills";
 }
 
 export interface UserProfile {

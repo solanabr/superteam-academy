@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { useWallet } from "@/lib/wallet/context";
 import { useTranslations } from "next-intl";
 import {
@@ -22,11 +23,15 @@ import { AdminGuard } from "@/components/admin/admin-guard";
 import { StatsCards } from "@/components/admin/stats-cards";
 import { CourseTable } from "@/components/admin/course-table";
 import { UserTable } from "@/components/admin/user-table";
-import { AnalyticsCharts } from "@/components/admin/analytics-charts";
 import { ModerationList } from "@/components/admin/moderation-list";
 import { PlatformSettings } from "@/components/admin/platform-settings";
 import { CmsIntegration } from "@/components/admin/cms-integration";
 import { useAdmin } from "@/lib/hooks/use-admin";
+
+const AnalyticsCharts = dynamic(
+  () => import("@/components/admin/analytics-charts").then(mod => mod.AnalyticsCharts),
+  { ssr: false, loading: () => <div className="h-[400px] animate-pulse rounded-lg bg-white/5" /> }
+);
 
 type SectionId =
   | "courses"

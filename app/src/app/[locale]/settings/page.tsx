@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import Link from "next/link";
@@ -18,6 +18,8 @@ import {
   Moon,
   Sun,
   Loader2,
+  Camera,
+  Twitter,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 
@@ -39,7 +41,7 @@ export default function SettingsPage() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   const { data: session } = useSession();
-  const { user, connected } = useUser();
+  const { user, connected, walletAddress } = useUser();
   const linkedAccounts =
     (session as unknown as { linkedAccounts?: Record<string, { email?: string; name?: string }> })
       ?.linkedAccounts ?? {};
@@ -67,6 +69,58 @@ export default function SettingsPage() {
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
+
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [twitterHandle, setTwitterHandle] = useState("");
+  const [githubUsername, setGithubUsername] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !walletAddress) return;
+    try {
+      const storedAvatar = localStorage.getItem(`stacad:avatar:${walletAddress}`);
+      if (storedAvatar) setAvatarUrl(storedAvatar);
+    } catch {}
+    try {
+      const storedSocial = localStorage.getItem(`stacad:social:${walletAddress}`);
+      if (storedSocial) {
+        const parsed = JSON.parse(storedSocial) as { twitter?: string; github?: string };
+        setTwitterHandle(parsed.twitter ?? "");
+        setGithubUsername(parsed.github ?? "");
+      }
+    } catch {}
+  }, [walletAddress]);
+
+  const handleAvatarChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !walletAddress) return;
+    if (file.size > 2 * 1024 * 1024) {
+      alert("File must be under 2MB");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        canvas.width = 128;
+        canvas.height = 128;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+        ctx.drawImage(img, 0, 0, 128, 128);
+        const dataUrl = canvas.toDataURL("image/png");
+        try {
+          localStorage.setItem(`stacad:avatar:${walletAddress}`, dataUrl);
+        } catch {}
+        setAvatarUrl(dataUrl);
+      };
+      img.src = reader.result as string;
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  }, [walletAddress]);
 
   // Load profile from API
   useEffect(() => {
@@ -108,6 +162,14 @@ export default function SettingsPage() {
         }),
       });
       if (!res.ok) throw new Error("Save failed");
+      if (walletAddress) {
+        try {
+          localStorage.setItem(
+            `stacad:social:${walletAddress}`,
+            JSON.stringify({ twitter: twitterHandle, github: githubUsername }),
+          );
+        } catch {}
+      }
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch (error) {
@@ -115,7 +177,7 @@ export default function SettingsPage() {
     } finally {
       setSaving(false);
     }
-  }, [displayName, bio, isPublic, showOnLeaderboard, emailNotifications, streakReminders]);
+  }, [displayName, bio, isPublic, showOnLeaderboard, emailNotifications, streakReminders, twitterHandle, githubUsername, walletAddress]);
 
   const handleExportData = () => {
     const data = {
@@ -191,6 +253,35 @@ export default function SettingsPage() {
               {t("profileInfo")}
             </h2>
             <div className="bg-[var(--c-bg-card)] border border-[var(--c-border-subtle)] rounded-xl p-6 space-y-4">
+              <canvas ref={canvasRef} className="hidden" />
+              <div>
+                <label className="mb-2 block text-sm font-medium text-[var(--c-text-em)]">
+                  {t("avatar") ?? "Avatar"}
+                </label>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="group relative h-24 w-24 rounded-full overflow-hidden border-2 border-[var(--c-border-subtle)] hover:border-[#55E9AB] transition-colors"
+                >
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-[#55E9AB]/20 text-[#55E9AB] text-2xl font-semibold">
+                      {(displayName?.[0] || walletAddress?.[0] || "?").toUpperCase()}
+                    </div>
+                  )}
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Camera className="h-5 w-5 text-white" />
+                  </div>
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleAvatarChange}
+                />
+              </div>
               <div>
                 <label
                   htmlFor="settings-display-name"
@@ -223,6 +314,50 @@ export default function SettingsPage() {
                   placeholder={t("bioPlaceholder")}
                   disabled={loadingProfile}
                 />
+              </div>
+              <div>
+                <label
+                  htmlFor="settings-twitter"
+                  className="mb-2 block text-sm font-medium text-[var(--c-text-em)]"
+                >
+                  {t("twitter") ?? "Twitter / X"}
+                </label>
+                <div className="relative">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                    <Twitter className="h-4 w-4 text-[var(--c-text-2)]" />
+                  </div>
+                  <Input
+                    id="settings-twitter"
+                    value={twitterHandle}
+                    onChange={(e) => setTwitterHandle(e.target.value)}
+                    maxLength={50}
+                    placeholder="@username"
+                    disabled={loadingProfile}
+                    className="pl-9"
+                  />
+                </div>
+              </div>
+              <div>
+                <label
+                  htmlFor="settings-github"
+                  className="mb-2 block text-sm font-medium text-[var(--c-text-em)]"
+                >
+                  {t("github") ?? "GitHub"}
+                </label>
+                <div className="relative">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                    <Github className="h-4 w-4 text-[var(--c-text-2)]" />
+                  </div>
+                  <Input
+                    id="settings-github"
+                    value={githubUsername}
+                    onChange={(e) => setGithubUsername(e.target.value)}
+                    maxLength={50}
+                    placeholder="username"
+                    disabled={loadingProfile}
+                    className="pl-9"
+                  />
+                </div>
               </div>
               <Button size="sm" onClick={handleSave} disabled={saving || loadingProfile}>
                 {saving ? (

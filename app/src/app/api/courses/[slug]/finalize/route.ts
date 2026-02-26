@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireWalletSession } from "@/lib/auth/require-session";
 import { PublicKey, Transaction, sendAndConfirmTransaction } from "@solana/web3.js";
 import {
   getAssociatedTokenAddressSync,
@@ -62,6 +63,9 @@ export async function POST(
   { params }: { params: Promise<{ slug: string }> },
 ) {
   try {
+    const session = await requireWalletSession();
+    if ("error" in session) return session.error;
+
     const { slug } = await params;
     const course = courses.find((c) => c.slug === slug);
 
@@ -69,18 +73,8 @@ export async function POST(
       return NextResponse.json({ error: "Course not found" }, { status: 404 });
     }
 
-    const body = await request.json().catch(() => ({}));
-    const { walletAddress } = body as { walletAddress?: string };
-
-    if (!walletAddress) {
-      return NextResponse.json(
-        { error: "walletAddress required" },
-        { status: 400 },
-      );
-    }
-
     const { program, signer, connection } = getBackendProgram();
-    const learnerKey = new PublicKey(walletAddress);
+    const learnerKey = new PublicKey(session.wallet);
     const courseId = course.id;
     const [configPDA] = findConfigPDA();
     const [coursePDA] = findCoursePDA(courseId);

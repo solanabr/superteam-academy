@@ -151,7 +151,6 @@ export default async function RootLayout({
         />
         <link rel="dns-prefetch" href="https://us.i.posthog.com" />
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
-        <link rel="manifest" href="/manifest.json" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable} ${instrumentSerif.variable} ${caveat.variable} ${diatype.variable} ${dsemi.variable} antialiased`}

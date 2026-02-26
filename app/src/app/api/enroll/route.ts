@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireWalletSession } from "@/lib/auth/require-session";
 import { PublicKey, SystemProgram } from "@solana/web3.js";
 import { getBackendProgram } from "@/lib/solana/backend-signer";
 import { getAccounts } from "@/lib/solana/program";
@@ -11,21 +12,23 @@ import { logEnrollmentEvent } from "@/lib/supabase/enrollment-events";
 
 export async function POST(req: Request) {
   try {
+    const session = await requireWalletSession();
+    if ("error" in session) return session.error;
+
     const body = await req.json();
-    const { learner, courseId } = body as {
-      learner?: string;
+    const { courseId } = body as {
       courseId?: string;
     };
 
-    if (!learner || !courseId) {
+    if (!courseId) {
       return NextResponse.json(
-        { error: "Missing required fields: learner, courseId" },
+        { error: "Missing required field: courseId" },
         { status: 400 },
       );
     }
 
     const { program, connection } = getBackendProgram();
-    const learnerKey = new PublicKey(learner);
+    const learnerKey = new PublicKey(session.wallet);
     const [coursePDA] = findCoursePDA(courseId);
     const [enrollmentPDA] = findEnrollmentPDA(courseId, learnerKey);
 
@@ -83,7 +86,7 @@ export async function POST(req: Request) {
 
     logEnrollmentEvent({
       eventType: "enroll",
-      wallet: learner,
+      wallet: session.wallet,
       courseId,
     });
 
