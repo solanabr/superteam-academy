@@ -111,10 +111,13 @@ function truncate(addr: string): string {
   return addr.slice(0, 6) + '...' + addr.slice(-6);
 }
 
-function buildTwitterIntent(name: string): string {
-  const text = encodeURIComponent(
-    `Acabei de conquistar o certificado "${name}" na @SuperteamBR Academy! 🎓\n\nAprendendo Solana e Web3 na prática.\n\n#Solana #Web3 #Blockchain`
-  );
+function buildTwitterIntent(name: string, locale: string = 'pt-BR'): string {
+  const messages: Record<string, string> = {
+    'pt-BR': `Acabei de conquistar o certificado "${name}" na @SuperteamBR Academy! \u{1F393}\n\nAprendendo Solana e Web3 na pr\u00E1tica.\n\n#Solana #Web3 #Blockchain`,
+    'en': `Just earned the "${name}" certificate on @SuperteamBR Academy! \u{1F393}\n\nLearning Solana and Web3 hands-on.\n\n#Solana #Web3 #Blockchain`,
+    'es': `Acabo de obtener el certificado "${name}" en @SuperteamBR Academy! \u{1F393}\n\nAprendiendo Solana y Web3 en la pr\u00E1ctica.\n\n#Solana #Web3 #Blockchain`,
+  };
+  const text = encodeURIComponent(messages[locale] || messages['pt-BR']);
   return `https://twitter.com/intent/tweet?text=${text}`;
 }
 
