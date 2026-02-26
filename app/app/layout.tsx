@@ -5,6 +5,8 @@ import { Toaster } from "@/components/ui/sonner";
 import { NavbarWrapper } from "@/components/landing/NavbarWrapper";
 import { siteConfig } from "@/config/siteConfig";
 import { Geist, Geist_Mono, Jersey_10, Inter } from "next/font/google";
+import { getLocale, getMessages } from "next-intl/server";
+import { NextIntlClientProvider } from "next-intl";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -40,13 +42,16 @@ const jsonLd = {
   inLanguage: "pt-BR",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
+  const messages = await getMessages();
+
   return (
-    <html lang="pt-BR" suppressHydrationWarning className="dark">
+    <html lang={locale} suppressHydrationWarning className="dark">
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${gameFont.variable} ${inter.variable} antialiased bg-zinc-900`}
       >
@@ -62,8 +67,10 @@ export default function RootLayout({
         <ThemeProvider>
           <SolanaProvider>
             <QueryProvider>
-              <NavbarWrapper />
-              {children}
+              <NextIntlClientProvider messages={messages} locale={locale}>
+                <NavbarWrapper />
+                {children}
+              </NextIntlClientProvider>
             </QueryProvider>
           </SolanaProvider>
         </ThemeProvider>

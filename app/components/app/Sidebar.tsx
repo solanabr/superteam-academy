@@ -9,13 +9,13 @@ import {
     Settings,
     Award,
     Shield,
-    Trophy,
 } from "lucide-react";
 
 import { Logo } from "@/components/Logo";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useXpBalance } from "@/hooks";
 import { levelFromXp, xpProgressInLevel } from "@/lib/level";
+import { useTranslations } from "next-intl";
 
 import {
     Sidebar as ShadcnSidebar,
@@ -30,18 +30,19 @@ import {
     SidebarSeparator,
 } from "@/components/ui/sidebar";
 
-const navItems = [
-    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/courses", label: "Courses", icon: BookOpen },
-    { href: "/profile", label: "Profile", icon: User },
-    { href: "/certificates", label: "Certificates", icon: Award },
-    { href: "/settings", label: "Settings", icon: Settings },
+const navItems: { href: string; key: "dashboard" | "courses" | "profile" | "certificates" | "settings"; icon: typeof LayoutDashboard }[] = [
+    { href: "/dashboard", key: "dashboard", icon: LayoutDashboard },
+    { href: "/courses", key: "courses", icon: BookOpen },
+    { href: "/profile", key: "profile", icon: User },
+    { href: "/certificates", key: "certificates", icon: Award },
+    { href: "/settings", key: "settings", icon: Settings },
 ];
 
 export function AppSidebar() {
     const { isAdmin } = useIsAdmin();
     const pathname = usePathname();
     const { data: xp } = useXpBalance();
+    const t = useTranslations("common");
 
     const xpValue = xp ?? 0;
     const { level, xpInLevel, xpForNextLevel } = xpProgressInLevel(xpValue);
@@ -65,7 +66,7 @@ export function AppSidebar() {
       group-data-[state=collapsed]:pointer-events-none
     "
                     >
-                        Superteam-academy
+                        {t("appName")}
                     </p>
                 </SidebarHeader>
             </Link>
@@ -75,7 +76,7 @@ export function AppSidebar() {
                 <SidebarGroup>
                     <SidebarGroupContent>
                         <SidebarMenu>
-                            {navItems.map(({ href, label, icon: Icon }) => {
+                            {navItems.map(({ href, key, icon: Icon }) => {
                                 const active =
                                     pathname === href || pathname.startsWith(href + "/");
 
@@ -84,7 +85,7 @@ export function AppSidebar() {
                                         <SidebarMenuButton
                                             asChild
                                             isActive={active}
-                                            tooltip={label}
+                                            tooltip={t(key)}
                                             className="
                                                 rounded-xl
                                                 transition-all duration-200
@@ -99,7 +100,7 @@ export function AppSidebar() {
                                             >
                                                 <Icon className="h-4 w-4 shrink-0 text-zinc-400" />
                                                 <span className="font-game text-lg">
-                                                    {label}
+                                                    {t(key)}
                                                 </span>
                                             </Link>
                                         </SidebarMenuButton>
@@ -121,7 +122,7 @@ export function AppSidebar() {
                                         <SidebarMenuButton
                                             asChild
                                             isActive={pathname.startsWith("/admin")}
-                                            tooltip="Admin"
+                                            tooltip={t("admin")}
                                             className="
                                                 rounded-xl
                                                 transition-all duration-200
@@ -135,7 +136,7 @@ export function AppSidebar() {
                                                 className="flex items-center gap-3 px-3 py-2"
                                             >
                                                 <Shield className="h-4 w-4 shrink-0 text-zinc-400" />
-                                                <span className="font-game text-lg">Admin</span>
+                                                <span className="font-game text-lg">{t("admin")}</span>
                                             </Link>
                                         </SidebarMenuButton>
                                     </SidebarMenuItem>
@@ -166,7 +167,7 @@ export function AppSidebar() {
                     </div>
 
                     <p className="font-game text-xs text-gray-500 mt-1 text-center">
-                        {xpInLevel} / {xpForNextLevel} XP
+                        {xpInLevel} / {xpForNextLevel} {t("xp")}
                     </p>
                 </div>
             </SidebarFooter>
