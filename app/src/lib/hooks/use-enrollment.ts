@@ -1,7 +1,7 @@
 "use client";
 
 import { useWallet, useConnection } from "@/lib/wallet/context";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   getReadonlyProgram,
   getAccounts,
@@ -54,6 +54,7 @@ export function useEnrollment(courseId: string | null) {
   const [enrollment, setEnrollment] = useState<OnChainEnrollment | null>(null);
   const [loading, setLoading] = useState(false);
   const [exists, setExists] = useState(false);
+  const initialFetchDone = useRef(false);
 
   const refresh = useCallback(async (): Promise<boolean> => {
     if (!publicKey || !courseId) {
@@ -62,18 +63,21 @@ export function useEnrollment(courseId: string | null) {
       return false;
     }
 
-    setLoading(true);
+    // Only show loading spinner for the initial fetch, not polling refreshes
+    const isInitial = !initialFetchDone.current;
+    if (isInitial) setLoading(true);
+
     try {
       const program = getReadonlyProgram(connection);
       const [pda] = findEnrollmentPDA(courseId, publicKey);
       const enrollment = await getAccounts(program).enrollment.fetch(pda);
       setEnrollment(enrollment);
       setExists(true);
-      setLoading(false);
+      if (isInitial) setLoading(false);
+      initialFetchDone.current = true;
       return true;
     } catch (error: unknown) {
-      const msg =
-        error instanceof Error ? error.message : String(error);
+      const msg = error instanceof Error ? error.message : String(error);
       const isNotFound =
         msg.includes("Account does not exist") ||
         msg.includes("has no data");
@@ -82,12 +86,14 @@ export function useEnrollment(courseId: string | null) {
       }
       setEnrollment(null);
       setExists(false);
-      setLoading(false);
+      if (isInitial) setLoading(false);
+      initialFetchDone.current = true;
       return false;
     }
   }, [publicKey, courseId, connection]);
 
   useEffect(() => {
+    initialFetchDone.current = false;
     refresh();
   }, [refresh]);
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useWallet } from "@/lib/wallet/context";
 import { useProgram } from "@/lib/hooks/use-program";
 import { useEnrollment } from "@/lib/hooks/use-enrollment";
@@ -41,20 +41,32 @@ export function EnrollSection({
   } = useEnrollment(courseId);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Optimistic: show enrolled state immediately after TX confirms
+  const [optimisticEnrolled, setOptimisticEnrolled] = useState(false);
+  const enrollingRef = useRef(false);
 
   const isComplete = isEnrolled && enrollment?.completedAt !== null;
 
   const handleEnroll = async () => {
-    if (!program || !publicKey) return;
+    if (!program || !publicKey || enrollingRef.current) return;
+    enrollingRef.current = true;
     setLoading(true);
     setError(null);
+    setOptimisticEnrolled(false);
     try {
       await enroll(program, publicKey, courseId);
       analytics.courseEnrolled(courseId);
-      for (let i = 0; i < 5; i++) {
-        const found = await refreshEnrollment();
-        if (found) break;
+      // TX confirmed on-chain — show success immediately
+      setOptimisticEnrolled(true);
+      setLoading(false);
+      // Background: sync actual on-chain state (non-blocking)
+      for (let i = 0; i < 8; i++) {
         await new Promise((r) => setTimeout(r, 2000));
+        const found = await refreshEnrollment();
+        if (found) {
+          setOptimisticEnrolled(false); // real state took over
+          break;
+        }
       }
     } catch (e: unknown) {
       console.error("Enroll failed:", e);
@@ -75,8 +87,10 @@ export function EnrollSection({
       } else {
         setError(tl("enrollmentFailed"));
       }
+      setLoading(false);
+    } finally {
+      enrollingRef.current = false;
     }
-    setLoading(false);
   };
 
   const metaText = (
@@ -108,7 +122,8 @@ export function EnrollSection({
     );
   }
 
-  if (enrollmentLoading) {
+  // Only show "enrolling" spinner on initial load, not during handleEnroll
+  if (enrollmentLoading && !loading && !optimisticEnrolled && !error) {
     return (
       <div className="sa-enroll-section">
         <span
@@ -136,7 +151,7 @@ export function EnrollSection({
     );
   }
 
-  if (isEnrolled) {
+  if (isEnrolled || optimisticEnrolled) {
     return (
       <div className="sa-enroll-section">
         <button className="sa-enroll-btn enrolled">
@@ -163,6 +178,7 @@ export function EnrollSection({
             fontFamily: "var(--font-mono)",
             fontSize: "11px",
             color: "#EF4444",
+            marginTop: "8px",
           }}
         >
           {error}
