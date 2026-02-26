@@ -355,7 +355,10 @@
     "deleteConfirmDesc": "This action cannot be undone. Type DELETE to confirm.",
     "typeDelete": "Type DELETE to confirm",
     "cancel": "Cancel",
-    "deleting": "Deleting..."
+    "deleting": "Deleting...",
+    "avatar": "Avatar",
+    "twitter": "Twitter / X",
+    "github": "GitHub"
   },
   "certificate": {
     "title": "Certificate of Completion",

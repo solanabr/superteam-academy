@@ -355,7 +355,10 @@
     "deleteConfirmDesc": "Esta acao nao pode ser desfeita. Digite DELETE para confirmar.",
     "typeDelete": "Digite DELETE para confirmar",
     "cancel": "Cancelar",
-    "deleting": "Excluindo..."
+    "deleting": "Excluindo...",
+    "avatar": "Avatar",
+    "twitter": "Twitter / X",
+    "github": "GitHub"
   },
   "certificate": {
     "title": "Certificado de Conclusao",

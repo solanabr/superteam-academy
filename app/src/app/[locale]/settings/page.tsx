@@ -256,7 +256,7 @@ export default function SettingsPage() {
               <canvas ref={canvasRef} className="hidden" />
               <div>
                 <label className="mb-2 block text-sm font-medium text-[var(--c-text-em)]">
-                  {t("avatar") ?? "Avatar"}
+                  {t("avatar")}
                 </label>
                 <button
                   type="button"
@@ -320,7 +320,7 @@ export default function SettingsPage() {
                   htmlFor="settings-twitter"
                   className="mb-2 block text-sm font-medium text-[var(--c-text-em)]"
                 >
-                  {t("twitter") ?? "Twitter / X"}
+                  {t("twitter")}
                 </label>
                 <div className="relative">
                   <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -342,7 +342,7 @@ export default function SettingsPage() {
                   htmlFor="settings-github"
                   className="mb-2 block text-sm font-medium text-[var(--c-text-em)]"
                 >
-                  {t("github") ?? "GitHub"}
+                  {t("github")}
                 </label>
                 <div className="relative">
                   <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
