@@ -5,11 +5,10 @@ import {
   BookOpen, Clock, Users, Zap, Star, CheckCircle, ChevronRight,
   Play, Lock, Award, BarChart2, ArrowLeft, GraduationCap
 } from 'lucide-react';
-import dynamic from 'next/dynamic';
+import EnrollButtonWrapper from '@/components/EnrollButtonWrapper';
 import { cn } from '@/lib/utils';
 import { localePath } from '@/lib/paths';
 
-const EnrollButton = dynamic(() => import('@/components/EnrollButton'), { ssr: false });
 
 const L = (obj: Record<string, string>, locale: string) => obj[locale] ?? obj['pt-BR'];
 
@@ -503,7 +502,7 @@ export default async function CourseDetailPage({
                   <div className="text-sm text-gray-400">{t('full_access')}</div>
                 </div>
 
-                <EnrollButton
+                <EnrollButtonWrapper
                   courseId={slug}
                   lessonPath={localePath(locale, '/lessons/intro-1')}
                   startText={t('start_course')}
