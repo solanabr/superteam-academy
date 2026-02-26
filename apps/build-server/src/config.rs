@@ -21,8 +21,8 @@ pub enum LogFormat {
 
 impl Config {
     pub fn from_env() -> Self {
-        let api_key = env::var("SOLARIUM_API_KEY").expect("SOLARIUM_API_KEY must be set");
-        assert!(!api_key.is_empty(), "SOLARIUM_API_KEY must not be empty");
+        let api_key = env::var("ACADEMY_API_KEY").expect("ACADEMY_API_KEY must be set");
+        assert!(!api_key.is_empty(), "ACADEMY_API_KEY must not be empty");
 
         Self {
             api_key,
@@ -49,7 +49,7 @@ impl Config {
                 _ => LogFormat::Json,
             },
             programs_dir: env::var("PROGRAMS_DIR").unwrap_or_else(|_| "programs".into()),
-            builds_dir: env::var("BUILDS_DIR").unwrap_or_else(|_| "/tmp/solarium-builds".into()),
+            builds_dir: env::var("BUILDS_DIR").unwrap_or_else(|_| "/tmp/academy-builds".into()),
         }
     }
 }

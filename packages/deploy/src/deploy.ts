@@ -29,7 +29,7 @@ import type {
  * webpack dynamic-import chunks (module-level Maps can be duplicated when
  * Next.js creates separate chunks for each `dynamic()` import).
  */
-const CACHE_KEY = "__solariumBinaryCache";
+const CACHE_KEY = "__academyBinaryCache";
 
 function getGlobalCache(): Map<string, Uint8Array> {
   const g = globalThis as Record<string, unknown>;

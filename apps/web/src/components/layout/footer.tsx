@@ -18,14 +18,14 @@ export function Footer() {
             <Link href={`/${locale}`} className="flex items-center gap-2">
               <Image
                 src="/logo-light.png"
-                alt="Solarium"
+                alt="Superteam Academy"
                 width={106}
                 height={32}
                 className="h-8 w-auto dark:hidden"
               />
               <Image
                 src="/logo-dark.png"
-                alt="Solarium"
+                alt="Superteam Academy"
                 width={106}
                 height={32}
                 className="hidden h-8 w-auto dark:block"

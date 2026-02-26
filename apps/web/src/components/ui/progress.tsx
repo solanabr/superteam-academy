@@ -5,7 +5,7 @@ import * as ProgressPrimitive from "@radix-ui/react-progress";
 import { cn } from "@/lib/utils";
 
 /**
- * Solarium v9 Progress — two sizes:
+ * Superteam Academy v9 Progress — two sizes:
  *
  * **default (14px):** `.prog-track` + `.prog-fill` with shimmer overlay +
  * inner 3D highlight.  Uses `.pf-primary`, `.pf-xp`, `.pf-success` fill

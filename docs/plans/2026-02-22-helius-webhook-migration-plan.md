@@ -716,7 +716,7 @@ async function issueCredentialForCourse(
 
     // Build metadata JSON
     const metadataJson = {
-      name: `Solarium: ${(sanityCourse.title ?? courseId).slice(0, 20)}`,
+      name: `Superteam Academy: ${(sanityCourse.title ?? courseId).slice(0, 20)}`,
       symbol: "STACAD",
       description: `Certificate of completion for ${sanityCourse.title ?? courseId}`,
       image: "",
@@ -727,7 +727,7 @@ async function issueCredentialForCourse(
           value: new Date(event.timestamp * 1000).toISOString().split("T")[0],
         },
         { trait_type: "Recipient", value: event.learner },
-        { trait_type: "Platform", value: "Solarium" },
+        { trait_type: "Platform", value: "Superteam Academy" },
       ],
       external_url: `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/certificates`,
     };
@@ -743,7 +743,7 @@ async function issueCredentialForCourse(
     if (!metaRow) return;
 
     const metadataUri = `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/api/certificates/metadata?id=${metaRow.id}`;
-    const credentialName = `Solarium: ${(sanityCourse.title ?? courseId).slice(0, 20)}`;
+    const credentialName = `Superteam Academy: ${(sanityCourse.title ?? courseId).slice(0, 20)}`;
 
     const result = await onChainIssueCredential(
       courseId,

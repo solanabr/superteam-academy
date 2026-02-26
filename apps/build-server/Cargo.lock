@@ -1539,7 +1539,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "solarium-build-server"
+name = "academy-build-server"
 version = "0.1.0"
 dependencies = [
  "anyhow",

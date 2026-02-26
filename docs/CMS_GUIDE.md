@@ -1,6 +1,6 @@
 # CMS Guide
 
-Guide for managing course content in Sanity CMS for Solarium (`solarium.courses`), a Solana developer education platform.
+Guide for managing course content in Sanity CMS for Superteam Academy (`solarium.courses`), a Solana developer education platform.
 
 ## Overview
 
@@ -155,7 +155,7 @@ Badges and milestones that learners can unlock. Each achievement can be minted a
 
 ## Publishing Workflow
 
-Content in Solarium follows a two-phase publishing model: **CMS-first, then on-chain deployment**. A course is NOT visible to students until both phases are complete.
+Content in Superteam Academy follows a two-phase publishing model: **CMS-first, then on-chain deployment**. A course is NOT visible to students until both phases are complete.
 
 ### Phase 1: Create Content in Sanity
 

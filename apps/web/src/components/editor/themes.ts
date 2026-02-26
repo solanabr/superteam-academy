@@ -1,7 +1,7 @@
 import type { editor } from "monaco-editor";
 
 /**
- * Monaco Editor themes aligned with Solarium Design System v5.
+ * Monaco Editor themes aligned with Superteam Academy Design System v5.
  * These MUST use hex values — Monaco API does not support CSS custom properties.
  * Backgrounds use our warm neutral palette instead of cold grays.
  */

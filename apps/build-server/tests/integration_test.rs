@@ -1,4 +1,4 @@
-//! Integration tests for the Solarium build server.
+//! Integration tests for the Superteam Academy build server.
 //!
 //! These tests run against a live server instance.
 //! All tests are #[ignore]d by default — run with:
@@ -170,5 +170,5 @@ fn test_metrics_endpoint() {
         .unwrap();
     assert_eq!(resp.status(), 200);
     let body = resp.text().unwrap();
-    assert!(body.contains("solarium_builds_total"));
+    assert!(body.contains("academy_builds_total"));
 }

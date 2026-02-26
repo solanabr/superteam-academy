@@ -1,6 +1,6 @@
 # Admin Panel Guide
 
-The Solarium admin panel provides tools for syncing Sanity CMS content to the on-chain program.
+The Superteam Academy admin panel provides tools for syncing Sanity CMS content to the on-chain program.
 
 ## Accessing the Admin Panel
 

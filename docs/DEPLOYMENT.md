@@ -1,6 +1,6 @@
 # Deployment Guide
 
-Production deployment guide for Solarium on Vercel + Supabase + Sanity + GCP.
+Production deployment guide for Superteam Academy on Vercel + Supabase + Sanity + GCP.
 
 ---
 

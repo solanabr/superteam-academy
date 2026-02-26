@@ -199,7 +199,7 @@
       "_type": "slug",
       "current": "building-your-first-solana-program"
     },
-    "description": "Take your Anchor knowledge from theory to practice. Write, compile, and deploy real Solana programs using the Solarium Build Server — no local toolchain setup required. By the end, you'll have a working counter program deployed to Devnet.",
+    "description": "Take your Anchor knowledge from theory to practice. Write, compile, and deploy real Solana programs using the Superteam Academy Build Server — no local toolchain setup required. By the end, you'll have a working counter program deployed to Devnet.",
     "difficulty": "intermediate",
     "duration": 12,
     "instructor": {
