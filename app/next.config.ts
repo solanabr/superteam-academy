@@ -86,6 +86,9 @@ const nextConfig: NextConfig = {
   },
 };
 
+// Debug Sentry source map upload
+if (process.env.SENTRY_ORG) process.env.SENTRY_LOG_LEVEL = 'debug';
+
 // Only wrap with Sentry when credentials are present (avoids bundle overhead in dev/without config)
 const configuredNext = withNextIntl(nextConfig);
 export default process.env.SENTRY_ORG
