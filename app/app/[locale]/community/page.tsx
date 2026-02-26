@@ -84,12 +84,15 @@ function formatRelativeTime(date: string): string {
 function normalizeDiscussion(
 	d: Awaited<ReturnType<typeof getAllDiscussions>>[number]
 ): NormalizedDiscussion {
+	const authorName = d.author?.name ?? "Unknown";
+	const authorInitials = getInitials(authorName);
+
 	return {
 		id: d._id,
 		slug: typeof d.slug === "string" ? d.slug : d.slug?.current || d._id,
 		title: d.title,
 		excerpt: d.excerpt,
-		author: { name: d.author.name, initials: getInitials(d.author.name) },
+		author: { name: authorName, initials: authorInitials },
 		category: d.category,
 		views: d.views,
 		comments: d.commentCount,

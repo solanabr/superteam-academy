@@ -18,6 +18,7 @@ export default async function DiscussionPage({ params }: DiscussionPageProps) {
 	if (!discussion) notFound();
 
 	const t = await getTranslations("community.discussions");
+	const authorName = discussion.author?.name ?? "Unknown";
 
 	return (
 		<div className="mx-auto space-y-6">
@@ -43,7 +44,7 @@ export default async function DiscussionPage({ params }: DiscussionPageProps) {
 						</div>
 						<h1 className="text-2xl font-bold">{discussion.title}</h1>
 						<div className="flex items-center gap-4 text-sm text-muted-foreground">
-							<span>{discussion.author.name}</span>
+							<span>{authorName}</span>
 							<span>{new Date(discussion.publishedAt).toLocaleDateString()}</span>
 							<span className="flex items-center gap-1">
 								<Eye className="h-3.5 w-3.5" />
