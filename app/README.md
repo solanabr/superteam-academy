@@ -3,6 +3,10 @@
 The premier Solana learning platform for Latin American developers.  
 Interactive courses · On-chain XP tokens · NFT credentials · Multilingual (PT-BR, ES, EN)
 
+| Landing | Courses | Dashboard |
+|---------|---------|-----------|
+| ![Landing](../docs/images/landing.png) | ![Courses](../docs/images/courses.png) | ![Dashboard](../docs/images/dashboard.png) |
+
 [![Next.js](https://img.shields.io/badge/Next.js-16-black)](https://nextjs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)](https://typescriptlang.org)
 [![Solana](https://img.shields.io/badge/Solana-Devnet-9945FF)](https://solana.com)
