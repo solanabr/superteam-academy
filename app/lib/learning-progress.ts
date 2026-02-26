@@ -74,7 +74,9 @@ export class LearningProgressService {
       const pda = getEnrollmentPDA(courseSlug, learnerPubkey);
       const info = await this.connection.getAccountInfo(pda);
       return info !== null;
-    } catch {
+    } catch (err) {
+      // Network or RPC error — treat as not enrolled rather than throwing
+      console.warn('isEnrolled check failed:', err);
       return false;
     }
   }

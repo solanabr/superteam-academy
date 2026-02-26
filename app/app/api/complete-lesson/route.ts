@@ -9,40 +9,14 @@ import {
 } from '@solana/web3.js';
 import { AnchorProvider, Program, Wallet } from '@coral-xyz/anchor';
 import IDL from '@/lib/idl/onchain_academy.json';
-
-const PROGRAM_ID = new PublicKey(
-  '3Yr5EZrq8t4fMunuHUZoN9Q6cn4Sf6p3AFAdvWEMaxKU'
-);
-const TOKEN_2022_PROGRAM_ID = new PublicKey(
-  'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb'
-);
-const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey(
-  'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'
-);
-
-function getConfigPDA(): PublicKey {
-  const [pda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('config')],
-    PROGRAM_ID
-  );
-  return pda;
-}
-
-function getCoursePDA(courseId: string): PublicKey {
-  const [pda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('course'), Buffer.from(courseId)],
-    PROGRAM_ID
-  );
-  return pda;
-}
-
-function getEnrollmentPDA(courseId: string, learner: PublicKey): PublicKey {
-  const [pda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('enrollment'), Buffer.from(courseId), learner.toBytes()],
-    PROGRAM_ID
-  );
-  return pda;
-}
+import {
+  PROGRAM_ID,
+  TOKEN_2022_PROGRAM_ID,
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  getConfigPDA,
+  getCoursePDA,
+  getEnrollmentPDA,
+} from '@/lib/solana-program';
 
 export async function POST(request: NextRequest) {
   try {

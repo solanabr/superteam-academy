@@ -7,9 +7,16 @@ import { test, expect } from '@playwright/test';
  * and course enrollment flows across all locales.
  */
 
-const COURSE_SLUGS = ['intro-solana', 'anchor-basics', 'defi-solana'];
+const COURSE_SLUGS = ['intro-solana', 'anchor-basics', 'defi-solana'] as const;
 
 test.describe('Course detail pages', () => {
+  test('all course slugs have navigable pages', async ({ page }) => {
+    for (const slug of COURSE_SLUGS) {
+      await page.goto(`/en/courses/${slug}`);
+      await expect(page.locator('h1, h2').first()).toBeVisible();
+    }
+  });
+
   test('intro-solana course page loads in English', async ({ page }) => {
     await page.goto('/en/courses/intro-solana');
     await expect(page.locator('h1, h2').first()).toBeVisible();
