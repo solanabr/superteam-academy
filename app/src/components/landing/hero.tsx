@@ -27,13 +27,20 @@ function useCounter(end: number, duration = 1500, start = false) {
 
 const floatingCards = [
   {
+    icon: "🔥",
+    title: "Daily Streak",
+    value: "14 Days",
+    subtitle: "Keep it up, builder!",
+    color: "#FF6B35",
+    pos: { left: "2%", top: "34%", transform: undefined },
+  },
+  {
     icon: "⚡",
     title: "XP Earned",
     value: "+75 XP",
     subtitle: "Proof of History lesson",
     color: "#9945FF",
-    delay: 0,
-    offset: { x: -260, y: 60 },
+    pos: { left: "2%", top: "63%", transform: undefined },
   },
   {
     icon: "🏆",
@@ -41,8 +48,7 @@ const floatingCards = [
     value: "Week Warrior",
     subtitle: "7-day streak · rare",
     color: "#14F195",
-    delay: 0.4,
-    offset: { x: 220, y: -30 },
+    pos: { right: "2%", top: "34%", transform: undefined },
   },
   {
     icon: "🎓",
@@ -50,8 +56,7 @@ const floatingCards = [
     value: "Level 3 NFT",
     subtitle: "Solana Fundamentals",
     color: "#00C2FF",
-    delay: 0.7,
-    offset: { x: 240, y: 155 },
+    pos: { right: "2%", top: "63%", transform: undefined },
   },
 ];
 
@@ -262,55 +267,60 @@ export function Hero() {
         </motion.div>
       </motion.div>
 
-      {/* Floating UI cards */}
+      {/* Floating UI cards — anchored to side edges, never overlap text */}
       {mounted && (
         <div className="hidden lg:block absolute inset-0 pointer-events-none z-10">
           {floatingCards.map((card, i) => (
             <motion.div
               key={i}
-              initial={{ opacity: 0, scale: 0.8 }}
+              initial={{ opacity: 0, scale: 0.9 }}
               animate={{
                 opacity: 1,
                 scale: 1,
-                y: [0, -10, 0],
+                y: [0, -8, 0],
               }}
               transition={{
-                opacity: { duration: 0.5, delay: 0.6 + card.delay },
-                scale: { duration: 0.5, delay: 0.6 + card.delay },
-                y: { duration: 5, repeat: Infinity, delay: card.delay, ease: "easeInOut" },
+                opacity: { duration: 0.5, delay: 0.7 + i * 0.15 },
+                scale: { duration: 0.5, delay: 0.7 + i * 0.15 },
+                y: { duration: 5 + i * 0.4, repeat: Infinity, delay: i * 0.6, ease: "easeInOut" },
               }}
-              className="absolute top-1/2 left-1/2"
               style={{
-                x: card.offset.x,
-                y: card.offset.y - 30,
+                position: "absolute",
+                left: card.pos.left,
+                right: card.pos.right,
+                top: card.pos.top,
+                transform: card.pos.transform,
               }}
             >
               <div
-                className="glass-v2 p-3.5 w-52 shadow-card"
-                style={{ borderColor: `${card.color}25` }}
+                className="p-3.5 w-48 shadow-card rounded-2xl border backdrop-blur-xl"
+                style={{
+                  backgroundColor: "rgba(10, 10, 18, 0.40)",
+                  borderColor: `${card.color}35`,
+                }}
               >
                 <div className="flex items-start gap-3">
                   <div
                     className="w-8 h-8 rounded-lg flex items-center justify-center text-lg shrink-0"
-                    style={{ backgroundColor: `${card.color}15` }}
+                    style={{ backgroundColor: `${card.color}20` }}
                   >
                     {card.icon}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-[10px] text-muted-foreground/70 uppercase tracking-wider">{card.title}</p>
-                    <p className="text-sm font-bold text-foreground leading-tight">{card.value}</p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">{card.subtitle}</p>
+                    <p className="text-[10px] text-white/80 uppercase tracking-wider">{card.title}</p>
+                    <p className="text-sm font-bold text-white leading-tight drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">{card.value}</p>
+                    <p className="text-[10px] text-white/70 mt-0.5">{card.subtitle}</p>
                   </div>
                 </div>
                 <div className="mt-2.5 flex items-center gap-1.5">
                   <TrendingUp className="w-3 h-3" style={{ color: card.color }} />
-                  <div className="flex-1 h-1 rounded-full bg-white/8">
+                  <div className="flex-1 h-1 rounded-full bg-white/15">
                     <motion.div
                       className="h-full rounded-full"
                       style={{ background: card.color }}
                       initial={{ width: 0 }}
                       animate={{ width: `${65 + i * 12}%` }}
-                      transition={{ delay: 0.8 + card.delay, duration: 0.8, ease: "easeOut" }}
+                      transition={{ delay: 0.8 + i * 0.1, duration: 0.8, ease: "easeOut" }}
                     />
                   </div>
                 </div>

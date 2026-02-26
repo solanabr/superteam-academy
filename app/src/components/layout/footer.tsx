@@ -25,6 +25,8 @@ const footerLinks: Record<string, FooterLink[]> = {
     { label: "Forum", href: "/community" },
   ],
   Resources: [
+    { label: "Admin", href: "/admin" },
+    { label: "Course Creator (CMS)", href: "/studio" },
     { label: "Documentation", href: "/docs" },
     { label: "Solana Cookbook", href: "https://solanacookbook.com", external: true },
     { label: "Anchor Docs", href: "https://www.anchor-lang.com", external: true },

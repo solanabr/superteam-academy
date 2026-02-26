@@ -1,8 +1,9 @@
 /**
- * LearningProgressService — Clean abstraction over local/on-chain state.
- * Stubbed for MVP with localStorage. Swap methods for on-chain calls later.
+ * LearningProgressService — Hybrid local + on-chain.
+ * Uses devnet XP and credentials when connection and env vars are available.
  */
 
+import { PublicKey } from "@solana/web3.js";
 import {
   Achievement,
   CourseProgress,
@@ -21,8 +22,11 @@ import {
   MOCK_LEADERBOARD,
   MOCK_CREDENTIAL,
   MOCK_COURSES,
+  TRACKS,
   generateMockStreak,
 } from "@/lib/mock-data";
+import { getSolanaContext } from "@/lib/solana/context";
+import { fetchXpBalance, fetchCredentialsByOwner } from "@/lib/solana/xp";
 
 const STORAGE_KEYS = {
   enrollments: "academy_enrollments",
@@ -147,6 +151,21 @@ class LocalLearningProgressService implements LearningProgressService {
   }
 
   async getXpBalance(walletAddress: string): Promise<XPBalance> {
+    const ctx = getSolanaContext();
+    if (
+      ctx.connection &&
+      ctx.xpMint &&
+      walletAddress &&
+      walletAddress.length >= 32 &&
+      walletAddress.length <= 44
+    ) {
+      try {
+        const pubkey = new PublicKey(walletAddress);
+        return await fetchXpBalance(ctx.connection, pubkey, ctx.xpMint);
+      } catch {
+        /* fall through to localStorage */
+      }
+    }
     const defaultXp = walletAddress === "demo" ? 4200 : 0;
     const xp = getStorage<number>(`${STORAGE_KEYS.xp}:${walletAddress}`, defaultXp);
     return calculateXPBalance(xp);
@@ -176,6 +195,64 @@ class LocalLearningProgressService implements LearningProgressService {
 
   async getCredentials(walletAddress: string): Promise<Credential[]> {
     if (!walletAddress) return [];
+    const ctx = getSolanaContext();
+    if (
+      ctx.heliusUrl &&
+      walletAddress.length >= 32 &&
+      walletAddress.length <= 44
+    ) {
+      try {
+        const items = await fetchCredentialsByOwner(ctx.heliusUrl, walletAddress);
+        return items.map(
+          (item: {
+            mintAddress: string;
+            name: string;
+            imageUri: string;
+            metadataUri: string;
+            attributes?: Array<{ trait_type: string; value: string }>;
+            collection?: string;
+          }): Credential => {
+            const level =
+              Number(
+                item.attributes?.find((a) => a.trait_type === "level")?.value
+              ) || 1;
+            const coursesCompleted =
+              Number(
+                item.attributes?.find((a) => a.trait_type === "coursesCompleted")
+                  ?.value
+              ) || 0;
+            const totalXp =
+              Number(
+                item.attributes?.find((a) => a.trait_type === "totalXp")?.value
+              ) || 0;
+            return {
+              id: item.mintAddress,
+              mintAddress: item.mintAddress,
+              walletAddress,
+              track: TRACKS[0] ?? {
+                id: 1,
+                name: "Solana Academy",
+                slug: "academy",
+                description: "",
+                color: "#9945FF",
+                icon: "⚡",
+                courses: [],
+              },
+              level,
+              coursesCompleted,
+              totalXp,
+              issuedAt: new Date(),
+              name: item.name,
+              imageUri: item.imageUri,
+              metadataUri: item.metadataUri,
+              collection: item.collection ?? "",
+            };
+          }
+        );
+      } catch {
+        /* fall through */
+      }
+    }
     return [MOCK_CREDENTIAL];
   }
 

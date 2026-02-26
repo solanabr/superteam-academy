@@ -17,6 +17,8 @@ import {
   CheckCircle2,
   Target,
   Activity,
+  Gift,
+  Calendar,
 } from "lucide-react";
 import { PageLayout } from "@/components/layout/page-layout";
 import { Button } from "@/components/ui/button";
@@ -26,7 +28,13 @@ import { XPDisplay } from "@/components/gamification/xp-display";
 import { StreakCalendar } from "@/components/gamification/streak-calendar";
 import { AchievementBadge } from "@/components/gamification/achievement-badge";
 import { learningProgressService } from "@/lib/services/learning-progress";
-import { MOCK_COURSES, MOCK_ACHIEVEMENTS, generateMockStreak } from "@/lib/mock-data";
+import {
+  MOCK_COURSES,
+  MOCK_ACHIEVEMENTS,
+  generateMockStreak,
+  MOCK_DAILY_CHALLENGE,
+  MOCK_SEASONAL_EVENTS,
+} from "@/lib/mock-data";
 import { calculateXPBalance, formatXP } from "@/lib/utils/xp";
 import { XPBalance, Streak, Achievement } from "@/types";
 
@@ -167,6 +175,73 @@ export default function DashboardPage() {
               </motion.div>
             ))}
           </div>
+
+          {/* Daily Challenge */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+            className="bento-card p-4 mb-6"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Gift className="h-4 w-4 text-orange-400" />
+                <span className="text-sm font-medium">Daily Challenge</span>
+                <Badge className="text-[10px] h-4 px-1.5 bg-orange-500/15 text-orange-400 border-orange-500/30">
+                  Bonus XP
+                </Badge>
+              </div>
+              <span className="text-xs text-muted-foreground">
+                {MOCK_DAILY_CHALLENGE.progress}/{MOCK_DAILY_CHALLENGE.target} completed
+              </span>
+            </div>
+            <p className="text-sm text-muted-foreground mb-2">{MOCK_DAILY_CHALLENGE.description}</p>
+            <Progress
+              value={(MOCK_DAILY_CHALLENGE.progress / MOCK_DAILY_CHALLENGE.target) * 100}
+              variant="xp"
+              className="h-2 mb-2"
+            />
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-[#14F195] font-semibold">
+                +{MOCK_DAILY_CHALLENGE.xpReward} XP when complete
+              </span>
+              <Link href="/courses">
+                <Button variant="ghost" size="sm" className="h-6 text-xs">
+                  Do it →
+                </Button>
+              </Link>
+            </div>
+          </motion.div>
+
+          {/* Seasonal Events */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.28 }}
+            className="bento-card p-4 mb-6"
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <Calendar className="h-4 w-4 text-[#9945FF]" />
+              <span className="text-sm font-medium">Seasonal Events</span>
+            </div>
+            <div className="space-y-2">
+              {MOCK_SEASONAL_EVENTS.map((ev) => (
+                <div
+                  key={ev.id}
+                  className="flex items-center justify-between p-3 rounded-lg bg-white/[0.03] border border-white/[0.06]"
+                >
+                  <div>
+                    <p className="text-sm font-medium">{ev.name}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{ev.description}</p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-[10px] font-semibold text-[#14F195]">{ev.reward}</p>
+                    <p className="text-[10px] text-muted-foreground">{ev.participants} joined</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
 
           {/* Weekly goal bar */}
           <motion.div

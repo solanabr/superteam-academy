@@ -15,6 +15,8 @@ import {
 import { clusterApiUrl } from "@solana/web3.js";
 import { MotionConfig } from "framer-motion";
 import { Toaster } from "sonner";
+import { PWARegister } from "./pwa-register";
+import { SolanaContextBridge } from "./solana-context-bridge";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -53,8 +55,10 @@ export function Providers({ children }: { children: ReactNode }) {
       >
         <MotionConfig reducedMotion="never">
         <ConnectionProvider endpoint={endpoint}>
+          <SolanaContextBridge />
           <WalletProvider wallets={wallets} autoConnect>
             <WalletModalProvider>
+              <PWARegister />
               {children}
               <Toaster
                 position="bottom-right"

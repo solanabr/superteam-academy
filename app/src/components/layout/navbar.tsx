@@ -11,6 +11,7 @@ import {
   Zap,
   BookOpen,
   Trophy,
+  Users,
   LayoutDashboard,
   User,
   Settings,
@@ -40,6 +41,7 @@ import { formatXP } from "@/lib/utils/xp";
 const navLinks = [
   { href: "/courses", label: "Courses", icon: BookOpen },
   { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
+  { href: "/community", label: "Community", icon: Users },
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
 ];
 

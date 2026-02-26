@@ -638,6 +638,102 @@ export const MOCK_CREDENTIAL: Credential = {
   collection: "SolanaFundamentalsCollection",
 };
 
+// Community / Forum
+export const MOCK_DISCUSSION_THREADS = [
+  {
+    id: "t1",
+    title: "How do I derive a PDA for my program?",
+    category: "Q&A",
+    author: "solana_newbie",
+    avatar: "SN",
+    replies: 12,
+    views: 340,
+    lastActivity: new Date(Date.now() - 2 * 60 * 60 * 1000),
+    isPinned: true,
+    isResolved: true,
+  },
+  {
+    id: "t2",
+    title: "Anchor vs native Solana: which to choose?",
+    category: "Discussion",
+    author: "defi_builder",
+    avatar: "DB",
+    replies: 24,
+    views: 890,
+    lastActivity: new Date(Date.now() - 5 * 60 * 60 * 1000),
+    isPinned: true,
+    isResolved: false,
+  },
+  {
+    id: "t3",
+    title: "Token-2022 Transfer Hook implementation tips",
+    category: "Q&A",
+    author: "token_master",
+    avatar: "TM",
+    replies: 8,
+    views: 156,
+    lastActivity: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+    isPinned: false,
+    isResolved: true,
+  },
+  {
+    id: "t4",
+    title: "Share your first dApp deployed on Devnet!",
+    category: "Showcase",
+    author: "rust_rustler",
+    avatar: "RR",
+    replies: 45,
+    views: 1200,
+    lastActivity: new Date(Date.now() - 30 * 60 * 1000),
+    isPinned: false,
+    isResolved: false,
+  },
+  {
+    id: "t5",
+    title: "CPI from Anchor program to System Program",
+    category: "Q&A",
+    author: "anchor_dev",
+    avatar: "AD",
+    replies: 5,
+    views: 98,
+    lastActivity: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+    isPinned: false,
+    isResolved: false,
+  },
+];
+
+// Daily Challenges & Seasonal Events
+export const MOCK_DAILY_CHALLENGE = {
+  id: "dc1",
+  title: "Complete any 2 lessons today",
+  description: "Finish 2 lessons from any course to earn bonus XP",
+  xpReward: 50,
+  progress: 1,
+  target: 2,
+  expiresAt: new Date(new Date().setHours(23, 59, 59)),
+};
+
+export const MOCK_SEASONAL_EVENTS = [
+  {
+    id: "ev1",
+    name: "Solana Winter Build 2025",
+    description: "Complete 5 courses and mint a special achievement NFT",
+    startsAt: new Date("2025-01-01"),
+    endsAt: new Date("2025-03-31"),
+    reward: "Limited edition Winter Builder NFT",
+    participants: 1240,
+  },
+  {
+    id: "ev2",
+    name: "LATAM Developer Sprint",
+    description: "Earn 5,000 XP in 30 days — top 50 get bonus credentials",
+    startsAt: new Date("2025-02-01"),
+    endsAt: new Date("2025-02-28"),
+    reward: "Exclusive LATAM Sprint credential",
+    participants: 890,
+  },
+];
+
 export function generateMockStreak(): Streak {
   const history: StreakDay[] = [];
   const today = new Date();
