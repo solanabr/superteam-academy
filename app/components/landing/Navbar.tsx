@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/app/ThemeToggle";
 import { WalletConnectButton } from "@/components/wallet/WalletConnectButton";
+import { LanguageSwitcher } from "@/components/app/LanguageSwitcher";
 import { useIsAdmin } from "@/hooks";
+import { useTranslations } from "next-intl";
 
 import {
   NavigationMenu,
@@ -17,47 +18,21 @@ import {
 } from "@/components/ui/navigation-menu";
 
 const NAV_LINKS = [
-  { label: "Leaderboard", href: "/leaderboard" },
-  { label: "Challenges", href: "/challenges" },
+  { key: "leaderboard" as const, href: "/leaderboard" },
+  { key: "challenges" as const, href: "/challenges" },
 ];
 
 const COURSES = [
-  {
-    title: "Solana Fundamentals",
-    description: "",
-    level: "Beginner",
-    href: "/courses/solana-fundamentals",
-  },
-  {
-    title: "Anchor Program Development",
-    description: "",
-    level: "Beginner",
-    href: "/courses/anchor-development",
-  },
-  {
-    title: "Token Extensions",
-    description: "",
-    level: "Advanced",
-    href: "/courses/token-extensions",
-  },
-  {
-    title: "Metaplex Core NFTs",
-    description: "",
-    level: "Advanced",
-    href: "/courses/defi",
-  },
+  { titleKey: "Solana Fundamentals", levelKey: "beginner" as const, href: "/courses/solana-fundamentals" },
+  { titleKey: "Anchor Program Development", levelKey: "beginner" as const, href: "/courses/anchor-development" },
+  { titleKey: "Token Extensions", levelKey: "advanced" as const, href: "/courses/token-extensions" },
+  { titleKey: "Metaplex Core NFTs", levelKey: "advanced" as const, href: "/courses/defi" },
 ];
-
-const LANGUAGES = [
-  { code: "EN", label: "English" },
-  { code: "PT-BR", label: "Português" },
-  { code: "ES", label: "Español" },
-] as const;
 
 export function Navbar() {
   const { isAdmin } = useIsAdmin();
-  const [lang, setLang] = useState("EN");
-  const activeLang = LANGUAGES.find((l) => l.code === lang) ?? LANGUAGES[0];
+  const t = useTranslations("nav");
+  const tCommon = useTranslations("common");
 
   return (
     <header className="sticky top-0 z-50 w-full">
@@ -70,7 +45,7 @@ export function Navbar() {
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2">
               <p className="font-game font-bold text-2xl">
-                Superteam-academy
+                {tCommon("appName")}
               </p>
             </Link>
 
@@ -81,7 +56,7 @@ export function Navbar() {
                   {/* Courses dropdown */}
                   <NavigationMenuItem>
                     <NavigationMenuTrigger className="font-game text-xl">
-                      Courses
+                      {t("courses")}
                     </NavigationMenuTrigger>
 
                     <NavigationMenuContent>
@@ -95,15 +70,13 @@ export function Navbar() {
                               >
                                 <div className="flex items-center justify-between">
                                   <h4 className="font-game text-xl">
-                                    {course.title}
+                                    {course.titleKey}
                                   </h4>
                                   <span className="text-xs text-yellow-400 font-game">
-                                    {course.level}
+                                    {t(course.levelKey)}
                                   </span>
                                 </div>
-                                <p className="mt-1 text-sm text-muted-foreground">
-                                  {course.description}
-                                </p>
+                                <p className="mt-1 text-sm text-muted-foreground" />
                               </Link>
                             </NavigationMenuLink>
                           </li>
@@ -112,7 +85,6 @@ export function Navbar() {
                     </NavigationMenuContent>
                   </NavigationMenuItem>
 
-                  {/* Normal links */}
                   {NAV_LINKS.map((link) => (
                     <NavigationMenuItem key={link.href}>
                       <NavigationMenuLink asChild>
@@ -120,41 +92,11 @@ export function Navbar() {
                           href={link.href}
                           className="font-game text-xl hover:text-yellow-400 transition-colors"
                         >
-                          {link.label}
+                          {t(link.key)}
                         </Link>
                       </NavigationMenuLink>
                     </NavigationMenuItem>
                   ))}
-
-                  {/* Language selector */}
-                  {/* Language selector — own NavigationMenu so content anchors correctly */}
-                  <NavigationMenu>
-                    <NavigationMenuList>
-                      <NavigationMenuItem>
-                        <NavigationMenuTrigger className="font-game text-xl">
-                          {activeLang.code}
-                        </NavigationMenuTrigger>
-                        <NavigationMenuContent>
-                          <ul className="flex flex-col gap-1 p-2 w-[180px]">
-                            {LANGUAGES.map((l) => (
-                              <li key={l.code}>
-                                <button
-                                  onClick={() => setLang(l.code)}
-                                  className={`w-full flex items-center gap-3 rounded-lg px-4 py-2.5 font-game text-lg text-left transition-colors
-                  ${lang === l.code
-                                      ? "bg-yellow-400/10 text-yellow-400"
-                                      : "hover:bg-accent"
-                                    }`}
-                                >
-                                  {l.label}
-                                </button>
-                              </li>
-                            ))}
-                          </ul>
-                        </NavigationMenuContent>
-                      </NavigationMenuItem>
-                    </NavigationMenuList>
-                  </NavigationMenu>
 
                   {isAdmin && (
                     <NavigationMenuItem>
@@ -163,7 +105,7 @@ export function Navbar() {
                           href="/admin"
                           className="font-game text-xl hover:text-yellow-400 transition-colors"
                         >
-                          Admin
+                          {tCommon("admin")}
                         </Link>
                       </NavigationMenuLink>
                     </NavigationMenuItem>
@@ -174,6 +116,7 @@ export function Navbar() {
 
             {/* Right actions */}
             <div className="flex items-center gap-4">
+              <LanguageSwitcher />
               <ThemeToggle />
               <WalletConnectButton />
             </div>

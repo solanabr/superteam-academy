@@ -5,6 +5,7 @@ import { XpBadge } from "./XpBadge";
 import { WalletConnectButton } from "@/components/wallet/WalletConnectButton";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Logo } from "@/components/Logo";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 
 export function AppHeader() {
     return (
@@ -14,6 +15,7 @@ export function AppHeader() {
                 <Logo />
             </div>
             <div className="flex items-center gap-2">
+                <LanguageSwitcher />
                 <ThemeToggle />
                 <XpBadge />
                 <WalletConnectButton />
