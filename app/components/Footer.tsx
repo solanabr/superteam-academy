@@ -87,7 +87,7 @@ export default function Footer() {
             {tFooter('built_on_solana')}
           </p>
           <div className="flex items-center gap-1 text-sm text-gray-400">
-            <span>Powered by</span>
+            <span>{tFooter('powered_by')}</span>
             <span className="text-purple-400 font-medium">Superteam Brasil</span>
           </div>
         </div>
