@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { Check } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { useWallet } from "@/lib/wallet/context";
 import { learningService } from "@/lib/services/learning-progress";
 import { useEnrollment, isLessonComplete } from "@/lib/hooks/use-enrollment";
@@ -44,7 +45,9 @@ export function LessonChallenge({
   const t = useTranslations("lesson");
   const router = useRouter();
   const { publicKey } = useWallet();
+  const { data: session } = useSession();
   const walletAddress = publicKey?.toBase58() ?? null;
+  const hasSession = !!(session?.user?.id && session.user.id === walletAddress);
 
   const prevLesson = lessonIndex > 0 ? allLessons[lessonIndex - 1] : null;
   const nextLesson =
@@ -157,11 +160,11 @@ export function LessonChallenge({
       .completeLesson(userId, cId, lessonIndex)
       .catch((e) => console.error("local completeLesson error:", e));
 
-    if (walletAddress && course) {
+    if (hasSession && walletAddress && course) {
       return completeLessonAPI(walletAddress, course.id ?? slug, lessonIndex);
     }
     return true;
-  }, [walletAddress, course, lessonIndex, slug, completeLessonAPI]);
+  }, [hasSession, walletAddress, course, lessonIndex, slug, completeLessonAPI]);
 
   const handleRun = useCallback(async () => {
     if (!lesson.challenge) return;

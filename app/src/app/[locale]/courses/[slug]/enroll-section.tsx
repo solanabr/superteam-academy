@@ -53,9 +53,10 @@ export function EnrollSection({
   const [finalizing, setFinalizing] = useState(false);
   // Optimistic: show enrolled state immediately after TX confirms
   const [optimisticEnrolled, setOptimisticEnrolled] = useState(false);
+  const [optimisticComplete, setOptimisticComplete] = useState(false);
   const enrollingRef = useRef(false);
 
-  const isComplete = isEnrolled && enrollment?.completedAt !== null;
+  const isComplete = isEnrolled && (enrollment?.completedAt !== null || optimisticComplete);
 
   // Detect "all lessons done but never finalized" state
   const completedCount = enrollment?.lessonFlags
@@ -173,7 +174,9 @@ export function EnrollSection({
       if (data.error) {
         setError(data.error);
       } else {
-        // Poll for completedAt to appear on-chain
+        // Show completed immediately
+        setOptimisticComplete(true);
+        // Background: sync actual on-chain state
         for (let i = 0; i < 8; i++) {
           await new Promise((r) => setTimeout(r, 2000));
           const updated = await refreshEnrollment();
