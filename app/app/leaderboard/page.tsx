@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Search, ChevronLeft, ChevronRight, Trophy, Crown, Medal } from "lucide-react";
 import { PixelAvatar } from "@/components/app";
 import { getMockLeaderboard } from "@/lib/services/mock-leaderboard";
-import type { LeaderboardTimeframe } from "@/lib/services/learning-progress";
+import type { LeaderboardEntry, LeaderboardTimeframe } from "@/lib/services/learning-progress";
 import { cn } from "@/lib/utils";
 import {
     Table,
@@ -38,12 +39,24 @@ function truncateWallet(address: string) {
 
 
 
+async function fetchLeaderboard(timeframe: LeaderboardTimeframe): Promise<LeaderboardEntry[]> {
+    const res = await fetch(`/api/leaderboard?timeframe=${timeframe}`);
+    const data = (await res.json()) as { entries?: LeaderboardEntry[]; error?: string };
+    if (data.entries && data.entries.length > 0) return data.entries;
+    return getMockLeaderboard(timeframe);
+}
+
 export default function LeaderboardPage() {
     const [timeframe, setTimeframe] = useState<LeaderboardTimeframe>("all-time");
     const [search, setSearch] = useState("");
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState<number>(10);
-    const entries = getMockLeaderboard(timeframe);
+
+    const { data: entries = [] } = useQuery({
+        queryKey: ["leaderboard", timeframe],
+        queryFn: () => fetchLeaderboard(timeframe),
+        placeholderData: (prev) => prev ?? getMockLeaderboard(timeframe),
+    });
 
     const filtered = useMemo(
         () =>

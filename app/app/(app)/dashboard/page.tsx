@@ -12,8 +12,35 @@ import { ProgressBar, PageHeader, StreakCalendar, DailyReward } from "@/componen
 import { getAllCourses } from "@/lib/services/content-service";
 import { getMockStreakData } from "@/lib/services/mock-leaderboard";
 import { useXpBalance } from "@/hooks";
+import { useEnrollment } from "@/hooks/useEnrollment";
+import { getLessonFlagsFromEnrollment, countCompletedLessons } from "@/lib/lesson-bitmap";
+import { levelFromXp } from "@/lib/level";
 import { useState, useEffect } from "react";
 import type { MockCourse } from "@/lib/services/content-service";
+
+function EnrolledCourseCard({ course }: { course: MockCourse }) {
+    const { data: enrollment } = useEnrollment(course.id);
+    const lessonFlags = getLessonFlagsFromEnrollment(enrollment ?? undefined);
+    const completedCount = lessonFlags.length > 0 ? countCompletedLessons(lessonFlags) : 0;
+    return (
+        <Link href={`/courses/${course.slug}`} className="h-full">
+            <div className="border-4 rounded-2xl h-full">
+                <div className="font-game p-4 h-full flex flex-col">
+                    <div>
+                        <h2 className="text-lg font-light text-gray-500">Course</h2>
+                        <h2 className="text-3xl line-clamp-2 min-h-[4.5rem]">{course.title}</h2>
+                    </div>
+                    <div className="mt-auto pt-4">
+                        <h2 className="text-lg text-gray-400">
+                            {completedCount} Completed <span>out {course.lessonCount}</span>
+                        </h2>
+                        <ProgressBar value={completedCount} max={course.lessonCount} />
+                    </div>
+                </div>
+            </div>
+        </Link>
+    );
+}
 
 export default function DashboardPage() {
     const { data: xp } = useXpBalance();
@@ -29,7 +56,7 @@ export default function DashboardPage() {
     }, []);
 
     const xpValue = xp ?? 0;
-    const level = Math.floor(xpValue / 500) + 1;
+    const level = levelFromXp(xpValue);
 
     return (
         <>
@@ -69,31 +96,7 @@ export default function DashboardPage() {
                             ) : (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5 auto-rows-fr">
                                     {courses.slice(0, 2).map((course) => (
-                                        <Link href={`/courses/${course.slug}`} key={course.id} className="h-full">
-                                            <div className="border-4 rounded-2xl h-full">
-                                                <div className="font-game p-4 h-full flex flex-col">
-                                                    {/* Top content */}
-                                                    <div>
-                                                        <h2 className="text-lg font-light text-gray-500">
-                                                            Course
-                                                        </h2>
-
-                                                        <h2 className="text-3xl line-clamp-2 min-h-[4.5rem]">
-                                                            {course.title}
-                                                        </h2>
-                                                    </div>
-
-                                                    {/* Bottom content */}
-                                                    <div className="mt-auto pt-4">
-                                                        <h2 className="text-lg text-gray-400">
-                                                            0 Completed <span>out {course.lessonCount}</span>
-                                                        </h2>
-
-                                                        <ProgressBar value={0} max={100} />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </Link>
+                                        <EnrolledCourseCard key={course.id} course={course} />
                                     ))}
                                 </div>
                             )}
