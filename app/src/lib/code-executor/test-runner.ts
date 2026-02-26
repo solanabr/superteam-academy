@@ -121,14 +121,6 @@ export function runTestAssertions(
           actual: "Execution timed out",
         };
       }
-      if (!allLogText.trim()) {
-        return {
-          name: tc.name,
-          passed: false,
-          expected: tc.expectedOutput,
-          actual: "(no output — your code must produce console output)",
-        };
-      }
       return { name: tc.name, passed: true };
     }
 

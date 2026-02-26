@@ -71,8 +71,15 @@ export function useEnrollment(courseId: string | null) {
       setExists(true);
       setLoading(false);
       return true;
-    } catch (error) {
-      console.error("[useEnrollment] Failed to fetch enrollment:", error);
+    } catch (error: unknown) {
+      const msg =
+        error instanceof Error ? error.message : String(error);
+      const isNotFound =
+        msg.includes("Account does not exist") ||
+        msg.includes("has no data");
+      if (!isNotFound) {
+        console.error("[useEnrollment] Failed to fetch enrollment:", error);
+      }
       setEnrollment(null);
       setExists(false);
       setLoading(false);
