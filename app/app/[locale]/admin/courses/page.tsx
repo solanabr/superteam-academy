@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "@superteam-academy/i18n/navigation";
-import { BookOpen, Plus, Pencil, Trash2, Eye, Loader2, ChevronRight } from "lucide-react";
+import { BookOpen, Plus, Pencil, Trash2, Eye, ChevronRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -83,8 +83,20 @@ export default function AdminCoursesPage() {
 
 	if (loading) {
 		return (
-			<div className="flex items-center justify-center py-20">
-				<Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+			<div className="p-6 space-y-6">
+				<div className="flex items-center justify-between">
+					<div className="space-y-2">
+						<div className="h-8 w-52 bg-muted animate-pulse rounded-lg" />
+						<div className="h-4 w-36 bg-muted animate-pulse rounded-lg" />
+					</div>
+					<div className="h-10 w-28 bg-muted animate-pulse rounded-lg" />
+				</div>
+				<div className="space-y-3">
+					<div className="h-10 bg-muted animate-pulse rounded-lg" />
+					{Array.from({ length: 5 }).map((_, i) => (
+						<div key={i} className="h-14 bg-muted animate-pulse rounded-lg" />
+					))}
+				</div>
 			</div>
 		);
 	}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Users, Search, Loader2 } from "lucide-react";
+import { Users, Search } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -89,8 +89,11 @@ export default function AdminUsersPage() {
 			</div>
 
 			{loading ? (
-				<div className="flex items-center justify-center py-20">
-					<Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+				<div className="space-y-4">
+					<div className="h-10 bg-muted animate-pulse rounded-lg" />
+					{Array.from({ length: 8 }).map((_, i) => (
+						<div key={i} className="h-12 bg-muted animate-pulse rounded-lg" />
+					))}
 				</div>
 			) : filtered.length === 0 ? (
 				<Card>

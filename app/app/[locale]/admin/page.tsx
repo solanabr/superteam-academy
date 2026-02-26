@@ -10,7 +10,6 @@ import {
 	TrendingUp,
 	Shield,
 	Plus,
-	Loader2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -46,8 +45,19 @@ export default function AdminDashboard() {
 
 	if (loading) {
 		return (
-			<div className="flex items-center justify-center py-20">
-				<Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+			<div className="p-6 space-y-6">
+				<div className="flex items-center justify-between">
+					<div className="space-y-2">
+						<div className="h-8 w-48 bg-muted animate-pulse rounded-lg" />
+						<div className="h-4 w-64 bg-muted animate-pulse rounded-lg" />
+					</div>
+					<div className="h-10 w-28 bg-muted animate-pulse rounded-lg" />
+				</div>
+				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+					{Array.from({ length: 6 }).map((_, i) => (
+						<div key={i} className="h-28 bg-muted animate-pulse rounded-xl" />
+					))}
+				</div>
 			</div>
 		);
 	}

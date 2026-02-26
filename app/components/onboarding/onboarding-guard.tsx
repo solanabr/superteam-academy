@@ -35,8 +35,15 @@ export function OnboardingGuard({ children, requireOnboarding = true }: Onboardi
 
 	if (requireOnboarding && !user?.onboardingCompleted && !isOnboardingPage) {
 		return (
-			<div className="min-h-screen flex items-center justify-center">
-				<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+			<div className="min-h-screen bg-background">
+				<div className="mx-auto px-4 sm:px-6 py-8 space-y-6">
+					<div className="h-8 w-48 bg-muted animate-pulse rounded-lg" />
+					<div className="h-4 w-72 bg-muted animate-pulse rounded-lg" />
+					<div className="max-w-2xl space-y-4">
+						<div className="h-48 bg-muted animate-pulse rounded-xl" />
+						<div className="h-12 bg-muted animate-pulse rounded-xl" />
+					</div>
+				</div>
 			</div>
 		);
 	}

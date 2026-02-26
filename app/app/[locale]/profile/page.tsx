@@ -111,14 +111,14 @@ export function ProfileSkeleton() {
 			</div>
 			<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 				<div className="lg:col-span-2 space-y-6">
-					{[120, 180, 220].map((h) => (
-						<div key={h} className={`h-[${h}px] bg-muted animate-pulse rounded-2xl`} />
-					))}
+					<div className="h-30 bg-muted animate-pulse rounded-2xl" />
+					<div className="h-45 bg-muted animate-pulse rounded-2xl" />
+					<div className="h-55 bg-muted animate-pulse rounded-2xl" />
 				</div>
 				<div className="space-y-6">
-					{[140, 160, 200].map((h) => (
-						<div key={h} className={`h-[${h}px] bg-muted animate-pulse rounded-2xl`} />
-					))}
+					<div className="h-35 bg-muted animate-pulse rounded-2xl" />
+					<div className="h-40 bg-muted animate-pulse rounded-2xl" />
+					<div className="h-50 bg-muted animate-pulse rounded-2xl" />
 				</div>
 			</div>
 		</div>
