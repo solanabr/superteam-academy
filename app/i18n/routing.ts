@@ -36,6 +36,11 @@ export const routing = defineRouting({
       'en': '/settings',
       'es': '/configuracion',
     },
+    '/profile': {
+      'pt-BR': '/perfil',
+      'en': '/profile',
+      'es': '/perfil',
+    },
     '/profile/[address]': {
       'pt-BR': '/perfil/[address]',
       'en': '/profile/[address]',

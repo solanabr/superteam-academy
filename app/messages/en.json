@@ -248,7 +248,13 @@
     "verified": "Verified",
     "verify_onchain": "Verify On-Chain",
     "issued_on": "Issued on",
-    "streak_days_count": "{count} day streak"
+    "streak_days_count": "{count} day streak",
+    "connect_to_view": "Connect Wallet to View Profile",
+    "connect_description": "Connect your Solana wallet to access your achievements, credentials, and learning progress.",
+    "redirecting": "Redirecting to your profile...",
+    "feature_achievements": "Achievements",
+    "feature_credentials": "Credentials",
+    "feature_progress": "Progress"
   },
   "settings": {
     "title": "Settings",
@@ -308,7 +314,12 @@
     "for_beginners": "For Beginners",
     "built_on_solana": "Built on Solana.",
     "powered_by": "Powered by",
-    "challenges": "Code Challenges"
+    "challenges": "Code Challenges",
+    "newsletter_title": "Stay Updated",
+    "newsletter_desc": "Get the latest courses and Web3 learning tips.",
+    "newsletter_placeholder": "Your email address",
+    "newsletter_button": "Subscribe",
+    "newsletter_thanks": "Thanks for subscribing!"
   },
   "common": {
     "loading": "Loading...",

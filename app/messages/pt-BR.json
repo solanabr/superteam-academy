@@ -248,7 +248,13 @@
     "verified": "Verificado",
     "verify_onchain": "Verificar On-Chain",
     "issued_on": "Emitido em",
-    "streak_days_count": "{count} dias de sequência"
+    "streak_days_count": "{count} dias de sequência",
+    "connect_to_view": "Conecte a Carteira para Ver o Perfil",
+    "connect_description": "Conecte sua carteira Solana para acessar suas conquistas, credenciais e progresso de aprendizado.",
+    "redirecting": "Redirecionando para seu perfil...",
+    "feature_achievements": "Conquistas",
+    "feature_credentials": "Credenciais",
+    "feature_progress": "Progresso"
   },
   "settings": {
     "title": "Configurações",
@@ -308,7 +314,12 @@
     "for_beginners": "Para Iniciantes",
     "built_on_solana": "Construído na Solana.",
     "powered_by": "Desenvolvido por",
-    "challenges": "Desafios de Código"
+    "challenges": "Desafios de Código",
+    "newsletter_title": "Fique Atualizado",
+    "newsletter_desc": "Receba os cursos mais recentes e dicas de Web3.",
+    "newsletter_placeholder": "Seu endereco de email",
+    "newsletter_button": "Inscrever-se",
+    "newsletter_thanks": "Obrigado por se inscrever!"
   },
   "common": {
     "loading": "Carregando...",

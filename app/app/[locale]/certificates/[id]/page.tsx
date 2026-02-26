@@ -19,10 +19,10 @@ interface CertData {
   credentialName: Record<string, string>;
   track: string;
   address: string;
-  issuedDate: string;
+  issuedDate: Record<string, string>;
   totalXp: number;
   coursesCompleted: number;
-  skills: string[];
+  skills: Record<string, string[]>;
   mintAddress: string;
   color: string;
   glowColor: string;
@@ -37,10 +37,18 @@ const CERT_DATA: Record<string, CertData> = {
     },
     track: 'Solana Core',
     address: '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU',
-    issuedDate: '10 de Janeiro de 2026',
+    issuedDate: {
+      'pt-BR': '10 de Janeiro de 2026',
+      'en': 'January 10, 2026',
+      'es': '10 de Enero de 2026',
+    },
     totalXp: 1000,
     coursesCompleted: 1,
-    skills: ['Contas e PDAs', 'Transações & Instruções', 'Web3.js', 'Wallets & Signers', 'Token Program'],
+    skills: {
+      'pt-BR': ['Contas e PDAs', 'Transações & Instruções', 'Web3.js', 'Wallets & Signers', 'Token Program'],
+      'en': ['Accounts & PDAs', 'Transactions & Instructions', 'Web3.js', 'Wallets & Signers', 'Token Program'],
+      'es': ['Cuentas y PDAs', 'Transacciones e Instrucciones', 'Web3.js', 'Wallets & Signers', 'Token Program'],
+    },
     mintAddress: '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU',
     color: 'from-purple-600 via-indigo-600 to-blue-600',
     glowColor: 'shadow-purple-900/50',
@@ -53,10 +61,18 @@ const CERT_DATA: Record<string, CertData> = {
     },
     track: 'NFTs & Metaplex',
     address: 'Ap9Stg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosg7kLm',
-    issuedDate: '05 de Fevereiro de 2026',
+    issuedDate: {
+      'pt-BR': '05 de Fevereiro de 2026',
+      'en': 'February 5, 2026',
+      'es': '5 de Febrero de 2026',
+    },
     totalXp: 2800,
     coursesCompleted: 3,
-    skills: ['Metaplex Protocol', 'Candy Machine v3', 'Token Metadata', 'Royalties On-Chain', 'NFT Marketplaces'],
+    skills: {
+      'pt-BR': ['Metaplex Protocol', 'Candy Machine v3', 'Token Metadata', 'Royalties On-Chain', 'NFT Marketplaces'],
+      'en': ['Metaplex Protocol', 'Candy Machine v3', 'Token Metadata', 'On-Chain Royalties', 'NFT Marketplaces'],
+      'es': ['Metaplex Protocol', 'Candy Machine v3', 'Token Metadata', 'Royalties On-Chain', 'NFT Marketplaces'],
+    },
     mintAddress: 'Ap9Stg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosg7kLm',
     color: 'from-pink-600 via-purple-600 to-indigo-600',
     glowColor: 'shadow-pink-900/50',
@@ -72,10 +88,18 @@ const DEFAULT_CERT: CertData = {
   },
   track: 'Solana Development',
   address: '2kTpMnRs8jWx4fBq1cBqHnRs1cBq4fBq1cBqHnRs1cBq',
-  issuedDate: '25 de Fevereiro de 2026',
+  issuedDate: {
+    'pt-BR': '25 de Fevereiro de 2026',
+    'en': 'February 25, 2026',
+    'es': '25 de Febrero de 2026',
+  },
   totalXp: 3500,
   coursesCompleted: 4,
-  skills: ['Solana Core', 'Anchor Framework', 'DeFi Protocols', 'NFT Standards', 'Segurança On-Chain'],
+  skills: {
+    'pt-BR': ['Solana Core', 'Anchor Framework', 'Protocolos DeFi', 'Padrões NFT', 'Segurança On-Chain'],
+    'en': ['Solana Core', 'Anchor Framework', 'DeFi Protocols', 'NFT Standards', 'On-Chain Security'],
+    'es': ['Solana Core', 'Anchor Framework', 'Protocolos DeFi', 'Estándares NFT', 'Seguridad On-Chain'],
+  },
   mintAddress: '2kTpMnRs8jWx4fBq1cBqHnRs1cBq4fBq1cBqHnRs1cBq',
   color: 'from-purple-600 via-indigo-600 to-blue-600',
   glowColor: 'shadow-purple-900/50',
@@ -211,7 +235,7 @@ export default async function CertificatePage({
                 <h3 className="text-sm font-semibold text-white">{t('certified_skills')}</h3>
               </div>
               <ul className="space-y-2">
-                {cert.skills.map((skill) => (
+                {(cert.skills[locale] ?? cert.skills['pt-BR']).map((skill) => (
                   <li key={skill} className="flex items-center gap-2 text-sm text-gray-300">
                     <CheckCircle className="h-4 w-4 text-green-400 shrink-0" />
                     {skill}
@@ -273,7 +297,7 @@ export default async function CertificatePage({
                 <GraduationCap className="h-4 w-4 text-gray-700" />
                 <span>{t('issued_by')}</span>
               </div>
-              <span>{cert.issuedDate}</span>
+              <span>{L(cert.issuedDate, locale)}</span>
               <span className="font-mono text-gray-700 text-[10px]">
                 {cert.mintAddress.slice(0, 8)}...{cert.mintAddress.slice(-8)}
               </span>

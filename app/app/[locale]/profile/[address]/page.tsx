@@ -15,6 +15,7 @@ import {
   BarChart2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import SkillRadarChart from '@/components/SkillRadarChart';
 import { localePath } from '@/lib/paths';
 
 const L = (obj: Record<string, string>, locale: string) => obj[locale] ?? obj['pt-BR'];
@@ -48,7 +49,7 @@ const CREDENTIALS = [
     track: 'Solana',
     color: 'from-purple-600 to-indigo-600',
     xp: 1000,
-    issuedDate: '10 Jan 2026',
+    issuedDate: { 'pt-BR': '10 Jan 2026', 'en': 'Jan 10, 2026', 'es': '10 Ene 2026' },
     mintAddress: '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU',
     mintShort: '7xKX...sAsU',
   },
@@ -62,7 +63,7 @@ const CREDENTIALS = [
     track: 'NFTs',
     color: 'from-pink-600 to-purple-600',
     xp: 1800,
-    issuedDate: '05 Fev 2026',
+    issuedDate: { 'pt-BR': '05 Fev 2026', 'en': 'Feb 5, 2026', 'es': '5 Feb 2026' },
     mintAddress: 'Ap9Stg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosg7kLm',
     mintShort: 'Ap9S...7kLm',
   },
@@ -116,7 +117,7 @@ const COURSES_COMPLETED = [
       'es': 'Introducción a Solana',
     },
     xp: 1000,
-    completedDate: '10 Jan 2026',
+    completedDate: { 'pt-BR': '10 Jan 2026', 'en': 'Jan 10, 2026', 'es': '10 Ene 2026' },
     color: 'from-purple-600 to-indigo-600',
   },
   {
@@ -127,7 +128,7 @@ const COURSES_COMPLETED = [
       'es': 'NFTs con Metaplex',
     },
     xp: 1800,
-    completedDate: '05 Fev 2026',
+    completedDate: { 'pt-BR': '05 Fev 2026', 'en': 'Feb 5, 2026', 'es': '5 Feb 2026' },
     color: 'from-pink-600 to-purple-600',
   },
   {
@@ -138,7 +139,7 @@ const COURSES_COMPLETED = [
       'es': 'DeFi en Solana',
     },
     xp: 1200,
-    completedDate: '20 Fev 2026',
+    completedDate: { 'pt-BR': '20 Fev 2026', 'en': 'Feb 20, 2026', 'es': '20 Feb 2026' },
     color: 'from-blue-600 to-cyan-600',
   },
 ];
@@ -232,7 +233,7 @@ export default async function ProfilePage({
               { label: t('xp_total'),           value: TOTAL_XP.toLocaleString(), icon: Zap,      color: 'text-yellow-400' },
               { label: t('courses_completed'),  value: String(COURSES_COMPLETED.length), icon: BookOpen, color: 'text-blue-400'   },
               { label: t('credentials'),        value: String(CREDENTIALS.length),       icon: Award,    color: 'text-green-400'  },
-              { label: t('streak_record'),      value: `${STREAK} dias`,                 icon: Flame,    color: 'text-orange-400' },
+              { label: t('streak_record'),      value: `${STREAK} ${locale === 'en' ? 'days' : locale === 'es' ? 'd\u00edas' : 'dias'}`,                 icon: Flame,    color: 'text-orange-400' },
             ].map(({ label, value, icon: Icon, color }) => (
               <div
                 key={label}
@@ -256,24 +257,26 @@ export default async function ProfilePage({
             <BarChart2 className="h-5 w-5 text-purple-400" />
             {t('skills')}
           </h2>
-          <div className="rounded-2xl border border-gray-800 bg-gray-900/60 p-6 space-y-4">
-            {SKILLS.map((skill) => {
-              const skillName = typeof skill.name === 'string' ? skill.name : L(skill.name, locale);
-              return (
-                <div key={skillName}>
-                  <div className="flex justify-between text-sm mb-1.5">
-                    <span className="font-medium text-gray-300">{skillName}</span>
-                    <span className="text-gray-500 tabular-nums">{skill.pct}%</span>
+          <div className="rounded-2xl border border-gray-800 bg-gray-900/60 p-6">
+            <SkillRadarChart
+              data={SKILLS.map((skill) => ({
+                skill: typeof skill.name === 'string' ? skill.name : L(skill.name, locale),
+                value: skill.pct,
+                fullMark: 100,
+              }))}
+            />
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-4">
+              {SKILLS.map((skill) => {
+                const skillName = typeof skill.name === 'string' ? skill.name : L(skill.name, locale);
+                return (
+                  <div key={skillName} className="flex items-center gap-2 text-xs">
+                    <div className={cn('h-2 w-2 rounded-full bg-gradient-to-r', skill.color)} />
+                    <span className="text-gray-400">{skillName}</span>
+                    <span className="text-gray-600 ml-auto">{skill.pct}%</span>
                   </div>
-                  <div className="h-2.5 rounded-full bg-gray-800 overflow-hidden">
-                    <div
-                      className={cn('h-full rounded-full bg-gradient-to-r', skill.color)}
-                      style={{ width: `${skill.pct}%` }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         </section>
 
@@ -299,7 +302,7 @@ export default async function ProfilePage({
                     <div>
                       <h3 className="text-sm font-bold text-white">{L(cred.name, locale)}</h3>
                       <p className="text-xs text-gray-500 mt-0.5">
-                        {t('issued_on')} {cred.issuedDate} · Track {cred.track}
+                        {t('issued_on')} {typeof cred.issuedDate === 'string' ? cred.issuedDate : L(cred.issuedDate, locale)} · Track {cred.track}
                       </p>
                     </div>
                     <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-green-900/30 border border-green-700/30 px-2 py-0.5 text-xs font-medium text-green-400">
@@ -381,7 +384,7 @@ export default async function ProfilePage({
                   <div className="text-sm font-medium text-gray-200 group-hover:text-white transition-colors">
                     {L(c.title, locale)}
                   </div>
-                  <div className="text-xs text-gray-500">{c.completedDate}</div>
+                  <div className="text-xs text-gray-500">{typeof c.completedDate === 'string' ? c.completedDate : L(c.completedDate, locale)}</div>
                 </div>
                 <span className="text-sm font-bold text-yellow-400 shrink-0">
                   +{c.xp.toLocaleString()} XP
