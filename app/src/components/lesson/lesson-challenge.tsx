@@ -147,23 +147,9 @@ export function LessonChallenge({
       });
       if (Date.now() < end) requestAnimationFrame(burst);
     })();
-    if (isLastLesson && enrollment?.lessonFlags) {
-      // Only show course complete if ALL other lessons are done on-chain
-      let allOthersDone = true;
-      for (let i = 0; i < allLessons.length; i++) {
-        if (i === lessonIndex) continue;
-        if (!isLessonComplete(enrollment.lessonFlags, i)) {
-          allOthersDone = false;
-          break;
-        }
-      }
-      if (allOthersDone) {
-        setTimeout(() => setShowCourseComplete(true), 1500);
-      }
-    }
-  }, [isLastLesson, enrollment, allLessons, lessonIndex]);
+  }, []);
 
-  const callCompleteLessonAPI = useCallback(() => {
+  const callCompleteLessonAPI = useCallback(async (): Promise<boolean> => {
     const userId = walletAddress ?? "local";
     const cId = course?.id ?? slug;
 
@@ -172,8 +158,9 @@ export function LessonChallenge({
       .catch((e) => console.error("local completeLesson error:", e));
 
     if (walletAddress && course) {
-      completeLessonAPI(walletAddress, course.id ?? slug, lessonIndex);
+      return completeLessonAPI(walletAddress, course.id ?? slug, lessonIndex);
     }
+    return true;
   }, [walletAddress, course, lessonIndex, slug, completeLessonAPI]);
 
   const handleRun = useCallback(async () => {
@@ -188,9 +175,29 @@ export function LessonChallenge({
     if (allPassed && !completed) {
       setCompleted(true);
       triggerCelebration();
-      callCompleteLessonAPI();
+
+      let allOthersDone = false;
+      if (isLastLesson && enrollment?.lessonFlags) {
+        allOthersDone = true;
+        for (let i = 0; i < allLessons.length; i++) {
+          if (i === lessonIndex) continue;
+          if (!isLessonComplete(enrollment.lessonFlags, i)) {
+            allOthersDone = false;
+            break;
+          }
+        }
+      }
+
+      if (allOthersDone) {
+        const confirmed = await callCompleteLessonAPI();
+        if (confirmed) {
+          setTimeout(() => setShowCourseComplete(true), 500);
+        }
+      } else {
+        callCompleteLessonAPI();
+      }
     }
-  }, [code, lesson.challenge, completed, triggerCelebration, callCompleteLessonAPI, runChallenge]);
+  }, [code, lesson.challenge, completed, isLastLesson, enrollment, allLessons, lessonIndex, triggerCelebration, callCompleteLessonAPI, runChallenge]);
 
   const handleReset = useCallback(() => {
     setCode(lesson.challenge?.starterCode ?? "");

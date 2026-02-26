@@ -111,12 +111,9 @@ export function LessonReading({
       });
       if (Date.now() < end) requestAnimationFrame(burst);
     })();
-    if (isLastLesson) {
-      setTimeout(() => setShowCourseComplete(true), 1500);
-    }
-  }, [isLastLesson]);
+  }, []);
 
-  const callCompleteLessonAPI = useCallback(() => {
+  const callCompleteLessonAPI = useCallback(async (): Promise<boolean> => {
     const userId = walletAddress ?? "local";
     const cId = course?.id ?? slug;
 
@@ -125,17 +122,52 @@ export function LessonReading({
       .catch((e) => console.error("local completeLesson error:", e));
 
     if (walletAddress && course) {
-      fetch("/api/complete-lesson", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          learner: walletAddress,
-          courseId: course.id,
-          lessonIndex,
-        }),
-      }).catch((e) => console.error("complete-lesson API error:", e));
+      try {
+        const res = await fetch("/api/complete-lesson", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            learner: walletAddress,
+            courseId: course.id,
+            lessonIndex,
+          }),
+        });
+        return res.ok;
+      } catch (e) {
+        console.error("complete-lesson API error:", e);
+        return false;
+      }
     }
+    return true;
   }, [walletAddress, course, lessonIndex, slug]);
+
+  const handleLessonComplete = useCallback(async () => {
+    if (completed || completedOnChainRef.current) return;
+    setCompleted(true);
+
+    let allOthersDone = false;
+    if (isLastLesson && enrollment?.lessonFlags) {
+      allOthersDone = true;
+      for (let i = 0; i < allLessons.length; i++) {
+        if (i === lessonIndex) continue;
+        if (!isLessonComplete(enrollment.lessonFlags, i)) {
+          allOthersDone = false;
+          break;
+        }
+      }
+    }
+
+    triggerCelebration();
+
+    if (allOthersDone) {
+      const confirmed = await callCompleteLessonAPI();
+      if (confirmed) {
+        setTimeout(() => setShowCourseComplete(true), 500);
+      }
+    } else {
+      callCompleteLessonAPI();
+    }
+  }, [completed, isLastLesson, enrollment, allLessons, lessonIndex, triggerCelebration, callCompleteLessonAPI]);
 
   const navigateNext = useCallback(() => {
     if (nextLesson) {
@@ -294,12 +326,7 @@ export function LessonReading({
             <QuizRenderer
               content={lesson.content ?? ""}
               xpReward={lesson.xpReward}
-              onComplete={() => {
-                if (completed || completedOnChainRef.current) return;
-                setCompleted(true);
-                triggerCelebration();
-                callCompleteLessonAPI();
-              }}
+              onComplete={() => handleLessonComplete()}
             />
           ) : (
             <V9ContentRenderer text={lesson.content ?? lesson.title} />
@@ -368,12 +395,7 @@ export function LessonReading({
                 </div>
               ) : (
                 <button
-                  onClick={() => {
-                    if (completedOnChainRef.current) return;
-                    setCompleted(true);
-                    triggerCelebration();
-                    callCompleteLessonAPI();
-                  }}
+                  onClick={() => handleLessonComplete()}
                   style={{
                     width: "100%",
                     display: "flex",

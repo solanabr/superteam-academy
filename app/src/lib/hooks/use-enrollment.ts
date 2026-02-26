@@ -56,11 +56,11 @@ export function useEnrollment(courseId: string | null) {
   const [exists, setExists] = useState(false);
   const initialFetchDone = useRef(false);
 
-  const refresh = useCallback(async (): Promise<boolean> => {
+  const refresh = useCallback(async (): Promise<OnChainEnrollment | null> => {
     if (!publicKey || !courseId) {
       setEnrollment(null);
       setExists(false);
-      return false;
+      return null;
     }
 
     // Only show loading spinner for the initial fetch, not polling refreshes
@@ -75,7 +75,7 @@ export function useEnrollment(courseId: string | null) {
       setExists(true);
       if (isInitial) setLoading(false);
       initialFetchDone.current = true;
-      return true;
+      return enrollment;
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : String(error);
       const isNotFound =
@@ -88,7 +88,7 @@ export function useEnrollment(courseId: string | null) {
       setExists(false);
       if (isInitial) setLoading(false);
       initialFetchDone.current = true;
-      return false;
+      return null;
     }
   }, [publicKey, courseId, connection]);
 

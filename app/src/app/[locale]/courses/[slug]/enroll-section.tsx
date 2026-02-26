@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useWallet } from "@/lib/wallet/context";
 import { useProgram } from "@/lib/hooks/use-program";
 import {
   useEnrollment,
   countCompletedLessons,
+  isLessonComplete,
 } from "@/lib/hooks/use-enrollment";
+import { learningService } from "@/lib/services/learning-progress";
 import { useRequireAuth } from "@/lib/hooks/use-require-auth";
 import { enroll } from "@/lib/solana/transactions";
 import { analytics } from "@/providers/analytics-provider";
@@ -52,6 +54,7 @@ export function EnrollSection({
   // Optimistic: show enrolled state immediately after TX confirms
   const [optimisticEnrolled, setOptimisticEnrolled] = useState(false);
   const enrollingRef = useRef(false);
+  const syncAttemptedRef = useRef(false);
 
   const isComplete = isEnrolled && enrollment?.completedAt !== null;
 
@@ -61,6 +64,44 @@ export function EnrollSection({
     : 0;
   const allLessonsDone =
     isEnrolled && !isComplete && totalLessons > 0 && completedCount >= totalLessons;
+
+  // Self-healing: sync locally-completed lessons missing on-chain
+  useEffect(() => {
+    if (syncAttemptedRef.current) return;
+    if (!isEnrolled || isComplete || !publicKey || !enrollment?.lessonFlags) return;
+    if (completedCount >= totalLessons) return;
+
+    const walletAddress = publicKey.toBase58();
+    syncAttemptedRef.current = true;
+
+    const syncMissing = async () => {
+      const progress = await learningService.getProgress(walletAddress, courseId);
+      const missingIndices: number[] = [];
+
+      for (const idx of progress.completedLessons) {
+        if (!isLessonComplete(enrollment.lessonFlags, idx)) {
+          missingIndices.push(idx);
+        }
+      }
+
+      if (missingIndices.length === 0) return;
+
+      await Promise.allSettled(
+        missingIndices.map((lessonIndex) =>
+          fetch("/api/complete-lesson", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ learner: walletAddress, courseId, lessonIndex }),
+          })
+        )
+      );
+
+      await new Promise((r) => setTimeout(r, 3000));
+      await refreshEnrollment();
+    };
+
+    syncMissing();
+  }, [isEnrolled, isComplete, completedCount, totalLessons, enrollment, publicKey, courseId, refreshEnrollment]);
 
   const handleEnroll = async () => {
     if (!program || !publicKey || enrollingRef.current) return;
@@ -122,8 +163,12 @@ export function EnrollSection({
       if (data.error) {
         setError(data.error);
       } else {
-        // Refresh enrollment to pick up completedAt
-        await refreshEnrollment();
+        // Poll for completedAt to appear on-chain
+        for (let i = 0; i < 8; i++) {
+          await new Promise((r) => setTimeout(r, 2000));
+          const updated = await refreshEnrollment();
+          if (updated?.completedAt != null) break;
+        }
       }
     } catch (e) {
       console.error("Finalize failed:", e);

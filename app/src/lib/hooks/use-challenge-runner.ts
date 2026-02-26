@@ -115,16 +115,22 @@ export function useChallengeRunner() {
   );
 
   const completeLesson = useCallback(
-    (walletAddress: string, courseId: string, lessonIndex: number) => {
-      fetch("/api/complete-lesson", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          learner: walletAddress,
-          courseId,
-          lessonIndex,
-        }),
-      }).catch((e) => console.error("complete-lesson API error:", e));
+    async (walletAddress: string, courseId: string, lessonIndex: number): Promise<boolean> => {
+      try {
+        const res = await fetch("/api/complete-lesson", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            learner: walletAddress,
+            courseId,
+            lessonIndex,
+          }),
+        });
+        return res.ok;
+      } catch (e) {
+        console.error("complete-lesson API error:", e);
+        return false;
+      }
     },
     [],
   );
