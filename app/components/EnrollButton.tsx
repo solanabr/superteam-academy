@@ -53,6 +53,8 @@ export default function EnrollButton({
         setAlreadyEnrolled(true);
         setStatus('enrolled');
       }
+    }).catch(() => {
+      // Silently ignore — enrollment check is non-critical
     });
   }, [publicKey, connection, courseId]);
 

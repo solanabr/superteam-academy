@@ -114,7 +114,7 @@ export default function Nav() {
                   )}
                 >
                   <Icon className="h-4 w-4" />
-                  {t(item.key as 'courses' | 'dashboard' | 'leaderboard' | 'community')}
+                  {t(item.key as 'courses' | 'dashboard' | 'leaderboard' | 'community' | 'teach')}
                 </Link>
               );
             })}
@@ -223,7 +223,7 @@ export default function Nav() {
                 )}
               >
                 <Icon className="h-4 w-4" />
-                {t(item.key as 'courses' | 'dashboard' | 'leaderboard' | 'community')}
+                {t(item.key as 'courses' | 'dashboard' | 'leaderboard' | 'community' | 'teach')}
               </Link>
             );
           })}

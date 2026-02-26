@@ -33,8 +33,11 @@ export async function sanityFetch<T = unknown>(
   if (!isSanityConfigured) return null;
 
   const encodedQuery = encodeURIComponent(query);
-  const encodedParams = encodeURIComponent(JSON.stringify(params));
-  const url = `https://${SANITY_CONFIG.projectId}.api.sanity.io/v${SANITY_CONFIG.apiVersion}/data/query/${SANITY_CONFIG.dataset}?query=${encodedQuery}&$params=${encodedParams}`;
+  const paramParts = Object.entries(params).map(
+    ([k, v]) => `$${k}=${encodeURIComponent(JSON.stringify(v))}`
+  );
+  const paramStr = paramParts.length > 0 ? '&' + paramParts.join('&') : '';
+  const url = `https://${SANITY_CONFIG.projectId}.api.sanity.io/v${SANITY_CONFIG.apiVersion}/data/query/${SANITY_CONFIG.dataset}?query=${encodedQuery}${paramStr}`;
 
   try {
     const res = await fetch(url, {
@@ -44,7 +47,8 @@ export async function sanityFetch<T = unknown>(
     if (!res.ok) return null;
     const data = await res.json();
     return (data.result ?? null) as T;
-  } catch {
+  } catch (err) {
+    console.error("[sanity] Fetch failed:", err);
     return null;
   }
 }

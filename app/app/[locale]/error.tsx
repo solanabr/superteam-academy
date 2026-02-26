@@ -1,7 +1,9 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
+import * as Sentry from '@sentry/nextjs';
 
 export default function Error({
   error,
@@ -11,6 +13,10 @@ export default function Error({
   reset: () => void;
 }) {
   const t = useTranslations('common');
+
+  useEffect(() => {
+    Sentry.captureException(error);
+  }, [error]);
 
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center px-4">

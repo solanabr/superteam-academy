@@ -4,12 +4,13 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import {
   ChevronLeft, ChevronRight, CheckCircle, Circle, Zap, Code2,
   BookOpen, ArrowLeft, Play, FileText
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { localePath } from '@/lib/paths';
 
 const L = (obj: Record<string, string>, locale: string) => obj[locale] ?? obj['pt-BR'];
@@ -221,6 +222,36 @@ export default function LessonPage() {
   const [completed, setCompleted] = useState(lesson.completed);
   const [activeTab, setActiveTab] = useState<TabType>('content');
   const [language, setLanguage] = useState('typescript');
+  const [completing, setCompleting] = useState(false);
+  const { publicKey } = useWallet();
+
+  const handleComplete = useCallback(async () => {
+    if (completed || completing) return;
+    setCompleting(true);
+
+    // If wallet is connected, persist completion on-chain via API
+    if (publicKey) {
+      try {
+        const res = await fetch('/api/complete-lesson', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            courseId: 'intro-solana',
+            lessonIndex: currentIndex,
+            learner: publicKey.toBase58(),
+          }),
+        });
+        if (!res.ok) {
+          console.error('Lesson completion API error:', await res.text());
+        }
+      } catch (err) {
+        console.error('Failed to persist lesson completion:', err);
+      }
+    }
+
+    setCompleted(true);
+    setCompleting(false);
+  }, [completed, completing, publicKey, currentIndex]);
 
   const completedCount = LESSON_SIDEBAR.filter((l) => l.completed).length;
 
@@ -427,7 +458,8 @@ console.log(\`Saldo: \${balance / 1e9} SOL\`);`}
             ) : <div />}
 
             <button
-              onClick={() => setCompleted(true)}
+              onClick={handleComplete}
+              disabled={completing}
               className={cn(
                 'flex items-center gap-2 rounded-xl px-5 py-2 text-sm font-bold transition-all',
                 completed

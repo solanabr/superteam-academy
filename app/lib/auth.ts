@@ -30,7 +30,9 @@ const providers = [
 
 export const authOptions: NextAuthOptions = {
   providers,
-  secret: process.env.NEXTAUTH_SECRET ?? 'dev-secret-not-for-production',
+  secret: process.env.NEXTAUTH_SECRET ?? (process.env.NODE_ENV === 'production'
+    ? (() => { throw new Error('NEXTAUTH_SECRET must be set in production'); })()
+    : 'dev-secret-not-for-production'),
   pages: {
     signIn: undefined, // use default modal
   },

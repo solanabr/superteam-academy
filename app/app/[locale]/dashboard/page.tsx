@@ -177,7 +177,8 @@ function truncateAddress(addr: string): string {
 export default function DashboardPage() {
   const locale = useLocale();
   const t = useTranslations('dashboard');
-  const tc = useTranslations('courses');
+  const tc = useTranslations('common');
+  const tCourses = useTranslations('courses');
   const { connected, publicKey } = useWallet();
   const googleUser = useGoogleUser();
 
@@ -212,7 +213,7 @@ export default function DashboardPage() {
           {/* Divider */}
           <div className="my-4 flex items-center gap-3">
             <div className="flex-1 h-px bg-gray-800" />
-            <span className="text-xs text-gray-600 uppercase tracking-widest">ou</span>
+            <span className="text-xs text-gray-600 uppercase tracking-widest">{tc('or')}</span>
             <div className="flex-1 h-px bg-gray-800" />
           </div>
           {/* Secondary: Google sign-in */}
@@ -228,7 +229,7 @@ export default function DashboardPage() {
             />
           </div>
           <p className="mt-4 text-xs text-gray-600">
-            Google sign-in provides a preview dashboard. For on-chain credentials, connect a Solana wallet.
+            {t('google_disclaimer')}
           </p>
         </div>
       </div>
@@ -381,7 +382,7 @@ export default function DashboardPage() {
                   <div className="flex items-start justify-between gap-2 mb-3">
                     <div>
                       <h3 className="text-sm font-semibold text-white">{L(c.title, locale)}</h3>
-                      <p className="text-xs text-gray-500 mt-0.5">{c.lessonsCompleted}/{c.totalLessons} {tc('lessons')}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{c.lessonsCompleted}/{c.totalLessons} {tCourses('lessons')}</p>
                     </div>
                     <span className="text-xs font-bold text-purple-300">{c.progress}%</span>
                   </div>
@@ -444,7 +445,7 @@ export default function DashboardPage() {
             <BarChart2 className="h-8 w-8 text-purple-400 shrink-0" />
             <div>
               <h3 className="text-sm font-semibold text-white">{t('top_percent', { percent: 15 })}</h3>
-              <p className="text-xs text-gray-400">Sua posição atual é #42 no ranking geral</p>
+              <p className="text-xs text-gray-400">{t('leaderboard_position', { rank: 42 })}</p>
             </div>
           </div>
           <Link
