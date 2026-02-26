@@ -43,8 +43,28 @@ export async function syncBlockchainData(userId: string, walletAddress: string) 
     const learnerXpAta = getAssociatedTokenAddressSync(XP_MINT, walletPubkey, false, new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"));
     const balance = await connection.getTokenAccountBalance(learnerXpAta);
     const realXp = Number(balance.value.amount);
-    await prisma.user.update({ where: { id: userId }, data: { xp: realXp } });
-    console.log(`[Sync] XP restored: ${realXp}`);
+    
+    // Получаем текущего юзера, чтобы узнать разницу
+    const dbUser = await prisma.user.findUnique({ where: { id: userId }});
+    
+    if (dbUser && dbUser.xp !== realXp) {
+        const diff = realXp - dbUser.xp;
+        
+        await prisma.user.update({ where: { id: userId }, data: { xp: realXp } });
+        
+        // Если XP увеличился (например, через скрипт), пишем в историю!
+        if (diff > 0) {
+            await prisma.xPHistory.create({
+                data: {
+                    userId: userId,
+                    amount: diff,
+                    source: "sync",
+                    description: "Blockchain state synchronization"
+                }
+            });
+        }
+        console.log(`[Sync] XP restored: ${realXp} (Diff: +${diff})`);
+    }
   } catch (e) {}
 
   // 2. Courses & Lessons Sync (НОВАЯ ЛОГИКА)

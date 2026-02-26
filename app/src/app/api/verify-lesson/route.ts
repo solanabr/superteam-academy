@@ -151,13 +151,24 @@ export async function POST(request: Request) {
         // В. Начисляем XP (только если транзакция была реальной, а не "already-on-chain")
         // Хотя для синхронизации, если в БД не было completed, а в чейне было - лучше начислить, 
         // чтобы выровнять баланс.
-        const shouldAwardXp = true; // Упрощаем: если мы дошли сюда, значит в БД урока не было
-
+        const shouldAwardXp = true; 
         if (shouldAwardXp) {
             await tx.user.update({
                 where: { walletAddress },
                 data: { xp: { increment: XP_REWARD } }
             });
+
+            // НОВОЕ: Пишем в историю
+            await tx.xPHistory.create({
+                data: {
+                    userId: user.id,
+                    amount: XP_REWARD,
+                    source: "lesson",
+                    description: `Completed lesson ${lessonIndex + 1} in course ${courseId}`
+                }
+            });
+                
+            // TODO: В будущем здесь будет вызов сервиса отправки уведомлений (Notification Service)
         }
     });
 

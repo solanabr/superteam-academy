@@ -86,6 +86,18 @@ export async function checkAndAwardAchievement(
             data: { xp: { increment: dbAch.xpReward } }
         });
 
+        // НОВОЕ: Пишем в историю
+        await prisma.xPHistory.create({
+            data: {
+                userId: userId,
+                amount: dbAch.xpReward,
+                source: "achievement",
+                description: `Unlocked badge: ${dbAch.name}`
+            }
+        });
+        
+        // TODO: В будущем здесь будет вызов сервиса отправки уведомлений (Notification Service)
+
         return tx;
 
     } catch (e) {
