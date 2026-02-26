@@ -1,29 +1,15 @@
 "use client";
 
 import type React from "react";
-import { useEffect, useState, type ComponentType } from "react";
+import { useEffect } from "react";
 import { ProgressProvider } from "@bprogress/next/app";
 import { ThemeProvider } from "next-themes";
-import type { AuthSession } from "@/contexts/auth-context";
+import { AuthWalletProvider } from "@/contexts/auth-wallet-provider";
 
 type WalletProviderProps = {
 	children: React.ReactNode;
-	initialSession: AuthSession | null;
+	initialSession: Record<string, Record<string, unknown>> | null;
 };
-
-function DeferredAuthProvider({ children, initialSession }: WalletProviderProps) {
-	const [Provider, setProvider] = useState<ComponentType<WalletProviderProps> | null>(null);
-
-	useEffect(() => {
-		import("@/contexts/auth-wallet-provider").then((mod) => {
-			setProvider(() => mod.AuthWalletProvider);
-		});
-	}, []);
-
-	if (!Provider) return <>{children}</>;
-
-	return <Provider initialSession={initialSession}>{children}</Provider>;
-}
 
 export default function Providers({ children, initialSession }: WalletProviderProps) {
 	useEffect(() => {
@@ -45,9 +31,7 @@ export default function Providers({ children, initialSession }: WalletProviderPr
 				options={{ showSpinner: false }}
 				shallowRouting
 			>
-				<DeferredAuthProvider initialSession={initialSession}>
-					{children}
-				</DeferredAuthProvider>
+				<AuthWalletProvider initialSession={initialSession}>{children}</AuthWalletProvider>
 			</ProgressProvider>
 		</ThemeProvider>
 	);

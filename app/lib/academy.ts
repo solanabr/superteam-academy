@@ -44,12 +44,13 @@ export type IndexedLearnerActivity = {
 
 export async function fetchIndexedLearnerActivity(
 	learner: PublicKey,
-	limit = 20
+	limit = 10
 ): Promise<IndexedLearnerActivity[]> {
 	const connection = getSolanaConnection();
 	const programId = getProgramId();
+	// Fetch only limit * 2 signatures (was limit * 5 = 100) to reduce RPC calls
 	const signatures = await connection.getSignaturesForAddress(learner, {
-		limit: Math.max(limit * 5, 50),
+		limit: limit * 2,
 	});
 
 	const candidateSignatures = signatures
@@ -60,40 +61,43 @@ export async function fetchIndexedLearnerActivity(
 			blockTime: entry.blockTime,
 		}));
 
-	const transactions = await Promise.all(
-		candidateSignatures.map((entry) =>
-			connection
-				.getParsedTransaction(entry.signature, { maxSupportedTransactionVersion: 0 })
-				.then((transaction) => ({ entry, transaction }))
-		)
-	);
+	// Process in batches of 10 to avoid overwhelming the RPC
+	const batchSize = 10;
+	const activity: IndexedLearnerActivity[] = [];
 
-	const activity = transactions
-		.filter(({ transaction }) => transaction !== null)
-		.map(({ entry, transaction }) => {
-			const parsed = transaction as NonNullable<typeof transaction>;
-			const hasProgramInstruction = parsed.transaction.message.instructions.some(
+	for (let i = 0; i < candidateSignatures.length && activity.length < limit; i += batchSize) {
+		const batch = candidateSignatures.slice(i, i + batchSize);
+		const transactions = await Promise.all(
+			batch.map((entry) =>
+				connection
+					.getParsedTransaction(entry.signature, { maxSupportedTransactionVersion: 0 })
+					.then((transaction) => ({ entry, transaction }))
+			)
+		);
+
+		for (const { entry, transaction } of transactions) {
+			if (!transaction || activity.length >= limit) continue;
+			const hasProgramInstruction = transaction.transaction.message.instructions.some(
 				(instruction) =>
 					"programId" in instruction ? instruction.programId.equals(programId) : false
 			);
-			if (!hasProgramInstruction) return null;
+			if (!hasProgramInstruction) continue;
 
-			const instructionFromLogs = parsed.meta?.logMessages
+			const instructionFromLogs = transaction.meta?.logMessages
 				?.map((line) => line.match(/Instruction:\s*([A-Za-z0-9_]+)/)?.[1] ?? null)
 				.find(Boolean);
 
-			return {
+			activity.push({
 				signature: entry.signature,
 				slot: entry.slot,
 				timestamp: new Date(
 					(entry.blockTime ?? Math.floor(Date.now() / 1000)) * 1000
 				).toISOString(),
 				instruction: instructionFromLogs ?? "program_interaction",
-				success: parsed.meta?.err == null,
-			} satisfies IndexedLearnerActivity;
-		})
-		.filter((entry): entry is IndexedLearnerActivity => entry !== null)
-		.slice(0, limit);
+				success: transaction.meta?.err == null,
+			});
+		}
+	}
 
 	return activity;
 }

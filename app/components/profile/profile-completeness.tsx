@@ -22,22 +22,25 @@ interface ProfileCompletenessProps {
 }
 
 export function ProfileCompleteness({ user }: ProfileCompletenessProps) {
-	const completenessItems = useMemo(() => ([
-		{ key: "name", label: "Name", completed: !!user.name },
-		{ key: "username", label: "Username", completed: !!user.username },
-		{ key: "bio", label: "Bio", completed: !!user.bio },
-		{ key: "title", label: "Professional Title", completed: !!user.title },
-		{ key: "location", label: "Location", completed: !!user.location },
-		{ key: "experience", label: "Experience Level", completed: !!user.experienceLevel },
-		{
-			key: "goals",
-			label: "Learning Goals",
-			completed: user.learningGoals && user.learningGoals.length > 0,
-		},
-		{ key: "skills", label: "Skills", completed: user.skills && user.skills.length > 0 },
-		{ key: "github", label: "GitHub", completed: !!user.github },
-		{ key: "linkedin", label: "LinkedIn", completed: !!user.linkedin },
-	]), [user]);
+	const completenessItems = useMemo(
+		() => [
+			{ key: "name", label: "Name", completed: !!user.name },
+			{ key: "username", label: "Username", completed: !!user.username },
+			{ key: "bio", label: "Bio", completed: !!user.bio },
+			{ key: "title", label: "Professional Title", completed: !!user.title },
+			{ key: "location", label: "Location", completed: !!user.location },
+			{ key: "experience", label: "Experience Level", completed: !!user.experienceLevel },
+			{
+				key: "goals",
+				label: "Learning Goals",
+				completed: user.learningGoals && user.learningGoals.length > 0,
+			},
+			{ key: "skills", label: "Skills", completed: user.skills && user.skills.length > 0 },
+			{ key: "github", label: "GitHub", completed: !!user.github },
+			{ key: "linkedin", label: "LinkedIn", completed: !!user.linkedin },
+		],
+		[user]
+	);
 
 	const completeness = useMemo(() => {
 		const filled = completenessItems.filter((item) => item.completed).length;

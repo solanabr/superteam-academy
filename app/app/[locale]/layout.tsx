@@ -10,6 +10,8 @@ import { serverAuth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { locales } from "@superteam-academy/i18n/config";
 import { OnboardingGuard } from "@/components/onboarding/onboarding-guard";
+import { getGravatarUrl } from "@/lib/utils";
+import { syncAuthSession } from "../api/auth/sync/action";
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
 const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY;
@@ -61,6 +63,16 @@ export default async function LocaleLayout({
 		},
 	});
 
+	if (initialSession) {
+		const syncData = await syncAuthSession(initialSession);
+		initialSession.user = {
+			...initialSession.user,
+			role: syncData?.role,
+			onboardingCompleted: syncData?.onboardingCompleted ?? false,
+			image: initialSession.user.image || getGravatarUrl(initialSession.user.email),
+		};
+	}
+
 	return (
 		<>
 			{GA_ID && (
@@ -80,21 +92,9 @@ export default async function LocaleLayout({
 				</Script>
 			)}
 			<NextIntlClientProvider locale={locale} messages={messages}>
-				<Providers
-					initialSession={
-						initialSession
-							? {
-									id: initialSession.session.id,
-									expiresAt: initialSession
-										? new Date(initialSession.session.expiresAt)
-										: new Date(),
-									userId: initialSession?.user.id ?? "",
-								}
-							: null
-					}
-				>
+				<Providers initialSession={initialSession}>
 					<SiteHeader />
-					<OnboardingGuard>
+					<OnboardingGuard requireOnboarding={!!initialSession}>
 						<main className="flex-1">{children}</main>
 					</OnboardingGuard>
 					<SiteFooter />

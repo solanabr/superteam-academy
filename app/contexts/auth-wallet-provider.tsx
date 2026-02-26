@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useCallback, useMemo, type ReactNode } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef, type ReactNode } from "react";
 import { ConnectionProvider, WalletProvider, useWallet } from "@solana/wallet-adapter-react";
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import { PhantomWalletAdapter, SolflareWalletAdapter } from "@solana/wallet-adapter-wallets";
@@ -19,72 +19,90 @@ function AuthProviderInner({
 	initialSession,
 }: {
 	children: ReactNode;
-	initialSession: AuthSession | null;
+	initialSession: Record<string, Record<string, unknown>> | null;
 }) {
 	const wallet = useWallet();
-	const [session, setSession] = useState<AuthSession | null>(initialSession ?? null);
-	const [user, setUser] = useState<AuthUser | null>(null);
-	const [isOAuthLoading, setIsOAuthLoading] = useState(true);
+	const [session, setSession] = useState<AuthSession | null>(
+		initialSession
+			? {
+					id: initialSession.session.id as string,
+					expiresAt: new Date(initialSession.session.expiresAt as string),
+					userId: initialSession.user.id as string,
+				}
+			: null
+	);
+	const [user, setUser] = useState<AuthUser | null>(
+		initialSession
+			? {
+					id: initialSession.user.id as string,
+					name: initialSession.user.name as string,
+					email: initialSession.user.email as string,
+					image: initialSession.user.image as string,
+					role: initialSession.user.role as never,
+					onboardingCompleted: initialSession.user.onboardingCompleted as boolean,
+				}
+			: null
+	);
 	const [isWalletVerified, setIsWalletVerified] = useState(false);
+	const refreshingRef = useRef(false);
 
 	const refreshSession = useCallback(async () => {
-		const result = await authClient.getSession();
-
-		if (!result.data) {
-			setSession(null);
-			setUser(null);
-			return;
-		}
-
-		setSession({
-			id: result.data.session.id,
-			expiresAt: new Date(result.data.session.expiresAt),
-			userId: result.data.user.id,
-		});
-
-		const image = result.data.user.image || getGravatarUrl(result.data.user.email);
-		const userData: AuthUser = {
-			id: result.data.user.id,
-			name: result.data.user.name,
-			email: result.data.user.email,
-			image,
-		};
-		setUser(userData);
+		if (refreshingRef.current) return;
+		refreshingRef.current = true;
 
 		try {
-			const syncRes = await fetch("/api/auth/sync", { method: "POST" });
-			if (syncRes.ok) {
-				const syncData = (await syncRes.json()) as {
-					synced: boolean;
-					role?: string;
-					onboardingCompleted?: boolean;
-				};
-				if (syncData.synced && syncData.role) {
-					const role = syncData.role as NonNullable<AuthUser["role"]>;
-					setUser((prev) =>
-						prev
-							? { ...prev, role, onboardingCompleted: syncData.onboardingCompleted }
-							: prev
-					);
-				}
+			const result = await authClient.getSession();
+
+			if (!result.data) {
+				setSession(null);
+				setUser(null);
+				return;
 			}
-		} catch {
-			// Sync failure is non-blocking
+
+			const newSession: AuthSession = {
+				id: result.data.session.id,
+				expiresAt: new Date(result.data.session.expiresAt),
+				userId: result.data.user.id,
+			};
+
+			const image = result.data.user.image || getGravatarUrl(result.data.user.email);
+			let userData: AuthUser = {
+				id: result.data.user.id,
+				name: result.data.user.name,
+				email: result.data.user.email,
+				image,
+			};
+
+			// Sync with Sanity BEFORE setting user state to avoid intermediate render
+			// without onboardingCompleted (which causes redirect loops)
+			try {
+				const syncRes = await fetch("/api/auth/sync", { method: "POST" });
+				if (syncRes.ok) {
+					const syncData = (await syncRes.json()) as {
+						synced: boolean;
+						role?: string;
+						onboardingCompleted?: boolean;
+					};
+					if (syncData.synced && syncData.role) {
+						const role = syncData.role as NonNullable<AuthUser["role"]>;
+						userData = {
+							...userData,
+							role,
+							onboardingCompleted: syncData.onboardingCompleted ?? false,
+						};
+					}
+				}
+			} catch {
+				// Sync failure is non-blocking
+			}
+
+			// Set state atomically — user always has complete role + onboarding data
+			setSession(newSession);
+			setUser(userData);
+		} finally {
+			refreshingRef.current = false;
 		}
 	}, []);
-
-	useEffect(() => {
-		const loadSession = async () => {
-			try {
-				await refreshSession();
-			} catch {
-				// No session
-			} finally {
-				setIsOAuthLoading(false);
-			}
-		};
-		loadSession();
-	}, [refreshSession]);
 
 	useEffect(() => {
 		if (!wallet.connected) {
@@ -170,7 +188,6 @@ function AuthProviderInner({
 			isWalletVerified,
 			session,
 			user,
-			isOAuthLoading,
 			isAuthenticated,
 			isAdmin,
 			isSuperAdmin,
@@ -185,7 +202,6 @@ function AuthProviderInner({
 			isWalletVerified,
 			session,
 			user,
-			isOAuthLoading,
 			isAuthenticated,
 			isAdmin,
 			isSuperAdmin,
@@ -207,7 +223,7 @@ export function AuthWalletProvider({
 	initialSession,
 }: {
 	children: ReactNode;
-	initialSession: AuthSession | null;
+	initialSession: Record<string, Record<string, unknown>> | null;
 }) {
 	return (
 		<ConnectionProvider endpoint={ENDPOINT}>

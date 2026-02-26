@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 
 interface OnboardingData {
-	timeCommitment: string;
+	timeCommitment?: string;
 	username?: string;
 	name?: string;
 	bio?: string;

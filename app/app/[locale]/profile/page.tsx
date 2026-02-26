@@ -173,37 +173,54 @@ async function getDynamicProfile(walletAddress?: string) {
 		};
 	}
 	const academyClient = getAcademyClient();
-	const [config, allCourses, enrollments] = await Promise.all([
+	const connection = getSolanaConnection();
+	const programId = getProgramId();
+	const credentialService = new CredentialService(connection, programId);
+	const achievementService = new AchievementService(connection, programId);
+
+	// Fetch everything in parallel — these are all independent
+	const [
+		config,
+		allCourses,
+		enrollments,
+		indexedActivity,
+		rawCredentials,
+		onChainAchievements,
+		sanityUser,
+	] = await Promise.all([
 		academyClient.fetchConfig(),
 		academyClient.fetchAllCourses(),
 		academyClient.fetchEnrollmentsForLearner(learner),
+		fetchIndexedLearnerActivity(learner, 10),
+		credentialService.getCredentialsByOwner(learner),
+		achievementService.getLearnerAchievements(learner),
+		getUserByWallet(learner.toBase58()),
 	]);
-	const indexedActivity = await fetchIndexedLearnerActivity(learner, 20);
 
-	// Fetch credential NFTs via DAS API
-	const credentialService = new CredentialService(getSolanaConnection(), getProgramId());
-	const rawCredentials = await credentialService.getCredentialsByOwner(learner);
-	const credentials = await Promise.all(
-		rawCredentials.map(async (cred) => {
-			const metadata = await credentialService.getCredentialMetadata(cred.id);
-			return {
-				id: cred.id,
-				title: metadata.name,
-				description: metadata.description,
-				imageUrl: metadata.image,
-				track: cred.track,
-				issuedAt: cred.issuedAt,
-				totalXp: cred.totalXp,
-				metadataUri: cred.metadataUri,
-				isActive: cred.isActive,
-			};
-		})
-	);
-
-	const xpMint = config?.xpMint;
-	const xpBalance = xpMint
-		? ((await academyClient.fetchXpBalance(findToken2022ATA(learner, xpMint))) ?? 0n)
-		: 0n;
+	// Second pass: things that depend on first pass results
+	const [credentials, xpBalance] = await Promise.all([
+		Promise.all(
+			rawCredentials.map(async (cred) => {
+				const metadata = await credentialService.getCredentialMetadata(cred.id);
+				return {
+					id: cred.id,
+					title: metadata.name,
+					description: metadata.description,
+					imageUrl: metadata.image,
+					track: cred.track,
+					issuedAt: cred.issuedAt,
+					totalXp: cred.totalXp,
+					metadataUri: cred.metadataUri,
+					isActive: cred.isActive,
+				};
+			})
+		),
+		config?.xpMint
+			? academyClient
+					.fetchXpBalance(findToken2022ATA(learner, config.xpMint))
+					.then((b) => b ?? 0n)
+			: Promise.resolve(0n),
+	]);
 
 	const coursesByKey = new Map(
 		allCourses.map((course) => [course.pubkey.toBase58(), course.account])
@@ -262,9 +279,6 @@ async function getDynamicProfile(walletAddress?: string) {
 	const nextLevelXP = (level + 1) * (level + 1) * 100;
 	const xpIntoLevel = currentXP - currentLevelXP;
 
-	// Fetch on-chain achievements
-	const achievementService = new AchievementService(getSolanaConnection(), getProgramId());
-	const onChainAchievements = await achievementService.getLearnerAchievements(learner);
 	const achievements = onChainAchievements.map((a) => ({
 		id: a.achievementId,
 		title: a.name,
@@ -347,7 +361,6 @@ async function getDynamicProfile(walletAddress?: string) {
 		},
 	}));
 
-	const sanityUser = await getUserByWallet(learner.toBase58());
 	const gravatarKey = sanityUser?.email || learner.toBase58();
 
 	return {

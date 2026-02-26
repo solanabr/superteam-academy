@@ -21,6 +21,7 @@ interface OnboardingData {
 	preferredTopics?: string[];
 	learningGoals?: string[];
 	experienceLevel?: string;
+	timeCommitment?: string;
 }
 
 const STEPS = [
@@ -105,7 +106,9 @@ export default function OnboardingPage() {
 						data={onboardingData}
 						onNext={handleNext}
 						onBack={handleBack}
-						onComplete={currentStep === STEPS.length - 1 ? handleComplete : undefined}
+						{...(currentStep === STEPS.length - 1
+							? { onComplete: handleComplete }
+							: {})}
 					/>
 				</div>
 			</div>

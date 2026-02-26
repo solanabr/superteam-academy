@@ -48,6 +48,12 @@ export function createServerAuth(config: ServerAuthConfig) {
 			window: 10 * 60 * 1000,
 			max: 100,
 		},
+		user: {
+			additionalFields: {
+				role: { type: "string", required: false },
+				onboardingCompleted: { type: "boolean", required: false },
+			},
+		},
 	});
 }
 

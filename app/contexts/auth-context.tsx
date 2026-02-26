@@ -37,7 +37,6 @@ export interface AuthContextType {
 
 	session: AuthSession | null;
 	user: AuthUser | null;
-	isOAuthLoading: boolean;
 
 	isAuthenticated: boolean;
 	isAdmin: boolean;
@@ -67,7 +66,6 @@ const defaultAuth: AuthContextType = {
 	isWalletVerified: false,
 	session: null,
 	user: null,
-	isOAuthLoading: false,
 	isAuthenticated: false,
 	isAdmin: false,
 	isSuperAdmin: false,

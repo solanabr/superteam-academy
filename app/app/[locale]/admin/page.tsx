@@ -2,15 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "@superteam-academy/i18n/navigation";
-import {
-	BarChart3,
-	Users,
-	BookOpen,
-	Trophy,
-	TrendingUp,
-	Shield,
-	Plus,
-} from "lucide-react";
+import { BarChart3, Users, BookOpen, Trophy, TrendingUp, Shield, Plus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

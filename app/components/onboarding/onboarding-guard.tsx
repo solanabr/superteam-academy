@@ -9,7 +9,7 @@ interface OnboardingGuardProps {
 	requireOnboarding?: boolean;
 }
 
-export function OnboardingGuard({ children, requireOnboarding = true }: OnboardingGuardProps) {
+export function OnboardingGuard({ children, requireOnboarding = false }: OnboardingGuardProps) {
 	const { user, isAuthenticated } = useAuth();
 	const router = useRouter();
 	const pathname = usePathname();
@@ -18,20 +18,14 @@ export function OnboardingGuard({ children, requireOnboarding = true }: Onboardi
 	const isOnboardingPage = /\/onboarding(\/|$)/.test(pathname);
 
 	useEffect(() => {
+		// Wait until auth is fully resolved before making redirect decisions
 		if (!isAuthenticated) return;
-
 		const hasCompletedOnboarding = user?.onboardingCompleted;
 
 		if (requireOnboarding && !hasCompletedOnboarding && !isOnboardingPage) {
 			router.push("/onboarding");
-		} else if (hasCompletedOnboarding && isOnboardingPage) {
-			router.push("/profile");
 		}
 	}, [isAuthenticated, user, router, requireOnboarding, isOnboardingPage]);
-
-	if (!isAuthenticated) {
-		return <>{children}</>;
-	}
 
 	if (requireOnboarding && !user?.onboardingCompleted && !isOnboardingPage) {
 		return (
