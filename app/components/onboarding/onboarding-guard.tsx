@@ -27,7 +27,7 @@ export function OnboardingGuard({ children, requireOnboarding = false }: Onboard
 		}
 	}, [isAuthenticated, user, router, requireOnboarding, isOnboardingPage]);
 
-	if (requireOnboarding && !user?.onboardingCompleted && !isOnboardingPage) {
+	if (isAuthenticated && requireOnboarding && !user?.onboardingCompleted && !isOnboardingPage) {
 		return (
 			<div className="min-h-screen bg-background">
 				<div className="mx-auto px-4 sm:px-6 py-8 space-y-6">
