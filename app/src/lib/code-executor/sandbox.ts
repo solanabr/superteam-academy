@@ -1,3 +1,5 @@
+import { SANDBOX_SHIMS } from "./sandbox-shims";
+
 export interface LogEntry {
   type: "log" | "error" | "warn" | "info";
   args: string[];
@@ -65,7 +67,10 @@ export function executeJS(
       finish(true);
     }, timeoutMs);
 
+    const escapedCode = JSON.stringify("" + jsCode + "");
+
     const html = `<!DOCTYPE html><html><head><script>
+${SANDBOX_SHIMS}
 (function(){
   var P = window.parent;
   function send(obj) { obj.__sandbox = true; P.postMessage(obj, "*"); }
@@ -82,7 +87,7 @@ export function executeJS(
   window.onerror = function(msg){ send({type:"error",message:String(msg)}); };
   window.onunhandledrejection = function(e){ send({type:"error",message:e.reason?String(e.reason):"Unhandled promise rejection"}); };
   try {
-    var fn = new Function(${JSON.stringify("" + jsCode + "")});
+    var fn = new Function(${escapedCode});
     var result = fn();
     if(result && typeof result.then === "function"){
       result.then(function(){ send({type:"done"}); }).catch(function(e){ send({type:"error",message:String(e)}); });

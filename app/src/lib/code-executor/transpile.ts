@@ -53,7 +53,7 @@ export async function transpileAndProtect(
     const result = await esbuild.transform(tsCode, {
       loader: "ts",
       target: "es2020",
-      format: "esm",
+      format: "cjs",
     });
 
     if (result.warnings.length > 0) {
