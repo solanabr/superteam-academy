@@ -61,6 +61,38 @@ function determineRole(email: string, walletAddress?: string): UserRole {
 	return "learner";
 }
 
+function normalizeWalletAddress(walletAddress?: string): string | undefined {
+	if (!walletAddress) return undefined;
+	const normalized = walletAddress.trim();
+	return normalized.length > 0 ? normalized : undefined;
+}
+
+function rolePriority(role: UserRole): number {
+	if (role === "superadmin") return 3;
+	if (role === "admin") return 2;
+	return 1;
+}
+
+function chooseHigherRole(a: UserRole, b: UserRole): UserRole {
+	return rolePriority(a) >= rolePriority(b) ? a : b;
+}
+
+function mergeStringLists(a: string[] = [], b: string[] = []): string[] {
+	return Array.from(new Set([...a, ...b]));
+}
+
+async function deleteUsersByIds(client: ReturnType<typeof createSanityClient>, ids: string[]) {
+	if (ids.length === 0) return;
+
+	for (const id of ids) {
+		try {
+			await client.delete(id);
+		} catch (err) {
+			console.error("[sanity-users] Failed to delete duplicate user:", id, err);
+		}
+	}
+}
+
 export async function syncUserToSanity(params: {
 	authId: string;
 	name: string;
@@ -70,20 +102,123 @@ export async function syncUserToSanity(params: {
 }): Promise<AcademyUser | null> {
 	const client = sanityWriteClient();
 	if (!client) return null;
+	const normalizedWalletAddress = normalizeWalletAddress(params.walletAddress);
 
 	const existing = await client.fetch<AcademyUser | null>(userByAuthIdQuery, {
 		authId: params.authId,
 	});
+	const existingByWallet = normalizedWalletAddress
+		? await client.fetch<AcademyUser | null>(userByWalletQuery, {
+				walletAddress: normalizedWalletAddress,
+			})
+		: null;
 
 	const now = new Date().toISOString();
+
+	if (existingByWallet && existing && existingByWallet._id !== existing._id) {
+		const patch: Record<string, unknown> = {
+			authId: params.authId,
+			name: params.name,
+			email: params.email,
+			walletAddress: normalizedWalletAddress,
+			lastActiveAt: now,
+			role: chooseHigherRole(existingByWallet.role, existing.role),
+			xpBalance: Math.max(existingByWallet.xpBalance ?? 0, existing.xpBalance ?? 0),
+			enrolledCourses: mergeStringLists(
+				existingByWallet.enrolledCourses,
+				existing.enrolledCourses
+			),
+			completedCourses: mergeStringLists(
+				existingByWallet.completedCourses,
+				existing.completedCourses
+			),
+			savedCourses: mergeStringLists(existingByWallet.savedCourses, existing.savedCourses),
+			onboardingCompleted:
+				Boolean(existingByWallet.onboardingCompleted) ||
+				Boolean(existing.onboardingCompleted),
+		};
+
+		if (params.image) {
+			patch.image = params.image;
+		}
+
+		if (!existingByWallet.username && existing.username) {
+			patch.username = existing.username;
+		}
+
+		if (!existingByWallet.username && !existing.username) {
+			patch.username = await generateUsername(params.name);
+		}
+
+		await client.patch(existingByWallet._id).set(patch).commit();
+		await deleteUsersByIds(client, [existing._id]);
+
+		const duplicateWalletUsers = await client.fetch<Array<{ _id: string }>>(
+			`*[_type == "academyUser" && walletAddress == $walletAddress && _id != $keepId]{ _id }`,
+			{ walletAddress: normalizedWalletAddress, keepId: existingByWallet._id }
+		);
+		await deleteUsersByIds(
+			client,
+			duplicateWalletUsers.map((user) => user._id)
+		);
+
+		return {
+			...existingByWallet,
+			...patch,
+		} as AcademyUser;
+	}
+
+	if (!existing && existingByWallet) {
+		const patch: Record<string, unknown> = {
+			authId: params.authId,
+			name: params.name,
+			email: params.email,
+			walletAddress: normalizedWalletAddress,
+			lastActiveAt: now,
+		};
+
+		if (params.image) {
+			patch.image = params.image;
+		}
+
+		if (!existingByWallet.username) {
+			patch.username = await generateUsername(params.name);
+		}
+
+		if (existingByWallet.role === "learner") {
+			const newRole = determineRole(params.email, normalizedWalletAddress);
+			if (newRole !== "learner") {
+				patch.role = newRole;
+			}
+		}
+
+		await client.patch(existingByWallet._id).set(patch).commit();
+
+		const duplicateWalletUsers = normalizedWalletAddress
+			? await client.fetch<Array<{ _id: string }>>(
+					`*[_type == "academyUser" && walletAddress == $walletAddress && _id != $keepId]{ _id }`,
+					{ walletAddress: normalizedWalletAddress, keepId: existingByWallet._id }
+				)
+			: [];
+		await deleteUsersByIds(
+			client,
+			duplicateWalletUsers.map((user) => user._id)
+		);
+
+		return {
+			...existingByWallet,
+			...patch,
+		} as AcademyUser;
+	}
 
 	if (existing) {
 		const patch: Record<string, unknown> = {
 			name: params.name,
+			email: params.email,
 			lastActiveAt: now,
 		};
-		if (params.walletAddress && !existing.walletAddress) {
-			patch.walletAddress = params.walletAddress;
+		if (normalizedWalletAddress) {
+			patch.walletAddress = normalizedWalletAddress;
 		}
 		if (params.image) {
 			patch.image = params.image;
@@ -95,20 +230,30 @@ export async function syncUserToSanity(params: {
 		}
 		// Promote to superadmin if env matches
 		if (existing.role === "learner") {
-			const newRole = determineRole(params.email, params.walletAddress);
+			const newRole = determineRole(params.email, normalizedWalletAddress);
 			if (newRole !== "learner") {
 				patch.role = newRole;
 			}
 		}
 		try {
 			await client.patch(existing._id).set(patch).commit();
+			if (normalizedWalletAddress) {
+				const duplicateWalletUsers = await client.fetch<Array<{ _id: string }>>(
+					`*[_type == "academyUser" && walletAddress == $walletAddress && _id != $keepId]{ _id }`,
+					{ walletAddress: normalizedWalletAddress, keepId: existing._id }
+				);
+				await deleteUsersByIds(
+					client,
+					duplicateWalletUsers.map((user) => user._id)
+				);
+			}
 		} catch (err) {
 			console.error("[sanity-users] Failed to patch user:", err);
 		}
 		return { ...existing, ...patch } as AcademyUser;
 	}
 
-	const role = determineRole(params.email, params.walletAddress);
+	const role = determineRole(params.email, normalizedWalletAddress);
 	// Generate username for new users
 	const username = await generateUsername(params.name);
 	const doc = {
@@ -116,7 +261,7 @@ export async function syncUserToSanity(params: {
 		authId: params.authId,
 		name: params.name,
 		email: params.email,
-		walletAddress: params.walletAddress ?? "",
+		walletAddress: normalizedWalletAddress ?? "",
 		image: params.image ?? "",
 		username,
 		role,
@@ -129,6 +274,16 @@ export async function syncUserToSanity(params: {
 
 	try {
 		const created = await client.create(doc);
+		if (normalizedWalletAddress) {
+			const duplicateWalletUsers = await client.fetch<Array<{ _id: string }>>(
+				`*[_type == "academyUser" && walletAddress == $walletAddress && _id != $keepId]{ _id }`,
+				{ walletAddress: normalizedWalletAddress, keepId: created._id as string }
+			);
+			await deleteUsersByIds(
+				client,
+				duplicateWalletUsers.map((user) => user._id)
+			);
+		}
 		return { ...doc, ...created } as unknown as AcademyUser;
 	} catch (err) {
 		console.error("[sanity-users] Failed to create user:", err);

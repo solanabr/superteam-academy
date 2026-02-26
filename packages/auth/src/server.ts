@@ -52,6 +52,7 @@ export function createServerAuth(config: ServerAuthConfig) {
 			additionalFields: {
 				role: { type: "string", required: false },
 				onboardingCompleted: { type: "boolean", required: false },
+				walletAddress: { type: "string", required: false },
 			},
 		},
 	});

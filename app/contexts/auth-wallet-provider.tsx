@@ -5,6 +5,7 @@ import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import { PhantomWalletAdapter, SolflareWalletAdapter } from "@solana/wallet-adapter-wallets";
 import { createAuthClient, type AuthClient } from "@superteam-academy/auth";
 import { createSignInMessage } from "@superteam-academy/auth";
+import { walletEmail } from "@superteam-academy/auth";
 import { AuthContext, type AuthSession, type AuthUser, type AuthContextType } from "./auth-context";
 import { getGravatarUrl } from "@/lib/utils";
 
@@ -120,7 +121,7 @@ function AuthProviderInner({
 			return;
 		}
 
-		if (session?.userId && user?.email === `${currentWallet}@wallet.superteam.local`) {
+		if (session?.userId && user?.email === walletEmail(currentWallet)) {
 			setIsWalletVerified(true);
 			return;
 		}

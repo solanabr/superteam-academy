@@ -22,7 +22,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 	const pathname = usePathname();
 
 	useEffect(() => {
-		if ( !isAuthenticated) {
+		if (!isAuthenticated) {
 			router.replace("/");
 		}
 	}, [isAuthenticated, router]);

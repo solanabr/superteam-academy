@@ -148,6 +148,9 @@ export async function mapCourseToDetail(
 		expandedAuthor?.bio
 			?.flatMap((block) => block.children?.map((c) => c.text) ?? [])
 			.join(" ") ?? "";
+	const instructorUser = expandedAuthor?.walletAddress
+		? await getUserByWallet(expandedAuthor.walletAddress)
+		: null;
 
 	const lessonStates = options?.enrollment?.lessonStates ?? [];
 	let lessonIndexPointer = 0;
@@ -197,21 +200,18 @@ export async function mapCourseToDetail(
 	const progressPercent =
 		lessonCount > 0 ? Math.round((completedLessonsCount / lessonCount) * 100) : 0;
 
-	const instructorName = expandedAuthor?.name ?? seed?.instructor ?? "Superteam Instructor";
+	const instructorName =
+		instructorUser?.name ?? expandedAuthor?.name ?? seed?.instructor ?? "Superteam Instructor";
 
-	// Resolve instructor avatar: CMS image > Gravatar (email from Sanity user > author name)
+	// Resolve instructor avatar: CMS image > user profile image > Gravatar
 	let instructorAvatar = expandedAuthor?.image
 		? resolveCourseImageUrl(expandedAuthor.image, 256, 256)
 		: null;
 	if (!instructorAvatar) {
-		let gravatarKey = instructorName;
-		if (expandedAuthor?.walletAddress) {
-			const sanityUser = await getUserByWallet(expandedAuthor.walletAddress);
-			if (sanityUser?.email) {
-				gravatarKey = sanityUser.email;
-			}
-		}
-		instructorAvatar = getGravatarUrl(gravatarKey);
+		instructorAvatar = instructorUser?.image ?? null;
+	}
+	if (!instructorAvatar) {
+		instructorAvatar = getGravatarUrl(instructorUser?.email ?? instructorName);
 	}
 
 	return {
@@ -227,16 +227,16 @@ export async function mapCourseToDetail(
 		students: onchain?.totalEnrollments ?? seed?.students ?? 0,
 		instructor: {
 			name: instructorName,
-			title: "Course Instructor",
+			title: instructorUser?.title ?? "Course Instructor",
 			avatar: instructorAvatar,
-			bio: authorBio,
+			bio: instructorUser?.bio ?? authorBio,
 			courses: 1,
 			students: onchain?.totalEnrollments ?? seed?.students ?? 0,
 			rating: averageRating,
 			socialLinks: {
-				twitter: "",
-				linkedin: "",
-				website: "",
+				twitter: instructorUser?.twitter ?? "",
+				linkedin: instructorUser?.linkedin ?? "",
+				website: instructorUser?.portfolio ?? instructorUser?.website ?? "",
 			},
 		},
 		image:

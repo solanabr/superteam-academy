@@ -3,18 +3,14 @@ import { setSessionCookie } from "better-auth/cookies";
 import type { AuthContext } from "better-auth";
 import { APIError } from "better-call";
 import { z } from "zod";
+import { walletEmail } from "./wallet-utils";
 
 const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 
 const WALLET_PROVIDER_ID = "wallet";
-const WALLET_EMAIL_DOMAIN = "wallet.superteam.local";
 
 function walletDisplayName(publicKey: string) {
 	return `Wallet ${publicKey.slice(0, 6)}...${publicKey.slice(-4)}`;
-}
-
-function walletEmail(publicKey: string) {
-	return `${publicKey}@${WALLET_EMAIL_DOMAIN}`;
 }
 
 function toPublicUser(user: {
@@ -55,6 +51,7 @@ async function findOrCreateWalletUser(ctx: AuthContext, publicKey: string) {
 		name: walletDisplayName(publicKey),
 		email: walletEmail(publicKey),
 		emailVerified: true,
+		walletAddress: publicKey,
 	});
 
 	await ctx.internalAdapter.createAccount({

@@ -1,8 +1,7 @@
 import { createServerAuth, type ServerAuthConfig } from "@superteam-academy/auth";
+import { walletFromEmail } from "@superteam-academy/auth";
 import { headers } from "next/headers";
 import type { NextRequest } from "next/server";
-
-const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 
 const authConfig: ServerAuthConfig = {
 	baseURL: process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000",
@@ -13,22 +12,6 @@ const authConfig: ServerAuthConfig = {
 };
 
 export const serverAuth = createServerAuth(authConfig);
-
-const WALLET_EMAIL_DOMAIN = "wallet.superteam.local";
-
-function isWalletEmail(email: string) {
-	return email.endsWith(`@${WALLET_EMAIL_DOMAIN}`);
-}
-
-function extractWalletFromEmail(email: string) {
-	if (!isWalletEmail(email)) {
-		return undefined;
-	}
-
-	const candidate = email.slice(0, email.length - `@${WALLET_EMAIL_DOMAIN}`.length);
-
-	return BASE58_RE.test(candidate) ? candidate : undefined;
-}
 
 export async function issueWalletBetterAuthSession(request: NextRequest, publicKey: string) {
 	const authSecret = process.env.BETTER_AUTH_SECRET ?? process.env.AUTH_SECRET;
@@ -60,5 +43,5 @@ export async function getLinkedWallet() {
 		return undefined;
 	}
 
-	return extractWalletFromEmail(session.user.email);
+	return walletFromEmail(session.user.email);
 }

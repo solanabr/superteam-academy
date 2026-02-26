@@ -1,9 +1,16 @@
 "use client";
 
 import { Link } from "@superteam-academy/i18n/navigation";
+import { Github, MessageCircle, Twitter } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import Logo from "@/public/logo.svg";
+
+const SOCIAL_LINKS = [
+	{ href: "https://github.com/superteambrasil", label: "GitHub", icon: Github },
+	{ href: "https://discord.gg/superteambrasil", label: "Discord", icon: MessageCircle },
+	{ href: "https://x.com/superteambr", label: "Twitter", icon: Twitter },
+] as const;
 
 const FOOTER_LINKS = {
 	learn: [
@@ -51,6 +58,24 @@ export function SiteFooter() {
 							<p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
 								{t("description")}
 							</p>
+							<div className="flex items-center gap-3 pt-1">
+								{SOCIAL_LINKS.map((social) => {
+									const Icon = social.icon;
+
+									return (
+										<a
+											key={social.label}
+											href={social.href}
+											target="_blank"
+											rel="noreferrer"
+											aria-label={social.label}
+											className="text-muted-foreground hover:text-foreground transition-colors"
+										>
+											<Icon className="h-4 w-4" />
+										</a>
+									);
+								})}
+							</div>
 						</div>
 
 						{Object.entries(FOOTER_LINKS).map(([category, links]) => (

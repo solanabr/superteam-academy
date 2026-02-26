@@ -1,9 +1,8 @@
 "use server";
 
+import { isWalletEmail, walletFromEmail } from "@superteam-academy/auth";
 import type { serverAuth } from "@/lib/auth";
 import { getUserByAuthId, syncUserToSanity } from "@/lib/sanity-users";
-
-const WALLET_EMAIL_DOMAIN = "wallet.superteam.local";
 
 export async function syncAuthSession(
 	session: Awaited<ReturnType<typeof serverAuth.api.getSession>>
@@ -13,10 +12,7 @@ export async function syncAuthSession(
 	}
 
 	const { user } = session;
-	const isWalletUser = user.email.endsWith(`@${WALLET_EMAIL_DOMAIN}`);
-	const walletAddress = isWalletUser
-		? user.email.slice(0, user.email.length - `@${WALLET_EMAIL_DOMAIN}`.length)
-		: undefined;
+	const walletAddress = isWalletEmail(user.email) ? walletFromEmail(user.email) : undefined;
 
 	// Fast path: return cached role if user already exists in Sanity
 	const existing = await getUserByAuthId(user.id);
