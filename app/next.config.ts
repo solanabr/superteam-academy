@@ -1,3 +1,6 @@
+// Force Sentry CLI to use EU region
+if (!process.env.SENTRY_URL) process.env.SENTRY_URL = 'https://de.sentry.io';
+
 import type { NextConfig } from "next";
 import createNextIntlPlugin from 'next-intl/plugin';
 import { withSentryConfig } from '@sentry/nextjs';
@@ -90,7 +93,6 @@ export default process.env.SENTRY_ORG
   ? withSentryConfig(configuredNext, {
       org: process.env.SENTRY_ORG,
       project: process.env.SENTRY_PROJECT,
-      url: 'https://de.sentry.io',
       silent: !process.env.CI,
       widenClientFileUpload: true,
     })
