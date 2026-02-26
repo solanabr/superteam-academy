@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { ArrowLeft, GripVertical, Loader2, Save } from "lucide-react";
+import { ArrowLeft, GripVertical, Loader2, Save, Code2 } from "lucide-react";
 import { Link } from "@superteam-academy/i18n/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -155,6 +155,12 @@ export default function EditCoursePage() {
 				<Badge variant={course.onchainStatus === "succeeded" ? "default" : "secondary"}>
 					On-chain: {course.onchainStatus ?? "draft"}
 				</Badge>
+				<Button variant="outline" asChild>
+					<Link href={`/admin/courses/${courseId}/content`}>
+						<Code2 className="h-4 w-4 mr-2" />
+						Challenges & Quizzes
+					</Link>
+				</Button>
 			</div>
 
 			<Card>

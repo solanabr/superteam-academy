@@ -1,9 +1,9 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 
 import { ChallengeContent } from "./challenge-content";
-import { getCourseById } from "@/lib/cms";
-import { getChallengeDefinition } from "@/lib/challenge-data";
+import { getChallengePageData } from "@/lib/challenge-content";
 
 interface ChallengePageProps {
 	params: Promise<{
@@ -14,20 +14,52 @@ interface ChallengePageProps {
 
 export async function generateMetadata({ params }: ChallengePageProps): Promise<Metadata> {
 	const { id, challengeId } = await params;
-	const course = await getCourseById(id);
-	const challenge = getChallengeDefinition(challengeId);
+	const pageData = await getChallengePageData(id, challengeId);
+	if (!pageData) {
+		return {
+			title: `Challenge | ${challengeId} | Superteam Academy`,
+			description: "Coding challenge",
+		};
+	}
+
+	const { course, challenge } = pageData;
 	return {
-		title: `${challenge.title} | ${course?.title ?? id} | Superteam Academy`,
+		title: `${challenge.title} | ${course.title} | Superteam Academy`,
 		description: challenge.description,
 	};
 }
 
 export default async function ChallengePage({ params }: ChallengePageProps) {
 	const { id, challengeId } = await params;
+	const pageData = await getChallengePageData(id, challengeId);
+	if (!pageData) {
+		notFound();
+	}
+
+	const challengeData = {
+		id: pageData.lesson.slug?.current ?? pageData.lesson._id,
+		title: pageData.challenge.title,
+		description: pageData.challenge.description,
+		difficulty: pageData.challenge.difficulty,
+		estimatedTime: pageData.challenge.estimatedTime,
+		xpReward: pageData.challenge.xpReward,
+		language: pageData.challenge.language,
+		starterCode: pageData.challenge.starterCode,
+		instructions: pageData.challenge.instructions,
+		objectives: pageData.challenge.objectives,
+		tests: pageData.challenge.tests,
+		hints: pageData.challenge.hints,
+	};
+
 	return (
 		<div className="min-h-screen bg-background">
 			<Suspense fallback={<ChallengeSkeleton />}>
-				<ChallengeContent courseId={id} challengeId={challengeId} />
+				<ChallengeContent
+					courseId={id}
+					courseTitle={pageData.course.title}
+					challengeId={challengeId}
+					challenge={challengeData}
+				/>
 			</Suspense>
 		</div>
 	);

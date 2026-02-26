@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { getChallengeDefinition } from "@/lib/challenge-data";
+import { getChallengePageData } from "@/lib/challenge-content";
 
 interface RunRequest {
 	code?: string;
@@ -22,6 +22,10 @@ export async function POST(
 	try {
 		const { challengeId } = await params;
 		const body = (await request.json()) as RunRequest;
+		const courseId = request.nextUrl.searchParams.get("courseId");
+		if (!courseId) {
+			return NextResponse.json({ error: "Missing courseId" }, { status: 400 });
+		}
 
 		if (!body.code || typeof body.code !== "string") {
 			return NextResponse.json({ error: "Missing code" }, { status: 400 });
@@ -31,7 +35,12 @@ export async function POST(
 			return NextResponse.json({ error: "Missing language" }, { status: 400 });
 		}
 
-		const challenge = getChallengeDefinition(challengeId);
+		const pageData = await getChallengePageData(courseId, challengeId);
+		if (!pageData) {
+			return NextResponse.json({ error: "Challenge not found" }, { status: 404 });
+		}
+
+		const challenge = pageData.challenge;
 		const testResults = evaluateCode(body.code, challenge.starterCode, challenge.tests);
 
 		if (body.submit) {

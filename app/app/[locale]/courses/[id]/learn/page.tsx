@@ -24,6 +24,7 @@ import { getCourseById } from "@/lib/cms";
 import { getAcademyClient } from "@/lib/academy";
 import { getLinkedWallet } from "@/lib/auth";
 import { mapCourseToDetail } from "@/lib/course-data";
+import { getLessonQuizPageData } from "@/lib/challenge-content";
 import { PublicKey } from "@solana/web3.js";
 import { countCompletedLessons } from "@superteam-academy/anchor";
 
@@ -362,6 +363,32 @@ async function getLesson(courseId: string, lessonId: string) {
 		order: index + 1,
 	}));
 
+	const quizData = await getLessonQuizPageData(courseId, lesson.id);
+	const quiz = quizData
+		? {
+				id: quizData.quiz.slug.current,
+				title: quizData.quiz.title,
+				questions: quizData.quiz.questions.map((question) => ({
+					id: question.id,
+					question: question.prompt,
+					options: question.options.map((option) => option.text),
+					correctAnswer: Math.max(
+						0,
+						question.options.findIndex(
+							(option) => option.id === question.correctOptionId
+						)
+					),
+					explanation: question.explanation,
+				})),
+				passingScore: quizData.quiz.passingScore,
+			}
+		: {
+				id: `${lesson.id}-quiz`,
+				title: `${lesson.title} Quiz`,
+				questions: [],
+				passingScore: 70,
+			};
+
 	return {
 		id: lesson.id,
 		title: lesson.title,
@@ -369,12 +396,7 @@ async function getLesson(courseId: string, lessonId: string) {
 		duration: lesson.duration,
 		videoUrl,
 		content: { sections },
-		quiz: {
-			id: `${lesson.id}-quiz`,
-			title: `${lesson.title} Quiz`,
-			questions: [],
-			passingScore: 70,
-		},
+		quiz,
 		resources,
 	};
 }

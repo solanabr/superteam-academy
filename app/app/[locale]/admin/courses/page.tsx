@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "@superteam-academy/i18n/navigation";
-import { BookOpen, Plus, Pencil, Trash2, Eye, ChevronRight } from "lucide-react";
+import { BookOpen, Plus, Pencil, Trash2, Eye, ChevronRight, Code2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -207,6 +207,13 @@ export default function AdminCoursesPage() {
 														href={`/courses/${course.slug?.current ?? course._id}`}
 													>
 														<Eye className="h-4 w-4" />
+													</Link>
+												</Button>
+												<Button variant="ghost" size="icon" asChild>
+													<Link
+														href={`/admin/courses/${course._id}/content`}
+													>
+														<Code2 className="h-4 w-4" />
 													</Link>
 												</Button>
 												<Button variant="ghost" size="icon" asChild>

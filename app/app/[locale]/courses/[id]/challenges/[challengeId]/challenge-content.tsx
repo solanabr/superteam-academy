@@ -17,7 +17,21 @@ import { ChallengeInstructions } from "@/components/challenges/challenge-instruc
 import { ChallengeTests } from "@/components/challenges/challenge-tests";
 import { ChallengeResults } from "@/components/challenges/challenge-results";
 import { ChallengeHints } from "@/components/challenges/challenge-hints";
-import { getChallengeDefinition } from "@/lib/challenge-data";
+
+interface ChallengeData {
+	id: string;
+	title: string;
+	description: string;
+	difficulty: string;
+	estimatedTime: string;
+	xpReward: number;
+	language: string;
+	starterCode: string;
+	instructions: Array<{ title: string; content: string }>;
+	objectives: string[];
+	tests: Array<{ id: string; description: string; type: "unit" | "integration" }>;
+	hints: Array<{ content: string; cost: number }>;
+}
 
 interface TestResult {
 	testId: string;
@@ -54,15 +68,16 @@ interface SubmitResponse {
 export function ChallengeContent({
 	courseId,
 	challengeId,
+	courseTitle,
+	challenge,
 }: {
 	courseId: string;
 	challengeId: string;
+	courseTitle: string;
+	challenge: ChallengeData;
 }) {
 	const t = useTranslations("challenges");
-
-	const challengeDef = getChallengeDefinition(challengeId);
-	const challenge = { id: challengeId, ...challengeDef };
-	const course = { id: courseId, title: challengeDef.title };
+	const course = { id: courseId, title: courseTitle };
 
 	const [code, setCode] = useState(challenge.starterCode);
 	const [testResults, setTestResults] = useState<TestResult[]>([]);
@@ -80,11 +95,14 @@ export function ChallengeContent({
 	const handleRunTests = useCallback(async () => {
 		setIsRunning(true);
 		try {
-			const res = await fetch(`/api/challenges/${challengeId}/run`, {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ code, language: challenge.language }),
-			});
+			const res = await fetch(
+				`/api/challenges/${challengeId}/run?courseId=${encodeURIComponent(courseId)}`,
+				{
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ code, language: challenge.language }),
+				}
+			);
 			if (res.ok) {
 				const data = (await res.json()) as RunResponse;
 				setTestResults(data.testResults);
@@ -92,15 +110,18 @@ export function ChallengeContent({
 		} finally {
 			setIsRunning(false);
 		}
-	}, [code, challengeId, challenge.language]);
+	}, [code, challenge.language, challengeId, courseId]);
 
 	const handleSubmit = useCallback(async () => {
 		try {
-			const res = await fetch(`/api/challenges/${challengeId}/run`, {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ code, language: challenge.language, submit: true }),
-			});
+			const res = await fetch(
+				`/api/challenges/${challengeId}/run?courseId=${encodeURIComponent(courseId)}`,
+				{
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ code, language: challenge.language, submit: true }),
+				}
+			);
 			if (res.ok) {
 				const data = (await res.json()) as SubmitResponse;
 				setSubmissionResults(data.result);
@@ -120,7 +141,7 @@ export function ChallengeContent({
 		} catch {
 			// Network error — silent fail, UI already reverts
 		}
-	}, [code, challengeId, challenge.language, challenge.tests]);
+	}, [code, challenge.language, challenge.tests, challengeId, courseId]);
 
 	const handleRetry = useCallback(() => {
 		setSubmissionResults(null);

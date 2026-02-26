@@ -80,6 +80,67 @@ export type Lesson = SanityDocument & {
 	duration?: string;
 };
 
+export type ChallengeDifficulty = "beginner" | "intermediate" | "advanced";
+
+export type ChallengeInstruction = {
+	title: string;
+	content: string;
+};
+
+export type ChallengeTest = {
+	id: string;
+	description: string;
+	type: "unit" | "integration";
+};
+
+export type ChallengeHint = {
+	content: string;
+	cost: number;
+};
+
+export type LessonChallenge = SanityDocument & {
+	_type: "lessonChallenge";
+	title: string;
+	slug: SanitySlug;
+	description: string;
+	difficulty: ChallengeDifficulty;
+	estimatedTime: string;
+	xpReward: number;
+	language: string;
+	starterCode: string;
+	instructions: ChallengeInstruction[];
+	objectives: string[];
+	tests: ChallengeTest[];
+	hints: ChallengeHint[];
+	published: boolean;
+	course: { _ref: string };
+	lesson: { _ref: string };
+};
+
+export type QuizQuestionOption = {
+	id: string;
+	text: string;
+};
+
+export type QuizQuestion = {
+	id: string;
+	prompt: string;
+	options: QuizQuestionOption[];
+	correctOptionId: string;
+	explanation?: string;
+};
+
+export type LessonQuiz = SanityDocument & {
+	_type: "lessonQuiz";
+	title: string;
+	slug: SanitySlug;
+	passingScore: number;
+	questions: QuizQuestion[];
+	published: boolean;
+	course: { _ref: string };
+	lesson: { _ref: string };
+};
+
 export type Author = SanityDocument & {
 	_type: "author";
 	name: string;
