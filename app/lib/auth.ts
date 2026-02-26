@@ -30,9 +30,9 @@ const providers = [
 
 export const authOptions: NextAuthOptions = {
   providers,
-  secret: process.env.NEXTAUTH_SECRET ?? (process.env.NODE_ENV === 'production'
-    ? (() => { throw new Error('NEXTAUTH_SECRET must be set in production'); })()
-    : 'dev-secret-not-for-production'),
+  // NEXTAUTH_SECRET must be set in production via environment variable.
+  // When unset, NextAuth uses a random in-memory key (sessions reset on restart).
+  secret: process.env.NEXTAUTH_SECRET,
   pages: {
     signIn: undefined, // use default modal
   },
