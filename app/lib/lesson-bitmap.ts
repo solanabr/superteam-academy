@@ -1,5 +1,14 @@
 import { BN } from "@coral-xyz/anchor";
 
+/** Enrollment account may have lessonFlags (camelCase) or lesson_flags (snake_case) from IDL */
+export function getLessonFlagsFromEnrollment(enrollment: unknown): BN[] {
+  if (!enrollment || typeof enrollment !== "object") return [];
+  const acc = enrollment as Record<string, unknown>;
+  const flags = acc.lessonFlags ?? acc.lesson_flags;
+  if (Array.isArray(flags) && flags.length > 0) return flags as BN[];
+  return [];
+}
+
 export function isLessonComplete(
   lessonFlags: BN[],
   lessonIndex: number

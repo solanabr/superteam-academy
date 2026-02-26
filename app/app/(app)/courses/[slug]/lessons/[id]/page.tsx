@@ -19,6 +19,9 @@ import {
     getLessonById,
     getAllLessonsFlat,
 } from "@/lib/services/content-service";
+import { useEnrollment, useCompleteLesson } from "@/hooks";
+import { getLessonFlagsFromEnrollment, isLessonComplete } from "@/lib/lesson-bitmap";
+import { useWallet } from "@solana/wallet-adapter-react";
 import { toast } from "sonner";
 
 export default function LessonPage({
@@ -27,10 +30,16 @@ export default function LessonPage({
     params: Promise<{ slug: string; id: string }>;
 }) {
     const { slug, id } = use(params);
+    const { publicKey } = useWallet();
     const [result, setResult] = useState<Awaited<ReturnType<typeof getLessonById>>>(undefined);
     const [isLoading, setIsLoading] = useState(true);
     const [testOutput, setTestOutput] = useState<string | null>(null);
     const [code, setCode] = useState("");
+
+    const courseId = result?.course?.id ?? null;
+    const { data: enrollment } = useEnrollment(courseId);
+    const completeLesson = useCompleteLesson();
+    const lessonFlags = getLessonFlagsFromEnrollment(enrollment ?? undefined);
 
     useEffect(() => {
         getLessonById(slug, id).then((data) => {
@@ -59,6 +68,14 @@ export default function LessonPage({
         lessonIndex < allLessons.length - 1 ? allLessons[lessonIndex + 1] : null;
 
     const isChallenge = lesson.type === "challenge";
+    const isEnrolled = !!enrollment;
+    const isCompleted = isEnrolled && lessonFlags.length > 0 && isLessonComplete(lessonFlags, lessonIndex);
+    const canMarkComplete = isEnrolled && !!publicKey && !isCompleted;
+
+    const handleMarkComplete = () => {
+        if (!publicKey || !course.id) return;
+        completeLesson.mutate({ courseId: course.id, lessonIndex });
+    };
 
     const handleRunTests = () => {
         setTestOutput("Running tests...\n\n✅ All tests passed!");
@@ -140,6 +157,35 @@ export default function LessonPage({
                                     {lesson.challengeTests}
                                 </pre>
                             </Card>
+                        )}
+
+                        {/* Mark complete */}
+                        {!isEnrolled ? (
+                            <Card className="bg-amber-500/10 border-amber-500/20 p-4">
+                                <p className="text-sm text-amber-600 dark:text-amber-400 mb-2">
+                                    Enroll in this course to track progress and earn XP.
+                                </p>
+                                <Button asChild variant="outline" size="sm">
+                                    <Link href={`/courses/${slug}`}>Enroll on course page</Link>
+                                </Button>
+                            </Card>
+                        ) : (
+                            <div className="flex items-center gap-2">
+                                {isCompleted ? (
+                                    <Badge variant="outline" className="bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20 gap-1">
+                                        <CheckCircle2 className="h-3 w-3" />
+                                        Completed
+                                    </Badge>
+                                ) : (
+                                    <Button
+                                        size="sm"
+                                        onClick={handleMarkComplete}
+                                        disabled={!canMarkComplete || completeLesson.isPending}
+                                    >
+                                        {completeLesson.isPending ? "Completing..." : "Mark complete"}
+                                    </Button>
+                                )}
+                            </div>
                         )}
                     </div>
 

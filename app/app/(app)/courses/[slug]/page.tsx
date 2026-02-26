@@ -20,6 +20,7 @@ import { Card } from "@/components/ui/card";
 import { PageHeader, ProgressBar } from "@/components/app";
 import { getCourseBySlug, getAllLessonsFlat } from "@/lib/services/content-service";
 import { useEnroll, useEnrollment } from "@/hooks";
+import { getLessonFlagsFromEnrollment, countCompletedLessons, isLessonComplete } from "@/lib/lesson-bitmap";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { toast } from "sonner";
 
@@ -62,6 +63,8 @@ export default function CourseDetailPage({
     const allLessons = getAllLessonsFlat(course);
     const totalXp = course.lessonCount * course.xpPerLesson;
     const isEnrolled = !!enrollment;
+    const lessonFlags = getLessonFlagsFromEnrollment(enrollment ?? undefined);
+    const completedCount = lessonFlags.length > 0 ? countCompletedLessons(lessonFlags) : 0;
 
     const handleEnroll = () => {
         if (!publicKey) {
@@ -126,7 +129,7 @@ export default function CourseDetailPage({
                     <div className="shrink-0">
                         {isEnrolled ? (
                             <div className="space-y-3">
-                                <ProgressBar value={0} max={course.lessonCount} label="Progress" />
+                                <ProgressBar value={completedCount} max={course.lessonCount} label="Progress" />
                                 <Button asChild className="w-full">
                                     <Link href={`/courses/${slug}/lessons/${allLessons[0]?.id}`}>
                                         <Play className="mr-2 h-4 w-4" />
@@ -151,7 +154,9 @@ export default function CourseDetailPage({
             <div className="space-y-4">
                 <h2 className="text-lg font-semibold">Course Content</h2>
 
-                {course.modules.map((mod, mi) => (
+                {course.modules.map((mod, mi) => {
+                    const lessonIndexStart = course.modules.slice(0, mi).reduce((sum, m) => sum + m.lessons.length, 0);
+                    return (
                     <Card key={mi} className="overflow-hidden">
                         <div className="border-b border-border bg-muted/30 px-5 py-3">
                             <h3 className="text-sm font-semibold">
@@ -162,14 +167,21 @@ export default function CourseDetailPage({
                             </p>
                         </div>
                         <div className="divide-y divide-border">
-                            {mod.lessons.map((lesson) => (
+                            {mod.lessons.map((lesson, li) => {
+                                const flatIndex = lessonIndexStart + li;
+                                const completed = isEnrolled && isLessonComplete(lessonFlags, flatIndex);
+                                return (
                                 <div
                                     key={lesson.id}
                                     className="flex items-center justify-between px-5 py-3"
                                 >
                                     <div className="flex items-center gap-3">
                                         {isEnrolled ? (
-                                            <Circle className="h-4 w-4 text-muted-foreground" />
+                                            completed ? (
+                                                <CheckCircle2 className="h-4 w-4 text-green-500" />
+                                            ) : (
+                                                <Circle className="h-4 w-4 text-muted-foreground" />
+                                            )
                                         ) : (
                                             <Lock className="h-4 w-4 text-muted-foreground/50" />
                                         )}
@@ -192,15 +204,17 @@ export default function CourseDetailPage({
                                     {isEnrolled && (
                                         <Button asChild variant="ghost" size="sm">
                                             <Link href={`/courses/${slug}/lessons/${lesson.id}`}>
-                                                Start
+                                                {completed ? "Review" : "Start"}
                                             </Link>
                                         </Button>
                                     )}
                                 </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </Card>
-                ))}
+                    );
+                })}
             </div>
         </div>
     );
