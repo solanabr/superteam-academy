@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Camera, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +27,7 @@ export function ProfileSettings() {
 	const [isLoading, setIsLoading] = useState(false);
 	const [usernameChecking, setUsernameChecking] = useState(false);
 	const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
+	const usernameTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
 	const [profile, setProfile] = useState<ProfileData>({
 		name: "",
 		email: "",
@@ -71,14 +72,12 @@ export function ProfileSettings() {
 		setProfile((prev) => ({ ...prev, username: value }));
 		setUsernameAvailable(null);
 
-		// Debounce username checking
-		const timeoutId = setTimeout(async () => {
+		if (usernameTimerRef.current) clearTimeout(usernameTimerRef.current);
+		usernameTimerRef.current = setTimeout(async () => {
 			if (value && (await isValidUsername(value))) {
 				checkUsernameAvailability(value);
 			}
 		}, 500);
-
-		return () => clearTimeout(timeoutId);
 	};
 
 	const handleSave = async () => {
@@ -106,6 +105,7 @@ export function ProfileSettings() {
 		try {
 			await save({
 				name: profile.name,
+				email: profile.email,
 				username: profile.username,
 				bio: profile.bio,
 				location: profile.location,

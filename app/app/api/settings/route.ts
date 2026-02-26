@@ -22,6 +22,7 @@ export async function GET() {
 		profile: {
 			name: user.name,
 			email: user.email,
+			username: user.username ?? "",
 			bio: user.bio ?? "",
 			location: user.location ?? "",
 			website: user.website ?? "",
@@ -53,14 +54,14 @@ export async function PATCH(request: Request) {
 
 	const patch: Record<string, unknown> = {};
 
-	// Profile fields (top-level on AcademyUser)
 	if (typeof body.name === "string") patch.name = body.name.trim();
+	if (typeof body.email === "string") patch.email = body.email.trim();
+	if (typeof body.username === "string") patch.username = body.username.trim();
 	if (typeof body.bio === "string") patch.bio = body.bio.trim();
 	if (typeof body.location === "string") patch.location = body.location.trim();
 	if (typeof body.website === "string") patch.website = body.website.trim();
 	if (typeof body.image === "string") patch.image = body.image;
 
-	// Settings sub-objects — merge into existing settings
 	if (body.settings && typeof body.settings === "object") {
 		const incoming = body.settings as Record<string, unknown>;
 		const current: UserSettings = user.settings ?? {};

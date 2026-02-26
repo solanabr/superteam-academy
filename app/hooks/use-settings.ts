@@ -20,6 +20,12 @@ interface SettingsResponse {
 
 let cachedData: SettingsResponse | null = null;
 
+async function fetchSettings(): Promise<SettingsResponse> {
+	const res = await fetch("/api/settings");
+	if (!res.ok) throw new Error("Failed to load");
+	return res.json() as Promise<SettingsResponse>;
+}
+
 export function useSettings() {
 	const [data, setData] = useState<SettingsResponse | null>(cachedData);
 	const [loading, setLoading] = useState(!cachedData);
@@ -27,18 +33,14 @@ export function useSettings() {
 	useEffect(() => {
 		if (cachedData) return;
 		let cancelled = false;
-		fetch("/api/settings")
-			.then((res) => {
-				if (!res.ok) throw new Error("Failed to load");
-				return res.json() as Promise<SettingsResponse>;
-			})
+		fetchSettings()
 			.then((result) => {
 				if (cancelled) return;
 				cachedData = result;
 				setData(result);
 			})
 			.catch(() => {
-				/* silent — settings load is best-effort */
+				// best-effort load
 			})
 			.finally(() => {
 				if (!cancelled) setLoading(false);
@@ -55,8 +57,9 @@ export function useSettings() {
 			body: JSON.stringify(patch),
 		});
 		if (!res.ok) throw new Error("Failed to save");
-		// Invalidate cache so next mount re-fetches
-		cachedData = null;
+		const freshData = await fetchSettings();
+		cachedData = freshData;
+		setData(freshData);
 	}, []);
 
 	return { data, loading, save };
