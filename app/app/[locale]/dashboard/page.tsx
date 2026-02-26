@@ -13,6 +13,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 import { cn } from '@/lib/utils';
+import StreakCalendar from '@/components/StreakCalendar';
 import { localePath } from '@/lib/paths';
 
 const L = (obj: Record<string, string>, locale: string) => obj[locale] ?? obj['pt-BR'];
@@ -253,12 +254,22 @@ export default function DashboardPage() {
               <p className="text-sm text-purple-400 mt-1">{t('welcome_sub', { level: LEVEL })}</p>
             </div>
             <div className="flex items-center gap-3">
-              <div className="rounded-xl border border-yellow-700/50 bg-yellow-900/20 px-4 py-2 text-center">
-                <div className="flex items-center gap-1.5 text-yellow-300">
-                  <Flame className="h-4 w-4 text-orange-400" />
-                  <span className="text-xl font-extrabold">{STREAK}</span>
+              <div className="rounded-xl border border-yellow-700/50 bg-yellow-900/20 px-4 py-2">
+                <div className="flex items-center gap-3">
+                  <div className="text-center">
+                    <div className="flex items-center gap-1.5 text-yellow-300">
+                      <Flame className="h-4 w-4 text-orange-400" />
+                      <span className="text-xl font-extrabold">{STREAK}</span>
+                    </div>
+                    <div className="text-xs text-yellow-600">{t('day_streak')}</div>
+                  </div>
+                  <div className="hidden sm:block border-l border-yellow-800/50 pl-3">
+                    <StreakCalendar
+                      streakDays={STREAK}
+                      labels={{ today: t('streak_today'), daysAgo: t('streak_28_days') }}
+                    />
+                  </div>
                 </div>
-                <div className="text-xs text-yellow-600">{t('day_streak')}</div>
               </div>
             </div>
           </div>

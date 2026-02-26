@@ -63,7 +63,10 @@
     "code_challenges": "Desafios de Código",
     "code_challenges_desc": "Editor Monaco integrado com desafios práticos. Escreva, teste e envie código Rust/TypeScript direto no browser.",
     "superteam_community": "Comunidade Superteam",
-    "superteam_community_desc": "Faça parte da maior rede de desenvolvedores Web3 da América Latina. Networking, oportunidades e colaboração."
+    "superteam_community_desc": "Faça parte da maior rede de desenvolvedores Web3 da América Latina. Networking, oportunidades e colaboração.",
+    "testimonials_title": "O que os Alunos Dizem",
+    "testimonials_subtitle": "Junte-se a milhares de desenvolvedores construindo na Solana",
+    "trusted_by": "Impulsionando o ecossistema Solana"
   },
   "courses": {
     "catalog_title": "Catálogo de Cursos",
@@ -154,7 +157,10 @@
     "to_level": "para nível {level}",
     "day_streak": "dias de sequência",
     "google_disclaimer": "O login com Google oferece um painel de visualizacao. Para credenciais on-chain, conecte uma carteira Solana.",
-    "leaderboard_position": "Sua posicao atual e #{rank} no ranking geral"
+    "leaderboard_position": "Sua posicao atual e #{rank} no ranking geral",
+    "streak_calendar": "Atividade",
+    "streak_28_days": "28 dias atrás",
+    "streak_today": "Hoje"
   },
   "lesson": {
     "complete_lesson": "Completar Aula",
@@ -284,7 +290,18 @@
     "dark_desc": "Fundo escuro, ideal para noite",
     "light_desc": "Fundo claro, ideal para dia",
     "system_desc": "Segue a preferência do sistema",
-    "prefs_updated": "Suas preferências foram atualizadas."
+    "prefs_updated": "Suas preferências foram atualizadas.",
+    "profile_section": "Perfil",
+    "profile_desc": "Gerencie suas informações de perfil público",
+    "display_name": "Nome de Exibição",
+    "display_name_placeholder": "Seu nome ou apelido",
+    "bio": "Bio",
+    "bio_placeholder": "Conte sobre você...",
+    "avatar_url": "URL do Avatar",
+    "avatar_url_placeholder": "https://exemplo.com/avatar.png",
+    "twitter_handle": "Twitter / X",
+    "github_handle": "GitHub",
+    "social_links": "Links Sociais"
   },
   "certificate": {
     "verify_onchain": "Verificar On-Chain",
@@ -304,7 +321,13 @@
     "verify_solana_explorer": "Verificar On-Chain — Solana Explorer",
     "issued_by": "Emitido pela Superteam Academy",
     "permanently_recorded": "Este certificado está permanentemente registrado na blockchain Solana, garantindo a autenticidade e imutabilidade da credencial.",
-    "track_label": "Trilha"
+    "track_label": "Trilha",
+    "nft_details": "Detalhes do NFT",
+    "mint_address": "Endereço do Mint",
+    "metadata_uri": "URI de Metadados",
+    "ownership": "Proprietário",
+    "token_standard": "Padrão do Token",
+    "download_cert": "Baixar"
   },
   "footer": {
     "brand_description": "Aprenda Solana & Web3 com credenciais on-chain verificáveis.",

@@ -11,6 +11,9 @@ import {
   Monitor,
   Bell,
   ShieldCheck,
+  User,
+  AtSign,
+  Link2,
   CheckCircle,
   ChevronRight,
 } from 'lucide-react';
@@ -98,6 +101,11 @@ export default function SettingsPage() {
     achievements: true,
   });
 
+  const [displayName, setDisplayName] = useState('');
+  const [bio, setBio] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState('');
+  const [twitter, setTwitter] = useState('');
+  const [github, setGithub] = useState('');
   const [privacy, setPrivacy] = useState<Record<string, boolean>>({
     publicProfile: true,
     showXpRanking: true,
@@ -123,6 +131,11 @@ export default function SettingsPage() {
         }
         if (parsed.notifications) setNotifications(parsed.notifications);
         if (parsed.privacy) setPrivacy(parsed.privacy);
+        if (parsed.displayName) setDisplayName(parsed.displayName);
+        if (parsed.bio) setBio(parsed.bio);
+        if (parsed.avatarUrl) setAvatarUrl(parsed.avatarUrl);
+        if (parsed.twitter) setTwitter(parsed.twitter);
+        if (parsed.github) setGithub(parsed.github);
       }
     } catch {
       // ignore malformed data
@@ -152,7 +165,7 @@ export default function SettingsPage() {
   }
 
   function handleSave() {
-    const settings = { language, theme, notifications, privacy };
+    const settings = { language, theme, notifications, privacy, displayName, bio, avatarUrl, twitter, github };
     localStorage.setItem('academy-settings', JSON.stringify(settings));
     setToast(true);
   }
@@ -201,6 +214,69 @@ export default function SettingsPage() {
       </div>
 
       <div className="mx-auto max-w-2xl px-4 py-8 space-y-8">
+
+        {/* Profile */}
+        <section className="rounded-2xl border border-gray-800 bg-gray-900/60 p-6">
+          <SectionHeading icon={User} title={t('profile_section')} color="text-purple-400" />
+          <p className="text-xs text-gray-500 mb-4">{t('profile_desc')}</p>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-xs font-medium text-gray-400 mb-1.5">{t('display_name')}</label>
+              <input
+                type="text"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                placeholder={t('display_name_placeholder')}
+                className="w-full rounded-xl border border-gray-700 bg-gray-800 px-3 py-2.5 text-sm text-gray-200 placeholder:text-gray-600 focus:border-purple-600 focus:outline-none focus:ring-1 focus:ring-purple-600"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-400 mb-1.5">{t('bio')}</label>
+              <textarea
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                placeholder={t('bio_placeholder')}
+                rows={3}
+                className="w-full rounded-xl border border-gray-700 bg-gray-800 px-3 py-2.5 text-sm text-gray-200 placeholder:text-gray-600 focus:border-purple-600 focus:outline-none focus:ring-1 focus:ring-purple-600 resize-none"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-400 mb-1.5">{t('avatar_url')}</label>
+              <input
+                type="url"
+                value={avatarUrl}
+                onChange={(e) => setAvatarUrl(e.target.value)}
+                placeholder={t('avatar_url_placeholder')}
+                className="w-full rounded-xl border border-gray-700 bg-gray-800 px-3 py-2.5 text-sm text-gray-200 placeholder:text-gray-600 focus:border-purple-600 focus:outline-none focus:ring-1 focus:ring-purple-600"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-400 mb-1.5">{t('social_links')}</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="flex items-center gap-2">
+                  <AtSign className="h-4 w-4 text-gray-500 shrink-0" />
+                  <input
+                    type="text"
+                    value={twitter}
+                    onChange={(e) => setTwitter(e.target.value)}
+                    placeholder={t('twitter_handle')}
+                    className="flex-1 rounded-xl border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-gray-200 placeholder:text-gray-600 focus:border-purple-600 focus:outline-none"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Link2 className="h-4 w-4 text-gray-500 shrink-0" />
+                  <input
+                    type="text"
+                    value={github}
+                    onChange={(e) => setGithub(e.target.value)}
+                    placeholder={t('github_handle')}
+                    className="flex-1 rounded-xl border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-gray-200 placeholder:text-gray-600 focus:border-purple-600 focus:outline-none"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
 
         {/* Language */}
         <section className="rounded-2xl border border-gray-800 bg-gray-900/60 p-6">

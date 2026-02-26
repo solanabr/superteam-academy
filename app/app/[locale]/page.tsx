@@ -264,6 +264,95 @@ export default async function LandingPage({
         </div>
       </section>
 
+      {/* Testimonials */}
+      <section className="py-24 px-4 border-t border-gray-800">
+        <div className="mx-auto max-w-5xl">
+          <div className="mb-14 text-center">
+            <h2 className="text-4xl font-bold text-white mb-2">{t('testimonials_title')}</h2>
+            <p className="text-gray-400">{t('testimonials_subtitle')}</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              {
+                name: 'Rafael Mendes',
+                role: { 'pt-BR': 'Desenvolvedor Solana', 'en': 'Solana Developer', 'es': 'Desarrollador Solana' },
+                quote: {
+                  'pt-BR': 'A melhor plataforma para aprender Solana. Os desafios pr\u00e1ticos e credenciais on-chain me ajudaram a conseguir meu primeiro emprego em Web3.',
+                  'en': 'The best platform to learn Solana. The hands-on challenges and on-chain credentials helped me land my first Web3 job.',
+                  'es': 'La mejor plataforma para aprender Solana. Los desaf\u00edos pr\u00e1cticos y credenciales on-chain me ayudaron a conseguir mi primer empleo en Web3.',
+                },
+                xp: '12,500',
+              },
+              {
+                name: 'Ana Costa',
+                role: { 'pt-BR': 'Pesquisadora DeFi', 'en': 'DeFi Researcher', 'es': 'Investigadora DeFi' },
+                quote: {
+                  'pt-BR': 'O sistema de gamifica\u00e7\u00e3o me manteve motivada. Completei 4 cursos em 2 meses e ganhei credenciais verificadas na blockchain.',
+                  'en': 'The gamification system kept me motivated. I completed 4 courses in 2 months and earned verified credentials on the blockchain.',
+                  'es': 'El sistema de gamificaci\u00f3n me mantuvo motivada. Complet\u00e9 4 cursos en 2 meses y gan\u00e9 credenciales verificadas en la blockchain.',
+                },
+                xp: '8,200',
+              },
+              {
+                name: 'Lucas Oliveira',
+                role: { 'pt-BR': 'Engenheiro de Smart Contracts', 'en': 'Smart Contract Engineer', 'es': 'Ingeniero de Smart Contracts' },
+                quote: {
+                  'pt-BR': 'Dos cursos de Anchor ao deploy em devnet, cada aula foi objetiva e pr\u00e1tica. Recomendo para qualquer dev que quer entrar no ecossistema Solana.',
+                  'en': 'From Anchor courses to devnet deployment, every lesson was focused and practical. Highly recommend for any dev wanting to join the Solana ecosystem.',
+                  'es': 'Desde los cursos de Anchor hasta el deploy en devnet, cada lecci\u00f3n fue objetiva y pr\u00e1ctica. Recomiendo a cualquier dev que quiera entrar al ecosistema Solana.',
+                },
+                xp: '15,300',
+              },
+            ].map((testimonial) => (
+              <div
+                key={testimonial.name}
+                className="rounded-2xl border border-gray-800 bg-gray-900/40 p-6 flex flex-col"
+              >
+                <Quote className="h-6 w-6 text-purple-500/40 mb-3" />
+                <p className="text-sm text-gray-300 leading-relaxed flex-1 mb-4">
+                  {L(testimonial.quote, locale)}
+                </p>
+                <div className="flex items-center gap-3 pt-3 border-t border-gray-800">
+                  <div className="h-9 w-9 rounded-full bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center text-xs font-bold text-white">
+                    {testimonial.name.split(' ').map(n => n[0]).join('')}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold text-white">{testimonial.name}</div>
+                    <div className="text-xs text-gray-500">{L(testimonial.role, locale)}</div>
+                  </div>
+                  <div className="text-xs font-bold text-yellow-400">{testimonial.xp} XP</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Trusted by / Partner logos */}
+      <section className="border-y border-gray-800 bg-gray-900/30 py-10 px-4">
+        <div className="mx-auto max-w-5xl">
+          <p className="text-center text-xs font-medium text-gray-500 uppercase tracking-widest mb-6">{t('trusted_by')}</p>
+          <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12 opacity-60">
+            {[
+              { name: 'Solana', gradient: 'from-purple-400 to-indigo-400' },
+              { name: 'Metaplex', gradient: 'from-pink-400 to-purple-400' },
+              { name: 'Helius', gradient: 'from-orange-400 to-red-400' },
+              { name: 'Jupiter', gradient: 'from-green-400 to-teal-400' },
+              { name: 'Superteam', gradient: 'from-blue-400 to-indigo-400' },
+            ].map((partner) => (
+              <div key={partner.name} className="flex items-center gap-2 group hover:opacity-100 transition-opacity">
+                <div className={cn('h-6 w-6 rounded-lg bg-gradient-to-br flex items-center justify-center text-white text-xs font-bold', partner.gradient)}>
+                  {partner.name[0]}
+                </div>
+                <span className={cn('text-sm font-bold bg-gradient-to-r bg-clip-text text-transparent', partner.gradient)}>
+                  {partner.name}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* How it works */}
       <section className="py-24 px-4">
         <div className="mx-auto max-w-5xl">

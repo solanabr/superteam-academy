@@ -10,6 +10,7 @@ import {
   Shield,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import DownloadCertButton from '@/components/DownloadCertButton';
 
 const L = (obj: Record<string, string>, locale: string) => obj[locale] ?? obj['pt-BR'];
 
@@ -140,7 +141,7 @@ export default async function CertificatePage({
   const credName = L(cert.credentialName, locale);
 
   const explorerUrl = `https://explorer.solana.com/address/${cert.mintAddress}?cluster=devnet`;
-  const twitterUrl  = buildTwitterIntent(credName);
+  const twitterUrl  = buildTwitterIntent(credName, locale);
   const linkedinUrl = buildLinkedInIntent(credName);
 
   return (
@@ -286,6 +287,7 @@ export default async function CertificatePage({
                 </svg>
                 LinkedIn
               </a>
+              <DownloadCertButton label={t('download_cert')} />
             </div>
 
             {/* Divider */}
@@ -306,6 +308,31 @@ export default async function CertificatePage({
 
           {/* Bottom gradient bar */}
           <div className={cn('relative h-1 bg-gradient-to-r opacity-60', cert.color)} />
+        </div>
+
+        {/* NFT Details */}
+        <div className="rounded-2xl border border-gray-800 bg-gray-900/60 p-5">
+          <h3 className="text-sm font-semibold text-white mb-3">{t('nft_details')}</h3>
+          <div className="space-y-2.5">
+            <div>
+              <span className="text-xs text-gray-500">{t('mint_address')}</span>
+              <p className="font-mono text-xs text-gray-300 mt-0.5 break-all">{cert.mintAddress}</p>
+            </div>
+            <div>
+              <span className="text-xs text-gray-500">{t('metadata_uri')}</span>
+              <p className="font-mono text-xs text-gray-300 mt-0.5 break-all">
+                https://arweave.net/{cert.mintAddress.slice(0, 16)}...metadata.json
+              </p>
+            </div>
+            <div>
+              <span className="text-xs text-gray-500">{t('ownership')}</span>
+              <p className="font-mono text-xs text-gray-300 mt-0.5 break-all">{truncate(cert.address)}</p>
+            </div>
+            <div>
+              <span className="text-xs text-gray-500">{t('token_standard')}</span>
+              <p className="text-xs text-gray-300 mt-0.5">Metaplex Core (Soulbound via PermanentFreezeDelegate)</p>
+            </div>
+          </div>
         </div>
 
         {/* Helper note */}

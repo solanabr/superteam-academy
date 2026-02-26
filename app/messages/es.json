@@ -63,7 +63,10 @@
     "code_challenges": "Desafíos de Código",
     "code_challenges_desc": "Editor Monaco integrado con desafíos prácticos. Escribe, prueba y envía código Rust/TypeScript directo en el navegador.",
     "superteam_community": "Comunidad Superteam",
-    "superteam_community_desc": "Sé parte de la mayor red de desarrolladores Web3 de América Latina. Networking, oportunidades y colaboración."
+    "superteam_community_desc": "Sé parte de la mayor red de desarrolladores Web3 de América Latina. Networking, oportunidades y colaboración.",
+    "testimonials_title": "Lo que Dicen los Estudiantes",
+    "testimonials_subtitle": "Únete a miles de desarrolladores construyendo en Solana",
+    "trusted_by": "Impulsando el ecosistema Solana"
   },
   "courses": {
     "catalog_title": "Catálogo de Cursos",
@@ -154,7 +157,10 @@
     "to_level": "para nivel {level}",
     "day_streak": "días de racha",
     "google_disclaimer": "El inicio de sesion con Google ofrece un panel de vista previa. Para credenciales on-chain, conecta una billetera Solana.",
-    "leaderboard_position": "Tu posicion actual es #{rank} en el ranking global"
+    "leaderboard_position": "Tu posicion actual es #{rank} en el ranking global",
+    "streak_calendar": "Actividad",
+    "streak_28_days": "Hace 28 días",
+    "streak_today": "Hoy"
   },
   "lesson": {
     "complete_lesson": "Completar Lección",
@@ -284,7 +290,18 @@
     "dark_desc": "Fondo oscuro, ideal para la noche",
     "light_desc": "Fondo claro, ideal para el día",
     "system_desc": "Sigue la preferencia del sistema",
-    "prefs_updated": "Tus preferencias han sido actualizadas."
+    "prefs_updated": "Tus preferencias han sido actualizadas.",
+    "profile_section": "Perfil",
+    "profile_desc": "Administra tu información de perfil público",
+    "display_name": "Nombre",
+    "display_name_placeholder": "Tu nombre o alias",
+    "bio": "Bio",
+    "bio_placeholder": "Cuéntanos sobre ti...",
+    "avatar_url": "URL del Avatar",
+    "avatar_url_placeholder": "https://ejemplo.com/avatar.png",
+    "twitter_handle": "Twitter / X",
+    "github_handle": "GitHub",
+    "social_links": "Enlaces Sociales"
   },
   "certificate": {
     "verify_onchain": "Verificar On-Chain",
@@ -304,7 +321,13 @@
     "verify_solana_explorer": "Verificar On-Chain — Solana Explorer",
     "issued_by": "Emitido por Superteam Academy",
     "permanently_recorded": "Este certificado está permanentemente registrado en la blockchain Solana, garantizando la autenticidad e inmutabilidad de la credencial.",
-    "track_label": "Pista"
+    "track_label": "Pista",
+    "nft_details": "Detalles del NFT",
+    "mint_address": "Dirección del Mint",
+    "metadata_uri": "URI de Metadatos",
+    "ownership": "Propietario",
+    "token_standard": "Estándar del Token",
+    "download_cert": "Descargar"
   },
   "footer": {
     "brand_description": "Aprende Solana y Web3 con credenciales on-chain verificables.",
@@ -541,7 +564,7 @@
     "subtitle": "Editor Monaco integrado con desafios practicos. Escribe, prueba y envia codigo Rust/TypeScript directo en el navegador.",
     "stats_challenges": "Desafios",
     "stats_total_xp": "XP Total",
-    "stats_tracks": "Pistas",
+    "stats_tracks": "{count} Rutas",
     "badge_daily": "Diario",
     "badge_weekly": "Semanal",
     "badge_seasonal": "Temporada",
