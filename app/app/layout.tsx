@@ -2,6 +2,7 @@ import { QueryProvider } from "@/providers/QueryProvider";
 import { SolanaProvider } from "@/providers/SolanaProvider";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { Toaster } from "@/components/ui/sonner";
+import { Analytics } from "@/components/analytics/Analytics";
 import { NavbarWrapper } from "@/components/landing/NavbarWrapper";
 import { siteConfig } from "@/config/siteConfig";
 import { Geist, Geist_Mono, Jersey_10, Inter } from "next/font/google";
@@ -68,6 +69,7 @@ export default async function RootLayout({
           <SolanaProvider>
             <QueryProvider>
               <NextIntlClientProvider messages={messages} locale={locale}>
+                <Analytics />
                 <NavbarWrapper />
                 {children}
               </NextIntlClientProvider>
