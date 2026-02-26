@@ -6,6 +6,7 @@ import { PhantomWalletAdapter, SolflareWalletAdapter } from "@solana/wallet-adap
 import { createAuthClient, type AuthClient } from "@superteam-academy/auth";
 import { createSignInMessage } from "@superteam-academy/auth";
 import { walletEmail } from "@superteam-academy/auth";
+import { syncAuthSession } from "../app/api/auth/sync/action";
 import { AuthContext, type AuthSession, type AuthUser, type AuthContextType } from "./auth-context";
 import { getGravatarUrl } from "@/lib/utils";
 
@@ -60,46 +61,28 @@ function AuthProviderInner({
 				return;
 			}
 
+			const syncedData = await syncAuthSession(result.data);
+
 			const newSession: AuthSession = {
 				id: result.data.session.id,
 				expiresAt: new Date(result.data.session.expiresAt),
 				userId: result.data.user.id,
 			};
 
-			const image = result.data.user.image || getGravatarUrl(result.data.user.email);
-			let userData: AuthUser = {
+			const image =
+				result.data.user.image ||
+				getGravatarUrl(syncedData?.email || result.data.user.email);
+			const userData: AuthUser = {
 				id: result.data.user.id,
 				name: result.data.user.name,
-				email: result.data.user.email,
+				email: syncedData?.email || result.data.user.email,
 				image,
+				role: syncedData?.role,
+				onboardingCompleted: syncedData?.onboardingCompleted ?? false,
 			};
 
-			// Sync with Sanity BEFORE setting user state to avoid intermediate render
-			// without onboardingCompleted (which causes redirect loops)
-			try {
-				const syncRes = await fetch("/api/auth/sync", { method: "POST" });
-				if (syncRes.ok) {
-					const syncData = (await syncRes.json()) as {
-						synced: boolean;
-						role?: string;
-						onboardingCompleted?: boolean;
-					};
-					if (syncData.synced && syncData.role) {
-						const role = syncData.role as NonNullable<AuthUser["role"]>;
-						userData = {
-							...userData,
-							role,
-							onboardingCompleted: syncData.onboardingCompleted ?? false,
-						};
-					}
-				}
-			} catch {
-				// Sync failure is non-blocking
-			}
-
-			// Set state atomically — user always has complete role + onboarding data
-			setSession(newSession);
 			setUser(userData);
+			setSession(newSession);
 		} finally {
 			refreshingRef.current = false;
 		}
