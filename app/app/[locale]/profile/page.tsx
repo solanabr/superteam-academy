@@ -53,15 +53,23 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
 	return (
 		<div className="min-h-screen bg-background">
 			<Suspense fallback={<ProfileSkeleton />}>
-				<ProfileContent walletAddress={walletAddress} />
+				<ProfileContent walletAddress={walletAddress} username={params?.username} />
 			</Suspense>
 		</div>
 	);
 }
 
-export async function ProfileContent({ walletAddress }: { walletAddress: string | undefined }) {
-	const { user, stats, achievements, activity, courses, credentials } =
-		await getDynamicProfile(walletAddress);
+export async function ProfileContent({
+	walletAddress,
+	username,
+}: {
+	walletAddress: string | undefined;
+	username?: string | undefined;
+}) {
+	const { user, stats, achievements, activity, courses, credentials } = await getDynamicProfile(
+		walletAddress,
+		username
+	);
 
 	return (
 		<div className="mx-auto px-4 sm:px-6 py-8 space-y-6">
@@ -125,20 +133,29 @@ export function ProfileSkeleton() {
 	);
 }
 
-async function getDynamicProfile(walletAddress?: string) {
+async function getDynamicProfile(inputWalletAddress?: string, username?: string) {
+	// Look up Sanity user by username if provided
+	const sanityUserByUsername = username ? await getUserByUsername(username) : null;
+
+	// If no wallet provided, try to get it from the Sanity user
+	const walletAddress = inputWalletAddress || sanityUserByUsername?.walletAddress || undefined;
+
 	if (!walletAddress) {
+		// No wallet at all — show Sanity-only profile or anonymous fallback
+		const gravatarKey = sanityUserByUsername?.email || "anonymous";
 		return {
 			user: {
-				id: "anonymous",
-				name: "Connect Wallet",
-				email: "",
-				avatar: getGravatarUrl("anonymous"),
-				bio: "Add ?wallet=<public-key> to view on-chain profile data.",
-				joinDate: new Date().toISOString(),
-				location: "",
-				github: "",
-				linkedin: "",
-				walletAddress: "11111111111111111111111111111111",
+				id: sanityUserByUsername?._id || "anonymous",
+				name: sanityUserByUsername?.name || "Connect Wallet",
+				email: sanityUserByUsername?.email || "",
+				avatar: sanityUserByUsername?.image || getGravatarUrl(gravatarKey),
+				bio: sanityUserByUsername?.bio || "Connect a wallet to view on-chain profile data.",
+				joinDate: sanityUserByUsername?._createdAt || new Date().toISOString(),
+				location: sanityUserByUsername?.location || "",
+				github: sanityUserByUsername?.github || "",
+				linkedin: sanityUserByUsername?.linkedin || "",
+				username: sanityUserByUsername?.username,
+				walletAddress: sanityUserByUsername?.walletAddress || "",
 			},
 			stats: emptyStats(),
 			achievements: [],
@@ -152,18 +169,22 @@ async function getDynamicProfile(walletAddress?: string) {
 	try {
 		learner = new PublicKey(walletAddress);
 	} catch {
+		// Invalid wallet address — show Sanity-only profile if available
+		const resolved = sanityUserByUsername;
+		const gravatarKey = resolved?.email || "unknown";
 		return {
 			user: {
-				id: "invalid-wallet",
-				name: "Invalid Wallet",
-				email: "",
-				avatar: getGravatarUrl("invalid-wallet"),
-				bio: "Wallet address is invalid. Use a valid Solana public key.",
-				joinDate: new Date().toISOString(),
-				location: "",
-				github: "",
-				linkedin: "",
-				walletAddress: "11111111111111111111111111111111",
+				id: resolved?._id || "unknown",
+				name: resolved?.name || "Unknown User",
+				email: resolved?.email || "",
+				avatar: resolved?.image || getGravatarUrl(gravatarKey),
+				bio: resolved?.bio || "",
+				joinDate: resolved?._createdAt || new Date().toISOString(),
+				location: resolved?.location || "",
+				github: resolved?.github || "",
+				linkedin: resolved?.linkedin || "",
+				username: resolved?.username,
+				walletAddress: resolved?.walletAddress || "",
 			},
 			stats: emptyStats(),
 			achievements: [],
@@ -361,22 +382,24 @@ async function getDynamicProfile(walletAddress?: string) {
 		},
 	}));
 
-	const gravatarKey = sanityUser?.email || learner.toBase58();
+	// Prefer username-fetched Sanity user over wallet-fetched one
+	const resolvedUser = sanityUserByUsername || sanityUser;
+	const gravatarKey = resolvedUser?.email || learner.toBase58();
 
 	return {
 		user: {
-			id: learner.toBase58(),
-			name: sanityUser?.name || `Learner ${learner.toBase58().slice(0, 6)}`,
-			email: sanityUser?.email || "",
-			avatar: getGravatarUrl(gravatarKey),
-			bio: sanityUser?.bio || "On-chain academy profile",
+			id: resolvedUser?._id || learner.toBase58(),
+			name: resolvedUser?.name || `Learner ${learner.toBase58().slice(0, 6)}`,
+			email: resolvedUser?.email || "",
+			avatar: resolvedUser?.image || getGravatarUrl(gravatarKey),
+			bio: resolvedUser?.bio || "On-chain academy profile",
 			joinDate: enrollments[0]
 				? new Date(enrollments[0].account.enrolledAt * 1000).toISOString()
-				: new Date().toISOString(),
-			location: sanityUser?.location || "",
-			github: sanityUser?.github || "",
-			linkedin: sanityUser?.linkedin || "",
-			username: sanityUser?.username,
+				: resolvedUser?._createdAt || new Date().toISOString(),
+			location: resolvedUser?.location || "",
+			github: resolvedUser?.github || "",
+			linkedin: resolvedUser?.linkedin || "",
+			username: resolvedUser?.username,
 			walletAddress: learner.toBase58(),
 		},
 		stats,

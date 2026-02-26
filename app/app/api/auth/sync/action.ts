@@ -25,7 +25,7 @@ export async function syncAuthSession(
 		syncUserToSanity({
 			authId: user.id,
 			name: user.name,
-			email: user.email,
+			email: existing.email,
 			...(walletAddress ? { walletAddress } : {}),
 			...(user.image ? { image: user.image } : {}),
 		}).catch(() => undefined);
@@ -33,6 +33,7 @@ export async function syncAuthSession(
 		return {
 			synced: true,
 			role: existing.role,
+			email: existing.email,
 			onboardingCompleted: existing.onboardingCompleted ?? false,
 		};
 	}
@@ -52,6 +53,7 @@ export async function syncAuthSession(
 
 	return {
 		synced: true,
+		email: sanityUser.email,
 		role: sanityUser.role,
 		onboardingCompleted: sanityUser.onboardingCompleted ?? false,
 	};

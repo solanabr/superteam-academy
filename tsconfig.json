@@ -15,7 +15,6 @@
 		"noUnusedParameters": true,
 		"noImplicitReturns": true,
 		"noFallthroughCasesInSwitch": true,
-		"exactOptionalPropertyTypes": true,
 		"noImplicitOverride": true,
 		"allowUnusedLabels": false,
 		"allowUnreachableCode": false,

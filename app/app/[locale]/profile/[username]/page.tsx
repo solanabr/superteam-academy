@@ -27,11 +27,11 @@ export default async function ProfileUsernamePage({ params }: ProfileUsernamePag
 
 	// Try finding user by username
 	const user = await getUserByUsername(username);
-	if (user?.walletAddress) {
+	if (user) {
 		return (
 			<div className="min-h-screen bg-background">
 				<Suspense fallback={<ProfileSkeleton />}>
-					<ProfileContent walletAddress={user.walletAddress} />
+					<ProfileContent walletAddress={user.walletAddress} username={username} />
 				</Suspense>
 			</div>
 		);

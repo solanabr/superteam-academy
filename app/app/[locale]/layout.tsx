@@ -67,9 +67,12 @@ export default async function LocaleLayout({
 		const syncData = await syncAuthSession(initialSession);
 		initialSession.user = {
 			...initialSession.user,
+			email: syncData?.email || initialSession.user.email,
 			role: syncData?.role,
 			onboardingCompleted: syncData?.onboardingCompleted ?? false,
-			image: initialSession.user.image || getGravatarUrl(initialSession.user.email),
+			image:
+				initialSession.user.image ||
+				getGravatarUrl(syncData?.email || initialSession.user.email),
 		};
 	}
 

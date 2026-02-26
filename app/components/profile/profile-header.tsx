@@ -66,9 +66,9 @@ export function ProfileHeader({ user, stats }: ProfileHeaderProps) {
 				<div className="absolute inset-0 pattern-dots opacity-20" />
 			</div>
 
-			<div className="px-5 pb-5 -mt-10">
+			<div className="px-5 pb-5 -mt-8 relative z-10">
 				<div className="flex flex-col sm:flex-row gap-4 sm:items-end">
-					<Avatar className="h-20 w-20 ring-4 ring-card">
+					<Avatar className="h-20 w-20 ring-4 ring-card mt-2">
 						<AvatarImage src={user.avatar} alt={user.name} />
 						<AvatarFallback className="text-lg bg-primary text-primary-foreground">
 							{initials}
@@ -97,10 +97,12 @@ export function ProfileHeader({ user, stats }: ProfileHeaderProps) {
 									{user.location}
 								</span>
 							)}
-							<span className="inline-flex items-center gap-1">
-								<Wallet className="h-3 w-3" />
-								{shortWallet}
-							</span>
+							{user.walletAddress && (
+								<span className="inline-flex items-center gap-1">
+									<Wallet className="h-3 w-3" />
+									{shortWallet}
+								</span>
+							)}
 						</div>
 					</div>
 
