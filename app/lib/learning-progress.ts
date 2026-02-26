@@ -109,7 +109,7 @@ export class LearningProgressService {
   ): Promise<CourseProgress> {
     const enrolled = await this.isEnrolled(courseSlug, learnerPubkey);
     const certs = await getCertificates(learnerPubkey.toBase58());
-    const hasCert = certs.some(c => c.courseSlug === courseSlug);
+    const hasCert = certs.some(c => c.courseId === courseSlug);
 
     return {
       courseSlug,
