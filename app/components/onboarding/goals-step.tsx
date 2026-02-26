@@ -37,24 +37,8 @@ const LEARNING_GOALS = [
 	"community-building",
 ];
 
-const EXPERIENCE_LEVELS = [
-	{ value: "beginner", label: "Beginner", description: "New to programming/development" },
-	{
-		value: "intermediate",
-		label: "Intermediate",
-		description: "Some experience, building projects",
-	},
-	{
-		value: "advanced",
-		label: "Advanced",
-		description: "Experienced developer, complex projects",
-	},
-	{ value: "expert", label: "Expert", description: "Senior level, mentoring others" },
-];
-
 export function GoalsStep({ data, onNext, onBack }: GoalsStepProps) {
 	const [selectedGoals, setSelectedGoals] = useState<string[]>(data.learningGoals || []);
-	const [experienceLevel, setExperienceLevel] = useState(data.experienceLevel || "");
 
 	const toggleGoal = (goal: string) => {
 		setSelectedGoals((prev) =>
@@ -65,7 +49,6 @@ export function GoalsStep({ data, onNext, onBack }: GoalsStepProps) {
 	const handleNext = () => {
 		onNext({
 			learningGoals: selectedGoals,
-			experienceLevel,
 		});
 	};
 
@@ -77,32 +60,6 @@ export function GoalsStep({ data, onNext, onBack }: GoalsStepProps) {
 					What do you hope to achieve through learning on Superteam Academy?
 				</p>
 			</div>
-
-			<Card>
-				<CardHeader>
-					<CardTitle>Experience Level</CardTitle>
-					<CardDescription>
-						Where would you place yourself on the learning journey?
-					</CardDescription>
-				</CardHeader>
-				<CardContent className="space-y-3">
-					{EXPERIENCE_LEVELS.map((level) => (
-						<button
-							key={level.value}
-							type="button"
-							className={`p-3 border rounded-lg cursor-pointer transition-colors text-left w-full ${
-								experienceLevel === level.value
-									? "border-primary bg-primary/5"
-									: "border-border hover:border-primary/50"
-							}`}
-							onClick={() => setExperienceLevel(level.value)}
-						>
-							<div className="font-medium">{level.label}</div>
-							<div className="text-sm text-muted-foreground">{level.description}</div>
-						</button>
-					))}
-				</CardContent>
-			</Card>
 
 			<Card>
 				<CardHeader>

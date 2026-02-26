@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,6 +35,7 @@ export function WelcomeStep({ data, onNext }: WelcomeStepProps) {
 	const [checking, setChecking] = useState(false);
 	const [available, setAvailable] = useState<boolean | null>(null);
 	const [suggestions, setSuggestions] = useState<string[]>([]);
+	const [loadingSuggestions, setLoadingSuggestions] = useState(false);
 
 	const checkUsername = async (value: string) => {
 		if (!(await isValidUsername(value))) {
@@ -63,15 +64,33 @@ export function WelcomeStep({ data, onNext }: WelcomeStepProps) {
 		}
 	};
 
-	const handleGetSuggestions = async () => {
-		if (user) {
-			const suggested = await getUsernameSuggestions({
-				name: user.name,
-				email: user.email,
-			});
-			setSuggestions(suggested.slice(0, 3));
-		}
-	};
+	useEffect(() => {
+		if (!user || username) return;
+
+		let active = true;
+		const loadSuggestions = async () => {
+			setLoadingSuggestions(true);
+			try {
+				const suggested = await getUsernameSuggestions({
+					name: user.name,
+					email: user.email,
+				});
+				if (active) {
+					setSuggestions(suggested.slice(0, 3));
+				}
+			} finally {
+				if (active) {
+					setLoadingSuggestions(false);
+				}
+			}
+		};
+
+		void loadSuggestions();
+
+		return () => {
+			active = false;
+		};
+	}, [user, username]);
 
 	const handleNext = async () => {
 		if (!username || !(await isValidUsername(username)) || available !== true) {
@@ -131,15 +150,11 @@ export function WelcomeStep({ data, onNext }: WelcomeStepProps) {
 
 					{!username && (
 						<div className="space-y-2">
-							<Button
-								type="button"
-								variant="outline"
-								size="sm"
-								onClick={handleGetSuggestions}
-								className="w-full"
-							>
-								Get Suggestions
-							</Button>
+							{loadingSuggestions ? (
+								<p className="text-xs text-muted-foreground">
+									Loading suggestions...
+								</p>
+							) : null}
 							{suggestions.length > 0 && (
 								<div className="space-y-1">
 									<p className="text-xs text-muted-foreground">Suggestions:</p>

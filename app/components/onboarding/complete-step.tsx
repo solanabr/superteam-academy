@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle, Rocket } from "lucide-react";
+import { Rocket } from "lucide-react";
 
 interface OnboardingData {
 	username?: string;
@@ -27,19 +27,9 @@ interface CompleteStepProps {
 export function CompleteStep({ onComplete }: CompleteStepProps) {
 	return (
 		<div className="space-y-6">
-			<div className="text-center">
-				<div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-					<CheckCircle className="w-8 h-8 text-green-600" />
-				</div>
-				<h1 className="text-2xl font-bold">You're all set! 🎉</h1>
-				<p className="text-muted-foreground mt-2">
-					Your profile is ready and your learning journey begins now.
-				</p>
-			</div>
-
 			<Card>
 				<CardHeader>
-					<CardTitle>What's Next?</CardTitle>
+					<CardTitle>You're all set. What's Next?</CardTitle>
 					<CardDescription>Here's what you can do to get started:</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-4">

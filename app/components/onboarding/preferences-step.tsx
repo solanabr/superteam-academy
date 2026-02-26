@@ -45,15 +45,8 @@ const TOPICS = [
 	"api-development",
 ];
 
-const TIME_COMMITMENTS = [
-	{ value: "casual", label: "Casual (1-2 hours/week)", description: "Light learning pace" },
-	{ value: "regular", label: "Regular (3-5 hours/week)", description: "Moderate commitment" },
-	{ value: "intensive", label: "Intensive (6+ hours/week)", description: "Full-time learning" },
-];
-
 export function PreferencesStep({ data, onNext, onBack }: PreferencesStepProps) {
 	const [selectedTopics, setSelectedTopics] = useState<string[]>(data.preferredTopics || []);
-	const [timeCommitment, setTimeCommitment] = useState(data.timeCommitment || "");
 
 	const toggleTopic = (topic: string) => {
 		setSelectedTopics((prev) =>
@@ -64,25 +57,22 @@ export function PreferencesStep({ data, onNext, onBack }: PreferencesStepProps) 
 	const handleNext = () => {
 		onNext({
 			preferredTopics: selectedTopics,
-			timeCommitment,
 		});
 	};
 
 	return (
 		<div className="space-y-6">
 			<div className="text-center">
-				<h1 className="text-2xl font-bold">Your Learning Preferences</h1>
+				<h1 className="text-2xl font-bold">Topics you care about</h1>
 				<p className="text-muted-foreground mt-2">
-					Help us personalize your learning experience.
+					Pick the areas you want to explore first.
 				</p>
 			</div>
 
 			<Card>
 				<CardHeader>
 					<CardTitle>Topics of Interest</CardTitle>
-					<CardDescription>
-						Select the topics you're most interested in learning about.
-					</CardDescription>
+					<CardDescription>Select all that apply.</CardDescription>
 				</CardHeader>
 				<CardContent>
 					<div className="flex flex-wrap gap-2">
@@ -100,34 +90,6 @@ export function PreferencesStep({ data, onNext, onBack }: PreferencesStepProps) 
 					<p className="text-xs text-muted-foreground mt-2">
 						Selected: {selectedTopics.length} topics
 					</p>
-				</CardContent>
-			</Card>
-
-			<Card>
-				<CardHeader>
-					<CardTitle>Time Commitment</CardTitle>
-					<CardDescription>
-						How much time do you plan to dedicate to learning each week?
-					</CardDescription>
-				</CardHeader>
-				<CardContent className="space-y-3">
-					{TIME_COMMITMENTS.map((commitment) => (
-						<button
-							key={commitment.value}
-							type="button"
-							className={`p-3 border rounded-lg cursor-pointer transition-colors text-left w-full ${
-								timeCommitment === commitment.value
-									? "border-primary bg-primary/5"
-									: "border-border hover:border-primary/50"
-							}`}
-							onClick={() => setTimeCommitment(commitment.value)}
-						>
-							<div className="font-medium">{commitment.label}</div>
-							<div className="text-sm text-muted-foreground">
-								{commitment.description}
-							</div>
-						</button>
-					))}
 				</CardContent>
 			</Card>
 
