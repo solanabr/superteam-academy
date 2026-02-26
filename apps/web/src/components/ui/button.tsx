@@ -4,7 +4,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 /* ═══════════════════════════════════════════════════════════════
-   Solarium v9 Button — 3 core variants: primary, secondary, accent
+   Superteam Academy v9 Button — 3 core variants: primary, secondary, accent
    Spec: docs/design-system.html (lines 278-310)
    ═══════════════════════════════════════════════════════════════ */
 

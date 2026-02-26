@@ -1,6 +1,6 @@
 # Customization Guide
 
-How to customize and extend Solarium for your own needs.
+How to customize and extend Superteam Academy for your own needs.
 
 ## Theme Customization
 

@@ -263,10 +263,10 @@ export async function POST(req: NextRequest) {
           continue;
         }
 
-        // Certificate NFTs have Platform = "Solarium" and Course attributes
+        // Certificate NFTs have Platform = "Superteam Academy" and Course attributes
         const platformAttr = attrs.find((a) => a.trait_type === "Platform");
         const courseAttr = attrs.find((a) => a.trait_type === "Course");
-        if (platformAttr?.value === "Solarium" && courseAttr) {
+        if (platformAttr?.value === "Superteam Academy" && courseAttr) {
           await supabase.from("certificates").upsert(
             {
               user_id: profile.id,

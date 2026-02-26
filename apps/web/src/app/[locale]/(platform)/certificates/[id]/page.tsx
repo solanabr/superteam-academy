@@ -115,7 +115,7 @@ export default function CertificateViewPage() {
 
   function handleShareTwitter() {
     const text = encodeURIComponent(
-      `I just earned my "${certData.courseTitle}" certificate on Solarium! Verify on-chain: ${explorerUrl}`
+      `I just earned my "${certData.courseTitle}" certificate on Superteam Academy! Verify on-chain: ${explorerUrl}`
     );
     window.open(
       `https://twitter.com/intent/tweet?text=${text}`,

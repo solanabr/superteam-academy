@@ -2236,7 +2236,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "solarium-program"
+name = "academy-program"
 version = "0.1.0"
 dependencies = [
  "anchor-lang",

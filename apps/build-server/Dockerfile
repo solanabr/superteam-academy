@@ -22,14 +22,14 @@ RUN apt-get update -qq && apt-get install -y -qq \
     && rm -rf /var/lib/apt/lists/*
 
 # Non-root user
-RUN useradd -m -s /bin/bash solarium
-USER solarium
-WORKDIR /home/solarium
+RUN useradd -m -s /bin/bash academy
+USER academy
+WORKDIR /home/academy
 
 # Install Rust toolchain (cargo is needed by cargo-build-sbf)
-ENV RUSTUP_HOME="/home/solarium/.rustup"
-ENV CARGO_HOME="/home/solarium/.cargo"
-ENV PATH="${CARGO_HOME}/bin:/home/solarium/.local/share/solana/install/active_release/bin:${PATH}"
+ENV RUSTUP_HOME="/home/academy/.rustup"
+ENV CARGO_HOME="/home/academy/.cargo"
+ENV PATH="${CARGO_HOME}/bin:/home/academy/.local/share/solana/install/active_release/bin:${PATH}"
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain 1.85.0
 
 # Install Agave toolchain (includes cargo-build-sbf)
@@ -39,15 +39,15 @@ RUN sh -c "$(curl -sSfL https://release.anza.xyz/v${AGAVE_VERSION}/install)"
 RUN cargo --version && cargo-build-sbf --version && solana --version
 
 # Copy template programs and pre-cache all crates
-COPY --chown=solarium:solarium programs/ programs/
+COPY --chown=academy:academy programs/ programs/
 RUN cargo-build-sbf --manifest-path programs/Cargo.toml
 
 # Copy server binary LAST (code changes don't bust toolchain cache)
-COPY --from=builder /build/target/release/solarium-build-server .
+COPY --from=builder /build/target/release/academy-build-server .
 
 # Create builds directory
-RUN mkdir -p /tmp/solarium-builds
+RUN mkdir -p /tmp/academy-builds
 
 EXPOSE 8080
 
-CMD ["./solarium-build-server"]
+CMD ["./academy-build-server"]

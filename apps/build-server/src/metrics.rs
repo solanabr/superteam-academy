@@ -54,25 +54,25 @@ impl Metrics {
         let duration_sum = self.duration_sum_ms.load(Ordering::Relaxed) as f64 / 1000.0;
 
         format!(
-            r#"# HELP solarium_builds_total Total number of builds
-# TYPE solarium_builds_total counter
-solarium_builds_total{{status="success"}} {success}
-solarium_builds_total{{status="error"}} {error}
-solarium_builds_total{{status="timeout"}} {timeout}
-# HELP solarium_build_duration_seconds Build duration histogram
-# TYPE solarium_build_duration_seconds histogram
-solarium_build_duration_seconds_bucket{{le="30"}} {}
-solarium_build_duration_seconds_bucket{{le="60"}} {}
-solarium_build_duration_seconds_bucket{{le="120"}} {}
-solarium_build_duration_seconds_bucket{{le="+Inf"}} {total}
-solarium_build_duration_seconds_count {total}
-solarium_build_duration_seconds_sum {duration_sum}
-# HELP solarium_cache_hits_total Cache hit count
-# TYPE solarium_cache_hits_total counter
-solarium_cache_hits_total {}
-# HELP solarium_cache_misses_total Cache miss count
-# TYPE solarium_cache_misses_total counter
-solarium_cache_misses_total {}
+            r#"# HELP academy_builds_total Total number of builds
+# TYPE academy_builds_total counter
+academy_builds_total{{status="success"}} {success}
+academy_builds_total{{status="error"}} {error}
+academy_builds_total{{status="timeout"}} {timeout}
+# HELP academy_build_duration_seconds Build duration histogram
+# TYPE academy_build_duration_seconds histogram
+academy_build_duration_seconds_bucket{{le="30"}} {}
+academy_build_duration_seconds_bucket{{le="60"}} {}
+academy_build_duration_seconds_bucket{{le="120"}} {}
+academy_build_duration_seconds_bucket{{le="+Inf"}} {total}
+academy_build_duration_seconds_count {total}
+academy_build_duration_seconds_sum {duration_sum}
+# HELP academy_cache_hits_total Cache hit count
+# TYPE academy_cache_hits_total counter
+academy_cache_hits_total {}
+# HELP academy_cache_misses_total Cache miss count
+# TYPE academy_cache_misses_total counter
+academy_cache_misses_total {}
 "#,
             self.duration_le_30.load(Ordering::Relaxed),
             self.duration_le_60.load(Ordering::Relaxed),

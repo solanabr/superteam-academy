@@ -4,11 +4,11 @@ use anchor_lang::prelude::*;
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 
 #[program]
-pub mod solarium_program {
+pub mod academy_program {
     use super::*;
 
     pub fn initialize(_ctx: Context<Initialize>) -> Result<()> {
-        msg!("Solarium default program");
+        msg!("Superteam Academy default program");
         Ok(())
     }
 }

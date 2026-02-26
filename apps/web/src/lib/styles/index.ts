@@ -1,5 +1,5 @@
 /**
- * Solarium Design System v5 — Barrel Export
+ * Superteam Academy Design System v5 — Barrel Export
  *
  * Import all style tokens from here:
  *   import { BUTTON_STYLES, CARD_STYLES, cx } from '@/lib/styles';

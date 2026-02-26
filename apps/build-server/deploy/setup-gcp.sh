@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# First-time GCP setup for Solarium Build Server
+# First-time GCP setup for Superteam Academy Build Server
 # Usage: ./setup-gcp.sh <PROJECT_ID> [REGION]
 
 PROJECT_ID="${1:?Usage: setup-gcp.sh <PROJECT_ID> [REGION]}"
 REGION="${2:-southamerica-east1}"
-REPO_NAME="solarium-images"
-SA_NAME="solarium-build-sa"
+REPO_NAME="academy-images"
+SA_NAME="academy-build-sa"
 
 echo "==> Setting project to ${PROJECT_ID}"
 gcloud config set project "${PROJECT_ID}"
@@ -23,12 +23,12 @@ echo "==> Creating Artifact Registry repository"
 gcloud artifacts repositories create "${REPO_NAME}" \
   --repository-format=docker \
   --location="${REGION}" \
-  --description="Solarium Docker images" \
+  --description="Superteam Academy Docker images" \
   2>/dev/null || echo "Repository already exists"
 
 echo "==> Creating service account"
 gcloud iam service-accounts create "${SA_NAME}" \
-  --display-name="Solarium Build Server" \
+  --display-name="Superteam Academy Build Server" \
   2>/dev/null || echo "Service account already exists"
 
 SA_EMAIL="${SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
@@ -59,4 +59,4 @@ echo "  Compute Engine SA: ${COMPUTE_SA} (for Cloud Build image push)"
 echo ""
 echo "Next steps:"
 echo "  1. Generate an API key: openssl rand -hex 32"
-echo "  2. Deploy: SOLARIUM_API_KEY=<key> ./deploy.sh ${PROJECT_ID} ${REGION}"
+echo "  2. Deploy: ACADEMY_API_KEY=<key> ./deploy.sh ${PROJECT_ID} ${REGION}"
