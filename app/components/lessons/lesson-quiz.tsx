@@ -36,20 +36,29 @@ export function LessonQuiz({ quiz, onComplete, onRetry }: LessonQuizProps) {
 	const [showResults, setShowResults] = useState(false);
 	const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
 	const [quizCompleted, setQuizCompleted] = useState(false);
+	const validQuestions = quiz.questions.filter(
+		(question) =>
+			Boolean(question?.id) &&
+			Boolean(question?.question) &&
+			Array.isArray(question?.options) &&
+			question.options.length > 0
+	);
+	const hasQuestions = validQuestions.length > 0;
 
 	const handleSubmitQuiz = useCallback(() => {
+		if (!hasQuestions) return;
 		setShowResults(true);
 		setQuizCompleted(true);
 
 		// Calculate score
-		const correctAnswers = quiz.questions.filter(
+		const correctAnswers = validQuestions.filter(
 			(q) => answers[q.id] === q.correctAnswer
 		).length;
-		const score = (correctAnswers / quiz.questions.length) * 100;
+		const score = (correctAnswers / validQuestions.length) * 100;
 		const passed = score >= quiz.passingScore;
 
 		onComplete?.(score, passed);
-	}, [quiz.questions, quiz.passingScore, answers, onComplete]);
+	}, [validQuestions, hasQuestions, quiz.passingScore, answers, onComplete]);
 
 	useEffect(() => {
 		if (quiz.timeLimit && !showResults && !quizCompleted) {
@@ -73,8 +82,8 @@ export function LessonQuiz({ quiz, onComplete, onRetry }: LessonQuizProps) {
 		return () => clearInterval(timer);
 	}, [timeRemaining, handleSubmitQuiz]);
 
-	const currentQuestion = quiz.questions[currentQuestionIndex];
-	const progress = ((currentQuestionIndex + 1) / quiz.questions.length) * 100;
+	const currentQuestion = validQuestions[currentQuestionIndex];
+	const progress = hasQuestions ? ((currentQuestionIndex + 1) / validQuestions.length) * 100 : 0;
 
 	const formatTime = (seconds: number) => {
 		const minutes = Math.floor(seconds / 60);
@@ -90,7 +99,7 @@ export function LessonQuiz({ quiz, onComplete, onRetry }: LessonQuizProps) {
 	};
 
 	const handleNext = () => {
-		if (currentQuestionIndex < quiz.questions.length - 1) {
+		if (currentQuestionIndex < validQuestions.length - 1) {
 			setCurrentQuestionIndex((prev) => prev + 1);
 		} else {
 			handleSubmitQuiz();
@@ -113,16 +122,18 @@ export function LessonQuiz({ quiz, onComplete, onRetry }: LessonQuizProps) {
 	};
 
 	const calculateScore = () => {
-		const correctAnswers = quiz.questions.filter(
+		if (!hasQuestions) return 0;
+
+		const correctAnswers = validQuestions.filter(
 			(q) => answers[q.id] === q.correctAnswer
 		).length;
-		return (correctAnswers / quiz.questions.length) * 100;
+		return (correctAnswers / validQuestions.length) * 100;
 	};
 
 	if (showResults) {
 		const score = calculateScore();
 		const passed = score >= quiz.passingScore;
-		const correctAnswers = quiz.questions.filter(
+		const correctAnswers = validQuestions.filter(
 			(q) => answers[q.id] === q.correctAnswer
 		).length;
 
@@ -145,7 +156,7 @@ export function LessonQuiz({ quiz, onComplete, onRetry }: LessonQuizProps) {
 						<div>
 							<div className="text-3xl font-bold mb-2">{score.toFixed(1)}%</div>
 							<p className="text-muted-foreground">
-								{correctAnswers} out of {quiz.questions.length} correct
+								{correctAnswers} out of {validQuestions.length} correct
 							</p>
 						</div>
 
@@ -162,7 +173,7 @@ export function LessonQuiz({ quiz, onComplete, onRetry }: LessonQuizProps) {
 
 				<div className="space-y-4">
 					<h3 className="text-lg font-semibold">Review Answers</h3>
-					{quiz.questions.map((question, index) => {
+					{validQuestions.map((question, index) => {
 						const userAnswer = answers[question.id];
 						const isCorrect = userAnswer === question.correctAnswer;
 
@@ -242,6 +253,23 @@ export function LessonQuiz({ quiz, onComplete, onRetry }: LessonQuizProps) {
 		);
 	}
 
+	if (!hasQuestions || !currentQuestion) {
+		return (
+			<div className="space-y-6">
+				<Card>
+					<CardHeader>
+						<CardTitle>{quiz.title}</CardTitle>
+					</CardHeader>
+					<CardContent>
+						<p className="text-sm text-muted-foreground">
+							This quiz is not available yet.
+						</p>
+					</CardContent>
+				</Card>
+			</div>
+		);
+	}
+
 	return (
 		<div className="space-y-6">
 			<Card>
@@ -257,7 +285,7 @@ export function LessonQuiz({ quiz, onComplete, onRetry }: LessonQuizProps) {
 					<div className="space-y-2">
 						<div className="flex justify-between text-sm">
 							<span>
-								Question {currentQuestionIndex + 1} of {quiz.questions.length}
+								Question {currentQuestionIndex + 1} of {validQuestions.length}
 							</span>
 							<span>{Math.round(progress)}% complete</span>
 						</div>
@@ -311,7 +339,7 @@ export function LessonQuiz({ quiz, onComplete, onRetry }: LessonQuizProps) {
 					disabled={answers[currentQuestion.id] === undefined}
 					className="flex-1"
 				>
-					{currentQuestionIndex === quiz.questions.length - 1 ? "Submit Quiz" : "Next"}
+					{currentQuestionIndex === validQuestions.length - 1 ? "Submit Quiz" : "Next"}
 				</Button>
 			</div>
 		</div>
