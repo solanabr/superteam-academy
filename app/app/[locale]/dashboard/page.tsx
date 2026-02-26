@@ -13,6 +13,7 @@ import {
 	Clock,
 } from "lucide-react";
 import { useConnection } from "@solana/wallet-adapter-react";
+import type { PublicKey } from "@solana/web3.js";
 import { countCompletedLessons } from "@superteam-academy/anchor";
 import { calculateLevelFromXP } from "@superteam-academy/gamification";
 import { StreakEventType } from "@superteam-academy/gamification/streak-system";
@@ -81,13 +82,13 @@ export default function DashboardPage() {
 		const [config, allCourses, enrollments] = await Promise.all([
 			client.fetchConfig(),
 			client.fetchAllCourses(),
-			client.fetchEnrollmentsForLearner(wallet.publicKey),
+			client.fetchEnrollmentsForLearner(wallet.publicKey as PublicKey),
 		]);
 
 		let totalXp = 0;
 		if (config?.xpMint) {
 			const { findToken2022ATA } = await import("@superteam-academy/solana");
-			const ata = findToken2022ATA(wallet.publicKey, config.xpMint);
+			const ata = findToken2022ATA(wallet.publicKey as PublicKey, config.xpMint);
 			const balance = await client.fetchXpBalance(ata);
 			totalXp = Number(balance ?? 0n);
 		}
@@ -139,7 +140,7 @@ export default function DashboardPage() {
 		setRecommendedCourses(recommended);
 
 		// Activity feed
-		fetchIndexedLearnerActivity(wallet.publicKey, 10)
+		fetchIndexedLearnerActivity(wallet.publicKey as PublicKey, 10)
 			.then(setActivity)
 			.catch(() => undefined);
 

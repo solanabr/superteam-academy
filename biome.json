@@ -112,13 +112,7 @@
 				"noConsole": {
 					"level": "error",
 					"options": {
-						"allow": [
-							"warn",
-							"error",
-							"info",
-							"debug",
-							"assert"
-						]
+						"allow": ["warn", "error", "info", "debug", "assert", "log"]
 					}
 				},
 				"noConstEnum": "error",
@@ -227,10 +221,7 @@
 	},
 	"overrides": [
 		{
-			"includes": [
-				"**/*.ts",
-				"**/*.tsx"
-			],
+			"includes": ["**/*.ts", "**/*.tsx"],
 			"linter": {
 				"rules": {
 					"suspicious": {
@@ -241,11 +232,7 @@
 			}
 		},
 		{
-			"includes": [
-				"**/*.test.ts",
-				"**/*.spec.ts",
-				"test/**/*.ts"
-			],
+			"includes": ["**/*.test.ts", "**/*.spec.ts", "test/**/*.ts"],
 			"linter": {
 				"rules": {
 					"suspicious": {

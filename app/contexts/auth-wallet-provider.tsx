@@ -54,10 +54,18 @@ function AuthProviderInner({
 		try {
 			const syncRes = await fetch("/api/auth/sync", { method: "POST" });
 			if (syncRes.ok) {
-				const syncData = (await syncRes.json()) as { synced: boolean; role?: string };
+				const syncData = (await syncRes.json()) as {
+					synced: boolean;
+					role?: string;
+					onboardingCompleted?: boolean;
+				};
 				if (syncData.synced && syncData.role) {
 					const role = syncData.role as NonNullable<AuthUser["role"]>;
-					setUser((prev) => (prev ? { ...prev, role } : prev));
+					setUser((prev) =>
+						prev
+							? { ...prev, role, onboardingCompleted: syncData.onboardingCompleted }
+							: prev
+					);
 				}
 			}
 		} catch {

@@ -13,6 +13,7 @@ export interface AuthUser {
 	email: string;
 	image?: string;
 	role?: "learner" | "admin" | "superadmin";
+	onboardingCompleted?: boolean;
 }
 
 export interface WalletState {

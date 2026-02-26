@@ -34,6 +34,7 @@ export async function POST() {
 		return NextResponse.json({
 			synced: true,
 			role: existing.role,
+			onboardingCompleted: existing.onboardingCompleted ?? false,
 		});
 	}
 
@@ -53,5 +54,6 @@ export async function POST() {
 	return NextResponse.json({
 		synced: true,
 		role: sanityUser.role,
+		onboardingCompleted: sanityUser.onboardingCompleted ?? false,
 	});
 }

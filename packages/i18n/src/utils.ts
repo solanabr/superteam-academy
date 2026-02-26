@@ -104,7 +104,7 @@ export const TranslationUtils = {
 		t: Awaited<ReturnType<typeof getTranslations>>,
 		key: string,
 		options?: Parameters<Awaited<ReturnType<typeof getTranslations>>["rich"]>[1]
-	) {
+	): ReturnType<Awaited<ReturnType<typeof getTranslations>>["rich"]> {
 		return t.rich(key, options);
 	},
 

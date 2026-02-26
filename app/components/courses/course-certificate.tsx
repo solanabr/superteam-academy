@@ -156,8 +156,9 @@ export function CourseCertificate({ certificate }: CourseCertificateProps) {
 					</div>
 
 					{certificate.verifiable && (
-						<div
-							className="p-3 bg-muted/50 rounded-lg cursor-pointer hover:bg-muted/70 transition-colors"
+						<button
+							type="button"
+							className="p-3 bg-muted/50 rounded-lg cursor-pointer hover:bg-muted/70 transition-colors text-left w-full border-none"
 							onClick={handleVerifyCertificate}
 						>
 							<div className="flex items-start gap-3">
@@ -171,7 +172,7 @@ export function CourseCertificate({ certificate }: CourseCertificateProps) {
 									</p>
 								</div>
 							</div>
-						</div>
+						</button>
 					)}
 				</div>
 			</CardContent>

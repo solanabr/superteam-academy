@@ -78,7 +78,7 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 		try {
 			const ix = buildEnrollInstruction({
 				courseId: course.id,
-				learner: wallet.publicKey,
+				learner: wallet.publicKey as PublicKey,
 				programId: getProgramId(),
 				...(course.prerequisiteCourseId
 					? { prerequisiteCourseId: course.prerequisiteCourseId }
@@ -86,7 +86,7 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 			});
 
 			const tx = new Transaction().add(ix);
-			tx.feePayer = wallet.publicKey;
+			tx.feePayer = wallet.publicKey as PublicKey;
 			tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
 
 			const signature = await wallet.sendTransaction(tx, connection);
@@ -111,12 +111,12 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 		try {
 			const ix = buildCloseEnrollmentInstruction({
 				courseId: course.id,
-				learner: wallet.publicKey,
+				learner: wallet.publicKey as PublicKey,
 				programId: getProgramId(),
 			});
 
 			const tx = new Transaction().add(ix);
-			tx.feePayer = wallet.publicKey;
+			tx.feePayer = wallet.publicKey as PublicKey;
 			tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
 
 			const signature = await wallet.sendTransaction(tx, connection);

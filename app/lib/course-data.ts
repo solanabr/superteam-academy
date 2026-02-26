@@ -48,7 +48,7 @@ export type CourseDetailView = {
 	price: number;
 	enrolled: boolean;
 	finalized: boolean;
-	prerequisiteCourseId?: string | undefined;
+	prerequisiteCourseId?: string;
 	progress: {
 		percentage: number;
 		completedLessons: number;

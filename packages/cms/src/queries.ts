@@ -126,11 +126,30 @@ export const userFields = /* groq */ `
   bio,
   location,
   website,
+  username,
   role,
   xpBalance,
   enrolledCourses,
   completedCourses,
   savedCourses,
+  title,
+  company,
+  education,
+  experienceLevel,
+  preferredTopics,
+  learningGoals,
+  timeCommitment,
+  github,
+  linkedin,
+  twitter,
+  portfolio,
+  skills,
+  languages,
+  timezone,
+  availability,
+  onboardingCompleted,
+  onboardingStep,
+  profileCompleteness,
   settings,
   lastActiveAt
 `;
@@ -149,6 +168,12 @@ export const userByEmailQuery = /* groq */ `
 
 export const userByWalletQuery = /* groq */ `
   *[_type == "academyUser" && walletAddress == $walletAddress][0] {
+    ${userFields}
+  }
+`;
+
+export const userByUsernameQuery = /* groq */ `
+  *[_type == "academyUser" && username == $username][0] {
     ${userFields}
   }
 `;

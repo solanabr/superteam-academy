@@ -276,7 +276,7 @@ async function getCourse(id: string) {
 		lessonStates: boolean[];
 	} | null = null;
 
-	if (wallet && onchainCourse) {
+	if (wallet && learner && onchainCourse) {
 		try {
 			const enrollmentData = await academyClient.fetchEnrollment(id, learner);
 			if (enrollmentData) {

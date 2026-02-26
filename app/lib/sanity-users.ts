@@ -4,11 +4,13 @@ import {
 	userByAuthIdQuery,
 	userByEmailQuery,
 	userByWalletQuery,
+	userByUsernameQuery,
 	allUsersQuery,
 	adminUsersQuery,
 	userStatsQuery,
 	userCountQuery,
 } from "@superteam-academy/cms/queries";
+import { generateUsername } from "./username-utils";
 
 export type { AcademyUser };
 
@@ -86,6 +88,11 @@ export async function syncUserToSanity(params: {
 		if (params.image) {
 			patch.image = params.image;
 		}
+		// Generate username if not exists
+		if (!existing.username) {
+			const username = await generateUsername(params.name);
+			patch.username = username;
+		}
 		// Promote to superadmin if env matches
 		if (existing.role === "learner") {
 			const newRole = determineRole(params.email, params.walletAddress);
@@ -102,6 +109,8 @@ export async function syncUserToSanity(params: {
 	}
 
 	const role = determineRole(params.email, params.walletAddress);
+	// Generate username for new users
+	const username = await generateUsername(params.name);
 	const doc = {
 		_type: "academyUser" as const,
 		authId: params.authId,
@@ -109,6 +118,7 @@ export async function syncUserToSanity(params: {
 		email: params.email,
 		walletAddress: params.walletAddress ?? "",
 		image: params.image ?? "",
+		username,
 		role,
 		xpBalance: 0,
 		enrolledCourses: [] as string[],
@@ -142,6 +152,12 @@ export async function getUserByWallet(walletAddress: string): Promise<AcademyUse
 	const client = sanityReadClient();
 	if (!client) return null;
 	return client.fetch<AcademyUser | null>(userByWalletQuery, { walletAddress });
+}
+
+export async function getUserByUsername(username: string): Promise<AcademyUser | null> {
+	const client = sanityReadClient();
+	if (!client) return null;
+	return client.fetch<AcademyUser | null>(userByUsernameQuery, { username });
 }
 
 export async function getAllUsers(limit = 100, offset = 0): Promise<AcademyUser[]> {

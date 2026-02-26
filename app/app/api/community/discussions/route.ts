@@ -74,7 +74,7 @@ export async function POST(request: Request) {
 		image: session.user.image || "",
 	});
 
-	if(!sanityUser) {
+	if (!sanityUser) {
 		return NextResponse.json({ error: "Failed to sync user" }, { status: 500 });
 	}
 

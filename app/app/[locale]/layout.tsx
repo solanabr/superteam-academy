@@ -9,6 +9,7 @@ import { SiteFooter } from "@/components/navigation/site-footer";
 import { serverAuth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { locales } from "@superteam-academy/i18n/config";
+import { OnboardingGuard } from "@/components/onboarding/onboarding-guard";
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
 const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY;
@@ -93,7 +94,9 @@ export default async function LocaleLayout({
 					}
 				>
 					<SiteHeader />
-					<main className="flex-1">{children}</main>
+					<OnboardingGuard>
+						<main className="flex-1">{children}</main>
+					</OnboardingGuard>
 					<SiteFooter />
 				</Providers>
 			</NextIntlClientProvider>

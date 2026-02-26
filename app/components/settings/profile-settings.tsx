@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Camera } from "lucide-react";
+import { Camera, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,10 +9,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { useSettings } from "@/hooks/use-settings";
+import { isValidUsername, isUsernameAvailable } from "@/lib/username-utils";
 
 interface ProfileData {
 	name: string;
 	email: string;
+	username: string;
 	bio: string;
 	location: string;
 	website: string;
@@ -23,9 +25,12 @@ export function ProfileSettings() {
 	const { toast } = useToast();
 	const { data, loading, save } = useSettings();
 	const [isLoading, setIsLoading] = useState(false);
+	const [usernameChecking, setUsernameChecking] = useState(false);
+	const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
 	const [profile, setProfile] = useState<ProfileData>({
 		name: "",
 		email: "",
+		username: "",
 		bio: "",
 		location: "",
 		website: "",
@@ -37,6 +42,7 @@ export function ProfileSettings() {
 		setProfile({
 			name: data.profile.name,
 			email: data.profile.email,
+			username: data.profile.username || "",
 			bio: data.profile.bio,
 			location: data.profile.location,
 			website: data.profile.website,
@@ -44,11 +50,63 @@ export function ProfileSettings() {
 		});
 	}, [data]);
 
+	const checkUsernameAvailability = async (username: string) => {
+		if (!(await isValidUsername(username))) {
+			setUsernameAvailable(null);
+			return;
+		}
+
+		setUsernameChecking(true);
+		try {
+			const available = await isUsernameAvailable(username);
+			setUsernameAvailable(available);
+		} catch {
+			setUsernameAvailable(null);
+		} finally {
+			setUsernameChecking(false);
+		}
+	};
+
+	const handleUsernameChange = (value: string) => {
+		setProfile((prev) => ({ ...prev, username: value }));
+		setUsernameAvailable(null);
+
+		// Debounce username checking
+		const timeoutId = setTimeout(async () => {
+			if (value && (await isValidUsername(value))) {
+				checkUsernameAvailability(value);
+			}
+		}, 500);
+
+		return () => clearTimeout(timeoutId);
+	};
+
 	const handleSave = async () => {
+		// Validate username
+		if (profile.username && !(await isValidUsername(profile.username))) {
+			toast({
+				title: "Invalid username",
+				description:
+					"Username must be 3-30 characters and contain only letters, numbers, hyphens, and underscores.",
+				variant: "destructive",
+			});
+			return;
+		}
+
+		if (profile.username && usernameAvailable === false) {
+			toast({
+				title: "Username unavailable",
+				description: "This username is already taken. Please choose another one.",
+				variant: "destructive",
+			});
+			return;
+		}
+
 		setIsLoading(true);
 		try {
 			await save({
 				name: profile.name,
+				username: profile.username,
 				bio: profile.bio,
 				location: profile.location,
 				website: profile.website,
@@ -140,6 +198,40 @@ export function ProfileSettings() {
 							value={profile.email}
 							onChange={(e) => setProfile((p) => ({ ...p, email: e.target.value }))}
 						/>
+					</div>
+					<div className="space-y-1.5 sm:col-span-2">
+						<Label htmlFor="username" className="text-xs">
+							Username
+						</Label>
+						<div className="relative">
+							<Input
+								id="username"
+								value={profile.username}
+								onChange={(e) => handleUsernameChange(e.target.value)}
+								placeholder="your-username"
+								className={
+									profile.username && usernameAvailable === false
+										? "border-destructive"
+										: ""
+								}
+							/>
+							{profile.username && (
+								<div className="absolute right-3 top-1/2 -translate-y-1/2">
+									{usernameChecking ? (
+										<div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+									) : usernameAvailable === true ? (
+										<Check className="h-4 w-4 text-green-500" />
+									) : usernameAvailable === false ? (
+										<X className="h-4 w-4 text-destructive" />
+									) : null}
+								</div>
+							)}
+						</div>
+						<p className="text-[10px] text-muted-foreground">
+							3-30 characters. Letters, numbers, hyphens, and underscores only.
+							{usernameAvailable === false && " This username is already taken."}
+							{usernameAvailable === true && " Username is available!"}
+						</p>
 					</div>
 					<div className="space-y-1.5">
 						<Label htmlFor="location" className="text-xs">

@@ -157,11 +157,45 @@ export type AcademyUser = SanityDocument & {
 	bio?: string;
 	location?: string;
 	website?: string;
+	username?: string;
 	role: UserRole;
 	xpBalance: number;
 	enrolledCourses: string[];
 	completedCourses: string[];
 	savedCourses: string[];
+
+	// Professional Info
+	title?: string;
+	company?: string;
+	education?: {
+		degree?: string;
+		institution?: string;
+		graduationYear?: number;
+	};
+
+	// Learning Preferences
+	experienceLevel?: "beginner" | "intermediate" | "advanced" | "expert";
+	preferredTopics?: string[];
+	learningGoals?: string[];
+	timeCommitment?: "casual" | "regular" | "intensive";
+
+	// Social Links (extended)
+	github?: string;
+	linkedin?: string;
+	twitter?: string;
+	portfolio?: string;
+
+	// Additional Profile
+	skills?: string[];
+	languages?: string[]; // Programming languages
+	timezone?: string;
+	availability?: "open" | "busy" | "unavailable";
+
+	// Onboarding metadata
+	onboardingCompleted?: boolean;
+	onboardingStep?: number;
+	profileCompleteness?: number;
+
 	settings?: UserSettings;
 	lastActiveAt?: string;
 };

@@ -23,6 +23,22 @@ import {
 } from "@/lib/community-cms";
 import type { DiscussionCategory } from "@superteam-academy/cms";
 
+interface NormalizedDiscussion {
+	id: string;
+	slug: string;
+	title: string;
+	excerpt: string;
+	author: { name: string; initials: string };
+	category: string;
+	views: number;
+	comments: number;
+	points: number;
+	tags: string[];
+	createdAt: string;
+	pinned: boolean;
+	solved: boolean;
+}
+
 export const metadata: Metadata = {
 	title: "Discussions | Community | Superteam Academy",
 	description:

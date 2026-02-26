@@ -16,6 +16,7 @@ interface User {
 	location?: string;
 	github?: string;
 	linkedin?: string;
+	username?: string | undefined;
 	walletAddress: string;
 }
 

@@ -22,8 +22,9 @@ import { getLinkedWallet } from "@/lib/auth";
 import { calculateLevelFromXP } from "@superteam-academy/gamification";
 import { CredentialService } from "@/services/credential-service";
 import { AchievementService } from "@/services/achievement-service";
+import { ProfileCompleteness } from "@/components/profile/profile-completeness";
+import { getUserByUsername, getUserByWallet } from "@/lib/sanity-users";
 import { getGravatarUrl } from "@/lib/utils";
-import { getUserByWallet } from "@/lib/sanity-users";
 
 export const metadata: Metadata = {
 	title: "Profile | Superteam Academy",
@@ -31,30 +32,41 @@ export const metadata: Metadata = {
 };
 
 interface ProfilePageProps {
-	searchParams?: Promise<{ wallet?: string }>;
+	searchParams?: Promise<{ wallet?: string; username?: string }>;
 }
 
 export default async function ProfilePage({ searchParams }: ProfilePageProps) {
 	const params = searchParams ? await searchParams : undefined;
 	const linkedWallet = await getLinkedWallet();
-	const wallet = params?.wallet ?? linkedWallet;
+
+	// Priority: username > wallet > linkedWallet
+	let walletAddress: string | undefined;
+
+	if (params?.username) {
+		// Look up user by username to get wallet address
+		const user = await getUserByUsername(params.username);
+		walletAddress = user?.walletAddress;
+	} else {
+		walletAddress = params?.wallet ?? linkedWallet;
+	}
 
 	return (
 		<div className="min-h-screen bg-background">
 			<Suspense fallback={<ProfileSkeleton />}>
-				<ProfileContent {...(wallet ? { walletAddress: wallet } : {})} />
+				<ProfileContent walletAddress={walletAddress} />
 			</Suspense>
 		</div>
 	);
 }
 
-async function ProfileContent({ walletAddress }: { walletAddress?: string }) {
-	const profile = await getDynamicProfile(walletAddress);
-	const { user, stats, achievements, activity, courses, credentials } = profile;
+export async function ProfileContent({ walletAddress }: { walletAddress: string | undefined }) {
+	const { user, stats, achievements, activity, courses, credentials } =
+		await getDynamicProfile(walletAddress);
 
 	return (
 		<div className="mx-auto px-4 sm:px-6 py-8 space-y-6">
 			<ProfileHeader user={user} stats={stats} />
+			<ProfileCompleteness user={user} />
 
 			<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 				<div className="lg:col-span-2 space-y-6">
@@ -85,7 +97,7 @@ async function ProfileContent({ walletAddress }: { walletAddress?: string }) {
 	);
 }
 
-function ProfileSkeleton() {
+export function ProfileSkeleton() {
 	return (
 		<div className="mx-auto px-4 sm:px-6 py-8 space-y-6">
 			<div className="rounded-2xl border border-border/60 p-6">
@@ -344,13 +356,14 @@ async function getDynamicProfile(walletAddress?: string) {
 			name: sanityUser?.name || `Learner ${learner.toBase58().slice(0, 6)}`,
 			email: sanityUser?.email || "",
 			avatar: getGravatarUrl(gravatarKey),
-			bio: "On-chain academy profile",
+			bio: sanityUser?.bio || "On-chain academy profile",
 			joinDate: enrollments[0]
 				? new Date(enrollments[0].account.enrolledAt * 1000).toISOString()
 				: new Date().toISOString(),
-			location: "",
-			github: "",
-			linkedin: "",
+			location: sanityUser?.location || "",
+			github: sanityUser?.github || "",
+			linkedin: sanityUser?.linkedin || "",
+			username: sanityUser?.username,
 			walletAddress: learner.toBase58(),
 		},
 		stats,

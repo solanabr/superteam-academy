@@ -38,6 +38,7 @@
 	"scripts": {
 		"build": "turbo build",
 		"dev": "turbo run dev --filter=superteam-academy-frontend",
+		"generate-usernames": "tsx scripts/generate-usernames.ts",
 		"lint": "biome check .",
 		"lint:fix": "biome check --fix .",
 		"format": "biome format --write .",

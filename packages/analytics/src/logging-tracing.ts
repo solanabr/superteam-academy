@@ -545,6 +545,24 @@ export const LoggingTracingFactory = {
 	},
 };
 
+export interface MiddlewareRequest {
+	method: string;
+	path: string;
+	url: string;
+	ip: string;
+	headers: Record<string, string | string[] | undefined>;
+	get(name: string): string | undefined;
+	correlationId?: string;
+	spanContext?: SpanContext;
+	logger?: Logger;
+}
+
+export interface MiddlewareResponse {
+	statusCode: number;
+	end: (...args: unknown[]) => void;
+	get(name: string): string | undefined;
+}
+
 // Middleware for HTTP request logging and tracing
 export class HTTPLoggingMiddleware {
 	private logger: Logger;
@@ -557,24 +575,6 @@ export class HTTPLoggingMiddleware {
 
 	// Express.js middleware
 	getExpressMiddleware() {
-		interface MiddlewareRequest {
-			method: string;
-			path: string;
-			url: string;
-			ip: string;
-			headers: Record<string, string | string[] | undefined>;
-			get(name: string): string | undefined;
-			correlationId?: string;
-			spanContext?: SpanContext;
-			logger?: Logger;
-		}
-
-		interface MiddlewareResponse {
-			statusCode: number;
-			end: (...args: unknown[]) => void;
-			get(name: string): string | undefined;
-		}
-
 		return (req: MiddlewareRequest, res: MiddlewareResponse, next: () => void) => {
 			const startTime = Date.now();
 			const spanContext = this.tracer.startSpan(

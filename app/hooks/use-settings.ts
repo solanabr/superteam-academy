@@ -6,6 +6,7 @@ import type { UserSettings } from "@superteam-academy/cms";
 interface ProfileData {
 	name: string;
 	email: string;
+	username?: string;
 	bio: string;
 	location: string;
 	website: string;
