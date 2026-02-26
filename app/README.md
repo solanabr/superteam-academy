@@ -10,15 +10,18 @@ Superteam Academy is a decentralized learning platform for Web3 and Solana educa
 
 - **Course catalog** with search, filtering, and sorting
 - **Interactive code challenges** with Monaco editor, test runner, hints, and XP rewards
-- **Gamification engine** -- XP system, levels, achievements, and daily streaks
-- **On-chain credentials** -- soulbound NFT certificates on Solana with Explorer links
+- **Gamification engine** — XP system, levels, achievements, and daily streaks
+- **On-chain credentials** — soulbound NFT certificates on Solana with Explorer links
 - **Leaderboard** with animated podium for the top 3 learners
 - **Learner dashboard** with XP progress charts (Recharts), streak tracking, and achievement badges
 - **Wallet integration** via Phantom (Solana wallet adapter)
-- **Internationalization** -- pt-BR (default), English, and Spanish with localized URL paths
+- **Authentication** — Google OAuth, GitHub OAuth, and Phantom wallet via NextAuth.js
+- **Headless CMS** — Sanity-powered course content with real-time preview
+- **Internationalization** — pt-BR (default), English, and Spanish with localized URL paths
+- **Analytics** — GA4 event tracking + Microsoft Clarity heatmaps + Sentry error monitoring
 - **Dark theme** by default, with light mode toggle (next-themes)
 - **Responsive design** built with Tailwind CSS 4 and Radix UI primitives
-- **Smooth animations** powered by Framer Motion
+- **272 E2E tests** with Playwright, covering all locales and user flows
 
 ---
 
@@ -39,6 +42,12 @@ Superteam Academy is a decentralized learning platform for Web3 and Solana educa
 | Forms | React Hook Form + Zod |
 | Blockchain | @solana/web3.js, @solana/wallet-adapter, @coral-xyz/anchor |
 | Tokens | SPL Token (Token-2022 soulbound XP) |
+| CMS | Sanity (headless CMS for course content) |
+| Auth | NextAuth.js (Google OAuth + GitHub OAuth + Phantom wallet) |
+| Analytics | Google Analytics 4 + Microsoft Clarity heatmaps |
+| Monitoring | Sentry (error tracking + performance + source maps) |
+| Testing | Playwright (272 E2E tests across 3 locales) |
+| CI/CD | GitHub Actions (typecheck, lint, build, Anchor tests, E2E) |
 
 ---
 
