@@ -164,7 +164,7 @@ test.describe('Admin system tab', () => {
   });
 
   test('all 6 system services shown as online', async ({ page }) => {
-    const onlineIndicators = page.locator(':text-matches("Online|En Línea")');
+    const onlineIndicators = page.locator('[data-testid="service-online-badge"]');
     await expect(onlineIndicators).toHaveCount(6);
   });
 

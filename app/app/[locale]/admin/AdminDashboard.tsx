@@ -770,7 +770,7 @@ export default function AdminDashboard() {
                 <div key={name} className="rounded-xl border border-gray-800 bg-gray-900/60 p-4">
                   <div className="flex items-start justify-between mb-2">
                     <Icon className="h-5 w-5 text-gray-500" />
-                    <span className="flex items-center gap-1 text-xs text-green-400">
+                    <span data-testid="service-online-badge" className="flex items-center gap-1 text-xs text-green-400">
                       <span className="h-1.5 w-1.5 rounded-full bg-green-400" />
                       {t('online')}
                     </span>
