@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "Solarium",
+    "appName": "Superteam Academy",
     "tagline": "Aprende Desarrollo Solana",
     "loading": "Cargando...",
     "error": "Algo salió mal",
@@ -57,7 +57,7 @@
     "retry": "Reintentar",
     "signFailed": "No se pudo firmar el mensaje de verificación. Inténtalo de nuevo.",
     "signInSubtitle": "Conecta tu billetera o inicia sesión para empezar a aprender",
-    "signInTitle": "Bienvenido a Solarium",
+    "signInTitle": "Bienvenido a Superteam Academy",
     "signInWithGoogle": "Iniciar sesión con Google",
     "signInWithGitHub": "Iniciar sesión con GitHub",
     "githubSignInFailed": "No se pudo iniciar sesión con GitHub. Inténtalo de nuevo.",
@@ -71,7 +71,7 @@
     "heroSubtitle": "Donde los devs de Solana echan raíces.",
     "heroSubtitle2": "Cursos interactivos, credenciales on-chain, open source.",
     "exploreCourses": "Explorar Cursos",
-    "featuresTitle": "Por Qué Solarium",
+    "featuresTitle": "Por Qué Superteam Academy",
     "featureCodeTitle": "Programa en el Navegador",
     "featureCodeDesc": "Escribe Rust, Anchor y TypeScript directo en el navegador. Desafíos reales con pruebas automatizadas — sin configurar nada.",
     "featureCertsTitle": "Certificados On-Chain",
@@ -241,7 +241,7 @@
     "mintDescription": "Reclama tu certificado on-chain como NFT en Solana Devnet.",
     "completed": "Completado",
     "mint": "Mint",
-    "collection": "Solarium Certificates",
+    "collection": "Superteam Academy Certificates",
     "notFound": "Certificado no encontrado",
     "pageTitle": "Mis Certificados",
     "pageSubtitle": "Tus certificados NFT ganados en Solana",
@@ -395,7 +395,7 @@
   },
   "nameGenerator": {
     "title": "Tu Identidad Solana",
-    "subtitle": "Aquí está tu identidad única en Solarium",
+    "subtitle": "Aquí está tu identidad única en Superteam Academy",
     "reroll": "Sortear",
     "rerollsLeft": "{count} sorteos restantes",
     "noRerolls": "Sin sorteos restantes",

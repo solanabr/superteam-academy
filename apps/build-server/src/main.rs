@@ -158,7 +158,7 @@ async fn main() {
 
     let addr = SocketAddr::from((Ipv4Addr::UNSPECIFIED, config.port));
     let listener = TcpListener::bind(addr).await.expect("Failed to bind");
-    info!(port = config.port, "Solarium build server starting");
+    info!(port = config.port, "Superteam Academy build server starting");
 
     axum::serve(
         listener,

@@ -1,6 +1,6 @@
-# Solarium -- Architecture Reference
+# Superteam Academy -- Architecture Reference
 
-System architecture, component structure, data flow, and service interfaces for Solarium -- a Solana-native educational LMS.
+System architecture, component structure, data flow, and service interfaces for Superteam Academy -- a Solana-native educational LMS.
 
 ---
 

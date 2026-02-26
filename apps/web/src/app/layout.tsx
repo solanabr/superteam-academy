@@ -24,8 +24,8 @@ const fontMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Solarium — Learn Solana Development",
-    template: "%s | Solarium",
+    default: "Superteam Academy — Learn Solana Development",
+    template: "%s | Superteam Academy",
   },
   description:
     "The definitive learning platform for Solana developers. Interactive courses, on-chain credentials, and a community of builders.",
@@ -42,14 +42,14 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    siteName: "Solarium",
-    title: "Solarium — Learn Solana Development",
+    siteName: "Superteam Academy",
+    title: "Superteam Academy — Learn Solana Development",
     description:
       "The definitive learning platform for Solana developers. Interactive courses, on-chain credentials, and a community of builders.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Solarium — Learn Solana Development",
+    title: "Superteam Academy — Learn Solana Development",
     description:
       "The definitive learning platform for Solana developers. Interactive courses, on-chain credentials, and a community of builders.",
   },

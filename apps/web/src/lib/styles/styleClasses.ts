@@ -1,5 +1,5 @@
 /**
- * Solarium Design System v9 — Centralized Style Classes
+ * Superteam Academy Design System v9 — Centralized Style Classes
  *
  * All components MUST import styles from this file.
  * Never hardcode colors, typography, or shadows in components.

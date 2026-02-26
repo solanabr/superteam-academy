@@ -1,5 +1,5 @@
 <div align="center">
-  <h1>Solarium</h1>
+  <h1>Superteam Academy</h1>
   <p><strong>A Solana-native learning platform with on-chain credentials.</strong></p>
   <p>Soulbound XP tokens, NFT certificates, interactive coding challenges, and gamified progression — all on Solana.</p>
   <p>Built by <a href="https://superteam.fun">Superteam Brazil</a></p>
@@ -28,7 +28,7 @@
 
 ## Overview
 
-Solarium is an open-source learning management system built on Solana. Learners enroll in courses, complete lessons to earn soulbound XP tokens, receive NFT certificates on course completion, and collect achievements — all with on-chain verification.
+Superteam Academy is an open-source learning management system built on Solana. Learners enroll in courses, complete lessons to earn soulbound XP tokens, receive NFT certificates on course completion, and collect achievements — all with on-chain verification.
 
 ### Feature Highlights
 
@@ -109,8 +109,8 @@ For on-chain program development, you also need:
 
 ```bash
 # 1. Clone and install
-git clone https://github.com/superteam-brazil/solarium.git
-cd solarium
+git clone https://github.com/superteam-brazil/superteam-academy.git
+cd superteam-academy
 pnpm install
 
 # 2. Configure environment
@@ -147,7 +147,7 @@ pnpm format       # Prettier formatting
 ## Project Structure
 
 ```
-solarium/
+superteam-academy/
 ├── apps/
 │   ├── web/                    # Next.js 14 application
 │   │   ├── src/app/            #   App Router pages ([locale] route groups)
@@ -220,10 +220,10 @@ Copy `.env.example` to `apps/web/.env.local` and fill in values.
 
 ### Build Server (Optional -- for code compilation features)
 
-| Variable                       | Scope  | Description                                                              |
-| ------------------------------ | ------ | ------------------------------------------------------------------------ |
-| `NEXT_PUBLIC_BUILD_SERVER_URL` | Client | Cloud Run service URL                                                    |
-| `BUILD_SERVER_API_KEY`         | Server | API key for `X-API-Key` header (same as `SOLARIUM_API_KEY` on Cloud Run) |
+| Variable                       | Scope  | Description                                                             |
+| ------------------------------ | ------ | ----------------------------------------------------------------------- |
+| `NEXT_PUBLIC_BUILD_SERVER_URL` | Client | Cloud Run service URL                                                   |
+| `BUILD_SERVER_API_KEY`         | Server | API key for `X-API-Key` header (same as `ACADEMY_API_KEY` on Cloud Run) |
 
 ### Analytics (Optional -- platform works without these)
 
@@ -242,14 +242,14 @@ Copy `.env.example` to `apps/web/.env.local` and fill in values.
 
 ## Deployment
 
-Solarium deploys as a Vercel-hosted Next.js app backed by Supabase (Postgres + Auth), Sanity CMS, and a Solana on-chain program.
+Superteam Academy deploys as a Vercel-hosted Next.js app backed by Supabase (Postgres + Auth), Sanity CMS, and a Solana on-chain program.
 
 - **[Production Deployment Guide](docs/DEPLOYMENT.md)** -- Full instructions for Vercel, Supabase, Sanity, Google OAuth, GCP Cloud Run (build server), analytics, custom domains, and post-deployment checklist.
 - **[Program Deployment Guide](docs/DEPLOY-PROGRAM.md)** -- On-chain program build, deploy, and initialize workflow (keypair generation, Anchor build, devnet deploy, XP mint creation).
 
 ## On-Chain Program
 
-**Program**: Solarium Academy (`onchain_academy`)
+**Program**: Superteam Academy (`onchain_academy`)
 **Network**: Solana Devnet
 **Program ID**: `GmLKszNTdCgYYkrspmi9sRFWj3ZiCamkc4YrppKJRUhh`
 

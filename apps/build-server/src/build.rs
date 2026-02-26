@@ -292,7 +292,7 @@ impl BuildService {
             let binary_b64 = if cached.success {
                 let so_path = Path::new(&self.config.builds_dir)
                     .join(&cached.uuid)
-                    .join("solarium_program.so");
+                    .join("academy_program.so");
                 tokio::fs::read(&so_path)
                     .await
                     .ok()
@@ -366,7 +366,7 @@ impl BuildService {
 
         // 8. Read binary before any cleanup (same instance has the file)
         let binary_b64 = if success {
-            let so_path = build_dir.join("solarium_program.so");
+            let so_path = build_dir.join("academy_program.so");
             match tokio::fs::read(&so_path).await {
                 Ok(bytes) => Some(STANDARD.encode(&bytes)),
                 Err(e) => {
@@ -410,7 +410,7 @@ impl BuildService {
 
         let binary_path = Path::new(&self.config.builds_dir)
             .join(uuid)
-            .join("solarium_program.so");
+            .join("academy_program.so");
 
         tokio::fs::read(&binary_path)
             .await

@@ -514,7 +514,7 @@ async function tryIssueCredential(
     const courseName = sanityCourse.title ?? courseId;
 
     // Truncate credential name to 32 UTF-8 bytes (on-chain limit)
-    let credentialName = `Solarium: ${courseName}`;
+    let credentialName = `Superteam Academy: ${courseName}`;
     const encoder = new TextEncoder();
     while (encoder.encode(credentialName).length > 32) {
       credentialName = credentialName.slice(0, -1);
@@ -542,7 +542,7 @@ async function tryIssueCredential(
     const metadataJson = {
       name: credentialName,
       symbol: "STACAD",
-      description: `Certificate of completion for ${courseName} on Solarium.`,
+      description: `Certificate of completion for ${courseName} on Superteam Academy.`,
       image: "",
       attributes: [
         { trait_type: "Course", value: courseName },
@@ -554,7 +554,7 @@ async function tryIssueCredential(
           trait_type: "Recipient",
           value: profile?.username ?? walletAddress,
         },
-        { trait_type: "Platform", value: "Solarium" },
+        { trait_type: "Platform", value: "Superteam Academy" },
       ],
       properties: { category: "certificate", creators: [] },
       external_url: `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/certificates`,

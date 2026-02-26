@@ -49,13 +49,13 @@ const CODE_LINES: CodeLine[] = [
     indent: "",
     tokens: [{ text: "#[program]", className: "text-accent" }],
   },
-  // 5: pub mod solarium {
+  // 5: pub mod academy {
   {
     lineNum: 5,
     indent: "",
     tokens: [
       { text: "pub mod ", className: "text-secondary" },
-      { text: "solarium", className: "text-primary" },
+      { text: "academy", className: "text-primary" },
       { text: " {", className: "text-text-3" },
     ],
   },

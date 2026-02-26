@@ -342,7 +342,7 @@
     "_id": "module-bfsp-build-pipeline",
     "_type": "module",
     "title": "The Build Pipeline",
-    "description": "Understand how Solana programs get compiled and get your first successful build through the Solarium Build Server.",
+    "description": "Understand how Solana programs get compiled and get your first successful build through the Superteam Academy Build Server.",
     "lessons": [
       { "_type": "reference", "_ref": "lesson-bfsp-from-code-to-chain" },
       { "_type": "reference", "_ref": "lesson-bfsp-your-first-build" },
