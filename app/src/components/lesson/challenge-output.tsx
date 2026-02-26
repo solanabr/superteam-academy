@@ -7,11 +7,13 @@ export function ChallengeOutput({
   logs,
   isRunning,
   error,
+  completed,
 }: {
   testResults: { name: string; passed: boolean; expected?: string; actual?: string }[];
   logs: string;
   isRunning: boolean;
   error?: string;
+  completed?: boolean;
 }) {
   const t = useTranslations("lesson");
   const output = error || logs;
@@ -20,6 +22,12 @@ export function ChallengeOutput({
 
   return (
     <div style={{ background: "rgba(0,0,0,0.3)", borderTop: "1px solid rgba(255,255,255,0.04)", padding: "10px 14px", minHeight: 56, maxHeight: 140, overflowY: "auto" as const, fontFamily: "var(--font-mono)", fontSize: 11.5, color: "rgba(255,255,255,0.4)", lineHeight: 1.5, whiteSpace: "pre-wrap" as const, flexShrink: 0 }}>
+      {completed && !isRunning && (
+        <div style={{ padding: "6px 10px", marginBottom: 6, background: "rgba(20,241,149,0.1)", borderLeft: "2px solid #14F195", fontSize: 10, letterSpacing: "0.1em", color: "#14F195", fontWeight: 700 }}>
+          {"\u2713"} {t("lessonComplete")}
+        </div>
+      )}
+
       {isRunning && (
         <span style={{ animation: "sa-pulse 0.8s infinite" }}>{t("running")}</span>
       )}

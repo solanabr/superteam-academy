@@ -171,6 +171,7 @@
     "hideSolution": "Hide Solution",
     "showSolution": "Show Solution",
     "running": "Running...",
+    "lessonComplete": "LESSON COMPLETE",
     "outputPlaceholder": "Output will appear here...",
     "lessonCompleted": "{done}/{total} Completed",
     "autoSaved": "auto-saved",

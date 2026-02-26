@@ -147,10 +147,21 @@ export function LessonChallenge({
       });
       if (Date.now() < end) requestAnimationFrame(burst);
     })();
-    if (isLastLesson) {
-      setTimeout(() => setShowCourseComplete(true), 1500);
+    if (isLastLesson && enrollment?.lessonFlags) {
+      // Only show course complete if ALL other lessons are done on-chain
+      let allOthersDone = true;
+      for (let i = 0; i < allLessons.length; i++) {
+        if (i === lessonIndex) continue;
+        if (!isLessonComplete(enrollment.lessonFlags, i)) {
+          allOthersDone = false;
+          break;
+        }
+      }
+      if (allOthersDone) {
+        setTimeout(() => setShowCourseComplete(true), 1500);
+      }
     }
-  }, [isLastLesson]);
+  }, [isLastLesson, enrollment, allLessons, lessonIndex]);
 
   const callCompleteLessonAPI = useCallback(() => {
     const userId = walletAddress ?? "local";
@@ -253,6 +264,7 @@ export function LessonChallenge({
         testResults={testResults}
         logs={output}
         isRunning={isRunning}
+        completed={completed}
       />
     </>
   );
@@ -643,16 +655,16 @@ export function LessonChallenge({
           </button>
           <button
             onClick={handleRun}
-            disabled={isRunning}
+            disabled={isRunning || completed}
             style={{
               fontFamily: "var(--font-mono)",
               fontSize: 10,
               letterSpacing: "0.1em",
               padding: "6px 20px",
               border: "none",
-              background: isRunning ? "var(--nd-highlight-orange)" : "var(--xp)",
-              color: isRunning ? "#fff" : "var(--background)",
-              cursor: isRunning ? "wait" : "pointer",
+              background: completed ? "#14F195" : isRunning ? "var(--nd-highlight-orange)" : "var(--xp)",
+              color: completed ? "var(--background)" : isRunning ? "#fff" : "var(--background)",
+              cursor: completed ? "default" : isRunning ? "wait" : "pointer",
               fontWeight: 700,
               display: "flex",
               alignItems: "center",
@@ -661,7 +673,7 @@ export function LessonChallenge({
               textTransform: "uppercase" as const,
             }}
           >
-            {"\u25B6"} {isRunning ? t("running") : t("runCode")}
+            {completed ? `\u2713 ${t("done")}` : isRunning ? t("running") : `\u25B6 ${t("runCode")}`}
           </button>
           {completed ? (
             <button
