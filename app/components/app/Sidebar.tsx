@@ -15,6 +15,7 @@ import {
 import { Logo } from "@/components/Logo";
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useXpBalance } from "@/hooks";
+import { levelFromXp, xpProgressInLevel } from "@/lib/level";
 
 import {
     Sidebar as ShadcnSidebar,
@@ -43,10 +44,8 @@ export function AppSidebar() {
     const { data: xp } = useXpBalance();
 
     const xpValue = xp ?? 0;
-    const level = Math.floor(xpValue / 500) + 1;
-    const xpInLevel = xpValue % 500;
-    const xpForNextLevel = 500;
-    const progress = (xpInLevel / xpForNextLevel) * 100;
+    const { level, xpInLevel, xpForNextLevel } = xpProgressInLevel(xpValue);
+    const progress = xpForNextLevel > 0 ? (xpInLevel / xpForNextLevel) * 100 : 0;
 
     return (
         <ShadcnSidebar
