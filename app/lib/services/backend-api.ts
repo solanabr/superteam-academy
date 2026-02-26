@@ -101,17 +101,26 @@ export interface BackendApiResponse {
 
 async function postBff(path: string, params: object): Promise<BackendApiResponse> {
   const url = resolveUrl(path);
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(params),
-  });
-  const body = (await res.json().catch(() => ({}))) as
-    | { ok: true; data: BackendApiResponse }
-    | { ok: false; error?: string };
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(params),
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Network error";
+    return { error: msg.includes("fetch") ? "Request failed. Check backend and API token." : msg };
+  }
+  let body: { ok?: boolean; data?: BackendApiResponse; error?: string };
+  try {
+    body = (await res.json()) as { ok?: boolean; data?: BackendApiResponse; error?: string };
+  } catch {
+    return { error: res.ok ? "Invalid response from server" : res.statusText || "Request failed" };
+  }
   if (!res.ok) {
     const err = "error" in body ? body.error : undefined;
-    return { error: err ?? res.statusText };
+    return { error: err ?? res.statusText ?? "Request failed" };
   }
   return body.ok && body.data ? body.data : (body as unknown as BackendApiResponse);
 }

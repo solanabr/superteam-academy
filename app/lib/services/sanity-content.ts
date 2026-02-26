@@ -5,6 +5,7 @@ import type { MockCourse, MockModule, MockLesson } from './mock-content'
 interface SanityCourse {
   _id: string
   id: string
+  onChainCourseId?: string
   slug: { current: string }
   title: string
   description: string
@@ -37,6 +38,7 @@ interface SanityLesson {
 const COURSE_QUERY = `*[_type == "course" && published == true] | order(_createdAt desc) {
   _id,
   id,
+  onChainCourseId,
   slug,
   title,
   description,
@@ -63,6 +65,7 @@ const COURSE_QUERY = `*[_type == "course" && published == true] | order(_created
 const COURSE_BY_SLUG_QUERY = `*[_type == "course" && slug.current == $slug && published == true][0] {
   _id,
   id,
+  onChainCourseId,
   slug,
   title,
   description,
@@ -90,6 +93,7 @@ const COURSE_BY_SLUG_QUERY = `*[_type == "course" && slug.current == $slug && pu
 function transformCourse(sanityCourse: SanityCourse): MockCourse {
   return {
     id: sanityCourse.id,
+    onChainCourseId: sanityCourse.onChainCourseId ?? undefined,
     slug: sanityCourse.slug.current,
     title: sanityCourse.title,
     description: sanityCourse.description,

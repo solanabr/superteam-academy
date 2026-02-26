@@ -25,7 +25,8 @@ export function useCompleteLesson() {
         lessonIndex: params.lessonIndex ?? 0,
       });
       if (result.error) throw new Error(result.error);
-      return result.tx!;
+      if (!result.tx) throw new Error("No transaction signature returned");
+      return result.tx;
     },
     onSuccess: (_, params) => {
       const walletKey = publicKey?.toBase58() ?? params.learner ?? "";

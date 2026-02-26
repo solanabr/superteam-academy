@@ -3,6 +3,7 @@ export { PageHeader } from "./PageHeader";
 export { EmptyState } from "./EmptyState";
 export { XpBadge } from "./XpBadge";
 export { ProgressBar } from "./ProgressBar";
+export { CodeEditor } from "@/components/editor";
 export { AppSidebar } from "./Sidebar";
 export { AppHeader } from "./AppHeader";
 export { ThemeToggle } from "./ThemeToggle";

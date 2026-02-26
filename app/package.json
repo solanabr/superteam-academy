@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.31.1",
+    "@monaco-editor/react": "^4.7.0",
     "@sanity/client": "^6.20.0",
     "@sanity/image-url": "^1.0.2",
     "@sentry/nextjs": "^10.40.0",
@@ -26,6 +27,7 @@
     "clsx": "^2.1.1",
     "framer-motion": "^12.34.3",
     "lucide-react": "^0.575.0",
+    "monaco-editor": "^0.55.1",
     "motion": "^12.34.3",
     "next": "16.1.6",
     "next-intl": "^4.8.3",

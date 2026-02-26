@@ -6,6 +6,10 @@ import {
     SidebarProvider,
 } from "@/components/ui/sidebar";
 
+/**
+ * Main app layout: dashboard, courses, certificates, settings, profile, leaderboard, admin.
+ * Only used by routes under (app). Do not use test-page-only behavior here; /test has its own layout.
+ */
 export default function AppLayout({ children }: { children: React.ReactNode }) {
     return (
         <WalletGuard>
