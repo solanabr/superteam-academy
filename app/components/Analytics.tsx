@@ -1,6 +1,7 @@
 'use client';
 
 import Script from 'next/script';
+import { useEffect } from 'react';
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 const HOTJAR_ID = process.env.NEXT_PUBLIC_HOTJAR_ID;
@@ -20,6 +21,14 @@ const CLARITY_ID = process.env.NEXT_PUBLIC_CLARITY_ID;
  * Scripts are loaded with strategy="afterInteractive" to avoid blocking paint.
  */
 export default function Analytics() {
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {
+        // SW registration failure is non-critical
+      });
+    }
+  }, []);
+
   return (
     <>
       {/* Google Analytics 4 */}

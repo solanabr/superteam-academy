@@ -8,7 +8,8 @@
     "settings": "Settings",
     "connect_wallet": "Connect Wallet",
     "disconnect": "Disconnect",
-    "community": "Community"
+    "community": "Community",
+    "challenges": "Challenges"
   },
   "landing": {
     "hero_title": "Learn Solana & Web3",
@@ -302,7 +303,9 @@
     "section_community": "Community",
     "section_platform": "Platform",
     "for_beginners": "For Beginners",
-    "built_on_solana": "Built on Solana."
+    "built_on_solana": "Built on Solana.",
+    "powered_by": "Powered by",
+    "challenges": "Code Challenges"
   },
   "common": {
     "loading": "Loading...",

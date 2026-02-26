@@ -45,12 +45,12 @@ export default function Footer() {
             </h3>
             <ul className="space-y-0.5 text-sm text-gray-300">
               <li><Link href={localePath(locale, '/courses')} className="block py-2 hover:text-purple-300 transition-colors">{tNav('courses')}</Link></li>
+              <li><Link href={localePath(locale, '/challenges')} className="block py-2 hover:text-purple-300 transition-colors">{tFooter('challenges')}</Link></li>
               <li><Link href={`${localePath(locale, '/courses')}?level=beginner`} className="block py-2 hover:text-purple-300 transition-colors">
                 {tFooter('for_beginners')}
               </Link></li>
               <li><Link href={`${localePath(locale, '/courses')}?track=DeFi`} className="block py-2 hover:text-purple-300 transition-colors">DeFi</Link></li>
               <li><Link href={`${localePath(locale, '/courses')}?track=NFTs`} className="block py-2 hover:text-purple-300 transition-colors">NFTs & Metaplex</Link></li>
-              <li><Link href={`${localePath(locale, '/courses')}?track=Anchor`} className="block py-2 hover:text-purple-300 transition-colors">Anchor Framework</Link></li>
             </ul>
           </div>
 

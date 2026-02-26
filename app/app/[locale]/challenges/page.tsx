@@ -113,7 +113,7 @@ export default function ChallengesPage() {
                 <span className="rounded-lg border border-gray-700 px-3 py-1.5 text-xs text-gray-500">Coming Soon</span>
               ) : (
                 <Link
-                  href={localePath(`/challenges/${challenge.id}`, locale)}
+                  href={localePath(locale, `/challenges/${challenge.id}`)}
                   className="flex items-center gap-1 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:from-purple-500 hover:to-indigo-500 transition-all"
                 >
                   Start
