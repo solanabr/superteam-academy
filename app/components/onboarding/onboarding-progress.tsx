@@ -1,6 +1,7 @@
 "use client";
 
 import { Check } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 
 interface OnboardingProgressProps {
@@ -10,10 +11,12 @@ interface OnboardingProgressProps {
 }
 
 export function OnboardingProgress({ currentStep, totalSteps, steps }: OnboardingProgressProps) {
+	const t = useTranslations("onboarding.progress");
+
 	return (
 		<div
 			className="w-full"
-			aria-label={`Onboarding progress: step ${currentStep + 1} of ${totalSteps}`}
+			aria-label={t("ariaLabel", { current: currentStep + 1, total: totalSteps })}
 		>
 			<div className="mb-2 overflow-x-auto pb-1">
 				<div className="mx-auto flex min-w-max items-center justify-center">

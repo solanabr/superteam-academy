@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Rocket } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface OnboardingData {
 	username?: string;
@@ -25,12 +26,14 @@ interface CompleteStepProps {
 }
 
 export function CompleteStep({ onComplete }: CompleteStepProps) {
+	const t = useTranslations("onboarding.complete");
+
 	return (
 		<div className="space-y-6">
 			<Card>
 				<CardHeader>
-					<CardTitle>You're all set. What's Next?</CardTitle>
-					<CardDescription>Here's what you can do to get started:</CardDescription>
+					<CardTitle>{t("title")}</CardTitle>
+					<CardDescription>{t("description")}</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-4">
 					<div className="space-y-3">
@@ -39,10 +42,9 @@ export function CompleteStep({ onComplete }: CompleteStepProps) {
 								<span className="text-xs font-medium text-primary">1</span>
 							</div>
 							<div>
-								<h4 className="font-medium">Explore Courses</h4>
+								<h4 className="font-medium">{t("steps.exploreCourses.title")}</h4>
 								<p className="text-sm text-muted-foreground">
-									Browse our curated collection of blockchain and web development
-									courses.
+									{t("steps.exploreCourses.description")}
 								</p>
 							</div>
 						</div>
@@ -52,10 +54,9 @@ export function CompleteStep({ onComplete }: CompleteStepProps) {
 								<span className="text-xs font-medium text-primary">2</span>
 							</div>
 							<div>
-								<h4 className="font-medium">Start Learning</h4>
+								<h4 className="font-medium">{t("steps.startLearning.title")}</h4>
 								<p className="text-sm text-muted-foreground">
-									Enroll in your first course and begin earning XP and
-									achievements.
+									{t("steps.startLearning.description")}
 								</p>
 							</div>
 						</div>
@@ -65,9 +66,9 @@ export function CompleteStep({ onComplete }: CompleteStepProps) {
 								<span className="text-xs font-medium text-primary">3</span>
 							</div>
 							<div>
-								<h4 className="font-medium">Connect & Share</h4>
+								<h4 className="font-medium">{t("steps.connectAndShare.title")}</h4>
 								<p className="text-sm text-muted-foreground">
-									Join our community, share your progress, and learn with others.
+									{t("steps.connectAndShare.description")}
 								</p>
 							</div>
 						</div>
@@ -79,10 +80,8 @@ export function CompleteStep({ onComplete }: CompleteStepProps) {
 				<div className="flex items-center gap-3">
 					<Rocket className="w-5 h-5 text-primary" />
 					<div>
-						<h4 className="font-medium">Ready to launch your learning journey?</h4>
-						<p className="text-sm text-muted-foreground">
-							Your personalized dashboard awaits!
-						</p>
+						<h4 className="font-medium">{t("cta.title")}</h4>
+						<p className="text-sm text-muted-foreground">{t("cta.description")}</p>
 					</div>
 				</div>
 			</div>
@@ -90,7 +89,7 @@ export function CompleteStep({ onComplete }: CompleteStepProps) {
 			<div className="flex justify-center">
 				<Button onClick={onComplete} size="lg" className="px-8">
 					<Rocket className="w-4 h-4 mr-2" />
-					Get Started
+					{t("actions.getStarted")}
 				</Button>
 			</div>
 		</div>

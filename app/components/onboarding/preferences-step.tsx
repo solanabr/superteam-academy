@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useTranslations } from "next-intl";
 
 interface OnboardingData {
 	timeCommitment?: string;
@@ -46,6 +47,7 @@ const TOPICS = [
 ];
 
 export function PreferencesStep({ data, onNext, onBack }: PreferencesStepProps) {
+	const t = useTranslations("onboarding.preferences");
 	const [selectedTopics, setSelectedTopics] = useState<string[]>(data.preferredTopics || []);
 
 	const toggleTopic = (topic: string) => {
@@ -63,16 +65,14 @@ export function PreferencesStep({ data, onNext, onBack }: PreferencesStepProps) 
 	return (
 		<div className="space-y-6">
 			<div className="text-center">
-				<h1 className="text-2xl font-bold">Topics you care about</h1>
-				<p className="text-muted-foreground mt-2">
-					Pick the areas you want to explore first.
-				</p>
+				<h1 className="text-2xl font-bold">{t("title")}</h1>
+				<p className="text-muted-foreground mt-2">{t("description")}</p>
 			</div>
 
 			<Card>
 				<CardHeader>
-					<CardTitle>Topics of Interest</CardTitle>
-					<CardDescription>Select all that apply.</CardDescription>
+					<CardTitle>{t("card.title")}</CardTitle>
+					<CardDescription>{t("card.description")}</CardDescription>
 				</CardHeader>
 				<CardContent>
 					<div className="flex flex-wrap gap-2">
@@ -83,21 +83,21 @@ export function PreferencesStep({ data, onNext, onBack }: PreferencesStepProps) 
 								className="cursor-pointer hover:bg-primary/80"
 								onClick={() => toggleTopic(topic)}
 							>
-								{topic.replace("-", " ")}
+								{t(`topics.${topic}`)}
 							</Badge>
 						))}
 					</div>
 					<p className="text-xs text-muted-foreground mt-2">
-						Selected: {selectedTopics.length} topics
+						{t("selected", { count: selectedTopics.length })}
 					</p>
 				</CardContent>
 			</Card>
 
 			<div className="flex justify-between">
 				<Button variant="outline" onClick={onBack}>
-					Back
+					{t("actions.back")}
 				</Button>
-				<Button onClick={handleNext}>Continue</Button>
+				<Button onClick={handleNext}>{t("actions.continue")}</Button>
 			</div>
 		</div>
 	);

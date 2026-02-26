@@ -2842,6 +2842,231 @@
 		"backToOptions": "Back to sign in options",
 		"termsNotice": "By continuing, you agree to our Terms of Service and Privacy Policy."
 	},
+	"onboarding": {
+		"steps": {
+			"welcome": "Welcome",
+			"profile": "Basic Profile",
+			"profile-details": "Profile Details",
+			"topics": "Topics",
+			"time": "Time",
+			"experience": "Experience",
+			"goals": "Goals",
+			"complete": "Complete"
+		},
+		"progress": {
+			"ariaLabel": "Onboarding progress: step {current} of {total}"
+		},
+		"welcome": {
+			"title": "Welcome to Superteam Academy! 🎉",
+			"description": "Let's set up your profile to get the most out of your learning journey.",
+			"usernameCard": {
+				"title": "Choose Your Username",
+				"description": "This will be your unique identifier on the platform. Choose something memorable!",
+				"label": "Username",
+				"placeholder": "your-username",
+				"help": "3-30 characters. Letters, numbers, hyphens, and underscores only.",
+				"taken": "This username is already taken.",
+				"available": "Username is available!"
+			},
+			"suggestions": {
+				"loading": "Loading suggestions...",
+				"title": "Suggestions:"
+			},
+			"actions": {
+				"continue": "Continue"
+			}
+		},
+		"profile": {
+			"title": "Basic profile",
+			"description": "Start with your core identity information.",
+			"card": {
+				"title": "About You",
+				"description": "A short profile helps personalize your Academy experience."
+			},
+			"fields": {
+				"name": {
+					"label": "Full Name",
+					"placeholder": "Your full name"
+				},
+				"title": {
+					"label": "Professional Title",
+					"placeholder": "Software Engineer, Student, etc."
+				},
+				"company": {
+					"label": "Company/Organization",
+					"placeholder": "Where do you work or study?"
+				}
+			},
+			"actions": {
+				"back": "Back",
+				"continue": "Continue"
+			}
+		},
+		"profileDetails": {
+			"title": "Profile details",
+			"description": "Add optional details so others can find and connect with you.",
+			"card": {
+				"title": "Public Details",
+				"description": "These help your profile stand out."
+			},
+			"fields": {
+				"location": {
+					"label": "Location",
+					"placeholder": "City, Country"
+				},
+				"website": {
+					"label": "Website/Portfolio",
+					"placeholder": "https://your-website.com"
+				},
+				"bio": {
+					"label": "Bio",
+					"placeholder": "Tell us about your interests and what you're building...",
+					"remaining": "{count} characters remaining"
+				}
+			},
+			"actions": {
+				"back": "Back",
+				"continue": "Continue"
+			}
+		},
+		"preferences": {
+			"title": "Topics you care about",
+			"description": "Pick the areas you want to explore first.",
+			"card": {
+				"title": "Topics of Interest",
+				"description": "Select all that apply."
+			},
+			"selected": "Selected: {count} topics",
+			"topics": {
+				"web-development": "Web development",
+				"blockchain": "Blockchain",
+				"smart-contracts": "Smart contracts",
+				"defi": "DeFi",
+				"nft": "NFT",
+				"cryptography": "Cryptography",
+				"data-science": "Data science",
+				"machine-learning": "Machine learning",
+				"mobile-development": "Mobile development",
+				"game-development": "Game development",
+				"devops": "DevOps",
+				"security": "Security",
+				"ai": "AI",
+				"cloud-computing": "Cloud computing",
+				"databases": "Databases",
+				"api-development": "API development"
+			},
+			"actions": {
+				"back": "Back",
+				"continue": "Continue"
+			}
+		},
+		"timeCommitment": {
+			"title": "Your weekly commitment",
+			"description": "How much time can you regularly dedicate to learning?",
+			"card": {
+				"title": "Time Commitment",
+				"description": "Choose one option."
+			},
+			"options": {
+				"casual": {
+					"label": "Casual (1-2 hours/week)",
+					"description": "Light learning pace"
+				},
+				"regular": {
+					"label": "Regular (3-5 hours/week)",
+					"description": "Moderate commitment"
+				},
+				"intensive": {
+					"label": "Intensive (6+ hours/week)",
+					"description": "High commitment"
+				}
+			},
+			"actions": {
+				"back": "Back",
+				"continue": "Continue"
+			}
+		},
+		"experience": {
+			"title": "Your current level",
+			"description": "This helps us tailor recommendations from day one.",
+			"card": {
+				"title": "Experience Level",
+				"description": "Pick the closest match."
+			},
+			"levels": {
+				"beginner": {
+					"label": "Beginner",
+					"description": "New to programming/development"
+				},
+				"intermediate": {
+					"label": "Intermediate",
+					"description": "Some experience, building projects"
+				},
+				"advanced": {
+					"label": "Advanced",
+					"description": "Experienced developer, complex projects"
+				},
+				"expert": {
+					"label": "Expert",
+					"description": "Senior level, mentoring others"
+				}
+			},
+			"actions": {
+				"back": "Back",
+				"continue": "Continue"
+			}
+		},
+		"goals": {
+			"title": "Your Learning Goals",
+			"description": "What do you hope to achieve through learning on Superteam Academy?",
+			"card": {
+				"title": "Learning Goals",
+				"description": "What are your main objectives? Select all that apply."
+			},
+			"selected": "Selected: {count} goals",
+			"options": {
+				"career-change": "Career change",
+				"skill-up": "Skill up",
+				"certification": "Certification",
+				"personal-growth": "Personal growth",
+				"entrepreneurship": "Entrepreneurship",
+				"freelancing": "Freelancing",
+				"job-promotion": "Job promotion",
+				"side-project": "Side project",
+				"teaching": "Teaching",
+				"community-building": "Community building"
+			},
+			"actions": {
+				"back": "Back",
+				"continue": "Continue"
+			}
+		},
+		"complete": {
+			"title": "You're all set. What's Next?",
+			"description": "Here's what you can do to get started:",
+			"steps": {
+				"exploreCourses": {
+					"title": "Explore Courses",
+					"description": "Browse our curated collection of blockchain and web development courses."
+				},
+				"startLearning": {
+					"title": "Start Learning",
+					"description": "Enroll in your first course and begin earning XP and achievements."
+				},
+				"connectAndShare": {
+					"title": "Connect & Share",
+					"description": "Join our community, share your progress, and learn with others."
+				}
+			},
+			"cta": {
+				"title": "Ready to launch your learning journey?",
+				"description": "Your personalized dashboard awaits!"
+			},
+			"actions": {
+				"getStarted": "Get Started"
+			}
+		}
+	},
 	"footer": {
 		"description": "Master Solana development through interactive courses and earn verifiable on-chain credentials.",
 		"learn": "Learn",

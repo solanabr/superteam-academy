@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { WelcomeStep } from "@/components/onboarding/welcome-step";
 import { ProfileStep } from "@/components/onboarding/profile-step";
 import { ProfileDetailsStep } from "@/components/onboarding/profile-details-step";
@@ -27,14 +28,14 @@ interface OnboardingData {
 }
 
 const STEPS = [
-	{ id: "welcome", title: "Welcome", component: WelcomeStep },
-	{ id: "profile", title: "Basic Profile", component: ProfileStep },
-	{ id: "profile-details", title: "Profile Details", component: ProfileDetailsStep },
-	{ id: "topics", title: "Topics", component: PreferencesStep },
-	{ id: "time", title: "Time", component: TimeCommitmentStep },
-	{ id: "experience", title: "Experience", component: ExperienceStep },
-	{ id: "goals", title: "Goals", component: GoalsStep },
-	{ id: "complete", title: "Complete", component: CompleteStep },
+	{ id: "welcome", component: WelcomeStep },
+	{ id: "profile", component: ProfileStep },
+	{ id: "profile-details", component: ProfileDetailsStep },
+	{ id: "topics", component: PreferencesStep },
+	{ id: "time", component: TimeCommitmentStep },
+	{ id: "experience", component: ExperienceStep },
+	{ id: "goals", component: GoalsStep },
+	{ id: "complete", component: CompleteStep },
 ];
 
 interface OnboardingFlowProps {
@@ -42,6 +43,7 @@ interface OnboardingFlowProps {
 }
 
 export function OnboardingFlow({ onCompleted }: OnboardingFlowProps) {
+	const t = useTranslations("onboarding");
 	const [currentStep, setCurrentStep] = useState(0);
 	const [onboardingData, setOnboardingData] = useState<OnboardingData>({});
 	const router = useRouter();
@@ -91,7 +93,7 @@ export function OnboardingFlow({ onCompleted }: OnboardingFlowProps) {
 			<OnboardingProgress
 				currentStep={currentStep}
 				totalSteps={STEPS.length}
-				steps={STEPS.map((step) => step.title)}
+				steps={STEPS.map((step) => t(`steps.${step.id}`))}
 			/>
 
 			<div className="rounded-2xl border border-border/60 bg-card p-4 sm:p-6 max-h-[62vh] overflow-y-auto">

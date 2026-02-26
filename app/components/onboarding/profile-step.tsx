@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useTranslations } from "next-intl";
 import { useAuth } from "@/contexts/auth-context";
 
 interface OnboardingData {
@@ -28,6 +29,7 @@ interface ProfileStepProps {
 }
 
 export function ProfileStep({ data, onNext, onBack }: ProfileStepProps) {
+	const t = useTranslations("onboarding.profile");
 	const { user } = useAuth();
 	const [profile, setProfile] = useState({
 		name: data.name || user?.name || "",
@@ -42,54 +44,50 @@ export function ProfileStep({ data, onNext, onBack }: ProfileStepProps) {
 	return (
 		<div className="space-y-6">
 			<div className="text-center">
-				<h1 className="text-2xl font-bold">Basic profile</h1>
-				<p className="text-muted-foreground mt-2">
-					Start with your core identity information.
-				</p>
+				<h1 className="text-2xl font-bold">{t("title")}</h1>
+				<p className="text-muted-foreground mt-2">{t("description")}</p>
 			</div>
 
 			<Card>
 				<CardHeader>
-					<CardTitle>About You</CardTitle>
-					<CardDescription>
-						A short profile helps personalize your Academy experience.
-					</CardDescription>
+					<CardTitle>{t("card.title")}</CardTitle>
+					<CardDescription>{t("card.description")}</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-4">
 					<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 						<div className="space-y-2">
-							<Label htmlFor="name">Full Name</Label>
+							<Label htmlFor="name">{t("fields.name.label")}</Label>
 							<Input
 								id="name"
 								value={profile.name}
 								onChange={(e) =>
 									setProfile((prev) => ({ ...prev, name: e.target.value }))
 								}
-								placeholder="Your full name"
+								placeholder={t("fields.name.placeholder")}
 							/>
 						</div>
 						<div className="space-y-2">
-							<Label htmlFor="title">Professional Title</Label>
+							<Label htmlFor="title">{t("fields.title.label")}</Label>
 							<Input
 								id="title"
 								value={profile.title}
 								onChange={(e) =>
 									setProfile((prev) => ({ ...prev, title: e.target.value }))
 								}
-								placeholder="Software Engineer, Student, etc."
+								placeholder={t("fields.title.placeholder")}
 							/>
 						</div>
 					</div>
 
 					<div className="space-y-2">
-						<Label htmlFor="company">Company/Organization</Label>
+						<Label htmlFor="company">{t("fields.company.label")}</Label>
 						<Input
 							id="company"
 							value={profile.company}
 							onChange={(e) =>
 								setProfile((prev) => ({ ...prev, company: e.target.value }))
 							}
-							placeholder="Where do you work or study?"
+							placeholder={t("fields.company.placeholder")}
 						/>
 					</div>
 				</CardContent>
@@ -97,9 +95,9 @@ export function ProfileStep({ data, onNext, onBack }: ProfileStepProps) {
 
 			<div className="flex justify-between">
 				<Button variant="outline" onClick={onBack}>
-					Back
+					{t("actions.back")}
 				</Button>
-				<Button onClick={handleNext}>Continue</Button>
+				<Button onClick={handleNext}>{t("actions.continue")}</Button>
 			</div>
 		</div>
 	);

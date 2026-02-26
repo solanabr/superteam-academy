@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { isValidUsername, isUsernameAvailable, getUsernameSuggestions } from "@/lib/username-utils";
 import { useAuth } from "@/contexts/auth-context";
 
@@ -30,6 +31,7 @@ interface WelcomeStepProps {
 }
 
 export function WelcomeStep({ data, onNext }: WelcomeStepProps) {
+	const t = useTranslations("onboarding.welcome");
 	const { user } = useAuth();
 	const [username, setUsername] = useState(data.username || "");
 	const [checking, setChecking] = useState(false);
@@ -102,29 +104,24 @@ export function WelcomeStep({ data, onNext }: WelcomeStepProps) {
 	return (
 		<div className="space-y-6">
 			<div className="text-center">
-				<h1 className="text-2xl font-bold">Welcome to Superteam Academy! 🎉</h1>
-				<p className="text-muted-foreground mt-2">
-					Let's set up your profile to get the most out of your learning journey.
-				</p>
+				<h1 className="text-2xl font-bold">{t("title")}</h1>
+				<p className="text-muted-foreground mt-2">{t("description")}</p>
 			</div>
 
 			<Card>
 				<CardHeader>
-					<CardTitle>Choose Your Username</CardTitle>
-					<CardDescription>
-						This will be your unique identifier on the platform. Choose something
-						memorable!
-					</CardDescription>
+					<CardTitle>{t("usernameCard.title")}</CardTitle>
+					<CardDescription>{t("usernameCard.description")}</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-4">
 					<div className="space-y-2">
-						<Label htmlFor="username">Username</Label>
+						<Label htmlFor="username">{t("usernameCard.label")}</Label>
 						<div className="relative">
 							<Input
 								id="username"
 								value={username}
 								onChange={(e) => handleUsernameChange(e.target.value)}
-								placeholder="your-username"
+								placeholder={t("usernameCard.placeholder")}
 								className={
 									username && available === false ? "border-destructive" : ""
 								}
@@ -142,9 +139,9 @@ export function WelcomeStep({ data, onNext }: WelcomeStepProps) {
 							)}
 						</div>
 						<p className="text-xs text-muted-foreground">
-							3-30 characters. Letters, numbers, hyphens, and underscores only.
-							{available === false && " This username is already taken."}
-							{available === true && " Username is available!"}
+							{t("usernameCard.help")}
+							{available === false && ` ${t("usernameCard.taken")}`}
+							{available === true && ` ${t("usernameCard.available")}`}
 						</p>
 					</div>
 
@@ -152,12 +149,14 @@ export function WelcomeStep({ data, onNext }: WelcomeStepProps) {
 						<div className="space-y-2">
 							{loadingSuggestions ? (
 								<p className="text-xs text-muted-foreground">
-									Loading suggestions...
+									{t("suggestions.loading")}
 								</p>
 							) : null}
 							{suggestions.length > 0 && (
 								<div className="space-y-1">
-									<p className="text-xs text-muted-foreground">Suggestions:</p>
+									<p className="text-xs text-muted-foreground">
+										{t("suggestions.title")}
+									</p>
 									<div className="flex flex-wrap gap-1">
 										{suggestions.map((suggestion) => (
 											<Button
@@ -181,7 +180,7 @@ export function WelcomeStep({ data, onNext }: WelcomeStepProps) {
 
 			<div className="flex justify-end">
 				<Button onClick={handleNext} disabled={!username || available !== true}>
-					Continue
+					{t("actions.continue")}
 				</Button>
 			</div>
 		</div>

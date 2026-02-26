@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -26,21 +27,14 @@ interface ExperienceStepProps {
 }
 
 const EXPERIENCE_LEVELS = [
-	{ value: "beginner", label: "Beginner", description: "New to programming/development" },
-	{
-		value: "intermediate",
-		label: "Intermediate",
-		description: "Some experience, building projects",
-	},
-	{
-		value: "advanced",
-		label: "Advanced",
-		description: "Experienced developer, complex projects",
-	},
-	{ value: "expert", label: "Expert", description: "Senior level, mentoring others" },
+	{ value: "beginner" },
+	{ value: "intermediate" },
+	{ value: "advanced" },
+	{ value: "expert" },
 ];
 
 export function ExperienceStep({ data, onNext, onBack }: ExperienceStepProps) {
+	const t = useTranslations("onboarding.experience");
 	const [experienceLevel, setExperienceLevel] = useState(data.experienceLevel || "");
 
 	const handleNext = () => {
@@ -50,16 +44,14 @@ export function ExperienceStep({ data, onNext, onBack }: ExperienceStepProps) {
 	return (
 		<div className="space-y-6">
 			<div className="text-center">
-				<h1 className="text-2xl font-bold">Your current level</h1>
-				<p className="text-muted-foreground mt-2">
-					This helps us tailor recommendations from day one.
-				</p>
+				<h1 className="text-2xl font-bold">{t("title")}</h1>
+				<p className="text-muted-foreground mt-2">{t("description")}</p>
 			</div>
 
 			<Card>
 				<CardHeader>
-					<CardTitle>Experience Level</CardTitle>
-					<CardDescription>Pick the closest match.</CardDescription>
+					<CardTitle>{t("card.title")}</CardTitle>
+					<CardDescription>{t("card.description")}</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-3">
 					{EXPERIENCE_LEVELS.map((level) => (
@@ -73,8 +65,10 @@ export function ExperienceStep({ data, onNext, onBack }: ExperienceStepProps) {
 							}`}
 							onClick={() => setExperienceLevel(level.value)}
 						>
-							<div className="font-medium">{level.label}</div>
-							<div className="text-sm text-muted-foreground">{level.description}</div>
+							<div className="font-medium">{t(`levels.${level.value}.label`)}</div>
+							<div className="text-sm text-muted-foreground">
+								{t(`levels.${level.value}.description`)}
+							</div>
 						</button>
 					))}
 				</CardContent>
@@ -82,9 +76,9 @@ export function ExperienceStep({ data, onNext, onBack }: ExperienceStepProps) {
 
 			<div className="flex justify-between">
 				<Button variant="outline" onClick={onBack}>
-					Back
+					{t("actions.back")}
 				</Button>
-				<Button onClick={handleNext}>Continue</Button>
+				<Button onClick={handleNext}>{t("actions.continue")}</Button>
 			</div>
 		</div>
 	);

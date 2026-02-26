@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -38,6 +39,7 @@ const LEARNING_GOALS = [
 ];
 
 export function GoalsStep({ data, onNext, onBack }: GoalsStepProps) {
+	const t = useTranslations("onboarding.goals");
 	const [selectedGoals, setSelectedGoals] = useState<string[]>(data.learningGoals || []);
 
 	const toggleGoal = (goal: string) => {
@@ -55,18 +57,14 @@ export function GoalsStep({ data, onNext, onBack }: GoalsStepProps) {
 	return (
 		<div className="space-y-6">
 			<div className="text-center">
-				<h1 className="text-2xl font-bold">Your Learning Goals</h1>
-				<p className="text-muted-foreground mt-2">
-					What do you hope to achieve through learning on Superteam Academy?
-				</p>
+				<h1 className="text-2xl font-bold">{t("title")}</h1>
+				<p className="text-muted-foreground mt-2">{t("description")}</p>
 			</div>
 
 			<Card>
 				<CardHeader>
-					<CardTitle>Learning Goals</CardTitle>
-					<CardDescription>
-						What are your main objectives? Select all that apply.
-					</CardDescription>
+					<CardTitle>{t("card.title")}</CardTitle>
+					<CardDescription>{t("card.description")}</CardDescription>
 				</CardHeader>
 				<CardContent>
 					<div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -81,23 +79,21 @@ export function GoalsStep({ data, onNext, onBack }: GoalsStepProps) {
 								}`}
 								onClick={() => toggleGoal(goal)}
 							>
-								<div className="font-medium capitalize">
-									{goal.replace("-", " ")}
-								</div>
+								<div className="font-medium">{t(`options.${goal}`)}</div>
 							</button>
 						))}
 					</div>
 					<p className="text-xs text-muted-foreground mt-2">
-						Selected: {selectedGoals.length} goals
+						{t("selected", { count: selectedGoals.length })}
 					</p>
 				</CardContent>
 			</Card>
 
 			<div className="flex justify-between">
 				<Button variant="outline" onClick={onBack}>
-					Back
+					{t("actions.back")}
 				</Button>
-				<Button onClick={handleNext}>Continue</Button>
+				<Button onClick={handleNext}>{t("actions.continue")}</Button>
 			</div>
 		</div>
 	);

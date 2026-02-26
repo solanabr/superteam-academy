@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useTranslations } from "next-intl";
 
 interface OnboardingData {
 	username?: string;
@@ -31,6 +32,7 @@ interface ProfileDetailsStepProps {
 const maxBioLength = 500;
 
 export function ProfileDetailsStep({ data, onNext, onBack }: ProfileDetailsStepProps) {
+	const t = useTranslations("onboarding.profileDetails");
 	const [profile, setProfile] = useState({
 		bio: data.bio || "",
 		location: data.location || "",
@@ -44,21 +46,19 @@ export function ProfileDetailsStep({ data, onNext, onBack }: ProfileDetailsStepP
 	return (
 		<div className="space-y-6">
 			<div className="text-center">
-				<h1 className="text-2xl font-bold">Profile details</h1>
-				<p className="text-muted-foreground mt-2">
-					Add optional details so others can find and connect with you.
-				</p>
+				<h1 className="text-2xl font-bold">{t("title")}</h1>
+				<p className="text-muted-foreground mt-2">{t("description")}</p>
 			</div>
 
 			<Card>
 				<CardHeader>
-					<CardTitle>Public Details</CardTitle>
-					<CardDescription>These help your profile stand out.</CardDescription>
+					<CardTitle>{t("card.title")}</CardTitle>
+					<CardDescription>{t("card.description")}</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-4">
 					<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 						<div className="space-y-2">
-							<Label htmlFor="location">Location</Label>
+							<Label htmlFor="location">{t("fields.location.label")}</Label>
 							<Input
 								id="location"
 								value={profile.location}
@@ -68,35 +68,37 @@ export function ProfileDetailsStep({ data, onNext, onBack }: ProfileDetailsStepP
 										location: event.target.value,
 									}))
 								}
-								placeholder="City, Country"
+								placeholder={t("fields.location.placeholder")}
 							/>
 						</div>
 						<div className="space-y-2">
-							<Label htmlFor="website">Website/Portfolio</Label>
+							<Label htmlFor="website">{t("fields.website.label")}</Label>
 							<Input
 								id="website"
 								value={profile.website}
 								onChange={(event) =>
 									setProfile((prev) => ({ ...prev, website: event.target.value }))
 								}
-								placeholder="https://your-website.com"
+								placeholder={t("fields.website.placeholder")}
 							/>
 						</div>
 					</div>
 
 					<div className="space-y-2">
-						<Label htmlFor="bio">Bio</Label>
+						<Label htmlFor="bio">{t("fields.bio.label")}</Label>
 						<Textarea
 							id="bio"
 							value={profile.bio}
 							onChange={(event) =>
 								setProfile((prev) => ({ ...prev, bio: event.target.value }))
 							}
-							placeholder="Tell us about your interests and what you're building..."
+							placeholder={t("fields.bio.placeholder")}
 							rows={3}
 						/>
 						<p className="text-xs text-muted-foreground">
-							{Math.max(0, maxBioLength - profile.bio.length)} characters remaining
+							{t("fields.bio.remaining", {
+								count: Math.max(0, maxBioLength - profile.bio.length),
+							})}
 						</p>
 					</div>
 				</CardContent>
@@ -104,9 +106,9 @@ export function ProfileDetailsStep({ data, onNext, onBack }: ProfileDetailsStepP
 
 			<div className="flex justify-between">
 				<Button variant="outline" onClick={onBack}>
-					Back
+					{t("actions.back")}
 				</Button>
-				<Button onClick={handleNext}>Continue</Button>
+				<Button onClick={handleNext}>{t("actions.continue")}</Button>
 			</div>
 		</div>
 	);

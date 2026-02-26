@@ -2842,6 +2842,231 @@
 		"backToOptions": "Back to sign in options",
 		"termsNotice": "By continuing, you agree to our Terms of Service and Privacy Policy."
 	},
+	"onboarding": {
+		"steps": {
+			"welcome": "Boas-vindas",
+			"profile": "Perfil básico",
+			"profile-details": "Detalhes do perfil",
+			"topics": "Tópicos",
+			"time": "Tempo",
+			"experience": "Experiência",
+			"goals": "Objetivos",
+			"complete": "Finalizar"
+		},
+		"progress": {
+			"ariaLabel": "Progresso do onboarding: etapa {current} de {total}"
+		},
+		"welcome": {
+			"title": "Bem-vindo ao Superteam Academy! 🎉",
+			"description": "Vamos configurar seu perfil para aproveitar ao máximo sua jornada de aprendizado.",
+			"usernameCard": {
+				"title": "Escolha seu nome de usuário",
+				"description": "Este será seu identificador único na plataforma. Escolha algo memorável!",
+				"label": "Nome de usuário",
+				"placeholder": "seu-usuario",
+				"help": "3-30 caracteres. Apenas letras, números, hífens e sublinhados.",
+				"taken": "Este nome de usuário já está em uso.",
+				"available": "Nome de usuário disponível!"
+			},
+			"suggestions": {
+				"loading": "Carregando sugestões...",
+				"title": "Sugestões:"
+			},
+			"actions": {
+				"continue": "Continuar"
+			}
+		},
+		"profile": {
+			"title": "Perfil básico",
+			"description": "Comece com suas informações principais de identidade.",
+			"card": {
+				"title": "Sobre você",
+				"description": "Um perfil curto ajuda a personalizar sua experiência na Academy."
+			},
+			"fields": {
+				"name": {
+					"label": "Nome completo",
+					"placeholder": "Seu nome completo"
+				},
+				"title": {
+					"label": "Título profissional",
+					"placeholder": "Engenheiro de software, estudante, etc."
+				},
+				"company": {
+					"label": "Empresa/Organização",
+					"placeholder": "Onde você trabalha ou estuda?"
+				}
+			},
+			"actions": {
+				"back": "Voltar",
+				"continue": "Continuar"
+			}
+		},
+		"profileDetails": {
+			"title": "Detalhes do perfil",
+			"description": "Adicione detalhes opcionais para que outras pessoas possam encontrar e se conectar com você.",
+			"card": {
+				"title": "Detalhes públicos",
+				"description": "Eles ajudam seu perfil a se destacar."
+			},
+			"fields": {
+				"location": {
+					"label": "Localização",
+					"placeholder": "Cidade, País"
+				},
+				"website": {
+					"label": "Site/Portfólio",
+					"placeholder": "https://seu-site.com"
+				},
+				"bio": {
+					"label": "Bio",
+					"placeholder": "Conte sobre seus interesses e o que você está construindo...",
+					"remaining": "{count} caracteres restantes"
+				}
+			},
+			"actions": {
+				"back": "Voltar",
+				"continue": "Continuar"
+			}
+		},
+		"preferences": {
+			"title": "Tópicos que importam para você",
+			"description": "Escolha as áreas que você quer explorar primeiro.",
+			"card": {
+				"title": "Tópicos de interesse",
+				"description": "Selecione todos os que se aplicam."
+			},
+			"selected": "Selecionados: {count} tópicos",
+			"topics": {
+				"web-development": "Desenvolvimento web",
+				"blockchain": "Blockchain",
+				"smart-contracts": "Contratos inteligentes",
+				"defi": "DeFi",
+				"nft": "NFT",
+				"cryptography": "Criptografia",
+				"data-science": "Ciência de dados",
+				"machine-learning": "Aprendizado de máquina",
+				"mobile-development": "Desenvolvimento mobile",
+				"game-development": "Desenvolvimento de jogos",
+				"devops": "DevOps",
+				"security": "Segurança",
+				"ai": "IA",
+				"cloud-computing": "Computação em nuvem",
+				"databases": "Bancos de dados",
+				"api-development": "Desenvolvimento de APIs"
+			},
+			"actions": {
+				"back": "Voltar",
+				"continue": "Continuar"
+			}
+		},
+		"timeCommitment": {
+			"title": "Seu compromisso semanal",
+			"description": "Quanto tempo você pode dedicar regularmente ao aprendizado?",
+			"card": {
+				"title": "Compromisso de tempo",
+				"description": "Escolha uma opção."
+			},
+			"options": {
+				"casual": {
+					"label": "Casual (1-2 horas/semana)",
+					"description": "Ritmo leve de aprendizado"
+				},
+				"regular": {
+					"label": "Regular (3-5 horas/semana)",
+					"description": "Compromisso moderado"
+				},
+				"intensive": {
+					"label": "Intensivo (6+ horas/semana)",
+					"description": "Compromisso alto"
+				}
+			},
+			"actions": {
+				"back": "Voltar",
+				"continue": "Continuar"
+			}
+		},
+		"experience": {
+			"title": "Seu nível atual",
+			"description": "Isso nos ajuda a personalizar recomendações desde o primeiro dia.",
+			"card": {
+				"title": "Nível de experiência",
+				"description": "Escolha a opção mais próxima."
+			},
+			"levels": {
+				"beginner": {
+					"label": "Iniciante",
+					"description": "Novo em programação/desenvolvimento"
+				},
+				"intermediate": {
+					"label": "Intermediário",
+					"description": "Alguma experiência, construindo projetos"
+				},
+				"advanced": {
+					"label": "Avançado",
+					"description": "Desenvolvedor experiente, projetos complexos"
+				},
+				"expert": {
+					"label": "Especialista",
+					"description": "Nível sênior, mentorando outras pessoas"
+				}
+			},
+			"actions": {
+				"back": "Voltar",
+				"continue": "Continuar"
+			}
+		},
+		"goals": {
+			"title": "Seus objetivos de aprendizado",
+			"description": "O que você espera alcançar aprendendo no Superteam Academy?",
+			"card": {
+				"title": "Objetivos de aprendizado",
+				"description": "Quais são seus principais objetivos? Selecione todos os que se aplicam."
+			},
+			"selected": "Selecionados: {count} objetivos",
+			"options": {
+				"career-change": "Mudança de carreira",
+				"skill-up": "Evoluir habilidades",
+				"certification": "Certificação",
+				"personal-growth": "Crescimento pessoal",
+				"entrepreneurship": "Empreendedorismo",
+				"freelancing": "Freelancing",
+				"job-promotion": "Promoção no trabalho",
+				"side-project": "Projeto paralelo",
+				"teaching": "Ensino",
+				"community-building": "Construção de comunidade"
+			},
+			"actions": {
+				"back": "Voltar",
+				"continue": "Continuar"
+			}
+		},
+		"complete": {
+			"title": "Tudo pronto. O que vem agora?",
+			"description": "Veja o que você pode fazer para começar:",
+			"steps": {
+				"exploreCourses": {
+					"title": "Explore cursos",
+					"description": "Navegue por nossa coleção curada de cursos de blockchain e desenvolvimento web."
+				},
+				"startLearning": {
+					"title": "Comece a aprender",
+					"description": "Inscreva-se no seu primeiro curso e comece a ganhar XP e conquistas."
+				},
+				"connectAndShare": {
+					"title": "Conecte-se e compartilhe",
+					"description": "Participe da comunidade, compartilhe seu progresso e aprenda com outras pessoas."
+				}
+			},
+			"cta": {
+				"title": "Pronto para lançar sua jornada de aprendizado?",
+				"description": "Seu painel personalizado está te esperando!"
+			},
+			"actions": {
+				"getStarted": "Começar"
+			}
+		}
+	},
 	"footer": {
 		"description": "Master Solana development through interactive courses and earn verifiable on-chain credentials.",
 		"learn": "Learn",

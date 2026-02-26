@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -25,13 +26,10 @@ interface TimeCommitmentStepProps {
 	onComplete?: () => void;
 }
 
-const TIME_COMMITMENTS = [
-	{ value: "casual", label: "Casual (1-2 hours/week)", description: "Light learning pace" },
-	{ value: "regular", label: "Regular (3-5 hours/week)", description: "Moderate commitment" },
-	{ value: "intensive", label: "Intensive (6+ hours/week)", description: "High commitment" },
-];
+const TIME_COMMITMENTS = [{ value: "casual" }, { value: "regular" }, { value: "intensive" }];
 
 export function TimeCommitmentStep({ data, onNext, onBack }: TimeCommitmentStepProps) {
+	const t = useTranslations("onboarding.timeCommitment");
 	const [timeCommitment, setTimeCommitment] = useState(data.timeCommitment || "");
 
 	const handleNext = () => {
@@ -41,16 +39,14 @@ export function TimeCommitmentStep({ data, onNext, onBack }: TimeCommitmentStepP
 	return (
 		<div className="space-y-6">
 			<div className="text-center">
-				<h1 className="text-2xl font-bold">Your weekly commitment</h1>
-				<p className="text-muted-foreground mt-2">
-					How much time can you regularly dedicate to learning?
-				</p>
+				<h1 className="text-2xl font-bold">{t("title")}</h1>
+				<p className="text-muted-foreground mt-2">{t("description")}</p>
 			</div>
 
 			<Card>
 				<CardHeader>
-					<CardTitle>Time Commitment</CardTitle>
-					<CardDescription>Choose one option.</CardDescription>
+					<CardTitle>{t("card.title")}</CardTitle>
+					<CardDescription>{t("card.description")}</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-3">
 					{TIME_COMMITMENTS.map((commitment) => (
@@ -64,9 +60,11 @@ export function TimeCommitmentStep({ data, onNext, onBack }: TimeCommitmentStepP
 							}`}
 							onClick={() => setTimeCommitment(commitment.value)}
 						>
-							<div className="font-medium">{commitment.label}</div>
+							<div className="font-medium">
+								{t(`options.${commitment.value}.label`)}
+							</div>
 							<div className="text-sm text-muted-foreground">
-								{commitment.description}
+								{t(`options.${commitment.value}.description`)}
 							</div>
 						</button>
 					))}
@@ -75,9 +73,9 @@ export function TimeCommitmentStep({ data, onNext, onBack }: TimeCommitmentStepP
 
 			<div className="flex justify-between">
 				<Button variant="outline" onClick={onBack}>
-					Back
+					{t("actions.back")}
 				</Button>
-				<Button onClick={handleNext}>Continue</Button>
+				<Button onClick={handleNext}>{t("actions.continue")}</Button>
 			</div>
 		</div>
 	);
