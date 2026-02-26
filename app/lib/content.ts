@@ -103,3 +103,68 @@ export async function getCertificateById(
 // ---------------------------------------------------------------------------
 
 export const contentSource = isSanityConfigured ? 'sanity' : 'mock';
+
+
+// ---------------------------------------------------------------------------
+// Featured Courses (for landing page — returns i18n-aware shape)
+// ---------------------------------------------------------------------------
+
+interface FeaturedCourse {
+  slug: string;
+  title: Record<string, string>;
+  level: string;
+  xp: number;
+  lessons: number;
+  track: string;
+  color: string;
+  students: number;
+  rating: number;
+}
+
+const RATING_MAP: Record<string, number> = {
+  'intro-solana': 4.9,
+  'anchor-basics': 4.8,
+  'defi-solana': 4.7,
+  'nft-solana': 4.6,
+  'token-extensions': 4.5,
+};
+
+/**
+ * Returns featured courses from Sanity CMS with i18n titles.
+ * Falls back to null if CMS is not configured or data is missing.
+ */
+export async function getFeaturedCourses(): Promise<FeaturedCourse[] | null> {
+  if (!isSanityConfigured) return null;
+
+  const raw = await sanityFetch<Array<{
+    slug: string;
+    title: string;
+    title_ptBR?: string;
+    title_en?: string;
+    title_es?: string;
+    level: string;
+    xp_reward: number;
+    lesson_count: number;
+    track: string;
+    thumbnail_color?: string;
+    enrollments?: number;
+  }>>(QUERIES.courses);
+
+  if (!raw || raw.length === 0) return null;
+
+  return raw.slice(0, 3).map((c) => ({
+    slug: c.slug,
+    title: {
+      'pt-BR': c.title_ptBR || c.title,
+      en: c.title_en || c.title,
+      es: c.title_es || c.title,
+    },
+    level: c.level,
+    xp: c.xp_reward,
+    lessons: c.lesson_count,
+    track: c.track,
+    color: c.thumbnail_color || 'from-purple-600 to-indigo-600',
+    students: c.enrollments || 0,
+    rating: RATING_MAP[c.slug] ?? 4.5,
+  }));
+}

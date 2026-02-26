@@ -18,7 +18,7 @@ const CLARITY_ID = process.env.NEXT_PUBLIC_CLARITY_ID;
  *   NEXT_PUBLIC_CLARITY_ID=XXXXXXXXXX
  *
  * Set these in Vercel project settings → Environment Variables.
- * Scripts are loaded with strategy="afterInteractive" to avoid blocking paint.
+ * Scripts are loaded with strategy="lazyOnload" to avoid blocking paint.
  */
 export default function Analytics() {
   useEffect(() => {
@@ -36,9 +36,9 @@ export default function Analytics() {
         <>
           <Script
             src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
-            strategy="afterInteractive"
+            strategy="lazyOnload"
           />
-          <Script id="google-analytics" strategy="afterInteractive">
+          <Script id="google-analytics" strategy="lazyOnload">
             {`
               window.dataLayer = window.dataLayer || [];
               function gtag(){dataLayer.push(arguments);}
@@ -53,7 +53,7 @@ export default function Analytics() {
 
       {/* Microsoft Clarity Heatmaps & Session Recordings */}
       {CLARITY_ID && (
-        <Script id="microsoft-clarity" strategy="afterInteractive">
+        <Script id="microsoft-clarity" strategy="lazyOnload">
           {`
             (function(c,l,a,r,i,t,y){
               c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
@@ -66,7 +66,7 @@ export default function Analytics() {
 
       {/* Hotjar Heatmaps & Session Recordings */}
       {HOTJAR_ID && (
-        <Script id="hotjar" strategy="afterInteractive">
+        <Script id="hotjar" strategy="lazyOnload">
           {`
             (function(h,o,t,j,a,r){
               h.hj=h.hj||function(){(h.hj.q=h.hj.q||[]).push(arguments)};

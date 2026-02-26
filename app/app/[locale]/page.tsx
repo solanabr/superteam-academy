@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { localePath } from '@/lib/paths';
+import { getFeaturedCourses } from '@/lib/content';
 
 const MOCK_COURSES = [
   {
@@ -70,6 +71,9 @@ export default async function LandingPage({
 }) {
   const { locale } = await params;
   const t = await getTranslations('landing');
+
+  // Fetch featured courses from Sanity CMS (falls back to inline data if unavailable)
+  const cmsCourses = await getFeaturedCourses();
   const tc = await getTranslations('courses');
 
   const L = (obj: Record<string, string>) => obj[locale] ?? obj['pt-BR'];
@@ -208,7 +212,7 @@ export default async function LandingPage({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {MOCK_COURSES.map((course) => (
+            {(cmsCourses ?? MOCK_COURSES).map((course) => (
               <div key={course.slug}>
                 <Link href={localePath(locale, `/courses/${course.slug}`)}>
                   <div className="group relative rounded-2xl border border-gray-800 bg-gray-900 overflow-hidden hover:border-gray-700 transition-all hover:scale-[1.02] hover:shadow-xl hover:shadow-gray-900/50">

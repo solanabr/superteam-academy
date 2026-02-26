@@ -21,7 +21,7 @@ export default function LazyWalletProvider({ children }: { children: React.React
     const load = () => setReady(true);
     if ('requestIdleCallback' in window) {
       const id = (window as Window & { requestIdleCallback: (cb: () => void, opts?: object) => number })
-        .requestIdleCallback(load, { timeout: 2000 });
+        .requestIdleCallback(load, { timeout: 4000 });
       return () => (window as Window & { cancelIdleCallback: (id: number) => void }).cancelIdleCallback(id);
     } else {
       // Fallback: small delay so LCP/FCP aren't blocked
