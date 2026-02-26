@@ -1,7 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { Zap, Twitter, Github, MessageCircle, ExternalLink } from "lucide-react";
+import {
+  Zap,
+  Twitter,
+  Github,
+  MessageCircle,
+  ExternalLink,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -19,18 +25,42 @@ const footerLinks: Record<string, FooterLink[]> = {
     { label: "Certificates", href: "/certificates" },
   ],
   Community: [
-    { label: "Discord", href: "https://discord.gg/superteambrasil", external: true },
-    { label: "Twitter", href: "https://twitter.com/SuperteamBR", external: true },
-    { label: "GitHub", href: "https://github.com/solanabr/superteam-academy", external: true },
+    {
+      label: "Discord",
+      href: "https://discord.gg/superteambrasil",
+      external: true,
+    },
+    {
+      label: "Twitter",
+      href: "https://twitter.com/SuperteamBR",
+      external: true,
+    },
+    {
+      label: "GitHub",
+      href: "https://github.com/solanabr/superteam-academy",
+      external: true,
+    },
     { label: "Forum", href: "/community" },
   ],
   Resources: [
     { label: "Admin", href: "/admin" },
     { label: "Course Creator (CMS)", href: "/studio" },
     { label: "Documentation", href: "/docs" },
-    { label: "Solana Cookbook", href: "https://solanacookbook.com", external: true },
-    { label: "Anchor Docs", href: "https://www.anchor-lang.com", external: true },
-    { label: "Metaplex Docs", href: "https://developers.metaplex.com", external: true },
+    {
+      label: "Solana Cookbook",
+      href: "https://solanacookbook.com",
+      external: true,
+    },
+    {
+      label: "Anchor Docs",
+      href: "https://www.anchor-lang.com",
+      external: true,
+    },
+    {
+      label: "Metaplex Docs",
+      href: "https://developers.metaplex.com",
+      external: true,
+    },
   ],
 };
 
@@ -54,8 +84,9 @@ export function Footer() {
               </span>
             </Link>
             <p className="text-sm text-muted-foreground max-w-xs mb-6">
-              The premier Solana learning platform for Latin American developers.
-              Build real dApps, earn on-chain credentials, and join the community.
+              The premier Solana learning platform for Latin American
+              developers. Build real dApps, earn on-chain credentials, and join
+              the community.
             </p>
 
             {/* Social Links */}
@@ -90,7 +121,9 @@ export function Footer() {
           {/* Links */}
           {Object.entries(footerLinks).map(([category, links]) => (
             <div key={category}>
-              <h3 className="font-semibold text-sm text-foreground mb-4">{category}</h3>
+              <h3 className="font-semibold text-sm text-foreground mb-4">
+                {category}
+              </h3>
               <ul className="space-y-2.5">
                 {links.map((link) => (
                   <li key={link.label}>
@@ -114,7 +147,9 @@ export function Footer() {
         <div className="mt-12 pt-8 border-t border-border/50">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div className="max-w-sm">
-              <h3 className="font-semibold text-sm text-foreground mb-1">Stay Updated</h3>
+              <h3 className="font-semibold text-sm text-foreground mb-1">
+                Stay Updated
+              </h3>
               <p className="text-xs text-muted-foreground">
                 Get the latest courses, Solana news, and platform updates.
               </p>
@@ -137,12 +172,18 @@ export function Footer() {
 
         {/* Bottom */}
         <div className="mt-8 pt-6 border-t border-border/50 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
-          <p>© 2024 Superteam Brazil. All rights reserved. MIT License.</p>
+          <p>© 2026 Superteam Brazil. All rights reserved. MIT License.</p>
           <div className="flex items-center gap-4">
-            <Link href="/privacy" className="hover:text-foreground transition-colors">
+            <Link
+              href="/privacy"
+              className="hover:text-foreground transition-colors"
+            >
               Privacy
             </Link>
-            <Link href="/terms" className="hover:text-foreground transition-colors">
+            <Link
+              href="/terms"
+              className="hover:text-foreground transition-colors"
+            >
               Terms
             </Link>
             <span className="flex items-center gap-1">
