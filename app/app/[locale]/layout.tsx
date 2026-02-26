@@ -32,13 +32,30 @@ const META: Record<string, { title: string; description: string; ogDesc: string 
   },
 };
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://superteam-academy.vercel.app';
+
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
   const m = META[locale] ?? META['pt-BR'];
   return {
     title: m.title,
     description: m.description,
-    openGraph: { title: 'Superteam Academy', description: m.ogDesc, type: 'website' },
+    metadataBase: new URL(SITE_URL),
+    openGraph: {
+      title: 'Superteam Academy',
+      description: m.ogDesc,
+      type: 'website',
+      url: `${SITE_URL}/${locale}`,
+      siteName: 'Superteam Academy',
+      images: [{ url: '/icon-512.png', width: 512, height: 512, alt: 'Superteam Academy' }],
+      locale: locale === 'pt-BR' ? 'pt_BR' : locale === 'es' ? 'es_LA' : 'en_US',
+    },
+    twitter: {
+      card: 'summary',
+      title: m.title,
+      description: m.ogDesc,
+      images: ['/icon-512.png'],
+    },
     manifest: '/manifest.json',
     appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: 'ST Academy' },
     other: { 'mobile-web-app-capable': 'yes' },
