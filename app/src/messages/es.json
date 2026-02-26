@@ -38,7 +38,10 @@
         "active_course": "Curso Activo",
         "up_next": "A continuación",
         "trophy_case": "Vitrina de Trofeos",
-        "unlocked": "{count}/{total} Desbloqueados"
+        "unlocked": "{count}/{total} Desbloqueados",
+        "continue_learning": "Continuar Aprendiendo",
+        "no_enrollments": "Aún no te has inscrito en ningún curso.",
+        "recommended_courses": "Recomendado para Ti"
     },
     "settings": {
         "title": "Ajustes",
@@ -60,9 +63,15 @@
         "linked_accounts": {
             "google": "Cuenta de Google",
             "github": "Cuenta de GitHub",
-            "email": "Cuenta de Correo",
+            "email": "Cuenta de Email",
             "linked": "Vinculado",
-            "tooltip": "Tu dirección de billetera está vinculada a esta cuenta de {provider}. Esto no se puede cambiar."
+            "connected": "Conectado",
+            "tooltip": "Tu dirección de billetera está vinculada a este {provider}. Esto no se puede cambiar."
+        },
+        "roles": {
+            "teacher": "Profesor",
+            "student": "Estudiante",
+            "admin": "Administrador"
         },
         "delete_account": "Eliminar cuenta",
         "delete_account_warning": "Advertencia: Esta acción es irreversible.",
@@ -73,7 +82,34 @@
         "sol_balance": "Saldo SOL",
         "exp_balance": "Saldo de Tokens EXP",
         "devnet_label": "Devnet",
-        "airdrop_tooltip": "El SOL de Devnet se usa para pagar las tarifas de transacción. Si tu saldo es bajo, puedes solicitar más en el faucet oficial."
+        "airdrop_tooltip": "El SOL de Devnet se usa para pagar las tarifas de transacción. Si tu saldo es bajo, puedes solicitar más en el faucet oficial.",
+        "tabs": {
+            "account": "Ajustes de Cuenta",
+            "profile": "Perfil Público",
+            "preferences": "Preferencias"
+        },
+        "preferences": {
+            "title": "Preferencias",
+            "notifications": "Notificaciones",
+            "notify_updates": "Actualizaciones de la Plataforma",
+            "notify_updates_desc": "Recibe noticias sobre nuevos cursos y funciones.",
+            "notify_activity": "Actividad del Curso",
+            "notify_activity_desc": "Recibe actualizaciones sobre tu progreso y estado de certificados.",
+            "privacy": "Privacidad",
+            "is_public": "Perfil Público",
+            "is_public_desc": "Haz que tu perfil sea buscable en la tabla de clasificación y visible para otros.",
+            "data_export": "Exportar Datos",
+            "data_export_desc": "Descarga todos tus datos de la academia (perfil, inscripciones, certificados, EXP) en formato JSON.",
+            "export_button": "Descargar Datos"
+        },
+        "referral": {
+            "title": "Programa de Referidos",
+            "desc": "Comparte tu enlace de referido con amigos y gana EXP de bonificación cuando se unan y completen su primer curso.",
+            "your_link": "Tu Enlace de Referido",
+            "stats": "Estadísticas de Referidos",
+            "friends_joined": "Amigos Referidos",
+            "copied": "¡Enlace Copiado!"
+        }
     },
     "courses": {
         "title": "Explorar Currículo",
@@ -89,6 +125,10 @@
         "loading": "Cargando cursos...",
         "none_available": "No hay cursos disponibles aún.",
         "none_found": "No se encontraron cursos para {filter}.",
+        "no_search_results": "No hay cursos que coincidan con \"{query}\".",
+        "results_count": "{count} curso encontrado",
+        "results_count_plural": "{count} cursos encontrados",
+        "search_courses": "Buscar cursos...",
         "duration_tbd": "TBD",
         "beginner": "Principiante",
         "intermediate": "Intermedio",
@@ -99,7 +139,8 @@
         "module_label": "Módulo {index}",
         "no_modules": "Aún no hay módulos. Agrega módulos y lecciones en Course Studio.",
         "curriculum": "Currículo",
-        "all_courses": "Todos los cursos"
+        "all_courses": "Todos los cursos",
+        "enrolled_progress": "{pct}% Completado"
     },
     "achievements": {
         "title": "Logros",
@@ -217,7 +258,8 @@
         "title": "Tabla de clasificación",
         "subtitle": "Mejores estudiantes por XP",
         "col_user": "Usuario",
-        "col_level": "Nivel"
+        "col_level": "Nivel",
+        "all_courses": "Todos los Cursos"
     },
     "profile": {
         "not_found_title": "Perfil no encontrado",

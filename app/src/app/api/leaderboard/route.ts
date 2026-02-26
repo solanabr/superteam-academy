@@ -12,10 +12,11 @@ export async function GET(request: NextRequest) {
             : "all-time";
 
         const limit = parseInt(searchParams.get("limit") || "50", 10);
+        const courseId = searchParams.get("courseId") || undefined;
 
         const { getCached } = await import("@/lib/cache");
-        const leaderboard = await getCached(`leaderboard:${timeframe}:${limit}`, async () => {
-            return await learningProgressService.getLeaderboard({ limit, timeframe });
+        const leaderboard = await getCached(`leaderboard:${timeframe}:${courseId || 'all'}:${limit}`, async () => {
+            return await learningProgressService.getLeaderboard({ limit, timeframe, courseId });
         }, { ttl: 60 });
 
         return NextResponse.json(leaderboard);

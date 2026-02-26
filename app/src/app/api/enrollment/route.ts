@@ -32,9 +32,15 @@ export async function GET(request: NextRequest) {
       const identifier = process.env.NEXT_PUBLIC_USE_ONCHAIN === "true" ? (wallet as string) : user.id;
 
       const { getCached } = await import("@/lib/cache");
-      const progress = await getCached(`user:${wallet}:enrollment:${courseId}`, async () => {
-        return await service.getEnrollmentProgress(identifier, courseId);
-      }, { ttl: 60 });
+      const [progress, credential] = await Promise.all([
+        getCached(`user:${wallet}:enrollment:${courseId}`, async () => {
+          return await service.getEnrollmentProgress(identifier, courseId);
+        }, { ttl: 60 }),
+        prisma.credential.findFirst({
+          where: { userId: user.id, trackId: courseId },
+          select: { mintAddress: true }
+        })
+      ]);
 
       if (!progress) {
         if (isPolling) return NextResponse.json({ status: "pending" }, { status: 202 });
@@ -48,6 +54,7 @@ export async function GET(request: NextRequest) {
         bonusClaimed: progress.bonusClaimed,
         lessonFlags: Array.from(progress.lessonFlags),
         onChainActive: progress.onChainActive,
+        mintAddress: credential?.mintAddress ?? null,
       });
     } else {
       // List all enrollments with calculated progress - Wrapped in Cache

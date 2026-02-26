@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
+import { toPng } from "html-to-image";
 
-import { Loader2 } from "lucide-react";
+import { Loader2, Download, ExternalLink, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTranslations } from "next-intl";
 
@@ -24,9 +25,11 @@ export default function CertificatePage() {
     const params = useParams();
     const id = Array.isArray(params?.id) ? params.id[0] : params?.id;
     const t = useTranslations("certificates");
+    const certificateRef = useRef<HTMLDivElement>(null);
 
     const [credential, setCredential] = useState<CredentialDetail | null>(null);
     const [loading, setLoading] = useState(true);
+    const [downloading, setDownloading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
@@ -62,6 +65,29 @@ export default function CertificatePage() {
         window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}`, "_blank");
     };
 
+    const handleDownload = async () => {
+        if (!certificateRef.current) return;
+        setDownloading(true);
+        try {
+            const dataUrl = await toPng(certificateRef.current, {
+                quality: 0.95,
+                pixelRatio: 2,
+                backgroundColor: "#0A0A0B",
+            });
+            const link = document.createElement("a");
+            link.download = `superteam-academy-${credential?.trackName?.toLowerCase()}-certificate.png`;
+            link.href = dataUrl;
+            link.click();
+        } catch (err) {
+            console.error("Failed to download certificate:", err);
+        } finally {
+            setDownloading(false);
+        }
+    };
+
+    const explorerAddress = credential?.mintAddress || credential?.id;
+    const isValidExplorerLink = !!explorerAddress && explorerAddress.length > 20; // Basic check for Solana addr
+
     return (
         <main className="min-h-screen bg-void pt-4 pb-12">
             <div className="max-w-4xl mx-auto px-6 py-8 md:px-10 md:py-10 flex flex-col gap-10">
@@ -89,7 +115,7 @@ export default function CertificatePage() {
                         </div>
 
                         {/* Certificate Render */}
-                        <div className="glass-panel rounded-2xl overflow-hidden border border-white/10 relative p-1 group">
+                        <div ref={certificateRef} className="glass-panel rounded-2xl overflow-hidden border border-white/10 relative p-1 group">
                             <div className="absolute inset-0 bg-gradient-to-tr from-solana/20 via-transparent to-transparent opacity-50"></div>
                             <div className="relative bg-void/90 rounded-xl overflow-hidden border border-white/5 p-8 md:p-12 min-h-[400px] flex items-center justify-center bg-[url('/grid.svg')] bg-center backdrop-blur-sm">
                                 <div className="absolute inset-0 bg-gradient-to-b from-transparent to-void/80"></div>
@@ -98,7 +124,7 @@ export default function CertificatePage() {
                                     <div className="w-24 h-24 bg-gradient-to-br from-solana to-emerald-900 rounded-full flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(20,241,149,0.3)]">
                                         <span className="material-symbols-outlined text-5xl text-void">verified</span>
                                     </div>
-                                    <h2 className="text-5xl font-serif text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400 mb-6 drop-shadow-sm">
+                                    <h2 className="text-5xl font-serif text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400 mb-6 drop-shadow-sm leading-tight">
                                         Certificate of Completion
                                     </h2>
                                     <p className="text-text-muted mb-8 text-lg">
@@ -129,30 +155,53 @@ export default function CertificatePage() {
                                     <span className="font-mono text-xs text-solana">Metaplex Core</span>
                                 </div>
                                 <div className="pt-2">
-                                    <a href={`https://explorer.solana.com/address/${credential.id}?cluster=devnet`} target="_blank" rel="noreferrer" className="text-solana text-sm hover:underline flex items-center gap-1">
-                                        View on Solana Explorer <span className="material-symbols-outlined text-[14px]">open_in_new</span>
-                                    </a>
+                                    {isValidExplorerLink ? (
+                                        <a href={`https://explorer.solana.com/address/${explorerAddress}?cluster=devnet`} target="_blank" rel="noreferrer" className="text-solana text-sm hover:underline flex items-center gap-1">
+                                            View on Solana Explorer <ExternalLink size={14} />
+                                        </a>
+                                    ) : (
+                                        <span className="text-text-muted text-xs italic">Syncing with blockchain...</span>
+                                    )}
                                 </div>
                             </div>
 
                             <div className="glass-panel p-6 rounded-xl flex flex-col justify-center gap-4">
-                                <h3 className="font-display font-semibold text-white text-center mb-2">Share Your Achievement</h3>
-                                <Button
-                                    onClick={handleShareTwitter}
-                                    variant="outline"
-                                    className="w-full py-6 bg-[#1DA1F2]/10 text-[#1DA1F2] border-[#1DA1F2]/30 hover:bg-[#1DA1F2]/20 rounded-lg flex items-center justify-center gap-2 font-semibold transition-all"
-                                >
-                                    <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z" /></svg>
-                                    Share on Twitter / X
-                                </Button>
-                                <Button
-                                    onClick={handleShareLinkedIn}
-                                    variant="outline"
-                                    className="w-full py-6 bg-[#0077b5]/10 text-[#0077b5] border-[#0077b5]/30 hover:bg-[#0077b5]/20 rounded-lg flex items-center justify-center gap-2 font-semibold transition-all"
-                                >
-                                    <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" /></svg>
-                                    Share on LinkedIn
-                                </Button>
+                                <div className="flex items-center justify-between mb-2">
+                                    <h3 className="font-display font-semibold text-white">Actions</h3>
+                                    <Button
+                                        onClick={handleDownload}
+                                        disabled={downloading}
+                                        variant="ghost"
+                                        size="sm"
+                                        className="text-solana hover:text-solana hover:bg-solana/10 gap-2 font-mono h-8"
+                                    >
+                                        {downloading ? (
+                                            <Loader2 size={14} className="animate-spin" />
+                                        ) : (
+                                            <Download size={14} />
+                                        )}
+                                        {downloading ? "Generating..." : "Download"}
+                                    </Button>
+                                </div>
+
+                                <div className="flex flex-col gap-3">
+                                    <Button
+                                        onClick={handleShareTwitter}
+                                        variant="outline"
+                                        className="w-full h-12 bg-white/5 border-white/10 hover:border-solana/30 text-white rounded-lg flex items-center justify-center gap-3 font-semibold transition-all group"
+                                    >
+                                        <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z" /></svg>
+                                        Share on Twitter
+                                    </Button>
+                                    <Button
+                                        onClick={handleShareLinkedIn}
+                                        variant="outline"
+                                        className="w-full h-12 bg-white/5 border-white/10 hover:border-solana/30 text-white rounded-lg flex items-center justify-center gap-3 font-semibold transition-all group"
+                                    >
+                                        <Share2 size={18} className="text-[#0077b5]" />
+                                        Share on LinkedIn
+                                    </Button>
+                                </div>
                             </div>
                         </div>
                     </>

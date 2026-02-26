@@ -16,7 +16,8 @@ export type PublicProfile = {
 
 type ProfileState = {
     profiles: Record<string, PublicProfile>;
-    isLoading: boolean;
+    isInitialLoading: boolean;
+    isRefreshing: boolean;
     error: string | null;
 
     fetchProfile: (wallet: string) => Promise<void>;
@@ -27,22 +28,26 @@ type ProfileState = {
 
 const initialState = {
     profiles: {},
-    isLoading: false,
+    isInitialLoading: false,
+    isRefreshing: false,
     error: null,
 };
 
 export const useProfileStore = create<ProfileState>((set, get) => ({
     ...initialState,
 
-    setLoading: (isLoading) => set({ isLoading }),
+    setLoading: (loading) => set({ isInitialLoading: loading }),
 
     fetchProfile: async (wallet) => {
         const state = get();
+        const hasData = !!state.profiles[wallet];
 
-        // If we already have the profile, we're good (or we can background refresh)
-        if (state.profiles[wallet]) return;
-
-        set({ isLoading: true, error: null });
+        // If no data, it's an initial load. If data exists, it's a background refresh.
+        if (hasData) {
+            set({ isRefreshing: true });
+        } else {
+            set({ isInitialLoading: true, error: null });
+        }
 
         try {
             const res = await fetch(`/api/user/${wallet}`);
@@ -57,11 +62,14 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
                 error: null
             }));
         } catch (error) {
-            set({
-                error: error instanceof Error ? error.message : "Failed to fetch profile",
-            });
+            // Only set error if we don't have any data yet
+            if (!hasData) {
+                set({
+                    error: error instanceof Error ? error.message : "Failed to fetch profile",
+                });
+            }
         } finally {
-            set({ isLoading: false });
+            set({ isInitialLoading: false, isRefreshing: false });
         }
     },
 

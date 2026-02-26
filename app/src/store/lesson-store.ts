@@ -1,6 +1,6 @@
-
 import { create } from "zustand";
 import { withFallbackRPC } from "@/lib/solana-connection";
+import { sendGAEvent } from "@/components/analytics/ThirdPartyScripts";
 import { OnChainLearningService } from "@/lib/learning-progress/onchain-impl";
 import { HELIUS_RPC } from "@/lib/solana-connection";
 
@@ -131,6 +131,7 @@ export const useLessonStore = create<LessonState>((set, get) => ({
 
             // Immediately flip the UI (optimistic) — the API already confirmed success
             get().setCompletionOptimistic(courseId, lessonIndex, true);
+            sendGAEvent('complete_lesson', { course_id: courseId, lesson_index: lessonIndex, xp_earned: 100 });
 
             // Sync user progress in the background (fire-and-forget)
             import("@/store/user-store").then(({ useUserStore }) => {

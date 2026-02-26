@@ -2,6 +2,7 @@ import { Footer } from "@/components/layout/Footer";
 import { ScrollJourney } from "@/components/landing/ScrollJourney";
 import { LandingHeaderActions } from "@/components/landing/LandingHeaderActions";
 import { LandingCTA } from "@/components/landing/LandingCTA";
+import { SocialProof } from "@/components/landing/SocialProof";
 import { getTranslations } from "next-intl/server";
 
 export default async function LandingPage() {
@@ -103,6 +104,10 @@ export default async function LandingPage() {
                 </div>
 
                 <ScrollJourney />
+
+                <SocialProof />
+
+                <LandingCTA />
             </main>
             <Footer />
 

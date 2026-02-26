@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { useWallets } from "@privy-io/react-auth/solana";
 import { ACHIEVEMENTS, type Achievement } from "@/lib/achievements";
+import { sendGAEvent } from "@/components/analytics/ThirdPartyScripts";
 import { Loader2, CheckCircle, Unlock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import clsx from "clsx";
@@ -100,6 +101,7 @@ export function AchievementList() {
                     type: "success",
                     message: "🎉 Congrats, continue on your journey soldier!",
                 });
+                sendGAEvent('claim_achievement', { achievement_id: achievement.id, wallet: walletAddress });
                 await fetchProgress();
             } else {
                 // Requirements not met — show friendly message

@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { withFallbackRPC } from "@/lib/solana-connection";
+import { sendGAEvent } from "@/components/analytics/ThirdPartyScripts";
 
 export type EnrollmentProgress = {
   courseId: string;
@@ -8,17 +9,37 @@ export type EnrollmentProgress = {
   completedAt: string | null;
   bonusClaimed: boolean;
   onChainActive?: boolean;
+  mintAddress?: string | null;
+};
+
+export type AllEnrollmentItem = {
+  courseId: string;
+  title: string;
+  slug: string;
+  track: string | null;
+  difficulty: string | null;
+  duration: string | null;
+  completedLessons: number;
+  totalLessons: number;
+  progressPercent: number;
+  completedAt: string | null;
+  bonusClaimed: boolean;
+  updatedAt: string;
 };
 
 type EnrollmentState = {
   // Map of courseId -> enrollment progress
   enrollments: Record<string, EnrollmentProgress>;
+  // All enrollments list (for dashboard / course progress overlays)
+  allEnrollments: AllEnrollmentItem[];
+  isLoadingAll: boolean;
   // Map of courseId -> loading state
   loading: Record<string, boolean>;
   // Map of courseId -> error message
   errors: Record<string, string | null>;
   // Actions
   fetchEnrollment: (walletAddress: string, courseId: string, force?: boolean) => Promise<void>;
+  fetchAllEnrollments: (walletAddress: string, force?: boolean) => Promise<void>;
   enroll: (walletAddress: string, courseId: string, signTx?: (input: { transaction: Uint8Array; wallet: any; chain?: string; options?: { uiOptions?: any } }) => Promise<{ signedTransaction: Uint8Array }>, wallet?: any, uiOptions?: any) => Promise<void>;
   unenroll: (walletAddress: string, courseId: string, signTx?: (input: { transaction: Uint8Array; wallet: any; chain?: string; options?: { uiOptions?: any } }) => Promise<{ signedTransaction: Uint8Array }>, wallet?: any, uiOptions?: any) => Promise<void>;
   finalize: (walletAddress: string, courseId: string, lessonCount: number) => Promise<void>;
@@ -36,6 +57,8 @@ type EnrollmentState = {
 
 export const useEnrollmentStore = create<EnrollmentState>((set, get) => ({
   enrollments: {},
+  allEnrollments: [],
+  isLoadingAll: false,
   loading: {},
   errors: {},
 
@@ -112,6 +135,14 @@ export const useEnrollmentStore = create<EnrollmentState>((set, get) => ({
           data.bonusClaimed = false;
         }
         state.setEnrollment(courseId, data);
+        // Also update allEnrollments entry if it exists, to keep progress in sync
+        set((s) => ({
+          allEnrollments: s.allEnrollments.map((e) =>
+            e.courseId === courseId
+              ? { ...e, completedLessons: data.completedCount ?? e.completedLessons, totalLessons: data.totalLessons ?? e.totalLessons, progressPercent: data.totalLessons > 0 ? Math.round(((data.completedCount ?? 0) / data.totalLessons) * 100) : 0, completedAt: data.completedAt }
+              : e
+          ),
+        }));
       } else if (res.status === 404) {
         // Not enrolled - clear enrollment state
         state.setEnrollment(courseId, null);
@@ -129,6 +160,28 @@ export const useEnrollmentStore = create<EnrollmentState>((set, get) => ({
       // Don't clear enrollment on error - keep existing state
     } finally {
       state.setLoading(courseId, false);
+    }
+  },
+
+  fetchAllEnrollments: async (walletAddress, force = false) => {
+    const state = get();
+    // Skip if already loading or data exists and not forced
+    if (state.isLoadingAll) return;
+    if (!force && state.allEnrollments.length > 0) return;
+
+    set({ isLoadingAll: true });
+    try {
+      const res = await fetch(
+        `/api/enrollment/list?wallet=${encodeURIComponent(walletAddress)}`
+      );
+      if (res.ok) {
+        const data: AllEnrollmentItem[] = await res.json();
+        set({ allEnrollments: data });
+      }
+    } catch (error) {
+      console.error("fetchAllEnrollments error:", error);
+    } finally {
+      set({ isLoadingAll: false });
     }
   },
 
@@ -211,7 +264,10 @@ export const useEnrollmentStore = create<EnrollmentState>((set, get) => ({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ wallet: walletAddress, courseId }),
       })
-        .then(() => get().fetchEnrollment(walletAddress, courseId, true))
+        .then(() => {
+          sendGAEvent('enroll', { course_id: courseId, wallet: walletAddress });
+          get().fetchEnrollment(walletAddress, courseId, true);
+        })
         .catch((e) => console.error("Enrollment DB sync failed:", e));
     } catch (error) {
       state.setError(
@@ -326,6 +382,7 @@ export const useEnrollmentStore = create<EnrollmentState>((set, get) => ({
 
       // Clear loading BEFORE fetchEnrollment so its guard doesn't block the refresh
       state.setLoading(courseId, false);
+      sendGAEvent('graduate', { course_id: courseId, wallet: walletAddress, xp_earned: 500 });
       await get().fetchEnrollment(walletAddress, courseId);
     } catch (error) {
       state.setError(
@@ -443,6 +500,8 @@ export const useEnrollmentStore = create<EnrollmentState>((set, get) => ({
 
   reset: () => set({
     enrollments: {},
+    allEnrollments: [],
+    isLoadingAll: false,
     loading: {},
     errors: {},
   }),

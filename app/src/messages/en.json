@@ -38,7 +38,10 @@
         "active_course": "Active Course",
         "up_next": "Up Next",
         "trophy_case": "Trophy Case",
-        "unlocked": "{count}/{total} Unlocked"
+        "unlocked": "{count}/{total} Unlocked",
+        "continue_learning": "Continue Learning",
+        "no_enrollments": "You haven't enrolled in any courses yet.",
+        "recommended_courses": "Recommended for You"
     },
     "settings": {
         "title": "Settings",
@@ -62,7 +65,13 @@
             "github": "GitHub Account",
             "email": "Email Account",
             "linked": "Linked",
+            "connected": "Connected",
             "tooltip": "Your wallet address is linked to this {provider}. This cannot be changed."
+        },
+        "roles": {
+            "teacher": "Teacher",
+            "student": "Student",
+            "admin": "Admin"
         },
         "delete_account": "Delete Account",
         "delete_account_warning": "Warning: This action is irreversible.",
@@ -75,7 +84,34 @@
         "devnet_label": "Devnet",
         "airdrop_tooltip": "Devnet SOL is used to pay for transaction fees during enrollment and lessons. If your balance is low, you can request more from the official faucet.",
         "request_airdrop_cta": "Request Airdrop",
-        "requesting_airdrop": "Requesting..."
+        "requesting_airdrop": "Requesting...",
+        "tabs": {
+            "account": "Account Settings",
+            "profile": "Public Profile",
+            "preferences": "Preferences"
+        },
+        "preferences": {
+            "title": "Preferences",
+            "notifications": "Notifications",
+            "notify_updates": "Platform Updates",
+            "notify_updates_desc": "Receive news about new courses and features.",
+            "notify_activity": "Course Activity",
+            "notify_activity_desc": "Receive updates about your progress and certificate status.",
+            "privacy": "Privacy",
+            "is_public": "Public Profile",
+            "is_public_desc": "Make your profile searchable on the leaderboard and visible to others.",
+            "data_export": "Data Export",
+            "data_export_desc": "Download all your academy data (profile, enrollments, credentials, XP) in JSON format.",
+            "export_button": "Download Data"
+        },
+        "referral": {
+            "title": "Referral Program",
+            "desc": "Share your referral link with friends and earn bonus EXP when they join and complete their first course.",
+            "your_link": "Your Referral Link",
+            "stats": "Referral Stats",
+            "friends_joined": "Friends Joined",
+            "copied": "Link Copied!"
+        }
     },
     "courses": {
         "title": "Explore Curriculum",
@@ -92,6 +128,10 @@
         "loading": "Loading courses...",
         "none_available": "No courses available yet.",
         "none_found": "No courses found for {filter}.",
+        "no_search_results": "No courses match \"{query}\".",
+        "results_count": "{count} course found",
+        "results_count_plural": "{count} courses found",
+        "search_courses": "Search courses...",
         "duration_tbd": "TBD",
         "beginner": "Beginner",
         "intermediate": "Intermediate",
@@ -102,7 +142,8 @@
         "module_label": "Module {index}",
         "no_modules": "No modules yet. Add modules and lessons in Course Studio.",
         "curriculum": "Curriculum",
-        "all_courses": "All Courses"
+        "all_courses": "All Courses",
+        "enrolled_progress": "{pct}% Complete"
     },
     "achievements": {
         "title": "Achievements",
@@ -220,7 +261,8 @@
         "title": "Leaderboard",
         "subtitle": "Top learners by XP",
         "col_user": "User",
-        "col_level": "Level"
+        "col_level": "Level",
+        "all_courses": "All Courses"
     },
     "profile": {
         "not_found_title": "Profile Not Found",

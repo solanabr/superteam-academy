@@ -10,15 +10,24 @@ import { Button } from "@/components/ui/button";
 import { useTranslations } from "next-intl";
 
 
-export function CredentialList({ walletAddress: propAddress }: { walletAddress?: string }) {
+export function CredentialList({
+    walletAddress: propAddress,
+    initialData
+}: {
+    walletAddress?: string;
+    initialData?: Credential[];
+}) {
     const { user: privyUser } = usePrivy();
     const { wallets } = useWallets();
     const {
-        credentials,
+        credentials: storeCredentials,
         isCredentialsLoading: loading,
         fetchCredentials
     } = useUserStore();
     const t = useTranslations("components");
+
+    // Use initialData if provided, otherwise fallback to store
+    const credentials = initialData ?? storeCredentials;
 
     const linkedAddress =
         privyUser?.wallet?.address ?? privyUser?.linkedAccounts?.find((a) => a.type === "wallet")?.address;
@@ -28,10 +37,11 @@ export function CredentialList({ walletAddress: propAddress }: { walletAddress?:
     const tracks = ["all", "rust", "anchor", "security", "solana"];
 
     useEffect(() => {
-        if (resolvedAddress) {
+        // Only fetch if initialData is NOT provided
+        if (resolvedAddress && !initialData) {
             fetchCredentials(resolvedAddress);
         }
-    }, [resolvedAddress, fetchCredentials]);
+    }, [resolvedAddress, fetchCredentials, initialData]);
 
     if (loading && credentials.length === 0) {
         return <Loader2 className="h-6 w-6 animate-spin text-solana" />;

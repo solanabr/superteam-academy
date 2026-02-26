@@ -142,6 +142,15 @@ export async function PUT(request: NextRequest) {
         preferences: true,
       }
     });
+
+    // Invalidate cache for this user
+    try {
+      const { invalidatePattern } = await import("@/lib/cache");
+      await invalidatePattern(`user:${wallet}*`);
+    } catch (e) {
+      console.error("Cache invalidation failed for user update:", e);
+    }
+
     return NextResponse.json(user);
   } catch (e: any) {
     console.error("PUT /api/user error:", e?.message ?? e);

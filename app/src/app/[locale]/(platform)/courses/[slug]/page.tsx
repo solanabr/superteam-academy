@@ -8,6 +8,7 @@ import { CourseEnrollmentBlock } from "@/components/courses/CourseEnrollmentBloc
 import { CourseCompletion } from "@/components/courses/CourseCompletion";
 import { getTranslations } from "next-intl/server";
 import { ModuleList } from "@/components/courses/ModuleList";
+import { ReviewsSection } from "@/components/courses/ReviewsSection";
 
 
 export default async function CourseDetailPage({
@@ -90,6 +91,8 @@ export default async function CourseDetailPage({
             {t("no_modules")}
           </p>
         )}
+
+        <ReviewsSection />
       </div>
     </main>
   );

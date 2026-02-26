@@ -118,9 +118,10 @@ export function createLearningProgressService(prisma: PrismaClient): LearningPro
     };
   };
 
-  const getLeaderboard = async (options?: { limit?: number; timeframe?: "daily" | "weekly" | "all-time" }): Promise<LeaderboardEntry[]> => {
+  const getLeaderboard = async (options?: { limit?: number; timeframe?: "daily" | "weekly" | "all-time"; courseId?: string }): Promise<LeaderboardEntry[]> => {
     const limit = options?.limit ?? 50;
     const timeframe = options?.timeframe ?? "all-time";
+    const courseId = options?.courseId;
 
     let dateFilter: Date | null = null;
     if (timeframe === "daily") {
@@ -134,11 +135,16 @@ export function createLearningProgressService(prisma: PrismaClient): LearningPro
       dateFilter = d;
     }
 
-    if (dateFilter) {
+    // Base where clause
+    const where: any = {};
+    if (dateFilter) where.createdAt = { gte: dateFilter };
+    if (courseId) where.source = { contains: courseId };
+
+    if (dateFilter || courseId) {
       // Group by userId on XpEvent
       const agg = await prisma.xpEvent.groupBy({
         by: ['userId'],
-        where: { createdAt: { gte: dateFilter } },
+        where,
         _sum: { amount: true },
         orderBy: { _sum: { amount: 'desc' } },
         take: limit,
@@ -475,7 +481,7 @@ export function createLearningProgressService(prisma: PrismaClient): LearningPro
         data: {
           userId,
           amount: xpReward,
-          source: "lesson",
+          source: `lesson:${courseId}`,
         }
       })
     ]);

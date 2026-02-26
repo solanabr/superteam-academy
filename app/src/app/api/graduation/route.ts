@@ -62,8 +62,16 @@ export async function POST(request: NextRequest) {
         ]);
         console.log("[api/graduation] Prisma updated (Completion + 500 XP)");
 
-        // 1. Finalize on-chain (updates enrollment PDA state and distributes XP) & 2. Issue Credential (NFT Minting)
-        // Offload to Inngest for background processing
+        // Final Cache Clear - IMPORTANT: Must happen even in on-chain mode 
+        // because the local Prisma state has changed (completedAt set).
+        try {
+            const { invalidatePattern } = await import("@/lib/cache");
+            await invalidatePattern(`user:${wallet}*`);
+            console.log(`[api/graduation] Cache invalidated for user ${wallet}`);
+        } catch (e) {
+            console.error("[api/graduation] Cache invalidation failed:", e);
+        }
+
         if (process.env.NEXT_PUBLIC_USE_ONCHAIN === "true") {
             const { inngest } = await import("@/lib/inngest/client");
             console.log(`[api/graduation] Dispatching background graduation for user ${wallet}, Course: ${courseId}`);
@@ -84,9 +92,6 @@ export async function POST(request: NextRequest) {
             });
         }
 
-        // Final Cache Clear for Off-chain mode
-        const { invalidatePattern } = await import("@/lib/cache");
-        await invalidatePattern(`user:${wallet}*`);
         return NextResponse.json({ ok: true });
     } catch (e: any) {
         console.error(`[api/graduation] FATAL ERROR: ${e.message}`, e.stack);

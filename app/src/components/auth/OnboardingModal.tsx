@@ -1,210 +1,189 @@
 "use client";
 
-import { useState } from "react";
-import { useUserStore } from "@/store/user-store";
+import { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { useTranslations } from "next-intl";
+import { Progress } from "@/components/ui/progress";
+import { CheckCircle2, ChevronRight, GraduationCap, Code2, Rocket } from "lucide-react";
+import { Link } from "@/i18n/routing";
 
-type OnboardingModalProps = {
-    walletAddress: string;
-    onComplete: () => void;
-};
+interface Question {
+    id: string;
+    text: string;
+    field: string;
+    options: { label: string; value: number }[];
+}
 
-const ROLES = [
+const ASSESSMENT_QUESTIONS: Question[] = [
     {
-        id: "student" as const,
-        label: "Student",
-        icon: "school",
-        description: "I'm here to learn Solana development",
-        color: "from-solana to-emerald-600",
+        id: "rust",
+        text: "How familiar are you with Rust programming?",
+        field: "rust",
+        options: [
+            { label: "Never used it", value: 1 },
+            { label: "Basic syntax known", value: 2 },
+            { label: "Built small projects", value: 3 },
+            { label: "Commercial experience", value: 4 },
+        ]
     },
     {
-        id: "professor" as const,
-        label: "Teacher",
-        icon: "psychology",
-        description: "I want to create and publish courses",
-        color: "from-blue-500 to-indigo-600",
+        id: "solana",
+        text: "How much experience do you have with Solana development?",
+        field: "solana",
+        options: [
+            { label: "New to Solana", value: 1 },
+            { label: "Know the concepts (PDAs, Accounts)", value: 2 },
+            { label: "Have deployed to Devnet", value: 3 },
+            { label: "Have deployed Mainnet programs", value: 4 },
+        ]
     },
+    {
+        id: "web3",
+        text: "How familiar are you with Web3 concepts (Wallets, Signature, DeFi)?",
+        field: "web3",
+        options: [
+            { label: "Brand new", value: 1 },
+            { label: "Average crypto user", value: 2 },
+            { label: "Intermediate developer", value: 3 },
+            { label: "Advanced expert", value: 4 },
+        ]
+    }
 ];
 
-/**
- * One-time onboarding modal shown after first Privy signup.
- * Collects role + display name, PUTs to /api/user, sets profile.onboardingComplete = true.
- */
-export function OnboardingModal({ walletAddress, onComplete }: OnboardingModalProps) {
-    const [step, setStep] = useState<1 | 2>(1);
-    const [selectedRole, setSelectedRole] = useState<"student" | "professor" | null>(null);
-    const [displayName, setDisplayName] = useState("");
-    const [saving, setSaving] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const t = useTranslations("auth");
+export function OnboardingModal() {
+    const [isOpen, setIsOpen] = useState(false);
+    const [step, setStep] = useState(0); // 0: Welcome, 1: Quiz, 2: Result
+    const [currentQuestion, setCurrentQuestion] = useState(0);
+    const [answers, setAnswers] = useState<Record<string, number>>({});
 
-    const fetchUser = useUserStore((s) => s.fetchUser);
+    useEffect(() => {
+        const isComplete = localStorage.getItem("onboarding_complete");
+        if (!isComplete) {
+            setIsOpen(true);
+        }
+    }, []);
 
-    const handleSubmit = async () => {
-        if (!selectedRole || !displayName.trim()) return;
-
-        setSaving(true);
-        setError(null);
-
-        try {
-            const res = await fetch("/api/user", {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    wallet: walletAddress,
-                    role: selectedRole,
-                    profile: {
-                        displayName: displayName.trim(),
-                        onboardingComplete: true,
-                    },
-                }),
-            });
-
-            if (!res.ok) {
-                throw new Error("Failed to save profile");
+    const handleNext = () => {
+        if (step === 0) setStep(1);
+        else if (step === 1) {
+            if (currentQuestion < ASSESSMENT_QUESTIONS.length - 1) {
+                setCurrentQuestion(prev => prev + 1);
+            } else {
+                setStep(2);
             }
-
-            // Refresh user in store so AuthGuard sees onboardingComplete
-            await fetchUser(walletAddress);
-            onComplete();
-        } catch (e: any) {
-            setError(e?.message ?? "Something went wrong");
-        } finally {
-            setSaving(false);
         }
     };
 
+    const handleAnswer = (value: number) => {
+        const q = ASSESSMENT_QUESTIONS[currentQuestion];
+        setAnswers(prev => ({ ...prev, [q.field]: value }));
+        handleNext();
+    };
+
+    const finishOnboarding = () => {
+        localStorage.setItem("onboarding_complete", "true");
+        setIsOpen(false);
+    };
+
+    const getRecommendation = () => {
+        const total = Object.values(answers).reduce((a, b) => a + b, 0);
+        if (total < 6) return { title: "Solana Fundamentals", slug: "solana-fundamentals", desc: "Start with the basics of Solana architecture." };
+        if (total < 10) return { title: "Building with Anchor", slug: "building-with-anchor", desc: "Dive into program development using the Anchor framework." };
+        return { title: "Advanced Solana Security", slug: "solana-security", desc: "Master industrial-grade program security." };
+    };
+
+    const recommendation = getRecommendation();
+
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-void/95 backdrop-blur-md">
-            {/* Background glow */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-br from-solana/10 to-rust/10 blur-[120px] rounded-full pointer-events-none" />
-
-            <div className="relative z-10 w-full max-w-lg mx-4">
-                {/* Header */}
-                <div className="text-center mb-8">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-solana/10 border border-solana/20 mb-4">
-                        <span className="w-2 h-2 rounded-full bg-solana animate-pulse" />
-                        <span className="font-code text-xs text-solana uppercase tracking-widest">{t("welcome")}</span>
-                    </div>
-                    <h1 className="font-display text-3xl font-bold text-white mb-2">
-                        {step === 1 ? "Choose your path" : "What should we call you?"}
-                    </h1>
-                    <p className="text-text-muted text-sm">
-                        {step === 1
-                            ? "Select your role to personalize your experience."
-                            : "Pick a name that other developers will see."}
-                    </p>
-                </div>
-
-                {/* Step indicator */}
-                <div className="flex items-center justify-center gap-2 mb-8">
-                    <div className={`h-1 w-12 rounded-full transition-colors ${step >= 1 ? "bg-solana" : "bg-white/10"}`} />
-                    <div className={`h-1 w-12 rounded-full transition-colors ${step >= 2 ? "bg-solana" : "bg-white/10"}`} />
-                </div>
-
-                {/* Step 1: Role Selection */}
-                {step === 1 && (
-                    <div className="space-y-4">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {ROLES.map((role) => (
-                                <Button
-                                    key={role.id}
-                                    onClick={() => setSelectedRole(role.id)}
-                                    variant="ghost"
-                                    className={`relative flex flex-col items-center gap-3 p-6 rounded-xl border-2 transition-all duration-300 group h-auto ${selectedRole === role.id
-                                        ? "border-solana bg-solana/10 shadow-[0_0_30px_rgba(20,241,149,0.15)]"
-                                        : "border-white/10 bg-white/[0.02] hover:border-white/20 hover:bg-white/5"
-                                        }`}
-                                >
-                                    <div className={`size-14 rounded-xl bg-gradient-to-br ${role.color} flex items-center justify-center shadow-lg transition-transform group-hover:scale-110 ${selectedRole === role.id ? "scale-110" : ""
-                                        }`}>
-                                        <span className="material-symbols-outlined text-white text-2xl">{role.icon}</span>
-                                    </div>
-                                    <div className="text-center">
-                                        <h3 className={`font-display font-bold text-lg ${selectedRole === role.id ? "text-solana" : "text-white"}`}>
-                                            {role.label}
-                                        </h3>
-                                        <p className="text-text-muted text-xs mt-1">{role.description}</p>
-                                    </div>
-                                    {selectedRole === role.id && (
-                                        <div className="absolute top-3 right-3 size-6 bg-solana rounded-full flex items-center justify-center">
-                                            <span className="material-symbols-outlined text-sm text-void">check</span>
-                                        </div>
-                                    )}
-                                </Button>
-                            ))}
-                        </div>
-
-                        <Button
-                            onClick={() => selectedRole && setStep(2)}
-                            disabled={!selectedRole}
-                            variant="default"
-                            className="w-full mt-6 h-12 rounded-xl font-display font-bold text-sm bg-solana text-[#0A0A0B] hover:brightness-110 active:scale-[0.98] transition-all shadow-[0_0_20px_-5px_rgba(20,240,148,0.4)] disabled:opacity-30 disabled:cursor-not-allowed"
-                        >
-                            {t("continue")}
-                        </Button>
-                    </div>
-                )}
-
-                {/* Step 2: Display Name */}
-                {step === 2 && (
-                    <div className="space-y-6">
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-text-secondary">Developer / Pseudo Name</label>
-                            <input
-                                type="text"
-                                value={displayName}
-                                onChange={(e) => setDisplayName(e.target.value)}
-                                placeholder="e.g. vitalik, satoshi, solana_dev"
-                                maxLength={30}
-                                autoFocus
-                                className="w-full h-12 rounded-xl border border-white/10 bg-white/[0.03] px-4 text-white font-mono text-sm placeholder:text-text-muted focus:outline-none focus:border-solana/50 focus:ring-1 focus:ring-solana/20 transition-all"
-                                onKeyDown={(e) => {
-                                    if (e.key === "Enter" && displayName.trim()) handleSubmit();
-                                }}
-                            />
-                            <p className="text-[11px] text-text-muted font-mono">
-                                {displayName.length}/30 characters
-                            </p>
-                        </div>
-
-                        {error && (
-                            <div className="px-4 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-mono">
-                                {error}
+        <Dialog open={isOpen} onOpenChange={(open: boolean) => { if (!open) finishOnboarding(); }}>
+            <DialogContent className="sm:max-w-[500px] bg-void border-white/5 p-0 overflow-hidden">
+                <div className="p-8">
+                    {step === 0 && (
+                        <div className="space-y-6 text-center py-4">
+                            <div className="mx-auto w-16 h-16 rounded-full bg-solana/10 flex items-center justify-center border border-solana/20">
+                                <GraduationCap className="w-8 h-8 text-solana" />
                             </div>
-                        )}
-
-                        <div className="flex gap-3">
-                            <Button
-                                onClick={() => setStep(1)}
-                                variant="outline"
-                                className="h-12 px-6 rounded-xl font-medium text-sm text-text-secondary hover:text-white hover:bg-white/5 border border-white/10 transition-all"
-                            >
-                                Back
-                            </Button>
-                            <Button
-                                onClick={handleSubmit}
-                                disabled={!displayName.trim() || saving}
-                                variant="default"
-                                className="flex-1 h-12 rounded-xl font-display font-bold text-sm bg-solana text-[#0A0A0B] hover:brightness-110 active:scale-[0.98] transition-all shadow-[0_0_20px_-5px_rgba(20,240,148,0.4)] disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                            >
-                                {saving ? (
-                                    <>
-                                        <div className="size-4 rounded-full border-2 border-void/30 border-t-void animate-spin" />
-                                        Setting up...
-                                    </>
-                                ) : (
-                                    <>
-                                        Let&apos;s Go
-                                        <span className="material-symbols-outlined text-lg">rocket_launch</span>
-                                    </>
-                                )}
+                            <DialogHeader>
+                                <DialogTitle className="text-2xl font-display font-bold text-white text-center">Welcome to Academy</DialogTitle>
+                            </DialogHeader>
+                            <p className="text-text-secondary leading-relaxed">
+                                Take a quick skill assessment to personalize your learning journey and get course recommendations.
+                            </p>
+                            <Button onClick={handleNext} className="w-full bg-solana text-black font-bold hover:bg-solana/90">
+                                Start Assessment
+                                <ChevronRight className="ml-2 w-4 h-4" />
                             </Button>
                         </div>
-                    </div>
-                )}
-            </div>
-        </div>
+                    )}
+
+                    {step === 1 && (
+                        <div className="space-y-8 py-4">
+                            <div className="space-y-2">
+                                <div className="flex justify-between text-[10px] font-mono text-text-muted uppercase tracking-wider">
+                                    <span>Question {currentQuestion + 1} of {ASSESSMENT_QUESTIONS.length}</span>
+                                    <span>{Math.round(((currentQuestion + 1) / ASSESSMENT_QUESTIONS.length) * 100)}%</span>
+                                </div>
+                                <Progress value={((currentQuestion + 1) / ASSESSMENT_QUESTIONS.length) * 100} className="h-1 bg-white/5" />
+                            </div>
+
+                            <div className="space-y-6">
+                                <h3 className="text-lg font-medium text-white">
+                                    {ASSESSMENT_QUESTIONS[currentQuestion].text}
+                                </h3>
+                                <div className="grid grid-cols-1 gap-3">
+                                    {ASSESSMENT_QUESTIONS[currentQuestion].options.map((opt) => (
+                                        <button
+                                            key={opt.value}
+                                            onClick={() => handleAnswer(opt.value)}
+                                            className="group p-4 bg-white/5 border border-white/5 rounded-xl text-left hover:border-solana/50 hover:bg-solana/5 transition-all duration-200"
+                                        >
+                                            <span className="text-sm font-medium text-white group-hover:text-solana transition-colors">
+                                                {opt.label}
+                                            </span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {step === 2 && (
+                        <div className="space-y-8 py-4 text-center">
+                            <div className="mx-auto w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center border border-green-500/20">
+                                <CheckCircle2 className="w-8 h-8 text-green-500" />
+                            </div>
+                            <div className="space-y-2">
+                                <h3 className="text-2xl font-display font-bold text-white">Profile Complete!</h3>
+                                <p className="text-text-secondary text-sm">Based on your skills, we recommend this starting point:</p>
+                            </div>
+
+                            <div className="p-6 bg-white/5 border border-white/10 rounded-2xl space-y-4 text-left">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-lg bg-solana/20 flex items-center justify-center">
+                                        <Rocket className="w-5 h-5 text-solana" />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-bold text-white text-sm">{recommendation.title}</h4>
+                                        <p className="text-[10px] text-text-muted">{recommendation.desc}</p>
+                                    </div>
+                                </div>
+                                <Link href={`/courses/${recommendation.slug}`} onClick={finishOnboarding}>
+                                    <Button className="w-full mt-2 bg-white text-black font-bold hover:bg-white/90">
+                                        Go to Course
+                                    </Button>
+                                </Link>
+                            </div>
+
+                            <button
+                                onClick={finishOnboarding}
+                                className="text-xs text-text-muted hover:text-white transition-colors"
+                            >
+                                Skip to Dashboard
+                            </button>
+                        </div>
+                    )}
+                </div>
+            </DialogContent>
+        </Dialog>
     );
 }

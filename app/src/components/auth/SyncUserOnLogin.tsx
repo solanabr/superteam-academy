@@ -20,15 +20,29 @@ export function SyncUserOnLogin() {
   const walletAddress = linkedAddress ?? solanaAddress;
 
   useEffect(() => {
+    // Check for referral code in URL
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get("ref");
+    if (ref) {
+      sessionStorage.setItem("referral_code", ref);
+    }
+
     if (!authenticated || !walletAddress || synced.current) return;
     synced.current = true;
+
     const email =
       user?.email?.address ?? (user?.linkedAccounts?.find((a: any) => a.type === "email") as any)?.address;
+
+    const storedReferral = sessionStorage.getItem("referral_code");
 
     fetch("/api/user", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ wallet: walletAddress, email: email ?? undefined }),
+      body: JSON.stringify({
+        wallet: walletAddress,
+        email: email ?? undefined,
+        referrerCode: storedReferral ?? undefined
+      }),
     })
       .then(async (res) => {
         if (res.ok) {
@@ -36,6 +50,8 @@ export function SyncUserOnLogin() {
           setUser(data);
           // Also trigger progress fetch once user is synced
           fetchProgress(walletAddress);
+          // Clear referral after successful sync
+          sessionStorage.removeItem("referral_code");
         } else {
           synced.current = false;
         }

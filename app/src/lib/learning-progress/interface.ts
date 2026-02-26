@@ -11,7 +11,7 @@ export interface LearningProgressService {
   getEnrollmentProgress(userId: string, courseId: string): Promise<EnrollmentProgress | null>;
   getXP(userId: string): Promise<number>;
   getStreak(userId: string): Promise<StreakData>;
-  getLeaderboard(options?: { limit?: number; timeframe?: "daily" | "weekly" | "all-time" }): Promise<LeaderboardEntry[]>;
+  getLeaderboard(options?: { limit?: number; timeframe?: "daily" | "weekly" | "all-time"; courseId?: string }): Promise<LeaderboardEntry[]>;
   getCredentials(userId: string): Promise<Credential[]>;
   getCredential(id: string): Promise<Credential | null>;
   completeLesson(params: {

@@ -38,7 +38,10 @@
         "active_course": "Curso Ativo",
         "up_next": "A seguir",
         "trophy_case": "Vitrina de Troféus",
-        "unlocked": "{count}/{total} Desbloqueados"
+        "unlocked": "{count}/{total} Desbloqueados",
+        "continue_learning": "Continuar Aprendendo",
+        "no_enrollments": "Você ainda não se inscreveu em nenhum curso.",
+        "recommended_courses": "Recomendado para Você"
     },
     "settings": {
         "title": "Configurações",
@@ -58,11 +61,17 @@
         "save_error": "✗ Falha ao salvar",
         "connect_wallet_prompt": "Por favor, conecte sua carteira para ver as configurações.",
         "linked_accounts": {
-            "google": "Conta do Google",
-            "github": "Conta do GitHub",
-            "email": "Conta de E-mail",
+            "google": "Conta Google",
+            "github": "Conta GitHub",
+            "email": "Conta de Email",
             "linked": "Vinculado",
-            "tooltip": "Seu endereço de carteira está vinculado a esta conta do {provider}. Isso não pode ser alterado."
+            "connected": "Conectado",
+            "tooltip": "Seu endereço de carteira está vinculado a este {provider}. Isso não pode ser alterado."
+        },
+        "roles": {
+            "teacher": "Professor",
+            "student": "Aluno",
+            "admin": "Administrador"
         },
         "delete_account": "Excluir conta",
         "delete_account_warning": "Aviso: Esta ação é irreversível.",
@@ -73,7 +82,34 @@
         "sol_balance": "Saldo SOL",
         "exp_balance": "Saldo de Tokens EXP",
         "devnet_label": "Devnet",
-        "airdrop_tooltip": "O SOL da Devnet é usado para pagar taxas de transação. Se o seu saldo estiver baixo, você pode solicitar mais no faucet oficial."
+        "airdrop_tooltip": "O SOL da Devnet é usado para pagar taxas de transação. Se o seu saldo estiver baixo, você pode solicitar mais no faucet oficial.",
+        "tabs": {
+            "account": "Configurações da Conta",
+            "profile": "Perfil Público",
+            "preferences": "Preferências"
+        },
+        "preferences": {
+            "title": "Preferências",
+            "notifications": "Notificações",
+            "notify_updates": "Atualizações da Plataforma",
+            "notify_updates_desc": "Receba notícias sobre novos cursos e recursos.",
+            "notify_activity": "Atividade do Curso",
+            "notify_activity_desc": "Receba atualizações sobre seu progresso e status de certificados.",
+            "privacy": "Privacidade",
+            "is_public": "Perfil Público",
+            "is_public_desc": "Torne seu perfil pesquisável no leaderboard e visível para outros.",
+            "data_export": "Exportar Dados",
+            "data_export_desc": "Baixe todos os seus dados da academia (perfil, inscrições, certificados, EXP) em formato JSON.",
+            "export_button": "Baixar Dados"
+        },
+        "referral": {
+            "title": "Programa de Indicação",
+            "desc": "Compartilhe seu link de indicação com amigos e ganhe EXP bônus quando eles se juntarem e completarem seu primeiro curso.",
+            "your_link": "Seu Link de Indicação",
+            "stats": "Estatísticas de Indicação",
+            "friends_joined": "Amigos Indicados",
+            "copied": "Link Copiado!"
+        }
     },
     "courses": {
         "title": "Explorar Currículo",
@@ -89,6 +125,10 @@
         "loading": "Carregando cursos...",
         "none_available": "Nenhum curso disponível ainda.",
         "none_found": "Nenhum curso encontrado para {filter}.",
+        "no_search_results": "Nenhum curso corresponde a \"{query}\".",
+        "results_count": "{count} curso encontrado",
+        "results_count_plural": "{count} cursos encontrados",
+        "search_courses": "Buscar cursos...",
         "duration_tbd": "TBD",
         "beginner": "Iniciante",
         "intermediate": "Intermediário",
@@ -99,7 +139,8 @@
         "module_label": "Módulo {index}",
         "no_modules": "Nenhum módulo ainda. Adicione módulos e lições no Course Studio.",
         "curriculum": "Currículo",
-        "all_courses": "Todos os cursos"
+        "all_courses": "Todos os cursos",
+        "enrolled_progress": "{pct}% Completo"
     },
     "achievements": {
         "title": "Conquistas",
@@ -217,7 +258,8 @@
         "title": "Placar",
         "subtitle": "Melhores alunos por XP",
         "col_user": "Usuário",
-        "col_level": "Nível"
+        "col_level": "Nível",
+        "all_courses": "Todos os Cursos"
     },
     "profile": {
         "not_found_title": "Perfil não encontrado",

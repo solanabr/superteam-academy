@@ -3,13 +3,14 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useAppUser } from "@/hooks/useAppUser";
-import { Loader2, Coins, CalendarDays, ExternalLink, ShieldCheck, Trophy, Github, Twitter, Globe, LinkIcon } from "lucide-react";
+import { Loader2, Coins, CalendarDays, ShieldCheck, Trophy, Twitter, Globe } from "lucide-react";
 import { Link } from "@/i18n/routing";
 import { Button } from "@/components/ui/button";
-import clsx from "clsx";
 import { useTranslations } from "next-intl";
 import { ACHIEVEMENTS } from "@/lib/achievements";
 import { CredentialList } from "@/components/dashboard/CredentialList";
+import { AchievementBadge } from "@/components/achievements/AchievementBadge";
+import { SkillRadar } from "@/components/profile/SkillRadar";
 
 type ProfileData = {
     user: {
@@ -32,7 +33,7 @@ export default function ProfilePage() {
     const wallet = params.wallet as string;
     const t = useTranslations("profile");
 
-    const { profiles, isLoading, error: storeError, fetchProfile } = useProfileStore();
+    const { profiles, isInitialLoading, error: storeError, fetchProfile } = useProfileStore();
 
     useEffect(() => {
         if (wallet) {
@@ -41,14 +42,17 @@ export default function ProfilePage() {
     }, [wallet, fetchProfile]);
 
     const data = profiles[wallet] || null;
-    const loading = isLoading && !data;
     const error = storeError;
 
-    if (loading) {
+    if (isInitialLoading && !data) {
         return (
-            <div className="flex h-[60vh] items-center justify-center">
-                <Loader2 className="text-solana h-8 w-8 animate-spin" />
-            </div>
+            <main className="min-h-screen bg-void pt-8 pb-16">
+                <div className="mx-auto max-w-4xl px-4 space-y-8 animate-pulse">
+                    <div className="glass-panel p-8 rounded-lg border border-white/5 h-48 bg-white/5" />
+                    <div className="glass-panel p-6 rounded-xl border border-white/5 h-64 bg-white/5" />
+                    <div className="h-64 bg-white/5 rounded-xl border border-white/5" />
+                </div>
+            </main>
         );
     }
 
@@ -70,14 +74,34 @@ export default function ProfilePage() {
     const P = data.user.profile || {};
     const displayName = P.displayName || `User ${data.user.walletAddress.substring(0, 4)}...${data.user.walletAddress.substring(data.user.walletAddress.length - 4)}`;
 
-    const achievements = ACHIEVEMENTS.map((def) => {
-        return {
-            ...def,
-            claimed: data.achievementFlags?.includes(def.bitIndex) || false,
-        };
-    }).filter(a => a.claimed);
+    const claimedAchievements = ACHIEVEMENTS.map((def) => ({
+        ...def,
+        claimed: data.achievementFlags?.includes(def.bitIndex) || false,
+    })).filter(a => a.claimed);
 
     const credentials = data.credentials;
+
+    // Compute skill scores from credentials (each credential contributes up to 100 pts)
+    const TRACK_SKILL_MAP: Record<string, string> = {
+        rust: "Rust",
+        anchor: "Anchor",
+        defi: "DeFi",
+        frontend: "Frontend",
+        security: "Security",
+        solana: "Solana",
+    };
+    const skillScores: Record<string, number> = {};
+    credentials.forEach((cred) => {
+        const trackId = cred.trackName?.toLowerCase() ?? "";
+        if (!trackId) return;
+        const key = Object.keys(TRACK_SKILL_MAP).find(k => trackId.includes(k));
+        if (key) skillScores[key] = Math.min(100, (skillScores[key] ?? 0) + 30);
+    });
+    const skills = Object.entries(TRACK_SKILL_MAP).map(([key, label]) => ({
+        label,
+        value: skillScores[key] ?? 0,
+    }));
+    const hasSkillData = skills.some(s => s.value > 0);
 
     return (
         <main className="min-h-screen bg-void pt-8 pb-16">
@@ -159,12 +183,50 @@ export default function ProfilePage() {
 
 
 
+                {/* Skill Radar */}
+                {hasSkillData && (
+                    <section className="glass-panel p-6 rounded-xl border border-white/5 space-y-4">
+                        <h2 className="text-lg font-display font-semibold text-text-primary flex items-center gap-2">
+                            <span className="material-symbols-outlined notranslate text-solana text-xl">radar</span>
+                            Skill Profile
+                        </h2>
+                        <div className="flex justify-center">
+                            <SkillRadar skills={skills} size={240} />
+                        </div>
+                    </section>
+                )}
+
+                {/* Achievement Badges */}
+                {claimedAchievements.length > 0 && (
+                    <section className="glass-panel p-6 rounded-xl border border-white/5 space-y-4">
+                        <h2 className="text-lg font-display font-semibold text-text-primary flex items-center gap-2">
+                            <Trophy className="h-5 w-5 text-solana" />
+                            Achievements
+                            <span className="text-xs font-mono text-text-muted ml-auto">
+                                {claimedAchievements.length} earned
+                            </span>
+                        </h2>
+                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4 place-items-center">
+                            {claimedAchievements.map((a) => (
+                                <AchievementBadge
+                                    key={a.id}
+                                    icon={a.icon}
+                                    title={a.title}
+                                    description={a.description}
+                                    claimed={a.claimed}
+                                    size="sm"
+                                />
+                            ))}
+                        </div>
+                    </section>
+                )}
+
                 <section className="space-y-4">
                     <h2 className="text-lg font-display font-semibold text-text-primary flex items-center gap-2">
                         <ShieldCheck className="h-5 w-5 text-solana" />
-                        Certificates & Credentials
+                        Certificates &amp; Credentials
                     </h2>
-                    <CredentialList walletAddress={wallet} />
+                    <CredentialList walletAddress={wallet} initialData={data.credentials as any} />
                 </section>
             </div>
         </main>

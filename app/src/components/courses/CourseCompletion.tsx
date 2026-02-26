@@ -27,8 +27,11 @@ export function CourseCompletion({ courseId, totalLessons }: CourseCompletionPro
     const completedCount = useEnrollmentStore((state) =>
         state.enrollments[courseId]?.completedCount ?? 0
     );
-    const completedAt = useEnrollmentStore((state) =>
+    const mintedAt = useEnrollmentStore((state) =>
         state.enrollments[courseId]?.completedAt ?? null
+    );
+    const mintAddress = useEnrollmentStore((state) =>
+        state.enrollments[courseId]?.mintAddress ?? null
     );
     const onChainActive = useEnrollmentStore((state) =>
         state.enrollments[courseId]?.onChainActive ?? false
@@ -44,24 +47,26 @@ export function CourseCompletion({ courseId, totalLessons }: CourseCompletionPro
     const [isActionLoading, setIsActionLoading] = useState(false);
     const [isReclaimLoading, setIsReclaimLoading] = useState(false);
 
-    // State for tracking the newly minted Certificate NFT
-    const [mintedCredentialId, setMintedCredentialId] = useState<string | null>(null);
-
     // Persists after API success — prevents button from reverting to "Get Certificate"
     const [graduated, setGraduated] = useState(false);
 
-    const isComplete = completedCount >= totalLessons || !!completedAt;
+    const isComplete = completedCount >= totalLessons || !!mintedAt;
 
-    // Once the graduation API returns success, poll until completedAt is set by Inngest
+    // Condition for "Truly Finished": 
+    // If on-chain is active, we wait for mintAddress. Otherwise just mintedAt.
+    const USE_ONCHAIN = process.env.NEXT_PUBLIC_USE_ONCHAIN === "true";
+    const isMinted = USE_ONCHAIN ? !!mintAddress : !!mintedAt;
+
+    // Once the graduation API returns success, poll until isMinted is true
     useEffect(() => {
-        if (!graduated || completedAt || !walletAddress) return;
+        if (!graduated || isMinted || !walletAddress) return;
         const interval = setInterval(() => {
             fetchEnrollment(walletAddress, courseId, true);
         }, 3000);
         return () => clearInterval(interval);
-    }, [graduated, completedAt, walletAddress, courseId, fetchEnrollment]);
+    }, [graduated, isMinted, walletAddress, courseId, fetchEnrollment]);
 
-    if (!authenticated || !walletAddress || (completedCount === 0 && !completedAt)) return null;
+    if (!authenticated || !walletAddress || (completedCount === 0 && !mintedAt)) return null;
 
     const handleFinalize = async () => {
         if (isActionLoading || graduated) return;
@@ -83,14 +88,10 @@ export function CourseCompletion({ courseId, totalLessons }: CourseCompletionPro
                 throw new Error(data?.error ?? "Finalize failed");
             }
 
-            const data = await res.json();
-            if (data.mintAddress) {
-                setMintedCredentialId(data.mintAddress);
-            }
-
             // Mark as graduated — this prevents the button from ever reverting
             setGraduated(true);
 
+            const data = await res.json();
             if (data.warning || data.message) {
                 alert(data.warning || data.message);
             }
@@ -128,7 +129,7 @@ export function CourseCompletion({ courseId, totalLessons }: CourseCompletionPro
 
     return (
         <div className="mt-6 border-t border-white/10 pt-6">
-            {!completedAt && !graduated ? (
+            {!isMinted && !graduated ? (
                 <div className="flex flex-col gap-4 items-start">
                     <h3 className="text-xl font-bold text-white">{t("completion_title")}</h3>
                     <p className="text-text-secondary">{t("completion_info")}</p>
@@ -151,7 +152,7 @@ export function CourseCompletion({ courseId, totalLessons }: CourseCompletionPro
                         )}
                     </Button>
                 </div>
-            ) : !completedAt && graduated ? (
+            ) : !isMinted && graduated ? (
                 <div className="flex flex-col gap-4 items-start">
                     <h3 className="text-xl font-bold text-white">{t("completion_title")}</h3>
                     <p className="text-text-secondary">Your certificate is being minted on-chain. This may take a moment...</p>

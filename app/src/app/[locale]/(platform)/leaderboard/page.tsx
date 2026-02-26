@@ -16,12 +16,22 @@ export default function LeaderboardPage() {
   const { entries: allEntries, isLoading, fetchLeaderboard } = useLeaderboardStore();
 
   const [timeframe, setTimeframe] = useState<"daily" | "weekly" | "all-time">("all-time");
+  const [courseId, setCourseId] = useState<string>("");
+  const [courses, setCourses] = useState<{ _id: string, title: string }[]>([]);
 
   useEffect(() => {
-    fetchLeaderboard(timeframe);
-  }, [timeframe, fetchLeaderboard]);
+    fetch("/api/courses/list")
+      .then(res => res.json())
+      .then(data => setCourses(data.courses || []))
+      .catch(() => { });
+  }, []);
 
-  const entries = allEntries[timeframe] || [];
+  useEffect(() => {
+    fetchLeaderboard(timeframe, courseId || undefined);
+  }, [timeframe, courseId, fetchLeaderboard]);
+
+  const cacheKey = `${timeframe}${courseId ? `:${courseId}` : ""}`;
+  const entries = allEntries[cacheKey] || [];
   const loading = isLoading && entries.length === 0;
 
   // Removed full-page loading to keep header visible
@@ -32,21 +42,36 @@ export default function LeaderboardPage() {
         <h1 className="font-display text-text-primary text-3xl font-semibold">{t("title")}</h1>
         <p className="text-text-secondary mt-2">{t("subtitle")}</p>
 
-        <div className="mt-8 flex items-center justify-center gap-2">
-          {(["daily", "weekly", "all-time"] as const).map((tf) => (
-            <Button
-              key={tf}
-              variant={timeframe === tf ? "default" : "outline"}
-              size="sm"
-              onClick={() => setTimeframe(tf)}
-              className={clsx(
-                "rounded-full px-5 transition-all duration-200",
-                timeframe === tf && "shadow-[0_0_15px_rgba(20,241,149,0.15)]"
-              )}
-            >
-              {tf.charAt(0).toUpperCase() + tf.slice(1).replace("-", " ")}
-            </Button>
-          ))}
+        <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="flex items-center gap-2">
+            {(["daily", "weekly", "all-time"] as const).map((tf) => (
+              <Button
+                key={tf}
+                variant={timeframe === tf ? "default" : "outline"}
+                size="sm"
+                onClick={() => setTimeframe(tf)}
+                className={clsx(
+                  "rounded-full px-5 transition-all duration-200",
+                  timeframe === tf && "shadow-[0_0_15px_rgba(20,241,149,0.15)]"
+                )}
+              >
+                {tf.charAt(0).toUpperCase() + tf.slice(1).replace("-", " ")}
+              </Button>
+            ))}
+          </div>
+
+          <div className="h-4 w-[1px] bg-white/10 hidden sm:block" />
+
+          <select
+            value={courseId}
+            onChange={(e) => setCourseId(e.target.value)}
+            className="bg-black/40 border border-white/10 rounded-full px-4 py-1.5 text-xs text-text-primary focus:outline-none focus:border-solana/50 transition-colors"
+          >
+            <option value="">{t("all_courses")}</option>
+            {courses.map(c => (
+              <option key={c._id} value={c._id}>{c.title}</option>
+            ))}
+          </select>
         </div>
       </div>
 
