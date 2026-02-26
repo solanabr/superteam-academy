@@ -49,6 +49,7 @@ jobs:
       NEXT_PUBLIC_GA_ID: ${{ secrets.NEXT_PUBLIC_GA_ID }}
       NEXT_PUBLIC_SANITY_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_SANITY_PROJECT_ID }}
       NEXT_PUBLIC_SOLANA_RPC: ${{ secrets.NEXT_PUBLIC_SOLANA_RPC }}
+      NEXTAUTH_SECRET: 'ci-build-secret-not-for-production'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -66,6 +67,9 @@ jobs:
     defaults:
       run:
         working-directory: app
+    env:
+      NEXTAUTH_SECRET: 'ci-e2e-secret-not-for-production'
+      NEXTAUTH_URL: 'http://localhost:3000'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
