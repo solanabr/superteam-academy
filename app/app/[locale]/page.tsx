@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import {
   GraduationCap, Trophy, Code2, Zap, Users, BookOpen,
-  ArrowRight, Star, CheckCircle, Wallet, ChevronRight, Award
+  ArrowRight, Star, CheckCircle, Wallet, ChevronRight, Award, Quote
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { localePath } from '@/lib/paths';

@@ -42,3 +42,4 @@ next-env.d.ts
 
 # sentry cli config (contains org/project names)
 .sentryclirc
+test-results/
