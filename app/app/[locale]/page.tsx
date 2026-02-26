@@ -310,7 +310,7 @@ export default async function LandingPage({
               >
                 <Quote className="h-6 w-6 text-purple-500/40 mb-3" />
                 <p className="text-sm text-gray-300 leading-relaxed flex-1 mb-4">
-                  {L(testimonial.quote, locale)}
+                  {L(testimonial.quote)}
                 </p>
                 <div className="flex items-center gap-3 pt-3 border-t border-gray-800">
                   <div className="h-9 w-9 rounded-full bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center text-xs font-bold text-white">
@@ -318,7 +318,7 @@ export default async function LandingPage({
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-semibold text-white">{testimonial.name}</div>
-                    <div className="text-xs text-gray-500">{L(testimonial.role, locale)}</div>
+                    <div className="text-xs text-gray-500">{L(testimonial.role)}</div>
                   </div>
                   <div className="text-xs font-bold text-yellow-400">{testimonial.xp} XP</div>
                 </div>
