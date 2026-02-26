@@ -92,6 +92,8 @@ export default process.env.SENTRY_ORG
   ? withSentryConfig(configuredNext, {
       org: process.env.SENTRY_ORG,
       project: process.env.SENTRY_PROJECT,
+      sentryUrl: process.env.SENTRY_URL || 'https://de.sentry.io',
+      authToken: process.env.SENTRY_AUTH_TOKEN,
       silent: !process.env.CI,
       widenClientFileUpload: true,
     })
