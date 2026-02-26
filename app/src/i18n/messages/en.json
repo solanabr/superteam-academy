@@ -1,0 +1,343 @@
+{
+  "navigation": {
+    "home": "Home",
+    "courses": "Courses",
+    "dashboard": "Dashboard",
+    "leaderboard": "Leaderboard",
+    "community": "Community",
+    "profile": "Profile",
+    "settings": "Settings",
+    "signIn": "Sign In",
+    "signOut": "Sign Out",
+    "connectWallet": "Connect Wallet",
+    "explore": "Explore Courses"
+  },
+  "landing": {
+    "hero": {
+      "title": "Master Solana Development",
+      "subtitle": "From zero to deploying production-ready dApps. Interactive courses, on-chain credentials, and a community of builders.",
+      "cta": "Start Learning",
+      "ctaSecondary": "Explore Courses"
+    },
+    "features": {
+      "title": "Everything you need to become a Solana developer",
+      "interactive": {
+        "title": "Interactive Coding",
+        "description": "Write, test, and deploy Solana programs directly in your browser with real-time feedback."
+      },
+      "credentials": {
+        "title": "On-Chain Credentials",
+        "description": "Earn soulbound NFTs that prove your skills. Verifiable on-chain, visible in your wallet."
+      },
+      "xp": {
+        "title": "XP & Leveling",
+        "description": "Earn XP tokens for every lesson. Track your progress and compete on the leaderboard."
+      },
+      "community": {
+        "title": "Community Driven",
+        "description": "Learn with builders from across Latin America and beyond. Open-source and forkable."
+      }
+    },
+    "paths": {
+      "title": "Learning Paths",
+      "subtitle": "Structured tracks to take you from beginner to expert"
+    },
+    "stats": {
+      "learners": "Active Learners",
+      "courses": "Courses",
+      "credentials": "Credentials Issued",
+      "xpAwarded": "XP Awarded"
+    },
+    "cta": {
+      "title": "Ready to build on Solana?",
+      "subtitle": "Join thousands of developers learning to build the future of finance.",
+      "button": "Get Started Free"
+    },
+    "testimonials": {
+      "title": "Loved by Builders",
+      "subtitle": "See what developers are saying about Superteam Academy",
+      "1": {
+        "quote": "The interactive coding challenges made learning Anchor so much easier. I deployed my first program in a week.",
+        "name": "Lucas M.",
+        "role": "Solana Developer, Brazil"
+      },
+      "2": {
+        "quote": "On-chain credentials are a game changer. I can prove my skills directly from my wallet.",
+        "name": "Ana R.",
+        "role": "Full-stack Dev, Argentina"
+      },
+      "3": {
+        "quote": "Best structured Solana learning path I've found. The XP system keeps me motivated.",
+        "name": "Pedro S.",
+        "role": "Blockchain Engineer, Portugal"
+      }
+    }
+  },
+  "courses": {
+    "catalog": {
+      "title": "Courses",
+      "subtitle": "Project-based courses to level up your Solana skills",
+      "search": "Search courses...",
+      "filters": {
+        "all": "All",
+        "beginner": "Beginner",
+        "intermediate": "Intermediate",
+        "advanced": "Advanced"
+      },
+      "empty": "No courses found matching your filters.",
+      "lessons": "lessons",
+      "xp": "XP",
+      "enrolled": "Enrolled",
+      "completed": "Completed"
+    },
+    "detail": {
+      "enroll": "Enroll Now",
+      "enrollRefundInfo": "Rent is fully reclaimable",
+      "enrollRefundTooltip": "The SOL paid to enroll (account rent) will be returned to your wallet when you close the enrollment after completing the course.",
+      "continue": "Continue Learning",
+      "start": "Start Learning",
+      "completed": "Completed",
+      "prerequisite": "Prerequisite",
+      "modules": "Course Modules",
+      "whatYouLearn": "What you'll learn",
+      "duration": "Duration",
+      "difficulty": "Difficulty",
+      "xpReward": "XP Reward",
+      "totalXp": "total XP",
+      "reviews": "Student Reviews",
+      "noReviews": "No reviews yet. Complete the course to leave a review!",
+      "reviewForm": {
+        "title": "Write a Review",
+        "editTitle": "Edit Your Review",
+        "yourRating": "Your rating",
+        "placeholder": "Share your experience with this course (optional)",
+        "submit": "Submit Review",
+        "update": "Update Review",
+        "saving": "Saving...",
+        "submitted": "Review submitted!",
+        "updated": "Review updated!",
+        "error": "Failed to submit review",
+        "ratingRequired": "Please select a rating"
+      }
+    }
+  },
+  "lesson": {
+    "previous": "Previous",
+    "next": "Next",
+    "backToCourse": "Back to Course",
+    "complete": "Mark Complete",
+    "completed": "Completed",
+    "challenge": {
+      "title": "Challenge",
+      "run": "Run Code",
+      "submit": "Submit",
+      "reset": "Reset",
+      "hints": "Show Hints",
+      "solution": "Show Solution",
+      "passed": "All tests passed!",
+      "failed": "Some tests failed. Try again.",
+      "testCases": "Test Cases"
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome back",
+    "currentCourses": "Current Courses",
+    "nextLesson": "Next Lesson",
+    "recentActivity": "Recent Activity",
+    "achievements": "Achievements",
+    "recommended": "Recommended",
+    "noCourses": "You haven't enrolled in any courses yet.",
+    "startLearning": "Start Learning"
+  },
+  "profile": {
+    "title": "Profile",
+    "editProfile": "Edit Profile",
+    "skills": "Skills",
+    "achievements": "Achievements",
+    "credentials": "Credentials",
+    "completedCourses": "Completed Courses",
+    "memberSince": "Member since",
+    "level": "Level",
+    "totalXp": "Total XP",
+    "streak": "Day Streak",
+    "noCredentials": "No credentials yet. Complete a course track to earn one."
+  },
+  "leaderboard": {
+    "title": "Leaderboard",
+    "subtitle": "Top builders ranked by XP",
+    "weekly": "Weekly",
+    "monthly": "Monthly",
+    "allTime": "All Time",
+    "rank": "Rank",
+    "learner": "Learner",
+    "xp": "XP",
+    "level": "Level",
+    "you": "You"
+  },
+  "settings": {
+    "title": "Settings",
+    "profile": "Profile",
+    "account": "Account",
+    "preferences": "Preferences",
+    "privacy": "Privacy",
+    "language": "Language",
+    "theme": "Theme",
+    "notifications": "Notifications",
+    "save": "Save Changes",
+    "saved": "Changes saved",
+    "connectedWallets": "Connected Wallets",
+    "linkWallet": "Link Wallet",
+    "linkGoogle": "Link Google",
+    "linkGithub": "Link GitHub",
+    "publicProfile": "Public Profile",
+    "exportData": "Export Data"
+  },
+  "certificate": {
+    "title": "Certificate of Completion",
+    "verifyOnChain": "Verify On-Chain",
+    "share": "Share",
+    "download": "Download",
+    "mintAddress": "Mint Address",
+    "issuedTo": "Issued to",
+    "issuedOn": "Issued on",
+    "track": "Track",
+    "coursesCompleted": "Courses Completed",
+    "totalXp": "Total XP"
+  },
+  "gamification": {
+    "xp": "XP",
+    "level": "Level",
+    "streak": "Streak",
+    "days": "days",
+    "achievements": "Achievements",
+    "noAchievements": "Complete lessons and courses to earn achievements."
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "signInWith": "Sign in with",
+    "orContinueWith": "or continue with",
+    "connectWallet": "Connect Wallet",
+    "walletRequired": "Connect a wallet to enroll in courses and receive credentials.",
+    "linkWalletTitle": "Link a Solana Wallet",
+    "linkWalletDescription": "To access all features, link a Solana wallet to your account.",
+    "linkBenefitXp": "Earn XP Tokens",
+    "linkBenefitXpDesc": "Receive soulbound XP tokens on-chain as you learn.",
+    "linkBenefitNfts": "Achievement NFTs",
+    "linkBenefitNftsDesc": "Mint credential and achievement NFTs to showcase your skills.",
+    "linkBenefitOwnership": "Own Your Progress",
+    "linkBenefitOwnershipDesc": "Your credentials live on Solana — portable and verifiable forever.",
+    "linkWalletAction": "Link Wallet Now",
+    "linkingWallet": "Linking...",
+    "linkWalletLater": "I'll do this later",
+    "walletLinkedSuccess": "Wallet linked successfully!"
+  },
+  "comments": {
+    "title": "Discussion",
+    "placeholder": "Share your thoughts or ask a question...",
+    "submit": "Post Comment",
+    "reply": "Reply",
+    "replyTo": "Reply to {name}",
+    "replyPlaceholder": "Write a reply...",
+    "delete": "Delete",
+    "helpful": "Helpful",
+    "markedHelpful": "Marked as helpful",
+    "noComments": "No comments yet. Be the first to share your thoughts!",
+    "signInToComment": "Sign in to join the discussion",
+    "achievementEarned": "Achievement unlocked: {name}!",
+    "helperAchievement": "Your comment helped someone!",
+    "charLimit": "{count}/2000",
+    "ago": "{time} ago"
+  },
+  "onboarding": {
+    "welcome": "Welcome to Superteam Academy!",
+    "welcomeSubtitle": "Master Solana development with interactive courses and on-chain credentials.",
+    "welcomeFeature1": "Interactive Courses",
+    "welcomeFeature2": "XP Tokens",
+    "welcomeFeature3": "NFT Credentials",
+    "welcomeFeature4": "Community",
+    "getStarted": "Get Started",
+    "profileTitle": "Set up your profile",
+    "profileSubtitle": "Tell us a bit about yourself",
+    "profileAvatarHint": "From your sign-in provider",
+    "changePhoto": "Change photo",
+    "uploading": "Uploading...",
+    "displayNameLabel": "Display Name",
+    "displayNamePlaceholder": "Your name",
+    "usernameLabel": "Username",
+    "usernamePlaceholder": "your-username",
+    "bioLabel": "Bio",
+    "bioPlaceholder": "A short intro about yourself",
+    "socialsLabel": "Social links (optional)",
+    "twitterPlaceholder": "username",
+    "githubPlaceholder": "username",
+    "websitePlaceholder": "https://your.site",
+    "walletTitle": "Connect your wallet",
+    "walletSubtitle": "Unlock on-chain features like XP tokens and credential NFTs",
+    "walletAskTitle": "Do you have a Solana wallet?",
+    "walletAskSubtitle": "A wallet unlocks on-chain rewards and credentials",
+    "walletHaveOne": "Yes, connect my wallet",
+    "walletDontHave": "No, I need to create one",
+    "walletLinkedTitle": "Wallet connected!",
+    "walletLinkedDesc": "Your wallet is linked. You're ready to earn on-chain XP and credentials.",
+    "walletSignMessage": "Please approve the signature request in your wallet to complete linking.",
+    "walletConnectDesc": "Select your wallet provider and approve the connection. It's free — no SOL required.",
+    "walletGuideTitle": "Create a Solana wallet",
+    "walletGuideSubtitle": "Follow these quick steps to set up Solflare — it only takes a few minutes",
+    "walletGuideStep1": "Install Solflare browser extension",
+    "walletGuideStep2": "Click 'I need a new wallet' and set a password",
+    "walletGuideStep3": "Write down your recovery phrase on paper",
+    "walletGuideStep3Warning": "Never share this phrase. Never store it digitally.",
+    "walletGuideStep4": "Come back and connect your new wallet",
+    "walletGuideFullGuide": "Read the full guide",
+    "walletGuideReady": "I created my wallet, connect it",
+    "connectWallet": "Connect Wallet",
+    "skipForNow": "Skip for now",
+    "exploreTitle": "Start learning",
+    "exploreSubtitle": "Here are some courses to get you started",
+    "startLearning": "Start Learning",
+    "goToDashboard": "Go to Dashboard",
+    "noCoursesYet": "Courses coming soon!",
+    "lessons": "lessons",
+    "skip": "Skip",
+    "next": "Next",
+    "back": "Back",
+    "saving": "Saving...",
+    "step": "Step {current} of {total}"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "retry": "Retry",
+    "back": "Back",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "viewAll": "View All",
+    "comingSoon": "Coming Soon"
+  },
+  "forum": {
+    "title": "Community",
+    "subtitle": "Discuss, ask questions, and share knowledge with fellow learners",
+    "newPost": "New Post",
+    "allPosts": "All",
+    "forumPosts": "Discussions",
+    "lessonPosts": "Lesson Comments",
+    "postTitle": "Title",
+    "postContent": "Content",
+    "postPlaceholder": "Share your thoughts, questions, or discoveries...",
+    "titlePlaceholder": "Give your post a title",
+    "submit": "Post",
+    "replies": "replies",
+    "noPostsYet": "No posts yet. Be the first to start a discussion!",
+    "signInToPost": "Sign in to join the discussion",
+    "fromLesson": "From lesson discussion",
+    "backToCommunity": "Back to Community",
+    "postNotFound": "Post not found",
+    "loadError": "Failed to load post",
+    "replyPlaceholder": "Write your reply...",
+    "replyButton": "Reply",
+    "replySuccess": "Reply posted!",
+    "replyError": "Failed to post reply"
+  }
+}

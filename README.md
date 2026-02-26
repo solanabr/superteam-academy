@@ -45,9 +45,11 @@ The program is live on devnet:
 
 | | Address |
 |---|---|
-| **Program** | [`ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf`](https://explorer.solana.com/address/ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf?cluster=devnet) |
-| **XP Mint** | [`xpXPUjkfk7t4AJF1tYUoyAYxzuM5DhinZWS1WjfjAu3`](https://explorer.solana.com/address/xpXPUjkfk7t4AJF1tYUoyAYxzuM5DhinZWS1WjfjAu3?cluster=devnet) |
-| **Authority** | [`ACAd3USj2sMV6drKcMY2wZtNkhVDHWpC4tfJe93hgqYn`](https://explorer.solana.com/address/ACAd3USj2sMV6drKcMY2wZtNkhVDHWpC4tfJe93hgqYn?cluster=devnet) |
+| **Program** | [`FEjumbmTCGxTwqikEcyC13czHfTwsnk7B9erNEEuHeBB`](https://explorer.solana.com/address/FEjumbmTCGxTwqikEcyC13czHfTwsnk7B9erNEEuHeBB?cluster=devnet) |
+| **XP Mint** | [`5S5pSBFe968KdjAaG5yUXX1detFrE9vR4RGvT7JqRGjd`](https://explorer.solana.com/address/5S5pSBFe968KdjAaG5yUXX1detFrE9vR4RGvT7JqRGjd?cluster=devnet) |
+| **Credential Collection** | [`3kVGs49bDKKjwhP1B83QuQDdNnCcDPkMoyRGKBm6Nosb`](https://explorer.solana.com/address/3kVGs49bDKKjwhP1B83QuQDdNnCcDPkMoyRGKBm6Nosb?cluster=devnet) |
+| **Authority** | [`GovRkQrjmipeWeM5CZPECM63iUNmLuHvAr4jMdCYQAcq`](https://explorer.solana.com/address/GovRkQrjmipeWeM5CZPECM63iUNmLuHvAr4jMdCYQAcq?cluster=devnet) |
+| **Config PDA** | [`5EzcihtLatMMqRanQZqcmZaufctgH3rWf6Mq8sQgbdHV`](https://explorer.solana.com/address/5EzcihtLatMMqRanQZqcmZaufctgH3rWf6Mq8sQgbdHV?cluster=devnet) |
 
 Frontend bounty applicants: [deploy your own instance](docs/DEPLOY-PROGRAM.md) on devnet.
 

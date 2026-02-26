@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="800" y2="450" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#2563EB"/>
+      <stop offset="100%" stop-color="#7C3AED"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="450" rx="16" fill="#0D1117"/>
+  <rect width="800" height="450" rx="16" fill="url(#bg)" opacity="0.15"/>
+  <!-- Anchor icon -->
+  <g transform="translate(340, 60)">
+    <!-- Anchor ring -->
+    <circle cx="60" cy="40" r="28" stroke="#3B82F6" stroke-width="8" fill="none"/>
+    <!-- Anchor shaft -->
+    <line x1="60" y1="68" x2="60" y2="210" stroke="#3B82F6" stroke-width="8" stroke-linecap="round"/>
+    <!-- Anchor crossbar -->
+    <line x1="25" y1="130" x2="95" y2="130" stroke="#3B82F6" stroke-width="8" stroke-linecap="round"/>
+    <!-- Anchor flukes -->
+    <path d="M20 200 Q20 170 60 210 Q100 170 100 200" stroke="#3B82F6" stroke-width="8" fill="none" stroke-linecap="round"/>
+  </g>
+  <!-- Title -->
+  <text x="400" y="380" text-anchor="middle" fill="white" font-family="system-ui, -apple-system, sans-serif" font-size="32" font-weight="700" letter-spacing="1">Anchor Framework</text>
+  <text x="400" y="415" text-anchor="middle" fill="#3B82F6" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="500" letter-spacing="2" opacity="0.9">PROGRAM DEVELOPMENT</text>
+</svg>

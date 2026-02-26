@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <circle cx="64" cy="64" r="60" fill="#EF4444"/>
+  <circle cx="64" cy="64" r="56" fill="#B91C1C"/>
+  <!-- Bug body -->
+  <ellipse cx="64" cy="68" rx="18" ry="22" fill="white"/>
+  <ellipse cx="64" cy="48" rx="12" ry="10" fill="white"/>
+  <!-- Bug line -->
+  <line x1="64" y1="52" x2="64" y2="88" stroke="#B91C1C" stroke-width="2"/>
+  <!-- Eyes -->
+  <circle cx="58" cy="46" r="3" fill="#B91C1C"/>
+  <circle cx="70" cy="46" r="3" fill="#B91C1C"/>
+  <!-- Antennae -->
+  <line x1="58" y1="40" x2="50" y2="30" stroke="white" stroke-width="3" stroke-linecap="round"/>
+  <line x1="70" y1="40" x2="78" y2="30" stroke="white" stroke-width="3" stroke-linecap="round"/>
+  <!-- Legs -->
+  <line x1="46" y1="60" x2="36" y2="52" stroke="white" stroke-width="3" stroke-linecap="round"/>
+  <line x1="82" y1="60" x2="92" y2="52" stroke="white" stroke-width="3" stroke-linecap="round"/>
+  <line x1="46" y1="72" x2="34" y2="72" stroke="white" stroke-width="3" stroke-linecap="round"/>
+  <line x1="82" y1="72" x2="94" y2="72" stroke="white" stroke-width="3" stroke-linecap="round"/>
+  <line x1="46" y1="82" x2="36" y2="90" stroke="white" stroke-width="3" stroke-linecap="round"/>
+  <line x1="82" y1="82" x2="92" y2="90" stroke="white" stroke-width="3" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,21 @@
+{
+  "name": "Superteam Academy",
+  "short_name": "Academy",
+  "description": "The ultimate learning platform for Solana developers. From zero to deploying production-ready dApps.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#7c3aed",
+  "orientation": "portrait-primary",
+  "categories": ["education", "developer tools"],
+  "icons": [
+    {
+      "src": "/superteam-logo.jpg",
+      "sizes": "400x400",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "prefer_related_applications": false
+}

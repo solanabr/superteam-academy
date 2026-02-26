@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <circle cx="64" cy="64" r="60" fill="#6366F1"/>
+  <circle cx="64" cy="64" r="56" fill="#4F46E5"/>
+  <!-- Rocket -->
+  <path d="M64 30 C56 42 50 56 50 72 L58 72 L58 88 L70 88 L70 72 L78 72 C78 56 72 42 64 30Z" fill="white"/>
+  <!-- Window -->
+  <circle cx="64" cy="56" r="6" fill="#4F46E5"/>
+  <!-- Flames -->
+  <path d="M58 88 L54 100 L60 94 L64 102 L68 94 L74 100 L70 88Z" fill="#F97316"/>
+  <!-- Fins -->
+  <path d="M50 72 L40 80 L50 78Z" fill="white"/>
+  <path d="M78 72 L88 80 L78 78Z" fill="white"/>
+</svg>

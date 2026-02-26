@@ -1,0 +1,30 @@
+{
+  "name": "Superteam Academy XP",
+  "symbol": "STXP",
+  "description": "Soulbound experience points earned by completing courses on Superteam Academy. Non-transferable Token-2022 token.",
+  "image": "https://i.ibb.co/Q7NWgn9N/STBR-LOGO.jpg",
+  "external_url": "https://x.com/SuperteamBR",
+  "attributes": [
+    {
+      "trait_type": "Type",
+      "value": "Experience Points"
+    },
+    {
+      "trait_type": "Transferable",
+      "value": "No"
+    },
+    {
+      "trait_type": "Standard",
+      "value": "Token-2022"
+    }
+  ],
+  "properties": {
+    "category": "currency",
+    "files": [
+      {
+        "uri": "https://i.ibb.co/Q7NWgn9N/STBR-LOGO.jpg",
+        "type": "image/jpeg"
+      }
+    ]
+  }
+}

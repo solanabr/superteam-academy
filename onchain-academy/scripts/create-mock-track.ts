@@ -5,12 +5,12 @@ import { fromWeb3JsKeypair, fromWeb3JsPublicKey } from "@metaplex-foundation/umi
 import * as fs from "fs";
 import { Keypair, PublicKey } from "@solana/web3.js";
 
-const PROGRAM_ID = new PublicKey("ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf");
+const PROGRAM_ID = new PublicKey("FEjumbmTCGxTwqikEcyC13czHfTwsnk7B9erNEEuHeBB");
 
 const secret = JSON.parse(fs.readFileSync("../wallets/signer.json", "utf-8"));
 const keypair = Keypair.fromSecretKey(Uint8Array.from(secret));
 
-const umi = createUmi("https://api.devnet.solana.com")
+const umi = createUmi("https://devnet.helius-rpc.com/?api-key=44daf6b7-435a-4124-95e4-f5eaa32ff810")
   .use(mplCore())
   .use(keypairIdentity(fromWeb3JsKeypair(keypair)));
 

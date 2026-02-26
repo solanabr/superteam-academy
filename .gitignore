@@ -48,12 +48,20 @@ lcov.info
 *.profraw
 *.profdata
 
+# Playwright
+app/test-results/
+app/playwright-report/
+app/blob-report/
+
 # Fuzz corpus (can be large)
 onchain-academy/trident-tests/fuzz/corpus/
 onchain-academy/trident-tests/fuzz/artifacts/
 
 # Verifiable build artifacts
 onchain-academy/target/verifiable/
+
+# Verification / audit notes
+verify_items.txt
 
 # Misc
 *.log

@@ -1308,6 +1308,7 @@ dependencies = [
  "anchor-lang",
  "mpl-core",
  "spl-token-2022",
+ "spl-token-metadata-interface",
 ]
 
 [[package]]
