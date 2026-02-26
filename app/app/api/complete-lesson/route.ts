@@ -7,7 +7,7 @@ import {
   Transaction,
   TransactionInstruction,
 } from '@solana/web3.js';
-import { AnchorProvider, Program, Wallet } from '@coral-xyz/anchor';
+import { AnchorProvider, Program } from '@coral-xyz/anchor';
 import IDL from '@/lib/idl/onchain_academy.json';
 import {
   PROGRAM_ID,
@@ -51,7 +51,8 @@ export async function POST(request: NextRequest) {
 
     const provider = new AnchorProvider(
       connection,
-      new Wallet(backendSigner),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      { publicKey: backendSigner.publicKey, signTransaction: async (tx: any) => { tx.sign(backendSigner); return tx; }, signAllTransactions: async (txs: any[]) => { txs.forEach((t: any) => t.sign(backendSigner)); return txs; } } as any,
       { commitment: 'confirmed' }
     );
 

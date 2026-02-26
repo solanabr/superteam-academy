@@ -123,6 +123,11 @@ export default function SettingsPage() {
           theme?: Theme;
           notifications?: Record<string, boolean>;
           privacy?: Record<string, boolean>;
+          displayName?: string;
+          bio?: string;
+          avatarUrl?: string;
+          twitter?: string;
+          github?: string;
         };
         if (parsed.language) setLanguage(parsed.language);
         if (parsed.theme) {
