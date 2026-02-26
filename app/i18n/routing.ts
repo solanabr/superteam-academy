@@ -61,5 +61,15 @@ export const routing = defineRouting({
       'en': '/onboarding',
       'es': '/bienvenida',
     },
+    '/teach': {
+      'pt-BR': '/ensinar',
+      'en': '/teach',
+      'es': '/ensenar',
+    },
+    '/teach/new': {
+      'pt-BR': '/ensinar/novo',
+      'en': '/teach/new',
+      'es': '/ensenar/nuevo',
+    },
   }
 });

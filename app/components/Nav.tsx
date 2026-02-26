@@ -31,6 +31,7 @@ import {
   LayoutDashboard,
   Users2,
   Shield,
+  PenTool,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { localePath } from '@/lib/paths';
@@ -46,6 +47,7 @@ const NAV_ITEMS = [
   { key: 'dashboard', path: '/painel', enPath: '/dashboard', esPath: '/panel' as const, icon: LayoutDashboard },
   { key: 'leaderboard', path: '/classificacao', enPath: '/leaderboard', esPath: '/clasificacion' as const, icon: Trophy },
   { key: 'community', path: '/comunidade', enPath: '/community', esPath: '/comunidad' as const, icon: Users2 },
+  { key: 'teach', path: '/ensinar', enPath: '/teach', esPath: '/ensenar' as const, icon: PenTool },
 ] as const;
 
 type LocaleCode = 'pt-BR' | 'en' | 'es';

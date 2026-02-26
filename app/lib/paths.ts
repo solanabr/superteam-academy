@@ -10,6 +10,7 @@ const PATHNAMES: Record<string, Record<string, string>> = {
   "/community": { "pt-BR": "/comunidade", en: "/community", es: "/comunidad" },
   "/admin": { "pt-BR": "/admin", en: "/admin", es: "/admin" },
   "/onboarding": { "pt-BR": "/boas-vindas", en: "/onboarding", es: "/bienvenida" },
+  "/teach": { "pt-BR": "/ensinar", en: "/teach", es: "/ensenar" },
 };
 
 export function localePath(locale: string, canonicalPath: string): string {
