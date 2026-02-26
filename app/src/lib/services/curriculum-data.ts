@@ -300,6 +300,7 @@ export const courses: Course[] = [
                 {
                   name: "Defines GreetingAccount with message field",
                   expectCodeContains: "pub message: String",
+                  expectNoError: true,
                 },
                 {
                   name: "Uses init constraint with correct seeds",
@@ -354,6 +355,7 @@ export const courses: Course[] = [
                 {
                   name: "Uses PDA seeds and bump",
                   expectCodeContains: "seeds",
+                  expectNoError: true,
                 },
                 {
                   name: "Increments with checked_add",
@@ -393,6 +395,7 @@ export const courses: Course[] = [
                 {
                   name: "Initializes counter with count = 0",
                   expectCodeContains: "count = 0",
+                  expectNoError: true,
                 },
                 {
                   name: "Increment uses checked_add",
@@ -537,6 +540,7 @@ export const courses: Course[] = [
                 {
                   name: "Defines create_poll with question field",
                   expectCodeContains: "create_poll",
+                  expectNoError: true,
                 },
                 {
                   name: "Defines cast_vote with choice parameter",
@@ -894,6 +898,7 @@ export const courses: Course[] = [
                 {
                   name: "Uses system_program::transfer for deposits",
                   expectCodeContains: "system_program::transfer",
+                  expectNoError: true,
                 },
                 {
                   name: "Uses checked_add and checked_sub",
@@ -995,6 +1000,7 @@ export const courses: Course[] = [
                 {
                   name: "Uses u128 intermediate for safe multiplication",
                   expectCodeContains: "as u128",
+                  expectNoError: true,
                 },
                 {
                   name: "Uses checked_add for pool total",
@@ -1049,6 +1055,7 @@ export const courses: Course[] = [
                 {
                   name: "Uses Signer type for admin",
                   expectCodeContains: "Signer",
+                  expectNoError: true,
                 },
                 {
                   name: "Uses typed Account for token accounts",
@@ -1141,6 +1148,7 @@ export const courses: Course[] = [
                 {
                   name: "Fixes missing signer check",
                   expectCodeContains: "Signer",
+                  expectNoError: true,
                 },
                 {
                   name: "Adds has_one for seller validation",
