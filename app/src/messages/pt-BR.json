@@ -1,0 +1,156 @@
+{
+  "nav": {
+    "courses": "Cursos",
+    "leaderboard": "Ranking",
+    "dashboard": "Painel",
+    "profile": "Perfil",
+    "settings": "Configurações",
+    "signIn": "Entrar",
+    "signOut": "Sair",
+    "getStarted": "Começar"
+  },
+  "hero": {
+    "badge": "A plataforma #1 de aprendizado Solana",
+    "title": "Domine o Desenvolvimento Solana",
+    "titleHighlight": "Do Zero ao dApp",
+    "description": "Cursos interativos, credenciais on-chain e recompensas reais de XP. A plataforma de aprendizado mais completa para desenvolvedores Solana na América Latina.",
+    "cta": "Começar Gratuitamente",
+    "ctaSecondary": "Explorar Cursos",
+    "stats": {
+      "developers": "Desenvolvedores",
+      "courses": "Cursos",
+      "xpAwarded": "XP Distribuído",
+      "countries": "Países"
+    }
+  },
+  "courses": {
+    "title": "Cursos",
+    "subtitle": "Domine Solana do básico ao DeFi avançado",
+    "search": "Buscar cursos...",
+    "filters": {
+      "all": "Todos",
+      "beginner": "Iniciante",
+      "intermediate": "Intermediário",
+      "advanced": "Avançado",
+      "expert": "Expert"
+    },
+    "difficulty": {
+      "beginner": "Iniciante",
+      "intermediate": "Intermediário",
+      "advanced": "Avançado",
+      "expert": "Expert"
+    },
+    "enroll": "Matricular-se",
+    "continue": "Continuar",
+    "completed": "Concluído",
+    "xpReward": "Recompensa XP",
+    "lessons": "aulas",
+    "duration": "min",
+    "enrolled": "matriculados",
+    "rating": "avaliação"
+  },
+  "dashboard": {
+    "title": "Painel",
+    "welcome": "Bem-vindo de volta",
+    "xpBalance": "Saldo XP",
+    "currentLevel": "Nível Atual",
+    "currentStreak": "Sequência Atual",
+    "days": "dias",
+    "activeCourses": "Cursos Ativos",
+    "completedCourses": "Cursos Concluídos",
+    "achievements": "Conquistas",
+    "recentActivity": "Atividade Recente",
+    "nextLesson": "Próxima Aula",
+    "continueLabel": "Continuar",
+    "recommendedCourses": "Recomendados para Você"
+  },
+  "leaderboard": {
+    "title": "Ranking",
+    "subtitle": "Os melhores construtores Solana classificados por XP",
+    "weekly": "Semanal",
+    "monthly": "Mensal",
+    "allTime": "Todos os Tempos",
+    "rank": "Posição",
+    "developer": "Desenvolvedor",
+    "xp": "XP",
+    "level": "Nível",
+    "streak": "Sequência",
+    "courses": "Cursos"
+  },
+  "profile": {
+    "title": "Perfil",
+    "editProfile": "Editar Perfil",
+    "skills": "Habilidades",
+    "achievements": "Conquistas",
+    "credentials": "Credenciais On-Chain",
+    "completedCourses": "Cursos Concluídos",
+    "joinedOn": "Entrou em",
+    "publicProfile": "Perfil Público",
+    "verifyOnExplorer": "Verificar no Explorer"
+  },
+  "settings": {
+    "title": "Configurações",
+    "profile": "Perfil",
+    "account": "Conta",
+    "preferences": "Preferências",
+    "privacy": "Privacidade",
+    "language": "Idioma",
+    "theme": "Tema",
+    "themeLight": "Claro",
+    "themeDark": "Escuro",
+    "themeSystem": "Sistema",
+    "notifications": "Notificações",
+    "saveChanges": "Salvar Alterações"
+  },
+  "gamification": {
+    "level": "Nível",
+    "xp": "XP",
+    "streak": "Sequência",
+    "days": "dias",
+    "achievements": "Conquistas",
+    "nextLevel": "Próximo Nível",
+    "xpToNextLevel": "XP para o próximo nível",
+    "streakFreeze": "Congelar Sequência",
+    "milestones": {
+      "7days": "7 dias seguidos",
+      "30days": "30 dias seguidos",
+      "100days": "100 dias seguidos"
+    }
+  },
+  "common": {
+    "loading": "Carregando...",
+    "error": "Algo deu errado",
+    "tryAgain": "Tentar Novamente",
+    "cancel": "Cancelar",
+    "save": "Salvar",
+    "edit": "Editar",
+    "delete": "Excluir",
+    "confirm": "Confirmar",
+    "back": "Voltar",
+    "next": "Próximo",
+    "previous": "Anterior",
+    "complete": "Concluir",
+    "view": "Ver",
+    "share": "Compartilhar",
+    "copy": "Copiar",
+    "copied": "Copiado!",
+    "connectWallet": "Conectar Carteira",
+    "walletConnected": "Carteira Conectada",
+    "disconnectWallet": "Desconectar",
+    "dark": "Escuro",
+    "light": "Claro"
+  },
+  "footer": {
+    "description": "A principal plataforma de aprendizado Solana para desenvolvedores latino-americanos.",
+    "platform": "Plataforma",
+    "community": "Comunidade",
+    "resources": "Recursos",
+    "newsletter": {
+      "title": "Fique Atualizado",
+      "description": "Receba os últimos cursos e novidades Solana.",
+      "placeholder": "Digite seu e-mail",
+      "subscribe": "Inscrever-se"
+    },
+    "copyright": "© 2024 Superteam Academy. Todos os direitos reservados."
+  }
+}

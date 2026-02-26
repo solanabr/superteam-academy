@@ -2,6 +2,16 @@
 
 Decentralized learning platform on Solana. Learners enroll in courses, complete lessons to earn soulbound XP tokens, receive Metaplex Core credential NFTs, and collect achievements. Course creators earn XP rewards. Platform governed by multisig authority.
 
+## Screenshots
+
+| Landing | Courses | Dashboard |
+|--------|---------|-----------|
+| ![Landing](docs/images/landing.png) | ![Courses](docs/images/courses.png) | ![Dashboard](docs/images/dashboard.png) |
+
+**Landing** — Hero with "Master Solana, From Zero to dApp", gamification cards (Daily Streak, XP Earned, Achievement, Credential), and learning paths.  
+**Courses** — Catalog with search, level filters, track filters, and course cards with XP rewards.  
+**Dashboard** — Welcome stats, Total XP, Level, Streak, Achievements, Daily Challenge, and seasonal events.
+
 ## Monorepo Structure
 
 ```

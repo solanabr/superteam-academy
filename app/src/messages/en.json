@@ -1,0 +1,156 @@
+{
+  "nav": {
+    "courses": "Courses",
+    "leaderboard": "Leaderboard",
+    "dashboard": "Dashboard",
+    "profile": "Profile",
+    "settings": "Settings",
+    "signIn": "Sign In",
+    "signOut": "Sign Out",
+    "getStarted": "Get Started"
+  },
+  "hero": {
+    "badge": "The #1 Solana Learning Platform",
+    "title": "Master Solana Development",
+    "titleHighlight": "From Zero to dApp",
+    "description": "Interactive courses, on-chain credentials, and real XP rewards. The most complete learning platform for Solana developers in Latin America.",
+    "cta": "Start Learning Free",
+    "ctaSecondary": "Explore Courses",
+    "stats": {
+      "developers": "Developers",
+      "courses": "Courses",
+      "xpAwarded": "XP Awarded",
+      "countries": "Countries"
+    }
+  },
+  "courses": {
+    "title": "Courses",
+    "subtitle": "Master Solana from fundamentals to advanced DeFi",
+    "search": "Search courses...",
+    "filters": {
+      "all": "All",
+      "beginner": "Beginner",
+      "intermediate": "Intermediate",
+      "advanced": "Advanced",
+      "expert": "Expert"
+    },
+    "difficulty": {
+      "beginner": "Beginner",
+      "intermediate": "Intermediate",
+      "advanced": "Advanced",
+      "expert": "Expert"
+    },
+    "enroll": "Enroll Now",
+    "continue": "Continue",
+    "completed": "Completed",
+    "xpReward": "XP Reward",
+    "lessons": "lessons",
+    "duration": "min",
+    "enrolled": "enrolled",
+    "rating": "rating"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome back",
+    "xpBalance": "XP Balance",
+    "currentLevel": "Current Level",
+    "currentStreak": "Current Streak",
+    "days": "days",
+    "activeCourses": "Active Courses",
+    "completedCourses": "Completed Courses",
+    "achievements": "Achievements",
+    "recentActivity": "Recent Activity",
+    "nextLesson": "Next Lesson",
+    "continueLabel": "Continue",
+    "recommendedCourses": "Recommended for You"
+  },
+  "leaderboard": {
+    "title": "Leaderboard",
+    "subtitle": "Top Solana builders ranked by XP",
+    "weekly": "Weekly",
+    "monthly": "Monthly",
+    "allTime": "All Time",
+    "rank": "Rank",
+    "developer": "Developer",
+    "xp": "XP",
+    "level": "Level",
+    "streak": "Streak",
+    "courses": "Courses"
+  },
+  "profile": {
+    "title": "Profile",
+    "editProfile": "Edit Profile",
+    "skills": "Skills",
+    "achievements": "Achievements",
+    "credentials": "On-Chain Credentials",
+    "completedCourses": "Completed Courses",
+    "joinedOn": "Joined",
+    "publicProfile": "Public Profile",
+    "verifyOnExplorer": "Verify on Explorer"
+  },
+  "settings": {
+    "title": "Settings",
+    "profile": "Profile",
+    "account": "Account",
+    "preferences": "Preferences",
+    "privacy": "Privacy",
+    "language": "Language",
+    "theme": "Theme",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeSystem": "System",
+    "notifications": "Notifications",
+    "saveChanges": "Save Changes"
+  },
+  "gamification": {
+    "level": "Level",
+    "xp": "XP",
+    "streak": "Streak",
+    "days": "days",
+    "achievements": "Achievements",
+    "nextLevel": "Next Level",
+    "xpToNextLevel": "XP to next level",
+    "streakFreeze": "Streak Freeze",
+    "milestones": {
+      "7days": "7 Day Streak",
+      "30days": "30 Day Streak",
+      "100days": "100 Day Streak"
+    }
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "tryAgain": "Try Again",
+    "cancel": "Cancel",
+    "save": "Save",
+    "edit": "Edit",
+    "delete": "Delete",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "complete": "Complete",
+    "view": "View",
+    "share": "Share",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "connectWallet": "Connect Wallet",
+    "walletConnected": "Wallet Connected",
+    "disconnectWallet": "Disconnect",
+    "dark": "Dark",
+    "light": "Light"
+  },
+  "footer": {
+    "description": "The premier Solana learning platform for Latin American developers.",
+    "platform": "Platform",
+    "community": "Community",
+    "resources": "Resources",
+    "newsletter": {
+      "title": "Stay Updated",
+      "description": "Get the latest courses and Solana news.",
+      "placeholder": "Enter your email",
+      "subscribe": "Subscribe"
+    },
+    "copyright": "© 2024 Superteam Academy. All rights reserved."
+  }
+}
