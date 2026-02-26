@@ -85,7 +85,7 @@ export function ChallengeInterface({
   }, [isAlreadyCompleted]);
   const [showDescription, setShowDescription] = useState(true);
   const [descHeight, setDescHeight] = useState(180);
-  const [panelHeight, setPanelHeight] = useState(250);
+  const [panelHeight, setPanelHeight] = useState(100);
   const resizeRef = useRef<{
     startY: number;
     startHeight: number;
@@ -322,7 +322,7 @@ export function ChallengeInterface({
       )}
 
       {/* Toolbar */}
-      <div className="flex shrink-0 items-center justify-between border-b border-border px-3 py-1.5">
+      <div className="flex shrink-0 items-center justify-between border-b border-border px-3 py-2.5">
         <ChallengeRunner
           code={code}
           tests={tests}

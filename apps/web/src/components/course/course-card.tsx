@@ -93,9 +93,17 @@ export function CourseCard({
         <div className="course-card-foot">
           <div className="course-card-stat">
             {lessonCount !== undefined && (
-              <span>
-                {lessonCount} {t("lessons")}
-              </span>
+              <>
+                <span>
+                  {lessonCount} {t("lessons")}
+                </span>
+                <span
+                  className="text-[16px] leading-none text-text-3"
+                  aria-hidden="true"
+                >
+                  &middot;
+                </span>
+              </>
             )}
             <span>
               {duration} {t("hours")}
