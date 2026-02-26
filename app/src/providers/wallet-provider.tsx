@@ -15,7 +15,7 @@ import {
   type WalletContextState,
   type AnchorWallet,
 } from "@/lib/wallet/context";
-import { HELIUS_RPC_URL } from "@/lib/constants";
+import { HELIUS_RPC_URL, SOLANA_NETWORK } from "@/lib/constants";
 import { analytics } from "@/providers/analytics-provider";
 
 /**
@@ -61,10 +61,17 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     if (typeof window === "undefined") return HELIUS_RPC_URL;
     return `${window.location.origin}/api/rpc`;
   }, []);
+  const wsEndpoint = useMemo(
+    () =>
+      SOLANA_NETWORK === "devnet"
+        ? "wss://api.devnet.solana.com"
+        : "wss://api.mainnet-beta.solana.com",
+    [],
+  );
   const wallets = useMemo(() => [], []);
 
   return (
-    <ConnectionProvider endpoint={endpoint}>
+    <ConnectionProvider endpoint={endpoint} config={{ wsEndpoint }}>
       <SolanaWalletProvider wallets={wallets} autoConnect>
         <WalletBridge>{children}</WalletBridge>
       </SolanaWalletProvider>

@@ -55,11 +55,11 @@ export function useEnrollment(courseId: string | null) {
   const [loading, setLoading] = useState(false);
   const [exists, setExists] = useState(false);
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (): Promise<boolean> => {
     if (!publicKey || !courseId) {
       setEnrollment(null);
       setExists(false);
-      return;
+      return false;
     }
 
     setLoading(true);
@@ -69,12 +69,15 @@ export function useEnrollment(courseId: string | null) {
       const enrollment = await getAccounts(program).enrollment.fetch(pda);
       setEnrollment(enrollment);
       setExists(true);
+      setLoading(false);
+      return true;
     } catch (error) {
       console.error("[useEnrollment] Failed to fetch enrollment:", error);
       setEnrollment(null);
       setExists(false);
+      setLoading(false);
+      return false;
     }
-    setLoading(false);
   }, [publicKey, courseId, connection]);
 
   useEffect(() => {

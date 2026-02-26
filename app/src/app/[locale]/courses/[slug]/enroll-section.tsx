@@ -51,7 +51,11 @@ export function EnrollSection({
     try {
       await enroll(program, publicKey, courseId);
       analytics.courseEnrolled(courseId);
-      await refreshEnrollment();
+      for (let i = 0; i < 5; i++) {
+        const found = await refreshEnrollment();
+        if (found) break;
+        await new Promise((r) => setTimeout(r, 2000));
+      }
     } catch (e: unknown) {
       console.error("Enroll failed:", e);
       const anchor = parseAnchorError(e);

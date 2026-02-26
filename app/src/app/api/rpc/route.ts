@@ -23,6 +23,8 @@ const ALLOWED_METHODS = new Set([
   "getAssetsByOwner",
   "getMultipleAccounts",
   "getSignaturesForAddress",
+  "getSignatureStatuses",
+  "isBlockhashValid",
   "getSlot",
   "getBlockHeight",
 ]);
