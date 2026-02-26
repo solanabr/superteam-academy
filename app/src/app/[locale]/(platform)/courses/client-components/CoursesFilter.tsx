@@ -5,21 +5,22 @@ import { Link } from "@/i18n/routing";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { useEnrollmentStore } from "@/store/enrollment-store";
+import { Search, Verified, Play, ArrowUpRight, BarChart4, BarChart, Signal, Terminal, Anchor, Shield, Code, Clock } from "lucide-react";
 import type { CourseListItem } from "@/sanity/lib/queries";
 
 const TRACK_OPTIONS = ["all", "rust", "anchor", "security", "solana"];
 
-const DIFFICULTY_ICON_MAP: Record<string, string> = {
-    beginner: "bar_chart_4_bars",
-    intermediate: "bar_chart",
-    advanced: "signal_cellular_alt",
+const DIFFICULTY_ICON_MAP: Record<string, any> = {
+    beginner: BarChart4,
+    intermediate: BarChart,
+    advanced: Signal,
 };
 
-const TRACK_ICON_MAP: Record<string, string> = {
-    rust: "terminal",
-    anchor: "anchor",
-    security: "security",
-    solana: "code",
+const TRACK_ICON_MAP: Record<string, any> = {
+    rust: Terminal,
+    anchor: Anchor,
+    security: Shield,
+    solana: Code,
 };
 
 const TRACK_GRADIENT_MAP: Record<string, string> = {
@@ -76,9 +77,7 @@ export function CoursesFilter({ courses }: { courses: CourseListItem[] }) {
             <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
                 {/* Search Input */}
                 <div className="relative flex-1 max-w-sm">
-                    <span className="material-symbols-outlined notranslate absolute left-3 top-1/2 -translate-y-1/2 text-text-muted text-[18px]">
-                        search
-                    </span>
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted h-4 w-4" />
                     <input
                         type="text"
                         onChange={(e) => handleSearch(e.target.value)}
@@ -140,7 +139,7 @@ export function CoursesFilter({ courses }: { courses: CourseListItem[] }) {
                                     {/* Completed badge */}
                                     {isCompleted && (
                                         <div className="absolute top-3 right-3 z-10 flex items-center gap-1 bg-solana/20 border border-solana/30 rounded-full px-2 py-0.5">
-                                            <span className="material-symbols-outlined notranslate text-solana text-[12px]">verified</span>
+                                            <Verified className="h-3 w-3 text-solana" />
                                             <span className="text-[10px] font-mono font-bold text-solana uppercase tracking-widest">Completed</span>
                                         </div>
                                     )}
@@ -148,9 +147,10 @@ export function CoursesFilter({ courses }: { courses: CourseListItem[] }) {
                                     {/* Course Cover */}
                                     <div className={`h-48 w-full relative overflow-hidden bg-gradient-to-br ${gradient} to-void`}>
                                         <div className="absolute inset-0 flex items-center justify-center opacity-80 group-hover:scale-105 transition-transform duration-500">
-                                            <span className={`material-symbols-outlined notranslate text-[100px] ${iconColor}`}>
-                                                {icon}
-                                            </span>
+                                            {(() => {
+                                                const Icon = icon;
+                                                return <Icon className={`h-24 w-24 ${iconColor}`} />;
+                                            })()}
                                         </div>
                                         <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0B] to-transparent opacity-60"></div>
 
@@ -171,9 +171,11 @@ export function CoursesFilter({ courses }: { courses: CourseListItem[] }) {
                                                 {course.title}
                                             </h3>
                                             <div className="size-8 rounded-full border border-white/10 flex items-center justify-center bg-white/5 group-hover:bg-solana group-hover:text-void transition-colors flex-shrink-0">
-                                                <span className="material-symbols-outlined notranslate text-[18px]">
-                                                    {isEnrolled ? "play_arrow" : "arrow_outward"}
-                                                </span>
+                                                {isEnrolled ? (
+                                                    <Play className="h-4 w-4 fill-current" />
+                                                ) : (
+                                                    <ArrowUpRight className="h-4 w-4" />
+                                                )}
                                             </div>
                                         </div>
                                         <p className="text-text-secondary text-sm line-clamp-2">
@@ -197,16 +199,17 @@ export function CoursesFilter({ courses }: { courses: CourseListItem[] }) {
 
                                         <div className="mt-auto pt-4 border-t border-white/10 flex items-center gap-4 text-xs font-mono text-text-secondary">
                                             <span className="flex items-center gap-1.5 text-solana">
-                                                <span className="material-symbols-outlined notranslate text-[14px]">
-                                                    {DIFFICULTY_ICON_MAP[course.difficulty?.toLowerCase() ?? ""] ?? "bar_chart"}
-                                                </span>
+                                                {(() => {
+                                                    const Icon = DIFFICULTY_ICON_MAP[course.difficulty?.toLowerCase() ?? ""] ?? BarChart;
+                                                    return <Icon className="h-3.5 w-3.5" />;
+                                                })()}
                                                 {course.difficulty
                                                     ? t(course.difficulty.toLowerCase() as any)
                                                     : t("beginner")}
                                             </span>
                                             <span className="w-1 h-1 rounded-full bg-[#1F1F1F]"></span>
                                             <span className="flex items-center gap-1.5">
-                                                <span className="material-symbols-outlined notranslate text-[14px]">schedule</span>
+                                                <Clock className="h-3.5 w-3.5" />
                                                 {course.duration || t("duration_tbd")}
                                             </span>
                                         </div>

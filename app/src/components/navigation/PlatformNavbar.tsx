@@ -13,6 +13,20 @@ import { usePlaygroundStore } from "@/store/playground-store";
 import { useAppUser } from "@/hooks/useAppUser";
 import { LocaleSwitcher } from "../layout/LocaleSwitcher";
 import { Button } from "../ui/button";
+import {
+    LayoutDashboard,
+    Trophy,
+    GraduationCap,
+    FileEdit,
+    Terminal,
+    Wallet,
+    Settings,
+    LogOut,
+    ChevronDown,
+    ChevronUp,
+    Menu,
+    X
+} from "lucide-react";
 
 export function PlatformNavbar() {
     const pathname = usePathname();
@@ -34,11 +48,11 @@ export function PlatformNavbar() {
     const isProfessor = user?.role === "professor" || user?.role === "admin";
 
     const navLinks = [
-        { href: "/dashboard", label: t("dashboard"), icon: "dashboard" },
-        { href: "/leaderboard", label: t("leaderboard"), icon: "leaderboard" },
-        { href: "/courses", label: t("courses"), icon: "school" },
-        { href: "/achievements", label: t("achievements"), icon: "trophy" },
-        ...(isProfessor ? [{ href: "/teach/courses", label: t("teach"), icon: "edit_note" }] : []),
+        { href: "/dashboard", label: t("dashboard"), icon: LayoutDashboard },
+        { href: "/leaderboard", label: t("leaderboard"), icon: Trophy },
+        { href: "/courses", label: t("courses"), icon: GraduationCap },
+        { href: "/achievements", label: t("achievements"), icon: Trophy },
+        ...(isProfessor ? [{ href: "/teach/courses", label: t("teach"), icon: FileEdit }] : []),
     ];
 
     const isActive = (href: string) => {
@@ -78,7 +92,7 @@ export function PlatformNavbar() {
             {/* Logo */}
             <Link href="/dashboard" className="flex items-center gap-3">
                 <div className="size-8 rounded bg-gradient-to-br from-solana to-emerald-800 flex items-center justify-center shadow-[0_0_10px_rgba(20,241,149,0.3)]">
-                    <span className="material-symbols-outlined notranslate text-void font-bold text-lg">terminal</span>
+                    <Terminal size={18} className="text-void" strokeWidth={2.5} />
                 </div>
                 <h1 className="font-display font-bold text-lg md:text-xl tracking-tight text-white hidden sm:block">
                     Superteam<span className="text-solana">.academy</span>
@@ -96,7 +110,7 @@ export function PlatformNavbar() {
                             : "text-text-muted hover:text-white hover:bg-white/5"
                             }`}
                     >
-                        <span className="material-symbols-outlined notranslate text-lg">{link.icon}</span>
+                        <link.icon size={18} className={isActive(link.href) ? "text-solana" : "text-text-muted"} />
                         <span>{link.label}</span>
                     </Link>
                 ))}
@@ -112,7 +126,7 @@ export function PlatformNavbar() {
                 {/* Wallet Address (Desktop) */}
                 {user?.walletAddress && (
                     <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10">
-                        <span className="material-symbols-outlined notranslate text-solana text-sm">wallet</span>
+                        <Wallet size={14} className="text-solana" />
                         <span className="font-mono text-xs text-text-muted">
                             {user.walletAddress.slice(0, 4)}...{user.walletAddress.slice(-4)}
                         </span>
@@ -140,9 +154,9 @@ export function PlatformNavbar() {
                                 </span>
                             )}
                         </div>
-                        <span className="material-symbols-outlined notranslate text-text-muted text-sm hidden md:block group-hover:text-white">
-                            {isProfileOpen ? "expand_less" : "expand_more"}
-                        </span>
+                        <div className="hidden md:block">
+                            {isProfileOpen ? <ChevronUp size={14} className="text-text-muted" /> : <ChevronDown size={14} className="text-text-muted" />}
+                        </div>
                     </Button>
 
                     {/* Dropdown Menu - Wrapped with invisible expanded padding for better UX */}
@@ -163,7 +177,7 @@ export function PlatformNavbar() {
                                         className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 text-text-muted hover:text-white transition-all"
                                         onClick={() => setProfileOpen(false)}
                                     >
-                                        <span className="material-symbols-outlined notranslate text-lg">settings</span>
+                                        <Settings size={18} />
                                         <span className="text-sm font-medium">{t("settings")}</span>
                                     </Link>
                                     <Button
@@ -171,7 +185,7 @@ export function PlatformNavbar() {
                                         variant="ghost"
                                         className="w-full flex items-center justify-start gap-3 px-3 py-2 rounded-lg hover:bg-white/5 text-text-muted hover:text-white transition-all h-auto"
                                     >
-                                        <span className="material-symbols-outlined notranslate text-lg">logout</span>
+                                        <LogOut size={18} />
                                         <span className="text-sm font-medium">{t("logout")}</span>
                                     </Button>
                                 </div>
@@ -187,9 +201,7 @@ export function PlatformNavbar() {
                     onClick={toggleMobileMenu}
                     className="md:hidden"
                 >
-                    <span className="material-symbols-outlined notranslate text-white">
-                        {isMobileMenuOpen ? "close" : "menu"}
-                    </span>
+                    {isMobileMenuOpen ? <X size={24} className="text-white" /> : <Menu size={24} className="text-white" />}
                 </Button>
             </div>
 
@@ -208,7 +220,7 @@ export function PlatformNavbar() {
                                         }`}
                                     onClick={() => setMobileMenuOpen(false)}
                                 >
-                                    <span className="material-symbols-outlined notranslate text-lg">{link.icon}</span>
+                                    <link.icon size={20} />
                                     <span>{link.label}</span>
                                 </Link>
                             ))}
@@ -220,7 +232,7 @@ export function PlatformNavbar() {
                                 className="flex items-center gap-3 px-4 py-3 rounded-lg font-display font-medium text-sm text-text-muted hover:text-white hover:bg-white/5 transition-all"
                                 onClick={() => setMobileMenuOpen(false)}
                             >
-                                <span className="material-symbols-outlined notranslate text-lg">settings</span>
+                                <Settings size={20} />
                                 <span>{t("settings")}</span>
                             </Link>
 
@@ -229,7 +241,7 @@ export function PlatformNavbar() {
                                 variant="ghost"
                                 className="w-full flex items-center justify-start gap-3 px-4 py-3 rounded-lg font-display font-medium text-sm text-text-muted hover:text-white hover:bg-white/5 transition-all h-auto"
                             >
-                                <span className="material-symbols-outlined notranslate text-lg">logout</span>
+                                <LogOut size={20} />
                                 <span>{t("logout")}</span>
                             </Button>
                         </div>

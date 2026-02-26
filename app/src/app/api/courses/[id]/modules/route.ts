@@ -7,6 +7,7 @@ type LessonInput = {
   title: string;
   sortOrder?: number;
   content?: string;
+  testOutput?: string;
 };
 
 type ModuleInput = {
@@ -128,6 +129,36 @@ export async function POST(
         if (!lessonTitle) continue;
 
         const contentBlocks = textToPortableText(lesson.content);
+        const testOutput = (lesson.testOutput || "").trim();
+
+        let challengeId: string | undefined = undefined;
+        if (testOutput) {
+          // If testOutput is provided, upsert a challenge document
+          // For simplicity in this automated flow, we'll create a single test case
+          const challengeData = {
+            _type: "challenge",
+            title: `${lessonTitle} Challenge`,
+            language: "rust", // Default to rust for ahora
+            testCases: [
+              {
+                _key: "default-test",
+                name: "Standard test case",
+                expected: testOutput,
+              },
+            ],
+          };
+
+          // Check if lesson already has a challenge to update
+          const existingLesson = lesson._id ? await serverClient.fetch(`*[_id == $id][0]{ challenge->{_id} }`, { id: lesson._id }) : null;
+
+          if (existingLesson?.challenge?._id) {
+            await serverClient.patch(existingLesson.challenge._id).set(challengeData).commit();
+            challengeId = existingLesson.challenge._id;
+          } else {
+            const newChallenge = await serverClient.create(challengeData);
+            challengeId = newChallenge._id;
+          }
+        }
 
         if (lesson._id) {
           const updatedLesson = await serverClient
@@ -136,8 +167,8 @@ export async function POST(
               title: lessonTitle,
               sortOrder: li,
               content: contentBlocks,
-              lessonType: "content",
-              challenge: undefined,
+              lessonType: challengeId ? "challenge" : "content",
+              challenge: challengeId ? { _type: "reference", _ref: challengeId } : undefined,
             })
             .commit();
 
@@ -151,7 +182,8 @@ export async function POST(
             title: lessonTitle,
             sortOrder: li,
             content: contentBlocks,
-            lessonType: "content",
+            lessonType: challengeId ? "challenge" : "content",
+            challenge: challengeId ? { _type: "reference", _ref: challengeId } : undefined,
           });
 
           lessonRefs.push({

@@ -14,6 +14,7 @@ import { CredentialList } from "@/components/dashboard/CredentialList";
 import { ContinueLearning } from "@/components/dashboard/ContinueLearning";
 import { StreakCalendar } from "@/components/dashboard/StreakCalendar";
 import { Button } from "@/components/ui/button";
+import { Wallet, AlertTriangle, ExternalLink, Activity, Flame, Medal, Check } from "lucide-react";
 import { withFallbackRPC } from "@/lib/solana-connection";
 import type { CourseListItem } from "@/sanity/lib/queries";
 
@@ -111,7 +112,7 @@ export default function DashboardPage() {
                                 {t("welcome", { name: (user?.profile as any)?.displayName || (user?.walletAddress ? "Dev" : "Student") })}
                             </h2>
                             <p className="font-mono text-text-muted text-sm flex items-center gap-2 mt-1">
-                                <span className="material-symbols-outlined notranslate text-sm">wallet</span>
+                                <Wallet className="h-3.5 w-3.5" />
                                 {t("wallet_id")}: <span className="text-solana/80">{user?.walletAddress ? `${user.walletAddress.slice(0, 4)}...${user.walletAddress.slice(-4)}` : "Not Connected"}</span>
                             </p>
                         </div>
@@ -123,7 +124,7 @@ export default function DashboardPage() {
             {solBalance !== null && solBalance < 0.5 && (
                 <div className="bg-rust/10 border border-rust/30 rounded-xl p-4 flex flex-col md:flex-row md:items-center gap-4 shadow-[0_0_15px_rgba(255,100,100,0.1)]">
                     <div className="flex-shrink-0 size-10 rounded-full bg-rust/20 flex items-center justify-center border border-rust/30">
-                        <span className="material-symbols-outlined text-rust">warning</span>
+                        <AlertTriangle className="h-5 w-5 text-rust" />
                     </div>
                     <div className="flex-1">
                         <h3 className="text-sm font-bold text-white mb-1">Low Devnet SOL Balance</h3>
@@ -132,7 +133,7 @@ export default function DashboardPage() {
                     <Button asChild variant="destructive" className="whitespace-nowrap flex items-center gap-2 px-4 py-2 bg-rust hover:bg-rust/90 text-white rounded-lg text-sm font-medium transition-all shadow-[0_0_15px_rgba(255,100,100,0.2)] h-auto">
                         <a href="https://faucet.solana.com" target="_blank" rel="noopener noreferrer">
                             Get Devnet SOL
-                            <span className="material-symbols-outlined text-base">open_in_new</span>
+                            <ExternalLink className="h-4 w-4" />
                         </a>
                     </Button>
                 </div>
@@ -143,7 +144,7 @@ export default function DashboardPage() {
                 {/* XP Card */}
                 <div className="glass-panel p-6 rounded-xl flex flex-col justify-between h-32 relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                        <span className="material-symbols-outlined notranslate text-4xl text-white">data_usage</span>
+                        <Activity className="h-10 w-10 text-white" />
                     </div>
                     <p className="text-text-muted text-[10px] font-mono uppercase tracking-[0.2em] font-bold">{t("stats.xp")}</p>
                     <div className="flex items-baseline gap-2 mt-1">
@@ -160,7 +161,7 @@ export default function DashboardPage() {
                 {/* Streak Card */}
                 <div className="glass-panel p-6 rounded-xl flex flex-col justify-between h-32 relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-4 opacity-50">
-                        <span className="material-symbols-outlined notranslate text-4xl text-rust animate-pulse-glow">local_fire_department</span>
+                        <Flame className="h-10 w-10 text-rust animate-pulse-glow" />
                     </div>
                     <p className="text-text-muted text-sm font-display uppercase tracking-widest font-semibold">{t("stats.streak")}</p>
                     <h3 className="text-4xl font-mono font-bold text-white">
@@ -174,7 +175,7 @@ export default function DashboardPage() {
                 {/* Rank Card */}
                 <div className="glass-panel p-6 rounded-xl flex flex-col justify-between h-32 relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-4 opacity-20 group-hover:opacity-40 transition-opacity">
-                        <span className="material-symbols-outlined notranslate text-4xl text-white">military_tech</span>
+                        <Medal className="h-10 w-10 text-white" />
                     </div>
                     <p className="text-text-muted text-sm font-display uppercase tracking-widest font-semibold">{t("stats.rank")}</p>
                     <h3 className={`text-4xl font-display font-bold ${rankInfo.color}`}>
@@ -229,7 +230,7 @@ export default function DashboardPage() {
                                     </div>
                                     {trophy.claimed && (
                                         <div className="absolute -top-1 -right-1 size-5 bg-solana rounded-full flex items-center justify-center border-2 border-void shadow-[0_0_8px_rgba(20,241,149,0.6)]">
-                                            <span className="material-symbols-outlined text-[11px] text-void font-bold">check</span>
+                                            <Check className="h-3 w-3 text-void" strokeWidth={3} />
                                         </div>
                                     )}
                                 </div>

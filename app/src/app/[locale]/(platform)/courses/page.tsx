@@ -14,7 +14,7 @@ export default async function CoursesPage({
   const courses = await getCourses(locale);
 
   return (
-    <main className="min-h-screen bg-void pt-4 pb-12">
+    <main className="pt-4 pb-12">
       <div className="max-w-7xl mx-auto px-6 space-y-10 flex flex-col pt-4">
         <div className="flex flex-col gap-2 max-w-2xl">
           <h2 className="font-display text-4xl md:text-5xl font-bold text-white tracking-tight">{t("title")}</h2>

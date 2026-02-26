@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { useTranslations } from "next-intl";
 import type { AllEnrollmentItem } from "@/store/enrollment-store";
 import type { CourseListItem } from "@/sanity/lib/queries";
-import { GraduationCap } from "lucide-react";
+import { ArrowRight, Terminal, Anchor, Shield, Code2, GraduationCap } from "lucide-react";
 
 const TRACK_COLORS: Record<string, string> = {
     rust: "from-rust/20 to-void border-rust/20 text-rust",
@@ -20,11 +20,11 @@ const REC_TRACK_COLORS: Record<string, string> = {
     solana: "text-solana border-solana/20 bg-solana/10",
 };
 
-const TRACK_ICONS: Record<string, string> = {
-    rust: "terminal",
-    anchor: "anchor",
-    security: "security",
-    solana: "code",
+const TRACK_ICONS: Record<string, any> = {
+    rust: Terminal,
+    anchor: Anchor,
+    security: Shield,
+    solana: Code2,
 };
 
 type Props = {
@@ -125,7 +125,7 @@ export function ContinueLearning({ enrollments, isLoading, allCourses }: Props) 
                                         )}
                                         <span className="text-[10px] font-mono text-text-muted group-hover:text-solana transition-colors flex items-center gap-0.5 font-bold uppercase tracking-wider">
                                             Enroll
-                                            <span className="material-symbols-outlined notranslate text-[12px]">arrow_forward</span>
+                                            <ArrowRight size={12} className="ml-0.5" />
                                         </span>
                                     </div>
                                 </Link>
@@ -135,9 +135,7 @@ export function ContinueLearning({ enrollments, isLoading, allCourses }: Props) 
                 ) : (
                     <div className="glass-panel rounded-xl p-8 border border-white/5 flex flex-col items-center justify-center text-center gap-4">
                         <div className="size-12 rounded-full bg-white/5 flex items-center justify-center">
-                            <span className="material-symbols-outlined notranslate text-2xl text-text-muted">
-                                school
-                            </span>
+                            <GraduationCap size={24} className="text-text-muted" />
                         </div>
                         <div className="space-y-1">
                             <p className="text-white font-medium">{t("no_enrollments")}</p>
@@ -168,7 +166,7 @@ export function ContinueLearning({ enrollments, isLoading, allCourses }: Props) 
                 {inProgress.map((course) => {
                     const trackKey = course.track?.toLowerCase() ?? "solana";
                     const colorClass = TRACK_COLORS[trackKey] ?? TRACK_COLORS.solana;
-                    const icon = TRACK_ICONS[trackKey] ?? "code";
+                    const Icon = TRACK_ICONS[trackKey] ?? Code2;
 
                     return (
                         <Link
@@ -183,9 +181,7 @@ export function ContinueLearning({ enrollments, isLoading, allCourses }: Props) 
 
                             <div className="relative flex items-start gap-3">
                                 <div className="flex-shrink-0 size-9 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
-                                    <span className="material-symbols-outlined notranslate text-lg text-text-secondary">
-                                        {icon}
-                                    </span>
+                                    <Icon size={18} className="text-text-secondary" />
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-display font-semibold text-white leading-tight line-clamp-2 group-hover:text-solana transition-colors">
@@ -221,9 +217,7 @@ export function ContinueLearning({ enrollments, isLoading, allCourses }: Props) 
                             <div className="flex items-center justify-end">
                                 <span className="text-[10px] font-mono text-solana/70 group-hover:text-solana flex items-center gap-1 transition-colors uppercase tracking-widest">
                                     Continue
-                                    <span className="material-symbols-outlined notranslate text-[14px]">
-                                        arrow_forward
-                                    </span>
+                                    <ArrowRight size={14} />
                                 </span>
                             </div>
                         </Link>

@@ -9,6 +9,8 @@ interface StatsRowProps {
     className?: string;
 }
 
+import { Activity, Flame, Medal } from "lucide-react";
+
 export function StatsRow({ xp, streak, rank, nextRankXP, className }: StatsRowProps) {
     const t = useTranslations("components");
     return (
@@ -16,7 +18,7 @@ export function StatsRow({ xp, streak, rank, nextRankXP, className }: StatsRowPr
             {/* XP Card */}
             <div className="glass-panel p-6 rounded-xl flex flex-col justify-between h-32 relative overflow-hidden group">
                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                    <span className="material-symbols-outlined text-4xl text-white">data_usage</span>
+                    <Activity size={40} className="text-white" />
                 </div>
                 <p className="text-text-muted text-[10px] font-mono uppercase tracking-[0.2em] font-bold">{t("stats_total_xp")}</p>
                 <div className="flex items-baseline gap-2 mt-1">
@@ -34,7 +36,7 @@ export function StatsRow({ xp, streak, rank, nextRankXP, className }: StatsRowPr
             {/* Streak Card */}
             <div className="glass-panel p-6 rounded-xl flex flex-col justify-between h-32 relative overflow-hidden group">
                 <div className="absolute top-0 right-0 p-4 opacity-50">
-                    <span className="material-symbols-outlined text-4xl text-rust animate-pulse-glow">local_fire_department</span>
+                    <Flame size={40} className="text-rust animate-pulse-glow" fill="currentColor" />
                 </div>
                 <p className="text-text-muted text-sm font-display uppercase tracking-widest font-semibold">{t("stats_current_streak")}</p>
                 <div className="flex items-baseline gap-2">
@@ -46,7 +48,7 @@ export function StatsRow({ xp, streak, rank, nextRankXP, className }: StatsRowPr
             {/* Rank Card */}
             <div className="glass-panel p-6 rounded-xl flex flex-col justify-between h-32 relative overflow-hidden group">
                 <div className="absolute top-0 right-0 p-4 opacity-20 group-hover:opacity-40 transition-opacity">
-                    <span className="material-symbols-outlined text-4xl text-white">military_tech</span>
+                    <Medal size={40} className="text-white" />
                 </div>
                 <p className="text-text-muted text-sm font-display uppercase tracking-widest font-semibold">{t("stats_current_rank")}</p>
                 <h3 className="text-4xl font-display font-bold text-white">{rank}</h3>

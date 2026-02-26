@@ -8,12 +8,14 @@ import { useWallets } from "@privy-io/react-auth/solana";
 import { Button } from "@/components/ui/button";
 import { useTranslations } from "next-intl";
 import { urlFor } from "@/sanity/lib/image";
+import { Image as ImageIcon } from "lucide-react";
 
 type EditableLesson = {
   _id?: string;
   title: string;
   sortOrder: number;
   contentText: string;
+  testOutput?: string;
 };
 
 type EditableModule = {
@@ -148,6 +150,7 @@ export default function EditCoursePage() {
                         ? lesson.sortOrder
                         : li,
                     contentText,
+                    testOutput: lesson.challenge?.testCases?.[0]?.expected || "",
                   } as EditableLesson;
                 }) ?? [],
             })) ?? [];
@@ -264,6 +267,7 @@ export default function EditCoursePage() {
                 title: lesson.title,
                 sortOrder: li,
                 content: lesson.contentText,
+                testOutput: lesson.testOutput,
               })),
             })),
           }),
@@ -349,7 +353,7 @@ export default function EditCoursePage() {
                 {imagePreview ? (
                   <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
                 ) : (
-                  <span className="material-symbols-outlined text-white/20 text-3xl">image</span>
+                  <ImageIcon className="h-8 w-8 text-white/20" />
                 )}
               </div>
               <div className="flex flex-col gap-2">
@@ -581,6 +585,29 @@ export default function EditCoursePage() {
                           />
                           <p className="mt-1 text-[11px] text-text-secondary">
                             {t("lesson_content_info")}
+                          </p>
+                        </div>
+                        <div className="mt-3">
+                          <label className="block text-xs font-medium mb-1 flex items-center gap-1.5">
+                            <span className="size-1.5 rounded-full bg-solana"></span>
+                            Test Output (Challenge Validation)
+                          </label>
+                          <textarea
+                            value={lesson.testOutput || ""}
+                            onChange={(e) => {
+                              const next = [...modulesState];
+                              next[modIndex].lessons[lessonIndex] = {
+                                ...next[modIndex].lessons[lessonIndex],
+                                testOutput: e.target.value,
+                              };
+                              setModulesState(next);
+                            }}
+                            rows={2}
+                            placeholder="Exact output expected from the user's code to pass the test..."
+                            className="flex w-full rounded-md border border-border-subtle bg-[#050506] px-2 py-2 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-solana placeholder:text-text-muted"
+                          />
+                          <p className="mt-1 text-[10px] text-text-muted italic">
+                            If provided, this lesson becomes a "Challenge" and users must match this output to pass.
                           </p>
                         </div>
                       </div>

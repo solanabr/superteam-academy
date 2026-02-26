@@ -13,6 +13,8 @@ function getMilestoneAtStreak(streak: number): number | null {
     return MILESTONE_DAYS.find((m) => streak >= m && streak < (MILESTONE_DAYS[MILESTONE_DAYS.indexOf(m) + 1] ?? Infinity)) ?? null;
 }
 
+import { Flame, Medal } from "lucide-react";
+
 export function StreakCalendar({ currentStreak, longestStreak, lastActivityDate, isLoading }: Props) {
     if (isLoading) {
         return (
@@ -83,7 +85,7 @@ export function StreakCalendar({ currentStreak, longestStreak, lastActivityDate,
         <section className="glass-panel rounded-xl p-6 border border-white/5 space-y-4">
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined notranslate text-rust text-xl">local_fire_department</span>
+                    <Flame size={20} className="text-rust" fill="currentColor" />
                     <h3 className="text-sm font-display font-semibold text-white uppercase tracking-widest">
                         Streak Calendar
                     </h3>
@@ -134,7 +136,7 @@ export function StreakCalendar({ currentStreak, longestStreak, lastActivityDate,
                 {/* Milestone badge or next milestone */}
                 {currentMilestone ? (
                     <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-rust/10 border border-rust/20">
-                        <span className="material-symbols-outlined notranslate text-rust text-[14px]">military_tech</span>
+                        <Medal size={14} className="text-rust" />
                         <span className="text-[10px] font-mono font-bold text-rust uppercase tracking-widest">
                             {currentMilestone}-Day Streak!
                         </span>

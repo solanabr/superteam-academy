@@ -4,6 +4,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { usePathname, useRouter } from "@/i18n/routing";
 import { useState, useRef, useEffect } from "react";
 import { Button } from "../ui/button";
+import { Languages, ChevronUp, ChevronDown } from "lucide-react";
 
 const locales = [
   { code: "en", label: "English" },
@@ -12,7 +13,6 @@ const locales = [
 ] as const;
 
 export function LocaleSwitcher() {
-  const t = useTranslations("common");
   const locale = useLocale();
   const router = useRouter();
   const pathname = usePathname();
@@ -44,11 +44,9 @@ export function LocaleSwitcher() {
         variant="ghost"
         className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-white/5 transition-all text-sm font-medium text-text-muted hover:text-white h-auto"
       >
-        <span className="material-symbols-outlined notranslate text-lg">language</span>
+        <Languages size={18} />
         <span className="hidden sm:inline">{currentLabel}</span>
-        <span className="material-symbols-outlined notranslate text-sm">
-          {isOpen ? "expand_less" : "expand_more"}
-        </span>
+        {isOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
       </Button>
 
       {isOpen && (

@@ -1,5 +1,7 @@
 "use client";
 
+import { Check } from "lucide-react";
+
 type Props = {
     icon: string;
     title: string;
@@ -37,8 +39,8 @@ export function AchievementBadge({
                     <div className="hexagon-inner absolute inset-0 bg-gradient-to-br from-gray-800 to-black p-[1px]">
                         <div
                             className={`absolute inset-0 hexagon opacity-90 ${claimed
-                                    ? "bg-gradient-to-br from-solana to-emerald-900"
-                                    : "bg-gradient-to-br from-gray-700 to-gray-900"
+                                ? "bg-gradient-to-br from-solana to-emerald-900"
+                                : "bg-gradient-to-br from-gray-700 to-gray-900"
                                 }`}
                         ></div>
                         <div className="absolute inset-[2px] bg-void hexagon flex items-center justify-center">
@@ -49,9 +51,7 @@ export function AchievementBadge({
 
                 {claimed && (
                     <div className="absolute -top-1 -right-1 size-5 bg-solana rounded-full flex items-center justify-center border-2 border-void shadow-[0_0_8px_rgba(20,241,149,0.6)]">
-                        <span className="material-symbols-outlined text-[11px] text-void font-bold">
-                            check
-                        </span>
+                        <Check size={11} className="text-void font-bold" />
                     </div>
                 )}
             </div>

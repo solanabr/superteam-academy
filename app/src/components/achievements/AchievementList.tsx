@@ -5,7 +5,7 @@ import { usePrivy } from "@privy-io/react-auth";
 import { useWallets } from "@privy-io/react-auth/solana";
 import { ACHIEVEMENTS, type Achievement } from "@/lib/achievements";
 import { sendGAEvent } from "@/components/analytics/ThirdPartyScripts";
-import { Loader2, CheckCircle, Unlock } from "lucide-react";
+import { Loader2, CheckCircle, Unlock, X, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import clsx from "clsx";
 import confetti from "canvas-confetti";
@@ -142,7 +142,7 @@ export function AchievementList() {
                         onClick={() => setToast(null)}
                         className="text-current opacity-60 hover:opacity-100 shrink-0"
                     >
-                        <span className="material-symbols-outlined text-lg">close</span>
+                        <X size={18} />
                     </Button>
                 </div>
             )}
@@ -164,16 +164,18 @@ export function AchievementList() {
                                 {isClaimed ? (
                                     <CheckCircle className="h-6 w-6 text-solana" />
                                 ) : (
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() => handleClaim(a)}
-                                        disabled={!!claimingId}
-                                        className="text-text-secondary hover:text-white"
-                                        title="Try to unlock"
-                                    >
-                                        {claimingId === a.id ? <Loader2 className="h-5 w-5 animate-spin" /> : <Unlock className="h-5 w-5" />}
-                                    </Button>
+                                    <div className="flex items-center gap-2">
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => handleClaim(a)}
+                                            disabled={!!claimingId}
+                                            className="text-text-secondary hover:text-white"
+                                            title="Try to unlock"
+                                        >
+                                            {claimingId === a.id ? <Loader2 className="h-5 w-5 animate-spin" /> : <Unlock className="h-5 w-5" />}
+                                        </Button>
+                                    </div>
                                 )}
                             </div>
                             <div>

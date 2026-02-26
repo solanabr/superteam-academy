@@ -32,12 +32,18 @@ export async function GET(request: NextRequest) {
       const identifier = process.env.NEXT_PUBLIC_USE_ONCHAIN === "true" ? (wallet as string) : user.id;
 
       const { getCached } = await import("@/lib/cache");
+      const { getCourseById } = await import("@/sanity/lib/queries");
+
+      // Fetch course from Sanity to get the correct trackId
+      const course = await getCourseById(courseId);
+      const trackId = course?.track ?? courseId;
+
       const [progress, credential] = await Promise.all([
         getCached(`user:${wallet}:enrollment:${courseId}`, async () => {
           return await service.getEnrollmentProgress(identifier, courseId);
         }, { ttl: 60 }),
         prisma.credential.findFirst({
-          where: { userId: user.id, trackId: courseId },
+          where: { userId: user.id, trackId: trackId },
           select: { mintAddress: true }
         })
       ]);

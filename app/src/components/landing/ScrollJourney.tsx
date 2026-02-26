@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { Link } from "@/i18n/routing";
+import { useEffect, useRef } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import { ArrowRight } from "lucide-react";
 
 export function ScrollJourney() {
     const { ready, authenticated, login } = usePrivy();
@@ -136,7 +136,7 @@ export function ScrollJourney() {
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none eclipse-halo">
                         <div className="relative w-32 h-32 md:w-40 md:h-40 flex items-center justify-center animate-pulse">
-                            <div className="absolute inset-0 glass-morphism rotate-45 border-solana/40 bg-solana/20 shadow-[0_0_40px_rgba(20,241,149,0.4),0_0_60px_rgba(240,101,41,0.2)] eclipse-halo flex"></div>
+                            <div className="absolute inset-0 glass-morphism rotate-45 border-solana/40 bg-solana/20 shadow-[0_0_40px_rgba(20,241,149,0.4),0_0_60px_rgba(255,210,63,0.2)] eclipse-halo flex"></div>
                             <div className="absolute w-2/3 h-2/3 glass-morphism rotate-[22.5deg] border-solana/30 bg-solana/10"></div>
                             <div className="w-2 h-2 rounded-full bg-solana shadow-[0_0_15px_#14F195]"></div>
                         </div>
@@ -198,7 +198,7 @@ export function ScrollJourney() {
                     className="h-14 px-10 bg-solana hover:bg-[#10d482] hover:scale-105 transition-all duration-300 text-black font-display font-bold text-lg rounded-sm flex items-center justify-center gap-3 shadow-[0_0_30px_rgba(20,241,149,0.3)] disabled:opacity-50"
                 >
                     <span>{authenticated ? "Dashboard" : "Start Compiling"}</span>
-                    <span className="material-symbols-outlined notranslate text-xl">arrow_forward</span>
+                    <ArrowRight size={20} />
                 </Button>
             </div>
         </div>

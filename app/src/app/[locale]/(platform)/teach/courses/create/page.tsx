@@ -333,23 +333,6 @@ export default function CreateCoursePage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="publish"
-                checked={formData.published}
-                onChange={(e) =>
-                  setFormData({ ...formData, published: e.target.checked })
-                }
-                disabled={titleStatus !== 'unique'}
-                className={`h-4 w-4 rounded border-border-subtle ${titleStatus !== 'unique' ? 'opacity-50 cursor-not-allowed' : ''}`}
-              />
-              <label htmlFor="publish" className={`text-sm font-medium ${titleStatus !== 'unique' ? 'text-text-secondary cursor-not-allowed' : ''}`}>
-                Publish immediately {titleStatus !== 'unique' && "(Check title first)"}
-              </label>
-            </div>
-          </div>
 
           <div className="flex gap-3">
             <Button type="submit" disabled={loading || titleStatus !== 'unique'} variant="solana-ghost">
@@ -365,11 +348,10 @@ export default function CreateCoursePage() {
           </div>
         </form>
 
-        <div className="mt-6 p-4 bg-muted rounded text-sm">
-          <p className="font-semibold mb-2">Note:</p>
-          <p>
-            Any module and lesson titles you add here will be created in Sanity.
-            You can edit the course and add full content later from the course editor.
+        <div className="mt-6 p-4 bg-white/5 rounded-lg border border-white/10 text-sm">
+          <p className="font-semibold mb-2 text-solana">Note:</p>
+          <p className="text-text-secondary leading-relaxed">
+            Add your course title and structure here to get started. Publishing is available after you review the draft course and finish adding/editing lesson content, challenges, and test outputs in the Sanity Studio editor.
           </p>
         </div>
       </div>

@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import { toPng } from "html-to-image";
 
-import { Loader2, Download, ExternalLink, Share2 } from "lucide-react";
+import { Loader2, Download, ExternalLink, Share2, Award, ShieldCheck, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTranslations } from "next-intl";
 
@@ -54,10 +54,10 @@ export default function CertificatePage() {
             .finally(() => setLoading(false));
     }, [id]);
 
-    const handleShareTwitter = () => {
+    const handleShareX = () => {
         const url = encodeURIComponent(window.location.href);
-        const text = encodeURIComponent(`I just earned a Level ${credential?.level} ${credential?.trackName} credential on @SuperteamEarn Academy! 🎓✨`);
-        window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, "_blank");
+        const text = encodeURIComponent(`I just earned a Level ${credential?.level} ${credential?.trackName} credential on @SuperteamEarn Academy! 🎓✨ #Solana #SuperteamBrazil`);
+        window.open(`https://x.com/intent/tweet?text=${text}&url=${url}`, "_blank");
     };
 
     const handleShareLinkedIn = () => {
@@ -68,28 +68,33 @@ export default function CertificatePage() {
     const handleDownload = async () => {
         if (!certificateRef.current) return;
         setDownloading(true);
+
         try {
+            // High DPI capture using html-to-image
+            // We've removed external stylesheets that were causing SecurityError/TypeError
             const dataUrl = await toPng(certificateRef.current, {
-                quality: 0.95,
+                quality: 1,
                 pixelRatio: 2,
                 backgroundColor: "#0A0A0B",
             });
+
             const link = document.createElement("a");
             link.download = `superteam-academy-${credential?.trackName?.toLowerCase()}-certificate.png`;
             link.href = dataUrl;
             link.click();
         } catch (err) {
             console.error("Failed to download certificate:", err);
+            alert("Failed to generate download. Please try again or take a screenshot.");
         } finally {
             setDownloading(false);
         }
     };
 
     const explorerAddress = credential?.mintAddress || credential?.id;
-    const isValidExplorerLink = !!explorerAddress && explorerAddress.length > 20; // Basic check for Solana addr
+    const isValidExplorerLink = !!explorerAddress && explorerAddress.length > 20;
 
     return (
-        <main className="min-h-screen bg-void pt-4 pb-12">
+        <main className="pt-4 pb-12">
             <div className="max-w-4xl mx-auto px-6 py-8 md:px-10 md:py-10 flex flex-col gap-10">
                 {loading ? (
                     <div className="flex justify-center items-center py-32">
@@ -114,41 +119,65 @@ export default function CertificatePage() {
                             </p>
                         </div>
 
-                        {/* Certificate Render */}
+                        {/* Certificate Render Area (Captured for PNG) */}
                         <div ref={certificateRef} className="glass-panel rounded-2xl overflow-hidden border border-white/10 relative p-1 group">
                             <div className="absolute inset-0 bg-gradient-to-tr from-solana/20 via-transparent to-transparent opacity-50"></div>
-                            <div className="relative bg-void/90 rounded-xl overflow-hidden border border-white/5 p-8 md:p-12 min-h-[400px] flex items-center justify-center bg-[url('/grid.svg')] bg-center backdrop-blur-sm">
-                                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-void/80"></div>
+                            <div className="relative bg-void rounded-xl overflow-hidden border border-white/5 p-8 md:p-12 min-h-[500px] flex flex-col items-center justify-between bg-[url('/grid.svg')] bg-center backdrop-blur-sm">
+                                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-void/90"></div>
 
-                                <div className="relative z-10 flex flex-col items-center text-center max-w-lg">
-                                    <div className="w-24 h-24 bg-gradient-to-br from-solana to-emerald-900 rounded-full flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(20,241,149,0.3)]">
-                                        <span className="material-symbols-outlined text-5xl text-void">verified</span>
+                                {/* Top Badge & Branding */}
+                                <div className="relative z-10 flex flex-col items-center text-center">
+                                    <div className="w-20 h-20 bg-gradient-to-br from-solana to-emerald-900 rounded-full flex items-center justify-center mb-6 shadow-[0_0_40px_rgba(20,241,149,0.4)]">
+                                        <Award size={48} strokeWidth={1.5} className="text-void" />
                                     </div>
-                                    <h2 className="text-5xl font-serif text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400 mb-6 drop-shadow-sm leading-tight">
+                                    <h2 className="text-5xl font-display text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400 mb-6 drop-shadow-sm leading-tight uppercase font-bold tracking-tighter">
                                         Certificate of Completion
                                     </h2>
-                                    <p className="text-text-muted mb-8 text-lg">
-                                        This certifies that the recipient has successfully completed the <strong className="text-white">{credential.trackName}</strong> track on Superteam Academy, demonstrating practical knowledge and on-chain proficiency.
+                                    <div className="max-w-md mx-auto h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent mb-6"></div>
+
+                                    <p className="text-text-muted mb-8 text-lg px-4 italic leading-relaxed">
+                                        This certifies that the recipient has successfully completed the <strong className="text-white font-semibold">{credential.trackName}</strong> track on Superteam Academy, demonstrating practical knowledge and on-chain proficiency.
                                     </p>
-                                    <div className="flex flex-col items-center w-full border-t border-white/10 pt-6">
-                                        <div>
-                                            <p className="text-xs uppercase font-mono text-solana tracking-widest mb-1 text-center">Date Issued</p>
-                                            <p className="text-lg font-mono text-white mt-1 text-center">
-                                                {new Date(credential.earnedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
-                                            </p>
-                                        </div>
+                                </div>
+
+                                {/* Metadata inside the render (for the download) */}
+                                <div className="relative z-10 w-full grid grid-cols-1 md:grid-cols-3 gap-6 pt-8 border-t border-white/10">
+                                    <div className="flex flex-col items-center md:items-start">
+                                        <p className="text-[10px] uppercase font-mono text-solana/60 tracking-[0.2em] mb-1">Recipient</p>
+                                        <p className="text-sm font-mono text-white tracking-tighter">
+                                            {credential.owner ? `${credential.owner.slice(0, 8)}...${credential.owner.slice(-8)}` : "Learner"}
+                                        </p>
+                                    </div>
+
+                                    <div className="flex flex-col items-center">
+                                        <p className="text-[10px] uppercase font-mono text-solana/60 tracking-[0.2em] mb-1">Date Issued</p>
+                                        <p className="text-sm font-mono text-white">
+                                            {new Date(credential.earnedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
+                                        </p>
+                                    </div>
+
+                                    <div className="flex flex-col items-center md:items-end">
+                                        <p className="text-[10px] uppercase font-mono text-solana/60 tracking-[0.2em] mb-1">Asset ID</p>
+                                        <p className="text-sm font-mono text-white tracking-tighter">
+                                            {credential.id.slice(0, 8)}...{credential.id.slice(-8)}
+                                        </p>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Metadata & Actions */}
+                        {/* Public Metadata & Actions */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="glass-panel p-6 rounded-xl space-y-4">
-                                <h3 className="font-display font-semibold text-white mb-4">On-Chain Metadata</h3>
+                                <h3 className="font-display font-semibold text-white mb-4 flex items-center gap-2">
+                                    <ShieldCheck size={18} className="text-solana" />
+                                    On-Chain Metadata
+                                </h3>
                                 <div className="flex justify-between items-center py-2 border-b border-white/5">
                                     <span className="text-text-muted text-sm">Asset ID</span>
-                                    <span className="font-mono text-xs text-white bg-white/5 px-2 py-1 rounded">{credential.id.slice(0, 8)}...{credential.id.slice(-8)}</span>
+                                    <span className="font-mono text-xs text-white bg-white/5 px-2 py-1 rounded truncate ml-4" title={credential.id}>
+                                        {credential.id}
+                                    </span>
                                 </div>
                                 <div className="flex justify-between items-center py-2 border-b border-white/5">
                                     <span className="text-text-muted text-sm">Standard</span>
@@ -156,8 +185,8 @@ export default function CertificatePage() {
                                 </div>
                                 <div className="pt-2">
                                     {isValidExplorerLink ? (
-                                        <a href={`https://explorer.solana.com/address/${explorerAddress}?cluster=devnet`} target="_blank" rel="noreferrer" className="text-solana text-sm hover:underline flex items-center gap-1">
-                                            View on Solana Explorer <ExternalLink size={14} />
+                                        <a href={`https://explorer.solana.com/address/${explorerAddress}?cluster=devnet`} target="_blank" rel="noreferrer" className="text-solana text-sm hover:underline flex items-center gap-1 group">
+                                            View on Solana Explorer <ExternalLink size={14} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                                         </a>
                                     ) : (
                                         <span className="text-text-muted text-xs italic">Syncing with blockchain...</span>
@@ -180,23 +209,25 @@ export default function CertificatePage() {
                                         ) : (
                                             <Download size={14} />
                                         )}
-                                        {downloading ? "Generating..." : "Download"}
+                                        {downloading ? "Generating PNG..." : "Download Original"}
                                     </Button>
                                 </div>
 
                                 <div className="flex flex-col gap-3">
                                     <Button
-                                        onClick={handleShareTwitter}
+                                        onClick={handleShareX}
                                         variant="outline"
-                                        className="w-full h-12 bg-white/5 border-white/10 hover:border-solana/30 text-white rounded-lg flex items-center justify-center gap-3 font-semibold transition-all group"
+                                        className="w-full h-12 bg-white/5 border-white/10 hover:border-[#1DA1F2]/30 text-white rounded-lg flex items-center justify-center gap-3 font-semibold transition-all group"
                                     >
-                                        <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z" /></svg>
-                                        Share on Twitter
+                                        <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                                        </svg>
+                                        Share on X
                                     </Button>
                                     <Button
                                         onClick={handleShareLinkedIn}
                                         variant="outline"
-                                        className="w-full h-12 bg-white/5 border-white/10 hover:border-solana/30 text-white rounded-lg flex items-center justify-center gap-3 font-semibold transition-all group"
+                                        className="w-full h-12 bg-white/5 border-white/10 hover:border-blue-500/30 text-white rounded-lg flex items-center justify-center gap-3 font-semibold transition-all group"
                                     >
                                         <Share2 size={18} className="text-[#0077b5]" />
                                         Share on LinkedIn

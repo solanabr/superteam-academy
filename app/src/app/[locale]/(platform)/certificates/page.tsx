@@ -5,6 +5,7 @@ import { useAppUser } from "@/hooks/useAppUser";
 import { useUserStore } from "@/store/user-store";
 import { Link } from "@/i18n/routing";
 import Image from "next/image";
+import { Award, Medal, ArrowRight } from "lucide-react";
 
 export default function CertificatesIndexPage() {
     const { user } = useAppUser();
@@ -35,7 +36,7 @@ export default function CertificatesIndexPage() {
                 </div>
             ) : credentials.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-24 gap-4 glass-panel rounded-xl border border-white/5">
-                    <span className="material-symbols-outlined notranslate text-text-muted text-5xl">workspace_premium</span>
+                    <Award className="h-12 w-12 text-text-muted" />
                     <p className="text-text-muted font-mono text-sm text-center max-w-xs">
                         No certificates yet. Complete a course to earn your first on-chain credential!
                     </p>
@@ -54,7 +55,7 @@ export default function CertificatesIndexPage() {
                                 {/* Certificate preview */}
                                 <div className="h-44 bg-gradient-to-br from-solana/10 to-void flex items-center justify-center relative overflow-hidden">
                                     <div className="absolute inset-0 flex items-center justify-center opacity-10">
-                                        <span className="material-symbols-outlined notranslate text-[120px] text-solana">workspace_premium</span>
+                                        <Award className="h-28 w-28 text-solana" />
                                     </div>
                                     {cred.image ? (
                                         <Image
@@ -66,7 +67,7 @@ export default function CertificatesIndexPage() {
                                         />
                                     ) : (
                                         <div className="flex flex-col items-center gap-2 z-10">
-                                            <span className="material-symbols-outlined notranslate text-solana text-5xl">military_tech</span>
+                                            <Medal className="h-12 w-12 text-solana" />
                                             <span className="text-xs font-mono text-solana/70 uppercase tracking-widest">
                                                 {cred.trackName}
                                             </span>
@@ -90,7 +91,7 @@ export default function CertificatesIndexPage() {
                                         </span>
                                         <span className="text-[10px] font-mono text-solana/70 flex items-center gap-1 uppercase tracking-widest group-hover:text-solana transition-colors">
                                             View
-                                            <span className="material-symbols-outlined notranslate text-[12px]">arrow_forward</span>
+                                            <ArrowRight className="h-3 w-3" />
                                         </span>
                                     </div>
                                 </div>

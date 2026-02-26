@@ -8,6 +8,7 @@ import { useUserStore } from "@/store/user-store";
 import { OnboardingModal } from "./OnboardingModal";
 import { Button } from "../ui/button";
 import { useTranslations } from "next-intl";
+import { AlertCircle } from "lucide-react";
 
 /**
  * Client-side auth guard. Wraps protected pages.
@@ -139,7 +140,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
                     {error && !isLoading ? (
                         <>
                             <div className="size-12 rounded-full bg-red-500/10 flex items-center justify-center mb-2">
-                                <span className="material-symbols-outlined text-red-500 text-2xl">error</span>
+                                <AlertCircle className="text-red-500" size={24} />
                             </div>
                             <h2 className="text-xl font-bold text-text-primary">{t("sync_error")}</h2>
                             <p className="text-text-secondary max-w-xs">{error}</p>
@@ -167,9 +168,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
         );
     }
 
-    // Check onboarding — show modal if not completed
-    const profile = user?.profile as any;
-    if (user && !profile?.onboardingComplete && !onboardingDone) {
+    if (user && !(user.profile as any)?.onboardingComplete && !onboardingDone) {
         return (
             <OnboardingModal
                 walletAddress={user.walletAddress}

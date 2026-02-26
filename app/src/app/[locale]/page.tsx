@@ -1,9 +1,9 @@
 import { Footer } from "@/components/layout/Footer";
 import { ScrollJourney } from "@/components/landing/ScrollJourney";
 import { LandingHeaderActions } from "@/components/landing/LandingHeaderActions";
-import { LandingCTA } from "@/components/landing/LandingCTA";
 import { SocialProof } from "@/components/landing/SocialProof";
 import { getTranslations } from "next-intl/server";
+import { Terminal } from "lucide-react";
 
 export default async function LandingPage() {
     const t = await getTranslations("landing");
@@ -20,8 +20,8 @@ export default async function LandingPage() {
             {/* Navigation */}
             <nav className="fixed top-0 left-0 right-0 h-20 z-40 glass-panel border-b border-white/10 px-8 flex items-center justify-between transition-all duration-300">
                 <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 bg-solana/10 border border-solana/20 rounded flex items-center justify-center">
-                        <span className="material-symbols-outlined notranslate text-solana text-xl">terminal</span>
+                    <div className="size-9 bg-solana/10 border border-solana/20 rounded flex items-center justify-center">
+                        <Terminal className="text-solana h-5 w-5" />
                     </div>
                     <span className="font-display font-bold text-xl tracking-tight text-white">{t("title")}</span>
                 </div>
@@ -41,7 +41,7 @@ export default async function LandingPage() {
 
                     <h1 className="font-display font-bold text-6xl md:text-8xl lg:text-[6.5rem] leading-[0.95] tracking-tighter text-white mb-4">
                         {t("tagline_start")} <br />
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-solana via-white to-rust">{t("tagline_end")}</span>
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-solana via-white to-[#FFD23F]">{t("tagline_end")}</span>
                     </h1>
 
                     <p className="font-body text-lg md:text-xl text-text-muted max-w-2xl leading-relaxed">
@@ -54,7 +54,7 @@ export default async function LandingPage() {
                     {/* Floating Code Window */}
                     <div className="w-full max-w-3xl glass-panel rounded-lg border border-white/10 shadow-2xl code-window animate-float relative overflow-hidden group border-white/20 shadow-[0_20px_50px_rgba(0,0,0,0.5)] ring-1 ring-white/10">
                         {/* Glow Effect behind window */}
-                        <div className="absolute -inset-1 bg-gradient-to-br from-solana/20 to-rust/20 blur-xl opacity-20 -z-10 group-hover:opacity-30 transition-opacity duration-700"></div>
+                        <div className="absolute -inset-1 bg-gradient-to-br from-solana/20 to-[#FFD23F]/20 blur-xl opacity-20 -z-10 group-hover:opacity-30 transition-opacity duration-700"></div>
 
                         {/* Window Title Bar */}
                         <div className="h-10 border-b border-white/5 flex items-center px-4 gap-2 bg-white/5">
@@ -106,8 +106,6 @@ export default async function LandingPage() {
                 <ScrollJourney />
 
                 <SocialProof />
-
-                <LandingCTA />
             </main>
             <Footer />
 

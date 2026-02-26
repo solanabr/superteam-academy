@@ -98,7 +98,6 @@ export function CredentialList({
                             href={`/certificates/${cred.id}`}
                             className="glass-panel relative overflow-hidden rounded-lg border p-6 group block transition-transform hover:scale-[1.02] active:scale-[0.98]"
                         >
-                            <div className="absolute right-0 top-0 h-24 w-24 translate-x-8 translate-y--8 rounded-full bg-solana/10 blur-2xl group-hover:bg-solana/20 transition-all" />
 
                             {cred.image ? (
                                 <div className="absolute inset-0 z-0 opacity-20 group-hover:opacity-40 transition-opacity">

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useAppUser } from "@/hooks/useAppUser";
-import { Loader2, Coins, CalendarDays, ShieldCheck, Trophy, Twitter, Globe } from "lucide-react";
+import { Loader2, Coins, CalendarDays, ShieldCheck, Trophy, Twitter, Globe, Radar } from "lucide-react";
 import { Link } from "@/i18n/routing";
 import { Button } from "@/components/ui/button";
 import { useTranslations } from "next-intl";
@@ -46,7 +46,7 @@ export default function ProfilePage() {
 
     if (isInitialLoading && !data) {
         return (
-            <main className="min-h-screen bg-void pt-8 pb-16">
+            <main className="pt-8 pb-16">
                 <div className="mx-auto max-w-4xl px-4 space-y-8 animate-pulse">
                     <div className="glass-panel p-8 rounded-lg border border-white/5 h-48 bg-white/5" />
                     <div className="glass-panel p-6 rounded-xl border border-white/5 h-64 bg-white/5" />
@@ -104,7 +104,7 @@ export default function ProfilePage() {
     const hasSkillData = skills.some(s => s.value > 0);
 
     return (
-        <main className="min-h-screen bg-void pt-8 pb-16">
+        <main className="pt-8 pb-16">
             <div className="mx-auto max-w-4xl px-4 space-y-8">
                 {user?.walletAddress === data.user.walletAddress && data.xp === 0 && (
                     <div className="border border-solana/20 bg-solana/5 rounded-lg p-4 flex items-center justify-between gap-4 animate-in fade-in slide-in-from-top-2 duration-500">
@@ -187,7 +187,7 @@ export default function ProfilePage() {
                 {hasSkillData && (
                     <section className="glass-panel p-6 rounded-xl border border-white/5 space-y-4">
                         <h2 className="text-lg font-display font-semibold text-text-primary flex items-center gap-2">
-                            <span className="material-symbols-outlined notranslate text-solana text-xl">radar</span>
+                            <Radar className="h-5 w-5 text-solana" />
                             Skill Profile
                         </h2>
                         <div className="flex justify-center">

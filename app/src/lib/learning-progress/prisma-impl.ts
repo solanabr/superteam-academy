@@ -509,20 +509,6 @@ export function createLearningProgressService(prisma: PrismaClient): LearningPro
       where: { userId_courseId: { userId, courseId } },
       data: { completedAt: new Date() },
     });
-
-    // Issue credential
-    try {
-      await issueCredential({
-        userId,
-        courseId,
-        trackId: courseId,
-        trackName: courseId,
-        xpEarned: 0
-      });
-      // Achievement "first-course" is claimed manually by the user.
-    } catch (e) {
-      console.error("Failed to issue credential:", e);
-    }
   };
 
   const claimCompletionBonus = async (userId: string, courseId: string, xpAmount: number): Promise<void> => {

@@ -12,6 +12,8 @@ type EnrollButtonProps = {
   className?: string;
 };
 
+import { Wallet, Loader2 } from "lucide-react";
+
 export function EnrollButton({ courseId, courseTitle, className }: EnrollButtonProps) {
   const t = useTranslations("course_detail");
   const [isUnenrolling, setIsUnenrolling] = useState(false);
@@ -119,9 +121,9 @@ export function EnrollButton({ courseId, courseTitle, className }: EnrollButtonP
             className="font-mono text-[10px] uppercase font-bold tracking-tight"
           >
             {isUnenrolling ? (
-              <span className="animate-spin text-sm">⌛</span>
+              <Loader2 size={16} className="animate-spin" />
             ) : (
-              <span className="material-symbols-outlined text-[16px]">account_balance_wallet</span>
+              <Wallet size={16} />
             )}
             {isComplete ? "Reclaim Enrollment Rent" : "Close Enrollment & Reclaim"}
           </Button>
@@ -144,7 +146,7 @@ export function EnrollButton({ courseId, courseTitle, className }: EnrollButtonP
       >
         {loading ? (
           <>
-            <span className="material-symbols-outlined text-lg animate-spin">progress_activity</span>
+            <Loader2 size={18} className="animate-spin" />
             {t("enrolling")}
           </>
         ) : (

@@ -9,7 +9,7 @@ export default function AchievementsPage() {
   const t = useTranslations("achievements");
 
   return (
-    <main className="min-h-screen bg-void pt-4 pb-12">
+    <main className="pt-4 pb-12">
       <div className="mx-auto max-w-6xl px-4">
         <div className="mb-6">
           <nav className="flex items-center gap-2 text-xs font-mono text-text-muted mb-6 uppercase tracking-widest">

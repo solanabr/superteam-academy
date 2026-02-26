@@ -54,11 +54,28 @@ function portableTextToParagraphs(content: unknown): string[] {
 
 const EMPTY_STATS: { memory?: string; cpuTime?: string } = {};
 
+import {
+  CodeXml,
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  XCircle,
+  Loader2,
+  Code2,
+  RotateCcw,
+  Settings,
+  FlaskConical,
+  ChevronDown
+} from "lucide-react";
+
 export function LessonViewClient({ course, lesson }: LessonViewClientProps) {
   const t = useTranslations("lessons");
   const router = useRouter();
   const lessonId = lesson._id;
   const getCodeFromEditorRef = useRef<(() => string) | null>(null);
+  const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
+  const [testResult, setTestResult] = useState<"idle" | "checking" | "passed" | "failed">("idle");
+  const [testExpected, setTestExpected] = useState<string>("");
   const { wallets } = useWallets();
   const { signTransaction } = useSignTransaction();
 
@@ -122,6 +139,7 @@ export function LessonViewClient({ course, lesson }: LessonViewClientProps) {
       return;
     }
     setStatus(lessonId, "running");
+    setTestResult("idle");
     setOutput(lessonId, "");
     setStats(lessonId, {});
     setDailyLimitReached(false);
@@ -148,6 +166,27 @@ export function LessonViewClient({ course, lesson }: LessonViewClientProps) {
         setStats(lessonId, { memory: data.memory, cpuTime: data.cpuTime });
       }
       setStatus(lessonId, data.passed ? "success" : "error");
+
+      // --- Test case comparison (independent from lesson completion) ---
+      const testCases = lesson.challenge?.testCases;
+      if (testCases && testCases.length > 0) {
+        const firstCase = testCases[0];
+        const expected = (firstCase.expected ?? "").trim();
+
+        // If expected is empty/null, auto-pass (creator left it blank — no output checking required)
+        if (!expected) {
+          setTestResult("checking");
+          await new Promise((r) => setTimeout(r, 400));
+          setTestResult("passed");
+        } else if (combinedOutput) {
+          // Only compare if there's actual output to compare against
+          setTestResult("checking");
+          await new Promise((r) => setTimeout(r, 600)); // brief spinner for UX
+          const actual = combinedOutput.trim();
+          setTestExpected(expected);
+          setTestResult(actual === expected ? "passed" : "failed");
+        }
+      }
     } catch (err) {
       console.error("run-code error", err);
       setStatus(lessonId, "error");
@@ -157,8 +196,47 @@ export function LessonViewClient({ course, lesson }: LessonViewClientProps) {
 
   const isChallenge = lesson.lessonType === "challenge";
 
+  // Default boilerplate code per language when user switches
+  const LANGUAGE_BOILERPLATE: Record<string, string> = {
+    rust: `fn main() {
+    println!("Hello from Solana!");
+}
+`,
+    javascript: `// JavaScript
+console.log("Hello from Superteam Academy!");
+`,
+    typescript: `// TypeScript
+console.log("Hello from Superteam Academy!");
+`,
+    json: `{}`,
+  };
+
+  // Language display info
+  const LANGUAGE_INFO: Record<string, { label: string; file: string }> = {
+    rust: { label: "Rust", file: "lib.rs" },
+    javascript: { label: "JavaScript", file: "index.js" },
+    typescript: { label: "TypeScript", file: "index.ts" },
+    json: { label: "JSON", file: "data.json" },
+  };
+
+  const SUPPORTED_LANGUAGES: Array<"rust" | "javascript" | "typescript"> = ["rust", "javascript", "typescript"];
+
+  const handleLanguageSwitch = (newLang: "rust" | "javascript" | "typescript") => {
+    if (newLang === language) return;
+    setLanguage(lessonId, newLang);
+    // Only set boilerplate if editor is empty or has the default placeholder
+    const currentCode = getCodeFromEditorRef.current?.() || playgroundCode;
+    if (!currentCode || currentCode === "// Write your Solana program here...") {
+      setCode(lessonId, LANGUAGE_BOILERPLATE[newLang] || "");
+    }
+    // Reset test result on language change
+    setTestResult("idle");
+  };
+
+  const langInfo = LANGUAGE_INFO[language] || LANGUAGE_INFO["rust"];
+
   return (
-    <div className="bg-[#0A0A0B] text-[#EDEDEF] font-body overflow-hidden h-screen flex flex-col relative selection:bg-solana/20 selection:text-solana">
+    <div className="bg-[#0A0A0B] text-[#EDEDEF] font-body overflow-hidden flex flex-col relative selection:bg-solana/20 selection:text-solana mx-auto max-w-[1600px] my-4 rounded-2xl border border-white/5 shadow-2xl" style={{ height: 'calc(100vh - 2rem)' }}>
       {/* Ambient Noise Overlay */}
       <div className="absolute inset-0 z-0 pointer-events-none bg-noise opacity-15 mix-blend-overlay"></div>
 
@@ -168,7 +246,7 @@ export function LessonViewClient({ course, lesson }: LessonViewClientProps) {
           {/* Logo Area */}
           <Link href="/dashboard" className="flex items-center gap-3 text-white hover:opacity-80 transition-opacity">
             <div className="size-6 text-solana">
-              <span className="material-symbols-outlined text-2xl">code_blocks</span>
+              <CodeXml size={24} />
             </div>
             <h2 className="font-display text-xl font-bold tracking-tight">Superteam</h2>
           </Link>
@@ -214,6 +292,37 @@ export function LessonViewClient({ course, lesson }: LessonViewClientProps) {
                       <p key={idx} className="text-text-secondary leading-[1.7] mb-6">{p}</p>
                     ))}
                   </div>
+
+                  {/* Challenge Objectives Section */}
+                  {isChallenge && (
+                    <div className="mt-8 p-5 rounded-xl bg-solana/5 border border-solana/10 relative overflow-hidden group/obj">
+                      <div className="absolute top-0 right-0 p-3 opacity-10 group-hover/obj:opacity-20 transition-opacity">
+                        <FlaskConical size={48} className="text-solana" />
+                      </div>
+                      <h3 className="text-sm font-bold text-solana uppercase tracking-widest mb-4 flex items-center gap-2">
+                        <span className="size-1.5 rounded-full bg-solana animate-pulse"></span>
+                        Challenge Objectives
+                      </h3>
+                      <div className="space-y-3">
+                        <div className="flex items-start gap-3">
+                          <div className="size-5 rounded-full bg-solana/20 flex items-center justify-center shrink-0 mt-0.5">
+                            <CheckCircle2 size={12} className="text-solana" />
+                          </div>
+                          <p className="text-sm text-text-primary leading-relaxed font-medium">
+                            Implement the logic to produce the exact expected output shown in the terminal validation.
+                          </p>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <div className="size-5 rounded-full bg-solana/20 flex items-center justify-center shrink-0 mt-0.5">
+                            <CheckCircle2 size={12} className="text-solana" />
+                          </div>
+                          <p className="text-sm text-text-primary leading-relaxed font-medium">
+                            Ensure your code returns the correct result to pass the automated test case.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -222,7 +331,7 @@ export function LessonViewClient({ course, lesson }: LessonViewClientProps) {
                 <div className="flex items-center justify-between gap-4">
                   {prevLesson ? (
                     <Link href={`/courses/${course.slug}/lessons/${prevLesson._id}`} className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium text-text-secondary hover:text-white hover:bg-white/5 transition-all border border-transparent hover:border-white/10">
-                      <span className="material-symbols-outlined text-lg">arrow_back</span>
+                      <ArrowLeft size={18} />
                       {t("previous")}
                     </Link>
                   ) : <div></div>}
@@ -233,7 +342,7 @@ export function LessonViewClient({ course, lesson }: LessonViewClientProps) {
                       href={`/courses/${course.slug}`}
                       className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold bg-solana text-[#0A0A0B] hover:brightness-110 active:scale-[0.98] transition-all shadow-[0_0_20px_-5px_rgba(20,240,148,0.4)]"
                     >
-                      <span className="material-symbols-outlined text-lg">check_circle</span>
+                      <CheckCircle2 size={18} />
                       Return to Course Page
                     </Link>
                   ) : isCompleted && nextLesson ? (
@@ -243,7 +352,7 @@ export function LessonViewClient({ course, lesson }: LessonViewClientProps) {
                       className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold bg-solana text-[#0A0A0B] hover:brightness-110 active:scale-[0.98] transition-all shadow-[0_0_20px_-5px_rgba(20,240,148,0.4)]"
                     >
                       {t("next_lesson")}
-                      <span className="material-symbols-outlined text-lg">arrow_forward</span>
+                      <ArrowRight size={18} />
                     </Link>
                   ) : (
                     /* Not completed yet */
@@ -257,13 +366,13 @@ export function LessonViewClient({ course, lesson }: LessonViewClientProps) {
                     >
                       {isCompleting ? (
                         <>
-                          <span className="material-symbols-outlined text-lg animate-spin">progress_activity</span>
+                          <Loader2 size={18} className="animate-spin" />
                           {t("completing")}
                         </>
                       ) : (
                         <>
                           {nextLesson ? t("continue") : t("finish_course")}
-                          <span className="material-symbols-outlined text-lg">arrow_forward</span>
+                          <ArrowRight size={18} />
                         </>
                       )}
                     </Button>
@@ -276,15 +385,15 @@ export function LessonViewClient({ course, lesson }: LessonViewClientProps) {
           <ResizableHandle withHandle className="w-1 bg-white/5 hover:bg-solana/30 transition-colors cursor-col-resize active:bg-solana/50" />
 
           {/* RIGHT PANE: Editor & Terminal */}
-          <ResizablePanel defaultSize={60} minSize={30}>
-            <ResizablePanelGroup orientation="vertical">
-              <ResizablePanel defaultSize={75} minSize={40}>
-                <section className="flex flex-col h-full bg-[#050506] relative">
+          <ResizablePanel defaultSize={60} minSize={30} className="flex flex-col h-full overflow-hidden">
+            <div className="flex-1 flex flex-col min-h-0 min-w-0 bg-[#0A0A0B]">
+              <div className="flex-1 flex flex-col min-h-0">
+                <section className="flex-1 flex flex-col bg-[#050506] relative">
                   {/* Lesson Completed Overlay */}
                   {isCompleted && (
                     <div className="absolute inset-0 z-30 bg-[#050506]/95 backdrop-blur-sm flex flex-col items-center justify-center gap-6">
                       <div className="size-20 rounded-full bg-solana/10 flex items-center justify-center border border-solana/20 shadow-[0_0_40px_rgba(20,241,149,0.15)]">
-                        <span className="material-symbols-outlined text-5xl text-solana">check_circle</span>
+                        <CheckCircle2 size={48} className="text-solana" />
                       </div>
                       <div className="text-center">
                         <h3 className="text-2xl font-display font-bold text-white mb-2">{t("lesson_completed")}</h3>
@@ -300,7 +409,7 @@ export function LessonViewClient({ course, lesson }: LessonViewClientProps) {
                           className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold bg-solana text-[#0A0A0B] hover:brightness-110 active:scale-[0.98] transition-all shadow-[0_0_20px_-5px_rgba(20,240,148,0.4)]"
                         >
                           {t("next_lesson")}
-                          <span className="material-symbols-outlined text-lg">arrow_forward</span>
+                          <ArrowRight size={18} />
                         </Link>
                       ) : (
                         <Link
@@ -308,32 +417,75 @@ export function LessonViewClient({ course, lesson }: LessonViewClientProps) {
                           className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold bg-solana text-[#0A0A0B] hover:brightness-110 active:scale-[0.98] transition-all shadow-[0_0_20px_-5px_rgba(20,240,148,0.4)]"
                         >
                           Return to Course Page
-                          <span className="material-symbols-outlined text-lg">check_circle</span>
+                          <CheckCircle2 size={18} />
                         </Link>
                       )}
                     </div>
                   )}
 
                   {/* Editor Top Bar */}
-                  <div className="h-10 flex items-center justify-between bg-[#0A0A0B] border-b border-white/10 px-2 select-none">
-                    <div className="flex items-center h-full pt-2">
-                      <div className="h-full px-4 flex items-center gap-2 bg-[#050506] border-t border-x border-solana/30 rounded-t text-sm font-mono text-white relative group">
-                        <span className="material-symbols-outlined text-base text-rust">code</span>
-                        lib.rs
-                        <div className="absolute top-0 left-0 w-full h-[2px] bg-solana shadow-[0_0_8px_rgba(20,240,148,0.6)]"></div>
+                  <div className="h-11 flex items-center justify-between bg-[#0A0A0B] border-b border-white/10 px-2 select-none">
+                    {/* Custom Language Selector Dropdown */}
+                    <div className="flex items-center h-full px-3 gap-2">
+                      <div className="relative">
+                        <button
+                          onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
+                          disabled={isCompleted}
+                          className="flex items-center gap-2 bg-[#0A0A0B]/80 backdrop-blur-sm border border-white/10 rounded-full px-4 py-1.5 text-[11px] font-mono font-medium text-white/90 hover:bg-white/5 hover:border-white/20 transition-all focus:outline-none"
+                        >
+                          <span>{LANGUAGE_INFO[language]?.label} ({LANGUAGE_INFO[language]?.file})</span>
+                          <ChevronDown size={12} className={`transition-transform duration-200 ${isLangMenuOpen ? 'rotate-180' : ''}`} />
+                        </button>
+
+                        {isLangMenuOpen && (
+                          <>
+                            <div className="fixed inset-0 z-40" onClick={() => setIsLangMenuOpen(false)} />
+                            <div className="absolute top-full left-0 mt-2 w-52 bg-[#0A0A0B] border border-white/10 rounded-xl shadow-2xl z-50 py-1 overflow-hidden animate-in fade-in zoom-in duration-200 origin-top">
+                              {SUPPORTED_LANGUAGES.map((lang) => (
+                                <button
+                                  key={lang}
+                                  onClick={() => {
+                                    handleLanguageSwitch(lang as any);
+                                    setIsLangMenuOpen(false);
+                                  }}
+                                  className={`w-full text-left px-4 py-2 text-[11px] font-mono transition-colors hover:bg-white/5 ${language === lang ? 'text-solana bg-solana/5' : 'text-white/70'}`}
+                                >
+                                  {LANGUAGE_INFO[lang]?.label} ({LANGUAGE_INFO[lang]?.file})
+                                </button>
+                              ))}
+                            </div>
+                          </>
+                        )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-3 pr-2">
+                    <div className="flex items-center gap-2 pr-2">
                       {!isCompleted && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-text-secondary hover:text-white transition-colors p-1 rounded hover:bg-white/5"
-                          onClick={() => setCode(lessonId, "")}
-                          title={t("reset_code")}
-                        >
-                          <span className="material-symbols-outlined text-[18px]">restart_alt</span>
-                        </Button>
+                        <>
+                          <button
+                            onClick={handleRunCode}
+                            disabled={playgroundStatus === "running"}
+                            className="flex items-center gap-2 px-4 py-1.5 bg-solana/10 hover:bg-solana/20 border border-solana/40 text-solana rounded-lg text-xs font-bold font-mono transition-all hover:shadow-[0_0_12px_rgba(20,241,149,0.2)] disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
+                          >
+                            {playgroundStatus === "running" ? (
+                              <Loader2 size={13} className="animate-spin" />
+                            ) : (
+                              <Settings size={13} className="group-hover:animate-spin" />
+                            )}
+                            {playgroundStatus === "running" ? "Running..." : "Run Code"}
+                          </button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-text-secondary hover:text-white transition-colors p-1 rounded hover:bg-white/5"
+                            onClick={() => {
+                              setCode(lessonId, LANGUAGE_BOILERPLATE[language] || "");
+                              setTestResult("idle");
+                            }}
+                            title={t("reset_code")}
+                          >
+                            <RotateCcw size={14} />
+                          </Button>
+                        </>
                       )}
                     </div>
                   </div>
@@ -341,48 +493,79 @@ export function LessonViewClient({ course, lesson }: LessonViewClientProps) {
                   {/* Code Editor Area */}
                   <div className="flex-1 relative overflow-hidden flex font-mono text-[15px] leading-relaxed bg-[#050506]">
                     <CodeEditor
-                      initialValue={playgroundCode || lesson.challenge?.starterCode || "// Write your Solana program here..."}
+                      initialValue={playgroundCode || lesson.challenge?.starterCode || LANGUAGE_BOILERPLATE[language] || "// Write your code here..."}
                       language={language}
                       onChange={(code) => setCode(lessonId, code)}
                       onGetCode={(getCode) => { getCodeFromEditorRef.current = getCode; }}
                       className="h-full w-full"
                     />
 
-                    {/* Floating Run Action — hidden when completed */}
-                    {!isCompleted && (
-                      <div className="absolute bottom-6 right-6 z-20">
-                        <Button
-                          onClick={handleRunCode}
-                          disabled={playgroundStatus === "running"}
-                          variant="default"
-                          className="flex items-center gap-3 pl-5 pr-6 py-3.5 bg-white text-black hover:bg-white/90 rounded-xl font-bold shadow-[0_10px_40px_-10px_rgba(255,255,255,0.3)] hover:scale-105 active:scale-95 transition-all group disabled:opacity-70 border-none"
-                        >
-                          <span className={`material-symbols-outlined ${playgroundStatus === "running" ? "animate-spin" : "group-hover:animate-spin"}`}>
-                            {playgroundStatus === "running" ? "progress_activity" : "settings"}
-                          </span>
-                          <span>{playgroundStatus === "running" ? t("building") : t("build_deploy")}</span>
-                        </Button>
-                      </div>
-                    )}
                   </div>
                 </section>
-              </ResizablePanel>
 
-              <ResizableHandle withHandle className="h-1 bg-white/5 hover:bg-solana/30 transition-colors cursor-row-resize active:bg-solana/50" />
+                {/* TERMINAL & TEST RESULTS AREA */}
+                <div className="shrink-0 border-t border-white/10 bg-[#020202] flex flex-col">
+                  {/* Terminal Pane - height adjusted to be more compact */}
+                  <div className="h-56 flex flex-col relative overflow-hidden">
+                    <TerminalOutput
+                      output={playgroundOutput}
+                      status={playgroundStatus}
+                      executionStats={executionStats}
+                      dailyLimitReached={dailyLimitReached}
+                      onClear={() => { setOutput(lessonId, ""); setTestResult("idle"); }}
+                    />
+                  </div>
 
-              <ResizablePanel defaultSize={25} minSize={15}>
-                {/* Terminal Pane */}
-                <div className="h-full bg-[#020202] flex flex-col relative overflow-hidden">
-                  <TerminalOutput
-                    output={playgroundOutput}
-                    status={playgroundStatus}
-                    executionStats={executionStats}
-                    dailyLimitReached={dailyLimitReached}
-                    onClear={() => setOutput(lessonId, "")}
-                  />
+                  {/* Test Result Banner - flush with terminal */}
+                  {testResult !== "idle" && lesson.challenge?.testCases && lesson.challenge.testCases.length > 0 && (
+                    <div className={`shrink-0 h-[68px] border-t px-6 flex items-center gap-4 transition-all z-20 ${testResult === "checking"
+                      ? "border-white/10 bg-white/3"
+                      : testResult === "passed"
+                        ? "border-solana/30 bg-solana/10"
+                        : "border-red-500/30 bg-red-500/10"
+                      }`}>
+                      {testResult === "checking" ? (
+                        <div className="flex items-center gap-3">
+                          <Loader2 size={18} className="shrink-0 text-text-muted animate-spin" />
+                          <span className="text-sm font-mono text-text-muted tracking-tight">Checking output against test cases...</span>
+                        </div>
+                      ) : testResult === "passed" ? (
+                        <div className="flex items-center gap-4 w-full">
+                          <div className="size-8 rounded-full bg-solana/20 flex items-center justify-center shrink-0">
+                            <CheckCircle2 size={20} className="text-solana" />
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-sm font-bold font-mono text-solana tracking-wide">TEST PASSED</span>
+                            <span className="text-xs font-mono text-text-secondary">
+                              {lesson.challenge.testCases[0].name || "Challenge 1"} — output matches expected
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-4">
+                          <div className="size-8 rounded-full bg-red-500/20 flex items-center justify-center shrink-0">
+                            <XCircle size={20} className="text-red-400" />
+                          </div>
+                          <div className="flex flex-col max-w-2xl">
+                            <span className="text-sm font-bold font-mono text-red-400 tracking-wide">TEST FAILED</span>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <span className="text-xs font-mono text-text-secondary truncate">
+                                {lesson.challenge.testCases[0].name || "Challenge 1"}
+                              </span>
+                              {testExpected && (
+                                <span className="text-[11px] font-mono text-text-muted border-l border-white/10 pl-2">
+                                  Expected: <span className="text-white/60 font-medium italic">"{testExpected.slice(0, 40)}{testExpected.length > 40 ? "…" : ""}"</span>
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-              </ResizablePanel>
-            </ResizablePanelGroup>
+              </div>
+            </div>
           </ResizablePanel>
         </ResizablePanelGroup>
       </main>

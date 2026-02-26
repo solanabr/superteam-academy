@@ -12,6 +12,9 @@
     --text-secondary: #8F9099;
     --solana: #14F195;
     --rust: #F06529;
+    --brazil-yellow: #FFD23F;
+    /* Superteam Brazil Yellow */
+    --brazil-yellow-dim: rgba(255, 210, 63, 0.1);
     /* Updated to correct Rust Orange */
     --syntax-purple: #8470FF;
     --selection: rgba(20, 241, 149, 0.1);
@@ -63,24 +66,6 @@
     background-color: rgba(20, 241, 149, 0.2);
     /* solana/20 */
     color: var(--solana);
-  }
-
-  /* Material Symbols Support */
-  .material-symbols-outlined {
-    font-family: 'Material Symbols Outlined';
-    font-weight: normal;
-    font-style: normal;
-    font-size: 24px;
-    line-height: 1;
-    letter-spacing: normal;
-    text-transform: none;
-    display: inline-block;
-    white-space: nowrap;
-    word-wrap: normal;
-    direction: ltr;
-    -webkit-font-feature-settings: 'liga';
-    font-feature-settings: 'liga';
-    -webkit-font-smoothing: antialiased;
   }
 }
 
@@ -170,7 +155,7 @@
 
   /* Scroll Journey Styles from code.html */
   .glow-orb {
-    box-shadow: 0 0 15px var(--solana), 0 0 30px rgba(240, 101, 41, 0.5);
+    box-shadow: 0 0 15px var(--solana), 0 0 30px rgba(255, 210, 63, 0.5);
     background: var(--solana);
     transition: opacity 0.3s ease, transform 0.2s ease;
   }
@@ -178,7 +163,7 @@
   .vertical-wire {
     background: linear-gradient(180deg, transparent, var(--solana) 50%, transparent);
     width: 2px;
-    box-shadow: 0 0 15px rgba(240, 101, 41, 0.2);
+    box-shadow: 0 0 15px rgba(255, 210, 63, 0.2);
   }
 
   .terminal-cursor {
@@ -213,7 +198,7 @@
     position: absolute;
     width: 600px;
     height: 600px;
-    background: radial-gradient(circle, rgba(20, 241, 149, 0.08) 0%, rgba(240, 101, 41, 0.05) 40%, transparent 70%);
+    background: radial-gradient(circle, rgba(20, 241, 149, 0.08) 0%, rgba(255, 210, 63, 0.05) 40%, transparent 70%);
     pointer-events: none;
     z-index: 0;
   }
@@ -234,7 +219,7 @@
   }
 
   .eclipse-halo {
-    filter: drop-shadow(0 0 15px rgba(20, 241, 149, 0.4)) drop-shadow(0 0 25px rgba(240, 101, 41, 0.3));
+    filter: drop-shadow(0 0 15px rgba(20, 241, 149, 0.4)) drop-shadow(0 0 25px rgba(255, 210, 63, 0.3));
   }
 
   @keyframes heartbeat {

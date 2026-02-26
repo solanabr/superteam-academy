@@ -4,7 +4,6 @@ import { Suspense } from "react";
 // Header and Footer removed for custom page layouts
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { SyncUserOnLogin } from "@/components/auth/SyncUserOnLogin";
-import { OnboardingModal } from "@/components/auth/OnboardingModal";
 import { ThirdPartyScripts } from "@/components/analytics/ThirdPartyScripts";
 import "../globals.css"; // Adjusted path
 import { NextIntlClientProvider } from "next-intl";
@@ -46,10 +45,6 @@ export default async function RootLayout({
   return (
     <html lang={locale} className="dark">
       <head>
-        <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
-        />
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#14F195" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -58,11 +53,10 @@ export default async function RootLayout({
       <body
         className={`${spaceGrotesk.variable} ${inter.variable} ${jetbrainsMono.variable} flex min-h-screen flex-col font-body antialiased bg-void text-text-primary selection:bg-solana/20 selection:text-solana`}
       >
-        <div className="bg-noise opacity-15 pointer-events-none fixed inset-0 z-50 mix-blend-overlay"></div>
+        <div className="bg-noise opacity-12 pointer-events-none fixed inset-0 z-50 mix-blend-overlay"></div>
         <NextIntlClientProvider messages={messages}>
           <AuthProvider>
             <SyncUserOnLogin />
-            <OnboardingModal />
             <Suspense fallback={null}>
               <ThirdPartyScripts />
             </Suspense>

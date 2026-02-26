@@ -62,16 +62,23 @@ export default function LeaderboardPage() {
 
           <div className="h-4 w-[1px] bg-white/10 hidden sm:block" />
 
-          <select
-            value={courseId}
-            onChange={(e) => setCourseId(e.target.value)}
-            className="bg-black/40 border border-white/10 rounded-full px-4 py-1.5 text-xs text-text-primary focus:outline-none focus:border-solana/50 transition-colors"
-          >
-            <option value="">{t("all_courses")}</option>
-            {courses.map(c => (
-              <option key={c._id} value={c._id}>{c.title}</option>
-            ))}
-          </select>
+          <div className="relative">
+            <select
+              value={courseId}
+              onChange={(e) => setCourseId(e.target.value)}
+              className="appearance-none bg-[#0A0A0B]/60 border border-white/10 rounded-full pl-5 pr-10 py-2 text-xs text-text-primary focus:outline-none focus:border-solana/50 transition-all cursor-pointer hover:bg-[#0A0A0B]/80 hover:border-white/20"
+            >
+              <option value="">{t("all_courses")}</option>
+              {courses.map(c => (
+                <option key={c._id} value={c._id}>{c.title}</option>
+              ))}
+            </select>
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted">
+              <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
+          </div>
         </div>
       </div>
 

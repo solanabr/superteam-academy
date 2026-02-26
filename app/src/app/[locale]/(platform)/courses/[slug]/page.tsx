@@ -26,7 +26,7 @@ export default async function CourseDetailPage({
 
   return (
     <main className="min-h-screen bg-void pt-4 pb-12">
-      <div className="mx-auto max-w-6xl px-4">
+      <div className="mx-auto max-w-7xl px-4">
         <nav className="flex items-center gap-2 text-xs font-mono text-text-muted mb-6 uppercase tracking-widest">
           <Link href="/courses" className="hover:text-solana transition-colors">Courses</Link>
           <span className="text-white/20">/</span>
@@ -43,7 +43,7 @@ export default async function CourseDetailPage({
                 className="rounded-lg object-cover"
               />
             ) : (
-              <div className="from-solana/10 to-rust/10 flex aspect-video w-full items-center justify-center rounded-lg bg-gradient-to-br">
+              <div className="from-solana/10 to-[#FFD23F]/10 flex aspect-video w-full items-center justify-center rounded-lg bg-gradient-to-br">
                 <span className="text-text-secondary text-5xl opacity-50">⌘</span>
               </div>
             )}

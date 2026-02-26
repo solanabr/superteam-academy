@@ -6,7 +6,7 @@ import { usePrivy } from "@privy-io/react-auth";
 import { Link } from "@/i18n/routing";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Save, Lock, Mail, Wallet, Coins, Info, ExternalLink, Trash2, ChevronRight, User, Users, Copy, Gift, Download } from "lucide-react";
+import { Loader2, Save, Lock, Mail, Wallet, Coins, Info, ExternalLink, Trash2, ChevronRight, User, Users, Copy, Gift, Download, ShieldCheck, Brain, GraduationCap } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { PublicKey, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { withFallbackRPC } from "@/lib/solana-connection";
@@ -278,7 +278,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-void pt-4 pb-12">
+    <main className="pt-4 pb-12">
       <div className="mx-auto max-w-2xl px-4">
         <nav className="flex items-center gap-2 text-xs font-mono text-text-muted mb-6 uppercase tracking-widest">
           <Link href="/dashboard" className="hover:text-solana transition-colors">Dashboard</Link>
@@ -354,12 +354,13 @@ export default function SettingsPage() {
               <div className="space-y-2">
                 <label className="text-sm font-medium text-text-secondary">{t("account_role")}</label>
                 <div className="flex items-center gap-3 h-10 px-3 rounded-md border border-white/10 bg-black/20">
-                  <span className={`material-symbols-outlined text-lg ${user.role === "admin" ? "text-amber-400" :
-                    user.role === "professor" ? "text-blue-400" : "text-solana"
-                    }`}>
-                    {user.role === "admin" ? "admin_panel_settings" :
-                      user.role === "professor" ? "psychology" : "school"}
-                  </span>
+                  {user.role === "admin" ? (
+                    <ShieldCheck className="h-4 w-4 text-amber-400" />
+                  ) : user.role === "professor" ? (
+                    <Brain className="h-4 w-4 text-blue-400" />
+                  ) : (
+                    <GraduationCap className="h-4 w-4 text-solana" />
+                  )}
                   <span className={`text-sm font-display font-semibold capitalize ${user.role === "admin" ? "text-amber-400" :
                     user.role === "professor" ? "text-blue-400" : "text-solana"
                     }`}>
@@ -438,7 +439,7 @@ export default function SettingsPage() {
                           className="text-[10px] font-bold text-solana hover:text-white transition-colors flex items-center gap-1 bg-solana/10 px-2 py-1 rounded border border-solana/20 h-auto"
                         >
                           <a href="https://faucet.solana.com" target="_blank" rel="noopener noreferrer">
-                            <span className="material-symbols-outlined text-[12px]">open_in_new</span>
+                            <ExternalLink className="h-3 w-3" />
                             Get SOL
                           </a>
                         </Button>

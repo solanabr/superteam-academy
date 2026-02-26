@@ -13,6 +13,8 @@ interface ActiveCourseProps {
     className?: string;
 }
 
+import { ArrowRight } from "lucide-react";
+
 export function ActiveCourse({
     courseTitle,
     courseSlug,
@@ -61,7 +63,7 @@ export function ActiveCourse({
                                 <Link href={`/courses/${courseSlug}/lessons/${lastLessonId}`}>
                                     <Button className="px-5 font-bold shadow-[0_0_15px_rgba(255,255,255,0.1)] group-hover:scale-105 transition-transform">
                                         {t("active_course_continue")}
-                                        <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                                        <ArrowRight size={16} className="ml-2" />
                                     </Button>
                                 </Link>
                             </div>

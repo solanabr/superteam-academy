@@ -7,6 +7,8 @@ import { useWallets } from "@privy-io/react-auth/solana";
 import { usePrivy } from "@privy-io/react-auth";
 import { Button } from "../ui/button";
 
+import { Terminal } from "lucide-react";
+
 export function Footer() {
   const t = useTranslations("footer");
   const { wallets } = useWallets();
@@ -56,12 +58,12 @@ export function Footer() {
   };
 
   return (
-    <footer className="w-full border-t border-white/10 py-8 mt-auto bg-[#0A0A0B] relative z-20">
+    <footer className="w-full border-t border-white/10 py-8 mt-auto glass-panel-flat backdrop-blur-md bg-transparent relative z-20">
       <div className="max-w-7xl mx-auto px-6 text-center">
         <p className="text-text-secondary text-base font-mono flex items-center justify-center gap-2 select-none">
           {t("made_with")}
           <span
-            className="text-rust text-xl cursor-pointer transition-all duration-300 inline-block relative hover:scale-125 hover:rotate-12 active:scale-95"
+            className="text-[var(--brazil-yellow)] text-xl cursor-pointer transition-all duration-300 inline-block relative hover:scale-125 hover:rotate-12 active:scale-95"
             style={{ transform: `translate(${position.x}px, ${position.y}px)` }}
             onClick={handleHeartClick}
           >
@@ -91,7 +93,7 @@ export function Footer() {
 
             <div className="relative z-[10] flex flex-col h-full">
               <Dialog.Title className="text-solana font-mono font-bold text-xl mb-6 flex items-center gap-3">
-                <span className="material-symbols-outlined text-2xl">terminal</span>
+                <Terminal size={24} />
                 ubuntu@superteam:~$
               </Dialog.Title>
 
