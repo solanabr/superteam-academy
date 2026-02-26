@@ -67,8 +67,8 @@ export function getCourseIdForProgram(course: { id: string; onChainCourseId?: st
   return course.onChainCourseId ?? course.id
 }
 
-/** On-chain course account shape (we only need lesson count for capping). */
-export type OnChainCourse = { lesson_count: number }
+/** On-chain course account shape (we only need lesson count for capping). Fetched account may be typed loosely. */
+export type OnChainCourse = { lesson_count?: number }
 
 /**
  * Effective lesson count for display and on-chain: when the course is linked to an on-chain

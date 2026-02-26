@@ -55,9 +55,28 @@ function applyTheme(
   monaco.editor.defineTheme(DEFAULT_EDITOR_THEME_ID, theme);
 }
 
+/** Monaco TS/JS language API (monaco.languages.typescript); types may be deprecated in @types. */
+interface MonacoTsApi {
+  typescriptDefaults: {
+    addExtraLib(content: string, filePath?: string): void;
+    getCompilerOptions(): object;
+    setCompilerOptions(options: object): void;
+    getDiagnosticsOptions(): object;
+    setDiagnosticsOptions(options: object): void;
+  };
+  javascriptDefaults: {
+    addExtraLib(content: string, filePath?: string): void;
+    getCompilerOptions(): object;
+    setCompilerOptions(options: object): void;
+    getDiagnosticsOptions(): object;
+    setDiagnosticsOptions(options: object): void;
+  };
+}
+
 /** Configure TypeScript/JS so require() and Node-style code don't show "Cannot find name 'require'" */
 function configureMonacoTypescript(monaco: typeof import("monaco-editor")) {
-  const ts = monaco.languages?.typescript ?? (monaco as { typescript?: typeof monaco.languages.typescript }).typescript;
+  const raw = monaco.languages?.typescript ?? (monaco as unknown as { typescript?: MonacoTsApi }).typescript;
+  const ts = raw as unknown as MonacoTsApi | undefined;
   if (!ts) return;
 
   const nodeDecl = `
