@@ -162,6 +162,7 @@
     "credentialIssued": "Credencial emitida! +{xp} XP concedidos.",
     "viewCredential": "Ver Credencial",
     "finalizeFailed": "Nao foi possivel finalizar. Tente novamente.",
+    "syncFailed": "Nao foi possivel sincronizar o progresso. Tente novamente.",
     "lessonOf": "Aula {current} de {total}",
     "backToCourse": "Voltar ao Curso",
     "quizComplete": "Quiz Concluido",

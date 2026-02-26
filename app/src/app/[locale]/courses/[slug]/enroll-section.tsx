@@ -54,7 +54,6 @@ export function EnrollSection({
   // Optimistic: show enrolled state immediately after TX confirms
   const [optimisticEnrolled, setOptimisticEnrolled] = useState(false);
   const enrollingRef = useRef(false);
-  const syncAttemptedRef = useRef(false);
 
   const isComplete = isEnrolled && enrollment?.completedAt !== null;
 
@@ -62,46 +61,24 @@ export function EnrollSection({
   const completedCount = enrollment?.lessonFlags
     ? countCompletedLessons(enrollment.lessonFlags)
     : 0;
-  const allLessonsDone =
-    isEnrolled && !isComplete && totalLessons > 0 && completedCount >= totalLessons;
 
-  // Self-healing: sync locally-completed lessons missing on-chain
+  // Also check local progress for lessons completed locally but not yet on-chain
+  const [locallyComplete, setLocallyComplete] = useState(false);
   useEffect(() => {
-    if (syncAttemptedRef.current) return;
-    if (!isEnrolled || isComplete || !publicKey || !enrollment?.lessonFlags) return;
+    if (!isEnrolled || isComplete || !publicKey || totalLessons === 0) return;
     if (completedCount >= totalLessons) return;
 
-    const walletAddress = publicKey.toBase58();
-    syncAttemptedRef.current = true;
-
-    const syncMissing = async () => {
-      const progress = await learningService.getProgress(walletAddress, courseId);
-      const missingIndices: number[] = [];
-
-      for (const idx of progress.completedLessons) {
-        if (!isLessonComplete(enrollment.lessonFlags, idx)) {
-          missingIndices.push(idx);
+    learningService
+      .getProgress(publicKey.toBase58(), courseId)
+      .then((progress) => {
+        if (progress.completedLessons.length >= totalLessons) {
+          setLocallyComplete(true);
         }
-      }
+      });
+  }, [isEnrolled, isComplete, publicKey, courseId, completedCount, totalLessons]);
 
-      if (missingIndices.length === 0) return;
-
-      await Promise.allSettled(
-        missingIndices.map((lessonIndex) =>
-          fetch("/api/complete-lesson", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ learner: walletAddress, courseId, lessonIndex }),
-          })
-        )
-      );
-
-      await new Promise((r) => setTimeout(r, 3000));
-      await refreshEnrollment();
-    };
-
-    syncMissing();
-  }, [isEnrolled, isComplete, completedCount, totalLessons, enrollment, publicKey, courseId, refreshEnrollment]);
+  const allLessonsDone =
+    isEnrolled && !isComplete && totalLessons > 0 && (completedCount >= totalLessons || locallyComplete);
 
   const handleEnroll = async () => {
     if (!program || !publicKey || enrollingRef.current) return;
@@ -154,10 +131,43 @@ export function EnrollSection({
     setFinalizing(true);
     setError(null);
     try {
+      const walletAddress = publicKey.toBase58();
+
+      // Sync locally-completed lessons that are missing on-chain
+      if (enrollment?.lessonFlags && completedCount < totalLessons) {
+        const progress = await learningService.getProgress(walletAddress, courseId);
+        const missingIndices: number[] = [];
+        for (const idx of progress.completedLessons) {
+          if (!isLessonComplete(enrollment.lessonFlags, idx)) {
+            missingIndices.push(idx);
+          }
+        }
+        if (missingIndices.length > 0) {
+          const results = await Promise.allSettled(
+            missingIndices.map((lessonIndex) =>
+              fetch("/api/complete-lesson", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ learner: walletAddress, courseId, lessonIndex }),
+              })
+            )
+          );
+          const anyFailed = results.some(
+            (r) => r.status === "rejected" || !(r.value as Response).ok
+          );
+          if (anyFailed) {
+            setError(tl("syncFailed"));
+            return;
+          }
+          // Wait for on-chain confirmation
+          await new Promise((r) => setTimeout(r, 3000));
+        }
+      }
+
       const res = await fetch(`/api/courses/${slug}/finalize`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ walletAddress: publicKey.toBase58() }),
+        body: JSON.stringify({ walletAddress }),
       });
       const data = await res.json();
       if (data.error) {

@@ -162,6 +162,7 @@
     "credentialIssued": "Credential issued! +{xp} XP awarded.",
     "viewCredential": "View Credential",
     "finalizeFailed": "Could not finalize. Please try again.",
+    "syncFailed": "Could not sync lesson progress. Please try again.",
     "lessonOf": "Lesson {current} of {total}",
     "backToCourse": "Back to Course",
     "quizComplete": "Quiz Complete",
