@@ -35,8 +35,8 @@ function toPublicUser(user: {
 
 async function findOrCreateWalletUser(ctx: AuthContext, publicKey: string) {
 	const existingAccount = await ctx.internalAdapter.findAccountByProviderId(
-		publicKey,
-		WALLET_PROVIDER_ID
+		WALLET_PROVIDER_ID,
+		publicKey
 	);
 
 	if (existingAccount) {
