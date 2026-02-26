@@ -198,6 +198,8 @@ export default async function CourseDetail({
       {/* ═══ ENROLL ═══ */}
       <EnrollSection
         courseId={course.id}
+        slug={slug}
+        totalLessons={totalLessons}
         totalCompletions={course.totalCompletions}
         creator={course.creator}
         t={{

@@ -3,7 +3,10 @@
 import { useState, useRef } from "react";
 import { useWallet } from "@/lib/wallet/context";
 import { useProgram } from "@/lib/hooks/use-program";
-import { useEnrollment } from "@/lib/hooks/use-enrollment";
+import {
+  useEnrollment,
+  countCompletedLessons,
+} from "@/lib/hooks/use-enrollment";
 import { useRequireAuth } from "@/lib/hooks/use-require-auth";
 import { enroll } from "@/lib/solana/transactions";
 import { analytics } from "@/providers/analytics-provider";
@@ -12,6 +15,8 @@ import { useTranslations } from "next-intl";
 
 interface EnrollSectionProps {
   courseId: string;
+  slug: string;
+  totalLessons: number;
   totalCompletions: number;
   creator: string;
   t: {
@@ -25,6 +30,8 @@ interface EnrollSectionProps {
 
 export function EnrollSection({
   courseId,
+  slug,
+  totalLessons,
   totalCompletions,
   creator,
   t,
@@ -41,11 +48,19 @@ export function EnrollSection({
   } = useEnrollment(courseId);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [finalizing, setFinalizing] = useState(false);
   // Optimistic: show enrolled state immediately after TX confirms
   const [optimisticEnrolled, setOptimisticEnrolled] = useState(false);
   const enrollingRef = useRef(false);
 
   const isComplete = isEnrolled && enrollment?.completedAt !== null;
+
+  // Detect "all lessons done but never finalized" state
+  const completedCount = enrollment?.lessonFlags
+    ? countCompletedLessons(enrollment.lessonFlags)
+    : 0;
+  const allLessonsDone =
+    isEnrolled && !isComplete && totalLessons > 0 && completedCount >= totalLessons;
 
   const handleEnroll = async () => {
     if (!program || !publicKey || enrollingRef.current) return;
@@ -90,6 +105,31 @@ export function EnrollSection({
       setLoading(false);
     } finally {
       enrollingRef.current = false;
+    }
+  };
+
+  const handleFinalize = async () => {
+    if (!publicKey || finalizing) return;
+    setFinalizing(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/courses/${slug}/finalize`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ walletAddress: publicKey.toBase58() }),
+      });
+      const data = await res.json();
+      if (data.error) {
+        setError(data.error);
+      } else {
+        // Refresh enrollment to pick up completedAt
+        await refreshEnrollment();
+      }
+    } catch (e) {
+      console.error("Finalize failed:", e);
+      setError(tl("finalizeFailed"));
+    } finally {
+      setFinalizing(false);
     }
   };
 
@@ -147,6 +187,33 @@ export function EnrollSection({
           &#10003;&nbsp;&nbsp;{t.completed}
         </button>
         {metaText}
+      </div>
+    );
+  }
+
+  if (allLessonsDone) {
+    return (
+      <div className="sa-enroll-section">
+        <button
+          className="sa-enroll-btn"
+          onClick={() => requireAuth(handleFinalize)}
+          disabled={finalizing}
+        >
+          {finalizing ? tl("finalizing") : tl("finalizeAndClaim")}
+        </button>
+        {metaText}
+        {error && (
+          <p
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: "11px",
+              color: "#EF4444",
+              marginTop: "8px",
+            }}
+          >
+            {error}
+          </p>
+        )}
       </div>
     );
   }
