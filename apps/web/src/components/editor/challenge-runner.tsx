@@ -857,18 +857,24 @@ export function ChallengeRunner({
     }, 50);
   }, [code, tests, language, buildType, onResult]);
 
+  const showSubmit =
+    allPassed && !isComplete && (!isDeployable || deployComplete);
+
   return (
     <div className={cn("flex items-center gap-2", className)}>
       <Button
         onClick={handleRun}
         disabled={isRunning}
         size="sm"
-        variant="push"
+        variant={showSubmit ? "pushOutline" : "push"}
         className="gap-1.5"
       >
         {isRunning ? (
           <div
-            className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent"
+            className={cn(
+              "h-3.5 w-3.5 animate-spin rounded-full border-2 border-t-transparent",
+              showSubmit ? "border-primary" : "border-primary-foreground"
+            )}
             aria-hidden="true"
           />
         ) : (
@@ -877,7 +883,7 @@ export function ChallengeRunner({
         {buildType === "buildable" ? t("buildProgram") : t("runCode")}
       </Button>
 
-      {allPassed && !isComplete && (!isDeployable || deployComplete) && (
+      {showSubmit && (
         <Button onClick={onSubmit} size="sm" variant="push" className="gap-1.5">
           {t("submitSolution")}
           <span className="ml-1 rounded-full px-1.5 py-0.5 text-[10px] font-bold [background:rgba(255,255,255,0.20)]">

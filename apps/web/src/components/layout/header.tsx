@@ -172,7 +172,7 @@ export function Header() {
       if (amount > 0) {
         setXpGainAmount(amount);
         clearTimeout(xpGainTimerRef.current);
-        xpGainTimerRef.current = setTimeout(() => setXpGainAmount(null), 2000);
+        xpGainTimerRef.current = setTimeout(() => setXpGainAmount(null), 2600);
       }
       setTimeout(fetchXp, 500);
     };
@@ -192,6 +192,27 @@ export function Header() {
       {/* Main header bar — bottom border is XP progress */}
       <div className="relative bg-transparent backdrop-blur-md">
         <div className="relative mx-auto flex h-[56px] max-w-[1600px] items-center px-[16px]">
+          {/* Left: Superteam Brazil logo (desktop) */}
+          <Link
+            href={user ? `/${locale}/dashboard` : `/${locale}`}
+            className="relative z-10 mr-auto hidden shrink-0 md:flex"
+          >
+            <Image
+              src="/ST-DARK-GREEN-HORIZONTAL.png"
+              alt="Superteam Brasil"
+              width={160}
+              height={32}
+              className="h-6 w-auto dark:hidden"
+            />
+            <Image
+              src="/ST-YELLOW-HORIZONTAL.png"
+              alt="Superteam Brasil"
+              width={160}
+              height={32}
+              className="hidden h-6 w-auto dark:block"
+            />
+          </Link>
+
           {/* Center: nav pill bar (desktop) */}
           {isLoggedIn && (
             <nav
@@ -247,10 +268,10 @@ export function Header() {
                 {xpGainAmount !== null && (
                   <span
                     key={xpGainAmount + Date.now()}
-                    className="absolute -bottom-7 left-1/2 -translate-x-1/2 whitespace-nowrap font-display text-[14px] font-black text-[var(--xp)] duration-300 animate-in fade-in slide-in-from-top-1"
+                    className="absolute -bottom-9 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-[var(--xp-dim)] bg-[var(--card)] px-3 py-0.5 font-display text-[15px] font-black text-[var(--xp)] shadow-[0_2px_8px_var(--xp-dim)]"
                     style={{
                       animation:
-                        "xp-float 2s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+                        "xp-float 2.5s cubic-bezier(0.16, 1, 0.3, 1) forwards",
                     }}
                   >
                     +{xpGainAmount} XP
@@ -282,14 +303,14 @@ export function Header() {
             >
               <Image
                 src="/logo-light.png"
-                alt="Solarium"
+                alt="Superteam Academy"
                 width={120}
                 height={36}
                 className="h-7 w-auto dark:hidden"
               />
               <Image
                 src="/logo-dark.png"
-                alt="Solarium"
+                alt="Superteam Academy"
                 width={120}
                 height={36}
                 className="hidden h-7 w-auto dark:block"

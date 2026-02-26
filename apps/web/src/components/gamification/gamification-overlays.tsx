@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { XpPopup } from "@/components/gamification/xp-popup";
 import { LevelUpOverlay } from "@/components/gamification/level-up-overlay";
 import { AchievementPopup } from "@/components/gamification/achievement-popup";
 import { CertificatePopup } from "@/components/gamification/certificate-popup";
@@ -39,10 +38,9 @@ export function GamificationOverlays() {
         <>
           <LevelUpOverlay />
           {/* Single stacking container for all bottom-right popups */}
-          <div className="pointer-events-none fixed bottom-20 right-6 z-50 flex flex-col items-end gap-2">
+          <div className="pointer-events-none fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2">
             <CertificatePopup className="pointer-events-auto" />
             <AchievementPopup className="pointer-events-auto" />
-            <XpPopup />
           </div>
         </>
       )}

@@ -326,7 +326,7 @@ export function LessonPageClient({
     const visibleTests = lesson.tests?.filter((tc) => !tc.hidden) ?? [];
 
     return (
-      <div className="-mx-4 -my-6 flex h-[calc(100vh-4rem)] flex-col md:-mx-8 md:-my-8">
+      <div className="-mx-4 -my-6 flex h-[calc(100vh-60px)] flex-col pt-4 md:-mx-8 md:-my-8">
         <div className="flex flex-1 flex-col overflow-hidden lg:flex-row">
           {/* Left pane: description + test cases + navigation */}
           <div className="w-full overflow-auto lg:w-1/2 lg:border-r-[2.5px] lg:border-border">
@@ -403,20 +403,28 @@ export function LessonPageClient({
               )}
 
               {/* Navigation */}
-              <div className="flex items-center justify-between border-t border-border pt-6">
-                {prevLesson ? (
-                  <Button variant="pushOutline" size="sm" asChild>
+              <div className="flex flex-wrap items-center justify-center gap-3 border-t border-border pt-6">
+                {prevLesson && (
+                  <Button
+                    variant="pushOutline"
+                    size="default"
+                    asChild
+                    className="min-w-[120px] justify-center"
+                  >
                     <Link
                       href={`/${locale}/courses/${courseSlug}/lessons/${prevLesson.slug}`}
                     >
                       &larr; {tCommon("previous")}
                     </Link>
                   </Button>
-                ) : (
-                  <div />
                 )}
                 {nextLesson ? (
-                  <Button variant="push" size="sm" asChild>
+                  <Button
+                    variant="push"
+                    size="default"
+                    asChild
+                    className="min-w-[120px] justify-center"
+                  >
                     <Link
                       href={`/${locale}/courses/${courseSlug}/lessons/${nextLesson.slug}`}
                     >
@@ -424,7 +432,12 @@ export function LessonPageClient({
                     </Link>
                   </Button>
                 ) : (
-                  <Button variant="push" size="sm" asChild>
+                  <Button
+                    variant="push"
+                    size="default"
+                    asChild
+                    className="min-w-[120px] justify-center"
+                  >
                     <Link href={`/${locale}/courses/${courseSlug}`}>
                       {t("lessonComplete")}
                     </Link>
