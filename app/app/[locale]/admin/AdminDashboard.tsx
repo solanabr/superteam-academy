@@ -48,12 +48,7 @@ import {
 } from 'recharts';
 import { cn } from '@/lib/utils';
 import { localePath } from '@/lib/paths';
-
-// Admin wallet addresses — in production, stored on-chain in Config account
-const ADMIN_WALLETS = new Set([
-  '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU', // demo admin
-  'GpXHXs5KfzfXbNKcMLNbAMsJsgPsBE7y5GtwVoiuxYvH', // platform authority
-]);
+import { isAdmin as checkIsAdmin } from '@/lib/rbac';
 
 // --- Mock data (production: fetched from Helius DAS API + on-chain accounts) ---
 
@@ -266,7 +261,7 @@ export default function AdminDashboard() {
   const [flaggedPosts, setFlaggedPosts] = useState<FlaggedPost[]>(FLAGGED_POSTS);
 
   const isAdmin =
-    !connected || (publicKey && ADMIN_WALLETS.has(publicKey.toBase58()));
+    !connected || checkIsAdmin(publicKey?.toBase58());
 
   if (!isAdmin) {
     return (
