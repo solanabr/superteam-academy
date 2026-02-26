@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://superteam-academy.vercel.app';
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://app-roan-iota-58.vercel.app';
 
 const LOCALES = ['pt-BR', 'en', 'es'] as const;
 

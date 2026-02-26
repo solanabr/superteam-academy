@@ -32,7 +32,7 @@ const META: Record<string, { title: string; description: string; ogDesc: string 
   },
 };
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://superteam-academy.vercel.app';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://app-roan-iota-58.vercel.app';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
