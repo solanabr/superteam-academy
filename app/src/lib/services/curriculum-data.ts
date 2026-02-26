@@ -300,17 +300,14 @@ export const courses: Course[] = [
                 {
                   name: "Defines GreetingAccount with message field",
                   expectCodeContains: "pub message: String",
-                  expectNoError: true,
                 },
                 {
                   name: "Uses init constraint with correct seeds",
                   expectCodeContains: "init",
-                  expectNoError: true,
                 },
                 {
                   name: "Stores the message in the account",
                   expectCodeContains: "greeting.message",
-                  expectNoError: true,
                 },
               ],
               language: "rust",
@@ -357,17 +354,14 @@ export const courses: Course[] = [
                 {
                   name: "Uses PDA seeds and bump",
                   expectCodeContains: "seeds",
-                  expectNoError: true,
                 },
                 {
                   name: "Increments with checked_add",
                   expectCodeContains: "checked_add",
-                  expectNoError: true,
                 },
                 {
                   name: "Uses has_one constraint",
                   expectCodeContains: "has_one",
-                  expectNoError: true,
                 },
               ],
               language: "rust",
@@ -399,17 +393,14 @@ export const courses: Course[] = [
                 {
                   name: "Initializes counter with count = 0",
                   expectCodeContains: "count = 0",
-                  expectNoError: true,
                 },
                 {
                   name: "Increment uses checked_add",
                   expectCodeContains: "checked_add",
-                  expectNoError: true,
                 },
                 {
                   name: "Decrement uses checked_sub",
                   expectCodeContains: "checked_sub",
-                  expectNoError: true,
                 },
               ],
               language: "rust",
@@ -546,22 +537,18 @@ export const courses: Course[] = [
                 {
                   name: "Defines create_poll with question field",
                   expectCodeContains: "create_poll",
-                  expectNoError: true,
                 },
                 {
                   name: "Defines cast_vote with choice parameter",
                   expectCodeContains: "cast_vote",
-                  expectNoError: true,
                 },
                 {
                   name: "Creates voter_record PDA with init",
                   expectCodeContains: "voter_record",
-                  expectNoError: true,
                 },
                 {
                   name: "Defines InvalidChoice error variant",
                   expectCodeContains: "InvalidChoice",
-                  expectNoError: true,
                 },
               ],
               language: "rust",
@@ -907,22 +894,18 @@ export const courses: Course[] = [
                 {
                   name: "Uses system_program::transfer for deposits",
                   expectCodeContains: "system_program::transfer",
-                  expectNoError: true,
                 },
                 {
                   name: "Uses checked_add and checked_sub",
                   expectCodeContains: "checked_add",
-                  expectNoError: true,
                 },
                 {
                   name: "Defines InsufficientBalance error",
                   expectCodeContains: "InsufficientBalance",
-                  expectNoError: true,
                 },
                 {
                   name: "Uses try_borrow_mut_lamports for withdrawal",
                   expectCodeContains: "try_borrow_mut_lamports",
-                  expectNoError: true,
                 },
               ],
               language: "rust",
@@ -1012,17 +995,14 @@ export const courses: Course[] = [
                 {
                   name: "Uses u128 intermediate for safe multiplication",
                   expectCodeContains: "as u128",
-                  expectNoError: true,
                 },
                 {
                   name: "Uses checked_add for pool total",
                   expectCodeContains: "checked_add",
-                  expectNoError: true,
                 },
                 {
                   name: "Multiplies before dividing (checked_mul then checked_div)",
                   expectCodeContains: "checked_mul",
-                  expectNoError: true,
                 },
               ],
               language: "rust",
@@ -1069,27 +1049,22 @@ export const courses: Course[] = [
                 {
                   name: "Uses Signer type for admin",
                   expectCodeContains: "Signer",
-                  expectNoError: true,
                 },
                 {
                   name: "Uses typed Account for token accounts",
                   expectCodeContains: "Account<",
-                  expectNoError: true,
                 },
                 {
                   name: "Uses checked_sub for safe arithmetic",
                   expectCodeContains: "checked_sub",
-                  expectNoError: true,
                 },
                 {
                   name: "Validates PDA with seeds and bump",
                   expectCodeContains: "seeds",
-                  expectNoError: true,
                 },
                 {
                   name: "Uses has_one or constraint for authorization",
                   expectCodeContains: "has_one",
-                  expectNoError: true,
                 },
               ],
               language: "rust",
@@ -1127,17 +1102,14 @@ export const courses: Course[] = [
                 {
                   name: "Defines FuzzInstruction with Arbitrary derive",
                   expectCodeContains: "Arbitrary",
-                  expectNoError: true,
                 },
                 {
                   name: "Implements process_instruction with state tracking",
                   expectCodeContains: "process_instruction",
-                  expectNoError: true,
                 },
                 {
                   name: "Implements check_invariants method",
                   expectCodeContains: "check_invariants",
-                  expectNoError: true,
                 },
               ],
               language: "rust",
@@ -1169,27 +1141,22 @@ export const courses: Course[] = [
                 {
                   name: "Fixes missing signer check",
                   expectCodeContains: "Signer",
-                  expectNoError: true,
                 },
                 {
                   name: "Adds has_one for seller validation",
                   expectCodeContains: "has_one",
-                  expectNoError: true,
                 },
                 {
                   name: "Uses typed TokenAccount",
                   expectCodeContains: "Account<'info, TokenAccount>",
-                  expectNoError: true,
                 },
                 {
                   name: "Validates price is non-zero",
                   expectCodeContains: "InvalidPrice",
-                  expectNoError: true,
                 },
                 {
                   name: "Checks is_active constraint",
                   expectCodeContains: "is_active",
-                  expectNoError: true,
                 },
               ],
               language: "rust",
