@@ -1,5 +1,7 @@
 export interface MockCourse {
     id: string;
+    /** Optional. When set, used for on-chain calls (enroll, complete_lesson). Leave unset so users see `id` as the course id (e.g. solana-fundamentals). Only set for dev/test when the chain uses a different id (e.g. test-course-1). */
+    onChainCourseId?: string;
     slug: string;
     title: string;
     description: string;

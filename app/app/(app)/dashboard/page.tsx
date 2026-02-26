@@ -9,10 +9,9 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProgressBar, PageHeader, StreakCalendar, DailyReward } from "@/components/app";
-import { getAllCourses } from "@/lib/services/content-service";
+import { getAllCourses, getCourseIdForProgram, getEffectiveLessonCount } from "@/lib/services/content-service";
 import { getMockStreakData } from "@/lib/services/mock-leaderboard";
-import { useXpBalance } from "@/hooks";
-import { useEnrollment } from "@/hooks/useEnrollment";
+import { useXpBalance, useCourse, useEnrollment } from "@/hooks";
 import { getLessonFlagsFromEnrollment, countCompletedLessons } from "@/lib/lesson-bitmap";
 import { levelFromXp } from "@/lib/level";
 import { useState, useEffect } from "react";
@@ -20,9 +19,12 @@ import { useTranslations } from "next-intl";
 import type { MockCourse } from "@/lib/services/content-service";
 
 function EnrolledCourseCard({ course }: { course: MockCourse }) {
-    const { data: enrollment } = useEnrollment(course.id);
+    const programCourseId = getCourseIdForProgram(course);
+    const { data: enrollment } = useEnrollment(programCourseId);
+    const { data: onChainCourse } = useCourse(programCourseId);
     const lessonFlags = getLessonFlagsFromEnrollment(enrollment ?? undefined);
     const completedCount = lessonFlags.length > 0 ? countCompletedLessons(lessonFlags) : 0;
+    const effectiveCount = getEffectiveLessonCount(course, onChainCourse ?? null);
     const t = useTranslations("dashboard");
     return (
         <Link href={`/courses/${course.slug}`} className="h-full">
@@ -34,9 +36,9 @@ function EnrolledCourseCard({ course }: { course: MockCourse }) {
                     </div>
                     <div className="mt-auto pt-4">
                         <h2 className="text-lg text-gray-400">
-                            {completedCount} {t("completedOutOf")} {course.lessonCount}
+                            {completedCount} {t("completedOutOf")} {effectiveCount}
                         </h2>
-                        <ProgressBar value={completedCount} max={course.lessonCount} />
+                        <ProgressBar value={completedCount} max={effectiveCount} />
                     </div>
                 </div>
             </div>

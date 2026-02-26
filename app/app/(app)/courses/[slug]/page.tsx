@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { PageHeader, ProgressBar } from "@/components/app";
-import { getCourseBySlug, getAllLessonsFlat } from "@/lib/services/content-service";
+import { getCourseBySlug, getAllLessonsFlat, getCourseIdForProgram } from "@/lib/services/content-service";
 import { useEnroll, useEnrollment } from "@/hooks";
 import { getLessonFlagsFromEnrollment, countCompletedLessons, isLessonComplete } from "@/lib/lesson-bitmap";
 import { useWallet } from "@solana/wallet-adapter-react";
@@ -40,7 +40,7 @@ export default function CourseDetailPage({
     const [isLoading, setIsLoading] = useState(true);
     const { publicKey } = useWallet();
     const enroll = useEnroll();
-    const { data: enrollment } = useEnrollment(course?.id ?? null);
+    const { data: enrollment } = useEnrollment(course ? getCourseIdForProgram(course) : null);
 
     useEffect(() => {
         getCourseBySlug(slug).then((data) => {
@@ -71,7 +71,7 @@ export default function CourseDetailPage({
             toast.error("Connect your wallet to enroll.");
             return;
         }
-        enroll.mutate({ courseId: course.id });
+        enroll.mutate({ courseId: getCourseIdForProgram(course) });
     };
 
     return (

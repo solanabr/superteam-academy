@@ -61,3 +61,43 @@ export function getAllLessonsFlat(course: MockCourse): MockLesson[] {
 
 // Re-export types for convenience
 export type { MockCourse, MockModule, MockLesson } from './mock-content'
+
+/** Course id to use for on-chain calls (enroll, complete_lesson, etc.). Use onChainCourseId when set, else course.id. */
+export function getCourseIdForProgram(course: { id: string; onChainCourseId?: string }): string {
+  return course.onChainCourseId ?? course.id
+}
+
+/** On-chain course account shape (we only need lesson count for capping). Fetched account may be typed loosely. */
+export type OnChainCourse = { lesson_count?: number }
+
+/**
+ * Effective lesson count for display and on-chain: when the course is linked to an on-chain
+ * course (onChainCourseId), cap to the chain's lesson_count so we never show or complete
+ * lessons that would cause "Lesson index out of bounds".
+ */
+export function getEffectiveLessonCount(
+  course: MockCourse,
+  onChainCourse: OnChainCourse | null | undefined
+): number {
+  const contentCount = course.modules.reduce((sum, m) => sum + m.lessons.length, 0)
+  if (course.onChainCourseId && onChainCourse != null && typeof onChainCourse.lesson_count === 'number') {
+    return Math.min(contentCount, onChainCourse.lesson_count)
+  }
+  return contentCount
+}
+
+/** First N lessons from content, capped by on-chain lesson_count when present. */
+export function getEffectiveLessons(
+  course: MockCourse,
+  onChainCourse: OnChainCourse | null | undefined
+): MockLesson[] {
+  const all = getAllLessonsFlat(course)
+  const cap = getEffectiveLessonCount(course, onChainCourse)
+  return all.slice(0, cap)
+}
+
+/** Content course that maps to this on-chain course id (onChainCourseId or id). */
+export async function getContentCourseByOnChainId(onChainCourseId: string): Promise<MockCourse | undefined> {
+  const all = await getAllCourses()
+  return all.find((c) => getCourseIdForProgram(c) === onChainCourseId)
+}

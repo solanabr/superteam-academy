@@ -57,7 +57,9 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useProgram } from "@/hooks/useProgram";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { getAllCourses, getCourseIdForProgram } from "@/lib/services/content-service";
+import type { MockCourse } from "@/lib/services/content-service";
 
 function CopyablePubkey({ value }: { value: string }) {
   return (
@@ -190,20 +192,26 @@ function CoursesSection() {
             {courses.map((c) => {
               const acc = c.account as {
                 courseId: string;
-                lessonCount: number;
-                xpPerLesson: number;
-                isActive: boolean;
+                lesson_count?: number;
+                lessonCount?: number;
+                xp_per_lesson?: number;
+                xpPerLesson?: number;
+                is_active?: boolean;
+                isActive?: boolean;
               };
+              const lessonCount = acc.lesson_count ?? acc.lessonCount ?? 0;
+              const xpPerLesson = acc.xp_per_lesson ?? acc.xpPerLesson ?? 0;
+              const isActive = acc.is_active ?? acc.isActive ?? false;
               return (
                 <TableRow key={c.publicKey.toBase58()}>
                   <TableCell className="font-mono text-xs break-all">
                     {c.publicKey.toBase58()}
                   </TableCell>
                   <TableCell className="font-mono">{acc.courseId}</TableCell>
-                  <TableCell>{acc.lessonCount}</TableCell>
-                  <TableCell>{acc.xpPerLesson}</TableCell>
+                  <TableCell>{lessonCount}</TableCell>
+                  <TableCell>{xpPerLesson}</TableCell>
                   <TableCell>
-                    {acc.isActive ? (
+                    {isActive ? (
                       <Badge variant="default">Active</Badge>
                     ) : (
                       <Badge variant="secondary">Inactive</Badge>
@@ -222,16 +230,19 @@ function CoursesSection() {
 function EnrollmentRow({
   courseId,
   lessonCount,
+  displayLabel,
 }: {
   courseId: string;
   lessonCount: number;
+  displayLabel?: string;
 }) {
   const { data: enrollment, isLoading } = useEnrollment(courseId);
   const { mutate: closeEnrollment, isPending: closing } = useCloseEnrollment();
+  const label = displayLabel ?? courseId;
   if (isLoading) {
     return (
       <TableRow>
-        <TableCell className="font-mono">{courseId}</TableCell>
+        <TableCell className="font-mono">{label}</TableCell>
         <TableCell colSpan={4}>Loading…</TableCell>
       </TableRow>
     );
@@ -239,7 +250,7 @@ function EnrollmentRow({
   if (!enrollment) {
     return (
       <TableRow>
-        <TableCell className="font-mono">{courseId}</TableCell>
+        <TableCell className="font-mono">{label}</TableCell>
         <TableCell colSpan={4}>—</TableCell>
       </TableRow>
     );
@@ -254,7 +265,12 @@ function EnrollmentRow({
   const done = acc.completedAt != null;
   return (
     <TableRow>
-      <TableCell className="font-mono">{courseId}</TableCell>
+      <TableCell>
+        <span className="font-medium">{label}</span>
+        {displayLabel != null && (
+          <code className="ml-1 text-xs text-muted-foreground">({courseId})</code>
+        )}
+      </TableCell>
       <TableCell>
         {completed}/{lessonCount}
       </TableCell>
@@ -280,7 +296,12 @@ function LearnerSection() {
   const { data: xp } = useXpBalance();
   const { mutate: enroll, isPending: enrolling } = useEnroll();
   const [courseId, setCourseId] = useState("");
+  const [contentCourses, setContentCourses] = useState<MockCourse[]>([]);
   const program = useProgram();
+
+  useEffect(() => {
+    getAllCourses().then(setContentCourses);
+  }, []);
 
   if (!publicKey || !program) {
     return (
@@ -329,9 +350,13 @@ function LearnerSection() {
               <SelectContent>
                 {courseOptions.map((c) => {
                   const acc = c.account as { courseId: string };
+                  const contentCourse = contentCourses.find(
+                    (cc) => getCourseIdForProgram(cc) === acc.courseId
+                  );
+                  const label = contentCourse?.title ?? contentCourse?.slug ?? acc.courseId;
                   return (
                     <SelectItem key={acc.courseId} value={acc.courseId}>
-                      {acc.courseId}
+                      {label} {contentCourse ? `(${acc.courseId})` : ""}
                     </SelectItem>
                   );
                 })}
@@ -365,13 +390,23 @@ function LearnerSection() {
               {courseOptions.map((c) => {
                 const acc = c.account as {
                   courseId: string;
-                  lessonCount: number;
+                  lesson_count?: number;
+                  lessonCount?: number;
                 };
+                const lessonCount =
+                  acc.lesson_count ?? acc.lessonCount ?? 0;
+                const contentCourse = contentCourses.find(
+                  (cc) => getCourseIdForProgram(cc) === acc.courseId
+                );
+                const displayLabel = contentCourse
+                  ? contentCourse.title
+                  : undefined;
                 return (
                   <EnrollmentRow
                     key={acc.courseId}
                     courseId={acc.courseId}
-                    lessonCount={acc.lessonCount}
+                    lessonCount={lessonCount}
+                    displayLabel={displayLabel}
                   />
                 );
               })}

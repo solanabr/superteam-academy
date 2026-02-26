@@ -14,12 +14,15 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { ProgressBar, SolanaPlayground } from "@/components/app";
+import { ProgressBar, CodeEditor } from "@/components/app";
 import {
     getLessonById,
     getAllLessonsFlat,
+    getCourseIdForProgram,
+    getEffectiveLessonCount,
+    getEffectiveLessons,
 } from "@/lib/services/content-service";
-import { useEnrollment, useCompleteLesson } from "@/hooks";
+import { useEnrollment, useCompleteLesson, useCourse } from "@/hooks";
 import { getLessonFlagsFromEnrollment, isLessonComplete } from "@/lib/lesson-bitmap";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { toast } from "sonner";
@@ -36,8 +39,9 @@ export default function LessonPage({
     const [testOutput, setTestOutput] = useState<string | null>(null);
     const [code, setCode] = useState("");
 
-    const courseId = result?.course?.id ?? null;
+    const courseId = result?.course ? getCourseIdForProgram(result.course) : null;
     const { data: enrollment } = useEnrollment(courseId);
+    const { data: onChainCourse } = useCourse(courseId);
     const completeLesson = useCompleteLesson();
     const lessonFlags = getLessonFlagsFromEnrollment(enrollment ?? undefined);
 
@@ -63,9 +67,16 @@ export default function LessonPage({
 
     const { course, lesson, moduleTitle, lessonIndex } = result;
     const allLessons = getAllLessonsFlat(course);
+    const contentCount = allLessons.length;
+    const effectiveCount = getEffectiveLessonCount(course, onChainCourse ?? null);
+    const effectiveLessons = getEffectiveLessons(course, onChainCourse ?? null);
+    const onChainLessonCount = course.onChainCourseId && onChainCourse != null && typeof (onChainCourse as { lesson_count?: number }).lesson_count === 'number'
+      ? (onChainCourse as { lesson_count: number }).lesson_count
+      : null;
+    const canCompleteOnChain = onChainLessonCount == null || lessonIndex < onChainLessonCount;
+
     const prevLesson = lessonIndex > 0 ? allLessons[lessonIndex - 1] : null;
-    const nextLesson =
-        lessonIndex < allLessons.length - 1 ? allLessons[lessonIndex + 1] : null;
+    const nextLesson = lessonIndex < contentCount - 1 ? allLessons[lessonIndex + 1] : null;
 
     const isChallenge = lesson.type === "challenge";
     const isEnrolled = !!enrollment;
@@ -74,7 +85,12 @@ export default function LessonPage({
 
     const handleMarkComplete = () => {
         if (!publicKey || !course.id) return;
-        completeLesson.mutate({ courseId: course.id, lessonIndex });
+        const programCourseId = getCourseIdForProgram(course);
+        completeLesson.mutate({
+            courseId: programCourseId,
+            learner: publicKey.toBase58(),
+            lessonIndex,
+        });
     };
 
     const handleRunTests = () => {
@@ -106,11 +122,11 @@ export default function LessonPage({
                 <div className="flex items-center gap-2">
                     <ProgressBar
                         value={lessonIndex}
-                        max={course.lessonCount}
+                        max={contentCount}
                         size="sm"
                     />
                     <span className="text-xs text-muted-foreground whitespace-nowrap">
-                        {lessonIndex + 1}/{course.lessonCount}
+                        {lessonIndex + 1}/{contentCount}
                     </span>
                 </div>
             </div>
@@ -180,10 +196,15 @@ export default function LessonPage({
                                     <Button
                                         size="sm"
                                         onClick={handleMarkComplete}
-                                        disabled={!canMarkComplete || completeLesson.isPending}
+                                        disabled={!canMarkComplete || !canCompleteOnChain || completeLesson.isPending}
                                     >
                                         {completeLesson.isPending ? "Completing..." : "Mark complete"}
                                     </Button>
+                                )}
+                                {isEnrolled && !canCompleteOnChain && onChainLessonCount != null && (
+                                    <span className="text-xs text-muted-foreground">
+                                        This lesson is not available on-chain (course has {onChainLessonCount} lessons).
+                                    </span>
                                 )}
                             </div>
                         )}
@@ -218,13 +239,13 @@ export default function LessonPage({
                     </div>
                 </div>
 
-                {/* Right: Solana Playground (challenges only) */}
+                {/* Right: Code editor (challenges only) */}
                 {isChallenge ? (
                     <div className="flex w-1/2 flex-col overflow-hidden border-l border-border bg-background">
                         <div className="flex items-center justify-between border-b border-border bg-muted/30 px-4 py-2">
                             <div className="flex items-center gap-2">
                                 <Code2 className="h-4 w-4 text-muted-foreground" />
-                                <span className="text-sm font-medium">Solana Playground</span>
+                                <span className="text-sm font-medium">Code</span>
                             </div>
                             {lesson.challengeCode && (
                                 <Button
@@ -232,7 +253,7 @@ export default function LessonPage({
                                     size="sm"
                                     onClick={async () => {
                                         try {
-                                            await navigator.clipboard.writeText(lesson.challengeCode || "");
+                                            await navigator.clipboard.writeText(code || lesson.challengeCode || "");
                                             toast.success("Starter code copied to clipboard!");
                                         } catch (err) {
                                             toast.error("Failed to copy code. Please copy manually.");
@@ -245,8 +266,14 @@ export default function LessonPage({
                                 </Button>
                             )}
                         </div>
-                        <div className="flex-1 overflow-hidden relative">
-                            <SolanaPlayground starterCode={lesson.challengeCode} />
+                        <div className="flex-1 overflow-hidden relative min-h-0">
+                            <CodeEditor
+                                value={code}
+                                onChange={setCode}
+                                language="typescript"
+                                height="100%"
+                                className="h-full"
+                            />
                         </div>
                     </div>
                 ) : null}
