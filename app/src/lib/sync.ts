@@ -1,6 +1,6 @@
 // app/src/lib/sync.ts
 import { connection } from "@/lib/server";
-import { prisma } from "@/lib/db";
+import { prisma, updateStreak } from "@/lib/db";
 import { PublicKey } from "@solana/web3.js";
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 import { PROGRAM_ID, XP_MINT } from "@/lib/constants";
@@ -36,6 +36,7 @@ export async function syncBlockchainData(userId: string, walletAddress: string) 
   console.log(`[Sync] Starting full sync for ${walletAddress}...`);
   const program = getReadOnlyProgram();
   const walletPubkey = new PublicKey(walletAddress);
+  let hasRestoredLessonsThisSession = false;
 
   // 1. XP Sync (уже было)
   try {
@@ -99,6 +100,7 @@ export async function syncBlockchainData(userId: string, walletAddress: string) 
                           }
                       });
                       console.log(`[Sync] Restored lesson ${i} for ${courseId}`);
+                      hasRestoredLessonsThisSession = true;
                   }
               }
           }
@@ -108,5 +110,10 @@ export async function syncBlockchainData(userId: string, walletAddress: string) 
              console.error(`[Sync] Error checking course ${courseId}`, e);
           }
       }
+  }
+
+  if (hasRestoredLessonsThisSession) {
+    console.log(`[Sync] Lessons restored. Updating streak...`);
+    await updateStreak(walletAddress);
   }
 }

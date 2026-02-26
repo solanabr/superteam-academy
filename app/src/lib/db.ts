@@ -27,41 +27,42 @@ export async function updateStreak(walletAddress: string) {
   if (!user) return;
 
   const now = new Date();
-  const lastLessonDate = user.lastLessonAt;
-
-  // Устанавливаем время на начало дня для корректного сравнения календарных дней
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
+  
   let newStreak = user.streak;
 
-  if (!lastLessonDate) {
-      // Это самый первый урок в жизни
+  if (!user.lastLessonAt) {
+      // Самый первый раз
       newStreak = 1;
   } else {
-      const lastLessonDay = new Date(lastLessonDate.getFullYear(), lastLessonDate.getMonth(), lastLessonDate.getDate());
-      
+      const lastLessonDay = new Date(user.lastLessonAt.getFullYear(), user.lastLessonAt.getMonth(), user.lastLessonAt.getDate());
       const diffTime = today.getTime() - lastLessonDay.getTime();
       const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
 
       if (diffDays === 1) {
-          // Идеально: прошел урок вчера, сегодня продолжает
+          // Вчера был урок, сегодня новый -> увеличиваем
           newStreak += 1;
       } else if (diffDays > 1) {
-          // Пропустил день или больше -> сброс стрика
+          // Пропустил вчера. Стрик должен был быть сброшен в /user/me, но на всякий случай:
+          // Так как урок пройден СЕГОДНЯ, стрик становится 1.
           newStreak = 1;
+      } else if (diffDays === 0) {
+          // Сегодня уже был урок.
+          // Если стрик 0 (например, после сброса), ставим 1.
+          if (newStreak === 0) newStreak = 1;
+          // Иначе стрик не меняем (уже начислили сегодня).
       }
-      // Если diffDays === 0 (уже проходил урок сегодня), стрик не меняем
   }
 
-  // Обновляем и стрик, и дату последнего урока
   await prisma.user.update({
       where: { walletAddress },
       data: { 
           streak: newStreak,
-          lastLessonAt: now 
+          lastLessonAt: now // Запоминаем, что урок пройден сейчас
       }
   });
 }
+
 // 3. Сохранение прогресса (Исправлено под новую схему)
 export async function saveLessonProgress(
   walletAddress: string, 
@@ -113,4 +114,27 @@ export async function getLessonProgress(
       }
     }
   });
+}
+
+// Эта функция будет вызываться при каждом логине / синхронизации пользователя
+export async function checkAndResetStreak(walletAddress: string) {
+    const user = await prisma.user.findUnique({ where: { walletAddress } });
+    if (!user || !user.lastLessonAt) return user;
+
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const lastLessonDay = new Date(user.lastLessonAt.getFullYear(), user.lastLessonAt.getMonth(), user.lastLessonAt.getDate());
+    
+    const diffTime = today.getTime() - lastLessonDay.getTime();
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+    // Если прошло БОЛЬШЕ 1 дня (то есть вчера он ничего не делал), стрик СГОРАЕТ на 0.
+    if (diffDays > 1 && user.streak > 0) {
+        return await prisma.user.update({
+            where: { walletAddress },
+            data: { streak: 0 } // Обнуляем!
+        });
+    }
+
+    return user;
 }
