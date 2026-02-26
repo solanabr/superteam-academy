@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
@@ -57,6 +57,8 @@ export default function Nav() {
   const router = useRouter();
   const { theme, setTheme } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   const t = useTranslations('nav');
   const locale = useLocale() as LocaleCode;
 
@@ -162,12 +164,13 @@ export default function Nav() {
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
               className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-colors"
               aria-label="Toggle theme"
+              suppressHydrationWarning
             >
-              {theme === 'dark' ? (
+              {mounted && (theme === 'dark' ? (
                 <Sun className="w-4 h-4" />
               ) : (
                 <Moon className="w-4 h-4" />
-              )}
+              ))}
             </button>
 
             {/* Google sign-in (optional, only renders when GOOGLE_CLIENT_ID is set) */}

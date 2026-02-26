@@ -16,6 +16,11 @@ const nextConfig: NextConfig = {
       '@radix-ui/react-tabs',
       '@radix-ui/react-toast',
       'recharts',
+      '@solana/wallet-adapter-react',
+      '@solana/wallet-adapter-react-ui',
+      '@solana/wallet-adapter-phantom',
+      '@solana/web3.js',
+      '@coral-xyz/anchor',
     ],
   },
   images: {
@@ -37,6 +42,18 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
+        source: '/_next/static/(.*)',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+        ],
+      },
+      {
+        source: '/(.*)\.(?:png|jpg|jpeg|gif|svg|ico|webp|woff|woff2)',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=86400, stale-while-revalidate=604800' },
+        ],
+      },
+      {
         source: '/(.*)',
         headers: [
           { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
@@ -49,9 +66,13 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withSentryConfig(withNextIntl(nextConfig), {
-  org: process.env.SENTRY_ORG,
-  project: process.env.SENTRY_PROJECT,
-  silent: !process.env.CI,
-  widenClientFileUpload: true,
-});
+// Only wrap with Sentry when credentials are present (avoids bundle overhead in dev/without config)
+const configuredNext = withNextIntl(nextConfig);
+export default process.env.SENTRY_ORG
+  ? withSentryConfig(configuredNext, {
+      org: process.env.SENTRY_ORG,
+      project: process.env.SENTRY_PROJECT,
+      silent: !process.env.CI,
+      widenClientFileUpload: true,
+    })
+  : configuredNext;

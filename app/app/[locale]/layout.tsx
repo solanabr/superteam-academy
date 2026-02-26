@@ -85,6 +85,11 @@ export default async function LocaleLayout({
 
   return (
     <html lang={locale} suppressHydrationWarning className={`dark ${geistSans.variable} ${geistMono.variable}`}>
+      <head>
+        <link rel="dns-prefetch" href="https://api.devnet.solana.com" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://cdn.sanity.io" crossOrigin="anonymous" />
+      </head>
       <body className="antialiased bg-gray-950 text-gray-100 min-h-screen">
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
           <NextIntlClientProvider messages={messages}>
