@@ -115,7 +115,7 @@ export function CourseProgress({ progress, courseId }: CourseProgressProps) {
 
 				<div className="flex gap-2">
 					<Button className="flex-1" size="sm" asChild={true}>
-						<Link href={`/courses/${courseId}/learn`}>
+						<Link href={`/courses/${courseId}/lessons/1-1`}>
 							{t("progress.continueLearning")}
 						</Link>
 					</Button>

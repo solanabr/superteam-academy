@@ -92,7 +92,7 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 			const signature = await wallet.sendTransaction(tx, connection);
 			await connection.confirmTransaction(signature, "confirmed");
 
-			router.push(`/courses/${course.id}/learn`);
+			router.push(`/courses/${course.id}/lessons/1-1`);
 		} catch (error) {
 			console.error("Enrollment failed:", error);
 		} finally {
@@ -154,7 +154,7 @@ export function CourseEnrollment({ course }: CourseEnrollmentProps) {
 				</div>
 
 				<Button className="w-full" size="lg" asChild={true}>
-					<a href={`/courses/${course.id}/learn`}>{t("enroll.continueLearning")}</a>
+					<a href={`/courses/${course.id}/lessons/1-1`}>{t("enroll.continueLearning")}</a>
 				</Button>
 
 				<Button

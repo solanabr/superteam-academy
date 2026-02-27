@@ -158,7 +158,7 @@ export function CourseHero({ course }: CourseHeroProps) {
 						<div className="flex items-center gap-3 pt-4">
 							{course.enrolled ? (
 								<Button size="lg" asChild={true}>
-									<Link href={`/courses/${course.id}/learn`}>
+									<Link href={`/courses/${course.id}/lessons/1-1`}>
 										{t("hero.continueLearning")}
 									</Link>
 								</Button>

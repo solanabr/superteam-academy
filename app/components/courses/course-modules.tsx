@@ -232,7 +232,7 @@ function ModuleCard({
 											const href =
 												lesson.type === "interactive"
 													? `/courses/${courseId}/challenges/${lesson.id}`
-													: `/courses/${courseId}/learn?lesson=${lesson.id}`;
+													: `/courses/${courseId}/lessons/${lesson.id}`;
 
 											// Check if lesson is locked (previous lesson not completed)
 											const lessonIndex = module.lessonsList.findIndex(

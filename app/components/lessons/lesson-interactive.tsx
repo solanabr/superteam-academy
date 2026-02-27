@@ -105,7 +105,7 @@ export function LessonNavigationWrapper({
 
 	const handleLessonSelect = useCallback(
 		(selectedLessonId: string) => {
-			router.push(`/courses/${courseId}/learn?lesson=${selectedLessonId}`);
+			router.push(`/courses/${courseId}/lessons/${selectedLessonId}`);
 		},
 		[courseId, router]
 	);

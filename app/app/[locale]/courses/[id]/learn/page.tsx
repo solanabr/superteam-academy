@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { ArrowLeft, Maximize, Settings, Clock, BookOpen, Code } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -41,12 +42,16 @@ export async function generateMetadata({
 	params,
 	searchParams,
 }: LessonPageProps): Promise<Metadata> {
-	// This would fetch course and lesson data from CMS/API
 	const { id } = await params;
 	const resolvedSearchParams = await searchParams;
 	const lessonId = resolvedSearchParams?.lesson || "1-1";
-	const course = await getCourse(id);
-	const lesson = await getLesson(id, lessonId);
+
+	return buildLessonMetadata(id, lessonId);
+}
+
+export async function buildLessonMetadata(courseId: string, lessonId: string): Promise<Metadata> {
+	const course = await getCourse(courseId);
+	const lesson = await getLesson(courseId, lessonId);
 
 	return {
 		title: `${lesson.title} | ${course.title} | Superteam Academy`,
@@ -58,11 +63,20 @@ export default async function LessonPage({ params, searchParams }: LessonPagePro
 	const { id } = await params;
 	const resolvedSearchParams = await searchParams;
 	const lessonId = resolvedSearchParams?.lesson || "1-1";
+	redirect(`/courses/${id}/lessons/${lessonId}`);
+}
 
+export async function LegacyLessonPageRenderer({
+	courseId,
+	lessonId,
+}: {
+	courseId: string;
+	lessonId: string;
+}) {
 	return (
 		<div className="min-h-screen bg-background">
 			<Suspense fallback={<LessonSkeleton />}>
-				<LessonContentWrapper courseId={id} lessonId={lessonId} />
+				<LessonContentWrapper courseId={courseId} lessonId={lessonId} />
 			</Suspense>
 		</div>
 	);
