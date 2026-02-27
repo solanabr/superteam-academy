@@ -10,8 +10,25 @@ import { CourseList } from "@/components/courses/course-list";
 import { CoursesFilters } from "@/components/courses/courses-filters";
 import { Pagination } from "@/components/ui/pagination";
 import { getCoursesCMS, isSanityConfigured, resolveCourseImageUrl } from "@/lib/cms";
-import { FRONTEND_SEED_COURSES } from "@superteam-academy/cms";
 import { getTranslations } from "next-intl/server";
+
+type CatalogCourse = {
+	id: string;
+	title: string;
+	description: string;
+	category: string;
+	level: string;
+	duration: string;
+	students: number;
+	instructor: string;
+	image: string;
+	tags: string[];
+	topics: string[];
+	xpReward: number;
+	price: number;
+	featured: boolean;
+	gradient: string;
+};
 
 export const metadata: Metadata = {
 	title: "Catalog | Superteam Academy",
@@ -307,8 +324,7 @@ function CoursesSkeleton({ view }: { view: string }) {
 }
 
 async function getCourses(searchParams: Awaited<CoursesPageProps["searchParams"]>) {
-	// When Sanity is configured, fetch from CMS; otherwise use seed data
-	let baseCourses: typeof FRONTEND_SEED_COURSES;
+	let baseCourses: CatalogCourse[];
 	if (isSanityConfigured) {
 		const cmsCourses = await getCoursesCMS();
 		baseCourses = cmsCourses.map((c) => ({
@@ -328,9 +344,8 @@ async function getCourses(searchParams: Awaited<CoursesPageProps["searchParams"]
 			featured: false,
 			gradient: "from-green to-forest",
 		}));
-		if (baseCourses.length === 0) baseCourses = FRONTEND_SEED_COURSES;
 	} else {
-		baseCourses = FRONTEND_SEED_COURSES;
+		baseCourses = [];
 	}
 
 	let filtered = [...baseCourses];

@@ -236,10 +236,10 @@ export default async function DiscussionsPage({ searchParams }: DiscussionsPageP
 				: await getAllDiscussions()
 		: [];
 
-	// Normalize Sanity data or use mock data
+	// Normalize Sanity data only
 	const discussions = isSanityConfigured
 		? sanityDiscussions.map(normalizeDiscussion)
-		: DISCUSSIONS;
+		: DISCUSSIONS.slice(0, 0);
 
 	// Filter by search query
 	const filtered = discussions.filter((d) => {

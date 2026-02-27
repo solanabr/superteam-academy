@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 import { useConnection } from "@solana/wallet-adapter-react";
 import type { PublicKey } from "@solana/web3.js";
-import { countCompletedLessons } from "@superteam-academy/anchor";
 import { calculateLevelFromXP } from "@superteam-academy/gamification";
 import { StreakEventType } from "@superteam-academy/gamification/streak-system";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -77,67 +76,37 @@ export default function DashboardPage() {
 
 		const programId = getProgramId();
 		const service = new LearningProgressService(connection, programId);
-		const client = service.academyClient;
+		const overview = await service.getLearnerOverview(wallet.publicKey as PublicKey);
+		const totalXp = Number(overview.stats.totalXp);
+		const level = calculateLevelFromXP(totalXp);
 
-		const [config, allCourses, enrollments] = await Promise.all([
-			client.fetchConfig(),
-			client.fetchAllCourses(),
-			client.fetchEnrollmentsForLearner(wallet.publicKey as PublicKey),
-		]);
+		const courses: RecentCourse[] = overview.courses.map((course) => {
+			const progress =
+				course.totalLessons > 0
+					? Math.round((course.completedLessons / course.totalLessons) * 100)
+					: 0;
 
-		let totalXp = 0;
-		if (config?.xpMint) {
-			const { findToken2022ATA } = await import("@superteam-academy/solana");
-			const ata = findToken2022ATA(wallet.publicKey as PublicKey, config.xpMint);
-			const balance = await client.fetchXpBalance(ata);
-			totalXp = Number(balance ?? 0n);
-		}
-
-		const coursesByKey = new Map(allCourses.map((c) => [c.pubkey.toBase58(), c.account]));
-
-		let completedCount = 0;
-		let totalLessonsCompleted = 0;
-		const courses: RecentCourse[] = enrollments.map((entry) => {
-			const course = coursesByKey.get(entry.account.course.toBase58());
-			const completed = countCompletedLessons(entry.account.lessonFlags);
-			totalLessonsCompleted += completed;
-			if (entry.account.completedAt !== null) completedCount++;
-			const total = course?.lessonCount ?? 0;
-			const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
 			return {
-				id: course?.courseId ?? entry.pubkey.toBase58(),
-				title: course?.courseId ?? "Course",
+				id: course.courseId,
+				title: course.courseId,
 				progress,
-				totalLessons: total,
-				completedLessons: completed,
-				lastAccessed: new Date(entry.account.enrolledAt * 1000).toISOString(),
+				totalLessons: course.totalLessons,
+				completedLessons: course.completedLessons,
+				lastAccessed: new Date(course.enrolledAt * 1000).toISOString(),
 			};
 		});
-
-		const level = calculateLevelFromXP(totalXp);
 
 		setStats({
 			totalXp,
 			level,
 			streak: streakData.current,
-			coursesEnrolled: enrollments.length,
-			coursesCompleted: completedCount,
-			lessonsCompleted: totalLessonsCompleted,
-			achievementsUnlocked: completedCount,
+			coursesEnrolled: overview.stats.enrolledCourses,
+			coursesCompleted: overview.stats.completedCourses,
+			lessonsCompleted: overview.stats.totalLessonsCompleted,
+			achievementsUnlocked: overview.achievementsUnlocked,
 		});
 		setRecentCourses(courses.slice(0, 3));
-
-		// Recommended courses: any course the learner is not enrolled in
-		const enrolledCourseKeys = new Set(enrollments.map((e) => e.account.course.toBase58()));
-		const recommended = allCourses
-			.filter((c) => !enrolledCourseKeys.has(c.pubkey.toBase58()) && c.account.isActive)
-			.slice(0, 3)
-			.map((c) => ({
-				id: c.account.courseId,
-				title: c.account.courseId,
-				lessonCount: c.account.lessonCount,
-			}));
-		setRecommendedCourses(recommended);
+		setRecommendedCourses(overview.recommendedCourses);
 
 		// Activity feed
 		fetchIndexedLearnerActivity(wallet.publicKey as PublicKey, 10)

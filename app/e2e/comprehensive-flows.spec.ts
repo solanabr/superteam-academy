@@ -69,4 +69,40 @@ test.describe("Superteam Academy route modernization", () => {
 		await expect(page).toHaveURL(/time=weekly/);
 		await expect(page).toHaveURL(/q=1111/);
 	});
+
+	test("covers learner journey surfaces and learning API contracts", async ({ page }) => {
+		await page.goto("/en/courses/solana-intro", { waitUntil: "domcontentloaded" });
+		await expect(page.locator("h1").first()).toBeVisible();
+		await expect(page.getByText(/enrollment|enrolment/i).first()).toBeVisible();
+
+		await page.goto("/en/courses/solana-intro/lessons/1-1", { waitUntil: "domcontentloaded" });
+		await expect(page).toHaveURL(/\/en\/courses\/solana-intro\/lessons\/1-1$/);
+		await expect(page.getByRole("tab", { name: /content|conteúdo/i })).toBeVisible();
+		await expect(page.getByRole("button", { name: /mark complete/i })).toBeVisible();
+
+		await page.goto("/en/courses/solana-intro/challenges/1-1", {
+			waitUntil: "domcontentloaded",
+		});
+		await expect(page).toHaveURL(/\/en\/courses\/solana-intro\/challenges\/1-1$/);
+		await expect(page.getByRole("button", { name: /run tests/i })).toBeVisible();
+		await expect(page.getByRole("button", { name: /submit/i })).toBeVisible();
+
+		const completeRes = await page.request.post("/api/lessons/complete", {
+			data: {},
+		});
+		expect([400, 401]).toContain(completeRes.status());
+
+		const finalizeRes = await page.request.post("/api/courses/finalize", {
+			data: {},
+		});
+		expect([400, 401]).toContain(finalizeRes.status());
+
+		const issueCredentialRes = await page.request.post("/api/credentials/issue", {
+			data: {},
+		});
+		expect([400, 401]).toContain(issueCredentialRes.status());
+
+		await page.goto("/en/certificates", { waitUntil: "domcontentloaded" });
+		await expect(page.locator("h1").first()).toBeVisible();
+	});
 });

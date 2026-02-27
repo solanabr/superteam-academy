@@ -3,7 +3,6 @@
  *
  * CMS lessons of type "interactive" map to challenges here.
  * The key is the lesson slug (= challengeId in the URL).
- * When a slug has no entry, the page shows a generic stub.
  */
 
 export interface ChallengeDefinition {
@@ -138,28 +137,12 @@ pub struct Counter {
 	},
 };
 
-/** Return a challenge definition by lesson slug, or a generic stub. */
+/** Return a challenge definition by lesson slug. */
 export function getChallengeDefinition(challengeId: string): ChallengeDefinition {
 	const found = CHALLENGES[challengeId];
-	if (found) return found;
+	if (!found) {
+		throw new Error(`Challenge definition not found for slug: ${challengeId}`);
+	}
 
-	// Generic stub for challenges without a dedicated definition yet
-	return {
-		title: "Coding Challenge",
-		description: "Complete the interactive coding challenge for this lesson.",
-		difficulty: "Beginner",
-		estimatedTime: "30 min",
-		xpReward: 50,
-		language: "rust",
-		starterCode: "// Write your solution here\n",
-		instructions: [
-			{
-				title: "Getting Started",
-				content: "Read the objectives below and write code to satisfy all test cases.",
-			},
-		],
-		objectives: ["Pass all tests"],
-		tests: [{ id: "test-1", description: "Solution compiles", type: "unit" }],
-		hints: [{ content: "Review the lesson content for guidance.", cost: 5 }],
-	};
+	return found;
 }

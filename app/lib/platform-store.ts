@@ -74,51 +74,21 @@ export type PlatformStore = {
 };
 
 const defaultStore: PlatformStore = {
-	apiKeys: [
-		{
-			id: "key-default",
-			name: "Default API Key",
-			secret: "sk_default_******",
-			status: "active",
-			createdAt: new Date().toISOString(),
-			rateLimit: 1000,
-			usage: { today: 0, month: 0 },
-		},
-	],
+	apiKeys: [],
 	hackathon: {
-		id: "hackathon-2026",
-		name: "Superteam Solana Hackathon",
-		description: "Build production-grade Solana learning experiences.",
-		status: "active",
-		startDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-		endDate: new Date(Date.now() + 11 * 24 * 60 * 60 * 1000).toISOString(),
-		rules: [
-			"Projects must be open source",
-			"Projects must use Solana",
-			"Team size: 2-4 members",
-		],
-		prizes: [
-			{ position: "1st", amount: "5000 USDC", description: "Grand Prize" },
-			{ position: "2nd", amount: "3000 USDC", description: "Runner Up" },
-			{ position: "3rd", amount: "1000 USDC", description: "Third Place" },
-		],
+		id: "",
+		name: "",
+		description: "",
+		status: "upcoming",
+		startDate: "",
+		endDate: "",
+		rules: [],
+		prizes: [],
 		participants: 0,
 	},
 	teams: [],
 	submissions: [],
-	plugins: [
-		{
-			id: "plugin-code-format",
-			name: "Code Formatter",
-			description: "Automatic code formatting",
-			version: "1.0.0",
-			author: "Superteam",
-			category: "editor",
-			rating: 4.8,
-			installs: 120,
-			enabled: true,
-		},
-	],
+	plugins: [],
 	subscriptionByUser: {},
 };
 

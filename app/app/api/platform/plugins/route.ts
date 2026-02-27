@@ -4,20 +4,7 @@ import { readPlatformStore, writePlatformStore } from "@/lib/platform-store";
 export async function GET() {
 	const store = await readPlatformStore();
 	const installed = store.plugins.filter((plugin) => plugin.enabled);
-	const available = [
-		...store.plugins.filter((plugin) => !plugin.enabled),
-		{
-			id: "plugin-analytics-pro",
-			name: "Analytics Dashboard",
-			description: "Advanced analytics widgets",
-			version: "1.0.0",
-			author: "Superteam",
-			category: "analytics" as const,
-			rating: 4.6,
-			installs: 64,
-			enabled: false,
-		},
-	];
+	const available = store.plugins.filter((plugin) => !plugin.enabled);
 
 	return NextResponse.json({
 		installedPlugins: installed,
@@ -30,6 +17,7 @@ export async function POST(request: NextRequest) {
 	const body = (await request.json()) as
 		| { action: "install"; pluginId: string }
 		| { action: "uninstall"; pluginId: string }
+		| { action: "update"; pluginId: string }
 		| { action: "toggle"; pluginId: string; enabled: boolean }
 		| {
 				action: "create";
@@ -62,6 +50,18 @@ export async function POST(request: NextRequest) {
 		store.plugins = store.plugins.map((plugin) =>
 			plugin.id === body.pluginId ? { ...plugin, enabled: body.enabled } : plugin
 		);
+	}
+	if (body.action === "update") {
+		store.plugins = store.plugins.map((plugin) => {
+			if (plugin.id !== body.pluginId) return plugin;
+			const [major, minor, patch] = plugin.version.split(".").map((part) => Number(part));
+			const nextPatch = Number.isFinite(patch) ? patch + 1 : 1;
+			const nextVersion = `${Number.isFinite(major) ? major : 1}.${Number.isFinite(minor) ? minor : 0}.${nextPatch}`;
+			return {
+				...plugin,
+				version: nextVersion,
+			};
+		});
 	}
 	if (body.action === "create") {
 		store.plugins.push({

@@ -85,12 +85,15 @@ export function usePluginSystem(_userId: string) {
 	};
 
 	const updatePlugin = async (pluginId: string) => {
-		// Mock implementation - simulate version update
-		setInstalledPlugins((prev) =>
-			prev.map((plugin) =>
-				plugin.id === pluginId ? { ...plugin, version: "2.2.0" } : plugin
-			)
-		);
+		const response = await fetch("/api/platform/plugins", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ action: "update", pluginId }),
+		});
+		if (!response.ok) {
+			throw new Error("Unable to update plugin");
+		}
+		await loadPlugins();
 	};
 
 	const configurePlugin = async (pluginId: string, settings: Record<string, unknown>) => {

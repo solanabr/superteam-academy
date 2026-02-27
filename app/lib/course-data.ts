@@ -1,4 +1,3 @@
-import { FRONTEND_SEED_COURSES, ONCHAIN_COURSE_STUBS } from "@superteam-academy/cms";
 import type { Course, CourseAuthor } from "@superteam-academy/cms";
 import { resolveCourseImageUrl } from "@/lib/cms";
 import { getGravatarUrl } from "@/lib/utils";
@@ -97,10 +96,6 @@ export type CourseDetailView = {
 	otherCourses: Array<{ title: string; slug: string; rating: string; students: string }>;
 };
 
-export function seedCourseById(id: string) {
-	return FRONTEND_SEED_COURSES.find((course) => course.id === id) ?? null;
-}
-
 export async function mapCourseToDetail(
 	id: string,
 	course: Course | null,
@@ -125,11 +120,9 @@ export async function mapCourseToDetail(
 		otherCourses?: Array<{ title: string; slug: string; rating: string; students: string }>;
 	}
 ): Promise<CourseDetailView> {
-	const seed = seedCourseById(id);
 	const lessons = course?.modules?.flatMap((module) => module.lessons ?? []) ?? [];
 	const lessonCount = onchain?.lessonCount ?? Math.max(1, lessons.length);
-	const xpPerLesson =
-		onchain?.xpPerLesson ?? Math.max(1, Math.floor((seed?.xpReward ?? 100) / lessonCount));
+	const xpPerLesson = onchain?.xpPerLesson ?? 100;
 	const computedXpReward = xpPerLesson * lessonCount;
 	const reviews = options?.reviews ?? [];
 	const averageRating =
@@ -159,13 +152,13 @@ export async function mapCourseToDetail(
 		course?.modules?.map((module, moduleIndex) => {
 			const moduleLessons = module.lessons ?? [];
 			const lessonsList = moduleLessons.map((lesson, lessonIndex) => {
-				const stub = ONCHAIN_COURSE_STUBS.find((s) => s.courseId === id);
-				const stubLesson = stub?.lessons.find(
-					(sl) => sl.title.toLowerCase() === lesson.title.toLowerCase()
-				);
 				const lessonType: "video" | "interactive" | "quiz" | "reading" =
-					stubLesson?.kind ??
-					(lesson.title.toLowerCase().includes("quiz") ? "quiz" : "video");
+					lesson.title.toLowerCase().includes("quiz")
+						? "quiz"
+						: lesson.title.toLowerCase().includes("challenge") ||
+							  lesson.title.toLowerCase().includes("interactive")
+							? "interactive"
+							: "video";
 				const completed = lessonStates[lessonIndexPointer] ?? false;
 				lessonIndexPointer += 1;
 
@@ -200,8 +193,7 @@ export async function mapCourseToDetail(
 	const progressPercent =
 		lessonCount > 0 ? Math.round((completedLessonsCount / lessonCount) * 100) : 0;
 
-	const instructorName =
-		instructorUser?.name ?? expandedAuthor?.name ?? seed?.instructor ?? "Superteam Instructor";
+	const instructorName = instructorUser?.name ?? expandedAuthor?.name ?? "Superteam Instructor";
 
 	// Resolve instructor avatar: CMS image > user profile image > Gravatar
 	let instructorAvatar = expandedAuthor?.image
@@ -216,22 +208,22 @@ export async function mapCourseToDetail(
 
 	return {
 		id,
-		title: course?.title ?? seed?.title ?? id,
-		description: course?.description ?? seed?.description ?? "",
-		shortDescription: course?.description ?? seed?.description ?? "",
-		category: course?.track ?? seed?.category ?? "solana",
-		level: course?.level ?? seed?.level ?? "beginner",
-		duration: course?.duration ?? seed?.duration ?? "1 hour",
+		title: course?.title ?? id,
+		description: course?.description ?? "",
+		shortDescription: course?.description ?? "",
+		category: course?.track ?? "solana",
+		level: course?.level ?? "beginner",
+		duration: course?.duration ?? "1 hour",
 		rating: averageRating,
 		reviewCount: reviews.length,
-		students: onchain?.totalEnrollments ?? seed?.students ?? 0,
+		students: onchain?.totalEnrollments ?? 0,
 		instructor: {
 			name: instructorName,
 			title: instructorUser?.title ?? "Course Instructor",
 			avatar: instructorAvatar,
 			bio: instructorUser?.bio ?? authorBio,
 			courses: 1,
-			students: onchain?.totalEnrollments ?? seed?.students ?? 0,
+			students: onchain?.totalEnrollments ?? 0,
 			rating: averageRating,
 			socialLinks: {
 				twitter: instructorUser?.twitter ?? "",
@@ -241,12 +233,11 @@ export async function mapCourseToDetail(
 		},
 		image:
 			resolveCourseImageUrl(course?.image, 1400, 788) ??
-			seed?.image ??
 			"/courses/default.jpg",
 		videoPreview: "",
-		tags: seed?.tags ?? [course?.track ?? "solana"],
+		tags: [course?.track ?? "solana"],
 		xpReward: computedXpReward,
-		price: seed?.price ?? 0,
+		price: 0,
 		enrolled,
 		finalized,
 		prerequisiteCourseId: onchain?.prerequisite?.id,
@@ -258,11 +249,11 @@ export async function mapCourseToDetail(
 			streak: 0,
 			xpEarned,
 			xpTotal: computedXpReward,
-			estimatedCompletion: course?.duration ?? seed?.duration ?? "",
+			estimatedCompletion: course?.duration ?? "",
 			lastActivity: "",
 		},
 		certificate: {
-			title: `${course?.title ?? seed?.title ?? "Course"} Credential`,
+			title: `${course?.title ?? "Course"} Credential`,
 			issuer: "Superteam Academy",
 			type: "completion",
 			verifiable: true,
@@ -271,7 +262,7 @@ export async function mapCourseToDetail(
 			"Complete all course lessons",
 		],
 		requirements: ["Solana wallet", "Basic development knowledge"],
-		skills: seed?.tags ?? ["solana"],
+		skills: [course?.track ?? "solana"],
 		modules:
 			modules.length > 0
 				? modules

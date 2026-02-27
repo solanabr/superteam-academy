@@ -113,13 +113,13 @@ const PAST_EVENTS = [
 export default async function EventsPage() {
 	const t = await getTranslations("community");
 
-	// Fetch events from Sanity or use mock data
+	// Fetch events from Sanity
 	const upcomingEvents = isSanityConfigured
 		? (await getUpcomingEvents()).map(normalizeEvent)
-		: UPCOMING_EVENTS;
+		: UPCOMING_EVENTS.slice(0, 0);
 	const pastEvents = isSanityConfigured
 		? (await getPastEvents()).map(normalizePastEvent)
-		: PAST_EVENTS;
+		: PAST_EVENTS.slice(0, 0);
 
 	return (
 		<div className="space-y-6">

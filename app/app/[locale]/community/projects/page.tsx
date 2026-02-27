@@ -175,12 +175,12 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
 	const { q = "", category = "all" } = await searchParams;
 	const t = await getTranslations("community");
 
-	// Fetch projects from Sanity or use mock data
+	// Fetch projects from Sanity
 	const rawProjects = isSanityConfigured
 		? category !== "all"
 			? await getProjectsByCategory(category as ProjectCategory)
 			: await getAllProjects()
-		: PROJECTS;
+		: [];
 
 	// Always normalize to ensure consistent shape
 	const projects = rawProjects.map(normalizeProject);

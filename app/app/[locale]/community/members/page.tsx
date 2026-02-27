@@ -113,7 +113,7 @@ const BADGE_LABELS: Record<string, { icon: typeof Crown; color: string }> = {
 export default async function MembersPage() {
 	const t = await getTranslations("community");
 
-	// Fetch members from Sanity or use mock data
+	// Fetch members from Sanity
 	let allMembers: NormalizedMember[] = [];
 	let topMembers: NormalizedMember[] = [];
 	let mentorMembers: NormalizedMember[] = [];

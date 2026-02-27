@@ -23,7 +23,24 @@ import { CoursesFilters } from "@/components/courses/courses-filters";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { getCoursesCMS, isSanityConfigured, resolveCourseImageUrl } from "@/lib/cms";
-import { FRONTEND_SEED_COURSES } from "@superteam-academy/cms";
+
+type TopicCourse = {
+	id: string;
+	title: string;
+	description: string;
+	category: string;
+	level: string;
+	duration: string;
+	students: number;
+	instructor: string;
+	image: string;
+	tags: string[];
+	topics: string[];
+	xpReward: number;
+	price: number;
+	featured: boolean;
+	gradient: string;
+};
 
 const TOPICS = [
 	{
@@ -263,7 +280,7 @@ function TopicCoursesSkeleton() {
 }
 
 async function getTopicCourses(slug: string, level: string, sort: string) {
-	let baseCourses: typeof FRONTEND_SEED_COURSES;
+	let baseCourses: TopicCourse[];
 	if (isSanityConfigured) {
 		const cmsCourses = await getCoursesCMS();
 		baseCourses = cmsCourses.map((c) => ({
@@ -283,9 +300,8 @@ async function getTopicCourses(slug: string, level: string, sort: string) {
 			featured: false,
 			gradient: "from-green to-forest",
 		}));
-		if (baseCourses.length === 0) baseCourses = FRONTEND_SEED_COURSES;
 	} else {
-		baseCourses = FRONTEND_SEED_COURSES;
+		baseCourses = [];
 	}
 
 	let filtered = baseCourses.filter((course) => course.topics?.includes(slug));

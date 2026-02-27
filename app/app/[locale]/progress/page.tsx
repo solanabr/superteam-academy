@@ -1,12 +1,10 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { PublicKey } from "@solana/web3.js";
-import { findToken2022ATA } from "@superteam-academy/solana";
-import { countCompletedLessons } from "@superteam-academy/anchor";
-import { getAcademyClient, getProgramId, getSolanaConnection } from "@/lib/academy";
+import { getProgramId, getSolanaConnection } from "@/lib/academy";
 import { getLinkedWallet } from "@/lib/auth";
 import { ProgressTracking } from "@/components/progress/progress-tracking";
-import { AchievementService } from "@/services/achievement-service";
+import { LearningProgressService } from "@/services/learning-progress-service";
 import { calculateLevelFromXP } from "@superteam-academy/gamification";
 
 export const metadata: Metadata = {
@@ -39,59 +37,17 @@ async function ProgressContent() {
 	const learner = new PublicKey(wallet);
 	const connection = getSolanaConnection();
 	const programId = getProgramId();
-	const client = getAcademyClient();
-
-	const [config, allCourses, enrollments] = await Promise.all([
-		client.fetchConfig(),
-		client.fetchAllCourses(),
-		client.fetchEnrollmentsForLearner(learner),
-	]);
-
-	let totalXp = 0;
-	if (config?.xpMint) {
-		const ata = findToken2022ATA(learner, config.xpMint);
-		const balance = await client.fetchXpBalance(ata);
-		totalXp = Number(balance ?? 0n);
-	}
-
-	const courseMap = new Map(allCourses.map((c) => [c.pubkey.toBase58(), c.account]));
-
-	const courses = enrollments.map((entry) => {
-		const course = courseMap.get(entry.account.course.toBase58());
-		const completed = countCompletedLessons(entry.account.lessonFlags);
-		const total = course?.lessonCount ?? 0;
-		return {
-			courseId: course?.courseId ?? entry.pubkey.toBase58(),
-			courseTitle: course?.courseId ?? "Course",
-			totalLessons: total,
-			completedLessons: completed,
-			xpEarned: completed * (course?.xpPerLesson ?? 0),
-			timeSpent: completed * 10,
-			lastActivity: new Date(entry.account.enrolledAt * 1000),
-			streak: 0,
-		};
-	});
+	const service = new LearningProgressService(connection, programId);
+	const snapshot = await service.getLearnerProgressSnapshot(learner);
+	const totalXp = snapshot.totalXp;
 
 	const level = calculateLevelFromXP(totalXp);
 	const nextLevelXP = (level + 1) ** 2 * 100;
 
-	const achievementService = new AchievementService(connection, programId);
-	const rawAchievements = await achievementService.getLearnerAchievements(learner);
-	const achievements = rawAchievements
-		.filter((a) => a.earned && a.awardedAt)
-		.map((a) => ({
-			id: a.achievementId,
-			title: a.name,
-			description: a.metadataUri,
-			icon: "trophy",
-			unlockedAt: new Date((a.awardedAt as number) * 1000),
-			rarity: "common" as const,
-		}));
-
 	return (
 		<ProgressTracking
-			courses={courses}
-			achievements={achievements}
+			courses={snapshot.courses}
+			achievements={snapshot.achievements}
 			totalXP={totalXp}
 			currentLevel={level}
 			nextLevelXP={nextLevelXP}
