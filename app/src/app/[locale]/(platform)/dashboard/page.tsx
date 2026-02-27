@@ -14,7 +14,7 @@ import { CredentialList } from "@/components/dashboard/CredentialList";
 import { ContinueLearning } from "@/components/dashboard/ContinueLearning";
 import { StreakCalendar } from "@/components/dashboard/StreakCalendar";
 import { Button } from "@/components/ui/button";
-import { Wallet, AlertTriangle, ExternalLink, Activity, Flame, Medal, Check } from "lucide-react";
+import { Wallet, AlertTriangle, ExternalLink, Activity, Flame, Medal, Check, Copy } from "lucide-react";
 import { withFallbackRPC } from "@/lib/solana-connection";
 import type { CourseListItem } from "@/sanity/lib/queries";
 
@@ -37,6 +37,7 @@ export default function DashboardPage() {
 
     const [solBalance, setSolBalance] = useState<number | null>(null);
     const [allCourses, setAllCourses] = useState<CourseListItem[]>([]);
+    const [walletCopied, setWalletCopied] = useState(false);
 
     // Fetch all data in parallel on wallet available
     useEffect(() => {
@@ -114,6 +115,19 @@ export default function DashboardPage() {
                             <p className="font-mono text-text-muted text-sm flex items-center gap-2 mt-1">
                                 <Wallet className="h-3.5 w-3.5" />
                                 {t("wallet_id")}: <span className="text-solana/80">{user?.walletAddress ? `${user.walletAddress.slice(0, 4)}...${user.walletAddress.slice(-4)}` : "Not Connected"}</span>
+                                {user?.walletAddress && (
+                                    <button
+                                        onClick={() => {
+                                            navigator.clipboard.writeText(user.walletAddress as string);
+                                            setWalletCopied(true);
+                                            setTimeout(() => setWalletCopied(false), 2000);
+                                        }}
+                                        className="ml-1 text-text-muted hover:text-solana transition-colors p-1 rounded-md hover:bg-white/5"
+                                        title="Copy full address"
+                                    >
+                                        {walletCopied ? <Check className="h-3.5 w-3.5 text-solana" /> : <Copy className="h-3.5 w-3.5" />}
+                                    </button>
+                                )}
                             </p>
                         </div>
                     </div>

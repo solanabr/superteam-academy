@@ -174,7 +174,7 @@
         "error_no_code": "> error: no code provided. Please write some code first."
     },
     "enrollment": {
-        "checking": "Checking enrollment...",
+        "checking": "Checking enrollment status...",
         "sign_in_required": "Sign in to access this lesson",
         "sign_in_info": "You need to be signed in and enrolled in this course to view lesson content.",
         "sign_in_button": "Sign in",
@@ -195,7 +195,7 @@
         "your_progress": "Your progress: {current}/{total} lessons ({pct}%)",
         "login_to_enroll": "Log in and connect your wallet to enroll in {title}.",
         "enrolled": "Enrolled",
-        "enrolling": "Enrolling...",
+        "enrolling": "Checking enrollment status...",
         "enroll_cta": "Enroll in this course",
         "completion_title": "Course Complete!",
         "completion_info": "You have finished all lessons.",

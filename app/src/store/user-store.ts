@@ -105,6 +105,15 @@ export const useUserStore = create<UserState>((set, get) => ({
         try {
             const res = await fetch(`/api/user?wallet=${encodeURIComponent(walletAddress)}`);
 
+            if (res.status === 404) {
+                // User doesn't exist yet, SyncUserOnLogin will handle creation
+                // Prevent late-arriving 404s from wiping out a successfully synced user
+                if (!get().user) {
+                    set({ user: null, error: null });
+                }
+                return;
+            }
+
             if (!res.ok) {
                 throw new Error("Failed to fetch user");
             }
@@ -112,10 +121,13 @@ export const useUserStore = create<UserState>((set, get) => ({
             const data = await res.json();
             set({ user: data, error: null });
         } catch (error) {
-            set({
-                error: error instanceof Error ? error.message : "Failed to fetch user",
-                user: null,
-            });
+            // Prevent late-arriving network errors from wiping out a successfully synced user
+            if (!get().user) {
+                set({
+                    error: error instanceof Error ? error.message : "Failed to fetch user",
+                    user: null,
+                });
+            }
         } finally {
             set({ isLoading: false });
         }

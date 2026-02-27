@@ -60,6 +60,7 @@ export default function EditCoursePage() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [course, setCourse] = useState<Course | null>(null);
   const [modulesState, setModulesState] = useState<EditableModule[]>([]);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -294,6 +295,11 @@ export default function EditCoursePage() {
 
     if (res.ok) {
       setFormData({ ...formData, published: !formData.published });
+      if (!formData.published) {
+        setSuccessMessage("Course structured on-chain! It will be published on your dashboard shortly.");
+        // Auto-clear success message after 4 seconds
+        setTimeout(() => setSuccessMessage(null), 4000);
+      }
     } else {
       const data = await res.json();
       setError(data.error || "Failed to update publish status");
@@ -341,6 +347,15 @@ export default function EditCoursePage() {
         {error && (
           <div className="mb-4 p-3 bg-red-500/10 border border-red-500 rounded text-red-500">
             {error}
+          </div>
+        )}
+
+        {successMessage && (
+          <div className="mb-4 p-4 bg-solana/10 border border-solana rounded-lg text-solana flex items-center gap-3">
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+            <span className="font-medium text-sm">{successMessage}</span>
           </div>
         )}
 

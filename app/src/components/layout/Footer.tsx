@@ -85,7 +85,7 @@ export function Footer() {
             {/* Background and Overlay */}
             <div
               className="absolute inset-0 bg-cover bg-center z-0"
-              style={{ backgroundImage: "url('/easteregg/rusty_kitagawa.png')" }}
+              style={{ backgroundImage: "url('/easteregg/AINote.jpg')" }}
             />
             {/* Very dark black overlay - artwork still visible but text pops */}
             <div className="absolute inset-0 bg-black/86 z-[1]" />

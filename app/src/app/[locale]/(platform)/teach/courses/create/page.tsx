@@ -15,6 +15,7 @@ export default function CreateCoursePage() {
   const { wallets } = useWallets();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -101,12 +102,18 @@ export default function CreateCoursePage() {
         throw new Error(data.error || "Failed to create course");
       }
 
-      // Delay slightly to give Sanity time to globally index the new document,
-      // ensuring it appears in the list when we land on the next page.
-      setTimeout(() => {
-        router.refresh();
-        router.push(`/teach/courses`);
-      }, 1500);
+      if (formData.published) {
+        setSuccessMessage("Course structured on-chain! It will be published on your dashboard shortly.");
+        setTimeout(() => {
+          router.refresh();
+          router.push(`/teach/courses`);
+        }, 4000);
+      } else {
+        setTimeout(() => {
+          router.refresh();
+          router.push(`/teach/courses`);
+        }, 1500);
+      }
     } catch (err: any) {
       setError(err.message || "Failed to create course");
       setLoading(false);
@@ -134,6 +141,15 @@ export default function CreateCoursePage() {
         {error && (
           <div className="mb-4 p-3 bg-red-500/10 border border-red-500 rounded text-red-500">
             {error}
+          </div>
+        )}
+
+        {successMessage && (
+          <div className="mb-4 p-4 bg-solana/10 border border-solana rounded-lg text-solana flex items-center gap-3">
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+            <span className="font-medium text-sm">{successMessage}</span>
           </div>
         )}
 

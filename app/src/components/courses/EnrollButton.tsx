@@ -17,7 +17,7 @@ import { Wallet, Loader2 } from "lucide-react";
 export function EnrollButton({ courseId, courseTitle, className }: EnrollButtonProps) {
   const t = useTranslations("course_detail");
   const [isUnenrolling, setIsUnenrolling] = useState(false);
-  const { authenticated, user } = usePrivy();
+  const { authenticated, user, connectWallet } = usePrivy();
   const { wallets } = useWallets();
   const { signTransaction } = useSignTransaction();
 
@@ -39,11 +39,20 @@ export function EnrollButton({ courseId, courseTitle, className }: EnrollButtonP
     if (!authenticated) return;
 
     if (!activeWallet || !walletAddress) {
-      // If authenticated but no wallet found, we might need to prompt connection
-      // or handle the case where Privy hasn't initialized the wallet yet.
-      console.error("No Solana wallet found for authenticated user");
-      useEnrollmentStore.getState().setError(courseId, "Solana wallet not found. Please ensure your wallet is connected.");
-      return;
+      const isEmbeddedWallet =
+        user?.linkedAccounts?.some((a) => a.type === "wallet" && (a as any).walletClientType === "privy") ||
+        (user?.wallet as any)?.walletClientType === "privy";
+
+      if (!isEmbeddedWallet) {
+        console.error("No active external Solana wallet found for authenticated user");
+        useEnrollmentStore.getState().setError(courseId, "Please connect your Solana wallet to enroll.");
+        connectWallet();
+        return;
+      } else {
+        console.error("Embedded wallet still initializing");
+        useEnrollmentStore.getState().setError(courseId, "Wallet is still initializing. Please wait a moment and try again.");
+        return;
+      }
     }
 
     try {
@@ -64,7 +73,22 @@ export function EnrollButton({ courseId, courseTitle, className }: EnrollButtonP
   };
 
   const handleUnenroll = async () => {
-    if (!authenticated || !walletAddress) return;
+    if (!authenticated) return;
+
+    if (!activeWallet || !walletAddress) {
+      const isEmbeddedWallet =
+        user?.linkedAccounts?.some((a) => a.type === "wallet" && (a as any).walletClientType === "privy") ||
+        (user?.wallet as any)?.walletClientType === "privy";
+
+      if (!isEmbeddedWallet) {
+        alert("Please connect your Solana wallet to reclaim rent.");
+        connectWallet();
+        return;
+      } else {
+        alert("Wallet is still initializing. Please wait a moment and try again.");
+        return;
+      }
+    }
 
     try {
       const unenrollUiOptions = {

@@ -16,36 +16,38 @@ export function SocialProof() {
     const partners = [
         { name: "Superteam Brazil", logo: "/logo/st-brazil-horizontal.svg" },
         { name: "Solana Foundation", logo: "/logo/solana-foundation.svg" },
-        { name: "Metaplex", logo: "/logo/metaplex.svg" },
     ];
 
     return (
         <section className="w-full max-w-7xl mx-auto px-6 py-24 space-y-24">
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <StatCard
-                    icon={<Users className="h-6 w-6 text-solana" />}
-                    label="Active Builders"
-                    value={stats?.totalUsers ? stats.totalUsers.toLocaleString() : "..."}
-                />
-                <StatCard
-                    icon={<Award className="h-6 w-6 text-amber-400" />}
-                    label="Total XP Minted"
-                    value={stats?.totalXp ? stats.totalXp.toLocaleString() : "..."}
-                />
-                <StatCard
-                    icon={<CheckCircle2 className="h-6 w-6 text-blue-400" />}
-                    label="Graduates"
-                    value={stats?.totalGraduates ? stats.totalGraduates.toLocaleString() : "..."}
-                />
+            <div className="space-y-12">
+                <h2 className="text-xs font-mono uppercase tracking-[0.4em] text-text-muted text-center opacity-60">superteam academy stats</h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <StatCard
+                        icon={<Users className="h-6 w-6 text-solana" />}
+                        label="Active Builders"
+                        value={stats?.totalUsers ? stats.totalUsers.toLocaleString() : "..."}
+                    />
+                    <StatCard
+                        icon={<Award className="h-6 w-6 text-amber-400" />}
+                        label="Total XP Minted"
+                        value={stats?.totalXp ? stats.totalXp.toLocaleString() : "..."}
+                    />
+                    <StatCard
+                        icon={<CheckCircle2 className="h-6 w-6 text-blue-400" />}
+                        label="Graduates"
+                        value={stats?.totalGraduates ? stats.totalGraduates.toLocaleString() : "..."}
+                    />
+                </div>
             </div>
 
             {/* Partners Row */}
-            <div className="text-center space-y-8">
-                <p className="text-xs font-mono uppercase tracking-[0.2em] text-text-muted">Empowered by the best in the ecosystem</p>
-                <div className="flex flex-wrap items-center justify-center gap-12 opacity-50 grayscale hover:grayscale-0 transition-all">
+            <div className="text-center space-y-14 pb-16">
+                <p className="text-sm font-mono uppercase tracking-[0.4em] text-white/90">Empowered by the best in the ecosystem</p>
+                <div className="flex flex-wrap items-center justify-center gap-24 opacity-70 grayscale hover:grayscale-0 transition-all duration-700">
                     {partners.map(p => (
-                        <img key={p.name} src={p.logo} alt={p.name} className="h-8 w-auto" />
+                        <img key={p.name} src={p.logo} alt={p.name} className="h-12 md:h-16 w-auto" />
                     ))}
                 </div>
             </div>

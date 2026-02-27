@@ -16,12 +16,15 @@ type CourseCompletionProps = {
 
 export function CourseCompletion({ courseId, totalLessons }: CourseCompletionProps) {
     const t = useTranslations("course_detail");
-    const { authenticated, user } = usePrivy();
+    const { authenticated, user, connectWallet } = usePrivy();
     const { wallets } = useWallets();
 
     const linkedAddress =
         user?.wallet?.address ?? user?.linkedAccounts?.find((a) => a.type === "wallet")?.address;
     const walletAddress = linkedAddress ?? wallets?.[0]?.address;
+
+    // Find the actual Solana wallet object that matches our target address
+    const activeWallet = wallets.find(w => w.address === walletAddress) ?? wallets[0];
 
     // Use atomic selectors to prevent re-render issues
     const completedCount = useEnrollmentStore((state) =>
@@ -70,6 +73,20 @@ export function CourseCompletion({ courseId, totalLessons }: CourseCompletionPro
 
     const handleFinalize = async () => {
         if (isActionLoading || graduated) return;
+
+        if (!walletAddress) {
+            const isEmbeddedWallet =
+                user?.linkedAccounts?.some((a) => a.type === "wallet" && (a as any).walletClientType === "privy") ||
+                (user?.wallet as any)?.walletClientType === "privy";
+            if (!isEmbeddedWallet) {
+                alert("Please connect your Solana wallet to get your certificate.");
+                connectWallet();
+            } else {
+                alert("Wallet is still initializing. Please wait a moment and try again.");
+            }
+            return;
+        }
+
         setIsActionLoading(true);
         try {
             console.log(`[CourseCompletion] Requesting graduation for course ${courseId}`);
@@ -109,13 +126,26 @@ export function CourseCompletion({ courseId, totalLessons }: CourseCompletionPro
 
     const handleReclaimRent = async () => {
         if (isReclaimLoading) return;
+
+        if (!activeWallet || !walletAddress) {
+            const isEmbeddedWallet =
+                user?.linkedAccounts?.some((a) => a.type === "wallet" && (a as any).walletClientType === "privy") ||
+                (user?.wallet as any)?.walletClientType === "privy";
+            if (!isEmbeddedWallet) {
+                alert("Please connect your Solana wallet to reclaim rent.");
+                connectWallet();
+            } else {
+                alert("Wallet is still initializing. Please wait a moment and try again.");
+            }
+            return;
+        }
+
         const confirm = window.confirm("Reclaiming rent will close your on-chain enrollment account and return approximately 0.003 SOL to your wallet. Your progress will remain archived in our database. Proceed?");
         if (!confirm) return;
 
         setIsReclaimLoading(true);
         try {
-            const { wallet } = wallets[0] as any; // Privy wallet for signing
-            await reclaimRent(walletAddress, courseId, wallets[0]?.signTransaction as any, wallets[0]);
+            await reclaimRent(walletAddress, courseId, activeWallet.signTransaction as any, activeWallet);
             alert("Rent reclaimed successfully!");
         } catch (error: any) {
             console.error("Reclaim rent failed", error);

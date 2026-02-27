@@ -171,7 +171,7 @@
         "error_no_code": "> erro: nenhum código fornecido. Por favor, escreva algum código primeiro."
     },
     "enrollment": {
-        "checking": "Verificando inscrição...",
+        "checking": "Verificando status de inscrição...",
         "sign_in_required": "Entrar para acessar esta lição",
         "sign_in_info": "Você precisa estar logado e inscrito neste curso para ver o conteúdo da lição.",
         "sign_in_button": "Entrar",
@@ -192,7 +192,7 @@
         "your_progress": "Seu progresso: {current}/{total} lições ({pct}%)",
         "login_to_enroll": "Faça login e conecte sua carteira para se inscrever em {title}.",
         "enrolled": "Inscrito",
-        "enrolling": "Inscrevendo...",
+        "enrolling": "Verificando status de inscrição...",
         "enroll_cta": "Inscrever-se neste curso",
         "completion_title": "Curso Completo!",
         "completion_info": "Você terminou todas as lições.",

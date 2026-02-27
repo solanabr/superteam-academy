@@ -11,6 +11,7 @@ export function SyncUserOnLogin() {
   const { authenticated, user } = usePrivy();
   const { wallets } = useWallets();
   const setUser = useUserStore((s: UserState) => s.setUser);
+  const setError = useUserStore((s: UserState) => s.setError);
   const fetchProgress = useUserStore((s: UserState) => s.fetchProgress);
   const synced = useRef(false);
 
@@ -54,12 +55,14 @@ export function SyncUserOnLogin() {
           sessionStorage.removeItem("referral_code");
         } else {
           synced.current = false;
+          setError("Failed to create profile. Please check your connection or try again later.");
         }
       })
       .catch(() => {
         synced.current = false;
+        setError("Failed to connect to the server for profile creation.");
       });
-  }, [authenticated, walletAddress, user?.email?.address, user?.linkedAccounts, setUser, fetchProgress]);
+  }, [authenticated, walletAddress, user?.email?.address, user?.linkedAccounts, setUser, setError, fetchProgress]);
 
   return null;
 }

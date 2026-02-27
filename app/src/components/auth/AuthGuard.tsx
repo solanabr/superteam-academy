@@ -146,8 +146,12 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
                             <p className="text-text-secondary max-w-xs">{error}</p>
                             <Button
                                 onClick={() => {
-                                    lastFetchedWallet.current = null; // reset guard
-                                    if (walletAddress) fetchUser(walletAddress);
+                                    if (error?.includes("create profile")) {
+                                        window.location.reload();
+                                    } else {
+                                        lastFetchedWallet.current = null; // reset guard
+                                        if (walletAddress) fetchUser(walletAddress);
+                                    }
                                 }}
                                 variant="default"
                                 className="mt-4 px-6 py-2 bg-solana text-void font-bold rounded-lg hover:bg-solana-light transition-colors"

@@ -12,7 +12,7 @@ import { LearningProgressService } from "./interface";
 import onchainAcademyIdl from "@/lib/idl/onchain_academy.json";
 import { prisma } from "@/lib/db";
 import { withFallbackRPC, HELIUS_RPC } from "@/lib/solana-connection";
-import { TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
+import { TOKEN_2022_PROGRAM_ID, getAssociatedTokenAddressSync, createAssociatedTokenAccountIdempotentInstruction } from "@solana/spl-token";
 import bs58 from "bs58";
 import { getLevelFromXp } from "@/lib/ranks";
 
@@ -595,25 +595,51 @@ export class OnChainLearningService implements LearningProgressService {
 
                 // Find token accounts
                 const learnerTokenAccounts = await connection.getTokenAccountsByOwner(learner, { mint: config.xpMint });
-                const learnerTokenAccount = learnerTokenAccounts.value[0]?.pubkey;
+                let learnerTokenAccount = learnerTokenAccounts.value[0]?.pubkey;
 
                 const [coursePda] = PublicKey.findProgramAddressSync([Buffer.from("course"), Buffer.from(courseId)], program.programId);
                 const course = await (program.account as any).course.fetch(coursePda);
                 const creator = course.creator;
                 const creatorTokenAccounts = await connection.getTokenAccountsByOwner(creator, { mint: config.xpMint });
-                const creatorTokenAccount = creatorTokenAccounts.value[0]?.pubkey;
+                let creatorTokenAccount = creatorTokenAccounts.value[0]?.pubkey;
 
                 const enrollmentPda = this.getEnrollmentPDA(courseId, learner);
 
                 console.log(`[onchain-service] finalizeCourse: derived PDAs: course=${coursePda.toBase58()}, enrollment=${enrollmentPda.toBase58()}`);
-                console.log(`[onchain-service] finalizeCourse: tokens: learner=${learnerTokenAccount?.toBase58()}, creator=${creatorTokenAccount?.toBase58()}`);
+                console.log(`[onchain-service] finalizeCourse: existing tokens: learner=${learnerTokenAccount?.toBase58()}, creator=${creatorTokenAccount?.toBase58()}`);
 
-                if (!learnerTokenAccount || !creatorTokenAccount) {
-                    throw new Error(`Token accounts missing: learner=${!!learnerTokenAccount}, creator=${!!creatorTokenAccount}`);
+                const tx = new Transaction();
+
+                if (!learnerTokenAccount) {
+                    learnerTokenAccount = getAssociatedTokenAddressSync(config.xpMint, learner, true, TOKEN_2022_PROGRAM_ID);
+                    tx.add(
+                        createAssociatedTokenAccountIdempotentInstruction(
+                            backendWallet.publicKey,
+                            learnerTokenAccount,
+                            learner,
+                            config.xpMint,
+                            TOKEN_2022_PROGRAM_ID
+                        )
+                    );
+                    console.log(`[onchain-service] finalizeCourse: Adding instruction to create missing learner ATA: ${learnerTokenAccount.toBase58()}`);
+                }
+
+                if (!creatorTokenAccount) {
+                    creatorTokenAccount = getAssociatedTokenAddressSync(config.xpMint, creator, true, TOKEN_2022_PROGRAM_ID);
+                    tx.add(
+                        createAssociatedTokenAccountIdempotentInstruction(
+                            backendWallet.publicKey,
+                            creatorTokenAccount,
+                            creator,
+                            config.xpMint,
+                            TOKEN_2022_PROGRAM_ID
+                        )
+                    );
+                    console.log(`[onchain-service] finalizeCourse: Adding instruction to create missing creator ATA: ${creatorTokenAccount.toBase58()}`);
                 }
 
                 console.log(`[onchain-service] finalizeCourse: Building transaction for learner ${learner.toBase58()} and creator ${creator.toBase58()}`);
-                const tx = await (program.methods as any)
+                const finalizeIz = await (program.methods as any)
                     .finalizeCourse()
                     .accounts({
                         config: configPda,
@@ -627,7 +653,9 @@ export class OnChainLearningService implements LearningProgressService {
                         backendSigner: backendWallet.publicKey,
                         tokenProgram: TOKEN_2022_PROGRAM_ID,
                     } as any)
-                    .transaction();
+                    .instruction();
+
+                tx.add(finalizeIz);
 
                 tx.feePayer = backendWallet.publicKey;
                 tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;

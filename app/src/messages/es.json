@@ -171,7 +171,7 @@
         "error_no_code": "> error: no se proporcionó código. Por favor escribe algo de código primero."
     },
     "enrollment": {
-        "checking": "Comprobando inscripción...",
+        "checking": "Comprobando estado de inscripción...",
         "sign_in_required": "Inicia sesión para acceder a esta lección",
         "sign_in_info": "Debes iniciar sesión y estar inscrito en este curso para ver el contenido de la lección.",
         "sign_in_button": "Iniciar sesión",
@@ -192,7 +192,7 @@
         "your_progress": "Tu progreso: {current}/{total} lecciones ({pct}%)",
         "login_to_enroll": "Inicia sesión y conecta tu billetera para inscribirte en {title}.",
         "enrolled": "Inscrito",
-        "enrolling": "Inscribiendo...",
+        "enrolling": "Comprobando estado de inscripción...",
         "enroll_cta": "Inscribirse en este curso",
         "completion_title": "¡Curso Completado!",
         "completion_info": "Has terminado todas las lecciones.",

@@ -6,7 +6,7 @@ import { usePrivy } from "@privy-io/react-auth";
 import { Link } from "@/i18n/routing";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Save, Lock, Mail, Wallet, Coins, Info, ExternalLink, Trash2, ChevronRight, User, Users, Copy, Gift, Download, ShieldCheck, Brain, GraduationCap } from "lucide-react";
+import { Loader2, Save, Lock, Mail, Wallet, Coins, Info, ExternalLink, Trash2, ChevronRight, User, Users, Copy, Gift, Download, ShieldCheck, Brain, GraduationCap, Check } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { PublicKey, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { withFallbackRPC } from "@/lib/solana-connection";
@@ -178,6 +178,7 @@ export default function SettingsPage() {
   const [solBalance, setSolBalance] = useState<number | null>(null);
   const [showAirdropTip, setShowAirdropTip] = useState(false);
   const [showWalletTip, setShowWalletTip] = useState(false);
+  const [walletCopied, setWalletCopied] = useState(false);
   // Zustand
   const progress = useUserStore((s) => s.progress);
   const fetchProgress = useUserStore((s) => s.fetchProgress);
@@ -343,11 +344,29 @@ export default function SettingsPage() {
                     )}
                   </div>
                 </label>
-                <Input
-                  value={user.walletAddress}
-                  disabled
-                  className="font-mono text-xs opacity-50 bg-black/20"
-                />
+                <div className="flex gap-2">
+                  <Input
+                    value={user.walletAddress}
+                    readOnly
+                    className="font-mono text-xs opacity-50 bg-black/20 text-text-primary"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-10 w-10 border border-white/10 shrink-0 hover:text-solana transition-colors"
+                    onClick={() => {
+                      if (user.walletAddress) {
+                        navigator.clipboard.writeText(user.walletAddress);
+                        setWalletCopied(true);
+                        setTimeout(() => setWalletCopied(false), 2000);
+                      }
+                    }}
+                    title="Copy Wallet Address"
+                  >
+                    {walletCopied ? <Check className="h-4 w-4 text-solana" /> : <Copy className="h-4 w-4" />}
+                  </Button>
+                </div>
               </div>
 
               {/* Account Role */}
