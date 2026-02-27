@@ -18,7 +18,9 @@ const courseFields = `
     socialLinks
   },
   tags,
-  xpReward
+  xpReward,
+  trackId,
+  trackLevel
 `;
 
 const moduleWithLessonsFields = `
@@ -112,13 +114,15 @@ export async function getLessonBySlug(
 
 export async function getAllLearningPaths(): Promise<LearningPath[]> {
   return sanityFetch<LearningPath[]>(
-    `*[_type == "learningPath"] | order(title asc) {
+    `*[_type == "learningPath"] | order(coalesce(order, 999) asc, title asc) {
       _id,
       title,
       description,
       "slug": slug.current,
+      tag,
+      order,
       difficulty,
-      "courses": courses[onChainStatus.status == "synced"]->{
+      "courses": *[_type == "course" && _id in ^.courses[]._ref && onChainStatus.status == "synced"] {
         ${courseFields},
         "modules": modules[]->{
           _id,
@@ -200,6 +204,7 @@ export interface CourseSummary {
   tags: string[] | null;
   difficulty: string;
   totalLessons: number;
+  learningPath: string | null;
 }
 
 /**
@@ -216,7 +221,8 @@ export async function getCoursesByIds(ids: string[]): Promise<CourseSummary[]> {
       "thumbnail": thumbnail.asset->url,
       tags,
       difficulty,
-      "totalLessons": count(modules[]->lessons[])
+      "totalLessons": count(modules[]->lessons[]),
+      "learningPath": *[_type == "learningPath" && references(^._id)][0].title
     }`,
     { ids }
   );
@@ -256,6 +262,9 @@ export interface RecommendedCourse {
   tags: string[] | null;
   xpReward: number;
   totalLessons: number;
+  trackId?: number;
+  trackLevel?: number;
+  learningPath: string | null;
 }
 
 /**
@@ -277,7 +286,10 @@ export async function getRecommendedCourses(
       instructor->{ name, "avatar": avatar.asset->url },
       tags,
       xpReward,
-      "totalLessons": count(modules[]->lessons[])
+      trackId,
+      trackLevel,
+      "totalLessons": count(modules[]->lessons[]),
+      "learningPath": *[_type == "learningPath" && references(^._id)][0].title
     }`,
     { excludeIds }
   );
@@ -288,13 +300,16 @@ export async function getRecommendedCourses(
  * Returns each course's _id, title, and tags array.
  */
 export async function getAllCourseTags(): Promise<
-  { _id: string; title: string; tags: string[] }[]
+  { _id: string; title: string; tags: string[]; totalLessons: number }[]
 > {
-  return sanityFetch<{ _id: string; title: string; tags: string[] }[]>(
+  return sanityFetch<
+    { _id: string; title: string; tags: string[]; totalLessons: number }[]
+  >(
     `*[_type == "course" && onChainStatus.status == "synced" && defined(tags)] {
       _id,
       title,
-      tags
+      tags,
+      "totalLessons": count(modules[]->lessons[])
     }`
   );
 }
@@ -315,11 +330,15 @@ export async function getAllCourseLessonCounts(): Promise<
 }
 
 export interface DeployedAchievement {
-  /** TS-compatible ID — Sanity _id with "achievement-" prefix stripped (e.g. "first-steps"). */
+  /** Full Sanity _id (e.g. "achievement-first-steps"). */
   id: string;
   name: string;
   description: string;
   icon: string;
+  /** Short monospace text for octagonal medal display (e.g. "01", "Rs", "A+"). */
+  glyph: string;
+  /** Uses the iridescent Solana-themed visual treatment. */
+  solTier: boolean;
   category: string;
   /** XP minted alongside the achievement NFT on-chain (0 = no XP). */
   xpReward: number;
@@ -329,7 +348,6 @@ export interface DeployedAchievement {
  * Returns full achievement definitions for achievements deployed on-chain.
  * Only achievements with an on-chain PDA are included — these are the only ones
  * that can be minted as NFTs.
- * ID is derived from Sanity _id by stripping the "achievement-" prefix.
  */
 export async function getDeployedAchievements(): Promise<
   DeployedAchievement[]
@@ -340,12 +358,14 @@ export async function getDeployedAchievements(): Promise<
       name: string;
       description: string;
       icon: string;
+      glyph: string | null;
+      solTier: boolean | null;
       category: string;
       xpReward: number;
     }>
   >(
     `*[_type == "achievement" && defined(onChainStatus.achievementPda)] | order(name asc) {
-      _id, name, description, icon, category, xpReward
+      _id, name, description, icon, glyph, solTier, category, xpReward
     }`
   );
   return raw.map((a) => ({
@@ -353,6 +373,8 @@ export async function getDeployedAchievements(): Promise<
     name: a.name,
     description: a.description,
     icon: a.icon,
+    glyph: a.glyph ?? a._id.slice(-2).toUpperCase(),
+    solTier: a.solTier ?? false,
     category: a.category,
     xpReward: a.xpReward ?? 0,
   }));
@@ -370,12 +392,14 @@ export async function getAllAchievements(): Promise<DeployedAchievement[]> {
       name: string;
       description: string;
       icon: string;
+      glyph: string | null;
+      solTier: boolean | null;
       category: string;
       xpReward: number;
     }>
   >(
     `*[_type == "achievement"] | order(name asc) {
-      _id, name, description, icon, category, xpReward
+      _id, name, description, icon, glyph, solTier, category, xpReward
     }`
   );
   return raw.map((a) => ({
@@ -383,6 +407,8 @@ export async function getAllAchievements(): Promise<DeployedAchievement[]> {
     name: a.name,
     description: a.description,
     icon: a.icon,
+    glyph: a.glyph ?? a._id.slice(-2).toUpperCase(),
+    solTier: a.solTier ?? false,
     category: a.category,
     xpReward: a.xpReward ?? 0,
   }));
