@@ -13,6 +13,22 @@ interface AnalyticsData {
 	totalEnrollments: number;
 	totalCourses: number;
 	publishedCourses: number;
+	activationFunnel?: {
+		signups: number;
+		onboardingCompleted: number;
+		activated: number;
+		completed: number;
+	};
+	cohorts?: {
+		recentSignups7d: number;
+		recentSignups30d: number;
+	};
+}
+
+interface ObservabilityMetrics {
+	generatedAt: number;
+	counters: Array<{ name: string; value: number }>;
+	durations: Array<{ name: string; avgMs: number; maxMs: number; count: number }>;
 }
 
 interface CourseRow {
@@ -28,18 +44,26 @@ interface CourseRow {
 export default function AdminAnalyticsPage() {
 	const [stats, setStats] = useState<AnalyticsData | null>(null);
 	const [courses, setCourses] = useState<CourseRow[]>([]);
+	const [metrics, setMetrics] = useState<ObservabilityMetrics | null>(null);
 	const [loading, setLoading] = useState(true);
 
 	const fetchData = useCallback(async () => {
 		try {
-			const [statsRes, coursesRes] = await Promise.all([
+			const [statsRes, coursesRes, observabilityRes] = await Promise.all([
 				fetch("/api/admin/stats"),
 				fetch("/api/admin/courses"),
+				fetch("/api/platform/observability"),
 			]);
 			if (statsRes.ok) setStats(await statsRes.json());
 			if (coursesRes.ok) {
 				const data = (await coursesRes.json()) as { courses: CourseRow[] };
 				setCourses(data.courses);
+			}
+			if (observabilityRes.ok) {
+				const data = (await observabilityRes.json()) as {
+					metrics: ObservabilityMetrics;
+				};
+				setMetrics(data.metrics);
 			}
 		} finally {
 			setLoading(false);
@@ -90,6 +114,23 @@ export default function AdminAnalyticsPage() {
 		intermediate: courses.filter((c) => c.level === "intermediate").length,
 		advanced: courses.filter((c) => c.level === "advanced").length,
 	};
+
+	const funnel = s.activationFunnel ?? {
+		signups: 0,
+		onboardingCompleted: 0,
+		activated: 0,
+		completed: 0,
+	};
+
+	const cohorts = s.cohorts ?? { recentSignups7d: 0, recentSignups30d: 0 };
+
+	const topObservabilityCounters = (metrics?.counters ?? [])
+		.filter(
+			(entry) =>
+				entry.name.startsWith("challenge.run") || entry.name.startsWith("leaderboard.")
+		)
+		.sort((a, b) => b.value - a.value)
+		.slice(0, 5);
 
 	return (
 		<div className="p-6 space-y-6">
@@ -220,6 +261,65 @@ export default function AdminAnalyticsPage() {
 										: 0
 								}
 							/>
+						</div>
+					</CardContent>
+				</Card>
+			</div>
+
+			<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+				<Card>
+					<CardHeader>
+						<CardTitle>Activation Funnel</CardTitle>
+					</CardHeader>
+					<CardContent className="space-y-4">
+						<div className="flex items-center justify-between">
+							<span className="text-sm">Signups</span>
+							<span className="font-medium">{funnel.signups}</span>
+						</div>
+						<div className="flex items-center justify-between">
+							<span className="text-sm">Onboarding Completed</span>
+							<span className="font-medium">{funnel.onboardingCompleted}</span>
+						</div>
+						<div className="flex items-center justify-between">
+							<span className="text-sm">Activated (Enrolled)</span>
+							<span className="font-medium">{funnel.activated}</span>
+						</div>
+						<div className="flex items-center justify-between">
+							<span className="text-sm">Completed 1+ Course</span>
+							<span className="font-medium">{funnel.completed}</span>
+						</div>
+					</CardContent>
+				</Card>
+
+				<Card>
+					<CardHeader>
+						<CardTitle>Cohorts & Runtime Metrics</CardTitle>
+					</CardHeader>
+					<CardContent className="space-y-4">
+						<div className="flex items-center justify-between">
+							<span className="text-sm">New Users (7d)</span>
+							<Badge variant="secondary">{cohorts.recentSignups7d}</Badge>
+						</div>
+						<div className="flex items-center justify-between">
+							<span className="text-sm">New Users (30d)</span>
+							<Badge variant="secondary">{cohorts.recentSignups30d}</Badge>
+						</div>
+						<div className="pt-2 border-t space-y-2">
+							{topObservabilityCounters.length === 0 ? (
+								<p className="text-xs text-muted-foreground">
+									No observability samples yet.
+								</p>
+							) : (
+								topObservabilityCounters.map((entry) => (
+									<div
+										key={entry.name}
+										className="flex items-center justify-between text-xs"
+									>
+										<span className="text-muted-foreground">{entry.name}</span>
+										<span className="font-medium">{entry.value}</span>
+									</div>
+								))
+							)}
 						</div>
 					</CardContent>
 				</Card>

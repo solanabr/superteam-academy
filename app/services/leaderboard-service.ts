@@ -2,6 +2,7 @@ import { PublicKey } from "@solana/web3.js";
 import { BaseService } from "./types";
 import { AcademyClient, countCompletedLessons } from "@superteam-academy/anchor";
 import { findToken2022ATA } from "@superteam-academy/solana";
+import { incrementMetric, recordDuration } from "@/lib/runtime-observability";
 
 export interface LeaderboardEntry {
 	rank: number;
@@ -30,9 +31,15 @@ export class LeaderboardService extends BaseService {
 	 * Uses token largest accounts and decodes ATA owner at byte offset 32.
 	 */
 	async getLeaderboard(xpMint: PublicKey, limit: number): Promise<LeaderboardEntry[]> {
+		const startedAt = performance.now();
+		incrementMetric("leaderboard.global.index.requests.total");
 		const largest = await this.connection.getTokenLargestAccounts(xpMint);
 		const topTokenAccounts = largest.value.slice(0, Math.max(limit * 2, limit));
-		if (topTokenAccounts.length === 0) return [];
+		if (topTokenAccounts.length === 0) {
+			incrementMetric("leaderboard.global.index.requests.empty");
+			recordDuration("leaderboard.global.index.duration_ms", performance.now() - startedAt);
+			return [];
+		}
 
 		const accountPubkeys = topTokenAccounts.map((entry) => entry.address);
 		const infos = await this.connection.getMultipleAccountsInfo(accountPubkeys);
@@ -48,7 +55,7 @@ export class LeaderboardService extends BaseService {
 			}
 		}
 
-		return [...byOwner.entries()]
+		const results = [...byOwner.entries()]
 			.sort((a, b) => (a[1] > b[1] ? -1 : 1))
 			.slice(0, limit)
 			.map(([publicKey, xpBalance], index) => ({
@@ -56,17 +63,27 @@ export class LeaderboardService extends BaseService {
 				publicKey,
 				xpBalance,
 			}));
+
+		incrementMetric("leaderboard.global.index.requests.success");
+		recordDuration("leaderboard.global.index.duration_ms", performance.now() - startedAt);
+		return results;
 	}
 
 	/**
 	 * Fetch per-course leaderboard by counting completed lessons from enrollment accounts.
 	 */
 	async getCourseLeaderboard(courseId: string, limit: number): Promise<LeaderboardEntry[]> {
+		const startedAt = performance.now();
+		incrementMetric("leaderboard.course.index.requests.total");
 		const allEnrollments = await this.client.fetchAllEnrollments();
 		const allCourses = await this.client.fetchAllCourses();
 
 		const coursePubkey = allCourses.find((c) => c.account.courseId === courseId)?.pubkey;
-		if (!coursePubkey) return [];
+		if (!coursePubkey) {
+			incrementMetric("leaderboard.course.index.requests.missing_course");
+			recordDuration("leaderboard.course.index.duration_ms", performance.now() - startedAt);
+			return [];
+		}
 
 		const courseKey = coursePubkey.toBase58();
 		const courseEnrollments = allEnrollments.filter(
@@ -76,7 +93,7 @@ export class LeaderboardService extends BaseService {
 		const courseAccount = allCourses.find((c) => c.account.courseId === courseId)?.account;
 		const xpPerLesson = courseAccount?.xpPerLesson ?? 0;
 
-		return courseEnrollments
+		const results = courseEnrollments
 			.map((e) => {
 				const completed = countCompletedLessons(e.account.lessonFlags);
 				return {
@@ -91,5 +108,9 @@ export class LeaderboardService extends BaseService {
 				publicKey: entry.pubkey.toBase58(),
 				xpBalance: entry.xpBalance,
 			}));
+
+		incrementMetric("leaderboard.course.index.requests.success");
+		recordDuration("leaderboard.course.index.duration_ms", performance.now() - startedAt);
+		return results;
 	}
 }

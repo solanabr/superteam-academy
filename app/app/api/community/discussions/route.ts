@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { serverAuth } from "@/lib/auth";
 import { createDiscussion } from "@/lib/community-cms";
 import { syncUserToSanity } from "@/lib/sanity-users";
+import { evaluateContentModeration, enqueueModerationItem } from "@/lib/community-moderation";
 import type { DiscussionCategory } from "@superteam-academy/cms";
 
 const VALID_CATEGORIES: DiscussionCategory[] = [
@@ -67,6 +68,14 @@ export async function POST(request: Request) {
 		return NextResponse.json({ error: "Maximum 5 tags allowed" }, { status: 400 });
 	}
 
+	const moderation = evaluateContentModeration(`${title}\n${content}\n${tags.join(" ")}`);
+	if (moderation.status === "rejected") {
+		return NextResponse.json(
+			{ error: "Content rejected by moderation checks", reasons: moderation.reasons },
+			{ status: 400 }
+		);
+	}
+
 	const sanityUser = await syncUserToSanity({
 		authId: session.user.id,
 		name: session.user.name,
@@ -93,5 +102,22 @@ export async function POST(request: Request) {
 		);
 	}
 
-	return NextResponse.json({ slug: result.slug }, { status: 201 });
+	if (moderation.status === "needs_review") {
+		enqueueModerationItem({
+			target: "discussion",
+			title,
+			slug: result.slug,
+			authorId: sanityUser._id,
+			decision: moderation,
+		});
+	}
+
+	return NextResponse.json(
+		{
+			slug: result.slug,
+			moderationStatus: moderation.status,
+			moderationReasons: moderation.reasons,
+		},
+		{ status: 201 }
+	);
 }

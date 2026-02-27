@@ -133,6 +133,33 @@ export function useSeasonalEvents(_userId: string) {
 		await loadSeasonalEvents();
 	};
 
+	const refreshOpsSnapshot = async () => {
+		const response = await fetch("/api/platform/seasonal-events/ops", {
+			method: "GET",
+			cache: "no-store",
+		});
+		if (!response.ok) {
+			throw new Error("Failed to fetch seasonal ops snapshot");
+		}
+		return (await response.json()) as {
+			event: { status: "upcoming" | "active" | "ended" };
+			participants: Array<{
+				userId: string;
+				joined: boolean;
+				completedChallenges: number;
+			}>;
+		};
+	};
+
+	const setEventStatus = async (status: "upcoming" | "active" | "ended") => {
+		await fetch("/api/platform/seasonal-events/ops", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ action: "set-status", status }),
+		});
+		await loadSeasonalEvents();
+	};
+
 	return {
 		currentEvent,
 		upcomingEvents,
@@ -144,5 +171,7 @@ export function useSeasonalEvents(_userId: string) {
 		joinEvent,
 		completeChallenge,
 		claimReward,
+		refreshOpsSnapshot,
+		setEventStatus,
 	};
 }

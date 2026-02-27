@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { getChallengePageData } from "@/lib/challenge-content";
+import { incrementMetric, recordDuration } from "@/lib/runtime-observability";
 
 interface RunRequest {
 	code?: string;
@@ -22,28 +23,35 @@ export async function POST(
 	request: NextRequest,
 	{ params }: { params: Promise<{ challengeId: string }> }
 ) {
+	const startedAt = performance.now();
+	incrementMetric("challenge.run.requests.total");
 	try {
 		const { challengeId } = await params;
 		const body = (await request.json()) as RunRequest;
 		const courseId = request.nextUrl.searchParams.get("courseId");
 		if (!courseId) {
+			incrementMetric("challenge.run.requests.invalid");
 			return NextResponse.json({ error: "Missing courseId" }, { status: 400 });
 		}
 
 		if (!body.code || typeof body.code !== "string") {
+			incrementMetric("challenge.run.requests.invalid");
 			return NextResponse.json({ error: "Missing code" }, { status: 400 });
 		}
 
 		if (!body.language || typeof body.language !== "string") {
+			incrementMetric("challenge.run.requests.invalid");
 			return NextResponse.json({ error: "Missing language" }, { status: 400 });
 		}
 
 		const language = body.language.toLowerCase();
 		if (!SUPPORTED_LANGUAGES.has(language)) {
+			incrementMetric("challenge.run.requests.unsupported_language");
 			return NextResponse.json({ error: "Unsupported language" }, { status: 400 });
 		}
 
 		if (body.code.length > MAX_CODE_SIZE) {
+			incrementMetric("challenge.run.requests.code_too_large");
 			return NextResponse.json(
 				{ error: `Code exceeds ${MAX_CODE_SIZE} characters` },
 				{ status: 400 }
@@ -52,6 +60,7 @@ export async function POST(
 
 		const pageData = await getChallengePageData(courseId, challengeId);
 		if (!pageData) {
+			incrementMetric("challenge.run.requests.not_found");
 			return NextResponse.json({ error: "Challenge not found" }, { status: 404 });
 		}
 
@@ -68,6 +77,15 @@ export async function POST(
 			const passed = testResults.every((r) => r.passed);
 			const totalTime = testResults.reduce((sum, r) => sum + r.executionTime, 0);
 			const testsPassed = testResults.filter((r) => r.passed).length;
+
+			incrementMetric("challenge.run.submissions.total");
+			if (passed) {
+				incrementMetric("challenge.run.submissions.passed");
+			} else {
+				incrementMetric("challenge.run.submissions.failed");
+			}
+
+			recordDuration("challenge.run.request.latency_ms", performance.now() - startedAt);
 
 			return NextResponse.json({
 				result: {
@@ -90,8 +108,13 @@ export async function POST(
 			});
 		}
 
+		incrementMetric("challenge.run.executions.total");
+		recordDuration("challenge.run.request.latency_ms", performance.now() - startedAt);
+
 		return NextResponse.json({ testResults });
 	} catch {
+		incrementMetric("challenge.run.requests.error");
+		recordDuration("challenge.run.request.latency_ms", performance.now() - startedAt);
 		return NextResponse.json({ error: "Internal server error" }, { status: 500 });
 	}
 }

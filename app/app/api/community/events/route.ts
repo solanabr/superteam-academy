@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { serverAuth } from "@/lib/auth";
 import { createEvent } from "@/lib/community-cms";
+import { evaluateContentModeration, enqueueModerationItem } from "@/lib/community-moderation";
 import type { EventType } from "@superteam-academy/cms";
 
 const VALID_TYPES: EventType[] = ["Workshop", "AMA", "Hackathon", "Meetup"];
@@ -87,6 +88,16 @@ export async function POST(request: Request) {
 		return NextResponse.json({ error: "Maximum 5 tags allowed" }, { status: 400 });
 	}
 
+	const moderation = evaluateContentModeration(
+		`${title}\n${description}\n${tags.join(" ")}\n${location ?? ""}`
+	);
+	if (moderation.status === "rejected") {
+		return NextResponse.json(
+			{ error: "Content rejected by moderation checks", reasons: moderation.reasons },
+			{ status: 400 }
+		);
+	}
+
 	const result = await createEvent({
 		title,
 		description,
@@ -108,5 +119,21 @@ export async function POST(request: Request) {
 		);
 	}
 
-	return NextResponse.json({ slug: result.slug }, { status: 201 });
+	if (moderation.status === "needs_review") {
+		enqueueModerationItem({
+			target: "event",
+			title,
+			slug: result.slug,
+			decision: moderation,
+		});
+	}
+
+	return NextResponse.json(
+		{
+			slug: result.slug,
+			moderationStatus: moderation.status,
+			moderationReasons: moderation.reasons,
+		},
+		{ status: 201 }
+	);
 }
