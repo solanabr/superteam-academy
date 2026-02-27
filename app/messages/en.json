@@ -1,0 +1,11 @@
+{
+    "HomePage": {
+        "title": "Learn Solana with Superteam Academy",
+        "subtitle": "The ultimate platform for Solana developers in Latin America."
+    },
+    "Navigation": {
+        "courses": "Courses",
+        "dashboard": "Dashboard",
+        "leaderboard": "Leaderboard"
+    }
+}

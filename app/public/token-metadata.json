@@ -1,0 +1,12 @@
+{
+  "name": "Superteam Academy XP",
+  "symbol": "STXP",
+  "description": "Experience Points earned by completing courses on Superteam Academy — the premier Solana learning platform for Latin America. This is a soulbound token and cannot be transferred.",
+  "image": "https://raw.githubusercontent.com/Nihal-Pandey-2302/superteam-brazil-academy/main/app/public/xp-token-icon.png",
+  "external_url": "https://superteam-brazil-academy.vercel.app",
+  "attributes": [
+    { "trait_type": "Type", "value": "Experience Points" },
+    { "trait_type": "Network", "value": "Solana Devnet" },
+    { "trait_type": "Platform", "value": "Superteam Academy" }
+  ]
+}
