@@ -17,6 +17,7 @@ import { CurriculumAccordion } from "@/components/course/curriculum-accordion";
 import { ProgressBar } from "@/components/course/progress-bar";
 import { createClient } from "@/lib/supabase/client";
 import { AuthModal } from "@/components/auth/auth-modal";
+import { useAuth } from "@/lib/auth/auth-provider";
 import { useOnChainEnroll } from "@/hooks/use-on-chain-enroll";
 import type { Course } from "@/lib/sanity/types";
 
@@ -38,42 +39,27 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
     0
   );
 
+  const { userId, profile: authProfile, isLoading: authLoading } = useAuth();
+  const walletAddress = authProfile?.wallet_address ?? null;
+
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [completedLessons, setCompletedLessons] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [walletAddress, setWalletAddress] = useState<string | null>(null);
 
   const fetchEnrollmentAndProgress = useCallback(async () => {
+    if (!userId) {
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const supabase = createClient();
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      const user = session?.user ?? null;
-
-      if (!user) {
-        setIsLoading(false);
-        return;
-      }
-
-      setUserId(user.id);
-
-      // Fetch wallet address from profile
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("wallet_address")
-        .eq("id", user.id)
-        .single();
-      if (profile?.wallet_address) {
-        setWalletAddress(profile.wallet_address);
-      }
 
       // Check enrollment status
       const { data: enrollment } = await supabase
         .from("enrollments")
         .select("id")
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .eq("course_id", course._id)
         .maybeSingle();
 
@@ -84,7 +70,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
         const { data: progress } = await supabase
           .from("user_progress")
           .select("lesson_id")
-          .eq("user_id", user.id)
+          .eq("user_id", userId)
           .eq("course_id", course._id)
           .eq("completed", true);
 
@@ -95,11 +81,12 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
     } finally {
       setIsLoading(false);
     }
-  }, [course._id]);
+  }, [course._id, userId]);
 
   useEffect(() => {
+    if (authLoading) return;
     fetchEnrollmentAndProgress();
-  }, [fetchEnrollmentAndProgress]);
+  }, [authLoading, fetchEnrollmentAndProgress]);
 
   const { isEnrolling, handleEnroll } = useOnChainEnroll({
     courseId: course._id,
@@ -275,7 +262,9 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                 </Button>
               }
             />
-          ) : null}
+          ) : (
+            <div className="h-11 w-40 animate-pulse rounded-[var(--r-md)] bg-[var(--input)]" />
+          )}
         </div>
       </div>
 
