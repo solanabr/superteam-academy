@@ -6,17 +6,17 @@ import {
 
 interface CanonicalLessonPageProps {
 	params: Promise<{
-		slug: string;
 		id: string;
+		lessonId: string;
 	}>;
 }
 
 export async function generateMetadata({ params }: CanonicalLessonPageProps): Promise<Metadata> {
-	const { slug, id } = await params;
-	return buildLessonMetadata(slug, id);
+	const { id, lessonId } = await params;
+	return buildLessonMetadata(id, lessonId);
 }
 
 export default async function CanonicalLessonPage({ params }: CanonicalLessonPageProps) {
-	const { slug, id } = await params;
-	return <LegacyLessonPageRenderer courseId={slug} lessonId={id} />;
+	const { id, lessonId } = await params;
+	return <LegacyLessonPageRenderer courseId={id} lessonId={lessonId} />;
 }
