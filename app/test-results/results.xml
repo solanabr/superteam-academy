@@ -1,0 +1,132 @@
+<testsuites id="" name="" tests="30" failures="0" skipped="30" errors="0" time="1.992793999999998">
+<testsuite name="comprehensive-flows.spec.ts" timestamp="2026-02-27T10:52:45.773Z" hostname="chromium" tests="6" failures="0" skipped="6" time="0" errors="0">
+<testcase name="Superteam Academy route modernization › loads localized core routes" classname="comprehensive-flows.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Superteam Academy route modernization › opens a course detail from catalog" classname="comprehensive-flows.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Superteam Academy route modernization › loads canonical lesson route" classname="comprehensive-flows.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Superteam Academy route modernization › redirects legacy learn route to canonical lessons route" classname="comprehensive-flows.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Superteam Academy route modernization › loads challenge route under course namespace" classname="comprehensive-flows.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Superteam Academy route modernization › leaderboard filters update URL query params" classname="comprehensive-flows.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="comprehensive-flows.spec.ts" timestamp="2026-02-27T10:52:45.773Z" hostname="firefox" tests="6" failures="0" skipped="6" time="0" errors="0">
+<testcase name="Superteam Academy route modernization › loads localized core routes" classname="comprehensive-flows.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Superteam Academy route modernization › opens a course detail from catalog" classname="comprehensive-flows.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Superteam Academy route modernization › loads canonical lesson route" classname="comprehensive-flows.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Superteam Academy route modernization › redirects legacy learn route to canonical lessons route" classname="comprehensive-flows.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Superteam Academy route modernization › loads challenge route under course namespace" classname="comprehensive-flows.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Superteam Academy route modernization › leaderboard filters update URL query params" classname="comprehensive-flows.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="comprehensive-flows.spec.ts" timestamp="2026-02-27T10:52:45.773Z" hostname="webkit" tests="6" failures="0" skipped="6" time="0" errors="0">
+<testcase name="Superteam Academy route modernization › loads localized core routes" classname="comprehensive-flows.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Superteam Academy route modernization › opens a course detail from catalog" classname="comprehensive-flows.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Superteam Academy route modernization › loads canonical lesson route" classname="comprehensive-flows.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Superteam Academy route modernization › redirects legacy learn route to canonical lessons route" classname="comprehensive-flows.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Superteam Academy route modernization › loads challenge route under course namespace" classname="comprehensive-flows.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Superteam Academy route modernization › leaderboard filters update URL query params" classname="comprehensive-flows.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="comprehensive-flows.spec.ts" timestamp="2026-02-27T10:52:45.773Z" hostname="Mobile Chrome" tests="6" failures="0" skipped="6" time="0" errors="0">
+<testcase name="Superteam Academy route modernization › loads localized core routes" classname="comprehensive-flows.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Superteam Academy route modernization › opens a course detail from catalog" classname="comprehensive-flows.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Superteam Academy route modernization › loads canonical lesson route" classname="comprehensive-flows.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Superteam Academy route modernization › redirects legacy learn route to canonical lessons route" classname="comprehensive-flows.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Superteam Academy route modernization › loads challenge route under course namespace" classname="comprehensive-flows.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Superteam Academy route modernization › leaderboard filters update URL query params" classname="comprehensive-flows.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="comprehensive-flows.spec.ts" timestamp="2026-02-27T10:52:45.773Z" hostname="Mobile Safari" tests="6" failures="0" skipped="6" time="0" errors="0">
+<testcase name="Superteam Academy route modernization › loads localized core routes" classname="comprehensive-flows.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Superteam Academy route modernization › opens a course detail from catalog" classname="comprehensive-flows.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Superteam Academy route modernization › loads canonical lesson route" classname="comprehensive-flows.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Superteam Academy route modernization › redirects legacy learn route to canonical lessons route" classname="comprehensive-flows.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Superteam Academy route modernization › loads challenge route under course namespace" classname="comprehensive-flows.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Superteam Academy route modernization › leaderboard filters update URL query params" classname="comprehensive-flows.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+</testsuites>

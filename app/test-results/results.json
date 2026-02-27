@@ -1,0 +1,766 @@
+{
+  "config": {
+    "configFile": "/Users/elcharitas/Workspace/superteam-academy/app/playwright.config.ts",
+    "rootDir": "/Users/elcharitas/Workspace/superteam-academy/app/e2e",
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": "/Users/elcharitas/Workspace/superteam-academy/app/e2e/global-setup.ts",
+    "globalTeardown": "/Users/elcharitas/Workspace/superteam-academy/app/e2e/global-teardown.ts",
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {},
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/Users/elcharitas/Workspace/superteam-academy/app/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/Users/elcharitas/Workspace/superteam-academy/app/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/Users/elcharitas/Workspace/superteam-academy/app/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "firefox",
+        "name": "firefox",
+        "testDir": "/Users/elcharitas/Workspace/superteam-academy/app/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/Users/elcharitas/Workspace/superteam-academy/app/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "webkit",
+        "name": "webkit",
+        "testDir": "/Users/elcharitas/Workspace/superteam-academy/app/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/Users/elcharitas/Workspace/superteam-academy/app/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "Mobile Chrome",
+        "name": "Mobile Chrome",
+        "testDir": "/Users/elcharitas/Workspace/superteam-academy/app/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/Users/elcharitas/Workspace/superteam-academy/app/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "Mobile Safari",
+        "name": "Mobile Safari",
+        "testDir": "/Users/elcharitas/Workspace/superteam-academy/app/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/Users/elcharitas/Workspace/superteam-academy/app/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "accessibility",
+        "name": "accessibility",
+        "testDir": "/Users/elcharitas/Workspace/superteam-academy/app/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.accessibility.spec.ts"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "html",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "test-results/results.json"
+        }
+      ],
+      [
+        "junit",
+        {
+          "outputFile": "test-results/results.xml"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "runAgents": "none",
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.58.2",
+    "workers": 4,
+    "webServer": {
+      "command": "npm run dev",
+      "url": "http://localhost:3000",
+      "reuseExistingServer": true,
+      "timeout": 120000
+    }
+  },
+  "suites": [
+    {
+      "title": "comprehensive-flows.spec.ts",
+      "file": "comprehensive-flows.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Superteam Academy route modernization",
+          "file": "comprehensive-flows.spec.ts",
+          "line": 11,
+          "column": 6,
+          "specs": [
+            {
+              "title": "loads localized core routes",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "28cc6f5bf0cbb34f7a71-568872ddf558ca4aa4cd",
+              "file": "comprehensive-flows.spec.ts",
+              "line": 12,
+              "column": 6
+            },
+            {
+              "title": "opens a course detail from catalog",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "28cc6f5bf0cbb34f7a71-5f4e040e8e437d46c9d5",
+              "file": "comprehensive-flows.spec.ts",
+              "line": 21,
+              "column": 6
+            },
+            {
+              "title": "loads canonical lesson route",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "28cc6f5bf0cbb34f7a71-71c36a86270582bb99cc",
+              "file": "comprehensive-flows.spec.ts",
+              "line": 33,
+              "column": 6
+            },
+            {
+              "title": "redirects legacy learn route to canonical lessons route",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "28cc6f5bf0cbb34f7a71-037efb04f573a1a8745f",
+              "file": "comprehensive-flows.spec.ts",
+              "line": 43,
+              "column": 6
+            },
+            {
+              "title": "loads challenge route under course namespace",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "28cc6f5bf0cbb34f7a71-c0e3a445ae38e159b199",
+              "file": "comprehensive-flows.spec.ts",
+              "line": 51,
+              "column": 6
+            },
+            {
+              "title": "leaderboard filters update URL query params",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "28cc6f5bf0cbb34f7a71-05d51c92ecf2ad9b440e",
+              "file": "comprehensive-flows.spec.ts",
+              "line": 61,
+              "column": 6
+            },
+            {
+              "title": "loads localized core routes",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "28cc6f5bf0cbb34f7a71-e8a1f5f6279bfbc0b0ec",
+              "file": "comprehensive-flows.spec.ts",
+              "line": 12,
+              "column": 6
+            },
+            {
+              "title": "opens a course detail from catalog",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "28cc6f5bf0cbb34f7a71-bfa2c6804eb69ff9a900",
+              "file": "comprehensive-flows.spec.ts",
+              "line": 21,
+              "column": 6
+            },
+            {
+              "title": "loads canonical lesson route",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "28cc6f5bf0cbb34f7a71-2e64603d3df3a7d6f8d1",
+              "file": "comprehensive-flows.spec.ts",
+              "line": 33,
+              "column": 6
+            },
+            {
+              "title": "redirects legacy learn route to canonical lessons route",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "28cc6f5bf0cbb34f7a71-c14567596e5ddf00d8eb",
+              "file": "comprehensive-flows.spec.ts",
+              "line": 43,
+              "column": 6
+            },
+            {
+              "title": "loads challenge route under course namespace",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "28cc6f5bf0cbb34f7a71-c76d8240f7d1571f9a06",
+              "file": "comprehensive-flows.spec.ts",
+              "line": 51,
+              "column": 6
+            },
+            {
+              "title": "leaderboard filters update URL query params",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "28cc6f5bf0cbb34f7a71-5628048f45f3abbee174",
+              "file": "comprehensive-flows.spec.ts",
+              "line": 61,
+              "column": 6
+            },
+            {
+              "title": "loads localized core routes",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "28cc6f5bf0cbb34f7a71-cd570b12a972fb4275d0",
+              "file": "comprehensive-flows.spec.ts",
+              "line": 12,
+              "column": 6
+            },
+            {
+              "title": "opens a course detail from catalog",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "28cc6f5bf0cbb34f7a71-abd6af8c5051b18b56af",
+              "file": "comprehensive-flows.spec.ts",
+              "line": 21,
+              "column": 6
+            },
+            {
+              "title": "loads canonical lesson route",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "28cc6f5bf0cbb34f7a71-4759b22bf83ae68f7756",
+              "file": "comprehensive-flows.spec.ts",
+              "line": 33,
+              "column": 6
+            },
+            {
+              "title": "redirects legacy learn route to canonical lessons route",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "28cc6f5bf0cbb34f7a71-73e13dc8e4e172713898",
+              "file": "comprehensive-flows.spec.ts",
+              "line": 43,
+              "column": 6
+            },
+            {
+              "title": "loads challenge route under course namespace",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "28cc6f5bf0cbb34f7a71-791be2b937ad8a1ef899",
+              "file": "comprehensive-flows.spec.ts",
+              "line": 51,
+              "column": 6
+            },
+            {
+              "title": "leaderboard filters update URL query params",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "28cc6f5bf0cbb34f7a71-b7fd3d8e43fc87ea3267",
+              "file": "comprehensive-flows.spec.ts",
+              "line": 61,
+              "column": 6
+            },
+            {
+              "title": "loads localized core routes",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "28cc6f5bf0cbb34f7a71-563599776eaf93f55ef1",
+              "file": "comprehensive-flows.spec.ts",
+              "line": 12,
+              "column": 6
+            },
+            {
+              "title": "opens a course detail from catalog",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "28cc6f5bf0cbb34f7a71-b88292d2f76b8ac04caf",
+              "file": "comprehensive-flows.spec.ts",
+              "line": 21,
+              "column": 6
+            },
+            {
+              "title": "loads canonical lesson route",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "28cc6f5bf0cbb34f7a71-1d4c522cac8b7c8939b2",
+              "file": "comprehensive-flows.spec.ts",
+              "line": 33,
+              "column": 6
+            },
+            {
+              "title": "redirects legacy learn route to canonical lessons route",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "28cc6f5bf0cbb34f7a71-600a301c637cb071cb7b",
+              "file": "comprehensive-flows.spec.ts",
+              "line": 43,
+              "column": 6
+            },
+            {
+              "title": "loads challenge route under course namespace",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "28cc6f5bf0cbb34f7a71-e5076d297a5519bb92a9",
+              "file": "comprehensive-flows.spec.ts",
+              "line": 51,
+              "column": 6
+            },
+            {
+              "title": "leaderboard filters update URL query params",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "28cc6f5bf0cbb34f7a71-5080c1ef39e09958ebc3",
+              "file": "comprehensive-flows.spec.ts",
+              "line": 61,
+              "column": 6
+            },
+            {
+              "title": "loads localized core routes",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "28cc6f5bf0cbb34f7a71-e44cdf0a724c9de3319c",
+              "file": "comprehensive-flows.spec.ts",
+              "line": 12,
+              "column": 6
+            },
+            {
+              "title": "opens a course detail from catalog",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "28cc6f5bf0cbb34f7a71-4574028411e08d4496b8",
+              "file": "comprehensive-flows.spec.ts",
+              "line": 21,
+              "column": 6
+            },
+            {
+              "title": "loads canonical lesson route",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "28cc6f5bf0cbb34f7a71-144bc3ef3f2f1bb1c1ee",
+              "file": "comprehensive-flows.spec.ts",
+              "line": 33,
+              "column": 6
+            },
+            {
+              "title": "redirects legacy learn route to canonical lessons route",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "28cc6f5bf0cbb34f7a71-14504ee23213417da574",
+              "file": "comprehensive-flows.spec.ts",
+              "line": 43,
+              "column": 6
+            },
+            {
+              "title": "loads challenge route under course namespace",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "28cc6f5bf0cbb34f7a71-2b0a5cb057e2c856a32f",
+              "file": "comprehensive-flows.spec.ts",
+              "line": 51,
+              "column": 6
+            },
+            {
+              "title": "leaderboard filters update URL query params",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "28cc6f5bf0cbb34f7a71-30922aab21e9b7eb3887",
+              "file": "comprehensive-flows.spec.ts",
+              "line": 61,
+              "column": 6
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-02-27T10:52:43.784Z",
+    "duration": 1992.793999999998,
+    "expected": 0,
+    "skipped": 30,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}
