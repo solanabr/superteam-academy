@@ -26,7 +26,15 @@ export function QuizWorkspace({ questions, onComplete }: QuizWorkspaceProps) {
   const [score, setScore] = useState(0);
   const [quizFinished, setQuizFinished] = useState(false);
 
-  const currentQuestion = questions[currentQuestionIndex];
+  const currentQuestion = questions?.[currentQuestionIndex];
+
+  if (!questions || questions.length === 0 || !currentQuestion) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+        <p className="text-gray-400 text-lg">No questions available for this quiz.</p>
+      </div>
+    );
+  }
 
   const handleSelectOption = (index: number) => {
     if (isAnswered) return;
