@@ -21,7 +21,7 @@ test.describe('Responsive Design', () => {
 
       for (const page of pages) {
         test(`${page.name} renders without horizontal overflow`, async ({ page: p }) => {
-          await p.goto(`http://localhost:3001${page.path}`);
+          await p.goto(`http://localhost:3000${page.path}`);
           const bodyWidth = await p.evaluate(() => document.body.scrollWidth);
           const viewportWidth = await p.evaluate(() => window.innerWidth);
           expect(bodyWidth).toBeLessThanOrEqual(viewportWidth + 1);
@@ -29,7 +29,7 @@ test.describe('Responsive Design', () => {
       }
 
       test('navigation is accessible', async ({ page: p }) => {
-        await p.goto('http://localhost:3001/en');
+        await p.goto('http://localhost:3000/en');
         if (vp.name === 'mobile') {
           // Mobile should have a menu button or hamburger
           const nav = p.locator('nav, [role="navigation"], header');
