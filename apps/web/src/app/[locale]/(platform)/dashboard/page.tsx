@@ -26,6 +26,7 @@ import { DashboardIdentityPanel } from "@/components/gamification/dashboard-iden
 import { CourseCard } from "@/components/course/course-card";
 import { CourseCompletionMint } from "@/components/certificates/course-completion-mint";
 import { WalletNameGenerator } from "@/components/profile/wallet-name-generator";
+import { useAuth } from "@/lib/auth/auth-provider";
 import { createClient } from "@/lib/supabase/client";
 import { buildCloseEnrollmentInstruction } from "@/lib/solana/instructions";
 import {
@@ -103,7 +104,10 @@ interface DashboardData {
   fetchError: boolean;
 }
 
-function useDashboardData(): DashboardData {
+function useDashboardData(
+  authUserId: string | null,
+  authLoading: boolean
+): DashboardData {
   const [data, setData] = useState<DashboardData>({
     xp: 0,
     level: 0,
@@ -122,24 +126,22 @@ function useDashboardData(): DashboardData {
   });
 
   useEffect(() => {
+    if (authLoading) return;
+
     async function fetchData() {
       try {
-        const supabase = createClient();
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        const user = session?.user ?? null;
-
-        if (!user) {
+        if (!authUserId) {
           setData((prev) => ({ ...prev, isLoading: false }));
           return;
         }
 
+        const supabase = createClient();
+
         // Fetch XP + streak via service layer (on-chain first, Supabase fallback)
         const service = getProgressService(supabase);
         const [totalXp, streakData] = await Promise.all([
-          service.getXP(user.id),
-          service.getStreak(user.id),
+          service.getXP(authUserId),
+          service.getStreak(authUserId),
         ]);
 
         // Fetch profile — separate name_rerolls_used to avoid breaking the
@@ -147,26 +149,26 @@ function useDashboardData(): DashboardData {
         const { data: profile } = await supabase
           .from("profiles")
           .select("username")
-          .eq("id", user.id)
+          .eq("id", authUserId)
           .single();
 
         const { data: rerollData } = await supabase
           .from("profiles")
           .select("name_rerolls_used")
-          .eq("id", user.id)
+          .eq("id", authUserId)
           .single();
 
         // Fetch achievements count
         const { count: achievementsCount } = await supabase
           .from("user_achievements")
           .select("id", { count: "exact", head: true })
-          .eq("user_id", user.id);
+          .eq("user_id", authUserId);
 
         // Fetch all XP transactions for the activity feed
         const { data: transactions } = await supabase
           .from("xp_transactions")
           .select("amount, reason, created_at, tx_signature")
-          .eq("user_id", user.id)
+          .eq("user_id", authUserId)
           .order("created_at", { ascending: false });
 
         // Fetch activity dates for streak heatmap (last 270 days)
@@ -175,7 +177,7 @@ function useDashboardData(): DashboardData {
         const { data: activityRows } = await supabase
           .from("xp_transactions")
           .select("created_at")
-          .eq("user_id", user.id)
+          .eq("user_id", authUserId)
           .gte("created_at", oneYearAgo.toISOString());
 
         const streakHistory: Record<string, number> = {};
@@ -194,20 +196,20 @@ function useDashboardData(): DashboardData {
           supabase
             .from("enrollments")
             .select("course_id, enrolled_at, tx_signature")
-            .eq("user_id", user.id),
+            .eq("user_id", authUserId),
           supabase
             .from("user_progress")
             .select("course_id, lesson_id, completed")
-            .eq("user_id", user.id)
+            .eq("user_id", authUserId)
             .eq("completed", true),
           supabase
             .from("certificates")
             .select("course_id, course_title, minted_at, tx_signature")
-            .eq("user_id", user.id),
+            .eq("user_id", authUserId),
           supabase
             .from("user_achievements")
             .select("achievement_id, unlocked_at, tx_signature")
-            .eq("user_id", user.id)
+            .eq("user_id", authUserId)
             .order("unlocked_at", { ascending: false })
             .limit(10),
         ]);
@@ -492,7 +494,7 @@ function useDashboardData(): DashboardData {
           recommendedCourses: recommended,
           recentActivity,
           username: profile?.username ?? "Builder",
-          userId: user.id,
+          userId: authUserId,
           nameRerollsUsed: rerollData?.name_rerolls_used ?? -1,
           isLoading: false,
           fetchError: false,
@@ -509,7 +511,7 @@ function useDashboardData(): DashboardData {
     }
 
     fetchData();
-  }, []);
+  }, [authUserId, authLoading]);
 
   return data;
 }
@@ -521,7 +523,8 @@ export default function DashboardPage() {
   const tErrors = useTranslations("programErrors");
   const tTime = useTranslations("timeAgo");
   const locale = useLocale();
-  const data = useDashboardData();
+  const { userId: authUserId, isLoading: authLoading } = useAuth();
+  const data = useDashboardData(authUserId, authLoading);
   const { connection } = useConnection();
   const { publicKey, sendTransaction } = useWallet();
   const { setVisible: setWalletModalVisible } = useWalletModal();
