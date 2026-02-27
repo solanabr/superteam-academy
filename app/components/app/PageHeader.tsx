@@ -12,7 +12,7 @@ export function PageHeader({ title, subtitle, action }: PageHeaderProps) {
             <div className="space-y-1">
                 <h1 className="text-4xl font-game">{title}</h1>
                 {subtitle && (
-                    <p className="font-game text-xl text-gray-400">{subtitle}</p>
+                    <p className="font-game text-xl text-muted-foreground">{subtitle}</p>
                 )}
             </div>
             {action && <div className="mt-2 sm:mt-0">{action}</div>}

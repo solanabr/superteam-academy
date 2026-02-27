@@ -78,8 +78,8 @@ const TESTIMONIALS_ROW_2: Testimonial[] = [
 
 function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
     return (
-        <div className="inline-flex w-[320px] shrink-0 flex-col gap-4 rounded-2xl border-4 p-5">
-            <p className="font-game text-xl text-gray-300">
+        <div className="inline-flex w-[320px] shrink-0 flex-col gap-4 rounded-2xl border-4 border-border bg-card p-5">
+            <p className="font-game text-xl text-foreground">
                 &ldquo;{testimonial.quote}&rdquo;
             </p>
             <div className="flex items-center gap-3">
@@ -87,8 +87,8 @@ function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
                     {testimonial.avatar}
                 </div>
                 <div>
-                    <p className="font-game text-lg">{testimonial.name}</p>
-                    <p className="font-game text-sm text-gray-500">{testimonial.handle}</p>
+                    <p className="font-game text-lg text-foreground">{testimonial.name}</p>
+                    <p className="font-game text-sm text-muted-foreground">{testimonial.handle}</p>
                 </div>
             </div>
         </div>
@@ -122,7 +122,7 @@ export function TestimonialsSection() {
     const headerInView = useInView(headerRef, { once: true, margin: "-40px" });
 
     return (
-        <section className="w-full overflow-hidden py-16 bg-zinc-900">
+        <section className="w-full overflow-hidden py-16 bg-background">
             <motion.div
                 ref={headerRef}
                 initial={{ opacity: 0, y: 16 }}

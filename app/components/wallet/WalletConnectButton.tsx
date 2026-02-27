@@ -81,12 +81,12 @@ export function WalletConnectButton() {
         {open && (
           <div
             className={cn(
-              "absolute right-0 top-full z-50 mt-2 min-w-[200px] rounded-xl border-2 border-zinc-700 bg-zinc-900 px-2 py-2 shadow-xl"
+              "absolute right-0 top-full z-50 mt-2 min-w-[200px] rounded-xl border-2 border-border bg-popover px-2 py-2 shadow-xl"
             )}
           >
             <button
               type="button"
-              className="flex w-full items-center rounded-lg px-4 py-2.5 text-left font-game text-lg transition-colors hover:bg-zinc-800"
+              className="flex w-full items-center rounded-lg px-4 py-2.5 text-left font-game text-lg transition-colors hover:bg-accent"
               onClick={() => {
                 setOpen(false);
                 router.push("/dashboard");
@@ -96,7 +96,7 @@ export function WalletConnectButton() {
             </button>
             <button
               type="button"
-              className="flex w-full items-center rounded-lg px-4 py-2.5 text-left font-game text-lg transition-colors hover:bg-zinc-800"
+              className="flex w-full items-center rounded-lg px-4 py-2.5 text-left font-game text-lg transition-colors hover:bg-accent"
               onClick={() => {
                 setOpen(false);
                 setVisible(true);
@@ -106,7 +106,7 @@ export function WalletConnectButton() {
             </button>
             <button
               type="button"
-              className="flex w-full items-center rounded-lg px-4 py-2.5 text-left font-game text-lg transition-colors hover:bg-zinc-800"
+              className="flex w-full items-center rounded-lg px-4 py-2.5 text-left font-game text-lg transition-colors hover:bg-accent"
               onClick={() => {
                 if (publicKey) {
                   navigator.clipboard.writeText(publicKey.toBase58());
@@ -119,7 +119,7 @@ export function WalletConnectButton() {
             </button>
             <button
               type="button"
-              className="flex w-full items-center rounded-lg px-4 py-2.5 text-left font-game text-lg text-red-400 transition-colors hover:bg-zinc-800"
+              className="flex w-full items-center rounded-lg px-4 py-2.5 text-left font-game text-lg text-red-400 transition-colors hover:bg-accent"
               onClick={() => {
                 setOpen(false);
                 disconnect();

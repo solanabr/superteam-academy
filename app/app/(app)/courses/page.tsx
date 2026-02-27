@@ -10,33 +10,33 @@ import { getAllCourses, type MockCourse } from "@/lib/services/content-service";
 function CourseCard({ course }: { course: MockCourse }) {
     return (
         <Link href={`/courses/${course.slug}`} className="block h-full">
-            <div className="border-4 rounded-xl hover:bg-zinc-900 cursor-pointer h-full">
-                <div className="p-4 h-full flex flex-col">
+            <div className="border-4 rounded-2xl border-border hover:bg-accent cursor-pointer h-full transition-colors">
+                <div className="p-4 h-full flex flex-col font-game">
                     {/* Title + description */}
-                    <div>
-                        <h2 className="font-game text-2xl line-clamp-2">
+                    <div className="min-w-0">
+                        <h2 className="font-game text-2xl sm:text-3xl line-clamp-2">
                             {course.title}
                         </h2>
 
-                        <p className="font-game text-xl text-gray-400 line-clamp-2 mt-1">
+                        <p className="font-game text-lg sm:text-xl text-muted-foreground line-clamp-2 mt-1">
                             {course.description}
                         </p>
                     </div>
 
                     {/* Push this to bottom */}
-                    <div className="flex items-center gap-3 mt-auto pt-4 flex-nowrap overflow-hidden">
-                        <h2 className="bg-zinc-800 gap-2 font-game p-1 px-4 rounded-2xl inline-flex items-center whitespace-nowrap">
-                            <ChartNoAxesColumnIncreasing className="h-4 w-4" />
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-auto pt-4">
+                        <h2 className="bg-muted gap-2 font-game text-base sm:text-lg p-1.5 px-4 rounded-2xl inline-flex items-center whitespace-nowrap">
+                            <ChartNoAxesColumnIncreasing className="h-5 w-5" />
                             {course.difficulty}
                         </h2>
 
-                        <span className="font-game text-gray-500 inline-flex items-center gap-1 whitespace-nowrap">
-                            <BookOpen className="h-4 w-4" />
+                        <span className="font-game text-base sm:text-lg text-muted-foreground inline-flex items-center gap-1 whitespace-nowrap">
+                            <BookOpen className="h-5 w-5" />
                             {course.lessonCount} lessons
                         </span>
 
-                        <span className="font-game text-yellow-400 inline-flex items-center gap-1 whitespace-nowrap">
-                            <Sparkles className="h-4 w-4" />
+                        <span className="font-game text-base sm:text-lg text-yellow-400 inline-flex items-center gap-1 whitespace-nowrap">
+                            <Sparkles className="h-5 w-5" />
                             {course.lessonCount * course.xpPerLesson} XP
                         </span>
                     </div>
@@ -69,17 +69,17 @@ export default function CoursesPage() {
     }, [courses, search]);
 
     return (
-        <div className="p-10 md:px-12">
-            <h2 className="text-4xl mb-2 font-game">All Courses</h2>
+        <div className="p-4 sm:p-6 md:p-8 md:px-10 lg:px-12">
+            <h2 className="font-game text-4xl sm:text-5xl mb-2">All Courses</h2>
 
             {/* Search */}
             <div className="relative max-w-md mb-6">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
                 <Input
                     placeholder="Search courses..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="pl-9"
+                    className="pl-10 text-base sm:text-lg"
                 />
             </div>
 
@@ -87,7 +87,7 @@ export default function CoursesPage() {
             {isLoading ? (
                 <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                     {[1, 2, 3].map((i) => (
-                        <div key={i} className="h-40 animate-pulse rounded-xl border-4" />
+                        <div key={i} className="h-40 animate-pulse rounded-2xl border-4 border-border" />
                     ))}
                 </div>
             ) : filtered.length > 0 ? (

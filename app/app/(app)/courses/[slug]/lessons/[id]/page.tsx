@@ -107,17 +107,17 @@ export default function LessonPage({
     return (
         <div className="flex h-[calc(100vh-3.5rem)] flex-col overflow-hidden -m-4 sm:-m-6">
             {/* Top nav bar */}
-            <div className="flex items-center justify-between border-b border-border bg-background px-4 py-2">
-                <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border bg-background px-3 sm:px-4 py-2">
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                     <Link
                         href={`/courses/${slug}`}
-                        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors shrink-0"
                     >
                         <ChevronLeft className="h-4 w-4" />
-                        {course.title}
+                        <span className="truncate max-w-[120px] sm:max-w-[200px]">{course.title}</span>
                     </Link>
-                    <span className="text-muted-foreground/50">·</span>
-                    <span className="text-sm text-muted-foreground">{moduleTitle}</span>
+                    <span className="text-muted-foreground/50 shrink-0">·</span>
+                    <span className="text-xs sm:text-sm text-muted-foreground truncate">{moduleTitle}</span>
                 </div>
                 <div className="flex items-center gap-2">
                     <ProgressBar
@@ -132,13 +132,13 @@ export default function LessonPage({
             </div>
 
             {/* Main content */}
-            <div className="flex flex-1 overflow-hidden">
+            <div className="flex flex-1 flex-col md:flex-row overflow-hidden">
                 {/* Left: Content pane */}
                 <div
-                    className={`flex flex-col overflow-y-auto border-r border-border bg-background ${isChallenge ? "w-1/2" : "w-full max-w-3xl mx-auto"
+                    className={`flex flex-col overflow-y-auto border-b md:border-b-0 md:border-r border-border bg-background ${isChallenge ? "w-full md:w-1/2 md:min-w-0" : "w-full max-w-3xl mx-auto"
                         }`}
                 >
-                    <div className="p-6 space-y-4">
+                    <div className="p-4 sm:p-6 space-y-4">
                         <div className="flex items-center gap-2">
                             {isChallenge ? (
                                 <Badge
@@ -241,7 +241,7 @@ export default function LessonPage({
 
                 {/* Right: Code editor (challenges only) */}
                 {isChallenge ? (
-                    <div className="flex w-1/2 flex-col overflow-hidden border-l border-border bg-background">
+                    <div className="flex flex-1 flex-col overflow-hidden border-t md:border-t-0 md:border-l border-border bg-background min-h-[280px] md:min-h-0 w-full md:w-1/2">
                         <div className="flex items-center justify-between border-b border-border bg-muted/30 px-4 py-2">
                             <div className="flex items-center gap-2">
                                 <Code2 className="h-4 w-4 text-muted-foreground" />

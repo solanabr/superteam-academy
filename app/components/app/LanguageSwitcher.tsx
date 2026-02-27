@@ -39,13 +39,20 @@ export function LanguageSwitcher() {
       onValueChange={handleValueChange}
       disabled={isPending}
     >
-      <SelectTrigger className="w-[130px] gap-2 font-game" aria-label="Select language">
+      <SelectTrigger
+        className="w-[130px] gap-2 font-game bg-background border-border text-foreground hover:bg-accent/50 [&_svg]:text-muted-foreground"
+        aria-label="Select language"
+      >
         <Languages className="h-4 w-4 shrink-0" />
         <SelectValue />
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent
+        position="popper"
+        sideOffset={6}
+        className="z-[100] min-w-[var(--radix-select-trigger-width)] rounded-xl border-2 border-border bg-popover py-1.5 shadow-xl"
+      >
         {LOCALES.map(({ value, label }) => (
-          <SelectItem key={value} value={value}>
+          <SelectItem key={value} value={value} className="rounded-lg px-3 py-2.5 font-game text-base cursor-pointer">
             {label}
           </SelectItem>
         ))}

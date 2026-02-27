@@ -2,13 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/app";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { useAllCourses } from "@/hooks";
 import type { LeaderboardEntry } from "@/lib/services/learning-progress";
 
@@ -59,126 +52,118 @@ export default function AdminAnalyticsPage() {
   const courseList = (courses ?? []).map((c) => c.account as CourseAccount);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <PageHeader
         title="Analytics"
         subtitle="Platform metrics and per-course stats"
       />
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Total learners</CardTitle>
-            <CardDescription>Wallets with XP &gt; 0 (all-time)</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {leaderboardLoading ? (
-              <p className="text-muted-foreground text-sm">Loading…</p>
-            ) : (
-              <p className="text-2xl font-semibold tabular-nums">{totalLearners}</p>
-            )}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Total XP in circulation</CardTitle>
-            <CardDescription>Sum of all learner XP</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {leaderboardLoading ? (
-              <p className="text-muted-foreground text-sm">Loading…</p>
-            ) : (
-              <p className="text-2xl font-semibold tabular-nums">{totalXp.toLocaleString()}</p>
-            )}
-          </CardContent>
-        </Card>
+        <div className="p-4 sm:p-6 rounded-2xl border-4 border-border bg-card">
+          <h2 className="font-game text-xl mb-1">Total learners</h2>
+          <p className="font-game text-muted-foreground text-sm mb-3">
+            Wallets with XP &gt; 0 (all-time)
+          </p>
+          {leaderboardLoading ? (
+            <p className="font-game text-muted-foreground text-sm">Loading…</p>
+          ) : (
+            <p className="font-game text-2xl sm:text-3xl tabular-nums text-yellow-400">{totalLearners}</p>
+          )}
+        </div>
+        <div className="p-4 sm:p-6 rounded-2xl border-4 border-border bg-card">
+          <h2 className="font-game text-xl mb-1">Total XP in circulation</h2>
+          <p className="font-game text-muted-foreground text-sm mb-3">
+            Sum of all learner XP
+          </p>
+          {leaderboardLoading ? (
+            <p className="font-game text-muted-foreground text-sm">Loading…</p>
+          ) : (
+            <p className="font-game text-2xl sm:text-3xl tabular-nums text-yellow-400">{totalXp.toLocaleString()}</p>
+          )}
+        </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Leaderboard</CardTitle>
-          <CardDescription>Top learners by XP (all-time)</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {leaderboardError && (
-            <p className="text-sm text-destructive mb-4">{leaderboardError}</p>
-          )}
-          {leaderboardLoading ? (
-            <p className="text-muted-foreground text-sm">Loading…</p>
-          ) : entries.length === 0 ? (
-            <p className="text-muted-foreground text-sm">No entries yet.</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border">
-                    <th className="text-left py-2 pr-4 font-medium">Rank</th>
-                    <th className="text-left py-2 pr-4 font-medium">Wallet</th>
-                    <th className="text-right py-2 pl-2 font-medium">XP</th>
+      <div className="p-4 sm:p-6 rounded-2xl border-4 border-border bg-card">
+        <h2 className="font-game text-xl mb-1">Leaderboard</h2>
+        <p className="font-game text-muted-foreground text-sm mb-4">
+          Top learners by XP (all-time)
+        </p>
+        {leaderboardError && (
+          <p className="font-game text-sm text-destructive mb-4">{leaderboardError}</p>
+        )}
+        {leaderboardLoading ? (
+          <p className="font-game text-muted-foreground text-sm">Loading…</p>
+        ) : entries.length === 0 ? (
+          <p className="font-game text-muted-foreground text-sm">No entries yet.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm font-game">
+              <thead>
+                <tr className="border-b-2 border-border">
+                  <th className="text-left py-2 pr-4 font-game">Rank</th>
+                  <th className="text-left py-2 pr-4 font-game">Wallet</th>
+                  <th className="text-right py-2 pl-2 font-game">XP</th>
+                </tr>
+              </thead>
+              <tbody>
+                {entries.slice(0, 100).map((e) => (
+                  <tr key={e.wallet} className="border-b border-border/50">
+                    <td className="py-2 pr-4 tabular-nums">{e.rank}</td>
+                    <td className="py-2 pr-4 font-mono text-xs break-all">{e.wallet}</td>
+                    <td className="text-right py-2 pl-2 tabular-nums text-yellow-400">{e.xp.toLocaleString()}</td>
                   </tr>
-                </thead>
-                <tbody>
-                  {entries.slice(0, 100).map((e) => (
-                    <tr key={e.wallet} className="border-b border-border/50">
-                      <td className="py-2 pr-4 tabular-nums">{e.rank}</td>
-                      <td className="py-2 pr-4 font-mono text-xs break-all">{e.wallet}</td>
-                      <td className="text-right py-2 pl-2 tabular-nums">{e.xp.toLocaleString()}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {entries.length > 100 && (
-                <p className="text-muted-foreground text-xs mt-2">Showing top 100</p>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                ))}
+              </tbody>
+            </table>
+            {entries.length > 100 && (
+              <p className="font-game text-muted-foreground text-sm mt-2">Showing top 100</p>
+            )}
+          </div>
+        )}
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Per-course stats</CardTitle>
-          <CardDescription>Enrollments and completions from chain</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {courseList.length === 0 ? (
-            <p className="text-muted-foreground text-sm">No courses yet.</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border">
-                    <th className="text-left py-2 pr-4 font-medium">Course ID</th>
-                    <th className="text-right py-2 px-2">Enrollments</th>
-                    <th className="text-right py-2 px-2">Completions</th>
-                    <th className="text-right py-2 pl-2">Completion rate</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {courseList.map((acc) => {
-                    const rate =
-                      acc.totalEnrollments > 0
-                        ? ((acc.totalCompletions / acc.totalEnrollments) * 100).toFixed(1)
-                        : "—";
-                    return (
-                      <tr key={acc.courseId} className="border-b border-border/50">
-                        <td className="py-2 pr-4 font-mono">{acc.courseId}</td>
-                        <td className="text-right py-2 px-2 tabular-nums">
-                          {acc.totalEnrollments}
-                        </td>
-                        <td className="text-right py-2 px-2 tabular-nums">
-                          {acc.totalCompletions}
-                        </td>
-                        <td className="text-right py-2 pl-2 tabular-nums">{rate}%</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <div className="p-4 sm:p-6 rounded-2xl border-4 border-border bg-card">
+        <h2 className="font-game text-xl mb-1">Per-course stats</h2>
+        <p className="font-game text-muted-foreground text-sm mb-4">
+          Enrollments and completions from chain
+        </p>
+        {courseList.length === 0 ? (
+          <p className="font-game text-muted-foreground text-sm">No courses yet.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm font-game">
+              <thead>
+                <tr className="border-b-2 border-border">
+                  <th className="text-left py-2 pr-4 font-game">Course ID</th>
+                  <th className="text-right py-2 px-2 font-game">Enrollments</th>
+                  <th className="text-right py-2 px-2 font-game">Completions</th>
+                  <th className="text-right py-2 pl-2 font-game">Completion rate</th>
+                </tr>
+              </thead>
+              <tbody>
+                {courseList.map((acc) => {
+                  const rate =
+                    acc.totalEnrollments > 0
+                      ? ((acc.totalCompletions / acc.totalEnrollments) * 100).toFixed(1)
+                      : "—";
+                  return (
+                    <tr key={acc.courseId} className="border-b border-border/50">
+                      <td className="py-2 pr-4 font-mono">{acc.courseId}</td>
+                      <td className="text-right py-2 px-2 tabular-nums">
+                        {acc.totalEnrollments}
+                      </td>
+                      <td className="text-right py-2 px-2 tabular-nums">
+                        {acc.totalCompletions}
+                      </td>
+                      <td className="text-right py-2 pl-2 tabular-nums">{rate}%</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

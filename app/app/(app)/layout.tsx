@@ -19,7 +19,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 <AppSidebar />
                 <SidebarInset>
                     <AppHeader />
-                    <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-zinc-900">
+                    <div className="flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-6 bg-background min-h-0">
                         {children}
                     </div>
                 </SidebarInset>

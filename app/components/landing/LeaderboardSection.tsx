@@ -26,7 +26,7 @@ export function LeaderboardSection() {
     return (
         <section
             ref={ref}
-            className="w-full py-20 bg-zinc-900"
+            className="w-full py-20 bg-background"
         >
             <div className="mx-auto max-w-4xl px-4">
                 <motion.div

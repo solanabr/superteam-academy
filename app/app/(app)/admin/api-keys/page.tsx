@@ -2,17 +2,9 @@
 
 import { useState } from "react";
 import { PageHeader } from "@/components/app";
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import {
     Select,
     SelectContent,
@@ -44,152 +36,146 @@ export default function AdminApiKeysPage() {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
             <PageHeader
                 title="API Keys"
                 subtitle="Generate admin or client API keys for backend and integrations"
             />
 
-            <Card>
-                <CardHeader>
-                    <CardTitle className="text-base">Login</CardTitle>
-                    <CardDescription>
-                        Use ADMIN_PASSWORD (backend .env) to get a JWT. Required
-                        to generate API keys.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    {token ? (
-                        <div className="flex items-center gap-2">
-                            <p className="text-sm text-muted-foreground">
-                                Logged in. JWT active.
-                            </p>
-                            <Button variant="outline" size="sm" onClick={logout}>
-                                Logout
-                            </Button>
-                        </div>
-                    ) : (
-                        <div className="flex flex-wrap items-end gap-4">
-                            <div className="space-y-2 min-w-[240px]">
-                                <Label htmlFor="admin-password">Password</Label>
-                                <Input
-                                    id="admin-password"
-                                    type="password"
-                                    placeholder="ADMIN_PASSWORD"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                />
-                            </div>
-                            <Button
-                                onClick={() => login(password)}
-                                disabled={loginLoading || !password}
-                            >
-                                {loginLoading ? "Logging in…" : "Login"}
-                            </Button>
-                        </div>
-                    )}
-                    {loginError && (
-                        <p className="text-sm text-destructive">{loginError}</p>
-                    )}
-                </CardContent>
-            </Card>
-
-            <Separator />
-
-            <Card>
-                <CardHeader>
-                    <CardTitle className="text-base">Generate API key</CardTitle>
-                    <CardDescription>
-                        New keys can call academy endpoints. Store securely; the
-                        key is shown only once.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    {token ? (
-                        <div className="flex flex-wrap items-end gap-4">
-                            <div className="space-y-2">
-                                <Label>Role</Label>
-                                <Select
-                                    value={keyRole}
-                                    onValueChange={(v) =>
-                                        setKeyRole(v as "admin" | "client")
-                                    }
-                                >
-                                    <SelectTrigger className="w-[120px]">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="admin">admin</SelectItem>
-                                        <SelectItem value="client">client</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="space-y-2 min-w-[200px]">
-                                <Label>Label (optional)</Label>
-                                <Input
-                                    placeholder="e.g. BFF prod"
-                                    value={keyLabel}
-                                    onChange={(e) =>
-                                        setKeyLabel(e.target.value)
-                                    }
-                                />
-                            </div>
-                            <Button
-                                onClick={() => {
-                                    clearGen();
-                                    generate(token, {
-                                        role: keyRole,
-                                        label: keyLabel || undefined,
-                                    });
-                                }}
-                                disabled={genLoading}
-                            >
-                                {genLoading ? "Generating…" : "Generate"}
-                            </Button>
-                        </div>
-                    ) : (
-                        <p className="text-sm text-muted-foreground">
-                            Login first to generate API keys.
+            <div className="p-4 sm:p-6 rounded-2xl border-4 border-border bg-card">
+                <h2 className="font-game text-xl mb-1">Login</h2>
+                <p className="font-game text-muted-foreground text-sm mb-4">
+                    Use ADMIN_PASSWORD (backend .env) to get a JWT. Required
+                    to generate API keys.
+                </p>
+                {token ? (
+                    <div className="flex items-center gap-2">
+                        <p className="font-game text-sm text-muted-foreground">
+                            Logged in. JWT active.
                         </p>
-                    )}
-                    {genResult && (
-                        <div className="space-y-2">
-                            {genResult.error ? (
-                                <p className="text-sm text-destructive">
-                                    {genResult.error}
-                                </p>
-                            ) : (
-                                <div className="rounded-md border border-border bg-muted/50 p-3 font-mono text-sm break-all space-y-2">
-                                    <div className="flex flex-wrap items-center justify-between gap-2">
-                                        <span className="break-all">
-                                            <strong>API Key:</strong>{" "}
-                                            {genResult.apiKey}
-                                        </span>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={handleCopyKey}
-                                            className="shrink-0"
-                                        >
-                                            {copied ? "Copied" : "Copy"}
-                                        </Button>
-                                    </div>
-                                    <p className="text-muted-foreground text-xs">
-                                        role: {genResult.role}
-                                        {genResult.label
-                                            ? ` | label: ${genResult.label}`
-                                            : ""}
-                                    </p>
-                                    <p className="text-muted-foreground text-xs">
-                                        Set as BACKEND_API_TOKEN or use for
-                                        direct backend calls. Not shown again.
-                                    </p>
-                                </div>
-                            )}
+                        <Button variant="outline" size="sm" className="font-game border-2 border-border" onClick={logout}>
+                            Logout
+                        </Button>
+                    </div>
+                ) : (
+                    <div className="flex flex-wrap items-end gap-3 sm:gap-4">
+                        <div className="space-y-2 w-full min-w-0 sm:min-w-[200px] sm:max-w-[280px]">
+                            <Label htmlFor="admin-password" className="font-game">Password</Label>
+                            <Input
+                                id="admin-password"
+                                type="password"
+                                placeholder="ADMIN_PASSWORD"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                            />
                         </div>
-                    )}
-                </CardContent>
-            </Card>
+                        <Button
+                            variant="pixel"
+                            className="font-game"
+                            onClick={() => login(password)}
+                            disabled={loginLoading || !password}
+                        >
+                            {loginLoading ? "Logging in…" : "Login"}
+                        </Button>
+                    </div>
+                )}
+                {loginError && (
+                    <p className="font-game text-sm text-destructive mt-2">{loginError}</p>
+                )}
+            </div>
+
+            <div className="p-4 sm:p-6 rounded-2xl border-4 border-border bg-card">
+                <h2 className="font-game text-xl mb-1">Generate API key</h2>
+                <p className="font-game text-muted-foreground text-sm mb-4">
+                    New keys can call academy endpoints. Store securely; the
+                    key is shown only once.
+                </p>
+                {token ? (
+                    <div className="flex flex-wrap items-end gap-3 sm:gap-4">
+                        <div className="space-y-2 w-full min-w-0 sm:w-28">
+                            <Label className="font-game">Role</Label>
+                            <Select
+                                value={keyRole}
+                                onValueChange={(v) =>
+                                    setKeyRole(v as "admin" | "client")
+                                }
+                            >
+                                <SelectTrigger className="w-full sm:w-[120px] font-game">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="admin">admin</SelectItem>
+                                    <SelectItem value="client">client</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2 w-full min-w-0 sm:min-w-[160px] sm:max-w-[220px]">
+                            <Label className="font-game">Label (optional)</Label>
+                            <Input
+                                placeholder="e.g. BFF prod"
+                                value={keyLabel}
+                                onChange={(e) =>
+                                    setKeyLabel(e.target.value)
+                                }
+                            />
+                        </div>
+                        <Button
+                            variant="pixel"
+                            className="font-game"
+                            onClick={() => {
+                                clearGen();
+                                generate(token, {
+                                    role: keyRole,
+                                    label: keyLabel || undefined,
+                                });
+                            }}
+                            disabled={genLoading}
+                        >
+                            {genLoading ? "Generating…" : "Generate"}
+                        </Button>
+                    </div>
+                ) : (
+                    <p className="font-game text-sm text-muted-foreground">
+                        Login first to generate API keys.
+                    </p>
+                )}
+                {genResult && (
+                    <div className="space-y-2 mt-4">
+                        {genResult.error ? (
+                            <p className="font-game text-sm text-destructive">
+                                {genResult.error}
+                            </p>
+                        ) : (
+                            <div className="rounded-xl border-2 border-border bg-muted/50 p-4 font-mono text-sm break-all space-y-2">
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <span className="break-all font-game">
+                                        <strong>API Key:</strong>{" "}
+                                        {genResult.apiKey}
+                                    </span>
+                                    <Button
+                                        variant="pixel"
+                                        size="sm"
+                                        className="font-game shrink-0"
+                                        onClick={handleCopyKey}
+                                    >
+                                        {copied ? "Copied" : "Copy"}
+                                    </Button>
+                                </div>
+                                <p className="font-game text-muted-foreground text-sm">
+                                    role: {genResult.role}
+                                    {genResult.label
+                                        ? ` | label: ${genResult.label}`
+                                        : ""}
+                                </p>
+                                <p className="font-game text-muted-foreground text-sm">
+                                    Set as BACKEND_API_TOKEN or use for
+                                    direct backend calls. Not shown again.
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

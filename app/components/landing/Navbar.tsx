@@ -1,35 +1,38 @@
 "use client";
 
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import Image from "next/image";
+import { useState } from "react";
+import { Menu } from "lucide-react";
 import { ThemeToggle } from "@/components/app/ThemeToggle";
 import { WalletConnectButton } from "@/components/wallet/WalletConnectButton";
 import { LanguageSwitcher } from "@/components/app/LanguageSwitcher";
 import { useIsAdmin } from "@/hooks";
 import { useTranslations } from "next-intl";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
 
 import {
   NavigationMenu,
-  NavigationMenuContent,
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuList,
-  NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
 
 const NAV_LINKS = [
+  { key: "courses" as const, href: "/courses" },
   { key: "leaderboard" as const, href: "/leaderboard" },
   { key: "challenges" as const, href: "/challenges" },
 ];
 
-const COURSES = [
-  { titleKey: "Solana Fundamentals", levelKey: "beginner" as const, href: "/courses/solana-fundamentals" },
-  { titleKey: "Anchor Program Development", levelKey: "beginner" as const, href: "/courses/anchor-development" },
-  { titleKey: "Token Extensions", levelKey: "advanced" as const, href: "/courses/token-extensions" },
-  { titleKey: "Metaplex Core NFTs", levelKey: "advanced" as const, href: "/courses/defi" },
-];
-
 export function Navbar() {
+  const [openMobile, setOpenMobile] = useState(false);
   const { isAdmin } = useIsAdmin();
   const t = useTranslations("nav");
   const tCommon = useTranslations("common");
@@ -37,54 +40,33 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-50 w-full">
       {/* Floating navbar */}
-      <div className="relative flex justify-center pt-4">
-        <div className="w-[95%] md:w-[90%] lg:w-[85%] max-w-7xl
-                    rounded-2xl border border-white/10
+      <div className="relative flex justify-center px-2 pt-2 sm:pt-4 sm:px-0">
+        <div className="w-full sm:w-[95%] md:w-[90%] lg:w-[85%] max-w-7xl
+                    rounded-xl sm:rounded-2xl border border-white/10
                     bg-background/70 backdrop-blur-md shadow-lg">
-          <div className="px-6 py-4 flex items-center justify-between">
+          <div className="px-3 py-3 sm:px-6 sm:py-4 flex items-center justify-between gap-2">
             {/* Logo */}
-            <Link href="/" className="flex items-center gap-2">
-              <p className="font-game font-bold text-2xl">
-                {tCommon("appName")}
-              </p>
+            <Link href="/" className="flex items-center gap-2 shrink-0 min-w-0">
+              <Image
+                src="/HORIZONTAL-LOGO/ST-DARK-GREEN-HORIZONTAL.png"
+                alt="Superteam Academy"
+                width={160}
+                height={36}
+                className="h-7 w-auto object-contain dark:hidden sm:h-9"
+              />
+              <Image
+                src="/HORIZONTAL-LOGO/ST-OFF-WHITE-HORIZONTAL.png"
+                alt="Superteam Academy"
+                width={160}
+                height={36}
+                className="h-7 w-auto object-contain hidden dark:block sm:h-9"
+              />
             </Link>
 
             {/* Desktop Nav */}
             <nav className="hidden md:flex items-center gap-8 ">
               <NavigationMenu>
                 <NavigationMenuList className="gap-4">
-                  {/* Courses dropdown */}
-                  <NavigationMenuItem>
-                    <NavigationMenuTrigger className="font-game text-xl">
-                      {t("courses")}
-                    </NavigationMenuTrigger>
-
-                    <NavigationMenuContent>
-                      <ul className="grid grid-cols-2 gap-3 p-4 w-[520px]">
-                        {COURSES.map((course) => (
-                          <li key={course.href}>
-                            <NavigationMenuLink asChild>
-                              <Link
-                                href={course.href}
-                                className="block rounded-md p-3 hover:bg-accent transition-colors"
-                              >
-                                <div className="flex items-center justify-between">
-                                  <h4 className="font-game text-xl">
-                                    {course.titleKey}
-                                  </h4>
-                                  <span className="text-xs text-yellow-400 font-game">
-                                    {t(course.levelKey)}
-                                  </span>
-                                </div>
-                                <p className="mt-1 text-sm text-muted-foreground" />
-                              </Link>
-                            </NavigationMenuLink>
-                          </li>
-                        ))}
-                      </ul>
-                    </NavigationMenuContent>
-                  </NavigationMenuItem>
-
                   {NAV_LINKS.map((link) => (
                     <NavigationMenuItem key={link.href}>
                       <NavigationMenuLink asChild>
@@ -115,10 +97,52 @@ export function Navbar() {
             </nav>
 
             {/* Right actions */}
-            <div className="flex items-center gap-4">
-              <LanguageSwitcher />
-              <ThemeToggle />
+            <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+              <div className="hidden sm:flex items-center gap-2 sm:gap-4">
+                <LanguageSwitcher />
+                <ThemeToggle />
+              </div>
               <WalletConnectButton />
+
+              {/* Mobile nav trigger */}
+              <Sheet open={openMobile} onOpenChange={setOpenMobile}>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon" className="md:hidden size-9">
+                    <Menu className="size-5" />
+                    <span className="sr-only">Open menu</span>
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-[min(18rem,100vw)] flex flex-col gap-6 pt-8">
+                  <SheetHeader className="sr-only">
+                    <SheetTitle>Menu</SheetTitle>
+                  </SheetHeader>
+                  <div className="flex flex-col gap-4 sm:hidden">
+                    <LanguageSwitcher />
+                    <ThemeToggle />
+                  </div>
+                  <nav className="flex flex-col gap-2">
+                    {NAV_LINKS.map((link) => (
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        onClick={() => setOpenMobile(false)}
+                        className="font-game text-xl py-2 px-3 rounded-lg hover:bg-accent hover:text-yellow-400 transition-colors"
+                      >
+                        {t(link.key)}
+                      </Link>
+                    ))}
+                    {isAdmin && (
+                      <Link
+                        href="/admin"
+                        onClick={() => setOpenMobile(false)}
+                        className="font-game text-xl py-2 px-3 rounded-lg hover:bg-accent hover:text-yellow-400 transition-colors"
+                      >
+                        {tCommon("admin")}
+                      </Link>
+                    )}
+                  </nav>
+                </SheetContent>
+              </Sheet>
             </div>
           </div>
         </div>

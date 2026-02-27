@@ -2,13 +2,6 @@
 
 import { PageHeader } from "@/components/app";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
   useAllCourses,
   useCreateCourse,
   useUpdateCourse,
@@ -56,209 +49,201 @@ export default function AdminCoursesPage() {
   const courseList = (courses ?? []).map((c) => c.account as CourseAccount);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <PageHeader
         title="Courses"
         subtitle="Create and manage on-chain courses"
       />
 
       {courseList.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">On-chain courses</CardTitle>
-            <CardDescription>Enrollments and completions from chain</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border">
-                    <th className="text-left py-2 pr-4 font-medium">Course ID</th>
-                    <th className="text-right py-2 px-2">Enrollments</th>
-                    <th className="text-right py-2 px-2">Completions</th>
-                    <th className="text-center py-2 px-2">Active</th>
-                    <th className="text-right py-2 px-2">XP/lesson</th>
-                    <th className="text-right py-2 pl-2">Lessons</th>
+        <div className="p-4 sm:p-6 rounded-2xl border-4 border-border bg-card">
+          <h2 className="font-game text-xl mb-1">On-chain courses</h2>
+          <p className="font-game text-muted-foreground text-sm mb-4">
+            Enrollments and completions from chain
+          </p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm font-game">
+              <thead>
+                <tr className="border-b-2 border-border">
+                  <th className="text-left py-2 pr-4 font-game">Course ID</th>
+                  <th className="text-right py-2 px-2 font-game">Enrollments</th>
+                  <th className="text-right py-2 px-2 font-game">Completions</th>
+                  <th className="text-center py-2 px-2 font-game">Active</th>
+                  <th className="text-right py-2 px-2 font-game">XP/lesson</th>
+                  <th className="text-right py-2 pl-2 font-game">Lessons</th>
+                </tr>
+              </thead>
+              <tbody>
+                {courseList.map((acc) => (
+                  <tr key={acc.courseId} className="border-b border-border/50">
+                    <td className="py-2 pr-4 font-mono">
+                      <Link
+                        href="/test"
+                        className="text-yellow-400 hover:underline"
+                      >
+                        {acc.courseId}
+                      </Link>
+                    </td>
+                    <td className="text-right py-2 px-2 tabular-nums">
+                      {acc.totalEnrollments}
+                    </td>
+                    <td className="text-right py-2 px-2 tabular-nums">
+                      {acc.totalCompletions}
+                    </td>
+                    <td className="text-center py-2 px-2">
+                      {acc.isActive ? "Yes" : "No"}
+                    </td>
+                    <td className="text-right py-2 px-2 tabular-nums">
+                      {acc.xpPerLesson}
+                    </td>
+                    <td className="text-right py-2 pl-2 tabular-nums">
+                      {acc.lessonCount}
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {courseList.map((acc) => (
-                    <tr key={acc.courseId} className="border-b border-border/50">
-                      <td className="py-2 pr-4 font-mono">
-                        <Link
-                          href="/test"
-                          className="text-primary hover:underline"
-                        >
-                          {acc.courseId}
-                        </Link>
-                      </td>
-                      <td className="text-right py-2 px-2 tabular-nums">
-                        {acc.totalEnrollments}
-                      </td>
-                      <td className="text-right py-2 px-2 tabular-nums">
-                        {acc.totalCompletions}
-                      </td>
-                      <td className="text-center py-2 px-2">
-                        {acc.isActive ? "Yes" : "No"}
-                      </td>
-                      <td className="text-right py-2 px-2 tabular-nums">
-                        {acc.xpPerLesson}
-                      </td>
-                      <td className="text-right py-2 pl-2 tabular-nums">
-                        {acc.lessonCount}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       )}
 
       {isAuthority && (
         <>
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Create course</CardTitle>
-              <CardDescription>
-                Register a new course PDA. Requires authority via backend.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex flex-wrap gap-4">
-                <div className="space-y-2 min-w-[180px]">
-                  <Label>courseId</Label>
-                  <Input
-                    placeholder="e.g. intro-solana"
-                    value={createForm.courseId}
-                    onChange={(e) =>
-                      setCreateForm((f) => ({ ...f, courseId: e.target.value }))
-                    }
-                  />
-                </div>
-                <div className="space-y-2 w-24">
-                  <Label>lessonCount</Label>
-                  <Input
-                    type="number"
-                    min={1}
-                    value={createForm.lessonCount}
-                    onChange={(e) =>
-                      setCreateForm((f) => ({
-                        ...f,
-                        lessonCount: +e.target.value || 1,
-                      }))
-                    }
-                  />
-                </div>
-                <div className="space-y-2 w-24">
-                  <Label>xpPerLesson</Label>
-                  <Input
-                    type="number"
-                    min={0}
-                    value={createForm.xpPerLesson}
-                    onChange={(e) =>
-                      setCreateForm((f) => ({
-                        ...f,
-                        xpPerLesson: +e.target.value || 0,
-                      }))
-                    }
-                  />
-                </div>
-                <div className="flex items-end">
-                  <Button
-                    disabled={!createForm.courseId || creating}
-                    onClick={() =>
-                      createCourse({
-                        courseId: createForm.courseId,
-                        lessonCount: createForm.lessonCount,
-                        xpPerLesson: createForm.xpPerLesson,
-                      })
-                    }
-                  >
-                    {creating ? "Creating…" : "Create"}
-                  </Button>
-                </div>
+          <div className="p-4 sm:p-6 rounded-2xl border-4 border-border bg-card">
+            <h2 className="font-game text-xl mb-1">Create course</h2>
+            <p className="font-game text-muted-foreground text-sm mb-4">
+              Register a new course PDA. Requires authority via backend.
+            </p>
+            <div className="flex flex-wrap gap-3 sm:gap-4">
+              <div className="space-y-2 w-full min-w-0 sm:min-w-[160px] sm:max-w-[220px]">
+                <Label className="font-game">courseId</Label>
+                <Input
+                  placeholder="e.g. intro-solana"
+                  value={createForm.courseId}
+                  onChange={(e) =>
+                    setCreateForm((f) => ({ ...f, courseId: e.target.value }))
+                  }
+                />
               </div>
-            </CardContent>
-          </Card>
+              <div className="space-y-2 w-full min-w-0 sm:w-24">
+                <Label className="font-game">lessonCount</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  value={createForm.lessonCount}
+                  onChange={(e) =>
+                    setCreateForm((f) => ({
+                      ...f,
+                      lessonCount: +e.target.value || 1,
+                    }))
+                  }
+                />
+              </div>
+              <div className="space-y-2 w-full min-w-0 sm:w-24">
+                <Label className="font-game">xpPerLesson</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={createForm.xpPerLesson}
+                  onChange={(e) =>
+                    setCreateForm((f) => ({
+                      ...f,
+                      xpPerLesson: +e.target.value || 0,
+                    }))
+                  }
+                />
+              </div>
+              <div className="flex items-end">
+                <Button
+                  variant="pixel"
+                  className="font-game"
+                  disabled={!createForm.courseId || creating}
+                  onClick={() =>
+                    createCourse({
+                      courseId: createForm.courseId,
+                      lessonCount: createForm.lessonCount,
+                      xpPerLesson: createForm.xpPerLesson,
+                    })
+                  }
+                >
+                  {creating ? "Creating…" : "Create"}
+                </Button>
+              </div>
+            </div>
+          </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Update course</CardTitle>
-              <CardDescription>
-                Change XP, active status, or other fields.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex flex-wrap gap-4">
-                <div className="space-y-2 min-w-[200px]">
-                  <Label>Course</Label>
-                  <Select
-                    value={updateForm.courseId}
-                    onValueChange={(v) =>
-                      setUpdateForm((f) => ({ ...f, courseId: v }))
-                    }
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select course" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {courseList.map((acc) => (
-                        <SelectItem key={acc.courseId} value={acc.courseId}>
-                          {acc.courseId}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2 w-24">
-                  <Label>newXpPerLesson</Label>
-                  <Input
-                    type="number"
-                    min={0}
-                    value={updateForm.newXpPerLesson}
-                    onChange={(e) =>
-                      setUpdateForm((f) => ({
-                        ...f,
-                        newXpPerLesson: +e.target.value || 0,
-                      }))
-                    }
-                  />
-                </div>
-                <div className="flex items-end">
-                  <Button
-                    disabled={!updateForm.courseId || updating}
-                    onClick={() =>
-                      updateCourse({
-                        courseId: updateForm.courseId,
-                        newIsActive: updateForm.newIsActive,
-                        newXpPerLesson: updateForm.newXpPerLesson,
-                      })
-                    }
-                  >
-                    {updating ? "Updating…" : "Update"}
-                  </Button>
-                </div>
+          <div className="p-4 sm:p-6 rounded-2xl border-4 border-border bg-card">
+            <h2 className="font-game text-xl mb-1">Update course</h2>
+            <p className="font-game text-muted-foreground text-sm mb-4">
+              Change XP, active status, or other fields.
+            </p>
+            <div className="flex flex-wrap gap-3 sm:gap-4">
+              <div className="space-y-2 w-full min-w-0 sm:min-w-[160px] sm:max-w-[240px]">
+                <Label className="font-game">Course</Label>
+                <Select
+                  value={updateForm.courseId}
+                  onValueChange={(v) =>
+                    setUpdateForm((f) => ({ ...f, courseId: v }))
+                  }
+                >
+                  <SelectTrigger className="w-full font-game">
+                    <SelectValue placeholder="Select course" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {courseList.map((acc) => (
+                      <SelectItem key={acc.courseId} value={acc.courseId}>
+                        {acc.courseId}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-            </CardContent>
-          </Card>
+              <div className="space-y-2 w-full min-w-0 sm:w-24">
+                <Label className="font-game">newXpPerLesson</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={updateForm.newXpPerLesson}
+                  onChange={(e) =>
+                    setUpdateForm((f) => ({
+                      ...f,
+                      newXpPerLesson: +e.target.value || 0,
+                    }))
+                  }
+                />
+              </div>
+              <div className="flex items-end">
+                <Button
+                  variant="pixel"
+                  className="font-game"
+                  disabled={!updateForm.courseId || updating}
+                  onClick={() =>
+                    updateCourse({
+                      courseId: updateForm.courseId,
+                      newIsActive: updateForm.newIsActive,
+                      newXpPerLesson: updateForm.newXpPerLesson,
+                    })
+                  }
+                >
+                  {updating ? "Updating…" : "Update"}
+                </Button>
+              </div>
+            </div>
+          </div>
         </>
       )}
 
       {!isAuthority && (
-        <Card>
-          <CardContent className="py-6">
-            <p className="text-muted-foreground text-sm">
-              Only the authority can create or update courses. Use the backend
-              API with authority keypair.
-            </p>
-          </CardContent>
-        </Card>
+        <div className="p-4 sm:p-6 rounded-2xl border-4 border-border bg-card">
+          <p className="font-game text-muted-foreground text-sm">
+            Only the authority can create or update courses. Use the backend
+            API with authority keypair.
+          </p>
+        </div>
       )}
 
-      <p className="text-xs text-muted-foreground">
-        Full test playground: <Link href="/test" className="text-primary hover:underline">/test</Link>
+      <p className="font-game text-sm text-muted-foreground">
+        Full test playground: <Link href="/test" className="text-yellow-400 hover:underline">/test</Link>
       </p>
     </div>
   );

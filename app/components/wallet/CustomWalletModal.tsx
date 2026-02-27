@@ -34,7 +34,7 @@ function WalletListItemRow({
         onClick={onClick}
         tabIndex={tabIndex}
         className={cn(
-          "group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-colors",
+          "group flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left font-game text-lg transition-colors",
           "hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         )}
       >
@@ -45,12 +45,12 @@ function WalletListItemRow({
             width={24}
             height={24}
             unoptimized
-            className="h-6 w-6 shrink-0 rounded"
+            className="h-7 w-7 shrink-0 rounded"
           />
         )}
-        <span className="flex-1 font-medium">{wallet.adapter.name}</span>
+        <span className="flex-1 font-game font-medium">{wallet.adapter.name}</span>
         {isDetected && (
-          <span className="text-xs text-muted-foreground group-hover:text-accent-foreground">
+          <span className="font-game text-base text-muted-foreground group-hover:text-accent-foreground">
             Detected
           </span>
         )}
@@ -150,28 +150,28 @@ export function CustomWalletModal() {
       )}
     >
       <div
-        className="absolute inset-0 bg-black/50"
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         aria-hidden
         onClick={hide}
         onMouseDown={hide}
       />
       <div
         className={cn(
-          "relative z-10 w-full max-w-[400px] rounded-2xl border border-border bg-card shadow-xl transition-[transform,opacity] duration-200",
+          "relative z-10 w-full max-w-[440px] rounded-2xl border-4 border-border bg-card text-card-foreground shadow-xl transition-[transform,opacity] duration-200",
           mounted ? "scale-100 opacity-100" : "scale-95 opacity-0"
         )}
       >
         <div className="flex items-center justify-between border-b border-border px-5 py-4">
           <h2
             id="wallet-modal-title"
-            className="text-lg font-semibold text-foreground"
+            className="font-game text-3xl font-semibold text-foreground"
           >
             Connect wallet
           </h2>
           <button
             type="button"
             onClick={hide}
-            className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             aria-label="Close"
           >
             <svg width="16" height="16" viewBox="0 0 14 14" fill="currentColor" aria-hidden>
@@ -183,7 +183,7 @@ export function CustomWalletModal() {
         <div className="max-h-[min(70vh,420px)] overflow-y-auto px-5 py-4">
           {installed.length > 0 ? (
             <>
-              <p className="mb-3 text-sm text-muted-foreground">
+              <p className="mb-3 font-game text-lg text-muted-foreground">
                 Choose a wallet to connect to this app.
               </p>
               <ul className="space-y-0.5">
@@ -200,7 +200,7 @@ export function CustomWalletModal() {
                   <button
                     type="button"
                     onClick={() => setExpanded((e) => !e)}
-                    className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg py-2.5 font-game text-lg font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
                   >
                     {expanded ? "Less options" : "More options"}
                     <svg
@@ -230,7 +230,7 @@ export function CustomWalletModal() {
             </>
           ) : (
             <>
-              <p className="mb-4 text-center text-sm text-muted-foreground">
+              <p className="mb-4 text-center font-game text-lg text-muted-foreground">
                 You’ll need a Solana wallet to continue.
               </p>
               {notInstalled.length > 0 ? (
@@ -238,7 +238,7 @@ export function CustomWalletModal() {
                   <button
                     type="button"
                     onClick={() => setExpanded((e) => !e)}
-                    className="mb-3 flex w-full items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    className="mb-3 flex w-full items-center justify-center gap-2 rounded-lg py-2.5 font-game text-lg font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
                   >
                     {expanded ? "Hide options" : "Already have a wallet? View options"}
                     <svg

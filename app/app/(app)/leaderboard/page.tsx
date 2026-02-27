@@ -37,13 +37,11 @@ function truncateWallet(address: string) {
     return `${address.slice(0, 4)}...${address.slice(-4)}`;
 }
 
-
-
 async function fetchLeaderboard(timeframe: LeaderboardTimeframe): Promise<LeaderboardEntry[]> {
     const res = await fetch(`/api/leaderboard?timeframe=${timeframe}`);
     const data = (await res.json()) as { entries?: LeaderboardEntry[]; error?: string };
-    if (data.entries && data.entries.length > 0) return data.entries;
-    return getMockLeaderboard(timeframe);
+    if (!res.ok || data.error) return getMockLeaderboard(timeframe);
+    return data.entries ?? [];
 }
 
 export default function LeaderboardPage() {
@@ -55,7 +53,7 @@ export default function LeaderboardPage() {
     const { data: entries = [] } = useQuery({
         queryKey: ["leaderboard", timeframe],
         queryFn: () => fetchLeaderboard(timeframe),
-        placeholderData: (prev) => prev ?? getMockLeaderboard(timeframe),
+        placeholderData: (prev) => prev,
     });
 
     const filtered = useMemo(
@@ -79,42 +77,38 @@ export default function LeaderboardPage() {
     const handleNext = () => setPage((p) => Math.min(totalPages, p + 1));
 
     return (
-        <div className="max-w-6xl mx-auto px-6 py-10">
-            {/* Hero header */}
-            <div className="text-center mb-10">
-                <div className="inline-flex items-center gap-2 bg-yellow-400/10 border border-yellow-400/20 rounded-full px-5 py-2 mb-4">
-                    <Trophy className="h-4 w-4 text-yellow-400" />
-                    <span className="font-game text-lg text-yellow-400">Global Rankings</span>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
+            <div className="text-center mb-8 sm:mb-10">
+                <div className="inline-flex items-center gap-2 bg-yellow-400/10 border border-yellow-400/20 rounded-full px-4 sm:px-5 py-2 mb-3 sm:mb-4">
+                    <Trophy className="h-4 w-4 text-yellow-400 shrink-0" />
+                    <span className="font-game text-base sm:text-lg text-yellow-400">Global Rankings</span>
                 </div>
-                <h1 className="text-5xl md:text-6xl font-game">
+                <h1 className="font-game text-4xl sm:text-5xl md:text-6xl px-2">
                     Talent <span className="text-yellow-400">Leaderboard</span>
                 </h1>
-                <p className="mt-3 font-game text-xl text-gray-400 max-w-xl mx-auto">
+                <p className="mt-2 sm:mt-3 font-game text-lg sm:text-xl text-muted-foreground max-w-xl mx-auto px-2">
                     See where you stand amongst Solana&apos;s top contributors
                 </p>
             </div>
 
-            {/* Podium — Top 3 */}
             {entries.length >= 3 && (
                 <div className="flex items-end justify-center gap-4 md:gap-8 mb-12 pt-10">
-                    {/* #2 — Silver */}
                     <div className="flex flex-col items-center">
                         <PixelAvatar wallet={entries[1].wallet} size="lg" />
                         <p className="font-game text-lg mt-2 truncate max-w-[120px] text-center">
                             {truncateWallet(entries[1].wallet)}
                         </p>
-                        <p className="font-game text-xl text-gray-400">
+                        <p className="font-game text-xl text-muted-foreground">
                             {entries[1].xp.toLocaleString()} XP
                         </p>
-                        <div className="w-28 md:w-36 h-20 bg-gradient-to-t from-zinc-800 to-zinc-700 border-4 border-gray-400 rounded-t-xl flex items-center justify-center mt-2">
+                        <div className="w-28 md:w-36 h-20 bg-gradient-to-t from-muted to-muted/60 border-4 border-muted-foreground/30 rounded-t-xl flex items-center justify-center mt-2">
                             <div className="flex flex-col items-center">
-                                <Medal className="h-5 w-5 text-gray-400" />
-                                <span className="font-game text-2xl text-gray-400">#2</span>
+                                <Medal className="h-5 w-5 text-muted-foreground" />
+                                <span className="font-game text-2xl text-muted-foreground">#2</span>
                             </div>
                         </div>
                     </div>
 
-                    {/* #1 — Gold */}
                     <div className="flex flex-col items-center -mt-6">
                         <div className="relative">
                             <Crown className="h-8 w-8 text-yellow-400 absolute -top-8 left-1/2 -translate-x-1/2" />
@@ -134,7 +128,6 @@ export default function LeaderboardPage() {
                         </div>
                     </div>
 
-                    {/* #3 — Bronze */}
                     <div className="flex flex-col items-center">
                         <PixelAvatar wallet={entries[2].wallet} size="lg" />
                         <p className="font-game text-lg mt-2 truncate max-w-[120px] text-center">
@@ -143,7 +136,7 @@ export default function LeaderboardPage() {
                         <p className="font-game text-xl text-orange-400">
                             {entries[2].xp.toLocaleString()} XP
                         </p>
-                        <div className="w-28 md:w-36 h-16 bg-gradient-to-t from-zinc-800 to-zinc-700 border-4 border-orange-400 rounded-t-xl flex items-center justify-center mt-2">
+                        <div className="w-28 md:w-36 h-16 bg-gradient-to-t from-orange-400/20 to-orange-400/5 border-4 border-orange-400/50 rounded-t-xl flex items-center justify-center mt-2">
                             <div className="flex flex-col items-center">
                                 <Medal className="h-5 w-5 text-orange-400" />
                                 <span className="font-game text-2xl text-orange-400">#3</span>
@@ -153,7 +146,6 @@ export default function LeaderboardPage() {
                 </div>
             )}
 
-            {/* Controls */}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
                 <div className="flex gap-2 overflow-x-auto">
                     {timeframes.map(({ value, label }) => (
@@ -167,7 +159,7 @@ export default function LeaderboardPage() {
                                 "shrink-0 font-game text-xl px-5 py-2 rounded-xl border-2 transition-all",
                                 timeframe === value
                                     ? "bg-yellow-400 text-black border-yellow-500 shadow-[2px_2px_0_0_#c69405]"
-                                    : "bg-zinc-800 border-zinc-700 hover:bg-zinc-700"
+                                    : "bg-muted border-border hover:bg-accent"
                             )}
                         >
                             {label}
@@ -175,7 +167,7 @@ export default function LeaderboardPage() {
                     ))}
                 </div>
                 <div className="relative w-full sm:w-52">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
                         placeholder="Search wallets..."
                         value={search}
@@ -183,28 +175,27 @@ export default function LeaderboardPage() {
                             setSearch(e.target.value);
                             setPage(1);
                         }}
-                        className="h-10 pl-9 font-game text-lg bg-zinc-800 border-zinc-700"
+                        className="h-10 pl-9 font-game text-lg bg-muted border-border"
                     />
                 </div>
             </div>
 
-            {/* Table */}
-            <div className="rounded-2xl border-4 overflow-hidden">
+            <div className="rounded-2xl border-4 overflow-x-auto overflow-y-hidden">
                 {filtered.length === 0 ? (
                     <div className="flex items-center justify-center p-12">
-                        <p className="font-game text-xl text-gray-500">No results found</p>
+                        <p className="font-game text-xl text-muted-foreground">No results found</p>
                     </div>
                 ) : (
                     <Table>
                         <TableHeader>
-                            <TableRow className="hover:bg-transparent border-b-2 border-zinc-700">
-                                <TableHead className="w-20 px-5 py-4 font-game text-xl text-gray-500">
+                            <TableRow className="hover:bg-transparent border-b-2 border-border">
+                                <TableHead className="w-16 sm:w-20 px-3 sm:px-5 py-3 sm:py-4 font-game text-base sm:text-xl text-muted-foreground">
                                     Rank
                                 </TableHead>
-                                <TableHead className="px-5 py-4 font-game text-xl text-gray-500">
+                                <TableHead className="px-3 sm:px-5 py-3 sm:py-4 font-game text-base sm:text-xl text-muted-foreground">
                                     Player
                                 </TableHead>
-                                <TableHead className="px-5 py-4 text-right font-game text-xl text-gray-500">
+                                <TableHead className="px-3 sm:px-5 py-3 sm:py-4 text-right font-game text-base sm:text-xl text-muted-foreground">
                                     XP
                                 </TableHead>
                             </TableRow>
@@ -216,29 +207,29 @@ export default function LeaderboardPage() {
                                     <TableRow
                                         key={entry.wallet}
                                         className={cn(
-                                            "border-b border-zinc-800 last:border-b-0 transition-colors hover:bg-zinc-800/50",
-                                            isTop3 && "bg-zinc-800/30"
+                                            "border-b border-border last:border-b-0 transition-colors hover:bg-muted/50",
+                                            isTop3 && "bg-muted/30"
                                         )}
                                     >
-                                        <TableCell className="px-5 py-3">
+                                        <TableCell className="px-3 sm:px-5 py-2 sm:py-3">
                                             <span className={cn(
-                                                "font-game text-xl",
+                                                "font-game text-lg sm:text-xl",
                                                 entry.rank === 1 ? "text-yellow-400" :
-                                                    entry.rank === 2 ? "text-gray-400" :
-                                                        entry.rank === 3 ? "text-orange-400" : "text-gray-600"
+                                                    entry.rank === 2 ? "text-muted-foreground" :
+                                                        entry.rank === 3 ? "text-orange-400" : "text-muted-foreground"
                                             )}>
                                                 #{entry.rank}
                                             </span>
                                         </TableCell>
-                                        <TableCell className="px-5 py-3">
-                                            <div className="flex items-center gap-3">
-                                                <PixelAvatar wallet={entry.wallet} size="sm" />
-                                                <span className="font-game text-lg">
+                                        <TableCell className="px-3 sm:px-5 py-2 sm:py-3">
+                                            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                                                <PixelAvatar wallet={entry.wallet} size="sm" className="shrink-0" />
+                                                <span className="font-game text-base sm:text-lg truncate">
                                                     {truncateWallet(entry.wallet)}
                                                 </span>
                                             </div>
                                         </TableCell>
-                                        <TableCell className="px-5 py-3 text-right font-game text-xl tabular-nums text-yellow-400">
+                                        <TableCell className="px-3 sm:px-5 py-2 sm:py-3 text-right font-game text-lg sm:text-xl tabular-nums text-yellow-400">
                                             {entry.xp.toLocaleString()}
                                         </TableCell>
                                     </TableRow>
@@ -249,10 +240,9 @@ export default function LeaderboardPage() {
                 )}
             </div>
 
-            {/* Pagination */}
             {filtered.length > 0 && (
-                <div className="flex flex-wrap items-center justify-between gap-3 mt-4">
-                    <div className="flex items-center gap-4 font-game text-lg text-gray-500">
+                <div className="flex flex-wrap items-center justify-between gap-3 mt-4 px-1">
+                    <div className="flex items-center gap-4 font-game text-lg text-muted-foreground">
                         <span>
                             {start + 1}–{Math.min(start + pageSize, filtered.length)} of{" "}
                             {filtered.length}

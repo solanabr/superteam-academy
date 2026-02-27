@@ -223,11 +223,17 @@
 
 /* ─── Floating Sidebar ───────────────────────────────────────── */
 .floating-sidebar [data-sidebar="sidebar"] {
-  background: rgba(9, 9, 11, 0.85) !important;
+  background: color-mix(in oklch, var(--sidebar) 92%, transparent) !important;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(63, 63, 70, 0.6) !important;
+  border: 1px solid var(--sidebar-border) !important;
   border-radius: 1rem !important;
+  box-shadow: 0 20px 40px -20px oklch(0 0 0 / 0.25);
+}
+
+.dark .floating-sidebar [data-sidebar="sidebar"] {
+  background: var(--sidebar) !important;
+  border-color: var(--sidebar-border) !important;
   box-shadow:
     0 20px 40px rgba(0, 0, 0, 0.4),
     0 0 0 1px rgba(250, 204, 21, 0.04);
@@ -269,9 +275,9 @@ input[type="submit"],
 .xp-bar {
   height: 12px;
   border-radius: 6px;
-  background: #3f3f46;
+  background: var(--muted);
   overflow: hidden;
-  border: 2px solid #52525b;
+  border: 2px solid var(--border);
 }
 
 .xp-bar-fill {
@@ -435,4 +441,20 @@ input[type="submit"],
 
 .wallet-adapter-modal-middle-button:hover {
   opacity: 0.9;
+}
+
+/* ─── Toaster (Sonner) ────────────────────────────────────────── */
+[data-sonner-toast] {
+  font-family: var(--font-game), sans-serif !important;
+  font-size: 1.125rem !important;
+}
+
+[data-sonner-toast] [data-title] {
+  font-family: var(--font-game), sans-serif !important;
+  font-size: 1.125rem !important;
+}
+
+[data-sonner-toast] [data-description] {
+  font-family: var(--font-game), sans-serif !important;
+  font-size: 1rem !important;
 }

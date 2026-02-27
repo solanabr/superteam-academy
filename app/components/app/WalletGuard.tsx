@@ -18,14 +18,14 @@ export function WalletGuard({ children }: WalletGuardProps) {
         return (
             <div className="flex min-h-screen items-center justify-center">
                 <div className="mx-auto flex max-w-md flex-col items-center gap-6 px-6 text-center">
-                    <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-zinc-800">
+                    <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-muted">
                         <Wallet className="h-10 w-10 text-yellow-400" />
                     </div>
                     <div className="space-y-2">
                         <h1 className="text-3xl font-game">
                             Connect your wallet
                         </h1>
-                        <p className="font-game text-xl text-gray-400">
+                        <p className="font-game text-xl text-muted-foreground">
                             You need a Solana wallet to access the academy. Connect to start
                             learning, earning XP, and collecting credentials.
                         </p>

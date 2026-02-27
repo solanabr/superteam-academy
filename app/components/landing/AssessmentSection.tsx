@@ -74,7 +74,7 @@ export function AssessmentSection() {
     }
 
     return (
-        <section className="w-full bg-zinc-900 py-20">
+        <section className="w-full bg-background py-20">
             <div className="mx-auto max-w-2xl px-6">
                 <motion.div
                     ref={sectionRef}
@@ -89,14 +89,14 @@ export function AssessmentSection() {
                     <h2 className="text-4xl font-game">
                         Find the right course for yourself
                     </h2>
-                    <p className="mt-3 font-game text-xl text-gray-400">
+                    <p className="mt-3 font-game text-xl text-muted-foreground">
                         Answer {totalSteps} questions to figure out which course to start
                         with
                     </p>
                 </motion.div>
 
                 {/* Progress bar */}
-                <div className="mt-10 h-3 overflow-hidden rounded-full bg-zinc-800">
+                <div className="mt-10 h-3 overflow-hidden rounded-full bg-muted">
                     <motion.div
                         className="h-full rounded-full bg-yellow-400"
                         initial={{ width: 0 }}
@@ -121,7 +121,7 @@ export function AssessmentSection() {
                                     onClick={() => selectOption(i)}
                                     className={`rounded-xl border-2 px-5 py-4 text-left font-game text-xl transition-all ${isSelected
                                         ? "border-yellow-400 bg-yellow-400/10 text-yellow-400"
-                                        : "border-zinc-700 hover:border-yellow-400/40 hover:bg-zinc-800"
+                                        : "border-border hover:border-yellow-400/40 hover:bg-accent"
                                         }`}
                                 >
                                     {option}

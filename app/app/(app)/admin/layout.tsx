@@ -12,6 +12,7 @@ import {
   ChevronRight,
   Key,
   BarChart2,
+  LayoutDashboard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AdminLoginGate } from "@/components/app/AdminLoginGate";
@@ -54,8 +55,9 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="space-y-6">
-      <nav className="flex flex-wrap gap-2 border-b border-border pb-4">
+    <div className="space-y-4 sm:space-y-6">
+      <nav className="flex flex-wrap items-center gap-2 p-3 sm:p-4 rounded-xl sm:rounded-2xl border-2 sm:border-4 border-border bg-card">
+          <div className="flex flex-wrap gap-2">
           {adminNavItems.map(({ href, label, icon: Icon, exact }) => {
             const active = exact
               ? pathname === href
@@ -65,18 +67,27 @@ export default function AdminLayout({
                 key={href}
                 href={href}
                 className={cn(
-                  "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                  "flex items-center gap-1.5 sm:gap-2 rounded-lg sm:rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base font-game transition-colors border-2",
                   active
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    ? "bg-yellow-400/20 text-yellow-400 border-yellow-400/40"
+                    : "border-transparent text-muted-foreground hover:bg-accent hover:text-foreground hover:border-border"
                 )}
               >
                 {Icon && <Icon className="h-4 w-4 shrink-0" />}
                 {label}
-                {active && <ChevronRight className="h-4 w-4 shrink-0" />}
               </Link>
             );
           })}
+          </div>
+          <a
+            href="/studio"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 sm:gap-2 rounded-lg sm:rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base font-game border-2 border-yellow-400/40 bg-yellow-400/10 text-yellow-400 hover:bg-yellow-400/20 transition-colors w-full sm:w-auto sm:ml-auto"
+          >
+            <LayoutDashboard className="h-4 w-4 shrink-0" />
+            Content Studio
+          </a>
         </nav>
         <AdminLoginGate>{children}</AdminLoginGate>
       </div>

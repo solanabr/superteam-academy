@@ -27,14 +27,14 @@ const FEATURES = [
 
 export function FeaturesSection() {
     return (
-        <section className="w-full py-16 bg-zinc-900">
+        <section className="w-full py-16 bg-background">
             <div className="mx-auto max-w-7xl px-6">
                 <h2 className="text-4xl mb-4 font-game">Explore More</h2>
                 <div className="grid grid-cols-2 gap-5">
                     {FEATURES.map((feature) => (
                         <div
                             key={feature.title}
-                            className="flex gap-3 p-3 border rounded-xl bg-zinc-900 hover:bg-zinc-800 transition-colors cursor-pointer"
+                            className="flex gap-3 p-3 border rounded-xl bg-card hover:bg-accent transition-colors cursor-pointer"
                         >
                             <Image
                                 src={feature.icon}
@@ -46,7 +46,7 @@ export function FeaturesSection() {
                                 <h2 className="font-medium text-2xl font-game">
                                     {feature.title}
                                 </h2>
-                                <p className="font-game text-gray-400">{feature.desc}</p>
+                                <p className="font-game text-muted-foreground">{feature.desc}</p>
                             </div>
                         </div>
                     ))}
