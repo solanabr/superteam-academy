@@ -94,10 +94,12 @@ function RankedRow({
   entry,
   isCurrentUser,
   locale,
+  style,
 }: {
   entry: LeaderboardEntry;
   isCurrentUser: boolean;
   locale: string;
+  style?: React.CSSProperties;
 }) {
   const t = useTranslations("gamification");
   const initials = entry.username.slice(0, 2).toUpperCase();
@@ -107,7 +109,7 @@ function RankedRow({
       href={`/${locale}/profile/${encodeURIComponent(entry.username)}`}
       className="block no-underline"
     >
-      <div className={cn("lb-row", isCurrentUser && "me")}>
+      <div className={cn("lb-row", isCurrentUser && "me")} style={style}>
         <span className="lb-rank" aria-label={`Rank ${entry.rank}`}>
           {entry.rank}
         </span>
@@ -253,12 +255,13 @@ export function LeaderboardClient({
           {/* ═══ Ranked List ═══ */}
           {restEntries.length > 0 && (
             <div className="lb-list">
-              {restEntries.map((entry) => (
+              {restEntries.map((entry, i) => (
                 <RankedRow
                   key={entry.userId}
                   entry={entry}
                   isCurrentUser={entry.userId === currentUserId}
                   locale={locale}
+                  style={{ "--i": i } as React.CSSProperties}
                 />
               ))}
             </div>
