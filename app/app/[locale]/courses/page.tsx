@@ -24,6 +24,7 @@ interface CoursesPageProps {
 		q?: string;
 		category?: string;
 		level?: string;
+		duration?: string;
 		sort?: string;
 		view?: "grid" | "list";
 		page?: string;
@@ -35,12 +36,13 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
 		q = "",
 		category = "all",
 		level = "all",
+		duration = "all",
 		sort = "popular",
 		view = "grid",
 		page = "1",
 	} = await searchParams;
 
-	const hasFilters = q || category !== "all" || level !== "all";
+	const hasFilters = q || category !== "all" || level !== "all" || duration !== "all";
 	const t = await getTranslations("courses");
 
 	return (
@@ -59,7 +61,13 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
 			<div className="sticky top-16 z-30 border-b border-border/60 bg-background/80 backdrop-blur-xl">
 				<div className="mx-auto px-4 sm:px-6 py-3">
 					<div className="flex flex-col lg:flex-row gap-3 items-start lg:items-center">
-						<CoursesFilters q={q} category={category} level={level} sort={sort} />
+						<CoursesFilters
+							q={q}
+							category={category}
+							level={level}
+							duration={duration}
+							sort={sort}
+						/>
 
 						<div className="h-5 w-px bg-border/60 hidden lg:block" />
 
@@ -69,6 +77,7 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
 									q,
 									category,
 									level,
+									duration,
 									sort,
 									view: "grid",
 								})}
@@ -81,6 +90,7 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
 									q,
 									category,
 									level,
+									duration,
 									sort,
 									view: "list",
 								})}
@@ -103,7 +113,13 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
 								>
 									&ldquo;{q}&rdquo;
 									<a
-										href={buildFilterUrl({ category, level, sort, view })}
+										href={buildFilterUrl({
+											category,
+											level,
+											duration,
+											sort,
+											view,
+										})}
 										className="ml-0.5 p-0.5 rounded-full hover:bg-muted-foreground/20"
 									>
 										<X className="h-3 w-3" />
@@ -117,7 +133,7 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
 								>
 									{t(`categories.${category}`)}
 									<a
-										href={buildFilterUrl({ q, level, sort, view })}
+										href={buildFilterUrl({ q, level, duration, sort, view })}
 										className="ml-0.5 p-0.5 rounded-full hover:bg-muted-foreground/20"
 									>
 										<X className="h-3 w-3" />
@@ -131,7 +147,25 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
 								>
 									{t(`levels.${level}`)}
 									<a
-										href={buildFilterUrl({ q, category, sort, view })}
+										href={buildFilterUrl({ q, category, duration, sort, view })}
+										className="ml-0.5 p-0.5 rounded-full hover:bg-muted-foreground/20"
+									>
+										<X className="h-3 w-3" />
+									</a>
+								</Badge>
+							)}
+							{duration !== "all" && (
+								<Badge
+									variant="secondary"
+									className="gap-1 text-xs font-normal pr-1"
+								>
+									{duration === "short"
+										? "Short"
+										: duration === "medium"
+											? "Medium"
+											: "Long"}
+									<a
+										href={buildFilterUrl({ q, category, level, sort, view })}
 										className="ml-0.5 p-0.5 rounded-full hover:bg-muted-foreground/20"
 									>
 										<X className="h-3 w-3" />
@@ -151,7 +185,9 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
 
 			<div className="mx-auto px-4 sm:px-6 py-8">
 				<Suspense fallback={<CoursesSkeleton view={view} />}>
-					<CoursesContent searchParams={{ q, category, level, sort, view, page }} />
+					<CoursesContent
+						searchParams={{ q, category, level, duration, sort, view, page }}
+					/>
 				</Suspense>
 			</div>
 		</div>
@@ -317,6 +353,26 @@ async function getCourses(searchParams: Awaited<CoursesPageProps["searchParams"]
 		filtered = filtered.filter((course) => course.level === searchParams.level);
 	}
 
+	if (searchParams.duration && searchParams.duration !== "all") {
+		filtered = filtered.filter((course) => {
+			const minutes = parseDurationToMinutes(course.duration);
+
+			if (searchParams.duration === "short") {
+				return minutes < 240;
+			}
+
+			if (searchParams.duration === "medium") {
+				return minutes >= 240 && minutes <= 480;
+			}
+
+			if (searchParams.duration === "long") {
+				return minutes > 480;
+			}
+
+			return true;
+		});
+	}
+
 	if (searchParams.sort === "xp") {
 		filtered.sort((a, b) => b.xpReward - a.xpReward);
 	} else if (searchParams.sort === "newest") {
@@ -328,4 +384,23 @@ async function getCourses(searchParams: Awaited<CoursesPageProps["searchParams"]
 	}
 
 	return filtered;
+}
+
+function parseDurationToMinutes(duration: string): number {
+	const normalized = duration.toLowerCase();
+	const value = parseFloat(normalized);
+
+	if (Number.isNaN(value)) {
+		return 0;
+	}
+
+	if (normalized.includes("hour")) {
+		return Math.round(value * 60);
+	}
+
+	if (normalized.includes("min")) {
+		return Math.round(value);
+	}
+
+	return Math.round(value);
 }

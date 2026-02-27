@@ -17,10 +17,11 @@ type CoursesFiltersProps = {
 	q: string;
 	category: string;
 	level: string;
+	duration: string;
 	sort: string;
 };
 
-export function CoursesFilters({ q, category, level, sort }: CoursesFiltersProps) {
+export function CoursesFilters({ q, category, level, duration, sort }: CoursesFiltersProps) {
 	const router = useRouter();
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
@@ -92,6 +93,18 @@ export function CoursesFilters({ q, category, level, sort }: CoursesFiltersProps
 					<SelectItem value="beginner">Beginner</SelectItem>
 					<SelectItem value="intermediate">Intermediate</SelectItem>
 					<SelectItem value="advanced">Advanced</SelectItem>
+				</SelectContent>
+			</Select>
+
+			<Select value={duration} onValueChange={(value) => updateParam("duration", value)}>
+				<SelectTrigger className="h-9 w-32.5 text-sm bg-muted/50 border-border/60 rounded-lg">
+					<SelectValue />
+				</SelectTrigger>
+				<SelectContent>
+					<SelectItem value="all">Any duration</SelectItem>
+					<SelectItem value="short">Short (&lt; 4h)</SelectItem>
+					<SelectItem value="medium">Medium (4-8h)</SelectItem>
+					<SelectItem value="long">Long (&gt; 8h)</SelectItem>
 				</SelectContent>
 			</Select>
 

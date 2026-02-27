@@ -2,7 +2,11 @@
 import { useEffect, useState, useCallback, useMemo, useRef, type ReactNode } from "react";
 import { ConnectionProvider, WalletProvider, useWallet } from "@solana/wallet-adapter-react";
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
-import { PhantomWalletAdapter, SolflareWalletAdapter } from "@solana/wallet-adapter-wallets";
+import {
+	AlphaWalletAdapter,
+	PhantomWalletAdapter,
+	SolflareWalletAdapter,
+} from "@solana/wallet-adapter-wallets";
 import { createAuthClient, type AuthClient } from "@superteam-academy/auth";
 import { createSignInMessage } from "@superteam-academy/auth";
 import { walletEmail } from "@superteam-academy/auth";
@@ -200,7 +204,7 @@ function AuthProviderInner({
 }
 
 const ENDPOINT = process.env.NEXT_PUBLIC_SOLANA_RPC_URL ?? "https://api.devnet.solana.com";
-const WALLETS = [new PhantomWalletAdapter(), new SolflareWalletAdapter()];
+const WALLETS = [new PhantomWalletAdapter(), new SolflareWalletAdapter(), new AlphaWalletAdapter()];
 
 export function AuthWalletProvider({
 	children,

@@ -6,4 +6,4 @@ export const WALLET_CONFIG = {
 	localStorageKey: "superteam-academy-wallet",
 } as const;
 
-export const SUPPORTED_WALLETS = ["Phantom", "Solflare"] as const;
+export const SUPPORTED_WALLETS = ["Phantom", "Solflare", "Alpha"] as const;
