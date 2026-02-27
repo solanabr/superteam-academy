@@ -1,0 +1,11 @@
+{
+  "name": "Superteam Brazil LMS",
+  "short_name": "LMS",
+  "description": "Learn Solana. Build. Ship. Track progress with your wallet.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0c101c",
+  "theme_color": "#22d3ee",
+  "orientation": "portrait-primary",
+  "icons": [{"src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any"}]
+}
