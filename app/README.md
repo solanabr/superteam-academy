@@ -31,9 +31,9 @@ Superteam Academy is a decentralized learning platform for Web3 and Solana educa
 | Category | Score |
 |----------|-------|
 | Performance | 90+ (Vercel production) |
-| Accessibility | 96 |
-| Best Practices | 96 |
-| SEO | 91 |
+| Accessibility | 100 |
+| Best Practices | 100 |
+| SEO | 100 |
 
 > Scores measured on the live Vercel deployment using Lighthouse CLI. Performance varies by hosting environment.
 
