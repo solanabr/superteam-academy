@@ -23,56 +23,46 @@ export async function runCode(code: string, testCode?: string): Promise<Executio
       logs.push(`Error: ${args.map(arg => String(arg)).join(' ')}`);
     };
 
-    // Very basic TS -> JS transform (removing types) if we don't have full compiler
-    // In a real app, we'd use swc-wasm or babel here. 
-    // For now, assuming standard JS/TS that modern browsers might parse or simple strip.
-    // Actually, we need transpilation.
-    // We will assume the code passed here is ALREADY transpiled by Monaco or a helper.
-    // BUT, the runner needs to handle it.
-    
-    // Changing approach: The runner will receive TS, but we will use a dynamic import of typescript to transpile.
+    // Transpile TS -> JS
     const ts = (await import('typescript')).default;
-    const js = ts.transpile(code, { 
+    const userJs = ts.transpile(code, { 
         target: ts.ScriptTarget.ES2020, 
         module: ts.ModuleKind.CommonJS 
     });
 
-    // Create a function to run the code
-    // We inject a mock 'require' if needed for imports, but for now we assume standalone logic.
-    // We can inject 'expect' for tests.
-    
-    const context = {};
-    
-    // Execute user code
-    // eslint-disable-next-line no-new-func
-    new Function('console', 'require', js)(console, () => ({}));
-
-    // Execute tests if provided
+    // Simple assertion helper
     const testResults: TestResult[] = [];
-    if (testCode) {
-        // Simple assertion logic
-        const expect = (actual: any) => ({
-            toBe: (expected: any) => {
-                if (actual !== expected) throw new Error(`Expected ${expected} but got ${actual}`);
-            },
-            toBeTruthy: () => {
-                if (!actual) throw new Error(`Expected truthy but got ${actual}`);
-            }
-        });
+    const expect = (actual: any) => ({
+      toBe: (expected: any) => {
+        if (actual !== expected) throw new Error(`Expected ${JSON.stringify(expected)} but got ${JSON.stringify(actual)}`);
+      },
+      toBeTruthy: () => {
+        if (!actual) throw new Error(`Expected truthy but got ${actual}`);
+      },
+      toContain: (item: any) => {
+        if (!actual || !actual.includes(item)) throw new Error(`Expected "${actual}" to contain "${item}"`);
+      }
+    });
 
-        // Wrap test code
-        const testJs = ts.transpile(testCode, { target: ts.ScriptTarget.ES2020 });
-        
-        try {
-            // eslint-disable-next-line no-new-func
-            new Function('console', 'expect', testJs)(console, expect);
-             testResults.push({ passed: true, message: "Test passed" });
-        } catch (e: any) {
-            testResults.push({ passed: false, message: e.message });
-        }
+    if (testCode) {
+      // Combine user code + test code into a single scope so tests can call user functions
+      const testJs = ts.transpile(testCode, { target: ts.ScriptTarget.ES2020 });
+      const combined = userJs + '\n' + testJs;
+
+      try {
+        // eslint-disable-next-line no-new-func
+        new Function('console', 'expect', 'require', 'logs', combined)(console, expect, () => ({}), logs);
+        testResults.push({ passed: true, message: "All tests passed ✓" });
+      } catch (e: any) {
+        testResults.push({ passed: false, message: e.message });
+      }
+    } else {
+      // No tests — just run code
+      // eslint-disable-next-line no-new-func
+      new Function('console', 'require', userJs)(console, () => ({}));
     }
 
-    return { logs, tests: testResults };
+    return { logs, tests: testResults.length > 0 ? testResults : undefined };
   } catch (err: any) {
     return { logs, error: err.message };
   } finally {

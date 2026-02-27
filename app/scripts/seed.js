@@ -12,7 +12,7 @@ const CourseSchema = new Schema({
     lessons: [{
       id: { type: String },
       title: { type: String },
-      type: { type: String, enum: ['video', 'text', 'challenge'] },
+      type: { type: String, enum: ['video', 'text', 'challenge', 'quiz'] },
       content: { type: String },
       xp: { type: Number },
       initialCode: { type: String },
@@ -53,9 +53,9 @@ const courses = [
                 title: 'Your First Program',
                 slug: 'first-program',
                 type: 'challenge',
-                content: 'Write a TypeScript function that logs "Hello Solana" to the console.',
-                initialCode: 'function main() {\n  // Write your code here\n}',
-                testCode: 'expect(main()).toBe(undefined); // console.log returns undefined, we check output logs in runner',
+                content: '# Your First Program\n\nWrite a function called `main` that logs **\"Hello Solana\"** to the console.\n\n## Requirements\n- Define a function called `main`\n- Inside it, call `console.log("Hello Solana")`\n- Call `main()` at the end\n\n## Example Output\n```\nHello Solana\n```',
+                initialCode: '// Write a function that logs "Hello Solana"\nfunction main() {\n  // Your code here\n}\n\n// Call your function\nmain();',
+                testCode: 'expect(logs.length > 0).toBeTruthy();\nexpect(logs[0]).toBe("Hello Solana");',
                 xp: 50
             },
             {
