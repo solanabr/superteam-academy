@@ -326,7 +326,7 @@ export default async function LandingPage({
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-semibold text-white">{testimonial.name}</div>
-                    <div className="text-xs text-gray-500">{L(testimonial.role)}</div>
+                    <div className="text-xs text-gray-400">{L(testimonial.role)}</div>
                   </div>
                   <div className="text-xs font-bold text-yellow-400">{testimonial.xp} XP</div>
                 </div>
@@ -340,7 +340,7 @@ export default async function LandingPage({
       {/* Trusted by / Partner logos */}
       <section className="border-y border-gray-800 bg-gray-900/30 py-10 px-4">
         <div className="mx-auto max-w-5xl">
-          <p className="text-center text-xs font-medium text-gray-500 uppercase tracking-widest mb-6">{t('trusted_by')}</p>
+          <p className="text-center text-xs font-medium text-gray-400 uppercase tracking-widest mb-6">{t('trusted_by')}</p>
           <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12 opacity-60">
             {[
               { name: 'Solana', gradient: 'from-purple-400 to-indigo-400' },

@@ -87,6 +87,19 @@ export default async function LocaleLayout({
     <html lang={locale} suppressHydrationWarning className={`dark ${geistSans.variable} ${geistMono.variable}`}>
       <head>
         <meta name="theme-color" content="#030712" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'EducationalOrganization',
+              name: 'Superteam Academy',
+              url: 'https://app-roan-iota-58.vercel.app',
+              description: 'Web3 and Solana education platform for Brazilian developers',
+              sameAs: ['https://github.com/solanabr/superteam-academy'],
+            }),
+          }}
+        />
         <link rel="dns-prefetch" href="https://api.devnet.solana.com" />
         <link rel="preconnect" href="https://cdn.sanity.io" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
