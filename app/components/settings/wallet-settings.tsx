@@ -361,7 +361,7 @@ export function WalletSettings() {
 													size="sm"
 													onClick={() =>
 														void upsertOAuthProvider(
-															account.provider,
+															account.provider as "google" | "github",
 															true
 														)
 													}

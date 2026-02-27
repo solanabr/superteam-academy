@@ -177,7 +177,7 @@ export default async function TopicDetailPage({ params, searchParams }: TopicDet
 
 			<div className="sticky top-16 z-30 border-b border-border/60 bg-background/80 backdrop-blur-xl">
 				<div className="mx-auto px-4 sm:px-6 py-3">
-					<CoursesFilters q="" category="all" level={level} sort={sort} />
+					<CoursesFilters q="" category="all" level={level} duration="all" sort={sort} />
 				</div>
 			</div>
 

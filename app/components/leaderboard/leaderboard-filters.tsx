@@ -1,6 +1,8 @@
 "use client";
 
 import { Search, X, SlidersHorizontal, CalendarDays } from "lucide-react";
+import { useCallback, useMemo, useTransition } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
 	Select,
 	SelectContent,
@@ -8,19 +10,26 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { useState } from "react";
 
 interface LeaderboardFiltersProps {
-	onFiltersChange?: (filters: FilterState) => void;
+	filters?: FilterState;
 }
 
-interface FilterState {
+export interface FilterState {
 	search: string;
 	country: string;
 	level: string;
 	sortBy: string;
 	timePeriod: string;
 }
+
+export const DEFAULT_FILTERS: FilterState = {
+	search: "",
+	country: "",
+	level: "",
+	sortBy: "score",
+	timePeriod: "all-time",
+};
 
 const COUNTRIES = [
 	{ value: "BR", label: "Brazil" },
@@ -63,19 +72,58 @@ const TIME_PERIODS = [
 	{ value: "weekly", label: "This Week" },
 ];
 
-export function LeaderboardFilters({ onFiltersChange }: LeaderboardFiltersProps) {
-	const [filters, setFilters] = useState<FilterState>({
-		search: "",
-		country: "",
-		level: "",
-		sortBy: "score",
-		timePeriod: "all-time",
-	});
+export function LeaderboardFilters({ filters = DEFAULT_FILTERS }: LeaderboardFiltersProps) {
+	const router = useRouter();
+	const pathname = usePathname();
+	const searchParams = useSearchParams();
+	const [isPending, startTransition] = useTransition();
+
+	const baseParams = useMemo(() => new URLSearchParams(searchParams.toString()), [searchParams]);
+
+	const setUrlParams = useCallback(
+		(nextFilters: FilterState) => {
+			const params = new URLSearchParams(baseParams.toString());
+
+			if (nextFilters.search.trim()) {
+				params.set("q", nextFilters.search.trim());
+			} else {
+				params.delete("q");
+			}
+
+			if (nextFilters.country) {
+				params.set("country", nextFilters.country);
+			} else {
+				params.delete("country");
+			}
+
+			if (nextFilters.level) {
+				params.set("level", nextFilters.level);
+			} else {
+				params.delete("level");
+			}
+
+			if (nextFilters.sortBy !== "score") {
+				params.set("sort", nextFilters.sortBy);
+			} else {
+				params.delete("sort");
+			}
+
+			if (nextFilters.timePeriod !== "all-time") {
+				params.set("time", nextFilters.timePeriod);
+			} else {
+				params.delete("time");
+			}
+
+			startTransition(() => {
+				router.push(`${pathname}?${params.toString()}`);
+			});
+		},
+		[baseParams, pathname, router]
+	);
 
 	const handleFilterChange = (key: keyof FilterState, value: string) => {
 		const newFilters = { ...filters, [key]: value };
-		setFilters(newFilters);
-		onFiltersChange?.(newFilters);
+		setUrlParams(newFilters);
 	};
 
 	const clearFilter = (key: keyof FilterState) => {
@@ -86,15 +134,7 @@ export function LeaderboardFilters({ onFiltersChange }: LeaderboardFiltersProps)
 	};
 
 	const clearAll = () => {
-		const cleared: FilterState = {
-			search: "",
-			country: "",
-			level: "",
-			sortBy: "score",
-			timePeriod: "all-time",
-		};
-		setFilters(cleared);
-		onFiltersChange?.(cleared);
+		setUrlParams(DEFAULT_FILTERS);
 	};
 
 	const activeFilters = [
@@ -122,6 +162,7 @@ export function LeaderboardFilters({ onFiltersChange }: LeaderboardFiltersProps)
 						placeholder="Search learners..."
 						value={filters.search}
 						onChange={(e) => handleFilterChange("search", e.target.value)}
+						disabled={isPending}
 						className="w-full h-9 pl-9 pr-3 rounded-lg border border-border/60 bg-muted/40 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-colors"
 					/>
 					{filters.search && (
@@ -141,6 +182,7 @@ export function LeaderboardFilters({ onFiltersChange }: LeaderboardFiltersProps)
 					<Select
 						value={filters.timePeriod}
 						onValueChange={(value) => handleFilterChange("timePeriod", value)}
+						disabled={isPending}
 					>
 						<SelectTrigger className="w-32 h-9 bg-muted/40 border-border/60 text-sm">
 							<CalendarDays className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
@@ -156,13 +198,17 @@ export function LeaderboardFilters({ onFiltersChange }: LeaderboardFiltersProps)
 					</Select>
 
 					<Select
-						{...(filters.country ? { value: filters.country } : {})}
-						onValueChange={(value: string) => handleFilterChange("country", value)}
+						value={filters.country || "all"}
+						onValueChange={(value: string) =>
+							handleFilterChange("country", value === "all" ? "" : value)
+						}
+						disabled={isPending}
 					>
 						<SelectTrigger className="w-36 h-9 bg-muted/40 border-border/60 text-sm">
 							<SelectValue placeholder="Country" />
 						</SelectTrigger>
 						<SelectContent>
+							<SelectItem value="all">Country</SelectItem>
 							{COUNTRIES.map((c) => (
 								<SelectItem key={c.value} value={c.value}>
 									{c.label}
@@ -172,13 +218,17 @@ export function LeaderboardFilters({ onFiltersChange }: LeaderboardFiltersProps)
 					</Select>
 
 					<Select
-						{...(filters.level ? { value: filters.level } : {})}
-						onValueChange={(value: string) => handleFilterChange("level", value)}
+						value={filters.level || "all"}
+						onValueChange={(value: string) =>
+							handleFilterChange("level", value === "all" ? "" : value)
+						}
+						disabled={isPending}
 					>
 						<SelectTrigger className="w-28 h-9 bg-muted/40 border-border/60 text-sm">
 							<SelectValue placeholder="Level" />
 						</SelectTrigger>
 						<SelectContent>
+							<SelectItem value="all">Level</SelectItem>
 							{LEVELS.map((l) => (
 								<SelectItem key={l.value} value={l.value}>
 									{l.label}
@@ -190,6 +240,7 @@ export function LeaderboardFilters({ onFiltersChange }: LeaderboardFiltersProps)
 					<Select
 						value={filters.sortBy}
 						onValueChange={(value) => handleFilterChange("sortBy", value)}
+						disabled={isPending}
 					>
 						<SelectTrigger className="w-32 h-9 bg-muted/40 border-border/60 text-sm">
 							<SelectValue placeholder="Sort by" />
