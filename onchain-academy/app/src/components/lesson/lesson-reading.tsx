@@ -193,7 +193,7 @@ export function LessonReading({
         if (data.error) throw new Error(data.error);
         setFinalizationResult({
           xpAwarded: data.xpAwarded ?? course.xpReward,
-          credentialIssued: true,
+          credentialIssued: data.credentialIssued ?? false,
         });
       } else {
         const result = await learningService.finalizeCourse("local", course.id ?? slug);

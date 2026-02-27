@@ -39,43 +39,17 @@ function generateDemoActivity(): Record<string, number> {
 
 const DEMO_CREDENTIALS: Credential[] = [
   {
-    id: "demo-1",
-    mint: "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
+    id: "rust-track-1",
+    mint: "F2mk3n6gZVCk51YVLkYqwjy3RyToUKmQ26EweRejBYwx",
     track: "rust",
-    level: 2,
-    coursesCompleted: 3,
-    xpEarned: 1500,
-    imageUrl: "",
-    metadataUri: "",
-    issuedAt: "2025-12-15T00:00:00.000Z",
-    explorerUrl:
-      "https://explorer.solana.com/address/7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU?cluster=devnet",
-  },
-  {
-    id: "demo-2",
-    mint: "9nQEErgvBzBNNdMGo8f1jEBHRD3VYxQYaCQPfRywGFJk",
-    track: "anchor",
     level: 1,
     coursesCompleted: 1,
-    xpEarned: 500,
+    xpEarned: 540,
     imageUrl: "",
-    metadataUri: "",
-    issuedAt: "2026-01-10T00:00:00.000Z",
+    metadataUri: "https://arweave.net/placeholder-e2e-test-credential",
+    issuedAt: "2026-02-27T00:00:00.000Z",
     explorerUrl:
-      "https://explorer.solana.com/address/9nQEErgvBzBNNdMGo8f1jEBHRD3VYxQYaCQPfRywGFJk?cluster=devnet",
-  },
-  {
-    id: "demo-3",
-    mint: "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
-    track: "frontend",
-    level: 1,
-    coursesCompleted: 2,
-    xpEarned: 800,
-    imageUrl: "",
-    metadataUri: "",
-    issuedAt: "2026-01-28T00:00:00.000Z",
-    explorerUrl:
-      "https://explorer.solana.com/address/4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU?cluster=devnet",
+      "https://explorer.solana.com/address/F2mk3n6gZVCk51YVLkYqwjy3RyToUKmQ26EweRejBYwx?cluster=devnet",
   },
 ];
 

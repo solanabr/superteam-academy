@@ -6,6 +6,7 @@ import type { LeaderboardEntry } from "@/lib/services/types";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 
 let cache: { data: LeaderboardEntry[]; ts: number } | null = null;
+let enrichedCache: { data: LeaderboardEntry[]; ts: number } | null = null;
 const CACHE_TTL = 60_000;
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 100;
@@ -21,6 +22,9 @@ const TIMEFRAME_DAYS: Record<Timeframe, number> = {
 /** Fetch current on-chain XP balances (cached). */
 async function getAllTimeEntries(): Promise<LeaderboardEntry[]> {
   if (cache && Date.now() - cache.ts < CACHE_TTL) return cache.data;
+
+  // Raw data refreshing — invalidate enriched cache too
+  enrichedCache = null;
 
   if (!XP_MINT_ADDRESS) return [];
 
@@ -50,6 +54,69 @@ async function getAllTimeEntries(): Promise<LeaderboardEntry[]> {
 
   cache = { data: entries, ts: Date.now() };
   return entries;
+}
+
+/** Enrich on-chain entries with Supabase profile data and completion counts. */
+async function enrichWithSupabase(
+  entries: LeaderboardEntry[],
+): Promise<LeaderboardEntry[]> {
+  if (enrichedCache && Date.now() - enrichedCache.ts < CACHE_TTL) {
+    return enrichedCache.data;
+  }
+
+  try {
+    const supabase = getSupabaseAdmin();
+    const wallets = entries.map((e) => e.wallet);
+
+    const [profilesResult, eventsResult] = await Promise.all([
+      supabase
+        .from("user_profiles")
+        .select("user_id, display_name, show_on_leaderboard")
+        .in("user_id", wallets),
+      supabase
+        .from("enrollment_events")
+        .select("wallet")
+        .eq("event_type", "finalize_course")
+        .in("wallet", wallets),
+    ]);
+
+    const profileMap = new Map<string, { displayName: string; show: boolean }>();
+    if (profilesResult.data) {
+      for (const row of profilesResult.data) {
+        profileMap.set(row.user_id, {
+          displayName: row.display_name || "",
+          show: row.show_on_leaderboard ?? true,
+        });
+      }
+    }
+
+    const completionMap = new Map<string, number>();
+    if (eventsResult.data) {
+      for (const row of eventsResult.data) {
+        completionMap.set(row.wallet, (completionMap.get(row.wallet) ?? 0) + 1);
+      }
+    }
+
+    const enriched: LeaderboardEntry[] = [];
+    for (const entry of entries) {
+      const profile = profileMap.get(entry.wallet);
+      if (profile && !profile.show) continue;
+      enriched.push({
+        ...entry,
+        displayName: profile?.displayName || entry.displayName,
+        coursesCompleted: completionMap.get(entry.wallet) ?? entry.coursesCompleted,
+      });
+    }
+
+    enriched.sort((a, b) => b.xp - a.xp);
+    enriched.forEach((e, i) => (e.rank = i + 1));
+
+    enrichedCache = { data: enriched, ts: Date.now() };
+    return enriched;
+  } catch (err) {
+    console.error("[leaderboard] Supabase enrichment failed (non-fatal):", err);
+    return entries;
+  }
 }
 
 /**
@@ -122,7 +189,8 @@ export async function GET(req: Request) {
     );
     const timeframe = (searchParams.get("timeframe") ?? "alltime") as Timeframe;
 
-    const allTimeEntries = await getAllTimeEntries();
+    const rawEntries = await getAllTimeEntries();
+    const allTimeEntries = await enrichWithSupabase(rawEntries);
     const days = TIMEFRAME_DAYS[timeframe] || 0;
 
     let entries: LeaderboardEntry[];

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireWalletSession } from "@/lib/auth/require-session";
-import { PublicKey, Transaction, sendAndConfirmTransaction } from "@solana/web3.js";
+import { Keypair, PublicKey, SystemProgram, Transaction, sendAndConfirmTransaction } from "@solana/web3.js";
 import {
   getAssociatedTokenAddressSync,
   createAssociatedTokenAccountInstruction,
@@ -21,6 +21,13 @@ import {
   isClientError,
 } from "@/lib/solana/anchor-errors";
 import { withRetry } from "@/lib/solana/retry";
+import { getTrackCollection } from "@/lib/constants/collections";
+import { TRACK_LABELS } from "@/lib/constants";
+import { logEnrollmentEvent } from "@/lib/supabase/enrollment-events";
+
+const MPL_CORE_PROGRAM_ID = new PublicKey(
+  "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d",
+);
 
 async function ensureATA(
   connection: import("@solana/web3.js").Connection,
@@ -111,12 +118,57 @@ export async function POST(
         .rpc(),
     );
 
+    logEnrollmentEvent({
+      eventType: "finalize_course",
+      wallet: session.wallet,
+      courseId,
+      signature: tx,
+    });
+
+    // Attempt credential issuance if track collection is configured
+    let credentialIssued = false;
+    let credentialAsset: string | undefined;
+    const trackCollection = getTrackCollection(course.track);
+    if (trackCollection) {
+      try {
+        const assetKeypair = Keypair.generate();
+        const trackLabel = TRACK_LABELS[course.track as keyof typeof TRACK_LABELS] ?? course.track;
+        const credentialName = `${trackLabel} - ${course.title}`;
+        const metadataUri = `https://superteam.academy/api/metadata/${courseId}`;
+
+        await withRetry(() =>
+          program.methods
+            .issueCredential(credentialName, metadataUri, 1, course.xpReward ?? 0)
+            .accounts({
+              config: configPDA,
+              course: coursePDA,
+              enrollment: enrollmentPDA,
+              learner: learnerKey,
+              credentialAsset: assetKeypair.publicKey,
+              trackCollection: new PublicKey(trackCollection),
+              payer: signer.publicKey,
+              backendSigner: signer.publicKey,
+              mplCoreProgram: MPL_CORE_PROGRAM_ID,
+              systemProgram: SystemProgram.programId,
+            })
+            .signers([signer, assetKeypair])
+            .rpc(),
+        );
+        credentialIssued = true;
+        credentialAsset = assetKeypair.publicKey.toBase58();
+      } catch (credErr) {
+        console.error("issue-credential after finalize failed (non-fatal):", credErr);
+      }
+    }
+
     return NextResponse.json({
       success: true,
       courseId,
       xpAwarded: course.xpReward,
       track: course.track,
       finalizeTxSignature: tx,
+      credentialIssued,
+      credentialAsset,
     });
   } catch (err: unknown) {
     const anchor = parseAnchorError(err);

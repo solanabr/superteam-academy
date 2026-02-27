@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: ["/api/"],
     },
-    sitemap: "https://superteam-academy.vercel.app/sitemap.xml",
+    sitemap: "https://app-seven-mu-27.vercel.app/sitemap.xml",
   };
 }

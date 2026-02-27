@@ -75,7 +75,7 @@ const caveat = Caveat({
 const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID ?? "";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://superteam-academy.vercel.app"),
+  metadataBase: new URL("https://app-seven-mu-27.vercel.app"),
   title: {
     default: "Superteam Academy | Master Solana Development",
     template: "%s | Superteam Academy",
@@ -98,7 +98,7 @@ export const metadata: Metadata = {
     title: "Superteam Academy | Master Solana Development",
     description:
       "The gamified learning platform for Solana developers. Earn XP, collect on-chain credentials, and level up your skills.",
-    url: "https://superteam-academy.vercel.app",
+    url: "https://app-seven-mu-27.vercel.app",
     siteName: "Superteam Academy",
     images: [
       {
@@ -120,12 +120,12 @@ export const metadata: Metadata = {
   },
   robots: { index: true, follow: true },
   alternates: {
-    canonical: "https://superteam-academy.vercel.app",
+    canonical: "https://app-seven-mu-27.vercel.app",
     languages: {
-      en: "https://superteam-academy.vercel.app/en",
-      "pt-BR": "https://superteam-academy.vercel.app/pt-br",
-      es: "https://superteam-academy.vercel.app/es",
-      "x-default": "https://superteam-academy.vercel.app/en",
+      en: "https://app-seven-mu-27.vercel.app/en",
+      "pt-BR": "https://app-seven-mu-27.vercel.app/pt-br",
+      es: "https://app-seven-mu-27.vercel.app/es",
+      "x-default": "https://app-seven-mu-27.vercel.app/en",
     },
   },
 };
@@ -164,8 +164,8 @@ export default async function RootLayout({
               "@context": "https://schema.org",
               "@type": "Organization",
               name: "Superteam Academy",
-              url: "https://superteam-academy.vercel.app",
-              logo: "https://superteam-academy.vercel.app/icon.svg",
+              url: "https://app-seven-mu-27.vercel.app",
+              logo: "https://app-seven-mu-27.vercel.app/icon.svg",
               description:
                 "The gamified learning platform for Solana developers.",
               sameAs: ["https://twitter.com/SuperteamBR"],
