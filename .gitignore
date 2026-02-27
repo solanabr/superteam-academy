@@ -5,9 +5,12 @@ package-lock.json
 # Rust / Anchor build artifacts
 target/
 .anchor/
+onchain-academy/target/
+onchain-academy/.anchor/
 
 # Solana test validator
 test-ledger/
+onchain-academy/test-ledger/
 
 # Secrets - NEVER commit
 backend-signer.json

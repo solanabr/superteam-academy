@@ -3,6 +3,7 @@ members = [
     "programs/*"
 ]
 resolver = "2"
+exclude = ["trident-tests/fuzz"]
 
 [profile.release]
 overflow-checks = true

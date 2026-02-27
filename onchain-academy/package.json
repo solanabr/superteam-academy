@@ -1,5 +1,5 @@
 {
-  "name": "superteam-academy",
+  "name": "onchain-academy",
   "private": true,
   "scripts": {
     "test": "npx ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
