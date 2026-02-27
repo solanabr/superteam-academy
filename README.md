@@ -28,8 +28,9 @@ Built by [Superteam Brazil](https://superteam.fun/) as a competition entry for [
 
 | Item | Address |
 |------|---------|
-| Program ID | `EHgTQKSeAAoh7JVMij46CFVzThh4xUi7RDjZjHnA7qR6` |
-| XP Mint (Token-2022) | `H2LjXpSDff3iQsut49nGniBoAQWjERYA5BdTcmfjf9Yz` |
+| Program ID | [`EHgTQKSeAAoh7JVMij46CFVzThh4xUi7RDjZjHnA7qR6`](https://explorer.solana.com/address/EHgTQKSeAAoh7JVMij46CFVzThh4xUi7RDjZjHnA7qR6?cluster=devnet) |
+| XP Mint (Token-2022) | [`H2LjXpSDff3iQsut49nGniBoAQWjERYA5BdTcmfjf9Yz`](https://explorer.solana.com/address/H2LjXpSDff3iQsut49nGniBoAQWjERYA5BdTcmfjf9Yz?cluster=devnet) |
+| Upgrade Authority | [`Fsr5QpudWMXhnZQErVFTdysSfRh1SpHjrYXYZeM5k7Aq`](https://explorer.solana.com/address/Fsr5QpudWMXhnZQErVFTdysSfRh1SpHjrYXYZeM5k7Aq?cluster=devnet) |
 | Network | Solana Devnet |
 
 ## Repository Structure
