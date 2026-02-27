@@ -97,7 +97,7 @@ export default function Nav() {
           </Link>
 
           {/* Desktop nav links */}
-          <div className="hidden md:flex items-center gap-1">
+          <div className="hidden lg:flex items-center gap-1">
             {NAV_ITEMS.map((item) => {
               const href = getNavPath(item);
               const active = isActive(item);
@@ -121,7 +121,7 @@ export default function Nav() {
           </div>
 
           {/* Admin link — access-controlled on the page itself */}
-          <div className="hidden md:block">
+          <div className="hidden lg:block">
             <Link
               href={localePath(locale, '/admin')}
               className={cn(
@@ -193,7 +193,7 @@ export default function Nav() {
 
             {/* Mobile hamburger */}
             <button
-              className="md:hidden flex items-center justify-center h-9 w-9 rounded-lg text-gray-400 hover:bg-gray-800"
+              className="lg:hidden flex items-center justify-center h-9 w-9 rounded-lg text-gray-400 hover:bg-gray-800"
               onClick={() => setMobileOpen(!mobileOpen)}
               aria-label="Toggle menu"
             >
@@ -205,7 +205,7 @@ export default function Nav() {
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden border-t border-gray-800 bg-gray-950 px-4 py-3 space-y-1">
+        <div className="lg:hidden border-t border-gray-800 bg-gray-950 px-4 py-3 space-y-1">
           {NAV_ITEMS.map((item) => {
             const href = getNavPath(item);
             const active = isActive(item);
