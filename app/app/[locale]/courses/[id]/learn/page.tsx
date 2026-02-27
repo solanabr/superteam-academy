@@ -1,7 +1,6 @@
-import { Suspense } from "react";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { ArrowLeft, Maximize, Settings, Clock, BookOpen, Code } from "lucide-react";
+import { ArrowLeft, Maximize, Settings, Clock, BookOpen, Code, ExternalLink } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -66,23 +65,7 @@ export default async function LessonPage({ params, searchParams }: LessonPagePro
 	redirect(`/courses/${id}/lessons/${lessonId}`);
 }
 
-export async function LegacyLessonPageRenderer({
-	courseId,
-	lessonId,
-}: {
-	courseId: string;
-	lessonId: string;
-}) {
-	return (
-		<div className="min-h-screen bg-background">
-			<Suspense fallback={<LessonSkeleton />}>
-				<LessonContentWrapper courseId={courseId} lessonId={lessonId} />
-			</Suspense>
-		</div>
-	);
-}
-
-async function LessonContentWrapper({
+export async function LessonPageContent({
 	courseId,
 	lessonId,
 }: {
@@ -98,6 +81,58 @@ async function LessonContentWrapper({
 	const allLessons = course.modules.flatMap((m) => m.lessons);
 	const currentLessonMeta = allLessons.find((l) => l.id === lessonId);
 	const isInteractive = currentLessonMeta?.type === "interactive";
+	const challengeHref = `/courses/${courseId}/challenges/${lessonId}`;
+
+	const lessonTabs = (
+		<Tabs defaultValue="content" className="h-full flex flex-col">
+			<div className="border-b px-4">
+				<TabsList className="grid w-full grid-cols-4">
+					<TabsTrigger value="content">{t("tabs.content")}</TabsTrigger>
+					<TabsTrigger value="notes">{t("tabs.notes")}</TabsTrigger>
+					<TabsTrigger value="quiz">{t("tabs.quiz")}</TabsTrigger>
+					<TabsTrigger value="resources">{t("tabs.resources")}</TabsTrigger>
+				</TabsList>
+			</div>
+
+			<div className="flex-1 overflow-hidden">
+				<TabsContent value="content" className="h-full m-0">
+					<ScrollArea className="h-full">
+						<div className="p-6">
+							<LessonContent content={lesson.content} />
+						</div>
+					</ScrollArea>
+				</TabsContent>
+
+				<TabsContent value="notes" className="h-full m-0">
+					<ScrollArea className="h-full">
+						<div className="p-6">
+							<LessonNotes lessonId={lessonId} currentTime={0} />
+						</div>
+					</ScrollArea>
+				</TabsContent>
+
+				<TabsContent value="quiz" className="h-full m-0">
+					<ScrollArea className="h-full">
+						<div className="p-6">
+							<LessonQuizWrapper
+								courseId={courseId}
+								lessonIndex={progress.lessonIndex}
+								quiz={lesson.quiz}
+							/>
+						</div>
+					</ScrollArea>
+				</TabsContent>
+
+				<TabsContent value="resources" className="h-full m-0">
+					<ScrollArea className="h-full">
+						<div className="p-6">
+							<LessonResources resources={lesson.resources} />
+						</div>
+					</ScrollArea>
+				</TabsContent>
+			</div>
+		</Tabs>
+	);
 
 	return (
 		<div className="flex flex-col lg:flex-row min-h-screen">
@@ -144,54 +179,35 @@ async function LessonContentWrapper({
 				</div>
 
 				<div className="flex-1 overflow-hidden">
-					<Tabs defaultValue="content" className="h-full flex flex-col">
-						<div className="border-b px-4">
-							<TabsList className="grid w-full grid-cols-4">
-								<TabsTrigger value="content">{t("tabs.content")}</TabsTrigger>
-								<TabsTrigger value="notes">{t("tabs.notes")}</TabsTrigger>
-								<TabsTrigger value="quiz">{t("tabs.quiz")}</TabsTrigger>
-								<TabsTrigger value="resources">{t("tabs.resources")}</TabsTrigger>
-							</TabsList>
+					{isInteractive ? (
+						<div className="h-full flex flex-col lg:flex-row">
+							<div className="h-full lg:flex-1 min-h-0">{lessonTabs}</div>
+							<div className="hidden lg:block w-px bg-border" />
+							<div className="h-112 lg:h-full lg:w-[42%] lg:min-w-90 lg:max-w-[70%] lg:shrink-0 lg:resize-x overflow-hidden border-t lg:border-t-0 lg:border-l bg-muted/20">
+								<div className="h-full flex flex-col">
+									<div className="border-b px-4 py-3 flex items-center justify-between">
+										<div className="text-sm font-medium flex items-center gap-2">
+											<Code className="h-4 w-4" />
+											{t("tryChallenge")}
+										</div>
+										<Button variant="outline" size="sm" asChild={true}>
+											<a href={challengeHref} className="gap-2">
+												<ExternalLink className="h-3.5 w-3.5" />
+												{t("tryChallenge")}
+											</a>
+										</Button>
+									</div>
+									<iframe
+										title={`${lesson.title} challenge`}
+										src={challengeHref}
+										className="h-full w-full border-0"
+									/>
+								</div>
+							</div>
 						</div>
-
-						<div className="flex-1 overflow-hidden">
-							<TabsContent value="content" className="h-full m-0">
-								<ScrollArea className="h-full">
-									<div className="p-6">
-										<LessonContent content={lesson.content} />
-									</div>
-								</ScrollArea>
-							</TabsContent>
-
-							<TabsContent value="notes" className="h-full m-0">
-								<ScrollArea className="h-full">
-									<div className="p-6">
-										<LessonNotes lessonId={lessonId} currentTime={0} />
-									</div>
-								</ScrollArea>
-							</TabsContent>
-
-							<TabsContent value="quiz" className="h-full m-0">
-								<ScrollArea className="h-full">
-									<div className="p-6">
-										<LessonQuizWrapper
-											courseId={courseId}
-											lessonIndex={progress.lessonIndex}
-											quiz={lesson.quiz}
-										/>
-									</div>
-								</ScrollArea>
-							</TabsContent>
-
-							<TabsContent value="resources" className="h-full m-0">
-								<ScrollArea className="h-full">
-									<div className="p-6">
-										<LessonResources resources={lesson.resources} />
-									</div>
-								</ScrollArea>
-							</TabsContent>
-						</div>
-					</Tabs>
+					) : (
+						lessonTabs
+					)}
 				</div>
 			</div>
 
@@ -223,7 +239,7 @@ async function LessonContentWrapper({
 									className="w-full justify-start gap-2"
 									asChild={true}
 								>
-									<a href={`/courses/${courseId}/challenges/${lessonId}`}>
+									<a href={challengeHref}>
 										<Code className="h-4 w-4" />
 										{t("tryChallenge")}
 									</a>
@@ -244,42 +260,6 @@ async function LessonContentWrapper({
 							</Button>
 						</CardContent>
 					</Card>
-				</div>
-			</div>
-		</div>
-	);
-}
-
-function LessonSkeleton() {
-	return (
-		<div className="flex flex-col lg:flex-row min-h-screen">
-			<div className="flex-1 flex flex-col">
-				<div className="border-b p-4">
-					<div className="flex items-center justify-between">
-						<div className="space-y-2">
-							<div className="h-6 w-48 bg-muted animate-pulse rounded" />
-							<div className="h-4 w-32 bg-muted animate-pulse rounded" />
-						</div>
-						<div className="h-8 w-20 bg-muted animate-pulse rounded" />
-					</div>
-				</div>
-
-				<div className="aspect-video bg-muted animate-pulse" />
-
-				<div className="flex-1 p-6 space-y-4">
-					<div className="h-8 w-64 bg-muted animate-pulse rounded" />
-					<div className="space-y-2">
-						<div className="h-4 w-full bg-muted animate-pulse rounded" />
-						<div className="h-4 w-3/4 bg-muted animate-pulse rounded" />
-						<div className="h-4 w-1/2 bg-muted animate-pulse rounded" />
-					</div>
-				</div>
-			</div>
-
-			<div className="w-full lg:w-80 border-l p-4 space-y-6">
-				<div className="space-y-4">
-					<div className="h-32 bg-muted animate-pulse rounded" />
-					<div className="h-48 bg-muted animate-pulse rounded" />
 				</div>
 			</div>
 		</div>

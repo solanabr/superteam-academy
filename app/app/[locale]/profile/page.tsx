@@ -6,8 +6,8 @@ import { AchievementGrid } from "@/components/profile/achievement-grid";
 import { ProgressStats } from "@/components/profile/progress-stats";
 import { ActivityFeed } from "@/components/profile/activity-feed";
 import { LevelProgress } from "@/components/profile/level-progress";
-import { StreakTrackerConnected } from "@/components/profile/streak-tracker-connected";
-import { SkillRadarConnected } from "@/components/profile/skill-radar-connected";
+import { StreakTracker } from "@/components/profile/streak-tracker";
+import { SkillRadarChart } from "@/components/profile/skill-radar-chart";
 import { CourseProgress } from "@/components/profile/course-progress";
 import { CredentialList } from "@/components/credentials/credential-list";
 import { PublicKey } from "@solana/web3.js";
@@ -95,8 +95,8 @@ export async function ProfileContent({
 				</div>
 
 				<div className="space-y-6">
-					<StreakTrackerConnected walletAddress={walletAddress} />
-					<SkillRadarConnected courses={courses} />
+					<StreakTracker walletAddress={walletAddress} />
+					<SkillRadarChart courses={courses} />
 					<ProgressStats stats={stats} walletAddress={walletAddress} />
 					<ActivityFeed activities={activity} />
 				</div>

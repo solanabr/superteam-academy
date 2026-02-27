@@ -6,17 +6,23 @@ interface SkillData {
 }
 
 interface SkillRadarChartProps {
-	skills: SkillData[];
+	courses: Array<{
+		id: string;
+		status: "completed" | "in_progress" | "not_started";
+		progress?: { completedLessons: number; totalLessons: number };
+	}>;
 	size?: number;
 }
 
-export function SkillRadarChart({ skills, size = 240 }: SkillRadarChartProps) {
-	if (skills.length < 3) return null;
+export function SkillRadarChart({ courses, size = 240 }: SkillRadarChartProps) {
+	const resolvedSkills = deriveSkillsFromCourses(courses);
+
+	if (resolvedSkills.length < 3) return null;
 
 	const cx = size / 2;
 	const cy = size / 2;
 	const radius = size * 0.38;
-	const angleStep = (2 * Math.PI) / skills.length;
+	const angleStep = (2 * Math.PI) / resolvedSkills.length;
 	const levels = [20, 40, 60, 80, 100];
 
 	const getPoint = (index: number, value: number) => {
@@ -26,7 +32,7 @@ export function SkillRadarChart({ skills, size = 240 }: SkillRadarChartProps) {
 	};
 
 	const gridPolygons = levels.map((level) => {
-		const points = skills
+		const points = resolvedSkills
 			.map((_, i) => {
 				const { x, y } = getPoint(i, level);
 				return `${x},${y}`;
@@ -35,7 +41,7 @@ export function SkillRadarChart({ skills, size = 240 }: SkillRadarChartProps) {
 		return points;
 	});
 
-	const dataPoints = skills.map((s, i) => getPoint(i, s.value));
+	const dataPoints = resolvedSkills.map((s, i) => getPoint(i, s.value));
 	const dataPolygon = dataPoints.map((p) => `${p.x},${p.y}`).join(" ");
 
 	return (
@@ -55,7 +61,7 @@ export function SkillRadarChart({ skills, size = 240 }: SkillRadarChartProps) {
 				))}
 
 				{/* Axis lines */}
-				{skills.map((_, i) => {
+				{resolvedSkills.map((_, i) => {
 					const { x, y } = getPoint(i, 100);
 					return (
 						<line
@@ -84,7 +90,7 @@ export function SkillRadarChart({ skills, size = 240 }: SkillRadarChartProps) {
 				))}
 
 				{/* Labels */}
-				{skills.map((s, i) => {
+				{resolvedSkills.map((s, i) => {
 					const { x, y } = getPoint(i, 120);
 					return (
 						<text

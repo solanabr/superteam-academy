@@ -8,23 +8,17 @@ import { Link } from "@superteam-academy/i18n/navigation";
 interface Course {
 	id: string;
 	title: string;
-	description: string;
-	thumbnail?: string;
 	instructor: {
 		name: string;
-		avatar?: string;
 	};
 	progress: {
 		completedLessons: number;
 		totalLessons: number;
 		timeSpent: number;
-		lastAccessed?: string;
 	};
 	status: "not_started" | "in_progress" | "completed";
-	enrollmentDate: string;
 	completionDate?: string;
 	certificateEarned?: boolean;
-	rating?: number;
 }
 
 interface CourseProgressProps {

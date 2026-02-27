@@ -5,7 +5,6 @@ import { Trophy, Flame, Award, Zap } from "lucide-react";
 interface UserRank {
 	globalRank: number;
 	score: number;
-	level: number;
 	achievements: number;
 	streak: number;
 	percentile: number;
@@ -17,7 +16,7 @@ interface UserRankCardProps {
 
 export function UserRankCard({ userRank }: UserRankCardProps) {
 	return (
-		<div className="rounded-2xl bg-linear-to-br from-forest via-green to-forest p-[1px]">
+		<div className="rounded-2xl bg-linear-to-br from-forest via-green to-forest p-px">
 			<div className="rounded-2xl bg-card p-6 h-full">
 				<div className="flex flex-col md:flex-row md:items-center gap-6">
 					<div className="flex items-center gap-4">

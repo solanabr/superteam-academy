@@ -1,26 +1,25 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { Flame, Calendar } from "lucide-react";
+import { StreakEventType } from "@superteam-academy/gamification/streak-system";
 import { Progress } from "@/components/ui/progress";
-
-interface StreakData {
-	current: number;
-	longest: number;
-	lastActivity: string;
-	streakHistory: Array<{
-		date: string;
-		activities: number;
-		maintained: boolean;
-	}>;
-	weeklyGoal: number;
-	thisWeekActivities: number;
-}
+import { useStreak } from "@/hooks/use-streak";
 
 interface StreakTrackerProps {
-	streakData: StreakData;
+	walletAddress?: string;
 }
 
-export function StreakTracker({ streakData }: StreakTrackerProps) {
+export function StreakTracker({ walletAddress }: StreakTrackerProps) {
+	const { streakData, recordActivity } = useStreak(walletAddress);
+	const recordRef = useRef(recordActivity);
+	recordRef.current = recordActivity;
+
+	useEffect(() => {
+		if (!walletAddress) return;
+		recordRef.current(StreakEventType.DAILY_LOGIN);
+	}, [walletAddress]);
+
 	const weeklyPct = Math.min(
 		Math.round((streakData.thisWeekActivities / streakData.weeklyGoal) * 100),
 		100

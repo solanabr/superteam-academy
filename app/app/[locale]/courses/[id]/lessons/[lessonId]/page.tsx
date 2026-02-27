@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import {
 	buildLessonMetadata,
-	LegacyLessonPageRenderer,
+	LessonPageContent,
 } from "@/app/[locale]/courses/[id]/learn/page";
 
 interface CanonicalLessonPageProps {
@@ -18,5 +18,9 @@ export async function generateMetadata({ params }: CanonicalLessonPageProps): Pr
 
 export default async function CanonicalLessonPage({ params }: CanonicalLessonPageProps) {
 	const { id, lessonId } = await params;
-	return <LegacyLessonPageRenderer courseId={id} lessonId={lessonId} />;
+	return (
+		<div className="min-h-screen bg-background">
+			<LessonPageContent courseId={id} lessonId={lessonId} />
+		</div>
+	);
 }

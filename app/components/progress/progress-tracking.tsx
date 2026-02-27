@@ -1,11 +1,13 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { BookOpen, Trophy, TrendingUp, Calendar, Clock, CheckCircle } from "lucide-react";
+import { StreakEventType } from "@superteam-academy/gamification/streak-system";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
+import { useStreak } from "@/hooks/use-streak";
 import { useTranslations } from "next-intl";
 
 interface CourseProgress {
@@ -16,7 +18,6 @@ interface CourseProgress {
 	xpEarned: number;
 	timeSpent: number; // in minutes
 	lastActivity: Date;
-	streak: number;
 	grade?: string;
 }
 
@@ -35,7 +36,7 @@ interface ProgressTrackingProps {
 	totalXP: number;
 	currentLevel: number;
 	nextLevelXP: number;
-	streak: number;
+	walletAddress: string;
 }
 
 export function ProgressTracking({
@@ -44,10 +45,19 @@ export function ProgressTracking({
 	totalXP,
 	currentLevel,
 	nextLevelXP,
-	streak,
+	walletAddress,
 }: ProgressTrackingProps) {
 	const t = useTranslations("progress");
-	const { toast: _toast } = useToast();
+	const { streakData, recordActivity } = useStreak(walletAddress);
+	const recordRef = useRef(recordActivity);
+	recordRef.current = recordActivity;
+
+	useEffect(() => {
+		if (!walletAddress) return;
+		recordRef.current(StreakEventType.DAILY_LOGIN);
+	}, [walletAddress]);
+
+	const resolvedStreak = streakData.current;
 
 	const overallProgress =
 		courses.length > 0
@@ -118,7 +128,7 @@ export function ProgressTracking({
 						<div className="flex items-center gap-2">
 							<Calendar className="h-5 w-5 text-orange-600" />
 							<div>
-								<p className="text-2xl font-bold">{streak}</p>
+								<p className="text-2xl font-bold">{resolvedStreak}</p>
 								<p className="text-xs text-muted-foreground">{t("dayStreak")}</p>
 							</div>
 						</div>

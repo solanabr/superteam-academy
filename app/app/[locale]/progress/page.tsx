@@ -46,12 +46,12 @@ async function ProgressContent() {
 
 	return (
 		<ProgressTracking
+			walletAddress={wallet}
 			courses={snapshot.courses}
 			achievements={snapshot.achievements}
 			totalXP={totalXp}
 			currentLevel={level}
 			nextLevelXP={nextLevelXP}
-			streak={0}
 		/>
 	);
 }

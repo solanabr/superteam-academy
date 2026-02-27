@@ -373,7 +373,6 @@ async function getUserRank(global: DisplayLeaderboardEntry[]) {
 	return {
 		globalRank: target?.rank ?? 0,
 		score: target?.score ?? 0,
-		level: target?.level ?? 1,
 		achievements: target?.achievements ?? 0,
 		streak: target?.streak ?? 0,
 		percentile:

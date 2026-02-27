@@ -58,7 +58,6 @@ export interface LearnerProgressSnapshot {
 		xpEarned: number;
 		timeSpent: number;
 		lastActivity: Date;
-		streak: number;
 	}>;
 	achievements: Array<{
 		id: string;
@@ -207,7 +206,6 @@ export class LearningProgressService extends BaseService {
 				xpEarned: course.xpEarned,
 				timeSpent: course.completedLessons * 10,
 				lastActivity: new Date(course.enrolledAt * 1000),
-				streak: 0,
 			})),
 			achievements: rawAchievements
 				.filter((achievement) => achievement.earned && achievement.awardedAt)
