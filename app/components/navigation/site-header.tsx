@@ -61,7 +61,7 @@ export function SiteHeader() {
 	const pathname = usePathname();
 	const t = useTranslations("navigation");
 	const { resolvedTheme, setTheme } = useTheme();
-	const { isAuthenticated, user, wallet, signOut, isOAuthLoading } = useAuth();
+	const { isAuthenticated, user, wallet, signOut } = useAuth();
 	const [mounted, setMounted] = useState(false);
 	const [mobileOpen, setMobileOpen] = useState(false);
 	const [searchOpen, setSearchOpen] = useState(false);
@@ -159,7 +159,7 @@ export function SiteHeader() {
 								)}
 							</button>
 
-							{!isOAuthLoading && isAuthenticated ? (
+							{isAuthenticated ? (
 								<DropdownMenu>
 									<DropdownMenuTrigger asChild={true}>
 										<Button
@@ -310,7 +310,7 @@ export function SiteHeader() {
 									);
 								})}
 								<div className="pt-4 space-y-2 border-t border-border">
-									{!isOAuthLoading && isAuthenticated ? (
+									{isAuthenticated ? (
 										<>
 											<Link
 												href="/profile"

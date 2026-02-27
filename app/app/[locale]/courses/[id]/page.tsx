@@ -217,10 +217,10 @@ function CourseDetailSkeleton() {
 
 async function getCourse(id: string) {
 	const academyClient = getAcademyClient();
-	const [cmsCourse, reviews, wallet] = await Promise.all([
-		getCourseById(id),
-		getCourseReviews(id),
+	const [wallet, cmsCourse, reviews] = await Promise.all([
 		getLinkedWallet(),
+		getCourseById(id).catch(() => null),
+		getCourseReviews(id).catch(() => []),
 	]);
 
 	let onchainCourse: CourseAccount | null = null;
@@ -308,7 +308,7 @@ async function getCourse(id: string) {
 						trackId: onchainCourse.trackId,
 						trackLevel: onchainCourse.trackLevel,
 						totalEnrollments: onchainCourse.totalEnrollments,
-					}
+				  }
 				: {}),
 			...(prerequisiteInfo ? { prerequisite: prerequisiteInfo } : {}),
 		},

@@ -13,113 +13,16 @@ export const metadata: Metadata = {
 		"Attend workshops, AMAs, hackathons, and meetups with the Superteam Academy community.",
 };
 
-const UPCOMING_EVENTS = [
-	{
-		id: "1",
-		title: "Solana Program Security Workshop",
-		description:
-			"Deep dive into common vulnerabilities, fuzzing strategies, and professional audit techniques. Bring your code for live review.",
-		date: "Mar 5, 2026",
-		time: "2:00 PM UTC",
-		type: "Workshop",
-		location: "online",
-		attendees: 156,
-		maxAttendees: 200,
-		speakers: [
-			{ name: "James Wu", role: "Security Auditor" },
-			{ name: "Sarah Chen", role: "Program Engineer" },
-		],
-		tags: ["security", "auditing", "workshop"],
-	},
-	{
-		id: "2",
-		title: "DeFi Protocol Design AMA",
-		description:
-			"Ask anything about building DeFi protocols on Solana — AMM design, liquidity incentives, oracle integration, and risk management.",
-		date: "Mar 10, 2026",
-		time: "6:00 PM UTC",
-		type: "AMA",
-		location: "online",
-		attendees: 89,
-		maxAttendees: null,
-		speakers: [{ name: "Alex Rivera", role: "DeFi Protocol Lead" }],
-		tags: ["defi", "ama"],
-	},
-	{
-		id: "3",
-		title: "Weekend Hackathon: ZK Compression",
-		description:
-			"48-hour hackathon focused on ZK Compression and Light Protocol. Build something new, win prizes, and get mentorship from core contributors.",
-		date: "Mar 15-16, 2026",
-		time: "9:00 AM UTC",
-		type: "Hackathon",
-		location: "online",
-		attendees: 234,
-		maxAttendees: 500,
-		speakers: [{ name: "Light Protocol Team", role: "Core Contributors" }],
-		tags: ["hackathon", "zk", "competition"],
-	},
-	{
-		id: "4",
-		title: "Superteam Berlin Meetup",
-		description:
-			"In-person meetup in Berlin. Network with local Solana builders, share projects, and enjoy talks on the latest ecosystem developments.",
-		date: "Mar 22, 2026",
-		time: "7:00 PM CET",
-		type: "Meetup",
-		location: "Berlin, Germany",
-		attendees: 42,
-		maxAttendees: 80,
-		speakers: [],
-		tags: ["meetup", "networking", "berlin"],
-	},
-];
-
-const PAST_EVENTS = [
-	{
-		id: "p1",
-		title: "Anchor 0.31 Migration Workshop",
-		date: "Feb 1, 2026",
-		type: "Workshop",
-		attendees: 210,
-		recordingUrl: "#",
-	},
-	{
-		id: "p2",
-		title: "Token-2022 Deep Dive",
-		date: "Jan 20, 2026",
-		type: "Workshop",
-		attendees: 180,
-		recordingUrl: "#",
-	},
-	{
-		id: "p3",
-		title: "Metaplex Core NFTs AMA",
-		date: "Jan 10, 2026",
-		type: "AMA",
-		attendees: 145,
-		recordingUrl: "#",
-	},
-	{
-		id: "p4",
-		title: "Season 2 Hackathon: DeFi Track",
-		date: "Dec 15-16, 2025",
-		type: "Hackathon",
-		attendees: 312,
-		recordingUrl: "#",
-	},
-];
-
 export default async function EventsPage() {
 	const t = await getTranslations("community");
 
 	// Fetch events from Sanity
 	const upcomingEvents = isSanityConfigured
 		? (await getUpcomingEvents()).map(normalizeEvent)
-		: UPCOMING_EVENTS.slice(0, 0);
+		: [];
 	const pastEvents = isSanityConfigured
 		? (await getPastEvents()).map(normalizePastEvent)
-		: PAST_EVENTS.slice(0, 0);
+		: [];
 
 	return (
 		<div className="space-y-6">

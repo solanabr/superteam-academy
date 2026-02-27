@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Wallet, CheckCircle, AlertCircle } from "lucide-react";
 import { useConnection } from "@solana/wallet-adapter-react";
-import { Transaction } from "@solana/web3.js";
+import { PublicKey, Transaction } from "@solana/web3.js";
 import { buildEnrollInstruction, buildCloseEnrollmentInstruction } from "@superteam-academy/anchor";
 import { useTranslations } from "next-intl";
 

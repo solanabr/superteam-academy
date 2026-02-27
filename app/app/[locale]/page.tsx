@@ -15,7 +15,8 @@ import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 import HeroWave from "@/public/hero-wave.svg";
 import { NewsletterForm } from "@/components/newsletter-form";
-import { getCoursesCMS } from "@/lib/cms";
+import { getCoursesCMS, isSanityConfigured } from "@/lib/cms";
+import { getAcademyClient } from "@/lib/academy";
 import { FeaturedCoursesSkeleton } from "@/components/home/featured-courses-skeleton";
 
 const TOPICS = [
@@ -27,43 +28,6 @@ const TOPICS = [
 	{ name: "Security & Auditing", courses: 7, color: "bg-destructive/10 text-destructive" },
 	{ name: "Web3 Frontend", courses: 10, color: "bg-gold/10 text-gold" },
 	{ name: "Compressed NFTs", courses: 4, color: "bg-green/10 text-green" },
-];
-
-const FEATURED_COURSES = [
-	{
-		title: "Solana Development Fundamentals",
-		description: "Master the core concepts of Solana: accounts, transactions, PDAs, and CPIs.",
-		level: "Beginner",
-		duration: "8 hours",
-		lessons: 24,
-		students: 2450,
-		xp: 500,
-		slug: "solana-development-fundamentals",
-		gradient: "from-green to-forest",
-	},
-	{
-		title: "Smart Contract Security",
-		description:
-			"Learn vulnerability patterns, auditing techniques, and secure coding on Solana.",
-		level: "Advanced",
-		duration: "12 hours",
-		lessons: 32,
-		students: 1280,
-		xp: 1200,
-		slug: "smart-contract-security",
-		gradient: "from-forest to-dark",
-	},
-	{
-		title: "DeFi Protocol Engineering",
-		description: "Build production-grade DeFi: AMMs, lending markets, and yield protocols.",
-		level: "Intermediate",
-		duration: "16 hours",
-		lessons: 40,
-		students: 890,
-		xp: 2000,
-		slug: "defi-protocol-development",
-		gradient: "from-gold via-amber-500 to-gold",
-	},
 ];
 
 const TESTIMONIALS = [
@@ -292,31 +256,53 @@ async function FeaturesSection() {
 
 async function FeaturedCoursesSection() {
 	const t = await getTranslations("home.featured");
+	const academyClient = getAcademyClient();
 
-	// Try CMS data first, fall back to hardcoded
-	let courses = FEATURED_COURSES;
-	try {
-		const cmsCourses = await getCoursesCMS();
-		if (cmsCourses.length > 0) {
-			courses = cmsCourses.slice(0, 3).map((c, i) => ({
-				title: c.title,
-				description: c.description ?? c.title,
-				level: c.level,
-				duration: c.duration ?? "",
-				lessons: 0,
-				students: 0,
-				xp: c.xpReward,
-				slug: c.slug.current,
-				gradient:
-					i === 0
-						? "from-green to-forest"
-						: i === 1
-							? "from-forest to-dark"
-							: "from-gold via-amber-500 to-gold",
-			}));
-		}
-	} catch {
-		// Use hardcoded fallback
+	const [onchainCourses, cmsCourses] = await Promise.all([
+		academyClient.fetchAllCourses().catch(() => []),
+		isSanityConfigured ? getCoursesCMS().catch(() => []) : Promise.resolve([]),
+	]);
+
+	const cmsByCourseId = new Map(
+		cmsCourses.map((course) => [course.slug?.current ?? course._id, course])
+	);
+
+	const mapDifficultyToLevel = (difficulty: number) => {
+		if (difficulty >= 3) return "advanced";
+		if (difficulty === 2) return "intermediate";
+		return "beginner";
+	};
+
+	const gradientByIndex = [
+		"from-green to-forest",
+		"from-forest to-dark",
+		"from-gold via-amber-500 to-gold",
+	] as const;
+
+	const courses = onchainCourses
+		.filter((entry) => entry.account.isActive)
+		.sort((a, b) => b.account.totalEnrollments - a.account.totalEnrollments)
+		.slice(0, 3)
+		.map((entry, index) => {
+			const courseId = entry.account.courseId;
+			const cms = cmsByCourseId.get(courseId);
+			const lessons = entry.account.lessonCount;
+
+			return {
+				title: cms?.title ?? courseId,
+				description: cms?.description ?? courseId,
+				level: cms?.level ?? mapDifficultyToLevel(entry.account.difficulty),
+				duration: cms?.duration ?? `${Math.max(lessons, 1) * 10} min`,
+				lessons,
+				students: entry.account.totalEnrollments,
+				xp: entry.account.xpPerLesson * lessons,
+				slug: courseId,
+				gradient: gradientByIndex[index] ?? gradientByIndex[0],
+			};
+		});
+
+	if (courses.length === 0) {
+		return null;
 	}
 
 	return (

@@ -291,10 +291,10 @@ function LessonSkeleton() {
 
 async function getCourse(id: string) {
 	const academyClient = getAcademyClient();
-	const [cmsCourse, onchainCourse, onchainCourses] = await Promise.all([
-		getCourseById(id),
+	const [onchainCourse, onchainCourses, cmsCourse] = await Promise.all([
 		academyClient.fetchCourse(id),
 		academyClient.fetchAllCourses(),
+		getCourseById(id).catch(() => null),
 	]);
 
 	let prerequisiteLabel: string | null = null;
@@ -311,7 +311,7 @@ async function getCourse(id: string) {
 					lessonCount: onchainCourse.lessonCount,
 					trackId: onchainCourse.trackId,
 					trackLevel: onchainCourse.trackLevel,
-				}
+			  }
 			: {}),
 		...(prerequisiteLabel ? { prerequisiteLabel } : {}),
 	};
@@ -335,7 +335,12 @@ async function getCourse(id: string) {
 }
 
 async function getLesson(courseId: string, lessonId: string) {
-	const cmsCourse = await getCourseById(courseId);
+	const academyClient = getAcademyClient();
+	const [cmsCourse, onchainCourse] = await Promise.all([
+		getCourseById(courseId).catch(() => null),
+		academyClient.fetchCourse(courseId),
+	]);
+
 	const lessons =
 		cmsCourse?.modules?.flatMap((module) =>
 			(module.lessons ?? []).map((lesson) => ({
@@ -346,13 +351,18 @@ async function getLesson(courseId: string, lessonId: string) {
 			}))
 		) ?? [];
 
-	const lesson = lessons.find((entry) => entry.id === lessonId) ??
-		lessons[0] ?? {
-			id: lessonId,
-			title: "Lesson",
-			duration: "10 min",
-			content: [],
-		};
+	const fallbackLessons = Array.from(
+		{ length: Math.max(1, onchainCourse?.lessonCount ?? 1) },
+		(_, index) => ({
+		id: `${courseId}-lesson-${index + 1}`,
+		title: `Lesson ${index + 1}`,
+		duration: "10 min",
+		content: [],
+		})
+	);
+
+	const lessonPool = lessons.length > 0 ? lessons : fallbackLessons;
+	const lesson = lessonPool.find((entry) => entry.id === lessonId) ?? lessonPool[0];
 	const links = extractLinksFromBlocks(lesson.content ?? []);
 	const videoUrl =
 		links.find((link) => isVideoUrl(link.href))?.href ??
