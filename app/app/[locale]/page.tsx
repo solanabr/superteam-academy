@@ -5,7 +5,6 @@ import {
   ArrowRight, Star, CheckCircle, Wallet, ChevronRight, Award, Quote
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import AnimatedSection, { AnimatedCard } from '@/components/AnimatedSection';
 import { localePath } from '@/lib/paths';
 import { getFeaturedCourses } from '@/lib/content';
 
@@ -145,7 +144,6 @@ export default async function LandingPage({
       </section>
 
       {/* Stats row */}
-      <AnimatedSection>
       <section className="border-y border-gray-800 bg-gray-900/50 py-10 px-4">
         <div className="mx-auto max-w-5xl">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
@@ -167,10 +165,8 @@ export default async function LandingPage({
           </div>
         </div>
       </section>
-      </AnimatedSection>
 
       {/* Features */}
-      <AnimatedSection>
       <section className="py-24 px-4">
         <div className="mx-auto max-w-6xl">
           <div className="mb-14 text-center">
@@ -198,10 +194,8 @@ export default async function LandingPage({
           </div>
         </div>
       </section>
-      </AnimatedSection>
 
       {/* Featured courses */}
-      <AnimatedSection>
       <section className="bg-gray-900/40 py-24 px-4">
         <div className="mx-auto max-w-6xl">
           <div className="mb-12 flex items-end justify-between">
@@ -269,10 +263,8 @@ export default async function LandingPage({
           </div>
         </div>
       </section>
-      </AnimatedSection>
 
       {/* Testimonials */}
-      <AnimatedSection>
       <section className="py-24 px-4 border-t border-gray-800">
         <div className="mx-auto max-w-5xl">
           <div className="mb-14 text-center">
@@ -335,7 +327,6 @@ export default async function LandingPage({
           </div>
         </div>
       </section>
-      </AnimatedSection>
 
       {/* Trusted by / Partner logos */}
       <section className="border-y border-gray-800 bg-gray-900/30 py-10 px-4">
@@ -363,7 +354,6 @@ export default async function LandingPage({
       </section>
 
       {/* How it works */}
-      <AnimatedSection>
       <section className="py-24 px-4">
         <div className="mx-auto max-w-5xl">
           <div className="mb-14 text-center">
@@ -395,10 +385,8 @@ export default async function LandingPage({
           </div>
         </div>
       </section>
-      </AnimatedSection>
 
       {/* CTA */}
-      <AnimatedSection>
       <section className="py-20 px-4">
         <div className="mx-auto max-w-3xl">
           <div className="relative rounded-3xl overflow-hidden">
@@ -426,7 +414,6 @@ export default async function LandingPage({
           </div>
         </div>
       </section>
-      </AnimatedSection>
     </div>
   );
 }
