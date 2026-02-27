@@ -23,18 +23,43 @@ export function NotificationsPopover() {
 
   useEffect(() => {
       if (userDb?.walletAddress) {
-          // Вызываем API для получения истории
           fetch(`/api/user/history?wallet=${userDb.walletAddress}`)
             .then(res => res.json())
-            .then(data => {
+            .then((data: XPEvent[]) => {
                 setNotifications(data);
-                // Простая логика: считаем непрочитанными последние 3
-                setUnreadCount(Math.min(data.length, 3)); 
+                
+                // ЛОГИКА "ПРОЧИТАННОГО":
+                // 1. Берем дату последнего просмотренного из localStorage (ключ уникален для юзера)
+                const storageKey = `last_seen_notification_${userDb.walletAddress}`;
+                const lastSeenDate = localStorage.getItem(storageKey);
+
+                if (!lastSeenDate) {
+                    // Если никогда не открывал, показываем, что есть новые (до 5 шт)
+                    setUnreadCount(Math.min(data.length, 5));
+                } else {
+                    // Если открывал, считаем только те, что НОВЕЕ чем lastSeenDate
+                    const seenDateObj = new Date(lastSeenDate);
+                    const newUnread = data.filter(n => new Date(n.createdAt) > seenDateObj).length;
+                    setUnreadCount(newUnread);
+                }
             });
       }
   }, [userDb]);
 
-  const handleOpen = () => setUnreadCount(0); // Очищаем бейджик при открытии
+    const handleOpenChange = (open: boolean) => {
+      if (open) {
+          // Когда открываем:
+          // 1. Сбрасываем бейджик
+          setUnreadCount(0);
+          
+          // 2. Сохраняем дату САМОГО НОВОГО уведомления в localStorage
+          if (notifications.length > 0 && userDb?.walletAddress) {
+              const newestDate = notifications[0].createdAt;
+              const storageKey = `last_seen_notification_${userDb.walletAddress}`;
+              localStorage.setItem(storageKey, newestDate);
+          }
+      }
+    };
 
   const getIcon = (source: string) => {
       switch(source) {
@@ -46,7 +71,7 @@ export function NotificationsPopover() {
   };
 
   return (
-    <Popover onOpenChange={handleOpen}>
+    <Popover onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="h-5 w-5" />

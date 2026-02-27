@@ -51,6 +51,7 @@ model User {
   achievements  UserAchievement[]
   xpHistory     XPHistory[]
   challenges    UserChallenge[]
+  discussions   Discussion[]
 }
 
 
@@ -210,4 +211,19 @@ model UserChallenge {
   dateKey      String    
 
   @@unique([userId, challengeId, dateKey])
+}
+
+model Discussion {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  courseId    String   // Привязка к курсу
+  lessonIndex Int      // Привязка к конкретному уроку
+  
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String   @db.ObjectId
+  
+  content     String   // Текст вопроса/комментария
+  createdAt   DateTime @default(now())
+  
+  // Ответы на этот комментарий (опционально для глубоких тредов, но мы сделаем плоские для начала)
+  // upvotes    Int      @default(0)
 }

@@ -8,6 +8,7 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import ReactMarkdown from "react-markdown";
 import Confetti from 'react-confetti';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { LessonDiscussions } from "@/components/lesson-discussions";
 
 import { CodeEditor } from "@/components/code-editor";
 import { Button } from "@/components/ui/button";
@@ -172,12 +173,34 @@ export default function LessonPage() {
               <ResizablePanelGroup className="h-full w-full border-t">
                 
                 {/* Left: Content (Markdown) */}
-                <ResizablePanel defaultSize={40} minSize={20} className="bg-background">
-                  <ScrollArea className="h-full">
-                    <div className="p-8 prose dark:prose-invert max-w-none">
-                        <ReactMarkdown>{content.markdown}</ReactMarkdown>
-                    </div>
-                  </ScrollArea>
+                <ResizablePanel defaultSize={40} minSize={25} className="bg-background flex flex-col h-full">
+                    <Tabs defaultValue="task" className="flex-1 flex flex-col h-full">
+                        {/* Заголовок табов */}
+                        <div className="border-b px-4 shrink-0">
+                            <TabsList className="w-full justify-start bg-transparent h-12">
+                                <TabsTrigger value="task" className="data-[state=active]:bg-muted/50 data-[state=active]:shadow-none px-6">
+                                    Task
+                                </TabsTrigger>
+                                <TabsTrigger value="qa" className="data-[state=active]:bg-muted/50 data-[state=active]:shadow-none px-6">
+                                    Q&A Forum
+                                </TabsTrigger>
+                            </TabsList>
+                        </div>
+
+                        {/* Вкладка Контента (старая логика) */}
+                        <TabsContent value="task" className="flex-1 overflow-auto m-0 p-0 h-full">
+                            <ScrollArea className="h-full">
+                                <div className="p-6 md:p-8 prose dark:prose-invert max-w-none">
+                                    <ReactMarkdown>{content.markdown}</ReactMarkdown>
+                                </div>
+                            </ScrollArea>
+                        </TabsContent>
+
+                        {/* Вкладка Форума (новая) */}
+                        <TabsContent value="qa" className="flex-1 m-0 p-0 h-full overflow-hidden">
+                            <LessonDiscussions courseId={courseId} lessonIndex={lessonIndex} />
+                        </TabsContent>
+                    </Tabs>
                 </ResizablePanel>
 
                 <ResizableHandle withHandle />
@@ -244,9 +267,12 @@ export default function LessonPage() {
       <div className="md:hidden flex-1 flex flex-col overflow-hidden">
         <Tabs defaultValue="task" className="flex-1 flex flex-col">
             <div className="border-b px-4 bg-background">
-                <TabsList className="w-full grid grid-cols-2">
+                {/* ИСПРАВЛЕНИЕ: Меняем grid-cols-2 на grid-cols-3 */}
+                <TabsList className="w-full grid grid-cols-3">
                     <TabsTrigger value="task">Task</TabsTrigger>
-                    <TabsTrigger value="code">Editor & Terminal</TabsTrigger>
+                    <TabsTrigger value="code">Code</TabsTrigger>
+                    {/* НОВАЯ ВКЛАДКА */}
+                    <TabsTrigger value="qa">Q&A</TabsTrigger> 
                 </TabsList>
             </div>
             
@@ -279,6 +305,10 @@ export default function LessonPage() {
                         {logs.map((l, i) => <div key={i}>{l}</div>)}
                      </div>
                 </div>
+            </TabsContent>
+
+            <TabsContent value="qa" className="flex-1 overflow-hidden m-0 p-0 h-full">
+                <LessonDiscussions courseId={courseId} lessonIndex={lessonIndex} />
             </TabsContent>
         </Tabs>
       </div>
