@@ -22,7 +22,7 @@ export async function generateStaticParams() {
   );
 }
 
-const BASE_URL = "https://superteam-academy.vercel.app";
+const BASE_URL = "https://app-seven-mu-27.vercel.app";
 
 export async function generateMetadata({
   params,
