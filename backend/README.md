@@ -72,7 +72,7 @@ Set `ADMIN_SECRET` and `ADMIN_PASSWORD` to enable admin endpoints:
 | POST | /v1/admin/login | Exchange password for JWT |
 | POST | /v1/admin/generate-api-key | Generate API key (requires Bearer JWT) |
 
-**Flow**: POST `/v1/admin/login` with `{ "password": "<ADMIN_PASSWORD>" }` → returns `{ "token": "<JWT>" }`. Use JWT as `Authorization: Bearer <token>` to call `generate-api-key` with `{ "role": "admin" | "client", "label": "optional" }`. Generated keys work for academy endpoints.
+**Flow**: POST `/v1/admin/login` with `{ "password": "<ADMIN_PASSWORD>" }` → returns `{ "token": "<JWT>" }`. Use JWT as `Authorization: Bearer <token>` to call `generate-api-key` with `{ "role": "admin" | "client", "label": "optional" }`. Generated keys work for academy endpoints. The Next.js BFF verifies this JWT for admin-only academy actions (create-course, update-config, etc.); set app `ADMIN_JWT_SECRET` to the same value as backend `ADMIN_SECRET`.
 
 ## Security Middleware
 

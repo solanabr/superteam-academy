@@ -6,11 +6,14 @@ import {
   registerMinter,
   type RegisterMinterParams,
 } from "@/lib/services/backend-api";
+import { useAdminAuth } from "@/providers/AdminAuthProvider";
 
 export function useRegisterMinter() {
+  const { token } = useAdminAuth();
+
   return useMutation({
     mutationFn: async (params: RegisterMinterParams) => {
-      const result = await registerMinter(params);
+      const result = await registerMinter(params, token);
       if (result.error) throw new Error(result.error);
       return result.tx!;
     },

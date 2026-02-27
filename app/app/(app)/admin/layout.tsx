@@ -11,8 +11,10 @@ import {
   Award,
   ChevronRight,
   Key,
+  BarChart2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AdminLoginGate } from "@/components/app/AdminLoginGate";
 
 const adminNavItems = [
   { href: "/admin", label: "Overview", exact: true },
@@ -20,6 +22,7 @@ const adminNavItems = [
   { href: "/admin/courses", label: "Courses", icon: BookOpen },
   { href: "/admin/minters", label: "Minters", icon: KeyRound },
   { href: "/admin/achievements", label: "Achievements", icon: Award },
+  { href: "/admin/analytics", label: "Analytics", icon: BarChart2 },
   { href: "/admin/api-keys", label: "API Keys", icon: Key },
 ];
 
@@ -28,7 +31,7 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { isAdmin, role, isLoading } = useIsAdmin();
+  const { isAdmin, isLoading } = useIsAdmin();
   const pathname = usePathname();
   const router = useRouter();
 
@@ -53,29 +56,29 @@ export default function AdminLayout({
   return (
     <div className="space-y-6">
       <nav className="flex flex-wrap gap-2 border-b border-border pb-4">
-        {adminNavItems.map(({ href, label, icon: Icon, exact }) => {
-          const active = exact
-            ? pathname === href
-            : pathname === href || pathname.startsWith(href + "/");
-          return (
-            <Link
-              key={href}
-              href={href}
-              className={cn(
-                "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                active
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              )}
-            >
-              {Icon && <Icon className="h-4 w-4 shrink-0" />}
-              {label}
-              {active && <ChevronRight className="h-4 w-4 shrink-0" />}
-            </Link>
-          );
-        })}
-      </nav>
-      {children}
-    </div>
+          {adminNavItems.map(({ href, label, icon: Icon, exact }) => {
+            const active = exact
+              ? pathname === href
+              : pathname === href || pathname.startsWith(href + "/");
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={cn(
+                  "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                  active
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                )}
+              >
+                {Icon && <Icon className="h-4 w-4 shrink-0" />}
+                {label}
+                {active && <ChevronRight className="h-4 w-4 shrink-0" />}
+              </Link>
+            );
+          })}
+        </nav>
+        <AdminLoginGate>{children}</AdminLoginGate>
+      </div>
   );
 }

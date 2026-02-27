@@ -1,43 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { adminLogin, generateApiKey } from "@/lib/services/admin-api";
+import { useAdminAuth } from "@/providers/AdminAuthProvider";
+import { generateApiKey } from "@/lib/services/admin-api";
 
 export function useAdminLogin() {
-  const [loading, setLoading] = useState(false);
-  const [token, setToken] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  const login = async (password: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await adminLogin({ password });
-      if (res.error) {
-        setError(res.error);
-        return null;
-      }
-      if (res.token) {
-        setToken(res.token);
-        return res.token;
-      }
-      setError("No token returned");
-      return null;
-    } catch (e) {
-      const msg = (e as Error).message;
-      setError(msg);
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const logout = () => {
-    setToken(null);
-    setError(null);
-  };
-
-  return { login, logout, token, loading, error };
+  return useAdminAuth();
 }
 
 export function useGenerateApiKey() {

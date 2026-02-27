@@ -99,13 +99,15 @@ export interface BackendApiResponse {
   asset?: string;
 }
 
-async function postBff(path: string, params: object): Promise<BackendApiResponse> {
+async function postBff(path: string, params: object, token?: string | null): Promise<BackendApiResponse> {
   const url = resolveUrl(path);
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
   let res: Response;
   try {
     res = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify(params),
     });
   } catch (err) {
@@ -126,9 +128,10 @@ async function postBff(path: string, params: object): Promise<BackendApiResponse
 }
 
 export async function createCourse(
-  params: CreateCourseParams
+  params: CreateCourseParams,
+  token?: string | null
 ): Promise<BackendApiResponse> {
-  return postBff("/create-course", params);
+  return postBff("/create-course", params, token);
 }
 
 export async function completeLesson(
@@ -144,11 +147,11 @@ export async function finalizeCourse(
 }
 
 
-export const updateConfig = (params: UpdateConfigParams) =>
-  postBff("/update-config", params);
+export const updateConfig = (params: UpdateConfigParams, token?: string | null) =>
+  postBff("/update-config", params, token);
 
-export const updateCourse = (params: UpdateCourseParams) =>
-  postBff("/update-course", params);
+export const updateCourse = (params: UpdateCourseParams, token?: string | null) =>
+  postBff("/update-course", params, token);
 
 export const issueCredential = (params: IssueCredentialParams) =>
   postBff("/issue-credential", params);
@@ -156,21 +159,22 @@ export const issueCredential = (params: IssueCredentialParams) =>
 export const upgradeCredential = (params: UpgradeCredentialParams) =>
   postBff("/upgrade-credential", params);
 
-export const registerMinter = (params: RegisterMinterParams) =>
-  postBff("/register-minter", params);
+export const registerMinter = (params: RegisterMinterParams, token?: string | null) =>
+  postBff("/register-minter", params, token);
 
-export const revokeMinter = (params: RevokeMinterParams) =>
-  postBff("/revoke-minter", params);
+export const revokeMinter = (params: RevokeMinterParams, token?: string | null) =>
+  postBff("/revoke-minter", params, token);
 
-export const rewardXp = (params: RewardXpParams) =>
-  postBff("/reward-xp", params);
+export const rewardXp = (params: RewardXpParams, token?: string | null) =>
+  postBff("/reward-xp", params, token);
 
-export const createAchievementType = (params: CreateAchievementTypeParams) =>
-  postBff("/create-achievement-type", params);
+export const createAchievementType = (params: CreateAchievementTypeParams, token?: string | null) =>
+  postBff("/create-achievement-type", params, token);
 
-export const awardAchievement = (params: AwardAchievementParams) =>
-  postBff("/award-achievement", params);
+export const awardAchievement = (params: AwardAchievementParams, token?: string | null) =>
+  postBff("/award-achievement", params, token);
 
 export const deactivateAchievementType = (
-  params: DeactivateAchievementTypeParams
-) => postBff("/deactivate-achievement-type", params);
+  params: DeactivateAchievementTypeParams,
+  token?: string | null
+) => postBff("/deactivate-achievement-type", params, token);

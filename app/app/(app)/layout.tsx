@@ -5,6 +5,7 @@ import {
     SidebarInset,
     SidebarProvider,
 } from "@/components/ui/sidebar";
+import { AdminAuthProvider } from "@/providers/AdminAuthProvider";
 
 /**
  * Main app layout: dashboard, courses, certificates, settings, profile, leaderboard, admin.
@@ -13,7 +14,8 @@ import {
 export default function AppLayout({ children }: { children: React.ReactNode }) {
     return (
         <WalletGuard>
-            <SidebarProvider>
+            <AdminAuthProvider>
+                <SidebarProvider>
                 <AppSidebar />
                 <SidebarInset>
                     <AppHeader />
@@ -22,6 +24,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     </div>
                 </SidebarInset>
             </SidebarProvider>
+            </AdminAuthProvider>
         </WalletGuard>
     );
 }
