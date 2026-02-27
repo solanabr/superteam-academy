@@ -13,6 +13,7 @@ import { Globe, Menu, X, Settings, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { motion } from 'framer-motion';
+import { useGamification } from '@/context/GamificationContext';
 
 const WalletMultiButton = dynamic(
   () => import('@solana/wallet-adapter-react-ui').then((mod) => mod.WalletMultiButton),
@@ -25,6 +26,7 @@ export function Navbar() {
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false);
+  const { xp } = useGamification();
 
   const handleLanguageChange = (locale: string) => {
     router.replace(pathname, { locale });
@@ -55,11 +57,13 @@ export function Navbar() {
         </div>
 
         <div className="hidden md:flex items-center gap-4">
-            {/* XP Counter (Mockup for now, will connect to context later) */}
+          {/* XP Counter */}
+          {xp > 0 && (
             <div className="flex items-center gap-2 bg-[#1E1E24] border border-[#2E2E36] rounded-full px-3 py-1.5">
-                <div className="text-xs font-medium text-gray-400">XP</div>
-                <div className="text-sm font-bold text-[#14F195]">1,250</div>
+              <div className="text-xs font-medium text-gray-400">XP</div>
+              <div className="text-sm font-bold text-[#14F195]">{xp.toLocaleString()}</div>
             </div>
+          )}
 
           <DropdownMenu onOpenChange={setIsLanguageDropdownOpen}>
             <DropdownMenuTrigger asChild>
