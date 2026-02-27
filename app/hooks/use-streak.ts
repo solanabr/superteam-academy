@@ -53,6 +53,20 @@ function createEmptyState(userId: string): StreakState {
 
 const engine = new StreakCalculationEngine();
 
+function applyEngineRewards(state: StreakState, rewards: Array<{ type: string; value: unknown }>) {
+	let nextState = state;
+
+	for (const reward of rewards) {
+		if (reward.type !== "freeze_award") continue;
+		if (typeof reward.value !== "number") continue;
+		if (!Number.isFinite(reward.value) || reward.value <= 0) continue;
+
+		nextState = engine.awardFreezes(nextState, Math.floor(reward.value));
+	}
+
+	return nextState;
+}
+
 export function useStreak(userId: string | undefined) {
 	const [state, setState] = useState<StreakState>(() => createEmptyState(userId ?? "anonymous"));
 
@@ -65,30 +79,37 @@ export function useStreak(userId: string | undefined) {
 	const recordActivity = useCallback(
 		(type: StreakEventType = StreakEventType.DAILY_LOGIN) => {
 			if (!userId) return;
-			const event: StreakEvent = {
-				id: crypto.randomUUID(),
-				userId,
-				type,
-				timestamp: new Date(),
-				activityCount: 1,
-			};
-			const { newState } = engine.calculateStreak(state, event);
-			setState(newState);
-			saveStreakState(userId, newState);
+			setState((previousState) => {
+				const event: StreakEvent = {
+					id: crypto.randomUUID(),
+					userId,
+					type,
+					timestamp: new Date(),
+					activityCount: 1,
+				};
+
+				const { newState, rewards } = engine.calculateStreak(previousState, event);
+				const rewardedState = applyEngineRewards(newState, rewards);
+				saveStreakState(userId, rewardedState);
+				return rewardedState;
+			});
 		},
-		[userId, state]
+		[userId]
 	);
 
 	const applyFreeze = useCallback(() => {
 		if (!userId) return;
-		// engine.useFreeze is a class method, not a React hook
-		const freezeFn = engine.useFreeze.bind(engine);
-		const result = freezeFn(state);
-		if (result.success) {
-			setState(result.newState);
+		setState((previousState) => {
+			// biome-ignore lint/correctness/useHookAtTopLevel: not a hook, just using engine logic
+			const result = engine.useFreeze(previousState);
+			if (!result.success) {
+				return previousState;
+			}
+
 			saveStreakState(userId, result.newState);
-		}
-	}, [userId, state]);
+			return result.newState;
+		});
+	}, [userId]);
 
 	// Build the StreakData shape expected by StreakTracker component
 	const streakData = {

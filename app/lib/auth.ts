@@ -1,5 +1,6 @@
 import { createServerAuth, type ServerAuthConfig } from "@superteam-academy/auth";
 import { walletFromEmail } from "@superteam-academy/auth";
+import { PublicKey } from "@solana/web3.js";
 import { headers } from "next/headers";
 import type { NextRequest } from "next/server";
 
@@ -60,6 +61,18 @@ export async function issueLinkedWalletBetterAuthSession(
 
 export async function getLinkedWallet() {
 	const requestHeaders = await headers();
+
+	if (process.env.NODE_ENV === "test") {
+		const testWallet = requestHeaders.get("x-test-wallet");
+		if (testWallet) {
+			try {
+				return new PublicKey(testWallet).toBase58();
+			} catch {
+				return undefined;
+			}
+		}
+	}
+
 	const session = await serverAuth.api.getSession({
 		headers: requestHeaders,
 	});

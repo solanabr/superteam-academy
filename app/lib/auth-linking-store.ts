@@ -77,7 +77,10 @@ export async function upsertLinkedAccount(params: {
 	identifier: string;
 }): Promise<
 	| { linked: true }
-	| { linked: false; reason: "storage-unavailable" | "linked-to-different-user" | "user-not-found" }
+	| {
+			linked: false;
+			reason: "storage-unavailable" | "linked-to-different-user" | "user-not-found";
+	  }
 > {
 	const normalizedIdentifier = normalizeIdentifier(params.identifier);
 	const client = sanityWriteClient();
@@ -166,3 +169,5 @@ export async function unlinkLinkedAccount(params: {
 	await client.patch(currentUser._id).set(patch).commit();
 	return true;
 }
+
+export type { LinkedAccountProvider };

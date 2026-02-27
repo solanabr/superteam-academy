@@ -18,6 +18,7 @@ interface TestResult {
 
 const SUPPORTED_LANGUAGES = new Set(["rust", "typescript", "javascript", "python"]);
 const MAX_CODE_SIZE = 60_000;
+const MAX_TEST_RESULTS = 100;
 
 export async function POST(
 	request: NextRequest,
@@ -65,6 +66,31 @@ export async function POST(
 		}
 
 		const challenge = pageData.challenge;
+		const challengeLanguage = challenge.language.toLowerCase();
+		if (challengeLanguage !== language) {
+			incrementMetric("challenge.run.requests.language_mismatch");
+			return NextResponse.json(
+				{ error: "Language does not match challenge configuration" },
+				{ status: 400 }
+			);
+		}
+
+		if (!Array.isArray(challenge.tests) || challenge.tests.length === 0) {
+			incrementMetric("challenge.run.requests.invalid_challenge_tests");
+			return NextResponse.json(
+				{ error: "Challenge has no configured tests" },
+				{ status: 422 }
+			);
+		}
+
+		if (challenge.tests.length > MAX_TEST_RESULTS) {
+			incrementMetric("challenge.run.requests.too_many_tests");
+			return NextResponse.json(
+				{ error: `Challenge test limit exceeded (${MAX_TEST_RESULTS})` },
+				{ status: 422 }
+			);
+		}
+
 		const testResults = evaluateCode({
 			challengeId,
 			code: body.code,

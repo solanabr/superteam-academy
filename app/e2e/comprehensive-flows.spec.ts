@@ -105,4 +105,35 @@ test.describe("Superteam Academy route modernization", () => {
 		await page.goto("/en/certificates", { waitUntil: "domcontentloaded" });
 		await expect(page.locator("h1").first()).toBeVisible();
 	});
+
+	test("authenticated API paths pass auth gate in test mode", async ({ playwright, baseURL }) => {
+		const authenticatedRequest = await playwright.request.newContext({
+			baseURL,
+			extraHTTPHeaders: {
+				"x-test-wallet": "11111111111111111111111111111111",
+			},
+		});
+
+		const completeRes = await authenticatedRequest.post("/api/lessons/complete", {
+			data: {},
+		});
+		expect(completeRes.status()).toBe(400);
+
+		const finalizeRes = await authenticatedRequest.post("/api/courses/finalize", {
+			data: {},
+		});
+		expect(finalizeRes.status()).toBe(400);
+
+		const issueRes = await authenticatedRequest.post("/api/credentials/issue", {
+			data: {},
+		});
+		expect(issueRes.status()).toBe(400);
+
+		const claimRes = await authenticatedRequest.post("/api/achievements/claim", {
+			data: {},
+		});
+		expect([400, 422]).toContain(claimRes.status());
+
+		await authenticatedRequest.dispose();
+	});
 });

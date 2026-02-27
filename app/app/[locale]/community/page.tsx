@@ -104,121 +104,6 @@ function normalizeDiscussion(
 	};
 }
 
-const DISCUSSIONS = [
-	{
-		id: "1",
-		slug: "best-practices-for-pda-design-in-complex-programs",
-		title: "Best practices for PDA design in complex programs?",
-		excerpt:
-			"I'm building a multi-vault system and wondering about the best approach to PDA derivation when you have nested accounts that reference each other...",
-		author: { name: "Alex Chen", initials: "AC" },
-		category: "technicalQA",
-		views: 1240,
-		comments: 28,
-		points: 45,
-		tags: ["anchor", "pda", "architecture"],
-		createdAt: "2h ago",
-		pinned: false,
-		solved: true,
-	},
-	{
-		id: "2",
-		slug: "season-3-launch-zk-compression-track-everything-you-need-to-know",
-		title: "Season 3 Launch: ZK Compression Track — Everything you need to know",
-		excerpt:
-			"We're excited to announce the launch of our ZK Compression learning track. This track covers Light Protocol, compressed state, and building efficient dApps...",
-		author: { name: "Team Academy", initials: "TA" },
-		category: "announcements",
-		views: 3420,
-		comments: 42,
-		points: 128,
-		tags: ["announcement", "zk", "season-3"],
-		createdAt: "1d ago",
-		pinned: true,
-		solved: false,
-	},
-	{
-		id: "3",
-		slug: "how-i-built-a-dex-aggregator-in-2-weeks-lessons-learned",
-		title: "How I built a DEX aggregator in 2 weeks — lessons learned",
-		excerpt:
-			"After completing the DeFi track, I decided to build a real DEX aggregator. Here's what I learned about routing algorithms, Jupiter integration, and CU optimization...",
-		author: { name: "Maria Santos", initials: "MS" },
-		category: "projectShowcase",
-		views: 892,
-		comments: 15,
-		points: 67,
-		tags: ["defi", "project", "tutorial"],
-		createdAt: "3d ago",
-		pinned: false,
-		solved: false,
-	},
-	{
-		id: "4",
-		slug: "token-2022-transfer-hooks-when-to-use-them",
-		title: "Token-2022 transfer hooks: when to use them?",
-		excerpt:
-			"I'm confused about when transfer hooks are the right choice vs. just using a custom instruction. What are the tradeoffs in terms of CU cost and composability?",
-		author: { name: "James Wilson", initials: "JW" },
-		category: "technicalQA",
-		views: 654,
-		comments: 12,
-		points: 23,
-		tags: ["token-2022", "extensions"],
-		createdAt: "4d ago",
-		pinned: false,
-		solved: true,
-	},
-	{
-		id: "5",
-		slug: "request-interactive-solana-explorer-in-course-labs",
-		title: "Request: Interactive Solana Explorer in course labs",
-		excerpt:
-			"It would be amazing to have a built-in explorer panel in the lab environment so we can inspect accounts and transactions without leaving the page...",
-		author: { name: "Priya Patel", initials: "PP" },
-		category: "featureRequests",
-		views: 321,
-		comments: 8,
-		points: 34,
-		tags: ["feature-request", "labs"],
-		createdAt: "5d ago",
-		pinned: false,
-		solved: false,
-	},
-	{
-		id: "6",
-		slug: "study-group-anchor-masterclass-week-3-check-in",
-		title: "Study group: Anchor Masterclass — Week 3 check-in",
-		excerpt:
-			"Hey everyone! How's week 3 going? Let's share our progress on the PDAs and CPIs section. I found the CPI signing examples really helpful...",
-		author: { name: "Yuki Tanaka", initials: "YT" },
-		category: "studyGroups",
-		views: 189,
-		comments: 22,
-		points: 15,
-		tags: ["study-group", "anchor", "week-3"],
-		createdAt: "6d ago",
-		pinned: false,
-		solved: false,
-	},
-	{
-		id: "7",
-		slug: "on-chain-credential-verification-my-experience-using-the-api",
-		title: "On-chain credential verification — my experience using the API",
-		excerpt:
-			"I integrated the credential verification API into my portfolio site. Here are some tips for displaying Metaplex Core NFT metadata correctly...",
-		author: { name: "Carlos Rodriguez", initials: "CR" },
-		category: "projectShowcase",
-		views: 445,
-		comments: 6,
-		points: 29,
-		tags: ["credentials", "metaplex", "api"],
-		createdAt: "1w ago",
-		pinned: false,
-		solved: false,
-	},
-];
-
 interface DiscussionsPageProps {
 	searchParams: Promise<{ q?: string; category?: string; tag?: string }>;
 }
@@ -237,9 +122,9 @@ export default async function DiscussionsPage({ searchParams }: DiscussionsPageP
 		: [];
 
 	// Normalize Sanity data only
-	const discussions = isSanityConfigured
+	const discussions: NormalizedDiscussion[] = isSanityConfigured
 		? sanityDiscussions.map(normalizeDiscussion)
-		: DISCUSSIONS.slice(0, 0);
+		: [];
 
 	// Filter by search query
 	const filtered = discussions.filter((d) => {
