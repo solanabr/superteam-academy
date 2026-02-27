@@ -50,11 +50,10 @@ export function AnimatedCard({
 }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 30, scale: 0.95 }}
-      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+      initial={{ opacity: 0 }}
+      whileInView={{ opacity: 1 }}
       viewport={{ once: true, margin: '-60px' }}
       transition={{ duration: 0.5, delay, ease: [0.25, 0.46, 0.45, 0.94] }}
-      whileHover={{ y: -4, transition: { duration: 0.2 } }}
       className={className}
     >
       {children}
@@ -73,8 +72,8 @@ export function AnimatedCounter({
 }) {
   return (
     <motion.span
-      initial={{ opacity: 0, scale: 0.5 }}
-      whileInView={{ opacity: 1, scale: 1 }}
+      initial={{ opacity: 0 }}
+      whileInView={{ opacity: 1 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5, type: 'spring', stiffness: 200 }}
       className={className}
