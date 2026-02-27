@@ -610,3 +610,67 @@ The gamification module (`lib/gamification.ts`) computes derived values from XP 
 - `NEXT_PUBLIC_RPC_ENDPOINT` -- public, used client-side for RPC connection
 - No secrets are exposed to the client; backend signer keys are server-only
 - Wallet adapter credentials are managed entirely by the browser extension
+
+---
+
+## API Layer
+
+### Route Architecture
+
+The API layer uses Next.js 15 App Router API routes (`app/api/`). All routes return JSON and follow RESTful conventions.
+
+```
+app/api/
+├── auth/[...nextauth]/route.ts    # NextAuth.js handler
+├── complete-lesson/route.ts       # On-chain lesson completion
+├── quiz/validate/route.ts         # Server-side quiz answer validation
+├── courses/route.ts               # GET: List courses (filters, pagination)
+├── courses/[slug]/
+│   ├── route.ts                   # GET: Course by slug
+│   ├── enroll/route.ts            # POST: Enroll in course
+│   ├── progress/route.ts          # GET: Course progress
+│   └── reviews/route.ts           # GET/POST: Course reviews
+├── leaderboard/route.ts           # GET: Leaderboard (filters)
+├── profile/[address]/route.ts     # GET: Public profile
+├── achievements/route.ts          # GET: Achievements with unlock status
+├── certificates/
+│   ├── route.ts                   # GET: List certificates
+│   └── [id]/route.ts              # GET: Certificate by ID
+├── challenges/
+│   ├── route.ts                   # GET: Available challenges
+│   └── submit/route.ts            # POST: Submit challenge solution
+├── community/threads/
+│   ├── route.ts                   # GET/POST: Forum threads
+│   └── [id]/route.ts              # GET: Thread with replies
+├── analytics/events/route.ts      # POST: Track analytics events
+└── health/route.ts                # GET: Health check
+```
+
+### Data Flow
+
+1. **Content routes** (`courses`, `leaderboard`, `certificates`) delegate to `lib/content.ts`, which checks Sanity CMS first and falls back to `lib/mock-data.ts`.
+2. **Quiz validation** uses server-only answer keys in `lib/quiz-keys.ts` — these are never bundled into the client.
+3. **Reviews and threads** use in-memory stores (Map) for demo purposes. In production, these would use a database (Supabase, PlanetScale, etc.).
+4. **On-chain routes** (`complete-lesson`, `enroll`) interact with the Solana program via `@coral-xyz/anchor`.
+
+### Quiz Security Model
+
+```
+Client                          Server
+  │                               │
+  ├─ POST /api/quiz/validate ────►│ Validate answer against server-only keys
+  │◄──── { correct: true } ──────┤
+  │                               │
+  ├─ POST /api/complete-lesson ──►│ Only proceeds if quiz was passed
+  │◄──── { signature: "..." } ───┤ Calls on-chain completeLesson
+```
+
+### Offline Architecture
+
+The `lib/indexed-db.ts` module provides offline support:
+
+1. **Course caching**: Enrolled course content is stored in IndexedDB for offline reading
+2. **Completion queue**: Lesson completions are queued locally when offline
+3. **Auto-sync**: When the browser comes back online, queued completions are synced to the server
+4. **Storage structure**: Two object stores — `courses` (keyed by slug) and `completionQueue` (keyed by unique ID, indexed by sync status)
+

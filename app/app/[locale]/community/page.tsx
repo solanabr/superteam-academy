@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   MessageSquare,
@@ -195,6 +195,43 @@ export default function CommunityPage() {
   const [selectedCategory, setSelectedCategory] = useState<Category>('all');
   const [sortKey, setSortKey] = useState<SortKey>('latest');
   const [search, setSearch] = useState('');
+  const [showNewThread, setShowNewThread] = useState(false);
+  const [newTitle, setNewTitle] = useState('');
+  const [newBody, setNewBody] = useState('');
+  const [newCategory, setNewCategory] = useState<Exclude<Category, 'all'>>('general');
+  const [submitting, setSubmitting] = useState(false);
+
+  // Fetch threads from API on mount
+  useEffect(() => {
+    fetch('/api/community/threads')
+      .then(r => r.json())
+      .then(data => {
+        if (data.threads) {
+          // Log that API data was loaded
+          console.log('[community] Loaded', data.threads.length, 'threads from API');
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleNewThread = useCallback(async () => {
+    if (!newTitle.trim() || !newBody.trim()) return;
+    setSubmitting(true);
+    try {
+      const res = await fetch('/api/community/threads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: newTitle, bodyText: newBody, author: 'You', category: newCategory }),
+      });
+      if (res.ok) {
+        setShowNewThread(false);
+        setNewTitle('');
+        setNewBody('');
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  }, [newTitle, newBody, newCategory]);
 
   interface CategoryItem {
     key: Category;
@@ -275,7 +312,7 @@ export default function CommunityPage() {
                 <p className="text-sm text-gray-400 mt-0.5">{t('subtitle')}</p>
               </div>
             </div>
-            <button className="flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2.5 text-sm font-semibold text-white transition-all hover:bg-purple-500 active:scale-95 w-fit">
+            <button onClick={() => setShowNewThread(true)} className="flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2.5 text-sm font-semibold text-white transition-all hover:bg-purple-500 active:scale-95 w-fit">
               <Plus className="h-4 w-4" />
               {t('new_thread')}
             </button>
@@ -301,6 +338,53 @@ export default function CommunityPage() {
           </div>
         </div>
       </div>
+
+
+      {/* New Thread Dialog */}
+      {showNewThread && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setShowNewThread(false)}>
+          <div className="w-full max-w-lg rounded-2xl border border-gray-700 bg-gray-900 p-6 space-y-4" onClick={e => e.stopPropagation()}>
+            <h2 className="text-lg font-bold text-white">{t('new_thread')}</h2>
+            <input
+              type="text"
+              value={newTitle}
+              onChange={e => setNewTitle(e.target.value)}
+              placeholder="Thread title..."
+              className="w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-2.5 text-sm text-white placeholder-gray-500 outline-none focus:border-purple-600"
+            />
+            <textarea
+              value={newBody}
+              onChange={e => setNewBody(e.target.value)}
+              rows={4}
+              placeholder="What's on your mind?"
+              className="w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-2.5 text-sm text-white placeholder-gray-500 outline-none focus:border-purple-600 resize-none"
+            />
+            <select
+              value={newCategory}
+              onChange={e => setNewCategory(e.target.value as Exclude<Category, 'all'>)}
+              className="w-full rounded-lg border border-gray-700 bg-gray-800 px-4 py-2.5 text-sm text-white outline-none"
+            >
+              <option value="general">General</option>
+              <option value="solana">Solana</option>
+              <option value="anchor">Anchor</option>
+              <option value="defi">DeFi</option>
+              <option value="nft">NFT</option>
+            </select>
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setShowNewThread(false)} className="px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors">
+                Cancel
+              </button>
+              <button
+                onClick={handleNewThread}
+                disabled={submitting || !newTitle.trim() || !newBody.trim()}
+                className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-500 disabled:opacity-50 transition-all"
+              >
+                {submitting ? '...' : t('new_thread')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="mx-auto max-w-5xl px-4 py-8">
         {/* Search + Sort row */}

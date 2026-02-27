@@ -6,6 +6,7 @@ import {
   Play, Lock, Award, BarChart2, ArrowLeft, GraduationCap
 } from 'lucide-react';
 import EnrollButtonWrapper from '@/components/EnrollButtonWrapper';
+import ReviewSection from '@/components/ReviewSection';
 import { cn } from '@/lib/utils';
 import { localePath } from '@/lib/paths';
 
@@ -463,33 +464,12 @@ export default async function CourseDetailPage({
             </section>
 
             {/* Reviews */}
-            <section>
-              <h2 className="mb-4 text-xl font-bold text-white flex items-center gap-2">
-                <Star className="h-5 w-5 text-yellow-400" />
-                {t('student_reviews')}
-              </h2>
-              <div className="space-y-4">
-                {REVIEWS.map((r, i) => (
-                  <div key={i} className="rounded-2xl border border-gray-800 bg-gray-900/40 p-5">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <div className="h-8 w-8 rounded-full bg-gradient-to-br from-purple-700 to-indigo-700 flex items-center justify-center text-xs font-bold text-white">
-                          {r.author[0]}
-                        </div>
-                        <span className="text-sm font-medium text-gray-300">{r.author}</span>
-                      </div>
-                      <span className="text-xs text-gray-500">{r.date}</span>
-                    </div>
-                    <div className="flex gap-0.5 mb-2">
-                      {[...Array(5)].map((_, j) => (
-                        <Star key={j} className={cn('h-3.5 w-3.5', j < r.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-700')} />
-                      ))}
-                    </div>
-                    <p className="text-sm text-gray-400">{L(r.text, locale)}</p>
-                  </div>
-                ))}
-              </div>
-            </section>
+            <ReviewSection
+              slug={slug}
+              locale={locale}
+              title={t('student_reviews')}
+              staticReviews={REVIEWS}
+            />
           </div>
 
           {/* Sidebar */}

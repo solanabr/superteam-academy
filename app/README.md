@@ -21,7 +21,7 @@ Superteam Academy is a decentralized learning platform for Web3 and Solana educa
 - **Analytics** — GA4 event tracking + Microsoft Clarity heatmaps + Sentry error monitoring
 - **Dark theme** by default, with light mode toggle (next-themes)
 - **Responsive design** built with Tailwind CSS 4 and Radix UI primitives
-- **272 E2E tests** with Playwright, covering all locales and user flows
+- **234 unit tests** (Vitest) + **200+ E2E tests** (Playwright), covering all lib modules, API routes, locales, and user flows
 
 ---
 
@@ -46,7 +46,7 @@ Superteam Academy is a decentralized learning platform for Web3 and Solana educa
 | Auth | NextAuth.js (Google OAuth + GitHub OAuth + Phantom wallet) |
 | Analytics | Google Analytics 4 + Microsoft Clarity heatmaps |
 | Monitoring | Sentry (error tracking + performance + source maps) |
-| Testing | Playwright (272 E2E tests across 3 locales) |
+| Testing | Vitest (234 unit tests) + Playwright (200+ E2E tests) |
 | CI/CD | GitHub Actions (typecheck, lint, build, Anchor tests, E2E) |
 
 ---
@@ -222,6 +222,115 @@ URL paths are also localized (e.g., `/pt-BR/cursos` vs. `/en/courses`).
    ```
 
 4. Restart the development server. The new locale is immediately available at `/fr/`.
+
+
+---
+
+## API Routes
+
+The app exposes 19 API route files with 22+ endpoints:
+
+| Route | Methods | Description |
+|-------|---------|-------------|
+| `/api/health` | GET | Health check with service status |
+| `/api/courses` | GET | List courses with pagination, track/level filters |
+| `/api/courses/[slug]` | GET | Get course by slug |
+| `/api/courses/[slug]/enroll` | POST | Enroll in a course (wallet required) |
+| `/api/courses/[slug]/progress` | GET | Get course progress for a wallet |
+| `/api/courses/[slug]/reviews` | GET, POST | Course reviews (1 per wallet per course) |
+| `/api/leaderboard` | GET | Leaderboard with country/period filters |
+| `/api/profile/[address]` | GET | Public profile by wallet address |
+| `/api/achievements` | GET | All achievements with unlock status |
+| `/api/certificates` | GET | List certificates |
+| `/api/certificates/[id]` | GET | Get certificate by ID |
+| `/api/challenges` | GET | Available challenges with filters |
+| `/api/challenges/submit` | POST | Submit challenge solution |
+| `/api/community/threads` | GET, POST | Forum threads with category filters |
+| `/api/community/threads/[id]` | GET | Thread with replies |
+| `/api/quiz/validate` | POST | Server-side quiz answer validation |
+| `/api/analytics/events` | POST | Track custom analytics events |
+| `/api/complete-lesson` | POST | Complete lesson on-chain |
+| `/api/auth/[...nextauth]` | GET, POST | NextAuth.js authentication |
+
+### Quiz Security
+
+Quiz answers are validated server-side via `/api/quiz/validate`. Answer keys are stored in `lib/quiz-keys.ts` and never sent to the client. The `complete-lesson` API route can be gated on quiz validation to prevent XP farming.
+
+---
+
+## Testing
+
+### Unit Tests (Vitest)
+
+```bash
+npm run test:unit           # Run all unit tests
+npm run test:unit:watch     # Watch mode
+npm run test:unit:coverage  # With coverage report
+```
+
+234 unit tests covering:
+- `lib/gamification.ts` — XP calculation, levels, achievements, streaks
+- `lib/content.ts` — Course fetching, filtering, leaderboard
+- `lib/rbac.ts` — Role-based access control
+- `lib/paths.ts` — Localized URL path resolution
+- `lib/utils.ts` — Utility functions
+- `lib/solana-program.ts` — Program IDs, PDA seeds, explorer URLs
+- `lib/mock-data.ts` — Data integrity (i18n, types, uniqueness)
+- `lib/sanity.ts` — CMS config, GROQ queries
+- `lib/quiz-keys.ts` — Quiz answer validation
+- API route input validation schemas
+
+### E2E Tests (Playwright)
+
+```bash
+npm run test               # Run all E2E tests
+npm run test:ui            # Interactive test UI
+npm run test:report        # View HTML report
+```
+
+E2E test suites:
+- `e2e/pages.spec.ts` — All page loads across locales
+- `e2e/navigation.spec.ts` — Navigation flows
+- `e2e/course-detail.spec.ts` — Course detail page
+- `e2e/admin.spec.ts` — Admin dashboard
+- `e2e/onchain-integration.spec.ts` — Wallet + on-chain flows
+- `e2e/ux-accessibility.spec.ts` — Accessibility checks
+- `e2e/api-routes.spec.ts` — All API endpoint testing
+- `e2e/i18n-comprehensive.spec.ts` — All pages x all locales
+- `e2e/responsive.spec.ts` — Mobile/tablet/desktop viewports
+- `e2e/settings-persistence.spec.ts` — Settings page flows
+- `e2e/pwa.spec.ts` — PWA manifest, SW, offline features
+
+### Run All Tests
+
+```bash
+npm run test:all           # Unit tests + E2E tests
+```
+
+---
+
+## Courses
+
+18 courses across 5 tracks, all with full i18n (pt-BR, en, es):
+
+| Track | Courses |
+|-------|---------|
+| **Solana** | Solana 101, Token Program, Token Extensions (Token-2022), Solana Security, ZK Compression, Account Abstraction |
+| **Anchor** | Anchor Framework, Cross-Program Invocations (CPI) |
+| **DeFi** | DeFi on Solana |
+| **NFT** | Creating NFTs, Compressed NFTs (cNFTs), Metaplex Core |
+| **Web3** | Web3 Wallets, Solana Mobile, DAO Governance, Solana Pay, Blinks & Actions, Solana Gaming (Unity SDK) |
+
+---
+
+## Offline Support
+
+The app includes IndexedDB-based offline support (`lib/indexed-db.ts`):
+- Save enrolled course content for offline reading
+- Queue lesson completions while offline
+- Auto-sync completions when back online
+- Check offline availability per course
+
 
 ---
 
