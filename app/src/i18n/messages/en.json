@@ -1,0 +1,185 @@
+{
+  "nav": {
+    "courses": "Courses",
+    "leaderboard": "Leaderboard",
+    "dashboard": "Dashboard",
+    "profile": "Profile",
+    "settings": "Settings",
+    "connectWallet": "Connect Wallet",
+    "disconnectWallet": "Disconnect",
+    "signIn": "Sign In"
+  },
+  "home": {
+    "hero": {
+      "badge": "Hackathon Bounty · Superteam Brazil",
+      "title": "Master Solana Development",
+      "subtitle": "Earn verifiable credentials and XP on-chain. The first decentralized LMS built for the Solana ecosystem.",
+      "cta": "Start Learning",
+      "ctaSecondary": "Browse Courses",
+      "stats": {
+        "developers": "Developers",
+        "courses": "Courses",
+        "xpMinted": "XP Minted"
+      }
+    },
+    "tracks": {
+      "title": "Learning Tracks",
+      "subtitle": "Structured paths from zero to production-ready Solana developer"
+    },
+    "features": {
+      "title": "Built Different",
+      "onChain": {
+        "title": "On-Chain Progress",
+        "description": "Every lesson completion mints XP tokens to your wallet. Progress lives on Solana — not in a database."
+      },
+      "credentials": {
+        "title": "Soulbound Credentials",
+        "description": "Complete a track to earn a non-transferable NFT credential. Verifiable by anyone, owned forever."
+      },
+      "editor": {
+        "title": "In-Browser IDE",
+        "description": "Write and test Rust/TypeScript code directly in the browser with Monaco editor. No setup required."
+      },
+      "rewards": {
+        "title": "Creator Rewards",
+        "description": "Course creators earn XP when their courses are completed. Aligned incentives, on-chain."
+      }
+    },
+    "socialProof": {
+      "title": "Join the Community"
+    }
+  },
+  "courses": {
+    "title": "Courses",
+    "subtitle": "From Solana basics to advanced on-chain programs",
+    "searchPlaceholder": "Search courses...",
+    "filters": {
+      "all": "All",
+      "beginner": "Beginner",
+      "intermediate": "Intermediate",
+      "advanced": "Advanced"
+    },
+    "sort": {
+      "newest": "Newest",
+      "xpReward": "XP Reward",
+      "difficulty": "Difficulty"
+    },
+    "empty": "No courses found",
+    "enroll": "Enroll",
+    "enrolled": "Enrolled",
+    "continue": "Continue",
+    "completed": "Completed",
+    "lessons": "{count} lessons",
+    "hours": "{count}h",
+    "xp": "{amount} XP",
+    "difficulty": {
+      "beginner": "Beginner",
+      "intermediate": "Intermediate",
+      "advanced": "Advanced"
+    }
+  },
+  "lesson": {
+    "complete": "Mark Complete",
+    "completing": "Completing...",
+    "completed": "Completed",
+    "next": "Next Lesson",
+    "previous": "Previous",
+    "runCode": "Run Code",
+    "resetCode": "Reset",
+    "testPassing": "All tests passing",
+    "testFailing": "{count} test(s) failing",
+    "xpEarned": "+{amount} XP earned!"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "level": "Level {level}",
+    "xpToNext": "{xp} XP to level {next}",
+    "streak": {
+      "day": "day streak",
+      "days": "day streak",
+      "longest": "longest streak"
+    },
+    "activeCourses": "Active Courses",
+    "completedCourses": "Completed",
+    "credentials": "Credentials",
+    "recentActivity": "Recent Activity",
+    "noActivity": "No activity yet. Start a course!",
+    "continueLearning": "Continue Learning"
+  },
+  "leaderboard": {
+    "title": "Leaderboard",
+    "subtitle": "Top Solana learners ranked by XP",
+    "timeframes": {
+      "weekly": "Weekly",
+      "monthly": "Monthly",
+      "allTime": "All Time"
+    },
+    "rank": "Rank",
+    "learner": "Learner",
+    "level": "Level",
+    "xp": "XP",
+    "you": "You"
+  },
+  "profile": {
+    "title": "Profile",
+    "editProfile": "Edit Profile",
+    "credentials": "Credentials",
+    "achievements": "Achievements",
+    "courses": "Courses",
+    "noCredentials": "No credentials yet",
+    "noAchievements": "No achievements yet",
+    "joinedDate": "Joined {date}",
+    "xpTotal": "{xp} XP total",
+    "level": "Level {level}"
+  },
+  "settings": {
+    "title": "Settings",
+    "profile": {
+      "title": "Profile",
+      "username": "Username",
+      "displayName": "Display Name",
+      "bio": "Bio",
+      "save": "Save Changes",
+      "saved": "Saved!"
+    },
+    "accounts": {
+      "title": "Linked Accounts",
+      "wallet": "Solana Wallet",
+      "google": "Google",
+      "github": "GitHub",
+      "connect": "Connect",
+      "disconnect": "Disconnect"
+    },
+    "appearance": {
+      "title": "Appearance",
+      "theme": "Theme",
+      "dark": "Dark",
+      "light": "Light"
+    },
+    "language": {
+      "title": "Language",
+      "select": "Select Language"
+    }
+  },
+  "certificate": {
+    "title": "Certificate",
+    "verified": "Verified on Solana",
+    "share": "Share",
+    "viewOnExplorer": "View on Explorer",
+    "completedOn": "Completed on {date}",
+    "earnedBy": "Earned by",
+    "track": "Track"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "retry": "Retry",
+    "back": "Back",
+    "close": "Close",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "walletRequired": "Connect your wallet to continue",
+    "notFound": "Not Found",
+    "comingSoon": "Coming Soon"
+  }
+}

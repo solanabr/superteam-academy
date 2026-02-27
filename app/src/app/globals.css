@@ -1,0 +1,170 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  /* Superteam Academy Design Tokens */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-elevated: var(--elevated);
+  --color-border: var(--border);
+  --color-border-hover: var(--border-hover);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent-dim: var(--accent-dim);
+  --color-subtle: var(--subtle);
+  --color-danger: var(--danger);
+  --color-warning: var(--warning);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-destructive: var(--destructive);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+  --radius-xl: calc(var(--radius) + 6px);
+  --radius-2xl: calc(var(--radius) + 12px);
+}
+
+:root {
+  --radius: 6px;
+
+  /* Light mode — maps to dark Solana aesthetic (inverted for potential toggle) */
+  --background: #0A0A0A;
+  --foreground: #EDEDED;
+  --card: #111111;
+  --card-foreground: #EDEDED;
+  --elevated: #1A1A1A;
+  --popover: #111111;
+  --popover-foreground: #EDEDED;
+  --primary: #EDEDED;
+  --primary-foreground: #0A0A0A;
+  --secondary: #1A1A1A;
+  --secondary-foreground: #EDEDED;
+  --muted: #1A1A1A;
+  --muted-foreground: #666666;
+  --accent: #14F195;
+  --accent-foreground: #0A0A0A;
+  --accent-dim: #0D9E61;
+  --subtle: #333333;
+  --border: #1F1F1F;
+  --border-hover: #2E2E2E;
+  --input: #1F1F1F;
+  --ring: #14F195;
+  --destructive: #FF4444;
+  --danger: #FF4444;
+  --warning: #F5A623;
+
+  /* Chart colors */
+  --chart-1: #14F195;
+  --chart-2: #9945FF;
+  --chart-3: #F5A623;
+  --chart-4: #00D4FF;
+  --chart-5: #FF4444;
+
+  /* Sidebar */
+  --sidebar: #0D0D0D;
+  --sidebar-foreground: #EDEDED;
+  --sidebar-primary: #14F195;
+  --sidebar-primary-foreground: #0A0A0A;
+  --sidebar-accent: #1A1A1A;
+  --sidebar-accent-foreground: #EDEDED;
+  --sidebar-border: #1F1F1F;
+  --sidebar-ring: #14F195;
+}
+
+.light {
+  --background: #F7F7F5;
+  --foreground: #0A0A0A;
+  --card: #FFFFFF;
+  --card-foreground: #0A0A0A;
+  --elevated: #F0F0ED;
+  --popover: #FFFFFF;
+  --popover-foreground: #0A0A0A;
+  --primary: #0A0A0A;
+  --primary-foreground: #F7F7F5;
+  --secondary: #EFEFED;
+  --secondary-foreground: #0A0A0A;
+  --muted: #EFEFED;
+  --muted-foreground: #777770;
+  --accent: #0D9E61;
+  --accent-foreground: #FFFFFF;
+  --accent-dim: #0A8050;
+  --subtle: #DDDDDA;
+  --border: #E5E5E2;
+  --border-hover: #D0D0CC;
+  --input: #E5E5E2;
+  --ring: #0D9E61;
+  --sidebar: #F0F0ED;
+  --sidebar-foreground: #0A0A0A;
+  --sidebar-border: #E5E5E2;
+  --sidebar-ring: #0D9E61;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply scroll-smooth;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+/* Solana mint glow utility */
+@layer utilities {
+  .glow-accent {
+    box-shadow: 0 0 20px rgba(20, 241, 149, 0.15), 0 0 40px rgba(20, 241, 149, 0.05);
+  }
+  .glow-accent-sm {
+    box-shadow: 0 0 8px rgba(20, 241, 149, 0.25);
+  }
+  .text-gradient-accent {
+    background: linear-gradient(135deg, #14F195 0%, #00D4FF 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .grid-pattern {
+    background-image:
+      linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  .scanline {
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.03) 2px,
+      rgba(0,0,0,0.03) 4px
+    );
+  }
+  .mono-numbers {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+  }
+}
+
+/* Monaco editor dark theme override */
+.monaco-editor .margin {
+  background-color: #0D0D0D !important;
+}

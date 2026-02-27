@@ -1,0 +1,106 @@
+"use client";
+
+import { useState, useCallback } from "react";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
+import { Copy, LogOut, ChevronDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useXpBalance } from "@/hooks/useXpBalance";
+import { cn } from "@/lib/utils";
+
+function abbrev(address: string): string {
+  return `${address.slice(0, 4)}...${address.slice(-4)}`;
+}
+
+export function WalletButton({ className }: { className?: string }) {
+  const { publicKey, disconnect, connected } = useWallet();
+  const { setVisible } = useWalletModal();
+  const { data: xpData } = useXpBalance();
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = useCallback(() => {
+    if (!publicKey) return;
+    navigator.clipboard.writeText(publicKey.toBase58());
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, [publicKey]);
+
+  if (!connected || !publicKey) {
+    return (
+      <Button
+        onClick={() => setVisible(true)}
+        className={cn(
+          "bg-[#14F195] text-black font-mono text-sm font-medium hover:bg-[#0D9E61] transition-colors",
+          className
+        )}
+        size="sm"
+      >
+        <span className="mr-1.5">◎</span>
+        Connect Wallet
+      </Button>
+    );
+  }
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          className={cn(
+            "font-mono text-sm border-[#1F1F1F] hover:border-[#2E2E2E] bg-[#111111] hover:bg-[#1A1A1A]",
+            className
+          )}
+        >
+          <span className="text-[#14F195] mr-1.5">◎</span>
+          {abbrev(publicKey.toBase58())}
+          {xpData && (
+            <span className="ml-2 text-xs text-[#666666] border border-[#1F1F1F] rounded px-1.5 py-0.5">
+              Lv.{xpData.level}
+            </span>
+          )}
+          <ChevronDown className="ml-1 h-3 w-3 text-[#666666]" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="end"
+        className="w-56 bg-[#111111] border-[#1F1F1F] font-mono"
+      >
+        <div className="px-3 py-2">
+          <p className="text-xs text-[#666666] mb-1">Connected wallet</p>
+          <p className="text-sm text-[#EDEDED] break-all">
+            {publicKey.toBase58().slice(0, 20)}...
+          </p>
+          {xpData && (
+            <p className="text-xs text-[#14F195] mt-1">
+              {xpData.balance.toLocaleString()} XP · Level {xpData.level}
+            </p>
+          )}
+        </div>
+        <DropdownMenuSeparator className="bg-[#1F1F1F]" />
+        <DropdownMenuItem
+          onClick={handleCopy}
+          className="text-[#EDEDED] focus:bg-[#1A1A1A] focus:text-[#EDEDED] cursor-pointer"
+        >
+          <Copy className="mr-2 h-3.5 w-3.5" />
+          {copied ? "Copied!" : "Copy address"}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator className="bg-[#1F1F1F]" />
+        <DropdownMenuItem
+          onClick={() => disconnect()}
+          className="text-[#FF4444] focus:bg-[#1A1A1A] focus:text-[#FF4444] cursor-pointer"
+        >
+          <LogOut className="mr-2 h-3.5 w-3.5" />
+          Disconnect
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
