@@ -36,9 +36,9 @@ export function MarkdownRenderer({ content, className }: MarkdownRendererProps) 
             </h3>
           ),
           p: ({ children }) => (
-            <p className="text-gray-300 leading-relaxed mb-4 text-base">
+            <div className="text-gray-300 leading-relaxed mb-4 text-base">
               {children}
-            </p>
+            </div>
           ),
           strong: ({ children }) => (
             <strong className="text-white font-black drop-shadow-[0_0_2px_rgba(255,255,255,0.2)]">
