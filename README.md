@@ -21,7 +21,7 @@ Built by [Superteam Brazil](https://superteam.fun/) as a competition entry for [
 - **Wallet Authentication** -- Multi-wallet support (Phantom, Backpack, Solflare) via Wallet Standard auto-detect
 - **XP System** -- Soulbound Token-2022 tokens with level formula: `Level = floor(sqrt(totalXP / 100))`
 - **Gamification** -- XP rewards per lesson, challenge, and course; streak tracking with freeze system; 20 achievements
-- **Internationalization** -- English, Portuguese (BR), and Spanish with full UI string externalization
+- **Internationalization** -- English, Portuguese (BR), and Spanish; more languages available upon request
 - **Dark and Light Themes** -- Dark mode by default with Warm Stone palette, theme toggle via `next-themes`
 
 ## Deployed Addresses
