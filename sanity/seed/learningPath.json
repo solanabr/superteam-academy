@@ -1,29 +1,85 @@
 [
   {
-    "_id": "path-solana-developer",
+    "_id": "path-solana-core",
     "_type": "learningPath",
-    "title": "Solana Developer Path",
-    "slug": { "_type": "slug", "current": "solana-developer" },
-    "description": "The complete path from zero to Solana developer. Start with the fundamentals, learn Rust for blockchain, master the Anchor framework, and build production-ready dApp frontends.",
+    "title": "Solana Core",
+    "tag": "Foundation",
+    "order": 1,
+    "slug": { "_type": "slug", "current": "solana-core" },
+    "description": "The complete path from zero to Solana developer. Start with the fundamentals, understand how the network works, and build your first on-chain program.",
     "difficulty": "beginner",
     "courses": [
       { "_type": "reference", "_ref": "course-solana-fundamentals" },
-      { "_type": "reference", "_ref": "course-rust-for-solana" },
-      { "_type": "reference", "_ref": "course-anchor-framework" },
-      { "_type": "reference", "_ref": "course-solana-frontend" }
+      { "_type": "reference", "_ref": "course-building-first-program" }
     ]
   },
   {
-    "_id": "path-defi-builder",
+    "_id": "path-rust-programs",
     "_type": "learningPath",
-    "title": "DeFi Builder Path",
-    "slug": { "_type": "slug", "current": "defi-builder" },
-    "description": "Specialize in decentralized finance on Solana. Build on your Solana development skills to understand AMMs, lending protocols, token mechanics, and create DeFi primitives.",
-    "difficulty": "advanced",
+    "title": "Rust & Programs",
+    "tag": "Builder",
+    "order": 2,
+    "slug": { "_type": "slug", "current": "rust-programs" },
+    "description": "Master Rust for blockchain and the Anchor framework. Write, test, and deploy production-ready Solana programs.",
+    "difficulty": "intermediate",
     "courses": [
-      { "_type": "reference", "_ref": "course-solana-fundamentals" },
       { "_type": "reference", "_ref": "course-rust-for-solana" },
-      { "_type": "reference", "_ref": "course-defi-on-solana" }
+      { "_type": "reference", "_ref": "course-anchor-framework" }
     ]
+  },
+  {
+    "_id": "path-frontend",
+    "_type": "learningPath",
+    "title": "Frontend",
+    "tag": "UI/UX",
+    "order": 3,
+    "slug": { "_type": "slug", "current": "frontend" },
+    "description": "Build production-ready Solana dApp frontends. Master wallet integration, on-chain data reading, and interactive transaction UIs.",
+    "difficulty": "intermediate",
+    "courses": [{ "_type": "reference", "_ref": "course-solana-frontend" }]
+  },
+  {
+    "_id": "path-defi",
+    "_type": "learningPath",
+    "title": "DeFi",
+    "tag": "DeFi",
+    "order": 4,
+    "slug": { "_type": "slug", "current": "defi" },
+    "description": "Specialize in decentralized finance on Solana. Understand AMMs, lending protocols, token mechanics, and create DeFi primitives.",
+    "difficulty": "advanced",
+    "courses": [{ "_type": "reference", "_ref": "course-defi-on-solana" }]
+  },
+  {
+    "_id": "path-infrastructure",
+    "_type": "learningPath",
+    "title": "Infrastructure",
+    "tag": "Infra",
+    "order": 5,
+    "slug": { "_type": "slug", "current": "infrastructure" },
+    "description": "Learn to build and maintain Solana infrastructure — validators, RPCs, indexers, and developer tooling.",
+    "difficulty": "advanced",
+    "courses": []
+  },
+  {
+    "_id": "path-ai-solana",
+    "_type": "learningPath",
+    "title": "AI x Solana",
+    "tag": "AI Agents",
+    "order": 6,
+    "slug": { "_type": "slug", "current": "ai-solana" },
+    "description": "Explore the intersection of artificial intelligence and Solana. Build AI agents that interact with on-chain data and execute transactions.",
+    "difficulty": "intermediate",
+    "courses": []
+  },
+  {
+    "_id": "path-security",
+    "_type": "learningPath",
+    "title": "Security & Auditing",
+    "tag": "Security",
+    "order": 7,
+    "slug": { "_type": "slug", "current": "security" },
+    "description": "Learn to audit Solana programs for vulnerabilities. Understand common exploit patterns, best practices, and security testing methodologies.",
+    "difficulty": "advanced",
+    "courses": []
   }
 ]

@@ -28,6 +28,20 @@ export const learningPath = defineType({
       rows: 4,
     }),
     defineField({
+      name: "tag",
+      title: "Tag",
+      type: "string",
+      description:
+        "Short descriptor shown alongside the title (e.g. 'Foundation', 'Builder')",
+    }),
+    defineField({
+      name: "order",
+      title: "Display Order",
+      type: "number",
+      description: "Controls display order on the courses page (lower = first)",
+      validation: (rule) => rule.integer().min(0),
+    }),
+    defineField({
       name: "difficulty",
       title: "Difficulty",
       type: "string",
