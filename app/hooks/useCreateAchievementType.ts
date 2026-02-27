@@ -6,11 +6,14 @@ import {
   createAchievementType,
   type CreateAchievementTypeParams,
 } from "@/lib/services/backend-api";
+import { useAdminAuth } from "@/providers/AdminAuthProvider";
 
 export function useCreateAchievementType() {
+  const { token } = useAdminAuth();
+
   return useMutation({
     mutationFn: async (params: CreateAchievementTypeParams) => {
-      const result = await createAchievementType(params);
+      const result = await createAchievementType(params, token);
       if (result.error) throw new Error(result.error);
       return { tx: result.tx!, collection: result.collection };
     },

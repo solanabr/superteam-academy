@@ -27,6 +27,15 @@ import {
 import { useState } from "react";
 import Link from "next/link";
 
+type CourseAccount = {
+  courseId: string;
+  totalEnrollments: number;
+  totalCompletions: number;
+  isActive: boolean;
+  xpPerLesson: number;
+  lessonCount: number;
+};
+
 export default function AdminCoursesPage() {
   const { role } = useIsAdmin();
   const { data: courses } = useAllCourses();
@@ -44,6 +53,7 @@ export default function AdminCoursesPage() {
   });
 
   const isAuthority = role === "authority";
+  const courseList = (courses ?? []).map((c) => c.account as CourseAccount);
 
   return (
     <div className="space-y-6">
@@ -52,28 +62,56 @@ export default function AdminCoursesPage() {
         subtitle="Create and manage on-chain courses"
       />
 
-      {courses && courses.length > 0 && (
+      {courseList.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="text-base">On-chain courses</CardTitle>
-            <CardDescription>Existing course PDAs</CardDescription>
+            <CardDescription>Enrollments and completions from chain</CardDescription>
           </CardHeader>
           <CardContent>
-            <ul className="space-y-1 font-mono text-sm">
-              {courses.map((c) => {
-                const acc = c.account as { courseId: string };
-                return (
-                  <li key={acc.courseId}>
-                    <Link
-                      href="/test"
-                      className="text-primary hover:underline"
-                    >
-                      {acc.courseId}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="text-left py-2 pr-4 font-medium">Course ID</th>
+                    <th className="text-right py-2 px-2">Enrollments</th>
+                    <th className="text-right py-2 px-2">Completions</th>
+                    <th className="text-center py-2 px-2">Active</th>
+                    <th className="text-right py-2 px-2">XP/lesson</th>
+                    <th className="text-right py-2 pl-2">Lessons</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {courseList.map((acc) => (
+                    <tr key={acc.courseId} className="border-b border-border/50">
+                      <td className="py-2 pr-4 font-mono">
+                        <Link
+                          href="/test"
+                          className="text-primary hover:underline"
+                        >
+                          {acc.courseId}
+                        </Link>
+                      </td>
+                      <td className="text-right py-2 px-2 tabular-nums">
+                        {acc.totalEnrollments}
+                      </td>
+                      <td className="text-right py-2 px-2 tabular-nums">
+                        {acc.totalCompletions}
+                      </td>
+                      <td className="text-center py-2 px-2">
+                        {acc.isActive ? "Yes" : "No"}
+                      </td>
+                      <td className="text-right py-2 px-2 tabular-nums">
+                        {acc.xpPerLesson}
+                      </td>
+                      <td className="text-right py-2 pl-2 tabular-nums">
+                        {acc.lessonCount}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </CardContent>
         </Card>
       )}
@@ -166,17 +204,11 @@ export default function AdminCoursesPage() {
                       <SelectValue placeholder="Select course" />
                     </SelectTrigger>
                     <SelectContent>
-                      {(courses ?? []).map((c) => {
-                        const acc = c.account as { courseId: string };
-                        return (
-                          <SelectItem
-                            key={acc.courseId}
-                            value={acc.courseId}
-                          >
-                            {acc.courseId}
-                          </SelectItem>
-                        );
-                      })}
+                      {courseList.map((acc) => (
+                        <SelectItem key={acc.courseId} value={acc.courseId}>
+                          {acc.courseId}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>

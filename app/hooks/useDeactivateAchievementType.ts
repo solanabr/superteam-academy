@@ -6,11 +6,14 @@ import {
   deactivateAchievementType,
   type DeactivateAchievementTypeParams,
 } from "@/lib/services/backend-api";
+import { useAdminAuth } from "@/providers/AdminAuthProvider";
 
 export function useDeactivateAchievementType() {
+  const { token } = useAdminAuth();
+
   return useMutation({
     mutationFn: async (params: DeactivateAchievementTypeParams) => {
-      const result = await deactivateAchievementType(params);
+      const result = await deactivateAchievementType(params, token);
       if (result.error) throw new Error(result.error);
       return result.tx!;
     },
