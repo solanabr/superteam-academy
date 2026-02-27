@@ -39,8 +39,9 @@ export function useIsAdmin(): {
     if (!publicKey) {
       return { isAdmin: false, role: null, isLoading: configLoading };
     }
+    // Wallet connected but config not fetched yet (e.g. program not ready) → still loading
     if (!config || !isFetched) {
-      return { isAdmin: false, role: null, isLoading: configLoading };
+      return { isAdmin: false, role: null, isLoading: true };
     }
 
     const authority =

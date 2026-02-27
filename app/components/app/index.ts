@@ -1,3 +1,4 @@
+export { MarkdownContent } from "./MarkdownContent";
 export { WalletGuard } from "./WalletGuard";
 export { PageHeader } from "./PageHeader";
 export { EmptyState } from "./EmptyState";

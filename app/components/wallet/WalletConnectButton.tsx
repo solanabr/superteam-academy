@@ -3,7 +3,7 @@
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useRef, useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -16,6 +16,7 @@ export function WalletConnectButton() {
   const [displayName, setDisplayNameState] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const pathname = usePathname();
 
   const refreshDisplayName = () => {
     if (publicKey) {
@@ -47,14 +48,17 @@ export function WalletConnectButton() {
   }, [open]);
 
   // Redirect to dashboard only on the *moment* of connection (false → true),
-  // not on every render — so visiting `/` while already connected won't bounce you.
+  // and only when not already on a page that should stay (e.g. /studio, /admin).
   const prevConnected = useRef(connected);
   useEffect(() => {
     if (connected && !prevConnected.current) {
-      router.push("/dashboard");
+      const stayOn = pathname === "/studio" || pathname?.startsWith("/studio/") || pathname?.startsWith("/admin");
+      if (!stayOn) {
+        router.push("/dashboard");
+      }
     }
     prevConnected.current = connected;
-  }, [connected, router]);
+  }, [connected, router, pathname]);
 
   const label =
     connected && publicKey
