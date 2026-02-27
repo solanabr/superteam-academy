@@ -19,3 +19,13 @@ export function nowISO(): string {
 export function todayDateString(): string {
   return new Date().toISOString().split("T")[0] as string;
 }
+
+/** Truncate a Solana address or URI for display: "AbCd...xYz1". */
+export function truncateAddress(
+  address: string,
+  prefixLen = 6,
+  suffixLen = 4
+): string {
+  if (address.length <= prefixLen + suffixLen + 3) return address;
+  return `${address.slice(0, prefixLen)}...${address.slice(-suffixLen)}`;
+}
