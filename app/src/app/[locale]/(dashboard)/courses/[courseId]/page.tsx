@@ -23,7 +23,7 @@ export default function CourseDetailsPage() {
   const { getUserEnrollment, enrollInCourse } = useProgram();
 
   const courseId = params.courseId as string;
-  const courseContent = COURSE_CONTENT[courseId];
+  const [courseContent, setCourseContent] = useState<any>(null); // Новое состояние
 
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [completedIndices, setCompletedIndices] = useState<number[]>([]);
@@ -31,23 +31,23 @@ export default function CourseDetailsPage() {
   const [enrolling, setEnrolling] = useState(false);
 
   useEffect(() => {
-    if (!courseContent) return;
-
-    const checkStatus = async () => {
-        if (!publicKey) {
-            setLoading(false);
-            return;
-        }
-
+    const loadCourse = async () => {
+        setLoading(true);
         try {
-            // 1. Проверяем запись в блокчейне (или через useUser, но тут надежнее напрямую)
-            const enrollment = await getUserEnrollment(courseId);
-            setIsEnrolled(!!enrollment);
+            // Загружаем данные из нашей новой CMS
+            const res = await fetch(`/api/courses/${courseId}`);
+            if (!res.ok) throw new Error("Course not found");
+            const data = await res.json();
+            setCourseContent(data);
 
-            // 2. Получаем прогресс из БД
-            const res = await fetch(`/api/course/progress?wallet=${publicKey.toString()}&courseId=${courseId}`);
-            const indices = await res.json();
-            setCompletedIndices(indices);
+            // Проверяем запись (как было)
+            if (publicKey) {
+                const enrollment = await getUserEnrollment(courseId);
+                setIsEnrolled(!!enrollment);
+                const progRes = await fetch(`/api/course/progress?wallet=${publicKey.toString()}&courseId=${courseId}`);
+                const indices = await progRes.json();
+                setCompletedIndices(indices);
+            }
         } catch (e) {
             console.error(e);
         } finally {
@@ -55,7 +55,7 @@ export default function CourseDetailsPage() {
         }
     };
 
-    checkStatus();
+    loadCourse();
   }, [publicKey, courseId, getUserEnrollment]);
 
   const handleEnroll = async () => {
@@ -81,7 +81,7 @@ export default function CourseDetailsPage() {
   const progressPercent = Math.round((completedCount / totalLessons) * 100);
 
   // Находим первый непройденный урок для кнопки "Continue"
-  const nextLessonIndex = courseContent.lessons.findIndex((_, i) => !completedIndices.includes(i));
+  const nextLessonIndex = courseContent.lessons.findIndex((lesson: any, i: number) => !completedIndices.includes(i));
   const continueIndex = nextLessonIndex === -1 ? 0 : nextLessonIndex; // Если все пройдены, ведем на 0
 
   return (

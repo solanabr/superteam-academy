@@ -36,33 +36,53 @@ export default function LessonPage() {
   const [showCertificateModal, setShowCertificateModal] = useState(false);
   const [certificateId, setCertificateId] = useState<string | null>(null);
 
-  // 1. Загрузка контента и статуса
-  useEffect(() => {
-    const lessonData = getLessonContent(courseId, lessonIndex);
-    if (lessonData) {
-      setContent(lessonData);
-      setCode(lessonData.initialCode);
-      setLogs([]); // Очистка логов при смене урока
-      setIsCompleted(false);
+    useEffect(() => {
+        const loadLesson = async () => {
+            try {
+                // Запрашиваем весь курс (или можно сделать отдельный API для одного урока)
+                const res = await fetch(`/api/courses/${courseId}`);
+                if (!res.ok) throw new Error("Course not found");
+                const courseData = await res.json();
+                
+                const lessonData = courseData.lessons[lessonIndex];
+                
+                if (lessonData) {
+                    // Маппим данные БД в ожидаемый формат компонента
+                    setContent({
+                        id: lessonData.id,
+                        title: lessonData.title,
+                        markdown: lessonData.content,
+                        initialCode: lessonData.initialCode || ""
+                    });
+                    setCode(lessonData.initialCode || "");
+                    setLogs([]);
+                    setIsCompleted(false);
 
-      if (publicKey) {
-          fetch(`/api/lesson/status?wallet=${publicKey.toString()}&courseId=${courseId}&lessonIndex=${lessonIndex}`)
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === "completed") {
-                    setIsCompleted(true);
-                    if (data.codeSnippet) {
-                        setCode(data.codeSnippet);
+                    // ... (проверка статуса пройденности, как было)
+                    if (publicKey) {
+                        fetch(`/api/lesson/status?wallet=${publicKey.toString()}&courseId=${courseId}&lessonIndex=${lessonIndex}`)
+                            .then(res => res.json())
+                            .then(data => {
+                                if (data.status === "completed") {
+                                    setIsCompleted(true);
+                                    if (data.codeSnippet) {
+                                        setCode(data.codeSnippet);
+                                    }
+                                    setLogs(["[System] Lesson previously completed. Code loaded."]);
+                                }
+                            });
                     }
-                    setLogs(["[System] Lesson previously completed. Code loaded."]);
+                } else {
+                    toast.error("Lesson not found");
+                    router.push(`/courses/${courseId}`);
                 }
-            });
-      }
-    } else {
-        toast.error("Lesson not found");
-        router.push(`/courses/${courseId}`);
-    }
-  }, [courseId, lessonIndex, publicKey, router]);
+            } catch (e) {
+                console.error(e);
+            }
+        };
+    
+        loadLesson();
+    }, [courseId, lessonIndex, publicKey, router]);
 
   const handleCheckCode = async () => {
     if (!publicKey) {

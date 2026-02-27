@@ -9,6 +9,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  USER
+  ADMIN
+}
+
 // Модель User (расширенная для NextAuth)
 model User {
   id            String    @id @default(auto()) @map("_id") @db.ObjectId
@@ -28,6 +33,8 @@ model User {
   // Соцсети (храним username для отображения)
   twitterHandle String?
   githubHandle  String?
+
+  role          Role      @default(USER)
   
   // Геймификация
   xp            Int       @default(0)
@@ -136,4 +143,40 @@ model XPHistory {
 
   @@index([userId])
   @@index([createdAt])
+}
+
+model Course {
+  id          String         @id @default(auto()) @map("_id") @db.ObjectId
+  slug        String         @unique // Идентификатор в блокчейне (solana-mock-test)
+  title       String
+  description String
+  difficulty  String         @default("Beginner") // Beginner, Intermediate, Advanced
+  xpPerLesson Int            @default(50)
+  imageUrl    String?
+  isPublished Boolean        @default(false)
+  
+  modules     CourseModule[] // Связь с модулями
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}
+
+model CourseModule {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  courseId    String   @db.ObjectId
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title       String
+  order       Int      // Порядок модуля (1, 2, 3...)
+  
+  lessons     Lesson[] // Связь с уроками
+}
+
+model Lesson {
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  moduleId    String       @db.ObjectId
+  module      CourseModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  title       String
+  content     String       // Текст урока в формате Markdown
+  initialCode String?      // Стартовый код (для практики)
+  order       Int          // Глобальный индекс урока в курсе (0, 1, 2...) для блокчейна
+  isChallenge Boolean      @default(true) // true = практика с кодом, false = только текст/видео
 }
