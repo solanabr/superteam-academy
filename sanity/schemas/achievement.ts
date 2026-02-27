@@ -24,6 +24,21 @@ export const achievement = defineType({
       description: "Icon identifier (e.g., emoji or icon library name)",
     }),
     defineField({
+      name: "glyph",
+      title: "Medal Glyph",
+      type: "string",
+      description:
+        "Short monospace text displayed inside the octagonal medal (1-2 chars). Examples: 01, Rs, A+, \u2726",
+    }),
+    defineField({
+      name: "solTier",
+      title: "Solana Tier",
+      type: "boolean",
+      initialValue: false,
+      description:
+        "Enable the iridescent Solana-themed visual treatment for this medal.",
+    }),
+    defineField({
       name: "category",
       title: "Category",
       type: "string",
