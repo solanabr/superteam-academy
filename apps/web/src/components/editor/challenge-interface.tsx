@@ -10,6 +10,7 @@ import {
   ArrowCounterClockwise,
   Trophy,
   Lightning,
+  X,
 } from "@phosphor-icons/react";
 import { CodeEditor, resetEditorStorage } from "./code-editor";
 import { OutputPanel } from "./output-panel";
@@ -70,6 +71,7 @@ export function ChallengeInterface({
   const [isComplete, setIsComplete] = useState(isAlreadyCompleted ?? false);
   const [pendingSubmit, setPendingSubmit] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [hiddenHints, setHiddenHints] = useState<Set<number>>(new Set());
 
   // Sync when the async DB check resolves after mount.
   // Also fires when lesson-client sets isCompleted=true after API returns —
@@ -213,11 +215,25 @@ export function ChallengeInterface({
     [descHeight, panelHeight]
   );
 
-  const visibleHints = hints.slice(0, challengeState.hintsRevealed);
+  const revealedHints = hints
+    .slice(0, challengeState.hintsRevealed)
+    .map((hint, i) => ({ hint, originalIndex: i }));
+  const visibleHints = revealedHints.filter(
+    (h) => !hiddenHints.has(h.originalIndex)
+  );
   const hasMoreHints = challengeState.hintsRevealed < hints.length;
 
+  const handleDismissHint = useCallback((index: number) => {
+    setHiddenHints((prev) => new Set(prev).add(index));
+  }, []);
+
   return (
-    <div className={cn("flex h-full flex-col overflow-hidden", className)}>
+    <div
+      className={cn(
+        "flex h-full flex-col overflow-hidden rounded-xl border-[2.5px] border-border shadow-card",
+        className
+      )}
+    >
       {/* Description toggle + test cases (hidden when rendered externally) */}
       {!hideDescription && (
         <>
@@ -261,18 +277,28 @@ export function ChallengeInterface({
             {/* Hints */}
             {visibleHints.length > 0 && (
               <div className="mt-3 space-y-2">
-                {visibleHints.map((hint, index) => (
+                {visibleHints.map(({ hint, originalIndex }) => (
                   <div
-                    key={`hint-${index}`}
-                    className="flex items-start gap-2 rounded-md border p-2 [background:var(--accent-bg)] [border-color:var(--accent-border-s)]"
+                    key={`hint-${originalIndex}`}
+                    className="flex items-start gap-2 rounded-lg border-[2px] px-3 py-2.5 [background:var(--accent-bg)] [border-color:var(--accent-border-s)]"
                   >
                     <Lightbulb
                       size={16}
-                      weight="duotone"
+                      weight="fill"
                       className="mt-0.5 shrink-0 text-accent"
                       aria-hidden="true"
                     />
-                    <span className="text-xs">{hint}</span>
+                    <span className="flex-1 text-xs leading-relaxed text-text">
+                      {hint}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleDismissHint(originalIndex)}
+                      className="mt-0.5 shrink-0 rounded-md p-0.5 text-text-3 transition-colors hover:bg-border hover:text-text"
+                      aria-label={tCommon("close")}
+                    >
+                      <X size={12} weight="bold" />
+                    </button>
                   </div>
                 ))}
               </div>
@@ -322,79 +348,91 @@ export function ChallengeInterface({
       )}
 
       {/* Toolbar */}
-      <div className="flex shrink-0 items-center justify-between border-b border-border px-3 py-2.5">
-        <ChallengeRunner
-          code={code}
-          tests={tests}
-          language={language}
-          buildType={buildType}
-          isDeployable={isDeployable}
-          onResult={handleResult}
-          onSubmit={handleSubmit}
-          isComplete={isComplete}
-          xpReward={xpReward}
-          solutionRevealed={challengeState.solutionRevealed}
-        />
+      <div className="shrink-0 border-b border-border bg-card px-3 py-2.5">
+        <div className="flex items-center justify-between">
+          <ChallengeRunner
+            code={code}
+            tests={tests}
+            language={language}
+            buildType={buildType}
+            isDeployable={isDeployable}
+            onResult={handleResult}
+            onSubmit={handleSubmit}
+            isComplete={isComplete}
+            xpReward={xpReward}
+            solutionRevealed={challengeState.solutionRevealed}
+          />
 
-        <div className="flex items-center gap-1">
-          {hasMoreHints && (
+          <div className="flex items-center gap-1">
+            {hasMoreHints && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleRevealHint}
+                className="gap-1 text-xs"
+              >
+                <Lightbulb size={16} weight="duotone" aria-hidden="true" />
+                {t("showHint")}
+                <span className="text-text-3">
+                  ({challengeState.hintsRevealed}/{hints.length})
+                </span>
+              </Button>
+            )}
+
+            {solution && code !== solution && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleShowSolution}
+                className="gap-1 text-xs"
+              >
+                <Eye size={16} weight="duotone" aria-hidden="true" />
+                {t("showSolution")}
+              </Button>
+            )}
+
             <Button
               variant="ghost"
               size="sm"
-              onClick={handleRevealHint}
+              onClick={handleReset}
               className="gap-1 text-xs"
             >
-              <Lightbulb size={16} weight="duotone" aria-hidden="true" />
-              {t("showHint")}
-              <span className="text-text-3">
-                ({challengeState.hintsRevealed}/{hints.length})
-              </span>
+              <ArrowCounterClockwise
+                size={16}
+                weight="duotone"
+                aria-hidden="true"
+              />
+              {t("resetCode")}
             </Button>
-          )}
-
-          {solution && code !== solution && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleShowSolution}
-              className="gap-1 text-xs"
-            >
-              <Eye size={16} weight="duotone" aria-hidden="true" />
-              {t("showSolution")}
-            </Button>
-          )}
-
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleReset}
-            className="gap-1 text-xs"
-          >
-            <ArrowCounterClockwise
-              size={16}
-              weight="duotone"
-              aria-hidden="true"
-            />
-            {t("resetCode")}
-          </Button>
+          </div>
         </div>
       </div>
 
       {/* Hints (shown inline when description is hidden, i.e. split-panel mode) */}
       {hideDescription && visibleHints.length > 0 && (
-        <div className="shrink-0 space-y-2 border-b border-border px-4 py-3">
-          {visibleHints.map((hint, index) => (
+        <div className="shrink-0 space-y-2 border-b border-border bg-card px-4 py-3">
+          {visibleHints.map(({ hint, originalIndex }) => (
             <div
-              key={`hint-${index}`}
-              className="flex items-start gap-2 rounded-md border p-2 [background:var(--accent-bg)] [border-color:var(--accent-border-s)]"
+              key={`hint-${originalIndex}`}
+              className="flex items-start gap-2.5 rounded-lg border-[2px] px-3 py-2.5 [background:var(--accent-bg)] [border-color:var(--accent-border-s)]"
             >
               <Lightbulb
                 size={16}
-                weight="duotone"
+                weight="fill"
                 className="mt-0.5 shrink-0 text-accent"
                 aria-hidden="true"
               />
-              <span className="text-xs">{hint}</span>
+              <span className="flex-1 text-xs leading-relaxed text-text">
+                {hint}
+              </span>
+              <button
+                type="button"
+                onClick={() => handleDismissHint(originalIndex)}
+                className="mt-0.5 shrink-0 rounded-md p-0.5 text-text-3 transition-colors hover:bg-border hover:text-text"
+                aria-label={tCommon("close")}
+              >
+                <X size={12} weight="bold" />
+              </button>
             </div>
           ))}
         </div>

@@ -23,6 +23,7 @@ export interface Achievement {
   category: "progress" | "streaks" | "skills" | "community" | "special";
   unlockedAt?: Date;
   explorerUrl?: string;
+  assetAddress?: string;
 }
 
 export interface Certificate {

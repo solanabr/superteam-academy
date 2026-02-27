@@ -7,6 +7,7 @@ import { GraduationCap } from "@phosphor-icons/react";
 import type { Certificate } from "@superteam-lms/types";
 import { createClient } from "@/lib/supabase/client";
 import { CertificateCard } from "@/components/certificates/certificate-card";
+import { getCoursesByIds } from "@/lib/sanity/queries";
 import { CERTIFICATE_STYLES as CS } from "@/lib/styles/styleClasses";
 
 export default function CertificatesPage() {
@@ -14,6 +15,9 @@ export default function CertificatesPage() {
   const tCommon = useTranslations("common");
   const locale = useLocale();
   const [certificates, setCertificates] = useState<Certificate[]>([]);
+  const [subtitleMap, setSubtitleMap] = useState<Map<string, string>>(
+    new Map()
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [recipientName, setRecipientName] = useState<string>("");
 
@@ -47,18 +51,36 @@ export default function CertificatesPage() {
           .eq("user_id", user.id)
           .order("minted_at", { ascending: false });
 
-        if (certs) {
-          setCertificates(
-            certs.map((cert) => ({
-              id: cert.id,
-              userId: cert.user_id,
-              courseId: cert.course_id,
-              courseTitle: cert.course_title,
-              mintAddress: cert.mint_address ?? "",
-              metadataUri: cert.metadata_uri ?? "",
-              mintedAt: new Date(cert.minted_at),
-            }))
-          );
+        if (certs && certs.length > 0) {
+          const mapped = certs.map((cert) => ({
+            id: cert.id,
+            userId: cert.user_id,
+            courseId: cert.course_id,
+            courseTitle: cert.course_title,
+            mintAddress: cert.mint_address ?? "",
+            metadataUri: cert.metadata_uri ?? "",
+            mintedAt: new Date(cert.minted_at),
+          }));
+          setCertificates(mapped);
+
+          // Fetch course data from Sanity for learning path + difficulty
+          const courseIds = [...new Set(mapped.map((c) => c.courseId))];
+          const courses = await getCoursesByIds(courseIds);
+          const sMap = new Map<string, string>();
+          for (const course of courses) {
+            const parts: string[] = [];
+            if (course.learningPath) parts.push(course.learningPath);
+            if (course.difficulty) {
+              parts.push(
+                course.difficulty.charAt(0).toUpperCase() +
+                  course.difficulty.slice(1)
+              );
+            }
+            if (parts.length > 0) {
+              sMap.set(course._id, parts.join(" · "));
+            }
+          }
+          setSubtitleMap(sMap);
         }
 
         setIsLoading(false);
@@ -73,11 +95,14 @@ export default function CertificatesPage() {
 
   return (
     <div className="space-y-8">
+      {/* Page header */}
       <div>
-        <h1 className="font-display text-3xl font-black tracking-[-0.5px]">
+        <h1 className="font-display text-[30px] font-extrabold leading-[1.2] tracking-[-0.5px] text-text">
           {t("pageTitle")}
         </h1>
-        <p className="mt-2 text-text-3">{t("pageSubtitle")}</p>
+        <p className="mt-2 font-body text-[15px] text-text-3">
+          {t("pageSubtitle")}
+        </p>
       </div>
 
       {isLoading ? (
@@ -93,20 +118,25 @@ export default function CertificatesPage() {
           <GraduationCap
             size={48}
             weight="duotone"
-            className="text-accent"
+            className="text-text-3"
             aria-hidden="true"
           />
-          <p className="text-center text-lg text-text-3">
+          <p className="text-center font-body text-[15px] text-text-3">
             {t("noCertificates")}
           </p>
         </div>
       ) : (
         <div className={CS.full.grid}>
           {certificates.map((cert) => (
-            <Link key={cert.id} href={`/${locale}/certificates/${cert.id}`}>
+            <Link
+              key={cert.id}
+              href={`/${locale}/certificates/${cert.id}`}
+              className="h-full"
+            >
               <CertificateCard
                 certificate={cert}
                 recipientName={recipientName}
+                subtitle={subtitleMap.get(cert.courseId)}
                 variant="full"
               />
             </Link>

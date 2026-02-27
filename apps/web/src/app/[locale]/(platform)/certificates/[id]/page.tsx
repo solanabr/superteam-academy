@@ -3,29 +3,26 @@
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
+import { Copy, Check } from "@phosphor-icons/react";
+import type { Certificate } from "@superteam-lms/types";
 import { Button } from "@/components/ui/button";
-import { SolanaLogo } from "@/components/icons/solana-logo";
+import { CertificateCard } from "@/components/certificates/certificate-card";
 import { createClient } from "@/lib/supabase/client";
-import { CERTIFICATE_STYLES as CS, cx } from "@/lib/styles/styleClasses";
+import { getCoursesByIds } from "@/lib/sanity/queries";
+import { CERTIFICATE_STYLES as CS } from "@/lib/styles/styleClasses";
+import { truncateAddress } from "@/lib/utils";
 
-function truncateAddress(address: string): string {
-  if (address.length <= 12) return address;
-  return `${address.slice(0, 6)}...${address.slice(-4)}`;
-}
-
-interface CertificateData {
-  id: string;
-  courseTitle: string;
+interface CertDetail {
+  cert: Certificate;
   recipientName: string;
-  recipientWallet: string;
-  completionDate: string;
+  subtitle: string;
   mintAddress: string;
   metadataUri: string;
   network: string;
 }
 
 function useCertificateData(certId: string) {
-  const [data, setData] = useState<CertificateData | null>(null);
+  const [data, setData] = useState<CertDetail | null>(null);
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
@@ -50,18 +47,30 @@ function useCertificateData(certId: string) {
           .eq("id", cert.user_id)
           .single();
 
+        // Fetch learning path + difficulty from Sanity
+        const courses = await getCoursesByIds([cert.course_id]);
+        const course = courses[0];
+        const parts: string[] = [];
+        if (course?.learningPath) parts.push(course.learningPath);
+        if (course?.difficulty) {
+          parts.push(
+            course.difficulty.charAt(0).toUpperCase() +
+              course.difficulty.slice(1)
+          );
+        }
+
         setData({
-          id: cert.id,
-          courseTitle: cert.course_title,
+          cert: {
+            id: cert.id,
+            userId: cert.user_id,
+            courseId: cert.course_id,
+            courseTitle: cert.course_title,
+            mintAddress: cert.mint_address ?? "",
+            metadataUri: cert.metadata_uri ?? "",
+            mintedAt: new Date(cert.minted_at),
+          },
           recipientName: profile?.username ?? "Builder",
-          recipientWallet: profile?.wallet_address
-            ? truncateAddress(profile.wallet_address)
-            : "",
-          completionDate: new Date(cert.minted_at).toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          }),
+          subtitle: parts.join(" · "),
           mintAddress: cert.mint_address ?? "",
           metadataUri: cert.metadata_uri ?? "",
           network: "devnet",
@@ -77,11 +86,45 @@ function useCertificateData(certId: string) {
   return { data, notFound };
 }
 
+function CopyableValue({ value, full }: { value: string; full: string }) {
+  const t = useTranslations("certificates");
+  const [copied, setCopied] = useState(false);
+
+  async function handleCopy() {
+    await navigator.clipboard.writeText(full);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  return (
+    <button
+      onClick={handleCopy}
+      className="group inline-flex items-center gap-1.5 font-mono text-xs font-medium text-text-2 transition-colors hover:text-text"
+    >
+      {value}
+      {copied ? (
+        <Check size={12} weight="bold" className="text-success" />
+      ) : (
+        <Copy
+          size={12}
+          weight="bold"
+          className="opacity-0 transition-opacity group-hover:opacity-100"
+        />
+      )}
+      {copied && (
+        <span className="text-[10px] font-semibold text-success">
+          {t("copied")}
+        </span>
+      )}
+    </button>
+  );
+}
+
 export default function CertificateViewPage() {
   const t = useTranslations("certificates");
   const params = useParams();
   const certId = typeof params.id === "string" ? params.id : "";
-  const { data: cert, notFound: certNotFound } = useCertificateData(certId);
+  const { data, notFound: certNotFound } = useCertificateData(certId);
   const v = CS.verify;
 
   if (certNotFound) {
@@ -92,7 +135,7 @@ export default function CertificateViewPage() {
     );
   }
 
-  if (!cert) {
+  if (!data) {
     return (
       <div className="flex items-center justify-center py-20">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
@@ -101,97 +144,81 @@ export default function CertificateViewPage() {
     );
   }
 
-  // Bind to a non-null const so closures can see it without TS complaining
-  const certData = cert;
-  const explorerUrl = `https://explorer.solana.com/address/${certData.mintAddress}?cluster=${certData.network}`;
+  const { cert, recipientName, subtitle, mintAddress, metadataUri, network } =
+    data;
+  const explorerUrl = mintAddress
+    ? `https://explorer.solana.com/address/${mintAddress}?cluster=${network}`
+    : "";
 
-  async function handleCopyLink() {
-    await navigator.clipboard.writeText(window.location.href);
-  }
-
-  function handleDownload() {
-    window.print();
-  }
-
-  function handleShareTwitter() {
+  function handleShareX() {
+    const pageUrl = window.location.href;
     const text = encodeURIComponent(
-      `I just earned my "${certData.courseTitle}" certificate on Superteam Academy! Verify on-chain: ${explorerUrl}`
+      `I just earned my "${cert.courseTitle}" certificate on @SuperteamBR Academy! 🎓\n\nVerify on-chain:`
     );
+    const url = encodeURIComponent(pageUrl);
     window.open(
-      `https://twitter.com/intent/tweet?text=${text}`,
+      `https://x.com/intent/tweet?text=${text}&url=${url}`,
       "_blank",
       "noopener,noreferrer"
     );
+  }
+
+  async function handleCopyLink() {
+    await navigator.clipboard.writeText(window.location.href);
   }
 
   return (
     <div className={v.page}>
       <h1 className={v.pageTitle}>{t("title")}</h1>
 
-      {/* Certificate card — static (no hover lift) */}
-      <div className={CS.wrap}>
-        <div className={cx(CS.inner, v.inner)}>
-          {/* Solana icon */}
-          <div className={v.icon}>
-            <SolanaLogo className={v.iconSvg} variant="brand" />
-          </div>
-
-          {/* Heading + gradient bar */}
-          <div className={v.heading}>{t("title")}</div>
-          <div className={v.gradientBar} />
-
-          {/* Recipient */}
-          <div className={v.label}>{t("recipient")}</div>
-          <div className={v.recipient}>{certData.recipientName}</div>
-          {certData.recipientWallet && (
-            <div className={v.wallet}>{certData.recipientWallet}</div>
-          )}
-
-          {/* Completion date */}
-          <div className={v.date}>
-            {t("completedOn", { date: certData.completionDate })}
-          </div>
-        </div>
+      {/* Certificate card — same design as list page */}
+      <div className="cert-wrap-static">
+        <CertificateCard
+          certificate={cert}
+          recipientName={recipientName}
+          subtitle={subtitle}
+          variant="full"
+        />
       </div>
 
       {/* Action buttons */}
       <div className={v.actions}>
-        <Button variant="default" size="sm" asChild>
-          <a href={explorerUrl} target="_blank" rel="noopener noreferrer">
-            {t("viewOnExplorer")} &rarr;
-          </a>
-        </Button>
-        <Button variant="outline" size="sm" onClick={handleShareTwitter}>
+        {explorerUrl && (
+          <Button variant="default" size="sm" asChild>
+            <a href={explorerUrl} target="_blank" rel="noopener noreferrer">
+              {t("viewOnExplorer")} &rarr;
+            </a>
+          </Button>
+        )}
+        <Button variant="outline" size="sm" onClick={handleShareX}>
           {t("share")}
         </Button>
         <Button variant="outline" size="sm" onClick={handleCopyLink}>
           {t("copyLink")}
         </Button>
-        <Button variant="outline" size="sm" onClick={handleDownload}>
-          {t("download")}
-        </Button>
       </div>
 
-      {/* NFT Details card */}
+      {/* NFT Details card — copyable values */}
       <div className={v.nftCard}>
         <div className={v.nftTitle}>{t("nftDetails")}</div>
         <div className={v.nftRow}>
           <span className={v.nftLabel}>{t("mintAddress")}</span>
-          <span className={cx(v.nftValue, v.nftValueMono)}>
-            {truncateAddress(certData.mintAddress)}
-          </span>
+          <CopyableValue
+            value={truncateAddress(mintAddress)}
+            full={mintAddress}
+          />
         </div>
         <div className={v.nftRow}>
           <span className={v.nftLabel}>{t("metadataUri")}</span>
-          <span className={cx(v.nftValue, v.nftValueMono)}>
-            {truncateAddress(certData.metadataUri)}
-          </span>
+          <CopyableValue
+            value={truncateAddress(metadataUri)}
+            full={metadataUri}
+          />
         </div>
         <div className={v.nftRow}>
           <span className={v.nftLabel}>{t("network")}</span>
           <span className={v.nftValue}>
-            {certData.network.charAt(0).toUpperCase() +
-              certData.network.slice(1)}
+            {network.charAt(0).toUpperCase() + network.slice(1)}
           </span>
         </div>
         <div className={v.nftRow}>

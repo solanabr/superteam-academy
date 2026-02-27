@@ -1,23 +1,24 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
+import Link from "next/link";
+import { GraduationCap, CircleNotch } from "@phosphor-icons/react";
 import type { Achievement, Certificate } from "@superteam-lms/types";
-import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LevelBadge } from "@/components/gamification/level-badge";
+import { ProfileHeroPanel } from "@/components/gamification/profile-hero-panel";
 import { SkillRadar } from "@/components/gamification/skill-radar";
 import { AchievementGrid } from "@/components/gamification/achievement-grid";
-import { CertificateGrid } from "@/components/certificates/certificate-grid";
 import { createClient } from "@/lib/supabase/client";
 import { getProgressService } from "@/lib/services";
 import { calculateLevel } from "@/lib/gamification/xp";
+import { CERTIFICATE_STYLES as CS } from "@/lib/styles/styleClasses";
 import {
+  getAllAchievements,
   getAllCourseTags,
   getCoursesByIds,
-  getDeployedAchievements,
   type DeployedAchievement,
 } from "@/lib/sanity/queries";
+import { truncateAddress } from "@/lib/utils";
 
 interface UserData {
   id: string;
@@ -43,6 +44,7 @@ interface CompletedCourse {
 interface SkillItem {
   label: string;
   value: number;
+  lessonCount: number;
 }
 
 interface ProfileData {
@@ -54,6 +56,7 @@ interface ProfileData {
     certificatesCount: number;
   };
   skills: SkillItem[];
+  totalLessons: number;
   achievements: Achievement[];
   deployedAchievements: DeployedAchievement[];
   certificates: Certificate[];
@@ -66,6 +69,7 @@ function useProfileData(): ProfileData {
     user: null,
     stats: { totalXp: 0, level: 0, coursesCompleted: 0, certificatesCount: 0 },
     skills: [],
+    totalLessons: 0,
     achievements: [],
     deployedAchievements: [],
     certificates: [],
@@ -135,8 +139,6 @@ function useProfileData(): ProfileData {
             }
           : null;
 
-        // achievements resolved after achievementMap is built below
-
         const certificates: Certificate[] =
           certRows?.map((row) => ({
             id: row.id,
@@ -148,8 +150,10 @@ function useProfileData(): ProfileData {
             mintedAt: new Date(row.minted_at),
           })) ?? [];
 
+        // Total unique completed lessons (one row per lesson)
+        const totalCompletedLessons = (progressRows ?? []).length;
+
         // Build completed courses from progress data
-        // Group progress rows by course_id
         const courseProgressMap = new Map<string, number>();
         for (const row of progressRows ?? []) {
           courseProgressMap.set(
@@ -166,17 +170,15 @@ function useProfileData(): ProfileData {
 
         // Resolve enrolled course details from Sanity CMS
         const enrolledIds = (enrollmentRows ?? []).map((e) => e.course_id);
-        const [courseSummaries, allCourseTags, deployedAchievements] =
+        const [courseSummaries, allCourseTags, allAchievements] =
           await Promise.all([
             enrolledIds.length > 0
               ? getCoursesByIds(enrolledIds)
               : Promise.resolve([]),
             getAllCourseTags(),
-            getDeployedAchievements(),
+            getAllAchievements(),
           ]);
-        const achievementMap = new Map(
-          deployedAchievements.map((a) => [a.id, a])
-        );
+        const achievementMap = new Map(allAchievements.map((a) => [a.id, a]));
 
         const network = process.env.NEXT_PUBLIC_SOLANA_NETWORK ?? "devnet";
         const cluster = network === "mainnet" ? "mainnet-beta" : network;
@@ -197,6 +199,7 @@ function useProfileData(): ProfileData {
               category: (def?.category as Achievement["category"]) ?? "special",
               unlockedAt: new Date(row.unlocked_at),
               explorerUrl,
+              assetAddress: row.asset_address ?? undefined,
             };
           }) ?? [];
 
@@ -222,30 +225,34 @@ function useProfileData(): ProfileData {
           }
         }
 
-        // Compute skill radar from course tags
-        // Count how many times each tag appears across all courses,
-        // then scale completed course tags relative to total.
-        const tagTotalCount = new Map<string, number>();
-        const tagCompletedCount = new Map<string, number>();
+        // Compute skill radar — raw completed lessons per tag, normalized
+        // so the strongest tag = 100 and others scale proportionally.
+        // This shows skill *distribution* instead of flat 100% everywhere.
+        const tagCompletedLessons = new Map<string, number>();
         for (const course of allCourseTags) {
+          const done = courseProgressMap.get(course._id) ?? 0;
           for (const tag of course.tags ?? []) {
-            tagTotalCount.set(tag, (tagTotalCount.get(tag) ?? 0) + 1);
-            if (completedCourseIds.has(course._id)) {
-              tagCompletedCount.set(tag, (tagCompletedCount.get(tag) ?? 0) + 1);
-            }
+            tagCompletedLessons.set(
+              tag,
+              (tagCompletedLessons.get(tag) ?? 0) + done
+            );
           }
         }
 
-        // Convert to skill items: value = (completed / total) * 100
-        const skills: SkillItem[] = Array.from(tagTotalCount.entries())
-          .map(([tag, total]) => ({
+        const rawSkills = Array.from(tagCompletedLessons.entries())
+          .filter(([, count]) => count > 0)
+          .map(([tag, count]) => ({
             label: tag.charAt(0).toUpperCase() + tag.slice(1),
-            value: Math.round(
-              ((tagCompletedCount.get(tag) ?? 0) / total) * 100
-            ),
+            lessonCount: count,
           }))
-          .sort((a, b) => b.value - a.value)
+          .sort((a, b) => b.lessonCount - a.lessonCount)
           .slice(0, 8);
+
+        const maxLessons = rawSkills[0]?.lessonCount ?? 1;
+        const skills: SkillItem[] = rawSkills.map((s) => ({
+          ...s,
+          value: Math.round((s.lessonCount / maxLessons) * 100),
+        }));
 
         setData({
           user: profileData,
@@ -256,8 +263,9 @@ function useProfileData(): ProfileData {
             certificatesCount: certificates.length,
           },
           skills: skills.length > 0 ? skills : [],
+          totalLessons: totalCompletedLessons,
           achievements,
-          deployedAchievements,
+          deployedAchievements: allAchievements,
           certificates,
           completedCourses,
           isLoading: false,
@@ -276,12 +284,18 @@ function useProfileData(): ProfileData {
 export default function ProfilePage() {
   const t = useTranslations("profile");
   const tCerts = useTranslations("certificates");
+  const locale = useLocale();
   const data = useProfileData();
 
   if (data.isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        <CircleNotch
+          size={32}
+          weight="bold"
+          className="animate-spin text-primary"
+          aria-hidden="true"
+        />
         <span className="sr-only">Loading...</span>
       </div>
     );
@@ -298,131 +312,91 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="space-y-8">
-      {/* Profile Header */}
-      <div className="flex flex-col items-start gap-6 sm:flex-row">
-        <Avatar className="h-20 w-20">
-          {data.user.avatarUrl && (
-            <AvatarImage src={data.user.avatarUrl} alt={data.user.username} />
-          )}
-          <AvatarFallback className="text-2xl">
-            {data.user.username.slice(0, 2).toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
+    <div className="space-y-10">
+      {/* ─── Profile Hero Panel (dash-panel) ─── */}
+      <ProfileHeroPanel
+        user={data.user}
+        stats={data.stats}
+        achievements={data.achievements}
+        deployedAchievements={data.deployedAchievements}
+        showVisibilityBadge
+      />
 
-        <div className="flex-1 space-y-2">
-          <div className="flex items-center gap-3">
-            <h1 className="font-display text-2xl font-black tracking-[-0.5px]">
-              {data.user.username}
-            </h1>
-            <LevelBadge level={data.stats.level} size="sm" />
-            <span className="rounded-full px-2.5 py-0.5 text-xs font-medium text-success [background:var(--success-bg)]">
-              {data.user.isPublic ? t("publicProfile") : t("privateProfile")}
-            </span>
-          </div>
+      {/* ─── Skills Radar ─── */}
+      {data.skills.length > 0 && (
+        <section>
+          <h2 className="mb-4 font-display text-[22px] font-extrabold">
+            {t("skills")}
+          </h2>
+          <SkillRadar skills={data.skills} totalLessons={data.totalLessons} />
+        </section>
+      )}
 
-          <p className="max-w-2xl text-text-3">{data.user.bio || t("noBio")}</p>
-
-          <div className="flex items-center gap-1 text-sm text-text-3">
-            <span>
-              {t("joinedOn", { date: data.user.joinedAt.toLocaleDateString() })}
-            </span>
-          </div>
-
-          {/* Social Links */}
-          {data.user.socialLinks && (
-            <div className="mt-2 flex items-center gap-4">
-              {data.user.socialLinks.twitter && (
-                <a
-                  href={`https://twitter.com/${data.user.socialLinks.twitter}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1 text-sm text-text-3 transition-colors hover:text-text"
-                >
-                  Twitter &rarr;
-                </a>
-              )}
-              {data.user.socialLinks.github && (
-                <a
-                  href={`https://github.com/${data.user.socialLinks.github}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1 text-sm text-text-3 transition-colors hover:text-text"
-                >
-                  GitHub &rarr;
-                </a>
-              )}
-              {data.user.socialLinks.discord && (
-                <span className="flex items-center gap-1 text-sm text-text-3">
-                  Discord: {data.user.socialLinks.discord}
-                </span>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Stats Bar */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="font-display text-2xl font-black text-xp">
-              {data.stats.totalXp.toLocaleString()}
-            </p>
-            <p className="mt-1 text-xs text-text-3">{t("totalXp")}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex flex-col items-center p-4 text-center">
-            <LevelBadge level={data.stats.level} size="md" />
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="font-display text-2xl font-black">
-              {data.stats.coursesCompleted}
-            </p>
-            <p className="mt-1 text-xs text-text-3">{t("coursesCompleted")}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="font-display text-2xl font-black">
-              {data.stats.certificatesCount}
-            </p>
-            <p className="mt-1 text-xs text-text-3">
-              {t("certificatesEarned")}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Skills Radar */}
-      <div className="space-y-4">
-        <h2 className="font-display text-xl font-extrabold">{t("skills")}</h2>
-        <Card>
-          <CardContent className="flex items-center justify-center p-6">
-            <SkillRadar skills={data.skills} size={280} />
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Achievements */}
+      {/* ─── Achievements ─── */}
       <AchievementGrid
         unlockedAchievements={data.achievements}
         catalog={data.deployedAchievements}
       />
 
-      {/* Certificates */}
-      <div className="space-y-4">
-        <h2 className="font-display text-xl font-extrabold">
-          {tCerts("title")}
-        </h2>
-        <CertificateGrid
-          certificates={data.certificates}
-          recipientName={data.user.username}
-        />
-      </div>
+      {/* ─── Certificates — compact on-chain proof cards ─── */}
+      {data.certificates.length > 0 && (
+        <section>
+          <h2 className="mb-4 font-display text-[22px] font-extrabold">
+            {tCerts("title")}
+          </h2>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {data.certificates.map((cert) => (
+              <Link
+                key={cert.id}
+                href={`/${locale}/certificates/${cert.id}`}
+                className="group"
+              >
+                <div className={CS.gradCard || "grad-card"}>
+                  <div className={CS.gradCardInner || "grad-card-inner"}>
+                    <div className={CS.gradCardBody || "grad-card-body"}>
+                      <p className="font-display text-[15px] font-extrabold leading-snug text-text">
+                        {cert.courseTitle}
+                      </p>
+                      <p className="mt-1 font-body text-[13px] text-text-2">
+                        {data.user?.username}
+                        <span className="mx-1.5 text-text-3">&middot;</span>
+                        {cert.mintedAt.toLocaleDateString()}
+                      </p>
+                      <div className="mt-3">
+                        <span className={CS.proofPill}>
+                          <span className={CS.proofDot} aria-hidden="true" />
+                          {cert.mintAddress
+                            ? truncateAddress(cert.mintAddress)
+                            : tCerts("onChain")}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {data.certificates.length === 0 && (
+        <section>
+          <h2 className="mb-4 font-display text-[22px] font-extrabold">
+            {tCerts("title")}
+          </h2>
+          <div className="flex flex-col items-center justify-center gap-4 py-12">
+            <GraduationCap
+              size={48}
+              weight="duotone"
+              className="text-accent"
+              aria-hidden="true"
+            />
+            <p className="text-center font-body text-text-3">
+              {tCerts("noCertificates")}
+            </p>
+          </div>
+        </section>
+      )}
     </div>
   );
 }

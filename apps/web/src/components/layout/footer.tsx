@@ -47,7 +47,7 @@ export function Footer() {
               <GithubLogo size={20} weight="bold" />
             </a>
             <a
-              href="https://twitter.com/superteambr"
+              href="https://x.com/superteambr"
               target="_blank"
               rel="noopener noreferrer"
               className="text-text-3 transition-colors hover:text-text"

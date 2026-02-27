@@ -19,6 +19,9 @@ import { dispatchCertificateMinted } from "@/components/gamification/certificate
  */
 export function useGamificationEvents(userId: string | undefined) {
   const lastKnownLevelRef = useRef<number | null>(null);
+  // Deduplicate Realtime events — Supabase may deliver the same row multiple
+  // times (e.g. React Strict Mode double-mount, reconnection replays).
+  const seenIdsRef = useRef(new Set<string>());
 
   useEffect(() => {
     if (!userId) return;
@@ -65,7 +68,21 @@ export function useGamificationEvents(userId: string | undefined) {
           filter: `user_id=eq.${userId}`,
         },
         (payload) => {
-          const row = payload.new as { amount?: number; reason?: string };
+          const row = payload.new as {
+            id?: string;
+            amount?: number;
+            reason?: string;
+            tx_signature?: string;
+          };
+
+          // Deduplicate by row id (primary defence) or tx_signature (fallback)
+          const dedupeKey = row.id ?? row.tx_signature;
+          if (dedupeKey) {
+            if (seenIdsRef.current.has(dedupeKey)) return;
+            seenIdsRef.current.add(dedupeKey);
+            setTimeout(() => seenIdsRef.current.delete(dedupeKey), 15_000);
+          }
+
           const amount = row.amount;
           if (!amount || amount <= 0) return;
 
@@ -91,7 +108,16 @@ export function useGamificationEvents(userId: string | undefined) {
           filter: `user_id=eq.${userId}`,
         },
         (payload) => {
-          const row = payload.new as { achievement_id?: string };
+          const row = payload.new as {
+            id?: string;
+            achievement_id?: string;
+          };
+          const key = row.id ?? row.achievement_id;
+          if (key) {
+            if (seenIdsRef.current.has(key)) return;
+            seenIdsRef.current.add(key);
+            setTimeout(() => seenIdsRef.current.delete(key), 15_000);
+          }
           if (row.achievement_id) {
             const displayName = row.achievement_id
               .replace(/_/g, " ")
@@ -111,15 +137,19 @@ export function useGamificationEvents(userId: string | undefined) {
         },
         (payload) => {
           const row = payload.new as { id?: string };
-          if (row.id) {
-            dispatchCertificateMinted(row.id);
-          }
+          if (!row.id) return;
+          if (seenIdsRef.current.has(row.id)) return;
+          seenIdsRef.current.add(row.id);
+          const certId = row.id;
+          setTimeout(() => seenIdsRef.current.delete(certId), 15_000);
+          dispatchCertificateMinted(certId);
         }
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
+      seenIdsRef.current.clear();
     };
   }, [userId]);
 }
