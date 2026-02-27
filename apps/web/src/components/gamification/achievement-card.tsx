@@ -1,34 +1,39 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { GLYPH_MAP, SOL_TIER_IDS } from "@/lib/gamification/achievement-meta";
-import { cn } from "@/lib/utils";
+import { cn, truncateAddress } from "@/lib/utils";
 
 interface AchievementCardProps {
-  id: string;
   name: string;
   description: string;
+  glyph: string;
+  solTier?: boolean;
   unlockedAt?: Date;
   explorerUrl?: string;
+  assetAddress?: string;
   className?: string;
 }
 
 export function AchievementCard({
-  id,
   name,
   // description is intentionally omitted from the medal grid view
   // (shown in tooltips or detail panels, not in the compact octagon layout)
   description: _description,
+  glyph,
+  solTier,
   unlockedAt,
   explorerUrl,
+  assetAddress,
   className,
 }: AchievementCardProps) {
   const t = useTranslations("gamification");
   const isUnlocked = !!unlockedAt;
-  const isSol = isUnlocked && SOL_TIER_IDS.has(id);
-  const glyph = GLYPH_MAP[id] ?? id.slice(-2).toUpperCase();
+  const isSol = isUnlocked && !!solTier;
 
   const medalState = isUnlocked ? (isSol ? "sol" : "earned") : "locked";
+  const pillLabel = assetAddress
+    ? truncateAddress(assetAddress, 5)
+    : t("onChain");
 
   const medal = (
     <div className={cn("ach-medal", medalState)} aria-hidden="true">
@@ -68,12 +73,12 @@ export function AchievementCard({
                 tabIndex={-1}
               >
                 <span className="proof-dot" aria-hidden="true" />
-                {t("onChain")}
+                {pillLabel}
               </a>
             ) : (
               <span className="proof-pill">
                 <span className="proof-dot" aria-hidden="true" />
-                {t("onChain")}
+                {pillLabel}
               </span>
             )}
           </div>

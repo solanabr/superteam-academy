@@ -46,6 +46,12 @@ export function AchievementGrid({
       .map((a) => [a.id, a.explorerUrl!])
   );
 
+  const assetAddressMap = new Map(
+    unlockedAchievements
+      .filter((a) => a.assetAddress)
+      .map((a) => [a.id, a.assetAddress!])
+  );
+
   // Derive categories from the live catalog (no hardcoded list)
   const categories = [
     "all",
@@ -82,10 +88,12 @@ export function AchievementGrid({
   return (
     <div className={cn("space-y-4", className)}>
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center gap-3">
         <h3 className="font-display text-lg font-black">{t("achievements")}</h3>
-        <span className="font-body text-sm text-text-3">
-          {totalUnlocked}/{totalAchievements}
+        <span className="inline-flex items-center rounded-full border border-border bg-[var(--input)] px-2 py-0.5 font-mono text-[11px] font-semibold text-text-2">
+          {totalUnlocked}
+          <span className="mx-0.5 text-text-3">/</span>
+          {totalAchievements}
         </span>
       </div>
 
@@ -149,11 +157,13 @@ export function AchievementGrid({
           {sorted.map((def) => (
             <AchievementCard
               key={def.id}
-              id={def.id}
               name={def.name}
               description={def.description}
+              glyph={def.glyph}
+              solTier={def.solTier}
               unlockedAt={unlockedMap.get(def.id)}
               explorerUrl={explorerUrlMap.get(def.id)}
+              assetAddress={assetAddressMap.get(def.id)}
             />
           ))}
         </div>

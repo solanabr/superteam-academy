@@ -3,6 +3,10 @@ export interface AchievementDefinition {
   name: string;
   description: string;
   icon: string;
+  /** Short monospace text for octagonal medal display (e.g. "01", "Rs", "A+"). */
+  glyph: string;
+  /** Uses the iridescent Solana-themed visual treatment. */
+  solTier: boolean;
   category: string;
 }
 

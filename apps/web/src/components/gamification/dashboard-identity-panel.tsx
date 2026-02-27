@@ -13,10 +13,7 @@ import {
 import * as Tooltip from "@radix-ui/react-tooltip";
 import type { StreakData } from "@superteam-lms/types";
 import { LevelBadge } from "@/components/gamification/level-badge";
-import {
-  ACHIEVEMENT_META,
-  SOL_TIER_IDS,
-} from "@/lib/gamification/achievement-meta";
+import type { AchievementDefinition } from "@/lib/gamification";
 import { xpToNextLevel } from "@/lib/gamification/xp";
 import { cn } from "@/lib/utils";
 
@@ -278,6 +275,8 @@ export interface DashboardIdentityPanelProps {
   streak: StreakData;
   achievementsCount: number;
   unlockedAchievementIds: string[];
+  /** Sanity achievement catalog — single source of truth for total count + token list */
+  catalog: AchievementDefinition[];
   className?: string;
 }
 
@@ -287,6 +286,7 @@ export function DashboardIdentityPanel({
   streak,
   achievementsCount,
   unlockedAchievementIds,
+  catalog,
   className,
 }: DashboardIdentityPanelProps) {
   const t = useTranslations("gamification");
@@ -302,12 +302,12 @@ export function DashboardIdentityPanel({
   // Sort achievements: earned first, then locked
   const sortedAchievements = useMemo(
     () =>
-      [...ACHIEVEMENT_META].sort((a, b) => {
+      [...catalog].sort((a, b) => {
         const aEarned = unlockedSet.has(a.id) ? 0 : 1;
         const bEarned = unlockedSet.has(b.id) ? 0 : 1;
         return aEarned - bEarned;
       }),
-    [unlockedSet]
+    [catalog, unlockedSet]
   );
 
   // Achievement slider — horizontal drag-to-scroll
@@ -415,7 +415,7 @@ export function DashboardIdentityPanel({
             <span className="dash-ach-count">
               {t("ofUnlocked", {
                 count: achievementsCount,
-                total: ACHIEVEMENT_META.length,
+                total: catalog.length,
               })}
             </span>
           </div>
@@ -430,13 +430,13 @@ export function DashboardIdentityPanel({
             >
               {sortedAchievements.map((ach) => {
                 const earned = unlockedSet.has(ach.id);
-                const isSol = earned && SOL_TIER_IDS.has(ach.id);
+                const isSol = earned && ach.solTier;
                 return (
                   <AchievementToken
                     key={ach.id}
                     glyph={ach.glyph}
                     name={ach.name}
-                    hint={ach.hint}
+                    hint={ach.description}
                     state={earned ? (isSol ? "sol" : "earned") : "locked"}
                   />
                 );

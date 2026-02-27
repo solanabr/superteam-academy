@@ -23,7 +23,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { DashboardIdentityPanel } from "@/components/gamification/dashboard-identity-panel";
-import { ProgressBar } from "@/components/course/progress-bar";
 import { CourseCard } from "@/components/course/course-card";
 import { CourseCompletionMint } from "@/components/certificates/course-completion-mint";
 import { WalletNameGenerator } from "@/components/profile/wallet-name-generator";
@@ -40,7 +39,9 @@ import {
   getCoursesByIds,
   getLessonsByIds,
   getRecommendedCourses,
+  getAllAchievements,
   type RecommendedCourse,
+  type DeployedAchievement,
 } from "@/lib/sanity/queries";
 
 const SOLANA_CLUSTER = process.env.NEXT_PUBLIC_SOLANA_NETWORK ?? "devnet";
@@ -64,6 +65,9 @@ interface CurrentCourse {
   slug: string;
   completedLessons: number;
   totalLessons: number;
+  difficulty: string;
+  learningPath: string | null;
+  thumbnail: string | null;
 }
 
 interface DashboardData {
@@ -73,6 +77,8 @@ interface DashboardData {
   achievementsCount: number;
   /** Full Sanity _ids of achievements unlocked by this user */
   unlockedAchievementIds: string[];
+  /** All achievements from Sanity — single source of truth for catalog */
+  achievementCatalog: DeployedAchievement[];
   currentCourses: CurrentCourse[];
   recommendedCourses: RecommendedCourse[];
   recentActivity: {
@@ -104,6 +110,7 @@ function useDashboardData(): DashboardData {
     streak: defaultStreak,
     achievementsCount: 0,
     unlockedAchievementIds: [],
+    achievementCatalog: [],
     currentCourses: [],
     recommendedCourses: [],
     recentActivity: [],
@@ -228,15 +235,20 @@ function useDashboardData(): DashboardData {
         const lessonPattern = /^Completed lesson:\s*(.+)$/;
         const challengePattern = /^Completed challenge:\s*(.+)$/;
         const courseCompletePattern = /^Completed course:\s*(.+)$/;
+        const achievementRewardPattern = /^Achievement reward:\s*(.+)$/;
+        const courseCompletionBonusPattern =
+          /^Course completion bonus:\s*(.+)$/;
         const lessonIdsFromTx: string[] = [];
         const courseCompleteIdsFromTx: string[] = [];
         for (const tx of transactions ?? []) {
           const lessonMatch = lessonPattern.exec(tx.reason);
           const challengeMatch = challengePattern.exec(tx.reason);
           const courseMatch = courseCompletePattern.exec(tx.reason);
+          const bonusMatch = courseCompletionBonusPattern.exec(tx.reason);
           const lessonOrChallengeId = lessonMatch?.[1] ?? challengeMatch?.[1];
           if (lessonOrChallengeId) lessonIdsFromTx.push(lessonOrChallengeId);
           if (courseMatch?.[1]) courseCompleteIdsFromTx.push(courseMatch[1]);
+          if (bonusMatch?.[1]) courseCompleteIdsFromTx.push(bonusMatch[1]);
         }
 
         // Fetch lesson titles/slugs from Sanity
@@ -276,12 +288,14 @@ function useDashboardData(): DashboardData {
         const excludeFromRecommended = [
           ...new Set([...allEnrolledIds, ...mintedCourseIds]),
         ];
-        const [courseSummaries, recommended] = await Promise.all([
-          allCourseIdsToFetch.length > 0
-            ? getCoursesByIds(allCourseIdsToFetch)
-            : Promise.resolve([]),
-          getRecommendedCourses(excludeFromRecommended),
-        ]);
+        const [courseSummaries, recommended, achievementCatalog] =
+          await Promise.all([
+            allCourseIdsToFetch.length > 0
+              ? getCoursesByIds(allCourseIdsToFetch)
+              : Promise.resolve([]),
+            getRecommendedCourses(excludeFromRecommended),
+            getAllAchievements(),
+          ]);
         // Build a lookup map: course _id -> Sanity data
         const courseMap = new Map(courseSummaries.map((c) => [c._id, c]));
 
@@ -293,6 +307,9 @@ function useDashboardData(): DashboardData {
             slug: sanity?.slug ?? id,
             completedLessons: completedPerCourse.get(id) ?? 0,
             totalLessons: sanity?.totalLessons ?? 0,
+            difficulty: sanity?.difficulty ?? "beginner",
+            learningPath: sanity?.learningPath ?? null,
+            thumbnail: sanity?.thumbnail ?? null,
           };
         });
 
@@ -364,6 +381,33 @@ function useDashboardData(): DashboardData {
               txSignature: tx.tx_signature ?? null,
               href: course ? `/courses/${course.slug}` : null,
             });
+          } else if (achievementRewardPattern.exec(tx.reason)?.[1]) {
+            const rawId = tx.reason.match(achievementRewardPattern)![1]!;
+            const name = rawId
+              .replace(/^achievement-/, "")
+              .replace(/[-_]/g, " ")
+              .replace(/\b\w/g, (c: string) => c.toUpperCase());
+            raw.push({
+              type: "xp_other",
+              action: `Achievement reward: ${name}`,
+              xp: tx.amount,
+              time: tx.created_at,
+              txSignature: tx.tx_signature ?? null,
+              href: null,
+            });
+          } else if (courseCompletionBonusPattern.exec(tx.reason)?.[1]) {
+            const courseId = tx.reason.match(courseCompletionBonusPattern)![1]!;
+            const course = courseMap.get(courseId);
+            raw.push({
+              type: "course_complete",
+              action: course
+                ? `Course completion bonus: ${course.title}`
+                : tx.reason,
+              xp: tx.amount,
+              time: tx.created_at,
+              txSignature: tx.tx_signature ?? null,
+              href: course ? `/courses/${course.slug}` : null,
+            });
           } else {
             raw.push({
               type: "xp_other",
@@ -379,7 +423,8 @@ function useDashboardData(): DashboardData {
         // 2. Achievement unlocks
         for (const row of achievementRows ?? []) {
           const name = row.achievement_id
-            .replace(/_/g, " ")
+            .replace(/^achievement-/, "")
+            .replace(/[-_]/g, " ")
             .replace(/\b\w/g, (c: string) => c.toUpperCase());
           raw.push({
             type: "achievement",
@@ -442,6 +487,7 @@ function useDashboardData(): DashboardData {
           unlockedAchievementIds: (achievementRows ?? []).map(
             (r) => r.achievement_id
           ),
+          achievementCatalog,
           currentCourses,
           recommendedCourses: recommended,
           recentActivity,
@@ -484,10 +530,44 @@ export default function DashboardPage() {
   const [showNameReveal, setShowNameReveal] = useState(false);
   const [dashboardUsername, setDashboardUsername] = useState(data.username);
   const [activityPage, setActivityPage] = useState(0);
-  const ACTIVITY_PAGE_SIZE = 8;
+  const ACTIVITY_PAGE_SIZE = 10;
   const totalActivityPages = Math.ceil(
     data.recentActivity.length / ACTIVITY_PAGE_SIZE
   );
+
+  // Group paginated activity items by date for history-style browsing
+  const activityPageItems = data.recentActivity.slice(
+    activityPage * ACTIVITY_PAGE_SIZE,
+    (activityPage + 1) * ACTIVITY_PAGE_SIZE
+  );
+  const todayDateStr = new Date().toISOString().split("T")[0]!;
+  const yesterdayDateStr = new Date(Date.now() - 86400000)
+    .toISOString()
+    .split("T")[0]!;
+  const activityDateGroups: {
+    date: string;
+    label: string;
+    items: typeof activityPageItems;
+  }[] = [];
+  let lastGroupDate = "";
+  for (const item of activityPageItems) {
+    const dateStr = item.time.split("T")[0]!;
+    if (dateStr !== lastGroupDate) {
+      lastGroupDate = dateStr;
+      let label: string;
+      if (dateStr === todayDateStr) label = tTime("today");
+      else if (dateStr === yesterdayDateStr) label = tTime("yesterday");
+      else {
+        const d = new Date(dateStr + "T00:00:00");
+        label = d.toLocaleDateString(locale, {
+          month: "short",
+          day: "numeric",
+        });
+      }
+      activityDateGroups.push({ date: dateStr, label, items: [] });
+    }
+    activityDateGroups[activityDateGroups.length - 1]!.items.push(item);
+  }
 
   // Show name reveal modal on first visit (rerolls === 0 means never seen)
   useEffect(() => {
@@ -585,18 +665,11 @@ export default function DashboardPage() {
   );
 
   const formatTimeAgo = (isoDate: string): string => {
-    const createdAt = new Date(isoDate);
-    const now = new Date();
-    const diffMs = now.getTime() - createdAt.getTime();
+    const diffMs = Date.now() - new Date(isoDate).getTime();
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-
-    if (diffHours < 1) {
-      return tTime("justNow");
-    } else if (diffHours < 24) {
-      return tTime("hours", { count: diffHours });
-    } else {
-      return tTime("days", { count: Math.floor(diffHours / 24) });
-    }
+    if (diffHours < 1) return tTime("justNow");
+    if (diffHours < 24) return tTime("hours", { count: diffHours });
+    return tTime("days", { count: Math.floor(diffHours / 24) });
   };
 
   if (data.isLoading) {
@@ -648,69 +721,96 @@ export default function DashboardPage() {
         streak={data.streak}
         achievementsCount={data.achievementsCount}
         unlockedAchievementIds={data.unlockedAchievementIds}
+        catalog={data.achievementCatalog}
       />
 
-      {/* Current Courses */}
-      <div className="space-y-4">
-        <h2 className="font-display text-xl font-extrabold">
-          {t("currentCourses")}
-        </h2>
+      {/* ═══ Current Courses ═══ */}
+      <section className="cc-section">
+        <div className="cc-section-head">
+          <h2 className="cc-section-title">{t("currentCourses")}</h2>
+          {courses.length > 0 && (
+            <span className="cc-section-count">{courses.length}</span>
+          )}
+        </div>
+
         {courses.length > 0 ? (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="cc-grid">
             {courses.map((course) => {
               const isComplete =
                 course.completedLessons >= course.totalLessons &&
                 course.totalLessons > 0;
-              const percent =
+              const ringR = 15;
+              const ringC = 2 * Math.PI * ringR;
+              const progress =
                 course.totalLessons > 0
-                  ? Math.round(
-                      (course.completedLessons / course.totalLessons) * 100
-                    )
+                  ? course.completedLessons / course.totalLessons
                   : 0;
+              const ringOffset = ringC * (1 - progress);
 
               return (
-                <div key={course.courseId} className="cc-card group">
+                <div key={course.courseId} className="cc-card">
                   {!isComplete && (
                     <button
                       onClick={() => handleUnenroll(course.courseId)}
                       disabled={unenrollingId === course.courseId}
-                      className="absolute right-3 top-4 z-10 flex h-6 w-6 items-center justify-center rounded-full text-danger opacity-0 transition-all hover:scale-110 hover:bg-danger hover:text-white hover:shadow-md disabled:cursor-not-allowed disabled:opacity-100 group-hover:opacity-100"
+                      className="cc-unenroll"
                       aria-label={t("removeCourse")}
                     >
                       {unenrollingId === course.courseId ? (
                         <span className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
                       ) : (
-                        <X size={12} weight="bold" />
+                        <X size={10} weight="bold" />
                       )}
                     </button>
                   )}
 
                   <Link href={`/${locale}/courses/${course.slug}`}>
+                    <div className="cc-thumb" aria-hidden="true">
+                      <img
+                        src={course.thumbnail || "/cover.png"}
+                        alt=""
+                        width={400}
+                        height={225}
+                        loading="lazy"
+                      />
+                    </div>
                     <div className="cc-body">
-                      <div className="cc-head">
-                        <div className="cc-icon">
-                          <BookOpen
-                            size={20}
-                            weight="duotone"
-                            aria-hidden="true"
-                          />
-                        </div>
-                        <div className="cc-meta">
-                          <div className="cc-title">{course.title}</div>
-                          <div className="cc-sub">
-                            {course.completedLessons}/{course.totalLessons}{" "}
-                            {tCourses("lessons")}
-                          </div>
-                        </div>
+                      <div className="cc-meta">
+                        <div className="cc-title">{course.title}</div>
+                        <span className="cc-sub">
+                          {course.learningPath ?? tCourses(course.difficulty)}
+                        </span>
                       </div>
-                      <div className="cc-progress">
-                        <ProgressBar
-                          value={course.completedLessons}
-                          max={course.totalLessons}
-                          className="flex-1"
-                        />
-                        <span className="cc-pct">{percent}%</span>
-                      </div>
+                      <span className="cc-progress">
+                        <span className="cc-ring-wrap">
+                          <svg className="cc-ring" viewBox="0 0 36 36">
+                            <circle
+                              cx="18"
+                              cy="18"
+                              r={ringR}
+                              className="cc-ring-track"
+                            />
+                            <circle
+                              cx="18"
+                              cy="18"
+                              r={ringR}
+                              strokeDasharray={ringC}
+                              strokeDashoffset={ringOffset}
+                              transform="rotate(-90 18 18)"
+                              className="cc-ring-fill"
+                            />
+                          </svg>
+                          <span className="cc-ring-count">
+                            <span className="cc-ring-done">
+                              {course.completedLessons}
+                            </span>
+                            /{course.totalLessons}
+                          </span>
+                        </span>
+                        <span className="cc-ring-label">
+                          {tCourses("lessons")}
+                        </span>
+                      </span>
                     </div>
                   </Link>
 
@@ -728,37 +828,40 @@ export default function DashboardPage() {
             })}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-12">
+          <div className="cc-empty">
             <BookOpen
-              size={48}
+              size={40}
               weight="duotone"
-              className="mb-3 text-text-3"
+              className="text-text-3"
               aria-hidden="true"
             />
             <p className="text-text-3">{t("noCourses")}</p>
             <Link
               href={`/${locale}/courses`}
-              className="mt-4 inline-flex items-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:[background:var(--primary-hover)]"
+              className="mt-2 inline-flex items-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:[background:var(--primary-hover)]"
             >
               {t("browseCourses")}
             </Link>
           </div>
         )}
-      </div>
+      </section>
 
-      {/* Recent Activity */}
-      <div className="space-y-4">
-        <h2 className="font-display text-xl font-extrabold">
-          {t("recentActivity")}
-        </h2>
+      {/* ═══ Activity ═══ */}
+      <section className="act-section">
+        <div className="act-section-head">
+          <h2 className="act-section-title">{t("recentActivity")}</h2>
+          {data.recentActivity.length > 0 && (
+            <span className="act-section-count">
+              {data.recentActivity.length}
+            </span>
+          )}
+        </div>
+
         {data.recentActivity.length > 0 ? (
-          <div className="act-feed">
-            {data.recentActivity
-              .slice(
-                activityPage * ACTIVITY_PAGE_SIZE,
-                (activityPage + 1) * ACTIVITY_PAGE_SIZE
-              )
-              .map((activity) => {
+          <div className="act-panel">
+            <div className="act-panel-amb" aria-hidden="true" />
+            <div className="act-feed">
+              {activityPageItems.map((activity) => {
                 const iconMap = {
                   lesson: Lightning,
                   challenge: Lightning,
@@ -819,17 +922,18 @@ export default function DashboardPage() {
                   </div>
                 );
               })}
+            </div>
             {totalActivityPages > 1 && (
-              <div className="flex items-center justify-end gap-1 px-4 pb-3 pt-1">
+              <div className="act-pager">
                 <button
                   onClick={() => setActivityPage((p) => Math.max(0, p - 1))}
                   disabled={activityPage === 0}
-                  className="flex h-7 w-7 items-center justify-center rounded-md text-text-2 transition-colors hover:bg-[var(--bg-2)] hover:text-text disabled:pointer-events-none disabled:opacity-30"
+                  className="act-pager-btn"
                   aria-label={tCommon("previous")}
                 >
-                  <CaretLeft size={14} weight="bold" />
+                  <CaretLeft size={12} weight="bold" />
                 </button>
-                <span className="min-w-[3ch] text-center font-mono text-xs text-text-3">
+                <span className="act-pager-label">
                   {activityPage + 1}/{totalActivityPages}
                 </span>
                 <button
@@ -839,22 +943,26 @@ export default function DashboardPage() {
                     )
                   }
                   disabled={activityPage >= totalActivityPages - 1}
-                  className="flex h-7 w-7 items-center justify-center rounded-md text-text-2 transition-colors hover:bg-[var(--bg-2)] hover:text-text disabled:pointer-events-none disabled:opacity-30"
+                  className="act-pager-btn"
                   aria-label={tCommon("next")}
                 >
-                  <CaretRight size={14} weight="bold" />
+                  <CaretRight size={12} weight="bold" />
                 </button>
               </div>
             )}
           </div>
         ) : (
-          <div className="act-feed">
-            <div className="flex flex-col items-center justify-center py-8">
-              <p className="text-sm text-text-3">{t("noRecentActivity")}</p>
-            </div>
+          <div className="act-empty">
+            <Lightning
+              size={40}
+              weight="duotone"
+              className="text-text-3"
+              aria-hidden="true"
+            />
+            <p className="text-text-3">{t("noRecentActivity")}</p>
           </div>
         )}
-      </div>
+      </section>
 
       {/* Recommended Courses */}
       <div className="space-y-4">
@@ -863,7 +971,7 @@ export default function DashboardPage() {
         </h2>
         {data.recommendedCourses.length > 0 ? (
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {data.recommendedCourses.map((course, idx) => (
+            {data.recommendedCourses.map((course) => (
               <CourseCard
                 key={course._id}
                 slug={course.slug}
@@ -875,8 +983,8 @@ export default function DashboardPage() {
                 duration={course.duration}
                 lessonCount={course.totalLessons}
                 xpReward={course.xpReward}
-                instructorName={course.instructor?.name ?? ""}
-                courseNum={idx + 1}
+                trackLevel={course.trackLevel}
+                pathLabel={course.learningPath ?? undefined}
               />
             ))}
           </div>
