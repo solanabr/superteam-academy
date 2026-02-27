@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { validateQuizAnswer } from '@/lib/quiz-keys';
+import { authOptions } from '@/lib/auth';
 import {
   Connection,
   Keypair,
@@ -23,11 +26,32 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { courseId, lessonIndex, learner: learnerStr } = body;
 
+    // Verify authenticated session
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Authentication required. Please sign in.' },
+        { status: 401 }
+      );
+    }
+
     if (!courseId || lessonIndex === undefined || !learnerStr) {
       return NextResponse.json(
         { error: 'Missing required fields: courseId, lessonIndex, learner' },
         { status: 400 }
       );
+    }
+
+    // Server-side quiz validation gate
+    const quizAnswer = body.quizAnswer;
+    if (quizAnswer !== undefined) {
+      const isCorrect = validateQuizAnswer(courseId, lessonIndex, quizAnswer);
+      if (!isCorrect) {
+        return NextResponse.json(
+          { error: 'Quiz answer is incorrect. Complete the quiz before marking lesson as done.' },
+          { status: 403 }
+        );
+      }
     }
 
     // Load backend signer from environment

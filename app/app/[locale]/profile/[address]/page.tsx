@@ -241,7 +241,7 @@ export default async function ProfilePage({
               >
                 <Icon className={cn('mx-auto mb-1.5 h-5 w-5', color)} />
                 <div className="text-xl font-extrabold text-white">{value}</div>
-                <div className="text-xs text-gray-500 mt-0.5">{label}</div>
+                <div className="text-xs text-gray-400 mt-0.5">{label}</div>
               </div>
             ))}
           </div>
@@ -301,7 +301,7 @@ export default async function ProfilePage({
                   <div className="flex items-start justify-between gap-2 mb-3">
                     <div>
                       <h3 className="text-sm font-bold text-white">{L(cred.name, locale)}</h3>
-                      <p className="text-xs text-gray-500 mt-0.5">
+                      <p className="text-xs text-gray-400 mt-0.5">
                         {t('issued_on')} {typeof cred.issuedDate === 'string' ? cred.issuedDate : L(cred.issuedDate, locale)} · Track {cred.track}
                       </p>
                     </div>
@@ -335,7 +335,7 @@ export default async function ProfilePage({
           <h2 className="flex items-center gap-2 text-base font-bold text-white mb-5">
             <Trophy className="h-5 w-5 text-yellow-400" />
             {t('achievements')}
-            <span className="text-xs font-normal text-gray-500">
+            <span className="text-xs font-normal text-gray-400">
               {ACHIEVEMENTS.filter((a) => a.unlocked).length}/{ACHIEVEMENTS.length}
             </span>
           </h2>
@@ -384,7 +384,7 @@ export default async function ProfilePage({
                   <div className="text-sm font-medium text-gray-200 group-hover:text-white transition-colors">
                     {L(c.title, locale)}
                   </div>
-                  <div className="text-xs text-gray-500">{typeof c.completedDate === 'string' ? c.completedDate : L(c.completedDate, locale)}</div>
+                  <div className="text-xs text-gray-400">{typeof c.completedDate === 'string' ? c.completedDate : L(c.completedDate, locale)}</div>
                 </div>
                 <span className="text-sm font-bold text-yellow-400 shrink-0">
                   +{c.xp.toLocaleString()} XP

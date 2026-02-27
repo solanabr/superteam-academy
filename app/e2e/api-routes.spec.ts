@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-const BASE = 'http://localhost:3000';
+const BASE = 'http://localhost:3001';
 
 test.describe('API Routes', () => {
   test.describe('GET /api/health', () => {

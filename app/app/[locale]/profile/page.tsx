@@ -2,11 +2,12 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWalletSafe as useWallet } from '@/lib/use-wallet-safe';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { useLocale, useTranslations } from 'next-intl';
 import { User, Shield, Award, BookOpen } from 'lucide-react';
 import { localePath } from '@/lib/paths';
+
 
 export default function ProfilePage() {
   const locale = useLocale();
@@ -58,7 +59,7 @@ export default function ProfilePage() {
           ].map(({ icon: Icon, label }) => (
             <div key={label} className="rounded-xl border border-gray-800 bg-gray-900/40 p-3 text-center">
               <Icon className="mx-auto h-5 w-5 text-purple-400 mb-1.5" />
-              <span className="text-xs text-gray-500">{label}</span>
+              <span className="text-xs text-gray-400">{label}</span>
             </div>
           ))}
         </div>

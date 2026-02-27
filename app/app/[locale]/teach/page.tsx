@@ -75,7 +75,7 @@ export default function TeachDashboard() {
             { icon: BarChart2, label: t('stat_total_xp'), value: MY_COURSES.reduce((a, c) => a + c.xp, 0).toLocaleString() },
           ].map(({ icon: Icon, label, value }) => (
             <div key={label} className="rounded-xl border border-gray-800 bg-gray-900/50 p-4">
-              <div className="flex items-center gap-2 text-gray-500 mb-1">
+              <div className="flex items-center gap-2 text-gray-400 mb-1">
                 <Icon className="h-4 w-4" />
                 <span className="text-xs">{label}</span>
               </div>
@@ -90,7 +90,7 @@ export default function TeachDashboard() {
         {MY_COURSES.length === 0 ? (
           <div className="text-center py-16 border border-dashed border-gray-800 rounded-2xl">
             <BookOpen className="mx-auto h-10 w-10 text-gray-700 mb-3" />
-            <p className="text-gray-500">{t('no_courses')}</p>
+            <p className="text-gray-400">{t('no_courses')}</p>
             <Link
               href={localePath(locale, '/teach/new')}
               className="mt-4 inline-flex items-center gap-1 text-sm text-purple-400 hover:text-purple-300"
@@ -118,7 +118,7 @@ export default function TeachDashboard() {
                       {t(`status_${course.status}`)}
                     </span>
                   </div>
-                  <div className="flex items-center gap-4 text-xs text-gray-500">
+                  <div className="flex items-center gap-4 text-xs text-gray-400">
                     <span className="flex items-center gap-1"><BookOpen className="h-3 w-3" /> {course.lessons} {t('lessons')}</span>
                     <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {course.students}</span>
                     <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {course.updatedAt}</span>

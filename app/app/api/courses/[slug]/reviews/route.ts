@@ -74,10 +74,12 @@ export async function POST(
     walletAddress,
     courseSlug: slug,
     rating,
-    text: text ?? '',
+    text: (text ?? '').replace(/[\x00-\x1F\x7F]/g, '').slice(0, 1000),
     createdAt: new Date().toISOString(),
   };
 
+  // Cap reviews per course to prevent unbounded growth
+  if (existing.length >= 500) existing.shift();
   existing.push(review);
 
   return NextResponse.json({ review }, { status: 201 });

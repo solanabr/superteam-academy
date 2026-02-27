@@ -1,3 +1,5 @@
+import 'server-only';
+
 /**
  * Server-side quiz answer keys.
  * NEVER expose these to the client — only used in API route validation.

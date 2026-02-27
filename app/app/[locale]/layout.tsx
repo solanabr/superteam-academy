@@ -87,6 +87,7 @@ export default async function LocaleLayout({
     <html lang={locale} suppressHydrationWarning className={`dark ${geistSans.variable} ${geistMono.variable}`}>
       <head>
         <meta name="theme-color" content="#030712" />
+        <meta name="description" content="The ultimate Web3 learning platform. Master Solana development, earn on-chain credentials, and join the next generation of blockchain builders." />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

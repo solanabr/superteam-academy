@@ -601,5 +601,57 @@
     "ch_escrow_program_desc": "Implement a trustless escrow program that holds tokens until both parties fulfill conditions.",
     "ch_nft_mint": "Mint a Compressed NFT",
     "ch_nft_mint_desc": "Use Metaplex Bubblegum to mint a compressed NFT for cost-efficient on-chain art."
+  },
+  "offline": {
+    "title": "Offline Library",
+    "subtitle": "Access your saved courses and sync pending progress.",
+    "loading": "Loading offline data...",
+    "online": "You are online",
+    "offline_status": "You are offline",
+    "saved_courses": "Saved Courses",
+    "no_courses": "No courses saved for offline reading yet.",
+    "browse_courses": "Browse courses to save",
+    "saved": "Saved",
+    "remove": "Remove from offline",
+    "pending_sync": "Pending Sync",
+    "all_synced": "All lesson completions are synced.",
+    "sync_now": "Sync Now"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "No notifications yet.",
+    "mark_read": "Mark as read",
+    "mark_all_read": "Mark all as read",
+    "new_achievement": "New Achievement Unlocked!",
+    "course_updated": "Course Updated",
+    "new_challenge": "New Challenge Available"
+  },
+  "search": {
+    "title": "Search",
+    "placeholder": "Search courses, challenges...",
+    "no_results": "No results found for \"{query}\".",
+    "results_count": "{count} results",
+    "filter_courses": "Courses",
+    "filter_challenges": "Challenges",
+    "filter_all": "All"
+  },
+  "errors": {
+    "network": "Network error. Please check your connection.",
+    "unauthorized": "You must be signed in to do this.",
+    "forbidden": "You do not have permission.",
+    "not_found": "Page not found.",
+    "server": "Something went wrong. Please try again.",
+    "wallet_required": "Please connect your wallet first.",
+    "quiz_incorrect": "That answer is incorrect. Try again!"
+  },
+  "aria": {
+    "main_nav": "Main navigation",
+    "skip_to_content": "Skip to main content",
+    "close_dialog": "Close dialog",
+    "toggle_theme": "Toggle color theme",
+    "open_menu": "Open menu",
+    "close_menu": "Close menu",
+    "language_selector": "Select language",
+    "xp_progress": "XP progress bar"
   }
 }

@@ -154,7 +154,7 @@ export default async function CertificatePage({
         {/* Back link */}
         <Link
           href={`/${locale}/perfil/${cert.address}`}
-          className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-300 transition-colors"
+          className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-300 transition-colors"
         >
           {t('back_to_profile')}
         </Link>
@@ -204,7 +204,7 @@ export default async function CertificatePage({
 
             {/* Credential name */}
             <div className="text-center mb-8">
-              <p className="text-sm text-gray-500 mb-2">{t('awarded_to')}</p>
+              <p className="text-sm text-gray-400 mb-2">{t('awarded_to')}</p>
               <p className="font-mono text-base text-gray-300 mb-4">
                 {truncate(cert.address)}
               </p>
@@ -227,7 +227,7 @@ export default async function CertificatePage({
                 >
                   <Icon className={cn('mx-auto mb-1.5 h-5 w-5', color)} />
                   <div className="text-lg font-extrabold text-white leading-tight">{value}</div>
-                  <div className="text-xs text-gray-500 mt-0.5">{label}</div>
+                  <div className="text-xs text-gray-400 mt-0.5">{label}</div>
                 </div>
               ))}
             </div>
@@ -318,21 +318,21 @@ export default async function CertificatePage({
           <h3 className="text-sm font-semibold text-white mb-3">{t('nft_details')}</h3>
           <div className="space-y-2.5">
             <div>
-              <span className="text-xs text-gray-500">{t('mint_address')}</span>
+              <span className="text-xs text-gray-400">{t('mint_address')}</span>
               <p className="font-mono text-xs text-gray-300 mt-0.5 break-all">{cert.mintAddress}</p>
             </div>
             <div>
-              <span className="text-xs text-gray-500">{t('metadata_uri')}</span>
+              <span className="text-xs text-gray-400">{t('metadata_uri')}</span>
               <p className="font-mono text-xs text-gray-300 mt-0.5 break-all">
                 https://arweave.net/{cert.mintAddress.slice(0, 16)}...metadata.json
               </p>
             </div>
             <div>
-              <span className="text-xs text-gray-500">{t('ownership')}</span>
+              <span className="text-xs text-gray-400">{t('ownership')}</span>
               <p className="font-mono text-xs text-gray-300 mt-0.5 break-all">{truncate(cert.address)}</p>
             </div>
             <div>
-              <span className="text-xs text-gray-500">{t('token_standard')}</span>
+              <span className="text-xs text-gray-400">{t('token_standard')}</span>
               <p className="text-xs text-gray-300 mt-0.5">Metaplex Core (Soulbound via PermanentFreezeDelegate)</p>
             </div>
           </div>

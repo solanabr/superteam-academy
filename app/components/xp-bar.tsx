@@ -90,7 +90,7 @@ export function XPBar({ totalXP, streakDays = 0, className, compact = false }: X
           <span className="text-gray-400">
             {current.toLocaleString()} / {required.toLocaleString()} XP
           </span>
-          <span className="text-gray-500">{percent}%</span>
+          <span className="text-gray-400">{percent}%</span>
         </div>
         <div className="relative h-3 w-full bg-gray-800 rounded-full overflow-hidden">
           {/* Animated shimmer */}
@@ -101,7 +101,7 @@ export function XPBar({ totalXP, streakDays = 0, className, compact = false }: X
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse rounded-full" />
           </div>
         </div>
-        <div className="text-right text-xs text-gray-500">
+        <div className="text-right text-xs text-gray-400">
           {(required - current).toLocaleString()} XP {t('to_level', { level: level + 1 })}
         </div>
       </div>

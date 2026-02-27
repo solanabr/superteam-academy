@@ -112,7 +112,7 @@ export function CourseCard({ course, enrolled = false, progress = 0 }: CourseCar
         </p>
 
         {/* Stats row */}
-        <div className="flex items-center gap-3 text-gray-500 text-xs">
+        <div className="flex items-center gap-3 text-gray-400 text-xs">
           <div className="flex items-center gap-1">
             <BookOpen className="w-3.5 h-3.5" />
             <span>{course.lesson_count} {t('lessons')}</span>
@@ -131,7 +131,7 @@ export function CourseCard({ course, enrolled = false, progress = 0 }: CourseCar
         {enrolled && (
           <div className="space-y-1">
             <div className="flex items-center justify-between text-xs">
-              <span className="text-gray-500">{t('progress' as never) ?? 'Progresso'}</span>
+              <span className="text-gray-400">{t('progress' as never) ?? 'Progresso'}</span>
               <span className="text-gray-400">{progress}%</span>
             </div>
             <div className="h-1.5 w-full bg-gray-800 rounded-full overflow-hidden">

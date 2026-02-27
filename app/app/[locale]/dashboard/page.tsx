@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWalletSafe as useWallet } from '@/lib/use-wallet-safe';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import {
   Zap, Trophy, Flame, Award, BookOpen, TrendingUp,
@@ -247,7 +247,7 @@ export default function DashboardPage() {
         <div className="mx-auto max-w-6xl">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <p className="text-gray-500 text-sm mb-1">{t('welcome')}</p>
+              <p className="text-gray-400 text-sm mb-1">{t('welcome')}</p>
               <h1 className="text-2xl font-bold text-white font-mono">
                 {truncateAddress(address)}
               </h1>
@@ -286,12 +286,12 @@ export default function DashboardPage() {
               </div>
               <div>
                 <div className="text-sm font-semibold text-white">{t('level')} {LEVEL}</div>
-                <div className="text-xs text-gray-500">Solana Developer</div>
+                <div className="text-xs text-gray-400">Solana Developer</div>
               </div>
             </div>
             <div className="text-right">
               <div className="text-sm font-semibold text-white">{XP_IN_LEVEL.toLocaleString()} / {XP_FOR_NEXT.toLocaleString()} XP</div>
-              <div className="text-xs text-gray-500">{XP_FOR_NEXT - XP_IN_LEVEL} {t('to_level', { level: LEVEL + 1 })}</div>
+              <div className="text-xs text-gray-400">{XP_FOR_NEXT - XP_IN_LEVEL} {t('to_level', { level: LEVEL + 1 })}</div>
             </div>
           </div>
           <div className="h-3 rounded-full bg-gray-800 overflow-hidden">
@@ -393,7 +393,7 @@ export default function DashboardPage() {
                   <div className="flex items-start justify-between gap-2 mb-3">
                     <div>
                       <h3 className="text-sm font-semibold text-white">{L(c.title, locale)}</h3>
-                      <p className="text-xs text-gray-500 mt-0.5">{c.lessonsCompleted}/{c.totalLessons} {tCourses('lessons')}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">{c.lessonsCompleted}/{c.totalLessons} {tCourses('lessons')}</p>
                     </div>
                     <span className="text-xs font-bold text-purple-300">{c.progress}%</span>
                   </div>
@@ -404,7 +404,7 @@ export default function DashboardPage() {
                     />
                   </div>
                   <div className="flex items-center justify-between">
-                    <p className="text-xs text-gray-500 truncate max-w-[60%]">
+                    <p className="text-xs text-gray-400 truncate max-w-[60%]">
                       {t('next_prefix')} <span className="text-gray-300">{L(c.nextLesson, locale)}</span>
                     </p>
                     <Link
@@ -425,7 +425,7 @@ export default function DashboardPage() {
           <div className="flex items-center gap-2 mb-4">
             <Trophy className="h-5 w-5 text-yellow-400" />
             <h2 className="text-lg font-bold text-white">{t('achievements')}</h2>
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-gray-400">
               {ACHIEVEMENTS.filter((a) => a.unlocked).length}/{ACHIEVEMENTS.length}
             </span>
           </div>
@@ -444,7 +444,7 @@ export default function DashboardPage() {
                   {ach.unlocked ? ach.emoji : <Lock className="mx-auto h-6 w-6 text-gray-600" />}
                 </div>
                 <div className="text-xs font-semibold text-gray-300">{L(ach.name, locale)}</div>
-                <div className="text-xs text-gray-500 mt-0.5 leading-tight">{L(ach.desc, locale)}</div>
+                <div className="text-xs text-gray-400 mt-0.5 leading-tight">{L(ach.desc, locale)}</div>
               </div>
             ))}
           </div>

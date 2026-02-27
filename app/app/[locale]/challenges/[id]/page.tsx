@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 function EditorLoadingFallback() {
   const t = useTranslations('challenge');
   return (
-    <div className="flex h-full items-center justify-center bg-gray-900 text-gray-500 text-sm">
+    <div className="flex h-full items-center justify-center bg-gray-900 text-gray-400 text-sm">
       {t('loading_editor')}
     </div>
   );
@@ -348,17 +348,17 @@ export default function ChallengePage() {
               <div key={i} className="rounded-xl border border-gray-700 bg-gray-900 overflow-hidden mb-3">
                 <div className="grid grid-cols-2 divide-x divide-gray-700">
                   <div className="p-3">
-                    <div className="text-xs font-medium text-gray-500 mb-1">Input</div>
+                    <div className="text-xs font-medium text-gray-400 mb-1">Input</div>
                     <code className="text-xs text-green-300 font-mono">{ex.input}</code>
                   </div>
                   <div className="p-3">
-                    <div className="text-xs font-medium text-gray-500 mb-1">Output</div>
+                    <div className="text-xs font-medium text-gray-400 mb-1">Output</div>
                     <code className="text-xs text-blue-300 font-mono">{ex.output}</code>
                   </div>
                 </div>
                 {ex.explanation && (
                   <div className="border-t border-gray-700 p-3">
-                    <span className="text-xs text-gray-500 font-medium">{t('explanation')} </span>
+                    <span className="text-xs text-gray-400 font-medium">{t('explanation')} </span>
                     <span className="text-xs text-gray-400">{ex.explanation}</span>
                   </div>
                 )}
@@ -383,7 +383,7 @@ export default function ChallengePage() {
               )}
             </div>
             {hintsShown === 0 && (
-              <p className="text-xs text-gray-500">{t('try_yourself')}</p>
+              <p className="text-xs text-gray-400">{t('try_yourself')}</p>
             )}
             {challenge.hints.slice(0, hintsShown).map((hint, i) => (
               <div key={i} className="mb-2 rounded-lg border border-yellow-800/40 bg-yellow-900/10 p-3">
@@ -417,7 +417,7 @@ export default function ChallengePage() {
         {/* Editor toolbar */}
         <div className="flex items-center justify-between border-b border-gray-800 bg-gray-900 px-4 py-2 shrink-0">
           <div className="flex items-center gap-2">
-            <Code2 className="h-4 w-4 text-gray-500" />
+            <Code2 className="h-4 w-4 text-gray-400" />
             <span className="text-xs text-gray-400 font-medium">TypeScript</span>
           </div>
           <div className="flex items-center gap-2">
@@ -513,7 +513,7 @@ export default function ChallengePage() {
                     )}>
                       {tc.name}
                     </span>
-                    <div className="text-gray-500 mt-0.5 truncate">
+                    <div className="text-gray-400 mt-0.5 truncate">
                       Input: <span className="text-gray-400">{tc.input}</span>
                       {' → '}Expected: <span className="text-gray-400">{tc.expected}</span>
                     </div>

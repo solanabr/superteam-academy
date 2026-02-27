@@ -76,6 +76,11 @@ export const routing = defineRouting({
       'en': '/teach',
       'es': '/ensenar',
     },
+    '/offline': {
+      'pt-BR': '/offline',
+      'en': '/offline',
+      'es': '/sin-conexion',
+    },
     '/teach/new': {
       'pt-BR': '/ensinar/novo',
       'en': '/teach/new',

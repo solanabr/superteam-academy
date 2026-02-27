@@ -235,7 +235,7 @@ function StatCard({
             </p>
           )}
         </div>
-        <Icon className="h-6 w-6 text-gray-500" />
+        <Icon className="h-6 w-6 text-gray-400" />
       </div>
     </div>
   );
@@ -245,7 +245,7 @@ function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }
   return (
     <div className="mb-4">
       <h2 className="text-base font-bold text-white">{title}</h2>
-      {subtitle && <p className="text-xs text-gray-500 mt-0.5">{subtitle}</p>}
+      {subtitle && <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>}
     </div>
   );
 }
@@ -261,7 +261,7 @@ export default function AdminDashboard() {
   const [flaggedPosts, setFlaggedPosts] = useState<FlaggedPost[]>(FLAGGED_POSTS);
 
   const isAdmin =
-    !connected || checkIsAdmin(publicKey?.toBase58());
+    connected && checkIsAdmin(publicKey?.toBase58());
 
   if (!isAdmin) {
     return (
@@ -315,7 +315,7 @@ export default function AdminDashboard() {
             </div>
             <div>
               <h1 className="text-sm font-bold text-white">{t('title')}</h1>
-              <p className="text-xs text-gray-500">{t('subtitle')}</p>
+              <p className="text-xs text-gray-400">{t('subtitle')}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -346,7 +346,7 @@ export default function AdminDashboard() {
                   'flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-medium transition-all',
                   activeTab === id
                     ? 'bg-purple-900/50 text-purple-300 border border-purple-700/50'
-                    : 'text-gray-500 hover:text-gray-300 hover:bg-gray-800/50'
+                    : 'text-gray-400 hover:text-gray-300 hover:bg-gray-800/50'
                 )}
               >
                 <Icon className="h-3.5 w-3.5" />
@@ -422,7 +422,7 @@ export default function AdminDashboard() {
                   <Area type="monotone" dataKey="completions" stroke="#16a34a" strokeWidth={2} fill="url(#compGrad)" name={t('completions')} />
                 </AreaChart>
               </ResponsiveContainer>
-              <div className="flex gap-4 mt-2 text-xs text-gray-500">
+              <div className="flex gap-4 mt-2 text-xs text-gray-400">
                 <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-purple-500" />{t('enrollments')}</span>
                 <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-green-500" />{t('completions')}</span>
               </div>
@@ -469,7 +469,7 @@ export default function AdminDashboard() {
                       </div>
                     ))}
                     <div className="pt-1 border-t border-gray-800 flex items-center justify-between text-xs">
-                      <span className="text-gray-500">{t('conversion_rate')}</span>
+                      <span className="text-gray-400">{t('conversion_rate')}</span>
                       <span className="font-bold text-green-400">22.7%</span>
                     </div>
                   </div>
@@ -492,7 +492,7 @@ export default function AdminDashboard() {
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
                 <thead>
-                  <tr className="border-b border-gray-800 text-gray-500">
+                  <tr className="border-b border-gray-800 text-gray-400">
                     <th className="text-left px-5 py-3 font-medium">{t('col_course')}</th>
                     <th className="text-left px-4 py-3 font-medium">{t('col_track')}</th>
                     <th className="text-right px-4 py-3 font-medium">{t('col_enrolled')}</th>
@@ -514,7 +514,7 @@ export default function AdminDashboard() {
                       <tr key={course.id} className="border-b border-gray-800/50 hover:bg-gray-800/20 transition-colors">
                         <td className="px-5 py-3">
                           <div className="font-medium text-white">{course.title}</div>
-                          <div className="text-gray-500 mt-0.5">{course.lessons} lessons · Updated {course.lastUpdated}</div>
+                          <div className="text-gray-400 mt-0.5">{course.lessons} lessons · Updated {course.lastUpdated}</div>
                         </td>
                         <td className="px-4 py-3">
                           <span className="rounded-md bg-gray-800 px-2 py-0.5 text-gray-300">{course.track}</span>
@@ -550,10 +550,10 @@ export default function AdminDashboard() {
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center justify-center gap-2">
-                            <button className="text-gray-500 hover:text-blue-400 transition-colors">
+                            <button className="text-gray-400 hover:text-blue-400 transition-colors">
                               <Eye className="h-3.5 w-3.5" />
                             </button>
-                            <button className="text-gray-500 hover:text-yellow-400 transition-colors">
+                            <button className="text-gray-400 hover:text-yellow-400 transition-colors">
                               <Edit3 className="h-3.5 w-3.5" />
                             </button>
                           </div>
@@ -564,7 +564,7 @@ export default function AdminDashboard() {
                 </tbody>
               </table>
             </div>
-            <div className="px-5 py-3 border-t border-gray-800 flex items-center justify-between text-xs text-gray-500">
+            <div className="px-5 py-3 border-t border-gray-800 flex items-center justify-between text-xs text-gray-400">
               <span>{COURSES.length} {t('total_courses')}</span>
               <span>{COURSES.filter((c) => courseStatuses[c.id] === 'published').length} {t('published_courses')}</span>
             </div>
@@ -583,7 +583,7 @@ export default function AdminDashboard() {
                 { label: t('avg_streak'), value: '12d', icon: Clock, color: 'border-orange-800/30' },
               ].map(({ label, value, icon: Icon, color }) => (
                 <div key={label} className={cn('rounded-2xl border bg-gray-900/60 p-4', color)}>
-                  <Icon className="h-5 w-5 text-gray-500 mb-2" />
+                  <Icon className="h-5 w-5 text-gray-400 mb-2" />
                   <div className="text-xl font-extrabold text-white">{value}</div>
                   <div className="text-xs text-gray-400">{label}</div>
                 </div>
@@ -598,7 +598,7 @@ export default function AdminDashboard() {
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead>
-                    <tr className="border-b border-gray-800 text-gray-500">
+                    <tr className="border-b border-gray-800 text-gray-400">
                       <th className="text-left px-5 py-3 font-medium">{t('col_rank')}</th>
                       <th className="text-left px-4 py-3 font-medium">{t('col_address')}</th>
                       <th className="text-right px-4 py-3 font-medium">{t('col_xp')}</th>
@@ -617,7 +617,7 @@ export default function AdminDashboard() {
                             user.rank === 1 ? 'bg-yellow-900/50 text-yellow-300' :
                             user.rank === 2 ? 'bg-gray-700 text-gray-300' :
                             user.rank === 3 ? 'bg-orange-900/50 text-orange-400' :
-                            'bg-gray-800 text-gray-500'
+                            'bg-gray-800 text-gray-400'
                           )}>
                             {user.rank}
                           </span>
@@ -627,7 +627,7 @@ export default function AdminDashboard() {
                         <td className="px-4 py-3 text-right text-purple-300">{user.level}</td>
                         <td className="px-4 py-3 text-right text-orange-400">{user.streak}d</td>
                         <td className="px-4 py-3 text-right text-green-400">{user.credentials}</td>
-                        <td className="px-4 py-3 text-right text-gray-500">{user.joinedDaysAgo}d ago</td>
+                        <td className="px-4 py-3 text-right text-gray-400">{user.joinedDaysAgo}d ago</td>
                       </tr>
                     ))}
                   </tbody>
@@ -706,7 +706,7 @@ export default function AdminDashboard() {
                 <div className="rounded-xl border border-green-800/30 bg-green-900/10 p-8 text-center">
                   <CheckCircle className="mx-auto h-8 w-8 text-green-500 mb-2" />
                   <p className="text-sm font-semibold text-green-400">{t('all_clear')}</p>
-                  <p className="text-xs text-gray-500 mt-1">{t('all_clear_desc')}</p>
+                  <p className="text-xs text-gray-400 mt-1">{t('all_clear_desc')}</p>
                 </div>
               )}
             </div>
@@ -764,7 +764,7 @@ export default function AdminDashboard() {
               ].map(({ name, detail, status, icon: Icon, meta }) => (
                 <div key={name} className="rounded-xl border border-gray-800 bg-gray-900/60 p-4">
                   <div className="flex items-start justify-between mb-2">
-                    <Icon className="h-5 w-5 text-gray-500" />
+                    <Icon className="h-5 w-5 text-gray-400" />
                     <span data-testid="service-online-badge" className="flex items-center gap-1 text-xs text-green-400">
                       <span className="h-1.5 w-1.5 rounded-full bg-green-400" />
                       {t('online')}

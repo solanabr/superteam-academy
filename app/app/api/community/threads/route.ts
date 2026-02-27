@@ -74,8 +74,14 @@ export async function POST(request: NextRequest) {
   if (!title || typeof title !== 'string' || title.length < 3) {
     return NextResponse.json({ error: 'Title must be at least 3 characters' }, { status: 400 });
   }
+  if (title.length > 200) {
+    return NextResponse.json({ error: 'Title must be under 200 characters' }, { status: 400 });
+  }
   if (!bodyText || typeof bodyText !== 'string' || bodyText.length < 10) {
     return NextResponse.json({ error: 'Body must be at least 10 characters' }, { status: 400 });
+  }
+  if (bodyText.length > 10000) {
+    return NextResponse.json({ error: 'Body must be under 10,000 characters' }, { status: 400 });
   }
   if (!author || typeof author !== 'string') {
     return NextResponse.json({ error: 'Author is required' }, { status: 400 });
@@ -88,8 +94,8 @@ export async function POST(request: NextRequest) {
 
   const thread: Thread = {
     id: `thread-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-    title,
-    body: bodyText,
+    title: title.replace(/[\x00-\x1F\x7F]/g, ''),
+    body: bodyText.replace(/[\x00-\x1F\x7F]/g, ''),
     author,
     category: category ?? 'general',
     upvotes: 0,
@@ -97,6 +103,8 @@ export async function POST(request: NextRequest) {
     createdAt: new Date().toISOString(),
   };
 
+  // Cap store to prevent unbounded growth
+  if (threadStore.length >= 1000) threadStore.shift();
   threadStore.push(thread);
 
   return NextResponse.json({ thread }, { status: 201 });

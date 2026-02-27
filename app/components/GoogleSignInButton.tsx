@@ -95,7 +95,7 @@ export default function GoogleSignInButton({ compact = false }: GoogleSignInButt
             {session.user?.name ?? session.user?.email}
           </span>
         )}
-        <ChevronDown className="h-3 w-3 text-gray-500" />
+        <ChevronDown className="h-3 w-3 text-gray-400" />
       </button>
 
       {open && (
@@ -110,7 +110,7 @@ export default function GoogleSignInButton({ compact = false }: GoogleSignInButt
               <p className="truncate text-sm font-medium text-white">
                 {session.user?.name}
               </p>
-              <p className="truncate text-xs text-gray-500">
+              <p className="truncate text-xs text-gray-400">
                 {session.user?.email}
               </p>
             </div>

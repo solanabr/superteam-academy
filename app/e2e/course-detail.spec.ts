@@ -20,12 +20,12 @@ test.describe('Course detail pages', () => {
   test('intro-solana course page loads in English', async ({ page }) => {
     await page.goto('/en/courses/intro-solana');
     await expect(page.locator('h1, h2').first()).toBeVisible();
-    await expect(page.locator('text=Solana').first()).toBeVisible();
+    await expect(page.locator('h1:has-text("Solana"), h2:has-text("Solana"), p:has-text("Solana")').first()).toBeVisible();
   });
 
   test('intro-solana loads in pt-BR with Portuguese title', async ({ page }) => {
     await page.goto('/pt-BR/cursos/intro-solana');
-    await expect(page.locator('text=Solana').first()).toBeVisible();
+    await expect(page.locator('h1:has-text("Solana"), h2:has-text("Solana"), p:has-text("Solana")').first()).toBeVisible();
     await expect(page.locator('h1, h2').first()).toBeVisible();
   });
 
@@ -46,12 +46,16 @@ test.describe('Course detail pages', () => {
   });
 
   test('unknown course slug shows 404 or not found', async ({ page }) => {
-    await page.goto('/en/courses/nonexistent-course-xyz');
-    // Should show some error state or redirect
+    const response = await page.goto('/en/courses/nonexistent-course-xyz');
+    // Should show error state: 404 status, not found text, or redirect
+    const status = response?.status() ?? 200;
     const title = await page.title();
-    const hasNotFound = title.includes('404') || title.includes('Not Found');
-    const hasH1 = await page.locator('h1, h2').first().isVisible().catch(() => false);
-    expect(hasNotFound || hasH1).toBeTruthy();
+    const bodyText = await page.textContent('body') ?? '';
+    const is404 = status === 404 || title.includes('404') || title.includes('Not Found')
+      || bodyText.includes('not found') || bodyText.includes('Not Found')
+      || bodyText.includes('404') || bodyText.includes('does not exist');
+    const hasVisibleContent = await page.locator('h1, h2, [role="alert"]').first().isVisible().catch(() => false);
+    expect(is404 || hasVisibleContent).toBeTruthy();
   });
 
   test('course page has start lesson button or link', async ({ page }) => {

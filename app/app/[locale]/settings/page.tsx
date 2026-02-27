@@ -223,7 +223,7 @@ export default function SettingsPage() {
         {/* Profile */}
         <section className="rounded-2xl border border-gray-800 bg-gray-900/60 p-6">
           <SectionHeading icon={User} title={t('profile_section')} color="text-purple-400" />
-          <p className="text-xs text-gray-500 mb-4">{t('profile_desc')}</p>
+          <p className="text-xs text-gray-400 mb-4">{t('profile_desc')}</p>
           <div className="space-y-4">
             <div>
               <label className="block text-xs font-medium text-gray-400 mb-1.5">{t('display_name')}</label>
@@ -259,7 +259,7 @@ export default function SettingsPage() {
               <label className="block text-xs font-medium text-gray-400 mb-1.5">{t('social_links')}</label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="flex items-center gap-2">
-                  <AtSign className="h-4 w-4 text-gray-500 shrink-0" />
+                  <AtSign className="h-4 w-4 text-gray-400 shrink-0" />
                   <input
                     type="text"
                     value={twitter}
@@ -269,7 +269,7 @@ export default function SettingsPage() {
                   />
                 </div>
                 <div className="flex items-center gap-2">
-                  <Link2 className="h-4 w-4 text-gray-500 shrink-0" />
+                  <Link2 className="h-4 w-4 text-gray-400 shrink-0" />
                   <input
                     type="text"
                     value={github}
@@ -310,7 +310,7 @@ export default function SettingsPage() {
                   <span className="text-2xl" aria-hidden="true">{lang.flag}</span>
                   <div className="flex-1">
                     <div className="text-sm font-semibold text-white">{lang.label}</div>
-                    <div className="text-xs text-gray-500">{lang.region}</div>
+                    <div className="text-xs text-gray-400">{lang.region}</div>
                   </div>
                   {selected && (
                     <CheckCircle className="h-5 w-5 text-purple-400 shrink-0" />
@@ -350,14 +350,14 @@ export default function SettingsPage() {
                       'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border',
                       selected
                         ? 'border-purple-600/40 bg-purple-900/30 text-purple-400'
-                        : 'border-gray-700 bg-gray-800 text-gray-500'
+                        : 'border-gray-700 bg-gray-800 text-gray-400'
                     )}
                   >
                     <Icon className="h-4 w-4" />
                   </div>
                   <div className="flex-1">
                     <div className="text-sm font-semibold text-white">{label}</div>
-                    <div className="text-xs text-gray-500">{desc}</div>
+                    <div className="text-xs text-gray-400">{desc}</div>
                   </div>
                   {selected && (
                     <CheckCircle className="h-5 w-5 text-purple-400 shrink-0" />
@@ -379,7 +379,7 @@ export default function SettingsPage() {
               >
                 <div className="flex-1">
                   <div className="text-sm font-medium text-gray-200">{item.label}</div>
-                  <div className="text-xs text-gray-500 mt-0.5">{item.description}</div>
+                  <div className="text-xs text-gray-400 mt-0.5">{item.description}</div>
                 </div>
                 <Toggle
                   id={`notif-${item.key}`}
@@ -404,7 +404,7 @@ export default function SettingsPage() {
               >
                 <div className="flex-1">
                   <div className="text-sm font-medium text-gray-200">{item.label}</div>
-                  <div className="text-xs text-gray-500 mt-0.5">{item.description}</div>
+                  <div className="text-xs text-gray-400 mt-0.5">{item.description}</div>
                 </div>
                 <Toggle
                   id={`privacy-${item.key}`}

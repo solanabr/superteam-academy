@@ -95,7 +95,7 @@ export default function Footer() {
               </div>
               <div>
                 <h3 className="text-sm font-bold text-white">{tNl('newsletter_title')}</h3>
-                <p className="text-xs text-gray-500">{tNl('newsletter_desc')}</p>
+                <p className="text-xs text-gray-400">{tNl('newsletter_desc')}</p>
               </div>
             </div>
             {subscribed ? (

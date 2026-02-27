@@ -153,7 +153,7 @@ function ThreadRow({ thread, t }: ThreadRowProps) {
           {t(thread.titleKey)}
         </h3>
 
-        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-500">
+        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-400">
           <span className="font-mono">{thread.author}</span>
           <span>·</span>
           <span>{formatRelativeTime(thread.hoursAgo, t)}</span>
@@ -161,7 +161,7 @@ function ThreadRow({ thread, t }: ThreadRowProps) {
       </div>
 
       {/* Right: stats */}
-      <div className="flex items-center gap-4 sm:gap-5 text-xs text-gray-500 shrink-0 ml-10 sm:ml-0">
+      <div className="flex items-center gap-4 sm:gap-5 text-xs text-gray-400 shrink-0 ml-10 sm:ml-0">
         {/* Upvotes */}
         <div className="flex items-center gap-1.5">
           <ThumbsUp className="h-3.5 w-3.5 text-purple-500" />
@@ -208,7 +208,6 @@ export default function CommunityPage() {
       .then(data => {
         if (data.threads) {
           // Log that API data was loaded
-          console.log('[community] Loaded', data.threads.length, 'threads from API');
         }
       })
       .catch(() => {});
@@ -391,7 +390,7 @@ export default function CommunityPage() {
         <div className="flex flex-col sm:flex-row gap-3 mb-6">
           {/* Search */}
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <input
               type="text"
               value={search}

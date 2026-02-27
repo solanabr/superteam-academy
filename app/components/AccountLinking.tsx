@@ -88,7 +88,7 @@ export default function AccountLinking() {
                   {publicKey.toBase58().slice(0, 4)}...{publicKey.toBase58().slice(-4)}
                 </div>
               ) : (
-                <div className="text-xs text-gray-500">{L(LABELS.not_connected, locale)}</div>
+                <div className="text-xs text-gray-400">{L(LABELS.not_connected, locale)}</div>
               )}
             </div>
           </div>
@@ -124,7 +124,7 @@ export default function AccountLinking() {
               {googleUser ? (
                 <div className="text-xs text-green-400">{googleUser.name}</div>
               ) : (
-                <div className="text-xs text-gray-500">{L(LABELS.not_connected, locale)}</div>
+                <div className="text-xs text-gray-400">{L(LABELS.not_connected, locale)}</div>
               )}
             </div>
           </div>
@@ -145,8 +145,8 @@ export default function AccountLinking() {
           </>
         ) : (
           <>
-            <AlertCircle className="h-4 w-4 text-gray-500" />
-            <span className="text-sm text-gray-500">{L(LABELS.link_info, locale)}</span>
+            <AlertCircle className="h-4 w-4 text-gray-400" />
+            <span className="text-sm text-gray-400">{L(LABELS.link_info, locale)}</span>
           </>
         )}
       </div>

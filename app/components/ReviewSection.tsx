@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useWalletSafe as useWallet } from '@/lib/use-wallet-safe';
 import { Star, Send } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -20,6 +21,7 @@ interface ReviewSectionProps {
 }
 
 export default function ReviewSection({ slug, locale, title, staticReviews }: ReviewSectionProps) {
+  const { publicKey, connected } = useWallet();
   const [apiReviews, setApiReviews] = useState<Review[]>([]);
   const [avgRating, setAvgRating] = useState(0);
   const [newRating, setNewRating] = useState(5);
@@ -48,7 +50,7 @@ export default function ReviewSection({ slug, locale, title, staticReviews }: Re
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          walletAddress: 'anonymous-' + Math.random().toString(36).slice(2, 8),
+          walletAddress: publicKey?.toBase58() ?? 'anonymous-' + Math.random().toString(36).slice(2, 8),
           rating: newRating,
           text: newText,
         }),
@@ -85,7 +87,7 @@ export default function ReviewSection({ slug, locale, title, staticReviews }: Re
                 </div>
                 <span className="text-sm font-medium text-gray-300">{r.author}</span>
               </div>
-              <span className="text-xs text-gray-500">{r.date}</span>
+              <span className="text-xs text-gray-400">{r.date}</span>
             </div>
             <div className="flex gap-0.5 mb-2">
               {[...Array(5)].map((_, j) => (
@@ -105,7 +107,7 @@ export default function ReviewSection({ slug, locale, title, staticReviews }: Re
                 </div>
                 <span className="text-sm font-medium text-gray-300">{r.walletAddress.slice(0, 8)}...</span>
               </div>
-              <span className="text-xs text-gray-500">{new Date(r.createdAt).toLocaleDateString()}</span>
+              <span className="text-xs text-gray-400">{new Date(r.createdAt).toLocaleDateString()}</span>
             </div>
             <div className="flex gap-0.5 mb-2">
               {[...Array(5)].map((_, j) => (
@@ -145,11 +147,11 @@ export default function ReviewSection({ slug, locale, title, staticReviews }: Re
             />
             <button
               onClick={handleSubmit}
-              disabled={submitting}
+              disabled={submitting || !connected}
               className="flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-500 disabled:opacity-50 transition-all"
             >
               <Send className="h-4 w-4" />
-              {submitting ? 'Submitting...' : 'Submit Review'}
+              {submitting ? 'Submitting...' : connected ? 'Submit Review' : 'Connect wallet to review'}
             </button>
           </div>
         ) : (

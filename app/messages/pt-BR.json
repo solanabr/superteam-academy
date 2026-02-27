@@ -601,5 +601,57 @@
     "ch_escrow_program_desc": "Implemente um programa de escrow trustless que mantém tokens ate ambas as partes cumprirem as condicoes.",
     "ch_nft_mint": "Mintar um NFT Comprimido",
     "ch_nft_mint_desc": "Use Metaplex Bubblegum para mintar um NFT comprimido para arte on-chain eficiente."
+  },
+  "offline": {
+    "title": "Biblioteca Offline",
+    "subtitle": "Acesse seus cursos salvos e sincronize o progresso pendente.",
+    "loading": "Carregando dados offline...",
+    "online": "Voce esta online",
+    "offline_status": "Voce esta offline",
+    "saved_courses": "Cursos Salvos",
+    "no_courses": "Nenhum curso salvo para leitura offline ainda.",
+    "browse_courses": "Explorar cursos para salvar",
+    "saved": "Salvo em",
+    "remove": "Remover do offline",
+    "pending_sync": "Sincronizacao Pendente",
+    "all_synced": "Todas as conclusoes de aulas estao sincronizadas.",
+    "sync_now": "Sincronizar Agora"
+  },
+  "notifications": {
+    "title": "Notificacoes",
+    "empty": "Nenhuma notificacao ainda.",
+    "mark_read": "Marcar como lida",
+    "mark_all_read": "Marcar todas como lidas",
+    "new_achievement": "Nova Conquista Desbloqueada!",
+    "course_updated": "Curso Atualizado",
+    "new_challenge": "Novo Desafio Disponivel"
+  },
+  "search": {
+    "title": "Busca",
+    "placeholder": "Buscar cursos, desafios...",
+    "no_results": "Nenhum resultado encontrado para \"{query}\".",
+    "results_count": "{count} resultados",
+    "filter_courses": "Cursos",
+    "filter_challenges": "Desafios",
+    "filter_all": "Todos"
+  },
+  "errors": {
+    "network": "Erro de rede. Verifique sua conexao.",
+    "unauthorized": "Voce precisa estar conectado para fazer isso.",
+    "forbidden": "Voce nao tem permissao.",
+    "not_found": "Pagina nao encontrada.",
+    "server": "Algo deu errado. Tente novamente.",
+    "wallet_required": "Por favor, conecte sua carteira primeiro.",
+    "quiz_incorrect": "Resposta incorreta. Tente novamente!"
+  },
+  "aria": {
+    "main_nav": "Navegacao principal",
+    "skip_to_content": "Pular para o conteudo principal",
+    "close_dialog": "Fechar dialogo",
+    "toggle_theme": "Alternar tema de cores",
+    "open_menu": "Abrir menu",
+    "close_menu": "Fechar menu",
+    "language_selector": "Selecionar idioma",
+    "xp_progress": "Barra de progresso XP"
   }
 }

@@ -601,5 +601,57 @@
     "ch_escrow_program_desc": "Implementa un programa de escrow trustless que mantiene tokens hasta que ambas partes cumplan las condiciones.",
     "ch_nft_mint": "Mintear un NFT Comprimido",
     "ch_nft_mint_desc": "Usa Metaplex Bubblegum para mintear un NFT comprimido para arte on-chain eficiente."
+  },
+  "offline": {
+    "title": "Biblioteca Sin Conexion",
+    "subtitle": "Accede a tus cursos guardados y sincroniza el progreso pendiente.",
+    "loading": "Cargando datos sin conexion...",
+    "online": "Estas en linea",
+    "offline_status": "Estas sin conexion",
+    "saved_courses": "Cursos Guardados",
+    "no_courses": "Aun no hay cursos guardados para lectura sin conexion.",
+    "browse_courses": "Explorar cursos para guardar",
+    "saved": "Guardado el",
+    "remove": "Eliminar de sin conexion",
+    "pending_sync": "Sincronizacion Pendiente",
+    "all_synced": "Todas las lecciones completadas estan sincronizadas.",
+    "sync_now": "Sincronizar Ahora"
+  },
+  "notifications": {
+    "title": "Notificaciones",
+    "empty": "Sin notificaciones aun.",
+    "mark_read": "Marcar como leida",
+    "mark_all_read": "Marcar todas como leidas",
+    "new_achievement": "Nuevo Logro Desbloqueado!",
+    "course_updated": "Curso Actualizado",
+    "new_challenge": "Nuevo Desafio Disponible"
+  },
+  "search": {
+    "title": "Busqueda",
+    "placeholder": "Buscar cursos, desafios...",
+    "no_results": "No se encontraron resultados para \"{query}\".",
+    "results_count": "{count} resultados",
+    "filter_courses": "Cursos",
+    "filter_challenges": "Desafios",
+    "filter_all": "Todos"
+  },
+  "errors": {
+    "network": "Error de red. Verifica tu conexion.",
+    "unauthorized": "Debes iniciar sesion para hacer esto.",
+    "forbidden": "No tienes permiso.",
+    "not_found": "Pagina no encontrada.",
+    "server": "Algo salio mal. Intentalo de nuevo.",
+    "wallet_required": "Por favor, conecta tu billetera primero.",
+    "quiz_incorrect": "Respuesta incorrecta. Intentalo de nuevo!"
+  },
+  "aria": {
+    "main_nav": "Navegacion principal",
+    "skip_to_content": "Saltar al contenido principal",
+    "close_dialog": "Cerrar dialogo",
+    "toggle_theme": "Cambiar tema de colores",
+    "open_menu": "Abrir menu",
+    "close_menu": "Cerrar menu",
+    "language_selector": "Seleccionar idioma",
+    "xp_progress": "Barra de progreso XP"
   }
 }

@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('PWA Features', () => {
   test('manifest.json is accessible', async ({ request }) => {
-    const res = await request.get('http://localhost:3000/manifest.json');
+    const res = await request.get('/manifest.json');
     if (res.ok()) {
       const data = await res.json();
       expect(data.name).toBeTruthy();
@@ -13,7 +13,7 @@ test.describe('PWA Features', () => {
   });
 
   test('service worker registration script exists', async ({ page }) => {
-    await page.goto('http://localhost:3000/en');
+    await page.goto('/en');
     // Check if SW is registered or if registration script exists
     const swRegistered = await page.evaluate(() => {
       return 'serviceWorker' in navigator;
@@ -22,13 +22,13 @@ test.describe('PWA Features', () => {
   });
 
   test('app has viewport meta tag', async ({ page }) => {
-    await page.goto('http://localhost:3000/en');
+    await page.goto('/en');
     const viewport = await page.locator('meta[name="viewport"]').getAttribute('content');
     expect(viewport).toContain('width=device-width');
   });
 
   test('app has theme-color meta tag', async ({ page }) => {
-    await page.goto('http://localhost:3000/en');
+    await page.goto('/en');
     const themeColor = page.locator('meta[name="theme-color"]');
     const count = await themeColor.count();
     // Theme color is recommended for PWAs
@@ -43,11 +43,11 @@ test.describe('PWA Features', () => {
       if (failure?.errorText?.includes('ERR_ABORTED')) return;
       failedRequests.push(req.url());
     });
-    await page.goto('http://localhost:3000/en');
+    await page.goto('/en');
     await page.waitForLoadState('networkidle');
     // Filter out expected non-critical failures
     const criticalFailures = failedRequests.filter(url =>
-      url.includes('localhost:3000') &&
+      url.includes('localhost:3001') &&
       !url.includes('favicon') &&
       !url.includes('_next/') // Next.js internal chunks and static assets
     );
@@ -55,7 +55,7 @@ test.describe('PWA Features', () => {
   });
 
   test('icons are accessible', async ({ page }) => {
-    await page.goto('http://localhost:3000/en');
+    await page.goto('/en');
     // Check for various icon links
     const icons = page.locator('link[rel="icon"], link[rel="apple-touch-icon"]');
     const count = await icons.count();
@@ -63,13 +63,13 @@ test.describe('PWA Features', () => {
   });
 
   test('app has proper charset', async ({ page }) => {
-    await page.goto('http://localhost:3000/en');
+    await page.goto('/en');
     const charset = await page.locator('meta[charset]').getAttribute('charset');
     expect(charset?.toLowerCase()).toBe('utf-8');
   });
 
   test('page has proper document structure', async ({ page }) => {
-    await page.goto('http://localhost:3000/en');
+    await page.goto('/en');
     // Main, header, footer structure
     const main = await page.locator('main').count();
     expect(main).toBeGreaterThanOrEqual(0);
@@ -78,7 +78,7 @@ test.describe('PWA Features', () => {
   });
 
   test('images have alt attributes', async ({ page }) => {
-    await page.goto('http://localhost:3000/en');
+    await page.goto('/en');
     const images = page.locator('img');
     const count = await images.count();
     for (let i = 0; i < Math.min(count, 10); i++) {
@@ -89,7 +89,7 @@ test.describe('PWA Features', () => {
   });
 
   test('app has no accessibility violations in document structure', async ({ page }) => {
-    await page.goto('http://localhost:3000/en');
+    await page.goto('/en');
     // Check for skip-nav or main landmark
     const landmarks = await page.locator('[role="main"], main, [role="navigation"], nav').count();
     expect(landmarks).toBeGreaterThan(0);

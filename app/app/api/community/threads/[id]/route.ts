@@ -32,3 +32,43 @@ export async function GET(
     total: replies.length,
   });
 }
+
+
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const body = await request.json();
+  const { bodyText, author } = body;
+
+  if (!bodyText || typeof bodyText !== 'string' || bodyText.length < 2) {
+    return NextResponse.json({ error: 'Reply body must be at least 2 characters' }, { status: 400 });
+  }
+  if (bodyText.length > 5000) {
+    return NextResponse.json({ error: 'Reply must be under 5,000 characters' }, { status: 400 });
+  }
+  if (!author || typeof author !== 'string') {
+    return NextResponse.json({ error: 'Author is required' }, { status: 400 });
+  }
+
+  if (!replyStore.has(id)) {
+    replyStore.set(id, []);
+  }
+  const replies = replyStore.get(id)!;
+
+  const reply: Reply = {
+    id: `reply-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    threadId: id,
+    body: bodyText.replace(/[\x00-\x1F\x7F]/g, ''),
+    author: author.replace(/[\x00-\x1F\x7F]/g, ''),
+    upvotes: 0,
+    createdAt: new Date().toISOString(),
+  };
+
+  // Cap replies per thread
+  if (replies.length >= 500) replies.shift();
+  replies.push(reply);
+
+  return NextResponse.json({ reply }, { status: 201 });
+}

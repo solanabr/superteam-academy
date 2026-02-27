@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWalletSafe as useWallet } from '@/lib/use-wallet-safe';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import {
   Rocket, Wallet, BookOpen, CheckCircle, ChevronRight,
@@ -210,7 +210,7 @@ export default function OnboardingPage() {
           </div>
           <button
             onClick={() => setStep(2)}
-            className="mt-6 text-xs text-gray-500 hover:text-gray-300 transition-colors"
+            className="mt-6 text-xs text-gray-400 hover:text-gray-300 transition-colors"
           >
             {t('skip')} →
           </button>
@@ -250,7 +250,7 @@ export default function OnboardingPage() {
                   </div>
                   <p className="text-xs text-gray-400 mt-1 leading-relaxed">{L(course.desc, locale)}</p>
                   <div className="flex items-center gap-3 mt-2">
-                    <span className="text-xs text-gray-500">{course.lessons} lessons</span>
+                    <span className="text-xs text-gray-400">{course.lessons} lessons</span>
                     <span className="flex items-center gap-0.5 text-xs text-yellow-400">
                       <Zap className="h-3 w-3" />
                       {course.xp} XP

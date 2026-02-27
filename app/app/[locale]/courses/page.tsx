@@ -277,7 +277,7 @@ export default function CoursesPage() {
         {/* Search + Sort row */}
         <div className="mb-6 flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <input
               type="text"
               placeholder={t('search_placeholder')}
@@ -287,13 +287,13 @@ export default function CoursesPage() {
             />
             {search && (
               <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2">
-                <X className="h-4 w-4 text-gray-500 hover:text-gray-300" />
+                <X className="h-4 w-4 text-gray-400 hover:text-gray-300" />
               </button>
             )}
           </div>
 
           <div className="flex items-center gap-2">
-            <SlidersHorizontal className="h-4 w-4 text-gray-500" />
+            <SlidersHorizontal className="h-4 w-4 text-gray-400" />
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
@@ -348,7 +348,7 @@ export default function CoursesPage() {
         </div>
 
         {/* Results count */}
-        <div className="mb-6 text-sm text-gray-500">
+        <div className="mb-6 text-sm text-gray-400">
           {t('available_count', { count: filtered.length })}
         </div>
 
@@ -356,7 +356,7 @@ export default function CoursesPage() {
         {filtered.length === 0 ? (
           <div className="text-center py-20">
             <BookOpen className="mx-auto h-12 w-12 text-gray-700 mb-3" />
-            <p className="text-gray-500 text-lg">{t('no_results')}</p>
+            <p className="text-gray-400 text-lg">{t('no_results')}</p>
             <button
               onClick={() => { setLevelFilter('all'); setTrackFilter('all'); setSearch(''); }}
               className="mt-4 text-sm text-purple-400 hover:text-purple-300"
@@ -386,7 +386,7 @@ export default function CoursesPage() {
                     <h3 className="mb-1.5 text-sm font-semibold text-white leading-snug group-hover:text-purple-300 transition-colors line-clamp-2">
                       {L(course.title, locale)}
                     </h3>
-                    <p className="mb-3 text-xs text-gray-500 leading-relaxed line-clamp-2 flex-1">
+                    <p className="mb-3 text-xs text-gray-400 leading-relaxed line-clamp-2 flex-1">
                       {L(course.desc, locale)}
                     </p>
 
@@ -395,11 +395,11 @@ export default function CoursesPage() {
                       {[...Array(5)].map((_, j) => (
                         <Star key={j} className={cn('h-3 w-3', j < Math.floor(course.rating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-700')} />
                       ))}
-                      <span className="text-xs text-gray-500 ml-1">{course.rating}</span>
+                      <span className="text-xs text-gray-400 ml-1">{course.rating}</span>
                     </div>
 
                     {/* Stats */}
-                    <div className="grid grid-cols-3 gap-1 text-xs text-gray-500 border-t border-gray-800 pt-3">
+                    <div className="grid grid-cols-3 gap-1 text-xs text-gray-400 border-t border-gray-800 pt-3">
                       <div className="flex flex-col items-center gap-0.5">
                         <BookOpen className="h-3.5 w-3.5" />
                         <span>{course.lessons} {t('lessons')}</span>

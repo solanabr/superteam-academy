@@ -21,9 +21,21 @@ Superteam Academy is a decentralized learning platform for Web3 and Solana educa
 - **Analytics** — GA4 event tracking + Microsoft Clarity heatmaps + Sentry error monitoring
 - **Dark theme** by default, with light mode toggle (next-themes)
 - **Responsive design** built with Tailwind CSS 4 and Radix UI primitives
-- **234 unit tests** (Vitest) + **200+ E2E tests** (Playwright), covering all lib modules, API routes, locales, and user flows
+- **234 unit tests** (Vitest) + **225 E2E test cases** (Playwright, run across 2 browser projects) = **459 unique tests**, covering all lib modules, API routes, locales, responsive viewports, and user flows
 
 ---
+
+
+## Lighthouse Scores
+
+| Category | Score |
+|----------|-------|
+| Performance | 90+ (Vercel production) |
+| Accessibility | 96 |
+| Best Practices | 96 |
+| SEO | 91 |
+
+> Scores measured on the live Vercel deployment using Lighthouse CLI. Performance varies by hosting environment.
 
 ## Tech Stack
 
@@ -46,7 +58,7 @@ Superteam Academy is a decentralized learning platform for Web3 and Solana educa
 | Auth | NextAuth.js (Google OAuth + GitHub OAuth + Phantom wallet) |
 | Analytics | Google Analytics 4 + Microsoft Clarity heatmaps |
 | Monitoring | Sentry (error tracking + performance + source maps) |
-| Testing | Vitest (234 unit tests) + Playwright (200+ E2E tests) |
+| Testing | Vitest (234 unit tests) + Playwright (225 E2E tests x 2 browsers) = 459 unique |
 | CI/CD | GitHub Actions (typecheck, lint, build, Anchor tests, E2E) |
 
 ---
@@ -124,8 +136,10 @@ app/
 │       │   └── page.tsx                # Profile (skills/credentials)
 │       ├── settings/
 │       │   └── page.tsx                # Settings (language/theme/privacy)
-│       └── certificates/[id]/
-│           └── page.tsx                # Certificate view (Solana Explorer link)
+│       ├── certificates/[id]/
+│       │   └── page.tsx                # Certificate view (Solana Explorer link)
+│       └── offline/
+│           └── page.tsx                # Offline library (IndexedDB saved courses)
 ├── components/
 │   ├── Nav.tsx                         # Navigation bar with wallet button
 │   ├── Footer.tsx                      # Site footer
@@ -192,7 +206,7 @@ The production build outputs to `.next/`. The server listens on port 3000 by def
 
 ## Internationalization (i18n)
 
-The app uses [next-intl](https://next-intl.dev/) with the App Router. Three locales are supported out of the box:
+The app uses [next-intl](https://next-intl.dev/) with the App Router. Three locales with 611 translation keys each are supported out of the box:
 
 | Locale | Language | URL Prefix |
 |---|---|---|
@@ -228,7 +242,7 @@ URL paths are also localized (e.g., `/pt-BR/cursos` vs. `/en/courses`).
 
 ## API Routes
 
-The app exposes 19 API route files with 22+ endpoints:
+The app exposes 23 API route files with 30+ endpoints:
 
 | Route | Methods | Description |
 |-------|---------|-------------|
@@ -248,6 +262,10 @@ The app exposes 19 API route files with 22+ endpoints:
 | `/api/community/threads` | GET, POST | Forum threads with category filters |
 | `/api/community/threads/[id]` | GET | Thread with replies |
 | `/api/quiz/validate` | POST | Server-side quiz answer validation |
+| `/api/courses/[slug]/lessons` | GET | List lessons for a course |
+| `/api/notifications` | GET, PATCH | User notifications (read/mark read) |
+| `/api/search` | GET | Full-text search across courses and challenges |
+| `/api/stats` | GET | Platform statistics and feature list |
 | `/api/analytics/events` | POST | Track custom analytics events |
 | `/api/complete-lesson` | POST | Complete lesson on-chain |
 | `/api/auth/[...nextauth]` | GET, POST | NextAuth.js authentication |
@@ -325,7 +343,7 @@ npm run test:all           # Unit tests + E2E tests
 
 ## Offline Support
 
-The app includes IndexedDB-based offline support (`lib/indexed-db.ts`):
+The app includes a dedicated `/offline` page and IndexedDB-based offline support (`lib/indexed-db.ts`):
 - Save enrolled course content for offline reading
 - Queue lesson completions while offline
 - Auto-sync completions when back online

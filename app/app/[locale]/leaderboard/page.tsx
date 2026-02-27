@@ -106,7 +106,7 @@ export default function LeaderboardPage() {
                 {entry.xp.toLocaleString()} XP
               </div>
 
-              <div className="text-xs text-gray-500 mt-1">{t('level')} {entry.level}</div>
+              <div className="text-xs text-gray-400 mt-1">{t('level')} {entry.level}</div>
 
               {entry.streak > 0 && (
                 <div className="flex items-center justify-center gap-1 mt-2 text-xs text-orange-400">
@@ -123,19 +123,19 @@ export default function LeaderboardPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-800 bg-gray-900/60">
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                   {t('rank')}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                   {t('learner')}
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">
                   {t('xp')}
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
+                <th className="px-4 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider hidden sm:table-cell">
                   {t('level')}
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
+                <th className="px-4 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider hidden md:table-cell">
                   {t('streak')}
                 </th>
               </tr>
@@ -162,7 +162,7 @@ export default function LeaderboardPage() {
                           'flex h-7 w-7 items-center justify-center rounded-full text-sm font-bold',
                           entry.rank <= 3
                             ? 'bg-yellow-500/20 text-yellow-400'
-                            : 'text-gray-500'
+                            : 'text-gray-400'
                         )}
                       >
                         {entry.rank}

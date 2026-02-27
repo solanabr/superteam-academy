@@ -127,7 +127,7 @@ export default function NewCoursePage() {
           <div className="bg-gray-900 p-4">
             <h3 className="text-lg font-semibold text-white">{title || t('untitled')}</h3>
             <p className="text-sm text-gray-400 mt-1 line-clamp-2">{description || t('no_description')}</p>
-            <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
+            <div className="flex items-center gap-4 mt-3 text-xs text-gray-400">
               <span className="flex items-center gap-1"><BookOpen className="h-3 w-3" /> {lessons.length} {t('lessons')}</span>
               <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {duration}</span>
               <span className="flex items-center gap-1"><Zap className="h-3 w-3 text-yellow-500" /> +{xpReward} XP</span>
@@ -283,7 +283,7 @@ export default function NewCoursePage() {
             {lessons.length === 0 ? (
               <div className="text-center py-10 border border-dashed border-gray-800 rounded-xl">
                 <BookOpen className="mx-auto h-8 w-8 text-gray-700 mb-2" />
-                <p className="text-xs text-gray-500">{t('no_lessons')}</p>
+                <p className="text-xs text-gray-400">{t('no_lessons')}</p>
               </div>
             ) : (
               <div className="space-y-2">
@@ -293,7 +293,7 @@ export default function NewCoursePage() {
                     className="flex items-center gap-3 rounded-xl border border-gray-800 bg-gray-900/50 p-3"
                   >
                     <GripVertical className="h-4 w-4 text-gray-600 flex-shrink-0 cursor-grab" />
-                    <span className="text-xs text-gray-500 w-6 flex-shrink-0">{i + 1}.</span>
+                    <span className="text-xs text-gray-400 w-6 flex-shrink-0">{i + 1}.</span>
                     <input
                       type="text"
                       value={lesson.title}
@@ -318,7 +318,7 @@ export default function NewCoursePage() {
                         className="w-16 bg-gray-800 rounded-lg px-2 py-1 text-xs text-gray-300 text-center border border-gray-700"
                       />
                     </div>
-                    <label className="flex items-center gap-1 text-xs text-gray-500 cursor-pointer">
+                    <label className="flex items-center gap-1 text-xs text-gray-400 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={lesson.free}
@@ -329,7 +329,7 @@ export default function NewCoursePage() {
                     </label>
                     <button
                       onClick={() => removeLesson(lesson.id)}
-                      className="p-1 text-gray-500 hover:text-red-400 transition-colors"
+                      className="p-1 text-gray-400 hover:text-red-400 transition-colors"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>

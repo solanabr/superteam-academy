@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getLocale, getTranslations } from 'next-intl/server';
 import {
@@ -278,6 +279,26 @@ const REVIEWS = [
   },
 ];
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://app-roan-iota-58.vercel.app';
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string; slug: string }> }): Promise<Metadata> {
+  const { locale, slug } = await params;
+  const course = MOCK_COURSES[slug];
+  if (!course) return { title: 'Course Not Found — Superteam Academy' };
+  const title = L(course.title, locale);
+  const desc = L(course.desc, locale);
+  return {
+    title: `${title} — Superteam Academy`,
+    description: desc,
+    openGraph: {
+      title: `${title} — Superteam Academy`,
+      description: desc,
+      url: `${SITE_URL}/${locale}/courses/${slug}`,
+      type: 'website',
+    },
+  };
+}
+
 export default async function CourseDetailPage({
   params,
 }: {
@@ -397,7 +418,7 @@ export default async function CourseDetailPage({
                     <div className="flex items-center gap-3 min-w-0">
                       <div className={cn(
                         'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold',
-                        lesson.free ? 'bg-purple-900/50 text-purple-300' : 'bg-gray-800 text-gray-500'
+                        lesson.free ? 'bg-purple-900/50 text-purple-300' : 'bg-gray-800 text-gray-400'
                       )}>
                         {lesson.free ? <Play className="h-3.5 w-3.5" /> : <Lock className="h-3.5 w-3.5" />}
                       </div>
@@ -405,7 +426,7 @@ export default async function CourseDetailPage({
                         <p className={cn('text-sm font-medium truncate', lesson.free ? 'text-gray-200' : 'text-gray-400')}>
                           {i + 1}. {L(lesson.title, locale)}
                         </p>
-                        <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
+                        <div className="flex items-center gap-2 text-xs text-gray-400 mt-0.5">
                           <Clock className="h-3 w-3" />
                           {lesson.duration} min
                           {lesson.free && <span className="text-purple-400 font-medium ml-1">• {t('free')}</span>}

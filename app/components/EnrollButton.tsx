@@ -106,7 +106,7 @@ export default function EnrollButton({
             fontWeight: 700,
           }}
         />
-        <span className="text-xs text-gray-500">{connectText}</span>
+        <span className="text-xs text-gray-400">{connectText}</span>
       </div>
     );
   }

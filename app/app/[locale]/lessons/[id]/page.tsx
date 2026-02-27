@@ -10,7 +10,7 @@ import {
   BookOpen, ArrowLeft, Play, FileText
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWalletSafe as useWallet } from '@/lib/use-wallet-safe';
 import { localePath } from '@/lib/paths';
 
 const L = (obj: Record<string, string>, locale: string) => obj[locale] ?? obj['pt-BR'];
@@ -18,7 +18,7 @@ const L = (obj: Record<string, string>, locale: string) => obj[locale] ?? obj['p
 function EditorLoadingFallback() {
   const tLesson = useTranslations('lesson');
   return (
-    <div className="flex h-full items-center justify-center bg-gray-900 text-gray-500 text-sm">
+    <div className="flex h-full items-center justify-center bg-gray-900 text-gray-400 text-sm">
       {tLesson('loading_editor')}
     </div>
   );
@@ -935,6 +935,7 @@ const LESSON_SIDEBAR = LESSONS;
 
 type TabType = 'content' | 'editor';
 
+
 export default function LessonPage() {
   const params = useParams();
   const locale = useLocale();
@@ -991,13 +992,13 @@ export default function LessonPage() {
         <div className="p-4 border-b border-gray-800">
           <Link
             href={localePath(locale, '/courses/intro-solana')}
-            className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-purple-400 transition-colors mb-2"
+            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-purple-400 transition-colors mb-2"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
             {L(COURSE_TITLE, locale)}
           </Link>
           <h3 className="text-sm font-semibold text-white">{t('course_lessons')}</h3>
-          <div className="mt-1 text-xs text-gray-500">
+          <div className="mt-1 text-xs text-gray-400">
             {completedCount}/{LESSON_SIDEBAR.length} {t('completed_count')}
           </div>
         </div>
@@ -1045,7 +1046,7 @@ export default function LessonPage() {
                 'flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all',
                 activeTab === 'content'
                   ? 'bg-purple-900/50 text-purple-300'
-                  : 'text-gray-500 hover:text-gray-300'
+                  : 'text-gray-400 hover:text-gray-300'
               )}
             >
               <FileText className="h-3.5 w-3.5" />
@@ -1057,7 +1058,7 @@ export default function LessonPage() {
                 'flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all',
                 activeTab === 'editor'
                   ? 'bg-purple-900/50 text-purple-300'
-                  : 'text-gray-500 hover:text-gray-300'
+                  : 'text-gray-400 hover:text-gray-300'
               )}
             >
               <Code2 className="h-3.5 w-3.5" />
@@ -1065,7 +1066,7 @@ export default function LessonPage() {
             </button>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-500">{lesson.duration}min</span>
+            <span className="text-xs text-gray-400">{lesson.duration}min</span>
             <div className="flex items-center gap-1 text-xs font-semibold text-yellow-400">
               <Zap className="h-3.5 w-3.5" />
               +{lesson.xp} XP
@@ -1083,7 +1084,7 @@ export default function LessonPage() {
           )}>
             <div className="p-6 flex-1">
               <h1 className="mb-1 text-xl font-bold text-white leading-tight">{L(lesson.title, locale)}</h1>
-              <p className="mb-6 text-xs text-gray-500">{L(lesson.course, locale)}</p>
+              <p className="mb-6 text-xs text-gray-400">{L(lesson.course, locale)}</p>
 
               {/* Render markdown-ish content */}
               <div className="prose-lesson space-y-4">
@@ -1114,7 +1115,7 @@ export default function LessonPage() {
                     <div className="h-3 w-3 rounded-full bg-yellow-500/70" />
                     <div className="h-3 w-3 rounded-full bg-green-500/70" />
                   </div>
-                  <span className="text-xs text-gray-500 font-mono">typescript</span>
+                  <span className="text-xs text-gray-400 font-mono">typescript</span>
                 </div>
                 <div className="bg-gray-900 p-4">
                   <pre className="text-xs text-gray-300 font-mono leading-relaxed overflow-x-auto whitespace-pre-wrap">

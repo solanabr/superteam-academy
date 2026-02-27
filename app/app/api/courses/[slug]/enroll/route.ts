@@ -30,6 +30,11 @@ export async function POST(
     return NextResponse.json({ error: 'Already enrolled' }, { status: 409 });
   }
 
+  // Cap enrollments per course
+  if (courseEnrollments.size >= 10000) {
+    const first = courseEnrollments.values().next().value;
+    if (first) courseEnrollments.delete(first);
+  }
   courseEnrollments.add(walletAddress);
 
   return NextResponse.json({

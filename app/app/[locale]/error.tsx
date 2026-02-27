@@ -26,7 +26,7 @@ export default function Error({
         </div>
         <h2 className="text-2xl font-bold text-white">{t('error')}</h2>
         <p className="max-w-md text-gray-400">
-          {error.message || 'Something went wrong. Please try again.'}
+          {process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong. Please try again.'}
         </p>
         <button
           onClick={reset}
