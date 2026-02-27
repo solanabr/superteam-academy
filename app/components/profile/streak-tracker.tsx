@@ -11,7 +11,7 @@ interface StreakTrackerProps {
 }
 
 export function StreakTracker({ walletAddress }: StreakTrackerProps) {
-	const { streakData, recordActivity } = useStreak(walletAddress);
+	const { state, streakData, milestoneData, recordActivity } = useStreak(walletAddress);
 	const recordRef = useRef(recordActivity);
 	recordRef.current = recordActivity;
 
@@ -127,21 +127,40 @@ export function StreakTracker({ walletAddress }: StreakTrackerProps) {
 			<div className="pt-3 border-t border-border/40">
 				<span className="text-xs text-muted-foreground block mb-2">Milestones</span>
 				<div className="flex gap-2">
-					{[7, 14, 30, 100].map((m) => {
-						const done = streakData.longest >= m;
+					{milestoneData.milestones.map((milestone) => {
+						const done = streakData.longest >= milestone.days;
+						const hasFreezeReward = milestone.freezeAward > 0;
 						return (
 							<div
-								key={m}
+								key={milestone.days}
 								className={`flex-1 text-center py-1.5 rounded-lg text-xs font-medium ${
 									done
 										? "bg-gold/10 text-gold border border-gold/20"
 										: "bg-muted text-muted-foreground"
 								}`}
 							>
-								{m}d
+								{milestone.days}d{hasFreezeReward ? " + freeze" : ""}
 							</div>
 						);
 					})}
+				</div>
+				<div className="mt-3 grid grid-cols-2 gap-2">
+					<div className="rounded-lg border border-border/60 bg-background px-3 py-2">
+						<div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+							Freezes available
+						</div>
+						<div className="text-sm font-semibold">{state.freezesAvailable}</div>
+					</div>
+					<div className="rounded-lg border border-border/60 bg-background px-3 py-2">
+						<div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+							Next reward
+						</div>
+						<div className="text-sm font-semibold">
+							{milestoneData.nextMilestone
+								? `${milestoneData.daysToNextMilestone} day${milestoneData.daysToNextMilestone === 1 ? "" : "s"}`
+								: "Reached max"}
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>

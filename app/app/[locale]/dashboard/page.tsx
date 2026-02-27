@@ -33,6 +33,9 @@ interface DashboardStats {
 	totalXp: number;
 	level: number;
 	streak: number;
+	freezesAvailable: number;
+	nextMilestone: number | null;
+	daysToNextMilestone: number;
 	coursesEnrolled: number;
 	coursesCompleted: number;
 	lessonsCompleted: number;
@@ -58,7 +61,11 @@ export default function DashboardPage() {
 	>([]);
 	const [activity, setActivity] = useState<IndexedLearnerActivity[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
-	const { streakData, recordActivity } = useStreak(wallet.publicKey?.toBase58());
+	const { state, streakData, milestoneData, recordActivity } = useStreak(
+		wallet.publicKey?.toBase58()
+	);
+	const nextMilestone = milestoneData.nextMilestone?.days ?? null;
+	const daysToNextMilestone = milestoneData.daysToNextMilestone;
 
 	// Record daily activity on dashboard visit
 	useEffect(() => {
@@ -98,6 +105,9 @@ export default function DashboardPage() {
 			totalXp,
 			level,
 			streak: streakData.current,
+			freezesAvailable: state.freezesAvailable,
+			nextMilestone,
+			daysToNextMilestone,
 			coursesEnrolled: overview.stats.enrolledCourses,
 			coursesCompleted: overview.stats.completedCourses,
 			lessonsCompleted: overview.stats.totalLessonsCompleted,
@@ -112,7 +122,14 @@ export default function DashboardPage() {
 			.catch(() => undefined);
 
 		setIsLoading(false);
-	}, [wallet.publicKey, connection, streakData.current]);
+	}, [
+		wallet.publicKey,
+		connection,
+		streakData.current,
+		state.freezesAvailable,
+		nextMilestone,
+		daysToNextMilestone,
+	]);
 
 	useEffect(() => {
 		loadDashboard();
@@ -158,7 +175,7 @@ export default function DashboardPage() {
 					<p className="text-muted-foreground mt-1">{t("overview")}</p>
 				</div>
 
-				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
 					<StatCard
 						icon={<TrendingUp className="w-5 h-5" />}
 						label={t("totalXp")}
@@ -176,6 +193,19 @@ export default function DashboardPage() {
 						label={t("courses")}
 						value={`${stats.coursesCompleted}/${stats.coursesEnrolled}`}
 						sublabel={t("lessonsDone", { count: stats.lessonsCompleted })}
+					/>
+					<StatCard
+						icon={<Clock className="w-5 h-5" />}
+						label={t("streakFreezes")}
+						value={String(stats.freezesAvailable)}
+						sublabel={
+							stats.nextMilestone
+								? t("nextMilestoneIn", {
+										days: stats.daysToNextMilestone,
+										milestone: stats.nextMilestone,
+									})
+								: t("maxMilestoneReached")
+						}
 					/>
 					<StatCard
 						icon={<Trophy className="w-5 h-5" />}

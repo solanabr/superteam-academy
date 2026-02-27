@@ -850,7 +850,10 @@
 		"learningStats": "Estatísticas de Aprendizado",
 		"overallProgress": "Progresso Geral",
 		"totalTime": "Tempo Total",
-		"recentActivity": "Atividade Recente"
+		"recentActivity": "Atividade Recente",
+		"streakFreezes": "Congelamentos de Sequência",
+		"nextMilestoneIn": "{days}d para sequência de {milestone}d",
+		"maxMilestoneReached": "Maior marco de sequência alcançado"
 	},
 	"enrollment": {
 		"enrolled": "Matriculado!",
@@ -2625,7 +2628,10 @@
 		"quickActions": "Ações Rápidas",
 		"exploreCourses": "Explorar Cursos",
 		"leaderboard": "Ranking",
-		"myCredentials": "Minhas Credenciais"
+		"myCredentials": "Minhas Credenciais",
+		"streakFreezes": "Congelamentos de Sequência",
+		"nextMilestoneIn": "{days}d para sequência de {milestone}d",
+		"maxMilestoneReached": "Maior marco de sequência alcançado"
 	},
 	"common": {
 		"error": {

@@ -22,6 +22,10 @@ interface Challenge {
 interface ChallengeEditorProps {
 	challenge: Challenge;
 	initialCode: string;
+	liveValidation?: {
+		status: "idle" | "checking" | "valid" | "invalid";
+		message: string;
+	};
 	onCodeChange: (code: string) => void;
 	onRunTests: () => void;
 	onSubmit: () => void;
@@ -30,6 +34,7 @@ interface ChallengeEditorProps {
 export function ChallengeEditor({
 	challenge,
 	initialCode,
+	liveValidation,
 	onCodeChange,
 	onRunTests,
 	onSubmit,
@@ -165,6 +170,19 @@ export function ChallengeEditor({
 				<div className="flex items-center gap-4">
 					<span>Lines: {code.split("\n").length}</span>
 					<span>Characters: {code.length}</span>
+					{liveValidation && liveValidation.status !== "idle" && (
+						<span
+							className={
+								liveValidation.status === "invalid"
+									? "text-destructive"
+									: liveValidation.status === "valid"
+										? "text-green-600"
+										: "text-muted-foreground"
+							}
+						>
+							{liveValidation.message}
+						</span>
+					)}
 				</div>
 
 				<div className="flex items-center gap-2">

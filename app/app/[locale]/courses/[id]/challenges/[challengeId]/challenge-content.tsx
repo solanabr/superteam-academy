@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { ArrowLeft, RotateCcw, CheckCircle, Clock, Target, Code, TestTube } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -65,6 +65,13 @@ interface SubmitResponse {
 	result: SubmissionResult;
 }
 
+interface ValidationResponse {
+	validation: {
+		valid: boolean;
+		error?: string;
+	};
+}
+
 export function ChallengeContent({
 	courseId,
 	challengeId,
@@ -85,12 +92,69 @@ export function ChallengeContent({
 	const [isRunning, setIsRunning] = useState(false);
 	const [completed, setCompleted] = useState(false);
 	const [usedHints, setUsedHints] = useState<number[]>([]);
+	const [liveValidation, setLiveValidation] = useState<{
+		status: "idle" | "checking" | "valid" | "invalid";
+		message: string;
+	}>({ status: "idle", message: "" });
 
 	const testsPassed = testResults.filter((r) => r.passed).length;
 
 	const handleCodeChange = useCallback((newCode: string) => {
 		setCode(newCode);
 	}, []);
+
+	useEffect(() => {
+		if (!code.trim()) {
+			setLiveValidation({ status: "idle", message: "" });
+			return;
+		}
+
+		const timeoutId = window.setTimeout(async () => {
+			setLiveValidation({ status: "checking", message: "Checking code..." });
+			try {
+				const res = await fetch(
+					`/api/challenges/${challengeId}/run?courseId=${encodeURIComponent(courseId)}`,
+					{
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({
+							code,
+							language: challenge.language,
+							validateOnly: true,
+						}),
+					}
+				);
+
+				if (!res.ok) {
+					setLiveValidation({
+						status: "invalid",
+						message: "Unable to validate code right now",
+					});
+					return;
+				}
+
+				const data = (await res.json()) as ValidationResponse;
+				if (data.validation.valid) {
+					setLiveValidation({ status: "valid", message: "Syntax checks passed" });
+					return;
+				}
+
+				setLiveValidation({
+					status: "invalid",
+					message: data.validation.error ?? "Validation failed",
+				});
+			} catch {
+				setLiveValidation({
+					status: "invalid",
+					message: "Unable to validate code right now",
+				});
+			}
+		}, 450);
+
+		return () => {
+			window.clearTimeout(timeoutId);
+		};
+	}, [challenge.language, challengeId, code, courseId]);
 
 	const handleRunTests = useCallback(async () => {
 		setIsRunning(true);
@@ -156,6 +220,7 @@ export function ChallengeContent({
 		setCode(challenge.starterCode);
 		setTestResults([]);
 		setSubmissionResults(null);
+		setLiveValidation({ status: "idle", message: "" });
 	}, [challenge.starterCode]);
 
 	return (
@@ -227,6 +292,7 @@ export function ChallengeContent({
 									<ChallengeEditor
 										challenge={challenge}
 										initialCode={code}
+										liveValidation={liveValidation}
 										onCodeChange={handleCodeChange}
 										onRunTests={handleRunTests}
 										onSubmit={handleSubmit}

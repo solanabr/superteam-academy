@@ -850,7 +850,10 @@
 		"learningStats": "Learning Stats",
 		"overallProgress": "Overall Progress",
 		"totalTime": "Total Time",
-		"recentActivity": "Recent Activity"
+		"recentActivity": "Recent Activity",
+		"streakFreezes": "Streak Freezes",
+		"nextMilestoneIn": "{days}d to {milestone}d streak",
+		"maxMilestoneReached": "Top streak milestone reached"
 	},
 	"enrollment": {
 		"enrolled": "Enrolled!",
@@ -2625,7 +2628,10 @@
 		"quickActions": "Quick Actions",
 		"exploreCourses": "Explore Courses",
 		"leaderboard": "Leaderboard",
-		"myCredentials": "My Credentials"
+		"myCredentials": "My Credentials",
+		"streakFreezes": "Streak Freezes",
+		"nextMilestoneIn": "{days}d to {milestone}d streak",
+		"maxMilestoneReached": "Top streak milestone reached"
 	},
 	"common": {
 		"error": {

@@ -48,7 +48,7 @@ export function ProgressTracking({
 	walletAddress,
 }: ProgressTrackingProps) {
 	const t = useTranslations("progress");
-	const { streakData, recordActivity } = useStreak(walletAddress);
+	const { state, streakData, milestoneData, recordActivity } = useStreak(walletAddress);
 	const recordRef = useRef(recordActivity);
 	recordRef.current = recordActivity;
 
@@ -91,7 +91,7 @@ export function ProgressTracking({
 
 	return (
 		<div className="space-y-6">
-			<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+			<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
 				<Card>
 					<CardContent className="pt-6">
 						<div className="flex items-center gap-2">
@@ -127,6 +127,28 @@ export function ProgressTracking({
 							<div>
 								<p className="text-2xl font-bold">{streakData.current}</p>
 								<p className="text-xs text-muted-foreground">{t("dayStreak")}</p>
+							</div>
+						</div>
+					</CardContent>
+				</Card>
+
+				<Card>
+					<CardContent className="pt-6">
+						<div className="flex items-center gap-2">
+							<Clock className="h-5 w-5 text-cyan-600" />
+							<div>
+								<p className="text-2xl font-bold">{state.freezesAvailable}</p>
+								<p className="text-xs text-muted-foreground">
+									{t("streakFreezes")}
+								</p>
+								<p className="text-[11px] text-muted-foreground mt-1">
+									{milestoneData.nextMilestone
+										? t("nextMilestoneIn", {
+												days: milestoneData.daysToNextMilestone,
+												milestone: milestoneData.nextMilestone.days,
+											})
+										: t("maxMilestoneReached")}
+								</p>
 							</div>
 						</div>
 					</CardContent>

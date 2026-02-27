@@ -5,6 +5,7 @@ import {
 	StreakCalculationEngine,
 	StreakStatus,
 	StreakEventType,
+	DEFAULT_STREAK_CONFIG,
 	type StreakState,
 	type StreakEvent,
 } from "@superteam-academy/gamification/streak-system";
@@ -52,6 +53,12 @@ function createEmptyState(userId: string): StreakState {
 }
 
 const engine = new StreakCalculationEngine();
+const STREAK_MILESTONES = Object.entries(DEFAULT_STREAK_CONFIG.rewards)
+	.map(([day, reward]) => ({
+		days: Number(day),
+		freezeAward: reward.freezeAward ?? 0,
+	}))
+	.sort((a, b) => a.days - b.days);
 
 function applyEngineRewards(state: StreakState, rewards: Array<{ type: string; value: unknown }>) {
 	let nextState = state;
@@ -122,7 +129,23 @@ export function useStreak(userId: string | undefined) {
 			state.status === StreakStatus.ACTIVE ? Math.min(state.currentStreak, 7) : 0,
 	};
 
-	return { state, streakData, recordActivity, applyFreeze };
+	const nextMilestone = STREAK_MILESTONES.find(
+		(milestone) => milestone.days > state.currentStreak
+	);
+	const achievedMilestones = STREAK_MILESTONES.filter(
+		(milestone) => milestone.days <= state.longestStreak
+	);
+
+	const milestoneData = {
+		milestones: STREAK_MILESTONES,
+		nextMilestone,
+		daysToNextMilestone: nextMilestone
+			? Math.max(0, nextMilestone.days - state.currentStreak)
+			: 0,
+		achievedMilestones,
+	};
+
+	return { state, streakData, milestoneData, recordActivity, applyFreeze };
 }
 
 /** Build a 7-day history from current streak state for the StreakTracker calendar */

@@ -6,6 +6,7 @@ interface RunRequest {
 	code?: string;
 	language?: string;
 	submit?: boolean;
+	validateOnly?: boolean;
 }
 
 interface TestResult {
@@ -89,6 +90,18 @@ export async function POST(
 				{ error: `Challenge test limit exceeded (${MAX_TEST_RESULTS})` },
 				{ status: 422 }
 			);
+		}
+
+		if (body.validateOnly) {
+			const compilation = compileSource(body.code, language);
+			incrementMetric("challenge.run.validations.total");
+			recordDuration("challenge.run.request.latency_ms", performance.now() - startedAt);
+			return NextResponse.json({
+				validation: {
+					valid: compilation.ok,
+					error: compilation.ok ? undefined : compilation.error,
+				},
+			});
 		}
 
 		const testResults = evaluateCode({
@@ -319,7 +332,6 @@ function evaluateAssertion({
 				error: `Assertion failed for test: ${testDescription}`,
 			};
 }
-
 function hasBalancedDelimiters(source: string): boolean {
 	const openers = new Set(["(", "[", "{"]);
 	const closers = new Map([

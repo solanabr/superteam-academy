@@ -82,4 +82,37 @@ describe("POST /api/challenges/[challengeId]/run", () => {
 		expect(data.testResults).toHaveLength(2);
 		expect(data.testResults.every((result: { passed: boolean }) => result.passed)).toBe(true);
 	});
+
+	it("returns live validation feedback without executing tests", async () => {
+		getChallengePageDataMock.mockResolvedValue({
+			challenge: {
+				language: "rust",
+				starterCode: "fn initialize() {}",
+				tests: [{ id: "t1", description: "Compile", type: "unit" }],
+				xpReward: 100,
+			},
+		} as unknown as NonNullable<Awaited<ReturnType<typeof getChallengePageData>>>);
+
+		const request = new NextRequest(
+			"http://localhost:3000/api/challenges/1-1/run?courseId=solana-intro",
+			{
+				method: "POST",
+				headers: { "content-type": "application/json" },
+				body: JSON.stringify({
+					code: "fn initialize() { let count = 0; }",
+					language: "rust",
+					validateOnly: true,
+				}),
+			}
+		);
+
+		const response = await POST(request, { params: Promise.resolve({ challengeId: "1-1" }) });
+		expect(response.status).toBe(200);
+		expect(await response.json()).toEqual({
+			validation: {
+				valid: true,
+				error: undefined,
+			},
+		});
+	});
 });
