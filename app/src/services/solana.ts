@@ -3,6 +3,7 @@ import { Connection, PublicKey, LAMPORTS_PER_SOL, clusterApiUrl } from '@solana/
 import { createUmi } from '@metaplex-foundation/umi-bundle-defaults';
 import { mplBubblegum } from '@metaplex-foundation/mpl-bubblegum';
 import { publicKey as umiPublicKey } from '@metaplex-foundation/umi';
+import { TOKEN_2022_PROGRAM_ID } from '@solana/spl-token';
 
 // Real Devnet Assets
 export const XP_TOKEN_MINT = new PublicKey(process.env.NEXT_PUBLIC_XP_MINT_ADDRESS || "xpXPUjkfk7t4AJF1tYUoyAYxzuM5DhinZWS1WjfjAu3"); 
@@ -51,10 +52,14 @@ class SolanaServiceImpl {
     try {
       const tokenAccounts = await this.connection.getParsedTokenAccountsByOwner(
         new PublicKey(walletAddress),
-        { mint: XP_TOKEN_MINT }
+        { programId: TOKEN_2022_PROGRAM_ID }
       );
       
-      const balance = tokenAccounts.value[0]?.account.data.parsed.info.tokenAmount.uiAmount || 0;
+      const account = tokenAccounts.value.find(
+        (acc) => acc.account.data.parsed.info.mint === XP_TOKEN_MINT.toBase58()
+      );
+      
+      const balance = account?.account.data.parsed.info.tokenAmount.uiAmount || 0;
       return balance;
     } catch (error) {
       console.error("Error fetching XP balance:", error);
