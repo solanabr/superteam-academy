@@ -1,0 +1,155 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Dark theme (default) — rich navy with teal/cyan accent */
+:root,
+[data-theme="dark"] {
+  --bg: 22 28 45;
+  --bg-page: 12 16 28;
+  --surface: 30 38 58;
+  --surface-elevated: 45 55 80;
+  --surface-muted: 38 46 66;
+  --border: 58 70 100;
+  --border-muted: 45 55 80;
+  --text: 241 245 252;
+  --text-muted: 165 180 210;
+  --text-subtle: 120 140 180;
+  --accent: 34 211 238;
+  --accent-hover: 56 189 248;
+  --accent-muted: 34 211 238;
+  --chart-1: 34 211 238;
+  --chart-2: 129 140 248;
+  --chart-3: 251 191 36;
+  --success: 52 211 153;
+  --accent-secondary: 129 140 248;
+  --trust-bg: 30 38 58; /* dark: same as surface */
+}
+
+/* Light theme — off-white with muted emerald primary (growth/learning, not blue) */
+[data-theme="light"] {
+  --bg: 252 252 253;
+  --bg-page: 246 247 250;
+  --surface: 255 255 255;
+  --surface-elevated: 248 250 252;
+  --surface-muted: 241 245 249;
+  --border: 226 232 240;
+  --border-muted: 241 245 249;
+  --text: 15 23 42;
+  --text-muted: 51 65 85;
+  --text-subtle: 100 116 139; /* cool gray-blue #64748B */
+  --accent: 16 185 129;       /* emerald-500 #10B981 — “Start learning” / growth */
+  --accent-hover: 5 150 105;  /* emerald-600 */
+  --accent-muted: 52 211 153; /* emerald-400 for subtle accents */
+  --chart-1: 16 185 129;     /* emerald — first card / primary */
+  --chart-2: 124 58 237;      /* violet #7C3AED — second card */
+  --chart-3: 217 119 6;       /* warm amber #D97706 — tertiary */
+  --success: 16 185 129;
+  --accent-secondary: 124 58 237; /* violet */
+  --trust-bg: 250 245 255;    /* very light purple #FAF5FF for trust strip */
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+  body {
+    background: rgb(var(--bg-page));
+    color: rgb(var(--text));
+  }
+  :focus-visible {
+    outline: 2px solid rgb(var(--accent));
+    outline-offset: 2px;
+  }
+  [class*="focus-visible:ring"]:focus-visible {
+    outline: none;
+  }
+}
+
+@layer utilities {
+  .focus\:not-sr-only:focus {
+    position: fixed;
+    width: auto;
+    height: auto;
+    padding: 0.5rem 1rem;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+  }
+}
+
+/* Wallet adapter: match design system */
+.wallet-adapter-button {
+  background: rgb(var(--accent)) !important;
+  color: rgb(3 7 18) !important;
+  border-radius: 6px !important;
+  font-weight: 600 !important;
+  font-size: 0.875rem !important;
+}
+
+.wallet-adapter-button:hover {
+  background: rgb(var(--accent-hover)) !important;
+  color: rgb(3 7 18) !important;
+}
+
+.wallet-adapter-modal-wrapper {
+  background: rgb(var(--bg)) !important;
+}
+
+/* Ensure wallet modal appears above header (z-50). Overlay must sit BELOW content so wallet list is clickable. */
+.wallet-adapter-modal {
+  z-index: 9999 !important;
+}
+.wallet-adapter-modal-overlay {
+  z-index: 9999 !important;
+}
+.wallet-adapter-modal-container {
+  z-index: 10000 !important;
+  position: relative !important;
+}
+.wallet-adapter-dropdown-list {
+  z-index: 9999 !important;
+}
+
+.wallet-adapter-modal-title {
+  color: rgb(var(--text)) !important;
+}
+
+.wallet-adapter-modal-list li button {
+  color: rgb(var(--text)) !important;
+  cursor: pointer !important;
+}
+.wallet-adapter-modal-list li button:hover {
+  background: rgb(var(--surface)) !important;
+}
+
+/* Subtle hero gradient glow */
+@keyframes hero-glow {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.7; }
+}
+
+.hero-glow {
+  animation: hero-glow 8s ease-in-out infinite;
+}
+
+/* Card hover lift */
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.hover-lift:hover {
+  transform: translateY(-2px);
+}
