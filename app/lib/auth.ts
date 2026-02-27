@@ -33,6 +33,31 @@ export async function issueWalletBetterAuthSession(request: NextRequest, publicK
 	});
 }
 
+export async function issueLinkedWalletBetterAuthSession(
+	request: NextRequest,
+	publicKey: string,
+	userId: string
+) {
+	const authSecret = process.env.BETTER_AUTH_SECRET ?? process.env.AUTH_SECRET;
+	if (!authSecret) {
+		throw new Error("BETTER_AUTH_SECRET or AUTH_SECRET is required for wallet auth");
+	}
+
+	const endpointHeaders = new Headers(request.headers);
+
+	return serverAuth.api.signInLinkedWallet({
+		body: {
+			publicKey,
+			userId,
+			rememberMe: true,
+			internalAuthToken: `wallet:${authSecret}`,
+		},
+		request,
+		headers: endpointHeaders,
+		returnHeaders: true,
+	});
+}
+
 export async function getLinkedWallet() {
 	const requestHeaders = await headers();
 	const session = await serverAuth.api.getSession({

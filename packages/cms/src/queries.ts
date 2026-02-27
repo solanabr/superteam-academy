@@ -151,6 +151,7 @@ export const userFields = /* groq */ `
   onboardingStep,
   profileCompleteness,
   settings,
+  linkedAccounts,
   lastActiveAt
 `;
 

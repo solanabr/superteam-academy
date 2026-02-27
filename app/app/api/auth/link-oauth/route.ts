@@ -1,5 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
+import { headers } from "next/headers";
+import { serverAuth } from "@/lib/auth";
+import { upsertLinkedAccount } from "@/lib/auth-linking-store";
+import { getUserByAuthId, syncUserToSanity } from "@/lib/sanity-users";
 
 export async function POST(request: NextRequest) {
 	try {
@@ -20,30 +23,42 @@ export async function POST(request: NextRequest) {
 			return NextResponse.json({ error: "Missing identifier" }, { status: 400 });
 		}
 
-		const cookieStore = await cookies();
-		const raw = cookieStore.get("linked_accounts")?.value;
-		const accounts: Array<{
-			provider: string;
-			identifier: string;
-			linkedAt: string;
-		}> = raw
-			? (JSON.parse(raw) as Array<{ provider: string; identifier: string; linkedAt: string }>)
-			: [];
+		const requestHeaders = await headers();
+		const session = await serverAuth.api.getSession({ headers: requestHeaders });
+		if (!session) {
+			return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+		}
 
-		const nextAccounts = accounts.filter((account) => account.provider !== body.provider);
-		nextAccounts.push({
+		const existingUser = await getUserByAuthId(session.user.id);
+		if (!existingUser) {
+			await syncUserToSanity({
+				authId: session.user.id,
+				name: session.user.name,
+				email: session.user.email,
+				...(session.user.image ? { image: session.user.image } : {}),
+			});
+		}
+
+		const result = await upsertLinkedAccount({
+			userId: session.user.id,
 			provider: body.provider,
 			identifier,
-			linkedAt: new Date().toISOString(),
 		});
 
-		cookieStore.set("linked_accounts", JSON.stringify(nextAccounts), {
-			httpOnly: true,
-			secure: process.env.NODE_ENV === "production",
-			sameSite: "strict",
-			maxAge: 30 * 24 * 60 * 60,
-			path: "/",
-		});
+		if (!result.linked) {
+			if (result.reason === "storage-unavailable") {
+				return NextResponse.json({ error: "Sanity storage unavailable" }, { status: 503 });
+			}
+
+			if (result.reason === "user-not-found") {
+				return NextResponse.json({ error: "Sanity user not found" }, { status: 404 });
+			}
+
+			return NextResponse.json(
+				{ error: "Account is already linked to a different user" },
+				{ status: 409 }
+			);
+		}
 
 		return NextResponse.json({ success: true });
 	} catch {

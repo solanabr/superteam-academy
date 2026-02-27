@@ -1,5 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
+import { headers } from "next/headers";
+import { serverAuth } from "@/lib/auth";
+import { unlinkLinkedAccount, type LinkedAccountProvider } from "@/lib/auth-linking-store";
 
 export async function POST(request: NextRequest) {
 	try {
@@ -9,32 +11,27 @@ export async function POST(request: NextRequest) {
 			return NextResponse.json({ error: "Missing or invalid provider" }, { status: 400 });
 		}
 
-		const cookieStore = await cookies();
-		const raw = cookieStore.get("linked_accounts")?.value;
-		const accounts: LinkedAccountEntry[] = raw ? (JSON.parse(raw) as LinkedAccountEntry[]) : [];
-
-		const filtered = accounts.filter((a) => a.provider !== body.provider);
-
-		if (filtered.length === accounts.length) {
-			return NextResponse.json({ error: "Provider not found" }, { status: 404 });
+		if (body.provider !== "wallet" && body.provider !== "google" && body.provider !== "github") {
+			return NextResponse.json({ error: "Unsupported provider" }, { status: 400 });
 		}
 
-		cookieStore.set("linked_accounts", JSON.stringify(filtered), {
-			httpOnly: true,
-			secure: process.env.NODE_ENV === "production",
-			sameSite: "strict",
-			maxAge: 30 * 24 * 60 * 60,
-			path: "/",
+		const requestHeaders = await headers();
+		const session = await serverAuth.api.getSession({ headers: requestHeaders });
+		if (!session) {
+			return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+		}
+
+		const removed = await unlinkLinkedAccount({
+			userId: session.user.id,
+			provider: body.provider as LinkedAccountProvider,
 		});
+
+		if (!removed) {
+			return NextResponse.json({ error: "Provider not found" }, { status: 404 });
+		}
 
 		return NextResponse.json({ success: true });
 	} catch {
 		return NextResponse.json({ error: "Internal server error" }, { status: 500 });
 	}
-}
-
-interface LinkedAccountEntry {
-	provider: string;
-	identifier: string;
-	linkedAt: string;
 }

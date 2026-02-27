@@ -208,6 +208,14 @@ export interface UserSettings {
 	wallet?: UserWalletSettings;
 }
 
+export type LinkedAccountProvider = "wallet" | "google" | "github";
+
+export interface LinkedAccountRecord {
+	provider: LinkedAccountProvider;
+	identifier: string;
+	linkedAt: string;
+}
+
 export type AcademyUser = SanityDocument & {
 	_type: "academyUser";
 	authId: string;
@@ -258,6 +266,7 @@ export type AcademyUser = SanityDocument & {
 	profileCompleteness?: number;
 
 	settings?: UserSettings;
+	linkedAccounts?: LinkedAccountRecord[];
 	lastActiveAt?: string;
 };
 

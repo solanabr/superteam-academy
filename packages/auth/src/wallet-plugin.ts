@@ -116,6 +116,51 @@ export function walletAuthPlugin() {
 					};
 				}
 			),
+			signInLinkedWallet: createAuthEndpoint(
+				"/sign-in/wallet-linked",
+				{
+					method: "POST",
+					body: z.object({
+						publicKey: z.string().min(32).max(64),
+						userId: z.string().min(1),
+						rememberMe: z.boolean().optional(),
+						internalAuthToken: z.string().min(1),
+					}),
+				},
+				async (ctx) => {
+					if (ctx.body.internalAuthToken !== `wallet:${ctx.context.secret}`) {
+						throw new APIError("UNAUTHORIZED", {
+							message: "Unauthorized linked wallet sign-in invocation",
+						});
+					}
+
+					const normalizedPublicKey = ctx.body.publicKey.trim();
+					if (!BASE58_RE.test(normalizedPublicKey)) {
+						throw new APIError("BAD_REQUEST", {
+							message: "Invalid wallet public key",
+						});
+					}
+
+					const user = await ctx.context.internalAdapter.findUserById(ctx.body.userId);
+					if (!user) {
+						throw new APIError("BAD_REQUEST", {
+							message: "Linked user was not found",
+						});
+					}
+
+					const session = await ctx.context.internalAdapter.createSession(
+						user.id,
+						!ctx.body.rememberMe
+					);
+
+					await setSessionCookie(ctx, { session, user }, !ctx.body.rememberMe);
+
+					return {
+						token: session.token,
+						user: toPublicUser(user),
+					};
+				}
+			),
 		},
 	} as const;
 }

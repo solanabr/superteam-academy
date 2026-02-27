@@ -1,7 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { verifyWalletSignature, walletAuthSchema } from "@superteam-academy/auth";
-import { issueWalletBetterAuthSession } from "@/lib/auth";
+import { issueLinkedWalletBetterAuthSession, issueWalletBetterAuthSession } from "@/lib/auth";
+import { findLinkedUserId } from "@/lib/auth-linking-store";
 
 function nonceDeleteCookie() {
 	const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
@@ -60,7 +61,14 @@ export async function POST(request: NextRequest) {
 
 		cookieStore.delete("wallet_nonce");
 
-		const betterAuthResult = await issueWalletBetterAuthSession(request, parsed.data.publicKey);
+		const linkedUserId = await findLinkedUserId("wallet", parsed.data.publicKey);
+		const betterAuthResult = linkedUserId
+			? await issueLinkedWalletBetterAuthSession(
+					request,
+					parsed.data.publicKey,
+					linkedUserId
+				)
+			: await issueWalletBetterAuthSession(request, parsed.data.publicKey);
 
 		const response = NextResponse.json({
 			authenticated: true,

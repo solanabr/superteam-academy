@@ -1,6 +1,9 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
+import { headers } from "next/headers";
 import { verifyWalletSignature, walletAuthSchema } from "@superteam-academy/auth";
+import { serverAuth } from "@/lib/auth";
+import { upsertLinkedAccount } from "@/lib/auth-linking-store";
+import { getUserByAuthId, syncUserToSanity } from "@/lib/sanity-users";
 
 export async function POST(request: NextRequest) {
 	try {
@@ -19,41 +22,46 @@ export async function POST(request: NextRequest) {
 			return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
 		}
 
-		const cookieStore = await cookies();
-		const existingRaw = cookieStore.get("linked_accounts")?.value;
-		const existing: LinkedAccountEntry[] = existingRaw
-			? (JSON.parse(existingRaw) as LinkedAccountEntry[])
-			: [];
-
-		const alreadyLinked = existing.some(
-			(a) => a.provider === "wallet" && a.identifier === parsed.data.publicKey
-		);
-		if (alreadyLinked) {
-			return NextResponse.json({ error: "Wallet already linked" }, { status: 409 });
+		const requestHeaders = await headers();
+		const session = await serverAuth.api.getSession({ headers: requestHeaders });
+		if (!session) {
+			return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 		}
 
-		existing.push({
+		const existingUser = await getUserByAuthId(session.user.id);
+		if (!existingUser) {
+			await syncUserToSanity({
+				authId: session.user.id,
+				name: session.user.name,
+				email: session.user.email,
+				walletAddress: parsed.data.publicKey,
+				...(session.user.image ? { image: session.user.image } : {}),
+			});
+		}
+
+		const result = await upsertLinkedAccount({
+			userId: session.user.id,
 			provider: "wallet",
 			identifier: parsed.data.publicKey,
-			linkedAt: new Date().toISOString(),
 		});
 
-		cookieStore.set("linked_accounts", JSON.stringify(existing), {
-			httpOnly: true,
-			secure: process.env.NODE_ENV === "production",
-			sameSite: "strict",
-			maxAge: 30 * 24 * 60 * 60,
-			path: "/",
-		});
+		if (!result.linked) {
+			if (result.reason === "storage-unavailable") {
+				return NextResponse.json({ error: "Sanity storage unavailable" }, { status: 503 });
+			}
+
+			if (result.reason === "user-not-found") {
+				return NextResponse.json({ error: "Sanity user not found" }, { status: 404 });
+			}
+
+			return NextResponse.json(
+				{ error: "Wallet already linked to a different account" },
+				{ status: 409 }
+			);
+		}
 
 		return NextResponse.json({ success: true });
 	} catch {
 		return NextResponse.json({ error: "Internal server error" }, { status: 500 });
 	}
-}
-
-interface LinkedAccountEntry {
-	provider: string;
-	identifier: string;
-	linkedAt: string;
 }
