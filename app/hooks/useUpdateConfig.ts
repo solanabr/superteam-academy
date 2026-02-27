@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { updateConfig } from "@/lib/services/backend-api";
+import { useAdminAuth } from "@/providers/AdminAuthProvider";
 
 export interface UpdateConfigParams {
   newBackendSigner: string;
@@ -10,10 +11,11 @@ export interface UpdateConfigParams {
 
 export function useUpdateConfig() {
   const queryClient = useQueryClient();
+  const { token } = useAdminAuth();
 
   return useMutation({
     mutationFn: async (params: UpdateConfigParams) => {
-      const result = await updateConfig(params);
+      const result = await updateConfig(params, token);
       if (result.error) throw new Error(result.error);
       return result.tx!;
     },

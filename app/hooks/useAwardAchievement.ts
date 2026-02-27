@@ -6,13 +6,15 @@ import {
   awardAchievement,
   type AwardAchievementParams,
 } from "@/lib/services/backend-api";
+import { useAdminAuth } from "@/providers/AdminAuthProvider";
 
 export function useAwardAchievement() {
   const queryClient = useQueryClient();
+  const { token } = useAdminAuth();
 
   return useMutation({
     mutationFn: async (params: AwardAchievementParams) => {
-      const result = await awardAchievement(params);
+      const result = await awardAchievement(params, token);
       if (result.error) throw new Error(result.error);
       return { tx: result.tx!, asset: result.asset };
     },
