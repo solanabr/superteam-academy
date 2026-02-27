@@ -20,6 +20,7 @@ import { ProgressBar } from "@/components/course/progress-bar";
 import { AuthModal } from "@/components/auth/auth-modal";
 import { trackEvent } from "@/lib/analytics";
 import { createClient } from "@/lib/supabase/client";
+import { useAuth } from "@/lib/auth/auth-provider";
 import { useOnChainEnroll } from "@/hooks/use-on-chain-enroll";
 import type { Lesson } from "@/lib/sanity/types";
 
@@ -178,13 +179,13 @@ export function LessonPageClient({
   const tCommon = useTranslations("common");
   const tCourses = useTranslations("courses");
 
+  const { userId, profile: authProfile, isLoading: authLoading } = useAuth();
+
   const [isCompleted, setIsCompleted] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
   const [earnedXp, setEarnedXp] = useState<number | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
   const [isEnrolled, setIsEnrolled] = useState(false);
-  // null = still loading, false = no wallet linked, true = wallet linked
-  const [hasLinkedWallet, setHasLinkedWallet] = useState<boolean | null>(null);
+  const hasLinkedWallet = authProfile ? !!authProfile.wallet_address : null;
   const [buildUuid, setBuildUuid] = useState<string | null>(null);
   const [programKeypairSecret, setProgramKeypairSecret] = useState<
     number[] | null
@@ -195,47 +196,31 @@ export function LessonPageClient({
     onSuccess: () => setIsEnrolled(true),
   });
 
-  // Check auth state, enrollment, and completion on mount
+  // Parallelize enrollment + completion checks once auth is ready
   useEffect(() => {
+    if (authLoading || !userId) return;
+
     const supabase = createClient();
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session?.user) return;
-      setUserId(session.user.id);
 
-      // Check whether user has linked a wallet (required for on-chain XP)
-      supabase
-        .from("profiles")
-        .select("wallet_address")
-        .eq("id", session.user.id)
-        .single()
-        .then(({ data }) => {
-          setHasLinkedWallet(!!data?.wallet_address);
-        });
-
-      // Check enrollment
+    Promise.all([
       supabase
         .from("enrollments")
         .select("id")
-        .eq("user_id", session.user.id)
+        .eq("user_id", userId)
         .eq("course_id", courseId)
-        .maybeSingle()
-        .then(({ data }) => {
-          if (data) setIsEnrolled(true);
-        });
-
-      // Check completion
+        .maybeSingle(),
       supabase
         .from("user_progress")
         .select("completed")
-        .eq("user_id", session.user.id)
+        .eq("user_id", userId)
         .eq("lesson_id", lesson._id)
         .eq("completed", true)
-        .maybeSingle()
-        .then(({ data }) => {
-          if (data) setIsCompleted(true);
-        });
+        .maybeSingle(),
+    ]).then(([enrollmentResult, progressResult]) => {
+      if (enrollmentResult.data) setIsEnrolled(true);
+      if (progressResult.data) setIsCompleted(true);
     });
-  }, [lesson._id, courseId]);
+  }, [authLoading, userId, lesson._id, courseId]);
 
   const currentIndex = allLessons.findIndex((l) => l._id === lesson._id);
   const prevLesson = currentIndex > 0 ? allLessons[currentIndex - 1] : null;
