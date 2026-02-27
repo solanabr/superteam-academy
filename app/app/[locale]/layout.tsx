@@ -11,8 +11,8 @@ import LazyWalletProvider from '../../components/LazyWalletProvider';
 import AuthProviderWrapper from '../../components/AuthProviderWrapper';
 import Analytics from '../../components/Analytics';
 
-const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] });
-const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] });
+const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'], display: 'optional' });
+const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'], display: 'optional' });
 
 const META: Record<string, { title: string; description: string; ogDesc: string }> = {
   'pt-BR': {
