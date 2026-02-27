@@ -282,7 +282,7 @@ export function CourseCatalogClient({
           {/* Course Grid */}
           {filteredCourses.length > 0 ? (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {filteredCourses.map((course) => {
+              {filteredCourses.map((course, i) => {
                 const p = progress.get(course._id);
                 return (
                   <CourseCard
@@ -302,6 +302,7 @@ export function CourseCatalogClient({
                     trackLevel={course.trackLevel}
                     thumbnail={course.thumbnail}
                     status={statuses.get(course._id)}
+                    style={{ "--i": i } as React.CSSProperties}
                   />
                 );
               })}

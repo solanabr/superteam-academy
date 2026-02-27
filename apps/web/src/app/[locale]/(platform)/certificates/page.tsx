@@ -127,11 +127,12 @@ export default function CertificatesPage() {
         </div>
       ) : (
         <div className={CS.full.grid}>
-          {certificates.map((cert) => (
+          {certificates.map((cert, i) => (
             <Link
               key={cert.id}
               href={`/${locale}/certificates/${cert.id}`}
               className="h-full"
+              style={{ "--i": i } as React.CSSProperties}
             >
               <CertificateCard
                 certificate={cert}

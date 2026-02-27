@@ -17,6 +17,7 @@ interface CourseCardProps {
   trackLevel?: number;
   thumbnail?: string | null;
   status?: "enrolled" | "completed";
+  style?: React.CSSProperties;
 }
 
 export function CourseCard({
@@ -32,6 +33,7 @@ export function CourseCard({
   trackLevel,
   thumbnail,
   status,
+  style,
 }: CourseCardProps) {
   const t = useTranslations("courses");
   const locale = useLocale();
@@ -41,6 +43,7 @@ export function CourseCard({
       href={`/${locale}/courses/${slug}`}
       className="course-card"
       aria-label={title}
+      style={style}
     >
       {/* Thumbnail */}
       <div className="course-card-thumb" aria-hidden="true">
