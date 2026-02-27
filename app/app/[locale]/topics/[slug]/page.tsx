@@ -23,6 +23,7 @@ import { CoursesFilters } from "@/components/courses/courses-filters";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { getCoursesCMS, isSanityConfigured, resolveCourseImageUrl } from "@/lib/cms";
+import { getAcademyClient } from "@/lib/academy";
 
 type TopicCourse = {
 	id: string;
@@ -280,29 +281,69 @@ function TopicCoursesSkeleton() {
 }
 
 async function getTopicCourses(slug: string, level: string, sort: string) {
-	let baseCourses: TopicCourse[];
-	if (isSanityConfigured) {
-		const cmsCourses = await getCoursesCMS();
-		baseCourses = cmsCourses.map((c) => ({
-			id: c.slug?.current ?? c._id,
-			title: c.title,
-			description: c.description ?? "",
-			category: c.track ?? "solana",
-			level: c.level,
-			duration: c.duration ?? "",
-			students: 0,
-			instructor: "",
-			image: resolveCourseImageUrl(c.image, 960, 540) ?? "/courses/default.jpg",
-			tags: [c.track ?? "solana"],
-			topics: [],
-			xpReward: c.xpReward,
-			price: 0,
-			featured: false,
-			gradient: "from-green to-forest",
-		}));
-	} else {
-		baseCourses = [];
-	}
+	const academyClient = getAcademyClient();
+	const [onchainCourses, cmsCourses] = await Promise.all([
+		academyClient.fetchAllCourses(),
+		isSanityConfigured ? getCoursesCMS() : Promise.resolve([]),
+	]);
+
+	const cmsByCourseId = new Map(
+		cmsCourses.map((course) => [course.slug?.current ?? course._id, course])
+	);
+
+	const mapDifficultyToLevel = (difficulty: number) => {
+		if (difficulty >= 3) return "advanced";
+		if (difficulty === 2) return "intermediate";
+		return "beginner";
+	};
+
+	const topicKeywords: Record<string, string[]> = {
+		"solana-development": ["solana", "anchor", "program"],
+		"smart-contracts": ["contract", "anchor", "program"],
+		defi: ["defi", "amm", "dex", "liquidity"],
+		security: ["security", "audit", "vulnerability"],
+		"frontend-dapps": ["frontend", "dapp", "react", "ui"],
+		"token-economics": ["token", "economics", "tokenomics", "spl"],
+		"nfts-digital-assets": ["nft", "metaplex", "asset", "collection"],
+		"web3-fundamentals": ["web3", "blockchain", "fundamental"],
+		"zk-compression": ["zk", "compression", "light protocol"],
+		"mobile-development": ["mobile", "saga", "sms"],
+	};
+
+	const deriveTopics = (category: string, tags: string[]) => {
+		const haystack = `${category} ${tags.join(" ")}`.toLowerCase();
+		return Object.entries(topicKeywords)
+			.filter(([, keywords]) => keywords.some((keyword) => haystack.includes(keyword)))
+			.map(([topicSlug]) => topicSlug);
+	};
+
+	const baseCourses: TopicCourse[] = onchainCourses
+		.filter((entry) => entry.account.isActive)
+		.map((entry) => {
+			const courseId = entry.account.courseId;
+			const cms = cmsByCourseId.get(courseId);
+			const lessonCount = entry.account.lessonCount;
+			const category = cms?.track ?? "solana";
+			const tags = cms?.track ? [cms.track] : ["solana"];
+
+			return {
+				id: courseId,
+				title: cms?.title ?? courseId,
+				description: cms?.description ?? "",
+				category,
+				level: cms?.level ?? mapDifficultyToLevel(entry.account.difficulty),
+				duration: cms?.duration ?? `${Math.max(lessonCount, 1) * 10} min`,
+				students: entry.account.totalEnrollments,
+				instructor: "",
+				image: resolveCourseImageUrl(cms?.image, 960, 540) ?? "/courses/default.jpg",
+				tags,
+				topics: deriveTopics(category, tags),
+				xpReward: entry.account.xpPerLesson * lessonCount,
+				price: 0,
+				featured: false,
+				gradient: "from-green to-forest",
+			};
+		});
 
 	let filtered = baseCourses.filter((course) => course.topics?.includes(slug));
 

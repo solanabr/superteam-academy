@@ -10,6 +10,7 @@ import { CourseList } from "@/components/courses/course-list";
 import { CoursesFilters } from "@/components/courses/courses-filters";
 import { Pagination } from "@/components/ui/pagination";
 import { getCoursesCMS, isSanityConfigured, resolveCourseImageUrl } from "@/lib/cms";
+import { getAcademyClient } from "@/lib/academy";
 import { getTranslations } from "next-intl/server";
 
 type CatalogCourse = {
@@ -324,29 +325,47 @@ function CoursesSkeleton({ view }: { view: string }) {
 }
 
 async function getCourses(searchParams: Awaited<CoursesPageProps["searchParams"]>) {
-	let baseCourses: CatalogCourse[];
-	if (isSanityConfigured) {
-		const cmsCourses = await getCoursesCMS();
-		baseCourses = cmsCourses.map((c) => ({
-			id: c.slug?.current ?? c._id,
-			title: c.title,
-			description: c.description ?? "",
-			category: c.track ?? "solana",
-			level: c.level,
-			duration: c.duration ?? "",
-			students: 0,
-			instructor: "",
-			image: resolveCourseImageUrl(c.image, 960, 540) ?? "/courses/default.jpg",
-			tags: [c.track ?? "solana"],
-			topics: [],
-			xpReward: c.xpReward,
-			price: 0,
-			featured: false,
-			gradient: "from-green to-forest",
-		}));
-	} else {
-		baseCourses = [];
-	}
+	const academyClient = getAcademyClient();
+	const [onchainCourses, cmsCourses] = await Promise.all([
+		academyClient.fetchAllCourses(),
+		isSanityConfigured ? getCoursesCMS() : Promise.resolve([]),
+	]);
+
+	const cmsByCourseId = new Map(
+		cmsCourses.map((course) => [course.slug?.current ?? course._id, course])
+	);
+
+	const mapDifficultyToLevel = (difficulty: number) => {
+		if (difficulty >= 3) return "advanced";
+		if (difficulty === 2) return "intermediate";
+		return "beginner";
+	};
+
+	const baseCourses: CatalogCourse[] = onchainCourses
+		.filter((entry) => entry.account.isActive)
+		.map((entry) => {
+			const courseId = entry.account.courseId;
+			const cms = cmsByCourseId.get(courseId);
+			const lessonCount = entry.account.lessonCount;
+
+			return {
+				id: courseId,
+				title: cms?.title ?? courseId,
+				description: cms?.description ?? "",
+				category: cms?.track ?? "solana",
+				level: cms?.level ?? mapDifficultyToLevel(entry.account.difficulty),
+				duration: cms?.duration ?? `${Math.max(lessonCount, 1) * 10} min`,
+				students: entry.account.totalEnrollments,
+				instructor: "",
+				image: resolveCourseImageUrl(cms?.image, 960, 540) ?? "/courses/default.jpg",
+				tags: cms?.track ? [cms.track] : ["solana"],
+				topics: [],
+				xpReward: entry.account.xpPerLesson * lessonCount,
+				price: 0,
+				featured: false,
+				gradient: "from-green to-forest",
+			};
+		});
 
 	let filtered = [...baseCourses];
 

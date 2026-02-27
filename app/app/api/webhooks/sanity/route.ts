@@ -7,6 +7,7 @@ import {
 	getCourseSyncJobs,
 	processCourseSyncQueue,
 } from "@/lib/course-sync-jobs";
+import { maybeRunAutoCourseIndexReconcile } from "@/lib/course-index-sync";
 
 // Sanity webhook secret for verification
 const SANITY_WEBHOOK_SECRET = process.env.SANITY_WEBHOOK_SECRET;
@@ -96,6 +97,13 @@ export async function POST(request: NextRequest) {
 
 		if (_type === "course" && (operation === "create" || operation === "update")) {
 			await triggerOnchainCourseSync(documentId);
+		}
+
+		if (process.env.ENABLE_COURSE_INDEX_AUTO_RECONCILE !== "false") {
+			const minIntervalMs = Number(process.env.COURSE_INDEX_SYNC_INTERVAL_MS ?? 300_000);
+			await maybeRunAutoCourseIndexReconcile({
+				minIntervalMs: Number.isFinite(minIntervalMs) ? minIntervalMs : 300_000,
+			});
 		}
 
 		return NextResponse.json({

@@ -2,7 +2,17 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "@superteam-academy/i18n/navigation";
-import { BookOpen, Plus, Pencil, Trash2, Eye, ChevronRight, Code2 } from "lucide-react";
+import {
+	BookOpen,
+	Plus,
+	Pencil,
+	Trash2,
+	Eye,
+	ChevronRight,
+	Code2,
+	Loader2,
+	RefreshCw,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -42,6 +52,8 @@ interface CourseRow {
 export default function AdminCoursesPage() {
 	const [courses, setCourses] = useState<CourseRow[]>([]);
 	const [loading, setLoading] = useState(true);
+	const [reconciling, setReconciling] = useState(false);
+	const [reconcileMessage, setReconcileMessage] = useState<string | null>(null);
 
 	const fetchCourses = useCallback(async () => {
 		try {
@@ -81,6 +93,36 @@ export default function AdminCoursesPage() {
 		}
 	};
 
+	const handleReconcile = async () => {
+		setReconciling(true);
+		setReconcileMessage(null);
+		try {
+			const res = await fetch("/api/admin/courses/reconcile", { method: "POST" });
+			const payload = (await res.json()) as {
+				report?: { changed: number; failed: number };
+				error?: string;
+			};
+
+			if (!res.ok) {
+				setReconcileMessage(payload.error ?? "Failed to reconcile index");
+				return;
+			}
+
+			await fetchCourses();
+			const changed = payload.report?.changed ?? 0;
+			const failed = payload.report?.failed ?? 0;
+			setReconcileMessage(
+				failed > 0
+					? `Reconcile completed with ${failed} failures (${changed} changed).`
+					: `Reconcile completed (${changed} changed).`
+			);
+		} catch {
+			setReconcileMessage("Failed to reconcile index");
+		} finally {
+			setReconciling(false);
+		}
+	};
+
 	if (loading) {
 		return (
 			<div className="p-6 space-y-6">
@@ -109,13 +151,30 @@ export default function AdminCoursesPage() {
 					<p className="text-muted-foreground">
 						{courses.length} course{courses.length !== 1 ? "s" : ""} total
 					</p>
+					{reconcileMessage && (
+						<p className="text-sm text-muted-foreground mt-1">{reconcileMessage}</p>
+					)}
 				</div>
-				<Button asChild>
-					<Link href="/admin/courses/new">
-						<Plus className="h-4 w-4 mr-2" />
-						New Course
-					</Link>
-				</Button>
+				<div className="flex items-center gap-2">
+					<Button
+						variant="outline"
+						onClick={handleReconcile}
+						disabled={reconciling}
+					>
+						{reconciling ? (
+							<Loader2 className="h-4 w-4 mr-2 animate-spin" />
+						) : (
+							<RefreshCw className="h-4 w-4 mr-2" />
+						)}
+						Reconcile Index
+					</Button>
+					<Button asChild>
+						<Link href="/admin/courses/new">
+							<Plus className="h-4 w-4 mr-2" />
+							New Course
+						</Link>
+					</Button>
+				</div>
 			</div>
 
 			{courses.length === 0 ? (
