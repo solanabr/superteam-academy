@@ -1,0 +1,63 @@
+{
+	"ci": {
+		"collect": {
+			"numberOfRuns": 2,
+			"startServerCommand": "bun run start -- -p 3000",
+			"startServerReadyPattern": "ready",
+			"url": [
+				"http://localhost:3000/en",
+				"http://localhost:3000/en/courses",
+				"http://localhost:3000/en/leaderboard"
+			]
+		},
+		"assert": {
+			"assertions": {
+				"categories:performance": [
+					"warn",
+					{
+						"minScore": 0.75
+					}
+				],
+				"categories:accessibility": [
+					"warn",
+					{
+						"minScore": 0.9
+					}
+				],
+				"categories:best-practices": [
+					"warn",
+					{
+						"minScore": 0.85
+					}
+				],
+				"categories:seo": [
+					"warn",
+					{
+						"minScore": 0.85
+					}
+				],
+				"largest-contentful-paint": [
+					"warn",
+					{
+						"maxNumericValue": 3200
+					}
+				],
+				"cumulative-layout-shift": [
+					"warn",
+					{
+						"maxNumericValue": 0.15
+					}
+				],
+				"interactive": [
+					"warn",
+					{
+						"maxNumericValue": 5000
+					}
+				]
+			}
+		},
+		"upload": {
+			"target": "temporary-public-storage"
+		}
+	}
+}
