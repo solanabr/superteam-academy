@@ -220,7 +220,9 @@ export async function reconcileCourseIndex(options?: {
 			changed += 1;
 			if (apply && writeClient) {
 				try {
-					const patch = writeClient.patch(course._id).set({ onchainStatus: targetStatus });
+					const patch = writeClient
+						.patch(course._id)
+						.set({ onchainStatus: targetStatus });
 					if (targetCoursePda) {
 						patch.set({ coursePda: targetCoursePda });
 					} else {

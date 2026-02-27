@@ -253,25 +253,17 @@ async function getDynamicProfile(inputWalletAddress?: string, username?: string)
 		return {
 			id: course?.courseId ?? entry.pubkey.toBase58(),
 			title: course?.courseId ?? "Course",
-			description: "On-chain course progress",
-			thumbnail: "/courses/default.jpg",
-			instructor: { name: "Superteam", avatar: "" },
+			instructor: { name: "Superteam" },
 			progress: {
 				completedLessons,
 				totalLessons,
 				timeSpent: completedLessons * 10,
-				...(entry.account.enrolledAt
-					? { lastAccessed: new Date(entry.account.enrolledAt * 1000).toISOString() }
-					: {}),
 			},
 			status: entry.account.completedAt
 				? ("completed" as const)
 				: completedLessons > 0
 					? ("in_progress" as const)
 					: ("not_started" as const),
-			enrollmentDate: entry.account.enrolledAt
-				? new Date(entry.account.enrolledAt * 1000).toISOString()
-				: new Date().toISOString(),
 			...(entry.account.completedAt
 				? { completionDate: new Date(entry.account.completedAt * 1000).toISOString() }
 				: {}),

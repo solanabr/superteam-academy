@@ -291,7 +291,7 @@ async function getCourse(id: string) {
 					lessonCount: onchainCourse.lessonCount,
 					trackId: onchainCourse.trackId,
 					trackLevel: onchainCourse.trackLevel,
-			  }
+				}
 			: {}),
 		...(prerequisiteLabel ? { prerequisiteLabel } : {}),
 	};
@@ -334,10 +334,10 @@ async function getLesson(courseId: string, lessonId: string) {
 	const fallbackLessons = Array.from(
 		{ length: Math.max(1, onchainCourse?.lessonCount ?? 1) },
 		(_, index) => ({
-		id: `${courseId}-lesson-${index + 1}`,
-		title: `Lesson ${index + 1}`,
-		duration: "10 min",
-		content: [],
+			id: `${courseId}-lesson-${index + 1}`,
+			title: `Lesson ${index + 1}`,
+			duration: "10 min",
+			content: [],
 		})
 	);
 

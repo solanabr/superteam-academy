@@ -45,7 +45,6 @@ interface RecentCourse {
 	progress: number;
 	totalLessons: number;
 	completedLessons: number;
-	lastAccessed: string;
 }
 
 export default function DashboardPage() {
@@ -92,7 +91,6 @@ export default function DashboardPage() {
 				progress,
 				totalLessons: course.totalLessons,
 				completedLessons: course.completedLessons,
-				lastAccessed: new Date(course.enrolledAt * 1000).toISOString(),
 			};
 		});
 

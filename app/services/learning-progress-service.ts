@@ -1,26 +1,8 @@
 import type { PublicKey } from "@solana/web3.js";
 import { BaseService } from "./types";
-import {
-	AcademyClient,
-	type CourseAccount,
-	type EnrollmentAccount,
-	countCompletedLessons,
-	isLessonCompleted,
-} from "@superteam-academy/anchor";
+import { AcademyClient, countCompletedLessons } from "@superteam-academy/anchor";
 import { findToken2022ATA } from "@superteam-academy/solana";
 import { AchievementService } from "./achievement-service";
-
-export interface CourseProgress {
-	courseId: string;
-	coursePubkey: PublicKey;
-	lessonCount: number;
-	completedLessons: number;
-	isFinalized: boolean;
-	enrolledAt: number;
-	completedAt: number | null;
-	xpPerLesson: number;
-	lessonStates: boolean[];
-}
 
 export interface LearnerStats {
 	totalXp: bigint;
@@ -74,9 +56,6 @@ export class LearningProgressService extends BaseService {
 	private achievementService: AchievementService;
 
 	get academyClient(): AcademyClient {
-		if (!this.client) {
-			this.client = new AcademyClient(this.connection, this.programId);
-		}
 		return this.client;
 	}
 
@@ -84,32 +63,6 @@ export class LearningProgressService extends BaseService {
 		super(...args);
 		this.client = new AcademyClient(this.connection, this.programId);
 		this.achievementService = new AchievementService(this.connection, this.programId);
-	}
-
-	async getCourseProgress(courseId: string, learner: PublicKey): Promise<CourseProgress | null> {
-		const [course, enrollment] = await Promise.all([
-			this.academyClient.fetchCourse(courseId),
-			this.academyClient.fetchEnrollment(courseId, learner),
-		]);
-
-		if (!course || !enrollment) return null;
-
-		const completedLessons = countCompletedLessons(enrollment.lessonFlags);
-		const lessonStates = Array.from({ length: course.lessonCount }, (_, i) =>
-			isLessonCompleted(enrollment.lessonFlags, i)
-		);
-
-		return {
-			courseId: course.courseId,
-			coursePubkey: enrollment.course,
-			lessonCount: course.lessonCount,
-			completedLessons,
-			isFinalized: enrollment.completedAt !== null,
-			enrolledAt: enrollment.enrolledAt,
-			completedAt: enrollment.completedAt,
-			xpPerLesson: course.xpPerLesson,
-			lessonStates,
-		};
 	}
 
 	async getLearnerStats(learner: PublicKey, xpMint: PublicKey | null): Promise<LearnerStats> {
@@ -133,14 +86,6 @@ export class LearningProgressService extends BaseService {
 		};
 	}
 
-	async getAllCourses(): Promise<Array<{ pubkey: PublicKey; account: CourseAccount }>> {
-		return this.academyClient.fetchAllCourses();
-	}
-
-	async getEnrollment(courseId: string, learner: PublicKey): Promise<EnrollmentAccount | null> {
-		return this.academyClient.fetchEnrollment(courseId, learner);
-	}
-
 	async getLearnerOverview(learner: PublicKey): Promise<LearnerOverview> {
 		const [config, allCourses, enrollments, allAchievements] = await Promise.all([
 			this.academyClient.fetchConfig(),
@@ -150,7 +95,9 @@ export class LearningProgressService extends BaseService {
 		]);
 
 		const stats = await this.getLearnerStats(learner, config?.xpMint ?? null);
-		const coursesByKey = new Map(allCourses.map((course) => [course.pubkey.toBase58(), course]));
+		const coursesByKey = new Map(
+			allCourses.map((course) => [course.pubkey.toBase58(), course])
+		);
 
 		const courses = enrollments.map((entry) => {
 			const matched = coursesByKey.get(entry.account.course.toBase58());
@@ -172,9 +119,14 @@ export class LearningProgressService extends BaseService {
 			};
 		});
 
-		const enrolledCourseKeys = new Set(enrollments.map((entry) => entry.account.course.toBase58()));
+		const enrolledCourseKeys = new Set(
+			enrollments.map((entry) => entry.account.course.toBase58())
+		);
 		const recommendedCourses = allCourses
-			.filter((course) => !enrolledCourseKeys.has(course.pubkey.toBase58()) && course.account.isActive)
+			.filter(
+				(course) =>
+					!enrolledCourseKeys.has(course.pubkey.toBase58()) && course.account.isActive
+			)
 			.slice(0, 3)
 			.map((course) => ({
 				id: course.account.courseId,
@@ -182,7 +134,9 @@ export class LearningProgressService extends BaseService {
 				lessonCount: course.account.lessonCount,
 			}));
 
-		const achievementsUnlocked = allAchievements.filter((achievement) => achievement.earned).length;
+		const achievementsUnlocked = allAchievements.filter(
+			(achievement) => achievement.earned
+		).length;
 
 		return {
 			stats,
@@ -219,5 +173,4 @@ export class LearningProgressService extends BaseService {
 				})),
 		};
 	}
-
 }

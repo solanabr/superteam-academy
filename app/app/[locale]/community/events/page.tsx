@@ -20,9 +20,7 @@ export default async function EventsPage() {
 	const upcomingEvents = isSanityConfigured
 		? (await getUpcomingEvents()).map(normalizeEvent)
 		: [];
-	const pastEvents = isSanityConfigured
-		? (await getPastEvents()).map(normalizePastEvent)
-		: [];
+	const pastEvents = isSanityConfigured ? (await getPastEvents()).map(normalizePastEvent) : [];
 
 	return (
 		<div className="space-y-6">

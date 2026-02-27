@@ -152,13 +152,14 @@ export async function mapCourseToDetail(
 		course?.modules?.map((module, moduleIndex) => {
 			const moduleLessons = module.lessons ?? [];
 			const lessonsList = moduleLessons.map((lesson, lessonIndex) => {
-				const lessonType: "video" | "interactive" | "quiz" | "reading" =
-					lesson.title.toLowerCase().includes("quiz")
-						? "quiz"
-						: lesson.title.toLowerCase().includes("challenge") ||
-							  lesson.title.toLowerCase().includes("interactive")
-							? "interactive"
-							: "video";
+				const lessonType: "video" | "interactive" | "quiz" | "reading" = lesson.title
+					.toLowerCase()
+					.includes("quiz")
+					? "quiz"
+					: lesson.title.toLowerCase().includes("challenge") ||
+							lesson.title.toLowerCase().includes("interactive")
+						? "interactive"
+						: "video";
 				const completed = lessonStates[lessonIndexPointer] ?? false;
 				lessonIndexPointer += 1;
 
@@ -231,9 +232,7 @@ export async function mapCourseToDetail(
 				website: instructorUser?.portfolio ?? instructorUser?.website ?? "",
 			},
 		},
-		image:
-			resolveCourseImageUrl(course?.image, 1400, 788) ??
-			"/courses/default.jpg",
+		image: resolveCourseImageUrl(course?.image, 1400, 788) ?? "/courses/default.jpg",
 		videoPreview: "",
 		tags: [course?.track ?? "solana"],
 		xpReward: computedXpReward,

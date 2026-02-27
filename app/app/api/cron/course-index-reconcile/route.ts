@@ -11,7 +11,7 @@ async function isAuthorized(): Promise<boolean> {
 	const direct = requestHeaders.get("x-cron-secret");
 
 	if (direct && direct === secret) return true;
-	if (bearer && bearer.startsWith("Bearer ") && bearer.slice(7) === secret) return true;
+	if (bearer?.startsWith("Bearer ") && bearer.slice(7) === secret) return true;
 
 	return false;
 }

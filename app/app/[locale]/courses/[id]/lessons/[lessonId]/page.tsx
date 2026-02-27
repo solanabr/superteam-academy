@@ -1,8 +1,5 @@
 import type { Metadata } from "next";
-import {
-	buildLessonMetadata,
-	LessonPageContent,
-} from "@/app/[locale]/courses/[id]/learn/page";
+import { buildLessonMetadata, LessonPageContent } from "@/app/[locale]/courses/[id]/learn/page";
 
 interface CanonicalLessonPageProps {
 	params: Promise<{

@@ -9,12 +9,18 @@ async function assertAdmin() {
 	const session = await serverAuth.api.getSession({ headers: requestHeaders });
 
 	if (!session) {
-		return { ok: false as const, response: NextResponse.json({ error: "Not authenticated" }, { status: 401 }) };
+		return {
+			ok: false as const,
+			response: NextResponse.json({ error: "Not authenticated" }, { status: 401 }),
+		};
 	}
 
 	const admin = await isUserAdmin(session.user.id);
 	if (!admin) {
-		return { ok: false as const, response: NextResponse.json({ error: "Forbidden" }, { status: 403 }) };
+		return {
+			ok: false as const,
+			response: NextResponse.json({ error: "Forbidden" }, { status: 403 }),
+		};
 	}
 
 	return { ok: true as const };

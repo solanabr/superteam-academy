@@ -266,7 +266,7 @@ function evaluateAssertion({
 		if (description.includes("decrement")) {
 			const passed =
 				/fn\s+decrement\s*\(/.test(code) &&
-				(/count\s*-\=\s*1/.test(code) || /checked_sub\s*\(/.test(code));
+				(/count\s*-=\s*1/.test(code) || /checked_sub\s*\(/.test(code));
 			return passed
 				? { passed: true, output: "decrement assertion passed" }
 				: {

@@ -308,7 +308,7 @@ async function getCourse(id: string) {
 						trackId: onchainCourse.trackId,
 						trackLevel: onchainCourse.trackLevel,
 						totalEnrollments: onchainCourse.totalEnrollments,
-				  }
+					}
 				: {}),
 			...(prerequisiteInfo ? { prerequisite: prerequisiteInfo } : {}),
 		},

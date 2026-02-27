@@ -8,7 +8,6 @@ export interface LeaderboardEntry {
 	rank: number;
 	publicKey: string;
 	xpBalance: bigint;
-	displayName?: string;
 }
 
 export class LeaderboardService extends BaseService {

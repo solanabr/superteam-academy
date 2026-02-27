@@ -156,11 +156,7 @@ export default function AdminCoursesPage() {
 					)}
 				</div>
 				<div className="flex items-center gap-2">
-					<Button
-						variant="outline"
-						onClick={handleReconcile}
-						disabled={reconciling}
-					>
+					<Button variant="outline" onClick={handleReconcile} disabled={reconciling}>
 						{reconciling ? (
 							<Loader2 className="h-4 w-4 mr-2 animate-spin" />
 						) : (
