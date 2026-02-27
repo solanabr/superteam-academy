@@ -5,7 +5,7 @@ import { mplBubblegum } from '@metaplex-foundation/mpl-bubblegum';
 import { publicKey as umiPublicKey } from '@metaplex-foundation/umi';
 
 // Real Devnet Assets
-export const XP_TOKEN_MINT = new PublicKey(process.env.NEXT_PUBLIC_XP_MINT_ADDRESS || "GJumUBRPeu4mx7Cx11TtjcAA5b2gvdAteZzgpz5fwRHZ"); 
+export const XP_TOKEN_MINT = new PublicKey(process.env.NEXT_PUBLIC_XP_MINT_ADDRESS || "xpXPUjkfk7t4AJF1tYUoyAYxzuM5DhinZWS1WjfjAu3"); 
 export const CREDENTIAL_TREE_ADDRESS = umiPublicKey(process.env.NEXT_PUBLIC_CREDENTIAL_TREE_ADDRESS || "45n28QSmaWaAtUDVYPsTensja45tg1KSG3E5Y3szKNgd"); 
 export const COLLECTION_MINT = umiPublicKey(process.env.NEXT_PUBLIC_COLLECTION_MINT || "2TTHTuH5Tva2Z7tnNcGaDfCQcnEzFkAUoPbp8eGvkVHB"); 
 
