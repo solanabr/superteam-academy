@@ -255,18 +255,18 @@ export function Header() {
               className="flex items-center"
             >
               <Image
-                src="/logo-light.png"
-                alt="Superteam Academy"
-                width={120}
-                height={36}
-                className="h-7 w-auto dark:hidden"
+                src="/ST-DARK-GREEN-HORIZONTAL.png"
+                alt="Superteam Brasil"
+                width={160}
+                height={32}
+                className="h-6 w-auto dark:hidden"
               />
               <Image
-                src="/logo-dark.png"
-                alt="Superteam Academy"
-                width={120}
-                height={36}
-                className="hidden h-7 w-auto dark:block"
+                src="/ST-YELLOW-HORIZONTAL.png"
+                alt="Superteam Brasil"
+                width={160}
+                height={32}
+                className="hidden h-6 w-auto dark:block"
               />
             </Link>
             <button

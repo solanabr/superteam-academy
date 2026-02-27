@@ -17,18 +17,18 @@ export function Footer() {
           <div className="flex flex-col items-center gap-3 md:items-start">
             <Link href={`/${locale}`} className="flex items-center gap-2">
               <Image
-                src="/logo-light.png"
-                alt="Superteam Academy"
-                width={106}
+                src="/ST-DARK-GREEN-HORIZONTAL.png"
+                alt="Superteam Brasil"
+                width={160}
                 height={32}
-                className="h-8 w-auto dark:hidden"
+                className="h-6 w-auto dark:hidden"
               />
               <Image
-                src="/logo-dark.png"
-                alt="Superteam Academy"
-                width={106}
+                src="/ST-YELLOW-HORIZONTAL.png"
+                alt="Superteam Brasil"
+                width={160}
                 height={32}
-                className="hidden h-8 w-auto dark:block"
+                className="hidden h-6 w-auto dark:block"
               />
             </Link>
             <p className="text-sm leading-relaxed text-text-2">
