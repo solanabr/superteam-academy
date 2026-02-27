@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { useAuth } from "@/lib/auth/auth-provider";
 import { LevelUpOverlay } from "@/components/gamification/level-up-overlay";
 import { AchievementPopup } from "@/components/gamification/achievement-popup";
 import { CertificatePopup } from "@/components/gamification/certificate-popup";
@@ -9,26 +8,10 @@ import { useGamificationEvents } from "@/hooks/use-gamification-events";
 import { ToastContainer } from "@/components/ui/toast-container";
 
 export function GamificationOverlays() {
-  const [userId, setUserId] = useState<string | undefined>();
-
-  useEffect(() => {
-    const supabase = createClient();
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUserId(session?.user?.id);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUserId(session?.user?.id);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+  const { userId } = useAuth();
 
   // Subscribe to Supabase Realtime for gamification popups
-  useGamificationEvents(userId);
+  useGamificationEvents(userId ?? undefined);
 
   return (
     <>
