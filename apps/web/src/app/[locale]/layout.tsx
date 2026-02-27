@@ -5,6 +5,7 @@ import { locales, type Locale } from "@/lib/i18n/config";
 import { ThemeProvider } from "@/components/layout/theme-provider";
 import { SolanaWalletProvider } from "@/lib/solana/wallet-provider";
 import { AnalyticsProvider } from "@/components/analytics/analytics-provider";
+import { AuthProvider } from "@/lib/auth/auth-provider";
 import { Header } from "@/components/layout/header";
 import { GamificationOverlays } from "@/components/gamification/gamification-overlays";
 
@@ -32,15 +33,17 @@ export default async function LocaleLayout({
     >
       <NextIntlClientProvider messages={messages}>
         <SolanaWalletProvider>
-          <AnalyticsProvider>
-            <div className="grid-bg flex min-h-screen flex-col bg-[var(--bg)]">
-              <Header />
-              <main id="main-content" className="flex-1 pt-[60px]">
-                {children}
-              </main>
-              <GamificationOverlays />
-            </div>
-          </AnalyticsProvider>
+          <AuthProvider>
+            <AnalyticsProvider>
+              <div className="grid-bg flex min-h-screen flex-col bg-[var(--bg)]">
+                <Header />
+                <main id="main-content" className="flex-1 pt-[60px]">
+                  {children}
+                </main>
+                <GamificationOverlays />
+              </div>
+            </AnalyticsProvider>
+          </AuthProvider>
         </SolanaWalletProvider>
       </NextIntlClientProvider>
     </ThemeProvider>
