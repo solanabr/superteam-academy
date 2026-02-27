@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWalletSafe as useWallet } from '@/lib/use-wallet-safe';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { useLocale } from 'next-intl';
 import { Link2, CheckCircle2, AlertCircle, Wallet, Mail } from 'lucide-react';
