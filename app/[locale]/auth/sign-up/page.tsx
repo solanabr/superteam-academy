@@ -11,8 +11,10 @@ import { Label } from '@/components/ui/label'
 import { Link, useRouter } from '@/i18n/routing'
 import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { Shield, Mail, Lock, UserPlus, ArrowRight, Loader2, Github, Chrome } from 'lucide-react'
+import { UserPlus, Mail, Lock, ArrowRight, Loader2, Github, Chrome } from 'lucide-react'
 import { useWallet } from '@solana/wallet-adapter-react'
+
+const PENDING_WALLET_SIGNUP_KEY = 'pending_wallet_signup_address'
 
 export default function SignUpPage() {
   const [email, setEmail] = useState('')
@@ -20,19 +22,38 @@ export default function SignUpPage() {
   const [repeatPassword, setRepeatPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [isWalletLoading, setIsWalletLoading] = useState(false)
   const router = useRouter()
   const t = useTranslations('Auth')
-  const { signMessage, connected } = useWallet()
-  const [walletEmail, setWalletEmail] = useState('')
+  const { signMessage, connected, publicKey } = useWallet()
 
   useEffect(() => {
     const checkUser = async () => {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        router.replace('/dashboard')
+      if (!user) {
+        return
       }
+
+      const params = new URLSearchParams(window.location.search)
+      const isWalletSignupFlow = params.get('wallet') === '1'
+      const pendingWalletAddress = localStorage.getItem(PENDING_WALLET_SIGNUP_KEY)
+
+      if (isWalletSignupFlow && pendingWalletAddress) {
+        await supabase
+          .from('profiles')
+          .update({
+            wallet_address: pendingWalletAddress,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', user.id)
+
+        localStorage.removeItem(PENDING_WALLET_SIGNUP_KEY)
+      }
+
+      router.replace('/dashboard')
     }
+
     checkUser()
   }, [router])
 
@@ -67,9 +88,41 @@ export default function SignUpPage() {
     }
   }
 
+  const handleWalletGoogleSignup = async () => {
+    if (!connected || !signMessage || !publicKey) {
+      setError('Connect your wallet to continue')
+      return
+    }
+
+    setError(null)
+    setIsWalletLoading(true)
+
+    const encoder = new TextEncoder()
+    const message = encoder.encode(`Create account with wallet + Gmail - ${new Date().toISOString()}`)
+
+    try {
+      await signMessage(message)
+
+      localStorage.setItem(PENDING_WALLET_SIGNUP_KEY, publicKey.toString())
+
+      const supabase = createClient()
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${location.origin}${location.pathname}?wallet=1`,
+        },
+      })
+
+      if (error) throw error
+    } catch (walletError: unknown) {
+      setError(walletError instanceof Error ? walletError.message : 'Wallet sign-up failed')
+      localStorage.removeItem(PENDING_WALLET_SIGNUP_KEY)
+      setIsWalletLoading(false)
+    }
+  }
+
   return (
     <div className="flex min-h-screen w-full items-center justify-center p-6 md:p-10 bg-background relative overflow-hidden">
-      {/* Background Decorations */}
       <div className="absolute top-0 left-0 w-full h-full -z-10">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 rounded-full blur-[120px]" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-secondary/10 rounded-full blur-[120px]" />
@@ -139,41 +192,26 @@ export default function SignUpPage() {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="space-y-3">
-                  <div className="grid gap-2">
-                    <Label htmlFor="wallet-email">Email for verification</Label>
-                    <Input
-                      id="wallet-email"
-                      type="email"
-                      placeholder="name@example.com"
-                      value={walletEmail}
-                      onChange={(e) => setWalletEmail(e.target.value)}
-                      className="h-11 bg-background/50 border-border/50 focus:border-primary/50 transition-all"
-                    />
-                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Wallet sign-up requires linking Google (Gmail).
+                  </p>
                   <Button
                     type="button"
                     variant="default"
                     className="w-full h-11 rounded-xl"
-                    onClick={async () => {
-                      if (!connected || !signMessage) {
-                        return
-                      }
-                      if (!walletEmail) return
-                      const encoder = new TextEncoder()
-                      const message = encoder.encode(`Create account with wallet • ${new Date().toISOString()}`)
-                      try {
-                        await signMessage(message)
-                        const supabase = createClient()
-                        await supabase.auth.signInWithOtp({
-                          email: walletEmail,
-                          options: { emailRedirectTo: `${location.origin}/dashboard` }
-                        })
-                      } catch {}
-                    }}
+                    onClick={handleWalletGoogleSignup}
+                    disabled={isWalletLoading}
                   >
-                    Sign up with Wallet (Email Verification)
+                    {isWalletLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Linking Gmail...
+                      </>
+                    ) : (
+                      'Sign up with Wallet + Gmail'
+                    )}
                   </Button>
                 </div>
 
@@ -183,9 +221,9 @@ export default function SignUpPage() {
                   </div>
                 )}
 
-                <Button 
-                  type="submit" 
-                  className="w-full h-11 text-base font-bold rounded-xl shadow-[0_0_20px_rgba(20,241,149,0.1)] hover:shadow-[0_0_30px_rgba(20,241,149,0.2)] transition-all" 
+                <Button
+                  type="submit"
+                  className="w-full h-11 text-base font-bold rounded-xl shadow-[0_0_20px_rgba(20,241,149,0.1)] hover:shadow-[0_0_30px_rgba(20,241,149,0.2)] transition-all"
                   disabled={isLoading}
                 >
                   {isLoading ? (
@@ -202,10 +240,10 @@ export default function SignUpPage() {
                 </Button>
 
                 <div className="grid grid-cols-2 gap-3">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    className="h-11 rounded-xl" 
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-11 rounded-xl"
                     onClick={async () => {
                       const supabase = createClient()
                       await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${location.origin}${location.pathname}` } })
@@ -214,10 +252,10 @@ export default function SignUpPage() {
                     <Chrome className="mr-2 h-4 w-4" />
                     Google
                   </Button>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    className="h-11 rounded-xl" 
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-11 rounded-xl"
                     onClick={async () => {
                       const supabase = createClient()
                       await supabase.auth.signInWithOAuth({ provider: 'github', options: { redirectTo: `${location.origin}${location.pathname}` } })
@@ -245,4 +283,3 @@ export default function SignUpPage() {
     </div>
   )
 }
-
