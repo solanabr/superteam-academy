@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { transform as sucraseTransform } from "sucrase";
 import { useTranslations } from "next-intl";
-import { Play } from "@phosphor-icons/react";
+import { Play, CircleNotch } from "@phosphor-icons/react";
 import type { TestCase } from "@superteam-lms/types";
 import { Keypair } from "@solana/web3.js";
 import { setCachedBinary } from "@superteam-lms/deploy";
@@ -870,11 +870,10 @@ export function ChallengeRunner({
         className="gap-1.5"
       >
         {isRunning ? (
-          <div
-            className={cn(
-              "h-3.5 w-3.5 animate-spin rounded-full border-2 border-t-transparent",
-              showSubmit ? "border-primary" : "border-primary-foreground"
-            )}
+          <CircleNotch
+            size={14}
+            weight="bold"
+            className="animate-spin"
             aria-hidden="true"
           />
         ) : (

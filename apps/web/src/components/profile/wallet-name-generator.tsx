@@ -108,11 +108,11 @@ export function WalletNameGenerator({
         <p className="mt-1 text-sm text-text-3">{t("subtitle")}</p>
       </div>
 
-      {/* Name display with gradient border */}
+      {/* Name display with gradient border — fixed size to prevent layout shift */}
       <div className="relative w-full max-w-md rounded-xl bg-gradient-to-r from-primary to-secondary p-[2px]">
-        <div className="flex min-h-[80px] items-center justify-center rounded-[10px] bg-bg px-6 py-4">
+        <div className="flex h-[80px] items-center justify-center overflow-hidden rounded-[10px] bg-bg px-6 py-4">
           <span
-            className={`font-mono text-xl font-bold tracking-tight transition-opacity sm:text-2xl ${
+            className={`truncate font-mono text-xl font-bold tracking-tight transition-opacity sm:text-2xl ${
               settled ? "opacity-100" : "opacity-80"
             } ${isRolling ? "text-text-3" : "text-text"}`}
           >

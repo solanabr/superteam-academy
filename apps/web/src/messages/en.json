@@ -25,7 +25,8 @@
     "settings": "Settings",
     "profile": "Profile",
     "certificates": "Certificates",
-    "courses": "courses"
+    "courses": "courses",
+    "all": "All"
   },
   "nav": {
     "home": "Home",
@@ -111,7 +112,18 @@
     "noCourses": "No courses available",
     "noCoursesDescription": "Check back soon for new learning content.",
     "signInToEnroll": "Sign In to Enroll",
-    "enrollFailed": "Enrollment failed. Please try again."
+    "enrollFailed": "Enrollment failed. Please try again.",
+    "allPaths": "All Paths",
+    "pathCore": "Solana Core",
+    "pathRust": "Rust & Programs",
+    "pathAnchor": "Anchor",
+    "pathFrontend": "Frontend",
+    "pathDefi": "DeFi",
+    "done": "Done",
+    "locked": "Locked",
+    "notStarted": "Not started",
+    "ofXp": "of {total} XP",
+    "coursesCount": "{count} of {total} done"
   },
   "lesson": {
     "content": "Content",
@@ -157,6 +169,7 @@
     "fetchErrorDetail": "We had trouble loading your data. Your progress is safe — please try refreshing the page.",
     "noCourses": "You haven't enrolled in any courses yet",
     "noRecentActivity": "No recent activity",
+    "noActivityHint": "Complete a lesson to see your progress here",
     "progressOverview": "Progress Overview",
     "recentActivity": "Activity",
     "recommendedCourses": "Recommended For You",
@@ -217,7 +230,8 @@
     "tier_sapling": "Sapling",
     "tier_canopy": "Canopy",
     "viewOnExplorer": "View on Explorer",
-    "onChain": "on-chain"
+    "onChain": "on-chain",
+    "you": "You"
   },
   "certificates": {
     "title": "Certificate of Completion",
@@ -225,8 +239,9 @@
     "minting": "Minting...",
     "mintSuccess": "Certificate minted successfully!",
     "viewOnExplorer": "View on Solana Explorer",
-    "share": "Share",
+    "share": "Share on X",
     "download": "Download",
+    "copied": "Copied!",
     "completedOn": "Completed on {date}",
     "recipient": "Recipient",
     "mintAddress": "Mint Address",
@@ -258,7 +273,8 @@
     "privateProfile": "Private Profile",
     "coursesCompleted": "Courses Completed",
     "totalXp": "Total XP",
-    "certificatesEarned": "Certificates Earned",
+    "certificatesEarned": "Certificates",
+    "achievementsUnlocked": "Achievements",
     "bio": "Bio",
     "socialLinks": "Social Links",
     "noBio": "No bio yet",
@@ -270,7 +286,11 @@
     "profileIsPrivate": "This profile is private",
     "backToLeaderboard": "Back",
     "loading": "Loading profile...",
-    "viewProfile": "View Profile"
+    "viewProfile": "View Profile",
+    "lessonsCompleted": "Lessons Completed",
+    "lessonsCount": "{count} lessons",
+    "totalLabel": "Total",
+    "xpToLevel": "XP to Lv. {level}"
   },
   "settings": {
     "title": "Settings",
@@ -297,7 +317,7 @@
     "avatarRemoved": "Profile photo removed",
     "avatarTooLarge": "Image must be under 1 MB",
     "avatarInvalidType": "Only JPG, PNG, and WebP images are allowed",
-    "twitter": "Twitter",
+    "twitter": "X",
     "github": "GitHub",
     "discord": "Discord",
     "walletAddress": "Wallet Address",
@@ -343,7 +363,7 @@
     "openMenu": "Open menu",
     "mobileNavigation": "Mobile navigation",
     "github": "GitHub",
-    "twitter": "Twitter",
+    "twitter": "X",
     "discord": "Discord",
     "solana": "Solana",
     "copyLink": "Copy link",
@@ -360,7 +380,7 @@
     "apiReference": "API Reference",
     "changelog": "Changelog",
     "discord": "Discord",
-    "twitter": "Twitter",
+    "twitter": "X",
     "github": "GitHub",
     "forum": "Forum",
     "privacyPolicy": "Privacy Policy",
@@ -391,7 +411,9 @@
   "timeAgo": {
     "justNow": "Just now",
     "hours": "{count} hours ago",
-    "days": "{count} days ago"
+    "days": "{count} days ago",
+    "today": "Today",
+    "yesterday": "Yesterday"
   },
   "nameGenerator": {
     "title": "Your Solana Identity",

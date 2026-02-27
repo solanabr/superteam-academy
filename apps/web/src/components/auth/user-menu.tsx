@@ -91,7 +91,9 @@ export function UserMenu({
             <AvatarFallback className="text-xs">{initials}</AvatarFallback>
           </Avatar>
           <div className="flex min-w-0 flex-col leading-none">
-            <p className="truncate font-medium">{username}</p>
+            <p className="truncate font-display text-[13px] font-bold">
+              {username}
+            </p>
             {truncatedWallet && (
               <button
                 onClick={handleCopyAddress}
@@ -114,7 +116,10 @@ export function UserMenu({
         </div>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link href={`/${locale}/profile`} className="flex items-center gap-2">
+          <Link
+            href={`/${locale}/profile`}
+            className="flex items-center gap-2 font-display text-[13px] font-semibold"
+          >
             <UserCircle size={14} weight="bold" />
             {tCommon("profile")}
           </Link>
@@ -122,7 +127,7 @@ export function UserMenu({
         <DropdownMenuItem asChild>
           <Link
             href={`/${locale}/certificates`}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 font-display text-[13px] font-semibold"
           >
             <Certificate size={14} weight="bold" />
             {tCommon("certificates")}
@@ -131,7 +136,7 @@ export function UserMenu({
         <DropdownMenuItem asChild>
           <Link
             href={`/${locale}/settings`}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 font-display text-[13px] font-semibold"
           >
             <GearSix size={14} weight="bold" />
             {tCommon("settings")}
@@ -140,7 +145,7 @@ export function UserMenu({
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={handleSignOut}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 font-display text-[13px] font-semibold"
         >
           <SignOut size={14} weight="bold" />
           {tCommon("signOut")}

@@ -32,12 +32,12 @@ export function LanguageSwitcher() {
           <GlobeSimple size={18} weight="bold" />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent align="end" className="z-[201]">
         {locales.map((loc) => (
           <DropdownMenuItem
             key={loc}
             onClick={() => handleChange(loc)}
-            className="flex cursor-pointer items-center justify-between gap-4"
+            className="flex cursor-pointer items-center justify-between gap-4 font-display text-[13px] font-semibold"
           >
             <span>{localeNames[loc]}</span>
             {locale === loc && (

@@ -1,158 +1,76 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 
 interface SkillData {
   label: string;
-  value: number; // 0-100
+  value: number; // 0-100 (normalized)
+  lessonCount?: number;
 }
 
 interface SkillRadarProps {
   skills: SkillData[];
-  size?: number;
+  /** Actual unique completed lesson count (avoids double-counting across tags) */
+  totalLessons?: number;
   className?: string;
 }
 
-const DEFAULT_SKILLS: SkillData[] = [
-  { label: "Rust", value: 0 },
-  { label: "Anchor", value: 0 },
-  { label: "Frontend", value: 0 },
-  { label: "Security", value: 0 },
-  { label: "DeFi", value: 0 },
-  { label: "Testing", value: 0 },
-];
-
 export function SkillRadar({
-  skills = DEFAULT_SKILLS,
-  size = 200,
+  skills,
+  totalLessons: totalLessonsProp,
   className,
 }: SkillRadarProps) {
+  const t = useTranslations("profile");
   const tA11y = useTranslations("a11y");
-  const center = size / 2;
-  const radius = size * 0.35;
+  const [hovered, setHovered] = useState<number | null>(null);
+
+  if (!skills.length) return null;
+
+  // Chart geometry
+  const size = 400;
+  const pad = 90;
+  const vb = size + pad * 2;
+  const cx = vb / 2;
+  const cy = vb / 2;
+  const radius = size * 0.4;
   const rings = 4;
   const n = skills.length;
-  const angleStep = (2 * Math.PI) / n;
+  const step = (2 * Math.PI) / n;
 
-  function getPoint(index: number, value: number): { x: number; y: number } {
-    const angle = angleStep * index - Math.PI / 2;
-    const r = (value / 100) * radius;
-    return {
-      x: center + r * Math.cos(angle),
-      y: center + r * Math.sin(angle),
-    };
+  function pt(i: number, pct: number) {
+    const a = step * i - Math.PI / 2;
+    const r = (pct / 100) * radius;
+    return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) };
   }
 
-  // Data polygon points
-  const dataPoints = skills.map((s, i) => getPoint(i, s.value));
+  const dataPts = skills.map((s, i) => pt(i, s.value));
   const dataPath =
-    dataPoints.map((p, i) => `${i === 0 ? "M" : "L"}${p.x},${p.y}`).join(" ") +
+    dataPts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x},${p.y}`).join(" ") +
     " Z";
 
+  // Use the prop if provided (actual unique count), otherwise fall back to tag sum
+  const totalLessons =
+    totalLessonsProp ??
+    skills.reduce((sum, s) => sum + (s.lessonCount ?? 0), 0);
+
   return (
-    <div className={cn("inline-block", className)}>
+    <div className={cn("skill-chart", className)}>
       <svg
-        viewBox={`0 0 ${size} ${size}`}
-        width={size}
-        height={size}
+        viewBox={`0 0 ${vb} ${vb}`}
+        className="skill-chart-svg"
         role="img"
         aria-label={tA11y("skillRadarChart")}
+        onMouseLeave={() => setHovered(null)}
       >
-        {/* Background rings */}
-        {Array.from({ length: rings }, (_, ringIdx) => {
-          const ringValue = ((ringIdx + 1) / rings) * 100;
-          const points = skills
-            .map((_, i) => {
-              const p = getPoint(i, ringValue);
-              return `${p.x},${p.y}`;
-            })
-            .join(" ");
-          return (
-            <polygon
-              key={ringIdx}
-              points={points}
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="0.5"
-              className="text-border"
-            />
-          );
-        })}
-
-        {/* Axis lines */}
-        {skills.map((_, i) => {
-          const p = getPoint(i, 100);
-          return (
-            <line
-              key={i}
-              x1={center}
-              y1={center}
-              x2={p.x}
-              y2={p.y}
-              stroke="currentColor"
-              strokeWidth="0.5"
-              className="text-border"
-            />
-          );
-        })}
-
-        {/* Data area */}
-        <path
-          d={dataPath}
-          fill="url(#radar-gradient)"
-          fillOpacity="0.3"
-          stroke="url(#radar-gradient-stroke)"
-          strokeWidth="2"
-        />
-
-        {/* Data points */}
-        {dataPoints.map((p, i) => (
-          <circle
-            key={i}
-            cx={p.x}
-            cy={p.y}
-            r="3"
-            fill="var(--primary)"
-            stroke="var(--accent)"
-            strokeWidth="1"
-          />
-        ))}
-
-        {/* Labels */}
-        {skills.map((s, i) => {
-          const labelOffset = radius + 24;
-          const angle = angleStep * i - Math.PI / 2;
-          const lx = center + labelOffset * Math.cos(angle);
-          const ly = center + labelOffset * Math.sin(angle);
-          return (
-            <text
-              key={i}
-              x={lx}
-              y={ly}
-              textAnchor="middle"
-              dominantBaseline="middle"
-              className="fill-text font-body text-[10px]"
-            >
-              {s.label}
-            </text>
-          );
-        })}
-
-        {/* Gradient defs */}
         <defs>
-          <linearGradient
-            id="radar-gradient"
-            x1="0%"
-            y1="0%"
-            x2="100%"
-            y2="100%"
-          >
+          <linearGradient id="radar-gfill" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="var(--primary)" />
             <stop offset="100%" stopColor="var(--accent)" />
           </linearGradient>
           <linearGradient
-            id="radar-gradient-stroke"
+            id="radar-gstroke"
             x1="0%"
             y1="0%"
             x2="100%"
@@ -162,6 +80,188 @@ export function SkillRadar({
             <stop offset="100%" stopColor="var(--accent)" />
           </linearGradient>
         </defs>
+
+        {/* Concentric ring guides */}
+        {Array.from({ length: rings }, (_, ri) => {
+          const pct = ((ri + 1) / rings) * 100;
+          const pts = skills.map((_, i) => pt(i, pct));
+          const poly = pts.map((p) => `${p.x},${p.y}`).join(" ");
+          return (
+            <polygon
+              key={ri}
+              points={poly}
+              fill="none"
+              stroke="var(--border)"
+              strokeWidth={ri === rings - 1 ? "1" : "0.5"}
+              opacity={0.6}
+            />
+          );
+        })}
+
+        {/* Axis spokes */}
+        {skills.map((_, i) => {
+          const outer = pt(i, 100);
+          const active = hovered === i;
+          return (
+            <line
+              key={i}
+              x1={cx}
+              y1={cy}
+              x2={outer.x}
+              y2={outer.y}
+              stroke={active ? "var(--primary)" : "var(--border)"}
+              strokeWidth={active ? "1.5" : "0.5"}
+              opacity={active ? 1 : 0.6}
+              style={{ transition: "stroke 0.15s, stroke-width 0.15s" }}
+            />
+          );
+        })}
+
+        {/* Data polygon — filled shape */}
+        <path
+          d={dataPath}
+          fill="url(#radar-gfill)"
+          fillOpacity="0.18"
+          stroke="url(#radar-gstroke)"
+          strokeWidth="2.5"
+          strokeLinejoin="round"
+        />
+
+        {/* Data dots — interactive */}
+        {dataPts.map((p, i) => {
+          const active = hovered === i;
+          const outerPt = pt(i, 100);
+          return (
+            <g key={i}>
+              {/* Fat invisible hit target */}
+              <line
+                x1={cx}
+                y1={cy}
+                x2={outerPt.x}
+                y2={outerPt.y}
+                stroke="transparent"
+                strokeWidth="28"
+                style={{ cursor: "pointer" }}
+                onMouseEnter={() => setHovered(i)}
+              />
+              {/* Outer glow */}
+              <circle
+                cx={p.x}
+                cy={p.y}
+                r={active ? 12 : 5}
+                fill="var(--primary)"
+                fillOpacity={active ? 0.2 : 0.1}
+                style={{ transition: "r 0.2s, fill-opacity 0.2s" }}
+                pointerEvents="none"
+              />
+              {/* Dot */}
+              <circle
+                cx={p.x}
+                cy={p.y}
+                r={active ? 5 : 3.5}
+                fill="var(--primary)"
+                stroke="var(--card)"
+                strokeWidth="2"
+                style={{ transition: "r 0.2s" }}
+                pointerEvents="none"
+              />
+            </g>
+          );
+        })}
+
+        {/* Outer labels */}
+        {skills.map((s, i) => {
+          const labelR = radius + 44;
+          const a = step * i - Math.PI / 2;
+          const lx = cx + labelR * Math.cos(a);
+          const ly = cx + labelR * Math.sin(a);
+          const active = hovered === i;
+          const dimmed = hovered !== null && !active;
+
+          return (
+            <g
+              key={i}
+              style={{
+                opacity: dimmed ? 0.3 : 1,
+                transition: "opacity 0.2s",
+                cursor: "pointer",
+              }}
+              onMouseEnter={() => setHovered(i)}
+            >
+              <text
+                x={lx}
+                y={ly - 8}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                style={{
+                  fontFamily: "var(--font-display)",
+                  fontWeight: active ? 900 : 700,
+                  fontSize: "15px",
+                  fill: active ? "var(--primary)" : "var(--text)",
+                  transition: "fill 0.15s",
+                }}
+              >
+                {s.label}
+              </text>
+              <text
+                x={lx}
+                y={ly + 10}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontWeight: 600,
+                  fontSize: "12px",
+                  fill: active ? "var(--primary)" : "var(--text-3)",
+                  transition: "fill 0.15s",
+                }}
+              >
+                {t("lessonsCount", { count: s.lessonCount ?? 0 })}
+              </text>
+            </g>
+          );
+        })}
+
+        {/* Center — total lessons */}
+        <circle cx={cx} cy={cy} r="34" fill="var(--card)" />
+        <circle
+          cx={cx}
+          cy={cy}
+          r="34"
+          fill="none"
+          stroke="var(--border)"
+          strokeWidth="1.5"
+        />
+        <text
+          x={cx}
+          y={cy - 6}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          style={{
+            fontFamily: "var(--font-display)",
+            fontWeight: 900,
+            fontSize: "22px",
+            fill: "var(--text)",
+          }}
+        >
+          {totalLessons}
+        </text>
+        <text
+          x={cx}
+          y={cy + 13}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontWeight: 600,
+            fontSize: "9px",
+            fill: "var(--text-3)",
+            textTransform: "uppercase",
+            letterSpacing: "0.6px",
+          }}
+        >
+          {t("totalLabel")}
+        </text>
       </svg>
     </div>
   );

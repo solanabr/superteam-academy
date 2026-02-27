@@ -11,6 +11,7 @@ import dynamic from "next/dynamic";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
+import rehypeHighlight from "rehype-highlight";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { Lightning, CheckCircle, ArrowLeft } from "@phosphor-icons/react";
@@ -188,7 +189,6 @@ export function LessonPageClient({
   const [programKeypairSecret, setProgramKeypairSecret] = useState<
     number[] | null
   >(null);
-
   const { isEnrolling, handleEnroll, enrollError } = useOnChainEnroll({
     courseId,
     userId,
@@ -326,39 +326,42 @@ export function LessonPageClient({
     const visibleTests = lesson.tests?.filter((tc) => !tc.hidden) ?? [];
 
     return (
-      <div className="-mx-4 -my-6 flex h-[calc(100vh-60px)] flex-col pt-4 md:-mx-8 md:-my-8">
+      <div className="grid-bg -mx-4 -my-6 flex h-[calc(100vh-60px)] flex-col bg-[var(--bg)] pt-4 md:-mx-8 md:-my-8">
         <div className="flex flex-1 flex-col overflow-hidden lg:flex-row">
           {/* Left pane: description + test cases + navigation */}
           <div className="w-full overflow-auto lg:w-1/2 lg:border-r-[2.5px] lg:border-border">
             <div className="space-y-6 p-6 pb-12">
-              {/* Back + progress */}
-              <div className="flex items-center justify-between">
+              {/* Lesson top bar */}
+              <div className="flex items-center gap-3 border-b border-border pb-4">
                 <Link
                   href={`/${locale}/courses/${courseSlug}`}
-                  className="inline-flex items-center gap-1.5 text-sm font-medium text-text-3 transition-colors hover:text-text"
+                  className="inline-flex items-center gap-1.5 font-display text-sm font-semibold text-text-3 transition-colors hover:text-text"
                 >
                   <ArrowLeft size={16} weight="bold" />
                   {tCommon("back")}
                 </Link>
-                <div className="flex items-center gap-3">
-                  <span className="font-display text-xs font-bold text-text-3">
-                    {currentIndex + 1}/{allLessons.length}
+                <div className="ml-auto flex items-center gap-4">
+                  <span className="flex items-center gap-1 font-display text-sm font-black text-xp">
+                    <Lightning size={14} weight="fill" />+
+                    {earnedXp ?? courseXpPerLesson} XP
                   </span>
-                  <ProgressBar
-                    value={currentIndex + 1}
-                    max={allLessons.length}
-                    className="w-24"
-                  />
+                  <span
+                    className="text-[16px] leading-none text-text-3"
+                    aria-hidden="true"
+                  >
+                    &middot;
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-xs tabular-nums text-text-3">
+                      {currentIndex + 1}/{allLessons.length}
+                    </span>
+                    <ProgressBar
+                      value={currentIndex + 1}
+                      max={allLessons.length}
+                      className="w-20"
+                    />
+                  </div>
                 </div>
-              </div>
-
-              {/* Lesson meta */}
-              <div className="flex items-center gap-2 text-xs text-text-3">
-                <span>{t("challenge")}</span>
-                <span className="ml-auto flex items-center gap-1 font-display font-black text-xp">
-                  <Lightning size={14} weight="duotone" className="text-xp" />+
-                  {earnedXp ?? courseXpPerLesson} XP
-                </span>
               </div>
 
               {/* Video embed (if lesson has a video) */}
@@ -368,7 +371,7 @@ export function LessonPageClient({
               <div className="prose max-w-none dark:prose-invert">
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
-                  rehypePlugins={[rehypeRaw]}
+                  rehypePlugins={[rehypeRaw, rehypeHighlight]}
                   components={markdownComponents}
                 >
                   {lesson.content}
@@ -506,34 +509,37 @@ export function LessonPageClient({
   // Content lessons: natural flow within platform layout
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      {/* Back + progress */}
-      <div className="flex items-center justify-between">
+      {/* Lesson top bar */}
+      <div className="flex items-center gap-3 border-b border-border pb-4">
         <Link
           href={`/${locale}/courses/${courseSlug}`}
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-text-3 transition-colors hover:text-text"
+          className="inline-flex items-center gap-1.5 font-display text-sm font-semibold text-text-3 transition-colors hover:text-text"
         >
           <ArrowLeft size={16} weight="bold" />
           {tCommon("back")}
         </Link>
-        <div className="flex items-center gap-3">
-          <span className="font-display text-xs font-bold text-text-3">
-            {currentIndex + 1}/{allLessons.length}
+        <div className="ml-auto flex items-center gap-4">
+          <span className="flex items-center gap-1 font-display text-sm font-black text-xp">
+            <Lightning size={14} weight="fill" />+
+            {earnedXp ?? courseXpPerLesson} XP
           </span>
-          <ProgressBar
-            value={currentIndex + 1}
-            max={allLessons.length}
-            className="w-24"
-          />
+          <span
+            className="text-[16px] leading-none text-text-3"
+            aria-hidden="true"
+          >
+            &middot;
+          </span>
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-xs tabular-nums text-text-3">
+              {currentIndex + 1}/{allLessons.length}
+            </span>
+            <ProgressBar
+              value={currentIndex + 1}
+              max={allLessons.length}
+              className="w-20"
+            />
+          </div>
         </div>
-      </div>
-
-      {/* Lesson meta */}
-      <div className="flex items-center gap-2 text-xs text-text-3">
-        <span>{t("content")}</span>
-        <span className="ml-auto flex items-center gap-1 font-display font-black text-xp">
-          <Lightning size={14} weight="duotone" className="text-xp" />+
-          {earnedXp ?? courseXpPerLesson} XP
-        </span>
       </div>
 
       {/* Video embed (if lesson has a video) */}
@@ -543,7 +549,7 @@ export function LessonPageClient({
       <div className="prose max-w-3xl dark:prose-invert">
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
-          rehypePlugins={[rehypeRaw]}
+          rehypePlugins={[rehypeRaw, rehypeHighlight]}
           components={markdownComponents}
         >
           {lesson.content}

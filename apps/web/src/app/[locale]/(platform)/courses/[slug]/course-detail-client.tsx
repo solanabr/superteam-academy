@@ -13,7 +13,6 @@ import {
 } from "@phosphor-icons/react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Button } from "@/components/ui/button";
-import { DifficultyBadge } from "@/components/course/difficulty-badge";
 import { CurriculumAccordion } from "@/components/course/curriculum-accordion";
 import { ProgressBar } from "@/components/course/progress-bar";
 import { createClient } from "@/lib/supabase/client";
@@ -112,25 +111,23 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
   const isComplete = completedCount === totalLessons && totalLessons > 0;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Back to catalog */}
       <Link
         href={`/${locale}/courses`}
-        className="inline-flex items-center gap-1.5 text-sm font-medium text-text-3 transition-colors hover:text-text"
+        className="inline-flex items-center gap-1.5 font-display text-sm font-semibold text-text-3 transition-colors hover:text-text"
       >
         <ArrowLeft size={16} weight="bold" />
         {tCommon("back")}
       </Link>
 
-      {/* Course Header */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-3">
-          <DifficultyBadge
-            difficulty={course.difficulty}
-            label={t(course.difficulty)}
-          />
+      {/* Course Header Card */}
+      <div className="rounded-xl border-[2.5px] border-border bg-card p-6 shadow-card md:p-8">
+        {/* Metadata row */}
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="course-card-diff">{t(course.difficulty)}</span>
           <span className="flex items-center gap-1.5 text-sm text-text-3">
-            <Clock size={16} weight="duotone" className="text-text-3" />
+            <Clock size={16} weight="duotone" />
             {course.duration} {t("hours")}
           </span>
           <span className="flex items-center gap-1.5 text-sm text-text-3">
@@ -139,138 +136,147 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
           </span>
         </div>
 
-        <h1 className="font-display text-3xl font-black tracking-[-0.5px] md:text-4xl">
+        <h1 className="mt-4 font-display text-3xl font-black tracking-[-0.5px] md:text-4xl">
           {course.title}
         </h1>
 
-        {/* Description + CTA side by side */}
-        <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
-          <div className="min-w-0 flex-1 space-y-4">
-            <p className="max-w-2xl text-lg text-text-3">
-              {course.description}
-            </p>
+        <div className="mt-4 space-y-4">
+          <p className="max-w-2xl text-[15px] leading-relaxed text-text-2">
+            {course.description}
+          </p>
 
-            {/* Instructor */}
-            {course.instructor && (
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-subtle">
-                  <User
-                    size={20}
-                    weight="duotone"
-                    className="text-text-3"
-                    aria-hidden="true"
-                  />
-                </div>
-                <div>
-                  <p className="text-sm font-medium">
-                    {t("courseBy")} {course.instructor.name}
-                  </p>
-                  {course.instructor.bio && (
-                    <p className="text-xs text-text-3">
-                      {course.instructor.bio}
-                    </p>
-                  )}
-                </div>
+          {/* Instructor */}
+          {course.instructor && (
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-subtle">
+                <User
+                  size={18}
+                  weight="duotone"
+                  className="text-text-3"
+                  aria-hidden="true"
+                />
               </div>
-            )}
+              <div>
+                <p className="font-display text-[13px] font-bold">
+                  {t("courseBy")} {course.instructor.name}
+                </p>
+                {course.instructor.bio && (
+                  <p className="text-xs leading-snug text-text-3">
+                    {course.instructor.bio}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
 
-            {/* XP Reward */}
-            <span className="flex items-center gap-1.5 font-display text-lg font-black text-xp">
-              <Lightning size={20} weight="duotone" className="text-accent" />
+          {/* XP + Tags row */}
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="inline-flex items-center gap-1.5 font-display text-lg font-black text-xp">
+              <Lightning size={20} weight="fill" className="text-xp" />
               {course.xpReward} {t("xpReward")}
             </span>
-
-            {/* Tags */}
             {tags.length > 0 && (
-              <div className="flex flex-wrap gap-2">
+              <>
+                <span className="text-border" aria-hidden="true">
+                  |
+                </span>
                 {tags.map((tag) => (
                   <span
                     key={tag}
-                    className="rounded-full border-[2.5px] border-border bg-subtle px-3 py-1 font-display text-xs font-bold text-text shadow-[0_1px_0_0] shadow-border"
+                    className="rounded-full border border-border bg-subtle px-3 py-0.5 font-mono text-[11px] font-semibold uppercase tracking-wider text-text-3"
                   >
                     {tag}
                   </span>
                 ))}
-              </div>
-            )}
-          </div>
-
-          {/* CTA column */}
-          <div className="flex shrink-0 flex-col items-start gap-3 md:items-end">
-            {!isLoading && userId ? (
-              <>
-                {!isEnrolled && !publicKey && !walletAddress ? (
-                  <Button
-                    variant="push"
-                    size="lg"
-                    className="font-semibold"
-                    asChild
-                  >
-                    <Link href={`/${locale}/settings?tab=account`}>
-                      <Wallet
-                        size={16}
-                        weight="duotone"
-                        className="mr-2"
-                        aria-hidden="true"
-                      />
-                      {t("linkWalletToEnroll")}
-                    </Link>
-                  </Button>
-                ) : (
-                  <Button
-                    variant="push"
-                    size="lg"
-                    className="font-semibold"
-                    onClick={isEnrolled ? undefined : handleEnroll}
-                    disabled={isEnrolling}
-                    asChild={isEnrolled ? true : undefined}
-                  >
-                    {isEnrolled ? (
-                      <a
-                        href={`/${locale}/courses/${course.slug}/lessons/${modules[0]?.lessons?.[0]?.slug ?? ""}`}
-                      >
-                        {t("continueCourse")}
-                      </a>
-                    ) : (
-                      <>
-                        {isEnrolling && (
-                          <>
-                            <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
-                            <span className="sr-only">Loading...</span>
-                          </>
-                        )}
-                        {t("enrollNow")}
-                      </>
-                    )}
-                  </Button>
-                )}
               </>
-            ) : !isLoading ? (
-              <AuthModal
-                trigger={
-                  <Button variant="push" size="lg" className="font-semibold">
-                    {t("signInToEnroll")}
-                  </Button>
-                }
-              />
-            ) : null}
+            )}
           </div>
         </div>
 
-        {/* Progress bar (if enrolled) */}
-        {isEnrolled && (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-text-3">
-                {completedCount} / {totalLessons} {t("lessons")}
-              </span>
-              <span className="text-text-3">
-                {isComplete ? t("completed") : t("inProgress")}
-              </span>
+        {/* CTA + Progress */}
+        <div className="mt-6 border-t border-border pt-5">
+          {/* Progress bar (if enrolled) */}
+          {isEnrolled && (
+            <div className="mb-5 space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-display text-[13px] font-bold text-text-2">
+                  {completedCount} / {totalLessons} {t("lessons")}
+                </span>
+                <span className="font-display text-[13px] font-bold text-text-3">
+                  {isComplete ? t("completed") : t("inProgress")}
+                </span>
+              </div>
+              <ProgressBar
+                value={completedCount}
+                max={totalLessons}
+                showLabel
+              />
             </div>
-            <ProgressBar value={completedCount} max={totalLessons} showLabel />
-          </div>
-        )}
+          )}
+
+          {/* CTA button */}
+          {!isLoading && userId ? (
+            <>
+              {!isEnrolled && !publicKey && !walletAddress ? (
+                <Button
+                  variant="push"
+                  size="lg"
+                  className="w-full font-semibold md:w-auto"
+                  asChild
+                >
+                  <Link href={`/${locale}/settings?tab=account`}>
+                    <Wallet
+                      size={16}
+                      weight="duotone"
+                      className="mr-2"
+                      aria-hidden="true"
+                    />
+                    {t("linkWalletToEnroll")}
+                  </Link>
+                </Button>
+              ) : (
+                <Button
+                  variant="push"
+                  size="lg"
+                  className="w-full font-semibold md:w-auto"
+                  onClick={isEnrolled ? undefined : handleEnroll}
+                  disabled={isEnrolling}
+                  asChild={isEnrolled ? true : undefined}
+                >
+                  {isEnrolled ? (
+                    <a
+                      href={`/${locale}/courses/${course.slug}/lessons/${modules[0]?.lessons?.[0]?.slug ?? ""}`}
+                    >
+                      {t("continueCourse")}
+                    </a>
+                  ) : (
+                    <>
+                      {isEnrolling && (
+                        <>
+                          <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+                          <span className="sr-only">Loading...</span>
+                        </>
+                      )}
+                      {t("enrollNow")}
+                    </>
+                  )}
+                </Button>
+              )}
+            </>
+          ) : !isLoading ? (
+            <AuthModal
+              trigger={
+                <Button
+                  variant="push"
+                  size="lg"
+                  className="w-full font-semibold md:w-auto"
+                >
+                  {t("signInToEnroll")}
+                </Button>
+              }
+            />
+          ) : null}
+        </div>
       </div>
 
       {/* Curriculum */}

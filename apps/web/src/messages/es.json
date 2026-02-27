@@ -25,7 +25,8 @@
     "settings": "Configuración",
     "profile": "Perfil",
     "certificates": "Certificados",
-    "courses": "cursos"
+    "courses": "cursos",
+    "all": "Todos"
   },
   "nav": {
     "home": "Inicio",
@@ -111,7 +112,18 @@
     "noCourses": "No hay cursos disponibles",
     "noCoursesDescription": "Vuelve pronto para nuevos contenidos de aprendizaje.",
     "signInToEnroll": "Iniciar Sesión para Inscribirse",
-    "enrollFailed": "Error al inscribirse. Inténtalo de nuevo."
+    "enrollFailed": "Error al inscribirse. Inténtalo de nuevo.",
+    "allPaths": "Todas las Rutas",
+    "pathCore": "Solana Core",
+    "pathRust": "Rust & Programas",
+    "pathAnchor": "Anchor",
+    "pathFrontend": "Frontend",
+    "pathDefi": "DeFi",
+    "done": "Completado",
+    "locked": "Bloqueado",
+    "notStarted": "No iniciado",
+    "ofXp": "de {total} XP",
+    "coursesCount": "{count} de {total} completados"
   },
   "lesson": {
     "content": "Contenido",
@@ -157,6 +169,7 @@
     "fetchErrorDetail": "Tuvimos problemas al cargar tus datos. Tu progreso está seguro — intenta actualizar la página.",
     "noCourses": "Aún no te has inscrito en ningún curso",
     "noRecentActivity": "Sin actividad reciente",
+    "noActivityHint": "Completa una lección para ver tu progreso aquí",
     "progressOverview": "Resumen de Progreso",
     "recentActivity": "Actividad",
     "recommendedCourses": "Recomendados Para Ti",
@@ -217,7 +230,8 @@
     "tier_sapling": "Retoño",
     "tier_canopy": "Dosel",
     "viewOnExplorer": "Ver en Explorer",
-    "onChain": "on-chain"
+    "onChain": "on-chain",
+    "you": "Tú"
   },
   "certificates": {
     "title": "Certificado de Finalización",
@@ -225,8 +239,9 @@
     "minting": "Emitiendo...",
     "mintSuccess": "¡Certificado emitido exitosamente!",
     "viewOnExplorer": "Ver en Solana Explorer",
-    "share": "Compartir",
+    "share": "Compartir en X",
     "download": "Descargar",
+    "copied": "¡Copiado!",
     "completedOn": "Completado el {date}",
     "recipient": "Destinatario",
     "mintAddress": "Dirección de Mint",
@@ -258,7 +273,8 @@
     "privateProfile": "Perfil Privado",
     "coursesCompleted": "Cursos Completados",
     "totalXp": "XP Total",
-    "certificatesEarned": "Certificados Ganados",
+    "certificatesEarned": "Certificados",
+    "achievementsUnlocked": "Logros",
     "bio": "Bio",
     "socialLinks": "Enlaces Sociales",
     "noBio": "Sin bio aún",
@@ -270,7 +286,11 @@
     "profileIsPrivate": "Este perfil es privado",
     "backToLeaderboard": "Volver",
     "loading": "Cargando perfil...",
-    "viewProfile": "Ver Perfil"
+    "viewProfile": "Ver Perfil",
+    "lessonsCompleted": "Lecciones Completadas",
+    "lessonsCount": "{count} lecciones",
+    "totalLabel": "Total",
+    "xpToLevel": "XP para Nv. {level}"
   },
   "settings": {
     "title": "Configuración",
@@ -297,7 +317,7 @@
     "avatarRemoved": "Foto de perfil eliminada",
     "avatarTooLarge": "La imagen debe ser menor de 1 MB",
     "avatarInvalidType": "Solo se permiten imágenes JPG, PNG y WebP",
-    "twitter": "Twitter",
+    "twitter": "X",
     "github": "GitHub",
     "discord": "Discord",
     "walletAddress": "Dirección de Billetera",
@@ -343,7 +363,7 @@
     "openMenu": "Abrir menú",
     "mobileNavigation": "Navegación móvil",
     "github": "GitHub",
-    "twitter": "Twitter",
+    "twitter": "X",
     "discord": "Discord",
     "solana": "Solana",
     "copyLink": "Copiar enlace",
@@ -360,7 +380,7 @@
     "apiReference": "Referencia de API",
     "changelog": "Changelog",
     "discord": "Discord",
-    "twitter": "Twitter",
+    "twitter": "X",
     "github": "GitHub",
     "forum": "Foro",
     "privacyPolicy": "Política de Privacidad",
@@ -391,7 +411,9 @@
   "timeAgo": {
     "justNow": "Ahora mismo",
     "hours": "Hace {count} horas",
-    "days": "Hace {count} días"
+    "days": "Hace {count} días",
+    "today": "Hoy",
+    "yesterday": "Ayer"
   },
   "nameGenerator": {
     "title": "Tu Identidad Solana",

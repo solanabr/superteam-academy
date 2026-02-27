@@ -12,14 +12,14 @@ export default async function LeaderboardPage() {
       data: { user },
     },
   ] = await Promise.all([
-    service.getLeaderboard("weekly"),
+    service.getLeaderboard("alltime"),
     supabase.auth.getUser(),
   ]);
 
   return (
     <LeaderboardClient
       initialEntries={initialEntries}
-      initialTimeframe="weekly"
+      initialTimeframe="alltime"
       currentUserId={user?.id ?? ""}
     />
   );

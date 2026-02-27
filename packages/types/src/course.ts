@@ -82,6 +82,8 @@ export interface Course {
   xpReward: number;
   modules: Module[];
   trackCollectionAddress?: string | null;
+  trackId?: number;
+  trackLevel?: number;
 }
 
 export interface LearningPath {
@@ -89,6 +91,8 @@ export interface LearningPath {
   title: string;
   description: string;
   slug: string;
+  tag?: string;
+  order?: number;
   courses: Course[];
   difficulty: Difficulty;
 }
