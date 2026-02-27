@@ -20,6 +20,7 @@ interface RustApiResponse {
 
 interface FinalizeApiResponse {
   xpAwarded?: number;
+  credentialIssued?: boolean;
   error?: string;
 }
 
@@ -147,7 +148,7 @@ export function useChallengeRunner() {
       });
       const data: FinalizeApiResponse = await res.json();
       if (data.error) throw new Error(data.error);
-      return { xpAwarded: data.xpAwarded ?? 0, credentialIssued: true };
+      return { xpAwarded: data.xpAwarded ?? 0, credentialIssued: data.credentialIssued ?? false };
     },
     [],
   );
