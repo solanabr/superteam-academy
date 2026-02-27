@@ -6,8 +6,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import { House, Book, Trophy, List, X } from "@phosphor-icons/react";
-import type { User } from "@supabase/supabase-js";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth/auth-provider";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { AuthModal } from "@/components/auth/auth-modal";
@@ -16,12 +16,6 @@ import { LevelBadge } from "@/components/gamification/level-badge";
 import { xpToNextLevel, calculateLevel } from "@/lib/gamification/xp";
 import { useXpBalance } from "@/lib/solana/hooks";
 import { createClient } from "@/lib/supabase/client";
-
-interface UserProfile {
-  username: string;
-  avatar_url: string | null;
-  wallet_address: string | null;
-}
 
 const navItems = [
   { key: "dashboard", icon: House, href: "/dashboard" },
@@ -34,10 +28,8 @@ export function Header() {
   const tA11y = useTranslations("a11y");
   const locale = useLocale();
   const pathname = usePathname();
+  const { user, profile, isLoading: authLoading } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [authLoading, setAuthLoading] = useState(true);
 
   // XP state
   const [displayedXp, setDisplayedXp] = useState(0);
@@ -50,57 +42,6 @@ export function Header() {
   const xpGainTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
   const { balance: onChainXp } = useXpBalance();
-
-  // Auth + profile loading
-  useEffect(() => {
-    const supabase = createClient();
-
-    async function loadUser() {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      const currentUser = session?.user ?? null;
-      setUser(currentUser);
-
-      if (currentUser) {
-        const { data } = await supabase
-          .from("profiles")
-          .select("username, avatar_url, wallet_address")
-          .eq("id", currentUser.id)
-          .single();
-        if (data) setProfile(data);
-      }
-      setAuthLoading(false);
-    }
-
-    loadUser();
-
-    // IMPORTANT: This callback must NOT be async.
-    // During initialization, GoTrue awaits all onAuthStateChange callbacks.
-    // An async callback that calls supabase.from() would deadlock because the
-    // Postgrest client internally calls getSession(), which awaits initializePromise.
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      const newUser = session?.user ?? null;
-      setUser(newUser);
-
-      if (newUser) {
-        supabase
-          .from("profiles")
-          .select("username, avatar_url, wallet_address")
-          .eq("id", newUser.id)
-          .single()
-          .then(({ data }) => {
-            if (data) setProfile(data as UserProfile);
-          });
-      } else {
-        setProfile(null);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
 
   // XP fetching
   const fetchXp = useCallback(async () => {
@@ -214,7 +155,19 @@ export function Header() {
           </Link>
 
           {/* Center: nav pill bar (desktop) */}
-          {isLoggedIn && (
+          {authLoading ? (
+            <nav
+              className="nav-bar absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 md:flex"
+              aria-hidden="true"
+            >
+              {navItems.map((item) => (
+                <div key={item.key} className="nav-link">
+                  <div className="h-4 w-4 animate-pulse rounded bg-[var(--input)]" />
+                  <div className="h-3 w-12 animate-pulse rounded bg-[var(--input)]" />
+                </div>
+              ))}
+            </nav>
+          ) : isLoggedIn ? (
             <nav
               className="nav-bar absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 md:flex"
               aria-label={tA11y("platformNavigation")}
@@ -237,7 +190,7 @@ export function Header() {
                 );
               })}
             </nav>
-          )}
+          ) : null}
 
           {/* Right: XP ring → lang → theme → user (desktop) */}
           <div className="relative z-10 ml-auto hidden shrink-0 items-center gap-[10px] md:flex">
