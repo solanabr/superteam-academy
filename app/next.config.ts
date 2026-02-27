@@ -80,7 +80,7 @@ const nextConfig: NextConfig = {
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
-          { key: 'Content-Security-Policy', value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.sanity.io https://www.googletagmanager.com https://www.clarity.ms; connect-src 'self' https://api.devnet.solana.com https://*.sentry.io https://*.sanity.io https://www.google-analytics.com https://*.google-analytics.com wss:; img-src 'self' data: blob: https://cdn.sanity.io https://lh3.googleusercontent.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; frame-src 'self';" },
+          { key: 'Content-Security-Policy', value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.sanity.io https://www.googletagmanager.com https://*.clarity.ms; connect-src 'self' https://api.devnet.solana.com https://*.sentry.io https://*.sanity.io https://www.google-analytics.com https://*.google-analytics.com https://*.clarity.ms wss:; img-src 'self' data: blob: https://cdn.sanity.io https://lh3.googleusercontent.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; frame-src 'self';" },
         ],
       },
     ];
