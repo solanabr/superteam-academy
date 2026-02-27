@@ -50,6 +50,7 @@ model User {
   progress      LessonProgress[]
   achievements  UserAchievement[]
   xpHistory     XPHistory[]
+  challenges    UserChallenge[]
 }
 
 
@@ -179,4 +180,34 @@ model Lesson {
   initialCode String?      // Стартовый код (для практики)
   order       Int          // Глобальный индекс урока в курсе (0, 1, 2...) для блокчейна
   isChallenge Boolean      @default(true) // true = практика с кодом, false = только текст/видео
+}
+
+model Challenge {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String   // "Complete 3 lessons today"
+  description String
+  xpReward    Int      @default(25)
+  targetCount Int      // Сколько действий нужно сделать (например, 3)
+  type        String   // "LESSON_COUNT", "LOGIN_STREAK"
+  isActive    Boolean  @default(true)
+  
+  userChallenges UserChallenge[]
+}
+
+model UserChallenge {
+  id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId       String    @db.ObjectId
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challengeId  String    @db.ObjectId
+  challenge    Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  
+  currentCount Int       @default(0) // Сколько уже сделал сегодня
+  isCompleted  Boolean   @default(false)
+  claimedAt    DateTime? // Время, когда забрал награду
+  
+  // Уникальный ключ: юзер + челендж + дата (строка YYYY-MM-DD)
+  // Это позволит каждый день создавать новую запись
+  dateKey      String    
+
+  @@unique([userId, challengeId, dateKey])
 }

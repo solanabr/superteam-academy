@@ -170,6 +170,53 @@ export async function POST(request: Request) {
                 
             // TODO: В будущем здесь будет вызов сервиса отправки уведомлений (Notification Service)
         }
+
+        // НОВОЕ: Трекинг Daily Challenges
+        const todayStr = new Date().toISOString().split('T')[0];
+                
+        // Получаем все активные задания типа LESSON_COUNT
+        const activeChallenges = await tx.challenge.findMany({
+            where: { type: "LESSON_COUNT", isActive: true }
+        });
+
+        for (const challenge of activeChallenges) {
+            // Ищем текущий прогресс на сегодня
+            const userCh = await tx.userChallenge.findUnique({
+                where: {
+                    userId_challengeId_dateKey: {
+                        userId: user.id,
+                        challengeId: challenge.id,
+                        dateKey: todayStr
+                    }
+                }
+            });
+
+            const currentCount = (userCh?.currentCount || 0) + 1;
+            const isCompleted = currentCount >= challenge.targetCount;
+
+            await tx.userChallenge.upsert({
+                where: {
+                    userId_challengeId_dateKey: {
+                        userId: user.id,
+                        challengeId: challenge.id,
+                        dateKey: todayStr
+                    }
+                },
+                update: {
+                    currentCount: currentCount,
+                    isCompleted: isCompleted,
+                     // Мы не ставим claimedAt автоматически. Юзер должен сам "забрать" награду.
+                },
+                create: {
+                    userId: user.id,
+                    challengeId: challenge.id,
+                    dateKey: todayStr,
+                    currentCount: currentCount,
+                    isCompleted: isCompleted
+                }
+            });
+        }
+
     });
 
     // 5. Обновляем Стрик (вынесено в отдельную логику)

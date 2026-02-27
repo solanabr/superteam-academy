@@ -10,6 +10,7 @@ import { Menu } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { AuthGuard } from "@/components/auth-guard";
 import {LanguageSwitcher} from "@/components/language-switcher"
+import {NotificationsPopover} from "@/components/notifications-popover"
 
 // Провайдеры
 import { SessionProvider } from "next-auth/react";
@@ -57,6 +58,7 @@ export default function DashboardLayout({
 
               <div className="flex items-center space-x-4">
                 <ModeToggle />
+                <NotificationsPopover />
                 <LanguageSwitcher />
                 <UserNav />
               </div>

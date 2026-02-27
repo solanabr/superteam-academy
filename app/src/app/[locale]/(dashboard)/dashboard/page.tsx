@@ -7,6 +7,7 @@ import { useUser } from "@/hooks/useUser";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import { ArrowRight, Loader2 } from "lucide-react";
+import {DailyQuests} from "@/components/daily-quests"
 
 interface UserEnrollment {
     id: string;
@@ -48,6 +49,7 @@ export default function DashboardPage() {
 
         <div className="col-span-3 space-y-4">
             <h3 className="text-xl font-semibold">Activity</h3>
+            <DailyQuests />
             <StreakCard />
         </div>
       </div>
