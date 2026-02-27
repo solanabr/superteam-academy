@@ -12,6 +12,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { useTranslations } from "next-intl";
 import { useToast } from "@/hooks/use-toast";
 import { useSettings } from "@/hooks/use-settings";
 
@@ -38,53 +39,59 @@ const DEFAULTS: PrivacyState = {
 const TOGGLE_ITEMS = [
 	{
 		key: "showProgress" as const,
-		label: "Show progress",
-		desc: "Display course progress on your profile",
+		labelKey: "toggles.showProgress.label",
+		descKey: "toggles.showProgress.description",
 	},
 	{
 		key: "showAchievements" as const,
-		label: "Show achievements",
-		desc: "Display badges and credentials",
+		labelKey: "toggles.showAchievements.label",
+		descKey: "toggles.showAchievements.description",
 	},
 	{
 		key: "showActivity" as const,
-		label: "Show activity",
-		desc: "Display recent learning activity",
+		labelKey: "toggles.showActivity.label",
+		descKey: "toggles.showActivity.description",
 	},
 	{
 		key: "allowMessaging" as const,
-		label: "Allow messaging",
-		desc: "Let other learners message you",
+		labelKey: "toggles.allowMessaging.label",
+		descKey: "toggles.allowMessaging.description",
 	},
 	{
 		key: "dataSharing" as const,
-		label: "Data sharing",
-		desc: "Share anonymized data for platform improvement",
+		labelKey: "toggles.dataSharing.label",
+		descKey: "toggles.dataSharing.description",
 	},
 	{
 		key: "analyticsTracking" as const,
-		label: "Analytics tracking",
-		desc: "Allow usage analytics to improve your experience",
+		labelKey: "toggles.analyticsTracking.label",
+		descKey: "toggles.analyticsTracking.description",
 	},
 ] as const;
 
 const VISIBILITY_OPTIONS = [
-	{ value: "public" as const, label: "Public", desc: "Anyone can view your profile", Icon: Eye },
+	{
+		value: "public" as const,
+		labelKey: "visibility.public.label",
+		descKey: "visibility.public.description",
+		Icon: Eye,
+	},
 	{
 		value: "friends" as const,
-		label: "Friends only",
-		desc: "Only connections can view",
+		labelKey: "visibility.friends.label",
+		descKey: "visibility.friends.description",
 		Icon: Users,
 	},
 	{
 		value: "private" as const,
-		label: "Private",
-		desc: "Only you can view your profile",
+		labelKey: "visibility.private.label",
+		descKey: "visibility.private.description",
 		Icon: Lock,
 	},
 ];
 
 export function PrivacySettings() {
+	const t = useTranslations("settings.privacySection");
 	const { toast } = useToast();
 	const { data, save } = useSettings();
 	const [isLoading, setIsLoading] = useState(false);
@@ -100,9 +107,16 @@ export function PrivacySettings() {
 		setIsLoading(true);
 		try {
 			await save({ settings: { privacy: settings } });
-			toast({ title: "Privacy updated", description: "Your preferences have been saved." });
+			toast({
+				title: t("toast.updatedTitle"),
+				description: t("toast.updatedDescription"),
+			});
 		} catch {
-			toast({ title: "Error", description: "Failed to save.", variant: "destructive" });
+			toast({
+				title: t("toast.errorTitle"),
+				description: t("toast.errorDescription"),
+				variant: "destructive",
+			});
 		} finally {
 			setIsLoading(false);
 		}
@@ -118,7 +132,7 @@ export function PrivacySettings() {
 			const exportData = {
 				exportedAt: new Date().toISOString(),
 				privacySettings: settings,
-				note: "This is an export of your Superteam Academy privacy settings and preferences.",
+				note: t("export.note"),
 			};
 			const blob = new Blob([JSON.stringify(exportData, null, 2)], {
 				type: "application/json",
@@ -129,27 +143,30 @@ export function PrivacySettings() {
 			link.download = `superteam-academy-data-export-${new Date().toISOString().split("T")[0]}.json`;
 			link.click();
 			URL.revokeObjectURL(url);
-			toast({ title: "Data exported", description: "Your data has been downloaded." });
+			toast({
+				title: t("toast.exportedTitle"),
+				description: t("toast.exportedDescription"),
+			});
 		} catch {
 			toast({
-				title: "Export failed",
-				description: "Could not export your data.",
+				title: t("toast.exportFailedTitle"),
+				description: t("toast.exportFailedDescription"),
 				variant: "destructive",
 			});
 		} finally {
 			setIsExporting(false);
 		}
-	}, [settings, toast]);
+	}, [settings, t, toast]);
 
 	return (
 		<div className="rounded-2xl border border-border/60 bg-card overflow-hidden">
 			<div className="px-6 py-4 border-b border-border/40">
-				<h3 className="font-semibold text-sm">Privacy & Visibility</h3>
+				<h3 className="font-semibold text-sm">{t("title")}</h3>
 			</div>
 
 			<div className="p-6 space-y-6">
 				<div className="space-y-2">
-					<Label className="text-xs">Profile visibility</Label>
+					<Label className="text-xs">{t("labels.profileVisibility")}</Label>
 					<Select
 						value={settings.profileVisibility}
 						onValueChange={(v: "public" | "friends" | "private") =>
@@ -160,13 +177,13 @@ export function PrivacySettings() {
 							<SelectValue />
 						</SelectTrigger>
 						<SelectContent>
-							{VISIBILITY_OPTIONS.map(({ value, label, desc, Icon }) => (
+							{VISIBILITY_OPTIONS.map(({ value, labelKey, descKey, Icon }) => (
 								<SelectItem key={value} value={value}>
 									<div className="flex items-center gap-2">
 										<Icon className="h-3.5 w-3.5" />
-										<span>{label}</span>
+										<span>{t(labelKey)}</span>
 										<span className="text-muted-foreground text-xs">
-											- {desc}
+											- {t(descKey)}
 										</span>
 									</div>
 								</SelectItem>
@@ -176,11 +193,11 @@ export function PrivacySettings() {
 				</div>
 
 				<div className="space-y-1">
-					{TOGGLE_ITEMS.map(({ key, label, desc }) => (
+					{TOGGLE_ITEMS.map(({ key, labelKey, descKey }) => (
 						<div key={key} className="flex items-center justify-between py-2.5">
 							<div>
-								<Label className="text-sm">{label}</Label>
-								<p className="text-xs text-muted-foreground">{desc}</p>
+								<Label className="text-sm">{t(labelKey)}</Label>
+								<p className="text-xs text-muted-foreground">{t(descKey)}</p>
 							</div>
 							<Switch
 								checked={settings[key]}
@@ -192,14 +209,14 @@ export function PrivacySettings() {
 
 				<div className="flex justify-end pt-2">
 					<Button onClick={handleSave} disabled={isLoading} size="sm">
-						{isLoading ? "Saving..." : "Save changes"}
+						{isLoading ? t("actions.saving") : t("actions.saveChanges")}
 					</Button>
 				</div>
 
 				<div className="pt-4 border-t border-border/40 space-y-2">
-					<Label className="text-xs">Data export</Label>
+					<Label className="text-xs">{t("export.title")}</Label>
 					<p className="text-xs text-muted-foreground">
-						Download a copy of your settings and preferences.
+						{t("export.description")}
 					</p>
 					<Button
 						variant="outline"
@@ -209,7 +226,7 @@ export function PrivacySettings() {
 						className="gap-1.5"
 					>
 						<Download className="h-3.5 w-3.5" />
-						{isExporting ? "Exporting..." : "Export my data"}
+						{isExporting ? t("actions.exporting") : t("actions.exportData")}
 					</Button>
 				</div>
 			</div>

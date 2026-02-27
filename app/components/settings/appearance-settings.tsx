@@ -5,6 +5,7 @@ import { Sun, Moon, Monitor } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { useTranslations } from "next-intl";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "next-themes";
 import { useSettings } from "@/hooks/use-settings";
@@ -12,18 +13,19 @@ import { useSettings } from "@/hooks/use-settings";
 type ThemeVal = "light" | "dark" | "system";
 
 const THEMES = [
-	{ value: "light" as const, label: "Light", Icon: Sun },
-	{ value: "dark" as const, label: "Dark", Icon: Moon },
-	{ value: "system" as const, label: "System", Icon: Monitor },
+	{ value: "light" as const, Icon: Sun },
+	{ value: "dark" as const, Icon: Moon },
+	{ value: "system" as const, Icon: Monitor },
 ];
 
 const FONT_SIZES = [
-	{ value: "small", label: "Small" },
-	{ value: "medium", label: "Medium" },
-	{ value: "large", label: "Large" },
+	{ value: "small" },
+	{ value: "medium" },
+	{ value: "large" },
 ];
 
 export function AppearanceSettings() {
+	const t = useTranslations("settings.appearanceSection");
 	const { toast } = useToast();
 	const { theme, setTheme } = useTheme();
 	const { data, save } = useSettings();
@@ -54,11 +56,15 @@ export function AppearanceSettings() {
 				},
 			});
 			toast({
-				title: "Appearance updated",
-				description: "Your preferences have been saved.",
+				title: t("toast.updatedTitle"),
+				description: t("toast.updatedDescription"),
 			});
 		} catch {
-			toast({ title: "Error", description: "Failed to save.", variant: "destructive" });
+			toast({
+				title: t("toast.errorTitle"),
+				description: t("toast.errorDescription"),
+				variant: "destructive",
+			});
 		} finally {
 			setIsLoading(false);
 		}
@@ -67,16 +73,16 @@ export function AppearanceSettings() {
 	return (
 		<div className="rounded-2xl border border-border/60 bg-card overflow-hidden">
 			<div className="px-6 py-4 border-b border-border/40">
-				<h3 className="font-semibold text-sm">Appearance</h3>
+				<h3 className="font-semibold text-sm">{t("title")}</h3>
 			</div>
 
 			<div className="p-6 space-y-6">
 				<div className="space-y-3">
 					<h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-						Theme
+						{t("sections.theme")}
 					</h4>
 					<div className="grid grid-cols-3 gap-2">
-						{THEMES.map(({ value, label, Icon }) => (
+						{THEMES.map(({ value, Icon }) => (
 							<button
 								key={value}
 								type="button"
@@ -90,7 +96,9 @@ export function AppearanceSettings() {
 								<Icon
 									className={`h-5 w-5 ${currentTheme === value ? "text-primary" : "text-muted-foreground"}`}
 								/>
-								<span className="text-xs font-medium">{label}</span>
+								<span className="text-xs font-medium">
+									{t(`themeOptions.${value}`)}
+								</span>
 							</button>
 						))}
 					</div>
@@ -98,10 +106,10 @@ export function AppearanceSettings() {
 
 				<div className="space-y-3">
 					<h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-						Font size
+						{t("sections.fontSize")}
 					</h4>
 					<div className="flex gap-2">
-						{FONT_SIZES.map(({ value, label }) => (
+						{FONT_SIZES.map(({ value }) => (
 							<button
 								key={value}
 								type="button"
@@ -112,7 +120,7 @@ export function AppearanceSettings() {
 										: "bg-muted/50 text-muted-foreground hover:bg-muted"
 								}`}
 							>
-								{label}
+								{t(`fontSizeOptions.${value}`)}
 							</button>
 						))}
 					</div>
@@ -120,13 +128,13 @@ export function AppearanceSettings() {
 
 				<div className="space-y-3">
 					<h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-						Accessibility
+						{t("sections.accessibility")}
 					</h4>
 					<div className="flex items-center justify-between py-2">
 						<div>
-							<Label className="text-sm">Reduced motion</Label>
+							<Label className="text-sm">{t("reducedMotion.title")}</Label>
 							<p className="text-xs text-muted-foreground">
-								Minimize animations across the platform
+								{t("reducedMotion.description")}
 							</p>
 						</div>
 						<Switch checked={reducedMotion} onCheckedChange={setReducedMotion} />
@@ -135,7 +143,7 @@ export function AppearanceSettings() {
 
 				<div className="flex justify-end pt-2">
 					<Button onClick={handleSave} disabled={isLoading} size="sm">
-						{isLoading ? "Saving..." : "Save changes"}
+						{isLoading ? t("actions.saving") : t("actions.saveChanges")}
 					</Button>
 				</div>
 			</div>

@@ -16,16 +16,18 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslations } from "next-intl";
 
 const EVENT_TYPES = [
-	{ value: "workshop", label: "Workshop" },
-	{ value: "ama", label: "AMA" },
-	{ value: "hackathon", label: "Hackathon" },
-	{ value: "meetup", label: "Meetup" },
-	{ value: "conference", label: "Conference" },
+	{ value: "workshop" },
+	{ value: "ama" },
+	{ value: "hackathon" },
+	{ value: "meetup" },
+	{ value: "conference" },
 ];
 
 export default function NewEventPage() {
+	const t = useTranslations("community.createEvent");
 	const router = useRouter();
 	const { toast } = useToast();
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -85,22 +87,22 @@ export default function NewEventPage() {
 			const data = await res.json();
 
 			if (!res.ok) {
-				throw new Error(data.error || "Failed to create event");
+				throw new Error(data.error || t("errors.createFailed"));
 			}
 
 			toast({
-				title: "Event created!",
-				description: "Your event has been posted to the community.",
+				title: t("toast.createdTitle"),
+				description: t("toast.createdDescription"),
 			});
 
 			router.push("/community/events");
 		} catch (err) {
 			toast({
-				title: "Error",
+				title: t("toast.errorTitle"),
 				description:
 					err instanceof Error
 						? err.message
-						: "Failed to create event. Please try again.",
+						: t("errors.createFailedRetry"),
 				variant: "destructive",
 			});
 		} finally {
@@ -117,9 +119,9 @@ export default function NewEventPage() {
 					</Link>
 				</Button>
 				<div>
-					<h1 className="text-2xl font-bold">Create Event</h1>
+					<h1 className="text-2xl font-bold">{t("title")}</h1>
 					<p className="text-sm text-muted-foreground">
-						Host a workshop, AMA, hackathon, or meetup for the community
+						{t("description")}
 					</p>
 				</div>
 			</div>
@@ -128,12 +130,12 @@ export default function NewEventPage() {
 				<div className="rounded-2xl border border-border/60 bg-card p-6 space-y-5">
 					<div className="space-y-2">
 						<label htmlFor="title" className="text-sm font-medium">
-							Event Name *
+							{t("fields.eventName")}
 						</label>
 						<Input
 							id="title"
 							name="title"
-							placeholder="Solana Security Workshop"
+							placeholder={t("placeholders.eventName")}
 							className="h-11"
 							required
 							maxLength={200}
@@ -143,7 +145,7 @@ export default function NewEventPage() {
 					<div className="grid grid-cols-2 gap-4">
 						<div className="space-y-2">
 							<label htmlFor="type" className="text-sm font-medium">
-								Type *
+								{t("fields.type")}
 							</label>
 							<Select name="type" defaultValue="workshop" required>
 								<SelectTrigger className="h-11">
@@ -152,7 +154,7 @@ export default function NewEventPage() {
 								<SelectContent>
 									{EVENT_TYPES.map((type) => (
 										<SelectItem key={type.value} value={type.value}>
-											{type.label}
+											{t(`eventTypes.${type.value}`)}
 										</SelectItem>
 									))}
 								</SelectContent>
@@ -161,7 +163,7 @@ export default function NewEventPage() {
 
 						<div className="space-y-2">
 							<label htmlFor="timezone" className="text-sm font-medium">
-								Timezone *
+								{t("fields.timezone")}
 							</label>
 							<Input
 								id="timezone"
@@ -176,7 +178,7 @@ export default function NewEventPage() {
 					<div className="grid grid-cols-2 gap-4">
 						<div className="space-y-2">
 							<label htmlFor="startDate" className="text-sm font-medium">
-								Start Date & Time *
+								{t("fields.startDateTime")}
 							</label>
 							<Input
 								id="startDate"
@@ -189,7 +191,7 @@ export default function NewEventPage() {
 
 						<div className="space-y-2">
 							<label htmlFor="endDate" className="text-sm font-medium">
-								End Date & Time
+								{t("fields.endDateTime")}
 							</label>
 							<Input
 								id="endDate"
@@ -201,7 +203,7 @@ export default function NewEventPage() {
 					</div>
 
 					<div className="space-y-2">
-						<label className="text-sm font-medium">Location *</label>
+						<label className="text-sm font-medium">{t("fields.location")}</label>
 						<div className="flex gap-2 mb-2">
 							<Button
 								type="button"
@@ -209,7 +211,7 @@ export default function NewEventPage() {
 								size="sm"
 								onClick={() => setIsOnline(true)}
 							>
-								Online
+								{t("location.online")}
 							</Button>
 							<Button
 								type="button"
@@ -217,7 +219,7 @@ export default function NewEventPage() {
 								size="sm"
 								onClick={() => setIsOnline(false)}
 							>
-								In Person
+								{t("location.inPerson")}
 							</Button>
 						</div>
 						{!isOnline && (
@@ -233,12 +235,12 @@ export default function NewEventPage() {
 
 					<div className="space-y-2">
 						<label htmlFor="description" className="text-sm font-medium">
-							Description *
+							{t("fields.description")}
 						</label>
 						<Textarea
 							id="description"
 							name="description"
-							placeholder="What will attendees learn or experience at this event?"
+							placeholder={t("placeholders.description")}
 							className="min-h-37.5 resize-y"
 							required
 						/>
@@ -247,7 +249,7 @@ export default function NewEventPage() {
 					<div className="grid grid-cols-2 gap-4">
 						<div className="space-y-2">
 							<label htmlFor="maxAttendees" className="text-sm font-medium">
-								Max Attendees (optional)
+								{t("fields.maxAttendees")}
 							</label>
 							<Input
 								id="maxAttendees"
@@ -261,7 +263,7 @@ export default function NewEventPage() {
 
 						<div className="space-y-2">
 							<label htmlFor="registrationUrl" className="text-sm font-medium">
-								Registration URL (optional)
+								{t("fields.registrationUrl")}
 							</label>
 							<Input
 								id="registrationUrl"
@@ -275,14 +277,14 @@ export default function NewEventPage() {
 
 					<div className="space-y-2">
 						<label htmlFor="tags" className="text-sm font-medium">
-							Tags (optional)
+							{t("fields.tags")}
 						</label>
 						<Input
 							id="tags"
 							value={tagInput}
 							onChange={(e) => setTagInput(e.target.value)}
 							onKeyDown={handleAddTag}
-							placeholder="Press Enter to add tags (max 5)"
+							placeholder={t("placeholders.tags")}
 							disabled={tags.length >= 5}
 						/>
 						{tags.length > 0 && (
@@ -305,11 +307,11 @@ export default function NewEventPage() {
 
 				<div className="flex items-center justify-between">
 					<Button type="button" variant="ghost" asChild>
-						<Link href="/community/events">Cancel</Link>
+						<Link href="/community/events">{t("actions.cancel")}</Link>
 					</Button>
 					<Button type="submit" disabled={isSubmitting}>
 						{isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-						Create Event
+						{t("actions.createEvent")}
 					</Button>
 				</div>
 			</form>

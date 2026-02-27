@@ -1,6 +1,7 @@
 import { Award, ExternalLink, Star } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useTranslations } from "next-intl";
 
 interface CredentialItem {
 	id: string;
@@ -19,6 +20,7 @@ interface CredentialListProps {
 }
 
 export function CredentialList({ credentials }: CredentialListProps) {
+	const t = useTranslations("credentials");
 	if (credentials.length === 0) return null;
 
 	return (
@@ -26,7 +28,7 @@ export function CredentialList({ credentials }: CredentialListProps) {
 			<CardHeader>
 				<CardTitle className="flex items-center gap-2">
 					<Award className="h-5 w-5 text-yellow-600" />
-					Credentials ({credentials.length})
+					{t("listTitle", { count: credentials.length })}
 				</CardTitle>
 			</CardHeader>
 			<CardContent>
@@ -40,7 +42,7 @@ export function CredentialList({ credentials }: CredentialListProps) {
 										variant={cred.isActive ? "default" : "secondary"}
 										className="text-xs"
 									>
-										{cred.isActive ? "Verified" : "Unverified"}
+										{cred.isActive ? t("verified") : t("unverified")}
 									</Badge>
 								</div>
 								{cred.description && (
@@ -62,7 +64,7 @@ export function CredentialList({ credentials }: CredentialListProps) {
 										className="flex items-center gap-1 hover:text-foreground transition-colors"
 									>
 										<ExternalLink className="h-3 w-3" />
-										Explorer
+										{t("explorer")}
 									</a>
 								</div>
 							</CardContent>

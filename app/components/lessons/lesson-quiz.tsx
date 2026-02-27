@@ -9,6 +9,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { useTranslations } from "next-intl";
 
 interface QuizQuestion {
 	id: string;
@@ -31,6 +32,7 @@ interface LessonQuizProps {
 }
 
 export function LessonQuiz({ quiz, onComplete, onRetry }: LessonQuizProps) {
+	const t = useTranslations("lessonQuiz");
 	const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 	const [answers, setAnswers] = useState<Record<string, number>>({});
 	const [showResults, setShowResults] = useState(false);
@@ -149,30 +151,35 @@ export function LessonQuiz({ quiz, onComplete, onRetry }: LessonQuizProps) {
 							)}
 						</div>
 						<CardTitle className="text-2xl">
-							{passed ? "Congratulations!" : "Try Again"}
+							{passed ? t("results.congratulations") : t("results.tryAgain")}
 						</CardTitle>
 					</CardHeader>
 					<CardContent className="text-center space-y-4">
 						<div>
 							<div className="text-3xl font-bold mb-2">{score.toFixed(1)}%</div>
 							<p className="text-muted-foreground">
-								{correctAnswers} out of {validQuestions.length} correct
+								{t("results.correctCount", {
+									correct: correctAnswers,
+									total: validQuestions.length,
+								})}
 							</p>
 						</div>
 
 						<Badge variant={passed ? "default" : "destructive"} className="text-sm">
-							{passed ? "Passed" : "Failed"} (Required: {quiz.passingScore}%)
+							{passed ? t("results.passed") : t("results.failed")} ({t("results.required", {
+								score: quiz.passingScore,
+							})})
 						</Badge>
 
 						<Button onClick={handleRetry} className="w-full">
 							<RotateCcw className="h-4 w-4 mr-2" />
-							Try Again
+							{t("results.tryAgain")}
 						</Button>
 					</CardContent>
 				</Card>
 
 				<div className="space-y-4">
-					<h3 className="text-lg font-semibold">Review Answers</h3>
+					<h3 className="text-lg font-semibold">{t("results.reviewAnswers")}</h3>
 					{validQuestions.map((question, index) => {
 						const userAnswer = answers[question.id];
 						const isCorrect = userAnswer === question.correctAnswer;
@@ -186,7 +193,7 @@ export function LessonQuiz({ quiz, onComplete, onRetry }: LessonQuizProps) {
 										) : (
 											<XCircle className="h-4 w-4 text-red-500" />
 										)}
-										Question {index + 1}
+										{t("results.question", { number: index + 1 })}
 									</CardTitle>
 								</CardHeader>
 								<CardContent className="space-y-3">
@@ -237,7 +244,7 @@ export function LessonQuiz({ quiz, onComplete, onRetry }: LessonQuizProps) {
 									{question.explanation && (
 										<div className="bg-blue-50 border border-blue-200 rounded-lg p-3 dark:bg-blue-950 dark:border-blue-800">
 											<p className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-1">
-												Explanation:
+													{t("results.explanation")}
 											</p>
 											<p className="text-sm text-blue-700 dark:text-blue-300">
 												{question.explanation}
@@ -262,7 +269,7 @@ export function LessonQuiz({ quiz, onComplete, onRetry }: LessonQuizProps) {
 					</CardHeader>
 					<CardContent>
 						<p className="text-sm text-muted-foreground">
-							This quiz is not available yet.
+							{t("notAvailable")}
 						</p>
 					</CardContent>
 				</Card>
@@ -285,9 +292,12 @@ export function LessonQuiz({ quiz, onComplete, onRetry }: LessonQuizProps) {
 					<div className="space-y-2">
 						<div className="flex justify-between text-sm">
 							<span>
-								Question {currentQuestionIndex + 1} of {validQuestions.length}
+								{t("progress.questionOf", {
+									current: currentQuestionIndex + 1,
+									total: validQuestions.length,
+								})}
 							</span>
-							<span>{Math.round(progress)}% complete</span>
+							<span>{t("progress.complete", { percent: Math.round(progress) })}</span>
 						</div>
 						<Progress value={progress} className="h-2" />
 					</div>
@@ -332,14 +342,16 @@ export function LessonQuiz({ quiz, onComplete, onRetry }: LessonQuizProps) {
 					variant="outline"
 					className="flex-1"
 				>
-					Previous
+					{t("actions.previous")}
 				</Button>
 				<Button
 					onClick={handleNext}
 					disabled={answers[currentQuestion.id] === undefined}
 					className="flex-1"
 				>
-					{currentQuestionIndex === validQuestions.length - 1 ? "Submit Quiz" : "Next"}
+					{currentQuestionIndex === validQuestions.length - 1
+						? t("actions.submitQuiz")
+						: t("actions.next")}
 				</Button>
 			</div>
 		</div>

@@ -18,6 +18,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { useTranslations } from "next-intl";
 
 interface LessonData {
 	_id?: string;
@@ -52,6 +53,7 @@ interface CourseData {
 }
 
 export default function EditCoursePage() {
+	const t = useTranslations("admin.editCourse");
 	const router = useRouter();
 	const params = useParams();
 	const courseId = params.courseId as string;
@@ -291,7 +293,7 @@ export default function EditCoursePage() {
 				<Button onClick={handleSave} disabled={saving || !title.trim()}>
 					{saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
 					<Save className="h-4 w-4 mr-2" />
-					Save Changes
+					{t("saveChanges")}
 				</Button>
 			</div>
 		</div>

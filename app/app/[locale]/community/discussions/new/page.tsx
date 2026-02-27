@@ -16,17 +16,19 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslations } from "next-intl";
 
 const CATEGORIES = [
-	{ value: "announcements", label: "Announcements" },
-	{ value: "technicalQA", label: "Technical Q&A" },
-	{ value: "projectShowcase", label: "Project Showcase" },
-	{ value: "featureRequests", label: "Feature Requests" },
-	{ value: "studyGroups", label: "Study Groups" },
-	{ value: "offTopic", label: "Off Topic" },
+	{ value: "announcements" },
+	{ value: "technicalQA" },
+	{ value: "projectShowcase" },
+	{ value: "featureRequests" },
+	{ value: "studyGroups" },
+	{ value: "offTopic" },
 ];
 
 export default function NewDiscussionPage() {
+	const t = useTranslations("community.createDiscussion");
 	const router = useRouter();
 	const { toast } = useToast();
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -66,22 +68,22 @@ export default function NewDiscussionPage() {
 			const data = await res.json();
 
 			if (!res.ok) {
-				throw new Error(data.error || "Failed to create discussion");
+				throw new Error(data.error || t("errors.createFailed"));
 			}
 
 			toast({
-				title: "Discussion created!",
-				description: "Your discussion has been posted to the community.",
+				title: t("toast.createdTitle"),
+				description: t("toast.createdDescription"),
 			});
 
 			router.push(`/community/discussions/${data.slug}`);
 		} catch (err) {
 			toast({
-				title: "Error",
+				title: t("toast.errorTitle"),
 				description:
 					err instanceof Error
 						? err.message
-						: "Failed to create discussion. Please try again.",
+						: t("errors.createFailedRetry"),
 				variant: "destructive",
 			});
 		} finally {
@@ -98,9 +100,9 @@ export default function NewDiscussionPage() {
 					</Link>
 				</Button>
 				<div>
-					<h1 className="text-2xl font-bold">Start a Discussion</h1>
+					<h1 className="text-2xl font-bold">{t("title")}</h1>
 					<p className="text-sm text-muted-foreground">
-						Ask questions, share ideas, or showcase your work
+						{t("description")}
 					</p>
 				</div>
 			</div>
@@ -109,12 +111,12 @@ export default function NewDiscussionPage() {
 				<div className="rounded-2xl border border-border/60 bg-card p-6 space-y-5">
 					<div className="space-y-2">
 						<label htmlFor="title" className="text-sm font-medium">
-							Title *
+							{t("fields.title")}
 						</label>
 						<Input
 							id="title"
 							name="title"
-							placeholder="What's on your mind?"
+							placeholder={t("placeholders.title")}
 							className="h-11"
 							required
 							maxLength={200}
@@ -123,7 +125,7 @@ export default function NewDiscussionPage() {
 
 					<div className="space-y-2">
 						<label htmlFor="category" className="text-sm font-medium">
-							Category *
+							{t("fields.category")}
 						</label>
 						<Select name="category" defaultValue="technicalQA" required>
 							<SelectTrigger className="h-11">
@@ -132,7 +134,7 @@ export default function NewDiscussionPage() {
 							<SelectContent>
 								{CATEGORIES.map((cat) => (
 									<SelectItem key={cat.value} value={cat.value}>
-										{cat.label}
+										{t(`categories.${cat.value}`)}
 									</SelectItem>
 								))}
 							</SelectContent>
@@ -141,28 +143,28 @@ export default function NewDiscussionPage() {
 
 					<div className="space-y-2">
 						<label htmlFor="content" className="text-sm font-medium">
-							Details *
+							{t("fields.details")}
 						</label>
 						<Textarea
 							id="content"
 							name="content"
-							placeholder="Provide more context, code snippets, or background information..."
+							placeholder={t("placeholders.details")}
 							className="min-h-50 resize-y"
 							required
 						/>
-						<p className="text-xs text-muted-foreground">Markdown supported</p>
+						<p className="text-xs text-muted-foreground">{t("markdownSupported")}</p>
 					</div>
 
 					<div className="space-y-2">
 						<label htmlFor="tags" className="text-sm font-medium">
-							Tags (optional)
+							{t("fields.tags")}
 						</label>
 						<Input
 							id="tags"
 							value={tagInput}
 							onChange={(e) => setTagInput(e.target.value)}
 							onKeyDown={handleAddTag}
-							placeholder="Press Enter to add tags (max 5)"
+							placeholder={t("placeholders.tags")}
 							disabled={tags.length >= 5}
 						/>
 						{tags.length > 0 && (
@@ -185,11 +187,11 @@ export default function NewDiscussionPage() {
 
 				<div className="flex items-center justify-between">
 					<Button type="button" variant="ghost" asChild>
-						<Link href="/community">Cancel</Link>
+						<Link href="/community">{t("actions.cancel")}</Link>
 					</Button>
 					<Button type="submit" disabled={isSubmitting}>
 						{isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-						Post Discussion
+						{t("actions.postDiscussion")}
 					</Button>
 				</div>
 			</form>

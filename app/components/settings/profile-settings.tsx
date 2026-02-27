@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useTranslations } from "next-intl";
 import { useToast } from "@/hooks/use-toast";
 import { useSettings } from "@/hooks/use-settings";
 import { isValidUsername, isUsernameAvailable } from "@/lib/username-utils";
@@ -22,6 +23,7 @@ interface ProfileData {
 }
 
 export function ProfileSettings() {
+	const t = useTranslations("settings.profileSection");
 	const { toast } = useToast();
 	const { data, loading, save } = useSettings();
 	const [isLoading, setIsLoading] = useState(false);
@@ -84,9 +86,8 @@ export function ProfileSettings() {
 		// Validate username
 		if (profile.username && !(await isValidUsername(profile.username))) {
 			toast({
-				title: "Invalid username",
-				description:
-					"Username must be 3-30 characters and contain only letters, numbers, hyphens, and underscores.",
+				title: t("toast.invalidUsernameTitle"),
+				description: t("toast.invalidUsernameDescription"),
 				variant: "destructive",
 			});
 			return;
@@ -94,8 +95,8 @@ export function ProfileSettings() {
 
 		if (profile.username && usernameAvailable === false) {
 			toast({
-				title: "Username unavailable",
-				description: "This username is already taken. Please choose another one.",
+				title: t("toast.usernameUnavailableTitle"),
+				description: t("toast.usernameUnavailableDescription"),
 				variant: "destructive",
 			});
 			return;
@@ -111,11 +112,14 @@ export function ProfileSettings() {
 				location: profile.location,
 				website: profile.website,
 			});
-			toast({ title: "Profile updated", description: "Your changes have been saved." });
+			toast({
+				title: t("toast.updatedTitle"),
+				description: t("toast.updatedDescription"),
+			});
 		} catch {
 			toast({
-				title: "Error",
-				description: "Failed to save changes.",
+				title: t("toast.errorTitle"),
+				description: t("toast.errorDescription"),
 				variant: "destructive",
 			});
 		} finally {
@@ -146,7 +150,7 @@ export function ProfileSettings() {
 	return (
 		<div className="rounded-2xl border border-border/60 bg-card overflow-hidden">
 			<div className="px-6 py-4 border-b border-border/40">
-				<h3 className="font-semibold text-sm">Profile Information</h3>
+				<h3 className="font-semibold text-sm">{t("title")}</h3>
 			</div>
 
 			<div className="p-6 space-y-6">
@@ -162,7 +166,7 @@ export function ProfileSettings() {
 							<Button variant="outline" size="sm" asChild>
 								<span>
 									<Camera className="h-3.5 w-3.5 mr-1.5" />
-									Change photo
+									{t("changePhoto")}
 								</span>
 							</Button>
 						</Label>
@@ -173,14 +177,14 @@ export function ProfileSettings() {
 							onChange={handleAvatarChange}
 							className="hidden"
 						/>
-						<p className="text-[10px] text-muted-foreground mt-1">JPG, PNG. Max 2MB.</p>
+						<p className="text-[10px] text-muted-foreground mt-1">{t("photoHelp")}</p>
 					</div>
 				</div>
 
 				<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 					<div className="space-y-1.5">
 						<Label htmlFor="name" className="text-xs">
-							Name
+							{t("fields.name")}
 						</Label>
 						<Input
 							id="name"
@@ -190,7 +194,7 @@ export function ProfileSettings() {
 					</div>
 					<div className="space-y-1.5">
 						<Label htmlFor="email" className="text-xs">
-							Email
+							{t("fields.email")}
 						</Label>
 						<Input
 							id="email"
@@ -201,14 +205,14 @@ export function ProfileSettings() {
 					</div>
 					<div className="space-y-1.5 sm:col-span-2">
 						<Label htmlFor="username" className="text-xs">
-							Username
+							{t("fields.username")}
 						</Label>
 						<div className="relative">
 							<Input
 								id="username"
 								value={profile.username}
 								onChange={(e) => handleUsernameChange(e.target.value)}
-								placeholder="your-username"
+								placeholder={t("placeholders.username")}
 								className={
 									profile.username && usernameAvailable === false
 										? "border-destructive"
@@ -228,14 +232,14 @@ export function ProfileSettings() {
 							)}
 						</div>
 						<p className="text-[10px] text-muted-foreground">
-							3-30 characters. Letters, numbers, hyphens, and underscores only.
-							{usernameAvailable === false && " This username is already taken."}
-							{usernameAvailable === true && " Username is available!"}
+							{t("usernameHelp")}
+							{usernameAvailable === false && ` ${t("usernameTaken")}`}
+							{usernameAvailable === true && ` ${t("usernameAvailable")}`}
 						</p>
 					</div>
 					<div className="space-y-1.5">
 						<Label htmlFor="location" className="text-xs">
-							Location
+							{t("fields.location")}
 						</Label>
 						<Input
 							id="location"
@@ -247,7 +251,7 @@ export function ProfileSettings() {
 					</div>
 					<div className="space-y-1.5">
 						<Label htmlFor="website" className="text-xs">
-							Website
+							{t("fields.website")}
 						</Label>
 						<Input
 							id="website"
@@ -259,7 +263,7 @@ export function ProfileSettings() {
 
 				<div className="space-y-1.5">
 					<Label htmlFor="bio" className="text-xs">
-						Bio
+						{t("fields.bio")}
 					</Label>
 					<Textarea
 						id="bio"
@@ -268,13 +272,13 @@ export function ProfileSettings() {
 						rows={3}
 					/>
 					<p className="text-[10px] text-muted-foreground">
-						Brief description for your profile. Max 160 characters.
+						{t("bioHelp")}
 					</p>
 				</div>
 
 				<div className="flex justify-end pt-2">
 					<Button onClick={handleSave} disabled={isLoading} size="sm">
-						{isLoading ? "Saving..." : "Save changes"}
+						{isLoading ? t("actions.saving") : t("actions.saveChanges")}
 					</Button>
 				</div>
 			</div>

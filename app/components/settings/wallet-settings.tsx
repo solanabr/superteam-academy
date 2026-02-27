@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Wallet, ExternalLink, Copy, Check, RefreshCw, Link2, Unlink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { useTranslations } from "next-intl";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/auth-context";
 import { useSettings } from "@/hooks/use-settings";
@@ -20,6 +21,7 @@ function truncateAddress(address: string) {
 }
 
 export function WalletSettings() {
+	const t = useTranslations("settings.walletSection");
 	const { toast } = useToast();
 	const { wallet, user } = useAuth();
 	const { data, save } = useSettings();
@@ -37,7 +39,7 @@ export function WalletSettings() {
 	}, [data]);
 
 	const walletAddress = wallet.publicKey?.toBase58() ?? null;
-	const walletName = wallet.wallet?.adapter.name ?? "Unknown";
+	const walletName = wallet.wallet?.adapter.name ?? t("unknownWallet");
 
 	const loadLinkedAccounts = useCallback(async () => {
 		setAccountsLoading(true);
@@ -70,9 +72,13 @@ export function WalletSettings() {
 		setSaving(true);
 		try {
 			await save({ settings: { wallet: { autoConnect } } });
-			toast({ title: "Wallet settings saved" });
+			toast({ title: t("toast.savedTitle") });
 		} catch {
-			toast({ title: "Error", description: "Failed to save.", variant: "destructive" });
+			toast({
+				title: t("toast.errorTitle"),
+				description: t("toast.errorDescription"),
+				variant: "destructive",
+			});
 		} finally {
 			setSaving(false);
 		}
@@ -90,19 +96,19 @@ export function WalletSettings() {
 			if (!response.ok) {
 				const errorData = (await response.json()) as { error?: string };
 				toast({
-					title: "Unable to unlink account",
-					description: errorData.error ?? "Please try again.",
+					title: t("toast.unlinkFailedTitle"),
+					description: errorData.error ?? t("toast.tryAgain"),
 					variant: "destructive",
 				});
 				return;
 			}
 
 			await loadLinkedAccounts();
-			toast({ title: "Account unlinked" });
+			toast({ title: t("toast.unlinkedTitle") });
 		} catch {
 			toast({
-				title: "Unable to unlink account",
-				description: "Please try again.",
+				title: t("toast.unlinkFailedTitle"),
+				description: t("toast.tryAgain"),
 				variant: "destructive",
 			});
 		} finally {
@@ -123,19 +129,19 @@ export function WalletSettings() {
 			if (!response.ok) {
 				const errorData = (await response.json()) as { error?: string };
 				toast({
-					title: reauth ? "Re-auth failed" : "Link failed",
-					description: errorData.error ?? "Please try again.",
+					title: reauth ? t("toast.reauthFailedTitle") : t("toast.linkFailedTitle"),
+					description: errorData.error ?? t("toast.tryAgain"),
 					variant: "destructive",
 				});
 				return;
 			}
 
 			await loadLinkedAccounts();
-			toast({ title: reauth ? "Account re-authenticated" : "Account linked" });
+			toast({ title: reauth ? t("toast.reauthedTitle") : t("toast.linkedTitle") });
 		} catch {
 			toast({
-				title: reauth ? "Re-auth failed" : "Link failed",
-				description: "Please try again.",
+				title: reauth ? t("toast.reauthFailedTitle") : t("toast.linkFailedTitle"),
+				description: t("toast.tryAgain"),
 				variant: "destructive",
 			});
 		} finally {
@@ -146,8 +152,8 @@ export function WalletSettings() {
 	const linkCurrentWallet = async () => {
 		if (!wallet.publicKey || !wallet.signMessage) {
 			toast({
-				title: "Wallet signature unavailable",
-				description: "Connect a sign-enabled wallet first.",
+				title: t("toast.signatureUnavailableTitle"),
+				description: t("toast.signatureUnavailableDescription"),
 				variant: "destructive",
 			});
 			return;
@@ -181,19 +187,19 @@ export function WalletSettings() {
 			if (!response.ok) {
 				const errorData = (await response.json()) as { error?: string };
 				toast({
-					title: "Wallet link failed",
-					description: errorData.error ?? "Please try again.",
+					title: t("toast.walletLinkFailedTitle"),
+					description: errorData.error ?? t("toast.tryAgain"),
 					variant: "destructive",
 				});
 				return;
 			}
 
 			await loadLinkedAccounts();
-			toast({ title: "Wallet linked" });
+			toast({ title: t("toast.walletLinkedTitle") });
 		} catch {
 			toast({
-				title: "Wallet link failed",
-				description: "Please try again.",
+				title: t("toast.walletLinkFailedTitle"),
+				description: t("toast.tryAgain"),
 				variant: "destructive",
 			});
 		} finally {
@@ -209,7 +215,7 @@ export function WalletSettings() {
 			<div className="rounded-2xl border border-border/60 bg-card overflow-hidden">
 				<div className="px-6 py-4 border-b border-border/40">
 					<p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-						Connected wallet
+						{t("sections.connectedWallet")}
 					</p>
 				</div>
 				<div className="divide-y divide-border/40">
@@ -223,7 +229,7 @@ export function WalletSettings() {
 								<div className="flex items-center gap-2">
 									<p className="text-sm font-medium">{walletName}</p>
 									<span className="text-[10px] font-medium uppercase tracking-wider text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">
-										Primary
+										{t("badges.primary")}
 									</span>
 									<span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
 										solana
@@ -266,7 +272,7 @@ export function WalletSettings() {
 						</div>
 					) : (
 						<div className="px-6 py-8 text-center text-sm text-muted-foreground">
-							No wallet connected. Connect a wallet to manage it here.
+							{t("empty.noWalletConnected")}
 						</div>
 					)}
 				</div>
@@ -275,7 +281,7 @@ export function WalletSettings() {
 			<div className="rounded-2xl border border-border/60 bg-card overflow-hidden">
 				<div className="px-6 py-4 border-b border-border/40 flex items-center justify-between">
 					<p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-						Linked accounts
+						{t("sections.linkedAccounts")}
 					</p>
 					<Button
 						variant="ghost"
@@ -298,7 +304,7 @@ export function WalletSettings() {
 							disabled={pendingProvider !== null}
 						>
 							<Link2 className="h-3.5 w-3.5 mr-1.5" />
-							{isLinked("google") ? "Re-link Google" : "Link Google"}
+							{isLinked("google") ? t("actions.relinkGoogle") : t("actions.linkGoogle")}
 						</Button>
 						<Button
 							variant="outline"
@@ -307,7 +313,7 @@ export function WalletSettings() {
 							disabled={pendingProvider !== null}
 						>
 							<Link2 className="h-3.5 w-3.5 mr-1.5" />
-							{isLinked("github") ? "Re-link GitHub" : "Link GitHub"}
+							{isLinked("github") ? t("actions.relinkGithub") : t("actions.linkGithub")}
 						</Button>
 						<Button
 							variant="outline"
@@ -316,27 +322,20 @@ export function WalletSettings() {
 							disabled={pendingProvider !== null || !walletAddress}
 						>
 							<Link2 className="h-3.5 w-3.5 mr-1.5" />
-							{isLinked("wallet") ? "Re-link wallet" : "Link current wallet"}
+							{isLinked("wallet") ? t("actions.relinkWallet") : t("actions.linkCurrentWallet")}
 						</Button>
 					</div>
 
 					{accountsLoading ? (
 						<div className="text-sm text-muted-foreground">
-							Loading linked accounts...
+							{t("loading.linkedAccounts")}
 						</div>
 					) : linkedAccounts.length === 0 ? (
-						<div className="text-sm text-muted-foreground">No linked accounts yet.</div>
+						<div className="text-sm text-muted-foreground">{t("empty.noLinkedAccounts")}</div>
 					) : (
 						<div className="space-y-2">
 							{linkedAccounts.map((account) => {
-								const providerLabel =
-									account.provider === "wallet"
-										? "Wallet"
-										: account.provider === "google"
-											? "Google"
-											: account.provider === "github"
-												? "GitHub"
-												: "Email";
+								const providerLabel = t(`providers.${account.provider}`);
 
 								return (
 									<div
@@ -349,7 +348,7 @@ export function WalletSettings() {
 												{account.identifier}
 											</p>
 											<p className="text-[10px] text-muted-foreground mt-0.5">
-												Linked{" "}
+												{t("linkedAtLabel")}{" "}
 												{new Date(account.linkedAt).toLocaleDateString()}
 											</p>
 										</div>
@@ -368,7 +367,7 @@ export function WalletSettings() {
 													disabled={pendingProvider !== null}
 												>
 													<RefreshCw className="h-3.5 w-3.5 mr-1.5" />
-													Re-auth
+													{t("actions.reauth")}
 												</Button>
 											)}
 											<Button
@@ -380,7 +379,7 @@ export function WalletSettings() {
 												disabled={pendingProvider !== null}
 											>
 												<Unlink className="h-3.5 w-3.5 mr-1.5" />
-												Unlink
+												{t("actions.unlink")}
 											</Button>
 										</div>
 									</div>
@@ -394,15 +393,15 @@ export function WalletSettings() {
 			<div className="rounded-2xl border border-border/60 bg-card overflow-hidden">
 				<div className="px-6 py-4 border-b border-border/40">
 					<p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-						Preferences
+						{t("sections.preferences")}
 					</p>
 				</div>
 				<div className="p-6 space-y-4">
 					<div className="flex items-center justify-between">
 						<div>
-							<p className="text-sm font-medium">Auto-connect</p>
+							<p className="text-sm font-medium">{t("autoConnect.title")}</p>
 							<p className="text-xs text-muted-foreground">
-								Automatically connect your primary wallet on login
+								{t("autoConnect.description")}
 							</p>
 						</div>
 						<Switch checked={autoConnect} onCheckedChange={setAutoConnect} />
@@ -412,7 +411,7 @@ export function WalletSettings() {
 
 			<div className="flex justify-end">
 				<Button size="sm" onClick={handleSave} disabled={saving}>
-					{saving ? "Saving..." : "Save changes"}
+					{saving ? t("actions.saving") : t("actions.saveChanges")}
 				</Button>
 			</div>
 		</div>

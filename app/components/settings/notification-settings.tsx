@@ -12,6 +12,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { useTranslations } from "next-intl";
 import { useToast } from "@/hooks/use-toast";
 import { useSettings } from "@/hooks/use-settings";
 
@@ -40,47 +41,48 @@ const DEFAULTS: NotificationState = {
 const TOGGLE_ITEMS = [
 	{
 		key: "emailNotifications" as const,
-		label: "Email notifications",
-		desc: "Receive updates via email",
+		labelKey: "toggles.emailNotifications.label",
+		descKey: "toggles.emailNotifications.description",
 		Icon: Mail,
 		section: "general",
 	},
 	{
 		key: "pushNotifications" as const,
-		label: "Push notifications",
-		desc: "Browser & mobile push alerts",
+		labelKey: "toggles.pushNotifications.label",
+		descKey: "toggles.pushNotifications.description",
 		Icon: MessageSquare,
 		section: "general",
 	},
 	{
 		key: "courseUpdates" as const,
-		label: "Course updates",
-		desc: "New content & curriculum changes",
+		labelKey: "toggles.courseUpdates.label",
+		descKey: "toggles.courseUpdates.description",
 		Icon: BookOpen,
 		section: "types",
 	},
 	{
 		key: "achievementAlerts" as const,
-		label: "Achievement alerts",
-		desc: "Badges and milestone notifications",
+		labelKey: "toggles.achievementAlerts.label",
+		descKey: "toggles.achievementAlerts.description",
 		Icon: Trophy,
 		section: "types",
 	},
 	{
 		key: "weeklyDigest" as const,
-		label: "Weekly digest",
-		desc: "Summary of your weekly activity",
+		labelKey: "toggles.weeklyDigest.label",
+		descKey: "toggles.weeklyDigest.description",
 		section: "types",
 	},
 	{
 		key: "marketingEmails" as const,
-		label: "Marketing emails",
-		desc: "Product news and promotions",
+		labelKey: "toggles.marketingEmails.label",
+		descKey: "toggles.marketingEmails.description",
 		section: "types",
 	},
 ] as const;
 
 export function NotificationSettings() {
+	const t = useTranslations("settings.notificationsSection");
 	const { toast } = useToast();
 	const { data, save } = useSettings();
 	const [isLoading, setIsLoading] = useState(false);
@@ -96,11 +98,15 @@ export function NotificationSettings() {
 		try {
 			await save({ settings: { notifications: settings } });
 			toast({
-				title: "Notifications updated",
-				description: "Your preferences have been saved.",
+				title: t("toast.updatedTitle"),
+				description: t("toast.updatedDescription"),
 			});
 		} catch {
-			toast({ title: "Error", description: "Failed to save.", variant: "destructive" });
+			toast({
+				title: t("toast.errorTitle"),
+				description: t("toast.errorDescription"),
+				variant: "destructive",
+			});
 		} finally {
 			setIsLoading(false);
 		}
@@ -116,15 +122,15 @@ export function NotificationSettings() {
 				{title}
 			</h4>
 			{TOGGLE_ITEMS.filter((i) => i.section === section).map((item) => {
-				const { key, label, desc } = item;
+				const { key, labelKey, descKey } = item;
 				const Icon = "Icon" in item ? item.Icon : null;
 				return (
 					<div key={key} className="flex items-center justify-between py-2">
 						<div className="flex items-center gap-3">
 							{Icon && <Icon className="h-4 w-4 text-muted-foreground" />}
 							<div>
-								<Label className="text-sm">{label}</Label>
-								<p className="text-xs text-muted-foreground">{desc}</p>
+								<Label className="text-sm">{t(labelKey)}</Label>
+								<p className="text-xs text-muted-foreground">{t(descKey)}</p>
 							</div>
 						</div>
 						<Switch
@@ -140,20 +146,20 @@ export function NotificationSettings() {
 	return (
 		<div className="rounded-2xl border border-border/60 bg-card overflow-hidden">
 			<div className="px-6 py-4 border-b border-border/40">
-				<h3 className="font-semibold text-sm">Notifications</h3>
+				<h3 className="font-semibold text-sm">{t("title")}</h3>
 			</div>
 
 			<div className="p-6 space-y-6">
-				{renderSection("General", "general")}
-				{renderSection("Notification Types", "types")}
+				{renderSection(t("sections.general"), "general")}
+				{renderSection(t("sections.notificationTypes"), "types")}
 
 				<div className="space-y-3">
 					<h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-						Frequency
+						{t("sections.frequency")}
 					</h4>
 					<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 						<div className="space-y-1.5">
-							<Label className="text-xs">Email frequency</Label>
+							<Label className="text-xs">{t("labels.emailFrequency")}</Label>
 							<Select
 								value={settings.emailFrequency}
 								onValueChange={(v: "immediate" | "daily" | "weekly") =>
@@ -164,14 +170,14 @@ export function NotificationSettings() {
 									<SelectValue />
 								</SelectTrigger>
 								<SelectContent>
-									<SelectItem value="immediate">Immediate</SelectItem>
-									<SelectItem value="daily">Daily digest</SelectItem>
-									<SelectItem value="weekly">Weekly digest</SelectItem>
+									<SelectItem value="immediate">{t("frequency.immediate")}</SelectItem>
+									<SelectItem value="daily">{t("frequency.daily")}</SelectItem>
+									<SelectItem value="weekly">{t("frequency.weekly")}</SelectItem>
 								</SelectContent>
 							</Select>
 						</div>
 						<div className="space-y-1.5">
-							<Label className="text-xs">Push frequency</Label>
+							<Label className="text-xs">{t("labels.pushFrequency")}</Label>
 							<Select
 								value={settings.pushFrequency}
 								onValueChange={(v: "immediate" | "daily" | "weekly") =>
@@ -182,9 +188,9 @@ export function NotificationSettings() {
 									<SelectValue />
 								</SelectTrigger>
 								<SelectContent>
-									<SelectItem value="immediate">Immediate</SelectItem>
-									<SelectItem value="daily">Daily digest</SelectItem>
-									<SelectItem value="weekly">Weekly digest</SelectItem>
+									<SelectItem value="immediate">{t("frequency.immediate")}</SelectItem>
+									<SelectItem value="daily">{t("frequency.daily")}</SelectItem>
+									<SelectItem value="weekly">{t("frequency.weekly")}</SelectItem>
 								</SelectContent>
 							</Select>
 						</div>
@@ -193,7 +199,7 @@ export function NotificationSettings() {
 
 				<div className="flex justify-end pt-2">
 					<Button onClick={handleSave} disabled={isLoading} size="sm">
-						{isLoading ? "Saving..." : "Save changes"}
+						{isLoading ? t("actions.saving") : t("actions.saveChanges")}
 					</Button>
 				</div>
 			</div>

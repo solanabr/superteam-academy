@@ -1,4 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
+import { Keypair } from "@solana/web3.js";
+import nacl from "tweetnacl";
+import { createSignInMessage } from "@superteam-academy/auth";
 
 async function expectRouteLoads(page: Page, path: string, expectedUrlPattern: RegExp) {
 	const response = await page.goto(path, { waitUntil: "domcontentloaded" });
@@ -6,6 +9,38 @@ async function expectRouteLoads(page: Page, path: string, expectedUrlPattern: Re
 	expect(response?.status()).toBeLessThan(400);
 	await expect(page).toHaveURL(expectedUrlPattern);
 	await expect(page.locator("h1").first()).toBeVisible();
+}
+
+async function signInWithWallet(requestContext: {
+	get: (url: string) => Promise<{ status: () => number; json: () => Promise<unknown> }>;
+	post: (
+		url: string,
+		options?: { data?: unknown }
+	) => Promise<{ status: () => number; json: () => Promise<unknown> }>;
+}) {
+	const nonceRes = await requestContext.get("/api/auth/wallet/nonce");
+	expect(nonceRes.status()).toBe(200);
+
+	const nonceBody = (await nonceRes.json()) as { nonce: string; domain: string };
+	const wallet = Keypair.generate();
+	const message = createSignInMessage(nonceBody.nonce, nonceBody.domain);
+	const signatureBytes = nacl.sign.detached(new TextEncoder().encode(message), wallet.secretKey);
+
+	const verifyRes = await requestContext.post("/api/auth/wallet/verify", {
+		data: {
+			publicKey: wallet.publicKey.toBase58(),
+			signature: Buffer.from(signatureBytes).toString("base64"),
+			message,
+		},
+	});
+	expect(verifyRes.status()).toBe(200);
+
+	const verifyBody = (await verifyRes.json()) as {
+		authenticated?: boolean;
+		publicKey?: string;
+	};
+	expect(verifyBody.authenticated).toBe(true);
+	expect(verifyBody.publicKey).toBe(wallet.publicKey.toBase58());
 }
 
 test.describe("Superteam Academy route modernization", () => {
@@ -106,13 +141,15 @@ test.describe("Superteam Academy route modernization", () => {
 		await expect(page.locator("h1").first()).toBeVisible();
 	});
 
-	test("authenticated API paths pass auth gate in test mode", async ({ playwright, baseURL }) => {
+	test("authenticated API paths pass auth gate with wallet signature", async ({
+		playwright,
+		baseURL,
+	}) => {
 		const authenticatedRequest = await playwright.request.newContext({
 			baseURL,
-			extraHTTPHeaders: {
-				"x-test-wallet": "11111111111111111111111111111111",
-			},
 		});
+
+		await signInWithWallet(authenticatedRequest);
 
 		const completeRes = await authenticatedRequest.post("/api/lessons/complete", {
 			data: {},

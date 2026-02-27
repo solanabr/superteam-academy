@@ -1,0 +1,6 @@
+<testsuites id="" name="" tests="1" failures="0" skipped="0" errors="0" time="31.883226000000004">
+<testsuite name="comprehensive-flows.spec.ts" timestamp="2026-02-27T22:18:36.114Z" hostname="chromium" tests="1" failures="0" skipped="0" time="3.546" errors="0">
+<testcase name="Superteam Academy route modernization › authenticated API paths pass auth gate with wallet signature" classname="comprehensive-flows.spec.ts" time="3.546">
+</testcase>
+</testsuite>
+</testsuites>

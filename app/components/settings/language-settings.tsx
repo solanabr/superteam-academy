@@ -11,6 +11,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { useTranslations } from "next-intl";
 import { useToast } from "@/hooks/use-toast";
 import { useSettings } from "@/hooks/use-settings";
 
@@ -28,20 +29,20 @@ interface LangState {
 }
 
 const LANGUAGES = [
-	{ value: "en" as const, label: "English", region: "United States" },
-	{ value: "pt-BR" as const, label: "Portugues (Brasil)", region: "Brazil" },
-	{ value: "es" as const, label: "Espanol", region: "Spain" },
+	{ value: "en" as const },
+	{ value: "pt-BR" as const },
+	{ value: "es" as const },
 ];
 
 const TIMEZONES = [
-	{ value: "America/Sao_Paulo", label: "Sao Paulo (GMT-3)" },
-	{ value: "America/New_York", label: "New York (GMT-5)" },
-	{ value: "America/Chicago", label: "Chicago (GMT-6)" },
-	{ value: "America/Los_Angeles", label: "Los Angeles (GMT-8)" },
-	{ value: "Europe/London", label: "London (GMT+0)" },
-	{ value: "Europe/Paris", label: "Paris (GMT+1)" },
-	{ value: "Asia/Tokyo", label: "Tokyo (GMT+9)" },
-	{ value: "Australia/Sydney", label: "Sydney (GMT+10)" },
+	{ value: "America/Sao_Paulo", key: "saoPaulo" },
+	{ value: "America/New_York", key: "newYork" },
+	{ value: "America/Chicago", key: "chicago" },
+	{ value: "America/Los_Angeles", key: "losAngeles" },
+	{ value: "Europe/London", key: "london" },
+	{ value: "Europe/Paris", key: "paris" },
+	{ value: "Asia/Tokyo", key: "tokyo" },
+	{ value: "Australia/Sydney", key: "sydney" },
 ];
 
 function getLocale(lang: Language) {
@@ -51,6 +52,7 @@ function getLocale(lang: Language) {
 }
 
 export function LanguageSettings() {
+	const t = useTranslations("settings.languageSection");
 	const { toast } = useToast();
 	const { data, save } = useSettings();
 	const [saving, setSaving] = useState(false);
@@ -74,9 +76,13 @@ export function LanguageSettings() {
 		setSaving(true);
 		try {
 			await save({ settings: { language: settings } });
-			toast({ title: "Language settings saved" });
+			toast({ title: t("toast.savedTitle") });
 		} catch {
-			toast({ title: "Error", description: "Failed to save.", variant: "destructive" });
+			toast({
+				title: t("toast.errorTitle"),
+				description: t("toast.errorDescription"),
+				variant: "destructive",
+			});
 		} finally {
 			setSaving(false);
 		}
@@ -89,7 +95,7 @@ export function LanguageSettings() {
 			<div className="rounded-2xl border border-border/60 bg-card overflow-hidden">
 				<div className="px-6 py-4 border-b border-border/40">
 					<p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-						Language
+						{t("sections.language")}
 					</p>
 				</div>
 				<div className="p-4 grid gap-2">
@@ -107,8 +113,12 @@ export function LanguageSettings() {
 								}`}
 							>
 								<div>
-									<p className="text-sm font-medium">{lang.label}</p>
-									<p className="text-xs text-muted-foreground">{lang.region}</p>
+									<p className="text-sm font-medium">
+										{t(`languages.${lang.value}.label`)}
+									</p>
+									<p className="text-xs text-muted-foreground">
+										{t(`languages.${lang.value}.region`)}
+									</p>
 								</div>
 								{active && <Check className="h-4 w-4 text-primary" />}
 							</button>
@@ -120,12 +130,12 @@ export function LanguageSettings() {
 			<div className="rounded-2xl border border-border/60 bg-card overflow-hidden">
 				<div className="px-6 py-4 border-b border-border/40">
 					<p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-						Regional formats
+						{t("sections.regionalFormats")}
 					</p>
 				</div>
 				<div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
 					<div className="space-y-1.5">
-						<Label className="text-xs">Date format</Label>
+						<Label className="text-xs">{t("labels.dateFormat")}</Label>
 						<Select
 							value={settings.dateFormat}
 							onValueChange={(v: DateFormat) => update("dateFormat", v)}
@@ -142,7 +152,7 @@ export function LanguageSettings() {
 					</div>
 
 					<div className="space-y-1.5">
-						<Label className="text-xs">Time format</Label>
+						<Label className="text-xs">{t("labels.timeFormat")}</Label>
 						<Select
 							value={settings.timeFormat}
 							onValueChange={(v: TimeFormat) => update("timeFormat", v)}
@@ -151,14 +161,14 @@ export function LanguageSettings() {
 								<SelectValue />
 							</SelectTrigger>
 							<SelectContent>
-								<SelectItem value="12h">12-hour (3:45 PM)</SelectItem>
-								<SelectItem value="24h">24-hour (15:45)</SelectItem>
+								<SelectItem value="12h">{t("timeFormats.12h")}</SelectItem>
+								<SelectItem value="24h">{t("timeFormats.24h")}</SelectItem>
 							</SelectContent>
 						</Select>
 					</div>
 
 					<div className="space-y-1.5">
-						<Label className="text-xs">Number format</Label>
+						<Label className="text-xs">{t("labels.numberFormat")}</Label>
 						<Select
 							value={settings.numberFormat}
 							onValueChange={(v: NumberFormat) => update("numberFormat", v)}
@@ -175,7 +185,7 @@ export function LanguageSettings() {
 					</div>
 
 					<div className="space-y-1.5">
-						<Label className="text-xs">Timezone</Label>
+						<Label className="text-xs">{t("labels.timezone")}</Label>
 						<Select
 							value={settings.timezone}
 							onValueChange={(v) => update("timezone", v)}
@@ -186,7 +196,7 @@ export function LanguageSettings() {
 							<SelectContent>
 								{TIMEZONES.map((tz) => (
 									<SelectItem key={tz.value} value={tz.value}>
-										{tz.label}
+										{t(`timezones.${tz.key}`)}
 									</SelectItem>
 								))}
 							</SelectContent>
@@ -198,14 +208,14 @@ export function LanguageSettings() {
 			<div className="rounded-2xl border border-border/60 bg-card overflow-hidden">
 				<div className="px-6 py-4 border-b border-border/40">
 					<p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-						Preview
+						{t("sections.preview")}
 					</p>
 				</div>
 				<div className="p-6">
 					<div className="rounded-xl bg-muted/50 p-4 grid grid-cols-3 gap-4 text-center">
 						<div>
 							<p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
-								Date
+								{t("preview.date")}
 							</p>
 							<p className="text-sm font-medium font-mono">
 								{new Date().toLocaleDateString(locale, {
@@ -218,7 +228,7 @@ export function LanguageSettings() {
 						</div>
 						<div>
 							<p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
-								Time
+								{t("preview.time")}
 							</p>
 							<p className="text-sm font-medium font-mono">
 								{new Date().toLocaleTimeString(locale, {
@@ -231,7 +241,7 @@ export function LanguageSettings() {
 						</div>
 						<div>
 							<p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
-								Number
+								{t("preview.number")}
 							</p>
 							<p className="text-sm font-medium font-mono">
 								{new Intl.NumberFormat(settings.numberFormat, {
@@ -246,7 +256,7 @@ export function LanguageSettings() {
 
 			<div className="flex justify-end">
 				<Button size="sm" onClick={handleSave} disabled={saving}>
-					{saving ? "Saving..." : "Save changes"}
+					{saving ? t("actions.saving") : t("actions.saveChanges")}
 				</Button>
 			</div>
 		</div>

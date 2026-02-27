@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, CheckCircle, Circle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useTranslations } from "next-intl";
 
 interface Lesson {
 	id: string;
@@ -32,6 +33,7 @@ export function LessonNavigation({
 	hasPrevious,
 	hasNext,
 }: LessonNavigationProps) {
+	const t = useTranslations("lessonNavigation");
 	const currentIndex = lessons.findIndex((lesson) => lesson.id === currentLessonId);
 	const currentLesson = lessons[currentIndex];
 
@@ -54,10 +56,10 @@ export function LessonNavigation({
 					className="flex-1"
 				>
 					<ChevronLeft className="h-4 w-4 mr-2" />
-					Previous Lesson
+					{t("previousLesson")}
 				</Button>
 				<Button variant="outline" onClick={onNext} disabled={!hasNext} className="flex-1">
-					Next Lesson
+					{t("nextLesson")}
 					<ChevronRight className="h-4 w-4 ml-2" />
 				</Button>
 			</div>
@@ -65,7 +67,7 @@ export function LessonNavigation({
 			{currentLesson && (
 				<Card>
 					<CardHeader className="pb-3">
-						<CardTitle className="text-sm font-medium">Current Lesson</CardTitle>
+						<CardTitle className="text-sm font-medium">{t("currentLesson")}</CardTitle>
 					</CardHeader>
 					<CardContent className="pt-0">
 						<div className="flex items-center gap-3">
@@ -87,7 +89,7 @@ export function LessonNavigation({
 
 			<Card>
 				<CardHeader>
-					<CardTitle className="text-sm font-medium">Course Content</CardTitle>
+					<CardTitle className="text-sm font-medium">{t("courseContent")}</CardTitle>
 				</CardHeader>
 				<CardContent className="pt-0">
 					<ScrollArea className="h-96">

@@ -16,17 +16,19 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslations } from "next-intl";
 
 const CATEGORIES = [
-	{ value: "defi", label: "DeFi" },
-	{ value: "nft", label: "NFT" },
-	{ value: "tooling", label: "Tooling" },
-	{ value: "gaming", label: "Gaming" },
-	{ value: "social", label: "Social" },
-	{ value: "infra", label: "Infrastructure" },
+	{ value: "defi" },
+	{ value: "nft" },
+	{ value: "tooling" },
+	{ value: "gaming" },
+	{ value: "social" },
+	{ value: "infra" },
 ];
 
 export default function NewProjectPage() {
+	const t = useTranslations("community.createProject");
 	const router = useRouter();
 	const { toast } = useToast();
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -78,22 +80,22 @@ export default function NewProjectPage() {
 			const data = await res.json();
 
 			if (!res.ok) {
-				throw new Error(data.error || "Failed to submit project");
+				throw new Error(data.error || t("errors.submitFailed"));
 			}
 
 			toast({
-				title: "Project submitted!",
-				description: "Your project has been shared with the community.",
+				title: t("toast.submittedTitle"),
+				description: t("toast.submittedDescription"),
 			});
 
 			router.push(`/community/projects/${data.slug}`);
 		} catch (err) {
 			toast({
-				title: "Error",
+				title: t("toast.errorTitle"),
 				description:
 					err instanceof Error
 						? err.message
-						: "Failed to submit project. Please try again.",
+						: t("errors.submitFailedRetry"),
 				variant: "destructive",
 			});
 		} finally {
@@ -110,9 +112,9 @@ export default function NewProjectPage() {
 					</Link>
 				</Button>
 				<div>
-					<h1 className="text-2xl font-bold">Submit Project</h1>
+					<h1 className="text-2xl font-bold">{t("title")}</h1>
 					<p className="text-sm text-muted-foreground">
-						Showcase what you've built with Solana
+						{t("description")}
 					</p>
 				</div>
 			</div>
@@ -121,12 +123,12 @@ export default function NewProjectPage() {
 				<div className="rounded-2xl border border-border/60 bg-card p-6 space-y-5">
 					<div className="space-y-2">
 						<label htmlFor="title" className="text-sm font-medium">
-							Project Name *
+							{t("fields.projectName")}
 						</label>
 						<Input
 							id="title"
 							name="title"
-							placeholder="My Awesome Solana Project"
+							placeholder={t("placeholders.projectName")}
 							className="h-11"
 							required
 							maxLength={100}
@@ -135,7 +137,7 @@ export default function NewProjectPage() {
 
 					<div className="space-y-2">
 						<label htmlFor="category" className="text-sm font-medium">
-							Category *
+							{t("fields.category")}
 						</label>
 						<Select name="category" defaultValue="tooling" required>
 							<SelectTrigger className="h-11">
@@ -144,7 +146,7 @@ export default function NewProjectPage() {
 							<SelectContent>
 								{CATEGORIES.map((cat) => (
 									<SelectItem key={cat.value} value={cat.value}>
-										{cat.label}
+										{t(`categories.${cat.value}`)}
 									</SelectItem>
 								))}
 							</SelectContent>
@@ -153,12 +155,12 @@ export default function NewProjectPage() {
 
 					<div className="space-y-2">
 						<label htmlFor="description" className="text-sm font-medium">
-							Description *
+							{t("fields.description")}
 						</label>
 						<Textarea
 							id="description"
 							name="description"
-							placeholder="What does your project do? What problem does it solve? What makes it unique?"
+							placeholder={t("placeholders.description")}
 							className="min-h-37.5 resize-y"
 							required
 						/>
@@ -167,7 +169,7 @@ export default function NewProjectPage() {
 					<div className="grid grid-cols-2 gap-4">
 						<div className="space-y-2">
 							<label htmlFor="githubUrl" className="text-sm font-medium">
-								GitHub URL
+								{t("fields.githubUrl")}
 							</label>
 							<Input
 								id="githubUrl"
@@ -180,7 +182,7 @@ export default function NewProjectPage() {
 
 						<div className="space-y-2">
 							<label htmlFor="liveUrl" className="text-sm font-medium">
-								Demo/Live URL
+								{t("fields.liveUrl")}
 							</label>
 							<Input
 								id="liveUrl"
@@ -194,7 +196,7 @@ export default function NewProjectPage() {
 
 					<div className="space-y-2">
 						<label htmlFor="xpReward" className="text-sm font-medium">
-							XP Reward (optional)
+							{t("fields.xpReward")}
 						</label>
 						<Input
 							id="xpReward"
@@ -205,20 +207,20 @@ export default function NewProjectPage() {
 							min="0"
 						/>
 						<p className="text-xs text-muted-foreground">
-							XP to award contributors for helping with this project
+							{t("xpRewardHelp")}
 						</p>
 					</div>
 
 					<div className="space-y-2">
 						<label htmlFor="tags" className="text-sm font-medium">
-							Tags (optional)
+							{t("fields.tags")}
 						</label>
 						<Input
 							id="tags"
 							value={tagInput}
 							onChange={(e) => setTagInput(e.target.value)}
 							onKeyDown={handleAddTag}
-							placeholder="Press Enter to add tags (max 5)"
+							placeholder={t("placeholders.tags")}
 							disabled={tags.length >= 5}
 						/>
 						{tags.length > 0 && (
@@ -241,11 +243,11 @@ export default function NewProjectPage() {
 
 				<div className="flex items-center justify-between">
 					<Button type="button" variant="ghost" asChild>
-						<Link href="/community/projects">Cancel</Link>
+						<Link href="/community/projects">{t("actions.cancel")}</Link>
 					</Button>
 					<Button type="submit" disabled={isSubmitting}>
 						{isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-						Submit Project
+						{t("actions.submit")}
 					</Button>
 				</div>
 			</form>

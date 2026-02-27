@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useTranslations } from "next-intl";
 
 interface ErrorBoundaryState {
 	hasError: boolean;
@@ -41,17 +42,19 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
 }
 
 function DefaultErrorFallback({ error, reset }: { error: Error | undefined; reset: () => void }) {
+	const t = useTranslations("common.error");
+
 	return (
 		<div className="min-h-screen flex items-center justify-center">
 			<div className="text-center">
-				<h2 className="text-2xl font-bold mb-4">Something went wrong</h2>
-				<p className="mb-4">{error?.message || "An unexpected error occurred"}</p>
+				<h2 className="text-2xl font-bold mb-4">{t("title")}</h2>
+				<p className="mb-4">{error?.message || t("description")}</p>
 				<button
 					type="button"
 					onClick={reset}
 					className="px-4 py-2 bg-primary text-primary-foreground rounded"
 				>
-					Try again
+					{t("tryAgain")}
 				</button>
 			</div>
 		</div>
