@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useSession } from "next-auth/react";
 import { HeroSection } from "@/components/landing/hero-section";
@@ -11,12 +11,14 @@ import { Footer } from "@/components/landing/footer";
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/mode-toggle";
 import { UserNav } from "@/components/user-nav";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
+import { useLocale } from "next-intl";
 
 export default function LandingPage() {
   const { connected } = useWallet();
   const { status } = useSession();
   const router = useRouter();
+  const locale = useLocale();
 
   // Если пользователь вошел, редиректим его в дашборд
   // НО: Иногда полезно дать возможность посмотреть лендинг залогиненным.

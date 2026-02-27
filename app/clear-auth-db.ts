@@ -18,8 +18,12 @@ async function clearAuthData() {
     const userEnrollmentDeleted= await prisma.userEnrollment.deleteMany({});
     console.log (`Удалено записанных пользователь: ${userEnrollmentDeleted.count}`)
 
+    const XpHistoryDeleted = await prisma.xPHistory.deleteMany({});
+    console.log (`Удалено XP из истории: ${XpHistoryDeleted.count}`)
+
     const usersDeleted = await prisma.user.deleteMany({});
     console.log(`Удалено пользователей: ${usersDeleted.count}`);
+
 
 
     console.log('Очистка завершена успешно!');

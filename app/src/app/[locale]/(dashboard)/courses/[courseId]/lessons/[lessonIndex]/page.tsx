@@ -2,7 +2,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import { useWallet } from "@solana/wallet-adapter-react";
 import ReactMarkdown from "react-markdown";
 import Confetti from 'react-confetti';

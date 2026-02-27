@@ -7,8 +7,9 @@ import { ModeToggle } from "@/components/mode-toggle";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { AuthGuard } from "@/components/auth-guard";
+import {LanguageSwitcher} from "@/components/language-switcher"
 
 // Провайдеры
 import { SessionProvider } from "next-auth/react";
@@ -56,6 +57,7 @@ export default function DashboardLayout({
 
               <div className="flex items-center space-x-4">
                 <ModeToggle />
+                <LanguageSwitcher />
                 <UserNav />
               </div>
             </div>

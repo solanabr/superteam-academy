@@ -1,12 +1,16 @@
+// app/next.config.js
 /** @type {import('next').NextConfig} */
+const createNextIntlPlugin = require('next-intl/plugin');
+
+// Без аргументов плагин сам найдет ./src/i18n/request.ts
+const withNextIntl = createNextIntlPlugin();
+
 const nextConfig = {
   reactStrictMode: true,
 
   webpack: (config) => {
-    // Исключаем проблемные пакеты из бандла (они не нужны в браузере)
     config.externals.push('pino-pretty', 'lokijs', 'encoding');
 
-    // Для Node.js-ориентированных пакетов (если нужно)
     config.resolve.fallback = {
       ...config.resolve.fallback,
       fs: false,
@@ -16,9 +20,6 @@ const nextConfig = {
 
     return config;
   },
-
-  // Альтернатива в Next.js 14+ (более рекомендуемая)
-  //serverExternalPackages: ['pino-pretty', 'lokijs', 'encoding'],
 };
 
-module.exports = nextConfig;
+module.exports = withNextIntl(nextConfig);

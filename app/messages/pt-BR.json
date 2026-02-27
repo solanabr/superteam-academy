@@ -1,0 +1,28 @@
+{
+  "Navigation": {
+    "dashboard": "Painel",
+    "courses": "Cursos",
+    "leaderboard": "Tabela de Classificação",
+    "settings": "Configurações"
+  },
+  "Landing": {
+    "title": "Construa o Futuro da Web3 na Solana",
+    "subtitle": "A plataforma de aprendizado interativo definitiva. Aprenda Rust, Anchor e DeFi construindo dApps reais.",
+    "start": "Começar a Aprender",
+    "features": "Explorar Recursos"
+  },
+  "Header": {
+    "signIn": "Entrar"
+  },
+  "Dashboard": {
+    "title": "Painel de Controle",
+    "totalXp": "XP Total",
+    "level": "Nível Atual",
+    "achievements": "Conquistas",
+    "myLearning": "Meu Aprendizado",
+    "activity": "Atividade (Últimos 30 Dias)",
+    "streak": "Dias de Ofensiva",
+    "noCourses": "Você ainda não começou nenhum curso.",
+    "explore": "Explorar Cursos"
+  }
+}

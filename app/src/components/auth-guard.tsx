@@ -1,55 +1,55 @@
-// app/src/components/auth-guard.tsx
 "use client";
 
 import { useEffect, useState } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useSession } from "next-auth/react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname } from "@/i18n/navigation"; 
 import { Loader2 } from "lucide-react";
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
-  const { connected, publicKey } = useWallet();
+  const { connected } = useWallet();
   const { status } = useSession();
   const router = useRouter();
-  const pathname = usePathname();
+  
+  // УМНЫЙ usePathname ВОЗВРАЩАЕТ ПУТЬ БЕЗ ЛОКАЛИ (например, "/dashboard")
+  const pathname = usePathname(); 
   const [isChecking, setIsChecking] = useState(true);
 
+  // Список публичных путей, куда можно без логина
+  const publicPaths = ["/", "/courses"]; 
+
+  // Проверка: является ли текущий путь публичным
+  // Также пускаем на детальные страницы курсов (например, /courses/anchor-101)
+  const isPublic = publicPaths.includes(pathname) || pathname.startsWith("/courses/");
+
   useEffect(() => {
-    // 1. Если это главная страница - проверки не нужны, там своя логика редиректа ВНУТРЬ
-    if (pathname === "/") {
+    // Если путь публичный - проверки не нужны, пропускаем сразу
+    if (isPublic) {
         setIsChecking(false);
         return;
     }
 
-    // 2. Ждем инициализации
     if (status === "loading") return;
 
-    // 3. Проверяем авторизацию
     const isAuthenticated = connected || status === "authenticated";
 
     if (!isAuthenticated) {
-      console.log("Not authenticated, redirecting to /");
-      router.replace("/"); // Используем replace, чтобы не засорять историю
+      console.log("AuthGuard: Access denied, redirecting to /");
+      router.replace("/"); // Кидаем на главную (на Лендинг)
     } else {
       setIsChecking(false);
     }
-  }, [connected, status, router, pathname]);
+  }, [connected, status, router, pathname, isPublic]);
 
-  // Если мы на главной - рендерим сразу (там свой контент)
-  if (pathname === "/") {
-      return <>{children}</>;
-  }
+  if (isPublic) return <>{children}</>;
 
-  // Если идет проверка или загрузка сессии - показываем лоадер
   if (isChecking || status === "loading") {
       return (
-        <div className="h-screen w-full flex flex-col items-center justify-center gap-2">
+        <div className="h-screen w-full flex items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">Verifying access...</p>
         </div>
       );
   }
 
-  // Если проверка пройдена
   return <>{children}</>;
 }

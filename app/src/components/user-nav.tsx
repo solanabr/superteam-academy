@@ -17,7 +17,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Wallet, LogOut, User } from "lucide-react";
 import { FaGithub, FaGoogle } from "react-icons/fa";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import dynamic from "next/dynamic";
 import {useUser} from '@/hooks/useUser'
 

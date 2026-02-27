@@ -12,7 +12,7 @@ import { XpStatCard } from "@/components/xp-stat-card";
 import { SkillChart } from "@/components/skill-chart";
 import { CredentialCard } from "@/components/credential-card";
 import { Skeleton } from "@/components/ui/skeleton";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useCredentials, CredentialNFT } from "@/hooks/useCredentials"; // Импортируем хук и тип
 
 // Тип для пропсов, чтобы обеспечить строгую типизацию

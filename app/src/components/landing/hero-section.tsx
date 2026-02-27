@@ -1,7 +1,7 @@
 // app/src/components/landing/hero-section.tsx
 "use client";
 
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Terminal, Zap, Shield } from "lucide-react";
 import { motion } from "framer-motion";

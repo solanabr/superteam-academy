@@ -5,7 +5,7 @@ import { CourseProgress } from "@/components/course-progress";
 import { StreakCard } from "@/components/streak-card";
 import { useUser } from "@/hooks/useUser";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { ArrowRight, Loader2 } from "lucide-react";
 
 interface UserEnrollment {

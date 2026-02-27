@@ -30,35 +30,44 @@ export async function updateStreak(walletAddress: string) {
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   
   let newStreak = user.streak;
+  let lastLessonDate = user.lastLessonAt;
 
-  if (!user.lastLessonAt) {
-      // Самый первый раз
+  console.log(`[Streak] Updating for ${walletAddress}. Current: ${newStreak}. Last: ${lastLessonDate?.toISOString()}. Now: ${now.toISOString()}`);
+
+  if (!lastLessonDate) {
       newStreak = 1;
+      console.log(`[Streak] First lesson. Set to 1.`);
   } else {
-      const lastLessonDay = new Date(user.lastLessonAt.getFullYear(), user.lastLessonAt.getMonth(), user.lastLessonAt.getDate());
+      const lastLessonDay = new Date(lastLessonDate.getFullYear(), lastLessonDate.getMonth(), lastLessonDate.getDate());
       const diffTime = today.getTime() - lastLessonDay.getTime();
       const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
 
-      if (diffDays === 1) {
-          // Вчера был урок, сегодня новый -> увеличиваем
+      console.log(`[Streak] Diff days: ${diffDays} (Today: ${today.toISOString()}, Last: ${lastLessonDay.toISOString()})`);
+
+      if (diffDays === 0) {
+          // Уже проходил сегодня.
+          if (newStreak === 0) {
+              newStreak = 1;
+              console.log(`[Streak] Same day recovery. Set to 1.`);
+          } else {
+              console.log(`[Streak] Same day. No change.`);
+          }
+      } else if (diffDays === 1) {
           newStreak += 1;
-      } else if (diffDays > 1) {
-          // Пропустил вчера. Стрик должен был быть сброшен в /user/me, но на всякий случай:
-          // Так как урок пройден СЕГОДНЯ, стрик становится 1.
+          console.log(`[Streak] Next day! Increment to ${newStreak}.`);
+      } else {
           newStreak = 1;
-      } else if (diffDays === 0) {
-          // Сегодня уже был урок.
-          // Если стрик 0 (например, после сброса), ставим 1.
-          if (newStreak === 0) newStreak = 1;
-          // Иначе стрик не меняем (уже начислили сегодня).
+          console.log(`[Streak] Missed day(s). Reset to 1.`);
       }
   }
 
+  // Обновляем только если изменилось, чтобы не спамить БД лишний раз
+  // Хотя lastLessonAt обновлять надо всегда, чтобы зафиксировать "свежесть" активности
   await prisma.user.update({
       where: { walletAddress },
       data: { 
           streak: newStreak,
-          lastLessonAt: now // Запоминаем, что урок пройден сейчас
+          lastLessonAt: now 
       }
   });
 }

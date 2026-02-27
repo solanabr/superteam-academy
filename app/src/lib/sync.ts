@@ -98,29 +98,43 @@ export async function syncBlockchainData(userId: string, walletAddress: string) 
               const lessonFlags = enrollmentAccount.lessonFlags as BN[];
               
               // Проходимся по предполагаемым урокам (например, до 50)
-              for (let i = 0; i < 50; i++) {
+                for (let i = 0; i < 50; i++) {
                   if (isLessonComplete(lessonFlags, i)) {
-                      // Урок пройден в чейне -> Пишем в БД
-                      await prisma.lessonProgress.upsert({
+                      // СНАЧАЛА проверяем, есть ли урок в БД и завершен ли он
+                      const existingProgress = await prisma.lessonProgress.findUnique({
                           where: {
                               userId_courseId_lessonIndex: {
                                   userId,
                                   courseId,
                                   lessonIndex: i
                               }
-                          },
-                          update: { status: "completed" }, // Если было in_progress -> completed
-                          create: {
-                              userId,
-                              courseId,
-                              lessonIndex: i,
-                              status: "completed",
-                              completedAt: new Date(), // Время примерное (сейчас)
-                              codeSnippet: "// Restored from blockchain" // Кода нет в чейне
                           }
                       });
-                      console.log(`[Sync] Restored lesson ${i} for ${courseId}`);
-                      hasRestoredLessonsThisSession = true;
+
+                      // Если урока НЕТ или он НЕ завершен -> тогда мы его "восстанавливаем"
+                      if (!existingProgress || existingProgress.status !== "completed") {
+                          await prisma.lessonProgress.upsert({
+                              where: {
+                                  userId_courseId_lessonIndex: {
+                                      userId,
+                                      courseId,
+                                      lessonIndex: i
+                                  }
+                              },
+                              update: { status: "completed", completedAt: new Date() }, 
+                              create: {
+                                  userId,
+                                  courseId,
+                                  lessonIndex: i,
+                                  status: "completed",
+                                  completedAt: new Date(), // Ставим дату восстановления
+                                  codeSnippet: "// Restored from blockchain"
+                              }
+                          });
+                          console.log(`[Sync] Restored lesson ${i} for ${courseId}`);
+                          hasRestoredLessonsThisSession = true; // ТОЛЬКО ЗДЕСЬ
+                      }
+                      // Если урок уже completed, мы ничего не делаем и флаг не ставим.
                   }
               }
           }
