@@ -678,10 +678,54 @@ export default function DashboardPage() {
   if (data.isLoading) {
     return (
       <div className="space-y-8" aria-hidden="true">
+        {/* Title */}
         <div className="h-9 w-48 animate-pulse rounded-[var(--r-md)] bg-[var(--input)]" />
-        <div className="h-[280px] w-full animate-pulse rounded-[var(--r-xl)] bg-[var(--input)]" />
-        <div className="h-[240px] w-full animate-pulse rounded-[var(--r-xl)] bg-[var(--input)]" />
-        <div className="h-[200px] w-full animate-pulse rounded-[var(--r-xl)] bg-[var(--input)]" />
+
+        {/* Identity panel — reuses real layout classes for accurate sizing */}
+        <div className="dash-panel">
+          <div className="dash-top">
+            <div className="dash-identity">
+              <div className="h-16 w-16 animate-pulse rounded-full bg-[var(--input)]" />
+              <div className="flex-1">
+                <div className="h-8 w-28 animate-pulse rounded bg-[var(--input)]" />
+              </div>
+            </div>
+            <div className="h-20 w-full animate-pulse rounded-[var(--r-md)] bg-[var(--input)]" />
+          </div>
+          <div className="dash-bottom">
+            <div className="h-40 w-full animate-pulse rounded-[var(--r-md)] bg-[var(--input)]" />
+            <div className="h-40 w-full animate-pulse rounded-[var(--r-md)] bg-[var(--input)]" />
+          </div>
+        </div>
+
+        {/* Current Courses — reuses cc-grid for responsive column count */}
+        <section>
+          <div className="h-5 w-36 animate-pulse rounded bg-[var(--input)]" />
+          <div className="cc-grid mt-4">
+            {Array.from({ length: 2 }).map((_, i) => (
+              <div key={i} className="cc-card">
+                <div className="cc-thumb animate-pulse bg-[var(--input)]" />
+                <div className="cc-body">
+                  <div className="h-4 w-3/4 animate-pulse rounded bg-[var(--input)]" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Activity */}
+        <section>
+          <div className="h-5 w-36 animate-pulse rounded bg-[var(--input)]" />
+          <div className="act-panel mt-4">
+            <div className="act-feed">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="act-row">
+                  <div className="h-3 w-full animate-pulse rounded bg-[var(--input)]" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
       </div>
     );
   }
