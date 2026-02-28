@@ -183,6 +183,7 @@ export interface LeaderboardEntry {
   rank: number;
   walletAddress: string;
   username?: string;
+  displayName?: string;
   avatarUrl?: string;
   xpBalance: number;
   level: number;

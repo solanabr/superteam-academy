@@ -6,6 +6,7 @@ import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { useXpBalance } from "@/hooks/useXpBalance";
 import { useStreak } from "@/hooks/useStreak";
 import { useCredentials } from "@/hooks/useCredentials";
+import { useActivity } from "@/hooks/useActivity";
 import { XPBar } from "@/components/gamification/XPBar";
 import { StreakWidget } from "@/components/gamification/StreakWidget";
 import { CredentialCard } from "@/components/solana/CredentialCard";
@@ -21,53 +22,9 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-// ─── Mock data ────────────────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
 
-interface ActivityItem {
-  id: string;
-  type: "lesson" | "xp" | "milestone" | "enrollment" | "credential";
-  message: string;
-  detail?: string;
-  timestamp: string;
-}
-
-const MOCK_ACTIVITY: ActivityItem[] = [
-  {
-    id: "1",
-    type: "lesson",
-    message: "Completed lesson: Account Model",
-    detail: "Solana Basics · Module 2",
-    timestamp: "2 hours ago",
-  },
-  {
-    id: "2",
-    type: "xp",
-    message: "+50 XP earned",
-    detail: "Lesson completion reward",
-    timestamp: "2 hours ago",
-  },
-  {
-    id: "3",
-    type: "milestone",
-    message: "Streak milestone: 7 days",
-    detail: "You're on fire — keep it up!",
-    timestamp: "Yesterday",
-  },
-  {
-    id: "4",
-    type: "enrollment",
-    message: "Enrolled in: Anchor Framework 101",
-    detail: "Track: Anchor Framework",
-    timestamp: "3 days ago",
-  },
-  {
-    id: "5",
-    type: "credential",
-    message: "Credential minted: Solana Basics",
-    detail: "Soulbound NFT on Solana",
-    timestamp: "1 week ago",
-  },
-];
+type ActivityItemType = "lesson" | "xp" | "milestone" | "enrollment" | "credential";
 
 interface RecommendedCourse {
   id: string;
@@ -195,7 +152,7 @@ function DailyChallengeWidget() {
 
 // ─── Activity icon ────────────────────────────────────────────────────────────
 
-function ActivityIcon({ type }: { type: ActivityItem["type"] }) {
+function ActivityIcon({ type }: { type: ActivityItemType }) {
   switch (type) {
     case "lesson":
       return <CheckCircle2 className="h-3.5 w-3.5 text-[#14F195]" />;
@@ -219,6 +176,7 @@ export default function DashboardPage() {
   const { data: xpData, loading: xpLoading } = useXpBalance();
   const { streak } = useStreak();
   const { credentials, loading: credsLoading } = useCredentials();
+  const { items: activityItems, thisWeek, loading: activityLoading } = useActivity();
 
   if (!connected) {
     return (
@@ -311,10 +269,14 @@ export default function DashboardPage() {
               This Week
             </span>
           </div>
-          <div className="font-mono text-3xl font-bold text-foreground">
-            {MOCK_ACTIVITY.filter((a) => a.type === "lesson").length}
-            <span className="text-sm text-muted-foreground ml-1">lessons</span>
-          </div>
+          {activityLoading ? (
+            <div className="h-8 bg-elevated rounded animate-pulse mb-2" />
+          ) : (
+            <div className="font-mono text-3xl font-bold text-foreground">
+              {thisWeek}
+              <span className="text-sm text-muted-foreground ml-1">lessons</span>
+            </div>
+          )}
           <p className="text-[10px] text-muted-foreground font-mono mt-2">
             Keep the momentum going
           </p>
@@ -345,37 +307,44 @@ export default function DashboardPage() {
             </span>
           </div>
 
-          <ol className="relative">
-            {MOCK_ACTIVITY.map((item, idx) => (
-              <li key={item.id} className="flex gap-3 group">
-                {/* Timeline line + dot */}
-                <div className="flex flex-col items-center">
-                  <div className="flex items-center justify-center w-6 h-6 rounded-full bg-background border border-border flex-shrink-0 mt-0.5 group-hover:border-border-hover transition-colors">
-                    <ActivityIcon type={item.type} />
+          {activityLoading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map(i => <div key={i} className="h-12 bg-elevated rounded animate-pulse" />)}
+            </div>
+          ) : activityItems.length === 0 ? (
+            <p className="text-xs font-mono text-muted-foreground text-center py-8">
+              Complete your first lesson to see activity here.
+            </p>
+          ) : (
+            <ol className="relative">
+              {activityItems.map((item, idx) => (
+                <li key={item.id} className="flex gap-3 group">
+                  <div className="flex flex-col items-center">
+                    <div className="flex items-center justify-center w-6 h-6 rounded-full bg-background border border-border flex-shrink-0 mt-0.5 group-hover:border-border-hover transition-colors">
+                      <ActivityIcon type={item.type} />
+                    </div>
+                    {idx < activityItems.length - 1 && (
+                      <div className="w-px flex-1 bg-elevated my-1 min-h-[16px]" />
+                    )}
                   </div>
-                  {idx < MOCK_ACTIVITY.length - 1 && (
-                    <div className="w-px flex-1 bg-elevated my-1 min-h-[16px]" />
-                  )}
-                </div>
-
-                {/* Content */}
-                <div className="pb-4 flex-1 min-w-0">
-                  <p className="text-xs font-mono text-foreground leading-snug">
-                    {item.message}
-                  </p>
-                  {item.detail && (
-                    <p className="text-[10px] text-muted-foreground mt-0.5">
-                      {item.detail}
+                  <div className="pb-4 flex-1 min-w-0">
+                    <p className="text-xs font-mono text-foreground leading-snug">
+                      {item.message}
                     </p>
-                  )}
-                  <p className="text-[10px] text-subtle font-mono mt-1 flex items-center gap-1">
-                    <Clock className="h-2.5 w-2.5" />
-                    {item.timestamp}
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ol>
+                    {item.detail && (
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        {item.detail}
+                      </p>
+                    )}
+                    <p className="text-[10px] text-subtle font-mono mt-1 flex items-center gap-1">
+                      <Clock className="h-2.5 w-2.5" />
+                      {item.timestamp}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          )}
         </div>
 
         {/* Recommended courses — 3 cols */}

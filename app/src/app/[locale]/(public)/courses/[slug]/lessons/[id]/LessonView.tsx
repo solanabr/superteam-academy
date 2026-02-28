@@ -25,6 +25,7 @@ import { PortableText } from "@portabletext/react";
 import { MonacoEditor } from "@/components/editor/MonacoEditor";
 import { completeLesson } from "@/services/learning-progress";
 import { useEnrollment } from "@/hooks/useEnrollment";
+import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 import type { SanityLesson, SanityModule, SanityTestCase } from "@/types";
 
@@ -646,11 +647,32 @@ export function LessonView({
       if (typeof window !== "undefined") {
         localStorage.setItem(completedKey, JSON.stringify(Array.from(next)));
       }
+
+      // Persist to Supabase for real XP tracking + activity feed
+      if (publicKey && supabase) {
+        const wallet = publicKey.toBase58();
+        const xp = lesson.xpReward ?? 0;
+        // Record completion
+        supabase.from("lesson_completions").upsert({
+          wallet_address: wallet,
+          course_slug: courseSlug,
+          course_title: courseTitle,
+          lesson_id: lesson._id,
+          lesson_title: lesson.title,
+          xp_earned: xp,
+          completed_at: new Date().toISOString(),
+        }, { onConflict: "wallet_address,lesson_id" }).then(() => {});
+        // Increment total_xp in profile
+        if (xp > 0) {
+          supabase.rpc("increment_xp", { wallet: wallet, amount: xp }).then(() => {});
+        }
+      }
+
       setCelebration(true);
       setTimeout(() => setCelebration(false), 4500);
       setCompleting(false);
     }
-  }, [completedIds, completedKey, courseSlug, isEnrolled, lesson._id, lesson.order]);
+  }, [completedIds, completedKey, courseSlug, courseTitle, isEnrolled, lesson._id, lesson.order, lesson.title, lesson.xpReward, publicKey]);
 
   const handleResetCode = useCallback(() => {
     const starter = lesson.starterCode ?? "";

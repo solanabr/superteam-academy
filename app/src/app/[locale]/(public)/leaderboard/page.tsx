@@ -88,12 +88,12 @@ function PodiumCard({
   medal,
   highlighted,
 }: {
-  entry: { walletAddress: string; username?: string; xpBalance: number; level: number };
+  entry: { walletAddress: string; username?: string; displayName?: string; xpBalance: number; level: number };
   height: string;
   medal: string;
   highlighted?: boolean;
 }) {
-  const name = entry.username ?? `${entry.walletAddress.slice(0, 4)}...${entry.walletAddress.slice(-4)}`;
+  const name = entry.displayName ?? entry.username ?? `${entry.walletAddress.slice(0, 4)}...${entry.walletAddress.slice(-4)}`;
 
   return (
     <div

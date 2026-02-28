@@ -2,6 +2,7 @@
 
 import { LevelBadge } from "@/components/gamification/LevelBadge";
 import { cn } from "@/lib/utils";
+import { Link } from "@/i18n/navigation";
 import type { LeaderboardEntry } from "@/types";
 
 interface LeaderboardTableProps {
@@ -23,18 +24,23 @@ export function LeaderboardTable({ entries, currentWallet }: LeaderboardTablePro
         <div className="col-span-3 text-right">XP</div>
       </div>
 
-      {entries.map((entry, i) => {
+      {entries.map((entry) => {
         const isTop3 = entry.rank <= 3;
         const isYou = currentWallet === entry.walletAddress;
+        const displayLabel = entry.displayName ?? entry.username;
+        const profileHref = entry.username
+          ? (`/profile/${entry.username}` as Parameters<typeof Link>[0]["href"])
+          : null;
 
-        return (
+        const inner = (
           <div
-            key={entry.walletAddress}
             className={cn(
               "grid grid-cols-12 gap-2 px-4 py-3 border-b border-border last:border-0 font-mono items-center transition-colors",
               isYou
                 ? "bg-[#14F195]/5 border-l-2 border-l-[#14F195]"
-                : "hover:bg-elevated"
+                : profileHref
+                  ? "hover:bg-elevated cursor-pointer"
+                  : "hover:bg-elevated"
             )}
           >
             {/* Rank */}
@@ -46,15 +52,15 @@ export function LeaderboardTable({ entries, currentWallet }: LeaderboardTablePro
               )}
             </div>
 
-            {/* Wallet/username */}
+            {/* Name */}
             <div className="col-span-6 flex items-center gap-2 min-w-0">
               <div className="w-6 h-6 rounded-full bg-elevated flex items-center justify-center text-[10px] flex-shrink-0">
-                {(entry.username ?? entry.walletAddress)[0].toUpperCase()}
+                {(displayLabel ?? entry.walletAddress)[0].toUpperCase()}
               </div>
               <div className="min-w-0">
-                {entry.username ? (
+                {displayLabel ? (
                   <span className="text-sm text-foreground truncate block">
-                    {entry.username}
+                    {displayLabel}
                   </span>
                 ) : (
                   <span
@@ -87,11 +93,19 @@ export function LeaderboardTable({ entries, currentWallet }: LeaderboardTablePro
             </div>
           </div>
         );
+
+        return profileHref ? (
+          <Link key={entry.walletAddress} href={profileHref}>
+            {inner}
+          </Link>
+        ) : (
+          <div key={entry.walletAddress}>{inner}</div>
+        );
       })}
 
       {entries.length === 0 && (
         <div className="text-center py-12 text-muted-foreground font-mono text-sm">
-          No data yet
+          No data yet. Complete lessons to appear here!
         </div>
       )}
     </div>

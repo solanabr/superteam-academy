@@ -2,9 +2,9 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { fetchXpBalance } from "@/lib/solana";
 import { getXpData } from "@/types";
 import type { XpData } from "@/types";
+import { supabase } from "@/lib/supabase";
 
 export function useXpBalance() {
   const { publicKey } = useWallet();
@@ -13,17 +13,24 @@ export function useXpBalance() {
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
-    if (!publicKey) {
+    if (!publicKey || !supabase) {
       setData(null);
       return;
     }
     setLoading(true);
     setError(null);
     try {
-      const balance = await fetchXpBalance(publicKey.toBase58());
-      setData(getXpData(balance));
+      const { data: row } = await supabase
+        .from("profiles")
+        .select("total_xp")
+        .eq("wallet_address", publicKey.toBase58())
+        .maybeSingle();
+
+      const xp = row?.total_xp ?? 0;
+      setData(getXpData(xp));
     } catch (err) {
       setError(String(err));
+      setData(getXpData(0));
     } finally {
       setLoading(false);
     }
@@ -31,8 +38,6 @@ export function useXpBalance() {
 
   useEffect(() => {
     refresh();
-    const interval = setInterval(refresh, 30_000); // poll every 30s
-    return () => clearInterval(interval);
   }, [refresh]);
 
   return { data, loading, error, refresh };
