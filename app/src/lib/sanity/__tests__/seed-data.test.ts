@@ -161,8 +161,8 @@ describe('seedLessonContents', () => {
 // ---------------------------------------------------------------------------
 
 describe('seedAchievements', () => {
-  it('have 7 entries', () => {
-    expect(seedAchievements).toHaveLength(7);
+  it('have 12 entries', () => {
+    expect(seedAchievements).toHaveLength(12);
   });
 
   it('have unique IDs', () => {
@@ -178,6 +178,8 @@ describe('seedAchievements', () => {
       'challenge',
       'social',
       'special',
+      'progress',
+      'skill',
     ];
     for (const achievement of seedAchievements) {
       expect(validCategories).toContain(achievement.category);

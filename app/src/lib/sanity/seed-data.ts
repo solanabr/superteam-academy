@@ -1823,12 +1823,14 @@ export interface SeedAchievement {
   name: LocalizedString;
   description: LocalizedText;
   icon: string;
-  category: 'learning' | 'streak' | 'challenge' | 'social' | 'special';
+  category: 'learning' | 'streak' | 'challenge' | 'social' | 'special' | 'progress' | 'skill';
   xpReward: number;
+  rarity: 'common' | 'rare' | 'epic' | 'legendary';
   condition: { type: string; value: number };
 }
 
 export const seedAchievements: SeedAchievement[] = [
+  // ── Learning / Progress ─────────────────────────────────────────────────
   {
     _id: 'achievement-first-lesson',
     achievementId: 'first-lesson',
@@ -1839,12 +1841,13 @@ export const seedAchievements: SeedAchievement[] = [
     },
     description: {
       en: 'Complete your first lesson and begin your Solana development journey.',
-      pt: 'Complete sua primeira li\u00e7\u00e3o e comece sua jornada de desenvolvimento Solana.',
-      es: 'Completa tu primera lecci\u00f3n y comienza tu viaje de desarrollo en Solana.',
+      pt: 'Complete sua primeira lição e comece sua jornada de desenvolvimento Solana.',
+      es: 'Completa tu primera lección y comienza tu viaje de desarrollo en Solana.',
     },
-    icon: 'rocket',
-    category: 'learning',
+    icon: '🚀',
+    category: 'progress',
     xpReward: 50,
+    rarity: 'common',
     condition: { type: 'lessons_completed', value: 1 },
   },
   {
@@ -1857,14 +1860,55 @@ export const seedAchievements: SeedAchievement[] = [
     },
     description: {
       en: 'Complete 5 lessons. You are building real momentum.',
-      pt: 'Complete 5 li\u00e7\u00f5es. Voc\u00ea est\u00e1 criando um ritmo real.',
-      es: 'Completa 5 lecciones. Est\u00e1s construyendo un impulso real.',
+      pt: 'Complete 5 lições. Você está criando um ritmo real.',
+      es: 'Completa 5 lecciones. Estás construyendo un impulso real.',
     },
-    icon: 'zap',
-    category: 'learning',
+    icon: '⚡',
+    category: 'progress',
     xpReward: 200,
+    rarity: 'common',
     condition: { type: 'lessons_completed', value: 5 },
   },
+  {
+    _id: 'achievement-course-completer',
+    achievementId: 'course-completer',
+    name: {
+      en: 'Course Completer',
+      pt: 'Curso Completo',
+      es: 'Curso Completado',
+    },
+    description: {
+      en: 'Complete any course from start to finish. Your first major milestone.',
+      pt: 'Complete qualquer curso do início ao fim. Seu primeiro grande marco.',
+      es: 'Completa cualquier curso de principio a fin. Tu primer gran hito.',
+    },
+    icon: '🎓',
+    category: 'progress',
+    xpReward: 500,
+    rarity: 'rare',
+    condition: { type: 'courses_completed', value: 1 },
+  },
+  {
+    _id: 'achievement-speed-runner',
+    achievementId: 'speed-runner',
+    name: {
+      en: 'Speed Runner',
+      pt: 'Velocista',
+      es: 'Velocista',
+    },
+    description: {
+      en: 'Complete a course in under 7 days. Speed and dedication combined.',
+      pt: 'Complete um curso em menos de 7 dias. Velocidade e dedicação combinadas.',
+      es: 'Completa un curso en menos de 7 días. Velocidad y dedicación combinadas.',
+    },
+    icon: '⏱️',
+    category: 'special',
+    xpReward: 750,
+    rarity: 'epic',
+    condition: { type: 'course_completed_days', value: 7 },
+  },
+
+  // ── Streak ──────────────────────────────────────────────────────────
   {
     _id: 'achievement-streak-3',
     achievementId: 'streak-3',
@@ -1875,85 +1919,151 @@ export const seedAchievements: SeedAchievement[] = [
     },
     description: {
       en: 'Maintain a 3-day learning streak. Consistency is key to mastery.',
-      pt: 'Mantenha uma sequ\u00eancia de aprendizado de 3 dias. Consist\u00eancia \u00e9 a chave para a maestria.',
-      es: 'Mantiene una racha de aprendizaje de 3 d\u00edas. La consistencia es la clave del dominio.',
+      pt: 'Mantenha uma sequência de aprendizado de 3 dias. Consistência é a chave para a maestria.',
+      es: 'Mantiene una racha de aprendizaje de 3 días. La consistencia es la clave del dominio.',
     },
-    icon: 'flame',
+    icon: '🔥',
     category: 'streak',
     xpReward: 100,
+    rarity: 'common',
     condition: { type: 'streak_days', value: 3 },
   },
   {
     _id: 'achievement-streak-7',
     achievementId: 'streak-7',
     name: {
-      en: 'Unstoppable',
-      pt: 'Impar\u00e1vel',
-      es: 'Imparable',
+      en: 'Week Warrior',
+      pt: 'Guerreiro Semanal',
+      es: 'Guerrero Semanal',
     },
     description: {
-      en: 'Maintain a 7-day learning streak. Nothing can slow you down.',
-      pt: 'Mantenha uma sequ\u00eancia de aprendizado de 7 dias. Nada pode te frear.',
-      es: 'Mantiene una racha de aprendizaje de 7 d\u00edas. Nada puede frenarte.',
+      en: 'Maintain a 7-day learning streak. A full week of dedication.',
+      pt: 'Mantenha uma sequência de aprendizado de 7 dias. Uma semana completa de dedicação.',
+      es: 'Mantiene una racha de aprendizaje de 7 días. Una semana completa de dedicación.',
     },
-    icon: 'trophy',
+    icon: '⚔️',
     category: 'streak',
     xpReward: 300,
+    rarity: 'rare',
     condition: { type: 'streak_days', value: 7 },
   },
   {
     _id: 'achievement-streak-30',
     achievementId: 'streak-30',
     name: {
-      en: 'Unstoppable Force',
-      pt: 'Forca Imparavel',
-      es: 'Fuerza Imparable',
+      en: 'Monthly Master',
+      pt: 'Mestre Mensal',
+      es: 'Maestro Mensual',
     },
     description: {
       en: 'Maintain a 30-day learning streak. True dedication to your craft.',
-      pt: 'Mantenha uma sequencia de aprendizado de 30 dias. Verdadeira dedicacao ao seu oficio.',
-      es: 'Mantiene una racha de aprendizaje de 30 dias. Verdadera dedicacion a tu oficio.',
+      pt: 'Mantenha uma sequência de aprendizado de 30 dias. Verdadeira dedicação ao seu ofício.',
+      es: 'Mantiene una racha de aprendizaje de 30 días. Verdadera dedicación a tu oficio.',
     },
-    icon: 'flame',
+    icon: '🏅',
     category: 'streak',
     xpReward: 1000,
+    rarity: 'epic',
     condition: { type: 'streak_days', value: 30 },
   },
   {
     _id: 'achievement-streak-100',
     achievementId: 'streak-100',
     name: {
-      en: 'Legendary Streak',
-      pt: 'Sequencia Lendaria',
-      es: 'Racha Legendaria',
+      en: 'Consistency King',
+      pt: 'Rei da Consistência',
+      es: 'Rey de la Consistencia',
     },
     description: {
       en: 'Maintain a 100-day learning streak. You are a true legend.',
-      pt: 'Mantenha uma sequencia de aprendizado de 100 dias. Voce e uma verdadeira lenda.',
-      es: 'Mantiene una racha de aprendizaje de 100 dias. Eres una verdadera leyenda.',
+      pt: 'Mantenha uma sequência de aprendizado de 100 dias. Você é uma verdadeira lenda.',
+      es: 'Mantiene una racha de aprendizaje de 100 días. Eres una verdadera leyenda.',
     },
-    icon: 'crown',
+    icon: '👑',
     category: 'streak',
     xpReward: 5000,
+    rarity: 'legendary',
     condition: { type: 'streak_days', value: 100 },
   },
+
+  // ── Challenge ───────────────────────────────────────────────────────
   {
     _id: 'achievement-first-challenge',
     achievementId: 'first-challenge',
     name: {
       en: 'Challenge Accepted',
       pt: 'Desafio Aceito',
-      es: 'Desaf\u00edo Aceptado',
+      es: 'Desafío Aceptado',
     },
     description: {
       en: 'Complete your first code challenge. You have proven you can build.',
-      pt: 'Complete seu primeiro desafio de c\u00f3digo. Voc\u00ea provou que consegue construir.',
-      es: 'Completa tu primer desaf\u00edo de c\u00f3digo. Has demostrado que puedes construir.',
+      pt: 'Complete seu primeiro desafio de código. Você provou que consegue construir.',
+      es: 'Completa tu primer desafío de código. Has demostrado que puedes construir.',
     },
-    icon: 'sword',
+    icon: '⚔️',
     category: 'challenge',
     xpReward: 150,
+    rarity: 'common',
     condition: { type: 'challenges_completed', value: 1 },
+  },
+
+  // ── Skill ───────────────────────────────────────────────────────────
+  {
+    _id: 'achievement-rust-rookie',
+    achievementId: 'rust-rookie',
+    name: {
+      en: 'Rust Rookie',
+      pt: 'Novato em Rust',
+      es: 'Novato en Rust',
+    },
+    description: {
+      en: 'Complete your first Rust lesson. The foundation of Solana programs.',
+      pt: 'Complete sua primeira lição de Rust. A base dos programas Solana.',
+      es: 'Completa tu primera lección de Rust. La base de los programas Solana.',
+    },
+    icon: '🦀',
+    category: 'skill',
+    xpReward: 100,
+    rarity: 'common',
+    condition: { type: 'rust_lessons_completed', value: 1 },
+  },
+  {
+    _id: 'achievement-anchor-expert',
+    achievementId: 'anchor-expert',
+    name: {
+      en: 'Anchor Expert',
+      pt: 'Especialista em Anchor',
+      es: 'Experto en Anchor',
+    },
+    description: {
+      en: 'Complete the Anchor track. You have mastered the most popular Solana framework.',
+      pt: 'Complete a trilha Anchor. Você dominou o framework Solana mais popular.',
+      es: 'Completa la pista de Anchor. Has dominado el framework Solana más popular.',
+    },
+    icon: '⚓',
+    category: 'skill',
+    xpReward: 1500,
+    rarity: 'epic',
+    condition: { type: 'track_completed', value: 1 },
+  },
+  {
+    _id: 'achievement-full-stack-solana',
+    achievementId: 'full-stack-solana',
+    name: {
+      en: 'Full Stack Solana',
+      pt: 'Full Stack Solana',
+      es: 'Full Stack Solana',
+    },
+    description: {
+      en: 'Complete all tracks. You are a full-stack Solana developer.',
+      pt: 'Complete todas as trilhas. Você é um desenvolvedor Solana full-stack.',
+      es: 'Completa todas las pistas. Eres un desarrollador Solana full-stack.',
+    },
+    icon: '🏆',
+    category: 'special',
+    xpReward: 10000,
+    rarity: 'legendary',
+    condition: { type: 'all_tracks_completed', value: 1 },
   },
 ];
 
