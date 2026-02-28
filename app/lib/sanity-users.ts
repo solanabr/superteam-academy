@@ -1,5 +1,6 @@
 import { createSanityClient } from "@superteam-academy/cms";
 import type { AcademyUser, UserRole } from "@superteam-academy/cms";
+import { isWalletEmail, walletFromEmail } from "@superteam-academy/auth";
 import {
 	userByAuthIdQuery,
 	userByEmailQuery,
@@ -35,7 +36,7 @@ function sanityReadClient() {
 	if (_readClient !== undefined) return _readClient;
 	const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
 	const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET ?? "production";
-	const token = process.env.SANITY_API_READ_TOKEN;
+	const token = process.env.SANITY_API_READ_TOKEN ?? process.env.SANITY_API_WRITE_TOKEN;
 	if (!projectId || !token) {
 		_readClient = null;
 		return null;
@@ -44,15 +45,28 @@ function sanityReadClient() {
 	return _readClient;
 }
 
-function isSuperAdminIdentifier(emailOrWallet: string): boolean {
+export function isSuperAdminIdentifier(emailOrWallet: string): boolean {
 	const identifier = process.env.SUPER_ADMIN_IDENTIFIER;
 	if (!identifier) return false;
-	const ids = identifier.split(",").map((id) => id.trim());
+	const normalizedInput = emailOrWallet.trim();
+	if (normalizedInput.length === 0) return false;
+	const ids = identifier
+		.split(",")
+		.map((id) => id.trim())
+		.filter((id) => id.length > 0);
 	// Exact match first (wallet addresses are case-sensitive Base58)
 	// then case-insensitive fallback (emails)
 	return ids.some(
-		(id) => id === emailOrWallet || id.toLowerCase() === emailOrWallet.toLowerCase()
+		(id) => id === normalizedInput || id.toLowerCase() === normalizedInput.toLowerCase()
 	);
+}
+
+function isSessionSuperAdminIdentity(email?: string | null): boolean {
+	if (!email) return false;
+	if (isSuperAdminIdentifier(email)) return true;
+	if (!isWalletEmail(email)) return false;
+	const walletAddress = walletFromEmail(email);
+	return walletAddress ? isSuperAdminIdentifier(walletAddress) : false;
 }
 
 function determineRole(email: string, walletAddress?: string): UserRole {
@@ -368,14 +382,23 @@ export async function updateUserRole(userId: string, role: UserRole): Promise<bo
 	return true;
 }
 
-export async function isUserAdmin(authId: string): Promise<boolean> {
+export async function isUserAdmin(authId: string, sessionEmail?: string | null): Promise<boolean> {
 	const user = await getUserByAuthId(authId);
-	if (!user) return false;
-	return user.role === "admin" || user.role === "superadmin";
+	if (user) {
+		return user.role === "admin" || user.role === "superadmin";
+	}
+
+	return isSessionSuperAdminIdentity(sessionEmail);
 }
 
-export async function isUserSuperAdmin(authId: string): Promise<boolean> {
+export async function isUserSuperAdmin(
+	authId: string,
+	sessionEmail?: string | null
+): Promise<boolean> {
 	const user = await getUserByAuthId(authId);
-	if (!user) return false;
-	return user.role === "superadmin";
+	if (user) {
+		return user.role === "superadmin";
+	}
+
+	return isSessionSuperAdminIdentity(sessionEmail);
 }

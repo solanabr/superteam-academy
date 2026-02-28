@@ -30,7 +30,7 @@ export async function GET() {
 		return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 	}
 
-	const superAdmin = await isUserSuperAdmin(session.user.id);
+	const superAdmin = await isUserSuperAdmin(session.user.id, session.user.email);
 	if (!superAdmin) {
 		return NextResponse.json(
 			{ error: "Only super admins can access settings" },
@@ -66,7 +66,7 @@ export async function PATCH(request: NextRequest) {
 		return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 	}
 
-	const superAdmin = await isUserSuperAdmin(session.user.id);
+	const superAdmin = await isUserSuperAdmin(session.user.id, session.user.email);
 	if (!superAdmin) {
 		return NextResponse.json(
 			{ error: "Only super admins can modify settings" },

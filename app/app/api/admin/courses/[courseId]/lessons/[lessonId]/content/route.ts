@@ -20,7 +20,7 @@ async function ensureAdmin() {
 		return { error: NextResponse.json({ error: "Not authenticated" }, { status: 401 }) };
 	}
 
-	const admin = await isUserAdmin(session.user.id);
+	const admin = await isUserAdmin(session.user.id, session.user.email);
 	if (!admin) {
 		return { error: NextResponse.json({ error: "Forbidden" }, { status: 403 }) };
 	}

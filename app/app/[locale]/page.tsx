@@ -280,7 +280,6 @@ async function FeaturedCoursesSection() {
 	] as const;
 
 	const courses = onchainCourses
-		.filter((entry) => entry.account.isActive)
 		.sort((a, b) => b.account.totalEnrollments - a.account.totalEnrollments)
 		.slice(0, 3)
 		.map((entry, index) => {

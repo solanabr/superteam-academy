@@ -342,7 +342,6 @@ async function getCourses(searchParams: Awaited<CoursesPageProps["searchParams"]
 	};
 
 	const baseCourses: CatalogCourse[] = onchainCourses
-		.filter((entry) => entry.account.isActive)
 		.map((entry) => {
 			const courseId = entry.account.courseId;
 			const cms = cmsByCourseId.get(courseId);

@@ -14,8 +14,8 @@ export function getRpcUrl(): string {
 
 export function getProgramId(): PublicKey {
 	const value =
-		process.env.NEXT_PUBLIC_ACADEMY_PROGRAM_ID ??
 		process.env.ACADEMY_PROGRAM_ID ??
+		process.env.NEXT_PUBLIC_ACADEMY_PROGRAM_ID ??
 		DEFAULT_PROGRAM_ID;
 	return new PublicKey(value);
 }

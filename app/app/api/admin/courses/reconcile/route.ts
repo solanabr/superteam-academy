@@ -15,7 +15,7 @@ async function assertAdmin() {
 		};
 	}
 
-	const admin = await isUserAdmin(session.user.id);
+	const admin = await isUserAdmin(session.user.id, session.user.email);
 	if (!admin) {
 		return {
 			ok: false as const,

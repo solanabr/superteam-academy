@@ -318,7 +318,6 @@ async function getTopicCourses(slug: string, level: string, sort: string) {
 	};
 
 	const baseCourses: TopicCourse[] = onchainCourses
-		.filter((entry) => entry.account.isActive)
 		.map((entry) => {
 			const courseId = entry.account.courseId;
 			const cms = cmsByCourseId.get(courseId);

@@ -18,7 +18,7 @@ export async function GET() {
 		return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 	}
 
-	const admin = await isUserAdmin(session.user.id);
+	const admin = await isUserAdmin(session.user.id, session.user.email);
 	if (!admin) {
 		return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 	}
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
 		return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 	}
 
-	const admin = await isUserAdmin(session.user.id);
+	const admin = await isUserAdmin(session.user.id, session.user.email);
 	if (!admin) {
 		return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 	}

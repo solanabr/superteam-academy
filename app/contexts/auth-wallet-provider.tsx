@@ -66,6 +66,20 @@ function AuthProviderInner({
 			}
 
 			const syncedData = await syncAuthSession(result.data);
+			let serverRole = syncedData?.role;
+			try {
+				const permissionsRes = await fetch("/api/auth/permissions");
+				if (permissionsRes.ok) {
+					const permissions = (await permissionsRes.json()) as {
+						role?: "learner" | "admin" | "superadmin";
+					};
+					if (permissions.role) {
+						serverRole = permissions.role;
+					}
+				}
+			} catch {
+				// Keep auth usable even if permission hydration request fails.
+			}
 
 			const newSession: AuthSession = {
 				id: result.data.session.id,
@@ -81,7 +95,7 @@ function AuthProviderInner({
 				name: result.data.user.name,
 				email: syncedData?.email || result.data.user.email,
 				image,
-				role: syncedData?.role,
+				role: serverRole,
 				onboardingCompleted: syncedData?.onboardingCompleted ?? false,
 			};
 
@@ -91,6 +105,10 @@ function AuthProviderInner({
 			refreshingRef.current = false;
 		}
 	}, []);
+
+	useEffect(() => {
+		void refreshSession();
+	}, [refreshSession]);
 
 	useEffect(() => {
 		if (!wallet.connected) {

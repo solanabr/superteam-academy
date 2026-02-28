@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { serverAuth } from "@/lib/auth";
-import { isUserAdmin } from "@/lib/sanity-users";
-import { getMetricsSnapshot } from "@/lib/runtime-observability";
+import { isUserAdmin, isUserSuperAdmin } from "@/lib/sanity-users";
 
 export async function GET() {
 	const requestHeaders = await headers();
@@ -12,12 +11,14 @@ export async function GET() {
 		return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 	}
 
-	const admin = await isUserAdmin(session.user.id, session.user.email);
-	if (!admin) {
-		return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-	}
+	const [admin, superAdmin] = await Promise.all([
+		isUserAdmin(session.user.id, session.user.email),
+		isUserSuperAdmin(session.user.id, session.user.email),
+	]);
 
 	return NextResponse.json({
-		metrics: getMetricsSnapshot(),
+		isAdmin: admin,
+		isSuperAdmin: superAdmin,
+		role: superAdmin ? "superadmin" : admin ? "admin" : "learner",
 	});
 }

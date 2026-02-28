@@ -12,7 +12,7 @@ export async function GET() {
 		return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 	}
 
-	const admin = await isUserAdmin(session.user.id);
+	const admin = await isUserAdmin(session.user.id, session.user.email);
 	if (!admin) {
 		return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 	}
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
 		return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 	}
 
-	const superAdmin = await isUserSuperAdmin(session.user.id);
+	const superAdmin = await isUserSuperAdmin(session.user.id, session.user.email);
 	if (!superAdmin) {
 		return NextResponse.json({ error: "Only super admins can modify roles" }, { status: 403 });
 	}
