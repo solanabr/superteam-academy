@@ -29,8 +29,8 @@ describe("Accessibility Tests", () => {
 			button.focus();
 			expect(button).toHaveFocus();
 
-			// Check for visible focus indicator
-			expect(button).toHaveClass("focus:outline-none", "focus:ring-2");
+			// Check for visible focus indicator (uses focus-visible variant)
+			expect(button).toHaveClass("focus-visible:outline-none", "focus-visible:ring-2");
 		});
 
 		it("supports keyboard navigation", async () => {

@@ -9,7 +9,7 @@ describe("Input Component", () => {
 
 		const input = screen.getByPlaceholderText("Enter text");
 		expect(input).toBeInTheDocument();
-		expect(input).toHaveAttribute("type", "text");
+		expect((input as HTMLInputElement).type).toBe("text");
 	});
 
 	it("renders with different input types", () => {
@@ -59,7 +59,7 @@ describe("Input Component", () => {
 
 		const input = screen.getByPlaceholderText("Disabled input");
 		expect(input).toBeDisabled();
-		expect(input).toHaveClass("opacity-50", "cursor-not-allowed");
+		expect(input).toHaveClass("disabled:opacity-50", "disabled:cursor-not-allowed");
 	});
 
 	it("renders when placeholder is provided", () => {
@@ -213,11 +213,12 @@ describe("Input Component", () => {
 
 	it("handles controlled vs uncontrolled usage", () => {
 		// Controlled
-		const { rerender } = render(<Input value="controlled" />);
+		const { unmount } = render(<Input value="controlled" onChange={() => {}} />);
 		expect(screen.getByDisplayValue("controlled")).toBeInTheDocument();
+		unmount();
 
 		// Uncontrolled
-		rerender(<Input defaultValue="uncontrolled" />);
+		render(<Input defaultValue="uncontrolled" />);
 		expect(screen.getByDisplayValue("uncontrolled")).toBeInTheDocument();
 	});
 });

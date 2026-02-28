@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { Flame, Calendar } from "lucide-react";
-import { StreakEventType } from "@superteam-academy/gamification/streak-system";
+import { useEffect, useRef, useState } from "react";
+import { Flame, Calendar, Snowflake } from "lucide-react";
+import { StreakEventType, StreakStatus } from "@superteam-academy/gamification/streak-system";
 import { Progress } from "@/components/ui/progress";
 import { useStreak } from "@/hooks/use-streak";
 
@@ -11,9 +11,11 @@ interface StreakTrackerProps {
 }
 
 export function StreakTracker({ walletAddress }: StreakTrackerProps) {
-	const { state, streakData, milestoneData, recordActivity } = useStreak(walletAddress);
+	const { state, streakData, milestoneData, recordActivity, applyFreeze } =
+		useStreak(walletAddress);
 	const recordRef = useRef(recordActivity);
 	recordRef.current = recordActivity;
+	const [freezeConfirm, setFreezeConfirm] = useState(false);
 
 	useEffect(() => {
 		if (!walletAddress) return;
@@ -148,7 +150,10 @@ export function StreakTracker({ walletAddress }: StreakTrackerProps) {
 						<div className="text-[10px] uppercase tracking-wide text-muted-foreground">
 							Freezes available
 						</div>
-						<div className="text-sm font-semibold">{state.freezesAvailable}</div>
+						<div className="text-sm font-semibold flex items-center gap-1.5">
+							<Snowflake className="h-3.5 w-3.5 text-sky-500" />
+							{state.freezesAvailable}
+						</div>
 					</div>
 					<div className="rounded-lg border border-border/60 bg-background px-3 py-2">
 						<div className="text-[10px] uppercase tracking-wide text-muted-foreground">
@@ -161,6 +166,69 @@ export function StreakTracker({ walletAddress }: StreakTrackerProps) {
 						</div>
 					</div>
 				</div>
+
+				{state.status === StreakStatus.FROZEN && state.frozenUntil && (
+					<div className="mt-3 rounded-lg bg-sky-500/10 border border-sky-500/20 px-3 py-2.5 flex items-center gap-2">
+						<Snowflake className="h-4 w-4 text-sky-500 shrink-0" />
+						<div className="text-xs">
+							<span className="font-medium text-sky-600 dark:text-sky-400">
+								Streak frozen
+							</span>
+							<span className="text-muted-foreground">
+								{" "}
+								until{" "}
+								{new Date(state.frozenUntil).toLocaleDateString("en", {
+									month: "short",
+									day: "numeric",
+								})}
+							</span>
+						</div>
+					</div>
+				)}
+
+				{isWarning &&
+					state.freezesAvailable > 0 &&
+					state.status !== StreakStatus.FROZEN && (
+						<div className="mt-3">
+							{!freezeConfirm ? (
+								<button
+									type="button"
+									onClick={() => setFreezeConfirm(true)}
+									className="w-full rounded-lg bg-sky-500/10 border border-sky-500/20 px-3 py-2.5 text-xs font-medium text-sky-600 dark:text-sky-400 hover:bg-sky-500/20 transition-colors flex items-center justify-center gap-2"
+								>
+									<Snowflake className="h-3.5 w-3.5" />
+									Use streak freeze ({state.freezesAvailable} left)
+								</button>
+							) : (
+								<div className="rounded-lg bg-sky-500/10 border border-sky-500/20 px-3 py-3 space-y-2">
+									<p className="text-xs text-center text-muted-foreground">
+										This will protect your {streakData.current}-day streak for
+										24 hours
+									</p>
+									<div className="flex gap-2">
+										<button
+											type="button"
+											onClick={() => setFreezeConfirm(false)}
+											className="flex-1 rounded-md border border-border/60 bg-background px-2 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted transition-colors"
+										>
+											Cancel
+										</button>
+										<button
+											type="button"
+											onClick={() => {
+												applyFreeze();
+												setFreezeConfirm(false);
+											}}
+											className="flex-1 rounded-md bg-sky-500 px-2 py-1.5 text-xs font-medium text-white hover:bg-sky-600 transition-colors flex items-center justify-center gap-1"
+										>
+											<Snowflake className="h-3 w-3" />
+											Freeze streak
+										</button>
+									</div>
+								</div>
+							)}
+						</div>
+					)}
 			</div>
 		</div>
 	);

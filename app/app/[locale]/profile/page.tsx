@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import { Shield } from "lucide-react";
 
 import { ProfileHeader } from "@/components/profile/profile-header";
 import { AchievementGrid } from "@/components/profile/achievement-grid";
@@ -13,11 +14,12 @@ import { CredentialList } from "@/components/credentials/credential-list";
 import { PublicKey } from "@solana/web3.js";
 import { findToken2022ATA } from "@superteam-academy/solana";
 import {
-	fetchIndexedLearnerActivity,
-	getAcademyClient,
-	getSolanaConnection,
-	getProgramId,
+    fetchIndexedLearnerActivity,
+    getAcademyClient,
+    getSolanaConnection,
+    getProgramId,
 } from "@/lib/academy";
+import type { UserPrivacySettings } from "@superteam-academy/cms";
 import { getLinkedWallet } from "@/lib/auth";
 import { calculateLevelFromXP } from "@superteam-academy/gamification";
 import { CredentialService } from "@/services/credential-service";
@@ -60,43 +62,76 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
 export async function ProfileContent({
 	walletAddress,
 	username,
+	privacy,
 }: {
 	walletAddress: string | undefined;
 	username?: string | undefined;
+	privacy?: UserPrivacySettings;
 }) {
+	const isPublicView = !!privacy;
+	const isPrivateProfile = privacy?.profileVisibility === "private";
+
+	if (isPrivateProfile) {
+		return (
+			<div className="mx-auto px-4 sm:px-6 py-20 text-center">
+				<div className="rounded-2xl border border-border/60 bg-card p-10 max-w-md mx-auto space-y-3">
+					<Shield className="h-10 w-10 text-muted-foreground mx-auto" />
+					<h2 className="text-xl font-semibold">Private Profile</h2>
+					<p className="text-sm text-muted-foreground">
+						This user has set their profile to private.
+					</p>
+				</div>
+			</div>
+		);
+	}
+
 	const { user, stats, achievements, activity, courses, credentials } = await getDynamicProfile(
 		walletAddress,
 		username
 	);
 
+	const showProgress = !isPublicView || privacy?.showProgress !== false;
+	const showAchievements = !isPublicView || privacy?.showAchievements !== false;
+	const showActivity = !isPublicView || privacy?.showActivity !== false;
+
 	return (
 		<div className="mx-auto px-4 sm:px-6 py-8 space-y-6">
 			<ProfileHeader user={user} stats={stats} />
-			<ProfileCompleteness user={user} />
+			{!isPublicView && <ProfileCompleteness user={user} />}
 
 			<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 				<div className="lg:col-span-2 space-y-6">
-					<LevelProgress
-						currentLevel={stats.level}
-						currentXP={stats.xp}
-						nextLevelXP={stats.nextLevelXP}
-						totalXP={stats.totalXP}
-						levelUpHistory={stats.levelHistory}
-					/>
-					<CourseProgress courses={courses} />
+					{showProgress && (
+						<>
+							<LevelProgress
+								currentLevel={stats.level}
+								currentXP={stats.xp}
+								nextLevelXP={stats.nextLevelXP}
+								totalXP={stats.totalXP}
+								levelUpHistory={stats.levelHistory}
+							/>
+							<CourseProgress courses={courses} />
+						</>
+					)}
 					<CredentialList credentials={credentials} />
-					<AchievementGrid
-						achievements={achievements}
-						unlockedCount={stats.achievements.unlocked}
-						totalCount={stats.achievements.total}
-					/>
+					{showAchievements && (
+						<AchievementGrid
+							achievements={achievements}
+							unlockedCount={stats.achievements.unlocked}
+							totalCount={stats.achievements.total}
+						/>
+					)}
 				</div>
 
 				<div className="space-y-6">
 					<StreakTracker walletAddress={walletAddress} />
-					<SkillRadarChart courses={courses} />
-					<ProgressStats stats={stats} walletAddress={walletAddress} />
-					<ActivityFeed activities={activity} />
+					{showProgress && (
+						<>
+							<SkillRadarChart courses={courses} />
+							<ProgressStats stats={stats} walletAddress={walletAddress} />
+						</>
+					)}
+					{showActivity && <ActivityFeed activities={activity} />}
 				</div>
 			</div>
 		</div>

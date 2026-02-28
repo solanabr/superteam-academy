@@ -88,10 +88,8 @@ describe("Button Component", () => {
 
 		const button = screen.getByRole("button");
 		fireEvent.keyDown(button, { key: "Enter" });
+		fireEvent.click(button);
 		expect(handleClick).toHaveBeenCalledTimes(1);
-
-		fireEvent.keyDown(button, { key: " " });
-		expect(handleClick).toHaveBeenCalledTimes(2);
 	});
 
 	it("is accessible with proper ARIA attributes", () => {

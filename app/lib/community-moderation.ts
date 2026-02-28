@@ -1,4 +1,4 @@
-export type ModerationTarget = "discussion" | "event" | "project";
+export type ModerationTarget = "discussion" | "event" | "project" | "comment";
 export type ModerationStatus = "approved" | "needs_review" | "rejected";
 
 export interface ModerationDecision {

@@ -2789,6 +2789,10 @@
 			"title": "Built by builders, for builders",
 			"description": "Hear from developers who accelerated their Solana careers."
 		},
+		"partners": {
+			"title": "Trusted by leading Web3 organizations",
+			"description": "We partner with the best in the Solana ecosystem to bring you world-class education."
+		},
 		"cta": {
 			"title": "Your Solana journey starts here",
 			"description": "Join 10,000+ developers already building the future of Web3. Start with our free courses today.",

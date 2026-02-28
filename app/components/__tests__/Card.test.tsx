@@ -1,12 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import {
-	Card,
-	CardHeader,
-	CardTitle,
-	CardDescription,
-	CardContent,
-	CardFooter,
+    Card,
+    CardHeader,
+    CardTitle,
+    CardDescription,
+    CardContent,
+    CardFooter,
 } from "@/components/ui/card";
 
 describe("Card Component", () => {
@@ -165,9 +165,9 @@ describe("Card Component", () => {
 
 		it("handles nested cards", () => {
 			render(
-				<Card>
+				<Card data-testid="outer">
 					<CardContent>
-						<Card>
+						<Card data-testid="inner">
 							<CardContent>Nested content</CardContent>
 						</Card>
 					</CardContent>
@@ -175,8 +175,8 @@ describe("Card Component", () => {
 			);
 
 			expect(screen.getByText("Nested content")).toBeInTheDocument();
-			const cards = screen.getAllByRole("region", { hidden: true });
-			expect(cards).toHaveLength(2);
+			expect(screen.getByTestId("outer")).toBeInTheDocument();
+			expect(screen.getByTestId("inner")).toBeInTheDocument();
 		});
 
 		it("maintains proper spacing between sections", () => {
@@ -234,7 +234,7 @@ describe("Card Component", () => {
 
 		it("handles overflow content", () => {
 			render(
-				<Card className="max-h-32 overflow-hidden">
+				<Card className="max-h-32 overflow-hidden" data-testid="overflow-card">
 					<CardContent>
 						Very long content that might overflow the card boundaries and test how the
 						component handles overflow situations.
@@ -242,8 +242,7 @@ describe("Card Component", () => {
 				</Card>
 			);
 
-			const content = screen.getByText(/Very long content/);
-			expect(content.closest("div")).toHaveClass("overflow-hidden");
+			expect(screen.getByTestId("overflow-card")).toHaveClass("overflow-hidden");
 		});
 	});
 

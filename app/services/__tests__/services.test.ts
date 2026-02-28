@@ -2,25 +2,24 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { PublicKey, type Connection } from "@solana/web3.js";
 
 // Mock @superteam-academy/anchor
+const __mockClient = {
+	fetchConfig: vi.fn(),
+	fetchCourse: vi.fn(),
+	fetchEnrollment: vi.fn(),
+	fetchEnrollmentsForLearner: vi.fn(),
+	fetchAllCourses: vi.fn(),
+	fetchAllAchievementTypes: vi.fn(),
+	fetchAchievementReceipt: vi.fn(),
+	fetchXpBalance: vi.fn(),
+};
+
 vi.mock("@superteam-academy/anchor", () => {
-	const mockClient = {
-		fetchConfig: vi.fn(),
-		fetchCourse: vi.fn(),
-		fetchEnrollment: vi.fn(),
-		fetchEnrollmentsForLearner: vi.fn(),
-		fetchAllCourses: vi.fn(),
-		fetchAllAchievementTypes: vi.fn(),
-		fetchAchievementReceipt: vi.fn(),
-		fetchXpBalance: vi.fn(),
-	};
-	function AcademyClient() {
-		return mockClient;
-	}
 	return {
-		AcademyClient,
+		AcademyClient: function AcademyClient() {
+			return __mockClient;
+		},
 		countCompletedLessons: vi.fn(() => 3),
 		isLessonCompleted: vi.fn(() => true),
-		__mockClient: mockClient,
 	};
 });
 
@@ -42,18 +41,11 @@ describe("AchievementService", () => {
 	let service: InstanceType<
 		Awaited<typeof import("@/services/achievement-service")>["AchievementService"]
 	>;
-	let mockClient: ReturnType<typeof getMockClient>;
-
-	function getMockClient() {
-		// eslint-disable-next-line @typescript-eslint/no-require-imports
-		return require("@superteam-academy/anchor").__mockClient;
-	}
 
 	beforeEach(async () => {
 		vi.clearAllMocks();
 		const mod = await import("@/services/achievement-service");
 		service = new mod.AchievementService(createMockConnection(), PROGRAM_ID);
-		mockClient = getMockClient();
 	});
 
 	it("getAllAchievementTypes returns mapped accounts", async () => {
@@ -73,7 +65,7 @@ describe("AchievementService", () => {
 				},
 			},
 		];
-		mockClient.fetchAllAchievementTypes.mockResolvedValue(mockTypes);
+		__mockClient.fetchAllAchievementTypes.mockResolvedValue(mockTypes);
 
 		const result = await service.getAllAchievementTypes();
 		expect(result).toHaveLength(1);
@@ -82,13 +74,13 @@ describe("AchievementService", () => {
 	});
 
 	it("hasAchievement returns true when receipt exists", async () => {
-		mockClient.fetchAchievementReceipt.mockResolvedValue({ awardedAt: 1_700_000_000 });
+		__mockClient.fetchAchievementReceipt.mockResolvedValue({ awardedAt: 1_700_000_000 });
 		const result = await service.hasAchievement("first-course", MOCK_LEARNER);
 		expect(result).toBe(true);
 	});
 
 	it("hasAchievement returns false when receipt is null", async () => {
-		mockClient.fetchAchievementReceipt.mockResolvedValue(null);
+		__mockClient.fetchAchievementReceipt.mockResolvedValue(null);
 		const result = await service.hasAchievement("first-course", MOCK_LEARNER);
 		expect(result).toBe(false);
 	});
@@ -110,8 +102,8 @@ describe("AchievementService", () => {
 				},
 			},
 		];
-		mockClient.fetchAllAchievementTypes.mockResolvedValue(mockTypes);
-		mockClient.fetchAchievementReceipt.mockResolvedValue({
+		__mockClient.fetchAllAchievementTypes.mockResolvedValue(mockTypes);
+		__mockClient.fetchAchievementReceipt.mockResolvedValue({
 			awardedAt: 1_700_001_000,
 			asset: PublicKey.default,
 		});
@@ -135,16 +127,14 @@ describe("LeaderboardService", () => {
 	});
 
 	it("getUserXp returns 0n when no balance", async () => {
-		const mockClient = require("@superteam-academy/anchor").__mockClient;
-		mockClient.fetchXpBalance.mockResolvedValue(null);
+		__mockClient.fetchXpBalance.mockResolvedValue(null);
 
 		const result = await service.getUserXp(MOCK_LEARNER, PublicKey.default);
 		expect(result).toBe(0n);
 	});
 
 	it("getUserXp returns balance when available", async () => {
-		const mockClient = require("@superteam-academy/anchor").__mockClient;
-		mockClient.fetchXpBalance.mockResolvedValue(500n);
+		__mockClient.fetchXpBalance.mockResolvedValue(500n);
 
 		const result = await service.getUserXp(MOCK_LEARNER, PublicKey.default);
 		expect(result).toBe(500n);
@@ -201,34 +191,31 @@ describe("CredentialService", () => {
 	});
 
 	it("getEnrollmentCredential returns null when no enrollment", async () => {
-		const mockClient = require("@superteam-academy/anchor").__mockClient;
-		mockClient.fetchEnrollment.mockResolvedValue(null);
+		__mockClient.fetchEnrollment.mockResolvedValue(null);
 		const result = await service.getEnrollmentCredential("course-1", MOCK_LEARNER);
 		expect(result).toBeNull();
 	});
 
 	it("getEnrollmentCredential returns null when no course found", async () => {
-		const mockClient = require("@superteam-academy/anchor").__mockClient;
-		mockClient.fetchEnrollment.mockResolvedValue({
+		__mockClient.fetchEnrollment.mockResolvedValue({
 			credentialAsset: PublicKey.default,
 			course: PublicKey.default,
 			enrolledAt: 1_700_000_000,
 			completedAt: null,
 		});
-		mockClient.fetchCourse.mockResolvedValue(null);
+		__mockClient.fetchCourse.mockResolvedValue(null);
 		const result = await service.getEnrollmentCredential("course-1", MOCK_LEARNER);
 		expect(result).toBeNull();
 	});
 
 	it("getEnrollmentCredential returns credential when enrollment and course exist", async () => {
-		const mockClient = require("@superteam-academy/anchor").__mockClient;
-		mockClient.fetchEnrollment.mockResolvedValue({
+		__mockClient.fetchEnrollment.mockResolvedValue({
 			credentialAsset: PublicKey.default,
 			course: PublicKey.default,
 			enrolledAt: 1_700_000_000,
 			completedAt: 1_700_001_000,
 		});
-		mockClient.fetchCourse.mockResolvedValue({
+		__mockClient.fetchCourse.mockResolvedValue({
 			trackId: 1,
 			trackLevel: 2,
 			xpPerLesson: 10,
@@ -245,23 +232,16 @@ describe("LearningProgressService", () => {
 	let service: InstanceType<
 		Awaited<typeof import("@/services/learning-progress-service")>["LearningProgressService"]
 	>;
-	let mockClient: ReturnType<typeof getMockClient>;
-
-	function getMockClient() {
-		// eslint-disable-next-line @typescript-eslint/no-require-imports
-		return require("@superteam-academy/anchor").__mockClient;
-	}
 
 	beforeEach(async () => {
 		vi.clearAllMocks();
 		const mod = await import("@/services/learning-progress-service");
 		service = new mod.LearningProgressService(createMockConnection(), PROGRAM_ID);
-		mockClient = getMockClient();
 	});
 
 	it("getLearnerStats returns zero stats when no enrollments", async () => {
-		mockClient.fetchEnrollmentsForLearner.mockResolvedValue([]);
-		mockClient.fetchXpBalance.mockResolvedValue(0n);
+		__mockClient.fetchEnrollmentsForLearner.mockResolvedValue([]);
+		__mockClient.fetchXpBalance.mockResolvedValue(0n);
 
 		const result = await service.getLearnerStats(MOCK_LEARNER, PublicKey.default);
 		expect(result.enrolledCourses).toBe(0);
@@ -271,11 +251,11 @@ describe("LearningProgressService", () => {
 	});
 
 	it("getLearnerStats counts completed courses", async () => {
-		mockClient.fetchEnrollmentsForLearner.mockResolvedValue([
+		__mockClient.fetchEnrollmentsForLearner.mockResolvedValue([
 			{ account: { lessonFlags: [0xff], completedAt: 1_700_001_000 } },
 			{ account: { lessonFlags: [0x01], completedAt: null } },
 		]);
-		mockClient.fetchXpBalance.mockResolvedValue(250n);
+		__mockClient.fetchXpBalance.mockResolvedValue(250n);
 
 		const result = await service.getLearnerStats(MOCK_LEARNER, PublicKey.default);
 		expect(result.enrolledCourses).toBe(2);
@@ -284,17 +264,17 @@ describe("LearningProgressService", () => {
 	});
 
 	it("getLearnerStats returns 0 xp when xpMint is null", async () => {
-		mockClient.fetchEnrollmentsForLearner.mockResolvedValue([]);
+		__mockClient.fetchEnrollmentsForLearner.mockResolvedValue([]);
 		const result = await service.getLearnerStats(MOCK_LEARNER, null);
 		expect(result.totalXp).toBe(0n);
 	});
 
 	it("getLearnerOverview includes recommended courses", async () => {
-		const enrolledCourseKey = new PublicKey("22222222222222222222222222222222");
-		const unenrolledCourseKey = new PublicKey("33333333333333333333333333333333");
+		const enrolledCourseKey = PublicKey.unique();
+		const unenrolledCourseKey = PublicKey.unique();
 
-		mockClient.fetchConfig.mockResolvedValue({ xpMint: PublicKey.default });
-		mockClient.fetchAllCourses.mockResolvedValue([
+		__mockClient.fetchConfig.mockResolvedValue({ xpMint: PublicKey.default });
+		__mockClient.fetchAllCourses.mockResolvedValue([
 			{
 				pubkey: enrolledCourseKey,
 				account: { courseId: "c1", lessonCount: 5, xpPerLesson: 10, isActive: true },
@@ -304,7 +284,7 @@ describe("LearningProgressService", () => {
 				account: { courseId: "c2", lessonCount: 3, xpPerLesson: 20, isActive: true },
 			},
 		]);
-		mockClient.fetchEnrollmentsForLearner.mockResolvedValue([
+		__mockClient.fetchEnrollmentsForLearner.mockResolvedValue([
 			{
 				pubkey: PublicKey.default,
 				account: {
@@ -315,9 +295,9 @@ describe("LearningProgressService", () => {
 				},
 			},
 		]);
-		mockClient.fetchXpBalance.mockResolvedValue(100n);
-		mockClient.fetchAllAchievementTypes.mockResolvedValue([]);
-		mockClient.fetchAchievementReceipt.mockResolvedValue(null);
+		__mockClient.fetchXpBalance.mockResolvedValue(100n);
+		__mockClient.fetchAllAchievementTypes.mockResolvedValue([]);
+		__mockClient.fetchAchievementReceipt.mockResolvedValue(null);
 
 		const result = await service.getLearnerOverview(MOCK_LEARNER);
 		expect(result.courses).toHaveLength(1);
@@ -326,11 +306,11 @@ describe("LearningProgressService", () => {
 	});
 
 	it("getLearnerProgressSnapshot maps courses and achievements", async () => {
-		mockClient.fetchConfig.mockResolvedValue({ xpMint: PublicKey.default });
-		mockClient.fetchAllCourses.mockResolvedValue([]);
-		mockClient.fetchEnrollmentsForLearner.mockResolvedValue([]);
-		mockClient.fetchXpBalance.mockResolvedValue(0n);
-		mockClient.fetchAllAchievementTypes.mockResolvedValue([]);
+		__mockClient.fetchConfig.mockResolvedValue({ xpMint: PublicKey.default });
+		__mockClient.fetchAllCourses.mockResolvedValue([]);
+		__mockClient.fetchEnrollmentsForLearner.mockResolvedValue([]);
+		__mockClient.fetchXpBalance.mockResolvedValue(0n);
+		__mockClient.fetchAllAchievementTypes.mockResolvedValue([]);
 
 		const result = await service.getLearnerProgressSnapshot(MOCK_LEARNER);
 		expect(result.totalXp).toBe(0);

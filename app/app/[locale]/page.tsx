@@ -18,6 +18,7 @@ import { NewsletterForm } from "@/components/newsletter-form";
 import { getCoursesIndex, isSanityConfigured } from "@/lib/cms";
 import { getAcademyClient } from "@/lib/academy";
 import { FeaturedCoursesSkeleton } from "@/components/home/featured-courses-skeleton";
+import Image from "next/image";
 
 const TOPICS = [
 	{ name: "Solana Basics", courses: 12, color: "bg-green/10 text-green" },
@@ -472,6 +473,48 @@ async function CTASection() {
 	);
 }
 
+const PARTNERS = [
+	{ name: "Solana Foundation", logo: "/partners/solana.svg" },
+	{ name: "Superteam", logo: "/partners/superteam.svg" },
+	{ name: "Helius", logo: "/partners/helius.svg" },
+	{ name: "Metaplex", logo: "/partners/metaplex.svg" },
+];
+
+async function PartnersSection() {
+	const t = await getTranslations("home.partners");
+
+	return (
+		<section className="py-16 lg:py-20 border-y border-border/60">
+			<div className="mx-auto px-4 sm:px-6">
+				<div className="text-center max-w-2xl mx-auto mb-10">
+					<h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
+						{t("title")}
+					</h2>
+					<p className="mt-3 text-muted-foreground">{t("description")}</p>
+				</div>
+
+				<div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-8">
+					{PARTNERS.map((partner) => (
+						<div
+							key={partner.name}
+							className="flex items-center justify-center grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all duration-300"
+						>
+							<Image
+								src={partner.logo}
+								alt={partner.name}
+								className="h-8 sm:h-10 w-auto object-contain invert"
+								loading="lazy"
+								width={100}
+								height={40}
+							/>
+						</div>
+					))}
+				</div>
+			</div>
+		</section>
+	);
+}
+
 export default function Home() {
 	return (
 		<>
@@ -483,6 +526,7 @@ export default function Home() {
 			</Suspense>
 			<HowItWorksSection />
 			<TestimonialsSection />
+			<PartnersSection />
 			<CTASection />
 		</>
 	);

@@ -2,9 +2,10 @@ import "@testing-library/jest-dom";
 import { expect, afterEach, beforeAll, afterAll } from "vitest";
 import { cleanup } from "@testing-library/react";
 import * as matchers from "@testing-library/jest-dom/matchers";
+import { toHaveNoViolations } from "jest-axe";
 
-// Extend expect with jest-dom matchers
-expect.extend(matchers);
+// Extend expect with jest-dom matchers and jest-axe matchers
+expect.extend({ ...matchers, ...toHaveNoViolations });
 
 // Cleanup after each test
 afterEach(() => {
