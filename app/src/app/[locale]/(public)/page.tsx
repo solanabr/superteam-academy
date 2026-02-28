@@ -88,21 +88,12 @@ export default async function LandingPage() {
               <span>◎</span>
               {t("hero.cta")}
             </Link>
-            <a
-              href="#tracks"
+            <Link
+              href="/onboarding"
               className="inline-flex items-center gap-2 border border-border text-foreground font-mono text-sm px-6 py-2.5 rounded hover:bg-card hover:border-border-hover transition-colors"
             >
-              {t("hero.ctaSecondary")}
-            </a>
-          </div>
-
-          <div className="mt-4">
-            <a
-              href="./onboarding"
-              className="text-xs font-mono text-muted-foreground hover:text-[#14F195] underline underline-offset-4 transition-colors"
-            >
-              Not sure where to start? Take the skill assessment →
-            </a>
+              Find your starting point →
+            </Link>
           </div>
 
           {/* Stats */}
@@ -120,13 +111,6 @@ export default async function LandingPage() {
           </div>
         </div>
 
-        {/* Terminal decoration */}
-        <div className="absolute bottom-8 right-8 hidden lg:block font-mono text-[10px] text-subtle text-right">
-          <div className="text-[#14F195]">$ solana balance</div>
-          <div>42,000 XP tokens</div>
-          <div className="text-[#14F195]">$ academy level</div>
-          <div>Level 20 · Master Builder</div>
-        </div>
       </section>
 
       {/* ── Learning Tracks ── */}
