@@ -11,8 +11,6 @@ import {
 } from "./idl";
 import {
 	findConfigPDA,
-	findCoursePDA,
-	findEnrollmentPDA,
 	findMinterRolePDA,
 	findAchievementTypePDA,
 	findAchievementReceiptPDA,
@@ -27,6 +25,20 @@ export class AcademyClient {
 	constructor(connection: Connection, programId?: PublicKey) {
 		this.connection = connection;
 		this.programId = programId ?? new PublicKey(PROGRAM_ID);
+	}
+
+	private findCoursePDA(courseId: string): [PublicKey, number] {
+		return PublicKey.findProgramAddressSync(
+			[Buffer.from("course"), Buffer.from(courseId)],
+			this.programId
+		);
+	}
+
+	private findEnrollmentPDA(courseId: string, learner: PublicKey): [PublicKey, number] {
+		return PublicKey.findProgramAddressSync(
+			[Buffer.from("enrollment"), Buffer.from(courseId), learner.toBuffer()],
+			this.programId
+		);
 	}
 
 	// ─── Config ──────────────────────────────────────────────────────────
@@ -55,7 +67,7 @@ export class AcademyClient {
 	// ─── Course ──────────────────────────────────────────────────────────
 
 	async fetchCourse(courseId: string): Promise<CourseAccount | null> {
-		const [pda] = findCoursePDA(courseId);
+		const [pda] = this.findCoursePDA(courseId);
 		const info = await this.connection.getAccountInfo(pda);
 		if (!info) return null;
 		return this.decodeCourse(info.data);
@@ -63,7 +75,7 @@ export class AcademyClient {
 
 	async fetchAllCourses(): Promise<Array<{ pubkey: PublicKey; account: CourseAccount }>> {
 		const accounts = await this.connection.getProgramAccounts(this.programId, {
-			filters: [{ dataSize: DISCRIMINATOR_SIZE + ACCOUNT_SIZES.Course }],
+			filters: [{ dataSize: ACCOUNT_SIZES.Course }],
 		});
 		return accounts.map((a) => ({
 			pubkey: a.pubkey,
@@ -101,25 +113,25 @@ export class AcademyClient {
 		const hasPrereq = data[offset] === 1;
 		offset += 1;
 		const prerequisite = hasPrereq ? new PublicKey(data.subarray(offset, offset + 32)) : null;
-		offset += 32;
+		if (hasPrereq) {
+			offset += 32;
+		}
 
 		const creatorRewardXp = data.readUInt32LE(offset);
 		offset += 4;
 		const minCompletionsForReward = data.readUInt16LE(offset);
 		offset += 2;
-		const totalCompletions = data.readUInt32LE(offset);
-		offset += 4;
-		const totalEnrollments = data.readUInt32LE(offset);
-		offset += 4;
-		const isActive = data[offset] === 1;
-		offset += 1;
-		const createdAt = Number(data.readBigInt64LE(offset));
-		offset += 8;
-		const updatedAt = Number(data.readBigInt64LE(offset));
-		offset += 8;
-		const reserved = new Uint8Array(data.subarray(offset, offset + 8));
-		offset += 8;
-		const bump = data[offset];
+
+		// Tail fields are fixed-width and always at deterministic offsets from the end.
+		// Reading from the tail avoids drift from any variable-length section in the middle.
+		const tailStart = data.length;
+		const bump = data[tailStart - 1];
+		const reserved = new Uint8Array(data.subarray(tailStart - 9, tailStart - 1));
+		const updatedAt = Number(data.readBigInt64LE(tailStart - 17));
+		const createdAt = Number(data.readBigInt64LE(tailStart - 25));
+		const isActive = data[tailStart - 26] === 1;
+		const totalEnrollments = data.readUInt32LE(tailStart - 30);
+		const totalCompletions = data.readUInt32LE(tailStart - 34);
 
 		return {
 			courseId,
@@ -147,7 +159,7 @@ export class AcademyClient {
 	// ─── Enrollment ──────────────────────────────────────────────────────
 
 	async fetchEnrollment(courseId: string, learner: PublicKey): Promise<EnrollmentAccount | null> {
-		const [pda] = findEnrollmentPDA(courseId, learner);
+		const [pda] = this.findEnrollmentPDA(courseId, learner);
 		const info = await this.connection.getAccountInfo(pda);
 		if (!info) return null;
 		return this.decodeEnrollment(info.data);
@@ -157,7 +169,7 @@ export class AcademyClient {
 		learner: PublicKey
 	): Promise<Array<{ pubkey: PublicKey; account: EnrollmentAccount }>> {
 		const accounts = await this.connection.getProgramAccounts(this.programId, {
-			filters: [{ dataSize: DISCRIMINATOR_SIZE + ACCOUNT_SIZES.Enrollment }],
+			filters: [{ dataSize: ACCOUNT_SIZES.Enrollment }],
 		});
 		// Enrollment PDA = ["enrollment", courseId, learner]. Since courseId is not
 		// stored in the account data we cannot memcmp-filter server-side.
@@ -177,14 +189,14 @@ export class AcademyClient {
 			.filter((e) => {
 				const courseId = courseIdByKey.get(e.account.course.toBase58());
 				if (!courseId) return false;
-				const [expectedPda] = findEnrollmentPDA(courseId, learner);
+				const [expectedPda] = this.findEnrollmentPDA(courseId, learner);
 				return e.pubkey.equals(expectedPda);
 			});
 	}
 
 	async fetchAllEnrollments(): Promise<Array<{ pubkey: PublicKey; account: EnrollmentAccount }>> {
 		const accounts = await this.connection.getProgramAccounts(this.programId, {
-			filters: [{ dataSize: DISCRIMINATOR_SIZE + ACCOUNT_SIZES.Enrollment }],
+			filters: [{ dataSize: ACCOUNT_SIZES.Enrollment }],
 		});
 
 		return accounts.map((account) => ({
@@ -204,7 +216,9 @@ export class AcademyClient {
 		const hasCompleted = data[offset] === 1;
 		offset += 1;
 		const completedAt = hasCompleted ? Number(data.readBigInt64LE(offset)) : null;
-		offset += 8;
+		if (hasCompleted) {
+			offset += 8;
+		}
 
 		const lessonFlags: [bigint, bigint, bigint, bigint] = [
 			data.readBigUInt64LE(offset),
@@ -220,7 +234,9 @@ export class AcademyClient {
 		const credentialAsset = hasCredential
 			? new PublicKey(data.subarray(offset, offset + 32))
 			: null;
-		offset += 32;
+		if (hasCredential) {
+			offset += 32;
+		}
 
 		const reserved = new Uint8Array(data.subarray(offset, offset + 4));
 		offset += 4;

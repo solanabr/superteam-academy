@@ -1,15 +1,16 @@
 import { NextResponse } from "next/server";
 import { getUserStats, getAllUsers } from "@/lib/sanity-users";
-import { getCoursesCMS } from "@/lib/cms";
+import { getAcademyClient } from "@/lib/academy";
 import { requireAdmin } from "@/lib/route-utils";
 
 export async function GET() {
 	const auth = await requireAdmin();
 	if (!auth.ok) return auth.response;
+	const academyClient = getAcademyClient();
 
-	const [userStats, courses, users] = await Promise.all([
+	const [userStats, onchainCourses, users] = await Promise.all([
 		getUserStats(),
-		getCoursesCMS(),
+		academyClient.fetchAllCourses(),
 		getAllUsers(10_000, 0),
 	]);
 
@@ -38,8 +39,8 @@ export async function GET() {
 		activeUsers: userStats.activeUsers,
 		adminCount: userStats.adminCount,
 		totalEnrollments: userStats.totalEnrollments,
-		totalCourses: courses.length,
-		publishedCourses: courses.filter((c) => c.published).length,
+		totalCourses: onchainCourses.length,
+		publishedCourses: onchainCourses.filter((course) => course.account.isActive).length,
 		activationFunnel: {
 			signups: userStats.totalUsers,
 			onboardingCompleted: onboardingCompletedUsers,
