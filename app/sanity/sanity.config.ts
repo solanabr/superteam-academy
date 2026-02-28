@@ -10,7 +10,7 @@ import instructor from "./schemas/instructor";
 export default defineConfig({
   name: "superteam-academy",
   title: "Superteam Academy CMS",
-  projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID ?? "your-project-id",
+  projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID ?? "k9esrahg",
   dataset: process.env.NEXT_PUBLIC_SANITY_DATASET ?? "production",
   plugins: [structureTool(), visionTool(), codeInput()],
   schema: {
