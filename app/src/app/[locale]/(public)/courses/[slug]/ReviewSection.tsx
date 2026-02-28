@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Star, Loader2, CheckCircle } from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
+import { useProfile } from "@/hooks/useProfile";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -38,6 +39,7 @@ function StarRating({ rating, interactive = false, onChange }: { rating: number;
 
 function ReviewModal({ courseSlug, onClose, onSubmitted }: { courseSlug: string; onClose: () => void; onSubmitted: () => void }) {
   const { publicKey } = useWallet();
+  const profile = useProfile();
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -47,10 +49,13 @@ function ReviewModal({ courseSlug, onClose, onSubmitted }: { courseSlug: string;
     if (!publicKey || rating === 0) return;
     setSubmitting(true);
     setError(null);
+    const wallet = publicKey.toBase58();
+    const displayName = profile?.display_name ?? profile?.username
+      ?? (wallet.slice(0, 6) + "..." + wallet.slice(-4));
     const { error: err } = await supabase.from("course_reviews").upsert({
       course_slug: courseSlug,
-      wallet_address: publicKey.toBase58(),
-      display_name: publicKey.toBase58().slice(0, 6) + "..." + publicKey.toBase58().slice(-4),
+      wallet_address: wallet,
+      display_name: displayName,
       rating,
       comment: comment.trim() || null,
     }, { onConflict: "course_slug,wallet_address" });
