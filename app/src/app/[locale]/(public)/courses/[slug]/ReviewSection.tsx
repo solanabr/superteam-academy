@@ -124,7 +124,7 @@ export function RateCourseButton({ courseSlug, totalLessons }: { courseSlug: str
     <>
       <button
         onClick={() => setShowModal(true)}
-        className="w-full flex items-center justify-center gap-1.5 mt-2 py-2 border border-[#F5A623]/40 bg-[#F5A623]/5 text-[#F5A623] text-xs font-mono font-semibold rounded hover:bg-[#F5A623]/10 transition-colors"
+        className="w-full flex items-center justify-center gap-1.5 mt-2 py-2.5 border border-[#F5A623]/40 bg-[#F5A623]/5 text-[#F5A623] text-sm font-mono font-semibold rounded-full hover:bg-[#F5A623]/10 transition-colors"
       >
         {submitted ? <><CheckCircle className="h-3.5 w-3.5" /> Review submitted</> : <><Star className="h-3.5 w-3.5" /> Rate this course</>}
       </button>
