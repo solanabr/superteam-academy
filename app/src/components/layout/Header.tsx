@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 const NAV_LINKS = [
   { key: "courses" as const, href: "/courses" },
   { key: "leaderboard" as const, href: "/leaderboard" },
+  { key: "community" as const, href: "/community" },
   { key: "dashboard" as const, href: "/dashboard" },
 ] as const;
 
