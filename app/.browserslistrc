@@ -1,4 +1,6 @@
-chrome >= 87
-firefox >= 78
-safari >= 14
-edge >= 88
+chrome >= 90
+firefox >= 88
+safari >= 15
+edge >= 90
+Android >= 10
+iOS >= 15

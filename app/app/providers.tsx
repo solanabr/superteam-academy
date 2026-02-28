@@ -19,12 +19,7 @@ export default function Providers({ children, initialSession }: WalletProviderPr
 	}, []);
 
 	return (
-		<ThemeProvider
-			attribute="class"
-			defaultTheme="system"
-			enableSystem
-			disableTransitionOnChange
-		>
+		<ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
 			<ProgressProvider
 				height="3px"
 				color="#008c4c"
