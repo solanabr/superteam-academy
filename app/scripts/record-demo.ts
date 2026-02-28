@@ -195,17 +195,22 @@ async function scrollTo(page: Parameters<typeof chromium.launch>[0] extends neve
     await sleep(800);
   }
 
-  // Answer each question (pick first option)
+  // Answer each question — OptionCard has `text-left` class (unique vs nav buttons)
   for (let step = 0; step < 4; step++) {
-    const firstOption = page.locator('button[class*="border"]').first();
-    if (await firstOption.isVisible()) {
+    try {
+      // OptionCard buttons have class "text-left" which nav buttons don't have
+      const firstOption = page.locator('button.text-left').first();
+      await firstOption.waitFor({ state: 'visible', timeout: 5000 });
       await firstOption.click();
-      await sleep(600);
-    }
-    const nextBtn = page.locator('button').filter({ hasText: /next|see results/i }).first();
-    if (await nextBtn.isVisible()) {
-      await nextBtn.click();
-      await sleep(800);
+      await sleep(700);
+
+      const nextBtn = page.locator('button').filter({ hasText: /next|see results|my results/i }).first();
+      await nextBtn.waitFor({ state: 'visible', timeout: 5000 });
+      // force:true bypasses disabled check after option selection race
+      await nextBtn.click({ force: true });
+      await sleep(900);
+    } catch {
+      // skip this step if something goes wrong
     }
   }
   await sleep(1500);

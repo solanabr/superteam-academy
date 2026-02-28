@@ -1,9 +1,10 @@
 import { getTranslations } from "next-intl/server";
-import { ExternalLink, Share2, Shield } from "lucide-react";
+import { ExternalLink, Shield } from "lucide-react";
 import { solanaExplorerUrl } from "@/lib/solana";
 import { TRACKS } from "@/types";
 import type { Metadata } from "next";
 import { DownloadButton } from "./DownloadButton";
+import { CopyShareButton } from "./CopyShareButton";
 
 // X (Twitter) logo as inline SVG — no extra dependency needed
 function XIcon({ className }: { className?: string }) {
@@ -188,19 +189,3 @@ export default async function CertificatePage({ params }: Props) {
   );
 }
 
-// Client component for clipboard copy
-function CopyShareButton({ url, label }: { url: string; label: string }) {
-  return (
-    <button
-      className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-[#14F195] text-black font-mono font-semibold text-sm rounded hover:bg-accent-dim transition-colors"
-      onClick={() => {
-        if (typeof window !== "undefined") {
-          navigator.clipboard.writeText(url).catch(() => {});
-        }
-      }}
-    >
-      <Share2 className="h-3.5 w-3.5" />
-      {label}
-    </button>
-  );
-}
