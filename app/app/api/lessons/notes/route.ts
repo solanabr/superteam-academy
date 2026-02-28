@@ -1,10 +1,15 @@
 import { NextResponse } from "next/server";
-import { requireSession, parseJsonBody, sanityWriteClient, sanityReadClient } from "@/lib/route-utils";
+import {
+	requireSession,
+	parseJsonBody,
+	sanityWriteClient,
+	sanityReadClient,
+} from "@/lib/route-utils";
 import { syncUserToSanity } from "@/lib/sanity-users";
 import { notesByLessonAndUserQuery } from "@superteam-academy/cms";
 
 const MAX_TITLE_LENGTH = 200;
-const MAX_CONTENT_LENGTH = 5_000;
+const MAX_CONTENT_LENGTH = 5000;
 
 export async function GET(request: Request) {
 	const auth = await requireSession();
@@ -61,10 +66,16 @@ export async function POST(request: Request) {
 		return NextResponse.json({ error: "lessonId is required" }, { status: 400 });
 	}
 	if (!title || title.length > MAX_TITLE_LENGTH) {
-		return NextResponse.json({ error: "Title is required (max 200 characters)" }, { status: 400 });
+		return NextResponse.json(
+			{ error: "Title is required (max 200 characters)" },
+			{ status: 400 }
+		);
 	}
 	if (!content || content.length > MAX_CONTENT_LENGTH) {
-		return NextResponse.json({ error: "Content is required (max 5000 characters)" }, { status: 400 });
+		return NextResponse.json(
+			{ error: "Content is required (max 5000 characters)" },
+			{ status: 400 }
+		);
 	}
 
 	if (!sanityWriteClient) {
@@ -91,7 +102,10 @@ export async function POST(request: Request) {
 		timestamp,
 	});
 
-	return NextResponse.json({ note: { _id: doc._id, lessonId, title, content, timestamp } }, { status: 201 });
+	return NextResponse.json(
+		{ note: { _id: doc._id, lessonId, title, content, timestamp } },
+		{ status: 201 }
+	);
 }
 
 export async function PATCH(request: Request) {

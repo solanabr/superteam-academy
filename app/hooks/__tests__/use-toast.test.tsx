@@ -22,7 +22,11 @@ describe("useToast", () => {
 	it("supports variant and description", () => {
 		const { result } = renderHook(() => useToast());
 		act(() => {
-			result.current.toast({ title: "Error", description: "Something broke", variant: "destructive" });
+			result.current.toast({
+				title: "Error",
+				description: "Something broke",
+				variant: "destructive",
+			});
 		});
 		expect(result.current.toasts[0].variant).toBe("destructive");
 		expect(result.current.toasts[0].description).toBe("Something broke");

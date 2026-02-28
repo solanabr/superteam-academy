@@ -299,11 +299,22 @@ const USERS_BY_WALLETS_QUERY = `*[_type == "academyUser" && walletAddress in $wa
 
 export async function getUsersByWallets(
 	wallets: string[]
-): Promise<Map<string, Pick<AcademyUser, "name" | "image" | "walletAddress"> & { location?: string }>> {
-	const map = new Map<string, Pick<AcademyUser, "name" | "image" | "walletAddress"> & { location?: string }>();
+): Promise<
+	Map<string, Pick<AcademyUser, "name" | "image" | "walletAddress"> & { location?: string }>
+> {
+	const map = new Map<
+		string,
+		Pick<AcademyUser, "name" | "image" | "walletAddress"> & { location?: string }
+	>();
 	if (!readClient || wallets.length === 0) return map;
 	const results = await readClient.fetch<
-		Array<{ _id: string; name: string; image?: string; walletAddress: string; location?: string }>
+		Array<{
+			_id: string;
+			name: string;
+			image?: string;
+			walletAddress: string;
+			location?: string;
+		}>
 	>(USERS_BY_WALLETS_QUERY, { wallets });
 	for (const u of results) {
 		if (u.walletAddress) map.set(u.walletAddress, u);

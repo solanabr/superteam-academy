@@ -2,31 +2,31 @@ import { EditorView, basicSetup } from "codemirror";
 import { EditorState, Compartment } from "@codemirror/state";
 import { detectLanguage } from "./languages";
 import {
-    keymap,
-    highlightSpecialChars,
-    drawSelection,
-    dropCursor,
-    rectangularSelection,
-    crosshairCursor,
-    highlightActiveLineGutter,
-    highlightActiveLine,
-    type ViewUpdate,
+	keymap,
+	highlightSpecialChars,
+	drawSelection,
+	dropCursor,
+	rectangularSelection,
+	crosshairCursor,
+	highlightActiveLineGutter,
+	highlightActiveLine,
+	type ViewUpdate,
 } from "@codemirror/view";
 import {
-    defaultHighlightStyle,
-    syntaxHighlighting,
-    indentOnInput,
-    bracketMatching,
-    foldGutter,
-    foldKeymap,
+	defaultHighlightStyle,
+	syntaxHighlighting,
+	indentOnInput,
+	bracketMatching,
+	foldGutter,
+	foldKeymap,
 } from "@codemirror/language";
 import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
 import { searchKeymap, highlightSelectionMatches } from "@codemirror/search";
 import {
-    autocompletion,
-    completionKeymap,
-    closeBrackets,
-    closeBracketsKeymap,
+	autocompletion,
+	completionKeymap,
+	closeBrackets,
+	closeBracketsKeymap,
 } from "@codemirror/autocomplete";
 import { lintKeymap } from "@codemirror/lint";
 import { javascript } from "@codemirror/lang-javascript";

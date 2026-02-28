@@ -14,10 +14,10 @@ import { CredentialList } from "@/components/credentials/credential-list";
 import { PublicKey } from "@solana/web3.js";
 import { findToken2022ATA } from "@superteam-academy/solana";
 import {
-    fetchIndexedLearnerActivity,
-    getAcademyClient,
-    getSolanaConnection,
-    getProgramId,
+	fetchIndexedLearnerActivity,
+	getAcademyClient,
+	getSolanaConnection,
+	getProgramId,
 } from "@/lib/academy";
 import type { UserPrivacySettings } from "@superteam-academy/cms";
 import { getLinkedWallet } from "@/lib/auth";

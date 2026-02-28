@@ -17,7 +17,7 @@ import { getGravatarUrl } from "@/lib/utils";
 import "@solana/wallet-adapter-react-ui/styles.css";
 
 const authClient: AuthClient = createAuthClient({
-	baseURL: process.env.NEXT_PUBLIC_AUTH_URL ?? "http://localhost:3000",
+	baseURL: process.env.NEXT_PUBLIC_AUTH_URL || "",
 });
 
 function AuthProviderInner({
@@ -90,6 +90,9 @@ function AuthProviderInner({
 
 				setUser(userData);
 				setSession(newSession);
+			} catch {
+				setSession(null);
+				setUser(null);
 			} finally {
 				pendingRefreshRef.current = null;
 			}

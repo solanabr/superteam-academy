@@ -1,12 +1,12 @@
 import type { Course } from "../schemas";
 import type { CMSContext } from "./cms-service";
 import {
-    allCoursesQuery,
-    allCoursesIndexQuery,
-    courseBySlugQuery,
-    coursesByTrackQuery,
-    allTracksQuery,
-    searchCoursesQuery,
+	allCoursesQuery,
+	allCoursesIndexQuery,
+	courseBySlugQuery,
+	coursesByTrackQuery,
+	allTracksQuery,
+	searchCoursesQuery,
 } from "../queries";
 
 export type CourseReview = {

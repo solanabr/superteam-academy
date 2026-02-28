@@ -190,16 +190,7 @@ export function StreakTracker({ walletAddress }: StreakTrackerProps) {
 					state.freezesAvailable > 0 &&
 					state.status !== StreakStatus.FROZEN && (
 						<div className="mt-3">
-							{!freezeConfirm ? (
-								<button
-									type="button"
-									onClick={() => setFreezeConfirm(true)}
-									className="w-full rounded-lg bg-sky-500/10 border border-sky-500/20 px-3 py-2.5 text-xs font-medium text-sky-600 dark:text-sky-400 hover:bg-sky-500/20 transition-colors flex items-center justify-center gap-2"
-								>
-									<Snowflake className="h-3.5 w-3.5" />
-									Use streak freeze ({state.freezesAvailable} left)
-								</button>
-							) : (
+							{freezeConfirm ? (
 								<div className="rounded-lg bg-sky-500/10 border border-sky-500/20 px-3 py-3 space-y-2">
 									<p className="text-xs text-center text-muted-foreground">
 										This will protect your {streakData.current}-day streak for
@@ -226,6 +217,15 @@ export function StreakTracker({ walletAddress }: StreakTrackerProps) {
 										</button>
 									</div>
 								</div>
+							) : (
+								<button
+									type="button"
+									onClick={() => setFreezeConfirm(true)}
+									className="w-full rounded-lg bg-sky-500/10 border border-sky-500/20 px-3 py-2.5 text-xs font-medium text-sky-600 dark:text-sky-400 hover:bg-sky-500/20 transition-colors flex items-center justify-center gap-2"
+								>
+									<Snowflake className="h-3.5 w-3.5" />
+									Use streak freeze ({state.freezesAvailable} left)
+								</button>
 							)}
 						</div>
 					)}

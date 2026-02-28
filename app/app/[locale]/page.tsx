@@ -23,11 +23,11 @@ import Image from "next/image";
 const TOPICS = [
 	{ name: "Solana Basics", courses: 12, color: "bg-green/10 text-green" },
 	{ name: "Anchor Framework", courses: 8, color: "bg-forest/10 text-forest" },
-	{ name: "Token Programs", courses: 6, color: "bg-gold/10 text-gold" },
+	{ name: "Token Programs", courses: 6, color: "bg-gold/10 text-amber-700 dark:text-amber-400" },
 	{ name: "DeFi Development", courses: 9, color: "bg-green/10 text-green" },
 	{ name: "NFT & Metaplex", courses: 5, color: "bg-forest/10 text-forest" },
 	{ name: "Security & Auditing", courses: 7, color: "bg-destructive/10 text-destructive" },
-	{ name: "Web3 Frontend", courses: 10, color: "bg-gold/10 text-gold" },
+	{ name: "Web3 Frontend", courses: 10, color: "bg-gold/10 text-amber-700 dark:text-amber-400" },
 	{ name: "Compressed NFTs", courses: 4, color: "bg-green/10 text-green" },
 ];
 
@@ -177,7 +177,7 @@ async function TopicsStrip() {
 							className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all hover:scale-105 ${topic.color}`}
 						>
 							{topic.name}
-							<span className="text-xs opacity-60">{topic.courses}</span>
+							<span className="text-xs text-muted-foreground">{topic.courses}</span>
 						</Link>
 					))}
 				</div>
@@ -487,9 +487,7 @@ async function PartnersSection() {
 		<section className="py-16 lg:py-20 border-y border-border/60">
 			<div className="mx-auto px-4 sm:px-6">
 				<div className="text-center max-w-2xl mx-auto mb-10">
-					<h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
-						{t("title")}
-					</h2>
+					<h2 className="text-2xl sm:text-3xl font-bold tracking-tight">{t("title")}</h2>
 					<p className="mt-3 text-muted-foreground">{t("description")}</p>
 				</div>
 

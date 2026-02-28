@@ -507,6 +507,8 @@
 		"signUpFree": "Regístrate gratis",
 		"register": "Registrarse",
 		"toggleMenu": "Alternar menú",
+		"openMenu": "Abrir menú",
+		"closeMenu": "Cerrar menú",
 		"toggleTheme": "Cambiar tema",
 		"switchLanguage": "Cambiar idioma"
 	},

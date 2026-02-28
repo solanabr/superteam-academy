@@ -1,18 +1,18 @@
 import type { Metadata } from "next";
 import { Link } from "@superteam-academy/i18n/navigation";
 import {
-    Code,
-    Layers,
-    Shield,
-    Coins,
-    Palette,
-    BarChart3,
-    Blocks,
-    Globe,
-    Cpu,
-    Smartphone,
-    ArrowRight,
-    BookOpen,
+	Code,
+	Layers,
+	Shield,
+	Coins,
+	Palette,
+	BarChart3,
+	Blocks,
+	Globe,
+	Cpu,
+	Smartphone,
+	ArrowRight,
+	BookOpen,
 } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { getCoursesIndex, isSanityConfigured } from "@/lib/cms";
@@ -127,9 +127,7 @@ async function getTopicCourseCounts(): Promise<Map<string, number>> {
 		isSanityConfigured ? getCoursesIndex().catch(() => []) : Promise.resolve([]),
 	]);
 
-	const cmsByCourseId = new Map(
-		cmsCourses.map((c) => [c.slug?.current ?? c._id, c])
-	);
+	const cmsByCourseId = new Map(cmsCourses.map((c) => [c.slug?.current ?? c._id, c]));
 
 	const counts = new Map<string, number>();
 	for (const topic of TOPICS) {

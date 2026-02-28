@@ -4,7 +4,7 @@ import { syncUserToSanity } from "@/lib/sanity-users";
 import { evaluateContentModeration, enqueueModerationItem } from "@/lib/community-moderation";
 import { requireSession, parseJsonBody } from "@/lib/route-utils";
 
-const MAX_COMMENT_LENGTH = 5_000;
+const MAX_COMMENT_LENGTH = 5000;
 
 export async function POST(request: Request) {
 	const auth = await requireSession();

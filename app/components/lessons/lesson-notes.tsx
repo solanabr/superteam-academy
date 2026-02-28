@@ -91,7 +91,9 @@ export function LessonNotes({
 		let cancelled = false;
 		async function load() {
 			try {
-				const res = await fetch(`/api/lessons/notes?lessonId=${encodeURIComponent(lessonId)}`);
+				const res = await fetch(
+					`/api/lessons/notes?lessonId=${encodeURIComponent(lessonId)}`
+				);
 				if (res.ok) {
 					const data = await res.json();
 					if (!cancelled && Array.isArray(data.notes) && data.notes.length > 0) {
@@ -112,7 +114,9 @@ export function LessonNotes({
 			}
 		}
 		load();
-		return () => { cancelled = true; };
+		return () => {
+			cancelled = true;
+		};
 	}, [lessonId, loadLocalNotes]);
 
 	useEffect(() => {
@@ -177,7 +181,11 @@ export function LessonNotes({
 				await fetch("/api/lessons/notes", {
 					method: "PATCH",
 					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({ noteId, title: editTitle.trim(), content: editContent.trim() }),
+					body: JSON.stringify({
+						noteId,
+						title: editTitle.trim(),
+						content: editContent.trim(),
+					}),
 				});
 			} catch {
 				// Silently fall back to local
@@ -209,7 +217,9 @@ export function LessonNotes({
 	const deleteNote = async (noteId: string) => {
 		if (useApi) {
 			try {
-				await fetch(`/api/lessons/notes?noteId=${encodeURIComponent(noteId)}`, { method: "DELETE" });
+				await fetch(`/api/lessons/notes?noteId=${encodeURIComponent(noteId)}`, {
+					method: "DELETE",
+				});
 			} catch {
 				// Silently fall back to local
 			}

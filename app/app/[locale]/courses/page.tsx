@@ -64,7 +64,8 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
 		following,
 	} = await searchParams;
 
-	const hasFilters = q || category !== "all" || level !== "all" || duration !== "all" || following === "true";
+	const hasFilters =
+		q || category !== "all" || level !== "all" || duration !== "all" || following === "true";
 	const t = await getTranslations("courses");
 
 	return (

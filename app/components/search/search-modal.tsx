@@ -200,7 +200,9 @@ export function SearchModal({ open, onOpenChange }: SearchModalProps) {
 									<div className="min-w-0">
 										<p className="font-medium truncate">{result.title}</p>
 										{result.level && (
-											<p className="text-xs text-muted-foreground capitalize">{result.level}</p>
+											<p className="text-xs text-muted-foreground capitalize">
+												{result.level}
+											</p>
 										)}
 									</div>
 								</button>

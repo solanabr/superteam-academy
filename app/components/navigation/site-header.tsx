@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import dynamic from "next/dynamic";
 import { Link } from "@superteam-academy/i18n/navigation";
 import { usePathname } from "next/navigation";
 import {
@@ -29,11 +30,18 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { SearchModal } from "@/components/search/search-modal";
-import { LoginModal } from "@/components/auth/login-modal";
 import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
 import Logo from "@/public/logo.svg";
+
+const SearchModal = dynamic(
+	() => import("@/components/search/search-modal").then((m) => ({ default: m.SearchModal })),
+	{ ssr: false }
+);
+const LoginModal = dynamic(
+	() => import("@/components/auth/login-modal").then((m) => ({ default: m.LoginModal })),
+	{ ssr: false }
+);
 
 const NAV_ITEMS = [
 	{
@@ -272,6 +280,7 @@ export function SiteHeader() {
 								type="button"
 								onClick={() => setSearchOpen(true)}
 								className="p-2 rounded-lg hover:bg-muted transition-colors"
+								aria-label={t("searchPlaceholder")}
 							>
 								<Search className="h-5 w-5 text-muted-foreground" />
 							</button>
@@ -279,6 +288,7 @@ export function SiteHeader() {
 								type="button"
 								onClick={() => setMobileOpen(!mobileOpen)}
 								className="p-2 rounded-lg hover:bg-muted transition-colors"
+								aria-label={mobileOpen ? t("closeMenu") : t("openMenu")}
 							>
 								{mobileOpen ? (
 									<X className="h-5 w-5" />
@@ -406,7 +416,7 @@ export function SiteHeader() {
 			</header>
 
 			<SearchModal open={searchOpen} onOpenChange={setSearchOpen} />
-			<LoginModal open={loginOpen} onOpenChange={setLoginOpen} />
+			{loginOpen && <LoginModal open={loginOpen} onOpenChange={setLoginOpen} />}
 		</>
 	);
 }

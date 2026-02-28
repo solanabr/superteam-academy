@@ -12,9 +12,7 @@ import { DiscussionCommentForm } from "@/components/community/discussion-comment
 function renderBlocks(blocks: SanityBlock[] | undefined): string {
 	if (!blocks) return "";
 	return blocks
-		.map((block) =>
-			(block.children ?? []).map((child) => child.text ?? "").join("")
-		)
+		.map((block) => (block.children ?? []).map((child) => child.text ?? "").join(""))
 		.join("\n\n");
 }
 

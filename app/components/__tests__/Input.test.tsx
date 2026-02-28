@@ -213,7 +213,7 @@ describe("Input Component", () => {
 
 	it("handles controlled vs uncontrolled usage", () => {
 		// Controlled
-		const { unmount } = render(<Input value="controlled" onChange={() => {}} />);
+		const { unmount } = render(<Input value="controlled" onChange={() => undefined} />);
 		expect(screen.getByDisplayValue("controlled")).toBeInTheDocument();
 		unmount();
 

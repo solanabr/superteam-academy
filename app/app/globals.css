@@ -41,9 +41,9 @@
 	--radius-xl: 1rem;
 	--radius-2xl: 1.25rem;
 
-	--font-sans: "DM Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
-	--font-display: "Bricolage Grotesque", "DM Sans", ui-sans-serif, system-ui, sans-serif;
-	--font-mono: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+	--font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
+	--font-display: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
+	--font-mono: var(--font-jb-mono), "Fira Code", ui-monospace, monospace;
 
 	--animate-accordion-down: accordion-down 0.2s ease-out;
 	--animate-accordion-up: accordion-up 0.2s ease-out;
