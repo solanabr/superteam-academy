@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
-import { Copy, LogOut, ChevronDown } from "lucide-react";
+import { Copy, LogOut, ChevronDown, LayoutDashboard, User, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useXpBalance } from "@/hooks/useXpBalance";
 import { cn } from "@/lib/utils";
+import { Link } from "@/i18n/navigation";
 
 function abbrev(address: string): string {
   return `${address.slice(0, 4)}...${address.slice(-4)}`;
@@ -91,6 +92,25 @@ export function WalletButton({ className }: { className?: string }) {
         >
           <Copy className="mr-2 h-3.5 w-3.5" />
           {copied ? "Copied!" : "Copy address"}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator className="bg-[#1F1F1F]" />
+        <DropdownMenuItem asChild className="text-[#EDEDED] focus:bg-[#1A1A1A] focus:text-[#EDEDED] cursor-pointer">
+          <Link href="/dashboard">
+            <LayoutDashboard className="mr-2 h-3.5 w-3.5" />
+            Dashboard
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild className="text-[#EDEDED] focus:bg-[#1A1A1A] focus:text-[#EDEDED] cursor-pointer">
+          <Link href="/profile">
+            <User className="mr-2 h-3.5 w-3.5" />
+            Profile
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild className="text-[#EDEDED] focus:bg-[#1A1A1A] focus:text-[#EDEDED] cursor-pointer">
+          <Link href="/settings">
+            <Settings className="mr-2 h-3.5 w-3.5" />
+            Settings
+          </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator className="bg-[#1F1F1F]" />
         <DropdownMenuItem
