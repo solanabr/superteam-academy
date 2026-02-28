@@ -37,13 +37,26 @@ export function useEnrollment(courseId: string | undefined) {
     }
     setEnrolling(true);
     try {
+      // Verify connection is reachable and get fresh blockhash
+      let latestBlockhash;
+      try {
+        latestBlockhash = await connection.getLatestBlockhash("finalized");
+      } catch {
+        return { success: false, error: "Cannot reach Solana devnet. Check your connection." };
+      }
+
       const wallet = {
         publicKey,
         signTransaction: signTransaction as AnchorWallet["signTransaction"],
         signAllTransactions: signAllTransactions as AnchorWallet["signAllTransactions"],
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any as AnchorWallet;
-      const provider = new AnchorProvider(connection, wallet, { commitment: "confirmed" });
+
+      const provider = new AnchorProvider(connection, wallet, {
+        commitment: "confirmed",
+        skipPreflight: false,
+        preflightCommitment: "confirmed",
+      });
 
       // Dynamically import IDL to avoid SSR issues
       const { IDL } = await import("@/lib/idl").catch(() => ({ IDL: null }));
@@ -56,7 +69,13 @@ export function useEnrollment(courseId: string | undefined) {
       const [coursePda] = findCoursePDA(courseId);
       const [enrollmentPda] = findEnrollmentPDA(courseId, publicKey);
 
-      const sig = await (program.methods as unknown as { enroll: (id: string) => { accountsPartial: (accounts: Record<string, unknown>) => { rpc: () => Promise<string> } } })
+      const sig = await (program.methods as unknown as {
+        enroll: (id: string) => {
+          accountsPartial: (accounts: Record<string, unknown>) => {
+            rpc: (opts?: Record<string, unknown>) => Promise<string>;
+          };
+        };
+      })
         .enroll(courseId)
         .accountsPartial({
           course: coursePda,
@@ -64,7 +83,13 @@ export function useEnrollment(courseId: string | undefined) {
           learner: publicKey,
           systemProgram: SystemProgram.programId,
         })
-        .rpc();
+        .rpc({
+          commitment: "confirmed",
+          skipPreflight: false,
+          maxRetries: 3,
+          // Pass the fresh blockhash we already fetched
+          minContextSlot: latestBlockhash.lastValidBlockHeight,
+        });
 
       await refresh();
       return { success: true, signature: sig };
