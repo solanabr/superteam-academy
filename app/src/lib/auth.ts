@@ -1,18 +1,30 @@
 import NextAuth from 'next-auth';
+import type { Provider } from 'next-auth/providers';
 import Google from 'next-auth/providers/google';
 import GitHub from 'next-auth/providers/github';
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
-  providers: [
+const providers: Provider[] = [];
+
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+  providers.push(
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     }),
+  );
+}
+
+if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
+  providers.push(
     GitHub({
       clientId: process.env.GITHUB_CLIENT_ID,
       clientSecret: process.env.GITHUB_CLIENT_SECRET,
     }),
-  ],
+  );
+}
+
+export const { handlers, auth, signIn, signOut } = NextAuth({
+  providers,
   secret: process.env.NEXTAUTH_SECRET,
   session: {
     strategy: 'jwt',
@@ -38,9 +50,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return session;
     },
   },
-  // Using NextAuth built-in sign-in page for now.
-  // Custom sign-in page can be added later at /auth/signin.
 });
+
+/** Provider availability flags for client-side conditional rendering. */
+export const providerFlags = {
+  google: !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),
+  github: !!(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET),
+};
 
 declare module 'next-auth' {
   interface Session {

@@ -2,6 +2,7 @@
 
 import { useSession, signIn, signOut } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
+import { useEffect, useState } from 'react';
 import { LogIn, LogOut, Github, Chrome } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -25,9 +26,24 @@ function deriveInitials(name: string | null | undefined): string {
   return (first.charAt(0) + last.charAt(0)).toUpperCase();
 }
 
+interface ProviderFlags {
+  google: boolean;
+  github: boolean;
+}
+
 export function SignInMenu() {
   const { data: session, status } = useSession();
   const t = useTranslations('auth');
+  const [providers, setProviders] = useState<ProviderFlags>({ google: false, github: false });
+
+  useEffect(() => {
+    fetch('/api/auth/providers-status')
+      .then((r) => r.json())
+      .then((data: ProviderFlags) => setProviders(data))
+      .catch(() => {/* leave defaults */});
+  }, []);
+
+  const hasAnyProvider = providers.google || providers.github;
 
   if (status === 'loading') {
     return (
@@ -38,10 +54,8 @@ export function SignInMenu() {
     );
   }
 
-  // Authenticated state: show user avatar + dropdown with sign-out
   if (session?.user) {
     const user = session.user;
-
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -52,12 +66,8 @@ export function SignInMenu() {
             aria-label={t('signed_in_as', { email: user.email ?? '' })}
           >
             <Avatar size="sm">
-              {user.image && (
-                <AvatarImage src={user.image} alt={user.name ?? ''} />
-              )}
-              <AvatarFallback className="text-xs">
-                {deriveInitials(user.name)}
-              </AvatarFallback>
+              {user.image && <AvatarImage src={user.image} alt={user.name ?? ''} />}
+              <AvatarFallback className="text-xs">{deriveInitials(user.name)}</AvatarFallback>
             </Avatar>
             <span className="hidden max-w-[120px] truncate text-sm sm:inline">
               {user.name ?? user.email}
@@ -67,19 +77,12 @@ export function SignInMenu() {
         <DropdownMenuContent align="end" className="w-56">
           <DropdownMenuLabel className="font-normal">
             <div className="flex flex-col gap-1">
-              {user.name && (
-                <p className="text-sm font-medium leading-none">{user.name}</p>
-              )}
-              {user.email && (
-                <p className="text-xs text-muted-foreground">{user.email}</p>
-              )}
+              {user.name && <p className="text-sm font-medium leading-none">{user.name}</p>}
+              {user.email && <p className="text-xs text-muted-foreground">{user.email}</p>}
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onClick={() => signOut()}
-            className="cursor-pointer"
-          >
+          <DropdownMenuItem onClick={() => signOut()} className="cursor-pointer">
             <LogOut className="mr-2 h-4 w-4" />
             {t('sign_out')}
           </DropdownMenuItem>
@@ -88,7 +91,11 @@ export function SignInMenu() {
     );
   }
 
-  // Unauthenticated state: show sign-in dropdown with provider options
+  // No providers configured — don't show sign-in button at all
+  if (!hasAnyProvider) {
+    return null;
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -101,20 +108,18 @@ export function SignInMenu() {
         <DropdownMenuLabel>{t('sign_in')}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem
-            onClick={() => signIn('google')}
-            className="cursor-pointer"
-          >
-            <Chrome className="mr-2 h-4 w-4" />
-            {t('continue_with_google')}
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() => signIn('github')}
-            className="cursor-pointer"
-          >
-            <Github className="mr-2 h-4 w-4" />
-            {t('continue_with_github')}
-          </DropdownMenuItem>
+          {providers.google && (
+            <DropdownMenuItem onClick={() => signIn('google')} className="cursor-pointer">
+              <Chrome className="mr-2 h-4 w-4" />
+              {t('continue_with_google')}
+            </DropdownMenuItem>
+          )}
+          {providers.github && (
+            <DropdownMenuItem onClick={() => signIn('github')} className="cursor-pointer">
+              <Github className="mr-2 h-4 w-4" />
+              {t('continue_with_github')}
+            </DropdownMenuItem>
+          )}
         </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
