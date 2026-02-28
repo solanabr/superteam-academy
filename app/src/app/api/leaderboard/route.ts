@@ -54,7 +54,7 @@ export async function GET() {
         id: '1',
         method: 'getTokenAccounts',
         params: {
-          mintAddress: XP_MINT.toBase58(),
+          mint: XP_MINT.toBase58(),
           limit: 100,
           page: 1,
         },
