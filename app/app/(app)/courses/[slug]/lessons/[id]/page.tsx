@@ -71,8 +71,8 @@ export default function LessonPage({
     const effectiveCount = getEffectiveLessonCount(course, onChainCourse ?? null);
     const effectiveLessons = getEffectiveLessons(course, onChainCourse ?? null);
     const onChainLessonCount = course.onChainCourseId && onChainCourse != null && typeof (onChainCourse as { lesson_count?: number }).lesson_count === 'number'
-      ? (onChainCourse as { lesson_count: number }).lesson_count
-      : null;
+        ? (onChainCourse as { lesson_count: number }).lesson_count
+        : null;
     const canCompleteOnChain = onChainLessonCount == null || lessonIndex < onChainLessonCount;
 
     const prevLesson = lessonIndex > 0 ? allLessons[lessonIndex - 1] : null;
@@ -278,6 +278,5 @@ export default function LessonPage({
                     </div>
                 ) : null}
             </div>
-        </div>
-    );
+        </div>)
 }

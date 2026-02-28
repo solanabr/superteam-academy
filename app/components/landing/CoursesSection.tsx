@@ -28,23 +28,7 @@ const COURSES: Course[] = [
         lessons: 8,
         xp: 1200,
         image: "/courses/anchor-dev.png",
-    },
-    {
-        title: "Token Extensions (Token-2022)",
-        description: "Master Solana Token Extensions: transfer fees, non-transferable tokens, confidential transfers.",
-        level: "Advanced",
-        lessons: 6,
-        xp: 1200,
-        image: "/courses/token-extensions.png",
-    },
-    {
-        title: "Metaplex Core NFTs",
-        description: "Learn Metaplex Core: create collections, mint NFTs with plugins, and build token-gated experiences.",
-        level: "Advanced",
-        lessons: 6,
-        xp: 1200,
-        image: "/courses/metaplex-nfts.png",
-    },
+    }
 ];
 
 function CourseCard({ course }: { course: Course }) {
