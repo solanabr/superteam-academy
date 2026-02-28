@@ -1,11 +1,11 @@
 import { PublicKey, SystemProgram, TransactionInstruction } from "@solana/web3.js";
 import {
-    findConfigPDA,
-    findCoursePDA,
-    findEnrollmentPDA,
-    findAchievementTypePDA,
-    findAchievementReceiptPDA,
-    findMinterRolePDA,
+	findConfigPDA,
+	findCoursePDA,
+	findEnrollmentPDA,
+	findAchievementTypePDA,
+	findAchievementReceiptPDA,
+	findMinterRolePDA,
 } from "./pda";
 
 // Well-known program IDs
@@ -48,8 +48,8 @@ export function buildEnrollInstruction({
 	programId,
 	prerequisiteCourseId,
 }: EnrollInstructionParams): TransactionInstruction {
-	const [coursePda] = findCoursePDA(courseId);
-	const [enrollmentPda] = findEnrollmentPDA(courseId, learner);
+	const [coursePda] = findCoursePDA(courseId, programId);
+	const [enrollmentPda] = findEnrollmentPDA(courseId, learner, programId);
 
 	const data = Buffer.concat([DISCRIMINATOR_ENROLL, encodeBorshString(courseId)]);
 
@@ -61,8 +61,8 @@ export function buildEnrollInstruction({
 	];
 
 	if (prerequisiteCourseId) {
-		const [prereqCoursePda] = findCoursePDA(prerequisiteCourseId);
-		const [prereqEnrollmentPda] = findEnrollmentPDA(prerequisiteCourseId, learner);
+		const [prereqCoursePda] = findCoursePDA(prerequisiteCourseId, programId);
+		const [prereqEnrollmentPda] = findEnrollmentPDA(prerequisiteCourseId, learner, programId);
 		keys.push(
 			{ pubkey: prereqCoursePda, isSigner: false, isWritable: false },
 			{ pubkey: prereqEnrollmentPda, isSigner: false, isWritable: false }
@@ -83,8 +83,8 @@ export function buildCloseEnrollmentInstruction({
 	learner,
 	programId,
 }: CloseEnrollmentInstructionParams): TransactionInstruction {
-	const [coursePda] = findCoursePDA(courseId);
-	const [enrollmentPda] = findEnrollmentPDA(courseId, learner);
+	const [coursePda] = findCoursePDA(courseId, programId);
+	const [enrollmentPda] = findEnrollmentPDA(courseId, learner, programId);
 
 	const keys = [
 		{ pubkey: coursePda, isSigner: false, isWritable: false },
@@ -120,9 +120,9 @@ export function buildCompleteLessonInstruction({
 	backendSigner,
 	programId,
 }: CompleteLessonParams): TransactionInstruction {
-	const [configPda] = findConfigPDA();
-	const [coursePda] = findCoursePDA(courseId);
-	const [enrollmentPda] = findEnrollmentPDA(courseId, learner);
+	const [configPda] = findConfigPDA(programId);
+	const [coursePda] = findCoursePDA(courseId, programId);
+	const [enrollmentPda] = findEnrollmentPDA(courseId, learner, programId);
 
 	const data = Buffer.concat([DISCRIMINATOR_COMPLETE_LESSON, encodeU8(lessonIndex)]);
 
@@ -163,9 +163,9 @@ export function buildFinalizeCourseInstruction({
 	backendSigner,
 	programId,
 }: FinalizeCourseParams): TransactionInstruction {
-	const [configPda] = findConfigPDA();
-	const [coursePda] = findCoursePDA(courseId);
-	const [enrollmentPda] = findEnrollmentPDA(courseId, learner);
+	const [configPda] = findConfigPDA(programId);
+	const [coursePda] = findCoursePDA(courseId, programId);
+	const [enrollmentPda] = findEnrollmentPDA(courseId, learner, programId);
 
 	const keys = [
 		{ pubkey: configPda, isSigner: false, isWritable: false },
@@ -212,9 +212,9 @@ export function buildIssueCredentialInstruction({
 	totalXp,
 	programId,
 }: IssueCredentialParams): TransactionInstruction {
-	const [configPda] = findConfigPDA();
-	const [coursePda] = findCoursePDA(courseId);
-	const [enrollmentPda] = findEnrollmentPDA(courseId, learner);
+	const [configPda] = findConfigPDA(programId);
+	const [coursePda] = findCoursePDA(courseId, programId);
+	const [enrollmentPda] = findEnrollmentPDA(courseId, learner, programId);
 
 	const data = Buffer.concat([
 		DISCRIMINATOR_ISSUE_CREDENTIAL,
@@ -269,9 +269,9 @@ export function buildUpgradeCredentialInstruction({
 	totalXp,
 	programId,
 }: UpgradeCredentialParams): TransactionInstruction {
-	const [configPda] = findConfigPDA();
-	const [coursePda] = findCoursePDA(courseId);
-	const [enrollmentPda] = findEnrollmentPDA(courseId, learner);
+	const [configPda] = findConfigPDA(programId);
+	const [coursePda] = findCoursePDA(courseId, programId);
+	const [enrollmentPda] = findEnrollmentPDA(courseId, learner, programId);
 
 	const data = Buffer.concat([
 		DISCRIMINATOR_UPGRADE_CREDENTIAL,
@@ -327,10 +327,10 @@ export function buildAwardAchievementInstruction({
 	minter,
 	programId,
 }: AwardAchievementParams): TransactionInstruction {
-	const [configPda] = findConfigPDA();
-	const [achievementTypePda] = findAchievementTypePDA(achievementId);
-	const [receiptPda] = findAchievementReceiptPDA(achievementId, recipient);
-	const [minterRolePda] = findMinterRolePDA(minter);
+	const [configPda] = findConfigPDA(programId);
+	const [achievementTypePda] = findAchievementTypePDA(achievementId, programId);
+	const [receiptPda] = findAchievementReceiptPDA(achievementId, recipient, programId);
+	const [minterRolePda] = findMinterRolePDA(minter, programId);
 
 	const keys = [
 		{ pubkey: configPda, isSigner: false, isWritable: false },
@@ -392,8 +392,8 @@ export function buildCreateCourseInstruction({
 	authority,
 	programId,
 }: CreateCourseInstructionParams): TransactionInstruction {
-	const [configPda] = findConfigPDA();
-	const [coursePda] = findCoursePDA(courseId);
+	const [configPda] = findConfigPDA(programId);
+	const [coursePda] = findCoursePDA(courseId, programId);
 
 	const prereqBuf = prerequisite
 		? Buffer.concat([Buffer.from([1]), prerequisite.toBuffer()])
@@ -449,8 +449,8 @@ export function buildUpdateCourseInstruction({
 	authority,
 	programId,
 }: UpdateCourseInstructionParams): TransactionInstruction {
-	const [configPda] = findConfigPDA();
-	const [coursePda] = findCoursePDA(courseId);
+	const [configPda] = findConfigPDA(programId);
+	const [coursePda] = findCoursePDA(courseId, programId);
 
 	const data = Buffer.concat([
 		DISCRIMINATOR_UPDATE_COURSE,

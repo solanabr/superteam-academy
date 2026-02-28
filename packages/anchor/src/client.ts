@@ -1,19 +1,19 @@
 import { type Connection, PublicKey } from "@solana/web3.js";
 import {
-	PROGRAM_ID,
-	ACCOUNT_SIZES,
-	type ConfigAccount,
-	type CourseAccount,
-	type EnrollmentAccount,
-	type MinterRoleAccount,
-	type AchievementTypeAccount,
-	type AchievementReceiptAccount,
+    PROGRAM_ID,
+    ACCOUNT_SIZES,
+    type ConfigAccount,
+    type CourseAccount,
+    type EnrollmentAccount,
+    type MinterRoleAccount,
+    type AchievementTypeAccount,
+    type AchievementReceiptAccount,
 } from "./idl";
 import {
-	findConfigPDA,
-	findMinterRolePDA,
-	findAchievementTypePDA,
-	findAchievementReceiptPDA,
+    findConfigPDA,
+    findMinterRolePDA,
+    findAchievementTypePDA,
+    findAchievementReceiptPDA,
 } from "./pda";
 
 const DISCRIMINATOR_SIZE = 8;
@@ -44,7 +44,7 @@ export class AcademyClient {
 	// ─── Config ──────────────────────────────────────────────────────────
 
 	async fetchConfig(): Promise<ConfigAccount | null> {
-		const [pda] = findConfigPDA();
+		const [pda] = findConfigPDA(this.programId);
 		const info = await this.connection.getAccountInfo(pda);
 		if (!info) return null;
 		return this.decodeConfig(info.data);
@@ -122,16 +122,19 @@ export class AcademyClient {
 		const minCompletionsForReward = data.readUInt16LE(offset);
 		offset += 2;
 
-		// Tail fields are fixed-width and always at deterministic offsets from the end.
-		// Reading from the tail avoids drift from any variable-length section in the middle.
-		const tailStart = data.length;
-		const bump = data[tailStart - 1];
-		const reserved = new Uint8Array(data.subarray(tailStart - 9, tailStart - 1));
-		const updatedAt = Number(data.readBigInt64LE(tailStart - 17));
-		const createdAt = Number(data.readBigInt64LE(tailStart - 25));
-		const isActive = data[tailStart - 26] === 1;
-		const totalEnrollments = data.readUInt32LE(tailStart - 30);
-		const totalCompletions = data.readUInt32LE(tailStart - 34);
+		const totalCompletions = data.readUInt32LE(offset);
+		offset += 4;
+		const totalEnrollments = data.readUInt32LE(offset);
+		offset += 4;
+		const isActive = data[offset] === 1;
+		offset += 1;
+		const createdAt = Number(data.readBigInt64LE(offset));
+		offset += 8;
+		const updatedAt = Number(data.readBigInt64LE(offset));
+		offset += 8;
+		const reserved = new Uint8Array(data.subarray(offset, offset + 8));
+		offset += 8;
+		const bump = data[offset];
 
 		return {
 			courseId,
@@ -248,7 +251,7 @@ export class AcademyClient {
 	// ─── MinterRole ─────────────────────────────────────────────────────
 
 	async fetchMinterRole(minterKey: PublicKey): Promise<MinterRoleAccount | null> {
-		const [pda] = findMinterRolePDA(minterKey);
+		const [pda] = findMinterRolePDA(minterKey, this.programId);
 		const info = await this.connection.getAccountInfo(pda);
 		if (!info) return null;
 		return this.decodeMinterRole(info.data);
@@ -279,7 +282,7 @@ export class AcademyClient {
 	// ─── AchievementType ────────────────────────────────────────────────
 
 	async fetchAchievementType(achievementId: string): Promise<AchievementTypeAccount | null> {
-		const [pda] = findAchievementTypePDA(achievementId);
+		const [pda] = findAchievementTypePDA(achievementId, this.programId);
 		const info = await this.connection.getAccountInfo(pda);
 		if (!info) return null;
 		return this.decodeAchievementType(info.data);
@@ -355,7 +358,7 @@ export class AcademyClient {
 		achievementId: string,
 		recipient: PublicKey
 	): Promise<AchievementReceiptAccount | null> {
-		const [pda] = findAchievementReceiptPDA(achievementId, recipient);
+		const [pda] = findAchievementReceiptPDA(achievementId, recipient, this.programId);
 		const info = await this.connection.getAccountInfo(pda);
 		if (!info) return null;
 		return this.decodeAchievementReceipt(info.data);
