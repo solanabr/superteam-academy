@@ -1,75 +1,48 @@
 /**
- * Environment variable validation and typed exports.
- * Required vars throw in production; optional vars log warnings.
+ * Environment variable exports.
+ *
+ * IMPORTANT: Next.js only inlines NEXT_PUBLIC_* env vars when accessed via
+ * static string literals (e.g. process.env.NEXT_PUBLIC_FOO). Dynamic access
+ * like process.env[name] resolves to undefined on the client. All public
+ * vars therefore use direct property access below.
  */
 
-const isProduction = process.env.NODE_ENV === "production";
+// --- Public (exposed to client via static inlining) ---
 
-function required(name: string): string {
-  const value = process.env[name];
-  if (!value) {
-    if (isProduction) {
-      throw new Error(`Missing required environment variable: ${name}`);
-    }
-    console.warn(`[env] Missing required variable: ${name}`);
-    return "";
-  }
-  return value;
-}
+export const NEXT_PUBLIC_SOLANA_NETWORK = (process.env.NEXT_PUBLIC_SOLANA_NETWORK ??
+  "devnet") as "mainnet-beta" | "devnet";
 
-function optional(name: string, fallback: string): string {
-  return process.env[name] ?? fallback;
-}
+export const NEXT_PUBLIC_PROGRAM_ID =
+  process.env.NEXT_PUBLIC_PROGRAM_ID ??
+  "EHgTQKSeAAoh7JVMij46CFVzThh4xUi7RDjZjHnA7qR6";
 
-// --- Public (exposed to client) ---
+export const NEXT_PUBLIC_XP_MINT_ADDRESS =
+  process.env.NEXT_PUBLIC_XP_MINT_ADDRESS ?? "";
 
-export const NEXT_PUBLIC_SOLANA_NETWORK = optional(
-  "NEXT_PUBLIC_SOLANA_NETWORK",
-  "devnet",
-) as "mainnet-beta" | "devnet";
+export const NEXT_PUBLIC_CREDENTIAL_COLLECTION =
+  process.env.NEXT_PUBLIC_CREDENTIAL_COLLECTION ?? "";
 
-export const NEXT_PUBLIC_PROGRAM_ID = optional(
-  "NEXT_PUBLIC_PROGRAM_ID",
-  "EHgTQKSeAAoh7JVMij46CFVzThh4xUi7RDjZjHnA7qR6",
-);
-
-export const NEXT_PUBLIC_XP_MINT_ADDRESS = optional(
-  "NEXT_PUBLIC_XP_MINT_ADDRESS",
-  "",
-);
-
-export const NEXT_PUBLIC_CREDENTIAL_COLLECTION = optional(
-  "NEXT_PUBLIC_CREDENTIAL_COLLECTION",
-  "",
-);
-
-export const NEXT_PUBLIC_SUPABASE_URL = optional(
-  "NEXT_PUBLIC_SUPABASE_URL",
-  "",
-);
-
-// --- Server-only ---
-
-export const HELIUS_API_KEY = optional("HELIUS_API_KEY", "");
-
-export const SUPABASE_SERVICE_ROLE_KEY = optional(
-  "SUPABASE_SERVICE_ROLE_KEY",
-  "",
-);
-
-export const GOOGLE_CLIENT_ID = optional("GOOGLE_CLIENT_ID", "");
-export const GOOGLE_CLIENT_SECRET = optional("GOOGLE_CLIENT_SECRET", "");
-export const GITHUB_CLIENT_ID = optional("GITHUB_CLIENT_ID", "");
-export const GITHUB_CLIENT_SECRET = optional("GITHUB_CLIENT_SECRET", "");
+export const NEXT_PUBLIC_SUPABASE_URL =
+  process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 
 // --- Cloudflare Turnstile ---
 
-export const NEXT_PUBLIC_TURNSTILE_SITE_KEY = optional(
-  "NEXT_PUBLIC_TURNSTILE_SITE_KEY",
-  "",
-);
+export const NEXT_PUBLIC_TURNSTILE_SITE_KEY =
+  process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "";
 
-export const TURNSTILE_SECRET_KEY = optional("TURNSTILE_SECRET_KEY", "");
+// --- Server-only ---
+
+export const HELIUS_API_KEY = process.env.HELIUS_API_KEY ?? "";
+
+export const SUPABASE_SERVICE_ROLE_KEY =
+  process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
+
+export const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID ?? "";
+export const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET ?? "";
+export const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID ?? "";
+export const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET ?? "";
+
+export const TURNSTILE_SECRET_KEY = process.env.TURNSTILE_SECRET_KEY ?? "";
 
 // --- Derived ---
 
