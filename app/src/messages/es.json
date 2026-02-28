@@ -1,0 +1,1230 @@
+{
+  "common": {
+    "appName": "Superteam Academy",
+    "signIn": "Iniciar Sesión",
+    "signUp": "Registrarse",
+    "connectWallet": "Conectar Billetera",
+    "disconnectWallet": "Desconectar Billetera",
+    "walletConnected": "Billetera Conectada",
+    "darkMode": "Modo Oscuro",
+    "lightMode": "Modo Claro",
+    "language": "Idioma",
+    "search": "Buscar",
+    "searchPlaceholder": "Buscar cursos, rutas, temas...",
+    "loading": "Cargando...",
+    "error": "Algo salió mal",
+    "errorTryAgain": "Inténtalo de nuevo más tarde",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "previous": "Anterior",
+    "viewAll": "Ver Todo",
+    "learnMore": "Saber Más",
+    "submit": "Enviar",
+    "close": "Cerrar",
+    "confirm": "Confirmar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "share": "Compartir",
+    "download": "Descargar",
+    "copy": "Copiar",
+    "copied": "¡Copiado!",
+    "retry": "Reintentar",
+    "comingSoon": "Próximamente",
+    "beta": "Beta",
+    "new": "Nuevo",
+    "free": "Gratis",
+    "required": "Obligatorio",
+    "optional": "Opcional",
+    "viewOnExplorer": "Ver en Solana Explorer",
+    "poweredBySolana": "Construido sobre Solana",
+    "noResults": "No se encontraron resultados",
+    "showMore": "Mostrar Más",
+    "showLess": "Mostrar Menos",
+    "sortBy": "Ordenar por",
+    "filterBy": "Filtrar por",
+    "all": "Todos",
+    "active": "Activos",
+    "completed": "Completados",
+    "inProgress": "En Progreso"
+  },
+  "nav": {
+    "home": "Inicio",
+    "courses": "Cursos",
+    "dashboard": "Panel",
+    "leaderboard": "Clasificación",
+    "profile": "Perfil",
+    "settings": "Configuración",
+    "docs": "Documentación",
+    "community": "Comunidad",
+    "mobileMenu": "Menú",
+    "challenges": "Desafíos"
+  },
+  "landing": {
+    "hero": {
+      "title": "Domina el Desarrollo en Solana, Obtén Credenciales On-Chain",
+      "subtitle": "La plataforma de aprendizaje práctico para builders de Solana. Completa cursos interactivos, gana XP soulbound y colecciona credenciales verificables que demuestran tus habilidades on-chain.",
+      "cta": "Empieza a Aprender",
+      "exploreCourses": "Explorar Cursos",
+      "badge": "Plataforma de Aprendizaje Open Source",
+      "watchDemo": "Ver Demo",
+      "learnersCount": "{count}+ builders aprendiendo on-chain",
+      "coursesCount": "{count}+ cursos interactivos"
+    },
+    "features": {
+      "sectionTitle": "¿Por qué Superteam Academy?",
+      "sectionSubtitle": "Todo lo que necesitas para pasar de cero a desplegar programas en Solana",
+      "interactiveLessons": {
+        "title": "Lecciones Interactivas",
+        "description": "Escribe, compila y despliega programas de Solana directamente en tu navegador. Sin configuración previa."
+      },
+      "onChainCredentials": {
+        "title": "Credenciales On-Chain",
+        "description": "Obtén credenciales verificables con ZK Compression que demuestran tus habilidades. Se actualizan conforme avanzas en cada ruta."
+      },
+      "soulboundXP": {
+        "title": "XP Soulbound",
+        "description": "Gana tokens de XP no transferibles en Solana. Tu balance es tu reputación, visible en la clasificación pública."
+      },
+      "learningPaths": {
+        "title": "Rutas de Aprendizaje",
+        "description": "Sigue rutas organizadas de principiante a avanzado en Anchor, Rust, DeFi y seguridad."
+      },
+      "streaksAndGamification": {
+        "title": "Rachas y Gamificación",
+        "description": "Crea hábitos diarios de estudio con rachas, logros y progresión de nivel que te mantienen motivado."
+      },
+      "creatorRewards": {
+        "title": "Recompensas para Creadores",
+        "description": "Los creadores de cursos ganan XP cuando los estudiantes completan sus cursos. Crea el currículo y recibe recompensas."
+      }
+    },
+    "paths": {
+      "sectionTitle": "Rutas de Aprendizaje",
+      "sectionSubtitle": "Elige tu camino hacia el dominio de Solana",
+      "anchor": {
+        "title": "Anchor Framework",
+        "description": "Construye programas de Solana con el framework más popular. Desde estructuras de cuentas hasta CPIs."
+      },
+      "rust": {
+        "title": "Rust para Solana",
+        "description": "Domina los fundamentos de Rust orientados al desarrollo on-chain. Ownership, lifetimes y rendimiento."
+      },
+      "defi": {
+        "title": "Desarrollo DeFi",
+        "description": "Construye AMMs, protocolos de préstamo y vaults. Comprende token economics y composabilidad."
+      },
+      "security": {
+        "title": "Seguridad de Programas",
+        "description": "Aprende a auditar programas de Solana. Identifica vulnerabilidades comunes y escribe código seguro."
+      },
+      "viewAllTracks": "Ver Todas las Rutas",
+      "coursesCount": "{count, plural, one {1 curso} other {# cursos}}"
+    },
+    "popularCourses": {
+      "title": "Cursos Populares",
+      "subtitle": "Comienza con nuestros cursos más populares para desarrolladores.",
+      "viewAll": "Ver todos los cursos",
+      "start": "Empezar",
+      "lessonsCount": "{count, plural, one {1 lección} other {# lecciones}}",
+      "enrolled": "{count} inscritos"
+    },
+    "testimonials": {
+      "title": "Lo que Dicen los Builders",
+      "items": [
+        {
+          "name": "Ana Souza",
+          "role": "Desarrolladora Solana, Superteam Brasil",
+          "quote": "El enfoque práctico de Superteam Academy me ayudó a pasar de cero a desplegar mi primer programa Anchor en dos semanas. El sistema de XP me mantuvo volviendo cada día."
+        },
+        {
+          "name": "Carlos Mendes",
+          "role": "Builder DeFi",
+          "quote": "Los desafíos de código interactivos son increíbles. Aprendí más sobre PDAs y CPIs en un fin de semana que en un mes leyendo documentación."
+        },
+        {
+          "name": "Priya Patel",
+          "role": "Desarrolladora Full-Stack",
+          "quote": "Finalmente un camino de aprendizaje estructurado para Solana. Las credenciales on-chain son una gran adición a mi portafolio y prueba de habilidades reales."
+        }
+      ]
+    },
+    "partners": {
+      "title": "Respaldado por el Ecosistema Solana"
+    },
+    "socialProof": {
+      "sectionTitle": "Respaldado por la Comunidad Solana",
+      "learnersLabel": "Estudiantes Activos",
+      "coursesLabel": "Cursos Disponibles",
+      "credentialsLabel": "Credenciales Emitidas",
+      "xpLabel": "XP Distribuido",
+      "testimonialLabel": "Lo que dicen los builders"
+    },
+    "cta": {
+      "title": "¿Listo para Construir en Solana?",
+      "subtitle": "Únete a miles de desarrolladores que obtienen credenciales verificables. Conecta tu billetera y empieza tu primer curso hoy.",
+      "button": "Empieza Gratis"
+    },
+    "footer": {
+      "description": "La plataforma open-source de aprendizaje para desarrolladores Solana. Creada por Superteam Brasil.",
+      "platform": "Plataforma",
+      "resources": "Recursos",
+      "community": "Comunidad",
+      "stayUpdated": "Mantente al Día",
+      "newsletterDescription": "Recibe los últimos cursos, novedades y actualizaciones del ecosistema Solana.",
+      "subscribe": "Suscribirse",
+      "subscribed": "¡Gracias por suscribirte! Te mantendremos informado.",
+      "copyright": "© {year} Superteam Academy. Open source bajo licencia MIT. Hecho con amor por la comunidad Solana en Brasil.",
+      "courses": "Cursos",
+      "leaderboard": "Clasificación",
+      "dashboard": "Panel",
+      "certificates": "Certificados",
+      "solanaDocs": "Docs de Solana",
+      "anchorBook": "Libro de Anchor",
+      "solanaCookbook": "Solana Cookbook",
+      "metaplexDocs": "Docs de Metaplex",
+      "discord": "Discord",
+      "twitter": "Twitter",
+      "github": "GitHub",
+      "superteamEarn": "Superteam Earn"
+    }
+  },
+  "courses": {
+    "catalog": {
+      "title": "Catálogo de Cursos",
+      "subtitle": "Explora cursos prácticos de Solana para todos los niveles",
+      "searchPlaceholder": "Buscar cursos...",
+      "enrolledBadge": "Inscrito",
+      "completedBadge": "Completado",
+      "lessonsCount": "{count} lecciones",
+      "challengesCount": "{count} desafíos",
+      "studentsCount": "{count} estudiantes",
+      "completionsCount": "{count} completados",
+      "xpReward": "{amount} XP",
+      "enrollNow": "Inscribirse",
+      "continueLesson": "Continuar Aprendiendo",
+      "viewCourse": "Ver Curso",
+      "noCourses": "No se encontraron cursos con los filtros seleccionados",
+      "noCoursesHint": "Intenta ajustar tu búsqueda o los filtros.",
+      "clearFilters": "Limpiar Filtros",
+      "resultsCount": "{count, plural, =0 {No se encontraron cursos} =1 {1 curso encontrado} other {# cursos encontrados}}"
+    },
+    "detail": {
+      "aboutCourse": "Acerca de Este Curso",
+      "whatYoullLearn": "Lo Que Aprenderás",
+      "prerequisites": "Requisitos Previos",
+      "noPrerequisites": "No se requieren requisitos previos",
+      "prerequisiteRequired": "Completa \"{course}\" primero",
+      "courseContent": "Contenido del Curso",
+      "lessonsList": "Lecciones",
+      "challengeLabel": "Desafío",
+      "instructorLabel": "Instructor",
+      "createdBy": "Creado por",
+      "lastUpdated": "Última actualización el {date}",
+      "version": "Versión {number}",
+      "difficulty": "Dificultad",
+      "beginner": "Principiante",
+      "intermediate": "Intermedio",
+      "advanced": "Avanzado",
+      "track": "Ruta",
+      "estimatedTime": "Tiempo Estimado",
+      "hours": "{count} horas",
+      "enrollButton": "Inscribirse en Este Curso",
+      "enrolledMessage": "Estás inscrito en este curso",
+      "unenrollButton": "Cancelar Inscripción",
+      "unenrollConfirm": "¿Estás seguro de que quieres cancelar la inscripción? Perderás tu progreso y no se otorgará XP.",
+      "unenrollCooldown": "Puedes cancelar la inscripción 24 horas después de inscribirte",
+      "completedMessage": "¡Has completado este curso!",
+      "progressLabel": "Tu Progreso",
+      "lessonsCompleted": "{completed} de {total} lecciones completadas",
+      "tags": "Etiquetas",
+      "shareThisCourse": "Compartir Este Curso",
+      "reviews": "Reseñas de Estudiantes",
+      "reviewsCount": "{count, plural, =0 {Sin reseñas aún} one {1 reseña} other {# reseñas}}",
+      "writeReview": "Escribir una Reseña",
+      "yourRating": "Tu calificación",
+      "reviewPlaceholder": "Comparte tu experiencia con este curso...",
+      "submitReview": "Enviar Reseña",
+      "reviewSelectRating": "Por favor, selecciona una calificación",
+      "reviewMinLength": "La reseña debe tener al menos 10 caracteres",
+      "you": "Tú",
+      "discussion": {
+        "title": "Discusión de la Comunidad",
+        "commentsCount": "{count, plural, =0 {Sin comentarios aún} one {1 comentario} other {# comentarios}}",
+        "placeholder": "Haz una pregunta o comparte tus ideas...",
+        "post": "Publicar",
+        "reply": "Responder",
+        "cancelReply": "Cancelar",
+        "replyPlaceholder": "Responder a {name}...",
+        "repliesCount": "{count, plural, one {1 respuesta} other {# respuestas}}",
+        "you": "Tú",
+        "empty": "Sin discusiones aún",
+        "emptyHint": "¡Sé el primero en iniciar una conversación!"
+      }
+    },
+    "filters": {
+      "allTracks": "Todas las Rutas",
+      "allDifficulties": "Todos los Niveles",
+      "sortRecent": "Más Recientes",
+      "sortPopular": "Más Populares",
+      "sortXP": "Mayor XP",
+      "sortAlphabetical": "A-Z",
+      "trackAnchor": "Anchor Framework",
+      "trackRust": "Rust para Solana",
+      "trackDeFi": "Desarrollo DeFi",
+      "trackSecurity": "Seguridad de Programas",
+      "trackStandalone": "Independiente",
+      "difficultyBeginner": "Principiante",
+      "difficultyIntermediate": "Intermedio",
+      "difficultyAdvanced": "Avanzado",
+      "statusAll": "Todos los Cursos",
+      "statusEnrolled": "Mis Inscritos",
+      "statusCompleted": "Mis Completados"
+    }
+  },
+  "lesson": {
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "challenge": {
+      "title": "Desafío",
+      "description": "Pon a prueba tus habilidades",
+      "instructions": "Instrucciones",
+      "submitChallenge": "Enviar Desafío",
+      "passed": "¡Desafío Superado!",
+      "failed": "Desafío Fallido",
+      "tryAgain": "Intentar de Nuevo",
+      "attemptsLeft": "{count} intentos restantes",
+      "unlimitedAttempts": "Intentos ilimitados",
+      "expectedOutput": "Resultado Esperado",
+      "yourOutput": "Tu Resultado",
+      "testsPassed": "{passed} de {total} pruebas aprobadas",
+      "allTestsPassed": "¡Todas las pruebas aprobadas!",
+      "xpEarned": "¡+{amount} XP ganados!",
+      "modules": "Módulos",
+      "tests": "Pruebas",
+      "showHintsCount": "Mostrar Pistas ({count})",
+      "hideHints": "Ocultar Pistas",
+      "hintNumber": "Pista {number}:",
+      "showNextHint": "Mostrar siguiente pista",
+      "solutionApplied": "Solución Aplicada",
+      "challengeCompleted": "Desafío completado",
+      "markCompleteXP": "Completar +{xp} XP",
+      "completeXP": "Completar +{xp} XP",
+      "done": "Listo",
+      "skip": "Omitir",
+      "prev": "Anterior",
+      "outputPlaceholder": "Ejecuta tu código para ver la salida aquí.",
+      "mobileOutputPlaceholder": "Ejecuta el código para ver la salida.",
+      "testInput": "Entrada: {input}",
+      "testExpected": "Esperado: {expected}"
+    },
+    "expectedBehavior": "Comportamiento Esperado",
+    "moduleLabel": "Módulo {index}: {title}",
+    "courseModules": "Módulos del Curso",
+    "markComplete": "Marcar como Completada",
+    "completed": "Completada",
+    "runCode": "Ejecutar Código",
+    "resetCode": "Reiniciar Código",
+    "hint": "Mostrar Pista",
+    "hideHint": "Ocultar Pista",
+    "solution": "Mostrar Solución",
+    "hideSolution": "Ocultar Solución",
+    "nextLesson": "Siguiente Lección",
+    "prevLesson": "Lección Anterior",
+    "backToCourse": "Volver al Curso",
+    "lessonOf": "Lección {current} de {total}",
+    "progressPercent": "{percent}% Completado",
+    "editor": {
+      "title": "Editor de Código",
+      "language": "Lenguaje",
+      "theme": "Tema",
+      "fontSize": "Tamaño de Fuente",
+      "output": "Salida",
+      "console": "Consola",
+      "clearConsole": "Limpiar",
+      "building": "Compilando...",
+      "deploying": "Desplegando...",
+      "success": "¡Éxito!",
+      "error": "Error",
+      "compileError": "Error de Compilación",
+      "runtimeError": "Error de Ejecución",
+      "loadingEditor": "Cargando editor...",
+      "resetToStarter": "Restaurar código inicial",
+      "reset": "Reiniciar",
+      "running": "Ejecutando...",
+      "run": "Ejecutar"
+    },
+    "content": {
+      "readingTime": "{minutes} min de lectura",
+      "videoLength": "{minutes} min de video",
+      "interactiveExercise": "Ejercicio Interactivo",
+      "keyTakeaways": "Puntos Clave",
+      "additionalResources": "Recursos Adicionales",
+      "documentation": "Documentación"
+    }
+  },
+  "dashboard": {
+    "welcome": "¡Bienvenido de vuelta, {name}!",
+    "welcomeNew": "¡Bienvenido a Superteam Academy!",
+    "subtitle": "Continúa donde lo dejaste o empieza algo nuevo",
+    "currentCourses": "Cursos en Progreso",
+    "noCourses": "Aún no te has inscrito en ningún curso",
+    "startLearning": "Explora los cursos y empieza a aprender",
+    "xpBalance": "Balance de XP",
+    "totalXP": "XP Total",
+    "seasonXP": "XP Temporada {number}",
+    "level": "Nivel {number}",
+    "nextLevel": "{xp} XP para Nivel {level}",
+    "streak": "Racha Actual",
+    "streakDays": "{count} días",
+    "longestStreak": "Racha Más Larga",
+    "streakFreezes": "{count} congelamientos de racha disponibles",
+    "noStreak": "¡Empieza una racha completando una lección hoy!",
+    "achievements": "Logros",
+    "achievementsUnlocked": "{unlocked} de {total} desbloqueados",
+    "viewAllAchievements": "Ver Todos los Logros",
+    "recommended": "Recomendado para Ti",
+    "recentActivity": "Actividad Reciente",
+    "noActivity": "Sin actividad reciente. ¡Empieza un curso para ver tu progreso aquí!",
+    "activityLessonCompleted": "Completó la lección \"{lesson}\" en {course}",
+    "activityCourseCompleted": "Completó el curso \"{course}\"",
+    "activityCourseEnrolled": "Se inscribió en \"{course}\"",
+    "activityAchievementEarned": "Obtuvo el logro: {achievement}",
+    "activityCredentialIssued": "Recibió credencial: {credential}",
+    "activityStreakMilestone": "¡Alcanzó una racha de {days} días!",
+    "statsOverview": "Tus Estadísticas",
+    "coursesCompleted": "Cursos Completados",
+    "lessonsCompleted": "Lecciones Completadas",
+    "credentialsEarned": "Credenciales Obtenidas",
+    "rank": "Posición en Clasificación",
+    "dailyGoal": "Meta Diaria",
+    "dailyGoalProgress": "{earned} de {goal} XP hoy",
+    "weeklyProgress": "Progreso Semanal",
+    "calendar": "Calendario de Actividad",
+    "achievementsEmpty": "Completa lecciones y cursos para desbloquear logros.",
+    "achievementsEmptyHint": "Comienza un curso para ganar tu primera medalla.",
+    "gettingStarted": {
+      "title": "Primeros Pasos",
+      "enrollTitle": "Inscríbete en un curso",
+      "enrollDesc": "Explora nuestros cursos y haz clic en \"Inscribirse\" para empezar a aprender.",
+      "xpTitle": "Gana XP",
+      "xpDesc": "Completa lecciones y desafíos para ganar puntos de experiencia.",
+      "streakTitle": "Construye tu racha",
+      "streakDesc": "Aprende diariamente para mantener y hacer crecer tu racha."
+    },
+    "events": {
+      "activeNow": "Evento Activo",
+      "endingSoon": "Terminando Pronto",
+      "xpBonus": "+{percent}% XP",
+      "endsIn": "Termina en {time}",
+      "dismiss": "Cerrar banner del evento",
+      "devnetSprint": {
+        "name": "Sprint de Devnet",
+        "description": "¡Completa lecciones esta semana y gana +50% de XP extra en cada desafío!"
+      },
+      "hackSeason": {
+        "name": "Temporada Hack",
+        "description": "¡Semana del Hackathon de Superteam — completa cualquier curso y gana el doble de XP!"
+      },
+      "solanaBirthday": {
+        "name": "Aniversario de Solana",
+        "description": "¡Celebra el cumpleaños de Solana con +75% de XP en todos los cursos de Rust y Anchor!"
+      }
+    },
+    "dailyChallenge": "Desafío del Día",
+    "solveChallenge": "Resolver Desafío de Hoy",
+    "challengeCompleted": "¡Desafío Completado\\!"
+  },
+  "profile": {
+    "editProfile": "Editar Perfil",
+    "viewPublicProfile": "Ver Perfil Público",
+    "myProfile": "Mi Perfil",
+    "memberSince": "Miembro desde {date}",
+    "walletAddress": "Dirección de Billetera",
+    "skills": "Habilidades",
+    "noSkills": "Completa cursos para desbloquear habilidades",
+    "badges": "Insignias",
+    "noBadges": "Aún no has obtenido insignias",
+    "credentials": "Credenciales",
+    "noCredentials": "Completa una ruta de aprendizaje para obtener tu primera credencial",
+    "credentialLevel": "Nivel {level}",
+    "credentialTrack": "Ruta {track}",
+    "credentialCoursesCompleted": "{count} cursos completados",
+    "credentialXPEarned": "{amount} XP ganados en la ruta",
+    "viewCredential": "Ver Credencial",
+    "verifyCredential": "Verificar On-Chain",
+    "verifiedOnChain": "Verificado On-Chain",
+    "achievementsCount": "{claimed}/{total} desbloqueados",
+    "completedCourses": "Cursos Completados",
+    "noCompletedCourses": "Aún no has completado ningún curso",
+    "inProgressCourses": "En Progreso",
+    "noInProgressCourses": "Ningún curso en progreso",
+    "bio": "Biografía",
+    "bioPlaceholder": "Cuéntale a la comunidad sobre ti...",
+    "socialLinks": "Redes Sociales",
+    "github": "GitHub",
+    "twitter": "Twitter / X",
+    "discord": "Discord",
+    "website": "Sitio Web",
+    "profileUpdated": "Perfil actualizado correctamente",
+    "referrals": "Referidos",
+    "referralCount": "{count} builders referidos",
+    "referralLink": "Tu Enlace de Referido",
+    "referralDescription": "Comparte tu enlace y gana recompensas cuando nuevos estudiantes se registren",
+    "shareProfile": "Compartir Perfil",
+    "publicProfile": "Perfil Público",
+    "copyLink": "Copiar Enlace",
+    "linkCopied": "¡Enlace copiado!",
+    "shareOnTwitter": "Compartir en X",
+    "levelProgress": "Progreso de Nivel",
+    "profileNotFound": "Perfil No Encontrado",
+    "profileNotFoundDescription": "Este perfil de usuario no existe o está configurado como privado.",
+    "backToLeaderboard": "Volver a la Clasificación"
+  },
+  "leaderboard": {
+    "title": "Clasificación",
+    "subtitle": "Los mejores builders clasificados por XP ganado en Solana",
+    "rank": "Posición",
+    "wallet": "Builder",
+    "xp": "XP",
+    "level": "Nivel",
+    "weekly": "Esta Semana",
+    "monthly": "Este Mes",
+    "allTime": "General",
+    "season": "Temporada {number}",
+    "currentSeason": "Temporada Actual",
+    "previousSeasons": "Temporadas Anteriores",
+    "yourRank": "Tu Posición",
+    "notRanked": "Sin posición aún — gana XP para aparecer en la clasificación",
+    "topLearners": "Mejores Estudiantes",
+    "topCreators": "Mejores Creadores",
+    "rankChange": "Cambio",
+    "rankUp": "Subió {positions}",
+    "rankDown": "Bajó {positions}",
+    "rankSame": "Sin cambio",
+    "filter": {
+      "track": "Filtrar por Ruta",
+      "allTracks": "Todas las Rutas",
+      "course": "Filtrar por Curso",
+      "allCourses": "Todos los Cursos",
+      "period": "Período"
+    },
+    "empty": "Ningún aprendiz clasificado aún",
+    "emptyHint": "¡Sé el primero en la clasificación — comienza a ganar XP hoy!",
+    "startLearning": "Empezar a Aprender",
+    "loading": "Cargando clasificación...",
+    "walletColumn": "Billetera",
+    "rankFirst": "1º",
+    "rankSecond": "2º",
+    "rankThird": "3º",
+    "you": "Tú",
+    "yourRankOut": "#{rank} de {total} aprendices",
+    "learnersOnBoard": "{total} aprendices en la clasificación"
+  },
+  "settings": {
+    "title": "Configuración",
+    "profile": "Configuración del Perfil",
+    "account": "Cuenta",
+    "preferences": "Preferencias",
+    "privacy": "Privacidad",
+    "notifications": "Notificaciones",
+    "profileSection": {
+      "displayName": "Nombre Visible",
+      "displayNamePlaceholder": "Ingresa tu nombre visible",
+      "email": "Correo Electrónico",
+      "emailPlaceholder": "tu@correo.com",
+      "emailDescription": "Solo se usa para notificaciones. Nunca se comparte públicamente.",
+      "avatar": "Foto de Perfil",
+      "changeAvatar": "Cambiar Avatar",
+      "removeAvatar": "Eliminar",
+      "bio": "Bio",
+      "bioPlaceholder": "Cuéntanos sobre ti",
+      "avatarDescription": "Tu foto de perfil visible para otros estudiantes.",
+      "socialLinks": "Redes Sociales",
+      "socialLinksDescription": "Conecta tus cuentas sociales para que otros puedan encontrarte.",
+      "twitterHandle": "Twitter",
+      "githubUsername": "GitHub",
+      "discordUsername": "Discord",
+      "savedFeedback": "¡Guardado!"
+    },
+    "accountSection": {
+      "walletAddress": "Billetera Conectada",
+      "changeWallet": "Cambiar Billetera",
+      "exportData": "Exportar Mis Datos",
+      "exportDescription": "Descarga todos tus datos de aprendizaje en formato JSON",
+      "deleteAccount": "Eliminar Cuenta",
+      "deleteWarning": "Esta acción es irreversible. Tus datos on-chain (XP, credenciales) permanecerán, pero tu perfil y progreso serán eliminados.",
+      "deleteConfirm": "Escribe ELIMINAR para confirmar",
+      "walletsDescription": "Administra las billeteras vinculadas a tu cuenta.",
+      "primaryWallet": "Billetera Principal",
+      "disconnect": "Desconectar",
+      "noWallet": "Ninguna billetera conectada",
+      "connectWalletHint": "Conecta una billetera usando el botón en el encabezado",
+      "signInMethods": "Métodos de Inicio de Sesión",
+      "signInMethodsDescription": "Administra cómo inicias sesión en tu cuenta.",
+      "notConnected": "No conectado",
+      "connected": "Conectado",
+      "connect": "Conectar",
+      "unlink": "Desvincular",
+      "confirmDelete": "Confirmar Eliminación",
+      "cancel": "Cancelar"
+    },
+    "preferencesSection": {
+      "language": "Idioma",
+      "theme": "Tema",
+      "themeLight": "Claro",
+      "themeDark": "Oscuro",
+      "themeSystem": "Sistema",
+      "codeEditor": "Configuración del Editor de Código",
+      "editorTheme": "Tema del Editor",
+      "editorFontSize": "Tamaño de Fuente",
+      "timezone": "Zona Horaria",
+      "timezoneDescription": "Las rachas se reinician a medianoche UTC independientemente de esta configuración",
+      "languageDescription": "Elige tu idioma preferido para la plataforma.",
+      "themeDescription": "Selecciona tu apariencia preferida."
+    },
+    "privacySection": {
+      "profileVisibility": "Visibilidad del Perfil",
+      "profilePublic": "Público",
+      "profilePrivate": "Privado",
+      "profileDescription": "Los perfiles públicos aparecen en la clasificación y pueden ser vistos por cualquier persona",
+      "showWalletAddress": "Mostrar Dirección de Billetera",
+      "showActivity": "Mostrar Actividad",
+      "showCredentials": "Mostrar Credenciales",
+      "visibilityDescription": "Controla quién puede ver tu perfil, logros y progreso de aprendizaje.",
+      "publicDescription": "Tu perfil, XP, logros y racha son visibles para todos en la clasificación y en tu página de perfil.",
+      "privateDescription": "Tu perfil está oculto de la clasificación y de otros usuarios. Solo tú puedes ver tu progreso."
+    },
+    "notificationsSection": {
+      "emailNotifications": "Notificaciones por Correo",
+      "streakReminder": "Recordatorio de Racha",
+      "streakReminderDescription": "Recibe un recordatorio antes de que tu racha se pierda",
+      "courseUpdates": "Actualizaciones de Cursos",
+      "courseUpdatesDescription": "Recibe notificaciones cuando se actualicen cursos en los que estás inscrito",
+      "newCourses": "Alertas de Nuevos Cursos",
+      "newCoursesDescription": "Recibe notificaciones sobre nuevos cursos en tus rutas",
+      "achievements": "Notificaciones de Logros",
+      "achievementsDescription": "Celebra cuando desbloquees nuevos logros",
+      "leaderboardChanges": "Cambios en la Clasificación",
+      "leaderboardChangesDescription": "Recibe notificaciones cuando tu posición cambie significativamente",
+      "description": "Controla qué notificaciones recibes.",
+      "emailDescription": "Recibe actualizaciones y anuncios por correo electrónico."
+    },
+    "saved": "Configuración guardada",
+    "saveChanges": "Guardar Cambios",
+    "unsavedChanges": "Tienes cambios sin guardar",
+    "subtitle": "Administra la configuración y preferencias de tu cuenta."
+  },
+  "certificate": {
+    "title": "Certificado de Finalización",
+    "subtitle": "Credencial Verificable On-Chain",
+    "awardedTo": "Otorgado a",
+    "forCompleting": "Por completar exitosamente",
+    "issuedOn": "Emitido el {date}",
+    "verifyOnChain": "Verificar On-Chain",
+    "verifying": "Verificando...",
+    "verified": "Verificado en Solana",
+    "verificationFailed": "Error en la verificación",
+    "share": "Compartir Certificado",
+    "shareTwitter": "Compartir en Twitter",
+    "shareLinkedIn": "Compartir en LinkedIn",
+    "copyLink": "Copiar Enlace",
+    "download": "Descargar Certificado",
+    "downloadPNG": "Descargar como PNG",
+    "downloadPDF": "Descargar como PDF",
+    "credentialId": "ID de Credencial",
+    "trackLevel": "Nivel de Ruta",
+    "coursesInTrack": "{completed} de {total} cursos en {track}",
+    "totalXPInTrack": "{amount} XP ganados en esta ruta",
+    "upgradeAvailable": "Sigue aprendiendo para mejorar esta credencial",
+    "viewAllCredentials": "Ver Todas las Credenciales",
+    "onChainDetails": "Detalles On-Chain",
+    "transactionHash": "Transacción",
+    "compressedAddress": "Dirección Comprimida",
+    "issuer": "Emisor",
+    "issuerName": "Superteam Academy",
+    "solanaExplorer": "Solana Explorer",
+    "metadataUri": "URI de Metadatos",
+    "ownershipVerified": "Propiedad verificada para la billetera {wallet}. Esta credencial es intransferible y permanentemente vinculada al destinatario.",
+    "yourOnChainCredentials": "Tus Credenciales On-Chain",
+    "onChainBadge": "on-chain",
+    "credentialInfo": "Nivel {level} · {count, plural, one {1 curso} other {# cursos}} completados",
+    "viewMetadata": "Ver Metadatos",
+    "notCompleted": "Aún no has completado este curso.",
+    "notCompletedDescription": "Completa todas las lecciones de este curso para obtener tu certificado.",
+    "goToCourse": "Ir al Curso",
+    "courseNotFound": "Curso no encontrado.",
+    "courseNotFoundDescription": "No se pudo encontrar el curso asociado con este certificado.",
+    "connectWalletPrompt": "Conecta tu billetera para ver tu certificado.",
+    "devnetDemo": "Demo Devnet",
+    "devnetExplorerNote": "Este es un marcador de devnet. Las credenciales on-chain se emitirán cuando se implemente el programa.",
+    "loading": "Cargando certificado..."
+  },
+  "gamification": {
+    "xp": "XP",
+    "xpFull": "Puntos de Experiencia",
+    "level": "Nivel",
+    "levelLabel": "Nivel {number}",
+    "streak": "Racha",
+    "streakDays": "Racha de {count} días",
+    "streakActive": "¡Racha activa! ¡Sigue así!",
+    "streakFrozen": "Congelamiento de racha usado — tu racha está a salvo",
+    "streakBroken": "Racha perdida. ¡Empieza una nueva hoy!",
+    "streakMilestone": "¡Hito de Racha: {days} días!",
+    "achievement": "Logro",
+    "achievementUnlocked": "¡Logro Desbloqueado!",
+    "achievementDescription": "{name} — {description}",
+    "levelUp": "¡Subiste de Nivel!",
+    "levelUpMessage": "¡Felicidades! ¡Alcanzaste el Nivel {level}!",
+    "xpEarned": "+{amount} XP",
+    "achievementRewardXP": "{name} — +{xp} XP",
+    "levelUpReached": "Alcanzaste el Nivel {level}",
+    "claim": "Reclamar",
+    "dailyXPCap": "Límite Diario de XP",
+    "dailyXPProgress": "{earned} / {cap} XP ganados hoy",
+    "dailyXPCapReached": "Límite diario de XP alcanzado. ¡Vuelve mañana!",
+    "streakFreeze": {
+      "singular": "{count} congelamiento de racha disponible",
+      "plural": "{count} congelamientos de racha disponibles"
+    },
+    "streakFreezeDescription": "Protege tu racha por un día sin actividad",
+    "streakFreezeCount": "{count} disponibles",
+    "achievements": {
+      "firstLesson": {
+        "name": "Primeros Pasos",
+        "description": "Completa tu primera lección"
+      },
+      "firstCourse": {
+        "name": "Graduado",
+        "description": "Completa tu primer curso"
+      },
+      "streak7": {
+        "name": "Guerrero de la Semana",
+        "description": "Mantén una racha de 7 días"
+      },
+      "streak30": {
+        "name": "Maestro del Mes",
+        "description": "Mantén una racha de 30 días"
+      },
+      "streak100": {
+        "name": "Centenario del Código",
+        "description": "Mantén una racha de 100 días"
+      },
+      "streak365": {
+        "name": "Un Año de Código",
+        "description": "Mantén una racha de 365 días"
+      },
+      "fiveCourses": {
+        "name": "Polímata",
+        "description": "Completa 5 cursos"
+      },
+      "tenCourses": {
+        "name": "Buscador de Conocimiento",
+        "description": "Completa 10 cursos"
+      },
+      "firstCredential": {
+        "name": "Acreditado",
+        "description": "Obtén tu primera credencial on-chain"
+      },
+      "trackComplete": {
+        "name": "Maestro de Ruta",
+        "description": "Completa todos los cursos de una ruta de aprendizaje"
+      },
+      "referral": {
+        "name": "Constructor de Comunidad",
+        "description": "Refiere a tu primer estudiante a la plataforma"
+      },
+      "topTen": {
+        "name": "Top 10",
+        "description": "Llega al top 10 de la clasificación"
+      }
+    },
+    "celebration": {
+      "lessonComplete": "¡Lección Completa!",
+      "onFire": "¡Estás en racha!",
+      "nailedIt": "¡Lo lograste!",
+      "keepGoing": "¡Sigue así!",
+      "amazingWork": "¡Trabajo increíble!",
+      "challengeCrushed": "¡Desafío Superado!",
+      "codeMaster": "¡Maestro del Código!",
+      "testsPassed": "¡Pruebas Pasadas!",
+      "brilliant": "¡Brillante!",
+      "levelUp": "¡Subiste de Nivel!",
+      "levelReached": "Alcanzaste el Nivel {level}",
+      "continue": "Continuar",
+      "dailyGoal": "Meta Diaria",
+      "bonusXP": "+{amount} XP de bonificación ({multiplier}x)"
+    },
+    "dailyGoal": {
+      "title": "Meta Diaria",
+      "goalLabel": "Meta:",
+      "goal": "Meta",
+      "xpToday": "{earned} / {target} XP",
+      "complete": "¡Meta diaria alcanzada!"
+    },
+    "dailyQuests": {
+      "title": "Misiones Diarias",
+      "done": "{completed}/{total} completadas",
+      "empty": "No hay misiones disponibles ahora",
+      "emptyHint": "Completa una lección para desbloquear misiones diarias.",
+      "lessonLearner": "Aprendiz de Lecciones",
+      "xpHunter": "Cazador de XP",
+      "codeWarrior": "Guerrero del Código",
+      "streakKeeper": "Guardián de la Racha"
+    },
+    "combo": {
+      "twoX": "¡Combo 2x!",
+      "threeX": "¡Combo {count}x!",
+      "super": "¡SUPER Combo!",
+      "count": "¡Combo {count}x!"
+    },
+    "streakDanger": {
+      "title": "¡Racha en peligro!",
+      "description": "Tu racha de {count} días se reiniciará a medianoche.",
+      "action": "Completa una lección",
+      "suffix": "¡para mantenerla!",
+      "message": "Tu racha de {count} días se reiniciará a medianoche. ¡Completa una lección para mantenerla!"
+    },
+    "streakFreezeAvailable": "{count} congelamiento{count, plural, one {} other {s}} de racha disponible{count, plural, one {} other {s}}",
+    "onChain": {
+      "badge": "on-chain",
+      "verified": "Verificado en Solana devnet",
+      "rankings": "Clasificación On-Chain",
+      "credentials": "Tus Credenciales On-Chain"
+    }
+  },
+  "auth": {
+    "connectTitle": "Conecta Tu Billetera",
+    "connectSubtitle": "Conecta una billetera de Solana para empezar a aprender y obtener credenciales",
+    "selectWallet": "Selecciona una Billetera",
+    "phantom": "Phantom",
+    "solflare": "Solflare",
+    "backpack": "Backpack",
+    "walletNotFound": "Billetera no encontrada. Por favor, instala {wallet} para continuar.",
+    "connectionFailed": "Error al conectar billetera. Inténtalo de nuevo.",
+    "wrongNetwork": "Por favor, cambia a la red {network}",
+    "signingMessage": "Firma el mensaje para verificar tu billetera",
+    "newLearner": "¿Nuevo aquí? Tu perfil se creará automáticamente.",
+    "returningLearner": "¡Bienvenido de vuelta! Tu progreso ha sido restaurado.",
+    "disconnected": "Billetera desconectada"
+  },
+  "errors": {
+    "notFound": {
+      "title": "Página No Encontrada",
+      "description": "La página que buscas no existe o ha sido movida. Regresa a tu ruta de aprendizaje.",
+      "goHome": "Ir al Inicio",
+      "browseCourses": "Explorar Cursos"
+    },
+    "global": {
+      "title": "Algo salió mal",
+      "description": "Ocurrió un error inesperado. El equipo ha sido notificado.",
+      "tryAgain": "Intentar de nuevo"
+    },
+    "generic": "Algo salió mal. Inténtalo de nuevo.",
+    "networkError": "Error de red. Verifica tu conexión e inténtalo de nuevo.",
+    "walletNotConnected": "Conecta tu billetera para continuar.",
+    "courseNotFound": "Curso no encontrado.",
+    "lessonNotFound": "Lección no encontrada.",
+    "enrollmentFailed": "Error al inscribirse en el curso. Inténtalo de nuevo.",
+    "completionFailed": "Error al registrar la finalización de la lección. Inténtalo de nuevo.",
+    "prerequisiteNotMet": "Debes completar el curso requisito previo primero.",
+    "dailyXPLimitReached": "¡Alcanzaste tu límite diario de XP. Vuelve mañana!",
+    "alreadyEnrolled": "Ya estás inscrito en este curso.",
+    "notEnrolled": "No estás inscrito en este curso.",
+    "transactionFailed": "Transacción fallida. Inténtalo de nuevo.",
+    "transactionTimeout": "La transacción expiró. Verifica tu billetera e inténtalo de nuevo.",
+    "insufficientFunds": "SOL insuficiente para las comisiones de transacción.",
+    "sessionExpired": "Tu sesión ha expirado. Reconecta tu billetera.",
+    "rateLimited": "Demasiadas solicitudes. Espera un momento e inténtalo de nuevo.",
+    "maintenanceMode": "Superteam Academy está en mantenimiento. Volveremos pronto.",
+    "routes": {
+      "courses": {
+        "title": "No se pudieron cargar los Cursos",
+        "description": "Tuvimos problemas al cargar el catálogo de cursos. Inténtalo de nuevo o explora otras secciones."
+      },
+      "courseDetail": {
+        "title": "No se pudo cargar el Curso",
+        "description": "Tuvimos problemas al cargar los detalles de este curso. Inténtalo de nuevo o vuelve al catálogo."
+      },
+      "lesson": {
+        "title": "No se pudo cargar la Lección",
+        "description": "Tuvimos problemas al cargar esta lección. Inténtalo de nuevo o vuelve a la vista general del curso."
+      },
+      "dashboard": {
+        "title": "No se pudo cargar el Panel",
+        "description": "Tuvimos problemas al cargar tu panel. Inténtalo de nuevo o explora cursos."
+      },
+      "leaderboard": {
+        "title": "No se pudo cargar la Clasificación",
+        "description": "Tuvimos problemas al cargar la clasificación. Inténtalo de nuevo o vuelve a tu panel."
+      },
+      "profile": {
+        "title": "No se pudo cargar el Perfil",
+        "description": "Tuvimos problemas al cargar tu perfil. Inténtalo de nuevo o vuelve a tu panel."
+      },
+      "publicProfile": {
+        "title": "No se pudo cargar el Perfil",
+        "description": "Tuvimos problemas al cargar este perfil. El usuario puede no existir o hubo un error temporal."
+      },
+      "settings": {
+        "title": "No se pudo cargar la Configuración",
+        "description": "Tuvimos problemas al cargar tu configuración. Inténtalo de nuevo o vuelve a tu panel."
+      },
+      "certificate": {
+        "title": "No se pudo cargar el Certificado",
+        "description": "Tuvimos problemas al cargar este certificado. Puede no existir o hubo un error temporal."
+      },
+      "admin": {
+        "title": "No se pudo cargar el Panel Admin",
+        "description": "Tuvimos problemas al cargar el panel administrativo. Inténtalo de nuevo o vuelve a tu panel."
+      },
+      "onboarding": {
+        "title": "No se pudo cargar el Onboarding",
+        "description": "Tuvimos problemas al cargar la evaluación de habilidades. Inténtalo de nuevo o explora los cursos directamente."
+      },
+      "landing": {
+        "title": "No se pudo cargar la página",
+        "description": "Tuvimos problemas al cargar esta página. Inténtalo de nuevo o explora los cursos directamente."
+      },
+      "challenges": {
+        "title": "No se pudo cargar el desafío",
+        "description": "Tuvimos problemas al cargar el desafío de hoy. Por favor, inténtalo de nuevo."
+      }
+    },
+    "goToCourses": "Explorar Cursos",
+    "goToDashboard": "Ir al Panel",
+    "goToProfile": "Ir al Perfil"
+  },
+  "admin": {
+    "title": "Panel Administrativo",
+    "subtitle": "Vista general de la plataforma, análisis de cursos y gestión de contenido",
+    "totalCourses": "Total de Cursos",
+    "activeCourses": "{count, plural, one {# curso activo} other {# cursos activos}}",
+    "totalContent": "Total de Lecciones",
+    "contentBreakdown": "{challenges, plural, one {# desafío interactivo} other {# desafíos interactivos}}",
+    "totalEnrollments": "Total de Inscripciones",
+    "completionsSummary": "{completions} completados · {rate}% tasa promedio",
+    "xpEcosystem": "Ecosistema XP",
+    "xpAvailable": "XP Disponible",
+    "achievementXP": "+ {xp} XP de logros",
+    "courseAnalytics": "Análisis de Cursos",
+    "course": "Curso",
+    "track": "Ruta",
+    "enrollments": "Inscripciones",
+    "completions": "Completados",
+    "completionRate": "Tasa",
+    "lessons": "lecciones",
+    "challenges": "desafíos",
+    "viewCourse": "Ver curso",
+    "byDifficulty": "Por Dificultad",
+    "difficulty": {
+      "beginner": "Principiante",
+      "intermediate": "Intermedio",
+      "advanced": "Avanzado"
+    },
+    "byTrack": "Por Ruta",
+    "achievementSystem": "Sistema de Logros",
+    "totalBadges": "Total de insignias",
+    "achievementCategory": {
+      "progress": "Progreso",
+      "streaks": "Rachas",
+      "skills": "Habilidades",
+      "community": "Comunidad",
+      "special": "Especial"
+    },
+    "quickActions": "Acciones Rápidas",
+    "links": {
+      "sanityCMS": "Sanity CMS Studio",
+      "analytics": "Google Analytics",
+      "errorMonitoring": "Monitoreo Sentry",
+      "platformSettings": "Configuración de la Plataforma",
+      "createCourse": "Creador de Cursos"
+    },
+    "platformHealth": "Salud de la Plataforma",
+    "health": {
+      "cmsStatus": "Estado del CMS",
+      "mock": "Datos de Prueba",
+      "i18n": "Internacionalización",
+      "locales": "idiomas",
+      "achievements": "Slots de Logros",
+      "tracks": "Rutas de Aprendizaje",
+      "active": "activas"
+    },
+    "authRequired": "Autenticación Requerida",
+    "authRequiredDescription": "Por favor, conecta tu billetera o inicia sesión para acceder al panel de administración.",
+    "accessDenied": "Acceso Denegado",
+    "accessDeniedDescription": "Tu billetera no está autorizada para acceder al panel de administración. Contacta a un administrador.",
+    "goToDashboard": "Ir al Panel",
+    "createCourse": "Crear Curso",
+    "creator": {
+      "title": "Creador de Cursos",
+      "subtitle": "Construye y publica un nuevo curso en la plataforma",
+      "saveDraft": "Guardar Borrador",
+      "saved": "¡Guardado!",
+      "backToAdmin": "Volver al Admin",
+      "back": "Atrás",
+      "next": "Continuar",
+      "steps": {
+        "basic": "Info Básica",
+        "modules": "Módulos",
+        "settings": "Configuración",
+        "preview": "Vista Previa"
+      },
+      "basic": {
+        "title": "Información Básica",
+        "subtitle": "Configura los detalles principales de tu curso",
+        "courseTitle": "Título del Curso",
+        "courseTitlePlaceholder": "ej. Introducción a los Programas de Solana",
+        "slug": "Slug de URL",
+        "slugHint": "Generado automáticamente desde el título — debe ser único",
+        "description": "Descripción Breve",
+        "descriptionPlaceholder": "Describe lo que los estudiantes lograrán en este curso...",
+        "difficulty": "Nivel de Dificultad",
+        "difficultyOption": {
+          "beginner": "Principiante",
+          "intermediate": "Intermedio",
+          "advanced": "Avanzado"
+        },
+        "track": "Pista de Aprendizaje",
+        "creator": "Nombre del Instructor",
+        "creatorPlaceholder": "Tu nombre o nombre del equipo",
+        "tags": "Etiquetas",
+        "tagsPlaceholder": "rust, anchor, defi (separados por comas)",
+        "cardPreview": "Vista Previa de la Tarjeta"
+      },
+      "modules": {
+        "title": "Módulos y Lecciones",
+        "lessonCount": "{count, plural, one {# lección} other {# lecciones}}",
+        "addModule": "Agregar Módulo",
+        "moduleTitlePlaceholder": "ej. Primeros Pasos",
+        "moduleDescriptionPlaceholder": "Breve descripción de este módulo...",
+        "addContent": "Agregar Lección de Contenido",
+        "addChallenge": "Agregar Desafío",
+        "content": "Contenido",
+        "challenge": "Desafío",
+        "lessonTitlePlaceholder": "Título de la lección...",
+        "removeModule": "Eliminar módulo",
+        "removeLesson": "Eliminar lección",
+        "emptyModules": "Aún no hay módulos",
+        "emptyModulesHint": "Agrega al menos un módulo con lecciones para continuar"
+      },
+      "settings": {
+        "title": "Configuración del Curso",
+        "subtitle": "Configura XP, visibilidad y requisitos previos",
+        "totalXP": "Recompensa Total de XP",
+        "totalXPHint": "Otorgado cuando el estudiante completa todas las lecciones",
+        "useCalculated": "Usar calculado automáticamente ({xp} XP)",
+        "duration": "Duración Estimada",
+        "durationPlaceholder": "ej. 8 horas",
+        "isActive": "Publicar Curso",
+        "isActiveHint": "Haz este curso visible para los estudiantes inmediatamente",
+        "prerequisites": "Requisitos Previos",
+        "prerequisitesHint": "Selecciona cursos que los estudiantes deben completar primero",
+        "noPrerequisites": "No hay otros cursos disponibles",
+        "courseSummary": "Resumen del Curso",
+        "summaryModules": "Módulos",
+        "summaryLessons": "Total de Lecciones",
+        "summaryChallenges": "Desafíos",
+        "summaryXP": "XP Total"
+      },
+      "preview": {
+        "title": "Revisar y Publicar",
+        "subtitle": "Previsualiza tu curso antes de hacerlo público",
+        "courseCard": "Vista Previa de la Tarjeta",
+        "moduleOverview": "Estructura de Módulos",
+        "check": {
+          "hasTitle": "Tiene título",
+          "hasDescription": "Tiene descripción",
+          "hasCreator": "Tiene instructor",
+          "hasModules": "Tiene módulos"
+        },
+        "lessons": "lecciones",
+        "challenges": "desafíos",
+        "moreModules": "módulos más",
+        "untitledCourse": "Curso sin Título",
+        "noDescription": "Sin descripción aún",
+        "unnamedModule": "Módulo sin Nombre",
+        "readyToPublish": "Listo para Publicar",
+        "saveAsDraft": "Guardar como Borrador",
+        "publishHint": "Este curso será visible para todos los estudiantes",
+        "draftHint": "Tu curso se guardará pero no será visible para los estudiantes",
+        "publish": "Publicar Curso",
+        "saveDraft": "Guardar como Borrador",
+        "fixValidation": "Por favor completa todos los campos requeridos antes de publicar"
+      }
+    }
+  },
+  "accessibility": {
+    "skipToContent": "Saltar al contenido principal",
+    "openMenu": "Abrir menú de navegación",
+    "closeMenu": "Cerrar menú de navegación",
+    "toggleTheme": "Alternar modo oscuro",
+    "languageSelector": "Seleccionar idioma",
+    "progressBar": "Progreso del curso: {percent}%",
+    "lessonNavigation": "Navegación de lecciones",
+    "codeEditor": "Editor de código para {language}",
+    "expandSection": "Expandir {section}",
+    "collapseSection": "Contraer {section}"
+  },
+  "onboarding": {
+    "title": "Encuentra Tu Camino de Aprendizaje",
+    "subtitle": "Responde algunas preguntas y te recomendaremos los mejores cursos para ti",
+    "seeResults": "Ver Mis Resultados",
+    "steps": {
+      "experience": "Experiencia",
+      "interests": "Intereses",
+      "goal": "Objetivo",
+      "pace": "Ritmo"
+    },
+    "questions": {
+      "experience": {
+        "title": "¿Cuál es tu experiencia en desarrollo?",
+        "subtitle": "Esto nos ayuda a recomendar el punto de partida correcto",
+        "beginner": {
+          "label": "Principiante Total",
+          "description": "Nuevo en programación y blockchain"
+        },
+        "webDev": {
+          "label": "Desarrollador Web",
+          "description": "Experiencia con JS/TS, nuevo en blockchain"
+        },
+        "devNewSolana": {
+          "label": "Dev, Nuevo en Solana",
+          "description": "Conoce otras cadenas, aprendiendo Solana"
+        },
+        "solanaDev": {
+          "label": "Desarrollador Solana",
+          "description": "Ya construyendo en Solana, quiere avanzar"
+        }
+      },
+      "interests": {
+        "title": "¿Qué quieres aprender?",
+        "subtitle": "Selecciona todos los que te interesen",
+        "rust": {
+          "label": "Fundamentos de Rust",
+          "description": "Lenguaje principal para programas Solana"
+        },
+        "anchor": {
+          "label": "Framework Anchor",
+          "description": "Construye programas Solana más rápido"
+        },
+        "defi": {
+          "label": "Protocolos DeFi",
+          "description": "AMMs, préstamos y estrategias de rendimiento"
+        },
+        "frontend": {
+          "label": "Frontend & dApps",
+          "description": "Construye aplicaciones Solana para usuarios"
+        },
+        "security": {
+          "label": "Seguridad de Programas",
+          "description": "Audita y asegura programas Solana"
+        },
+        "token": {
+          "label": "Ingeniería de Tokens",
+          "description": "Diseño, acuñación y economía de tokens"
+        }
+      },
+      "goal": {
+        "title": "¿Cuál es tu objetivo principal?",
+        "subtitle": "Personalizaremos las recomendaciones para ayudarte a llegar ahí",
+        "firstProgram": {
+          "label": "Lanzar Mi Primer Programa",
+          "description": "Publicar algo on-chain desde cero"
+        },
+        "job": {
+          "label": "Conseguir un Empleo Solana",
+          "description": "Desarrollar habilidades para oportunidades profesionales"
+        },
+        "project": {
+          "label": "Construir Mi Propio Proyecto",
+          "description": "Lanzar una startup o proyecto personal"
+        },
+        "fun": {
+          "label": "Aprender por Diversión",
+          "description": "Exploración impulsada por curiosidad"
+        },
+        "contribute": {
+          "label": "Contribuir al Open Source",
+          "description": "Retribuir al ecosistema Solana"
+        }
+      },
+      "pace": {
+        "title": "¿Cuánto tiempo puedes dedicar?",
+        "subtitle": "Estimaremos tu tiempo hasta la primera credencial",
+        "casual": {
+          "label": "15 min/día",
+          "description": "Aprendizaje casual, progreso constante"
+        },
+        "consistent": {
+          "label": "30 min/día",
+          "description": "Práctica diaria consistente"
+        },
+        "intensive": {
+          "label": "1+ horas/día",
+          "description": "Inmersiones intensivas"
+        },
+        "weekend": {
+          "label": "Guerrero de Fin de Semana",
+          "description": "Sesiones más largas los fines de semana"
+        }
+      }
+    },
+    "results": {
+      "title": "Tu Camino Personalizado",
+      "subtitle": "Basado en tus respuestas, aquí es donde empezar",
+      "recommendedPath": "Ruta de Aprendizaje Recomendada",
+      "estimatedWeeks": "{count, plural, one {~1 semana} other {~# semanas}}",
+      "toFirstCredential": "hasta la primera credencial",
+      "earnCredential": "Gana credencial on-chain",
+      "startWith": "Comienza con estos cursos",
+      "startFirstCourse": "Comenzar Primer Curso",
+      "browseAll": "Explorar Todos los Cursos",
+      "paths": {
+        "fundamentals": {
+          "name": "Fundamentos de Solana",
+          "description": "Comienza desde cero y aprende los conceptos fundamentales del desarrollo blockchain en Solana."
+        },
+        "security": {
+          "name": "Seguridad de Programas",
+          "description": "Aprende a auditar programas Solana, identificar vulnerabilidades y escribir código seguro."
+        },
+        "defi": {
+          "name": "Desarrollador DeFi",
+          "description": "Construye AMMs, protocolos de préstamos y bóvedas en Solana."
+        },
+        "anchor": {
+          "name": "Dominio de Anchor",
+          "description": "Domina el framework Anchor para construir programas Solana."
+        },
+        "fullstack": {
+          "name": "Full Stack Solana",
+          "description": "Construye dApps completas, desde contratos inteligentes hasta interfaces frontend."
+        }
+      }
+    }
+  },
+  "challenges": {
+    "title": "Desafíos Diarios",
+    "subtitle": "Un nuevo desafío de programación Solana cada día. Resuélvelo para ganar XP adicional.",
+    "dailyChallenge": "Desafío del Día",
+    "xpReward": "XP",
+    "runTests": "Ejecutar Pruebas",
+    "allPassed": "Reclamar XP",
+    "markComplete": "Marcar Completo",
+    "alreadyCompleted": "Completado Hoy",
+    "showSolution": "Ver Solución",
+    "hideSolution": "Ocultar Solución",
+    "hintLabel": "Pista",
+    "nextHint": "Siguiente Pista",
+    "nextReset": "Próximo desafío en",
+    "tags": "Etiquetas",
+    "testResults": "Resultados de Pruebas",
+    "passed": "pasó",
+    "failed": "falló",
+    "pastChallenges": "Desafíos Recientes",
+    "completed": "Completado",
+    "locked": "Perdido"
+  }
+}

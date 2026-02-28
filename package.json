@@ -1,0 +1,13 @@
+{
+  "name": "superteam-academy",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --filter app dev",
+    "build": "pnpm --filter app build",
+    "lint": "pnpm --filter app lint",
+    "start": "pnpm --filter app start"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

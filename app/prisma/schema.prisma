@@ -1,0 +1,286 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── User ───────────────────────────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  privyId       String?   @unique
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+
+  // Extended profile
+  wallet      String?  @unique
+  displayName String?
+  bio         String?
+  isPublic    Boolean  @default(true)
+  isAdmin     Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  enrollments Enrollment[]
+  achievements UserAchievement[]
+  credentials UserCredential[]
+  streakData  StreakData?
+  xpEvents    XPEvent[]
+  activities  Activity[]
+  socialLinks SocialLinks?
+}
+
+model SocialLinks {
+  id      String  @id @default(cuid())
+  userId  String  @unique
+  twitter String?
+  github  String?
+  discord String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ─── Course Content ─────────────────────────────────────────────────────────
+
+model Course {
+  id          String @id @default(cuid())
+  slug        String @unique
+  title       String
+  description String
+
+  thumbnail     String?
+  difficulty    String  // beginner | intermediate | advanced
+  duration      String  // e.g. "8 hours"
+  xpTotal       Int
+  trackId       Int
+  trackLevel    Int
+  trackName     String
+  creator       String
+  creatorAvatar String?
+  isActive      Boolean  @default(true)
+  tags          String[]
+  prerequisites String[] // course slugs
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  modules     Module[]
+  enrollments Enrollment[]
+
+  @@index([trackId])
+  @@index([difficulty])
+  @@index([isActive])
+}
+
+model Module {
+  id          String @id @default(cuid())
+  courseId     String
+  title       String
+  description String
+  order       Int
+
+  course  Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessons Lesson[]
+
+  @@index([courseId, order])
+}
+
+model Lesson {
+  id          String @id @default(cuid())
+  moduleId    String
+  title       String
+  description String
+  type        String  // content | challenge
+  order       Int
+  xpReward    Int
+  content     String? // markdown content (text)
+  duration    String
+
+  module      Module            @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  challenge   Challenge?
+  completions LessonCompletion[]
+
+  @@index([moduleId, order])
+}
+
+model Challenge {
+  id          String @id @default(cuid())
+  lessonId    String @unique
+  prompt      String
+  starterCode String
+  language    String // rust | typescript | json
+  hints       String[]
+  solution    String
+
+  lesson    Lesson     @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  testCases TestCase[]
+}
+
+model TestCase {
+  id             String @id @default(cuid())
+  challengeId    String
+  name           String
+  input          String
+  expectedOutput String
+  order          Int    @default(0)
+
+  challenge Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+
+  @@index([challengeId, order])
+}
+
+// ─── Enrollment & Progress ──────────────────────────────────────────────────
+
+model Enrollment {
+  id             String    @id @default(cuid())
+  userId         String
+  courseId        String
+  enrolledAt     DateTime  @default(now())
+  completedAt    DateTime?
+  lastAccessedAt DateTime  @default(now())
+
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course      Course             @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  completions LessonCompletion[]
+
+  @@unique([userId, courseId])
+  @@index([userId])
+  @@index([courseId])
+}
+
+model LessonCompletion {
+  id           String   @id @default(cuid())
+  enrollmentId String
+  lessonId     String
+  xpEarned     Int
+  completedAt  DateTime @default(now())
+
+  enrollment Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  lesson     Lesson     @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([enrollmentId, lessonId])
+}
+
+// ─── Gamification ───────────────────────────────────────────────────────────
+
+model StreakData {
+  id               String    @id @default(cuid())
+  userId           String    @unique
+  currentStreak    Int       @default(0)
+  longestStreak    Int       @default(0)
+  lastActivityDate DateTime?
+  streakFreezes    Int       @default(0)
+
+  user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activities DailyActivity[]
+}
+
+model DailyActivity {
+  id           String   @id @default(cuid())
+  streakDataId String
+  date         DateTime @db.Date
+  active       Boolean  @default(true)
+
+  streakData StreakData @relation(fields: [streakDataId], references: [id], onDelete: Cascade)
+
+  @@unique([streakDataId, date])
+}
+
+model XPEvent {
+  id       String   @id @default(cuid())
+  userId   String
+  amount   Int
+  source   String   // lesson | challenge | streak | achievement | daily_challenge | bonus
+  sourceId String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model Achievement {
+  id          Int    @id
+  name        String
+  description String
+  icon        String
+  category    String // progress | streaks | skills | community | special
+  xpReward    Int
+
+  claims UserAchievement[]
+}
+
+model UserAchievement {
+  id            String   @id @default(cuid())
+  userId        String
+  achievementId Int
+  claimedAt     DateTime @default(now())
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, achievementId])
+}
+
+model UserCredential {
+  id               String   @id @default(cuid())
+  userId           String
+  trackId          Int
+  trackName        String
+  currentLevel     Int
+  coursesCompleted Int
+  totalXpEarned    Int
+  mintAddress      String?
+  metadataUri      String?
+  badgeImage       String?
+  firstEarned      DateTime @default(now())
+  lastUpdated      DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, trackId])
+}
+
+// ─── Activity & Analytics ───────────────────────────────────────────────────
+
+model Activity {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String   // lesson_completed | challenge_passed | course_enrolled | course_completed | achievement_claimed
+  data      Json
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([type])
+}
+
+// ─── Newsletter ─────────────────────────────────────────────────────────────
+
+model Newsletter {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+}
+
+// ─── Daily Challenge Completions ────────────────────────────────────────────
+
+model DailyChallengeCompletion {
+  id          String   @id @default(cuid())
+  userId      String
+  challengeId String
+  date        String   // YYYY-MM-DD
+  xpEarned    Int
+  completedAt DateTime @default(now())
+
+  @@unique([userId, date])
+  @@index([userId])
+}

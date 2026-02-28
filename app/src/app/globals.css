@@ -1,0 +1,442 @@
+@import "tailwindcss";
+
+/* ============================================
+   Superteam Brazil — Official Color Palette
+   Source: ST Brazil bounty design system image
+
+   PALETTE OVERVIEW:
+   ├── Yellow/Gold: Warm accent, CTAs
+   ├── Green (3 shades): Primary brand, headers
+   ├── Neutrals: Cream (light) / Deep green (dark)
+   └── Text: Dark green on cream, cream on dark green
+   ============================================ */
+
+/* ── Palette Source Values (from design image) ── */
+:root {
+  /* Main: Yellow / Gold */
+  --palette-yellow-base: #c8b830;
+  --palette-yellow-surface: #ede08a;
+  --palette-yellow-hover: #d4c23d;
+  --palette-yellow-pressed: #b8a028;
+  --palette-yellow-border: #c4ba88;
+
+  /* Main: Green (medium) — darkened from #5b9a4b for WCAG AA contrast with white text (4.79:1) */
+  --palette-green-base: #448038;
+  --palette-green-surface: #3d7a4a;
+  --palette-green-hover: #3a7232;
+  --palette-green-pressed: #306028;
+  --palette-green-border: #4a7a52;
+
+  /* Main: Green (dark) */
+  --palette-green-dark-base: #2d6b42;
+  --palette-green-dark-surface: #2a5a38;
+  --palette-green-dark-hover: #266040;
+  --palette-green-dark-pressed: #204e30;
+  --palette-green-dark-border: #3a6b4a;
+
+  /* Main: Green (darkest) / BG for dark mode */
+  --palette-green-darkest-bg: #1e3a28;
+  --palette-green-darkest-surface: #2a4d38;
+  --palette-green-darkest-hover: #243f2e;
+  --palette-green-darkest-border: #304a38;
+
+  /* Neutrals: Cream / Warm whites */
+  --palette-neutral-bg: #f2ebd4;
+  --palette-neutral-surface: #e8e0c6;
+  --palette-neutral-surface2: #ddd5b2;
+  --palette-neutral-border: #c8be8c;
+
+  /* Text */
+  --palette-text-on-light: #1a3020;
+  --palette-text-on-dark: #ede6d2;
+}
+
+/* ── Dark Mode (default) ── */
+:root {
+  /* Backgrounds */
+  --background: var(--palette-green-darkest-bg);
+  --foreground: var(--palette-text-on-dark);
+  --card: var(--palette-green-darkest-surface);
+  --card-foreground: var(--palette-text-on-dark);
+  --popover: var(--palette-green-darkest-surface);
+  --popover-foreground: var(--palette-text-on-dark);
+
+  /* Borders / Input */
+  --border: rgba(237, 230, 210, 0.1);
+  --input: rgba(237, 230, 210, 0.1);
+  --ring: var(--palette-green-base);
+
+  /* Brand: Green (primary) */
+  --primary: var(--palette-green-base);
+  --primary-foreground: #ffffff;
+
+  /* Brand: Gold (accent) */
+  --secondary: var(--palette-yellow-base);
+  --secondary-foreground: var(--palette-green-darkest-bg);
+
+  /* Muted */
+  --muted: var(--palette-green-darkest-hover);
+  --muted-foreground: #aabfac;
+
+  /* Accent */
+  --accent: var(--palette-yellow-hover);
+  --accent-foreground: var(--palette-green-darkest-bg);
+
+  /* Destructive */
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+
+  /* Superteam Green brand scale */
+  --st-green: var(--palette-green-base);
+  --st-green-light: var(--palette-green-hover);
+  --st-green-dark: var(--palette-green-dark-base);
+
+  /* Gold scale */
+  --brazil-gold: var(--palette-yellow-base);
+  --brazil-gold-light: var(--palette-yellow-hover);
+  --brazil-gold-dark: var(--palette-yellow-pressed);
+
+  /* Supporting tones */
+  --brazil-green: #2d9b6e;
+  --brazil-teal: #43b5a0;
+  --brazil-coral: #d4755e;
+  --brazil-blue: #1a5c7a;
+  --brazil-cream: var(--palette-text-on-dark);
+
+  /* Gamification */
+  --xp-color: var(--palette-yellow-base);
+  --streak-color: #ef4444;
+  --level-color: var(--palette-green-base);
+  --achievement-color: var(--palette-yellow-hover);
+
+  /* Radius */
+  --radius: 0.75rem;
+
+  /* Sidebar */
+  --sidebar-background: var(--palette-green-darkest-bg);
+  --sidebar-foreground: var(--palette-text-on-dark);
+}
+
+/* ── Light Mode ── */
+.light {
+  --background: var(--palette-neutral-bg);
+  --foreground: var(--palette-text-on-light);
+  --card: var(--palette-neutral-surface);
+  --card-foreground: var(--palette-text-on-light);
+  --popover: var(--palette-neutral-surface);
+  --popover-foreground: var(--palette-text-on-light);
+  --border: rgba(26, 48, 32, 0.12);
+  --input: rgba(26, 48, 32, 0.12);
+  --ring: var(--palette-green-dark-base);
+  --muted: var(--palette-neutral-surface2);
+  --muted-foreground: #5a6b5c;
+  --primary: var(--palette-green-dark-base);
+  --primary-foreground: #ffffff;
+  --secondary: var(--palette-yellow-pressed);
+  --secondary-foreground: #ffffff;
+  --accent: var(--palette-yellow-base);
+  --accent-foreground: var(--palette-text-on-light);
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --st-green: var(--palette-green-dark-base);
+  --st-green-light: var(--palette-green-base);
+  --st-green-dark: var(--palette-green-dark-pressed);
+  --brazil-gold: var(--palette-yellow-pressed);
+  --brazil-gold-light: var(--palette-yellow-base);
+  --brazil-gold-dark: var(--palette-yellow-pressed);
+  --sidebar-background: var(--palette-neutral-bg);
+  --sidebar-foreground: var(--palette-text-on-light);
+}
+
+/* ── Tailwind v4 Theme ── */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Brand green */
+  --color-st-green: var(--st-green);
+  --color-st-green-light: var(--st-green-light);
+  --color-st-green-dark: var(--st-green-dark);
+
+  /* Gold accent */
+  --color-brazil-gold: var(--brazil-gold);
+  --color-brazil-gold-light: var(--brazil-gold-light);
+  --color-brazil-gold-dark: var(--brazil-gold-dark);
+
+  /* Supporting */
+  --color-brazil-green: var(--brazil-green);
+  --color-brazil-teal: var(--brazil-teal);
+  --color-brazil-coral: var(--brazil-coral);
+  --color-brazil-blue: var(--brazil-blue);
+  --color-brazil-cream: var(--brazil-cream);
+
+  /* Gamification */
+  --color-xp: var(--xp-color);
+  --color-streak: var(--streak-color);
+  --color-level: var(--level-color);
+  --color-achievement: var(--achievement-color);
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+
+  /* Fonts */
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-heading: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  /* Accordion animations */
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+}
+
+/* ── Base Styles ── */
+* {
+  border-color: var(--border);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* Focus-visible ring for keyboard navigation */
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Respect reduced-motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(237, 230, 210, 0.15);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(237, 230, 210, 0.25);
+}
+
+.light ::-webkit-scrollbar-thumb {
+  background: rgba(26, 48, 32, 0.15);
+}
+
+.light ::-webkit-scrollbar-thumb:hover {
+  background: rgba(26, 48, 32, 0.25);
+}
+
+/* Glassmorphic card */
+.glass {
+  background: rgba(42, 77, 56, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(237, 230, 210, 0.08);
+}
+
+.light .glass {
+  background: rgba(232, 224, 198, 0.8);
+  border: 1px solid rgba(26, 48, 32, 0.08);
+}
+
+/* Gold hover gradient (Superteam Brazil signature) */
+.hover-gold {
+  transition: all 0.3s ease;
+}
+
+.hover-gold:hover {
+  border-color: transparent;
+  background-image: linear-gradient(var(--card), var(--card)),
+    linear-gradient(144.34deg, var(--palette-yellow-hover) -29.96%, var(--palette-yellow-base) 131.56%);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+}
+
+/* Gradient text */
+.text-gradient-brand {
+  background: linear-gradient(135deg, var(--st-green) 0%, var(--brazil-teal) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-gold {
+  background: linear-gradient(135deg, var(--brazil-gold-light) 0%, var(--brazil-gold) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Animations ── */
+@keyframes accordion-down {
+  from { height: 0; }
+  to { height: var(--radix-accordion-content-height); }
+}
+
+@keyframes accordion-up {
+  from { height: var(--radix-accordion-content-height); }
+  to { height: 0; }
+}
+
+@keyframes xp-gain {
+  0% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-24px); }
+}
+
+.animate-xp-gain {
+  animation: xp-gain 1s ease-out forwards;
+}
+
+@keyframes flame-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.animate-flame {
+  animation: flame-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes notification-slide-in {
+  0% { opacity: 0; transform: translateX(100%); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+.animate-notification-in {
+  animation: notification-slide-in 0.3s ease-out forwards;
+}
+
+/* Gamification animations */
+@keyframes celebration-bounce {
+  0% { opacity: 0; transform: scale(0); }
+  60% { opacity: 1; transform: scale(1.2); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.animate-celebration-bounce {
+  animation: celebration-bounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes confetti-fall {
+  0% { opacity: 1; transform: translateY(-10px) rotate(0deg); }
+  100% { opacity: 0; transform: translateY(400px) rotate(720deg); }
+}
+
+.animate-confetti {
+  animation: confetti-fall var(--confetti-duration, 3s) ease-in forwards;
+  animation-delay: var(--confetti-delay, 0s);
+}
+
+@keyframes combo-pulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(200, 184, 48, 0.4); }
+  50% { transform: scale(1.05); box-shadow: 0 0 12px 4px rgba(200, 184, 48, 0.2); }
+}
+
+.animate-combo-pulse {
+  animation: combo-pulse 2s ease-in-out infinite;
+}
+
+@keyframes goal-complete {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+
+.animate-goal-complete {
+  animation: goal-complete 0.3s ease-out;
+}
+
+@keyframes streak-danger-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.animate-streak-danger {
+  animation: streak-danger-pulse 1.5s ease-in-out infinite;
+}
+
+/* ── Micro-interaction Animations ── */
+
+/* Shimmer sweep on active progress bars */
+@keyframes progress-shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.progress-bar-animated {
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-bar-animated::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.15) 50%,
+    transparent 100%
+  );
+  animation: progress-shimmer 2.5s ease-in-out infinite;
+}
+
+/* Glow pulse for claimed achievement hover */
+@keyframes achievement-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(212, 194, 61, 0); }
+  50% { box-shadow: 0 0 12px 2px rgba(212, 194, 61, 0.15); }
+}
+
+.achievement-hover-glow:hover {
+  animation: achievement-glow 2s ease-in-out infinite;
+}
+
+/* Page transition — subtle fade for route navigation */
+@keyframes page-enter {
+  from { opacity: 0.7; }
+  to { opacity: 1; }
+}
+
+.animate-page-enter {
+  animation: page-enter 0.15s ease-out;
+}

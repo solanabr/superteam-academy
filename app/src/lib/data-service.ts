@@ -1,0 +1,212 @@
+import { prisma } from "@/lib/db";
+import type { Course, Achievement, LearningPath } from "@/types";
+
+// ── Courses ─────────────────────────────────────────────────────────────────
+
+function formatCourse(c: Awaited<ReturnType<typeof fetchCourseRaw>>, completions = 0): Course {
+  if (!c) throw new Error("Course not found");
+
+  const lessonCount = c.modules.reduce((sum, m) => sum + m.lessons.length, 0);
+  const challengeCount = c.modules.reduce(
+    (sum, m) => sum + m.lessons.filter((l) => l.type === "challenge").length,
+    0,
+  );
+
+  return {
+    id: c.id,
+    slug: c.slug,
+    title: c.title,
+    description: c.description,
+    thumbnail: c.thumbnail ?? "",
+    difficulty: c.difficulty as Course["difficulty"],
+    duration: c.duration,
+    lessonCount,
+    challengeCount,
+    xpTotal: c.xpTotal,
+    trackId: c.trackId,
+    trackLevel: c.trackLevel,
+    trackName: c.trackName,
+    creator: c.creator,
+    creatorAvatar: c.creatorAvatar ?? undefined,
+    isActive: c.isActive,
+    totalEnrollments: c._count?.enrollments ?? 0,
+    totalCompletions: completions,
+    modules: c.modules.map((m) => ({
+      id: m.id,
+      title: m.title,
+      description: m.description,
+      order: m.order,
+      lessons: m.lessons.map((l) => ({
+        id: l.id,
+        title: l.title,
+        description: l.description,
+        type: l.type as "content" | "challenge",
+        order: l.order,
+        xpReward: l.xpReward,
+        content: l.content ?? undefined,
+        duration: l.duration,
+        challenge: l.challenge
+          ? {
+              id: l.challenge.id,
+              prompt: l.challenge.prompt,
+              starterCode: l.challenge.starterCode,
+              language: l.challenge.language as "rust" | "typescript" | "json",
+              hints: l.challenge.hints,
+              testCases: l.challenge.testCases.map((t) => ({
+                id: t.id,
+                name: t.name,
+                input: t.input,
+                expectedOutput: t.expectedOutput,
+              })),
+            }
+          : undefined,
+      })),
+    })),
+    prerequisites: c.prerequisites,
+    tags: c.tags,
+    createdAt: c.createdAt.toISOString(),
+    updatedAt: c.updatedAt.toISOString(),
+  };
+}
+
+const courseInclude = {
+  modules: {
+    orderBy: { order: "asc" as const },
+    include: {
+      lessons: {
+        orderBy: { order: "asc" as const },
+        include: {
+          challenge: {
+            include: {
+              testCases: { orderBy: { order: "asc" as const } },
+            },
+          },
+        },
+      },
+    },
+  },
+  _count: {
+    select: { enrollments: true },
+  },
+} as const;
+
+async function fetchCourseRaw(slug: string) {
+  return prisma.course.findUnique({
+    where: { slug },
+    include: courseInclude,
+  });
+}
+
+export async function getAllCourses(): Promise<Course[]> {
+  const [courses, completionGroups] = await Promise.all([
+    prisma.course.findMany({
+      where: { isActive: true },
+      include: courseInclude,
+      orderBy: [{ trackId: "asc" }, { trackLevel: "asc" }],
+    }),
+    prisma.enrollment.groupBy({
+      by: ["courseId"],
+      where: { completedAt: { not: null } },
+      _count: { courseId: true },
+    }),
+  ]);
+  const completionMap = new Map(completionGroups.map((g) => [g.courseId, g._count.courseId]));
+
+  return courses.map((c) => formatCourse(c, completionMap.get(c.id) ?? 0));
+}
+
+export async function getCourseBySlug(slug: string): Promise<Course | undefined> {
+  const course = await fetchCourseRaw(slug);
+  if (!course) return undefined;
+  const completions = await prisma.enrollment.count({
+    where: { courseId: course.id, completedAt: { not: null } },
+  });
+  return formatCourse(course, completions);
+}
+
+export async function getCoursesByTrack(trackId: number): Promise<Course[]> {
+  const [courses, completionGroups] = await Promise.all([
+    prisma.course.findMany({
+      where: { trackId, isActive: true },
+      include: courseInclude,
+      orderBy: { trackLevel: "asc" },
+    }),
+    prisma.enrollment.groupBy({
+      by: ["courseId"],
+      where: { completedAt: { not: null } },
+      _count: { courseId: true },
+    }),
+  ]);
+  const completionMap = new Map(completionGroups.map((g) => [g.courseId, g._count.courseId]));
+
+  return courses.map((c) => formatCourse(c, completionMap.get(c.id) ?? 0));
+}
+
+export async function getCoursesByDifficulty(
+  difficulty: Course["difficulty"],
+): Promise<Course[]> {
+  const [courses, completionGroups] = await Promise.all([
+    prisma.course.findMany({
+      where: { difficulty, isActive: true },
+      include: courseInclude,
+      orderBy: [{ trackId: "asc" }, { trackLevel: "asc" }],
+    }),
+    prisma.enrollment.groupBy({
+      by: ["courseId"],
+      where: { completedAt: { not: null } },
+      _count: { courseId: true },
+    }),
+  ]);
+  const completionMap = new Map(completionGroups.map((g) => [g.courseId, g._count.courseId]));
+
+  return courses.map((c) => formatCourse(c, completionMap.get(c.id) ?? 0));
+}
+
+// ── Learning Paths ──────────────────────────────────────────────────────────
+
+export async function getAllLearningPaths(): Promise<LearningPath[]> {
+  // Learning paths are derived from tracks
+  const tracks = await prisma.course.findMany({
+    where: { isActive: true },
+    select: { trackId: true, trackName: true, slug: true, trackLevel: true },
+    orderBy: [{ trackId: "asc" }, { trackLevel: "asc" }],
+  });
+
+  const pathMap = new Map<number, { name: string; slugs: string[] }>();
+  for (const t of tracks) {
+    if (!pathMap.has(t.trackId)) {
+      pathMap.set(t.trackId, { name: t.trackName, slugs: [] });
+    }
+    pathMap.get(t.trackId)!.slugs.push(t.slug);
+  }
+
+  const icons = ["BookOpen", "Anchor", "Coins", "TrendingUp", "Shield", "Layers"];
+  const colors = ["#9945FF", "#14F195", "#FFD700", "#00D4FF", "#FF6B6B", "#4ECDC4"];
+
+  return Array.from(pathMap.entries()).map(([id, { name, slugs }]) => ({
+    id: String(id),
+    name,
+    description: `Master ${name} through hands-on courses`,
+    icon: icons[id] ?? "BookOpen",
+    courses: slugs,
+    color: colors[id] ?? "#9945FF",
+  }));
+}
+
+// ── Achievements ────────────────────────────────────────────────────────────
+
+export async function getAllAchievements(): Promise<Achievement[]> {
+  const achievements = await prisma.achievement.findMany({
+    orderBy: { id: "asc" },
+  });
+
+  return achievements.map((a) => ({
+    id: a.id,
+    name: a.name,
+    description: a.description,
+    icon: a.icon,
+    category: a.category as Achievement["category"],
+    xpReward: a.xpReward,
+    claimed: false,
+  }));
+}

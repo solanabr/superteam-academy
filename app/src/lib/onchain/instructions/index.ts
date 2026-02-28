@@ -1,0 +1,1 @@
+export { checkEnrollmentOnChain } from "./enroll";
