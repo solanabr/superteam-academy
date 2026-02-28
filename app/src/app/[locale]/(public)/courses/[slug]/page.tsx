@@ -153,7 +153,11 @@ export default async function CourseDetailPage({ params }: Props) {
               </div>
             </div>
 
-            <EnrollButton courseId={course.onChainCourseId ?? course.slug} courseSlug={slug} />
+            <EnrollButton
+              courseId={course.onChainCourseId ?? course.slug}
+              courseSlug={slug}
+              firstLessonId={course.modules?.[0]?.lessons?.[0]?._id}
+            />
 
             <div className="mt-4 pt-4 border-t border-border space-y-2 text-xs font-mono text-muted-foreground">
               <div className="flex justify-between">

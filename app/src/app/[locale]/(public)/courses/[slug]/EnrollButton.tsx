@@ -11,9 +11,10 @@ import { Link } from "@/i18n/navigation";
 interface EnrollButtonProps {
   courseId: string;
   courseSlug: string;
+  firstLessonId?: string;
 }
 
-export function EnrollButton({ courseId, courseSlug }: EnrollButtonProps) {
+export function EnrollButton({ courseId, courseSlug, firstLessonId }: EnrollButtonProps) {
   const { connected } = useWallet();
   const { setVisible } = useWalletModal();
   const { connection } = useConnection();
@@ -80,7 +81,7 @@ export function EnrollButton({ courseId, courseSlug }: EnrollButtonProps) {
   if (progress.isFinalized) {
     return (
       <Link
-        href={{ pathname: "/courses/[slug]/lessons/[id]", params: { slug: courseSlug, id: `${courseId}-l1` } }}
+        href={{ pathname: "/courses/[slug]/lessons/[id]", params: { slug: courseSlug, id: firstLessonId ?? `${courseId}-l1` } }}
         className="block w-full text-center bg-[#14F195]/10 text-[#14F195] border border-[#14F195]/30 font-mono font-semibold text-sm py-2.5 rounded hover:bg-[#14F195]/20 transition-colors"
       >
         ✓ Completed
@@ -91,7 +92,7 @@ export function EnrollButton({ courseId, courseSlug }: EnrollButtonProps) {
   if (progress.enrolled) {
     return (
       <Link
-        href={{ pathname: "/courses/[slug]/lessons/[id]", params: { slug: courseSlug, id: `${courseId}-l1` } }}
+        href={{ pathname: "/courses/[slug]/lessons/[id]", params: { slug: courseSlug, id: firstLessonId ?? `${courseId}-l1` } }}
         className="block w-full text-center bg-elevated border border-[#14F195]/30 text-[#14F195] font-mono font-semibold text-sm py-2.5 rounded hover:bg-[#14F195]/10 transition-colors"
       >
         Continue Learning →
