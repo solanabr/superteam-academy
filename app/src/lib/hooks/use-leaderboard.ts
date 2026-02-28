@@ -17,6 +17,8 @@ interface UseLeaderboardReturn {
   userRank: number | null;
   isLoading: boolean;
   error: string | null;
+  /** True when the backend lacks Helius DAS support (no API key configured). */
+  dasUnavailable: boolean;
   refresh: () => Promise<void>;
 }
 
@@ -33,6 +35,7 @@ export function useLeaderboard(): UseLeaderboardReturn {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [dasUnavailable, setDasUnavailable] = useState(false);
 
   // Prevent state updates on unmounted component
   const mountedRef = useRef(true);
@@ -48,10 +51,14 @@ export function useLeaderboard(): UseLeaderboardReturn {
         throw new Error(`Leaderboard fetch failed (HTTP ${response.status})`);
       }
 
-      const data = (await response.json()) as { entries: LeaderboardEntry[] };
+      const data = (await response.json()) as {
+        entries: LeaderboardEntry[];
+        dasUnavailable?: boolean;
+      };
 
       if (!mountedRef.current) return;
 
+      setDasUnavailable(data.dasUnavailable === true);
       setEntries(data.entries);
     } catch (err) {
       if (!mountedRef.current) return;
@@ -84,6 +91,7 @@ export function useLeaderboard(): UseLeaderboardReturn {
     userRank,
     isLoading,
     error,
+    dasUnavailable,
     refresh: fetchLeaderboard,
   };
 }

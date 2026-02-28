@@ -1,7 +1,8 @@
 'use client';
 
-import { useCallback, useState } from 'react';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useCallback, useEffect, useState } from 'react';
+import { useConnection, useWallet } from '@solana/wallet-adapter-react';
+import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { useTranslations } from 'next-intl';
 import {
   Wallet,
@@ -33,9 +34,33 @@ function truncateAddress(address: string): string {
 
 export function WalletSettings() {
   const t = useTranslations('settings');
+  const { connection } = useConnection();
   const { publicKey, connected, disconnect, wallet } = useWallet();
   const { xp, level, levelTitle, isLoading: xpLoading } = useXp();
   const [copied, setCopied] = useState(false);
+  const [solBalance, setSolBalance] = useState<number | null>(null);
+  const [solLoading, setSolLoading] = useState(false);
+
+  useEffect(() => {
+    if (!publicKey || !connected) {
+      setSolBalance(null);
+      return;
+    }
+    let cancelled = false;
+    setSolLoading(true);
+    connection
+      .getBalance(publicKey)
+      .then((lamports) => {
+        if (!cancelled) setSolBalance(lamports / LAMPORTS_PER_SOL);
+      })
+      .catch(() => {
+        if (!cancelled) setSolBalance(null);
+      })
+      .finally(() => {
+        if (!cancelled) setSolLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [publicKey, connected, connection]);
 
   const walletAddress = publicKey?.toBase58() ?? '';
   const explorerUrl = `https://explorer.solana.com/address/${walletAddress}?cluster=${CLUSTER}`;
@@ -150,7 +175,7 @@ export function WalletSettings() {
             Balances
           </span>
 
-          {/* SOL Balance — placeholder */}
+          {/* SOL Balance */}
           <div className="flex items-center justify-between rounded-lg border p-3">
             <div className="flex items-center gap-2">
               <div className="rounded-md bg-muted p-1.5">
@@ -158,9 +183,13 @@ export function WalletSettings() {
               </div>
               <span className="text-sm font-medium">SOL</span>
             </div>
-            <span className="text-sm font-mono text-muted-foreground">
-              --
-            </span>
+            {solLoading ? (
+              <Skeleton className="h-4 w-16" />
+            ) : (
+              <span className="text-sm font-mono text-muted-foreground">
+                {solBalance !== null ? solBalance.toFixed(4) : '--'}
+              </span>
+            )}
           </div>
 
           {/* XP Balance */}

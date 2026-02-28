@@ -1,6 +1,25 @@
 import type { Credential } from '@/lib/solana/credentials';
 
 // ---------------------------------------------------------------------------
+// ARCHITECTURE NOTE
+// ---------------------------------------------------------------------------
+// This file defines the LearningProgressService interface and a reference
+// MockLearningProgressService implementation with hardcoded data.
+//
+// IMPORTANT: The mock service is NOT actively used by the frontend.
+// Real data flows through:
+//   - XP balance:    user-store.ts → connection.getTokenAccountBalance()
+//   - Credentials:   user-store.ts → getCredentialsByOwner() (Helius DAS)
+//   - Leaderboard:   /api/leaderboard → Helius DAS getTokenAccounts
+//   - Enrollments:   user-store.ts → fetchUserEnrollments() (RPC)
+//   - Streak:        user-store.ts → localStorage persistence
+//
+// The interface + mock are preserved as a clean abstraction boundary for
+// future backend integration (e.g., swapping to a server-backed service
+// once Anchor IDL deserialization is available for enrollment/course reads).
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
 // Service return types
 // ---------------------------------------------------------------------------
 

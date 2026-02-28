@@ -12,6 +12,8 @@ import type { LeaderboardEntry } from '@/lib/hooks/use-leaderboard';
 interface PodiumTop3Props {
   entries: LeaderboardEntry[];
   isLoading?: boolean;
+  /** When true, Helius DAS is not configured — show setup hint instead of generic empty state. */
+  dasUnavailable?: boolean;
   className?: string;
 }
 
@@ -189,7 +191,7 @@ function PodiumSkeleton() {
   );
 }
 
-export function PodiumTop3({ entries, isLoading = false, className }: PodiumTop3Props) {
+export function PodiumTop3({ entries, isLoading = false, dasUnavailable = false, className }: PodiumTop3Props) {
   if (isLoading) {
     return <PodiumSkeleton />;
   }
@@ -199,7 +201,9 @@ export function PodiumTop3({ entries, isLoading = false, className }: PodiumTop3
       <div className={cn('flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed py-12 text-center', className)}>
         <Trophy className="size-10 text-muted-foreground" />
         <p className="text-sm text-muted-foreground">
-          No rankings yet. Be the first to earn XP!
+          {dasUnavailable
+            ? 'Leaderboard requires a Helius RPC endpoint. Set NEXT_PUBLIC_HELIUS_RPC_URL in your environment.'
+            : 'No rankings yet. Be the first to earn XP!'}
         </p>
       </div>
     );

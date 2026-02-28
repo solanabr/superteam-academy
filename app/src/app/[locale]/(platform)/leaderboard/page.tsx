@@ -18,7 +18,7 @@ import { YourRankSticky } from '@/components/leaderboard/your-rank-sticky';
 export default function LeaderboardPage() {
   const t = useTranslations('leaderboard');
   const { publicKey } = useWallet();
-  const { entries, userRank, isLoading, error, refresh } = useLeaderboard();
+  const { entries, userRank, isLoading, error, dasUnavailable, refresh } = useLeaderboard();
   const { xp, level } = useXp();
 
   const [timeRange, setTimeRange] = useState<TimeRange>('all_time');
@@ -146,7 +146,7 @@ export default function LeaderboardPage() {
       )}
 
       {/* Podium */}
-      <PodiumTop3 entries={top3} isLoading={isLoading} />
+      <PodiumTop3 entries={top3} isLoading={isLoading} dasUnavailable={dasUnavailable} />
 
       {/* Table for rank 4+ */}
       <LeaderboardTable
