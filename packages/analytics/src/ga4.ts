@@ -489,6 +489,10 @@ export interface FunnelResult {
 }
 
 export class AudienceSegmentation {
+	constructor(_ga4Service: GA4AnalyticsService) {
+		/* reserved for future use */
+	}
+
 	async createSegment(
 		_segmentId: string,
 		_name: string,
@@ -530,6 +534,10 @@ export interface SegmentAnalysis {
 }
 
 export class CustomReports {
+	constructor(_ga4Service: GA4AnalyticsService) {
+		/* reserved for future use */
+	}
+
 	async createReport(
 		_reportId: string,
 		_name: string,
@@ -641,6 +649,10 @@ export class PrivacyControls {
 }
 
 export class DataRetentionManager {
+	constructor(_ga4Service: GA4AnalyticsService) {
+		/* reserved for future use */
+	}
+
 	async setRetentionPolicy(_propertyId: string, _retentionDays: number): Promise<void> {
 		/* noop */
 	}

@@ -35,11 +35,13 @@ export { LevelProgressionEngine } from "./level-system";
 
 export { DEFAULT_LEVELS } from "./level-system";
 
+import { levelFromXP as _levelFromXP } from "./xp-calculation";
+
 export { XPCalculationEngine, DEFAULT_XP_CONFIG, levelFromXP } from "./xp-calculation";
 export type { XPConfig, XPEvent, XPStats, XPAnalytics } from "./xp-calculation";
 export { XPEventType } from "./xp-calculation";
 
 /** @deprecated Use `levelFromXP` instead */
 export function calculateLevelFromXP(totalXP: number): number {
-	return levelFromXP(totalXP);
+	return _levelFromXP(totalXP);
 }

@@ -502,7 +502,7 @@ async function PartnersSection() {
 							<Image
 								src={partner.logo}
 								alt={partner.name}
-								className="h-8 sm:h-10 w-auto object-contain invert"
+								className="h-8 sm:h-10 w-auto object-contain dark:invert"
 								loading="lazy"
 								width={100}
 								height={40}

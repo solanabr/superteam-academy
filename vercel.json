@@ -1,36 +1,15 @@
 {
 	"version": 2,
-	"builds": [
-		{
-			"src": "app/package.json",
-			"use": "@vercel/next",
-			"config": {
-				"maxLambdaSize": "50mb"
-			}
-		}
-	],
-	"routes": [
-		{
-			"src": "/api/(.*)",
-			"dest": "/app/api/$1"
-		},
-		{
-			"src": "/(.*)",
-			"dest": "/app/$1"
-		}
-	],
+	"buildCommand": "bun run build",
+	"outputDirectory": "app/.next",
+	"framework": "nextjs",
+	"installCommand": "bun install",
 	"functions": {
 		"app/api/**/*.ts": {
 			"maxDuration": 30
 		}
 	},
-	"regions": ["iad1"],
-	"env": {
-		"NODE_ENV": "production"
-	},
-	"build": {
-		"env": {
-			"NODE_ENV": "production"
-		}
-	}
+	"regions": [
+		"iad1"
+	]
 }
