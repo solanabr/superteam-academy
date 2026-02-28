@@ -14,15 +14,15 @@ export type CourseTopic =
   | "security"
   | "tooling";
 
-export type ResourceType = "video" | "document" | "text";
+export type LessonType = "video" | "document" | "text";
 export type TestType = "quiz" | "code_challenge";
 
-// ─── Resource ─────────────────────────────────────────────────────────────────
+// ─── Lesson ───────────────────────────────────────────────────────────────────
 
-export interface IResource {
+export interface ILesson {
   _id?: mongoose.Types.ObjectId;
   title: string;
-  type: ResourceType;
+  type: LessonType;
   content?: string;   // For "text" type — raw markdown
   url?: string;       // For "video" or "document" type
   duration?: number;  // For videos — estimated minutes
@@ -59,6 +59,7 @@ export interface ITest {
   title: string;
   type: TestType;
   passThreshold: number;        // Always 80 (stored for flexibility)
+  points: number;               // Weight within the milestone (sums to 100)
   // Only one of these will be populated depending on type
   questions?: IQuizQuestion[];  // For "quiz" type
   codeChallenge?: ICodeChallenge; // For "code_challenge" type
@@ -71,7 +72,7 @@ export interface IMilestone {
   title: string;
   description: string;
   order: number;          // 1 through 5
-  resources: IResource[]; // Max 5 resources per milestone
+  lessons: ILesson[];     // Max 5 lessons per milestone
   tests: ITest[];         // Admin decides how many and what type
   xpReward: number;       // Locked until course completion
 }
@@ -96,9 +97,11 @@ export interface ICourse extends Document {
 
   // Denormalized stats (for catalog page — no aggregation needed)
   totalXP: number;            // Sum of all milestone XP — auto-calculated
-  duration: number;           // Sum of all resource durations — auto-calculated
+  duration: number;           // Sum of all lesson durations — auto-calculated
   enrollmentCount: number;
   completionCount: number;
+  rating: number;
+  ratingCount: number;
 
   author: {
     name: string;
@@ -113,7 +116,7 @@ export interface ICourse extends Document {
 
 // ─── Sub-Schemas ──────────────────────────────────────────────────────────────
 
-const ResourceSchema = new Schema<IResource>({
+const LessonSchema = new Schema<ILesson>({
   title: { type: String, required: true },
   type: {
     type: String,
@@ -122,7 +125,7 @@ const ResourceSchema = new Schema<IResource>({
   },
   content: { type: String },  // populated if type === "text"
   url: { type: String },      // populated if type === "video" | "document"
-  duration: { type: Number }, // minutes, for videos
+  duration: { type: Number, default: 8 }, // minutes, for videos
   order: { type: Number, required: true },
 });
 
@@ -169,6 +172,7 @@ const TestSchema = new Schema<ITest>({
     required: true,
   },
   passThreshold: { type: Number, default: 80 },
+  points: { type: Number, default: 100 },
   questions: [QuizQuestionSchema],
   codeChallenge: { type: CodeChallengeSchema, default: undefined },
 });
@@ -177,11 +181,11 @@ const MilestoneSchema = new Schema<IMilestone>({
   title: { type: String, required: true },
   description: { type: String, default: "" },
   order: { type: Number, required: true, min: 1, max: 5 },
-  resources: {
-    type: [ResourceSchema],
+  lessons: {
+    type: [LessonSchema],
     validate: {
-      validator: (v: IResource[]) => v.length <= 5,
-      message: "A milestone cannot have more than 5 resources",
+      validator: (v: ILesson[]) => v.length <= 5,
+      message: "A milestone cannot have more than 5 lessons",
     },
   },
   tests: [TestSchema],
@@ -229,8 +233,8 @@ const CourseSchema = new Schema<ICourse>(
     milestones: {
       type: [MilestoneSchema],
       validate: {
-        validator: (v: IMilestone[]) => v.length === 5,
-        message: "A course must have exactly 5 milestones",
+        validator: (v: IMilestone[]) => v.length >= 1,
+        message: "A course must have at least one milestone",
       },
     },
 
@@ -239,6 +243,8 @@ const CourseSchema = new Schema<ICourse>(
     duration: { type: Number, default: 0 },
     enrollmentCount: { type: Number, default: 0 },
     completionCount: { type: Number, default: 0 },
+    rating: { type: Number, default: 0 },
+    ratingCount: { type: Number, default: 0 },
 
     author: {
       name: { type: String, required: true },
@@ -259,15 +265,15 @@ CourseSchema.index({ tags: 1 });
 
 // ─── Pre-save: Auto-calculate totalXP and duration ────────────────────────────
 
-CourseSchema.pre("save", function (next) {
+CourseSchema.pre("save", function (this: ICourse, next) {
   let totalXP = 0;
   let duration = 0;
 
-  this.milestones.forEach((milestone) => {
+  this.milestones.forEach((milestone: IMilestone) => {
     totalXP += milestone.xpReward;
 
-    milestone.resources.forEach((resource) => {
-      if (resource.duration) duration += resource.duration;
+    milestone.lessons.forEach((lesson: ILesson) => {
+      if (lesson.duration) duration += lesson.duration;
     });
   });
 

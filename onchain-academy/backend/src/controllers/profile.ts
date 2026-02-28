@@ -117,7 +117,14 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
         }
 
         // ── 2. Update allowed fields ─────────────────────────────────────────────
-        if (username !== undefined) user.username = username;
+        if (username !== undefined) {
+            const existingUser = await User.findOne({ username });
+            if (existingUser) {
+                res.status(400).json({ success: false, message: "Username already exists" });
+                return;
+            }
+            user.username = username
+        };
         if (name !== undefined) user.name = name;
         if (bio !== undefined) user.bio = bio;
         if (avatar !== undefined) user.avatar = avatar;
@@ -172,3 +179,5 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
         res.status(500).json({ success: false, message: "Server error" });
     }
 };
+
+

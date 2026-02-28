@@ -5,7 +5,10 @@ export interface IEnrollment extends Document {
   courseId: mongoose.Types.ObjectId;
   enrolledAt: Date;
   lastAccessedAt: Date;
-  completedAt?: Date;   // Set when all 5 MilestoneProgress records have allTestsPassed: true
+  completedAt?: Date;
+  rating?: number;
+  comment?: string;
+  ratedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -22,6 +25,9 @@ const EnrollmentSchema = new Schema<IEnrollment>(
       ref: "Course",
       required: true,
     },
+    rating: { type: Number, min: 1, max: 5 },
+    comment: { type: String, trim: true },
+    ratedAt: { type: Date },
     enrolledAt: { type: Date, default: Date.now },
     lastAccessedAt: { type: Date, default: Date.now },
     completedAt: { type: Date },

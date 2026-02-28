@@ -29,13 +29,13 @@ const options: swaggerJSDoc.Options = {
             },
             schemas: {
                 // ── Primitives ─────────────────────────────────────────────────
-                Resource: {
+                Lesson: {
                     type: "object",
                     properties: {
                         title: { type: "string", example: "Introduction to Solana" },
                         type: { type: "string", enum: ["video", "document", "text"] },
                         content: { type: "string", description: "Markdown content (type=text only)", nullable: true },
-                        url: { type: "string", description: "URL for video or document resources", nullable: true },
+                        url: { type: "string", description: "URL for video or document lessons", nullable: true },
                         duration: { type: "integer", description: "Estimated minutes (videos)", nullable: true },
                         order: { type: "integer", minimum: 1, maximum: 5 },
                     },
@@ -100,10 +100,10 @@ const options: swaggerJSDoc.Options = {
                         description: { type: "string" },
                         order: { type: "integer", minimum: 1, maximum: 5, description: "Position in the course (1–5)" },
                         xpReward: { type: "integer", example: 100, description: "XP unlocked when the full course is completed" },
-                        resources: {
+                        lessons: {
                             type: "array",
                             maxItems: 5,
-                            items: { $ref: "#/components/schemas/Resource" },
+                            items: { $ref: "#/components/schemas/Lesson" },
                         },
                         tests: {
                             type: "array",
@@ -133,7 +133,7 @@ const options: swaggerJSDoc.Options = {
                             items: { $ref: "#/components/schemas/Milestone" },
                         },
                         totalXP: { type: "integer", description: "Auto-calculated sum of all milestone XP rewards" },
-                        duration: { type: "integer", description: "Auto-calculated total video duration in minutes" },
+                        duration: { type: "integer", description: "Auto-calculated total lesson duration in minutes" },
                         enrollmentCount: { type: "integer" },
                         completionCount: { type: "integer" },
                         author: {
@@ -168,6 +168,7 @@ const options: swaggerJSDoc.Options = {
                         milestoneId: { type: "string" },
                         milestoneOrder: { type: "integer", minimum: 1, maximum: 5 },
                         testAttempts: { type: "array", items: { $ref: "#/components/schemas/TestAttempt" } },
+                        completedLessons: { type: "array", items: { type: "string" }, description: "List of completed lesson IDs" },
                         allTestsPassed: { type: "boolean" },
                         xpReward: { type: "integer" },
                         isXPUnlocked: { type: "boolean", description: "True once all 5 milestones in the course are completed" },

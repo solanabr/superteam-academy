@@ -85,12 +85,11 @@ const optionalAuth = (req: Request, res: Response, next: NextFunction) => {
  *                 enum: [solana-basics, smart-contracts, defi, nfts, tokens, web3-frontend, security, tooling]
  *               milestones:
  *                 type: array
- *                 description: Exactly 5 milestones required
- *                 minItems: 5
- *                 maxItems: 5
+ *                 description: At least 1 milestone required
+ *                 minItems: 1
  *                 items:
  *                   type: object
- *                   required: [title, xpReward, resources, tests]
+ *                   required: [title, xpReward, lessons, tests]
  *                   properties:
  *                     title:
  *                       type: string
@@ -101,11 +100,11 @@ const optionalAuth = (req: Request, res: Response, next: NextFunction) => {
  *                       type: integer
  *                       example: 100
  *                       description: XP awarded when the full course is completed
- *                     resources:
+ *                     lessons:
  *                       type: array
  *                       maxItems: 5
  *                       items:
- *                         $ref: '#/components/schemas/Resource'
+ *                         $ref: '#/components/schemas/Lesson'
  *                     tests:
  *                       type: array
  *                       items:
@@ -256,7 +255,7 @@ router.get("/", coursesController.getCourses);
  *       `milestoneProgress` records.
  *     responses:
  *       200:
- *         description: Course detail with full milestones, resources, and tests
+ *         description: Course detail with full milestones, lessons, and tests
  *         content:
  *           application/json:
  *             schema:
@@ -319,6 +318,52 @@ router.post("/:slug/enroll", authenticate, coursesController.enrollInCourse);
 
 /**
  * @swagger
+ * /courses/{slug}/rate:
+ *   post:
+ *     summary: Rate and review a course (only after completion)
+ *     tags: [Courses]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: slug
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [rating]
+ *             properties:
+ *               rating:
+ *                 type: number
+ *                 minimum: 1
+ *                 maximum: 5
+ *                 example: 5
+ *               comment:
+ *                 type: string
+ *                 example: "Great course, learned a lot!"
+ *     responses:
+ *       200:
+ *         description: Rating submitted successfully
+ *       400:
+ *         description: Invalid rating
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Course not completed yet
+ *       404:
+ *         description: Course or enrollment not found
+ *       500:
+ *         description: Server error
+ */
+router.post("/:slug/rate", authenticate, coursesController.rateCourse);
+
+/**
+ * @swagger
  * /courses/{slug}/milestones/{milestoneId}/complete:
  *   post:
  *     summary: Submit a test attempt for a milestone
@@ -344,21 +389,56 @@ router.post("/:slug/enroll", authenticate, coursesController.enrollInCourse);
  *             type: object
  *             required:
  *               - testId
- *               - score
  *             properties:
  *               testId:
  *                 type: string
  *                 description: The _id of the test being attempted
- *               score:
- *                 type: number
- *                 minimum: 0
- *                 maximum: 100
- *                 description: Score percentage. >= 80 to pass.
+ *                 example: "64f1a2b3c4d5e6f7a8b9c0d1"
+ *               quizAnswers:
+ *                 type: array
+ *                 description: Required when the test type is "quiz"
+ *                 example:
+ *                   - questionId: "64f1a2b3c4d5e6f7a8b9c0d2"
+ *                     selectedLabel: "A"
+ *                   - questionId: "64f1a2b3c4d5e6f7a8b9c0d3"
+ *                     selectedLabel: "C"
+ *                 items:
+ *                   type: object
+ *                   required: [questionId, selectedLabel]
+ *                   properties:
+ *                     questionId:
+ *                       type: string
+ *                       description: The _id of the quiz question
+ *                       example: "64f1a2b3c4d5e6f7a8b9c0d2"
+ *                     selectedLabel:
+ *                       type: string
+ *                       description: The label of the selected option (e.g. "A", "B")
+ *                       example: "A"
+ *               codeResults:
+ *                 type: array
+ *                 description: Required when the test type is "code_challenge"
+ *                 example:
+ *                   - input: "5"
+ *                     output: "25"
+ *                   - input: "3"
+ *                     output: "9"
+ *                 items:
+ *                   type: object
+ *                   required: [input, output]
+ *                   properties:
+ *                     input:
+ *                       type: string
+ *                       description: The test case input that was run
+ *                       example: "5"
+ *                     output:
+ *                       type: string
+ *                       description: The actual output produced by the user's code
+ *                       example: "25"
  *     responses:
  *       200:
  *         description: Attempt recorded. Response indicates pass/fail and whether the milestone or course is now complete.
  *       400:
- *         description: Invalid score
+ *         description: Missing required fields (e.g. testId, quizAnswers, or codeResults)
  *       401:
  *         description: Unauthorized
  *       403:
@@ -414,6 +494,90 @@ router.post(
     "/:slug/milestones/:milestoneId/claim-xp",
     authenticate,
     coursesController.claimMilestoneXP
+);
+
+/**
+ * @swagger
+ * /courses/{slug}/milestones/{milestoneId}/tests/{testId}:
+ *   get:
+ *     summary: Get test details (for taking a test)
+ *     tags: [Courses]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: slug
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: milestoneId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: testId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Returns the test document including questions
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Not enrolled in this course
+ *       404:
+ *         description: Course, milestone, or test not found
+ *       500:
+ *         description: Server error
+ */
+router.get(
+    "/:slug/milestones/:milestoneId/tests/:testId",
+    authenticate,
+    coursesController.getTest
+);
+
+/**
+ * @swagger
+ * /courses/{slug}/milestones/{milestoneId}/lessons/{lessonId}/complete:
+ *   post:
+ *     summary: Mark a lesson as complete
+ *     tags: [Courses]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: slug
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: milestoneId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: lessonId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Lesson marked as complete
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Not enrolled in this course
+ *       404:
+ *         description: Course, milestone, or progress record not found
+ *       500:
+ *         description: Server error
+ */
+router.post(
+    "/:slug/milestones/:milestoneId/lessons/:lessonId/complete",
+    authenticate,
+    coursesController.completeLesson
 );
 
 export default router;

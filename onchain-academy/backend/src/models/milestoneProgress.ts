@@ -28,6 +28,8 @@ export interface IMilestoneProgress extends Document {
   isXPClaimed: boolean;     // User hit the claim button
   xpClaimedAt?: Date;
 
+  completedLessons: mongoose.Types.ObjectId[]; // Track completed lessons in this milestone
+
   completedAt?: Date;       // When allTestsPassed first became true
   createdAt: Date;
   updatedAt: Date;
@@ -62,7 +64,7 @@ const MilestoneProgressSchema = new Schema<IMilestoneProgress>(
       type: Schema.Types.ObjectId,
       required: true,
     },
-    milestoneOrder: { type: Number, required: true, min: 1, max: 5 },
+    milestoneOrder: { type: Number, required: true, min: 1 },
 
     // Test tracking
     testAttempts: [TestAttemptSchema],
@@ -73,6 +75,8 @@ const MilestoneProgressSchema = new Schema<IMilestoneProgress>(
     isXPUnlocked: { type: Boolean, default: false },
     isXPClaimed: { type: Boolean, default: false },
     xpClaimedAt: { type: Date },
+
+    completedLessons: [{ type: Schema.Types.ObjectId }],
 
     completedAt: { type: Date },
   },

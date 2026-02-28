@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import mongoose from "mongoose";
 import { Course } from "../models/courses";
 import { Enrollment } from "../models/enrollment";
 import { MilestoneProgress } from "../models/milestoneProgress";
@@ -9,7 +10,7 @@ import { updateStreak } from "../services/streak";
 
 /**
  * POST /admin/courses
- * Creates a new course. Must have exactly 5 milestones.
+ * Creates a new course. Must have at least 1 milestone.
  * totalXP is auto-calculated from milestone xpRewards in the pre-save hook.
  */
 export const createCourse = async (req: Request, res: Response): Promise<void> => {
@@ -26,6 +27,7 @@ export const createCourse = async (req: Request, res: Response): Promise<void> =
       milestones,
       author,
       sanityId,
+      certificate,
     } = req.body;
 
     // Validate exactly 5 milestones
@@ -37,25 +39,25 @@ export const createCourse = async (req: Request, res: Response): Promise<void> =
       return;
     }
 
-    // Validate each milestone has at least 1 resource and 1 test
+    // Validate each milestone has at least 1 lesson and 1 test
     for (let i = 0; i < milestones.length; i++) {
       const milestone = milestones[i];
 
-      if (!milestone.resources || milestone.resources.length === 0) {
+      if (!milestone.lessons || milestone.lessons.length === 0) {
         res.status(400).json({
           success: false,
-          message: `Milestone ${i + 1} must have at least 1 resource`,
+          message: `Milestone ${i + 1} must have at least 1 lesson`,
         });
         return;
       }
 
-      if (milestone.resources.length > 5) {
-        res.status(400).json({
-          success: false,
-          message: `Milestone ${i + 1} cannot have more than 5 resources`,
-        });
-        return;
-      }
+      // if (milestone.lessons.length > 5) {
+      //   res.status(400).json({
+      //     success: false,
+      //     message: `Milestone ${i + 1} cannot have more than 5 lessons`,
+      //   });
+      //   return;
+      // }
 
       if (!milestone.tests || milestone.tests.length === 0) {
         res.status(400).json({
@@ -203,7 +205,8 @@ export const getCourses = async (req: Request, res: Response): Promise<void> => 
 
 /**
  * GET /courses/:slug
- * Returns full course with milestones, resources and tests.
+ * Returns full course with milestones, lessons and tests.
+ * Includes detailed stats and user reviews.
  * If user is authenticated, also returns their enrollment + milestone progress.
  */
 export const getCourseBySlug = async (req: Request, res: Response): Promise<void> => {
@@ -217,6 +220,27 @@ export const getCourseBySlug = async (req: Request, res: Response): Promise<void
       res.status(404).json({ success: false, message: "Course not found" });
       return;
     }
+
+    // Derived stats
+    let totalLessons = 0;
+    course.milestones.forEach(m => totalLessons += m.lessons.length);
+
+    // Fetch reviews (top 10 recent)
+    const recentReviews = await Enrollment.find({
+      courseId: course._id,
+      rating: { $exists: true },
+    })
+      .sort({ ratedAt: -1 })
+      .limit(10)
+      .populate("userId", "name avatar"); // Assuming User has name and avatar
+
+    const formattedReviews = recentReviews.map(r => ({
+      user: (r.userId as any).name,
+      avatar: (r.userId as any).avatar,
+      rating: r.rating,
+      comment: r.comment,
+      ratedAt: r.ratedAt,
+    }));
 
     // If user is authenticated, attach their progress
     const userId = (req as any).user?.id;
@@ -240,13 +264,83 @@ export const getCourseBySlug = async (req: Request, res: Response): Promise<void
     res.status(200).json({
       success: true,
       data: {
-        course,
+        course: {
+          ...course.toObject(),
+          milestoneCount: course.milestones.length,
+          lessonCount: totalLessons,
+        },
+        reviews: formattedReviews,
         enrollment,
         milestoneProgress,
       },
     });
   } catch (error) {
     console.error("Get course error:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+/**
+ * POST /courses/:slug/rate
+ * Allows users who have completed the course to rate and review it.
+ * Updates Course.rating and Course.ratingCount denormalized fields.
+ */
+export const rateCourse = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = (req as any).user.id;
+    const { slug } = req.params;
+    const { rating, comment } = req.body;
+
+    if (!rating || rating < 1 || rating > 5) {
+      res.status(400).json({ success: false, message: "Rating must be between 1 and 5" });
+      return;
+    }
+
+    const course = await Course.findOne({ slug, status: "published" });
+    if (!course) {
+      res.status(404).json({ success: false, message: "Course not found" });
+      return;
+    }
+
+    const enrollment = await Enrollment.findOne({ userId, courseId: course._id });
+    if (!enrollment || !enrollment.completedAt) {
+      res.status(403).json({
+        success: false,
+        message: "You must complete the course before rating it",
+      });
+      return;
+    }
+
+    const isFirstTimeRating = !enrollment.rating;
+    const oldRating = enrollment.rating || 0;
+
+    // Update enrollment
+    enrollment.rating = rating;
+    enrollment.comment = comment;
+    enrollment.ratedAt = new Date();
+    await enrollment.save();
+
+    // Update course average rating
+    // Logic: ((currentRating * ratingCount) - oldRating + newRating) / newRatingCount
+    let newRatingCount = course.ratingCount;
+    if (isFirstTimeRating) {
+      newRatingCount += 1;
+    }
+
+    const currentRatingTotal = course.rating * course.ratingCount;
+    const updatedRating = (currentRatingTotal - oldRating + rating) / newRatingCount;
+
+    course.rating = Number(updatedRating.toFixed(1));
+    course.ratingCount = newRatingCount;
+    await course.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Thank you for your rating!",
+      data: { rating: course.rating, ratingCount: course.ratingCount },
+    });
+  } catch (error) {
+    console.error("Rate course error:", error);
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
@@ -327,26 +421,24 @@ export const enrollInCourse = async (req: Request, res: Response): Promise<void>
 
 /**
  * POST /courses/:slug/milestones/:milestoneId/complete
- * Body: { testId, score } — score is 0-100
+ * Body: { testId, quizAnswers?, codeResults? }
  *
- * Records a test attempt for the milestone.
- * If score >= 80, marks the test as passed.
- * If ALL tests in the milestone are passed, marks the milestone as complete.
- * If ALL 5 milestones are complete, marks the course as complete + unlocks all XP.
+ * Performs backend grading of a test attempt.
+ * Quizzes are graded by comparing selected options to the correct ones.
+ * Code challenges are graded by matching user output to expected output.
+ *
+ * A milestone is considered complete if the cumulative weighted score 
+ * (Sum of (BestScore % * TestPoints)) across all tests in the milestone is >= 80.
+ * If ALL 5 milestones are complete, the course is marked as complete.
  */
 export const completeMilestone = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = (req as any).user.id;
     const { slug, milestoneId } = req.params;
-    const { testId, score } = req.body;
+    const { testId, quizAnswers, codeResults } = req.body;
 
-    if (score === undefined || score === null) {
-      res.status(400).json({ success: false, message: "Score is required" });
-      return;
-    }
-
-    if (score < 0 || score > 100) {
-      res.status(400).json({ success: false, message: "Score must be between 0 and 100" });
+    if (!testId) {
+      res.status(400).json({ success: false, message: "testId is required" });
       return;
     }
 
@@ -373,6 +465,13 @@ export const completeMilestone = async (req: Request, res: Response): Promise<vo
       return;
     }
 
+    // Find the specific test
+    const test = milestone.tests.find((t) => t._id?.toString() === testId);
+    if (!test) {
+      res.status(404).json({ success: false, message: "Test not found" });
+      return;
+    }
+
     // Get this user's progress for this milestone
     let progress = await MilestoneProgress.findOne({
       userId,
@@ -385,23 +484,76 @@ export const completeMilestone = async (req: Request, res: Response): Promise<vo
       return;
     }
 
-    const passed = score >= 80;
+    // MAKE SURE THE USER HAS COMPLETED ALL LESSONS IN THIS MILESTONE
+    if (milestone.lessons.length !== progress.completedLessons.length) {
+      res.status(400).json({ success: false, message: "You have not completed all lessons in this milestone" });
+      return;
+    }
 
-    // Check if this test was already attempted
+    // --- Backend Grading ---
+    let score = 0;
+
+    if (test.type === "quiz") {
+      if (!quizAnswers || !Array.isArray(quizAnswers)) {
+        res.status(400).json({ success: false, message: "quizAnswers array is required for quiz tests" });
+        return;
+      }
+
+      if (!test.questions || test.questions.length === 0) {
+        score = 100; // No questions means automatic pass
+      } else {
+        let correctCount = 0;
+        test.questions.forEach((q) => {
+          const answer = quizAnswers.find((a: any) => a.questionId === q._id?.toString());
+          if (answer) {
+            const option = q.options.find((opt) => opt.label === answer.selectedLabel);
+            if (option?.isCorrect) {
+              correctCount++;
+            }
+          }
+        });
+        score = Math.round((correctCount / test.questions.length) * 100);
+      }
+    } else if (test.type === "code_challenge") {
+      if (!codeResults || !Array.isArray(codeResults)) {
+        res.status(400).json({ success: false, message: "codeResults array is required for code challenges" });
+        return;
+      }
+
+      const challenge = test.codeChallenge;
+      if (!challenge || !challenge.testCases || challenge.testCases.length === 0) {
+        score = 100;
+      } else {
+        let passedCases = 0;
+        challenge.testCases.forEach((tc) => {
+          const result = codeResults.find((r: any) => r.input === tc.input);
+          // Case-insensitive trim match for robustness
+          if (result && result.output?.toString().trim() === tc.expectedOutput.trim()) {
+            passedCases++;
+          }
+        });
+        score = Math.round((passedCases / challenge.testCases.length) * 100);
+      }
+    }
+
+    const passed = score >= test.passThreshold;
+
+    // --- Update Progress ---
     const existingAttemptIndex = progress.testAttempts.findIndex(
       (a) => a.testId.toString() === testId
     );
 
     if (existingAttemptIndex > -1) {
-      // Update existing attempt
-      progress.testAttempts[existingAttemptIndex].score = score;
-      progress.testAttempts[existingAttemptIndex].passed = passed;
+      // Keep best score
+      if (score > progress.testAttempts[existingAttemptIndex].score) {
+        progress.testAttempts[existingAttemptIndex].score = score;
+        progress.testAttempts[existingAttemptIndex].passed = passed;
+      }
       progress.testAttempts[existingAttemptIndex].attempts += 1;
       progress.testAttempts[existingAttemptIndex].lastAttemptAt = new Date();
     } else {
-      // First attempt on this test
       progress.testAttempts.push({
-        testId,
+        testId: new mongoose.Types.ObjectId(testId),
         score,
         passed,
         attempts: 1,
@@ -409,25 +561,30 @@ export const completeMilestone = async (req: Request, res: Response): Promise<vo
       });
     }
 
-    // Check if ALL tests in this milestone are now passed
-    const allTestsPassed = milestone.tests.every((test) =>
-      progress!.testAttempts.some(
-        (a) => a.testId.toString() === test._id?.toString() && a.passed
-      )
-    );
+    // --- Weighted Scoring Logic ---
+    // Total score = Sum(BestScore% * TestPoints)
+    // Milestone passes if TotalScore >= 80 (standardized threshold)
+    let cumulativeScore = 0;
+    milestone.tests.forEach((t) => {
+      const attempt = progress!.testAttempts.find((a) => a.testId.toString() === t._id?.toString());
+      if (attempt) {
+        cumulativeScore += (attempt.score / 100) * (t.points || 100);
+      }
+    });
 
-    if (allTestsPassed && !progress.allTestsPassed) {
+    const isMilestonePass = cumulativeScore >= 80;
+
+    if (isMilestonePass && !progress.allTestsPassed) {
       progress.allTestsPassed = true;
       progress.completedAt = new Date();
     }
 
     await progress.save();
 
-    // Update streak — counts any lesson activity (pass or fail)
+    // Update streak
     try {
       await updateStreak(userId);
     } catch (streakErr) {
-      // Non-fatal — log but don't fail the request
       console.error("[completeMilestone] streak update failed:", streakErr);
     }
 
@@ -440,17 +597,14 @@ export const completeMilestone = async (req: Request, res: Response): Promise<vo
     const courseComplete = allMilestoneProgress.every((mp) => mp.allTestsPassed);
 
     if (courseComplete && !enrollment.completedAt) {
-      // Mark enrollment as complete
       enrollment.completedAt = new Date();
       await enrollment.save();
 
-      // Unlock XP on ALL milestone progress records
       await MilestoneProgress.updateMany(
         { userId, courseId: course._id },
         { isXPUnlocked: true }
       );
 
-      // Increment course completion count
       await Course.findByIdAndUpdate(course._id, {
         $inc: { completionCount: 1 },
       });
@@ -459,15 +613,16 @@ export const completeMilestone = async (req: Request, res: Response): Promise<vo
     res.status(200).json({
       success: true,
       message: passed
-        ? allTestsPassed
+        ? isMilestonePass
           ? courseComplete
             ? "Milestone complete! Course complete! XP unlocked 🎉"
             : "Milestone complete!"
-          : "Test passed!"
-        : "Test failed — you can retake it anytime",
+          : "Test passed! Complete other tests in this milestone to proceed."
+        : "Test score lower than required. You can retake it anytime.",
       data: {
         score,
         passed,
+        cumulativeScore,
         allTestsPassed: progress.allTestsPassed,
         courseComplete,
         progress,
@@ -512,7 +667,7 @@ export const claimMilestoneXP = async (req: Request, res: Response): Promise<voi
     if (!progress.isXPUnlocked) {
       res.status(403).json({
         success: false,
-        message: "XP is locked — complete all 5 milestones first",
+        message: "XP is locked — complete all course milestones first",
       });
       return;
     }
@@ -553,6 +708,123 @@ export const claimMilestoneXP = async (req: Request, res: Response): Promise<voi
     });
   } catch (error) {
     console.error("Claim XP error:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+// ─── Get Test ─────────────────────────────────────────────────────────────────
+
+/**
+ * GET /courses/:slug/milestones/:milestoneId/tests/:testId
+ * Returns the full test document (questions, passThreshold, etc.) directly
+ * from the DB so the frontend never has to rely on localStorage data,
+ * which could be tampered with.
+ *
+ * Requires the user to be enrolled in the course.
+ */
+export const getTest = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = (req as any).user.id;
+    const { slug, milestoneId, testId } = req.params;
+
+    // Fetch the published course
+    const course = await Course.findOne({ slug, status: "published" });
+    if (!course) {
+      res.status(404).json({ success: false, message: "Course not found" });
+      return;
+    }
+
+    // Verify the user is enrolled
+    const enrollment = await Enrollment.findOne({ userId, courseId: course._id });
+    if (!enrollment) {
+      res.status(403).json({ success: false, message: "You are not enrolled in this course" });
+      return;
+    }
+
+    // Find the milestone
+    const milestone = course.milestones.find(
+      (m) => m._id?.toString() === milestoneId
+    );
+    if (!milestone) {
+      res.status(404).json({ success: false, message: "Milestone not found" });
+      return;
+    }
+
+    // Find the test within the milestone
+    const test = milestone.tests.find(
+      (t) => t._id?.toString() === testId
+    );
+    if (!test) {
+      res.status(404).json({ success: false, message: "Test not found" });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      data: { test },
+    });
+  } catch (error) {
+    console.error("Get test error:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+// ─── Complete Lesson ──────────────────────────────────────────────────────────
+
+/**
+ * POST /courses/:slug/milestones/:milestoneId/lessons/:lessonId/complete
+ * Marks a lesson as complete for the authenticated user.
+ */
+export const completeLesson = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = (req as any).user.id;
+    const { slug, milestoneId, lessonId } = req.params;
+
+    const course = await Course.findOne({ slug, status: "published" });
+    if (!course) {
+      res.status(404).json({ success: false, message: "Course not found" });
+      return;
+    }
+
+    const enrollment = await Enrollment.findOne({ userId, courseId: course._id });
+    if (!enrollment) {
+      res.status(403).json({ success: false, message: "You are not enrolled in this course" });
+      return;
+    }
+
+    const progress = await MilestoneProgress.findOne({
+      userId,
+      courseId: course._id,
+      milestoneId,
+    });
+
+    if (!progress) {
+      res.status(404).json({ success: false, message: "Milestone progress not found" });
+      return;
+    }
+
+    const lessonObjectId = new mongoose.Types.ObjectId(lessonId);
+
+    // Add to completedLessons only if not already present
+    if (!progress.completedLessons.some((id) => id.equals(lessonObjectId))) {
+      progress.completedLessons.push(lessonObjectId);
+      await progress.save();
+    }
+
+    // Update streak — counts lesson completion activity
+    try {
+      await updateStreak(userId);
+    } catch (streakErr) {
+      console.error("[completeLesson] streak update failed:", streakErr);
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Lesson marked as complete",
+      data: { completedLessons: progress.completedLessons },
+    });
+  } catch (error) {
+    console.error("Complete lesson error:", error);
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
