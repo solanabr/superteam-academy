@@ -7,7 +7,7 @@ import { GitHubIcon, DiscordIcon, XIcon } from "@/components/ui/social-icons";
 import Logo from "@/public/logo.svg";
 
 const SOCIAL_LINKS = [
-	{ href: "https://github.com/superteambrasil", label: "GitHub", icon: GitHubIcon },
+	{ href: "https://github.com/superteambr", label: "GitHub", icon: GitHubIcon },
 	{ href: "https://discord.gg/superteambrasil", label: "Discord", icon: DiscordIcon },
 	{ href: "https://x.com/superteambr", label: "Twitter", icon: XIcon },
 ] as const;
@@ -46,8 +46,8 @@ export function SiteFooter() {
 		<footer className="border-t border-border bg-muted/30">
 			<div className="mx-auto px-4 sm:px-6">
 				<div className="py-12 lg:py-16">
-					<div className="grid grid-cols-2 md:grid-cols-5 gap-8 lg:gap-12">
-						<div className="col-span-2 space-y-4">
+					<div className="grid grid-cols-3 md:grid-cols-5 gap-8 lg:gap-12">
+						<div className="col-span-3 md:col-span-2 space-y-4">
 							<Link href="/" className="cursor-pointer inline-block">
 								<Logo
 									width={150}
