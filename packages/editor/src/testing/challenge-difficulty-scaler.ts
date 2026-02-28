@@ -152,10 +152,8 @@ export const ChallengeDifficultyScaler = {
 };
 
 function calculateTargetDifficulty(profile: LearnerProfile): number {
-	// Base difficulty on skill level and preferences
 	let targetDifficulty = (profile.skillLevel + profile.preferredDifficulty) / 2;
 
-	// Adjust based on recent performance
 	const recentChallenges = profile.completedChallenges
 		.filter((c) => Date.now() - c.completedAt.getTime() < 30 * 24 * 60 * 60 * 1000) // Last 30 days
 		.slice(-10); // Last 10 challenges
@@ -167,19 +165,16 @@ function calculateTargetDifficulty(profile: LearnerProfile): number {
 		targetDifficulty += scoreAdjustment * 0.3;
 	}
 
-	// Adjust for learning streak
 	if (profile.currentStreak > 5) {
 		targetDifficulty += 0.1; // Increase difficulty for good streaks
 	} else if (profile.currentStreak === 0) {
 		targetDifficulty -= 0.2; // Decrease difficulty after breaks
 	}
 
-	// Clamp to valid range
 	return Math.max(0, Math.min(1, targetDifficulty));
 }
 
 function selectDifficultyLevel(targetDifficulty: number): DifficultyLevel {
-	// Map 0-1 difficulty to our predefined levels
 	const levelIndex = Math.round(targetDifficulty * (DIFFICULTY_LEVELS.length - 1));
 	return DIFFICULTY_LEVELS[Math.max(0, Math.min(DIFFICULTY_LEVELS.length - 1, levelIndex))];
 }
@@ -192,37 +187,30 @@ function applyDifficultyAdjustments(
 	const adjustments = difficultyLevel.adjustments;
 	let adjusted: ChallengeSpec = { ...baseChallenge };
 
-	// Adjust time and memory limits
 	adjusted.timeLimit = Math.round(baseChallenge.timeLimit * adjustments.timeLimitMultiplier);
 	adjusted.memoryLimit = Math.round(
 		baseChallenge.memoryLimit * adjustments.memoryLimitMultiplier
 	);
 
-	// Adjust test cases
 	const targetTestCaseCount = Math.round(
 		baseChallenge.testCases.length * adjustments.testCaseCountMultiplier
 	);
 	if (targetTestCaseCount < baseChallenge.testCases.length) {
-		// Remove some test cases for easier difficulty
 		adjusted.testCases = baseChallenge.testCases.slice(0, Math.max(1, targetTestCaseCount));
 	} else if (targetTestCaseCount > baseChallenge.testCases.length) {
-		// Add more test cases for harder difficulty (duplicate with variations)
 		adjusted.testCases = generateAdditionalTestCases(
 			baseChallenge.testCases,
 			targetTestCaseCount - baseChallenge.testCases.length
 		);
 	}
 
-	// Adjust hints
 	if (adjustments.hintReduction !== 0) {
 		if (adjustments.hintReduction > 0) {
-			// Remove hints for harder difficulty
 			adjusted.hints = (baseChallenge.hints || []).slice(
 				0,
 				Math.max(0, (baseChallenge.hints || []).length - adjustments.hintReduction)
 			);
 		} else {
-			// Add hints for easier difficulty
 			const additionalHints = generateAdditionalHints(
 				baseChallenge,
 				Math.abs(adjustments.hintReduction)
@@ -231,17 +219,14 @@ function applyDifficultyAdjustments(
 		}
 	}
 
-	// Adjust prerequisites
 	if (adjustments.prerequisiteAddition !== 0 && baseChallenge.prerequisites) {
 		if (adjustments.prerequisiteAddition > 0) {
-			// Add prerequisites for harder difficulty
 			const additionalPrereqs = generateAdditionalPrerequisites(
 				baseChallenge,
 				adjustments.prerequisiteAddition
 			);
 			adjusted.prerequisites = [...baseChallenge.prerequisites, ...additionalPrereqs];
 		} else {
-			// Remove prerequisites for easier difficulty
 			adjusted.prerequisites = baseChallenge.prerequisites.slice(
 				0,
 				Math.max(
@@ -252,14 +237,11 @@ function applyDifficultyAdjustments(
 		}
 	}
 
-	// Adjust XP reward based on difficulty
 	adjusted.xpReward = Math.round(baseChallenge.xpReward * difficultyLevel.multiplier);
 
-	// Adjust title and description to reflect difficulty
 	adjusted.title = `${baseChallenge.title} (${difficultyLevel.name})`;
 	adjusted.description = `${baseChallenge.description}\n\nDifficulty: ${difficultyLevel.description}`;
 
-	// Personalize for learner if profile provided
 	if (learnerProfile) {
 		adjusted = personalizeForLearner(adjusted, learnerProfile);
 	}
@@ -272,7 +254,6 @@ function generateAdditionalTestCases(existingTests: TestCase[], count: number): 
 	const baseTest = existingTests[0]; // Use first test as template
 
 	for (let i = 0; i < count; i++) {
-		// Generate variations of the base test
 		const variation = createTestVariation(baseTest, i + 1);
 		additionalTests.push(variation);
 	}
@@ -285,8 +266,6 @@ function createTestVariation(baseTest: TestCase, index: number): TestCase {
 		...baseTest,
 		id: `${baseTest.id}_var${index}`,
 		description: `${baseTest.description} (Variation ${index})`,
-		// In a real implementation, you'd generate different inputs/expected outputs
-		// For now, we'll keep them the same but mark as variations
 	};
 }
 
@@ -308,8 +287,6 @@ function generateAdditionalHints(_challenge: ChallengeSpec, count: number): stri
 }
 
 function generateAdditionalPrerequisites(_challenge: ChallengeSpec, count: number): string[] {
-	// This would need a prerequisite database in a real implementation
-	// For now, return generic prerequisites
 	const prereqs = [
 		"basic-programming-concepts",
 		"variables-and-data-types",
@@ -324,7 +301,6 @@ function generateAdditionalPrerequisites(_challenge: ChallengeSpec, count: numbe
 function personalizeForLearner(challenge: ChallengeSpec, profile: LearnerProfile): ChallengeSpec {
 	const personalized = { ...challenge };
 
-	// Add personalized hints based on learner's weaknesses
 	if (profile.weaknesses.length > 0) {
 		const weaknessHints = profile.weaknesses.map(
 			(weakness) => `Remember to focus on ${weakness} concepts.`
@@ -332,7 +308,6 @@ function personalizeForLearner(challenge: ChallengeSpec, profile: LearnerProfile
 		personalized.hints = [...(personalized.hints || []), ...weaknessHints];
 	}
 
-	// Adjust based on learning style
 	switch (profile.learningStyle) {
 		case "visual":
 			personalized.description += "\n\n💡 Try drawing a diagram of the problem.";
@@ -378,26 +353,20 @@ function generateAdaptationReasoning(
 }
 
 function isRecommendedForLearner(challenge: ChallengeSpec, profile: LearnerProfile): boolean {
-	// Check if challenge aligns with learner's current abilities and goals
 	const challengeDifficulty = estimateChallengeDifficulty(challenge);
 	const skillGap = Math.abs(challengeDifficulty - profile.skillLevel);
 
-	// Recommend if challenge is appropriately challenging (not too easy or hard)
 	return skillGap <= 0.3;
 }
 
 function estimateChallengeDifficulty(challenge: ChallengeSpec): number {
-	// Simple difficulty estimation based on challenge properties
 	let difficulty = 0.5; // Base difficulty
 
-	// Adjust based on time/memory constraints
 	if (challenge.timeLimit < 30) difficulty += 0.2; // Strict time limit
 	if (challenge.memoryLimit < 64) difficulty += 0.1; // Low memory limit
 
-	// Adjust based on test case complexity
 	if (challenge.testCases.length > 10) difficulty += 0.1;
 
-	// Adjust based on XP reward (higher XP = harder challenge)
 	difficulty += Math.min(0.2, (challenge.xpReward - 50) / 200);
 
 	return Math.max(0, Math.min(1, difficulty));

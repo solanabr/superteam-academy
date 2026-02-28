@@ -1,12 +1,6 @@
-/**
- * Handcrafted IDL types matching the on-chain superteam_academy program.
- * Program ID: 3YchgRgR65gdRqgTZTM5qQXqtTZn5Kt2i6FPnZVu34Qb
- */
 import type { PublicKey } from "@solana/web3.js";
 
 export const PROGRAM_ID = "3YchgRgR65gdRqgTZTM5qQXqtTZn5Kt2i6FPnZVu34Qb";
-
-// ─── Account Types ──────────────────────────────────────────────────────────
 
 export interface ConfigAccount {
 	authority: PublicKey;
@@ -80,8 +74,6 @@ export interface AchievementReceiptAccount {
 	bump: number;
 }
 
-// ─── Instruction Parameter Types ────────────────────────────────────────────
-
 export interface CreateCourseParams {
 	courseId: string;
 	creator: PublicKey;
@@ -122,8 +114,6 @@ export interface CreateAchievementTypeParams {
 	xpReward: number; // u32
 }
 
-// ─── Account Size Constants ─────────────────────────────────────────────────
-
 export const ACCOUNT_SIZES = {
 	Config: 113,
 	Course: 192,
@@ -132,8 +122,6 @@ export const ACCOUNT_SIZES = {
 	AchievementType: 338,
 	AchievementReceipt: 49,
 } as const;
-
-// ─── PDA Seed Constants ─────────────────────────────────────────────────────
 
 export const PDA_SEEDS = {
 	config: [Buffer.from("config")] as const,
@@ -150,8 +138,6 @@ export const PDA_SEEDS = {
 			recipient.toBuffer(),
 		] as const,
 } as const;
-
-// ─── Error Codes ────────────────────────────────────────────────────────────
 
 export const ACADEMY_ERRORS = {
 	Unauthorized: { code: 6000, msg: "Unauthorized signer" },
@@ -190,8 +176,6 @@ export const ACADEMY_ERRORS = {
 } as const;
 
 export type AcademyErrorName = keyof typeof ACADEMY_ERRORS;
-
-// ─── Event Types ────────────────────────────────────────────────────────────
 
 export interface ConfigUpdatedEvent {
 	field: string;
@@ -305,8 +289,6 @@ export interface AchievementTypeDeactivatedEvent {
 	timestamp: number;
 }
 
-// ─── Lesson Bitmap Helpers ──────────────────────────────────────────────────
-
 /** Check if a specific lesson is completed in the bitmap flags */
 export function isLessonCompleted(lessonFlags: readonly bigint[], lessonIndex: number): boolean {
 	const wordIndex = Math.floor(lessonIndex / 64);
@@ -327,8 +309,6 @@ export function countCompletedLessons(lessonFlags: readonly bigint[]): number {
 	}
 	return count;
 }
-
-// ─── Account String Constants ───────────────────────────────────────────────
 
 export const MAX_COURSE_ID_LEN = 32;
 export const MAX_LABEL_LEN = 32;

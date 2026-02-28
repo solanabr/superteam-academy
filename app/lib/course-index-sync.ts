@@ -165,7 +165,7 @@ export async function reconcileCourseIndex(options?: {
 		const targetStatus = onchain ? "succeeded" : "draft";
 		const targetCoursePda = onchain?.coursePda ?? null;
 		const targetArweaveTxId = onchain?.arweaveTxId ?? null;
-		const targetLastSyncError = null;
+		const targetLastSyncError: string | null = null;
 
 		const currentStatus = toNullableString(course.onchainStatus) ?? "draft";
 		const currentCoursePda = toNullableString(course.coursePda);

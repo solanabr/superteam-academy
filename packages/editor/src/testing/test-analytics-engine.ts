@@ -112,7 +112,6 @@ export class TestAnalyticsEngine {
 				? this.submissionHistory.filter((s) => s.passed).length / allSubmissions
 				: 0;
 
-		// Popular challenges
 		const challengeCounts = new Map<string, number>();
 		this.submissionHistory.forEach((s) => {
 			challengeCounts.set(s.challengeId, (challengeCounts.get(s.challengeId) || 0) + 1);
@@ -123,7 +122,6 @@ export class TestAnalyticsEngine {
 			.slice(0, 10)
 			.map(([challengeId, submissions]) => ({ challengeId, submissions }));
 
-		// Difficulty distribution
 		const difficultyDist: { [key: string]: number } = {};
 		this.challengeMetrics.forEach((metrics) => {
 			const difficulty = this.mapDifficultyToLabel(metrics.difficultyRating);
@@ -282,7 +280,6 @@ export class TestAnalyticsEngine {
 		const todayPoint = existing.find((p) => p.timestamp.startsWith(today));
 		if (todayPoint) {
 			todayPoint.submissions++;
-			// Recalculate averages (simplified)
 			todayPoint.passRate =
 				(todayPoint.passRate * (todayPoint.submissions - 1) + (newRecord.passed ? 1 : 0)) /
 				todayPoint.submissions;
@@ -299,7 +296,6 @@ export class TestAnalyticsEngine {
 			});
 		}
 
-		// Keep only last 30 days
 		return existing
 			.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
 			.slice(-30);
@@ -316,11 +312,9 @@ export class TestAnalyticsEngine {
 			submissions.reduce((sum, s) => sum + s.executionResult.executionTime, 0) /
 			submissions.length;
 
-		// Difficulty factors
 		const passRateDifficulty = 1 - passRate; // Lower pass rate = higher difficulty
 		const timeDifficulty = Math.min(avgTime / (challengeSpec.timeLimit * 1000), 1); // Longer execution = higher difficulty
 
-		// Weighted average
 		return passRateDifficulty * 0.7 + timeDifficulty * 0.3;
 	}
 
@@ -329,8 +323,6 @@ export class TestAnalyticsEngine {
 		const tracks = new Map<string, { completed: number; total: number; recent: Date }>();
 
 		userSubmissions.forEach((submission) => {
-			// This would need actual track information from challenge specs
-			// For now, we'll simulate with challenge IDs
 			const track = submission.challengeId.split("-")[0]; // Assume track-challenge format
 
 			if (!tracks.has(track)) {
@@ -361,11 +353,9 @@ export class TestAnalyticsEngine {
 	}
 
 	private identifyStrengths(userId: string): string[] {
-		// Analyze user's performance patterns to identify strengths
 		const userSubmissions = this.submissionHistory.filter((s) => s.userId === userId);
 		const strengths: string[] = [];
 
-		// High success rate in certain challenge types
 		const challengeTypes = new Map<string, { passed: number; total: number }>();
 		userSubmissions.forEach((submission) => {
 			const type = submission.challengeId.split("-")[1] || "general";
@@ -392,7 +382,6 @@ export class TestAnalyticsEngine {
 	}
 
 	private identifyWeaknesses(userId: string): string[] {
-		// Similar to strengths but for areas needing improvement
 		const userSubmissions = this.submissionHistory.filter((s) => s.userId === userId);
 		const weaknesses: string[] = [];
 
@@ -427,17 +416,14 @@ export class TestAnalyticsEngine {
 
 		const recommendations: string[] = [];
 
-		// Recommend challenges based on weaknesses
 		userAnalytics.weaknesses.forEach((weakness) => {
 			if (weakness.includes("algorithms")) {
 				recommendations.push("algorithm-basics-1");
 			} else if (weakness.includes("data structures")) {
 				recommendations.push("data-structures-1");
 			}
-			// Add more specific recommendations based on weakness patterns
 		});
 
-		// Recommend next level challenges if user is doing well
 		if (userAnalytics.averageScore > 80) {
 			recommendations.push("advanced-algorithms-1");
 		}
@@ -458,7 +444,6 @@ export class TestAnalyticsEngine {
 			)
 			.filter(Boolean) as string[];
 
-		// Simple frequency analysis
 		const errorCounts = new Map<string, number>();
 		errors.forEach((error) => {
 			const count = errorCounts.get(error) || 0;

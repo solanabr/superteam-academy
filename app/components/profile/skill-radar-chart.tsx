@@ -112,7 +112,6 @@ export function deriveSkillsFromCourses(
 		progress?: { completedLessons: number; totalLessons: number };
 	}>
 ): SkillData[] {
-	// Map course IDs to skill categories heuristically
 	const categoryMap: Record<string, string> = {
 		solana: "Core Solana",
 		anchor: "Anchor",

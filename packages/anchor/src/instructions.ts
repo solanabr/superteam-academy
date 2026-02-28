@@ -8,13 +8,11 @@ import {
 	findMinterRolePDA,
 } from "./pda";
 
-// Well-known program IDs
 const TOKEN_2022_PROGRAM_ID_STR = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb";
 const MPL_CORE_PROGRAM_ID_STR = "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d";
 const TOKEN_2022_PROGRAM_ID = new PublicKey(TOKEN_2022_PROGRAM_ID_STR);
 const MPL_CORE_PROGRAM_ID = new PublicKey(MPL_CORE_PROGRAM_ID_STR);
 
-// Anchor discriminators: sha256("global:<name>")[0..8]
 const DISCRIMINATOR_ENROLL = Buffer.from([0x3a, 0x0c, 0x24, 0x03, 0x8e, 0x1c, 0x01, 0x2b]);
 const DISCRIMINATOR_CLOSE_ENROLLMENT = Buffer.from([
 	0xec, 0x89, 0x85, 0xfd, 0x5b, 0x8a, 0xd9, 0x5b,
@@ -99,8 +97,6 @@ export function buildCloseEnrollmentInstruction({
 	});
 }
 
-// ─── complete_lesson ─────────────────────────────────────────────────────────
-
 export interface CompleteLessonParams {
 	courseId: string;
 	lessonIndex: number;
@@ -139,8 +135,6 @@ export function buildCompleteLessonInstruction({
 
 	return new TransactionInstruction({ keys, programId, data });
 }
-
-// ─── finalize_course ─────────────────────────────────────────────────────────
 
 export interface FinalizeCourseParams {
 	courseId: string;
@@ -182,8 +176,6 @@ export function buildFinalizeCourseInstruction({
 
 	return new TransactionInstruction({ keys, programId, data: DISCRIMINATOR_FINALIZE_COURSE });
 }
-
-// ─── issue_credential ────────────────────────────────────────────────────────
 
 export interface IssueCredentialParams {
 	courseId: string;
@@ -240,8 +232,6 @@ export function buildIssueCredentialInstruction({
 	return new TransactionInstruction({ keys, programId, data });
 }
 
-// ─── upgrade_credential ──────────────────────────────────────────────────────
-
 export interface UpgradeCredentialParams {
 	courseId: string;
 	learner: PublicKey;
@@ -297,9 +287,6 @@ export function buildUpgradeCredentialInstruction({
 	return new TransactionInstruction({ keys, programId, data });
 }
 
-// ─── Borsh encoding helpers ──────────────────────────────────────────────────
-
-// Anchor discriminator for award_achievement: sha256("global:award_achievement")[0..8]
 const DISCRIMINATOR_AWARD_ACHIEVEMENT = Buffer.from([
 	0x9a, 0x7e, 0x3b, 0x82, 0x46, 0x72, 0xd2, 0x4f,
 ]);
@@ -355,8 +342,6 @@ export function buildAwardAchievementInstruction({
 		data: DISCRIMINATOR_AWARD_ACHIEVEMENT,
 	});
 }
-
-// ─── create_course (admin) ────────────────────────────────────────────────────
 
 const DISCRIMINATOR_CREATE_COURSE = Buffer.from([0x78, 0x79, 0x9a, 0xa4, 0x6b, 0xb4, 0xa7, 0xf1]);
 const DISCRIMINATOR_UPDATE_COURSE = Buffer.from([0x51, 0xd9, 0x12, 0xc0, 0x81, 0xe9, 0x81, 0xe7]);
@@ -426,8 +411,6 @@ export function buildCreateCourseInstruction({
 	});
 }
 
-// ─── update_course (admin) ────────────────────────────────────────────────────
-
 export interface UpdateCourseInstructionParams {
 	courseId: string;
 	newContentTxId?: Uint8Array | number[] | null;
@@ -471,8 +454,6 @@ export function buildUpdateCourseInstruction({
 		data,
 	});
 }
-
-// ─── Borsh encoding helpers ──────────────────────────────────────────────────
 
 function encodeU8(value: number): Buffer {
 	const buf = Buffer.alloc(1);

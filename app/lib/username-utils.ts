@@ -33,12 +33,10 @@ export async function generateUsername(
 ): Promise<string> {
 	const sanitized = sanitizeUsername(baseName);
 
-	// If the sanitized name is valid and not taken, use it
 	if ((await isValidUsername(sanitized)) && !existingUsernames.includes(sanitized)) {
 		return sanitized;
 	}
 
-	// Try adding random numbers until we find an available username
 	let attempts = 0;
 	let candidate = sanitized;
 
@@ -48,7 +46,6 @@ export async function generateUsername(
 		attempts++;
 	}
 
-	// If we still haven't found one, use a completely random username
 	if (existingUsernames.includes(candidate)) {
 		candidate = `user${Date.now().toString().slice(-6)}`;
 	}

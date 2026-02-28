@@ -1,4 +1,5 @@
 import * as monaco from "monaco-editor";
+import { detectLanguage } from "./languages";
 
 export interface MonacoEditorConfig {
 	language: string;
@@ -42,10 +43,8 @@ export class MonacoEditorAdapter {
 	async initialize(): Promise<void> {
 		if (this.monaco) return;
 
-		// Load Monaco Editor
 		this.monaco = monaco;
 
-		// Configure TypeScript compiler options
 		this.monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
 			target: this.monaco.languages.typescript.ScriptTarget.ES2020,
 			allowNonTsExtensions: true,
@@ -59,7 +58,6 @@ export class MonacoEditorAdapter {
 			typeRoots: ["node_modules/@types"],
 		});
 
-		// Configure JavaScript compiler options
 		this.monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
 			target: this.monaco.languages.typescript.ScriptTarget.ES2020,
 			allowNonTsExtensions: true,
@@ -73,14 +71,12 @@ export class MonacoEditorAdapter {
 			typeRoots: ["node_modules/@types"],
 		});
 
-		// Add custom themes
 		this.defineThemes();
 	}
 
 	private defineThemes(): void {
 		if (!this.monaco) return;
 
-		// Dark theme for coding challenges
 		this.monaco.editor.defineTheme("superteam-dark", {
 			base: "vs-dark",
 			inherit: true,
@@ -186,20 +182,11 @@ export class MonacoEditorAdapter {
 		return instance;
 	}
 
-	// Utility methods for common operations
 	static getLanguageFromFilename(filename: string): string {
+		const detected = detectLanguage(filename);
+		if (detected) return detected.id;
 		const ext = filename.split(".").pop()?.toLowerCase();
 		switch (ext) {
-			case "ts":
-			case "tsx":
-				return "typescript";
-			case "js":
-			case "jsx":
-				return "javascript";
-			case "rs":
-				return "rust";
-			case "py":
-				return "python";
 			case "java":
 				return "java";
 			case "cpp":
@@ -218,8 +205,6 @@ export class MonacoEditorAdapter {
 				return "shell";
 			case "sql":
 				return "sql";
-			case "json":
-				return "json";
 			case "xml":
 			case "html":
 				return "html";
@@ -228,8 +213,6 @@ export class MonacoEditorAdapter {
 			case "scss":
 			case "sass":
 				return "scss";
-			case "md":
-				return "markdown";
 			case "yaml":
 			case "yml":
 				return "yaml";

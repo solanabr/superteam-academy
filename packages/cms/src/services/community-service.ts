@@ -1,29 +1,29 @@
 import type {
-	Discussion,
-	Event,
-	Project,
-	CommunityMember,
-	DiscussionCategory,
-	EventStatus,
-	EventType,
-	ProjectCategory,
+    Discussion,
+    Event,
+    Project,
+    CommunityMember,
+    DiscussionCategory,
+    EventStatus,
+    EventType,
+    ProjectCategory,
 } from "../schemas";
 import type { CMSContext } from "./cms-service";
 import {
-	allDiscussionsQuery,
-	discussionBySlugQuery,
-	discussionsByCategoryQuery,
-	discussionsByTagQuery,
-	upcomingEventsQuery,
-	pastEventsQuery,
-	eventBySlugQuery,
-	allProjectsQuery,
-	featuredProjectsQuery,
-	projectBySlugQuery,
-	projectsByCategoryQuery,
-	allMembersQuery,
-	topMembersQuery,
-	membersByBadgeQuery,
+    allDiscussionsQuery,
+    discussionBySlugQuery,
+    discussionsByCategoryQuery,
+    discussionsByTagQuery,
+    upcomingEventsQuery,
+    pastEventsQuery,
+    eventBySlugQuery,
+    allProjectsQuery,
+    featuredProjectsQuery,
+    projectBySlugQuery,
+    projectsByCategoryQuery,
+    allMembersQuery,
+    topMembersQuery,
+    membersByBadgeQuery,
 } from "../queries";
 
 export interface DiscussionWithMeta extends Omit<Discussion, "author"> {
@@ -93,6 +93,12 @@ export interface CreateProjectInput {
 
 export function createCommunityService(context: CMSContext) {
 	const { fetch, resolveImageUrl, readClient, writeClient } = context;
+
+	const toSlug = (title: string) =>
+		title
+			.toLowerCase()
+			.replace(/[^a-z0-9]+/g, "-")
+			.replace(/^-|-$/g, "");
 
 	const getAllDiscussions = async (): Promise<DiscussionWithMeta[]> => {
 		if (!readClient) return [];
@@ -213,10 +219,7 @@ export function createCommunityService(context: CMSContext) {
 			return { success: false, error: "Sanity write client not configured" };
 		}
 
-		const slug = input.title
-			.toLowerCase()
-			.replace(/[^a-z0-9]+/g, "-")
-			.replace(/^-|-$/g, "");
+		const slug = toSlug(input.title);
 
 		const doc = await writeClient.create({
 			_type: "discussion" as const,
@@ -251,10 +254,7 @@ export function createCommunityService(context: CMSContext) {
 			return { success: false, error: "Sanity write client not configured" };
 		}
 
-		const slug = input.title
-			.toLowerCase()
-			.replace(/[^a-z0-9]+/g, "-")
-			.replace(/^-|-$/g, "");
+		const slug = toSlug(input.title);
 
 		const doc = await writeClient.create({
 			_type: "event" as const,
@@ -285,10 +285,7 @@ export function createCommunityService(context: CMSContext) {
 			return { success: false, error: "Sanity write client not configured" };
 		}
 
-		const slug = input.title
-			.toLowerCase()
-			.replace(/[^a-z0-9]+/g, "-")
-			.replace(/^-|-$/g, "");
+		const slug = toSlug(input.title);
 
 		const doc = await writeClient.create({
 			_type: "project" as const,

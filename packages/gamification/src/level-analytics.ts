@@ -6,7 +6,6 @@ import {
 	RewardType,
 } from "./level-system";
 
-// Level Analytics Engine
 export class LevelAnalyticsEngine {
 	private engine: LevelProgressionEngine;
 	private userLevelHistory: Map<string, UserLevel[]> = new Map();
@@ -18,14 +17,12 @@ export class LevelAnalyticsEngine {
 		this.engine = engine;
 	}
 
-	// Track user level changes
 	trackLevelChange(userId: string, oldLevel: UserLevel, _newLevel: UserLevel): void {
 		const history = this.userLevelHistory.get(userId) || [];
 		history.push({ ...oldLevel, lastUpdated: new Date() });
 		this.userLevelHistory.set(userId, history);
 	}
 
-	// Track challenge completion
 	trackChallengeCompletion(
 		_userId: string,
 		challengeId: string,
@@ -37,14 +34,12 @@ export class LevelAnalyticsEngine {
 		this.challengeCompletions.set(challengeId, completions);
 	}
 
-	// Track reward claims
 	trackRewardClaim(claim: LevelRewardClaim): void {
 		const claims = this.rewardClaims.get(claim.userId) || [];
 		claims.push(claim);
 		this.rewardClaims.set(claim.userId, claims);
 	}
 
-	// Get comprehensive analytics
 	getAnalytics(): LevelAnalytics {
 		const globalStats = this.engine.getLevelStats();
 		const userStats = this.calculateUserStats();
@@ -59,7 +54,6 @@ export class LevelAnalyticsEngine {
 		};
 	}
 
-	// Get user-specific analytics
 	getUserAnalytics(userId: string): LevelAnalytics["userStats"][number] | null {
 		const userLevel = this.engine.getUserProgress(userId);
 		if (!userLevel) return null;
@@ -67,7 +61,6 @@ export class LevelAnalyticsEngine {
 		const history = this.userLevelHistory.get(userId) || [];
 		const timeToLevel: number[] = [];
 
-		// Calculate time to reach each level
 		for (let level = 2; level <= userLevel.currentLevel; level++) {
 			const levelReached = history.find((h) => h.currentLevel === level);
 			if (levelReached) {
@@ -83,7 +76,6 @@ export class LevelAnalyticsEngine {
 			}
 		}
 
-		// Calculate level efficiency (XP per day)
 		const totalDays =
 			history.length > 0
 				? Math.ceil(
@@ -104,7 +96,6 @@ export class LevelAnalyticsEngine {
 		};
 	}
 
-	// Get level progression insights
 	getLevelInsights(): {
 		fastestLevelUps: Array<{ userId: string; level: number; days: number }>;
 		slowestLevelUps: Array<{ userId: string; level: number; days: number }>;
@@ -119,7 +110,6 @@ export class LevelAnalyticsEngine {
 		const slowestLevelUps: Array<{ userId: string; level: number; days: number }> = [];
 		const levelTimes: Map<number, number[]> = new Map();
 
-		// Collect level up times
 		this.userLevelHistory.forEach((history, userId) => {
 			for (let i = 1; i < history.length; i++) {
 				const current = history[i];
@@ -131,23 +121,19 @@ export class LevelAnalyticsEngine {
 							(1000 * 60 * 60 * 24)
 					);
 
-					// Track for level bottlenecks
 					const times = levelTimes.get(current.currentLevel) || [];
 					times.push(days);
 					levelTimes.set(current.currentLevel, times);
 
-					// Track fastest/slowest
 					fastestLevelUps.push({ userId, level: current.currentLevel, days });
 					slowestLevelUps.push({ userId, level: current.currentLevel, days });
 				}
 			}
 		});
 
-		// Sort and limit
 		fastestLevelUps.sort((a, b) => a.days - b.days);
 		slowestLevelUps.sort((a, b) => b.days - a.days);
 
-		// Calculate level bottlenecks
 		const levelBottlenecks: Array<{
 			level: number;
 			averageDays: number;
@@ -163,7 +149,6 @@ export class LevelAnalyticsEngine {
 
 		levelBottlenecks.sort((a, b) => b.averageDays - a.averageDays);
 
-		// Calculate user engagement
 		const userEngagements = Array.from(this.userLevelHistory.entries()).map(
 			([userId, history]) => {
 				if (history.length < 2) return { userId, engagement: "unknown" as const };
@@ -202,7 +187,6 @@ export class LevelAnalyticsEngine {
 		};
 	}
 
-	// Get challenge completion analytics
 	private calculateChallengeStats(): LevelAnalytics["challengeStats"] {
 		const allChallenges = Array.from(this.challengeCompletions.values()).flat();
 		const totalChallenges = allChallenges.length;
@@ -218,7 +202,6 @@ export class LevelAnalyticsEngine {
 				? validTimes.reduce((sum, time) => sum + time, 0) / validTimes.length
 				: 0;
 
-		// Find most popular challenge
 		const challengeCounts: Record<string, number> = {};
 		this.challengeCompletions.forEach((completions, challengeId) => {
 			challengeCounts[challengeId] = completions.length;
@@ -237,16 +220,13 @@ export class LevelAnalyticsEngine {
 		};
 	}
 
-	// Get reward claim analytics
 	private calculateRewardStats(): LevelAnalytics["rewardStats"] {
 		const allClaims = Array.from(this.rewardClaims.values()).flat();
 		const totalRewards = allClaims.length;
 
-		// Calculate claim rate (assuming all available rewards)
 		const totalUsers = this.engine.getLevelStats().totalUsers;
 		const claimRate = totalUsers > 0 ? (totalRewards / (totalUsers * 2)) * 100 : 0; // Rough estimate
 
-		// Find most popular reward type
 		const rewardTypeCounts: Record<string, number> = {};
 		allClaims.forEach((claim) => {
 			rewardTypeCounts[claim.rewardType] = (rewardTypeCounts[claim.rewardType] || 0) + 1;
@@ -264,7 +244,6 @@ export class LevelAnalyticsEngine {
 		};
 	}
 
-	// Calculate user stats for all users
 	private calculateUserStats(): LevelAnalytics["userStats"] {
 		const userStats: LevelAnalytics["userStats"] = [];
 
@@ -278,7 +257,6 @@ export class LevelAnalyticsEngine {
 		return userStats;
 	}
 
-	// Export analytics data for external analysis
 	exportAnalyticsData(): {
 		userLevelHistory: Record<string, UserLevel[]>;
 		challengeCompletions: Record<string, Array<{ completedAt: Date; timeToComplete: number }>>;
@@ -293,7 +271,6 @@ export class LevelAnalyticsEngine {
 		};
 	}
 
-	// Generate level progression report
 	generateProgressionReport(userId: string): {
 		currentLevel: number;
 		nextMilestone: { level: number; xpNeeded: number; daysEstimated: number } | null;
@@ -320,7 +297,6 @@ export class LevelAnalyticsEngine {
 				completed: c.isCompleted,
 			}));
 
-		// Calculate next milestone
 		const nextLevel = this.engine.getLevel(userLevel.currentLevel + 1);
 		let nextMilestone: { level: number; xpNeeded: number; daysEstimated: number } | null = null;
 		if (nextLevel) {
@@ -332,7 +308,6 @@ export class LevelAnalyticsEngine {
 			};
 		}
 
-		// Generate recommendations
 		const recommendations = this.generateRecommendations(userId, userLevel, challenges);
 
 		return {
@@ -344,15 +319,12 @@ export class LevelAnalyticsEngine {
 		};
 	}
 
-	// Estimate days to next level based on user's history
 	private estimateDaysToNextLevel(userId: string, userLevel: UserLevel): number {
 		const history = this.userLevelHistory.get(userId);
 		if (!history || history.length < 2) {
-			// Default estimate based on level
 			return Math.max(7, userLevel.currentLevel * 2);
 		}
 
-		// Calculate average XP per day from recent history
 		const recentHistory = history.slice(-3); // Last 3 level changes
 		let totalXP = 0;
 		let totalDays = 0;
@@ -375,7 +347,6 @@ export class LevelAnalyticsEngine {
 		return Math.ceil(xpNeeded / Math.max(avgXPPerDay, 10)); // Minimum 10 XP/day
 	}
 
-	// Generate personalized recommendations
 	private generateRecommendations(
 		userId: string,
 		userLevel: UserLevel,
@@ -383,7 +354,6 @@ export class LevelAnalyticsEngine {
 	): string[] {
 		const recommendations: string[] = [];
 
-		// Check incomplete challenges
 		const incompleteChallenges = challenges.filter((c) => !c.completed);
 		if (incompleteChallenges.length > 0) {
 			const closestToComplete = incompleteChallenges.sort(
@@ -397,7 +367,6 @@ export class LevelAnalyticsEngine {
 			}
 		}
 
-		// Check level progress
 		if (userLevel.levelProgress < 30) {
 			recommendations.push("Focus on consistent daily learning to level up faster.");
 		} else if (userLevel.levelProgress > 80) {
@@ -406,7 +375,6 @@ export class LevelAnalyticsEngine {
 			);
 		}
 
-		// Check engagement based on history
 		const history = this.userLevelHistory.get(userId) || [];
 		if (history.length > 0) {
 			const daysSinceLastLevel = Math.ceil(
@@ -421,7 +389,6 @@ export class LevelAnalyticsEngine {
 			}
 		}
 
-		// Add general tips
 		if (recommendations.length === 0) {
 			recommendations.push(
 				"Keep up the great work! Try completing daily challenges for bonus XP."

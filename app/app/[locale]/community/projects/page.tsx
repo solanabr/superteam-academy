@@ -48,12 +48,10 @@ function getInitials(name: string): string {
 }
 
 function normalizeProject(project: ProjectWithMeta | (typeof PROJECTS)[number]): NormalizedProject {
-	// If already normalized (mock data with initials in author), return as-is
 	if ("author" in project && typeof project.author === "object" && "initials" in project.author) {
 		return project as NormalizedProject;
 	}
 
-	// Normalize Sanity data (has _id, author object without initials)
 	const sanityProject = project as ProjectWithMeta;
 	return {
 		id: sanityProject._id,
@@ -175,17 +173,14 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
 	const { q = "", category = "all" } = await searchParams;
 	const t = await getTranslations("community");
 
-	// Fetch projects from Sanity
 	const rawProjects = isSanityConfigured
 		? category !== "all"
 			? await getProjectsByCategory(category as ProjectCategory)
 			: await getAllProjects()
 		: [];
 
-	// Always normalize to ensure consistent shape
 	const projects = rawProjects.map(normalizeProject);
 
-	// Filter by search query
 	const filtered = projects.filter((p) => {
 		if (q) {
 			const query = q.toLowerCase();

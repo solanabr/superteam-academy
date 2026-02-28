@@ -40,30 +40,23 @@ export class AntiCheatSystem {
 	): CheatDetectionResult {
 		const flags: CheatFlag[] = [];
 
-		// Timing analysis
 		const timingFlags = this.analyzeTiming(userId, challengeSpec, executionResult);
 		flags.push(...timingFlags);
 
-		// Pattern analysis
 		const patternFlags = this.analyzePatterns(userId, challengeSpec, executionResult);
 		flags.push(...patternFlags);
 
-		// Code similarity analysis
 		const similarityFlags = this.analyzeCodeSimilarity(challengeSpec.id, code);
 		flags.push(...similarityFlags);
 
-		// Resource usage analysis
 		const resourceFlags = this.analyzeResourceUsage(executionResult);
 		flags.push(...resourceFlags);
 
-		// Behavioral analysis
 		const behaviorFlags = this.analyzeBehavior(userId, challengeSpec, code, executionResult);
 		flags.push(...behaviorFlags);
 
-		// Calculate overall confidence
 		const confidence = this.calculateConfidence(flags);
 
-		// Store submission for future analysis
 		this.storeSubmission(userId, challengeSpec.id, code, executionResult);
 
 		const recommendations = this.generateRecommendations(flags);
@@ -83,7 +76,6 @@ export class AntiCheatSystem {
 	): CheatFlag[] {
 		const flags: CheatFlag[] = [];
 
-		// Check for suspiciously fast execution
 		const totalTime = executionResult.executionTime;
 		const avgTimePerTest = totalTime / executionResult.testResults.length;
 
@@ -96,12 +88,10 @@ export class AntiCheatSystem {
 			});
 		}
 
-		// Check for perfect timing consistency (might indicate hardcoded results)
 		const times = executionResult.testResults.map((r) => r.executionTime);
 		const timeVariance = this.calculateVariance(times);
 
 		if (timeVariance < 10) {
-			// Very low variance
 			flags.push({
 				type: "timing",
 				severity: "low",
@@ -126,7 +116,6 @@ export class AntiCheatSystem {
 				Date.now() - s.submissionTime.getTime() < AntiCheatSystem.PATTERN_ANALYSIS_WINDOW
 		);
 
-		// Check for perfect score streaks
 		const perfectScores = recentSubmissions.filter((s) =>
 			s.testResults.every((r) => r.passed)
 		).length;
@@ -140,7 +129,6 @@ export class AntiCheatSystem {
 			});
 		}
 
-		// Check for rapid submissions (possible automation)
 		const recentTimestamps = recentSubmissions.map((s) => s.submissionTime.getTime());
 		if (recentTimestamps.length >= 3) {
 			const intervals: number[] = [];
@@ -150,7 +138,6 @@ export class AntiCheatSystem {
 			const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
 
 			if (avgInterval < 5 * 60 * 1000) {
-				// Less than 5 minutes between submissions
 				flags.push({
 					type: "pattern",
 					severity: "medium",
@@ -192,7 +179,6 @@ export class AntiCheatSystem {
 	}): CheatFlag[] {
 		const flags: CheatFlag[] = [];
 
-		// Check for zero memory usage (might indicate mocked execution)
 		const zeroMemoryTests = executionResult.testResults.filter(
 			(r) => r.memoryUsed === 0
 		).length;
@@ -205,7 +191,6 @@ export class AntiCheatSystem {
 			});
 		}
 
-		// Check for identical memory usage across all tests (suspicious)
 		const memoryUsages = executionResult.testResults.map((r) => r.memoryUsed);
 		const uniqueMemories = new Set(memoryUsages);
 		if (uniqueMemories.size === 1 && memoryUsages[0] > 0) {
@@ -228,7 +213,6 @@ export class AntiCheatSystem {
 	): CheatFlag[] {
 		const flags: CheatFlag[] = [];
 
-		// Check for code that directly outputs expected results (hardcoded)
 		const expectedOutputs = challengeSpec.testCases.map((tc) => String(tc.expectedOutput));
 		const codeContainsExpected = expectedOutputs.some(
 			(output) => code.includes(output) && output.length > 3 // Avoid flagging short outputs
@@ -243,7 +227,6 @@ export class AntiCheatSystem {
 			});
 		}
 
-		// Check for unusual code patterns (e.g., eval, Function constructor)
 		const dangerousPatterns = [
 			/eval\s*\(/,
 			/new\s+Function\s*\(/,
@@ -326,7 +309,6 @@ export class AntiCheatSystem {
 
 		this.submissionHistory.get(userId)?.push(pattern);
 
-		// Store code signature for similarity checking
 		const signature = this.generateCodeSignature(code);
 		if (!this.codeSignatures.has(challengeId)) {
 			this.codeSignatures.set(challengeId, []);
@@ -341,7 +323,6 @@ export class AntiCheatSystem {
 	}
 
 	private calculateCodeSimilarity(code1: string, code2: string): number {
-		// Simple token-based similarity (in production, use more sophisticated algorithms)
 		const tokens1 = this.tokenizeCode(code1);
 		const tokens2 = this.tokenizeCode(code2);
 
@@ -352,7 +333,6 @@ export class AntiCheatSystem {
 	}
 
 	private tokenizeCode(code: string): string[] {
-		// Simple tokenization - split on whitespace and punctuation
 		return code
 			.replace(/[^\w\s]/g, " ")
 			.split(/\s+/)
@@ -361,7 +341,6 @@ export class AntiCheatSystem {
 	}
 
 	private generateCodeSignature(code: string): string {
-		// Generate a simple signature for similarity comparison
 		const tokens = this.tokenizeCode(code);
 		return tokens.slice(0, 20).join(" "); // First 20 significant tokens
 	}

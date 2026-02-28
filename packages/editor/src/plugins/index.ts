@@ -57,7 +57,6 @@ export class EditorPluginManager {
 	}
 }
 
-// Built-in plugins
 export class AutoSavePlugin implements EditorPlugin {
 	name = "auto-save";
 	version = "1.0.0";
@@ -91,12 +90,11 @@ export class SyntaxHighlightPlugin implements EditorPlugin {
 	version = "1.0.0";
 
 	activate(_editor: CodeEditor): void {
-		// Syntax highlighting is handled by the editor implementations
-		// This plugin could add custom syntax highlighting rules
+		/* noop */
 	}
 
 	deactivate(): void {
-		// Cleanup if needed
+		/* noop */
 	}
 }
 
@@ -105,12 +103,11 @@ export class IntelliSensePlugin implements EditorPlugin {
 	version = "1.0.0";
 
 	activate(_editor: CodeEditor): void {
-		// IntelliSense is handled by the editor implementations
-		// This plugin could add custom completion providers
+		/* noop */
 	}
 
 	deactivate(): void {
-		// Cleanup if needed
+		/* noop */
 	}
 }
 

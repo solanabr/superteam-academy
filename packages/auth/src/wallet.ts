@@ -1,4 +1,3 @@
-import type { WalletAdapter } from "@solana/wallet-adapter-base";
 import { PublicKey } from "@solana/web3.js";
 import { z } from "zod";
 import nacl from "tweetnacl";
@@ -30,8 +29,4 @@ export function verifyWalletSignature(payload: WalletAuthPayload): boolean {
 	} catch {
 		return false;
 	}
-}
-
-export function getWalletAdapters(): WalletAdapter[] {
-	return [];
 }

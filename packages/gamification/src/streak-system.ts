@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-// Streak Types
 export enum StreakStatus {
 	ACTIVE = "active",
 	BROKEN = "broken",
@@ -18,7 +17,6 @@ export enum StreakEventType {
 	STREAK_RECOVERED = "streak_recovered",
 }
 
-// Streak Configuration
 export interface StreakConfig {
 	activityWindowHours: number; // Hours in which activity counts for streak
 	freezeDurationDays: number; // How long a freeze lasts
@@ -30,7 +28,6 @@ export interface StreakConfig {
 	};
 	rewards: {
 		[key: number]: {
-			// streak length -> reward
 			xpBonus: number;
 			freezeAward?: number;
 			achievement?: string;
@@ -38,7 +35,6 @@ export interface StreakConfig {
 	};
 }
 
-// Default Streak Configuration
 export const DEFAULT_STREAK_CONFIG: StreakConfig = {
 	activityWindowHours: 24, // 24 hours for daily streak
 	freezeDurationDays: 7, // Freezes last 7 days
@@ -61,7 +57,6 @@ export const DEFAULT_STREAK_CONFIG: StreakConfig = {
 	},
 };
 
-// Streak Event Schema
 export const StreakEventSchema = z.object({
 	id: z.string().uuid(),
 	userId: z.string(),
@@ -73,7 +68,6 @@ export const StreakEventSchema = z.object({
 
 export type StreakEvent = z.infer<typeof StreakEventSchema>;
 
-// Streak State
 export interface StreakState {
 	userId: string;
 	currentStreak: number;
@@ -88,7 +82,6 @@ export interface StreakState {
 	lastUpdated: Date;
 }
 
-// Streak Calculation Engine
 export class StreakCalculationEngine {
 	private config: StreakConfig;
 
@@ -96,7 +89,6 @@ export class StreakCalculationEngine {
 		this.config = config;
 	}
 
-	// Calculate new streak state based on event
 	calculateStreak(
 		currentState: StreakState,
 		event: StreakEvent
@@ -115,7 +107,6 @@ export class StreakCalculationEngine {
 		const today = new Date();
 		today.setHours(0, 0, 0, 0);
 
-		// Check if event type counts for streak
 		if (!this.config.requiredActivities.types.includes(event.type)) {
 			return { newState, streakChange, rewards, notifications };
 		}
@@ -132,11 +123,11 @@ export class StreakCalculationEngine {
 			}
 
 			case StreakEventType.STREAK_FREEZE_USED:
-				this.processFreezeUsage(newState, eventDate);
 				break;
 
 			case StreakEventType.STREAK_RECOVERED:
-				this.processStreakRecovery(newState, eventDate);
+				newState.status = StreakStatus.ACTIVE;
+				newState.recoveryDeadline = null;
 				break;
 
 			default:
@@ -147,7 +138,6 @@ export class StreakCalculationEngine {
 		return { newState, streakChange, rewards, notifications };
 	}
 
-	// Check if streak can be maintained today
 	canMaintainStreak(streakState: StreakState): boolean {
 		if (streakState.status === StreakStatus.FROZEN) {
 			return streakState.frozenUntil ? new Date() < streakState.frozenUntil : false;
@@ -162,7 +152,6 @@ export class StreakCalculationEngine {
 		return streakState.status === StreakStatus.ACTIVE;
 	}
 
-	// Get streak recovery options
 	getRecoveryOptions(streakState: StreakState): {
 		canRecover: boolean;
 		timeRemaining: number; // hours
@@ -184,7 +173,6 @@ export class StreakCalculationEngine {
 					)
 				: 0;
 
-		// Calculate freezes needed based on days missed
 		const daysMissed = streakState.lastActivityDate
 			? Math.floor(
 					(now.getTime() - streakState.lastActivityDate.getTime()) / (1000 * 60 * 60 * 24)
@@ -210,7 +198,6 @@ export class StreakCalculationEngine {
 		};
 	}
 
-	// Use a streak freeze
 	useFreeze(streakState: StreakState): {
 		success: boolean;
 		newState: StreakState;
@@ -252,7 +239,6 @@ export class StreakCalculationEngine {
 		};
 	}
 
-	// Award streak freezes
 	awardFreezes(streakState: StreakState, count: number): StreakState {
 		const newState = { ...streakState };
 		newState.freezesAvailable = Math.min(
@@ -263,7 +249,6 @@ export class StreakCalculationEngine {
 		return newState;
 	}
 
-	// Get streak statistics
 	getStreakStats(streakState: StreakState): {
 		currentStreak: number;
 		longestStreak: number;
@@ -281,7 +266,6 @@ export class StreakCalculationEngine {
 		const daysActive = streakState.longestStreak;
 		const efficiency = totalDays > 0 ? (daysActive / totalDays) * 100 : 0;
 
-		// Find next milestone
 		const milestones = Object.keys(this.config.rewards)
 			.map(Number)
 			.sort((a, b) => a - b);
@@ -314,7 +298,6 @@ export class StreakCalculationEngine {
 		const rewards: Array<{ type: string; value: unknown }> = [];
 		const notifications: string[] = [];
 
-		// Normalize dates to day level
 		const eventDay = new Date(eventDate);
 		eventDay.setHours(0, 0, 0, 0);
 
@@ -323,27 +306,22 @@ export class StreakCalculationEngine {
 			lastActivityDay.setHours(0, 0, 0, 0);
 		}
 
-		// Check if this is a new day
 		const isNewDay = !lastActivityDay || eventDay.getTime() !== lastActivityDay.getTime();
 
 		if (!isNewDay) {
-			// Same day activity, no streak change
 			return { streakChange, rewards, notifications };
 		}
 
-		// Calculate days between activities
 		const daysDifference = lastActivityDay
 			? Math.floor((eventDay.getTime() - lastActivityDay.getTime()) / (1000 * 60 * 60 * 24))
 			: 1;
 
 		if (state.status === StreakStatus.ACTIVE) {
 			if (daysDifference === 1) {
-				// Consecutive day - maintain/increase streak
 				state.currentStreak += 1;
 				state.longestStreak = Math.max(state.longestStreak, state.currentStreak);
 				streakChange = 1;
 
-				// Check for rewards
 				const reward = this.config.rewards[state.currentStreak];
 				if (reward) {
 					rewards.push({ type: "xp_bonus", value: reward.xpBonus });
@@ -356,7 +334,6 @@ export class StreakCalculationEngine {
 					notifications.push(`🎉 Streak milestone reached: ${state.currentStreak} days!`);
 				}
 			} else if (daysDifference === 2 && state.freezesAvailable > 0) {
-				// One day gap - use freeze automatically
 				state.freezesAvailable -= 1;
 				state.totalFreezesUsed += 1;
 				state.currentStreak += 1;
@@ -364,7 +341,6 @@ export class StreakCalculationEngine {
 				streakChange = 1;
 				notifications.push("🛡️ Streak freeze used automatically!");
 			} else {
-				// Streak broken
 				state.status = StreakStatus.BROKEN;
 				state.recoveryDeadline = new Date(eventDay);
 				state.recoveryDeadline.setDate(
@@ -377,12 +353,10 @@ export class StreakCalculationEngine {
 			}
 		} else if (state.status === StreakStatus.BROKEN) {
 			if (daysDifference <= this.config.recoveryWindowDays + 1) {
-				// Recovery successful
 				state.status = StreakStatus.ACTIVE;
 				state.recoveryDeadline = null;
 				notifications.push("🔥 Streak recovered! Keep it going!");
 			} else {
-				// Recovery failed - start new streak
 				state.currentStreak = 1;
 				state.longestStreak = Math.max(state.longestStreak, 1);
 				state.status = StreakStatus.ACTIVE;
@@ -392,7 +366,6 @@ export class StreakCalculationEngine {
 				notifications.push("🌟 New streak started!");
 			}
 		} else if (state.status === StreakStatus.FROZEN) {
-			// Check if freeze period is over
 			if (state.frozenUntil && eventDay >= state.frozenUntil) {
 				state.status = StreakStatus.ACTIVE;
 				state.frozenUntil = null;
@@ -402,7 +375,6 @@ export class StreakCalculationEngine {
 				notifications.push("❄️ Freeze period ended, streak continues!");
 			}
 		} else {
-			// Start new streak
 			state.currentStreak = 1;
 			state.longestStreak = Math.max(state.longestStreak, 1);
 			state.status = StreakStatus.ACTIVE;
@@ -415,27 +387,15 @@ export class StreakCalculationEngine {
 		return { streakChange, rewards, notifications };
 	}
 
-	private processFreezeUsage(_state: StreakState, _eventDate: Date): void {
-		// Freeze usage is handled in useFreeze method
-	}
-
-	private processStreakRecovery(state: StreakState, _eventDate: Date): void {
-		state.status = StreakStatus.ACTIVE;
-		state.recoveryDeadline = null;
-	}
-
-	// Update configuration
 	updateConfig(newConfig: Partial<StreakConfig>): void {
 		this.config = { ...this.config, ...newConfig };
 	}
 
-	// Get current configuration
 	getConfig(): StreakConfig {
 		return { ...this.config };
 	}
 }
 
-// Streak Analytics Types
 export interface StreakStats {
 	userId: string;
 	currentStreak: number;

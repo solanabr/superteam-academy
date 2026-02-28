@@ -1,16 +1,16 @@
 import { createCommunityService } from "@superteam-academy/cms";
 import { cmsContext, isSanityConfigured } from "./cms-context";
 import type {
-    DiscussionWithMeta,
-    EventWithMeta,
-    ProjectWithMeta,
-    MemberWithMeta,
-    DiscussionCategory,
-    EventStatus,
-    ProjectCategory,
-    CreateDiscussionInput,
-    CreateEventInput,
-    CreateProjectInput,
+	DiscussionWithMeta,
+	EventWithMeta,
+	ProjectWithMeta,
+	MemberWithMeta,
+	DiscussionCategory,
+	EventStatus,
+	ProjectCategory,
+	CreateDiscussionInput,
+	CreateEventInput,
+	CreateProjectInput,
 } from "@superteam-academy/cms";
 
 const communityService = createCommunityService(cmsContext);

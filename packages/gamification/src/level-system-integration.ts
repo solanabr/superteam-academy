@@ -12,7 +12,6 @@ import {
 } from "./level-notifications";
 import { LevelChallengeTracker, ChallengeRecommendationEngine } from "./level-challenges";
 
-// Main Level System Integration
 export class LevelSystem {
 	private progression: LevelProgressionEngine;
 	private analytics: LevelAnalyticsEngine;
@@ -28,7 +27,6 @@ export class LevelSystem {
 		this.recommendations = new ChallengeRecommendationEngine(this.challenges);
 	}
 
-	// User Management
 	initializeUser(userId: string, totalXP = 0): UserLevel {
 		return this.progression.initializeUser(userId, totalXP);
 	}
@@ -49,7 +47,6 @@ export class LevelSystem {
 	} {
 		const result = this.progression.updateUserXP(userId, newTotalXP);
 
-		// Track level change for analytics
 		if (result.levelChanged) {
 			const userLevel = this.progression.getUserProgress(userId);
 			if (userLevel) {
@@ -62,7 +59,6 @@ export class LevelSystem {
 					userLevel
 				);
 
-				// Create level up notification
 				const levelData = this.progression.getLevel(result.newLevel);
 				if (levelData) {
 					this.notifications.createLevelUpNotification(
@@ -72,7 +68,6 @@ export class LevelSystem {
 						levelData
 					);
 
-					// Create reward available notifications for manual rewards
 					levelData.rewards.forEach((reward) => {
 						if (!reward.isAutomatic) {
 							this.notifications.createRewardAvailableNotification(
@@ -89,7 +84,6 @@ export class LevelSystem {
 		return result;
 	}
 
-	// Challenge Management
 	lessonCompleted(userId: string) {
 		return this.challenges.lessonCompleted(userId);
 	}
@@ -134,7 +128,6 @@ export class LevelSystem {
 		return this.recommendations.getChallengeTips(challengeType as ChallengeType);
 	}
 
-	// Reward Management
 	claimReward(userId: string, level: number, rewardId: string) {
 		const result = this.progression.claimReward(userId, level, rewardId);
 
@@ -149,7 +142,6 @@ export class LevelSystem {
 		return this.progression.getAvailableRewards(userId);
 	}
 
-	// Notification Management
 	getUserNotifications(
 		userId: string,
 		options?: {
@@ -178,7 +170,6 @@ export class LevelSystem {
 		return this.notifications.getNotificationStats(userId);
 	}
 
-	// Analytics
 	getAnalytics() {
 		return this.analytics.getAnalytics();
 	}
@@ -195,7 +186,6 @@ export class LevelSystem {
 		return this.analytics.generateProgressionReport(userId);
 	}
 
-	// Level Data Management
 	getLevel(level: number) {
 		return this.progression.getLevel(level);
 	}
@@ -216,7 +206,6 @@ export class LevelSystem {
 		return this.progression.getLevelByXP(totalXP);
 	}
 
-	// System Maintenance
 	checkExpiringChallenges() {
 		return this.challenges.checkExpiringChallenges();
 	}
@@ -225,12 +214,10 @@ export class LevelSystem {
 		return this.notifications.cleanupExpiredNotifications();
 	}
 
-	// Data Export/Import
 	exportSystemData() {
 		return {
 			progression: {
 				levels: this.progression.getAllLevels(),
-				// Note: User data would need to be exported separately for privacy
 			},
 			analytics: this.analytics.exportAnalyticsData(),
 			notifications: this.notifications.exportNotifications(),
@@ -238,12 +225,10 @@ export class LevelSystem {
 		};
 	}
 
-	// Event Handlers
 	onNotification(type: NotificationType, handler: NotificationHandler) {
 		this.notifications.on(type, handler);
 	}
 
-	// Utility Methods
 	getLevelStats() {
 		return this.progression.getLevelStats();
 	}
@@ -253,7 +238,6 @@ export class LevelSystem {
 	}
 }
 
-// Factory function for creating a configured level system
 export function createLevelSystem(config?: {
 	customLevels?: Level[];
 	enableAnalytics?: boolean;
@@ -262,17 +246,15 @@ export function createLevelSystem(config?: {
 	const levels = config?.customLevels;
 	const system = new LevelSystem(levels);
 
-	// Configure system based on options
 	if (config?.enableAnalytics === false) {
-		// Could disable analytics tracking if needed
+		/* noop */
 	}
 
 	if (config?.enableNotifications === false) {
-		// Could disable notifications if needed
+		/* noop */
 	}
 
 	return system;
 }
 
-// Default export
 export default LevelSystem;

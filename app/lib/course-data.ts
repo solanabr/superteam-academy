@@ -134,7 +134,6 @@ export async function mapCourseToDetail(
 				)
 			: 4.7;
 
-	// Resolve author from expanded GROQ projection
 	const expandedAuthor =
 		course?.author && "name" in course.author ? (course.author as CourseAuthor) : null;
 	const authorBio =
@@ -196,7 +195,6 @@ export async function mapCourseToDetail(
 
 	const instructorName = instructorUser?.name ?? expandedAuthor?.name ?? "Superteam Instructor";
 
-	// Resolve instructor avatar: CMS image > user profile image > Gravatar
 	let instructorAvatar = expandedAuthor?.image
 		? resolveCourseImageUrl(expandedAuthor.image, 256, 256)
 		: null;

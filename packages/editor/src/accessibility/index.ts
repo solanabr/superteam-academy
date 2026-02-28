@@ -43,7 +43,6 @@ export class EditorAccessibilityManager {
 		return { ...this.options };
 	}
 
-	// Screen reader announcements
 	announce(message: string, priority: "polite" | "assertive" = "polite"): void {
 		if (!this.options.screenReaderSupport) return;
 
@@ -59,13 +58,11 @@ export class EditorAccessibilityManager {
 		announcement.textContent = message;
 		document.body.appendChild(announcement);
 
-		// Remove after announcement
 		setTimeout(() => {
 			document.body.removeChild(announcement);
 		}, 1000);
 	}
 
-	// Focus management
 	focusEditor(): void {
 		if (this.editor) {
 			this.editor.focus();
@@ -73,7 +70,6 @@ export class EditorAccessibilityManager {
 		}
 	}
 
-	// Keyboard navigation helpers
 	handleKeydown(event: KeyboardEvent): boolean {
 		if (!this.options.keyboardNavigation) return false;
 
@@ -94,17 +90,14 @@ export class EditorAccessibilityManager {
 	}
 
 	private detectSystemPreferences(): void {
-		// Detect high contrast mode
 		if (window.matchMedia?.("(prefers-contrast: high)").matches) {
 			this.options.highContrastMode = true;
 		}
 
-		// Detect reduced motion preference
 		if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
 			this.options.reducedMotion = true;
 		}
 
-		// Detect screen reader usage (basic detection)
 		if (
 			navigator.userAgent.includes("NVDA") ||
 			navigator.userAgent.includes("JAWS") ||
@@ -117,19 +110,13 @@ export class EditorAccessibilityManager {
 	private applyAccessibilitySettings(): void {
 		if (!this.editor) return;
 
-		// Apply font size and line height
-		// Note: This would need to be implemented in the specific editor implementations
-
-		// Add ARIA labels and descriptions
 		this.addAriaAttributes();
 
-		// Set up keyboard event listeners
 		this.setupKeyboardListeners();
 	}
 
 	private addAriaAttributes(): void {
-		// This would add appropriate ARIA attributes to the editor container
-		// Implementation depends on the specific editor being used
+		/* noop */
 	}
 
 	private setupKeyboardListeners(): void {
@@ -139,11 +126,8 @@ export class EditorAccessibilityManager {
 	}
 }
 
-// WCAG 2.1 AA compliance helpers
 export const WCAGComplianceChecker = {
 	checkColorContrast(_foreground: string, _background: string): boolean {
-		// Simple contrast ratio calculation
-		// In a real implementation, this would use a proper color contrast library
 		return true; // Placeholder
 	},
 
@@ -178,7 +162,6 @@ export const WCAGComplianceChecker = {
 	},
 };
 
-// Keyboard shortcut manager with accessibility
 export class AccessibleKeybindingManager {
 	private keybindings: Map<string, { callback: () => void; description: string }> = new Map();
 
@@ -189,7 +172,6 @@ export class AccessibleKeybindingManager {
 	announceKeybinding(key: string): void {
 		const binding = this.keybindings.get(key);
 		if (binding) {
-			// Announce the keybinding to screen readers
 			const announcement = document.createElement("div");
 			announcement.setAttribute("aria-live", "polite");
 			announcement.textContent = `Shortcut: ${key} - ${binding.description}`;

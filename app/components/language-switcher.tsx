@@ -22,11 +22,9 @@ export function LanguageSwitcher() {
 
 	const switchLocale = (newLocale: string) => {
 		startTransition(() => {
-			// Remove the current locale from the pathname
 			const segments = pathname.split("/");
 			segments.splice(1, 1); // Remove locale segment
 
-			// Add the new locale
 			const newPathname = `/${newLocale}${segments.join("/")}`;
 
 			router.replace(newPathname);

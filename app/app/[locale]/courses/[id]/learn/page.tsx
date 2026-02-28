@@ -77,7 +77,6 @@ export async function LessonPageContent({
 	const progress = await getLessonProgress(courseId, lessonId);
 	const t = await getTranslations("learn");
 
-	// Determine if this lesson has an associated coding challenge
 	const allLessons = course.modules.flatMap((m) => m.lessons);
 	const currentLessonMeta = allLessons.find((l) => l.id === lessonId);
 	const isInteractive = currentLessonMeta?.type === "interactive";

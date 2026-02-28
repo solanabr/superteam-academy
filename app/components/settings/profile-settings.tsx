@@ -25,7 +25,12 @@ interface ProfileData {
 export function ProfileSettings() {
 	const t = useTranslations("settings.profileSection");
 	const { toast } = useToast();
-	const { data, loading, saving: isLoading, handleSave: saveSettings } = useSettingsSave({
+	const {
+		data,
+		loading,
+		saving: isLoading,
+		handleSave: saveSettings,
+	} = useSettingsSave({
 		successTitle: t("toast.updatedTitle"),
 		successDescription: t("toast.updatedDescription"),
 		errorTitle: t("toast.errorTitle"),

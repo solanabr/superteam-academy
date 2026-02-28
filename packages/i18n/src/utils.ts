@@ -1,42 +1,16 @@
 import { getTranslations } from "next-intl/server";
 
-/**
- * Translation utilities for the LMS platform
- * Provides type-safe translation functions and utilities
- */
-
-/**
- * Server-side translation hook
- * Use in Server Components and Server Actions
- */
 export const t = getTranslations;
 
-/**
- * Translation key type for type safety
- * This ensures all translation keys are valid
- */
 export type TranslationKey = string;
 
-/**
- * Get nested translation keys for type safety
- */
 export type NestedKeyOf<ObjectType extends object> = {
 	[Key in keyof ObjectType & (string | number)]: ObjectType[Key] extends object
 		? `${Key}` | `${Key}.${NestedKeyOf<ObjectType[Key]>}`
 		: `${Key}`;
 }[keyof ObjectType & (string | number)];
 
-/**
- * Translation utilities for common operations
- */
 export const TranslationUtils = {
-	/**
-	 * Format a translation with count (pluralization)
-	 * @param t - Translation function
-	 * @param key - Translation key
-	 * @param count - Count for pluralization
-	 * @param options - Additional options
-	 */
 	formatCount(
 		t: Awaited<ReturnType<typeof getTranslations>>,
 		key: string,
@@ -46,13 +20,6 @@ export const TranslationUtils = {
 		return t(key, { count, ...options });
 	},
 
-	/**
-	 * Format a translation with date
-	 * @param t - Translation function
-	 * @param key - Translation key
-	 * @param date - Date to format
-	 * @param options - Additional options
-	 */
 	formatDate(
 		t: Awaited<ReturnType<typeof getTranslations>>,
 		key: string,
@@ -62,13 +29,6 @@ export const TranslationUtils = {
 		return t(key, { date, ...options });
 	},
 
-	/**
-	 * Format a translation with time
-	 * @param t - Translation function
-	 * @param key - Translation key
-	 * @param time - Time to format
-	 * @param options - Additional options
-	 */
 	formatTime(
 		t: Awaited<ReturnType<typeof getTranslations>>,
 		key: string,
@@ -78,13 +38,6 @@ export const TranslationUtils = {
 		return t(key, { time, ...options });
 	},
 
-	/**
-	 * Format a translation with number
-	 * @param t - Translation function
-	 * @param key - Translation key
-	 * @param value - Number to format
-	 * @param options - Additional options
-	 */
 	formatNumber(
 		t: Awaited<ReturnType<typeof getTranslations>>,
 		key: string,
@@ -94,12 +47,6 @@ export const TranslationUtils = {
 		return t(key, { value, ...options });
 	},
 
-	/**
-	 * Get a rich text translation (for formatted content)
-	 * @param t - Translation function
-	 * @param key - Translation key
-	 * @param options - Additional options
-	 */
 	getRichText(
 		t: Awaited<ReturnType<typeof getTranslations>>,
 		key: string,
@@ -108,11 +55,6 @@ export const TranslationUtils = {
 		return t.rich(key, options);
 	},
 
-	/**
-	 * Check if a translation key exists
-	 * @param t - Translation function
-	 * @param key - Translation key to check
-	 */
 	hasKey(t: Awaited<ReturnType<typeof getTranslations>>, key: string): boolean {
 		try {
 			t(key);
@@ -122,13 +64,6 @@ export const TranslationUtils = {
 		}
 	},
 
-	/**
-	 * Get translation with fallback
-	 * @param t - Translation function
-	 * @param key - Primary translation key
-	 * @param fallbackKey - Fallback translation key
-	 * @param options - Additional options
-	 */
 	withFallback(
 		t: Awaited<ReturnType<typeof getTranslations>>,
 		key: string,
@@ -143,9 +78,6 @@ export const TranslationUtils = {
 	},
 };
 
-/**
- * Common translation keys for reuse across components
- */
 export const COMMON_KEYS = {
 	LOADING: "common.loading",
 	ERROR: "common.error",
@@ -178,9 +110,6 @@ export const COMMON_KEYS = {
 	REFRESH: "common.refresh",
 } as const;
 
-/**
- * Navigation translation keys
- */
 export const NAVIGATION_KEYS = {
 	HOME: "navigation.home",
 	COURSES: "navigation.courses",
@@ -195,9 +124,6 @@ export const NAVIGATION_KEYS = {
 	SWITCH_LANGUAGE: "navigation.switchLanguage",
 } as const;
 
-/**
- * Auth translation keys
- */
 export const AUTH_KEYS = {
 	CONNECT_WALLET: "auth.connectWallet",
 	DISCONNECT_WALLET: "auth.disconnectWallet",
@@ -224,9 +150,6 @@ export const AUTH_KEYS = {
 	PASSWORD_RESET: "auth.passwordReset",
 } as const;
 
-/**
- * Course translation keys
- */
 export const COURSE_KEYS = {
 	TITLE: "courses.title",
 	ENROLLED: "courses.enrolled",
@@ -261,9 +184,6 @@ export const COURSE_KEYS = {
 	UNBOOKMARK: "courses.unbookmark",
 } as const;
 
-/**
- * Learning translation keys
- */
 export const LEARNING_KEYS = {
 	START_LESSON: "learning.startLesson",
 	COMPLETE_LESSON: "learning.completeLesson",
@@ -303,9 +223,6 @@ export const LEARNING_KEYS = {
 	TEST_FAILED: "learning.testFailed",
 } as const;
 
-/**
- * Profile translation keys
- */
 export const PROFILE_KEYS = {
 	TITLE: "profile.title",
 	PERSONAL_INFO: "profile.personalInfo",
@@ -336,9 +253,6 @@ export const PROFILE_KEYS = {
 	PROGRESS: "profile.progress",
 } as const;
 
-/**
- * Settings translation keys
- */
 export const SETTINGS_KEYS = {
 	TITLE: "settings.title",
 	LANGUAGE: "settings.language",
@@ -370,9 +284,6 @@ export const SETTINGS_KEYS = {
 	CONNECTED_ACCOUNTS: "settings.connectedAccounts",
 } as const;
 
-/**
- * Error translation keys
- */
 export const ERROR_KEYS = {
 	GENERIC: "errors.generic",
 	NETWORK: "errors.network",
@@ -406,9 +317,6 @@ export const ERROR_KEYS = {
 	LEARNING_INVALID_SOLUTION: "errors.learning.invalidSolution",
 } as const;
 
-/**
- * Validation translation keys
- */
 export const VALIDATION_KEYS = {
 	REQUIRED: "validation.required",
 	EMAIL: "validation.email",
@@ -423,9 +331,6 @@ export const VALIDATION_KEYS = {
 	PAST: "validation.past",
 } as const;
 
-/**
- * Accessibility translation keys
- */
 export const ACCESSIBILITY_KEYS = {
 	SKIP_TO_CONTENT: "accessibility.skipToContent",
 	SKIP_TO_NAVIGATION: "accessibility.skipToNavigation",

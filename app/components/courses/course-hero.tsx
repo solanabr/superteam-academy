@@ -50,7 +50,9 @@ export function CourseHero({ course }: CourseHeroProps) {
 			.then((data: { savedCourses?: string[] }) => {
 				setIsSaved(data.savedCourses?.includes(course.id) ?? false);
 			})
-			.catch(() => {});
+			.catch(() => {
+				/* noop */
+			});
 	}, [course.id, isAuthenticated]);
 
 	const handleSaveCourse = async () => {

@@ -7,7 +7,9 @@ export type EditorType = "monaco" | "codemirror";
 export class EditorFactory {
 	private static instance: EditorFactory;
 
-	private constructor() {}
+	private constructor() {
+		/* noop */
+	}
 
 	static getInstance(): EditorFactory {
 		if (!EditorFactory.instance) {
@@ -35,15 +37,11 @@ export class EditorFactory {
 		return this.createEditor("codemirror", options);
 	}
 
-	// Utility method to detect the best editor for the environment
 	getRecommendedEditor(): EditorType {
-		// Monaco is better for complex TypeScript editing
-		// CodeMirror is lighter and better for simple use cases
 		return "monaco"; // Default to Monaco for LMS use case
 	}
 }
 
-// Convenience functions
 export function createEditor(type: EditorType, options: EditorOptions = {}): CodeEditor {
 	return EditorFactory.getInstance().createEditor(type, options);
 }

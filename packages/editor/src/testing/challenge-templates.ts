@@ -74,10 +74,8 @@ export class ChallengeTemplateManager {
 			throw new Error(`Template not found: ${templateId}`);
 		}
 
-		// Validate parameters
 		this.validateParameters(template, parameters);
 
-		// Generate challenge using template generators
 		let generatedSpec: Partial<ChallengeSpec> = { ...template.templateSpec };
 
 		for (const generator of template.generators) {
@@ -86,10 +84,8 @@ export class ChallengeTemplateManager {
 			generatedSpec = this.mergeSpecs(generatedSpec, generated);
 		}
 
-		// Apply parameters to template
 		generatedSpec = this.applyParameters(generatedSpec, parameters);
 
-		// Generate unique ID and finalize spec
 		const challengeId = this.generateChallengeId(templateId, parameters, seed);
 		const finalSpec: ChallengeSpec = {
 			id: challengeId,
@@ -123,18 +119,15 @@ export class ChallengeTemplateManager {
 	}
 
 	private initializeBuiltInTemplates(): void {
-		// Algorithm templates
 		this.addTemplate(this.createArraySumTemplate());
 		this.addTemplate(this.createStringReverseTemplate());
 		this.addTemplate(this.createFibonacciTemplate());
 		this.addTemplate(this.createSortingTemplate());
 
-		// Data structure templates
 		this.addTemplate(this.createStackTemplate());
 		this.addTemplate(this.createQueueTemplate());
 		this.addTemplate(this.createLinkedListTemplate());
 
-		// Logic templates
 		this.addTemplate(this.createFizzBuzzTemplate());
 		this.addTemplate(this.createPrimeCheckerTemplate());
 		this.addTemplate(this.createPalindromeTemplate());
@@ -691,7 +684,6 @@ class LinkedList {
 		};
 	}
 
-	// Test case generators
 	private generateArraySumTestCases(size: string): TestCase[] {
 		const sizes = { small: 5, medium: 10, large: 20 };
 		const arraySize = sizes[size as keyof typeof sizes] || 10;
@@ -715,7 +707,6 @@ class LinkedList {
 			},
 		];
 
-		// Generate random test cases
 		for (let i = 0; i < 5; i++) {
 			const arr = Array.from({ length: arraySize }, () => Math.floor(Math.random() * 100));
 			const sum = arr.reduce((a, b) => a + b, 0);
@@ -886,11 +877,9 @@ class LinkedList {
 			},
 		];
 
-		// Generate random arrays
 		for (let i = 0; i < 3; i++) {
 			const arr = Array.from({ length: arraySize }, () => Math.floor(Math.random() * 100));
 			if (includeDuplicates) {
-				// Add some duplicates
 				arr.push(arr[0], arr[Math.floor(arr.length / 2)]);
 			}
 			const sorted = [...arr].sort((a, b) => a - b);
@@ -908,8 +897,6 @@ class LinkedList {
 	}
 
 	private generateStackTestCases(_maxOps: number): TestCase[] {
-		// This would generate complex test cases for stack operations
-		// Simplified for brevity
 		return [
 			{
 				id: "basic-operations",
@@ -923,7 +910,6 @@ class LinkedList {
 	}
 
 	private generateQueueTestCases(_maxOps: number): TestCase[] {
-		// Similar to stack test cases
 		return [
 			{
 				id: "basic-operations",
@@ -937,7 +923,6 @@ class LinkedList {
 	}
 
 	private generateLinkedListTestCases(_maxSize: number): TestCase[] {
-		// Complex test cases for linked list operations
 		return [
 			{
 				id: "basic-operations",
@@ -1102,7 +1087,6 @@ class LinkedList {
 		return testCases;
 	}
 
-	// Utility methods
 	private addTemplate(template: ChallengeTemplate): void {
 		this.templates.set(template.id, template);
 	}
@@ -1155,10 +1139,8 @@ class LinkedList {
 		spec: Partial<ChallengeSpec>,
 		parameters: Record<string, unknown>
 	): Partial<ChallengeSpec> {
-		// Apply any global parameters to the spec
 		const result = { ...spec };
 
-		// Replace placeholders in strings
 		const replacePlaceholders = (str: string): string => {
 			return str.replace(/\{\{(\w+)\}\}/g, (match, key) => {
 				return parameters[key] !== undefined ? String(parameters[key]) : match;

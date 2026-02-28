@@ -35,7 +35,6 @@ interface CourseDetailPageProps {
 }
 
 export async function generateMetadata({ params }: CourseDetailPageProps): Promise<Metadata> {
-	// This would fetch course data from CMS/API
 	const { id } = await params;
 	const course = await getCourse(id);
 

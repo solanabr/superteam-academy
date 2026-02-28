@@ -49,10 +49,8 @@ export class MonacoCodeEditor implements CodeEditor {
 	async mount(container: HTMLElement): Promise<void> {
 		this.container = container;
 
-		// Dynamically import Monaco Editor
 		const monaco = await this.loadMonaco();
 
-		// Create editor
 		this.editor = monaco.editor.create(container, {
 			value: this.options.value,
 			language: this.options.language,
@@ -84,10 +82,8 @@ export class MonacoCodeEditor implements CodeEditor {
 			},
 		});
 
-		// Set up event listeners
 		this.setupEventListeners();
 
-		// Configure TypeScript compiler options
 		if (this.options.language === "typescript") {
 			this.configureTypeScript();
 		}
@@ -195,7 +191,6 @@ export class MonacoCodeEditor implements CodeEditor {
 
 	addCommand(keybinding: string, callback: () => void): void {
 		if (this.editor) {
-			// Parse keybinding (e.g., "Ctrl+S", "Cmd+Enter")
 			const keyCode = this.parseKeybinding(keybinding);
 
 			this.editor.addCommand(keyCode, callback);
@@ -221,7 +216,6 @@ export class MonacoCodeEditor implements CodeEditor {
 	}
 
 	private async loadMonaco(): Promise<MonacoApi> {
-		// Load Monaco Editor from CDN if not already loaded
 		if (!(window as unknown as Record<string, unknown>).monaco) {
 			await this.loadMonacoFromCDN();
 		}
@@ -233,7 +227,6 @@ export class MonacoCodeEditor implements CodeEditor {
 			const script = document.createElement("script");
 			script.src = "https://unpkg.com/monaco-editor@0.45.0/min/vs/loader.min.js";
 			script.onload = () => {
-				// Configure Monaco loader
 				const win = window as unknown as Record<string, unknown>;
 				(
 					win.require as Record<string, unknown> & {
@@ -245,7 +238,6 @@ export class MonacoCodeEditor implements CodeEditor {
 					},
 				});
 
-				// Load Monaco
 				(win.require as (deps: string[], cb: () => void) => void)(
 					["vs/editor/editor.main"],
 					() => {
@@ -261,7 +253,6 @@ export class MonacoCodeEditor implements CodeEditor {
 	private setupEventListeners(): void {
 		if (!this.editor) return;
 
-		// Content change listener
 		this.editor.onDidChangeModelContent(() => {
 			const value = this.getValue();
 			this.onChangeCallbacks.forEach((callback) => {
@@ -275,7 +266,6 @@ export class MonacoCodeEditor implements CodeEditor {
 			}
 		});
 
-		// Keyboard shortcuts
 		this.addCommand("Ctrl+S", () => {
 			this.onSaveCallbacks.forEach((callback) => {
 				callback();
@@ -307,7 +297,6 @@ export class MonacoCodeEditor implements CodeEditor {
 			addExtraLib(content: string, filePath: string): void;
 		};
 
-		// Configure TypeScript compiler options
 		typescriptDefaults.setCompilerOptions({
 			target: (typescript.ScriptTarget as Record<string, unknown>).ES2020,
 			allowNonTsExtensions: true,
@@ -329,7 +318,6 @@ export class MonacoCodeEditor implements CodeEditor {
 			noImplicitOverride: true,
 		});
 
-		// Add common type definitions
 		const libSource = `
       declare global {
         interface Window {
@@ -348,7 +336,6 @@ export class MonacoCodeEditor implements CodeEditor {
 		const KeyMod = monaco.KeyMod as Record<string, number>;
 		const KeyCode = monaco.KeyCode as Record<string, number>;
 
-		// Simple keybinding parser
 		const parts = keybinding.split("+");
 		let keyCode = 0;
 

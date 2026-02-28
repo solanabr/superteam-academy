@@ -16,7 +16,6 @@ export const metadata: Metadata = {
 export default async function EventsPage() {
 	const t = await getTranslations("community");
 
-	// Fetch events from Sanity
 	const upcomingEvents = isSanityConfigured
 		? (await getUpcomingEvents()).map(normalizeEvent)
 		: [];

@@ -1,31 +1,32 @@
 import { EditorView, basicSetup } from "codemirror";
 import { EditorState, Compartment } from "@codemirror/state";
+import { detectLanguage } from "./languages";
 import {
-	keymap,
-	highlightSpecialChars,
-	drawSelection,
-	dropCursor,
-	rectangularSelection,
-	crosshairCursor,
-	highlightActiveLineGutter,
-	highlightActiveLine,
-	type ViewUpdate,
+    keymap,
+    highlightSpecialChars,
+    drawSelection,
+    dropCursor,
+    rectangularSelection,
+    crosshairCursor,
+    highlightActiveLineGutter,
+    highlightActiveLine,
+    type ViewUpdate,
 } from "@codemirror/view";
 import {
-	defaultHighlightStyle,
-	syntaxHighlighting,
-	indentOnInput,
-	bracketMatching,
-	foldGutter,
-	foldKeymap,
+    defaultHighlightStyle,
+    syntaxHighlighting,
+    indentOnInput,
+    bracketMatching,
+    foldGutter,
+    foldKeymap,
 } from "@codemirror/language";
 import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
 import { searchKeymap, highlightSelectionMatches } from "@codemirror/search";
 import {
-	autocompletion,
-	completionKeymap,
-	closeBrackets,
-	closeBracketsKeymap,
+    autocompletion,
+    completionKeymap,
+    closeBrackets,
+    closeBracketsKeymap,
 } from "@codemirror/autocomplete";
 import { lintKeymap } from "@codemirror/lint";
 import { javascript } from "@codemirror/lang-javascript";
@@ -63,7 +64,6 @@ export interface CodeMirrorInstance {
 export class CodeMirrorAdapter {
 	private static instance: CodeMirrorAdapter;
 
-	// Compartments for dynamic configuration
 	private languageCompartment = new Compartment();
 	private tabSizeCompartment = new Compartment();
 	private themeCompartment = new Compartment();
@@ -84,7 +84,6 @@ export class CodeMirrorAdapter {
 	): CodeMirrorInstance {
 		const languageExtension = this.getLanguageExtension(config.language);
 
-		// Define onChange callback before state so the update listener can reference it
 		let onChangeCallback: ((value: string) => void) | null = null;
 
 		const startState = EditorState.create({
@@ -114,19 +113,15 @@ export class CodeMirrorAdapter {
 					...lintKeymap,
 					indentWithTab,
 				]),
-				// Dynamic compartments
 				this.languageCompartment.of(languageExtension),
 				this.tabSizeCompartment.of(EditorState.tabSize.of(config.tabSize || 2)),
 				this.themeCompartment.of(this.getThemeExtension(config.theme || "dark")),
 				this.readonlyCompartment.of(EditorView.editable.of(!config.readOnly)),
-				// Static extensions based on config
 				...(config.lineNumbers !== false ? [highlightActiveLineGutter()] : []),
 				...(config.foldGutter !== false ? [foldGutter()] : []),
 				...(config.highlightActiveLine !== false ? [highlightActiveLine()] : []),
 				...(config.lineWrapping ? [EditorView.lineWrapping] : []),
-				// Dynamic keybinding compartment for onSave
 				this.keymapCompartment.of([]),
-				// Update listener for onChange
 				EditorView.updateListener.of((update: ViewUpdate) => {
 					if (update.docChanged && onChangeCallback) {
 						onChangeCallback(update.view.state.doc.toString());
@@ -156,7 +151,6 @@ export class CodeMirrorAdapter {
 				onChangeCallback = callback;
 			},
 			onSave: (callback) => {
-				// Add save keybinding (Ctrl+S / Cmd+S)
 				const saveKeymap = keymap.of([
 					{
 						key: "Mod-s",
@@ -198,33 +192,13 @@ export class CodeMirrorAdapter {
 	}
 
 	private getThemeExtension(_theme: "light" | "dark") {
-		// For now, return empty extension. In a real implementation,
-		// you'd define proper themes using @codemirror/theme-*
 		return [];
 	}
 
-	// Utility methods
 	static getLanguageFromFilename(filename: string): string {
-		const ext = filename.split(".").pop()?.toLowerCase();
-		switch (ext) {
-			case "ts":
-				return "typescript";
-			case "tsx":
-				return "tsx";
-			case "js":
-				return "javascript";
-			case "jsx":
-				return "javascript";
-			case "rs":
-				return "rust";
-			case "py":
-				return "python";
-			default:
-				return "javascript";
-		}
+		return detectLanguage(filename)?.id ?? "javascript";
 	}
 
-	// Configuration methods for dynamic updates
 	updateLanguage(instance: CodeMirrorInstance, language: string): void {
 		const extension = this.getLanguageExtension(language);
 		instance.view.dispatch({

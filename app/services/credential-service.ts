@@ -1,11 +1,11 @@
 import { PublicKey } from "@solana/web3.js";
 import {
-    BaseService,
-    type Credential,
-    type CredentialMetadata,
-    type IssueResult,
-    type VerifyResult,
-    type TrackRequirements,
+	BaseService,
+	type Credential,
+	type CredentialMetadata,
+	type IssueResult,
+	type VerifyResult,
+	type TrackRequirements,
 } from "./types";
 import { AcademyClient } from "@superteam-academy/anchor";
 
@@ -133,12 +133,10 @@ export class CredentialService extends BaseService {
 			return { isValid: false, error: "Credential not found on-chain" };
 		}
 
-		// Soulbound credentials must be frozen (PermanentFreezeDelegate)
 		if (!asset.frozen && !asset.ownership.frozen) {
 			return { isValid: false, error: "Credential is not frozen (invalid soulbound state)" };
 		}
 
-		// Must belong to a collection (grouping by "collection")
 		const collection = asset.grouping.find((g) => g.group_key === "collection");
 		if (!collection) {
 			return { isValid: false, error: "Credential has no collection association" };
@@ -156,13 +154,11 @@ export class CredentialService extends BaseService {
 			return { name: "Unknown", description: "", image: "", attributes: [] };
 		}
 
-		// If json_uri is available, fetch full off-chain metadata
 		if (asset.content.json_uri) {
 			const offChain = await this.fetchJsonUri(asset.content.json_uri);
 			if (offChain) return offChain;
 		}
 
-		// Fall back to on-chain DAS metadata
 		return {
 			name: asset.content.metadata.name,
 			description: asset.content.metadata.description,
@@ -208,7 +204,6 @@ export class CredentialService extends BaseService {
 		};
 		const items = json.result?.items ?? [];
 
-		// Filter to Metaplex Core assets only (interface = "MplCoreAsset" or "V1_NFT" with frozen)
 		return items.filter(
 			(a) => a.interface === "MplCoreAsset" || (a.interface === "V1_NFT" && a.frozen)
 		);
@@ -241,7 +236,6 @@ export class CredentialService extends BaseService {
 	}
 
 	private async fetchJsonUri(uri: string): Promise<CredentialMetadata | null> {
-		// Only allow arweave / https URIs
 		if (!uri.startsWith("https://")) return null;
 
 		const response = await fetch(uri, {
@@ -266,7 +260,6 @@ export class CredentialService extends BaseService {
 	private dasAssetToCredential(asset: DasAsset): Credential {
 		const collection = asset.grouping.find((g) => g.group_key === "collection");
 
-		// Read real values from the Attributes plugin if available
 		const attributes = (asset as DasAssetWithAttributes).content?.metadata?.attributes;
 		let coursesCompleted = 1;
 		let totalXp = 0;

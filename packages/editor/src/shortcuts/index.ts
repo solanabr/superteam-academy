@@ -42,12 +42,10 @@ export class KeybindingManager {
 	private matchesContext(when?: string): boolean {
 		if (!when) return true;
 
-		// Simple context matching - can be extended for complex expressions
 		return this.context[when] === true;
 	}
 }
 
-// Predefined keybindings for LMS
 export const DEFAULT_KEYBINDINGS: Keybinding[] = [
 	{
 		key: "Ctrl+S",

@@ -1,11 +1,11 @@
 import type {
-    LessonChallenge,
-    LessonQuiz,
-    ChallengeInstruction,
-    ChallengeTest,
-    ChallengeHint,
-    QuizQuestion,
-    QuizQuestionOption,
+	LessonChallenge,
+	LessonQuiz,
+	ChallengeInstruction,
+	ChallengeTest,
+	ChallengeHint,
+	QuizQuestion,
+	QuizQuestionOption,
 } from "@superteam-academy/cms";
 import { readClient } from "@/lib/cms-context";
 

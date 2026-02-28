@@ -1,14 +1,31 @@
 import { getTranslations } from "next-intl/server";
 import { locales } from "./config";
 
-/**
- * Server-side rendering utilities for translations
- * Provides utilities for generating metadata, handling SSR translations
- */
+function buildMetadata(
+	title: string,
+	description: string | undefined,
+	locale: string,
+	canonical: string,
+	ogType = "website"
+) {
+	return {
+		title,
+		description,
+		openGraph: { title, description, locale, type: ogType },
+		twitter: { card: "summary_large_image" as const, title, description },
+		alternates: {
+			canonical,
+			languages: locales.reduce(
+				(acc, loc) => {
+					acc[loc.code] = canonical.replace(`/${locale}`, `/${loc.code}`);
+					return acc;
+				},
+				{} as Record<string, string>
+			),
+		},
+	};
+}
 
-/**
- * Generate page metadata with translations
- */
 export async function generatePageMetadata(
 	locale: string,
 	namespace: string,
@@ -16,123 +33,43 @@ export async function generatePageMetadata(
 	descriptionKey?: string
 ) {
 	const t = await getTranslations({ locale, namespace });
-
-	const title = t(titleKey);
-	const description = descriptionKey ? t(descriptionKey) : undefined;
-
-	return {
-		title,
-		description,
-		openGraph: {
-			title,
-			description,
-			locale,
-			type: "website",
-		},
-		twitter: {
-			card: "summary_large_image",
-			title,
-			description,
-		},
-		alternates: {
-			canonical: `/${locale}`,
-			languages: locales.reduce(
-				(acc, loc) => {
-					acc[loc.code] = `/${loc.code}`;
-					return acc;
-				},
-				{} as Record<string, string>
-			),
-		},
-	};
+	return buildMetadata(
+		t(titleKey),
+		descriptionKey ? t(descriptionKey) : undefined,
+		locale,
+		`/${locale}`
+	);
 }
 
-/**
- * Generate course metadata
- */
 export async function generateCourseMetadata(
 	locale: string,
 	courseId: string,
 	courseTitle: string
 ) {
 	const t = await getTranslations({ locale, namespace: "courses" });
-
-	const title = `${courseTitle} - ${t("title")}`;
-	const description = t("courseDescription", { course: courseTitle });
-
-	return {
-		title,
-		description,
-		openGraph: {
-			title,
-			description,
-			type: "article",
-			locale,
-		},
-		twitter: {
-			card: "summary_large_image",
-			title,
-			description,
-		},
-		alternates: {
-			canonical: `/${locale}/courses/${courseId}`,
-			languages: locales.reduce(
-				(acc, loc) => {
-					acc[loc.code] = `/${loc.code}/courses/${courseId}`;
-					return acc;
-				},
-				{} as Record<string, string>
-			),
-		},
-	};
+	return buildMetadata(
+		`${courseTitle} - ${t("title")}`,
+		t("courseDescription", { course: courseTitle }),
+		locale,
+		`/${locale}/courses/${courseId}`,
+		"article"
+	);
 }
 
-/**
- * Generate profile metadata
- */
 export async function generateProfileMetadata(locale: string, username: string) {
 	const t = await getTranslations({ locale, namespace: "profile" });
-
-	const title = `${username} - ${t("title")}`;
-	const description = t("profileDescription", { user: username });
-
-	return {
-		title,
-		description,
-		openGraph: {
-			title,
-			description,
-			type: "profile",
-			locale,
-		},
-		twitter: {
-			card: "summary_large_image",
-			title,
-			description,
-		},
-		alternates: {
-			canonical: `/${locale}/profile/${username}`,
-			languages: locales.reduce(
-				(acc, loc) => {
-					acc[loc.code] = `/${loc.code}/profile/${username}`;
-					return acc;
-				},
-				{} as Record<string, string>
-			),
-		},
-	};
+	return buildMetadata(
+		`${username} - ${t("title")}`,
+		t("profileDescription", { user: username }),
+		locale,
+		`/${locale}/profile/${username}`,
+		"profile"
+	);
 }
 
-/**
- * Server-side translation loader
- * Pre-loads translations for SSR
- */
 const translationCache = new Map<string, unknown>();
 
 export const ServerTranslationLoader = {
-	/**
-	 * Load translations for a specific locale and namespace
-	 */
 	async loadTranslations(locale: string, namespace?: string): Promise<unknown> {
 		const cacheKey = `${locale}${namespace ? `:${namespace}` : ""}`;
 
@@ -157,9 +94,6 @@ export const ServerTranslationLoader = {
 		}
 	},
 
-	/**
-	 * Pre-load common translations for better performance
-	 */
 	async preloadCommonTranslations(): Promise<void> {
 		const commonNamespaces = ["common", "navigation", "auth", "errors"];
 
@@ -172,16 +106,10 @@ export const ServerTranslationLoader = {
 		await Promise.all(preloadPromises);
 	},
 
-	/**
-	 * Clear translation cache
-	 */
 	clearCache(): void {
 		translationCache.clear();
 	},
 
-	/**
-	 * Get cache statistics
-	 */
 	getCacheStats(): { size: number; keys: string[] } {
 		return {
 			size: translationCache.size,
@@ -190,10 +118,6 @@ export const ServerTranslationLoader = {
 	},
 };
 
-/**
- * Translation context provider for server components
- * Provides translation utilities to child components
- */
 export async function createTranslationContext(locale: string) {
 	const commonT = await getTranslations({ locale, namespace: "common" });
 	const navT = await getTranslations({ locale, namespace: "navigation" });
@@ -204,13 +128,9 @@ export async function createTranslationContext(locale: string) {
 		common: commonT,
 		navigation: navT,
 		auth: authT,
-		// Add more namespaces as needed
 	};
 }
 
-/**
- * Generate sitemap URLs with locale support
- */
 export function generateSitemapUrls(
 	baseUrl: string,
 	paths: string[]
@@ -236,9 +156,6 @@ export function generateSitemapUrls(
 	return urls;
 }
 
-/**
- * Generate robots.txt content with locale support
- */
 export function generateRobotsTxt(baseUrl: string): string {
 	let content = `User-agent: *
 Allow: /
@@ -253,10 +170,6 @@ Allow: /
 	return content;
 }
 
-/**
- * Translation error boundary helper
- * Provides fallback translations when translation loading fails
- */
 const errorFallbacks = {
 	en: {
 		error: "An error occurred",

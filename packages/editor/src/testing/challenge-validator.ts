@@ -13,7 +13,6 @@ export const ChallengeSpecValidator = {
 		const errors: string[] = [];
 		const warnings: string[] = [];
 
-		// Required fields validation
 		if (!spec.id || typeof spec.id !== "string" || spec.id.trim().length === 0) {
 			errors.push("Challenge ID is required and must be a non-empty string");
 		}
@@ -32,24 +31,20 @@ export const ChallengeSpecValidator = {
 			);
 		}
 
-		// Language validation
 		if (!spec.language || !SUPPORTED_LANGUAGES.includes(spec.language)) {
 			errors.push(`Language must be one of: ${SUPPORTED_LANGUAGES.join(", ")}`);
 		}
 
-		// Difficulty validation
 		if (!spec.difficulty || !SUPPORTED_DIFFICULTIES.includes(spec.difficulty)) {
 			errors.push(`Difficulty must be one of: ${SUPPORTED_DIFFICULTIES.join(", ")}`);
 		}
 
-		// XP reward validation
 		if (typeof spec.xpReward !== "number" || spec.xpReward < 0) {
 			errors.push("XP reward must be a non-negative number");
 		} else if (spec.xpReward > 1000) {
 			warnings.push("XP reward seems unusually high (> 1000)");
 		}
 
-		// Time and memory limits
 		if (typeof spec.timeLimit !== "number" || spec.timeLimit <= 0) {
 			errors.push("Time limit must be a positive number (seconds)");
 		} else if (spec.timeLimit > 300) {
@@ -64,7 +59,6 @@ export const ChallengeSpecValidator = {
 			warnings.push("Memory limit is very high (> 1GB)");
 		}
 
-		// Test cases validation
 		if (!spec.testCases || !Array.isArray(spec.testCases)) {
 			errors.push("Test cases must be an array");
 		} else {
@@ -84,19 +78,16 @@ export const ChallengeSpecValidator = {
 				}
 			});
 
-			// Check for hidden test cases
 			const hiddenTests = spec.testCases.filter((tc) => tc.isHidden);
 			if (hiddenTests.length === 0) {
 				warnings.push("No hidden test cases found - consider adding some for security");
 			}
 		}
 
-		// Solution template validation
 		if (!spec.solutionTemplate || typeof spec.solutionTemplate !== "string") {
 			errors.push("Solution template is required and must be a string");
 		}
 
-		// Hints validation
 		if (spec.hints && Array.isArray(spec.hints)) {
 			if (spec.hints.length > MAX_HINTS) {
 				errors.push(`Cannot have more than ${MAX_HINTS} hints`);
@@ -108,7 +99,6 @@ export const ChallengeSpecValidator = {
 			});
 		}
 
-		// Tags validation
 		if (spec.tags && Array.isArray(spec.tags)) {
 			if (spec.tags.length > MAX_TAGS) {
 				errors.push(`Cannot have more than ${MAX_TAGS} tags`);
@@ -120,7 +110,6 @@ export const ChallengeSpecValidator = {
 			});
 		}
 
-		// Prerequisites validation
 		if (spec.prerequisites && Array.isArray(spec.prerequisites)) {
 			if (spec.prerequisites.length > MAX_PREREQUISITES) {
 				errors.push(`Cannot have more than ${MAX_PREREQUISITES} prerequisites`);
@@ -132,7 +121,6 @@ export const ChallengeSpecValidator = {
 			});
 		}
 
-		// Track validation
 		if (!spec.track || typeof spec.track !== "string") {
 			errors.push("Track is required and must be a string");
 		}
@@ -147,14 +135,12 @@ export const ChallengeSpecValidator = {
 	sanitizeSpec(spec: Partial<ChallengeSpec>): Partial<ChallengeSpec> {
 		const sanitized = { ...spec };
 
-		// Trim strings
 		if (sanitized.title) sanitized.title = sanitized.title.trim();
 		if (sanitized.description) sanitized.description = sanitized.description.trim();
 		if (sanitized.track) sanitized.track = sanitized.track.trim();
 		if (sanitized.solutionTemplate)
 			sanitized.solutionTemplate = sanitized.solutionTemplate.trim();
 
-		// Sanitize arrays
 		if (sanitized.hints) {
 			sanitized.hints = sanitized.hints
 				.filter((hint) => typeof hint === "string" && hint.trim().length > 0)

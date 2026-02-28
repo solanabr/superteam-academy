@@ -112,7 +112,6 @@ export default async function DiscussionsPage({ searchParams }: DiscussionsPageP
 	const { q = "", category = "all", tag } = await searchParams;
 	const t = await getTranslations("community");
 
-	// Fetch discussions from Sanity
 	const sanityDiscussions = isSanityConfigured
 		? category !== "all"
 			? await getDiscussionsByCategory(category as DiscussionCategory)
@@ -121,12 +120,10 @@ export default async function DiscussionsPage({ searchParams }: DiscussionsPageP
 				: await getAllDiscussions()
 		: [];
 
-	// Normalize Sanity data only
 	const discussions: NormalizedDiscussion[] = isSanityConfigured
 		? sanityDiscussions.map(normalizeDiscussion)
 		: [];
 
-	// Filter by search query
 	const filtered = discussions.filter((d) => {
 		if (q) {
 			const query = q.toLowerCase();

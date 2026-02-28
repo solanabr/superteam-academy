@@ -85,7 +85,6 @@ export default function AdminTeamPage() {
 		if (!promoteEmail.trim()) return;
 		setPromoting(true);
 
-		// First find the user by searching through the users API
 		const res = await fetch("/api/admin/users?limit=200&offset=0");
 		if (!res.ok) {
 			setPromoting(false);

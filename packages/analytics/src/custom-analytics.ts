@@ -71,7 +71,6 @@ export const AnalyticsEventSchema = z.object({
 
 export type AnalyticsEvent = z.infer<typeof AnalyticsEventSchema>;
 
-// Analytics Configuration
 export interface AnalyticsConfig {
 	serviceName: string;
 	environment: "development" | "staging" | "production";
@@ -93,7 +92,6 @@ export interface AnalyticsConfig {
 	};
 }
 
-// Analytics Destination Interface
 export interface AnalyticsDestination {
 	name: string;
 	send(events: AnalyticsEvent[]): Promise<void>;
@@ -101,19 +99,16 @@ export interface AnalyticsDestination {
 	close(): Promise<void>;
 }
 
-// Analytics Transformer Interface
 export interface AnalyticsTransformer {
 	name: string;
 	transform(event: AnalyticsEvent): AnalyticsEvent | null;
 }
 
-// Analytics Filter Interface
 export interface AnalyticsFilter {
 	name: string;
 	shouldInclude(event: AnalyticsEvent): boolean;
 }
 
-// Built-in Destinations
 export class HTTPDestination implements AnalyticsDestination {
 	name: string;
 	private endpoint: string;
@@ -124,7 +119,9 @@ export class HTTPDestination implements AnalyticsDestination {
 		name: string,
 		endpoint: string,
 		apiKey?: string,
-		headers: Record<string, string> = {}
+		headers: Record<string, string> = {
+			/* noop */
+		}
 	) {
 		this.name = name;
 		this.endpoint = endpoint;
@@ -154,11 +151,11 @@ export class HTTPDestination implements AnalyticsDestination {
 	}
 
 	async flush(): Promise<void> {
-		// No-op for HTTP
+		/* noop */
 	}
 
 	async close(): Promise<void> {
-		// No-op for HTTP
+		/* noop */
 	}
 }
 
@@ -170,15 +167,15 @@ export class DatabaseDestination implements AnalyticsDestination {
 	}
 
 	async send(_events: AnalyticsEvent[]): Promise<void> {
-		// ignored
+		/* noop */
 	}
 
 	async flush(): Promise<void> {
-		// Flush database connections
+		/* noop */
 	}
 
 	async close(): Promise<void> {
-		// Close database connections
+		/* noop */
 	}
 }
 
@@ -190,19 +187,18 @@ export class FileDestination implements AnalyticsDestination {
 	}
 
 	async send(_events: AnalyticsEvent[]): Promise<void> {
-		// ignored
+		/* noop */
 	}
 
 	async flush(): Promise<void> {
-		// Flush file buffers
+		/* noop */
 	}
 
 	async close(): Promise<void> {
-		// Close file handles
+		/* noop */
 	}
 }
 
-// Built-in Transformers
 export class PrivacyTransformer implements AnalyticsTransformer {
 	name = "privacy";
 	private config: { anonymizeIp: boolean; excludeFields: string[] };
@@ -214,12 +210,10 @@ export class PrivacyTransformer implements AnalyticsTransformer {
 	transform(event: AnalyticsEvent): AnalyticsEvent | null {
 		const transformed = { ...event };
 
-		// Anonymize IP
 		if (this.config.anonymizeIp && transformed.context?.ip) {
 			transformed.context.ip = this.anonymizeIp(transformed.context.ip);
 		}
 
-		// Exclude fields
 		for (const field of this.config.excludeFields) {
 			this.removeField(transformed, field);
 		}
@@ -228,7 +222,6 @@ export class PrivacyTransformer implements AnalyticsTransformer {
 	}
 
 	private anonymizeIp(ip: string): string {
-		// Simple anonymization: replace last octet with 0
 		const parts = ip.split(".");
 		if (parts.length === 4) {
 			parts[3] = "0";
@@ -293,7 +286,6 @@ export class SamplingTransformer implements AnalyticsTransformer {
 	}
 }
 
-// Built-in Filters
 export class EventTypeFilter implements AnalyticsFilter {
 	name: string;
 	private allowedTypes: Set<AnalyticsEventType>;
@@ -348,7 +340,6 @@ export class PropertyFilter implements AnalyticsFilter {
 	}
 }
 
-// Analytics Service
 export class AnalyticsService {
 	private config: AnalyticsConfig;
 	private eventBuffer: AnalyticsEvent[] = [];
@@ -396,14 +387,12 @@ export class AnalyticsService {
 			context: context as AnalyticsEvent["context"],
 		};
 
-		// Apply filters
 		for (const filter of this.config.filters) {
 			if (!filter.shouldInclude(event)) {
 				return;
 			}
 		}
 
-		// Apply transformers
 		let transformedEvent: AnalyticsEvent | null = event;
 		for (const transformer of this.config.transformers) {
 			if (transformedEvent) {
@@ -414,14 +403,12 @@ export class AnalyticsService {
 
 		if (!transformedEvent) return;
 
-		// Apply sampling
 		if (this.config.sampling.enabled && Math.random() > this.config.sampling.rate) {
 			return;
 		}
 
 		this.eventBuffer.push(transformedEvent);
 
-		// Flush if buffer is full
 		if (this.eventBuffer.length >= this.config.batchSize) {
 			await this.flush();
 		}
@@ -438,7 +425,6 @@ export class AnalyticsService {
 		});
 	}
 
-	// Track course enrollment
 	async trackCourseEnrollment(
 		userId: string,
 		courseId: string,
@@ -452,7 +438,6 @@ export class AnalyticsService {
 		});
 	}
 
-	// Track lesson completion
 	async trackLessonCompletion(
 		userId: string,
 		courseId: string,
@@ -470,7 +455,6 @@ export class AnalyticsService {
 		});
 	}
 
-	// Track course completion
 	async trackCourseCompletion(
 		userId: string,
 		courseId: string,
@@ -486,7 +470,6 @@ export class AnalyticsService {
 		});
 	}
 
-	// Track achievement unlocked
 	async trackAchievementUnlocked(
 		userId: string,
 		achievementId: string,
@@ -500,7 +483,6 @@ export class AnalyticsService {
 		});
 	}
 
-	// Track XP earned
 	async trackXPEarned(
 		userId: string,
 		amount: number,
@@ -514,7 +496,6 @@ export class AnalyticsService {
 		});
 	}
 
-	// Track feature usage
 	async trackFeatureUsage(
 		userId: string,
 		featureName: string,
@@ -528,7 +509,6 @@ export class AnalyticsService {
 		});
 	}
 
-	// Track search performed
 	async trackSearchPerformed(
 		userId: string,
 		query: string,
@@ -542,7 +522,6 @@ export class AnalyticsService {
 		});
 	}
 
-	// Track time spent
 	async trackTimeSpent(
 		userId: string,
 		activity: string,
@@ -556,7 +535,6 @@ export class AnalyticsService {
 		});
 	}
 
-	// Get analytics statistics
 	getStats(): {
 		totalEvents: number;
 		bufferedEvents: number;
@@ -573,7 +551,6 @@ export class AnalyticsService {
 		};
 	}
 
-	// Flush events to destinations
 	private async flush(): Promise<void> {
 		if (this.eventBuffer.length === 0) return;
 
@@ -592,7 +569,6 @@ export class AnalyticsService {
 						await new Promise((resolve) => setTimeout(resolve, this.config.retryDelay));
 					} else {
 						console.error(`Failed to send events to ${destination.name}:`, error);
-						// Put events back in buffer
 						this.eventBuffer.unshift(...events);
 					}
 				}
@@ -602,7 +578,6 @@ export class AnalyticsService {
 		await Promise.all(sendPromises);
 	}
 
-	// Start flush timer
 	private startFlushTimer(): void {
 		this.flushTimer = setInterval(() => {
 			this.flush().catch((error) => {
@@ -612,7 +587,6 @@ export class AnalyticsService {
 	}
 }
 
-// Analytics Factory
 export const AnalyticsFactory = {
 	createAnalyticsService(config: AnalyticsConfig): AnalyticsService {
 		return new AnalyticsService(config);
@@ -692,9 +666,7 @@ export const AnalyticsFactory = {
 	},
 };
 
-// Cohort Analysis
 export class CohortAnalysis {
-	// Analyze user cohorts
 	async analyzeCohorts(
 		_cohortDefinition: {
 			dimension: "registration_date" | "first_course_enrollment" | "first_lesson_completion";
@@ -712,17 +684,13 @@ export class CohortAnalysis {
 			end: Date;
 		}
 	): Promise<CohortResult[]> {
-		// In a real implementation, this would query analytics data
-		// For now, return mock data
 		return [];
 	}
 
-	// Calculate retention rates
 	async calculateRetention(cohortSize: number, periods: number): Promise<RetentionResult> {
-		// Mock implementation
 		return {
 			cohortSize,
-			retentionRates: Array.from({ length: periods }, (_, i) => Math.max(0, 1 - i * 0.1)),
+			retentionRates: Array.from({ length: periods }, () => 0),
 		};
 	}
 }
@@ -739,7 +707,6 @@ export interface RetentionResult {
 	retentionRates: number[];
 }
 
-// A/B Testing Framework
 export class ABTesting {
 	private analytics: AnalyticsService;
 	private experiments: Map<string, Experiment> = new Map();
@@ -748,7 +715,6 @@ export class ABTesting {
 		this.analytics = analytics;
 	}
 
-	// Create experiment
 	createExperiment(
 		id: string,
 		name: string,
@@ -765,12 +731,10 @@ export class ABTesting {
 		});
 	}
 
-	// Assign user to variant
 	assignUser(experimentId: string, userId: string): string | null {
 		const experiment = this.experiments.get(experimentId);
 		if (!experiment || experiment.status !== "active") return null;
 
-		// Simple hash-based assignment
 		const hash = this.hashString(userId + experimentId);
 		const totalWeight = experiment.variants.reduce((sum, v) => sum + v.weight, 0);
 		let cumulativeWeight = 0;
@@ -785,12 +749,13 @@ export class ABTesting {
 		return experiment.variants[0].id; // Fallback
 	}
 
-	// Track experiment event
 	async trackExperimentEvent(
 		experimentId: string,
 		userId: string,
 		eventType: AnalyticsEventType,
-		properties: Record<string, unknown> = {}
+		properties: Record<string, unknown> = {
+			/* noop */
+		}
 	): Promise<void> {
 		const variantId = this.assignUser(experimentId, userId);
 		if (!variantId) return;
@@ -802,23 +767,21 @@ export class ABTesting {
 		});
 	}
 
-	// Get experiment results
 	getExperimentResults(experimentId: string): ExperimentResult | null {
 		const experiment = this.experiments.get(experimentId);
 		if (!experiment) return null;
 
-		// Mock results - in real implementation, this would query analytics data
 		return {
 			experimentId,
 			variants: experiment.variants.map((v) => ({
 				id: v.id,
 				name: v.name,
-				participants: Math.floor(Math.random() * 1000),
-				conversions: Math.floor(Math.random() * 100),
-				conversionRate: Math.random(),
+				participants: 0,
+				conversions: 0,
+				conversionRate: 0,
 			})),
-			winner: experiment.variants[Math.floor(Math.random() * experiment.variants.length)].id,
-			confidence: Math.random() * 100,
+			winner: experiment.variants[0].id,
+			confidence: 0,
 		};
 	}
 

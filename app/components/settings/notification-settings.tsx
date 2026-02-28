@@ -6,11 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
 } from "@/components/ui/select";
 import { useTranslations } from "next-intl";
 import { useSettingsSave } from "@/hooks/use-settings";
@@ -82,7 +82,11 @@ const TOGGLE_ITEMS = [
 
 export function NotificationSettings() {
 	const t = useTranslations("settings.notificationsSection");
-	const { data, saving: isLoading, handleSave: saveSettings } = useSettingsSave({
+	const {
+		data,
+		saving: isLoading,
+		handleSave: saveSettings,
+	} = useSettingsSave({
 		successTitle: t("toast.updatedTitle"),
 		successDescription: t("toast.updatedDescription"),
 		errorTitle: t("toast.errorTitle"),

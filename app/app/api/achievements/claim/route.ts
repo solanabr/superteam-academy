@@ -50,13 +50,11 @@ export async function POST(request: Request) {
 			);
 		}
 
-		// Check if already earned
 		const existingReceipt = await client.fetchAchievementReceipt(achievementId, recipient);
 		if (existingReceipt) {
 			return NextResponse.json({ error: "Achievement already earned" }, { status: 409 });
 		}
 
-		// Check max supply
 		if (
 			achievementType.maxSupply > 0 &&
 			achievementType.currentSupply >= achievementType.maxSupply
@@ -70,7 +68,6 @@ export async function POST(request: Request) {
 
 		const tx = new Transaction();
 
-		// Ensure the recipient's Token-2022 ATA exists
 		const ataInfo = await connection.getAccountInfo(recipientTokenAccount);
 		if (!ataInfo) {
 			const createAtaIx = new TransactionInstruction({

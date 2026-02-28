@@ -12,7 +12,7 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-	const auth = await requireRole("superadmin")
+	const auth = await requireRole("superadmin");
 	if (!auth.ok) return auth.response;
 
 	const body = (await request.json()) as { userId: string; role: UserRole };

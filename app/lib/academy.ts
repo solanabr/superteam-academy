@@ -48,7 +48,6 @@ export async function fetchIndexedLearnerActivity(
 ): Promise<IndexedLearnerActivity[]> {
 	const connection = getSolanaConnection();
 	const programId = getProgramId();
-	// Fetch only limit * 2 signatures (was limit * 5 = 100) to reduce RPC calls
 	const signatures = await connection.getSignaturesForAddress(learner, {
 		limit: limit * 2,
 	});
@@ -61,7 +60,6 @@ export async function fetchIndexedLearnerActivity(
 			blockTime: entry.blockTime,
 		}));
 
-	// Process in batches of 10 to avoid overwhelming the RPC
 	const batchSize = 10;
 	const activity: IndexedLearnerActivity[] = [];
 

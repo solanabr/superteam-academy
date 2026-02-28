@@ -3,9 +3,7 @@ import { setSessionCookie } from "better-auth/cookies";
 import type { AuthContext } from "better-auth";
 import { APIError } from "better-call";
 import { z } from "zod";
-import { walletEmail } from "./wallet-utils";
-
-const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+import { walletEmail, BASE58_RE } from "./wallet-utils";
 
 const WALLET_PROVIDER_ID = "wallet";
 

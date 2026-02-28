@@ -1,4 +1,3 @@
-// Re-export xp-calculation module as the "xp-engine" entry point
 export {
 	XPCalculationEngine,
 	DEFAULT_XP_CONFIG,

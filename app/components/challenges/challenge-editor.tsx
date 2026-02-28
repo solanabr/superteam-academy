@@ -46,7 +46,6 @@ export function ChallengeEditor({
 	const [isRunning, setIsRunning] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
-	// Mount the editor from @superteam-academy/editor
 	useEffect(() => {
 		const container = containerRef.current;
 		if (!container) return;
@@ -85,7 +84,6 @@ export function ChallengeEditor({
 		};
 	}, [challenge.language, initialCode, onCodeChange]); // Only re-mount when language changes
 
-	// Sync external code resets (e.g. from the Reset button)
 	const syncCode = useCallback(
 		(newCode: string) => {
 			setCode(newCode);

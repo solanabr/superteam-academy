@@ -11,7 +11,6 @@ interface ProfileUsernamePageProps {
 export default async function ProfileUsernamePage({ params }: ProfileUsernamePageProps) {
 	const { username } = await params;
 
-	// If the username is a valid Solana public key, treat it as a wallet address
 	try {
 		new PublicKey(username);
 		return (
@@ -22,10 +21,9 @@ export default async function ProfileUsernamePage({ params }: ProfileUsernamePag
 			</div>
 		);
 	} catch {
-		// Not a valid public key — try username lookup
+		/* noop */
 	}
 
-	// Try finding user by username
 	const user = await getUserByUsername(username);
 	if (user) {
 		return (
@@ -37,7 +35,6 @@ export default async function ProfileUsernamePage({ params }: ProfileUsernamePag
 		);
 	}
 
-	// Fallback: try finding user by wallet address stored in CMS (for backwards compatibility)
 	const userByWallet = await getUserByWallet(username);
 	if (userByWallet?.walletAddress) {
 		return (

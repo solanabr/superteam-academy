@@ -49,7 +49,6 @@ export class EditorPerformanceManager {
 		return { ...this.options };
 	}
 
-	// Lazy loading for editor modules
 	async loadModule(moduleName: string): Promise<unknown> {
 		if (this.loadedModules.has(moduleName)) {
 			return this.loadedModules.get(moduleName);
@@ -92,7 +91,6 @@ export class EditorPerformanceManager {
 		}
 	}
 
-	// Code splitting for large files
 	async splitLargeFile(content: string): Promise<string[]> {
 		if (!this.options.codeSplitting) {
 			return [content];
@@ -105,7 +103,6 @@ export class EditorPerformanceManager {
 			return [content];
 		}
 
-		// Split by logical boundaries (functions, classes, etc.)
 		const lines = content.split("\n");
 		let currentChunk = "";
 		let braceCount = 0;
@@ -114,7 +111,6 @@ export class EditorPerformanceManager {
 		for (const line of lines) {
 			currentChunk += `${line}\n`;
 
-			// Count braces and parentheses to avoid splitting inside blocks
 			braceCount += (line.match(/\{/g) || []).length - (line.match(/\}/g) || []).length;
 			parenCount += (line.match(/\(/g) || []).length - (line.match(/\)/g) || []).length;
 
@@ -133,13 +129,11 @@ export class EditorPerformanceManager {
 		return chunks;
 	}
 
-	// Memory management
 	trackMemoryUsage(component: string, size: number): void {
 		if (!this.options.memoryManagement) return;
 
 		this.memoryUsage.set(component, size);
 
-		// Check if we need to free memory
 		const totalMemory = Array.from(this.memoryUsage.values()).reduce((sum, s) => sum + s, 0);
 		const maxMemory = 50 * 1024 * 1024; // 50MB limit
 
@@ -149,7 +143,6 @@ export class EditorPerformanceManager {
 	}
 
 	private freeMemory(): void {
-		// Free least recently used modules
 		const entries = Array.from(this.loadedModules.entries());
 		const toRemove = entries.slice(0, Math.ceil(entries.length / 2));
 
@@ -158,13 +151,11 @@ export class EditorPerformanceManager {
 			this.memoryUsage.delete(name);
 		});
 
-		// Force garbage collection if available
 		if (window.gc) {
 			window.gc();
 		}
 	}
 
-	// Debounced updates
 	queueUpdate(updateFn: () => void): void {
 		this.updateQueue.push(updateFn);
 
@@ -179,18 +170,15 @@ export class EditorPerformanceManager {
 		this.isUpdating = true;
 
 		while (this.updateQueue.length > 0) {
-			// biome-ignore lint/style/noNonNullAssertion: length check guarantees element exists
 			const updateFn = this.updateQueue.shift()!;
 			await updateFn();
 
-			// Small delay to prevent blocking the main thread
 			await new Promise((resolve) => setTimeout(resolve, 16)); // ~60fps
 		}
 
 		this.isUpdating = false;
 	}
 
-	// Virtualization for large files
 	createVirtualizedView(content: string): VirtualizedContent {
 		if (!this.options.virtualization) {
 			return {
@@ -215,7 +203,6 @@ export class EditorPerformanceManager {
 		};
 	}
 
-	// Performance monitoring
 	getPerformanceMetrics(): PerformanceMetrics {
 		const memoryInfo = (performance as unknown as Record<string, unknown>).memory as
 			| Record<string, number>
@@ -236,13 +223,11 @@ export class EditorPerformanceManager {
 	}
 
 	private async loadMonacoEditor(): Promise<unknown> {
-		// Dynamic import for Monaco Editor
 		const monaco = await import("monaco-editor");
 		return monaco;
 	}
 
 	private async loadCodeMirror(): Promise<unknown> {
-		// Dynamic import for CodeMirror
 		const { EditorView } = await import("@codemirror/view");
 		const { basicSetup } = await import("codemirror");
 		const { javascript } = await import("@codemirror/lang-javascript");
@@ -250,23 +235,19 @@ export class EditorPerformanceManager {
 	}
 
 	private async loadTypeScript(): Promise<unknown> {
-		// Load TypeScript language support
 		const ts = await import("typescript");
 		return ts;
 	}
 
 	private async loadRust(): Promise<unknown> {
-		// Load Rust language support (would need a Rust language plugin)
 		return {}; // Placeholder
 	}
 
 	private async loadPython(): Promise<unknown> {
-		// Load Python language support (would need a Python language plugin)
 		return {}; // Placeholder
 	}
 
 	private preloadCommonLanguages(): void {
-		// Preload commonly used languages
 		setTimeout(() => {
 			this.loadModule("typescript").catch(() => {
 				/* ignored */
@@ -278,15 +259,11 @@ export class EditorPerformanceManager {
 	}
 
 	private estimateModuleSize(module: unknown): number {
-		// Rough estimation of module size
 		return JSON.stringify(module).length * 2; // Assume UTF-16 encoding
 	}
 
 	private applyPerformanceSettings(): void {
 		if (!this.editor) return;
-
-		// Apply performance settings to the editor
-		// This would need to be implemented in the specific editor implementations
 	}
 }
 
@@ -307,7 +284,6 @@ export interface PerformanceMetrics {
 	updateQueueLength: number;
 }
 
-// Performance monitoring utilities
 export class PerformanceMonitor {
 	private static instance: PerformanceMonitor;
 	private metrics: PerformanceMetrics[] = [];
@@ -323,12 +299,10 @@ export class PerformanceMonitor {
 	recordMetrics(metrics: PerformanceMetrics): void {
 		this.metrics.push(metrics);
 
-		// Keep only last 100 metrics
 		if (this.metrics.length > 100) {
 			this.metrics.shift();
 		}
 
-		// Notify observers
 		this.observers.forEach((observer) => {
 			observer(metrics);
 		});
@@ -357,7 +331,6 @@ export class PerformanceMonitor {
 	}
 }
 
-// Lazy loading utilities
 export const LazyLoader = {
 	cache: new Map<string, Promise<unknown>>(),
 

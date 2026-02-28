@@ -1,7 +1,6 @@
 import { type LevelChallenge, ChallengeType, type LevelProgressionEngine } from "./level-system";
 import type { LevelNotificationsEngine } from "./level-notifications";
 
-// Level Challenge Tracker
 export class LevelChallengeTracker {
 	private engine: LevelProgressionEngine;
 	private notifications: LevelNotificationsEngine;
@@ -12,7 +11,6 @@ export class LevelChallengeTracker {
 		this.notifications = notifications;
 	}
 
-	// Update challenge progress based on user action
 	updateChallengeFromAction(
 		userId: string,
 		actionType: ChallengeType,
@@ -46,7 +44,6 @@ export class LevelChallengeTracker {
 			);
 
 			if (updateResult.challengeCompleted && !wasCompleted) {
-				// Challenge just completed
 				this.notifications.createChallengeCompletedNotification(
 					userId,
 					challenge.challenge,
@@ -61,14 +58,12 @@ export class LevelChallengeTracker {
 				});
 			}
 
-			// Update stored progress
 			this.setChallengeProgress(userId, challenge.challengeId, newProgress);
 		});
 
 		return results;
 	}
 
-	// Specific challenge update methods
 	lessonCompleted(userId: string): Array<{
 		challengeId: string;
 		wasCompleted: boolean;
@@ -93,7 +88,6 @@ export class LevelChallengeTracker {
 		wasCompleted: boolean;
 		xpAwarded: number;
 	}> {
-		// Check for streak-based challenges
 		const userLevel = this.engine.getUserProgress(userId);
 		if (!userLevel) return [];
 
@@ -167,21 +161,16 @@ export class LevelChallengeTracker {
 		wasCompleted: boolean;
 		xpAwarded: number;
 	}> {
-		// Convert minutes to hours for challenges that track time
 		const hoursSpent = minutesSpent / 60;
 		return this.updateChallengeFromAction(userId, ChallengeType.TIME_SPENT, hoursSpent);
 	}
 
-	// Check for expiring challenges and send notifications
 	checkExpiringChallenges(): number {
 		let notificationCount = 0;
 
 		this.engine.getAllLevels().forEach((level) => {
-			// This is a simplified check - in practice, you'd iterate through all users
-			// For now, we'll just return the count of potential notifications
 			level.challenges.forEach((challenge) => {
 				if (challenge.timeLimit) {
-					// This would need to be implemented with actual user challenge tracking
 					notificationCount++;
 				}
 			});
@@ -190,13 +179,11 @@ export class LevelChallengeTracker {
 		return notificationCount;
 	}
 
-	// Get challenge progress for user
 	getChallengeProgress(userId: string, challengeId: string): number {
 		const userProgress = this.challengeProgress.get(userId);
 		return userProgress?.get(challengeId) || 0;
 	}
 
-	// Set challenge progress for user
 	private setChallengeProgress(userId: string, challengeId: string, progress: number): void {
 		let userProgress = this.challengeProgress.get(userId);
 		if (!userProgress) {
@@ -206,7 +193,6 @@ export class LevelChallengeTracker {
 		userProgress.set(challengeId, progress);
 	}
 
-	// Get user's active challenges
 	getActiveChallenges(userId: string): Array<{
 		challengeId: string;
 		challenge: LevelChallenge;
@@ -243,12 +229,10 @@ export class LevelChallengeTracker {
 				};
 			})
 			.sort((a, b) => {
-				// Sort by progress percentage (closest to completion first)
 				return b.progressPercent - a.progressPercent;
 			});
 	}
 
-	// Get user's completed challenges
 	getCompletedChallenges(userId: string): Array<{
 		challengeId: string;
 		challenge: LevelChallenge;
@@ -271,112 +255,35 @@ export class LevelChallengeTracker {
 			.sort((a, b) => b.completedAt.getTime() - a.completedAt.getTime());
 	}
 
-	// Get challenge statistics
 	getChallengeStats(): {
 		totalChallenges: number;
-		completedChallenges: number;
-		completionRate: number;
-		averageCompletionTime: number;
-		mostPopularChallengeType: ChallengeType;
-		challengeTypeStats: Record<
-			ChallengeType,
-			{
-				total: number;
-				completed: number;
-				completionRate: number;
-			}
-		>;
+		challengeTypeStats: Record<ChallengeType, { total: number }>;
 	} {
 		const allLevels = this.engine.getAllLevels();
 		let totalChallenges = 0;
-		let completedChallenges = 0;
-		const completionTimes: number[] = [];
-		const challengeTypeCounts: Record<ChallengeType, { total: number; completed: number }> = {
-			[ChallengeType.LESSONS_COMPLETED]: { total: 0, completed: 0 },
-			[ChallengeType.CHALLENGES_SOLVED]: { total: 0, completed: 0 },
-			[ChallengeType.STREAK_MAINTAINED]: { total: 0, completed: 0 },
-			[ChallengeType.COURSES_FINISHED]: { total: 0, completed: 0 },
-			[ChallengeType.REFERRALS_MADE]: { total: 0, completed: 0 },
-			[ChallengeType.SOCIAL_SHARES]: { total: 0, completed: 0 },
-			[ChallengeType.TIME_SPENT]: { total: 0, completed: 0 },
+		const challengeTypeCounts: Record<ChallengeType, { total: number }> = {
+			[ChallengeType.LESSONS_COMPLETED]: { total: 0 },
+			[ChallengeType.CHALLENGES_SOLVED]: { total: 0 },
+			[ChallengeType.STREAK_MAINTAINED]: { total: 0 },
+			[ChallengeType.COURSES_FINISHED]: { total: 0 },
+			[ChallengeType.REFERRALS_MADE]: { total: 0 },
+			[ChallengeType.SOCIAL_SHARES]: { total: 0 },
+			[ChallengeType.TIME_SPENT]: { total: 0 },
 		};
 
-		// This is a simplified calculation - in practice, you'd need to aggregate across all users
 		allLevels.forEach((level) => {
 			level.challenges.forEach((challenge) => {
 				totalChallenges++;
 				challengeTypeCounts[challenge.type].total++;
-
-				// Estimate completion rate (this would need real user data)
-				const estimatedCompletionRate = this.getEstimatedCompletionRate(challenge.type);
-				if (Math.random() < estimatedCompletionRate) {
-					// Simplified simulation
-					completedChallenges++;
-					challengeTypeCounts[challenge.type].completed++;
-					completionTimes.push(challenge.timeLimit || 7); // Default 7 days
-				}
 			});
-		});
-
-		const completionRate =
-			totalChallenges > 0 ? (completedChallenges / totalChallenges) * 100 : 0;
-		const averageCompletionTime =
-			completionTimes.length > 0
-				? completionTimes.reduce((sum, time) => sum + time, 0) / completionTimes.length
-				: 0;
-
-		const mostPopularChallengeType = Object.entries(challengeTypeCounts).reduce(
-			(max, [type, stats]) =>
-				stats.total > max.stats.total ? { type: type as ChallengeType, stats } : max,
-			{ type: ChallengeType.LESSONS_COMPLETED, stats: { total: 0, completed: 0 } }
-		).type;
-
-		const challengeTypeStats: Record<
-			ChallengeType,
-			{
-				total: number;
-				completed: number;
-				completionRate: number;
-			}
-		> = {} as Record<
-			ChallengeType,
-			{ total: number; completed: number; completionRate: number }
-		>;
-
-		Object.entries(challengeTypeCounts).forEach(([type, stats]) => {
-			challengeTypeStats[type as ChallengeType] = {
-				total: stats.total,
-				completed: stats.completed,
-				completionRate: stats.total > 0 ? (stats.completed / stats.total) * 100 : 0,
-			};
 		});
 
 		return {
 			totalChallenges,
-			completedChallenges,
-			completionRate,
-			averageCompletionTime,
-			mostPopularChallengeType,
-			challengeTypeStats,
+			challengeTypeStats: challengeTypeCounts,
 		};
 	}
 
-	// Get estimated completion rate for challenge types (based on typical user behavior)
-	private getEstimatedCompletionRate(challengeType: ChallengeType): number {
-		const rates: Record<ChallengeType, number> = {
-			[ChallengeType.LESSONS_COMPLETED]: 0.75, // 75% complete lesson challenges
-			[ChallengeType.CHALLENGES_SOLVED]: 0.45, // 45% complete coding challenges
-			[ChallengeType.STREAK_MAINTAINED]: 0.3, // 30% maintain long streaks
-			[ChallengeType.COURSES_FINISHED]: 0.25, // 25% complete full courses
-			[ChallengeType.REFERRALS_MADE]: 0.15, // 15% make referrals
-			[ChallengeType.SOCIAL_SHARES]: 0.2, // 20% share on social media
-			[ChallengeType.TIME_SPENT]: 0.6, // 60% spend significant time
-		};
-
-		return rates[challengeType] || 0.5;
-	}
-
-	// Reset challenge progress (for testing or admin purposes)
 	resetChallengeProgress(userId: string, challengeId: string): boolean {
 		const userProgress = this.challengeProgress.get(userId);
 		if (userProgress) {
@@ -386,7 +293,6 @@ export class LevelChallengeTracker {
 		return false;
 	}
 
-	// Export challenge progress data
 	exportProgressData(): Record<string, Record<string, number>> {
 		const exportData: Record<string, Record<string, number>> = {};
 		this.challengeProgress.forEach((userProgress, userId) => {
@@ -395,7 +301,6 @@ export class LevelChallengeTracker {
 		return exportData;
 	}
 
-	// Import challenge progress data
 	importProgressData(importData: Record<string, Record<string, number>>): void {
 		Object.entries(importData).forEach(([userId, progress]) => {
 			const userProgress = new Map(Object.entries(progress));
@@ -404,7 +309,6 @@ export class LevelChallengeTracker {
 	}
 }
 
-// Challenge Recommendation Engine
 export class ChallengeRecommendationEngine {
 	private tracker: LevelChallengeTracker;
 
@@ -412,7 +316,6 @@ export class ChallengeRecommendationEngine {
 		this.tracker = tracker;
 	}
 
-	// Get recommended challenges for user
 	getRecommendedChallenges(
 		userId: string,
 		limit = 3
@@ -428,7 +331,6 @@ export class ChallengeRecommendationEngine {
 
 		if (activeChallenges.length === 0) return [];
 
-		// Score challenges based on various factors
 		const scoredChallenges = activeChallenges.map((challenge) => {
 			let score = 0;
 			let priority: "high" | "medium" | "low" = "low";
@@ -437,7 +339,6 @@ export class ChallengeRecommendationEngine {
 			const progressPercent = challenge.progressPercent;
 			const timeLeft = challenge.timeLeft;
 
-			// Progress-based scoring
 			if (progressPercent >= 80) {
 				score += 100;
 				priority = "high";
@@ -452,7 +353,6 @@ export class ChallengeRecommendationEngine {
 				reason = "Getting started is the hardest part.";
 			}
 
-			// Time pressure scoring
 			if (timeLeft !== undefined) {
 				if (timeLeft <= 24) {
 					score += 80;
@@ -465,7 +365,6 @@ export class ChallengeRecommendationEngine {
 				}
 			}
 
-			// Challenge type preferences (easier challenges get slight boost)
 			switch (challenge.challenge.type) {
 				case ChallengeType.LESSONS_COMPLETED:
 					score += 10;
@@ -492,7 +391,6 @@ export class ChallengeRecommendationEngine {
 					break;
 			}
 
-			// XP bonus consideration
 			score += Math.min(challenge.challenge.xpBonus / 10, 20); // Cap at 20 points
 
 			return {
@@ -503,14 +401,12 @@ export class ChallengeRecommendationEngine {
 			};
 		});
 
-		// Sort by score and return top recommendations
 		return scoredChallenges
 			.sort((a, b) => b.score - a.score)
 			.slice(0, limit)
 			.map(({ score, ...challenge }) => challenge);
 	}
 
-	// Get challenge completion tips
 	getChallengeTips(challengeType: ChallengeType): string[] {
 		const tips: Record<ChallengeType, string[]> = {
 			[ChallengeType.LESSONS_COMPLETED]: [

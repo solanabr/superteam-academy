@@ -1,9 +1,9 @@
 import { type NextRequest, NextResponse } from "next/server";
 import {
-    getAdminLessonContent,
-    getCourseRefByIdOrSlug,
-    createChallengeDraft,
-    createQuizDraft,
+	getAdminLessonContent,
+	getCourseRefByIdOrSlug,
+	createChallengeDraft,
+	createQuizDraft,
 } from "@/lib/challenge-content";
 import { writeClient } from "@/lib/cms-context";
 import { parseChallengePayload, parseQuizPayload } from "@/lib/admin-content-validation";

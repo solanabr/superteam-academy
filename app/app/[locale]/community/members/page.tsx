@@ -39,12 +39,10 @@ function getInitials(name: string): string {
 function normalizeMember(
 	member: MemberWithMeta | AcademyUser | NormalizedMember
 ): NormalizedMember {
-	// If already normalized (mock data), return as-is
 	if ("initials" in member && "name" in member && typeof member.initials === "string") {
 		return member as NormalizedMember;
 	}
 
-	// Handle AcademyUser (all users of the app)
 	if ("authId" in member) {
 		const user = member as AcademyUser;
 		return {
@@ -72,7 +70,6 @@ function normalizeMember(
 		};
 	}
 
-	// Handle MemberWithMeta (legacy community members)
 	const sanityMember = member as MemberWithMeta;
 	return {
 		id: sanityMember._id,
@@ -113,21 +110,18 @@ const BADGE_LABELS: Record<string, { icon: typeof Crown; color: string }> = {
 export default async function MembersPage() {
 	const t = await getTranslations("community");
 
-	// Fetch members from Sanity
 	let allMembers: NormalizedMember[] = [];
 	let topMembers: NormalizedMember[] = [];
 	let mentorMembers: NormalizedMember[] = [];
 	let risingStarMembers: NormalizedMember[] = [];
 
 	try {
-		// Use all users of the app
 		const sanityUsers = await getAllUsers();
 		allMembers = sanityUsers.map(normalizeMember);
 		topMembers = allMembers.sort((a, b) => b.xp - a.xp).slice(0, 5);
 		mentorMembers = allMembers.filter((m) => m.badges.includes("mentor"));
 		risingStarMembers = allMembers.filter((m) => m.badges.includes("rising-star"));
 	} catch (error) {
-		// Fall back to empty arrays if Sanity fails
 		console.error("Failed to fetch members from Sanity:", error);
 		allMembers = [];
 		topMembers = [];

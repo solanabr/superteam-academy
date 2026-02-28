@@ -1,19 +1,19 @@
 import { type Connection, PublicKey } from "@solana/web3.js";
 import {
-    PROGRAM_ID,
-    ACCOUNT_SIZES,
-    type ConfigAccount,
-    type CourseAccount,
-    type EnrollmentAccount,
-    type MinterRoleAccount,
-    type AchievementTypeAccount,
-    type AchievementReceiptAccount,
+	PROGRAM_ID,
+	ACCOUNT_SIZES,
+	type ConfigAccount,
+	type CourseAccount,
+	type EnrollmentAccount,
+	type MinterRoleAccount,
+	type AchievementTypeAccount,
+	type AchievementReceiptAccount,
 } from "./idl";
 import {
-    findConfigPDA,
-    findMinterRolePDA,
-    findAchievementTypePDA,
-    findAchievementReceiptPDA,
+	findConfigPDA,
+	findMinterRolePDA,
+	findAchievementTypePDA,
+	findAchievementReceiptPDA,
 } from "./pda";
 
 const DISCRIMINATOR_SIZE = 8;
@@ -41,8 +41,6 @@ export class AcademyClient {
 		);
 	}
 
-	// ─── Config ──────────────────────────────────────────────────────────
-
 	async fetchConfig(): Promise<ConfigAccount | null> {
 		const [pda] = findConfigPDA(this.programId);
 		const info = await this.connection.getAccountInfo(pda);
@@ -64,8 +62,6 @@ export class AcademyClient {
 		return { authority, backendSigner, xpMint, reserved, bump };
 	}
 
-	// ─── Course ──────────────────────────────────────────────────────────
-
 	async fetchCourse(courseId: string): Promise<CourseAccount | null> {
 		const [pda] = this.findCoursePDA(courseId);
 		const info = await this.connection.getAccountInfo(pda);
@@ -86,7 +82,6 @@ export class AcademyClient {
 	private decodeCourse(data: Buffer): CourseAccount {
 		let offset = DISCRIMINATOR_SIZE;
 
-		// String: 4-byte length prefix + data
 		const courseIdLen = data.readUInt32LE(offset);
 		offset += 4;
 		const courseId = data.subarray(offset, offset + courseIdLen).toString("utf-8");
@@ -109,7 +104,6 @@ export class AcademyClient {
 		const trackLevel = data[offset];
 		offset += 1;
 
-		// Option<Pubkey>: 1-byte discriminator + 32 bytes
 		const hasPrereq = data[offset] === 1;
 		offset += 1;
 		const prerequisite = hasPrereq ? new PublicKey(data.subarray(offset, offset + 32)) : null;
@@ -159,8 +153,6 @@ export class AcademyClient {
 		};
 	}
 
-	// ─── Enrollment ──────────────────────────────────────────────────────
-
 	async fetchEnrollment(courseId: string, learner: PublicKey): Promise<EnrollmentAccount | null> {
 		const [pda] = this.findEnrollmentPDA(courseId, learner);
 		const info = await this.connection.getAccountInfo(pda);
@@ -174,10 +166,6 @@ export class AcademyClient {
 		const accounts = await this.connection.getProgramAccounts(this.programId, {
 			filters: [{ dataSize: ACCOUNT_SIZES.Enrollment }],
 		});
-		// Enrollment PDA = ["enrollment", courseId, learner]. Since courseId is not
-		// stored in the account data we cannot memcmp-filter server-side.
-		// Instead, we fetch all Courses to build a pubkey→courseId map,
-		// then verify PDA derivation for the given learner.
 		const courses = await this.fetchAllCourses();
 		const courseIdByKey = new Map<string, string>();
 		for (const c of courses) {
@@ -215,7 +203,6 @@ export class AcademyClient {
 		const enrolledAt = Number(data.readBigInt64LE(offset));
 		offset += 8;
 
-		// Option<i64>
 		const hasCompleted = data[offset] === 1;
 		offset += 1;
 		const completedAt = hasCompleted ? Number(data.readBigInt64LE(offset)) : null;
@@ -231,7 +218,6 @@ export class AcademyClient {
 		];
 		offset += 32;
 
-		// Option<Pubkey>
 		const hasCredential = data[offset] === 1;
 		offset += 1;
 		const credentialAsset = hasCredential
@@ -247,8 +233,6 @@ export class AcademyClient {
 
 		return { course, enrolledAt, completedAt, lessonFlags, credentialAsset, reserved, bump };
 	}
-
-	// ─── MinterRole ─────────────────────────────────────────────────────
 
 	async fetchMinterRole(minterKey: PublicKey): Promise<MinterRoleAccount | null> {
 		const [pda] = findMinterRolePDA(minterKey, this.programId);
@@ -278,8 +262,6 @@ export class AcademyClient {
 		const bump = data[offset];
 		return { minter, label, maxXpPerCall, totalXpMinted, isActive, createdAt, reserved, bump };
 	}
-
-	// ─── AchievementType ────────────────────────────────────────────────
 
 	async fetchAchievementType(achievementId: string): Promise<AchievementTypeAccount | null> {
 		const [pda] = findAchievementTypePDA(achievementId, this.programId);
@@ -352,8 +334,6 @@ export class AcademyClient {
 		};
 	}
 
-	// ─── AchievementReceipt ─────────────────────────────────────────────
-
 	async fetchAchievementReceipt(
 		achievementId: string,
 		recipient: PublicKey
@@ -374,14 +354,11 @@ export class AcademyClient {
 		return { asset, awardedAt, bump };
 	}
 
-	// ─── XP Balance ─────────────────────────────────────────────────────
-
 	/** Fetch the XP balance for a learner's Token-2022 ATA */
 	async fetchXpBalance(learnerAta: PublicKey): Promise<bigint | null> {
 		const info = await this.connection.getAccountInfo(learnerAta);
 		if (!info) return null;
 
-		// Token-2022 account: mint (32) + owner (32) + amount (8) at offset 64
 		if (info.data.length < 72) return null;
 		return info.data.readBigUInt64LE(64);
 	}

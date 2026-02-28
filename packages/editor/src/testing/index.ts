@@ -4,32 +4,23 @@ import { EditorAccessibilityManager } from "../accessibility";
 import { EditorSecurityManager } from "../security";
 import { EditorPerformanceManager } from "../performance";
 
-// Challenge specification and validation
 export * from "./challenge-types";
 export * from "./challenge-validator";
 
-// Execution engine
 export * from "./challenge-execution-engine";
 
-// Grading system
 export * from "./grading-engine";
 
-// Anti-cheat system
 export * from "./anti-cheat-system";
 
-// Analytics and metrics
 export * from "./test-analytics-engine";
 
-// Audit trail
 export * from "./grading-audit-trail";
 
-// Difficulty scaling
 export * from "./challenge-difficulty-scaler";
 
-// Templates and generators
 export * from "./challenge-templates";
 
-// Code quality analysis
 export * from "./code-quality-analyzer";
 
 export interface TestResult {
@@ -62,30 +53,22 @@ export class EditorTestFramework {
 		this.performance = new EditorPerformanceManager();
 	}
 
-	// Unit tests for editor functionality
 	async runUnitTests(): Promise<TestSuite> {
 		const tests: TestResult[] = [];
 		const startTime = Date.now();
 
-		// Test editor creation
 		tests.push(await this.testEditorCreation());
 
-		// Test editor mounting
 		tests.push(await this.testEditorMounting());
 
-		// Test editor content operations
 		tests.push(await this.testContentOperations());
 
-		// Test editor events
 		tests.push(await this.testEventHandling());
 
-		// Test accessibility features
 		tests.push(await this.testAccessibility());
 
-		// Test security features
 		tests.push(await this.testSecurity());
 
-		// Test performance features
 		tests.push(await this.testPerformance());
 
 		const duration = Date.now() - startTime;
@@ -102,24 +85,18 @@ export class EditorTestFramework {
 		};
 	}
 
-	// Integration tests
 	async runIntegrationTests(): Promise<TestSuite> {
 		const tests: TestResult[] = [];
 		const startTime = Date.now();
 
-		// Test full editor lifecycle
 		tests.push(await this.testEditorLifecycle());
 
-		// Test language switching
 		tests.push(await this.testLanguageSwitching());
 
-		// Test theme switching
 		tests.push(await this.testThemeSwitching());
 
-		// Test plugin system
 		tests.push(await this.testPluginSystem());
 
-		// Test state persistence
 		tests.push(await this.testStatePersistence());
 
 		const duration = Date.now() - startTime;
@@ -180,12 +157,10 @@ export class EditorTestFramework {
 
 			await this.editor.mount(container);
 
-			// Check if editor is mounted
 			if (!container.querySelector(".monaco-editor, .cm-editor")) {
 				throw new Error("Editor not mounted properly");
 			}
 
-			// Cleanup
 			document.body.removeChild(container);
 
 			return {
@@ -213,7 +188,6 @@ export class EditorTestFramework {
 
 			const testContent = 'function test() {\n  return "Hello World";\n}';
 
-			// Test setting content
 			this.editor.setValue(testContent);
 			const retrievedContent = this.editor.getValue();
 
@@ -221,7 +195,6 @@ export class EditorTestFramework {
 				throw new Error("Content setting/getting failed");
 			}
 
-			// Test content length
 			if (this.editor.getLength() !== testContent.length) {
 				throw new Error("Content length mismatch");
 			}
@@ -254,20 +227,16 @@ export class EditorTestFramework {
 				eventFired = true;
 			};
 
-			// Test event subscription
 			this.editor.on("change", eventHandler);
 
-			// Trigger content change
 			this.editor.setValue("new content");
 
-			// Wait a bit for event to fire
 			await new Promise((resolve) => setTimeout(resolve, 100));
 
 			if (!eventFired) {
 				throw new Error("Event not fired");
 			}
 
-			// Test event unsubscription
 			this.editor.off("change", eventHandler);
 			eventFired = false;
 			this.editor.setValue("another change");
@@ -303,7 +272,6 @@ export class EditorTestFramework {
 
 			this.accessibility.setEditor(this.editor);
 
-			// Test accessibility options
 			this.accessibility.updateOptions({
 				screenReaderSupport: true,
 				keyboardNavigation: true,
@@ -315,7 +283,6 @@ export class EditorTestFramework {
 				throw new Error("Accessibility options not set correctly");
 			}
 
-			// Test announcement (this would normally be tested with a screen reader)
 			this.accessibility.announce("Test announcement");
 
 			return {
@@ -337,7 +304,6 @@ export class EditorTestFramework {
 		const startTime = Date.now();
 
 		try {
-			// Test input sanitization
 			const dangerousInput = '<script>alert("xss")</script>Hello World';
 			const sanitized = this.security.sanitizeInput(dangerousInput);
 
@@ -345,7 +311,6 @@ export class EditorTestFramework {
 				throw new Error("Input sanitization failed");
 			}
 
-			// Test input validation
 			const { InputValidator } = await import("../security");
 			const validation = InputValidator.validateCodeInput(
 				'console.log("safe");',
@@ -390,17 +355,14 @@ export class EditorTestFramework {
 
 			this.performance.setEditor(this.editor);
 
-			// Test lazy loading
 			await this.performance.loadModule("typescript");
 
-			// Test performance metrics
 			const metrics = this.performance.getPerformanceMetrics();
 
 			if (!metrics.memoryUsage || typeof metrics.totalMemoryUsed !== "number") {
 				throw new Error("Performance metrics not available");
 			}
 
-			// Test virtualization
 			const largeContent = "line\n".repeat(1000);
 			const virtualized = this.performance.createVirtualizedView(largeContent);
 
@@ -427,7 +389,6 @@ export class EditorTestFramework {
 		const startTime = Date.now();
 
 		try {
-			// Create and mount editor
 			const editor = this.factory.createEditor("codemirror", {
 				language: "javascript",
 				theme: "default",
@@ -439,7 +400,6 @@ export class EditorTestFramework {
 
 			await editor.mount(container);
 
-			// Test content operations
 			editor.setValue("updated content");
 			const content = editor.getValue();
 
@@ -447,13 +407,10 @@ export class EditorTestFramework {
 				throw new Error("Content update failed");
 			}
 
-			// Test focus
 			editor.focus();
 
-			// Test disposal
 			editor.dispose();
 
-			// Cleanup
 			document.body.removeChild(container);
 
 			return {
@@ -479,7 +436,6 @@ export class EditorTestFramework {
 				throw new Error("No editor available");
 			}
 
-			// Test language switching
 			this.editor.setLanguage("javascript");
 			let language = this.editor.getLanguage();
 
@@ -517,7 +473,6 @@ export class EditorTestFramework {
 				throw new Error("No editor available");
 			}
 
-			// Test theme switching
 			this.editor.setTheme("vs-dark");
 			let theme = this.editor.getTheme();
 
@@ -551,12 +506,9 @@ export class EditorTestFramework {
 		const startTime = Date.now();
 
 		try {
-			// This would test the plugin system integration
-			// For now, just check that the plugin manager exists
 			const { EditorPluginManager } = await import("../plugins");
 
 			const pluginManager = new EditorPluginManager();
-			// Basic functionality check
 			if (!pluginManager) {
 				throw new Error("Plugin manager not available");
 			}
@@ -580,11 +532,9 @@ export class EditorTestFramework {
 		const startTime = Date.now();
 
 		try {
-			// This would test state persistence
 			const { EditorStateManager } = await import("../state");
 
 			const stateManager = new EditorStateManager();
-			// Basic functionality check
 			if (!stateManager) {
 				throw new Error("State manager not available");
 			}
@@ -604,7 +554,6 @@ export class EditorTestFramework {
 		}
 	}
 
-	// Run all tests
 	async runAllTests(): Promise<{ unit: TestSuite; integration: TestSuite }> {
 		const unit = await this.runUnitTests();
 		const integration = await this.runIntegrationTests();
@@ -612,7 +561,6 @@ export class EditorTestFramework {
 		return { unit, integration };
 	}
 
-	// Generate test report
 	generateReport(results: { unit: TestSuite; integration: TestSuite }): string {
 		const { unit, integration } = results;
 
@@ -650,7 +598,6 @@ ${integration.tests
 	}
 }
 
-// Test utilities
 export const TestUtils = {
 	createMockContainer(): HTMLElement {
 		const container = document.createElement("div");

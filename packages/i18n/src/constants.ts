@@ -1,4 +1,3 @@
-// Supported locales with metadata
 export const locales = [
 	{
 		code: "en",
@@ -25,7 +24,6 @@ export type LocaleDirection = (typeof locales)[number]["direction"];
 
 export const defaultLocale: Locale = "en";
 
-// Locale detection and routing configuration
 export const localeConfig = {
 	locales: locales.map((l) => l.code),
 	defaultLocale,
@@ -33,18 +31,15 @@ export const localeConfig = {
 	localePrefix: "as-needed" as const,
 };
 
-// Get locale metadata
 export function getLocaleInfo(locale: string) {
 	return locales.find((l) => l.code === locale);
 }
 
-// Check if locale is RTL
 export function isRTL(locale: string): boolean {
 	const info = getLocaleInfo(locale);
 	return info?.direction === "rtl";
 }
 
-// Get locale direction
 export function getLocaleDirection(locale: string): LocaleDirection {
 	const info = getLocaleInfo(locale);
 	return info?.direction || "ltr";

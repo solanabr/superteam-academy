@@ -6,7 +6,6 @@ import {
 	ChallengeType,
 } from "./level-system";
 
-// Notification Types
 export enum NotificationType {
 	LEVEL_UP = "level_up",
 	CHALLENGE_COMPLETED = "challenge_completed",
@@ -17,7 +16,6 @@ export enum NotificationType {
 	STREAK_MILESTONE = "streak_milestone",
 }
 
-// Notification Priority
 export enum NotificationPriority {
 	LOW = "low",
 	MEDIUM = "medium",
@@ -25,7 +23,6 @@ export enum NotificationPriority {
 	URGENT = "urgent",
 }
 
-// Level Notification
 export interface LevelNotification {
 	id: string;
 	userId: string;
@@ -40,26 +37,22 @@ export interface LevelNotification {
 	actions?: NotificationAction[];
 }
 
-// Notification Action
 export interface NotificationAction {
 	label: string;
 	action: string;
 	data?: Record<string, unknown>;
 }
 
-// Level Notifications Engine
 export class LevelNotificationsEngine {
 	private notifications: Map<string, LevelNotification[]> = new Map();
 	private notificationHandlers: Map<NotificationType, NotificationHandler[]> = new Map();
 
-	// Register notification handler
 	on(type: NotificationType, handler: NotificationHandler): void {
 		const handlers = this.notificationHandlers.get(type) || [];
 		handlers.push(handler);
 		this.notificationHandlers.set(type, handlers);
 	}
 
-	// Create level up notification
 	createLevelUpNotification(
 		userId: string,
 		oldLevel: number,
@@ -102,7 +95,6 @@ export class LevelNotificationsEngine {
 		return notification;
 	}
 
-	// Create challenge completed notification
 	createChallengeCompletedNotification(
 		userId: string,
 		challenge: LevelChallenge,
@@ -149,7 +141,6 @@ export class LevelNotificationsEngine {
 		return notification;
 	}
 
-	// Create reward available notification
 	createRewardAvailableNotification(
 		userId: string,
 		level: number,
@@ -195,7 +186,6 @@ export class LevelNotificationsEngine {
 		return notification;
 	}
 
-	// Create reward claimed notification
 	createRewardClaimedNotification(
 		userId: string,
 		level: number,
@@ -222,7 +212,6 @@ export class LevelNotificationsEngine {
 		return notification;
 	}
 
-	// Create challenge expiring notification
 	createChallengeExpiringNotification(
 		userId: string,
 		challengeId: string,
@@ -259,7 +248,6 @@ export class LevelNotificationsEngine {
 		return notification;
 	}
 
-	// Create milestone reached notification
 	createMilestoneNotification(
 		userId: string,
 		milestone: string,
@@ -288,7 +276,6 @@ export class LevelNotificationsEngine {
 		return notification;
 	}
 
-	// Create streak milestone notification
 	createStreakMilestoneNotification(
 		userId: string,
 		streakLength: number,
@@ -315,7 +302,6 @@ export class LevelNotificationsEngine {
 		return notification;
 	}
 
-	// Get user notifications
 	getUserNotifications(
 		userId: string,
 		options: {
@@ -323,7 +309,9 @@ export class LevelNotificationsEngine {
 			type?: NotificationType;
 			limit?: number;
 			offset?: number;
-		} = {}
+		} = {
+			/* noop */
+		}
 	): LevelNotification[] {
 		const userNotifications = this.notifications.get(userId) || [];
 
@@ -337,10 +325,8 @@ export class LevelNotificationsEngine {
 			filtered = filtered.filter((n) => n.type === options.type);
 		}
 
-		// Sort by creation date (newest first)
 		filtered.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
-		// Apply pagination
 		const offset = options.offset || 0;
 		const limit = options.limit ?? filtered.length;
 		filtered = filtered.slice(offset, offset + limit);
@@ -348,7 +334,6 @@ export class LevelNotificationsEngine {
 		return filtered;
 	}
 
-	// Mark notification as read
 	markAsRead(userId: string, notificationId: string): boolean {
 		const userNotifications = this.notifications.get(userId);
 		if (!userNotifications) return false;
@@ -360,7 +345,6 @@ export class LevelNotificationsEngine {
 		return true;
 	}
 
-	// Mark all notifications as read
 	markAllAsRead(userId: string): number {
 		const userNotifications = this.notifications.get(userId);
 		if (!userNotifications) return 0;
@@ -376,7 +360,6 @@ export class LevelNotificationsEngine {
 		return count;
 	}
 
-	// Delete notification
 	deleteNotification(userId: string, notificationId: string): boolean {
 		const userNotifications = this.notifications.get(userId);
 		if (!userNotifications) return false;
@@ -388,7 +371,6 @@ export class LevelNotificationsEngine {
 		return true;
 	}
 
-	// Clean up expired notifications
 	cleanupExpiredNotifications(): number {
 		let totalCleaned = 0;
 
@@ -407,7 +389,6 @@ export class LevelNotificationsEngine {
 		return totalCleaned;
 	}
 
-	// Get notification statistics
 	getNotificationStats(userId?: string): {
 		total: number;
 		unread: number;
@@ -419,7 +400,6 @@ export class LevelNotificationsEngine {
 		if (userId) {
 			notifications = this.notifications.get(userId) || [];
 		} else {
-			// All notifications
 			this.notifications.forEach((userNotifications) => {
 				notifications.push(...userNotifications);
 			});
@@ -458,7 +438,6 @@ export class LevelNotificationsEngine {
 		};
 	}
 
-	// Export notifications for backup/debugging
 	exportNotifications(userId?: string): Record<string, LevelNotification[]> {
 		if (userId) {
 			return { [userId]: this.notifications.get(userId) || [] };
@@ -472,14 +451,12 @@ export class LevelNotificationsEngine {
 		return exportData;
 	}
 
-	// Import notifications
 	importNotifications(importData: Record<string, LevelNotification[]>): void {
 		Object.entries(importData).forEach(([userId, notifications]) => {
 			this.notifications.set(userId, notifications);
 		});
 	}
 
-	// Private methods
 	private addNotification(notification: LevelNotification): void {
 		const userNotifications = this.notifications.get(notification.userId) || [];
 		userNotifications.push(notification);
@@ -498,10 +475,8 @@ export class LevelNotificationsEngine {
 	}
 }
 
-// Notification Handler Type
 export type NotificationHandler = (notification: LevelNotification) => void;
 
-// Notification Templates
 export const NOTIFICATION_TEMPLATES = {
 	[NotificationType.LEVEL_UP]: {
 		title: "🎉 Level Up!",

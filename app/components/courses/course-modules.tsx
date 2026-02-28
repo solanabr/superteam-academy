@@ -3,14 +3,14 @@
 import { useState } from "react";
 import Link from "next/link";
 import {
-    ChevronDown,
-    Play,
-    FileText,
-    Code,
-    CheckCircle,
-    Lock,
-    Clock,
-    AlertCircle,
+	ChevronDown,
+	Play,
+	FileText,
+	Code,
+	CheckCircle,
+	Lock,
+	Clock,
+	AlertCircle,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -233,7 +233,6 @@ function ModuleCard({
 												lesson.type === "interactive"
 													? `/courses/${courseId}/challenges/${lesson.id}`
 													: `/courses/${courseId}/lessons/${lesson.id}`;
-
 
 											const lessonIndex = module.lessonsList.findIndex(
 												(l) => l.id === lesson.id

@@ -7,16 +7,13 @@ export async function POST(request: NextRequest) {
 	try {
 		const { email } = await request.json();
 
-		// Basic email validation
 		if (!email || !email.includes("@")) {
 			return NextResponse.json({ error: "Valid email is required" }, { status: 400 });
 		}
 
-		// Get locale from headers if available
 		const headersList = await headers();
 		const locale = headersList.get("accept-language")?.split(",")[0].split("-")[0] || "en";
 
-		// Subscribe via Sanity
 		const result = await subscribeToNewsletter(email, {
 			source: "homepage",
 			locale,

@@ -42,7 +42,6 @@ export class CodeMirrorEditor implements CodeEditor {
 	async mount(container: HTMLElement): Promise<void> {
 		this.container = container;
 
-		// Dynamically import CodeMirror
 		const { EditorView, basicSetup } = await import("codemirror");
 		const { EditorState } = await import("@codemirror/state");
 		const {
@@ -70,10 +69,8 @@ export class CodeMirrorEditor implements CodeEditor {
 			await import("@codemirror/autocomplete");
 		const { lintKeymap } = await import("@codemirror/lint");
 
-		// Get language support
 		const language = await this.getLanguageSupport(this.options.language || "typescript");
 
-		// Create extensions
 		const extensions: unknown[] = [
 			basicSetup,
 			lineNumbers(),
@@ -101,7 +98,6 @@ export class CodeMirrorEditor implements CodeEditor {
 				...foldKeymap,
 				...completionKeymap,
 				...lintKeymap,
-				// Custom keybindings
 				{
 					key: "Ctrl-s",
 					run: () => {
@@ -141,22 +137,18 @@ export class CodeMirrorEditor implements CodeEditor {
 			}),
 		];
 
-		// Add theme
 		if (this.options.theme === "dark") {
 			const { oneDark } = await import("@codemirror/theme-one-dark");
 			extensions.push(oneDark);
 		}
 
-		// Store EditorView reference for dynamic config
 		this.editorViewEditable = (val: boolean) => EditorView.editable.of(val);
 
-		// Create editor state
 		const state = EditorState.create({
 			doc: this.options.value ?? "",
 			extensions: extensions as import("@codemirror/state").Extension[],
 		});
 
-		// Create editor view
 		this.view = new EditorView({
 			state,
 			parent: container,
@@ -188,7 +180,6 @@ export class CodeMirrorEditor implements CodeEditor {
 	}
 
 	setLanguage(language: string): void {
-		// Store the language; full dynamic switching would require a Compartment
 		this.options.language = language;
 	}
 
@@ -197,8 +188,6 @@ export class CodeMirrorEditor implements CodeEditor {
 	}
 
 	setTheme(theme: string): void {
-		// CodeMirror themes are applied via extensions during mount
-		// For runtime theme changes, we'd need to recreate the editor
 		this.options.theme = theme;
 	}
 
@@ -250,8 +239,7 @@ export class CodeMirrorEditor implements CodeEditor {
 	}
 
 	addCommand(_keybinding: string, _callback: () => void): void {
-		// CodeMirror keybindings are set during mount
-		// For dynamic commands, we'd need to add to the keymap extension
+		/* noop */
 	}
 
 	setSize(width: number | string, height: number | string): void {
@@ -290,7 +278,6 @@ export class CodeMirrorEditor implements CodeEditor {
 				return json();
 			}
 			default:
-				// Fallback to plain text
 				return [];
 		}
 	}

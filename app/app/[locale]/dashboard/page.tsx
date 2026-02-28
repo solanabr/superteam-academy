@@ -67,7 +67,6 @@ export default function DashboardPage() {
 	const nextMilestone = milestoneData.nextMilestone?.days ?? null;
 	const daysToNextMilestone = milestoneData.daysToNextMilestone;
 
-	// Record daily activity on dashboard visit
 	useEffect(() => {
 		if (wallet.publicKey) {
 			recordActivity(StreakEventType.DAILY_LOGIN);
@@ -116,7 +115,6 @@ export default function DashboardPage() {
 		setRecentCourses(courses.slice(0, 3));
 		setRecommendedCourses(overview.recommendedCourses);
 
-		// Activity feed
 		fetchIndexedLearnerActivity(wallet.publicKey as PublicKey, 10)
 			.then(setActivity)
 			.catch(() => undefined);

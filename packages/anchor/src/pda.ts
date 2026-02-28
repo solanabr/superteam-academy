@@ -9,7 +9,11 @@ export function findCoursePDA(courseId: string, programId: PublicKey): [PublicKe
 	return PublicKey.findProgramAddressSync([...PDA_SEEDS.course(courseId)], programId);
 }
 
-export function findEnrollmentPDA(courseId: string, learner: PublicKey, programId: PublicKey): [PublicKey, number] {
+export function findEnrollmentPDA(
+	courseId: string,
+	learner: PublicKey,
+	programId: PublicKey
+): [PublicKey, number] {
 	return PublicKey.findProgramAddressSync(
 		[...PDA_SEEDS.enrollment(courseId, learner)],
 		programId
@@ -20,7 +24,10 @@ export function findMinterRolePDA(minterKey: PublicKey, programId: PublicKey): [
 	return PublicKey.findProgramAddressSync([...PDA_SEEDS.minter(minterKey)], programId);
 }
 
-export function findAchievementTypePDA(achievementId: string, programId: PublicKey): [PublicKey, number] {
+export function findAchievementTypePDA(
+	achievementId: string,
+	programId: PublicKey
+): [PublicKey, number] {
 	return PublicKey.findProgramAddressSync([...PDA_SEEDS.achievement(achievementId)], programId);
 }
 

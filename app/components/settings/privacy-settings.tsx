@@ -6,11 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
 } from "@/components/ui/select";
 import { useTranslations } from "next-intl";
 import { useToast } from "@/hooks/use-toast";
@@ -93,7 +93,11 @@ const VISIBILITY_OPTIONS = [
 export function PrivacySettings() {
 	const t = useTranslations("settings.privacySection");
 	const { toast } = useToast();
-	const { data, saving: isLoading, handleSave: saveSettings } = useSettingsSave({
+	const {
+		data,
+		saving: isLoading,
+		handleSave: saveSettings,
+	} = useSettingsSave({
 		successTitle: t("toast.updatedTitle"),
 		successDescription: t("toast.updatedDescription"),
 		errorTitle: t("toast.errorTitle"),

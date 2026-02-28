@@ -77,7 +77,6 @@ function applyEngineRewards(state: StreakState, rewards: Array<{ type: string; v
 export function useStreak(userId: string | undefined) {
 	const [state, setState] = useState<StreakState>(() => createEmptyState(userId ?? "anonymous"));
 
-	// Load from localStorage on mount / userId change
 	useEffect(() => {
 		if (!userId) return;
 		setState(loadStreakState(userId));
@@ -107,7 +106,7 @@ export function useStreak(userId: string | undefined) {
 	const applyFreeze = useCallback(() => {
 		if (!userId) return;
 		setState((previousState) => {
-			// biome-ignore lint/correctness/useHookAtTopLevel: not a hook, just using engine logic
+			// biome-ignore lint/correctness/useHookAtTopLevel: engine.useFreeze is a class method, not a React hook
 			const result = engine.useFreeze(previousState);
 			if (!result.success) {
 				return previousState;
@@ -118,7 +117,6 @@ export function useStreak(userId: string | undefined) {
 		});
 	}, [userId]);
 
-	// Build the StreakData shape expected by StreakTracker component
 	const streakData = {
 		current: state.currentStreak,
 		longest: state.longestStreak,

@@ -2,7 +2,6 @@ import type { CMSContext } from "./cms-service";
 import type { NewsletterSubscriber } from "../schemas";
 export function createNewsletterService(context: CMSContext) {
 	const { fetch, writeClient } = context;
-	const activeWriteClient = writeClient;
 
 	const subscribe = async (
 		email: string,
@@ -11,7 +10,7 @@ export function createNewsletterService(context: CMSContext) {
 			locale?: string;
 		}
 	): Promise<{ success: boolean; subscriber?: NewsletterSubscriber; error?: string }> => {
-		if (!activeWriteClient) {
+		if (!writeClient) {
 			return { success: false, error: "Sanity client not configured" };
 		}
 
@@ -23,7 +22,7 @@ export function createNewsletterService(context: CMSContext) {
 
 			if (existing) {
 				if (existing.status === "unsubscribed") {
-					const updated = await activeWriteClient
+					const updated = await writeClient
 						.patch(existing._id)
 						.set({
 							status: "active",
@@ -38,7 +37,7 @@ export function createNewsletterService(context: CMSContext) {
 				return { success: true, subscriber: existing };
 			}
 
-			const subscriber = await activeWriteClient.create({
+			const subscriber = await writeClient.create({
 				_type: "newsletterSubscriber" as const,
 				email,
 				status: "active" as const,
@@ -57,7 +56,7 @@ export function createNewsletterService(context: CMSContext) {
 	};
 
 	const unsubscribe = async (email: string): Promise<{ success: boolean; error?: string }> => {
-		if (!activeWriteClient) {
+		if (!writeClient) {
 			return { success: false, error: "Sanity client not configured" };
 		}
 
@@ -71,7 +70,7 @@ export function createNewsletterService(context: CMSContext) {
 				return { success: false, error: "Email not found" };
 			}
 
-			await activeWriteClient
+			await writeClient
 				.patch(subscriber._id)
 				.set({
 					status: "unsubscribed",

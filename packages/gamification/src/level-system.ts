@@ -1,4 +1,5 @@
-// Level Configuration
+import { levelFromXP } from "./xp-calculation";
+
 export interface Level {
 	level: number;
 	name: string;
@@ -10,7 +11,6 @@ export interface Level {
 	color: string;
 }
 
-// Level Reward Types
 export enum RewardType {
 	XP_BONUS = "xp_bonus",
 	STREAK_FREEZE = "streak_freeze",
@@ -21,7 +21,6 @@ export enum RewardType {
 	DISCOUNT = "discount",
 }
 
-// Level Challenge Types
 export enum ChallengeType {
 	LESSONS_COMPLETED = "lessons_completed",
 	CHALLENGES_SOLVED = "challenges_solved",
@@ -32,7 +31,6 @@ export enum ChallengeType {
 	TIME_SPENT = "time_spent",
 }
 
-// Level Reward
 export interface LevelReward {
 	type: RewardType;
 	value: number | string;
@@ -40,7 +38,6 @@ export interface LevelReward {
 	isAutomatic: boolean; // true if granted automatically, false if user must claim
 }
 
-// Level Challenge
 export interface LevelChallenge {
 	type: ChallengeType;
 	target: number;
@@ -49,7 +46,6 @@ export interface LevelChallenge {
 	timeLimit?: number; // days to complete
 }
 
-// User Level Progress
 export interface UserLevel {
 	userId: string;
 	currentLevel: number;
@@ -62,7 +58,6 @@ export interface UserLevel {
 	lastUpdated: Date;
 }
 
-// Level Challenge Progress
 export interface UserLevelChallenge {
 	userId: string;
 	challengeId: string;
@@ -76,7 +71,6 @@ export interface UserLevelChallenge {
 	expiresAt?: Date;
 }
 
-// Level Reward Claim
 export interface LevelRewardClaim {
 	userId: string;
 	level: number;
@@ -86,7 +80,6 @@ export interface LevelRewardClaim {
 	rewardValue: number | string;
 }
 
-// Default Level Configuration
 export const DEFAULT_LEVELS: Level[] = [
 	{
 		level: 1,
@@ -460,7 +453,6 @@ export const DEFAULT_LEVELS: Level[] = [
 	},
 ];
 
-// Level Progression Engine
 export class LevelProgressionEngine {
 	private levels: Map<number, Level> = new Map();
 	private userLevels: Map<string, UserLevel> = new Map();
@@ -468,13 +460,11 @@ export class LevelProgressionEngine {
 	private claimedRewards: Map<string, Set<string>> = new Map();
 
 	constructor(levels: Level[] = DEFAULT_LEVELS) {
-		// Initialize level configuration
 		levels.forEach((level) => {
 			this.levels.set(level.level, level);
 		});
 	}
 
-	// Initialize user level progress
 	initializeUser(userId: string, totalXP = 0): UserLevel {
 		if (this.userLevels.has(userId)) {
 			return this.userLevels.get(userId) as UserLevel;
@@ -495,13 +485,11 @@ export class LevelProgressionEngine {
 
 		this.userLevels.set(userId, userLevel);
 
-		// Initialize level challenges for current level
 		this.initializeLevelChallenges(userId, levelProgress.level);
 
 		return userLevel;
 	}
 
-	// Update user XP and recalculate level
 	updateUserXP(
 		userId: string,
 		newTotalXP: number
@@ -518,7 +506,6 @@ export class LevelProgressionEngine {
 		const levelProgress = this.calculateLevelProgress(newTotalXP);
 		const levelChanged = levelProgress.level > oldLevel;
 
-		// Update user level
 		userLevel.currentLevel = levelProgress.level;
 		userLevel.totalXP = newTotalXP;
 		userLevel.xpToNextLevel = levelProgress.xpToNextLevel;
@@ -527,11 +514,9 @@ export class LevelProgressionEngine {
 
 		if (levelChanged) {
 			userLevel.levelReachedAt = new Date();
-			// Initialize challenges for new level
 			this.initializeLevelChallenges(userId, levelProgress.level);
 		}
 
-		// Get rewards and challenges for the current level
 		const currentLevelData = this.levels.get(levelProgress.level);
 		const rewards = currentLevelData?.rewards || [];
 		const challenges = currentLevelData?.challenges || [];
@@ -545,22 +530,18 @@ export class LevelProgressionEngine {
 		};
 	}
 
-	// Get user level progress
 	getUserProgress(userId: string): UserLevel | null {
 		return this.userLevels.get(userId) || null;
 	}
 
-	// Get level data
 	getLevel(level: number): Level | null {
 		return this.levels.get(level) || null;
 	}
 
-	// Get all levels
 	getAllLevels(): Level[] {
 		return Array.from(this.levels.values()).sort((a, b) => a.level - b.level);
 	}
 
-	// Get level challenges for user
 	getUserLevelChallenges(userId: string, level?: number): UserLevelChallenge[] {
 		const userChallenges = this.userChallenges.get(userId);
 		if (!userChallenges) return [];
@@ -572,7 +553,6 @@ export class LevelProgressionEngine {
 		return challenges;
 	}
 
-	// Update challenge progress
 	updateChallengeProgress(
 		userId: string,
 		challengeId: string,
@@ -599,9 +579,7 @@ export class LevelProgressionEngine {
 
 		if (challenge.isCompleted && !wasAlreadyCompleted) {
 			challenge.completedAt = new Date();
-			// xpAwarded already set
 
-			// Add to user's completed challenges
 			const userLevel = this.userLevels.get(userId);
 			if (userLevel && !userLevel.completedChallenges.includes(challengeId)) {
 				userLevel.completedChallenges.push(challengeId);
@@ -616,7 +594,6 @@ export class LevelProgressionEngine {
 		};
 	}
 
-	// Claim level reward
 	claimReward(
 		userId: string,
 		level: number,
@@ -649,17 +626,14 @@ export class LevelProgressionEngine {
 			return { success: false, message: "Reward is automatically granted" };
 		}
 
-		// Check if already claimed
 		const claimedRewards = this.claimedRewards.get(userId) || new Set();
 		if (claimedRewards.has(rewardId)) {
 			return { success: false, message: "Reward already claimed" };
 		}
 
-		// Mark as claimed
 		claimedRewards.add(rewardId);
 		this.claimedRewards.set(userId, claimedRewards);
 
-		// Add to user's claimed rewards
 		if (!userLevel.claimedRewards.includes(rewardId)) {
 			userLevel.claimedRewards.push(rewardId);
 			userLevel.lastUpdated = new Date();
@@ -672,7 +646,6 @@ export class LevelProgressionEngine {
 		};
 	}
 
-	// Get available rewards for user
 	getAvailableRewards(userId: string): LevelReward[] {
 		const userLevel = this.userLevels.get(userId);
 		if (!userLevel) return [];
@@ -680,7 +653,6 @@ export class LevelProgressionEngine {
 		const claimedRewards = this.claimedRewards.get(userId) || new Set();
 		const rewards: LevelReward[] = [];
 
-		// Get rewards from current level
 		const currentLevelData = this.levels.get(userLevel.currentLevel);
 		if (currentLevelData) {
 			currentLevelData.rewards.forEach((reward) => {
@@ -694,13 +666,12 @@ export class LevelProgressionEngine {
 		return rewards;
 	}
 
-	// Calculate level progress from XP using spec formula: Level = floor(sqrt(totalXP / 100))
 	private calculateLevelProgress(totalXP: number): {
 		level: number;
 		xpToNextLevel: number;
 		progress: number;
 	} {
-		const level = Math.max(0, Math.floor(Math.sqrt(totalXP / 100)));
+		const level = levelFromXP(totalXP);
 		const currentLevelXP = level * level * 100;
 		const nextLevelXP = (level + 1) * (level + 1) * 100;
 		const xpToNext = Math.max(0, nextLevelXP - totalXP);
@@ -714,7 +685,6 @@ export class LevelProgressionEngine {
 		};
 	}
 
-	// Initialize level challenges for user
 	private initializeLevelChallenges(userId: string, level: number): void {
 		const levelData = this.levels.get(level);
 		if (!levelData) return;
@@ -744,7 +714,6 @@ export class LevelProgressionEngine {
 		this.userChallenges.set(userId, userChallenges);
 	}
 
-	// Get level statistics
 	getLevelStats(): {
 		totalLevels: number;
 		totalUsers: number;
@@ -789,12 +758,10 @@ export class LevelProgressionEngine {
 		};
 	}
 
-	// Add new level
 	addLevel(level: Level): void {
 		this.levels.set(level.level, level);
 	}
 
-	// Update existing level
 	updateLevel(levelNumber: number, updates: Partial<Level>): void {
 		const existing = this.levels.get(levelNumber);
 		if (existing) {
@@ -802,14 +769,12 @@ export class LevelProgressionEngine {
 		}
 	}
 
-	// Get level by XP
 	getLevelByXP(totalXP: number): Level | null {
 		const progress = this.calculateLevelProgress(totalXP);
 		return this.levels.get(progress.level) || null;
 	}
 }
 
-// Level Analytics Types
 export interface LevelAnalytics {
 	globalStats: {
 		totalUsers: number;

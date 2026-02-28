@@ -122,7 +122,6 @@ export async function syncUserToSanity(params: SyncUserParams): Promise<AcademyU
 		return patch;
 	};
 
-	// Two different Sanity users found (one by authId, one by wallet): merge them
 	if (existingByWallet && existing && existingByWallet._id !== existing._id) {
 		const patch: Record<string, unknown> = {
 			...(await buildExistingUserPatch(existingByWallet)),
@@ -151,33 +150,50 @@ export async function syncUserToSanity(params: SyncUserParams): Promise<AcademyU
 
 		await writeClient.patch(existingByWallet._id).set(patch).commit();
 		await deleteUsersByIds(writeClient, [existing._id]);
-		await patchAndCleanupByWallet(writeClient, existingByWallet._id, {}, normalizedWalletAddress);
+		await patchAndCleanupByWallet(
+			writeClient,
+			existingByWallet._id,
+			{},
+			normalizedWalletAddress
+		);
 
 		return { ...existingByWallet, ...patch } as AcademyUser;
 	}
 
-	// Found by wallet but not authId: adopt existing wallet user
 	if (!existing && existingByWallet) {
 		const patch = await buildExistingUserPatch(existingByWallet);
-		await patchAndCleanupByWallet(writeClient, existingByWallet._id, patch, normalizedWalletAddress);
+		await patchAndCleanupByWallet(
+			writeClient,
+			existingByWallet._id,
+			patch,
+			normalizedWalletAddress
+		);
 		return { ...existingByWallet, ...patch } as AcademyUser;
 	}
 
-	// Found by authId: update in place
 	if (existing) {
 		const patch = await buildExistingUserPatch(existing);
 		try {
-			await patchAndCleanupByWallet(writeClient, existing._id, patch, normalizedWalletAddress);
+			await patchAndCleanupByWallet(
+				writeClient,
+				existing._id,
+				patch,
+				normalizedWalletAddress
+			);
 		} catch (err) {
 			console.error("[sanity-users] Failed to patch user:", err);
 		}
 		return { ...existing, ...patch } as AcademyUser;
 	}
 
-	// Fallback: find by email when authId and wallet both miss (e.g., after auth DB reset)
 	if (existingByEmail) {
 		const patch = await buildExistingUserPatch(existingByEmail);
-		await patchAndCleanupByWallet(writeClient, existingByEmail._id, patch, normalizedWalletAddress);
+		await patchAndCleanupByWallet(
+			writeClient,
+			existingByEmail._id,
+			patch,
+			normalizedWalletAddress
+		);
 		return { ...existingByEmail, ...patch } as AcademyUser;
 	}
 
@@ -200,7 +216,11 @@ export async function syncUserToSanity(params: SyncUserParams): Promise<AcademyU
 
 	try {
 		const created = await writeClient.create(doc);
-		await cleanupDuplicateWalletUsers(writeClient, created._id as string, normalizedWalletAddress);
+		await cleanupDuplicateWalletUsers(
+			writeClient,
+			created._id as string,
+			normalizedWalletAddress
+		);
 		return { ...doc, ...created } as unknown as AcademyUser;
 	} catch (err) {
 		console.error("[sanity-users] Failed to create user:", err);

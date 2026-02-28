@@ -74,20 +74,16 @@ export class CodeQualityAnalyzer {
 		const lines = code.split("\n").filter((line) => line.trim().length > 0);
 		const linesOfCode = lines.length;
 
-		// Cyclomatic complexity
 		const cyclomaticComplexity = this.calculateCyclomaticComplexity(code, language);
 
-		// Maintainability index (simplified)
 		const maintainabilityIndex = this.calculateMaintainabilityIndex(
 			linesOfCode,
 			cyclomaticComplexity
 		);
 
-		// Comment ratio
 		const commentLines = lines.filter((line) => this.isCommentLine(line, language)).length;
 		const commentRatio = linesOfCode > 0 ? commentLines / linesOfCode : 0;
 
-		// Function analysis
 		const functions = this.extractFunctions(code, language);
 		const functionCount = functions.length;
 		const functionLengths = functions.map((f) => f.lines.length);
@@ -97,19 +93,14 @@ export class CodeQualityAnalyzer {
 				: 0;
 		const maxFunctionLength = functionLengths.length > 0 ? Math.max(...functionLengths) : 0;
 
-		// Duplicate code ratio (simplified)
 		const duplicateCodeRatio = this.calculateDuplicateCodeRatio(lines);
 
-		// Naming convention score
 		const namingConventionScore = this.calculateNamingConventionScore(code, language);
 
-		// Error handling score
 		const errorHandlingScore = this.calculateErrorHandlingScore(code, language);
 
-		// Testability score
 		const testabilityScore = this.calculateTestabilityScore(code, language);
 
-		// Overall score (weighted average)
 		const overallScore = this.calculateOverallScore({
 			cyclomaticComplexity,
 			maintainabilityIndex,
@@ -140,7 +131,6 @@ export class CodeQualityAnalyzer {
 	private calculateCyclomaticComplexity(code: string, language: string): number {
 		let complexity = 1; // Base complexity
 
-		// Count control flow statements
 		const patterns = this.getComplexityPatterns(language);
 
 		patterns.forEach((pattern) => {
@@ -150,7 +140,6 @@ export class CodeQualityAnalyzer {
 			}
 		});
 
-		// Count logical operators
 		const logicalOps = (code.match(/\|\||&&/g) || []).length;
 		complexity += logicalOps;
 
@@ -184,16 +173,11 @@ export class CodeQualityAnalyzer {
 	}
 
 	private calculateMaintainabilityIndex(linesOfCode: number, complexity: number): number {
-		// Simplified maintainability index calculation
-		// MI = 171 - 5.2 * ln(Halstead Volume) - 0.23 * CC - 16.2 * ln(LOC)
-		// Using a simplified version for demonstration
-
 		const locFactor = Math.log(Math.max(linesOfCode, 1)) * 16.2;
 		const complexityFactor = complexity * 0.23;
 
 		let mi = 171 - complexityFactor - locFactor;
 
-		// Adjust for other factors
 		mi = Math.max(0, Math.min(171, mi));
 
 		return mi;
@@ -226,7 +210,6 @@ export class CodeQualityAnalyzer {
 		switch (language) {
 			case "javascript":
 			case "typescript": {
-				// Match function declarations and arrow functions
 				const jsFunctions = code.match(/function\s+\w+\s*\([^)]*\)\s*\{[^}]*\}/g) || [];
 				jsFunctions.forEach((func) => {
 					const lines = func.split("\n");
@@ -238,7 +221,6 @@ export class CodeQualityAnalyzer {
 			}
 
 			case "python": {
-				// Match def statements
 				const pyFunctions =
 					code.match(/def\s+\w+\s*\([^)]*\):[\s\S]*?(?=\n\ndef|\nclass|\n@|\n\n|\n$)/g) ||
 					[];
@@ -252,7 +234,6 @@ export class CodeQualityAnalyzer {
 			}
 
 			case "rust": {
-				// Match fn statements
 				const rustFunctions =
 					code.match(/fn\s+\w+\s*\([^)]*\)\s*(->\s*\w+\s*)?\{[\s\S]*?\}/g) || [];
 				rustFunctions.forEach((func) => {
@@ -276,11 +257,9 @@ export class CodeQualityAnalyzer {
 		const duplicates = new Set<string>();
 		const seen = new Set<string>();
 
-		// Check for duplicate lines (simplified)
 		lines.forEach((line) => {
 			const trimmed = line.trim();
 			if (trimmed.length > 10) {
-				// Only check substantial lines
 				if (seen.has(trimmed)) {
 					duplicates.add(trimmed);
 				} else {
@@ -298,10 +277,8 @@ export class CodeQualityAnalyzer {
 		switch (language) {
 			case "javascript":
 			case "typescript": {
-				// Check for camelCase variables and functions
 				const identifiers = code.match(/\b[a-zA-Z_$][a-zA-Z0-9_$]*\b/g) || [];
 				const badNames = identifiers.filter((id) => {
-					// Check for snake_case in JS/TS (should be camelCase)
 					return id.includes("_") && !id.startsWith("_");
 				});
 				score -= badNames.length * 5;
@@ -309,10 +286,8 @@ export class CodeQualityAnalyzer {
 			}
 
 			case "python": {
-				// Check for snake_case
 				const pyIdentifiers = code.match(/\b[a-zA-Z_][a-zA-Z0-9_]*\b/g) || [];
 				const badPyNames = pyIdentifiers.filter((id) => {
-					// Check for camelCase in Python (should be snake_case)
 					return /[a-z][A-Z]/.test(id);
 				});
 				score -= badPyNames.length * 5;
@@ -320,10 +295,8 @@ export class CodeQualityAnalyzer {
 			}
 
 			case "rust": {
-				// Check for snake_case
 				const rustIdentifiers = code.match(/\b[a-zA-Z_][a-zA-Z0-9_]*\b/g) || [];
 				const badRustNames = rustIdentifiers.filter((id) => {
-					// Check for camelCase in Rust functions (should be snake_case)
 					return /[a-z][A-Z]/.test(id) && !id.startsWith("A-Z");
 				});
 				score -= badRustNames.length * 5;
@@ -371,14 +344,12 @@ export class CodeQualityAnalyzer {
 	private calculateTestabilityScore(code: string, _language: string): number {
 		let score = 50; // Base score
 
-		// Check for pure functions (no side effects)
 		const hasConsole = code.includes("console.");
 		const hasGlobalVars = /\bvar\s+\w+/.test(code) || /\blet\s+\w+\s*=/.test(code);
 
 		if (!hasConsole) score += 20;
 		if (!hasGlobalVars) score += 30;
 
-		// Check for dependency injection
 		if (code.includes("function") && /\([^)]*\w+\s*\)/.test(code)) {
 			score += 20;
 		}
@@ -400,30 +371,22 @@ export class CodeQualityAnalyzer {
 
 		let score = 0;
 
-		// Maintainability index (higher is better)
 		score += ((metrics.maintainabilityIndex ?? 0) / 100) * weights.maintainabilityIndex;
 
-		// Cyclomatic complexity (lower is better)
 		const complexityScore = Math.max(0, 1 - (metrics.cyclomaticComplexity ?? 0) / 50);
 		score += complexityScore * weights.cyclomaticComplexity;
 
-		// Comment ratio (higher is better)
 		score += Math.min((metrics.commentRatio ?? 0) * 2, 1) * weights.commentRatio;
 
-		// Function length (lower is better)
 		const lengthScore = Math.max(0, 1 - (metrics.averageFunctionLength ?? 0) / 100);
 		score += lengthScore * weights.averageFunctionLength;
 
-		// Duplicate code (lower is better)
 		score += (1 - (metrics.duplicateCodeRatio ?? 0)) * weights.duplicateCodeRatio;
 
-		// Naming conventions (higher is better)
 		score += (metrics.namingConventionScore ?? 0 / 100) * weights.namingConventionScore;
 
-		// Error handling (higher is better)
 		score += (metrics.errorHandlingScore ?? 0 / 100) * weights.errorHandlingScore;
 
-		// Testability (higher is better)
 		score += (metrics.testabilityScore ?? 0 / 100) * weights.testabilityScore;
 
 		return Math.round(score * 100);
@@ -436,7 +399,6 @@ export class CodeQualityAnalyzer {
 	): CodeQualityIssue[] {
 		const issues: CodeQualityIssue[] = [];
 
-		// Complexity issues
 		if (metrics.cyclomaticComplexity > CodeQualityAnalyzer.COMPLEXITY_THRESHOLDS.poor) {
 			issues.push({
 				type: "complexity",
@@ -453,7 +415,6 @@ export class CodeQualityAnalyzer {
 			});
 		}
 
-		// Maintainability issues
 		if (metrics.maintainabilityIndex < CodeQualityAnalyzer.MAINTAINABILITY_THRESHOLDS.poor) {
 			issues.push({
 				type: "maintainability",
@@ -463,7 +424,6 @@ export class CodeQualityAnalyzer {
 			});
 		}
 
-		// Function length issues
 		if (metrics.maxFunctionLength > CodeQualityAnalyzer.FUNCTION_LENGTH_THRESHOLDS.poor) {
 			issues.push({
 				type: "readability",
@@ -473,7 +433,6 @@ export class CodeQualityAnalyzer {
 			});
 		}
 
-		// Comment issues
 		if (metrics.commentRatio < 0.05) {
 			issues.push({
 				type: "readability",
@@ -483,7 +442,6 @@ export class CodeQualityAnalyzer {
 			});
 		}
 
-		// Duplicate code issues
 		if (metrics.duplicateCodeRatio > 0.1) {
 			issues.push({
 				type: "maintainability",
@@ -493,7 +451,6 @@ export class CodeQualityAnalyzer {
 			});
 		}
 
-		// Naming convention issues
 		if (metrics.namingConventionScore < 70) {
 			issues.push({
 				type: "convention",
@@ -503,7 +460,6 @@ export class CodeQualityAnalyzer {
 			});
 		}
 
-		// Error handling issues
 		if (metrics.errorHandlingScore < 30) {
 			issues.push({
 				type: "maintainability",
@@ -513,7 +469,6 @@ export class CodeQualityAnalyzer {
 			});
 		}
 
-		// Security issues (basic check)
 		if (code.includes("eval(") || code.includes("Function(")) {
 			issues.push({
 				type: "security",
@@ -529,14 +484,12 @@ export class CodeQualityAnalyzer {
 	private generateSuggestions(issues: CodeQualityIssue[], metrics: CodeQualityMetrics): string[] {
 		const suggestions: string[] = [];
 
-		// General suggestions based on metrics
 		if (metrics.overallScore < 50) {
 			suggestions.push("Consider a complete refactor to improve code quality");
 		} else if (metrics.overallScore < 70) {
 			suggestions.push("Focus on reducing complexity and improving structure");
 		}
 
-		// Specific suggestions based on issues
 		const hasComplexityIssues = issues.some((i) => i.type === "complexity");
 		const hasReadabilityIssues = issues.some((i) => i.type === "readability");
 
@@ -552,7 +505,6 @@ export class CodeQualityAnalyzer {
 			);
 		}
 
-		// Language-specific suggestions
 		if (metrics.errorHandlingScore < 50) {
 			suggestions.push("Implement comprehensive error handling with try-catch blocks");
 		}

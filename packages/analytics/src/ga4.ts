@@ -1,7 +1,5 @@
-// GA4 Analytics Implementation
 import { z } from "zod";
 
-// GA4 Event Types
 export enum GA4EventType {
 	PAGE_VIEW = "page_view",
 	USER_ENGAGEMENT = "user_engagement",
@@ -22,7 +20,6 @@ export enum GA4EventType {
 	REFERRAL = "referral",
 }
 
-// GA4 Event Schema
 export const GA4EventSchema = z.object({
 	name: z.string(),
 	parameters: z.record(z.string(), z.unknown()).optional(),
@@ -30,7 +27,6 @@ export const GA4EventSchema = z.object({
 
 export type GA4Event = z.infer<typeof GA4EventSchema>;
 
-// GA4 Configuration
 export interface GA4Config {
 	measurementId: string;
 	apiSecret: string;
@@ -47,7 +43,6 @@ export interface GA4Config {
 	};
 }
 
-// GA4 Client
 export class GA4Client {
 	private config: GA4Config;
 	private baseUrl = "https://www.google-analytics.com/mp/collect";
@@ -60,7 +55,6 @@ export class GA4Client {
 		return this.config;
 	}
 
-	// Send event to GA4
 	async sendEvent(
 		clientId: string,
 		event: GA4Event,
@@ -76,7 +70,6 @@ export class GA4Client {
 							...event.parameters,
 							...this.config.customParameters,
 							debug_mode: this.config.debug ? 1 : 0,
-							// Privacy controls
 							...(this.config.privacySettings?.anonymizeIp && {
 								anonymize_ip: true,
 							}),
@@ -104,7 +97,6 @@ export class GA4Client {
 		}
 	}
 
-	// Send multiple events
 	async sendEvents(
 		clientId: string,
 		events: GA4Event[],
@@ -123,7 +115,6 @@ export class GA4Client {
 						...event.parameters,
 						...this.config.customParameters,
 						debug_mode: this.config.debug ? 1 : 0,
-						// Privacy controls
 						...(this.config.privacySettings?.anonymizeIp && {
 							anonymize_ip: true,
 						}),
@@ -131,7 +122,6 @@ export class GA4Client {
 				})),
 			};
 
-			// Only include user_properties if provided
 			if (userProperties && Object.keys(userProperties).length > 0) {
 				payload.user_properties = userProperties;
 			}
@@ -154,7 +144,6 @@ export class GA4Client {
 		}
 	}
 
-	// Track page view
 	async trackPageView(
 		clientId: string,
 		pageTitle: string,
@@ -171,7 +160,6 @@ export class GA4Client {
 		});
 	}
 
-	// Track user engagement
 	async trackEngagement(
 		clientId: string,
 		engagementTime: number,
@@ -188,7 +176,6 @@ export class GA4Client {
 		});
 	}
 
-	// Track course progress
 	async trackCourseProgress(
 		clientId: string,
 		courseId: string,
@@ -207,7 +194,6 @@ export class GA4Client {
 		});
 	}
 
-	// Track XP earning
 	async trackXPEarned(
 		clientId: string,
 		amount: number,
@@ -226,7 +212,6 @@ export class GA4Client {
 		});
 	}
 
-	// Track achievement unlock
 	async trackAchievementUnlocked(
 		clientId: string,
 		achievementId: string,
@@ -245,7 +230,6 @@ export class GA4Client {
 		});
 	}
 
-	// Track leaderboard interaction
 	async trackLeaderboardView(
 		clientId: string,
 		leaderboardType: string,
@@ -263,7 +247,6 @@ export class GA4Client {
 	}
 }
 
-// GA4 Analytics Service
 export class GA4AnalyticsService {
 	private client: GA4Client;
 	private eventQueue: Array<{
@@ -277,20 +260,16 @@ export class GA4AnalyticsService {
 		this.client = new GA4Client(config);
 	}
 
-	// Get GA4 config
 	getConfig(): GA4Config {
 		return this.client.getConfig();
 	}
 
-	// Initialize GA4
 	init(): void {
-		// Load GA4 script if in browser environment
 		if (typeof window !== "undefined") {
 			this.loadGAScript();
 		}
 	}
 
-	// Track event
 	async trackEvent(
 		clientId: string,
 		event: GA4Event,
@@ -308,7 +287,6 @@ export class GA4AnalyticsService {
 		await this.processQueue();
 	}
 
-	// Track user action
 	async trackUserAction(
 		clientId: string,
 		action: string,
@@ -328,7 +306,6 @@ export class GA4AnalyticsService {
 		});
 	}
 
-	// Track conversion
 	async trackConversion(
 		clientId: string,
 		conversionType: string,
@@ -347,7 +324,6 @@ export class GA4AnalyticsService {
 		});
 	}
 
-	// Track funnel step
 	async trackFunnelStep(
 		clientId: string,
 		funnelName: string,
@@ -366,15 +342,12 @@ export class GA4AnalyticsService {
 		});
 	}
 
-	// Get analytics data (for reporting)
 	async getAnalyticsData(
 		startDate: string,
 		endDate: string,
 		metrics: string[],
 		dimensions: string[]
 	): Promise<unknown> {
-		// This would integrate with GA4 Data API
-		// For now, return mock data
 		return {
 			reports: [],
 			metadata: {
@@ -386,7 +359,6 @@ export class GA4AnalyticsService {
 		};
 	}
 
-	// Set user properties
 	async setUserProperties(clientId: string, properties: Record<string, unknown>): Promise<void> {
 		await this.trackEvent(clientId, {
 			name: "set_user_properties",
@@ -394,7 +366,6 @@ export class GA4AnalyticsService {
 		});
 	}
 
-	// Track custom event
 	async trackCustomEvent(
 		clientId: string,
 		eventName: string,
@@ -416,7 +387,6 @@ export class GA4AnalyticsService {
 		this.isProcessing = true;
 
 		try {
-			// Process events in batches
 			const batchSize = 25;
 			while (this.eventQueue.length > 0) {
 				const batch = this.eventQueue.splice(0, batchSize);
@@ -434,13 +404,11 @@ export class GA4AnalyticsService {
 	}
 
 	private loadGAScript(): void {
-		// Load Google Analytics script
 		const script = document.createElement("script");
 		script.async = true;
 		script.src = `https://www.googletagmanager.com/gtag/js?id=${this.client.getConfig().measurementId}`;
 		document.head.appendChild(script);
 
-		// Initialize gtag
 		const win = window as unknown as { dataLayer: unknown[] };
 		win.dataLayer = win.dataLayer || [];
 		function gtag(...args: unknown[]) {
@@ -456,10 +424,8 @@ export class GA4AnalyticsService {
 		const crossDomainSettings = config.crossDomainSettings;
 
 		gtag("config", config.measurementId, {
-			// Privacy settings
 			anonymize_ip: privacySettings.anonymizeIp,
 			allow_ad_features: !privacySettings.disableAdvertisingFeatures,
-			// Cross-domain tracking
 			...(crossDomainSettings && {
 				linker: {
 					domains: crossDomainSettings.domains,
@@ -470,7 +436,6 @@ export class GA4AnalyticsService {
 	}
 }
 
-// Funnel Analysis
 export class FunnelAnalysis {
 	private _ga4Service: GA4AnalyticsService;
 
@@ -478,7 +443,6 @@ export class FunnelAnalysis {
 		this._ga4Service = ga4Service;
 	}
 
-	// Define funnel
 	async defineFunnel(
 		_funnelId: string,
 		_name: string,
@@ -488,10 +452,9 @@ export class FunnelAnalysis {
 			conditions?: Record<string, unknown>;
 		}>
 	): Promise<void> {
-		// ignored
+		/* noop */
 	}
 
-	// Track funnel progress
 	async trackFunnelProgress(
 		clientId: string,
 		funnelId: string,
@@ -502,13 +465,11 @@ export class FunnelAnalysis {
 		await this._ga4Service.trackFunnelStep(clientId, funnelId, stepName, stepNumber, userId);
 	}
 
-	// Analyze funnel performance
 	async analyzeFunnel(
 		_funnelId: string,
 		_startDate: string,
 		_endDate: string
 	): Promise<FunnelResult> {
-		// In real implementation, this would query GA4 Data API
 		return {
 			funnelId: "",
 			totalEntrants: 0,
@@ -527,13 +488,7 @@ export interface FunnelResult {
 	averageTimeToComplete: number;
 }
 
-// Audience Segmentation
 export class AudienceSegmentation {
-	// biome-ignore lint/complexity/noUselessConstructor: accepts ga4Service for API compatibility
-	// biome-ignore lint/suspicious/noEmptyBlockStatements: intentionally empty
-	constructor(_ga4Service: GA4AnalyticsService) {}
-
-	// Create audience segment
 	async createSegment(
 		_segmentId: string,
 		_name: string,
@@ -543,17 +498,15 @@ export class AudienceSegmentation {
 			value: unknown;
 		}>
 	): Promise<void> {
-		// ignored
+		/* noop */
 	}
 
-	// Analyze segment
 	async analyzeSegment(
 		_segmentId: string,
 		_metrics: string[],
 		_startDate: string,
 		_endDate: string
 	): Promise<SegmentAnalysis> {
-		// In real implementation, this would query GA4 Data API
 		return {
 			segmentId: "",
 			userCount: 0,
@@ -563,9 +516,7 @@ export class AudienceSegmentation {
 		};
 	}
 
-	// Get segment users
 	async getSegmentUsers(_segmentId: string): Promise<string[]> {
-		// In real implementation, this would query user data
 		return [];
 	}
 }
@@ -578,13 +529,7 @@ export interface SegmentAnalysis {
 	topEvents: Array<{ event: string; count: number }>;
 }
 
-// Custom Reports and Dashboards
 export class CustomReports {
-	// biome-ignore lint/complexity/noUselessConstructor: accepts ga4Service for API compatibility
-	// biome-ignore lint/suspicious/noEmptyBlockStatements: intentionally empty
-	constructor(_ga4Service: GA4AnalyticsService) {}
-
-	// Create custom report
 	async createReport(
 		_reportId: string,
 		_name: string,
@@ -603,12 +548,10 @@ export class CustomReports {
 			}>;
 		}
 	): Promise<void> {
-		// ignored
+		/* noop */
 	}
 
-	// Generate report
 	async generateReport(_reportId: string): Promise<ReportData> {
-		// In real implementation, this would query GA4 Data API
 		return {
 			reportId: "",
 			data: [],
@@ -619,14 +562,11 @@ export class CustomReports {
 		};
 	}
 
-	// Create dashboard
 	async createDashboard(_dashboardId: string, _name: string, _reports: string[]): Promise<void> {
-		// ignored
+		/* noop */
 	}
 
-	// Get dashboard data
 	async getDashboardData(_dashboardId: string): Promise<DashboardData> {
-		// In real implementation, this would aggregate multiple reports
 		return {
 			dashboardId: "",
 			reports: [],
@@ -650,7 +590,6 @@ export interface DashboardData {
 	lastUpdated: string;
 }
 
-// Privacy Controls
 export class PrivacyControls {
 	private _ga4Service: GA4AnalyticsService;
 
@@ -658,7 +597,6 @@ export class PrivacyControls {
 		this._ga4Service = ga4Service;
 	}
 
-	// Configure privacy settings
 	async configurePrivacy(
 		clientId: string,
 		settings: {
@@ -675,7 +613,6 @@ export class PrivacyControls {
 		});
 	}
 
-	// Handle GDPR consent
 	async handleGDPRConsent(
 		clientId: string,
 		consentGiven: boolean,
@@ -690,14 +627,11 @@ export class PrivacyControls {
 		});
 	}
 
-	// Delete user data
 	async deleteUserData(_userId: string): Promise<void> {
-		// ignored
+		/* noop */
 	}
 
-	// Export user data
 	async exportUserData(userId: string): Promise<unknown> {
-		// In real implementation, this would call GA4 Data API to export user data
 		return {
 			userId,
 			data: {},
@@ -706,30 +640,20 @@ export class PrivacyControls {
 	}
 }
 
-// Data Retention Management
 export class DataRetentionManager {
-	// biome-ignore lint/complexity/noUselessConstructor: accepts ga4Service for API compatibility
-	// biome-ignore lint/suspicious/noEmptyBlockStatements: intentionally empty
-	constructor(_ga4Service: GA4AnalyticsService) {}
-
-	// Set data retention policy
 	async setRetentionPolicy(_propertyId: string, _retentionDays: number): Promise<void> {
-		// ignored
+		/* noop */
 	}
 
-	// Get current retention policy
 	async getRetentionPolicy(_propertyId: string): Promise<number> {
-		// In real implementation, this would query GA4 Admin API
 		return 26; // Default 26 months
 	}
 
-	// Schedule data deletion
 	async scheduleDataDeletion(_userId: string, _deleteAfterDays: number): Promise<void> {
-		// ignored
+		/* noop */
 	}
 }
 
-// Cross-Domain Tracking
 export class CrossDomainTracking {
 	private _ga4Service: GA4AnalyticsService;
 
@@ -737,21 +661,17 @@ export class CrossDomainTracking {
 		this._ga4Service = ga4Service;
 	}
 
-	// Configure cross-domain tracking
 	async configureCrossDomain(_domains: string[], _linkerParameter = "_gl"): Promise<void> {
-		// ignored
+		/* noop */
 	}
 
-	// Generate cross-domain link
 	generateCrossDomainLink(targetUrl: string, sourceParams: Record<string, string>): string {
-		// In real implementation, this would generate linker parameter
 		const linkerParam = btoa(JSON.stringify(sourceParams));
 		const config = this._ga4Service.getConfig();
 		const linkerParameter = config.crossDomainSettings?.linkerParameter ?? "_gl";
 		return `${targetUrl}?${linkerParameter}=${linkerParam}`;
 	}
 
-	// Process cross-domain linker
 	processCrossDomainLink(linkerParam: string): Record<string, string> {
 		try {
 			return JSON.parse(atob(linkerParam));
@@ -761,7 +681,6 @@ export class CrossDomainTracking {
 	}
 }
 
-// GA4 Factory
 export const GA4Factory = {
 	createGA4Service(config: GA4Config): GA4AnalyticsService {
 		const service = new GA4AnalyticsService(config);

@@ -181,10 +181,8 @@ export class GradingAuditTrail {
 			);
 		}
 
-		// Sort by timestamp descending
 		results.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 
-		// Apply pagination
 		const offset = query.offset || 0;
 		const limit = query.limit || 50;
 		return results.slice(offset, offset + limit);
@@ -301,7 +299,6 @@ export class GradingAuditTrail {
 
 		const submissionIds = new Set(
 			entries.map((entry) => {
-				// Find submission ID from entry (this would need proper mapping in real implementation)
 				return entry.details.executionResult?.testResults[0]?.testCaseId || "";
 			})
 		).size;
@@ -336,15 +333,12 @@ export class GradingAuditTrail {
 	}
 
 	private sanitizeDetails(details: AuditDetails): AuditDetails {
-		// Remove sensitive information from audit details
 		const sanitized = { ...details };
 
-		// Truncate code snippets for privacy
 		if (sanitized.codeSnippet && sanitized.codeSnippet.length > 200) {
 			sanitized.codeSnippet = `${sanitized.codeSnippet.substring(0, 200)}...`;
 		}
 
-		// Remove potential PII from error messages
 		if (sanitized.errorMessage) {
 			sanitized.errorMessage = sanitized.errorMessage.replace(
 				/\/Users\/[^/]+/g,

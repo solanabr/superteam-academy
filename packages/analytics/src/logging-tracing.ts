@@ -1,7 +1,5 @@
-// Logging and Distributed Tracing Implementation
 import { z } from "zod";
 
-// Log Levels
 export enum LogLevel {
 	DEBUG = 0,
 	INFO = 1,
@@ -10,7 +8,6 @@ export enum LogLevel {
 	FATAL = 4,
 }
 
-// Log Entry Schema
 export const LogEntrySchema = z.object({
 	id: z.string().uuid(),
 	timestamp: z.date(),
@@ -40,7 +37,6 @@ export const LogEntrySchema = z.object({
 
 export type LogEntry = z.infer<typeof LogEntrySchema>;
 
-// Span Context for Tracing
 export interface SpanContext {
 	traceId: string;
 	spanId: string;
@@ -48,7 +44,6 @@ export interface SpanContext {
 	sampled: boolean;
 }
 
-// Span Schema
 export const SpanSchema = z.object({
 	id: z.string(),
 	traceId: z.string(),
@@ -83,7 +78,6 @@ export const SpanSchema = z.object({
 
 export type Span = z.infer<typeof SpanSchema>;
 
-// Logger Configuration
 export interface LoggerConfig {
 	serviceName: string;
 	serviceVersion: string;
@@ -102,7 +96,6 @@ export interface LoggerConfig {
 	};
 }
 
-// Log Transport Interface
 export interface LogTransport {
 	name: string;
 	level: LogLevel;
@@ -111,7 +104,6 @@ export interface LogTransport {
 	close(): Promise<void>;
 }
 
-// Built-in Transports
 export class ConsoleTransport implements LogTransport {
 	name = "console";
 	level: LogLevel;
@@ -155,11 +147,11 @@ export class ConsoleTransport implements LogTransport {
 	}
 
 	async flush(): Promise<void> {
-		// No-op for console
+		/* noop */
 	}
 
 	async close(): Promise<void> {
-		// No-op for console
+		/* noop */
 	}
 }
 
@@ -174,16 +166,16 @@ export class FileTransport implements LogTransport {
 	}
 
 	async log(_entry: LogEntry): Promise<void> {
-		// ignored
+		/* noop */
 	}
 
 	async flush(): Promise<void> {
-		// Flush file stream if implemented
+		/* noop */
 	}
 
 	async close(): Promise<void> {
 		if (this.writeStream) {
-			// Close file stream
+			/* noop */
 		}
 	}
 }
@@ -239,12 +231,10 @@ export class HTTPTransport implements LogTransport {
 
 			if (!response.ok) {
 				console.error(`Log transport failed: ${response.status}`);
-				// Put entries back in buffer
 				this.buffer.unshift(...entries);
 			}
 		} catch (error) {
 			console.error("Error sending logs:", error);
-			// Put entries back in buffer
 			this.buffer.unshift(...entries);
 		}
 	}
@@ -257,7 +247,6 @@ export class HTTPTransport implements LogTransport {
 	}
 }
 
-// Logger Class
 export class Logger {
 	private config: LoggerConfig;
 	private context: Record<string, unknown> = {};
@@ -267,17 +256,14 @@ export class Logger {
 		this.config = config;
 	}
 
-	// Set global context
 	setContext(context: Record<string, unknown>): void {
 		this.context = { ...this.context, ...context };
 	}
 
-	// Set span context for tracing
 	setSpanContext(spanContext: SpanContext): void {
 		this.spanContext = spanContext;
 	}
 
-	// Create child logger with additional context
 	child(context: Record<string, unknown>): Logger {
 		const childLogger = new Logger(this.config);
 		childLogger.context = { ...this.context, ...context };
@@ -287,7 +273,6 @@ export class Logger {
 		return childLogger;
 	}
 
-	// Log methods
 	debug(message: string, context?: Record<string, unknown>, error?: Error): void {
 		this.log(LogLevel.DEBUG, message, context, error);
 	}
@@ -308,7 +293,6 @@ export class Logger {
 		this.log(LogLevel.FATAL, message, context, error);
 	}
 
-	// Generic log method
 	private log(
 		level: LogLevel,
 		message: string,
@@ -317,7 +301,6 @@ export class Logger {
 	): void {
 		if (level < this.config.level) return;
 
-		// Apply sampling
 		if (this.config.sampling.enabled && Math.random() > this.config.sampling.rate) {
 			return;
 		}
@@ -345,7 +328,6 @@ export class Logger {
 			}),
 		};
 
-		// Send to all transports
 		this.config.transports
 			.filter((transport) => level >= transport.level)
 			.forEach((transport) => {
@@ -355,18 +337,15 @@ export class Logger {
 			});
 	}
 
-	// Flush all transports
 	async flush(): Promise<void> {
 		await Promise.all(this.config.transports.map((transport) => transport.flush()));
 	}
 
-	// Close all transports
 	async close(): Promise<void> {
 		await Promise.all(this.config.transports.map((transport) => transport.close()));
 	}
 }
 
-// Tracer for Distributed Tracing
 export class Tracer {
 	private serviceName: string;
 	private spans: Map<string, Span> = new Map();
@@ -376,12 +355,13 @@ export class Tracer {
 		this.serviceName = serviceName;
 	}
 
-	// Start a new span
 	startSpan(
 		name: string,
 		kind: Span["kind"] = "internal",
 		parentContext?: SpanContext,
-		attributes: Record<string, unknown> = {}
+		attributes: Record<string, unknown> = {
+			/* noop */
+		}
 	): SpanContext {
 		const spanId = this.generateSpanId();
 		const traceId = parentContext?.traceId || this.generateTraceId();
@@ -412,7 +392,6 @@ export class Tracer {
 		};
 	}
 
-	// End a span
 	endSpan(spanContext: SpanContext, status: Span["status"] = "ok", statusMessage?: string): void {
 		const span = this.spans.get(spanContext.spanId);
 		if (!span) return;
@@ -422,17 +401,14 @@ export class Tracer {
 		span.status = status;
 		span.statusMessage = statusMessage;
 
-		// Remove from active spans
 		const index = this.activeSpans.findIndex((s) => s.id === spanContext.spanId);
 		if (index > -1) {
 			this.activeSpans.splice(index, 1);
 		}
 
-		// Export span (in a real implementation, this would send to a tracing backend)
 		this.exportSpan(span);
 	}
 
-	// Add event to active span
 	addEvent(name: string, attributes?: Record<string, unknown>): void {
 		const activeSpan = this.getActiveSpan();
 		if (!activeSpan) return;
@@ -445,7 +421,6 @@ export class Tracer {
 		});
 	}
 
-	// Set attributes on active span
 	setAttributes(attributes: Record<string, unknown>): void {
 		const activeSpan = this.getActiveSpan();
 		if (!activeSpan) return;
@@ -453,38 +428,31 @@ export class Tracer {
 		activeSpan.attributes = { ...activeSpan.attributes, ...attributes };
 	}
 
-	// Get active span
 	private getActiveSpan(): Span | undefined {
 		return this.activeSpans[this.activeSpans.length - 1];
 	}
 
-	// Generate trace ID
 	private generateTraceId(): string {
 		return crypto.randomUUID();
 	}
 
-	// Generate span ID
 	private generateSpanId(): string {
 		return crypto.randomUUID().slice(0, 16);
 	}
 
-	// Export span (placeholder for actual tracing backend)
 	private exportSpan(_span: Span): void {
-		// ignored
+		/* noop */
 	}
 
-	// Get all spans for a trace
 	getSpansForTrace(traceId: string): Span[] {
 		return Array.from(this.spans.values()).filter((span) => span.traceId === traceId);
 	}
 
-	// Get active spans
 	getActiveSpans(): Span[] {
 		return [...this.activeSpans];
 	}
 }
 
-// Logging and Tracing Factory
 export const LoggingTracingFactory = {
 	createLogger(config: LoggerConfig): Logger {
 		return new Logger(config);
@@ -563,7 +531,6 @@ export interface MiddlewareResponse {
 	get(name: string): string | undefined;
 }
 
-// Middleware for HTTP request logging and tracing
 export class HTTPLoggingMiddleware {
 	private logger: Logger;
 	private tracer: Tracer;
@@ -573,7 +540,6 @@ export class HTTPLoggingMiddleware {
 		this.tracer = tracer;
 	}
 
-	// Express.js middleware
 	getExpressMiddleware() {
 		return (req: MiddlewareRequest, res: MiddlewareResponse, next: () => void) => {
 			const startTime = Date.now();
@@ -589,12 +555,10 @@ export class HTTPLoggingMiddleware {
 				}
 			);
 
-			// Set correlation ID
 			const correlationId =
 				(req.headers["x-correlation-id"] as string | undefined) ?? crypto.randomUUID();
 			req.correlationId = correlationId;
 
-			// Create child logger with request context
 			const requestLogger = this.logger.child({
 				correlationId,
 				traceId: spanContext.traceId,
@@ -605,14 +569,12 @@ export class HTTPLoggingMiddleware {
 				ip: req.ip,
 			});
 
-			// Log request
 			requestLogger.info("HTTP request started", {
 				method: req.method,
 				url: req.url,
 				headers: req.headers as Record<string, unknown>,
 			});
 
-			// Override res.end to log response
 			const originalEnd = res.end;
 			res.end = (...args: unknown[]) => {
 				const duration = Date.now() - startTime;
@@ -622,21 +584,18 @@ export class HTTPLoggingMiddleware {
 					"http.duration": duration,
 				});
 
-				// Log response
 				requestLogger.info("HTTP request completed", {
 					statusCode: res.statusCode,
 					duration,
 					contentLength: res.get("Content-Length"),
 				});
 
-				// End span
 				const status: Span["status"] = res.statusCode >= 400 ? "error" : "ok";
 				this.tracer.endSpan(spanContext, status);
 
 				originalEnd.apply(res, args);
 			};
 
-			// Set span context on request
 			req.spanContext = spanContext;
 			req.logger = requestLogger;
 
@@ -644,7 +603,6 @@ export class HTTPLoggingMiddleware {
 		};
 	}
 
-	// Generic middleware for other frameworks
 	logRequest(
 		method: string,
 		url: string,
@@ -692,7 +650,6 @@ export class HTTPLoggingMiddleware {
 	}
 }
 
-// Performance monitoring decorators
 export function logExecutionTime(logger: Logger, operationName: string) {
 	return (_target: unknown, propertyKey: string, descriptor: PropertyDescriptor) => {
 		const originalMethod = descriptor.value;
@@ -730,11 +687,9 @@ export function logExecutionTime(logger: Logger, operationName: string) {
 	};
 }
 
-// Correlation ID utilities
 const _correlationIdStorage = new Map<string, string>();
 
 function _getCorrelationIdKey(): string {
-	// In a real implementation, this would use async local storage
 	return "correlation-id";
 }
 

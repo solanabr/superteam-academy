@@ -188,7 +188,6 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 		if (key in body) patch[key] = body[key];
 	}
 
-	// Resolve current CMS doc and on-chain state
 	const cmsCurrent = sanityWriteClient
 		? await sanityWriteClient
 				.fetch<{
@@ -222,7 +221,6 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 	const onchainCourseId = onchain.courseId;
 	const lessonCount = Math.max(onchain.lessonCount, 1);
 
-	// Compute on-chain deltas — only send values that actually changed
 	const wantActive = typeof patch.published === "boolean" ? (patch.published as boolean) : null;
 	const wantXpTotal =
 		typeof patch.xpReward === "number" ? Math.max(0, Math.floor(Number(patch.xpReward))) : null;
@@ -267,14 +265,12 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 	const onchainSignature = onchainResult.signature;
 	const hasOnchainDelta = onchainResult.changed;
 
-	// Re-fetch on-chain state after update
 	const updatedOnchain = hasOnchainDelta
 		? await getAcademyClient()
 				.fetchCourse(onchainCourseId)
 				.catch(() => onchain)
 		: onchain;
 
-	// Write CMS index
 	const client = sanityWriteClient;
 	if (!client) {
 		return NextResponse.json({
@@ -353,7 +349,6 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
 	const authority = loadBackendSigner();
 	const client = sanityWriteClient;
 
-	// Resolve the slug for PDA derivation
 	let courseDocId: string | null = null;
 	let courseSlug = courseId;
 	if (client) {
@@ -367,7 +362,6 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
 		}
 	}
 
-	// Deactivate on-chain
 	const onchain = await getAcademyClient()
 		.fetchCourse(courseSlug)
 		.catch(() => null);
@@ -406,7 +400,6 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
 		});
 	}
 
-	// Delete CMS modules → lessons → course
 	if (courseDocId) {
 		const modules = await client.fetch<Array<{ _id: string }>>(
 			`*[_type == "module" && references($courseId)]{ _id }`,

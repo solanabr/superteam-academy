@@ -39,11 +39,9 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
 	const params = searchParams ? await searchParams : undefined;
 	const linkedWallet = await getLinkedWallet();
 
-	// Priority: username > wallet > linkedWallet
 	let walletAddress: string | undefined;
 
 	if (params?.username) {
-		// Look up user by username to get wallet address
 		const user = await getUserByUsername(params.username);
 		walletAddress = user?.walletAddress;
 	} else {
@@ -134,14 +132,11 @@ export function ProfileSkeleton() {
 }
 
 async function getDynamicProfile(inputWalletAddress?: string, username?: string) {
-	// Look up Sanity user by username if provided
 	const sanityUserByUsername = username ? await getUserByUsername(username) : null;
 
-	// If no wallet provided, try to get it from the Sanity user
 	const walletAddress = inputWalletAddress || sanityUserByUsername?.walletAddress || undefined;
 
 	if (!walletAddress) {
-		// No wallet at all — show Sanity-only profile or anonymous fallback
 		const gravatarKey = sanityUserByUsername?.email || "anonymous";
 		return {
 			user: {
@@ -169,7 +164,6 @@ async function getDynamicProfile(inputWalletAddress?: string, username?: string)
 	try {
 		learner = new PublicKey(walletAddress);
 	} catch {
-		// Invalid wallet address — show Sanity-only profile if available
 		const resolved = sanityUserByUsername;
 		const gravatarKey = resolved?.email || "unknown";
 		return {
@@ -199,7 +193,6 @@ async function getDynamicProfile(inputWalletAddress?: string, username?: string)
 	const credentialService = new CredentialService(connection, programId);
 	const achievementService = new AchievementService(connection, programId);
 
-	// Fetch everything in parallel — these are all independent
 	const [
 		config,
 		allCourses,
@@ -218,7 +211,6 @@ async function getDynamicProfile(inputWalletAddress?: string, username?: string)
 		getUserByWallet(learner.toBase58()),
 	]);
 
-	// Second pass: things that depend on first pass results
 	const [credentials, xpBalance] = await Promise.all([
 		Promise.all(
 			rawCredentials.map(async (cred) => {
@@ -374,7 +366,6 @@ async function getDynamicProfile(inputWalletAddress?: string, username?: string)
 		},
 	}));
 
-	// Prefer username-fetched Sanity user over wallet-fetched one
 	const resolvedUser = sanityUserByUsername || sanityUser;
 	const gravatarKey = resolvedUser?.email || learner.toBase58();
 

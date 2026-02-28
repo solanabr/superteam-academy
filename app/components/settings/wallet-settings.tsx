@@ -25,7 +25,11 @@ export function WalletSettings() {
 	const t = useTranslations("settings.walletSection");
 	const { toast } = useToast();
 	const { wallet, user } = useAuth();
-	const { data, saving, handleSave: saveSettings } = useSettingsSave({
+	const {
+		data,
+		saving,
+		handleSave: saveSettings,
+	} = useSettingsSave({
 		successTitle: t("toast.savedTitle"),
 		errorTitle: t("toast.errorTitle"),
 		errorDescription: t("toast.errorDescription"),

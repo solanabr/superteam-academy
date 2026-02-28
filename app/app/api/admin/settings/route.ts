@@ -4,7 +4,7 @@ import { requireRole, sanityReadClient, sanityWriteClient } from "@/lib/route-ut
 const SETTINGS_DOC_ID = "platformSettings";
 
 export async function GET() {
-	const auth = await requireRole("superadmin")
+	const auth = await requireRole("superadmin");
 	if (!auth.ok) return auth.response;
 
 	const client = sanityReadClient;
@@ -28,7 +28,7 @@ export async function GET() {
 }
 
 export async function PATCH(request: NextRequest) {
-	const auth = await requireRole("superadmin")
+	const auth = await requireRole("superadmin");
 	if (!auth.ok) return auth.response;
 
 	const client = sanityWriteClient;

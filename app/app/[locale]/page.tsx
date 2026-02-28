@@ -1,15 +1,15 @@
 import { Link } from "@superteam-academy/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import {
-    ArrowRight,
-    BookOpen,
-    Users,
-    Zap,
-    Shield,
-    Code,
-    Award,
-    TrendingUp,
-    Clock,
+	ArrowRight,
+	BookOpen,
+	Users,
+	Zap,
+	Shield,
+	Code,
+	Award,
+	TrendingUp,
+	Clock,
 } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";

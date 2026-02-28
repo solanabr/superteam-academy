@@ -46,13 +46,11 @@ export default async function LocaleLayout({
 }) {
 	const { locale } = await params;
 
-	// Validate locale
 	const isValidLocale = locales.some((l) => l.code === locale);
 	if (!isValidLocale) {
 		notFound();
 	}
 
-	// Set request locale for next-intl
 	setRequestLocale(locale);
 
 	const headerList = await headers();

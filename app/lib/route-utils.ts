@@ -5,7 +5,7 @@ import { createHash } from "node:crypto";
 import { serverAuth } from "@/lib/auth";
 import { readClient, writeClient } from "@/lib/cms-context";
 import { syncAuthSession } from "../app/api/auth/sync/action";
-import { UserRole } from "@/packages/cms/src";
+import type { UserRole } from "@/packages/cms/src";
 
 type AuthResult =
 	| { ok: true; session: NonNullable<Awaited<ReturnType<typeof serverAuth.api.getSession>>> }
@@ -23,9 +23,7 @@ export async function requireSession(): Promise<AuthResult> {
 	return { ok: true, session };
 }
 
-export async function requireRole(
-	...roles: UserRole[]
-): Promise<AuthResult> {
+export async function requireRole(...roles: UserRole[]): Promise<AuthResult> {
 	const auth = await requireSession();
 	if (!auth.ok) return auth;
 	const synced = await syncAuthSession(auth.session);

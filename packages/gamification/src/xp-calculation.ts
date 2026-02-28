@@ -1,6 +1,10 @@
 import { z } from "zod";
 
-// XP Event Types
+/** Spec formula: Level = floor(sqrt(totalXP / 100)) */
+export function levelFromXP(totalXP: number): number {
+	return Math.max(0, Math.floor(Math.sqrt(totalXP / 100)));
+}
+
 export enum XPEventType {
 	LESSON_COMPLETION = "lesson_completion",
 	CHALLENGE_SUCCESS = "challenge_success",
@@ -16,7 +20,6 @@ export enum XPEventType {
 	MONTHLY_ACTIVE = "monthly_active",
 }
 
-// XP Event Schema
 export const XPEventSchema = z.object({
 	id: z.string().uuid(),
 	userId: z.string(),
@@ -31,7 +34,6 @@ export const XPEventSchema = z.object({
 
 export type XPEvent = z.infer<typeof XPEventSchema>;
 
-// XP Calculation Configuration
 export interface XPConfig {
 	baseAmounts: Record<XPEventType, number>;
 	multipliers: {
@@ -56,7 +58,6 @@ export interface XPConfig {
 	};
 }
 
-// Default XP Configuration
 export const DEFAULT_XP_CONFIG: XPConfig = {
 	baseAmounts: {
 		[XPEventType.LESSON_COMPLETION]: 10,
@@ -100,7 +101,6 @@ export const DEFAULT_XP_CONFIG: XPConfig = {
 	},
 };
 
-// XP Calculation Engine
 export class XPCalculationEngine {
 	private config: XPConfig;
 
@@ -108,25 +108,21 @@ export class XPCalculationEngine {
 		this.config = config;
 	}
 
-	// Calculate XP for a single event
 	calculateXP(event: Omit<XPEvent, "amount">): number {
 		let baseAmount = this.config.baseAmounts[event.type];
 
-		// Apply streak multiplier
 		const streakLength = event.metadata?.streakLength;
 		if (typeof streakLength === "number") {
 			const streakMultiplier = this.getStreakMultiplier(streakLength);
 			baseAmount *= streakMultiplier;
 		}
 
-		// Apply time bonus
 		const timeOfDay = event.metadata?.timeOfDay;
 		if (typeof timeOfDay === "string") {
 			const timeMultiplier = this.getTimeMultiplier(timeOfDay);
 			baseAmount *= timeMultiplier;
 		}
 
-		// Apply difficulty multiplier
 		const difficulty = event.metadata?.difficulty;
 		if (typeof difficulty === "string" && difficulty in this.config.multipliers.difficulty) {
 			const difficultyMultiplier =
@@ -136,21 +132,18 @@ export class XPCalculationEngine {
 			baseAmount *= difficultyMultiplier;
 		}
 
-		// Apply custom multiplier
 		baseAmount *= event.multiplier;
 
-		// Apply caps
 		return Math.min(baseAmount, this.getCapForEvent(event));
 	}
 
-	// Calculate level from total XP using spec formula: Level = floor(sqrt(totalXP / 100))
 	calculateLevel(totalXP: number): {
 		level: number;
 		currentXP: number;
 		nextLevelXP: number;
 		progress: number;
 	} {
-		const level = Math.max(0, Math.floor(Math.sqrt(totalXP / 100)));
+		const level = levelFromXP(totalXP);
 		const currentLevelXP = level * level * 100;
 		const nextLevelXP = (level + 1) * (level + 1) * 100;
 		const progress =
@@ -166,7 +159,6 @@ export class XPCalculationEngine {
 		};
 	}
 
-	// Check if XP amount exceeds caps
 	validateXP(
 		event: XPEvent,
 		dailyXP: number,
@@ -187,7 +179,6 @@ export class XPCalculationEngine {
 			};
 		}
 
-		// Check daily cap
 		if (dailyXP + event.amount > this.config.caps.daily) {
 			const available = Math.max(0, this.config.caps.daily - dailyXP);
 			return {
@@ -197,7 +188,6 @@ export class XPCalculationEngine {
 			};
 		}
 
-		// Check weekly cap
 		if (weeklyXP + event.amount > this.config.caps.weekly) {
 			const available = Math.max(0, this.config.caps.weekly - weeklyXP);
 			return {
@@ -207,7 +197,6 @@ export class XPCalculationEngine {
 			};
 		}
 
-		// Check monthly cap
 		if (monthlyXP + event.amount > this.config.caps.monthly) {
 			const available = Math.max(0, this.config.caps.monthly - monthlyXP);
 			return {
@@ -224,7 +213,6 @@ export class XPCalculationEngine {
 	}
 
 	private getStreakMultiplier(streakLength: number): number {
-		// Find the highest applicable streak multiplier
 		let multiplier = 1;
 		for (const [threshold, mult] of Object.entries(this.config.multipliers.streak)) {
 			if (streakLength >= parseInt(threshold, 10)) {
@@ -239,7 +227,6 @@ export class XPCalculationEngine {
 	}
 
 	private getCapForEvent(event: Omit<XPEvent, "amount">): number {
-		// Different event types may have different caps
 		switch (event.type) {
 			case XPEventType.LEVEL_UP:
 				return 1000; // Level up events have higher cap
@@ -250,18 +237,15 @@ export class XPCalculationEngine {
 		}
 	}
 
-	// Update configuration
 	updateConfig(newConfig: Partial<XPConfig>): void {
 		this.config = { ...this.config, ...newConfig };
 	}
 
-	// Get current configuration
 	getConfig(): XPConfig {
 		return { ...this.config };
 	}
 }
 
-// XP Analytics Types
 export interface XPStats {
 	totalXP: number;
 	level: number;

@@ -3,19 +3,19 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Link } from "@superteam-academy/i18n/navigation";
 import {
-    Code,
-    Layers,
-    Shield,
-    Coins,
-    Palette,
-    BarChart3,
-    Blocks,
-    Globe,
-    Cpu,
-    Smartphone,
-    BookOpen,
-    ArrowLeft,
-    Search,
+	Code,
+	Layers,
+	Shield,
+	Coins,
+	Palette,
+	BarChart3,
+	Blocks,
+	Globe,
+	Cpu,
+	Smartphone,
+	BookOpen,
+	ArrowLeft,
+	Search,
 } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { CourseGrid } from "@/components/courses/course-grid";
@@ -320,30 +320,30 @@ async function getTopicCourses(slug: string, level: string, sort: string) {
 	const baseCourses: TopicCourse[] = onchainCourses
 		.filter((entry) => entry.account.isActive)
 		.map((entry) => {
-		const courseId = entry.account.courseId;
-		const cms = cmsByCourseId.get(courseId);
-		const lessonCount = entry.account.lessonCount;
-		const category = cms?.track ?? "solana";
-		const tags = cms?.track ? [cms.track] : ["solana"];
+			const courseId = entry.account.courseId;
+			const cms = cmsByCourseId.get(courseId);
+			const lessonCount = entry.account.lessonCount;
+			const category = cms?.track ?? "solana";
+			const tags = cms?.track ? [cms.track] : ["solana"];
 
-		return {
-			id: courseId,
-			title: cms?.title ?? courseId,
-			description: cms?.description ?? "",
-			category,
-			level: cms?.level ?? mapDifficultyToLevel(entry.account.difficulty),
-			duration: cms?.duration ?? `${Math.max(lessonCount, 1) * 10} min`,
-			students: entry.account.totalEnrollments,
-			instructor: "",
-			image: resolveCourseImageUrl(cms?.image, 960, 540) ?? "/courses/default.jpg",
-			tags,
-			topics: deriveTopics(category, tags),
-			xpReward: entry.account.xpPerLesson * lessonCount,
-			price: 0,
-			featured: false,
-			gradient: "from-green to-forest",
-		};
-	});
+			return {
+				id: courseId,
+				title: cms?.title ?? courseId,
+				description: cms?.description ?? "",
+				category,
+				level: cms?.level ?? mapDifficultyToLevel(entry.account.difficulty),
+				duration: cms?.duration ?? `${Math.max(lessonCount, 1) * 10} min`,
+				students: entry.account.totalEnrollments,
+				instructor: "",
+				image: resolveCourseImageUrl(cms?.image, 960, 540) ?? "/courses/default.jpg",
+				tags,
+				topics: deriveTopics(category, tags),
+				xpReward: entry.account.xpPerLesson * lessonCount,
+				price: 0,
+				featured: false,
+				gradient: "from-green to-forest",
+			};
+		});
 
 	let filtered = baseCourses.filter((course) => course.topics?.includes(slug));
 

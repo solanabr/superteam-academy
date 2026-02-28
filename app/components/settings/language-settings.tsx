@@ -5,11 +5,11 @@ import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
 } from "@/components/ui/select";
 import { useTranslations } from "next-intl";
 import { useSettingsSave } from "@/hooks/use-settings";
@@ -48,7 +48,11 @@ function getLocale(lang: Language) {
 
 export function LanguageSettings() {
 	const t = useTranslations("settings.languageSection");
-	const { data, saving, handleSave: saveSettings } = useSettingsSave({
+	const {
+		data,
+		saving,
+		handleSave: saveSettings,
+	} = useSettingsSave({
 		successTitle: t("toast.savedTitle"),
 		errorTitle: t("toast.errorTitle"),
 		errorDescription: t("toast.errorDescription"),

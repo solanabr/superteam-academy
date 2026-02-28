@@ -14,7 +14,6 @@ export async function syncAuthSession(
 	const { user } = session;
 	const walletAddress = isWalletEmail(user.email) ? walletFromEmail(user.email) : undefined;
 
-	// Fast path: return cached role if user already exists in Sanity
 	const existing = await getUserByAuthId(user.id);
 	if (existing) {
 		const syncPromise = syncUserToSanity({
@@ -35,7 +34,6 @@ export async function syncAuthSession(
 		};
 	}
 
-	// New user: need to wait for creation to get the role
 	const sanityUser = await syncUserToSanity({
 		authId: user.id,
 		name: user.name,

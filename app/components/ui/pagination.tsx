@@ -25,7 +25,6 @@ export function Pagination({
 		const params = new URLSearchParams();
 		Object.entries(searchParams).forEach(([key, value]) => {
 			if (value && value !== "1") {
-				// Don't include page=1
 				params.set(key, value);
 			}
 		});

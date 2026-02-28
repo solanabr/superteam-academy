@@ -58,7 +58,6 @@ export async function POST(request: Request) {
 
 		const tx = new Transaction();
 
-		// Ensure the learner's Token-2022 ATA exists (CreateIdempotent = instruction index 1)
 		const ataInfo = await connection.getAccountInfo(learnerTokenAccount);
 		if (!ataInfo) {
 			const createAtaIx = new TransactionInstruction({

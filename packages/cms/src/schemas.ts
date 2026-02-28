@@ -233,7 +233,6 @@ export type AcademyUser = SanityDocument & {
 	completedCourses: string[];
 	savedCourses: string[];
 
-	// Professional Info
 	title?: string;
 	company?: string;
 	education?: {
@@ -242,25 +241,21 @@ export type AcademyUser = SanityDocument & {
 		graduationYear?: number;
 	};
 
-	// Learning Preferences
 	experienceLevel?: "beginner" | "intermediate" | "advanced" | "expert";
 	preferredTopics?: string[];
 	learningGoals?: string[];
 	timeCommitment?: "casual" | "regular" | "intensive";
 
-	// Social Links (extended)
 	github?: string;
 	linkedin?: string;
 	twitter?: string;
 	portfolio?: string;
 
-	// Additional Profile
 	skills?: string[];
 	languages?: string[]; // Programming languages
 	timezone?: string;
 	availability?: "open" | "busy" | "unavailable";
 
-	// Onboarding metadata
 	onboardingCompleted?: boolean;
 	onboardingStep?: number;
 	profileCompleteness?: number;
@@ -269,8 +264,6 @@ export type AcademyUser = SanityDocument & {
 	linkedAccounts?: LinkedAccountRecord[];
 	lastActiveAt?: string;
 };
-
-// ── Community Schemas ───────────────────────────────────────────
 
 export type DiscussionCategory =
 	| "announcements"

@@ -20,7 +20,6 @@ export enum ErrorCategory {
 	UNKNOWN = "unknown",
 }
 
-// Error Context Schema
 export const ErrorContextSchema = z.object({
 	userId: z.string().optional(),
 	sessionId: z.string().optional(),
@@ -38,7 +37,6 @@ export const ErrorContextSchema = z.object({
 
 export type ErrorContext = z.infer<typeof ErrorContextSchema>;
 
-// Error Report Schema
 export const ErrorReportSchema = z.object({
 	id: z.string().uuid(),
 	message: z.string(),
@@ -68,7 +66,6 @@ export const ErrorReportSchema = z.object({
 
 export type ErrorReport = z.infer<typeof ErrorReportSchema>;
 
-// Alert Configuration
 export interface AlertConfig {
 	enabled: boolean;
 	channels: AlertChannel[];
@@ -80,14 +77,12 @@ export interface AlertConfig {
 	cooldownPeriod: number; // milliseconds
 }
 
-// Alert Channel Interface
 export interface AlertChannel {
 	name: string;
 	type: "email" | "slack" | "webhook" | "pagerduty" | "opsgenie";
 	sendAlert(alert: Alert): Promise<void>;
 }
 
-// Alert Types
 export enum AlertType {
 	ERROR_RATE_SPIKE = "error_rate_spike",
 	HIGH_ERROR_COUNT = "high_error_count",
@@ -96,7 +91,6 @@ export enum AlertType {
 	SERVICE_DOWN = "service_down",
 }
 
-// Alert Schema
 export const AlertSchema = z.object({
 	id: z.string().uuid(),
 	type: z.nativeEnum(AlertType),
@@ -116,7 +110,6 @@ export const AlertSchema = z.object({
 
 export type Alert = z.infer<typeof AlertSchema>;
 
-// Built-in Alert Channels
 export class EmailAlertChannel implements AlertChannel {
 	name: string;
 	type = "email" as const;
@@ -126,7 +119,7 @@ export class EmailAlertChannel implements AlertChannel {
 	}
 
 	async sendAlert(_alert: Alert): Promise<void> {
-		// ignored
+		/* noop */
 	}
 }
 
@@ -231,7 +224,6 @@ export class WebhookAlertChannel implements AlertChannel {
 	}
 }
 
-// Error Monitoring Service
 export class ErrorMonitoringService {
 	private serviceName: string;
 	private environment: string;
@@ -277,19 +269,15 @@ export class ErrorMonitoringService {
 			...context,
 		};
 
-		// Generate fingerprint for grouping
 		const fingerprint = this.generateFingerprint(error, category);
 
-		// Check if this error already exists
 		let report = this.errorReports.get(fingerprint);
 
 		if (report) {
-			// Update existing report
 			report.occurrences++;
 			report.lastSeen = new Date();
 			report.context = fullContext; // Update with latest context
 		} else {
-			// Create new report
 			report = {
 				id: crypto.randomUUID(),
 				message: error.message,
@@ -307,11 +295,9 @@ export class ErrorMonitoringService {
 			this.errorReports.set(fingerprint, report);
 		}
 
-		// Add to recent errors for rate monitoring
 		this.recentErrors.push(report);
 		this.cleanupRecentErrors();
 
-		// Check for alerts
 		await this.checkAlerts(report);
 
 		return report.id;
@@ -329,7 +315,9 @@ export class ErrorMonitoringService {
 		title: string,
 		description: string,
 		severity: ErrorSeverity,
-		data: Record<string, unknown> = {}
+		data: Record<string, unknown> = {
+			/* noop */
+		}
 	): Promise<void> {
 		if (!this.alertConfig.enabled) return;
 
@@ -347,7 +335,6 @@ export class ErrorMonitoringService {
 			resolved: false,
 		};
 
-		// Check cooldown
 		const cooldownKey = `${type}:${severity}`;
 		const lastAlert = this.alertCooldowns.get(cooldownKey);
 		const now = Date.now();
@@ -358,7 +345,6 @@ export class ErrorMonitoringService {
 
 		this.alertCooldowns.set(cooldownKey, now);
 
-		// Send to all channels
 		await Promise.all(this.alertConfig.channels.map((channel) => channel.sendAlert(alert)));
 	}
 
@@ -444,15 +430,12 @@ export class ErrorMonitoringService {
 		};
 	}
 
-	// Generate error fingerprint
 	private generateFingerprint(error: Error, category: ErrorCategory): string {
-		// Simple fingerprint based on error name, message, and stack trace
 		const stack = error.stack || "";
 		const stackLines = stack.split("\n").slice(0, 5).join("\n");
 		return btoa(`${error.name}:${error.message}:${category}:${stackLines}`).slice(0, 32);
 	}
 
-	// Categorize error automatically
 	private categorizeError(error: Error): ErrorCategory {
 		const message = error.message.toLowerCase();
 		const name = error.name.toLowerCase();
@@ -504,9 +487,7 @@ export class ErrorMonitoringService {
 		return ErrorCategory.UNKNOWN;
 	}
 
-	// Determine severity based on error and category
 	private determineSeverity(error: Error, category: ErrorCategory): ErrorSeverity {
-		// Critical errors
 		if (category === ErrorCategory.SECURITY) {
 			return ErrorSeverity.CRITICAL;
 		}
@@ -515,7 +496,6 @@ export class ErrorMonitoringService {
 			return ErrorSeverity.HIGH;
 		}
 
-		// High severity for certain categories
 		if (
 			[ErrorCategory.DATABASE, ErrorCategory.AUTHENTICATION, ErrorCategory.NETWORK].includes(
 				category
@@ -524,22 +504,18 @@ export class ErrorMonitoringService {
 			return ErrorSeverity.HIGH;
 		}
 
-		// Medium severity for business logic and validation
 		if ([ErrorCategory.BUSINESS_LOGIC, ErrorCategory.VALIDATION].includes(category)) {
 			return ErrorSeverity.MEDIUM;
 		}
 
-		// Low severity for unknown or external service errors
 		return ErrorSeverity.LOW;
 	}
 
-	// Check for alerts based on error patterns
 	private async checkAlerts(report: ErrorReport): Promise<void> {
 		if (!this.alertConfig.enabled) return;
 
 		const stats = this.getErrorStats();
 
-		// Check error rate
 		if (stats.errorRate > this.alertConfig.thresholds.errorRate) {
 			await this.createAlert(
 				AlertType.ERROR_RATE_SPIKE,
@@ -550,7 +526,6 @@ export class ErrorMonitoringService {
 			);
 		}
 
-		// Check critical errors
 		if (report.severity === ErrorSeverity.CRITICAL) {
 			await this.createAlert(
 				AlertType.CRITICAL_ERROR,
@@ -561,7 +536,6 @@ export class ErrorMonitoringService {
 			);
 		}
 
-		// Check consecutive errors (simplified)
 		const recentCriticalErrors = this.recentErrors
 			.filter((e) => e.severity === ErrorSeverity.CRITICAL)
 			.slice(-this.alertConfig.thresholds.errorCount);
@@ -580,7 +554,6 @@ export class ErrorMonitoringService {
 		}
 	}
 
-	// Clean up old recent errors (keep last 1000)
 	private cleanupRecentErrors(): void {
 		if (this.recentErrors.length > 1000) {
 			this.recentErrors = this.recentErrors.slice(-500);
@@ -588,7 +561,6 @@ export class ErrorMonitoringService {
 	}
 }
 
-// Error Monitoring Factory
 export const ErrorMonitoringFactory = {
 	createErrorMonitoringService(
 		serviceName: string,
@@ -636,7 +608,6 @@ export const ErrorMonitoringFactory = {
 	},
 };
 
-// Global error handler integration
 export class GlobalErrorHandler {
 	private errorMonitoring: ErrorMonitoringService;
 
@@ -644,9 +615,7 @@ export class GlobalErrorHandler {
 		this.errorMonitoring = errorMonitoring;
 	}
 
-	// Setup global error handlers
 	setupGlobalHandlers(): void {
-		// Handle uncaught exceptions
 		process.on("uncaughtException", async (error) => {
 			console.error("Uncaught Exception:", error);
 			await this.errorMonitoring.captureException(error, {
@@ -654,7 +623,6 @@ export class GlobalErrorHandler {
 			});
 		});
 
-		// Handle unhandled promise rejections
 		process.on("unhandledRejection", async (reason, promise) => {
 			const error = reason instanceof Error ? reason : new Error(String(reason));
 			console.error("Unhandled Rejection:", error);
@@ -664,7 +632,6 @@ export class GlobalErrorHandler {
 			});
 		});
 
-		// Handle browser errors (if in browser environment)
 		if (typeof window !== "undefined") {
 			window.addEventListener("error", async (event) => {
 				const error = event.error || new Error(event.message);
@@ -688,7 +655,6 @@ export class GlobalErrorHandler {
 		}
 	}
 
-	// Create error boundary for React components (if React is available)
 	createErrorBoundary(): unknown {
 		if (!React) return null;
 
@@ -736,7 +702,6 @@ export class GlobalErrorHandler {
 	}
 }
 
-// Default error fallback component
 function DefaultErrorFallback({ error }: { error: Error }) {
 	const ReactModule = React as { createElement: (...args: unknown[]) => unknown } | null;
 	if (ReactModule) {
@@ -752,14 +717,12 @@ function DefaultErrorFallback({ error }: { error: Error }) {
 			)
 		);
 	}
-	// Fallback if React is not available
 	return null;
 }
 
-// React import for error boundary (conditional)
 let React: unknown = null;
 try {
 	React = require("react");
 } catch {
-	// React not available, error boundary won't work
+	/* noop */
 }

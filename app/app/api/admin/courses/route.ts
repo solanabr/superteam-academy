@@ -38,7 +38,6 @@ export async function GET() {
 
 	const onchainCourses = await getAcademyClient().fetchAllCourses();
 
-	// Fetch CMS metadata to enrich the on-chain listing
 	type CmsRow = {
 		_id: string;
 		_createdAt: string;
@@ -128,7 +127,6 @@ export async function POST(request: NextRequest) {
 	const authority = loadBackendSigner();
 	const [coursePda] = findCoursePDA(slug, programId);
 
-	// Check if course already exists on-chain
 	const existingInfo = await connection.getAccountInfo(coursePda, "confirmed");
 	if (existingInfo) {
 		return NextResponse.json({
@@ -136,7 +134,6 @@ export async function POST(request: NextRequest) {
 		});
 	}
 
-	// Build on-chain create (+ deactivate if unpublished) in one tx
 	const createIx = buildCreateCourseInstruction({
 		courseId: slug,
 		creator: authority.publicKey,
@@ -189,7 +186,6 @@ export async function POST(request: NextRequest) {
 
 	const onchainResult = { slug, coursePda: coursePda.toBase58(), created: true, signature };
 
-	// Write CMS index (best-effort after on-chain success)
 	const client = sanityWriteClient;
 	if (!client) {
 		return NextResponse.json(
@@ -225,7 +221,6 @@ export async function POST(request: NextRequest) {
 		? await client.patch(existingBySlug._id).set(courseDoc).commit()
 		: await client.create(courseDoc);
 
-	// Create module/lesson docs for brand-new courses
 	if (!existingBySlug && body.modules?.length) {
 		for (const mod of body.modules) {
 			const moduleDoc = await client.create({

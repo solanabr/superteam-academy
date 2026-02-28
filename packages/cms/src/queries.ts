@@ -118,8 +118,6 @@ export const authorBySlugQuery = /* groq */ `
   }
 `;
 
-// ── Academy User queries ────────────────────────────────────────────
-
 export const userFields = /* groq */ `
   _id,
   _type,
@@ -210,8 +208,6 @@ export const userStatsQuery = /* groq */ `
     "totalEnrollments": count(*[_type == "academyUser" && count(enrolledCourses) > 0])
   }
 `;
-
-// ── Community queries ───────────────────────────────────────────
 
 export const discussionFields = /* groq */ `
   _id,

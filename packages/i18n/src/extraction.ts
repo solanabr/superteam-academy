@@ -2,11 +2,6 @@ import fs from "node:fs";
 import path from "node:path";
 import { glob } from "glob";
 
-/**
- * Translation extraction utilities
- * Extracts translation keys from source code and manages translation files
- */
-
 export interface ExtractedKey {
 	key: string;
 	file: string;
@@ -20,9 +15,6 @@ export interface ExtractionResult {
 	totalFiles: number;
 }
 
-/**
- * Translation extractor class
- */
 export class TranslationExtractor {
 	private sourceDir: string;
 
@@ -33,9 +25,6 @@ export class TranslationExtractor {
 		this.sourceDir = sourceDir;
 	}
 
-	/**
-	 * Extract translation keys from source files
-	 */
 	async extractKeys(): Promise<ExtractionResult> {
 		const files = await this.findSourceFiles();
 		const keys: ExtractedKey[] = [];
@@ -52,9 +41,6 @@ export class TranslationExtractor {
 		};
 	}
 
-	/**
-	 * Find all source files to scan
-	 */
 	private async findSourceFiles(): Promise<string[]> {
 		const patterns = [
 			"**/*.{ts,tsx,js,jsx}",
@@ -75,25 +61,16 @@ export class TranslationExtractor {
 		return files;
 	}
 
-	/**
-	 * Extract translation keys from a single file
-	 */
 	private async extractFromFile(filePath: string): Promise<ExtractedKey[]> {
 		const content = fs.readFileSync(filePath, "utf-8");
 		const lines = content.split("\n");
 		const keys: ExtractedKey[] = [];
 
-		// Patterns to match translation function calls
 		const patterns = [
-			// t('key')
 			/t\(['"]([^'"]+)['"]/g,
-			// t.rich('key')
 			/t\.rich\(['"]([^'"]+)['"]/g,
-			// useTranslations() hook usage
 			/useTranslations\(\)\(['"]([^'"]+)['"]/g,
-			// getTranslations() usage
 			/getTranslations\(\)\(['"]([^'"]+)['"]/g,
-			// Translation key constants
 			/['"]([^'"]+)['"]\s*:\s*['"]([^'"]+)['"]/g,
 		];
 
@@ -118,19 +95,12 @@ export class TranslationExtractor {
 		return keys;
 	}
 
-	/**
-	 * Check if a string looks like a valid translation key
-	 */
 	private isValidTranslationKey(key: string): boolean {
-		// Basic validation - should contain dots and be reasonable length
 		return (
 			key.length > 0 && key.length < 100 && /^[a-zA-Z0-9_.]+$/.test(key) && key.includes(".")
 		);
 	}
 
-	/**
-	 * Generate missing translation keys report
-	 */
 	async generateMissingKeysReport(
 		existingTranslations: Record<string, unknown>
 	): Promise<string> {
@@ -148,7 +118,6 @@ export class TranslationExtractor {
 		} else {
 			report += `❌ Found ${missingKeys.length} missing translation keys:\n\n`;
 
-			// Group by file
 			const keysByFile: Record<string, string[]> = {};
 			extraction.keys.forEach((extracted) => {
 				if (missingKeys.includes(extracted.key)) {
@@ -171,9 +140,6 @@ export class TranslationExtractor {
 		return report;
 	}
 
-	/**
-	 * Flatten nested translation object to dot notation keys
-	 */
 	private flattenKeys(obj: Record<string, unknown>, prefix = ""): Set<string> {
 		const keys = new Set<string>();
 
@@ -194,9 +160,6 @@ export class TranslationExtractor {
 		return keys;
 	}
 
-	/**
-	 * Update translation files with missing keys
-	 */
 	async updateTranslationFiles(
 		missingKeys: string[],
 		locales: string[] = ["en", "pt-BR", "es"]
@@ -210,12 +173,10 @@ export class TranslationExtractor {
 				const content = fs.readFileSync(filePath, "utf-8");
 				const translations = JSON.parse(content);
 
-				// Add missing keys with placeholder values
 				for (const key of missingKeys) {
 					this.setNestedValue(translations, key, `[${locale.toUpperCase()}] ${key}`);
 				}
 
-				// Write back to file with proper formatting
 				fs.writeFileSync(filePath, `${JSON.stringify(translations, null, 2)}\n`);
 			} catch (error) {
 				console.error(`❌ Failed to update ${locale}.json:`, error);
@@ -223,9 +184,6 @@ export class TranslationExtractor {
 		}
 	}
 
-	/**
-	 * Set a nested value in an object using dot notation
-	 */
 	private setNestedValue(obj: Record<string, unknown>, key: string, value: unknown): void {
 		const parts = key.split(".");
 		let current: Record<string, unknown> = obj;
@@ -245,9 +203,6 @@ export class TranslationExtractor {
 		}
 	}
 
-	/**
-	 * Generate translation template from existing keys
-	 */
 	async generateTemplate(baseLocale = "es"): Promise<Record<string, unknown>> {
 		const baseFile = path.join(__dirname, "../locales", `${baseLocale}.json`);
 		const content = fs.readFileSync(baseFile, "utf-8");
@@ -258,9 +213,6 @@ export class TranslationExtractor {
 		return template as Record<string, unknown>;
 	}
 
-	/**
-	 * Create template with placeholder values
-	 */
 	private createTemplate(
 		obj: Record<string, unknown>,
 		locale: string,
@@ -287,16 +239,12 @@ export class TranslationExtractor {
 	}
 }
 
-/**
- * CLI utility for extraction
- */
 export async function extractTranslations(): Promise<void> {
 	const extractor = new TranslationExtractor();
 
 	try {
 		const result = await extractor.extractKeys();
 
-		// Group keys by file
 		const keysByFile: Record<string, ExtractedKey[]> = {};
 		result.keys.forEach((key) => {
 			if (!keysByFile[key.file]) {
@@ -315,15 +263,11 @@ export async function extractTranslations(): Promise<void> {
 	}
 }
 
-/**
- * CLI utility to check for missing translations
- */
 export async function checkMissingTranslations(): Promise<void> {
 	const extractor = new TranslationExtractor();
 	const messagesDir = path.join(__dirname, "../locales");
 
 	try {
-		// Load base translations (English)
 		const baseContent = fs.readFileSync(path.join(messagesDir, "en.json"), "utf-8");
 		const baseTranslations = JSON.parse(baseContent);
 
@@ -334,7 +278,6 @@ export async function checkMissingTranslations(): Promise<void> {
 	}
 }
 
-// Run extraction if called directly
 if (require.main === module) {
 	const command = process.argv[2];
 

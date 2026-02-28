@@ -22,7 +22,11 @@ const FONT_SIZES = [{ value: "small" }, { value: "medium" }, { value: "large" }]
 export function AppearanceSettings() {
 	const t = useTranslations("settings.appearanceSection");
 	const { theme, setTheme } = useTheme();
-	const { data, saving: isLoading, handleSave: saveSettings } = useSettingsSave({
+	const {
+		data,
+		saving: isLoading,
+		handleSave: saveSettings,
+	} = useSettingsSave({
 		successTitle: t("toast.updatedTitle"),
 		successDescription: t("toast.updatedDescription"),
 		errorTitle: t("toast.errorTitle"),

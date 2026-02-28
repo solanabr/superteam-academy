@@ -1,7 +1,5 @@
-// Telemetry and Observability Implementation
 import { z } from "zod";
 
-// Telemetry Event Types
 export enum TelemetryEventType {
 	APP_START = "app_start",
 	APP_ERROR = "app_error",
@@ -16,7 +14,6 @@ export enum TelemetryEventType {
 	BUSINESS_METRIC = "business_metric",
 }
 
-// Telemetry Event Schema
 export const TelemetryEventSchema = z.object({
 	id: z.string().uuid(),
 	timestamp: z.date(),
@@ -32,7 +29,6 @@ export const TelemetryEventSchema = z.object({
 
 export type TelemetryEvent = z.infer<typeof TelemetryEventSchema>;
 
-// Telemetry Configuration
 export interface TelemetryConfig {
 	serviceName: string;
 	serviceVersion: string;
@@ -44,7 +40,6 @@ export interface TelemetryConfig {
 	filters: TelemetryFilter[];
 }
 
-// Telemetry Exporter Interface
 export interface TelemetryExporter {
 	name: string;
 	export(events: TelemetryEvent[]): Promise<void>;
@@ -52,27 +47,23 @@ export interface TelemetryExporter {
 	shutdown(): Promise<void>;
 }
 
-// Telemetry Filter Interface
 export interface TelemetryFilter {
 	shouldInclude(event: TelemetryEvent): boolean;
 }
 
-// Built-in Exporters
 export class ConsoleExporter implements TelemetryExporter {
 	name = "console";
 
-	async export(events: TelemetryEvent[]): Promise<void> {
-		events.forEach((_event) => {
-			// ignored
-		});
+	async export(_events: TelemetryEvent[]): Promise<void> {
+		/* noop */
 	}
 
 	async flush(): Promise<void> {
-		// No-op for console
+		/* noop */
 	}
 
 	async shutdown(): Promise<void> {
-		// No-op for console
+		/* noop */
 	}
 }
 
@@ -106,11 +97,11 @@ export class HTTPExporter implements TelemetryExporter {
 	}
 
 	async flush(): Promise<void> {
-		// No-op for HTTP
+		/* noop */
 	}
 
 	async shutdown(): Promise<void> {
-		// No-op for HTTP
+		/* noop */
 	}
 }
 
@@ -137,7 +128,6 @@ export class FileExporter implements TelemetryExporter {
 	}
 }
 
-// Built-in Filters
 export class SamplingFilter implements TelemetryFilter {
 	private rate: number;
 
@@ -174,7 +164,6 @@ export class TelemetryUserFilter implements TelemetryFilter {
 	}
 }
 
-// Telemetry Service
 export class TelemetryService {
 	private config: TelemetryConfig;
 	private eventBuffer: TelemetryEvent[] = [];
@@ -185,14 +174,12 @@ export class TelemetryService {
 		this.config = config;
 	}
 
-	// Start telemetry collection
 	async start(): Promise<void> {
 		if (this.isRunning) return;
 
 		this.isRunning = true;
 		this.startFlushTimer();
 
-		// Send app start event
 		await this.recordEvent({
 			type: TelemetryEventType.APP_START,
 			properties: {
@@ -203,7 +190,6 @@ export class TelemetryService {
 		});
 	}
 
-	// Stop telemetry collection
 	async stop(): Promise<void> {
 		if (!this.isRunning) return;
 
@@ -214,20 +200,16 @@ export class TelemetryService {
 			this.flushTimer = null;
 		}
 
-		// Flush remaining events
 		await this.flush();
 
-		// Shutdown exporters
 		await Promise.all(this.config.exporters.map((exporter) => exporter.shutdown()));
 	}
 
-	// Record an event
 	async recordEvent(
 		event: Omit<TelemetryEvent, "id" | "timestamp" | "environment" | "version">
 	): Promise<void> {
 		if (!this.isRunning) return;
 
-		// Apply filters
 		const fullEvent: TelemetryEvent = {
 			id: crypto.randomUUID(),
 			timestamp: new Date(),
@@ -236,27 +218,23 @@ export class TelemetryService {
 			...event,
 		};
 
-		// Check filters
 		for (const filter of this.config.filters) {
 			if (!filter.shouldInclude(fullEvent)) {
 				return;
 			}
 		}
 
-		// Apply sampling
 		if (Math.random() > this.config.samplingRate) {
 			return;
 		}
 
 		this.eventBuffer.push(fullEvent);
 
-		// Flush if buffer is full
 		if (this.eventBuffer.length >= this.config.batchSize) {
 			await this.flush();
 		}
 	}
 
-	// Record user action
 	async recordUserAction(
 		userId: string,
 		action: string,
@@ -274,7 +252,6 @@ export class TelemetryService {
 		});
 	}
 
-	// Record error
 	async recordError(
 		error: Error,
 		userId?: string,
@@ -294,7 +271,6 @@ export class TelemetryService {
 		});
 	}
 
-	// Record performance metric
 	async recordPerformanceMetric(
 		metricName: string,
 		value: number,
@@ -316,7 +292,6 @@ export class TelemetryService {
 		});
 	}
 
-	// Record API call
 	async recordAPICall(
 		method: string,
 		endpoint: string,
@@ -339,7 +314,6 @@ export class TelemetryService {
 		});
 	}
 
-	// Record business metric
 	async recordBusinessMetric(
 		metricName: string,
 		value: number,
@@ -359,7 +333,6 @@ export class TelemetryService {
 		});
 	}
 
-	// Get telemetry statistics
 	getStats(): {
 		totalEvents: number;
 		bufferedEvents: number;
@@ -367,7 +340,6 @@ export class TelemetryService {
 		droppedEvents: number;
 		uptime: number;
 	} {
-		// This would track actual statistics
 		return {
 			totalEvents: 0,
 			bufferedEvents: this.eventBuffer.length,
@@ -377,7 +349,6 @@ export class TelemetryService {
 		};
 	}
 
-	// Flush events to exporters
 	private async flush(): Promise<void> {
 		if (this.eventBuffer.length === 0) return;
 
@@ -388,12 +359,10 @@ export class TelemetryService {
 			await Promise.all(this.config.exporters.map((exporter) => exporter.export(events)));
 		} catch (error) {
 			console.error("Error flushing telemetry events:", error);
-			// Put events back in buffer
 			this.eventBuffer.unshift(...events);
 		}
 	}
 
-	// Start flush timer
 	private startFlushTimer(): void {
 		this.flushTimer = setInterval(() => {
 			this.flush().catch((error) => {
@@ -403,7 +372,6 @@ export class TelemetryService {
 	}
 }
 
-// Telemetry Factory
 export const TelemetryFactory = {
 	createTelemetryService(config: TelemetryConfig): TelemetryService {
 		return new TelemetryService(config);
@@ -453,7 +421,6 @@ export const TelemetryFactory = {
 	},
 };
 
-// Performance Monitoring
 export class PerformanceMonitor {
 	private telemetry: TelemetryService;
 	private measurements: Map<string, number> = new Map();
@@ -462,12 +429,10 @@ export class PerformanceMonitor {
 		this.telemetry = telemetry;
 	}
 
-	// Start measuring
 	startMeasurement(name: string): void {
 		this.measurements.set(name, Date.now());
 	}
 
-	// End measurement and record
 	async endMeasurement(name: string, tags?: string[], userId?: string): Promise<void> {
 		const startTime = this.measurements.get(name);
 		if (!startTime) return;
@@ -478,7 +443,6 @@ export class PerformanceMonitor {
 		await this.telemetry.recordPerformanceMetric(name, duration, "milliseconds", tags, userId);
 	}
 
-	// Measure async operation
 	async measureAsync<T>(
 		name: string,
 		operation: () => Promise<T>,
@@ -496,7 +460,6 @@ export class PerformanceMonitor {
 		}
 	}
 
-	// Record memory usage
 	async recordMemoryUsage(userId?: string): Promise<void> {
 		const perfWithMemory = performance as unknown as {
 			memory?: { usedJSHeapSize: number; totalJSHeapSize: number };
@@ -520,10 +483,8 @@ export class PerformanceMonitor {
 		}
 	}
 
-	// Record page load time
 	async recordPageLoadTime(userId?: string): Promise<void> {
 		if (typeof performance !== "undefined") {
-			// Try modern PerformanceNavigationTiming API first
 			const navigation = performance.getEntriesByType("navigation")[0] as unknown as
 				| { loadEventEnd: number; fetchStart: number }
 				| undefined;
@@ -539,7 +500,6 @@ export class PerformanceMonitor {
 				return;
 			}
 
-			// Fallback to legacy performance.timing
 			const timing = (
 				performance as unknown as {
 					timing?: { loadEventEnd: number; navigationStart: number };

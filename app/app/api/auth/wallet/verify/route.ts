@@ -39,7 +39,6 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
-		// Validate nonce from httpOnly cookie
 		const cookieStore = await cookies();
 		const storedNonce = cookieStore.get("wallet_nonce")?.value;
 		if (!storedNonce) {
@@ -49,7 +48,6 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
-		// Check nonce is present in the signed message
 		if (!parsed.data.message.includes(storedNonce)) {
 			return NextResponse.json({ error: "Nonce mismatch" }, { status: 401 });
 		}

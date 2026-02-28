@@ -203,7 +203,7 @@ export function ChallengeContent({
 				}
 			}
 		} catch {
-			// Network error — silent fail, UI already reverts
+			/* noop */
 		}
 	}, [code, challenge.language, challenge.tests, challengeId, courseId]);
 

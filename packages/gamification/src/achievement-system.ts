@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-// Achievement Categories
 export enum AchievementCategory {
 	LEARNING = "learning",
 	CODING = "coding",
@@ -10,7 +9,6 @@ export enum AchievementCategory {
 	SPECIAL = "special",
 }
 
-// Achievement Rarity
 export enum AchievementRarity {
 	COMMON = "common",
 	UNCOMMON = "uncommon",
@@ -19,7 +17,6 @@ export enum AchievementRarity {
 	LEGENDARY = "legendary",
 }
 
-// Achievement Types
 export enum AchievementType {
 	PROGRESS = "progress", // Based on progress metrics
 	COUNT = "count", // Based on count of actions
@@ -29,7 +26,6 @@ export enum AchievementType {
 	SPECIAL = "special", // Special event achievements
 }
 
-// Achievement Definition
 export interface Achievement {
 	id: string;
 	name: string;
@@ -46,7 +42,6 @@ export interface Achievement {
 	updatedAt: Date;
 }
 
-// Achievement Criteria
 export interface AchievementCriteria {
 	metric: string; // e.g., 'lessons_completed', 'challenges_solved', 'streak_days'
 	operator: "gte" | "lte" | "eq" | "gt" | "lt"; // comparison operator
@@ -54,7 +49,6 @@ export interface AchievementCriteria {
 	additionalConditions?: Record<string, unknown>; // extra conditions
 }
 
-// User Achievement Progress
 export interface UserAchievement {
 	userId: string;
 	achievementId: string;
@@ -66,7 +60,6 @@ export interface UserAchievement {
 	metadata?: Record<string, unknown>;
 }
 
-// Achievement Unlock Event
 export const AchievementUnlockEventSchema = z.object({
 	id: z.string().uuid(),
 	userId: z.string(),
@@ -78,9 +71,7 @@ export const AchievementUnlockEventSchema = z.object({
 
 export type AchievementUnlockEvent = z.infer<typeof AchievementUnlockEventSchema>;
 
-// Achievement Catalog
 export const ACHIEVEMENT_CATALOG: Achievement[] = [
-	// Learning Achievements
 	{
 		id: "first_lesson",
 		name: "First Steps",
@@ -124,7 +115,6 @@ export const ACHIEVEMENT_CATALOG: Achievement[] = [
 		updatedAt: new Date("2024-01-01"),
 	},
 
-	// Coding Achievements
 	{
 		id: "first_challenge",
 		name: "Code Beginner",
@@ -172,7 +162,6 @@ export const ACHIEVEMENT_CATALOG: Achievement[] = [
 		updatedAt: new Date("2024-01-01"),
 	},
 
-	// Streak Achievements
 	{
 		id: "week_warrior",
 		name: "Week Warrior",
@@ -202,7 +191,6 @@ export const ACHIEVEMENT_CATALOG: Achievement[] = [
 		updatedAt: new Date("2024-01-01"),
 	},
 
-	// Community Achievements
 	{
 		id: "social_butterfly",
 		name: "Social Butterfly",
@@ -232,7 +220,6 @@ export const ACHIEVEMENT_CATALOG: Achievement[] = [
 		updatedAt: new Date("2024-01-01"),
 	},
 
-	// Progression Achievements
 	{
 		id: "level_up",
 		name: "Level Up",
@@ -262,7 +249,6 @@ export const ACHIEVEMENT_CATALOG: Achievement[] = [
 		updatedAt: new Date("2024-01-01"),
 	},
 
-	// Special Achievements
 	{
 		id: "early_adopter",
 		name: "Early Adopter",
@@ -301,19 +287,16 @@ export const ACHIEVEMENT_CATALOG: Achievement[] = [
 	},
 ];
 
-// Achievement System Engine
 export class AchievementSystem {
 	private achievements: Map<string, Achievement> = new Map();
 	private userProgress: Map<string, Map<string, UserAchievement>> = new Map();
 
 	constructor(achievementCatalog: Achievement[] = ACHIEVEMENT_CATALOG) {
-		// Initialize achievement catalog
 		achievementCatalog.forEach((achievement) => {
 			this.achievements.set(achievement.id, achievement);
 		});
 	}
 
-	// Initialize user achievement progress
 	initializeUser(userId: string): void {
 		if (!this.userProgress.has(userId)) {
 			const userAchievements = new Map<string, UserAchievement>();
@@ -330,7 +313,6 @@ export class AchievementSystem {
 		}
 	}
 
-	// Update user progress for a metric
 	updateProgress(
 		userId: string,
 		metric: string,
@@ -353,14 +335,12 @@ export class AchievementSystem {
 			wasCompleted: boolean;
 		}> = [];
 
-		// Check all achievements that use this metric
 		this.achievements.forEach((achievement) => {
 			if (!achievement.isActive) return;
 
 			const userAchievement = userAchievements?.get(achievement.id);
 			if (!userAchievement || userAchievement.isCompleted) return;
 
-			// Check if this achievement uses the updated metric
 			if (achievement.criteria.metric === metric) {
 				const wasCompleted = userAchievement.isCompleted;
 				const newProgress = this.calculateProgress(
@@ -372,7 +352,6 @@ export class AchievementSystem {
 				userAchievement.progress = newProgress;
 				userAchievement.metadata = { ...userAchievement.metadata, ...metadata };
 
-				// Check if achievement is now completed
 				if (this.checkCompletion(achievement.criteria, newProgress)) {
 					userAchievement.isCompleted = true;
 					userAchievement.completedAt = new Date();
@@ -390,13 +369,11 @@ export class AchievementSystem {
 		return { unlockedAchievements, progressUpdates };
 	}
 
-	// Get user achievement progress
 	getUserAchievements(userId: string): UserAchievement[] {
 		this.initializeUser(userId);
 		return Array.from(this.userProgress.get(userId)?.values() ?? []);
 	}
 
-	// Get completed achievements for user
 	getCompletedAchievements(userId: string): Achievement[] {
 		const userAchievements = this.getUserAchievements(userId);
 		return userAchievements
@@ -405,13 +382,11 @@ export class AchievementSystem {
 			.filter(Boolean) as Achievement[];
 	}
 
-	// Get achievement progress for user
 	getAchievementProgress(userId: string, achievementId: string): UserAchievement | null {
 		this.initializeUser(userId);
 		return this.userProgress.get(userId)?.get(achievementId) || null;
 	}
 
-	// Check if user has prerequisites for achievement
 	hasPrerequisites(userId: string, achievement: Achievement): boolean {
 		if (!achievement.prerequisites || achievement.prerequisites.length === 0) {
 			return true;
@@ -422,21 +397,18 @@ export class AchievementSystem {
 		return achievement.prerequisites.every((prereqId) => completedIds.has(prereqId));
 	}
 
-	// Get achievements by category
 	getAchievementsByCategory(category: AchievementCategory): Achievement[] {
 		return Array.from(this.achievements.values()).filter(
 			(achievement) => achievement.category === category
 		);
 	}
 
-	// Get achievements by rarity
 	getAchievementsByRarity(rarity: AchievementRarity): Achievement[] {
 		return Array.from(this.achievements.values()).filter(
 			(achievement) => achievement.rarity === rarity
 		);
 	}
 
-	// Calculate achievement rarity distribution
 	getRarityDistribution(): Record<AchievementRarity, number> {
 		const distribution = {
 			[AchievementRarity.COMMON]: 0,
@@ -453,7 +425,6 @@ export class AchievementSystem {
 		return distribution;
 	}
 
-	// Get achievement statistics
 	getAchievementStats(userId: string): {
 		totalAchievements: number;
 		completedAchievements: number;
@@ -493,7 +464,6 @@ export class AchievementSystem {
 			0
 		);
 
-		// Get recent unlocks (last 10)
 		const recentUnlocks = allAchievements
 			.filter((ua) => ua.isCompleted && ua.completedAt)
 			.sort((a, b) => (b.completedAt?.getTime() ?? 0) - (a.completedAt?.getTime() ?? 0))
@@ -524,7 +494,6 @@ export class AchievementSystem {
 		newValue: number | string | boolean,
 		currentProgress: number
 	): number {
-		// For count-based achievements, accumulate progress
 		if (typeof newValue === "number" && typeof criteria.value === "number") {
 			switch (criteria.operator) {
 				case "gte":
@@ -537,7 +506,6 @@ export class AchievementSystem {
 			}
 		}
 
-		// For boolean achievements
 		if (typeof newValue === "boolean" && typeof criteria.value === "boolean") {
 			return newValue === criteria.value ? 1 : currentProgress;
 		}
@@ -564,11 +532,9 @@ export class AchievementSystem {
 		}
 	}
 
-	// Add new achievement to catalog
 	addAchievement(achievement: Achievement): void {
 		this.achievements.set(achievement.id, achievement);
 
-		// Add to all existing users' progress
 		this.userProgress.forEach((userAchievements) => {
 			userAchievements.set(achievement.id, {
 				userId: "",
@@ -580,7 +546,6 @@ export class AchievementSystem {
 		});
 	}
 
-	// Update existing achievement
 	updateAchievement(achievementId: string, updates: Partial<Achievement>): void {
 		const existing = this.achievements.get(achievementId);
 		if (existing) {
@@ -592,18 +557,15 @@ export class AchievementSystem {
 		}
 	}
 
-	// Get all achievements
 	getAllAchievements(): Achievement[] {
 		return Array.from(this.achievements.values());
 	}
 
-	// Get achievement by ID
 	getAchievement(achievementId: string): Achievement | null {
 		return this.achievements.get(achievementId) || null;
 	}
 }
 
-// Achievement Analytics Types
 export interface AchievementAnalytics {
 	globalStats: {
 		totalAchievements: number;

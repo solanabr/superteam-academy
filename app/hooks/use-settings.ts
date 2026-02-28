@@ -41,7 +41,7 @@ export function useSettings() {
 				setData(result);
 			})
 			.catch(() => {
-				// best-effort load
+				/* noop */
 			})
 			.finally(() => {
 				if (!cancelled) setLoading(false);
@@ -92,7 +92,14 @@ export function useSettingsSave(messages: {
 				setSaving(false);
 			}
 		},
-		[save, toast, messages.successTitle, messages.successDescription, messages.errorTitle, messages.errorDescription]
+		[
+			save,
+			toast,
+			messages.successTitle,
+			messages.successDescription,
+			messages.errorTitle,
+			messages.errorDescription,
+		]
 	);
 
 	return { data, loading, saving, handleSave };
