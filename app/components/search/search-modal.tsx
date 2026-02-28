@@ -1,11 +1,20 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Search, BookOpen, Layers, Users, Clock } from "lucide-react";
+import { Search, BookOpen, Layers, Users, Clock, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import * as VisuallyHidden from "@radix-ui/react-visually-hidden";
+
+interface SearchResult {
+	id: string;
+	title: string;
+	slug: string;
+	description: string;
+	level?: string;
+	image: string | null;
+}
 
 interface SearchModalProps {
 	open: boolean;
@@ -26,6 +35,8 @@ export function SearchModal({ open, onOpenChange }: SearchModalProps) {
 	const inputRef = useRef<HTMLInputElement>(null);
 	const [query, setQuery] = useState("");
 	const [recentSearches, setRecentSearches] = useState<string[]>([]);
+	const [results, setResults] = useState<SearchResult[]>([]);
+	const [loading, setLoading] = useState(false);
 
 	useEffect(() => {
 		if (open) {
@@ -40,17 +51,46 @@ export function SearchModal({ open, onOpenChange }: SearchModalProps) {
 			setTimeout(() => inputRef.current?.focus(), 0);
 		} else {
 			setQuery("");
+			setResults([]);
 		}
 	}, [open]);
+
+	const fetchResults = useCallback(async (q: string) => {
+		if (!q.trim()) {
+			setResults([]);
+			return;
+		}
+		setLoading(true);
+		try {
+			const res = await fetch(`/api/courses/search?q=${encodeURIComponent(q.trim())}`);
+			if (res.ok) {
+				const data = await res.json();
+				setResults(data.results ?? []);
+			}
+		} catch {
+			setResults([]);
+		} finally {
+			setLoading(false);
+		}
+	}, []);
+
+	useEffect(() => {
+		const timeout = setTimeout(() => fetchResults(query), 300);
+		return () => clearTimeout(timeout);
+	}, [query, fetchResults]);
+
+	const saveSearch = (searchQuery: string) => {
+		const trimmed = searchQuery.trim();
+		if (!trimmed) return;
+		const updated = [trimmed, ...recentSearches.filter((s) => s !== trimmed)].slice(0, 5);
+		setRecentSearches(updated);
+		localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
+	};
 
 	const handleSearch = (searchQuery: string) => {
 		const trimmed = searchQuery.trim();
 		if (!trimmed) return;
-
-		const updated = [trimmed, ...recentSearches.filter((s) => s !== trimmed)].slice(0, 5);
-		setRecentSearches(updated);
-		localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
-
+		saveSearch(trimmed);
 		onOpenChange(false);
 		router.push(`/courses?q=${encodeURIComponent(trimmed)}`);
 	};
@@ -126,11 +166,59 @@ export function SearchModal({ open, onOpenChange }: SearchModalProps) {
 						</div>
 					)}
 
+					{query && loading && (
+						<div className="flex items-center justify-center py-6">
+							<Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+						</div>
+					)}
+
+					{query && !loading && results.length > 0 && (
+						<div>
+							<p className="px-3 py-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+								{t("results")}
+							</p>
+							{results.map((result) => (
+								<button
+									key={result.id}
+									type="button"
+									onClick={() => {
+										saveSearch(query);
+										onOpenChange(false);
+										router.push(`/courses/${result.slug}`);
+									}}
+									className="flex items-center gap-3 w-full px-3 py-2 text-sm rounded-md hover:bg-accent transition-colors text-left"
+								>
+									{result.image ? (
+										<img
+											src={result.image}
+											alt=""
+											className="h-8 w-14 rounded object-cover shrink-0"
+										/>
+									) : (
+										<BookOpen className="h-4 w-4 text-muted-foreground shrink-0" />
+									)}
+									<div className="min-w-0">
+										<p className="font-medium truncate">{result.title}</p>
+										{result.level && (
+											<p className="text-xs text-muted-foreground capitalize">{result.level}</p>
+										)}
+									</div>
+								</button>
+							))}
+						</div>
+					)}
+
+					{query && !loading && results.length === 0 && (
+						<div className="px-3 py-6 text-center text-sm text-muted-foreground">
+							{t("noResults")}
+						</div>
+					)}
+
 					{query && (
 						<button
 							type="button"
 							onClick={() => handleSearch(query)}
-							className="flex items-center gap-3 w-full px-3 py-2 text-sm rounded-md hover:bg-accent transition-colors text-left"
+							className="flex items-center gap-3 w-full px-3 py-2 text-sm rounded-md hover:bg-accent transition-colors text-left border-t border-border mt-1 pt-2"
 						>
 							<Search className="h-3.5 w-3.5 text-muted-foreground" />
 							{t("searchFor", { query })}

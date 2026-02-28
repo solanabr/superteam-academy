@@ -5,6 +5,7 @@ const courseService = createCourseService(cmsContext);
 
 export const {
 	resolveCourseImageUrl,
+	searchCourses,
 	getAllCourses: getCoursesCMS,
 	getAllCoursesIndex: getCoursesIndex,
 	getCourseBySlug,

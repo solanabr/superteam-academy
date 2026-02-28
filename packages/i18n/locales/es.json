@@ -162,7 +162,8 @@
 			"enrollFor": "Inscribirse por ${price}",
 			"moneyBack": "Garantía de devolución de 30 días",
 			"lifetimeAccess": "Acceso de por vida a los materiales del curso",
-			"certificateIncluded": "Certificado de finalización incluido"
+			"certificateIncluded": "Certificado de finalización incluido",
+			"closeEnrollment": "Close Enrollment"
 		},
 		"modules": {
 			"title": "Plan de estudios",
@@ -546,27 +547,229 @@
 		"nextLevel": "Siguiente nivel"
 	},
 	"onboarding": {
-		"welcomeTitle": "Bienvenido a Superteam Academy",
-		"welcomeDesc": "Tu viaje en el desarrollo blockchain comienza aquí",
-		"connectWalletTitle": "Conecta tu billetera",
-		"connectWalletDesc": "Vincula tu billetera de Solana para rastrear tu progreso en la cadena",
-		"connectWallet": "Conectar billetera",
-		"exploreCoursesTitle": "Explora los cursos",
-		"exploreCoursesDesc": "Navega nuestra colección curada de cursos de blockchain",
-		"exploreCourses": "Explorar cursos",
-		"firstChallengeTitle": "Tu primer desafío",
-		"firstChallengeDesc": "Pon a prueba tus habilidades con un desafío introductorio de programación",
-		"startChallenge": "Iniciar desafío",
-		"setupCompleteTitle": "Configuración completa",
-		"setupCompleteDesc": "¡Estás listo para comenzar a aprender!",
-		"onboardingComplete": "Incorporación completa",
-		"onboardingCompleteDesc": "¡Bienvenido a bordo! Comienza a explorar los cursos.",
-		"gettingStarted": "Primeros pasos",
-		"completed": "Completado",
-		"previous": "Anterior",
-		"skip": "Omitir",
-		"finish": "Finalizar",
-		"next": "Siguiente"
+		"steps": {
+			"welcome": "Bienvenida",
+			"profile": "Perfil básico",
+			"profile-details": "Detalles del perfil",
+			"topics": "Temas",
+			"time": "Tiempo",
+			"experience": "Experiencia",
+			"goals": "Objetivos",
+			"complete": "Finalizar"
+		},
+		"progress": {
+			"ariaLabel": "Progreso de onboarding: paso {current} de {total}"
+		},
+		"welcome": {
+			"title": "¡Bienvenido a Superteam Academy! 🎉",
+			"description": "Configuramos tu perfil para que aproveches al máximo tu aprendizaje.",
+			"usernameCard": {
+				"title": "Elige tu nombre de usuario",
+				"description": "Será tu identificador único en la plataforma. ¡Elige uno memorable!",
+				"label": "Nombre de usuario",
+				"placeholder": "tu-usuario",
+				"help": "3-30 caracteres. Solo letras, números, guiones y guiones bajos.",
+				"taken": "Este nombre de usuario ya está en uso.",
+				"available": "¡Nombre de usuario disponible!"
+			},
+			"suggestions": {
+				"loading": "Cargando sugerencias...",
+				"title": "Sugerencias:"
+			},
+			"actions": {
+				"continue": "Continuar"
+			}
+		},
+		"profile": {
+			"title": "Perfil básico",
+			"description": "Empieza con tu información principal.",
+			"card": {
+				"title": "Sobre ti",
+				"description": "Un perfil breve ayuda a personalizar tu experiencia en Academy."
+			},
+			"fields": {
+				"name": {
+					"label": "Nombre completo",
+					"placeholder": "Tu nombre completo"
+				},
+				"title": {
+					"label": "Título profesional",
+					"placeholder": "Ingeniero de software, estudiante, etc."
+				},
+				"company": {
+					"label": "Empresa/Organización",
+					"placeholder": "¿Dónde trabajas o estudias?"
+				}
+			},
+			"actions": {
+				"back": "Atrás",
+				"continue": "Continuar"
+			}
+		},
+		"profileDetails": {
+			"title": "Detalles del perfil",
+			"description": "Agrega datos opcionales para que otros te encuentren y conecten contigo.",
+			"card": {
+				"title": "Detalles públicos",
+				"description": "Estos datos ayudan a destacar tu perfil."
+			},
+			"fields": {
+				"location": {
+					"label": "Ubicación",
+					"placeholder": "Ciudad, país"
+				},
+				"website": {
+					"label": "Sitio web/Portafolio",
+					"placeholder": "https://tu-sitio.com"
+				},
+				"bio": {
+					"label": "Bio",
+					"placeholder": "Cuéntanos sobre tus intereses y lo que estás construyendo...",
+					"remaining": "{count} caracteres restantes"
+				}
+			},
+			"actions": {
+				"back": "Atrás",
+				"continue": "Continuar"
+			}
+		},
+		"preferences": {
+			"title": "Temas que te interesan",
+			"description": "Elige las áreas que quieres explorar primero.",
+			"card": {
+				"title": "Temas de interés",
+				"description": "Selecciona todos los que correspondan."
+			},
+			"selected": "Seleccionados: {count} temas",
+			"topics": {
+				"web-development": "Desarrollo web",
+				"blockchain": "Blockchain",
+				"smart-contracts": "Contratos inteligentes",
+				"defi": "DeFi",
+				"nft": "NFT",
+				"cryptography": "Criptografía",
+				"data-science": "Ciencia de datos",
+				"machine-learning": "Aprendizaje automático",
+				"mobile-development": "Desarrollo móvil",
+				"game-development": "Desarrollo de juegos",
+				"devops": "DevOps",
+				"security": "Seguridad",
+				"ai": "IA",
+				"cloud-computing": "Computación en la nube",
+				"databases": "Bases de datos",
+				"api-development": "Desarrollo de APIs"
+			},
+			"actions": {
+				"back": "Atrás",
+				"continue": "Continuar"
+			}
+		},
+		"timeCommitment": {
+			"title": "Tu compromiso semanal",
+			"description": "¿Cuánto tiempo puedes dedicar regularmente al aprendizaje?",
+			"card": {
+				"title": "Compromiso de tiempo",
+				"description": "Elige una opción."
+			},
+			"options": {
+				"casual": {
+					"label": "Casual (1-2 horas/semana)",
+					"description": "Ritmo de aprendizaje ligero"
+				},
+				"regular": {
+					"label": "Regular (3-5 horas/semana)",
+					"description": "Compromiso moderado"
+				},
+				"intensive": {
+					"label": "Intensivo (6+ horas/semana)",
+					"description": "Compromiso alto"
+				}
+			},
+			"actions": {
+				"back": "Atrás",
+				"continue": "Continuar"
+			}
+		},
+		"experience": {
+			"title": "Tu nivel actual",
+			"description": "Esto nos ayuda a personalizar recomendaciones desde el primer día.",
+			"card": {
+				"title": "Nivel de experiencia",
+				"description": "Elige la opción más cercana."
+			},
+			"levels": {
+				"beginner": {
+					"label": "Principiante",
+					"description": "Nuevo en programación/desarrollo"
+				},
+				"intermediate": {
+					"label": "Intermedio",
+					"description": "Algo de experiencia, construyendo proyectos"
+				},
+				"advanced": {
+					"label": "Avanzado",
+					"description": "Desarrollador con experiencia, proyectos complejos"
+				},
+				"expert": {
+					"label": "Experto",
+					"description": "Nivel senior, mentoría a otros"
+				}
+			},
+			"actions": {
+				"back": "Atrás",
+				"continue": "Continuar"
+			}
+		},
+		"goals": {
+			"title": "Tus objetivos de aprendizaje",
+			"description": "¿Qué esperas lograr aprendiendo en Superteam Academy?",
+			"card": {
+				"title": "Objetivos de aprendizaje",
+				"description": "¿Cuáles son tus objetivos principales? Selecciona todos los que apliquen."
+			},
+			"selected": "Seleccionados: {count} objetivos",
+			"options": {
+				"career-change": "Cambio de carrera",
+				"skill-up": "Mejorar habilidades",
+				"certification": "Certificación",
+				"personal-growth": "Crecimiento personal",
+				"entrepreneurship": "Emprendimiento",
+				"freelancing": "Freelance",
+				"job-promotion": "Ascenso laboral",
+				"side-project": "Proyecto paralelo",
+				"teaching": "Enseñanza",
+				"community-building": "Construcción de comunidad"
+			},
+			"actions": {
+				"back": "Atrás",
+				"continue": "Continuar"
+			}
+		},
+		"complete": {
+			"title": "Todo listo. ¿Qué sigue?",
+			"description": "Esto es lo que puedes hacer para empezar:",
+			"steps": {
+				"exploreCourses": {
+					"title": "Explora cursos",
+					"description": "Revisa nuestra selección curada de cursos de blockchain y desarrollo web."
+				},
+				"startLearning": {
+					"title": "Empieza a aprender",
+					"description": "Inscríbete en tu primer curso y comienza a ganar XP y logros."
+				},
+				"connectAndShare": {
+					"title": "Conecta y comparte",
+					"description": "Únete a la comunidad, comparte tu progreso y aprende con otros."
+				}
+			},
+			"cta": {
+				"title": "¿Listo para lanzar tu aprendizaje?",
+				"description": "¡Tu panel personalizado te espera!"
+			},
+			"actions": {
+				"getStarted": "Comenzar"
+			}
+		}
 	},
 	"actions": {
 		"error": "Error",
@@ -671,6 +874,198 @@
 			"appearance": "Apariencia",
 			"language": "Idioma",
 			"wallet": "Billetera"
+		},
+		"appearanceSection": {
+			"actions": {
+				"saveChanges": "Save Changes",
+				"saving": "Saving"
+			},
+			"reducedMotion": {
+				"description": "Description",
+				"title": "Title"
+			},
+			"sections": {
+				"accessibility": "Accessibility",
+				"fontSize": "Font Size",
+				"theme": "Theme"
+			},
+			"title": "Title",
+			"toast": {
+				"errorDescription": "Error Description",
+				"errorTitle": "Error Title",
+				"updatedDescription": "Updated Description",
+				"updatedTitle": "Updated Title"
+			}
+		},
+		"languageSection": {
+			"actions": {
+				"saveChanges": "Save Changes",
+				"saving": "Saving"
+			},
+			"labels": {
+				"dateFormat": "Date Format",
+				"numberFormat": "Number Format",
+				"timeFormat": "Time Format",
+				"timezone": "Timezone"
+			},
+			"preview": {
+				"date": "Date",
+				"number": "Number",
+				"time": "Time"
+			},
+			"sections": {
+				"language": "Language",
+				"preview": "Preview",
+				"regionalFormats": "Regional Formats"
+			},
+			"timeFormats": {
+				"12h": "12h",
+				"24h": "24h"
+			},
+			"toast": {
+				"errorDescription": "Error Description",
+				"errorTitle": "Error Title",
+				"savedTitle": "Saved Title"
+			}
+		},
+		"notificationsSection": {
+			"actions": {
+				"saveChanges": "Save Changes",
+				"saving": "Saving"
+			},
+			"frequency": {
+				"daily": "Daily",
+				"immediate": "Immediate",
+				"weekly": "Weekly"
+			},
+			"labels": {
+				"emailFrequency": "Email Frequency",
+				"pushFrequency": "Push Frequency"
+			},
+			"sections": {
+				"frequency": "Frequency",
+				"general": "General",
+				"notificationTypes": "Notification Types"
+			},
+			"title": "Title",
+			"toast": {
+				"errorDescription": "Error Description",
+				"errorTitle": "Error Title",
+				"updatedDescription": "Updated Description",
+				"updatedTitle": "Updated Title"
+			}
+		},
+		"privacySection": {
+			"actions": {
+				"exportData": "Export Data",
+				"exporting": "Exporting",
+				"saveChanges": "Save Changes",
+				"saving": "Saving"
+			},
+			"export": {
+				"description": "Description",
+				"note": "Note",
+				"title": "Title"
+			},
+			"labels": {
+				"profileVisibility": "Profile Visibility"
+			},
+			"title": "Title",
+			"toast": {
+				"errorDescription": "Error Description",
+				"errorTitle": "Error Title",
+				"exportFailedDescription": "Export Failed Description",
+				"exportFailedTitle": "Export Failed Title",
+				"exportedDescription": "Exported Description",
+				"exportedTitle": "Exported Title",
+				"updatedDescription": "Updated Description",
+				"updatedTitle": "Updated Title"
+			}
+		},
+		"profileSection": {
+			"actions": {
+				"saveChanges": "Save Changes",
+				"saving": "Saving"
+			},
+			"bioHelp": "Bio Help",
+			"changePhoto": "Change Photo",
+			"fields": {
+				"bio": "Bio",
+				"email": "Email",
+				"location": "Location",
+				"name": "Name",
+				"username": "Username",
+				"website": "Website"
+			},
+			"photoHelp": "Photo Help",
+			"placeholders": {
+				"username": "Username"
+			},
+			"title": "Title",
+			"toast": {
+				"errorDescription": "Error Description",
+				"errorTitle": "Error Title",
+				"invalidUsernameDescription": "Invalid Username Description",
+				"invalidUsernameTitle": "Invalid Username Title",
+				"updatedDescription": "Updated Description",
+				"updatedTitle": "Updated Title",
+				"usernameUnavailableDescription": "Username Unavailable Description",
+				"usernameUnavailableTitle": "Username Unavailable Title"
+			},
+			"usernameAvailable": "Username Available",
+			"usernameHelp": "Username Help",
+			"usernameTaken": "Username Taken"
+		},
+		"walletSection": {
+			"actions": {
+				"linkCurrentWallet": "Link Current Wallet",
+				"linkGithub": "Link GitHub",
+				"linkGoogle": "Link Google",
+				"reauth": "Reauth",
+				"relinkGithub": "Relink GitHub",
+				"relinkGoogle": "Relink Google",
+				"relinkWallet": "Relink Wallet",
+				"saveChanges": "Save Changes",
+				"saving": "Saving",
+				"unlink": "Unlink"
+			},
+			"autoConnect": {
+				"description": "Description",
+				"title": "Title"
+			},
+			"badges": {
+				"primary": "Primary"
+			},
+			"empty": {
+				"noLinkedAccounts": "No Linked Accounts",
+				"noWalletConnected": "No Wallet Connected"
+			},
+			"linkedAtLabel": "Linked At Label",
+			"loading": {
+				"linkedAccounts": "Linked Accounts"
+			},
+			"sections": {
+				"connectedWallet": "Connected Wallet",
+				"linkedAccounts": "Linked Accounts",
+				"preferences": "Preferences"
+			},
+			"toast": {
+				"errorDescription": "Error Description",
+				"errorTitle": "Error Title",
+				"linkFailedTitle": "Link Failed Title",
+				"linkedTitle": "Linked Title",
+				"reauthFailedTitle": "Reauth Failed Title",
+				"reauthedTitle": "Reauthed Title",
+				"savedTitle": "Saved Title",
+				"signatureUnavailableDescription": "Signature Unavailable Description",
+				"signatureUnavailableTitle": "Signature Unavailable Title",
+				"tryAgain": "Try Again",
+				"unlinkFailedTitle": "Unlink Failed Title",
+				"unlinkedTitle": "Unlinked Title",
+				"walletLinkFailedTitle": "Wallet Link Failed Title",
+				"walletLinkedTitle": "Wallet Linked Title"
+			},
+			"unknownWallet": "Unknown Wallet"
 		}
 	},
 	"pagination": {
@@ -775,6 +1170,9 @@
 			"analyticsTitle": "Analíticas de la plataforma",
 			"analyticsDesc": "Ver analíticas detalladas de la plataforma",
 			"viewAnalytics": "Ver analíticas"
+		},
+		"editCourse": {
+			"saveChanges": "Save Changes"
 		}
 	},
 	"achievements": {
@@ -967,7 +1365,10 @@
 		"noCredentials": "Sin credenciales",
 		"noCredentialsDesc": "Completa cursos para obtener credenciales verificables.",
 		"myCredentials": "Mis credenciales",
-		"credentialsDesc": "{count} credenciales obtenidas"
+		"credentialsDesc": "{count} credenciales obtenidas",
+		"explorer": "Explorer",
+		"listTitle": "List Title",
+		"unverified": "Unverified"
 	},
 	"seasonal": {
 		"title": "Eventos de temporada",
@@ -2582,7 +2983,32 @@
 			"step2Title": "Aprende haciendo",
 			"step2Desc": "Completa lecciones interactivas, resuelve desafíos de código y construye proyectos reales en el navegador.",
 			"step3Title": "Gana XP y credenciales",
-			"step3Desc": "Acumula puntos de experiencia, mantén rachas y desbloquea credenciales intransferibles en cadena."
+			"step3Desc": "Acumula puntos de experiencia, mantén rachas y desbloquea credenciales intransferibles en cadena.",
+			"badge": "Badge",
+			"community": "Community",
+			"communityDesc": "Community Desc",
+			"completion": "Completion",
+			"courses": "Courses",
+			"credentials": "Credentials",
+			"credentialsDesc": "Credentials Desc",
+			"cta": "Cta",
+			"description": "Description",
+			"earnXp": "Earn XP",
+			"earnXpDesc": "Earn XP Desc",
+			"expertContent": "Expert Content",
+			"expertContentDesc": "Expert Content Desc",
+			"explorePaths": "Explore Paths",
+			"interactiveCoding": "Interactive Coding",
+			"interactiveCodingDesc": "Interactive Coding Desc",
+			"learners": "Learners",
+			"lessons": "Lessons",
+			"popular": "Popular",
+			"startCourse": "Start Course",
+			"streaks": "Streaks",
+			"streaksDesc": "Streaks Desc",
+			"titleHighlight": "Title Highlight",
+			"titleSuffix": "Title Suffix",
+			"viewAll": "View All"
 		},
 		"testimonials": {
 			"title": "Hecho por constructores, para constructores",
@@ -2631,7 +3057,9 @@
 		"myCredentials": "Mis credenciales",
 		"streakFreezes": "Congelaciones de racha",
 		"nextMilestoneIn": "{days}d para una racha de {milestone}d",
-		"maxMilestoneReached": "Meta máxima de racha alcanzada"
+		"maxMilestoneReached": "Meta máxima de racha alcanzada",
+		"recentActivity": "Recent Activity",
+		"recommendedCourses": "Recommended Courses"
 	},
 	"common": {
 		"error": {
@@ -2705,6 +3133,13 @@
 			"empty": "No se encontraron discusiones",
 			"emptyDescription": "Intenta ajustar tus filtros o inicia una nueva discusión.",
 			"backToDiscussions": "Volver a Discusiones",
+			"replies": "Respuestas",
+			"noReplies": "Sin respuestas aún. ¡Sé el primero en responder!",
+			"leaveReply": "Dejar una Respuesta",
+			"replyPlaceholder": "Escribe tu respuesta...",
+			"postReply": "Publicar Respuesta",
+			"posting": "Publicando...",
+			"accepted": "Aceptada",
 			"tabs": {
 				"recent": "Recientes",
 				"trending": "Tendencias",
@@ -2718,7 +3153,8 @@
 				"featureRequests": "Solicitudes de Funciones",
 				"studyGroups": "Grupos de Estudio",
 				"offTopic": "Fuera de Tema"
-			}
+			},
+			"pinned": "Pinned"
 		},
 		"events": {
 			"tabs": {
@@ -2777,6 +3213,105 @@
 				"social": "Social",
 				"infra": "Infraestructura"
 			}
+		},
+		"createDiscussion": {
+			"actions": {
+				"cancel": "Cancel",
+				"postDiscussion": "Post Discussion"
+			},
+			"description": "Description",
+			"errors": {
+				"createFailed": "Create Failed",
+				"createFailedRetry": "Create Failed Retry"
+			},
+			"fields": {
+				"category": "Category",
+				"details": "Details",
+				"tags": "Tags",
+				"title": "Title"
+			},
+			"markdownSupported": "Markdown Supported",
+			"placeholders": {
+				"details": "Details",
+				"tags": "Tags",
+				"title": "Title"
+			},
+			"title": "Title",
+			"toast": {
+				"createdDescription": "Created Description",
+				"createdTitle": "Created Title",
+				"errorTitle": "Error Title"
+			}
+		},
+		"createEvent": {
+			"actions": {
+				"cancel": "Cancel",
+				"createEvent": "Create Event"
+			},
+			"description": "Description",
+			"errors": {
+				"createFailed": "Create Failed",
+				"createFailedRetry": "Create Failed Retry"
+			},
+			"fields": {
+				"description": "Description",
+				"endDateTime": "End Date Time",
+				"eventName": "Event Name",
+				"location": "Location",
+				"maxAttendees": "Max Attendees",
+				"registrationUrl": "Registration URL",
+				"startDateTime": "Start Date Time",
+				"tags": "Tags",
+				"timezone": "Timezone",
+				"type": "Type"
+			},
+			"location": {
+				"inPerson": "In Person",
+				"online": "Online"
+			},
+			"placeholders": {
+				"description": "Description",
+				"eventName": "Event Name",
+				"tags": "Tags"
+			},
+			"title": "Title",
+			"toast": {
+				"createdDescription": "Created Description",
+				"createdTitle": "Created Title",
+				"errorTitle": "Error Title"
+			}
+		},
+		"createProject": {
+			"actions": {
+				"cancel": "Cancel",
+				"submit": "Submit"
+			},
+			"description": "Description",
+			"errors": {
+				"submitFailed": "Submit Failed",
+				"submitFailedRetry": "Submit Failed Retry"
+			},
+			"fields": {
+				"category": "Category",
+				"description": "Description",
+				"githubUrl": "GitHub URL",
+				"liveUrl": "Live URL",
+				"projectName": "Project Name",
+				"tags": "Tags",
+				"xpReward": "XP Reward"
+			},
+			"placeholders": {
+				"description": "Description",
+				"projectName": "Project Name",
+				"tags": "Tags"
+			},
+			"title": "Title",
+			"toast": {
+				"errorTitle": "Error Title",
+				"submittedDescription": "Submitted Description",
+				"submittedTitle": "Submitted Title"
+			},
+			"xpRewardHelp": "XP Reward Help"
 		}
 	},
 	"topics": {
@@ -2807,7 +3342,10 @@
 		"verified": "Verificado",
 		"xpEarned": "XP ganado",
 		"onChainProof": "Prueba en cadena",
-		"viewOnExplorer": "Ver en el explorador"
+		"viewOnExplorer": "Ver en el explorador",
+		"certificatesEarned": "Certificates Earned",
+		"connectWallet": "Connect Wallet",
+		"noCertificates": "No Certificates"
 	},
 	"learn": {
 		"backToCourse": "Volver al curso",
@@ -2848,231 +3386,6 @@
 		"backToOptions": "Volver a las opciones de inicio de sesión",
 		"termsNotice": "Al continuar, aceptas nuestros Términos de servicio y Política de privacidad."
 	},
-	"onboarding": {
-		"steps": {
-			"welcome": "Bienvenida",
-			"profile": "Perfil básico",
-			"profile-details": "Detalles del perfil",
-			"topics": "Temas",
-			"time": "Tiempo",
-			"experience": "Experiencia",
-			"goals": "Objetivos",
-			"complete": "Finalizar"
-		},
-		"progress": {
-			"ariaLabel": "Progreso de onboarding: paso {current} de {total}"
-		},
-		"welcome": {
-			"title": "¡Bienvenido a Superteam Academy! 🎉",
-			"description": "Configuramos tu perfil para que aproveches al máximo tu aprendizaje.",
-			"usernameCard": {
-				"title": "Elige tu nombre de usuario",
-				"description": "Será tu identificador único en la plataforma. ¡Elige uno memorable!",
-				"label": "Nombre de usuario",
-				"placeholder": "tu-usuario",
-				"help": "3-30 caracteres. Solo letras, números, guiones y guiones bajos.",
-				"taken": "Este nombre de usuario ya está en uso.",
-				"available": "¡Nombre de usuario disponible!"
-			},
-			"suggestions": {
-				"loading": "Cargando sugerencias...",
-				"title": "Sugerencias:"
-			},
-			"actions": {
-				"continue": "Continuar"
-			}
-		},
-		"profile": {
-			"title": "Perfil básico",
-			"description": "Empieza con tu información principal.",
-			"card": {
-				"title": "Sobre ti",
-				"description": "Un perfil breve ayuda a personalizar tu experiencia en Academy."
-			},
-			"fields": {
-				"name": {
-					"label": "Nombre completo",
-					"placeholder": "Tu nombre completo"
-				},
-				"title": {
-					"label": "Título profesional",
-					"placeholder": "Ingeniero de software, estudiante, etc."
-				},
-				"company": {
-					"label": "Empresa/Organización",
-					"placeholder": "¿Dónde trabajas o estudias?"
-				}
-			},
-			"actions": {
-				"back": "Atrás",
-				"continue": "Continuar"
-			}
-		},
-		"profileDetails": {
-			"title": "Detalles del perfil",
-			"description": "Agrega datos opcionales para que otros te encuentren y conecten contigo.",
-			"card": {
-				"title": "Detalles públicos",
-				"description": "Estos datos ayudan a destacar tu perfil."
-			},
-			"fields": {
-				"location": {
-					"label": "Ubicación",
-					"placeholder": "Ciudad, país"
-				},
-				"website": {
-					"label": "Sitio web/Portafolio",
-					"placeholder": "https://tu-sitio.com"
-				},
-				"bio": {
-					"label": "Bio",
-					"placeholder": "Cuéntanos sobre tus intereses y lo que estás construyendo...",
-					"remaining": "{count} caracteres restantes"
-				}
-			},
-			"actions": {
-				"back": "Atrás",
-				"continue": "Continuar"
-			}
-		},
-		"preferences": {
-			"title": "Temas que te interesan",
-			"description": "Elige las áreas que quieres explorar primero.",
-			"card": {
-				"title": "Temas de interés",
-				"description": "Selecciona todos los que correspondan."
-			},
-			"selected": "Seleccionados: {count} temas",
-			"topics": {
-				"web-development": "Desarrollo web",
-				"blockchain": "Blockchain",
-				"smart-contracts": "Contratos inteligentes",
-				"defi": "DeFi",
-				"nft": "NFT",
-				"cryptography": "Criptografía",
-				"data-science": "Ciencia de datos",
-				"machine-learning": "Aprendizaje automático",
-				"mobile-development": "Desarrollo móvil",
-				"game-development": "Desarrollo de juegos",
-				"devops": "DevOps",
-				"security": "Seguridad",
-				"ai": "IA",
-				"cloud-computing": "Computación en la nube",
-				"databases": "Bases de datos",
-				"api-development": "Desarrollo de APIs"
-			},
-			"actions": {
-				"back": "Atrás",
-				"continue": "Continuar"
-			}
-		},
-		"timeCommitment": {
-			"title": "Tu compromiso semanal",
-			"description": "¿Cuánto tiempo puedes dedicar regularmente al aprendizaje?",
-			"card": {
-				"title": "Compromiso de tiempo",
-				"description": "Elige una opción."
-			},
-			"options": {
-				"casual": {
-					"label": "Casual (1-2 horas/semana)",
-					"description": "Ritmo de aprendizaje ligero"
-				},
-				"regular": {
-					"label": "Regular (3-5 horas/semana)",
-					"description": "Compromiso moderado"
-				},
-				"intensive": {
-					"label": "Intensivo (6+ horas/semana)",
-					"description": "Compromiso alto"
-				}
-			},
-			"actions": {
-				"back": "Atrás",
-				"continue": "Continuar"
-			}
-		},
-		"experience": {
-			"title": "Tu nivel actual",
-			"description": "Esto nos ayuda a personalizar recomendaciones desde el primer día.",
-			"card": {
-				"title": "Nivel de experiencia",
-				"description": "Elige la opción más cercana."
-			},
-			"levels": {
-				"beginner": {
-					"label": "Principiante",
-					"description": "Nuevo en programación/desarrollo"
-				},
-				"intermediate": {
-					"label": "Intermedio",
-					"description": "Algo de experiencia, construyendo proyectos"
-				},
-				"advanced": {
-					"label": "Avanzado",
-					"description": "Desarrollador con experiencia, proyectos complejos"
-				},
-				"expert": {
-					"label": "Experto",
-					"description": "Nivel senior, mentoría a otros"
-				}
-			},
-			"actions": {
-				"back": "Atrás",
-				"continue": "Continuar"
-			}
-		},
-		"goals": {
-			"title": "Tus objetivos de aprendizaje",
-			"description": "¿Qué esperas lograr aprendiendo en Superteam Academy?",
-			"card": {
-				"title": "Objetivos de aprendizaje",
-				"description": "¿Cuáles son tus objetivos principales? Selecciona todos los que apliquen."
-			},
-			"selected": "Seleccionados: {count} objetivos",
-			"options": {
-				"career-change": "Cambio de carrera",
-				"skill-up": "Mejorar habilidades",
-				"certification": "Certificación",
-				"personal-growth": "Crecimiento personal",
-				"entrepreneurship": "Emprendimiento",
-				"freelancing": "Freelance",
-				"job-promotion": "Ascenso laboral",
-				"side-project": "Proyecto paralelo",
-				"teaching": "Enseñanza",
-				"community-building": "Construcción de comunidad"
-			},
-			"actions": {
-				"back": "Atrás",
-				"continue": "Continuar"
-			}
-		},
-		"complete": {
-			"title": "Todo listo. ¿Qué sigue?",
-			"description": "Esto es lo que puedes hacer para empezar:",
-			"steps": {
-				"exploreCourses": {
-					"title": "Explora cursos",
-					"description": "Revisa nuestra selección curada de cursos de blockchain y desarrollo web."
-				},
-				"startLearning": {
-					"title": "Empieza a aprender",
-					"description": "Inscríbete en tu primer curso y comienza a ganar XP y logros."
-				},
-				"connectAndShare": {
-					"title": "Conecta y comparte",
-					"description": "Únete a la comunidad, comparte tu progreso y aprende con otros."
-				}
-			},
-			"cta": {
-				"title": "¿Listo para lanzar tu aprendizaje?",
-				"description": "¡Tu panel personalizado te espera!"
-			},
-			"actions": {
-				"getStarted": "Comenzar"
-			}
-		}
-	},
 	"footer": {
 		"description": "Domina el desarrollo en Solana a través de cursos interactivos y obtén credenciales verificables en cadena.",
 		"learn": "Aprender",
@@ -3108,8 +3421,65 @@
 		"recent": "Recientes",
 		"quickLinks": "Enlaces rápidos",
 		"searchFor": "Buscar \"{query}\"",
+		"results": "Resultados",
+		"noResults": "No se encontraron cursos",
 		"browseCourses": "Explorar cursos",
 		"exploreTopics": "Explorar temas",
 		"leaderboard": "Tabla de clasificación"
+	},
+	"lessonNavigation": {
+		"courseContent": "Course Content",
+		"currentLesson": "Current Lesson",
+		"nextLesson": "Next Lesson",
+		"previousLesson": "Previous Lesson"
+	},
+	"lessonProgress": {
+		"achievements": "Achievements",
+		"courseProgress": "Course Progress",
+		"currentLesson": "Current Lesson",
+		"lessonsCompleted": "Lessons Completed",
+		"percentComplete": "Percent Complete",
+		"percentToNextLevel": "Percent To Next Level",
+		"progress": "Progress",
+		"timeSpent": "Time Spent",
+		"timeSpentLabel": "Time Spent Label",
+		"xpEarned": "XP Earned"
+	},
+	"lessonQuiz": {
+		"actions": {
+			"next": "Next",
+			"previous": "Previous",
+			"submitQuiz": "Submit Quiz"
+		},
+		"notAvailable": "Not Available",
+		"progress": {
+			"complete": "Complete",
+			"questionOf": "Question Of"
+		},
+		"results": {
+			"congratulations": "Congratulations",
+			"correctCount": "Correct Count",
+			"explanation": "Explanation",
+			"failed": "Failed",
+			"passed": "Passed",
+			"question": "Question",
+			"required": "Required",
+			"reviewAnswers": "Review Answers",
+			"tryAgain": "Try Again"
+		}
+	},
+	"profile": {
+		"completeness": {
+			"cta": "Cta",
+			"missingInformation": "Missing Information",
+			"percentComplete": "Percent Complete",
+			"status": {
+				"excellent": "Excellent",
+				"fair": "Fair",
+				"good": "Good",
+				"needsWork": "Needs Work"
+			},
+			"title": "Title"
+		}
 	}
 }

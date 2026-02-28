@@ -7,6 +7,7 @@ import type {
     EventStatus,
     EventType,
     ProjectCategory,
+    SanityBlock,
 } from "../schemas";
 import type { CMSContext } from "./cms-service";
 import {
@@ -26,6 +27,19 @@ import {
     membersByBadgeQuery,
 } from "../queries";
 
+export interface CommentWithMeta {
+	_id: string;
+	content: SanityBlock[];
+	points: number;
+	accepted: boolean;
+	publishedAt: string;
+	author: {
+		_id: string;
+		name: string;
+		image?: string;
+	};
+}
+
 export interface DiscussionWithMeta extends Omit<Discussion, "author"> {
 	author: {
 		_id: string;
@@ -33,6 +47,7 @@ export interface DiscussionWithMeta extends Omit<Discussion, "author"> {
 		image?: string;
 	};
 	commentCount: number;
+	comments?: CommentWithMeta[];
 }
 
 export interface EventWithMeta extends Event {
@@ -89,6 +104,12 @@ export interface CreateProjectInput {
 	githubUrl?: string | undefined;
 	liveUrl?: string | undefined;
 	xpReward?: number | undefined;
+}
+
+export interface CreateCommentInput {
+	discussionId: string;
+	content: string;
+	authorId: string;
 }
 
 export function createCommunityService(context: CMSContext) {
@@ -307,7 +328,35 @@ export function createCommunityService(context: CMSContext) {
 		return { success: true, slug: doc.slug?.current || slug };
 	};
 
+	const createComment = async (
+		input: CreateCommentInput
+	): Promise<{ success: boolean; commentId?: string; error?: string }> => {
+		if (!writeClient) {
+			return { success: false, error: "Sanity write client not configured" };
+		}
+
+		const doc = await writeClient.create({
+			_type: "discussionComment" as const,
+			discussion: { _type: "reference", _ref: input.discussionId },
+			content: [
+				{
+					_type: "block",
+					_key: crypto.randomUUID(),
+					style: "normal",
+					children: [{ _type: "span", _key: crypto.randomUUID(), text: input.content }],
+				},
+			],
+			author: { _type: "reference", _ref: input.authorId },
+			points: 0,
+			accepted: false,
+			publishedAt: new Date().toISOString(),
+		});
+
+		return { success: true, commentId: doc._id };
+	};
+
 	return {
+		createComment,
 		createDiscussion,
 		createEvent,
 		createProject,

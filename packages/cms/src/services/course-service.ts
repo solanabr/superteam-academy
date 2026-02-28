@@ -1,11 +1,12 @@
 import type { Course } from "../schemas";
 import type { CMSContext } from "./cms-service";
 import {
-	allCoursesQuery,
-	allCoursesIndexQuery,
-	courseBySlugQuery,
-	coursesByTrackQuery,
-	allTracksQuery,
+    allCoursesQuery,
+    allCoursesIndexQuery,
+    courseBySlugQuery,
+    coursesByTrackQuery,
+    allTracksQuery,
+    searchCoursesQuery,
 } from "../queries";
 
 export type CourseReview = {
@@ -22,6 +23,12 @@ export type CourseReview = {
 
 export function createCourseService(context: CMSContext) {
 	const { fetch, resolveImageUrl, readClient } = context;
+
+	const searchCourses = async (query: string): Promise<Course[]> => {
+		if (!readClient || !query.trim()) return [];
+		const q = `${query.trim()}*`;
+		return (await fetch<Course[]>(searchCoursesQuery, { q })) || [];
+	};
 
 	const getAllCourses = async (): Promise<Course[]> => {
 		if (!readClient) return [];
@@ -145,6 +152,7 @@ export function createCourseService(context: CMSContext) {
 	): string | null => resolveImageUrl(image, width, height);
 
 	return {
+		searchCourses,
 		getAllCourses,
 		getAllCoursesIndex,
 		getCourseBySlug,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Save, Edit3, Trash2, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,27 @@ interface LessonNotesProps {
 	onUpdateNote?: (noteId: string, updates: Partial<Note>) => void;
 }
 
+interface ApiNote {
+	_id: string;
+	_createdAt?: string;
+	_updatedAt?: string;
+	lessonId: string;
+	title: string;
+	content: string;
+	timestamp: number;
+}
+
+function apiNoteToNote(n: ApiNote): Note {
+	return {
+		id: n._id,
+		timestamp: n.timestamp ?? 0,
+		title: n.title,
+		content: n.content,
+		createdAt: new Date(n._createdAt ?? Date.now()),
+		updatedAt: new Date(n._updatedAt ?? Date.now()),
+	};
+}
+
 export function LessonNotes({
 	lessonId,
 	currentTime,
@@ -40,8 +61,9 @@ export function LessonNotes({
 	const [newNoteContent, setNewNoteContent] = useState("");
 	const [editTitle, setEditTitle] = useState("");
 	const [editContent, setEditContent] = useState("");
+	const [useApi, setUseApi] = useState(false);
 
-	useEffect(() => {
+	const loadLocalNotes = useCallback(() => {
 		const savedNotes = localStorage.getItem(`lesson-notes-${lessonId}`);
 		if (savedNotes) {
 			try {
@@ -53,21 +75,51 @@ export function LessonNotes({
 					createdAt: string;
 					updatedAt: string;
 				}
-				const parsedNotes = (JSON.parse(savedNotes) as StoredNote[]).map((note) => ({
+				return (JSON.parse(savedNotes) as StoredNote[]).map((note) => ({
 					...note,
 					createdAt: new Date(note.createdAt),
 					updatedAt: new Date(note.updatedAt),
 				}));
-				setNotes(parsedNotes);
-			} catch (error) {
-				console.error("Failed to load notes:", error);
+			} catch {
+				return [];
 			}
 		}
+		return [];
 	}, [lessonId]);
 
 	useEffect(() => {
-		localStorage.setItem(`lesson-notes-${lessonId}`, JSON.stringify(notes));
-	}, [notes, lessonId]);
+		let cancelled = false;
+		async function load() {
+			try {
+				const res = await fetch(`/api/lessons/notes?lessonId=${encodeURIComponent(lessonId)}`);
+				if (res.ok) {
+					const data = await res.json();
+					if (!cancelled && Array.isArray(data.notes) && data.notes.length > 0) {
+						setNotes(data.notes.map(apiNoteToNote));
+						setUseApi(true);
+						return;
+					}
+					if (!cancelled && res.ok) {
+						setUseApi(true);
+					}
+				}
+			} catch {
+				// API not available — fall back to localStorage
+			}
+			if (!cancelled) {
+				const local = loadLocalNotes();
+				setNotes(local);
+			}
+		}
+		load();
+		return () => { cancelled = true; };
+	}, [lessonId, loadLocalNotes]);
+
+	useEffect(() => {
+		if (!useApi) {
+			localStorage.setItem(`lesson-notes-${lessonId}`, JSON.stringify(notes));
+		}
+	}, [notes, lessonId, useApi]);
 
 	const formatTime = (seconds: number) => {
 		const minutes = Math.floor(seconds / 60);
@@ -75,7 +127,7 @@ export function LessonNotes({
 		return `${minutes}:${secs.toString().padStart(2, "0")}`;
 	};
 
-	const addNote = () => {
+	const addNote = async () => {
 		if (!newNoteTitle.trim() || !newNoteContent.trim()) return;
 
 		const note: Note = {
@@ -87,6 +139,27 @@ export function LessonNotes({
 			updatedAt: new Date(),
 		};
 
+		if (useApi) {
+			try {
+				const res = await fetch("/api/lessons/notes", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						lessonId,
+						title: note.title,
+						content: note.content,
+						timestamp: note.timestamp,
+					}),
+				});
+				if (res.ok) {
+					const data = await res.json();
+					note.id = data.note._id;
+				}
+			} catch {
+				// Silently fall back to local
+			}
+		}
+
 		const updatedNotes = [...notes, note].sort((a, b) => a.timestamp - b.timestamp);
 		setNotes(updatedNotes);
 		onSaveNote?.(note);
@@ -96,8 +169,20 @@ export function LessonNotes({
 		setIsAddingNote(false);
 	};
 
-	const updateNote = (noteId: string) => {
+	const updateNote = async (noteId: string) => {
 		if (!editTitle.trim() || !editContent.trim()) return;
+
+		if (useApi) {
+			try {
+				await fetch("/api/lessons/notes", {
+					method: "PATCH",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ noteId, title: editTitle.trim(), content: editContent.trim() }),
+				});
+			} catch {
+				// Silently fall back to local
+			}
+		}
 
 		const updatedNotes = notes.map((note) =>
 			note.id === noteId
@@ -121,7 +206,15 @@ export function LessonNotes({
 		setEditContent("");
 	};
 
-	const deleteNote = (noteId: string) => {
+	const deleteNote = async (noteId: string) => {
+		if (useApi) {
+			try {
+				await fetch(`/api/lessons/notes?noteId=${encodeURIComponent(noteId)}`, { method: "DELETE" });
+			} catch {
+				// Silently fall back to local
+			}
+		}
+
 		const updatedNotes = notes.filter((note) => note.id !== noteId);
 		setNotes(updatedNotes);
 		onDeleteNote?.(noteId);

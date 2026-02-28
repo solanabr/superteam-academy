@@ -134,7 +134,7 @@ export function ChallengeInstructions({
 
 			<Card>
 				<CardHeader>
-					<CardTitle>{t("instructions.tips")}</CardTitle>
+					<CardTitle>{t("instructions.tips.title")}</CardTitle>
 				</CardHeader>
 				<CardContent>
 					<div className="space-y-3 text-sm text-muted-foreground">

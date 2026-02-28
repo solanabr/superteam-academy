@@ -7,6 +7,8 @@ export type {
 	CreateDiscussionInput,
 	CreateEventInput,
 	CreateProjectInput,
+	CreateCommentInput,
+	CommentWithMeta,
 	DiscussionWithMeta,
 	EventWithMeta,
 	ProjectWithMeta,

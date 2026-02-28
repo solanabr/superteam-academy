@@ -375,3 +375,12 @@ export type NewsletterSubscriber = SanityDocument & {
 	source?: string;
 	locale?: string;
 };
+
+export type LessonNote = SanityDocument & {
+	_type: "lessonNote";
+	lessonId: string;
+	user: { _ref: string };
+	title: string;
+	content: string;
+	timestamp: number;
+};

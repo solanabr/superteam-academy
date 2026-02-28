@@ -162,7 +162,8 @@
 			"enrollFor": "Enroll for ${price}",
 			"moneyBack": "30-day money-back guarantee",
 			"lifetimeAccess": "Lifetime access to course materials",
-			"certificateIncluded": "Certificate of completion included"
+			"certificateIncluded": "Certificate of completion included",
+			"closeEnrollment": "Close Enrollment"
 		},
 		"modules": {
 			"title": "Course Curriculum",
@@ -648,6 +649,198 @@
 			"appearance": "Appearance",
 			"language": "Language",
 			"wallet": "Wallet"
+		},
+		"appearanceSection": {
+			"actions": {
+				"saveChanges": "Save Changes",
+				"saving": "Saving"
+			},
+			"reducedMotion": {
+				"description": "Description",
+				"title": "Title"
+			},
+			"sections": {
+				"accessibility": "Accessibility",
+				"fontSize": "Font Size",
+				"theme": "Theme"
+			},
+			"title": "Title",
+			"toast": {
+				"errorDescription": "Error Description",
+				"errorTitle": "Error Title",
+				"updatedDescription": "Updated Description",
+				"updatedTitle": "Updated Title"
+			}
+		},
+		"languageSection": {
+			"actions": {
+				"saveChanges": "Save Changes",
+				"saving": "Saving"
+			},
+			"labels": {
+				"dateFormat": "Date Format",
+				"numberFormat": "Number Format",
+				"timeFormat": "Time Format",
+				"timezone": "Timezone"
+			},
+			"preview": {
+				"date": "Date",
+				"number": "Number",
+				"time": "Time"
+			},
+			"sections": {
+				"language": "Language",
+				"preview": "Preview",
+				"regionalFormats": "Regional Formats"
+			},
+			"timeFormats": {
+				"12h": "12h",
+				"24h": "24h"
+			},
+			"toast": {
+				"errorDescription": "Error Description",
+				"errorTitle": "Error Title",
+				"savedTitle": "Saved Title"
+			}
+		},
+		"notificationsSection": {
+			"actions": {
+				"saveChanges": "Save Changes",
+				"saving": "Saving"
+			},
+			"frequency": {
+				"daily": "Daily",
+				"immediate": "Immediate",
+				"weekly": "Weekly"
+			},
+			"labels": {
+				"emailFrequency": "Email Frequency",
+				"pushFrequency": "Push Frequency"
+			},
+			"sections": {
+				"frequency": "Frequency",
+				"general": "General",
+				"notificationTypes": "Notification Types"
+			},
+			"title": "Title",
+			"toast": {
+				"errorDescription": "Error Description",
+				"errorTitle": "Error Title",
+				"updatedDescription": "Updated Description",
+				"updatedTitle": "Updated Title"
+			}
+		},
+		"privacySection": {
+			"actions": {
+				"exportData": "Export Data",
+				"exporting": "Exporting",
+				"saveChanges": "Save Changes",
+				"saving": "Saving"
+			},
+			"export": {
+				"description": "Description",
+				"note": "Note",
+				"title": "Title"
+			},
+			"labels": {
+				"profileVisibility": "Profile Visibility"
+			},
+			"title": "Title",
+			"toast": {
+				"errorDescription": "Error Description",
+				"errorTitle": "Error Title",
+				"exportFailedDescription": "Export Failed Description",
+				"exportFailedTitle": "Export Failed Title",
+				"exportedDescription": "Exported Description",
+				"exportedTitle": "Exported Title",
+				"updatedDescription": "Updated Description",
+				"updatedTitle": "Updated Title"
+			}
+		},
+		"profileSection": {
+			"actions": {
+				"saveChanges": "Save Changes",
+				"saving": "Saving"
+			},
+			"bioHelp": "Bio Help",
+			"changePhoto": "Change Photo",
+			"fields": {
+				"bio": "Bio",
+				"email": "Email",
+				"location": "Location",
+				"name": "Name",
+				"username": "Username",
+				"website": "Website"
+			},
+			"photoHelp": "Photo Help",
+			"placeholders": {
+				"username": "Username"
+			},
+			"title": "Title",
+			"toast": {
+				"errorDescription": "Error Description",
+				"errorTitle": "Error Title",
+				"invalidUsernameDescription": "Invalid Username Description",
+				"invalidUsernameTitle": "Invalid Username Title",
+				"updatedDescription": "Updated Description",
+				"updatedTitle": "Updated Title",
+				"usernameUnavailableDescription": "Username Unavailable Description",
+				"usernameUnavailableTitle": "Username Unavailable Title"
+			},
+			"usernameAvailable": "Username Available",
+			"usernameHelp": "Username Help",
+			"usernameTaken": "Username Taken"
+		},
+		"walletSection": {
+			"actions": {
+				"linkCurrentWallet": "Link Current Wallet",
+				"linkGithub": "Link GitHub",
+				"linkGoogle": "Link Google",
+				"reauth": "Reauth",
+				"relinkGithub": "Relink GitHub",
+				"relinkGoogle": "Relink Google",
+				"relinkWallet": "Relink Wallet",
+				"saveChanges": "Save Changes",
+				"saving": "Saving",
+				"unlink": "Unlink"
+			},
+			"autoConnect": {
+				"description": "Description",
+				"title": "Title"
+			},
+			"badges": {
+				"primary": "Primary"
+			},
+			"empty": {
+				"noLinkedAccounts": "No Linked Accounts",
+				"noWalletConnected": "No Wallet Connected"
+			},
+			"linkedAtLabel": "Linked At Label",
+			"loading": {
+				"linkedAccounts": "Linked Accounts"
+			},
+			"sections": {
+				"connectedWallet": "Connected Wallet",
+				"linkedAccounts": "Linked Accounts",
+				"preferences": "Preferences"
+			},
+			"toast": {
+				"errorDescription": "Error Description",
+				"errorTitle": "Error Title",
+				"linkFailedTitle": "Link Failed Title",
+				"linkedTitle": "Linked Title",
+				"reauthFailedTitle": "Reauth Failed Title",
+				"reauthedTitle": "Reauthed Title",
+				"savedTitle": "Saved Title",
+				"signatureUnavailableDescription": "Signature Unavailable Description",
+				"signatureUnavailableTitle": "Signature Unavailable Title",
+				"tryAgain": "Try Again",
+				"unlinkFailedTitle": "Unlink Failed Title",
+				"unlinkedTitle": "Unlinked Title",
+				"walletLinkFailedTitle": "Wallet Link Failed Title",
+				"walletLinkedTitle": "Wallet Linked Title"
+			},
+			"unknownWallet": "Unknown Wallet"
 		}
 	},
 	"pagination": {
@@ -752,6 +945,9 @@
 			"analyticsTitle": "Platform Analytics",
 			"analyticsDesc": "View detailed platform analytics",
 			"viewAnalytics": "View Analytics"
+		},
+		"editCourse": {
+			"saveChanges": "Save Changes"
 		}
 	},
 	"achievements": {
@@ -944,7 +1140,10 @@
 		"noCredentials": "No Credentials",
 		"noCredentialsDesc": "Complete courses to earn verifiable credentials.",
 		"myCredentials": "My Credentials",
-		"credentialsDesc": "{count} credentials earned"
+		"credentialsDesc": "{count} credentials earned",
+		"explorer": "Explorer",
+		"listTitle": "List Title",
+		"unverified": "Unverified"
 	},
 	"seasonal": {
 		"title": "Seasonal Events",
@@ -2559,7 +2758,32 @@
 			"step2Title": "Learn by doing",
 			"step2Desc": "Complete interactive lessons, solve coding challenges, and build real projects in-browser.",
 			"step3Title": "Earn XP & credentials",
-			"step3Desc": "Collect experience points, maintain streaks, and unlock soulbound on-chain credentials."
+			"step3Desc": "Collect experience points, maintain streaks, and unlock soulbound on-chain credentials.",
+			"badge": "Badge",
+			"community": "Community",
+			"communityDesc": "Community Desc",
+			"completion": "Completion",
+			"courses": "Courses",
+			"credentials": "Credentials",
+			"credentialsDesc": "Credentials Desc",
+			"cta": "Cta",
+			"description": "Description",
+			"earnXp": "Earn XP",
+			"earnXpDesc": "Earn XP Desc",
+			"expertContent": "Expert Content",
+			"expertContentDesc": "Expert Content Desc",
+			"explorePaths": "Explore Paths",
+			"interactiveCoding": "Interactive Coding",
+			"interactiveCodingDesc": "Interactive Coding Desc",
+			"learners": "Learners",
+			"lessons": "Lessons",
+			"popular": "Popular",
+			"startCourse": "Start Course",
+			"streaks": "Streaks",
+			"streaksDesc": "Streaks Desc",
+			"titleHighlight": "Title Highlight",
+			"titleSuffix": "Title Suffix",
+			"viewAll": "View All"
 		},
 		"testimonials": {
 			"title": "Built by builders, for builders",
@@ -2608,7 +2832,9 @@
 		"myCredentials": "My Credentials",
 		"streakFreezes": "Streak Freezes",
 		"nextMilestoneIn": "{days}d to {milestone}d streak",
-		"maxMilestoneReached": "Top streak milestone reached"
+		"maxMilestoneReached": "Top streak milestone reached",
+		"recentActivity": "Recent Activity",
+		"recommendedCourses": "Recommended Courses"
 	},
 	"common": {
 		"error": {
@@ -2682,6 +2908,13 @@
 			"empty": "No discussions found",
 			"emptyDescription": "Try adjusting your filters or start a new discussion.",
 			"backToDiscussions": "Back to Discussions",
+			"replies": "Replies",
+			"noReplies": "No replies yet. Be the first to respond!",
+			"leaveReply": "Leave a Reply",
+			"replyPlaceholder": "Write your reply...",
+			"postReply": "Post Reply",
+			"posting": "Posting...",
+			"accepted": "Accepted",
 			"tabs": {
 				"recent": "Recent",
 				"trending": "Trending",
@@ -2695,7 +2928,8 @@
 				"featureRequests": "Feature Requests",
 				"studyGroups": "Study Groups",
 				"offTopic": "Off Topic"
-			}
+			},
+			"pinned": "Pinned"
 		},
 		"events": {
 			"tabs": {
@@ -2754,6 +2988,105 @@
 				"social": "Social",
 				"infra": "Infrastructure"
 			}
+		},
+		"createDiscussion": {
+			"actions": {
+				"cancel": "Cancel",
+				"postDiscussion": "Post Discussion"
+			},
+			"description": "Description",
+			"errors": {
+				"createFailed": "Create Failed",
+				"createFailedRetry": "Create Failed Retry"
+			},
+			"fields": {
+				"category": "Category",
+				"details": "Details",
+				"tags": "Tags",
+				"title": "Title"
+			},
+			"markdownSupported": "Markdown Supported",
+			"placeholders": {
+				"details": "Details",
+				"tags": "Tags",
+				"title": "Title"
+			},
+			"title": "Title",
+			"toast": {
+				"createdDescription": "Created Description",
+				"createdTitle": "Created Title",
+				"errorTitle": "Error Title"
+			}
+		},
+		"createEvent": {
+			"actions": {
+				"cancel": "Cancel",
+				"createEvent": "Create Event"
+			},
+			"description": "Description",
+			"errors": {
+				"createFailed": "Create Failed",
+				"createFailedRetry": "Create Failed Retry"
+			},
+			"fields": {
+				"description": "Description",
+				"endDateTime": "End Date Time",
+				"eventName": "Event Name",
+				"location": "Location",
+				"maxAttendees": "Max Attendees",
+				"registrationUrl": "Registration URL",
+				"startDateTime": "Start Date Time",
+				"tags": "Tags",
+				"timezone": "Timezone",
+				"type": "Type"
+			},
+			"location": {
+				"inPerson": "In Person",
+				"online": "Online"
+			},
+			"placeholders": {
+				"description": "Description",
+				"eventName": "Event Name",
+				"tags": "Tags"
+			},
+			"title": "Title",
+			"toast": {
+				"createdDescription": "Created Description",
+				"createdTitle": "Created Title",
+				"errorTitle": "Error Title"
+			}
+		},
+		"createProject": {
+			"actions": {
+				"cancel": "Cancel",
+				"submit": "Submit"
+			},
+			"description": "Description",
+			"errors": {
+				"submitFailed": "Submit Failed",
+				"submitFailedRetry": "Submit Failed Retry"
+			},
+			"fields": {
+				"category": "Category",
+				"description": "Description",
+				"githubUrl": "GitHub URL",
+				"liveUrl": "Live URL",
+				"projectName": "Project Name",
+				"tags": "Tags",
+				"xpReward": "XP Reward"
+			},
+			"placeholders": {
+				"description": "Description",
+				"projectName": "Project Name",
+				"tags": "Tags"
+			},
+			"title": "Title",
+			"toast": {
+				"errorTitle": "Error Title",
+				"submittedDescription": "Submitted Description",
+				"submittedTitle": "Submitted Title"
+			},
+			"xpRewardHelp": "XP Reward Help"
 		}
 	},
 	"topics": {
@@ -2784,7 +3117,10 @@
 		"verified": "Verified",
 		"xpEarned": "XP Earned",
 		"onChainProof": "On-Chain Proof",
-		"viewOnExplorer": "View on Explorer"
+		"viewOnExplorer": "View on Explorer",
+		"certificatesEarned": "Certificates Earned",
+		"connectWallet": "Connect Wallet",
+		"noCertificates": "No Certificates"
 	},
 	"learn": {
 		"backToCourse": "Back to Course",
@@ -3085,8 +3421,65 @@
 		"recent": "Recent",
 		"quickLinks": "Quick links",
 		"searchFor": "Search for \"{query}\"",
+		"results": "Results",
+		"noResults": "No courses found",
 		"browseCourses": "Browse Courses",
 		"exploreTopics": "Explore Topics",
 		"leaderboard": "Leaderboard"
+	},
+	"lessonNavigation": {
+		"courseContent": "Course Content",
+		"currentLesson": "Current Lesson",
+		"nextLesson": "Next Lesson",
+		"previousLesson": "Previous Lesson"
+	},
+	"lessonProgress": {
+		"achievements": "Achievements",
+		"courseProgress": "Course Progress",
+		"currentLesson": "Current Lesson",
+		"lessonsCompleted": "Lessons Completed",
+		"percentComplete": "Percent Complete",
+		"percentToNextLevel": "Percent To Next Level",
+		"progress": "Progress",
+		"timeSpent": "Time Spent",
+		"timeSpentLabel": "Time Spent Label",
+		"xpEarned": "XP Earned"
+	},
+	"lessonQuiz": {
+		"actions": {
+			"next": "Next",
+			"previous": "Previous",
+			"submitQuiz": "Submit Quiz"
+		},
+		"notAvailable": "Not Available",
+		"progress": {
+			"complete": "Complete",
+			"questionOf": "Question Of"
+		},
+		"results": {
+			"congratulations": "Congratulations",
+			"correctCount": "Correct Count",
+			"explanation": "Explanation",
+			"failed": "Failed",
+			"passed": "Passed",
+			"question": "Question",
+			"required": "Required",
+			"reviewAnswers": "Review Answers",
+			"tryAgain": "Try Again"
+		}
+	},
+	"profile": {
+		"completeness": {
+			"cta": "Cta",
+			"missingInformation": "Missing Information",
+			"percentComplete": "Percent Complete",
+			"status": {
+				"excellent": "Excellent",
+				"fair": "Fair",
+				"good": "Good",
+				"needsWork": "Needs Work"
+			},
+			"title": "Profile Completion"
+		}
 	}
 }

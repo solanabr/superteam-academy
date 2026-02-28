@@ -50,6 +50,14 @@ export const lessonFields = /* groq */ `
   duration
 `;
 
+export const searchCoursesQuery = /* groq */ `
+  *[_type == "course" && published == true && (
+    title match $q || description match $q
+  )] | order(_createdAt desc) [0...10] {
+    ${courseFields}
+  }
+`;
+
 export const allCoursesQuery = /* groq */ `
   *[_type == "course" && published == true] | order(_createdAt desc) {
     ${courseFields}
@@ -396,5 +404,22 @@ export const membersByBadgeQuery = /* groq */ `
   *[_type == "communityMember" && $badge in badges] | order(user->xpBalance desc) {
     ${memberFields},
     "achievementCount": 0
+  }
+`;
+
+export const lessonNoteFields = /* groq */ `
+  _id,
+  _type,
+  _createdAt,
+  _updatedAt,
+  lessonId,
+  title,
+  content,
+  timestamp
+`;
+
+export const notesByLessonAndUserQuery = /* groq */ `
+  *[_type == "lessonNote" && lessonId == $lessonId && user._ref == $userId] | order(timestamp asc) {
+    ${lessonNoteFields}
   }
 `;
