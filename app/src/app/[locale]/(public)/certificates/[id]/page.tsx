@@ -5,6 +5,20 @@ import { TRACKS } from "@/types";
 import type { Metadata } from "next";
 import { DownloadButton } from "./DownloadButton";
 
+// X (Twitter) logo as inline SVG — no extra dependency needed
+function XIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.261 5.634 5.903-5.634Zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+    </svg>
+  );
+}
+
 interface Props {
   params: Promise<{ locale: string; id: string }>;
 }
@@ -34,6 +48,11 @@ export default async function CertificatePage({ params }: Props) {
   };
 
   const track = TRACKS[mockCredential.trackId];
+
+  const certificateUrl = `https://superteam-academy.vercel.app/certificates/${id}`;
+  const twitterShareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+    `I just completed the ${mockCredential.name} on @SuperteamBR Academy and earned my on-chain credential! #Solana #Web3 #SuperteamAcademy`
+  )}&url=${encodeURIComponent(certificateUrl)}`;
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-12">
@@ -133,7 +152,17 @@ export default async function CertificatePage({ params }: Props) {
           {t("viewOnExplorer")}
         </a>
         <DownloadButton label={t("download")} />
-        <CopyShareButton url={`https://academy.superteam.fun/certificates/${id}`} label={t("share")} />
+        <CopyShareButton url={certificateUrl} label={t("share")} />
+        <a
+          href={twitterShareUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center gap-2 px-4 py-2.5 border border-[#1F1F1F] text-[#666666] hover:text-[#EDEDED] hover:border-[#2E2E2E] font-mono text-sm rounded transition-colors"
+          title="Share on X (Twitter)"
+        >
+          <XIcon className="h-3.5 w-3.5" />
+          <span className="hidden sm:inline">Share on X</span>
+        </a>
       </div>
 
       {/* On-chain details */}
