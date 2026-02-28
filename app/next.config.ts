@@ -11,7 +11,7 @@ const withNextIntl = createNextIntlPlugin();
 // When Sentry credentials are absent, alias @sentry/nextjs to a no-op stub.
 // This removes ~120 KB of Sentry SDK from the initial JS bundle, improving
 // LCP and TBT scores significantly.
-const sentryStubPath = path.resolve('./lib/sentry-stub.ts');
+const sentryStubPath = path.resolve(__dirname, './lib/sentry-stub');
 const useSentryStub = !process.env.SENTRY_ORG;
 
 const nextConfig: NextConfig = {
