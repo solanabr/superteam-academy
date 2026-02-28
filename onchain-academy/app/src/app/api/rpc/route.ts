@@ -13,6 +13,8 @@ const UPSTREAM_URL = HELIUS_KEY
 const ALLOWED_METHODS = new Set([
   "getBalance",
   "getTokenAccountBalance",
+  "getTokenAccountsByOwner",
+  "getParsedTokenAccountsByOwner",
   "getTokenLargestAccounts",
   "getAccountInfo",
   "getProgramAccounts",

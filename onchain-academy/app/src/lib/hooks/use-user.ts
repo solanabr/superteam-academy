@@ -197,7 +197,7 @@ export function useUser() {
     const [dasResult, enrollmentResult, xpResult] = await Promise.allSettled([
       getCredentialsByOwner(walletAddress),
       getCredentialsFromEnrollments(publicKey, connection),
-      getXPBalance(walletAddress),
+      getXPBalance(walletAddress, connection),
     ]);
 
     if (xpResult.status === "fulfilled") xp = xpResult.value;
