@@ -1,9 +1,11 @@
 "use client";
 
-import { ReactNode } from "react";
+import { ReactNode, Suspense } from "react";
 import { WalletProvider } from "./WalletProvider";
 import { SessionProvider } from "next-auth/react";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { PostHogProvider } from "./PostHogProvider";
+import { PostHogPageview } from "./PostHogPageview";
 
 interface ProvidersProps {
   children: ReactNode;
@@ -11,12 +13,17 @@ interface ProvidersProps {
 
 export function Providers({ children }: ProvidersProps) {
   return (
-    <SessionProvider>
-      <WalletProvider>
-        <TooltipProvider delayDuration={200}>
-          {children}
-        </TooltipProvider>
-      </WalletProvider>
-    </SessionProvider>
+    <PostHogProvider>
+      <SessionProvider>
+        <WalletProvider>
+          <TooltipProvider delayDuration={200}>
+            <Suspense>
+              <PostHogPageview />
+            </Suspense>
+            {children}
+          </TooltipProvider>
+        </WalletProvider>
+      </SessionProvider>
+    </PostHogProvider>
   );
 }

@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import { Providers } from "@/components/providers";
 import type { Locale } from "@/i18n/routing";
+import { GoogleAnalytics } from "@next/third-parties/google";
 
 interface LocaleLayoutProps {
   children: React.ReactNode;
@@ -51,6 +52,9 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
   return (
     <NextIntlClientProvider messages={messages}>
       <Providers>{children}</Providers>
+      {process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
+        <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
+      )}
     </NextIntlClientProvider>
   );
 }
