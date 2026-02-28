@@ -185,13 +185,22 @@ export function EnrollSection({
       }
 
       // Pre-finalize check: verify all lessons are confirmed on-chain
-      const freshEnrollment = await refreshEnrollment();
-      if (freshEnrollment?.lessonFlags) {
-        const onChainCount = countCompletedLessons(freshEnrollment.lessonFlags);
-        if (onChainCount < totalLessons) {
-          setError(tl("syncFailed"));
-          return;
+      // Retry up to 4 times with 2s delay to handle RPC propagation lag
+      let verified = false;
+      for (let attempt = 0; attempt < 4; attempt++) {
+        if (attempt > 0) await new Promise((r) => setTimeout(r, 2000));
+        const freshEnrollment = await refreshEnrollment();
+        if (freshEnrollment?.lessonFlags) {
+          const onChainCount = countCompletedLessons(freshEnrollment.lessonFlags);
+          if (onChainCount >= totalLessons) {
+            verified = true;
+            break;
+          }
         }
+      }
+      if (!verified) {
+        setError(tl("syncFailed"));
+        return;
       }
 
       const res = await fetch(`/api/courses/${slug}/finalize`, {

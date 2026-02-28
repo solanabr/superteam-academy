@@ -163,8 +163,8 @@ export function LessonReading({
     triggerCelebration();
 
     if (allOthersDone) {
-      callCompleteLessonAPI();
-      setTimeout(() => setShowCourseComplete(true), 500);
+      await callCompleteLessonAPI();
+      setShowCourseComplete(true);
     } else {
       callCompleteLessonAPI();
     }
