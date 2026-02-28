@@ -109,6 +109,38 @@ const HINTS = [
   "The CPI requires the system program",
 ];
 
+// --- Next lesson banner ---
+function NextLessonBanner({ slug, nextLessonId, isLastLesson }: { slug: string; nextLessonId: string; isLastLesson: boolean }) {
+  return (
+    <div className="border border-[#14F195]/30 bg-[#14F195]/5 rounded-lg px-5 py-4 flex items-center justify-between gap-4">
+      <div className="flex items-center gap-3">
+        <CheckCircle className="h-5 w-5 text-[#14F195] shrink-0" />
+        <div>
+          <p className="font-mono text-sm font-semibold text-foreground">Lesson complete!</p>
+          <p className="text-xs text-muted-foreground font-mono mt-0.5">
+            {isLastLesson ? "You finished the last lesson in this course." : "Ready for the next one?"}
+          </p>
+        </div>
+      </div>
+      {isLastLesson ? (
+        <Link
+          href={{ pathname: "/courses/[slug]", params: { slug } }}
+          className="shrink-0 flex items-center gap-1.5 bg-[#14F195] text-black font-mono font-semibold text-sm px-4 py-2 rounded hover:bg-[#0D9E61] transition-colors"
+        >
+          Finish Course <ChevronRight className="h-3.5 w-3.5" />
+        </Link>
+      ) : (
+        <Link
+          href={{ pathname: "/courses/[slug]/lessons/[id]", params: { slug, id: nextLessonId } }}
+          className="shrink-0 flex items-center gap-1.5 bg-[#14F195] text-black font-mono font-semibold text-sm px-4 py-2 rounded hover:bg-[#0D9E61] transition-colors"
+        >
+          Next Lesson <ChevronRight className="h-3.5 w-3.5" />
+        </Link>
+      )}
+    </div>
+  );
+}
+
 // --- Hints component ---
 function HintsPanel() {
   const [revealedCount, setRevealedCount] = useState(0);
@@ -384,26 +416,28 @@ export default function LessonPage() {
           {/* Solution toggle */}
           {isChallenge && <SolutionPanel />}
 
+          {/* Next lesson banner — appears after completing challenge */}
+          {isChallenge && completed && (
+            <div className="mt-6">
+              <NextLessonBanner slug={slug} nextLessonId={nextLessonId} isLastLesson={isLastLesson} />
+            </div>
+          )}
+
           {/* Complete button for content lessons */}
           {!isChallenge && (
-            <div className="mt-8">
-              <button
-                onClick={handleComplete}
-                disabled={completing || completed || !publicKey}
-                className={cn(
-                  "flex items-center gap-2 px-5 py-2.5 rounded font-mono text-sm font-semibold transition-colors",
-                  completed
-                    ? "bg-[#14F195]/10 text-[#14F195] border border-[#14F195]/30 cursor-default"
-                    : "bg-[#14F195] text-black hover:bg-accent-dim"
-                )}
-              >
-                {completing && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                {completed ? (
-                  <><CheckCircle className="h-3.5 w-3.5" /> {t("completed")}</>
-                ) : (
-                  t("complete")
-                )}
-              </button>
+            <div className="mt-8 space-y-3">
+              {!completed ? (
+                <button
+                  onClick={handleComplete}
+                  disabled={completing || !publicKey}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded font-mono text-sm font-semibold bg-[#14F195] text-black hover:bg-accent-dim transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {completing && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                  {t("complete")}
+                </button>
+              ) : (
+                <NextLessonBanner slug={slug} nextLessonId={nextLessonId} isLastLesson={isLastLesson} />
+              )}
             </div>
           )}
 
