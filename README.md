@@ -23,6 +23,7 @@ Built by [Superteam Brazil](https://superteam.fun/) as a competition entry for [
 - **Gamification** -- XP rewards per lesson, challenge, and course; streak tracking with freeze system; 20 achievements
 - **Internationalization** -- English, Portuguese (BR), and Spanish; more languages available upon request
 - **Dark and Light Themes** -- Dark mode by default with Warm Stone palette, theme toggle via `next-themes`
+- **Cloudflare Turnstile** -- Bot protection on site load and API endpoints (lesson completion, course finalization)
 
 ## Deployed Addresses
 

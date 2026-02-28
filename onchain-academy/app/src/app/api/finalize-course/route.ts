@@ -22,6 +22,7 @@ import {
 import { logEnrollmentEvent } from "@/lib/supabase/enrollment-events";
 import { withRetry } from "@/lib/solana/retry";
 import { getExplorerUrl } from "@/lib/solana/tx-utils";
+import { verifyTurnstile } from "@/lib/turnstile";
 
 async function ensureATA(
   connection: import("@solana/web3.js").Connection,
@@ -57,9 +58,20 @@ export async function POST(req: Request) {
     if ("error" in session) return session.error;
 
     const body = await req.json();
-    const { courseId } = body as {
+    const { courseId, turnstileToken } = body as {
       courseId?: string;
+      turnstileToken?: string;
     };
+
+    if (turnstileToken) {
+      const valid = await verifyTurnstile(turnstileToken);
+      if (!valid) {
+        return NextResponse.json(
+          { error: "Bot verification failed" },
+          { status: 403 },
+        );
+      }
+    }
 
     if (!courseId) {
       return NextResponse.json(

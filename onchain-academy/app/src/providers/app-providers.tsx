@@ -7,20 +7,23 @@ import { LazyWalletProvider } from "./wallet-lazy-provider";
 import { ToastProvider } from "@/lib/hooks/use-toast";
 import { AnalyticsProvider } from "./analytics-provider";
 import { CookieConsent } from "@/components/ui/cookie-consent";
+import { TurnstileGate } from "@/components/turnstile/turnstile-gate";
 
 export function AppProviders({ children }: { children: ReactNode }) {
   return (
     <SessionProvider>
       <ThemeProvider>
-        <LazyWalletProvider>
-          <ToastProvider>
-            <Suspense fallback={null}>
-              <AnalyticsProvider />
-            </Suspense>
-            {children}
-            <CookieConsent />
-          </ToastProvider>
-        </LazyWalletProvider>
+        <TurnstileGate>
+          <LazyWalletProvider>
+            <ToastProvider>
+              <Suspense fallback={null}>
+                <AnalyticsProvider />
+              </Suspense>
+              {children}
+              <CookieConsent />
+            </ToastProvider>
+          </LazyWalletProvider>
+        </TurnstileGate>
       </ThemeProvider>
     </SessionProvider>
   );
