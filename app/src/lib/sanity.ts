@@ -48,7 +48,7 @@ export async function getAllCourses(): Promise<SanityCourse[]> {
       "modules": modules[]-> | order(order asc) {
         _id, title, description, order,
         "lessons": lessons[]-> | order(order asc) {
-          _id, title, type, order, xpReward, estimatedMinutes
+          _id, title, "type": lessonType, order, xpReward, estimatedMinutes
         }
       }
     }
@@ -81,7 +81,7 @@ export async function getCourseBySlug(slug: string): Promise<SanityCourse | null
       "modules": modules[]-> | order(order asc) {
         _id, title, description, order,
         "lessons": lessons[]-> | order(order asc) {
-          _id, title, type, order, xpReward, estimatedMinutes,
+          _id, title, "type": lessonType, order, xpReward, estimatedMinutes,
           content, starterCode, solutionCode,
           testCases[] { input, expectedOutput, description }
         }
@@ -95,7 +95,7 @@ export async function getLessonById(id: string): Promise<SanityLesson | null> {
   if (!sanityClient) return null;
   const lesson = await sanityClient.fetch(`
     *[_type == "lesson" && _id == $id][0] {
-      _id, title, type, order, xpReward, estimatedMinutes,
+      _id, title, "type": lessonType, order, xpReward, estimatedMinutes,
       content, starterCode, solutionCode,
       testCases[] { input, expectedOutput, description }
     }
