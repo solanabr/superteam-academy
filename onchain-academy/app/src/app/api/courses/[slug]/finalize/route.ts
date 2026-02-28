@@ -141,6 +141,7 @@ export async function POST(
     // Attempt credential issuance if track collection is configured
     let credentialIssued = false;
     let credentialAsset: string | undefined;
+    let credentialError: string | undefined;
     const trackCollection = getTrackCollection(course.track);
     if (trackCollection) {
       try {
@@ -149,9 +150,11 @@ export async function POST(
         const credentialName = `${trackLabel} - ${course.title}`;
         const metadataUri = `https://superteam.academy/api/metadata/${courseId}`;
 
+        const totalXp = (onChainCourse.xpPerLesson ?? 0) * (onChainCourse.lessonCount ?? 0);
+
         await withRetry(() =>
           program.methods
-            .issueCredential(credentialName, metadataUri, 1, course.xpReward ?? 0)
+            .issueCredential(credentialName, metadataUri, 1, totalXp)
             .accounts({
               config: configPDA,
               course: coursePDA,
@@ -170,8 +173,13 @@ export async function POST(
         credentialIssued = true;
         credentialAsset = assetKeypair.publicKey.toBase58();
       } catch (credErr) {
+        const msg = credErr instanceof Error ? credErr.message : String(credErr);
         console.error("issue-credential after finalize failed (non-fatal):", credErr);
+        credentialError = msg;
       }
+    } else {
+      credentialError = "No track collection configured for track: " + course.track;
+      console.warn("issue-credential skipped:", credentialError);
     }
 
     return NextResponse.json({
@@ -183,6 +191,7 @@ export async function POST(
       explorerUrl: getExplorerUrl(tx),
       credentialIssued,
       credentialAsset,
+      credentialError,
     });
   } catch (err: unknown) {
     const anchor = parseAnchorError(err);

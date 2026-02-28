@@ -154,8 +154,10 @@ export function EnrollSection({
         ? countCompletedLessons(currentEnrollment.lessonFlags)
         : 0;
 
-      // Sync locally-completed lessons that are missing on-chain — sequentially
-      // to avoid write-write conflicts on the shared enrollment PDA
+      // Sync locally-completed lessons that are missing on-chain.
+      // Another call from the lesson page may already be in-flight for the
+      // same lesson (fire-and-forget), so treat non-fatal errors gracefully
+      // and rely on the verification loop below to confirm state.
       if (currentEnrollment?.lessonFlags && currentCompletedCount < totalLessons) {
         const progress = await learningService.getProgress(walletAddress, courseId);
         const missingIndices: number[] = [];
@@ -165,29 +167,43 @@ export function EnrollSection({
           }
         }
         for (const lessonIndex of missingIndices) {
-          const res = await fetch("/api/complete-lesson", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ learner: walletAddress, courseId, lessonIndex }),
-          });
-          if (!res.ok) {
-            const data = await res.json().catch(() => ({}));
-            if (!data.alreadyDone) {
-              setError(tl("syncFailed"));
-              return;
+          try {
+            const res = await fetch("/api/complete-lesson", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ learner: walletAddress, courseId, lessonIndex }),
+            });
+            if (!res.ok) {
+              const data = await res.json().catch(() => ({}));
+              // 401 = session expired — bail immediately, user must re-auth
+              if (res.status === 401) {
+                setError(tl("syncFailed"));
+                return;
+              }
+              // Any other error (409 write-conflict, 500 in-flight race, etc.)
+              // is non-fatal — the lesson may already be on-chain via the
+              // fire-and-forget call from the lesson page. Let verification
+              // loop decide below.
+              if (!data.alreadyDone) {
+                console.warn(`complete-lesson ${lessonIndex} returned ${res.status}, continuing`);
+              }
             }
+          } catch {
+            // Network error — continue, verification loop will catch it
+            console.warn(`complete-lesson ${lessonIndex} network error, continuing`);
           }
         }
-        // Refresh enrollment to get updated bitmap before finalizing
+        // Refresh enrollment to get updated bitmap before verifying
         if (missingIndices.length > 0) {
           await refreshEnrollment();
         }
       }
 
-      // Pre-finalize check: verify all lessons are confirmed on-chain
-      // Retry up to 4 times with 2s delay to handle RPC propagation lag
+      // Verify all lessons are confirmed on-chain.
+      // Retry up to 6 times with 2s delay (12s window) to handle both
+      // RPC propagation lag and in-flight TXs from the lesson page.
       let verified = false;
-      for (let attempt = 0; attempt < 4; attempt++) {
+      for (let attempt = 0; attempt < 6; attempt++) {
         if (attempt > 0) await new Promise((r) => setTimeout(r, 2000));
         const freshEnrollment = await refreshEnrollment();
         if (freshEnrollment?.lessonFlags) {

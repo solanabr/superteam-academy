@@ -162,6 +162,7 @@
     "credentialIssued": "Credencial emitida! +{xp} XP otorgados.",
     "courseFinalized": "Curso completado! +{xp} XP otorgados.",
     "viewCredential": "Ver Credencial",
+    "credentialFailed": "No se pudo emitir la credencial NFT. XP fue otorgado.",
     "finalizeFailed": "No se pudo finalizar. Intentalo de nuevo.",
     "syncFailed": "No se pudo sincronizar el progreso. Intentalo de nuevo.",
     "lessonOf": "Leccion {current} de {total}",

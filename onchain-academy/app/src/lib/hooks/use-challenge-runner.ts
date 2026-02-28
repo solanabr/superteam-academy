@@ -22,6 +22,7 @@ interface FinalizeApiResponse {
   xpAwarded?: number;
   credentialIssued?: boolean;
   credentialAsset?: string;
+  credentialError?: string;
   error?: string;
 }
 
@@ -141,7 +142,7 @@ export function useChallengeRunner() {
     async (
       slug: string,
       walletAddress: string,
-    ): Promise<{ xpAwarded: number; credentialIssued: boolean; credentialAsset?: string }> => {
+    ): Promise<{ xpAwarded: number; credentialIssued: boolean; credentialAsset?: string; credentialError?: string }> => {
       const res = await fetch(`/api/courses/${slug}/finalize`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -149,7 +150,12 @@ export function useChallengeRunner() {
       });
       const data: FinalizeApiResponse = await res.json();
       if (data.error) throw new Error(data.error);
-      return { xpAwarded: data.xpAwarded ?? 0, credentialIssued: data.credentialIssued ?? false, credentialAsset: data.credentialAsset };
+      return {
+        xpAwarded: data.xpAwarded ?? 0,
+        credentialIssued: data.credentialIssued ?? false,
+        credentialAsset: data.credentialAsset,
+        credentialError: data.credentialError,
+      };
     },
     [],
   );
