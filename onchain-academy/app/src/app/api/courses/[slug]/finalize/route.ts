@@ -171,13 +171,14 @@ export async function POST(
 
     // Step 2: Issue credential (mandatory — no success without it)
     let credentialAsset: string | undefined;
+    let credentialTx: string | undefined;
     try {
       const assetKeypair = Keypair.generate();
       const trackLabel = TRACK_LABELS[course.track as keyof typeof TRACK_LABELS] ?? course.track;
       const credentialName = `${trackLabel} - ${course.title}`;
       const metadataUri = `https://superteam.academy/api/metadata/${courseId}`;
 
-      await withRetry(() =>
+      credentialTx = await withRetry(() =>
         program.methods
           .issueCredential(credentialName, metadataUri, 1, new BN(totalXp))
           .accounts({
@@ -216,7 +217,12 @@ export async function POST(
       xpAwarded: alreadyFinalized ? 0 : totalXp,
       track: course.track,
       finalizeTxSignature: finalizeTx,
-      explorerUrl: finalizeTx ? getExplorerUrl(finalizeTx) : undefined,
+      credentialTxSignature: credentialTx,
+      explorerUrl: credentialTx
+        ? getExplorerUrl(credentialTx)
+        : finalizeTx
+          ? getExplorerUrl(finalizeTx)
+          : undefined,
       credentialIssued: true,
       credentialAsset,
     });
