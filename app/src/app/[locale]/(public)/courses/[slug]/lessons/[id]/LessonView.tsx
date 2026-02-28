@@ -24,6 +24,7 @@ import { Link } from "@/i18n/navigation";
 import { PortableText } from "@portabletext/react";
 import { MonacoEditor } from "@/components/editor/MonacoEditor";
 import { completeLesson } from "@/services/learning-progress";
+import { useEnrollment } from "@/hooks/useEnrollment";
 import { cn } from "@/lib/utils";
 import type { SanityLesson, SanityModule, SanityTestCase } from "@/types";
 
@@ -568,6 +569,8 @@ export function LessonView({
 }: LessonViewProps) {
   const t = useTranslations("lesson");
   const { publicKey } = useWallet();
+  const { progress } = useEnrollment(courseSlug);
+  const isEnrolled = progress?.enrolled ?? false;
 
   const isChallenge = lesson.type === "challenge";
   const storageKey = `code_${courseSlug}_${lesson._id}`;
@@ -630,6 +633,7 @@ export function LessonView({
   }, [code, lesson.testCases]);
 
   const markComplete = useCallback(async () => {
+    if (!isEnrolled) return;
     setCompleting(true);
     try {
       await completeLesson(courseSlug, lesson.order ?? 0);
@@ -646,7 +650,7 @@ export function LessonView({
       setTimeout(() => setCelebration(false), 4500);
       setCompleting(false);
     }
-  }, [completedIds, completedKey, courseSlug, lesson._id, lesson.order]);
+  }, [completedIds, completedKey, courseSlug, isEnrolled, lesson._id, lesson.order]);
 
   const handleResetCode = useCallback(() => {
     const starter = lesson.starterCode ?? "";
@@ -804,10 +808,16 @@ export function LessonView({
                   {!isCompleted ? (
                     <>
                       {!publicKey && <ConnectPrompt />}
+                      {publicKey && !isEnrolled && (
+                        <p className="text-xs font-mono text-amber-400">
+                          Enroll in this course to track progress on-chain.
+                        </p>
+                      )}
                       <button
                         onClick={markComplete}
-                        disabled={completing}
+                        disabled={completing || !isEnrolled || !publicKey}
                         className="flex items-center gap-2 px-5 py-2.5 rounded font-mono text-sm font-semibold bg-[#14F195] text-black hover:bg-[#0D9E61] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        title={!isEnrolled ? "Enroll in the course first" : undefined}
                       >
                         {completing && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                         {t("complete")}
@@ -976,19 +986,18 @@ export function LessonView({
                       ) : (
                         <button
                           onClick={markComplete}
-                          disabled={completing || (!allPassed && (lesson.testCases?.length ?? 0) > 0)}
+                          disabled={completing || !isEnrolled || !publicKey || (!allPassed && (lesson.testCases?.length ?? 0) > 0)}
                           className={cn(
                             "flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-mono font-semibold transition-colors",
-                            allPassed || (lesson.testCases?.length ?? 0) === 0
+                            isEnrolled && publicKey && (allPassed || (lesson.testCases?.length ?? 0) === 0)
                               ? "bg-[#14F195] text-black hover:bg-[#0D9E61]"
                               : "bg-elevated text-muted-foreground border border-border cursor-not-allowed"
                           )}
                           title={
-                            !allPassed && (lesson.testCases?.length ?? 0) > 0
-                              ? "Run tests first"
-                              : !publicKey
-                              ? "Connect wallet to submit"
-                              : undefined
+                            !publicKey ? "Connect wallet to submit"
+                            : !isEnrolled ? "Enroll in the course first"
+                            : !allPassed && (lesson.testCases?.length ?? 0) > 0 ? "Run tests first"
+                            : undefined
                           }
                         >
                           {completing ? (
