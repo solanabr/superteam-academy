@@ -31,6 +31,7 @@ interface CourseCardData {
   gradientFrom: string;
   gradientTo: string;
   icon: React.ElementType;
+  slug: string;
 }
 
 const FEATURED_COURSES: CourseCardData[] = [
@@ -38,49 +39,53 @@ const FEATURED_COURSES: CourseCardData[] = [
     title: 'Solana Fundamentals',
     description: 'Understand accounts, transactions, and the Solana runtime from first principles.',
     difficulty: 'Beginner',
-    lessons: 12,
-    xp: 1200,
+    lessons: 5,
+    xp: 250,
     track: 'Solana Core',
     trackColor: 'bg-primary/10 text-primary',
     gradientFrom: 'from-primary/20',
     gradientTo: 'to-primary/5',
     icon: Layers,
+    slug: 'solana-101',
   },
   {
     title: 'Building a DEX with Anchor',
     description: 'Create a fully functional decentralized exchange with order books and AMM pools.',
     difficulty: 'Intermediate',
-    lessons: 18,
-    xp: 2400,
+    lessons: 8,
+    xp: 600,
     track: 'DeFi',
     trackColor: 'bg-accent/10 text-accent',
     gradientFrom: 'from-accent/20',
     gradientTo: 'to-accent/5',
     icon: Code2,
+    slug: 'defi-201',
   },
   {
     title: 'NFT Collections with Metaplex',
     description: 'Mint, manage, and trade NFT collections using the Metaplex Core standard.',
     difficulty: 'Intermediate',
-    lessons: 14,
-    xp: 1800,
+    lessons: 7,
+    xp: 525,
     track: 'NFT & Metaplex',
     trackColor: 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400',
     gradientFrom: 'from-yellow-500/20',
     gradientTo: 'to-yellow-500/5',
     icon: BookOpen,
+    slug: 'nft-201',
   },
   {
     title: 'Smart Contract Auditing',
     description: 'Master security patterns and learn to identify common Solana program vulnerabilities.',
     difficulty: 'Advanced',
-    lessons: 16,
-    xp: 3200,
+    lessons: 8,
+    xp: 800,
     track: 'Security',
     trackColor: 'bg-red-500/10 text-red-600 dark:text-red-400',
     gradientFrom: 'from-red-500/20',
     gradientTo: 'to-red-500/5',
     icon: Shield,
+    slug: 'sec-301',
   },
 ];
 
@@ -169,7 +174,7 @@ export function FeaturedCourses() {
                   className="w-full gap-1.5 text-primary"
                   asChild
                 >
-                  <Link href="/courses">
+                  <Link href={`/courses/${course.slug}`}>
                     Start Course
                     <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
                   </Link>
