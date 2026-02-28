@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Settings } from "lucide-react";
 import { Link, usePathname } from "@/i18n/navigation";
 import { WalletButton } from "@/components/solana/WalletButton";
 import { Button } from "@/components/ui/button";
@@ -49,6 +49,16 @@ export function Header() {
 
         {/* Right side */}
         <div className="flex items-center gap-2">
+          <Link
+            href="/settings"
+            className={cn(
+              "hidden sm:flex items-center justify-center h-8 w-8 rounded text-muted-foreground hover:text-foreground hover:bg-card transition-colors",
+              pathname.startsWith("/settings") && "text-foreground bg-elevated"
+            )}
+            title="Settings"
+          >
+            <Settings className="h-4 w-4" />
+          </Link>
           <WalletButton className="hidden sm:flex" />
 
           {/* Mobile toggle */}

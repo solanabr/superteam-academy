@@ -27,6 +27,7 @@ export default async function LessonPage({ params }: Props) {
       lesson={lesson}
       courseSlug={slug}
       courseTitle={course.title}
+      modules={course.modules}
       prevLessonId={prevLesson?._id ?? null}
       nextLessonId={nextLesson?._id ?? null}
     />

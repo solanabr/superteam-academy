@@ -1,5 +1,5 @@
 import { getTranslations } from "next-intl/server";
-import { getProfileByUsername } from "@/lib/supabase";
+import { getProfileByUsername, getProfileByWallet } from "@/lib/supabase";
 import { getCredentials, getAchievements } from "@/services/credentials";
 import { CredentialCard } from "@/components/solana/CredentialCard";
 import { LevelBadge } from "@/components/gamification/LevelBadge";
@@ -21,19 +21,18 @@ export default async function ProfilePage({ params }: Props) {
   const { username } = await params;
   const t = await getTranslations("profile");
 
-  const profile = await getProfileByUsername(username).catch(() => null);
+  // Try username lookup first, then wallet address lookup (for direct /profile/[walletAddress] URLs)
+  const isWalletAddress = username.length >= 32 && username.length <= 44;
+  const profile =
+    (await getProfileByUsername(username).catch(() => null)) ??
+    (isWalletAddress ? await getProfileByWallet(username).catch(() => null) : null);
 
-  if (!profile) {
-    return (
-      <div className="max-w-3xl mx-auto px-4 py-20 text-center">
-        <p className="font-mono text-muted-foreground">Profile not found</p>
-      </div>
-    );
-  }
+  // For wallet addresses without a Supabase profile, generate a stub
+  const walletAddress = profile?.walletAddress ?? (isWalletAddress ? username : null);
 
   const [credentials, achievements] = await Promise.all([
-    profile.walletAddress ? getCredentials(profile.walletAddress) : [],
-    profile.walletAddress ? getAchievements(profile.walletAddress) : [],
+    walletAddress ? getCredentials(walletAddress) : Promise.resolve([]),
+    walletAddress ? getAchievements(walletAddress) : Promise.resolve([]),
   ]);
 
   const totalXp = credentials.reduce(
@@ -42,34 +41,43 @@ export default async function ProfilePage({ params }: Props) {
   );
   const level = xpToLevel(totalXp);
 
+  // If no profile at all and not a wallet address, show not found
+  if (!profile && !walletAddress) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-20 text-center">
+        <p className="font-mono text-muted-foreground">Profile not found.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10">
       {/* Profile header */}
       <div className="flex items-start gap-5 mb-8">
         <div className="w-16 h-16 rounded-full bg-elevated border border-border flex items-center justify-center font-mono text-2xl flex-shrink-0">
-          {(profile.displayName ?? profile.username ?? "?")[0].toUpperCase()}
+          {(profile?.displayName ?? profile?.username ?? username)?.[0]?.toUpperCase() ?? "?"}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="font-mono text-2xl font-bold text-foreground">
-              {profile.displayName ?? profile.username ?? username}
+              {profile?.displayName ?? profile?.username ?? (walletAddress ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}` : username)}
             </h1>
             <LevelBadge level={level} />
-            <VisibilityToggle walletAddress={profile.walletAddress} />
+            {walletAddress && <VisibilityToggle walletAddress={walletAddress} />}
           </div>
-          {profile.username && (
+          {profile?.username && (
             <p className="text-sm text-muted-foreground font-mono">@{profile.username}</p>
           )}
-          {profile.bio && (
+          {profile?.bio && (
             <p className="text-sm text-muted-foreground mt-2 max-w-xl">{profile.bio}</p>
           )}
           <div className="flex flex-wrap gap-4 mt-3 text-xs font-mono text-muted-foreground">
-            {profile.walletAddress && (
-              <span>
-                ◎ {profile.walletAddress.slice(0, 6)}...{profile.walletAddress.slice(-4)}
-              </span>
+            {walletAddress && (
+              <span>◎ {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}</span>
             )}
-            <span>Joined {new Date(profile.createdAt).toLocaleDateString()}</span>
+            {profile?.createdAt && (
+              <span>Joined {new Date(profile.createdAt).toLocaleDateString()}</span>
+            )}
           </div>
         </div>
       </div>

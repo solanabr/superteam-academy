@@ -62,12 +62,6 @@ export default async function LandingPage() {
         />
 
         <div className="relative z-10 text-center max-w-4xl mx-auto">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 bg-[#14F195]/10 border border-[#14F195]/20 rounded-full px-4 py-1.5 mb-8 font-mono text-xs text-[#14F195]">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#14F195] animate-pulse" />
-            {t("hero.badge")}
-          </div>
-
           {/* H1 */}
           <h1 className="font-mono font-black text-5xl sm:text-7xl md:text-8xl leading-[0.9] tracking-tight mb-6">
             <span className="block text-foreground">Master</span>

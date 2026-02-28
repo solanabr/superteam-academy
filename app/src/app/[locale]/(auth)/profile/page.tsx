@@ -12,7 +12,7 @@ export default function ProfileRedirect() {
 
   useEffect(() => {
     if (publicKey) {
-      router.push({ pathname: "/profile/[username]", params: { username: publicKey.toBase58().slice(0, 8) } });
+      router.push({ pathname: "/profile/[username]", params: { username: publicKey.toBase58() } });
     }
   }, [publicKey, router]);
 
