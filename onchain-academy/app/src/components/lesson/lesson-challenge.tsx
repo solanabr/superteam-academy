@@ -87,6 +87,7 @@ export function LessonChallenge({
   const [showCourseComplete, setShowCourseComplete] = useState(false);
   const [isFinalizing, setIsFinalizing] = useState(false);
   const [finalizationResult, setFinalizationResult] = useState<{
+    success: boolean;
     xpAwarded: number;
     credentialIssued: boolean;
   } | null>(null);
@@ -225,12 +226,13 @@ export function LessonChallenge({
       if (walletAddress) {
         const result = await finalizeCourseAPI(slug, walletAddress);
         setFinalizationResult({
+          success: true,
           xpAwarded: result.xpAwarded || (course.xpReward ?? 0),
           credentialIssued: result.credentialIssued,
         });
       } else {
         const result = await learningService.finalizeCourse("local", course.id ?? slug);
-        setFinalizationResult(result);
+        setFinalizationResult({ success: true, ...result });
       }
 
       const confetti = await lazyConfetti();
@@ -254,7 +256,7 @@ export function LessonChallenge({
       }, 300);
     } catch (e) {
       console.error("finalizeCourse error:", e);
-      setFinalizationResult({ xpAwarded: 0, credentialIssued: false });
+      setFinalizationResult({ success: false, xpAwarded: 0, credentialIssued: false });
     } finally {
       setIsFinalizing(false);
     }

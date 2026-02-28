@@ -160,6 +160,7 @@
     "finalizeAndClaim": "Finalize & Claim Credential",
     "finalizing": "Finalizing...",
     "credentialIssued": "Credential issued! +{xp} XP awarded.",
+    "courseFinalized": "Course completed! +{xp} XP awarded.",
     "viewCredential": "View Credential",
     "finalizeFailed": "Could not finalize. Please try again.",
     "syncFailed": "Could not sync lesson progress. Please try again.",

@@ -160,6 +160,7 @@
     "finalizeAndClaim": "Finalizar e Reivindicar Credencial",
     "finalizing": "Finalizando...",
     "credentialIssued": "Credencial emitida! +{xp} XP concedidos.",
+    "courseFinalized": "Curso concluido! +{xp} XP concedidos.",
     "viewCredential": "Ver Credencial",
     "finalizeFailed": "Nao foi possivel finalizar. Tente novamente.",
     "syncFailed": "Nao foi possivel sincronizar o progresso. Tente novamente.",

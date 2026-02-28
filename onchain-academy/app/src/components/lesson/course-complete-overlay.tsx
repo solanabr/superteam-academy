@@ -18,7 +18,7 @@ export function CourseCompleteOverlay({
   show: boolean;
   locale: string;
   isFinalizing: boolean;
-  finalizationResult: { xpAwarded: number; credentialIssued: boolean } | null;
+  finalizationResult: { success: boolean; xpAwarded: number; credentialIssued: boolean } | null;
   onFinalize: () => void;
   onDismiss: () => void;
 }) {
@@ -144,7 +144,7 @@ export function CourseCompleteOverlay({
           </p>
 
           {finalizationResult ? (
-            finalizationResult.credentialIssued ? (
+            finalizationResult.success ? (
               <div
                 style={{
                   display: "flex",
@@ -166,26 +166,30 @@ export function CourseCompleteOverlay({
                       color: "var(--xp)",
                     }}
                   >
-                    {t("credentialIssued", { xp: finalizationResult.xpAwarded })}
+                    {finalizationResult.credentialIssued
+                      ? t("credentialIssued", { xp: finalizationResult.xpAwarded })
+                      : t("courseFinalized", { xp: finalizationResult.xpAwarded })}
                   </p>
                 </div>
-                <button
-                  onClick={() => router.push(`/${locale}/certificates`)}
-                  style={{
-                    width: "100%",
-                    fontFamily: "var(--font-mono)",
-                    fontSize: "11px",
-                    letterSpacing: "0.15em",
-                    textTransform: "uppercase",
-                    padding: "14px 36px",
-                    border: "none",
-                    cursor: "pointer",
-                    background: "var(--foreground)",
-                    color: "var(--background)",
-                  }}
-                >
-                  {t("viewCredential")}
-                </button>
+                {finalizationResult.credentialIssued && (
+                  <button
+                    onClick={() => router.push(`/${locale}/certificates`)}
+                    style={{
+                      width: "100%",
+                      fontFamily: "var(--font-mono)",
+                      fontSize: "11px",
+                      letterSpacing: "0.15em",
+                      textTransform: "uppercase",
+                      padding: "14px 36px",
+                      border: "none",
+                      cursor: "pointer",
+                      background: "var(--foreground)",
+                      color: "var(--background)",
+                    }}
+                  >
+                    {t("viewCredential")}
+                  </button>
+                )}
                 <button
                   onClick={onDismiss}
                   style={{
@@ -195,9 +199,9 @@ export function CourseCompleteOverlay({
                     letterSpacing: "0.15em",
                     textTransform: "uppercase",
                     padding: "14px 36px",
-                    background: "none",
-                    color: "var(--c-text-muted)",
-                    border: "1px solid var(--c-border-subtle)",
+                    background: finalizationResult.credentialIssued ? "none" : "var(--foreground)",
+                    color: finalizationResult.credentialIssued ? "var(--c-text-muted)" : "var(--background)",
+                    border: finalizationResult.credentialIssued ? "1px solid var(--c-border-subtle)" : "none",
                     cursor: "pointer",
                   }}
                 >
@@ -237,6 +241,23 @@ export function CourseCompleteOverlay({
                   }}
                 >
                   {t("finalizeAndClaim")}
+                </button>
+                <button
+                  onClick={onDismiss}
+                  style={{
+                    width: "100%",
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "11px",
+                    letterSpacing: "0.15em",
+                    textTransform: "uppercase",
+                    padding: "14px 36px",
+                    background: "none",
+                    color: "var(--c-text-muted)",
+                    border: "1px solid var(--c-border-subtle)",
+                    cursor: "pointer",
+                  }}
+                >
+                  {t("later")}
                 </button>
               </div>
             )

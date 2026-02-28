@@ -59,6 +59,7 @@ export function LessonReading({
   const [showCourseComplete, setShowCourseComplete] = useState(false);
   const [isFinalizing, setIsFinalizing] = useState(false);
   const [finalizationResult, setFinalizationResult] = useState<{
+    success: boolean;
     xpAwarded: number;
     credentialIssued: boolean;
   } | null>(null);
@@ -202,7 +203,7 @@ export function LessonReading({
                 if (!syncRes.ok) {
                   const syncData = await syncRes.json().catch(() => ({}));
                   if (!syncData.alreadyDone) {
-                    setFinalizationResult({ xpAwarded: 0, credentialIssued: false });
+                    setFinalizationResult({ success: false, xpAwarded: 0, credentialIssued: false });
                     return;
                   }
                 }
@@ -225,7 +226,7 @@ export function LessonReading({
           }
         }
         if (!verified) {
-          setFinalizationResult({ xpAwarded: 0, credentialIssued: false });
+          setFinalizationResult({ success: false, xpAwarded: 0, credentialIssued: false });
           return;
         }
 
@@ -237,12 +238,13 @@ export function LessonReading({
         const data = await res.json();
         if (data.error) throw new Error(data.error);
         setFinalizationResult({
+          success: true,
           xpAwarded: data.xpAwarded ?? course.xpReward,
           credentialIssued: data.credentialIssued ?? false,
         });
       } else {
         const result = await learningService.finalizeCourse("local", course.id ?? slug);
-        setFinalizationResult(result);
+        setFinalizationResult({ success: true, ...result });
       }
 
       const confetti = await lazyConfetti();
@@ -266,7 +268,7 @@ export function LessonReading({
       }, 300);
     } catch (e) {
       console.error("finalizeCourse error:", e);
-      setFinalizationResult({ xpAwarded: 0, credentialIssued: false });
+      setFinalizationResult({ success: false, xpAwarded: 0, credentialIssued: false });
     } finally {
       setIsFinalizing(false);
     }
