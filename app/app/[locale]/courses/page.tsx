@@ -12,6 +12,8 @@ import { Pagination } from "@/components/ui/pagination";
 import { getCoursesIndex, isSanityConfigured, resolveCourseImageUrl } from "@/lib/cms";
 import { getAcademyClient } from "@/lib/academy";
 import { getTranslations } from "next-intl/server";
+import { getLinkedWallet } from "@/lib/auth";
+import { getUserByWallet } from "@/lib/sanity-users";
 
 type CatalogCourse = {
 	id: string;
@@ -46,6 +48,7 @@ interface CoursesPageProps {
 		sort?: string;
 		view?: "grid" | "list";
 		page?: string;
+		following?: string;
 	}>;
 }
 
@@ -58,9 +61,10 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
 		sort = "popular",
 		view = "grid",
 		page = "1",
+		following,
 	} = await searchParams;
 
-	const hasFilters = q || category !== "all" || level !== "all" || duration !== "all";
+	const hasFilters = q || category !== "all" || level !== "all" || duration !== "all" || following === "true";
 	const t = await getTranslations("courses");
 
 	return (
@@ -124,6 +128,27 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
 							<span className="text-xs text-muted-foreground">
 								{t("catalog.filters")}:
 							</span>
+							{following === "true" && (
+								<Badge
+									variant="secondary"
+									className="gap-1 text-xs font-normal pr-1"
+								>
+									Following
+									<a
+										href={buildFilterUrl({
+											q,
+											category,
+											level,
+											duration,
+											sort,
+											view,
+										})}
+										className="ml-0.5 p-0.5 rounded-full hover:bg-muted-foreground/20"
+									>
+										<X className="h-3 w-3" />
+									</a>
+								</Badge>
+							)}
 							{q && (
 								<Badge
 									variant="secondary"
@@ -204,7 +229,7 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
 			<div className="mx-auto px-4 sm:px-6 py-8">
 				<Suspense fallback={<CoursesSkeleton view={view} />}>
 					<CoursesContent
-						searchParams={{ q, category, level, duration, sort, view, page }}
+						searchParams={{ q, category, level, duration, sort, view, page, following }}
 					/>
 				</Suspense>
 			</div>
@@ -368,6 +393,17 @@ async function getCourses(searchParams: Awaited<CoursesPageProps["searchParams"]
 		});
 
 	let filtered = [...baseCourses];
+
+	if (searchParams.following === "true") {
+		const wallet = await getLinkedWallet();
+		if (wallet) {
+			const sanityUser = await getUserByWallet(wallet);
+			const savedIds = new Set(sanityUser?.savedCourses ?? []);
+			filtered = filtered.filter((course) => savedIds.has(course.id));
+		} else {
+			filtered = [];
+		}
+	}
 
 	if (searchParams.q) {
 		const query = searchParams.q.toLowerCase();

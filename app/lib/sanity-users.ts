@@ -294,3 +294,19 @@ export async function updateUserRole(userId: string, role: UserRole): Promise<bo
 	await writeClient.patch(userId).set({ role }).commit();
 	return true;
 }
+
+const USERS_BY_WALLETS_QUERY = `*[_type == "academyUser" && walletAddress in $wallets]{ _id, name, image, walletAddress, location }`;
+
+export async function getUsersByWallets(
+	wallets: string[]
+): Promise<Map<string, Pick<AcademyUser, "name" | "image" | "walletAddress"> & { location?: string }>> {
+	const map = new Map<string, Pick<AcademyUser, "name" | "image" | "walletAddress"> & { location?: string }>();
+	if (!readClient || wallets.length === 0) return map;
+	const results = await readClient.fetch<
+		Array<{ _id: string; name: string; image?: string; walletAddress: string; location?: string }>
+	>(USERS_BY_WALLETS_QUERY, { wallets });
+	for (const u of results) {
+		if (u.walletAddress) map.set(u.walletAddress, u);
+	}
+	return map;
+}

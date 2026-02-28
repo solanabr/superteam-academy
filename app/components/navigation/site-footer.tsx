@@ -1,15 +1,15 @@
 "use client";
 
 import { Link } from "@superteam-academy/i18n/navigation";
-import { Github, MessageCircle, Twitter } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { GitHubIcon, DiscordIcon, XIcon } from "@/components/ui/social-icons";
 import Logo from "@/public/logo.svg";
 
 const SOCIAL_LINKS = [
-	{ href: "https://github.com/superteambrasil", label: "GitHub", icon: Github },
-	{ href: "https://discord.gg/superteambrasil", label: "Discord", icon: MessageCircle },
-	{ href: "https://x.com/superteambr", label: "Twitter", icon: Twitter },
+	{ href: "https://github.com/superteambrasil", label: "GitHub", icon: GitHubIcon },
+	{ href: "https://discord.gg/superteambrasil", label: "Discord", icon: DiscordIcon },
+	{ href: "https://x.com/superteambr", label: "Twitter", icon: XIcon },
 ] as const;
 
 const FOOTER_LINKS = {

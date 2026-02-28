@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Send } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ export function DiscussionCommentForm({
 	onCommentPosted,
 }: DiscussionCommentFormProps) {
 	const t = useTranslations("community.discussions");
+	const router = useRouter();
 	const [content, setContent] = useState("");
 	const [submitting, setSubmitting] = useState(false);
 	const [error, setError] = useState<string | null>(null);
@@ -42,6 +44,7 @@ export function DiscussionCommentForm({
 
 			setContent("");
 			onCommentPosted?.();
+			router.refresh();
 		} catch {
 			setError("Network error. Please try again.");
 		} finally {

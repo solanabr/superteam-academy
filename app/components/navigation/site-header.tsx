@@ -16,6 +16,7 @@ import {
 	User,
 	Settings,
 	LogOut,
+	ShieldCheck,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useTranslations } from "next-intl";
@@ -61,7 +62,7 @@ export function SiteHeader() {
 	const pathname = usePathname();
 	const t = useTranslations("navigation");
 	const { resolvedTheme, setTheme } = useTheme();
-	const { isAuthenticated, user, wallet, signOut } = useAuth();
+	const { isAuthenticated, isAdmin, user, wallet, signOut } = useAuth();
 	const [mounted, setMounted] = useState(false);
 	const [mobileOpen, setMobileOpen] = useState(false);
 	const [searchOpen, setSearchOpen] = useState(false);
@@ -172,10 +173,10 @@ export function SiteHeader() {
 												<img
 													src={user.image}
 													alt={displayName}
-													className="h-9 w-9 rounded-full object-cover"
+													className="h-9 w-9 rounded-full object-cover ring-2 ring-border/60"
 												/>
 											) : (
-												<div className="h-9 w-9 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+												<div className="h-9 w-9 rounded-full bg-primary/10 text-primary flex items-center justify-center ring-2 ring-border/60">
 													<User className="h-4 w-4" />
 												</div>
 											)}
@@ -214,11 +215,19 @@ export function SiteHeader() {
 											</Link>
 										</DropdownMenuItem>
 										<DropdownMenuItem asChild={true}>
-											<Link href="/courses/my">
+											<Link href="/courses?following=true">
 												<Compass className="h-4 w-4 mr-2" />
-												Tracks I’m Following
+												Courses I'm Following
 											</Link>
 										</DropdownMenuItem>
+										{isAdmin && (
+											<DropdownMenuItem asChild={true}>
+												<Link href="/admin">
+													<ShieldCheck className="h-4 w-4 mr-2" />
+													Admin
+												</Link>
+											</DropdownMenuItem>
+										)}
 										<DropdownMenuSeparator />
 										<DropdownMenuItem onSelect={handleSignOut}>
 											<LogOut className="h-4 w-4 mr-2" />
@@ -337,13 +346,23 @@ export function SiteHeader() {
 												My Certifications
 											</Link>
 											<Link
-												href="/courses/my"
+												href="/courses?following=true"
 												onClick={() => setMobileOpen(false)}
 												className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-muted"
 											>
 												<Compass className="h-4 w-4" />
-												Tracks I’m Following
+												Courses I'm Following
 											</Link>
+											{isAdmin && (
+												<Link
+													href="/admin"
+													onClick={() => setMobileOpen(false)}
+													className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-muted"
+												>
+													<ShieldCheck className="h-4 w-4" />
+													Admin
+												</Link>
+											)}
 											<Button
 												variant="outline"
 												className="w-full"

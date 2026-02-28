@@ -5,9 +5,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LeaderboardTable } from "@/components/leaderboard/leaderboard-table";
 import {
-	DEFAULT_FILTERS,
-	LeaderboardFilters,
-	type FilterState,
+    DEFAULT_FILTERS,
+    LeaderboardFilters,
+    type FilterState,
 } from "@/components/leaderboard/leaderboard-filters";
 import { UserRankCard } from "@/components/leaderboard/user-rank-card";
 import { getAcademyClient } from "@/lib/academy";
@@ -15,6 +15,9 @@ import { LeaderboardService } from "@/services/leaderboard-service";
 import { getLinkedWallet } from "@/lib/auth";
 import { calculateLevelFromXP } from "@superteam-academy/gamification";
 import { getGravatarUrl } from "@/lib/utils";
+import { getUsersByWallets } from "@/lib/sanity-users";
+import { getCoursesIndex, isSanityConfigured } from "@/lib/cms";
+import { countCompletedLessons } from "@superteam-academy/anchor";
 import { PublicKey } from "@solana/web3.js";
 
 export const metadata: Metadata = {
@@ -285,19 +288,23 @@ async function getGlobalLeaderboard(includeActivity: boolean) {
 
 	const service = new LeaderboardService(academyClient.connection, academyClient.programId);
 	const entries = await service.getLeaderboard(config.xpMint, 50);
-	const activityMap = includeActivity
-		? await getLatestActivityMap(entries.map((entry) => entry.publicKey))
-		: new Map<string, number>();
+	const wallets = entries.map((entry) => entry.publicKey);
+
+	const [activityMap, sanityUsers] = await Promise.all([
+		includeActivity ? getLatestActivityMap(wallets) : Promise.resolve(new Map<string, number>()),
+		getUsersByWallets(wallets),
+	]);
 
 	return entries.map((entry) => {
 		const xp = Number(entry.xpBalance);
+		const sanityUser = sanityUsers.get(entry.publicKey);
 		return {
 			rank: entry.rank,
 			user: {
 				id: entry.publicKey,
-				name: `${entry.publicKey.slice(0, 4)}...${entry.publicKey.slice(-4)}`,
-				avatar: getGravatarUrl(entry.publicKey),
-				country: "--",
+				name: sanityUser?.name ?? `${entry.publicKey.slice(0, 4)}...${entry.publicKey.slice(-4)}`,
+				avatar: sanityUser?.image || getGravatarUrl(entry.publicKey),
+				country: sanityUser?.location ?? "--",
 			},
 			score: xp,
 			level: calculateLevelFromXP(xp),
@@ -312,49 +319,109 @@ async function getGlobalLeaderboard(includeActivity: boolean) {
 async function getCourseLeaderboards(includeActivity: boolean) {
 	const academyClient = getAcademyClient();
 	const config = await academyClient.fetchConfig();
-	const courses = await academyClient.fetchAllCourses();
+	const [courses, allEnrollments, cmsCourses] = await Promise.all([
+		academyClient.fetchAllCourses(),
+		academyClient.fetchAllEnrollments(),
+		isSanityConfigured ? getCoursesIndex().catch(() => []) : Promise.resolve([]),
+	]);
+
+	const cmsByCourseId = new Map(
+		cmsCourses.map((c) => [c.slug?.current ?? c._id, c])
+	);
+
 	if (!config)
 		return courses.slice(0, 4).map((course) => ({
 			courseId: course.account.courseId,
-			courseName: course.account.courseId,
-			entries: [] as Array<{
-				rank: number;
-				user: { id: string; name: string; avatar?: string; country: string };
-				score: number;
-				level: number;
-				achievements: number;
-				streak: number;
-				change: number;
-			}>,
+			courseName: cmsByCourseId.get(course.account.courseId)?.title ?? course.account.courseId,
+			entries: [] as DisplayLeaderboardEntry[],
 		}));
 
-	const service = new LeaderboardService(academyClient.connection, academyClient.programId);
+	// Build a map of enrollment PDA -> course key for quick lookup
+	const coursePdaToId = new Map(
+		courses.map((c) => [c.pubkey.toBase58(), c.account.courseId])
+	);
 
+	// Get global leaderboard wallet addresses (verified correct)
+	const service = new LeaderboardService(academyClient.connection, academyClient.programId);
+	const globalEntries = await service.getLeaderboard(config.xpMint, 100);
+	const walletAddresses = globalEntries.map((e) => e.publicKey);
+
+	// For each course, derive enrollment PDAs for known wallets and match
 	const results = await Promise.all(
 		courses.slice(0, 4).map(async (course) => {
-			const entries = await service.getCourseLeaderboard(course.account.courseId, 10);
-			const activityMap = includeActivity
-				? await getLatestActivityMap(entries.map((entry) => entry.publicKey))
-				: new Map<string, number>();
+			const courseId = course.account.courseId;
+			const courseKey = course.pubkey.toBase58();
+			const xpPerLesson = course.account.xpPerLesson;
+
+			// Find enrollments for this course
+			const courseEnrollments = allEnrollments.filter(
+				(e) => e.account.course.toBase58() === courseKey
+			);
+
+			// Build a set of enrollment PDAs for this course
+			const enrollmentPdaSet = new Set(courseEnrollments.map((e) => e.pubkey.toBase58()));
+			const enrollmentByPda = new Map(
+				courseEnrollments.map((e) => [e.pubkey.toBase58(), e])
+			);
+
+			// For each known wallet, derive the expected enrollment PDA
+			const learnerEntries: Array<{ wallet: string; xp: number }> = [];
+			for (const wallet of walletAddresses) {
+				const [expectedPda] = PublicKey.findProgramAddressSync(
+					[Buffer.from("enrollment"), Buffer.from(courseId), new PublicKey(wallet).toBuffer()],
+					academyClient.programId
+				);
+				const pdaKey = expectedPda.toBase58();
+				const enrollment = enrollmentByPda.get(pdaKey);
+				if (enrollment) {
+					const completed = countCompletedLessons(enrollment.account.lessonFlags);
+					learnerEntries.push({ wallet, xp: completed * xpPerLesson });
+				}
+			}
+
+			// Also check enrollments that don't belong to global leaderboard wallets
+			// by trying all remaining enrollment PDAs
+			const matchedPdas = new Set(
+				learnerEntries.map((e) => {
+					const [pda] = PublicKey.findProgramAddressSync(
+						[Buffer.from("enrollment"), Buffer.from(courseId), new PublicKey(e.wallet).toBuffer()],
+						academyClient.programId
+					);
+					return pda.toBase58();
+				})
+			);
+			// Any unmatched enrollment PDAs can't be resolved to a wallet without brute force
+			// so we skip them
+
+			const sorted = learnerEntries
+				.sort((a, b) => b.xp - a.xp)
+				.slice(0, 10);
+
+			const courseWallets = sorted.map((e) => e.wallet);
+			const [activityMap, sanityUsers] = await Promise.all([
+				includeActivity ? getLatestActivityMap(courseWallets) : Promise.resolve(new Map<string, number>()),
+				getUsersByWallets(courseWallets),
+			]);
+
 			return {
-				courseId: course.account.courseId,
-				courseName: course.account.courseId,
-				entries: entries.map((entry) => {
-					const xp = Number(entry.xpBalance);
+				courseId,
+				courseName: cmsByCourseId.get(courseId)?.title ?? courseId,
+				entries: sorted.map((entry, index) => {
+					const sanityUser = sanityUsers.get(entry.wallet);
 					return {
-						rank: entry.rank,
+						rank: index + 1,
 						user: {
-							id: entry.publicKey,
-							name: `${entry.publicKey.slice(0, 4)}...${entry.publicKey.slice(-4)}`,
-							avatar: getGravatarUrl(entry.publicKey),
-							country: "--",
+							id: entry.wallet,
+							name: sanityUser?.name ?? `${entry.wallet.slice(0, 4)}...${entry.wallet.slice(-4)}`,
+							avatar: sanityUser?.image || getGravatarUrl(entry.wallet),
+							country: sanityUser?.location ?? "--",
 						},
-						score: xp,
-						level: calculateLevelFromXP(xp),
+						score: entry.xp,
+						level: calculateLevelFromXP(entry.xp),
 						achievements: 0,
 						streak: 0,
 						change: 0,
-						lastActiveAt: activityMap.get(entry.publicKey),
+						lastActiveAt: activityMap.get(entry.wallet),
 					};
 				}),
 			};
