@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useXpBalance } from "@/hooks/useXpBalance";
+import { useProfile } from "@/hooks/useProfile";
 import { cn } from "@/lib/utils";
 import { Link } from "@/i18n/navigation";
 
@@ -24,7 +25,10 @@ export function WalletButton({ className }: { className?: string }) {
   const { publicKey, disconnect, connected } = useWallet();
   const { setVisible } = useWalletModal();
   const { data: xpData } = useXpBalance();
+  const profile = useProfile();
   const [copied, setCopied] = useState(false);
+
+  const displayName = profile?.username ?? profile?.display_name ?? (publicKey ? abbrev(publicKey.toBase58()) : "");
 
   const handleCopy = useCallback(() => {
     if (!publicKey) return;
@@ -61,7 +65,7 @@ export function WalletButton({ className }: { className?: string }) {
           )}
         >
           <span className="text-[#14F195] mr-1.5">◎</span>
-          {abbrev(publicKey.toBase58())}
+          {displayName}
           {xpData && (
             <span className="ml-2 text-xs text-muted-foreground border border-border rounded px-1.5 py-0.5">
               Lv.{xpData.level}
