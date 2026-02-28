@@ -8,7 +8,7 @@ pub mod utils;
 
 use instructions::*;
 
-declare_id!("ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf");
+declare_id!("FBL7RFCfVd5MG3wrcjcrcYC5tht8nNi1QeGebtdFichD");
 
 #[program]
 pub mod onchain_academy {
@@ -112,5 +112,45 @@ pub mod onchain_academy {
 
     pub fn deactivate_achievement_type(ctx: Context<DeactivateAchievementType>) -> Result<()> {
         instructions::deactivate_achievement_type::handler(ctx)
+    }
+
+    // =====================================================================
+    // Learner Profile & Gamification (ported from superteam-academy)
+    // =====================================================================
+
+    pub fn init_learner(ctx: Context<InitLearner>) -> Result<()> {
+        instructions::init_learner::handler(ctx)
+    }
+
+    pub fn register_referral(ctx: Context<RegisterReferral>) -> Result<()> {
+        instructions::register_referral::handler(ctx)
+    }
+
+    pub fn claim_achievement(
+        ctx: Context<ClaimAchievement>,
+        achievement_index: u8,
+        xp_reward: u32,
+    ) -> Result<()> {
+        instructions::claim_achievement::handler(ctx, achievement_index, xp_reward)
+    }
+
+    pub fn award_streak_freeze(ctx: Context<AwardStreakFreeze>) -> Result<()> {
+        instructions::award_streak_freeze::handler(ctx)
+    }
+
+    pub fn unenroll(ctx: Context<Unenroll>, course_id: String) -> Result<()> {
+        instructions::unenroll::handler(ctx, course_id)
+    }
+
+    // =====================================================================
+    // Seasons (ported from superteam-academy)
+    // =====================================================================
+
+    pub fn create_season(ctx: Context<CreateSeason>, season: u16) -> Result<()> {
+        instructions::create_season::handler(ctx, season)
+    }
+
+    pub fn close_season(ctx: Context<CloseSeason>) -> Result<()> {
+        instructions::close_season::handler(ctx)
     }
 }

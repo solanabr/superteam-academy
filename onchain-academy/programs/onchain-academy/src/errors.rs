@@ -56,4 +56,22 @@ pub enum AcademyError {
     InvalidAmount,
     #[msg("XP reward must be greater than zero")]
     InvalidXpReward,
+    #[msg("Season already closed")]
+    SeasonClosed,
+    #[msg("Season not active")]
+    SeasonNotActive,
+    #[msg("Invalid season number")]
+    InvalidSeasonNumber,
+    #[msg("Cannot refer yourself")]
+    SelfReferral,
+    #[msg("Already has a referrer")]
+    AlreadyReferred,
+    #[msg("Achievement already claimed")]
+    AchievementAlreadyClaimed,
+    #[msg("Daily XP limit exceeded")]
+    DailyXPLimitExceeded,
+    #[msg("Course already completed")]
+    CourseAlreadyCompleted,
+    #[msg("Arithmetic overflow")]
+    ArithmeticOverflow,
 }

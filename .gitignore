@@ -59,3 +59,5 @@ onchain-academy/target/verifiable/
 *.log
 *.tmp
 .cache/
+
+target/

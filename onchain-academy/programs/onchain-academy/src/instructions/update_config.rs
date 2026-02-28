@@ -7,6 +7,8 @@ use crate::state::{Config, MinterRole};
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct UpdateConfigParams {
     pub new_backend_signer: Option<Pubkey>,
+    pub max_daily_xp: Option<u32>,
+    pub max_achievement_xp: Option<u32>,
 }
 
 pub fn handler<'info>(
@@ -37,6 +39,22 @@ pub fn handler<'info>(
         config.backend_signer = signer;
         emit!(ConfigUpdated {
             field: "backend_signer".to_string(),
+            timestamp: Clock::get()?.unix_timestamp,
+        });
+    }
+
+    if let Some(max_daily) = params.max_daily_xp {
+        config.max_daily_xp = max_daily;
+        emit!(ConfigUpdated {
+            field: "max_daily_xp".to_string(),
+            timestamp: Clock::get()?.unix_timestamp,
+        });
+    }
+
+    if let Some(max_ach) = params.max_achievement_xp {
+        config.max_achievement_xp = max_ach;
+        emit!(ConfigUpdated {
+            field: "max_achievement_xp".to_string(),
             timestamp: Clock::get()?.unix_timestamp,
         });
     }
