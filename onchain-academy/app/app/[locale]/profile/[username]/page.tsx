@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { profileApi, ProfileData } from "@/lib/profile";
 import { useAuth } from "@/components/providers/auth-context";
+import { useTranslations } from "next-intl";
 
 /* ── Radar chart (CSS-based) ─────────────────────────── */
 function SkillRadar({ skills }: { skills: { name: string; value: number }[] }) {
@@ -96,6 +97,7 @@ function SkillRadar({ skills }: { skills: { name: string; value: number }[] }) {
 }
 
 export default function ProfilePage() {
+    const t = useTranslations("Profile");
     const { username } = useParams<{ username: string }>();
     const { user: authUser } = useAuth();
     const [data, setData] = useState<ProfileData | null>(null);
@@ -114,17 +116,17 @@ export default function ProfilePage() {
             .then(res => setData(res.data))
             .catch(err => {
                 console.error("Failed to fetch profile:", err);
-                setError(err.message || "Failed to load profile");
+                setError(err.message || t("failedToLoad"));
             })
             .finally(() => setLoading(false));
-    }, [username, isMe]);
+    }, [username, isMe, t]);
 
     if (loading) {
         return (
             <div className="min-h-screen bg-[#050810] flex items-center justify-center font-mono">
                 <div className="space-y-4 text-center">
                     <div className="w-12 h-12 border-2 border-neon-green/20 border-t-neon-green rounded-full animate-spin mx-auto" />
-                    <p className="text-zinc-500 text-sm animate-pulse tracking-widest">CONNECTING_TO_USER_NODE...</p>
+                    <p className="text-zinc-500 text-sm animate-pulse tracking-widest">{t("connecting")}</p>
                 </div>
             </div>
         );
@@ -135,10 +137,10 @@ export default function ProfilePage() {
             <div className="min-h-screen bg-[#050810] flex items-center justify-center font-mono">
                 <div className="p-8 border border-red-500/20 bg-red-500/5 text-center space-y-4 max-w-md">
                     <Shield className="w-12 h-12 text-red-500 mx-auto opacity-50" />
-                    <h2 className="text-white font-black uppercase tracking-wider">Access Denied</h2>
-                    <p className="text-zinc-500 text-xs leading-relaxed">{error || "User profile not found or is set to private."}</p>
+                    <h2 className="text-white font-black uppercase tracking-wider">{t("accessDenied")}</h2>
+                    <p className="text-zinc-500 text-xs leading-relaxed">{error || t("profileNotFound")}</p>
                     <Link href="/dashboard" className="inline-block px-4 py-2 border border-white/10 text-xs text-white hover:bg-white/5 transition-colors">
-                        Return to Dashboard
+                        {t("returnToDashboard")}
                     </Link>
                 </div>
             </div>
@@ -162,12 +164,12 @@ export default function ProfilePage() {
     ];
 
     const getRankTitle = (level: number) => {
-        if (level >= 15) return "Grandmaster";
-        if (level >= 12) return "Champion";
-        if (level >= 9) return "Veteran";
-        if (level >= 6) return "Warrior";
-        if (level >= 3) return "Fighter";
-        return "Initiate";
+        if (level >= 15) return t("grandmaster");
+        if (level >= 12) return t("champion");
+        if (level >= 9) return t("veteran");
+        if (level >= 6) return t("warrior");
+        if (level >= 3) return t("fighter");
+        return t("initiate");
     };
 
     return (
@@ -182,7 +184,7 @@ export default function ProfilePage() {
                 <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
                     <Link href="/dashboard" className="flex items-center gap-2 text-sm text-zinc-500 hover:text-neon-green transition-colors group font-mono">
                         <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-                        cd ../dashboard
+                        {t("cdDashboard")}
                     </Link>
                     <div className="flex items-center gap-2">
                         <div className="w-8 h-8 border border-white/10 bg-white/5 flex items-center justify-center text-white">
@@ -234,22 +236,22 @@ export default function ProfilePage() {
                                                 className="flex items-center gap-1.5 px-2.5 py-1 bg-white/[0.02] border border-white/[0.08] text-[10px] text-zinc-500 hover:text-white hover:border-white/20 transition-all font-bold uppercase tracking-wider"
                                             >
                                                 {profile.isPublic ? <Eye className="w-3 h-3 text-emerald-400" /> : <EyeOff className="w-3 h-3 text-red-400" />}
-                                                {profile.isPublic ? "Public Profile" : "Private Profile"}
+                                                {profile.isPublic ? t("publicProfile") : t("privateProfile")}
                                             </button>
                                         )}
                                         {isMe && (
                                             <Link href="/settings" className="flex items-center gap-1.5 px-2.5 py-1 bg-white/[0.02] border border-white/[0.08] text-[10px] text-zinc-500 hover:text-white hover:border-white/20 transition-all font-bold uppercase tracking-wider">
                                                 <Settings className="w-3 h-3" />
-                                                Edit Profile
+                                                {t("editProfile")}
                                             </Link>
                                         )}
                                     </div>
                                 </div>
 
                                 <div className="flex flex-col items-start sm:items-end gap-1">
-                                    <div className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">Class / Bio</div>
+                                    <div className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">{t("classBio")}</div>
                                     <p className="text-xs text-zinc-400 max-w-md sm:text-right leading-relaxed border-l-2 sm:border-l-0 sm:border-r-2 border-amber-400/30 pl-3 sm:pl-0 sm:pr-3 py-1">
-                                        {profile.bio || "No bio provided."}
+                                        {profile.bio || t("noBio")}
                                     </p>
                                 </div>
                             </div>
@@ -257,7 +259,7 @@ export default function ProfilePage() {
                             <div className="h-px w-full bg-gradient-to-r from-white/[0.06] to-transparent my-4" />
 
                             <div className="flex flex-wrap items-center gap-6 text-zinc-500">
-                                <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider"><Calendar className="w-3.5 h-3.5 text-zinc-600" /> Joined {new Date(profile.createdAt).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}</span>
+                                <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider"><Calendar className="w-3.5 h-3.5 text-zinc-600" /> {t("joined")} {new Date(profile.createdAt).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}</span>
                                 {profile.twitter && (
                                     <a href={`https://twitter.com/${profile.twitter}`} target="_blank" className="flex items-center gap-1.5 text-xs hover:text-sky-400 transition-colors font-bold uppercase tracking-wider"><Twitter className="w-3.5 h-3.5" /> @{profile.twitter}</a>
                                 )}
@@ -265,7 +267,7 @@ export default function ProfilePage() {
                                     <a href={`https://github.com/${profile.github}`} target="_blank" className="flex items-center gap-1.5 text-xs hover:text-white transition-colors font-bold uppercase tracking-wider"><Github className="w-3.5 h-3.5" /> {profile.github}</a>
                                 )}
                                 {profile.website && (
-                                    <a href={profile.website} target="_blank" className="flex items-center gap-1.5 text-xs hover:text-neon-cyan transition-colors font-bold uppercase tracking-wider"><Globe className="w-3.5 h-3.5" /> Website</a>
+                                    <a href={profile.website} target="_blank" className="flex items-center gap-1.5 text-xs hover:text-neon-cyan transition-colors font-bold uppercase tracking-wider"><Globe className="w-3.5 h-3.5" /> {t("website")}</a>
                                 )}
                             </div>
                         </div>
@@ -275,9 +277,9 @@ export default function ProfilePage() {
                 {/* ── Stats Row ── */}
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
                     {[
-                        { icon: Zap, label: "Total XP", value: xp_total.toLocaleString(), color: "text-neon-green" },
-                        { icon: Crown, label: "Level", value: String(profile.level), color: "text-neon-purple" },
-                        { icon: Flame, label: "Streak", value: `${profile.currentStreak} days`, color: "text-orange-400" },
+                        { icon: Zap, label: t("totalXp"), value: xp_total.toLocaleString(), color: "text-neon-green" },
+                        { icon: Crown, label: t("level"), value: String(profile.level), color: "text-neon-purple" },
+                        { icon: Flame, label: t("streak"), value: t("days", { count: profile.currentStreak }), color: "text-orange-400" },
                     ].map((stat, i) => (
                         <div key={i} className="p-5 border border-white/[0.06] bg-[#0a0f1a]/90 relative overflow-hidden group">
                             {/* Hover accent */}
@@ -304,11 +306,11 @@ export default function ProfilePage() {
                                 <div className="flex items-center gap-2">
                                     <span className="text-neon-purple/60">// </span>
                                     <span className="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
-                                        <Crown className="w-4 h-4 text-neon-purple" /> Level {profile.level}
+                                        <Crown className="w-4 h-4 text-neon-purple" /> {t("level")} {profile.level}
                                     </span>
                                 </div>
                                 <span className="text-[10px] text-neon-purple bg-neon-purple/10 border border-neon-purple/20 px-2 py-0.5 font-bold tracking-widest uppercase">
-                                    {xp_total.toLocaleString()} / {nextLevelXP.toLocaleString()} XP
+                                    {xp_total.toLocaleString()} / {nextLevelXP.toLocaleString()} {t("xp")}
                                 </span>
                             </div>
 
@@ -329,8 +331,8 @@ export default function ProfilePage() {
                                 </div>
                             </div>
                             <div className="flex justify-between items-center mt-2 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                                <span>Progress: {Math.round(levelProgress)}%</span>
-                                <span>{(nextLevelXP - xp_total).toLocaleString()} XP to Level {profile.level + 1}</span>
+                                <span>{t("progress", { percent: Math.round(levelProgress) })}</span>
+                                <span>{(nextLevelXP - xp_total).toLocaleString()} {t("xpToLevel", { level: profile.level + 1 })}</span>
                             </div>
                         </motion.div>
 
@@ -340,9 +342,9 @@ export default function ProfilePage() {
                                 <div className="flex items-center gap-3">
                                     <Shield className="w-5 h-5 text-amber-400" />
                                     <div>
-                                        <div className="text-xs font-bold text-white uppercase tracking-wider">{xp.locked.toLocaleString()} XP Locked</div>
+                                        <div className="text-xs font-bold text-white uppercase tracking-wider">{xp.locked.toLocaleString()} {t("xpLocked")}</div>
                                         <div className="text-[10px] text-zinc-500 leading-relaxed">
-                                            Finish your active courses to unlock this XP and level up faster!
+                                            {t("xpLockedDesc")}
                                         </div>
                                     </div>
                                 </div>
@@ -355,7 +357,7 @@ export default function ProfilePage() {
                         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="border border-white/[0.06] bg-[#0a0f1a]/90 overflow-hidden">
                             <div className="px-5 py-3 border-b border-white/5 bg-white/[0.02] flex items-center gap-2">
                                 <Shield className="w-4 h-4 text-neon-cyan" />
-                                <span className="text-sm font-bold text-white uppercase tracking-wider">Skill Tree</span>
+                                <span className="text-sm font-bold text-white uppercase tracking-wider">{t("skillTree")}</span>
                             </div>
                             <div className="p-6 relative">
                                 {/* Grid background */}

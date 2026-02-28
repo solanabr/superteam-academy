@@ -6,6 +6,7 @@ import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef, useEffect, useCallback, useState } from "react";
+import { useTranslations } from "next-intl";
 
 /* ─── Animated Glowing Grid ─── */
 function AnimatedGrid() {
@@ -467,6 +468,7 @@ function ScrollingCode() {
 
 /* ─── Main Hero ─── */
 export function Hero() {
+  const t = useTranslations("Hero");
   const containerRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -547,9 +549,9 @@ export function Hero() {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="flex items-center gap-3 mb-6"
           >
-            <span className="text-neon-green font-mono text-sm">{">"}</span>
+            <span className="text-neon-green font-mono text-sm">{t("terminalPrefix")}</span>
             <span className="font-mono text-xs uppercase tracking-[0.3em] text-zinc-500">
-              onchain_academy
+              {t("terminalPrompt")}
             </span>
             <div className="w-2 h-2 bg-neon-green animate-pulse" />
           </motion.div>
@@ -562,14 +564,14 @@ export function Hero() {
             className="space-y-2 mb-6"
           >
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight leading-[1.1] font-mono">
-              <span className="text-zinc-400 block">Level up your skills.</span>
+              <span className="text-zinc-400 block">{t("headlinePrefix")}</span>
               <span className="relative inline-block px-3 py-1">
                 {/* Corner brackets around the typed text */}
                 <span className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-neon-green/50" />
                 <span className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-neon-green/50" />
                 <span className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-neon-green/50" />
                 <span className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-neon-green/50" />
-                <TypewriterText text="Build on Solana" delay={800} />
+                <TypewriterText text={t("typewriterText")} delay={800} />
               </span>
             </h1>
           </motion.div>
@@ -582,9 +584,8 @@ export function Hero() {
             className="mb-8"
           >
             <div className="text-sm sm:text-base text-zinc-500 max-w-lg leading-relaxed font-mono text-center">
-              <span className="text-neon-green/60">// </span>
-              Learn how to write your own on-chain programs
-              from the top builders in the Solana ecosystem.
+              <span className="text-neon-green/60">{t("subtitleComment")} </span>
+              {t("subtitle")}
             </div>
           </motion.div>
 
@@ -596,13 +597,13 @@ export function Hero() {
             className="flex flex-col sm:flex-row items-center gap-5 mb-12"
           >
             <Link href="/auth">
-              <HackerButton text="Start Learning" />
+              <HackerButton text={t("ctaStart")} />
             </Link>
             <Link
               href="/courses"
               className="btn-slide-right relative flex items-center gap-2 text-sm text-zinc-400 hover:text-neon-green transition-colors duration-300 group uppercase tracking-wider font-semibold font-mono px-4 py-2 overflow-hidden border border-white/[0.08] hover:border-neon-green/40"
             >
-              <span className="relative z-10">Browse Courses</span>
+              <span className="relative z-10">{t("ctaBrowse")}</span>
               <ArrowRight className="relative z-10 w-4 h-4 transition-transform group-hover:translate-x-1" />
             </Link>
           </motion.div>
@@ -621,14 +622,14 @@ export function Hero() {
             <span className="absolute bottom-0 right-0 w-3 h-3 border-b border-r border-neon-green/30" />
 
             <div className="text-[9px] text-zinc-600 font-mono uppercase tracking-[0.2em] text-center mb-3">
-              <span className="text-neon-green/40">$ </span>stats --live
+              <span className="text-neon-green/40">$ </span>{t("statsCommand")}
             </div>
             <div className="flex items-center gap-8 sm:gap-12">
-              <AnimatedCounter target={1200} suffix="+" label="Builders" delay={1400} />
+              <AnimatedCounter target={1200} suffix="+" label={t("builders")} delay={1400} />
               <div className="w-px h-8 bg-white/[0.08]" />
-              <AnimatedCounter target={50} suffix="+" label="Courses" delay={1600} />
+              <AnimatedCounter target={50} suffix="+" label={t("courses")} delay={1600} />
               <div className="w-px h-8 bg-white/[0.08]" />
-              <AnimatedCounter target={10} suffix="K+" label="Programs" delay={1800} />
+              <AnimatedCounter target={10} suffix="K+" label={t("programs")} delay={1800} />
             </div>
           </motion.div>
         </div>

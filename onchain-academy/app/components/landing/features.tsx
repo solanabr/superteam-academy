@@ -4,13 +4,15 @@ import { TiltCard } from "@/components/ui/tilt-card";
 import { Code2, Trophy, Zap, Flame, Shield, Crown } from "lucide-react";
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
+import { useTranslations } from "next-intl";
 
 /* ─── Mini XP Bar Illustration ─── */
 function MiniXPBar() {
+    const t = useTranslations("Features");
     return (
         <div className="space-y-1">
             <div className="flex items-center justify-between text-[9px] font-mono">
-                <span className="text-neon-green font-bold">Lvl 7</span>
+                <span className="text-neon-green font-bold">{t("level")} 7</span>
                 <span className="text-zinc-600">7,340 / 10,000</span>
             </div>
             <div className="h-1.5 bg-white/5 overflow-hidden">
@@ -47,10 +49,11 @@ function MiniStreak() {
 
 /* ─── Mini Leaderboard ─── */
 function MiniLeaderboard() {
+    const t = useTranslations("Features");
     const players = [
         { name: "rafael.sol", xp: "24.8K", rank: 1 },
         { name: "maria.eth", xp: "22.1K", rank: 2 },
-        { name: "you", xp: "7.3K", rank: 42 },
+        { name: t("you"), xp: "7.3K", rank: 42 },
     ];
     return (
         <div className="space-y-1">
@@ -93,13 +96,14 @@ function MiniBadges() {
 
 /* ─── Mini Code Challenge ─── */
 function MiniCodeChallenge() {
+    const t = useTranslations("Features");
     return (
         <div className="space-y-1">
             <div className="flex items-center gap-1.5">
                 {["✅", "✅", "✅", "⏳", "🔒"].map((s, i) => (
                     <span key={i} className="text-[10px]">{s}</span>
                 ))}
-                <span className="text-[9px] text-zinc-500 ml-1 font-mono font-bold">3/5 tests</span>
+                <span className="text-[9px] text-zinc-500 ml-1 font-mono font-bold">3/5 {t("tests")}</span>
             </div>
             <div className="font-mono text-[9px] text-zinc-500 bg-white/[0.02] px-2 py-1 border border-white/[0.04]">
                 <span className="text-neon-green">assert_eq!</span><span className="text-zinc-400">(result, 42);</span>
@@ -110,6 +114,7 @@ function MiniCodeChallenge() {
 
 /* ─── Mini NFT Card ─── */
 function MiniNFT() {
+    const t = useTranslations("Features");
     return (
         <div className="flex items-center gap-2">
             <motion.div
@@ -120,8 +125,8 @@ function MiniNFT() {
                 🏅
             </motion.div>
             <div className="font-mono">
-                <div className="text-[9px] font-bold text-white">Builder NFT</div>
-                <div className="text-[8px] text-amber-400 font-bold">Tier 3 / 5</div>
+                <div className="text-[9px] font-bold text-white">{t("builderNft")}</div>
+                <div className="text-[8px] text-amber-400 font-bold">{t("tier")} 3 / 5</div>
                 <div className="flex gap-0.5 mt-0.5">
                     {[1, 2, 3, 4, 5].map(i => (
                         <div key={i} className={`w-1.5 h-1.5 ${i <= 3 ? "bg-amber-400" : "bg-white/10"}`} />
@@ -132,66 +137,67 @@ function MiniNFT() {
     );
 }
 
-const features = [
-    {
-        icon: Zap,
-        title: "XP & Leveling",
-        description: "Earn soulbound XP tokens on Solana for every lesson and challenge. Your power grows with every line of code.",
-        glowColor: "rgba(0, 255, 163, 0.12)",
-        stat: "Level formula: √(XP/100)",
-        iconColor: "text-neon-green",
-        illustration: MiniXPBar,
-    },
-    {
-        icon: Trophy,
-        title: "Soulbound NFTs",
-        description: "Earn evolving Metaplex Core NFTs that upgrade in-place as you progress. Proof of mastery, on-chain.",
-        glowColor: "rgba(245, 158, 11, 0.12)",
-        stat: "32,000+ credentials issued",
-        iconColor: "text-amber-400",
-        illustration: MiniNFT,
-    },
-    {
-        icon: Flame,
-        title: "Streak System",
-        description: "Maintain daily streaks. Hit milestones at 7, 30, and 100 days. Streak freezes for when life happens.",
-        glowColor: "rgba(249, 115, 22, 0.12)",
-        stat: "Top streak: 247 days",
-        iconColor: "text-orange-400",
-        illustration: MiniStreak,
-    },
-    {
-        icon: Crown,
-        title: "Leaderboard",
-        description: "Compete with builders worldwide. Weekly, monthly, and all-time rankings derived from on-chain XP.",
-        glowColor: "rgba(0, 240, 255, 0.12)",
-        stat: "12,400+ active builders",
-        iconColor: "text-neon-cyan",
-        illustration: MiniLeaderboard,
-    },
-    {
-        icon: Shield,
-        title: "Achievements",
-        description: "Unlock 256 achievements across progress, skills, streaks, and community. Five rarity tiers from Common to Legendary.",
-        glowColor: "rgba(153, 69, 255, 0.12)",
-        stat: "5 rarity tiers",
-        iconColor: "text-neon-purple",
-        illustration: MiniBadges,
-    },
-    {
-        icon: Code2,
-        title: "Code Challenges",
-        description: "Write Rust and TypeScript in-browser with real-time test feedback and instant XP on completion.",
-        glowColor: "rgba(236, 72, 153, 0.12)",
-        stat: "200+ challenges",
-        iconColor: "text-pink-400",
-        illustration: MiniCodeChallenge,
-    },
-];
-
 export function Features() {
+    const t = useTranslations("Features");
     const ref = useRef<HTMLDivElement>(null);
     const isInView = useInView(ref, { once: true, margin: "-50px" });
+
+    const features = [
+        {
+            icon: Zap,
+            titleKey: "xpLeveling",
+            descriptionKey: "xpLevelingDesc",
+            glowColor: "rgba(0, 255, 163, 0.12)",
+            statKey: "levelFormula",
+            iconColor: "text-neon-green",
+            illustration: MiniXPBar,
+        },
+        {
+            icon: Trophy,
+            titleKey: "soulboundNfts",
+            descriptionKey: "soulboundNftsDesc",
+            glowColor: "rgba(245, 158, 11, 0.12)",
+            statKey: "credentialsIssued",
+            iconColor: "text-amber-400",
+            illustration: MiniNFT,
+        },
+        {
+            icon: Flame,
+            titleKey: "streakSystem",
+            descriptionKey: "streakSystemDesc",
+            glowColor: "rgba(249, 115, 22, 0.12)",
+            statKey: "topStreak",
+            iconColor: "text-orange-400",
+            illustration: MiniStreak,
+        },
+        {
+            icon: Crown,
+            titleKey: "leaderboard",
+            descriptionKey: "leaderboardDesc",
+            glowColor: "rgba(0, 240, 255, 0.12)",
+            statKey: "activeBuilders",
+            iconColor: "text-neon-cyan",
+            illustration: MiniLeaderboard,
+        },
+        {
+            icon: Shield,
+            titleKey: "achievements",
+            descriptionKey: "achievementsDesc",
+            glowColor: "rgba(153, 69, 255, 0.12)",
+            statKey: "rarityTiers",
+            iconColor: "text-neon-purple",
+            illustration: MiniBadges,
+        },
+        {
+            icon: Code2,
+            titleKey: "codeChallenges",
+            descriptionKey: "codeChallengesDesc",
+            glowColor: "rgba(236, 72, 153, 0.12)",
+            statKey: "challengesCount",
+            iconColor: "text-pink-400",
+            illustration: MiniCodeChallenge,
+        },
+    ];
 
     return (
         <section className="relative py-24 md:py-32 overflow-hidden">
@@ -209,18 +215,17 @@ export function Features() {
                     <div className="flex items-center gap-3">
                         <span className="text-neon-green font-mono text-sm">{">"}</span>
                         <span className="font-mono text-xs uppercase tracking-[0.3em] text-zinc-500">
-                            game_mechanics
+                            {t("gameMechanics")}
                         </span>
                         <div className="flex-1 h-px bg-white/[0.06]" />
                     </div>
                     <h2 className="text-3xl md:text-5xl lg:text-6xl font-black text-white tracking-tight">
-                        Your Skills,{" "}
-                        <span className="text-neon-green">Gamified</span>
+                        {t("yourSkills")}{" "}
+                        <span className="text-neon-green">{t("gamified")}</span>
                     </h2>
                     <p className="text-zinc-400 text-lg max-w-xl font-mono text-sm leading-relaxed">
                         <span className="text-neon-green/60">// </span>
-                        Every interaction earns rewards. Every milestone unlocks new abilities.
-                        This isn&apos;t a tutorial — it&apos;s a quest.
+                        {t("description")}
                     </p>
                 </motion.div>
 
@@ -242,14 +247,14 @@ export function Features() {
                                         </div>
                                         <div className="flex items-center gap-1 px-2 py-0.5 bg-white/[0.03] border border-white/[0.06]">
                                             <Zap className="w-3 h-3 text-neon-green" />
-                                            <span className="text-[9px] font-mono font-bold text-zinc-500">{feature.stat}</span>
+                                            <span className="text-[9px] font-mono font-bold text-zinc-500">{t(feature.statKey)}</span>
                                         </div>
                                     </div>
 
                                     {/* Title + Description */}
                                     <div className="space-y-2 flex-1">
-                                        <h3 className="text-lg font-black text-white font-mono">{feature.title}</h3>
-                                        <p className="text-sm text-zinc-400 leading-relaxed">{feature.description}</p>
+                                        <h3 className="text-lg font-black text-white font-mono">{t(feature.titleKey)}</h3>
+                                        <p className="text-sm text-zinc-400 leading-relaxed">{t(feature.descriptionKey)}</p>
                                     </div>
 
                                     {/* Mini Illustration */}

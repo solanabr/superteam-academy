@@ -24,8 +24,10 @@ import {
     Shield
 } from "lucide-react";
 import { dashboardApi, DashboardData } from "@/lib/dashboard";
+import { useTranslations } from "next-intl";
 
 export default function DashboardPage() {
+    const t = useTranslations("Dashboard");
     const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth();
     const router = useRouter();
     const { disconnect, connected } = useWallet();
@@ -55,18 +57,18 @@ export default function DashboardPage() {
                 .then(res => setDashboardData(res.data))
                 .catch(err => {
                     console.error("Dashboard error:", err);
-                    setError("Failed to load dashboard data");
+                    setError(t("failedToLoad"));
                 })
                 .finally(() => setLoading(false));
         }
-    }, [isAuthenticated]);
+    }, [isAuthenticated, t]);
 
     if (authLoading || loading) {
         return (
             <div className="min-h-screen bg-[#050810] flex items-center justify-center font-mono">
                 <div className="space-y-4 text-center">
                     <div className="w-12 h-12 border-2 border-neon-green/20 border-t-neon-green rounded-full animate-spin mx-auto" />
-                    <p className="text-zinc-500 text-sm animate-pulse tracking-widest">CONNECTING_TO_SOLANA_V1...</p>
+                    <p className="text-zinc-500 text-sm animate-pulse tracking-widest">{t("connecting")}</p>
                 </div>
             </div>
         );
@@ -92,13 +94,13 @@ export default function DashboardPage() {
                     </div>
                     <nav className="flex items-center gap-2">
                         <Link href="/courses" className="flex items-center gap-1.5 px-3 py-2 text-[10px] text-zinc-500 hover:text-white transition-colors uppercase tracking-widest font-mono font-bold">
-                            <BookOpen className="w-3.5 h-3.5" /> Courses
+                            <BookOpen className="w-3.5 h-3.5" /> {t("courses")}
                         </Link>
                         <Link href="/leaderboard" className="flex items-center gap-1.5 px-3 py-2 text-[10px] text-zinc-500 hover:text-white transition-colors uppercase tracking-widest font-mono font-bold">
-                            <BarChart3 className="w-3.5 h-3.5" /> Leaderboard
+                            <BarChart3 className="w-3.5 h-3.5" /> {t("leaderboard")}
                         </Link>
                         <Link href="/profile" className="flex items-center gap-1.5 px-3 py-2 text-[10px] text-zinc-500 hover:text-white transition-colors uppercase tracking-widest font-mono font-bold">
-                            <User className="w-3.5 h-3.5" /> Profile
+                            <User className="w-3.5 h-3.5" /> {t("profile")}
                         </Link>
                         <div className="w-px h-5 bg-white/[0.06] mx-2" />
                         <Link href="/settings" className="p-2 text-zinc-500 hover:text-white transition-colors">
@@ -109,7 +111,7 @@ export default function DashboardPage() {
                             className="flex items-center gap-2 px-3 py-1.5 text-zinc-600 hover:text-red-400 transition-colors uppercase text-[10px] tracking-widest font-black font-mono"
                         >
                             <LogOut className="w-3.5 h-3.5" />
-                            Sign Out
+                            {t("signOut")}
                         </button>
                     </nav>
                 </div>
@@ -128,17 +130,17 @@ export default function DashboardPage() {
                         <div className="flex items-center gap-3">
                             <span className="text-neon-cyan font-mono text-sm">{">"}</span>
                             <span className="font-mono text-xs uppercase tracking-[0.3em] text-zinc-500">
-                                player_dashboard
+                                {t("playerDashboard")}
                             </span>
                             <div className="w-24 h-px bg-white/[0.06]" />
                         </div>
                         <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight">
-                            Welcome to the Arena,{" "}
-                            <span className="text-amber-400">{user.name || user.username || "Builder"}</span>
+                            {t("welcomeToArena")}{" "}
+                            <span className="text-amber-400">{user.name || user.username || t("builder")}</span>
                         </h1>
                         <p className="text-sm text-zinc-400 font-mono mt-4 leading-relaxed max-w-xl">
                             <span className="text-neon-cyan/60">// </span>
-                            Review your stats, claim rewards, and choose your next quest.
+                            {t("reviewStats")}
                         </p>
                     </motion.div>
 
@@ -155,9 +157,9 @@ export default function DashboardPage() {
                                 <div className="px-5 py-3 border-b border-white/5 bg-white/[0.02] flex items-center justify-between font-mono">
                                     <div className="flex items-center gap-2">
                                         <Shield className="w-4 h-4 text-amber-400" />
-                                        <span className="text-sm font-bold text-white uppercase tracking-wider">Player Card</span>
+                                        <span className="text-sm font-bold text-white uppercase tracking-wider">{t("playerCard")}</span>
                                     </div>
-                                    <span className="text-[10px] text-zinc-500 font-bold flex items-center gap-1.5"><div className="w-1.5 h-1.5 bg-neon-green rounded-full animate-pulse" /> Live</span>
+                                    <span className="text-[10px] text-zinc-500 font-bold flex items-center gap-1.5"><div className="w-1.5 h-1.5 bg-neon-green rounded-full animate-pulse" /> {t("live")}</span>
                                 </div>
 
                                 <div className="p-5 space-y-5">
@@ -170,10 +172,10 @@ export default function DashboardPage() {
                                         </div>
                                         <div className="font-mono">
                                             <div className="text-white font-bold flex items-center gap-2">
-                                                {user.username || "Initiate"}
-                                                <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 bg-amber-400/10 text-amber-400 border border-amber-400/20">Active</span>
+                                                {user.username || t("initiate")}
+                                                <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 bg-amber-400/10 text-amber-400 border border-amber-400/20">{t("active")}</span>
                                             </div>
-                                            <div className="text-[10px] text-zinc-500 mt-1">{user.email || 'No email provided'}</div>
+                                            <div className="text-[10px] text-zinc-500 mt-1">{user.email || t("noEmail")}</div>
                                         </div>
                                     </div>
 
@@ -182,18 +184,18 @@ export default function DashboardPage() {
                                             <div className="text-xl font-black text-neon-green flex justify-center items-center gap-1">
                                                 {(dashboardData?.xp.total || user.totalXP || 0).toLocaleString()}
                                             </div>
-                                            <div className="text-[9px] text-zinc-500 uppercase tracking-widest font-bold">Total XP</div>
+                                            <div className="text-[9px] text-zinc-500 uppercase tracking-widest font-bold">{t("totalXp")}</div>
                                         </div>
                                         <div className="p-3 bg-white/[0.02] border border-white/5 text-center space-y-1">
                                             <div className="text-xl font-black text-orange-400">
                                                 {dashboardData?.streak.current || 0}
                                             </div>
-                                            <div className="text-[9px] text-zinc-500 uppercase tracking-widest font-bold">Day Streak</div>
+                                            <div className="text-[9px] text-zinc-500 uppercase tracking-widest font-bold">{t("dayStreak")}</div>
                                         </div>
                                     </div>
 
                                     <Link href="/profile" className="w-full py-2 flex items-center justify-center gap-2 text-[10px] font-mono font-bold text-neon-cyan uppercase tracking-widest hover:bg-white/[0.02] border border-transparent hover:border-white/5 transition-colors">
-                                        View Full Profile <ChevronRight className="w-3 h-3" />
+                                        {t("viewFullProfile")} <ChevronRight className="w-3 h-3" />
                                     </Link>
                                 </div>
                             </motion.div>
@@ -208,14 +210,14 @@ export default function DashboardPage() {
                                 <div className="px-5 py-3 border-b border-white/5 bg-white/[0.02] flex items-center justify-between font-mono">
                                     <div className="flex items-center gap-2">
                                         <Trophy className="w-4 h-4 text-amber-400" />
-                                        <span className="text-sm font-bold text-white uppercase tracking-wider">Trophies</span>
+                                        <span className="text-sm font-bold text-white uppercase tracking-wider">{t("trophies")}</span>
                                     </div>
-                                    <span className="text-[10px] text-zinc-500 font-bold">0 Unlocked</span>
+                                    <span className="text-[10px] text-zinc-500 font-bold">0 {t("unlocked")}</span>
                                 </div>
                                 <div className="p-5 flex flex-col items-center justify-center text-center space-y-3 min-h-[150px]">
                                     <Trophy className="w-8 h-8 text-zinc-700 mx-auto" />
-                                    <div className="text-xs text-zinc-600 font-mono uppercase tracking-widest font-black">No loot yet</div>
-                                    <div className="text-[10px] text-zinc-500 font-mono">Complete quests to earn rewards.</div>
+                                    <div className="text-xs text-zinc-600 font-mono uppercase tracking-widest font-black">{t("noLootYet")}</div>
+                                    <div className="text-[10px] text-zinc-500 font-mono">{t("completeQuests")}</div>
                                 </div>
                             </motion.div>
                         </div>
@@ -232,10 +234,10 @@ export default function DashboardPage() {
                                 <div className="px-5 py-3 border-b border-white/5 bg-white/[0.02] flex items-center justify-between font-mono">
                                     <div className="flex items-center gap-2">
                                         <Target className="w-4 h-4 text-neon-cyan" />
-                                        <span className="text-sm font-bold text-white uppercase tracking-wider">Active Quests</span>
+                                        <span className="text-sm font-bold text-white uppercase tracking-wider">{t("activeQuests")}</span>
                                     </div>
                                     <Link href="/courses" className="text-[10px] text-neon-cyan hover:text-neon-cyan/80 font-bold uppercase tracking-wider flex items-center gap-0.5">
-                                        Browse Quests <ChevronRight className="w-3 h-3" />
+                                        {t("browseQuests")} <ChevronRight className="w-3 h-3" />
                                     </Link>
                                 </div>
 
@@ -261,11 +263,11 @@ export default function DashboardPage() {
                                                 </div>
                                                 <div className="flex items-center justify-between sm:justify-end gap-4 min-w-[140px]">
                                                     <div className="flex items-center gap-1 text-[10px] font-black text-amber-400 bg-amber-400/10 border border-amber-400/20 px-2 py-1">
-                                                        <Zap className="w-3 h-3" /> +{course.totalXP} XP
+                                                        <Zap className="w-3 h-3" /> +{course.totalXP} {t("xp")}
                                                     </div>
                                                     <Link href={`/courses/${course.slug}`}>
                                                         <button className="text-[10px] text-neon-cyan font-bold uppercase tracking-widest hover:text-neon-cyan/80 flex items-center gap-1">
-                                                            {course.progress.percent > 0 ? "Continue" : "Start"} <ChevronRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+                                                            {course.progress.percent > 0 ? t("continue") : t("start")} <ChevronRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
                                                         </button>
                                                     </Link>
                                                 </div>
@@ -275,11 +277,11 @@ export default function DashboardPage() {
                                         <div className="flex flex-col items-center justify-center p-8 text-center space-y-4 border border-dashed border-white/10">
                                             <BookOpen className="w-8 h-8 text-zinc-700" />
                                             <div className="space-y-1">
-                                                <div className="text-xs text-zinc-500 font-bold uppercase tracking-widest">No Active Quests</div>
-                                                <p className="text-[10px] text-zinc-600">You haven't enrolled in any courses yet.</p>
+                                                <div className="text-xs text-zinc-500 font-bold uppercase tracking-widest">{t("noActiveQuests")}</div>
+                                                <p className="text-[10px] text-zinc-600">{t("noEnrolledCourses")}</p>
                                             </div>
                                             <Link href="/courses" className="px-4 py-1.5 bg-neon-cyan/10 border border-neon-cyan/20 text-neon-cyan text-[10px] font-black uppercase tracking-widest hover:bg-neon-cyan/20 transition-colors">
-                                                Start Your First Quest
+                                                {t("startFirstQuest")}
                                             </Link>
                                         </div>
                                     )}
@@ -297,7 +299,7 @@ export default function DashboardPage() {
                                     <div className="px-5 py-3 border-b border-white/5 bg-white/[0.02] flex items-center justify-between font-mono">
                                         <div className="flex items-center gap-2">
                                             <Crown className="w-4 h-4 text-amber-400" />
-                                            <span className="text-sm font-bold text-white uppercase tracking-wider">Recommended Quests</span>
+                                            <span className="text-sm font-bold text-white uppercase tracking-wider">{t("recommendedQuests")}</span>
                                         </div>
                                     </div>
                                     <div className="p-5 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
@@ -313,16 +315,13 @@ export default function DashboardPage() {
                                                 <div className="text-[10px] font-black text-white truncate group-hover:text-neon-cyan transition-colors">{course.title}</div>
                                                 <div className="flex items-center justify-between mt-2 text-[8px] font-bold">
                                                     <span className="text-zinc-500 uppercase">{course.difficulty}</span>
-                                                    <span className="text-amber-400">+{course.totalXP} XP</span>
+                                                    <span className="text-amber-400">+{course.totalXP} {t("xp")}</span>
                                                 </div>
                                             </Link>
                                         ))}
                                     </div>
                                 </motion.div>
                             )}
-
-                            {/* Leaderboard Preview (Optional enhancement) */}
-                            {/* ... could show top 3 users here ... */}
                         </div>
                     </div>
                 </div>

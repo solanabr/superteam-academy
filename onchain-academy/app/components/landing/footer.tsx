@@ -3,30 +3,33 @@
 import { Hexagon, Github, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-
-const platformLinks = [
-    { label: "Courses", href: "/auth" },
-    { label: "Leaderboard", href: "/auth" },
-    { label: "Credentials", href: "/auth" },
-    { label: "Dashboard", href: "/auth" },
-    { label: "Bounties", href: "/auth" },
-];
-
-const communityLinks = [
-    { label: "Discord", href: "#", external: true },
-    { label: "Twitter", href: "#", external: true },
-    { label: "GitHub", href: "https://github.com/solanabr/superteam-academy", external: true },
-    { label: "Superteam", href: "#", external: true },
-];
-
-const resourceLinks = [
-    { label: "Documentation", href: "#" },
-    { label: "API Reference", href: "#" },
-    { label: "Contributing", href: "#" },
-    { label: "Brand Kit", href: "#" },
-];
+import { useTranslations } from "next-intl";
 
 export function Footer() {
+    const t = useTranslations("Footer");
+    
+    const platformLinks = [
+        { labelKey: "courses", href: "/auth" },
+        { labelKey: "leaderboard", href: "/auth" },
+        { labelKey: "credentials", href: "/auth" },
+        { labelKey: "dashboard", href: "/auth" },
+        { labelKey: "bounties", href: "/auth" },
+    ];
+
+    const communityLinks = [
+        { labelKey: "discord", href: "#", external: true },
+        { labelKey: "twitter", href: "#", external: true },
+        { labelKey: "github", href: "https://github.com/solanabr/superteam-academy", external: true },
+        { labelKey: "superteam", href: "#", external: true },
+    ];
+
+    const resourceLinks = [
+        { labelKey: "documentation", href: "#" },
+        { labelKey: "apiReference", href: "#" },
+        { labelKey: "contributing", href: "#" },
+        { labelKey: "brandKit", href: "#" },
+    ];
+
     return (
         <footer className="relative border-t border-white/[0.06] bg-[#020408] pt-16 pb-8 overflow-hidden">
             {/* Top accent line */}
@@ -51,8 +54,7 @@ export function Footer() {
                         </Link>
                         <p className="text-sm text-zinc-500 max-w-xs leading-relaxed font-mono">
                             <span className="text-neon-green/40">// </span>
-                            The ultimate open-source learning platform for Solana developers.
-                            Build, ship, and earn on-chain credentials.
+                            {t("description")}
                         </p>
                         <div className="flex items-center gap-3">
                             <a
@@ -85,17 +87,17 @@ export function Footer() {
                     {/* Links */}
                     <div className="md:col-span-2">
                         <h4 className="text-sm font-bold font-mono text-white mb-5 uppercase tracking-[0.2em]">
-                            <span className="text-neon-green/40">./</span>Platform
+                            <span className="text-neon-green/40">./</span>{t("platform")}
                         </h4>
                         <ul className="space-y-3">
                             {platformLinks.map((link) => (
-                                <li key={link.label}>
+                                <li key={link.labelKey}>
                                     <Link
                                         href={link.href}
                                         className="text-sm font-mono text-zinc-500 hover:text-neon-green transition-colors duration-200 flex items-center gap-1 group"
                                     >
                                         <span className="text-zinc-700 group-hover:text-neon-green/40 transition-colors">›</span>
-                                        {link.label}
+                                        {t(link.labelKey)}
                                     </Link>
                                 </li>
                             ))}
@@ -104,11 +106,11 @@ export function Footer() {
 
                     <div className="md:col-span-2">
                         <h4 className="text-sm font-bold font-mono text-white mb-5 uppercase tracking-[0.2em]">
-                            <span className="text-neon-green/40">./</span>Community
+                            <span className="text-neon-green/40">./</span>{t("community")}
                         </h4>
                         <ul className="space-y-3">
                             {communityLinks.map((link) => (
-                                <li key={link.label}>
+                                <li key={link.labelKey}>
                                     <a
                                         href={link.href}
                                         target={link.external ? "_blank" : undefined}
@@ -116,7 +118,7 @@ export function Footer() {
                                         className="text-sm font-mono text-zinc-500 hover:text-neon-green transition-colors duration-200 flex items-center gap-1"
                                     >
                                         <span className="text-zinc-700">›</span>
-                                        {link.label}
+                                        {t(link.labelKey)}
                                         {link.external && <ExternalLink className="w-3 h-3 opacity-50" />}
                                     </a>
                                 </li>
@@ -126,17 +128,17 @@ export function Footer() {
 
                     <div className="md:col-span-2">
                         <h4 className="text-sm font-bold font-mono text-white mb-5 uppercase tracking-[0.2em]">
-                            <span className="text-neon-green/40">./</span>Resources
+                            <span className="text-neon-green/40">./</span>{t("resources")}
                         </h4>
                         <ul className="space-y-3">
                             {resourceLinks.map((link) => (
-                                <li key={link.label}>
+                                <li key={link.labelKey}>
                                     <Link
                                         href={link.href}
                                         className="text-sm font-mono text-zinc-500 hover:text-neon-green transition-colors duration-200 flex items-center gap-1 group"
                                     >
                                         <span className="text-zinc-700 group-hover:text-neon-green/40 transition-colors">›</span>
-                                        {link.label}
+                                        {t(link.labelKey)}
                                     </Link>
                                 </li>
                             ))}
@@ -148,10 +150,10 @@ export function Footer() {
                         <div className="p-4 bg-white/[0.02] border border-white/[0.06] space-y-3">
                             <div className="flex items-center gap-2 font-mono">
                                 <div className="w-5 h-5 bg-gradient-to-br from-[#9945FF] to-[#14F195]" />
-                                <span className="text-xs font-bold text-white uppercase tracking-wider">Built on Solana</span>
+                                <span className="text-xs font-bold text-white uppercase tracking-wider">{t("builtOnSolana")}</span>
                             </div>
                             <p className="text-[11px] text-zinc-600 leading-relaxed font-mono">
-                                Powered by Solana blockchain for XP tokens, credentials, and verifiable achievements.
+                                {t("solanaDescription")}
                             </p>
                         </div>
                     </div>
@@ -161,17 +163,17 @@ export function Footer() {
                 <div className="border-t border-white/[0.06] pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-zinc-600 font-mono">
                     <p>
                         <span className="text-neon-green/30">$ </span>
-                        echo &quot;© 2024 Superteam Academy. Open Source under MIT License.&quot;
+                        {t("copyright")}
                     </p>
                     <div className="flex gap-6">
                         <Link href="#" className="hover:text-neon-green transition-colors">
-                            Privacy Policy
+                            {t("privacyPolicy")}
                         </Link>
                         <Link href="#" className="hover:text-neon-green transition-colors">
-                            Terms of Service
+                            {t("termsOfService")}
                         </Link>
                         <Link href="#" className="hover:text-neon-green transition-colors">
-                            Cookies
+                            {t("cookies")}
                         </Link>
                     </div>
                 </div>

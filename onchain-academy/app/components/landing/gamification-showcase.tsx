@@ -4,15 +4,18 @@ import { motion, useInView } from "framer-motion";
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { Flame, Trophy, Zap, Target, Crown, Medal, Star, Swords, Shield, Award, Lock, ChevronRight, Sparkles, Gift, Gem, Scroll } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 /* ─── Mini Leaderboard Preview ─── */
 function LeaderboardPreview() {
+    const t = useTranslations("Gamification");
+    
     const players = [
-        { rank: 1, name: "rafael.sol", xp: 24850, level: 15, streak: 45, avatar: "🥇", change: "+2", title: "Grandmaster" },
-        { rank: 2, name: "maria.eth", xp: 22100, level: 14, streak: 32, avatar: "🥈", change: "+1", title: "Champion" },
-        { rank: 3, name: "lucas.sol", xp: 19800, level: 14, streak: 28, avatar: "🥉", change: "-1", title: "Champion" },
-        { rank: 4, name: "ana.dev", xp: 17500, level: 13, streak: 21, avatar: "4", change: "+3", title: "Veteran" },
-        { rank: 5, name: "pedro.sol", xp: 15200, level: 12, streak: 15, avatar: "5", change: "0", title: "Warrior" },
+        { rank: 1, name: "rafael.sol", xp: 24850, level: 15, streak: 45, avatar: "🥇", change: "+2", title: t("grandmaster") },
+        { rank: 2, name: "maria.eth", xp: 22100, level: 14, streak: 32, avatar: "🥈", change: "+1", title: t("champion") },
+        { rank: 3, name: "lucas.sol", xp: 19800, level: 14, streak: 28, avatar: "🥉", change: "-1", title: t("champion") },
+        { rank: 4, name: "ana.dev", xp: 17500, level: 13, streak: 21, avatar: "4", change: "+3", title: t("veteran") },
+        { rank: 5, name: "pedro.sol", xp: 15200, level: 12, streak: 15, avatar: "5", change: "0", title: t("warrior") },
     ];
 
     return (
@@ -20,10 +23,10 @@ function LeaderboardPreview() {
             <div className="px-5 py-3 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">
                 <div className="flex items-center gap-2 font-mono">
                     <Crown className="w-4 h-4 text-amber-400" />
-                    <span className="text-sm font-bold text-white uppercase tracking-wider">Arena Leaderboard</span>
+                    <span className="text-sm font-bold text-white uppercase tracking-wider">{t("arenaLeaderboard")}</span>
                 </div>
                 <div className="flex gap-1">
-                    {["Weekly", "Season", "All-Time"].map((filter, i) => (
+                    {[t("weekly"), t("season"), t("allTime")].map((filter, i) => (
                         <button key={filter}
                             className={`px-2.5 py-1 text-[10px] font-bold font-mono uppercase tracking-wider transition-all ${i === 0 ? "bg-neon-green/10 text-neon-green border border-neon-green/20" : "text-zinc-600 hover:text-zinc-400"}`}
                         >
@@ -62,14 +65,14 @@ function LeaderboardPreview() {
                                 <span className="text-sm font-bold font-mono text-white truncate group-hover:text-neon-green transition-colors">
                                     {player.name}
                                 </span>
-                                <span className={`text-[8px] font-black font-mono uppercase tracking-wider px-1.5 py-0.5 ${player.title === "Grandmaster" ? "bg-amber-400/10 text-amber-400 border border-amber-400/20" :
-                                    player.title === "Champion" ? "bg-neon-purple/10 text-neon-purple border border-neon-purple/20" :
+                                <span className={`text-[8px] font-black font-mono uppercase tracking-wider px-1.5 py-0.5 ${player.title === t("grandmaster") ? "bg-amber-400/10 text-amber-400 border border-amber-400/20" :
+                                    player.title === t("champion") ? "bg-neon-purple/10 text-neon-purple border border-neon-purple/20" :
                                         "bg-white/5 text-zinc-500 border border-white/[0.06]"
                                     }`}>{player.title}</span>
                             </div>
                             <div className="flex items-center gap-2 text-[10px] text-zinc-600 font-mono">
-                                <span className="flex items-center gap-0.5">Lvl {player.level}</span>
-                                <span className="flex items-center gap-0.5 text-orange-400/60"><Flame className="w-2.5 h-2.5" />{player.streak}d</span>
+                                <span className="flex items-center gap-0.5">{t("level")} {player.level}</span>
+                                <span className="flex items-center gap-0.5 text-orange-400/60"><Flame className="w-2.5 h-2.5" />{player.streak}{t("days")}</span>
                             </div>
                         </div>
                         <div className="text-right relative z-10 font-mono">
@@ -90,14 +93,14 @@ function LeaderboardPreview() {
                 />
                 <div className="flex items-center gap-2 text-[10px] font-mono relative z-10">
                     <div className="w-6 h-6 bg-neon-green/20 border border-neon-green/30 flex items-center justify-center text-[8px] font-black text-neon-green">U</div>
-                    <span className="text-zinc-500">Your rank: </span>
+                    <span className="text-zinc-500">{t("yourRank")}</span>
                     <span className="text-white font-black">#42</span>
-                    <span className="text-zinc-600">• 7,340 XP</span>
-                    <span className="text-neon-green font-bold">⬆ +5 this week</span>
+                    <span className="text-zinc-600">• 7,340 {t("xp")}</span>
+                    <span className="text-neon-green font-bold">⬆ +5 {t("thisWeek")}</span>
                 </div>
                 <Link href="/auth">
                     <button className="text-[10px] font-mono text-neon-cyan font-bold hover:text-neon-cyan/80 flex items-center gap-0.5 relative z-10 uppercase tracking-wider">
-                        View Full Board <ChevronRight className="w-3 h-3" />
+                        {t("viewFullBoard")} <ChevronRight className="w-3 h-3" />
                     </button>
                 </Link>
             </div>
@@ -107,31 +110,32 @@ function LeaderboardPreview() {
 
 /* ─── Achievement Grid ─── */
 function AchievementGrid() {
+    const t = useTranslations("Gamification");
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
     const achievements = [
-        { icon: Star, name: "First Steps", desc: "Complete your first lesson", earned: true, rarity: "Common", color: "text-neon-green", xp: 50 },
-        { icon: Flame, name: "Week Warrior", desc: "7-day streak", earned: true, rarity: "Uncommon", color: "text-orange-400", xp: 100 },
-        { icon: Swords, name: "Challenge Master", desc: "Pass 10 challenges", earned: true, rarity: "Rare", color: "text-neon-cyan", xp: 200 },
-        { icon: Shield, name: "Anchor Expert", desc: "Complete Anchor track", earned: false, rarity: "Epic", color: "text-neon-purple", xp: 500 },
-        { icon: Crown, name: "Speed Runner", desc: "Finish course in 1 week", earned: false, rarity: "Legendary", color: "text-amber-400", xp: 1000 },
-        { icon: Award, name: "Bug Hunter", desc: "Report 3 valid bugs", earned: false, rarity: "Legendary", color: "text-red-400", xp: 750 },
+        { icon: Star, name: t("firstSteps"), desc: t("firstStepsDesc"), earned: true, rarity: t("common"), color: "text-neon-green", xp: 50 },
+        { icon: Flame, name: t("weekWarrior"), desc: t("weekWarriorDesc"), earned: true, rarity: t("uncommon"), color: "text-orange-400", xp: 100 },
+        { icon: Swords, name: t("challengeMaster"), desc: t("challengeMasterDesc"), earned: true, rarity: t("rare"), color: "text-neon-cyan", xp: 200 },
+        { icon: Shield, name: t("anchorExpert"), desc: t("anchorExpertDesc"), earned: false, rarity: t("epic"), color: "text-neon-purple", xp: 500 },
+        { icon: Crown, name: t("speedRunner"), desc: t("speedRunnerDesc"), earned: false, rarity: t("legendary"), color: "text-amber-400", xp: 1000 },
+        { icon: Award, name: t("bugHunter"), desc: t("bugHunterDesc"), earned: false, rarity: t("legendary"), color: "text-red-400", xp: 750 },
     ];
 
     const rarityColors: Record<string, string> = {
-        Common: "text-zinc-400",
-        Uncommon: "text-emerald-400",
-        Rare: "text-blue-400",
-        Epic: "text-neon-purple",
-        Legendary: "text-amber-400",
+        [t("common")]: "text-zinc-400",
+        [t("uncommon")]: "text-emerald-400",
+        [t("rare")]: "text-blue-400",
+        [t("epic")]: "text-neon-purple",
+        [t("legendary")]: "text-amber-400",
     };
 
     const rarityGlows: Record<string, string> = {
-        Common: "",
-        Uncommon: "shadow-[0_0_15px_rgba(52,211,153,0.2)]",
-        Rare: "shadow-[0_0_15px_rgba(96,165,250,0.2)]",
-        Epic: "shadow-[0_0_20px_rgba(153,69,255,0.3)]",
-        Legendary: "shadow-[0_0_25px_rgba(251,191,36,0.3)]",
+        [t("common")]: "",
+        [t("uncommon")]: "shadow-[0_0_15px_rgba(52,211,153,0.2)]",
+        [t("rare")]: "shadow-[0_0_15px_rgba(96,165,250,0.2)]",
+        [t("epic")]: "shadow-[0_0_20px_rgba(153,69,255,0.3)]",
+        [t("legendary")]: "shadow-[0_0_25px_rgba(251,191,36,0.3)]",
     };
 
     return (
@@ -139,9 +143,9 @@ function AchievementGrid() {
             <div className="px-5 py-3 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">
                 <div className="flex items-center gap-2 font-mono">
                     <Trophy className="w-4 h-4 text-amber-400" />
-                    <span className="text-sm font-bold text-white uppercase tracking-wider">Achievements</span>
+                    <span className="text-sm font-bold text-white uppercase tracking-wider">{t("achievements")}</span>
                 </div>
-                <span className="text-[10px] text-zinc-500 font-bold font-mono">3/6 Unlocked</span>
+                <span className="text-[10px] text-zinc-500 font-bold font-mono">3/6 {t("unlocked")}</span>
             </div>
 
             <div className="grid grid-cols-3 gap-px bg-white/[0.03]">
@@ -171,7 +175,7 @@ function AchievementGrid() {
                         <div className="font-mono">
                             <div className="text-xs font-bold text-white">{a.name}</div>
                             <div className={`text-[9px] font-black ${rarityColors[a.rarity]} uppercase tracking-wider`}>{a.rarity}</div>
-                            <div className="text-[10px] text-zinc-600 mt-0.5 font-bold">+{a.xp} XP</div>
+                            <div className="text-[10px] text-zinc-600 mt-0.5 font-bold">+{a.xp} {t("xp")}</div>
                         </div>
                     </motion.div>
                 ))}
@@ -182,15 +186,17 @@ function AchievementGrid() {
 
 /* ─── Battle Pass / Season Rewards ─── */
 function BattlePass() {
+    const t = useTranslations("Gamification");
+    
     const tiers = [
-        { level: 1, reward: "🎨 Profile Border", type: "Cosmetic", unlocked: true, xpNeeded: 0 },
-        { level: 5, reward: "🗡️ Streak Freeze x3", type: "Power-up", unlocked: true, xpNeeded: 500 },
-        { level: 10, reward: "🛡️ Uncommon Badge", type: "NFT", unlocked: true, xpNeeded: 1000 },
-        { level: 15, reward: "✨ Animated Avatar", type: "Cosmetic", unlocked: false, xpNeeded: 2500, current: true },
-        { level: 25, reward: "⚔️ Rare Title: Blade", type: "Title", unlocked: false, xpNeeded: 5000 },
-        { level: 35, reward: "💎 Epic Achievement", type: "NFT", unlocked: false, xpNeeded: 8000 },
-        { level: 50, reward: "👑 Legendary Skin", type: "Cosmetic", unlocked: false, xpNeeded: 15000 },
-        { level: 100, reward: "🏆 Season Champion NFT", type: "NFT", unlocked: false, xpNeeded: 50000 },
+        { level: 1, reward: t("profileBorder"), type: t("cosmetic"), unlocked: true, xpNeeded: 0 },
+        { level: 5, reward: t("streakFreeze"), type: t("powerUp"), unlocked: true, xpNeeded: 500 },
+        { level: 10, reward: t("uncommonBadge"), type: "NFT", unlocked: true, xpNeeded: 1000 },
+        { level: 15, reward: t("animatedAvatar"), type: t("cosmetic"), unlocked: false, xpNeeded: 2500, current: true },
+        { level: 25, reward: t("rareTitle"), type: t("title"), unlocked: false, xpNeeded: 5000 },
+        { level: 35, reward: t("epicAchievement"), type: "NFT", unlocked: false, xpNeeded: 8000 },
+        { level: 50, reward: t("legendarySkin"), type: t("cosmetic"), unlocked: false, xpNeeded: 15000 },
+        { level: 100, reward: t("seasonChampion"), type: "NFT", unlocked: false, xpNeeded: 50000 },
     ];
 
     return (
@@ -200,11 +206,11 @@ function BattlePass() {
                     <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 1.5, repeat: Infinity }}>
                         <Sparkles className="w-4 h-4 text-neon-purple" />
                     </motion.div>
-                    <span className="text-sm font-bold text-white uppercase tracking-wider">Season 1 Battle Pass</span>
+                    <span className="text-sm font-bold text-white uppercase tracking-wider">{t("seasonBattlePass")}</span>
                 </div>
                 <div className="flex items-center gap-2 font-mono">
-                    <span className="text-[10px] text-zinc-500 font-bold">Tier 12/100</span>
-                    <span className="text-[10px] text-neon-green font-bold border border-neon-green/20 px-1.5 py-0.5">FREE</span>
+                    <span className="text-[10px] text-zinc-500 font-bold">{t("tier")} 12/100</span>
+                    <span className="text-[10px] text-neon-green font-bold border border-neon-green/20 px-1.5 py-0.5">{t("free")}</span>
                 </div>
             </div>
 
@@ -245,12 +251,12 @@ function BattlePass() {
                                 </div>
                                 <div className="mt-2 text-center w-20 font-mono">
                                     <div className={`text-[9px] font-black uppercase tracking-wider ${tier.unlocked ? "text-neon-green" : tier.current ? "text-neon-purple" : "text-zinc-600"}`}>
-                                        Lvl {tier.level}
+                                        {t("level")} {tier.level}
                                     </div>
                                     <div className="text-[8px] text-zinc-500 truncate">{tier.reward.slice(2)}</div>
                                     <div className={`text-[8px] font-bold ${tier.type === "NFT" ? "text-amber-400" :
-                                        tier.type === "Power-up" ? "text-neon-cyan" :
-                                            tier.type === "Title" ? "text-neon-purple" :
+                                        tier.type === t("powerUp") ? "text-neon-cyan" :
+                                            tier.type === t("title") ? "text-neon-purple" :
                                                 "text-zinc-500"
                                         }`}>{tier.type}</div>
                                 </div>
@@ -279,11 +285,11 @@ function BattlePass() {
             <div className="px-5 py-3 border-t border-white/5 bg-white/[0.02] flex items-center justify-between relative overflow-hidden font-mono">
                 <div className="flex items-center gap-2 text-[10px]">
                     <Gift className="w-3.5 h-3.5 text-neon-purple" />
-                    <span className="text-zinc-500">Next reward in</span>
-                    <span className="text-neon-purple font-black">1,160 XP</span>
+                    <span className="text-zinc-500">{t("nextRewardIn")}</span>
+                    <span className="text-neon-purple font-black">1,160 {t("xp")}</span>
                 </div>
                 <div className="text-[10px] text-zinc-500">
-                    Season ends in <span className="text-white font-bold">42 days</span>
+                    {t("seasonEndsIn")} <span className="text-white font-bold">42 {t("days")}</span>
                 </div>
             </div>
         </div>
@@ -292,20 +298,22 @@ function BattlePass() {
 
 /* ─── RPG Player Card ─── */
 function PlayerCard() {
+    const t = useTranslations("Gamification");
+    
     const skills = [
         { name: "Rust", level: 7, maxLevel: 10, xp: 2800, color: "bg-orange-500", icon: "🦀" },
         { name: "TypeScript", level: 5, maxLevel: 10, xp: 1500, color: "bg-blue-400", icon: "📘" },
         { name: "Anchor", level: 4, maxLevel: 10, xp: 1200, color: "bg-neon-purple", icon: "⚓" },
-        { name: "DeFi", level: 2, maxLevel: 10, xp: 400, color: "bg-neon-cyan", icon: "💰" },
-        { name: "Security", level: 1, maxLevel: 10, xp: 100, color: "bg-red-500", icon: "🔒" },
+        { name: t("defi"), level: 2, maxLevel: 10, xp: 400, color: "bg-neon-cyan", icon: "💰" },
+        { name: t("security"), level: 1, maxLevel: 10, xp: 100, color: "bg-red-500", icon: "🔒" },
     ];
 
     const rpgStats = [
-        { name: "STR", value: 42, label: "Code Power", color: "text-red-400" },
-        { name: "INT", value: 68, label: "Problem Solving", color: "text-blue-400" },
-        { name: "DEX", value: 55, label: "Debug Speed", color: "text-neon-green" },
-        { name: "WIS", value: 38, label: "Architecture", color: "text-neon-purple" },
-        { name: "CHA", value: 71, label: "Code Review", color: "text-amber-400" },
+        { name: "STR", value: 42, label: t("codePower"), color: "text-red-400" },
+        { name: "INT", value: 68, label: t("problemSolving"), color: "text-blue-400" },
+        { name: "DEX", value: 55, label: t("debugSpeed"), color: "text-neon-green" },
+        { name: "WIS", value: 38, label: t("architecture"), color: "text-neon-purple" },
+        { name: "CHA", value: 71, label: t("codeReview"), color: "text-amber-400" },
     ];
 
     return (
@@ -313,9 +321,9 @@ function PlayerCard() {
             <div className="px-5 py-3 border-b border-white/5 bg-white/[0.02] flex items-center justify-between font-mono">
                 <div className="flex items-center gap-2">
                     <Shield className="w-4 h-4 text-neon-cyan" />
-                    <span className="text-sm font-bold text-white uppercase tracking-wider">Player Card</span>
+                    <span className="text-sm font-bold text-white uppercase tracking-wider">{t("playerCard")}</span>
                 </div>
-                <span className="text-[10px] text-zinc-500 font-bold">Preview</span>
+                <span className="text-[10px] text-zinc-500 font-bold">{t("preview")}</span>
             </div>
 
             <div className="p-5 space-y-5">
@@ -334,12 +342,12 @@ function PlayerCard() {
                     <div className="font-mono">
                         <div className="text-white font-bold flex items-center gap-2">
                             you.sol
-                            <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 bg-neon-purple/10 text-neon-purple border border-neon-purple/20">Warrior</span>
+                            <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 bg-neon-purple/10 text-neon-purple border border-neon-purple/20">{t("warrior")}</span>
                         </div>
-                        <div className="text-[10px] text-zinc-500">Joined 45 days ago • 8 achievements</div>
+                        <div className="text-[10px] text-zinc-500">{t("joined")} 45 {t("daysAgo")} • 8 {t("achievements")}</div>
                         <div className="flex items-center gap-2 mt-1 text-[10px]">
-                            <span className="flex items-center gap-0.5 text-orange-400"><Flame className="w-3 h-3" /> 12d</span>
-                            <span className="flex items-center gap-0.5 text-neon-green"><Zap className="w-3 h-3" /> 7,340 XP</span>
+                            <span className="flex items-center gap-0.5 text-orange-400"><Flame className="w-3 h-3" /> 12{t("days")}</span>
+                            <span className="flex items-center gap-0.5 text-neon-green"><Zap className="w-3 h-3" /> 7,340 {t("xp")}</span>
                             <span className="flex items-center gap-0.5 text-amber-400"><Crown className="w-3 h-3" /> #42</span>
                         </div>
                     </div>
@@ -348,7 +356,7 @@ function PlayerCard() {
                 {/* RPG Stats */}
                 <div className="space-y-2">
                     <div className="text-[10px] text-zinc-500 font-bold font-mono uppercase tracking-[0.2em]">
-                        <span className="text-neon-green/60">// </span>combat_stats
+                        <span className="text-neon-green/60">// </span>{t("combatStats")}
                     </div>
                     <div className="grid grid-cols-5 gap-2 font-mono">
                         {rpgStats.map((stat, i) => (
@@ -371,7 +379,7 @@ function PlayerCard() {
                 {/* Skill Trees */}
                 <div className="space-y-2.5">
                     <div className="text-[10px] text-zinc-500 font-bold font-mono uppercase tracking-[0.2em]">
-                        <span className="text-neon-green/60">// </span>skill_trees
+                        <span className="text-neon-green/60">// </span>{t("skillTrees")}
                     </div>
                     {skills.map((skill, i) => (
                         <motion.div
@@ -386,7 +394,7 @@ function PlayerCard() {
                                 <span className="text-white font-bold flex items-center gap-1.5">
                                     <span>{skill.icon}</span> {skill.name}
                                 </span>
-                                <span className="text-zinc-500">Lvl {skill.level}/{skill.maxLevel}</span>
+                                <span className="text-zinc-500">{t("level")} {skill.level}/{skill.maxLevel}</span>
                             </div>
                             <div className="h-1.5 bg-white/5 overflow-hidden">
                                 <motion.div
@@ -407,11 +415,13 @@ function PlayerCard() {
 
 /* ─── Daily Quests ─── */
 function DailyQuests() {
+    const t = useTranslations("Gamification");
+    
     const quests = [
-        { title: "Complete 1 Lesson", xp: 25, progress: 100, icon: "📖", done: true, type: "Daily" },
-        { title: "Pass a Boss Challenge", xp: 75, progress: 60, icon: "⚔️", done: false, type: "Daily" },
-        { title: "Review a Peer's Code", xp: 15, progress: 0, icon: "👀", done: false, type: "Daily" },
-        { title: "10-Day Streak Milestone", xp: 200, progress: 80, icon: "🔥", done: false, type: "Weekly" },
+        { title: t("completeLesson"), xp: 25, progress: 100, icon: "📖", done: true, type: t("daily") },
+        { title: t("passBossChallenge"), xp: 75, progress: 60, icon: "⚔️", done: false, type: t("daily") },
+        { title: t("reviewPeerCode"), xp: 15, progress: 0, icon: "👀", done: false, type: t("daily") },
+        { title: t("streakMilestone"), xp: 200, progress: 80, icon: "🔥", done: false, type: t("weekly") },
     ];
 
     return (
@@ -421,9 +431,9 @@ function DailyQuests() {
                     <motion.div animate={{ rotate: [0, 360] }} transition={{ duration: 4, repeat: Infinity, ease: "linear" }}>
                         <Target className="w-4 h-4 text-neon-cyan" />
                     </motion.div>
-                    <span className="text-sm font-bold text-white uppercase tracking-wider">Active Quests</span>
+                    <span className="text-sm font-bold text-white uppercase tracking-wider">{t("activeQuests")}</span>
                 </div>
-                <span className="text-[10px] text-zinc-500 font-bold">Resets in 8h 24m</span>
+                <span className="text-[10px] text-zinc-500 font-bold">{t("resetsIn")} 8h 24m</span>
             </div>
 
             <div className="p-4 space-y-2.5">
@@ -453,7 +463,7 @@ function DailyQuests() {
                                 <span className={`text-xs font-bold font-mono ${q.done ? "text-neon-green line-through" : "text-white"}`}>
                                     {q.title}
                                 </span>
-                                <span className={`text-[8px] font-black font-mono uppercase tracking-wider px-1 py-0.5 ${q.type === "Weekly" ? "bg-neon-purple/10 text-neon-purple border border-neon-purple/20" : "bg-white/5 text-zinc-500 border border-white/[0.06]"}`}>
+                                <span className={`text-[8px] font-black font-mono uppercase tracking-wider px-1 py-0.5 ${q.type === t("weekly") ? "bg-neon-purple/10 text-neon-purple border border-neon-purple/20" : "bg-white/5 text-zinc-500 border border-white/[0.06]"}`}>
                                     {q.type}
                                 </span>
                             </div>
@@ -477,13 +487,13 @@ function DailyQuests() {
 
             <div className="px-5 py-3 border-t border-white/5 bg-white/[0.02] font-mono">
                 <div className="flex items-center justify-between text-[10px]">
-                    <span className="text-zinc-500">🎁 Daily bonus: Complete all quests for</span>
+                    <span className="text-zinc-500">🎁 {t("dailyBonus")}</span>
                     <motion.span
                         animate={{ scale: [1, 1.1, 1] }}
                         transition={{ duration: 1, repeat: Infinity }}
                         className="text-neon-green font-black flex items-center gap-1"
                     >
-                        <Zap className="w-3 h-3" /> +150 XP
+                        <Zap className="w-3 h-3" /> +150 {t("xp")}
                     </motion.span>
                 </div>
             </div>
@@ -493,6 +503,7 @@ function DailyQuests() {
 
 /* ─── Main Section ─── */
 export function GamificationShowcase() {
+    const t = useTranslations("Gamification");
     const ref = useRef<HTMLDivElement>(null);
     const isInView = useInView(ref, { once: true, margin: "-50px" });
 
@@ -512,18 +523,17 @@ export function GamificationShowcase() {
                     <div className="flex items-center gap-3">
                         <span className="text-neon-green font-mono text-sm">{">"}</span>
                         <span className="font-mono text-xs uppercase tracking-[0.3em] text-zinc-500">
-                            rpg_system
+                            {t("rpgSystem")}
                         </span>
                         <div className="flex-1 h-px bg-white/[0.06]" />
                     </div>
                     <h2 className="text-3xl md:text-5xl lg:text-6xl font-black text-white tracking-tight">
-                        Not a Tutorial.{" "}
-                        <span className="text-amber-400">An RPG.</span>
+                        {t("notTutorial")}{" "}
+                        <span className="text-amber-400">{t("anRPG")}</span>
                     </h2>
                     <p className="text-zinc-400 text-sm max-w-xl font-mono leading-relaxed">
                         <span className="text-neon-green/60">// </span>
-                        Level up your character. Grow skill trees. Stack combos. Complete daily quests.
-                        Earn loot. Climb the arena leaderboard. Every line of code is an attack.
+                        {t("description")}
                     </p>
                 </motion.div>
 

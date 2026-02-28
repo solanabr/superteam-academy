@@ -4,17 +4,7 @@ import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import { AnimatedCounter } from "@/components/ui/animated-counter";
 import { Zap, Users, BookOpen, Trophy, LucideIcon } from "lucide-react";
-
-interface Stat {
-    label: string;
-    value: number;
-    suffix: string;
-    prefix?: string;
-    icon: LucideIcon;
-    color: string;
-    iconColor: string;
-    decimals?: number;
-}
+import { useTranslations } from "next-intl";
 
 interface StatItem {
     label: string;
@@ -22,20 +12,46 @@ interface StatItem {
     suffix: string;
     prefix?: string;
     decimals?: number;
-    icon: any;
+    icon: LucideIcon;
     iconColor: string;
 }
 
-const stats: StatItem[] = [
-    { label: "Active Builders", value: 12400, suffix: "+", icon: Users, iconColor: "text-neon-green" },
-    { label: "XP Distributed", value: 8.5, suffix: "M+", decimals: 1, icon: Zap, iconColor: "text-amber-400" },
-    { label: "Quests Completed", value: 85000, suffix: "+", icon: BookOpen, iconColor: "text-neon-cyan" },
-    { label: "NFTs Minted", value: 32000, suffix: "+", icon: Trophy, iconColor: "text-neon-purple" },
-];
-
 export function Stats() {
+    const t = useTranslations("Stats");
     const ref = useRef<HTMLDivElement>(null);
     const isInView = useInView(ref, { once: true, margin: "-100px" });
+
+    const stats: StatItem[] = [
+        { 
+            label: t("activeBuilders"), 
+            value: 12400, 
+            suffix: "+", 
+            icon: Users, 
+            iconColor: "text-neon-green" 
+        },
+        { 
+            label: t("xpDistributed"), 
+            value: 8.5, 
+            suffix: "M+", 
+            decimals: 1, 
+            icon: Zap, 
+            iconColor: "text-amber-400" 
+        },
+        { 
+            label: t("questsCompleted"), 
+            value: 85000, 
+            suffix: "+", 
+            icon: BookOpen, 
+            iconColor: "text-neon-cyan" 
+        },
+        { 
+            label: t("nftsMinted"), 
+            value: 32000, 
+            suffix: "+", 
+            icon: Trophy, 
+            iconColor: "text-neon-purple" 
+        },
+    ];
 
     return (
         <section className="relative py-20 overflow-hidden">
@@ -50,13 +66,13 @@ export function Stats() {
                     transition={{ duration: 0.5 }}
                     className="mb-10 flex items-center gap-3"
                 >
-                    <span className="text-neon-green font-mono text-sm">{"> "}</span>
+                    <span className="text-neon-green font-mono text-sm">{t("terminalPrefix")}</span>
                     <span className="font-mono text-xs uppercase tracking-[0.3em] text-zinc-500">
-                        system_stats
+                        {t("systemStats")}
                     </span>
                     <div className="flex-1 h-px bg-white/[0.06]" />
                     <span className="font-mono text-[10px] text-zinc-600 uppercase tracking-wider">
-                        live
+                        {t("live")}
                     </span>
                     <span className="w-1.5 h-1.5 bg-neon-green animate-pulse" />
                 </motion.div>

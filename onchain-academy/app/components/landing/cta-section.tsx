@@ -5,8 +5,10 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight, Mail, Sparkles, Zap, Trophy, Flame, Target } from "lucide-react";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 export function CTASection() {
+    const t = useTranslations("CTA");
     const [email, setEmail] = useState("");
     const [isSubmitted, setIsSubmitted] = useState(false);
 
@@ -62,37 +64,36 @@ export function CTASection() {
                                 >
                                     <span className="text-neon-green font-mono text-sm">{">"}</span>
                                     <span className="font-mono text-xs uppercase tracking-[0.3em] text-zinc-500">
-                                        initialize
+                                        {t("initialize")}
                                     </span>
                                 </motion.div>
 
                                 <h2 className="text-3xl md:text-5xl font-black text-white tracking-tight font-mono">
-                                    Ready to start your{" "}
-                                    <span className="text-neon-green">quest?</span>
+                                    {t("readyToStart")}{" "}
+                                    <span className="text-neon-green">{t("quest")}</span>
                                 </h2>
 
                                 <p className="text-zinc-400 text-sm leading-relaxed font-mono">
                                     <span className="text-neon-green/60">// </span>
-                                    Join 12,400+ builders leveling up their Solana skills. Earn XP,
-                                    unlock achievements, and claim your soulbound credentials.
+                                    {t("description")}
                                 </p>
 
                                 {/* Starting rewards preview */}
                                 <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
                                     <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-400/10 border border-amber-400/20 font-mono">
                                         <Zap className="w-3.5 h-3.5 text-amber-400" />
-                                        <span className="text-xs font-bold text-amber-400">+100 XP</span>
-                                        <span className="text-[10px] text-amber-400/60">signup bonus</span>
+                                        <span className="text-xs font-bold text-amber-400">+100 {t("xp")}</span>
+                                        <span className="text-[10px] text-amber-400/60">{t("signupBonus")}</span>
                                     </div>
                                     <div className="flex items-center gap-1.5 px-3 py-1.5 bg-neon-purple/10 border border-neon-purple/20 font-mono">
                                         <Trophy className="w-3.5 h-3.5 text-neon-purple" />
-                                        <span className="text-xs font-bold text-neon-purple">Early Adopter</span>
-                                        <span className="text-[10px] text-neon-purple/60">badge</span>
+                                        <span className="text-xs font-bold text-neon-purple">{t("earlyAdopter")}</span>
+                                        <span className="text-[10px] text-neon-purple/60">{t("badge")}</span>
                                     </div>
                                     <div className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-400/10 border border-orange-400/20 font-mono">
                                         <Flame className="w-3.5 h-3.5 text-orange-400" />
-                                        <span className="text-xs font-bold text-orange-400">3-day</span>
-                                        <span className="text-[10px] text-orange-400/60">streak freeze</span>
+                                        <span className="text-xs font-bold text-orange-400">{t("streakFreeze")}</span>
+                                        <span className="text-[10px] text-orange-400/60">{t("streakFreezeDesc")}</span>
                                     </div>
                                 </div>
 
@@ -102,7 +103,7 @@ export function CTASection() {
                                             size="lg"
                                             className="w-full sm:w-auto h-14 px-10 text-base font-bold font-mono uppercase tracking-wider bg-neon-green text-black hover:bg-neon-green/90 hover:shadow-[0_0_40px_rgba(0,255,163,0.3)] transition-all duration-300 group btn-hacker"
                                         >
-                                            🎮 Begin Your Journey
+                                            🎮 {t("beginJourney")}
                                             <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                                         </Button>
                                     </Link>
@@ -111,7 +112,7 @@ export function CTASection() {
                                 <div className="pt-8 border-t border-white/5 mt-8">
                                     <p className="text-sm text-zinc-500 mb-4 font-mono">
                                         <span className="text-neon-green/40">$ </span>
-                                        subscribe --notifications quest-lines seasonal-events
+                                        {t("subscribeCommand")}
                                     </p>
                                     <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
                                         <div className="relative flex-1">
@@ -120,12 +121,12 @@ export function CTASection() {
                                                 type="email"
                                                 value={email}
                                                 onChange={(e) => setEmail(e.target.value)}
-                                                placeholder="your@email.com"
+                                                placeholder={t("emailPlaceholder")}
                                                 className="w-full h-12 pl-10 pr-4 bg-white/5 border border-white/10 text-white text-sm font-mono placeholder:text-zinc-600 focus:outline-none focus:border-neon-green/50 focus:ring-1 focus:ring-neon-green/20 transition-all"
                                             />
                                         </div>
                                         <Button type="submit" variant="neon" className="h-12 px-6 font-mono font-bold uppercase tracking-wider flex-shrink-0">
-                                            {isSubmitted ? "✓ Subscribed!" : "Subscribe"}
+                                            {isSubmitted ? t("subscribed") : t("subscribe")}
                                         </Button>
                                     </form>
                                 </div>

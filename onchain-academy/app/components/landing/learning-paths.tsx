@@ -5,20 +5,21 @@ import Link from "next/link";
 import { motion, useInView } from "framer-motion";
 import { useRef, useState } from "react";
 import { ArrowRight, BookOpen, Clock, Star, Zap, Trophy, Flame, Target, Swords, Shield, Crown, Lock, Users, ChevronRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 export const paths = [
     {
         slug: "intro-to-solana",
-        title: "Solana Fundamentals",
-        description: "Accounts, transactions, programs, and the runtime model.",
-        longDesc: "Master the Solana runtime, understand accounts, craft transactions, and deploy your first program. The foundation every builder needs.",
-        level: "Beginner",
+        titleKey: "solanaFundamentals",
+        descriptionKey: "solanaFundamentalsDesc",
+        longDescKey: "solanaFundamentalsLongDesc",
+        levelKey: "beginner",
         difficulty: 1,
         xp: 2500,
         modules: 12,
         lessons: 48,
-        duration: "6 weeks",
-        boss: "The Validator",
+        durationKey: "sixWeeks",
+        bossKey: "theValidator",
         bossEmoji: "🤖",
         bossHp: 5000,
         ringColor: "#f97316",
@@ -26,31 +27,31 @@ export const paths = [
         glowColor: "rgba(249,115,22,0.15)",
         textColor: "text-orange-400",
         bgAccent: "bg-orange-500",
-        tag: "🌟 Most Popular",
+        tagKey: "mostPopular",
         tagColor: "bg-orange-500/10 text-orange-400 border-orange-500/20",
         questIcon: "📜",
-        rarity: "Common",
+        rarityKey: "common",
         rarityColor: "text-zinc-400",
         rewards: [
-            { name: "Solana Rookie NFT", type: "NFT", emoji: "🏅" },
-            { name: "First Steps Badge", type: "Badge", emoji: "⭐" },
+            { nameKey: "solanaRookieNft", type: "NFT", emoji: "🏅" },
+            { nameKey: "firstStepsBadge", type: "Badge", emoji: "⭐" },
         ],
-        loot: ["Profile Border", "Title: Initiate"],
+        loot: ["profileBorder", "titleInitiate"],
         playersActive: 4200,
         completionRate: 78,
     },
     {
         slug: "smart-contracts-101",
-        title: "Anchor Framework",
-        description: "PDAs, CPIs, Token-2022, Metaplex Core, and full-stack dApps.",
-        longDesc: "Build, test, and deploy production programs with Anchor. Master PDAs, cross-program invocations, Token-2022, and Metaplex Core NFTs.",
-        level: "Intermediate",
+        titleKey: "anchorFramework",
+        descriptionKey: "anchorFrameworkDesc",
+        longDescKey: "anchorFrameworkLongDesc",
+        levelKey: "intermediate",
         difficulty: 2,
         xp: 5000,
         modules: 24,
         lessons: 96,
-        duration: "10 weeks",
-        boss: "The Anchor King",
+        durationKey: "tenWeeks",
+        bossKey: "theAnchorKing",
         bossEmoji: "⚓",
         bossHp: 12000,
         ringColor: "#00ffa3",
@@ -58,31 +59,31 @@ export const paths = [
         glowColor: "rgba(0,255,163,0.15)",
         textColor: "text-neon-green",
         bgAccent: "bg-neon-green",
-        tag: "⚡ Recommended",
+        tagKey: "recommended",
         tagColor: "bg-neon-green/10 text-neon-green border-neon-green/20",
         questIcon: "⚔️",
-        rarity: "Rare",
+        rarityKey: "rare",
         rarityColor: "text-blue-400",
         rewards: [
-            { name: "Builder NFT", type: "NFT", emoji: "🛠️" },
-            { name: "Anchor Expert Badge", type: "Badge", emoji: "⚓" },
+            { nameKey: "builderNft", type: "NFT", emoji: "🛠️" },
+            { nameKey: "anchorExpertBadge", type: "Badge", emoji: "⚓" },
         ],
-        loot: ["Animated Avatar", "Title: Builder"],
+        loot: ["animatedAvatar", "titleBuilder"],
         playersActive: 3100,
         completionRate: 54,
     },
     {
         slug: "defi-on-solana",
-        title: "DeFi Developer",
-        description: "AMMs, lending, oracles, liquidation engines.",
-        longDesc: "Build production DeFi protocols from scratch. AMMs, lending markets, oracle integration, liquidation engines, and MEV protection.",
-        level: "Advanced",
+        titleKey: "defiDeveloper",
+        descriptionKey: "defiDeveloperDesc",
+        longDescKey: "defiDeveloperLongDesc",
+        levelKey: "advanced",
         difficulty: 3,
         xp: 10000,
         modules: 18,
         lessons: 72,
-        duration: "12 weeks",
-        boss: "The Liquidator",
+        durationKey: "twelveWeeks",
+        bossKey: "theLiquidator",
         bossEmoji: "💀",
         bossHp: 25000,
         ringColor: "#00f0ff",
@@ -90,31 +91,31 @@ export const paths = [
         glowColor: "rgba(0,240,255,0.15)",
         textColor: "text-neon-cyan",
         bgAccent: "bg-neon-cyan",
-        tag: "🆕 New",
+        tagKey: "new",
         tagColor: "bg-neon-cyan/10 text-neon-cyan border-neon-cyan/20",
         questIcon: "🗡️",
-        rarity: "Epic",
+        rarityKey: "epic",
         rarityColor: "text-neon-purple",
         rewards: [
-            { name: "Protocol Dev NFT", type: "NFT", emoji: "💎" },
-            { name: "DeFi Master Badge", type: "Badge", emoji: "🏆" },
+            { nameKey: "protocolDevNft", type: "NFT", emoji: "💎" },
+            { nameKey: "defiMasterBadge", type: "Badge", emoji: "🏆" },
         ],
-        loot: ["Legendary Skin", "Title: Protocol Mage"],
+        loot: ["legendarySkin", "titleProtocolMage"],
         playersActive: 1800,
         completionRate: 31,
     },
     {
         slug: "solana-security",
-        title: "Solana Security",
-        description: "Audit programs, find vulns, secure protocols.",
-        longDesc: "Become a security expert. Learn to audit Solana programs, find vulnerabilities, build exploit PoCs, and secure protocols against attacks.",
-        level: "Expert",
+        titleKey: "solanaSecurity",
+        descriptionKey: "solanaSecurityDesc",
+        longDescKey: "solanaSecurityLongDesc",
+        levelKey: "expert",
         difficulty: 4,
         xp: 8000,
         modules: 14,
         lessons: 56,
-        duration: "8 weeks",
-        boss: "The Exploit",
+        durationKey: "eightWeeks",
+        bossKey: "theExploit",
         bossEmoji: "🐉",
         bossHp: 30000,
         ringColor: "#ef4444",
@@ -122,16 +123,16 @@ export const paths = [
         glowColor: "rgba(239,68,68,0.15)",
         textColor: "text-red-400",
         bgAccent: "bg-red-500",
-        tag: "🔒 Coming Soon",
+        tagKey: "comingSoon",
         tagColor: "bg-red-500/10 text-red-400 border-red-500/20",
         questIcon: "🛡️",
-        rarity: "Legendary",
+        rarityKey: "legendary",
         rarityColor: "text-amber-400",
         rewards: [
-            { name: "Security Expert NFT", type: "NFT", emoji: "🛡️" },
-            { name: "Bug Hunter Badge", type: "Badge", emoji: "🐛" },
+            { nameKey: "securityExpertNft", type: "NFT", emoji: "🛡️" },
+            { nameKey: "bugHunterBadge", type: "Badge", emoji: "🐛" },
         ],
-        loot: ["Season Champion Skin", "Title: Guardian"],
+        loot: ["seasonChampionSkin", "titleGuardian"],
         playersActive: 920,
         completionRate: 12,
         locked: true,
@@ -187,6 +188,7 @@ export function QuestCard({
     href?: string;
     onBeginQuest?: (slug: string) => void
 }) {
+    const t = useTranslations("LearningPaths");
     const isLocked = 'locked' in path && path.locked;
     const linkHref = href || (isLocked ? "#" : `/courses/${path.slug}`);
 
@@ -226,7 +228,7 @@ export function QuestCard({
                                 {isLocked ? (
                                     <Lock className="w-6 h-6 text-zinc-600" />
                                 ) : (path as any).thumbnail ? (
-                                    <img src={(path as any).thumbnail} alt={path.title} className="w-full h-full object-cover" />
+                                    <img src={(path as any).thumbnail} alt={t(path.titleKey)} className="w-full h-full object-cover" />
                                 ) : (
                                     path.questIcon
                                 )}
@@ -243,22 +245,22 @@ export function QuestCard({
                                 {/* Tags row */}
                                 <div className="flex items-center gap-2 flex-wrap">
                                     <span className={`text-[9px] font-black font-mono uppercase tracking-widest px-2 py-0.5 border ${path.tagColor || "border-white/10 text-zinc-500"}`}>
-                                        {path.tag || "Course"}
+                                        {t(path.tagKey) || t("course")}
                                     </span>
                                     <span className={`text-[9px] font-black font-mono uppercase tracking-widest ${path.rarityColor || "text-zinc-600"}`}>
-                                        {path.rarity || "Standard"}
+                                        {t(path.rarityKey) || t("standard")}
                                     </span>
                                 </div>
 
                                 {/* Title */}
                                 <h3 className="text-xl md:text-2xl font-black font-mono text-white">
-                                    {path.title}
+                                    {t(path.titleKey)}
                                 </h3>
 
                                 {/* Difficulty + Level */}
                                 <div className="flex items-center gap-3">
                                     <DifficultyStars count={path.difficulty || 1} color={path.textColor || "text-zinc-500"} />
-                                    <span className={`text-xs font-bold font-mono ${path.textColor || "text-zinc-400"}`}>{path.level || "Starter"}</span>
+                                    <span className={`text-xs font-bold font-mono ${path.textColor || "text-zinc-400"}`}>{t(path.levelKey) || t("starter")}</span>
                                 </div>
                             </div>
                         </div>
@@ -271,7 +273,7 @@ export function QuestCard({
                                 className={`flex items-center gap-1.5 px-3 py-1.5 ${path.bgAccent || "bg-zinc-800"} relative overflow-hidden`}
                             >
                                 <Zap className="w-4 h-4 text-black" />
-                                <span className="text-sm font-black font-mono text-black">{(path.xp || 0).toLocaleString()} XP</span>
+                                <span className="text-sm font-black font-mono text-black">{(path.xp || 0).toLocaleString()} {t("xp")}</span>
                             </motion.div>
                             <ProgressRing percent={path.completionRate || 0} color={path.ringColor || "#ffffff"} />
                         </div>
@@ -280,7 +282,7 @@ export function QuestCard({
 
                 {/* === Description === */}
                 <div className="px-6 pt-3 pb-4">
-                    <p className="text-sm text-zinc-400 leading-relaxed font-mono">{path.longDesc || path.description}</p>
+                    <p className="text-sm text-zinc-400 leading-relaxed font-mono">{t(path.longDescKey) || t(path.descriptionKey)}</p>
                 </div>
 
                 {/* === Stats Bar === */}
@@ -289,24 +291,24 @@ export function QuestCard({
                         <div className="flex items-center gap-4 text-[11px] font-mono">
                             <span className="text-zinc-500 flex items-center gap-1.5">
                                 <BookOpen className="w-3.5 h-3.5" />
-                                <span className="font-bold text-zinc-300">{path.modules || 0}</span> Modules
+                                <span className="font-bold text-zinc-300">{path.modules || 0}</span> {t("modules")}
                             </span>
                             <span className="text-zinc-600">•</span>
                             <span className="text-zinc-500 flex items-center gap-1.5">
                                 <Target className="w-3.5 h-3.5" />
-                                <span className="font-bold text-zinc-300">{path.lessons || 0}</span> Lessons
+                                <span className="font-bold text-zinc-300">{path.lessons || 0}</span> {t("lessons")}
                             </span>
                             <span className="text-zinc-600">•</span>
                             <span className="text-zinc-500 flex items-center gap-1.5">
                                 <Clock className="w-3.5 h-3.5" />
-                                <span className="font-bold text-zinc-300">{path.duration || "N/A"}</span>
+                                <span className="font-bold text-zinc-300">{t(path.durationKey) || "N/A"}</span>
                             </span>
                         </div>
 
                         {/* Author Info */}
                         {(path as any).author && (
                             <div className="flex items-center gap-2">
-                                <span className="text-[10px] text-zinc-600 font-mono uppercase tracking-tighter">By</span>
+                                <span className="text-[10px] text-zinc-600 font-mono uppercase tracking-tighter">{t("by")}</span>
                                 <div className="flex items-center gap-1.5 px-2 py-0.5 bg-white/[0.02] border border-white/[0.05]">
                                     {(path as any).author.avatar && (
                                         <img src={(path as any).author.avatar} alt={(path as any).author.name} className="w-3.5 h-3.5 rounded-full object-cover" />
@@ -331,12 +333,12 @@ export function QuestCard({
                         <div className="flex-1 min-w-0 font-mono">
                             <div className="flex items-center gap-2">
                                 <Swords className="w-3 h-3 text-red-400" />
-                                <span className="text-[10px] font-black text-red-400 uppercase tracking-wider">Final Boss</span>
+                                <span className="text-[10px] font-black text-red-400 uppercase tracking-wider">{t("finalBoss")}</span>
                             </div>
-                            <div className="text-xs font-bold text-white">{path.boss || "Unknown Foe"}</div>
+                            <div className="text-xs font-bold text-white">{t(path.bossKey) || t("unknownFoe")}</div>
                         </div>
                         <div className="text-right font-mono">
-                            <div className="text-[10px] text-red-400/60">HP {(path.bossHp || 0).toLocaleString()}</div>
+                            <div className="text-[10px] text-red-400/60">{t("hp")} {(path.bossHp || 0).toLocaleString()}</div>
                             <div className="w-20 h-1.5 bg-red-900/30 overflow-hidden mt-0.5">
                                 <div className="h-full bg-red-500 w-full" />
                             </div>
@@ -347,10 +349,10 @@ export function QuestCard({
                 {/* === Loot Drops === */}
                 <div className="px-6 pb-4">
                     <div className="text-[9px] text-zinc-600 uppercase tracking-[0.2em] font-mono font-black mb-2">
-                        <span className="text-neon-green/60">// </span>loot_drops
+                        <span className="text-neon-green/60">// </span>{t("lootDrops")}
                     </div>
                     <div className="flex flex-wrap gap-2">
-                        {(path.rewards || []).map((r: { name: string; type: string; emoji: string }, i: number) => (
+                        {(path.rewards || []).map((r: { nameKey: string; type: string; emoji: string }, i: number) => (
                             <motion.div
                                 key={i}
                                 whileHover={{ scale: 1.05, y: -2 }}
@@ -361,7 +363,7 @@ export function QuestCard({
                             >
                                 <span className="text-sm">{r.emoji}</span>
                                 <div>
-                                    <div className="text-[10px] font-bold text-white">{r.name}</div>
+                                    <div className="text-[10px] font-bold text-white">{t(r.nameKey)}</div>
                                     <div className={`text-[8px] font-black uppercase tracking-wider ${r.type === "NFT" ? "text-amber-400" : "text-neon-purple"}`}>
                                         {r.type}
                                     </div>
@@ -372,8 +374,8 @@ export function QuestCard({
                             <div key={i} className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white/[0.02] border border-white/[0.06] font-mono">
                                 <span className="text-sm">{i === 0 ? "🎨" : "📛"}</span>
                                 <div>
-                                    <div className="text-[10px] font-bold text-zinc-400">{l}</div>
-                                    <div className="text-[8px] font-black uppercase tracking-wider text-zinc-600">Cosmetic</div>
+                                    <div className="text-[10px] font-bold text-zinc-400">{t(l)}</div>
+                                    <div className="text-[8px] font-black uppercase tracking-wider text-zinc-600">{t("cosmetic")}</div>
                                 </div>
                             </div>
                         ))}
@@ -383,15 +385,15 @@ export function QuestCard({
                 {/* === CTA Footer === */}
                 <div className="px-6 py-4 border-t border-white/[0.04] bg-white/[0.01] flex items-center justify-between font-mono">
                     <div className="flex items-center gap-3 text-[10px] text-zinc-500">
-                        <span className="flex items-center gap-1"><Users className="w-3 h-3 text-neon-cyan/50" /> {(path as any).enrollmentCount || (path as any).playersActive || 0} enrolled</span>
+                        <span className="flex items-center gap-1"><Users className="w-3 h-3 text-neon-cyan/50" /> {(path as any).enrollmentCount || (path as any).playersActive || 0} {t("enrolled")}</span>
                         <span className="text-zinc-700">•</span>
-                        <span className="flex items-center gap-1"><Trophy className="w-3 h-3 text-amber-400/50" /> {path.completionRate || 0}% completion</span>
+                        <span className="flex items-center gap-1"><Trophy className="w-3 h-3 text-amber-400/50" /> {path.completionRate || 0}% {t("completion")}</span>
                     </div>
 
                     {isLocked ? (
                         <div className="flex items-center gap-2 px-4 py-2 bg-white/5 text-zinc-500 text-sm font-bold border border-white/[0.06]">
                             <Lock className="w-4 h-4" />
-                            Locked
+                            {t("locked")}
                         </div>
                     ) : (
                         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }}>
@@ -401,7 +403,7 @@ export function QuestCard({
                                     size="lg"
                                     className={`btn-hacker ${path.bgAccent || "bg-white/10"} ${path.textColor?.includes('black') ? 'text-black' : 'text-white'} font-black font-mono uppercase tracking-wider transition-all duration-300 relative overflow-hidden group/btn`}
                                 >
-                                    ⚔️ Begin Quest
+                                    ⚔️ {t("beginQuest")}
                                     <ArrowRight className="ml-2 w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
                                 </Button>
                             ) : (
@@ -410,7 +412,7 @@ export function QuestCard({
                                         size="lg"
                                         className={`btn-hacker ${path.bgAccent || "bg-white/10"} ${path.textColor?.includes('black') ? 'text-black' : 'text-white'} font-black font-mono uppercase tracking-wider transition-all duration-300 relative overflow-hidden group/btn`}
                                     >
-                                        ⚔️ Begin Quest
+                                        ⚔️ {t("beginQuest")}
                                         <ArrowRight className="ml-2 w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
                                     </Button>
                                 </Link>
@@ -425,6 +427,7 @@ export function QuestCard({
 
 /* ─── Main Section ─── */
 export function LearningPaths() {
+    const t = useTranslations("LearningPaths");
     const ref = useRef<HTMLDivElement>(null);
 
     return (
@@ -444,18 +447,17 @@ export function LearningPaths() {
                         <div className="flex items-center gap-3">
                             <span className="text-neon-green font-mono text-sm">{">"}</span>
                             <span className="font-mono text-xs uppercase tracking-[0.3em] text-zinc-500">
-                                quest_lines
+                                {t("questLines")}
                             </span>
                             <div className="flex-1 h-px bg-white/[0.06]" />
                         </div>
                         <h2 className="text-3xl md:text-5xl lg:text-6xl font-black text-white tracking-tight">
-                            Choose Your{" "}
-                            <span className="text-neon-cyan">Quest</span>
+                            {t("chooseYour")}{" "}
+                            <span className="text-neon-cyan">{t("quest")}</span>
                         </h2>
                         <p className="text-zinc-400 text-sm max-w-xl font-mono leading-relaxed">
                             <span className="text-neon-green/60">// </span>
-                            Each quest line is an RPG campaign. Defeat bosses, earn soulbound loot,
-                            and prove your mastery on-chain.
+                            {t("description")}
                         </p>
                     </motion.div>
 
@@ -467,13 +469,13 @@ export function LearningPaths() {
                         className="flex items-center gap-3"
                     >
                         <div className="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/[0.06] font-mono">
-                            <span className="text-[10px] text-zinc-500 font-bold">4 Quests</span>
+                            <span className="text-[10px] text-zinc-500 font-bold">4 {t("quests")}</span>
                             <span className="text-zinc-700">•</span>
-                            <span className="text-[10px] text-neon-green font-bold">25,500 Total XP</span>
+                            <span className="text-[10px] text-neon-green font-bold">25,500 {t("totalXp")}</span>
                         </div>
                         <Link href="/auth">
                             <Button variant="outline" className="btn-slide-right text-neon-cyan border-neon-cyan/30 hover:bg-neon-cyan/10 hover:border-neon-cyan/60 group font-bold font-mono uppercase tracking-wider overflow-hidden relative">
-                                <span className="relative z-10">View All</span>
+                                <span className="relative z-10">{t("viewAll")}</span>
                                 <ChevronRight className="ml-1 w-4 h-4 group-hover:translate-x-1 transition-transform relative z-10" />
                             </Button>
                         </Link>
