@@ -24,28 +24,14 @@ export async function syncAuthSession(
 			...(walletAddress ? { walletAddress } : {}),
 			...(user.image ? { image: user.image } : {}),
 		});
-
-		// Learner records may need immediate role promotion when wallet matches SUPER_ADMIN_IDENTIFIER.
-		if (existing.role === "learner") {
-			const synced = await syncPromise.catch(() => null);
-			const effectiveRole = synced?.role ?? existing.role;
-
-			return {
-				synced: true,
-				role: effectiveRole,
-				email: existing.email,
-				onboardingCompleted: existing.onboardingCompleted ?? false,
-			};
-		}
-
-		// Fire-and-forget background update for non-role-changing refreshes.
-		syncPromise.catch(() => undefined);
+		const synced = await syncPromise.catch(() => null);
+		const effectiveRole = synced?.role ?? existing.role;
 
 		return {
 			synced: true,
-			role: existing.role,
+			role: effectiveRole,
 			email: existing.email,
-			onboardingCompleted: existing.onboardingCompleted ?? false,
+			onboardingCompleted: synced?.onboardingCompleted ?? false,
 		};
 	}
 

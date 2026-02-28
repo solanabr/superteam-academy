@@ -91,8 +91,8 @@ function chooseHigherRole(a: UserRole, b: UserRole): UserRole {
 	return rolePriority(a) >= rolePriority(b) ? a : b;
 }
 
-function mergeStringLists(a: string[] = [], b: string[] = []): string[] {
-	return Array.from(new Set([...a, ...b]));
+function mergeStringLists(...lists: (string[] | undefined)[]): string[] {
+	return Array.from(new Set(lists.flatMap((l) => l ?? [])));
 }
 
 async function deleteUsersByIds(client: ReturnType<typeof createSanityClient>, ids: string[]) {
@@ -105,6 +105,69 @@ async function deleteUsersByIds(client: ReturnType<typeof createSanityClient>, i
 			console.error("[sanity-users] Failed to delete duplicate user:", id, err);
 		}
 	}
+}
+
+type SanityClient = NonNullable<ReturnType<typeof sanityWriteClient>>;
+
+async function patchAndCleanupByWallet(
+	client: SanityClient,
+	targetId: string,
+	patch: Record<string, unknown>,
+	walletAddress: string | undefined
+) {
+	await client.patch(targetId).set(patch).commit();
+	if (walletAddress) {
+		const dups = await client.fetch<Array<{ _id: string }>>(
+			`*[_type == "academyUser" && walletAddress == $walletAddress && _id != $keepId]{ _id }`,
+			{ walletAddress, keepId: targetId }
+		);
+		await deleteUsersByIds(
+			client,
+			dups.map((u) => u._id)
+		);
+	}
+}
+
+function buildBasePatch(
+	params: { authId: string; name: string; email: string; image?: string },
+	walletAddress: string | undefined,
+	now: string
+): Record<string, unknown> {
+	const patch: Record<string, unknown> = {
+		authId: params.authId,
+		name: params.name,
+		email: params.email,
+		lastActiveAt: now,
+	};
+	if (walletAddress) patch.walletAddress = walletAddress;
+	if (params.image) patch.image = params.image;
+	return patch;
+}
+
+async function maybePromoteRole(
+	patch: Record<string, unknown>,
+	currentRole: string,
+	email: string,
+	walletAddress?: string
+) {
+	if (currentRole === "learner") {
+		const newRole = determineRole(email, walletAddress);
+		if (newRole !== "learner") patch.role = newRole;
+	}
+}
+
+async function adoptExistingUser(
+	client: SanityClient,
+	target: AcademyUser,
+	params: { authId: string; name: string; email: string; image?: string },
+	walletAddress: string | undefined,
+	now: string
+): Promise<AcademyUser> {
+	const patch = buildBasePatch(params, walletAddress, now);
+	if (!target.username) patch.username = await generateUsername(params.name);
+	await maybePromoteRole(patch, target.role, params.email, walletAddress);
+	await patchAndCleanupByWallet(client, target._id, patch, walletAddress);
+	return { ...target, ...patch } as AcademyUser;
 }
 
 export async function syncUserToSanity(params: {
@@ -126,16 +189,17 @@ export async function syncUserToSanity(params: {
 				walletAddress: normalizedWalletAddress,
 			})
 		: null;
+	const existingByEmail =
+		!existing && !existingByWallet
+			? await client.fetch<AcademyUser | null>(userByEmailQuery, { email: params.email })
+			: null;
 
 	const now = new Date().toISOString();
 
+	// Two different Sanity users found (one by authId, one by wallet): merge them
 	if (existingByWallet && existing && existingByWallet._id !== existing._id) {
 		const patch: Record<string, unknown> = {
-			authId: params.authId,
-			name: params.name,
-			email: params.email,
-			walletAddress: normalizedWalletAddress,
-			lastActiveAt: now,
+			...buildBasePatch(params, normalizedWalletAddress, now),
 			role: chooseHigherRole(existingByWallet.role, existing.role),
 			xpBalance: Math.max(existingByWallet.xpBalance ?? 0, existing.xpBalance ?? 0),
 			enrolledCourses: mergeStringLists(
@@ -152,121 +216,50 @@ export async function syncUserToSanity(params: {
 				Boolean(existing.onboardingCompleted),
 		};
 
-		if (params.image) {
-			patch.image = params.image;
-		}
-
 		if (!existingByWallet.username && existing.username) {
 			patch.username = existing.username;
 		}
-
 		if (!existingByWallet.username && !existing.username) {
 			patch.username = await generateUsername(params.name);
 		}
 
 		await client.patch(existingByWallet._id).set(patch).commit();
 		await deleteUsersByIds(client, [existing._id]);
+		await patchAndCleanupByWallet(client, existingByWallet._id, {}, normalizedWalletAddress);
 
-		const duplicateWalletUsers = await client.fetch<Array<{ _id: string }>>(
-			`*[_type == "academyUser" && walletAddress == $walletAddress && _id != $keepId]{ _id }`,
-			{ walletAddress: normalizedWalletAddress, keepId: existingByWallet._id }
-		);
-		await deleteUsersByIds(
-			client,
-			duplicateWalletUsers.map((user) => user._id)
-		);
-
-		return {
-			...existingByWallet,
-			...patch,
-		} as AcademyUser;
+		return { ...existingByWallet, ...patch } as AcademyUser;
 	}
 
+	// Found by wallet but not authId: adopt existing wallet user
 	if (!existing && existingByWallet) {
-		const patch: Record<string, unknown> = {
-			authId: params.authId,
-			name: params.name,
-			email: params.email,
-			walletAddress: normalizedWalletAddress,
-			lastActiveAt: now,
-		};
-
-		if (params.image) {
-			patch.image = params.image;
-		}
-
-		if (!existingByWallet.username) {
-			patch.username = await generateUsername(params.name);
-		}
-
-		if (existingByWallet.role === "learner") {
-			const newRole = determineRole(params.email, normalizedWalletAddress);
-			if (newRole !== "learner") {
-				patch.role = newRole;
-			}
-		}
-
-		await client.patch(existingByWallet._id).set(patch).commit();
-
-		const duplicateWalletUsers = normalizedWalletAddress
-			? await client.fetch<Array<{ _id: string }>>(
-					`*[_type == "academyUser" && walletAddress == $walletAddress && _id != $keepId]{ _id }`,
-					{ walletAddress: normalizedWalletAddress, keepId: existingByWallet._id }
-				)
-			: [];
-		await deleteUsersByIds(
-			client,
-			duplicateWalletUsers.map((user) => user._id)
-		);
-
-		return {
-			...existingByWallet,
-			...patch,
-		} as AcademyUser;
+		return adoptExistingUser(client, existingByWallet, params, normalizedWalletAddress, now);
 	}
 
+	// Found by authId: update in place
 	if (existing) {
 		const patch: Record<string, unknown> = {
 			name: params.name,
 			email: params.email,
 			lastActiveAt: now,
 		};
-		if (normalizedWalletAddress) {
-			patch.walletAddress = normalizedWalletAddress;
-		}
-		if (params.image) {
-			patch.image = params.image;
-		}
-		// Generate username if not exists
-		if (!existing.username) {
-			const username = await generateUsername(params.name);
-			patch.username = username;
-		}
-		// Promote to superadmin if env matches
-		if (existing.role === "learner") {
-			const newRole = determineRole(params.email, normalizedWalletAddress);
-			if (newRole !== "learner") {
-				patch.role = newRole;
-			}
-		}
+		if (normalizedWalletAddress) patch.walletAddress = normalizedWalletAddress;
+		if (params.image) patch.image = params.image;
+		if (!existing.username) patch.username = await generateUsername(params.name);
+		await maybePromoteRole(patch, existing.role, params.email, normalizedWalletAddress);
 		try {
-			await client.patch(existing._id).set(patch).commit();
-			if (normalizedWalletAddress) {
-				const duplicateWalletUsers = await client.fetch<Array<{ _id: string }>>(
-					`*[_type == "academyUser" && walletAddress == $walletAddress && _id != $keepId]{ _id }`,
-					{ walletAddress: normalizedWalletAddress, keepId: existing._id }
-				);
-				await deleteUsersByIds(
-					client,
-					duplicateWalletUsers.map((user) => user._id)
-				);
-			}
+			await patchAndCleanupByWallet(client, existing._id, patch, normalizedWalletAddress);
 		} catch (err) {
 			console.error("[sanity-users] Failed to patch user:", err);
 		}
 		return { ...existing, ...patch } as AcademyUser;
 	}
 
+	// Fallback: find by email when authId and wallet both miss (e.g., after auth DB reset)
+	if (existingByEmail) {
+		return adoptExistingUser(client, existingByEmail, params, normalizedWalletAddress, now);
+	}
+
+	// Brand new user
 	const role = determineRole(params.email, normalizedWalletAddress);
 	// Generate username for new users
 	const username = await generateUsername(params.name);
@@ -384,8 +377,8 @@ export async function updateUserRole(userId: string, role: UserRole): Promise<bo
 
 export async function isUserAdmin(authId: string, sessionEmail?: string | null): Promise<boolean> {
 	const user = await getUserByAuthId(authId);
-	if (user) {
-		return user.role === "admin" || user.role === "superadmin";
+	if (user && (user.role === "admin" || user.role === "superadmin")) {
+		return true;
 	}
 
 	return isSessionSuperAdminIdentity(sessionEmail);
@@ -396,8 +389,8 @@ export async function isUserSuperAdmin(
 	sessionEmail?: string | null
 ): Promise<boolean> {
 	const user = await getUserByAuthId(authId);
-	if (user) {
-		return user.role === "superadmin";
+	if (user?.role === "superadmin") {
+		return true;
 	}
 
 	return isSessionSuperAdminIdentity(sessionEmail);

@@ -43,6 +43,7 @@ export interface AuthContextType {
 	isSuperAdmin: boolean;
 	authMethod: "wallet" | "oauth" | "linked" | null;
 
+	refreshSession: () => Promise<void>;
 	verifyWallet: () => Promise<void>;
 	signInWithOAuth: (provider: "google" | "github") => Promise<void>;
 	signOut: () => Promise<void>;
@@ -70,6 +71,7 @@ const defaultAuth: AuthContextType = {
 	isAdmin: false,
 	isSuperAdmin: false,
 	authMethod: null,
+	refreshSession: noop,
 	verifyWallet: noop,
 	signInWithOAuth: noop,
 	signOut: noop,

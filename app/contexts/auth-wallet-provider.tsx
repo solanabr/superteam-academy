@@ -50,65 +50,60 @@ function AuthProviderInner({
 			: null
 	);
 	const [isWalletVerified, setIsWalletVerified] = useState(false);
-	const refreshingRef = useRef(false);
+	const pendingRefreshRef = useRef<Promise<void> | null>(null);
 
 	const refreshSession = useCallback(async () => {
-		if (refreshingRef.current) return;
-		refreshingRef.current = true;
-
-		try {
-			const result = await authClient.getSession();
-
-			if (!result.data) {
-				setSession(null);
-				setUser(null);
-				return;
-			}
-
-			const syncedData = await syncAuthSession(result.data);
-			let serverRole = syncedData?.role;
-			try {
-				const permissionsRes = await fetch("/api/auth/permissions");
-				if (permissionsRes.ok) {
-					const permissions = (await permissionsRes.json()) as {
-						role?: "learner" | "admin" | "superadmin";
-					};
-					if (permissions.role) {
-						serverRole = permissions.role;
-					}
-				}
-			} catch {
-				// Keep auth usable even if permission hydration request fails.
-			}
-
-			const newSession: AuthSession = {
-				id: result.data.session.id,
-				expiresAt: new Date(result.data.session.expiresAt),
-				userId: result.data.user.id,
-			};
-
-			const image =
-				result.data.user.image ||
-				getGravatarUrl(syncedData?.email || result.data.user.email);
-			const userData: AuthUser = {
-				id: result.data.user.id,
-				name: result.data.user.name,
-				email: syncedData?.email || result.data.user.email,
-				image,
-				role: serverRole,
-				onboardingCompleted: syncedData?.onboardingCompleted ?? false,
-			};
-
-			setUser(userData);
-			setSession(newSession);
-		} finally {
-			refreshingRef.current = false;
+		if (pendingRefreshRef.current) {
+			return pendingRefreshRef.current;
 		}
+
+		const doRefresh = async () => {
+			try {
+				const result = await authClient.getSession();
+
+				if (!result.data) {
+					setSession(null);
+					setUser(null);
+					return;
+				}
+
+				const syncedData = await syncAuthSession(result.data);
+				const serverRole = syncedData?.role;
+
+				const newSession: AuthSession = {
+					id: result.data.session.id,
+					expiresAt: new Date(result.data.session.expiresAt),
+					userId: result.data.user.id,
+				};
+
+				const image =
+					result.data.user.image ||
+					getGravatarUrl(syncedData?.email || result.data.user.email);
+				const userData: AuthUser = {
+					id: result.data.user.id,
+					name: result.data.user.name,
+					email: syncedData?.email || result.data.user.email,
+					image,
+					role: serverRole,
+					onboardingCompleted: syncedData?.onboardingCompleted ?? false,
+				};
+
+				setUser(userData);
+				setSession(newSession);
+			} finally {
+				pendingRefreshRef.current = null;
+			}
+		};
+
+		pendingRefreshRef.current = doRefresh();
+		return pendingRefreshRef.current;
 	}, []);
 
 	useEffect(() => {
-		void refreshSession();
-	}, [refreshSession]);
+		if (!initialSession) {
+			void refreshSession();
+		}
+	}, [refreshSession, initialSession]);
 
 	useEffect(() => {
 		if (!wallet.connected) {
@@ -156,14 +151,12 @@ function AuthProviderInner({
 
 		setIsWalletVerified(true);
 
-		void refreshSession();
+		await refreshSession();
 	}, [wallet, refreshSession, isWalletVerified, session, user]);
 
 	const isWalletConnected = wallet.connected;
 	const isOAuthAuthenticated = !!session;
-	const isAuthenticated = (isWalletConnected && isWalletVerified) || isOAuthAuthenticated;
-	const isAdmin = user?.role === "admin" || user?.role === "superadmin";
-	const isSuperAdmin = user?.role === "superadmin";
+
 	const authMethod =
 		isWalletVerified && isOAuthAuthenticated
 			? "linked"
@@ -194,10 +187,11 @@ function AuthProviderInner({
 			isWalletVerified,
 			session,
 			user,
-			isAuthenticated,
-			isAdmin,
-			isSuperAdmin,
+			isAuthenticated:  (isWalletConnected && isWalletVerified) || isOAuthAuthenticated,
+			isAdmin: user?.role === "admin" || user?.role === "superadmin",
+			isSuperAdmin: user?.role === "superadmin",
 			authMethod,
+			refreshSession,
 			verifyWallet,
 			signInWithOAuth,
 			signOut,
@@ -208,10 +202,9 @@ function AuthProviderInner({
 			isWalletVerified,
 			session,
 			user,
-			isAuthenticated,
-			isAdmin,
-			isSuperAdmin,
+			isOAuthAuthenticated,
 			authMethod,
+			refreshSession,
 			verifyWallet,
 			signInWithOAuth,
 			signOut,
