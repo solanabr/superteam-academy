@@ -338,10 +338,10 @@ export function ConstellationCanvas() {
       let progress = 0;
       if (elapsed > 500 && elapsed <= 3500) {
         progress = (elapsed - 500) / 3000;
-      } else if (elapsed > 3500 && elapsed <= 7500) {
+      } else if (elapsed > 3500 && elapsed <= 10500) {
         progress = 1;
-      } else if (elapsed > 7500 && elapsed <= 9000) {
-        progress = 1 - (elapsed - 7500) / 1500;
+      } else if (elapsed > 10500 && elapsed <= 12000) {
+        progress = 1 - (elapsed - 10500) / 1500;
         if (!disbanded) {
           disbanded = true;
           for (const lp of logoParticles) {
@@ -364,7 +364,7 @@ export function ConstellationCanvas() {
 
       // Fade logo particles out after disband so they don't linger
       const fadeAlpha =
-        elapsed > 9000 ? Math.max(0, 1 - (elapsed - 9000) / 2000) : 1;
+        elapsed > 12000 ? Math.max(0, 1 - (elapsed - 12000) / 2000) : 1;
 
       if (fadeAlpha > 0) {
         for (const lp of logoParticles) {

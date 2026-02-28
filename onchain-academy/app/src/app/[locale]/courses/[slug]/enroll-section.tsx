@@ -135,7 +135,8 @@ export function EnrollSection({
     try {
       const walletAddress = publicKey.toBase58();
 
-      // Sync locally-completed lessons that are missing on-chain
+      // Sync locally-completed lessons that are missing on-chain — sequentially
+      // to avoid write-write conflicts on the shared enrollment PDA
       if (enrollment?.lessonFlags && completedCount < totalLessons) {
         const progress = await learningService.getProgress(walletAddress, courseId);
         const missingIndices: number[] = [];
@@ -144,25 +145,33 @@ export function EnrollSection({
             missingIndices.push(idx);
           }
         }
-        if (missingIndices.length > 0) {
-          const results = await Promise.allSettled(
-            missingIndices.map((lessonIndex) =>
-              fetch("/api/complete-lesson", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ learner: walletAddress, courseId, lessonIndex }),
-              })
-            )
-          );
-          const anyFailed = results.some(
-            (r) => r.status === "rejected" || !(r.value as Response).ok
-          );
-          if (anyFailed) {
-            setError(tl("syncFailed"));
-            return;
+        for (const lessonIndex of missingIndices) {
+          const res = await fetch("/api/complete-lesson", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ learner: walletAddress, courseId, lessonIndex }),
+          });
+          if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            if (!data.alreadyDone) {
+              setError(tl("syncFailed"));
+              return;
+            }
           }
-          // Wait for on-chain confirmation
-          await new Promise((r) => setTimeout(r, 3000));
+        }
+        // Refresh enrollment to get updated bitmap before finalizing
+        if (missingIndices.length > 0) {
+          await refreshEnrollment();
+        }
+      }
+
+      // Pre-finalize check: verify all lessons are confirmed on-chain
+      const freshEnrollment = await refreshEnrollment();
+      if (freshEnrollment?.lessonFlags) {
+        const onChainCount = countCompletedLessons(freshEnrollment.lessonFlags);
+        if (onChainCount < totalLessons) {
+          setError(tl("syncFailed"));
+          return;
         }
       }
 

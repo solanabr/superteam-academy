@@ -394,6 +394,28 @@ export function LessonReading({
                     <ArrowRight style={{ width: 14, height: 14 }} />
                   </button>
                 </div>
+              ) : !walletAddress ? (
+                <button
+                  onClick={() => window.dispatchEvent(new Event("open-wallet-gateway"))}
+                  style={{
+                    width: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px",
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "11px",
+                    letterSpacing: "0.15em",
+                    textTransform: "uppercase",
+                    padding: "14px 36px",
+                    border: "1px solid var(--c-border-subtle)",
+                    cursor: "pointer",
+                    background: "none",
+                    color: "var(--c-text-muted)",
+                  }}
+                >
+                  {t("connectWallet")}
+                </button>
               ) : (
                 <button
                   onClick={() => handleLessonComplete()}

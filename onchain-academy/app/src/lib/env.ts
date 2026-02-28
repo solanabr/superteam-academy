@@ -62,6 +62,15 @@ export const GOOGLE_CLIENT_SECRET = optional("GOOGLE_CLIENT_SECRET", "");
 export const GITHUB_CLIENT_ID = optional("GITHUB_CLIENT_ID", "");
 export const GITHUB_CLIENT_SECRET = optional("GITHUB_CLIENT_SECRET", "");
 
+// --- Cloudflare Turnstile ---
+
+export const NEXT_PUBLIC_TURNSTILE_SITE_KEY = optional(
+  "NEXT_PUBLIC_TURNSTILE_SITE_KEY",
+  "",
+);
+
+export const TURNSTILE_SECRET_KEY = optional("TURNSTILE_SECRET_KEY", "");
+
 // --- Derived ---
 
 export const HELIUS_RPC_URL = HELIUS_API_KEY

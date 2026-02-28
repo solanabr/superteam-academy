@@ -25,6 +25,7 @@ import { getExplorerUrl } from "@/lib/solana/tx-utils";
 import { getTrackCollection } from "@/lib/constants/collections";
 import { TRACK_LABELS } from "@/lib/constants";
 import { logEnrollmentEvent } from "@/lib/supabase/enrollment-events";
+import { verifyTurnstile } from "@/lib/turnstile";
 
 const MPL_CORE_PROGRAM_ID = new PublicKey(
   "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d",
@@ -73,6 +74,17 @@ export async function POST(
   try {
     const session = await requireWalletSession();
     if ("error" in session) return session.error;
+
+    const body = await request.json();
+    if (body.turnstileToken) {
+      const valid = await verifyTurnstile(body.turnstileToken);
+      if (!valid) {
+        return NextResponse.json(
+          { error: "Bot verification failed" },
+          { status: 403 },
+        );
+      }
+    }
 
     const { slug } = await params;
     const course = courses.find((c) => c.slug === slug);
