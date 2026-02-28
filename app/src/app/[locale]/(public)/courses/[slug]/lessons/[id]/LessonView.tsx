@@ -752,7 +752,7 @@ export function LessonView({
             className="overflow-y-auto flex-shrink-0"
             style={{ width: isChallenge ? `${panelWidth}%` : "100%" }}
           >
-            <div className="p-6 max-w-3xl">
+            <div className={cn("p-6 max-w-3xl", !isChallenge && "mx-auto")}>
               {/* Lesson meta */}
               <div className="flex items-center gap-2 mb-5">
                 <span
