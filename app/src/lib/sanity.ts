@@ -37,7 +37,7 @@ export async function getAllCourses(): Promise<SanityCourse[]> {
       trackId,
       "thumbnail": thumbnail.asset->url,
       instructor->{
-        _id, name, bio,
+        _id, name, walletAddress, bio,
         "avatarUrl": avatar.asset->url,
         twitterHandle
       },
@@ -70,7 +70,7 @@ export async function getCourseBySlug(slug: string): Promise<SanityCourse | null
       trackId,
       "thumbnail": thumbnail.asset->url,
       instructor->{
-        _id, name, bio,
+        _id, name, walletAddress, bio,
         "avatarUrl": avatar.asset->url,
         twitterHandle
       },

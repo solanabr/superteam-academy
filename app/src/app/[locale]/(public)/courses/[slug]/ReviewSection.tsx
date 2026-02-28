@@ -93,7 +93,7 @@ function ReviewModal({ courseSlug, onClose, onSubmitted }: { courseSlug: string;
           <button
             onClick={handleSubmit}
             disabled={rating === 0 || submitting}
-            className="flex items-center gap-1.5 px-4 py-2 bg-[#14F195] text-black text-xs font-mono font-semibold rounded hover:bg-[#0D9E61] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-1.5 px-4 py-2 bg-[#14F195] text-black text-xs font-mono font-semibold rounded-full hover:bg-[#0D9E61] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {submitting && <Loader2 className="h-3 w-3 animate-spin" />}
             Submit Review

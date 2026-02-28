@@ -1,7 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { getAllCourses } from "@/lib/sanity";
-import { TRACKS } from "@/types";
 import type { Metadata } from "next";
 import { TestimonialsMarquee } from "@/components/landing/TestimonialsMarquee";
 
@@ -17,7 +16,6 @@ export async function generateMetadata({
 
 export default async function LandingPage() {
   const t = await getTranslations("home");
-  const tNav = await getTranslations("nav");
   const courses = await getAllCourses().catch(() => []);
 
   const stats = [
@@ -27,26 +25,10 @@ export default async function LandingPage() {
   ];
 
   const features = [
-    {
-      icon: "◎",
-      key: "onChain" as const,
-      color: "#14F195",
-    },
-    {
-      icon: "🔒",
-      key: "credentials" as const,
-      color: "#9945FF",
-    },
-    {
-      icon: "⚡",
-      key: "editor" as const,
-      color: "#00D4FF",
-    },
-    {
-      icon: "🏆",
-      key: "rewards" as const,
-      color: "#F5A623",
-    },
+    { key: "onChain" as const, color: "#14F195" },
+    { key: "credentials" as const, color: "#9945FF" },
+    { key: "editor" as const, color: "#00D4FF" },
+    { key: "rewards" as const, color: "#F5A623" },
   ];
 
   return (
@@ -78,14 +60,14 @@ export default async function LandingPage() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-16">
             <Link
               href="/courses"
-              className="inline-flex items-center gap-2 bg-[#14F195] text-black font-mono font-semibold text-sm px-6 py-2.5 rounded hover:bg-accent-dim transition-colors"
+              className="inline-flex items-center gap-2 bg-[#14F195] text-black font-mono font-semibold text-sm px-6 py-2.5 rounded-full hover:bg-accent-dim transition-colors"
             >
               <span>◎</span>
               {t("hero.cta")}
             </Link>
             <Link
               href="/onboarding"
-              className="inline-flex items-center gap-2 border border-border text-foreground font-mono text-sm px-6 py-2.5 rounded hover:bg-card hover:border-border-hover transition-colors"
+              className="inline-flex items-center gap-2 border border-border text-foreground font-mono text-sm px-6 py-2.5 rounded-full hover:bg-card hover:border-border-hover transition-colors"
             >
               Find your starting point →
             </Link>
@@ -108,14 +90,14 @@ export default async function LandingPage() {
 
       </section>
 
-      {/* ── Learning Tracks ── */}
+      {/* ── Learning Tracks + Features (unified) ── */}
       <section id="tracks" className="py-20 px-4 border-t border-border">
         <div className="max-w-7xl mx-auto">
-          <div className="mb-10">
-            <h2 className="font-mono text-2xl font-bold text-foreground mb-2">
+          <div className="text-center mb-12">
+            <h2 className="font-mono font-black text-3xl sm:text-4xl text-white mb-3">
               {t("tracks.title")}
             </h2>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground max-w-md mx-auto">
               {t("tracks.subtitle")}
             </p>
           </div>
@@ -244,36 +226,30 @@ export default async function LandingPage() {
             </Link>
 
           </div>
-        </div>
-      </section>
 
-      {/* ── Features ── */}
-      <section className="py-20 px-4 border-t border-border">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="font-mono text-2xl font-bold text-foreground">
-              {t("features.title")}
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {features.map(({ icon, key, color }) => (
+          {/* Features — no divider, unified with tracks */}
+          <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {features.map(({ key, color }) => (
               <div
                 key={key}
-                className="bg-card border border-border rounded p-5 hover:border-border-hover transition-all"
+                className="group relative bg-card border border-border rounded-2xl p-6 overflow-hidden transition-all"
               >
                 <div
-                  className="text-2xl mb-4 w-10 h-10 rounded flex items-center justify-center"
-                  style={{ backgroundColor: `${color}15` }}
-                >
-                  {icon}
+                  className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                  style={{ background: `radial-gradient(ellipse at top left, ${color}08 0%, transparent 60%)` }}
+                />
+                <div className="relative">
+                  <div
+                    className="w-1.5 h-6 rounded-full mb-4"
+                    style={{ backgroundColor: color }}
+                  />
+                  <h3 className="font-mono font-bold text-lg text-white mb-2 leading-tight">
+                    {t(`features.${key}.title`)}
+                  </h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    {t(`features.${key}.description`)}
+                  </p>
                 </div>
-                <h3 className="font-mono text-sm font-semibold text-foreground mb-2">
-                  {t(`features.${key}.title`)}
-                </h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  {t(`features.${key}.description`)}
-                </p>
               </div>
             ))}
           </div>
@@ -302,7 +278,7 @@ export default async function LandingPage() {
             </p>
             <Link
               href="/courses"
-              className="inline-flex items-center gap-2 bg-[#14F195] text-black font-mono font-semibold text-sm px-8 py-3 rounded hover:bg-accent-dim transition-colors"
+              className="inline-flex items-center gap-2 bg-[#14F195] text-black font-mono font-semibold text-sm px-8 py-3 rounded-full hover:bg-accent-dim transition-colors"
             >
               <span>◎</span>
               {t("hero.cta")}

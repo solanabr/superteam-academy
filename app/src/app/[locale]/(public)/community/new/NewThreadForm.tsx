@@ -31,7 +31,7 @@ export function NewThreadForm({ categories }: NewThreadFormProps) {
         </p>
         <button
           onClick={() => setVisible(true)}
-          className="inline-flex items-center gap-2 bg-[#14F195] text-black font-mono font-semibold text-sm px-5 py-2.5 rounded hover:bg-[#0D9E61] transition-colors"
+          className="inline-flex items-center gap-2 bg-[#14F195] text-black font-mono font-semibold text-sm px-5 py-2.5 rounded-full hover:bg-[#0D9E61] transition-colors"
         >
           <span>◎</span> Connect Wallet
         </button>
@@ -154,14 +154,14 @@ export function NewThreadForm({ categories }: NewThreadFormProps) {
         <button
           type="button"
           onClick={() => router.push("/community")}
-          className="px-4 py-2 bg-transparent border border-border text-muted-foreground font-mono text-sm rounded hover:border-border-hover hover:text-foreground transition-colors"
+          className="px-4 py-2 bg-transparent border border-border text-muted-foreground font-mono text-sm rounded-full hover:border-border-hover hover:text-foreground transition-colors"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={submitting}
-          className="px-6 py-2 bg-[#14F195] text-black font-mono font-semibold text-sm rounded hover:bg-[#0D9E61] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-6 py-2 bg-[#14F195] text-black font-mono font-semibold text-sm rounded-full hover:bg-[#0D9E61] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {submitting ? "Posting..." : "Post Thread"}
         </button>

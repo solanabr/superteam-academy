@@ -36,6 +36,7 @@ export type LessonType = "content" | "challenge";
 export interface SanityInstructor {
   _id: string;
   name: string;
+  walletAddress?: string;
   bio?: string;
   avatarUrl?: string;
   twitterHandle?: string;

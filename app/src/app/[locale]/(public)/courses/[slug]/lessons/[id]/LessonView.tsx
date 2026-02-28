@@ -540,7 +540,7 @@ function ConnectPrompt() {
       </p>
       <button
         onClick={() => setVisible(true)}
-        className="shrink-0 flex items-center gap-1.5 bg-[#14F195] text-black font-mono font-semibold text-xs px-3 py-1.5 rounded hover:bg-[#0D9E61] transition-colors"
+        className="shrink-0 flex items-center gap-1.5 bg-[#14F195] text-black font-mono font-semibold text-xs px-3 py-1.5 rounded-full hover:bg-[#0D9E61] transition-colors"
       >
         <span>◎</span> Connect
       </button>
@@ -838,14 +838,14 @@ export function LessonView({
                         {nextLessonId ? (
                           <Link
                             href={{ pathname: "/courses/[slug]/lessons/[id]", params: { slug: courseSlug, id: nextLessonId } }}
-                            className="shrink-0 flex items-center gap-1.5 bg-[#14F195] text-black font-mono font-semibold text-sm px-4 py-2 rounded hover:bg-[#0D9E61] transition-colors"
+                            className="shrink-0 flex items-center gap-1.5 bg-[#14F195] text-black font-mono font-semibold text-sm px-4 py-2 rounded-full hover:bg-[#0D9E61] transition-colors"
                           >
                             Next Lesson <ChevronRight className="h-3.5 w-3.5" />
                           </Link>
                         ) : (
                           <Link
                             href={{ pathname: "/courses/[slug]", params: { slug: courseSlug } }}
-                            className="shrink-0 flex items-center gap-1.5 bg-[#14F195] text-black font-mono font-semibold text-sm px-4 py-2 rounded hover:bg-[#0D9E61] transition-colors"
+                            className="shrink-0 flex items-center gap-1.5 bg-[#14F195] text-black font-mono font-semibold text-sm px-4 py-2 rounded-full hover:bg-[#0D9E61] transition-colors"
                           >
                             Finish <CheckCircle className="h-3.5 w-3.5" />
                           </Link>
@@ -874,7 +874,7 @@ export function LessonView({
                   {nextLessonId && (
                     <Link
                       href={{ pathname: "/courses/[slug]/lessons/[id]", params: { slug: courseSlug, id: nextLessonId } }}
-                      className="shrink-0 flex items-center gap-1.5 bg-[#14F195] text-black font-mono font-semibold text-sm px-4 py-2 rounded hover:bg-[#0D9E61] transition-colors"
+                      className="shrink-0 flex items-center gap-1.5 bg-[#14F195] text-black font-mono font-semibold text-sm px-4 py-2 rounded-full hover:bg-[#0D9E61] transition-colors"
                     >
                       Next <ChevronRight className="h-3.5 w-3.5" />
                     </Link>

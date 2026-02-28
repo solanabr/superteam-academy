@@ -1,8 +1,9 @@
 import { getTranslations } from "next-intl/server";
 import { getCourseBySlug, getAllCourses } from "@/lib/sanity";
 import { getMockCourseBySlug, MOCK_COURSES } from "@/lib/mock-courses";
+import { getProfileByWallet } from "@/lib/supabase";
 import { notFound } from "next/navigation";
-import { BookOpen, Clock, Zap, ChevronDown, Lock, CheckCircle } from "lucide-react";
+import { BookOpen, Clock, Zap, ChevronDown } from "lucide-react";
 import { DIFFICULTY_COLORS, TRACKS } from "@/types";
 import type { Metadata } from "next";
 import type { SanityCourse, SanityLesson } from "@/types";
@@ -43,6 +44,16 @@ export default async function CourseDetailPage({ params }: Props) {
   const track = TRACKS[course.trackId];
   const diffColor = DIFFICULTY_COLORS[course.difficulty] ?? "#666666";
   const totalLessons = course.modules.reduce((sum, m) => sum + (m.lessons?.length ?? 0), 0);
+
+  // Look up instructor's Supabase profile if they have a wallet address
+  const instructorWallet = course.instructor?.walletAddress;
+  const instructorProfile = instructorWallet
+    ? await getProfileByWallet(instructorWallet).catch(() => null)
+    : null;
+  const instructorDisplayName =
+    instructorProfile?.displayName ??
+    instructorProfile?.username ??
+    course.instructor?.name;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
@@ -201,18 +212,27 @@ export default async function CourseDetailPage({ params }: Props) {
 
           {course.instructor && (
             <div className="bg-card border border-border rounded p-5">
-              <p className="text-xs text-muted-foreground font-mono mb-2">Instructor</p>
+              <p className="text-xs text-muted-foreground font-mono mb-3">Instructor</p>
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-elevated flex items-center justify-center text-xs font-mono">
-                  {course.instructor.name[0]}
+                <div className="w-9 h-9 rounded-full bg-elevated border border-border flex items-center justify-center font-mono text-sm font-bold text-[#14F195] shrink-0">
+                  {(instructorDisplayName ?? "?")[0].toUpperCase()}
                 </div>
-                <div>
-                  <p className="text-sm font-mono font-semibold text-foreground">
-                    {course.instructor.name}
+                <div className="min-w-0">
+                  <p className="text-sm font-mono font-semibold text-foreground truncate">
+                    {instructorDisplayName ?? course.instructor.name}
                   </p>
-                  {course.instructor.twitterHandle && (
-                    <p className="text-xs text-muted-foreground">@{course.instructor.twitterHandle}</p>
-                  )}
+                  {instructorWallet ? (
+                    <Link
+                      href={`/profile/${instructorProfile?.username ?? instructorWallet}` as Parameters<typeof Link>[0]["href"]}
+                      className="text-[10px] font-mono text-muted-foreground hover:text-[#14F195] transition-colors"
+                    >
+                      ◎ {instructorWallet.slice(0, 6)}...{instructorWallet.slice(-4)}
+                    </Link>
+                  ) : course.instructor.twitterHandle ? (
+                    <p className="text-[10px] font-mono text-muted-foreground">
+                      @{course.instructor.twitterHandle}
+                    </p>
+                  ) : null}
                 </div>
               </div>
             </div>
@@ -237,14 +257,21 @@ function LessonRow({
   index: number;
   isFirst: boolean;
 }) {
-  const icon = lesson.type === "challenge" ? "⚡" : "📖";
-
   return (
     <Link
       href={{ pathname: "/courses/[slug]/lessons/[id]", params: { slug: courseSlug, id: lesson._id } }}
       className="flex items-center gap-3 px-4 py-3 border-b border-border last:border-0 hover:bg-elevated transition-colors group/row"
     >
-      <span className="text-xs">{icon}</span>
+      <span
+        className="text-[10px] font-mono px-1.5 py-0.5 rounded border shrink-0"
+        style={
+          lesson.type === "challenge"
+            ? { color: "#F5A623", borderColor: "#F5A62330", backgroundColor: "#F5A62310" }
+            : { color: "#666666", borderColor: "#33333380", backgroundColor: "transparent" }
+        }
+      >
+        {lesson.type === "challenge" ? "challenge" : "lesson"}
+      </span>
       <span className="text-sm font-mono text-muted-foreground group-hover/row:text-foreground flex-1 transition-colors">
         {lesson.title}
       </span>

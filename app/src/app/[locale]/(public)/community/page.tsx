@@ -54,7 +54,7 @@ export default async function CommunityPage({
         </div>
         <Link
           href="/community/new"
-          className="shrink-0 px-4 py-2 bg-[#14F195] text-black font-mono font-semibold text-sm rounded hover:bg-[#0D9E61] transition-colors"
+          className="shrink-0 px-4 py-2 bg-[#14F195] text-black font-mono font-semibold text-sm rounded-full hover:bg-[#0D9E61] transition-colors"
         >
           + New Thread
         </Link>

@@ -76,7 +76,7 @@ export function EnrollButton({ courseId, courseSlug, firstLessonId, totalLessons
     return (
       <button
         onClick={() => setVisible(true)}
-        className="w-full bg-[#14F195] text-black font-mono font-semibold text-sm py-2.5 rounded hover:bg-accent-dim transition-colors"
+        className="w-full bg-[#14F195] text-black font-mono font-semibold text-sm py-2.5 rounded-full hover:bg-accent-dim transition-colors"
       >
         Connect Wallet to Enroll
       </button>
@@ -93,7 +93,7 @@ export function EnrollButton({ courseId, courseSlug, firstLessonId, totalLessons
     return (
       <Link
         href={{ pathname: "/courses/[slug]/lessons/[id]", params: { slug: courseSlug, id: firstLessonId ?? `${courseId}-l1` } }}
-        className="block w-full text-center bg-[#14F195]/10 text-[#14F195] border border-[#14F195]/30 font-mono font-semibold text-sm py-2.5 rounded hover:bg-[#14F195]/20 transition-colors"
+        className="block w-full text-center bg-[#14F195]/10 text-[#14F195] border border-[#14F195]/30 font-mono font-semibold text-sm py-2.5 rounded-full hover:bg-[#14F195]/20 transition-colors"
       >
         ✓ Completed
       </Link>
@@ -106,7 +106,7 @@ export function EnrollButton({ courseId, courseSlug, firstLessonId, totalLessons
         <div className="space-y-2">
           <Link
             href={{ pathname: "/courses/[slug]", params: { slug: courseSlug } }}
-            className="block w-full text-center bg-[#14F195]/10 text-[#14F195] border border-[#14F195]/30 font-mono font-semibold text-sm py-2.5 rounded hover:bg-[#14F195]/20 transition-colors"
+            className="block w-full text-center bg-[#14F195]/10 text-[#14F195] border border-[#14F195]/30 font-mono font-semibold text-sm py-2.5 rounded-full hover:bg-[#14F195]/20 transition-colors"
           >
             ✓ Course Complete
           </Link>
@@ -116,7 +116,7 @@ export function EnrollButton({ courseId, courseSlug, firstLessonId, totalLessons
     return (
       <Link
         href={{ pathname: "/courses/[slug]/lessons/[id]", params: { slug: courseSlug, id: firstLessonId ?? `${courseId}-l1` } }}
-        className="block w-full text-center bg-elevated border border-[#14F195]/30 text-[#14F195] font-mono font-semibold text-sm py-2.5 rounded hover:bg-[#14F195]/10 transition-colors"
+        className="block w-full text-center bg-elevated border border-[#14F195]/30 text-[#14F195] font-mono font-semibold text-sm py-2.5 rounded-full hover:bg-[#14F195]/10 transition-colors"
       >
         Continue Learning →
       </Link>
@@ -135,7 +135,7 @@ export function EnrollButton({ courseId, courseSlug, firstLessonId, totalLessons
         onClick={handleEnroll}
         disabled={enrolling}
         className={cn(
-          "w-full bg-[#14F195] text-black font-mono font-semibold text-sm py-2.5 rounded transition-colors flex items-center justify-center gap-2",
+          "w-full bg-[#14F195] text-black font-mono font-semibold text-sm py-2.5 rounded-full transition-colors flex items-center justify-center gap-2",
           enrolling ? "opacity-70 cursor-not-allowed" : "hover:bg-accent-dim"
         )}
       >

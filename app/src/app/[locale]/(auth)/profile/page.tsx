@@ -26,7 +26,7 @@ export default function ProfileRedirect() {
         </p>
         <button
           onClick={() => setVisible(true)}
-          className="mt-2 bg-[#14F195] text-black font-mono font-semibold px-6 py-2.5 rounded hover:bg-accent-dim transition-colors"
+          className="mt-2 bg-[#14F195] text-black font-mono font-semibold px-6 py-2.5 rounded-full hover:bg-accent-dim transition-colors"
         >
           Connect Wallet
         </button>

@@ -174,7 +174,7 @@ export default function OnboardingPage() {
           </p>
           <button
             onClick={() => setStep(1)}
-            className="inline-flex items-center gap-2 bg-[#14F195] text-black font-mono font-semibold text-sm px-8 py-3 rounded hover:bg-accent-dim transition-colors"
+            className="inline-flex items-center gap-2 bg-[#14F195] text-black font-mono font-semibold text-sm px-8 py-3 rounded-full hover:bg-accent-dim transition-colors"
           >
             Start Assessment
             <ChevronRight className="h-4 w-4" />
@@ -246,7 +246,7 @@ export default function OnboardingPage() {
                 pathname: "/courses/[slug]",
                 params: { slug: result.slug },
               }}
-              className="flex-1 inline-flex items-center justify-center gap-2 bg-[#14F195] text-black font-mono font-semibold text-sm px-6 py-2.5 rounded hover:bg-accent-dim transition-colors"
+              className="flex-1 inline-flex items-center justify-center gap-2 bg-[#14F195] text-black font-mono font-semibold text-sm px-6 py-2.5 rounded-full hover:bg-accent-dim transition-colors"
             >
               Start Learning
               <ChevronRight className="h-4 w-4" />
