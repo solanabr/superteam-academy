@@ -196,17 +196,19 @@ export default function PracticeChallengePage({
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-      <div className="mb-4 flex items-center justify-between">
-        <Link
-          href="/practice"
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" /> {tp("title")}
-        </Link>
-        <div className="flex items-center gap-2">
+      <Link
+        href="/practice"
+        className="mb-4 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft className="h-4 w-4" /> {tp("title")}
+      </Link>
+
+      <div className="mb-2 flex flex-wrap items-center gap-3">
+        <h1 className="text-2xl font-bold">{ch.title}</h1>
+        <div className="flex flex-wrap items-center gap-2">
           {isCompleted && (
             <>
-              <Badge className="bg-solana-green text-white dark:text-black">
+              <Badge className="bg-solana-green text-white">
                 {tc("solved")}
               </Badge>
               {txHashes[id] && (
@@ -237,8 +239,6 @@ export default function PracticeChallengePage({
           <Badge variant="xp">{ch.xpReward} XP</Badge>
         </div>
       </div>
-
-      <h1 className="text-2xl font-bold mb-2">{ch.title}</h1>
       <p className="text-muted-foreground mb-6">{ch.description}</p>
 
       <div className="grid gap-6 lg:grid-cols-2">
