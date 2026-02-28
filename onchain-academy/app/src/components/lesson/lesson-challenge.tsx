@@ -661,28 +661,51 @@ export function LessonChallenge({
           >
             {t("reset")}
           </button>
-          <button
-            onClick={handleRun}
-            disabled={isRunning || completed}
-            style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: 10,
-              letterSpacing: "0.1em",
-              padding: "6px 20px",
-              border: "none",
-              background: completed ? "#14F195" : isRunning ? "var(--nd-highlight-orange)" : "var(--xp)",
-              color: completed ? "var(--background)" : isRunning ? "#fff" : "var(--background)",
-              cursor: completed ? "default" : isRunning ? "wait" : "pointer",
-              fontWeight: 700,
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              transition: "all 0.3s cubic-bezier(0.16,1,0.3,1)",
-              textTransform: "uppercase" as const,
-            }}
-          >
-            {completed ? `\u2713 ${t("done")}` : isRunning ? t("running") : `\u25B6 ${t("runCode")}`}
-          </button>
+          {!walletAddress ? (
+            <button
+              onClick={() => window.dispatchEvent(new Event("open-wallet-gateway"))}
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: 10,
+                letterSpacing: "0.1em",
+                padding: "6px 20px",
+                border: "1px solid var(--c-border-subtle)",
+                background: "none",
+                color: "var(--c-text-muted)",
+                cursor: "pointer",
+                fontWeight: 700,
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                textTransform: "uppercase" as const,
+              }}
+            >
+              {t("connectWallet")}
+            </button>
+          ) : (
+            <button
+              onClick={handleRun}
+              disabled={isRunning || completed}
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: 10,
+                letterSpacing: "0.1em",
+                padding: "6px 20px",
+                border: "none",
+                background: completed ? "#14F195" : isRunning ? "var(--nd-highlight-orange)" : "var(--xp)",
+                color: completed ? "var(--background)" : isRunning ? "#fff" : "var(--background)",
+                cursor: completed ? "default" : isRunning ? "wait" : "pointer",
+                fontWeight: 700,
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                transition: "all 0.3s cubic-bezier(0.16,1,0.3,1)",
+                textTransform: "uppercase" as const,
+              }}
+            >
+              {completed ? `\u2713 ${t("done")}` : isRunning ? t("running") : `\u25B6 ${t("runCode")}`}
+            </button>
+          )}
           {completed ? (
             <button
               onClick={navigateNext}
