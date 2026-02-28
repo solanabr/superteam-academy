@@ -17,6 +17,7 @@ export interface ForumThread {
   category_id: string;
   author_id: string | null;
   author_wallet: string;
+  author_display_name?: string | null;
   title: string;
   body: string;
   is_answered: boolean;
@@ -33,6 +34,7 @@ export interface ForumReply {
   thread_id: string;
   author_id: string | null;
   author_wallet: string;
+  author_display_name?: string | null;
   body: string;
   is_accepted: boolean;
   created_at: string;
@@ -119,6 +121,7 @@ export async function getThreads(
       category_id: row.category_id as string,
       author_id: row.author_id as string | null,
       author_wallet: row.author_wallet as string,
+      author_display_name: row.author_display_name as string | null,
       title: row.title as string,
       body: row.body as string,
       is_answered: (row.is_answered as boolean) ?? false,
@@ -171,6 +174,7 @@ export async function getThread(id: string): Promise<ForumThread | null> {
     category_id: row.category_id as string,
     author_id: row.author_id as string | null,
     author_wallet: row.author_wallet as string,
+    author_display_name: row.author_display_name as string | null,
     title: row.title as string,
     body: row.body as string,
     is_answered: (row.is_answered as boolean) ?? false,
@@ -198,6 +202,7 @@ export async function getReplies(threadId: string): Promise<ForumReply[]> {
     thread_id: row.thread_id as string,
     author_id: row.author_id as string | null,
     author_wallet: row.author_wallet as string,
+    author_display_name: row.author_display_name as string | null,
     body: row.body as string,
     is_accepted: (row.is_accepted as boolean) ?? false,
     created_at: row.created_at as string,
@@ -207,6 +212,7 @@ export async function getReplies(threadId: string): Promise<ForumReply[]> {
 export async function createThread(data: {
   categoryId: string;
   authorWallet: string;
+  authorDisplayName?: string;
   title: string;
   body: string;
 }): Promise<string | null> {
@@ -216,6 +222,7 @@ export async function createThread(data: {
     .insert({
       category_id: data.categoryId,
       author_wallet: data.authorWallet,
+      author_display_name: data.authorDisplayName || null,
       title: data.title,
       body: data.body,
     })
@@ -228,12 +235,14 @@ export async function createThread(data: {
 export async function createReply(data: {
   threadId: string;
   authorWallet: string;
+  authorDisplayName?: string;
   body: string;
 }): Promise<boolean> {
   if (!supabase) return false;
   const { error } = await supabase.from("forum_replies").insert({
     thread_id: data.threadId,
     author_wallet: data.authorWallet,
+    author_display_name: data.authorDisplayName || null,
     body: data.body,
   });
   return !error;

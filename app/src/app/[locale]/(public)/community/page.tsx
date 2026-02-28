@@ -164,7 +164,9 @@ export default async function CommunityPage({
                       </h3>
 
                       <div className="flex flex-wrap items-center gap-3 text-[10px] font-mono text-muted-foreground">
-                        <span className="truncate max-w-[120px]">{thread.author_wallet}</span>
+                        <span className="truncate max-w-[160px]">
+                          {thread.author_display_name ?? `${thread.author_wallet.slice(0, 6)}...${thread.author_wallet.slice(-4)}`}
+                        </span>
                         <span>·</span>
                         <span>{thread.reply_count ?? 0} replies</span>
                         <span>·</span>

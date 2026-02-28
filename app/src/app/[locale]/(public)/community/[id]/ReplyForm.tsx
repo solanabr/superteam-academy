@@ -5,6 +5,7 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { useRouter } from "@/i18n/navigation";
 import { createReply } from "@/lib/forum";
+import { useProfile } from "@/hooks/useProfile";
 
 interface ReplyFormProps {
   threadId: string;
@@ -14,6 +15,7 @@ export function ReplyForm({ threadId }: ReplyFormProps) {
   const router = useRouter();
   const { publicKey, connected } = useWallet();
   const { setVisible } = useWalletModal();
+  const profile = useProfile();
   const [body, setBody] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -36,6 +38,7 @@ export function ReplyForm({ threadId }: ReplyFormProps) {
   }
 
   const authorWallet = publicKey.toBase58();
+  const authorDisplayName = profile?.display_name ?? profile?.username ?? undefined;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -52,6 +55,7 @@ export function ReplyForm({ threadId }: ReplyFormProps) {
       const ok = await createReply({
         threadId,
         authorWallet,
+        authorDisplayName,
         body: body.trim(),
       });
 
@@ -77,7 +81,7 @@ export function ReplyForm({ threadId }: ReplyFormProps) {
         <span className="text-[#14F195]">◎</span>
         <span className="text-muted-foreground">Replying as</span>
         <span className="text-foreground">
-          {authorWallet.slice(0, 6)}...{authorWallet.slice(-4)}
+          {authorDisplayName ?? `${authorWallet.slice(0, 6)}...${authorWallet.slice(-4)}`}
         </span>
       </div>
 

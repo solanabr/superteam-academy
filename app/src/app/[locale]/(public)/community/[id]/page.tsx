@@ -88,7 +88,9 @@ export default async function ThreadDetailPage({ params }: Props) {
           </h1>
 
           <div className="flex flex-wrap items-center gap-3 text-[10px] font-mono text-muted-foreground">
-            <span className="text-foreground">{thread.author_wallet}</span>
+            <span className="text-foreground">
+              {thread.author_display_name ?? `${thread.author_wallet.slice(0, 6)}...${thread.author_wallet.slice(-4)}`}
+            </span>
             <span>·</span>
             <span>{formatTimeAgo(thread.created_at)}</span>
             <span>·</span>
@@ -143,7 +145,9 @@ export default async function ThreadDetailPage({ params }: Props) {
               )}
 
               <div className="flex items-center gap-3 text-[10px] font-mono text-muted-foreground">
-                <span className="text-foreground font-semibold">{reply.author_wallet}</span>
+                <span className="text-foreground font-semibold">
+                  {reply.author_display_name ?? `${reply.author_wallet.slice(0, 6)}...${reply.author_wallet.slice(-4)}`}
+                </span>
                 <span>·</span>
                 <span>{formatTimeAgo(reply.created_at)}</span>
                 <span className="ml-auto text-muted-foreground/50">#{index + 1}</span>

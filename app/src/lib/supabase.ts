@@ -60,6 +60,8 @@ export async function upsertProfile(
       display_name: profile.displayName,
       bio: profile.bio,
       avatar_url: profile.avatarUrl,
+      twitter_handle: profile.twitterHandle,
+      github_handle: profile.githubHandle,
       is_public: profile.isPublic ?? true,
     })
     .select()
@@ -78,6 +80,8 @@ function mapProfile(row: Record<string, unknown>): UserProfile {
     displayName: row.display_name as string | undefined,
     bio: row.bio as string | undefined,
     avatarUrl: row.avatar_url as string | undefined,
+    twitterHandle: row.twitter_handle as string | undefined,
+    githubHandle: row.github_handle as string | undefined,
     isPublic: (row.is_public as boolean) ?? true,
     createdAt: row.created_at as string,
   };

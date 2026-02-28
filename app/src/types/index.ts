@@ -98,6 +98,8 @@ export interface UserProfile {
   displayName?: string;
   bio?: string;
   avatarUrl?: string;
+  twitterHandle?: string;
+  githubHandle?: string;
   isPublic: boolean;
   createdAt: string;
 }

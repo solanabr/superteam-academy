@@ -7,7 +7,7 @@ import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { useRouter } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 import { Check, Loader2, Globe, Palette, User, Link2, Bell } from "lucide-react";
-import { upsertProfile } from "@/lib/supabase";
+import { upsertProfile, getProfileByWallet } from "@/lib/supabase";
 
 type SettingsTab = "profile" | "accounts" | "appearance" | "language" | "notifications";
 
@@ -45,12 +45,26 @@ export default function SettingsPage() {
   const [streakReminder, setStreakReminder] = useState(true);
   const [achievementNotifs, setAchievementNotifs] = useState(true);
 
+  // Load theme from localStorage
   useEffect(() => {
     const saved = localStorage.getItem("theme");
     if (saved === "light" || saved === "dark") {
       setActiveTheme(saved);
     }
   }, []);
+
+  // Load existing profile data when wallet connects
+  useEffect(() => {
+    if (!publicKey) return;
+    getProfileByWallet(publicKey.toBase58()).then((profile) => {
+      if (!profile) return;
+      setUsername(profile.username ?? "");
+      setDisplayName(profile.displayName ?? "");
+      setBio(profile.bio ?? "");
+      setTwitterHandle(profile.twitterHandle ?? "");
+      setGithubHandle(profile.githubHandle ?? "");
+    });
+  }, [publicKey]);
 
   const applyTheme = (theme: "dark" | "light") => {
     setActiveTheme(theme);
@@ -69,7 +83,10 @@ export default function SettingsPage() {
         await upsertProfile({
           walletAddress: publicKey.toBase58(),
           username: username || undefined,
+          displayName: displayName || undefined,
           bio: bio || undefined,
+          twitterHandle: twitterHandle || undefined,
+          githubHandle: githubHandle || undefined,
         });
       }
       setSaved(true);

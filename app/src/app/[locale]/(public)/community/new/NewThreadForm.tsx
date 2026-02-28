@@ -6,6 +6,7 @@ import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { useRouter } from "@/i18n/navigation";
 import { createThread } from "@/lib/forum";
 import type { ForumCategory } from "@/lib/forum";
+import { useProfile } from "@/hooks/useProfile";
 
 interface NewThreadFormProps {
   categories: ForumCategory[];
@@ -15,6 +16,7 @@ export function NewThreadForm({ categories }: NewThreadFormProps) {
   const router = useRouter();
   const { publicKey, connected } = useWallet();
   const { setVisible } = useWalletModal();
+  const profile = useProfile();
   const [categoryId, setCategoryId] = useState(categories[0]?.id ?? "");
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
@@ -38,6 +40,7 @@ export function NewThreadForm({ categories }: NewThreadFormProps) {
   }
 
   const authorWallet = publicKey.toBase58();
+  const authorDisplayName = profile?.display_name ?? profile?.username ?? undefined;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -53,6 +56,7 @@ export function NewThreadForm({ categories }: NewThreadFormProps) {
       const id = await createThread({
         categoryId,
         authorWallet,
+        authorDisplayName,
         title: title.trim(),
         body: body.trim(),
       });
@@ -78,7 +82,7 @@ export function NewThreadForm({ categories }: NewThreadFormProps) {
         <span className="text-[#14F195]">◎</span>
         <span className="text-muted-foreground">Posting as</span>
         <span className="text-foreground">
-          {authorWallet.slice(0, 6)}...{authorWallet.slice(-4)}
+          {authorDisplayName ?? `${authorWallet.slice(0, 6)}...${authorWallet.slice(-4)}`}
         </span>
       </div>
 
