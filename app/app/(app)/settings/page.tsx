@@ -49,7 +49,7 @@ export default function SettingsPage() {
     };
 
     return (
-        <div className="mx-auto max-w-2xl space-y-6 p-4 sm:p-6 md:p-10 md:px-12">
+        <div className="mx-auto max-w-2xl space-y-6">
             <PageHeader title={t("title")} subtitle={t("subtitle")} />
 
             {/* Language */}

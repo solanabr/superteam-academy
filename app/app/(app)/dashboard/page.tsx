@@ -31,11 +31,11 @@ function EnrolledCourseCard({ course }: { course: MockCourse }) {
             <div className="border-4 rounded-2xl h-full">
                 <div className="font-game p-4 h-full flex flex-col">
                     <div>
-                                        <h2 className="text-lg font-light text-muted-foreground">{t("courseLabel")}</h2>
+                        <h2 className="text-lg font-light text-muted-foreground">{t("courseLabel")}</h2>
                         <h2 className="text-2xl sm:text-3xl line-clamp-2 min-h-[3.5rem] sm:min-h-[4.5rem]">{course.title}</h2>
                     </div>
                     <div className="mt-auto pt-4">
-                                        <h2 className="text-lg text-muted-foreground">
+                        <h2 className="text-lg text-muted-foreground">
                             {completedCount} {t("completedOutOf")} {effectiveCount}
                         </h2>
                         <ProgressBar value={completedCount} max={effectiveCount} />
@@ -67,7 +67,7 @@ export default function DashboardPage() {
     return (
         <>
             <DailyReward streakCount={streak.current} />
-            <div className="p-4 sm:p-6 md:p-8 md:px-10 lg:px-12">
+            <div className="space-y-5 sm:space-y-7">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-7">
                     {/* Main column (2/3) */}
                     <div className="lg:col-span-2">

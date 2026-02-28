@@ -11,7 +11,7 @@ export default function CertificatesPage() {
 
     if (isLoading) {
         return (
-            <div className="space-y-6 p-10 md:px-12">
+            <div className="space-y-6">
                 <PageHeader title="Certificates" subtitle="Your on-chain credential NFTs" />
                 <div className="h-32 animate-pulse rounded-xl bg-muted" />
             </div>
@@ -20,7 +20,7 @@ export default function CertificatesPage() {
 
     if (credentials && credentials.length > 0) {
         return (
-            <div className="space-y-6 p-10 md:px-12">
+            <div className="space-y-6">
                 <PageHeader title="Certificates" subtitle="Your on-chain credential NFTs" />
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {credentials.map((cred) => (
@@ -45,7 +45,7 @@ export default function CertificatesPage() {
     }
 
     return (
-        <div className="space-y-6 p-10 md:px-12">
+        <div className="space-y-6">
             <PageHeader
                 title="Certificates"
                 subtitle="Your on-chain credential NFTs"
