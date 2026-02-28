@@ -52,8 +52,8 @@ export function Providers({ children }: { children: ReactNode }) {
     <CSPostHogProvider>
       <ThemeProvider
         attribute="class"
-        defaultTheme="dark"
-        enableSystem
+        defaultTheme="light"
+        forcedTheme="light"
         disableTransitionOnChange
       >
         <QueryClientProvider client={queryClient}>
