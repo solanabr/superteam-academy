@@ -75,6 +75,35 @@ export const seedTrack: SeedTrack = {
   color: '#9945FF',
 };
 
+export const seedTrackDefi: SeedTrack = {
+  _id: 'track-defi',
+  trackId: '2',
+  name: 'DeFi',
+  description: 'Build decentralized finance protocols on Solana — token swaps, lending, and liquidity pools.',
+  icon: 'defi',
+  color: '#14F195',
+};
+
+export const seedTrackNft: SeedTrack = {
+  _id: 'track-nft',
+  trackId: '3',
+  name: 'NFT & Metaplex',
+  description: 'Create, manage, and trade NFT collections using Metaplex Core and Bubblegum.',
+  icon: 'nft',
+  color: '#FFD700',
+};
+
+export const seedTrackSecurity: SeedTrack = {
+  _id: 'track-security',
+  trackId: '4',
+  name: 'Security',
+  description: 'Master smart contract auditing, vulnerability detection, and security best practices for Solana programs.',
+  icon: 'security',
+  color: '#FF6B6B',
+};
+
+export const seedAllTracks: SeedTrack[] = [seedTrack, seedTrackDefi, seedTrackNft, seedTrackSecurity];
+
 // ---------------------------------------------------------------------------
 // Test case shape (shared by lessons & daily challenges)
 // ---------------------------------------------------------------------------
@@ -1701,6 +1730,102 @@ export const seedCourseRaw: SeedCourseRaw = {
   },
 };
 
+export const seedCourseDefi: SeedCourseRaw = {
+  _id: 'course-defi-201',
+  courseId: 'defi-201',
+  title: {
+    en: 'Building a DEX with Anchor',
+    pt: 'Construindo uma DEX com Anchor',
+    es: 'Construyendo una DEX con Anchor',
+  },
+  description: {
+    en: 'Create a fully functional decentralized exchange with order books and AMM pools on Solana.',
+    pt: 'Crie uma exchange descentralizada funcional com livros de ordens e pools AMM na Solana.',
+    es: 'Crea un exchange descentralizado funcional con libros de ordenes y pools AMM en Solana.',
+  },
+  thumbnail: { asset: { _ref: 'image-defi201-thumb' } },
+  difficulty: 'intermediate',
+  xpPerLesson: 75,
+  lessonCount: 8,
+  skills: ['Anchor', 'Token Swaps', 'AMM', 'Liquidity Pools', 'SPL Token'],
+  prerequisites: ['solana-101'],
+  track: { _id: 'track-defi', trackId: '2', name: 'DeFi', icon: 'defi', color: '#14F195' },
+};
+
+export const seedCourseNft: SeedCourseRaw = {
+  _id: 'course-nft-201',
+  courseId: 'nft-201',
+  title: {
+    en: 'NFT Collections with Metaplex',
+    pt: 'Coleções NFT com Metaplex',
+    es: 'Colecciones NFT con Metaplex',
+  },
+  description: {
+    en: 'Mint, manage, and trade NFT collections using the Metaplex Core standard and Bubblegum compression.',
+    pt: 'Crie, gerencie e negocie coleções NFT usando o padrão Metaplex Core e compressão Bubblegum.',
+    es: 'Crea, gestiona e intercambia colecciones NFT usando el estándar Metaplex Core y compresión Bubblegum.',
+  },
+  thumbnail: { asset: { _ref: 'image-nft201-thumb' } },
+  difficulty: 'intermediate',
+  xpPerLesson: 75,
+  lessonCount: 7,
+  skills: ['Metaplex Core', 'cNFTs', 'Bubblegum', 'Token Metadata', 'Royalties'],
+  prerequisites: ['solana-101'],
+  track: { _id: 'track-nft', trackId: '3', name: 'NFT & Metaplex', icon: 'nft', color: '#FFD700' },
+};
+
+export const seedCourseSecurity: SeedCourseRaw = {
+  _id: 'course-sec-301',
+  courseId: 'sec-301',
+  title: {
+    en: 'Smart Contract Auditing',
+    pt: 'Auditoria de Contratos Inteligentes',
+    es: 'Auditoría de Contratos Inteligentes',
+  },
+  description: {
+    en: 'Master security patterns and learn to identify common Solana program vulnerabilities like reentrancy, PDA misuse, and unchecked math.',
+    pt: 'Domine padrões de segurança e aprenda a identificar vulnerabilidades comuns em programas Solana como reentrância, uso incorreto de PDAs e matemática não verificada.',
+    es: 'Domina patrones de seguridad y aprende a identificar vulnerabilidades comunes en programas Solana como reentrada, mal uso de PDAs y matemáticas no verificadas.',
+  },
+  thumbnail: { asset: { _ref: 'image-sec301-thumb' } },
+  difficulty: 'advanced',
+  xpPerLesson: 100,
+  lessonCount: 8,
+  skills: ['Security Auditing', 'Vulnerability Detection', 'Reentrancy', 'Access Control', 'Integer Overflow'],
+  prerequisites: ['solana-101'],
+  track: { _id: 'track-security', trackId: '4', name: 'Security', icon: 'security', color: '#FF6B6B' },
+};
+
+export const seedCourseTokenExt: SeedCourseRaw = {
+  _id: 'course-token-201',
+  courseId: 'token-201',
+  title: {
+    en: 'Token Extensions Deep Dive',
+    pt: 'Token Extensions em Profundidade',
+    es: 'Token Extensions en Profundidad',
+  },
+  description: {
+    en: 'Explore Token-2022 extensions: transfer hooks, confidential transfers, permanent delegates, and non-transferable tokens.',
+    pt: 'Explore extensões Token-2022: hooks de transferência, transferências confidenciais, delegados permanentes e tokens não transferíveis.',
+    es: 'Explora extensiones Token-2022: hooks de transferencia, transferencias confidenciales, delegados permanentes y tokens no transferibles.',
+  },
+  thumbnail: { asset: { _ref: 'image-token201-thumb' } },
+  difficulty: 'advanced',
+  xpPerLesson: 100,
+  lessonCount: 6,
+  skills: ['Token-2022', 'Transfer Hooks', 'Confidential Transfers', 'Mint Extensions', 'Permanent Delegates'],
+  prerequisites: ['solana-101'],
+  track: { _id: 'track-solana-core', trackId: '1', name: 'Solana Core', icon: 'solana', color: '#9945FF' },
+};
+
+export const seedAllCoursesRaw: SeedCourseRaw[] = [
+  seedCourseRaw,
+  seedCourseDefi,
+  seedCourseNft,
+  seedCourseSecurity,
+  seedCourseTokenExt,
+];
+
 // ---------------------------------------------------------------------------
 // Course detail (as returned by courseByIdQuery -- includes modules + lessons)
 // ---------------------------------------------------------------------------
@@ -1811,6 +1936,135 @@ export const seedCourseDetail: SeedCourseDetail = {
       ],
     },
   ],
+};
+
+export const seedCourseDetailDefi: SeedCourseDetail = {
+  ...seedCourseDefi,
+  credentialImage: null,
+  modules: [
+    {
+      _id: 'defi-module-0',
+      title: { en: 'Token Fundamentals', pt: 'Fundamentos de Tokens', es: 'Fundamentos de Tokens' },
+      description: { en: 'SPL Token, Token-2022, and token account architecture.', pt: 'SPL Token, Token-2022 e arquitetura de contas de token.', es: 'SPL Token, Token-2022 y arquitectura de cuentas de token.' },
+      order: 0,
+      lessons: [
+        { _id: 'defi-l0', title: { en: 'SPL Token Program', pt: 'Programa SPL Token', es: 'Programa SPL Token' }, lessonIndex: 0, xpReward: 75, hasCodeEditor: true, isChallenge: false, language: 'rust' },
+        { _id: 'defi-l1', title: { en: 'Creating a Token Mint', pt: 'Criando um Token Mint', es: 'Creando un Token Mint' }, lessonIndex: 1, xpReward: 75, hasCodeEditor: true, isChallenge: false, language: 'typescript' },
+        { _id: 'defi-l2', title: { en: 'Token Accounts & ATAs', pt: 'Contas de Token e ATAs', es: 'Cuentas de Token y ATAs' }, lessonIndex: 2, xpReward: 75, hasCodeEditor: false, isChallenge: false, language: null },
+        { _id: 'defi-l3', title: { en: 'Building a Swap Pool', pt: 'Construindo um Pool de Swap', es: 'Construyendo un Pool de Swap' }, lessonIndex: 3, xpReward: 75, hasCodeEditor: true, isChallenge: false, language: 'rust' },
+      ],
+    },
+    {
+      _id: 'defi-module-1',
+      title: { en: 'AMM & Orderbook', pt: 'AMM e Livro de Ordens', es: 'AMM y Libro de Ordenes' },
+      description: { en: 'Build automated market makers and order book mechanics.', pt: 'Construa market makers automáticos e mecânicas de livro de ordens.', es: 'Construye market makers automatizados y mecánicas de libro de órdenes.' },
+      order: 1,
+      lessons: [
+        { _id: 'defi-l4', title: { en: 'Constant Product AMM', pt: 'AMM de Produto Constante', es: 'AMM de Producto Constante' }, lessonIndex: 4, xpReward: 75, hasCodeEditor: true, isChallenge: false, language: 'rust' },
+        { _id: 'defi-l5', title: { en: 'Liquidity Providers', pt: 'Provedores de Liquidez', es: 'Proveedores de Liquidez' }, lessonIndex: 5, xpReward: 75, hasCodeEditor: true, isChallenge: false, language: 'rust' },
+        { _id: 'defi-l6', title: { en: 'Price Oracles', pt: 'Oráculos de Preço', es: 'Oráculos de Precio' }, lessonIndex: 6, xpReward: 75, hasCodeEditor: false, isChallenge: false, language: null },
+        { _id: 'defi-l7', title: { en: 'Challenge: Build a Mini DEX', pt: 'Desafio: Construa uma Mini DEX', es: 'Desafío: Construye una Mini DEX' }, lessonIndex: 7, xpReward: 75, hasCodeEditor: true, isChallenge: true, language: 'rust' },
+      ],
+    },
+  ],
+};
+
+export const seedCourseDetailNft: SeedCourseDetail = {
+  ...seedCourseNft,
+  credentialImage: null,
+  modules: [
+    {
+      _id: 'nft-module-0',
+      title: { en: 'Metaplex Core', pt: 'Metaplex Core', es: 'Metaplex Core' },
+      description: { en: 'Understanding the Metaplex Core standard for NFTs.', pt: 'Compreendendo o padrão Metaplex Core para NFTs.', es: 'Comprendiendo el estándar Metaplex Core para NFTs.' },
+      order: 0,
+      lessons: [
+        { _id: 'nft-l0', title: { en: 'NFT Fundamentals', pt: 'Fundamentos de NFT', es: 'Fundamentos de NFT' }, lessonIndex: 0, xpReward: 75, hasCodeEditor: false, isChallenge: false, language: null },
+        { _id: 'nft-l1', title: { en: 'Minting with Metaplex Core', pt: 'Mintando com Metaplex Core', es: 'Mintando con Metaplex Core' }, lessonIndex: 1, xpReward: 75, hasCodeEditor: true, isChallenge: false, language: 'typescript' },
+        { _id: 'nft-l2', title: { en: 'Collections & Plugins', pt: 'Coleções e Plugins', es: 'Colecciones y Plugins' }, lessonIndex: 2, xpReward: 75, hasCodeEditor: true, isChallenge: false, language: 'typescript' },
+      ],
+    },
+    {
+      _id: 'nft-module-1',
+      title: { en: 'Compressed NFTs', pt: 'NFTs Comprimidos', es: 'NFTs Comprimidos' },
+      description: { en: 'Scale to millions of NFTs with Bubblegum compression.', pt: 'Escale para milhões de NFTs com compressão Bubblegum.', es: 'Escala a millones de NFTs con compresión Bubblegum.' },
+      order: 1,
+      lessons: [
+        { _id: 'nft-l3', title: { en: 'State Compression', pt: 'Compressão de Estado', es: 'Compresión de Estado' }, lessonIndex: 3, xpReward: 75, hasCodeEditor: false, isChallenge: false, language: null },
+        { _id: 'nft-l4', title: { en: 'Bubblegum Minting', pt: 'Mintagem Bubblegum', es: 'Mintaje Bubblegum' }, lessonIndex: 4, xpReward: 75, hasCodeEditor: true, isChallenge: false, language: 'typescript' },
+        { _id: 'nft-l5', title: { en: 'Merkle Proofs & Verification', pt: 'Provas de Merkle e Verificação', es: 'Pruebas de Merkle y Verificación' }, lessonIndex: 5, xpReward: 75, hasCodeEditor: true, isChallenge: false, language: 'typescript' },
+        { _id: 'nft-l6', title: { en: 'Challenge: Launch a cNFT Collection', pt: 'Desafio: Lance uma Coleção cNFT', es: 'Desafío: Lanza una Colección cNFT' }, lessonIndex: 6, xpReward: 75, hasCodeEditor: true, isChallenge: true, language: 'typescript' },
+      ],
+    },
+  ],
+};
+
+export const seedCourseDetailSecurity: SeedCourseDetail = {
+  ...seedCourseSecurity,
+  credentialImage: null,
+  modules: [
+    {
+      _id: 'sec-module-0',
+      title: { en: 'Common Vulnerabilities', pt: 'Vulnerabilidades Comuns', es: 'Vulnerabilidades Comunes' },
+      description: { en: 'Identify and exploit common Solana program vulnerabilities.', pt: 'Identifique e explore vulnerabilidades comuns em programas Solana.', es: 'Identifica y explota vulnerabilidades comunes en programas Solana.' },
+      order: 0,
+      lessons: [
+        { _id: 'sec-l0', title: { en: 'Security Landscape', pt: 'Panorama de Segurança', es: 'Panorama de Seguridad' }, lessonIndex: 0, xpReward: 100, hasCodeEditor: false, isChallenge: false, language: null },
+        { _id: 'sec-l1', title: { en: 'Missing Owner Checks', pt: 'Verificações de Proprietário Ausentes', es: 'Verificaciones de Propietario Faltantes' }, lessonIndex: 1, xpReward: 100, hasCodeEditor: true, isChallenge: false, language: 'rust' },
+        { _id: 'sec-l2', title: { en: 'Integer Overflow & Underflow', pt: 'Overflow e Underflow de Inteiros', es: 'Desbordamiento de Enteros' }, lessonIndex: 2, xpReward: 100, hasCodeEditor: true, isChallenge: false, language: 'rust' },
+        { _id: 'sec-l3', title: { en: 'PDA Seed Collision', pt: 'Colisão de Seeds PDA', es: 'Colisión de Seeds PDA' }, lessonIndex: 3, xpReward: 100, hasCodeEditor: true, isChallenge: false, language: 'rust' },
+      ],
+    },
+    {
+      _id: 'sec-module-1',
+      title: { en: 'Advanced Patterns', pt: 'Padrões Avançados', es: 'Patrones Avanzados' },
+      description: { en: 'Advanced audit methodology and defensive programming.', pt: 'Metodologia avançada de auditoria e programação defensiva.', es: 'Metodología avanzada de auditoría y programación defensiva.' },
+      order: 1,
+      lessons: [
+        { _id: 'sec-l4', title: { en: 'Reentrancy in Solana', pt: 'Reentrância na Solana', es: 'Reentrancia en Solana' }, lessonIndex: 4, xpReward: 100, hasCodeEditor: true, isChallenge: false, language: 'rust' },
+        { _id: 'sec-l5', title: { en: 'CPI Safety', pt: 'Segurança CPI', es: 'Seguridad CPI' }, lessonIndex: 5, xpReward: 100, hasCodeEditor: true, isChallenge: false, language: 'rust' },
+        { _id: 'sec-l6', title: { en: 'Audit Methodology', pt: 'Metodologia de Auditoria', es: 'Metodología de Auditoría' }, lessonIndex: 6, xpReward: 100, hasCodeEditor: false, isChallenge: false, language: null },
+        { _id: 'sec-l7', title: { en: 'Challenge: Find the Bug', pt: 'Desafio: Encontre o Bug', es: 'Desafío: Encuentra el Bug' }, lessonIndex: 7, xpReward: 100, hasCodeEditor: true, isChallenge: true, language: 'rust' },
+      ],
+    },
+  ],
+};
+
+export const seedCourseDetailTokenExt: SeedCourseDetail = {
+  ...seedCourseTokenExt,
+  credentialImage: null,
+  modules: [
+    {
+      _id: 'token-module-0',
+      title: { en: 'Token-2022 Basics', pt: 'Básicos do Token-2022', es: 'Básicos de Token-2022' },
+      description: { en: 'Understanding the Token-2022 program and its extension system.', pt: 'Compreendendo o programa Token-2022 e seu sistema de extensões.', es: 'Comprendiendo el programa Token-2022 y su sistema de extensiones.' },
+      order: 0,
+      lessons: [
+        { _id: 'token-l0', title: { en: 'Token-2022 Overview', pt: 'Visão Geral do Token-2022', es: 'Visión General de Token-2022' }, lessonIndex: 0, xpReward: 100, hasCodeEditor: false, isChallenge: false, language: null },
+        { _id: 'token-l1', title: { en: 'Transfer Hooks', pt: 'Hooks de Transferência', es: 'Hooks de Transferencia' }, lessonIndex: 1, xpReward: 100, hasCodeEditor: true, isChallenge: false, language: 'rust' },
+        { _id: 'token-l2', title: { en: 'Confidential Transfers', pt: 'Transferências Confidenciais', es: 'Transferencias Confidenciales' }, lessonIndex: 2, xpReward: 100, hasCodeEditor: true, isChallenge: false, language: 'rust' },
+      ],
+    },
+    {
+      _id: 'token-module-1',
+      title: { en: 'Advanced Extensions', pt: 'Extensões Avançadas', es: 'Extensiones Avanzadas' },
+      description: { en: 'Non-transferable tokens, permanent delegates, and custom extensions.', pt: 'Tokens não transferíveis, delegados permanentes e extensões personalizadas.', es: 'Tokens no transferibles, delegados permanentes y extensiones personalizadas.' },
+      order: 1,
+      lessons: [
+        { _id: 'token-l3', title: { en: 'Non-Transferable Tokens', pt: 'Tokens Não Transferíveis', es: 'Tokens No Transferibles' }, lessonIndex: 3, xpReward: 100, hasCodeEditor: true, isChallenge: false, language: 'rust' },
+        { _id: 'token-l4', title: { en: 'Permanent Delegates', pt: 'Delegados Permanentes', es: 'Delegados Permanentes' }, lessonIndex: 4, xpReward: 100, hasCodeEditor: true, isChallenge: false, language: 'rust' },
+        { _id: 'token-l5', title: { en: 'Challenge: Soulbound Token', pt: 'Desafio: Token Soulbound', es: 'Desafío: Token Soulbound' }, lessonIndex: 5, xpReward: 100, hasCodeEditor: true, isChallenge: true, language: 'rust' },
+      ],
+    },
+  ],
+};
+
+export const seedAllCourseDetails: Record<string, SeedCourseDetail> = {
+  'solana-101': seedCourseDetail,
+  'defi-201': seedCourseDetailDefi,
+  'nft-201': seedCourseDetailNft,
+  'sec-301': seedCourseDetailSecurity,
+  'token-201': seedCourseDetailTokenExt,
 };
 
 // ---------------------------------------------------------------------------

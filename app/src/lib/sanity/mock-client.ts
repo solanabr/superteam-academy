@@ -1,7 +1,7 @@
 import {
-  seedTrack,
-  seedCourseRaw,
-  seedCourseDetail,
+  seedAllTracks,
+  seedAllCoursesRaw,
+  seedAllCourseDetails,
   seedLessons,
   seedAchievements,
   seedDailyChallenge,
@@ -49,8 +49,8 @@ function resolveQuery<T>(
   ) {
     const courseId = params?.courseId as string | undefined;
 
-    if (courseId && seedCourseDetail.courseId === courseId) {
-      return seedCourseDetail as T;
+    if (courseId && seedAllCourseDetails[courseId]) {
+      return seedAllCourseDetails[courseId] as T;
     }
 
     return null as T;
@@ -64,8 +64,9 @@ function resolveQuery<T>(
   ) {
     const trackId = params?.trackId as string | undefined;
 
-    if (trackId && seedCourseRaw.track.trackId === trackId) {
-      return [seedCourseRaw] as T;
+    if (trackId) {
+      const filtered = seedAllCoursesRaw.filter((c) => c.track.trackId === trackId);
+      return filtered as T;
     }
 
     return [] as T;
@@ -74,12 +75,12 @@ function resolveQuery<T>(
   // ── All / featured courses ────────────────────────────────────────
   // allCoursesQuery & featuredCoursesQuery: `_type == "course"` (no extra filters)
   if (query.includes('_type == "course"')) {
-    return [seedCourseRaw] as T;
+    return seedAllCoursesRaw as T;
   }
 
   // ── Tracks ────────────────────────────────────────────────────────
   if (query.includes('_type == "track"')) {
-    return [seedTrack] as T;
+    return seedAllTracks as T;
   }
 
   // ── Achievements ──────────────────────────────────────────────────
