@@ -1,24 +1,19 @@
 import { NextResponse } from "next/server";
-import { headers } from "next/headers";
-import { serverAuth } from "@/lib/auth";
 import { createProject } from "@/lib/community-cms";
 import { syncUserToSanity } from "@/lib/sanity-users";
 import { evaluateContentModeration, enqueueModerationItem } from "@/lib/community-moderation";
+import { requireSession, MAX_TAGS, parseTags, parseJsonBody } from "@/lib/route-utils";
 import type { ProjectCategory } from "@superteam-academy/cms";
 
 const VALID_CATEGORIES: ProjectCategory[] = ["defi", "nft", "tooling", "gaming", "social", "infra"];
 
 const MAX_TITLE_LENGTH = 100;
 const MAX_DESCRIPTION_LENGTH = 5000;
-const MAX_TAGS = 5;
-const MAX_TAG_LENGTH = 50;
 
 export async function POST(request: Request) {
-	const requestHeaders = await headers();
-	const session = await serverAuth.api.getSession({ headers: requestHeaders });
-	if (!session) {
-		return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-	}
+	const auth = await requireSession();
+	if (!auth.ok) return auth.response;
+	const session = auth.session;
 
 	let body: unknown;
 	try {
@@ -27,11 +22,10 @@ export async function POST(request: Request) {
 		return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
 	}
 
-	if (!body || typeof body !== "object") {
+	const data = parseJsonBody(body);
+	if (!data) {
 		return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
 	}
-
-	const data = body as Record<string, unknown>;
 
 	const title = typeof data.title === "string" ? data.title.trim() : "";
 	const description = typeof data.description === "string" ? data.description.trim() : "";
@@ -44,11 +38,7 @@ export async function POST(request: Request) {
 		typeof data.liveUrl === "string" && data.liveUrl.trim() ? data.liveUrl.trim() : undefined;
 	const xpReward =
 		typeof data.xpReward === "number" && data.xpReward >= 0 ? data.xpReward : undefined;
-	const tags = Array.isArray(data.tags)
-		? data.tags
-				.filter((t): t is string => typeof t === "string" && t.trim().length > 0)
-				.map((t) => t.trim().slice(0, MAX_TAG_LENGTH))
-		: [];
+	const tags = parseTags(data.tags);
 
 	if (!title || title.length > MAX_TITLE_LENGTH) {
 		return NextResponse.json(

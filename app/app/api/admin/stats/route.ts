@@ -1,23 +1,11 @@
 import { NextResponse } from "next/server";
-import { headers } from "next/headers";
-import { serverAuth } from "@/lib/auth";
-import { isUserAdmin } from "@/lib/sanity-users";
-import { getUserStats } from "@/lib/sanity-users";
-import { getAllUsers } from "@/lib/sanity-users";
+import { getUserStats, getAllUsers } from "@/lib/sanity-users";
 import { getCoursesCMS } from "@/lib/cms";
+import { requireAdmin } from "@/lib/route-utils";
 
 export async function GET() {
-	const requestHeaders = await headers();
-	const session = await serverAuth.api.getSession({ headers: requestHeaders });
-
-	if (!session) {
-		return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-	}
-
-	const admin = await isUserAdmin(session.user.id, session.user.email);
-	if (!admin) {
-		return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-	}
+	const auth = await requireAdmin();
+	if (!auth.ok) return auth.response;
 
 	const [userStats, courses, users] = await Promise.all([
 		getUserStats(),

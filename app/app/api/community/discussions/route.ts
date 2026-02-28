@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
-import { headers } from "next/headers";
-import { serverAuth } from "@/lib/auth";
 import { createDiscussion } from "@/lib/community-cms";
 import { syncUserToSanity } from "@/lib/sanity-users";
 import { evaluateContentModeration, enqueueModerationItem } from "@/lib/community-moderation";
+import { requireSession, MAX_TITLE_LENGTH, MAX_TAGS, parseTags, parseJsonBody } from "@/lib/route-utils";
 import type { DiscussionCategory } from "@superteam-academy/cms";
 
 const VALID_CATEGORIES: DiscussionCategory[] = [
@@ -15,17 +14,12 @@ const VALID_CATEGORIES: DiscussionCategory[] = [
 	"offTopic",
 ];
 
-const MAX_TITLE_LENGTH = 200;
 const MAX_CONTENT_LENGTH = 10_000;
-const MAX_TAGS = 5;
-const MAX_TAG_LENGTH = 50;
 
 export async function POST(request: Request) {
-	const requestHeaders = await headers();
-	const session = await serverAuth.api.getSession({ headers: requestHeaders });
-	if (!session) {
-		return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-	}
+	const auth = await requireSession();
+	if (!auth.ok) return auth.response;
+	const session = auth.session;
 
 	let body: unknown;
 	try {
@@ -34,20 +28,15 @@ export async function POST(request: Request) {
 		return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
 	}
 
-	if (!body || typeof body !== "object") {
+	const data = parseJsonBody(body);
+	if (!data) {
 		return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
 	}
-
-	const data = body as Record<string, unknown>;
 
 	const title = typeof data.title === "string" ? data.title.trim() : "";
 	const content = typeof data.content === "string" ? data.content.trim() : "";
 	const category = typeof data.category === "string" ? data.category : "";
-	const tags = Array.isArray(data.tags)
-		? data.tags
-				.filter((t): t is string => typeof t === "string" && t.trim().length > 0)
-				.map((t) => t.trim().slice(0, MAX_TAG_LENGTH))
-		: [];
+	const tags = parseTags(data.tags);
 
 	if (!title || title.length > MAX_TITLE_LENGTH) {
 		return NextResponse.json(

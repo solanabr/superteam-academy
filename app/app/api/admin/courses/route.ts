@@ -1,56 +1,15 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { headers } from "next/headers";
-import { createHash } from "node:crypto";
-import { serverAuth } from "@/lib/auth";
-import { isUserAdmin } from "@/lib/sanity-users";
-import { createSanityClient } from "@superteam-academy/cms";
-import { PROGRAM_ID as DEFAULT_PROGRAM_ID } from "@superteam-academy/anchor";
-import { getSolanaConnection } from "@/lib/academy";
-import { Keypair, PublicKey, SystemProgram, Transaction, TransactionInstruction } from "@solana/web3.js";
+import { getSolanaConnection, getProgramId } from "@/lib/academy";
+import { PublicKey, SystemProgram, Transaction, TransactionInstruction } from "@solana/web3.js";
 import { courseFields } from "@superteam-academy/cms/queries";
-
-function sanityWriteClient() {
-	const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
-	const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET ?? "production";
-	const token = process.env.SANITY_API_WRITE_TOKEN;
-	if (!projectId || !token) return null;
-	return createSanityClient({ projectId, dataset, token, useCdn: false });
-}
-
-function sanityReadClient() {
-	const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
-	const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET ?? "production";
-	const token = process.env.SANITY_API_READ_TOKEN ?? process.env.SANITY_API_WRITE_TOKEN;
-	if (!projectId || !token) return null;
-	return createSanityClient({ projectId, dataset, token, useCdn: false });
-}
-
-function getProgramId(): PublicKey {
-	const value =
-		process.env.ACADEMY_PROGRAM_ID ??
-		process.env.NEXT_PUBLIC_ACADEMY_PROGRAM_ID ??
-		DEFAULT_PROGRAM_ID;
-	return new PublicKey(value);
-}
-
-function loadAuthoritySigner(): Keypair {
-	const secret = process.env.BACKEND_SIGNER_SECRET_KEY;
-	if (!secret) {
-		throw new Error("BACKEND_SIGNER_SECRET_KEY is required for on-chain course creation");
-	}
-	return Keypair.fromSecretKey(Uint8Array.from(JSON.parse(secret)));
-}
-
-function instructionDiscriminator(name: string): Buffer {
-	return createHash("sha256").update(`global:${name}`).digest().subarray(0, 8);
-}
-
-function encodeBorshString(value: string): Buffer {
-	const bytes = Buffer.from(value, "utf8");
-	const len = Buffer.alloc(4);
-	len.writeUInt32LE(bytes.length, 0);
-	return Buffer.concat([len, bytes]);
-}
+import {
+	requireAdmin,
+	sanityReadClient,
+	sanityWriteClient,
+	loadBackendSigner,
+	instructionDiscriminator,
+	encodeBorshString,
+} from "@/lib/route-utils";
 
 function encodeCreateCourseParams(params: {
 	courseId: string;
@@ -118,7 +77,7 @@ async function ensureCreateCourseOnchain(params: {
 }): Promise<{ signature: string | null; coursePda: string; alreadyExists: boolean }> {
 	const programId = getProgramId();
 	const connection = getSolanaConnection();
-	const authority = loadAuthoritySigner();
+	const authority = loadBackendSigner();
 
 	const [configPda] = PublicKey.findProgramAddressSync([Buffer.from("config")], programId);
 	const [coursePda] = PublicKey.findProgramAddressSync(
@@ -197,19 +156,10 @@ function mapLevelToDifficulty(level: string): number {
 }
 
 export async function GET() {
-	const requestHeaders = await headers();
-	const session = await serverAuth.api.getSession({ headers: requestHeaders });
+	const auth = await requireAdmin();
+	if (!auth.ok) return auth.response;
 
-	if (!session) {
-		return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-	}
-
-	const admin = await isUserAdmin(session.user.id, session.user.email);
-	if (!admin) {
-		return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-	}
-
-	const client = sanityReadClient();
+	const client = sanityReadClient;
 	if (!client) {
 		return NextResponse.json({ error: "Sanity not configured" }, { status: 500 });
 	}
@@ -227,19 +177,10 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-	const requestHeaders = await headers();
-	const session = await serverAuth.api.getSession({ headers: requestHeaders });
+	const auth = await requireAdmin();
+	if (!auth.ok) return auth.response;
 
-	if (!session) {
-		return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-	}
-
-	const admin = await isUserAdmin(session.user.id, session.user.email);
-	if (!admin) {
-		return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-	}
-
-	const client = sanityWriteClient();
+	const client = sanityWriteClient;
 
 	const body = (await request.json()) as {
 		title: string;

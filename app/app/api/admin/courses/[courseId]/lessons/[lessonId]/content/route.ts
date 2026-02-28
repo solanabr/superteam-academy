@@ -1,7 +1,4 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { headers } from "next/headers";
-import { serverAuth } from "@/lib/auth";
-import { isUserAdmin } from "@/lib/sanity-users";
 import {
 	getAdminLessonContent,
 	getCourseRefByIdOrSlug,
@@ -10,27 +7,13 @@ import {
 	createQuizDraft,
 } from "@/lib/challenge-content";
 import { parseChallengePayload, parseQuizPayload } from "@/lib/admin-content-validation";
+import { requireAdmin } from "@/lib/route-utils";
 
 type RouteParams = { params: Promise<{ courseId: string; lessonId: string }> };
 
-async function ensureAdmin() {
-	const requestHeaders = await headers();
-	const session = await serverAuth.api.getSession({ headers: requestHeaders });
-	if (!session) {
-		return { error: NextResponse.json({ error: "Not authenticated" }, { status: 401 }) };
-	}
-
-	const admin = await isUserAdmin(session.user.id, session.user.email);
-	if (!admin) {
-		return { error: NextResponse.json({ error: "Forbidden" }, { status: 403 }) };
-	}
-
-	return { session };
-}
-
 export async function GET(_request: NextRequest, { params }: RouteParams) {
-	const auth = await ensureAdmin();
-	if (auth.error) return auth.error;
+	const auth = await requireAdmin();
+	if (!auth.ok) return auth.response;
 
 	const { courseId, lessonId } = await params;
 	const content = await getAdminLessonContent(courseId, lessonId);
@@ -42,8 +25,8 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 }
 
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
-	const auth = await ensureAdmin();
-	if (auth.error) return auth.error;
+	const auth = await requireAdmin();
+	if (!auth.ok) return auth.response;
 
 	const { courseId, lessonId } = await params;
 	const client = getSanityWriteClient();

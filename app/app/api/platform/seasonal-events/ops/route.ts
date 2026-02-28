@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-import { headers } from "next/headers";
-import { serverAuth } from "@/lib/auth";
-import { isUserAdmin } from "@/lib/sanity-users";
+import { requireAdmin } from "@/lib/route-utils";
 import {
 	getSeasonalBaseState,
 	listSeasonalUsers,
@@ -11,17 +9,8 @@ import {
 } from "@/lib/seasonal-events-store";
 
 export async function GET() {
-	const requestHeaders = await headers();
-	const session = await serverAuth.api.getSession({ headers: requestHeaders });
-
-	if (!session) {
-		return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-	}
-
-	const admin = await isUserAdmin(session.user.id, session.user.email);
-	if (!admin) {
-		return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-	}
+	const auth = await requireAdmin();
+	if (!auth.ok) return auth.response;
 
 	const users = listSeasonalUsers();
 	return NextResponse.json({
@@ -36,17 +25,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-	const requestHeaders = await headers();
-	const session = await serverAuth.api.getSession({ headers: requestHeaders });
-
-	if (!session) {
-		return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-	}
-
-	const admin = await isUserAdmin(session.user.id, session.user.email);
-	if (!admin) {
-		return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-	}
+	const auth = await requireAdmin();
+	if (!auth.ok) return auth.response;
 
 	const body = (await request.json()) as
 		| {

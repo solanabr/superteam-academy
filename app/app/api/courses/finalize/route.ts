@@ -1,15 +1,10 @@
 import { NextResponse } from "next/server";
-import { Keypair, PublicKey, Transaction } from "@solana/web3.js";
+import { PublicKey, Transaction } from "@solana/web3.js";
 import { buildFinalizeCourseInstruction, countCompletedLessons } from "@superteam-academy/anchor";
 import { findToken2022ATA } from "@superteam-academy/solana";
 import { getLinkedWallet } from "@/lib/auth";
 import { getAcademyClient, getProgramId, getSolanaConnection } from "@/lib/academy";
-
-function loadBackendSigner(): Keypair {
-	const secret = process.env.BACKEND_SIGNER_SECRET_KEY;
-	if (!secret) throw new Error("BACKEND_SIGNER_SECRET_KEY is required");
-	return Keypair.fromSecretKey(Uint8Array.from(JSON.parse(secret)));
-}
+import { loadBackendSigner } from "@/lib/route-utils";
 
 export async function POST(request: Request) {
 	try {

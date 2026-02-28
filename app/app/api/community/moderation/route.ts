@@ -1,21 +1,10 @@
 import { NextResponse } from "next/server";
-import { headers } from "next/headers";
-import { serverAuth } from "@/lib/auth";
-import { isUserAdmin } from "@/lib/sanity-users";
 import { listModerationQueue, resolveModerationItem } from "@/lib/community-moderation";
+import { requireAdmin } from "@/lib/route-utils";
 
 export async function GET(request: Request) {
-	const requestHeaders = await headers();
-	const session = await serverAuth.api.getSession({ headers: requestHeaders });
-
-	if (!session) {
-		return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-	}
-
-	const admin = await isUserAdmin(session.user.id, session.user.email);
-	if (!admin) {
-		return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-	}
+	const auth = await requireAdmin();
+	if (!auth.ok) return auth.response;
 
 	const { searchParams } = new URL(request.url);
 	const status = searchParams.get("status");
@@ -28,17 +17,8 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-	const requestHeaders = await headers();
-	const session = await serverAuth.api.getSession({ headers: requestHeaders });
-
-	if (!session) {
-		return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-	}
-
-	const admin = await isUserAdmin(session.user.id, session.user.email);
-	if (!admin) {
-		return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-	}
+	const auth = await requireAdmin();
+	if (!auth.ok) return auth.response;
 
 	const body = (await request.json()) as {
 		id?: string;

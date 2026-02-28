@@ -1,34 +1,10 @@
 import { NextResponse } from "next/server";
-import { headers } from "next/headers";
-import { serverAuth } from "@/lib/auth";
-import { isUserAdmin } from "@/lib/sanity-users";
 import { reconcileCourseIndex } from "@/lib/course-index-sync";
-
-async function assertAdmin() {
-	const requestHeaders = await headers();
-	const session = await serverAuth.api.getSession({ headers: requestHeaders });
-
-	if (!session) {
-		return {
-			ok: false as const,
-			response: NextResponse.json({ error: "Not authenticated" }, { status: 401 }),
-		};
-	}
-
-	const admin = await isUserAdmin(session.user.id, session.user.email);
-	if (!admin) {
-		return {
-			ok: false as const,
-			response: NextResponse.json({ error: "Forbidden" }, { status: 403 }),
-		};
-	}
-
-	return { ok: true as const };
-}
+import { requireAdmin } from "@/lib/route-utils";
 
 export async function GET() {
-	const guard = await assertAdmin();
-	if (!guard.ok) return guard.response;
+	const auth = await requireAdmin();
+	if (!auth.ok) return auth.response;
 
 	try {
 		const report = await reconcileCourseIndex({ apply: false });
@@ -42,8 +18,8 @@ export async function GET() {
 }
 
 export async function POST() {
-	const guard = await assertAdmin();
-	if (!guard.ok) return guard.response;
+	const auth = await requireAdmin();
+	if (!auth.ok) return auth.response;
 
 	try {
 		const report = await reconcileCourseIndex({ apply: true });

@@ -1,6 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { headers } from "next/headers";
-import { serverAuth } from "@/lib/auth";
+import { requireSession } from "@/lib/route-utils";
 import { upsertLinkedAccount } from "@/lib/auth-linking-store";
 import { getUserByAuthId, syncUserToSanity } from "@/lib/sanity-users";
 
@@ -23,11 +22,9 @@ export async function POST(request: NextRequest) {
 			return NextResponse.json({ error: "Missing identifier" }, { status: 400 });
 		}
 
-		const requestHeaders = await headers();
-		const session = await serverAuth.api.getSession({ headers: requestHeaders });
-		if (!session) {
-			return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-		}
+		const auth = await requireSession();
+		if (!auth.ok) return auth.response;
+		const { session } = auth;
 
 		const existingUser = await getUserByAuthId(session.user.id);
 		if (!existingUser) {

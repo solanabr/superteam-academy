@@ -1,19 +1,14 @@
 import { NextResponse } from "next/server";
-import { headers } from "next/headers";
 import type { UserSettings } from "@superteam-academy/cms";
 
-import { serverAuth } from "@/lib/auth";
 import { getUserByAuthId } from "@/lib/sanity-users";
-import { writeClient } from "@/lib/cms-context";
+import { requireSession, sanityWriteClient } from "@/lib/route-utils";
 
 export async function GET() {
-	const requestHeaders = await headers();
-	const session = await serverAuth.api.getSession({ headers: requestHeaders });
-	if (!session) {
-		return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-	}
+	const auth = await requireSession();
+	if (!auth.ok) return auth.response;
 
-	const user = await getUserByAuthId(session.user.id);
+	const user = await getUserByAuthId(auth.session.user.id);
 	if (!user) {
 		return NextResponse.json({ error: "User not found" }, { status: 404 });
 	}
@@ -35,17 +30,14 @@ export async function GET() {
 const VALID_SECTIONS = new Set(["notifications", "privacy", "appearance", "language", "wallet"]);
 
 export async function PATCH(request: Request) {
-	const requestHeaders = await headers();
-	const session = await serverAuth.api.getSession({ headers: requestHeaders });
-	if (!session) {
-		return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-	}
+	const auth = await requireSession();
+	if (!auth.ok) return auth.response;
 
-	if (!writeClient) {
+	if (!sanityWriteClient) {
 		return NextResponse.json({ error: "CMS not configured" }, { status: 503 });
 	}
 
-	const user = await getUserByAuthId(session.user.id);
+	const user = await getUserByAuthId(auth.session.user.id);
 	if (!user) {
 		return NextResponse.json({ error: "User not found" }, { status: 404 });
 	}
@@ -84,7 +76,7 @@ export async function PATCH(request: Request) {
 		return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });
 	}
 
-	await writeClient.patch(user._id).set(patch).commit();
+	await sanityWriteClient.patch(user._id).set(patch).commit();
 
 	return NextResponse.json({ ok: true });
 }

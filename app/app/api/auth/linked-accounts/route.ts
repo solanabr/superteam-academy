@@ -1,17 +1,13 @@
 import { NextResponse } from "next/server";
-import { headers } from "next/headers";
-import { serverAuth } from "@/lib/auth";
+import { requireSession } from "@/lib/route-utils";
 import { getLinkedAccountsForUser } from "@/lib/auth-linking-store";
 
 export async function GET() {
 	try {
-		const requestHeaders = await headers();
-		const session = await serverAuth.api.getSession({ headers: requestHeaders });
-		if (!session) {
-			return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-		}
+		const auth = await requireSession();
+		if (!auth.ok) return auth.response;
 
-		const accounts = await getLinkedAccountsForUser(session.user.id);
+		const accounts = await getLinkedAccountsForUser(auth.session.user.id);
 
 		return NextResponse.json({ accounts });
 	} catch {

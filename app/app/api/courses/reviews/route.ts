@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
-import { headers } from "next/headers";
 import { PublicKey } from "@solana/web3.js";
 
-import { serverAuth, getLinkedWallet } from "@/lib/auth";
+import { getLinkedWallet } from "@/lib/auth";
 import { getCourseById } from "@/lib/cms";
 import { cmsContext } from "@/lib/cms-context";
 import { getAcademyClient } from "@/lib/academy";
 import { syncUserToSanity } from "@/lib/sanity-users";
 import { getGravatarUrl } from "@/lib/utils";
+import { requireSession } from "@/lib/route-utils";
 
 const MIN_RATING = 1;
 const MAX_RATING = 5;
@@ -27,11 +27,9 @@ function parsePayload(
 }
 
 export async function POST(request: Request) {
-	const requestHeaders = await headers();
-	const session = await serverAuth.api.getSession({ headers: requestHeaders });
-	if (!session) {
-		return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-	}
+	const auth = await requireSession();
+	if (!auth.ok) return auth.response;
+	const session = auth.session;
 
 	const payload = parsePayload(await request.json());
 	if (!payload) {

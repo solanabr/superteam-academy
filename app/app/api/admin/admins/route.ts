@@ -1,38 +1,19 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { headers } from "next/headers";
-import { serverAuth } from "@/lib/auth";
-import { isUserAdmin, isUserSuperAdmin, updateUserRole, getAdminUsers } from "@/lib/sanity-users";
+import { updateUserRole, getAdminUsers } from "@/lib/sanity-users";
+import { requireAdmin, requireSuperAdmin } from "@/lib/route-utils";
 import type { UserRole } from "@superteam-academy/cms";
 
 export async function GET() {
-	const requestHeaders = await headers();
-	const session = await serverAuth.api.getSession({ headers: requestHeaders });
-
-	if (!session) {
-		return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-	}
-
-	const admin = await isUserAdmin(session.user.id, session.user.email);
-	if (!admin) {
-		return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-	}
+	const auth = await requireAdmin();
+	if (!auth.ok) return auth.response;
 
 	const admins = await getAdminUsers();
 	return NextResponse.json({ admins });
 }
 
 export async function POST(request: NextRequest) {
-	const requestHeaders = await headers();
-	const session = await serverAuth.api.getSession({ headers: requestHeaders });
-
-	if (!session) {
-		return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-	}
-
-	const superAdmin = await isUserSuperAdmin(session.user.id, session.user.email);
-	if (!superAdmin) {
-		return NextResponse.json({ error: "Only super admins can modify roles" }, { status: 403 });
-	}
+	const auth = await requireSuperAdmin();
+	if (!auth.ok) return auth.response;
 
 	const body = (await request.json()) as { userId: string; role: UserRole };
 	if (!body.userId || !["learner", "admin", "superadmin"].includes(body.role)) {

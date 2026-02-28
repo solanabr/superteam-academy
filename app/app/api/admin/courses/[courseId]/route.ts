@@ -1,75 +1,20 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { headers } from "next/headers";
-import { createHash } from "node:crypto";
-import { serverAuth } from "@/lib/auth";
-import { isUserAdmin } from "@/lib/sanity-users";
-import { createSanityClient } from "@superteam-academy/cms";
-import { PROGRAM_ID as DEFAULT_PROGRAM_ID } from "@superteam-academy/anchor";
-import { getSolanaConnection, arweaveTxIdToBytes } from "@/lib/academy";
-import { Keypair, PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js";
+import { getSolanaConnection, arweaveTxIdToBytes, getProgramId } from "@/lib/academy";
+import { PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js";
 import { courseFields, moduleFields, lessonFields } from "@superteam-academy/cms/queries";
-
-function sanityWriteClient() {
-	const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
-	const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET ?? "production";
-	const token = process.env.SANITY_API_WRITE_TOKEN;
-	if (!projectId || !token) return null;
-	return createSanityClient({ projectId, dataset, token, useCdn: false });
-}
-
-function sanityReadClient() {
-	const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
-	const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET ?? "production";
-	const token = process.env.SANITY_API_READ_TOKEN;
-	if (!projectId || !token) return null;
-	return createSanityClient({ projectId, dataset, token, useCdn: false });
-}
+import {
+	requireAdmin,
+	sanityReadClient,
+	sanityWriteClient,
+	loadBackendSigner,
+	instructionDiscriminator,
+	encodeOptionBytes,
+	encodeOptionBool,
+	encodeOptionU32,
+	encodeOptionU16,
+} from "@/lib/route-utils";
 
 type RouteParams = { params: Promise<{ courseId: string }> };
-
-function getProgramId(): PublicKey {
-	const value =
-		process.env.ACADEMY_PROGRAM_ID ??
-		process.env.NEXT_PUBLIC_ACADEMY_PROGRAM_ID ??
-		DEFAULT_PROGRAM_ID;
-	return new PublicKey(value);
-}
-
-function loadAuthoritySigner(): Keypair {
-	const secret = process.env.BACKEND_SIGNER_SECRET_KEY;
-	if (!secret) {
-		throw new Error("BACKEND_SIGNER_SECRET_KEY is required for on-chain course updates");
-	}
-	return Keypair.fromSecretKey(Uint8Array.from(JSON.parse(secret)));
-}
-
-function encodeOptionBytes(bytes: number[] | Uint8Array | null): Buffer {
-	if (!bytes) return Buffer.from([0]);
-	return Buffer.concat([Buffer.from([1]), Buffer.from(bytes)]);
-}
-
-function encodeOptionBool(value: boolean | null): Buffer {
-	if (value === null) return Buffer.from([0]);
-	return Buffer.from([1, value ? 1 : 0]);
-}
-
-function encodeOptionU32(value: number | null): Buffer {
-	if (value === null) return Buffer.from([0]);
-	const raw = Buffer.alloc(4);
-	raw.writeUInt32LE(value, 0);
-	return Buffer.concat([Buffer.from([1]), raw]);
-}
-
-function encodeOptionU16(value: number | null): Buffer {
-	if (value === null) return Buffer.from([0]);
-	const raw = Buffer.alloc(2);
-	raw.writeUInt16LE(value, 0);
-	return Buffer.concat([Buffer.from([1]), raw]);
-}
-
-function instructionDiscriminator(name: string): Buffer {
-	return createHash("sha256").update(`global:${name}`).digest().subarray(0, 8);
-}
 
 async function sendOnchainCourseUpdate(params: {
 	onchainCourseId: string;
@@ -85,7 +30,7 @@ async function sendOnchainCourseUpdate(params: {
 
 	const programId = getProgramId();
 	const connection = getSolanaConnection();
-	const authority = loadAuthoritySigner();
+	const authority = loadBackendSigner();
 
 	const [configPda] = PublicKey.findProgramAddressSync([Buffer.from("config")], programId);
 	const [coursePda] = PublicKey.findProgramAddressSync(
@@ -138,19 +83,10 @@ async function sendOnchainCourseUpdate(params: {
 
 export async function GET(_request: NextRequest, { params }: RouteParams) {
 	const { courseId } = await params;
-	const requestHeaders = await headers();
-	const session = await serverAuth.api.getSession({ headers: requestHeaders });
+	const auth = await requireAdmin();
+	if (!auth.ok) return auth.response;
 
-	if (!session) {
-		return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-	}
-
-	const admin = await isUserAdmin(session.user.id, session.user.email);
-	if (!admin) {
-		return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-	}
-
-	const client = sanityReadClient();
+	const client = sanityReadClient;
 	if (!client) {
 		return NextResponse.json({ error: "Sanity not configured" }, { status: 500 });
 	}
@@ -177,19 +113,10 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
 	const { courseId } = await params;
-	const requestHeaders = await headers();
-	const session = await serverAuth.api.getSession({ headers: requestHeaders });
+	const auth = await requireAdmin();
+	if (!auth.ok) return auth.response;
 
-	if (!session) {
-		return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-	}
-
-	const admin = await isUserAdmin(session.user.id, session.user.email);
-	if (!admin) {
-		return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-	}
-
-	const client = sanityWriteClient();
+	const client = sanityWriteClient;
 	if (!client) {
 		return NextResponse.json({ error: "Sanity write token not configured" }, { status: 500 });
 	}
@@ -308,23 +235,14 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
 export async function DELETE(_request: NextRequest, { params }: RouteParams) {
 	const { courseId } = await params;
-	const requestHeaders = await headers();
-	const session = await serverAuth.api.getSession({ headers: requestHeaders });
+	const auth = await requireAdmin();
+	if (!auth.ok) return auth.response;
 
-	if (!session) {
-		return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-	}
-
-	const admin = await isUserAdmin(session.user.id, session.user.email);
-	if (!admin) {
-		return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-	}
-
-	const client = sanityWriteClient();
+	const client = sanityWriteClient;
 
 	const programId = getProgramId();
 	const connection = getSolanaConnection();
-	const authority = loadAuthoritySigner();
+	const authority = loadBackendSigner();
 
 	let courseSlug: string | null = null;
 	if (client) {
