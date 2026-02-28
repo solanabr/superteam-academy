@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { upsertProfile } from "@/lib/supabase";
 
 const STORAGE_KEY = "profile:visibility";
 
-export function VisibilityToggle() {
+export function VisibilityToggle({ walletAddress }: { walletAddress?: string }) {
   const [isPublic, setIsPublic] = useState<boolean>(true);
   const [mounted, setMounted] = useState(false);
 
@@ -20,6 +21,10 @@ export function VisibilityToggle() {
     const next = !isPublic;
     setIsPublic(next);
     localStorage.setItem(STORAGE_KEY, next ? "public" : "private");
+    // Fire-and-forget Supabase update (best-effort)
+    if (walletAddress) {
+      upsertProfile({ walletAddress, isPublic: next }).catch(() => {});
+    }
   };
 
   if (!mounted) {

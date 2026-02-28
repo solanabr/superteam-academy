@@ -247,7 +247,12 @@ export default function LessonPage() {
   const t = useTranslations("lesson");
   const { publicKey } = useWallet();
 
-  const [code, setCode] = useState(DEMO_LESSON.starterCode);
+  const [code, setCode] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem(`code_${slug}_${id}`) ?? DEMO_LESSON.starterCode;
+    }
+    return DEMO_LESSON.starterCode;
+  });
   const [completing, setCompleting] = useState(false);
   const [completed, setCompleted] = useState(false);
   const [xpEarned, setXpEarned] = useState<number | null>(null);
@@ -257,6 +262,20 @@ export default function LessonPage() {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const isChallenge = DEMO_LESSON.type === "challenge";
+
+  // Parse next lesson ID
+  const parts = id.split("-l");
+  const coursePrefix = parts[0];
+  const lessonNum = parseInt(parts[1] || "1", 10);
+  const nextLessonId = `${coursePrefix}-l${lessonNum + 1}`;
+  const isLastLesson = lessonNum >= 6;
+
+  const handleCodeChange = (value: string | undefined) => {
+    setCode(value ?? "");
+    if (typeof window !== "undefined") {
+      localStorage.setItem(`code_${slug}_${id}`, value ?? "");
+    }
+  };
 
   const handleComplete = useCallback(async () => {
     if (!publicKey) return;
@@ -282,9 +301,6 @@ export default function LessonPage() {
     setPanelWidth((prev) => Math.min(75, Math.max(25, prev + deltaPct)));
   }, []);
 
-  // Suppress unused variable warning for `id`
-  void id;
-
   return (
     <div className="h-[calc(100vh-56px)] flex flex-col bg-[#0A0A0A]">
       {/* Top bar */}
@@ -309,10 +325,23 @@ export default function LessonPage() {
               {t("completed")}
             </span>
           )}
-          <button className="flex items-center gap-1.5 text-[#666666] hover:text-[#EDEDED] text-xs font-mono transition-colors">
-            <ChevronRight className="h-3 w-3" />
-            {t("next")}
-          </button>
+          {isLastLesson ? (
+            <Link
+              href={{ pathname: "/courses/[slug]", params: { slug } }}
+              className="flex items-center gap-1.5 text-[#14F195] hover:text-[#0D9E61] text-xs font-mono transition-colors"
+            >
+              <ChevronRight className="h-3 w-3" />
+              Finish Course ✓
+            </Link>
+          ) : (
+            <Link
+              href={{ pathname: "/courses/[slug]/lessons/[id]", params: { slug, id: nextLessonId } }}
+              className="flex items-center gap-1.5 text-[#666666] hover:text-[#EDEDED] text-xs font-mono transition-colors"
+            >
+              <ChevronRight className="h-3 w-3" />
+              {t("next")}
+            </Link>
+          )}
         </div>
       </div>
 
@@ -395,7 +424,7 @@ export default function LessonPage() {
           >
             <MonacoEditor
               value={code}
-              onChange={(v) => setCode(v ?? "")}
+              onChange={handleCodeChange}
               language="rust"
               height="100%"
               className="flex-1 rounded-none border-0 border-b border-[#1F1F1F]"

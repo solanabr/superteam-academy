@@ -55,7 +55,7 @@ export default async function ProfilePage({ params }: Props) {
               {profile.displayName ?? profile.username ?? username}
             </h1>
             <LevelBadge level={level} />
-            <VisibilityToggle />
+            <VisibilityToggle walletAddress={profile.walletAddress} />
           </div>
           {profile.username && (
             <p className="text-sm text-[#666666] font-mono">@{profile.username}</p>
@@ -109,6 +109,26 @@ export default async function ProfilePage({ params }: Props) {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {credentials.map((cred) => (
               <CredentialCard key={cred.id} credential={cred} />
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Completed Courses */}
+      <section className="mb-8">
+        <h2 className="font-mono text-sm font-semibold text-[#EDEDED] mb-3">Completed Courses</h2>
+        {credentials.length === 0 ? (
+          <p className="text-xs text-[#666666] font-mono">No completed courses yet.</p>
+        ) : (
+          <div className="space-y-2">
+            {credentials.map((cred) => (
+              <div key={cred.assetAddress} className="flex items-center justify-between bg-[#111111] border border-[#1F1F1F] rounded px-4 py-2.5">
+                <div>
+                  <p className="text-sm font-mono text-[#EDEDED]">{cred.attributes.trackId ?? "Academy"} Track</p>
+                  <p className="text-xs text-[#666666]">Level {cred.attributes.level ?? 0} · {Number(cred.attributes.totalXp ?? 0).toLocaleString()} XP</p>
+                </div>
+                <span className="text-[10px] font-mono text-[#14F195] bg-[#14F195]/10 border border-[#14F195]/20 rounded px-2 py-0.5">&#x2713; Completed</span>
+              </div>
             ))}
           </div>
         )}

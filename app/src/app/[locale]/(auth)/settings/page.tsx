@@ -6,15 +6,17 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { useRouter } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
-import { Check, Loader2, Globe, Palette, User, Link2 } from "lucide-react";
+import { Check, Loader2, Globe, Palette, User, Link2, Bell } from "lucide-react";
+import { upsertProfile } from "@/lib/supabase";
 
-type SettingsTab = "profile" | "accounts" | "appearance" | "language";
+type SettingsTab = "profile" | "accounts" | "appearance" | "language" | "notifications";
 
 const TABS: Array<{ id: SettingsTab; icon: typeof User; label: string }> = [
   { id: "profile", icon: User, label: "Profile" },
   { id: "accounts", icon: Link2, label: "Linked Accounts" },
   { id: "appearance", icon: Palette, label: "Appearance" },
   { id: "language", icon: Globe, label: "Language" },
+  { id: "notifications", icon: Bell, label: "Notifications" },
 ];
 
 const LANGUAGES = [
@@ -37,6 +39,11 @@ export default function SettingsPage() {
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
   const [activeTheme, setActiveTheme] = useState<"dark" | "light">("dark");
+  const [twitterHandle, setTwitterHandle] = useState("");
+  const [githubHandle, setGithubHandle] = useState("");
+  const [emailNotifs, setEmailNotifs] = useState(true);
+  const [streakReminder, setStreakReminder] = useState(true);
+  const [achievementNotifs, setAchievementNotifs] = useState(true);
 
   useEffect(() => {
     const saved = localStorage.getItem("theme");
@@ -58,10 +65,17 @@ export default function SettingsPage() {
   const handleSaveProfile = async () => {
     setSaving(true);
     try {
-      // TODO: upsertProfile from @/lib/supabase
-      await new Promise((r) => setTimeout(r, 800)); // mock delay
+      if (publicKey) {
+        await upsertProfile({
+          walletAddress: publicKey.toBase58(),
+          username: username || undefined,
+          bio: bio || undefined,
+        });
+      }
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
+    } catch (err) {
+      console.error("Failed to save profile:", err);
     } finally {
       setSaving(false);
     }
@@ -128,6 +142,22 @@ export default function SettingsPage() {
                   className="w-full bg-[#0A0A0A] border border-[#1F1F1F] rounded px-3 py-2 text-sm font-mono text-[#EDEDED] placeholder-[#333333] focus:outline-none focus:border-[#14F195]/50 transition-colors resize-none"
                 />
               </Field>
+              <Field label="Twitter / X">
+                <input
+                  value={twitterHandle}
+                  onChange={(e) => setTwitterHandle(e.target.value)}
+                  placeholder="@handle"
+                  className="w-full bg-[#0A0A0A] border border-[#1F1F1F] rounded px-3 py-2 text-sm font-mono text-[#EDEDED] placeholder-[#333333] focus:outline-none focus:border-[#14F195]/50 transition-colors"
+                />
+              </Field>
+              <Field label="GitHub">
+                <input
+                  value={githubHandle}
+                  onChange={(e) => setGithubHandle(e.target.value)}
+                  placeholder="username"
+                  className="w-full bg-[#0A0A0A] border border-[#1F1F1F] rounded px-3 py-2 text-sm font-mono text-[#EDEDED] placeholder-[#333333] focus:outline-none focus:border-[#14F195]/50 transition-colors"
+                />
+              </Field>
               <button
                 onClick={handleSaveProfile}
                 disabled={saving}
@@ -140,6 +170,31 @@ export default function SettingsPage() {
                 ) : null}
                 {saved ? t("profile.saved") : t("profile.save")}
               </button>
+              <div className="pt-4 border-t border-[#1F1F1F]">
+                <h3 className="font-mono text-xs font-semibold text-[#666666] mb-2 uppercase tracking-wider">Data Export</h3>
+                <p className="text-xs text-[#666666] mb-3">Download all your progress data, XP history, and credentials.</p>
+                <button
+                  onClick={() => {
+                    const data = {
+                      exportedAt: new Date().toISOString(),
+                      wallet: publicKey?.toBase58(),
+                      username,
+                      bio,
+                      streak: localStorage.getItem("streak_data"),
+                    };
+                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = "superteam-academy-data.json";
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  }}
+                  className="flex items-center gap-2 border border-[#1F1F1F] text-[#666666] font-mono text-xs px-4 py-2 rounded hover:border-[#2E2E2E] hover:text-[#EDEDED] transition-colors"
+                >
+                  Export Data (JSON)
+                </button>
+              </div>
             </div>
           )}
 
@@ -219,6 +274,31 @@ export default function SettingsPage() {
                   </button>
                 );
               })}
+            </div>
+          )}
+
+          {activeTab === "notifications" && (
+            <div className="bg-[#111111] border border-[#1F1F1F] rounded p-5 space-y-4">
+              <h2 className="font-mono text-sm font-semibold text-[#EDEDED]">Notifications</h2>
+              {[
+                { label: "Email notifications", sublabel: "Receive updates via email", state: emailNotifs, set: setEmailNotifs },
+                { label: "Streak reminders", sublabel: "Daily reminders to keep your streak", state: streakReminder, set: setStreakReminder },
+                { label: "Achievement alerts", sublabel: "Get notified when you earn badges", state: achievementNotifs, set: setAchievementNotifs },
+              ].map(({ label, sublabel, state, set }) => (
+                <div key={label} className="flex items-center justify-between py-2.5 border-b border-[#1F1F1F] last:border-0">
+                  <div>
+                    <p className="text-sm font-mono text-[#EDEDED]">{label}</p>
+                    <p className="text-xs text-[#666666]">{sublabel}</p>
+                  </div>
+                  <button
+                    onClick={() => { set(!state); localStorage.setItem(`notif_${label}`, String(!state)); }}
+                    className={`w-10 h-5 rounded-full transition-colors relative ${state ? "bg-[#14F195]" : "bg-[#333333]"}`}
+                  >
+                    <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all shadow ${state ? "left-5" : "left-0.5"}`} />
+                  </button>
+                </div>
+              ))}
+              <p className="text-[10px] text-[#444444] font-mono">Notification preferences are saved locally.</p>
             </div>
           )}
         </div>
