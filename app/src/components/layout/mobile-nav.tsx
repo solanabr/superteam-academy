@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { useWallet } from '@solana/wallet-adapter-react';
 import { Link } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
 import {
@@ -16,12 +15,12 @@ import { Separator } from '@/components/ui/separator';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { LanguageSwitcher } from '@/components/layout/language-switcher';
 import { SignInMenu } from '@/components/auth/sign-in-menu';
+import { WalletConnectButton } from '@/components/layout/wallet-connect-button';
 import {
   Menu,
   BookOpen,
   Trophy,
   Users,
-  Wallet,
   GraduationCap,
 } from 'lucide-react';
 
@@ -37,16 +36,9 @@ const navLinks: NavLink[] = [
   { href: '/community', labelKey: 'community', icon: Users },
 ];
 
-function truncateAddress(address: string): string {
-  if (address.length <= 8) return address;
-  return `${address.slice(0, 4)}...${address.slice(-4)}`;
-}
-
 export function MobileNav() {
   const [open, setOpen] = useState(false);
   const t = useTranslations('nav');
-  const tCommon = useTranslations('common');
-  const { publicKey, connected } = useWallet();
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -108,20 +100,7 @@ export function MobileNav() {
         </div>
 
         <div className="mt-auto px-4 pb-4">
-          <Button
-            className="w-full gap-2"
-            variant={connected ? 'outline' : 'default'}
-            aria-label={
-              connected
-                ? `Wallet connected: ${publicKey?.toBase58()}`
-                : tCommon('connect_wallet')
-            }
-          >
-            <Wallet className="h-4 w-4" />
-            {connected && publicKey
-              ? truncateAddress(publicKey.toBase58())
-              : tCommon('connect_wallet')}
-          </Button>
+          <WalletConnectButton fullWidth />
         </div>
       </SheetContent>
     </Sheet>

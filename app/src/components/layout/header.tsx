@@ -1,14 +1,13 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { useWallet } from '@solana/wallet-adapter-react';
 import { Link } from '@/i18n/routing';
-import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { LanguageSwitcher } from '@/components/layout/language-switcher';
 import { MobileNav } from '@/components/layout/mobile-nav';
 import { SignInMenu } from '@/components/auth/sign-in-menu';
-import { GraduationCap, Wallet } from 'lucide-react';
+import { WalletConnectButton } from '@/components/layout/wallet-connect-button';
+import { GraduationCap } from 'lucide-react';
 
 interface NavItem {
   href: string;
@@ -21,15 +20,8 @@ const navItems: NavItem[] = [
   { href: '/community', labelKey: 'community' },
 ];
 
-function truncateAddress(address: string): string {
-  if (address.length <= 8) return address;
-  return `${address.slice(0, 4)}...${address.slice(-4)}`;
-}
-
 export function Header() {
   const t = useTranslations('nav');
-  const tCommon = useTranslations('common');
-  const { publicKey, connected } = useWallet();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur-sm supports-[backdrop-filter]:bg-background/60">
@@ -70,21 +62,7 @@ export function Header() {
           <ThemeToggle />
           <LanguageSwitcher />
           <SignInMenu />
-          <Button
-            variant={connected ? 'outline' : 'default'}
-            size="sm"
-            className="gap-2"
-            aria-label={
-              connected
-                ? `Wallet connected: ${publicKey?.toBase58()}`
-                : tCommon('connect_wallet')
-            }
-          >
-            <Wallet className="h-4 w-4" />
-            {connected && publicKey
-              ? truncateAddress(publicKey.toBase58())
-              : tCommon('connect_wallet')}
-          </Button>
+          <WalletConnectButton />
         </div>
 
         {/* Mobile Navigation */}
