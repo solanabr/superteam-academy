@@ -15,6 +15,8 @@ export const routing = defineRouting({
     "/settings": "/settings",
     "/certificates/[id]": "/certificates/[id]",
     "/community": "/community",
+    "/community/new": "/community/new",
+    "/community/[id]": "/community/[id]",
     "/admin": "/admin",
     "/onboarding": "/onboarding",
   },
