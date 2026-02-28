@@ -70,7 +70,7 @@ Landing · Course Catalog · Course Detail · Lessons · Code Challenges · Dash
 
 | Performance | Accessibility | Best Practices | SEO |
 |:-----------:|:------------:|:--------------:|:---:|
-| 90 | 96 | 96 | 91 |
+| 90 | 100 | 100 | 100 |
 
 ## Devnet Deployment
 
