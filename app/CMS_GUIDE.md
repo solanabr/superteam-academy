@@ -4,19 +4,24 @@ Course content — courses, modules, lessons, and instructors — is managed thr
 
 ## Initial Setup
 
-### Step 1 - Create a Sanity Project
+### Step 1 - Sanity Project
 
+The Sanity project is already created and seeded with 5 courses. Project ID: `k9esrahg`.
+
+To use the existing project, skip to Step 2 and set `NEXT_PUBLIC_SANITY_PROJECT_ID=k9esrahg`.
+
+To create your own Sanity project (e.g. for a fork/community deployment):
 1. Go to [sanity.io](https://sanity.io) and sign in (free account is sufficient).
 2. Click **Create new project**.
 3. Name it `superteam-academy` and choose the `production` dataset.
-4. Note your **Project ID** from the project dashboard (looks like `abc12def`).
+4. Note your **Project ID** from the project dashboard.
 
 ### Step 2 - Set Environment Variables
 
 Add these to your `.env.local`:
 
 ```env
-NEXT_PUBLIC_SANITY_PROJECT_ID=your_project_id_here
+NEXT_PUBLIC_SANITY_PROJECT_ID=k9esrahg
 NEXT_PUBLIC_SANITY_DATASET=production
 # Optional: write token for seeding via script
 SANITY_API_TOKEN=your_token_here
@@ -31,7 +36,7 @@ To get `SANITY_API_TOKEN`:
 
 1. Sanity dashboard → your project → **API** tab → **CORS Origins**
 2. Add `http://localhost:3000` for development
-3. Add your production URL (e.g. `https://your-app.vercel.app`) for production
+3. Add your production URL (e.g. `https://app-dun-beta.vercel.app`) for production
 4. Check **Allow credentials** for both
 
 ### Step 4 - Open the Studio

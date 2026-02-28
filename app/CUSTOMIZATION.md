@@ -230,6 +230,67 @@ In Sanity Studio, create courses with `trackId: 6`. The landing page reads the `
 
 If courses in this track will have on-chain enrollment, register each course via the Anchor `initialize_course` instruction with the corresponding `track_id: 6`.
 
+## Extending the Gamification System
+
+### XP & Level Formula
+
+XP is a live on-chain Token-2022 balance. The level displayed throughout the UI is derived client-side:
+
+```typescript
+// src/lib/solana.ts
+export function xpToLevel(xp: number): number {
+  return Math.floor(Math.sqrt(xp / 100));
+}
+```
+
+To change the formula (e.g. linear instead of square-root):
+
+```typescript
+// Linear: level up every 500 XP
+export function xpToLevel(xp: number): number {
+  return Math.floor(xp / 500);
+}
+```
+
+Update all components that call `xpToLevel` — search `src/` for the import.
+
+### Adding New Achievement Types
+
+Achievements are on-chain `AchievementType` PDAs. Each type defines a badge name, metadata URI, supply cap, and XP reward. To add a new achievement:
+
+1. **Register on-chain** via `initialize_achievement_type` (authority keypair required):
+```bash
+anchor run init-achievement -- \
+  --achievement-id "speed-runner" \
+  --name "Speed Runner" \
+  --xp-reward 500 \
+  --supply-cap 1000
+```
+
+2. **Add badge display** in `src/components/gamification/AchievementCard.tsx` — map the `achievementId` to an icon and description:
+```typescript
+const ACHIEVEMENT_META: Record<string, { icon: string; label: string }> = {
+  "first-steps": { icon: "👶", label: "First Steps" },
+  "speed-runner": { icon: "⚡", label: "Speed Runner" },  // add here
+};
+```
+
+3. **Trigger claiming** — call `claim_achievement` via the backend after verifying the condition is met.
+
+### Streak Milestones
+
+Streaks are frontend-managed (localStorage + Supabase). Milestone rewards are defined in `src/services/streak.ts`:
+
+```typescript
+const STREAK_MILESTONES = [
+  { days: 7,   xpBonus: 100, badge: "week-warrior" },
+  { days: 30,  xpBonus: 500, badge: "monthly-master" },
+  { days: 100, xpBonus: 2000, badge: "consistency-king" },
+];
+```
+
+Add new milestones by extending this array and creating the corresponding `AchievementType` on-chain.
+
 ## Analytics Configuration
 
 ### PostHog (Product Analytics)
@@ -357,9 +418,10 @@ In Vercel dashboard → your project → **Settings** → **Environment Variable
 | `NEXT_PUBLIC_PROGRAM_ID` | All | `ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf` |
 | `NEXT_PUBLIC_CLUSTER` | All | `devnet` (or `mainnet-beta`) |
 | `NEXT_PUBLIC_XP_MINT` | All | XP mint address |
+| `NEXT_PUBLIC_RPC_URL` | Recommended | Helius RPC endpoint (`https://devnet.helius-rpc.com/?api-key=xxx`) |
 | `NEXT_PUBLIC_HELIUS_API_KEY` | All | Helius API key |
 | `NEXTAUTH_SECRET` | All | `openssl rand -base64 32` |
-| `NEXTAUTH_URL` | Production | `https://your-app.vercel.app` |
+| `NEXTAUTH_URL` | Production | `https://app-dun-beta.vercel.app` |
 | `GOOGLE_CLIENT_ID` | All | Google OAuth client ID |
 | `GOOGLE_CLIENT_SECRET` | All | Google OAuth client secret |
 | `GITHUB_CLIENT_ID` | All | GitHub OAuth app client ID |
@@ -374,13 +436,13 @@ In Vercel dashboard → your project → **Settings** → **Environment Variable
 After getting your Vercel deployment URL, update your OAuth apps:
 
 **Google Cloud Console** (`console.cloud.google.com`):
-- Authorized redirect URIs: `https://your-app.vercel.app/api/auth/callback/google`
+- Authorized redirect URIs: `https://app-dun-beta.vercel.app/api/auth/callback/google`
 
 **GitHub Developer Settings**:
-- Authorization callback URL: `https://your-app.vercel.app/api/auth/callback/github`
+- Authorization callback URL: `https://app-dun-beta.vercel.app/api/auth/callback/github`
 
 **Sanity CORS**:
-- Add `https://your-app.vercel.app` to allowed origins
+- Add `https://app-dun-beta.vercel.app` to allowed origins
 
 ### Preview Deployments
 

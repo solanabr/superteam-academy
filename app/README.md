@@ -22,6 +22,8 @@ Superteam Academy is a decentralized learning platform where developers master S
 | PWA | Service Worker + Web App Manifest |
 | Deployment | Vercel |
 
+**Live demo**: https://app-dun-beta.vercel.app
+
 ## Quick Start
 
 ```bash
@@ -33,7 +35,7 @@ cd superteam-academy/app
 npm install
 
 # Copy and fill environment variables
-cp .env.example .env.local
+cp .env.local.example .env.local
 # Edit .env.local with your values (see Environment Variables section below)
 
 # Start development server
@@ -53,6 +55,7 @@ Create `.env.local` from `.env.example` and fill in all required values:
 | `NEXT_PUBLIC_PROGRAM_ID` | Yes | Deployed Anchor program address (`ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf`) |
 | `NEXT_PUBLIC_CLUSTER` | Yes | `devnet` or `mainnet-beta` |
 | `NEXT_PUBLIC_XP_MINT` | Yes | Token-2022 XP mint address (NonTransferable + PermanentDelegate) |
+| `NEXT_PUBLIC_RPC_URL` | Recommended | Helius RPC endpoint (`https://devnet.helius-rpc.com/?api-key=xxx`) |
 | `NEXT_PUBLIC_HELIUS_API_KEY` | Recommended | Helius RPC + DAS API key for credential/leaderboard queries |
 | `BACKEND_SIGNER_PRIVATE_KEY` | Production | Backend keypair byte array — signs `complete_lesson` transactions |
 
@@ -89,6 +92,7 @@ Create `.env.local` from `.env.example` and fill in all required values:
 |---|---|---|
 | `NEXT_PUBLIC_GA_MEASUREMENT_ID` | Optional | GA4 measurement ID (`G-XXXXXXXXXX`) |
 | `NEXT_PUBLIC_POSTHOG_KEY` | Optional | PostHog project API key (`phc_xxx`) |
+| `NEXT_PUBLIC_POSTHOG_HOST` | Optional | PostHog host (defaults to `https://eu.i.posthog.com`) |
 | `NEXT_PUBLIC_SENTRY_DSN` | Optional | Sentry DSN for error tracking |
 
 ## Supabase Setup
@@ -267,4 +271,5 @@ Copy all variables from `.env.example` to Vercel. At minimum set:
 ## Bounty Submission
 
 This is a submission for the Superteam Brazil hackathon bounty.
-PR target: `github.com/solanabr/superteam-academy`
+PR: https://github.com/solanabr/superteam-academy/pull/37
+Live demo: https://app-dun-beta.vercel.app
