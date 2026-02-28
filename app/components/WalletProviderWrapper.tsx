@@ -1,6 +1,6 @@
 'use client';
 
-import '@solana/wallet-adapter-react-ui/styles.css';
+// styles loaded via globals.css (dynamic import doesn't bundle CSS correctly)
 import { useMemo } from 'react';
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
