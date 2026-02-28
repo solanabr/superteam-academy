@@ -49,9 +49,6 @@
 	--animate-accordion-up: accordion-up 0.2s ease-out;
 	--animate-fade-in: fade-in 0.4s ease-out;
 	--animate-fade-up: fade-up 0.5s ease-out;
-	--animate-slide-in: slide-in 0.3s ease-out;
-	--animate-scale-in: scale-in 0.2s ease-out;
-	--animate-shimmer: shimmer 2s linear infinite;
 	--animate-pulse-soft: pulse-soft 2s ease-in-out infinite;
 	--animate-float: float 6s ease-in-out infinite;
 
@@ -87,34 +84,6 @@
 		to {
 			opacity: 1;
 			transform: translateY(0);
-		}
-	}
-	@keyframes slide-in {
-		from {
-			opacity: 0;
-			transform: translateX(-8px);
-		}
-		to {
-			opacity: 1;
-			transform: translateX(0);
-		}
-	}
-	@keyframes scale-in {
-		from {
-			opacity: 0;
-			transform: scale(0.95);
-		}
-		to {
-			opacity: 1;
-			transform: scale(1);
-		}
-	}
-	@keyframes shimmer {
-		0% {
-			background-position: -200% 0;
-		}
-		100% {
-			background-position: 200% 0;
 		}
 	}
 	@keyframes pulse-soft {
@@ -218,30 +187,15 @@
 	.glass {
 		@apply bg-background/80 backdrop-blur-xl border border-border/50;
 	}
-	.glass-card {
-		@apply bg-card/70 backdrop-blur-lg border border-border/30 shadow-sm;
-	}
 	.surface-elevated {
-		@apply bg-card shadow-md shadow-black/[0.04] border border-border/60;
+		@apply bg-card shadow-md shadow-black/4 border border-border/60;
 	}
 	.surface-inset {
 		@apply bg-surface border border-border/40;
 	}
-	.glow-green {
-		box-shadow: 0 0 24px -4px rgba(0, 140, 76, 0.2);
-	}
-	.glow-gold {
-		box-shadow: 0 0 24px -4px rgba(255, 210, 63, 0.25);
-	}
 	.pattern-dots {
 		background-image: radial-gradient(circle, var(--color-border) 1px, transparent 1px);
 		background-size: 24px 24px;
-	}
-	.pattern-grid {
-		background-image:
-			linear-gradient(var(--color-border) 1px, transparent 1px),
-			linear-gradient(90deg, var(--color-border) 1px, transparent 1px);
-		background-size: 40px 40px;
 	}
 	.noise {
 		position: relative;

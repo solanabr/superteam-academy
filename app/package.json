@@ -78,13 +78,5 @@
 		"tailwindcss": "catalog:",
 		"typescript": "catalog:",
 		"vitest": "catalog:"
-	},
-	"browserslist": [
-		"iOS >= 15",
-		"Android >= 10",
-		"Chrome >= 90",
-		"Firefox >= 88",
-		"Safari >= 15",
-		"Edge >= 90"
-	]
+	}
 }

@@ -21,14 +21,46 @@ import { FeaturedCoursesSkeleton } from "@/components/home/featured-courses-skel
 import Image from "next/image";
 
 const TOPICS = [
-	{ name: "Solana Basics", courses: 12, color: "bg-green/10 text-green" },
-	{ name: "Anchor Framework", courses: 8, color: "bg-forest/10 text-forest" },
-	{ name: "Token Programs", courses: 6, color: "bg-gold/10 text-amber-700 dark:text-amber-400" },
-	{ name: "DeFi Development", courses: 9, color: "bg-green/10 text-green" },
-	{ name: "NFT & Metaplex", courses: 5, color: "bg-forest/10 text-forest" },
-	{ name: "Security & Auditing", courses: 7, color: "bg-destructive/10 text-destructive" },
-	{ name: "Web3 Frontend", courses: 10, color: "bg-gold/10 text-amber-700 dark:text-amber-400" },
-	{ name: "Compressed NFTs", courses: 4, color: "bg-green/10 text-green" },
+	{
+		name: "Solana Basics",
+		courses: 12,
+		color: "bg-green/20 text-foreground border border-green/30",
+	},
+	{
+		name: "Anchor Framework",
+		courses: 8,
+		color: "bg-forest/15 text-foreground border border-forest/30",
+	},
+	{
+		name: "Token Programs",
+		courses: 6,
+		color: "bg-gold/25 text-foreground border border-gold/35",
+	},
+	{
+		name: "DeFi Development",
+		courses: 9,
+		color: "bg-green/20 text-foreground border border-green/30",
+	},
+	{
+		name: "NFT & Metaplex",
+		courses: 5,
+		color: "bg-forest/15 text-foreground border border-forest/30",
+	},
+	{
+		name: "Security & Auditing",
+		courses: 7,
+		color: "bg-destructive/20 text-foreground border border-destructive/35",
+	},
+	{
+		name: "Web3 Frontend",
+		courses: 10,
+		color: "bg-gold/25 text-foreground border border-gold/35",
+	},
+	{
+		name: "Compressed NFTs",
+		courses: 4,
+		color: "bg-green/20 text-foreground border border-green/30",
+	},
 ];
 
 const TESTIMONIALS = [
@@ -75,10 +107,7 @@ async function HeroSection() {
 							{t("titleSuffix")}
 						</h1>
 
-						<p
-							className="mt-6 text-lg sm:text-xl text-muted-foreground max-w-2xl leading-relaxed animate-fade-up"
-							style={{ animationDelay: "100ms" }}
-						>
+						<p className="mt-6 text-lg sm:text-xl text-muted-foreground max-w-2xl leading-relaxed">
 							{t("description")}
 						</p>
 
@@ -167,7 +196,7 @@ async function TopicsStrip() {
 		<section className="border-y border-border bg-muted/30">
 			<div className="mx-auto px-4 sm:px-6 py-6">
 				<div className="flex items-center gap-3 overflow-x-auto scrollbar-none pb-1">
-					<span className="text-sm font-medium text-muted-foreground whitespace-nowrap">
+					<span className="text-sm font-medium text-foreground/80 whitespace-nowrap">
 						{t("popular")}
 					</span>
 					{TOPICS.map((topic) => (
@@ -177,7 +206,7 @@ async function TopicsStrip() {
 							className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all hover:scale-105 ${topic.color}`}
 						>
 							{topic.name}
-							<span className="text-xs text-muted-foreground">{topic.courses}</span>
+							<span className="text-xs text-foreground/80">{topic.courses}</span>
 						</Link>
 					))}
 				</div>

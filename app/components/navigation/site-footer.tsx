@@ -48,11 +48,16 @@ export function SiteFooter() {
 				<div className="py-12 lg:py-16">
 					<div className="grid grid-cols-3 md:grid-cols-5 gap-8 lg:gap-12">
 						<div className="col-span-3 md:col-span-2 space-y-4">
-							<Link href="/" className="cursor-pointer inline-block">
+							<Link
+								href="/"
+								className="cursor-pointer inline-block"
+								aria-label="Superteam Academy home"
+							>
 								<Logo
 									width={150}
 									height={32}
 									className="text-brand dark:text-white"
+									aria-hidden="true"
 								/>
 							</Link>
 							<p className="text-sm text-muted-foreground leading-relaxed max-w-xs">

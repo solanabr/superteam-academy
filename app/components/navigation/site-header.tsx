@@ -117,8 +117,17 @@ export function SiteHeader() {
 			<header className="sticky top-0 z-50 w-full glass border-b border-border/40">
 				<div className="mx-auto px-4 sm:px-6">
 					<div className="flex h-16 items-center gap-4">
-						<Link href="/" className="cursor-pointer">
-							<Logo width={150} height={32} className="text-brand dark:text-white" />
+						<Link
+							href="/"
+							className="cursor-pointer"
+							aria-label="Superteam Academy home"
+						>
+							<Logo
+								width={150}
+								height={32}
+								className="text-brand dark:text-white"
+								aria-hidden="true"
+							/>
 						</Link>
 
 						<nav className="hidden lg:flex items-center gap-1">
