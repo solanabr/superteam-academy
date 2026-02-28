@@ -135,11 +135,15 @@ async function scrollTo(page: Parameters<typeof chromium.launch>[0] extends neve
     await sleep(600);
   }
 
-  // Click "Run Code"
+  // Click "Run Code" — only if enabled
   const runBtn = page.locator('button').filter({ hasText: /run code|mark complete/i }).first();
-  if (await runBtn.isVisible()) {
-    await runBtn.click();
+  if (await runBtn.isVisible() && await runBtn.isEnabled()) {
+    await runBtn.click({ force: true });
     await sleep(2000);
+  } else {
+    // just scroll to show the button area
+    await scrollDown(page, 200);
+    await sleep(800);
   }
 
   // ── 5. Dashboard ──────────────────────────────────────────────────
