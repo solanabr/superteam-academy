@@ -653,5 +653,11 @@
     "close_menu": "Cerrar menu",
     "language_selector": "Seleccionar idioma",
     "xp_progress": "Barra de progreso XP"
+  },
+  "certificates": {
+    "title": "Mis Certificados",
+    "description": "Credenciales verificadas on-chain obtenidas al completar cursos",
+    "total_earned": "Certificados Obtenidos",
+    "verified": "Verificado On-chain"
   }
 }

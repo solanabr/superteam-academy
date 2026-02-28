@@ -674,3 +674,29 @@ The `lib/indexed-db.ts` module provides offline support:
 3. **Auto-sync**: When the browser comes back online, queued completions are synced to the server
 4. **Storage structure**: Two object stores — `courses` (keyed by slug) and `completionQueue` (keyed by unique ID, indexed by sync status)
 
+
+
+## PWA & Offline Architecture
+
+### Service Worker (`public/sw.js`)
+- **Cache-first** strategy for static assets (JS, CSS, images, fonts)
+- **Network-first** strategy for API routes and page navigation
+- Cache name versioned for clean updates
+- Registered in `app/[locale]/layout.tsx` via `<script>` tag
+
+### Web App Manifest (`public/manifest.json`)
+- Standalone display mode for native-like experience
+- 192x192 and 512x512 icons
+- Theme color `#030712` matching the dark UI
+- `start_url: /pt-BR` for Brazilian-first experience
+
+### IndexedDB (`lib/indexed-db.ts`)
+- **`courses` store**: Cached course content keyed by slug for offline reading
+- **`completionQueue` store**: Pending lesson completions queued while offline, indexed by sync status
+- Auto-sync via `navigator.onLine` event listener — completions POST to `/api/complete-lesson` when connectivity returns
+- Typed wrappers: `saveOfflineCourse()`, `listOfflineCourses()`, `queueCompletion()`, `getUnsyncedCompletions()`, `syncCompletions()`
+
+### Offline Page (`/[locale]/offline`)
+- Client component showing saved courses from IndexedDB
+- Pending sync queue with count badge
+- Connection status indicator with real-time `online`/`offline` events

@@ -46,6 +46,11 @@ export const routing = defineRouting({
       'en': '/profile/[address]',
       'es': '/perfil/[address]',
     },
+    '/certificates': {
+      'pt-BR': '/certificados',
+      'en': '/certificates',
+      'es': '/certificados',
+    },
     '/certificates/[id]': {
       'pt-BR': '/certificados/[id]',
       'en': '/certificates/[id]',

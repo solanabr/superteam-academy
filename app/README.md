@@ -1,5 +1,8 @@
 # Superteam Academy
 
+[![CI](https://github.com/TheAuroraAI/superteam-academy/actions/workflows/ci.yml/badge.svg?branch=feat/frontend-lms-25-02-2026)](https://github.com/TheAuroraAI/superteam-academy/actions/workflows/ci.yml)
+
+
 Superteam Academy is a decentralized learning platform for Web3 and Solana education, built for the Brazilian developer community and beyond. Learners enroll in structured courses, complete interactive code challenges with a built-in Monaco editor, earn XP through a gamification system, climb leaderboards, and receive on-chain NFT credentials on Solana -- all in a multilingual interface that supports Portuguese, English, and Spanish.
 
 > **Live demo**: [app-roan-iota-58.vercel.app](https://app-roan-iota-58.vercel.app)

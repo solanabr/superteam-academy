@@ -653,5 +653,11 @@
     "close_menu": "Close menu",
     "language_selector": "Select language",
     "xp_progress": "XP progress bar"
+  },
+  "certificates": {
+    "title": "My Certificates",
+    "description": "On-chain verified credentials earned through course completion",
+    "total_earned": "Certificates Earned",
+    "verified": "On-chain Verified"
   }
 }
