@@ -16,6 +16,7 @@ export const routing = defineRouting({
     "/certificates/[id]": "/certificates/[id]",
     "/community": "/community",
     "/admin": "/admin",
+    "/onboarding": "/onboarding",
   },
 });
 
