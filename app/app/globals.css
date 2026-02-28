@@ -24,3 +24,65 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Solana wallet adapter overrides — fix dropdown/button styling conflicts with Tailwind v4 */
+.wallet-adapter-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.wallet-adapter-dropdown-list {
+  position: absolute !important;
+  top: 100% !important;
+  right: 0 !important;
+  z-index: 9999 !important;
+  display: none !important;
+  min-width: 160px;
+  padding: 4px 0;
+  margin-top: 4px;
+  background: #1e1e2e !important;
+  border-radius: 8px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+  list-style: none !important;
+}
+
+.wallet-adapter-dropdown-list.wallet-adapter-dropdown-list-active {
+  display: block !important;
+}
+
+.wallet-adapter-dropdown-list li {
+  display: block !important;
+}
+
+.wallet-adapter-dropdown-list-item {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 16px !important;
+  color: #e2e8f0 !important;
+  background: transparent !important;
+  border: none !important;
+  cursor: pointer;
+  font-size: 14px !important;
+  white-space: nowrap;
+}
+
+.wallet-adapter-dropdown-list-item:hover {
+  background: #7c3aed44 !important;
+}
+
+.wallet-adapter-button {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.wallet-adapter-modal-wrapper {
+  z-index: 99999 !important;
+}
+
+.wallet-adapter-modal-overlay {
+  z-index: 99998 !important;
+  background: rgba(0, 0, 0, 0.7) !important;
+}
