@@ -734,7 +734,7 @@ export function LessonView({
       </div>
 
       {/* Body */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 min-h-0 overflow-hidden">
         {/* Sidebar */}
         <ModuleSidebar
           modules={modules}
@@ -746,7 +746,7 @@ export function LessonView({
         />
 
         {/* Main split area */}
-        <div ref={containerRef} className="flex flex-1 overflow-hidden">
+        <div ref={containerRef} className="flex flex-1 min-h-0 overflow-hidden">
           {/* Content pane */}
           <div
             className="overflow-y-auto flex-shrink-0"
@@ -890,17 +890,20 @@ export function LessonView({
               <ResizableDivider onDrag={handleDividerDrag} />
 
               <div
-                className="flex flex-col flex-shrink-0 overflow-hidden bg-card"
+                className="flex flex-col flex-shrink-0 min-h-0 overflow-hidden bg-card"
                 style={{ width: `${100 - panelWidth}%` }}
               >
                 {/* Editor tab bar */}
                 <div className="flex items-center border-b border-border px-3 py-1.5 gap-2 flex-shrink-0">
-                  <div className="flex items-center gap-1.5 bg-background rounded px-3 py-1 border border-border">
+                  <div className="flex items-center gap-1.5 bg-[#14F195]/10 rounded px-3 py-1 border border-[#14F195]/30">
                     <Code2 className="h-3 w-3 text-[#14F195]" />
-                    <span className="text-[10px] font-mono text-foreground">
-                      solution.{language === "rust" ? "rs" : "ts"}
+                    <span className="text-[10px] font-mono text-[#14F195]">
+                      main.{language === "rust" ? "rs" : "ts"}
                     </span>
                   </div>
+                  <span className="text-[10px] font-mono text-muted-foreground">
+                    ← write your solution here
+                  </span>
                   <div className="ml-auto flex items-center gap-1.5">
                     <span className="text-[10px] font-mono text-muted-foreground">
                       {language === "rust" ? "Rust" : "TypeScript"}
@@ -909,7 +912,7 @@ export function LessonView({
                 </div>
 
                 {/* Monaco editor */}
-                <div className="flex-1 overflow-hidden">
+                <div className="flex-1 min-h-0 overflow-hidden">
                   <MonacoEditor
                     value={code}
                     onChange={handleCodeChange}

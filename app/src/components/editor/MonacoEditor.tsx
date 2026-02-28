@@ -56,6 +56,7 @@ export function MonacoEditor({
     <div
       className={cn(
         "border border-border rounded overflow-hidden",
+        height === "100%" && "h-full",
         className
       )}
     >
