@@ -13,6 +13,7 @@ export function useWalletAuth() {
   const [state, setState] = useState<WalletAuthState>("idle");
   const [error, setError] = useState<string | null>(null);
   const prevPubkey = useRef<string | null>(null);
+  const hasConnectedOnce = useRef(false);
 
   // Session already has this wallet authenticated
   const isAuthenticated =
@@ -74,13 +75,18 @@ export function useWalletAuth() {
     }
   }, [publicKey, state]);
 
-  // Sign out of NextAuth when wallet disconnects
+  // Track that the wallet has connected at least once
   useEffect(() => {
-    if (!connected && session?.user?.id) {
+    if (connected) hasConnectedOnce.current = true;
+  }, [connected]);
+
+  // Sign out of NextAuth when wallet disconnects (skip initial render before auto-connect)
+  useEffect(() => {
+    if (!connected && hasConnectedOnce.current && session?.user?.id) {
       signOut({ redirect: false });
       setState("idle");
     }
-  }, [connected, session]);
+  }, [connected, session?.user?.id]);
 
   return {
     state,
