@@ -9,8 +9,7 @@ target/
 # Test artifacts
 test-ledger/
 
-# Lock files (regenerated per-workspace)
-# Keep Cargo.lock for reproducible builds but ignore yarn.lock if using pnpm
+# Lock files
 yarn.lock
 
 # OS files
@@ -21,6 +20,11 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+
+# Build (Next.js)
+.next/
+out/
+dist/
 
 # IDE / Editor
 .idea/
@@ -54,6 +58,22 @@ onchain-academy/trident-tests/fuzz/artifacts/
 
 # Verifiable build artifacts
 onchain-academy/target/verifiable/
+
+# Vercel
+.vercel
+
+# Sentry
+.sentryclirc
+
+# PWA (generated workbox files)
+workbox-*.js
+
+# Test
+test-results/
+playwright-report/
+
+# Sanity
+.sanity/
 
 # Misc
 *.log
