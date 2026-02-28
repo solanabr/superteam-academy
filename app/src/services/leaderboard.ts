@@ -4,12 +4,12 @@ import type { LeaderboardEntry, LeaderboardTimeframe } from "@/types";
 import { supabase } from "@/lib/supabase";
 
 export async function getLeaderboard(
-  _timeframe: LeaderboardTimeframe = "all-time"
+  timeframe: LeaderboardTimeframe = "all-time"
 ): Promise<LeaderboardEntry[]> {
   // Fetch all XP token balances from Solana
   const balances = await fetchAllXpBalances();
 
-  if (balances.length === 0) return getMockLeaderboard();
+  if (balances.length === 0) return getMockLeaderboard(timeframe);
 
   // Enrich with usernames from Supabase profiles (best-effort)
   const wallets = balances.slice(0, 50).map((b) => b.wallet);
@@ -45,23 +45,45 @@ export async function getLeaderboard(
   }));
 }
 
-function getMockLeaderboard(): LeaderboardEntry[] {
-  const mocks = [
-    { wallet: "7xKXt...8mPQ", xp: 48500 },
-    { wallet: "9sR2k...3nVW", xp: 41200 },
-    { wallet: "4mPL...7qRT", xp: 37800 },
-    { wallet: "2jNK...6wXS", xp: 31100 },
-    { wallet: "8rQT...1yZU", xp: 28400 },
-    { wallet: "5vBL...9cAB", xp: 24700 },
-    { wallet: "1kMN...4fCD", xp: 21300 },
-    { wallet: "6wOP...2hEF", xp: 18900 },
-    { wallet: "3tQR...7jGH", xp: 16400 },
-    { wallet: "0xST...5kIJ", xp: 14100 },
+function getMockLeaderboard(timeframe: LeaderboardTimeframe = "all-time"): LeaderboardEntry[] {
+  const allTime = [
+    { wallet: "7xKXt...8mPQ", xp: 48500, username: "sol_maxi" },
+    { wallet: "9sR2k...3nVW", xp: 41200, username: "anchor_dev" },
+    { wallet: "4mPL...7qRT", xp: 37800, username: "rustacean" },
+    { wallet: "2jNK...6wXS", xp: 31100, username: "degen_builder" },
+    { wallet: "8rQT...1yZU", xp: 28400, username: "lamport_lord" },
+    { wallet: "5vBL...9cAB", xp: 24700, username: "pdaMaster" },
+    { wallet: "1kMN...4fCD", xp: 21300, username: "zk_curious" },
+    { wallet: "6wOP...2hEF", xp: 18900, username: "helius_fan" },
+    { wallet: "3tQR...7jGH", xp: 16400, username: "spl_enjoyer" },
+    { wallet: "0xST...5kIJ", xp: 14100, username: "wagmi_dev" },
   ];
+
+  const monthly = [
+    { wallet: "5vBL...9cAB", xp: 6200, username: "pdaMaster" },
+    { wallet: "8rQT...1yZU", xp: 5800, username: "lamport_lord" },
+    { wallet: "2jNK...6wXS", xp: 4900, username: "degen_builder" },
+    { wallet: "7xKXt...8mPQ", xp: 4400, username: "sol_maxi" },
+    { wallet: "3tQR...7jGH", xp: 3800, username: "spl_enjoyer" },
+    { wallet: "0xST...5kIJ", xp: 3300, username: "wagmi_dev" },
+    { wallet: "1kMN...4fCD", xp: 2900, username: "zk_curious" },
+    { wallet: "6wOP...2hEF", xp: 2500, username: "helius_fan" },
+  ];
+
+  const weekly = [
+    { wallet: "3tQR...7jGH", xp: 1450, username: "spl_enjoyer" },
+    { wallet: "0xST...5kIJ", xp: 1280, username: "wagmi_dev" },
+    { wallet: "5vBL...9cAB", xp: 980, username: "pdaMaster" },
+    { wallet: "1kMN...4fCD", xp: 820, username: "zk_curious" },
+    { wallet: "8rQT...1yZU", xp: 650, username: "lamport_lord" },
+  ];
+
+  const mocks = timeframe === "weekly" ? weekly : timeframe === "monthly" ? monthly : allTime;
 
   return mocks.map((m, i) => ({
     rank: i + 1,
     walletAddress: m.wallet,
+    username: m.username,
     xpBalance: m.xp,
     level: xpToLevel(m.xp),
   }));
