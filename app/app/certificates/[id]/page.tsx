@@ -23,8 +23,6 @@ export default function CertificatePage() {
 
   return (
     <div className="min-h-screen bg-[#020202]">
-
-      {/* Header */}
       <div className="border-b border-[#1a1a1a] px-6 py-12 max-w-7xl mx-auto">
         <div className="flex items-center gap-4 mb-4">
           <span className="text-[10px] font-mono text-[#333] uppercase tracking-widest">
@@ -32,7 +30,7 @@ export default function CertificatePage() {
           </span>
           <div className="flex-1 h-px bg-[#1a1a1a]" />
           
-            href={`https://explorer.solana.com/address/${id}?cluster=devnet`}
+          <a  href={`https://explorer.solana.com/address/${id}?cluster=devnet`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 text-[10px] font-mono text-[#444] hover:text-[#9945ff] transition-colors uppercase tracking-widest"
@@ -48,62 +46,47 @@ export default function CertificatePage() {
 
       <div className="max-w-4xl mx-auto px-6 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-px bg-[#1a1a1a]">
-
-          {/* Certificate visual */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="bg-[#020202] p-8"
           >
             <div className="border border-[#9945ff]/30 p-8 relative overflow-hidden">
-              {/* Background pattern */}
               <div className="absolute inset-0 opacity-5">
                 <div className="absolute inset-0" style={{
                   backgroundImage: "repeating-linear-gradient(0deg, #9945ff, #9945ff 1px, transparent 1px, transparent 40px), repeating-linear-gradient(90deg, #9945ff, #9945ff 1px, transparent 1px, transparent 40px)",
                 }} />
               </div>
-
               <div className="relative">
                 <div className="text-[10px] font-mono text-[#9945ff] uppercase tracking-widest mb-8">
                   SUPERTEAM_ACADEMY // DEVNET
                 </div>
-
                 <div className="text-[10px] font-mono text-[#444] uppercase tracking-widest mb-2">
                   THIS_CERTIFIES_THAT
                 </div>
                 <div className="font-display font-black text-2xl uppercase tracking-tight text-[#f5f5f0] mb-6">
-                  {mockCredential.recipient.slice(0, 8)}...
-                  {mockCredential.recipient.slice(-8)}
+                  {mockCredential.recipient.slice(0, 8)}...{mockCredential.recipient.slice(-8)}
                 </div>
-
                 <div className="text-[10px] font-mono text-[#444] uppercase tracking-widest mb-2">
                   HAS_COMPLETED
                 </div>
                 <div className="font-display font-black text-3xl uppercase tracking-tight text-[#9945ff] mb-8">
                   {mockCredential.track}
                 </div>
-
                 <div className="grid grid-cols-3 gap-4 border-t border-[#1a1a1a] pt-6">
                   <div>
                     <div className="text-[10px] font-mono text-[#333] mb-1">LEVEL</div>
-                    <div className="text-xl font-black font-display text-[#14f195]">
-                      {mockCredential.level}
-                    </div>
+                    <div className="text-xl font-black font-display text-[#14f195]">{mockCredential.level}</div>
                   </div>
                   <div>
                     <div className="text-[10px] font-mono text-[#333] mb-1">COURSES</div>
-                    <div className="text-xl font-black font-display text-[#f5f5f0]">
-                      {mockCredential.coursesCompleted}
-                    </div>
+                    <div className="text-xl font-black font-display text-[#f5f5f0]">{mockCredential.coursesCompleted}</div>
                   </div>
                   <div>
                     <div className="text-[10px] font-mono text-[#333] mb-1">TOTAL_XP</div>
-                    <div className="text-xl font-black font-display text-[#9945ff]">
-                      {mockCredential.totalXp.toLocaleString()}
-                    </div>
+                    <div className="text-xl font-black font-display text-[#9945ff]">{mockCredential.totalXp.toLocaleString()}</div>
                   </div>
                 </div>
-
                 <div className="mt-6 pt-6 border-t border-[#1a1a1a]">
                   <div className="flex items-center gap-2 text-[10px] font-mono text-[#14f195]">
                     <CheckCircle className="w-3 h-3" />
@@ -114,7 +97,6 @@ export default function CertificatePage() {
             </div>
           </motion.div>
 
-          {/* Details */}
           <div className="bg-[#020202] p-8 space-y-6">
             <div>
               <div className="text-[10px] font-mono text-[#333] uppercase tracking-widest mb-6">
@@ -134,21 +116,16 @@ export default function CertificatePage() {
                   { label: "NETWORK", value: "SOLANA_DEVNET" },
                 ].map((item) => (
                   <div key={item.label} className="flex items-start justify-between py-2 border-b border-[#1a1a1a]">
-                    <span className="text-[10px] font-mono text-[#333] uppercase tracking-widest">
-                      {item.label}
-                    </span>
-                    <span className="text-[10px] font-mono text-[#f5f5f0] text-right max-w-[200px] break-all">
-                      {item.value}
-                    </span>
+                    <span className="text-[10px] font-mono text-[#333] uppercase tracking-widest">{item.label}</span>
+                    <span className="text-[10px] font-mono text-[#f5f5f0] text-right max-w-[200px] break-all">{item.value}</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Actions */}
             <div className="space-y-2 pt-4">
               
-                href={`https://explorer.solana.com/address/${id}?cluster=devnet`}
+               <a href={`https://explorer.solana.com/address/${id}?cluster=devnet`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 w-full py-3 bg-[#9945ff] text-white font-mono text-[10px] uppercase tracking-widest hover:bg-[#8835ef] transition-colors"
@@ -168,12 +145,8 @@ export default function CertificatePage() {
           </div>
         </div>
 
-        {/* Back */}
         <div className="mt-8">
-          <Link
-            href="/dashboard"
-            className="text-[10px] font-mono text-[#444] hover:text-[#9945ff] transition-colors uppercase tracking-widest"
-          >
+          <Link href="/dashboard" className="text-[10px] font-mono text-[#444] hover:text-[#9945ff] transition-colors uppercase tracking-widest">
             ← BACK_TO_DASHBOARD
           </Link>
         </div>
