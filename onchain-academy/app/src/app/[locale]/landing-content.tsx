@@ -271,12 +271,7 @@ export function LandingContent({
           }}
         >
           {/* Eyebrow */}
-          <div
-            style={{
-              animation:
-                "hero-slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) 100ms both",
-            }}
-          >
+          <div>
             <div
               style={{
                 display: "flex",
@@ -316,8 +311,6 @@ export function LandingContent({
               lineHeight: 0.95,
               margin: "0 0 20px",
               color: C,
-              animation:
-                "hero-slide-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) both",
             }}
           >
             {t("heroHeadline")}
@@ -328,12 +321,7 @@ export function LandingContent({
           </h1>
 
           {/* Subtitle */}
-          <div
-            style={{
-              animation:
-                "hero-slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) 200ms both",
-            }}
-          >
+          <div>
             <p
               style={{
                 fontFamily: FONT_SANS,
@@ -349,12 +337,7 @@ export function LandingContent({
           </div>
 
           {/* CTAs */}
-          <div
-            style={{
-              animation:
-                "hero-slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) 300ms both",
-            }}
-          >
+          <div>
             <div
               style={{
                 display: "flex",
