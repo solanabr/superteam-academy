@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
-import { AnchorProvider, Program, BN, web3 } from "@coral-xyz/anchor";
+import { AnchorProvider, Program, BN, web3, type Idl, type Wallet as AnchorWallet } from "@coral-xyz/anchor";
 import { SystemProgram } from "@solana/web3.js";
 import { getConnection, PROGRAM_ID } from "@/lib/solana";
 import { findEnrollmentPDA, findCoursePDA } from "@/lib/pda";
@@ -37,9 +37,13 @@ export function useEnrollment(courseId: string | undefined) {
     }
     setEnrolling(true);
     try {
-      const wallet = { publicKey, signTransaction, signAllTransactions };
+      const wallet = {
+        publicKey,
+        signTransaction: signTransaction as AnchorWallet["signTransaction"],
+        signAllTransactions: signAllTransactions as AnchorWallet["signAllTransactions"],
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const provider = new AnchorProvider(connection, wallet as any, { commitment: "confirmed" });
+      } as any as AnchorWallet;
+      const provider = new AnchorProvider(connection, wallet, { commitment: "confirmed" });
 
       // Dynamically import IDL to avoid SSR issues
       const { IDL } = await import("@/lib/idl").catch(() => ({ IDL: null }));
@@ -48,7 +52,7 @@ export function useEnrollment(courseId: string | undefined) {
       }
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const program = new Program(IDL as any, provider);
+      const program = new Program(IDL as unknown as Idl, provider);
       const [coursePda] = findCoursePDA(courseId);
       const [enrollmentPda] = findEnrollmentPDA(courseId, publicKey);
 
