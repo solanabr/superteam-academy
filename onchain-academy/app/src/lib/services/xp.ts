@@ -1,15 +1,19 @@
-import { PublicKey } from "@solana/web3.js";
+import { PublicKey, type Connection } from "@solana/web3.js";
 import { TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
-import { connection } from "@/lib/solana/connection";
+import { connection as defaultConnection } from "@/lib/solana/connection";
 import { XP_MINT_ADDRESS } from "@/lib/constants";
 import { calculateLevel, xpForLevel } from "@/lib/constants";
 
-export async function getXPBalance(walletAddress: string): Promise<number> {
+export async function getXPBalance(
+  walletAddress: string,
+  conn?: Connection,
+): Promise<number> {
   if (!XP_MINT_ADDRESS || !walletAddress) return 0;
 
+  const rpc = conn ?? defaultConnection;
   try {
     const owner = new PublicKey(walletAddress);
-    const { value } = await connection.getParsedTokenAccountsByOwner(
+    const { value } = await rpc.getParsedTokenAccountsByOwner(
       owner,
       { programId: TOKEN_2022_PROGRAM_ID },
       "confirmed",
@@ -19,7 +23,6 @@ export async function getXPBalance(walletAddress: string): Promise<number> {
     for (const entry of value) {
       const info = entry.account.data.parsed?.info;
       if (info?.mint === xpMint) {
-        // Use uiAmount for consistency with leaderboard (which also uses uiAmount)
         total += Number(info.tokenAmount?.uiAmount ?? info.tokenAmount?.amount ?? 0);
       }
     }
