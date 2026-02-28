@@ -59,7 +59,10 @@ onchain-academy/target/verifiable/
 *.log
 *.tmp
 .cache/
+.vercel
 
 # Dev config
 .claude/
 CLAUDE.md
+DEMO_SCRIPT.md
+DEMO_VIDEO_SCRIPT.md

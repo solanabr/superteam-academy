@@ -1,0 +1,4 @@
+[defaults]
+url = https://de.sentry.io
+org = aurora-kj
+project = superteam-academy
