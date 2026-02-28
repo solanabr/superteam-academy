@@ -274,7 +274,7 @@ export function LandingContent({
           <div
             style={{
               animation:
-                "hero-slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) 100ms forwards",
+                "hero-slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) 100ms both",
             }}
           >
             <div
@@ -317,7 +317,7 @@ export function LandingContent({
               margin: "0 0 20px",
               color: C,
               animation:
-                "hero-slide-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+                "hero-slide-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) both",
             }}
           >
             {t("heroHeadline")}
@@ -331,7 +331,7 @@ export function LandingContent({
           <div
             style={{
               animation:
-                "hero-slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) 200ms forwards",
+                "hero-slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) 200ms both",
             }}
           >
             <p
@@ -352,7 +352,7 @@ export function LandingContent({
           <div
             style={{
               animation:
-                "hero-slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) 300ms forwards",
+                "hero-slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) 300ms both",
             }}
           >
             <div
