@@ -3,26 +3,26 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Link } from "@superteam-academy/i18n/navigation";
 import {
-	Code,
-	Layers,
-	Shield,
-	Coins,
-	Palette,
-	BarChart3,
-	Blocks,
-	Globe,
-	Cpu,
-	Smartphone,
-	BookOpen,
-	ArrowLeft,
-	Search,
+    Code,
+    Layers,
+    Shield,
+    Coins,
+    Palette,
+    BarChart3,
+    Blocks,
+    Globe,
+    Cpu,
+    Smartphone,
+    BookOpen,
+    ArrowLeft,
+    Search,
 } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { CourseGrid } from "@/components/courses/course-grid";
 import { CoursesFilters } from "@/components/courses/courses-filters";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { getCoursesCMS, isSanityConfigured, resolveCourseImageUrl } from "@/lib/cms";
+import { getCoursesIndex, isSanityConfigured, resolveCourseImageUrl } from "@/lib/cms";
 import { getAcademyClient } from "@/lib/academy";
 
 type TopicCourse = {
@@ -284,7 +284,7 @@ async function getTopicCourses(slug: string, level: string, sort: string) {
 	const academyClient = getAcademyClient();
 	const [onchainCourses, cmsCourses] = await Promise.all([
 		academyClient.fetchAllCourses(),
-		isSanityConfigured ? getCoursesCMS() : Promise.resolve([]),
+		isSanityConfigured ? getCoursesIndex() : Promise.resolve([]),
 	]);
 
 	const cmsByCourseId = new Map(
@@ -317,7 +317,9 @@ async function getTopicCourses(slug: string, level: string, sort: string) {
 			.map(([topicSlug]) => topicSlug);
 	};
 
-	const baseCourses: TopicCourse[] = onchainCourses.map((entry) => {
+	const baseCourses: TopicCourse[] = onchainCourses
+		.filter((entry) => entry.account.isActive)
+		.map((entry) => {
 		const courseId = entry.account.courseId;
 		const cms = cmsByCourseId.get(courseId);
 		const lessonCount = entry.account.lessonCount;

@@ -1,21 +1,21 @@
 import { Link } from "@superteam-academy/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import {
-	ArrowRight,
-	BookOpen,
-	Users,
-	Zap,
-	Shield,
-	Code,
-	Award,
-	TrendingUp,
-	Clock,
+    ArrowRight,
+    BookOpen,
+    Users,
+    Zap,
+    Shield,
+    Code,
+    Award,
+    TrendingUp,
+    Clock,
 } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 import HeroWave from "@/public/hero-wave.svg";
 import { NewsletterForm } from "@/components/newsletter-form";
-import { getCoursesCMS, isSanityConfigured } from "@/lib/cms";
+import { getCoursesIndex, isSanityConfigured } from "@/lib/cms";
 import { getAcademyClient } from "@/lib/academy";
 import { FeaturedCoursesSkeleton } from "@/components/home/featured-courses-skeleton";
 
@@ -260,7 +260,7 @@ async function FeaturedCoursesSection() {
 
 	const [onchainCourses, cmsCourses] = await Promise.all([
 		academyClient.fetchAllCourses().catch(() => []),
-		isSanityConfigured ? getCoursesCMS().catch(() => []) : Promise.resolve([]),
+		isSanityConfigured ? getCoursesIndex().catch(() => []) : Promise.resolve([]),
 	]);
 
 	const cmsByCourseId = new Map(
@@ -280,6 +280,7 @@ async function FeaturedCoursesSection() {
 	] as const;
 
 	const courses = onchainCourses
+		.filter((entry) => entry.account.isActive)
 		.sort((a, b) => b.account.totalEnrollments - a.account.totalEnrollments)
 		.slice(0, 3)
 		.map((entry, index) => {

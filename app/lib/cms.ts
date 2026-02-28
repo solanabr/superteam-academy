@@ -27,6 +27,11 @@ export async function getCoursesCMS(): Promise<Course[]> {
 	return courseService.getAllCourses();
 }
 
+/** All courses (including unpublished) for on-chain enrichment. */
+export async function getCoursesIndex(): Promise<Course[]> {
+	return courseService.getAllCoursesIndex();
+}
+
 export async function getCourseBySlug(slug: string): Promise<Course | null> {
 	return courseService.getCourseBySlug(slug);
 }

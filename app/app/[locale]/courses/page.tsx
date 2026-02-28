@@ -9,7 +9,7 @@ import { CourseGrid } from "@/components/courses/course-grid";
 import { CourseList } from "@/components/courses/course-list";
 import { CoursesFilters } from "@/components/courses/courses-filters";
 import { Pagination } from "@/components/ui/pagination";
-import { getCoursesCMS, isSanityConfigured, resolveCourseImageUrl } from "@/lib/cms";
+import { getCoursesIndex, isSanityConfigured, resolveCourseImageUrl } from "@/lib/cms";
 import { getAcademyClient } from "@/lib/academy";
 import { getTranslations } from "next-intl/server";
 
@@ -328,7 +328,7 @@ async function getCourses(searchParams: Awaited<CoursesPageProps["searchParams"]
 	const academyClient = getAcademyClient();
 	const [onchainCourses, cmsCourses] = await Promise.all([
 		academyClient.fetchAllCourses(),
-		isSanityConfigured ? getCoursesCMS() : Promise.resolve([]),
+		isSanityConfigured ? getCoursesIndex() : Promise.resolve([]),
 	]);
 
 	const cmsByCourseId = new Map(
@@ -341,7 +341,9 @@ async function getCourses(searchParams: Awaited<CoursesPageProps["searchParams"]
 		return "beginner";
 	};
 
-	const baseCourses: CatalogCourse[] = onchainCourses.map((entry) => {
+	const baseCourses: CatalogCourse[] = onchainCourses
+		.filter((entry) => entry.account.isActive)
+		.map((entry) => {
 		const courseId = entry.account.courseId;
 		const cms = cmsByCourseId.get(courseId);
 		const lessonCount = entry.account.lessonCount;

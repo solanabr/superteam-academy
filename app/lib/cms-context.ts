@@ -14,6 +14,7 @@ export const readClient =
 				projectId,
 				dataset,
 				token: process.env.SANITY_API_READ_TOKEN ?? "",
+				useCdn: false,
 			})
 		: null;
 export const writeClient =

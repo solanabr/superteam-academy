@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { getAcademyClient, getSolanaConnection, getProgramId } from "@/lib/academy";
 import { Transaction } from "@solana/web3.js";
 import {
@@ -248,6 +249,9 @@ export async function POST(request: NextRequest) {
 			}
 		}
 	}
+
+	revalidatePath("/courses");
+	revalidatePath(`/courses/${slug}`);
 
 	return NextResponse.json(
 		{ course, onchain: onchainResult },

@@ -74,7 +74,6 @@ export function isSuperAdminIdentifier(emailOrWallet: string): boolean {
 }
 
 function determineRole(email: string, walletAddress?: string): UserRole {
-	console.log("Determining role for email:", email, "walletAddress:", walletAddress);
 	if (isSuperAdminIdentifier(email)) return "superadmin";
 	if (walletAddress && isSuperAdminIdentifier(walletAddress)) return "superadmin";
 	return "learner";

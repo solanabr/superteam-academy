@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import {
 	getAcademyClient,
 	getSolanaConnection,
@@ -299,6 +300,10 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 		const updated = cmsCurrent?._id
 			? await client.patch(cmsCurrent._id).set(sanityDoc).commit()
 			: await client.create(sanityDoc);
+
+		revalidatePath("/courses");
+		revalidatePath(`/courses/${onchainCourseId}`);
+
 		return NextResponse.json({
 			course: updated,
 			onchain: {
@@ -308,6 +313,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 		});
 	} catch (error) {
 		if (onchainSignature) {
+			revalidatePath("/courses");
 			return NextResponse.json({
 				onchain: { synced: true, signature: onchainSignature },
 				warning: "On-chain succeeded but Sanity update failed. Reconcile later.",
@@ -399,6 +405,9 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
 		}
 		await client.delete(courseDocId);
 	}
+
+	revalidatePath("/courses");
+	revalidatePath(`/courses/${courseSlug}`);
 
 	return NextResponse.json({
 		success: true,

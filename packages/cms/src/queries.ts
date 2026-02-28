@@ -56,6 +56,13 @@ export const allCoursesQuery = /* groq */ `
   }
 `;
 
+/** All courses without published filter — used for on-chain enrichment. */
+export const allCoursesIndexQuery = /* groq */ `
+  *[_type == "course"] | order(_createdAt desc) {
+    ${courseFields}
+  }
+`;
+
 export const courseBySlugQuery = /* groq */ `
   *[_type == "course" && slug.current == $slug][0] {
     ${courseFields},
