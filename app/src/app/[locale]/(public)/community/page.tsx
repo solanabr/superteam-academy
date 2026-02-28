@@ -10,10 +10,15 @@ export const metadata: Metadata = {
 
 export const revalidate = 60;
 
-export default async function CommunityPage() {
+export default async function CommunityPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ category?: string }>;
+}) {
+  const { category } = await searchParams;
   const [categories, threads, stats] = await Promise.all([
     getCategories(),
-    getThreads(undefined, 20, 0),
+    getThreads(category, 20, 0),
     getForumStats(),
   ]);
 
@@ -64,32 +69,32 @@ export default async function CommunityPage() {
           </p>
           <Link
             href="/community"
-            className="flex items-center justify-between px-3 py-2.5 bg-card border border-[#14F195]/40 rounded hover:border-border-hover hover:bg-elevated transition-colors group"
+            className={`flex items-center justify-between px-3 py-2.5 bg-card border rounded hover:bg-elevated transition-colors ${!category ? "border-[#14F195]/40" : "border-border hover:border-border-hover"}`}
           >
-            <span className="font-mono text-sm text-[#14F195]">All</span>
+            <span className={`font-mono text-sm ${!category ? "text-[#14F195]" : "text-foreground"}`}>All</span>
             <span className="font-mono text-[10px] text-muted-foreground bg-elevated px-1.5 py-0.5 rounded">
               {stats.thread_count}
             </span>
           </Link>
-          {categories.map((cat) => (
-            <Link
-              key={cat.slug}
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              href={`/community?category=${cat.slug}` as any}
-              className="flex items-center justify-between px-3 py-2.5 bg-card border border-border rounded hover:border-border-hover hover:bg-elevated transition-colors group"
-            >
-              <span className="font-mono text-sm text-foreground group-hover:text-[#14F195] transition-colors flex items-center gap-2">
-                <span
-                  className="w-1.5 h-1.5 rounded-full shrink-0"
-                  style={{ backgroundColor: cat.color }}
-                />
-                {cat.label}
-              </span>
-              <span className="font-mono text-[10px] text-muted-foreground bg-elevated px-1.5 py-0.5 rounded">
-                {cat.thread_count ?? 0}
-              </span>
-            </Link>
-          ))}
+          {categories.map((cat) => {
+            const isActive = category === cat.slug;
+            return (
+              <Link
+                key={cat.slug}
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                href={`/community?category=${cat.slug}` as any}
+                className={`flex items-center justify-between px-3 py-2.5 bg-card border rounded hover:bg-elevated transition-colors group ${isActive ? "border-[#14F195]/40" : "border-border hover:border-border-hover"}`}
+              >
+                <span className={`font-mono text-sm flex items-center gap-2 ${isActive ? "text-[#14F195]" : "text-foreground group-hover:text-[#14F195] transition-colors"}`}>
+                  <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: cat.color }} />
+                  {cat.label}
+                </span>
+                <span className="font-mono text-[10px] text-muted-foreground bg-elevated px-1.5 py-0.5 rounded">
+                  {cat.thread_count ?? 0}
+                </span>
+              </Link>
+            );
+          })}
         </aside>
 
         {/* Thread list */}
