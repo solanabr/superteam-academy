@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 const Editor = dynamic(() => import("@monaco-editor/react"), {
   ssr: false,
   loading: () => (
-    <div className="flex items-center justify-center h-full bg-[#0D0D0D] text-[#666666] font-mono text-sm">
+    <div className="flex items-center justify-center h-full bg-background text-muted-foreground font-mono text-sm">
       Loading editor...
     </div>
   ),
@@ -55,7 +55,7 @@ export function MonacoEditor({
   return (
     <div
       className={cn(
-        "border border-[#1F1F1F] rounded overflow-hidden",
+        "border border-border rounded overflow-hidden",
         className
       )}
     >

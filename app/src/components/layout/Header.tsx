@@ -20,12 +20,12 @@ export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[#1F1F1F] bg-[#0A0A0A]/90 backdrop-blur-sm">
+    <header className="sticky top-0 z-50 border-b border-border bg-background/90 backdrop-blur-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 font-mono text-sm font-semibold tracking-wider">
           <span className="text-[#14F195] text-base">◎</span>
-          <span className="text-[#EDEDED]">ACADEMY</span>
+          <span className="text-foreground">ACADEMY</span>
         </Link>
 
         {/* Desktop nav */}
@@ -37,8 +37,8 @@ export function Header() {
               className={cn(
                 "px-3 py-1.5 rounded text-sm font-mono transition-colors",
                 pathname === href || pathname.startsWith(href + "/")
-                  ? "text-[#EDEDED] bg-[#1A1A1A]"
-                  : "text-[#666666] hover:text-[#EDEDED] hover:bg-[#111111]"
+                  ? "text-foreground bg-elevated"
+                  : "text-muted-foreground hover:text-foreground hover:bg-card"
               )}
             >
               {t(key)}
@@ -54,7 +54,7 @@ export function Header() {
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden h-8 w-8 text-[#666666] hover:text-[#EDEDED]"
+            className="md:hidden h-8 w-8 text-muted-foreground hover:text-foreground"
             onClick={() => setMobileOpen((v) => !v)}
           >
             {mobileOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
@@ -64,7 +64,7 @@ export function Header() {
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden border-t border-[#1F1F1F] bg-[#0A0A0A] px-4 py-3 space-y-1">
+        <div className="md:hidden border-t border-border bg-background px-4 py-3 space-y-1">
           {NAV_LINKS.map(({ key, href }) => (
             <Link
               key={key}
@@ -73,8 +73,8 @@ export function Header() {
               className={cn(
                 "block px-3 py-2 rounded text-sm font-mono transition-colors",
                 pathname === href
-                  ? "text-[#EDEDED] bg-[#1A1A1A]"
-                  : "text-[#666666] hover:text-[#EDEDED]"
+                  ? "text-foreground bg-elevated"
+                  : "text-muted-foreground hover:text-foreground"
               )}
             >
               {t(key)}

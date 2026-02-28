@@ -88,7 +88,7 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10">
-      <h1 className="font-mono text-3xl font-bold text-[#EDEDED] mb-8">{t("title")}</h1>
+      <h1 className="font-mono text-3xl font-bold text-foreground mb-8">{t("title")}</h1>
 
       <div className="flex gap-6">
         {/* Sidebar tabs */}
@@ -100,8 +100,8 @@ export default function SettingsPage() {
               className={cn(
                 "w-full flex items-center gap-2.5 px-3 py-2 rounded text-sm font-mono text-left transition-colors",
                 activeTab === id
-                  ? "bg-[#1A1A1A] text-[#EDEDED]"
-                  : "text-[#666666] hover:text-[#EDEDED] hover:bg-[#111111]"
+                  ? "bg-elevated text-foreground"
+                  : "text-muted-foreground hover:text-foreground hover:bg-card"
               )}
             >
               <Icon className="h-3.5 w-3.5 flex-shrink-0" />
@@ -113,8 +113,8 @@ export default function SettingsPage() {
         {/* Tab content */}
         <div className="flex-1 min-w-0">
           {activeTab === "profile" && (
-            <div className="bg-[#111111] border border-[#1F1F1F] rounded p-5 space-y-4">
-              <h2 className="font-mono text-sm font-semibold text-[#EDEDED]">
+            <div className="bg-card border border-border rounded p-5 space-y-4">
+              <h2 className="font-mono text-sm font-semibold text-foreground">
                 {t("profile.title")}
               </h2>
               <Field label={t("profile.username")}>
@@ -122,7 +122,7 @@ export default function SettingsPage() {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="satoshi"
-                  className="w-full bg-[#0A0A0A] border border-[#1F1F1F] rounded px-3 py-2 text-sm font-mono text-[#EDEDED] placeholder-[#333333] focus:outline-none focus:border-[#14F195]/50 transition-colors"
+                  className="w-full bg-background border border-border rounded px-3 py-2 text-sm font-mono text-foreground placeholder-subtle focus:outline-none focus:border-[#14F195]/50 transition-colors"
                 />
               </Field>
               <Field label={t("profile.displayName")}>
@@ -130,7 +130,7 @@ export default function SettingsPage() {
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   placeholder="Satoshi Nakamoto"
-                  className="w-full bg-[#0A0A0A] border border-[#1F1F1F] rounded px-3 py-2 text-sm font-mono text-[#EDEDED] placeholder-[#333333] focus:outline-none focus:border-[#14F195]/50 transition-colors"
+                  className="w-full bg-background border border-border rounded px-3 py-2 text-sm font-mono text-foreground placeholder-subtle focus:outline-none focus:border-[#14F195]/50 transition-colors"
                 />
               </Field>
               <Field label={t("profile.bio")}>
@@ -139,7 +139,7 @@ export default function SettingsPage() {
                   onChange={(e) => setBio(e.target.value)}
                   placeholder="Building on Solana..."
                   rows={3}
-                  className="w-full bg-[#0A0A0A] border border-[#1F1F1F] rounded px-3 py-2 text-sm font-mono text-[#EDEDED] placeholder-[#333333] focus:outline-none focus:border-[#14F195]/50 transition-colors resize-none"
+                  className="w-full bg-background border border-border rounded px-3 py-2 text-sm font-mono text-foreground placeholder-subtle focus:outline-none focus:border-[#14F195]/50 transition-colors resize-none"
                 />
               </Field>
               <Field label="Twitter / X">
@@ -147,7 +147,7 @@ export default function SettingsPage() {
                   value={twitterHandle}
                   onChange={(e) => setTwitterHandle(e.target.value)}
                   placeholder="@handle"
-                  className="w-full bg-[#0A0A0A] border border-[#1F1F1F] rounded px-3 py-2 text-sm font-mono text-[#EDEDED] placeholder-[#333333] focus:outline-none focus:border-[#14F195]/50 transition-colors"
+                  className="w-full bg-background border border-border rounded px-3 py-2 text-sm font-mono text-foreground placeholder-subtle focus:outline-none focus:border-[#14F195]/50 transition-colors"
                 />
               </Field>
               <Field label="GitHub">
@@ -155,13 +155,13 @@ export default function SettingsPage() {
                   value={githubHandle}
                   onChange={(e) => setGithubHandle(e.target.value)}
                   placeholder="username"
-                  className="w-full bg-[#0A0A0A] border border-[#1F1F1F] rounded px-3 py-2 text-sm font-mono text-[#EDEDED] placeholder-[#333333] focus:outline-none focus:border-[#14F195]/50 transition-colors"
+                  className="w-full bg-background border border-border rounded px-3 py-2 text-sm font-mono text-foreground placeholder-subtle focus:outline-none focus:border-[#14F195]/50 transition-colors"
                 />
               </Field>
               <button
                 onClick={handleSaveProfile}
                 disabled={saving}
-                className="flex items-center gap-2 bg-[#14F195] text-black font-mono font-semibold text-sm px-5 py-2 rounded hover:bg-[#0D9E61] transition-colors disabled:opacity-70"
+                className="flex items-center gap-2 bg-[#14F195] text-black font-mono font-semibold text-sm px-5 py-2 rounded hover:bg-accent-dim transition-colors disabled:opacity-70"
               >
                 {saving ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -170,9 +170,9 @@ export default function SettingsPage() {
                 ) : null}
                 {saved ? t("profile.saved") : t("profile.save")}
               </button>
-              <div className="pt-4 border-t border-[#1F1F1F]">
-                <h3 className="font-mono text-xs font-semibold text-[#666666] mb-2 uppercase tracking-wider">Data Export</h3>
-                <p className="text-xs text-[#666666] mb-3">Download all your progress data, XP history, and credentials.</p>
+              <div className="pt-4 border-t border-border">
+                <h3 className="font-mono text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">Data Export</h3>
+                <p className="text-xs text-muted-foreground mb-3">Download all your progress data, XP history, and credentials.</p>
                 <button
                   onClick={() => {
                     const data = {
@@ -190,7 +190,7 @@ export default function SettingsPage() {
                     a.click();
                     URL.revokeObjectURL(url);
                   }}
-                  className="flex items-center gap-2 border border-[#1F1F1F] text-[#666666] font-mono text-xs px-4 py-2 rounded hover:border-[#2E2E2E] hover:text-[#EDEDED] transition-colors"
+                  className="flex items-center gap-2 border border-border text-muted-foreground font-mono text-xs px-4 py-2 rounded hover:border-border-hover hover:text-foreground transition-colors"
                 >
                   Export Data (JSON)
                 </button>
@@ -199,8 +199,8 @@ export default function SettingsPage() {
           )}
 
           {activeTab === "accounts" && (
-            <div className="bg-[#111111] border border-[#1F1F1F] rounded p-5 space-y-3">
-              <h2 className="font-mono text-sm font-semibold text-[#EDEDED]">
+            <div className="bg-card border border-border rounded p-5 space-y-3">
+              <h2 className="font-mono text-sm font-semibold text-foreground">
                 {t("accounts.title")}
               </h2>
               <AccountRow
@@ -227,8 +227,8 @@ export default function SettingsPage() {
           )}
 
           {activeTab === "appearance" && (
-            <div className="bg-[#111111] border border-[#1F1F1F] rounded p-5 space-y-4">
-              <h2 className="font-mono text-sm font-semibold text-[#EDEDED]">
+            <div className="bg-card border border-border rounded p-5 space-y-4">
+              <h2 className="font-mono text-sm font-semibold text-foreground">
                 {t("appearance.title")}
               </h2>
               <div className="flex gap-3">
@@ -240,7 +240,7 @@ export default function SettingsPage() {
                       "flex-1 py-3 rounded border font-mono text-sm capitalize transition-colors",
                       activeTheme === theme
                         ? "border-[#14F195] text-[#14F195] bg-[#14F195]/5"
-                        : "border-[#1F1F1F] text-[#666666] hover:border-[#2E2E2E] hover:text-[#EDEDED]"
+                        : "border-border text-muted-foreground hover:border-border-hover hover:text-foreground"
                     )}
                   >
                     {theme === "dark" ? t("appearance.dark") : t("appearance.light")}
@@ -252,8 +252,8 @@ export default function SettingsPage() {
           )}
 
           {activeTab === "language" && (
-            <div className="bg-[#111111] border border-[#1F1F1F] rounded p-5 space-y-3">
-              <h2 className="font-mono text-sm font-semibold text-[#EDEDED]">
+            <div className="bg-card border border-border rounded p-5 space-y-3">
+              <h2 className="font-mono text-sm font-semibold text-foreground">
                 {t("language.title")}
               </h2>
               {LANGUAGES.map(({ value, label }) => {
@@ -265,8 +265,8 @@ export default function SettingsPage() {
                     className={cn(
                       "w-full flex items-center justify-between px-3 py-2.5 rounded border font-mono text-sm transition-colors",
                       isActive
-                        ? "border-[#14F195]/30 text-[#EDEDED] bg-[#14F195]/5"
-                        : "border-[#1F1F1F] text-[#666666] hover:border-[#2E2E2E] hover:text-[#EDEDED]"
+                        ? "border-[#14F195]/30 text-foreground bg-[#14F195]/5"
+                        : "border-border text-muted-foreground hover:border-border-hover hover:text-foreground"
                     )}
                   >
                     <span>{label}</span>
@@ -278,17 +278,17 @@ export default function SettingsPage() {
           )}
 
           {activeTab === "notifications" && (
-            <div className="bg-[#111111] border border-[#1F1F1F] rounded p-5 space-y-4">
-              <h2 className="font-mono text-sm font-semibold text-[#EDEDED]">Notifications</h2>
+            <div className="bg-card border border-border rounded p-5 space-y-4">
+              <h2 className="font-mono text-sm font-semibold text-foreground">Notifications</h2>
               {[
                 { label: "Email notifications", sublabel: "Receive updates via email", state: emailNotifs, set: setEmailNotifs },
                 { label: "Streak reminders", sublabel: "Daily reminders to keep your streak", state: streakReminder, set: setStreakReminder },
                 { label: "Achievement alerts", sublabel: "Get notified when you earn badges", state: achievementNotifs, set: setAchievementNotifs },
               ].map(({ label, sublabel, state, set }) => (
-                <div key={label} className="flex items-center justify-between py-2.5 border-b border-[#1F1F1F] last:border-0">
+                <div key={label} className="flex items-center justify-between py-2.5 border-b border-border last:border-0">
                   <div>
-                    <p className="text-sm font-mono text-[#EDEDED]">{label}</p>
-                    <p className="text-xs text-[#666666]">{sublabel}</p>
+                    <p className="text-sm font-mono text-foreground">{label}</p>
+                    <p className="text-xs text-muted-foreground">{sublabel}</p>
                   </div>
                   <button
                     onClick={() => { set(!state); localStorage.setItem(`notif_${label}`, String(!state)); }}
@@ -298,7 +298,7 @@ export default function SettingsPage() {
                   </button>
                 </div>
               ))}
-              <p className="text-[10px] text-[#444444] font-mono">Notification preferences are saved locally.</p>
+              <p className="text-[10px] text-subtle font-mono">Notification preferences are saved locally.</p>
             </div>
           )}
         </div>
@@ -310,7 +310,7 @@ export default function SettingsPage() {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
-      <label className="text-xs font-mono text-[#666666]">{label}</label>
+      <label className="text-xs font-mono text-muted-foreground">{label}</label>
       {children}
     </div>
   );
@@ -332,14 +332,14 @@ function AccountRow({
   onDisconnect?: () => void;
 }) {
   return (
-    <div className="flex items-center justify-between py-2.5 border-b border-[#1F1F1F] last:border-0">
+    <div className="flex items-center justify-between py-2.5 border-b border-border last:border-0">
       <div className="flex items-center gap-2.5">
-        <span className="w-6 h-6 rounded bg-[#1A1A1A] flex items-center justify-center text-xs font-mono text-[#666666]">
+        <span className="w-6 h-6 rounded bg-elevated flex items-center justify-center text-xs font-mono text-muted-foreground">
           {icon}
         </span>
         <div>
-          <p className="text-sm font-mono text-[#EDEDED]">{label}</p>
-          {value && <p className="text-[10px] font-mono text-[#666666]">{value}</p>}
+          <p className="text-sm font-mono text-foreground">{label}</p>
+          {value && <p className="text-[10px] font-mono text-muted-foreground">{value}</p>}
         </div>
       </div>
       {connected ? (

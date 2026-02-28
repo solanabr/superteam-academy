@@ -49,12 +49,12 @@ export default async function CourseDetailPage({ params }: Props) {
         {/* Main content */}
         <div className="lg:col-span-2 space-y-8">
           {/* Breadcrumb */}
-          <nav className="flex items-center gap-2 text-xs font-mono text-[#666666]">
-            <Link href="/courses" className="hover:text-[#EDEDED] transition-colors">
+          <nav className="flex items-center gap-2 text-xs font-mono text-muted-foreground">
+            <Link href="/courses" className="hover:text-foreground transition-colors">
               Courses
             </Link>
             <span>/</span>
-            <span className="text-[#EDEDED]">{course.title}</span>
+            <span className="text-foreground">{course.title}</span>
           </nav>
 
           {/* Header */}
@@ -67,24 +67,24 @@ export default async function CourseDetailPage({ params }: Props) {
                 {course.difficulty}
               </span>
               {track && (
-                <span className="text-[10px] font-mono text-[#666666] bg-[#111111] border border-[#1F1F1F] px-2 py-0.5 rounded-sm">
+                <span className="text-[10px] font-mono text-muted-foreground bg-card border border-border px-2 py-0.5 rounded-sm">
                   {track.icon} {track.name}
                 </span>
               )}
             </div>
-            <h1 className="font-mono text-3xl font-bold text-[#EDEDED] mb-3">
+            <h1 className="font-mono text-3xl font-bold text-foreground mb-3">
               {course.title}
             </h1>
-            <p className="text-[#666666] leading-relaxed">{course.description}</p>
+            <p className="text-muted-foreground leading-relaxed">{course.description}</p>
           </div>
 
           {/* Stats */}
           <div className="flex flex-wrap gap-4 text-sm font-mono">
-            <div className="flex items-center gap-1.5 text-[#666666]">
+            <div className="flex items-center gap-1.5 text-muted-foreground">
               <BookOpen className="h-4 w-4" />
               <span>{totalLessons} lessons</span>
             </div>
-            <div className="flex items-center gap-1.5 text-[#666666]">
+            <div className="flex items-center gap-1.5 text-muted-foreground">
               <Clock className="h-4 w-4" />
               <span>{course.durationHours}h estimated</span>
             </div>
@@ -96,35 +96,35 @@ export default async function CourseDetailPage({ params }: Props) {
 
           {/* Modules */}
           <div>
-            <h2 className="font-mono text-lg font-semibold text-[#EDEDED] mb-4">
+            <h2 className="font-mono text-lg font-semibold text-foreground mb-4">
               Course Content
             </h2>
             <div className="space-y-2">
               {course.modules.map((module) => (
                 <details
                   key={module._id}
-                  className="bg-[#111111] border border-[#1F1F1F] rounded group"
+                  className="bg-card border border-border rounded group"
                   open={module.order === 1}
                 >
-                  <summary className="flex items-center justify-between p-4 cursor-pointer select-none list-none hover:bg-[#1A1A1A] rounded transition-colors">
+                  <summary className="flex items-center justify-between p-4 cursor-pointer select-none list-none hover:bg-elevated rounded transition-colors">
                     <div>
-                      <span className="font-mono text-sm font-semibold text-[#EDEDED]">
+                      <span className="font-mono text-sm font-semibold text-foreground">
                         {module.title}
                       </span>
                       {module.description && (
-                        <span className="text-xs text-[#666666] ml-2">
+                        <span className="text-xs text-muted-foreground ml-2">
                           {module.description}
                         </span>
                       )}
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="text-[10px] text-[#666666] font-mono">
+                      <span className="text-[10px] text-muted-foreground font-mono">
                         {module.lessons?.length ?? 0} lessons
                       </span>
-                      <ChevronDown className="h-3.5 w-3.5 text-[#666666] transition-transform group-open:rotate-180" />
+                      <ChevronDown className="h-3.5 w-3.5 text-muted-foreground transition-transform group-open:rotate-180" />
                     </div>
                   </summary>
-                  <div className="border-t border-[#1F1F1F]">
+                  <div className="border-t border-border">
                     {(module.lessons ?? []).map((lesson, i) => (
                       <LessonRow
                         key={lesson._id}
@@ -145,7 +145,7 @@ export default async function CourseDetailPage({ params }: Props) {
 
         {/* Sidebar */}
         <aside className="lg:sticky lg:top-20 h-fit space-y-4">
-          <div className="bg-[#111111] border border-[#1F1F1F] rounded p-5">
+          <div className="bg-card border border-border rounded p-5">
             <div className="flex items-center justify-between mb-4">
               <div className="font-mono text-2xl font-bold text-[#14F195]">
                 {course.xpReward.toLocaleString()}
@@ -155,34 +155,34 @@ export default async function CourseDetailPage({ params }: Props) {
 
             <EnrollButton courseId={course.onChainCourseId ?? course.slug} courseSlug={slug} />
 
-            <div className="mt-4 pt-4 border-t border-[#1F1F1F] space-y-2 text-xs font-mono text-[#666666]">
+            <div className="mt-4 pt-4 border-t border-border space-y-2 text-xs font-mono text-muted-foreground">
               <div className="flex justify-between">
                 <span>Difficulty</span>
                 <span style={{ color: diffColor }}>{course.difficulty}</span>
               </div>
               <div className="flex justify-between">
                 <span>Duration</span>
-                <span className="text-[#EDEDED]">{course.durationHours}h</span>
+                <span className="text-foreground">{course.durationHours}h</span>
               </div>
               <div className="flex justify-between">
                 <span>Lessons</span>
-                <span className="text-[#EDEDED]">{totalLessons}</span>
+                <span className="text-foreground">{totalLessons}</span>
               </div>
               {track && (
                 <div className="flex justify-between">
                   <span>Track</span>
-                  <span className="text-[#EDEDED]">{track.icon} {track.name}</span>
+                  <span className="text-foreground">{track.icon} {track.name}</span>
                 </div>
               )}
             </div>
 
             {course.tags && course.tags.length > 0 && (
-              <div className="mt-4 pt-4 border-t border-[#1F1F1F]">
+              <div className="mt-4 pt-4 border-t border-border">
                 <div className="flex flex-wrap gap-1.5">
                   {course.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="text-[10px] font-mono bg-[#1A1A1A] border border-[#1F1F1F] text-[#666666] px-2 py-0.5 rounded-sm"
+                      className="text-[10px] font-mono bg-elevated border border-border text-muted-foreground px-2 py-0.5 rounded-sm"
                     >
                       {tag}
                     </span>
@@ -193,18 +193,18 @@ export default async function CourseDetailPage({ params }: Props) {
           </div>
 
           {course.instructor && (
-            <div className="bg-[#111111] border border-[#1F1F1F] rounded p-5">
-              <p className="text-xs text-[#666666] font-mono mb-2">Instructor</p>
+            <div className="bg-card border border-border rounded p-5">
+              <p className="text-xs text-muted-foreground font-mono mb-2">Instructor</p>
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-[#1A1A1A] flex items-center justify-center text-xs font-mono">
+                <div className="w-8 h-8 rounded-full bg-elevated flex items-center justify-center text-xs font-mono">
                   {course.instructor.name[0]}
                 </div>
                 <div>
-                  <p className="text-sm font-mono font-semibold text-[#EDEDED]">
+                  <p className="text-sm font-mono font-semibold text-foreground">
                     {course.instructor.name}
                   </p>
                   {course.instructor.twitterHandle && (
-                    <p className="text-xs text-[#666666]">@{course.instructor.twitterHandle}</p>
+                    <p className="text-xs text-muted-foreground">@{course.instructor.twitterHandle}</p>
                   )}
                 </div>
               </div>
@@ -244,7 +244,7 @@ function StarRating({ rating }: { rating: number }) {
   return (
     <span className="font-mono text-sm tracking-tight">
       {Array.from({ length: 5 }, (_, i) => (
-        <span key={i} className={i < rating ? "text-[#14F195]" : "text-[#333333]"}>
+        <span key={i} className={i < rating ? "text-[#14F195]" : "text-subtle"}>
           ★
         </span>
       ))}
@@ -256,29 +256,29 @@ function StudentReviews() {
   return (
     <div>
       <div className="flex items-baseline gap-3 mb-4">
-        <h2 className="font-mono text-lg font-semibold text-[#EDEDED]">Student Reviews</h2>
+        <h2 className="font-mono text-lg font-semibold text-foreground">Student Reviews</h2>
         <div className="flex items-center gap-1.5 font-mono text-sm">
           <span className="text-[#14F195] font-bold">4.8</span>
-          <span className="text-[#666666]">/ 5</span>
-          <span className="text-[#444444] text-xs">(based on 127 reviews)</span>
+          <span className="text-muted-foreground">/ 5</span>
+          <span className="text-subtle text-xs">(based on 127 reviews)</span>
         </div>
       </div>
       <div className="space-y-3">
         {MOCK_REVIEWS.map((review) => (
           <div
             key={review.name}
-            className="bg-[#111111] border border-[#1F1F1F] rounded p-4 space-y-2"
+            className="bg-card border border-border rounded p-4 space-y-2"
           >
             <div className="flex items-center gap-3">
-              <div className="w-7 h-7 rounded-full bg-[#1A1A1A] border border-[#2E2E2E] flex items-center justify-center text-[10px] font-mono font-semibold text-[#EDEDED] shrink-0">
+              <div className="w-7 h-7 rounded-full bg-elevated border border-border-hover flex items-center justify-center text-[10px] font-mono font-semibold text-foreground shrink-0">
                 {review.initials}
               </div>
               <div className="flex flex-col gap-0.5">
-                <span className="text-xs font-mono font-semibold text-[#EDEDED]">{review.name}</span>
+                <span className="text-xs font-mono font-semibold text-foreground">{review.name}</span>
                 <StarRating rating={review.stars} />
               </div>
             </div>
-            <p className="text-sm text-[#666666] leading-relaxed pl-10">{review.comment}</p>
+            <p className="text-sm text-muted-foreground leading-relaxed pl-10">{review.comment}</p>
           </div>
         ))}
       </div>
@@ -302,13 +302,13 @@ function LessonRow({
   return (
     <Link
       href={{ pathname: "/courses/[slug]/lessons/[id]", params: { slug: courseSlug, id: lesson._id } }}
-      className="flex items-center gap-3 px-4 py-3 border-b border-[#1F1F1F] last:border-0 hover:bg-[#1A1A1A] transition-colors group/row"
+      className="flex items-center gap-3 px-4 py-3 border-b border-border last:border-0 hover:bg-elevated transition-colors group/row"
     >
       <span className="text-xs">{icon}</span>
-      <span className="text-sm font-mono text-[#666666] group-hover/row:text-[#EDEDED] flex-1 transition-colors">
+      <span className="text-sm font-mono text-muted-foreground group-hover/row:text-foreground flex-1 transition-colors">
         {lesson.title}
       </span>
-      <div className="flex items-center gap-2 text-[10px] font-mono text-[#666666]">
+      <div className="flex items-center gap-2 text-[10px] font-mono text-muted-foreground">
         {lesson.estimatedMinutes && <span>{lesson.estimatedMinutes}m</span>}
         <span className="text-[#14F195]">+{lesson.xpReward} XP</span>
       </div>

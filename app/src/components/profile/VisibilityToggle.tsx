@@ -29,7 +29,7 @@ export function VisibilityToggle({ walletAddress }: { walletAddress?: string }) 
 
   if (!mounted) {
     return (
-      <div className="h-7 w-24 rounded border border-[#1F1F1F] bg-[#111111] animate-pulse" />
+      <div className="h-7 w-24 rounded border border-border bg-card animate-pulse" />
     );
   }
 

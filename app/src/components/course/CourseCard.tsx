@@ -18,9 +18,9 @@ export function CourseCard({ course, progress }: CourseCardProps) {
 
   return (
     <Link href={{ pathname: "/courses/[slug]", params: { slug: course.slug } }}>
-      <article className="group relative bg-[#111111] border border-[#1F1F1F] rounded hover:border-[#2E2E2E] transition-all duration-200 overflow-hidden h-full flex flex-col">
+      <article className="group relative bg-card border border-border rounded hover:border-border-hover transition-all duration-200 overflow-hidden h-full flex flex-col">
         {/* Thumbnail */}
-        <div className="relative h-40 bg-[#0D0D0D] overflow-hidden flex-shrink-0">
+        <div className="relative h-40 bg-background overflow-hidden flex-shrink-0">
           {course.thumbnail ? (
             <Image
               src={course.thumbnail}
@@ -56,7 +56,7 @@ export function CourseCard({ course, progress }: CourseCardProps) {
           {/* Track badge */}
           {track && (
             <div className="absolute top-2 right-2">
-              <span className="text-[10px] font-mono text-[#666666] bg-[#0A0A0A]/80 px-2 py-0.5 rounded-sm border border-[#1F1F1F]">
+              <span className="text-[10px] font-mono text-muted-foreground bg-background/80 px-2 py-0.5 rounded-sm border border-border">
                 {track.icon} {track.name}
               </span>
             </div>
@@ -64,7 +64,7 @@ export function CourseCard({ course, progress }: CourseCardProps) {
 
           {/* Progress bar overlay */}
           {isEnrolled && (
-            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1F1F1F]">
+            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-border">
               <div
                 className="h-full bg-[#14F195] transition-all"
                 style={{ width: `${percent}%` }}
@@ -75,15 +75,15 @@ export function CourseCard({ course, progress }: CourseCardProps) {
 
         {/* Content */}
         <div className="p-4 flex flex-col flex-1">
-          <h3 className="font-mono text-sm font-semibold text-[#EDEDED] line-clamp-2 leading-snug mb-1.5 group-hover:text-white transition-colors">
+          <h3 className="font-mono text-sm font-semibold text-foreground line-clamp-2 leading-snug mb-1.5 group-hover:text-white transition-colors">
             {course.title}
           </h3>
-          <p className="text-xs text-[#666666] line-clamp-2 leading-relaxed flex-1 mb-3">
+          <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed flex-1 mb-3">
             {course.description}
           </p>
 
           {/* Bottom stats */}
-          <div className="flex items-center gap-3 text-[10px] font-mono text-[#666666]">
+          <div className="flex items-center gap-3 text-[10px] font-mono text-muted-foreground">
             <span className="flex items-center gap-1">
               <BookOpen className="h-3 w-3" />
               {course.modules.reduce((sum, m) => sum + (m.lessons?.length ?? 0), 0)} lessons
@@ -100,10 +100,10 @@ export function CourseCard({ course, progress }: CourseCardProps) {
 
           {/* Enrolled status */}
           {isEnrolled && (
-            <div className="mt-2 pt-2 border-t border-[#1F1F1F]">
+            <div className="mt-2 pt-2 border-t border-border">
               <div className="flex items-center justify-between text-[10px] font-mono">
-                <span className="text-[#666666]">Progress</span>
-                <span className={percent === 100 ? "text-[#14F195]" : "text-[#EDEDED]"}>
+                <span className="text-muted-foreground">Progress</span>
+                <span className={percent === 100 ? "text-[#14F195]" : "text-foreground"}>
                   {percent === 100 ? "Complete ✓" : `${percent}%`}
                 </span>
               </div>

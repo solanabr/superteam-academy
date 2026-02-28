@@ -57,7 +57,7 @@ export default async function CertificatePage({ params }: Props) {
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-12">
       {/* Certificate card */}
-      <div className="relative bg-[#0D0D0D] border border-[#14F195]/30 rounded-lg overflow-hidden p-8">
+      <div className="relative bg-background border border-[#14F195]/30 rounded-lg overflow-hidden p-8">
         {/* Ambient glow */}
         <div
           className="absolute inset-0 pointer-events-none"
@@ -81,38 +81,38 @@ export default async function CertificatePage({ params }: Props) {
                 {t("verified")}
               </span>
             </div>
-            <h1 className="font-mono text-2xl font-black text-[#EDEDED] tracking-widest uppercase">
+            <h1 className="font-mono text-2xl font-black text-foreground tracking-widest uppercase">
               Academy Certificate
             </h1>
           </div>
 
           {/* Divider */}
           <div className="flex items-center gap-3">
-            <div className="flex-1 h-px bg-[#1F1F1F]" />
+            <div className="flex-1 h-px bg-border" />
             <span className="text-[#14F195] text-lg">◎</span>
-            <div className="flex-1 h-px bg-[#1F1F1F]" />
+            <div className="flex-1 h-px bg-border" />
           </div>
 
           {/* Main content */}
           <div className="py-4 space-y-2">
-            <p className="text-xs text-[#666666] font-mono uppercase tracking-wider">This certifies that</p>
+            <p className="text-xs text-muted-foreground font-mono uppercase tracking-wider">This certifies that</p>
             <p className="font-mono text-xl font-bold text-[#14F195]">{mockCredential.earnedBy}</p>
-            <p className="text-xs text-[#666666] font-mono">has successfully completed</p>
-            <p className="font-mono text-2xl font-black text-[#EDEDED]">{mockCredential.name}</p>
+            <p className="text-xs text-muted-foreground font-mono">has successfully completed</p>
+            <p className="font-mono text-2xl font-black text-foreground">{mockCredential.name}</p>
             {track && (
-              <p className="text-sm text-[#666666] font-mono">
+              <p className="text-sm text-muted-foreground font-mono">
                 {track.icon} {track.name} Track · Level {mockCredential.level}
               </p>
             )}
           </div>
 
           {/* Stats */}
-          <div className="flex justify-center gap-8 py-3 border-y border-[#1F1F1F]">
+          <div className="flex justify-center gap-8 py-3 border-y border-border">
             <div className="text-center">
-              <div className="font-mono text-lg font-bold text-[#EDEDED]">
+              <div className="font-mono text-lg font-bold text-foreground">
                 {mockCredential.coursesCompleted}
               </div>
-              <div className="text-[9px] text-[#666666] font-mono uppercase tracking-wider">
+              <div className="text-[9px] text-muted-foreground font-mono uppercase tracking-wider">
                 Courses
               </div>
             </div>
@@ -120,21 +120,21 @@ export default async function CertificatePage({ params }: Props) {
               <div className="font-mono text-lg font-bold text-[#14F195]">
                 {Number(mockCredential.totalXp).toLocaleString()}
               </div>
-              <div className="text-[9px] text-[#666666] font-mono uppercase tracking-wider">
+              <div className="text-[9px] text-muted-foreground font-mono uppercase tracking-wider">
                 XP Earned
               </div>
             </div>
             <div className="text-center">
-              <div className="font-mono text-lg font-bold text-[#EDEDED]">
+              <div className="font-mono text-lg font-bold text-foreground">
                 {mockCredential.level}
               </div>
-              <div className="text-[9px] text-[#666666] font-mono uppercase tracking-wider">
+              <div className="text-[9px] text-muted-foreground font-mono uppercase tracking-wider">
                 Level
               </div>
             </div>
           </div>
 
-          <p className="text-xs text-[#666666] font-mono">
+          <p className="text-xs text-muted-foreground font-mono">
             {t("completedOn", { date: mockCredential.completedOn })}
           </p>
         </div>
@@ -146,7 +146,7 @@ export default async function CertificatePage({ params }: Props) {
           href={solanaExplorerUrl(id)}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex-1 flex items-center justify-center gap-2 py-2.5 border border-[#1F1F1F] text-[#666666] hover:text-[#EDEDED] hover:border-[#2E2E2E] font-mono text-sm rounded transition-colors"
+          className="flex-1 flex items-center justify-center gap-2 py-2.5 border border-border text-muted-foreground hover:text-foreground hover:border-border-hover font-mono text-sm rounded transition-colors"
         >
           <ExternalLink className="h-3.5 w-3.5" />
           {t("viewOnExplorer")}
@@ -157,7 +157,7 @@ export default async function CertificatePage({ params }: Props) {
           href={twitterShareUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center justify-center gap-2 px-4 py-2.5 border border-[#1F1F1F] text-[#666666] hover:text-[#EDEDED] hover:border-[#2E2E2E] font-mono text-sm rounded transition-colors"
+          className="flex items-center justify-center gap-2 px-4 py-2.5 border border-border text-muted-foreground hover:text-foreground hover:border-border-hover font-mono text-sm rounded transition-colors"
           title="Share on X (Twitter)"
         >
           <XIcon className="h-3.5 w-3.5" />
@@ -166,22 +166,22 @@ export default async function CertificatePage({ params }: Props) {
       </div>
 
       {/* On-chain details */}
-      <div className="mt-6 bg-[#111111] border border-[#1F1F1F] rounded p-4 space-y-2 font-mono text-xs">
+      <div className="mt-6 bg-card border border-border rounded p-4 space-y-2 font-mono text-xs">
         <div className="flex justify-between">
-          <span className="text-[#666666]">Asset Address</span>
-          <span className="text-[#EDEDED] break-all">{id.slice(0, 20)}...</span>
+          <span className="text-muted-foreground">Asset Address</span>
+          <span className="text-foreground break-all">{id.slice(0, 20)}...</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-[#666666]">Program</span>
-          <span className="text-[#EDEDED]">ACADBRCB3...3ucf</span>
+          <span className="text-muted-foreground">Program</span>
+          <span className="text-foreground">ACADBRCB3...3ucf</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-[#666666]">Network</span>
+          <span className="text-muted-foreground">Network</span>
           <span className="text-[#14F195]">Solana Devnet</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-[#666666]">Standard</span>
-          <span className="text-[#EDEDED]">Metaplex Core (Soulbound)</span>
+          <span className="text-muted-foreground">Standard</span>
+          <span className="text-foreground">Metaplex Core (Soulbound)</span>
         </div>
       </div>
     </div>
@@ -192,7 +192,7 @@ export default async function CertificatePage({ params }: Props) {
 function CopyShareButton({ url, label }: { url: string; label: string }) {
   return (
     <button
-      className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-[#14F195] text-black font-mono font-semibold text-sm rounded hover:bg-[#0D9E61] transition-colors"
+      className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-[#14F195] text-black font-mono font-semibold text-sm rounded hover:bg-accent-dim transition-colors"
       onClick={() => {
         if (typeof window !== "undefined") {
           navigator.clipboard.writeText(url).catch(() => {});

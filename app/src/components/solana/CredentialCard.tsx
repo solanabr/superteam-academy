@@ -15,9 +15,9 @@ export function CredentialCard({ credential }: CredentialCardProps) {
   const xp = credential.attributes.totalXp ?? "0";
 
   return (
-    <div className="group bg-[#111111] border border-[#1F1F1F] rounded hover:border-[#14F195]/30 transition-all duration-200 overflow-hidden">
+    <div className="group bg-card border border-border rounded hover:border-[#14F195]/30 transition-all duration-200 overflow-hidden">
       {/* Image / placeholder */}
-      <div className="relative h-32 bg-[#0A0A0A] flex items-center justify-center overflow-hidden">
+      <div className="relative h-32 bg-background flex items-center justify-center overflow-hidden">
         {credential.imageUrl ? (
           <Image
             src={credential.imageUrl}
@@ -36,17 +36,17 @@ export function CredentialCard({ credential }: CredentialCardProps) {
           </div>
         )}
         <div className="absolute top-2 right-2">
-          <span className="text-[10px] font-mono bg-[#0A0A0A]/90 text-[#14F195] border border-[#14F195]/30 px-2 py-0.5 rounded-sm">
+          <span className="text-[10px] font-mono bg-background/90 text-[#14F195] border border-[#14F195]/30 px-2 py-0.5 rounded-sm">
             Lv.{level}
           </span>
         </div>
       </div>
 
       <div className="p-3">
-        <h4 className="font-mono text-sm font-semibold text-[#EDEDED] truncate">
+        <h4 className="font-mono text-sm font-semibold text-foreground truncate">
           {credential.name}
         </h4>
-        <p className="text-[10px] text-[#666666] font-mono mt-0.5">
+        <p className="text-[10px] text-muted-foreground font-mono mt-0.5">
           {track ? `${track.icon} ${track.name}` : "Academy Credential"}
         </p>
         <div className="flex items-center justify-between mt-2">
@@ -57,7 +57,7 @@ export function CredentialCard({ credential }: CredentialCardProps) {
             href={solanaExplorerUrl(credential.assetAddress)}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[#666666] hover:text-[#EDEDED] transition-colors"
+            className="text-muted-foreground hover:text-foreground transition-colors"
             onClick={(e) => e.stopPropagation()}
           >
             <ExternalLink className="h-3 w-3" />

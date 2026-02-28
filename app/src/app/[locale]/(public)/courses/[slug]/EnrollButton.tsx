@@ -42,7 +42,7 @@ export function EnrollButton({ courseId, courseSlug }: EnrollButtonProps) {
     return (
       <button
         onClick={() => setVisible(true)}
-        className="w-full bg-[#14F195] text-black font-mono font-semibold text-sm py-2.5 rounded hover:bg-[#0D9E61] transition-colors"
+        className="w-full bg-[#14F195] text-black font-mono font-semibold text-sm py-2.5 rounded hover:bg-accent-dim transition-colors"
       >
         Connect Wallet to Enroll
       </button>
@@ -51,7 +51,7 @@ export function EnrollButton({ courseId, courseSlug }: EnrollButtonProps) {
 
   if (!progress) {
     return (
-      <div className="w-full h-10 bg-[#1A1A1A] rounded animate-pulse" />
+      <div className="w-full h-10 bg-elevated rounded animate-pulse" />
     );
   }
 
@@ -70,7 +70,7 @@ export function EnrollButton({ courseId, courseSlug }: EnrollButtonProps) {
     return (
       <Link
         href={{ pathname: "/courses/[slug]/lessons/[id]", params: { slug: courseSlug, id: `${courseId}-l1` } }}
-        className="block w-full text-center bg-[#1A1A1A] border border-[#14F195]/30 text-[#14F195] font-mono font-semibold text-sm py-2.5 rounded hover:bg-[#14F195]/10 transition-colors"
+        className="block w-full text-center bg-elevated border border-[#14F195]/30 text-[#14F195] font-mono font-semibold text-sm py-2.5 rounded hover:bg-[#14F195]/10 transition-colors"
       >
         Continue Learning →
       </Link>
@@ -84,7 +84,7 @@ export function EnrollButton({ courseId, courseSlug }: EnrollButtonProps) {
         disabled={enrolling}
         className={cn(
           "w-full bg-[#14F195] text-black font-mono font-semibold text-sm py-2.5 rounded transition-colors flex items-center justify-center gap-2",
-          enrolling ? "opacity-70 cursor-not-allowed" : "hover:bg-[#0D9E61]"
+          enrolling ? "opacity-70 cursor-not-allowed" : "hover:bg-accent-dim"
         )}
       >
         {enrolling && <Loader2 className="h-3.5 w-3.5 animate-spin" />}

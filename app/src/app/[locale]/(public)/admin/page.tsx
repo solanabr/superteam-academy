@@ -84,8 +84,8 @@ export default function AdminPage() {
 
       {/* Page header */}
       <div>
-        <h1 className="font-mono text-3xl font-bold text-[#EDEDED] mb-1">Admin Dashboard</h1>
-        <p className="text-sm text-[#666666]">Platform overview and course management.</p>
+        <h1 className="font-mono text-3xl font-bold text-foreground mb-1">Admin Dashboard</h1>
+        <p className="text-sm text-muted-foreground">Platform overview and course management.</p>
       </div>
 
       {/* Stats row */}
@@ -93,32 +93,32 @@ export default function AdminPage() {
         {STATS.map(({ label, value, icon: Icon }) => (
           <div
             key={label}
-            className="bg-[#111111] border border-[#1F1F1F] rounded-lg p-5 flex flex-col gap-3"
+            className="bg-card border border-border rounded-lg p-5 flex flex-col gap-3"
           >
             <div className="flex items-center justify-between">
-              <p className="text-xs font-mono text-[#666666] uppercase tracking-widest">{label}</p>
+              <p className="text-xs font-mono text-muted-foreground uppercase tracking-widest">{label}</p>
               <Icon className="h-4 w-4 text-[#14F195]" />
             </div>
-            <p className="font-mono text-2xl font-bold text-[#EDEDED]">{value}</p>
+            <p className="font-mono text-2xl font-bold text-foreground">{value}</p>
           </div>
         ))}
       </div>
 
       {/* Enrollments bar chart */}
-      <div className="bg-[#111111] border border-[#1F1F1F] rounded-lg p-6">
+      <div className="bg-card border border-border rounded-lg p-6">
         <div className="flex items-center gap-2 mb-5">
           <TrendingUp className="h-4 w-4 text-[#14F195]" />
-          <h2 className="font-mono text-sm font-semibold text-[#EDEDED] uppercase tracking-widest">
+          <h2 className="font-mono text-sm font-semibold text-foreground uppercase tracking-widest">
             Enrollments by Course
           </h2>
         </div>
         <div className="space-y-3">
           {COURSES.map((course) => (
             <div key={course.slug} className="flex items-center gap-3">
-              <span className="font-mono text-xs text-[#666666] w-44 shrink-0 truncate">
+              <span className="font-mono text-xs text-muted-foreground w-44 shrink-0 truncate">
                 {course.title}
               </span>
-              <div className="flex-1 bg-[#0A0A0A] rounded-sm h-5 overflow-hidden">
+              <div className="flex-1 bg-background rounded-sm h-5 overflow-hidden">
                 <div
                   className="h-full bg-[#14F195]/70 rounded-sm flex items-center justify-end pr-2 transition-all"
                   style={{ width: `${(course.enrollments / maxEnrollments) * 100}%` }}
@@ -134,17 +134,17 @@ export default function AdminPage() {
       </div>
 
       {/* Courses management table */}
-      <div className="bg-[#111111] border border-[#1F1F1F] rounded-lg overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[#1F1F1F]">
+      <div className="bg-card border border-border rounded-lg overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           <div className="flex items-center gap-2">
             <BookOpen className="h-4 w-4 text-[#14F195]" />
-            <h2 className="font-mono text-sm font-semibold text-[#EDEDED] uppercase tracking-widest">
+            <h2 className="font-mono text-sm font-semibold text-foreground uppercase tracking-widest">
               Courses
             </h2>
           </div>
           <Link
             href="/courses"
-            className="text-xs font-mono text-[#666666] hover:text-[#14F195] transition-colors flex items-center gap-1"
+            className="text-xs font-mono text-muted-foreground hover:text-[#14F195] transition-colors flex items-center gap-1"
           >
             View All <ExternalLink className="h-3 w-3" />
           </Link>
@@ -152,12 +152,12 @@ export default function AdminPage() {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-[#1F1F1F]">
+              <tr className="border-b border-border">
                 {["Title", "Difficulty", "Enrollments", "Completion %", "XP Reward", "Actions"].map(
                   (col) => (
                     <th
                       key={col}
-                      className="px-5 py-3 text-left text-[10px] font-mono uppercase tracking-widest text-[#666666]"
+                      className="px-5 py-3 text-left text-[10px] font-mono uppercase tracking-widest text-muted-foreground"
                     >
                       {col}
                     </th>
@@ -170,10 +170,10 @@ export default function AdminPage() {
                 <tr
                   key={course.slug}
                   className={[
-                    "border-b border-[#1F1F1F] last:border-0 transition-colors hover:bg-[#0F0F0F]",
+                    "border-b border-border last:border-0 transition-colors hover:bg-elevated",
                   ].join("")}
                 >
-                  <td className="px-5 py-3.5 font-mono text-sm text-[#EDEDED]">{course.title}</td>
+                  <td className="px-5 py-3.5 font-mono text-sm text-foreground">{course.title}</td>
                   <td className="px-5 py-3.5">
                     <span
                       className="text-[10px] font-mono px-2 py-0.5 rounded-full border"
@@ -186,18 +186,18 @@ export default function AdminPage() {
                       {course.difficulty}
                     </span>
                   </td>
-                  <td className="px-5 py-3.5 font-mono text-sm text-[#EDEDED]">
+                  <td className="px-5 py-3.5 font-mono text-sm text-foreground">
                     {course.enrollments.toLocaleString()}
                   </td>
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-2">
-                      <div className="w-20 h-1.5 bg-[#1F1F1F] rounded-full overflow-hidden">
+                      <div className="w-20 h-1.5 bg-border rounded-full overflow-hidden">
                         <div
                           className="h-full bg-[#14F195] rounded-full"
                           style={{ width: `${course.completion}%` }}
                         />
                       </div>
-                      <span className="font-mono text-xs text-[#666666]">{course.completion}%</span>
+                      <span className="font-mono text-xs text-muted-foreground">{course.completion}%</span>
                     </div>
                   </td>
                   <td className="px-5 py-3.5 font-mono text-sm text-[#14F195]">
@@ -205,7 +205,7 @@ export default function AdminPage() {
                   </td>
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-2">
-                      <button className="text-[10px] font-mono px-2.5 py-1 border border-[#1F1F1F] rounded text-[#666666] hover:text-[#EDEDED] hover:border-[#2E2E2E] transition-colors">
+                      <button className="text-[10px] font-mono px-2.5 py-1 border border-border rounded text-muted-foreground hover:text-foreground hover:border-border-hover transition-colors">
                         Edit
                       </button>
                       <a
@@ -224,21 +224,21 @@ export default function AdminPage() {
       </div>
 
       {/* Recent signups table */}
-      <div className="bg-[#111111] border border-[#1F1F1F] rounded-lg overflow-hidden">
-        <div className="flex items-center gap-2 px-5 py-4 border-b border-[#1F1F1F]">
+      <div className="bg-card border border-border rounded-lg overflow-hidden">
+        <div className="flex items-center gap-2 px-5 py-4 border-b border-border">
           <Users className="h-4 w-4 text-[#14F195]" />
-          <h2 className="font-mono text-sm font-semibold text-[#EDEDED] uppercase tracking-widest">
+          <h2 className="font-mono text-sm font-semibold text-foreground uppercase tracking-widest">
             Recent Signups
           </h2>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-[#1F1F1F]">
+              <tr className="border-b border-border">
                 {["Wallet", "Joined", "XP", "Level"].map((col) => (
                   <th
                     key={col}
-                    className="px-5 py-3 text-left text-[10px] font-mono uppercase tracking-widest text-[#666666]"
+                    className="px-5 py-3 text-left text-[10px] font-mono uppercase tracking-widest text-muted-foreground"
                   >
                     {col}
                   </th>
@@ -249,15 +249,15 @@ export default function AdminPage() {
               {RECENT_SIGNUPS.map((user) => (
                 <tr
                   key={user.wallet}
-                  className="border-b border-[#1F1F1F] last:border-0 hover:bg-[#0F0F0F] transition-colors"
+                  className="border-b border-border last:border-0 hover:bg-elevated transition-colors"
                 >
-                  <td className="px-5 py-3.5 font-mono text-sm text-[#EDEDED]">{user.wallet}</td>
-                  <td className="px-5 py-3.5 font-mono text-xs text-[#666666]">{user.joined}</td>
+                  <td className="px-5 py-3.5 font-mono text-sm text-foreground">{user.wallet}</td>
+                  <td className="px-5 py-3.5 font-mono text-xs text-muted-foreground">{user.joined}</td>
                   <td className="px-5 py-3.5 font-mono text-sm text-[#14F195]">
                     {user.xp.toLocaleString()} XP
                   </td>
                   <td className="px-5 py-3.5">
-                    <span className="font-mono text-xs text-[#EDEDED] bg-[#1A1A1A] border border-[#1F1F1F] px-2 py-0.5 rounded">
+                    <span className="font-mono text-xs text-foreground bg-elevated border border-border px-2 py-0.5 rounded">
                       Lv. {user.level}
                     </span>
                   </td>

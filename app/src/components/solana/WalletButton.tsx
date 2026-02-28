@@ -38,7 +38,7 @@ export function WalletButton({ className }: { className?: string }) {
       <Button
         onClick={() => setVisible(true)}
         className={cn(
-          "bg-[#14F195] text-black font-mono text-sm font-medium hover:bg-[#0D9E61] transition-colors",
+          "bg-[#14F195] text-black font-mono text-sm font-medium hover:bg-accent-dim transition-colors",
           className
         )}
         size="sm"
@@ -56,27 +56,27 @@ export function WalletButton({ className }: { className?: string }) {
           variant="outline"
           size="sm"
           className={cn(
-            "font-mono text-sm border-[#1F1F1F] hover:border-[#2E2E2E] bg-[#111111] hover:bg-[#1A1A1A]",
+            "font-mono text-sm border-border hover:border-border-hover bg-card hover:bg-elevated",
             className
           )}
         >
           <span className="text-[#14F195] mr-1.5">◎</span>
           {abbrev(publicKey.toBase58())}
           {xpData && (
-            <span className="ml-2 text-xs text-[#666666] border border-[#1F1F1F] rounded px-1.5 py-0.5">
+            <span className="ml-2 text-xs text-muted-foreground border border-border rounded px-1.5 py-0.5">
               Lv.{xpData.level}
             </span>
           )}
-          <ChevronDown className="ml-1 h-3 w-3 text-[#666666]" />
+          <ChevronDown className="ml-1 h-3 w-3 text-muted-foreground" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
-        className="w-56 bg-[#111111] border-[#1F1F1F] font-mono"
+        className="w-56 bg-card border-border font-mono"
       >
         <div className="px-3 py-2">
-          <p className="text-xs text-[#666666] mb-1">Connected wallet</p>
-          <p className="text-sm text-[#EDEDED] break-all">
+          <p className="text-xs text-muted-foreground mb-1">Connected wallet</p>
+          <p className="text-sm text-foreground break-all">
             {publicKey.toBase58().slice(0, 20)}...
           </p>
           {xpData && (
@@ -85,37 +85,37 @@ export function WalletButton({ className }: { className?: string }) {
             </p>
           )}
         </div>
-        <DropdownMenuSeparator className="bg-[#1F1F1F]" />
+        <DropdownMenuSeparator className="bg-border" />
         <DropdownMenuItem
           onClick={handleCopy}
-          className="text-[#EDEDED] focus:bg-[#1A1A1A] focus:text-[#EDEDED] cursor-pointer"
+          className="text-foreground focus:bg-elevated focus:text-foreground cursor-pointer"
         >
           <Copy className="mr-2 h-3.5 w-3.5" />
           {copied ? "Copied!" : "Copy address"}
         </DropdownMenuItem>
-        <DropdownMenuSeparator className="bg-[#1F1F1F]" />
-        <DropdownMenuItem asChild className="text-[#EDEDED] focus:bg-[#1A1A1A] focus:text-[#EDEDED] cursor-pointer">
+        <DropdownMenuSeparator className="bg-border" />
+        <DropdownMenuItem asChild className="text-foreground focus:bg-elevated focus:text-foreground cursor-pointer">
           <Link href="/dashboard">
             <LayoutDashboard className="mr-2 h-3.5 w-3.5" />
             Dashboard
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem asChild className="text-[#EDEDED] focus:bg-[#1A1A1A] focus:text-[#EDEDED] cursor-pointer">
+        <DropdownMenuItem asChild className="text-foreground focus:bg-elevated focus:text-foreground cursor-pointer">
           <Link href="/profile">
             <User className="mr-2 h-3.5 w-3.5" />
             Profile
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem asChild className="text-[#EDEDED] focus:bg-[#1A1A1A] focus:text-[#EDEDED] cursor-pointer">
+        <DropdownMenuItem asChild className="text-foreground focus:bg-elevated focus:text-foreground cursor-pointer">
           <Link href="/settings">
             <Settings className="mr-2 h-3.5 w-3.5" />
             Settings
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuSeparator className="bg-[#1F1F1F]" />
+        <DropdownMenuSeparator className="bg-border" />
         <DropdownMenuItem
           onClick={() => disconnect()}
-          className="text-[#FF4444] focus:bg-[#1A1A1A] focus:text-[#FF4444] cursor-pointer"
+          className="text-[#FF4444] focus:bg-elevated focus:text-[#FF4444] cursor-pointer"
         >
           <LogOut className="mr-2 h-3.5 w-3.5" />
           Disconnect

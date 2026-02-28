@@ -14,9 +14,9 @@ const RANK_LABELS = ["🥇", "🥈", "🥉"];
 
 export function LeaderboardTable({ entries, currentWallet }: LeaderboardTableProps) {
   return (
-    <div className="bg-[#111111] border border-[#1F1F1F] rounded overflow-hidden">
+    <div className="bg-card border border-border rounded overflow-hidden">
       {/* Header */}
-      <div className="grid grid-cols-12 gap-2 px-4 py-2.5 border-b border-[#1F1F1F] text-[10px] font-mono text-[#666666] uppercase tracking-wider">
+      <div className="grid grid-cols-12 gap-2 px-4 py-2.5 border-b border-border text-[10px] font-mono text-muted-foreground uppercase tracking-wider">
         <div className="col-span-1">#</div>
         <div className="col-span-6">Learner</div>
         <div className="col-span-2 text-center">Level</div>
@@ -31,10 +31,10 @@ export function LeaderboardTable({ entries, currentWallet }: LeaderboardTablePro
           <div
             key={entry.walletAddress}
             className={cn(
-              "grid grid-cols-12 gap-2 px-4 py-3 border-b border-[#1F1F1F] last:border-0 font-mono items-center transition-colors",
+              "grid grid-cols-12 gap-2 px-4 py-3 border-b border-border last:border-0 font-mono items-center transition-colors",
               isYou
                 ? "bg-[#14F195]/5 border-l-2 border-l-[#14F195]"
-                : "hover:bg-[#1A1A1A]"
+                : "hover:bg-elevated"
             )}
           >
             {/* Rank */}
@@ -42,23 +42,23 @@ export function LeaderboardTable({ entries, currentWallet }: LeaderboardTablePro
               {isTop3 ? (
                 <span>{RANK_LABELS[entry.rank - 1]}</span>
               ) : (
-                <span className="text-[#666666] text-xs">{entry.rank}</span>
+                <span className="text-muted-foreground text-xs">{entry.rank}</span>
               )}
             </div>
 
             {/* Wallet/username */}
             <div className="col-span-6 flex items-center gap-2 min-w-0">
-              <div className="w-6 h-6 rounded-full bg-[#1A1A1A] flex items-center justify-center text-[10px] flex-shrink-0">
+              <div className="w-6 h-6 rounded-full bg-elevated flex items-center justify-center text-[10px] flex-shrink-0">
                 {(entry.username ?? entry.walletAddress)[0].toUpperCase()}
               </div>
               <div className="min-w-0">
                 {entry.username ? (
-                  <span className="text-sm text-[#EDEDED] truncate block">
+                  <span className="text-sm text-foreground truncate block">
                     {entry.username}
                   </span>
                 ) : (
                   <span
-                    className="text-xs text-[#666666] truncate block"
+                    className="text-xs text-muted-foreground truncate block"
                     title={entry.walletAddress}
                   >
                     {entry.walletAddress.slice(0, 6)}...{entry.walletAddress.slice(-4)}
@@ -80,7 +80,7 @@ export function LeaderboardTable({ entries, currentWallet }: LeaderboardTablePro
               className={cn(
                 "col-span-3 text-right text-sm mono-numbers",
                 isTop3 ? "font-bold" : "",
-                isTop3 ? `text-[${RANK_COLORS[entry.rank - 1]}]` : "text-[#EDEDED]"
+                isTop3 ? `text-[${RANK_COLORS[entry.rank - 1]}]` : "text-foreground"
               )}
             >
               {entry.xpBalance.toLocaleString()}
@@ -90,7 +90,7 @@ export function LeaderboardTable({ entries, currentWallet }: LeaderboardTablePro
       })}
 
       {entries.length === 0 && (
-        <div className="text-center py-12 text-[#666666] font-mono text-sm">
+        <div className="text-center py-12 text-muted-foreground font-mono text-sm">
           No data yet
         </div>
       )}

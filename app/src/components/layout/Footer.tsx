@@ -15,13 +15,13 @@ export function Footer() {
   };
 
   return (
-    <footer className="border-t border-[#1F1F1F] mt-auto">
+    <footer className="border-t border-border mt-auto">
       {/* Newsletter section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 border-b border-[#1F1F1F]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 border-b border-border">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <p className="font-mono text-sm font-semibold text-[#EDEDED]">Stay updated</p>
-            <p className="text-xs text-[#666666] mt-0.5">
+            <p className="font-mono text-sm font-semibold text-foreground">Stay updated</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
               Get notified about new courses and Solana ecosystem updates.
             </p>
           </div>
@@ -37,11 +37,11 @@ export function Footer() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@solana.com"
                 required
-                className="flex-1 sm:w-56 bg-[#111111] border border-[#1F1F1F] rounded px-3 py-1.5 text-sm font-mono text-[#EDEDED] placeholder-[#444444] focus:outline-none focus:border-[#14F195]/50 transition-colors"
+                className="flex-1 sm:w-56 bg-card border border-border rounded px-3 py-1.5 text-sm font-mono text-foreground placeholder-[#444444] focus:outline-none focus:border-[#14F195]/50 transition-colors"
               />
               <button
                 type="submit"
-                className="px-4 py-1.5 bg-[#14F195] text-black font-mono font-semibold text-sm rounded hover:bg-[#0D9E61] transition-colors shrink-0"
+                className="px-4 py-1.5 bg-[#14F195] text-black font-mono font-semibold text-sm rounded hover:bg-accent-dim transition-colors shrink-0"
               >
                 Subscribe
               </button>
@@ -52,20 +52,20 @@ export function Footer() {
 
       {/* Bottom links row */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-        <p className="text-xs text-[#666666] font-mono">
+        <p className="text-xs text-muted-foreground font-mono">
           © 2026 Superteam Academy.{" "}
           <span className="text-[#14F195]">Built on Solana.</span>
         </p>
         <div className="flex items-center gap-4">
           <a
             href="/community"
-            className="text-xs text-[#666666] hover:text-[#EDEDED] transition-colors font-mono"
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors font-mono"
           >
             Community
           </a>
           <a
             href="/admin"
-            className="text-xs text-[#444444] hover:text-[#666666] transition-colors font-mono"
+            className="text-xs text-subtle hover:text-muted-foreground transition-colors font-mono"
           >
             Admin
           </a>
@@ -73,7 +73,7 @@ export function Footer() {
             href="https://github.com/solanabr/superteam-academy"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 text-xs text-[#666666] hover:text-[#EDEDED] transition-colors font-mono"
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors font-mono"
           >
             <Github className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">GitHub</span>
@@ -82,7 +82,7 @@ export function Footer() {
             href="https://superteam.fun"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 text-xs text-[#666666] hover:text-[#EDEDED] transition-colors font-mono"
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors font-mono"
           >
             <ExternalLink className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">Superteam</span>

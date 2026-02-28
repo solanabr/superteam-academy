@@ -86,13 +86,13 @@ export function StreakWidget({ streak, className }: StreakWidgetProps) {
                 streak.currentStreak >= 7
                   ? "text-[#F5A623]"
                   : streak.currentStreak > 0
-                  ? "text-[#EDEDED]"
-                  : "text-[#666666]"
+                  ? "text-foreground"
+                  : "text-muted-foreground"
               )}
             >
               {streak.currentStreak}
             </span>
-            <span className="text-[10px] text-[#666666] ml-1">day streak</span>
+            <span className="text-[10px] text-muted-foreground ml-1">day streak</span>
           </div>
           {activeMilestone && (
             <span
@@ -109,24 +109,24 @@ export function StreakWidget({ streak, className }: StreakWidgetProps) {
           )}
         </div>
 
-        <div className="h-6 w-px bg-[#1F1F1F]" />
+        <div className="h-6 w-px bg-border" />
 
         {/* Longest streak */}
         <div className="font-mono leading-none">
-          <span className="text-sm font-semibold text-[#EDEDED]">
+          <span className="text-sm font-semibold text-foreground">
             {streak.longestStreak}
           </span>
-          <span className="text-[10px] text-[#666666] ml-1">longest</span>
+          <span className="text-[10px] text-muted-foreground ml-1">longest</span>
         </div>
 
-        <div className="h-6 w-px bg-[#1F1F1F]" />
+        <div className="h-6 w-px bg-border" />
 
         {/* Total active days */}
         <div className="font-mono leading-none">
           <span className="text-sm font-semibold text-[#14F195]">
             {totalActiveDays}
           </span>
-          <span className="text-[10px] text-[#666666] ml-1">total days</span>
+          <span className="text-[10px] text-muted-foreground ml-1">total days</span>
         </div>
       </div>
 
@@ -142,7 +142,7 @@ export function StreakWidget({ streak, className }: StreakWidgetProps) {
             return (
               <div
                 key={wi}
-                className="text-[9px] font-mono text-[#666666] text-center truncate"
+                className="text-[9px] font-mono text-muted-foreground text-center truncate"
               >
                 {label ? label.label : ""}
               </div>
@@ -201,8 +201,8 @@ export function StreakWidget({ streak, className }: StreakWidgetProps) {
       </div>
 
       {/* Milestone legend */}
-      <div className="flex items-center gap-4 mt-3 pt-3 border-t border-[#1F1F1F]">
-        <span className="text-[9px] font-mono text-[#666666] uppercase tracking-wider">
+      <div className="flex items-center gap-4 mt-3 pt-3 border-t border-border">
+        <span className="text-[9px] font-mono text-muted-foreground uppercase tracking-wider">
           Milestones
         </span>
         {MILESTONES.map((m) => {
@@ -222,7 +222,7 @@ export function StreakWidget({ streak, className }: StreakWidgetProps) {
               <span
                 className={cn(
                   "text-[10px] font-mono",
-                  reached ? "text-[#F5A623]" : "text-[#444444]"
+                  reached ? "text-[#F5A623]" : "text-subtle"
                 )}
               >
                 {m}d

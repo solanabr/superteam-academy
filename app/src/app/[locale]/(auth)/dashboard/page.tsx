@@ -147,15 +147,15 @@ function DailyChallengeWidget() {
   return (
     <div className="mb-8">
       <div className="flex items-center gap-3 mb-4">
-        <h2 className="font-mono text-lg font-semibold text-[#EDEDED]">Daily Challenge</h2>
+        <h2 className="font-mono text-lg font-semibold text-foreground">Daily Challenge</h2>
         <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#14F195]/10 border border-[#14F195]/20 text-[#14F195] animate-pulse">
           LIVE
         </span>
-        <span className="ml-auto text-xs font-mono text-[#666666] flex items-center gap-1">
+        <span className="ml-auto text-xs font-mono text-muted-foreground flex items-center gap-1">
           <Clock className="h-3 w-3" /> Resets in {challenge.expiresIn}
         </span>
       </div>
-      <div className="bg-[#111111] border border-[#14F195]/20 rounded p-5 relative overflow-hidden">
+      <div className="bg-card border border-[#14F195]/20 rounded p-5 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-32 h-32 rounded-full pointer-events-none"
           style={{ background: "radial-gradient(circle at top right, rgba(20,241,149,0.06), transparent 70%)" }} />
         <div className="flex items-start justify-between gap-4 relative">
@@ -164,16 +164,16 @@ function DailyChallengeWidget() {
               <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-sm text-[#F5A623] bg-[#F5A623]/10 border border-[#F5A623]/20">
                 {challenge.difficulty}
               </span>
-              <span className="text-[10px] font-mono text-[#666666]">
+              <span className="text-[10px] font-mono text-muted-foreground">
                 {challenge.completedBy} devs completed today
               </span>
             </div>
-            <h3 className="font-mono text-sm font-semibold text-[#EDEDED] mb-1">{challenge.title}</h3>
-            <p className="text-xs text-[#666666] leading-relaxed">{challenge.description}</p>
+            <h3 className="font-mono text-sm font-semibold text-foreground mb-1">{challenge.title}</h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">{challenge.description}</p>
           </div>
           <div className="flex-shrink-0 text-right">
             <div className="font-mono text-2xl font-bold text-[#14F195]">+{challenge.xpReward}</div>
-            <div className="text-[10px] text-[#666666] font-mono">XP</div>
+            <div className="text-[10px] text-muted-foreground font-mono">XP</div>
           </div>
         </div>
         <div className="mt-4">
@@ -182,7 +182,7 @@ function DailyChallengeWidget() {
               pathname: "/courses/[slug]/lessons/[id]",
               params: { slug: "solana-fundamentals", id: "l6" },
             }}
-            className="inline-flex items-center gap-2 bg-[#14F195] text-black font-mono font-semibold text-sm px-5 py-2 rounded hover:bg-[#0D9E61] transition-colors"
+            className="inline-flex items-center gap-2 bg-[#14F195] text-black font-mono font-semibold text-sm px-5 py-2 rounded hover:bg-accent-dim transition-colors"
           >
             <Zap className="h-3.5 w-3.5" />
             Solve Challenge
@@ -224,16 +224,16 @@ export default function DashboardPage() {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4 px-4">
         <span className="text-5xl">◎</span>
-        <h2 className="font-mono text-xl font-bold text-[#EDEDED]">
+        <h2 className="font-mono text-xl font-bold text-foreground">
           Connect your wallet
         </h2>
-        <p className="text-sm text-[#666666] text-center max-w-sm">
+        <p className="text-sm text-muted-foreground text-center max-w-sm">
           Connect your Solana wallet to view your dashboard, XP balance, and
           learning progress.
         </p>
         <button
           onClick={() => setVisible(true)}
-          className="mt-2 bg-[#14F195] text-black font-mono font-semibold px-6 py-2.5 rounded hover:bg-[#0D9E61] transition-colors"
+          className="mt-2 bg-[#14F195] text-black font-mono font-semibold px-6 py-2.5 rounded hover:bg-accent-dim transition-colors"
         >
           Connect Wallet
         </button>
@@ -245,11 +245,11 @@ export default function DashboardPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="font-mono text-3xl font-bold text-[#EDEDED]">
+        <h1 className="font-mono text-3xl font-bold text-foreground">
           {t("title")}
         </h1>
         {publicKey && (
-          <p className="text-xs text-[#666666] font-mono mt-1">
+          <p className="text-xs text-muted-foreground font-mono mt-1">
             {publicKey.toBase58().slice(0, 20)}...
           </p>
         )}
@@ -258,74 +258,74 @@ export default function DashboardPage() {
       {/* Stats row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         {/* XP Card */}
-        <div className="bg-[#111111] border border-[#1F1F1F] rounded p-5">
+        <div className="bg-card border border-border rounded p-5">
           <div className="flex items-center gap-2 mb-3">
             <Zap className="h-4 w-4 text-[#14F195]" />
-            <span className="text-xs font-mono text-[#666666] uppercase tracking-wider">
+            <span className="text-xs font-mono text-muted-foreground uppercase tracking-wider">
               XP Balance
             </span>
           </div>
           {xpLoading ? (
-            <div className="h-8 bg-[#1A1A1A] rounded animate-pulse mb-3" />
+            <div className="h-8 bg-elevated rounded animate-pulse mb-3" />
           ) : xpData ? (
             <>
-              <div className="font-mono text-3xl font-bold text-[#EDEDED] mb-1">
+              <div className="font-mono text-3xl font-bold text-foreground mb-1">
                 {xpData.balance.toLocaleString()}
-                <span className="text-sm text-[#666666] ml-1">XP</span>
+                <span className="text-sm text-muted-foreground ml-1">XP</span>
               </div>
               <XPBar xpData={xpData} showLabel={true} />
             </>
           ) : (
-            <div className="font-mono text-3xl font-bold text-[#EDEDED]">
+            <div className="font-mono text-3xl font-bold text-foreground">
               0 XP
             </div>
           )}
         </div>
 
         {/* Credentials Card */}
-        <div className="bg-[#111111] border border-[#1F1F1F] rounded p-5">
+        <div className="bg-card border border-border rounded p-5">
           <div className="flex items-center gap-2 mb-3">
             <Award className="h-4 w-4 text-[#9945FF]" />
-            <span className="text-xs font-mono text-[#666666] uppercase tracking-wider">
+            <span className="text-xs font-mono text-muted-foreground uppercase tracking-wider">
               Credentials
             </span>
           </div>
           {credsLoading ? (
-            <div className="h-8 bg-[#1A1A1A] rounded animate-pulse" />
+            <div className="h-8 bg-elevated rounded animate-pulse" />
           ) : (
-            <div className="font-mono text-3xl font-bold text-[#EDEDED]">
+            <div className="font-mono text-3xl font-bold text-foreground">
               {credentials.length}
-              <span className="text-sm text-[#666666] ml-1">NFTs</span>
+              <span className="text-sm text-muted-foreground ml-1">NFTs</span>
             </div>
           )}
-          <p className="text-[10px] text-[#666666] font-mono mt-2">
+          <p className="text-[10px] text-muted-foreground font-mono mt-2">
             Soulbound on Solana
           </p>
         </div>
 
         {/* Activity summary */}
-        <div className="bg-[#111111] border border-[#1F1F1F] rounded p-5">
+        <div className="bg-card border border-border rounded p-5">
           <div className="flex items-center gap-2 mb-3">
             <TrendingUp className="h-4 w-4 text-[#00D4FF]" />
-            <span className="text-xs font-mono text-[#666666] uppercase tracking-wider">
+            <span className="text-xs font-mono text-muted-foreground uppercase tracking-wider">
               This Week
             </span>
           </div>
-          <div className="font-mono text-3xl font-bold text-[#EDEDED]">
+          <div className="font-mono text-3xl font-bold text-foreground">
             {MOCK_ACTIVITY.filter((a) => a.type === "lesson").length}
-            <span className="text-sm text-[#666666] ml-1">lessons</span>
+            <span className="text-sm text-muted-foreground ml-1">lessons</span>
           </div>
-          <p className="text-[10px] text-[#666666] font-mono mt-2">
+          <p className="text-[10px] text-muted-foreground font-mono mt-2">
             Keep the momentum going
           </p>
         </div>
       </div>
 
       {/* Streak calendar */}
-      <div className="bg-[#111111] border border-[#1F1F1F] rounded p-5 mb-8">
+      <div className="bg-card border border-border rounded p-5 mb-8">
         <div className="flex items-center gap-2 mb-4">
           <span className="text-sm">🔥</span>
-          <span className="text-xs font-mono text-[#666666] uppercase tracking-wider">
+          <span className="text-xs font-mono text-muted-foreground uppercase tracking-wider">
             Streak
           </span>
         </div>
@@ -335,12 +335,12 @@ export default function DashboardPage() {
       {/* Two-column layout: activity feed + recommended courses */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8">
         {/* Activity feed — 2 cols */}
-        <div className="lg:col-span-2 bg-[#111111] border border-[#1F1F1F] rounded p-5">
+        <div className="lg:col-span-2 bg-card border border-border rounded p-5">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-mono text-sm font-semibold text-[#EDEDED] uppercase tracking-wider">
+            <h2 className="font-mono text-sm font-semibold text-foreground uppercase tracking-wider">
               Recent Activity
             </h2>
-            <span className="text-[10px] font-mono text-[#666666]">
+            <span className="text-[10px] font-mono text-muted-foreground">
               Last 7 days
             </span>
           </div>
@@ -350,25 +350,25 @@ export default function DashboardPage() {
               <li key={item.id} className="flex gap-3 group">
                 {/* Timeline line + dot */}
                 <div className="flex flex-col items-center">
-                  <div className="flex items-center justify-center w-6 h-6 rounded-full bg-[#0A0A0A] border border-[#1F1F1F] flex-shrink-0 mt-0.5 group-hover:border-[#2E2E2E] transition-colors">
+                  <div className="flex items-center justify-center w-6 h-6 rounded-full bg-background border border-border flex-shrink-0 mt-0.5 group-hover:border-border-hover transition-colors">
                     <ActivityIcon type={item.type} />
                   </div>
                   {idx < MOCK_ACTIVITY.length - 1 && (
-                    <div className="w-px flex-1 bg-[#1A1A1A] my-1 min-h-[16px]" />
+                    <div className="w-px flex-1 bg-elevated my-1 min-h-[16px]" />
                   )}
                 </div>
 
                 {/* Content */}
                 <div className="pb-4 flex-1 min-w-0">
-                  <p className="text-xs font-mono text-[#EDEDED] leading-snug">
+                  <p className="text-xs font-mono text-foreground leading-snug">
                     {item.message}
                   </p>
                   {item.detail && (
-                    <p className="text-[10px] text-[#666666] mt-0.5">
+                    <p className="text-[10px] text-muted-foreground mt-0.5">
                       {item.detail}
                     </p>
                   )}
-                  <p className="text-[10px] text-[#444444] font-mono mt-1 flex items-center gap-1">
+                  <p className="text-[10px] text-subtle font-mono mt-1 flex items-center gap-1">
                     <Clock className="h-2.5 w-2.5" />
                     {item.timestamp}
                   </p>
@@ -379,14 +379,14 @@ export default function DashboardPage() {
         </div>
 
         {/* Recommended courses — 3 cols */}
-        <div className="lg:col-span-3 bg-[#111111] border border-[#1F1F1F] rounded p-5">
+        <div className="lg:col-span-3 bg-card border border-border rounded p-5">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-mono text-sm font-semibold text-[#EDEDED] uppercase tracking-wider">
+            <h2 className="font-mono text-sm font-semibold text-foreground uppercase tracking-wider">
               Up Next
             </h2>
             <Link
               href="/courses"
-              className="text-[10px] font-mono text-[#666666] hover:text-[#EDEDED] transition-colors flex items-center gap-0.5"
+              className="text-[10px] font-mono text-muted-foreground hover:text-foreground transition-colors flex items-center gap-0.5"
             >
               Browse all
               <ChevronRight className="h-3 w-3" />
@@ -405,7 +405,7 @@ export default function DashboardPage() {
                     params: { slug: course.slug },
                   }}
                 >
-                  <article className="group flex gap-3 p-3 rounded border border-[#1A1A1A] hover:border-[#2E2E2E] hover:bg-[#0D0D0D] transition-all">
+                  <article className="group flex gap-3 p-3 rounded border border-border hover:border-border-hover hover:bg-background transition-all">
                     {/* Track icon */}
                     <div
                       className="flex-shrink-0 w-10 h-10 rounded flex items-center justify-center text-xl"
@@ -419,10 +419,10 @@ export default function DashboardPage() {
 
                     {/* Info */}
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-mono text-xs font-semibold text-[#EDEDED] group-hover:text-white transition-colors leading-snug line-clamp-1">
+                      <h3 className="font-mono text-xs font-semibold text-foreground group-hover:text-white transition-colors leading-snug line-clamp-1">
                         {course.title}
                       </h3>
-                      <p className="text-[10px] text-[#666666] leading-relaxed mt-0.5 line-clamp-2">
+                      <p className="text-[10px] text-muted-foreground leading-relaxed mt-0.5 line-clamp-2">
                         {course.description}
                       </p>
                       <div className="flex items-center gap-3 mt-1.5">
@@ -436,7 +436,7 @@ export default function DashboardPage() {
                         >
                           {course.difficulty}
                         </span>
-                        <span className="text-[9px] font-mono text-[#666666] flex items-center gap-0.5">
+                        <span className="text-[9px] font-mono text-muted-foreground flex items-center gap-0.5">
                           <Clock className="h-2.5 w-2.5" />
                           {course.durationHours}h
                         </span>
@@ -447,7 +447,7 @@ export default function DashboardPage() {
                       </div>
                     </div>
 
-                    <ChevronRight className="h-4 w-4 text-[#333333] flex-shrink-0 self-center group-hover:text-[#666666] transition-colors" />
+                    <ChevronRight className="h-4 w-4 text-subtle flex-shrink-0 self-center group-hover:text-muted-foreground transition-colors" />
                   </article>
                 </Link>
               );
@@ -461,24 +461,24 @@ export default function DashboardPage() {
       {/* Continue Learning (existing) */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-mono text-lg font-semibold text-[#EDEDED]">
+          <h2 className="font-mono text-lg font-semibold text-foreground">
             {t("continueLearning")}
           </h2>
           <Link
             href="/courses"
-            className="text-xs text-[#666666] hover:text-[#EDEDED] font-mono transition-colors"
+            className="text-xs text-muted-foreground hover:text-foreground font-mono transition-colors"
           >
             Browse all →
           </Link>
         </div>
-        <div className="bg-[#111111] border border-[#1F1F1F] rounded p-6 text-center">
-          <BookOpen className="h-8 w-8 text-[#333333] mx-auto mb-3" />
-          <p className="text-sm text-[#666666] font-mono mb-4">
+        <div className="bg-card border border-border rounded p-6 text-center">
+          <BookOpen className="h-8 w-8 text-subtle mx-auto mb-3" />
+          <p className="text-sm text-muted-foreground font-mono mb-4">
             {t("noActivity")}
           </p>
           <Link
             href="/courses"
-            className="inline-flex items-center gap-2 bg-[#14F195] text-black font-mono font-semibold text-sm px-5 py-2 rounded hover:bg-[#0D9E61] transition-colors"
+            className="inline-flex items-center gap-2 bg-[#14F195] text-black font-mono font-semibold text-sm px-5 py-2 rounded hover:bg-accent-dim transition-colors"
           >
             Browse Courses
           </Link>
@@ -488,7 +488,7 @@ export default function DashboardPage() {
       {/* Credentials grid */}
       {credentials.length > 0 && (
         <div>
-          <h2 className="font-mono text-lg font-semibold text-[#EDEDED] mb-4">
+          <h2 className="font-mono text-lg font-semibold text-foreground mb-4">
             {t("credentials")}
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">

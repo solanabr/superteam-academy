@@ -72,10 +72,10 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="font-mono text-3xl font-bold text-[#EDEDED] mb-1">
+        <h1 className="font-mono text-3xl font-bold text-foreground mb-1">
           {t("title")}
         </h1>
-        <p className="text-sm text-[#666666]">{t("subtitle")}</p>
+        <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
       </div>
 
       {/* Search */}
@@ -83,13 +83,13 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
         {difficulty && <input type="hidden" name="difficulty" value={difficulty} />}
         {track && <input type="hidden" name="track" value={track} />}
         <div className="relative w-full max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#666666] pointer-events-none" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
           <input
             type="text"
             name="q"
             defaultValue={q ?? ""}
             placeholder="Search courses..."
-            className="w-full bg-[#111111] border border-[#1F1F1F] focus:border-[#14F195]/50 rounded pl-9 pr-3 py-1.5 text-sm font-mono text-[#EDEDED] placeholder-[#666666] focus:outline-none transition-colors"
+            className="w-full bg-card border border-border focus:border-[#14F195]/50 rounded pl-9 pr-3 py-1.5 text-sm font-mono text-foreground placeholder:text-muted-foreground focus:outline-none transition-colors"
           />
         </div>
       </form>
@@ -109,14 +109,14 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
                 "px-3 py-1.5 rounded text-xs font-mono transition-colors border",
                 (difficulty ?? "all") === value
                   ? "bg-[#14F195] text-black border-[#14F195]"
-                  : "bg-transparent text-[#666666] border-[#1F1F1F] hover:border-[#2E2E2E] hover:text-[#EDEDED]",
+                  : "bg-transparent text-muted-foreground border-border hover:border-border-hover hover:text-foreground",
               ].join(" ")}
             >
               {label}
             </Link>
           );
         })}
-        <span className="ml-auto text-xs text-[#666666] font-mono">
+        <span className="ml-auto text-xs text-muted-foreground font-mono">
           {sorted.length} {sorted.length === 1 ? "course" : "courses"}
         </span>
       </div>
@@ -130,11 +130,11 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
           )}
           {track && <input type="hidden" name="track" value={track} />}
           <div className="inline-flex items-center gap-2">
-            <label className="text-xs font-mono text-[#666666]">Sort by</label>
+            <label className="text-xs font-mono text-muted-foreground">Sort by</label>
             <select
               name="sort"
               defaultValue={activeSort}
-              className="bg-[#111111] border border-[#1F1F1F] text-[#EDEDED] font-mono text-xs rounded px-2 py-1.5 focus:outline-none focus:border-[#14F195]/50"
+              className="bg-card border border-border text-foreground font-mono text-xs rounded px-2 py-1.5 focus:outline-none focus:border-[#14F195]/50"
             >
               <option value="newest">{t("sort.newest")}</option>
               <option value="xpReward">{t("sort.xpReward")}</option>
@@ -142,7 +142,7 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
             </select>
             <button
               type="submit"
-              className="px-3 py-1.5 bg-[#111111] border border-[#1F1F1F] text-[#666666] hover:text-[#EDEDED] hover:border-[#2E2E2E] font-mono text-xs rounded transition-colors"
+              className="px-3 py-1.5 bg-card border border-border text-muted-foreground hover:text-foreground hover:border-border-hover font-mono text-xs rounded transition-colors"
             >
               Apply
             </button>
@@ -152,7 +152,7 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
 
       {/* Grid */}
       {sorted.length === 0 ? (
-        <div className="text-center py-20 text-[#666666] font-mono text-sm">
+        <div className="text-center py-20 text-muted-foreground font-mono text-sm">
           {t("empty")}
         </div>
       ) : (

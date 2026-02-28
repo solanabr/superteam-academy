@@ -72,7 +72,7 @@ export function SkillRadar({ skills }: SkillRadarProps) {
 
   return (
     <div
-      className="bg-[#111111] border border-[#1F1F1F] rounded-lg p-5 flex flex-col items-center"
+      className="bg-card border border-border rounded-lg p-5 flex flex-col items-center"
       style={{ width: "100%", maxWidth: SIZE + 40 }}
     >
       <svg

@@ -49,7 +49,7 @@ export default async function LandingPage() {
   ];
 
   return (
-    <div className="bg-[#0A0A0A] text-[#EDEDED]">
+    <div className="bg-background text-foreground">
       {/* ── Hero ── */}
       <section className="relative min-h-[90vh] flex flex-col items-center justify-center grid-pattern overflow-hidden px-4">
         {/* Background glow */}
@@ -70,12 +70,12 @@ export default async function LandingPage() {
 
           {/* H1 */}
           <h1 className="font-mono font-black text-5xl sm:text-7xl md:text-8xl leading-[0.9] tracking-tight mb-6">
-            <span className="block text-[#EDEDED]">Master</span>
-            <span className="block text-[#EDEDED]">Solana</span>
+            <span className="block text-foreground">Master</span>
+            <span className="block text-foreground">Solana</span>
             <span className="block text-[#14F195]">Development</span>
           </h1>
 
-          <p className="text-[#666666] text-base sm:text-lg max-w-xl mx-auto leading-relaxed mb-10 font-mono">
+          <p className="text-muted-foreground text-base sm:text-lg max-w-xl mx-auto leading-relaxed mb-10 font-mono">
             {t("hero.subtitle")}
           </p>
 
@@ -83,14 +83,14 @@ export default async function LandingPage() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-16">
             <Link
               href="/courses"
-              className="inline-flex items-center gap-2 bg-[#14F195] text-black font-mono font-semibold text-sm px-6 py-2.5 rounded hover:bg-[#0D9E61] transition-colors"
+              className="inline-flex items-center gap-2 bg-[#14F195] text-black font-mono font-semibold text-sm px-6 py-2.5 rounded hover:bg-accent-dim transition-colors"
             >
               <span>◎</span>
               {t("hero.cta")}
             </Link>
             <a
               href="#tracks"
-              className="inline-flex items-center gap-2 border border-[#1F1F1F] text-[#EDEDED] font-mono text-sm px-6 py-2.5 rounded hover:bg-[#111111] hover:border-[#2E2E2E] transition-colors"
+              className="inline-flex items-center gap-2 border border-border text-foreground font-mono text-sm px-6 py-2.5 rounded hover:bg-card hover:border-border-hover transition-colors"
             >
               {t("hero.ctaSecondary")}
             </a>
@@ -99,7 +99,7 @@ export default async function LandingPage() {
           <div className="mt-4">
             <a
               href="./onboarding"
-              className="text-xs font-mono text-[#666666] hover:text-[#14F195] underline underline-offset-4 transition-colors"
+              className="text-xs font-mono text-muted-foreground hover:text-[#14F195] underline underline-offset-4 transition-colors"
             >
               Not sure where to start? Take the skill assessment →
             </a>
@@ -109,10 +109,10 @@ export default async function LandingPage() {
           <div className="flex items-center justify-center gap-8 sm:gap-16">
             {stats.map(({ label, sublabel }) => (
               <div key={sublabel} className="text-center">
-                <div className="font-mono text-2xl font-bold text-[#EDEDED] mono-numbers">
+                <div className="font-mono text-2xl font-bold text-foreground mono-numbers">
                   {label}
                 </div>
-                <div className="text-[10px] text-[#666666] font-mono mt-0.5 uppercase tracking-wider">
+                <div className="text-[10px] text-muted-foreground font-mono mt-0.5 uppercase tracking-wider">
                   {sublabel}
                 </div>
               </div>
@@ -121,7 +121,7 @@ export default async function LandingPage() {
         </div>
 
         {/* Terminal decoration */}
-        <div className="absolute bottom-8 right-8 hidden lg:block font-mono text-[10px] text-[#333333] text-right">
+        <div className="absolute bottom-8 right-8 hidden lg:block font-mono text-[10px] text-subtle text-right">
           <div className="text-[#14F195]">$ solana balance</div>
           <div>42,000 XP tokens</div>
           <div className="text-[#14F195]">$ academy level</div>
@@ -130,13 +130,13 @@ export default async function LandingPage() {
       </section>
 
       {/* ── Learning Tracks ── */}
-      <section id="tracks" className="py-20 px-4 border-t border-[#1F1F1F]">
+      <section id="tracks" className="py-20 px-4 border-t border-border">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="font-mono text-2xl font-bold text-[#EDEDED] mb-2">
+            <h2 className="font-mono text-2xl font-bold text-foreground mb-2">
               {t("tracks.title")}
             </h2>
-            <p className="text-sm text-[#666666] max-w-md mx-auto">
+            <p className="text-sm text-muted-foreground max-w-md mx-auto">
               {t("tracks.subtitle")}
             </p>
           </div>
@@ -146,7 +146,7 @@ export default async function LandingPage() {
               <Link
                 key={track.id}
                 href={{ pathname: "/courses", query: { track: String(track.id) } }}
-                className="group bg-[#111111] border border-[#1F1F1F] rounded p-4 hover:border-[#2E2E2E] transition-all"
+                className="group bg-card border border-border rounded p-4 hover:border-border-hover transition-all"
               >
                 <div
                   className="text-2xl mb-3 transition-transform group-hover:scale-110"
@@ -159,7 +159,7 @@ export default async function LandingPage() {
                 >
                   {track.name}
                 </h3>
-                <p className="text-[11px] text-[#666666] leading-relaxed">
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
                   {track.description}
                 </p>
               </Link>
@@ -169,10 +169,10 @@ export default async function LandingPage() {
       </section>
 
       {/* ── Features ── */}
-      <section className="py-20 px-4 border-t border-[#1F1F1F]">
+      <section className="py-20 px-4 border-t border-border">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="font-mono text-2xl font-bold text-[#EDEDED]">
+            <h2 className="font-mono text-2xl font-bold text-foreground">
               {t("features.title")}
             </h2>
           </div>
@@ -181,7 +181,7 @@ export default async function LandingPage() {
             {features.map(({ icon, key, color }) => (
               <div
                 key={key}
-                className="bg-[#111111] border border-[#1F1F1F] rounded p-5 hover:border-[#2E2E2E] transition-all"
+                className="bg-card border border-border rounded p-5 hover:border-border-hover transition-all"
               >
                 <div
                   className="text-2xl mb-4 w-10 h-10 rounded flex items-center justify-center"
@@ -189,10 +189,10 @@ export default async function LandingPage() {
                 >
                   {icon}
                 </div>
-                <h3 className="font-mono text-sm font-semibold text-[#EDEDED] mb-2">
+                <h3 className="font-mono text-sm font-semibold text-foreground mb-2">
                   {t(`features.${key}.title`)}
                 </h3>
-                <p className="text-xs text-[#666666] leading-relaxed">
+                <p className="text-xs text-muted-foreground leading-relaxed">
                   {t(`features.${key}.description`)}
                 </p>
               </div>
@@ -202,10 +202,10 @@ export default async function LandingPage() {
       </section>
 
       {/* ── Testimonials ── */}
-      <section className="py-20 px-4 border-t border-[#1F1F1F]">
+      <section className="py-20 px-4 border-t border-border">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="font-mono text-2xl font-bold text-[#EDEDED]">
+            <h2 className="font-mono text-2xl font-bold text-foreground">
               {t("socialProof.testimonials")}
             </h2>
           </div>
@@ -236,20 +236,20 @@ export default async function LandingPage() {
             ].map(({ initials, name, role, quote }) => (
               <div
                 key={name}
-                className="bg-[#111111] border border-[#1F1F1F] rounded p-5 flex flex-col gap-4"
+                className="bg-card border border-border rounded p-5 flex flex-col gap-4"
               >
-                <p className="text-sm text-[#666666] leading-relaxed flex-1">
+                <p className="text-sm text-muted-foreground leading-relaxed flex-1">
                   &ldquo;{quote}&rdquo;
                 </p>
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-[#1A1A1A] border border-[#2E2E2E] flex items-center justify-center font-mono text-xs font-bold text-[#EDEDED] shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-elevated border border-border-hover flex items-center justify-center font-mono text-xs font-bold text-foreground shrink-0">
                     {initials}
                   </div>
                   <div>
-                    <div className="font-mono text-sm font-semibold text-[#EDEDED]">
+                    <div className="font-mono text-sm font-semibold text-foreground">
                       {name}
                     </div>
-                    <div className="text-xs text-[#666666]">{role}</div>
+                    <div className="text-xs text-muted-foreground">{role}</div>
                   </div>
                 </div>
               </div>
@@ -259,18 +259,18 @@ export default async function LandingPage() {
       </section>
 
       {/* ── CTA Banner ── */}
-      <section className="py-20 px-4 border-t border-[#1F1F1F]">
+      <section className="py-20 px-4 border-t border-border">
         <div className="max-w-2xl mx-auto text-center">
-          <div className="bg-[#111111] border border-[#14F195]/20 rounded-lg p-10">
-            <h2 className="font-mono text-2xl font-bold text-[#EDEDED] mb-3">
+          <div className="bg-card border border-[#14F195]/20 rounded-lg p-10">
+            <h2 className="font-mono text-2xl font-bold text-foreground mb-3">
               {t("socialProof.title")}
             </h2>
-            <p className="text-sm text-[#666666] mb-8 max-w-sm mx-auto">
+            <p className="text-sm text-muted-foreground mb-8 max-w-sm mx-auto">
               Join hundreds of developers building on Solana. Earn on-chain credentials. Ship real programs.
             </p>
             <Link
               href="/courses"
-              className="inline-flex items-center gap-2 bg-[#14F195] text-black font-mono font-semibold text-sm px-8 py-3 rounded hover:bg-[#0D9E61] transition-colors"
+              className="inline-flex items-center gap-2 bg-[#14F195] text-black font-mono font-semibold text-sm px-8 py-3 rounded hover:bg-accent-dim transition-colors"
             >
               <span>◎</span>
               {t("hero.cta")}

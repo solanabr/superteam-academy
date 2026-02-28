@@ -121,10 +121,10 @@ function HintsPanel() {
   };
 
   return (
-    <div className="mt-6 border border-[#1F1F1F] rounded">
+    <div className="mt-6 border border-border rounded">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between px-4 py-3 text-xs font-mono text-[#666666] hover:text-[#EDEDED] transition-colors"
+        className="w-full flex items-center justify-between px-4 py-3 text-xs font-mono text-muted-foreground hover:text-foreground transition-colors"
       >
         <span>💡 Hints</span>
         <ChevronDown
@@ -137,7 +137,7 @@ function HintsPanel() {
           {HINTS.slice(0, revealedCount).map((hint, i) => (
             <div
               key={i}
-              className="border border-[#14F195]/20 bg-[#14F195]/5 rounded p-3 text-sm font-mono text-[#EDEDED]"
+              className="border border-[#14F195]/20 bg-[#14F195]/5 rounded p-3 text-sm font-mono text-foreground"
             >
               <span className="text-[#14F195] mr-2">{i + 1}.</span>
               {hint}
@@ -154,7 +154,7 @@ function HintsPanel() {
           )}
 
           {revealedCount === HINTS.length && (
-            <p className="text-xs font-mono text-[#666666]">All hints revealed.</p>
+            <p className="text-xs font-mono text-muted-foreground">All hints revealed.</p>
           )}
         </div>
       )}
@@ -174,15 +174,15 @@ function SolutionPanel() {
           "text-xs font-mono px-3 py-1.5 rounded border transition-colors",
           showSolution
             ? "border-[#14F195]/50 text-[#14F195]"
-            : "border-[#333333] text-[#666666] hover:border-[#14F195]/50 hover:text-[#14F195]"
+            : "border-[#333333] text-muted-foreground hover:border-[#14F195]/50 hover:text-[#14F195]"
         )}
       >
         {showSolution ? "Hide Solution" : "Show Solution"}
       </button>
 
       {showSolution && (
-        <div className="mt-3 border border-[#1F1F1F] rounded overflow-hidden">
-          <div className="px-3 py-1.5 bg-[#111111] border-b border-[#1F1F1F] text-xs font-mono text-[#666666]">
+        <div className="mt-3 border border-border rounded overflow-hidden">
+          <div className="px-3 py-1.5 bg-card border-b border-border text-xs font-mono text-muted-foreground">
             solution.rs — read only
           </div>
           <MonacoEditor
@@ -236,7 +236,7 @@ function ResizableDivider({ onDrag }: ResizableDividerProps) {
   return (
     <div
       onMouseDown={handleMouseDown}
-      className="flex-shrink-0 w-2 border-l border-r border-[#2E2E2E] cursor-col-resize hover:bg-[#14F195]/10 transition-colors select-none"
+      className="flex-shrink-0 w-2 border-l border-r border-border-hover cursor-col-resize hover:bg-[#14F195]/10 transition-colors select-none"
     />
   );
 }
@@ -302,19 +302,19 @@ export default function LessonPage() {
   }, []);
 
   return (
-    <div className="h-[calc(100vh-56px)] flex flex-col bg-[#0A0A0A]">
+    <div className="h-[calc(100vh-56px)] flex flex-col bg-background">
       {/* Top bar */}
-      <div className="h-10 border-b border-[#1F1F1F] flex items-center justify-between px-4 flex-shrink-0">
+      <div className="h-10 border-b border-border flex items-center justify-between px-4 flex-shrink-0">
         <div className="flex items-center gap-3">
           <Link
             href={{ pathname: "/courses/[slug]", params: { slug } }}
-            className="flex items-center gap-1 text-xs text-[#666666] hover:text-[#EDEDED] font-mono transition-colors"
+            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground font-mono transition-colors"
           >
             <ChevronLeft className="h-3 w-3" />
             Back
           </Link>
-          <span className="text-[#333333]">/</span>
-          <span className="text-xs font-mono text-[#EDEDED] truncate max-w-[200px]">
+          <span className="text-subtle">/</span>
+          <span className="text-xs font-mono text-foreground truncate max-w-[200px]">
             {DEMO_LESSON.title}
           </span>
         </div>
@@ -336,7 +336,7 @@ export default function LessonPage() {
           ) : (
             <Link
               href={{ pathname: "/courses/[slug]/lessons/[id]", params: { slug, id: nextLessonId } }}
-              className="flex items-center gap-1.5 text-[#666666] hover:text-[#EDEDED] text-xs font-mono transition-colors"
+              className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground text-xs font-mono transition-colors"
             >
               <ChevronRight className="h-3 w-3" />
               {t("next")}
@@ -352,29 +352,29 @@ export default function LessonPage() {
           className="overflow-y-auto p-6 flex-shrink-0"
           style={{ width: `${panelWidth}%` }}
         >
-          <h1 className="font-mono text-xl font-bold text-[#EDEDED] mb-4">
+          <h1 className="font-mono text-xl font-bold text-foreground mb-4">
             {DEMO_LESSON.title}
           </h1>
 
           <div className="prose prose-invert prose-sm max-w-none font-mono">
             {DEMO_LESSON.content.split("\n").map((line, i) => {
               if (line.startsWith("## ")) {
-                return <h2 key={i} className="text-[#EDEDED] text-base font-bold mt-5 mb-2">{line.slice(3)}</h2>;
+                return <h2 key={i} className="text-foreground text-base font-bold mt-5 mb-2">{line.slice(3)}</h2>;
               }
               if (line.startsWith("# ")) {
-                return <h1 key={i} className="text-[#EDEDED] text-lg font-bold mb-3">{line.slice(2)}</h1>;
+                return <h1 key={i} className="text-foreground text-lg font-bold mb-3">{line.slice(2)}</h1>;
               }
               if (line.startsWith("- **")) {
                 const [term, ...rest] = line.slice(2).split("**:");
                 return (
-                  <div key={i} className="flex gap-2 text-sm text-[#666666] mb-1">
+                  <div key={i} className="flex gap-2 text-sm text-muted-foreground mb-1">
                     <span className="text-[#14F195] font-semibold">{term.replace("**", "")}</span>
                     <span>{rest.join("").replace(/\*/g, "")}</span>
                   </div>
                 );
               }
               if (line.trim() === "") return <div key={i} className="h-2" />;
-              return <p key={i} className="text-sm text-[#666666] leading-relaxed mb-1">{line.replace(/\*\*/g, "")}</p>;
+              return <p key={i} className="text-sm text-muted-foreground leading-relaxed mb-1">{line.replace(/\*\*/g, "")}</p>;
             })}
           </div>
 
@@ -394,7 +394,7 @@ export default function LessonPage() {
                   "flex items-center gap-2 px-5 py-2.5 rounded font-mono text-sm font-semibold transition-colors",
                   completed
                     ? "bg-[#14F195]/10 text-[#14F195] border border-[#14F195]/30 cursor-default"
-                    : "bg-[#14F195] text-black hover:bg-[#0D9E61]"
+                    : "bg-[#14F195] text-black hover:bg-accent-dim"
                 )}
               >
                 {completing && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
@@ -427,7 +427,7 @@ export default function LessonPage() {
               onChange={handleCodeChange}
               language="rust"
               height="100%"
-              className="flex-1 rounded-none border-0 border-b border-[#1F1F1F]"
+              className="flex-1 rounded-none border-0 border-b border-border"
             />
 
             {/* Test results + actions */}
@@ -439,7 +439,7 @@ export default function LessonPage() {
                       <span className={r.passed ? "text-[#14F195]" : "text-[#FF4444]"}>
                         {r.passed ? "✓" : "✗"}
                       </span>
-                      <span className={r.passed ? "text-[#666666]" : "text-[#FF4444]"}>
+                      <span className={r.passed ? "text-muted-foreground" : "text-[#FF4444]"}>
                         {r.description}
                       </span>
                     </div>
@@ -450,7 +450,7 @@ export default function LessonPage() {
               <div className="flex gap-2">
                 <button
                   onClick={() => setCode(DEMO_LESSON.starterCode)}
-                  className="px-3 py-1.5 text-xs font-mono text-[#666666] border border-[#1F1F1F] rounded hover:border-[#2E2E2E] hover:text-[#EDEDED] transition-colors"
+                  className="px-3 py-1.5 text-xs font-mono text-muted-foreground border border-border rounded hover:border-border-hover hover:text-foreground transition-colors"
                 >
                   {t("resetCode")}
                 </button>
@@ -461,7 +461,7 @@ export default function LessonPage() {
                     "flex-1 flex items-center justify-center gap-2 py-1.5 rounded font-mono text-sm font-semibold transition-colors",
                     completed
                       ? "bg-[#14F195]/10 text-[#14F195] border border-[#14F195]/30"
-                      : "bg-[#14F195] text-black hover:bg-[#0D9E61]"
+                      : "bg-[#14F195] text-black hover:bg-accent-dim"
                   )}
                 >
                   {completing && <Loader2 className="h-3.5 w-3.5 animate-spin" />}

@@ -26,7 +26,7 @@ export default async function ProfilePage({ params }: Props) {
   if (!profile) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-20 text-center">
-        <p className="font-mono text-[#666666]">Profile not found</p>
+        <p className="font-mono text-muted-foreground">Profile not found</p>
       </div>
     );
   }
@@ -46,24 +46,24 @@ export default async function ProfilePage({ params }: Props) {
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10">
       {/* Profile header */}
       <div className="flex items-start gap-5 mb-8">
-        <div className="w-16 h-16 rounded-full bg-[#1A1A1A] border border-[#1F1F1F] flex items-center justify-center font-mono text-2xl flex-shrink-0">
+        <div className="w-16 h-16 rounded-full bg-elevated border border-border flex items-center justify-center font-mono text-2xl flex-shrink-0">
           {(profile.displayName ?? profile.username ?? "?")[0].toUpperCase()}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="font-mono text-2xl font-bold text-[#EDEDED]">
+            <h1 className="font-mono text-2xl font-bold text-foreground">
               {profile.displayName ?? profile.username ?? username}
             </h1>
             <LevelBadge level={level} />
             <VisibilityToggle walletAddress={profile.walletAddress} />
           </div>
           {profile.username && (
-            <p className="text-sm text-[#666666] font-mono">@{profile.username}</p>
+            <p className="text-sm text-muted-foreground font-mono">@{profile.username}</p>
           )}
           {profile.bio && (
-            <p className="text-sm text-[#666666] mt-2 max-w-xl">{profile.bio}</p>
+            <p className="text-sm text-muted-foreground mt-2 max-w-xl">{profile.bio}</p>
           )}
-          <div className="flex flex-wrap gap-4 mt-3 text-xs font-mono text-[#666666]">
+          <div className="flex flex-wrap gap-4 mt-3 text-xs font-mono text-muted-foreground">
             {profile.walletAddress && (
               <span>
                 ◎ {profile.walletAddress.slice(0, 6)}...{profile.walletAddress.slice(-4)}
@@ -81,9 +81,9 @@ export default async function ProfilePage({ params }: Props) {
           { label: "Credentials", value: credentials.length.toString() },
           { label: "Achievements", value: achievements.length.toString() },
         ].map(({ label, value }) => (
-          <div key={label} className="bg-[#111111] border border-[#1F1F1F] rounded p-4 text-center">
-            <div className="font-mono text-2xl font-bold text-[#EDEDED]">{value}</div>
-            <div className="text-[10px] text-[#666666] font-mono mt-0.5 uppercase tracking-wider">
+          <div key={label} className="bg-card border border-border rounded p-4 text-center">
+            <div className="font-mono text-2xl font-bold text-foreground">{value}</div>
+            <div className="text-[10px] text-muted-foreground font-mono mt-0.5 uppercase tracking-wider">
               {label}
             </div>
           </div>
@@ -92,7 +92,7 @@ export default async function ProfilePage({ params }: Props) {
 
       {/* Skills */}
       <section className="mb-8">
-        <h2 className="font-mono text-lg font-semibold text-[#EDEDED] mb-4">
+        <h2 className="font-mono text-lg font-semibold text-foreground mb-4">
           Skills
         </h2>
         <SkillRadar />
@@ -100,11 +100,11 @@ export default async function ProfilePage({ params }: Props) {
 
       {/* Credentials */}
       <section className="mb-8">
-        <h2 className="font-mono text-lg font-semibold text-[#EDEDED] mb-4">
+        <h2 className="font-mono text-lg font-semibold text-foreground mb-4">
           {t("credentials")}
         </h2>
         {credentials.length === 0 ? (
-          <p className="text-sm text-[#666666] font-mono">{t("noCredentials")}</p>
+          <p className="text-sm text-muted-foreground font-mono">{t("noCredentials")}</p>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {credentials.map((cred) => (
@@ -116,16 +116,16 @@ export default async function ProfilePage({ params }: Props) {
 
       {/* Completed Courses */}
       <section className="mb-8">
-        <h2 className="font-mono text-sm font-semibold text-[#EDEDED] mb-3">Completed Courses</h2>
+        <h2 className="font-mono text-sm font-semibold text-foreground mb-3">Completed Courses</h2>
         {credentials.length === 0 ? (
-          <p className="text-xs text-[#666666] font-mono">No completed courses yet.</p>
+          <p className="text-xs text-muted-foreground font-mono">No completed courses yet.</p>
         ) : (
           <div className="space-y-2">
             {credentials.map((cred) => (
-              <div key={cred.assetAddress} className="flex items-center justify-between bg-[#111111] border border-[#1F1F1F] rounded px-4 py-2.5">
+              <div key={cred.assetAddress} className="flex items-center justify-between bg-card border border-border rounded px-4 py-2.5">
                 <div>
-                  <p className="text-sm font-mono text-[#EDEDED]">{cred.attributes.trackId ?? "Academy"} Track</p>
-                  <p className="text-xs text-[#666666]">Level {cred.attributes.level ?? 0} · {Number(cred.attributes.totalXp ?? 0).toLocaleString()} XP</p>
+                  <p className="text-sm font-mono text-foreground">{cred.attributes.trackId ?? "Academy"} Track</p>
+                  <p className="text-xs text-muted-foreground">Level {cred.attributes.level ?? 0} · {Number(cred.attributes.totalXp ?? 0).toLocaleString()} XP</p>
                 </div>
                 <span className="text-[10px] font-mono text-[#14F195] bg-[#14F195]/10 border border-[#14F195]/20 rounded px-2 py-0.5">&#x2713; Completed</span>
               </div>
@@ -137,17 +137,17 @@ export default async function ProfilePage({ params }: Props) {
       {/* Achievements */}
       {achievements.length > 0 && (
         <section>
-          <h2 className="font-mono text-lg font-semibold text-[#EDEDED] mb-4">
+          <h2 className="font-mono text-lg font-semibold text-foreground mb-4">
             {t("achievements")}
           </h2>
           <div className="flex flex-wrap gap-2">
             {achievements.map((ach) => (
               <div
                 key={ach.id}
-                className="bg-[#111111] border border-[#1F1F1F] rounded px-3 py-2 flex items-center gap-2"
+                className="bg-card border border-border rounded px-3 py-2 flex items-center gap-2"
               >
                 <span className="text-sm">🏆</span>
-                <span className="text-xs font-mono text-[#EDEDED]">{ach.name}</span>
+                <span className="text-xs font-mono text-foreground">{ach.name}</span>
                 <span className="text-[10px] font-mono text-[#14F195]">+{ach.xpReward} XP</span>
               </div>
             ))}

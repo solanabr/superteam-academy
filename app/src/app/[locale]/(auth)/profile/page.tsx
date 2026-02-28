@@ -20,13 +20,13 @@ export default function ProfileRedirect() {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4 px-4">
         <span className="text-4xl">◎</span>
-        <h2 className="font-mono text-xl font-bold text-[#EDEDED]">View your profile</h2>
-        <p className="text-sm text-[#666666] text-center max-w-xs">
+        <h2 className="font-mono text-xl font-bold text-foreground">View your profile</h2>
+        <p className="text-sm text-muted-foreground text-center max-w-xs">
           Connect your wallet to access your profile page.
         </p>
         <button
           onClick={() => setVisible(true)}
-          className="mt-2 bg-[#14F195] text-black font-mono font-semibold px-6 py-2.5 rounded hover:bg-[#0D9E61] transition-colors"
+          className="mt-2 bg-[#14F195] text-black font-mono font-semibold px-6 py-2.5 rounded hover:bg-accent-dim transition-colors"
         >
           Connect Wallet
         </button>
@@ -36,7 +36,7 @@ export default function ProfileRedirect() {
 
   return (
     <div className="min-h-[60vh] flex items-center justify-center">
-      <div className="text-[#666666] font-mono text-sm">Redirecting...</div>
+      <div className="text-muted-foreground font-mono text-sm">Redirecting...</div>
     </div>
   );
 }

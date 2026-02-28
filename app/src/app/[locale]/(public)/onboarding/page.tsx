@@ -101,13 +101,13 @@ function OptionCard({
   return (
     <button
       onClick={onClick}
-      className="w-full text-left bg-[#111111] border rounded p-4 cursor-pointer transition-all flex items-center justify-between gap-3"
+      className="w-full text-left bg-card border rounded p-4 cursor-pointer transition-all flex items-center justify-between gap-3"
       style={{
         borderColor: selected ? "#14F195" : "#1F1F1F",
         backgroundColor: selected ? "rgba(20,241,149,0.05)" : undefined,
       }}
     >
-      <span className="font-mono text-sm text-[#EDEDED]">{label}</span>
+      <span className="font-mono text-sm text-foreground">{label}</span>
       {selected && <CheckCircle className="h-4 w-4 text-[#14F195] flex-shrink-0" />}
     </button>
   );
@@ -120,12 +120,12 @@ function ProgressBar({ step }: { step: number }) {
   return (
     <div className="w-full mb-8">
       <div className="flex justify-between items-center mb-2">
-        <span className="text-[10px] font-mono text-[#666666] uppercase tracking-wider">
+        <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">
           Step {step} of 4
         </span>
-        <span className="text-[10px] font-mono text-[#666666]">{Math.round(pct)}%</span>
+        <span className="text-[10px] font-mono text-muted-foreground">{Math.round(pct)}%</span>
       </div>
-      <div className="h-0.5 bg-[#1F1F1F] rounded-full overflow-hidden">
+      <div className="h-0.5 bg-border rounded-full overflow-hidden">
         <div
           className="h-full rounded-full transition-all duration-500"
           style={{ width: `${pct}%`, backgroundColor: "#14F195" }}
@@ -166,15 +166,15 @@ export default function OnboardingPage() {
       <div className="min-h-[80vh] flex flex-col items-center justify-center px-4">
         <div className="max-w-md w-full text-center">
           <div className="text-6xl mb-6 font-mono text-[#14F195]">◎</div>
-          <h1 className="font-mono text-3xl font-black text-[#EDEDED] mb-4 leading-tight">
+          <h1 className="font-mono text-3xl font-black text-foreground mb-4 leading-tight">
             Welcome to Superteam Academy
           </h1>
-          <p className="text-sm text-[#666666] leading-relaxed mb-10 font-mono">
+          <p className="text-sm text-muted-foreground leading-relaxed mb-10 font-mono">
             Let&apos;s personalize your learning path. Answer a few quick questions.
           </p>
           <button
             onClick={() => setStep(1)}
-            className="inline-flex items-center gap-2 bg-[#14F195] text-black font-mono font-semibold text-sm px-8 py-3 rounded hover:bg-[#0D9E61] transition-colors"
+            className="inline-flex items-center gap-2 bg-[#14F195] text-black font-mono font-semibold text-sm px-8 py-3 rounded hover:bg-accent-dim transition-colors"
           >
             Start Assessment
             <ChevronRight className="h-4 w-4" />
@@ -190,16 +190,16 @@ export default function OnboardingPage() {
       <div className="min-h-[80vh] flex flex-col items-center justify-center px-4">
         <div className="max-w-lg w-full">
           <div className="text-center mb-8">
-            <div className="text-[10px] font-mono text-[#666666] uppercase tracking-widest mb-3">
+            <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest mb-3">
               Assessment Complete
             </div>
-            <h2 className="font-mono text-2xl font-black text-[#EDEDED]">
+            <h2 className="font-mono text-2xl font-black text-foreground">
               Your Recommended Path
             </h2>
           </div>
 
           <div
-            className="bg-[#111111] rounded p-6 mb-6 relative overflow-hidden"
+            className="bg-card rounded p-6 mb-6 relative overflow-hidden"
             style={{ border: `1px solid ${result.color}30` }}
           >
             {/* Glow */}
@@ -225,18 +225,18 @@ export default function OnboardingPage() {
             <h3 className="font-mono text-sm font-bold text-[#14F195] mb-2">
               {result.heading}
             </h3>
-            <p className="text-xs text-[#666666] leading-relaxed mb-4">
+            <p className="text-xs text-muted-foreground leading-relaxed mb-4">
               {result.description}
             </p>
 
-            <div className="flex items-center gap-2 pt-4 border-t border-[#1F1F1F]">
-              <span className="text-[10px] font-mono text-[#666666] uppercase tracking-wider">
+            <div className="flex items-center gap-2 pt-4 border-t border-border">
+              <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">
                 XP you&apos;ll earn
               </span>
               <span className="font-mono text-lg font-bold text-[#14F195] ml-auto">
                 +{result.xpReward.toLocaleString()}
               </span>
-              <span className="text-[10px] font-mono text-[#666666]">XP</span>
+              <span className="text-[10px] font-mono text-muted-foreground">XP</span>
             </div>
           </div>
 
@@ -246,14 +246,14 @@ export default function OnboardingPage() {
                 pathname: "/courses/[slug]",
                 params: { slug: result.slug },
               }}
-              className="flex-1 inline-flex items-center justify-center gap-2 bg-[#14F195] text-black font-mono font-semibold text-sm px-6 py-2.5 rounded hover:bg-[#0D9E61] transition-colors"
+              className="flex-1 inline-flex items-center justify-center gap-2 bg-[#14F195] text-black font-mono font-semibold text-sm px-6 py-2.5 rounded hover:bg-accent-dim transition-colors"
             >
               Start Learning
               <ChevronRight className="h-4 w-4" />
             </Link>
             <Link
               href="/courses"
-              className="flex-1 inline-flex items-center justify-center gap-2 border border-[#1F1F1F] text-[#EDEDED] font-mono text-sm px-6 py-2.5 rounded hover:bg-[#111111] hover:border-[#2E2E2E] transition-colors"
+              className="flex-1 inline-flex items-center justify-center gap-2 border border-border text-foreground font-mono text-sm px-6 py-2.5 rounded hover:bg-card hover:border-border-hover transition-colors"
             >
               Browse All Courses
             </Link>
@@ -318,7 +318,7 @@ export default function OnboardingPage() {
       <div className="max-w-lg w-full">
         <ProgressBar step={step} />
 
-        <h2 className="font-mono text-xl font-bold text-[#EDEDED] mb-6">
+        <h2 className="font-mono text-xl font-bold text-foreground mb-6">
           {q.question}
         </h2>
 

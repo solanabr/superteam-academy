@@ -105,11 +105,14 @@
   --accent: #0D9E61;
   --accent-foreground: #FFFFFF;
   --accent-dim: #0A8050;
-  --subtle: #DDDDDA;
+  --subtle: #CCCCCA;
   --border: #E5E5E2;
   --border-hover: #D0D0CC;
   --input: #E5E5E2;
   --ring: #0D9E61;
+  --destructive: #DC2626;
+  --danger: #DC2626;
+  --warning: #D97706;
   --sidebar: #F0F0ED;
   --sidebar-foreground: #0A0A0A;
   --sidebar-border: #E5E5E2;
@@ -163,9 +166,10 @@
   }
   .grid-pattern {
     background-image:
-      linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
     background-size: 40px 40px;
+    opacity: 0.5;
   }
   .scanline {
     background: repeating-linear-gradient(
