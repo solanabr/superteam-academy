@@ -2,7 +2,8 @@
 
 A decentralized learning platform built on Solana. Learners enroll in courses, complete lessons to earn soulbound XP tokens, receive Metaplex Core credential NFTs, collect achievements, and participate in a community forum. Course creators earn XP rewards. The platform is governed by a multisig authority.
 
-**Live:** [superteam-academy-ten.vercel.app](https://superteam-academy-ten.vercel.app)
+- **Demo** https://www.loom.com/share/8d51ffdba2ef4eaba453e2d988cedaf7
+- **Live:** [superteam-academy-ten.vercel.app](https://superteam-academy-ten.vercel.app)
 
 ## Table of Contents
 
