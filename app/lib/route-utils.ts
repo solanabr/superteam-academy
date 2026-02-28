@@ -4,7 +4,7 @@ import { Keypair } from "@solana/web3.js";
 import { createHash } from "node:crypto";
 import { serverAuth } from "@/lib/auth";
 import { readClient, writeClient } from "@/lib/cms-context";
-import { syncAuthSession } from "@/app/api/auth/sync/action";
+import { syncAuthSession } from "../app/api/auth/sync/action";
 
 type AuthResult =
 	| { ok: true; session: NonNullable<Awaited<ReturnType<typeof serverAuth.api.getSession>>> }

@@ -1,6 +1,5 @@
 import { createSanityClient } from "@superteam-academy/cms";
 import type { AcademyUser, UserRole } from "@superteam-academy/cms";
-import { isWalletEmail, walletFromEmail } from "@superteam-academy/auth";
 import {
 	userByAuthIdQuery,
 	userByEmailQuery,
@@ -12,83 +11,73 @@ import {
 	userCountQuery,
 } from "@superteam-academy/cms/queries";
 import { generateUsername } from "./username-utils";
+import { WALLET_EMAIL_DOMAIN } from "@/packages/auth/src/wallet-utils";
 
 export type { AcademyUser };
 
 // Cache clients at module level to reuse connections across requests
 let _writeClient: ReturnType<typeof createSanityClient> | null | undefined;
 let _readClient: ReturnType<typeof createSanityClient> | null | undefined;
+const DUPLICATE_WALLET_USERS_QUERY = `*[_type == "academyUser" && walletAddress == $walletAddress && _id != $keepId]{ _id }`;
 
-function sanityWriteClient() {
-	if (_writeClient !== undefined) return _writeClient;
+type SyncUserParams = {
+	authId: string;
+	name: string;
+	email: string;
+	walletAddress?: string;
+	image?: string;
+};
+
+function getSanityClient(kind: "read" | "write") {
+	if (kind === "write") {
+		if (_writeClient !== undefined) return _writeClient;
+	} else if (_readClient !== undefined) return _readClient;
+
 	const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
 	const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET ?? "production";
-	const token = process.env.SANITY_API_WRITE_TOKEN;
-	if (!projectId || !token) {
-		_writeClient = null;
-		return null;
-	}
-	_writeClient = createSanityClient({ projectId, dataset, token, useCdn: false });
-	return _writeClient;
-}
+	const token =
+		kind === "write"
+			? process.env.SANITY_API_WRITE_TOKEN
+			: (process.env.SANITY_API_READ_TOKEN ?? process.env.SANITY_API_WRITE_TOKEN);
 
-function sanityReadClient() {
-	if (_readClient !== undefined) return _readClient;
-	const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
-	const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET ?? "production";
-	const token = process.env.SANITY_API_READ_TOKEN ?? process.env.SANITY_API_WRITE_TOKEN;
 	if (!projectId || !token) {
+		if (kind === "write") {
+			_writeClient = null;
+			return _writeClient;
+		}
 		_readClient = null;
-		return null;
+		return _readClient;
 	}
-	_readClient = createSanityClient({ projectId, dataset, token, useCdn: false });
+
+	const client = createSanityClient({ projectId, dataset, token, useCdn: false });
+	if (kind === "write") {
+		_writeClient = client;
+		return _writeClient;
+	}
+	_readClient = client;
 	return _readClient;
 }
 
 export function isSuperAdminIdentifier(emailOrWallet: string): boolean {
 	const identifier = process.env.SUPER_ADMIN_IDENTIFIER;
 	if (!identifier) return false;
-	const normalizedInput = emailOrWallet.trim();
+	const normalizedInput = emailOrWallet.trim().replace(WALLET_EMAIL_DOMAIN, "");
 	if (normalizedInput.length === 0) return false;
 	const ids = identifier
 		.split(",")
 		.map((id) => id.trim())
 		.filter((id) => id.length > 0);
-	// Exact match first (wallet addresses are case-sensitive Base58)
-	// then case-insensitive fallback (emails)
+
 	return ids.some(
 		(id) => id === normalizedInput || id.toLowerCase() === normalizedInput.toLowerCase()
 	);
 }
 
-function isSessionSuperAdminIdentity(email?: string | null): boolean {
-	if (!email) return false;
-	if (isSuperAdminIdentifier(email)) return true;
-	if (!isWalletEmail(email)) return false;
-	const walletAddress = walletFromEmail(email);
-	return walletAddress ? isSuperAdminIdentifier(walletAddress) : false;
-}
-
 function determineRole(email: string, walletAddress?: string): UserRole {
+	console.log("Determining role for email:", email, "walletAddress:", walletAddress);
 	if (isSuperAdminIdentifier(email)) return "superadmin";
 	if (walletAddress && isSuperAdminIdentifier(walletAddress)) return "superadmin";
 	return "learner";
-}
-
-function normalizeWalletAddress(walletAddress?: string): string | undefined {
-	if (!walletAddress) return undefined;
-	const normalized = walletAddress.trim();
-	return normalized.length > 0 ? normalized : undefined;
-}
-
-function rolePriority(role: UserRole): number {
-	if (role === "superadmin") return 3;
-	if (role === "admin") return 2;
-	return 1;
-}
-
-function chooseHigherRole(a: UserRole, b: UserRole): UserRole {
-	return rolePriority(a) >= rolePriority(b) ? a : b;
 }
 
 function mergeStringLists(...lists: (string[] | undefined)[]): string[] {
@@ -107,7 +96,23 @@ async function deleteUsersByIds(client: ReturnType<typeof createSanityClient>, i
 	}
 }
 
-type SanityClient = NonNullable<ReturnType<typeof sanityWriteClient>>;
+type SanityClient = NonNullable<ReturnType<typeof getSanityClient>>;
+
+async function cleanupDuplicateWalletUsers(
+	client: SanityClient,
+	keepId: string,
+	walletAddress: string | undefined
+) {
+	if (!walletAddress) return;
+	const duplicates = await client.fetch<Array<{ _id: string }>>(DUPLICATE_WALLET_USERS_QUERY, {
+		walletAddress,
+		keepId,
+	});
+	await deleteUsersByIds(
+		client,
+		duplicates.map((user) => user._id)
+	);
+}
 
 async function patchAndCleanupByWallet(
 	client: SanityClient,
@@ -116,64 +121,18 @@ async function patchAndCleanupByWallet(
 	walletAddress: string | undefined
 ) {
 	await client.patch(targetId).set(patch).commit();
-	if (walletAddress) {
-		const dups = await client.fetch<Array<{ _id: string }>>(
-			`*[_type == "academyUser" && walletAddress == $walletAddress && _id != $keepId]{ _id }`,
-			{ walletAddress, keepId: targetId }
-		);
-		await deleteUsersByIds(
-			client,
-			dups.map((u) => u._id)
-		);
-	}
+	await cleanupDuplicateWalletUsers(client, targetId, walletAddress);
 }
 
-function buildBasePatch(
-	params: { authId: string; name: string; email: string; image?: string },
-	walletAddress: string | undefined,
-	now: string
-): Record<string, unknown> {
-	const patch: Record<string, unknown> = {
-		authId: params.authId,
-		name: params.name,
-		email: params.email,
-		lastActiveAt: now,
-	};
-	if (walletAddress) patch.walletAddress = walletAddress;
-	if (params.image) patch.image = params.image;
-	return patch;
-}
-
-async function adoptExistingUser(
-	client: SanityClient,
-	target: AcademyUser,
-	params: { authId: string; name: string; email: string; image?: string },
-	walletAddress: string | undefined,
-	now: string
-): Promise<AcademyUser> {
-	const patch = buildBasePatch(params, walletAddress, now);
-	if (!target.username) patch.username = await generateUsername(params.name);
-
-	const newRole = determineRole(params.email, walletAddress);
-	if (newRole !== "learner") patch.role = newRole;
-	await patchAndCleanupByWallet(client, target._id, patch, walletAddress);
-	return { ...target, ...patch } as AcademyUser;
-}
-
-export async function syncUserToSanity(params: {
-	authId: string;
-	name: string;
-	email: string;
-	walletAddress?: string;
-	image?: string;
-}): Promise<AcademyUser | null> {
-	const client = sanityWriteClient();
+export async function syncUserToSanity(params: SyncUserParams): Promise<AcademyUser | null> {
+	const client = getSanityClient("write");
 	if (!client) return null;
-	const normalizedWalletAddress = normalizeWalletAddress(params.walletAddress);
 
 	const existing = await client.fetch<AcademyUser | null>(userByAuthIdQuery, {
 		authId: params.authId,
 	});
+	const normalizedWalletAddress = params.walletAddress?.trim() ?? existing?.walletAddress?.trim();
+	const roleFromIdentity = determineRole(params.email, normalizedWalletAddress);
 	const existingByWallet = normalizedWalletAddress
 		? await client.fetch<AcademyUser | null>(userByWalletQuery, {
 				walletAddress: normalizedWalletAddress,
@@ -186,11 +145,26 @@ export async function syncUserToSanity(params: {
 
 	const now = new Date().toISOString();
 
+	const buildExistingUserPatch = async (
+		target: AcademyUser
+	): Promise<Record<string, unknown>> => {
+		const patch: Record<string, unknown> = {
+			name: params.name,
+			email: params.email,
+			lastActiveAt: now,
+			authId: params.authId,
+			role: roleFromIdentity,
+		};
+		if (normalizedWalletAddress) patch.walletAddress = normalizedWalletAddress;
+		if (params.image) patch.image = params.image;
+		if (!target.username) patch.username = await generateUsername(params.name);
+		return patch;
+	};
+
 	// Two different Sanity users found (one by authId, one by wallet): merge them
 	if (existingByWallet && existing && existingByWallet._id !== existing._id) {
 		const patch: Record<string, unknown> = {
-			...buildBasePatch(params, normalizedWalletAddress, now),
-			role: chooseHigherRole(existingByWallet.role, existing.role),
+			...(await buildExistingUserPatch(existingByWallet)),
 			xpBalance: Math.max(existingByWallet.xpBalance ?? 0, existing.xpBalance ?? 0),
 			enrolledCourses: mergeStringLists(
 				existingByWallet.enrolledCourses,
@@ -205,8 +179,7 @@ export async function syncUserToSanity(params: {
 				Boolean(existingByWallet.onboardingCompleted) ||
 				Boolean(existing.onboardingCompleted),
 		};
-		const newRole = determineRole(params.email, normalizedWalletAddress);
-		if (newRole !== "learner") patch.role = newRole;
+		if (roleFromIdentity !== "learner") patch.role = roleFromIdentity;
 
 		if (!existingByWallet.username && existing.username) {
 			patch.username = existing.username;
@@ -224,21 +197,14 @@ export async function syncUserToSanity(params: {
 
 	// Found by wallet but not authId: adopt existing wallet user
 	if (!existing && existingByWallet) {
-		return adoptExistingUser(client, existingByWallet, params, normalizedWalletAddress, now);
+		const patch = await buildExistingUserPatch(existingByWallet);
+		await patchAndCleanupByWallet(client, existingByWallet._id, patch, normalizedWalletAddress);
+		return { ...existingByWallet, ...patch } as AcademyUser;
 	}
 
 	// Found by authId: update in place
 	if (existing) {
-		const patch: Record<string, unknown> = {
-			name: params.name,
-			email: params.email,
-			lastActiveAt: now,
-		};
-		if (normalizedWalletAddress) patch.walletAddress = normalizedWalletAddress;
-		if (params.image) patch.image = params.image;
-		if (!existing.username) patch.username = await generateUsername(params.name);
-		const newRole = determineRole(params.email, normalizedWalletAddress);
-		if (newRole !== "learner") patch.role = newRole;
+		const patch = await buildExistingUserPatch(existing);
 		try {
 			await patchAndCleanupByWallet(client, existing._id, patch, normalizedWalletAddress);
 		} catch (err) {
@@ -249,12 +215,11 @@ export async function syncUserToSanity(params: {
 
 	// Fallback: find by email when authId and wallet both miss (e.g., after auth DB reset)
 	if (existingByEmail) {
-		return adoptExistingUser(client, existingByEmail, params, normalizedWalletAddress, now);
+		const patch = await buildExistingUserPatch(existingByEmail);
+		await patchAndCleanupByWallet(client, existingByEmail._id, patch, normalizedWalletAddress);
+		return { ...existingByEmail, ...patch } as AcademyUser;
 	}
 
-	// Brand new user
-	const role = determineRole(params.email, normalizedWalletAddress);
-	// Generate username for new users
 	const username = await generateUsername(params.name);
 	const doc = {
 		_type: "academyUser" as const,
@@ -264,7 +229,7 @@ export async function syncUserToSanity(params: {
 		walletAddress: normalizedWalletAddress ?? "",
 		image: params.image ?? "",
 		username,
-		role,
+		role: roleFromIdentity,
 		xpBalance: 0,
 		enrolledCourses: [] as string[],
 		completedCourses: [] as string[],
@@ -274,16 +239,7 @@ export async function syncUserToSanity(params: {
 
 	try {
 		const created = await client.create(doc);
-		if (normalizedWalletAddress) {
-			const duplicateWalletUsers = await client.fetch<Array<{ _id: string }>>(
-				`*[_type == "academyUser" && walletAddress == $walletAddress && _id != $keepId]{ _id }`,
-				{ walletAddress: normalizedWalletAddress, keepId: created._id as string }
-			);
-			await deleteUsersByIds(
-				client,
-				duplicateWalletUsers.map((user) => user._id)
-			);
-		}
+		await cleanupDuplicateWalletUsers(client, created._id as string, normalizedWalletAddress);
 		return { ...doc, ...created } as unknown as AcademyUser;
 	} catch (err) {
 		console.error("[sanity-users] Failed to create user:", err);
@@ -292,44 +248,44 @@ export async function syncUserToSanity(params: {
 }
 
 export async function getUserByAuthId(authId: string): Promise<AcademyUser | null> {
-	const client = sanityReadClient();
+	const client = getSanityClient("read");
 	if (!client) return null;
 	return client.fetch<AcademyUser | null>(userByAuthIdQuery, { authId });
 }
 
 export async function getUserByEmail(email: string): Promise<AcademyUser | null> {
-	const client = sanityReadClient();
+	const client = getSanityClient("read");
 	if (!client) return null;
 	return client.fetch<AcademyUser | null>(userByEmailQuery, { email });
 }
 
 export async function getUserByWallet(walletAddress: string): Promise<AcademyUser | null> {
-	const client = sanityReadClient();
+	const client = getSanityClient("read");
 	if (!client) return null;
 	return client.fetch<AcademyUser | null>(userByWalletQuery, { walletAddress });
 }
 
 export async function getUserByUsername(username: string): Promise<AcademyUser | null> {
-	const client = sanityReadClient();
+	const client = getSanityClient("read");
 	if (!client) return null;
 	return client.fetch<AcademyUser | null>(userByUsernameQuery, { username });
 }
 
 export async function getAllUsers(limit = 100, offset = 0): Promise<AcademyUser[]> {
-	const client = sanityReadClient();
+	const client = getSanityClient("read");
 	if (!client) return [];
 	const all = await client.fetch<AcademyUser[]>(allUsersQuery);
 	return all.slice(offset, offset + limit);
 }
 
 export async function getAdminUsers(): Promise<AcademyUser[]> {
-	const client = sanityReadClient();
+	const client = getSanityClient("read");
 	if (!client) return [];
 	return client.fetch<AcademyUser[]>(adminUsersQuery);
 }
 
 export async function getUserCount(): Promise<number> {
-	const client = sanityReadClient();
+	const client = getSanityClient("read");
 	if (!client) return 0;
 	return client.fetch<number>(userCountQuery);
 }
@@ -340,14 +296,14 @@ export async function getUserStats(): Promise<{
 	adminCount: number;
 	totalEnrollments: number;
 }> {
-	const client = sanityReadClient();
+	const client = getSanityClient("read");
 	if (!client) return { totalUsers: 0, activeUsers: 0, adminCount: 0, totalEnrollments: 0 };
 	const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 	return client.fetch(userStatsQuery, { since: thirtyDaysAgo });
 }
 
 export async function updateUserRole(userId: string, role: UserRole): Promise<boolean> {
-	const client = sanityWriteClient();
+	const client = getSanityClient("write");
 	if (!client) return false;
 
 	// Prevent demoting the env-configured super admin
@@ -366,25 +322,4 @@ export async function updateUserRole(userId: string, role: UserRole): Promise<bo
 
 	await client.patch(userId).set({ role }).commit();
 	return true;
-}
-
-export async function isUserAdmin(authId: string, sessionEmail?: string | null): Promise<boolean> {
-	const user = await getUserByAuthId(authId);
-	if (user && (user.role === "admin" || user.role === "superadmin")) {
-		return true;
-	}
-
-	return isSessionSuperAdminIdentity(sessionEmail);
-}
-
-export async function isUserSuperAdmin(
-	authId: string,
-	sessionEmail?: string | null
-): Promise<boolean> {
-	const user = await getUserByAuthId(authId);
-	if (user?.role === "superadmin") {
-		return true;
-	}
-
-	return isSessionSuperAdminIdentity(sessionEmail);
 }

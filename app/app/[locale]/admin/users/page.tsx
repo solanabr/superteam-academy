@@ -14,6 +14,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
+import { WALLET_EMAIL_DOMAIN } from "@/packages/auth/src/wallet-utils";
 
 interface UserRow {
 	_id: string;
@@ -132,7 +133,7 @@ export default function AdminUsersPage() {
 											{user.name || "—"}
 										</TableCell>
 										<TableCell className="text-sm">
-											{user.email.endsWith("@wallet.superteam.local")
+											{user.email.endsWith(WALLET_EMAIL_DOMAIN)
 												? "Wallet user"
 												: user.email}
 										</TableCell>

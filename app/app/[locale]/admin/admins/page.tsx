@@ -43,6 +43,7 @@ import {
 	AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/contexts/auth-context";
+import { WALLET_EMAIL_DOMAIN } from "@/packages/auth/src/wallet-utils";
 
 interface AdminRow {
 	_id: string;
@@ -251,7 +252,7 @@ export default function AdminTeamPage() {
 											{admin.name || "—"}
 										</TableCell>
 										<TableCell className="text-sm">
-											{admin.email.endsWith("@wallet.superteam.local")
+											{admin.email.endsWith(WALLET_EMAIL_DOMAIN)
 												? admin.walletAddress
 													? `${admin.walletAddress.slice(0, 4)}...${admin.walletAddress.slice(-4)}`
 													: "Wallet user"
