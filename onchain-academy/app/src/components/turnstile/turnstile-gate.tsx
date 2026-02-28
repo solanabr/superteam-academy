@@ -62,6 +62,16 @@ export function TurnstileGate({ children }: { children: React.ReactNode }) {
     if (showGate) renderWidget();
   }, [showGate, renderWidget]);
 
+  // Prevent background scroll while gate is visible
+  useEffect(() => {
+    if (!showGate) return;
+    const html = document.documentElement;
+    html.style.overflow = "hidden";
+    return () => {
+      html.style.overflow = "";
+    };
+  }, [showGate]);
+
   return (
     <>
       {children}

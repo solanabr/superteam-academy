@@ -28,6 +28,10 @@ export function CourseCompleteOverlay({
   const dialogRef = useRef<HTMLDivElement>(null);
   const previousFocus = useRef<HTMLElement | null>(null);
 
+  // Ref to avoid stale closure when requireAuth runs deferred after auth
+  const onFinalizeRef = useRef(onFinalize);
+  onFinalizeRef.current = onFinalize;
+
   const trapFocus = useCallback((e: KeyboardEvent) => {
     if (e.key === "Escape") {
       onDismiss();
@@ -241,7 +245,7 @@ export function CourseCompleteOverlay({
               style={{ display: "flex", flexDirection: "column", gap: "12px" }}
             >
               <button
-                onClick={() => requireAuth(onFinalize)}
+                onClick={() => requireAuth(() => onFinalizeRef.current())}
                 disabled={isFinalizing}
                 style={{
                   width: "100%",
