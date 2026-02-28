@@ -62,6 +62,7 @@ export function LessonReading({
     success: boolean;
     xpAwarded: number;
     credentialIssued: boolean;
+    credentialAsset?: string;
   } | null>(null);
 
   const { enrollment, refresh: refreshEnrollment } = useEnrollment(course?.id ?? null);
@@ -241,6 +242,7 @@ export function LessonReading({
           success: true,
           xpAwarded: data.xpAwarded ?? course.xpReward,
           credentialIssued: data.credentialIssued ?? false,
+          credentialAsset: data.credentialAsset,
         });
       } else {
         const result = await learningService.finalizeCourse("local", course.id ?? slug);

@@ -90,6 +90,7 @@ export function LessonChallenge({
     success: boolean;
     xpAwarded: number;
     credentialIssued: boolean;
+    credentialAsset?: string;
   } | null>(null);
 
   const { enrollment } = useEnrollment(course?.id ?? null);
@@ -229,6 +230,7 @@ export function LessonChallenge({
           success: true,
           xpAwarded: result.xpAwarded || (course.xpReward ?? 0),
           credentialIssued: result.credentialIssued,
+          credentialAsset: result.credentialAsset,
         });
       } else {
         const result = await learningService.finalizeCourse("local", course.id ?? slug);

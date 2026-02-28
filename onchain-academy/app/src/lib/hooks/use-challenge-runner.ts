@@ -21,6 +21,7 @@ interface RustApiResponse {
 interface FinalizeApiResponse {
   xpAwarded?: number;
   credentialIssued?: boolean;
+  credentialAsset?: string;
   error?: string;
 }
 
@@ -140,7 +141,7 @@ export function useChallengeRunner() {
     async (
       slug: string,
       walletAddress: string,
-    ): Promise<{ xpAwarded: number; credentialIssued: boolean }> => {
+    ): Promise<{ xpAwarded: number; credentialIssued: boolean; credentialAsset?: string }> => {
       const res = await fetch(`/api/courses/${slug}/finalize`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -148,7 +149,7 @@ export function useChallengeRunner() {
       });
       const data: FinalizeApiResponse = await res.json();
       if (data.error) throw new Error(data.error);
-      return { xpAwarded: data.xpAwarded ?? 0, credentialIssued: data.credentialIssued ?? false };
+      return { xpAwarded: data.xpAwarded ?? 0, credentialIssued: data.credentialIssued ?? false, credentialAsset: data.credentialAsset };
     },
     [],
   );

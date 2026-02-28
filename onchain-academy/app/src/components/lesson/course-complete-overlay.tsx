@@ -18,7 +18,7 @@ export function CourseCompleteOverlay({
   show: boolean;
   locale: string;
   isFinalizing: boolean;
-  finalizationResult: { success: boolean; xpAwarded: number; credentialIssued: boolean } | null;
+  finalizationResult: { success: boolean; xpAwarded: number; credentialIssued: boolean; credentialAsset?: string } | null;
   onFinalize: () => void;
   onDismiss: () => void;
 }) {
@@ -172,23 +172,49 @@ export function CourseCompleteOverlay({
                   </p>
                 </div>
                 {finalizationResult.credentialIssued && (
-                  <button
-                    onClick={() => router.push(`/${locale}/certificates`)}
-                    style={{
-                      width: "100%",
-                      fontFamily: "var(--font-mono)",
-                      fontSize: "11px",
-                      letterSpacing: "0.15em",
-                      textTransform: "uppercase",
-                      padding: "14px 36px",
-                      border: "none",
-                      cursor: "pointer",
-                      background: "var(--foreground)",
-                      color: "var(--background)",
-                    }}
-                  >
-                    {t("viewCredential")}
-                  </button>
+                  finalizationResult.credentialAsset ? (
+                    <a
+                      href={`https://explorer.solana.com/address/${finalizationResult.credentialAsset}?cluster=devnet`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        width: "100%",
+                        display: "block",
+                        fontFamily: "var(--font-mono)",
+                        fontSize: "11px",
+                        letterSpacing: "0.15em",
+                        textTransform: "uppercase",
+                        padding: "14px 36px",
+                        border: "none",
+                        cursor: "pointer",
+                        background: "var(--foreground)",
+                        color: "var(--background)",
+                        textAlign: "center",
+                        textDecoration: "none",
+                        boxSizing: "border-box",
+                      }}
+                    >
+                      {t("viewCredential")}
+                    </a>
+                  ) : (
+                    <button
+                      onClick={() => router.push(`/${locale}/certificates`)}
+                      style={{
+                        width: "100%",
+                        fontFamily: "var(--font-mono)",
+                        fontSize: "11px",
+                        letterSpacing: "0.15em",
+                        textTransform: "uppercase",
+                        padding: "14px 36px",
+                        border: "none",
+                        cursor: "pointer",
+                        background: "var(--foreground)",
+                        color: "var(--background)",
+                      }}
+                    >
+                      {t("viewCredential")}
+                    </button>
+                  )
                 )}
                 <button
                   onClick={onDismiss}
