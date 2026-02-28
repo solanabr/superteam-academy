@@ -59,8 +59,21 @@
     "level": "Level",
     "coursesCompleted": "Courses Completed",
     "credentials": "Credentials",
+    "credentialsEarned": "Credentials Earned",
     "totalXp": "Total XP",
-    "walletCopied": "Wallet address copied"
+    "walletCopied": "Wallet address copied",
+    "linkCopied": "Profile link copied!",
+    "shareProfile": "Share",
+    "shareTwitter": "Post",
+    "editName": "Click to edit display name",
+    "enterDisplayName": "Enter display name",
+    "nameSaved": "Display name saved!",
+    "shuffleAvatar": "Shuffle avatar",
+    "avatarShuffled": "Avatar shuffled!",
+    "copyWallet": "Copy wallet address",
+    "leaderboardRank": "Leaderboard Rank",
+    "courses": "courses",
+    "noCredentialsOther": "This learner hasn't earned any credentials yet."
   },
   "settings": {
     "title": "Settings",

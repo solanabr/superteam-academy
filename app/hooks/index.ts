@@ -33,3 +33,5 @@ export { useAwardAchievement } from "./useAwardAchievement";
 export { useDeactivateAchievementType } from "./useDeactivateAchievementType";
 export { useSfx } from "./useSfx";
 export { useCredentials, useCredentialAsset } from "./useCredentials";
+export { useXpBalanceFor } from "./useXpBalanceFor";
+export { useCredentialsFor } from "./useCredentialsFor";
