@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import { getCourseBySlug, getAllCourses } from "@/lib/sanity";
+import { getMockCourseBySlug, MOCK_COURSES } from "@/lib/mock-courses";
 import { notFound } from "next/navigation";
 import { BookOpen, Clock, Zap, ChevronDown, Lock, CheckCircle } from "lucide-react";
 import { DIFFICULTY_COLORS, TRACKS } from "@/types";
@@ -20,8 +21,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export async function generateStaticParams() {
-  const courses = await getAllCourses().catch(() => []);
-  return courses.map((c: SanityCourse) => ({ slug: c.slug }));
+  const sanityCourses = await getAllCourses().catch(() => []);
+  const mockSlugs = MOCK_COURSES.map((c) => ({ slug: c.slug }));
+  const sanitySlugs = sanityCourses.map((c: SanityCourse) => ({ slug: c.slug }));
+  return [...mockSlugs, ...sanitySlugs];
 }
 
 export default async function CourseDetailPage({ params }: Props) {
@@ -30,31 +33,11 @@ export default async function CourseDetailPage({ params }: Props) {
 
   let course = await getCourseBySlug(slug).catch(() => null);
 
-  // Fallback for demo
   if (!course) {
-    if (slug === "solana-fundamentals") {
-      course = {
-        _id: "mock-1", title: "Solana Fundamentals", slug,
-        description: "Master the core concepts of Solana: accounts, programs, transactions.",
-        difficulty: "beginner", durationHours: 3, xpReward: 500, trackId: 1,
-        modules: [
-          { _id: "m1", title: "Introduction", order: 1, description: "Get started with Solana",
-            lessons: [
-              { _id: "l1", title: "What is Solana?", type: "content", order: 1, xpReward: 50, estimatedMinutes: 10 },
-              { _id: "l2", title: "The Solana Runtime", type: "content", order: 2, xpReward: 50, estimatedMinutes: 15 },
-            ] },
-          { _id: "m2", title: "Accounts", order: 2, description: "Understanding Solana accounts",
-            lessons: [
-              { _id: "l3", title: "Account Model Deep Dive", type: "content", order: 1, xpReward: 75, estimatedMinutes: 20 },
-              { _id: "l4", title: "Account Challenge", type: "challenge", order: 2, xpReward: 150, estimatedMinutes: 30 },
-            ] },
-        ],
-        tags: ["solana", "basics"],
-      };
-    } else {
-      notFound();
-    }
+    course = getMockCourseBySlug(slug);
   }
+
+  if (!course) notFound();
 
   const track = TRACKS[course.trackId];
   const diffColor = DIFFICULTY_COLORS[course.difficulty] ?? "#666666";
