@@ -7,7 +7,6 @@ import {
 import { cn } from '@/lib/utils';
 import { localePath } from '@/lib/paths';
 import { getFeaturedCourses } from '@/lib/content';
-import AnimatedSection from '@/components/AnimatedSection';
 
 const MOCK_COURSES = [
   {
@@ -145,7 +144,7 @@ export default async function LandingPage({
       </section>
 
       {/* Stats row */}
-      <AnimatedSection>
+      <div className="animate-fade-in-up">
       <section className="border-y border-gray-800 bg-gray-900/50 py-10 px-4">
         <div className="mx-auto max-w-5xl">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
@@ -167,10 +166,10 @@ export default async function LandingPage({
           </div>
         </div>
       </section>
-      </AnimatedSection>
+      </div>
 
       {/* Features */}
-      <AnimatedSection>
+      <div className="animate-fade-in-up">
       <section className="py-24 px-4">
         <div className="mx-auto max-w-6xl">
           <div className="mb-14 text-center">
@@ -198,10 +197,10 @@ export default async function LandingPage({
           </div>
         </div>
       </section>
-      </AnimatedSection>
+      </div>
 
       {/* Featured courses */}
-      <AnimatedSection>
+      <div className="animate-fade-in-up">
       <section className="bg-gray-900/40 py-24 px-4">
         <div className="mx-auto max-w-6xl">
           <div className="mb-12 flex items-end justify-between">
@@ -269,10 +268,10 @@ export default async function LandingPage({
           </div>
         </div>
       </section>
-      </AnimatedSection>
+      </div>
 
       {/* Testimonials */}
-      <AnimatedSection>
+      <div className="animate-fade-in-up">
       <section className="py-24 px-4 border-t border-gray-800">
         <div className="mx-auto max-w-5xl">
           <div className="mb-14 text-center">
@@ -335,7 +334,7 @@ export default async function LandingPage({
           </div>
         </div>
       </section>
-      </AnimatedSection>
+      </div>
 
       {/* Trusted by / Partner logos */}
       <section className="border-y border-gray-800 bg-gray-900/30 py-10 px-4">
@@ -363,7 +362,7 @@ export default async function LandingPage({
       </section>
 
       {/* How it works */}
-      <AnimatedSection>
+      <div className="animate-fade-in-up">
       <section className="py-24 px-4">
         <div className="mx-auto max-w-5xl">
           <div className="mb-14 text-center">
@@ -395,10 +394,10 @@ export default async function LandingPage({
           </div>
         </div>
       </section>
-      </AnimatedSection>
+      </div>
 
       {/* CTA */}
-      <AnimatedSection>
+      <div className="animate-fade-in-up">
       <section className="py-20 px-4">
         <div className="mx-auto max-w-3xl">
           <div className="relative rounded-3xl overflow-hidden">
@@ -426,7 +425,7 @@ export default async function LandingPage({
           </div>
         </div>
       </section>
-      </AnimatedSection>
+      </div>
     </div>
   );
 }
