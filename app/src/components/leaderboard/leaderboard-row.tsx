@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { Medal } from 'lucide-react';
+import { Flame, Medal } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Link } from '@/i18n/routing';
 import { Badge } from '@/components/ui/badge';
@@ -93,6 +93,20 @@ export function LeaderboardRow({ entry, isCurrentUser }: LeaderboardRowProps) {
             {levelTitle}
           </span>
         </div>
+      </TableCell>
+
+      {/* Streak */}
+      <TableCell className="hidden sm:table-cell">
+        {(entry.streak ?? 0) > 0 ? (
+          <div className="flex items-center gap-1">
+            <Flame className="size-4 text-orange-500" />
+            <span className="text-sm font-medium tabular-nums">
+              {entry.streak}
+            </span>
+          </div>
+        ) : (
+          <span className="text-xs text-muted-foreground">-</span>
+        )}
       </TableCell>
 
       {/* XP */}

@@ -8,6 +8,8 @@ export interface LeaderboardEntry {
   xpBalance: number;
   level: number;
   rank: number;
+  /** Current learning streak in days. Optional — defaults to 0 when absent. */
+  streak?: number;
 }
 
 interface UseLeaderboardReturn {
