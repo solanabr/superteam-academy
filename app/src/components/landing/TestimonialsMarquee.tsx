@@ -100,6 +100,8 @@ function Card({ initials, name, role, quote, stars }: typeof TESTIMONIALS[0]) {
   );
 }
 
+const SPEED = 60; // seconds for one full cycle (higher = slower)
+
 function MarqueeRow({ items, reverse = false }: { items: typeof TESTIMONIALS; reverse?: boolean }) {
   const doubled = [...items, ...items];
   return (
@@ -107,7 +109,7 @@ function MarqueeRow({ items, reverse = false }: { items: typeof TESTIMONIALS; re
       <div
         className="flex"
         style={{
-          animation: `marquee${reverse ? "-reverse" : ""} ${items.length * 8}s linear infinite`,
+          animation: `marquee${reverse ? "-reverse" : ""} ${SPEED}s linear infinite`,
         }}
       >
         {doubled.map((t, i) => (
