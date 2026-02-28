@@ -28,6 +28,8 @@ type ConfiguredProviders = { google: boolean; github: boolean };
 interface ProfileData {
   display_name: string;
   bio: string;
+  twitter: string;
+  github: string;
   is_public: boolean;
   show_on_leaderboard: boolean;
   email_notifications: boolean;
@@ -136,6 +138,8 @@ export default function SettingsPage() {
       .then((data: ProfileData) => {
         setDisplayName(data.display_name ?? "");
         setBio(data.bio ?? "");
+        setTwitterHandle(data.twitter ?? "");
+        setGithubUsername(data.github ?? "");
         setIsPublic(data.is_public ?? true);
         setShowOnLeaderboard(data.show_on_leaderboard ?? true);
         setEmailNotifications(data.email_notifications ?? true);
@@ -145,9 +149,12 @@ export default function SettingsPage() {
       .finally(() => setLoadingProfile(false));
   }, [session]);
 
+  const [saveError, setSaveError] = useState<string | null>(null);
+
   const handleSave = useCallback(async () => {
     setSaving(true);
     setSaved(false);
+    setSaveError(null);
     try {
       const res = await fetch("/api/user/profile", {
         method: "POST",
@@ -155,13 +162,19 @@ export default function SettingsPage() {
         body: JSON.stringify({
           display_name: displayName,
           bio,
+          twitter: twitterHandle,
+          github: githubUsername,
           is_public: isPublic,
           show_on_leaderboard: showOnLeaderboard,
           email_notifications: emailNotifications,
           streak_reminders: streakReminders,
         }),
       });
-      if (!res.ok) throw new Error("Save failed");
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Save failed");
+      }
+      // Cache social links locally as fallback
       if (walletAddress) {
         try {
           localStorage.setItem(
@@ -173,6 +186,8 @@ export default function SettingsPage() {
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch (error) {
+      const msg = error instanceof Error ? error.message : "Save failed";
+      setSaveError(msg);
       console.error("[Settings] Failed to save settings:", error);
     } finally {
       setSaving(false);
@@ -359,6 +374,11 @@ export default function SettingsPage() {
                   />
                 </div>
               </div>
+              {saveError && (
+                <div className="rounded-[2px] border border-[#EF4444]/20 bg-[#EF4444]/5 px-4 py-3 text-sm text-[#EF4444]">
+                  {saveError}
+                </div>
+              )}
               <Button size="sm" onClick={handleSave} disabled={saving || loadingProfile}>
                 {saving ? (
                   <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> {t("saving")}</>

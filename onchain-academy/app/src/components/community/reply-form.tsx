@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Send } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useRequireAuth } from "@/lib/hooks/use-require-auth";
 
 interface ReplyFormProps {
   threadId: string;
@@ -23,11 +24,9 @@ export function ReplyForm({
   const [content, setContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { requireAuth } = useRequireAuth();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!content.trim() || submitting) return;
-
+  const submitReply = async () => {
     setSubmitting(true);
     setError(null);
 
@@ -54,6 +53,12 @@ export function ReplyForm({
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!content.trim() || submitting) return;
+    await requireAuth(submitReply);
   };
 
   return (

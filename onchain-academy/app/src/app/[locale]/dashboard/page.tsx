@@ -27,7 +27,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const params = useParams();
   const locale = params.locale as string;
-  const { user, connected } = useUser();
+  const { user, connected, loading: userLoading } = useUser();
   const t = useTranslations("dashboard");
   const { progressMap } = useAllEnrollments();
   const [mobile, setMobile] = useState(false);
@@ -96,6 +96,29 @@ export default function DashboardPage() {
 
   const credentials = user.credentials;
   const streakDays = user.streak.currentStreak;
+
+  if (userLoading && connected) {
+    return (
+      <div style={{ background: D, color: C, minHeight: "100vh", contain: "layout style" }}>
+        <div className="dash-grid">
+          <div className="dash-col-left" style={{ padding: "80px 24px 0" }}>
+            <div className="animate-pulse" style={{ width: 120, height: 14, background: "var(--c-bg-elevated)", marginBottom: 8 }} />
+            <div className="animate-pulse" style={{ width: 260, height: 48, background: "var(--c-bg-elevated)", marginBottom: 32 }} />
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="animate-pulse" style={{ height: 80, background: "var(--c-bg-elevated)" }} />
+              ))}
+            </div>
+          </div>
+          <div className="dash-col-right" style={{ padding: "80px 24px 0" }}>
+            <div className="animate-pulse" style={{ height: 120, background: "var(--c-bg-elevated)", marginBottom: 16 }} />
+            <div className="animate-pulse" style={{ height: 160, background: "var(--c-bg-elevated)", marginBottom: 16 }} />
+            <div className="animate-pulse" style={{ height: 80, background: "var(--c-bg-elevated)" }} />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ cursor: mobile ? "auto" : "none" }}>

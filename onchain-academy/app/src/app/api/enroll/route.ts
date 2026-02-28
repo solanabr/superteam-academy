@@ -84,6 +84,8 @@ export async function POST(req: Request) {
       .serialize({ requireAllSignatures: false })
       .toString("base64");
 
+    // Note: logged at TX-build time (before client signs). This records intent,
+    // not confirmation. The client signs and submits; on-chain state is the source of truth.
     logEnrollmentEvent({
       eventType: "enroll",
       wallet: session.wallet,

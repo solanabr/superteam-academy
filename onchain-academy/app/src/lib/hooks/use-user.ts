@@ -177,7 +177,7 @@ export function useUser() {
   const { publicKey, connected } = useWallet();
   const { connection } = useConnection();
   const [user, setUser] = useState<UserProfile>(DEFAULT_PROFILE);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(!!publicKey);
   const [newAchievements, setNewAchievements] = useState<Achievement[]>([]);
   const previousAchievementIds = useRef<Set<string>>(new Set());
 
@@ -213,9 +213,14 @@ export function useUser() {
       ...enrollmentCredentials.filter((c) => !dasIds.has(c.id)),
     ];
 
-    if (xp === 0) {
-      const localXP = await learningService.getLocalXP(walletAddress);
-      if (localXP > 0) xp = localXP;
+    // Cache on-chain XP locally; only fall back to local cache if on-chain fetch failed
+    if (xp > 0) {
+      try { localStorage.setItem(`stacad:xp:${walletAddress}`, String(xp)); } catch {}
+    } else if (xpResult.status === "rejected") {
+      try {
+        const cached = localStorage.getItem(`stacad:xp:${walletAddress}`);
+        if (cached) xp = Number(cached) || 0;
+      } catch {}
     }
 
     const level = calculateLevel(xp);

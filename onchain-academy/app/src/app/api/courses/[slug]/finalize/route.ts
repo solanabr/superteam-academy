@@ -21,6 +21,7 @@ import {
   isClientError,
 } from "@/lib/solana/anchor-errors";
 import { withRetry } from "@/lib/solana/retry";
+import { getExplorerUrl } from "@/lib/solana/tx-utils";
 import { getTrackCollection } from "@/lib/constants/collections";
 import { TRACK_LABELS } from "@/lib/constants";
 import { logEnrollmentEvent } from "@/lib/supabase/enrollment-events";
@@ -167,6 +168,7 @@ export async function POST(
       xpAwarded: course.xpReward,
       track: course.track,
       finalizeTxSignature: tx,
+      explorerUrl: getExplorerUrl(tx),
       credentialIssued,
       credentialAsset,
     });

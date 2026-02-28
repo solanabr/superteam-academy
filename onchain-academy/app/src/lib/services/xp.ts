@@ -19,7 +19,8 @@ export async function getXPBalance(walletAddress: string): Promise<number> {
     for (const entry of value) {
       const info = entry.account.data.parsed?.info;
       if (info?.mint === xpMint) {
-        total += Number(info.tokenAmount?.amount ?? 0);
+        // Use uiAmount for consistency with leaderboard (which also uses uiAmount)
+        total += Number(info.tokenAmount?.uiAmount ?? info.tokenAmount?.amount ?? 0);
       }
     }
     return total;

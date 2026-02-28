@@ -35,6 +35,8 @@ export async function GET() {
       user_id: userId,
       display_name: "",
       bio: "",
+      twitter: "",
+      github: "",
       is_public: true,
       show_on_leaderboard: true,
       email_notifications: true,
@@ -80,6 +82,12 @@ export async function POST(req: NextRequest) {
   }
   if (typeof body.streak_reminders === "boolean") {
     updates.streak_reminders = body.streak_reminders;
+  }
+  if (typeof body.twitter === "string") {
+    updates.twitter = body.twitter.slice(0, 50);
+  }
+  if (typeof body.github === "string") {
+    updates.github = body.github.slice(0, 50);
   }
 
   const supabase = getSupabaseAdmin();

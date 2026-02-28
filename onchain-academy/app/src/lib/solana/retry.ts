@@ -5,8 +5,8 @@
  * Fails immediately on permanent errors (InstructionError, insufficient funds).
  */
 
-const MAX_RETRIES = 2;
-const BACKOFF_MS = [1000, 3000];
+const MAX_RETRIES = 3;
+const BACKOFF_MS = [1000, 3000, 6000];
 
 const TRANSIENT_RE =
   /TransactionExpiredBlockheightExceeded|BlockhashNotFound|timeout|ETIMEDOUT|ECONNRESET|429|Too Many Requests|503|Service Unavailable/;
@@ -32,7 +32,9 @@ export async function withRetry<T>(fn: () => Promise<T>): Promise<T> {
       if (attempt >= MAX_RETRIES) throw err;
       if (!TRANSIENT_RE.test(msg)) throw err;
 
-      const delay = BACKOFF_MS[attempt] ?? 3000;
+      const base = BACKOFF_MS[attempt] ?? 6000;
+      const jitter = Math.floor(Math.random() * base * 0.3);
+      const delay = base + jitter;
       console.warn(
         `Solana tx attempt ${attempt + 1} failed (transient), retrying in ${delay}ms`,
       );

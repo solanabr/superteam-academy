@@ -80,8 +80,8 @@ export default function LeaderboardPage() {
     [entries, selectedTrack],
   );
 
-  const userEntry = shortWallet
-    ? filteredEntries.find((e) => e.wallet === shortWallet)
+  const userEntry = walletAddress
+    ? filteredEntries.find((e) => e.wallet === walletAddress)
     : null;
   const userRank = userEntry?.rank ?? null;
 

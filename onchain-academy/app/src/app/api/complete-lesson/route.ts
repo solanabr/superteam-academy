@@ -21,6 +21,7 @@ import {
 } from "@/lib/solana/anchor-errors";
 import { logEnrollmentEvent } from "@/lib/supabase/enrollment-events";
 import { withRetry } from "@/lib/solana/retry";
+import { getExplorerUrl } from "@/lib/solana/tx-utils";
 
 async function ensureATA(
   connection: import("@solana/web3.js").Connection,
@@ -105,7 +106,7 @@ export async function POST(req: Request) {
       signature: tx,
     });
 
-    return NextResponse.json({ signature: tx });
+    return NextResponse.json({ signature: tx, explorerUrl: getExplorerUrl(tx) });
   } catch (err: unknown) {
     const anchor = parseAnchorError(err);
     if (anchor && isIdempotentError(anchor.code)) {
