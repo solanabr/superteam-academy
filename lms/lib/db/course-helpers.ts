@@ -23,6 +23,7 @@ function toPlainCourse(doc: any): Course {
     totalEnrollments: doc.totalEnrollments ?? 0,
     modules: doc.modules,
     createdAt: doc.createdAt,
+    contentTxId: doc.contentTxId,
   };
 }
 

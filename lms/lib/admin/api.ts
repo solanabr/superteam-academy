@@ -32,6 +32,7 @@ export interface AdminStats {
     trackLevel: number;
     creatorRewardXp: number;
     minCompletionsForReward: number;
+    contentTxId: string | null;
   }[];
   learnerCount: number;
   learners: {
@@ -127,6 +128,37 @@ export async function updateConfig(
 // Courses
 // ---------------------------------------------------------------------------
 
+export async function bulkUploadToArweave(
+  secret: string,
+): Promise<{
+  ok: boolean;
+  total: number;
+  uploaded: number;
+  skipped: number;
+  failed: number;
+  results: { courseId: string; status: string; txId?: string }[];
+}> {
+  const res = await fetch("/api/admin/arweave-bulk-upload", {
+    method: "POST",
+    headers: headers(secret),
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+export async function uploadToArweave(
+  secret: string,
+  data: { type: "course-content" | "credential-metadata"; data: unknown },
+): Promise<{ txId: string; url: string }> {
+  const res = await fetch("/api/admin/arweave-upload", {
+    method: "POST",
+    headers: headers(secret),
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
 export async function createCourse(
   secret: string,
   data: {
@@ -140,6 +172,13 @@ export async function createCourse(
     prerequisite?: string;
     creatorRewardXp: number;
     minCompletionsForReward: number;
+    courseContent?: unknown;
+    title?: string;
+    slug?: string;
+    description?: string;
+    thumbnail?: string;
+    duration?: string;
+    modules?: unknown[];
   },
 ) {
   const res = await fetch("/api/admin/course", {

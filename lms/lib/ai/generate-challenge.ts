@@ -2,7 +2,7 @@ import type { PracticeCategory, PracticeDifficulty } from "@/types/practice";
 import { PRACTICE_CHALLENGES } from "@/lib/data/practice-challenges";
 
 const LYZR_API_URL = "https://agent-prod.studio.lyzr.ai/v3/inference/chat/";
-const LYZR_AGENT_ID = "6990319188c3964deca09041";
+const LYZR_AGENT_ID = "69a07065d48649433b1a5182";
 
 const CATEGORIES: PracticeCategory[] = [
   "accounts",
@@ -172,7 +172,12 @@ export async function generateDailyChallenge(
 
   const apiKey = process.env.LYZR_API_KEY;
   if (!apiKey) {
-    return getFallbackChallenge(difficulty, category, xpReward, pastDailyTitles);
+    return getFallbackChallenge(
+      difficulty,
+      category,
+      xpReward,
+      pastDailyTitles,
+    );
   }
 
   // AI should avoid both past dailies and practice titles

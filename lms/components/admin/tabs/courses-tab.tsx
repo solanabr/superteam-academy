@@ -28,12 +28,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Pencil, Plus } from "lucide-react";
+import { Search, Pencil, Plus, ExternalLink, Upload } from "lucide-react";
 import { toast } from "sonner";
 import {
   fetchStats,
   createCourse,
   updateCourse,
+  uploadToArweave,
+  bulkUploadToArweave,
   type AdminStats,
 } from "@/lib/admin/api";
 import { TxResult } from "../shared/tx-result";
@@ -44,9 +46,11 @@ type OnChainCourse = AdminStats["courses"][number];
 function CourseEditDialog({
   course,
   adminSecret,
+  courseContent,
 }: {
   course: OnChainCourse;
   adminSecret: string;
+  courseContent?: CourseContent;
 }) {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -71,8 +75,27 @@ function CourseEditDialog({
       }),
     onSuccess: (res) => {
       setLastTx(res.txSignature);
-      toast.success(`Course "${course.courseId}" updated`);
+      if (res.onChainError) {
+        toast.warning(
+          `Course "${course.courseId}" DB updated, on-chain failed: ${res.onChainError}`,
+        );
+      } else {
+        toast.success(`Course "${course.courseId}" updated`);
+      }
       queryClient.invalidateQueries({ queryKey: ["admin-stats"] });
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const arweaveUpload = useMutation({
+    mutationFn: () =>
+      uploadToArweave(adminSecret, {
+        type: "course-content",
+        data: courseContent,
+      }),
+    onSuccess: (res) => {
+      toast.success(`Uploaded to Arweave: ${res.txId}`);
+      queryClient.invalidateQueries({ queryKey: ["course-contents"] });
     },
     onError: (err: Error) => toast.error(err.message),
   });
@@ -130,6 +153,37 @@ function CourseEditDialog({
           >
             {mutation.isPending ? "Updating..." : "Update Course"}
           </Button>
+          {courseContent && !course.contentTxId && (
+            <Button
+              variant="outline"
+              onClick={() => arweaveUpload.mutate()}
+              disabled={arweaveUpload.isPending}
+              className="w-full"
+            >
+              {arweaveUpload.isPending
+                ? "Uploading..."
+                : "Upload Content to Arweave"}
+            </Button>
+          )}
+          <div className="space-y-1 rounded border p-2 text-xs text-muted-foreground">
+            <p>
+              <span className="font-medium">On-chain PDA:</span>{" "}
+              <span className="font-mono">{course.publicKey}</span>
+            </p>
+            {course.contentTxId && (
+              <p>
+                <span className="font-medium">Arweave:</span>{" "}
+                <a
+                  href={`https://arweave.net/${course.contentTxId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-500 underline"
+                >
+                  {course.contentTxId}
+                </a>
+              </p>
+            )}
+          </div>
           {lastTx && <TxResult signature={lastTx} />}
         </div>
       </DialogContent>
@@ -140,7 +194,15 @@ function CourseEditDialog({
 function CreateCourseDialog({ adminSecret }: { adminSecret: string }) {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
+  // Content fields
   const [courseId, setCourseId] = useState("");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [duration, setDuration] = useState("");
+  const [thumbnail, setThumbnail] = useState("");
+  const [modulesJson, setModulesJson] = useState("");
+  const [jsonError, setJsonError] = useState<string | null>(null);
+  // On-chain fields
   const [lessonCount, setLessonCount] = useState("5");
   const [difficulty, setDifficulty] = useState("1");
   const [xpPerLesson, setXpPerLesson] = useState("100");
@@ -151,9 +213,27 @@ function CreateCourseDialog({ adminSecret }: { adminSecret: string }) {
   const [creator, setCreator] = useState("");
   const [lastTx, setLastTx] = useState<string | null>(null);
 
+  const parseModules = (): unknown[] | null => {
+    if (!modulesJson.trim()) return [];
+    try {
+      const parsed = JSON.parse(modulesJson);
+      if (!Array.isArray(parsed)) {
+        setJsonError("Modules must be a JSON array");
+        return null;
+      }
+      setJsonError(null);
+      return parsed;
+    } catch (e: any) {
+      setJsonError(e.message);
+      return null;
+    }
+  };
+
   const mutation = useMutation({
-    mutationFn: () =>
-      createCourse(adminSecret, {
+    mutationFn: () => {
+      const modules = parseModules();
+      if (modules === null) throw new Error("Invalid modules JSON");
+      return createCourse(adminSecret, {
         courseId,
         creator: creator || undefined,
         lessonCount: Number(lessonCount),
@@ -163,17 +243,37 @@ function CreateCourseDialog({ adminSecret }: { adminSecret: string }) {
         trackLevel: Number(trackLevel),
         creatorRewardXp: Number(creatorRewardXp),
         minCompletionsForReward: Number(minCompletions),
-      }),
+        title: title || undefined,
+        slug: courseId,
+        description: description || undefined,
+        duration: duration || undefined,
+        thumbnail: thumbnail || undefined,
+        modules: modules.length > 0 ? modules : undefined,
+      });
+    },
     onSuccess: (res) => {
       setLastTx(res.txSignature);
-      toast.success(`Course "${courseId}" created on-chain`);
+      if (res.onChainError) {
+        toast.warning(
+          `Course "${courseId}" saved to DB but on-chain failed: ${res.onChainError}`,
+        );
+      } else {
+        toast.success(`Course "${courseId}" created`);
+      }
       queryClient.invalidateQueries({ queryKey: ["admin-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["course-contents"] });
     },
     onError: (err: Error) => toast.error(err.message),
   });
 
   const reset = () => {
     setCourseId("");
+    setTitle("");
+    setDescription("");
+    setDuration("");
+    setThumbnail("");
+    setModulesJson("");
+    setJsonError(null);
     setLessonCount("5");
     setDifficulty("1");
     setXpPerLesson("100");
@@ -199,19 +299,109 @@ function CreateCourseDialog({ adminSecret }: { adminSecret: string }) {
           Create Course
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Create New Course</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            Course Content
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-sm text-muted-foreground">
+                Course ID
+              </label>
+              <Input
+                placeholder="e.g. intro-to-solana"
+                value={courseId}
+                onChange={(e) => setCourseId(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="text-sm text-muted-foreground">Title</label>
+              <Input
+                placeholder="e.g. Introduction to Solana"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+              />
+            </div>
+          </div>
           <div>
-            <label className="text-sm text-muted-foreground">Course ID</label>
-            <Input
-              placeholder="e.g. intro-to-solana"
-              value={courseId}
-              onChange={(e) => setCourseId(e.target.value)}
+            <label className="text-sm text-muted-foreground">
+              Description
+            </label>
+            <textarea
+              placeholder="Course description..."
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+              className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
           </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-sm text-muted-foreground">Duration</label>
+              <Input
+                placeholder="e.g. 6 hours"
+                value={duration}
+                onChange={(e) => setDuration(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="text-sm text-muted-foreground">
+                Thumbnail URL
+              </label>
+              <Input
+                placeholder="/courses/my-course.png"
+                value={thumbnail}
+                onChange={(e) => setThumbnail(e.target.value)}
+              />
+            </div>
+          </div>
+          <div>
+            <label className="text-sm text-muted-foreground">
+              Modules (JSON array — paste full course structure)
+            </label>
+            <textarea
+              placeholder={`[
+  {
+    "id": "m1",
+    "title": "Module 1",
+    "description": "First module",
+    "order": 0,
+    "lessons": [
+      {
+        "id": "l1",
+        "title": "Lesson 1",
+        "description": "First lesson",
+        "order": 0,
+        "type": "content",
+        "xpReward": 25,
+        "duration": "15 min",
+        "content": "# Lesson content in Markdown"
+      }
+    ]
+  }
+]`}
+              value={modulesJson}
+              onChange={(e) => {
+                setModulesJson(e.target.value);
+                setJsonError(null);
+              }}
+              rows={8}
+              className="flex w-full rounded-md border border-input bg-background px-3 py-2 font-mono text-xs ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            />
+            {jsonError && (
+              <p className="mt-1 text-xs text-red-500">
+                JSON error: {jsonError}
+              </p>
+            )}
+          </div>
+
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide pt-2">
+            On-chain Parameters
+          </p>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-sm text-muted-foreground">
@@ -223,6 +413,9 @@ function CreateCourseDialog({ adminSecret }: { adminSecret: string }) {
                 value={lessonCount}
                 onChange={(e) => setLessonCount(e.target.value)}
               />
+              <p className="text-[10px] text-muted-foreground">
+                Auto-calculated from modules if provided
+              </p>
             </div>
             <div>
               <label className="text-sm text-muted-foreground">
@@ -268,7 +461,7 @@ function CreateCourseDialog({ adminSecret }: { adminSecret: string }) {
               </Select>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <div>
               <label className="text-sm text-muted-foreground">
                 Track Level
@@ -291,17 +484,17 @@ function CreateCourseDialog({ adminSecret }: { adminSecret: string }) {
                 onChange={(e) => setCreatorRewardXp(e.target.value)}
               />
             </div>
-          </div>
-          <div>
-            <label className="text-sm text-muted-foreground">
-              Min Completions for Reward
-            </label>
-            <Input
-              type="number"
-              min={0}
-              value={minCompletions}
-              onChange={(e) => setMinCompletions(e.target.value)}
-            />
+            <div>
+              <label className="text-sm text-muted-foreground">
+                Min Completions
+              </label>
+              <Input
+                type="number"
+                min={0}
+                value={minCompletions}
+                onChange={(e) => setMinCompletions(e.target.value)}
+              />
+            </div>
           </div>
           <div>
             <label className="text-sm text-muted-foreground">
@@ -319,7 +512,7 @@ function CreateCourseDialog({ adminSecret }: { adminSecret: string }) {
             disabled={mutation.isPending || !courseId}
             className="w-full"
           >
-            {mutation.isPending ? "Creating..." : "Create Course On-Chain"}
+            {mutation.isPending ? "Creating..." : "Create Course"}
           </Button>
           {lastTx && <TxResult signature={lastTx} />}
         </div>
@@ -335,6 +528,7 @@ interface CourseContent {
   description: string;
   difficulty: string;
   duration: string;
+  contentTxId?: string;
   modules: {
     id: string;
     title: string;
@@ -343,6 +537,7 @@ interface CourseContent {
 }
 
 export function CoursesTab({ adminSecret }: { adminSecret: string }) {
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const { data, isLoading } = useQuery({
     queryKey: ["admin-stats"],
@@ -355,6 +550,18 @@ export function CoursesTab({ adminSecret }: { adminSecret: string }) {
       if (!res.ok) return [];
       return res.json();
     },
+  });
+
+  const bulkUpload = useMutation({
+    mutationFn: () => bulkUploadToArweave(adminSecret),
+    onSuccess: (res) => {
+      toast.success(
+        `Arweave bulk upload: ${res.uploaded} uploaded, ${res.skipped} skipped, ${res.failed} failed`,
+      );
+      queryClient.invalidateQueries({ queryKey: ["admin-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["course-contents"] });
+    },
+    onError: (err: Error) => toast.error(err.message),
   });
 
   if (isLoading) {
@@ -371,6 +578,7 @@ export function CoursesTab({ adminSecret }: { adminSecret: string }) {
   const filtered = courses.filter((c) =>
     c.courseId.toLowerCase().includes(search.toLowerCase()),
   );
+  const missingArweave = courses.filter((c) => !c.contentTxId).length;
 
   return (
     <div className="space-y-4">
@@ -384,6 +592,18 @@ export function CoursesTab({ adminSecret }: { adminSecret: string }) {
             className="pl-9"
           />
         </div>
+        {missingArweave > 0 && (
+          <Button
+            variant="outline"
+            onClick={() => bulkUpload.mutate()}
+            disabled={bulkUpload.isPending}
+          >
+            <Upload className="mr-2 h-4 w-4" />
+            {bulkUpload.isPending
+              ? "Uploading..."
+              : `Push All to Arweave (${missingArweave})`}
+          </Button>
+        )}
         <CreateCourseDialog adminSecret={adminSecret} />
       </div>
 
@@ -428,18 +648,72 @@ export function CoursesTab({ adminSecret }: { adminSecret: string }) {
                           {track.display}
                         </Badge>
                       )}
+                      {(course.contentTxId || dbCourse?.contentTxId) && (
+                        <a
+                          href={`https://arweave.net/${course.contentTxId ?? dbCourse?.contentTxId}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Badge
+                            variant="outline"
+                            className="gap-1 border-blue-500 text-blue-500"
+                          >
+                            Arweave
+                            <ExternalLink className="h-2.5 w-2.5" />
+                          </Badge>
+                        </a>
+                      )}
                     </div>
                     <p className="text-xs text-muted-foreground">
                       {course.enrollments} enrolled · {course.completions}{" "}
                       completed · {course.xpPerLesson} XP/lesson ·{" "}
                       {course.lessonCount} lessons
                     </p>
+                    <p className="font-mono text-[10px] text-muted-foreground/60">
+                      PDA: {course.publicKey}
+                    </p>
                   </div>
                 </div>
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
                 <div className="mb-3 flex justify-end">
-                  <CourseEditDialog course={course} adminSecret={adminSecret} />
+                  <CourseEditDialog
+                    course={course}
+                    adminSecret={adminSecret}
+                    courseContent={dbCourse}
+                  />
+                </div>
+                <div className="mb-3 space-y-1 rounded border bg-muted/30 p-2 text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-muted-foreground">
+                      On-chain:
+                    </span>
+                    <span className="font-mono">{course.publicKey}</span>
+                  </div>
+                  {(course.contentTxId || dbCourse?.contentTxId) && (
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-muted-foreground">
+                        Arweave:
+                      </span>
+                      <a
+                        href={`https://arweave.net/${course.contentTxId ?? dbCourse?.contentTxId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-mono text-blue-500 underline"
+                      >
+                        {course.contentTxId ?? dbCourse?.contentTxId}
+                      </a>
+                    </div>
+                  )}
+                  {course.creator && (
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-muted-foreground">
+                        Creator:
+                      </span>
+                      <span className="font-mono">{course.creator}</span>
+                    </div>
+                  )}
                 </div>
                 {dbCourse ? (
                   <div className="space-y-3">

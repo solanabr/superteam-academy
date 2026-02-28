@@ -22,6 +22,7 @@ export interface ICourse extends Document {
   createdAt: string;
   onChainTxHash?: string;
   onChainAddress?: string;
+  contentTxId?: string;
 }
 
 const CourseSchema = new Schema<ICourse>({
@@ -46,6 +47,7 @@ const CourseSchema = new Schema<ICourse>({
   createdAt: { type: String, required: true },
   onChainTxHash: { type: String },
   onChainAddress: { type: String },
+  contentTxId: { type: String },
 });
 
 CourseSchema.index({ slug: 1 });

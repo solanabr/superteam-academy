@@ -21,6 +21,7 @@ import {
   buildIssueCredentialTx,
   buildUpgradeCredentialTx,
 } from "@/lib/solana/transactions";
+import { uploadJson, arweaveUrl } from "@/lib/arweave";
 
 export async function POST(req: NextRequest) {
   const { userId, courseId, lessonIndex } = await req.json();
@@ -114,6 +115,41 @@ export async function POST(req: NextRequest) {
 
               const credentialName = `${trackInfo?.display ?? "Superteam"} - Level ${onChainCourse.trackLevel}`;
 
+              // Build and upload Metaplex-standard metadata to Arweave
+              let metadataUri = "";
+              try {
+                const metadata = {
+                  name: credentialName,
+                  symbol: "SACAD",
+                  description: `Superteam Academy credential: ${credentialName}. Courses completed: ${trackCompletedCount}, Total XP: ${trackTotalXp}.`,
+                  attributes: [
+                    {
+                      trait_type: "Track",
+                      value: trackInfo?.display ?? "Superteam",
+                    },
+                    {
+                      trait_type: "Track Level",
+                      value: onChainCourse.trackLevel,
+                    },
+                    {
+                      trait_type: "Courses Completed",
+                      value: trackCompletedCount,
+                    },
+                    { trait_type: "Total XP", value: trackTotalXp },
+                    { trait_type: "Course", value: courseId },
+                  ],
+                };
+                const uploadResult = await uploadJson(metadata, [
+                  { name: "App-Name", value: "Superteam-Academy" },
+                  { name: "Content-Kind", value: "credential-metadata" },
+                  { name: "Course-Id", value: courseId },
+                  { name: "Learner", value: wallet.toBase58() },
+                ]);
+                metadataUri = uploadResult.url;
+              } catch {
+                // metadata upload is non-critical
+              }
+
               if (existingCredentialAsset) {
                 // Upgrade existing credential
                 const credentialTx = await buildUpgradeCredentialTx(
@@ -124,7 +160,7 @@ export async function POST(req: NextRequest) {
                   existingCredentialAsset,
                   PublicKey.default,
                   credentialName,
-                  "",
+                  metadataUri,
                   trackCompletedCount,
                   trackTotalXp,
                 );
@@ -149,7 +185,7 @@ export async function POST(req: NextRequest) {
                     credentialAssetKeypair,
                     PublicKey.default,
                     credentialName,
-                    "",
+                    metadataUri,
                     trackCompletedCount,
                     trackTotalXp,
                   );

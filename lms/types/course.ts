@@ -20,6 +20,7 @@ export interface Course {
   totalEnrollments: number;
   modules: Module[];
   createdAt: string;
+  contentTxId?: string;
 }
 
 export interface Module {

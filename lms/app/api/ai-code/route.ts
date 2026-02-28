@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const LYZR_API_URL = "https://agent-prod.studio.lyzr.ai/v3/inference/chat/";
-const LYZR_AGENT_ID = "6990319188c3964deca09041";
+const LYZR_AGENT_ID = "69a07065d48649433b1a5182";
 
 export async function POST(req: NextRequest) {
   const apiKey = process.env.LYZR_API_KEY;
