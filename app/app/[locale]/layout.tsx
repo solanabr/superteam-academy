@@ -114,7 +114,7 @@ export default async function LocaleLayout({
                 <Analytics />
                 <div className="flex flex-col min-h-screen">
                   <Nav />
-                  <main className="flex-1 min-h-screen">{children}</main>
+                  <main className="flex-1">{children}</main>
                   <Footer />
                 </div>
               </LazyWalletProvider>
