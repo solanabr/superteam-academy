@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useWallet } from "@/lib/wallet/context";
 import { useProgram } from "@/lib/hooks/use-program";
 import {
@@ -56,6 +56,17 @@ export function EnrollSection({
   const [optimisticComplete, setOptimisticComplete] = useState(false);
   const [explorerUrl, setExplorerUrl] = useState<string | null>(null);
   const enrollingRef = useRef(false);
+  const finalizingRef = useRef(false);
+
+  // Refs to avoid stale closures when requireAuth runs deferred actions
+  // after wallet connect + auth (the stored callback would otherwise
+  // capture program=null / publicKey=null from the pre-connect render)
+  const programRef = useRef(program);
+  programRef.current = program;
+  const publicKeyRef = useRef(publicKey);
+  publicKeyRef.current = publicKey;
+  const enrollmentRef = useRef(enrollment);
+  enrollmentRef.current = enrollment;
 
   const isComplete = isEnrolled && (enrollment?.completedAt !== null || optimisticComplete);
 
@@ -82,14 +93,16 @@ export function EnrollSection({
   const allLessonsDone =
     isEnrolled && !isComplete && totalLessons > 0 && (completedCount >= totalLessons || locallyComplete);
 
-  const handleEnroll = async () => {
-    if (!program || !publicKey || enrollingRef.current) return;
+  const handleEnroll = useCallback(async () => {
+    const currentProgram = programRef.current;
+    const currentPublicKey = publicKeyRef.current;
+    if (!currentProgram || !currentPublicKey || enrollingRef.current) return;
     enrollingRef.current = true;
     setLoading(true);
     setError(null);
     setOptimisticEnrolled(false);
     try {
-      await enroll(program, publicKey, courseId);
+      await enroll(currentProgram, currentPublicKey, courseId);
       analytics.courseEnrolled(courseId);
       // TX confirmed on-chain — show success immediately
       setOptimisticEnrolled(true);
@@ -126,22 +139,28 @@ export function EnrollSection({
     } finally {
       enrollingRef.current = false;
     }
-  };
+  }, [courseId, refreshEnrollment, tl]);
 
-  const handleFinalize = async () => {
-    if (!publicKey || finalizing) return;
+  const handleFinalize = useCallback(async () => {
+    const currentPublicKey = publicKeyRef.current;
+    const currentEnrollment = enrollmentRef.current;
+    if (!currentPublicKey || finalizingRef.current) return;
+    finalizingRef.current = true;
     setFinalizing(true);
     setError(null);
     try {
-      const walletAddress = publicKey.toBase58();
+      const walletAddress = currentPublicKey.toBase58();
+      const currentCompletedCount = currentEnrollment?.lessonFlags
+        ? countCompletedLessons(currentEnrollment.lessonFlags)
+        : 0;
 
       // Sync locally-completed lessons that are missing on-chain — sequentially
       // to avoid write-write conflicts on the shared enrollment PDA
-      if (enrollment?.lessonFlags && completedCount < totalLessons) {
+      if (currentEnrollment?.lessonFlags && currentCompletedCount < totalLessons) {
         const progress = await learningService.getProgress(walletAddress, courseId);
         const missingIndices: number[] = [];
         for (const idx of progress.completedLessons) {
-          if (!isLessonComplete(enrollment.lessonFlags, idx)) {
+          if (!isLessonComplete(currentEnrollment.lessonFlags, idx)) {
             missingIndices.push(idx);
           }
         }
@@ -198,9 +217,10 @@ export function EnrollSection({
       console.error("Finalize failed:", e);
       setError(tl("finalizeFailed"));
     } finally {
+      finalizingRef.current = false;
       setFinalizing(false);
     }
-  };
+  }, [totalLessons, courseId, slug, refreshEnrollment, tl]);
 
   const metaText = (
     <span
