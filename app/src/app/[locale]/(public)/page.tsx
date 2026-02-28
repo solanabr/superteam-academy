@@ -88,12 +88,12 @@ export default async function LandingPage() {
               <span>◎</span>
               {t("hero.cta")}
             </Link>
-            <Link
-              href="/courses"
+            <a
+              href="#tracks"
               className="inline-flex items-center gap-2 border border-[#1F1F1F] text-[#EDEDED] font-mono text-sm px-6 py-2.5 rounded hover:bg-[#111111] hover:border-[#2E2E2E] transition-colors"
             >
               {t("hero.ctaSecondary")}
-            </Link>
+            </a>
           </div>
 
           {/* Stats */}
@@ -121,7 +121,7 @@ export default async function LandingPage() {
       </section>
 
       {/* ── Learning Tracks ── */}
-      <section className="py-20 px-4 border-t border-[#1F1F1F]">
+      <section id="tracks" className="py-20 px-4 border-t border-[#1F1F1F]">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="font-mono text-2xl font-bold text-[#EDEDED] mb-2">

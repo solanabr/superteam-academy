@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { useRouter } from "@/i18n/navigation";
@@ -26,6 +26,7 @@ const LANGUAGES = [
 export default function SettingsPage() {
   const t = useTranslations("settings");
   const router = useRouter();
+  const currentLocale = useLocale();
   const { publicKey, connected, disconnect } = useWallet();
   const { setVisible } = useWalletModal();
 
@@ -47,7 +48,11 @@ export default function SettingsPage() {
   const applyTheme = (theme: "dark" | "light") => {
     setActiveTheme(theme);
     localStorage.setItem("theme", theme);
-    document.documentElement.setAttribute("data-theme", theme);
+    if (theme === "light") {
+      document.documentElement.classList.add("light");
+    } else {
+      document.documentElement.classList.remove("light");
+    }
   };
 
   const handleSaveProfile = async () => {
@@ -63,7 +68,8 @@ export default function SettingsPage() {
   };
 
   const handleLanguageChange = (locale: string) => {
-    router.replace("/settings", { locale });
+    // Full page reload for locale change — avoids next-intl typed pathname issues
+    window.location.href = `/${locale}/settings`;
   };
 
   return (
@@ -195,21 +201,24 @@ export default function SettingsPage() {
               <h2 className="font-mono text-sm font-semibold text-[#EDEDED]">
                 {t("language.title")}
               </h2>
-              {LANGUAGES.map(({ value, label }) => (
-                <button
-                  key={value}
-                  onClick={() => handleLanguageChange(value)}
-                  className={cn(
-                    "w-full flex items-center justify-between px-3 py-2.5 rounded border font-mono text-sm transition-colors",
-                    value === "en"
-                      ? "border-[#14F195]/30 text-[#EDEDED] bg-[#14F195]/5"
-                      : "border-[#1F1F1F] text-[#666666] hover:border-[#2E2E2E] hover:text-[#EDEDED]"
-                  )}
-                >
-                  <span>{label}</span>
-                  {value === "en" && <Check className="h-3.5 w-3.5 text-[#14F195]" />}
-                </button>
-              ))}
+              {LANGUAGES.map(({ value, label }) => {
+                const isActive = value === currentLocale;
+                return (
+                  <button
+                    key={value}
+                    onClick={() => handleLanguageChange(value)}
+                    className={cn(
+                      "w-full flex items-center justify-between px-3 py-2.5 rounded border font-mono text-sm transition-colors",
+                      isActive
+                        ? "border-[#14F195]/30 text-[#EDEDED] bg-[#14F195]/5"
+                        : "border-[#1F1F1F] text-[#666666] hover:border-[#2E2E2E] hover:text-[#EDEDED]"
+                    )}
+                  >
+                    <span>{label}</span>
+                    {isActive && <Check className="h-3.5 w-3.5 text-[#14F195]" />}
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>

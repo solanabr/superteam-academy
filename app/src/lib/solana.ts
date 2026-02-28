@@ -31,8 +31,9 @@ export const HELIUS_RPC_URL =
 
 export function getConnection(): Connection {
   const endpoint =
-    process.env.NEXT_PUBLIC_RPC_URL ??
-    (HELIUS_RPC_URL || clusterApiUrl(CLUSTER));
+    process.env.NEXT_PUBLIC_RPC_URL ||
+    HELIUS_RPC_URL ||
+    clusterApiUrl(CLUSTER);
   return new Connection(endpoint, "confirmed");
 }
 
