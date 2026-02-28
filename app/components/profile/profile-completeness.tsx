@@ -111,9 +111,7 @@ export function ProfileCompleteness({ user }: ProfileCompletenessProps) {
 
 				{completeness < 100 && (
 					<div className="pt-2 border-t">
-						<p className="text-xs text-muted-foreground">
-							{t("cta")}
-						</p>
+						<p className="text-xs text-muted-foreground">{t("cta")}</p>
 					</div>
 				)}
 			</CardContent>

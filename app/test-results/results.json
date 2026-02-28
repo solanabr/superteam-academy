@@ -1,214 +1,199 @@
 {
-  "config": {
-    "configFile": "/Users/elcharitas/Workspace/superteam-academy/app/playwright.config.ts",
-    "rootDir": "/Users/elcharitas/Workspace/superteam-academy/app/e2e",
-    "forbidOnly": false,
-    "fullyParallel": true,
-    "globalSetup": "/Users/elcharitas/Workspace/superteam-academy/app/e2e/global-setup.ts",
-    "globalTeardown": "/Users/elcharitas/Workspace/superteam-academy/app/e2e/global-teardown.ts",
-    "globalTimeout": 0,
-    "grep": {},
-    "grepInvert": null,
-    "maxFailures": 0,
-    "metadata": {
-      "actualWorkers": 1
-    },
-    "preserveOutput": "always",
-    "projects": [
-      {
-        "outputDir": "/Users/elcharitas/Workspace/superteam-academy/app/test-results",
-        "repeatEach": 1,
-        "retries": 0,
-        "metadata": {
-          "actualWorkers": 1
-        },
-        "id": "chromium",
-        "name": "chromium",
-        "testDir": "/Users/elcharitas/Workspace/superteam-academy/app/e2e",
-        "testIgnore": [],
-        "testMatch": [
-          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
-        ],
-        "timeout": 30000
-      },
-      {
-        "outputDir": "/Users/elcharitas/Workspace/superteam-academy/app/test-results",
-        "repeatEach": 1,
-        "retries": 0,
-        "metadata": {
-          "actualWorkers": 1
-        },
-        "id": "firefox",
-        "name": "firefox",
-        "testDir": "/Users/elcharitas/Workspace/superteam-academy/app/e2e",
-        "testIgnore": [],
-        "testMatch": [
-          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
-        ],
-        "timeout": 30000
-      },
-      {
-        "outputDir": "/Users/elcharitas/Workspace/superteam-academy/app/test-results",
-        "repeatEach": 1,
-        "retries": 0,
-        "metadata": {
-          "actualWorkers": 1
-        },
-        "id": "webkit",
-        "name": "webkit",
-        "testDir": "/Users/elcharitas/Workspace/superteam-academy/app/e2e",
-        "testIgnore": [],
-        "testMatch": [
-          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
-        ],
-        "timeout": 30000
-      },
-      {
-        "outputDir": "/Users/elcharitas/Workspace/superteam-academy/app/test-results",
-        "repeatEach": 1,
-        "retries": 0,
-        "metadata": {
-          "actualWorkers": 1
-        },
-        "id": "Mobile Chrome",
-        "name": "Mobile Chrome",
-        "testDir": "/Users/elcharitas/Workspace/superteam-academy/app/e2e",
-        "testIgnore": [],
-        "testMatch": [
-          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
-        ],
-        "timeout": 30000
-      },
-      {
-        "outputDir": "/Users/elcharitas/Workspace/superteam-academy/app/test-results",
-        "repeatEach": 1,
-        "retries": 0,
-        "metadata": {
-          "actualWorkers": 1
-        },
-        "id": "Mobile Safari",
-        "name": "Mobile Safari",
-        "testDir": "/Users/elcharitas/Workspace/superteam-academy/app/e2e",
-        "testIgnore": [],
-        "testMatch": [
-          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
-        ],
-        "timeout": 30000
-      },
-      {
-        "outputDir": "/Users/elcharitas/Workspace/superteam-academy/app/test-results",
-        "repeatEach": 1,
-        "retries": 0,
-        "metadata": {
-          "actualWorkers": 1
-        },
-        "id": "accessibility",
-        "name": "accessibility",
-        "testDir": "/Users/elcharitas/Workspace/superteam-academy/app/e2e",
-        "testIgnore": [],
-        "testMatch": [
-          "**/*.accessibility.spec.ts"
-        ],
-        "timeout": 30000
-      }
-    ],
-    "quiet": false,
-    "reporter": [
-      [
-        "html",
-        null
-      ],
-      [
-        "json",
-        {
-          "outputFile": "test-results/results.json"
-        }
-      ],
-      [
-        "junit",
-        {
-          "outputFile": "test-results/results.xml"
-        }
-      ]
-    ],
-    "reportSlowTests": {
-      "max": 5,
-      "threshold": 300000
-    },
-    "runAgents": "none",
-    "shard": null,
-    "tags": [],
-    "updateSnapshots": "missing",
-    "updateSourceMethod": "patch",
-    "version": "1.58.2",
-    "workers": 4,
-    "webServer": {
-      "command": "npm run dev",
-      "url": "http://localhost:3000",
-      "reuseExistingServer": true,
-      "timeout": 120000
-    }
-  },
-  "suites": [
-    {
-      "title": "comprehensive-flows.spec.ts",
-      "file": "comprehensive-flows.spec.ts",
-      "column": 0,
-      "line": 0,
-      "specs": [],
-      "suites": [
-        {
-          "title": "Superteam Academy route modernization",
-          "file": "comprehensive-flows.spec.ts",
-          "line": 46,
-          "column": 6,
-          "specs": [
-            {
-              "title": "authenticated API paths pass auth gate with wallet signature",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 30000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 3546,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-02-27T22:18:39.655Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "28cc6f5bf0cbb34f7a71-3bb66dca07b4cf6943ef",
-              "file": "comprehensive-flows.spec.ts",
-              "line": 144,
-              "column": 6
-            }
-          ]
-        }
-      ]
-    }
-  ],
-  "errors": [],
-  "stats": {
-    "startTime": "2026-02-27T22:18:11.521Z",
-    "duration": 31883.226000000002,
-    "expected": 1,
-    "skipped": 0,
-    "unexpected": 0,
-    "flaky": 0
-  }
+	"config": {
+		"configFile": "/Users/elcharitas/Workspace/superteam-academy/app/playwright.config.ts",
+		"rootDir": "/Users/elcharitas/Workspace/superteam-academy/app/e2e",
+		"forbidOnly": false,
+		"fullyParallel": true,
+		"globalSetup": "/Users/elcharitas/Workspace/superteam-academy/app/e2e/global-setup.ts",
+		"globalTeardown": "/Users/elcharitas/Workspace/superteam-academy/app/e2e/global-teardown.ts",
+		"globalTimeout": 0,
+		"grep": {},
+		"grepInvert": null,
+		"maxFailures": 0,
+		"metadata": {
+			"actualWorkers": 1
+		},
+		"preserveOutput": "always",
+		"projects": [
+			{
+				"outputDir": "/Users/elcharitas/Workspace/superteam-academy/app/test-results",
+				"repeatEach": 1,
+				"retries": 0,
+				"metadata": {
+					"actualWorkers": 1
+				},
+				"id": "chromium",
+				"name": "chromium",
+				"testDir": "/Users/elcharitas/Workspace/superteam-academy/app/e2e",
+				"testIgnore": [],
+				"testMatch": ["**/*.@(spec|test).?(c|m)[jt]s?(x)"],
+				"timeout": 30000
+			},
+			{
+				"outputDir": "/Users/elcharitas/Workspace/superteam-academy/app/test-results",
+				"repeatEach": 1,
+				"retries": 0,
+				"metadata": {
+					"actualWorkers": 1
+				},
+				"id": "firefox",
+				"name": "firefox",
+				"testDir": "/Users/elcharitas/Workspace/superteam-academy/app/e2e",
+				"testIgnore": [],
+				"testMatch": ["**/*.@(spec|test).?(c|m)[jt]s?(x)"],
+				"timeout": 30000
+			},
+			{
+				"outputDir": "/Users/elcharitas/Workspace/superteam-academy/app/test-results",
+				"repeatEach": 1,
+				"retries": 0,
+				"metadata": {
+					"actualWorkers": 1
+				},
+				"id": "webkit",
+				"name": "webkit",
+				"testDir": "/Users/elcharitas/Workspace/superteam-academy/app/e2e",
+				"testIgnore": [],
+				"testMatch": ["**/*.@(spec|test).?(c|m)[jt]s?(x)"],
+				"timeout": 30000
+			},
+			{
+				"outputDir": "/Users/elcharitas/Workspace/superteam-academy/app/test-results",
+				"repeatEach": 1,
+				"retries": 0,
+				"metadata": {
+					"actualWorkers": 1
+				},
+				"id": "Mobile Chrome",
+				"name": "Mobile Chrome",
+				"testDir": "/Users/elcharitas/Workspace/superteam-academy/app/e2e",
+				"testIgnore": [],
+				"testMatch": ["**/*.@(spec|test).?(c|m)[jt]s?(x)"],
+				"timeout": 30000
+			},
+			{
+				"outputDir": "/Users/elcharitas/Workspace/superteam-academy/app/test-results",
+				"repeatEach": 1,
+				"retries": 0,
+				"metadata": {
+					"actualWorkers": 1
+				},
+				"id": "Mobile Safari",
+				"name": "Mobile Safari",
+				"testDir": "/Users/elcharitas/Workspace/superteam-academy/app/e2e",
+				"testIgnore": [],
+				"testMatch": ["**/*.@(spec|test).?(c|m)[jt]s?(x)"],
+				"timeout": 30000
+			},
+			{
+				"outputDir": "/Users/elcharitas/Workspace/superteam-academy/app/test-results",
+				"repeatEach": 1,
+				"retries": 0,
+				"metadata": {
+					"actualWorkers": 1
+				},
+				"id": "accessibility",
+				"name": "accessibility",
+				"testDir": "/Users/elcharitas/Workspace/superteam-academy/app/e2e",
+				"testIgnore": [],
+				"testMatch": ["**/*.accessibility.spec.ts"],
+				"timeout": 30000
+			}
+		],
+		"quiet": false,
+		"reporter": [
+			["html", null],
+			[
+				"json",
+				{
+					"outputFile": "test-results/results.json"
+				}
+			],
+			[
+				"junit",
+				{
+					"outputFile": "test-results/results.xml"
+				}
+			]
+		],
+		"reportSlowTests": {
+			"max": 5,
+			"threshold": 300000
+		},
+		"runAgents": "none",
+		"shard": null,
+		"tags": [],
+		"updateSnapshots": "missing",
+		"updateSourceMethod": "patch",
+		"version": "1.58.2",
+		"workers": 4,
+		"webServer": {
+			"command": "npm run dev",
+			"url": "http://localhost:3000",
+			"reuseExistingServer": true,
+			"timeout": 120000
+		}
+	},
+	"suites": [
+		{
+			"title": "comprehensive-flows.spec.ts",
+			"file": "comprehensive-flows.spec.ts",
+			"column": 0,
+			"line": 0,
+			"specs": [],
+			"suites": [
+				{
+					"title": "Superteam Academy route modernization",
+					"file": "comprehensive-flows.spec.ts",
+					"line": 46,
+					"column": 6,
+					"specs": [
+						{
+							"title": "authenticated API paths pass auth gate with wallet signature",
+							"ok": true,
+							"tags": [],
+							"tests": [
+								{
+									"timeout": 30000,
+									"annotations": [],
+									"expectedStatus": "passed",
+									"projectId": "chromium",
+									"projectName": "chromium",
+									"results": [
+										{
+											"workerIndex": 0,
+											"parallelIndex": 0,
+											"status": "passed",
+											"duration": 3546,
+											"errors": [],
+											"stdout": [],
+											"stderr": [],
+											"retry": 0,
+											"startTime": "2026-02-27T22:18:39.655Z",
+											"annotations": [],
+											"attachments": []
+										}
+									],
+									"status": "expected"
+								}
+							],
+							"id": "28cc6f5bf0cbb34f7a71-3bb66dca07b4cf6943ef",
+							"file": "comprehensive-flows.spec.ts",
+							"line": 144,
+							"column": 6
+						}
+					]
+				}
+			]
+		}
+	],
+	"errors": [],
+	"stats": {
+		"startTime": "2026-02-27T22:18:11.521Z",
+		"duration": 31883.226000000002,
+		"expected": 1,
+		"skipped": 0,
+		"unexpected": 0,
+		"flaky": 0
+	}
 }

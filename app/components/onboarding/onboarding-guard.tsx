@@ -11,15 +11,12 @@ interface OnboardingGuardProps {
 export function OnboardingGuard({ children, requireOnboarding = false }: OnboardingGuardProps) {
 	const { user, isAuthenticated, refreshSession } = useAuth();
 
-	const shouldShowModal =
-		isAuthenticated && requireOnboarding && !user?.onboardingCompleted;
+	const shouldShowModal = isAuthenticated && requireOnboarding && !user?.onboardingCompleted;
 
 	return (
 		<>
 			{children}
-			{shouldShowModal ? (
-				<OnboardingModal onCompleted={refreshSession} />
-			) : null}
+			{shouldShowModal ? <OnboardingModal onCompleted={refreshSession} /> : null}
 		</>
 	);
 }

@@ -304,7 +304,9 @@ export function WalletSettings() {
 							disabled={pendingProvider !== null}
 						>
 							<Link2 className="h-3.5 w-3.5 mr-1.5" />
-							{isLinked("google") ? t("actions.relinkGoogle") : t("actions.linkGoogle")}
+							{isLinked("google")
+								? t("actions.relinkGoogle")
+								: t("actions.linkGoogle")}
 						</Button>
 						<Button
 							variant="outline"
@@ -313,7 +315,9 @@ export function WalletSettings() {
 							disabled={pendingProvider !== null}
 						>
 							<Link2 className="h-3.5 w-3.5 mr-1.5" />
-							{isLinked("github") ? t("actions.relinkGithub") : t("actions.linkGithub")}
+							{isLinked("github")
+								? t("actions.relinkGithub")
+								: t("actions.linkGithub")}
 						</Button>
 						<Button
 							variant="outline"
@@ -322,7 +326,9 @@ export function WalletSettings() {
 							disabled={pendingProvider !== null || !walletAddress}
 						>
 							<Link2 className="h-3.5 w-3.5 mr-1.5" />
-							{isLinked("wallet") ? t("actions.relinkWallet") : t("actions.linkCurrentWallet")}
+							{isLinked("wallet")
+								? t("actions.relinkWallet")
+								: t("actions.linkCurrentWallet")}
 						</Button>
 					</div>
 
@@ -331,7 +337,9 @@ export function WalletSettings() {
 							{t("loading.linkedAccounts")}
 						</div>
 					) : linkedAccounts.length === 0 ? (
-						<div className="text-sm text-muted-foreground">{t("empty.noLinkedAccounts")}</div>
+						<div className="text-sm text-muted-foreground">
+							{t("empty.noLinkedAccounts")}
+						</div>
 					) : (
 						<div className="space-y-2">
 							{linkedAccounts.map((account) => {

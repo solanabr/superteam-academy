@@ -63,11 +63,7 @@ export async function POST(request: NextRequest) {
 
 		const linkedUserId = await findLinkedUserId("wallet", parsed.data.publicKey);
 		const betterAuthResult = linkedUserId
-			? await issueLinkedWalletBetterAuthSession(
-					request,
-					parsed.data.publicKey,
-					linkedUserId
-				)
+			? await issueLinkedWalletBetterAuthSession(request, parsed.data.publicKey, linkedUserId)
 			: await issueWalletBetterAuthSession(request, parsed.data.publicKey);
 
 		const response = NextResponse.json({

@@ -80,10 +80,7 @@ export default function NewDiscussionPage() {
 		} catch (err) {
 			toast({
 				title: t("toast.errorTitle"),
-				description:
-					err instanceof Error
-						? err.message
-						: t("errors.createFailedRetry"),
+				description: err instanceof Error ? err.message : t("errors.createFailedRetry"),
 				variant: "destructive",
 			});
 		} finally {
@@ -101,9 +98,7 @@ export default function NewDiscussionPage() {
 				</Button>
 				<div>
 					<h1 className="text-2xl font-bold">{t("title")}</h1>
-					<p className="text-sm text-muted-foreground">
-						{t("description")}
-					</p>
+					<p className="text-sm text-muted-foreground">{t("description")}</p>
 				</div>
 			</div>
 

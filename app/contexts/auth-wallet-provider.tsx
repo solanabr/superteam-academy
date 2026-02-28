@@ -187,7 +187,7 @@ function AuthProviderInner({
 			isWalletVerified,
 			session,
 			user,
-			isAuthenticated:  (isWalletConnected && isWalletVerified) || isOAuthAuthenticated,
+			isAuthenticated: (isWalletConnected && isWalletVerified) || isOAuthAuthenticated,
 			isAdmin: user?.role === "admin" || user?.role === "superadmin",
 			isSuperAdmin: user?.role === "superadmin",
 			authMethod,

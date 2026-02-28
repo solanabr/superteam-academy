@@ -2,7 +2,13 @@ import { NextResponse } from "next/server";
 import { createDiscussion } from "@/lib/community-cms";
 import { syncUserToSanity } from "@/lib/sanity-users";
 import { evaluateContentModeration, enqueueModerationItem } from "@/lib/community-moderation";
-import { requireSession, MAX_TITLE_LENGTH, MAX_TAGS, parseTags, parseJsonBody } from "@/lib/route-utils";
+import {
+	requireSession,
+	MAX_TITLE_LENGTH,
+	MAX_TAGS,
+	parseTags,
+	parseJsonBody,
+} from "@/lib/route-utils";
 import type { DiscussionCategory } from "@superteam-academy/cms";
 
 const VALID_CATEGORIES: DiscussionCategory[] = [

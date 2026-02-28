@@ -1,10 +1,5 @@
 import { NextResponse } from "next/server";
-import {
-	PublicKey,
-	SystemProgram,
-	Transaction,
-	TransactionInstruction,
-} from "@solana/web3.js";
+import { PublicKey, SystemProgram, Transaction, TransactionInstruction } from "@solana/web3.js";
 import { buildCompleteLessonInstruction, isLessonCompleted } from "@superteam-academy/anchor";
 import {
 	findToken2022ATA,

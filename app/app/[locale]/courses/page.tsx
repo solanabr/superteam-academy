@@ -341,30 +341,29 @@ async function getCourses(searchParams: Awaited<CoursesPageProps["searchParams"]
 		return "beginner";
 	};
 
-	const baseCourses: CatalogCourse[] = onchainCourses
-		.map((entry) => {
-			const courseId = entry.account.courseId;
-			const cms = cmsByCourseId.get(courseId);
-			const lessonCount = entry.account.lessonCount;
+	const baseCourses: CatalogCourse[] = onchainCourses.map((entry) => {
+		const courseId = entry.account.courseId;
+		const cms = cmsByCourseId.get(courseId);
+		const lessonCount = entry.account.lessonCount;
 
-			return {
-				id: courseId,
-				title: cms?.title ?? courseId,
-				description: cms?.description ?? "",
-				category: cms?.track ?? "solana",
-				level: cms?.level ?? mapDifficultyToLevel(entry.account.difficulty),
-				duration: cms?.duration ?? `${Math.max(lessonCount, 1) * 10} min`,
-				students: entry.account.totalEnrollments,
-				instructor: "",
-				image: resolveCourseImageUrl(cms?.image, 960, 540) ?? "/courses/default.jpg",
-				tags: cms?.track ? [cms.track] : ["solana"],
-				topics: [],
-				xpReward: entry.account.xpPerLesson * lessonCount,
-				price: 0,
-				featured: false,
-				gradient: "from-green to-forest",
-			};
-		});
+		return {
+			id: courseId,
+			title: cms?.title ?? courseId,
+			description: cms?.description ?? "",
+			category: cms?.track ?? "solana",
+			level: cms?.level ?? mapDifficultyToLevel(entry.account.difficulty),
+			duration: cms?.duration ?? `${Math.max(lessonCount, 1) * 10} min`,
+			students: entry.account.totalEnrollments,
+			instructor: "",
+			image: resolveCourseImageUrl(cms?.image, 960, 540) ?? "/courses/default.jpg",
+			tags: cms?.track ? [cms.track] : ["solana"],
+			topics: [],
+			xpReward: entry.account.xpPerLesson * lessonCount,
+			price: 0,
+			featured: false,
+			gradient: "from-green to-forest",
+		};
+	});
 
 	let filtered = [...baseCourses];
 

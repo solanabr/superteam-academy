@@ -14,7 +14,10 @@ export async function requireSession(): Promise<AuthResult> {
 	const requestHeaders = await headers();
 	const session = await serverAuth.api.getSession({ headers: requestHeaders });
 	if (!session) {
-		return { ok: false, response: NextResponse.json({ error: "Not authenticated" }, { status: 401 }) };
+		return {
+			ok: false,
+			response: NextResponse.json({ error: "Not authenticated" }, { status: 401 }),
+		};
 	}
 	return { ok: true, session };
 }

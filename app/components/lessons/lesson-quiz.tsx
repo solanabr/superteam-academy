@@ -166,9 +166,11 @@ export function LessonQuiz({ quiz, onComplete, onRetry }: LessonQuizProps) {
 						</div>
 
 						<Badge variant={passed ? "default" : "destructive"} className="text-sm">
-							{passed ? t("results.passed") : t("results.failed")} ({t("results.required", {
+							{passed ? t("results.passed") : t("results.failed")} (
+							{t("results.required", {
 								score: quiz.passingScore,
-							})})
+							})}
+							)
 						</Badge>
 
 						<Button onClick={handleRetry} className="w-full">
@@ -244,7 +246,7 @@ export function LessonQuiz({ quiz, onComplete, onRetry }: LessonQuizProps) {
 									{question.explanation && (
 										<div className="bg-blue-50 border border-blue-200 rounded-lg p-3 dark:bg-blue-950 dark:border-blue-800">
 											<p className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-1">
-													{t("results.explanation")}
+												{t("results.explanation")}
 											</p>
 											<p className="text-sm text-blue-700 dark:text-blue-300">
 												{question.explanation}
@@ -268,9 +270,7 @@ export function LessonQuiz({ quiz, onComplete, onRetry }: LessonQuizProps) {
 						<CardTitle>{quiz.title}</CardTitle>
 					</CardHeader>
 					<CardContent>
-						<p className="text-sm text-muted-foreground">
-							{t("notAvailable")}
-						</p>
+						<p className="text-sm text-muted-foreground">{t("notAvailable")}</p>
 					</CardContent>
 				</Card>
 			</div>

@@ -215,9 +215,7 @@ export function PrivacySettings() {
 
 				<div className="pt-4 border-t border-border/40 space-y-2">
 					<Label className="text-xs">{t("export.title")}</Label>
-					<p className="text-xs text-muted-foreground">
-						{t("export.description")}
-					</p>
+					<p className="text-xs text-muted-foreground">{t("export.description")}</p>
 					<Button
 						variant="outline"
 						size="sm"

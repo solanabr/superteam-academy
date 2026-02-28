@@ -170,7 +170,9 @@ export function NotificationSettings() {
 									<SelectValue />
 								</SelectTrigger>
 								<SelectContent>
-									<SelectItem value="immediate">{t("frequency.immediate")}</SelectItem>
+									<SelectItem value="immediate">
+										{t("frequency.immediate")}
+									</SelectItem>
 									<SelectItem value="daily">{t("frequency.daily")}</SelectItem>
 									<SelectItem value="weekly">{t("frequency.weekly")}</SelectItem>
 								</SelectContent>
@@ -188,7 +190,9 @@ export function NotificationSettings() {
 									<SelectValue />
 								</SelectTrigger>
 								<SelectContent>
-									<SelectItem value="immediate">{t("frequency.immediate")}</SelectItem>
+									<SelectItem value="immediate">
+										{t("frequency.immediate")}
+									</SelectItem>
 									<SelectItem value="daily">{t("frequency.daily")}</SelectItem>
 									<SelectItem value="weekly">{t("frequency.weekly")}</SelectItem>
 								</SelectContent>

@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
 import { createEvent } from "@/lib/community-cms";
 import { evaluateContentModeration, enqueueModerationItem } from "@/lib/community-moderation";
-import { requireSession, MAX_TITLE_LENGTH, MAX_TAGS, parseTags, parseJsonBody } from "@/lib/route-utils";
+import {
+	requireSession,
+	MAX_TITLE_LENGTH,
+	MAX_TAGS,
+	parseTags,
+	parseJsonBody,
+} from "@/lib/route-utils";
 import type { EventType } from "@superteam-academy/cms";
 
 const VALID_TYPES: EventType[] = ["Workshop", "AMA", "Hackathon", "Meetup"];

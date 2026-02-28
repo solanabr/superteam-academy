@@ -10,7 +10,11 @@ export async function POST(request: NextRequest) {
 			return NextResponse.json({ error: "Missing or invalid provider" }, { status: 400 });
 		}
 
-		if (body.provider !== "wallet" && body.provider !== "google" && body.provider !== "github") {
+		if (
+			body.provider !== "wallet" &&
+			body.provider !== "google" &&
+			body.provider !== "github"
+		) {
 			return NextResponse.json({ error: "Unsupported provider" }, { status: 400 });
 		}
 

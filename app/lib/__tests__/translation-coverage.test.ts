@@ -24,7 +24,13 @@ function listMissingKeys(base: TranslationTree, target: TranslationTree, prefix 
 				missing.push(fullKey);
 				continue;
 			}
-			missing.push(...listMissingKeys(baseValue as TranslationTree, targetValue as TranslationTree, fullKey));
+			missing.push(
+				...listMissingKeys(
+					baseValue as TranslationTree,
+					targetValue as TranslationTree,
+					fullKey
+				)
+			);
 		}
 	}
 

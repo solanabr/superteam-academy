@@ -77,7 +77,10 @@ async function sendOnchainCourseUpdate(params: {
 	tx.sign(authority);
 
 	const signature = await connection.sendRawTransaction(tx.serialize());
-	await connection.confirmTransaction({ signature, blockhash, lastValidBlockHeight }, "confirmed");
+	await connection.confirmTransaction(
+		{ signature, blockhash, lastValidBlockHeight },
+		"confirmed"
+	);
 	return signature;
 }
 
@@ -167,7 +170,8 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
 	let onchainSignature: string | null = null;
 	let onchainError: string | null = null;
-	const shouldTreatAsOnchainSource = current.onchainStatus === "succeeded" && !!current.slug?.current;
+	const shouldTreatAsOnchainSource =
+		current.onchainStatus === "succeeded" && !!current.slug?.current;
 	const onchainCourseId = current.slug?.current ?? null;
 	const hasOnchainFieldUpdates =
 		typeof patch.published === "boolean" ||
@@ -179,15 +183,10 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 			onchainSignature = await sendOnchainCourseUpdate({
 				onchainCourseId,
 				newIsActive:
-					typeof patch.published === "boolean"
-						? (patch.published as boolean)
-						: null,
-				newXpPerLesson:
-					typeof patch.xpReward === "number" ? Number(patch.xpReward) : null,
+					typeof patch.published === "boolean" ? (patch.published as boolean) : null,
+				newXpPerLesson: typeof patch.xpReward === "number" ? Number(patch.xpReward) : null,
 				newContentTxId:
-					typeof body.arweaveTxId === "string"
-						? (body.arweaveTxId as string)
-						: null,
+					typeof body.arweaveTxId === "string" ? (body.arweaveTxId as string) : null,
 			});
 		} catch (error) {
 			onchainError = error instanceof Error ? error.message : "Failed to update on-chain";
@@ -206,7 +205,9 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 			.patch(courseId)
 			.set({
 				...patch,
-				...(onchainSignature ? { onchainStatus: "succeeded", updateSignature: onchainSignature } : {}),
+				...(onchainSignature
+					? { onchainStatus: "succeeded", updateSignature: onchainSignature }
+					: {}),
 			})
 			.commit();
 
@@ -246,10 +247,10 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
 
 	let courseSlug: string | null = null;
 	if (client) {
-		const existing = await client.fetch<{ slug?: { current?: string }; onchainStatus?: string } | null>(
-			`*[_type == "course" && _id == $id][0]{ slug, onchainStatus }`,
-			{ id: courseId }
-		);
+		const existing = await client.fetch<{
+			slug?: { current?: string };
+			onchainStatus?: string;
+		} | null>(`*[_type == "course" && _id == $id][0]{ slug, onchainStatus }`, { id: courseId });
 		courseSlug = existing?.slug?.current ?? null;
 	}
 
@@ -305,7 +306,8 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
 
 		const tx = new Transaction().add(ix);
 		tx.feePayer = authority.publicKey;
-		const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
+		const { blockhash, lastValidBlockHeight } =
+			await connection.getLatestBlockhash("confirmed");
 		tx.recentBlockhash = blockhash;
 		tx.sign(authority);
 

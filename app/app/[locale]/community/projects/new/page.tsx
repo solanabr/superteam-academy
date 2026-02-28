@@ -92,10 +92,7 @@ export default function NewProjectPage() {
 		} catch (err) {
 			toast({
 				title: t("toast.errorTitle"),
-				description:
-					err instanceof Error
-						? err.message
-						: t("errors.submitFailedRetry"),
+				description: err instanceof Error ? err.message : t("errors.submitFailedRetry"),
 				variant: "destructive",
 			});
 		} finally {
@@ -113,9 +110,7 @@ export default function NewProjectPage() {
 				</Button>
 				<div>
 					<h1 className="text-2xl font-bold">{t("title")}</h1>
-					<p className="text-sm text-muted-foreground">
-						{t("description")}
-					</p>
+					<p className="text-sm text-muted-foreground">{t("description")}</p>
 				</div>
 			</div>
 
@@ -206,9 +201,7 @@ export default function NewProjectPage() {
 							className="h-11"
 							min="0"
 						/>
-						<p className="text-xs text-muted-foreground">
-							{t("xpRewardHelp")}
-						</p>
+						<p className="text-xs text-muted-foreground">{t("xpRewardHelp")}</p>
 					</div>
 
 					<div className="space-y-2">

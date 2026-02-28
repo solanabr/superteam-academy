@@ -144,18 +144,6 @@ function buildBasePatch(
 	return patch;
 }
 
-async function maybePromoteRole(
-	patch: Record<string, unknown>,
-	currentRole: string,
-	email: string,
-	walletAddress?: string
-) {
-	if (currentRole === "learner") {
-		const newRole = determineRole(email, walletAddress);
-		if (newRole !== "learner") patch.role = newRole;
-	}
-}
-
 async function adoptExistingUser(
 	client: SanityClient,
 	target: AcademyUser,
@@ -165,7 +153,9 @@ async function adoptExistingUser(
 ): Promise<AcademyUser> {
 	const patch = buildBasePatch(params, walletAddress, now);
 	if (!target.username) patch.username = await generateUsername(params.name);
-	await maybePromoteRole(patch, target.role, params.email, walletAddress);
+
+	const newRole = determineRole(params.email, walletAddress);
+	if (newRole !== "learner") patch.role = newRole;
 	await patchAndCleanupByWallet(client, target._id, patch, walletAddress);
 	return { ...target, ...patch } as AcademyUser;
 }
@@ -215,6 +205,8 @@ export async function syncUserToSanity(params: {
 				Boolean(existingByWallet.onboardingCompleted) ||
 				Boolean(existing.onboardingCompleted),
 		};
+		const newRole = determineRole(params.email, normalizedWalletAddress);
+		if (newRole !== "learner") patch.role = newRole;
 
 		if (!existingByWallet.username && existing.username) {
 			patch.username = existing.username;
@@ -245,7 +237,8 @@ export async function syncUserToSanity(params: {
 		if (normalizedWalletAddress) patch.walletAddress = normalizedWalletAddress;
 		if (params.image) patch.image = params.image;
 		if (!existing.username) patch.username = await generateUsername(params.name);
-		await maybePromoteRole(patch, existing.role, params.email, normalizedWalletAddress);
+		const newRole = determineRole(params.email, normalizedWalletAddress);
+		if (newRole !== "learner") patch.role = newRole;
 		try {
 			await patchAndCleanupByWallet(client, existing._id, patch, normalizedWalletAddress);
 		} catch (err) {

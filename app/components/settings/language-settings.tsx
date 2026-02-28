@@ -28,11 +28,7 @@ interface LangState {
 	timezone: string;
 }
 
-const LANGUAGES = [
-	{ value: "en" as const },
-	{ value: "pt-BR" as const },
-	{ value: "es" as const },
-];
+const LANGUAGES = [{ value: "en" as const }, { value: "pt-BR" as const }, { value: "es" as const }];
 
 const TIMEZONES = [
 	{ value: "America/Sao_Paulo", key: "saoPaulo" },

@@ -271,9 +271,7 @@ export function ProfileSettings() {
 						onChange={(e) => setProfile((p) => ({ ...p, bio: e.target.value }))}
 						rows={3}
 					/>
-					<p className="text-[10px] text-muted-foreground">
-						{t("bioHelp")}
-					</p>
+					<p className="text-[10px] text-muted-foreground">{t("bioHelp")}</p>
 				</div>
 
 				<div className="flex justify-end pt-2">

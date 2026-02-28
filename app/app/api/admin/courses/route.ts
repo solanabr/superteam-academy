@@ -144,7 +144,10 @@ async function ensureCreateCourseOnchain(params: {
 	tx.sign(authority);
 
 	const signature = await connection.sendRawTransaction(tx.serialize());
-	await connection.confirmTransaction({ signature, blockhash, lastValidBlockHeight }, "confirmed");
+	await connection.confirmTransaction(
+		{ signature, blockhash, lastValidBlockHeight },
+		"confirmed"
+	);
 
 	return { signature, coursePda: coursePda.toBase58(), alreadyExists: false };
 }
@@ -219,9 +222,8 @@ export async function POST(request: NextRequest) {
 	const difficulty = mapLevelToDifficulty(body.level || "beginner");
 	const published = body.published ?? false;
 
-	let onchain:
-		| { signature: string | null; coursePda: string; alreadyExists: boolean }
-		| null = null;
+	let onchain: { signature: string | null; coursePda: string; alreadyExists: boolean } | null =
+		null;
 	try {
 		onchain = await ensureCreateCourseOnchain({
 			courseId: slug,
@@ -256,7 +258,8 @@ export async function POST(request: NextRequest) {
 					created: !onchain.alreadyExists,
 					...(onchain.signature ? { signature: onchain.signature } : {}),
 				},
-				warning: "On-chain course created, but Sanity write token is missing so index was not updated.",
+				warning:
+					"On-chain course created, but Sanity write token is missing so index was not updated.",
 			},
 			{ status: 201 }
 		);

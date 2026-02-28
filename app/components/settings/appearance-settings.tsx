@@ -18,11 +18,7 @@ const THEMES = [
 	{ value: "system" as const, Icon: Monitor },
 ];
 
-const FONT_SIZES = [
-	{ value: "small" },
-	{ value: "medium" },
-	{ value: "large" },
-];
+const FONT_SIZES = [{ value: "small" }, { value: "medium" }, { value: "large" }];
 
 export function AppearanceSettings() {
 	const t = useTranslations("settings.appearanceSection");
