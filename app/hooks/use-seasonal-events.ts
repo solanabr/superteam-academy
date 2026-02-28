@@ -1,8 +1,3 @@
-/**
- * Seasonal Events Hook
- * Manages seasonal events, challenges, and rewards
- */
-
 import { useState, useEffect, useCallback } from "react";
 
 interface SeasonalEvent {

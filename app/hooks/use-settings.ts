@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import type { UserSettings } from "@superteam-academy/cms";
+import { useToast } from "@/hooks/use-toast";
 
 interface ProfileData {
 	name: string;
@@ -63,4 +64,36 @@ export function useSettings() {
 	}, []);
 
 	return { data, loading, save };
+}
+
+export function useSettingsSave(messages: {
+	successTitle: string;
+	successDescription?: string;
+	errorTitle: string;
+	errorDescription: string;
+}) {
+	const { data, loading, save } = useSettings();
+	const { toast } = useToast();
+	const [saving, setSaving] = useState(false);
+
+	const handleSave = useCallback(
+		async (patch: Record<string, unknown>) => {
+			setSaving(true);
+			try {
+				await save(patch);
+				toast({ title: messages.successTitle, description: messages.successDescription });
+			} catch {
+				toast({
+					title: messages.errorTitle,
+					description: messages.errorDescription,
+					variant: "destructive",
+				});
+			} finally {
+				setSaving(false);
+			}
+		},
+		[save, toast, messages.successTitle, messages.successDescription, messages.errorTitle, messages.errorDescription]
+	);
+
+	return { data, loading, saving, handleSave };
 }

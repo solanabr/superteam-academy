@@ -1,8 +1,3 @@
-/**
- * Plugin System Hook
- * Manages plugin installation, configuration, and marketplace
- */
-
 import { useState, useEffect, useCallback } from "react";
 
 interface Plugin {

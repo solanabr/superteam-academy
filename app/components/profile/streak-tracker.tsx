@@ -31,7 +31,6 @@ export function StreakTracker({ walletAddress }: StreakTrackerProps) {
 	const isActive = daysSince === 0;
 	const isWarning = daysSince === 1;
 
-	// Build current week
 	const today = new Date();
 	const startOfWeek = new Date(today);
 	startOfWeek.setDate(today.getDate() - today.getDay());

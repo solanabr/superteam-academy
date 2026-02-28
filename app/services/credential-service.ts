@@ -1,11 +1,11 @@
 import { PublicKey } from "@solana/web3.js";
 import {
-	BaseService,
-	type Credential,
-	type CredentialMetadata,
-	type IssueResult,
-	type VerifyResult,
-	type TrackRequirements,
+    BaseService,
+    type Credential,
+    type CredentialMetadata,
+    type IssueResult,
+    type VerifyResult,
+    type TrackRequirements,
 } from "./types";
 import { AcademyClient } from "@superteam-academy/anchor";
 
@@ -48,7 +48,6 @@ export class CredentialService extends BaseService {
 		this.client = new AcademyClient(this.connection, this.programId);
 	}
 
-	/** Fetch all Metaplex Core credential NFTs owned by a learner via DAS API */
 	async getCredentialsByOwner(owner: PublicKey): Promise<Credential[]> {
 		const assets = await this.fetchDasAssets(owner);
 		return assets.map((asset) => this.dasAssetToCredential(asset));
@@ -128,7 +127,6 @@ export class CredentialService extends BaseService {
 		return { success: true, credentialId: result.credentialAsset };
 	}
 
-	/** Verify a credential NFT via DAS API: check frozen state + collection membership */
 	async verifyCredential(credentialId: string): Promise<VerifyResult> {
 		const asset = await this.fetchDasAssetById(credentialId);
 		if (!asset) {
@@ -152,7 +150,6 @@ export class CredentialService extends BaseService {
 		};
 	}
 
-	/** Fetch credential NFT metadata from its on-chain URI */
 	async getCredentialMetadata(credentialId: string): Promise<CredentialMetadata> {
 		const asset = await this.fetchDasAssetById(credentialId);
 		if (!asset) {
@@ -181,8 +178,6 @@ export class CredentialService extends BaseService {
 		}
 		return requirements;
 	}
-
-	// ─── DAS API helpers ─────────────────────────────────────────────────
 
 	private getRpcEndpoint(): string {
 		return this.connection.rpcEndpoint;
@@ -301,7 +296,6 @@ export class CredentialService extends BaseService {
 		};
 	}
 
-	/** Get the wallet address of the credential owner */
 	async getCredentialOwner(credentialId: string): Promise<string | null> {
 		const asset = await this.fetchDasAssetById(credentialId);
 		return asset?.ownership.owner ?? null;

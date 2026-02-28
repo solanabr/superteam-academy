@@ -6,15 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "@/components/ui/select";
 import { useTranslations } from "next-intl";
-import { useToast } from "@/hooks/use-toast";
-import { useSettings } from "@/hooks/use-settings";
+import { useSettingsSave } from "@/hooks/use-settings";
 
 interface NotificationState {
 	emailNotifications: boolean;
@@ -83,9 +82,12 @@ const TOGGLE_ITEMS = [
 
 export function NotificationSettings() {
 	const t = useTranslations("settings.notificationsSection");
-	const { toast } = useToast();
-	const { data, save } = useSettings();
-	const [isLoading, setIsLoading] = useState(false);
+	const { data, saving: isLoading, handleSave: saveSettings } = useSettingsSave({
+		successTitle: t("toast.updatedTitle"),
+		successDescription: t("toast.updatedDescription"),
+		errorTitle: t("toast.errorTitle"),
+		errorDescription: t("toast.errorDescription"),
+	});
 	const [settings, setSettings] = useState<NotificationState>(DEFAULTS);
 
 	useEffect(() => {
@@ -93,24 +95,7 @@ export function NotificationSettings() {
 		setSettings((prev) => ({ ...prev, ...data.settings.notifications }));
 	}, [data]);
 
-	const handleSave = async () => {
-		setIsLoading(true);
-		try {
-			await save({ settings: { notifications: settings } });
-			toast({
-				title: t("toast.updatedTitle"),
-				description: t("toast.updatedDescription"),
-			});
-		} catch {
-			toast({
-				title: t("toast.errorTitle"),
-				description: t("toast.errorDescription"),
-				variant: "destructive",
-			});
-		} finally {
-			setIsLoading(false);
-		}
-	};
+	const handleSave = () => saveSettings({ settings: { notifications: settings } });
 
 	const update = <K extends keyof NotificationState>(key: K, value: NotificationState[K]) => {
 		setSettings((prev) => ({ ...prev, [key]: value }));

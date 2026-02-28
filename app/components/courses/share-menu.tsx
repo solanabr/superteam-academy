@@ -1,15 +1,15 @@
 "use client";
 
-import { useState } from "react";
 import { Share2, Copy, Check, Mail } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
+import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
 interface ShareMenuProps {
@@ -28,15 +28,9 @@ function XIcon({ className }: { className?: string }) {
 
 export function ShareMenu({ title, description, size = "lg" }: ShareMenuProps) {
 	const t = useTranslations("courses");
-	const [copied, setCopied] = useState(false);
+	const { copied, copy } = useCopyToClipboard();
 
 	const url = typeof window !== "undefined" ? window.location.href : "";
-
-	const handleCopyLink = async () => {
-		await navigator.clipboard.writeText(url);
-		setCopied(true);
-		setTimeout(() => setCopied(false), 2000);
-	};
 
 	const shareOnX = () => {
 		const text = encodeURIComponent(`${title}\n${description}`);
@@ -72,7 +66,7 @@ export function ShareMenu({ title, description, size = "lg" }: ShareMenuProps) {
 				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="start" className="w-48">
-				<DropdownMenuItem onClick={handleCopyLink} className="gap-2">
+				<DropdownMenuItem onClick={() => copy(url)} className="gap-2">
 					{copied ? (
 						<Check className="h-4 w-4 text-green-500" />
 					) : (

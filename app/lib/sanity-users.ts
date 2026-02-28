@@ -1,5 +1,5 @@
-import { createSanityClient } from "@superteam-academy/cms";
 import type { AcademyUser, UserRole } from "@superteam-academy/cms";
+import { readClient, writeClient } from "@/lib/cms-context";
 import {
 	userByAuthIdQuery,
 	userByEmailQuery,
@@ -15,9 +15,6 @@ import { WALLET_EMAIL_DOMAIN } from "@/packages/auth/src/wallet-utils";
 
 export type { AcademyUser };
 
-// Cache clients at module level to reuse connections across requests
-let _writeClient: ReturnType<typeof createSanityClient> | null | undefined;
-let _readClient: ReturnType<typeof createSanityClient> | null | undefined;
 const DUPLICATE_WALLET_USERS_QUERY = `*[_type == "academyUser" && walletAddress == $walletAddress && _id != $keepId]{ _id }`;
 
 type SyncUserParams = {
@@ -27,36 +24,6 @@ type SyncUserParams = {
 	walletAddress?: string;
 	image?: string;
 };
-
-function getSanityClient(kind: "read" | "write") {
-	if (kind === "write") {
-		if (_writeClient !== undefined) return _writeClient;
-	} else if (_readClient !== undefined) return _readClient;
-
-	const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
-	const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET ?? "production";
-	const token =
-		kind === "write"
-			? process.env.SANITY_API_WRITE_TOKEN
-			: (process.env.SANITY_API_READ_TOKEN ?? process.env.SANITY_API_WRITE_TOKEN);
-
-	if (!projectId || !token) {
-		if (kind === "write") {
-			_writeClient = null;
-			return _writeClient;
-		}
-		_readClient = null;
-		return _readClient;
-	}
-
-	const client = createSanityClient({ projectId, dataset, token, useCdn: false });
-	if (kind === "write") {
-		_writeClient = client;
-		return _writeClient;
-	}
-	_readClient = client;
-	return _readClient;
-}
 
 export function isSuperAdminIdentifier(emailOrWallet: string): boolean {
 	const identifier = process.env.SUPER_ADMIN_IDENTIFIER;
@@ -83,9 +50,7 @@ function mergeStringLists(...lists: (string[] | undefined)[]): string[] {
 	return Array.from(new Set(lists.flatMap((l) => l ?? [])));
 }
 
-async function deleteUsersByIds(client: ReturnType<typeof createSanityClient>, ids: string[]) {
-	if (ids.length === 0) return;
-
+async function deleteUsersByIds(client: NonNullable<typeof writeClient>, ids: string[]) {
 	for (const id of ids) {
 		try {
 			await client.delete(id);
@@ -95,10 +60,8 @@ async function deleteUsersByIds(client: ReturnType<typeof createSanityClient>, i
 	}
 }
 
-type SanityClient = NonNullable<ReturnType<typeof getSanityClient>>;
-
 async function cleanupDuplicateWalletUsers(
-	client: SanityClient,
+	client: NonNullable<typeof writeClient>,
 	keepId: string,
 	walletAddress: string | undefined
 ) {
@@ -114,7 +77,7 @@ async function cleanupDuplicateWalletUsers(
 }
 
 async function patchAndCleanupByWallet(
-	client: SanityClient,
+	client: NonNullable<typeof writeClient>,
 	targetId: string,
 	patch: Record<string, unknown>,
 	walletAddress: string | undefined
@@ -124,22 +87,21 @@ async function patchAndCleanupByWallet(
 }
 
 export async function syncUserToSanity(params: SyncUserParams): Promise<AcademyUser | null> {
-	const client = getSanityClient("write");
-	if (!client) return null;
+	if (!writeClient) return null;
 
-	const existing = await client.fetch<AcademyUser | null>(userByAuthIdQuery, {
+	const existing = await writeClient.fetch<AcademyUser | null>(userByAuthIdQuery, {
 		authId: params.authId,
 	});
 	const normalizedWalletAddress = params.walletAddress?.trim() ?? existing?.walletAddress?.trim();
 	const roleFromIdentity = determineRole(params.email, normalizedWalletAddress);
 	const existingByWallet = normalizedWalletAddress
-		? await client.fetch<AcademyUser | null>(userByWalletQuery, {
+		? await writeClient.fetch<AcademyUser | null>(userByWalletQuery, {
 				walletAddress: normalizedWalletAddress,
 			})
 		: null;
 	const existingByEmail =
 		!existing && !existingByWallet
-			? await client.fetch<AcademyUser | null>(userByEmailQuery, { email: params.email })
+			? await writeClient.fetch<AcademyUser | null>(userByEmailQuery, { email: params.email })
 			: null;
 
 	const now = new Date().toISOString();
@@ -187,9 +149,9 @@ export async function syncUserToSanity(params: SyncUserParams): Promise<AcademyU
 			patch.username = await generateUsername(params.name);
 		}
 
-		await client.patch(existingByWallet._id).set(patch).commit();
-		await deleteUsersByIds(client, [existing._id]);
-		await patchAndCleanupByWallet(client, existingByWallet._id, {}, normalizedWalletAddress);
+		await writeClient.patch(existingByWallet._id).set(patch).commit();
+		await deleteUsersByIds(writeClient, [existing._id]);
+		await patchAndCleanupByWallet(writeClient, existingByWallet._id, {}, normalizedWalletAddress);
 
 		return { ...existingByWallet, ...patch } as AcademyUser;
 	}
@@ -197,7 +159,7 @@ export async function syncUserToSanity(params: SyncUserParams): Promise<AcademyU
 	// Found by wallet but not authId: adopt existing wallet user
 	if (!existing && existingByWallet) {
 		const patch = await buildExistingUserPatch(existingByWallet);
-		await patchAndCleanupByWallet(client, existingByWallet._id, patch, normalizedWalletAddress);
+		await patchAndCleanupByWallet(writeClient, existingByWallet._id, patch, normalizedWalletAddress);
 		return { ...existingByWallet, ...patch } as AcademyUser;
 	}
 
@@ -205,7 +167,7 @@ export async function syncUserToSanity(params: SyncUserParams): Promise<AcademyU
 	if (existing) {
 		const patch = await buildExistingUserPatch(existing);
 		try {
-			await patchAndCleanupByWallet(client, existing._id, patch, normalizedWalletAddress);
+			await patchAndCleanupByWallet(writeClient, existing._id, patch, normalizedWalletAddress);
 		} catch (err) {
 			console.error("[sanity-users] Failed to patch user:", err);
 		}
@@ -215,7 +177,7 @@ export async function syncUserToSanity(params: SyncUserParams): Promise<AcademyU
 	// Fallback: find by email when authId and wallet both miss (e.g., after auth DB reset)
 	if (existingByEmail) {
 		const patch = await buildExistingUserPatch(existingByEmail);
-		await patchAndCleanupByWallet(client, existingByEmail._id, patch, normalizedWalletAddress);
+		await patchAndCleanupByWallet(writeClient, existingByEmail._id, patch, normalizedWalletAddress);
 		return { ...existingByEmail, ...patch } as AcademyUser;
 	}
 
@@ -237,8 +199,8 @@ export async function syncUserToSanity(params: SyncUserParams): Promise<AcademyU
 	};
 
 	try {
-		const created = await client.create(doc);
-		await cleanupDuplicateWalletUsers(client, created._id as string, normalizedWalletAddress);
+		const created = await writeClient.create(doc);
+		await cleanupDuplicateWalletUsers(writeClient, created._id as string, normalizedWalletAddress);
 		return { ...doc, ...created } as unknown as AcademyUser;
 	} catch (err) {
 		console.error("[sanity-users] Failed to create user:", err);
@@ -247,46 +209,39 @@ export async function syncUserToSanity(params: SyncUserParams): Promise<AcademyU
 }
 
 export async function getUserByAuthId(authId: string): Promise<AcademyUser | null> {
-	const client = getSanityClient("read");
-	if (!client) return null;
-	return client.fetch<AcademyUser | null>(userByAuthIdQuery, { authId });
+	if (!readClient) return null;
+	return readClient.fetch<AcademyUser | null>(userByAuthIdQuery, { authId });
 }
 
 export async function getUserByEmail(email: string): Promise<AcademyUser | null> {
-	const client = getSanityClient("read");
-	if (!client) return null;
-	return client.fetch<AcademyUser | null>(userByEmailQuery, { email });
+	if (!readClient) return null;
+	return readClient.fetch<AcademyUser | null>(userByEmailQuery, { email });
 }
 
 export async function getUserByWallet(walletAddress: string): Promise<AcademyUser | null> {
-	const client = getSanityClient("read");
-	if (!client) return null;
-	return client.fetch<AcademyUser | null>(userByWalletQuery, { walletAddress });
+	if (!readClient) return null;
+	return readClient.fetch<AcademyUser | null>(userByWalletQuery, { walletAddress });
 }
 
 export async function getUserByUsername(username: string): Promise<AcademyUser | null> {
-	const client = getSanityClient("read");
-	if (!client) return null;
-	return client.fetch<AcademyUser | null>(userByUsernameQuery, { username });
+	if (!readClient) return null;
+	return readClient.fetch<AcademyUser | null>(userByUsernameQuery, { username });
 }
 
 export async function getAllUsers(limit = 100, offset = 0): Promise<AcademyUser[]> {
-	const client = getSanityClient("read");
-	if (!client) return [];
-	const all = await client.fetch<AcademyUser[]>(allUsersQuery);
+	if (!readClient) return [];
+	const all = await readClient.fetch<AcademyUser[]>(allUsersQuery);
 	return all.slice(offset, offset + limit);
 }
 
 export async function getAdminUsers(): Promise<AcademyUser[]> {
-	const client = getSanityClient("read");
-	if (!client) return [];
-	return client.fetch<AcademyUser[]>(adminUsersQuery);
+	if (!readClient) return [];
+	return readClient.fetch<AcademyUser[]>(adminUsersQuery);
 }
 
 export async function getUserCount(): Promise<number> {
-	const client = getSanityClient("read");
-	if (!client) return 0;
-	return client.fetch<number>(userCountQuery);
+	if (!readClient) return 0;
+	return readClient.fetch<number>(userCountQuery);
 }
 
 export async function getUserStats(): Promise<{
@@ -295,18 +250,15 @@ export async function getUserStats(): Promise<{
 	adminCount: number;
 	totalEnrollments: number;
 }> {
-	const client = getSanityClient("read");
-	if (!client) return { totalUsers: 0, activeUsers: 0, adminCount: 0, totalEnrollments: 0 };
+	if (!readClient) return { totalUsers: 0, activeUsers: 0, adminCount: 0, totalEnrollments: 0 };
 	const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-	return client.fetch(userStatsQuery, { since: thirtyDaysAgo });
+	return readClient.fetch(userStatsQuery, { since: thirtyDaysAgo });
 }
 
 export async function updateUserRole(userId: string, role: UserRole): Promise<boolean> {
-	const client = getSanityClient("write");
-	if (!client) return false;
+	if (!writeClient) return false;
 
-	// Prevent demoting the env-configured super admin
-	const user = await client.fetch<AcademyUser | null>(
+	const user = await writeClient.fetch<AcademyUser | null>(
 		`*[_type == "academyUser" && _id == $id][0]{ email, walletAddress, role }`,
 		{ id: userId }
 	);
@@ -319,6 +271,6 @@ export async function updateUserRole(userId: string, role: UserRole): Promise<bo
 	)
 		return false;
 
-	await client.patch(userId).set({ role }).commit();
+	await writeClient.patch(userId).set({ role }).commit();
 	return true;
 }

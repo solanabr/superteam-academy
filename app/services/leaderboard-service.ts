@@ -18,17 +18,12 @@ export class LeaderboardService extends BaseService {
 		this.client = new AcademyClient(this.connection, this.programId);
 	}
 
-	/** Fetch XP balance for a single user */
 	async getUserXp(learner: PublicKey, xpMint: PublicKey): Promise<bigint> {
 		const ata = findToken2022ATA(learner, xpMint);
 		const balance = await this.client.fetchXpBalance(ata);
 		return balance ?? 0n;
 	}
 
-	/**
-	 * Fetch leaderboard entries.
-	 * Uses token largest accounts and decodes ATA owner at byte offset 32.
-	 */
 	async getLeaderboard(xpMint: PublicKey, limit: number): Promise<LeaderboardEntry[]> {
 		const startedAt = performance.now();
 		incrementMetric("leaderboard.global.index.requests.total");
@@ -68,9 +63,6 @@ export class LeaderboardService extends BaseService {
 		return results;
 	}
 
-	/**
-	 * Fetch per-course leaderboard by counting completed lessons from enrollment accounts.
-	 */
 	async getCourseLeaderboard(courseId: string, limit: number): Promise<LeaderboardEntry[]> {
 		const startedAt = performance.now();
 		incrementMetric("leaderboard.course.index.requests.total");

@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { updateUserRole, getAdminUsers } from "@/lib/sanity-users";
-import { requireAdmin, requireSuperAdmin } from "@/lib/route-utils";
+import { requireAdmin, requireRole } from "@/lib/route-utils";
 import type { UserRole } from "@superteam-academy/cms";
 
 export async function GET() {
@@ -12,7 +12,7 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-	const auth = await requireSuperAdmin();
+	const auth = await requireRole("superadmin")
 	if (!auth.ok) return auth.response;
 
 	const body = (await request.json()) as { userId: string; role: UserRole };

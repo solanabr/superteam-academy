@@ -5,6 +5,7 @@ import { createHash } from "node:crypto";
 import { serverAuth } from "@/lib/auth";
 import { readClient, writeClient } from "@/lib/cms-context";
 import { syncAuthSession } from "../app/api/auth/sync/action";
+import { UserRole } from "@/packages/cms/src";
 
 type AuthResult =
 	| { ok: true; session: NonNullable<Awaited<ReturnType<typeof serverAuth.api.getSession>>> }
@@ -22,24 +23,20 @@ export async function requireSession(): Promise<AuthResult> {
 	return { ok: true, session };
 }
 
-export async function requireAdmin(): Promise<AuthResult> {
+export async function requireRole(
+	...roles: UserRole[]
+): Promise<AuthResult> {
 	const auth = await requireSession();
 	if (!auth.ok) return auth;
-	const admin = await syncAuthSession(auth.session);
-	if (admin?.role !== "admin" && admin?.role !== "superadmin") {
+	const synced = await syncAuthSession(auth.session);
+	if (!synced?.role || !roles.includes(synced.role)) {
 		return { ok: false, response: NextResponse.json({ error: "Forbidden" }, { status: 403 }) };
 	}
 	return auth;
 }
 
-export async function requireSuperAdmin(): Promise<AuthResult> {
-	const auth = await requireSession();
-	if (!auth.ok) return auth;
-	const superAdmin = await syncAuthSession(auth.session);
-	if (superAdmin?.role !== "superadmin") {
-		return { ok: false, response: NextResponse.json({ error: "Forbidden" }, { status: 403 }) };
-	}
-	return auth;
+export function requireAdmin(): Promise<AuthResult> {
+	return requireRole("admin", "superadmin");
 }
 
 export { readClient as sanityReadClient, writeClient as sanityWriteClient };

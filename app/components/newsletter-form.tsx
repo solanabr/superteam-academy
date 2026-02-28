@@ -34,7 +34,6 @@ export function NewsletterForm() {
 				setStatus("error");
 			}
 
-			// Reset status after 3 seconds
 			setTimeout(() => setStatus("idle"), 3000);
 		});
 	};

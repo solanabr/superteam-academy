@@ -1,8 +1,3 @@
-/**
- * Hackathon Hook
- * Manages hackathon participation, teams, and submissions
- */
-
 import { useState, useEffect, useCallback } from "react";
 
 interface Hackathon {

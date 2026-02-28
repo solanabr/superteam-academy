@@ -1,13 +1,13 @@
-import { createSanityClient } from "@superteam-academy/cms";
 import type {
-	LessonChallenge,
-	LessonQuiz,
-	ChallengeInstruction,
-	ChallengeTest,
-	ChallengeHint,
-	QuizQuestion,
-	QuizQuestionOption,
+    LessonChallenge,
+    LessonQuiz,
+    ChallengeInstruction,
+    ChallengeTest,
+    ChallengeHint,
+    QuizQuestion,
+    QuizQuestionOption,
 } from "@superteam-academy/cms";
+import { readClient } from "@/lib/cms-context";
 
 interface CourseLessonRef {
 	_id: string;
@@ -40,43 +40,9 @@ export interface AdminLessonContent {
 	quiz: LessonQuiz | null;
 }
 
-let writeClientCache: ReturnType<typeof createSanityClient> | null | undefined;
-let readClientCache: ReturnType<typeof createSanityClient> | null | undefined;
-
-function getSanityReadClient() {
-	if (readClientCache !== undefined) {
-		return readClientCache;
-	}
-	const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
-	const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET ?? "production";
-	const token = process.env.SANITY_API_READ_TOKEN;
-	if (!projectId || !token) {
-		readClientCache = null;
-		return readClientCache;
-	}
-	readClientCache = createSanityClient({ projectId, dataset, token, useCdn: false });
-	return readClientCache;
-}
-
-export function getSanityWriteClient() {
-	if (writeClientCache !== undefined) {
-		return writeClientCache;
-	}
-	const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
-	const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET ?? "production";
-	const token = process.env.SANITY_API_WRITE_TOKEN;
-	if (!projectId || !token) {
-		writeClientCache = null;
-		return writeClientCache;
-	}
-	writeClientCache = createSanityClient({ projectId, dataset, token, useCdn: false });
-	return writeClientCache;
-}
-
 export async function getCourseRefByIdOrSlug(courseIdOrSlug: string): Promise<CourseRef | null> {
-	const client = getSanityReadClient();
-	if (!client) return null;
-	return client.fetch<CourseRef | null>(
+	if (!readClient) return null;
+	return readClient.fetch<CourseRef | null>(
 		`*[_type == "course" && (_id == $courseIdOrSlug || slug.current == $courseIdOrSlug)][0] {
 			_id,
 			title,
@@ -95,24 +61,26 @@ export async function getCourseRefByIdOrSlug(courseIdOrSlug: string): Promise<Co
 	);
 }
 
+function findLessonInCourse(
+	course: CourseRef,
+	match: (lesson: CourseLessonRef) => boolean
+): CourseLessonRef | null {
+	return course.modules.flatMap((module) => module.lessons).find(match) ?? null;
+}
+
 export async function getChallengePageData(
 	courseIdOrSlug: string,
 	challengeSlug: string
 ): Promise<ChallengePageData | null> {
-	const client = getSanityReadClient();
-	if (!client) return null;
+	if (!readClient) return null;
 
 	const course = await getCourseRefByIdOrSlug(courseIdOrSlug);
 	if (!course) return null;
 
-	const lesson =
-		course.modules
-			.flatMap((module) => module.lessons)
-			.find((item) => item.slug?.current === challengeSlug) ?? null;
-
+	const lesson = findLessonInCourse(course, (l) => l.slug?.current === challengeSlug);
 	if (!lesson) return null;
 
-	const challenge = await client.fetch<LessonChallenge | null>(
+	const challenge = await readClient.fetch<LessonChallenge | null>(
 		`*[_type == "lessonChallenge" && references($lessonId) && references($courseId)][0] {
 			_id,
 			_type,
@@ -144,20 +112,15 @@ export async function getChallengePageData(
 }
 
 export async function getLessonQuizPageData(courseIdOrSlug: string, lessonSlug: string) {
-	const client = getSanityReadClient();
-	if (!client) return null;
+	if (!readClient) return null;
 
 	const course = await getCourseRefByIdOrSlug(courseIdOrSlug);
 	if (!course) return null;
 
-	const lesson =
-		course.modules
-			.flatMap((module) => module.lessons)
-			.find((item) => item.slug?.current === lessonSlug) ?? null;
-
+	const lesson = findLessonInCourse(course, (l) => l.slug?.current === lessonSlug);
 	if (!lesson) return null;
 
-	const quiz = await client.fetch<LessonQuiz | null>(
+	const quiz = await readClient.fetch<LessonQuiz | null>(
 		`*[_type == "lessonQuiz" && references($lessonId) && references($courseId) && published == true][0] {
 			_id,
 			_type,
@@ -184,19 +147,15 @@ export async function getAdminLessonContent(
 	courseIdOrSlug: string,
 	lessonId: string
 ): Promise<AdminLessonContent | null> {
-	const client = getSanityReadClient();
-	if (!client) return null;
+	if (!readClient) return null;
 
 	const course = await getCourseRefByIdOrSlug(courseIdOrSlug);
 	if (!course) return null;
 
-	const lesson =
-		course.modules.flatMap((module) => module.lessons).find((item) => item._id === lessonId) ??
-		null;
-
+	const lesson = findLessonInCourse(course, (l) => l._id === lessonId);
 	if (!lesson) return null;
 
-	const challenge = await client.fetch<LessonChallenge | null>(
+	const challenge = await readClient.fetch<LessonChallenge | null>(
 		`*[_type == "lessonChallenge" && references($lessonId) && references($courseId)][0] {
 			_id,
 			_type,
@@ -222,7 +181,7 @@ export async function getAdminLessonContent(
 		{ lessonId, courseId: course._id }
 	);
 
-	const quiz = await client.fetch<LessonQuiz | null>(
+	const quiz = await readClient.fetch<LessonQuiz | null>(
 		`*[_type == "lessonQuiz" && references($lessonId) && references($courseId)][0] {
 			_id,
 			_type,

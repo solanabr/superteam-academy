@@ -52,7 +52,6 @@ export function LessonQuiz({ quiz, onComplete, onRetry }: LessonQuizProps) {
 		setShowResults(true);
 		setQuizCompleted(true);
 
-		// Calculate score
 		const correctAnswers = validQuestions.filter(
 			(q) => answers[q.id] === q.correctAnswer
 		).length;

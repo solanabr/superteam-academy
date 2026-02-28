@@ -1,10 +1,3 @@
-/**
- * Challenge definitions.
- *
- * CMS lessons of type "interactive" map to challenges here.
- * The key is the lesson slug (= challengeId in the URL).
- */
-
 export interface ChallengeDefinition {
 	title: string;
 	description: string;
@@ -20,7 +13,6 @@ export interface ChallengeDefinition {
 }
 
 const CHALLENGES: Record<string, ChallengeDefinition> = {
-	/* ── solana-intro: "Transactions and Signers" ──────────────────── */
 	"transactions-and-signers": {
 		title: "Build a Simple Counter Program",
 		description:
@@ -137,7 +129,6 @@ pub struct Counter {
 	},
 };
 
-/** Return a challenge definition by lesson slug. */
 export function getChallengeDefinition(challengeId: string): ChallengeDefinition {
 	const found = CHALLENGES[challengeId];
 	if (!found) {

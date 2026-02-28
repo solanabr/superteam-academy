@@ -1,8 +1,9 @@
 "use client";
 
 import { Share2, Twitter, Link2, Download, Check } from "lucide-react";
-import { useState, useCallback, useRef } from "react";
+import { useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
+import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 
 interface CertificateActionsProps {
 	title: string;
@@ -19,7 +20,7 @@ export function CertificateActions({
 	xpEarned,
 	certificateId,
 }: CertificateActionsProps) {
-	const [copied, setCopied] = useState(false);
+	const { copied, copy: copyLink } = useCopyToClipboard();
 	const canvasRef = useRef<HTMLCanvasElement>(null);
 
 	const pageUrl =
@@ -34,12 +35,6 @@ export function CertificateActions({
 	);
 	const twitterUrl = `https://twitter.com/intent/tweet?text=${tweetText}`;
 
-	const copyLink = useCallback(async () => {
-		await navigator.clipboard.writeText(pageUrl);
-		setCopied(true);
-		setTimeout(() => setCopied(false), 2000);
-	}, [pageUrl]);
-
 	const downloadCertificate = useCallback(() => {
 		const canvas = canvasRef.current ?? document.createElement("canvas");
 		canvas.width = 1200;
@@ -47,30 +42,25 @@ export function CertificateActions({
 		const ctx = canvas.getContext("2d");
 		if (!ctx) return;
 
-		// Background
 		const grad = ctx.createLinearGradient(0, 0, 1200, 630);
 		grad.addColorStop(0, "#0a2a1b");
 		grad.addColorStop(1, "#1a4a2e");
 		ctx.fillStyle = grad;
 		ctx.fillRect(0, 0, 1200, 630);
 
-		// Border
 		ctx.strokeStyle = "#008c4c";
 		ctx.lineWidth = 4;
 		ctx.strokeRect(40, 40, 1120, 550);
 
-		// Inner border
 		ctx.strokeStyle = "rgba(0, 140, 76, 0.3)";
 		ctx.lineWidth = 1;
 		ctx.strokeRect(50, 50, 1100, 530);
 
-		// Title
 		ctx.fillStyle = "#ffffff";
 		ctx.font = "bold 20px sans-serif";
 		ctx.textAlign = "center";
 		ctx.fillText("SUPERTEAM ACADEMY", 600, 100);
 
-		// Certificate icon placeholder
 		ctx.fillStyle = "#008c4c";
 		ctx.beginPath();
 		ctx.arc(600, 170, 30, 0, Math.PI * 2);
@@ -79,7 +69,6 @@ export function CertificateActions({
 		ctx.font = "bold 24px sans-serif";
 		ctx.fillText("✓", 600, 178);
 
-		// Certificate title
 		ctx.fillStyle = "#f0f0f0";
 		ctx.font = "bold 36px sans-serif";
 		const titleLines = wrapText(ctx, title, 900);
@@ -89,32 +78,26 @@ export function CertificateActions({
 			y += 44;
 		}
 
-		// Awarded to
 		ctx.fillStyle = "#8fa89a";
 		ctx.font = "16px sans-serif";
 		ctx.fillText("Awarded to", 600, y + 20);
 
-		// Holder
 		ctx.fillStyle = "#ffffff";
 		ctx.font = "bold 24px sans-serif";
 		ctx.fillText(holder || "Learner", 600, y + 55);
 
-		// Course name
 		ctx.fillStyle = "#8fa89a";
 		ctx.font = "16px sans-serif";
 		ctx.fillText(`Course: ${courseName}`, 600, y + 90);
 
-		// XP badge
 		ctx.fillStyle = "#008c4c";
 		ctx.font = "bold 18px sans-serif";
 		ctx.fillText(`${xpEarned.toLocaleString()} XP`, 600, y + 125);
 
-		// Footer
 		ctx.fillStyle = "#4a6a55";
 		ctx.font = "12px sans-serif";
 		ctx.fillText("Verified on Solana · academy.superteam.fun", 600, 560);
 
-		// Download
 		const link = document.createElement("a");
 		link.download = `superteam-certificate-${certificateId.slice(0, 8)}.png`;
 		link.href = canvas.toDataURL("image/png");
@@ -134,7 +117,7 @@ export function CertificateActions({
 						Share on X
 					</a>
 				</Button>
-				<Button variant="outline" size="sm" className="gap-1.5" onClick={copyLink}>
+				<Button variant="outline" size="sm" className="gap-1.5" onClick={() => copyLink(pageUrl)}>
 					{copied ? <Check className="h-3.5 w-3.5" /> : <Link2 className="h-3.5 w-3.5" />}
 					{copied ? "Copied!" : "Copy link"}
 				</Button>

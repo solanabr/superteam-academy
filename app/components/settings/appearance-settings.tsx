@@ -6,9 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useTranslations } from "next-intl";
-import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "next-themes";
-import { useSettings } from "@/hooks/use-settings";
+import { useSettingsSave } from "@/hooks/use-settings";
 
 type ThemeVal = "light" | "dark" | "system";
 
@@ -22,10 +21,13 @@ const FONT_SIZES = [{ value: "small" }, { value: "medium" }, { value: "large" }]
 
 export function AppearanceSettings() {
 	const t = useTranslations("settings.appearanceSection");
-	const { toast } = useToast();
 	const { theme, setTheme } = useTheme();
-	const { data, save } = useSettings();
-	const [isLoading, setIsLoading] = useState(false);
+	const { data, saving: isLoading, handleSave: saveSettings } = useSettingsSave({
+		successTitle: t("toast.updatedTitle"),
+		successDescription: t("toast.updatedDescription"),
+		errorTitle: t("toast.errorTitle"),
+		errorDescription: t("toast.errorDescription"),
+	});
 	const [currentTheme, setCurrentTheme] = useState<ThemeVal>((theme as ThemeVal) || "system");
 	const [fontSize, setFontSize] = useState("medium");
 	const [reducedMotion, setReducedMotion] = useState(false);
@@ -42,28 +44,11 @@ export function AppearanceSettings() {
 		if (typeof a.reducedMotion === "boolean") setReducedMotion(a.reducedMotion);
 	}, [data]);
 
-	const handleSave = async () => {
-		setIsLoading(true);
-		try {
-			setTheme(currentTheme);
-			await save({
-				settings: {
-					appearance: { theme: currentTheme, fontSize, reducedMotion },
-				},
-			});
-			toast({
-				title: t("toast.updatedTitle"),
-				description: t("toast.updatedDescription"),
-			});
-		} catch {
-			toast({
-				title: t("toast.errorTitle"),
-				description: t("toast.errorDescription"),
-				variant: "destructive",
-			});
-		} finally {
-			setIsLoading(false);
-		}
+	const handleSave = () => {
+		setTheme(currentTheme);
+		saveSettings({
+			settings: { appearance: { theme: currentTheme, fontSize, reducedMotion } },
+		});
 	};
 
 	return (

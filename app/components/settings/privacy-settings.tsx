@@ -6,15 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "@/components/ui/select";
 import { useTranslations } from "next-intl";
 import { useToast } from "@/hooks/use-toast";
-import { useSettings } from "@/hooks/use-settings";
+import { useSettingsSave } from "@/hooks/use-settings";
 
 interface PrivacyState {
 	profileVisibility: "public" | "friends" | "private";
@@ -93,8 +93,12 @@ const VISIBILITY_OPTIONS = [
 export function PrivacySettings() {
 	const t = useTranslations("settings.privacySection");
 	const { toast } = useToast();
-	const { data, save } = useSettings();
-	const [isLoading, setIsLoading] = useState(false);
+	const { data, saving: isLoading, handleSave: saveSettings } = useSettingsSave({
+		successTitle: t("toast.updatedTitle"),
+		successDescription: t("toast.updatedDescription"),
+		errorTitle: t("toast.errorTitle"),
+		errorDescription: t("toast.errorDescription"),
+	});
 	const [isExporting, setIsExporting] = useState(false);
 	const [settings, setSettings] = useState<PrivacyState>(DEFAULTS);
 
@@ -103,24 +107,7 @@ export function PrivacySettings() {
 		setSettings((prev) => ({ ...prev, ...data.settings.privacy }));
 	}, [data]);
 
-	const handleSave = async () => {
-		setIsLoading(true);
-		try {
-			await save({ settings: { privacy: settings } });
-			toast({
-				title: t("toast.updatedTitle"),
-				description: t("toast.updatedDescription"),
-			});
-		} catch {
-			toast({
-				title: t("toast.errorTitle"),
-				description: t("toast.errorDescription"),
-				variant: "destructive",
-			});
-		} finally {
-			setIsLoading(false);
-		}
-	};
+	const handleSave = () => saveSettings({ settings: { privacy: settings } });
 
 	const update = <K extends keyof PrivacyState>(key: K, value: PrivacyState[K]) => {
 		setSettings((prev) => ({ ...prev, [key]: value }));

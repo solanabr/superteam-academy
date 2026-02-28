@@ -1,8 +1,3 @@
-/**
- * API Management Hook
- * Manages API keys, endpoints, and usage tracking
- */
-
 import { useState, useEffect, useCallback } from "react";
 
 interface ApiKey {

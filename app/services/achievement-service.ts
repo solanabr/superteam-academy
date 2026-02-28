@@ -28,13 +28,11 @@ export class AchievementService extends BaseService {
 		this.client = new AcademyClient(this.connection, this.programId);
 	}
 
-	/** Fetch all achievement types defined on-chain */
 	async getAllAchievementTypes(): Promise<AchievementTypeAccount[]> {
 		const results = await this.client.fetchAllAchievementTypes();
 		return results.map((r) => r.account);
 	}
 
-	/** Fetch all achievement types with earned status for a learner */
 	async getLearnerAchievements(learner: PublicKey): Promise<AchievementInfo[]> {
 		const types = await this.client.fetchAllAchievementTypes();
 
@@ -65,7 +63,6 @@ export class AchievementService extends BaseService {
 		return achievements;
 	}
 
-	/** Check if a learner has earned a specific achievement */
 	async hasAchievement(achievementId: string, learner: PublicKey): Promise<boolean> {
 		const receipt = await this.client.fetchAchievementReceipt(achievementId, learner);
 		return receipt !== null;

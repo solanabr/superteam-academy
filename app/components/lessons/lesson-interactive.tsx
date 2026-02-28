@@ -37,6 +37,14 @@ interface LessonInteractiveProps {
 	hasNext: boolean;
 }
 
+async function postLessonComplete(courseId: string, lessonIndex: number) {
+	return fetch("/api/lessons/complete", {
+		method: "POST",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify({ courseId, lessonIndex }),
+	});
+}
+
 export function LessonVideoPlayerWrapper({
 	courseId,
 	lessonIndex,
@@ -49,11 +57,7 @@ export function LessonVideoPlayerWrapper({
 		if (completing) return;
 		setCompleting(true);
 		try {
-			const res = await fetch("/api/lessons/complete", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ courseId, lessonIndex }),
-			});
+			const res = await postLessonComplete(courseId, lessonIndex);
 			if (!res.ok) {
 				console.error("Failed to complete lesson:", await res.text());
 			}
@@ -78,11 +82,7 @@ export function LessonQuizWrapper({
 		async (_score: number, passed: boolean) => {
 			if (passed) {
 				try {
-					await fetch("/api/lessons/complete", {
-						method: "POST",
-						headers: { "Content-Type": "application/json" },
-						body: JSON.stringify({ courseId, lessonIndex }),
-					});
+					await postLessonComplete(courseId, lessonIndex);
 				} catch (error) {
 					console.error("Quiz completion error:", error);
 				}
@@ -138,11 +138,7 @@ export function LessonMarkCompleteWrapper({
 		if (completing || completed) return;
 		setCompleting(true);
 		try {
-			const res = await fetch("/api/lessons/complete", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ courseId, lessonIndex }),
-			});
+			const res = await postLessonComplete(courseId, lessonIndex);
 			if (res.ok) {
 				setCompleted(true);
 				router.refresh();

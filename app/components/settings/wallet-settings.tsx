@@ -7,7 +7,8 @@ import { Switch } from "@/components/ui/switch";
 import { useTranslations } from "next-intl";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/auth-context";
-import { useSettings } from "@/hooks/use-settings";
+import { useSettingsSave } from "@/hooks/use-settings";
+import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { createSignInMessage } from "@superteam-academy/auth";
 
 interface LinkedAccount {
@@ -24,9 +25,12 @@ export function WalletSettings() {
 	const t = useTranslations("settings.walletSection");
 	const { toast } = useToast();
 	const { wallet, user } = useAuth();
-	const { data, save } = useSettings();
-	const [saving, setSaving] = useState(false);
-	const [copied, setCopied] = useState(false);
+	const { data, saving, handleSave: saveSettings } = useSettingsSave({
+		successTitle: t("toast.savedTitle"),
+		errorTitle: t("toast.errorTitle"),
+		errorDescription: t("toast.errorDescription"),
+	});
+	const { copied, copy } = useCopyToClipboard();
 	const [autoConnect, setAutoConnect] = useState(true);
 	const [linkedAccounts, setLinkedAccounts] = useState<LinkedAccount[]>([]);
 	const [accountsLoading, setAccountsLoading] = useState(true);
@@ -61,28 +65,11 @@ export function WalletSettings() {
 		void loadLinkedAccounts();
 	}, [loadLinkedAccounts]);
 
-	const copyAddress = async () => {
-		if (!walletAddress) return;
-		await navigator.clipboard.writeText(walletAddress);
-		setCopied(true);
-		setTimeout(() => setCopied(false), 2000);
+	const copyAddress = () => {
+		if (walletAddress) copy(walletAddress);
 	};
 
-	const handleSave = async () => {
-		setSaving(true);
-		try {
-			await save({ settings: { wallet: { autoConnect } } });
-			toast({ title: t("toast.savedTitle") });
-		} catch {
-			toast({
-				title: t("toast.errorTitle"),
-				description: t("toast.errorDescription"),
-				variant: "destructive",
-			});
-		} finally {
-			setSaving(false);
-		}
-	};
+	const handleSave = () => saveSettings({ settings: { wallet: { autoConnect } } });
 
 	const unlinkProvider = async (provider: string) => {
 		setPendingProvider(provider);

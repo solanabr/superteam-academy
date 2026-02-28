@@ -3,14 +3,14 @@
 import { useState } from "react";
 import Link from "next/link";
 import {
-	ChevronDown,
-	Play,
-	FileText,
-	Code,
-	CheckCircle,
-	Lock,
-	Clock,
-	AlertCircle,
+    ChevronDown,
+    Play,
+    FileText,
+    Code,
+    CheckCircle,
+    Lock,
+    Clock,
+    AlertCircle,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -234,7 +234,7 @@ function ModuleCard({
 													? `/courses/${courseId}/challenges/${lesson.id}`
 													: `/courses/${courseId}/lessons/${lesson.id}`;
 
-											// Check if lesson is locked (previous lesson not completed)
+
 											const lessonIndex = module.lessonsList.findIndex(
 												(l) => l.id === lesson.id
 											);

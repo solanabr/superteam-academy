@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useTranslations } from "next-intl";
 import { useToast } from "@/hooks/use-toast";
-import { useSettings } from "@/hooks/use-settings";
+import { useSettingsSave } from "@/hooks/use-settings";
 import { isValidUsername, isUsernameAvailable } from "@/lib/username-utils";
 
 interface ProfileData {
@@ -25,8 +25,12 @@ interface ProfileData {
 export function ProfileSettings() {
 	const t = useTranslations("settings.profileSection");
 	const { toast } = useToast();
-	const { data, loading, save } = useSettings();
-	const [isLoading, setIsLoading] = useState(false);
+	const { data, loading, saving: isLoading, handleSave: saveSettings } = useSettingsSave({
+		successTitle: t("toast.updatedTitle"),
+		successDescription: t("toast.updatedDescription"),
+		errorTitle: t("toast.errorTitle"),
+		errorDescription: t("toast.errorDescription"),
+	});
 	const [usernameChecking, setUsernameChecking] = useState(false);
 	const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
 	const usernameTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
@@ -83,7 +87,6 @@ export function ProfileSettings() {
 	};
 
 	const handleSave = async () => {
-		// Validate username
 		if (profile.username && !(await isValidUsername(profile.username))) {
 			toast({
 				title: t("toast.invalidUsernameTitle"),
@@ -102,29 +105,14 @@ export function ProfileSettings() {
 			return;
 		}
 
-		setIsLoading(true);
-		try {
-			await save({
-				name: profile.name,
-				email: profile.email,
-				username: profile.username,
-				bio: profile.bio,
-				location: profile.location,
-				website: profile.website,
-			});
-			toast({
-				title: t("toast.updatedTitle"),
-				description: t("toast.updatedDescription"),
-			});
-		} catch {
-			toast({
-				title: t("toast.errorTitle"),
-				description: t("toast.errorDescription"),
-				variant: "destructive",
-			});
-		} finally {
-			setIsLoading(false);
-		}
+		saveSettings({
+			name: profile.name,
+			email: profile.email,
+			username: profile.username,
+			bio: profile.bio,
+			location: profile.location,
+			website: profile.website,
+		});
 	};
 
 	const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {

@@ -1,14 +1,12 @@
 "use server";
 
 import type { AcademyUser } from "@superteam-academy/cms";
+import { readClient } from "@/lib/cms-context";
 
 const USERNAME_REGEX = /^[a-zA-Z0-9_-]+$/;
 const MIN_USERNAME_LENGTH = 3;
 const MAX_USERNAME_LENGTH = 30;
 
-/**
- * Validates if a username is valid
- */
 export async function isValidUsername(username: string): Promise<boolean> {
 	if (
 		!username ||
@@ -17,7 +15,6 @@ export async function isValidUsername(username: string): Promise<boolean> {
 	) {
 		return false;
 	}
-
 	return USERNAME_REGEX.test(username);
 }
 
@@ -30,9 +27,6 @@ function sanitizeUsername(username: string): string {
 		.replace(/^[-_]+|[-_]+$/g, "");
 }
 
-/**
- * Generates a unique username from a name
- */
 export async function generateUsername(
 	baseName: string,
 	existingUsernames: string[] = []
@@ -62,41 +56,15 @@ export async function generateUsername(
 	return candidate;
 }
 
-/**
- * Checks if a username is available (not in use)
- */
 export async function isUsernameAvailable(username: string): Promise<boolean> {
-	try {
-		if (!process.env.NEXT_PUBLIC_SANITY_PROJECT_ID) {
-			throw new Error("NEXT_PUBLIC_SANITY_PROJECT_ID is not configured");
-		}
-		if (!process.env.SANITY_API_READ_TOKEN) {
-			throw new Error("SANITY_API_READ_TOKEN is not configured");
-		}
-
-		const { createSanityClient } = await import("@superteam-academy/cms");
-		const client = createSanityClient({
-			projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
-			dataset: process.env.NEXT_PUBLIC_SANITY_DATASET ?? "production",
-			token: process.env.SANITY_API_READ_TOKEN,
-			useCdn: false,
-		});
-
-		const existing = await client.fetch(
-			`count(*[_type == "academyUser" && username == $username])`,
-			{ username }
-		);
-
-		return existing === 0;
-	} catch (error) {
-		console.error("Error checking username availability:", error);
-		return false;
-	}
+	if (!readClient) return false;
+	const existing = await readClient.fetch(
+		`count(*[_type == "academyUser" && username == $username])`,
+		{ username }
+	);
+	return existing === 0;
 }
 
-/**
- * Calculates profile completeness percentage
- */
 export async function calculateProfileCompleteness(user: AcademyUser): Promise<number> {
 	const fields = [
 		user.name,
@@ -115,9 +83,6 @@ export async function calculateProfileCompleteness(user: AcademyUser): Promise<n
 	return Math.round((filledFields / fields.length) * 100);
 }
 
-/**
- * Gets username suggestions based on user data
- */
 export async function getUsernameSuggestions(user: {
 	name?: string;
 	email?: string;

@@ -48,7 +48,6 @@ export function SkillRadarChart({ courses, size = 240 }: SkillRadarChartProps) {
 		<div className="rounded-2xl border border-border/60 bg-card p-5 space-y-3">
 			<h3 className="text-sm font-semibold">Skill Breakdown</h3>
 			<svg viewBox={`0 0 ${size} ${size}`} className="w-full max-w-60 mx-auto">
-				{/* Grid levels */}
 				{gridPolygons.map((points, i) => (
 					<polygon
 						key={i}
@@ -60,7 +59,6 @@ export function SkillRadarChart({ courses, size = 240 }: SkillRadarChartProps) {
 					/>
 				))}
 
-				{/* Axis lines */}
 				{resolvedSkills.map((_, i) => {
 					const { x, y } = getPoint(i, 100);
 					return (
@@ -77,19 +75,16 @@ export function SkillRadarChart({ courses, size = 240 }: SkillRadarChartProps) {
 					);
 				})}
 
-				{/* Data polygon */}
 				<polygon
 					points={dataPolygon}
 					className="fill-primary/15 stroke-primary"
 					strokeWidth="2"
 				/>
 
-				{/* Data points */}
 				{dataPoints.map((p, i) => (
 					<circle key={i} cx={p.x} cy={p.y} r="3" className="fill-primary" />
 				))}
 
-				{/* Labels */}
 				{resolvedSkills.map((s, i) => {
 					const { x, y } = getPoint(i, 120);
 					return (
@@ -110,7 +105,6 @@ export function SkillRadarChart({ courses, size = 240 }: SkillRadarChartProps) {
 	);
 }
 
-/** Derive skill data from enrolled courses' categories */
 export function deriveSkillsFromCourses(
 	courses: Array<{
 		id: string;

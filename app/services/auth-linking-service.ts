@@ -7,13 +7,6 @@ export interface LinkedAccount {
 }
 
 export class AuthLinkingService extends BaseService {
-	/**
-	 * Link a wallet address to an existing OAuth account.
-	 * In production, this calls a server endpoint that:
-	 * 1. Verifies the wallet signature
-	 * 2. Associates the wallet pubkey with the user record
-	 * 3. Returns the updated linked accounts
-	 */
 	async linkWallet(
 		publicKey: string,
 		signature: string,
@@ -33,9 +26,6 @@ export class AuthLinkingService extends BaseService {
 		return { success: true };
 	}
 
-	/**
-	 * Get all linked accounts for the current user.
-	 */
 	async getLinkedAccounts(): Promise<LinkedAccount[]> {
 		const res = await fetch("/api/auth/linked-accounts");
 		if (!res.ok) return [];
@@ -71,9 +61,6 @@ export class AuthLinkingService extends BaseService {
 		return { success: true };
 	}
 
-	/**
-	 * Unlink a specific provider from the current user.
-	 */
 	async unlinkAccount(provider: string): Promise<{ success: boolean; error?: string }> {
 		const res = await fetch("/api/auth/unlink", {
 			method: "POST",

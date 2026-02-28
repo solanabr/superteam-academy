@@ -1,11 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server";
 import {
-	getAdminLessonContent,
-	getCourseRefByIdOrSlug,
-	getSanityWriteClient,
-	createChallengeDraft,
-	createQuizDraft,
+    getAdminLessonContent,
+    getCourseRefByIdOrSlug,
+    createChallengeDraft,
+    createQuizDraft,
 } from "@/lib/challenge-content";
+import { writeClient } from "@/lib/cms-context";
 import { parseChallengePayload, parseQuizPayload } from "@/lib/admin-content-validation";
 import { requireAdmin } from "@/lib/route-utils";
 
@@ -29,8 +29,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 	if (!auth.ok) return auth.response;
 
 	const { courseId, lessonId } = await params;
-	const client = getSanityWriteClient();
-	if (!client) {
+	if (!writeClient) {
 		return NextResponse.json({ error: "Sanity write token not configured" }, { status: 500 });
 	}
 
@@ -60,7 +59,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 	if ("challenge" in body) {
 		if (body.challenge === null) {
 			if (existing.challenge?._id) {
-				await client.delete(existing.challenge._id);
+				await writeClient.delete(existing.challenge._id);
 			}
 		} else {
 			const parsed = parseChallengePayload(body.challenge);
@@ -97,9 +96,9 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 			};
 
 			if (existing.challenge?._id) {
-				await client.patch(existing.challenge._id).set(challengeDoc).commit();
+				await writeClient.patch(existing.challenge._id).set(challengeDoc).commit();
 			} else {
-				await client.create(challengeDoc);
+				await writeClient.create(challengeDoc);
 			}
 		}
 	}
@@ -107,7 +106,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 	if ("quiz" in body) {
 		if (body.quiz === null) {
 			if (existing.quiz?._id) {
-				await client.delete(existing.quiz._id);
+				await writeClient.delete(existing.quiz._id);
 			}
 		} else {
 			const parsed = parseQuizPayload(body.quiz);
@@ -136,9 +135,9 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 			};
 
 			if (existing.quiz?._id) {
-				await client.patch(existing.quiz._id).set(quizDoc).commit();
+				await writeClient.patch(existing.quiz._id).set(quizDoc).commit();
 			} else {
-				await client.create(quizDoc);
+				await writeClient.create(quizDoc);
 			}
 		}
 	}

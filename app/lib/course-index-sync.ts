@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { createSanityClient } from "@superteam-academy/cms";
+import { readClient, writeClient as sanityWriteClient } from "@/lib/cms-context";
 import { getAcademyClient, contentTxIdToArweaveUrl } from "@/lib/academy";
 
 type SanityCourseIndexDoc = {
@@ -95,22 +95,6 @@ async function withStateLock<T>(fn: () => Promise<T>): Promise<T> {
 	}
 }
 
-function sanityReadClient() {
-	const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
-	const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET ?? "production";
-	const token = process.env.SANITY_API_READ_TOKEN;
-	if (!projectId || !token) return null;
-	return createSanityClient({ projectId, dataset, token, useCdn: false });
-}
-
-function sanityWriteClient() {
-	const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
-	const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET ?? "production";
-	const token = process.env.SANITY_API_WRITE_TOKEN;
-	if (!projectId || !token) return null;
-	return createSanityClient({ projectId, dataset, token, useCdn: false });
-}
-
 function normalizeArweaveTxId(contentTxIdBytes: Uint8Array): string {
 	const url = contentTxIdToArweaveUrl(contentTxIdBytes);
 	return url.split("/").at(-1) ?? "";
@@ -132,13 +116,10 @@ export async function reconcileCourseIndex(options?: {
 	apply?: boolean;
 }): Promise<CourseIndexReconcileReport> {
 	const apply = options?.apply === true;
-	const readClient = sanityReadClient();
 	if (!readClient) {
 		throw new Error("Sanity read token is not configured");
 	}
-
-	const writeClient = apply ? sanityWriteClient() : null;
-	if (apply && !writeClient) {
+	if (apply && !sanityWriteClient) {
 		throw new Error("Sanity write token is not configured");
 	}
 
@@ -218,9 +199,9 @@ export async function reconcileCourseIndex(options?: {
 
 		if (deltas.length > 0) {
 			changed += 1;
-			if (apply && writeClient) {
+			if (apply && sanityWriteClient) {
 				try {
-					const patch = writeClient
+					const patch = sanityWriteClient
 						.patch(course._id)
 						.set({ onchainStatus: targetStatus });
 					if (targetCoursePda) {

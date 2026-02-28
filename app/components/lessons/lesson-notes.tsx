@@ -41,7 +41,6 @@ export function LessonNotes({
 	const [editTitle, setEditTitle] = useState("");
 	const [editContent, setEditContent] = useState("");
 
-	// Load notes from localStorage on mount
 	useEffect(() => {
 		const savedNotes = localStorage.getItem(`lesson-notes-${lessonId}`);
 		if (savedNotes) {
@@ -66,7 +65,6 @@ export function LessonNotes({
 		}
 	}, [lessonId]);
 
-	// Save notes to localStorage whenever notes change
 	useEffect(() => {
 		localStorage.setItem(`lesson-notes-${lessonId}`, JSON.stringify(notes));
 	}, [notes, lessonId]);

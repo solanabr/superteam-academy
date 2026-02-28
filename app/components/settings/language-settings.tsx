@@ -5,15 +5,14 @@ import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "@/components/ui/select";
 import { useTranslations } from "next-intl";
-import { useToast } from "@/hooks/use-toast";
-import { useSettings } from "@/hooks/use-settings";
+import { useSettingsSave } from "@/hooks/use-settings";
 
 type Language = "en" | "pt-BR" | "es";
 type DateFormat = "DD/MM/YYYY" | "MM/DD/YYYY" | "YYYY-MM-DD";
@@ -49,9 +48,11 @@ function getLocale(lang: Language) {
 
 export function LanguageSettings() {
 	const t = useTranslations("settings.languageSection");
-	const { toast } = useToast();
-	const { data, save } = useSettings();
-	const [saving, setSaving] = useState(false);
+	const { data, saving, handleSave: saveSettings } = useSettingsSave({
+		successTitle: t("toast.savedTitle"),
+		errorTitle: t("toast.errorTitle"),
+		errorDescription: t("toast.errorDescription"),
+	});
 	const [settings, setSettings] = useState<LangState>({
 		language: "en",
 		dateFormat: "MM/DD/YYYY",
@@ -68,21 +69,7 @@ export function LanguageSettings() {
 	const update = <K extends keyof LangState>(key: K, value: LangState[K]) =>
 		setSettings((prev) => ({ ...prev, [key]: value }));
 
-	const handleSave = async () => {
-		setSaving(true);
-		try {
-			await save({ settings: { language: settings } });
-			toast({ title: t("toast.savedTitle") });
-		} catch {
-			toast({
-				title: t("toast.errorTitle"),
-				description: t("toast.errorDescription"),
-				variant: "destructive",
-			});
-		} finally {
-			setSaving(false);
-		}
-	};
+	const handleSave = () => saveSettings({ settings: { language: settings } });
 
 	const locale = getLocale(settings.language);
 

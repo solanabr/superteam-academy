@@ -1,10 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { requireSuperAdmin, sanityReadClient, sanityWriteClient } from "@/lib/route-utils";
+import { requireRole, sanityReadClient, sanityWriteClient } from "@/lib/route-utils";
 
 const SETTINGS_DOC_ID = "platformSettings";
 
 export async function GET() {
-	const auth = await requireSuperAdmin();
+	const auth = await requireRole("superadmin")
 	if (!auth.ok) return auth.response;
 
 	const client = sanityReadClient;
@@ -28,7 +28,7 @@ export async function GET() {
 }
 
 export async function PATCH(request: NextRequest) {
-	const auth = await requireSuperAdmin();
+	const auth = await requireRole("superadmin")
 	if (!auth.ok) return auth.response;
 
 	const client = sanityWriteClient;

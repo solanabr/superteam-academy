@@ -15,10 +15,8 @@ export function FeaturedCoursesSkeleton() {
 							key={i}
 							className="rounded-2xl bg-card border border-border overflow-hidden"
 						>
-							{/* Image placeholder */}
 							<div className="h-40 bg-muted animate-pulse" />
 
-							{/* Content placeholder */}
 							<div className="flex-1 p-5 space-y-3">
 								<div className="h-6 w-3/4 bg-muted rounded animate-pulse" />
 								<div className="space-y-2">
@@ -33,7 +31,6 @@ export function FeaturedCoursesSkeleton() {
 								</div>
 							</div>
 
-							{/* Footer placeholder */}
 							<div className="px-5 pb-4 pt-0">
 								<div className="flex items-center justify-between">
 									<div className="h-4 w-32 bg-muted rounded animate-pulse" />

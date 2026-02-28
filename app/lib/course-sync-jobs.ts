@@ -2,7 +2,7 @@ import { execFile } from "node:child_process";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
-import { createSanityClient } from "@superteam-academy/cms";
+import { writeClient } from "@/lib/cms-context";
 
 const execFileAsync = promisify(execFile);
 
@@ -87,15 +87,6 @@ function parseScriptOutput(stdout: string) {
 	return { arweaveTxId, coursePda, createSignature };
 }
 
-function sanityClient() {
-	const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
-	const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET ?? "production";
-	const token = process.env.SANITY_API_WRITE_TOKEN ?? process.env.SANITY_API_READ_TOKEN;
-
-	if (!projectId || !token) return null;
-	return createSanityClient({ projectId, dataset, token, useCdn: false });
-}
-
 async function patchLifecycle(
 	documentId: string,
 	payload: {
@@ -106,10 +97,9 @@ async function patchLifecycle(
 		lastSyncError?: string | null;
 	}
 ) {
-	const client = sanityClient();
-	if (!client) return;
+	if (!writeClient) return;
 
-	await client
+	await writeClient
 		.patch(documentId)
 		.set({
 			onchainStatus: payload.onchainStatus,
