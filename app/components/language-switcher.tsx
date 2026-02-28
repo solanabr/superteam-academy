@@ -18,7 +18,7 @@ export function LanguageSwitcher() {
 	const locale = useLocale();
 	const router = useRouter();
 	const pathname = usePathname();
-	const [_isPending, startTransition] = useTransition();
+	const [, startTransition] = useTransition();
 
 	const switchLocale = (newLocale: string) => {
 		startTransition(() => {
@@ -40,7 +40,9 @@ export function LanguageSwitcher() {
 					aria-label={t("switchLanguage")}
 				>
 					<Globe className="h-5 w-5 md:h-4 md:w-4 text-muted-foreground" />
-					<span className="capitalize">{locale}</span>
+					<span className="capitalize">
+						{locales.find((l) => l.code === locale)?.name}
+					</span>
 				</button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end" className="min-w-35">
