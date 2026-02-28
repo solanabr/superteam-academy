@@ -7,6 +7,7 @@ import { DIFFICULTY_COLORS, TRACKS } from "@/types";
 import type { Metadata } from "next";
 import type { SanityCourse, SanityLesson } from "@/types";
 import { EnrollButton } from "./EnrollButton";
+import { StudentReviews, RateCourseButton } from "./ReviewSection";
 import { Link } from "@/i18n/navigation";
 
 interface Props {
@@ -140,7 +141,7 @@ export default async function CourseDetailPage({ params }: Props) {
             </div>
           </div>
           {/* Student Reviews */}
-          <StudentReviews />
+          <StudentReviews courseSlug={slug} />
         </div>
 
         {/* Sidebar */}
@@ -157,7 +158,9 @@ export default async function CourseDetailPage({ params }: Props) {
               courseId={course.onChainCourseId ?? course.slug}
               courseSlug={slug}
               firstLessonId={course.modules?.[0]?.lessons?.[0]?._id}
+              totalLessons={totalLessons}
             />
+            <RateCourseButton courseSlug={slug} totalLessons={totalLessons} />
 
             <div className="mt-4 pt-4 border-t border-border space-y-2 text-xs font-mono text-muted-foreground">
               <div className="flex justify-between">
@@ -220,75 +223,8 @@ export default async function CourseDetailPage({ params }: Props) {
   );
 }
 
-const MOCK_REVIEWS = [
-  {
-    initials: "AK",
-    name: "Alex K.",
-    stars: 5,
-    comment:
-      "Hands-down the best Solana intro I've found. The account model explanation finally clicked for me after this course.",
-  },
-  {
-    initials: "PM",
-    name: "Paula M.",
-    stars: 5,
-    comment:
-      "Concise and on-point. I came in knowing Ethereum and this bridged the gap perfectly. The on-chain XP system is a nice touch.",
-  },
-  {
-    initials: "JL",
-    name: "Joon L.",
-    stars: 4,
-    comment:
-      "Great content, well structured. Would love more challenge lessons per module — the coding exercises are the highlight.",
-  },
-];
 
-function StarRating({ rating }: { rating: number }) {
-  return (
-    <span className="font-mono text-sm tracking-tight">
-      {Array.from({ length: 5 }, (_, i) => (
-        <span key={i} className={i < rating ? "text-[#14F195]" : "text-subtle"}>
-          ★
-        </span>
-      ))}
-    </span>
-  );
-}
 
-function StudentReviews() {
-  return (
-    <div>
-      <div className="flex items-baseline gap-3 mb-4">
-        <h2 className="font-mono text-lg font-semibold text-foreground">Student Reviews</h2>
-        <div className="flex items-center gap-1.5 font-mono text-sm">
-          <span className="text-[#14F195] font-bold">4.8</span>
-          <span className="text-muted-foreground">/ 5</span>
-          <span className="text-subtle text-xs">(based on 127 reviews)</span>
-        </div>
-      </div>
-      <div className="space-y-3">
-        {MOCK_REVIEWS.map((review) => (
-          <div
-            key={review.name}
-            className="bg-card border border-border rounded p-4 space-y-2"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-7 h-7 rounded-full bg-elevated border border-border-hover flex items-center justify-center text-[10px] font-mono font-semibold text-foreground shrink-0">
-                {review.initials}
-              </div>
-              <div className="flex flex-col gap-0.5">
-                <span className="text-xs font-mono font-semibold text-foreground">{review.name}</span>
-                <StarRating rating={review.stars} />
-              </div>
-            </div>
-            <p className="text-sm text-muted-foreground leading-relaxed pl-10">{review.comment}</p>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 function LessonRow({
   lesson,

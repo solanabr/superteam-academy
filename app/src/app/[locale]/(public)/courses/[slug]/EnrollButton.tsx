@@ -12,9 +12,10 @@ interface EnrollButtonProps {
   courseId: string;
   courseSlug: string;
   firstLessonId?: string;
+  totalLessons?: number;
 }
 
-export function EnrollButton({ courseId, courseSlug, firstLessonId }: EnrollButtonProps) {
+export function EnrollButton({ courseId, courseSlug, firstLessonId, totalLessons = 0 }: EnrollButtonProps) {
   const { connected } = useWallet();
   const { setVisible } = useWalletModal();
   const { connection } = useConnection();
@@ -22,6 +23,16 @@ export function EnrollButton({ courseId, courseSlug, firstLessonId }: EnrollButt
   const [txError, setTxError] = useState<string | null>(null);
   const [txSuccess, setTxSuccess] = useState<string | null>(null);
   const [wrongNetwork, setWrongNetwork] = useState(false);
+  const [locallyCompleted, setLocallyCompleted] = useState(false);
+
+  // Check if user completed all lessons locally
+  useEffect(() => {
+    if (typeof window === "undefined" || totalLessons === 0) return;
+    try {
+      const ids: string[] = JSON.parse(localStorage.getItem(`completed_${courseSlug}`) ?? "[]");
+      setLocallyCompleted(ids.length >= totalLessons);
+    } catch {}
+  }, [courseSlug, totalLessons]);
 
   // Detect if wallet/connection is on the wrong network
   useEffect(() => {
@@ -90,6 +101,18 @@ export function EnrollButton({ courseId, courseSlug, firstLessonId }: EnrollButt
   }
 
   if (progress.enrolled) {
+    if (locallyCompleted) {
+      return (
+        <div className="space-y-2">
+          <Link
+            href={{ pathname: "/courses/[slug]", params: { slug: courseSlug } }}
+            className="block w-full text-center bg-[#14F195]/10 text-[#14F195] border border-[#14F195]/30 font-mono font-semibold text-sm py-2.5 rounded hover:bg-[#14F195]/20 transition-colors"
+          >
+            ✓ Course Complete
+          </Link>
+        </div>
+      );
+    }
     return (
       <Link
         href={{ pathname: "/courses/[slug]/lessons/[id]", params: { slug: courseSlug, id: firstLessonId ?? `${courseId}-l1` } }}
