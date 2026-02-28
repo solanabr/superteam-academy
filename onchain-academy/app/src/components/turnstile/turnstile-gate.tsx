@@ -17,21 +17,14 @@ function setCookie(name: string, value: string, hours: number) {
 }
 
 export function TurnstileGate({ children }: { children: React.ReactNode }) {
-  const [verified, setVerified] = useState<boolean | null>(null);
+  const [showGate, setShowGate] = useState(false);
   const [error, setError] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const renderedRef = useRef(false);
 
   useEffect(() => {
-    if (!SITE_KEY) {
-      setVerified(true);
-      return;
-    }
-    if (getCookie(COOKIE_NAME)) {
-      setVerified(true);
-      return;
-    }
-    setVerified(false);
+    if (!SITE_KEY || getCookie(COOKIE_NAME)) return;
+    setShowGate(true);
   }, []);
 
   const renderWidget = useCallback(() => {
@@ -58,7 +51,7 @@ export function TurnstileGate({ children }: { children: React.ReactNode }) {
       theme: "dark",
       callback: (token: string) => {
         setCookie(COOKIE_NAME, token, COOKIE_TTL_HOURS);
-        setVerified(true);
+        setShowGate(false);
       },
       "error-callback": () => setError(true),
       "expired-callback": () => setError(true),
@@ -66,65 +59,63 @@ export function TurnstileGate({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (verified === false) renderWidget();
-  }, [verified, renderWidget]);
+    if (showGate) renderWidget();
+  }, [showGate, renderWidget]);
 
-  // Not yet determined — render nothing to avoid flash
-  if (verified === null) return null;
-
-  // Verified — render app
-  if (verified) return <>{children}</>;
-
-  // Show gate
   return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 99999,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 24,
-        background: "#0A0A0A",
-      }}
-    >
-      <p
-        style={{
-          fontFamily: "monospace",
-          fontSize: 11,
-          letterSpacing: 3,
-          textTransform: "uppercase",
-          color: "#666",
-        }}
-      >
-        Verifying you are human
-      </p>
-      <div ref={containerRef} />
-      {error && (
-        <p style={{ fontFamily: "monospace", fontSize: 11, color: "#EF4444" }}>
-          Verification failed.{" "}
-          <button
-            onClick={() => {
-              setError(false);
-              renderedRef.current = false;
-              renderWidget();
-            }}
+    <>
+      {children}
+      {showGate && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 99999,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 24,
+            background: "#0A0A0A",
+          }}
+        >
+          <p
             style={{
-              background: "none",
-              border: "none",
-              color: "#6693F7",
-              cursor: "pointer",
               fontFamily: "monospace",
               fontSize: 11,
-              textDecoration: "underline",
+              letterSpacing: 3,
+              textTransform: "uppercase",
+              color: "#666",
             }}
           >
-            Retry
-          </button>
-        </p>
+            Verifying you are human
+          </p>
+          <div ref={containerRef} />
+          {error && (
+            <p style={{ fontFamily: "monospace", fontSize: 11, color: "#EF4444" }}>
+              Verification failed.{" "}
+              <button
+                onClick={() => {
+                  setError(false);
+                  renderedRef.current = false;
+                  renderWidget();
+                }}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "#6693F7",
+                  cursor: "pointer",
+                  fontFamily: "monospace",
+                  fontSize: 11,
+                  textDecoration: "underline",
+                }}
+              >
+                Retry
+              </button>
+            </p>
+          )}
+        </div>
       )}
-    </div>
+    </>
   );
 }
