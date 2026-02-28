@@ -29,11 +29,18 @@ export function EnrollButton({ courseId, courseSlug }: EnrollButtonProps) {
     } else if (!result.success) {
       // Friendly message for course-not-registered-on-chain errors
       const raw = result.error ?? "Unknown error";
-      const isAccountError = raw.includes("AccountNotFound") || raw.includes("account") || raw.includes("0x1770");
+      const isIdlError = raw.includes("idl.types") || raw.includes("IDL");
+      const isAccountNotFound = raw.includes("AccountNotFound") || raw.includes("0x1770") || raw.includes("account does not exist");
+      const isCourseNotActive = raw.includes("CourseNotActive") || raw.includes("6000");
+      const isAlreadyEnrolled = raw.includes("AlreadyEnrolled") || raw.includes("already in use");
       setTxError(
-        isAccountError
+        isAlreadyEnrolled
+          ? "You are already enrolled in this course."
+          : isCourseNotActive
+          ? "This course is not yet active on-chain."
+          : isAccountNotFound || isIdlError
           ? "Course not yet registered on devnet. Enrollment will work once the course PDA is created on-chain."
-          : raw
+          : raw.length > 120 ? raw.slice(0, 120) + "…" : raw
       );
     }
   };
