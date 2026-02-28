@@ -3,6 +3,8 @@ import { getProfileByUsername } from "@/lib/supabase";
 import { getCredentials, getAchievements } from "@/services/credentials";
 import { CredentialCard } from "@/components/solana/CredentialCard";
 import { LevelBadge } from "@/components/gamification/LevelBadge";
+import { SkillRadar } from "@/components/profile/SkillRadar";
+import { VisibilityToggle } from "@/components/profile/VisibilityToggle";
 import { xpToLevel } from "@/types";
 import type { Metadata } from "next";
 
@@ -53,6 +55,7 @@ export default async function ProfilePage({ params }: Props) {
               {profile.displayName ?? profile.username ?? username}
             </h1>
             <LevelBadge level={level} />
+            <VisibilityToggle />
           </div>
           {profile.username && (
             <p className="text-sm text-[#666666] font-mono">@{profile.username}</p>
@@ -86,6 +89,14 @@ export default async function ProfilePage({ params }: Props) {
           </div>
         ))}
       </div>
+
+      {/* Skills */}
+      <section className="mb-8">
+        <h2 className="font-mono text-lg font-semibold text-[#EDEDED] mb-4">
+          Skills
+        </h2>
+        <SkillRadar />
+      </section>
 
       {/* Credentials */}
       <section className="mb-8">
