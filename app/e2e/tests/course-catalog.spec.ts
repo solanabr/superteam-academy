@@ -15,7 +15,7 @@ test.describe('Course Catalog', () => {
     await expect(courses.pageTitle).toContainText(I18N.en.catalogTitle);
   });
 
-  test('search input is present and functional', async ({ page: _page }) => {
+  test('search input is present and functional', async () => {
     await expect(courses.searchInput).toBeVisible();
 
     // Type a search query — should not crash

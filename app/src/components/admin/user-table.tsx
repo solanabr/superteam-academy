@@ -189,7 +189,7 @@ export function UserTable() {
 
   const filtered = useMemo(() => {
     const term = search.toLowerCase();
-    let result = MOCK_USERS.filter((u) =>
+    const result = MOCK_USERS.filter((u) =>
       u.wallet.toLowerCase().includes(term),
     );
 

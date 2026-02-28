@@ -200,14 +200,14 @@ beforeEach(async () => {
     publicKey: MOCK_WALLET,
     signTransaction: mockSignTransaction,
     connected: true,
-  } as any);
+  } as unknown as ReturnType<typeof walletAdapter.useWallet>);
   vi.mocked(walletAdapter.useConnection).mockReturnValue({
     connection: {
       sendRawTransaction: mockSendRawTransaction,
       confirmTransaction: mockConfirmTransaction,
       getLatestBlockhash: mockGetLatestBlockhash,
     },
-  } as any);
+  } as unknown as ReturnType<typeof walletAdapter.useConnection>);
 });
 
 afterEach(() => {
@@ -330,7 +330,7 @@ describe('useEnrollment', () => {
       publicKey: null,
       signTransaction: mockSignTransaction,
       connected: false,
-    } as any);
+    } as unknown as ReturnType<typeof useWallet>);
 
     const { result } = renderHook(() => useEnrollment('anchor-dev'));
 

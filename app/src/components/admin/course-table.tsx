@@ -149,7 +149,7 @@ export function CourseTable() {
 
   const filtered = useMemo(() => {
     const term = search.toLowerCase();
-    let result = MOCK_COURSES.filter(
+    const result = MOCK_COURSES.filter(
       (c) =>
         c.title.toLowerCase().includes(term) ||
         c.id.toLowerCase().includes(term) ||

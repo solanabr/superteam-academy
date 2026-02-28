@@ -15,7 +15,7 @@ const ownerAddress = '11111111111111111111111111111112';
 const assetId = 'AssetXyz123456789abcdef123456789abcdef1234567';
 
 /** Helper: build a realistic DAS asset response object */
-function makeDasAsset(overrides: Record<string, any> = {}) {
+function makeDasAsset(overrides: Record<string, unknown> = {}) {
   return {
     id: assetId,
     interface: 'MplCoreAsset',
@@ -44,7 +44,7 @@ function makeDasAsset(overrides: Record<string, any> = {}) {
 }
 
 /** Helper: wrap a result in a JSON-RPC response */
-function rpcResponse(result: any) {
+function rpcResponse(result: unknown) {
   return { ok: true, json: () => Promise.resolve({ jsonrpc: '2.0', id: '1', result }) };
 }
 

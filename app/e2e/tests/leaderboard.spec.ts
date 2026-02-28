@@ -26,7 +26,7 @@ test.describe('Leaderboard', () => {
     await expect(allTimeBtn).toBeVisible();
   });
 
-  test('refresh button is present and clickable', async ({ page: _page }) => {
+  test('refresh button is present and clickable', async () => {
     await expect(leaderboard.refreshButton).toBeVisible();
 
     // Click refresh — should not crash

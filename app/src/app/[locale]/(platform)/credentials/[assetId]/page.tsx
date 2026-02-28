@@ -70,7 +70,6 @@ function ErrorState({ message }: { message: string }) {
 }
 
 export default function CredentialViewerPage({ params }: PageProps) {
-  const t = useTranslations('credentials');
   const resolvedParams = use(params);
   const { assetId } = resolvedParams;
 

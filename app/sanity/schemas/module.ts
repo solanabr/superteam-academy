@@ -1,7 +1,7 @@
 import { defineField, defineType } from 'sanity';
 import { localizedString, localizedText } from './helpers/localized';
 
-export const module = defineType({
+export const moduleSchema = defineType({
   name: 'module',
   title: 'Module',
   type: 'document',

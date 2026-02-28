@@ -123,7 +123,7 @@ export default function LessonPage() {
   const selectedCourse = useCourseStore((s) => s.selectedCourse);
 
   const [sidebarVisible, setSidebarVisible] = useState(true);
-  const [_code, setCode] = useState(MOCK_STARTER_CODE);
+  const [, setCode] = useState(MOCK_STARTER_CODE);
   const [output, setOutput] = useState('');
   const [testResults, setTestResults] = useState<TestResult[]>([]);
   const [isRunning, setIsRunning] = useState(false);

@@ -36,7 +36,6 @@ jobs:
 
       - name: Lint
         run: pnpm lint
-        continue-on-error: true
 
       - name: Typecheck
         run: pnpm tsc --noEmit

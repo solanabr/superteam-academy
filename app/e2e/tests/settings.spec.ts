@@ -31,7 +31,7 @@ test.describe('Settings', () => {
     await expect(lightButton).toHaveAttribute('aria-pressed', 'true');
   });
 
-  test('display name input is editable', async ({ page: _page }) => {
+  test('display name input is editable', async () => {
     await expect(settings.displayNameInput).toBeVisible();
 
     await settings.displayNameInput.fill('Test User');

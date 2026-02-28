@@ -12,12 +12,6 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import { MyCourses } from '@/components/creator/my-courses';
 import { CourseAnalytics } from '@/components/creator/course-analytics';
 import { CreatorRewards } from '@/components/creator/creator-rewards';

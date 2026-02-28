@@ -30,7 +30,7 @@ const LEVEL_NAMES: Record<number, string> = {
 };
 
 interface CredentialAttributesProps {
-  attributes: Record<string, any>;
+  attributes: Record<string, unknown>;
   createdAt?: string;
 }
 
@@ -52,7 +52,7 @@ function formatDate(dateStr: string): string {
 }
 
 function buildAttributeRows(
-  attributes: Record<string, any>,
+  attributes: Record<string, unknown>,
   createdAt?: string,
 ): AttributeRow[] {
   const rows: AttributeRow[] = [];
@@ -60,14 +60,14 @@ function buildAttributeRows(
   if (attributes.trackId !== undefined) {
     rows.push({
       label: 'Track',
-      value: TRACK_NAMES[attributes.trackId] ?? `Track ${attributes.trackId}`,
+      value: TRACK_NAMES[attributes.trackId as number] ?? `Track ${attributes.trackId}`,
     });
   }
 
   if (attributes.level !== undefined) {
     rows.push({
       label: 'Level',
-      value: LEVEL_NAMES[attributes.level] ?? `Level ${attributes.level}`,
+      value: LEVEL_NAMES[attributes.level as number] ?? `Level ${attributes.level}`,
     });
   }
 

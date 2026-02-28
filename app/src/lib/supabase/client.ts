@@ -5,7 +5,7 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '';
 
 function initSupabase(): SupabaseClient | null {
   if (!supabaseUrl || !supabaseAnonKey) {
-    // eslint-disable-next-line no-console
+     
     console.warn(
       '[supabase] NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY is not set. ' +
         'Forum features will use mock data.',
