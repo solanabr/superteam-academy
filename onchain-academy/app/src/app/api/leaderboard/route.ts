@@ -7,7 +7,7 @@ import { getSupabaseAdmin } from "@/lib/supabase/server";
 
 let cache: { data: LeaderboardEntry[]; ts: number } | null = null;
 let enrichedCache: { data: LeaderboardEntry[]; ts: number } | null = null;
-const CACHE_TTL = 60_000;
+const CACHE_TTL = 300_000;
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 100;
 
@@ -31,13 +31,21 @@ async function getAllTimeEntries(): Promise<LeaderboardEntry[]> {
   const mint = new PublicKey(XP_MINT_ADDRESS);
   const largestAccounts = await connection.getTokenLargestAccounts(mint);
 
+  // Filter to non-zero accounts and batch-fetch all account info in one RPC call
+  const nonZero = largestAccounts.value.filter(
+    (a) => a.uiAmount !== null && a.uiAmount > 0,
+  );
+  const addresses = nonZero.map((a) => a.address);
+  const accountInfos = addresses.length > 0
+    ? await connection.getMultipleParsedAccounts(addresses)
+    : { value: [] };
+
   const entries: LeaderboardEntry[] = [];
 
-  for (const account of largestAccounts.value) {
-    if (account.uiAmount === null || account.uiAmount === 0) continue;
-
-    const accountInfo = await connection.getParsedAccountInfo(account.address);
-    const data = accountInfo.value?.data;
+  for (let i = 0; i < nonZero.length; i++) {
+    const account = nonZero[i];
+    const info = accountInfos.value[i];
+    const data = info?.data;
     const parsed =
       typeof data === "object" && data !== null && "parsed" in data
         ? (data as { parsed: { info?: { owner?: string } } }).parsed
@@ -45,7 +53,7 @@ async function getAllTimeEntries(): Promise<LeaderboardEntry[]> {
     const owner = parsed?.info?.owner;
     if (!owner) continue;
 
-    const xp = account.uiAmount;
+    const xp = account.uiAmount!;
     entries.push({ rank: 0, wallet: owner, xp, level: calculateLevel(xp), streak: 0 });
   }
 

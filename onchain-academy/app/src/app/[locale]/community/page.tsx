@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useWallet } from "@/lib/wallet/context";
+import { useWalletAuth } from "@/lib/hooks/use-wallet-auth";
 import { Plus, Search, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +19,7 @@ export default function CommunityPage() {
   const locale = (params.locale as string) || "en";
   const { publicKey } = useWallet();
   const wallet = publicKey?.toBase58() ?? null;
+  const { isAuthenticated, authenticate } = useWalletAuth();
 
   const [category, setCategory] = useState("all");
   const [searchInput, setSearchInput] = useState("");
@@ -70,13 +72,18 @@ export default function CommunityPage() {
             />
           </form>
 
-          {wallet ? (
+          {wallet && isAuthenticated ? (
             <Link href={`/${locale}/community/new`}>
               <Button size="sm" className="gap-1.5">
                 <Plus className="h-3.5 w-3.5" />
                 {t("newThread")}
               </Button>
             </Link>
+          ) : wallet ? (
+            <Button size="sm" className="gap-1.5" onClick={authenticate}>
+              <Plus className="h-3.5 w-3.5" />
+              {t("newThread")}
+            </Button>
           ) : (
             <Button size="sm" variant="outline" disabled className="gap-1.5">
               <Plus className="h-3.5 w-3.5" />

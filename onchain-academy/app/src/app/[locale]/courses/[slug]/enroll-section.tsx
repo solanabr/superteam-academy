@@ -54,6 +54,7 @@ export function EnrollSection({
   // Optimistic: show enrolled state immediately after TX confirms
   const [optimisticEnrolled, setOptimisticEnrolled] = useState(false);
   const [optimisticComplete, setOptimisticComplete] = useState(false);
+  const [explorerUrl, setExplorerUrl] = useState<string | null>(null);
   const enrollingRef = useRef(false);
 
   const isComplete = isEnrolled && (enrollment?.completedAt !== null || optimisticComplete);
@@ -176,6 +177,7 @@ export function EnrollSection({
       } else {
         // Show completed immediately
         setOptimisticComplete(true);
+        if (data.explorerUrl) setExplorerUrl(data.explorerUrl);
         // Background: sync actual on-chain state
         for (let i = 0; i < 8; i++) {
           await new Promise((r) => setTimeout(r, 2000));
@@ -244,6 +246,24 @@ export function EnrollSection({
         <button className="sa-enroll-btn completed">
           &#10003;&nbsp;&nbsp;{t.completed}
         </button>
+        {explorerUrl && (
+          <a
+            href={explorerUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: "11px",
+              color: "var(--nd-highlight-blue, #6693F7)",
+              textDecoration: "underline",
+              textUnderlineOffset: "3px",
+              marginTop: "4px",
+              display: "inline-block",
+            }}
+          >
+            View on Explorer
+          </a>
+        )}
         {metaText}
       </div>
     );
