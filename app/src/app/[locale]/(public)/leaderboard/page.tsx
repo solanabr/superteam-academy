@@ -1,6 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import { getLeaderboard } from "@/services/leaderboard";
-import { LeaderboardTable } from "@/components/leaderboard/LeaderboardTable";
+import { LeaderboardClient } from "./LeaderboardClient";
 import type { Metadata } from "next";
 import type { LeaderboardTimeframe } from "@/types";
 import { Link } from "@/i18n/navigation";
@@ -77,7 +77,7 @@ export default async function LeaderboardPage({ searchParams }: Props) {
       )}
 
       {/* Table */}
-      <LeaderboardTable entries={entries} />
+      <LeaderboardClient entries={entries} />
     </div>
   );
 }
