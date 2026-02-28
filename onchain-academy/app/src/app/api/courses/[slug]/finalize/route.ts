@@ -17,7 +17,6 @@ import {
 import { courses } from "@/lib/services/courses";
 import {
   parseAnchorError,
-  isIdempotentError,
   isClientError,
 } from "@/lib/solana/anchor-errors";
 import { withRetry } from "@/lib/solana/retry";
@@ -100,108 +99,128 @@ export async function POST(
     const [coursePDA] = findCoursePDA(courseId);
     const [enrollmentPDA] = findEnrollmentPDA(courseId, learnerKey);
 
+    // Validate track collection upfront — no point finalizing if we can't issue
+    const trackCollection = getTrackCollection(course.track);
+    if (!trackCollection) {
+      console.error("No track collection configured for track:", course.track);
+      return NextResponse.json(
+        { error: `Track collection not configured for ${course.track}. Contact support.` },
+        { status: 500 },
+      );
+    }
+
     const accounts = getAccounts(program);
     const config = await accounts.config.fetch(configPDA);
     const xpMint = config.xpMint;
 
     const onChainCourse = await accounts.course.fetch(coursePDA);
     const creatorKey = onChainCourse.creator;
+    const totalXp = (onChainCourse.xpPerLesson ?? 0) * (onChainCourse.lessonCount ?? 0);
 
-    const [learnerATA, creatorATA] = await Promise.all([
-      ensureATA(connection, signer, xpMint, learnerKey),
-      ensureATA(connection, signer, xpMint, creatorKey),
-    ]);
+    // Step 1: Finalize course (XP award)
+    // If already finalized, continue to credential issuance anyway.
+    let finalizeTx: string | undefined;
+    let alreadyFinalized = false;
 
-    const tx = await withRetry(() =>
-      program.methods
-        .finalizeCourse()
-        .accounts({
-          config: configPDA,
-          course: coursePDA,
-          enrollment: enrollmentPDA,
-          learner: learnerKey,
-          learnerTokenAccount: learnerATA,
-          creatorTokenAccount: creatorATA,
-          creator: creatorKey,
-          xpMint,
-          backendSigner: signer.publicKey,
-          tokenProgram: TOKEN_2022_PROGRAM_ID,
-        })
-        .signers([signer])
-        .rpc(),
-    );
+    try {
+      const [learnerATA, creatorATA] = await Promise.all([
+        ensureATA(connection, signer, xpMint, learnerKey),
+        ensureATA(connection, signer, xpMint, creatorKey),
+      ]);
 
-    logEnrollmentEvent({
-      eventType: "finalize_course",
-      wallet: session.wallet,
-      courseId,
-      signature: tx,
-    });
+      finalizeTx = await withRetry(() =>
+        program.methods
+          .finalizeCourse()
+          .accounts({
+            config: configPDA,
+            course: coursePDA,
+            enrollment: enrollmentPDA,
+            learner: learnerKey,
+            learnerTokenAccount: learnerATA,
+            creatorTokenAccount: creatorATA,
+            creator: creatorKey,
+            xpMint,
+            backendSigner: signer.publicKey,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+          })
+          .signers([signer])
+          .rpc(),
+      );
 
-    // Attempt credential issuance if track collection is configured
-    let credentialIssued = false;
-    let credentialAsset: string | undefined;
-    let credentialError: string | undefined;
-    const trackCollection = getTrackCollection(course.track);
-    if (trackCollection) {
-      try {
-        const assetKeypair = Keypair.generate();
-        const trackLabel = TRACK_LABELS[course.track as keyof typeof TRACK_LABELS] ?? course.track;
-        const credentialName = `${trackLabel} - ${course.title}`;
-        const metadataUri = `https://superteam.academy/api/metadata/${courseId}`;
-
-        const totalXp = (onChainCourse.xpPerLesson ?? 0) * (onChainCourse.lessonCount ?? 0);
-
-        await withRetry(() =>
-          program.methods
-            .issueCredential(credentialName, metadataUri, 1, totalXp)
-            .accounts({
-              config: configPDA,
-              course: coursePDA,
-              enrollment: enrollmentPDA,
-              learner: learnerKey,
-              credentialAsset: assetKeypair.publicKey,
-              trackCollection: new PublicKey(trackCollection),
-              payer: signer.publicKey,
-              backendSigner: signer.publicKey,
-              mplCoreProgram: MPL_CORE_PROGRAM_ID,
-              systemProgram: SystemProgram.programId,
-            })
-            .signers([signer, assetKeypair])
-            .rpc(),
+      logEnrollmentEvent({
+        eventType: "finalize_course",
+        wallet: session.wallet,
+        courseId,
+        signature: finalizeTx,
+      });
+    } catch (finalizeErr) {
+      const anchor = parseAnchorError(finalizeErr);
+      if (anchor?.code === 5) {
+        // CourseAlreadyFinalized — XP was awarded before, continue to credential
+        alreadyFinalized = true;
+      } else if (anchor && isClientError(anchor.code)) {
+        return NextResponse.json(
+          { error: anchor.message, code: anchor.name },
+          { status: 400 },
         );
-        credentialIssued = true;
-        credentialAsset = assetKeypair.publicKey.toBase58();
-      } catch (credErr) {
-        const msg = credErr instanceof Error ? credErr.message : String(credErr);
-        console.error("issue-credential after finalize failed (non-fatal):", credErr);
-        credentialError = msg;
+      } else {
+        throw finalizeErr;
       }
-    } else {
-      credentialError = "No track collection configured for track: " + course.track;
-      console.warn("issue-credential skipped:", credentialError);
+    }
+
+    // Step 2: Issue credential (mandatory — no success without it)
+    let credentialAsset: string | undefined;
+    try {
+      const assetKeypair = Keypair.generate();
+      const trackLabel = TRACK_LABELS[course.track as keyof typeof TRACK_LABELS] ?? course.track;
+      const credentialName = `${trackLabel} - ${course.title}`;
+      const metadataUri = `https://superteam.academy/api/metadata/${courseId}`;
+
+      await withRetry(() =>
+        program.methods
+          .issueCredential(credentialName, metadataUri, 1, totalXp)
+          .accounts({
+            config: configPDA,
+            course: coursePDA,
+            enrollment: enrollmentPDA,
+            learner: learnerKey,
+            credentialAsset: assetKeypair.publicKey,
+            trackCollection: new PublicKey(trackCollection),
+            payer: signer.publicKey,
+            backendSigner: signer.publicKey,
+            mplCoreProgram: MPL_CORE_PROGRAM_ID,
+            systemProgram: SystemProgram.programId,
+          })
+          .signers([signer, assetKeypair])
+          .rpc(),
+      );
+      credentialAsset = assetKeypair.publicKey.toBase58();
+    } catch (credErr) {
+      const anchor = parseAnchorError(credErr);
+      if (anchor?.code === 16) {
+        // CredentialAlreadyIssued — idempotent success, asset exists in wallet
+      } else {
+        const msg = credErr instanceof Error ? credErr.message : String(credErr);
+        console.error("issue-credential failed:", credErr);
+        return NextResponse.json(
+          { error: `Credential issuance failed: ${msg}` },
+          { status: 500 },
+        );
+      }
     }
 
     return NextResponse.json({
       success: true,
       courseId,
-      xpAwarded: course.xpReward,
+      xpAwarded: alreadyFinalized ? 0 : totalXp,
       track: course.track,
-      finalizeTxSignature: tx,
-      explorerUrl: getExplorerUrl(tx),
-      credentialIssued,
+      finalizeTxSignature: finalizeTx,
+      explorerUrl: finalizeTx ? getExplorerUrl(finalizeTx) : undefined,
+      credentialIssued: true,
       credentialAsset,
-      credentialError,
     });
   } catch (err: unknown) {
     const anchor = parseAnchorError(err);
-    if (anchor && isIdempotentError(anchor.code)) {
-      return NextResponse.json({
-        alreadyDone: true,
-        message: anchor.message,
-        xpAwarded: 0,
-      });
-    }
     if (anchor && isClientError(anchor.code)) {
       return NextResponse.json(
         { error: anchor.message, code: anchor.name },

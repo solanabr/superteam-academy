@@ -18,7 +18,7 @@ export function CourseCompleteOverlay({
   show: boolean;
   locale: string;
   isFinalizing: boolean;
-  finalizationResult: { success: boolean; xpAwarded: number; credentialIssued: boolean; credentialAsset?: string; credentialError?: string } | null;
+  finalizationResult: { success: boolean; xpAwarded: number; credentialIssued: boolean; credentialAsset?: string; error?: string } | null;
   onFinalize: () => void;
   onDismiss: () => void;
 }) {
@@ -166,12 +166,10 @@ export function CourseCompleteOverlay({
                       color: "var(--xp)",
                     }}
                   >
-                    {finalizationResult.credentialIssued
-                      ? t("credentialIssued", { xp: finalizationResult.xpAwarded })
-                      : t("courseFinalized", { xp: finalizationResult.xpAwarded })}
+                    {t("credentialIssued", { xp: finalizationResult.xpAwarded })}
                   </p>
                 </div>
-                {finalizationResult.credentialIssued && finalizationResult.credentialAsset ? (
+                {finalizationResult.credentialAsset ? (
                   <a
                     href={`https://explorer.solana.com/address/${finalizationResult.credentialAsset}?cluster=devnet`}
                     target="_blank"
@@ -195,7 +193,7 @@ export function CourseCompleteOverlay({
                   >
                     {t("viewCredential")}
                   </a>
-                ) : finalizationResult.credentialIssued ? (
+                ) : (
                   <button
                     onClick={() => router.push(`/${locale}/certificates`)}
                     style={{
@@ -213,18 +211,7 @@ export function CourseCompleteOverlay({
                   >
                     {t("viewCredential")}
                   </button>
-                ) : finalizationResult.credentialError ? (
-                  <p
-                    style={{
-                      fontFamily: "var(--font-mono)",
-                      fontSize: "11px",
-                      color: "var(--nd-highlight-orange)",
-                      padding: "8px 0",
-                    }}
-                  >
-                    {t("credentialFailed")}
-                  </p>
-                ) : null}
+                )}
                 <button
                   onClick={onDismiss}
                   style={{
@@ -234,9 +221,9 @@ export function CourseCompleteOverlay({
                     letterSpacing: "0.15em",
                     textTransform: "uppercase",
                     padding: "14px 36px",
-                    background: finalizationResult.credentialIssued ? "none" : "var(--foreground)",
-                    color: finalizationResult.credentialIssued ? "var(--c-text-muted)" : "var(--background)",
-                    border: finalizationResult.credentialIssued ? "1px solid var(--c-border-subtle)" : "none",
+                    background: "none",
+                    color: "var(--c-text-muted)",
+                    border: "1px solid var(--c-border-subtle)",
                     cursor: "pointer",
                   }}
                 >
@@ -258,7 +245,7 @@ export function CourseCompleteOverlay({
                     color: "#EF4444",
                   }}
                 >
-                  {t("finalizeFailed")}
+                  {finalizationResult.error || t("finalizeFailed")}
                 </p>
                 <button
                   onClick={onFinalize}

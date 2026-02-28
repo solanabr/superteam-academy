@@ -91,7 +91,7 @@ export function LessonChallenge({
     xpAwarded: number;
     credentialIssued: boolean;
     credentialAsset?: string;
-    credentialError?: string;
+    error?: string;
   } | null>(null);
 
   const { enrollment } = useEnrollment(course?.id ?? null);
@@ -232,7 +232,6 @@ export function LessonChallenge({
           xpAwarded: result.xpAwarded || (course.xpReward ?? 0),
           credentialIssued: result.credentialIssued,
           credentialAsset: result.credentialAsset,
-          credentialError: result.credentialError,
         });
       } else {
         const result = await learningService.finalizeCourse("local", course.id ?? slug);
@@ -260,7 +259,8 @@ export function LessonChallenge({
       }, 300);
     } catch (e) {
       console.error("finalizeCourse error:", e);
-      setFinalizationResult({ success: false, xpAwarded: 0, credentialIssued: false });
+      const msg = e instanceof Error ? e.message : "Finalization failed";
+      setFinalizationResult({ success: false, xpAwarded: 0, credentialIssued: false, error: msg });
     } finally {
       setIsFinalizing(false);
     }
