@@ -35,6 +35,7 @@ model User {
   githubHandle  String?
 
   role          Role      @default(USER)
+  hasCompletedOnboarding Boolean @default(false)
   
   // Геймификация
   xp            Int       @default(0)
