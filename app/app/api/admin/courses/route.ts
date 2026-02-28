@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
 	const programId = getProgramId();
 	const connection = getSolanaConnection();
 	const authority = loadBackendSigner();
-	const [coursePda] = findCoursePDA(slug);
+	const [coursePda] = findCoursePDA(slug, programId);
 
 	// Check if course already exists on-chain
 	const existingInfo = await connection.getAccountInfo(coursePda, "confirmed");

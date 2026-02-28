@@ -150,7 +150,15 @@ async function sendOnchainUpdate(params: {
 	tx.recentBlockhash = blockhash;
 	tx.sign(authority);
 
-	const signature = await connection.sendRawTransaction(tx.serialize());
+	const sim = await connection.simulateTransaction(tx);
+	if (sim.value.err) {
+		const logs = sim.value.logs?.join("\n") ?? "";
+		throw new Error(`Simulation failed: ${JSON.stringify(sim.value.err)}\n${logs}`);
+	}
+
+	const signature = await connection.sendRawTransaction(tx.serialize(), {
+		skipPreflight: true,
+	});
 	await connection.confirmTransaction(
 		{ signature, blockhash, lastValidBlockHeight },
 		"confirmed"
@@ -235,12 +243,21 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 			wantContentTxId,
 		});
 	} catch (error) {
+		const msg = error instanceof Error ? error.message : "Unknown";
+		console.error("[PATCH] on-chain update failed", {
+			courseId: onchainCourseId,
+			wantActive,
+			wantXpPerLesson,
+			currentIsActive: onchain.isActive,
+			currentXpPerLesson: onchain.xpPerLesson,
+			error: msg,
+		});
 		return NextResponse.json(
 			{
 				error: "On-chain update failed",
 				onchain: {
 					synced: false,
-					error: error instanceof Error ? error.message : "Unknown",
+					error: msg,
 				},
 			},
 			{ status: 502 }

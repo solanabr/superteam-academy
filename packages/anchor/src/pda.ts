@@ -1,34 +1,33 @@
 import { PublicKey } from "@solana/web3.js";
-import { PROGRAM_ID, PDA_SEEDS } from "./idl";
+import { PDA_SEEDS } from "./idl";
 
-const programId = new PublicKey(PROGRAM_ID);
-
-export function findConfigPDA(): [PublicKey, number] {
+export function findConfigPDA(programId: PublicKey): [PublicKey, number] {
 	return PublicKey.findProgramAddressSync([...PDA_SEEDS.config], programId);
 }
 
-export function findCoursePDA(courseId: string): [PublicKey, number] {
+export function findCoursePDA(courseId: string, programId: PublicKey): [PublicKey, number] {
 	return PublicKey.findProgramAddressSync([...PDA_SEEDS.course(courseId)], programId);
 }
 
-export function findEnrollmentPDA(courseId: string, learner: PublicKey): [PublicKey, number] {
+export function findEnrollmentPDA(courseId: string, learner: PublicKey, programId: PublicKey): [PublicKey, number] {
 	return PublicKey.findProgramAddressSync(
 		[...PDA_SEEDS.enrollment(courseId, learner)],
 		programId
 	);
 }
 
-export function findMinterRolePDA(minterKey: PublicKey): [PublicKey, number] {
+export function findMinterRolePDA(minterKey: PublicKey, programId: PublicKey): [PublicKey, number] {
 	return PublicKey.findProgramAddressSync([...PDA_SEEDS.minter(minterKey)], programId);
 }
 
-export function findAchievementTypePDA(achievementId: string): [PublicKey, number] {
+export function findAchievementTypePDA(achievementId: string, programId: PublicKey): [PublicKey, number] {
 	return PublicKey.findProgramAddressSync([...PDA_SEEDS.achievement(achievementId)], programId);
 }
 
 export function findAchievementReceiptPDA(
 	achievementId: string,
-	recipient: PublicKey
+	recipient: PublicKey,
+	programId: PublicKey
 ): [PublicKey, number] {
 	return PublicKey.findProgramAddressSync(
 		[...PDA_SEEDS.achievementReceipt(achievementId, recipient)],
