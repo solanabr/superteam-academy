@@ -22,8 +22,14 @@ export async function getCredentialsByOwner(
 ): Promise<Credential[]> {
   if (!HELIUS_RPC_URL || !walletAddress) return [];
 
+  // Use the /api/rpc proxy on the client (HELIUS_API_KEY is server-only)
+  const rpcUrl =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/api/rpc`
+      : HELIUS_RPC_URL;
+
   try {
-    const response = await fetch(HELIUS_RPC_URL, {
+    const response = await fetch(rpcUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
