@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useState } from 'react';
+import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import {
   Award,
@@ -100,11 +101,13 @@ export function CredentialDetail({
           )}
         >
           {credential.imageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <Image
               src={credential.imageUrl}
               alt={credential.name}
-              className="size-full object-cover"
+              fill
+              className="object-cover"
+              sizes="(max-width: 640px) 100vw, 640px"
+              unoptimized
             />
           ) : (
             <div className="flex flex-col items-center gap-3 text-white/80">

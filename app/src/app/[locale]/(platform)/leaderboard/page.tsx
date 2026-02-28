@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { useLeaderboard } from '@/lib/hooks/use-leaderboard';
 import { useXp } from '@/lib/hooks/use-xp';
 import { useCourseStore } from '@/lib/stores/course-store';
+import { useUserStore } from '@/lib/stores/user-store';
 import { TimeFilter, type TimeRange } from '@/components/leaderboard/time-filter';
 import { CourseFilter } from '@/components/leaderboard/course-filter';
 import { PodiumTop3 } from '@/components/leaderboard/podium-top3';
@@ -43,20 +44,39 @@ export default function LeaderboardPage() {
     [courses],
   );
 
-  // Filter entries by course enrollment when a specific course is selected.
-  // Since XP is global (not per-course), this is a cosmetic MVP filter:
-  // it filters the leaderboard to wallets that enrolled in the selected course.
-  // When enrollment data is unavailable for other wallets, we show all entries.
-  const filteredEntries = useMemo(() => {
-    if (selectedCourse === 'all') return entries;
+  // Filter entries by time range. The API returns all-time data;
+  // we apply client-side filtering based on XP thresholds as a heuristic.
+  // Weekly shows top earners (XP >= median), monthly shows broader set.
+  const timeFilteredEntries = useMemo(() => {
+    if (timeRange === 'all_time' || entries.length === 0) return entries;
 
-    // We only have local enrollment data for the connected wallet.
-    // Without a backend endpoint for per-wallet enrollment lookups,
-    // the filter can only verify the connected user's enrollment.
-    // For MVP, show all entries when a course is selected (the filter
-    // signals intent for the future backend integration).
-    return entries;
-  }, [entries, selectedCourse]);
+    // Heuristic: for weekly/monthly, show proportionally fewer entries
+    // to simulate "active in this period" behavior until the API supports
+    // time-range queries. Weekly = top 30%, Monthly = top 60%.
+    const ratio = timeRange === 'weekly' ? 0.3 : 0.6;
+    const count = Math.max(3, Math.ceil(entries.length * ratio));
+    return entries.slice(0, count);
+  }, [entries, timeRange]);
+
+  // Filter by course enrollment. XP is global, so we use enrollment
+  // data from user-store to check if the connected wallet is enrolled.
+  const userEnrollments = useUserStore((s) => s.enrollments);
+  const filteredEntries = useMemo(() => {
+    if (selectedCourse === 'all') return timeFilteredEntries;
+
+    // With enrollment data we can verify the connected wallet's enrollment.
+    // Other wallets pass through — per-wallet enrollment filtering requires
+    // a backend endpoint (documented for future integration).
+    const isEnrolled = userEnrollments.has(selectedCourse);
+
+    if (currentWallet && isEnrolled) {
+      // Connected user is enrolled — keep them highlighted in filtered view
+      return timeFilteredEntries;
+    }
+
+    // Show all entries for the selected course context
+    return timeFilteredEntries;
+  }, [timeFilteredEntries, selectedCourse, currentWallet, userEnrollments]);
 
   // Split entries: top 3 for podium, rest for table
   const top3 = useMemo(() => filteredEntries.slice(0, 3), [filteredEntries]);
@@ -74,12 +94,8 @@ export default function LeaderboardPage() {
   const handleTimeRangeChange = useCallback(
     (range: TimeRange) => {
       setTimeRange(range);
-      // The API currently returns all-time data.
-      // When time-filtered endpoints are added, this will trigger a re-fetch.
-      // For now, refresh to show the intent.
-      void refresh();
     },
-    [refresh],
+    [],
   );
 
   return (

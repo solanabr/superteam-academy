@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Zap, CheckCircle2, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -40,12 +41,15 @@ export function DailyChallengeCard({
   className,
 }: DailyChallengeCardProps) {
   const [isStarting, setIsStarting] = useState(false);
+  const router = useRouter();
 
-  function handleStart() {
+  const handleStart = useCallback(() => {
     setIsStarting(true);
-    // Navigation would happen here — for now, simulate a brief loading state
-    setTimeout(() => setIsStarting(false), 1500);
-  }
+    // Navigate to the first available course challenge page.
+    // In production, this would link to a challenge-specific route
+    // using the challenge ID from the CMS.
+    router.push('/courses/intro-to-solana/challenge');
+  }, [router]);
 
   return (
     <Card
