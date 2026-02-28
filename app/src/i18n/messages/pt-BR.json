@@ -46,7 +46,8 @@
       }
     },
     "socialProof": {
-      "title": "Junte-se à Comunidade"
+      "title": "Junte-se à Comunidade",
+      "testimonials": "Depoimentos de Alunos"
     }
   },
   "courses": {
@@ -165,6 +166,7 @@
     "title": "Certificado",
     "verified": "Verificado na Solana",
     "share": "Compartilhar",
+    "download": "Baixar",
     "viewOnExplorer": "Ver no Explorer",
     "completedOn": "Concluído em {date}",
     "earnedBy": "Ganho por",

@@ -3,6 +3,7 @@ import { ExternalLink, Share2, Shield } from "lucide-react";
 import { solanaExplorerUrl } from "@/lib/solana";
 import { TRACKS } from "@/types";
 import type { Metadata } from "next";
+import { DownloadButton } from "./DownloadButton";
 
 interface Props {
   params: Promise<{ locale: string; id: string }>;
@@ -131,6 +132,7 @@ export default async function CertificatePage({ params }: Props) {
           <ExternalLink className="h-3.5 w-3.5" />
           {t("viewOnExplorer")}
         </a>
+        <DownloadButton label={t("download")} />
         <CopyShareButton url={`https://academy.superteam.fun/certificates/${id}`} label={t("share")} />
       </div>
 

@@ -46,7 +46,8 @@
       }
     },
     "socialProof": {
-      "title": "Join the Community"
+      "title": "Join the Community",
+      "testimonials": "Student Testimonials"
     }
   },
   "courses": {
@@ -165,6 +166,7 @@
     "title": "Certificate",
     "verified": "Verified on Solana",
     "share": "Share",
+    "download": "Download",
     "viewOnExplorer": "View on Explorer",
     "completedOn": "Completed on {date}",
     "earnedBy": "Earned by",

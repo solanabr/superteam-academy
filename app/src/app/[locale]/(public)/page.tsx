@@ -192,6 +192,63 @@ export default async function LandingPage() {
         </div>
       </section>
 
+      {/* ── Testimonials ── */}
+      <section className="py-20 px-4 border-t border-[#1F1F1F]">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="font-mono text-2xl font-bold text-[#EDEDED]">
+              {t("socialProof.testimonials")}
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[
+              {
+                initials: "MA",
+                name: "Miguel Andrade",
+                role: "Solana Developer",
+                quote:
+                  "Finally a platform that teaches Solana the right way. The on-chain XP system is genius — every lesson you complete is permanently on-chain.",
+              },
+              {
+                initials: "CS",
+                name: "Carolina Santos",
+                role: "DeFi Engineer",
+                quote:
+                  "Went from knowing nothing about Rust to deploying an AMM on devnet in 3 weeks. The code challenges are brutally effective.",
+              },
+              {
+                initials: "RL",
+                name: "Rafael Lima",
+                role: "Smart Contract Auditor",
+                quote:
+                  "The security course alone is worth it. Real exploit patterns with hands-on challenges. This is what Solana education should look like.",
+              },
+            ].map(({ initials, name, role, quote }) => (
+              <div
+                key={name}
+                className="bg-[#111111] border border-[#1F1F1F] rounded p-5 flex flex-col gap-4"
+              >
+                <p className="text-sm text-[#666666] leading-relaxed flex-1">
+                  &ldquo;{quote}&rdquo;
+                </p>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-[#1A1A1A] border border-[#2E2E2E] flex items-center justify-center font-mono text-xs font-bold text-[#EDEDED] shrink-0">
+                    {initials}
+                  </div>
+                  <div>
+                    <div className="font-mono text-sm font-semibold text-[#EDEDED]">
+                      {name}
+                    </div>
+                    <div className="text-xs text-[#666666]">{role}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── CTA Banner ── */}
       <section className="py-20 px-4 border-t border-[#1F1F1F]">
         <div className="max-w-2xl mx-auto text-center">
