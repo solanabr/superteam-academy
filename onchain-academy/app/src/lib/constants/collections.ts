@@ -6,12 +6,12 @@
  * env var after creating collections with create_achievement_type.
  */
 export const TRACK_COLLECTIONS: Record<string, string> = {
-  rust: process.env.NEXT_PUBLIC_RUST_COLLECTION ?? "",
-  anchor: process.env.NEXT_PUBLIC_ANCHOR_COLLECTION ?? "",
-  frontend: process.env.NEXT_PUBLIC_FRONTEND_COLLECTION ?? "",
-  security: process.env.NEXT_PUBLIC_SECURITY_COLLECTION ?? "",
-  defi: process.env.NEXT_PUBLIC_DEFI_COLLECTION ?? "",
-  mobile: process.env.NEXT_PUBLIC_MOBILE_COLLECTION ?? "",
+  rust: (process.env.NEXT_PUBLIC_RUST_COLLECTION ?? "").trim(),
+  anchor: (process.env.NEXT_PUBLIC_ANCHOR_COLLECTION ?? "").trim(),
+  frontend: (process.env.NEXT_PUBLIC_FRONTEND_COLLECTION ?? "").trim(),
+  security: (process.env.NEXT_PUBLIC_SECURITY_COLLECTION ?? "").trim(),
+  defi: (process.env.NEXT_PUBLIC_DEFI_COLLECTION ?? "").trim(),
+  mobile: (process.env.NEXT_PUBLIC_MOBILE_COLLECTION ?? "").trim(),
 };
 
 /**
