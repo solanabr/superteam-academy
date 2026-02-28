@@ -96,6 +96,15 @@ export default async function LandingPage() {
             </a>
           </div>
 
+          <div className="mt-4">
+            <a
+              href="./onboarding"
+              className="text-xs font-mono text-[#666666] hover:text-[#14F195] underline underline-offset-4 transition-colors"
+            >
+              Not sure where to start? Take the skill assessment →
+            </a>
+          </div>
+
           {/* Stats */}
           <div className="flex items-center justify-center gap-8 sm:gap-16">
             {stats.map(({ label, sublabel }) => (

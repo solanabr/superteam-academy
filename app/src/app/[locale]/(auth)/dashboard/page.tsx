@@ -131,6 +131,68 @@ const DIFFICULTY_COLORS: Record<string, string> = {
   advanced: "#FF4444",
 };
 
+// ─── Daily challenge widget ───────────────────────────────────────────────────
+
+function DailyChallengeWidget() {
+  // Mock daily challenge — in production, fetched from CMS
+  const challenge = {
+    title: "Bitmap Lesson Tracker",
+    description: "Implement a function that reads a u64 bitmap and returns which lesson indices are completed.",
+    xpReward: 50,
+    difficulty: "intermediate" as const,
+    expiresIn: "14h 22m",
+    completedBy: 47,
+  };
+
+  return (
+    <div className="mb-8">
+      <div className="flex items-center gap-3 mb-4">
+        <h2 className="font-mono text-lg font-semibold text-[#EDEDED]">Daily Challenge</h2>
+        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#14F195]/10 border border-[#14F195]/20 text-[#14F195] animate-pulse">
+          LIVE
+        </span>
+        <span className="ml-auto text-xs font-mono text-[#666666] flex items-center gap-1">
+          <Clock className="h-3 w-3" /> Resets in {challenge.expiresIn}
+        </span>
+      </div>
+      <div className="bg-[#111111] border border-[#14F195]/20 rounded p-5 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 rounded-full pointer-events-none"
+          style={{ background: "radial-gradient(circle at top right, rgba(20,241,149,0.06), transparent 70%)" }} />
+        <div className="flex items-start justify-between gap-4 relative">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-sm text-[#F5A623] bg-[#F5A623]/10 border border-[#F5A623]/20">
+                {challenge.difficulty}
+              </span>
+              <span className="text-[10px] font-mono text-[#666666]">
+                {challenge.completedBy} devs completed today
+              </span>
+            </div>
+            <h3 className="font-mono text-sm font-semibold text-[#EDEDED] mb-1">{challenge.title}</h3>
+            <p className="text-xs text-[#666666] leading-relaxed">{challenge.description}</p>
+          </div>
+          <div className="flex-shrink-0 text-right">
+            <div className="font-mono text-2xl font-bold text-[#14F195]">+{challenge.xpReward}</div>
+            <div className="text-[10px] text-[#666666] font-mono">XP</div>
+          </div>
+        </div>
+        <div className="mt-4">
+          <Link
+            href={{
+              pathname: "/courses/[slug]/lessons/[id]",
+              params: { slug: "solana-fundamentals", id: "l6" },
+            }}
+            className="inline-flex items-center gap-2 bg-[#14F195] text-black font-mono font-semibold text-sm px-5 py-2 rounded hover:bg-[#0D9E61] transition-colors"
+          >
+            <Zap className="h-3.5 w-3.5" />
+            Solve Challenge
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Activity icon ────────────────────────────────────────────────────────────
 
 function ActivityIcon({ type }: { type: ActivityItem["type"] }) {
@@ -393,6 +455,8 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      <DailyChallengeWidget />
 
       {/* Continue Learning (existing) */}
       <div className="mb-8">

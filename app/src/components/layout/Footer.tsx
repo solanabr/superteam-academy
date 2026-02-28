@@ -58,6 +58,18 @@ export function Footer() {
         </p>
         <div className="flex items-center gap-4">
           <a
+            href="/community"
+            className="text-xs text-[#666666] hover:text-[#EDEDED] transition-colors font-mono"
+          >
+            Community
+          </a>
+          <a
+            href="/admin"
+            className="text-xs text-[#444444] hover:text-[#666666] transition-colors font-mono"
+          >
+            Admin
+          </a>
+          <a
             href="https://github.com/solanabr/superteam-academy"
             target="_blank"
             rel="noopener noreferrer"
