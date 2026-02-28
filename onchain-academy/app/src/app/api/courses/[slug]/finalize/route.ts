@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireWalletSession } from "@/lib/auth/require-session";
 import { Keypair, PublicKey, SystemProgram, Transaction, sendAndConfirmTransaction } from "@solana/web3.js";
+import { BN } from "@coral-xyz/anchor";
 import {
   getAssociatedTokenAddressSync,
   createAssociatedTokenAccountInstruction,
@@ -178,7 +179,7 @@ export async function POST(
 
       await withRetry(() =>
         program.methods
-          .issueCredential(credentialName, metadataUri, 1, totalXp)
+          .issueCredential(credentialName, metadataUri, 1, new BN(totalXp))
           .accounts({
             config: configPDA,
             course: coursePDA,

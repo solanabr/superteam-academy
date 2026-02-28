@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireWalletSession } from "@/lib/auth/require-session";
 import { Keypair, PublicKey, SystemProgram } from "@solana/web3.js";
+import { BN } from "@coral-xyz/anchor";
 import { getBackendProgram } from "@/lib/solana/backend-signer";
 import {
   findConfigPDA,
@@ -70,7 +71,7 @@ export async function POST(req: Request) {
           credentialName,
           metadataUri,
           coursesCompleted ?? 1,
-          totalXp != null ? totalXp : 0,
+          new BN(totalXp ?? 0),
         )
         .accounts({
           config: configPDA,
