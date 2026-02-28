@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
@@ -35,6 +35,20 @@ export default function SettingsPage() {
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
+  const [activeTheme, setActiveTheme] = useState<"dark" | "light">("dark");
+
+  useEffect(() => {
+    const saved = localStorage.getItem("theme");
+    if (saved === "light" || saved === "dark") {
+      setActiveTheme(saved);
+    }
+  }, []);
+
+  const applyTheme = (theme: "dark" | "light") => {
+    setActiveTheme(theme);
+    localStorage.setItem("theme", theme);
+    document.documentElement.setAttribute("data-theme", theme);
+  };
 
   const handleSaveProfile = async () => {
     setSaving(true);
@@ -157,18 +171,19 @@ export default function SettingsPage() {
                 {t("appearance.title")}
               </h2>
               <div className="flex gap-3">
-                {["dark", "light"].map((theme) => (
+                {(["dark", "light"] as const).map((theme) => (
                   <button
                     key={theme}
+                    onClick={() => applyTheme(theme)}
                     className={cn(
                       "flex-1 py-3 rounded border font-mono text-sm capitalize transition-colors",
-                      theme === "dark"
+                      activeTheme === theme
                         ? "border-[#14F195] text-[#14F195] bg-[#14F195]/5"
-                        : "border-[#1F1F1F] text-[#666666] hover:border-[#2E2E2E]"
+                        : "border-[#1F1F1F] text-[#666666] hover:border-[#2E2E2E] hover:text-[#EDEDED]"
                     )}
                   >
                     {theme === "dark" ? t("appearance.dark") : t("appearance.light")}
-                    {theme === "dark" && <span className="ml-1.5 text-[9px]">✓</span>}
+                    {activeTheme === theme && <span className="ml-1.5 text-[9px]">✓</span>}
                   </button>
                 ))}
               </div>

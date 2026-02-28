@@ -116,6 +116,24 @@
   --sidebar-ring: #0D9E61;
 }
 
+[data-theme="light"] {
+  --bg-primary: #FFFFFF;
+  --bg-secondary: #F5F5F5;
+  --text-primary: #0A0A0A;
+  --text-muted: #666666;
+  --border: #E5E5E5;
+  --accent: #00C47A;
+}
+
+[data-theme="dark"] {
+  --bg-primary: #0A0A0A;
+  --bg-secondary: #111111;
+  --text-primary: #EDEDED;
+  --text-muted: #666666;
+  --border: #1F1F1F;
+  --accent: #14F195;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

@@ -1,10 +1,10 @@
 import { getTranslations } from "next-intl/server";
 import { getAllCourses } from "@/lib/sanity";
 import { CourseCard } from "@/components/course/CourseCard";
-import { DIFFICULTY_LABELS, type CourseDifficulty } from "@/types";
 import type { Metadata } from "next";
 import type { SanityCourse } from "@/types";
 import { Link } from "@/i18n/navigation";
+import { Search } from "lucide-react";
 
 export async function generateMetadata({
   params,
@@ -109,6 +109,22 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
         </h1>
         <p className="text-sm text-[#666666]">{t("subtitle")}</p>
       </div>
+
+      {/* Search */}
+      <form method="GET" action="" className="mb-4">
+        {difficulty && <input type="hidden" name="difficulty" value={difficulty} />}
+        {track && <input type="hidden" name="track" value={track} />}
+        <div className="relative w-full max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#666666] pointer-events-none" />
+          <input
+            type="text"
+            name="q"
+            defaultValue={q ?? ""}
+            placeholder="Search courses..."
+            className="w-full bg-[#111111] border border-[#1F1F1F] focus:border-[#14F195]/50 rounded pl-9 pr-3 py-1.5 text-sm font-mono text-[#EDEDED] placeholder-[#666666] focus:outline-none transition-colors"
+          />
+        </div>
+      </form>
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2 mb-8">
