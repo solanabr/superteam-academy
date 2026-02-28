@@ -8,7 +8,7 @@ import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useWallet } from "@/lib/wallet/context";
 import { learningService } from "@/lib/services/learning-progress";
-import { useEnrollment, isLessonComplete } from "@/lib/hooks/use-enrollment";
+import { useEnrollment, isLessonComplete, countCompletedLessons } from "@/lib/hooks/use-enrollment";
 import { XPToast } from "@/components/gamification/xp-toast";
 import { V9LessonSidebar } from "./lesson-sidebar";
 import { QuizRenderer } from "./lesson-quiz";
@@ -63,7 +63,7 @@ export function LessonReading({
     credentialIssued: boolean;
   } | null>(null);
 
-  const { enrollment } = useEnrollment(course?.id ?? null);
+  const { enrollment, refresh: refreshEnrollment } = useEnrollment(course?.id ?? null);
 
   useEffect(() => {
     const userId = walletAddress ?? "local";
@@ -149,7 +149,7 @@ export function LessonReading({
     setCompleted(true);
 
     let allOthersDone = false;
-    if (isLastLesson && enrollment?.lessonFlags) {
+    if (enrollment?.lessonFlags) {
       allOthersDone = true;
       for (let i = 0; i < allLessons.length; i++) {
         if (i === lessonIndex) continue;
@@ -168,7 +168,7 @@ export function LessonReading({
     } else {
       callCompleteLessonAPI();
     }
-  }, [completed, isLastLesson, enrollment, allLessons, lessonIndex, triggerCelebration, callCompleteLessonAPI]);
+  }, [completed, enrollment, allLessons, lessonIndex, triggerCelebration, callCompleteLessonAPI]);
 
   const navigateNext = useCallback(() => {
     if (nextLesson) {
@@ -184,6 +184,51 @@ export function LessonReading({
       if (!course) return;
 
       if (walletAddress) {
+        const totalLessons = allLessons.length;
+        const currentEnrollment = await refreshEnrollment();
+
+        // Sync locally-completed lessons that are missing on-chain
+        if (currentEnrollment?.lessonFlags) {
+          const currentCount = countCompletedLessons(currentEnrollment.lessonFlags);
+          if (currentCount < totalLessons) {
+            const progress = await learningService.getProgress(walletAddress, course.id ?? slug);
+            for (const idx of progress.completedLessons) {
+              if (!isLessonComplete(currentEnrollment.lessonFlags, idx)) {
+                const syncRes = await fetch("/api/complete-lesson", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ learner: walletAddress, courseId: course.id, lessonIndex: idx }),
+                });
+                if (!syncRes.ok) {
+                  const syncData = await syncRes.json().catch(() => ({}));
+                  if (!syncData.alreadyDone) {
+                    setFinalizationResult({ xpAwarded: 0, credentialIssued: false });
+                    return;
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        // Retry verification up to 4 times with 2s delay for RPC propagation
+        let verified = false;
+        for (let attempt = 0; attempt < 4; attempt++) {
+          if (attempt > 0) await new Promise((r) => setTimeout(r, 2000));
+          const fresh = await refreshEnrollment();
+          if (fresh?.lessonFlags) {
+            const onChainCount = countCompletedLessons(fresh.lessonFlags);
+            if (onChainCount >= totalLessons) {
+              verified = true;
+              break;
+            }
+          }
+        }
+        if (!verified) {
+          setFinalizationResult({ xpAwarded: 0, credentialIssued: false });
+          return;
+        }
+
         const res = await fetch(`/api/courses/${slug}/finalize`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -225,7 +270,7 @@ export function LessonReading({
     } finally {
       setIsFinalizing(false);
     }
-  }, [slug, walletAddress, course]);
+  }, [slug, walletAddress, course, allLessons, refreshEnrollment]);
 
   return (
     <div
