@@ -1,0 +1,447 @@
+"use client";
+
+import { useCallback, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { usePrivy } from "@privy-io/react-auth";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Baby,
+  Globe,
+  Code,
+  Rocket,
+  Anchor,
+  Shield,
+  TrendingUp,
+  Layout,
+  Coins,
+  Briefcase,
+  GraduationCap,
+  Heart,
+  Users,
+  Timer,
+  Coffee,
+  Zap,
+  CalendarDays,
+} from "lucide-react";
+import type { Course } from "@/types";
+import { trackEvent } from "@/lib/analytics";
+import { QuizProgress } from "./quiz-progress";
+import { QuizStep } from "./quiz-step";
+import type { QuizOption } from "./quiz-step";
+import { QuizResults } from "./quiz-results";
+import type { QuizAnswers } from "./quiz-results";
+import { AssessmentStep } from "./assessment-step";
+
+interface OnboardingQuizProps {
+  courses: Course[];
+}
+
+const STEP_KEYS = [
+  "experience",
+  "interests",
+  "goal",
+  "pace",
+  "assessment",
+] as const;
+
+function buildExperienceOptions(t: (key: string) => string): QuizOption[] {
+  return [
+    {
+      id: "beginner",
+      label: t("experience.beginner.label"),
+      description: t("experience.beginner.description"),
+      icon: Baby,
+    },
+    {
+      id: "web-dev",
+      label: t("experience.webDev.label"),
+      description: t("experience.webDev.description"),
+      icon: Globe,
+    },
+    {
+      id: "dev-new-solana",
+      label: t("experience.devNewSolana.label"),
+      description: t("experience.devNewSolana.description"),
+      icon: Code,
+    },
+    {
+      id: "solana-dev",
+      label: t("experience.solanaDev.label"),
+      description: t("experience.solanaDev.description"),
+      icon: Rocket,
+    },
+  ];
+}
+
+function buildInterestOptions(t: (key: string) => string): QuizOption[] {
+  return [
+    {
+      id: "rust",
+      label: t("interests.rust.label"),
+      description: t("interests.rust.description"),
+      icon: Code,
+    },
+    {
+      id: "anchor",
+      label: t("interests.anchor.label"),
+      description: t("interests.anchor.description"),
+      icon: Anchor,
+    },
+    {
+      id: "defi",
+      label: t("interests.defi.label"),
+      description: t("interests.defi.description"),
+      icon: TrendingUp,
+    },
+    {
+      id: "frontend",
+      label: t("interests.frontend.label"),
+      description: t("interests.frontend.description"),
+      icon: Layout,
+    },
+    {
+      id: "security",
+      label: t("interests.security.label"),
+      description: t("interests.security.description"),
+      icon: Shield,
+    },
+    {
+      id: "token",
+      label: t("interests.token.label"),
+      description: t("interests.token.description"),
+      icon: Coins,
+    },
+  ];
+}
+
+function buildGoalOptions(t: (key: string) => string): QuizOption[] {
+  return [
+    {
+      id: "first-program",
+      label: t("goal.firstProgram.label"),
+      description: t("goal.firstProgram.description"),
+      icon: Rocket,
+    },
+    {
+      id: "job",
+      label: t("goal.job.label"),
+      description: t("goal.job.description"),
+      icon: Briefcase,
+    },
+    {
+      id: "project",
+      label: t("goal.project.label"),
+      description: t("goal.project.description"),
+      icon: GraduationCap,
+    },
+    {
+      id: "fun",
+      label: t("goal.fun.label"),
+      description: t("goal.fun.description"),
+      icon: Heart,
+    },
+    {
+      id: "contribute",
+      label: t("goal.contribute.label"),
+      description: t("goal.contribute.description"),
+      icon: Users,
+    },
+  ];
+}
+
+function buildPaceOptions(t: (key: string) => string): QuizOption[] {
+  return [
+    {
+      id: "casual",
+      label: t("pace.casual.label"),
+      description: t("pace.casual.description"),
+      icon: Coffee,
+    },
+    {
+      id: "consistent",
+      label: t("pace.consistent.label"),
+      description: t("pace.consistent.description"),
+      icon: Timer,
+    },
+    {
+      id: "intensive",
+      label: t("pace.intensive.label"),
+      description: t("pace.intensive.description"),
+      icon: Zap,
+    },
+    {
+      id: "weekend",
+      label: t("pace.weekend.label"),
+      description: t("pace.weekend.description"),
+      icon: CalendarDays,
+    },
+  ];
+}
+
+export function OnboardingQuiz({ courses }: OnboardingQuizProps) {
+  const t = useTranslations("onboarding");
+  const tc = useTranslations("common");
+  const router = useRouter();
+  const { authenticated } = usePrivy();
+
+  const [step, setStep] = useState(0);
+  const [answers, setAnswers] = useState<QuizAnswers>({
+    experience: "",
+    interests: [],
+    goal: "",
+    pace: "",
+  });
+  const [assessmentAnswers, setAssessmentAnswers] = useState<
+    Record<string, string>
+  >({});
+  const [skillLevel, setSkillLevel] = useState<string | null>(null);
+  const [skillScore, setSkillScore] = useState<number | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const showResults = step === STEP_KEYS.length;
+
+  const stepLabels = STEP_KEYS.map((key) => t(`steps.${key}`));
+
+  const handleSingleSelect = useCallback(
+    (key: "experience" | "goal" | "pace", id: string) => {
+      setAnswers((prev) => ({ ...prev, [key]: id }));
+    },
+    [],
+  );
+
+  const handleMultiSelect = useCallback((id: string) => {
+    setAnswers((prev) => ({
+      ...prev,
+      interests: prev.interests.includes(id)
+        ? prev.interests.filter((i) => i !== id)
+        : [...prev.interests, id],
+    }));
+  }, []);
+
+  const handleAssessmentAnswer = useCallback(
+    (questionId: string, optionId: string) => {
+      setAssessmentAnswers((prev) => ({ ...prev, [questionId]: optionId }));
+    },
+    [],
+  );
+
+  const assessmentComplete = Object.keys(assessmentAnswers).length === 6;
+
+  const canProceed =
+    step === 0
+      ? answers.experience !== ""
+      : step === 1
+        ? answers.interests.length > 0
+        : step === 2
+          ? answers.goal !== ""
+          : step === 3
+            ? answers.pace !== ""
+            : step === 4
+              ? assessmentComplete
+              : false;
+
+  const handleSkip = async () => {
+    if (!authenticated) {
+      router.push("/dashboard");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await fetch("/api/onboarding", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ skip: true }),
+      });
+      sessionStorage.setItem("sta-onboarding-checked", "true");
+      router.push("/dashboard");
+    } catch {
+      router.push("/dashboard");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleNext = async () => {
+    if (!canProceed || step >= STEP_KEYS.length) return;
+
+    // Last step (assessment) — submit everything
+    if (step === STEP_KEYS.length - 1) {
+      const preferences = {
+        experience: answers.experience,
+        interests: answers.interests,
+        goal: answers.goal,
+        pace: answers.pace,
+      };
+
+      if (authenticated) {
+        setSubmitting(true);
+        try {
+          const res = await fetch("/api/onboarding", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              preferences,
+              assessment: assessmentAnswers,
+            }),
+          });
+          const data = await res.json();
+          setSkillLevel(data.skillLevel ?? null);
+          setSkillScore(data.skillScore ?? null);
+          sessionStorage.setItem("sta-onboarding-checked", "true");
+        } catch {
+          // Fall through to show results even on error
+        } finally {
+          setSubmitting(false);
+        }
+      } else {
+        // Unauthenticated — save to localStorage
+        try {
+          localStorage.setItem(
+            "sta-onboarding",
+            JSON.stringify({ ...preferences, assessment: assessmentAnswers }),
+          );
+        } catch {
+          // Silently ignore storage errors
+        }
+      }
+      trackEvent({
+        name: "onboarding_completed",
+        params: {
+          skill_level: answers.experience,
+          interests: answers.interests,
+        },
+      });
+      setStep(step + 1);
+      return;
+    }
+
+    setStep(step + 1);
+  };
+
+  const handleBack = () => {
+    if (step > 0) setStep(step - 1);
+  };
+
+  const experienceOptions = buildExperienceOptions((key) =>
+    t(`questions.${key}`),
+  );
+  const interestOptions = buildInterestOptions((key) => t(`questions.${key}`));
+  const goalOptions = buildGoalOptions((key) => t(`questions.${key}`));
+  const paceOptions = buildPaceOptions((key) => t(`questions.${key}`));
+
+  return (
+    <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-12">
+      {/* Progress */}
+      {!showResults && (
+        <div className="mb-10">
+          <QuizProgress
+            currentStep={step}
+            totalSteps={STEP_KEYS.length}
+            labels={stepLabels}
+          />
+        </div>
+      )}
+
+      {/* Quiz Steps */}
+      {step === 0 && (
+        <QuizStep
+          title={t("questions.experience.title")}
+          subtitle={t("questions.experience.subtitle")}
+          options={experienceOptions}
+          selected={answers.experience ? [answers.experience] : []}
+          onSelect={(id) => handleSingleSelect("experience", id)}
+        />
+      )}
+
+      {step === 1 && (
+        <QuizStep
+          title={t("questions.interests.title")}
+          subtitle={t("questions.interests.subtitle")}
+          options={interestOptions}
+          selected={answers.interests}
+          multiSelect
+          onSelect={handleMultiSelect}
+        />
+      )}
+
+      {step === 2 && (
+        <QuizStep
+          title={t("questions.goal.title")}
+          subtitle={t("questions.goal.subtitle")}
+          options={goalOptions}
+          selected={answers.goal ? [answers.goal] : []}
+          onSelect={(id) => handleSingleSelect("goal", id)}
+        />
+      )}
+
+      {step === 3 && (
+        <QuizStep
+          title={t("questions.pace.title")}
+          subtitle={t("questions.pace.subtitle")}
+          options={paceOptions}
+          selected={answers.pace ? [answers.pace] : []}
+          onSelect={(id) => handleSingleSelect("pace", id)}
+        />
+      )}
+
+      {step === 4 && (
+        <AssessmentStep
+          answers={assessmentAnswers}
+          onAnswer={handleAssessmentAnswer}
+        />
+      )}
+
+      {showResults && (
+        <QuizResults
+          answers={answers}
+          courses={courses}
+          skillLevel={skillLevel}
+          skillScore={skillScore}
+          authenticated={authenticated}
+        />
+      )}
+
+      {/* Navigation buttons */}
+      {!showResults && (
+        <div className="mt-10 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={handleBack}
+            disabled={step === 0}
+            className="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground disabled:invisible"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            {tc("back")}
+          </button>
+
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={handleSkip}
+              disabled={submitting}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+            >
+              {t("skipOnboarding")}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleNext}
+              disabled={!canProceed || submitting}
+              className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground transition-all duration-200 hover:bg-primary/90 hover:shadow-md hover:-translate-y-0.5 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-40"
+            >
+              {submitting
+                ? "..."
+                : step === STEP_KEYS.length - 1
+                  ? t("seeResults")
+                  : tc("next")}
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
