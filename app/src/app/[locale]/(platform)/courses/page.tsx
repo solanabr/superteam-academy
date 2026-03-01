@@ -23,10 +23,11 @@ import { useUserStore } from '@/lib/stores/user-store';
 // Helpers
 // ---------------------------------------------------------------------------
 
-function countActive(filters: { track: string | null; difficulty: string | null; searchQuery: string; sortBy: string }): number {
+function countActive(filters: { track: string | null; difficulty: string | null; duration: string | null; searchQuery: string; sortBy: string }): number {
   let count = 0;
   if (filters.track) count++;
   if (filters.difficulty) count++;
+  if (filters.duration) count++;
   if (filters.searchQuery.trim()) count++;
   if (filters.sortBy !== 'newest') count++;
   return count;

@@ -143,6 +143,7 @@ function createDefaultCourseState() {
     filters: {
       track: null as string | null,
       difficulty: null as 'beginner' | 'intermediate' | 'advanced' | null,
+      duration: null as 'short' | 'medium' | 'long' | null,
       searchQuery: '',
       sortBy: 'newest' as 'newest' | 'popular' | 'difficulty' | 'title',
     },
@@ -693,6 +694,7 @@ describe('useCourseList', () => {
     mockCourseState.filters = {
       track: 'blockchain' as string | null,
       difficulty: 'beginner' as 'beginner' | 'intermediate' | 'advanced' | null,
+      duration: null as 'short' | 'medium' | 'long' | null,
       searchQuery: 'solana',
       sortBy: 'title' as 'newest' | 'popular' | 'difficulty' | 'title',
     };

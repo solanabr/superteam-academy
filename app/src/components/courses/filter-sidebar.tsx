@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import type { CourseFilters, Difficulty, SortBy } from '@/lib/stores/course-store';
+import type { CourseFilters, Difficulty, DurationRange, SortBy } from '@/lib/stores/course-store';
 
 // ---------------------------------------------------------------------------
 // Track config
@@ -31,6 +31,12 @@ const DIFFICULTIES: { value: Difficulty; labelKey: string }[] = [
   { value: 'beginner', labelKey: 'beginner' },
   { value: 'intermediate', labelKey: 'intermediate' },
   { value: 'advanced', labelKey: 'advanced' },
+];
+
+const DURATION_OPTIONS: { value: DurationRange; labelKey: string }[] = [
+  { value: 'short', labelKey: 'duration_short' },
+  { value: 'medium', labelKey: 'duration_medium' },
+  { value: 'long', labelKey: 'duration_long' },
 ];
 
 const SORT_OPTIONS: { value: SortBy; labelKey: string }[] = [
@@ -55,6 +61,7 @@ function countActiveFilters(filters: CourseFilters): number {
   let count = 0;
   if (filters.track) count++;
   if (filters.difficulty) count++;
+  if (filters.duration) count++;
   if (filters.searchQuery.trim()) count++;
   if (filters.sortBy !== 'newest') count++;
   return count;
@@ -145,6 +152,36 @@ export function FilterSidebar({
                 )}
               >
                 {t(diff.labelKey)}
+              </Button>
+            );
+          })}
+        </div>
+      </FilterSection>
+
+      <Separator />
+
+      {/* Duration filter */}
+      <FilterSection title={t('filter_duration')}>
+        <div className="flex flex-wrap gap-1.5">
+          {DURATION_OPTIONS.map((dur) => {
+            const isActive = filters.duration === dur.value;
+            return (
+              <Button
+                key={dur.value}
+                variant={isActive ? 'default' : 'outline'}
+                size="xs"
+                onClick={() =>
+                  onFilterChange(
+                    'duration',
+                    isActive ? null : dur.value,
+                  )
+                }
+                className={cn(
+                  'transition-colors',
+                  isActive && 'shadow-sm',
+                )}
+              >
+                {t(dur.labelKey)}
               </Button>
             );
           })}

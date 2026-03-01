@@ -8,10 +8,12 @@ import { allCoursesQuery } from '@/lib/sanity/queries';
 
 export type Difficulty = 'beginner' | 'intermediate' | 'advanced';
 export type SortBy = 'newest' | 'popular' | 'difficulty' | 'title';
+export type DurationRange = 'short' | 'medium' | 'long';
 
 export interface CourseFilters {
   track: string | null;
   difficulty: Difficulty | null;
+  duration: DurationRange | null;
   searchQuery: string;
   sortBy: SortBy;
 }
@@ -73,8 +75,15 @@ const DIFFICULTY_MAP: Record<string, number> = {
 const DEFAULT_FILTERS: CourseFilters = {
   track: null,
   difficulty: null,
+  duration: null,
   searchQuery: '',
   sortBy: 'newest',
+};
+
+const DURATION_RANGES: Record<DurationRange, { min: number; max: number }> = {
+  short: { min: 0, max: 2 },
+  medium: { min: 2, max: 5 },
+  long: { min: 5, max: Infinity },
 };
 
 const DEFAULT_XP_PER_LESSON = 25;
@@ -244,6 +253,14 @@ export const useCourseStore = create<CourseState>()((set, get) => ({
     if (filters.difficulty) {
       const targetDifficulty = DIFFICULTY_LABEL_TO_NUM[filters.difficulty];
       filtered = filtered.filter((c) => c.difficulty === targetDifficulty);
+    }
+
+    // Filter by duration
+    if (filters.duration) {
+      const range = DURATION_RANGES[filters.duration];
+      filtered = filtered.filter(
+        (c) => c.estimatedHours >= range.min && c.estimatedHours < range.max,
+      );
     }
 
     // Filter by search query

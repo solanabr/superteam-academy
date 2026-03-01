@@ -102,6 +102,7 @@ describe('useCourseStore', () => {
       filters: {
         track: null,
         difficulty: null,
+        duration: null,
         searchQuery: '',
         sortBy: 'newest',
       },
@@ -127,6 +128,7 @@ describe('useCourseStore', () => {
       const { filters } = useCourseStore.getState();
       expect(filters.track).toBeNull();
       expect(filters.difficulty).toBeNull();
+      expect(filters.duration).toBeNull();
       expect(filters.searchQuery).toBe('');
       expect(filters.sortBy).toBe('newest');
     });
@@ -182,6 +184,7 @@ describe('useCourseStore', () => {
     it('resets all filters to default values', () => {
       useCourseStore.getState().setFilter('track', 'defi');
       useCourseStore.getState().setFilter('difficulty', 'advanced');
+      useCourseStore.getState().setFilter('duration', 'short');
       useCourseStore.getState().setFilter('searchQuery', 'test');
       useCourseStore.getState().setFilter('sortBy', 'title');
 
@@ -190,6 +193,7 @@ describe('useCourseStore', () => {
       const { filters } = useCourseStore.getState();
       expect(filters.track).toBeNull();
       expect(filters.difficulty).toBeNull();
+      expect(filters.duration).toBeNull();
       expect(filters.searchQuery).toBe('');
       expect(filters.sortBy).toBe('newest');
     });
@@ -397,6 +401,33 @@ describe('useCourseStore', () => {
 
       expect(result).toHaveLength(1);
       expect(result[0]!.courseId).toBe('defi-201');
+    });
+
+    // -----------------------------------------------------------------------
+    // Filter by duration
+    // -----------------------------------------------------------------------
+
+    it('filters by short duration (< 2 hours)', () => {
+      // solana-101: 10 lessons * 15min = 2.5h → rounds to 3h
+      // defi-201: 8 lessons * 15min = 2h → rounds to 2h
+      // anchor-102: 12 lessons * 15min = 3h → rounds to 3h
+      // All are >= 2h, so 'short' (<2h) should return 0
+      useCourseStore.getState().setFilter('duration', 'short');
+      const result = useCourseStore.getState().getFilteredCourses();
+      expect(result).toHaveLength(0);
+    });
+
+    it('filters by medium duration (2–5 hours)', () => {
+      useCourseStore.getState().setFilter('duration', 'medium');
+      const result = useCourseStore.getState().getFilteredCourses();
+      // All test courses are 2-3h, so all should match
+      expect(result).toHaveLength(3);
+    });
+
+    it('filters by long duration (5+ hours)', () => {
+      useCourseStore.getState().setFilter('duration', 'long');
+      const result = useCourseStore.getState().getFilteredCourses();
+      expect(result).toHaveLength(0);
     });
 
     // -----------------------------------------------------------------------
