@@ -33,6 +33,7 @@
     "courses": "Cursos",
     "dashboard": "Panel",
     "leaderboard": "Clasificación",
+    "community": "Comunidad",
     "profile": "Perfil",
     "settings": "Configuración",
     "certificates": "Certificados"
@@ -160,7 +161,10 @@
     "buildSuccess": "¡Programa compilado con éxito!",
     "buildFailed": "Error de compilación. Revisa los errores del compilador.",
     "linkWalletToEarnXp": "Vincula tu wallet para ganar XP on-chain.",
-    "linkWalletSettings": "Ir a Configuración →"
+    "linkWalletSettings": "Ir a Configuración →",
+    "discussion": "Discusión",
+    "askQuestion": "Hacer una Pregunta",
+    "signInToAsk": "Inicia sesión para hacer una pregunta"
   },
   "dashboard": {
     "browseCourses": "Explorar Cursos",
@@ -543,5 +547,59 @@
     "invalidAmount": "La cantidad debe ser mayor que cero.",
     "invalidXpReward": "La recompensa de XP debe ser mayor que cero.",
     "unknown": "La transacción falló. Inténtalo de nuevo."
+  },
+  "community": {
+    "title": "Comunidad",
+    "description": "Discute, haz preguntas y comparte con otros estudiantes",
+    "askQuestion": "Hacer una Pregunta",
+    "startDiscussion": "Iniciar una Discusión",
+    "allThreads": "Todos los Temas",
+    "answers": "{count, plural, zero {Sin respuestas} one {# respuesta} other {# respuestas}}",
+    "views": "{count, plural, one {# vista} other {# vistas}}",
+    "accepted": "Respuesta Aceptada",
+    "solved": "Resuelto",
+    "unanswered": "Sin Respuesta",
+    "pinned": "Fijado",
+    "locked": "Bloqueado",
+    "filterLatest": "Recientes",
+    "filterTop": "Más Votados",
+    "filterUnanswered": "Sin Respuesta",
+    "typeAll": "Todos",
+    "typeQuestions": "Preguntas",
+    "typeDiscussions": "Discusiones",
+    "postAnswer": "Responder",
+    "acceptAnswer": "Aceptar Respuesta",
+    "flagContent": "Reportar",
+    "flagReasons": {
+      "spam": "Spam",
+      "offensive": "Ofensivo",
+      "off-topic": "Fuera de tema",
+      "other": "Otro"
+    },
+    "flagSubmitted": "Reporte enviado. Gracias.",
+    "threadCreated": "Tema creado exitosamente",
+    "answerPosted": "Respuesta publicada",
+    "stats": {
+      "threads": "Temas",
+      "answers": "Respuestas",
+      "accepted": "Aceptadas",
+      "communityXp": "XP de la Comunidad"
+    },
+    "editor": {
+      "titlePlaceholder": "¿Cuál es tu pregunta o tema?",
+      "bodyPlaceholder": "Describe tu pregunta o tema en detalle. Usa Markdown para formatear.",
+      "preview": "Vista Previa",
+      "write": "Escribir"
+    },
+    "search": {
+      "placeholder": "Buscar discusiones...",
+      "noResults": "No se encontraron temas"
+    },
+    "empty": {
+      "global": "No hay temas aún. ¡Sé el primero en iniciar una discusión!",
+      "category": "No hay temas en esta categoría aún.",
+      "course": "No hay discusiones sobre este curso aún.",
+      "lesson": "No hay preguntas sobre esta lección aún. ¡Haz una!"
+    }
   }
 }
