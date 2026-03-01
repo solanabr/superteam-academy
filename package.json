@@ -48,6 +48,7 @@
 	"devDependencies": {
 		"@biomejs/biome": "catalog:",
 		"@types/node": "catalog:",
+		"critters": "^0.0.25",
 		"next": "catalog:",
 		"turbo": "^2.8.9",
 		"typescript": "catalog:"

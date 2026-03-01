@@ -8,13 +8,15 @@ const dmSans = DM_Sans({
 	weight: ["400", "500", "700"],
 	variable: "--font-dm-sans",
 	display: "swap",
+	preload: true,
 });
 
 const bricolageGrotesque = Bricolage_Grotesque({
 	subsets: ["latin"],
-	weight: ["400", "500", "600", "700", "800"],
+	weight: ["500", "700", "800"],
 	variable: "--font-display",
 	display: "swap",
+	preload: true,
 });
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -51,6 +53,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 			<head>
 				<link rel="icon" href="/favicon.ico" type="image/x-icon" />
 				<link rel="manifest" href="/manifest.json" />
+				<link rel="dns-prefetch" href="https://cdn.sanity.io" />
+				<link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+				<link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
 				<meta name="apple-mobile-web-app-capable" content="yes" />
 				<meta name="apple-mobile-web-app-status-bar-style" content="default" />
 			</head>

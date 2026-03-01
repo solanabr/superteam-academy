@@ -1,10 +1,13 @@
 "use client";
 
 import type React from "react";
-import { useEffect } from "react";
-import { ProgressProvider } from "@bprogress/next/app";
+import { useEffect, lazy, Suspense } from "react";
 import { ThemeProvider } from "next-themes";
 import { AuthWalletProvider } from "@/contexts/auth-wallet-provider";
+
+const ProgressProvider = lazy(() =>
+	import("@bprogress/next/app").then((m) => ({ default: m.ProgressProvider }))
+);
 
 type WalletProviderProps = {
 	children: React.ReactNode;
@@ -20,14 +23,18 @@ export default function Providers({ children, initialSession }: WalletProviderPr
 
 	return (
 		<ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
-			<ProgressProvider
-				height="3px"
-				color="#008c4c"
-				options={{ showSpinner: false }}
-				shallowRouting
-			>
-				<AuthWalletProvider initialSession={initialSession}>{children}</AuthWalletProvider>
-			</ProgressProvider>
+			<Suspense>
+				<ProgressProvider
+					height="3px"
+					color="#008c4c"
+					options={{ showSpinner: false }}
+					shallowRouting
+				>
+					<AuthWalletProvider initialSession={initialSession}>
+						{children}
+					</AuthWalletProvider>
+				</ProgressProvider>
+			</Suspense>
 		</ThemeProvider>
 	);
 }

@@ -1,18 +1,26 @@
 import type { Metadata, Viewport } from "next";
+import dynamic from "next/dynamic";
 import Script from "next/script";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import Providers from "../providers";
 import { SiteHeader } from "@/components/navigation/site-header";
-import { SiteFooter } from "@/components/navigation/site-footer";
 import { serverAuth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { locales } from "@superteam-academy/i18n/config";
-import { OnboardingGuard } from "@/components/onboarding/onboarding-guard";
 import { getGravatarUrl } from "@/lib/utils";
 import { syncAuthSession } from "../api/auth/sync/action";
 import { getLocalizedPageMetadata } from "@/lib/metadata";
+
+const SiteFooter = dynamic(() =>
+	import("@/components/navigation/site-footer").then((m) => ({ default: m.SiteFooter }))
+);
+const OnboardingGuard = dynamic(() =>
+	import("@/components/onboarding/onboarding-guard").then((m) => ({
+		default: m.OnboardingGuard,
+	}))
+);
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
 const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY;
@@ -55,12 +63,14 @@ export default async function LocaleLayout({
 	setRequestLocale(locale);
 
 	const headerList = await headers();
-	const messages = await getMessages({ locale });
-	const initialSession = await serverAuth.api.getSession({
-		headers: {
-			cookie: headerList.get("cookie") || "",
-		},
-	});
+	const [messages, initialSession] = await Promise.all([
+		getMessages({ locale }),
+		serverAuth.api.getSession({
+			headers: {
+				cookie: headerList.get("cookie") || "",
+			},
+		}),
+	]);
 
 	if (initialSession) {
 		const syncData = await syncAuthSession(initialSession);

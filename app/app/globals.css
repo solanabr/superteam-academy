@@ -148,7 +148,6 @@
 		scroll-behavior: smooth;
 		-webkit-font-smoothing: antialiased;
 		-moz-osx-font-smoothing: grayscale;
-		text-rendering: optimizeLegibility;
 	}
 	body {
 		font-feature-settings: "ss01", "ss02", "cv01";
