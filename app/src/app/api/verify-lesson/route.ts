@@ -26,14 +26,25 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Answer too short" }, { status: 400 });
     }
 
+    const courseDb = await prisma.course.findUnique({ 
+        where: { slug: courseId },
+        include: { modules: { include: { lessons: true } } }
+    });
+
+    const allLessons = courseDb?.modules.flatMap(m => m.lessons).sort((a, b) => a.order - b.order) || [];
+    const currentLesson = allLessons[lessonIndex];
+
     // 2. ИНТЕЛЛЕКТУАЛЬНАЯ ВАЛИДАЦИЯ (Anti-Cheat)
-    const validation = validateCode(courseId, lessonIndex, codeAnswer);
+    if (currentLesson && currentLesson.validationRules) {
+        const rules = currentLesson.validationRules as any[]; // Приводим JSON к массиву правил
+        const validation = validateCode(codeAnswer, rules);
+            
         if (!validation.isValid) {
-            // Возвращаем 400 Bad Request с конкретным текстом ошибки
             return NextResponse.json({ 
-                error: "Syntax Error / Requirement Missing", 
+                error: "Validation Failed", 
                 details: validation.error 
-        }, { status: 400 });
+            }, { status: 400 });
+        }
     }
 
     // 2. [ANTI-FARMING CHECK] Проверяем БД перед блокчейном
@@ -43,7 +54,7 @@ export async function POST(request: Request) {
         include: { progress: true } // Подгружаем прогресс
     });
 
-    const courseDb = await prisma.course.findUnique({ where: { slug: courseId }});
+    
     const xpRewardAmount = courseDb?.xpPerLesson || 25; // Fallback на 100, если вдруг нет в БД
 
     if (!user) {

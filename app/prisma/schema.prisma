@@ -182,6 +182,7 @@ model Lesson {
   initialCode String?      // Стартовый код (для практики)
   order       Int          // Глобальный индекс урока в курсе (0, 1, 2...) для блокчейна
   isChallenge Boolean      @default(true) // true = практика с кодом, false = только текст/видео
+  validationRules Json? 
 }
 
 model Challenge {

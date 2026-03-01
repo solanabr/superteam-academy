@@ -4,6 +4,11 @@ import { prisma } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
+import { getServerProgram, getBackendWallet } from "@/lib/server";
+import { PublicKey, SystemProgram } from "@solana/web3.js";
+import { PROGRAM_ID } from "@/lib/constants";
+import { BN } from "@coral-xyz/anchor";
+
 // GET: Получить список всех курсов для админки
 export async function GET() {
   try {
@@ -42,62 +47,152 @@ export async function POST(request: Request) {
     }
 
     const data = await request.json();
-    
-    // Используем транзакцию, чтобы обновить всю структуру атомарно
-    const result = await prisma.$transaction(async (tx) => {
-        // 1. Создаем или обновляем сам Курс
-        const course = await tx.course.upsert({
-            where: { slug: data.slug },
-            update: {
-                title: data.title,
-                description: data.description,
-                difficulty: data.difficulty,
-                xpPerLesson: data.xpPerLesson,
-                isPublished: data.isPublished,
-                imageUrl: data.imageUrl
-            },
-            create: {
-                slug: data.slug,
-                title: data.title,
-                description: data.description,
-                difficulty: data.difficulty,
-                xpPerLesson: data.xpPerLesson,
-                isPublished: data.isPublished,
-                imageUrl: data.imageUrl
-            }
+    const { slug, title, description, difficulty, xpPerLesson, imageUrl, isPublished, modules } = data;
+
+    // Подсчет общего количества уроков (нужно для блокчейна)
+    let totalLessons = 0;
+    if (modules && Array.isArray(modules)) {
+        modules.forEach(mod => {
+            if (mod.lessons) totalLessons += mod.lessons.length;
         });
+    }
 
-        // 2. Обрабатываем модули и уроки
-        // Для простоты (и чтобы не писать сложную логику синхронизации удалений),
-        // при апдейте через админку мы удаляем старые модули и создаем новые,
-        // либо аккуратно апдейтим.
-        // ВАЖНО: Удаление модулей удалит и LessonProgress пользователей! 
-        // Поэтому мы делаем безопасный upsert.
+    // ==========================================
+    // БЛОКЧЕЙН ЛОГИКА (Если курс публикуется)
+    // ==========================================
+    if (isPublished) {
+        console.log(`[Admin] Attempting to publish/update course ${slug} to blockchain...`);
+        try {
+            const program = getServerProgram();
+            const backendWallet = getBackendWallet();
+            
+            const [configPda] = PublicKey.findProgramAddressSync([Buffer.from("config")], PROGRAM_ID);
+            const [coursePda] = PublicKey.findProgramAddressSync([Buffer.from("course"), Buffer.from(slug)], PROGRAM_ID);
+            
+            // Проверяем, существует ли курс
+            const courseExists = await program.account.course.fetchNullable(coursePda);
+            const contentTxId = new Array(32).fill(0); // Заглушка для Arweave
+            
+            let diffNum = 1;
+            if (difficulty === "Intermediate") diffNum = 2;
+            if (difficulty === "Advanced") diffNum = 3;
 
-        if (data.modules && Array.isArray(data.modules)) {
-            let globalLessonIndex = 0; // Сквозной индекс для блокчейна
+            // Форматируем XP в BN, так как в updateCourse IDL часто требует BN, даже если в createCourse - обычное число.
+            // Но чтобы быть в безопасности, передадим числа, как в оригинальном скрипте.
+            const xpValue = parseInt(xpPerLesson) || 50;
 
-            for (const [modIndex, mod] of data.modules.entries()) {
-                const dbModule = await tx.courseModule.upsert({
-                    // Если есть ID, обновляем, иначе создаем (используем составной ключ или просто id)
-                    // Для надежности ищем по courseId + title (в реальном проде лучше по ID)
-                    where: { id: mod.id || "000000000000000000000000" }, // Dummy ObjectId
-                    update: { title: mod.title, order: modIndex },
-                    create: { courseId: course.id, title: mod.title, order: modIndex }
+            if (!courseExists) {
+                // СОЗДАНИЕ НОВОГО КУРСА
+                console.log(`[Admin] Creating NEW course PDA for: ${slug}`);
+                await program.methods.createCourse({
+                    courseId: slug,
+                    creator: backendWallet.publicKey,
+                    contentTxId: contentTxId,
+                    lessonCount: totalLessons,
+                    difficulty: diffNum,
+                    xpPerLesson: new BN(xpValue), // В оригинале было 100, но TypeScript IDL часто хочет BN. 
+                                                  // Оставим BN, если будет ругаться, уберем.
+                    trackId: 1, 
+                    trackLevel: 1,
+                    prerequisite: null,
+                    creatorRewardXp: new BN(50), 
+                    minCompletionsForReward: 10,  // Оставим как число, как в оригинале
+                })
+                .accounts({
+                    course: coursePda,
+                    config: configPda,
+                    authority: backendWallet.publicKey,
+                    systemProgram: SystemProgram.programId,
+                })
+                .signers([backendWallet.payer])
+                .rpc();
+                
+                console.log(`[Admin] ✅ Course ${slug} created on-chain!`);
+                
+            } else {
+                // ОБНОВЛЕНИЕ СУЩЕСТВУЮЩЕГО КУРСА
+                console.log(`[Admin] Course ${slug} exists. UPDATING on-chain data...`);
+                
+                // ВАЖНО: Смотрим в SPEC.md инструкцию update_course
+                await program.methods.updateCourse({
+                    newContentTxId: contentTxId,
+                    newIsActive: true,
+                    newXpPerLesson: new BN(xpValue),
+                    newCreatorRewardXp: null, // Не меняем
+                    newMinCompletionsForReward: null, // Не меняем
+                })
+                .accounts({
+                    config: configPda,
+                    course: coursePda,
+                    authority: backendWallet.publicKey,
+                })
+                .signers([backendWallet.payer])
+                .rpc();
+
+                console.log(`[Admin] ✅ Course ${slug} updated on-chain!`);
+            }
+        } catch (chainError: any) {
+            console.error("[Admin] ❌ Blockchain Error:", chainError);
+            return NextResponse.json({ error: `Blockchain Error: ${chainError.message}` }, { status: 500 });
+        }
+    }
+
+    // ==========================================
+    // DATABASE ЛОГИКА (Транзакция)
+    // ==========================================
+    // 1. Создаем/обновляем курс
+    const course = await prisma.course.upsert({
+        where: { slug: slug },
+        update: { title, description, difficulty, xpPerLesson, isPublished, imageUrl },
+        create: { slug, title, description, difficulty, xpPerLesson, isPublished, imageUrl }
+    });
+
+    // 2. Обрабатываем модули и уроки
+    if (modules && Array.isArray(modules)) {
+        let globalLessonIndex = 0;
+
+        for (let modIndex = 0; modIndex < modules.length; modIndex++) {
+            const mod = modules[modIndex];
+
+            // Находим или создаем модуль. Чтобы не было дублей при обновлении, 
+            // мы ищем его по courseId и title (в идеале нужно было бы передавать ID с фронта).
+            // Но для хакатона мы можем просто искать по title внутри курса.
+            let dbModule = await prisma.courseModule.findFirst({
+                where: { courseId: course.id, title: mod.title }
+            });
+
+            if (dbModule) {
+                dbModule = await prisma.courseModule.update({
+                    where: { id: dbModule.id },
+                    data: { order: modIndex }
                 });
+            } else {
+                dbModule = await prisma.courseModule.create({
+                    data: { courseId: course.id, title: mod.title, order: modIndex }
+                });
+            }
 
-                if (mod.lessons && Array.isArray(mod.lessons)) {
-                    for (const lesson of mod.lessons) {
-                        await tx.lesson.upsert({
-                            where: { id: lesson.id || "000000000000000000000000" },
-                            update: {
-                                title: lesson.title,
+            if (mod.lessons && Array.isArray(mod.lessons)) {
+                for (const lesson of mod.lessons) {
+                    
+                    // Аналогично ищем урок по title внутри модуля
+                    let dbLesson = await prisma.lesson.findFirst({
+                        where: { moduleId: dbModule.id, title: lesson.title }
+                    });
+
+                    if (dbLesson) {
+                        await prisma.lesson.update({
+                            where: { id: dbLesson.id },
+                            data: {
                                 content: lesson.content,
                                 initialCode: lesson.initialCode,
                                 isChallenge: lesson.isChallenge,
                                 order: globalLessonIndex
-                            },
-                            create: {
+                            }
+                        });
+                    } else {
+                        await prisma.lesson.create({
+                            data: {
                                 moduleId: dbModule.id,
                                 title: lesson.title,
                                 content: lesson.content,
@@ -106,15 +201,14 @@ export async function POST(request: Request) {
                                 order: globalLessonIndex
                             }
                         });
-                        globalLessonIndex++;
                     }
+                    globalLessonIndex++;
                 }
             }
         }
-        return course;
-    });
+    }
 
-    return NextResponse.json({ success: true, course: result });
+    return NextResponse.json({ success: true, course: course });
 
   } catch (error: any) {
     console.error("Save course error:", error);
