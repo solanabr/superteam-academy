@@ -12,7 +12,7 @@ import { ProgressBar, PageHeader, StreakCalendar, DailyReward } from "@/componen
 import { getAllCourses, getCourseIdForProgram, getEffectiveLessonCount } from "@/lib/services/content-service";
 import { getMockStreakData } from "@/lib/services/mock-leaderboard";
 import { useXpBalance, useCourse, useEnrollment } from "@/hooks";
-import { getLessonFlagsFromEnrollment, countCompletedLessons } from "@/lib/lesson-bitmap";
+import { getLessonFlagsFromEnrollment, countCompletedLessons, getCompletedAtFromEnrollment } from "@/lib/lesson-bitmap";
 import { levelFromXp } from "@/lib/level";
 import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
@@ -25,6 +25,8 @@ function EnrolledCourseCard({ course }: { course: MockCourse }) {
     const lessonFlags = getLessonFlagsFromEnrollment(enrollment ?? undefined);
     const completedCount = lessonFlags.length > 0 ? countCompletedLessons(lessonFlags) : 0;
     const effectiveCount = getEffectiveLessonCount(course, onChainCourse ?? null);
+    const completedAt = getCompletedAtFromEnrollment(enrollment ?? undefined);
+    const isCourseComplete = completedAt != null;
     const t = useTranslations("dashboard");
     return (
         <Link href={`/courses/${course.slug}`} className="h-full">
@@ -35,10 +37,16 @@ function EnrolledCourseCard({ course }: { course: MockCourse }) {
                         <h2 className="text-2xl sm:text-3xl line-clamp-2 min-h-[3.5rem] sm:min-h-[4.5rem]">{course.title}</h2>
                     </div>
                     <div className="mt-auto pt-4">
-                        <h2 className="text-lg text-muted-foreground">
-                            {completedCount} {t("completedOutOf")} {effectiveCount}
-                        </h2>
-                        <ProgressBar value={completedCount} max={effectiveCount} />
+                        {isCourseComplete ? (
+                            <h2 className="text-lg text-green-600 dark:text-green-400 font-medium">{t("courseComplete")}</h2>
+                        ) : (
+                            <>
+                                <h2 className="text-lg text-muted-foreground">
+                                    {completedCount} {t("completedOutOf")} {effectiveCount}
+                                </h2>
+                                <ProgressBar value={completedCount} max={effectiveCount} />
+                            </>
+                        )}
                     </div>
                 </div>
             </div>

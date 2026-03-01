@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { LeaderboardEntry } from "@/lib/services/learning-progress";
 
+const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3001";
+const BACKEND_API_TOKEN = process.env.BACKEND_API_TOKEN ?? "";
 const XP_MINT = process.env.NEXT_PUBLIC_XP_MINT ?? "";
 const HELIUS_RPC = process.env.NEXT_PUBLIC_HELIUS_RPC ?? "";
 const HELIUS_API_KEY = process.env.HELIUS_API_KEY ?? "";
@@ -17,7 +19,6 @@ function getHeliusUrl(): string | null {
   return null;
 }
 
-/** DAS getTokenAccounts response item (flexible shape) */
 interface TokenAccountItem {
   owner?: string;
   token_amount?: { amount?: string };
@@ -32,25 +33,31 @@ interface GetTokenAccountsResponse {
   error?: { message?: string };
 }
 
-export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const timeframe = searchParams.get("timeframe") ?? "all-time";
-
-  if (!XP_MINT) {
-    return NextResponse.json(
-      { error: "XP mint not configured", entries: [] },
-      { status: 200 }
+async function fetchFromBackend(): Promise<LeaderboardEntry[] | null> {
+  if (!BACKEND_URL || !BACKEND_API_TOKEN) return null;
+  try {
+    const res = await fetch(
+      `${BACKEND_URL.replace(/\/$/, "")}/v1/academy/leaderboard`,
+      { headers: { "X-API-Key": BACKEND_API_TOKEN } }
     );
+    if (!res.ok) return null;
+    const data = (await res.json()) as { entries?: Array<{ rank?: number; wallet?: string; xp?: number; coursesCompleted?: number }> };
+    const entries = data.entries ?? [];
+    if (entries.length === 0) return null;
+    return entries.map((e) => ({
+      rank: e.rank ?? 0,
+      wallet: e.wallet ?? "",
+      xp: e.xp ?? 0,
+    }));
+  } catch {
+    return null;
   }
+}
 
+async function fetchFromHelius(): Promise<LeaderboardEntry[]> {
+  if (!XP_MINT) return [];
   const url = getHeliusUrl();
-  if (!url) {
-    return NextResponse.json(
-      { error: "Helius RPC not configured", entries: [] },
-      { status: 200 }
-    );
-  }
-
+  if (!url) return [];
   try {
     const response = await fetch(url, {
       method: "POST",
@@ -59,23 +66,13 @@ export async function GET(request: NextRequest) {
         jsonrpc: "2.0",
         id: "1",
         method: "getTokenAccounts",
-        params: {
-          mint: XP_MINT,
-          limit: 1000,
-        },
+        params: { mint: XP_MINT, limit: 1000 },
       }),
     });
-
     const data = (await response.json()) as GetTokenAccountsResponse;
-    if (data.error || !data.result) {
-      return NextResponse.json(
-        { error: data.error?.message ?? "DAS request failed", entries: [] },
-        { status: 200 }
-      );
-    }
-
+    if (data.error || !data.result) return [];
     const accounts = data.result.token_accounts ?? data.result.items ?? [];
-    const entries: LeaderboardEntry[] = accounts
+    return accounts
       .map((acc) => {
         const owner = acc.owner ?? "";
         const amountStr = acc.token_amount?.amount ?? acc.amount ?? "0";
@@ -84,18 +81,17 @@ export async function GET(request: NextRequest) {
       })
       .filter((e) => e.owner && e.xp > 0)
       .sort((a, b) => b.xp - a.xp)
-      .map((e, i) => ({
-        rank: i + 1,
-        wallet: e.owner,
-        xp: e.xp,
-      }));
-
-    return NextResponse.json({ entries });
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : "Internal error";
-    return NextResponse.json(
-      { error: msg, entries: [] },
-      { status: 200 }
-    );
+      .map((e, i) => ({ rank: i + 1, wallet: e.owner, xp: e.xp }));
+  } catch {
+    return [];
   }
+}
+
+export async function GET(_request: NextRequest) {
+  const backend = await fetchFromBackend();
+  if (backend && backend.length > 0) {
+    return NextResponse.json({ entries: backend });
+  }
+  const entries = await fetchFromHelius();
+  return NextResponse.json({ entries });
 }

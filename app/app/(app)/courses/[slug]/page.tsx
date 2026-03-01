@@ -13,6 +13,7 @@ import {
     ChevronLeft,
     Play,
     Code2,
+    Trophy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,7 +21,7 @@ import { Card } from "@/components/ui/card";
 import { PageHeader, ProgressBar } from "@/components/app";
 import { getCourseBySlug, getAllLessonsFlat, getCourseIdForProgram } from "@/lib/services/content-service";
 import { useEnroll, useEnrollment } from "@/hooks";
-import { getLessonFlagsFromEnrollment, countCompletedLessons, isLessonComplete } from "@/lib/lesson-bitmap";
+import { getLessonFlagsFromEnrollment, countCompletedLessons, isLessonComplete, getCompletedAtFromEnrollment } from "@/lib/lesson-bitmap";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { toast } from "sonner";
 
@@ -65,6 +66,8 @@ export default function CourseDetailPage({
     const isEnrolled = !!enrollment;
     const lessonFlags = getLessonFlagsFromEnrollment(enrollment ?? undefined);
     const completedCount = lessonFlags.length > 0 ? countCompletedLessons(lessonFlags) : 0;
+    const completedAt = getCompletedAtFromEnrollment(enrollment ?? undefined);
+    const isCourseComplete = completedAt != null;
 
     const handleEnroll = () => {
         if (!publicKey) {
@@ -92,7 +95,7 @@ export default function CourseDetailPage({
                         <div className="flex flex-wrap items-center gap-2">
                             <Badge
                                 variant="outline"
-                                className={difficultyColors[course.difficulty]}
+                                className={`text-base font-game capitalize ${difficultyColors[course.difficulty]}`}
                             >
                                 {course.difficulty}
                             </Badge>
@@ -128,20 +131,36 @@ export default function CourseDetailPage({
 
                     <div className="shrink-0 w-full lg:w-auto">
                         {isEnrolled ? (
-                            <div className="space-y-3">
-                                <ProgressBar value={completedCount} max={course.lessonCount} label="Progress" />
-                                <Button asChild className="w-full font-game text-lg">
-                                    <Link href={`/courses/${slug}/lessons/${allLessons[0]?.id}`}>
-                                        <Play className="mr-2 h-4 w-4" />
-                                        Continue Learning
-                                    </Link>
-                                </Button>
+                            <div className="space-y-3 w-full min-w-0 max-w-xs lg:max-w-sm">
+                                <ProgressBar value={completedCount} max={course.lessonCount} label="Progress" className="font-game text-sm" />
+                                {isCourseComplete ? (
+                                    <>
+                                        <Badge variant="outline" className="bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20 text-base font-game">
+                                            <Trophy className="mr-1 h-4 w-4" />
+                                            Course Complete
+                                        </Badge>
+                                        <Button asChild variant="pixel" className="w-full font-game text-lg">
+                                            <Link href="/certificates">
+                                                View Certificates
+                                            </Link>
+                                        </Button>
+                                    </>
+                                ) : (
+                                    <Button asChild variant="pixel" className="w-full font-game text-lg">
+                                        <Link href={`/courses/${slug}/lessons/${allLessons[0]?.id}`}>
+                                            <Play className="mr-2 h-4 w-4" />
+                                            Continue Learning
+                                        </Link>
+                                    </Button>
+                                )}
                             </div>
                         ) : (
                             <Button
+                                variant="pixel"
                                 size="lg"
                                 onClick={handleEnroll}
                                 disabled={enroll.isPending}
+                                className="font-game text-lg"
                             >
                                 {enroll.isPending ? "Enrolling..." : "Enroll Now"}
                             </Button>
@@ -170,6 +189,8 @@ export default function CourseDetailPage({
                                 {mod.lessons.map((lesson, li) => {
                                     const flatIndex = lessonIndexStart + li;
                                     const completed = isEnrolled && isLessonComplete(lessonFlags, flatIndex);
+                                    const prevCompleted = flatIndex === 0 || (isEnrolled && isLessonComplete(lessonFlags, flatIndex - 1));
+                                    const canAccess = !isEnrolled ? false : prevCompleted;
                                     return (
                                         <div
                                             key={lesson.id}
@@ -179,8 +200,10 @@ export default function CourseDetailPage({
                                                 {isEnrolled ? (
                                                     completed ? (
                                                         <CheckCircle2 className="h-5 w-5 text-green-500" />
-                                                    ) : (
+                                                    ) : canAccess ? (
                                                         <Circle className="h-5 w-5 text-muted-foreground" />
+                                                    ) : (
+                                                        <Lock className="h-5 w-5 text-muted-foreground/50" />
                                                     )
                                                 ) : (
                                                     <Lock className="h-5 w-5 text-muted-foreground/50" />
@@ -202,11 +225,17 @@ export default function CourseDetailPage({
                                             </div>
 
                                             {isEnrolled && (
-                                                <Button asChild variant="pixel" size="sm" className="font-game">
-                                                    <Link href={`/courses/${slug}/lessons/${lesson.id}`}>
-                                                        {completed ? "Review" : "Start"}
-                                                    </Link>
-                                                </Button>
+                                                canAccess ? (
+                                                    <Button asChild variant="pixel" size="sm" className="font-game">
+                                                        <Link href={`/courses/${slug}/lessons/${lesson.id}`}>
+                                                            {completed ? "Review" : "Start"}
+                                                        </Link>
+                                                    </Button>
+                                                ) : (
+                                                    <span className="text-sm text-muted-foreground font-game">
+                                                        Complete previous lesson
+                                                    </span>
+                                                )
                                             )}
                                         </div>
                                     );

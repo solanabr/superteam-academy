@@ -52,6 +52,7 @@
     "badge": "Badge",
     "dailyStreak": "Daily Streak",
     "completedOutOf": "Completed out of",
+    "courseComplete": "Course complete",
     "getCertified": "Get Certified",
     "getCertifiedHint": "Complete courses to earn on-chain credential NFTs",
     "viewCerts": "View Certs"

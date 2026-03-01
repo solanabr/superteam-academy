@@ -2,12 +2,14 @@
 
 import { Award } from "lucide-react";
 import { PageHeader, EmptyState } from "@/components/app";
+import { CredentialImage } from "@/components/app/CredentialImage";
 import { Button } from "@/components/ui/button";
-import { useCredentials } from "@/hooks";
+import { useCredentials, useTrackImageMap } from "@/hooks";
 import Link from "next/link";
 
 export default function CertificatesPage() {
     const { data: credentials, isLoading } = useCredentials();
+    const trackImageMap = useTrackImageMap();
 
     if (isLoading) {
         return (
@@ -25,15 +27,20 @@ export default function CertificatesPage() {
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {credentials.map((cred) => (
                         <Link key={cred.asset} href={`/certificates/${cred.asset}`}>
-                            <div className="p-5 border-4 rounded-2xl hover:bg-zinc-800/50 transition-colors h-full">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <Award className="h-6 w-6 text-yellow-400" />
-                                    <span className="font-game text-lg">Track {cred.trackId}</span>
+                            <div className="p-5 border-4 rounded-2xl hover:border-yellow-400/50 transition-all bg-card h-full group">
+                                <div className="flex items-center gap-3 mb-2">
+                                    <CredentialImage
+                                        imageUrl={cred.imageUrl}
+                                        metadataUri={cred.metadataUri}
+                                        fallbackImageUrl={trackImageMap[cred.trackId]}
+                                        size="sm"
+                                    />
+                                    <span className="font-game text-lg">{cred.name ?? `Track ${cred.trackId}`}</span>
                                 </div>
-                                <p className="font-game text-gray-400 text-sm">
+                                <p className="font-game text-muted-foreground text-sm">
                                     Level {cred.level} · {cred.coursesCompleted} courses · {cred.totalXp.toLocaleString()} XP
                                 </p>
-                                <p className="font-game text-xs text-gray-500 mt-1 truncate" title={cred.asset}>
+                                <p className="font-game text-xs text-muted-foreground mt-1 truncate" title={cred.asset}>
                                     {cred.asset.slice(0, 8)}...
                                 </p>
                             </div>

@@ -7,12 +7,23 @@ const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 const nextConfig: NextConfig = {
   // Acknowledge Turbopack when webpack is also configured (e.g. for production build).
   turbopack: {},
+  serverExternalPackages: ["@prisma/client", "@prisma/adapter-pg"],
   images: {
     remotePatterns: [
       {
         protocol: "https",
         hostname: "api.dicebear.com",
         pathname: "/9.x/**",
+      },
+      {
+        protocol: "https",
+        hostname: "gateway.pinata.cloud",
+        pathname: "/ipfs/**",
+      },
+      {
+        protocol: "https",
+        hostname: "**.mypinata.cloud",
+        pathname: "/ipfs/**",
       },
     ],
   },

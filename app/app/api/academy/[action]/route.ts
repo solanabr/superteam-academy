@@ -40,6 +40,7 @@ const ALLOWED_ACTIONS = new Set([
   "create-credential-collection",
   "issue-credential-for-completion",
   "upload-credential-metadata",
+  "index-enrollment",
 ]);
 
 async function verifyAdminToken(token: string): Promise<boolean> {

@@ -6,6 +6,7 @@ export function registerLeaderboardRoutes(app: Hono): void {
     const prisma = getPrisma();
     const rows = await prisma.leaderboardEntry.findMany({
       orderBy: { totalXp: "desc" },
+      take: 100,
     });
     const entries = rows.map((r, i) => ({
       rank: i + 1,

@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { Award } from "lucide-react";
 import { uploadCredentialMetadata } from "@/lib/services/backend-api";
 import { toast } from "sonner";
 
@@ -209,7 +210,7 @@ export default function AdminCredentialsPage() {
         <div className="p-4 sm:p-6 rounded-2xl border-4 border-border bg-card">
           <h2 className="font-game text-xl mb-1">Create track collection</h2>
           <p className="font-game text-muted-foreground text-sm mb-4">
-            Mint a Metaplex Core collection for a new track. Backend assigns the next track ID and uploads optional image/metadata to Pinata.
+            Mint a Metaplex Core collection for a new track. Backend assigns the track ID, uploads optional image/metadata to Pinata, and stores it for dropdowns.
           </p>
           <div className="flex flex-col gap-4">
             <div className="flex flex-wrap items-end gap-4">
@@ -275,7 +276,7 @@ export default function AdminCredentialsPage() {
                     <img
                       src={createCollectionForm.imageDataUrl}
                       alt="Collection preview"
-                      className="h-24 w-24 sm:h-32 sm:w-32 object-contain rounded-lg border-2 border-border bg-muted/30"
+                      className="h-6 w-6 sm:h-8 sm:w-8 rounded object-cover shrink-0 border border-border bg-muted/30"
                     />
                     <div className="flex flex-col gap-0.5">
                       <span className="font-game text-sm text-muted-foreground">
@@ -325,7 +326,7 @@ export default function AdminCredentialsPage() {
         <div className="p-4 sm:p-6 rounded-2xl border-4 border-border bg-card">
           <h2 className="font-game text-xl mb-1">Issue for completed course</h2>
           <p className="font-game text-muted-foreground text-sm mb-4">
-            Run credential automation for a learner who already finalized a course. Select the track collection to use (or leave default from course track).
+            Run credential automation for a learner who already finalized a course. Pick a track collection (Sanity or backend).
           </p>
           <div className="flex flex-wrap items-end gap-4">
             <div className="space-y-2 min-w-[180px]">
@@ -369,13 +370,25 @@ export default function AdminCredentialsPage() {
                             alt=""
                             className="h-6 w-6 rounded object-cover shrink-0"
                           />
-                        ) : null}
+                        ) : (
+                          <div className="h-6 w-6 rounded bg-muted flex items-center justify-center shrink-0">
+                            <Award className="h-3.5 w-3.5 text-muted-foreground" />
+                          </div>
+                        )}
                         <span>{o.label}</span>
                       </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              <Input
+                placeholder="Or paste collection pubkey"
+                value={issueForCompletionForm.trackCollection}
+                onChange={(e) =>
+                  setIssueForCompletionForm((f) => ({ ...f, trackCollection: e.target.value }))
+                }
+                className="mt-1 font-mono text-sm"
+              />
             </div>
             <div className="space-y-2 flex-1 min-w-[200px]">
               <Label className="font-game">Learner (pubkey)</Label>
@@ -393,15 +406,15 @@ export default function AdminCredentialsPage() {
               className="font-game"
               disabled={
                 !issueForCompletionForm.courseId ||
-                !issueForCompletionForm.learner.trim() ||
                 !issueForCompletionForm.trackCollection ||
+                !issueForCompletionForm.learner.trim() ||
                 issuingForCompletion
               }
               onClick={() =>
                 issueForCompletion({
                   courseId: issueForCompletionForm.courseId,
                   learner: issueForCompletionForm.learner.trim(),
-                  trackCollection: issueForCompletionForm.trackCollection || undefined,
+                  trackCollection: issueForCompletionForm.trackCollection,
                 })
               }
             >
@@ -464,7 +477,11 @@ export default function AdminCredentialsPage() {
                               alt=""
                               className="h-6 w-6 rounded object-cover shrink-0"
                             />
-                          ) : null}
+                          ) : (
+                            <div className="h-6 w-6 rounded bg-muted flex items-center justify-center shrink-0">
+                              <Award className="h-3.5 w-3.5 text-muted-foreground" />
+                            </div>
+                          )}
                           <span>{o.label}</span>
                         </div>
                       </SelectItem>
@@ -687,7 +704,11 @@ export default function AdminCredentialsPage() {
                               alt=""
                               className="h-6 w-6 rounded object-cover shrink-0"
                             />
-                          ) : null}
+                          ) : (
+                            <div className="h-6 w-6 rounded bg-muted flex items-center justify-center shrink-0">
+                              <Award className="h-3.5 w-3.5 text-muted-foreground" />
+                            </div>
+                          )}
                           <span>{o.label}</span>
                         </div>
                       </SelectItem>

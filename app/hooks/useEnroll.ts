@@ -8,6 +8,7 @@ import type { AnchorError } from "@coral-xyz/anchor";
 import { useProgram } from "./useProgram";
 import { getCoursePda, getEnrollmentPda } from "@/lib/program";
 import { getAnchorErrorMessage } from "@/lib/anchor-error-messages";
+import { indexEnrollment } from "@/lib/services/backend-api";
 
 export interface EnrollParams {
   courseId: string;
@@ -45,9 +46,10 @@ export function useEnroll() {
       }
       return builder.rpc();
     },
-    onSuccess: (_, { courseId }) => {
+    onSuccess: async (txSignature, { courseId }) => {
       const walletKey = publicKey?.toBase58() ?? "";
-      void queryClient.invalidateQueries({ queryKey: ["enrollment", courseId, walletKey] });
+      void indexEnrollment({ learner: walletKey, courseId, txSignature });
+      void queryClient.invalidateQueries({ queryKey: ["enrollment"] });
       void queryClient.invalidateQueries({ queryKey: ["xpBalance", walletKey] });
       void queryClient.invalidateQueries({ queryKey: ["course", courseId] });
       toast.success("Enrolled successfully.");

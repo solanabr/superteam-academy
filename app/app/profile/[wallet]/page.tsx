@@ -19,7 +19,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PixelAvatar, setAvatarVersion } from "@/components/app/PixelAvatar";
-import { useXpBalanceFor, useCredentialsFor } from "@/hooks";
+import { CredentialImage } from "@/components/app/CredentialImage";
+import { useXpBalanceFor, useCredentialsFor, useTrackImageMap } from "@/hooks";
 import { levelFromXp, xpProgressInLevel } from "@/lib/level";
 import { getDisplayName, setDisplayName, onDisplayNameChanged } from "@/lib/display-name";
 import { getMockLeaderboard } from "@/lib/services/mock-leaderboard";
@@ -39,6 +40,7 @@ export default function PublicProfilePage() {
 
     const { data: xp, isLoading: xpLoading } = useXpBalanceFor(walletAddress);
     const { data: credentials, isLoading: credsLoading } = useCredentialsFor(walletAddress);
+    const trackImageMap = useTrackImageMap();
     const t = useTranslations("profile");
     const tCommon = useTranslations("common");
 
@@ -274,11 +276,14 @@ export default function PublicProfilePage() {
                         {credentials.map((cred) => (
                             <Link key={cred.asset} href={`/certificates/${cred.asset}`}>
                                 <div className="p-5 border-4 rounded-2xl hover:border-yellow-400/50 transition-all bg-card group h-full">
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <div className="p-2 rounded-lg bg-yellow-400/10">
-                                            <Award className="h-6 w-6 text-yellow-400" />
-                                        </div>
-                                        <span className="font-game text-xl">Track {cred.trackId}</span>
+                                    <div className="flex items-center gap-3 mb-3">
+                                        <CredentialImage
+                                            imageUrl={cred.imageUrl}
+                                            metadataUri={cred.metadataUri}
+                                            fallbackImageUrl={trackImageMap[cred.trackId]}
+                                            size="sm"
+                                        />
+                                        <span className="font-game text-xl">{cred.name ?? `Track ${cred.trackId}`}</span>
                                     </div>
                                     <div className="space-y-1">
                                         <p className="font-game text-muted-foreground">

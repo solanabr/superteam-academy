@@ -1,7 +1,11 @@
-import type { Hono } from "hono";
-import { PublicKey, SystemProgram } from "@solana/web3.js";
-import { TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
-import { getCoursePda, getEnrollmentPda } from "@/pdas.js";
+import {
+  ensureToken2022Ata,
+  fetchConfig,
+  fetchCourseOrThrow,
+  requireAuthorityProgram,
+  requireBackendProgram,
+  requireProviderPublicKey,
+} from "@/academy/shared.js";
 import { badRequest, withRouteErrorHandling } from "@/lib/errors.js";
 import {
   readFixedLengthNumberArrayOrNull,
@@ -13,14 +17,12 @@ import {
   readOptionalString,
   readRequiredPublicKey,
 } from "@/lib/validation.js";
-import {
-  ensureToken2022Ata,
-  fetchConfig,
-  fetchCourseOrThrow,
-  requireAuthorityProgram,
-  requireBackendProgram,
-  requireProviderPublicKey,
-} from "@/academy/shared.js";
+import { runCredentialAfterFinalize } from "@/academy/credential-automation.js";
+import { indexCourse, indexEnrollment, indexLessonCompletion } from "@/academy/indexing.js";
+import { getCoursePda, getEnrollmentPda } from "@/pdas.js";
+import { TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
+import { PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
+import type { Hono } from "hono";
 
 type CreateCourseMethods = {
   createCourse: (params: {
@@ -46,6 +48,7 @@ type CompleteLessonMethods = {
   completeLesson: (lessonIndex: number) => {
     accountsPartial: (accounts: Record<string, PublicKey>) => {
       rpc: () => Promise<string>;
+      instruction: () => Promise<import("@solana/web3.js").TransactionInstruction>;
     };
   };
 };
@@ -54,6 +57,7 @@ type FinalizeCourseMethods = {
   finalizeCourse: () => {
     accountsPartial: (accounts: Record<string, PublicKey>) => {
       rpc: () => Promise<string>;
+      instruction: () => Promise<import("@solana/web3.js").TransactionInstruction>;
     };
   };
 };
@@ -91,6 +95,16 @@ export function registerCourseRoutes(app: Hono): void {
         integer: true,
         min: 0,
       });
+      const trackId = readOptionalNumber(body, "trackId", {
+        defaultValue: 1,
+        integer: true,
+        min: 0,
+      });
+      const trackLevel = readOptionalNumber(body, "trackLevel", {
+        defaultValue: 1,
+        integer: true,
+        min: 1,
+      });
 
       if (!courseId || lessonCount === undefined || xpPerLesson === undefined) {
         throw badRequest("courseId, lessonCount and xpPerLesson are required");
@@ -111,8 +125,8 @@ export function registerCourseRoutes(app: Hono): void {
           lessonCount,
           difficulty: 1,
           xpPerLesson,
-          trackId: 1,
-          trackLevel: 1,
+          trackId: trackId ?? 1,
+          trackLevel: trackLevel ?? 1,
           prerequisite: null,
           creatorRewardXp: 50,
           minCompletionsForReward: 3,
@@ -125,7 +139,39 @@ export function registerCourseRoutes(app: Hono): void {
         })
         .rpc();
 
+      await indexCourse({
+        courseId,
+        trackId: trackId ?? 1,
+        trackLevel: trackLevel ?? 1,
+        lessonCount,
+        xpPerLesson,
+        creator: creator.toBase58(),
+        txSignature: tx,
+      }).catch((err) => console.error("indexCourse:", err));
+
       return c.json({ tx });
+    })
+  );
+
+  app.post(
+    "/index-enrollment",
+    withRouteErrorHandling(async (c) => {
+      const body = await readJsonObject(c);
+      const learner = readRequiredPublicKey(body, "learner");
+      const courseId = readOptionalString(body, "courseId", "test-course-1");
+      const txSignature = readOptionalString(body, "txSignature") ?? "";
+
+      if (!courseId || !txSignature.trim()) {
+        throw badRequest("courseId and txSignature are required");
+      }
+
+      await indexEnrollment({
+        learner: learner.toBase58(),
+        courseId,
+        txSignature,
+      });
+
+      return c.json({ ok: true });
     })
   );
 
@@ -149,11 +195,17 @@ export function registerCourseRoutes(app: Hono): void {
       }
 
       const { configPda, config } = await fetchConfig(program);
-      const { coursePda } = await fetchCourseOrThrow(
+      const { coursePda, course } = await fetchCourseOrThrow(
         program,
         courseId,
         `Course "${courseId}" not found. Create it first via POST /v1/academy/create-course.`
       );
+
+      const lessonCount =
+        (course as { lesson_count?: number }).lesson_count ??
+        (course as { lessonCount?: number }).lessonCount ??
+        0;
+      const isLastLesson = lessonCount > 0 && lessonIndex === lessonCount - 1;
 
       const enrollmentPda = getEnrollmentPda(courseId, learner, program.programId);
       const learnerTokenAccount = await ensureToken2022Ata(
@@ -162,8 +214,8 @@ export function registerCourseRoutes(app: Hono): void {
         learner
       );
 
-      const methods = program.methods as unknown as CompleteLessonMethods;
-      const tx = await methods
+      const completeLessonMethods = program.methods as unknown as CompleteLessonMethods;
+      const completeIx = await completeLessonMethods
         .completeLesson(lessonIndex)
         .accountsPartial({
           config: configPda,
@@ -175,7 +227,62 @@ export function registerCourseRoutes(app: Hono): void {
           backendSigner,
           tokenProgram: TOKEN_2022_PROGRAM_ID,
         })
-        .rpc();
+        .instruction();
+
+      let tx: string;
+      if (isLastLesson) {
+        const creatorTokenAccount = await ensureToken2022Ata(
+          program,
+          config.xpMint,
+          course.creator
+        );
+        const finalizeMethods = program.methods as unknown as FinalizeCourseMethods;
+        const finalizeIx = await finalizeMethods
+          .finalizeCourse()
+          .accountsPartial({
+            config: configPda,
+            course: coursePda,
+            enrollment: enrollmentPda,
+            learner,
+            learnerTokenAccount,
+            creatorTokenAccount,
+            creator: course.creator,
+            xpMint: config.xpMint,
+            backendSigner,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+          })
+          .instruction();
+        const combinedTx = new Transaction().add(completeIx, finalizeIx);
+        const provider = program.provider as { sendAndConfirm?: (tx: Transaction) => Promise<string> };
+        if (!provider.sendAndConfirm) {
+          throw new Error("Program provider cannot send transactions");
+        }
+        tx = await provider.sendAndConfirm(combinedTx);
+        runCredentialAfterFinalize(program, courseId, learner, course).catch((err) =>
+          console.error("Credential automation after finalize:", err)
+        );
+      } else {
+        const provider = program.provider as { sendAndConfirm?: (tx: Transaction) => Promise<string> };
+        if (!provider.sendAndConfirm) {
+          throw new Error("Program provider cannot send transactions");
+        }
+        tx = await provider.sendAndConfirm(new Transaction().add(completeIx));
+      }
+
+      const xpPerLesson =
+        (course as { xp_per_lesson?: number }).xp_per_lesson ??
+        (course as { xpPerLesson?: number }).xpPerLesson ??
+        0;
+
+      await indexLessonCompletion({
+        wallet: learner.toBase58(),
+        courseId,
+        lessonIndex,
+        txSignature: tx,
+        xpPerLesson,
+        isLastLesson,
+        lessonCount,
+      }).catch((err) => console.error("indexLessonCompletion:", err));
 
       return c.json({ tx });
     })
@@ -230,6 +337,10 @@ export function registerCourseRoutes(app: Hono): void {
           tokenProgram: TOKEN_2022_PROGRAM_ID,
         })
         .rpc();
+
+      runCredentialAfterFinalize(program, courseId, learner, course).catch((err) =>
+        console.error("Credential automation after finalize:", err)
+      );
 
       return c.json({ tx });
     })

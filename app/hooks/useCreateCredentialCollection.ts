@@ -24,6 +24,7 @@ export function useCreateCredentialCollection() {
     },
     onSuccess: (data) => {
       void queryClient.invalidateQueries({ queryKey: ["credential-collections"] });
+      void queryClient.invalidateQueries({ queryKey: ["credential-collections-list"] });
       toast.success(`Collection created (Track ${data.trackId}). Saved for automation.`);
     },
     onError: (err: Error) => {

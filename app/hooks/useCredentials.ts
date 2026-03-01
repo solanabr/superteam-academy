@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { getCredentialsByOwner, getAssetById, isCredentialsConfigAvailable } from "@/lib/services/credentials-das";
+import type { CredentialInfo } from "@/lib/services/learning-progress";
 
 export function useCredentials() {
   const { publicKey } = useWallet();
@@ -10,8 +10,12 @@ export function useCredentials() {
 
   return useQuery({
     queryKey: ["credentials", wallet],
-    queryFn: () => getCredentialsByOwner(wallet),
-    enabled: !!wallet && isCredentialsConfigAvailable(),
+    queryFn: async (): Promise<CredentialInfo[]> => {
+      const res = await fetch(`/api/credentials?wallet=${encodeURIComponent(wallet)}`);
+      const data = (await res.json()) as { credentials?: CredentialInfo[] };
+      return data.credentials ?? [];
+    },
+    enabled: !!wallet,
   });
 }
 
@@ -19,7 +23,11 @@ export function useCredentialAsset(assetId: string | null) {
   const { publicKey } = useWallet();
   return useQuery({
     queryKey: ["credentialAsset", assetId ?? ""],
-    queryFn: () => getAssetById(assetId!),
-    enabled: !!assetId && !!publicKey && isCredentialsConfigAvailable(),
+    queryFn: async () => {
+      const res = await fetch(`/api/credentials/asset?id=${encodeURIComponent(assetId!)}`);
+      if (!res.ok) return null;
+      return res.json();
+    },
+    enabled: !!assetId && !!publicKey,
   });
 }

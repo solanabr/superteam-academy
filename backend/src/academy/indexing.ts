@@ -33,49 +33,65 @@ export async function indexCourse(params: {
 }
 
 export async function indexEnrollment(params: {
-  wallet: string;
+  learner: string;
   courseId: string;
-  txSignature?: string | null;
+  txSignature: string;
 }): Promise<void> {
   const prisma = getPrisma();
-  await prisma.user.upsert({
-    where: { wallet: params.wallet },
-    create: { wallet: params.wallet },
-    update: {},
-  });
-  const courseExists = await prisma.course.findUnique({
+  const course = await prisma.course.findUnique({
     where: { courseId: params.courseId },
   });
-  if (courseExists) {
-    await prisma.enrollment.upsert({
-      where: {
-        wallet_courseId: { wallet: params.wallet, courseId: params.courseId },
-      },
-      create: {
-        wallet: params.wallet,
+  if (!course) return;
+
+  await prisma.user.upsert({
+    where: { wallet: params.learner },
+    create: {
+      wallet: params.learner,
+    },
+    update: {},
+  });
+
+  await prisma.enrollment.upsert({
+    where: {
+      wallet_courseId: {
+        wallet: params.learner,
         courseId: params.courseId,
-        txSignature: params.txSignature ?? null,
       },
-      update: { txSignature: params.txSignature ?? undefined },
-    });
-  }
+    },
+    create: {
+      wallet: params.learner,
+      courseId: params.courseId,
+      txSignature: params.txSignature,
+    },
+    update: {
+      txSignature: params.txSignature,
+    },
+  });
 }
 
 export async function indexLessonCompletion(params: {
   wallet: string;
   courseId: string;
   lessonIndex: number;
-  xpPerLesson: number;
   txSignature: string;
-  courseFinalized: boolean;
-  courseXpEarned?: number;
+  xpPerLesson: number;
+  isLastLesson: boolean;
+  lessonCount: number;
 }): Promise<void> {
   const prisma = getPrisma();
+
   await prisma.user.upsert({
     where: { wallet: params.wallet },
-    create: { wallet: params.wallet },
-    update: {},
+    create: {
+      wallet: params.wallet,
+      totalXp: params.xpPerLesson,
+    },
+    update: {
+      totalXp: { increment: params.xpPerLesson },
+      ...(params.isLastLesson && { coursesCompleted: { increment: 1 } }),
+    },
   });
+
   await prisma.lessonCompletion.upsert({
     where: {
       wallet_courseId_lessonIndex: {
@@ -90,22 +106,21 @@ export async function indexLessonCompletion(params: {
       lessonIndex: params.lessonIndex,
       txSignature: params.txSignature,
     },
-    update: { txSignature: params.txSignature },
-  });
-  await prisma.user.update({
-    where: { wallet: params.wallet },
-    data: {
-      totalXp: { increment: params.xpPerLesson },
-      ...(params.courseFinalized ? { coursesCompleted: { increment: 1 } } : {}),
+    update: {
+      txSignature: params.txSignature,
     },
   });
-  if (params.courseFinalized) {
-    const courseXp = params.courseXpEarned ?? params.xpPerLesson;
+
+  if (params.isLastLesson) {
+    const xpEarned = params.lessonCount * params.xpPerLesson;
     await prisma.enrollment.updateMany({
-      where: { wallet: params.wallet, courseId: params.courseId },
+      where: {
+        wallet: params.wallet,
+        courseId: params.courseId,
+      },
       data: {
         completedAt: new Date(),
-        xpEarned: courseXp,
+        xpEarned,
       },
     });
   }

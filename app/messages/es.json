@@ -52,6 +52,7 @@
     "badge": "Insignia",
     "dailyStreak": "Racha Diaria",
     "completedOutOf": "Completados de",
+    "courseComplete": "Curso completado",
     "getCertified": "Obtener Certificación",
     "getCertifiedHint": "Completa cursos para ganar NFTs de credencial on-chain",
     "viewCerts": "Ver Certificados"
