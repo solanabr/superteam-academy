@@ -770,3 +770,142 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 REVOKE EXECUTE ON FUNCTION get_daily_quest_state FROM authenticated, anon, public;
 GRANT EXECUTE ON FUNCTION get_daily_quest_state TO service_role;
+
+-- ============================================================
+-- Community Forum: Core Tables
+-- ============================================================
+
+-- Forum categories (global sections)
+CREATE TABLE forum_categories (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  slug TEXT UNIQUE NOT NULL,
+  description TEXT,
+  sort_order INT DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Threads (global + course/lesson scoped)
+CREATE TABLE threads (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  author_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  title TEXT NOT NULL CHECK (length(title) BETWEEN 5 AND 200),
+  slug TEXT NOT NULL,
+  short_id TEXT GENERATED ALWAYS AS (LEFT(id::text, 8)) STORED,
+  body TEXT NOT NULL CHECK (length(body) BETWEEN 10 AND 10000),
+  type TEXT NOT NULL CHECK (type IN ('question', 'discussion')),
+
+  category_id UUID REFERENCES forum_categories(id),
+  course_id TEXT,
+  lesson_id TEXT,
+
+  is_solved BOOLEAN NOT NULL DEFAULT false,
+  accepted_answer_id UUID,
+
+  answer_count INT NOT NULL DEFAULT 0,
+  vote_score INT NOT NULL DEFAULT 0,
+  view_count INT NOT NULL DEFAULT 0,
+
+  is_pinned BOOLEAN NOT NULL DEFAULT false,
+  is_locked BOOLEAN NOT NULL DEFAULT false,
+
+  last_activity_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+  CONSTRAINT chk_global_thread_has_category
+    CHECK (course_id IS NOT NULL OR category_id IS NOT NULL)
+);
+
+-- Answers (flat, Stack Overflow style)
+CREATE TABLE answers (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  thread_id UUID NOT NULL REFERENCES threads(id) ON DELETE CASCADE,
+  author_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  body TEXT NOT NULL CHECK (length(body) BETWEEN 1 AND 10000),
+  is_accepted BOOLEAN NOT NULL DEFAULT false,
+  vote_score INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- FK from threads.accepted_answer_id → answers (deferred, answers table must exist first)
+ALTER TABLE threads
+  ADD CONSTRAINT fk_threads_accepted_answer
+  FOREIGN KEY (accepted_answer_id) REFERENCES answers(id) ON DELETE SET NULL;
+
+-- Votes (polymorphic: either thread or answer, never both)
+CREATE TABLE votes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  thread_id UUID REFERENCES threads(id) ON DELETE CASCADE,
+  answer_id UUID REFERENCES answers(id) ON DELETE CASCADE,
+  value SMALLINT NOT NULL CHECK (value IN (-1, 1)),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+  CONSTRAINT chk_vote_target_exclusive CHECK (
+    (thread_id IS NOT NULL AND answer_id IS NULL) OR
+    (thread_id IS NULL AND answer_id IS NOT NULL)
+  )
+);
+
+-- Partial unique indexes (NULL != NULL in Postgres UNIQUE constraints)
+CREATE UNIQUE INDEX votes_user_thread_unique
+  ON votes(user_id, thread_id) WHERE thread_id IS NOT NULL;
+CREATE UNIQUE INDEX votes_user_answer_unique
+  ON votes(user_id, answer_id) WHERE answer_id IS NOT NULL;
+
+-- Flags (moderation)
+CREATE TABLE flags (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  reporter_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  thread_id UUID REFERENCES threads(id) ON DELETE CASCADE,
+  answer_id UUID REFERENCES answers(id) ON DELETE CASCADE,
+  reason TEXT NOT NULL CHECK (reason IN ('spam', 'offensive', 'off-topic', 'other')),
+  details TEXT CHECK (details IS NULL OR length(details) <= 1000),
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'resolved', 'dismissed')),
+  resolved_by UUID REFERENCES profiles(id),
+  resolved_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+  CONSTRAINT chk_flag_target_exclusive CHECK (
+    (thread_id IS NOT NULL AND answer_id IS NULL) OR
+    (thread_id IS NULL AND answer_id IS NOT NULL)
+  )
+);
+
+-- ============================================================
+-- Community Forum: Indexes
+-- ============================================================
+
+CREATE INDEX idx_threads_last_activity ON threads(last_activity_at DESC, id DESC);
+CREATE INDEX idx_threads_category ON threads(category_id) WHERE category_id IS NOT NULL;
+CREATE INDEX idx_threads_course ON threads(course_id) WHERE course_id IS NOT NULL;
+CREATE INDEX idx_threads_lesson ON threads(lesson_id) WHERE lesson_id IS NOT NULL;
+CREATE INDEX idx_threads_author ON threads(author_id);
+CREATE INDEX idx_threads_type_unsolved ON threads(type, is_solved) WHERE type = 'question' AND is_solved = false;
+CREATE INDEX idx_threads_short_id ON threads(short_id);
+
+CREATE INDEX idx_answers_thread ON answers(thread_id);
+CREATE INDEX idx_answers_author ON answers(author_id);
+
+CREATE INDEX idx_votes_thread ON votes(thread_id) WHERE thread_id IS NOT NULL;
+CREATE INDEX idx_votes_answer ON votes(answer_id) WHERE answer_id IS NOT NULL;
+CREATE INDEX idx_votes_user ON votes(user_id);
+
+CREATE INDEX idx_flags_status ON flags(status) WHERE status = 'pending';
+
+-- Full-text search on threads (weighted: title A, body B)
+ALTER TABLE threads ADD COLUMN search_vector tsvector
+  GENERATED ALWAYS AS (
+    setweight(to_tsvector('english', coalesce(title, '')), 'A') ||
+    setweight(to_tsvector('english', coalesce(body, '')), 'B')
+  ) STORED;
+CREATE INDEX idx_threads_search ON threads USING gin(search_vector);
+
+-- Seed default categories
+INSERT INTO forum_categories (name, slug, description, sort_order) VALUES
+  ('General', 'general', 'General Solana development discussions', 1),
+  ('Help', 'help', 'Ask questions and get help from the community', 2),
+  ('Showcase', 'showcase', 'Share your projects and achievements', 3),
+  ('Off-Topic', 'off-topic', 'Everything else', 4);
