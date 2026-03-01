@@ -63,6 +63,6 @@ test.describe('Navigation', () => {
     expect(count).toBeGreaterThan(0);
 
     // Verify at least one known link exists
-    await expect(landing.footer.getByText('Courses')).toBeVisible();
+    await expect(landing.footer.getByRole('link', { name: 'Courses' })).toBeVisible();
   });
 });
