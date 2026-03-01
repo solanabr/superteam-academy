@@ -107,10 +107,7 @@ export default function CertificatesPage() {
 
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
-          <div
-            className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"
-            aria-hidden="true"
-          />
+          <div className="sol-spinner" aria-hidden="true" />
           <span className="sr-only">{tCommon("loading")}</span>
         </div>
       ) : certificates.length === 0 ? (
