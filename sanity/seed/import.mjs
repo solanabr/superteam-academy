@@ -66,6 +66,7 @@ const client = createClient({
 const seedFiles = [
   "instructor.json",
   "achievements.json",
+  "quests.json",
   "lessons.json",
   "modules.json",
   "course.json",
@@ -125,7 +126,7 @@ async function main() {
 
   // Verify by fetching all documents
   console.log("\nVerification — querying imported data:");
-  const types = ["instructor", "lesson", "module", "course", "learningPath", "achievement"];
+  const types = ["instructor", "lesson", "module", "course", "learningPath", "achievement", "quest"];
   for (const type of types) {
     const count = await client.fetch(`count(*[_type == "${type}"])`);
     console.log(`  ${type}: ${count} document(s)`);
