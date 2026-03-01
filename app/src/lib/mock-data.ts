@@ -2334,26 +2334,3 @@ export function getLessonById(courseSlug: string, lessonId: string) {
   return null;
 }
 
-export const TESTIMONIALS = [
-  {
-    name: "Rafael Costa",
-    role: "Full Stack Developer",
-    quote:
-      "Superteam Academy transformed my career. I went from zero Solana knowledge to deploying my first program in just 2 weeks.",
-    avatar: "https://img-cdn.magiceden.dev/rs:fill:800:0:0/plain/https%3A%2F%2Fmetadata.degods.com%2Fg%2F5124-dead-rm.png",
-  },
-  {
-    name: "Camila Souza",
-    role: "DeFi Developer",
-    quote:
-      "The interactive challenges and on-chain credentials make this the best learning platform for Solana. Highly recommend!",
-    avatar: "https://img-cdn.magiceden.dev/rs:fill:800:0:0/plain/https%3A%2F%2Ffamousfoxes.com%2Fhd%2F1024.png",
-  },
-  {
-    name: "Diego Lima",
-    role: "Web3 Founder",
-    quote:
-      "The gamification keeps me coming back every day. My 45-day streak is proof that learning can be fun and addictive.",
-    avatar: "https://img-cdn.magiceden.dev/rs:fill:800:0:0/plain/https%3A%2F%2Farweave.net%2FU6K-xxNBlhdwB3sSsiFdCDimWOz1n0BtU1mieuTJ-qc",
-  },
-];

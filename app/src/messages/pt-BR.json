@@ -51,9 +51,11 @@
     "challenge": "Desafio"
   },
   "landing": {
+    "newCourse": "Novo Curso",
     "heroTitle": "Domine o Desenvolvimento Solana",
     "heroSubtitle": "A plataforma de aprendizado mais completa para Solana. Cursos interativos, desafios praticos e credenciais verificaveis on-chain.",
     "heroCTA": "Comece a Aprender Gratis",
+    "findYourPath": "Encontre Seu Caminho",
     "heroSecondaryCTA": "Entrar",
     "heroCTALoggedIn": "Continuar Aprendendo",
     "heroSecondaryCTALoggedIn": "Ver Perfil",
@@ -110,7 +112,13 @@
     "howStep3Title": "Aprenda e Construa",
     "howStep3Desc": "Licoes interativas com editor de codigo integrado. Escreva e teste programas Solana reais.",
     "howStep4Title": "Conquiste Credenciais",
-    "howStep4Desc": "Receba credenciais verificaveis on-chain e suba no ranking."
+    "howStep4Desc": "Receba credenciais verificaveis on-chain e suba no ranking.",
+    "submitTestimonial": "Enviar Depoimento",
+    "testimonialSubmitted": "Seu depoimento foi enviado! Ele pode aparecer na pagina inicial apos aprovacao.",
+    "shareExperience": "Compartilhe sua Experiencia",
+    "loginToShare": "Entre para Compartilhar sua Experiencia",
+    "yourRole": "Sua funcao (opcional)",
+    "yourTestimonial": "Compartilhe sua experiencia com a Superteam Academy..."
   },
   "courses": {
     "title": "Catalogo de Cursos",
@@ -179,7 +187,10 @@
     "lessonComplete": "Licao Concluida!",
     "xpEarned": "XP Conquistado",
     "nextLesson": "Proxima Licao",
-    "backToCourse": "Voltar ao Curso"
+    "backToCourse": "Voltar ao Curso",
+    "enrollFirst": "Matricule-se Primeiro",
+    "enrollRequired": "Voce precisa se matricular neste curso antes de marcar licoes como concluidas.",
+    "askQuestion": "Fazer uma Pergunta"
   },
   "dashboard": {
     "title": "Painel",
@@ -207,7 +218,9 @@
     "today": "Hoje",
     "best": "Melhor",
     "noActivityYet": "Sem atividade ainda. Comece um curso para ganhar XP!",
-    "startChallenge": "Iniciar Desafio"
+    "startChallenge": "Iniciar Desafio",
+    "linkWalletForActivity": "Conecte uma carteira em Configuracoes para ver sua atividade de XP.",
+    "recentXPActivity": "Atividade Recente de XP"
   },
   "profile": {
     "title": "Perfil",
@@ -366,12 +379,40 @@
   "community": {
     "title": "Comunidade",
     "newPost": "Nova Postagem",
+    "startThread": "Iniciar um Topico",
     "reply": "Responder",
     "upvote": "Curtir",
     "noPostsYet": "Nenhuma postagem ainda. Seja o primeiro a iniciar uma discussao!",
     "writePost": "Escreva sua postagem...",
     "postTitle": "Titulo da Postagem",
-    "selectCourse": "Selecionar Curso (opcional)"
+    "selectCourse": "Selecionar Curso (opcional)",
+    "postDetail": "Detalhes do Post",
+    "writeReply": "Escreva sua resposta...",
+    "replies": "Respostas",
+    "liked": "Curtido",
+    "askQuestion": "Fazer uma Pergunta",
+    "noRepliesYet": "Nenhuma resposta ainda. Seja o primeiro a responder!",
+    "backToForum": "Voltar ao Forum",
+    "question": "Pergunta",
+    "discussion": "Discussao",
+    "post": "Postagem",
+    "sortBy": "Ordenar por",
+    "newest": "Mais Recentes",
+    "oldest": "Mais Antigos",
+    "mostPopular": "Mais Populares",
+    "filterByCourse": "Filtrar por Curso",
+    "allCourses": "Todos os Cursos",
+    "allTypes": "Todos os Tipos",
+    "previous": "Anterior",
+    "next": "Proximo",
+    "postType": "Tipo de Postagem",
+    "addTags": "Adicionar Tags",
+    "tagPlaceholder": "Adicione uma tag e pressione Enter...",
+    "allTags": "Todas as Tags",
+    "searchByTag": "Buscar por Tag",
+    "noResults": "Nenhum resultado encontrado.",
+    "likedBy": "Curtido por",
+    "noLikesYet": "Nenhuma curtida ainda"
   },
   "admin": {
     "title": "Painel Administrativo",
@@ -454,7 +495,13 @@
     "create": "Criar",
     "credentialImage": "Imagem da Credencial",
     "credentialImageNote": "Em produção, os NFTs de credencial podem ter imagens diferentes por trilha. Por enquanto, todas as trilhas usam uma imagem padrão.",
-    "creatingCollection": "Criando coleção..."
+    "creatingCollection": "Criando coleção...",
+    "testimonials": "Depoimentos",
+    "featured": "Destacar isso!",
+    "featuredOrder": "Ordem",
+    "maxFeatured": "Maximo de 10 depoimentos destacados atingido.",
+    "newTestimonials": "Novos Depoimentos",
+    "featuredTestimonials": "Depoimentos Destacados"
   },
   "creator": {
     "title": "Painel do Criador",
@@ -482,7 +529,12 @@
     "optionExperienced": "Desenvolvedor experiente",
     "skipQuiz": "Pular por agora",
     "getRecommendations": "Obter Recomendacoes",
-    "recommendedPath": "Trilha de Aprendizado Recomendada"
+    "recommendedPath": "Trilha de Aprendizado Recomendada",
+    "interestDefi": "Protocolos DeFi",
+    "interestNft": "Projetos NFT",
+    "interestWeb3": "dApps e Frontends",
+    "interestPrograms": "Programas On-Chain",
+    "loadingRecommendations": "Encontrando os melhores cursos para voce..."
   },
   "footer": {
     "description": "A plataforma de aprendizado descentralizada para desenvolvedores Solana.",

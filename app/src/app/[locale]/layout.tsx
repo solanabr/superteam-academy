@@ -7,6 +7,7 @@ import { SolanaWalletProvider } from "@/lib/solana/wallet-provider";
 import { WalletLinkBanner } from "@/components/layout/wallet-link-banner";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
+import { OnboardingGuard } from "@/components/providers/onboarding-guard";
 import { Toaster } from "sonner";
 import { Suspense } from "react";
 import { AnalyticsProvider } from "@/components/providers/analytics-provider";
@@ -34,6 +35,7 @@ export default async function LocaleLayout({
               <AnalyticsProvider>
                 <div className="flex min-h-screen flex-col">
                   <Header />
+                  <OnboardingGuard />
                   <WalletLinkBanner />
                   <main className="flex-1">{children}</main>
                   <Footer />

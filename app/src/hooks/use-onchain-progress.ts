@@ -13,11 +13,12 @@ export function useOnChainProgress(
   walletAddress: string | null | undefined,
 ): OnChainProgress {
   const [credentials, setCredentials] = useState<Credential[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!walletAddress) {
       setCredentials([]);
+      setLoading(false);
       return;
     }
 

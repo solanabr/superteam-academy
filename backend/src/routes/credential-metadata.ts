@@ -16,7 +16,7 @@ app.get("/", async (c) => {
   const totalXp = parseInt(c.req.query("totalXp") ?? "0", 10);
   const completedCourseIds = c.req.query("completedCourseIds") ?? "";
 
-  const levelName = level >= 3 ? "Gold" : level >= 2 ? "Silver" : "Bronze";
+
 
   let imageUrl: string;
   try {
@@ -32,7 +32,7 @@ app.get("/", async (c) => {
   }
 
   const metadata = {
-    name: `${trackName} — ${levelName} Credential`,
+    name: `${trackName} Credential`,
     symbol: "SACAD",
     description: `Superteam Academy credential for completing ${coursesCompleted} course(s) in the ${trackName} track. Total XP: ${totalXp}.`,
     image: imageUrl,
@@ -40,7 +40,7 @@ app.get("/", async (c) => {
     attributes: [
       { trait_type: "track_id", value: String(trackId) },
       { trait_type: "track_name", value: trackName },
-      { trait_type: "level", value: levelName.toLowerCase() },
+      { trait_type: "level", value: String(level) },
       { trait_type: "courses_completed", value: String(coursesCompleted) },
       { trait_type: "total_xp", value: String(totalXp) },
       ...(completedCourseIds

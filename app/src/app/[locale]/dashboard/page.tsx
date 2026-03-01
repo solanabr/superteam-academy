@@ -9,76 +9,42 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getDashboardCourseCards } from "@/lib/courses";
-import { useBulkEnrollments } from "@/hooks/use-bulk-enrollments";
-import { useOnChainProgress } from "@/hooks/use-onchain-progress";
+import { usePlayerStats } from "@/hooks/use-player-stats";
+import { useCoursesCompleted } from "@/hooks/use-courses-completed";
 import { RentReclaimBanner } from "@/components/dashboard/rent-reclaim-banner";
-import type { CourseCardData } from "@/types/course";
-import type { StreakData, Achievement, XPTransaction } from "@/types/gamification";
+import { StatsBar } from "@/components/stats-bar";
+import type { Achievement, XPTransaction } from "@/types/gamification";
 import {
   Star,
   Flame,
-  Trophy,
   BookOpen,
   Target,
   ChevronRight,
-  Zap,
   Calendar,
   Award,
 } from "lucide-react";
-
-interface DashboardStats {
-  totalXP: number;
-  level: number;
-  rank: number;
-  currentStreak: number;
-  coursesCompleted: number;
-  lessonsCompleted: number;
-  streak: StreakData;
-}
-
-const DEFAULT_STATS: DashboardStats = {
-  totalXP: 0,
-  level: 0,
-  rank: 0,
-  currentStreak: 0,
-  coursesCompleted: 0,
-  lessonsCompleted: 0,
-  streak: {
-    currentStreak: 0,
-    longestStreak: 0,
-    lastActivityDate: null,
-    streakFreezes: 3,
-    isActiveToday: false,
-  },
-};
 
 export default function DashboardPage() {
   const t = useTranslations("dashboard");
   const tc = useTranslations("common");
   const { data: session, status } = useSession();
 
-  const [stats, setStats] = useState<DashboardStats>(DEFAULT_STATS);
+  // On-chain XP, level, streak via shared hook
+  const playerStats = usePlayerStats(session?.walletAddress);
+
+  // Courses completed (credentials + finalized enrollments) via shared hook
+  const {
+    coursesCompleted,
+    allCourses,
+    enrollments,
+    loading: loadingCoursesCompleted,
+    loadingEnrollments,
+  } = useCoursesCompleted(session?.walletAddress);
+
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [activity, setActivity] = useState<XPTransaction[]>([]);
-  const [loadingStats, setLoadingStats] = useState(true);
   const [loadingAchievements, setLoadingAchievements] = useState(true);
   const [loadingActivity, setLoadingActivity] = useState(true);
-  const [loadingCourses, setLoadingCourses] = useState(true);
-  const [allCourses, setAllCourses] = useState<CourseCardData[]>([]);
-
-  const { credentialCoursesCompleted } = useOnChainProgress(session?.walletAddress);
-
-  // Load course cards
-  useEffect(() => {
-    getDashboardCourseCards()
-      .then(setAllCourses)
-      .catch(() => {})
-      .finally(() => setLoadingCourses(false));
-  }, []);
-
-  // Batch on-chain enrollment check
-  const { enrollments, loading: loadingEnrollments } = useBulkEnrollments(allCourses);
 
   const enrolledCourses = allCourses
     .filter((c) => c.courseId && enrollments.some((e) => e.courseId === c.courseId))
@@ -86,16 +52,6 @@ export default function DashboardPage() {
       const e = enrollments.find((e) => e.courseId === c.courseId)!;
       return { ...c, progress: e.progressPct };
     });
-
-  // Credentials persist after close_enrollment deletes the enrollment PDA.
-  // Count = credential-based total + finalized enrollments still open (no credential yet).
-  const finalizedWithoutCredential = enrollments.filter(
-    (e) =>
-      (e.progressPct >= 100 || e.completedAt !== null) &&
-      (!e.credentialAsset ||
-        e.credentialAsset.toBase58() === "11111111111111111111111111111111"),
-  ).length;
-  const coursesCompleted = credentialCoursesCompleted + finalizedWithoutCredential;
 
   // Finalized enrollments that can collect credential + close
   const completedEnrollments = allCourses.flatMap((c) => {
@@ -107,35 +63,15 @@ export default function DashboardPage() {
     return [{ courseId: c.courseId, title: c.title, isFinalized }];
   });
 
-  // Load user data from API
+  // Load achievements + XP history from API
   useEffect(() => {
-    // Wait for next-auth to finish checking — avoids flashing zeros while session loads
     if (status === "loading") return;
     if (!session?.user) {
-      setLoadingStats(false);
       setLoadingAchievements(false);
       setLoadingActivity(false);
       return;
     }
 
-    // Fetch gamification stats
-    fetch("/api/gamification?type=stats")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.xp !== undefined) {
-          setStats((prev) => ({
-            ...prev,
-            totalXP: data.xp,
-            level: data.level,
-            currentStreak: data.streak?.currentStreak ?? 0,
-            streak: data.streak ?? prev.streak,
-          }));
-        }
-      })
-      .catch(() => {})
-      .finally(() => setLoadingStats(false));
-
-    // Fetch achievements
     fetch("/api/gamification?type=achievements")
       .then((res) => res.json())
       .then((data) => {
@@ -144,7 +80,6 @@ export default function DashboardPage() {
       .catch(() => {})
       .finally(() => setLoadingAchievements(false));
 
-    // Fetch XP history
     fetch("/api/gamification?type=history&limit=5")
       .then((res) => res.json())
       .then((data) => {
@@ -167,12 +102,14 @@ export default function DashboardPage() {
           { id: 8, name: "Early Adopter", icon: "star", category: "special" as const, xpReward: 250, unlocked: false },
         ];
 
+  const streak = playerStats.streak;
+
   // Build the last 28 days as a real calendar grid using actual activity dates
   const streakDays = (() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const activeDatesSet = new Set(stats.streak.activityDates ?? []);
+    const activeDatesSet = new Set(streak?.activityDates ?? []);
 
     return Array.from({ length: 28 }, (_, i) => {
       const date = new Date(today);
@@ -206,16 +143,19 @@ export default function DashboardPage() {
     return `${days}d ago`;
   }
 
-  function sourceLabel(source: string): string {
-    switch (source) {
-      case "lesson": return "Completed lesson";
-      case "challenge": return "Passed challenge";
-      case "streak": return "Streak bonus";
-      case "achievement": return "Achievement unlocked";
-      case "course": return "Course completed";
-      case "daily_first": return "Daily first login";
-      default: return source;
-    }
+  function sourceLabel(source: string, courseName?: string): string {
+    const base = (() => {
+      switch (source) {
+        case "lesson": return "Completed lesson";
+        case "challenge": return "Passed challenge";
+        case "streak": return "Streak bonus";
+        case "achievement": return "Achievement unlocked";
+        case "course": return "Course completed";
+        case "daily_first": return "Daily first login";
+        default: return source;
+      }
+    })();
+    return courseName ? `${base} · ${courseName}` : base;
   }
 
   return (
@@ -231,73 +171,15 @@ export default function DashboardPage() {
       )}
 
       {/* Stats Row */}
-      <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardContent className="flex items-center gap-4 p-6">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-              <Star className="h-6 w-6 text-primary" />
-            </div>
-            <div>
-              {loadingStats ? (
-                <Skeleton className="h-7 w-20 mb-1" />
-              ) : (
-                <p className="text-2xl font-bold">{stats.totalXP.toLocaleString()}</p>
-              )}
-              <p className="text-xs text-muted-foreground">{t("totalXP")}</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex items-center gap-4 p-6">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gold/10">
-              <Zap className="h-6 w-6 text-gold" />
-            </div>
-            <div>
-              {loadingStats ? (
-                <Skeleton className="h-7 w-20 mb-1" />
-              ) : (
-                <p className="text-2xl font-bold">{tc("level")} {stats.level}</p>
-              )}
-              <p className="text-xs text-muted-foreground">
-                {stats.rank > 0 ? `${t("rank")} #${stats.rank}` : t("rank")}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex items-center gap-4 p-6">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-orange-500/10">
-              <Flame className="h-6 w-6 text-orange-500" />
-            </div>
-            <div>
-              {loadingStats ? (
-                <Skeleton className="h-7 w-12 mb-1" />
-              ) : (
-                <p className="text-2xl font-bold">{stats.currentStreak}</p>
-              )}
-              <p className="text-xs text-muted-foreground">
-                {tc("streak")} ({tc("days")})
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex items-center gap-4 p-6">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-brand/10">
-              <Trophy className="h-6 w-6 text-green-brand" />
-            </div>
-            <div>
-              {(loadingCourses || loadingEnrollments) ? (
-                <Skeleton className="h-7 w-8 mb-1" />
-              ) : (
-                <p className="text-2xl font-bold">{coursesCompleted}</p>
-              )}
-              <p className="text-xs text-muted-foreground">
-                {t("coursesCompleted")}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="mb-8">
+        <StatsBar
+          xp={playerStats.xp}
+          streak={streak?.currentStreak ?? 0}
+          coursesCompleted={coursesCompleted}
+          loadingStats={playerStats.loading || status === "loading"}
+          loadingCourses={loadingCoursesCompleted}
+          variant="cards"
+        />
       </div>
 
       <div className="grid gap-8 lg:grid-cols-3">
@@ -315,7 +197,7 @@ export default function DashboardPage() {
               </Link>
             </CardHeader>
             <CardContent className="space-y-4">
-              {(loadingCourses || loadingEnrollments) ? (
+              {(loadingCoursesCompleted) ? (
                 <div className="space-y-3">
                   {[1, 2].map((i) => (
                     <div key={i} className="flex items-center gap-4 rounded-lg p-3">
@@ -377,23 +259,23 @@ export default function DashboardPage() {
                   <Calendar className="h-5 w-5" />
                   {t("streakCalendar")}
                 </CardTitle>
-                {!loadingStats && (
+                {!playerStats.loading && (
                   <div className="flex items-center gap-3 text-sm">
                     <span className="flex items-center gap-1.5">
                       <Flame className="h-4 w-4 text-orange-500" />
-                      <span className="font-semibold">{stats.currentStreak}</span>
+                      <span className="font-semibold">{streak?.currentStreak ?? 0}</span>
                       <span className="text-muted-foreground">{tc("days")}</span>
                     </span>
                     <span className="text-muted-foreground/50">·</span>
                     <span className="text-xs text-muted-foreground">
-                      {t("best")}: <span className="font-medium text-foreground">{stats.streak.longestStreak}</span>
+                      {t("best")}: <span className="font-medium text-foreground">{streak?.longestStreak ?? 0}</span>
                     </span>
                   </div>
                 )}
               </div>
             </CardHeader>
             <CardContent>
-              {loadingStats ? (
+              {playerStats.loading ? (
                 <div className="space-y-2">
                   <Skeleton className="h-4 w-28 mb-3" />
                   <div className="grid grid-cols-7 gap-2">
@@ -539,6 +421,17 @@ export default function DashboardPage() {
                     </div>
                   ))}
                 </div>
+              ) : !session?.walletAddress ? (
+                <div className="py-4 text-center">
+                  <p className="text-sm text-muted-foreground">
+                    {t("linkWalletForActivity")}
+                  </p>
+                  <Link href="/settings">
+                    <Button variant="outline" size="sm" className="mt-2">
+                      {tc("settings")}
+                    </Button>
+                  </Link>
+                </div>
               ) : activity.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4">
                   {t("noActivityYet")}
@@ -550,7 +443,7 @@ export default function DashboardPage() {
                       <Star className="h-3 w-3 text-primary" />
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm">{sourceLabel(tx.source)}</p>
+                      <p className="text-sm">{sourceLabel(tx.source, tx.courseName)}</p>
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-medium text-primary">
                           +{tx.amount} {tc("xp")}

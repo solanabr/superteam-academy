@@ -189,7 +189,7 @@ code.hljs {
 }
 
 .animate-marquee {
-  animation: marquee 30s linear infinite;
+  animation: marquee var(--marquee-duration, 30s) linear infinite;
 }
 
 .animate-marquee:hover {

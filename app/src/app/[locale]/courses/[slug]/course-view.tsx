@@ -36,6 +36,7 @@ import {
   LogIn,
   X,
   GraduationCap,
+  MessageSquare,
 } from "lucide-react";
 import Image from "next/image";
 import { toast } from "sonner";
@@ -269,6 +270,14 @@ export default function CourseView({ course, slug, preview = false }: { course: 
                 ));
               })()}
             </Accordion>
+            <div className="mt-6">
+              <Link href={`/community?new=true&course=${slug}`}>
+                <Button variant="outline" className="gap-2">
+                  <MessageSquare className="h-4 w-4" />
+                  {tc("community")} — Ask a Question
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
 

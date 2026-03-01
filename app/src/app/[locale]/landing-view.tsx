@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { TESTIMONIALS } from "@/lib/mock-data";
+
 import type { CourseCardData, Track } from "@/types/course";
+import type { Testimonial } from "@/services/interfaces";
 import { useBulkEnrollments } from "@/hooks/use-bulk-enrollments";
 import {
   GraduationCap,
@@ -27,7 +28,18 @@ import {
   LogIn,
   User,
   Rocket,
+  MessageSquarePlus,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 import { motion, useMotionValue, useTransform, animate, useInView } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
@@ -129,9 +141,10 @@ const AVATAR_COLORS = ["#D4A843", "#4A8B5C", "#00D1FF"];
 interface LandingViewProps {
   courseCards: CourseCardData[];
   activeTracks: Track[];
+  testimonials?: Testimonial[];
 }
 
-export default function LandingView({ courseCards, activeTracks }: LandingViewProps) {
+export default function LandingView({ courseCards, activeTracks, testimonials: dbTestimonials }: LandingViewProps) {
   const t = useTranslations("landing");
   const tc = useTranslations("common");
 
@@ -154,6 +167,31 @@ export default function LandingView({ courseCards, activeTracks }: LandingViewPr
   const { data: session } = useSession();
   const isLoggedIn = !!session?.user;
   const [signInOpen, setSignInOpen] = useState(false);
+  const [testimonialOpen, setTestimonialOpen] = useState(false);
+  const [testimonialQuote, setTestimonialQuote] = useState("");
+  const [testimonialRole, setTestimonialRole] = useState("");
+  const [submittingTestimonial, setSubmittingTestimonial] = useState(false);
+
+  const displayTestimonials = (dbTestimonials ?? []).map((t) => ({ name: t.name, role: t.role ?? "", quote: t.quote, avatar: t.avatarUrl, id: t.id }));
+
+  async function handleTestimonialSubmit() {
+    if (!testimonialQuote.trim()) return;
+    setSubmittingTestimonial(true);
+    try {
+      const res = await fetch("/api/testimonials", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ quote: testimonialQuote, role: testimonialRole }),
+      });
+      if (res.ok) {
+        toast.success(t("testimonialSubmitted"));
+        setTestimonialQuote("");
+        setTestimonialRole("");
+        setTestimonialOpen(false);
+      }
+    } catch { /* keep dialog open */ }
+    setSubmittingTestimonial(false);
+  }
 
   const { enrollments } = useBulkEnrollments(courseCards);
 
@@ -197,10 +235,19 @@ export default function LandingView({ courseCards, activeTracks }: LandingViewPr
 
         <div className="relative mx-auto max-w-7xl text-center">
           <motion.div {...fadeIn}>
-            <Badge variant="secondary" className="mb-6 px-4 py-1.5 text-sm">
-              <Flame className="mr-1.5 h-3.5 w-3.5 text-primary" />
-              {tc("new")} — Web3 Frontend Course
-            </Badge>
+            {courseCards.length > 0 ? (
+              <Link href={`/courses/${courseCards[0].slug}`}>
+                <Badge variant="secondary" className="mb-6 px-4 py-1.5 text-sm cursor-pointer hover:bg-accent transition-colors">
+                  <Flame className="mr-1.5 h-3.5 w-3.5 text-primary" />
+                  {t("newCourse")} - {courseCards[0].title}
+                </Badge>
+              </Link>
+            ) : (
+              <Badge variant="secondary" className="mb-6 px-4 py-1.5 text-sm">
+                <Flame className="mr-1.5 h-3.5 w-3.5 text-primary" />
+                {tc("new")}
+              </Badge>
+            )}
             <h1 className="mx-auto max-w-4xl text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
               <span className="bg-gradient-to-r from-primary via-gold to-green-accent bg-clip-text text-transparent">
                 {t("heroTitle")}
@@ -227,21 +274,20 @@ export default function LandingView({ courseCards, activeTracks }: LandingViewPr
                 </>
               ) : (
                 <>
+                  <Button
+                    size="lg"
+                    className="gap-2 text-base"
+                    onClick={() => setSignInOpen(true)}
+                  >
+                    {t("findYourPath")}
+                    <Rocket className="h-4 w-4" />
+                  </Button>
                   <Link href="/courses">
-                    <Button size="lg" className="gap-2 text-base">
+                    <Button size="lg" variant="outline" className="gap-2 text-base">
                       {t("heroCTA")}
                       <ArrowRight className="h-4 w-4" />
                     </Button>
                   </Link>
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="gap-2 text-base"
-                    onClick={() => setSignInOpen(true)}
-                  >
-                    {t("heroSecondaryCTA")}
-                    <LogIn className="h-4 w-4" />
-                  </Button>
                 </>
               )}
             </div>
@@ -281,11 +327,10 @@ export default function LandingView({ courseCards, activeTracks }: LandingViewPr
           {/* Fade edges */}
           <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-24 bg-gradient-to-r from-background to-transparent" />
           <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-24 bg-gradient-to-l from-background to-transparent" />
-          {/* Marquee track – framer-motion for reliable scrolling */}
-          <motion.div
-            className="flex w-max items-center gap-16"
-            animate={{ x: ["0%", "-50%"] }}
-            transition={{ x: { duration: 30, ease: "linear", repeat: Infinity } }}
+          {/* Marquee track – CSS animation with hover pause */}
+          <div
+            className="flex w-max items-center gap-16 animate-marquee hover:[animation-play-state:paused]"
+            style={{ ["--marquee-duration" as string]: "30s" }}
           >
             {[...PARTNERS, ...PARTNERS].map((p, i) => (
               <div
@@ -304,7 +349,7 @@ export default function LandingView({ courseCards, activeTracks }: LandingViewPr
                 }}
               />
             ))}
-          </motion.div>
+          </div>
         </div>
       </section>
 
@@ -624,38 +669,80 @@ export default function LandingView({ courseCards, activeTracks }: LandingViewPr
         </div>
       </section>
 
-      {/* ── Testimonials with avatars ── */}
-      <section className="px-4 py-20 sm:py-24">
+      {/* ── Testimonials with marquee ── */}
+      {displayTestimonials.length > 0 && <section className="px-4 py-20 sm:py-24">
         <div className="mx-auto max-w-7xl">
-          <motion.h2
-            className="text-center text-2xl font-bold sm:text-3xl"
-            initial={{ opacity: 0, y: 10 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
-            {t("testimonialsTitle")}
-          </motion.h2>
-          <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            {TESTIMONIALS.map((testimonial, idx) => (
-              <motion.div
-                key={testimonial.name}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.1 }}
-              >
-                <Card className="h-full transition-all duration-300 hover:shadow-lg hover:shadow-primary/5">
+          <div className="flex items-center justify-center gap-4">
+            <motion.h2
+              className="text-center text-2xl font-bold sm:text-3xl"
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+            >
+              {t("testimonialsTitle")}
+            </motion.h2>
+            {isLoggedIn ? (
+              <Dialog open={testimonialOpen} onOpenChange={setTestimonialOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-1.5">
+                    <MessageSquarePlus className="h-4 w-4" />
+                    {t("shareExperience")}
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>{t("submitTestimonial")}</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <Textarea
+                      placeholder={t("yourTestimonial")}
+                      value={testimonialQuote}
+                      onChange={(e) => setTestimonialQuote(e.target.value)}
+                      rows={4}
+                    />
+                    <Input
+                      placeholder={t("yourRole")}
+                      value={testimonialRole}
+                      onChange={(e) => setTestimonialRole(e.target.value)}
+                    />
+                    <Button
+                      className="w-full"
+                      onClick={handleTestimonialSubmit}
+                      disabled={submittingTestimonial || !testimonialQuote.trim()}
+                    >
+                      {submittingTestimonial ? "..." : tc("submit")}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            ) : (
+              <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setSignInOpen(true)}>
+                <LogIn className="h-4 w-4" />
+                {t("loginToShare")}
+              </Button>
+            )}
+          </div>
+          <div className="relative mt-12 overflow-hidden">
+            <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-20 bg-gradient-to-r from-background to-transparent" />
+            <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-20 bg-gradient-to-l from-background to-transparent" />
+            <div
+              className="flex w-max items-stretch gap-6 animate-marquee"
+              style={{ ["--marquee-duration" as string]: "45s" }}
+            >
+              {[...displayTestimonials, ...displayTestimonials].map((testimonial, idx) => (
+                <Card key={`${testimonial.id}-${idx}`} className="w-[320px] shrink-0 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5">
                   <CardContent className="p-6">
                     <div className="flex gap-1 text-primary">
                       {[...Array(5)].map((_, i) => (
                         <Star key={i} className="h-4 w-4 fill-current" />
                       ))}
                     </div>
-                    <p className="mt-4 text-sm text-muted-foreground italic">
+                    <p className="mt-4 text-sm text-muted-foreground italic line-clamp-4">
                       &ldquo;{testimonial.quote}&rdquo;
                     </p>
                     <div className="mt-4 flex items-center gap-3">
                       {testimonial.avatar ? (
+                        /* eslint-disable-next-line @next/next/no-img-element */
                         <img
                           src={testimonial.avatar}
                           alt={testimonial.name}
@@ -681,11 +768,11 @@ export default function LandingView({ courseCards, activeTracks }: LandingViewPr
                     </div>
                   </CardContent>
                 </Card>
-              </motion.div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
-      </section>
+      </section>}
 
       {/* ── Final CTA ── */}
       <section className="px-4 py-20 sm:py-24">

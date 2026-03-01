@@ -4,6 +4,14 @@ import type {
   CredentialIssuanceResult,
 } from "./interfaces";
 
+/** Parse level value from NFT attribute. Handles both numeric ("1") and legacy label ("bronze") formats. */
+function parseLevelValue(val: string): number {
+  const num = parseInt(val, 10);
+  if (!isNaN(num)) return num;
+  const labelMap: Record<string, number> = { bronze: 1, silver: 2, gold: 3 };
+  return labelMap[val.toLowerCase()] ?? 0;
+}
+
 // --- Helius DAS Implementation ---
 
 /** Known collection addresses for our tracks, loaded lazily. */
@@ -185,7 +193,7 @@ class HeliusCredentialService implements CredentialService {
       id: asset.id as string,
       trackId: parseInt(trackIdAttr.value, 10),
       trackName: trackNameAttr?.value ?? `Track ${trackIdAttr.value}`,
-      level: levelAttr ? parseInt(levelAttr.value, 10) || 0 : 0,
+      level: levelAttr ? parseLevelValue(levelAttr.value) : 0,
       issuedAt: (asset.created_at as string) ?? new Date().toISOString(),
       walletAddress,
       mintAddress: asset.id as string,

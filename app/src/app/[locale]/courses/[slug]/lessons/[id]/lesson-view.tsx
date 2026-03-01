@@ -32,6 +32,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Circle,
+  MessageSquare,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import type Monaco from "monaco-editor";
@@ -79,7 +80,7 @@ export default function LessonView({ lesson, mod, course, slug, id, preview = fa
   const currentIdx = allLessons.findIndex((l) => l.id === lesson.id);
   const basePath = preview ? `/courses/preview/${slug}` : `/courses/${slug}`;
 
-  const { isLessonComplete, refreshEnrollment } = useEnrollment(course.courseId, allLessons.length);
+  const { isLessonComplete, refreshEnrollment, enrolled, checking } = useEnrollment(course.courseId, allLessons.length);
 
   const [code, setCode] = useState(lesson.challenge?.starterCode ?? "");
   const [output, setOutput] = useState<string>("");
@@ -215,7 +216,7 @@ export default function LessonView({ lesson, mod, course, slug, id, preview = fa
     );
     if (allPassed) {
       setCompleted(true);
-      if (!preview) {
+      if (!preview && enrolled) {
         trackEvent(ANALYTICS_EVENTS.CHALLENGE_PASS, { courseSlug: slug, lessonId: id, xp: course.xpPerLesson ?? 0 });
         trackEvent(ANALYTICS_EVENTS.LESSON_COMPLETE, { courseSlug: slug, lessonId: id, type: "challenge" });
         markComplete();
@@ -536,9 +537,14 @@ export default function LessonView({ lesson, mod, course, slug, id, preview = fa
                 </div>
               ) : (
                 <div className="mt-8">
+                  {!enrolled && !checking && (
+                    <div className="mb-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-sm text-muted-foreground">
+                      {t("enrollRequired")}
+                    </div>
+                  )}
                   <Button
                     className="gap-2"
-                    disabled={completed || completing}
+                    disabled={completed || completing || !enrolled}
                     onClick={() => {
                       trackEvent(ANALYTICS_EVENTS.LESSON_COMPLETE, {
                         courseSlug: slug,
@@ -554,7 +560,9 @@ export default function LessonView({ lesson, mod, course, slug, id, preview = fa
                       ? t("lessonComplete")
                       : completing
                         ? "Submitting..."
-                        : `Mark as Complete (+${course.xpPerLesson ?? 0} ${tc("xp")})`}
+                        : !enrolled
+                          ? t("enrollFirst")
+                          : `Mark as Complete (+${course.xpPerLesson ?? 0} ${tc("xp")})`}
                   </Button>
                 </div>
               )}
@@ -574,9 +582,17 @@ export default function LessonView({ lesson, mod, course, slug, id, preview = fa
           ) : (
             <div />
           )}
-          <span className="text-xs text-muted-foreground">
-            {currentIdx + 1} / {allLessons.length}
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-muted-foreground">
+              {currentIdx + 1} / {allLessons.length}
+            </span>
+            <Link href={`/community?new=true&course=${slug}`}>
+              <Button variant="ghost" size="sm" className="gap-1 text-xs text-muted-foreground h-7">
+                <MessageSquare className="h-3 w-3" />
+                {t("askQuestion")}
+              </Button>
+            </Link>
+          </div>
           {nextLesson ? (
             <Link href={`${basePath}/lessons/${nextLesson.id}`}>
               <Button size="sm" className="gap-1">

@@ -7,11 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { calculateLevel } from "@/types/gamification";
 import type { Achievement } from "@/types/gamification";
+import { usePlayerStats } from "@/hooks/use-player-stats";
+import { useCoursesCompleted } from "@/hooks/use-courses-completed";
+import { StatsBar } from "@/components/stats-bar";
 import type { UserProfile, UserStats } from "@/types/user";
 import type { SkillScore } from "@/services/interfaces";
-import { useOnChainProgress } from "@/hooks/use-onchain-progress";
 import dynamic from "next/dynamic";
 
 const RechartsRadar = dynamic(
@@ -157,19 +158,18 @@ export default function ProfileView({
   const t = useTranslations("profile");
   const tc = useTranslations("common");
 
-  const totalXP = stats?.totalXP ?? 0;
-  const levelInfo = calculateLevel(totalXP);
+  const playerStats = usePlayerStats(profile.walletAddress);
+
+  const {
+    coursesCompleted,
+    credentials,
+    loading: coursesLoading,
+  } = useCoursesCompleted(profile.walletAddress);
 
   const achievements = useMemo(
     () => deriveAchievements(stats?.achievementFlags ?? [0, 0, 0, 0]),
     [stats?.achievementFlags],
   );
-
-  const {
-    credentials,
-    credentialCoursesCompleted,
-    loading: credentialsLoading,
-  } = useOnChainProgress(profile.walletAddress);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
@@ -249,37 +249,15 @@ export default function ProfileView({
           </div>
 
           {/* Stats bar */}
-          <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <div className="rounded-lg border border-border p-3 text-center">
-              <p className="text-2xl font-bold text-primary">
-                {totalXP.toLocaleString()}
-              </p>
-              <p className="text-xs text-muted-foreground">{tc("xp")}</p>
-            </div>
-            <div className="rounded-lg border border-border p-3 text-center">
-              <p className="text-2xl font-bold">
-                {tc("level")} {levelInfo.level}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {Math.round(levelInfo.progress * 100)}% {t("toNextLevel")}
-              </p>
-            </div>
-            <div className="rounded-lg border border-border p-3 text-center">
-              <p className="text-2xl font-bold">{stats?.currentStreak ?? 0}</p>
-              <p className="text-xs text-muted-foreground">
-                {tc("streak")} ({tc("days")})
-              </p>
-            </div>
-            <div className="rounded-lg border border-border p-3 text-center">
-              {credentialsLoading ? (
-                <Skeleton className="mx-auto h-8 w-8 mb-1" />
-              ) : (
-                <p className="text-2xl font-bold">
-                  {credentialCoursesCompleted}
-                </p>
-              )}
-              <p className="text-xs text-muted-foreground">{tc("completed")}</p>
-            </div>
+          <div className="mt-6">
+            <StatsBar
+              xp={playerStats.xp}
+              streak={playerStats.streak?.currentStreak ?? 0}
+              coursesCompleted={coursesCompleted}
+              loadingStats={playerStats.loading}
+              loadingCourses={coursesLoading}
+              variant="compact"
+            />
           </div>
         </CardContent>
       </Card>
@@ -331,7 +309,7 @@ export default function ProfileView({
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {credentialsLoading ? (
+              {coursesLoading ? (
                 <div className="space-y-3">
                   {[1, 2].map((i) => (
                     <div key={i} className="rounded-lg border border-border p-4">

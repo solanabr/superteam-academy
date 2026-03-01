@@ -65,7 +65,7 @@ export const authConfig: NextAuthConfig = {
         if (db) {
           const { data } = await db
             .from("profiles")
-            .select("display_name, avatar_url, email, is_admin")
+            .select("display_name, avatar_url, email, is_admin, onboarded")
             .eq("id", token.userId as string)
             .single();
           if (data) {
@@ -73,6 +73,7 @@ export const authConfig: NextAuthConfig = {
             if (data.email) token.email = data.email;
             if (data.avatar_url) token.picture = data.avatar_url;
             token.isAdmin = data.is_admin === true;
+            token.onboarded = data.onboarded === true;
           }
         }
         return token;
@@ -133,13 +134,14 @@ export const authConfig: NextAuthConfig = {
             token.linkedAccounts = result.linkedAccounts;
             token.walletAddress = result.walletAddress;
 
-            // Fetch admin status
-            const { data: adminCheck } = await db
+            // Fetch admin status and onboarded flag
+            const { data: profileFlags } = await db
               .from("profiles")
-              .select("is_admin")
+              .select("is_admin, onboarded")
               .eq("id", result.profileId)
               .single();
-            token.isAdmin = adminCheck?.is_admin === true;
+            token.isAdmin = profileFlags?.is_admin === true;
+            token.onboarded = profileFlags?.onboarded === true;
 
             // Always use canonical profile data from DB so that linking
             // a wallet doesn't overwrite name/email/image with wallet-
@@ -221,6 +223,7 @@ export const authConfig: NextAuthConfig = {
       session.provider = token.provider as string;
       session.switchedProfileName = token.switchedProfileName as string | undefined;
       session.isAdmin = token.isAdmin as boolean | undefined;
+      session.onboarded = token.onboarded as boolean | undefined;
       return session;
     },
   },

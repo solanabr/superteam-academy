@@ -7,5 +7,6 @@ declare module "next-auth" {
     provider: string;
     switchedProfileName?: string;
     isAdmin?: boolean;
+    onboarded?: boolean;
   }
 }

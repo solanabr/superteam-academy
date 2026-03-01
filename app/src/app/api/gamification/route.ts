@@ -42,11 +42,27 @@ export async function GET(req: NextRequest) {
       req.nextUrl.searchParams.get("limit") ?? "20",
       10,
     );
-    const history = await gamificationService.getXPHistory(
-      session.user.id,
-      limit,
-    );
-    return NextResponse.json(history);
+    const [history, titleMap] = await Promise.all([
+      gamificationService.getXPHistory(session.user.id, limit),
+      import("@/lib/courses").then(({ getCourseTitleMap }) => getCourseTitleMap()),
+    ]);
+
+    // Resolve course_pda → course name by building a PDA → courseId reverse map
+    const { getCoursePDA } = await import("@/lib/solana/enrollments");
+    const pdaToTitle = new Map<string, string>();
+    for (const [courseId, title] of Object.entries(titleMap)) {
+      try {
+        const pda = getCoursePDA(courseId).toBase58();
+        pdaToTitle.set(pda, title);
+      } catch { /* skip invalid courseIds */ }
+    }
+
+    const enriched = history.map((tx) => ({
+      ...tx,
+      courseName: tx.sourceId ? (pdaToTitle.get(tx.sourceId) ?? titleMap[tx.sourceId]) : undefined,
+    }));
+
+    return NextResponse.json(enriched);
   }
 
   return NextResponse.json({ error: "Invalid type" }, { status: 400 });

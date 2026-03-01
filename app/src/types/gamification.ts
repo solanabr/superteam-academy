@@ -32,6 +32,7 @@ export interface XPTransaction {
     | "daily_first"
     | "onchain_sync";
   sourceId?: string;
+  courseName?: string;
   createdAt: string;
 }
 

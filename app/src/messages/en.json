@@ -51,9 +51,11 @@
     "challenge": "Challenge"
   },
   "landing": {
+    "newCourse": "New Course",
     "heroTitle": "Master Solana Development",
     "heroSubtitle": "The most complete learning platform for Solana. Interactive courses, hands-on challenges, and verifiable on-chain credentials.",
     "heroCTA": "Start Learning Free",
+    "findYourPath": "Find Your Path",
     "heroSecondaryCTA": "Sign In",
     "heroCTALoggedIn": "Continue Learning",
     "heroSecondaryCTALoggedIn": "View Profile",
@@ -110,7 +112,13 @@
     "howStep3Title": "Learn & Build",
     "howStep3Desc": "Interactive lessons with a built-in code editor. Write and test real Solana programs.",
     "howStep4Title": "Earn Credentials",
-    "howStep4Desc": "Receive verifiable on-chain credentials and climb the leaderboard."
+    "howStep4Desc": "Receive verifiable on-chain credentials and climb the leaderboard.",
+    "submitTestimonial": "Submit Testimonial",
+    "testimonialSubmitted": "Your testimonial has been submitted! It may appear on the homepage once approved.",
+    "shareExperience": "Share Your Experience",
+    "loginToShare": "Login to Share Your Experience",
+    "yourRole": "Your role (optional)",
+    "yourTestimonial": "Share your experience with Superteam Academy..."
   },
   "courses": {
     "title": "Course Catalog",
@@ -179,7 +187,10 @@
     "lessonComplete": "Lesson Complete!",
     "xpEarned": "XP Earned",
     "nextLesson": "Next Lesson",
-    "backToCourse": "Back to Course"
+    "backToCourse": "Back to Course",
+    "enrollFirst": "Enroll First",
+    "enrollRequired": "You need to enroll in this course before you can mark lessons as complete.",
+    "askQuestion": "Ask a Question"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -207,7 +218,9 @@
     "today": "Today",
     "best": "Best",
     "noActivityYet": "No activity yet. Start a course to earn XP!",
-    "startChallenge": "Start Challenge"
+    "startChallenge": "Start Challenge",
+    "linkWalletForActivity": "Link a wallet in Settings to see your XP activity.",
+    "recentXPActivity": "Recent XP Activity"
   },
   "profile": {
     "title": "Profile",
@@ -366,12 +379,40 @@
   "community": {
     "title": "Community",
     "newPost": "New Post",
+    "startThread": "Start a Thread",
     "reply": "Reply",
     "upvote": "Upvote",
     "noPostsYet": "No posts yet. Be the first to start a discussion!",
     "writePost": "Write your post...",
     "postTitle": "Post Title",
-    "selectCourse": "Select Course (optional)"
+    "selectCourse": "Select Course (optional)",
+    "postDetail": "Post Detail",
+    "writeReply": "Write your reply...",
+    "replies": "Replies",
+    "liked": "Liked",
+    "askQuestion": "Ask a Question",
+    "noRepliesYet": "No replies yet. Be the first to respond!",
+    "backToForum": "Back to Forum",
+    "question": "Question",
+    "discussion": "Discussion",
+    "post": "Post",
+    "sortBy": "Sort by",
+    "newest": "Newest",
+    "oldest": "Oldest",
+    "mostPopular": "Most Popular",
+    "filterByCourse": "Filter by Course",
+    "allCourses": "All Courses",
+    "allTypes": "All Types",
+    "previous": "Previous",
+    "next": "Next",
+    "postType": "Post Type",
+    "addTags": "Add Tags",
+    "tagPlaceholder": "Add a tag and press Enter...",
+    "allTags": "All Tags",
+    "searchByTag": "Search by Tag",
+    "noResults": "No results found.",
+    "likedBy": "Liked by",
+    "noLikesYet": "No likes yet"
   },
   "admin": {
     "title": "Admin Dashboard",
@@ -454,7 +495,13 @@
     "create": "Create",
     "credentialImage": "Credential Image",
     "credentialImageNote": "In production, credential NFTs can have different images per track. For now, all tracks use a default image.",
-    "creatingCollection": "Creating collection..."
+    "creatingCollection": "Creating collection...",
+    "testimonials": "Testimonials",
+    "featured": "Feature this!",
+    "featuredOrder": "Order",
+    "maxFeatured": "Maximum of 10 featured testimonials reached.",
+    "newTestimonials": "New Testimonials",
+    "featuredTestimonials": "Featured Testimonials"
   },
   "creator": {
     "title": "Creator Dashboard",
@@ -482,7 +529,12 @@
     "optionExperienced": "Experienced developer",
     "skipQuiz": "Skip for now",
     "getRecommendations": "Get My Recommendations",
-    "recommendedPath": "Recommended Learning Path"
+    "recommendedPath": "Recommended Learning Path",
+    "interestDefi": "DeFi Protocols",
+    "interestNft": "NFT Projects",
+    "interestWeb3": "dApps & Frontends",
+    "interestPrograms": "On-Chain Programs",
+    "loadingRecommendations": "Finding the best courses for you..."
   },
   "footer": {
     "description": "The decentralized learning platform for Solana developers.",

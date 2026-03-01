@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { Link } from "@/i18n/routing";
+import { useSession } from "next-auth/react";
+import { Link, useRouter } from "@/i18n/routing";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   GraduationCap,
   ChevronRight,
@@ -16,7 +18,17 @@ import {
   Layers,
   Rocket,
   Sparkles,
+  Star,
 } from "lucide-react";
+
+interface Recommendation {
+  title: string;
+  slug: string;
+  difficulty: string;
+  trackName: string;
+  totalXP: number;
+  badge: string;
+}
 
 const STEPS = [
   {
@@ -35,62 +47,52 @@ const STEPS = [
   },
   {
     options: [
-      { label: "DeFi Protocols", value: "defi", icon: Layers },
-      { label: "NFT Projects", value: "nft", icon: Sparkles },
-      { label: "dApps & Frontends", value: "web3", icon: Code },
-      { label: "On-Chain Programs", value: "programs", icon: Rocket },
+      { label: "interestDefi", value: "defi", icon: Layers },
+      { label: "interestNft", value: "nft", icon: Sparkles },
+      { label: "interestWeb3", value: "web3", icon: Code },
+      { label: "interestPrograms", value: "programs", icon: Rocket },
     ],
   },
 ];
 
-const RECOMMENDATIONS: Record<
-  string,
-  { title: string; slug: string; badge: string }[]
-> = {
-  beginner: [
-    {
-      title: "Introduction to Solana",
-      slug: "introduction-to-solana",
-      badge: "Start Here",
-    },
-    {
-      title: "Web3 Frontend with Solana",
-      slug: "web3-frontend",
-      badge: "Recommended",
-    },
-  ],
-  intermediate: [
-    {
-      title: "Anchor Framework Fundamentals",
-      slug: "anchor-fundamentals",
-      badge: "Recommended",
-    },
-    {
-      title: "NFT Development on Solana",
-      slug: "nft-development",
-      badge: "Popular",
-    },
-  ],
-  advanced: [
-    { title: "DeFi on Solana", slug: "defi-on-solana", badge: "Advanced" },
-    {
-      title: "Anchor Framework Fundamentals",
-      slug: "anchor-fundamentals",
-      badge: "Deep Dive",
-    },
-  ],
-};
-
 export default function OnboardingPage() {
   const t = useTranslations("onboarding");
   const tc = useTranslations("common");
+  const { update: updateSession } = useSession();
+  const router = useRouter();
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<string[]>([]);
   const [showResults, setShowResults] = useState(false);
+  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const [loadingRecs, setLoadingRecs] = useState(false);
 
   const progress = ((step + 1) / (STEPS.length + 1)) * 100;
-  const level = answers[0] ?? "beginner";
-  const recommendations = RECOMMENDATIONS[level] ?? RECOMMENDATIONS["beginner"];
+
+  async function markOnboardingComplete() {
+    await fetch("/api/onboarding/complete", { method: "POST" });
+    await updateSession();
+  }
+
+  async function fetchRecommendations(allAnswers: string[]) {
+    setLoadingRecs(true);
+    setShowResults(true);
+    try {
+      const res = await fetch("/api/onboarding/recommendations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          experienceLevel: allAnswers[0] ?? "beginner",
+          web3Level: allAnswers[1] ?? "beginner",
+          interest: allAnswers[2] ?? "web3",
+        }),
+      });
+      if (res.ok) {
+        setRecommendations(await res.json());
+      }
+    } catch { /* ignore */ }
+    await markOnboardingComplete();
+    setLoadingRecs(false);
+  }
 
   const handleSelect = (value: string) => {
     const newAnswers = [...answers];
@@ -100,7 +102,7 @@ export default function OnboardingPage() {
     if (step < STEPS.length - 1) {
       setStep(step + 1);
     } else {
-      setShowResults(true);
+      fetchRecommendations(newAnswers);
     }
   };
 
@@ -115,27 +117,57 @@ export default function OnboardingPage() {
         </div>
 
         <div className="mt-8 space-y-4">
-          {recommendations.map((course, i) => (
-            <Link key={course.slug} href={`/courses/${course.slug}`}>
-              <Card className="transition-all hover:border-primary/50 hover:shadow-lg">
+          {loadingRecs ? (
+            Array.from({ length: 3 }).map((_, i) => (
+              <Card key={i}>
                 <CardContent className="flex items-center gap-4 p-6">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-xl font-bold text-primary">
-                    {i + 1}
+                  <Skeleton className="h-12 w-12 rounded-lg" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-5 w-3/4" />
+                    <Skeleton className="h-3 w-1/2" />
                   </div>
-                  <div className="flex-1">
-                    <p className="font-semibold">{course.title}</p>
-                  </div>
-                  <Badge variant="secondary">{course.badge}</Badge>
-                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
                 </CardContent>
               </Card>
-            </Link>
-          ))}
+            ))
+          ) : (
+            recommendations.map((course, i) => (
+              <Link key={course.slug} href={`/courses/${course.slug}`}>
+                <Card className="transition-all hover:border-primary/50 hover:shadow-lg">
+                  <CardContent className="flex items-center gap-4 p-6">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-xl font-bold text-primary">
+                      {i + 1}
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold">{course.title}</p>
+                      <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                        {course.trackName && <span>{course.trackName}</span>}
+                        <span className="flex items-center gap-1">
+                          <Star className="h-3 w-3" />
+                          {course.totalXP} {tc("xp")}
+                        </span>
+                        <Badge variant="outline" className="text-[10px]">
+                          {tc(course.difficulty)}
+                        </Badge>
+                      </div>
+                    </div>
+                    <Badge variant="secondary">{course.badge}</Badge>
+                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                  </CardContent>
+                </Card>
+              </Link>
+            ))
+          )}
         </div>
 
-        <div className="mt-8 text-center">
-          <Link href="/courses">
+        <div className="mt-8 flex flex-col items-center gap-3">
+          <Link href="/dashboard">
             <Button size="lg" className="gap-2">
+              {tc("dashboard")}
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </Link>
+          <Link href="/courses">
+            <Button size="lg" variant="outline" className="gap-2">
               {tc("viewAll")} {tc("courses")}
               <ArrowRight className="h-4 w-4" />
             </Button>
@@ -173,10 +205,7 @@ export default function OnboardingPage() {
                 <option.icon className="h-5 w-5 text-primary" />
               </div>
               <span className="flex-1 font-medium">
-                {typeof option.label === "string" &&
-                option.label.startsWith("option")
-                  ? t(option.label as "optionNone")
-                  : option.label}
+                {t(option.label as "optionNone")}
               </span>
               <ChevronRight className="h-5 w-5 text-muted-foreground" />
             </button>
@@ -185,7 +214,7 @@ export default function OnboardingPage() {
       </div>
 
       <div className="mt-8 text-center">
-        <Button variant="ghost" onClick={() => setShowResults(true)}>
+        <Button variant="ghost" onClick={() => fetchRecommendations(answers)}>
           {t("skipQuiz")}
         </Button>
       </div>

@@ -220,6 +220,102 @@ export interface TrackImageService {
   uploadImage(trackSlug: string, file: File): Promise<string>;
 }
 
+// ---------------------------------------------------------------------------
+// Testimonials
+// ---------------------------------------------------------------------------
+
+export interface Testimonial {
+  id: string;
+  userId: string;
+  name: string;
+  avatarUrl: string | null;
+  role: string | null;
+  quote: string;
+  featured: boolean;
+  featuredOrder: number;
+  createdAt: string;
+}
+
+export interface TestimonialService {
+  getFeatured(): Promise<Testimonial[]>;
+  getAll(params: { sort?: "newest" | "oldest" }): Promise<Testimonial[]>;
+  submit(userId: string, data: { quote: string; role?: string }): Promise<void>;
+  setFeatured(id: string, featured: boolean, order?: number): Promise<void>;
+}
+
+// ---------------------------------------------------------------------------
+// Community (extended)
+// ---------------------------------------------------------------------------
+
+export type PostType = "question" | "discussion" | "post";
+
+export interface CommunityPost {
+  id: string;
+  author: string;
+  authorUsername: string | null;
+  authorAvatarUrl: string | null;
+  title: string;
+  content: string;
+  courseId: string | null;
+  type: PostType;
+  tags: string[];
+  upvotes: number;
+  replies: number;
+  liked: boolean;
+  createdAt: string;
+}
+
+export interface GetPostsParams {
+  search?: string;
+  courseId?: string;
+  userId?: string;
+  sort?: "newest" | "oldest" | "popular";
+  type?: PostType;
+  tag?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface PostLiker {
+  userId: string;
+  displayName: string;
+  username: string | null;
+  avatarUrl: string | null;
+}
+
+export interface CommunityService {
+  getPosts(params: GetPostsParams): Promise<{ posts: CommunityPost[]; total: number }>;
+  getPost(id: string, userId?: string): Promise<CommunityPost | null>;
+  getReplies(postId: string, userId?: string): Promise<CommunityPost[]>;
+  createPost(userId: string, data: { title: string; content: string; courseId?: string; parentId?: string; type?: PostType; tags?: string[] }): Promise<void>;
+  toggleLike(userId: string, postId: string): Promise<{ liked: boolean; upvotes: number }>;
+  getLikers(postId: string): Promise<PostLiker[]>;
+  getDistinctTags(): Promise<string[]>;
+}
+
+// ---------------------------------------------------------------------------
+// Onboarding
+// ---------------------------------------------------------------------------
+
+export interface CourseRecommendation {
+  title: string;
+  slug: string;
+  difficulty: string;
+  trackName: string;
+  totalXP: number;
+  badge: string;
+}
+
+export interface OnboardingService {
+  getRecommendations(params: {
+    experienceLevel: string;
+    web3Level: string;
+    interest: string;
+  }): Promise<CourseRecommendation[]>;
+  isOnboarded(userId: string): Promise<boolean>;
+  completeOnboarding(userId: string): Promise<void>;
+}
+
 export interface TrackAdminService {
   createTrack(data: {
     name: string;

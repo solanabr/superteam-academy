@@ -67,6 +67,7 @@ import {
   Copy,
   Pencil,
   Eye,
+  Loader2,
 } from "lucide-react";
 import { SUBMISSION_STATUS, COURSE_ACTIONS } from "@/types/course";
 import { Link } from "@/i18n/routing";
@@ -208,6 +209,21 @@ export default function AdminPage() {
   const [trackForm, setTrackForm] = useState({ name: "", slug: "", description: "", color: "#D4A843", trackId: 0 });
   const [trackLoading, setTrackLoading] = useState<string | null>(null);
 
+  // Testimonials state
+  interface AdminTestimonial {
+    id: string;
+    name: string;
+    avatarUrl: string | null;
+    role: string | null;
+    quote: string;
+    featured: boolean;
+    featuredOrder: number;
+    createdAt: string;
+  }
+  const [adminTestimonials, setAdminTestimonials] = useState<AdminTestimonial[]>([]);
+  const [loadingTestimonials, setLoadingTestimonials] = useState(true);
+  const [featuringId, setFeaturingId] = useState<string | null>(null);
+
   // ── Data Fetching ───────────────────────────────────────────────────────
 
   const fetchStats = useCallback(async () => {
@@ -250,12 +266,20 @@ export default function AdminPage() {
     if (res.ok) setTracks(await res.json());
   }, []);
 
+  const fetchTestimonials = useCallback(async () => {
+    setLoadingTestimonials(true);
+    const res = await fetch("/api/testimonials?all=true");
+    if (res.ok) setAdminTestimonials(await res.json());
+    setLoadingTestimonials(false);
+  }, []);
+
   useEffect(() => {
     fetchStats();
     fetchAnalytics();
     fetchCourses();
     fetchTracks();
-  }, [fetchStats, fetchAnalytics, fetchCourses, fetchTracks]);
+    fetchTestimonials();
+  }, [fetchStats, fetchAnalytics, fetchCourses, fetchTracks, fetchTestimonials]);
 
   useEffect(() => {
     fetchUsers();
@@ -364,6 +388,7 @@ export default function AdminPage() {
           <TabsTrigger value="users">{t("userManagement")}</TabsTrigger>
           <TabsTrigger value="courses">{t("courseManagement")}</TabsTrigger>
           <TabsTrigger value="tracks">{t("tracks")}</TabsTrigger>
+          <TabsTrigger value="testimonials">{t("testimonials")}</TabsTrigger>
         </TabsList>
 
         {/* ── Overview / Analytics ──────────────────────────────────────── */}
@@ -876,6 +901,115 @@ export default function AdminPage() {
               </Table>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* ── Testimonials ──────────────────────────────────────────── */}
+        <TabsContent value="testimonials">
+          {loadingTestimonials ? (
+            <div className="space-y-6">
+              <Card><CardContent className="p-6 space-y-3">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20 w-full" />)}</CardContent></Card>
+              <Card><CardContent className="p-6 space-y-3">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20 w-full" />)}</CardContent></Card>
+            </div>
+          ) : (
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>{t("featuredTestimonials")}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {adminTestimonials.filter((t) => t.featured).sort((a, b) => a.featuredOrder - b.featuredOrder).map((item) => (
+                    <div key={item.id} className="flex items-start gap-3 rounded-lg border p-3">
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">{item.name}</p>
+                        <p className="text-xs text-muted-foreground">{item.role}</p>
+                        <p className="mt-1 text-sm italic">&ldquo;{item.quote}&rdquo;</p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Input
+                          type="number"
+                          className="w-16 h-8 text-xs"
+                          value={item.featuredOrder}
+                          onChange={async (e) => {
+                            const order = parseInt(e.target.value, 10) || 0;
+                            await fetch(`/api/admin/testimonials/${item.id}`, {
+                              method: "PATCH",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ featured: true, featuredOrder: order }),
+                            });
+                            fetchTestimonials();
+                          }}
+                        />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={async () => {
+                            await fetch(`/api/admin/testimonials/${item.id}`, {
+                              method: "PATCH",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ featured: false }),
+                            });
+                            fetchTestimonials();
+                          }}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                  {adminTestimonials.filter((t) => t.featured).length === 0 && (
+                    <p className="text-sm text-muted-foreground py-4 text-center">No featured testimonials yet.</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle>{t("newTestimonials")}</CardTitle>
+                  <span className="text-xs text-muted-foreground">Newest first</span>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {adminTestimonials.filter((t) => !t.featured).map((item) => (
+                    <div key={item.id} className="flex items-start gap-3 rounded-lg border p-3">
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">{item.name}</p>
+                        <p className="text-xs text-muted-foreground">{item.role}</p>
+                        <p className="mt-1 text-sm italic">&ldquo;{item.quote}&rdquo;</p>
+                        <p className="mt-1 text-xs text-muted-foreground">{new Date(item.createdAt).toLocaleDateString()}</p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={featuringId === item.id || adminTestimonials.filter((t) => t.featured).length >= 10}
+                        onClick={async () => {
+                          setFeaturingId(item.id);
+                          await fetch(`/api/admin/testimonials/${item.id}`, {
+                            method: "PATCH",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ featured: true, featuredOrder: adminTestimonials.filter((t) => t.featured).length }),
+                          });
+                          await fetchTestimonials();
+                          setFeaturingId(null);
+                        }}
+                      >
+                        {featuringId === item.id ? <Loader2 className="h-4 w-4 animate-spin" /> : t("featured")}
+                      </Button>
+                    </div>
+                  ))}
+                  {adminTestimonials.filter((t) => !t.featured).length === 0 && (
+                    <p className="text-sm text-muted-foreground py-4 text-center">No new testimonials.</p>
+                  )}
+                </div>
+                {adminTestimonials.filter((t) => t.featured).length >= 10 && (
+                  <p className="mt-3 text-xs text-amber-500">{t("maxFeatured")}</p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+          )}
         </TabsContent>
       </Tabs>
 
