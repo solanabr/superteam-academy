@@ -105,7 +105,7 @@ export class HybridProgressService implements LearningProgressService {
     if (!certs) return [];
 
     return certs.map((cert): Credential => {
-      const mintedAt = new Date(cert.minted_at);
+      const mintedAt = new Date(cert.minted_at ?? Date.now());
       return {
         trackId: cert.course_id,
         trackName: cert.course_title,

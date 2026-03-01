@@ -77,7 +77,9 @@ export async function GET(request: NextRequest) {
       const uuidRe =
         /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       const tsValid =
-        sort === "top" ? /^-?\d+$/.test(ts) : /^\d{4}-\d{2}-\d{2}T/.test(ts);
+        sort === "top"
+          ? /^-?\d+$/.test(ts ?? "")
+          : /^\d{4}-\d{2}-\d{2}T/.test(ts ?? "");
       if (ts && id && uuidRe.test(id) && tsValid) {
         if (sort === "latest") {
           query = query.or(
@@ -114,10 +116,7 @@ export async function GET(request: NextRequest) {
         .in("thread_id", threadIds);
       if (votes) {
         userVotes = Object.fromEntries(
-          votes.map((v: { thread_id: string; value: number }) => [
-            v.thread_id,
-            v.value,
-          ])
+          votes.map((v) => [v.thread_id ?? "", v.value])
         );
       }
     }
@@ -136,10 +135,7 @@ export async function GET(request: NextRequest) {
         .in("user_id", authorIds);
       if (xpData) {
         authorLevels = Object.fromEntries(
-          xpData.map((x: { user_id: string; level: number }) => [
-            x.user_id,
-            x.level,
-          ])
+          xpData.map((x) => [x.user_id ?? "", x.level ?? 0])
         );
       }
     }

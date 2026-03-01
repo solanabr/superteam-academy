@@ -33,7 +33,7 @@ export function useCommunityStats(
       const { data } = await supabase
         .from("community_stats")
         .select("*")
-        .eq("user_id", userId)
+        .eq("user_id", userId!)
         .single();
 
       if (data) {

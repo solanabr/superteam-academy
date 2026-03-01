@@ -137,7 +137,7 @@ export default function PublicProfilePage() {
               username: profile.username,
               bio: "",
               avatarUrl: profile.avatar_url ?? "",
-              joinedAt: new Date(profile.created_at),
+              joinedAt: new Date(profile.created_at ?? Date.now()),
               socialLinks: {},
             },
           }));
@@ -186,19 +186,19 @@ export default function PublicProfilePage() {
           username: profile.username,
           bio: profile.bio ?? "",
           avatarUrl: profile.avatar_url ?? "",
-          joinedAt: new Date(profile.created_at),
+          joinedAt: new Date(profile.created_at ?? Date.now()),
           socialLinks,
         };
 
         const certificates: Certificate[] =
           certResult.data?.map((row) => ({
             id: row.id,
-            userId: row.user_id,
+            userId: row.user_id ?? "",
             courseId: row.course_id,
             courseTitle: row.course_title,
             mintAddress: row.mint_address ?? "",
             metadataUri: row.metadata_uri ?? "",
-            mintedAt: new Date(row.minted_at),
+            mintedAt: new Date(row.minted_at ?? Date.now()),
           })) ?? [];
 
         // Total unique completed lessons
@@ -244,7 +244,7 @@ export default function PublicProfilePage() {
               description: def?.description ?? "",
               icon: def?.icon ?? "Award",
               category: (def?.category as Achievement["category"]) ?? "special",
-              unlockedAt: new Date(row.unlocked_at),
+              unlockedAt: new Date(row.unlocked_at ?? Date.now()),
               explorerUrl,
               assetAddress: row.asset_address ?? undefined,
             };
@@ -264,7 +264,7 @@ export default function PublicProfilePage() {
               title: sanity?.title ?? enrollment.course_id,
               slug: sanity?.slug ?? enrollment.course_id,
               completedAt: new Date(
-                enrollment.enrolled_at
+                enrollment.enrolled_at ?? Date.now()
               ).toLocaleDateString(),
               xpEarned: 0,
             });

@@ -54,12 +54,12 @@ export default function CertificatesPage() {
         if (certs && certs.length > 0) {
           const mapped = certs.map((cert) => ({
             id: cert.id,
-            userId: cert.user_id,
+            userId: cert.user_id ?? "",
             courseId: cert.course_id,
             courseTitle: cert.course_title,
             mintAddress: cert.mint_address ?? "",
             metadataUri: cert.metadata_uri ?? "",
-            mintedAt: new Date(cert.minted_at),
+            mintedAt: new Date(cert.minted_at ?? Date.now()),
           }));
           setCertificates(mapped);
 

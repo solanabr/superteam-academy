@@ -12,13 +12,13 @@ import {
 import type { Achievement } from "@superteam-lms/types";
 import { AchievementCard } from "./achievement-card";
 import type { AchievementDefinition } from "@/lib/gamification";
+import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
-import { cn } from "@/lib/utils";
 
 interface AchievementGridProps {
   unlockedAchievements: Achievement[];

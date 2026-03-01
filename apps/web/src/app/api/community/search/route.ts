@@ -46,10 +46,7 @@ export async function GET(request: NextRequest) {
         .in("thread_id", threadIds);
       if (votes) {
         userVotes = Object.fromEntries(
-          votes.map((v: { thread_id: string; value: number }) => [
-            v.thread_id,
-            v.value,
-          ])
+          votes.map((v) => [v.thread_id ?? "", v.value])
         );
       }
     }
@@ -68,10 +65,7 @@ export async function GET(request: NextRequest) {
         .in("user_id", authorIds);
       if (xpData) {
         authorLevels = Object.fromEntries(
-          xpData.map((x: { user_id: string; level: number }) => [
-            x.user_id,
-            x.level,
-          ])
+          xpData.map((x) => [x.user_id ?? "", x.level ?? 0])
         );
       }
     }

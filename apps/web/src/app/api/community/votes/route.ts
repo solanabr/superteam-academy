@@ -115,7 +115,12 @@ export async function POST(request: NextRequest) {
       }
     } else {
       // New vote (self-vote prevented by DB trigger)
-      const insertData: Record<string, unknown> = { user_id: user.id, value };
+      const insertData: {
+        user_id: string;
+        value: number;
+        thread_id?: string | null;
+        answer_id?: string | null;
+      } = { user_id: user.id, value };
       if (threadId) insertData.thread_id = threadId;
       else insertData.answer_id = answerId;
 

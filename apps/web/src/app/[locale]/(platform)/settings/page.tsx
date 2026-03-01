@@ -98,7 +98,7 @@ export default function SettingsPage() {
           discord?: string;
         };
 
-        setIsPublic(profile.is_public);
+        setIsPublic(profile.is_public ?? true);
         setAvatarUrl(profile.avatar_url ?? null);
         setWalletAddress(profile.wallet_address ?? null);
 

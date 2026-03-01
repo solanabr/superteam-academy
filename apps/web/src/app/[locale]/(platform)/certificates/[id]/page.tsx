@@ -36,7 +36,7 @@ function useCertificateData(certId: string) {
           .eq("id", certId)
           .single();
 
-        if (!cert) {
+        if (!cert || !cert.user_id) {
           setNotFound(true);
           return;
         }
@@ -67,7 +67,7 @@ function useCertificateData(certId: string) {
             courseTitle: cert.course_title,
             mintAddress: cert.mint_address ?? "",
             metadataUri: cert.metadata_uri ?? "",
-            mintedAt: new Date(cert.minted_at),
+            mintedAt: new Date(cert.minted_at ?? Date.now()),
           },
           recipientName: profile?.username ?? "Builder",
           subtitle: parts.join(" · "),
