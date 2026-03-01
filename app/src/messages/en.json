@@ -105,7 +105,8 @@
     "credential_earned": "Credential Earned on Completion",
     "track_label": "Track",
     "type_label": "Type",
-    "complete_to_earn": "Complete all lessons in this course to earn your soulbound credential NFT."
+    "complete_to_earn": "Complete all lessons in this course to earn your soulbound credential NFT.",
+    "content_on_arweave": "Content on Arweave"
   },
   "lesson": {
     "complete": "Mark as Complete",

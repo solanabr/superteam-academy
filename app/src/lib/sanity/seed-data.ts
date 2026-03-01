@@ -1700,6 +1700,7 @@ export interface SeedCourseRaw {
     icon: string | null;
     color: string | null;
   };
+  arweaveTxId?: string;
 }
 
 export const seedCourseRaw: SeedCourseRaw = {
@@ -1728,6 +1729,7 @@ export const seedCourseRaw: SeedCourseRaw = {
     icon: 'solana',
     color: '#9945FF',
   },
+  arweaveTxId: 'Aw3kVgN2Tp_S4VJQq0K9xHT6x_0qDp3jPFmS5EqhzKw',
 };
 
 export const seedCourseDefi: SeedCourseRaw = {
@@ -1750,6 +1752,7 @@ export const seedCourseDefi: SeedCourseRaw = {
   skills: ['Anchor', 'Token Swaps', 'AMM', 'Liquidity Pools', 'SPL Token'],
   prerequisites: ['solana-101'],
   track: { _id: 'track-defi', trackId: '2', name: 'DeFi', icon: 'defi', color: '#14F195' },
+  arweaveTxId: 'Bx4lWhN3Uq_T5WKRr1L0yIT7y_1rEq4kQGnT6FriALx',
 };
 
 export const seedCourseNft: SeedCourseRaw = {
@@ -1772,6 +1775,7 @@ export const seedCourseNft: SeedCourseRaw = {
   skills: ['Metaplex Core', 'cNFTs', 'Bubblegum', 'Token Metadata', 'Royalties'],
   prerequisites: ['solana-101'],
   track: { _id: 'track-nft', trackId: '3', name: 'NFT & Metaplex', icon: 'nft', color: '#FFD700' },
+  arweaveTxId: 'Cy5mXiO4Vr_U6XLSs2M1zJU8z_2sFr5lRHoU7GsjBMy',
 };
 
 export const seedCourseSecurity: SeedCourseRaw = {
@@ -1794,6 +1798,7 @@ export const seedCourseSecurity: SeedCourseRaw = {
   skills: ['Security Auditing', 'Vulnerability Detection', 'Reentrancy', 'Access Control', 'Integer Overflow'],
   prerequisites: ['solana-101'],
   track: { _id: 'track-security', trackId: '4', name: 'Security', icon: 'security', color: '#FF6B6B' },
+  arweaveTxId: 'Dz6nYjP5Ws_V7YMTt3N2AKV9A_3tGs6mSIpV8HtkCNz',
 };
 
 export const seedCourseTokenExt: SeedCourseRaw = {
@@ -1816,6 +1821,7 @@ export const seedCourseTokenExt: SeedCourseRaw = {
   skills: ['Token-2022', 'Transfer Hooks', 'Confidential Transfers', 'Mint Extensions', 'Permanent Delegates'],
   prerequisites: ['solana-101'],
   track: { _id: 'track-solana-core', trackId: '1', name: 'Solana Core', icon: 'solana', color: '#9945FF' },
+  arweaveTxId: 'EA7oZkQ6Xt_W8ZNUu4O3BLW0B_4uHt7nTJqW9IulDOA',
 };
 
 export const seedAllCoursesRaw: SeedCourseRaw[] = [

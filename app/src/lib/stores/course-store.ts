@@ -42,6 +42,9 @@ export interface CourseWithMeta {
   totalXp: number;
   enrollmentCount: number;
 
+  // Arweave content storage
+  arweaveTxId?: string;
+
   // Internal reference for filtering
   trackSlug: string;
 }
@@ -123,6 +126,7 @@ interface SanityCourseRaw {
     icon: string | null;
     color: string | null;
   } | null;
+  arweaveTxId?: string;
 }
 
 function difficultyStringToNumber(difficulty: string | null): number {
@@ -161,6 +165,9 @@ function sanityCourseToMeta(raw: SanityCourseRaw, locale: string = 'en'): Course
     // Computed
     totalXp: lessonCount * xpPerLesson,
     enrollmentCount: 0,
+
+    // Arweave
+    arweaveTxId: raw.arweaveTxId,
 
     // Internal
     trackSlug: raw.track?.trackId ?? '',

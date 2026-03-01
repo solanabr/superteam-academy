@@ -105,7 +105,8 @@
     "credential_earned": "Credencial Otorgada al Completar",
     "track_label": "Ruta",
     "type_label": "Tipo",
-    "complete_to_earn": "Completa todas las lecciones de este curso para obtener tu credencial NFT soulbound."
+    "complete_to_earn": "Completa todas las lecciones de este curso para obtener tu credencial NFT soulbound.",
+    "content_on_arweave": "Contenido en Arweave"
   },
   "lesson": {
     "complete": "Marcar como Completada",

@@ -81,6 +81,23 @@ export default function CourseDetailPage() {
       {/* Course header (hero) */}
       <CourseHeader course={course} />
 
+      {/* Arweave verification badge */}
+      {course.arweaveTxId && (
+        <a
+          href={`https://arweave.net/${course.arweaveTxId}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-400 hover:bg-emerald-500/20 transition-colors w-fit"
+        >
+          <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 2L2 7l10 5 10-5-10-5z" />
+            <path d="M2 17l10 5 10-5" />
+            <path d="M2 12l10 5 10-5" />
+          </svg>
+          {t('content_on_arweave')}
+        </a>
+      )}
+
       {/* Progress bar (only for enrolled, non-finalized courses) */}
       {isEnrolled && !isFinalized && (
         <div className="flex flex-col gap-2 rounded-lg border p-4">
