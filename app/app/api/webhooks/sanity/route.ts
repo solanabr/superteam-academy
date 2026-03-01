@@ -110,8 +110,6 @@ export async function POST(request: NextRequest) {
 }
 
 async function triggerOnchainCourseSync(documentId: string) {
-	if (process.env.ENABLE_SANITY_ONCHAIN_SYNC !== "true") return;
-
 	const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
 	const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET ?? "production";
 	const token = process.env.SANITY_API_READ_TOKEN;

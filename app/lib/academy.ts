@@ -5,18 +5,11 @@ let cachedConnection: Connection | null = null;
 let cachedClient: AcademyClient | null = null;
 
 export function getRpcUrl(): string {
-	return (
-		process.env.NEXT_PUBLIC_SOLANA_RPC_URL ??
-		process.env.SOLANA_RPC_URL ??
-		"https://api.devnet.solana.com"
-	);
+	return process.env.NEXT_PUBLIC_SOLANA_RPC_URL ?? "https://api.devnet.solana.com";
 }
 
 export function getProgramId(): PublicKey {
-	const value =
-		process.env.ACADEMY_PROGRAM_ID ??
-		process.env.NEXT_PUBLIC_ACADEMY_PROGRAM_ID ??
-		DEFAULT_PROGRAM_ID;
+	const value = process.env.NEXT_PUBLIC_ACADEMY_PROGRAM_ID ?? DEFAULT_PROGRAM_ID;
 	return new PublicKey(value);
 }
 

@@ -66,6 +66,21 @@ const NAV_ITEMS = [
 	},
 ];
 
+const RPC_ENDPOINT = process.env.NEXT_PUBLIC_SOLANA_RPC_URL ?? "https://api.devnet.solana.com";
+
+function getClusterBadge(endpoint: string): { label: string; className: string } {
+	const normalized = endpoint.toLowerCase();
+	if (normalized.includes("mainnet")) {
+		return { label: "MAIN", className: "bg-rose-500 text-white" };
+	}
+	if (normalized.includes("testnet")) {
+		return { label: "TEST", className: "bg-amber-500 text-black" };
+	}
+	return { label: "DEV", className: "bg-emerald-500 text-white" };
+}
+
+const CLUSTER_BADGE = getClusterBadge(RPC_ENDPOINT);
+
 export function SiteHeader() {
 	const pathname = usePathname();
 	const t = useTranslations("navigation");
@@ -186,17 +201,28 @@ export function SiteHeader() {
 											className="h-9 w-9 rounded-full"
 											aria-label="Open account menu"
 										>
-											{user?.image ? (
-												<img
-													src={user.image}
-													alt={displayName}
-													className="h-9 w-9 rounded-full object-cover ring-2 ring-border/60"
-												/>
-											) : (
-												<div className="h-9 w-9 rounded-full bg-primary/10 text-primary flex items-center justify-center ring-2 ring-border/60">
-													<User className="h-4 w-4" />
-												</div>
-											)}
+											<div className="relative h-9 w-9">
+												{user?.image ? (
+													<img
+														src={user.image}
+														alt={displayName}
+														className="h-9 w-9 rounded-full object-cover ring-2 ring-border/60"
+													/>
+												) : (
+													<div className="h-9 w-9 rounded-full bg-primary/10 text-primary flex items-center justify-center ring-2 ring-border/60">
+														<User className="h-4 w-4" />
+													</div>
+												)}
+												<span
+													className={cn(
+														"absolute -right-1 -bottom-1 h-4 min-w-4 px-1 rounded-full text-[9px] font-bold leading-4 text-center ring-2 ring-background",
+														CLUSTER_BADGE.className
+													)}
+													title={`Active cluster: ${CLUSTER_BADGE.label}`}
+												>
+													{CLUSTER_BADGE.label}
+												</span>
+											</div>
 										</Button>
 									</DropdownMenuTrigger>
 									<DropdownMenuContent align="end" className="w-64">
@@ -226,15 +252,9 @@ export function SiteHeader() {
 											</Link>
 										</DropdownMenuItem>
 										<DropdownMenuItem asChild={true}>
-											<Link href="/certificates">
-												<Trophy className="h-4 w-4 mr-2" />
-												My Certifications
-											</Link>
-										</DropdownMenuItem>
-										<DropdownMenuItem asChild={true}>
 											<Link href="/courses?following=true">
 												<Compass className="h-4 w-4 mr-2" />
-												Courses I'm Following
+												My Courses
 											</Link>
 										</DropdownMenuItem>
 										{isAdmin && (
@@ -357,20 +377,12 @@ export function SiteHeader() {
 												Settings
 											</Link>
 											<Link
-												href="/certificates"
-												onClick={() => setMobileOpen(false)}
-												className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-muted"
-											>
-												<Trophy className="h-4 w-4" />
-												My Certifications
-											</Link>
-											<Link
 												href="/courses?following=true"
 												onClick={() => setMobileOpen(false)}
 												className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium hover:bg-muted"
 											>
 												<Compass className="h-4 w-4" />
-												Courses I'm Following
+												My Courses
 											</Link>
 											{isAdmin && (
 												<Link

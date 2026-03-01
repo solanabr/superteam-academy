@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState, useCallback, useMemo, useRef, type ReactNode } from "react";
+import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { ConnectionProvider, WalletProvider, useWallet } from "@solana/wallet-adapter-react";
 import { createAuthClient, type AuthClient } from "@superteam-academy/auth";
 import { createSignInMessage } from "@superteam-academy/auth";
@@ -220,6 +221,15 @@ function AuthProviderInner({
 
 const ENDPOINT = process.env.NEXT_PUBLIC_SOLANA_RPC_URL ?? "https://api.devnet.solana.com";
 
+function deriveWalletNetwork(endpoint: string): WalletAdapterNetwork {
+	const normalizedEndpoint = endpoint.toLowerCase();
+	if (normalizedEndpoint.includes("mainnet")) return WalletAdapterNetwork.Mainnet;
+	if (normalizedEndpoint.includes("testnet")) return WalletAdapterNetwork.Testnet;
+	return WalletAdapterNetwork.Devnet;
+}
+
+const WALLET_NETWORK = deriveWalletNetwork(ENDPOINT);
+
 export function AuthWalletProvider({
 	children,
 	initialSession,
@@ -246,8 +256,8 @@ export function AuthWalletProvider({
 		])
 			.then(([phantom, solflare]) => {
 				setWallets([
-					new phantom.PhantomWalletAdapter(),
-					new solflare.SolflareWalletAdapter(),
+					new phantom.PhantomWalletAdapter({ network: WALLET_NETWORK }),
+					new solflare.SolflareWalletAdapter({ network: WALLET_NETWORK }),
 				]);
 				setWalletAdaptersLoaded(true);
 			})
