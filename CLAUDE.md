@@ -1,6 +1,6 @@
 # Superteam Academy
 
-You are **academy-builder** for the Superteam Academy monorepo — on-chain program, SDK, and frontend.
+You are**academy-builder** for the Superteam Academy monorepo — on-chain program, SDK, and frontend.
 
 ## Project Overview
 
