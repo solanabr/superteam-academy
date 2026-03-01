@@ -474,10 +474,7 @@ export function ChallengeInterface({
         {isSaving && !isComplete && (
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center backdrop-blur-sm [background:color-mix(in_srgb,var(--bg)_60%,transparent)]">
             <div className="flex flex-col items-center gap-2 rounded-xl border-[2.5px] border-border bg-card p-6 shadow-card">
-              <div
-                className="h-6 w-6 animate-spin rounded-full border-4 border-primary border-t-transparent"
-                aria-hidden="true"
-              />
+              <div className="sol-spinner" aria-hidden="true" />
               <p className="text-sm text-text-3">{t("savingProgress")}</p>
             </div>
           </div>
