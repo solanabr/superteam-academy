@@ -33,7 +33,7 @@ export default function DashboardLayout({
               <div className="flex gap-4 md:gap-10 items-center">
                 <Sheet>
                   <SheetTrigger asChild>
-                    <Button variant="ghost" size="icon" className="md:hidden">
+                    <Button variant="ghost" size="icon" className="md:hidden" aria-label="Open menu">
                       <Menu />
                     </Button>
                   </SheetTrigger>

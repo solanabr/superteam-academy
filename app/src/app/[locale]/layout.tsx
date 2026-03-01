@@ -11,13 +11,22 @@ import { NextIntlClientProvider } from 'next-intl';
 import { GoogleAnalytics } from '@next/third-parties/google'
 
 
-
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ 
+  subsets: ["latin"],
+  display: 'swap',
+  preload: true,
+});
 
 export const metadata: Metadata = {
-  title: "Superteam Academy LMS",
-  description: "Learn Solana Development",
-  manifest: "../../../public/manifest.json", // <-- Прямая ссылка на манифест
+  title: "Superteam Academy",
+  description: "The ultimate interactive learning platform for Solana developers. Learn Rust, Anchor, and DeFi by building real dApps.",
+  keywords: "Solana, Web3, Rust, Anchor, Smart Contracts, LMS, Education",
+  openGraph: {
+    title: "Superteam Academy",
+    description: "The ultimate interactive learning platform for Solana developers.",
+    type: "website",
+  },
+  manifest: "/manifest.json",
   themeColor: "#a855f7",
   appleWebApp: {
     capable: true,

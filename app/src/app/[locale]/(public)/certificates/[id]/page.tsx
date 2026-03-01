@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { ExternalLink, Twitter, CheckCircle2, Share2 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
+import Image from 'next/image';
 
 export default function CertificatePage() {
   const params = useParams();
@@ -48,10 +49,10 @@ export default function CertificatePage() {
         {/* Left: Image (3D Card Effect можно добавить сюда же) */}
         <div className="relative group">
             <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200"></div>
-            <img 
+            <Image
                 src={image} 
                 alt={name} 
-                className="relative rounded-xl shadow-2xl w-full object-cover aspect-square border border-white/10" 
+                className="relative rounded-xl shadow-2xl w-full object-cover aspect-square border border-white/10"
             />
         </div>
 

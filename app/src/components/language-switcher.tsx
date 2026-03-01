@@ -19,7 +19,7 @@ export function LanguageSwitcher() {
 
   return (
     <Select value={locale} onValueChange={handleLanguageChange}>
-      <SelectTrigger className="w-[110px] h-9 bg-background">
+      <SelectTrigger className="w-[110px] h-9 bg-background" aria-label="Select language">
         <Globe className="mr-2 h-4 w-4 text-muted-foreground" />
         {/* Добавим проверку, чтобы не было пустты */}
         <SelectValue placeholder="Lang">{locale.toUpperCase()}</SelectValue>

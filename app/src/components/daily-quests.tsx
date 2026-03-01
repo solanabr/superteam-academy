@@ -32,7 +32,10 @@ export function DailyQuests() {
     setLoading(false);
   };
 
-  useEffect(() => { fetchQuests(); }, [userDb]);
+  useEffect(() => { 
+    fetchQuests();
+  // eslint-disable-next-line react-hooks/exhaustive-deps 
+  }, [userDb]);
 
   const handleClaim = async (userChallengeId: string, e: React.MouseEvent) => {
       // Анимация прямо на кнопке
@@ -90,7 +93,7 @@ export function DailyQuests() {
                                 <span className="text-xs font-mono">{q.currentCount}/{q.targetCount}</span>
                             )}
                         </div>
-                        <Progress value={progress} className="h-1.5" />
+                        <Progress value={progress} className="h-1.5" aria-label={`Quest progress: ${q.title}`} />
                     </div>
                 );
             }) : (

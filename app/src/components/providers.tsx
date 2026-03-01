@@ -21,11 +21,14 @@ export function Providers({ children }: { children: React.ReactNode }) {
     return HELIUS_RPC.includes(`${apiKey}`) 
       ? clusterApiUrl(network) 
       : HELIUS_RPC;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [network]);
 
   // ВАЖНО: Оставляем массив пустым. 
   // Phantom и Solflare подключатся автоматически через механизм "Standard Wallet".
-  const wallets = useMemo(() => [], [network]);
+  const wallets = useMemo(() => 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [], [network]);
 
   return (
     <SessionProvider>

@@ -76,7 +76,7 @@ export default function LeaderboardPage() {
             {styles.icon}
             <div className="relative mb-3">
                 <Avatar className={cn("h-16 w-16 md:h-20 md:w-20 border-4", styles.border, styles.glow)}>
-                    <AvatarImage src={leader.image || `https://api.dicebear.com/7.x/identicon/svg?seed=${leader.walletAddress}`} />
+                    <AvatarImage src={leader.image || `https://api.dicebear.com/7.x/identicon/svg?seed=${leader.walletAddress}`} alt={`${leader.username} avater-leaderboard`} />
                     <AvatarFallback>U</AvatarFallback>
                 </Avatar>
                 {isMe && <Badge className="absolute -bottom-2 -translate-x-1/2 left-1/2 text-[10px] px-1.5 h-4 bg-primary text-primary-foreground border-none shadow-sm">YOU</Badge>}
@@ -166,7 +166,7 @@ export default function LeaderboardPage() {
                                 <TableCell>
                                     <div className="flex items-center gap-4">
                                         <Avatar className="h-10 w-10">
-                                            <AvatarImage src={leader.image || `https://api.dicebear.com/7.x/identicon/svg?seed=${leader.walletAddress}`} />
+                                            <AvatarImage src={leader.image || `https://api.dicebear.com/7.x/identicon/svg?seed=${leader.walletAddress}`} alt={`${leader.username} avatar-tablecell`} />
                                             <AvatarFallback>D</AvatarFallback>
                                         </Avatar>
                                         <span className="font-semibold flex items-center gap-2">
@@ -210,7 +210,7 @@ export default function LeaderboardPage() {
                           #{currentUser.rank}
                       </div>
                       <Avatar className="h-12 w-12 border-2 border-primary shadow-[0_0_15px_rgba(168,85,247,0.4)]">
-                          <AvatarImage src={currentUser.image || `https://api.dicebear.com/7.x/identicon/svg?seed=${currentUser.walletAddress}`} />
+                          <AvatarImage src={currentUser.image || `https://api.dicebear.com/7.x/identicon/svg?seed=${currentUser.walletAddress}`} alt={`${currentUser.username} Avatar-current-user`} />
                       </Avatar>
                       <div className="flex flex-col">
                           <span className="font-bold text-lg leading-tight">You</span>

@@ -39,7 +39,7 @@ export default function DashboardPage() {
                 ))
             ) : (
                 <div className="p-8 border rounded-lg text-center bg-muted/20">
-                    <p className="mb-4 text-muted-foreground">You haven't started any courses yet.</p>
+                    <p className="mb-4 text-muted-foreground">You haven’t started any courses yet.</p>
                     <Link href="/courses">
                         <Button>Explore Courses <ArrowRight className="ml-2 h-4 w-4"/></Button>
                     </Link>

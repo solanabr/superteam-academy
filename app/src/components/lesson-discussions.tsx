@@ -36,6 +36,7 @@ export function LessonDiscussions({ courseId, lessonIndex }: LessonDiscussionsPr
 
     useEffect(() => {
         fetchComments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [courseId, lessonIndex]);
 
     const handleSubmit = async () => {
@@ -107,7 +108,7 @@ export function LessonDiscussions({ courseId, lessonIndex }: LessonDiscussionsPr
                         return (
                             <div key={comment.id} className="flex gap-4">
                                 <Avatar className="h-10 w-10 border shadow-sm">
-                                    <AvatarImage src={comment.user.image || `https://api.dicebear.com/7.x/identicon/svg?seed=${comment.user.walletAddress}`} />
+                                    <AvatarImage src={comment.user.image || `https://api.dicebear.com/7.x/identicon/svg?seed=${comment.user.walletAddress}`} alt={`${comment.user.username || 'User'} avatar-discussions`} />
                                     <AvatarFallback>U</AvatarFallback>
                                 </Avatar>
                                 <div className="flex-1 space-y-1.5">

@@ -7,7 +7,7 @@ export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
     const body = await request.json();
-    const { walletAddress, username, bio, twitter, github } = body;
+    const { walletAddress, username, bio, twitterHandle, githubHandle } = body;
 
     let userToUpdate;
 
@@ -29,8 +29,8 @@ export async function POST(request: Request) {
       data: {
         username,
         bio,
-        twitter,
-        github,
+        twitterHandle,
+        githubHandle,
       },
     });
 

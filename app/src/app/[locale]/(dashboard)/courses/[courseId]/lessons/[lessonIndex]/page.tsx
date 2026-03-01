@@ -6,19 +6,29 @@ import { useParams } from "next/navigation";
 import { useRouter } from "@/i18n/navigation";
 import { useWallet } from "@solana/wallet-adapter-react";
 import ReactMarkdown from "react-markdown";
-import Confetti from 'react-confetti';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { LessonDiscussions } from "@/components/lesson-discussions";
 
-import { CodeEditor } from "@/components/code-editor";
 import { Button } from "@/components/ui/button";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Loader2, CheckCircle, ArrowRight, Play, Terminal, ArrowLeft } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import dynamic from "next/dynamic";
 
 import { getLessonContent, LessonContent, COURSE_CONTENT } from "@/lib/course-content";
+
+const CodeEditor = dynamic(
+  () => import("@/components/code-editor").then((mod) => mod.CodeEditor),
+  { 
+    ssr: false, // Редактор не может работать на сервере
+    loading: () => <div className="h-full w-full flex items-center justify-center bg-[#1e1e1e] border rounded-md"><Skeleton className="h-full w-full opacity-10" /></div> 
+  }
+);
+
+const Confetti = dynamic(() => import('react-confetti'), { ssr: false });
 
 export default function LessonPage() {
   const params = useParams();

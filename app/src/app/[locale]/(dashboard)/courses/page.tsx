@@ -134,7 +134,7 @@ export default function CoursesPage() {
                                 <span>Progress</span>
                                 <span>In Progress</span>
                             </div>
-                            <Progress value={10} className="h-1.5" />
+                            <Progress value={10} className="h-1.5" aria-label="Course-page-progress" />
                         </div>
                     )}
                   </CardContent>

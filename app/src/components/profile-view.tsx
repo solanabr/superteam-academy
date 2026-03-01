@@ -9,11 +9,12 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Twitter, Github, Calendar, ExternalLink, Share2, Award, BookOpen, Lock } from "lucide-react";
 import { XpStatCard } from "@/components/xp-stat-card";
-import { SkillChart } from "@/components/skill-chart";
 import { CredentialCard } from "@/components/credential-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "@/i18n/navigation";
 import { useCredentials, CredentialNFT } from "@/hooks/useCredentials"; // Импортируем хук и тип
+import dynamic from "next/dynamic";
+import Image from "next/image"
 
 // Тип для пропсов, чтобы обеспечить строгую типизацию
 // В будущем его можно вынести в @/types/index.ts
@@ -53,6 +54,14 @@ type AchievementType = {
     xpReward: number;
 };
 
+const SkillChart = dynamic(
+  () => import("@/components/skill-chart").then((mod) => mod.SkillChart),
+  { 
+    ssr: false, 
+    loading: () => <Skeleton className="h-[350px] w-full rounded-full opacity-20" /> 
+  }
+);
+
 export function ProfileView({ user, isPublic = false }: ProfileViewProps) {
   const { credentials, loading: nftLoading } = useCredentials(user.walletAddress || undefined);
   const [allAchievements, setAllAchievements] = useState<AchievementType[]>([]);
@@ -78,7 +87,7 @@ export function ProfileView({ user, isPublic = false }: ProfileViewProps) {
       {/* 1. Profile Header */}
       <div className="flex flex-col md:flex-row gap-8 items-start">
         <Avatar className="h-32 w-32 border-4 border-background shadow-xl">
-            <AvatarImage src={user.image || `https://api.dicebear.com/7.x/identicon/svg?seed=${user.walletAddress}`} />
+            <AvatarImage src={user.image || `https://api.dicebear.com/7.x/identicon/svg?seed=${user.walletAddress}`} alt={`${user.username || 'User'} avatar`} />
             <AvatarFallback>{user.username?.[0] || 'U'}</AvatarFallback>
         </Avatar>
         
@@ -148,7 +157,7 @@ export function ProfileView({ user, isPublic = false }: ProfileViewProps) {
                                             return (
                                                 <div key={ach.id} className="flex flex-col items-center gap-2 text-center group relative cursor-help">
                                                     <div className={`h-14 w-14 rounded-full overflow-hidden border-2 flex items-center justify-center transition-all ${unlocked ? 'border-yellow-500 shadow-lg bg-yellow-500/10' : 'border-muted bg-muted opacity-50 grayscale'}`}>
-                                                        <img src={ach.image} alt={ach.name} className="h-full w-full object-cover" />
+                                                        <Image src={ach.image} alt={ach.name} fill className="h-full w-full object-cover" />
                                                         {!unlocked && <Lock className="absolute h-5 w-5 text-muted-foreground/50" />}
                                                     </div>
                                                     {/* Tooltip */}

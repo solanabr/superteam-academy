@@ -72,7 +72,7 @@ export function CourseProgress({ courseId }: { courseId: string }) {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <Progress value={progressPercent} className="h-2" />
+        <Progress value={progressPercent} className="h-2" aria-label="Course progress" />
         <div className="flex justify-between text-xs text-muted-foreground">
             <span>0%</span>
             <span>{progressPercent}% Complete</span>
