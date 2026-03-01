@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getAllAchievements } from "@/lib/sanity/queries";
 
 export interface AchievementDefinition {
   id: string;
@@ -96,4 +97,54 @@ export async function buildCommunityUserState(
     acceptedAnswers: stats?.accepted_answers ?? 0,
     totalCommunityXp: stats?.total_community_xp ?? 0,
   };
+}
+
+/**
+ * Fire-and-forget helper: builds community state for a user, checks for newly
+ * earned achievements, and unlocks them via the `unlock_achievement` RPC.
+ * Non-critical — callers should swallow errors with `.catch(() => {})`.
+ */
+export async function checkCommunityAchievements(
+  admin: ReturnType<typeof createAdminClient>,
+  userId: string
+): Promise<void> {
+  const [allAchievements, { data: unlocked }] = await Promise.all([
+    getAllAchievements(),
+    admin
+      .from("user_achievements")
+      .select("achievement_id")
+      .eq("user_id", userId),
+  ]);
+  const alreadyUnlocked = (unlocked ?? []).map(
+    (r: { achievement_id: string }) => r.achievement_id
+  );
+
+  const baseState: UserState = {
+    completedLessons: 0,
+    completedCourses: 0,
+    currentStreak: 0,
+    hasCompletedRustLesson: false,
+    hasCompletedAnchorCourse: false,
+    hasCompletedAllTracks: false,
+    courseCompletionTimeHours: null,
+    allTestsPassedFirstTry: false,
+    userNumber: 999,
+    totalThreads: 0,
+    totalAnswers: 0,
+    acceptedAnswers: 0,
+    totalCommunityXp: 0,
+  };
+  const state = await buildCommunityUserState(admin, userId, baseState);
+  const newAchievements = checkNewAchievements(
+    allAchievements,
+    state,
+    alreadyUnlocked
+  );
+
+  for (const achievement of newAchievements) {
+    await admin.rpc("unlock_achievement", {
+      p_user_id: userId,
+      p_achievement_id: achievement.id,
+    });
+  }
 }
