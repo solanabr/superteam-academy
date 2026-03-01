@@ -1,9 +1,15 @@
 import { NextResponse } from "next/server";
+import { getCredentialCollectionsFromDb } from "@/lib/services/indexing-db";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3001";
 const API_TOKEN = process.env.BACKEND_API_TOKEN ?? "";
 
 export async function GET() {
+  const indexed = await getCredentialCollectionsFromDb();
+  if (indexed && indexed.list.length > 0) {
+    return NextResponse.json({ collections: indexed.collections, list: indexed.list });
+  }
+
   if (!API_TOKEN) {
     return NextResponse.json(
       { error: "Server misconfigured: missing API token", collections: {}, list: [] },

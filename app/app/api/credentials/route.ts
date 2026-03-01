@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { CredentialInfo } from "@/lib/services/learning-progress";
+import { getCredentialCollectionsFromDb } from "@/lib/services/indexing-db";
 
 const HELIUS_RPC = process.env.NEXT_PUBLIC_HELIUS_RPC ?? "";
 const HELIUS_API_KEY = process.env.HELIUS_API_KEY ?? "";
@@ -90,6 +91,12 @@ export async function GET(request: NextRequest) {
   }
 
   let collections: string[] = [...TRACK_COLLECTIONS_ENV];
+  if (collections.length === 0) {
+    const indexed = await getCredentialCollectionsFromDb();
+    if (indexed?.list?.length) {
+      collections = indexed.list.map((r) => r.collectionAddress).filter(Boolean);
+    }
+  }
   if (collections.length === 0 && API_TOKEN) {
     try {
       const res = await fetch(
