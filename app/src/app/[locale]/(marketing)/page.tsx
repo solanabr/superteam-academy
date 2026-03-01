@@ -7,6 +7,7 @@ import { TracksOverview } from '@/components/landing/tracks-overview';
 import { GamificationPreview } from '@/components/landing/gamification-preview';
 import { SocialProof } from '@/components/landing/social-proof';
 import { CtaBanner } from '@/components/landing/cta-banner';
+import { getOrganizationJsonLd } from '@/lib/utils/json-ld';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('landing');
@@ -20,6 +21,12 @@ export async function generateMetadata(): Promise<Metadata> {
 export default function HomePage() {
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(getOrganizationJsonLd()),
+        }}
+      />
       <HeroSection />
       <FeaturedCourses />
       <HowItWorks />

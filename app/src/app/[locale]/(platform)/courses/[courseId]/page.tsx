@@ -23,6 +23,7 @@ import {
 } from '@/components/courses/course-reviews';
 import { useCourse } from '@/lib/hooks/use-course';
 import { useCourseStore } from '@/lib/stores/course-store';
+import { getCourseJsonLd } from '@/lib/utils/json-ld';
 
 // ---------------------------------------------------------------------------
 // Page
@@ -60,6 +61,13 @@ export default function CourseDetailPage() {
 
   return (
     <div className="flex flex-col gap-6">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(getCourseJsonLd(course)),
+        }}
+      />
+
       {/* Back navigation */}
       <div>
         <Button variant="ghost" size="sm" asChild className="gap-1.5">
