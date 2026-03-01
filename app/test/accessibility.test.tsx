@@ -278,7 +278,7 @@ describe("Accessibility Tests", () => {
 
 		it("handles touch targets appropriately", async () => {
 			const { container } = render(
-				<Button className="min-h-[44px] min-w-[44px]">Touch Target</Button>
+				<Button className="min-h-11 min-w-11">Touch Target</Button>
 			);
 			await expectToBeAccessible(container);
 		});

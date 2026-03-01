@@ -4,6 +4,9 @@ import createNextIntlPlugin from "next-intl/plugin";
 const withNextIntl = createNextIntlPlugin("../packages/i18n/src/config.ts");
 
 const nextConfig: NextConfig = {
+	compiler: {
+		styledComponents: true,
+	},
 	serverExternalPackages: [
 		"@solana/web3.js",
 		"@solana/wallet-adapter-base",
@@ -12,7 +15,6 @@ const nextConfig: NextConfig = {
 		"tweetnacl",
 		"better-auth",
 		"better-call",
-		"next-sanity",
 		"@sanity/client",
 	],
 	images: {

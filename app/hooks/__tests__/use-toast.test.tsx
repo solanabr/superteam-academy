@@ -41,7 +41,7 @@ describe("useToast", () => {
 		});
 		expect(result.current.toasts).toHaveLength(2);
 		act(() => {
-			result.current.dismiss(id!);
+			result.current.dismiss(id);
 		});
 		expect(result.current.toasts).toHaveLength(1);
 		expect(result.current.toasts[0].title).toBe("B");

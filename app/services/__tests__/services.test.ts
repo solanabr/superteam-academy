@@ -223,8 +223,8 @@ describe("CredentialService", () => {
 		});
 		const result = await service.getEnrollmentCredential("course-1", MOCK_LEARNER);
 		expect(result).not.toBeNull();
-		expect(result!.totalXp).toBe(50);
-		expect(result!.isActive).toBe(true);
+		expect(result?.totalXp).toBe(50);
+		expect(result?.isActive).toBe(true);
 	});
 });
 

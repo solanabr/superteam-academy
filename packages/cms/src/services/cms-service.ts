@@ -54,7 +54,7 @@ export function createCmsContext({
 	): string | null => {
 		if (!imageUrlBuilder || !image) return null;
 		// biome-ignore lint/suspicious/noFocusedTests: .fit() is a Sanity image builder method, not a test
-		return imageUrlBuilder(image).width(width).height(height).fit("crop").url();
+		return imageUrlBuilder.image(image).width(width).height(height).fit("crop").url();
 	};
 
 	return {

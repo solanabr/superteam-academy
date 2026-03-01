@@ -26,7 +26,7 @@ export default function Providers({ children, initialSession }: WalletProviderPr
 			<Suspense>
 				<ProgressProvider
 					height="3px"
-					color="#008c4c"
+					color="var(--color-gold)"
 					options={{ showSpinner: false }}
 					shallowRouting
 				>
