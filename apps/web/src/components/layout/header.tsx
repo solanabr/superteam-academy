@@ -36,6 +36,7 @@ export function Header() {
   const [level, setLevel] = useState(0);
   const [glowing, setGlowing] = useState(false);
   const [xpGainAmount, setXpGainAmount] = useState<number | null>(null);
+  const xpGainKeyRef = useRef(0);
   const targetXpRef = useRef(0);
   const prevLevelRef = useRef(0);
   const rafRef = useRef<number>(0);
@@ -111,6 +112,7 @@ export function Header() {
     const handleXpGain = (e: Event) => {
       const amount = (e as CustomEvent<{ amount: number }>).detail?.amount;
       if (amount > 0) {
+        xpGainKeyRef.current += 1;
         setXpGainAmount(amount);
         clearTimeout(xpGainTimerRef.current);
         xpGainTimerRef.current = setTimeout(() => setXpGainAmount(null), 2600);
@@ -220,7 +222,7 @@ export function Header() {
                 {/* Floating +XP gain indicator */}
                 {xpGainAmount !== null && (
                   <span
-                    key={xpGainAmount + Date.now()}
+                    key={xpGainKeyRef.current}
                     className="absolute -bottom-9 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-[var(--xp-dim)] bg-[var(--card)] px-3 py-0.5 font-display text-[15px] font-black text-[var(--xp)] shadow-[0_2px_8px_var(--xp-dim)]"
                     style={{
                       animation:

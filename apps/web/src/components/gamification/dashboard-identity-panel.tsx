@@ -269,7 +269,8 @@ export function DashboardIdentityPanel({
   const t = useTranslations("gamification");
   const tDash = useTranslations("dashboard");
 
-  const { xpInCurrentLevel, progressPercent } = xpToNextLevel(xp);
+  const { xpInCurrentLevel, xpRequiredForNext, progressPercent } =
+    xpToNextLevel(xp);
 
   const unlockedSet = useMemo(
     () => new Set(unlockedAchievementIds),
@@ -371,10 +372,13 @@ export function DashboardIdentityPanel({
             </div>
             <div className="dash-xp-unit">{t("experiencePoints")}</div>
             <div className="dash-xp-to">
-              <em>
-                {xpInCurrentLevel.toLocaleString()} {t("xp")}
-              </em>{" "}
-              to {t("level")} {level + 1}
+              {t.rich("xpRemaining", {
+                xp: (xpRequiredForNext - xpInCurrentLevel).toLocaleString(),
+                xpLabel: t("xp"),
+                levelLabel: t("level"),
+                level: level + 1,
+                em: (chunks) => <em>{chunks}</em>,
+              })}
             </div>
             <div className="dash-xp-track">
               <div
