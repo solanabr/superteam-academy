@@ -6,12 +6,16 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getTranslations } from "next-intl/server";
 import { getUpcomingEvents, getPastEvents, isSanityConfigured } from "@/lib/community-cms";
+import { getLocalizedPageMetadata } from "@/lib/metadata";
 
-export const metadata: Metadata = {
-	title: "Events | Community | Superteam Academy",
-	description:
-		"Attend workshops, AMAs, hackathons, and meetups with the Superteam Academy community.",
-};
+export async function generateMetadata({
+	params,
+}: {
+	params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+	const { locale } = await params;
+	return getLocalizedPageMetadata(locale, "communityEvents");
+}
 
 export default async function EventsPage() {
 	const t = await getTranslations("community");

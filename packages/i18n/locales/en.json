@@ -606,13 +606,13 @@
 		"resetToDefaults": "Reset to Defaults",
 		"action": "Action",
 		"shortcut": "Shortcut",
-		"description": "Description",
+		"description": "Shortcut Description",
 		"actions": "Actions",
 		"recording": "Recording...",
 		"pressKeys": "Press keys",
 		"clickToRecord": "Click to record",
 		"edit": "Edit",
-		"help": "Help",
+		"help": "Shortcut Help",
 		"helpRecording": "Click on a shortcut and press your desired key combination",
 		"helpConflicts": "Conflicting shortcuts will be highlighted",
 		"helpReset": "You can reset individual or all shortcuts to defaults"
@@ -658,20 +658,20 @@
 				"saving": "Saving"
 			},
 			"reducedMotion": {
-				"description": "Description",
-				"title": "Title"
+				"description": "Reduce motion by limiting non-essential animations and transitions.",
+				"title": "Reduce Motion"
 			},
 			"sections": {
 				"accessibility": "Accessibility",
 				"fontSize": "Font Size",
 				"theme": "Theme"
 			},
-			"title": "Title",
+			"title": "Appearance Settings",
 			"toast": {
-				"errorDescription": "Error Description",
-				"errorTitle": "Error Title",
-				"updatedDescription": "Updated Description",
-				"updatedTitle": "Updated Title"
+				"errorDescription": "Failed to update appearance settings. Please try again.",
+				"errorTitle": "Update Failed",
+				"updatedDescription": "Your appearance preferences have been updated.",
+				"updatedTitle": "Appearance Updated"
 			}
 		},
 		"languageSection": {
@@ -686,9 +686,9 @@
 				"timezone": "Timezone"
 			},
 			"preview": {
-				"date": "Date",
-				"number": "Number",
-				"time": "Time"
+				"date": "Sample Date",
+				"number": "Sample Number",
+				"time": "Sample Time"
 			},
 			"sections": {
 				"language": "Language",
@@ -700,9 +700,9 @@
 				"24h": "24h"
 			},
 			"toast": {
-				"errorDescription": "Error Description",
-				"errorTitle": "Error Title",
-				"savedTitle": "Saved Title"
+				"errorDescription": "Failed to save language settings. Please try again.",
+				"errorTitle": "Save Failed",
+				"savedTitle": "Language Settings Saved"
 			}
 		},
 		"notificationsSection": {
@@ -724,12 +724,12 @@
 				"general": "General",
 				"notificationTypes": "Notification Types"
 			},
-			"title": "Title",
+			"title": "Notification Settings",
 			"toast": {
-				"errorDescription": "Error Description",
-				"errorTitle": "Error Title",
-				"updatedDescription": "Updated Description",
-				"updatedTitle": "Updated Title"
+				"errorDescription": "Failed to update notification settings. Please try again.",
+				"errorTitle": "Update Failed",
+				"updatedDescription": "Your notification preferences have been updated.",
+				"updatedTitle": "Notifications Updated"
 			}
 		},
 		"privacySection": {
@@ -740,23 +740,23 @@
 				"saving": "Saving"
 			},
 			"export": {
-				"description": "Description",
+				"description": "Download a copy of your personal data and account activity.",
 				"note": "Note",
-				"title": "Title"
+				"title": "Data Export"
 			},
 			"labels": {
 				"profileVisibility": "Profile Visibility"
 			},
-			"title": "Title",
+			"title": "Privacy Settings",
 			"toast": {
-				"errorDescription": "Error Description",
-				"errorTitle": "Error Title",
-				"exportFailedDescription": "Export Failed Description",
-				"exportFailedTitle": "Export Failed Title",
-				"exportedDescription": "Exported Description",
-				"exportedTitle": "Exported Title",
-				"updatedDescription": "Updated Description",
-				"updatedTitle": "Updated Title"
+				"errorDescription": "Failed to update privacy settings. Please try again.",
+				"errorTitle": "Update Failed",
+				"exportFailedDescription": "We could not export your data right now. Please try again later.",
+				"exportFailedTitle": "Export Failed",
+				"exportedDescription": "Your data export is ready.",
+				"exportedTitle": "Export Ready",
+				"updatedDescription": "Your privacy settings have been updated.",
+				"updatedTitle": "Privacy Updated"
 			}
 		},
 		"profileSection": {
@@ -764,7 +764,7 @@
 				"saveChanges": "Save Changes",
 				"saving": "Saving"
 			},
-			"bioHelp": "Bio Help",
+			"bioHelp": "Tell others what you are learning and building.",
 			"changePhoto": "Change Photo",
 			"fields": {
 				"bio": "Bio",
@@ -774,23 +774,23 @@
 				"username": "Username",
 				"website": "Website"
 			},
-			"photoHelp": "Photo Help",
+			"photoHelp": "Use a clear profile photo. Square images work best.",
 			"placeholders": {
 				"username": "Username"
 			},
-			"title": "Title",
+			"title": "Profile Settings",
 			"toast": {
-				"errorDescription": "Error Description",
-				"errorTitle": "Error Title",
-				"invalidUsernameDescription": "Invalid Username Description",
-				"invalidUsernameTitle": "Invalid Username Title",
-				"updatedDescription": "Updated Description",
-				"updatedTitle": "Updated Title",
-				"usernameUnavailableDescription": "Username Unavailable Description",
-				"usernameUnavailableTitle": "Username Unavailable Title"
+				"errorDescription": "Failed to update your profile. Please try again.",
+				"errorTitle": "Update Failed",
+				"invalidUsernameDescription": "Use 3-30 characters: letters, numbers, hyphens, or underscores.",
+				"invalidUsernameTitle": "Invalid Username",
+				"updatedDescription": "Your profile has been updated.",
+				"updatedTitle": "Profile Updated",
+				"usernameUnavailableDescription": "That username is already taken. Try another one.",
+				"usernameUnavailableTitle": "Username Unavailable"
 			},
 			"usernameAvailable": "Username Available",
-			"usernameHelp": "Username Help",
+			"usernameHelp": "This will be your public handle on the platform.",
 			"usernameTaken": "Username Taken"
 		},
 		"walletSection": {
@@ -807,8 +807,8 @@
 				"unlink": "Unlink"
 			},
 			"autoConnect": {
-				"description": "Description",
-				"title": "Title"
+				"description": "Automatically reconnect your preferred wallet when you return.",
+				"title": "Auto-Connect Wallet"
 			},
 			"badges": {
 				"primary": "Primary"
@@ -817,7 +817,7 @@
 				"noLinkedAccounts": "No Linked Accounts",
 				"noWalletConnected": "No Wallet Connected"
 			},
-			"linkedAtLabel": "Linked At Label",
+			"linkedAtLabel": "Linked on",
 			"loading": {
 				"linkedAccounts": "Linked Accounts"
 			},
@@ -827,20 +827,20 @@
 				"preferences": "Preferences"
 			},
 			"toast": {
-				"errorDescription": "Error Description",
-				"errorTitle": "Error Title",
-				"linkFailedTitle": "Link Failed Title",
-				"linkedTitle": "Linked Title",
-				"reauthFailedTitle": "Reauth Failed Title",
-				"reauthedTitle": "Reauthed Title",
-				"savedTitle": "Saved Title",
-				"signatureUnavailableDescription": "Signature Unavailable Description",
-				"signatureUnavailableTitle": "Signature Unavailable Title",
-				"tryAgain": "Try Again",
-				"unlinkFailedTitle": "Unlink Failed Title",
-				"unlinkedTitle": "Unlinked Title",
-				"walletLinkFailedTitle": "Wallet Link Failed Title",
-				"walletLinkedTitle": "Wallet Linked Title"
+				"errorDescription": "Wallet settings update failed. Please try again.",
+				"errorTitle": "Update Failed",
+				"linkFailedTitle": "Linking Failed",
+				"linkedTitle": "Account Linked",
+				"reauthFailedTitle": "Reauthentication Failed",
+				"reauthedTitle": "Reauthenticated",
+				"savedTitle": "Wallet Settings Saved",
+				"signatureUnavailableDescription": "A wallet signature is required to continue.",
+				"signatureUnavailableTitle": "Signature Required",
+				"tryAgain": "Please try again",
+				"unlinkFailedTitle": "Unlink Failed",
+				"unlinkedTitle": "Account Unlinked",
+				"walletLinkFailedTitle": "Wallet Linking Failed",
+				"walletLinkedTitle": "Wallet Linked"
 			},
 			"unknownWallet": "Unknown Wallet"
 		}
@@ -1129,7 +1129,7 @@
 		"issueDate": "Issue Date",
 		"expiryDate": "Expiry Date",
 		"grade": "Grade",
-		"description": "Description",
+		"description": "Credential Description",
 		"skills": "Skills",
 		"verified": "Verified",
 		"verifiedDesc": "This credential has been verified on-chain.",
@@ -1144,7 +1144,7 @@
 		"myCredentials": "My Credentials",
 		"credentialsDesc": "{count} credentials earned",
 		"explorer": "Explorer",
-		"listTitle": "List Title",
+		"listTitle": "Credential Title",
 		"unverified": "Unverified"
 	},
 	"seasonal": {
@@ -1248,7 +1248,7 @@
 		"pluginName": "Plugin Name",
 		"pluginNamePlaceholder": "Enter plugin name",
 		"pluginCategory": "Category",
-		"pluginDescription": "Description",
+		"pluginDescription": "Plugin Description",
 		"pluginDescriptionPlaceholder": "Describe your plugin",
 		"pluginCode": "Plugin Code",
 		"pluginCodePlaceholder": "Enter plugin code",
@@ -1571,7 +1571,7 @@
 			"title": "Training Programs",
 			"description": "Manage security training programs",
 			"table": {
-				"title": "Title",
+				"title": "Program Title",
 				"type": "Type",
 				"duration": "Duration",
 				"completion": "Completion",
@@ -1667,7 +1667,7 @@
 				"severity": "Severity",
 				"confidence": "Confidence",
 				"status": "Status",
-				"time": "Time"
+				"time": "Detected At"
 			}
 		},
 		"patterns": {
@@ -1850,7 +1850,7 @@
 			"description": "Complete incident history",
 			"table": {
 				"id": "ID",
-				"title": "Title",
+				"title": "Incident Title",
 				"severity": "Severity",
 				"status": "Status",
 				"assignedTo": "Assigned To",
@@ -1964,7 +1964,7 @@
 			"title": "All Reports",
 			"description": "Browse and manage generated reports",
 			"table": {
-				"title": "Title",
+				"title": "Report Title",
 				"type": "Type",
 				"status": "Status",
 				"generated": "Generated",
@@ -2284,7 +2284,7 @@
 				"user": "User",
 				"amount": "Amount",
 				"status": "Status",
-				"time": "Time"
+				"time": "Detected At"
 			}
 		},
 		"analytics": {
@@ -2360,7 +2360,7 @@
 				"requirement": "Requirement",
 				"type": "Type",
 				"status": "Status",
-				"details": "Details"
+				"details": "Audit Details"
 			}
 		},
 		"reports": {
@@ -2428,7 +2428,7 @@
 				"source": "Source",
 				"target": "Target",
 				"status": "Status",
-				"time": "Time"
+				"time": "Detected At"
 			}
 		},
 		"analytics": {
@@ -2763,29 +2763,29 @@
 			"step3Desc": "Collect experience points, maintain streaks, and unlock soulbound on-chain credentials.",
 			"badge": "Badge",
 			"community": "Community",
-			"communityDesc": "Community Desc",
+			"communityDesc": "Learn with peers, get feedback, and stay accountable.",
 			"completion": "Completion",
 			"courses": "Courses",
 			"credentials": "Credentials",
-			"credentialsDesc": "Credentials Desc",
-			"cta": "Cta",
-			"description": "Description",
+			"credentialsDesc": "Earn verifiable, on-chain credentials as you complete courses.",
+			"cta": "Start learning free",
+			"description": "Three simple steps to build real Solana skills.",
 			"earnXp": "Earn XP",
-			"earnXpDesc": "Earn XP Desc",
-			"expertContent": "Expert Content",
-			"expertContentDesc": "Expert Content Desc",
+			"earnXpDesc": "Complete lessons and challenges to earn XP and level up.",
+			"expertContent": "Expert-Curated Content",
+			"expertContentDesc": "Learn from builders who ship production Solana apps.",
 			"explorePaths": "Explore Paths",
 			"interactiveCoding": "Interactive Coding",
-			"interactiveCodingDesc": "Interactive Coding Desc",
+			"interactiveCodingDesc": "Write, run, and test code directly in your browser.",
 			"learners": "Learners",
 			"lessons": "Lessons",
-			"popular": "Popular",
+			"popular": "Popular Topics",
 			"startCourse": "Start Course",
 			"streaks": "Streaks",
-			"streaksDesc": "Streaks Desc",
-			"titleHighlight": "Title Highlight",
-			"titleSuffix": "Title Suffix",
-			"viewAll": "View All"
+			"streaksDesc": "Keep momentum with daily streaks and milestone rewards.",
+			"titleHighlight": "learn by doing",
+			"titleSuffix": "from day one",
+			"viewAll": "View All Courses"
 		},
 		"testimonials": {
 			"title": "Built by builders, for builders",
@@ -3000,28 +3000,28 @@
 				"cancel": "Cancel",
 				"postDiscussion": "Post Discussion"
 			},
-			"description": "Description",
+			"description": "Start a new discussion with the community.",
 			"errors": {
 				"createFailed": "Create Failed",
 				"createFailedRetry": "Create Failed Retry"
 			},
 			"fields": {
 				"category": "Category",
-				"details": "Details",
+				"details": "Discussion Details",
 				"tags": "Tags",
-				"title": "Title"
+				"title": "Discussion Title"
 			},
 			"markdownSupported": "Markdown Supported",
 			"placeholders": {
-				"details": "Details",
-				"tags": "Tags",
-				"title": "Title"
+				"details": "Describe your question or topic in detail...",
+				"tags": "solana, anchor, frontend",
+				"title": "What do you want to discuss?"
 			},
-			"title": "Title",
+			"title": "Create Discussion",
 			"toast": {
-				"createdDescription": "Created Description",
-				"createdTitle": "Created Title",
-				"errorTitle": "Error Title"
+				"createdDescription": "Your discussion has been published.",
+				"createdTitle": "Discussion Created",
+				"errorTitle": "Failed to Create Discussion"
 			}
 		},
 		"createEvent": {
@@ -3029,13 +3029,13 @@
 				"cancel": "Cancel",
 				"createEvent": "Create Event"
 			},
-			"description": "Description",
+			"description": "Create a community event and invite members to join.",
 			"errors": {
 				"createFailed": "Create Failed",
 				"createFailedRetry": "Create Failed Retry"
 			},
 			"fields": {
-				"description": "Description",
+				"description": "Event Description",
 				"endDateTime": "End Date Time",
 				"eventName": "Event Name",
 				"location": "Location",
@@ -3051,15 +3051,15 @@
 				"online": "Online"
 			},
 			"placeholders": {
-				"description": "Description",
+				"description": "What is this event about?",
 				"eventName": "Event Name",
-				"tags": "Tags"
+				"tags": "workshop, meetup, q&a"
 			},
-			"title": "Title",
+			"title": "Create Event",
 			"toast": {
-				"createdDescription": "Created Description",
-				"createdTitle": "Created Title",
-				"errorTitle": "Error Title"
+				"createdDescription": "Your event has been created.",
+				"createdTitle": "Event Created",
+				"errorTitle": "Failed to Create Event"
 			}
 		},
 		"createProject": {
@@ -3067,14 +3067,14 @@
 				"cancel": "Cancel",
 				"submit": "Submit"
 			},
-			"description": "Description",
+			"description": "Submit your project to showcase it to the community.",
 			"errors": {
 				"submitFailed": "Submit Failed",
 				"submitFailedRetry": "Submit Failed Retry"
 			},
 			"fields": {
 				"category": "Category",
-				"description": "Description",
+				"description": "Project Description",
 				"githubUrl": "GitHub URL",
 				"liveUrl": "Live URL",
 				"projectName": "Project Name",
@@ -3082,17 +3082,17 @@
 				"xpReward": "XP Reward"
 			},
 			"placeholders": {
-				"description": "Description",
+				"description": "What problem does your project solve?",
 				"projectName": "Project Name",
-				"tags": "Tags"
+				"tags": "defi, tooling, nfts"
 			},
-			"title": "Title",
+			"title": "Submit Project",
 			"toast": {
-				"errorTitle": "Error Title",
-				"submittedDescription": "Submitted Description",
-				"submittedTitle": "Submitted Title"
+				"errorTitle": "Failed to Submit Project",
+				"submittedDescription": "Your project has been submitted successfully.",
+				"submittedTitle": "Project Submitted"
 			},
-			"xpRewardHelp": "XP Reward Help"
+			"xpRewardHelp": "Set how much XP contributors can earn from this project."
 		}
 	},
 	"topics": {
@@ -3173,7 +3173,7 @@
 			"profile": "Basic Profile",
 			"profile-details": "Profile Details",
 			"topics": "Topics",
-			"time": "Time",
+			"time": "Time Commitment",
 			"experience": "Experience",
 			"goals": "Goals",
 			"complete": "Complete"
@@ -3460,23 +3460,23 @@
 		"notAvailable": "Not Available",
 		"progress": {
 			"complete": "Complete",
-			"questionOf": "Question Of"
+			"questionOf": "Question {current} of {total}"
 		},
 		"results": {
 			"congratulations": "Congratulations",
-			"correctCount": "Correct Count",
+			"correctCount": "Correct Answers",
 			"explanation": "Explanation",
 			"failed": "Failed",
 			"passed": "Passed",
 			"question": "Question",
-			"required": "Required",
+			"required": "Required to Pass",
 			"reviewAnswers": "Review Answers",
 			"tryAgain": "Try Again"
 		}
 	},
 	"profile": {
 		"completeness": {
-			"cta": "Cta",
+			"cta": "Complete Your Profile",
 			"missingInformation": "Missing Information",
 			"percentComplete": "Percent Complete",
 			"status": {
@@ -3486,6 +3486,82 @@
 				"needsWork": "Needs Work"
 			},
 			"title": "Profile Completion"
+		}
+	},
+	"seo": {
+		"pages": {
+			"home": {
+				"title": "Superteam Academy - Learn Solana Development",
+				"description": "Master Solana development through interactive courses, earn on-chain credentials, and join a global community of Web3 builders."
+			},
+			"topics": {
+				"title": "Topics | Superteam Academy",
+				"description": "Explore all learning topics across Web3, Solana development, and blockchain technology."
+			},
+			"leaderboard": {
+				"title": "Leaderboard | Superteam Academy",
+				"description": "See how you rank against other learners. Compete for top spots and earn recognition."
+			},
+			"progress": {
+				"title": "Learning Progress | Superteam Academy",
+				"description": "Track your on-chain learning progress, courses, and achievements."
+			},
+			"settings": {
+				"title": "Settings | Superteam Academy",
+				"description": "Manage your account settings and preferences."
+			},
+			"certificates": {
+				"title": "My Certificates | Superteam Academy",
+				"description": "View your earned on-chain credentials and course certificates."
+			},
+			"pricing": {
+				"title": "Pricing | Superteam Academy",
+				"description": "Learn for free or unlock premium content with Superteam Academy Pro."
+			},
+			"community": {
+				"title": "Discussions | Community | Superteam Academy",
+				"description": "Join discussions about Solana development, share projects, ask questions, and connect with other builders."
+			},
+			"courses": {
+				"title": "Catalog | Superteam Academy",
+				"description": "Browse 50+ courses on Solana development, DeFi, security, and more. Earn XP and verifiable on-chain credentials."
+			},
+			"communityMembers": {
+				"title": "Members | Community | Superteam Academy",
+				"description": "Discover top contributors and active members of the Superteam Academy community."
+			},
+			"communityEvents": {
+				"title": "Events | Community | Superteam Academy",
+				"description": "Attend workshops, AMAs, hackathons, and meetups with the Superteam Academy community."
+			},
+			"profile": {
+				"title": "Profile | Superteam Academy",
+				"description": "View your learning progress, achievements, and statistics."
+			}
+		},
+		"dynamic": {
+			"topic": {
+				"title": "{topic} Courses | Superteam Academy",
+				"notFoundTitle": "Topic Not Found | Superteam Academy",
+				"notFoundDescription": "The requested topic could not be found."
+			},
+			"course": {
+				"title": "{course} | Superteam Academy"
+			},
+			"lesson": {
+				"title": "{lesson} | {course} | Superteam Academy"
+			},
+			"challenge": {
+				"title": "{challenge} | {course} | Superteam Academy",
+				"notFoundTitle": "Challenge | {challengeId} | Superteam Academy",
+				"notFoundDescription": "Coding challenge."
+			},
+			"certificate": {
+				"title": "{certificate} - {holder} | Superteam Academy",
+				"description": "Verifiable on-chain credential for completing {course}.",
+				"notFoundTitle": "Certificate Not Found | Superteam Academy",
+				"notFoundDescription": "The requested certificate could not be found."
+			}
 		}
 	}
 }

@@ -3,14 +3,15 @@ import { buildLessonMetadata, LessonPageContent } from "../../learn/page";
 
 interface CanonicalLessonPageProps {
 	params: Promise<{
+		locale: string;
 		id: string;
 		lessonId: string;
 	}>;
 }
 
 export async function generateMetadata({ params }: CanonicalLessonPageProps): Promise<Metadata> {
-	const { id, lessonId } = await params;
-	return buildLessonMetadata(id, lessonId);
+	const { id, lessonId, locale } = await params;
+	return buildLessonMetadata(id, lessonId, locale);
 }
 
 export default async function CanonicalLessonPage({ params }: CanonicalLessonPageProps) {

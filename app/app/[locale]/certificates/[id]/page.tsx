@@ -10,16 +10,25 @@ import { CredentialService } from "@/services/credential-service";
 import { CertificateActions } from "@/components/credentials/certificate-actions";
 
 interface CertificatePageProps {
-	params: Promise<{ id: string }>;
+	params: Promise<{ locale: string; id: string }>;
 }
 
 export async function generateMetadata({ params }: CertificatePageProps): Promise<Metadata> {
-	const { id } = await params;
+	const { id, locale } = await params;
+	const t = await getTranslations({ locale, namespace: "seo.dynamic.certificate" });
 	const cert = await getCertificate(id);
-	if (!cert) return { title: "Certificate Not Found | Superteam Academy" };
+	if (!cert) {
+		return {
+			title: t("notFoundTitle"),
+			description: t("notFoundDescription"),
+		};
+	}
 	return {
-		title: `${cert.title} — ${cert.holder} | Superteam Academy`,
-		description: `Verifiable on-chain credential for completing ${cert.courseName}.`,
+		title: t("title", {
+			certificate: cert.title,
+			holder: cert.holder,
+		}),
+		description: t("description", { course: cert.courseName }),
 	};
 }
 

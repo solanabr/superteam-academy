@@ -1,15 +1,21 @@
 import { Search, Trophy, Zap, BookOpen, Award, Flame, Crown } from "lucide-react";
+import type { Metadata } from "next";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getTranslations } from "next-intl/server";
 import { getAllUsers, type AcademyUser } from "@/lib/sanity-users";
 import type { MemberWithMeta } from "@superteam-academy/cms";
+import { getLocalizedPageMetadata } from "@/lib/metadata";
 
-export const metadata = {
-	title: "Members | Community | Superteam Academy",
-	description: "Discover top contributors and active members of the Superteam Academy community.",
-};
+export async function generateMetadata({
+	params,
+}: {
+	params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+	const { locale } = await params;
+	return getLocalizedPageMetadata(locale, "communityMembers");
+}
 
 // Normalized member shape (consistent between Sanity and mock data)
 type NormalizedMember = {

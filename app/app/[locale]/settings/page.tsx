@@ -9,11 +9,16 @@ import { PrivacySettings } from "@/components/settings/privacy-settings";
 import { AppearanceSettings } from "@/components/settings/appearance-settings";
 import { LanguageSettings } from "@/components/settings/language-settings";
 import { WalletSettings } from "@/components/settings/wallet-settings";
+import { getLocalizedPageMetadata } from "@/lib/metadata";
 
-export const metadata: Metadata = {
-	title: "Settings | Superteam Academy",
-	description: "Manage your account settings and preferences",
-};
+export async function generateMetadata({
+	params,
+}: {
+	params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+	const { locale } = await params;
+	return getLocalizedPageMetadata(locale, "settings");
+}
 
 const TABS = [
 	{ value: "profile", Icon: User },

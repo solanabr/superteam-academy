@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getLocale } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { DM_Sans, Bricolage_Grotesque } from "next/font/google";
 import "./globals.css";
 
@@ -17,26 +17,31 @@ const bricolageGrotesque = Bricolage_Grotesque({
 	display: "swap",
 });
 
-export const metadata: Metadata = {
-	title: {
-		default: "Superteam Academy - Learn Solana Development",
-		template: "%s | Superteam Academy",
-	},
-	description:
-		"Master Solana development through interactive courses, earn on-chain credentials, and join a global community of Web3 builders.",
-	metadataBase: new URL("https://academy.superteam.fun"),
-	openGraph: {
-		type: "website",
-		siteName: "Superteam Academy",
-		title: "Superteam Academy - Learn Solana Development",
-		description:
-			"Master Solana development through interactive courses, earn on-chain credentials, and join a global community of Web3 builders.",
-	},
-	twitter: {
-		card: "summary_large_image",
-		site: "@SuperteamAcademy",
-	},
-};
+export async function generateMetadata(): Promise<Metadata> {
+	const locale = await getLocale();
+	const t = await getTranslations({ locale, namespace: "seo.pages.home" });
+	const title = t("title");
+	const description = t("description");
+
+	return {
+		title: {
+			default: title,
+			template: "%s | Superteam Academy",
+		},
+		description,
+		metadataBase: new URL("https://academy.superteam.fun"),
+		openGraph: {
+			type: "website",
+			siteName: "Superteam Academy",
+			title,
+			description,
+		},
+		twitter: {
+			card: "summary_large_image",
+			site: "@SuperteamAcademy",
+		},
+	};
+}
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
 	const locale = await getLocale();

@@ -19,12 +19,16 @@ import { getUsersByWallets } from "@/lib/sanity-users";
 import { getCoursesIndex, isSanityConfigured } from "@/lib/cms";
 import { countCompletedLessons } from "@superteam-academy/anchor";
 import { PublicKey } from "@solana/web3.js";
+import { getLocalizedPageMetadata } from "@/lib/metadata";
 
-export const metadata: Metadata = {
-	title: "Leaderboard | Superteam Academy",
-	description:
-		"See how you rank against other learners. Compete for top spots and earn recognition.",
-};
+export async function generateMetadata({
+	params,
+}: {
+	params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+	const { locale } = await params;
+	return getLocalizedPageMetadata(locale, "leaderboard");
+}
 
 interface LeaderboardPageProps {
 	searchParams: Promise<{

@@ -27,6 +27,7 @@ import {
 
 interface CourseDetailPageProps {
 	params: Promise<{
+		locale: string;
 		id: string;
 	}>;
 	searchParams?: Promise<{
@@ -35,11 +36,12 @@ interface CourseDetailPageProps {
 }
 
 export async function generateMetadata({ params }: CourseDetailPageProps): Promise<Metadata> {
-	const { id } = await params;
+	const { id, locale } = await params;
+	const t = await getTranslations({ locale, namespace: "seo.dynamic.course" });
 	const course = await getCourse(id);
 
 	return {
-		title: `${course.title} | Superteam Academy`,
+		title: t("title", { course: course.title }),
 		description: course.description,
 		openGraph: {
 			title: course.title,

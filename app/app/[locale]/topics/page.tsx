@@ -17,12 +17,16 @@ import {
 import { getTranslations } from "next-intl/server";
 import { getCoursesIndex, isSanityConfigured } from "@/lib/cms";
 import { getAcademyClient } from "@/lib/academy";
+import { getLocalizedPageMetadata } from "@/lib/metadata";
 
-export const metadata: Metadata = {
-	title: "Topics | Superteam Academy",
-	description:
-		"Explore all learning topics across Web3, Solana development, and blockchain technology.",
-};
+export async function generateMetadata({
+	params,
+}: {
+	params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+	const { locale } = await params;
+	return getLocalizedPageMetadata(locale, "topics");
+}
 
 const TOPICS = [
 	{

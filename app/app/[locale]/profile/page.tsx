@@ -27,11 +27,16 @@ import { AchievementService } from "@/services/achievement-service";
 import { ProfileCompleteness } from "@/components/profile/profile-completeness";
 import { getUserByUsername, getUserByWallet } from "@/lib/sanity-users";
 import { getGravatarUrl } from "@/lib/utils";
+import { getLocalizedPageMetadata } from "@/lib/metadata";
 
-export const metadata: Metadata = {
-	title: "Profile | Superteam Academy",
-	description: "View your learning progress, achievements, and statistics",
-};
+export async function generateMetadata({
+	params,
+}: {
+	params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+	const { locale } = await params;
+	return getLocalizedPageMetadata(locale, "profile");
+}
 
 interface ProfilePageProps {
 	searchParams?: Promise<{ wallet?: string; username?: string }>;

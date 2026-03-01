@@ -2,11 +2,16 @@ import type { Metadata } from "next";
 import { Link } from "@superteam-academy/i18n/navigation";
 import { Check, Zap, BookOpen, Trophy, Shield, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getLocalizedPageMetadata } from "@/lib/metadata";
 
-export const metadata: Metadata = {
-	title: "Pricing | Superteam Academy",
-	description: "Learn for free or unlock premium content with Superteam Academy Pro.",
-};
+export async function generateMetadata({
+	params,
+}: {
+	params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+	const { locale } = await params;
+	return getLocalizedPageMetadata(locale, "pricing");
+}
 
 const PLANS = [
 	{

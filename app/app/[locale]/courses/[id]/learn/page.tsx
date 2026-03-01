@@ -30,6 +30,7 @@ import { countCompletedLessons } from "@superteam-academy/anchor";
 
 interface LessonPageProps {
 	params: Promise<{
+		locale: string;
 		id: string;
 	}>;
 	searchParams?: Promise<{
@@ -41,19 +42,27 @@ export async function generateMetadata({
 	params,
 	searchParams,
 }: LessonPageProps): Promise<Metadata> {
-	const { id } = await params;
+	const { id, locale } = await params;
 	const resolvedSearchParams = await searchParams;
 	const lessonId = resolvedSearchParams?.lesson || "1-1";
 
-	return buildLessonMetadata(id, lessonId);
+	return buildLessonMetadata(id, lessonId, locale);
 }
 
-export async function buildLessonMetadata(courseId: string, lessonId: string): Promise<Metadata> {
+export async function buildLessonMetadata(
+	courseId: string,
+	lessonId: string,
+	locale: string
+): Promise<Metadata> {
+	const t = await getTranslations({ locale, namespace: "seo.dynamic.lesson" });
 	const course = await getCourse(courseId);
 	const lesson = await getLesson(courseId, lessonId);
 
 	return {
-		title: `${lesson.title} | ${course.title} | Superteam Academy`,
+		title: t("title", {
+			lesson: lesson.title,
+			course: course.title,
+		}),
 		description: lesson.description,
 	};
 }

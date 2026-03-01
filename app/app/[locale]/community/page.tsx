@@ -22,6 +22,7 @@ import {
 	isSanityConfigured,
 } from "@/lib/community-cms";
 import type { DiscussionCategory } from "@superteam-academy/cms";
+import { getLocalizedPageMetadata } from "@/lib/metadata";
 
 interface NormalizedDiscussion {
 	id: string;
@@ -39,11 +40,14 @@ interface NormalizedDiscussion {
 	solved: boolean;
 }
 
-export const metadata: Metadata = {
-	title: "Discussions | Community | Superteam Academy",
-	description:
-		"Join discussions about Solana development, share projects, ask questions, and connect with other builders.",
-};
+export async function generateMetadata({
+	params,
+}: {
+	params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+	const { locale } = await params;
+	return getLocalizedPageMetadata(locale, "community");
+}
 
 const CATEGORIES = [
 	"all",

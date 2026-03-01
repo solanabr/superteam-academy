@@ -170,10 +170,10 @@ export function SiteHeader() {
 								className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground"
 								aria-label={t("toggleTheme")}
 							>
-								{mounted && resolvedTheme === "dark" ? (
-									<Sun className="h-4 w-4" />
-								) : (
+								{mounted && resolvedTheme === "light" ? (
 									<Moon className="h-4 w-4" />
+								) : (
+									<Sun className="h-4 w-4" />
 								)}
 							</button>
 

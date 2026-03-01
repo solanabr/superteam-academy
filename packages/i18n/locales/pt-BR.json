@@ -12,7 +12,7 @@
 		},
 		"categories": {
 			"all": "Todas as Categorias",
-			"solana": "Solana Core",
+			"solana": "Núcleo Solana",
 			"anchor": "Anchor",
 			"defi": "DeFi",
 			"nft": "NFT",
@@ -157,13 +157,13 @@
 			"payWithCrypto": "Pagar com SOL ou USDC",
 			"recommended": "Recomendado",
 			"creditCard": "Cartão de Crédito",
-			"creditCardDesc": "Visa, Mastercard, American Express",
+			"creditCardDesc": "Visa, Mastercard e American Express",
 			"processing": "Processando...",
 			"enrollFor": "Matricular por ${price}",
 			"moneyBack": "Garantia de reembolso de 30 dias",
 			"lifetimeAccess": "Acesso vitalício ao conteúdo do curso",
 			"certificateIncluded": "Certificado de conclusão incluído",
-			"closeEnrollment": "Close Enrollment"
+			"closeEnrollment": "Fechar inscrição"
 		},
 		"modules": {
 			"title": "Grade do Curso",
@@ -349,7 +349,7 @@
 			"executionTime": "Tempo de Execução",
 			"xpEarned": "XP Ganho",
 			"overallScore": "Pontuação Geral",
-			"feedback": "Feedback",
+			"feedback": "Opinião",
 			"achievements": "Conquistas Desbloqueadas",
 			"nextSteps": "Próximos Passos",
 			"greatJob": "Bom trabalho!",
@@ -443,7 +443,7 @@
 			"blockchain": "Blockchain",
 			"aiMl": "IA & Machine Learning",
 			"mobile": "Desenvolvimento Mobile",
-			"design": "Design",
+			"design": "Projeto",
 			"dataScience": "Ciência de Dados",
 			"title": "Categorias",
 			"select": "Selecionar categoria"
@@ -625,7 +625,7 @@
 					"placeholder": "https://seu-site.com"
 				},
 				"bio": {
-					"label": "Bio",
+					"label": "Biografia",
 					"placeholder": "Conte sobre seus interesses e o que você está construindo...",
 					"remaining": "{count} caracteres restantes"
 				}
@@ -736,7 +736,7 @@
 				"certification": "Certificação",
 				"personal-growth": "Crescimento pessoal",
 				"entrepreneurship": "Empreendedorismo",
-				"freelancing": "Freelancing",
+				"freelancing": "Freelancer",
 				"job-promotion": "Promoção no trabalho",
 				"side-project": "Projeto paralelo",
 				"teaching": "Ensino",
@@ -879,17 +879,17 @@
 		},
 		"appearanceSection": {
 			"actions": {
-				"saveChanges": "Save Changes",
-				"saving": "Saving"
+				"saveChanges": "Salvar alterações",
+				"saving": "Salvando"
 			},
 			"reducedMotion": {
 				"description": "Description",
 				"title": "Title"
 			},
 			"sections": {
-				"accessibility": "Accessibility",
-				"fontSize": "Font Size",
-				"theme": "Theme"
+				"accessibility": "Acessibilidade",
+				"fontSize": "Tamanho da fonte",
+				"theme": "Tema"
 			},
 			"title": "Title",
 			"toast": {
@@ -901,14 +901,14 @@
 		},
 		"languageSection": {
 			"actions": {
-				"saveChanges": "Save Changes",
-				"saving": "Saving"
+				"saveChanges": "Salvar alterações",
+				"saving": "Salvando"
 			},
 			"labels": {
-				"dateFormat": "Date Format",
-				"numberFormat": "Number Format",
-				"timeFormat": "Time Format",
-				"timezone": "Timezone"
+				"dateFormat": "Formato de data",
+				"numberFormat": "Formato numérico",
+				"timeFormat": "Formato de hora",
+				"timezone": "Fuso horário"
 			},
 			"preview": {
 				"date": "Date",
@@ -916,9 +916,9 @@
 				"time": "Time"
 			},
 			"sections": {
-				"language": "Language",
-				"preview": "Preview",
-				"regionalFormats": "Regional Formats"
+				"language": "Linguagem",
+				"preview": "Visualização",
+				"regionalFormats": "Formatos Regionais"
 			},
 			"timeFormats": {
 				"12h": "12h",
@@ -932,22 +932,22 @@
 		},
 		"notificationsSection": {
 			"actions": {
-				"saveChanges": "Save Changes",
-				"saving": "Saving"
+				"saveChanges": "Salvar alterações",
+				"saving": "Salvando"
 			},
 			"frequency": {
-				"daily": "Daily",
-				"immediate": "Immediate",
-				"weekly": "Weekly"
+				"daily": "Diário",
+				"immediate": "Imediato",
+				"weekly": "Semanalmente"
 			},
 			"labels": {
-				"emailFrequency": "Email Frequency",
-				"pushFrequency": "Push Frequency"
+				"emailFrequency": "Frequência de e-mail",
+				"pushFrequency": "Frequência de envio"
 			},
 			"sections": {
-				"frequency": "Frequency",
-				"general": "General",
-				"notificationTypes": "Notification Types"
+				"frequency": "Freqüência",
+				"general": "Em geral",
+				"notificationTypes": "Tipos de notificação"
 			},
 			"title": "Title",
 			"toast": {
@@ -959,18 +959,18 @@
 		},
 		"privacySection": {
 			"actions": {
-				"exportData": "Export Data",
-				"exporting": "Exporting",
-				"saveChanges": "Save Changes",
-				"saving": "Saving"
+				"exportData": "Exportar dados",
+				"exporting": "Exportador",
+				"saveChanges": "Salvar alterações",
+				"saving": "Salvando"
 			},
 			"export": {
 				"description": "Description",
-				"note": "Note",
+				"note": "Observação",
 				"title": "Title"
 			},
 			"labels": {
-				"profileVisibility": "Profile Visibility"
+				"profileVisibility": "Visibilidade do perfil"
 			},
 			"title": "Title",
 			"toast": {
@@ -986,22 +986,22 @@
 		},
 		"profileSection": {
 			"actions": {
-				"saveChanges": "Save Changes",
-				"saving": "Saving"
+				"saveChanges": "Salvar alterações",
+				"saving": "Salvando"
 			},
 			"bioHelp": "Bio Help",
-			"changePhoto": "Change Photo",
+			"changePhoto": "Alterar foto",
 			"fields": {
-				"bio": "Bio",
-				"email": "Email",
-				"location": "Location",
-				"name": "Name",
-				"username": "Username",
-				"website": "Website"
+				"bio": "Biografia",
+				"email": "E-mail",
+				"location": "Localização",
+				"name": "Nome",
+				"username": "Nome de usuário",
+				"website": "Site"
 			},
 			"photoHelp": "Photo Help",
 			"placeholders": {
-				"username": "Username"
+				"username": "Nome de usuário"
 			},
 			"title": "Title",
 			"toast": {
@@ -1014,42 +1014,42 @@
 				"usernameUnavailableDescription": "Username Unavailable Description",
 				"usernameUnavailableTitle": "Username Unavailable Title"
 			},
-			"usernameAvailable": "Username Available",
+			"usernameAvailable": "Nome de usuário disponível",
 			"usernameHelp": "Username Help",
-			"usernameTaken": "Username Taken"
+			"usernameTaken": "Nome de usuário obtido"
 		},
 		"walletSection": {
 			"actions": {
-				"linkCurrentWallet": "Link Current Wallet",
-				"linkGithub": "Link GitHub",
-				"linkGoogle": "Link Google",
-				"reauth": "Reauth",
-				"relinkGithub": "Relink GitHub",
-				"relinkGoogle": "Relink Google",
-				"relinkWallet": "Relink Wallet",
-				"saveChanges": "Save Changes",
-				"saving": "Saving",
-				"unlink": "Unlink"
+				"linkCurrentWallet": "Vincular carteira atual",
+				"linkGithub": "Vincular GitHub",
+				"linkGoogle": "Vincular Google",
+				"reauth": "Reautorizar",
+				"relinkGithub": "Vincular novamente o GitHub",
+				"relinkGoogle": "Vincular novamente o Google",
+				"relinkWallet": "Vincular novamente a carteira",
+				"saveChanges": "Salvar alterações",
+				"saving": "Salvando",
+				"unlink": "Desvincular"
 			},
 			"autoConnect": {
 				"description": "Description",
 				"title": "Title"
 			},
 			"badges": {
-				"primary": "Primary"
+				"primary": "Primário"
 			},
 			"empty": {
-				"noLinkedAccounts": "No Linked Accounts",
-				"noWalletConnected": "No Wallet Connected"
+				"noLinkedAccounts": "Nenhuma conta vinculada",
+				"noWalletConnected": "Nenhuma carteira conectada"
 			},
 			"linkedAtLabel": "Linked At Label",
 			"loading": {
-				"linkedAccounts": "Linked Accounts"
+				"linkedAccounts": "Contas vinculadas"
 			},
 			"sections": {
-				"connectedWallet": "Connected Wallet",
-				"linkedAccounts": "Linked Accounts",
-				"preferences": "Preferences"
+				"connectedWallet": "Carteira Conectada",
+				"linkedAccounts": "Contas vinculadas",
+				"preferences": "Preferências"
 			},
 			"toast": {
 				"errorDescription": "Error Description",
@@ -1067,7 +1067,7 @@
 				"walletLinkFailedTitle": "Wallet Link Failed Title",
 				"walletLinkedTitle": "Wallet Linked Title"
 			},
-			"unknownWallet": "Unknown Wallet"
+			"unknownWallet": "Carteira desconhecida"
 		}
 	},
 	"pagination": {
@@ -1088,7 +1088,7 @@
 		"activeKeys": "{count} chaves ativas",
 		"tabs": {
 			"keys": "Chaves de API",
-			"endpoints": "Endpoints",
+			"endpoints": "Pontos finais",
 			"usage": "Uso",
 			"docs": "Documentação"
 		},
@@ -1174,7 +1174,7 @@
 			"viewAnalytics": "Ver Analytics"
 		},
 		"editCourse": {
-			"saveChanges": "Save Changes"
+			"saveChanges": "Salvar alterações"
 		}
 	},
 	"achievements": {
@@ -1368,9 +1368,9 @@
 		"noCredentialsDesc": "Conclua cursos para ganhar credenciais verificáveis.",
 		"myCredentials": "Minhas Credenciais",
 		"credentialsDesc": "{count} credenciais conquistadas",
-		"explorer": "Explorer",
+		"explorer": "Explorador",
 		"listTitle": "List Title",
-		"unverified": "Unverified"
+		"unverified": "Não verificado"
 	},
 	"seasonal": {
 		"title": "Eventos Sazonais",
@@ -1434,12 +1434,12 @@
 		"walletHelp": "Precisa de ajuda para conectar sua carteira?"
 	},
 	"plugins": {
-		"title": "Plugins",
+		"title": "Plug-ins",
 		"subtitle": "Amplie sua experiência de aprendizado com plugins",
 		"installedCount": "{count} instalados",
 		"tabs": {
 			"installed": "Instalados",
-			"marketplace": "Marketplace",
+			"marketplace": "Mercado",
 			"development": "Desenvolvimento"
 		},
 		"enabled": "Habilitado",
@@ -1458,7 +1458,7 @@
 			"editor": "Editor",
 			"theme": "Tema",
 			"integration": "Integração",
-			"analytics": "Analytics",
+			"analytics": "Análise",
 			"gamification": "Gamificação",
 			"utility": "Utilidades"
 		},
@@ -1521,7 +1521,7 @@
 		"autoRotateToggled": "Rotação automática alternada",
 		"vibrationToggled": "Vibração alternada",
 		"deviceStatus": "Status do Dispositivo",
-		"online": "Online",
+		"online": "On-line",
 		"offline": "Desconectado",
 		"charging": "Carregando",
 		"mobileFeatures": "Recursos Mobile",
@@ -1631,7 +1631,7 @@
 		"bounceRate": "Taxa de Rejeição",
 		"avgSession": "Sessão Média",
 		"deviceBreakdown": "Distribuição por Dispositivo",
-		"mobile": "Mobile",
+		"mobile": "Móvel",
 		"tablet": "Tablet (Táblet)",
 		"desktop": "Computador",
 		"topPages": "Páginas Mais Visitadas",
@@ -1654,7 +1654,7 @@
 		"medium": "Média",
 		"low": "Baixa",
 		"preloadStrategy": "Estratégia de Pré-carregamento",
-		"viewport": "Viewport",
+		"viewport": "Janela de visualização",
 		"aggressive": "Agressivo",
 		"none": "Nenhum",
 		"cacheStrategy": "Estratégia de Cache",
@@ -1662,7 +1662,7 @@
 		"memory": "Memória",
 		"compressionLevel": "Nível de Compressão",
 		"featureToggles": "Alternância de Recursos",
-		"serviceWorker": "Service Worker",
+		"serviceWorker": "Trabalhador de serviço",
 		"backgroundSync": "Sincronização em Segundo Plano",
 		"offlineMode": "Modo Desconectado",
 		"reduceAnimations": "Reduzir Animações",
@@ -1695,7 +1695,7 @@
 			"blockchain": "Blockchain",
 			"aiMl": "IA & Aprendizado de Máquina",
 			"mobile": "Desenvolvimento Mobile",
-			"design": "Design",
+			"design": "Projeto",
 			"dataScience": "Ciência de Dados",
 			"title": "Categorias",
 			"select": "Selecionar categoria"
@@ -1719,7 +1719,7 @@
 		"prices": {
 			"free": "Gratuito",
 			"paid": "Pago",
-			"premium": "Premium"
+			"premium": "Prêmio"
 		},
 		"sort": {
 			"relevance": "Relevância",
@@ -1740,11 +1740,11 @@
 		"minRating": "Avaliação Mínima",
 		"language": "Idioma",
 		"selectLanguage": "Selecionar idioma",
-		"tags": "Tags",
+		"tags": "Etiquetas",
 		"selectTags": "Selecionar tags",
 		"dateRange": "Período",
 		"selectDateRange": "Selecionar período",
-		"status": "Status",
+		"status": "Estado",
 		"selectStatus": "Selecionar status",
 		"price": "Preço",
 		"selectPrice": "Selecionar faixa de preço",
@@ -1766,7 +1766,7 @@
 			"overview": "Visão Geral",
 			"programs": "Programas",
 			"users": "Usuários",
-			"analytics": "Analytics"
+			"analytics": "Análise"
 		},
 		"metrics": {
 			"completionRate": "Taxa de Conclusão",
@@ -1801,12 +1801,12 @@
 				"duration": "Duração",
 				"completion": "Conclusão",
 				"enrolled": "Matriculados",
-				"status": "Status",
+				"status": "Estado",
 				"actions": "Ações"
 			},
 			"actions": {
 				"launch": "Iniciar",
-				"analytics": "Analytics"
+				"analytics": "Análise"
 			}
 		},
 		"users": {
@@ -1866,7 +1866,7 @@
 			"overview": "Visão Geral",
 			"anomalies": "Anomalias",
 			"patterns": "Padrões",
-			"insights": "Insights"
+			"insights": "Percepções"
 		},
 		"metrics": {
 			"activeUsers": "Usuários Ativos",
@@ -1891,7 +1891,7 @@
 				"user": "Usuário",
 				"severity": "Severidade",
 				"confidence": "Confiança",
-				"status": "Status",
+				"status": "Estado",
 				"time": "Hora"
 			}
 		},
@@ -1982,7 +1982,7 @@
 				"threshold": "Limite",
 				"accuracy": "Precisão",
 				"alerts": "Alertas",
-				"status": "Status",
+				"status": "Estado",
 				"actions": "Ações"
 			},
 			"status": {
@@ -2050,7 +2050,7 @@
 			"active": "Ativos",
 			"all": "Todos",
 			"teams": "Equipes",
-			"analytics": "Analytics"
+			"analytics": "Análise"
 		},
 		"metrics": {
 			"activeIncidents": "Incidentes Ativos",
@@ -2077,7 +2077,7 @@
 				"id": "ID",
 				"title": "Título",
 				"severity": "Severidade",
-				"status": "Status",
+				"status": "Estado",
 				"assignedTo": "Atribuído A",
 				"created": "Criado",
 				"actions": "Ações"
@@ -2141,7 +2141,7 @@
 		"tabs": {
 			"overview": "Visão Geral",
 			"reports": "Relatórios",
-			"analytics": "Analytics",
+			"analytics": "Análise",
 			"compliance": "Conformidade",
 			"create": "Criar Relatório"
 		},
@@ -2191,7 +2191,7 @@
 			"table": {
 				"title": "Título",
 				"type": "Tipo",
-				"status": "Status",
+				"status": "Estado",
 				"generated": "Gerado",
 				"size": "Tamanho",
 				"actions": "Ações"
@@ -2282,7 +2282,7 @@
 			"overview": "Visão Geral",
 			"users": "Usuários",
 			"factors": "Fatores",
-			"insights": "Insights"
+			"insights": "Percepções"
 		},
 		"metrics": {
 			"averageScore": "Pontuação Média",
@@ -2314,7 +2314,7 @@
 				"grade": "Nota",
 				"risk": "Risco",
 				"lastActivity": "Última Atividade",
-				"status": "Status"
+				"status": "Estado"
 			}
 		},
 		"factors": {
@@ -2405,7 +2405,7 @@
 				"actions": "Ações",
 				"priority": "Prioridade",
 				"successRate": "Taxa de Sucesso",
-				"status": "Status"
+				"status": "Estado"
 			},
 			"status": {
 				"enabled": "Habilitado",
@@ -2472,7 +2472,7 @@
 		"tabs": {
 			"overview": "Visão Geral",
 			"activities": "Atividades",
-			"analytics": "Analytics",
+			"analytics": "Análise",
 			"rules": "Regras"
 		},
 		"metrics": {
@@ -2508,7 +2508,7 @@
 				"risk": "Risco",
 				"user": "Usuário",
 				"amount": "Valor",
-				"status": "Status",
+				"status": "Estado",
 				"time": "Hora"
 			}
 		},
@@ -2569,7 +2569,7 @@
 			"description": "Status detalhado dos requisitos",
 			"table": {
 				"requirement": "Requisito",
-				"status": "Status",
+				"status": "Estado",
 				"score": "Pontuação",
 				"lastChecked": "Última Verificação",
 				"actions": "Ações"
@@ -2584,7 +2584,7 @@
 				"framework": "Estrutura",
 				"requirement": "Requisito",
 				"type": "Tipo",
-				"status": "Status",
+				"status": "Estado",
 				"details": "Detalhes"
 			}
 		},
@@ -2627,7 +2627,7 @@
 		"tabs": {
 			"overview": "Visão Geral",
 			"threats": "Ameaças",
-			"analytics": "Analytics",
+			"analytics": "Análise",
 			"settings": "Configurações"
 		},
 		"metrics": {
@@ -2652,7 +2652,7 @@
 				"severity": "Severidade",
 				"source": "Origem",
 				"target": "Alvo",
-				"status": "Status",
+				"status": "Estado",
 				"time": "Hora"
 			}
 		},
@@ -2690,7 +2690,7 @@
 			"button": "Upgrade para Premium"
 		},
 		"preview": {
-			"premium": "Premium",
+			"premium": "Prêmio",
 			"progress": "Progresso",
 			"lessons": "Aulas",
 			"upgradeMessage": "Faça o upgrade para Premium para desbloquear todas as aulas e recursos."
@@ -2834,7 +2834,7 @@
 				"cta": "Começar"
 			},
 			"premium": {
-				"name": "Premium",
+				"name": "Prêmio",
 				"description": "Para aprendizes dedicados",
 				"features": {
 					"unlimited": "Cursos ilimitados",
@@ -2847,7 +2847,7 @@
 				"cta": "Começar Premium"
 			},
 			"pro": {
-				"name": "Pro",
+				"name": "Pró",
 				"description": "Para equipes e profissionais",
 				"features": {
 					"everything": "Tudo do Premium",
@@ -2860,7 +2860,7 @@
 				"cta": "Começar Pro"
 			},
 			"enterprise": {
-				"name": "Enterprise",
+				"name": "Empresa",
 				"description": "Para organizações",
 				"features": {
 					"everything": "Tudo do Pro",
@@ -2900,7 +2900,7 @@
 			"email": "E-mail",
 			"priority": "Prioritário",
 			"dedicated": "Dedicado",
-			"analytics": "Analytics"
+			"analytics": "Análise"
 		}
 	},
 	"leaderboard": {
@@ -2986,27 +2986,27 @@
 			"step2Desc": "Desafios e avaliações automáticas",
 			"step3Title": "Comprove",
 			"step3Desc": "Ganhe credenciais on‑chain",
-			"badge": "Badge",
-			"community": "Community",
+			"badge": "Distintivo",
+			"community": "Comunidade",
 			"communityDesc": "Community Desc",
-			"completion": "Completion",
-			"courses": "Courses",
-			"credentials": "Credentials",
+			"completion": "Conclusão",
+			"courses": "Cursos",
+			"credentials": "Credenciais",
 			"credentialsDesc": "Credentials Desc",
 			"cta": "Cta",
 			"description": "Description",
-			"earnXp": "Earn XP",
+			"earnXp": "Ganhe XP",
 			"earnXpDesc": "Earn XP Desc",
 			"expertContent": "Expert Content",
 			"expertContentDesc": "Expert Content Desc",
-			"explorePaths": "Explore Paths",
-			"interactiveCoding": "Interactive Coding",
+			"explorePaths": "Explorar caminhos",
+			"interactiveCoding": "Codificação Interativa",
 			"interactiveCodingDesc": "Interactive Coding Desc",
-			"learners": "Learners",
-			"lessons": "Lessons",
+			"learners": "Alunos",
+			"lessons": "Lições",
 			"popular": "Popular",
-			"startCourse": "Start Course",
-			"streaks": "Streaks",
+			"startCourse": "Iniciar curso",
+			"streaks": "Ondas",
 			"streaksDesc": "Streaks Desc",
 			"titleHighlight": "Title Highlight",
 			"titleSuffix": "Title Suffix",
@@ -3064,8 +3064,8 @@
 		"streakFreezes": "Congelamentos de Sequência",
 		"nextMilestoneIn": "{days}d para sequência de {milestone}d",
 		"maxMilestoneReached": "Maior marco de sequência alcançado",
-		"recentActivity": "Recent Activity",
-		"recommendedCourses": "Recommended Courses"
+		"recentActivity": "Atividade recente",
+		"recommendedCourses": "Cursos recomendados"
 	},
 	"common": {
 		"error": {
@@ -3105,7 +3105,7 @@
 			"discordDesc": "Discussões em tempo real, canais de ajuda e grupos de estudo.",
 			"forum": "Forum",
 			"forumDesc": "Discussões detalhadas, apresentações de projetos e tópicos de perguntas e respostas.",
-			"twitter": "Twitter / X",
+			"twitter": "Twitter/X",
 			"twitterDesc": "Atualizações, anúncios e destaques da comunidade."
 		},
 		"topContributors": "Principais contribuidores",
@@ -3160,14 +3160,14 @@
 				"studyGroups": "Grupos de Estudo",
 				"offTopic": "Fora do Tema"
 			},
-			"pinned": "Pinned"
+			"pinned": "Fixado"
 		},
 		"events": {
 			"tabs": {
 				"upcoming": "Próximos",
 				"past": "Passados"
 			},
-			"online": "Online",
+			"online": "On-line",
 			"registered": "Inscrito",
 			"attended": "Participou",
 			"speakers": "Palestrantes",
@@ -3211,32 +3211,32 @@
 			"empty": "Nenhum projeto encontrado",
 			"emptyDescription": "Tente ajustar sua busca ou envie seu próprio projeto.",
 			"categories": {
-				"all": "All Categories",
+				"all": "Todas as categorias",
 				"defi": "DeFi",
 				"nft": "NFT",
-				"tooling": "Tooling",
-				"gaming": "Gaming",
+				"tooling": "Ferramentas",
+				"gaming": "Jogos",
 				"social": "Social",
-				"infra": "Infrastructure"
+				"infra": "Infraestrutura"
 			}
 		},
 		"createDiscussion": {
 			"actions": {
-				"cancel": "Cancel",
-				"postDiscussion": "Post Discussion"
+				"cancel": "Cancelar",
+				"postDiscussion": "Pós-discussão"
 			},
 			"description": "Description",
 			"errors": {
-				"createFailed": "Create Failed",
-				"createFailedRetry": "Create Failed Retry"
+				"createFailed": "Falha na criação",
+				"createFailedRetry": "Criar nova tentativa com falha"
 			},
 			"fields": {
-				"category": "Category",
+				"category": "Categoria",
 				"details": "Details",
-				"tags": "Tags",
+				"tags": "Etiquetas",
 				"title": "Title"
 			},
-			"markdownSupported": "Markdown Supported",
+			"markdownSupported": "Remarcação suportada",
 			"placeholders": {
 				"details": "Details",
 				"tags": "Tags",
@@ -3251,33 +3251,33 @@
 		},
 		"createEvent": {
 			"actions": {
-				"cancel": "Cancel",
-				"createEvent": "Create Event"
+				"cancel": "Cancelar",
+				"createEvent": "Criar Evento"
 			},
 			"description": "Description",
 			"errors": {
-				"createFailed": "Create Failed",
-				"createFailedRetry": "Create Failed Retry"
+				"createFailed": "Falha na criação",
+				"createFailedRetry": "Criar nova tentativa com falha"
 			},
 			"fields": {
 				"description": "Description",
-				"endDateTime": "End Date Time",
-				"eventName": "Event Name",
-				"location": "Location",
-				"maxAttendees": "Max Attendees",
-				"registrationUrl": "Registration URL",
-				"startDateTime": "Start Date Time",
-				"tags": "Tags",
-				"timezone": "Timezone",
-				"type": "Type"
+				"endDateTime": "Data de término e hora",
+				"eventName": "Nome do Evento",
+				"location": "Localização",
+				"maxAttendees": "Máximo de participantes",
+				"registrationUrl": "Registro URL",
+				"startDateTime": "Data de início e hora",
+				"tags": "Etiquetas",
+				"timezone": "Fuso horário",
+				"type": "Tipo"
 			},
 			"location": {
-				"inPerson": "In Person",
-				"online": "Online"
+				"inPerson": "Pessoalmente",
+				"online": "On-line"
 			},
 			"placeholders": {
 				"description": "Description",
-				"eventName": "Event Name",
+				"eventName": "Nome do Evento",
 				"tags": "Tags"
 			},
 			"title": "Title",
@@ -3289,26 +3289,26 @@
 		},
 		"createProject": {
 			"actions": {
-				"cancel": "Cancel",
-				"submit": "Submit"
+				"cancel": "Cancelar",
+				"submit": "Enviar"
 			},
 			"description": "Description",
 			"errors": {
-				"submitFailed": "Submit Failed",
-				"submitFailedRetry": "Submit Failed Retry"
+				"submitFailed": "Falha no envio",
+				"submitFailedRetry": "Enviar falha na nova tentativa"
 			},
 			"fields": {
-				"category": "Category",
+				"category": "Categoria",
 				"description": "Description",
-				"githubUrl": "GitHub URL",
-				"liveUrl": "Live URL",
-				"projectName": "Project Name",
-				"tags": "Tags",
-				"xpReward": "XP Reward"
+				"githubUrl": "URL do GitHub",
+				"liveUrl": "Ao vivo URL",
+				"projectName": "Nome do Projeto",
+				"tags": "Etiquetas",
+				"xpReward": "XP Recompensa"
 			},
 			"placeholders": {
 				"description": "Description",
-				"projectName": "Project Name",
+				"projectName": "Nome do Projeto",
 				"tags": "Tags"
 			},
 			"title": "Title",
@@ -3321,105 +3321,105 @@
 		}
 	},
 	"topics": {
-		"title": "Topics",
-		"description": "Explore learning paths across the Solana ecosystem. Each topic contains curated courses from beginner to advanced.",
-		"courses": "{count} courses",
-		"backToTopics": "Back to topics",
+		"title": "Tópicos",
+		"description": "Explore caminhos de aprendizagem em todo o ecossistema Solana. Cada tópico contém cursos selecionados do iniciante ao avançado.",
+		"courses": "{count} cursos",
+		"backToTopics": "Voltar aos tópicos",
 		"detail": {
-			"count": "{count} course",
-			"countPlural": "{count} courses",
+			"count": "{count} curso",
+			"countPlural": "{count} cursos",
 			"empty": {
-				"title": "No courses found",
-				"description": "No courses are currently available for this topic. Check back later or explore other topics.",
-				"browseCourses": "Browse all courses"
+				"title": "Nenhum curso encontrado",
+				"description": "Nenhum curso está disponível atualmente para este tópico. Volte mais tarde ou explore outros tópicos.",
+				"browseCourses": "Navegue por todos os cursos"
 			}
 		}
 	},
 	"certificates": {
-		"title": "Credential Details",
-		"issuedBy": "Issued by",
-		"issuer": "Superteam Academy",
-		"holder": "Holder",
-		"course": "Course",
-		"track": "Track",
-		"level": "Level",
-		"issued": "Issued",
-		"status": "Status",
-		"verified": "Verified",
-		"xpEarned": "XP Earned",
-		"onChainProof": "On-Chain Proof",
-		"viewOnExplorer": "View on Explorer",
-		"certificatesEarned": "Certificates Earned",
-		"connectWallet": "Connect Wallet",
-		"noCertificates": "No Certificates"
+		"title": "Detalhes da credencial",
+		"issuedBy": "Emitida pela",
+		"issuer": "Academia da Superequipe",
+		"holder": "Titular",
+		"course": "Curso",
+		"track": "Acompanhar",
+		"level": "Nível",
+		"issued": "Publicado",
+		"status": "Estado",
+		"verified": "Verificado",
+		"xpEarned": "XP ganho",
+		"onChainProof": "Prova On-Chain",
+		"viewOnExplorer": "Ver no Explorer",
+		"certificatesEarned": "Certificados ganhos",
+		"connectWallet": "Conectar carteira",
+		"noCertificates": "Sem certificados"
 	},
 	"learn": {
-		"backToCourse": "Back to Course",
+		"backToCourse": "De volta ao curso",
 		"tabs": {
-			"content": "Content",
-			"notes": "Notes",
-			"quiz": "Quiz",
-			"resources": "Resources"
+			"content": "Contente",
+			"notes": "Notas",
+			"quiz": "Questionário",
+			"resources": "Recursos"
 		},
-		"quickActions": "Quick Actions",
+		"quickActions": "Ações rápidas",
 		"tryChallenge": "Tentar o desafio",
-		"takeNotes": "Take Notes",
-		"markComplete": "Mark as Complete",
-		"fullscreen": "Fullscreen"
+		"takeNotes": "Faça anotações",
+		"markComplete": "Marcar como concluído",
+		"fullscreen": "Tela cheia"
 	},
 	"auth": {
-		"welcomeTitle": "Welcome to Superteam Academy",
-		"welcomeDescription": "Sign in to track your progress, earn XP, and unlock on-chain credentials.",
-		"verifyWalletTitle": "Verify your wallet",
-		"verifyWalletDescription": "Sign a message to verify ownership of {address}",
-		"oauthError": "Failed to sign in with {provider}. Please try again.",
-		"walletConnectError": "Failed to connect wallet. Please try again.",
-		"walletVerifyError": "Failed to verify wallet. Please try again.",
-		"connectWallet": "Connect Wallet",
-		"connecting": "Connecting...",
-		"continueWithWallet": "Continue with Wallet",
-		"continueWithWalletAddress": "Continue with {address}",
-		"or": "or",
-		"signingIn": "Signing in...",
-		"continueWithGoogle": "Continue with Google",
-		"continueWithGithub": "Continue with GitHub",
-		"walletSignMessage": "Sign a message with your wallet to prove ownership. This does not cost any SOL.",
-		"signing": "Signing...",
-		"signAndVerify": "Sign & Verify",
+		"welcomeTitle": "Bem-vindo à Academia Superteam",
+		"welcomeDescription": "Faça login para acompanhar seu progresso, ganhar XP e desbloquear credenciais na rede.",
+		"verifyWalletTitle": "Verifique sua carteira",
+		"verifyWalletDescription": "Assine uma mensagem para verificar a propriedade de {address}",
+		"oauthError": "Falha ao fazer login com {provider}. Por favor, tente novamente.",
+		"walletConnectError": "Falha ao conectar a carteira. Por favor, tente novamente.",
+		"walletVerifyError": "Falha ao verificar a carteira. Por favor, tente novamente.",
+		"connectWallet": "Conectar carteira",
+		"connecting": "Conectando...",
+		"continueWithWallet": "Continuar com a Carteira",
+		"continueWithWalletAddress": "Continuar com {address}",
+		"or": "ou",
+		"signingIn": "Fazendo login...",
+		"continueWithGoogle": "Continuar com o Google",
+		"continueWithGithub": "Continuar com GitHub",
+		"walletSignMessage": "Assine uma mensagem com sua carteira para comprovar a propriedade. Isso não custa nenhum SOL.",
+		"signing": "Assinando...",
+		"signAndVerify": "Assine e verifique",
 		"switchWallet": "Usar outra carteira",
 		"selectWallet": "Selecionar carteira",
 		"connected": "Conectada",
-		"backToOptions": "Back to sign in options",
-		"termsNotice": "By continuing, you agree to our Terms of Service and Privacy Policy."
+		"backToOptions": "Voltar para opções de login",
+		"termsNotice": "Ao continuar, você concorda com nossos Termos de Serviço e Política de Privacidade."
 	},
 	"footer": {
-		"description": "Master Solana development through interactive courses and earn verifiable on-chain credentials.",
-		"learn": "Learn",
-		"community": "Community",
-		"resources": "Resources",
-		"company": "Company",
-		"catalog": "Catalog",
-		"topics": "Topics",
-		"learningPaths": "Learning Paths",
-		"challenges": "Challenges",
-		"certifications": "Certifications",
-		"leaderboard": "Leaderboard",
+		"description": "Domine o desenvolvimento de Solana por meio de cursos interativos e obtenha credenciais verificáveis ​​na rede.",
+		"learn": "Aprender",
+		"community": "Comunidade",
+		"resources": "Recursos",
+		"company": "Empresa",
+		"catalog": "Catálogo",
+		"topics": "Tópicos",
+		"learningPaths": "Caminhos de aprendizagem",
+		"challenges": "Desafios",
+		"certifications": "Certificações",
+		"leaderboard": "Tabela de classificação",
 		"discord": "Discord",
 		"forum": "Forum",
-		"events": "Events",
+		"events": "Eventos",
 		"projects": "Projetos",
-		"documentation": "Documentation",
-		"apiReference": "API Reference",
-		"faqs": "FAQs",
-		"helpCenter": "Help Center",
-		"about": "About",
-		"careers": "Careers",
+		"documentation": "Documentação",
+		"apiReference": "API Referência",
+		"faqs": "Perguntas frequentes",
+		"helpCenter": "Central de Ajuda",
+		"about": "Sobre",
+		"careers": "Carreiras",
 		"pricing": "Preços",
 		"contact": "Contato",
 		"copyright": "2026 Superteam Academy. Construído sobre Solana.",
 		"privacy": "Privacidade",
 		"terms": "Termos",
-		"cookies": "Cookies"
+		"cookies": "Biscoitos"
 	},
 	"searchModal": {
 		"title": "Buscar",
@@ -3434,58 +3434,134 @@
 		"leaderboard": "Ranking"
 	},
 	"lessonNavigation": {
-		"courseContent": "Course Content",
-		"currentLesson": "Current Lesson",
-		"nextLesson": "Next Lesson",
-		"previousLesson": "Previous Lesson"
+		"courseContent": "Conteúdo do curso",
+		"currentLesson": "Lição atual",
+		"nextLesson": "Próxima lição",
+		"previousLesson": "Lição Anterior"
 	},
 	"lessonProgress": {
-		"achievements": "Achievements",
-		"courseProgress": "Course Progress",
-		"currentLesson": "Current Lesson",
-		"lessonsCompleted": "Lessons Completed",
-		"percentComplete": "Percent Complete",
-		"percentToNextLevel": "Percent To Next Level",
-		"progress": "Progress",
-		"timeSpent": "Time Spent",
-		"timeSpentLabel": "Time Spent Label",
-		"xpEarned": "XP Earned"
+		"achievements": "Conquistas",
+		"courseProgress": "Progresso do curso",
+		"currentLesson": "Lição atual",
+		"lessonsCompleted": "Lições concluídas",
+		"percentComplete": "Porcentagem concluída",
+		"percentToNextLevel": "Porcentagem para o próximo nível",
+		"progress": "Progresso",
+		"timeSpent": "Tempo gasto",
+		"timeSpentLabel": "Etiqueta de tempo gasto",
+		"xpEarned": "XP ganho"
 	},
 	"lessonQuiz": {
 		"actions": {
-			"next": "Next",
-			"previous": "Previous",
-			"submitQuiz": "Submit Quiz"
+			"next": "Próximo",
+			"previous": "Anterior",
+			"submitQuiz": "Enviar questionário"
 		},
-		"notAvailable": "Not Available",
+		"notAvailable": "Não disponível",
 		"progress": {
-			"complete": "Complete",
+			"complete": "Completo",
 			"questionOf": "Question Of"
 		},
 		"results": {
-			"congratulations": "Congratulations",
+			"congratulations": "Parabéns",
 			"correctCount": "Correct Count",
-			"explanation": "Explanation",
-			"failed": "Failed",
-			"passed": "Passed",
-			"question": "Question",
+			"explanation": "Explicação",
+			"failed": "Fracassado",
+			"passed": "Aprovado",
+			"question": "Pergunta",
 			"required": "Required",
-			"reviewAnswers": "Review Answers",
-			"tryAgain": "Try Again"
+			"reviewAnswers": "Revise as respostas",
+			"tryAgain": "Tente novamente"
 		}
 	},
 	"profile": {
 		"completeness": {
 			"cta": "Cta",
-			"missingInformation": "Missing Information",
-			"percentComplete": "Percent Complete",
+			"missingInformation": "Informações ausentes",
+			"percentComplete": "Porcentagem concluída",
 			"status": {
-				"excellent": "Excellent",
-				"fair": "Fair",
-				"good": "Good",
-				"needsWork": "Needs Work"
+				"excellent": "Excelente",
+				"fair": "Justo",
+				"good": "Bom",
+				"needsWork": "Precisa de trabalho"
 			},
 			"title": "Title"
+		}
+	},
+	"seo": {
+		"pages": {
+			"home": {
+				"title": "Superteam Academy - Aprenda Desenvolvimento Solana",
+				"description": "Domine o desenvolvimento em Solana com cursos interativos, ganhe credenciais on-chain e participe de uma comunidade global de builders Web3."
+			},
+			"topics": {
+				"title": "Topicos | Superteam Academy",
+				"description": "Explore todos os topicos de aprendizado em Web3, desenvolvimento Solana e tecnologia blockchain."
+			},
+			"leaderboard": {
+				"title": "Ranking | Superteam Academy",
+				"description": "Veja sua posicao entre outros alunos. Dispute o topo e ganhe reconhecimento."
+			},
+			"progress": {
+				"title": "Progresso de Aprendizado | Superteam Academy",
+				"description": "Acompanhe seu progresso on-chain, cursos e conquistas."
+			},
+			"settings": {
+				"title": "Configuracoes | Superteam Academy",
+				"description": "Gerencie as configuracoes e preferencias da sua conta."
+			},
+			"certificates": {
+				"title": "Meus Certificados | Superteam Academy",
+				"description": "Veja suas credenciais on-chain e certificados de curso conquistados."
+			},
+			"pricing": {
+				"title": "Precos | Superteam Academy",
+				"description": "Aprenda de graca ou desbloqueie conteudo premium com o Superteam Academy Pro."
+			},
+			"community": {
+				"title": "Discussoes | Comunidade | Superteam Academy",
+				"description": "Participe de discussoes sobre desenvolvimento Solana, compartilhe projetos, tire duvidas e conecte-se com outros builders."
+			},
+			"courses": {
+				"title": "Catalogo | Superteam Academy",
+				"description": "Navegue por 50+ cursos de desenvolvimento Solana, DeFi, seguranca e mais. Ganhe XP e credenciais on-chain verificaveis."
+			},
+			"communityMembers": {
+				"title": "Membros | Comunidade | Superteam Academy",
+				"description": "Descubra os principais contribuidores e membros ativos da comunidade Superteam Academy."
+			},
+			"communityEvents": {
+				"title": "Eventos | Comunidade | Superteam Academy",
+				"description": "Participe de workshops, AMAs, hackathons e meetups com a comunidade Superteam Academy."
+			},
+			"profile": {
+				"title": "Perfil | Superteam Academy",
+				"description": "Veja seu progresso de aprendizado, conquistas e estatisticas."
+			}
+		},
+		"dynamic": {
+			"topic": {
+				"title": "Cursos de {topic} | Superteam Academy",
+				"notFoundTitle": "Topico nao encontrado | Superteam Academy",
+				"notFoundDescription": "O topico solicitado nao foi encontrado."
+			},
+			"course": {
+				"title": "{course} | Academia da Superequipe"
+			},
+			"lesson": {
+				"title": "{lesson} | {course} | Academia da Superequipe"
+			},
+			"challenge": {
+				"title": "{challenge} | {course} | Academia da Superequipe",
+				"notFoundTitle": "Desafio | {challengeId} | Superteam Academy",
+				"notFoundDescription": "Desafio de codigo."
+			},
+			"certificate": {
+				"title": "{certificate} - {holder} | Academia da Superequipe",
+				"description": "Credencial on-chain verificavel por concluir {course}.",
+				"notFoundTitle": "Certificado nao encontrado | Superteam Academy",
+				"notFoundDescription": "O certificado solicitado nao foi encontrado."
+			}
 		}
 	}
 }

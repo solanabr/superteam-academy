@@ -14,6 +14,7 @@ import { getAcademyClient } from "@/lib/academy";
 import { getTranslations } from "next-intl/server";
 import { getLinkedWallet } from "@/lib/auth";
 import { getUserByWallet } from "@/lib/sanity-users";
+import { getLocalizedPageMetadata } from "@/lib/metadata";
 
 type CatalogCourse = {
 	id: string;
@@ -33,11 +34,14 @@ type CatalogCourse = {
 	gradient: string;
 };
 
-export const metadata: Metadata = {
-	title: "Catalog | Superteam Academy",
-	description:
-		"Browse 50+ courses on Solana development, DeFi, security, and more. Earn XP and verifiable on-chain credentials.",
-};
+export async function generateMetadata({
+	params,
+}: {
+	params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+	const { locale } = await params;
+	return getLocalizedPageMetadata(locale, "courses");
+}
 
 interface CoursesPageProps {
 	searchParams: Promise<{

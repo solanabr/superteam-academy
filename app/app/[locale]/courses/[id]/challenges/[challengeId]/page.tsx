@@ -1,30 +1,36 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { ChallengeContent } from "./challenge-content";
 import { getChallengePageData } from "@/lib/challenge-content";
 
 interface ChallengePageProps {
 	params: Promise<{
+		locale: string;
 		id: string;
 		challengeId: string;
 	}>;
 }
 
 export async function generateMetadata({ params }: ChallengePageProps): Promise<Metadata> {
-	const { id, challengeId } = await params;
+	const { id, challengeId, locale } = await params;
+	const t = await getTranslations({ locale, namespace: "seo.dynamic.challenge" });
 	const pageData = await getChallengePageData(id, challengeId);
 	if (!pageData) {
 		return {
-			title: `Challenge | ${challengeId} | Superteam Academy`,
-			description: "Coding challenge",
+			title: t("notFoundTitle", { challengeId }),
+			description: t("notFoundDescription"),
 		};
 	}
 
 	const { course, challenge } = pageData;
 	return {
-		title: `${challenge.title} | ${course.title} | Superteam Academy`,
+		title: t("title", {
+			challenge: challenge.title,
+			course: course.title,
+		}),
 		description: challenge.description,
 	};
 }

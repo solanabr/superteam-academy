@@ -12,19 +12,20 @@ import { locales } from "@superteam-academy/i18n/config";
 import { OnboardingGuard } from "@/components/onboarding/onboarding-guard";
 import { getGravatarUrl } from "@/lib/utils";
 import { syncAuthSession } from "../api/auth/sync/action";
+import { getLocalizedPageMetadata } from "@/lib/metadata";
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
 const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY;
 const POSTHOG_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com";
 
-export const metadata: Metadata = {
-	title: {
-		default: "Superteam Academy - Learn Solana Development",
-		template: "%s | Superteam Academy",
-	},
-	description:
-		"Master Solana development through interactive courses, earn on-chain credentials, and join a global community of Web3 builders.",
-};
+export async function generateMetadata({
+	params,
+}: {
+	params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+	const { locale } = await params;
+	return getLocalizedPageMetadata(locale, "home");
+}
 
 export const viewport: Viewport = {
 	width: "device-width",

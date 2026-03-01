@@ -8,11 +8,16 @@ import { getSolanaConnection, getProgramId } from "@/lib/academy";
 import { getLinkedWallet } from "@/lib/auth";
 import { CredentialService } from "@/services/credential-service";
 import { PublicKey } from "@solana/web3.js";
+import { getLocalizedPageMetadata } from "@/lib/metadata";
 
-export const metadata: Metadata = {
-	title: "My Certificates | Superteam Academy",
-	description: "View your earned on-chain credentials and course certificates.",
-};
+export async function generateMetadata({
+	params,
+}: {
+	params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+	const { locale } = await params;
+	return getLocalizedPageMetadata(locale, "certificates");
+}
 
 export default async function CertificatesPage() {
 	const t = await getTranslations("certificates");

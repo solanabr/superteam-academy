@@ -6,11 +6,16 @@ import { getLinkedWallet } from "@/lib/auth";
 import { ProgressTracking } from "@/components/progress/progress-tracking";
 import { LearningProgressService } from "@/services/learning-progress-service";
 import { calculateLevelFromXP } from "@superteam-academy/gamification";
+import { getLocalizedPageMetadata } from "@/lib/metadata";
 
-export const metadata: Metadata = {
-	title: "Learning Progress | Superteam Academy",
-	description: "Track your on-chain learning progress, courses, and achievements.",
-};
+export async function generateMetadata({
+	params,
+}: {
+	params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+	const { locale } = await params;
+	return getLocalizedPageMetadata(locale, "progress");
+}
 
 export default async function ProgressPage() {
 	return (

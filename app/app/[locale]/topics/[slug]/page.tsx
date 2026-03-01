@@ -127,7 +127,7 @@ const TOPICS = [
 ];
 
 interface TopicDetailPageProps {
-	params: Promise<{ slug: string }>;
+	params: Promise<{ locale: string; slug: string }>;
 	searchParams: Promise<{
 		level?: string;
 		sort?: string;
@@ -135,17 +135,19 @@ interface TopicDetailPageProps {
 }
 
 export async function generateMetadata({ params }: TopicDetailPageProps): Promise<Metadata> {
-	const { slug } = await params;
+	const { slug, locale } = await params;
+	const t = await getTranslations({ locale, namespace: "seo.dynamic.topic" });
 	const topic = TOPICS.find((t) => t.slug === slug);
 
 	if (!topic) {
 		return {
-			title: "Topic Not Found | Superteam Academy",
+			title: t("notFoundTitle"),
+			description: t("notFoundDescription"),
 		};
 	}
 
 	return {
-		title: `${topic.name} Courses | Superteam Academy`,
+		title: t("title", { topic: topic.name }),
 		description: topic.description,
 	};
 }
