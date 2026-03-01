@@ -17,9 +17,9 @@ const LOCALES = [
 ] as const;
 
 test.describe('Locale routing', () => {
-  test('root redirects to default locale (pt-BR)', async ({ page }) => {
+  test('root redirects to default locale (en)', async ({ page }) => {
     await page.goto('/');
-    await expect(page).toHaveURL(/\/pt-BR/);
+    await expect(page).toHaveURL(/\/en/);
   });
 
   for (const { code, coursesPath } of LOCALES) {

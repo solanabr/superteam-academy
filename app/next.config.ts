@@ -15,6 +15,7 @@ const sentryStubPath = path.resolve(__dirname, './lib/sentry-stub');
 const useSentryStub = !process.env.SENTRY_ORG;
 
 const nextConfig: NextConfig = {
+  trailingSlash: true,
   eslint: { ignoreDuringBuilds: true },
   webpack(config) {
     if (useSentryStub) {
