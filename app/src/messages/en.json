@@ -175,7 +175,10 @@
     "recommended": "Recommended For You",
     "activity": "Activity",
     "quick_stats": "Quick Stats",
-    "recent_activity": "Recent Activity"
+    "recent_activity": "Recent Activity",
+    "claim_onchain": "Claim On-Chain",
+    "achievement_claimed": "Claimed",
+    "view_on_explorer": "View on Explorer"
   },
   "leaderboard": {
     "title": "Leaderboard",

@@ -175,7 +175,10 @@
     "recommended": "Recomendado Para Ti",
     "activity": "Actividad",
     "quick_stats": "Estadísticas Rápidas",
-    "recent_activity": "Actividad Reciente"
+    "recent_activity": "Actividad Reciente",
+    "claim_onchain": "Reclamar On-Chain",
+    "achievement_claimed": "Reclamado",
+    "view_on_explorer": "Ver en Explorer"
   },
   "leaderboard": {
     "title": "Clasificación",

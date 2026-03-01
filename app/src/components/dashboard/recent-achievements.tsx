@@ -18,6 +18,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { ClaimAchievementButton } from './claim-achievement-button';
 
 interface RecentAchievementsProps {
   achievements: string[];
@@ -92,27 +93,30 @@ function AchievementBadge({ id }: { id: string }) {
   const meta = getAchievementMeta(id);
 
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <div className="flex flex-col items-center gap-1.5 group cursor-pointer">
-          <div
-            className={cn(
-              'flex size-12 items-center justify-center rounded-full bg-gradient-to-br shadow-sm transition-transform group-hover:scale-110',
-              meta.color,
-            )}
-          >
-            <Trophy className="size-5 text-white" />
+    <div className="flex flex-col items-center gap-1">
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="flex flex-col items-center gap-1.5 group cursor-pointer">
+            <div
+              className={cn(
+                'flex size-12 items-center justify-center rounded-full bg-gradient-to-br shadow-sm transition-transform group-hover:scale-110',
+                meta.color,
+              )}
+            >
+              <Trophy className="size-5 text-white" />
+            </div>
+            <span className="max-w-[72px] truncate text-center text-[10px] font-medium text-muted-foreground">
+              {meta.name}
+            </span>
           </div>
-          <span className="max-w-[72px] truncate text-center text-[10px] font-medium text-muted-foreground">
-            {meta.name}
-          </span>
-        </div>
-      </TooltipTrigger>
-      <TooltipContent>
-        <p className="text-xs font-medium">{meta.name}</p>
-        <p className="text-[10px] text-muted-foreground">{meta.description}</p>
-      </TooltipContent>
-    </Tooltip>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p className="text-xs font-medium">{meta.name}</p>
+          <p className="text-[10px] text-muted-foreground">{meta.description}</p>
+        </TooltipContent>
+      </Tooltip>
+      <ClaimAchievementButton achievementId={id} earned />
+    </div>
   );
 }
 

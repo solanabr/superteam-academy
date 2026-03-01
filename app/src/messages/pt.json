@@ -175,7 +175,10 @@
     "recommended": "Recomendado Para Você",
     "activity": "Atividade",
     "quick_stats": "Estatísticas Rápidas",
-    "recent_activity": "Atividade Recente"
+    "recent_activity": "Atividade Recente",
+    "claim_onchain": "Reivindicar On-Chain",
+    "achievement_claimed": "Reivindicado",
+    "view_on_explorer": "Ver no Explorer"
   },
   "leaderboard": {
     "title": "Ranking",
