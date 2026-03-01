@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import { getLocale } from "next-intl/server";
-import { DM_Sans, JetBrains_Mono, Bricolage_Grotesque } from "next/font/google";
+import { DM_Sans, Bricolage_Grotesque } from "next/font/google";
 import "./globals.css";
 
 const dmSans = DM_Sans({
 	subsets: ["latin"],
-	weight: ["400", "500", "600", "700"],
+	weight: ["400", "500", "700"],
 	variable: "--font-dm-sans",
 	display: "swap",
 });
@@ -13,14 +13,7 @@ const dmSans = DM_Sans({
 const bricolageGrotesque = Bricolage_Grotesque({
 	subsets: ["latin"],
 	weight: ["400", "500", "600", "700", "800"],
-	variable: "--font-bricolage",
-	display: "swap",
-});
-
-const jetbrainsMono = JetBrains_Mono({
-	subsets: ["latin"],
-	weight: ["400", "500", "600"],
-	variable: "--font-jb-mono",
+	variable: "--font-display",
 	display: "swap",
 });
 
@@ -57,7 +50,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 				<meta name="apple-mobile-web-app-status-bar-style" content="default" />
 			</head>
 			<body
-				className={`min-h-screen flex flex-col ${dmSans.variable} ${bricolageGrotesque.variable} ${jetbrainsMono.variable}`}
+				className={`min-h-screen flex flex-col ${dmSans.variable} ${bricolageGrotesque.variable}`}
 			>
 				{children}
 			</body>

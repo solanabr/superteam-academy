@@ -42,8 +42,7 @@
 	--radius-2xl: 1.25rem;
 
 	--font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
-	--font-display: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
-	--font-mono: var(--font-jb-mono), "Fira Code", ui-monospace, monospace;
+	--font-mono: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
 
 	--animate-accordion-down: accordion-down 0.2s ease-out;
 	--animate-accordion-up: accordion-up 0.2s ease-out;
