@@ -6,6 +6,8 @@ import {
   seedAchievements,
   seedDailyChallenge,
 } from '@/lib/sanity/seed-data';
+import { getAllChallenges, getChallengesByCategory, getChallengeById } from '@/lib/challenges';
+import type { ChallengeCategory } from '@/lib/challenges';
 
 /**
  * Simulates network latency so loading/skeleton states remain visible
@@ -91,6 +93,19 @@ function resolveQuery<T>(
   // ── Daily challenge ───────────────────────────────────────────────
   if (query.includes('_type == "dailyChallenge"')) {
     return seedDailyChallenge as T;
+  }
+
+  // ── Coding challenges ───────────────────────────────────────────
+  if (query.includes('_type == "challenge"')) {
+    if (query.includes('challengeId == $challengeId')) {
+      const challengeId = params?.challengeId as string | undefined;
+      return (challengeId ? getChallengeById(challengeId) ?? null : null) as T;
+    }
+    if (query.includes('category == $category')) {
+      const category = params?.category as ChallengeCategory | undefined;
+      return (category ? getChallengesByCategory(category) : getAllChallenges()) as T;
+    }
+    return getAllChallenges() as T;
   }
 
   // ── Fallback ──────────────────────────────────────────────────────
