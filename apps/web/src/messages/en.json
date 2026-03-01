@@ -124,7 +124,9 @@
     "locked": "Locked",
     "notStarted": "Not started",
     "ofXp": "of {total} XP",
-    "coursesCount": "{count} of {total} done"
+    "coursesCount": "{count} of {total} done",
+    "discussions": "Course Discussions",
+    "startDiscussion": "Start a Discussion"
   },
   "lesson": {
     "content": "Content",
