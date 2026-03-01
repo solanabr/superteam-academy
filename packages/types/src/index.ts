@@ -36,3 +36,23 @@ export type {
 } from "./onchain";
 
 export { PDA_SEEDS, setBit, checkBit, popcount } from "./onchain";
+
+export type {
+  ForumCategory,
+  ThreadType,
+  Thread,
+  ThreadWithAuthor,
+  Answer,
+  AnswerWithAuthor,
+  ThreadDetail,
+  VoteValue,
+  VoteRequest,
+  FlagReason,
+  FlagRequest,
+  CommunityStats,
+  ThreadSort,
+  ThreadScope,
+  ThreadListParams,
+  CreateThreadRequest,
+  CreateAnswerRequest,
+} from "./community";
