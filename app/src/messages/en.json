@@ -1,0 +1,126 @@
+{
+  "common": {
+    "appName": "Superteam Academy",
+    "tagline": "Learn Solana. Earn credentials. Build the future.",
+    "connectWallet": "Connect Wallet",
+    "disconnect": "Disconnect",
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "retry": "Retry",
+    "viewAll": "View All",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "save": "Save",
+    "close": "Close"
+  },
+  "nav": {
+    "home": "Home",
+    "courses": "Courses",
+    "leaderboard": "Leaderboard",
+    "profile": "Profile",
+    "achievements": "Achievements"
+  },
+  "home": {
+    "hero": {
+      "title": "Master Solana Development",
+      "subtitle": "Earn soulbound XP tokens and verifiable credentials as you learn to build on Solana",
+      "cta": "Start Learning",
+      "exploreCourses": "Explore Courses"
+    },
+    "stats": {
+      "totalLearners": "Total Learners",
+      "coursesAvailable": "Courses Available",
+      "credentialsIssued": "Credentials Issued",
+      "totalXpDistributed": "Total XP Distributed"
+    },
+    "features": {
+      "onChainTitle": "On-Chain Credentials",
+      "onChainDesc": "Earn soulbound Metaplex Core NFTs that prove your skills permanently on Solana",
+      "xpTitle": "Earn XP",
+      "xpDesc": "Complete lessons to earn Token-2022 XP tokens. Level up and climb the leaderboard",
+      "codeTitle": "Interactive Coding",
+      "codeDesc": "Write and test Solana programs directly in your browser with Monaco Editor"
+    }
+  },
+  "courses": {
+    "title": "Courses",
+    "subtitle": "Learn to build on Solana from zero to expert",
+    "filterAll": "All",
+    "filterBeginner": "Beginner",
+    "filterIntermediate": "Intermediate",
+    "filterAdvanced": "Advanced",
+    "lessons": "lessons",
+    "xpReward": "XP Reward",
+    "enrolled": "Enrolled",
+    "completed": "Completed",
+    "enroll": "Enroll Now",
+    "continue": "Continue Learning",
+    "prerequisite": "Requires: {prerequisite}",
+    "completions": "{count} completions",
+    "progress": "{percent}% complete"
+  },
+  "lesson": {
+    "title": "Lesson {number}",
+    "completed": "Completed",
+    "markComplete": "Mark as Complete",
+    "codeChallenge": "Code Challenge",
+    "runCode": "Run Code",
+    "resetCode": "Reset Code",
+    "quiz": "Quiz",
+    "checkAnswer": "Check Answer",
+    "correct": "Correct! +{xp} XP",
+    "incorrect": "Try again",
+    "nextLesson": "Next Lesson"
+  },
+  "leaderboard": {
+    "title": "Leaderboard",
+    "subtitle": "Top learners ranked by XP",
+    "rank": "Rank",
+    "learner": "Learner",
+    "xp": "XP",
+    "level": "Level",
+    "credentials": "Credentials",
+    "weekly": "Weekly",
+    "monthly": "Monthly",
+    "allTime": "All Time",
+    "yourRank": "Your Rank",
+    "noEntries": "No learners yet. Be the first!"
+  },
+  "profile": {
+    "title": "Profile",
+    "level": "Level {level}",
+    "totalXp": "Total XP",
+    "streak": "Day Streak",
+    "longestStreak": "Longest Streak",
+    "coursesEnrolled": "Enrolled",
+    "coursesCompleted": "Completed",
+    "credentials": "Credentials",
+    "achievements": "Achievements",
+    "recentActivity": "Recent Activity",
+    "noCredentials": "No credentials yet. Complete a course to earn your first!",
+    "noAchievements": "No achievements yet. Keep learning!"
+  },
+  "achievements": {
+    "title": "Achievements",
+    "subtitle": "Milestones and special awards",
+    "earned": "Earned",
+    "locked": "Locked",
+    "xpReward": "+{xp} XP"
+  },
+  "gamification": {
+    "xpEarned": "+{xp} XP earned!",
+    "levelUp": "Level Up! You're now Level {level}",
+    "streakActive": "{days} day streak! 🔥",
+    "streakLost": "Streak lost. Start a new one today!",
+    "newAchievement": "Achievement Unlocked: {name}"
+  },
+  "wallet": {
+    "connectTitle": "Connect Your Wallet",
+    "connectDesc": "Connect a Solana wallet to track progress, earn XP, and receive credentials",
+    "googleSignIn": "Sign in with Google",
+    "orConnectWallet": "Or connect a Solana wallet"
+  }
+}

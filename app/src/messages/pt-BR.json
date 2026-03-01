@@ -1,0 +1,126 @@
+{
+  "common": {
+    "appName": "Superteam Academy",
+    "tagline": "Aprenda Solana. Ganhe credenciais. Construa o futuro.",
+    "connectWallet": "Conectar Carteira",
+    "disconnect": "Desconectar",
+    "loading": "Carregando...",
+    "error": "Algo deu errado",
+    "retry": "Tentar novamente",
+    "viewAll": "Ver Tudo",
+    "back": "Voltar",
+    "next": "Próximo",
+    "previous": "Anterior",
+    "submit": "Enviar",
+    "cancel": "Cancelar",
+    "save": "Salvar",
+    "close": "Fechar"
+  },
+  "nav": {
+    "home": "Início",
+    "courses": "Cursos",
+    "leaderboard": "Ranking",
+    "profile": "Perfil",
+    "achievements": "Conquistas"
+  },
+  "home": {
+    "hero": {
+      "title": "Domine o Desenvolvimento Solana",
+      "subtitle": "Ganhe tokens XP soulbound e credenciais verificáveis enquanto aprende a construir na Solana",
+      "cta": "Começar a Aprender",
+      "exploreCourses": "Explorar Cursos"
+    },
+    "stats": {
+      "totalLearners": "Total de Alunos",
+      "coursesAvailable": "Cursos Disponíveis",
+      "credentialsIssued": "Credenciais Emitidas",
+      "totalXpDistributed": "XP Total Distribuído"
+    },
+    "features": {
+      "onChainTitle": "Credenciais On-Chain",
+      "onChainDesc": "Ganhe NFTs soulbound Metaplex Core que comprovam suas habilidades permanentemente na Solana",
+      "xpTitle": "Ganhe XP",
+      "xpDesc": "Complete lições para ganhar tokens XP Token-2022. Suba de nível e escale o ranking",
+      "codeTitle": "Programação Interativa",
+      "codeDesc": "Escreva e teste programas Solana diretamente no seu navegador com o Monaco Editor"
+    }
+  },
+  "courses": {
+    "title": "Cursos",
+    "subtitle": "Aprenda a construir na Solana do zero ao especialista",
+    "filterAll": "Todos",
+    "filterBeginner": "Iniciante",
+    "filterIntermediate": "Intermediário",
+    "filterAdvanced": "Avançado",
+    "lessons": "lições",
+    "xpReward": "Recompensa XP",
+    "enrolled": "Matriculado",
+    "completed": "Concluído",
+    "enroll": "Matricular-se",
+    "continue": "Continuar Aprendendo",
+    "prerequisite": "Requer: {prerequisite}",
+    "completions": "{count} conclusões",
+    "progress": "{percent}% concluído"
+  },
+  "lesson": {
+    "title": "Lição {number}",
+    "completed": "Concluída",
+    "markComplete": "Marcar como Concluída",
+    "codeChallenge": "Desafio de Código",
+    "runCode": "Executar Código",
+    "resetCode": "Resetar Código",
+    "quiz": "Quiz",
+    "checkAnswer": "Verificar Resposta",
+    "correct": "Correto! +{xp} XP",
+    "incorrect": "Tente novamente",
+    "nextLesson": "Próxima Lição"
+  },
+  "leaderboard": {
+    "title": "Ranking",
+    "subtitle": "Melhores alunos classificados por XP",
+    "rank": "Posição",
+    "learner": "Aluno",
+    "xp": "XP",
+    "level": "Nível",
+    "credentials": "Credenciais",
+    "weekly": "Semanal",
+    "monthly": "Mensal",
+    "allTime": "Todos os Tempos",
+    "yourRank": "Sua Posição",
+    "noEntries": "Nenhum aluno ainda. Seja o primeiro!"
+  },
+  "profile": {
+    "title": "Perfil",
+    "level": "Nível {level}",
+    "totalXp": "XP Total",
+    "streak": "Dias de Sequência",
+    "longestStreak": "Maior Sequência",
+    "coursesEnrolled": "Matriculados",
+    "coursesCompleted": "Concluídos",
+    "credentials": "Credenciais",
+    "achievements": "Conquistas",
+    "recentActivity": "Atividade Recente",
+    "noCredentials": "Nenhuma credencial ainda. Complete um curso para ganhar a primeira!",
+    "noAchievements": "Nenhuma conquista ainda. Continue aprendendo!"
+  },
+  "achievements": {
+    "title": "Conquistas",
+    "subtitle": "Marcos e prêmios especiais",
+    "earned": "Conquistado",
+    "locked": "Bloqueado",
+    "xpReward": "+{xp} XP"
+  },
+  "gamification": {
+    "xpEarned": "+{xp} XP ganho!",
+    "levelUp": "Subiu de Nível! Agora você é Nível {level}",
+    "streakActive": "{days} dias de sequência! 🔥",
+    "streakLost": "Sequência perdida. Comece uma nova hoje!",
+    "newAchievement": "Conquista Desbloqueada: {name}"
+  },
+  "wallet": {
+    "connectTitle": "Conecte Sua Carteira",
+    "connectDesc": "Conecte uma carteira Solana para acompanhar progresso, ganhar XP e receber credenciais",
+    "googleSignIn": "Entrar com Google",
+    "orConnectWallet": "Ou conecte uma carteira Solana"
+  }
+}
