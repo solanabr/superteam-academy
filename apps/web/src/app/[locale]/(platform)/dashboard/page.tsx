@@ -254,6 +254,7 @@ function useDashboardData(
         const achievementRewardPattern = /^Achievement reward:\s*(.+)$/;
         const courseCompletionBonusPattern =
           /^Course completion bonus:\s*(.+)$/;
+        const dailyQuestPattern = /^daily_quest:(.+)$/;
         const lessonIdsFromTx: string[] = [];
         const courseCompleteIdsFromTx: string[] = [];
         for (const tx of transactions ?? []) {
@@ -423,6 +424,20 @@ function useDashboardData(
               time: tx.created_at,
               txSignature: tx.tx_signature ?? null,
               href: course ? `/courses/${course.slug}` : null,
+            });
+          } else if (dailyQuestPattern.exec(tx.reason)?.[1]) {
+            const questId = tx.reason.match(dailyQuestPattern)![1]!;
+            const questName = questId
+              .replace(/^quest-/, "")
+              .replace(/[-_]/g, " ")
+              .replace(/\b\w/g, (c: string) => c.toUpperCase());
+            raw.push({
+              type: "xp_other",
+              action: `Daily Quest: ${questName}`, // TODO: i18n
+              xp: tx.amount,
+              time: tx.created_at,
+              txSignature: tx.tx_signature ?? null,
+              href: null,
             });
           } else {
             raw.push({
