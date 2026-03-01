@@ -4,6 +4,7 @@ import { lesson } from "./lesson";
 import { instructor } from "./instructor";
 import { learningPath } from "./learningPath";
 import { achievement } from "./achievement";
+import { quest } from "./quest";
 
 export const schemaTypes = [
   course,
@@ -12,4 +13,5 @@ export const schemaTypes = [
   instructor,
   learningPath,
   achievement,
+  quest,
 ];
