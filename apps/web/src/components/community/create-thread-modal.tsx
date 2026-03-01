@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { CircleNotch } from "@phosphor-icons/react";
 import { MarkdownEditor } from "./markdown-editor";
 import {
   Dialog,
@@ -35,6 +36,7 @@ export function CreateThreadModal({
   defaultScope,
 }: CreateThreadModalProps) {
   const router = useRouter();
+  const t = useTranslations("community");
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [type, setType] = useState<"question" | "discussion">("question");
@@ -117,7 +119,7 @@ export function CreateThreadModal({
       <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {type === "question" ? "Ask a Question" : "Start a Discussion"}
+            {type === "question" ? t("askQuestion") : t("newThread")}
           </DialogTitle>
         </DialogHeader>
 
@@ -133,7 +135,7 @@ export function CreateThreadModal({
                   : "border border-[var(--border-default)] bg-[var(--surface)] text-[var(--text-2)]"
               }`}
             >
-              Question
+              {t("question")}
             </button>
             <button
               type="button"
@@ -144,7 +146,7 @@ export function CreateThreadModal({
                   : "border border-[var(--border-default)] bg-[var(--surface)] text-[var(--text-2)]"
               }`}
             >
-              Discussion
+              {t("discussion")}
             </button>
           </div>
 
@@ -152,14 +154,14 @@ export function CreateThreadModal({
           {!isCourseScoped && (
             <div>
               <label className="mb-1 block text-sm font-medium text-[var(--text)]">
-                Category
+                {t("category")}
               </label>
               <select
                 value={categoryId}
                 onChange={(e) => setCategoryId(e.target.value)}
                 className="w-full rounded-md border border-[var(--border-default)] bg-[var(--input)] px-3 py-2 text-sm text-[var(--text)] focus:outline-none"
               >
-                <option value="">Select a category</option>
+                <option value="">{t("selectCategory")}</option>
                 {categories.map((cat) => (
                   <option key={cat.id} value={cat.id}>
                     {cat.name}
@@ -172,13 +174,13 @@ export function CreateThreadModal({
           {/* Title */}
           <div>
             <label className="mb-1 block text-sm font-medium text-[var(--text)]">
-              Title
+              {t("titleLabel")}
             </label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="What's your question or topic?"
+              placeholder={t("titlePlaceholder")}
               maxLength={200}
               className="w-full rounded-md border border-[var(--border-default)] bg-[var(--input)] px-3 py-2 text-sm text-[var(--text)] placeholder:text-[var(--text-2)] focus:outline-none"
             />
@@ -190,12 +192,12 @@ export function CreateThreadModal({
           {/* Body */}
           <div>
             <label className="mb-1 block text-sm font-medium text-[var(--text)]">
-              Details
+              {t("detailsLabel")}
             </label>
             <MarkdownEditor
               value={body}
               onChange={setBody}
-              placeholder="Describe your question or topic in detail. Use Markdown for formatting."
+              placeholder={t("detailsPlaceholder")}
               minHeight="200px"
             />
           </div>
@@ -206,15 +208,17 @@ export function CreateThreadModal({
           {/* Submit */}
           <div className="flex justify-end gap-2">
             <Button variant="secondary" onClick={() => onOpenChange(false)}>
-              Cancel
+              {t("cancel")}
             </Button>
             <Button
               variant="primary"
               onClick={handleSubmit}
               disabled={!isValid || isSubmitting}
             >
-              {isSubmitting && <Loader2 size={16} className="animate-spin" />}
-              Post
+              {isSubmitting && (
+                <CircleNotch size={16} className="animate-spin" />
+              )}
+              {t("post")}
             </Button>
           </div>
         </div>

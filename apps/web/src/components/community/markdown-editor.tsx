@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
@@ -21,6 +22,7 @@ export function MarkdownEditor({
   placeholder = "Write your content using Markdown...",
   minHeight = "200px",
 }: MarkdownEditorProps) {
+  const t = useTranslations("community");
   const [tab, setTab] = useState<"write" | "preview">("write");
   const charPercent = value.length / maxLength;
 
@@ -38,7 +40,7 @@ export function MarkdownEditor({
               : "text-[var(--text-2)] hover:text-[var(--text)]"
           )}
         >
-          Write
+          {t("write")}
         </button>
         <button
           type="button"
@@ -50,7 +52,7 @@ export function MarkdownEditor({
               : "text-[var(--text-2)] hover:text-[var(--text)]"
           )}
         >
-          Preview
+          {t("preview")}
         </button>
       </div>
 
@@ -83,7 +85,9 @@ export function MarkdownEditor({
               {value}
             </ReactMarkdown>
           ) : (
-            <p className="italic text-[var(--text-2)]">Nothing to preview</p>
+            <p className="italic text-[var(--text-2)]">
+              {t("nothingToPreview")}
+            </p>
           )}
         </div>
       )}

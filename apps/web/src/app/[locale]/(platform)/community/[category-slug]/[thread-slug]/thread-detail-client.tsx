@@ -3,10 +3,11 @@
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, CircleNotch } from "@phosphor-icons/react";
 import { useAuth } from "@/lib/auth/auth-provider";
 import { VoteButton } from "@/components/community/vote-button";
 import { ThreadStatusBadge } from "@/components/community/thread-status-badge";
@@ -54,21 +55,25 @@ interface ThreadDetailClientProps {
   shortId: string;
 }
 
-function timeAgo(dateStr: string): string {
+function timeAgo(
+  dateStr: string,
+  t: (key: string, values?: Record<string, number>) => string
+): string {
   const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
-  if (seconds < 60) return "just now";
+  if (seconds < 60) return t("justNow");
   const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
+  if (minutes < 60) return t("minutesAgo", { count: minutes });
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return t("hoursAgo", { count: hours });
   const days = Math.floor(hours / 24);
-  if (days < 30) return `${days}d ago`;
+  if (days < 30) return t("daysAgo", { count: days });
   const months = Math.floor(days / 30);
-  return `${months}mo ago`;
+  return t("monthsAgo", { count: months });
 }
 
 export function ThreadDetailClient({ shortId }: ThreadDetailClientProps) {
   const { user } = useAuth();
+  const t = useTranslations("community");
   const [thread, setThread] = useState<ThreadData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -124,7 +129,7 @@ export function ThreadDetailClient({ shortId }: ThreadDetailClientProps) {
   if (isLoading) {
     return (
       <div className="flex justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-[var(--primary)]" />
+        <CircleNotch className="h-8 w-8 animate-spin text-[var(--primary)]" />
       </div>
     );
   }
@@ -132,12 +137,12 @@ export function ThreadDetailClient({ shortId }: ThreadDetailClientProps) {
   if (error || !thread) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-20 text-center">
-        <p className="text-[var(--text-2)]">{error || "Thread not found"}</p>
+        <p className="text-[var(--text-2)]">{error || t("noResults")}</p>
         <Link
           href="/community"
           className="mt-2 inline-block text-[var(--primary)] hover:underline"
         >
-          Back to Community
+          {t("backToCommunity")}
         </Link>
       </div>
     );
@@ -153,7 +158,7 @@ export function ThreadDetailClient({ shortId }: ThreadDetailClientProps) {
         className="mb-4 inline-flex items-center gap-1 text-sm text-[var(--text-2)] transition-colors hover:text-[var(--primary)]"
       >
         <ArrowLeft size={14} />
-        {thread.category?.name || "Community"}
+        {thread.category?.name || t("title")}
       </Link>
 
       {/* Thread */}
@@ -188,16 +193,16 @@ export function ThreadDetailClient({ shortId }: ThreadDetailClientProps) {
                 <div className="h-5 w-5 rounded-full bg-[var(--primary-dim)]" />
               )}
               <span className="font-medium">
-                {thread.author.username || "Anonymous"}
+                {thread.author.username || t("anonymous")}
               </span>
               {thread.author.level > 0 && (
                 <span className="text-xs font-semibold text-[var(--level)]">
-                  Lv.{thread.author.level}
+                  {t("level", { level: thread.author.level })}
                 </span>
               )}
             </span>
-            <span>{timeAgo(thread.created_at)}</span>
-            <span>{thread.view_count} views</span>
+            <span>{timeAgo(thread.created_at, t)}</span>
+            <span>{t("views", { count: thread.view_count })}</span>
             {user && <FlagButton threadId={thread.id} />}
           </div>
 
@@ -216,8 +221,7 @@ export function ThreadDetailClient({ shortId }: ThreadDetailClientProps) {
       {/* Answers */}
       <div className="mt-8 border-t border-[var(--border-default)] pt-6">
         <h2 className="mb-4 font-display text-lg font-bold text-[var(--text)]">
-          {thread.answers.length}{" "}
-          {thread.answers.length === 1 ? "Answer" : "Answers"}
+          {t("answers", { count: thread.answers.length })}
         </h2>
 
         <div className="space-y-4">

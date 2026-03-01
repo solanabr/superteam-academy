@@ -1,6 +1,12 @@
 "use client";
 
-import { MessageSquare, MessageCircle, CheckCircle, Zap } from "lucide-react";
+import { useTranslations } from "next-intl";
+import {
+  Chats,
+  ChatCircle,
+  CheckCircle,
+  Lightning,
+} from "@phosphor-icons/react";
 import { useCommunityStats } from "@/hooks/use-community-stats";
 import { cn } from "@/lib/utils";
 
@@ -11,35 +17,36 @@ interface CommunityStatsProps {
 const STAT_ITEMS = [
   {
     key: "totalThreads",
-    label: "Threads",
-    icon: MessageSquare,
+    labelKey: "threads",
+    icon: Chats,
     color: "text-[var(--primary)]",
     bg: "bg-[var(--primary-dim)]",
   },
   {
     key: "totalAnswers",
-    label: "Answers",
-    icon: MessageCircle,
+    labelKey: "answersLabel",
+    icon: ChatCircle,
     color: "text-[var(--sol-purple)]",
     bg: "bg-[rgba(153,69,255,0.1)]",
   },
   {
     key: "acceptedAnswers",
-    label: "Accepted",
+    labelKey: "accepted",
     icon: CheckCircle,
     color: "text-[var(--primary)]",
     bg: "bg-[var(--primary-dim)]",
   },
   {
     key: "totalCommunityXp",
-    label: "Community XP",
-    icon: Zap,
+    labelKey: "communityXp",
+    icon: Lightning,
     color: "text-[var(--xp)]",
     bg: "bg-[var(--xp-dim)]",
   },
 ] as const;
 
 export function CommunityStats({ userId }: CommunityStatsProps) {
+  const t = useTranslations("community");
   const { stats, isLoading } = useCommunityStats(userId);
 
   if (isLoading) {
@@ -74,7 +81,9 @@ export function CommunityStats({ userId }: CommunityStatsProps) {
               <div className={cn("rounded-md p-1", item.bg)}>
                 <Icon size={14} className={item.color} />
               </div>
-              <span className="text-xs text-[var(--text-2)]">{item.label}</span>
+              <span className="text-xs text-[var(--text-2)]">
+                {t(item.labelKey)}
+              </span>
             </div>
             <span className="font-display text-lg font-bold text-[var(--text)]">
               {value}

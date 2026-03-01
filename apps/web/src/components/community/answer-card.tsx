@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
@@ -34,15 +35,20 @@ interface AnswerCardProps {
   disabled?: boolean;
 }
 
-function timeAgo(dateStr: string): string {
+function timeAgo(
+  dateStr: string,
+  t: (key: string, values?: Record<string, number>) => string
+): string {
   const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
-  if (seconds < 60) return "just now";
+  if (seconds < 60) return t("justNow");
   const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
+  if (minutes < 60) return t("minutesAgo", { count: minutes });
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return t("hoursAgo", { count: hours });
   const days = Math.floor(hours / 24);
-  return `${days}d ago`;
+  if (days < 30) return t("daysAgo", { count: days });
+  const months = Math.floor(days / 30);
+  return t("monthsAgo", { count: months });
 }
 
 export function AnswerCard({
@@ -52,6 +58,8 @@ export function AnswerCard({
   onAccept,
   disabled = false,
 }: AnswerCardProps) {
+  const t = useTranslations("community");
+
   return (
     <div
       className={cn(
@@ -80,7 +88,7 @@ export function AnswerCard({
       <div className="min-w-0 flex-1">
         {answer.is_accepted && (
           <span className="mb-2 inline-flex items-center text-xs font-semibold text-[var(--primary)]">
-            Accepted Answer
+            {t("acceptedAnswer")}
           </span>
         )}
 
@@ -106,14 +114,14 @@ export function AnswerCard({
             ) : (
               <div className="h-4 w-4 rounded-full bg-[var(--primary-dim)]" />
             )}
-            <span>{answer.author.username || "Anonymous"}</span>
+            <span>{answer.author.username || t("anonymous")}</span>
             {answer.author.level > 0 && (
               <span className="font-semibold text-[var(--level)]">
-                Lv.{answer.author.level}
+                {t("level", { level: answer.author.level })}
               </span>
             )}
           </span>
-          <span>{timeAgo(answer.created_at)}</span>
+          <span>{timeAgo(answer.created_at, t)}</span>
           <FlagButton answerId={answer.id} />
         </div>
       </div>
