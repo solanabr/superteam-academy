@@ -6,6 +6,8 @@ import { ConnectionProvider, WalletProvider } from "@solana/wallet-adapter-react
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import { clusterApiUrl } from "@solana/web3.js";
+import { SessionProvider } from "next-auth/react"; // <-- Импорт
+import { PostHogProvider } from "@/components/providers/posthog-provider"; // <-- Наш новый провайдер
 
 import "@solana/wallet-adapter-react-ui/styles.css";
 
@@ -26,10 +28,16 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const wallets = useMemo(() => [], [network]);
 
   return (
-    <ConnectionProvider endpoint={endpoint}>
-      <WalletProvider wallets={wallets} autoConnect>
-        <WalletModalProvider>{children}</WalletModalProvider>
-      </WalletProvider>
-    </ConnectionProvider>
+    <SessionProvider>
+      <ConnectionProvider endpoint={endpoint}>
+        <WalletProvider wallets={wallets} autoConnect>
+          <WalletModalProvider>
+            <PostHogProvider>
+              {children}
+            </PostHogProvider>
+          </WalletModalProvider>
+        </WalletProvider>
+      </ConnectionProvider>
+    </SessionProvider>
   );
 }

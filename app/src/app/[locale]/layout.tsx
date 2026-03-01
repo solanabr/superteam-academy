@@ -8,6 +8,8 @@ import { Toaster } from "@/components/ui/sonner"
 import { getMessages } from 'next-intl/server';
 import { notFound } from "next/navigation";
 import { NextIntlClientProvider } from 'next-intl';
+import { GoogleAnalytics } from '@next/third-parties/google'
+
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -28,15 +30,18 @@ export default async function RootLayout({
   return (
     <html lang={locale} suppressHydrationWarning>
       <body className={inter.className}>
-        <NextIntlClientProvider messages={messages} locale={locale}>
-            <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
-                <ProvidersWrapper>
-                    {children}
-                </ProvidersWrapper>
-                <Toaster />
-            </ThemeProvider>
-        </NextIntlClientProvider>
+        
+          <NextIntlClientProvider messages={messages} locale={locale}>
+              <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
+                  <ProvidersWrapper>
+                      {children}
+                  </ProvidersWrapper>
+                  <Toaster />
+              </ThemeProvider>
+          </NextIntlClientProvider>
+        
       </body>
+      <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID || ''} />
     </html>
   );
 }
