@@ -909,3 +909,252 @@ INSERT INTO forum_categories (name, slug, description, sort_order) VALUES
   ('Help', 'help', 'Ask questions and get help from the community', 2),
   ('Showcase', 'showcase', 'Share your projects and achievements', 3),
   ('Off-Topic', 'off-topic', 'Everything else', 4);
+
+-- ============================================================
+-- Community Forum: Triggers
+-- ============================================================
+
+-- Prevent self-voting
+CREATE OR REPLACE FUNCTION prevent_self_vote()
+RETURNS TRIGGER AS $$
+DECLARE
+  content_author_id UUID;
+BEGIN
+  IF NEW.thread_id IS NOT NULL THEN
+    SELECT author_id INTO content_author_id FROM threads WHERE id = NEW.thread_id;
+  ELSE
+    SELECT author_id INTO content_author_id FROM answers WHERE id = NEW.answer_id;
+  END IF;
+
+  IF content_author_id = NEW.user_id THEN
+    RAISE EXCEPTION 'Cannot vote on your own content';
+  END IF;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_prevent_self_vote
+  BEFORE INSERT ON votes
+  FOR EACH ROW EXECUTE FUNCTION prevent_self_vote();
+
+-- Update denormalized vote_score on threads/answers
+CREATE OR REPLACE FUNCTION update_vote_score()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    IF NEW.thread_id IS NOT NULL THEN
+      UPDATE threads SET vote_score = vote_score + NEW.value WHERE id = NEW.thread_id;
+    ELSE
+      UPDATE answers SET vote_score = vote_score + NEW.value WHERE id = NEW.answer_id;
+    END IF;
+  ELSIF TG_OP = 'UPDATE' THEN
+    IF NEW.thread_id IS NOT NULL THEN
+      UPDATE threads SET vote_score = vote_score + (NEW.value - OLD.value) WHERE id = NEW.thread_id;
+    ELSE
+      UPDATE answers SET vote_score = vote_score + (NEW.value - OLD.value) WHERE id = NEW.answer_id;
+    END IF;
+  ELSIF TG_OP = 'DELETE' THEN
+    IF OLD.thread_id IS NOT NULL THEN
+      UPDATE threads SET vote_score = vote_score - OLD.value WHERE id = OLD.thread_id;
+    ELSE
+      UPDATE answers SET vote_score = vote_score - OLD.value WHERE id = OLD.answer_id;
+    END IF;
+  END IF;
+
+  IF TG_OP = 'DELETE' THEN RETURN OLD; ELSE RETURN NEW; END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_update_vote_score
+  AFTER INSERT OR UPDATE OF value OR DELETE ON votes
+  FOR EACH ROW EXECUTE FUNCTION update_vote_score();
+
+-- Update answer_count on threads
+CREATE OR REPLACE FUNCTION update_answer_count()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    UPDATE threads SET answer_count = answer_count + 1 WHERE id = NEW.thread_id;
+  ELSIF TG_OP = 'DELETE' THEN
+    UPDATE threads SET answer_count = answer_count - 1 WHERE id = OLD.thread_id;
+  END IF;
+
+  IF TG_OP = 'DELETE' THEN RETURN OLD; ELSE RETURN NEW; END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_update_answer_count
+  AFTER INSERT OR DELETE ON answers
+  FOR EACH ROW EXECUTE FUNCTION update_answer_count();
+
+-- Update last_activity_at on new answers or answer edits
+CREATE OR REPLACE FUNCTION update_last_activity()
+RETURNS TRIGGER AS $$
+BEGIN
+  UPDATE threads SET last_activity_at = now() WHERE id = NEW.thread_id;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_update_last_activity
+  AFTER INSERT OR UPDATE OF body ON answers
+  FOR EACH ROW EXECUTE FUNCTION update_last_activity();
+
+-- ============================================================
+-- Community Forum: SECURITY DEFINER Functions
+-- ============================================================
+
+-- Increment view count (called from API route)
+CREATE OR REPLACE FUNCTION increment_view_count(p_thread_id UUID)
+RETURNS void
+LANGUAGE sql
+SECURITY DEFINER
+AS $$
+  UPDATE threads SET view_count = view_count + 1 WHERE id = p_thread_id;
+$$;
+
+-- Award community XP with daily cap (50/day total, 10/day vote sub-cap)
+CREATE OR REPLACE FUNCTION award_community_xp(
+  p_user_id UUID,
+  p_amount INTEGER,
+  p_reason TEXT,
+  p_idempotency_key TEXT DEFAULT NULL
+) RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_daily_total INTEGER;
+  v_daily_vote_total INTEGER;
+  v_is_vote_xp BOOLEAN;
+BEGIN
+  IF p_amount <= 0 THEN RETURN FALSE; END IF;
+
+  SELECT COALESCE(SUM(amount), 0) INTO v_daily_total
+  FROM xp_transactions
+  WHERE user_id = p_user_id
+    AND reason LIKE 'community:%'
+    AND created_at >= (CURRENT_DATE)::timestamptz;
+
+  IF v_daily_total >= 50 THEN RETURN FALSE; END IF;
+
+  v_is_vote_xp := p_reason LIKE 'community:upvote%';
+  IF v_is_vote_xp THEN
+    SELECT COALESCE(SUM(amount), 0) INTO v_daily_vote_total
+    FROM xp_transactions
+    WHERE user_id = p_user_id
+      AND reason LIKE 'community:upvote%'
+      AND created_at >= (CURRENT_DATE)::timestamptz;
+
+    IF v_daily_vote_total >= 10 THEN RETURN FALSE; END IF;
+
+    IF v_daily_vote_total + p_amount > 10 THEN
+      p_amount := 10 - v_daily_vote_total;
+    END IF;
+    IF p_amount <= 0 THEN RETURN FALSE; END IF;
+  END IF;
+
+  IF v_daily_total + p_amount > 50 THEN
+    p_amount := 50 - v_daily_total;
+  END IF;
+  IF p_amount <= 0 THEN RETURN FALSE; END IF;
+
+  IF p_idempotency_key IS NOT NULL THEN
+    INSERT INTO xp_transactions (user_id, amount, reason, idempotency_key)
+    VALUES (p_user_id, p_amount, p_reason, p_idempotency_key)
+    ON CONFLICT (user_id, idempotency_key) WHERE idempotency_key IS NOT NULL
+    DO NOTHING;
+
+    IF NOT FOUND THEN RETURN FALSE; END IF;
+  ELSE
+    INSERT INTO xp_transactions (user_id, amount, reason)
+    VALUES (p_user_id, p_amount, p_reason);
+  END IF;
+
+  INSERT INTO user_xp (id, user_id, total_xp, level, current_streak, longest_streak, last_activity_date)
+  VALUES (
+    gen_random_uuid(), p_user_id, p_amount,
+    floor(sqrt(p_amount / 100.0))::int,
+    1, 1, CURRENT_DATE
+  )
+  ON CONFLICT (user_id) DO UPDATE SET
+    total_xp = user_xp.total_xp + p_amount,
+    level = floor(sqrt((user_xp.total_xp + p_amount) / 100.0))::int,
+    last_activity_date = CURRENT_DATE,
+    current_streak = CASE
+      WHEN user_xp.last_activity_date IS NULL THEN 1
+      WHEN user_xp.last_activity_date = CURRENT_DATE THEN user_xp.current_streak
+      WHEN user_xp.last_activity_date = CURRENT_DATE - INTERVAL '1 day' THEN user_xp.current_streak + 1
+      ELSE 1
+    END,
+    longest_streak = GREATEST(
+      user_xp.longest_streak,
+      CASE
+        WHEN user_xp.last_activity_date = CURRENT_DATE - INTERVAL '1 day' THEN user_xp.current_streak + 1
+        WHEN user_xp.last_activity_date = CURRENT_DATE THEN user_xp.current_streak
+        ELSE 1
+      END
+    );
+
+  RETURN TRUE;
+END;
+$$;
+
+-- Revoke community XP (for vote removals — deletes transaction, decrements user_xp)
+CREATE OR REPLACE FUNCTION revoke_community_xp(
+  p_user_id UUID,
+  p_idempotency_key TEXT
+) RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_amount INTEGER;
+BEGIN
+  DELETE FROM xp_transactions
+  WHERE user_id = p_user_id AND idempotency_key = p_idempotency_key
+  RETURNING amount INTO v_amount;
+
+  IF v_amount IS NOT NULL THEN
+    UPDATE user_xp SET
+      total_xp = GREATEST(0, total_xp - v_amount),
+      level = floor(sqrt(GREATEST(0, total_xp - v_amount) / 100.0))::int
+    WHERE user_id = p_user_id;
+  END IF;
+END;
+$$;
+
+-- Atomic thread creation (INSERT + slug update in one transaction)
+CREATE OR REPLACE FUNCTION create_thread(
+  p_author_id UUID, p_title TEXT, p_body TEXT, p_type TEXT,
+  p_category_id UUID, p_course_id TEXT, p_lesson_id TEXT, p_slug_base TEXT
+) RETURNS TABLE(id UUID, short_id TEXT, slug TEXT)
+LANGUAGE plpgsql SECURITY DEFINER AS $$
+DECLARE
+  v_id UUID;
+  v_short_id TEXT;
+  v_slug TEXT;
+BEGIN
+  INSERT INTO threads (author_id, title, slug, body, type, category_id, course_id, lesson_id)
+  VALUES (p_author_id, p_title, p_slug_base, p_body, p_type, p_category_id, p_course_id, p_lesson_id)
+  RETURNING threads.id, threads.short_id INTO v_id, v_short_id;
+
+  v_slug := p_slug_base || '-' || v_short_id;
+  UPDATE threads SET slug = v_slug WHERE threads.id = v_id;
+
+  RETURN QUERY SELECT v_id, v_short_id, v_slug;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION increment_view_count(UUID) FROM public, anon, authenticated;
+GRANT EXECUTE ON FUNCTION increment_view_count(UUID) TO service_role;
+
+REVOKE ALL ON FUNCTION award_community_xp(UUID, INTEGER, TEXT, TEXT) FROM public, anon, authenticated;
+GRANT EXECUTE ON FUNCTION award_community_xp(UUID, INTEGER, TEXT, TEXT) TO service_role;
+
+REVOKE ALL ON FUNCTION revoke_community_xp(UUID, TEXT) FROM public, anon, authenticated;
+GRANT EXECUTE ON FUNCTION revoke_community_xp(UUID, TEXT) TO service_role;
+
+REVOKE ALL ON FUNCTION create_thread(UUID, TEXT, TEXT, TEXT, UUID, TEXT, TEXT, TEXT) FROM public, anon, authenticated;
+GRANT EXECUTE ON FUNCTION create_thread(UUID, TEXT, TEXT, TEXT, UUID, TEXT, TEXT, TEXT) TO service_role;
