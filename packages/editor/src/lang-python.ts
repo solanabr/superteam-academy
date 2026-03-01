@@ -1,16 +1,6 @@
-import { LanguageSupport, LRLanguage } from "@codemirror/language";
-import { parser } from "./python-parser";
+import { python as officialPython } from "@codemirror/lang-python";
+import type { LanguageSupport } from "@codemirror/language";
 
 export function python(): LanguageSupport {
-	return new LanguageSupport(
-		LRLanguage.define({
-			name: "python",
-			parser: parser,
-			languageData: {
-				commentTokens: { line: "#" },
-				indentOnInput:
-					/^\s*(?:def |class |if |elif |else:|for |while |try:|except |finally:|with )/,
-			},
-		})
-	);
+	return officialPython();
 }

@@ -1,15 +1,6 @@
-import { LanguageSupport, LRLanguage } from "@codemirror/language";
-import { parser } from "./typescript-parser";
+import { javascript } from "@codemirror/lang-javascript";
+import type { LanguageSupport } from "@codemirror/language";
 
 export function typescript(): LanguageSupport {
-	return new LanguageSupport(
-		LRLanguage.define({
-			name: "typescript",
-			parser: parser,
-			languageData: {
-				commentTokens: { line: "//", block: { open: "/*", close: "*/" } },
-				indentOnInput: /^\s*(?:case |default:|\{|\}|<\/)$/,
-			},
-		})
-	);
+	return javascript({ typescript: true, jsx: true });
 }

@@ -11,25 +11,10 @@
 			"import": "./dist/index.mjs",
 			"require": "./dist/index.js"
 		},
-		"./level-system": {
-			"types": "./dist/level-system.d.ts",
-			"import": "./dist/level-system.mjs",
-			"require": "./dist/level-system.js"
-		},
-		"./xp-engine": {
-			"types": "./dist/xp-engine.d.ts",
-			"import": "./dist/xp-engine.mjs",
-			"require": "./dist/xp-engine.js"
-		},
 		"./streak-system": {
 			"types": "./dist/streak-system.d.ts",
 			"import": "./dist/streak-system.mjs",
 			"require": "./dist/streak-system.js"
-		},
-		"./achievement-system": {
-			"types": "./dist/achievement-system.d.ts",
-			"import": "./dist/achievement-system.mjs",
-			"require": "./dist/achievement-system.js"
 		}
 	},
 	"files": [
@@ -42,9 +27,7 @@
 		"test:watch": "vitest",
 		"type-check": "tsc --noEmit"
 	},
-	"dependencies": {
-		"zod": "catalog:"
-	},
+	"dependencies": {},
 	"devDependencies": {
 		"@types/node": "catalog:",
 		"tsup": "catalog:",

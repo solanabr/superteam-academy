@@ -89,18 +89,6 @@ export const coursesByTrackQuery = /* groq */ `
   }
 `;
 
-export const lessonBySlugQuery = /* groq */ `
-  *[_type == "lesson" && slug.current == $slug][0] {
-    ${lessonFields},
-    "module": *[_type == "module" && references(^._id)][0] {
-      ${moduleFields},
-      "course": *[_type == "course" && references(^._id)][0] {
-        ${courseFields}
-      }
-    }
-  }
-`;
-
 export const allTracksQuery = /* groq */ `
   *[_type == "track"] | order(title asc) {
     _id,
@@ -109,20 +97,6 @@ export const allTracksQuery = /* groq */ `
     description,
     image,
     "courseCount": count(*[_type == "course" && track == ^.slug.current && published == true])
-  }
-`;
-
-export const authorBySlugQuery = /* groq */ `
-  *[_type == "author" && slug.current == $slug][0] {
-    _id,
-    name,
-    slug,
-    image,
-    bio,
-    walletAddress,
-    "courses": *[_type == "course" && author._ref == ^._id && published == true] {
-      ${courseFields}
-    }
   }
 `;
 

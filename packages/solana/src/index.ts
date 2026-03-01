@@ -1,2 +1,1 @@
-export * from "./connection";
-export * from "./pda";
+export { findToken2022ATA, TOKEN_2022_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID } from "./pda";

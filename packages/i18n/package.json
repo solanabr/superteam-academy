@@ -9,11 +9,7 @@
 		"./config": "./src/config.ts",
 		"./routing": "./src/routing.ts",
 		"./navigation": "./src/navigation.ts",
-		"./utils": "./src/utils.ts",
-		"./validation": "./src/validation.ts",
-		"./extraction": "./src/extraction.ts",
-		"./proxy": "./src/proxy.ts",
-		"./ssr": "./src/ssr.ts"
+		"./proxy": "./src/proxy.ts"
 	},
 	"files": [
 		"dist",
@@ -25,12 +21,11 @@
 		"type-check": "tsc --noEmit"
 	},
 	"dependencies": {
-		"glob": "^13.0.4",
-		"next-intl": "catalog:",
-		"zod": "catalog:"
+		"next-intl": "catalog:"
 	},
 	"devDependencies": {
 		"@types/node": "catalog:",
+		"@types/react": "catalog:",
 		"tsup": "catalog:",
 		"typescript": "catalog:"
 	},

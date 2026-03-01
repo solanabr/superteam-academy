@@ -7,8 +7,7 @@
 	"exports": {
 		".": "./src/index.ts",
 		"./queries": "./src/queries.ts",
-		"./schemas": "./src/schemas.ts",
-		"./course-stubs": "./src/course-stubs.ts"
+		"./schemas": "./src/schemas.ts"
 	},
 	"files": [
 		"dist"

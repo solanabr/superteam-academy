@@ -1,5 +1,3 @@
-import { z } from "zod";
-
 export enum StreakStatus {
 	ACTIVE = "active",
 	BROKEN = "broken",
@@ -18,13 +16,13 @@ export enum StreakEventType {
 }
 
 export interface StreakConfig {
-	activityWindowHours: number; // Hours in which activity counts for streak
-	freezeDurationDays: number; // How long a freeze lasts
-	maxFreezes: number; // Maximum freezes a user can have
-	recoveryWindowDays: number; // Days to recover a broken streak
+	activityWindowHours: number;
+	freezeDurationDays: number;
+	maxFreezes: number;
+	recoveryWindowDays: number;
 	requiredActivities: {
-		daily: number; // Minimum activities per day for streak
-		types: StreakEventType[]; // Which event types count
+		daily: number;
+		types: StreakEventType[];
 	};
 	rewards: {
 		[key: number]: {
@@ -36,12 +34,12 @@ export interface StreakConfig {
 }
 
 export const DEFAULT_STREAK_CONFIG: StreakConfig = {
-	activityWindowHours: 24, // 24 hours for daily streak
-	freezeDurationDays: 7, // Freezes last 7 days
-	maxFreezes: 3, // Maximum 3 freezes
-	recoveryWindowDays: 3, // 3 days to recover broken streak
+	activityWindowHours: 24,
+	freezeDurationDays: 7,
+	maxFreezes: 3,
+	recoveryWindowDays: 3,
 	requiredActivities: {
-		daily: 1, // At least 1 activity per day
+		daily: 1,
 		types: [
 			StreakEventType.LESSON_COMPLETED,
 			StreakEventType.CHALLENGE_COMPLETED,
@@ -57,16 +55,14 @@ export const DEFAULT_STREAK_CONFIG: StreakConfig = {
 	},
 };
 
-export const StreakEventSchema = z.object({
-	id: z.string().uuid(),
-	userId: z.string(),
-	type: z.nativeEnum(StreakEventType),
-	timestamp: z.date(),
-	metadata: z.record(z.string(), z.unknown()).optional(),
-	activityCount: z.number().min(1).default(1),
-});
-
-export type StreakEvent = z.infer<typeof StreakEventSchema>;
+export interface StreakEvent {
+	id: string;
+	userId: string;
+	type: StreakEventType;
+	timestamp: Date;
+	metadata?: Record<string, unknown>;
+	activityCount: number;
+}
 
 export interface StreakState {
 	userId: string;
@@ -138,66 +134,6 @@ export class StreakCalculationEngine {
 		return { newState, streakChange, rewards, notifications };
 	}
 
-	canMaintainStreak(streakState: StreakState): boolean {
-		if (streakState.status === StreakStatus.FROZEN) {
-			return streakState.frozenUntil ? new Date() < streakState.frozenUntil : false;
-		}
-
-		if (streakState.status === StreakStatus.BROKEN) {
-			return streakState.recoveryDeadline
-				? new Date() <= streakState.recoveryDeadline
-				: false;
-		}
-
-		return streakState.status === StreakStatus.ACTIVE;
-	}
-
-	getRecoveryOptions(streakState: StreakState): {
-		canRecover: boolean;
-		timeRemaining: number; // hours
-		freezesRequired: number;
-		alternativeActions: string[];
-	} {
-		const now = new Date();
-		const canRecover = streakState.recoveryDeadline
-			? now <= streakState.recoveryDeadline
-			: false;
-		const timeRemaining =
-			canRecover && streakState.recoveryDeadline
-				? Math.max(
-						0,
-						Math.floor(
-							(streakState.recoveryDeadline.getTime() - now.getTime()) /
-								(1000 * 60 * 60)
-						)
-					)
-				: 0;
-
-		const daysMissed = streakState.lastActivityDate
-			? Math.floor(
-					(now.getTime() - streakState.lastActivityDate.getTime()) / (1000 * 60 * 60 * 24)
-				)
-			: 0;
-
-		const freezesRequired = Math.min(daysMissed, streakState.freezesAvailable);
-
-		const alternativeActions: string[] = [];
-		if (streakState.freezesAvailable > 0) {
-			alternativeActions.push("use_freeze");
-		}
-		if (canRecover) {
-			alternativeActions.push("complete_activity");
-		}
-		alternativeActions.push("start_new_streak");
-
-		return {
-			canRecover,
-			timeRemaining,
-			freezesRequired,
-			alternativeActions,
-		};
-	}
-
 	useFreeze(streakState: StreakState): {
 		success: boolean;
 		newState: StreakState;
@@ -249,42 +185,6 @@ export class StreakCalculationEngine {
 		return newState;
 	}
 
-	getStreakStats(streakState: StreakState): {
-		currentStreak: number;
-		longestStreak: number;
-		status: StreakStatus;
-		daysActive: number;
-		freezesUsed: number;
-		efficiency: number; // percentage of potential days active
-		nextMilestone: number;
-		daysToNextMilestone: number;
-	} {
-		const now = new Date();
-		const startDate = streakState.streakStartDate || now;
-		const totalDays =
-			Math.floor((now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-		const daysActive = streakState.longestStreak;
-		const efficiency = totalDays > 0 ? (daysActive / totalDays) * 100 : 0;
-
-		const milestones = Object.keys(this.config.rewards)
-			.map(Number)
-			.sort((a, b) => a - b);
-		const nextMilestone =
-			milestones.find((m) => m > streakState.currentStreak) || streakState.currentStreak;
-		const daysToNextMilestone = nextMilestone - streakState.currentStreak;
-
-		return {
-			currentStreak: streakState.currentStreak,
-			longestStreak: streakState.longestStreak,
-			status: streakState.status,
-			daysActive,
-			freezesUsed: streakState.totalFreezesUsed,
-			efficiency,
-			nextMilestone,
-			daysToNextMilestone,
-		};
-	}
-
 	private processActivityEvent(
 		state: StreakState,
 		eventDate: Date,
@@ -331,7 +231,7 @@ export class StreakCalculationEngine {
 					if (reward.achievement) {
 						rewards.push({ type: "achievement", value: reward.achievement });
 					}
-					notifications.push(`🎉 Streak milestone reached: ${state.currentStreak} days!`);
+					notifications.push(`Streak milestone reached: ${state.currentStreak} days!`);
 				}
 			} else if (daysDifference === 2 && state.freezesAvailable > 0) {
 				state.freezesAvailable -= 1;
@@ -339,7 +239,7 @@ export class StreakCalculationEngine {
 				state.currentStreak += 1;
 				state.longestStreak = Math.max(state.longestStreak, state.currentStreak);
 				streakChange = 1;
-				notifications.push("🛡️ Streak freeze used automatically!");
+				notifications.push("Streak freeze used automatically!");
 			} else {
 				state.status = StreakStatus.BROKEN;
 				state.recoveryDeadline = new Date(eventDay);
@@ -348,14 +248,14 @@ export class StreakCalculationEngine {
 				);
 				streakChange = -state.currentStreak;
 				notifications.push(
-					`💔 Streak broken after ${state.currentStreak} days. You have ${this.config.recoveryWindowDays} days to recover it!`
+					`Streak broken after ${state.currentStreak} days. You have ${this.config.recoveryWindowDays} days to recover it!`
 				);
 			}
 		} else if (state.status === StreakStatus.BROKEN) {
 			if (daysDifference <= this.config.recoveryWindowDays + 1) {
 				state.status = StreakStatus.ACTIVE;
 				state.recoveryDeadline = null;
-				notifications.push("🔥 Streak recovered! Keep it going!");
+				notifications.push("Streak recovered! Keep it going!");
 			} else {
 				state.currentStreak = 1;
 				state.longestStreak = Math.max(state.longestStreak, 1);
@@ -363,7 +263,7 @@ export class StreakCalculationEngine {
 				state.streakStartDate = eventDay;
 				state.recoveryDeadline = null;
 				streakChange = 1;
-				notifications.push("🌟 New streak started!");
+				notifications.push("New streak started!");
 			}
 		} else if (state.status === StreakStatus.FROZEN) {
 			if (state.frozenUntil && eventDay >= state.frozenUntil) {
@@ -372,7 +272,7 @@ export class StreakCalculationEngine {
 				state.currentStreak += 1;
 				state.longestStreak = Math.max(state.longestStreak, state.currentStreak);
 				streakChange = 1;
-				notifications.push("❄️ Freeze period ended, streak continues!");
+				notifications.push("Freeze period ended, streak continues!");
 			}
 		} else {
 			state.currentStreak = 1;
@@ -380,48 +280,10 @@ export class StreakCalculationEngine {
 			state.status = StreakStatus.ACTIVE;
 			state.streakStartDate = eventDay;
 			streakChange = 1;
-			notifications.push("🌟 Streak started!");
+			notifications.push("Streak started!");
 		}
 
 		state.lastActivityDate = eventDate;
 		return { streakChange, rewards, notifications };
 	}
-
-	updateConfig(newConfig: Partial<StreakConfig>): void {
-		this.config = { ...this.config, ...newConfig };
-	}
-
-	getConfig(): StreakConfig {
-		return { ...this.config };
-	}
-}
-
-export interface StreakStats {
-	userId: string;
-	currentStreak: number;
-	longestStreak: number;
-	status: StreakStatus;
-	totalDaysActive: number;
-	averageStreakLength: number;
-	freezesUsed: number;
-	recoveryRate: number; // percentage of broken streaks recovered
-	mostProductiveDay: string; // day of week
-	mostProductiveHour: number;
-}
-
-export interface StreakAnalytics {
-	userStats: StreakStats;
-	globalStats: {
-		totalUsers: number;
-		averageStreak: number;
-		longestStreak: number;
-		mostCommonBreakDay: string;
-		recoverySuccessRate: number;
-		topStreakers: Array<{ userId: string; streak: number; daysActive: number }>;
-	};
-	distribution: {
-		byLength: Record<string, number>; // streak length ranges -> count
-		byStatus: Record<StreakStatus, number>;
-		byDayOfWeek: Record<string, number>;
-	};
 }

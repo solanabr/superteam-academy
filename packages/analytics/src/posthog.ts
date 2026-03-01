@@ -1,30 +1,79 @@
-import { z } from "zod";
+/**
+ * PostHog analytics — thin wrapper around the official `posthog-js` SDK.
+ *
+ * Usage:
+ *   import { initPostHog, captureEvent, identifyUser } from "@superteam-academy/analytics";
+ *   initPostHog({ apiKey: "phc_..." });
+ *   captureEvent("course_started", { courseId: "solana-101" });
+ */
 
-export const PostHogConfigSchema = z.object({
-	apiKey: z.string().min(1),
-	apiHost: z.string().url().default("https://us.i.posthog.com"),
-	autocapture: z.boolean().default(true),
-	capturePageview: z.boolean().default(true),
-	capturePageleave: z.boolean().default(true),
-	enableHeatmaps: z.boolean().default(true),
-	enableSessionRecording: z.boolean().default(true),
-	sessionRecordingSampleRate: z.number().min(0).max(1).default(0.1),
-	persistence: z.enum(["localStorage", "cookie", "memory"]).default("localStorage"),
-});
+import posthog from "posthog-js";
 
-export type PostHogConfig = z.infer<typeof PostHogConfigSchema>;
-
-export const DEFAULT_POSTHOG_CONFIG: Omit<PostHogConfig, "apiKey"> = {
-	apiHost: "https://us.i.posthog.com",
-	autocapture: true,
-	capturePageview: true,
-	capturePageleave: true,
-	enableHeatmaps: true,
-	enableSessionRecording: true,
-	sessionRecordingSampleRate: 0.1,
-	persistence: "localStorage",
-};
-
-export function getPostHogSnippet(config: PostHogConfig): string {
-	return `!function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init capture register register_once register_for_session unregister unregister_for_session getFeatureFlag getFeatureFlagPayload isFeatureEnabled reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException loadToolbar get_property getSessionProperty createPersonProfile opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing clear_opt_in_out_capturing debug getPageviewId".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);posthog.init('${config.apiKey}',{api_host:'${config.apiHost}',person_profiles:'identified_only',autocapture:${config.autocapture},capture_pageview:${config.capturePageview},capture_pageleave:${config.capturePageleave},enable_heatmaps:${config.enableHeatmaps},enable_recording_console_log:false,session_recording:{sample_rate:${config.sessionRecordingSampleRate}},persistence:'${config.persistence}'})`;
+export interface PostHogConfig {
+	apiKey: string;
+	apiHost?: string;
+	autocapture?: boolean;
+	capturePageview?: boolean;
+	capturePageleave?: boolean;
+	enableHeatmaps?: boolean;
+	enableSessionRecording?: boolean;
+	sessionRecordingSampleRate?: number;
+	persistence?: "localStorage" | "cookie" | "memory";
+	debug?: boolean;
 }
+
+const DEFAULT_HOST = "https://us.i.posthog.com";
+
+export function initPostHog(config: PostHogConfig): void {
+	if (typeof window === "undefined") return;
+
+	posthog.init(config.apiKey, {
+		api_host: config.apiHost ?? DEFAULT_HOST,
+		autocapture: config.autocapture ?? true,
+		capture_pageview: config.capturePageview ?? true,
+		capture_pageleave: config.capturePageleave ?? true,
+		enable_heatmaps: config.enableHeatmaps ?? true,
+		enable_recording_console_log: false,
+		persistence: config.persistence ?? "localStorage",
+		person_profiles: "identified_only",
+		debug: config.debug ?? false,
+	});
+}
+
+export function captureEvent(eventName: string, properties?: Record<string, unknown>): void {
+	posthog.capture(eventName, properties);
+}
+
+export function identifyUser(userId: string, traits?: Record<string, unknown>): void {
+	posthog.identify(userId, traits);
+}
+
+export function resetPostHogUser(): void {
+	posthog.reset();
+}
+
+export function setPostHogPersonProperties(properties: Record<string, unknown>): void {
+	posthog.setPersonProperties(properties);
+}
+
+export function isFeatureEnabled(flagKey: string): boolean {
+	return posthog.isFeatureEnabled(flagKey) ?? false;
+}
+
+export function getFeatureFlagPayload(flagKey: string): unknown {
+	return posthog.getFeatureFlagPayload(flagKey);
+}
+
+export function optIn(): void {
+	posthog.opt_in_capturing();
+}
+
+export function optOut(): void {
+	posthog.opt_out_capturing();
+}
+
+export function hasOptedOut(): boolean {
+	return posthog.has_opted_out_capturing();
+}
+
+export { posthog };

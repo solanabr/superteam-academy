@@ -1,4 +1,9 @@
-import type { EditorLanguage } from "../interfaces/code-editor";
+export interface EditorLanguage {
+	id: string;
+	displayName: string;
+	extensions: string[];
+	aliases?: string[];
+}
 
 export const SUPPORTED_LANGUAGES: EditorLanguage[] = [
 	{

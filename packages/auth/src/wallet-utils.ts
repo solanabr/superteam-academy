@@ -1,6 +1,6 @@
 export const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 
-export const WALLET_EMAIL_DOMAIN = "@wallet.superteam.local";
+export const WALLET_EMAIL_DOMAIN = "@wallet.superteam.com.br";
 
 export function walletEmail(publicKey: string): string {
 	return `${publicKey}${WALLET_EMAIL_DOMAIN}`;

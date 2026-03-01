@@ -1,4 +1,53 @@
-export * from "./idl";
-export * from "./pda";
-export * from "./client";
-export * from "./instructions";
+export {
+	PROGRAM_ID,
+	isLessonCompleted,
+	countCompletedLessons,
+} from "./idl";
+export type {
+	ConfigAccount,
+	CourseAccount,
+	EnrollmentAccount,
+	MinterRoleAccount,
+	AchievementTypeAccount,
+	AchievementReceiptAccount,
+	CreateCourseParams,
+	UpdateCourseParams,
+	UpdateConfigParams,
+	RegisterMinterParams,
+	CreateAchievementTypeParams,
+	ConfigUpdatedEvent,
+	CourseCreatedEvent,
+	CourseUpdatedEvent,
+	EnrolledEvent,
+	LessonCompletedEvent,
+	CourseFinalizedEvent,
+	EnrollmentClosedEvent,
+	CredentialIssuedEvent,
+	CredentialUpgradedEvent,
+	MinterRegisteredEvent,
+	MinterRevokedEvent,
+	XpRewardedEvent,
+	AchievementAwardedEvent,
+	AchievementTypeCreatedEvent,
+	AchievementTypeDeactivatedEvent,
+} from "./idl";
+export {
+	findConfigPDA,
+	findCoursePDA,
+	findEnrollmentPDA,
+	findMinterRolePDA,
+	findAchievementTypePDA,
+	findAchievementReceiptPDA,
+} from "./pda";
+export { AcademyClient } from "./client";
+export {
+	buildEnrollInstruction,
+	buildCloseEnrollmentInstruction,
+	buildCompleteLessonInstruction,
+	buildFinalizeCourseInstruction,
+	buildIssueCredentialInstruction,
+	buildUpgradeCredentialInstruction,
+	buildAwardAchievementInstruction,
+	buildCreateCourseInstruction,
+	buildUpdateCourseInstruction,
+} from "./instructions";
