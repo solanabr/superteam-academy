@@ -49,7 +49,7 @@ export function AppSidebar() {
     const { data: xp } = useXpBalance();
     const { publicKey } = useWallet();
     const t = useTranslations("common");
-    const profileHref = publicKey ? `/profile/${publicKey.toBase58()}` : "/profile";
+    const profileHref = "/profile";
 
     const navItems = [
         ...staticNavItems.slice(0, 4),

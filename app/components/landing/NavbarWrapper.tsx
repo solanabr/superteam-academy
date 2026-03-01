@@ -9,6 +9,7 @@ const HIDE_NAVBAR_PATHS = ["/studio", "/structure"];
 
 function isAppRoute(pathname: string | null) {
   if (!pathname) return false;
+  if (pathname === "/profile") return true;
   return APP_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"));
 }
 

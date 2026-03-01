@@ -95,4 +95,15 @@ export function getProgram(
   return new Program(idl as Idl, provider);
 }
 
+/** Read-only program for fetching accounts (e.g. Config) without a connected wallet. */
+export function getProgramReadOnly(connection: Connection): Program {
+  const dummyKey = new PublicKey("11111111111111111111111111111111");
+  const provider = new AnchorProvider(connection, {
+    publicKey: dummyKey,
+    signTransaction: async (tx) => tx,
+    signAllTransactions: async (txs) => txs,
+  });
+  return new Program(idl as Idl, provider);
+}
+
 export type AcademyProgram = Program;
