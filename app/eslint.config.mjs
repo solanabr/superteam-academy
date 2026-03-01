@@ -14,6 +14,11 @@ const eslintConfig = defineConfig([
       "react-hooks/purity": "warn",
       "react-hooks/static-components": "warn",
       "react-hooks/immutability": "warn",
+      // Allow underscore-prefixed params (standard convention for intentionally unused args)
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
+      ],
     },
   },
   {

@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { BookOpen, Clock, Sparkles, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { Link } from '@/i18n/routing';
@@ -58,10 +59,12 @@ export function CourseCard({ course, enrollment }: CourseCardProps) {
           )}
         >
           {course.imageUrl && (
-            <img
+            <Image
               src={course.imageUrl}
               alt=""
-              className="absolute inset-0 h-full w-full object-cover"
+              fill
+              className="absolute inset-0 object-cover"
+              unoptimized
             />
           )}
           {/* Track + Difficulty badges overlaid on gradient */}

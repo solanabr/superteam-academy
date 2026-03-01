@@ -64,10 +64,14 @@ export function EnrollmentChart() {
   const niceMin = Math.floor(minValue / 10) * 10;
   const niceRange = niceMax - niceMin || 1;
 
-  const xScale = (index: number) =>
-    PADDING.left + (index / (MOCK_DATA.length - 1)) * INNER_WIDTH;
-  const yScale = (value: number) =>
-    PADDING.top + (1 - (value - niceMin) / niceRange) * INNER_HEIGHT;
+  const xScale = useCallback(
+    (index: number) => PADDING.left + (index / (MOCK_DATA.length - 1)) * INNER_WIDTH,
+    [],
+  );
+  const yScale = useCallback(
+    (value: number) => PADDING.top + (1 - (value - niceMin) / niceRange) * INNER_HEIGHT,
+    [niceMin, niceRange],
+  );
 
   const linePath = MOCK_DATA.map(
     (d, i) => `${i === 0 ? 'M' : 'L'}${xScale(i)},${yScale(d.value)}`,
@@ -96,7 +100,7 @@ export function EnrollmentChart() {
         setTooltip({ x: xScale(index), y: yScale(d.value), data: d });
       }
     },
-    [svgRect],
+    [svgRect, xScale, yScale],
   );
 
   const handleMouseLeave = useCallback(() => {

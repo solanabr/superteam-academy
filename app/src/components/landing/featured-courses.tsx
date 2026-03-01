@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import { Button } from '@/components/ui/button';
@@ -141,10 +142,13 @@ export function FeaturedCourses() {
                   className={`h-32 bg-gradient-to-br ${course.gradientFrom} ${course.gradientTo} relative flex items-center justify-center overflow-hidden`}
                 >
                   {course.image ? (
-                    <img
+                    <Image
                       src={course.image}
                       alt=""
+                      width={800}
+                      height={128}
                       className="absolute inset-0 h-full w-full object-cover"
+                      unoptimized
                     />
                   ) : (
                     <course.icon className="h-10 w-10 text-foreground/20" />

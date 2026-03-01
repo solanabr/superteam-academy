@@ -117,10 +117,14 @@ export function AnalyticsLineChart() {
   const minVal = Math.floor(Math.min(...DAU_DATA.map((d) => d.value)) / LC_Y_AXIS_ROUNDING) * LC_Y_AXIS_ROUNDING;
   const range = maxVal - minVal || 1;
 
-  const xScale = (i: number) =>
-    LC_PAD.left + (i / (DAU_DATA.length - 1)) * LC_INNER_W;
-  const yScale = (v: number) =>
-    LC_PAD.top + (1 - (v - minVal) / range) * LC_INNER_H;
+  const xScale = useCallback(
+    (i: number) => LC_PAD.left + (i / (DAU_DATA.length - 1)) * LC_INNER_W,
+    [],
+  );
+  const yScale = useCallback(
+    (v: number) => LC_PAD.top + (1 - (v - minVal) / range) * LC_INNER_H,
+    [minVal, range],
+  );
 
   const linePath = DAU_DATA.map(
     (d, i) => `${i === 0 ? 'M' : 'L'}${xScale(i)},${yScale(d.value)}`,
@@ -148,7 +152,7 @@ export function AnalyticsLineChart() {
         setTooltip({ x: xScale(idx), y: yScale(d.value), data: d });
       }
     },
-    [rect],
+    [rect, xScale, yScale],
   );
 
   return (
