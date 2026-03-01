@@ -1,186 +1,172 @@
-# Superteam Academy LMS Frontend
+﻿# Superteam Academy - Frontend
 
-A Solana-native learning platform frontend built with Next.js App Router. This app delivers interactive course content, wallet-based enrollment, gamified XP progression, leaderboard views, and shareable learning credentials.
-
-## Overview
-
-Superteam Academy is a frontend-first LMS experience designed for Solana builders. The current implementation ships with local/mock data and service abstractions that make it straightforward to migrate to on-chain reads/writes and/or a headless CMS backend.
-
-The codebase uses modern React patterns (server + client components), provider-based composition for theme/i18n/wallet concerns, and typed service interfaces for clean data-source swapping.
-
-## Feature Highlights
-
-- Solana-native UX with wallet integration (`Phantom`, `Solflare`) via Solana Wallet Adapter.
-- Course catalog, filtering, enrollment flow, course details, and lesson progression.
-- Challenge-capable lesson pages with Monaco-based code editor.
-- XP, streaks, levels, achievements, and leaderboard views.
-- Credential pages with Solana Explorer verification links.
-- Persistent local user state using Zustand + `persist` middleware.
-- Internationalization with runtime locale switching (`en`, `pt-BR`, `es`) using `next-intl`.
-- Tailwind + shadcn/ui design system with responsive layout and reusable UI primitives.
-- Framer Motion animations across landing/leaderboard and key interaction surfaces.
+A Solana-native learning platform built with Next.js. Wallet-based enrollment, on-chain XP (Token-2022), Metaplex Core credentials, gamified progression, and a CMS-ready architecture.
 
 ## Tech Stack
 
-Core framework and runtime:
-
-- `next@16.1.6`
-- `react@19.2.3`
-- `react-dom@19.2.3`
-
-UI and styling:
-
-- `tailwindcss@4`
-- `@tailwindcss/postcss@4`
-- `shadcn/ui` (configured in `components.json`, New York style)
-- `radix-ui`
-- `framer-motion`
-
-Web3:
-
-- `@solana/web3.js`
-- `@solana/wallet-adapter-react`
-- `@solana/wallet-adapter-react-ui`
-- `@solana/wallet-adapter-wallets`
-- `@solana/spl-token`
-- `@coral-xyz/anchor`
-
-State, i18n, utilities:
-
-- `zustand`
-- `next-intl`
-- `zod`
+| Layer | Stack |
+|-------|-------|
+| Framework | Next.js 16 (App Router), React 19, TypeScript |
+| Styling | Tailwind CSS v4, shadcn/ui (New York), Radix UI |
+| Web3 | @solana/web3.js, @coral-xyz/anchor, Solana Wallet Adapter |
+| Auth | NextAuth.js - SIWS (Sign-In With Solana) + Google OAuth |
+| Database | Prisma + PostgreSQL (Supabase) |
+| State | Zustand (persisted), TanStack React Query |
+| i18n | next-intl (EN, PT-BR, ES) |
+| Analytics | GA4, PostHog, Sentry |
+| Tokens | Token-2022 (soulbound XP), Metaplex Core (credential NFTs) |
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js `20+` (recommended)
-- npm `10+`
+- Node.js 20+
+- npm 10+
+- PostgreSQL database (Supabase recommended)
 
 ### Install
 
 ```bash
+cd app
 npm install
 ```
 
-### Run Development Server
+### Environment
+
+Copy `.env.example` to `.env.local` and fill in values:
 
 ```bash
-npm run dev
+cp .env.example .env.local
 ```
 
-Open `http://localhost:3000`.
+Required variables:
 
-### Build for Production
+| Variable | Purpose |
+|----------|---------|
+| `NEXT_PUBLIC_HELIUS_RPC_URL` | Helius RPC endpoint (devnet or mainnet) |
+| `BACKEND_SIGNER_KEY` | Base58 or JSON keypair for backend-signed transactions |
+| `DATABASE_URL` | PostgreSQL connection string |
+| `NEXTAUTH_SECRET` | Session encryption key (`openssl rand -base64 32`) |
+| `NEXTAUTH_URL` | App URL (http://localhost:3000 for local) |
+
+Optional variables:
+
+| Variable | Purpose |
+|----------|---------|
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google OAuth |
+| `NEXT_PUBLIC_GA_MEASUREMENT_ID` | Google Analytics 4 |
+| `NEXT_PUBLIC_POSTHOG_KEY` / `NEXT_PUBLIC_POSTHOG_HOST` | PostHog analytics |
+| `NEXT_PUBLIC_SENTRY_DSN` / `SENTRY_ORG` / `SENTRY_PROJECT` | Sentry error monitoring |
+| `TRACK_COLLECTION_PUBKEY` | Metaplex Core track collection address |
+
+### Run
 
 ```bash
-npm run build
-npm run start
+npm run dev       # Development server at localhost:3000
+npm run build     # Production build
+npm run start     # Start production server
+npm run lint      # ESLint check
 ```
 
-### Lint
+### Database
 
 ```bash
-npm run lint
+npx prisma generate   # Generate Prisma client
+npx prisma db push    # Push schema to database
 ```
 
 ## Project Structure
 
-```text
-.
-├── src/
-│   ├── app/                      # Next.js App Router routes + root layout
-│   │   ├── (auth)/sign-in
-│   │   ├── (auth)/sign-up
-│   │   ├── courses
-│   │   ├── dashboard
-│   │   ├── leaderboard
-│   │   ├── profile/[username]
-│   │   ├── certificates/[id]
-│   │   └── settings
-│   ├── components/
-│   │   ├── course/               # Course cards, grid, module list, lesson UI
-│   │   ├── gamification/         # XP, streak, level, achievements UI
-│   │   ├── layout/               # Header, sidebar, footer
-│   │   ├── providers/            # Theme, i18n, wallet, app provider composition
-│   │   └── ui/                   # shadcn/ui primitives
-│   ├── hooks/                    # useCourses, useEnrollment, useXp
-│   ├── lib/
-│   │   ├── data/                 # mock-courses and seeded mock entities
-│   │   ├── services/             # Data/service contracts + local implementations
-│   │   ├── solana/               # Program constants, connection, PDA helpers
-│   │   └── store/                # Zustand user store
-│   ├── messages/                 # i18n dictionaries (en, es, pt-BR)
-│   └── types/                    # Shared domain types
-├── public/
-├── REFERENCE_COURSE_CATALOG.ts   # Large source catalog mapped into app courses
-└── docs/
-    ├── ARCHITECTURE.md
-    ├── CUSTOMIZATION.md
-    └── CMS_GUIDE.md
+```
+src/
++-- app/                          # App Router routes
+|   +-- (auth)/sign-in            # SIWS + Google sign-in
+|   +-- (auth)/sign-up            # SIWS + Google sign-up
+|   +-- api/                      # Server API routes
+|   |   +-- auth/[...nextauth]    # NextAuth handler
+|   |   +-- auth/nonce            # SIWS nonce generation
+|   |   +-- courses/finalize      # Backend-signed course finalization
+|   |   +-- courses/issue-credential  # Backend-signed credential issuance
+|   |   +-- lessons/complete      # Backend-signed lesson completion
+|   |   +-- leaderboard           # On-chain XP leaderboard
+|   |   +-- user                  # Profile CRUD
+|   +-- certificates/[id]         # Credential detail + verification
+|   +-- courses/                  # Course catalog
+|   +-- courses/[slug]            # Course detail + enrollment
+|   +-- courses/[slug]/lessons/[id]  # Lesson viewer + code editor
+|   +-- dashboard/                # Learner metrics + activity
+|   +-- leaderboard/              # XP ranking with timeframe filters
+|   +-- profile/[username]        # Public profile + credentials
+|   +-- settings/                 # Preferences + wallet management
++-- components/
+|   +-- course/                   # CourseCard, CourseGrid, LessonContent
+|   +-- editor/                   # Monaco code editor, challenge workspace
+|   +-- gamification/             # XP display, streaks, levels, achievements
+|   +-- layout/                   # Header, Sidebar, Footer
+|   +-- providers/                # Theme, Intl, Query, Wallet providers
+|   +-- ui/                       # shadcn/ui primitives
++-- hooks/
+|   +-- use-courses.ts            # Course search/filter
+|   +-- use-enrollment.ts         # On-chain enrollment flow
+|   +-- use-on-chain.ts           # React Query wrappers for on-chain reads
+|   +-- use-siws-auth.ts          # Sign-In With Solana flow
+|   +-- use-xp.ts                 # XP balance + streak computation
++-- lib/
+|   +-- api-schemas.ts            # Zod validation schemas for API routes
+|   +-- auth/                     # NextAuth config, session guards, SIWS verification
+|   +-- data/                     # Local course data + mock entities
+|   +-- db/                       # Prisma client singleton
+|   +-- services/                 # Service interfaces + local implementations
+|   +-- solana/                   # Program client, on-chain service, backend signer
+|   +-- store/                    # Zustand user store (persisted)
++-- messages/                     # i18n dictionaries (en, es, pt-BR)
++-- types/                        # Domain types + NextAuth augmentation
 ```
 
-## Environment Variables
+## On-Chain Integration
 
-Current status:
+| Instruction | Signer | Route |
+|------------|--------|-------|
+| `enroll_course` | Client wallet | Direct (hooks) |
+| `complete_lesson` | Backend | `POST /api/lessons/complete` |
+| `finalize_course` | Backend | `POST /api/courses/finalize` |
+| `issue_credential` | Backend | `POST /api/courses/issue-credential` |
 
-- No required environment variables for local development.
-- Solana RPC and program IDs are currently hardcoded in `src/lib/solana/constants.ts`.
+Program ID: `ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf` (devnet: `5bzKJ9GdnR6FmnF4Udcza64Hgdiz5vtsX35szuKzXp7c`)
 
-### Optional Variables You May Introduce
+XP Mint: `xpXPUjkfk7t4AJF1tYUoyAYxzuM5DhinZWS1WjfjAu3`
 
-If you want runtime configurability (recommended for production), add:
+## API Routes
+
+All protected routes use `requireSession()` auth guard + Zod request validation.
+
+| Route | Method | Auth | Description |
+|-------|--------|------|-------------|
+| `/api/auth/[...nextauth]` | * | Public | NextAuth handlers (SIWS + Google) |
+| `/api/auth/nonce` | GET | Public | Cryptographic nonce for SIWS |
+| `/api/user` | GET/PATCH | Public | Profile lookup + upsert |
+| `/api/lessons/complete` | POST | Session | Record lesson completion on-chain |
+| `/api/courses/finalize` | POST | Session | Finalize course + award XP |
+| `/api/courses/issue-credential` | POST | Session | Mint Metaplex Core credential NFT |
+| `/api/leaderboard` | GET | Public | On-chain XP leaderboard (top 50) |
+
+## Deployment
+
+### Vercel (recommended)
+
+1. Import repo in Vercel
+2. Set root directory to `app`
+3. Configure environment variables
+4. Deploy - Next.js settings are auto-detected
+
+### Self-hosted
 
 ```bash
-# .env.local
-NEXT_PUBLIC_SOLANA_NETWORK=devnet
-NEXT_PUBLIC_SOLANA_RPC_URL=https://api.devnet.solana.com
-NEXT_PUBLIC_ACADEMY_PROGRAM_ID=ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf
-NEXT_PUBLIC_XP_MINT=xpXPUjkfk7t4AJF1tYUoyAYxzuM5DhinZWS1WjfjAu3
+npm ci && npm run build && npm run start
 ```
 
-Then wire them in `src/lib/solana/constants.ts`.
+## Documentation
 
-## Deployment Guide
-
-### Deploy on Vercel
-
-1. Push the repo to GitHub/GitLab/Bitbucket.
-2. Import project in Vercel.
-3. Use default build settings:
-   - Install command: `npm install`
-   - Build command: `npm run build`
-   - Output: Next.js managed output
-4. Configure environment variables if you externalize Solana/CMS config.
-5. Deploy.
-
-### Self-Hosted Deployment
-
-```bash
-npm ci
-npm run build
-npm run start
-```
-
-Deploy behind a reverse proxy (Nginx/Caddy) and set `NODE_ENV=production`.
-
-## Contributing
-
-1. Create a feature branch.
-2. Keep changes typed and aligned with existing service interfaces in `src/lib/services`.
-3. Reuse shared components from `src/components/ui` and utility helpers from `src/lib`.
-4. Run `npm run lint` before opening a PR.
-5. Provide screenshots for UI changes and list impacted routes.
-
-### Recommended Contribution Pattern
-
-- For data/backend changes: update service interfaces first, then swap implementation class.
-- For new user-facing text: update all dictionaries in `src/messages`.
-- For new routes: follow App Router file conventions and maintain server/client boundaries.
-
-## Additional Documentation
-
-- Architecture: `docs/ARCHITECTURE.md`
-- UI/theme/content customization: `docs/CUSTOMIZATION.md`
-- CMS integration strategy: `docs/CMS_GUIDE.md`
+- [ARCHITECTURE.md](docs/ARCHITECTURE.md) - System architecture, components, data flow
+- [CMS_GUIDE.md](docs/CMS_GUIDE.md) - Content management, course creation, CMS migration
+- [CUSTOMIZATION.md](docs/CUSTOMIZATION.md) - Theming, i18n, gamification customization

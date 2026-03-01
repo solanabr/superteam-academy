@@ -7,12 +7,12 @@ const intensityClass = (active: boolean, index: number): string => {
     return "bg-secondary";
   }
   if (index % 4 === 0) {
-    return "bg-[#ffd23f]/40";
+    return "bg-highlight/40";
   }
   if (index % 3 === 0) {
-    return "bg-[#ffd23f]/60";
+    return "bg-highlight/60";
   }
-  return "bg-[#ffd23f]/80";
+  return "bg-highlight/80";
 };
 
 export function StreakCalendar({ streak }: { streak?: StreakData }) {

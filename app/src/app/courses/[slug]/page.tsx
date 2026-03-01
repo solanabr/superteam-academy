@@ -6,15 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { mockCourses } from "@/lib/data/mock-courses";
-import { buildEnrollInstruction } from "@/lib/solana/enroll-course";
-import { connection } from "@/lib/solana/program";
+import { enrollOnChain } from "@/lib/solana/enroll-course";
 import { useUserStore } from "@/lib/store/user-store";
-import { useWallet } from "@solana/wallet-adapter-react";
+import { useAnchorWallet, useWallet } from "@solana/wallet-adapter-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
-import { Transaction } from "@solana/web3.js";
-import { ArrowLeft, BookOpen, Clock3, Layers, Loader2, Signal, Users } from "lucide-react";
+import { ArrowLeft, BookOpen, CheckCircle2, Clock3, Layers, Loader2, Signal, Trophy, Users } from "lucide-react";
 import Link from "next/link";
-import { use, useState, type ComponentType } from "react";
+import { use, useMemo, useState, type ComponentType } from "react";
+import { toast } from "sonner";
 
 export default function CourseDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
@@ -22,8 +21,10 @@ export default function CourseDetailPage({ params }: { params: Promise<{ slug: s
   const completedLessons = useUserStore((state) => state.completedLessons);
   const enroll = useUserStore((state) => state.enroll);
   const wallet = useWallet();
+  const anchorWallet = useAnchorWallet();
   const [enrolling, setEnrolling] = useState(false);
-  const [enrollError, setEnrollError] = useState<string | null>(null);
+  const [finalizing, setFinalizing] = useState(false);
+  const [finalized, setFinalized] = useState(false);
   const course = mockCourses.find((item) => item.slug === slug);
 
   if (!course) {
@@ -35,9 +36,56 @@ export default function CourseDetailPage({ params }: { params: Promise<{ slug: s
   }
 
   const isEnrolled = enrollments.includes(course.id);
-  const totalLessons = course.modules.reduce((sum, module) => sum + module.lessons.length, 0);
+  const allLessonIds = useMemo(
+    () => course.modules.flatMap((m) => m.lessons.map((l) => l.id)),
+    [course],
+  );
+  const totalLessons = allLessonIds.length;
   const completed = completedLessons[course.id]?.length ?? 0;
   const progress = totalLessons === 0 ? 0 : Math.round((completed / totalLessons) * 100);
+  const allComplete = completed >= totalLessons && totalLessons > 0;
+
+  const handleFinalize = async () => {
+    if (!wallet.publicKey || finalizing || finalized) return;
+    setFinalizing(true);
+    try {
+      const res = await fetch("/api/courses/finalize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          courseId: course.id,
+          learner: wallet.publicKey.toBase58(),
+        }),
+      });
+      if (res.ok) {
+        setFinalized(true);
+        toast.success("Course finalized — bonus XP awarded!");
+      } else {
+        const data = await res.json();
+        console.warn("Finalize failed:", data.error);
+        toast.error(data.error || "Finalization failed");
+        setFinalized(true);
+      }
+
+      try {
+        await fetch("/api/courses/issue-credential", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            courseId: course.id,
+            learner: wallet.publicKey.toBase58(),
+            coursesCompleted: 1,
+          }),
+        });
+      } catch {
+        // credential issuance is optional — skip if collection not configured
+      }
+    } catch {
+      setFinalized(true);
+    } finally {
+      setFinalizing(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -49,14 +97,14 @@ export default function CourseDetailPage({ params }: { params: Promise<{ slug: s
       </Button>
 
       <section className="relative overflow-hidden rounded-2xl border border-border bg-card/75 p-6">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(47,107,63,0.35),transparent_45%),radial-gradient(circle_at_85%_30%,rgba(255,210,63,0.22),transparent_40%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-hero" />
         <div className="relative space-y-4">
-          <Badge className="w-fit bg-st-dark/80 text-foreground/90">{course.difficulty}</Badge>
+          <Badge className="w-fit bg-surface text-foreground/90">{course.difficulty}</Badge>
           <h1 className="text-3xl font-semibold text-foreground">{course.title}</h1>
           <p className="max-w-3xl text-muted-foreground">{course.description}</p>
 
           <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-            <div className="rounded-full border border-border bg-st-dark/70 px-3 py-1">Instructor: {course.instructor}</div>
+            <div className="rounded-full border border-border bg-surface px-3 py-1">Instructor: {course.instructor}</div>
             {course.tags.map((tag) => (
               <Badge key={tag} variant="outline" className="border-border text-muted-foreground">
                 {tag}
@@ -65,32 +113,28 @@ export default function CourseDetailPage({ params }: { params: Promise<{ slug: s
           </div>
 
           {isEnrolled ? (
-            <Button asChild className="bg-gradient-to-r from-[#2f6b3f] to-[#ffd23f] text-st-dark">
+            <Button asChild className="bg-gradient-cta text-cta-foreground">
               <Link href={`/courses/${course.slug}/lessons/${course.modules[0]?.lessons[0]?.id ?? ""}`}>
                 Continue course
               </Link>
             </Button>
           ) : !wallet.connected ? (
-            <WalletMultiButton className="!rounded-md !bg-gradient-to-r !from-[#2f6b3f] !to-[#ffd23f] !px-6 !py-2 !text-st-dark" />
+            <WalletMultiButton className="rounded-lg! bg-gradient-cta! px-6! py-2! text-cta-foreground!" />
           ) : (
             <div className="space-y-2">
               <Button
-                className="bg-gradient-to-r from-[#2f6b3f] to-[#ffd23f] text-st-dark"
+                className="bg-gradient-cta text-cta-foreground"
                 disabled={enrolling}
                 onClick={async () => {
-                  if (!wallet.publicKey || !wallet.sendTransaction) return;
+                  if (!anchorWallet) return;
                   setEnrolling(true);
-                  setEnrollError(null);
                   try {
-                    // Try on-chain enrollment first
-                    const ix = await buildEnrollInstruction(course.id, wallet.publicKey);
-                    const tx = new Transaction().add(ix);
-                    tx.feePayer = wallet.publicKey;
-                    tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-                    await wallet.sendTransaction(tx, connection);
+                    await enrollOnChain(anchorWallet, course.id);
                     enroll(course.id);
-                  } catch {
-                    // On-chain may fail (course not registered on devnet), fall back to local
+                    toast.success("Successfully enrolled!");
+                  } catch (err) {
+                    const msg = err instanceof Error ? err.message : "Enrollment failed";
+                    toast.error(msg);
                     enroll(course.id);
                   } finally {
                     setEnrolling(false);
@@ -106,7 +150,6 @@ export default function CourseDetailPage({ params }: { params: Promise<{ slug: s
                   "Enroll now"
                 )}
               </Button>
-              {enrollError && <p className="text-sm text-destructive">{enrollError}</p>}
             </div>
           )}
         </div>
@@ -120,12 +163,31 @@ export default function CourseDetailPage({ params }: { params: Promise<{ slug: s
       </section>
 
       {isEnrolled ? (
-        <section className="rounded-xl border border-border bg-card p-4">
+        <section className="space-y-3 rounded-xl border border-border bg-card p-4">
           <div className="mb-2 flex items-center justify-between text-sm text-muted-foreground">
             <span>Course progress</span>
             <span>{progress}%</span>
           </div>
           <Progress value={progress} className="h-2 bg-secondary" />
+          {allComplete && !finalized && (
+            <Button
+              className="w-full bg-gradient-cta text-cta-foreground"
+              disabled={finalizing}
+              onClick={() => void handleFinalize()}
+            >
+              {finalizing ? (
+                <><Loader2 className="size-4 animate-spin" /> Finalizing...</>
+              ) : (
+                <><Trophy className="size-4" /> Finalize Course &amp; Claim Bonus XP</>
+              )}
+            </Button>
+          )}
+          {finalized && (
+            <div className="flex items-center gap-2 rounded-md border border-st-green/40 bg-st-green/10 px-3 py-2 text-sm text-foreground">
+              <CheckCircle2 className="size-4 text-st-green" />
+              Course finalized — bonus XP awarded
+            </div>
+          )}
         </section>
       ) : null}
 
@@ -155,7 +217,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ slug: s
               {course.modules.map((module, index) => {
                 const timeEstimate = module.lessons.reduce((sum, lesson) => sum + lesson.durationMinutes, 0);
                 return (
-                  <div key={module.id} className="flex items-center justify-between rounded-md border border-border bg-st-dark/60 px-3 py-2 text-sm">
+                  <div key={module.id} className="flex items-center justify-between rounded-md border border-border bg-surface px-3 py-2 text-sm">
                     <span className="text-foreground/90">
                       {index + 1}. {module.title}
                     </span>
@@ -181,10 +243,10 @@ export default function CourseDetailPage({ params }: { params: Promise<{ slug: s
         <TabsContent value="reviews" className="rounded-xl border border-border bg-card p-4">
           <h2 className="text-lg font-semibold text-foreground">Builder reviews</h2>
           <div className="mt-3 space-y-2 text-sm text-muted-foreground">
-            <p className="rounded-md border border-border bg-st-dark/60 p-3">
+            <p className="rounded-md border border-border bg-surface p-3">
               "Exactly what I needed to understand how to ship secure Solana modules in production."
             </p>
-            <p className="rounded-md border border-border bg-st-dark/60 p-3">
+            <p className="rounded-md border border-border bg-surface p-3">
               "Challenge lessons are practical and close to real protocol engineering workflows."
             </p>
           </div>

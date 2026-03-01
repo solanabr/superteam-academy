@@ -45,8 +45,8 @@ export function Footer() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="border-t border-border bg-st-dark/80 px-4 py-8 sm:px-6">
-      <div className="mx-auto grid w-full max-w-7xl gap-8 lg:grid-cols-[1.2fr_2fr]">
+    <footer className="border-t border-border bg-card px-4 py-8 sm:px-6">
+      <div className="mx-auto grid w-full max-w-screen-2xl gap-8 lg:grid-cols-[1.2fr_2fr]">
         <div className="space-y-4">
           <div>
             <img
@@ -64,7 +64,7 @@ export function Footer() {
             </p>
           </div>
 
-          <Badge className="w-fit border-[#ffd23f]/35 bg-[#ffd23f]/10 text-[#ffd23f]">Built on Solana</Badge>
+          <Badge className="w-fit border-st-emerald/25 bg-st-emerald/10 text-st-emerald dark:text-st-emerald">Built on Solana</Badge>
 
           <div className="flex items-center gap-2 text-muted-foreground">
             <a href="https://github.com" target="_blank" rel="noreferrer" className="rounded-md border border-border p-2 hover:text-foreground">
@@ -97,7 +97,7 @@ export function Footer() {
         </div>
       </div>
 
-      <div className="mx-auto mt-8 flex w-full max-w-7xl flex-col gap-1 border-t border-border pt-4 text-xs text-muted-foreground/70 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mx-auto mt-8 flex w-full max-w-screen-2xl flex-col gap-1 border-t border-border pt-4 text-xs text-muted-foreground/60 sm:flex-row sm:items-center sm:justify-between">
         <span>{t("copyright")}</span>
         <span>© {year} Superteam Academy</span>
       </div>

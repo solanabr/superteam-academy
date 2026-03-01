@@ -2,18 +2,18 @@
 
 import { AchievementCard } from "@/components/gamification/achievement-card";
 import { Badge } from "@/components/ui/badge";
-import { mockAchievements, mockCourses, mockProfiles } from "@/lib/data/mock-courses";
-import { achievementService } from "@/lib/services/achievement-service";
+import { mockAchievements, mockCourses } from "@/lib/data/mock-courses";
 import { credentialService } from "@/lib/services/credential-service";
 import { useUserStore } from "@/lib/store/user-store";
-import type { Achievement, Credential, UserProfile } from "@/types";
-import Image from "next/image";
+import { useOnChainXp } from "@/hooks/use-on-chain";
+import { levelFromXp } from "@/lib/solana/constants";
+import type { Credential, UserProfile } from "@/types";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
-import { Wallet } from "lucide-react";
+import { ExternalLink, Loader2, Wallet } from "lucide-react";
 
 export default function ProfilePage() {
   const { username } = useParams<{ username: string }>();
@@ -21,45 +21,25 @@ export default function ProfilePage() {
   const enrollments = useUserStore((state) => state.enrollments);
   const completedLessons = useUserStore((state) => state.completedLessons);
   const walletAddress = useUserStore((state) => state.walletAddress);
-
-  const [achievements, setAchievements] = useState<Achievement[]>([]);
-  const [credentials, setCredentials] = useState<Credential[]>([]);
   const wallet = useWallet();
 
   const isCurrentUser = username === "you" || username === storeProfile.username;
-
-  if (isCurrentUser && !wallet.connected) {
-    return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-6 text-center">
-        <div className="rounded-2xl border border-border bg-card p-8">
-          <Wallet className="mx-auto mb-4 size-12 text-muted-foreground" />
-          <h1 className="text-2xl font-semibold text-foreground">Connect your wallet</h1>
-          <p className="mt-2 max-w-md text-muted-foreground">
-            Connect your Solana wallet to view your profile, achievements, and credentials.
-          </p>
-          <div className="mt-6">
-            <WalletMultiButton className="!rounded-md !bg-gradient-to-r !from-[#2f6b3f] !to-[#ffd23f] !px-6 !py-2 !text-st-dark" />
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const { data: onChainXp } = useOnChainXp(
+    isCurrentUser ? walletAddress ?? undefined : undefined,
+  );
 
   const profile: UserProfile | undefined = useMemo(() => {
     if (isCurrentUser) {
+      const xp = onChainXp ?? storeProfile.xp;
       return {
         ...storeProfile,
+        xp,
+        level: levelFromXp(xp),
         enrolledCourseIds: enrollments,
       };
     }
-    return mockProfiles.find((item) => item.username === username);
-  }, [isCurrentUser, storeProfile, enrollments, username]);
-
-  useEffect(() => {
-    if (!profile) return;
-    achievementService.listAchievements(profile.id).then(setAchievements);
-    credentialService.getCredentialsByWallet(walletAddress ?? profile.walletAddress ?? "").then(setCredentials);
-  }, [profile, walletAddress]);
+    return undefined;
+  }, [isCurrentUser, storeProfile, enrollments, onChainXp]);
 
   const enrolledCourses = useMemo(
     () => mockCourses.filter((course) => profile?.enrolledCourseIds.includes(course.id)),
@@ -70,6 +50,42 @@ export default function ProfilePage() {
     () => Object.values(completedLessons).reduce((sum, ids) => sum + ids.length, 0),
     [completedLessons],
   );
+
+  const [credentials, setCredentials] = useState<Credential[]>([]);
+  const [credLoading, setCredLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
+
+  useEffect(() => {
+    if (!walletAddress || !isCurrentUser) return;
+    let active = true;
+    setCredLoading(true);
+    credentialService
+      .getCredentialsByWallet(walletAddress)
+      .then((creds) => { if (active) setCredentials(creds); })
+      .finally(() => { if (active) setCredLoading(false); });
+    return () => { active = false; };
+  }, [walletAddress, isCurrentUser]);
+
+  if (isCurrentUser && !wallet.connected) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-6 text-center">
+        <div className="rounded-2xl border border-border bg-card p-8">
+          <Wallet className="mx-auto mb-4 size-12 text-muted-foreground" />
+          <h1 className="text-2xl font-semibold text-foreground">Connect your wallet</h1>
+          <p className="mt-2 max-w-md text-muted-foreground">
+            Connect your Solana wallet to view your profile, achievements, and credentials.
+          </p>
+          {mounted && (
+            <div className="mt-6">
+              <WalletMultiButton className="rounded-lg! bg-gradient-cta! px-6! py-2! text-cta-foreground!" />
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   if (!profile) {
     return (
@@ -83,13 +99,9 @@ export default function ProfilePage() {
     <div className="space-y-6">
       <header className="rounded-2xl border border-border bg-card p-6">
         <div className="flex items-start gap-4">
-          <Image
-            src={profile.avatar}
-            alt={profile.displayName}
-            width={80}
-            height={80}
-            className="rounded-full border-2 border-border"
-          />
+          <div className="flex size-20 items-center justify-center rounded-full border-2 border-border bg-surface text-xl font-bold text-foreground">
+            {profile.displayName.slice(0, 2).toUpperCase()}
+          </div>
           <div className="flex-1">
             <h1 className="text-3xl font-semibold text-foreground">{profile.displayName}</h1>
             <p className="mt-1 text-sm text-muted-foreground">@{profile.username}</p>
@@ -123,7 +135,10 @@ export default function ProfilePage() {
         <article className="rounded-xl border border-border bg-card p-4">
           <h2 className="mb-3 text-sm font-semibold text-foreground">Enrolled courses ({enrolledCourses.length})</h2>
           {enrolledCourses.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No courses enrolled yet.</p>
+            <p className="text-sm text-muted-foreground">
+              No courses enrolled yet.{" "}
+              <Link href="/courses" className="text-st-yellow hover:underline">Browse courses</Link>
+            </p>
           ) : (
             <ul className="space-y-2 text-sm text-muted-foreground">
               {enrolledCourses.map((course) => {
@@ -144,38 +159,56 @@ export default function ProfilePage() {
       <section className="space-y-3">
         <h2 className="text-lg font-semibold text-foreground">Achievements</h2>
         <div className="grid gap-3 md:grid-cols-3">
-          {achievements.map((achievement) => (
+          {mockAchievements.map((achievement) => (
             <AchievementCard key={achievement.id} achievement={achievement} />
           ))}
         </div>
       </section>
 
-      {credentials.length > 0 && (
-        <section className="space-y-3">
-          <h2 className="text-lg font-semibold text-foreground">Credentials</h2>
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold text-foreground">Credentials</h2>
+        {credLoading ? (
+          <div className="flex items-center gap-2 py-4 text-sm text-muted-foreground">
+            <Loader2 className="size-4 animate-spin" /> Loading credentials...
+          </div>
+        ) : credentials.length === 0 ? (
+          <p className="py-4 text-sm text-muted-foreground">
+            No credentials yet. Complete a course and finalize it to earn your first credential NFT.
+          </p>
+        ) : (
           <div className="grid gap-3 md:grid-cols-2">
             {credentials.map((credential) => (
-              <Link
+              <div
                 key={credential.id}
-                href={`/certificates/${credential.id}`}
-                className="overflow-hidden rounded-xl border border-border bg-card"
+                className="overflow-hidden rounded-xl border border-border bg-card transition hover:border-st-yellow/30"
               >
-                <Image
-                  src={credential.imageUri}
-                  alt={credential.title}
-                  width={600}
-                  height={300}
-                  className="h-44 w-full object-cover"
-                />
-                <div className="p-4">
-                  <p className="text-sm font-semibold text-foreground">{credential.title}</p>
-                  <p className="text-xs text-muted-foreground">Issued {new Date(credential.issuedAt).toLocaleDateString()}</p>
+                <div className="flex h-44 items-center justify-center bg-linear-to-r from-st-green/20 to-st-yellow/20">
+                  <span className="text-4xl">🏆</span>
                 </div>
-              </Link>
+                <div className="flex items-center justify-between p-4">
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">{credential.title}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {credential.issuedAt ? new Date(credential.issuedAt).toLocaleDateString() : "On-chain credential"}
+                    </p>
+                  </div>
+                  {credential.txSignature && (
+                    <a
+                      href={`https://explorer.solana.com/address/${credential.txSignature}?cluster=devnet`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-st-yellow hover:bg-st-yellow/10"
+                    >
+                      <ExternalLink className="size-3" />
+                      Explorer
+                    </a>
+                  )}
+                </div>
+              </div>
             ))}
           </div>
-        </section>
-      )}
+        )}
+      </section>
     </div>
   );
 }
@@ -191,6 +224,9 @@ function Stat({ label, value }: { label: string; value: string }) {
 
 function RadarChart({ values }: { values: Record<string, number> }) {
   const entries = Object.entries(values);
+  if (entries.length === 0) {
+    return <p className="py-4 text-center text-sm text-muted-foreground">No skills tracked yet.</p>;
+  }
   const center = 110;
   const radius = 90;
   const points = entries
@@ -207,7 +243,7 @@ function RadarChart({ values }: { values: Record<string, number> }) {
         {[0.25, 0.5, 0.75, 1].map((scale) => (
           <circle key={scale} cx={center} cy={center} r={radius * scale} fill="none" stroke="currentColor" className="text-border" />
         ))}
-        <polygon points={points} fill="rgba(255,210,63,0.22)" stroke="#ffd23f" strokeWidth="2" />
+        <polygon points={points} fill="var(--highlight, rgba(255,210,63,0.22))" fillOpacity="0.22" stroke="var(--highlight)" strokeWidth="2" />
       </svg>
       <div className="grid w-full grid-cols-2 gap-2 text-xs text-muted-foreground">
         {entries.map(([name, value]) => (

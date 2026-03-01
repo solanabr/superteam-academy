@@ -45,9 +45,9 @@ export function XpDisplay({ xp, onChainXp }: { xp: number; onChainXp: number }) 
           </div>
           <div className="text-right">
             <p className="text-xs text-muted-foreground/70">On-chain</p>
-            <p className="text-sm text-[#ffd23f]">{onChainXp.toLocaleString()}</p>
+            <p className="text-sm text-highlight">{onChainXp.toLocaleString()}</p>
           </div>
-          <Sparkles className="size-5 text-[#ffd23f]" />
+          <Sparkles className="size-5 text-highlight" />
         </div>
 
         <div>

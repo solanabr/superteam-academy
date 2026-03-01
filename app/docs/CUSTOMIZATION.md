@@ -1,129 +1,215 @@
-# Customization Guide
+﻿# Customization Guide
 
-This guide explains how to customize theme, course content, layout, and translations in the current frontend architecture.
+Theme customization, adding languages, and extending gamification in Superteam Academy.
 
-## 1) Theme and Brand Customization
+## 1. Theme & Brand Customization
 
-Superteam/Solana brand colors used across the app:
+### Brand Palette
 
-- Yellow (accent): `#ffd23f`
-- Dark Green (primary): `#2f6b3f`
-- Emerald: `#008c4c`
-- Cream: `#f7eacb`
-- Near-black: `#1b231d`
+Superteam Brasil brand colors follow the official brand guidelines:
 
-### Primary files
+| Token | Hex | Usage |
+|-------|-----|-------|
+| `st-yellow` | `#ffd23f` | Accent, highlights |
+| `st-cream` | `#f7eacb` | Light mode base tint |
+| `st-green` | `#2f6b3f` | Primary (dark green) |
+| `st-emerald` | `#008c4c` | CTA gradients, badges |
+| `st-dark` | `#1b231d` | Near-black text |
 
-- `src/app/globals.css`: design tokens and light/dark theme variables.
-- `src/app/layout.tsx`: global background gradients.
-- `src/components/layout/header.tsx`: wallet/action gradients and navigation styling.
-- `src/components/course/course-card.tsx`: course card gradient accents.
+### Design Token System
 
-### Where to update colors
+All colors are managed through CSS custom properties in `src/app/globals.css` using Tailwind CSS v4's `@theme inline` directive.
 
-1. Global tokens:
-   - Update CSS variables in `:root` and `.dark` inside `src/app/globals.css`.
-2. Branded gradients:
-   - Search for `from-[#2f6b3f]` and `to-[#ffd23f]` and replace consistently.
+**Key token categories:**
 
-```bash
-rg -n "2f6b3f|ffd23f|008c4c" src
+| Category | Tokens | Purpose |
+|----------|--------|---------|
+| Base | `--background`, `--foreground` | Page background and text |
+| Card | `--card`, `--card-foreground` | Card surfaces |
+| Primary | `--primary`, `--primary-foreground` | Brand primary |
+| Surface | `--surface`, `--surface-alt` | Elevated surfaces |
+| Highlight | `--highlight` | Accent color (yellow dark / green light) |
+| CTA | `--cta-from`, `--cta-to`, `--cta-foreground` | Call-to-action gradient |
+| Sidebar | `--sidebar`, `--sidebar-active`, `--sidebar-border` | Sidebar-specific |
+| Status | `--success`, `--warning`, `--info`, `--danger` | Feedback colors |
+| Podium | `--podium-gold`, `--podium-silver`, `--podium-bronze` | Leaderboard |
+
+### Modifying Colors
+
+1. Open `src/app/globals.css`
+2. Edit values in `:root` (light mode) and `.dark` (dark mode) blocks
+3. The `@theme inline` block maps CSS vars to Tailwind classes automatically
+
+Example - changing the primary color:
+
+```css
+:root {
+  --primary: #your-color;
+  --primary-foreground: #contrast-color;
+}
+.dark {
+  --primary: #your-dark-variant;
+  --primary-foreground: #contrast-color;
+}
 ```
 
-### Theme mode behavior
+### CTA Gradient
 
-- Theme state is stored in `src/lib/store/user-store.ts` (`theme`).
-- `src/components/providers/theme-provider.tsx` bridges store state with `next-themes`.
-- `src/components/layout/header.tsx` and `src/app/settings/page.tsx` expose theme toggles.
+The main call-to-action buttons use a custom gradient utility:
 
-## 2) Adding or Editing Courses
+```css
+.bg-gradient-cta {
+  background: linear-gradient(135deg, var(--cta-from), var(--cta-to));
+  color: var(--cta-foreground);
+}
+```
 
-Course data source is currently local and derived:
+Update `--cta-from` and `--cta-to` to change the CTA gradient across the entire app.
 
-- Source catalog: `REFERENCE_COURSE_CATALOG.ts`
-- App-facing mapped data: `src/lib/data/mock-courses.ts`
+### Custom Utilities
 
-### Data model
+| Class | Effect |
+|-------|--------|
+| `.bg-gradient-cta` | CTA button gradient |
+| `.bg-gradient-hero` | Hero section background |
+| `.bg-noise` | Subtle noise texture overlay |
+| `.glow-green` | Green box-shadow glow |
+| `.glow-yellow` | Yellow box-shadow glow |
 
-Course model is defined in `src/types/index.ts`:
+### Fonts
 
-- `Course` -> `Module[]` -> `Lesson[]`
-- Difficulty: `beginner | intermediate | advanced`
-- Lesson kinds: `content | challenge`
+- Primary: **Archivo** (loaded from `public/New Logo/fonts/Archivo/`)
+- Monospace: **JetBrains Mono** (from Google Fonts)
 
-### How course mapping works
+To change the primary font, update the `@font-face` declarations and `--font-sans` in `globals.css`.
 
-`src/lib/data/mock-courses.ts`:
+### Theme Mode
 
-- Imports `courses` from `REFERENCE_COURSE_CATALOG.ts`.
-- Maps/normalizes duration, objective text, module IDs, lesson IDs, challenge metadata.
-- Builds `mockCourses` used by catalog/detail/lesson routes.
+- Theme state stored in Zustand (`user-store.ts`, `theme` field)
+- `ThemeProvider` (next-themes) bridges store state with system preference
+- Toggle available in Header and Settings page
+- Supports: `dark`, `light`, `system`
 
-### Add a new course
+## 2. Adding Languages
 
-1. Add or update a course in `REFERENCE_COURSE_CATALOG.ts`.
-2. Ensure each module/lesson has title, duration, and content.
-3. Restart dev server if needed.
-4. Validate in:
-   - `/courses`
-   - `/courses/[slug]`
-   - `/courses/[slug]/lessons/[id]`
+### Current Locales
 
-### If using direct local objects instead of reference mapping
+- English (`en`) - `src/messages/en.json`
+- Portuguese Brazil (`pt-BR`) - `src/messages/pt-BR.json`
+- Spanish (`es`) - `src/messages/es.json`
 
-You can append to `mockCourses` shape directly (same interface as `Course`), but the current pattern prefers reference-catalog mapping for consistency.
+### Add a New Locale
 
-## 3) Modifying Layouts and Navigation
+1. **Create dictionary file:**
 
-### App shell
+```bash
+cp src/messages/en.json src/messages/fr.json
+# Translate all values in fr.json
+```
 
-- Root shell: `src/app/layout.tsx`
-- Header: `src/components/layout/header.tsx`
-- Sidebar: `src/components/layout/sidebar.tsx`
-- Footer: `src/components/layout/footer.tsx`
+2. **Register in IntlProvider** (`src/components/providers/intl-provider.tsx`):
 
-### Route-level layouts
+```typescript
+const dictionaries: Record<Locale, any> = {
+  en: enMessages,
+  "pt-BR": ptBrMessages,
+  es: esMessages,
+  fr: frMessages, // add
+};
+```
 
-Current route pages render directly in `src/app/*/page.tsx` without nested segment layout files. To add per-section wrappers, create route-level `layout.tsx` files in subfolders.
+3. **Extend Locale type** (`src/types/index.ts`):
 
-### Navigation links
+```typescript
+export type Locale = "en" | "pt-BR" | "es" | "fr";
+```
 
-- Header nav items: `src/components/layout/header.tsx` (`navItems`).
-- Sidebar links: `src/components/layout/sidebar.tsx` (`nav`).
-- Footer link columns: `src/components/layout/footer.tsx` (`columns`).
+4. **Add selector option** in Header (`src/components/layout/header.tsx`) and Settings (`src/app/settings/page.tsx`).
 
-## 4) i18n Translation Customization
+### Translation Namespaces
 
-Translations live in:
-
-- `src/messages/en.json`
-- `src/messages/es.json`
-- `src/messages/pt-BR.json`
-
-### Add/modify text
-
-1. Update key values in all locale files.
-2. Keep namespace/key parity across files (`Common`, `Courses`, `Dashboard`, etc.).
-3. Use existing key access pattern in components:
+Dictionaries use namespaced keys: `Common`, `Courses`, `Dashboard`, `Auth`, `Leaderboard`, `Settings`, `Profile`.
 
 ```tsx
 const t = useTranslations("Courses");
+return <h1>{t("title")}</h1>;
 ```
 
-### Add a new locale
+Keep key parity across all locale files.
 
-1. Extend `Locale` union in `src/types/index.ts`.
-2. Add new dictionary file in `src/messages`.
-3. Register it in `src/components/providers/intl-provider.tsx` (`dictionaries`).
-4. Add selector option in header/settings components.
+## 3. Extending Gamification
 
-## 5) UX Copy and Microcontent
+### XP System
 
-High-impact copy surfaces:
+- XP is tracked on-chain as Token-2022 soulbound tokens
+- `useXp` hook combines on-chain balance with local streak data
+- Level calculation via `levelFromXp()` in user store
+- XP per lesson defined in the on-chain program (default: 100)
 
-- Landing: `src/app/page.tsx`
-- Course catalog: `src/app/courses/page.tsx`
-- Dashboard: `src/app/dashboard/page.tsx`
-- Auth screens: `src/app/(auth)/sign-in/page.tsx`, `src/app/(auth)/sign-up/page.tsx`
+### Streaks
 
-Prefer moving hardcoded strings into i18n files when localizing new sections.
+- Tracked locally in Zustand (`streakDays: string[]`, last 90 days)
+- `recordActivity()` action called on lesson completion
+- `computeStreak()` in `use-xp.ts` builds 28-day grid + current/longest streaks
+- To change streak window, modify the constants in `use-xp.ts`
+
+### Achievements
+
+- Defined in `src/lib/services/achievement-service.ts`
+- Interface: `listAchievements(userId)`, `claimAchievement(userId, id)`
+- Current implementation returns mock achievements
+- To add new achievements, extend the achievement data and add unlock conditions
+
+### Leaderboard
+
+- Real on-chain data via `fetchXpLeaderboard()` (fetches all Token-2022 accounts for XP mint)
+- Enriched with `rank` and `level` in `/api/leaderboard` route
+- Timeframe filter (All Time / Monthly / Weekly) on the frontend
+- Top 3 displayed as podium cards with gold/silver/bronze styling
+
+### Adding New Gamification Elements
+
+1. Define the data model in `src/types/index.ts`
+2. Add interface method to the relevant service
+3. Implement in the local service class
+4. Create a React hook in `src/hooks/`
+5. Build UI component in `src/components/gamification/`
+6. Wire into the relevant page
+
+## 4. Layout Customization
+
+### App Shell
+
+| Component | File | Purpose |
+|-----------|------|---------|
+| Root Layout | `src/app/layout.tsx` | Provider composition, global styles, GA4/Sentry |
+| Header | `src/components/layout/header.tsx` | Navigation, wallet, theme, language |
+| Sidebar | `src/components/layout/sidebar.tsx` | Page navigation, user card, XP display |
+| Footer | `src/components/layout/footer.tsx` | Links, social, branding |
+
+### Navigation Links
+
+- **Header nav**: `navItems` array in `header.tsx`
+- **Sidebar links**: `nav` array in `sidebar.tsx`
+- **Footer columns**: `columns` array in `footer.tsx`
+
+### Adding a New Page
+
+1. Create `src/app/your-page/page.tsx`
+2. Add navigation link in Header and/or Sidebar
+3. Add translations to all locale files if using i18n
+4. The root layout shell (Header, Sidebar, Footer) wraps all pages automatically
+
+## 5. Component Library
+
+UI primitives from shadcn/ui (`src/components/ui/`):
+
+Badge, Button, Card, Dialog, Input, Progress, Select, Sheet, Tabs, Tooltip, Sonner (toast).
+
+All components use the design token system. No hardcoded colors - everything flows through CSS custom properties.
+
+To add new shadcn components:
+
+```bash
+npx shadcn@latest add [component-name]
+```

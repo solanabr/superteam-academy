@@ -52,11 +52,11 @@ export function LessonContent({ lesson, onComplete, completed }: LessonContentPr
         </Badge>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-border bg-st-dark/65">
+      <div className="overflow-hidden rounded-xl border border-border bg-surface">
         <div className="flex min-h-[60vh] flex-col lg:flex-row">
           <div className="p-5" style={{ width: `${split}%` }}>
             <h2 className="mb-2 text-sm font-semibold text-foreground/90">{t("lessonObjective")}</h2>
-            <Separator className="mb-4 bg-white/10" />
+            <Separator className="mb-4 bg-border" />
             <div className="prose prose-invert max-w-none text-sm leading-relaxed text-muted-foreground">
               {lesson.markdown.split("\n").map((line, index) => (
                 <p key={index}>{line.replace(/^###\s*/, "")}</p>
@@ -82,7 +82,7 @@ export function LessonContent({ lesson, onComplete, completed }: LessonContentPr
       <Button
         onClick={() => void onComplete()}
         disabled={completed}
-        className="bg-gradient-to-r from-[#2f6b3f] to-[#ffd23f] text-st-dark"
+        className="bg-gradient-cta text-cta-foreground"
       >
         {completed ? "Completed" : t("markComplete")}
       </Button>

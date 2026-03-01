@@ -3,6 +3,8 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { useUserStore } from "@/lib/store/user-store";
+import { useXp } from "@/hooks/use-xp";
+import { useWallet } from "@solana/wallet-adapter-react";
 import { BarChart3, BookOpen, Home, Settings, Trophy, UserCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
@@ -21,10 +23,13 @@ export function Sidebar() {
   const pathname = usePathname();
   const t = useTranslations("Common");
   const profile = useUserStore((state) => state.profile);
+  const walletAddress = useUserStore((state) => state.walletAddress);
+  const { connected } = useWallet();
+  const xp = useXp(walletAddress);
 
   return (
-    <aside className="hidden w-64 flex-col border-r border-border bg-st-dark/60 p-4 lg:flex">
-      <nav className="flex flex-col gap-2">
+    <aside className="hidden w-56 shrink-0 flex-col border-r border-sidebar-border bg-sidebar lg:flex xl:w-60">
+      <nav className="flex flex-col gap-0.5 p-3">
         {nav.map((item) => {
           const active = item.href === "/" ? pathname === "/" : pathname === item.href || pathname.startsWith(`${item.href}/`);
           const Icon = item.icon;
@@ -34,35 +39,44 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 rounded-lg border px-3 py-2 text-sm transition",
+                "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-all duration-200",
                 active
-                  ? "border-[#ffd23f]/30 bg-gradient-to-r from-[#2f6b3f]/25 to-[#ffd23f]/10 text-foreground"
-                  : "border-transparent text-muted-foreground hover:border-border hover:bg-card hover:text-foreground/90",
+                  ? "bg-sidebar-active/10 text-sidebar-active"
+                  : "text-sidebar-foreground hover:bg-secondary/60 hover:text-foreground",
               )}
             >
-              <Icon className="size-4" />
+              {active && (
+                <span className="absolute left-0 top-1/2 h-5 w-0.75 -translate-y-1/2 rounded-r-full bg-sidebar-active" />
+              )}
+              <Icon className={cn("size-4.5 transition-colors", active ? "text-sidebar-active" : "text-sidebar-foreground group-hover:text-foreground")} />
               <span>{label}</span>
             </Link>
           );
         })}
       </nav>
 
-      <div className="mt-auto space-y-3 rounded-xl border border-border bg-card p-3">
-        <div className="flex items-center gap-3">
-          <Avatar className="size-9 border border-border">
-            <AvatarImage src={profile.avatar} alt={profile.displayName} />
-            <AvatarFallback>{profile.displayName.slice(0, 2).toUpperCase()}</AvatarFallback>
-          </Avatar>
-          <div>
-            <p className="text-sm font-medium text-foreground">{profile.displayName}</p>
-            <p className="text-xs text-muted-foreground">@{profile.username}</p>
+      {connected && (
+        <div className="mt-auto border-t border-sidebar-border p-3">
+          <div className="rounded-xl bg-secondary/40 p-3">
+            <div className="flex items-center gap-2.5">
+              <Avatar className="size-8 ring-2 ring-sidebar-active/20">
+                <AvatarImage src={profile.avatar} alt={profile.displayName} />
+                <AvatarFallback className="bg-sidebar-active/10 text-xs font-semibold text-sidebar-active">
+                  {profile.displayName.slice(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-foreground">{profile.displayName}</p>
+                <p className="truncate text-[11px] text-muted-foreground">@{profile.username}</p>
+              </div>
+            </div>
+            <div className="mt-2.5 flex items-center justify-between rounded-lg bg-background/60 px-2.5 py-1.5">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">XP</span>
+              <span className="text-sm font-bold tabular-nums text-highlight">{xp.totalXp.toLocaleString()}</span>
+            </div>
           </div>
         </div>
-        <div className="rounded-md border border-border bg-st-dark/70 px-3 py-2">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground/70">XP</p>
-          <p className="text-sm font-semibold text-[#ffd23f]">{profile.xp.toLocaleString()}</p>
-        </div>
-      </div>
+      )}
     </aside>
   );
 }

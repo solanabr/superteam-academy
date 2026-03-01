@@ -1,41 +1,50 @@
 "use client";
 
-import { courseService } from "@/lib/services/course-service";
+import { enrollOnChain } from "@/lib/solana/enroll-course";
 import { useUserStore } from "@/lib/store/user-store";
-import type { WalletContextState } from "@solana/wallet-adapter-react";
+import { useAnchorWallet, useWallet } from "@solana/wallet-adapter-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { toast } from "sonner";
 
-export const useEnrollment = (wallet: WalletContextState) => {
-  const { enrollments, enroll } = useUserStore((state) => ({
-    enrollments: state.enrollments,
-    enroll: state.enroll,
-  }));
+export const useEnrollment = () => {
+  const wallet = useWallet();
+  const anchorWallet = useAnchorWallet();
+  const queryClient = useQueryClient();
+  const enrollments = useUserStore((state) => state.enrollments);
+  const enroll = useUserStore((state) => state.enroll);
+  const recordActivity = useUserStore((state) => state.recordActivity);
   const [pending, setPending] = useState(false);
   const [pendingCourseId, setPendingCourseId] = useState<string | null>(null);
   const [lastSignature, setLastSignature] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   const enrollInCourse = async (courseId: string): Promise<void> => {
-    if (!wallet.publicKey || !wallet.sendTransaction) {
-      setError("Wallet not connected");
+    if (!wallet.publicKey) {
+      toast.error("Wallet not connected");
       return;
     }
 
     setPending(true);
     setPendingCourseId(courseId);
-    setError(null);
     try {
-      const signature = await courseService.enrollInCourse(
-        {
-          publicKey: wallet.publicKey,
-          sendTransaction: wallet.sendTransaction,
-        },
-        courseId,
-      );
+      if (anchorWallet) {
+        try {
+          const signature = await enrollOnChain(anchorWallet, courseId);
+          setLastSignature(signature);
+          queryClient.invalidateQueries({ queryKey: ["onchain-enrollment"] });
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : "";
+          const isNotInitialized = msg.includes("AccountNotInitialized") || msg.includes("not found");
+          if (!isNotInitialized) {
+            console.warn("On-chain enrollment failed:", msg);
+          }
+        }
+      }
       enroll(courseId);
-      setLastSignature(signature);
+      recordActivity();
+      toast.success("Successfully enrolled!");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Enrollment failed");
+      toast.error(err instanceof Error ? err.message : "Enrollment failed");
     } finally {
       setPending(false);
       setPendingCourseId(null);
@@ -47,7 +56,6 @@ export const useEnrollment = (wallet: WalletContextState) => {
     pending,
     pendingCourseId,
     lastSignature,
-    error,
     isEnrolled: (courseId: string) => enrollments.includes(courseId),
     enrollInCourse,
   };

@@ -1,159 +1,204 @@
-# Architecture Overview
+﻿# Architecture Overview
 
-This document describes how the Superteam Academy frontend is organized today and where to extend it for on-chain or CMS-backed data.
+System architecture, component structure, data flow, and service interfaces for the Superteam Academy frontend.
 
-## 1) App Router Structure
+## 1. App Router Structure
 
-The app uses Next.js App Router in `src/app` with route groups and dynamic segments:
+```
+src/app/
++-- layout.tsx                    # Root shell (Header, Sidebar, Footer, providers)
++-- page.tsx                      # Landing page
++-- (auth)/sign-in/page.tsx       # SIWS + Google sign-in
++-- (auth)/sign-up/page.tsx       # SIWS + Google sign-up
++-- courses/page.tsx              # Course catalog with search + difficulty filter
++-- courses/[slug]/page.tsx       # Course detail + enrollment
++-- courses/[slug]/lessons/[id]/  # Lesson viewer + code editor + challenges
++-- dashboard/page.tsx            # Learner metrics, enrolled courses, activity
++-- leaderboard/page.tsx          # On-chain XP ranking + timeframe filter
++-- profile/[username]/page.tsx   # Public profile + credentials display
++-- certificates/[id]/page.tsx    # Credential detail + Solana Explorer links
++-- settings/page.tsx             # Language, theme, wallet management
++-- loading.tsx                   # Global loading state
++-- error.tsx                     # Error boundary (reports to Sentry)
++-- not-found.tsx                 # 404 page
+```
 
-- `src/app/layout.tsx`: global shell (Header, Sidebar, Footer, provider composition).
-- `src/app/page.tsx`: landing page.
-- `src/app/courses/page.tsx`: course catalog.
-- `src/app/courses/[slug]/page.tsx`: course details.
-- `src/app/courses/[slug]/lessons/[id]/page.tsx`: lesson experience + challenge completion.
-- `src/app/dashboard/page.tsx`: learner metrics and activity.
-- `src/app/leaderboard/page.tsx`: ranking and timeframe switching.
-- `src/app/profile/[username]/page.tsx`: profile and credentials.
-- `src/app/certificates/[id]/page.tsx`: credential details + verification links.
-- `src/app/settings/page.tsx`: language/theme/preferences/wallet view.
-- `src/app/(auth)/sign-in/page.tsx`, `src/app/(auth)/sign-up/page.tsx`: auth UI shells.
-- `src/app/loading.tsx`, `src/app/error.tsx`, `src/app/not-found.tsx`: app-level UX states.
+## 2. Provider Composition
 
-## 2) Server vs Client Components
+Defined in `src/components/providers/app-providers.tsx` (outer to inner):
 
-### Server components (current)
+1. **ThemeProvider** (next-themes) - Dark/light/system mode
+2. **IntlProvider** (next-intl) - Locale-aware translations
+3. **QueryProvider** (TanStack React Query) - Server state caching (30s stale, 1 retry)
+4. **AcademyWalletProvider** (Solana Wallet Adapter) - Phantom + Solflare
 
-- `src/app/layout.tsx` (root layout shell).
-- `src/app/profile/[username]/page.tsx` (client component — reads from Zustand store for current user, mock data for others).
-- `src/app/certificates/[id]/page.tsx` (async server route).
-- `src/app/loading.tsx`, `src/app/not-found.tsx`.
+Also in root layout:
+- **Sonner Toaster** - Toast notifications (bottom-right, rich colors)
+- **GA4 Script** - Conditional on `NEXT_PUBLIC_GA_MEASUREMENT_ID`
+- **Sentry** - Wraps `next.config.ts` via `withSentryConfig`
 
-### Client components (current)
+## 3. Authentication
 
-Most interactive routes are marked with `"use client"`, including:
+### Sign-In With Solana (SIWS)
 
-- `src/app/page.tsx`, `src/app/courses/page.tsx`, `src/app/dashboard/page.tsx`, `src/app/leaderboard/page.tsx`, `src/app/settings/page.tsx`, `src/app/courses/[slug]/page.tsx`, `src/app/courses/[slug]/lessons/[id]/page.tsx`.
-- Provider stack in `src/components/providers/*`.
-- Hooks and Zustand store.
+```
+Client                          Server
+  |-- GET /api/auth/nonce -------->|  Generate 32-byte nonce
+  |<-------- { nonce } ------------|
+  |                                |
+  |-- wallet.signMessage(msg) ---->|  Sign nonce with wallet
+  |                                |
+  |-- POST /api/auth/callback ---->|  NextAuth CredentialsProvider("solana")
+  |   { walletAddress, signature,  |  -> verifySiws() validates signature
+  |     nonce, message }           |  -> Prisma upsert User
+  |<-------- JWT session ----------|  -> Return JWT (7-day maxAge)
+```
 
-Reasoning: wallet adapter hooks, persisted local state, animations, and client-side filtering/progression currently run in-browser.
+### Google OAuth
 
-## 3) Provider Composition
+Conditionally enabled when `GOOGLE_CLIENT_ID` + `GOOGLE_CLIENT_SECRET` are set. Standard NextAuth GoogleProvider flow.
 
-Provider entrypoint is `src/components/providers/app-providers.tsx`:
+### Session Strategy
 
-1. `ThemeProvider` (`next-themes`) from `src/components/providers/theme-provider.tsx`.
-2. `IntlProvider` (`next-intl`) from `src/components/providers/intl-provider.tsx`.
-3. `AcademyWalletProvider` (Solana wallet adapter) from `src/components/providers/wallet-provider.tsx`.
+JWT-based. Session includes `walletAddress` via custom callbacks in `src/lib/auth/auth-options.ts`.
 
-This order ensures theme/i18n/wallet context is available app-wide.
+## 4. API Routes
 
-## 4) Service Interface Pattern
+| Route | Method | Auth | Validation | Description |
+|-------|--------|------|------------|-------------|
+| `/api/auth/[...nextauth]` | `*` | Public | NextAuth | Auth handlers |
+| `/api/auth/nonce` | GET | Public | - | SIWS nonce generation |
+| `/api/user` | GET | Public | Query param | Fetch user by wallet |
+| `/api/user` | PATCH | Public | Body fields | Upsert profile |
+| `/api/lessons/complete` | POST | `requireSession()` | `completeLessonSchema` | Backend-signed lesson completion |
+| `/api/courses/finalize` | POST | `requireSession()` | `finalizeCourseSchema` | Backend-signed course finalization + XP |
+| `/api/courses/issue-credential` | POST | `requireSession()` | `issueCredentialSchema` | Backend-signed credential mint |
+| `/api/leaderboard` | GET | Public | - | On-chain XP leaderboard (top 50) |
 
-The app uses explicit service interfaces plus local implementations, enabling backend swaps with minimal UI change.
+Protected routes use `requireSession()` from `src/lib/auth/require-session.ts` and Zod schemas from `src/lib/api-schemas.ts`.
 
-### Key contracts
+## 5. On-Chain Integration
 
-- `src/lib/services/course-service.ts`
-  - Interface: `CourseService`
-  - Current class: `LocalCourseService`
-  - Responsibilities: catalog listing/search, slug lookup, enrollment transaction.
+### Program Client (`src/lib/solana/program-client.ts`)
 
-- `src/lib/services/learning-progress.ts`
-  - Interface: `LearningProgressService`
-  - Current class: `LocalLearningProgressService`
-  - Responsibilities: lesson completion, progress, XP, streaks, leaderboard projection, credentials list.
+- `connection` - Helius RPC with confirmed commitment
+- `getReadonlyProvider()` - Read-only AnchorProvider (no signing)
+- `getProgram()` - Anchor Program instance for reads
+- `getSignerProgram(wallet)` - Anchor Program with wallet signer
 
-- `src/lib/services/achievement-service.ts`
-  - Interface: `AchievementService`
-  - Current class: `LocalAchievementService`
+### On-Chain Service (`src/lib/solana/on-chain-service.ts`)
 
-- `src/lib/services/leaderboard-service.ts`
-  - Interface: `LeaderboardService`
-  - Current class: `LocalLeaderboardService`
+| Function | Returns | Description |
+|----------|---------|-------------|
+| `fetchAllCourses()` | `OnChainCourse[]` | All course accounts from program |
+| `fetchCourse(courseId)` | `OnChainCourse` | Single course by PDA |
+| `fetchEnrollment(courseId, learner)` | `OnChainEnrollment` | Enrollment + completed lesson count (bit-counted) |
+| `fetchXpBalance(wallet)` | `number` | Token-2022 ATA balance |
+| `fetchXpLeaderboard()` | `LeaderboardEntry[]` | All XP holders sorted desc |
 
-- `src/lib/services/credential-service.ts`
-  - Interface: `CredentialService`
-  - Current class: `LocalCredentialService`
+### Backend Signer (`src/lib/solana/backend-signer.ts`)
 
-### Why this matters
+Loads keypair from `BACKEND_SIGNER_KEY` env var (supports base58 and JSON byte-array). Used by API routes for server-side transaction signing.
 
-UI and hooks depend on interfaces/exports (`courseService`, `learningProgressService`, etc.), not raw data files. Replacing local implementations with on-chain/CMS/API versions can happen behind these contracts.
+### Transaction Flows
 
-## 5) Solana Integration
+**Client-signed (enrollment):**
+```
+useEnrollment hook -> enrollOnChain(anchorWallet, courseId) -> wallet signs -> broadcast
+```
 
-Solana constants live in `src/lib/solana/constants.ts`:
+**Backend-signed (lesson completion, finalization, credential):**
+```
+Client POST /api/... -> requireSession() -> Zod validate -> getBackendKeypair()
+  -> build instruction -> sign with backend keypair -> broadcast -> return txSig
+```
 
-- Network: `devnet`
-- Program ID: `ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf`
-- XP mint: `xpXPUjkfk7t4AJF1tYUoyAYxzuM5DhinZWS1WjfjAu3`
-- Authority: `ACAd3USj2sMV6drKcMY2wZtNkhVDHWpC4tfJe93hgqYn`
-- XP per lesson: `100`
+## 6. React Query Hooks (`src/hooks/use-on-chain.ts`)
 
-Connection setup:
+| Hook | Query Key | Stale Time |
+|------|-----------|------------|
+| `useOnChainCourses()` | `["onchain-courses"]` | 60s |
+| `useOnChainCourse(courseId)` | `["onchain-course", id]` | 60s |
+| `useOnChainEnrollment(courseId, wallet)` | `["onchain-enrollment", id, wallet]` | 15s |
+| `useOnChainXp(wallet)` | `["onchain-xp", wallet]` | 15s |
 
-- `src/lib/solana/program.ts` exports shared `connection` with `confirmed` commitment.
+## 7. State Management
 
-PDA helpers:
+### Zustand Store (`src/lib/store/user-store.ts`)
 
-- `src/lib/solana/pda.ts` includes `deriveEnrollmentPda` and `deriveProgressPda`.
+Persisted to localStorage (key: `academy-user-state-v1`).
 
-Wallet integration:
+| Field | Type | Description |
+|-------|------|-------------|
+| `profile` | `UserProfile` | Display name, avatar, XP, level, interests |
+| `locale` | `Locale` | en / pt-BR / es |
+| `theme` | `string` | dark / light / system |
+| `walletAddress` | `string?` | Connected wallet |
+| `enrollments` | `string[]` | Enrolled course IDs |
+| `completedLessons` | `Record<string, string[]>` | courseId -> lessonId[] |
+| `streakDays` | `string[]` | ISO date strings (last 90) |
 
-- `src/components/providers/wallet-provider.tsx` configures `ConnectionProvider`, `WalletProvider`, and `WalletModalProvider`.
-- Wallet adapters: Phantom + Solflare.
+Actions: `setLocale`, `setTheme`, `setWalletAddress`, `updateProfile`, `enroll`, `completeLesson`, `addXp`, `recordActivity`.
 
-Current enrollment behavior:
+Wallet switch/disconnect automatically clears enrollments and completedLessons.
 
-- `courseService.enrollInCourse` builds a minimal transfer transaction (0 lamports) to authority as a placeholder transport path.
+## 8. Database (Prisma)
 
-## 6) State Management (Zustand)
+PostgreSQL via `@prisma/adapter-pg`. Schema at `prisma/schema.prisma`.
 
-The user store is `src/lib/store/user-store.ts`.
+| Model | Key Fields | Purpose |
+|-------|-----------|---------|
+| `User` | id, walletAddress (unique), displayName, username (unique), bio, avatar | User profiles |
+| `Activity` | id, userId (FK), kind, courseId, lessonIdx, txSig, xpEarned | Activity log |
 
-Stored domains:
+Indexed: `[userId, createdAt]`, `[kind]`.
 
-- `profile`
-- `locale`
-- `theme`
-- `walletAddress`
-- `enrollments`
-- `completedLessons`
+## 9. Service Interface Pattern
 
-Actions:
+Service interfaces in `src/lib/services/` define stable contracts. Current implementations use local/mock data. Backend swap happens by replacing implementation classes behind the same exports.
 
-- `setLocale`, `setTheme`, `setWalletAddress`
-- `enroll`, `completeLesson`, `addXp`
+| Interface | File | Current Impl |
+|-----------|------|--------------|
+| `CourseService` | `course-service.ts` | `LocalCourseService` |
+| `LearningProgressService` | `learning-progress.ts` | `LocalLearningProgressService` |
+| `AchievementService` | `achievement-service.ts` | `LocalAchievementService` |
+| `LeaderboardService` | `leaderboard-service.ts` | `LocalLeaderboardService` |
+| `CredentialService` | `credential-service.ts` | `LocalCredentialService` |
 
-Persistence:
+See [CMS_GUIDE.md](CMS_GUIDE.md) for migration strategy.
 
-- Zustand `persist` middleware with key `academy-user-state-v1`.
-- Partialized persisted shape to keep local UX state stable across reloads.
+## 10. Data Flow
 
-## 7) i18n Setup
+```
+REFERENCE_COURSE_CATALOG.ts
+        |
+        v
+src/lib/data/mock-courses.ts  (maps to Course model)
+        |
+        v
+src/lib/services/*Service     (interface boundary)
+        |
+        v
+src/hooks/use-*.ts            (React hooks, React Query)
+        |
+        v
+src/app/*/page.tsx            (route components)
+```
 
-Dictionaries:
+On-chain reads flow separately:
 
-- `src/messages/en.json`
-- `src/messages/es.json`
-- `src/messages/pt-BR.json`
-
-Runtime locale source:
-
-- Zustand store (`locale` in `user-store.ts`).
-
-Provider wiring:
-
-- `src/components/providers/intl-provider.tsx` maps store locale -> dictionary and wraps app in `NextIntlClientProvider`.
-
-Usage:
-
-- Components consume `useTranslations(namespace)`.
-- Header/settings route allows locale switching, updating store state immediately.
-
-## 8) Data Flow Snapshot
-
-- Catalog data is generated in `src/lib/data/mock-courses.ts` from `REFERENCE_COURSE_CATALOG.ts` and transformed to app-level `Course` model.
-- Hooks (`src/hooks`) call service layer and expose loading/interaction state.
-- UI routes and components render from hooks/store + service responses.
-- Lesson completion updates both local progress service storage and Zustand state, then recalculates XP/level surfaces.
+```
+Solana Program (Anchor)
+        |
+        v
+on-chain-service.ts           (fetchAllCourses, fetchXpBalance, etc.)
+        |
+        v
+use-on-chain.ts               (React Query wrappers)
+        |
+        v
+use-enrollment.ts / use-xp.ts (composite hooks)
+        |
+        v
+UI components
+```

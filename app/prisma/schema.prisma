@@ -1,0 +1,39 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String   @id @default(cuid())
+  walletAddress String   @unique @map("wallet_address")
+  displayName   String?  @map("display_name")
+  username      String?  @unique
+  bio           String?
+  avatar        String?
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  activities Activity[]
+
+  @@map("users")
+}
+
+model Activity {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  kind      String
+  courseId   String?  @map("course_id")
+  lessonIdx Int?     @map("lesson_idx")
+  txSig     String?  @map("tx_sig")
+  xpEarned  Int      @default(0) @map("xp_earned")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([kind])
+  @@map("activities")
+}

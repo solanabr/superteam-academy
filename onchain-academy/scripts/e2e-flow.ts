@@ -29,7 +29,7 @@ const program = anchor.workspace.onchainAcademy as Program<OnchainAcademy>;
 
 const courseId = process.argv[2] || "solana-mock-test";
 const trackCollection = new PublicKey(
-  process.argv[3] || "HgbTmCi4wUWAWLx4LD6zJ2AQdayaCe7mVfhJpGwXfeVX"
+  process.argv[3] || "5uoE19soMKtT6M2QvPKEp9pYgZUPmAScfpLiaKjue3jg"
 );
 const MPL_CORE_PROGRAM_ID = new PublicKey("CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d");
 

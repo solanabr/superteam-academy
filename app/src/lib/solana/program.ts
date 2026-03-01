@@ -1,6 +1,2 @@
-import { Connection } from "@solana/web3.js";
-import { ACADEMY_PROGRAM_ID, SOLANA_RPC_URL } from "./constants";
-
-export const connection = new Connection(SOLANA_RPC_URL, "confirmed");
-
-export { ACADEMY_PROGRAM_ID, SOLANA_RPC_URL };
+export { connection, getProgram, getSignerProgram, getReadonlyProvider } from "./program-client";
+export { ACADEMY_PROGRAM_ID, SOLANA_RPC_URL } from "./constants";

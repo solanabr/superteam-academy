@@ -1,163 +1,226 @@
-# CMS Integration Guide
+﻿# CMS Integration Guide
 
-This guide explains the current local/mock data architecture and how to replace it with Sanity or any headless CMS while preserving existing UI contracts.
+How to create and edit courses, the content schema, and the publishing workflow. Also covers migrating from local data to a headless CMS.
 
-## 1) Current Data Pattern
+## 1. Current Content Architecture
 
-The frontend currently uses local data + service interfaces:
+Course content is managed through a local data pipeline:
 
-- `src/lib/data/mock-courses.ts`
-  - Generates `mockCourses`, `mockLeaderboard`, `mockProfiles`, `mockAchievements`, `mockCredentials`.
-  - Uses `REFERENCE_COURSE_CATALOG.ts` as source and maps into app types.
+```
+REFERENCE_COURSE_CATALOG.ts   (source of truth - rich course definitions)
+        |
+        v
+src/lib/data/mock-courses.ts  (normalizes into app Course model)
+        |
+        v
+src/lib/services/*Service     (interface boundary - hooks consume these)
+```
 
-- `src/lib/services/*`
-  - Service interfaces define stable contracts.
-  - `Local*Service` classes return local/mock values.
+This separation makes CMS migration low-risk: replace the data source behind service interfaces without touching UI code.
 
-This separation is the key reason backend migration is low-risk.
+## 2. Content Schema
 
-## 2) Service Interface Contracts
+### Course
 
-Use these contracts as your CMS adapter boundary.
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Unique identifier |
+| `slug` | string | URL-friendly identifier |
+| `title` | string | Display title |
+| `subtitle` | string | Short tagline |
+| `description` | string | Full description |
+| `difficulty` | `beginner` / `intermediate` / `advanced` | Difficulty level |
+| `duration` | string | Estimated time (e.g. "6 hours") |
+| `tags` | string[] | Searchable tags |
+| `modules` | Module[] | Ordered list of modules |
+| `category` | string | Course category |
+| `gradient` | string | Tailwind gradient classes for card styling |
 
-### `CourseService` (`src/lib/services/course-service.ts`)
+### Module
 
-- `getAllCourses(): Promise<Course[]>`
-- `getCourseBySlug(slug: string): Promise<Course | null>`
-- `searchCourses(query: string, difficulty?: Course["difficulty"]): Promise<Course[]>`
-- `enrollInCourse(signer, courseId): Promise<string>`
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Unique within course |
+| `title` | string | Module title |
+| `lessons` | Lesson[] | Ordered list of lessons |
 
-### `LearningProgressService` (`src/lib/services/learning-progress.ts`)
+### Lesson
 
-- `getProgress(userId, courseId): Promise<CourseProgress>`
-- `completeLesson(userId, courseId, lessonId): Promise<void>`
-- `getXpBalance(walletAddress): Promise<number>`
-- `getStreakData(userId): Promise<StreakData>`
-- `getLeaderboard(timeframe, limit?): Promise<LeaderboardEntry[]>`
-- `getCredentials(walletAddress): Promise<Credential[]>`
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Unique within module |
+| `title` | string | Lesson title |
+| `kind` | `content` / `challenge` | Content-only or code challenge |
+| `duration` | string | Estimated time |
+| `markdown` | string | Lesson body (Markdown) |
+| `challenge` | ChallengeConfig? | For `kind: challenge` only |
 
-### `AchievementService` (`src/lib/services/achievement-service.ts`)
+### ChallengeConfig
 
-- `listAchievements(userId): Promise<Achievement[]>`
-- `claimAchievement(userId, achievementId): Promise<Achievement | null>`
+| Field | Type | Description |
+|-------|------|-------------|
+| `starterCode` | string | Initial code in editor |
+| `language` | string | `typescript` or `rust` |
+| `tests` | TestCase[] | Validation tests |
+| `solution` | string | Reference solution |
 
-### `LeaderboardService` (`src/lib/services/leaderboard-service.ts`)
+## 3. Creating a New Course
 
-- `getEntries(timeframe): Promise<LeaderboardEntry[]>`
+### Step 1: Define in REFERENCE_COURSE_CATALOG.ts
 
-### `CredentialService` (`src/lib/services/credential-service.ts`)
+Add a new course object to the `courses` array:
 
-- `getCredentialsByWallet(walletAddress): Promise<Credential[]>`
-- `issueCredential(courseId, walletAddress): Promise<Credential>`
+```typescript
+{
+  title: "Your Course Title",
+  slug: "your-course-slug",
+  subtitle: "Short description",
+  description: "Full course description...",
+  difficulty: "beginner",
+  duration: "4 hours",
+  tags: ["solana", "rust"],
+  category: "Development",
+  modules: [
+    {
+      title: "Module 1",
+      lessons: [
+        {
+          title: "Lesson 1",
+          kind: "content",
+          duration: "15 min",
+          markdown: "# Lesson content in Markdown..."
+        },
+        {
+          title: "Challenge 1",
+          kind: "challenge",
+          duration: "20 min",
+          markdown: "# Challenge instructions...",
+          challenge: {
+            starterCode: "// Write your code here",
+            language: "typescript",
+            tests: [
+              { input: "test input", expected: "expected output", description: "Test description" }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
+```
 
-## 3) Swap Strategy (Recommended)
+### Step 2: Validate
 
-1. Keep all interfaces unchanged.
-2. Replace each `Local*Service` class with a CMS-backed class (REST/GraphQL/SDK).
-3. Preserve exported singleton names (`courseService`, `learningProgressService`, etc.) so hooks/routes remain untouched.
-4. Add runtime validation (recommended: `zod`) at service boundary.
-5. Keep fallbacks for null/empty states.
+1. Restart dev server (or wait for HMR)
+2. Check `/courses` - course appears in catalog
+3. Check `/courses/your-course-slug` - detail page renders
+4. Walk through lessons at `/courses/your-course-slug/lessons/0`
 
-## 4) Sanity Example Mapping
+### Step 3: On-Chain Registration
 
-### Suggested Sanity document types
+For on-chain enrollment/completion to work, the course must also be registered on the Solana program via `create_course` instruction. See the on-chain program docs for details.
 
-- `course`
-- `module`
-- `lesson`
-- `credential`
-- `achievement`
-- `profile`
-- `leaderboardSnapshot`
+## 4. Editing Existing Courses
 
-### Suggested field mapping
+1. Find the course in `REFERENCE_COURSE_CATALOG.ts`
+2. Modify title, description, modules, or lessons
+3. The changes propagate through `mock-courses.ts` -> services -> UI automatically
 
-- Sanity `course.slug.current` -> app `Course.slug`
-- Sanity `course.title` -> app `Course.title`
-- Sanity `course.modules[]` -> app `Course.modules`
-- Sanity `lesson.body` -> app `Lesson.markdown`
-- Sanity `lesson.kind` -> app `Lesson.kind`
+## 5. Service Interface Contracts
 
-### Adapter skeleton (conceptual)
+These are the boundaries for CMS migration. Replace the `Local*` classes with CMS-backed implementations.
 
-```ts
+### CourseService (`src/lib/services/course-service.ts`)
+
+```typescript
+interface CourseService {
+  getAllCourses(): Promise<Course[]>
+  getCourseBySlug(slug: string): Promise<Course | null>
+  searchCourses(query: string, difficulty?: string): Promise<Course[]>
+  enrollInCourse(signer: WalletEnrollmentSigner, courseId: string): Promise<string>
+}
+```
+
+### LearningProgressService (`src/lib/services/learning-progress.ts`)
+
+```typescript
+interface LearningProgressService {
+  getProgress(userId: string, courseId: string): Promise<CourseProgress>
+  completeLesson(userId: string, courseId: string, lessonId: string): Promise<void>
+  getXpBalance(walletAddress: string): Promise<number>
+  getStreakData(userId: string): Promise<StreakData>
+  getLeaderboard(timeframe: string, limit?: number): Promise<LeaderboardEntry[]>
+  getCredentials(walletAddress: string): Promise<Credential[]>
+}
+```
+
+### Other Services
+
+- `AchievementService` - `listAchievements(userId)`, `claimAchievement(userId, id)`
+- `LeaderboardService` - `getEntries(timeframe)`
+- `CredentialService` - `getCredentialsByWallet(wallet)`, `issueCredential(courseId, wallet)`
+
+## 6. CMS Migration Strategy
+
+### Recommended Approach
+
+1. Keep all service interfaces unchanged
+2. Create CMS-backed classes (e.g. `SanityCourseService`) implementing the same interface
+3. Swap the exported singleton (e.g. `export const courseService = new SanityCourseService()`)
+4. Hooks and routes remain untouched
+
+### Adapter Example (Sanity)
+
+```typescript
 class SanityCourseService implements CourseService {
   async getAllCourses(): Promise<Course[]> {
-    const docs = await sanityClient.fetch("*");
-    return docs.map(mapSanityCourseToCourse);
+    const docs = await sanityClient.fetch('*[_type == "course"]');
+    return docs.map(mapSanityToCourse);
   }
 
   async getCourseBySlug(slug: string): Promise<Course | null> {
-    const doc = await sanityClient.fetch("*[_type == 'course' && slug.current == $slug][0]", { slug });
-    return doc ? mapSanityCourseToCourse(doc) : null;
+    const doc = await sanityClient.fetch(
+      '*[_type == "course" && slug.current == $slug][0]',
+      { slug }
+    );
+    return doc ? mapSanityToCourse(doc) : null;
   }
 
-  async searchCourses(query: string, difficulty?: Course["difficulty"]): Promise<Course[]> {
-    const docs = await sanityClient.fetch("*");
-    return docs
-      .map(mapSanityCourseToCourse)
-      .filter((course) => {
-        const q = query.toLowerCase();
-        const byQuery = !q || course.title.toLowerCase().includes(q) || course.tags.some((t) => t.toLowerCase().includes(q));
-        const byDifficulty = difficulty ? course.difficulty === difficulty : true;
-        return byQuery && byDifficulty;
-      });
-  }
-
-  async enrollInCourse(signer: WalletEnrollmentSigner, courseId: string): Promise<string> {
-    // keep current Solana tx path or replace with program instruction flow
-    return "tx-signature";
+  async searchCourses(query: string, difficulty?: string): Promise<Course[]> {
+    const all = await this.getAllCourses();
+    return all.filter(c => {
+      const byQuery = !query || c.title.toLowerCase().includes(query.toLowerCase());
+      const byDiff = !difficulty || c.difficulty === difficulty;
+      return byQuery && byDiff;
+    });
   }
 }
 ```
 
-## 5) Generic Headless CMS (Contentful, Strapi, Hygraph, etc.)
+### Suggested CMS Document Types
 
-The same adapter model applies:
+| CMS Type | Maps To |
+|----------|---------|
+| `course` | `Course` |
+| `module` | `Module` |
+| `lesson` | `Lesson` |
+| `credential` | `Credential` |
+| `achievement` | `Achievement` |
 
-- Fetch CMS documents.
-- Map to app domain types from `src/types/index.ts`.
-- Return data through existing service interfaces.
-- Do not leak CMS-specific models into route components.
+### Migration Checklist
 
-## 6) Lessons + Rich Text Handling
+- [ ] Implement CMS-backed service classes
+- [ ] Add Zod runtime validation at service boundary
+- [ ] Configure CMS endpoint/token env vars
+- [ ] Verify all routes render with CMS data
+- [ ] Keep fallbacks for null/empty states
+- [ ] Progressively move read-heavy views to server components
 
-Current lesson rendering expects plain markdown strings (`Lesson.markdown`).
+## 7. Lesson Rendering
 
-If CMS stores rich text blocks:
+Current rendering expects Markdown strings (`Lesson.markdown`). The renderer is in:
 
-1. Convert rich text to markdown in service adapter, or
-2. Replace renderer in lesson route/components with rich text renderer.
+- `src/app/courses/[slug]/lessons/[id]/page.tsx` - Lesson route
+- `src/components/course/lesson-content.tsx` - Markdown renderer
 
-Current affected files:
-
-- `src/app/courses/[slug]/lessons/[id]/page.tsx`
-- `src/components/course/lesson-content.tsx`
-
-## 7) Caching and Revalidation Considerations
-
-Because much of the app is currently client-driven:
-
-- You can start with client fetches in services.
-- For SEO/performance, progressively move read-heavy views to server components and fetch on server with revalidation.
-
-Potential first candidates:
-
-- Course catalog page
-- Course detail page
-- Public profile page
-
-## 8) Migration Checklist
-
-1. Implement CMS-backed service classes.
-2. Keep contract compatibility with current hooks/routes.
-3. Add typed mappers for each domain entity.
-4. Validate data with `zod` in adapters.
-5. Add env config for CMS endpoint/token.
-6. Verify routes:
-   - `/courses`
-   - `/courses/[slug]`
-   - `/courses/[slug]/lessons/[id]`
-   - `/dashboard`
-   - `/profile/[username]`
-7. Remove or reduce direct `mock*` imports from route files as backend parity improves.
+If your CMS stores rich text blocks, convert to Markdown in the service adapter or replace the renderer with a rich text component.

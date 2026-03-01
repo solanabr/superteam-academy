@@ -1,27 +1,20 @@
-import { ACADEMY_AUTHORITY } from "@/lib/solana/constants";
-import { connection } from "@/lib/solana/program";
 import { mockCourses } from "@/lib/data/mock-courses";
-import type { Course } from "@/types";
-import {
-  SystemProgram,
-  Transaction,
-  type PublicKey,
-} from "@solana/web3.js";
+import type { Course, Lesson } from "@/types";
 
-export interface WalletEnrollmentSigner {
-  publicKey: PublicKey;
-  sendTransaction: (
-    transaction: Transaction,
-    connectionArg: typeof connection,
-    options?: Record<string, unknown>,
-  ) => Promise<string>;
-}
-
+/**
+ * Content service interface — swap this implementation
+ * to connect Sanity, Strapi, Contentful, or any headless CMS.
+ *
+ * The current implementation uses static mock data.
+ * To integrate a CMS, create a new class implementing
+ * this interface and replace the export below.
+ */
 export interface CourseService {
   getAllCourses(): Promise<Course[]>;
   getCourseBySlug(slug: string): Promise<Course | null>;
+  getCourseById(id: string): Promise<Course | null>;
   searchCourses(query: string, difficulty?: Course["difficulty"]): Promise<Course[]>;
-  enrollInCourse(signer: WalletEnrollmentSigner, courseId: string): Promise<string>;
+  getLessonContent(courseSlug: string, lessonId: string): Promise<Lesson | null>;
 }
 
 class LocalCourseService implements CourseService {
@@ -31,6 +24,10 @@ class LocalCourseService implements CourseService {
 
   async getCourseBySlug(slug: string): Promise<Course | null> {
     return mockCourses.find((course) => course.slug === slug) ?? null;
+  }
+
+  async getCourseById(id: string): Promise<Course | null> {
+    return mockCourses.find((course) => course.id === id) ?? null;
   }
 
   async searchCourses(
@@ -48,30 +45,13 @@ class LocalCourseService implements CourseService {
     });
   }
 
-  async enrollInCourse(
-    signer: WalletEnrollmentSigner,
-    courseId: string,
-  ): Promise<string> {
-    void courseId;
-    const { blockhash } = await connection.getLatestBlockhash("confirmed");
-    const tx = new Transaction({
-      feePayer: signer.publicKey,
-      recentBlockhash: blockhash,
-    }).add(
-      SystemProgram.transfer({
-        fromPubkey: signer.publicKey,
-        toPubkey: ACADEMY_AUTHORITY,
-        lamports: 0,
-      }),
+  async getLessonContent(courseSlug: string, lessonId: string): Promise<Lesson | null> {
+    const course = mockCourses.find((c) => c.slug === courseSlug);
+    if (!course) return null;
+    return (
+      course.modules.flatMap((m) => m.lessons).find((l) => l.id === lessonId) ??
+      null
     );
-
-    const signature = await signer.sendTransaction(tx, connection, {
-      skipPreflight: false,
-      preflightCommitment: "confirmed",
-    });
-
-    await connection.confirmTransaction(signature, "confirmed");
-    return signature;
   }
 }
 

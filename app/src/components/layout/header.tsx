@@ -13,7 +13,7 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 const navItems = [
   { href: "/courses", label: "Courses" },
@@ -30,30 +30,33 @@ export function Header() {
   const { resolvedTheme, setTheme } = useTheme();
   const wallet = useWallet();
   const pathname = usePathname();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
 
   useEffect(() => {
     setWalletAddress(wallet.publicKey?.toBase58());
   }, [wallet.publicKey, setWalletAddress]);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6">
-        <div className="flex items-center gap-5">
+    <header className="sticky top-0 z-50 border-b border-border/50 bg-background/70 backdrop-blur-xl backdrop-saturate-150">
+      <div className="mx-auto flex h-14 max-w-screen-2xl items-center justify-between gap-4 px-4 sm:px-6">
+        <div className="flex items-center gap-6">
           <Link href="/" className="flex items-center gap-2">
             <img
               src="/New Logo/Logo/HORIZONTAL/SVG/ST-OFF-WHITE-HORIZONTAL.svg"
               alt="Superteam Brasil"
-              className="hidden h-8 dark:block"
+              className="hidden h-7 dark:block"
             />
             <img
               src="/New Logo/Logo/HORIZONTAL/SVG/ST-DARK-GREEN-HORIZONTAL.svg"
               alt="Superteam Brasil"
-              className="block h-8 dark:hidden"
+              className="block h-7 dark:hidden"
             />
             <span className="sr-only">{tCommon("brand")}</span>
           </Link>
 
-          <nav className="hidden items-center gap-2 md:flex">
+          <nav className="hidden items-center gap-1 md:flex">
             {navItems.map((item) => {
               const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
               return (
@@ -61,8 +64,8 @@ export function Header() {
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "rounded-md px-3 py-2 text-sm transition",
-                    active ? "bg-white/10 text-foreground" : "text-muted-foreground hover:text-foreground/90",
+                    "rounded-lg px-3 py-1.5 text-[13px] font-medium transition-colors",
+                    active ? "bg-primary/10 text-primary dark:text-primary" : "text-muted-foreground hover:text-foreground",
                   )}
                 >
                   {item.label}
@@ -72,9 +75,9 @@ export function Header() {
           </nav>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <Select value={locale} onValueChange={(value) => setLocale(value as Locale)}>
-            <SelectTrigger className="hidden h-9 w-[108px] border-border bg-card text-xs text-foreground/90 sm:flex">
+            <SelectTrigger className="hidden h-8 w-18 border-border/50 bg-transparent text-[11px] font-medium text-muted-foreground sm:flex">
               <SelectValue placeholder={tCommon("language")} />
             </SelectTrigger>
             <SelectContent>
@@ -85,30 +88,32 @@ export function Header() {
           </Select>
 
           <Button
-            variant="outline"
+            variant="ghost"
             size="icon"
-            className="h-9 w-9 border-border bg-card"
+            className="h-8 w-8 text-muted-foreground hover:text-foreground"
             onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
             aria-label="Toggle theme"
           >
-            {resolvedTheme === "dark" ? <SunMedium className="size-4" /> : <Moon className="size-4" />}
+            {mounted && resolvedTheme === "dark" ? <SunMedium className="size-4" /> : <Moon className="size-4" />}
           </Button>
 
           <div className="hidden md:block">
-            <WalletMultiButton className="!h-9 !rounded-md !bg-gradient-to-r !from-[#2f6b3f] !to-[#ffd23f] !px-3 !text-st-dark" />
+            {mounted && (
+              <WalletMultiButton className="h-8! rounded-lg! bg-gradient-cta! px-4! text-[13px]! font-medium! text-cta-foreground!" />
+            )}
           </div>
 
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="outline" size="icon" className="border-border bg-card md:hidden">
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground md:hidden">
                 <Menu className="size-4" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="border-border bg-st-dark text-foreground">
+            <SheetContent side="right" className="border-border bg-background text-foreground">
               <SheetHeader>
                 <SheetTitle>Navigation</SheetTitle>
               </SheetHeader>
-              <div className="mt-6 space-y-2">
+              <div className="mt-6 space-y-1">
                 {navItems.map((item) => {
                   const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
                   return (
@@ -116,8 +121,8 @@ export function Header() {
                       key={item.href}
                       href={item.href}
                       className={cn(
-                        "block rounded-md px-3 py-2 text-sm",
-                        active ? "bg-white/10 text-foreground" : "text-muted-foreground",
+                        "block rounded-lg px-3 py-2.5 text-sm font-medium",
+                        active ? "bg-primary/10 text-foreground" : "text-muted-foreground",
                       )}
                     >
                       {item.label}
@@ -127,7 +132,7 @@ export function Header() {
               </div>
               <div className="mt-6 space-y-3">
                 <Select value={locale} onValueChange={(value) => setLocale(value as Locale)}>
-                  <SelectTrigger className="h-9 w-full border-border bg-card text-xs text-foreground/90">
+                  <SelectTrigger className="h-9 w-full border-border bg-secondary/50 text-xs text-foreground/90">
                     <SelectValue placeholder={tCommon("language")} />
                   </SelectTrigger>
                   <SelectContent>
@@ -136,7 +141,9 @@ export function Header() {
                     <SelectItem value="es">ES</SelectItem>
                   </SelectContent>
                 </Select>
-                <WalletMultiButton className="!h-9 !w-full !rounded-md !bg-gradient-to-r !from-[#2f6b3f] !to-[#ffd23f] !px-3 !text-st-dark" />
+                {mounted && (
+                  <WalletMultiButton className="h-9! w-full! rounded-lg! bg-gradient-cta! px-3! text-cta-foreground!" />
+                )}
               </div>
             </SheetContent>
           </Sheet>

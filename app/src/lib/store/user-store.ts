@@ -12,12 +12,15 @@ interface UserState {
   walletAddress?: string;
   enrollments: string[];
   completedLessons: Record<string, string[]>;
+  streakDays: string[];
   setLocale: (locale: Locale) => void;
   setTheme: (theme: "dark" | "light" | "system") => void;
   setWalletAddress: (walletAddress?: string) => void;
+  updateProfile: (fields: Partial<Pick<UserProfile, "displayName" | "bio" | "username" | "avatar">>) => void;
   enroll: (courseId: string) => void;
   completeLesson: (courseId: string, lessonId: string) => void;
   addXp: (amount: number) => void;
+  recordActivity: () => void;
 }
 
 const defaultProfile: UserProfile = {
@@ -43,9 +46,29 @@ export const useUserStore = create<UserState>()(
       walletAddress: undefined,
       enrollments: [],
       completedLessons: {},
+      streakDays: [],
       setLocale: (locale) => set({ locale }),
       setTheme: (theme) => set({ theme }),
-      setWalletAddress: (walletAddress) => set({ walletAddress }),
+      setWalletAddress: (walletAddress) =>
+        set((state) => {
+          const isDisconnect = !walletAddress;
+          const isWalletSwitch =
+            !!state.walletAddress && !!walletAddress && state.walletAddress !== walletAddress;
+
+          if (!isDisconnect && !isWalletSwitch) {
+            return { walletAddress };
+          }
+
+          return {
+            walletAddress,
+            enrollments: [],
+            completedLessons: {},
+          };
+        }),
+      updateProfile: (fields) =>
+        set((state) => ({
+          profile: { ...state.profile, ...fields },
+        })),
       enroll: (courseId) =>
         set((state) => ({
           enrollments: state.enrollments.includes(courseId)
@@ -72,6 +95,13 @@ export const useUserStore = create<UserState>()(
             },
           };
         }),
+      recordActivity: () =>
+        set((state) => {
+          const today = new Date().toISOString().slice(0, 10);
+          if (state.streakDays.includes(today)) return state;
+          const days = [...state.streakDays, today].slice(-90);
+          return { streakDays: days };
+        }),
     }),
     {
       name: "academy-user-state-v1",
@@ -82,6 +112,7 @@ export const useUserStore = create<UserState>()(
         walletAddress: state.walletAddress,
         enrollments: state.enrollments,
         completedLessons: state.completedLessons,
+        streakDays: state.streakDays,
       }),
     },
   ),
