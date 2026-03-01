@@ -80,6 +80,14 @@ const DEFAULT_FILTERS: CourseFilters = {
 const DEFAULT_XP_PER_LESSON = 25;
 const ESTIMATED_MINUTES_PER_LESSON = 15;
 
+const THUMBNAIL_MAP: Record<string, string> = {
+  'image-solana101-thumb': '/images/courses/solana-101.svg',
+  'image-defi201-thumb': '/images/courses/defi-201.svg',
+  'image-nft201-thumb': '/images/courses/nft-201.svg',
+  'image-sec301-thumb': '/images/courses/sec-301.svg',
+  'image-token201-thumb': '/images/courses/token-201.svg',
+};
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -132,7 +140,7 @@ function sanityCourseToMeta(raw: SanityCourseRaw, locale: string = 'en'): Course
     title: raw.title?.[locale] ?? raw.title?.en ?? '',
     slug: raw.courseId,
     description: raw.description?.[locale] ?? raw.description?.en ?? '',
-    imageUrl: raw.thumbnail?.asset?._ref ?? '',
+    imageUrl: THUMBNAIL_MAP[raw.thumbnail?.asset?._ref ?? ''] ?? '',
     modules: [],
     tags: raw.skills ?? [],
     estimatedHours: Math.max(

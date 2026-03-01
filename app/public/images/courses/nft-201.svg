@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="800" y2="400" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1a1505"/>
+      <stop offset="100%" stop-color="#0d0b02"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="300" y1="100" x2="500" y2="300" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#eab308" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.03"/>
+    </linearGradient>
+    <linearGradient id="diamond-fill" x1="400" y1="120" x2="400" y2="280" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#fbbf24" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.1"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="400" fill="url(#bg)"/>
+  <ellipse cx="400" cy="200" rx="260" ry="160" fill="url(#glow)"/>
+  <!-- Hexagon grid -->
+  <g stroke="#eab308" stroke-opacity="0.12" stroke-width="1" fill="none">
+    <!-- Row 1 -->
+    <polygon points="280,100 310,83 340,100 340,134 310,151 280,134"/>
+    <polygon points="340,100 370,83 400,100 400,134 370,151 340,134"/>
+    <polygon points="400,100 430,83 460,100 460,134 430,151 400,134"/>
+    <polygon points="460,100 490,83 520,100 520,134 490,151 460,134"/>
+    <!-- Row 2 -->
+    <polygon points="250,151 280,134 310,151 310,185 280,202 250,185"/>
+    <polygon points="310,151 340,134 370,151 370,185 340,202 310,185"/>
+    <polygon points="370,151 400,134 430,151 430,185 400,202 370,185"/>
+    <polygon points="430,151 460,134 490,151 490,185 460,202 430,185"/>
+    <polygon points="490,151 520,134 550,151 550,185 520,202 490,185"/>
+    <!-- Row 3 -->
+    <polygon points="280,202 310,185 340,202 340,236 310,253 280,236"/>
+    <polygon points="340,202 370,185 400,202 400,236 370,253 340,236"/>
+    <polygon points="400,202 430,185 460,202 460,236 430,253 400,236"/>
+    <polygon points="460,202 490,185 520,202 520,236 490,253 460,236"/>
+    <!-- Row 4 -->
+    <polygon points="310,253 340,236 370,253 370,287 340,304 310,287"/>
+    <polygon points="370,253 400,236 430,253 430,287 400,304 370,287"/>
+    <polygon points="430,253 460,236 490,253 490,287 460,304 430,287"/>
+  </g>
+  <!-- Highlighted hexagons -->
+  <polygon points="370,151 400,134 430,151 430,185 400,202 370,185" fill="#eab308" opacity="0.08" stroke="#eab308" stroke-width="1.5" stroke-opacity="0.3"/>
+  <polygon points="400,202 430,185 460,202 460,236 430,253 400,236" fill="#f59e0b" opacity="0.06" stroke="#f59e0b" stroke-width="1.5" stroke-opacity="0.25"/>
+  <!-- Central diamond -->
+  <polygon points="400,140 440,200 400,260 360,200" fill="url(#diamond-fill)" stroke="#fbbf24" stroke-width="1.5" stroke-opacity="0.4"/>
+  <polygon points="400,160 425,200 400,240 375,200" fill="#fbbf24" opacity="0.08" stroke="#fbbf24" stroke-width="0.8" stroke-opacity="0.2"/>
+  <!-- Diamond facet lines -->
+  <line x1="400" y1="140" x2="375" y2="200" stroke="#fbbf24" stroke-width="0.6" stroke-opacity="0.2"/>
+  <line x1="400" y1="140" x2="425" y2="200" stroke="#fbbf24" stroke-width="0.6" stroke-opacity="0.2"/>
+  <line x1="375" y1="200" x2="400" y2="260" stroke="#fbbf24" stroke-width="0.6" stroke-opacity="0.15"/>
+  <line x1="425" y1="200" x2="400" y2="260" stroke="#fbbf24" stroke-width="0.6" stroke-opacity="0.15"/>
+  <!-- Sparkle accents -->
+  <g fill="#fbbf24">
+    <circle cx="400" cy="140" r="3" opacity="0.6"/>
+    <circle cx="440" cy="200" r="2.5" opacity="0.5"/>
+    <circle cx="400" cy="260" r="2.5" opacity="0.45"/>
+    <circle cx="360" cy="200" r="2.5" opacity="0.5"/>
+  </g>
+  <!-- Floating small diamonds -->
+  <polygon points="200,90 210,105 200,120 190,105" fill="#eab308" opacity="0.12" stroke="#eab308" stroke-width="0.5" stroke-opacity="0.2"/>
+  <polygon points="600,280 608,293 600,306 592,293" fill="#f59e0b" opacity="0.1" stroke="#f59e0b" stroke-width="0.5" stroke-opacity="0.18"/>
+  <polygon points="150,260 156,270 150,280 144,270" fill="#eab308" opacity="0.08"/>
+  <polygon points="660,120 665,128 660,136 655,128" fill="#fbbf24" opacity="0.1"/>
+  <!-- Corner accents -->
+  <g opacity="0.06" stroke="#eab308" stroke-width="0.8" fill="none">
+    <path d="M60,50 L100,50 L100,90"/>
+    <path d="M740,50 L700,50 L700,90"/>
+    <path d="M60,350 L100,350 L100,310"/>
+    <path d="M740,350 L700,350 L700,310"/>
+  </g>
+</svg>

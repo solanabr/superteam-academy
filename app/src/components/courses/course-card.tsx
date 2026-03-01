@@ -57,6 +57,13 @@ export function CourseCard({ course, enrollment }: CourseCardProps) {
             gradient,
           )}
         >
+          {course.imageUrl && (
+            <img
+              src={course.imageUrl}
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+          )}
           {/* Track + Difficulty badges overlaid on gradient */}
           <div className="absolute top-3 right-3 left-3 flex items-start justify-between">
             <TrackBadge

@@ -32,6 +32,7 @@ interface CourseCardData {
   gradientTo: string;
   icon: React.ElementType;
   slug: string;
+  image: string;
 }
 
 const FEATURED_COURSES: CourseCardData[] = [
@@ -47,6 +48,7 @@ const FEATURED_COURSES: CourseCardData[] = [
     gradientTo: 'to-primary/5',
     icon: Layers,
     slug: 'solana-101',
+    image: '/images/courses/solana-101.svg',
   },
   {
     title: 'Building a DEX with Anchor',
@@ -60,6 +62,7 @@ const FEATURED_COURSES: CourseCardData[] = [
     gradientTo: 'to-accent/5',
     icon: Code2,
     slug: 'defi-201',
+    image: '/images/courses/defi-201.svg',
   },
   {
     title: 'NFT Collections with Metaplex',
@@ -73,6 +76,7 @@ const FEATURED_COURSES: CourseCardData[] = [
     gradientTo: 'to-yellow-500/5',
     icon: BookOpen,
     slug: 'nft-201',
+    image: '/images/courses/nft-201.svg',
   },
   {
     title: 'Smart Contract Auditing',
@@ -86,6 +90,7 @@ const FEATURED_COURSES: CourseCardData[] = [
     gradientTo: 'to-red-500/5',
     icon: Shield,
     slug: 'sec-301',
+    image: '/images/courses/sec-301.svg',
   },
 ];
 
@@ -131,9 +136,17 @@ export function FeaturedCourses() {
             >
               {/* Gradient image placeholder */}
               <div
-                className={`h-32 bg-gradient-to-br ${course.gradientFrom} ${course.gradientTo} relative flex items-center justify-center`}
+                className={`h-32 bg-gradient-to-br ${course.gradientFrom} ${course.gradientTo} relative flex items-center justify-center overflow-hidden`}
               >
-                <course.icon className="h-10 w-10 text-foreground/20" />
+                {course.image ? (
+                  <img
+                    src={course.image}
+                    alt=""
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
+                ) : (
+                  <course.icon className="h-10 w-10 text-foreground/20" />
+                )}
                 {/* XP badge */}
                 <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-background/90 px-2.5 py-1 text-xs font-medium backdrop-blur-sm">
                   <Zap className="h-3 w-3 text-accent" />
