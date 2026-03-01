@@ -1,11 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import { Plus, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth/auth-provider";
 import { ThreadList } from "@/components/community/thread-list";
-import { CreateThreadModal } from "@/components/community/create-thread-modal";
 import { Button } from "@/components/ui/button";
 
 interface CategoryPageClientProps {
@@ -19,7 +17,11 @@ interface CategoryPageClientProps {
 
 export function CategoryPageClient({ category }: CategoryPageClientProps) {
   const { user } = useAuth();
-  const [showCreateModal, setShowCreateModal] = useState(false);
+
+  // TODO: Wire to CreateThreadModal (Task 16)
+  const handleCreateThread = () => {
+    // Will open CreateThreadModal once implemented
+  };
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
@@ -43,7 +45,7 @@ export function CategoryPageClient({ category }: CategoryPageClientProps) {
           )}
         </div>
         {user && (
-          <Button variant="primary" onClick={() => setShowCreateModal(true)}>
+          <Button variant="primary" onClick={handleCreateThread}>
             <Plus size={18} />
             New Thread
           </Button>
@@ -55,12 +57,6 @@ export function CategoryPageClient({ category }: CategoryPageClientProps) {
         scope={{ categorySlug: category.slug }}
         showFilters
         emptyMessage={`No threads in ${category.name} yet. Be the first to start a discussion!`}
-      />
-
-      <CreateThreadModal
-        open={showCreateModal}
-        onOpenChange={setShowCreateModal}
-        defaultScope={{ categoryId: category.id }}
       />
     </div>
   );
