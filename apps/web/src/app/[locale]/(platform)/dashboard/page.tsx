@@ -141,8 +141,9 @@ function useDashboardData(
 
         const supabase = createClient();
 
-        // Kick off quest fetch immediately — runs in parallel with all Supabase queries below
-        const questsPromise = fetch("/api/quests/daily")
+        // Evaluate quests FIRST — this may trigger on-chain XP mints.
+        // Awaiting before XP read avoids showing a stale balance.
+        const questsResult = await fetch("/api/quests/daily")
           .then((res) =>
             res.ok ? res.json() : { quests: [], nextResetTime: "" }
           )
@@ -224,9 +225,6 @@ function useDashboardData(
             .order("unlocked_at", { ascending: false })
             .limit(10),
         ]);
-
-        // Await quest data (already running in parallel since fetchData start)
-        const questsResult = await questsPromise;
 
         // Courses with minted certificates should not appear in "Current Courses"
         const mintedCourseIds = new Set(

@@ -583,7 +583,9 @@ CREATE POLICY "Users can view their own daily quests"
 
 -- ── get_daily_quest_state ─────────────────────────────────────
 -- Single-pass function: evaluates all quest progress for a user,
--- upserts rows, awards XP on first completion (idempotent).
+-- upserts rows, marks first completion via xp_granted flag.
+-- XP is minted on-chain by the API route (not in SQL) — the
+-- Helius webhook then syncs it to Supabase via award_xp().
 -- Called via service_role from /api/quests/daily.
 CREATE OR REPLACE FUNCTION get_daily_quest_state(
   p_user_id           UUID,
@@ -592,20 +594,21 @@ CREATE OR REPLACE FUNCTION get_daily_quest_state(
   p_module_lesson_map JSONB
 ) RETURNS JSONB AS $$
 DECLARE
-  v_quest       JSONB;
-  v_quest_id    TEXT;
-  v_type        TEXT;
-  v_target      INTEGER;
-  v_xp          INTEGER;
-  v_reset_type  TEXT;
-  v_current     INTEGER;
-  v_period      DATE;
-  v_existing    RECORD;
-  v_results     JSONB := '[]'::JSONB;
-  v_mod         JSONB;
-  v_mod_lessons TEXT[];
-  v_all_done    BOOLEAN;
-  v_max_date    DATE;
+  v_quest        JSONB;
+  v_quest_id     TEXT;
+  v_type         TEXT;
+  v_target       INTEGER;
+  v_xp           INTEGER;
+  v_reset_type   TEXT;
+  v_current      INTEGER;
+  v_period       DATE;
+  v_existing     RECORD;
+  v_results      JSONB := '[]'::JSONB;
+  v_mod          JSONB;
+  v_mod_lessons  TEXT[];
+  v_all_done     BOOLEAN;
+  v_max_date     DATE;
+  v_just_awarded BOOLEAN;
 BEGIN
   FOR v_quest IN SELECT * FROM jsonb_array_elements(p_quest_definitions)
   LOOP
@@ -615,6 +618,7 @@ BEGIN
     v_xp         := (v_quest->>'xpReward')::INTEGER;
     v_reset_type := v_quest->>'resetType';
     v_current    := 0;
+    v_just_awarded := false;
 
     -- ── Calculate current_value per quest type ──
     IF v_type = 'lesson' OR v_type = 'lesson_batch' THEN
@@ -685,21 +689,23 @@ BEGIN
         completed     = EXCLUDED.completed,
         completed_at  = EXCLUDED.completed_at;
 
-      -- Award XP if just completed
+      -- Mark xp_granted on first completion (API route mints on-chain)
       IF v_current >= v_target THEN
         UPDATE user_daily_quests
         SET xp_granted = true
         WHERE user_id = p_user_id AND quest_id = v_quest_id AND period_start = v_period AND xp_granted = false;
 
         IF FOUND THEN
-          PERFORM award_xp(p_user_id, v_xp, 'daily_quest:' || v_quest_id, 'quest:' || v_quest_id || ':' || v_period::TEXT);
+          v_just_awarded := true;
         END IF;
       END IF;
 
       v_results := v_results || jsonb_build_object(
         'questId', v_quest_id,
         'currentValue', v_current,
-        'completed', v_current >= v_target
+        'completed', v_current >= v_target,
+        'justAwarded', v_just_awarded,
+        'xpReward', v_xp
       );
       CONTINUE;  -- Skip generic upsert
 
@@ -746,21 +752,23 @@ BEGIN
       completed     = EXCLUDED.completed,
       completed_at  = COALESCE(user_daily_quests.completed_at, EXCLUDED.completed_at);
 
-    -- Award XP if just completed (xp_granted transitions false → true)
+    -- Mark xp_granted on first completion (API route mints on-chain)
     IF v_current >= v_target THEN
       UPDATE user_daily_quests
       SET xp_granted = true
       WHERE user_id = p_user_id AND quest_id = v_quest_id AND period_start = v_period AND xp_granted = false;
 
       IF FOUND THEN
-        PERFORM award_xp(p_user_id, v_xp, 'daily_quest:' || v_quest_id, 'quest:' || v_quest_id || ':' || v_period::TEXT);
+        v_just_awarded := true;
       END IF;
     END IF;
 
     v_results := v_results || jsonb_build_object(
       'questId', v_quest_id,
       'currentValue', v_current,
-      'completed', v_current >= v_target
+      'completed', v_current >= v_target,
+      'justAwarded', v_just_awarded,
+      'xpReward', v_xp
     );
   END LOOP;
 
