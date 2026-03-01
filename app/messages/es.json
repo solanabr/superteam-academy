@@ -1,28 +1,56 @@
 {
   "metadata": {
     "title": "Superteam Academy",
-    "description": "Decentralized learning platform on Solana"
+    "description": "Plataforma de aprendizaje descentralizada en Solana"
   },
   "header": {
-    "goHome": "Go to home"
+    "goHome": "Ir al inicio",
+    "courses": "Cursos"
   },
   "theme": {
-    "label": "Select theme",
-    "light": "Light",
-    "dark": "Dark",
-    "system": "System"
+    "label": "Seleccionar tema",
+    "light": "Claro",
+    "dark": "Oscuro",
+    "system": "Sistema"
   },
   "wallet": {
-    "connect": "Connect wallet",
-    "connectPrompt": "Connect your wallet",
-    "connecting": "Connecting…",
-    "disconnect": "Disconnect",
-    "copied": "Copied!"
+    "connect": "Conectar billetera",
+    "connectPrompt": "Conecta tu billetera",
+    "connecting": "Conectando…",
+    "disconnect": "Desconectar",
+    "copied": "¡Copiado!"
   },
   "language": {
-    "label": "Language",
+    "label": "Idioma",
     "en": "English",
-    "es": "Espanol",
-    "ptBR": "Portugues"
+    "es": "Español",
+    "ptBR": "Português"
+  },
+  "courses": {
+    "title": "Cursos",
+    "subtitle": "Aprende desarrollo en Solana desde los fundamentos hasta avanzado",
+    "search": "Buscar cursos...",
+    "filters": {
+      "all": "Todos los niveles",
+      "beginner": "Principiante",
+      "intermediate": "Intermedio",
+      "advanced": "Avanzado"
+    },
+    "learningPaths": "Rutas de aprendizaje",
+    "explore": "Explorar",
+    "coursesCount": "{count} cursos",
+    "lessons": "{count} lecciones",
+    "duration": "{minutes} min",
+    "enrolled": "{count} inscritos",
+    "xp": "{amount} XP",
+    "noResults": "No hay cursos que coincidan con tus filtros",
+    "noResultsDescription": "Intenta ajustar tu búsqueda o criterios de filtro",
+    "clearFilters": "Limpiar filtros",
+    "difficulty": {
+      "1": "Principiante",
+      "2": "Intermedio",
+      "3": "Avanzado"
+    },
+    "trackFilter": "Todas las rutas"
   }
 }

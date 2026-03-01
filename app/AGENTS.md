@@ -46,6 +46,7 @@ The app is a **scaffold** — infrastructure is wired but no application feature
 
 ## Rules
 
+- **Commits** — Do not add `Co-authored-by`, "made with Cursor", or similar to commit messages.
 - **shadcn only** for UI primitives — never hand-write a Dialog, Select, Button, etc. Run `pnpm exec shadcn add <component>` from the `app/` directory.
 - **Tailwind only when required** — use shadcn component variants/props first, Tailwind for layout and composition. Avoid duplicating what shadcn already provides.
 - **No `@solana/web3.js`** or `@solana/wallet-adapter-*` — use `@solana/kit` and Connector Kit.

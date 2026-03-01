@@ -50,6 +50,14 @@ export default async function LocaleLayout({ children, params }: Props) {
                   priority
                 />
               </Link>
+              <nav className="hidden items-center gap-1 sm:flex">
+                <Link
+                  href="/courses"
+                  className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors duration-200 hover:text-foreground"
+                >
+                  {tHeader("courses")}
+                </Link>
+              </nav>
               <div className="flex items-center gap-2">
                 <LanguageSwitcher />
                 <ThemeToggle />

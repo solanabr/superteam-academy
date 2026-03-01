@@ -4,7 +4,8 @@
     "description": "Decentralized learning platform on Solana"
   },
   "header": {
-    "goHome": "Go to home"
+    "goHome": "Go to home",
+    "courses": "Courses"
   },
   "theme": {
     "label": "Select theme",
@@ -24,5 +25,32 @@
     "en": "English",
     "es": "Espanol",
     "ptBR": "Portugues"
+  },
+  "courses": {
+    "title": "Courses",
+    "subtitle": "Learn Solana development from fundamentals to advanced",
+    "search": "Search courses...",
+    "filters": {
+      "all": "All Levels",
+      "beginner": "Beginner",
+      "intermediate": "Intermediate",
+      "advanced": "Advanced"
+    },
+    "learningPaths": "Learning Paths",
+    "explore": "Explore",
+    "coursesCount": "{count} courses",
+    "lessons": "{count} lessons",
+    "duration": "{minutes} min",
+    "enrolled": "{count} enrolled",
+    "xp": "{amount} XP",
+    "noResults": "No courses match your filters",
+    "noResultsDescription": "Try adjusting your search or filter criteria",
+    "clearFilters": "Clear filters",
+    "difficulty": {
+      "1": "Beginner",
+      "2": "Intermediate",
+      "3": "Advanced"
+    },
+    "trackFilter": "All Tracks"
   }
 }
