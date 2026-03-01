@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { WalletButton } from "@/components/wallet/WalletButton";
+import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
 import { cn } from "@/lib/utils/cn";
 import { useState } from "react";
 
@@ -54,8 +55,9 @@ export function Navbar() {
             ))}
           </div>
 
-          {/* Wallet + Mobile Toggle */}
+          {/* Right side */}
           <div className="flex items-center gap-3">
+            <LanguageSwitcher />
             <WalletButton />
             <button
               className="md:hidden p-2 text-white/60 hover:text-white"
