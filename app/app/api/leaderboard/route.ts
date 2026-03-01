@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { LeaderboardEntry } from "@/lib/services/learning-progress";
+import { getLeaderboardFromDb } from "@/lib/services/indexing-db";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:3001";
 const BACKEND_API_TOKEN = process.env.BACKEND_API_TOKEN ?? "";
@@ -88,6 +89,15 @@ async function fetchFromHelius(): Promise<LeaderboardEntry[]> {
 }
 
 export async function GET(_request: NextRequest) {
+  const indexed = await getLeaderboardFromDb();
+  if (indexed && indexed.length > 0) {
+    const entries: LeaderboardEntry[] = indexed.map((e) => ({
+      rank: e.rank,
+      wallet: e.wallet,
+      xp: e.xp,
+    }));
+    return NextResponse.json({ entries });
+  }
   const backend = await fetchFromBackend();
   if (backend && backend.length > 0) {
     return NextResponse.json({ entries: backend });
