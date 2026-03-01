@@ -51,7 +51,7 @@ export default function CourseDetailPage({
 
     if (isLoading) {
         return (
-            <div className="p-4 sm:p-6 md:p-8 md:px-10 lg:px-12 space-y-6">
+            <div className="space-y-4 sm:space-y-6">
                 <div className="h-8 w-32 animate-pulse rounded bg-muted" />
                 <div className="h-48 sm:h-64 animate-pulse rounded-2xl border-4 border-border bg-card" />
             </div>
@@ -75,7 +75,7 @@ export default function CourseDetailPage({
     };
 
     return (
-        <div className="p-4 sm:p-6 md:p-8 md:px-10 lg:px-12 space-y-4 sm:space-y-6">
+        <div className="space-y-4 sm:space-y-6">
             {/* Back link */}
             <Link
                 href="/courses"
@@ -157,62 +157,62 @@ export default function CourseDetailPage({
                 {course.modules.map((mod, mi) => {
                     const lessonIndexStart = course.modules.slice(0, mi).reduce((sum, m) => sum + m.lessons.length, 0);
                     return (
-                    <Card key={mi} className="overflow-hidden border-4 rounded-2xl border-border py-0 gap-0">
-                        <div className="border-b border-border bg-muted/30 px-3 sm:px-5 py-3 sm:py-4">
-                            <h3 className="font-game text-base sm:text-xl font-semibold tracking-wider break-words">
-                                Module {mi + 1}: {mod.title}
-                            </h3>
-                            <p className="font-game text-sm text-muted-foreground">
-                                {mod.lessons.length} lesson{mod.lessons.length === 1 ? "" : "s"}
-                            </p>
-                        </div>
-                        <div className="divide-y divide-border">
-                            {mod.lessons.map((lesson, li) => {
-                                const flatIndex = lessonIndexStart + li;
-                                const completed = isEnrolled && isLessonComplete(lessonFlags, flatIndex);
-                                return (
-                                <div
-                                    key={lesson.id}
-                                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-3 sm:px-5 py-3 sm:py-4"
-                                >
-                                    <div className="flex items-center gap-3">
-                                        {isEnrolled ? (
-                                            completed ? (
-                                                <CheckCircle2 className="h-5 w-5 text-green-500" />
-                                            ) : (
-                                                <Circle className="h-5 w-5 text-muted-foreground" />
-                                            )
-                                        ) : (
-                                            <Lock className="h-5 w-5 text-muted-foreground/50" />
-                                        )}
-                                        <div>
-                                            <p className="text-lg font-medium font-game">{lesson.title}</p>
-                                            <div className="flex items-center gap-2 text-sm text-muted-foreground font-game">
-                                                {lesson.type === "challenge" ? (
-                                                    <span className="inline-flex items-center gap-1">
-                                                        <Code2 className="h-4 w-4" /> Challenge
-                                                    </span>
+                        <Card key={mi} className="overflow-hidden border-4 rounded-2xl border-border py-0 gap-0">
+                            <div className="border-b border-border bg-muted/30 px-3 sm:px-5 py-3 sm:py-4">
+                                <h3 className="font-game text-base sm:text-xl font-semibold tracking-wider break-words">
+                                    Module {mi + 1}: {mod.title}
+                                </h3>
+                                <p className="font-game text-sm text-muted-foreground">
+                                    {mod.lessons.length} lesson{mod.lessons.length === 1 ? "" : "s"}
+                                </p>
+                            </div>
+                            <div className="divide-y divide-border">
+                                {mod.lessons.map((lesson, li) => {
+                                    const flatIndex = lessonIndexStart + li;
+                                    const completed = isEnrolled && isLessonComplete(lessonFlags, flatIndex);
+                                    return (
+                                        <div
+                                            key={lesson.id}
+                                            className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-3 sm:px-5 py-3 sm:py-4"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                {isEnrolled ? (
+                                                    completed ? (
+                                                        <CheckCircle2 className="h-5 w-5 text-green-500" />
+                                                    ) : (
+                                                        <Circle className="h-5 w-5 text-muted-foreground" />
+                                                    )
                                                 ) : (
-                                                    <span>Lesson</span>
+                                                    <Lock className="h-5 w-5 text-muted-foreground/50" />
                                                 )}
-                                                <span>·</span>
-                                                <span>{lesson.duration}</span>
+                                                <div>
+                                                    <p className="text-lg font-medium font-game">{lesson.title}</p>
+                                                    <div className="flex items-center gap-2 text-sm text-muted-foreground font-game">
+                                                        {lesson.type === "challenge" ? (
+                                                            <span className="inline-flex items-center gap-1">
+                                                                <Code2 className="h-4 w-4" /> Challenge
+                                                            </span>
+                                                        ) : (
+                                                            <span>Lesson</span>
+                                                        )}
+                                                        <span>·</span>
+                                                        <span>{lesson.duration}</span>
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </div>
 
-                                    {isEnrolled && (
-                                        <Button asChild variant="pixel" size="sm" className="font-game">
-                                            <Link href={`/courses/${slug}/lessons/${lesson.id}`}>
-                                                {completed ? "Review" : "Start"}
-                                            </Link>
-                                        </Button>
-                                    )}
-                                </div>
-                                );
-                            })}
-                        </div>
-                    </Card>
+                                            {isEnrolled && (
+                                                <Button asChild variant="pixel" size="sm" className="font-game">
+                                                    <Link href={`/courses/${slug}/lessons/${lesson.id}`}>
+                                                        {completed ? "Review" : "Start"}
+                                                    </Link>
+                                                </Button>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </Card>
                     );
                 })}
             </div>

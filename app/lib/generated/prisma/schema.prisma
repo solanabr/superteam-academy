@@ -1,0 +1,38 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model CommunityThread {
+  id            BigInt           @id @default(autoincrement())
+  type          String
+  title         String
+  body          String
+  authorName    String           @default("Anonymous") @map("author_name")
+  walletAddress String?          @map("wallet_address")
+  createdAt     DateTime         @default(now()) @map("created_at")
+  updatedAt     DateTime         @updatedAt @map("updated_at")
+  replies       CommunityReply[]
+
+  @@index([createdAt(sort: Desc)])
+  @@index([type, createdAt(sort: Desc)])
+  @@map("community_threads")
+}
+
+model CommunityReply {
+  id            BigInt          @id @default(autoincrement())
+  threadId      BigInt          @map("thread_id")
+  body          String
+  authorName    String          @default("Anonymous") @map("author_name")
+  walletAddress String?         @map("wallet_address")
+  isAccepted    Boolean         @default(false) @map("is_accepted")
+  createdAt     DateTime        @default(now()) @map("created_at")
+  thread        CommunityThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  @@index([threadId, createdAt(sort: Asc)])
+  @@map("community_replies")
+}

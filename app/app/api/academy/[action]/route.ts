@@ -18,6 +18,9 @@ const ADMIN_ONLY_ACTIONS = new Set([
   "deactivate-achievement-type",
   "reward-xp",
   "award-achievement",
+  "create-credential-collection",
+  "issue-credential-for-completion",
+  "upload-credential-metadata",
 ]);
 
 const ALLOWED_ACTIONS = new Set([
@@ -34,6 +37,9 @@ const ALLOWED_ACTIONS = new Set([
   "create-achievement-type",
   "award-achievement",
   "deactivate-achievement-type",
+  "create-credential-collection",
+  "issue-credential-for-completion",
+  "upload-credential-metadata",
 ]);
 
 async function verifyAdminToken(token: string): Promise<boolean> {

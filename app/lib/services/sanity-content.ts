@@ -89,6 +89,14 @@ const COURSE_BY_SLUG_QUERY = `*[_type == "course" && slug.current == $slug && pu
   }
 }`
 
+const TRACKS_QUERY = `*[_type == "track"] | order(trackId asc) {
+  _id,
+  trackId,
+  name,
+  slug,
+  trackCollection
+}`
+
 // Transform Sanity data to app format
 function transformCourse(sanityCourse: SanityCourse): MockCourse {
   return {
@@ -172,4 +180,22 @@ export async function getLessonById(
 
 export function getAllLessonsFlat(course: MockCourse): MockLesson[] {
   return course.modules.flatMap((m) => m.lessons)
+}
+
+export type SanityTrack = {
+  _id: string
+  trackId: number
+  name: string
+  slug: { current: string }
+  trackCollection: string
+}
+
+export async function getAllTracks(): Promise<SanityTrack[]> {
+  try {
+    const tracks = await sanityClient.fetch<SanityTrack[]>(TRACKS_QUERY)
+    return tracks ?? []
+  } catch (error) {
+    console.error('Error fetching tracks from Sanity:', error)
+    return []
+  }
 }

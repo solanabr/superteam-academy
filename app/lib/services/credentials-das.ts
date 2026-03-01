@@ -41,12 +41,16 @@ function parseAttributes(
 
 function assetToCredentialInfo(asset: DasAsset): CredentialInfo {
   const attrs = parseAttributes(asset.content?.metadata?.attributes);
+  const uri = asset.content?.metadata?.uri;
+  const imageUrl = asset.content?.links?.image ?? null;
   return {
     asset: asset.id,
     trackId: parseInt(attrs.track_id ?? "0", 10),
     level: parseInt(attrs.level ?? "0", 10),
     coursesCompleted: parseInt(attrs.courses_completed ?? "0", 10),
     totalXp: parseInt(attrs.total_xp ?? "0", 10),
+    imageUrl: imageUrl ?? undefined,
+    metadataUri: uri ?? undefined,
   };
 }
 

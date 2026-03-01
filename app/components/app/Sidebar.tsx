@@ -12,10 +12,12 @@ import {
     Shield,
     Trophy,
     Target,
+    MessageSquare,
 } from "lucide-react";
 
 import { useIsAdmin } from "@/hooks/useIsAdmin";
 import { useXpBalance } from "@/hooks";
+import { useWallet } from "@solana/wallet-adapter-react";
 import { levelFromXp, xpProgressInLevel } from "@/lib/level";
 import { useTranslations } from "next-intl";
 
@@ -31,12 +33,12 @@ import {
     SidebarMenuItem,
 } from "@/components/ui/sidebar";
 
-const navItems: { href: string; key: "dashboard" | "courses" | "leaderboard" | "challenges" | "profile" | "certificates" | "settings"; icon: typeof LayoutDashboard }[] = [
+const staticNavItems: { href: string; key: "dashboard" | "courses" | "leaderboard" | "challenges" | "discussions" | "certificates" | "settings"; icon: typeof LayoutDashboard }[] = [
     { href: "/dashboard", key: "dashboard", icon: LayoutDashboard },
     { href: "/courses", key: "courses", icon: BookOpen },
     { href: "/leaderboard", key: "leaderboard", icon: Trophy },
     { href: "/challenges", key: "challenges", icon: Target },
-    { href: "/profile", key: "profile", icon: User },
+    { href: "/discussions", key: "discussions", icon: MessageSquare },
     { href: "/certificates", key: "certificates", icon: Award },
     { href: "/settings", key: "settings", icon: Settings },
 ];
@@ -45,7 +47,15 @@ export function AppSidebar() {
     const { isAdmin } = useIsAdmin();
     const pathname = usePathname();
     const { data: xp } = useXpBalance();
+    const { publicKey } = useWallet();
     const t = useTranslations("common");
+    const profileHref = publicKey ? `/profile/${publicKey.toBase58()}` : "/profile";
+
+    const navItems = [
+        ...staticNavItems.slice(0, 4),
+        { href: profileHref, key: "profile" as const, icon: User },
+        ...staticNavItems.slice(4),
+    ];
 
     const xpValue = xp ?? 0;
     const { level, xpInLevel, xpForNextLevel } = xpProgressInLevel(xpValue);
@@ -85,8 +95,9 @@ export function AppSidebar() {
                     <SidebarGroupContent>
                         <SidebarMenu>
                             {navItems.map(({ href, key, icon: Icon }) => {
-                                const active =
-                                    pathname === href || pathname.startsWith(href + "/");
+                                const active = key === "profile"
+                                    ? pathname.startsWith("/profile")
+                                    : pathname === href || pathname.startsWith(href + "/");
 
                                 return (
                                     <SidebarMenuItem key={href}>

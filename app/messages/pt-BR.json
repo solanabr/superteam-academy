@@ -9,6 +9,7 @@
     "leaderboard": "Ranking",
     "admin": "Admin",
     "challenges": "Desafios",
+    "discussions": "Discussões",
     "exploreCourses": "Explorar Cursos",
     "signUp": "Cadastrar",
     "level": "Nível",
@@ -32,6 +33,7 @@
     "leaderboard": "Ranking",
     "challenges": "Desafios",
     "courses": "Cursos",
+    "discussions": "Discussões",
     "beginner": "Iniciante",
     "advanced": "Avançado",
     "intermediate": "Intermediário"
@@ -59,8 +61,21 @@
     "level": "Nível",
     "coursesCompleted": "Cursos Concluídos",
     "credentials": "Credenciais",
+    "credentialsEarned": "Credenciais Obtidas",
     "totalXp": "XP Total",
-    "walletCopied": "Endereço da carteira copiado"
+    "walletCopied": "Endereço da carteira copiado",
+    "linkCopied": "Link do perfil copiado!",
+    "shareProfile": "Compartilhar",
+    "shareTwitter": "Publicar",
+    "editName": "Clique para editar o nome",
+    "enterDisplayName": "Digite seu nome",
+    "nameSaved": "Nome salvo!",
+    "shuffleAvatar": "Embaralhar avatar",
+    "avatarShuffled": "Avatar embaralhado!",
+    "copyWallet": "Copiar endereço",
+    "leaderboardRank": "Posição",
+    "courses": "cursos",
+    "noCredentialsOther": "Este aprendiz ainda não possui credenciais."
   },
   "settings": {
     "title": "Configurações",

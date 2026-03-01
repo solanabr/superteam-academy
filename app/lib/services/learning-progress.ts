@@ -21,6 +21,10 @@ export interface CredentialInfo {
   level: number;
   coursesCompleted: number;
   totalXp: number;
+  /** Resolved image URL from DAS content.links.image or metadata */
+  imageUrl?: string | null;
+  /** On-chain metadata JSON URI */
+  metadataUri?: string | null;
 }
 
 export interface LearningProgressService {

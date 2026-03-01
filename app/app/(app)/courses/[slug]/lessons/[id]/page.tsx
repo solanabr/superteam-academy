@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { ProgressBar, CodeEditor, MarkdownContent } from "@/components/app";
+import { ProgressBar, CodeEditor, MarkdownContent, CourseCompleteModal } from "@/components/app";
 import {
     getLessonById,
     getAllLessonsFlat,
@@ -38,6 +38,10 @@ export default function LessonPage({
     const [isLoading, setIsLoading] = useState(true);
     const [testOutput, setTestOutput] = useState<string | null>(null);
     const [code, setCode] = useState("");
+    const [showCompletionModal, setShowCompletionModal] = useState(false);
+
+    // Derive track collection from env (first address if comma-separated)
+    const trackCollection = (process.env.NEXT_PUBLIC_CREDENTIAL_TRACK_COLLECTIONS ?? "").split(",")[0]?.trim() ?? "";
 
     const courseId = result?.course ? getCourseIdForProgram(result.course) : null;
     const { data: enrollment } = useEnrollment(courseId);
@@ -71,8 +75,8 @@ export default function LessonPage({
     const effectiveCount = getEffectiveLessonCount(course, onChainCourse ?? null);
     const effectiveLessons = getEffectiveLessons(course, onChainCourse ?? null);
     const onChainLessonCount = course.onChainCourseId && onChainCourse != null && typeof (onChainCourse as { lesson_count?: number }).lesson_count === 'number'
-      ? (onChainCourse as { lesson_count: number }).lesson_count
-      : null;
+        ? (onChainCourse as { lesson_count: number }).lesson_count
+        : null;
     const canCompleteOnChain = onChainLessonCount == null || lessonIndex < onChainLessonCount;
 
     const prevLesson = lessonIndex > 0 ? allLessons[lessonIndex - 1] : null;
@@ -90,6 +94,8 @@ export default function LessonPage({
             courseId: programCourseId,
             learner: publicKey.toBase58(),
             lessonIndex,
+            effectiveCount,
+            onCourseComplete: () => setShowCompletionModal(true),
         });
     };
 
@@ -105,179 +111,195 @@ export default function LessonPage({
     };
 
     return (
-        <div className="flex h-[calc(100vh-3.5rem)] flex-col overflow-hidden -m-4 sm:-m-6">
-            {/* Top nav bar */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border bg-background px-3 sm:px-4 py-2">
-                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                    <Link
-                        href={`/courses/${slug}`}
-                        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors shrink-0"
+        <>
+            <div className="flex h-[calc(100vh-3.5rem)] flex-col overflow-hidden -m-4 sm:-m-6">
+                {/* Top nav bar */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border bg-background px-3 sm:px-4 py-2">
+                    <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                        <Link
+                            href={`/courses/${slug}`}
+                            className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors shrink-0"
+                        >
+                            <ChevronLeft className="h-4 w-4" />
+                            <span className="truncate max-w-[120px] sm:max-w-[200px]">{course.title}</span>
+                        </Link>
+                        <span className="text-muted-foreground/50 shrink-0">·</span>
+                        <span className="text-xs sm:text-sm text-muted-foreground truncate">{moduleTitle}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <ProgressBar
+                            value={lessonIndex}
+                            max={contentCount}
+                            size="sm"
+                        />
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                            {lessonIndex + 1}/{contentCount}
+                        </span>
+                    </div>
+                </div>
+
+                {/* Main content */}
+                <div className="flex flex-1 flex-col md:flex-row overflow-hidden">
+                    {/* Left: Content pane */}
+                    <div
+                        className={`flex flex-col overflow-y-auto border-b md:border-b-0 md:border-r border-border bg-background ${isChallenge ? "w-full md:w-1/2 md:min-w-0" : "w-full max-w-3xl mx-auto"
+                            }`}
                     >
-                        <ChevronLeft className="h-4 w-4" />
-                        <span className="truncate max-w-[120px] sm:max-w-[200px]">{course.title}</span>
-                    </Link>
-                    <span className="text-muted-foreground/50 shrink-0">·</span>
-                    <span className="text-xs sm:text-sm text-muted-foreground truncate">{moduleTitle}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                    <ProgressBar
-                        value={lessonIndex}
-                        max={contentCount}
-                        size="sm"
-                    />
-                    <span className="text-xs text-muted-foreground whitespace-nowrap">
-                        {lessonIndex + 1}/{contentCount}
-                    </span>
-                </div>
-            </div>
-
-            {/* Main content */}
-            <div className="flex flex-1 flex-col md:flex-row overflow-hidden">
-                {/* Left: Content pane */}
-                <div
-                    className={`flex flex-col overflow-y-auto border-b md:border-b-0 md:border-r border-border bg-background ${isChallenge ? "w-full md:w-1/2 md:min-w-0" : "w-full max-w-3xl mx-auto"
-                        }`}
-                >
-                    <div className="p-4 sm:p-6 space-y-4">
-                        <div className="flex items-center gap-2">
-                            {isChallenge ? (
-                                <Badge
-                                    variant="outline"
-                                    className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
-                                >
-                                    <Code2 className="mr-1 h-3 w-3" />
-                                    Challenge
-                                </Badge>
-                            ) : (
-                                <Badge variant="outline">
-                                    <BookOpen className="mr-1 h-3 w-3" />
-                                    Lesson
-                                </Badge>
-                            )}
-                            <span className="text-xs text-muted-foreground">
-                                {lesson.duration}
-                            </span>
-                        </div>
-
-                        <h1 className="text-xl font-bold">{lesson.title}</h1>
-
-                        <div className="prose prose-sm dark:prose-invert max-w-none">
-                            <MarkdownContent content={lesson.content} />
-                        </div>
-
-                        {/* Challenge objective */}
-                        {isChallenge && lesson.challengeTests && (
-                            <Card className="bg-muted/30 p-4">
-                                <h3 className="mb-2 text-sm font-semibold">Objective</h3>
-                                <pre className="text-xs text-muted-foreground whitespace-pre-wrap">
-                                    {lesson.challengeTests}
-                                </pre>
-                            </Card>
-                        )}
-
-                        {/* Mark complete */}
-                        {!isEnrolled ? (
-                            <Card className="bg-amber-500/10 border-amber-500/20 p-4">
-                                <p className="text-sm text-amber-600 dark:text-amber-400 mb-2">
-                                    Enroll in this course to track progress and earn XP.
-                                </p>
-                                <Button asChild variant="outline" size="sm">
-                                    <Link href={`/courses/${slug}`}>Enroll on course page</Link>
-                                </Button>
-                            </Card>
-                        ) : (
+                        <div className="p-4 sm:p-6 space-y-4">
                             <div className="flex items-center gap-2">
-                                {isCompleted ? (
-                                    <Badge variant="outline" className="bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20 gap-1">
-                                        <CheckCircle2 className="h-3 w-3" />
-                                        Completed
+                                {isChallenge ? (
+                                    <Badge
+                                        variant="outline"
+                                        className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+                                    >
+                                        <Code2 className="mr-1 h-3 w-3" />
+                                        Challenge
                                     </Badge>
                                 ) : (
-                                    <Button
-                                        size="sm"
-                                        onClick={handleMarkComplete}
-                                        disabled={!canMarkComplete || !canCompleteOnChain || completeLesson.isPending}
-                                    >
-                                        {completeLesson.isPending ? "Completing..." : "Mark complete"}
+                                    <Badge variant="outline">
+                                        <BookOpen className="mr-1 h-3 w-3" />
+                                        Lesson
+                                    </Badge>
+                                )}
+                                <span className="text-xs text-muted-foreground">
+                                    {lesson.duration}
+                                </span>
+                            </div>
+
+                            <h1 className="text-xl font-bold">{lesson.title}</h1>
+
+                            <div className="prose prose-sm dark:prose-invert max-w-none">
+                                <MarkdownContent content={lesson.content} />
+                            </div>
+
+                            {/* Challenge objective */}
+                            {isChallenge && lesson.challengeTests && (
+                                <Card className="bg-muted/30 p-4">
+                                    <h3 className="mb-2 text-sm font-semibold">Objective</h3>
+                                    <pre className="text-xs text-muted-foreground whitespace-pre-wrap">
+                                        {lesson.challengeTests}
+                                    </pre>
+                                </Card>
+                            )}
+
+                            {/* Mark complete */}
+                            {!isEnrolled ? (
+                                <Card className="bg-amber-500/10 border-amber-500/20 p-4">
+                                    <p className="text-sm text-amber-600 dark:text-amber-400 mb-2">
+                                        Enroll in this course to track progress and earn XP.
+                                    </p>
+                                    <Button asChild variant="outline" size="sm">
+                                        <Link href={`/courses/${slug}`}>Enroll on course page</Link>
                                     </Button>
-                                )}
-                                {isEnrolled && !canCompleteOnChain && onChainLessonCount != null && (
-                                    <span className="text-xs text-muted-foreground">
-                                        This lesson is not available on-chain (course has {onChainLessonCount} lessons).
-                                    </span>
-                                )}
-                            </div>
-                        )}
-                    </div>
+                                </Card>
+                            ) : (
+                                <div className="flex items-center gap-2">
+                                    {isCompleted ? (
+                                        <Badge variant="outline" className="bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20 gap-1">
+                                            <CheckCircle2 className="h-3 w-3" />
+                                            Completed
+                                        </Badge>
+                                    ) : (
+                                        <Button
+                                            size="sm"
+                                            onClick={handleMarkComplete}
+                                            disabled={!canMarkComplete || !canCompleteOnChain || completeLesson.isPending}
+                                        >
+                                            {completeLesson.isPending ? "Completing..." : "Mark complete"}
+                                        </Button>
+                                    )}
+                                    {isEnrolled && !canCompleteOnChain && onChainLessonCount != null && (
+                                        <span className="text-xs text-muted-foreground">
+                                            This lesson is not available on-chain (course has {onChainLessonCount} lessons).
+                                        </span>
+                                    )}
+                                </div>
+                            )}
+                        </div>
 
-                    {/* Bottom nav */}
-                    <div className="mt-auto border-t border-border p-4 flex items-center justify-between">
-                        {prevLesson ? (
-                            <Button asChild variant="ghost" size="sm">
-                                <Link href={`/courses/${slug}/lessons/${prevLesson.id}`}>
-                                    <ChevronLeft className="mr-1 h-4 w-4" />
-                                    Previous
-                                </Link>
-                            </Button>
-                        ) : (
-                            <div />
-                        )}
+                        {/* Bottom nav */}
+                        <div className="mt-auto border-t border-border p-4 flex items-center justify-between">
+                            {prevLesson ? (
+                                <Button asChild variant="ghost" size="sm">
+                                    <Link href={`/courses/${slug}/lessons/${prevLesson.id}`}>
+                                        <ChevronLeft className="mr-1 h-4 w-4" />
+                                        Previous
+                                    </Link>
+                                </Button>
+                            ) : (
+                                <div />
+                            )}
 
-                        {nextLesson ? (
-                            <Button asChild size="sm">
-                                <Link href={`/courses/${slug}/lessons/${nextLesson.id}`}>
-                                    Next Lesson
-                                    <ChevronRight className="ml-1 h-4 w-4" />
-                                </Link>
-                            </Button>
-                        ) : (
-                            <Button size="sm">
-                                <CheckCircle2 className="mr-1 h-4 w-4" />
-                                Complete Course
-                            </Button>
-                        )}
-                    </div>
-                </div>
-
-                {/* Right: Code editor (challenges only) */}
-                {isChallenge ? (
-                    <div className="flex flex-1 flex-col overflow-hidden border-t md:border-t-0 md:border-l border-border bg-background min-h-[280px] md:min-h-0 w-full md:w-1/2">
-                        <div className="flex items-center justify-between border-b border-border bg-muted/30 px-4 py-2">
-                            <div className="flex items-center gap-2">
-                                <Code2 className="h-4 w-4 text-muted-foreground" />
-                                <span className="text-sm font-medium">Code</span>
-                            </div>
-                            {lesson.challengeCode && (
+                            {nextLesson ? (
+                                <Button asChild size="sm">
+                                    <Link href={`/courses/${slug}/lessons/${nextLesson.id}`}>
+                                        Next Lesson
+                                        <ChevronRight className="ml-1 h-4 w-4" />
+                                    </Link>
+                                </Button>
+                            ) : (
                                 <Button
-                                    variant="ghost"
                                     size="sm"
-                                    onClick={async () => {
-                                        try {
-                                            await navigator.clipboard.writeText(code || lesson.challengeCode || "");
-                                            toast.success("Starter code copied to clipboard!");
-                                        } catch (err) {
-                                            toast.error("Failed to copy code. Please copy manually.");
-                                        }
-                                    }}
-                                    className="h-7 text-xs"
+                                    onClick={handleMarkComplete}
+                                    disabled={completeLesson.isPending}
                                 >
-                                    <RotateCcw className="mr-1 h-3 w-3" />
-                                    Copy Starter Code
+                                    <CheckCircle2 className="mr-1 h-4 w-4" />
+                                    {completeLesson.isPending ? "Completing…" : "Complete Course"}
                                 </Button>
                             )}
                         </div>
-                        <div className="flex-1 overflow-hidden relative min-h-0">
-                            <CodeEditor
-                                value={code}
-                                onChange={setCode}
-                                language="typescript"
-                                height="100%"
-                                className="h-full"
-                            />
-                        </div>
                     </div>
-                ) : null}
+
+                    {/* Right: Code editor (challenges only) */}
+                    {isChallenge ? (
+                        <div className="flex flex-1 flex-col overflow-hidden border-t md:border-t-0 md:border-l border-border bg-background min-h-[280px] md:min-h-0 w-full md:w-1/2">
+                            <div className="flex items-center justify-between border-b border-border bg-muted/30 px-4 py-2">
+                                <div className="flex items-center gap-2">
+                                    <Code2 className="h-4 w-4 text-muted-foreground" />
+                                    <span className="text-sm font-medium">Code</span>
+                                </div>
+                                {lesson.challengeCode && (
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={async () => {
+                                            try {
+                                                await navigator.clipboard.writeText(code || lesson.challengeCode || "");
+                                                toast.success("Starter code copied to clipboard!");
+                                            } catch (err) {
+                                                toast.error("Failed to copy code. Please copy manually.");
+                                            }
+                                        }}
+                                        className="h-7 text-xs"
+                                    >
+                                        <RotateCcw className="mr-1 h-3 w-3" />
+                                        Copy Starter Code
+                                    </Button>
+                                )}
+                            </div>
+                            <div className="flex-1 overflow-hidden relative min-h-0">
+                                <CodeEditor
+                                    value={code}
+                                    onChange={setCode}
+                                    language="typescript"
+                                    height="100%"
+                                    className="h-full"
+                                />
+                            </div>
+                        </div>
+                    ) : null}
+                </div>
             </div>
-        </div>
+
+            {showCompletionModal && (
+                <CourseCompleteModal
+                    courseId={getCourseIdForProgram(course)}
+                    courseName={course.title}
+                    xpEarned={effectiveCount * (course.xpPerLesson ?? 100)}
+                    trackCollection={trackCollection}
+                    onClose={() => setShowCompletionModal(false)}
+                />
+            )}
+        </>
     );
 }

@@ -1,0 +1,86 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model CredentialCollection {
+  id                Int      @id @default(autoincrement())
+  trackId           Int      @unique(map: "credential_collections_track_id_key")
+  collectionAddress String   @map("collection_address")
+  name              String?
+  imageUrl          String?  @map("image_url")
+  metadataUri       String?  @map("metadata_uri")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  @@map("credential_collections")
+}
+
+model User {
+  wallet           String   @id
+  firstSeenAt      DateTime @default(now()) @map("first_seen_at")
+  totalXp          Int      @default(0) @map("total_xp")
+  coursesCompleted Int      @default(0) @map("courses_completed")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  enrollments       Enrollment[]
+  lessonCompletions LessonCompletion[]
+
+  @@map("users")
+}
+
+model Course {
+  courseId    String   @id @map("course_id")
+  trackId     Int      @map("track_id")
+  trackLevel  Int      @default(1) @map("track_level")
+  lessonCount Int      @map("lesson_count")
+  xpPerLesson Int      @map("xp_per_lesson")
+  creator     String?
+  txSignature String?  @map("tx_signature")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  enrollments Enrollment[]
+
+  @@map("courses")
+}
+
+model Enrollment {
+  wallet      String    @map("wallet")
+  courseId    String    @map("course_id")
+  enrolledAt  DateTime  @default(now()) @map("enrolled_at")
+  txSignature String?   @map("tx_signature")
+  completedAt DateTime? @map("completed_at")
+  xpEarned    Int?      @map("xp_earned")
+
+  user   User   @relation(fields: [wallet], references: [wallet], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [courseId], onDelete: Cascade)
+
+  @@id([wallet, courseId])
+  @@map("enrollments")
+}
+
+model LessonCompletion {
+  wallet      String   @map("wallet")
+  courseId    String   @map("course_id")
+  lessonIndex Int      @map("lesson_index")
+  completedAt DateTime @default(now()) @map("completed_at")
+  txSignature String?  @map("tx_signature")
+
+  user User @relation(fields: [wallet], references: [wallet], onDelete: Cascade)
+
+  @@id([wallet, courseId, lessonIndex])
+  @@index([wallet, courseId])
+  @@map("lesson_completions")
+}
+
+model LeaderboardEntry {
+  wallet           String   @id
+  totalXp          Int      @default(0) @map("total_xp")
+  coursesCompleted Int      @default(0) @map("courses_completed")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  @@map("leaderboard_entries")
+}

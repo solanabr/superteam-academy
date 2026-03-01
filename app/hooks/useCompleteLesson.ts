@@ -9,6 +9,10 @@ export interface CompleteLessonParams {
   courseId?: string;
   learner?: string;
   lessonIndex?: number;
+  /** Called when completing this lesson means all effective lessons are now done */
+  onCourseComplete?: () => void;
+  /** Total effective lessons in course — needed to detect full completion */
+  effectiveCount?: number;
 }
 
 export function useCompleteLesson() {
@@ -32,7 +36,14 @@ export function useCompleteLesson() {
       const walletKey = publicKey?.toBase58() ?? params.learner ?? "";
       void queryClient.invalidateQueries({ queryKey: ["enrollment"] });
       void queryClient.invalidateQueries({ queryKey: ["xpBalance", walletKey] });
-      toast.success("Lesson completed.");
+      toast.success("Lesson completed. +XP");
+      // Detect full course completion via refetched enrollment flags
+      // The caller provides effectiveCount + onCourseComplete to trigger the modal
+      if (params.onCourseComplete && params.effectiveCount != null) {
+        // We optimistically assume this lesson completes if we succeeded.
+        // The lesson page also cross-checks with lessonFlags after refetch.
+        params.onCourseComplete();
+      }
     },
     onError: (err: Error) => {
       toast.error(err.message);

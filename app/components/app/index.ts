@@ -16,3 +16,5 @@ export { CompletionBadge } from "./CompletionBadge";
 export { DailyReward } from "./DailyReward";
 export { PixelAvatar, getAvatarUrl, getAvatarVersion, setAvatarVersion } from "./PixelAvatar";
 export { LanguageSwitcher } from "./LanguageSwitcher";
+export { QuizModal } from "./QuizModal";
+export { CourseCompleteModal } from "./CourseCompleteModal";

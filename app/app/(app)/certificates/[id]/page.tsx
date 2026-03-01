@@ -17,11 +17,11 @@ import { useCredentialAsset } from "@/hooks/useCredentials";
 const cluster = process.env.NEXT_PUBLIC_CLUSTER ?? "devnet";
 
 function parseAttributes(
-  attrs: Array<{ key: string; value: string }> | Record<string, string> | undefined
+    attrs: Array<{ key: string; value: string }> | Record<string, string> | undefined
 ): Record<string, string> {
-  if (!attrs) return {};
-  if (Array.isArray(attrs)) return Object.fromEntries(attrs.map((a) => [a.key, a.value]));
-  return attrs as Record<string, string>;
+    if (!attrs) return {};
+    if (Array.isArray(attrs)) return Object.fromEntries(attrs.map((a) => [a.key, a.value]));
+    return attrs as Record<string, string>;
 }
 
 export default function CertificateDetailPage({
@@ -34,9 +34,9 @@ export default function CertificateDetailPage({
 
     if (isLoading) {
         return (
-            <div className="space-y-6">
+            <div className="max-w-xl mx-auto w-full space-y-6">
                 <PageHeader title="Certificate" subtitle="On-chain credential verification" />
-                <Card className="mx-auto max-w-lg p-8">
+                <Card className="p-8">
                     <div className="h-8 w-48 animate-pulse rounded bg-muted mx-auto" />
                 </Card>
             </div>
@@ -45,9 +45,9 @@ export default function CertificateDetailPage({
 
     if (!asset) {
         return (
-            <div className="space-y-6">
+            <div className="max-w-xl mx-auto w-full space-y-6">
                 <PageHeader title="Certificate" subtitle="On-chain credential verification" />
-                <Card className="mx-auto max-w-lg p-8 text-center">
+                <Card className="p-8 text-center">
                     <p className="text-muted-foreground">Credential not found or verification is not configured.</p>
                     <p className="text-sm text-muted-foreground mt-2 font-mono break-all">{id}</p>
                     <Button asChild variant="outline" className="mt-4">
@@ -66,10 +66,10 @@ export default function CertificateDetailPage({
     const imageUrl = asset.content?.links?.image;
 
     return (
-        <div className="space-y-6">
+        <div className="max-w-xl mx-auto w-full space-y-6">
             <PageHeader title="Certificate" subtitle="On-chain credential verification" />
 
-            <Card className="mx-auto max-w-lg p-8 text-center">
+            <Card className="p-8 text-center">
                 {imageUrl ? (
                     <div className="mx-auto mb-4 relative w-20 h-20 rounded-full overflow-hidden bg-muted">
                         <Image src={imageUrl} alt="" fill className="object-cover" unoptimized />
