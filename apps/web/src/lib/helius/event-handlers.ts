@@ -508,7 +508,11 @@ async function tryIssueCredential(
     const trackCollectionAddress = sanityCourse.trackCollectionAddress as
       | string
       | undefined;
-    if (!trackCollectionAddress) return;
+    if (!trackCollectionAddress) {
+      throw new Error(
+        `Course "${courseId}" has no trackCollectionAddress in Sanity — re-sync the course from the admin console`
+      );
+    }
 
     const trackCollectionPubkey = new PublicKey(trackCollectionAddress);
     const courseName = sanityCourse.title ?? courseId;
