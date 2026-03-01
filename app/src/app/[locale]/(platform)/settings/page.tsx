@@ -69,6 +69,7 @@ function loadProfile(): ProfileData {
       },
     };
   } catch {
+    console.warn('[settings] Failed to parse saved profile from localStorage');
     return defaultProfile;
   }
 }
@@ -82,7 +83,7 @@ function persistProfile(profile: ProfileData): void {
     }
     localStorage.setItem(PROFILE_KEY, JSON.stringify(toSave));
   } catch {
-    // localStorage quota exceeded or unavailable
+    console.warn('[settings] Failed to save profile to localStorage');
   }
 }
 
@@ -108,7 +109,7 @@ function collectLocalStorageData(): Record<string, unknown> {
       }
     }
   } catch {
-    // localStorage unavailable
+    console.warn('[settings] Failed to save notifications to localStorage');
   }
   return data;
 }

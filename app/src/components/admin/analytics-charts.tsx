@@ -7,6 +7,11 @@ import { cn } from '@/lib/utils';
  * Shared types & constants
  * ───────────────────────────────────────────────────────────── */
 
+// Shared chart rendering
+const Y_AXIS_LABEL_OFFSET = 10;
+const TICK_COUNT = 6;
+const TICK_DIVISIONS = TICK_COUNT - 1;
+
 const CHART_COLORS = [
   'oklch(0.541 0.267 293)',   // primary purple
   'oklch(0.592 0.176 152)',   // accent green
@@ -31,6 +36,30 @@ const BG_COLORS = [
  * LineChart — Daily Active Users (30 days)
  * ───────────────────────────────────────────────────────────── */
 
+// DAU mock data generation
+const DAU_DAYS = 30;
+const DAU_BASE = 120;
+const DAU_SIN_FREQUENCY = 0.4;
+const DAU_AMPLITUDE = 30;
+const DAU_WEEKEND_DIP = -25;
+const DAU_NOISE_RANGE = 30;
+const DAU_TREND_MULTIPLIER = 1.5;
+const DAU_MIN_VALUE = 20;
+
+// Line chart axis
+const LC_Y_AXIS_ROUNDING = 20;
+const LC_X_TICK_INDICES = [0, 7, 14, 21, 29];
+const LC_X_AXIS_LABEL_Y_OFFSET = 24;
+
+// Line chart tooltip
+const LC_TOOLTIP_DOT_RADIUS = 5;
+const LC_TOOLTIP_WIDTH = 110;
+const LC_TOOLTIP_HALF_WIDTH = LC_TOOLTIP_WIDTH / 2;
+const LC_TOOLTIP_HEIGHT = 28;
+const LC_TOOLTIP_RX = 6;
+const LC_TOOLTIP_Y_OFFSET = 40;
+const LC_TOOLTIP_TEXT_Y_OFFSET = 22;
+
 interface LineChartData {
   label: string;
   value: number;
@@ -39,20 +68,20 @@ interface LineChartData {
 function generateDAUData(): LineChartData[] {
   const data: LineChartData[] = [];
   const now = new Date();
-  for (let i = 29; i >= 0; i--) {
+  for (let i = DAU_DAYS - 1; i >= 0; i--) {
     const date = new Date(now);
     date.setDate(date.getDate() - i);
-    const base = 120 + Math.sin(i * 0.4) * 30;
+    const base = DAU_BASE + Math.sin(i * DAU_SIN_FREQUENCY) * DAU_AMPLITUDE;
     const weekday = date.getDay();
-    const weekendDip = weekday === 0 || weekday === 6 ? -25 : 0;
-    const noise = Math.random() * 30 - 15;
-    const trend = (30 - i) * 1.5;
+    const weekendDip = weekday === 0 || weekday === 6 ? DAU_WEEKEND_DIP : 0;
+    const noise = Math.random() * DAU_NOISE_RANGE - DAU_NOISE_RANGE / 2;
+    const trend = (DAU_DAYS - i) * DAU_TREND_MULTIPLIER;
     data.push({
       label: date.toLocaleDateString('en-US', {
         month: 'short',
         day: 'numeric',
       }),
-      value: Math.max(20, Math.round(base + weekendDip + noise + trend)),
+      value: Math.max(DAU_MIN_VALUE, Math.round(base + weekendDip + noise + trend)),
     });
   }
   return data;
@@ -84,8 +113,8 @@ export function AnalyticsLineChart() {
     return () => window.removeEventListener('resize', update);
   }, []);
 
-  const maxVal = Math.ceil(Math.max(...DAU_DATA.map((d) => d.value)) / 20) * 20;
-  const minVal = Math.floor(Math.min(...DAU_DATA.map((d) => d.value)) / 20) * 20;
+  const maxVal = Math.ceil(Math.max(...DAU_DATA.map((d) => d.value)) / LC_Y_AXIS_ROUNDING) * LC_Y_AXIS_ROUNDING;
+  const minVal = Math.floor(Math.min(...DAU_DATA.map((d) => d.value)) / LC_Y_AXIS_ROUNDING) * LC_Y_AXIS_ROUNDING;
   const range = maxVal - minVal || 1;
 
   const xScale = (i: number) =>
@@ -100,10 +129,10 @@ export function AnalyticsLineChart() {
   const areaPath = `${linePath} L${xScale(DAU_DATA.length - 1)},${LC_PAD.top + LC_INNER_H} L${xScale(0)},${LC_PAD.top + LC_INNER_H} Z`;
 
   const yTicks = Array.from(
-    { length: 6 },
-    (_, i) => minVal + (range / 5) * i,
+    { length: TICK_COUNT },
+    (_, i) => minVal + (range / TICK_DIVISIONS) * i,
   );
-  const xTickIndices = [0, 7, 14, 21, 29].filter(
+  const xTickIndices = LC_X_TICK_INDICES.filter(
     (i) => i < DAU_DATA.length,
   );
 
@@ -155,7 +184,7 @@ export function AnalyticsLineChart() {
               strokeDasharray="4 4"
             />
             <text
-              x={LC_PAD.left - 10}
+              x={LC_PAD.left - Y_AXIS_LABEL_OFFSET}
               y={yScale(t)}
               textAnchor="end"
               dominantBaseline="middle"
@@ -170,7 +199,7 @@ export function AnalyticsLineChart() {
           <text
             key={i}
             x={xScale(i)}
-            y={LC_PAD.top + LC_INNER_H + 24}
+            y={LC_PAD.top + LC_INNER_H + LC_X_AXIS_LABEL_Y_OFFSET}
             textAnchor="middle"
             className="fill-muted-foreground text-[11px]"
           >
@@ -201,22 +230,22 @@ export function AnalyticsLineChart() {
             <circle
               cx={tooltip.x}
               cy={tooltip.y}
-              r="5"
+              r={LC_TOOLTIP_DOT_RADIUS}
               fill={CHART_COLORS[0]}
               className="stroke-background"
               strokeWidth="2"
             />
             <rect
-              x={tooltip.x - 55}
-              y={tooltip.y - 40}
-              width="110"
-              height="28"
-              rx="6"
+              x={tooltip.x - LC_TOOLTIP_HALF_WIDTH}
+              y={tooltip.y - LC_TOOLTIP_Y_OFFSET}
+              width={LC_TOOLTIP_WIDTH}
+              height={LC_TOOLTIP_HEIGHT}
+              rx={LC_TOOLTIP_RX}
               className="fill-foreground"
             />
             <text
               x={tooltip.x}
-              y={tooltip.y - 22}
+              y={tooltip.y - LC_TOOLTIP_TEXT_Y_OFFSET}
               textAnchor="middle"
               className="fill-background text-[11px] font-medium"
             >
@@ -232,6 +261,21 @@ export function AnalyticsLineChart() {
 /* ─────────────────────────────────────────────────────────────
  * BarChart — Enrollments per Course
  * ───────────────────────────────────────────────────────────── */
+
+// Bar chart data & rendering
+const BC_Y_AXIS_ROUNDING = 100;
+const BC_BAR_PADDING_RATIO = 0.2;
+const BC_DEFAULT_OPACITY = 0.85;
+const BC_X_AXIS_LABEL_Y_OFFSET = 18;
+const BC_LABEL_ROTATION = -20;
+
+// Bar chart tooltip
+const BC_TOOLTIP_WIDTH = 50;
+const BC_TOOLTIP_HALF_WIDTH = BC_TOOLTIP_WIDTH / 2;
+const BC_TOOLTIP_HEIGHT = 22;
+const BC_TOOLTIP_RX = 4;
+const BC_TOOLTIP_Y_OFFSET = 28;
+const BC_TOOLTIP_TEXT_Y_OFFSET = 14;
 
 interface BarChartData {
   label: string;
@@ -259,15 +303,15 @@ export function AnalyticsBarChart() {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   const maxVal =
-    Math.ceil(Math.max(...ENROLLMENT_DATA.map((d) => d.value)) / 100) * 100;
+    Math.ceil(Math.max(...ENROLLMENT_DATA.map((d) => d.value)) / BC_Y_AXIS_ROUNDING) * BC_Y_AXIS_ROUNDING;
   const barWidth = BC_INNER_W / ENROLLMENT_DATA.length;
-  const barPadding = barWidth * 0.2;
+  const barPadding = barWidth * BC_BAR_PADDING_RATIO;
   const actualBarWidth = barWidth - barPadding * 2;
 
   const yScale = (v: number) =>
     BC_PAD.top + (1 - v / maxVal) * BC_INNER_H;
 
-  const yTicks = Array.from({ length: 6 }, (_, i) => (maxVal / 5) * i);
+  const yTicks = Array.from({ length: TICK_COUNT }, (_, i) => (maxVal / TICK_DIVISIONS) * i);
 
   return (
     <div>
@@ -288,7 +332,7 @@ export function AnalyticsBarChart() {
               strokeDasharray="4 4"
             />
             <text
-              x={BC_PAD.left - 10}
+              x={BC_PAD.left - Y_AXIS_LABEL_OFFSET}
               y={yScale(t)}
               textAnchor="end"
               dominantBaseline="middle"
@@ -319,17 +363,17 @@ export function AnalyticsBarChart() {
                 height={barH}
                 rx="4"
                 fill={CHART_COLORS[i % CHART_COLORS.length]}
-                opacity={isHovered ? 1 : 0.85}
+                opacity={isHovered ? 1 : BC_DEFAULT_OPACITY}
                 className="transition-opacity"
               />
 
               {/* X-axis label */}
               <text
                 x={x + actualBarWidth / 2}
-                y={BC_PAD.top + BC_INNER_H + 18}
+                y={BC_PAD.top + BC_INNER_H + BC_X_AXIS_LABEL_Y_OFFSET}
                 textAnchor="middle"
                 className="fill-muted-foreground text-[10px]"
-                transform={`rotate(-20, ${x + actualBarWidth / 2}, ${BC_PAD.top + BC_INNER_H + 18})`}
+                transform={`rotate(${BC_LABEL_ROTATION}, ${x + actualBarWidth / 2}, ${BC_PAD.top + BC_INNER_H + BC_X_AXIS_LABEL_Y_OFFSET})`}
               >
                 {d.label}
               </text>
@@ -338,16 +382,16 @@ export function AnalyticsBarChart() {
               {isHovered && (
                 <g>
                   <rect
-                    x={x + actualBarWidth / 2 - 25}
-                    y={y - 28}
-                    width="50"
-                    height="22"
-                    rx="4"
+                    x={x + actualBarWidth / 2 - BC_TOOLTIP_HALF_WIDTH}
+                    y={y - BC_TOOLTIP_Y_OFFSET}
+                    width={BC_TOOLTIP_WIDTH}
+                    height={BC_TOOLTIP_HEIGHT}
+                    rx={BC_TOOLTIP_RX}
                     className="fill-foreground"
                   />
                   <text
                     x={x + actualBarWidth / 2}
-                    y={y - 14}
+                    y={y - BC_TOOLTIP_TEXT_Y_OFFSET}
                     textAnchor="middle"
                     className="fill-background text-[11px] font-medium"
                   >
@@ -366,6 +410,14 @@ export function AnalyticsBarChart() {
 /* ─────────────────────────────────────────────────────────────
  * PieChart — Users by Track
  * ───────────────────────────────────────────────────────────── */
+
+// Pie chart rendering
+const PIE_LABEL_OFFSET = 24;
+const PIE_HOVER_EXPAND = 6;
+const PIE_HOVER_INNER_SHRINK = 2;
+const PIE_UNHOVERED_OPACITY = 0.5;
+const PIE_CENTER_TEXT_Y_UP = 6;
+const PIE_CENTER_TEXT_Y_DOWN = 14;
 
 interface PieSlice {
   label: string;
@@ -436,7 +488,7 @@ export function AnalyticsPieChart() {
     currentAngle = endAngle;
 
     const midAngle = startAngle + angle / 2;
-    const labelPos = polarToCartesian(PIE_CX, PIE_CY, PIE_RADIUS + 24, midAngle);
+    const labelPos = polarToCartesian(PIE_CX, PIE_CY, PIE_RADIUS + PIE_LABEL_OFFSET, midAngle);
 
     return {
       ...d,
@@ -472,14 +524,14 @@ export function AnalyticsPieChart() {
                   d={describeArc(
                     PIE_CX,
                     PIE_CY,
-                    isHovered ? PIE_RADIUS + 6 : PIE_RADIUS,
-                    isHovered ? PIE_INNER_RADIUS - 2 : PIE_INNER_RADIUS,
+                    isHovered ? PIE_RADIUS + PIE_HOVER_EXPAND : PIE_RADIUS,
+                    isHovered ? PIE_INNER_RADIUS - PIE_HOVER_INNER_SHRINK : PIE_INNER_RADIUS,
                     slice.startAngle,
                     slice.endAngle,
                   )}
                   fill={slice.color}
                   opacity={
-                    hoveredIndex === null || isHovered ? 1 : 0.5
+                    hoveredIndex === null || isHovered ? 1 : PIE_UNHOVERED_OPACITY
                   }
                   strokeWidth="2"
                   className="stroke-background transition-all duration-200"
@@ -491,7 +543,7 @@ export function AnalyticsPieChart() {
           {/* Center label */}
           <text
             x={PIE_CX}
-            y={PIE_CY - 6}
+            y={PIE_CY - PIE_CENTER_TEXT_Y_UP}
             textAnchor="middle"
             className="fill-foreground text-[22px] font-bold"
           >
@@ -499,7 +551,7 @@ export function AnalyticsPieChart() {
           </text>
           <text
             x={PIE_CX}
-            y={PIE_CY + 14}
+            y={PIE_CY + PIE_CENTER_TEXT_Y_DOWN}
             textAnchor="middle"
             className="fill-muted-foreground text-[11px]"
           >

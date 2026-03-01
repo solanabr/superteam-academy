@@ -2,14 +2,17 @@ import { NextResponse } from 'next/server';
 import {
   PublicKey,
   SystemProgram,
-  TransactionMessage,
-  VersionedTransaction,
+  TransactionInstruction,
 } from '@solana/web3.js';
 import {
   getBackendSigner,
   getServerConnection,
 } from '@/lib/solana/server/signer';
 import { checkRateLimit } from '@/lib/solana/server/rate-limit';
+import {
+  signAndConfirmTransaction,
+  parseAnchorErrorCode,
+} from '@/lib/solana/server/transaction';
 import {
   validateRequest,
   isErrorResponse,
@@ -226,20 +229,13 @@ export async function POST(request: Request) {
       },
     ];
 
-    const instruction = { keys, programId: PROGRAM_ID, data };
-    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
-
-    const messageV0 = new TransactionMessage({
-      payerKey: backendSigner.publicKey,
-      recentBlockhash: blockhash,
-      instructions: [instruction],
-    }).compileToV0Message();
-
-    const tx = new VersionedTransaction(messageV0);
-    tx.sign([backendSigner]);
-
-    const signature = await connection.sendRawTransaction(tx.serialize());
-    await connection.confirmTransaction({ signature, blockhash, lastValidBlockHeight }, 'confirmed');
+    const instruction: TransactionInstruction = { keys, programId: PROGRAM_ID, data };
+    const signature = await signAndConfirmTransaction(
+      connection,
+      [instruction],
+      [backendSigner],
+      backendSigner.publicKey,
+    );
 
     return NextResponse.json({
       signature,
@@ -247,8 +243,7 @@ export async function POST(request: Request) {
       credentialAsset: credentialAsset.toBase58(),
     });
   } catch (err: unknown) {
-    const anchorError = err as { error?: { errorCode?: { code?: string } } };
-    const errorCode = anchorError?.error?.errorCode?.code;
+    const errorCode = parseAnchorErrorCode(err);
 
     if (errorCode === 'CredentialNotFound') {
       return NextResponse.json(
