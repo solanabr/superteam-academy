@@ -7,7 +7,7 @@ import { ConnectionProvider } from "@solana/wallet-adapter-react";
 import { clusterApiUrl } from "@solana/web3.js";
 
 const solanaConnectors = toSolanaWalletConnectors({
-  shouldAutoConnect: true,
+  shouldAutoConnect: false,
 });
 
 const CLUSTER = (process.env.NEXT_PUBLIC_CLUSTER || "devnet") as
