@@ -25,6 +25,7 @@ export function useCourse(courseId?: string): UseCourseReturn {
   const selectCourse = useCourseStore((s) => s.selectCourse);
   const selectedCourse = useCourseStore((s) => s.selectedCourse);
   const courseLoading = useCourseStore((s) => s.isLoading);
+  const coursesLength = useCourseStore((s) => s.courses.length);
 
   const enrollments = useUserStore((s) => s.enrollments);
   const userLoading = useUserStore((s) => s.isLoading);
@@ -33,7 +34,7 @@ export function useCourse(courseId?: string): UseCourseReturn {
     if (courseId) {
       selectCourse(courseId);
     }
-  }, [courseId, selectCourse]);
+  }, [courseId, selectCourse, coursesLength]);
 
   const enrollment = courseId
     ? enrollments.get(courseId) ?? null
