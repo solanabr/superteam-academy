@@ -8,6 +8,7 @@ import { Copy, Check, Play, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { AiHintButton } from './ai-hint-button';
 
 /** Extract the editor instance type from the OnMount callback signature */
 type MonacoEditorInstance = Parameters<OnMount>[0];
@@ -25,6 +26,7 @@ interface MonacoEditorWrapperProps {
   isRunning?: boolean;
   readOnly?: boolean;
   className?: string;
+  challengeDescription?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -114,6 +116,7 @@ export function MonacoEditorWrapper({
   isRunning = false,
   readOnly = false,
   className,
+  challengeDescription,
 }: MonacoEditorWrapperProps) {
   const t = useTranslations('lesson');
   const { resolvedTheme } = useTheme();
@@ -228,6 +231,13 @@ export function MonacoEditorWrapper({
         </div>
 
         <div className="flex items-center gap-1">
+          {/* AI Hint */}
+          <AiHintButton
+            code={value}
+            challenge={challengeDescription ?? ''}
+            language={language}
+          />
+
           {/* Copy */}
           <Button
             variant="ghost"
