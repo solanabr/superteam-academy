@@ -26,8 +26,9 @@ Interactive courses, soulbound XP tokens, on-chain credential NFTs, and an integ
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict_|_Zero_Any-3178C6.svg?logo=typescript&logoColor=white)](tsconfig.json)
 [![Next.js](https://img.shields.io/badge/Next.js-15-black.svg?logo=next.js)](https://nextjs.org)
 [![Solana](https://img.shields.io/badge/Solana-Devnet-14F195.svg?logo=solana)](https://explorer.solana.com/address/ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf?cluster=devnet)
-[![Tests](https://img.shields.io/badge/Tests-356_Unit_|_36_E2E-brightgreen.svg)]()
-[![i18n](https://img.shields.io/badge/i18n-EN_|_PT--BR_|_ES-orange.svg)]()
+[![Tests](https://img.shields.io/badge/Tests-364_Unit_|_36_E2E-brightgreen.svg)]()
+[![Challenges](https://img.shields.io/badge/Challenges-100-ff6b6b.svg)]()
+[![i18n](https://img.shields.io/badge/i18n-514_keys_×_4_locales-orange.svg)]()
 
 </div>
 
@@ -152,6 +153,7 @@ https://github.com/user-attachments/assets/ceeb4f76-4bd3-4ab0-9250-45cf91829f8a
 ### Bonus Features
 
 - **Admin Dashboard** — Course management, user analytics, achievement configuration
+- **100 Coding Challenges** — 5 categories (Solana Fundamentals, DeFi, NFT/Metaplex, Security, Token Extensions), 3 difficulty tiers
 - **Daily Coding Challenges** — Timed challenges with speed leaderboard
 - **Community Forum** — Discussion threads with voting and Q&A
 - **Onboarding Quiz** — Skill assessment to personalize learning path
@@ -180,13 +182,13 @@ https://github.com/user-attachments/assets/ceeb4f76-4bd3-4ab0-9250-45cf91829f8a
 | **Code Editor** | Monaco Editor — Rust, TypeScript, JavaScript, Python, Solidity, JSON |
 | **Wallet** | Solana Wallet Adapter (multi-wallet, Wallet Standard) |
 | **Auth** | NextAuth v5 beta (Google + GitHub, conditional registration) |
-| **i18n** | next-intl — English, Portuguese (PT-BR), Spanish (ES) |
+| **i18n** | next-intl — English, Portuguese (PT-BR), Spanish (ES), Hindi (HI) |
 | **On-Chain** | Anchor 0.31+, Token-2022 (soulbound XP), Metaplex Core (credential NFTs) |
 | **RPC/Indexing** | Helius DAS API (credential queries, XP leaderboard) |
 | **Analytics** | GA4 + Microsoft Clarity (heatmaps) + Sentry (error monitoring) + Vercel Analytics |
 | **AI** | Anthropic Claude (contextual code hints in editor) |
 | **Storage** | Arweave (permanent course content via Irys) |
-| **Testing** | Vitest (356 unit tests) + Playwright (36 E2E specs) |
+| **Testing** | Vitest (364 unit tests) + Playwright (36 E2E specs) |
 | **Deployment** | Vercel with preview builds |
 | **PWA** | Service worker (multi-strategy caching) + Web App Manifest |
 
@@ -295,7 +297,7 @@ superteam-academy/
 │   │   │   ├── hooks/                  ← 9 React hooks (enrollment, XP, streak, etc.)
 │   │   │   └── services/              ← Service interfaces (learning progress)
 │   │   ├── i18n/                       ← next-intl routing config
-│   │   └── messages/                   ← en.json, pt.json, es.json (358 keys each)
+│   │   └── messages/                   ← en/pt/es/hi.json (514 keys each)
 │   ├── e2e/                            ← Playwright E2E specs
 │   └── public/                         ← Static assets, PWA manifest, service worker
 ├── docs/                               ← Program & architecture documentation
@@ -382,7 +384,7 @@ The Anchor program is deployed on Solana devnet with 16 instructions covering th
 ```bash
 # Frontend tests
 cd app
-pnpm test:run          # Run all 356 unit tests
+pnpm test:run          # Run all 364 unit tests
 pnpm test              # Watch mode
 
 # E2E tests
