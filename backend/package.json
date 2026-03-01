@@ -1,0 +1,25 @@
+{
+  "name": "superteam-academy-backend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js"
+  },
+  "dependencies": {
+    "fastify": "^4.28.0",
+    "@fastify/cors": "^9.0.0",
+    "@coral-xyz/anchor": "^0.31.0",
+    "@solana/web3.js": "^1.95.0",
+    "@solana/spl-token": "^0.4.6",
+    "dotenv": "^16.4.0",
+    "bn.js": "^5.2.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/bn.js": "^5.1.5",
+    "typescript": "^5.6.0",
+    "tsx": "^4.19.0"
+  }
+}

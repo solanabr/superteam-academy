@@ -1,0 +1,75 @@
+{
+  "nav": {
+    "courses": "Cursos",
+    "leaderboard": "Ranking",
+    "profile": "Perfil",
+    "connectWallet": "Conectar Carteira"
+  },
+  "home": {
+    "hero": "Domine o Desenvolvimento Solana",
+    "heroSub": "Ganhe credenciais verificáveis e tokens XP on-chain. Aprenda, construa e prove suas habilidades.",
+    "browseCourses": "Ver Cursos",
+    "stats": {
+      "courses": "Cursos",
+      "learners": "Alunos",
+      "xpMinted": "XP Emitido",
+      "credentials": "Credenciais Emitidas"
+    }
+  },
+  "courses": {
+    "title": "Catálogo de Cursos",
+    "subtitle": "Escolha seu caminho de aprendizado",
+    "enrollNow": "Inscrever-se",
+    "continue": "Continuar Aprendendo",
+    "completed": "Concluído",
+    "lessons": "aulas",
+    "difficulty": {
+      "1": "Iniciante",
+      "2": "Intermediário",
+      "3": "Avançado"
+    },
+    "xpPerLesson": "XP por aula",
+    "totalXp": "XP Total",
+    "prerequisite": "Pré-requisito necessário",
+    "enrolled": "inscritos",
+    "completions": "conclusões"
+  },
+  "course": {
+    "lessonProgress": "Progresso das Aulas",
+    "lesson": "Aula",
+    "complete": "Marcar Completa",
+    "finalize": "Finalizar Curso",
+    "claim": "Resgatar Credencial",
+    "alreadyComplete": "Já concluído",
+    "notEnrolled": "Você precisa se inscrever primeiro",
+    "enrollToStart": "Inscreva-se para começar",
+    "courseCompleted": "Curso concluído!",
+    "claimYourCredential": "Resgate sua credencial NFT"
+  },
+  "leaderboard": {
+    "title": "Ranking",
+    "subtitle": "Melhores alunos por XP",
+    "rank": "Posição",
+    "wallet": "Carteira",
+    "xp": "XP",
+    "level": "Nível"
+  },
+  "profile": {
+    "title": "Seu Perfil",
+    "xpBalance": "Saldo XP",
+    "level": "Nível",
+    "streak": "Dias Seguidos",
+    "credentials": "Credenciais",
+    "achievements": "Conquistas",
+    "enrollments": "Inscrições Ativas",
+    "noCredentials": "Complete cursos para ganhar credenciais",
+    "noEnrollments": "Inscreva-se em um curso para começar"
+  },
+  "common": {
+    "loading": "Carregando...",
+    "error": "Algo deu errado",
+    "retry": "Tentar novamente",
+    "back": "Voltar",
+    "viewAll": "Ver Todos"
+  }
+}
