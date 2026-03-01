@@ -28,7 +28,7 @@ Interactive courses, soulbound XP tokens, on-chain credential NFTs, and an integ
 [![Solana](https://img.shields.io/badge/Solana-Devnet-14F195.svg?logo=solana)](https://explorer.solana.com/address/ACADBRCB3zGvo1KSCbkztS33ZNzeBv2d7bqGceti3ucf?cluster=devnet)
 [![Tests](https://img.shields.io/badge/Tests-364_Unit_|_36_E2E-brightgreen.svg)]()
 [![Challenges](https://img.shields.io/badge/Challenges-100-ff6b6b.svg)]()
-[![i18n](https://img.shields.io/badge/i18n-514_keys_×_4_locales-orange.svg)]()
+[![i18n](https://img.shields.io/badge/i18n-627_keys_×_4_locales-orange.svg)]()
 
 </div>
 
@@ -297,7 +297,7 @@ superteam-academy/
 │   │   │   ├── hooks/                  ← 9 React hooks (enrollment, XP, streak, etc.)
 │   │   │   └── services/              ← Service interfaces (learning progress)
 │   │   ├── i18n/                       ← next-intl routing config
-│   │   └── messages/                   ← en/pt/es/hi.json (514 keys each)
+│   │   └── messages/                   ← en/pt/es/hi.json (627 keys each)
 │   ├── e2e/                            ← Playwright E2E specs
 │   └── public/                         ← Static assets, PWA manifest, service worker
 ├── docs/                               ← Program & architecture documentation
